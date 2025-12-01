@@ -28,28 +28,15 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-poetry
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache Poetry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.POETRY_CACHE_DIR }}
-            .venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
-
-      - name: Install deps
-        run: |
-          pip install poetry==${{ env.POETRY_VERSION }}
-          poetry config virtualenvs.in-project true
-          poetry install --no-root --with dev --no-interaction
+          python_version: ${{ env.PYTHON_VERSION }}
+          poetry_version: ${{ env.POETRY_VERSION }}
+          poetry_cache_dir: ${{ env.POETRY_CACHE_DIR }}
 
       - name: Run lint
         run: poetry run make lint
@@ -60,25 +47,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/setup-poetry
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache Poetry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.POETRY_CACHE_DIR }}
-            .venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
-
-      - name: Install deps
-        run: |
-          pip install poetry==${{ env.POETRY_VERSION }}
-          poetry config virtualenvs.in-project true
-          poetry install --no-root --with dev --no-interaction
+          python_version: ${{ env.PYTHON_VERSION }}
+          poetry_version: ${{ env.POETRY_VERSION }}
+          poetry_cache_dir: ${{ env.POETRY_CACHE_DIR }}
 
       - name: Run tests
         run: >
@@ -153,7 +126,7 @@ jobs:
     steps:
       - name: Check VPN secrets
         env:
-          CLIENT_OVPN: ${{ secrets.CLIENT_OVPN }}          
+          CLIENT_OVPN: ${{ secrets.CLIENT_OVPN }}
         run: |
           if [ -z "$CLIENT_OVPN" ]; then
             echo "VPN não configurada — pulando."
@@ -184,7 +157,6 @@ jobs:
           echo "$VPN_P12" | base64 --decode | sudo tee /etc/openvpn/auth.p12 >/dev/null
           sudo chmod 600 /etc/openvpn/*
 
-          # garantir log legível ANTES de iniciar
           sudo rm -f /tmp/ovpn.log || true
           sudo touch /tmp/ovpn.log
           sudo chmod 644 /tmp/ovpn.log
