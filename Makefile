@@ -22,5 +22,9 @@ lint:
 	poetry run sqlfmt ./airflow_lappis/dags/dbt --check
 	[ "${GITLAB_CI}" ] || poetry run sqlfluff lint ./airflow_lappis/dags/dbt
 
+lint-ci:
+	poetry run sqlfmt ./airflow_lappis/dags/dbt --check
+	poetry run sqlfluff lint ./airflow_lappis/dags/dbt --config .sqlfluff.ci --ignore templating
+
 test:
 	poetry run pytest tests
