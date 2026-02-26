@@ -64,4 +64,4 @@ def api_plano_trabalho_especial_dag() -> None:
     fetch_and_store_plano_trabalho_especial()
 
 
-dag_instance = api_plano_trabalho_especial_dag()
+api_plano_trabalho_especial_dag()
