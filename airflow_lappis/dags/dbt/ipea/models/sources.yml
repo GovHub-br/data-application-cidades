@@ -49,6 +49,11 @@ sources:
       - name: cargos_funcao
       - name: unidade_organizacional
 
+  - name: transferegov_emendas
+    schema: transferegov_emendas
+    tables:
+      - name: programas_especiais
+
   - name: dados_abertos
     schema: camara_deputados
     tables: 
