@@ -50,6 +50,10 @@ models:
     #   +schema: siape 
     #   views:
     #     +materialized: view
+    deputados_dbt:
+     +materialized: table
+     +schema: deputados
+
 
 on-run-start:
   - '{{create_udfs()}}'
