@@ -39,6 +39,10 @@ models:
         description: >
           Identificador numérico da legislatura à qual o deputado está vinculado.
 
+      - name: urlfoto
+        description: >
+          URL da foto oficial do deputado disponibilizada pela Câmara dos Deputados.
+
       - name: email
         description: >
           Endereço de e-mail institucional do deputado na Câmara dos Deputados.
@@ -47,37 +51,42 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
     data_tests: 
-  - verificacao_tipagem:
-      nome_tabela: 'deputados.deputados'
-      nome_coluna: 'id'
-      tipo_esperado: 'integer'
+    - verificacao_tipagem:
+        nome_tabela: 'deputados.deputados'
+        nome_coluna: 'id'
+        tipo_esperado: 'integer'
 
-  - verificacao_tipagem:
-      nome_tabela: 'deputados.deputados'
-      nome_coluna: 'nome'
-      tipo_esperado: 'text'
+    - verificacao_tipagem:
+        nome_tabela: 'deputados.deputados'
+        nome_coluna: 'nome'
+        tipo_esperado: 'text'
 
-  - verificacao_tipagem:
-      nome_tabela: 'deputados.deputados'
-      nome_coluna: 'siglapartido'
-      tipo_esperado: 'text'
+    - verificacao_tipagem:
+        nome_tabela: 'deputados.deputados'
+        nome_coluna: 'siglapartido'
+        tipo_esperado: 'text'
 
-  - verificacao_tipagem:
-      nome_tabela: 'deputados.deputados'
-      nome_coluna: 'siglauf'
-      tipo_esperado: 'text'
+    - verificacao_tipagem:
+        nome_tabela: 'deputados.deputados'
+        nome_coluna: 'siglauf'
+        tipo_esperado: 'text'
 
-  - verificacao_tipagem:
-      nome_tabela: 'deputados.deputados'
-      nome_coluna: 'idlegislatura'
-      tipo_esperado: 'integer'
+    - verificacao_tipagem:
+        nome_tabela: 'deputados.deputados'
+        nome_coluna: 'idlegislatura'
+        tipo_esperado: 'integer'
 
-  - verificacao_tipagem:
-      nome_tabela: 'deputados.deputados'
-      nome_coluna: 'email'
-      tipo_esperado: 'text'
+    - verificacao_tipagem:
+        nome_tabela: 'deputados'
+        nome_coluna: 'urlfoto'
+        tipo_esperado: 'text'
+        
+    - verificacao_tipagem:
+        nome_tabela: 'deputados.deputados'
+        nome_coluna: 'email'
+        tipo_esperado: 'text'
 
-  - verificacao_tipagem:
-      nome_tabela: 'deputados.deputados'
-      nome_coluna: 'dt_ingest'
-      tipo_esperado: 'timestamp with time zone'
+    - verificacao_tipagem:
+        nome_tabela: 'deputados.deputados'
+        nome_coluna: 'dt_ingest'
+        tipo_esperado: 'timestamp with time zone'
