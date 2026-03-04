@@ -54,3 +54,7 @@ sources:
     tables:
       - name: programas_especiais
 
+  - name: dados_abertos
+    schema: camara_deputados
+    tables: 
+      - name: deputados
