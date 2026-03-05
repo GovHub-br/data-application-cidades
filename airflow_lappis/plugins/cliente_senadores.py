@@ -3,6 +3,7 @@ import logging
 from typing import Any
 from cliente_base import ClienteBase
 
+
 class ClienteSenadores(ClienteBase):
     """
     Cliente para consumir a API de Dados Abertos do Senado Federal.
@@ -34,14 +35,18 @@ class ClienteSenadores(ClienteBase):
             try:
                 lista_root = data.get("ListaParlamentarEmExercicio", {})
                 parlamentares = lista_root.get("Parlamentares", {}).get("Parlamentar", [])
-                
+
                 if isinstance(parlamentares, dict):
                     parlamentares = [parlamentares]
-                
-                logging.info(f"[cliente_senadores.py] Successfully fetched {len(parlamentares)} senadores")
+
+                logging.info(
+                    f"[cliente_senadores.py] Successfully fetched {len(parlamentares)} senadores"
+                )
                 return parlamentares
             except Exception as e:
-                logging.error(f"[cliente_senadores.py] Erro ao parsear JSON do Senado: {e}")
+                logging.error(
+                    f"[cliente_senadores.py] Erro ao parsear JSON do Senado: {e}"
+                )
                 return []
         else:
             logging.warning(f"[cliente_senadores.py] Failed with status: {status}")

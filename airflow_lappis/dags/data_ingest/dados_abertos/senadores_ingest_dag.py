@@ -6,12 +6,13 @@ from postgres_helpers import get_postgres_conn
 from cliente_senadores import ClienteSenadores
 from cliente_postgres import ClientPostgresDB
 
+
 @dag(
     schedule_interval=get_dynamic_schedule("senadores_ingest_dag"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
-        "owner": "Cibelly", 
+        "owner": "Cibelly",
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
@@ -32,12 +33,11 @@ def senadores_ingest_dag() -> None:
 
         if senadores_data and len(senadores_data) > 0:
             registros_limpos = []
-            
+
             for item in senadores_data:
                 info = item.get("IdentificacaoParlamentar", {})
                 mandato = item.get("Mandato", {})
-                
-               
+
                 senador_simplificado = {
                     "id": info.get("CodigoParlamentar"),
                     "nome_parlamentar": info.get("NomeParlamentar"),
@@ -50,7 +50,7 @@ def senadores_ingest_dag() -> None:
                     "sigla_partido": info.get("SiglaPartidoParlamentar"),
                     "uf": info.get("UfParlamentar"),
                     "id_legislatura": mandato.get("CodigoLegislatura"),
-                    "dt_ingest": datetime.now().isoformat()
+                    "dt_ingest": datetime.now().isoformat(),
                 }
                 registros_limpos.append(senador_simplificado)
 
@@ -68,5 +68,6 @@ def senadores_ingest_dag() -> None:
             )
 
     fetch_and_store_senadores()
+
 
 senadores_ingest_dag()
