@@ -48,10 +48,16 @@ def api_finalidade_especial_dag() -> None:
             db.insert_data(
                 finalidades_data,
                 "finalidades_especiais",
-                conflict_fields=["id_executor", "cd_area_politica_publica_tipo_pt", 
-                                 "area_politica_publica_pt"],
-                primary_key=["id_executor", "cd_area_politica_publica_tipo_pt",
-                             "area_politica_publica_pt"],
+                conflict_fields=[
+                    "id_executor",
+                    "cd_area_politica_publica_tipo_pt",
+                    "area_politica_publica_pt",
+                ],
+                primary_key=[
+                    "id_executor",
+                    "cd_area_politica_publica_tipo_pt",
+                    "area_politica_publica_pt",
+                ],
                 schema="transferegov_emendas",
             )
 
@@ -67,5 +73,6 @@ def api_finalidade_especial_dag() -> None:
             )
 
     fetch_and_store_finalidade_especial()
+
 
 api_finalidade_especial_dag()
