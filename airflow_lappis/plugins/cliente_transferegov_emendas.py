@@ -857,8 +857,7 @@ class ClienteTransfereGov(ClienteBase):
             f"Total records: {len(all_data)}"
         )
         return all_data
-      
-    
+
     def get_ordens_bancarias_especiais(
         self, limit: int = 1000, offset: int = 0
     ) -> Optional[list]:
@@ -955,7 +954,9 @@ class ClienteTransfereGov(ClienteBase):
         )
         return all_data
 
-    def get_relatorio_gestao_novo_especial(self, limit: int = 1000, offset: int = 0) -> Optional[list]:
+    def get_relatorio_gestao_novo_especial(
+        self, limit: int = 1000, offset: int = 0
+    ) -> Optional[list]:
         """
         Obter relatórios de gestão novo especial com paginação.
 
@@ -1048,7 +1049,7 @@ class ClienteTransfereGov(ClienteBase):
             f"Total records: {len(all_data)}"
         )
         return all_data
-    
+
     def get_plano_trabalho_especial(
         self, limit: int = 1000, offset: int = 0
     ) -> Optional[list]:
@@ -1144,7 +1145,9 @@ class ClienteTransfereGov(ClienteBase):
         )
         return all_data
 
-    def get_historico_pagamentos_especiais(self, limit: int = 1000, offset: int = 0) -> Optional[list]:
+    def get_historico_pagamentos_especiais(
+        self, limit: int = 1000, offset: int = 0
+    ) -> Optional[list]:
         """
         Obter histórico de pagamentos especiais com paginação.
 

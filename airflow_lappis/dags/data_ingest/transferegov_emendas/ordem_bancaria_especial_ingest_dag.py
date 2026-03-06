@@ -66,4 +66,5 @@ def api_ordem_bancaria_especial_dag() -> None:
 
     fetch_and_store_ordem_bancaria_especial()
 
+
 api_ordem_bancaria_especial_dag()
