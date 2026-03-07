@@ -56,6 +56,9 @@ models:
     deputados_dbt:
      +materialized: table
      +schema: deputados
+    senadores_dbt:
+     +materialized: table
+     +schema: senadores
 
 
 on-run-start:
