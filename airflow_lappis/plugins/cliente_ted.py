@@ -130,3 +130,52 @@ class ClienteTed(ClienteBase):
         else:
             logging.warning(f"Falha ao buscar programação financeira - Status: {status}")
             return None
+
+    def get_todos_programas(self, limit: int = 1000, offset: int = 0) -> list | None:
+        """
+        Função ATÔMICA: Busca uma única 'fatia' (página) de programas.
+        """
+        headers = {
+            **self.BASE_HEADER, 
+            "Range-Unit": "items", 
+            "Range": f"{offset}-{offset + limit - 1}"
+        }
+        
+        endpoint = "programa"
+        logging.info(f"[cliente_ted.py] Fetching programas (offset: {offset}, limit: {limit})")
+        
+        status, data = self.request(
+            http.HTTPMethod.GET, endpoint, headers=headers
+        )
+        
+        if status in http.HTTPStatus.OK and isinstance(data, list):
+            logging.info(f"[cliente_ted.py] Sucesso ao buscar {len(data)} programas no offset {offset}.")
+            return data
+        else:
+            logging.error(f"[cliente_ted.py] Erro ao buscar programas. Status: {status}")
+            return None
+
+    def get_all_programas(self, limit: int = 1000) -> list:
+        """
+        Itera por todas as fatias de dados até o fim.
+        Segue a lógica da 'get_all_deputados'.
+        """
+        all_programas = []
+        current_offset = 0
+
+        while True:
+            programas = self.get_todos_programas(limit=limit, offset=current_offset)
+
+            if not programas:
+                break
+
+            all_programas.extend(programas)
+
+            if len(programas) < limit:
+                logging.info("[cliente_ted.py] Última página alcançada.")
+                break
+
+            current_offset += limit
+
+        logging.info(f"[cliente_ted.py] Carga completa finalizada. Total: {len(all_programas)} programas.")
+        return all_programas
