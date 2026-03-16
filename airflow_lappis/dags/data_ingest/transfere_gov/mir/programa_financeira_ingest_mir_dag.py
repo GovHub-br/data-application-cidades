@@ -52,5 +52,4 @@ def programacao_financeira_mir_dag() -> None:
 
     fetch_and_store_programacao_financeira()
 
-
-dag_instance = programacao_financeira_mir_dag()
+programacao_financeira_mir_dag()

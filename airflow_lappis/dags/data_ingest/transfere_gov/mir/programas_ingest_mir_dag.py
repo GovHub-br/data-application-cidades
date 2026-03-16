@@ -52,4 +52,4 @@ def api_programas_ted_dag() -> None:
 
     fetch_and_ingest_programas()
 
-dag_instance = api_programas_ted_dag()
+api_programas_ted_dag()
