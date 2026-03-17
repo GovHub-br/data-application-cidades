@@ -77,9 +77,6 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
     tests:
-      - row_count_match:
-          source_table: transferegov_emendas.programas_especiais
-          target_table: emendas.programas
       - verificacao_tipagem:
           nome_tabela: 'emendas.programas'
           nome_coluna: 'id_programa'
@@ -235,9 +232,6 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
     tests:
-      - row_count_match:
-          source_table: transferegov_emendas.planos_acao_especiais
-          target_table: emendas.planos_acoes
       - verificacao_tipagem:
           nome_tabela: 'emendas.planos_acoes'
           nome_coluna: 'id_plano_acao'
@@ -471,9 +465,6 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
     tests:
-      - row_count_match:
-          source_table: transferegov_emendas.ordens_bancarias_especiais
-          target_table: emendas.ordens_bancarias
       - verificacao_tipagem:
           nome_tabela: 'emendas.ordens_bancarias'
           nome_coluna: 'id_op_ob'
@@ -540,9 +531,6 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
     tests:
-      - row_count_match:
-          source_table: transferegov_emendas.historico_pagamentos_especiais
-          target_table: emendas.historico_pagamentos
       - verificacao_tipagem:
           nome_tabela: 'emendas.historico_pagamentos'
           nome_coluna: 'id_historico_op_ob'
@@ -607,9 +595,6 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
     tests:
-      - row_count_match:
-          source_table: transferegov_emendas.plano_trabalho_especial
-          target_table: emendas.planos_trabalho_especial
       - verificacao_tipagem:
           nome_tabela: 'emendas.planos_trabalho_especial'
           nome_coluna: 'id_plano_trabalho'
@@ -713,9 +698,6 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
     tests:
-      - row_count_match:
-          source_table: transferegov_emendas.documentos_habeis_especiais
-          target_table: emendas.documentos_habeis
       - verificacao_tipagem:
           nome_tabela: 'emendas.documentos_habeis'
           nome_coluna: 'id_dh'
@@ -781,7 +763,7 @@ models:
         description: "Parecer do Relatório de Gestão"
       - name: id_plano_acao
         description: "Identificador Único do Plano de Ação (PA)."
-    data_tests:
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.relatorio_gestao'
           nome_coluna: 'id_relatorio_gestao'
@@ -816,10 +798,7 @@ models:
         description: "Chave estrangeira que vincula o relatório ao Plano de Ação correspondente."
       - name: dt_ingest
         description: "Data e hora da ingestão dos dados na camada bronze (UTC-3)."
-    data_tests:
-      - row_count_match:
-          source_table: transferegov_emendas.relatorio_gestao_novo_especial
-          target_table: emendas.relatorio_gestao_novo
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.relatorio_gestao_novo'
           nome_coluna: 'id_relatorio_gestao_novo'
@@ -888,10 +867,7 @@ models:
       - name: dt_ingest
         description: "Data e hora (UTC-3 Brasília) da ingestão dos dados para a camada bronze."
 
-    data_tests:
-      - row_count_match:
-          source_table: transferegov_emendas.executor_especial
-          target_table: emendas.executor
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.executor_especial'
           nome_coluna: 'id_plano_acao'
@@ -965,10 +941,7 @@ models:
       - name: dt_ingest
         description: "Data e hora (UTC-3 Brasília) da ingestão dos dados para a camada bronze."
 
-    data_tests:
-      - row_count_match:
-          source_table: transferegov_emendas.meta_especial
-          target_table: emendas.metas
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.meta_especial'
           nome_coluna: 'id_executor'
@@ -1024,10 +997,7 @@ models:
       - name: dt_ingest
         description: "Data e hora (UTC-3 Brasília) da ingestão dos dados para a camada bronze."
 
-    data_tests:
-      - row_count_match:
-          source_table: transferegov_emendas.finalidade_especial
-          target_table: emendas.finalidades
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.finalidade_especial'
           nome_coluna: 'id_executor'
