@@ -50,7 +50,7 @@ models:
       - name: dt_ingest
         description: >
           Data e hora (UTC-3 Brasília) em que os dados foram ingeridos da fonte original para a camada raw.
-    data_tests: 
+    tests: 
     - verificacao_tipagem:
         nome_tabela: 'deputados.deputados'
         nome_coluna: 'id'
