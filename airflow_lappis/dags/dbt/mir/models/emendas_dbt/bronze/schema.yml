@@ -763,7 +763,7 @@ models:
         description: "Parecer do Relatório de Gestão"
       - name: id_plano_acao
         description: "Identificador Único do Plano de Ação (PA)."
-    data_tests:
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.relatorio_gestao'
           nome_coluna: 'id_relatorio_gestao'
@@ -798,7 +798,7 @@ models:
         description: "Chave estrangeira que vincula o relatório ao Plano de Ação correspondente."
       - name: dt_ingest
         description: "Data e hora da ingestão dos dados na camada bronze (UTC-3)."
-    data_tests:
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.relatorio_gestao_novo'
           nome_coluna: 'id_relatorio_gestao_novo'
@@ -867,7 +867,7 @@ models:
       - name: dt_ingest
         description: "Data e hora (UTC-3 Brasília) da ingestão dos dados para a camada bronze."
 
-    data_tests:
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.executor_especial'
           nome_coluna: 'id_plano_acao'
@@ -941,7 +941,7 @@ models:
       - name: dt_ingest
         description: "Data e hora (UTC-3 Brasília) da ingestão dos dados para a camada bronze."
 
-    data_tests:
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.meta_especial'
           nome_coluna: 'id_executor'
@@ -997,7 +997,7 @@ models:
       - name: dt_ingest
         description: "Data e hora (UTC-3 Brasília) da ingestão dos dados para a camada bronze."
 
-    data_tests:
+    tests:
       - verificacao_tipagem:
           nome_tabela: 'emendas.finalidade_especial'
           nome_coluna: 'id_executor'
