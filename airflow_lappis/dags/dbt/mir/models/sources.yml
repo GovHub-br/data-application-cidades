@@ -26,3 +26,8 @@ sources:
     schema: senado_federal
     tables:
       - name: senadores
+
+  - name: siafi
+    schema: siafi
+    tables:
+        - name: empenhos_tesouro_parlamentares

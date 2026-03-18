@@ -30,6 +30,9 @@ models:
     senadores_dbt:
      +materialized: table
      +schema: senadores
+    empenhos_ted_dbt:
+     +materialized: table
+     +schema: siafi_dbt
 
 
 on-run-start:
