@@ -29,7 +29,7 @@ def senadores_ingest_dag() -> None:
         postgres_conn_str = get_postgres_conn("postgres_mir")
         db = ClientPostgresDB(postgres_conn_str)
 
-        senadores_data = api.get_senadores_atuais()
+        senadores_data = api.get_senadores_por_legislatura()
 
         if senadores_data and len(senadores_data) > 0:
             registros_limpos = []
