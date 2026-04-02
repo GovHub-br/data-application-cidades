@@ -67,7 +67,8 @@ def fetch_email_with_zip(
     today = datetime.now(pytz.timezone("America/Sao_Paulo")).date()
     zip_payloads: List[bytes] = []
     with MailBox(imap_server).login(email, password) as mailbox:
-        for msg in mailbox.fetch(AND(date=today, from_=sender_email, subject=subject)):
+        # bulk=True: single IMAP FETCH command for all messages (avoids overquota)
+        for msg in mailbox.fetch(AND(date=today, from_=sender_email, subject=subject), bulk=True):
             for attachment in msg.attachments:
                 if attachment.filename.lower().endswith(".zip"):
                     zip_payloads.append(cast(bytes, attachment.payload))
