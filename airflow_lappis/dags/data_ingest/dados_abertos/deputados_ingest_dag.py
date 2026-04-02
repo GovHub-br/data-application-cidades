@@ -32,8 +32,16 @@ def deputados_ingest_dag() -> None:
         deputados_data = api.get_all_deputados()
 
         if deputados_data and len(deputados_data) > 0:
+            vistos= set()
+            lista_limpa = []
+
             for item in deputados_data:
-                item["dt_ingest"] = datetime.now().isoformat()
+                if item["id"] not in vistos:
+                    item["dt_ingest"] = datetime.now().isoformat()
+                    lista_limpa.append(item)
+                    vistos.add(item["id"])
+            
+            deputados_data = lista_limpa
 
             logging.info(
                 f"[deputados_ingest_dag.py] Inserindo "
