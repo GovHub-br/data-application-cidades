@@ -57,10 +57,9 @@ EMAIL_SUBJECT = "notas_credito_enviadas_devolvidas_a_partir_2026"
 SKIPROWS = 3
 
 with DAG(
-    dag_id="email_notas_credito_ingest_2026",
+    dag_id="email_notas_credito_ingest_mir_pos_2026",
     default_args=default_args,
-    description="Processa notas de crédito vindas do email sem filtro de data",
-    schedule_interval=get_dynamic_schedule("notas_credito_email_ingest_dag_2026"),
+    schedule_interval=get_dynamic_schedule("email_notas_credito_ingest_mir_post_2026"),
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["MIR", "email", "notas_credito"],
@@ -120,7 +119,7 @@ with DAG(
 
             db.insert_data(
                 data,
-                "empenhos_tesouro_notas_credito",
+                "nc_tesouro_pos__2026",
                 conflict_fields=unique_key,
                 primary_key=unique_key,
                 schema="siafi",

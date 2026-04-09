@@ -25,7 +25,7 @@ COLUMN_MAPPING = {
     2: "acao_governo",
     3: "acao_governo_descricao",
     4: "nc",
-    5: "nc_transferencia",
+    5: "nc_transferencia", 
     6: "nc_fonte_recursos",
     7: "nc_fonte_recursos_descricao",
     8: "ptres",
@@ -51,23 +51,22 @@ EMAIL_CONFIGS = {
     "enviadas": {
         "subject": "notas_credito_enviadas_devolvidas_ate_2025",
         "column_mapping": COLUMN_MAPPING,
-        "skiprows": 6,
+        "skiprows": 3,
     },
     "recebidas": {
-        "subject": " recebidas ",
+        "subject": "notas_credito_recebidas_ate_2025",
         "column_mapping": None,
-        "skiprows": 9,
+        "skiprows": 6,
     },
 }
 expected_columns = list(COLUMN_MAPPING.values())
 with DAG(
-    dag_id="email_notas_credito_ingest_blablabla",
+    dag_id="email_notas_credito_ingest_mir_ate_2025",
     default_args=default_args,
-    description="Processa anexos das NCs vindo de dois emails, formata e insere no db",
-    schedule_interval=get_dynamic_schedule("nc_tesouro_ingest_dag_blablabla"),
+    schedule_interval=get_dynamic_schedule("email_notas_credito_ingest_mir_ate_2025"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
-    tags=["email", "ncs", "tesouro", "MIR"],
+    tags=["MIR", "SIAFI", "notas_credito"],
 ) as dag:
 
     def process_email_data(email_type: str, **context: Dict[str, Any]) -> pd.DataFrame:
@@ -176,7 +175,7 @@ with DAG(
             postgres_conn_str = get_postgres_conn('postgres_mir')
             db = ClientPostgresDB(postgres_conn_str)
 
-            db.insert_data(data, "nc_tesouro", schema="siafi")
+            db.insert_data(data, "nc_tesouro_pre_2026", schema="siafi")
             logging.info("Dados inseridos com sucesso no banco de dados.")
         except Exception as e:
             logging.error("Erro ao inserir dados no banco: %s", str(e))
@@ -189,7 +188,7 @@ with DAG(
         try:
             postgres_conn_str = get_postgres_conn('postgres_mir')
             db = ClientPostgresDB(postgres_conn_str)
-            db.remove_duplicates("nc_tesouro", COLUMN_MAPPING, schema="siafi")
+            db.remove_duplicates("nc_tesouro_pre_2026", COLUMN_MAPPING, schema="siafi")
 
         except Exception as e:
             logging.error(f"Erro ao executar a limpeza de duplicados: {str(e)}")
