@@ -60,6 +60,9 @@ UNIQUE_KEY = [
 
 EMAIL_SUBJECT = "notas_de_empenho_ano_atual"
 SKIPROWS = 8
+TABLE_NAME = "empenhos_tesouro_parlamentares"
+SCHEMA_NAME = "siafi"
+OPTIONAL_COLUMNS = ["restos_a_pagar_inscritos", "restos_a_pagar_pagos"]
 
 # Configurações da DAG
 with DAG(
@@ -86,18 +89,41 @@ with DAG(
     def _get_db_client() -> ClientPostgresDB:
         return ClientPostgresDB(get_postgres_conn("postgres_mir"))
 
+    def _table_exists(db: ClientPostgresDB) -> bool:
+        result = db.execute_query(
+            f"SELECT to_regclass('{SCHEMA_NAME}.{TABLE_NAME}') IS NOT NULL;"
+        )
+        return bool(result and result[0][0])
+
+    def _normalize_optional_columns(df):
+        for column in OPTIONAL_COLUMNS:
+            if column not in df.columns:
+                df[column] = None
+        return df
+
+    def _ensure_optional_columns_in_table(db: ClientPostgresDB) -> None:
+        db.alter_table(
+            {column: None for column in OPTIONAL_COLUMNS},
+            TABLE_NAME,
+            schema=SCHEMA_NAME,
+        )
+
     def _insert_dataframe(df, db: ClientPostgresDB) -> int:
+        df = _normalize_optional_columns(df)
         df = df[df["ne_ccor_ano_emissao"].astype(str).str.startswith("20")]
         records = df.to_dict(orient="records")
         for r in records:
             r["dt_ingest"] = datetime.now().isoformat()
 
+        if _table_exists(db):
+            _ensure_optional_columns_in_table(db)
+
         db.insert_data(
             records,
-            "empenhos_tesouro_parlamentares",
+            TABLE_NAME,
             conflict_fields=UNIQUE_KEY,
             primary_key=UNIQUE_KEY,
-            schema="siafi",
+            schema=SCHEMA_NAME,
         )
         return len(records)
 
