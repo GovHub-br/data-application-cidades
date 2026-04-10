@@ -30,7 +30,7 @@ sources:
   - name: siafi
     schema: siafi
     tables:
-        - name: empenhos_tesouro_parlamentares
-        - name: empenhos_tesouro_emendas_parlamentares
+        - name: ne_tesouro
+        - name: ne_tesouro_emendas
         - name: nc_tesouro_pos__2026
         - name: nc_tesouro_pre_2026
