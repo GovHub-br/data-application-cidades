@@ -100,3 +100,116 @@ models:
           nome_tabela: 'mir.empenhos_tesouro_parlamentares'
           nome_coluna: 'restos_a_pagar_inscritos'
           tipo_esperado: 'numeric'
+
+  - name: nc_tesouro_mir
+    description: >
+      Modelo da camada bronze que consolida os dados brutos de Notas de Crédito do Tesouro Gerencial (SIAFI), 
+      abrangendo os períodos anteriores e posteriores a 2026. 
+      Realiza a unificação (UNION ALL) das bases históricas e atuais, preenchendo com valores nulos 
+      (ou zero para campos financeiros) as colunas inexistentes em cada tabela original para garantir a integridade do schema. 
+      O processamento inclui:
+        - Casting de tipos para texto e numérico;
+        - Limpeza de caracteres especiais em números de processo via Regex;
+        - Padronização de nomes de favorecidos para caixa alta;
+        - Conversão de valores financeiros para **numeric(15,2)** via macro;
+        - Filtro de segurança para processar apenas anos de emissão válidos (4 dígitos).
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: nc
+        description: "Número identificador da Nota de Crédito (NC)."
+      - name: ptres
+        description: "Programa de Trabalho Resumido (PTRES)."
+      - name: nc_transferencia
+        description: "Informações sobre transferência da Nota de Crédito."
+      - name: ugr_codigo
+        description: "Código da Unidade Gestora Responsável."
+      - name: ugr_nome
+        description: "Nome da Unidade Gestora Responsável."
+      - name: fonte_codigo
+        description: "Código da fonte de recursos."
+      - name: fonte_nome
+        description: "Descrição da fonte de recursos."
+      - name: pi_codigo
+        description: "Código do Plano Interno."
+      - name: pi_nome
+        description: "Descrição do Plano Interno."
+      - name: favorecido_codigo
+        description: "Identificador (CPF/CNPJ) do favorecido."
+      - name: favorecido_nome
+        description: "Nome ou razão social do favorecido."
+      - name: valor_celula
+        description: "Valor financeiro consolidado da transação."
+      - name: dt_ingest
+        description: "Timestamp da ingestão dos dados (UTC-3)."
+      - name: programa_governo
+        description: "Código identificador do programa de governo."
+      - name: programa_governo_descricao
+        description: "Descrição detalhada do programa de governo."
+      - name: acao_governo
+        description: "Código da ação orçamentária."
+      - name: acao_governo_descricao
+        description: "Descrição da ação orçamentária."
+      - name: nc_evento
+        description: "Código do evento contábil."
+      - name: nc_evento_descricao
+        description: "Descrição do evento contábil."
+      - name: nc_natureza_despesa
+        description: "Código da natureza de despesa."
+      - name: nc_natureza_despesa_descricao
+        description: "Descrição da natureza de despesa."
+      - name: nc_plano_interno_descricao2
+        description: "Segunda descrição detalhada do Plano Interno."
+      - name: favorecido_municipio
+        description: "Código do município do favorecido."
+      - name: favorecido_municipio_descricao
+        description: "Nome do município do favorecido."
+      - name: movimento_liquido_moeda_origem
+        description: "Valor do movimento líquido na moeda de origem."
+      - name: emissao_dia
+        description: "Dia da emissão da nota de crédito."
+      - name: emissao_mes
+        description: "Mês de emissão da nota de crédito."
+      - name: emissao_ano
+        description: "Ano de emissão da nota de crédito."
+      - name: dc
+        description: "Indicador de Débito ou Crédito (D/C)."
+      - name: emitente_codigo
+        description: "Código da Unidade Gestora emitente."
+      - name: emitente_nome
+        description: "Nome da Unidade Gestora emitente."
+      - name: gnd_codigo
+        description: "Código do Grupo de Natureza de Despesa."
+      - name: gnd_nome
+        description: "Nome do Grupo de Natureza de Despesa."
+      - name: descricao
+        description: "Descrição geral do documento."
+      - name: tipo_nc
+        description: "Classificação do tipo de Nota de Crédito."
+      - name: nc_item_detalhamento
+        description: "Detalhamento dos itens contidos na NC."
+      - name: ro
+        description: "Registro de Operação associado."
+      - name: item_total
+        description: "Valor total do item."
+      - name: total_lista
+        description: "Valor total da lista de itens."
+      - name: esfera_orcamentaria_codigo
+        description: "Código da esfera orçamentária."
+      - name: esfera_orcamentaria_nome
+        description: "Nome da esfera orçamentária."
+
+    tests:
+      - verificacao_tipagem:
+          nome_tabela: 'siafi.nc_tesouro_mir'
+          nome_coluna: 'ne_ccor_ano_emissao'
+          tipo_esperado: 'integer'
+      - verificacao_tipagem:
+          nome_tabela: 'siafi.nc_tesouro_mir'
+          nome_coluna: 'despesas_empenhadas'
+          tipo_esperado: 'numeric'
+      - verificacao_tipagem:
+          nome_tabela: 'siafi.nc_tesouro_mir'
+          nome_coluna: 'despesas_pagas'
+          tipo_esperado: 'numeric'
