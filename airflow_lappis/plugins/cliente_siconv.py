@@ -17,7 +17,7 @@ class ClienteSiconv:
                 f.write(chunk)
         logging.info("[cliente_siconv.py] Download concluído")
 
-    def ler_csv(self, nome_csv: str, skip_rows: int = 0) -> list[dict]:
+    def ler_csv(self, nome_csv: str, skip_rows: int = 0, colunas_esperadas: list = None) -> list[dict]:
         logging.info(f"[cliente_siconv.py] Lendo {nome_csv}...")
         registros = []
 
@@ -25,6 +25,13 @@ class ClienteSiconv:
             with z.open(nome_csv) as f:
                 conteudo = io.TextIOWrapper(f, encoding="utf-8")
                 reader = csv.DictReader(conteudo, delimiter=";")
+
+                if colunas_esperadas:
+                    colunas_csv = reader.fieldnames
+                    faltando = [c for c in colunas_esperadas if c not in colunas_csv]
+                    if faltando:
+                        raise ValueError(f"[cliente_siconv.py] Colunas faltando em {nome_csv}: {faltando}")
+                    logging.info(f"[cliente_siconv.py] Validação de colunas OK para {nome_csv}")
 
                 for i, row in enumerate(reader):
                     if i < skip_rows:

@@ -1,7 +1,4 @@
-import os
 import logging
-import requests
-import zipfile
 from datetime import datetime, timedelta
 from airflow.decorators import dag, task
 from postgres_helpers import get_postgres_conn
@@ -30,13 +27,13 @@ def siconv_ingestao_dag() -> None:
         return cliente.ZIP_PATH
 
     @task
-    def ingerir_tabela(zip_path: str, nome_tabela: str, nome_csv: str, conflict_fields: list, primary_key: list, skip_rows: int) -> None:
+    def ingerir_tabela(zip_path: str, nome_tabela: str, nome_csv: str, conflict_fields: list, primary_key: list, skip_rows: int, colunas: list) -> None:
         logging.info(f"[siconv_ingest_dag.py] Iniciando ingestão da tabela {nome_tabela}")
         postgres_conn_str = get_postgres_conn("postgres_mir")
         db = ClientPostgresDB(postgres_conn_str)
 
         cliente = ClienteSiconv()
-        registros = cliente.ler_csv(nome_csv, skip_rows)
+        registros = cliente.ler_csv(nome_csv, skip_rows, colunas_esperadas=colunas)
 
         if not registros:
             logging.warning(f"[siconv_ingest_dag.py] Nenhum registro encontrado em {nome_csv}")
@@ -61,6 +58,7 @@ def siconv_ingestao_dag() -> None:
             conflict_fields=tabela["conflict_fields"],
             primary_key=tabela["primary_key"],
             skip_rows=tabela["skip_rows"],
+            colunas=tabela["colunas"],
         )
 
 
