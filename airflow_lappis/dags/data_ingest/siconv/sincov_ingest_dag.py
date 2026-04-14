@@ -7,7 +7,7 @@ from cliente_siconv import ClienteSiconv
 from tabelas_siconv import TABELAS_SICONV
 
 @dag(
-    schedule_interval="@daily",
+    schedule_interval= None,
     start_date=datetime(2024, 1, 1),
     catchup=False,
     default_args={
@@ -15,7 +15,7 @@ from tabelas_siconv import TABELAS_SICONV
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["siconv", "data_ingest"],
+    tags=["siconv", "MIR"],
 )
 def siconv_ingestao_dag() -> None:
 
@@ -78,6 +78,15 @@ def siconv_ingestao_dag() -> None:
             logging.warning(f"[siconv_ingest_dag.py] Nenhum registro processado para {nome_tabela}")
         else:
             logging.info(f"[siconv_ingest_dag.py] Ingestão finalizada: {total_inserido} registros em {nome_tabela}")
+    
+    @task
+    def deletar_zip(zip_path: str) -> None:
+        import os
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
+            logging.info(f"[siconv_ingest_dag.py] Arquivo {zip_path} deletado com sucesso")
+        else:
+            logging.warning(f"[siconv_ingest_dag.py] Arquivo {zip_path} não encontrado para deletar")
 
     path_zip = baixar_siconv()
 
@@ -97,5 +106,6 @@ def siconv_ingestao_dag() -> None:
 
         ultima_task >> task_atual
         ultima_task = task_atual
+    ultima_task >> deletar_zip(path_zip)
 
 siconv_ingestao_dag()
