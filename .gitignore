@@ -53,3 +53,5 @@ Thumbs.db
 /connect.sh
 *.ovpn
 *.p12
+
+config.toml

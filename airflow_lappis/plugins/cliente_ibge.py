@@ -27,8 +27,8 @@ class ClienteIBGE(ClienteBase):
         periodos: str = "-20",
         nivel: str = "N1",
         localidade: str = "1",
-        classificacao_id: Optional[int] = None,
-        categoria: Optional[int] = None,
+        classificacao_id: int | str | None = None,
+        categoria: int | str | None = None,
     ) -> list | None:
         """Busca dados de um agregado da API IBGE.
 
