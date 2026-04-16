@@ -3,8 +3,9 @@ from airflow.decorators import dag, task
 from datetime import datetime, timedelta
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
-from cliente_fgv import ClienteFGV
+from cliente_fgv import ClienteSinduscon
 from cliente_postgres import ClientPostgresDB
+
 
 @dag(
     schedule_interval=get_dynamic_schedule("incc_m_ingest_dag"),
@@ -26,6 +27,7 @@ def incc_m_ingest_dag() -> None:
         Cria o schema da FGV antes do processamento.
         """
         import psycopg2
+
         postgres_conn_str = get_postgres_conn()
         schema = "fgv"
 
@@ -43,7 +45,7 @@ def incc_m_ingest_dag() -> None:
         """
         logging.info("Iniciando processamento do INCC-M")
 
-        api = ClienteFGV()
+        api = ClienteSinduscon()
         postgres_conn_str = get_postgres_conn()
         db = ClientPostgresDB(postgres_conn_str)
         tabela = "incc_m"
@@ -64,12 +66,10 @@ def incc_m_ingest_dag() -> None:
         else:
             logging.warning("Nenhum registro extraído para INCC-M da FGV.")
 
-
     setup = setup_schema()
     ingest_incc = fetch_and_store_incc()
 
     setup >> ingest_incc
 
-    
-dag_instance = incc_m_ingest_dag()
 
+dag_instance = incc_m_ingest_dag()
