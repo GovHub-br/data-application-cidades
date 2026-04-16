@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 import re
 from typing import List, Dict, Any, Optional
 from cliente_base import ClienteBase
@@ -20,13 +20,15 @@ class ClienteSnhis(ClienteBase):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "Accept": "*/*"
             }
-        # Garante que a base_url termina sem barra para evitar barras duplas nos endpoints
+
         super().__init__(base_url="https://www.gov.br", headers=headers)
 
     def get_regularidade_entes(self) -> List[Dict[str, Any]]:
         """
         Baixa o arquivo .xls de regularidade e converte para lista de dicts.
         """
+
+        # Deixar dinamico e pegar o ultimo
         endpoint = "/cidades/pt-br/acesso-a-informacao/acoes-e-programas/habitacao/programa-minha-casa-minha-vida/minha-casa-minha-vida-fnhis-sub-50-1/arquivos-fnhis-sub-50/dados_abertos_SNHIS_REGULARIDADE_ENTES_09022026.xls"
         
         logging.info("[ClienteSnhis] Baixando arquivo de regularidade SNHIS...")
@@ -61,7 +63,6 @@ class ClienteSnhis(ClienteBase):
         matches = re.findall(pattern, response.text)
         
         if not matches:
-            # Fallback mais genérico
             matches = re.findall(r'https?://[^\s"<>]+FGTS_ANALITICO[^\s"<>]*\.rar', response.text)
             
         if not matches:
@@ -90,28 +91,30 @@ class ClienteSnhis(ClienteBase):
         file_size = os.path.getsize(rar_path)
         logging.info(f"[ClienteSnhis] Download concluído. Tamanho: {file_size} bytes")
 
-        if file_size < 5000: # RARs reais raramente são menores que 5KB
-            with open(rar_path, 'r', encoding='latin-1', errors='ignore') as f:
-                content_peek = f.read(200)
-                logging.error(f"[ClienteSnhis] Conteúdo suspeito no arquivo: {content_peek}")
-            raise ValueError("O arquivo baixado é inválido (possível erro 404 ou HTML salvo como RAR).")
-
-        # 3. Extração com 7z
+        # 3. Extração com utilitários de sistema
         logging.info(f"[ClienteSnhis] Extraindo {rar_path} para {target_dir}...")
-        try:
-            # Usar "7z" genérico e capturar erro detalhado
-            result = subprocess.run(
-                ["7z", "x", rar_path, f"-o{target_dir}", "-y"],
-                check=True,
-                capture_output=True,
-                text=True
-            )
-            logging.info("[ClienteSnhis] Extração concluída com sucesso.")
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Erro no 7z: {e.stderr}")
-            raise RuntimeError(f"Falha na extração do RAR: {e.stderr}")
-        except FileNotFoundError:
-            raise RuntimeError("O executável '7z' (7-Zip) não foi encontrado no PATH do sistema.")
+        
+        extracted = False
+        errors = []
+
+
+        # Tentar com bsdtar (incluso no libarchive, que frequentemente lida com rar de boa)
+        if not extracted:
+            try:
+                subprocess.run(
+                    ["bsdtar", "-xf", rar_path, "-C", target_dir],
+                    check=True, capture_output=True, text=True
+                )
+                logging.info("[ClienteSnhis] Extração concluída com sucesso via bsdtar.")
+                extracted = True
+            except subprocess.CalledProcessError as e:
+                errors.append(f"bsdtar erro: {e.stderr}")
+            except Exception as e:
+                errors.append(f"bsdtar erro: {e}")
+
+        if not extracted:
+            logging.error(f"Todas as tentativas de extração falharam. Erros: {errors}")
+            raise RuntimeError(f"Falha na extração do RAR. Verifique se unrar ou um 7z compatível com RAR5 está instalado. Erros: {errors}")
 
         # 4. Localiza o arquivo extraído
         for file in os.listdir(target_dir):

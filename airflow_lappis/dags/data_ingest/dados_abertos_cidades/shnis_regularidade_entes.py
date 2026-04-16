@@ -24,7 +24,7 @@ DEFAULT_ARGS = {
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=DEFAULT_ARGS,
-    tags=["cidades", "dados_abertos_snhis_regularidade_entes", "dados.gov.br"], # Vou padronizar: Ministério, tabela do dump, fonte do dado
+    tags=["cidades", "dados_abertos_snhis_regularidade_entes", "dados.gov.br","FAR"], # Vou padronizar: Ministério, tabela do dump, fonte do dado
 )
 def snhis_dag():
     

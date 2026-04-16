@@ -5,7 +5,6 @@ from airflow.decorators import dag, task
 from postgres_helpers import get_postgres_conn
 from cliente_postgres import ClientPostgresDB
 from cliente_dados_gov_cidades import ClienteDadosGovCidades
-from airflow.decorators import dag, task
 
 DEFAULT_ARGS = {
     "owner": "Milena Rocha",
@@ -19,7 +18,7 @@ DEFAULT_ARGS = {
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=DEFAULT_ARGS,
-    tags=["cidades", "dados_abertos_pbqp_h_siac", "dados.gov.br"], # Vou padronizar: Ministério, tabela do dump, fonte do dado
+    tags=["cidades", "dados_abertos_pbqp_h_siac", "dados.gov.br", "FAR"], # Vou padronizar: Ministério, tabela do dump, fonte do dado
 )
 def siac_dag():
     

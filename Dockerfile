@@ -10,6 +10,8 @@ RUN apt-get update \
          libpq-dev \
          vim \
          unzip \
+         p7zip-full \
+         libarchive-tools \
          git \
          curl \
   && sed -i 's,^\(MinProtocol[ ]*=\).*,\1'TLSv1.0',g' /etc/ssl/openssl.cnf \

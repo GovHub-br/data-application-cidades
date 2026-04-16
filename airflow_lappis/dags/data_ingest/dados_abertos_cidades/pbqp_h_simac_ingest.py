@@ -18,7 +18,7 @@ DEFAULT_ARGS = {
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=DEFAULT_ARGS,
-    tags=["cidades", "dados_abertos_pbqp_h_simac", "dados.gov.br"], # Vou padronizar: Ministério, tabela do dump, fonte do dado
+    tags=["cidades", "dados_abertos_pbqp_h_simac", "dados.gov.br", "FAR"], # Vou padronizar: Ministério, tabela do dump, fonte do dado
 )
 def simac_dag():
     
@@ -27,9 +27,9 @@ def simac_dag():
         api = ClienteDadosGovCidades()
         db = ClientPostgresDB(get_postgres_conn())
         
-        # Busca dado
+ 
         raw = api.get_empresas_qualificadas_simac()
-        # Usa o helper comum
+
         data = process_and_clean_data(raw)
         db.insert_data(
         data,
