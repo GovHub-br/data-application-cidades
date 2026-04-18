@@ -102,18 +102,42 @@ class ClienteIBGE(ClienteBase):
             unidade = variavel["unidade"]
 
             for resultado in variavel["resultados"]:
+                class_ids = []
+                class_nomes = []
+                cat_ids = []
+                cat_nomes = []
+                
+                for c in resultado.get("classificacoes", []):
+                    class_ids.append(c["id"])
+                    class_nomes.append(c["nome"])
+                    cat_dict = c.get("categoria", {})
+                    for k, v in cat_dict.items():
+                        cat_ids.append(k)
+                        cat_nomes.append(v)
+                        
+                classificacao_id = "|".join(class_ids) if class_ids else "0"
+                classificacao_nome = " | ".join(class_nomes) if class_nomes else ""
+                categoria_id = "|".join(cat_ids) if cat_ids else "0"
+                categoria_nome = " | ".join(cat_nomes) if cat_nomes else ""
+
                 for serie in resultado["series"]:
-                    localidade = serie["localidade"]["nome"]
+                    localidade_id = serie["localidade"]["id"]
+                    localidade_nome = serie["localidade"]["nome"]
 
                     for periodo, valor in serie["serie"].items():
                         registros.append(
                             {
                                 "variavel_id": str(variavel_id),
                                 "variavel_nome": variavel_nome,
+                                "localidade_id": str(localidade_id),
+                                "localidade_nome": localidade_nome,
+                                "classificacao_id": classificacao_id,
+                                "classificacao_nome": classificacao_nome,
+                                "categoria_id": categoria_id,
+                                "categoria_nome": categoria_nome,
                                 "unidade": unidade,
-                                "periodo": periodo,
+                                "periodo": str(periodo),
                                 "valor": valor if valor and valor != "..." else None,
-                                "localidade": localidade,
                                 "dt_ingest": datetime.now().isoformat(),
                             }
                         )
