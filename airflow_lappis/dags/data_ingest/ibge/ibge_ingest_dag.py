@@ -6,6 +6,7 @@ from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_ibge import ClienteIBGE
 from cliente_postgres import ClientPostgresDB
+import psycopg2
 
 CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default_var=[])
 
@@ -32,16 +33,18 @@ def ibge_ingest_dag() -> None:
     def setup_schema() -> None:
         """
         Cria o schema do IBGE antes do processamento paralelo.
-        Evita race condition quando múltiplas tasks tentam criar o mesmo schema simultaneamente.
+        Tratando o UniqueViolation em alta concorrência do Airflow.
         """
-        import psycopg2
         postgres_conn_str = get_postgres_conn()
         schema = "ibge"
-        with psycopg2.connect(postgres_conn_str) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema};")
-            conn.commit()
-        logging.info(f"Schema '{schema}' garantido com sucesso.")
+        try:
+            with psycopg2.connect(postgres_conn_str) as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema};")
+                conn.commit()
+            logging.info(f"Schema '{schema}' garantido com sucesso.")
+        except psycopg2.errors.UniqueViolation:
+            logging.warning(f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado).")
 
     @task
     def fetch_and_store_mapped(config: dict) -> None:
@@ -79,8 +82,8 @@ def ibge_ingest_dag() -> None:
             db.insert_data(
                 registros,
                 tabela,
-                conflict_fields=["variavel_id", "periodo"],
-                primary_key=["variavel_id", "periodo"],
+                conflict_fields=["variavel_id", "localidade_id", "periodo", "classificacao_id", "categoria_id"],
+                primary_key=["variavel_id", "localidade_id", "periodo", "classificacao_id", "categoria_id"],
                 schema="ibge",
             )
             logging.info(f"Ingestão de {tabela} concluída")

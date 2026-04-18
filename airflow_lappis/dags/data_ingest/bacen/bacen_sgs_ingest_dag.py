@@ -7,11 +7,7 @@ from postgres_helpers import get_postgres_conn
 from cliente_bacen import ClienteBacen
 from cliente_postgres import ClientPostgresDB
 
-# Lê o JSON {tipo: codigo_sgs} do Airflow Variable e monta a lista de configs.
-# O prefixo AIRFLOW_VAR_ no .env registra a variável automaticamente no Airflow.
-# Exemplo: {"pf_concessoes_rs_mi": 20704, "pf_taxa_juros_aa": 20774, ...}
-BACEN_SERIES = Variable.get("BACEN_SERIES", deserialize_json=True, default_var={})
-CONFIGURACOES = [{"tipo": k, "codigo": v} for k, v in BACEN_SERIES.items()]
+
 
 
 @dag(
@@ -44,6 +40,13 @@ def bacen_sgs_ingest_dag() -> None:
         api = ClienteBacen()
         postgres_conn_str = get_postgres_conn()
         db = ClientPostgresDB(postgres_conn_str)
+
+        # Lê o JSON do Airflow Variable e monta a lista de configs.
+        # Deslocado para dentro da task para evitar parse frequente pelo Top-Level do Scheduler.
+        BACEN_SERIES_RAW = Variable.get("BACEN_SERIES", deserialize_json=True, default_var={})
+        if isinstance(BACEN_SERIES_RAW, list):
+            BACEN_SERIES_RAW = BACEN_SERIES_RAW[0] if len(BACEN_SERIES_RAW) > 0 else {}
+        CONFIGURACOES = [{"tipo": k, "codigo": v} for k, v in BACEN_SERIES_RAW.items()]
 
         for config in CONFIGURACOES:
             tipo = config["tipo"]
