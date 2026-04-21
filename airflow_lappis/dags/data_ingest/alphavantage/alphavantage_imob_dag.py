@@ -14,12 +14,12 @@ DEFAULT_ARGS = {
 }
 
 @dag(
-    dag_id="ingestao_alphavantage_imob",
+    dag_id="alphavantage_imob",
     schedule_interval="@daily",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=DEFAULT_ARGS,
-    tags=["infomoney", "alphavantage", "mercado_financeiro"],
+    tags=["cidades","infomoney", "imob", "cotações","conjuntura"],
 )
 def alphavantage_imob_dag() -> None:
     """

@@ -8,11 +8,11 @@ from cliente_postgres import ClientPostgresDB
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("pnad_continua_rendimento_mensal"),
+    schedule_interval=get_dynamic_schedule("pnad_continua_trimestral"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
-        "owner": "airflow",
+        "owner": "Milena Rocha",
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
@@ -21,14 +21,14 @@ from cliente_postgres import ClientPostgresDB
 def pnad_continua_rendimento_mensal() -> None:
     """DAG para buscar e armazenar o rendimento médio mensal real (PNAD Contínua - IBGE)."""
 
-    @task
-    def fetch_and_store_rendimento() -> None:
-        logging.info("[pnad_continua_rendimento_mensal.py] Iniciando extração do rendimento médio mensal (IBGE)")
+    def _fetch_and_store(api_method_name: str, target_table: str, desc: str) -> None:
+        logging.info(f"[pnad_continua_rendimento_mensal.py] Iniciando extração: {desc} (IBGE)")
 
         api = ClienteIBGE()
         db = ClientPostgresDB(get_postgres_conn())
 
-        ibge_data = api.get_rendimento_medio_mensal_real_anual_por_trimestre()
+        method = getattr(api, api_method_name)
+        ibge_data = method()
 
         if ibge_data:
             records_by_trimestre = {}
@@ -70,12 +70,12 @@ def pnad_continua_rendimento_mensal() -> None:
 
             logging.info(
                 f"[pnad_continua_rendimento_mensal.py] Inserindo "
-                f"{len(final_data)} registros no schema dados_ibge"
+                f"{len(final_data)} registros no schema dados_ibge na tabela {target_table}"
             )
 
             db.insert_data(
                 final_data,
-                "pnad_continua_rendimento_mensal",
+                target_table,
                 conflict_fields=["trimestre"],
                 primary_key=["trimestre"],
                 schema="dados_ibge",
@@ -83,12 +83,30 @@ def pnad_continua_rendimento_mensal() -> None:
 
             logging.info(
                 f"[pnad_continua_rendimento_mensal.py] Concluído. "
-                f"Total de {len(final_data)} registros processados."
+                f"Total de {len(final_data)} registros processados para {desc}."
             )
         else:
-            logging.warning("[pnad_continua_rendimento_mensal.py] Nenhum dado de rendimento encontrado")
+            logging.warning(f"[pnad_continua_rendimento_mensal.py] Nenhum dado encontrado para {desc}")
+
+    @task
+    def fetch_and_store_rendimento() -> None:
+        _fetch_and_store(
+            api_method_name="get_rendimento_medio_mensal_real_anual_por_trimestre",
+            target_table="pnad_continua_rendimento_mensal",
+            desc="rendimento médio mensal real"
+        )
+
+    @task
+    def fetch_and_store_ocupacao_por_atividade_de_trabalho_trimestral() -> None:
+        _fetch_and_store(
+            api_method_name="get_ocupacao_por_atividade_de_trabalho_trimestral",
+            target_table="pnad_continua_ocupacao",
+            desc="ocupação por atividade de trabalho trimestral"
+        )
+
 
     fetch_and_store_rendimento()
+    fetch_and_store_ocupacao_por_atividade_de_trabalho_trimestral()
 
 
 pnad_continua_rendimento_mensal()

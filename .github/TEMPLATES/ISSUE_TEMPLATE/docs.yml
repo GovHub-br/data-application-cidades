@@ -1,0 +1,12 @@
+name: Documentation
+description: Melhorias na documentação
+title: "[DOCS] "
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição
+      description: O que precisa ser melhorado?
+    validations:
+      required: true

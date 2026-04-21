@@ -1,0 +1,41 @@
+name: Epic
+description: Planejamento de uma funcionalidade grande
+title: "[EPIC] "
+labels: ["epic"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Qual problema estamos resolvendo?
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objetivo
+      description: O que queremos alcançar?
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Escopo
+      description: O que está dentro e fora dessa entrega?
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Subtarefas
+      description: Liste as tasks relacionadas
+      placeholder: |
+        - [ ] Ingestão (bronze)
+        - [ ] Transformação (silver)
+        - [ ] Métricas (gold)
+        - [ ] Dashboard
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Riscos
+      description: Dependências ou possíveis problemas

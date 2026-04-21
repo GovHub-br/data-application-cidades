@@ -80,7 +80,7 @@ class ClienteSnhis(ClienteBase):
 
         rar_path = os.path.join(target_dir, "fgts_downloaded.rar")
 
-        # 1. Download em stream (apenas uma vez!)
+        # 1. Download em stream 
         with self.client.stream("GET", full_url, timeout=900.0) as r:
             r.raise_for_status()
             with open(rar_path, "wb") as f:

@@ -1,0 +1,34 @@
+name: Task
+description: Tarefa técnica ou operacional
+title: "[TASK] "
+labels: ["task"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição
+      description: O que precisa ser feito?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Por que isso é necessário?
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      description: Como saber que está pronto?
+      placeholder: |
+        - [ ] Implementado
+        - [ ] Testado
+        - [ ] Validado
+
+  - type: input
+    id: parent
+    attributes:
+      label: Issue pai
+      description: Link da EPIC relacionada

@@ -1,0 +1,23 @@
+name: Feature Request
+description: Sugerir nova funcionalidade
+title: "[FEATURE] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: Qual problema isso resolve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solução proposta
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impacto
+      description: Quem será beneficiado?
