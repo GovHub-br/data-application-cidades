@@ -18,12 +18,12 @@ class ClienteSenadores(ClienteBase):
             f"[cliente_senadores.py] Initialized ClienteSenadores em: {ClienteSenadores.BASE_URL}"
         )
 
-    def get_senadores_atuais(self) -> list:
+    def get_senadores_por_legislatura(self) -> list:
         """
-        Obtém a lista de senadores em exercício.
+        Obtém a lista de senadores ativose inativos.
         O Senado geralmente retorna tudo em uma única chamada, sem paginação complexa como a Câmara.
         """
-        endpoint = "/senador/lista/atual"
+        endpoint = "/senador/lista/legislatura/0/100"
         logging.info("[cliente_senadores.py] Fetching senadores atuais")
 
         status, data = self.request(
@@ -31,9 +31,9 @@ class ClienteSenadores(ClienteBase):
         )
 
         if status == http.HTTPStatus.OK and isinstance(data, dict):
-            # A estrutura do JSON do Senado é: ListaParlamentarEmExercicio -> Parlamentares -> Parlamentar
+            # A estrutura do JSON do Senado é: ListaParlamentarLegislatura -> Parlamentares -> Parlamentar
             try:
-                lista_root = data.get("ListaParlamentarEmExercicio", {})
+                lista_root = data.get("ListaParlamentarLegislatura", {})
                 parlamentares = lista_root.get("Parlamentares", {}).get("Parlamentar", [])
 
                 if isinstance(parlamentares, dict):
@@ -51,3 +51,29 @@ class ClienteSenadores(ClienteBase):
         else:
             logging.warning(f"[cliente_senadores.py] Failed with status: {status}")
             return []
+        
+    def get_filiacoes_senador(self, codigo_parlamentar: int) -> list:
+        """
+        Obtém o histórico de filiações partidárias de um senador específico.
+        """
+        endpoint = f"/senador/{codigo_parlamentar}/filiacoes"
+        logging.info(f"[cliente_senadores.py] Fetching filiações para o senador: {codigo_parlamentar}")
+
+        status, data = self.request(
+            http.HTTPMethod.GET, endpoint, headers=self.BASE_HEADER
+        )
+
+        if status == http.HTTPStatus.OK and isinstance(data, dict):
+            try:
+                # Estrutura: FiliacaoPartidaria -> Parlamentar -> Filiacoes -> Filiacao
+                filiacoes_root = data.get("FiliacaoParlamentar", {}).get("Parlamentar", {})
+                filiacoes = filiacoes_root.get("Filiacoes", {}).get("Filiacao", [])
+
+                if isinstance(filiacoes, dict):
+                    filiacoes = [filiacoes]
+
+                return filiacoes
+            except Exception as e:
+                logging.error(f"[cliente_senadores.py] Erro ao parsear filiações: {e}")
+                return []
+        return []
