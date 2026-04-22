@@ -112,89 +112,126 @@ class ClienteFGVDados:
         self.session.mount("https://extra-ibre.fgv.br", LegacySSLAdapter())
         logging.info("[cliente_fgv.py] Initialized ClienteFGVDados")
 
-    def _obter_versoes_outsystems(self) -> dict:  # noqa: C901
+    def _obter_versoes_outsystems(self) -> dict:
         """
-        Extrai dinamicamente as hashes 'moduleVersion' e 'apiVersion'.
-        """
-        logging.info("[cliente_fgv.py] Buscando hashes dinâmicas do OutSystems...")
-        url_base = "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
+        Extrai dinamicamente moduleVersion, apiVersions e
+        URLs dos endpoints de login do OutSystems.
 
-        versoes = {
+        Estratégia:
+        1. moduleVersion vem do endpoint REST
+           /moduleservices/moduleversioninfo
+        2. apiVersions e URLs vêm do JS lazy-loaded
+           BL01_Login.mvc.js, onde o OutSystems registra
+           chamadas no formato:
+           callDataAction("...", "screenservices/...", "HASH", ...)
+        """
+        logging.info(
+            "[cliente_fgv.py] Buscando hashes"
+            " dinâmicas do OutSystems..."
+        )
+        url_base = (
+            "https://autenticacao-ibre.fgv.br"
+            "/ProdutosDigitais/"
+        )
+
+        # Fallbacks caso algo falhe
+        resultado = {
             "moduleVersion": "vuthrRMgPWqGaqAin6KHTA",
             "api_cloudflare": "OTGxLOOIYRPT4Yzxi6zCuA",
             "api_login": "kEIaQNU5n93i9Q026f_dlQ",
+            "url_cloudflare": (
+                "screenservices/ProdutosDigitais/"
+                "Blocks/BL01_Login/"
+                "DataActionCheckUsarCloudFlare"
+            ),
+            "url_login": (
+                "screenservices/ProdutosDigitais/"
+                "Blocks/BL01_Login/"
+                "DataActionGetDadosLogin"
+            ),
         }
 
+        # Session pode ter Accept: application/json,
+        # o que causa 406 ao baixar .js
+        headers_get = {"Accept": "*/*"}
+
+        # moduleVersion via REST
         try:
-            res_html = self.session.get(url_base, timeout=15)
-            res_html.raise_for_status()
-        except requests.RequestException as e:
-            logging.warning(f"[cliente_fgv.py] Falha na página inicial. Fallbacks: {e}")
-            return versoes
+            res_ver = self.session.get(
+                url_base + "moduleservices/moduleversioninfo",
+                timeout=10,
+                headers=headers_get,
+            )
+            if res_ver.status_code == 200:
+                token = res_ver.json().get("versionToken", "")
+                if token:
+                    resultado["moduleVersion"] = token
+        except Exception as e:
+            logging.warning(
+                "[cliente_fgv.py] Falha ao buscar"
+                f" moduleversioninfo: {e}"
+            )
 
-        # Coleta scripts referenciados e caminhos padrão de blocos
-        js_files = re.findall(
-            r'<script[^>]+src=["\']([^"\']+\.js[^"\']*)["\']', res_html.text
-        )
-        js_paths = js_files + [
-            "scripts/ProdutosDigitais.appDefinition.js",
-            "scripts/ProdutosDigitais.MainFlow.Login.mvc.js",
-            "scripts/ProdutosDigitais.Blocks.BL01_Login.mvc.js",
-        ]
-
-        urls_js = []
-        for js in js_paths:
-            full_url = urllib.parse.urljoin(url_base, js)
-            if full_url not in urls_js:
-                urls_js.append(full_url)
-
-        achou_mod, achou_cf, achou_log = False, False, False
-
-        for js_url in urls_js:
-            if achou_mod and achou_cf and achou_log:
-                break
-
-            try:
-                res_js = self.session.get(js_url, timeout=10)
-            except requests.RequestException:
-                continue
-
+        # apiVersions e URLs do BL01_Login.mvc.js
+        try:
+            url_js = (
+                url_base
+                + "scripts/ProdutosDigitais"
+                ".Blocks.BL01_Login.mvc.js"
+            )
+            res_js = self.session.get(
+                url_js, timeout=10, headers=headers_get
+            )
             if res_js.status_code == 200:
-                js_text = res_js.text
+                js = res_js.text
 
-                if not achou_mod:
-                    regex_mod = r'moduleVersion["\']?\s*:\s*["\']([a-zA-Z0-9_-]{22})["\']'
-                    match_mod = re.search(regex_mod, js_text)
-                    if match_mod:
-                        versoes["moduleVersion"] = match_mod.group(1)
-                        achou_mod = True
+                # Sufixo do DataAction -> chaves no resultado
+                acoes = {
+                    "DataActionCheckUsarCloudFlare": (
+                        "api_cloudflare",
+                        "url_cloudflare",
+                    ),
+                    "DataActionGET_UsarCloudFlare": (
+                        "api_cloudflare",
+                        "url_cloudflare",
+                    ),
+                    "DataActionGetDadosLogin": (
+                        "api_login",
+                        "url_login",
+                    ),
+                    "DataActionGET_Dados": (
+                        "api_login",
+                        "url_login",
+                    ),
+                }
 
-                if not achou_cf:
-                    regex_cf = (
-                        r"DataActionCheckUsarCloudFlare.{0,600}?"
-                        r'["\']([a-zA-Z0-9_-]{22})["\']'
-                    )
-                    match_cf = re.search(regex_cf, js_text, re.DOTALL)
-                    if match_cf:
-                        versoes["api_cloudflare"] = match_cf.group(1)
-                        achou_cf = True
-
-                if not achou_log:
-                    regex_log = (
-                        r"DataActionGetDadosLogin.{0,600}?"
-                        r'["\']([a-zA-Z0-9_-]{22})["\']'
-                    )
-                    match_login = re.search(regex_log, js_text, re.DOTALL)
-                    if match_login:
-                        versoes["api_login"] = match_login.group(1)
-                        achou_log = True
+                regex_call = (
+                    r'callDataAction\(\s*"[^"]*"\s*,\s*'
+                    r'"(screenservices/[^"]*'
+                    r'/(DataAction\w+))"\s*,\s*'
+                    r'"([^"]+)"'
+                )
+                for m in re.finditer(regex_call, js):
+                    url_path = m.group(1)
+                    action_name = m.group(2)
+                    api_hash = m.group(3)
+                    if action_name in acoes:
+                        k_hash, k_url = acoes[action_name]
+                        resultado[k_hash] = api_hash
+                        resultado[k_url] = url_path
+        except Exception as e:
+            logging.warning(
+                "[cliente_fgv.py] Falha ao buscar"
+                f" BL01_Login.mvc.js: {e}"
+            )
 
         logging.info(
-            f"[cliente_fgv.py] Hashes: Module={versoes['moduleVersion'][:5]}... | "
-            f"API_CF={versoes['api_cloudflare'][:5]}... | "
-            f"API_Login={versoes['api_login'][:5]}..."
+            "[cliente_fgv.py] Hashes:"
+            f" Module={resultado['moduleVersion'][:8]}..."
+            f" | CF={resultado['api_cloudflare'][:8]}..."
+            f" | Login={resultado['api_login'][:8]}..."
         )
-        return versoes
+        return resultado
 
     @staticmethod
     def _extrair_estados(html_text: str) -> dict:
@@ -262,8 +299,8 @@ class ClienteFGVDados:
         self.session.headers.update({"X-CSRFToken": ""})
 
         url_cf = (
-            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/screenservices/"
-            "ProdutosDigitais/Blocks/BL01_Login/DataActionCheckUsarCloudFlare"
+            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
+            + hashes_dinamicas["url_cloudflare"]
         )
 
         payload_cf = {
@@ -316,8 +353,8 @@ class ClienteFGVDados:
         self.session.headers.update({"X-CSRFToken": token_csrf})
 
         url_login = (
-            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/screenservices/"
-            "ProdutosDigitais/Blocks/BL01_Login/DataActionGetDadosLogin"
+            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
+            + hashes_dinamicas["url_login"]
         )
 
         payload_login = {
@@ -620,3 +657,4 @@ class ClienteFGVDados:
                 f"HTTP {res_csv.status_code} | Type: {content_type}"
             )
             return None
+
