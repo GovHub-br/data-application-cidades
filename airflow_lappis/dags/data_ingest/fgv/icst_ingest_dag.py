@@ -25,23 +25,6 @@ def icst_ingest_dag() -> None:
     """
 
     @task
-    def setup_schema() -> None:
-        """
-        Cria o schema da FGV antes do processamento.
-        """
-        import psycopg2
-
-        postgres_conn_str = get_postgres_conn()
-        schema = "fgv"
-
-        with psycopg2.connect(postgres_conn_str) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema};")
-            conn.commit()
-
-        logging.info(f"Schema '{schema}' garantido com sucesso.")
-
-    @task
     def fetch_and_store_icst() -> None:
         """
         Baixa o CSV do ICST autenticado e faz upsert no Postgres.
@@ -74,10 +57,7 @@ def icst_ingest_dag() -> None:
         else:
             logging.warning("Nenhum registro extraído para ICST Histórico da FGV.")
 
-    setup = setup_schema()
-    ingest_icst = fetch_and_store_icst()
-
-    setup >> ingest_icst
+    fetch_and_store_icst()
 
 
 dag_instance = icst_ingest_dag()

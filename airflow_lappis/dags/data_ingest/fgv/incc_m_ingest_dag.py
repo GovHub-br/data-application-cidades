@@ -22,23 +22,6 @@ def incc_m_ingest_dag() -> None:
     """DAG para ingestão de dados do INCC-M da FGV no PostgreSQL."""
 
     @task
-    def setup_schema() -> None:
-        """
-        Cria o schema da FGV antes do processamento.
-        """
-        import psycopg2
-
-        postgres_conn_str = get_postgres_conn()
-        schema = "fgv"
-
-        with psycopg2.connect(postgres_conn_str) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema};")
-            conn.commit()
-
-        logging.info(f"Schema '{schema}' garantido com sucesso.")
-
-    @task
     def fetch_and_store_incc() -> None:
         """
         Baixa o arquivo do INCC, trata os dados via Pandas e faz upsert do Postgres.
@@ -66,10 +49,7 @@ def incc_m_ingest_dag() -> None:
         else:
             logging.warning("Nenhum registro extraído para INCC-M da FGV.")
 
-    setup = setup_schema()
-    ingest_incc = fetch_and_store_incc()
-
-    setup >> ingest_incc
+    fetch_and_store_incc()
 
 
 dag_instance = incc_m_ingest_dag()

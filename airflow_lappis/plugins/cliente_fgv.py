@@ -269,16 +269,13 @@ class ClienteFGVDados:
                 estados[partes[i + 2]] = partes[i + 3]
             i += 4
         return estados
-
-    def fetch_icst_historico(self) -> Optional[list[dict]]:  # noqa: C901
+    
+    def _autenticar(self, hashes_dinamicas: dict) -> Optional[str]:
         """
-        Fluxo completo de autenticação e raspagem do CSV da série histórica (ICST).
-
-        Returns:
-            DataFrame Pandas contendo dados brutos em sucesso, ou None em falha.
+        Executa o fluxo de login no portal OutSystems e prepara a sessão
+        para transição aos sistemas ASP.NET legados.
         """
-        hashes_dinamicas = self._obter_versoes_outsystems()
-
+        logging.info("[cliente_fgv.py]  Inicializando autenticação FGV...")
         self.session.headers.update(
             {
                 "User-Agent": (
@@ -294,10 +291,9 @@ class ClienteFGVDados:
         )
 
         # Autenticação OutSystems
-        logging.info("[cliente_fgv.py] Inicializando autenticação FGV...")
         self.session.get("https://autenticacao-ibre.fgv.br/ProdutosDigitais/")
         self.session.headers.update({"X-CSRFToken": ""})
-
+    
         url_cf = (
             "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
             + hashes_dinamicas["url_cloudflare"]
@@ -417,6 +413,14 @@ class ClienteFGVDados:
         # Limpeza de headers modernos para transição
         for h in headers_to_remove:
             self.session.headers.pop(h, None)
+        
+        return url_redir
+
+    def _buscar_serie_icst(self, url_redir: str) -> bool:
+        """
+        Acessa a página inicial do sistema legado, busca a série 'ICST'
+        e a seleciona contornando a validação de eventos do ASP.NET.
+        """
 
         res_default = self.session.get(url_redir)
         estados = self._extrair_estados(res_default.text)
@@ -456,7 +460,7 @@ class ClienteFGVDados:
 
         if "ICST" not in res_search.text:
             logging.error("[cliente_fgv.py] Série ICST não encontrada na busca.")
-            return None
+            return False
 
         self.session.post(
             url_base_default,
@@ -476,6 +480,14 @@ class ClienteFGVDados:
             },
             headers=headers_ajax,
         )
+        
+        return True
+
+    def _configurar_consulta(self) -> bool:
+        """
+        Navega para a página de consulta, seleciona a opção de série histórica
+        e submete o formulário para preparar o grid de visualização.
+        """
 
         # Configuração da Visualização
         logging.info("[cliente_fgv.py] Configurando parâmetros históricos...")
@@ -485,9 +497,16 @@ class ClienteFGVDados:
 
         if "ICST" not in res_consulta.text:
             logging.error("[cliente_fgv.py] Séries não persistidas na sessão.")
-            return None
+            return False
 
-        headers_ajax_consulta = {**headers_ajax, "Referer": url_consulta}
+        headers_ajax_consulta = {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-MicrosoftAjax": "Delta=true",
+            "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+            "Cache-Control": "no-cache",
+            "Origin": "https://extra-ibre.fgv.br",
+            "Referer": url_consulta,
+        }
 
         res_radio = self.session.post(
             url_consulta,
@@ -565,7 +584,15 @@ class ClienteFGVDados:
             payload_viz["__EVENTVALIDATION"] = estados["__EVENTVALIDATION"]
 
         self.session.post(url_consulta, data=payload_viz, headers=headers_ajax_consulta)
+    
+        return True
 
+    def _baixar_e_parsear_csv(self) -> Optional[list[dict]]:
+        """
+        Acessa o frame de visualização, extrai as variáveis de estado do
+        DevExpress e emite a requisição final para download e parse do CSV.
+        """
+        url_consulta = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/consulta.aspx"
         url_visualiza = (
             "https://extra-ibre.fgv.br/IBRE/sitefgvdados/visualizaconsulta.aspx"
         )
@@ -657,4 +684,27 @@ class ClienteFGVDados:
                 f"HTTP {res_csv.status_code} | Type: {content_type}"
             )
             return None
+
+    def fetch_icst_historico(self) -> Optional[list[dict]]:
+        """
+        Orquestrador do fluxo completo de autenticação e raspagem do CSV
+        da série histórica (ICST).
+
+        Returns:
+            Lista de dicionários contendo dados brutos em sucesso,
+            ou None em falha.
+        """
+        hashes_dinamicas = self._obter_versoes_outsystems()
+
+        url_redir = self._autenticar(hashes_dinamicas)
+        if not url_redir:
+            return None
+
+        if not self._buscar_serie_icst(url_redir):
+            return None
+
+        if not self._configurar_consulta():
+            return None
+
+        return self._baixar_e_parsear_csv()
 
