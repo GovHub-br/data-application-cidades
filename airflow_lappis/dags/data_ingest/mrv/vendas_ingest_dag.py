@@ -8,7 +8,7 @@ from cliente_postgres import ClientPostgresDB
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("lancamentos_ingest_dag"),
+    schedule_interval=get_dynamic_schedule("vendas_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={
@@ -16,25 +16,27 @@ from cliente_postgres import ClientPostgresDB
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["mrv", "lancamentos", "operacionais", "custos"],
+    tags=["mrv", "vendas", "operacionais", "custos"],
 )
-def lancamentos_ingest_dag() -> None:
-    """DAG para ingestão de dados dos Lançamentos da Empresa MRV no PostgreSQL."""
+def vendas_ingest_dag() -> None:
+    """DAG para ingestão de dados das Vendas Líquidas da Empresa MRV
+    no PostgreSQL.
+    """
 
     @task
-    def fetch_and_store_lancamentos() -> None:
+    def fetch_and_store_vendas() -> None:
         """
-        Baixa o arquivo mais recente dos Lançamentos, trata os dados via Pandas
+        Baixa o arquivo mais recente das Vendas Líquidas, trata os dados via Pandas
         e faz upsert do Postgres.
         """
-        logging.info("Iniciando processamento dos Lançamentos")
+        logging.info("Iniciando processamento das Vendas...")
 
         api = ClienteMRV()
         postgres_conn_str = get_postgres_conn()
         db = ClientPostgresDB(postgres_conn_str)
-        tabela = "lancamentos"
+        tabela = "vendas_liquidas"
 
-        registros = api.fetch_dados_lancamentos()
+        registros = api.fetch_dados_vendas()
 
         if registros:
             logging.info(f"Inserindo {len(registros)} registros em mrv.{tabela}")
@@ -48,10 +50,10 @@ def lancamentos_ingest_dag() -> None:
             )
             logging.info(f"Ingestão de {tabela} concluída com sucesso.")
         else:
-            logging.warning("Nenhum registro extraído para Lançamentos da MRV.")
+            logging.warning("Nenhum registro extraído para Vendas Líquidas da MRV.")
 
-    fetch_and_store_lancamentos()
+    fetch_and_store_vendas()
 
 
-dag_instance = lancamentos_ingest_dag()
+dag_instance = vendas_ingest_dag()
 

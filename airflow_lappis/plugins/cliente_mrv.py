@@ -137,15 +137,19 @@ class ClienteMRV:
         except Exception as e:
             logging.error(f"[cliente_mrv.py] Erro ao processar Excel: {e}")
             return None
-
-    def _extrair_lancamentos_incorporacao(
-        self, df_bruto: pd.DataFrame
+    
+    def _extrair_bloco_operacional(
+        self,
+        df_bruto: pd.DataFrame,
+        nome_secao: str,
+        offsets_linhas: list[int],
+        nomes_colunas: list[str],
     ) -> Optional[pd.DataFrame]:
         """
-        Localiza a seção 'Lançamentos %MRV' -> 'MRV Incorporação', extrai as 3 linhas
-        de KPIs e transpõe os dados para formato tabular.
-        """
-        logging.info("[cliente_mrv.py] Iniciando extração do bloco de Lançamentos...")
+        Função genérica que localiza uma seção âncora, encontra a 'MRV Incorporação',
+        extrai as linhas especificadas pelos offsets e transpõe para o formato tabular.
+        """ 
+        logging.info(f"[cliente_mrv.py] Extraindo seção '{nome_secao}'...")
 
         try:
             # Pega a linha de índice 1 que possui os cabeçalhos temporais
@@ -153,11 +157,9 @@ class ClienteMRV:
 
             # Localiza o índice "Lançamentos %MRV"
             col_0_str = df_bruto[0].astype(str)
-            mask_secao = col_0_str.str.contains(
-                "Lançamentos %MRV", case=False, na=False
-            )
+            mask_secao = col_0_str.str.contains(nome_secao, case=False, na=False)
             if not mask_secao.any():
-                logging.error("[cliente_mrv.py] Seção 'Lançamentos %MRV' não achada.")
+                logging.error(f"[cliente_mrv.py] Seção '{nome_secao}' não achada.")
                 return None
             idx_secao = df_bruto[mask_secao].index[0]
 
@@ -172,33 +174,20 @@ class ClienteMRV:
                 return None
             idx_subgrupo = df_recorte[mask_sub].index[0]
 
-            # Isola as 3 linhas de interesse abaixo do subgrupo
+            # Calcula as linhas exatas a serem extraídas usando os offsets mapeados
+            indices_alvo = [idx_subgrupo + offset for offset in offsets_linhas]
             colunas_alvo = [0] + list(range(2, df_bruto.shape[1]))
-            df_kpis = df_bruto.iloc[
-                idx_subgrupo + 1 : idx_subgrupo + 4, colunas_alvo
-            ].copy()
+            
+            df_kpis = df_bruto.iloc[indices_alvo, colunas_alvo].copy()
 
-            # Usamos os cabeçalhos como índice antes de transpor
-            df_kpis.index = [
-                "vgv_lancamentos_milhoes",
-                "unidades",
-                "preco_medio_unidade_mil",
-            ]
+            df_kpis.index = nomes_colunas
             df_kpis.columns = ["periodo"] + cabecalhos.iloc[2:].tolist()
 
-            # Remove a primeira coluna (nomes em português/inglês)
+            # Remove a primeira coluna e transpõe
             df_kpis = df_kpis.drop(columns=["periodo"])
-
-            # Transpõe a matriz (linhas viram colunas e vice-versa)
             df_tabela = df_kpis.T.reset_index()
 
-            # Força o nome das 4 colunas resultantes de forma cravada
-            df_tabela.columns = [
-                "periodo",
-                "vgv_lancamentos_milhoes",
-                "unidades",
-                "preco_medio_unidade_mil",
-            ]
+            df_tabela.columns = ["periodo"] + nomes_colunas
 
             # Limpeza do período (1T26 / 1Q26 -> 1T26)
             df_tabela["periodo"] = df_tabela["periodo"].apply(
@@ -208,19 +197,18 @@ class ClienteMRV:
                 ".0", "", regex=False
             )
 
-            # Remove linhas nulas ('nan' string do astype)
-            df_tabela = df_tabela[
-                ~df_tabela["vgv_lancamentos_milhoes"].isin(["nan", "None", ""])
-            ]
+            # Usa o primeiro KPI passado como âncora de nulidade para limpar lixo
+            kpi_ancora = nomes_colunas[0]
+            df_tabela = df_tabela[~df_tabela[kpi_ancora].isin(["nan", "None", ""])]
 
             logging.info(
-                f"[cliente_mrv.py] Extração tabular concluída. "
-                f"Shape final: {df_tabela.shape}"
+                f"[cliente_mrv.py] Extração de '{nome_secao}' concluída. "
+                f"Shape: {df_tabela.shape}"
             )
             return df_tabela
 
         except Exception as e:
-            logging.error(f"[cliente_mrv.py] Erro ao fatiar o dataframe Pandas: {e}")
+            logging.error(f"[cliente_mrv.py] Erro ao extrair o df Pandas: {e}")
             return None
 
     def fetch_dados_lancamentos(self) -> Optional[list[dict]]:
@@ -239,7 +227,62 @@ class ClienteMRV:
         if df_bruto is None:
             return None
 
-        df_tabela = self._extrair_lancamentos_incorporacao(df_bruto)
+        df_tabela = self._extrair_bloco_operacional(
+            df_bruto=df_bruto,
+            nome_secao="Lançamentos %MRV",
+            offsets_linhas=[1, 2, 3],
+            nomes_colunas=[
+                "vgv_lancamentos_milhoes",
+                "unidades",
+                "preco_medio_unidade_mil"
+            ],
+        )
+        
+        if df_tabela is None:
+            return None
+
+        # Adiciona data de ingestão padrão da camada raw
+        df_tabela["dt_ingest"] = datetime.now().isoformat()
+
+        # Converte valores pd.NA/NaN para None (NULL do Postgres)
+        df_tabela = df_tabela.where(pd.notnull(df_tabela), None)
+
+        registros = df_tabela.to_dict(orient="records")
+
+        logging.info(
+            f"[cliente_mrv.py] Transformação final concluída. "
+            f"{len(registros)} registros preparados para ingestão."
+        )
+
+        return registros
+
+    def fetch_dados_vendas(self) -> Optional[list[dict]]:
+        """
+        Orquestrador do fluxo completo de busca, extração e transformação
+        dos dados operacionais de Vendas Líquidas da MRV.
+
+        Returns:
+            Lista de dicionários contendo os registros da tabela ou None em falha.
+        """
+        link_recente = self._buscar_link_planilha_recente()
+        if not link_recente:
+            return None
+
+        df_bruto = self._ler_dados_operacionais(link_recente)
+        if df_bruto is None:
+            return None
+        
+        df_tabela = self._extrair_bloco_operacional(
+            df_bruto=df_bruto,
+            nome_secao="Vendas Líquidas %MRV",
+            offsets_linhas=[1, 4, 5],
+            nomes_colunas=[
+                "vendas_liquidas_milhoes",
+                "unidades",
+                "preco_medio_unidade_mil"
+            ],
+        )
+        
         if df_tabela is None:
             return None
 
