@@ -1,0 +1,55 @@
+import logging
+from airflow.decorators import dag, task
+from datetime import datetime, timedelta
+from schedule_loader import get_dynamic_schedule
+from postgres_helpers import get_postgres_conn
+from cliente_fgv import ClienteSinduscon
+from cliente_postgres import ClientPostgresDB
+
+
+@dag(
+    schedule_interval=get_dynamic_schedule("incc_m_ingest_dag"),
+    start_date=datetime(2023, 1, 1),
+    catchup=False,
+    default_args={
+        "owner": "Gustavo",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["fgv", "incc_m", "construcao", "custos"],
+)
+def incc_m_ingest_dag() -> None:
+    """DAG para ingestão de dados do INCC-M da FGV no PostgreSQL."""
+
+    @task
+    def fetch_and_store_incc() -> None:
+        """
+        Baixa o arquivo do INCC, trata os dados via Pandas e faz upsert do Postgres.
+        """
+        logging.info("Iniciando processamento do INCC-M")
+
+        api = ClienteSinduscon()
+        postgres_conn_str = get_postgres_conn()
+        db = ClientPostgresDB(postgres_conn_str)
+        tabela = "incc_m"
+
+        registros = api.fetch_and_transform_incc()
+
+        if registros:
+            logging.info(f"Inserindo {len(registros)} registros em fgv.{tabela}")
+
+            db.insert_data(
+                data=registros,
+                table_name=tabela,
+                conflict_fields=["mes"],
+                primary_key=["mes"],
+                schema="fgv",
+            )
+            logging.info(f"Ingestão de {tabela} concluída com sucesso.")
+        else:
+            logging.warning("Nenhum registro extraído para INCC-M da FGV.")
+
+    fetch_and_store_incc()
+
+
+dag_instance = incc_m_ingest_dag()
