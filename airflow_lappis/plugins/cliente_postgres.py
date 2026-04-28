@@ -254,18 +254,18 @@ class ClientPostgresDB:
     def remove_duplicates(
         self, table_name: str, column_mapping: Dict[int, str], schema: str = "siafi"
     ) -> None:
-        try:
-            columns = ", ".join(column_mapping.values())
-            delete_query = f"""
-            DELETE FROM {schema}.{table_name}
-            WHERE ctid NOT IN (
-                SELECT MIN(ctid)
-                FROM {schema}.{table_name}
-                GROUP BY {columns}
-            );
-            """
-            vacuum_query = f"VACUUM {schema}.{table_name};"
+        columns = ", ".join(column_mapping.values())
+        delete_query = f"""
+        DELETE FROM {schema}.{table_name}
+        WHERE ctid NOT IN (
+            SELECT MIN(ctid)
+            FROM {schema}.{table_name}
+            GROUP BY {columns}
+        );
+        """
+        vacuum_query = f"VACUUM {schema}.{table_name};"
 
+        try:
             logging.info(
                 f"Executando query para remover duplicados em {schema}.{table_name}"
             )
@@ -277,20 +277,29 @@ class ClientPostgresDB:
                     logging.info(
                         f"Duplicados removidos com sucesso de {schema}.{table_name}"
                     )
-
-            with psycopg2.connect(self.conn_str) as conn:
-                conn.autocommit = True
-                with conn.cursor() as cursor:
-                    cursor.execute(vacuum_query)
-                    logging.info(
-                        f"VACUUM FULL executado com sucesso em {schema}.{table_name}"
-                    )
-
         except Exception as e:
             logging.error(
-                f"Erro ao remover duplicados ou otimizar {schema}.{table_name}: {str(e)}"
+                f"Erro ao remover duplicados de {schema}.{table_name}: {str(e)}"
             )
             raise
+
+        conn = None
+        try:
+            conn = psycopg2.connect(self.conn_str)
+            conn.autocommit = True
+            with conn.cursor() as cursor:
+                cursor.execute(vacuum_query)
+                logging.info(f"VACUUM executado com sucesso em {schema}.{table_name}")
+        except Exception as e:
+            logging.warning(
+                "Falha ao executar VACUUM em %s.%s (deduplicacao concluida): %s",
+                schema,
+                table_name,
+                str(e),
+            )
+        finally:
+            if conn:
+                conn.close()
 
     def get_codigo_unidade(self) -> list[dict]:
         query = """
@@ -354,7 +363,9 @@ class ClientPostgresDB:
         with psycopg2.connect(self.conn_str) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
-                return [{"nome_cor": row[0], "valor": row[1]} for row in cursor.fetchall()]
+                return [
+                    {"nome_cor": row[0], "valor": row[1]} for row in cursor.fetchall()
+                ]
 
     def get_dashboard_situacao_funcional(self) -> List[Dict[str, Any]]:
         query = """
