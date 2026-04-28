@@ -13,3 +13,8 @@ sources:
       - name: dados_abertos_snhis_regularidade_entes
       - name: dados_abertos_pbqp_h_simac
       - name: dados_abertos_pbqp_h_siac
+  
+  - name: novo_caged
+    schema: novo_caged
+    tables:
+      - name: saldo_estoque_construcao_edificios

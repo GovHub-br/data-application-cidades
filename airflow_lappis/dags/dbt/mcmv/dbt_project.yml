@@ -28,5 +28,9 @@ models:
      +materialized: table
      +schema: dados_abertos_cidades
 
+    novo_caged:
+      +materialized: table
+      +schema: novo_caged
+
 on-run-start:
   - '{{create_udfs()}}'
