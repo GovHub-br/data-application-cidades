@@ -1,0 +1,11 @@
+mcmv:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: "{{ env_var('DB_DW_HOST_MCMV', 'postgres') }}"
+      user: "{{ env_var('DB_DW_USER_MCMV', 'postgres') }}"
+      password: "{{ env_var('DB_DW_PASSWORD_MCMV', 'postgres') }}"
+      port: "{{ env_var('DB_DW_PORT_MCMV', '5432') | int }}"
+      dbname: "{{ env_var('DB_DW_DBNAME_MCMV', 'postgres') }}"
+      schema: "{{ env_var('DB_DW_SCHEMA_MCMV', 'mcmv') }}"

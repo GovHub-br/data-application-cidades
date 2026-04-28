@@ -1,3 +1,4 @@
+import logging
 import io
 import logging
 import os
@@ -23,32 +24,69 @@ class ClienteSnhis(ClienteBase):
 
         super().__init__(base_url="https://www.gov.br", headers=headers)
 
-    def get_regularidade_entes(self) -> List[Dict[str, Any]]:
+    def get_latest_regularidade_url(self) -> str:
         """
-        Baixa o arquivo .xls de regularidade e converte para lista de dicts.
+        Busca a URL mais recente de Regularidade dos Entes na página de Bases de Dados.
+        Garante a captura de arquivos de 2026 através de ordenação cronológica.
         """
-
-        # Deixar dinamico e pegar o ultimo
-        endpoint = "/cidades/pt-br/acesso-a-informacao/acoes-e-programas/habitacao/programa-minha-casa-minha-vida/minha-casa-minha-vida-fnhis-sub-50-1/arquivos-fnhis-sub-50/dados_abertos_SNHIS_REGULARIDADE_ENTES_09022026.xls"
+        # URL da página de Bases de Dados (onde o arquivo de 2026 foi confirmado)
+        page_url = "https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/habitacao/programa-minha-casa-minha-vida/bases-de-dados-do-programa-minha-casa-minha-vida"
         
-        logging.info("[ClienteSnhis] Baixando arquivo de regularidade SNHIS...")
+        logging.info(f"[ClienteSnhis] Buscando links em: {page_url}")
         
-        response = self.client.get(endpoint, timeout=120.0)
+        response = self.client.get(page_url, timeout=30.0)
         response.raise_for_status()
 
+        # 1. Tenta capturar links absolutos (com https://...)
+        pattern = r'https?://[^\s"<>]+SNHIS_REGULARIDADE_ENTES_\d+\.xls'
+        matches = re.findall(pattern, response.text)
+
+        # 2. Se não achar, tenta capturar links relativos (que começam com /cidades/...)
+        if not matches:
+            relative_pattern = r'\/cidades\/[^\s"<>]+SNHIS_REGULARIDADE_ENTES_\d+\.xls'
+            rel_matches = re.findall(relative_pattern, response.text)
+            # Normaliza os links relativos para URLs completas
+            matches = [f"https://www.gov.br{m}" for m in rel_matches]
+
+        if not matches:
+            raise Exception("Nenhum arquivo de regularidade SNHIS encontrado na página de Bases de Dados.")
+
+        # 3. Função de ordenação: Converte DDMMYYYY para YYYYMMDD para comparar datas corretamente
+        def sort_by_date(url: str):
+            date_match = re.search(r'(\d{8})', url)
+            if date_match:
+                d = date_match.group(1) # Ex: 09022026
+                # Retorna 20260209 (Garante que 2026 > 2025)
+                return d[4:] + d[2:4] + d[0:2]
+            return "00000000"
+
+        # Ordena e pega o último (mais recente cronologicamente)
+        matches.sort(key=sort_by_date)
+        latest_url = matches[-1]
+
+        logging.info(f"[ClienteSnhis] Link mais recente identificado: {latest_url}")
+        return latest_url
+    def get_regularidade_entes(self) -> List[Dict[str, Any]]:
+        """
+        Baixa o arquivo mais recente de regularidade dos entes
+        e retorna como lista de dicts.
+        """
+
+        full_url = self.get_latest_regularidade_url()
+        logging.info(f"[ClienteSnhis] Baixando arquivo: {full_url}")
+
+
+        response = self.client.get(full_url, timeout=120.0)
+        response.raise_for_status()
+
+
         try:
-
-            df = pd.read_excel(io.BytesIO(response.content), engine='xlrd')
-        except Exception as e:
-            logging.warning(f"[ClienteSnhis] Falha com xlrd: {e}. Tentando engine padrão.")
             df = pd.read_excel(io.BytesIO(response.content))
-
-        # Deixar dinamico e pegar o ultimo
-        df = df["arquivo_origem"] = "arquivos-fnhis-sub-50/dados_abertos_SNHIS_REGULARIDADE_ENTES_09022026.xls"
-        df = df["dt_ingest"] = datetime.now().isoformat()
-    
-        df = df.where(pd.notna(df), None)
-        return df.to_dict(orient="records")
+            df = df.where(pd.notna(df), None) # Trata NaNs 
+            return df.to_dict(orient="records")
+        except Exception as e:
+            logging.error(f"[ClienteSnhis] Erro ao ler Excel: {e}")
+            raise
 
     def get_latest_fgts_url(self) -> str:
         """
@@ -69,6 +107,7 @@ class ClienteSnhis(ClienteBase):
             raise Exception("Nenhum arquivo FGTS encontrado na página.")
         
         # Retorna o último link (ordem cronológica costuma ser a última na página)
+        logging.info(f"[ClienteSnhis] Arquivos encontrados: {matches}")
         return matches[-1]
 
     def download_and_extract_fgts(self, target_dir: str) -> str:

@@ -23,6 +23,7 @@ class ClienteAlphaVantage(ClienteBase):
         
         if not dados or "Time Series (Daily)" not in dados:
             logging.error(f"Erro ao buscar dados ou limite de API atingido: {dados}")
+            logging.error("Para obter uma API Key gratuita, acesse https://www.alphavantage.co/support/#api-keys")
             return []
 
         series = dados["Time Series (Daily)"]

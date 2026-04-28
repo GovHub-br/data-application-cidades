@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: infomoney
+    schema: infomoney
+    tables:
+      - name: acoes_imob
+
+  - name: dados_abertos_cidades
+    schema: dados_abertos_cidades
+    tables:
+      - name: mcmv_fgts_analitico
+      - name: dados_abertos_snhis_regularidade_entes
+      - name: dados_abertos_pbqp_h_simac
+      - name: dados_abertos_pbqp_h_siac

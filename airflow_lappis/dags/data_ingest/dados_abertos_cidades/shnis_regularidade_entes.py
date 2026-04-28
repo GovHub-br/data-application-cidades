@@ -34,19 +34,25 @@ def snhis_dag():
         api = ClienteSnhis()
         db = ClientPostgresDB(get_postgres_conn())
         data = api.get_regularidade_entes()
-        data = [
-        {normalize_column_name(k): v for k, v in row.items()}
-        for row in data
-    ]
+        url_origem = api.get_latest_regularidade_url()
+        data_ingestao = datetime.now().isoformat()
+        raw_data = api.get_regularidade_entes()
+        data = []
+        for row in raw_data:
+            # Normaliza colunas originais
+            normalized_row = {normalize_column_name(k): v for k, v in row.items()}
+            
+            # Adiciona as novas colunas
+            normalized_row["arquivo_origem"] = url_origem
+            normalized_row["dt_ingest"] = data_ingestao
+            
+            data.append(normalized_row)
         
         if not data:
             logging.warning("[SNHIS] Nenhum dado retornado")
             return
 
-        # adiciona coluna de ingestão
-
-        # for row in data:
-        #     row["dt_ingest"] = datetime.now().isoformat()
+   
 
         logging.info(f"[SNHIS] Inserindo {len(data)} registros")
         # talvez o cnpj

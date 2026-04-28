@@ -8,9 +8,16 @@ import logging
 import tempfile
 import pandas as pd
 
+DEFAULT_ARGS = {
+    "owner": "Milena Rocha",
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
+}
+
 @dag(
     dag_id="dados_abertos_fgts_analitico",
     schedule_interval="@monthly",
+    default_args=DEFAULT_ARGS,
     start_date=datetime(2026, 1, 1),
     catchup=False,
     tags=["cidades","FGTS", "FAR", "dados_abertos"],
@@ -33,7 +40,7 @@ def dados_abertos_mcmv_fgts_analitico():
             # Processamento otimizado com Pandas dividindo o CSV gigante em blocos 
             # para evitar esgotamento de memória no Docker ("Zombie Job" / Código -9)
             if file_path.lower().endswith(".csv"):
-                chunk_iterator = pd.read_csv(file_path, sep=";", encoding="latin-1", on_bad_lines='skip', chunksize=50000)
+                chunk_iterator = pd.read_csv(file_path, sep=";", encoding="utf-8", on_bad_lines='skip', chunksize=50000)
                 
                 inserted_count = 0
                 for i, df_chunk in enumerate(chunk_iterator):
@@ -42,6 +49,7 @@ def dados_abertos_mcmv_fgts_analitico():
                     
                     df_chunk.columns = [normalize_column_name(col) for col in df_chunk.columns]
                     df_chunk["dt_ingest"] = execution_date
+                    df_chunk["  arquivo_origem"] = api.get_latest_fgts_url().split("/")[-1]
                     
                     data = df_chunk.to_dict(orient="records")
                     logging.info(f"Otimização em lotes de {len(data)} registros. Inserindo lote {i+1} no Postgres...")

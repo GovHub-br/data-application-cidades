@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from airflow.decorators import dag, task
+from airflow.models import Variable
 
 from postgres_helpers import get_postgres_conn
 from cliente_postgres import ClientPostgresDB
@@ -31,30 +32,28 @@ def alphavantage_imob_dag() -> None:
     def fetch_and_load_imob():
         logging.info("Iniciando extração Alpha Vantage (IMOB.SA)...")
         
-        # 1. Configurações (Substitua pela sua chave real)
-        API_KEY = "GITSIMPKGTDXDSZW" 
-        SYMBOL = "IMOB.SA"
+  
+        config = Variable.get("api_key_alphavantage", deserialize_json=True)
+        API_KEY = config.get("api_key")
+        SYMBOL = config.get("acao")
         
-        # 2. Instanciando Clientes
+     
         api = ClienteAlphaVantage(api_key=API_KEY)
         db = ClientPostgresDB(get_postgres_conn())
         
-        # 3. Coleta de Dados
+      
         dados_imob = api.get_daily_series(SYMBOL)
         
         if not dados_imob:
             logging.warning(f"Nenhum dado retornado para o símbolo {SYMBOL}. Verifique a API Key ou o limite de requisições.")
             return
 
-        # 4. Enriquecimento com data de ingestão
         dt_ingest = datetime.now().isoformat()
         for item in dados_imob:
             item["dt_ingest"] = dt_ingest
 
         logging.info(f"Processados {len(dados_imob)} registros. Iniciando carga no banco...")
 
-        # 5. Carga no Postgres
-        # Nota: O schema 'infomoney' e a tabela 'acoes_imob' devem existir
         db.insert_data(
             dados_imob,
             table_name="acoes_imob",
@@ -65,8 +64,8 @@ def alphavantage_imob_dag() -> None:
         
         logging.info("Carga finalizada com sucesso no schema infomoney.")
 
-    # Execução da task
+    
     fetch_and_load_imob()
 
-# Inicialização da DAG
+
 alphavantage_imob_dag()

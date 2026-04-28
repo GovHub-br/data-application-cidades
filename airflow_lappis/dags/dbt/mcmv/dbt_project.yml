@@ -1,0 +1,32 @@
+name: 'mcmv'
+
+version: 1.0.0
+config-version: 2
+
+profile: mcmv
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+models:
+  mcmv: 
+    +database: postgres
+    
+    infomoney:
+      +materialized: table
+      +schema: infomoney
+
+    dados_abertos_cidades:
+     +materialized: table
+     +schema: dados_abertos_cidades
+
+on-run-start:
+  - '{{create_udfs()}}'
