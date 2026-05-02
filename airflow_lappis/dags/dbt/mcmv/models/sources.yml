@@ -18,3 +18,16 @@ sources:
     schema: novo_caged
     tables:
       - name: saldo_estoque_construcao_edificios
+
+  - name: __dados_brutos
+    schema: __dados_brutos
+    tables:
+      - name: novo_mcmv_far_consolidado
+      - name: novo_mcmv_far_financeiro_mensal
+      - name: int_empreendimentos_int040_far_caixa_pj
+      - name: int_empreendimentos_int_054_far_bb_pj
+      - name: dados_prioritarios_disponibilizados_snh_empreendimentos
+      - name: dados_abertos_mcmv_ogu_empreendimentos
+      - name: dados_prioritarios_recebidos_bb_empreendimentos
+      - name: dados_prioritarios_recebidos_caixa_empreendimentos
+      - name: novos_dados_mcmv_far
