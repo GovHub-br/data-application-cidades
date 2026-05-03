@@ -5,6 +5,7 @@ from typing import Optional
 import pandas as pd
 from cliente_base import ClienteBase
 
+
 class ClienteBacen(ClienteBase):
     BASE_URL = "https://api.bcb.gov.br"
 
@@ -22,10 +23,10 @@ class ClienteBacen(ClienteBase):
         return datetime.strptime(bcb_date, "%d/%m/%Y").strftime("%Y-%m-%d")
 
     def _fetch_series(
-            self,
-            codigo: int,
-            data_inicial: str,
-            data_final: str,
+        self,
+        codigo: int,
+        data_inicial: str,
+        data_final: str,
     ) -> Optional[pd.DataFrame]:
         path = f"/dados/serie/bcdata.sgs.{codigo}/dados"
         params = {
@@ -38,18 +39,15 @@ class ClienteBacen(ClienteBase):
 
         if status != HTTPStatus.OK or not data:
             logging.error(
-                f"[cliente_bacen.py] Falha ao buscar a serie {codigo}."
-                f"HTTP {status}"
+                f"[cliente_bacen.py] Falha ao buscar a serie {codigo}." f"HTTP {status}"
             )
             return None
 
         df = pd.DataFrame(data)
-        df["data_referencia"] = df['data'].apply(self._to_date)
+        df["data_referencia"] = df["data"].apply(self._to_date)
         df["valor"] = pd.to_numeric(df["valor"], errors="coerce")
 
-        logging.info(
-            f"[cliente_bacen.py] Serie {codigo}: {len(df)} pontos retornados."
-        )
+        logging.info(f"[cliente_bacen.py] Serie {codigo}: {len(df)} pontos retornados.")
         return df
 
     def fetch_and_transform(

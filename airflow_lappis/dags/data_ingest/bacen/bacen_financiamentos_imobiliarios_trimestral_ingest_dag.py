@@ -2,7 +2,11 @@ import logging
 from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
-from airflow.exceptions import AirflowException, AirflowFailException, AirflowSkipException
+from airflow.exceptions import (
+    AirflowException,
+    AirflowFailException,
+    AirflowSkipException,
+)
 
 from cliente_bacen import ClienteBacen
 from cliente_postgres import ClientPostgresDB
@@ -60,7 +64,9 @@ def bacen_financiamentos_imobiliarios_dag() -> None:
                 ano_atual, primeiro_mes_trimestre_atual, 1
             ) - timedelta(days=1)
 
-            primeiro_mes_trim_anterior = ((ultimo_dia_trim_anterior.month - 1) // 3) * 3 + 1
+            primeiro_mes_trim_anterior = (
+                (ultimo_dia_trim_anterior.month - 1) // 3
+            ) * 3 + 1
             primeiro_dia_trim_anterior = datetime(
                 ultimo_dia_trim_anterior.year, primeiro_mes_trim_anterior, 1
             )

@@ -2,7 +2,11 @@ import logging
 from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
-from airflow.exceptions import AirflowException, AirflowFailException, AirflowSkipException
+from airflow.exceptions import (
+    AirflowException,
+    AirflowFailException,
+    AirflowSkipException,
+)
 
 from cliente_bacen import ClienteBacen
 from cliente_postgres import ClientPostgresDB
@@ -27,6 +31,7 @@ SERIES_BACEN = {
 
 # Série histórica disponível a partir de 01/03/2011 (conforme SGS)
 DATA_INICIO_HISTORICO = "01/03/2011"
+
 
 @dag(
     dag_id="bacen_financiamentos_imobiliarios_historico_dag",
@@ -69,16 +74,15 @@ def bacen_financiamentos_imobiliarios_historico_dag() -> None:
 
             if df is None:
                 raise AirflowFailException(
-                "[bacen_historico_dag] ClienteBacen falhou buscando séries históricas."
-                f"Verifique os códigos SGS: {list(SERIES_BACEN.keys())}"
-            )
+                    "[bacen_historico_dag] ClienteBacen falhou buscando séries históricas."
+                    f"Verifique os códigos SGS: {list(SERIES_BACEN.keys())}"
+                )
 
             if df.empty:
                 raise AirflowSkipException(
                     "[bacen_historico_dag] DataFrame retornado está vazio — "
                     "nenhum dado disponível para o período histórico solicitado."
                 )
-
 
             registros = df.to_dict(orient="records")
             dt_ingest = datetime.now().isoformat()
@@ -113,7 +117,6 @@ def bacen_financiamentos_imobiliarios_historico_dag() -> None:
             raise AirflowException(
                 f"[bacen_historico_dag] Erro inesperado na carga histórica: {e}"
             ) from e
-
 
     fetch_and_store_historico()
 
