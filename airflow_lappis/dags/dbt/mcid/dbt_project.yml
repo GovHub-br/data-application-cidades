@@ -23,7 +23,9 @@ models:
     empreendimento_far_dbt:
       +materialized: table
       +schema: empreendimento_far
-      views:
+      silver:
+        +materialized: table
+      gold:
         +materialized: view
 
 on-run-start:

@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: ficha_empreendimento
+    description: >
+      Tabela Gold projetada especificamente para alimentar o componente visual de "Ficha do Empreendimento" 
+      nos Dashboards. Ela consome os dados da camada Silver (empreendimento) e injeta regras de negócio finais
+      como cálculo de status, prazos e ritmo financeiro.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+      - name: nome_empreendimento
+        description: Nome do empreendimento em maiúsculo (padronizado).
+      - name: status_execucao_simplificado
+        description: >
+          Regra de negócio: Traduz a porcentagem física em status categóricos (Não Iniciado, Em Andamento, Concluído).
+      - name: status_prazo
+        description: >
+          Regra de negócio: Analisa a data de previsão de entrega com a data atual. 
+          Alerta se o empreendimento está "Em Atraso" (não entregue e data limite vencida).
+      - name: ritmo_fisico_financeiro
+        description: >
+          Regra de negócio: Compara o % de execução física com o % de desembolso financeiro.
+          Aplica uma tolerância de 5% para classificar como "Ritmo Equilibrado", "Desembolso Adiantado" ou "Desembolso Atrasado".
+
+  - name: resumo_gerencial
+    description: >
+      Visão agregada Gold contendo os grandes KPIs e somatórios (UHs, Pessoas Atendidas, Valores) 
+      agrupados por tipologia e situação. Perfeita para os gráficos de pizza e barras dos painéis gerenciais.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: total_empreendimentos
+        description: Contagem total de APFs que se enquadram naquele perfil.
+      - name: total_uhs
+        description: Somatório de Unidades Habitacionais.
+      - name: media_execucao_fisica
+        description: Execução física média (0-100) daquele grupo de empreendimentos.
