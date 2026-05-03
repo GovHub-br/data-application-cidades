@@ -42,8 +42,8 @@ models:
         description: Valor total de contrapartidas em R$ (numeric 15,2).
     data_tests:
       - row_count_match:
-          source_table: "{{ source('raw', 'novo_mcmv_far_consolidado') }}"
-          target_table: "{{ ref('consolidado') }}"
+          source_table: __dados_brutos.novo_mcmv_far_consolidado
+          target_table: empreendimento_far.consolidado
 
   # Cadastro PJ
 
@@ -84,8 +84,8 @@ models:
         description: Longitude em graus (formato DMS, componente grau).
     data_tests:
       - row_count_match:
-          source_table: "{{ source('raw', 'novo_mcmv_far_cad_pj_mensal') }}"
-          target_table: "{{ ref('cadastro_pj') }}"
+          source_table: __dados_brutos.novo_mcmv_far_cad_pj_mensal
+          target_table: empreendimento_far.cadastro_pj
 
   # Obra Mensal
 
@@ -118,8 +118,8 @@ models:
         description: Data de referência do snapshot.
     data_tests:
       - row_count_match:
-          source_table: "{{ source('raw', 'novo_mcmv_far_obra_mensal') }}"
-          target_table: "{{ ref('obra_mensal') }}"
+          source_table: __dados_brutos.novo_mcmv_far_obra_mensal
+          target_table: empreendimento_far.obra_mensal
 
   # Financeiro Mensal
 

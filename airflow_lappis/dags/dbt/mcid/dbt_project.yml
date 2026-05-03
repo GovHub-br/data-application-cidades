@@ -20,6 +20,9 @@ clean-targets:
 models:
   mcid:
     +database: cidades
+    metadata:
+      +materialized: incremental
+      +schema: metadata
     empreendimento_far_dbt:
       +materialized: table
       +schema: empreendimento_far
