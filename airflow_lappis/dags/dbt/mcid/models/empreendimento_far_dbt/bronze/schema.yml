@@ -1,0 +1,186 @@
+version: 2
+
+models:
+
+  # Consolidado GFAR
+
+  - name: consolidado
+    description: >
+      Dados do GFAR consolidado com propostas e contratos FAR do Novo MCMV.
+      Cobre todo o ciclo de vida: da proposta protocolizada até a contratação.
+      Contém 15.091 registros (13.216 propostas únicas, 940 com APF).
+      Tipagem aplicada: text→int, text→date, text→numeric, text→boolean.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: id_proposta
+        description: Identificador único da proposta no GFAR (UUID).
+      - name: apf
+        description: APF normalizado para 8 dígitos (chave de integração principal).
+      - name: portaria_contratacao
+        description: Número da portaria MCID de seleção/contratação.
+      - name: co_situacao_contratada
+        description: "Situação da contratação: 1=Contratado, 2=Distratado, 3=Outro, NULL=Não contratado."
+      - name: proponente_nome
+        description: Nome social do proponente (ente público ou construtora).
+      - name: proponente_cnpj
+        description: CNPJ do proponente (apenas dígitos).
+      - name: tomador_nome
+        description: Nome social do tomador do financiamento.
+      - name: tomador_cnpj
+        description: CNPJ do tomador (apenas dígitos).
+      - name: empreendimento_nome
+        description: Nome do empreendimento (prioriza nome de contratação sobre protocolo).
+      - name: qt_uh
+        description: Quantidade de unidades habitacionais.
+      - name: co_tipo_edificacao
+        description: "Tipologia: 1=Casa Térrea, 2=Apartamento, 3=Sobrado, 4=Misto."
+      - name: valor_far
+        description: Valor do empréstimo FAR em R$ (numeric 15,2).
+      - name: valor_contrapartidas
+        description: Valor total de contrapartidas em R$ (numeric 15,2).
+    data_tests:
+      - row_count_match:
+          source_table: "{{ source('raw', 'novo_mcmv_far_consolidado') }}"
+          target_table: "{{ ref('consolidado') }}"
+
+  # Cadastro PJ
+
+  - name: cadastro_pj
+    description: >
+      Cadastro detalhado de pessoa jurídica (empreendimento contratado).
+      822 empreendimentos com composição financeira completa, coordenadas GPS,
+      tipologia, construtora, datas-chave e indicadores do empreendimento.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: construtora_nome
+        description: Nome da construtora responsável.
+      - name: construtora_cnpj
+        description: CNPJ da construtora (apenas dígitos).
+      - name: qt_uh
+        description: Quantidade de unidades habitacionais contratadas.
+      - name: vr_emprestimo_far
+        description: Valor do empréstimo FAR em R$.
+      - name: vr_total_investimento
+        description: Valor total do investimento (FAR + contrapartidas) em R$.
+      - name: vr_obra_edificacao
+        description: Valor destinado à obra/edificação em R$.
+      - name: vr_terreno
+        description: Valor do terreno em R$.
+      - name: dt_contratacao
+        description: Data de assinatura do contrato.
+      - name: dt_inicio_obra
+        description: Data de início efetivo da obra.
+      - name: dt_previsao_conclusao
+        description: Data prevista de conclusão da obra.
+      - name: gps_lat_grau
+        description: Latitude em graus (formato DMS, componente grau).
+      - name: gps_long_grau
+        description: Longitude em graus (formato DMS, componente grau).
+    data_tests:
+      - row_count_match:
+          source_table: "{{ source('raw', 'novo_mcmv_far_cad_pj_mensal') }}"
+          target_table: "{{ ref('cadastro_pj') }}"
+
+  # Obra Mensal
+
+  - name: obra_mensal
+    description: >
+      Evolução física da obra. Snapshot mensal com percentual previsto/realizado,
+      situação da obra, UHs concluídas e datas de paralisação/retomada/entrega.
+      822 registros (1 por empreendimento no snapshot atual).
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: co_situacao_obra
+        description: "Código da situação: 1=Não iniciada, 2=Paralisada, 11=Em andamento."
+      - name: pct_obra_prevista
+        description: Percentual de obra previsto para a data de referência (0-100).
+      - name: pct_obra_realizada
+        description: Percentual de obra efetivamente realizado (0-100).
+      - name: qt_uh_concluidas
+        description: Quantidade de UHs com obra concluída.
+      - name: dt_conclusao_obra
+        description: Data de conclusão da obra (quando concluída).
+      - name: dt_entrega
+        description: Data de entrega do empreendimento aos beneficiários.
+      - name: dt_paralisacao
+        description: Data de paralisação da obra (quando paralisada).
+      - name: dt_movimento
+        description: Data de referência do snapshot.
+    data_tests:
+      - row_count_match:
+          source_table: "{{ source('raw', 'novo_mcmv_far_obra_mensal') }}"
+          target_table: "{{ ref('obra_mensal') }}"
+
+  # Financeiro Mensal
+
+  - name: financeiro_mensal
+    description: >
+      Série temporal de liberações financeiras. Contém 6.069 registros para
+      638 APFs (média de 9,5 liberações por empreendimento). Cada registro
+      representa uma liberação de recurso com decomposição por componente.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: co_tipo_movimento
+        description: "Tipo: 1=Liberação obra, 5=INCC/ajuste."
+      - name: vr_liberado
+        description: Valor total liberado nesta operação em R$.
+      - name: vr_pago_obra
+        description: Parcela destinada à obra/edificação em R$.
+      - name: vr_pago_terreno
+        description: Parcela destinada ao terreno em R$.
+      - name: vr_pago_trabalho_social
+        description: Parcela destinada ao trabalho social (PTS) em R$.
+      - name: vr_pago_incc
+        description: Parcela de ajuste INCC em R$.
+      - name: dt_liberacao
+        description: Data efetiva da liberação do recurso.
+      - name: dt_movimento
+        description: Data de registro/movimento no sistema.
+
+  # Dados Prioritários CAIXA
+
+  - name: dados_prioritarios_caixa
+    description: >
+      Snapshot consolidado dos dados prioritários recebidos da CAIXA.
+      Filtrado apenas para modalidade FAR (4.443 empreendimentos).
+      Contém situação atual, percentual de execução, valores e coordenadas.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF no formato CAIXA (8 dígitos).
+      - name: situacao
+        description: "Situação textual: EM ANDAMENTO, CONCLUÍDO, PARALISADO, etc."
+      - name: pct_execucao
+        description: Percentual de execução física reportado pela CAIXA (0-100).
+      - name: valor_contratado
+        description: Valor total contratado em R$.
+      - name: valor_desembolsado
+        description: Valor total desembolsado acumulado em R$.
+      - name: valor_aporte_adicional
+        description: Valor de aporte/suplementação adicional em R$.
+      - name: uh_contratadas
+        description: Quantidade de UHs contratadas.
+      - name: uh_entregues
+        description: Quantidade de UHs já entregues.
+      - name: latitude
+        description: Latitude em formato decimal.
+      - name: longitude
+        description: Longitude em formato decimal.
+      - name: dt_contratacao
+        description: Data de contratação do empreendimento.

@@ -1,0 +1,11 @@
+mcid:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      host: "{{ env_var('DB_DW_HOST_MCID') }}"
+      user: "{{ env_var('DB_DW_USER_MCID') }}"
+      password: "{{ env_var('DB_DW_PASSWORD_MCID') }}"
+      port: "{{ env_var('DB_DW_PORT_MCID', '5432') | int }}"
+      dbname: "{{ env_var('DB_DW_DBNAME_MCID', 'cidades') }}"
+      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'mcid') }}"
