@@ -18,7 +18,7 @@ clean-targets:
 
 models:
   mcmv: 
-    +database: postgres
+    +database: cidades
     
     infomoney:
       +materialized: table
@@ -31,6 +31,8 @@ models:
     novo_caged:
       +materialized: table
       +schema: novo_caged
+
+    
 
 on-run-start:
   - '{{create_udfs()}}'

@@ -31,3 +31,5 @@ sources:
       - name: dados_prioritarios_recebidos_bb_empreendimentos
       - name: dados_prioritarios_recebidos_caixa_empreendimentos
       - name: novos_dados_mcmv_far
+      - name: novo_mcmv_far_contratacao
+      - name: novo_mcmv_far_obra_mensal

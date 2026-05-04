@@ -33,10 +33,10 @@ select
     coalesce(o.percentual_execucao, p.percentual_exec) as percentual_execucao,
 
     -- UHs
-    p.uh_contratadas,
-    p.uh_entregues,
-    p.uh_vigentes,
-    p.uh_distratadas,
+    {{parse_integer_value('p.uh_contratadas')}} as uh_contratadas,
+    {{parse_integer_value('p.uh_entregues')}} as uh_entregues,
+    {{parse_integer_value('p.uh_vigentes')}} as uh_vigentes,
+    {{parse_integer_value('p.uh_distratadas')}} as uh_distratadas,
     o.uh_concluidas,
     o.uh_ociosas,
 

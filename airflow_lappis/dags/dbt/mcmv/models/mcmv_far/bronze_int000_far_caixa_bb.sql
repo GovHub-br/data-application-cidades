@@ -18,10 +18,15 @@ select
     {{ parse_financial_value('vr_investimento') }} as vr_investimento,
     {{ parse_financial_value('vr_liberado') }} as vr_liberado,
 
-    cast(qt_unidade_financiadas as integer) as uh_contratadas,
-    cast(qt_unidades_concluidas as integer) as uh_concluidas,
-    cast(qt_unidades_ociosas as integer) as uh_ociosas,
-    cast(qt_unidades_entregues as integer) as uh_entregues,
+    -- cast(qt_unidade_financiadas as integer) as uh_contratadas,
+    -- cast(qt_unidades_concluidas as integer) as uh_concluidas,
+    -- cast(qt_unidades_ociosas as integer) as uh_ociosas,
+    -- cast(qt_unidades_entregues as integer) as uh_entregues,
+
+    {{parse_integer_value('qt_unidade_financiadas')}} as uh_contratadas,
+    {{parse_integer_value('qt_unidades_concluidas')}} as uh_concluidas,
+    {{parse_integer_value('qt_unidades_ociosas')}} as uh_ociosas,
+    {{parse_integer_value('qt_unidades_entregues')}} as uh_entregues,
 
     cast(portaria_selecao as varchar) as portaria_selecao,
     cast(situacao_retomada as varchar) as situacao_retomada,
