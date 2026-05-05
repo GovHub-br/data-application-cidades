@@ -29,7 +29,7 @@ models:
       silver:
         +materialized: table
       gold:
-        +materialized: view
+        +materialized: table
 
 on-run-start:
   - '{{create_udfs()}}'

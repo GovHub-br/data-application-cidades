@@ -29,6 +29,14 @@ models:
         description: Nome final do empreendimento após a contratação.
       - name: quantidade_uh
         description: Número total de Unidades Habitacionais (UHs) no empreendimento.
+      - name: municipio
+        description: Nome do município onde o empreendimento está localizado.
+      - name: uf
+        description: Unidade Federativa (UF) do empreendimento.
+      - name: co_originacao
+        description: Código de originação do empreendimento (1 = Seleção, 2 = Calamidade).
+      - name: co_tipo_demanda
+        description: Código do tipo de demanda (1 = Cadastro Habitacional).
       - name: situacao_empreendimento
         description: "Status/Situação gerencial atual da obra (ex: ENTREGUE, EM ANDAMENTO, PARALISADA)."
       - name: tipologia

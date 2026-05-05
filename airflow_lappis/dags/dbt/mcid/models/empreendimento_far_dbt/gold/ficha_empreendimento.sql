@@ -1,4 +1,4 @@
-{{ config(materialized="view") }}
+{{ config(materialized="table") }}
 
 with
     base_silver as (
@@ -22,6 +22,25 @@ select
     quantidade_uh,
     pessoas_atendidas,
     tipologia,
+    
+    -- Localização
+    municipio,
+    uf,
+    concat(municipio, '/', uf) as municipio_uf,
+    
+    -- Originação e Demanda
+    case co_originacao
+        when 1 then 'SELEÇÃO'
+        when 2 then 'CALAMIDADE/EMERGÊNCIA'
+        else 'OUTRO (' || coalesce(co_originacao::text, 'N/A') || ')'
+    end as metodo,
+    
+    case co_tipo_demanda
+        when 1 then 'CADASTRO HABITACIONAL'
+        when 2 then 'MOVIMENTOS SOCIAIS'
+        when 3 then 'CALAMIDADE'
+        else 'OUTRO (' || coalesce(co_tipo_demanda::text, 'N/A') || ')'
+    end as demanda,
     
     -- Status do Projeto
     situacao_empreendimento,

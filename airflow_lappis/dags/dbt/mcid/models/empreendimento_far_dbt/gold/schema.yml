@@ -12,6 +12,12 @@ models:
     columns:
       - name: apf
         description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+      - name: municipio_uf
+        description: Localização do empreendimento no formato "Município/UF" (ex. "Horizonte/CE").
+      - name: metodo
+        description: Método de originação/seleção do empreendimento (ex. SELEÇÃO, CALAMIDADE/EMERGÊNCIA).
+      - name: demanda
+        description: Tipo de demanda habitacional atendida pelo projeto (ex. CADASTRO HABITACIONAL).
       - name: nome_empreendimento
         description: Nome do empreendimento em maiúsculo (padronizado).
       - name: status_execucao_simplificado

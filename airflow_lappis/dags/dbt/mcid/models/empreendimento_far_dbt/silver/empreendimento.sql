@@ -37,6 +37,10 @@ select
     cons.tomador_nome,
     c.empreendimento_nome,
     c.qt_uh as quantidade_uh,
+    cons.municipio,
+    cons.uf,
+    cons.co_originacao,
+    cons.co_tipo_demanda,
     coalesce(cx.situacao, 'Situação não mapeada') as situacao_empreendimento,
     c.co_tipo_edificacao as codigo_tipologia,
     case c.co_tipo_edificacao
