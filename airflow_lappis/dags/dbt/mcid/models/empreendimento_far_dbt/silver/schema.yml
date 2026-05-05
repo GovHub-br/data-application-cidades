@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: empreendimento
+    description: >
+      Tabela Silver (Visão Unificada) de Empreendimentos FAR do Novo MCMV.
+      Esta tabela consolida as informações da camada bronze cruzando as tabelas
+      cadastro_pj, consolidado, obra_mensal e dados_prioritarios_caixa através da chave APF.
+      Gera uma visão final pronta para alimentar painéis e dashboards.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: Chave primária (Arranjo Produtivo Financeiro). ID único do empreendimento contratado na Caixa.
+      
+      # Dados do Empreendimento
+      - name: portaria_selecao
+        description: Número da portaria MCID de seleção ou enquadramento da proposta.
+      - name: proponente_cnpj
+        description: CNPJ do ente público ou empresa proponente.
+      - name: proponente_nome
+        description: Nome social do proponente original da proposta.
+      - name: tomador_cnpj
+        description: CNPJ do ente ou empresa tomadora do financiamento/recurso.
+      - name: tomador_nome
+        description: Nome social do tomador do financiamento/recurso.
+      - name: empreendimento_nome
+        description: Nome final do empreendimento após a contratação.
+      - name: quantidade_uh
+        description: Número total de Unidades Habitacionais (UHs) no empreendimento.
+      - name: municipio
+        description: Nome do município onde o empreendimento está localizado.
+      - name: uf
+        description: Unidade Federativa (UF) do empreendimento.
+      - name: co_originacao
+        description: Código de originação do empreendimento (1 = Seleção, 2 = Calamidade).
+      - name: co_tipo_demanda
+        description: Código do tipo de demanda (1 = Cadastro Habitacional).
+      - name: situacao_empreendimento
+        description: "Status/Situação gerencial atual da obra (ex: ENTREGUE, EM ANDAMENTO, PARALISADA)."
+      - name: tipologia
+        description: >
+          Classificação do tipo de construção. Calculado a partir de co_tipo_edificacao:
+          (Casa Térrea, Apartamento, Sobrado, Misto).
+      - name: pessoas_atendidas
+        description: >
+          Estimativa de pessoas diretamente beneficiadas.
+          Cálculo heurístico: (quantidade_uh * 3.3 pessoas por família) arredondado para baixo.
+
+      # Dados do Contrato
+      - name: valor_contratado
+        description: Valor total de investimento (Recurso FAR + Contrapartidas).
+      - name: agente_financeiro
+        description: "Banco responsável pelo financiamento/gestão (ex: CAIXA)."
+      - name: dt_contratacao
+        description: Data de assinatura do contrato de financiamento da obra.
+      - name: valor_aporte_adicional
+        description: Valor total de aportes ou suplementações adicionais liberadas durante a obra.
+      - name: valor_por_uh
+        description: Custo unitário estimado por UH (valor_contratado / quantidade_uh).
+
+      # Evolução Física
+      - name: percentual_execucao_fisica
+        description: Porcentagem (0 a 100) do andamento físico da obra reportado pela medição atual.
+      - name: dt_conclusao_obra
+        description: Data em que a obra física atingiu 100% (se aplicável).
+      - name: dt_entrega
+        description: Data de entrega das chaves aos beneficiários finais (se aplicável).
+      - name: dt_previsao_entrega
+        description: Previsão estipulada para a entrega oficial do empreendimento.
+
+      # Evolução Financeira
+      - name: valor_desembolsado
+        description: Total financeiro já repassado/liberado para a construtora até a medição atual.
+      - name: percentual_execucao_financeira
+        description: >
+          Percentual do recurso liberado sobre o valor total.
+          Cálculo: (valor_desembolsado / valor_contratado) * 100.
