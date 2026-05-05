@@ -1,0 +1,41 @@
+version: 2
+
+macros:
+  - name: create_udfs
+    description: >
+      Cria as UDFs necessárias para o projeto MCID.
+      Chamada no on-run-start do dbt_project.yml.
+
+  - name: generate_schema_name
+    description: >
+      Gera o nome do schema a ser utilizado no projeto.
+      Função built-in do dbt.
+
+  ## UDFS
+  - name: create_f_parse_date_br
+    description: >
+      Cria a UDF parse_date_br que converte datas nos formatos
+      brasileiros (DD/MM/YYYY, YYYYMMDD, YYYY-MM-DD) para tipo date.
+    arguments:
+      - name: in_text
+        type: text
+        description: >
+          Texto a ser convertido em data.
+          Aceita DD/MM/YYYY (padrão BR), YYYYMMDD (GFAR) e YYYY-MM-DD (ISO).
+
+  - name: create_f_normalize_apf
+    description: >
+      Cria a UDF normalize_apf que normaliza o APF para formato canônico
+      de 8 dígitos sem traço. Necessária porque o APF aparece em 3 formatos
+      diferentes nas tabelas fonte (com traço, 8 dígitos, 6 dígitos).
+    arguments:
+      - name: in_text
+        type: text
+        description: >
+          APF em qualquer formato. Ex.: "0626780-03", "62678003", "626780".
+
+  - name: parse_financial_value
+    description: >
+      Macro que converte valores financeiros em texto para numeric(15,2).
+      Suporta formato GFAR (zeros à esquerda + vírgula), brasileiro padrão
+      (ponto milhar + vírgula decimal) e formato numérico simples.
