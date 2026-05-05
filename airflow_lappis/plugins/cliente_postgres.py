@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Tuple
 import psycopg2
 import psycopg2.extras
@@ -35,6 +36,19 @@ class ClientPostgresDB:
             f"[cliente_postgres.py] Initialized ClientPostgresDB with conn_str: "
             f"{conn_str}"
         )
+
+    @contextmanager
+    def _connect(self):
+        """Context manager that guarantees the connection is closed after use.
+
+        psycopg2's native context manager only handles transactions
+        (commit/rollback) but does not close the connection.
+        """
+        conn = psycopg2.connect(self.conn_str)
+        try:
+            yield conn
+        finally:
+            conn.close()
 
     def create_table_if_not_exists(
         self,
@@ -82,7 +96,7 @@ class ClientPostgresDB:
         if conn is not None:
             _execute(conn)
         else:
-            with psycopg2.connect(self.conn_str) as new_conn:
+            with self._connect() as new_conn:
                 _execute(new_conn)
                 new_conn.commit()
 
@@ -152,13 +166,13 @@ class ClientPostgresDB:
         if conn is not None:
             _execute(conn)
         else:
-            with psycopg2.connect(self.conn_str) as new_conn:
+            with self._connect() as new_conn:
                 _execute(new_conn)
                 new_conn.commit()
 
     def execute_query(self, query: str) -> List[Tuple[Any, ...]]:
         logging.info(f"[cliente_postgres.py] Executing query: {query}")
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 results = cursor.fetchall()
@@ -170,27 +184,27 @@ class ClientPostgresDB:
 
     def get_contratos_ids(self, schema: str = "compras_gov") -> List[int]:
         query = f"SELECT id FROM {schema}.contratos"
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return [row[0] for row in cursor.fetchall()]
 
     def get_id_programas(self) -> List[int]:
         query = "SELECT id_programa FROM transfere_gov.programas"
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return [row[0] for row in cursor.fetchall()]
 
     def get_id_planos_acao(self) -> List[int]:
         query = "SELECT id_plano_acao FROM transfere_gov.planos_acao"
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return [row[0] for row in cursor.fetchall()]
 
     def drop_table_if_exists(self, table_name: str, schema: str = "raw") -> None:
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 try:
                     cursor.execute(f"DROP TABLE IF EXISTS {schema}.{table_name};")
@@ -212,7 +226,7 @@ class ClientPostgresDB:
             "SELECT tx_numero_programacao, ug_emitente_programacao "
             "FROM transfere_gov.programacao_financeira"
         )
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return cursor.fetchall()
@@ -260,7 +274,7 @@ class ClientPostgresDB:
         if conn is not None:
             _execute(conn)
         else:
-            with psycopg2.connect(self.conn_str) as new_conn:
+            with self._connect() as new_conn:
                 _execute(new_conn)
                 new_conn.commit()
 
@@ -273,7 +287,7 @@ class ClientPostgresDB:
             "SELECT cd_ug_emitente_nota, cd_gestao_emitente_nota, tx_numero_nota "
             "FROM transfere_gov.notas_de_credito"
         )
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return cursor.fetchall()
@@ -297,7 +311,7 @@ class ClientPostgresDB:
                 f"Executando query para remover duplicados em {schema}.{table_name}"
             )
 
-            with psycopg2.connect(self.conn_str) as conn:
+            with self._connect() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(delete_query)
                     conn.commit()
@@ -333,7 +347,7 @@ class ClientPostgresDB:
             SELECT codigounidade, ordem_grandeza
             FROM pessoas.unidade_organizacional
         """
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 rows = cursor.fetchall()
@@ -344,7 +358,7 @@ class ClientPostgresDB:
 
     def execute_non_query(self, query: str) -> None:
         logging.info(f"[cliente_postgres.py] Executando non-query: {query}")
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 try:
                     cursor.execute(query)
@@ -358,7 +372,7 @@ class ClientPostgresDB:
 
     def get_dashboard_kpis(self) -> Dict[str, int]:
         query = "SELECT kpi, valor FROM pessoas.kpis_servidores"
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return {row[0]: row[1] for row in cursor.fetchall()}
@@ -370,7 +384,7 @@ class ClientPostgresDB:
                 ROUND(percentual_distribuicao * 100, 1) as percentual
             FROM pessoas.distribuicao_genero
         """
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 genero_data = {}
@@ -387,7 +401,7 @@ class ClientPostgresDB:
             FROM pessoas.distribuicao_raca_cor
             ORDER BY quantidade_servidores DESC
         """
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return [
@@ -402,7 +416,7 @@ class ClientPostgresDB:
             FROM pessoas.distribuicao_situacao_funcional
             ORDER BY quantidade_servidores DESC
         """
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return [{"label": row[0], "valor": row[1]} for row in cursor.fetchall()]
@@ -417,7 +431,7 @@ class ClientPostgresDB:
             FROM pessoas.distribuicao_mapa_uf
             ORDER BY sigla_uf
         """
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
                 return {
@@ -438,7 +452,7 @@ class ClientPostgresDB:
             ORDER BY total DESC
             LIMIT %s
         """
-        with psycopg2.connect(self.conn_str) as conn:
+        with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query, (limit,))
                 return [
