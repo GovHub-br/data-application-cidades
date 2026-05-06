@@ -46,3 +46,42 @@ models:
         description: Somatório de Unidades Habitacionais.
       - name: media_execucao_fisica
         description: Execução física média (0-100) daquele grupo de empreendimentos.
+
+  - name: panorama_estadual
+    description: >
+      Visão Gold agregada por UF para alimentar o dashboard "Panorama Estadual".
+      Consolida todos os empreendimentos de um estado em seções distintas, cada uma
+      identificada pela coluna 'secao'. A ferramenta de BI filtra WHERE secao = 'X'
+      para montar cada card do painel.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: uf
+        description: Sigla da Unidade Federativa (ex. MT, BA, CE).
+      - name: secao
+        description: >
+          Identificador da seção do dashboard que esta linha alimenta.
+          Valores possíveis: 'header' (KPIs gerais), 'metodo' (distribuição por método de originação),
+          'portaria' (distribuição por portaria de referência), 'demanda' (distribuição por tipo de demanda),
+          'situacao' (distribuição por status da obra), 'execucao_fisica' (distribuição por faixa de execução).
+      - name: dimensao
+        description: >
+          Valor da dimensão dentro da seção. Para 'metodo' pode ser SELEÇÃO ou CALAMIDADE.
+          Para 'situacao' pode ser EM ANDAMENTO, PARALISADO, etc. Para 'header' é sempre 'resumo'.
+      - name: qtd_empreendimentos
+        description: >
+          Contagem de empreendimentos naquela combinação UF+seção+dimensão.
+          Na seção 'header', este campo contém o total de municípios atendidos.
+      - name: qtd_uhs
+        description: Somatório de Unidades Habitacionais naquela combinação.
+      - name: valor_1
+        description: "Na seção 'header': valor total contratado no estado. NULL nas demais seções."
+      - name: valor_2
+        description: "Na seção 'header': valor total desembolsado no estado. NULL nas demais seções."
+      - name: valor_3
+        description: "Na seção 'header': valor total de aportes adicionais no estado. NULL nas demais seções."
+      - name: valor_4
+        description: "Na seção 'header': valor médio por UH no estado. NULL nas demais seções."
+      - name: total_empreendimentos_uf
+        description: "Na seção 'header': total de empreendimentos no estado. NULL nas demais seções."
