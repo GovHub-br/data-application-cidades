@@ -39,7 +39,7 @@ def infomoney_imob_dag() -> None:
         
      
         api = ClienteInfomoney(api_key=API_KEY)
-        db = ClientPostgresDB(get_postgres_conn())
+        db = ClientPostgresDB(get_postgres_conn("cidades_prod"))
         
       
         dados_imob_raw = api.get_daily_series(SYMBOL)
@@ -53,18 +53,19 @@ def infomoney_imob_dag() -> None:
         dados_imob = []
 
         for data_pregao, valores in dados_imob_raw.items():
-            registro = {
-                "symbol": SYMBOL,
-                "data_pregao": data_pregao,
-                "open": float(valores["1. open"]),
-                "high": float(valores["2. high"]),
-                "low": float(valores["3. low"]),
-                "close": float(valores["4. close"]),
-                "volume": int(valores["5. volume"]),
-                "dt_ingest": dt_ingest
-            }
-
-            dados_imob.append(registro)
+            if data_pregao >= "2024-01-01":
+                registro = {
+                    "symbol": SYMBOL,
+                    "data_pregao": data_pregao,
+                    "open": float(valores["1. open"]),
+                    "high": float(valores["2. high"]),
+                    "low": float(valores["3. low"]),
+                    "close": float(valores["4. close"]),
+                    "volume": int(valores["5. volume"]),
+                    "dt_ingest": dt_ingest
+                }
+    
+                dados_imob.append(registro)
 
         db.insert_data(
             dados_imob,
