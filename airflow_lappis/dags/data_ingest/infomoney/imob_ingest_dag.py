@@ -30,7 +30,7 @@ def infomoney_imob_dag() -> None:
 
     @task
     def fetch_and_load_imob():
-        logging.info("Iniciando extração Alpha Vantage (IMOB.SA)...")
+        logging.info("Iniciando extração Infomoney (IMOB.SA)...")
         
   
         config = Variable.get("api_key_alphavantage", deserialize_json=True)
@@ -42,17 +42,29 @@ def infomoney_imob_dag() -> None:
         db = ClientPostgresDB(get_postgres_conn())
         
       
-        dados_imob = api.get_daily_series(SYMBOL)
-        
-        if not dados_imob:
-            logging.warning(f"Nenhum dado retornado para o símbolo {SYMBOL}. Verifique a API Key ou o limite de requisições.")
+        dados_imob_raw = api.get_daily_series(SYMBOL)
+
+        if not dados_imob_raw:
+            logging.warning(f"Nenhum dado retornado para o símbolo {SYMBOL}.")
             return
 
         dt_ingest = datetime.now().isoformat()
-        for item in dados_imob:
-            item["dt_ingest"] = dt_ingest
 
-        logging.info(f"Processados {len(dados_imob)} registros. Iniciando carga no banco...")
+        dados_imob = []
+
+        for data_pregao, valores in dados_imob_raw.items():
+            registro = {
+                "symbol": SYMBOL,
+                "data_pregao": data_pregao,
+                "open": float(valores["1. open"]),
+                "high": float(valores["2. high"]),
+                "low": float(valores["3. low"]),
+                "close": float(valores["4. close"]),
+                "volume": int(valores["5. volume"]),
+                "dt_ingest": dt_ingest
+            }
+
+            dados_imob.append(registro)
 
         db.insert_data(
             dados_imob,
