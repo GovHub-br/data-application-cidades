@@ -27,6 +27,16 @@ select
     municipio,
     uf,
     concat(municipio, '/', uf) as municipio_uf,
+
+    -- Concatenação: APF - Municipio/UF - Nome Empreendimento
+    -- para busca na Dashboard
+    concat(
+        apf,
+        ' - ', 
+        municipio, '/', uf, 
+        ' - ', 
+        upper(empreendimento_nome)
+    ) as apf_municipio_empreendimento, 
     
     -- Originação e Demanda
     case co_originacao
@@ -39,7 +49,11 @@ select
         when 1 then 'CADASTRO HABITACIONAL'
         when 2 then 'MOVIMENTOS SOCIAIS'
         when 3 then 'CALAMIDADE'
-        else 'OUTRO (' || coalesce(co_tipo_demanda::text, 'N/A') || ')'
+        when 4 then 'OBRA PÚBLICA'
+        when 5 then 'REASSENTAMENTO'
+        when 6 then 'DOAÇÃO/CESSÃO DE TERRENO'
+        when 7 then 'OUTROS'
+        else 'NÃO IDENTIFICADO (' || coalesce(co_tipo_demanda::text, 'N/A') || ')'
     end as demanda,
     
     -- Status do Projeto
