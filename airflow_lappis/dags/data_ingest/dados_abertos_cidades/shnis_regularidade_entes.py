@@ -39,10 +39,10 @@ def snhis_dag():
         raw_data = api.get_regularidade_entes()
         data = []
         for row in raw_data:
-            # Normaliza colunas originais
+
             normalized_row = {normalize_column_name(k): v for k, v in row.items()}
             
-            # Adiciona as novas colunas
+
             normalized_row["arquivo_origem"] = url_origem
             normalized_row["dt_ingest"] = data_ingestao
             

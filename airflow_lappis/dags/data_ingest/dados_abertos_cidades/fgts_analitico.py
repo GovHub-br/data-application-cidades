@@ -37,8 +37,7 @@ def dados_abertos_mcmv_fgts_analitico():
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = api.download_and_extract_fgts(tmpdir)
             
-            # Processamento otimizado com Pandas dividindo o CSV gigante em blocos 
-            # para evitar esgotamento de memória no Docker ("Zombie Job" / Código -9)
+          
             if file_path.lower().endswith(".csv"):
                 chunk_iterator = pd.read_csv(file_path, sep=";", encoding="utf-8", on_bad_lines='skip', chunksize=50000)
                 
@@ -70,11 +69,10 @@ def dados_abertos_mcmv_fgts_analitico():
                     logging.warning("Nenhum dado encontrado")
                     return
 
-                # Normalização de colunas via Pandas (mais rápido que loop em dict)
                 df.columns = [normalize_column_name(col) for col in df.columns]
                 df["dt_ingest"] = execution_date
 
-                # Conversão para lista de dicionários apenas se o seu db.insert_data exigir
+
                 data = df.to_dict(orient="records")
 
                 logging.info(f"Inserindo {len(data)} registros (Excel)")
@@ -84,8 +82,8 @@ def dados_abertos_mcmv_fgts_analitico():
                     schema="dados_abertos_cidades"
                 )
 
-    # Invocação da task para registrar no grafo
+
     fetch_and_store_fgts_analitico()
 
-# Instanciação da DAG
+
 dados_abertos_mcmv_fgts_analitico()

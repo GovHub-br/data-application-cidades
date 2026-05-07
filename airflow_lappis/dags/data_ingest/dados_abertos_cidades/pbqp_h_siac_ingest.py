@@ -27,9 +27,8 @@ def siac_dag():
         api = ClienteDadosGovCidades()
         db = ClientPostgresDB(get_postgres_conn())
         
-        # Busca dado
+
         raw = api.get_empresas_certificadas_siac()
-        # Usa o helper comum
         data = process_and_clean_data(raw)
         db.insert_data(
         data,
