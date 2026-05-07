@@ -15,7 +15,8 @@ class ClienteInfomoney(ClienteBase):
         params = {
             "function": "TIME_SERIES_DAILY",
             "symbol": symbol,
-            "apikey": self.api_key
+            "apikey": self.api_key,
+            "outputsize": "full"
         }
         
         logging.info(f"[Infomoney] Buscando dados para {symbol}...")
