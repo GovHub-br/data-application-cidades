@@ -39,7 +39,7 @@ def infomoney_imob_dag() -> None:
         
      
         api = ClienteInfomoney(api_key=API_KEY)
-        db = ClientPostgresDB(get_postgres_conn("cidades_prod"))
+        db = ClientPostgresDB(get_postgres_conn())
         
       
         dados_imob_raw = api.get_daily_series(SYMBOL)
