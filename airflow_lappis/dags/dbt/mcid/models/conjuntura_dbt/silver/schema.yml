@@ -1,0 +1,90 @@
+version: 2
+models:
+  - name: silver_fgv_icst
+    description: >
+      Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE.
+      Camada silver com variações mensais e em 12 meses calculadas via LAG.
+      Origem: conjuntura_bronze.bronze_fgv_icst.
+    meta: {}
+    tags:
+      - silver
+      - icst
+      - fgv
+    columns:
+      - name: data_referencia
+        description: Data de referência do índice (mensal).
+      - name: icst_com_ajuste_sazonal
+        description: Valor do ICST com ajuste sazonal.
+      - name: icst_sem_ajuste_sazonal
+        description: Valor do ICST sem ajuste sazonal.
+      - name: var_mes
+        description: Variação percentual em relação ao mês anterior.
+      - name: var_12_meses
+        description: Variação percentual em relação ao mesmo mês do ano anterior.
+      - name: dt_ingest
+        description: Data de ingestão do registro.
+
+  - name: silver_imob_infomoney
+    description: >
+      Índice IMOB da Infomoney agregado mensalmente (fechamento do último dia útil).
+      Camada silver com variações mensais, em 12 meses e acumulado da série calculados.
+      Origem: conjuntura_bronze.bronze_imob_infomoney.
+    meta: {}
+    tags:
+      - silver
+      - imob
+      - infomoney
+    columns:
+      - name: data_referencia
+        description: Primeiro dia do mês de referência.
+      - name: close_fim_mes
+        description: Valor de fechamento do último dia útil do mês.
+      - name: var_mes
+        description: Variação percentual em relação ao mês anterior.
+      - name: var_12_meses
+        description: Variação percentual em relação ao mesmo mês do ano anterior.
+      - name: var_acum_serie
+        description: Variação acumulada desde o início da série.
+
+  - name: silver_fipezap_locacao
+    description: >
+      Índice FipeZap de locação residencial.
+      Camada silver com tipagem correta e variação em 12 meses calculada.
+      Origem: conjuntura_bronze.bronze_fipezap_locacao.
+    meta: {}
+    tags:
+      - silver
+      - fipezap
+      - fipe
+    columns:
+      - name: data_referencia
+        description: Data de referência do índice (mensal).
+      - name: var_mensal
+        description: "Variação percentual mensal (em decimal, ex: 0.0068)."
+      - name: var_ano
+        description: Variação percentual acumulada no ano (em decimal).
+      - name: var_12_meses_calc
+        description: Variação percentual em 12 meses calculada via LAG.
+      - name: dt_ingest
+        description: Data de ingestão do registro.
+
+  - name: silver_abramat_indice
+    description: >
+      Índice ABRAMAT de custos da construção civil.
+      Camada silver com dados mockados a partir do relatório (ingestão via PDF).
+      Origem: conjuntura_bronze.bronze_abramat_indice.
+    meta: {}
+    tags:
+      - silver
+      - abramat
+    columns:
+      - name: data_referencia
+        description: Data de referência do índice (mensal).
+      - name: indice
+        description: Valor absoluto do índice ABRAMAT.
+      - name: var_mes
+        description: Variação percentual em relação ao mês anterior.
+      - name: var_12_meses
+        description: Variação percentual em relação ao mesmo mês do ano anterior.
+      - name: dt_ingest
+        description: Data de ingestão do registro.
