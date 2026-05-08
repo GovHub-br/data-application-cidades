@@ -18,8 +18,12 @@ class ClienteBase:
         )
 
     def request(
-        self, method: str, path: str, **kwargs: Any
-    ) -> Tuple[HTTPStatus, Optional[dict | list]]:
+        self, 
+        method: str, 
+        path: str,
+        response_type: str = "json",
+        **kwargs: Any
+    ) -> Tuple[HTTPStatus, Any]:
         """
         Faz uma requisição HTTP em até DEFAULT_MAX_RETRIES+1 tentativas.
 
@@ -37,22 +41,40 @@ class ClienteBase:
             try:
                 logging.info(
                     f"[cliente_base.py] Attempt {attempt + 1} for {method} "
-                    f"{self.base_url}{path} with kwargs: {kwargs}"
+                    f"{path}"
                 )
-                response = self.client.request(method, path, **kwargs)
+
+                response = self.client.request(
+                    method, 
+                    path,
+                    follow_redirects=True,
+                    **kwargs
+                )
                 response.raise_for_status()
+    
+                if response_type == "json":
+                    payload = response.json()
+                elif response_type == "text":
+                    payload = response.text
+                elif response_type == "bytes":
+                    payload = response.content
+                else:
+                    raise ValueError(
+                        f"Unsupported response_type: {response_type}"
+                    )
+
                 logging.info(
                     f"[cliente_base.py] Request successful with status "
                     f"{response.status_code}"
                 )
-                return HTTPStatus(response.status_code), response.json()
+                return HTTPStatus(response.status_code), payload
             except httpx.HTTPError as e:
                 status = response.status_code if response else "Unknown"
                 logging.warning(
                     f"[cliente_base.py] API failed with status {status} on "
                     f"attempt {attempt + 1}. Error: {str(e)}"
                 )
-                if attempt < self.DEFAULT_MAX_RETRIES:
+                if attempt < self.DEFAULT_MAX_RETRIES - 1:
                     time.sleep(attempt**2 * self.DEFAULT_SLEEP_SECONDS)
                 else:
                     logging.error(

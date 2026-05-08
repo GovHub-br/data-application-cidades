@@ -86,19 +86,18 @@ class ClienteAbecip(ClienteBase):
         )
 
         try:
-            resp = requests.get(
-                url_pagina,
-                headers=self.client.headers,
-                timeout=self.DEFAULT_TIMEOUT,
+            _, html = self.request(
+                "GET",
+                pagina_path,
+                response_type="text",
             )
-            resp.raise_for_status()
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             logging.error(
                 f"[cliente_abecip.py] Erro ao acessar página ABECIP: {e}"
             )
             return None
 
-        soup = BeautifulSoup(resp.text, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
         for tag in soup.find_all("a", href=True):
             href = tag["href"]
             if pattern in href:
@@ -125,14 +124,14 @@ class ClienteAbecip(ClienteBase):
         """
         logging.info(f"[cliente_abecip.py] Baixando XLSX de: {url}")
         try:
-            resp = requests.get(
+            _, content = self.request(
+                "GET",
                 url,
-                headers=self.client.headers,
-                timeout=self.DEFAULT_TIMEOUT,
+                response_type="bytes",
             )
-            resp.raise_for_status()
-            return resp.content
-        except requests.exceptions.RequestException as e:
+
+            return content
+        except Exception as e:
             logging.error(
                 f"[cliente_abecip.py] Erro ao baixar XLSX: {e}"
             )

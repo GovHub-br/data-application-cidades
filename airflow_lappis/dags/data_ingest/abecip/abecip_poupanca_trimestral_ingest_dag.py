@@ -30,7 +30,6 @@ def abecip_poupanca_trimestral_ingest_dag() -> None:
     DAG de ingestão incremental trimestral da Caderneta de Poupança ABECIP.
     A cada execução baixa o XLSX completo e faz upsert de toda a série —
     garantindo que revisões retroativas sejam capturadas automaticamente.
-    Depende da carga histórica prévia via abecip_poupanca_historico_ingest_dag.
     """
 
     @task
