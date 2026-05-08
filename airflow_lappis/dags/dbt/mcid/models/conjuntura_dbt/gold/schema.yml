@@ -1,0 +1,28 @@
+version: 2
+models:
+  - name: gold_indices_mercado_imobiliario
+    description: >
+      Tabela gold consolidada com variações dos principais índices do mercado imobiliário:
+      IMOB (Infomoney), FIPEZAP (locação), ICST (FGV-IBRE) e ABRAMAT.
+      Estruturada com 4 períodos de comparação para consumo direto no Superset.
+      Origem: silver_imob_infomoney, silver_fipezap_locacao, silver_fgv_icst, silver_abramat_indice.
+    meta: {}
+    tags:
+      - gold
+      - indices
+      - mercado_imobiliario
+    columns:
+      - name: periodo
+        description: "Período de comparação (ex: DEZ 25 vs. NOV 25, JAN-DEZ/25)."
+      - name: imob_var
+        description: Variação percentual do Índice IMOB no período.
+      - name: fipezap_var
+        description: Variação percentual do Índice FipeZap de locação no período.
+      - name: icst_var
+        description: Variação percentual do Índice ICST (sem ajuste sazonal) no período.
+      - name: abramat_var
+        description: Variação percentual do Índice ABRAMAT no período.
+    data_tests:
+      - row_count_match:
+          source_table: conjuntura_silver.silver_fgv_icst
+          target_table: conjuntura_gold.gold_indices_mercado_imobiliario

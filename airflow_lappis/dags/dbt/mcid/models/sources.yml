@@ -36,3 +36,128 @@ sources:
         description: >
           Tabela de referência do IBGE com os 27 estados brasileiros.
           Contém sigla, nome completo e região. Usada para enriquecer dashboards.
+
+  - name: ibge
+    schema: ibge
+    description: >
+      Schema de dados do IBGE. Contém dados de PIB da construção civil e SINAPI
+      por município, com cobertura de 2010 a 2021 para os 5.570 municípios brasileiros.
+    tables:
+      - name: pib_construcao
+        description: >
+          Produto Interno Bruto (PIB) da construção civil por município, em valores correntes e constantes.
+          Tipagem aplicada: text→int, text→numeric.
+      - name: sinapi
+        description: >
+          Índice Nacional de Custo da Construção (SINAPI) por município, em valores correntes.
+          Tipagem aplicada: text→int, text→numeric.
+      - name: pnadc_ocupados_construcao
+        description: >
+          Pessoas ocupadas na construção civil (PNAD Contínua trimestral).
+          Agregado 6323, variável 4090. Tipagem aplicada: text→int, text→numeric.
+      - name: pnadc_rendimento_construcao
+        description: >
+          Rendimento médio mensal real na construção civil (PNAD Contínua trimestral).
+          Agregado 6391, variável 5932. Tipagem aplicada: text→int, text→numeric.
+      
+  - name: fgv
+    schema: fgv
+    description: >
+      Schema de dados da FGV. Contém dados de evolução do preço médio do metro quadrado
+      para imóveis residenciais em 8 capitais brasileiras, com cobertura mensal de 2010 a 2021.
+    tables:
+      - name: icst
+        description: >
+          Evolução do preço médio do metro quadrado para imóveis residenciais em 8 capitais brasileiras.
+          Tipagem aplicada: text→date, text→numeric.
+      - name: incc_m
+        description: >
+          Evolução do preço médio do metro quadrado para imóveis residenciais em 8 capitais brasileiras.
+          Tipagem aplicada: text→date, text→numeric.
+
+  - name: bacen
+    schema: bacen
+    description: >
+      Schema de dados do Banco Central. Contém dados de séries temporais de taxas de juros
+      (Selic, CDB, CDI) e inflação (IPCA) com cobertura mensal de 2010 a 2021.
+    tables:
+      - name: financiamentos_imobiliarios
+        description: >
+          Séries temporais de taxas de juros (Selic, CDB, CDI) e inflação (IPCA) com cobertura mensal de 2010 a 2021.
+          Tipagem aplicada: text→date, text→numeric.
+
+  - name: novo_caged
+    schema: novo_caged
+    description: >
+      Schema de dados do Novo CAGED.
+    tables:
+      - name: saldo_estoque_construcao_edificios
+        description: >
+          Saldo e estoque da construção de edifícios.
+          Tipagem aplicada: text→int, text→float.
+  - name: infomoney
+    schema: infomoney
+    description: >
+      Schema de dados do InfoMoney.
+    tables:
+      - name: acoes_imob
+        description: >
+          Dados diários de preços de ações do setor imobiliário.
+
+  - name: fipe
+    schema: fipe
+    description: >
+      Schema de dados da FIPE. Contém o índice FipeZap de locação residencial
+      com variações mensais e acumuladas no ano.
+    tables:
+      - name: indice_locacao
+        description: >
+          Índice FipeZap de locação residencial com variação mensal e acumulada no ano.
+          Tipagem aplicada: text→date, text→numeric.
+
+  - name: abecip
+    schema: abecip
+    description: >
+      Schema de dados da ABECIP. Contém dados de financiamentos habitacionais
+      SBPE e saldo de caderneta de poupança com cobertura mensal.
+    tables:
+      - name: poupanca_sbpe_mensal
+        description: >
+          Saldo e captação líquida da caderneta de poupança SBPE mensal.
+          Contém depósitos, retiradas, captação líquida, rendimento e saldo.
+          Tipagem aplicada: text→date, text→numeric.
+
+  - name: conjuntura_bronze
+    schema: conjuntura_bronze
+    description: >
+      Schema bronze do projeto conjuntura. Contém dados brutos tipados
+      provenientes de diversas fontes do setor imobiliário e de construção civil.
+    tables:
+      - name: bronze_fgv_icst
+        description: Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE.
+      - name: bronze_imob_infomoney
+        description: Índice IMOB da Infomoney com dados diários de fechamento.
+      - name: bronze_abramat_indice
+        description: Índice ABRAMAT de custos da construção civil.
+      - name: bronze_fgts_financiamentos_habitacionais
+        description: Financiamentos habitacionais do FGTS por faixa e modalidade.
+      - name: bronze_abecip_sbpe_financiamentos_habitacionais
+        description: Financiamentos habitacionais SBPE da ABECIP.
+      - name: bronze_abecip_novos_financiamentos_imobiliarios
+        description: Novos financiamentos imobiliários por agente financeiro (ABECIP).
+      - name: bronze_bacen_financiamentos_imobiliarios
+        description: Financiamentos imobiliários PF e PJ do Banco Central.
+      - name: bronze_ibge_pib_construcao_civil
+        description: PIB da construção civil do IBGE.
+      - name: bronze_ibge_sinapi
+        description: Índice SINAPI do IBGE.
+      - name: bronze_fgv_incc_m
+        description: Índice Nacional de Custo da Construção (INCC-M) da FGV.
+      - name: bronze_cbic_lancamentos_vendas
+        description: Lançamentos e vendas do setor imobiliário da CBIC.
+      - name: bronze_balancos_empresas
+        description: Balanços trimestrais de empresas do setor imobiliário.
+      - name: bronze_ticket_medio_empresas
+        description: Ticket médio de lançamentos por empresa.
+      - name: bronze_mcid_orcamento_por_acao
+        description: Orçamento do MCID por ação governamental.

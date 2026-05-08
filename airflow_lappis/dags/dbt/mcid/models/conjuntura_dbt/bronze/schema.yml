@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: bronze_ibge_pib_construcao_civil
+    description: >
+      Produto Interno Bruto (PIB) da construção civil por município, em valores correntes e constantes.
+      Dados extraídos do IBGE, com cobertura de 2010 a 2021 para os 5.570 municípios brasileiros.
+      Tipagem aplicada: text→int, text→numeric.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: variavel_id
+        description: "Ano de referência do PIB"
+      - name: variavel_nome
+        description: Código IBGE do município (7 dígitos).
+      - name: unidade
+        description: Nome do município.
+      - name: periodo
+        description: PIB da construção civil em valores correntes (R$).
+      - name: data_referencia
+        description: PIB da construção civil em valores constantes (R$ de 2010).
+      - name: valor
+        description: PIB da construção civil em valores constantes (R$ de 2010)
+      - name: localidade
+        description: PIB da construção civil em valores constantes (R$ de 2010)
+      - name: dt_ingest
+        description: PIB da construção civil em valores constantes (R$ de 2010)
+    data_tests:
+      - row_count_match:
+          source_table: ibge.pib_construcao
+          target_table: conjuntura.bronze_ibge_pib_construcao_civil
+  
+  - name: bronze_ibge_sinapi
+    description: >
+      Índice Nacional de Custo da Construção (SINAPI) por município, em valores correntes.
+      Dados extraídos do IBGE, com cobertura de 2010 a 2021 para os 5.570 municípios brasileiros.
+      Tipagem aplicada: text→int, text→numeric.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: variavel_id
+        description: "Ano de referência do SINAPI"
+      - name: variavel_nome
+        description: Código IBGE do município (7 dígitos).
+      - name: unidade
+        description: Nome do município.
+      - name: periodo
+        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
+      - name: valor
+        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
+      - name: localidade
+        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
+      - name: dt_ingest 
+        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
+    data_tests:
+      - row_count_match:
+          source_table: ibge.sinapi 
+          target_table: conjuntura.bronze_ibge_sinapi
