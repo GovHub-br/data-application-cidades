@@ -32,3 +32,7 @@ sources:
           Dados prioritários recebidos da CAIXA com snapshot consolidado.
           Contém 4.443 empreendimentos FAR com situação, percentual de execução,
           valores contratados/desembolsados, UHs e coordenadas geográficas.
+      - name: api_ibge_uf
+        description: >
+          Tabela de referência do IBGE com os 27 estados brasileiros.
+          Contém sigla, nome completo e região. Usada para enriquecer dashboards.
