@@ -85,3 +85,32 @@ models:
         description: "Na seção 'header': valor médio por UH no estado. NULL nas demais seções."
       - name: total_empreendimentos_uf
         description: "Na seção 'header': total de empreendimentos no estado. NULL nas demais seções."
+
+  - name: mapa_nacional
+    description: >
+      Visão Gold geográfica para alimentar mapas coropléticos (Country Map) e gráficos
+      por região no Superset. Contém duas visões filtradas pela coluna 'nivel':
+      'uf' (27 linhas, uma por estado com código ISO 3166-2) e 'regiao' (5 linhas,
+      uma por macrorregião). Usa a tabela IBGE api_ibge_uf como referência.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: uf
+        description: "Sigla da UF (quando nivel='uf') ou sigla da região (quando nivel='regiao')."
+      - name: estado_nome
+        description: "Nome completo do estado (quando nivel='uf') ou nome da região (quando nivel='regiao')."
+      - name: iso_3166_2
+        description: "Código ISO 3166-2 no formato 'BR-XX' para o Country Map do Superset. NULL para nível região."
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (Norte, Nordeste, Sudeste, Sul, Centro-Oeste).
+      - name: nivel
+        description: "Discriminador: 'uf' para dados estaduais, 'regiao' para dados regionais."
+      - name: total_uhs
+        description: Somatório de Unidades Habitacionais naquela UF ou região.
+      - name: total_empreendimentos
+        description: Contagem de empreendimentos (APFs) naquela UF ou região.
+      - name: total_valor_contratado
+        description: Soma dos valores contratados em R$.
+      - name: media_execucao_fisica
+        description: Média do percentual de execução física dos empreendimentos (0-100).
