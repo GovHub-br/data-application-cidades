@@ -30,7 +30,6 @@ def fipezap_trimestral_ingest_dag() -> None:
     DAG de ingestão incremental trimestral do Índice FipeZAP.
     A cada execução baixa o XLSX completo e faz upsert de toda a série —
     garantindo que revisões retroativas sejam capturadas automaticamente.
-    Depende da carga histórica prévia via fipezap_historico_ingest_dag.
     """
 
     @task

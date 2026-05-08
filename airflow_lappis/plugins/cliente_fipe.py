@@ -77,12 +77,11 @@ class ClienteFipeZap(ClienteBase):
         )
 
         try:
-            response = requests.get(
+            _, content = self.request(
+                "GET",
                 f"{self.BASE_URL}{self.XLSX_PATH}",
-                headers=self.client.headers,
-                timeout=self.DEFAULT_TIMEOUT,
-            )
-            response.raise_for_status()
+                response_type="bytes"
+            ) 
         except requests.exceptions.RequestException as e:
             logging.error(
                 f"[cliente_fipezap.py] Erro ao baixar o XLSX: {e}"
@@ -91,7 +90,7 @@ class ClienteFipeZap(ClienteBase):
 
         try:
             df_raw = pd.read_excel(
-                io.BytesIO(response.content),
+                io.BytesIO(content),
                 sheet_name=self.ABA,
                 header=None,
             )
