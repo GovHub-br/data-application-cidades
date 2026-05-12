@@ -1,5 +1,5 @@
 ---
-name: odelo dbt
+name: Modelo dbt
 about: Criar, alterar ou validar modelos dbt
 title: ''
 labels: ''
