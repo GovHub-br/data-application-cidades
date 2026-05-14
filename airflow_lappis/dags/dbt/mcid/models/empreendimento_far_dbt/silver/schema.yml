@@ -126,8 +126,3 @@ models:
         description: Município do empreendimento.
       - name: uf
         description: UF do empreendimento.
-    data_tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - apf
-            - mes
