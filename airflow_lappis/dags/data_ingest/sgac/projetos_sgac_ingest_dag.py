@@ -12,6 +12,7 @@ from postgres_helpers import get_postgres_conn
 import pandas as pd
 import io
 import os
+import tempfile
 
 # Configurações básicas da DAG
 default_args = {
@@ -147,8 +148,8 @@ with DAG(
                 "CSV processado com sucesso. Dados encontrados: %s", total_linhas
             )
             
-            file_path = f"/tmp/sgac_email_data_{context['run_id']}.csv"
-            with open(file_path, "w", encoding="utf-8") as f:
+            fd, file_path = tempfile.mkstemp(prefix="sgac_email_data_", suffix=".csv")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
                 f.write(csv_data)
                 
             return file_path
@@ -158,9 +159,10 @@ with DAG(
 
     def insert_data_to_db(**context: Dict[str, Any]) -> None:
         """Insere no Postgres os dados retornados pela task de processamento do e-mail."""
+        file_path = None
         try:
             task_instance: Any = context["ti"]
-            file_path: Any = task_instance.xcom_pull(task_ids="process_emails")
+            file_path = task_instance.xcom_pull(task_ids="process_emails")
 
             if not file_path or not os.path.exists(file_path):
                 logging.warning("Nenhum dado para inserir no banco.")
@@ -169,7 +171,6 @@ with DAG(
             df = pd.read_csv(file_path)
             if df.empty:
                 logging.warning("CSV recebido sem registros para insercao.")
-                os.remove(file_path)
                 return
 
             data = df.to_dict(orient="records")
@@ -190,10 +191,12 @@ with DAG(
                 schema="sgac",
             )
             logging.info("Dados inseridos com sucesso no banco de dados.")
-            os.remove(file_path)
         except Exception as e:
             logging.error("Erro ao inserir dados no banco: %s", str(e))
             raise
+        finally:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
 
     #tarefa 1: processar os e-mails e extrair o CSV
     process_emails_task = PythonOperator(
