@@ -150,3 +150,20 @@ models:
         description: Valor total contratado do empreendimento em R$.
       - name: pct_executado_financeiro
         description: "Percentual acumulado do desembolso sobre o contrato (0-100)."
+
+  - name: execucao_fisica_financeira_chart
+    description: >
+      Tabela Gold para o gráfico de acompanhamento da execução física e financeira.
+      Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+      - name: mes
+        description: Mês de referência no formato YYYY-MM-DD.
+      - name: pct_obra_realizada
+        description: Percentual de execução física da obra (0 a 100).
+      - name: pct_executado_financeiro
+        description: Percentual de execução financeira (desembolso) da obra (0 a 100).
