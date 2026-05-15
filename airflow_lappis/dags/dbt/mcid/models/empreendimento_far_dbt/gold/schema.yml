@@ -114,3 +114,56 @@ models:
         description: Soma dos valores contratados em R$.
       - name: media_execucao_fisica
         description: Média do percentual de execução física dos empreendimentos (0-100).
+
+  - name: evolucao_financeira_chart
+    description: >
+      Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira" no Superset.
+      Consome a silver evolucao_financeira e enriquece com nome do empreendimento,
+      nome do estado (IBGE) e labels de mês formatados. Uma linha por APF × mês.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF do empreendimento.
+      - name: nome_empreendimento
+        description: Nome do empreendimento em maiúsculo (da ficha_empreendimento).
+      - name: apf_municipio_empreendimento
+        description: "Texto concatenado 'APF - Município/UF - Nome' para busca no dashboard."
+      - name: municipio
+        description: Município do empreendimento.
+      - name: uf
+        description: Sigla da UF.
+      - name: estado
+        description: Nome completo do estado em maiúsculo (da tabela IBGE).
+      - name: mes
+        description: Data do mês da liberação (tipo DATE, para ordenação).
+      - name: mes_label
+        description: "Label do mês no formato 'YYYY-MM' (para eixo X do gráfico)."
+      - name: mes_label_br
+        description: "Label do mês no formato 'MM/YYYY' (formato brasileiro)."
+      - name: vr_liberado_mes
+        description: Valor total liberado no mês em R$ (arredondado para 2 casas).
+      - name: vr_acumulado
+        description: Desembolso acumulado progressivo até o mês em R$.
+      - name: valor_contratado
+        description: Valor total contratado do empreendimento em R$.
+      - name: pct_executado_financeiro
+        description: "Percentual acumulado do desembolso sobre o contrato (0-100)."
+
+  - name: execucao_fisica_financeira_chart
+    description: >
+      Tabela Gold para o gráfico de acompanhamento da execução física e financeira.
+      Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+      - name: mes
+        description: Mês de referência no formato YYYY-MM-DD.
+      - name: pct_obra_realizada
+        description: Percentual de execução física da obra (0 a 100).
+      - name: pct_executado_financeiro
+        description: Percentual de execução financeira (desembolso) da obra (0 a 100).
