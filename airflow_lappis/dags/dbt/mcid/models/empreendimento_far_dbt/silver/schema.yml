@@ -77,3 +77,52 @@ models:
         description: >
           Percentual do recurso liberado sobre o valor total.
           Cálculo: (valor_desembolsado / valor_contratado) * 100.
+
+  - name: evolucao_financeira
+    description: >
+      Tabela Silver de Evolução Financeira dos Empreendimentos FAR.
+      Série temporal mensal de liberações financeiras por empreendimento (APF × mês).
+      Agrega as liberações da bronze financeiro_mensal e faz o JOIN com a silver
+      empreendimento usando a raiz de 6 dígitos do APF: LEFT(cad_pj.apf, 6) = RIGHT(fin.apf, 6).
+      Cobertura: ~79% dos empreendimentos (651/823) possuem dados financeiros.
+      Relação 1:N com empreendimento (1 APF → N meses de liberações).
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: APF do empreendimento (8 dígitos, normalizado).
+        data_tests:
+          - not_null
+      - name: mes
+        description: Primeiro dia do mês da(s) liberação(ões) (date, truncado).
+        data_tests:
+          - not_null
+      - name: qt_liberacoes
+        description: Quantidade de liberações financeiras individuais no mês.
+      - name: vr_liberado_mes
+        description: Soma de todos os valores liberados no mês em R$.
+        data_tests:
+          - not_null
+      - name: vr_pago_obra_mes
+        description: Parcela destinada à obra/edificação no mês em R$.
+      - name: vr_pago_terreno_mes
+        description: Parcela destinada ao terreno no mês em R$.
+      - name: vr_pago_pts_mes
+        description: Parcela destinada ao trabalho social (PTS) no mês em R$.
+      - name: vr_pago_incc_mes
+        description: Parcela de ajuste INCC no mês em R$.
+      - name: vr_acumulado
+        description: >
+          Desembolso acumulado progressivo por APF até o mês corrente.
+          Calculado via SUM(vr_liberado_mes) OVER (PARTITION BY apf ORDER BY mes).
+      - name: pct_executado_financeiro
+        description: >
+          Percentual do desembolso acumulado sobre o valor contratado.
+          Cálculo: (vr_acumulado / valor_contratado) * 100.
+      - name: valor_contratado
+        description: Valor total contratado do empreendimento (herdado da silver empreendimento).
+      - name: municipio
+        description: Município do empreendimento.
+      - name: uf
+        description: UF do empreendimento.
