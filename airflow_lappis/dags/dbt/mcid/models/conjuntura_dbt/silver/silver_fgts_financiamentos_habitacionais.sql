@@ -34,5 +34,6 @@ SELECT
         + COALESCE(financiamento_pf_valor_faixa_3_sem_fundo_social, 0)
         + COALESCE(financiamento_pf_valor_faixa_3_fundo_social, 0)
         + COALESCE(financiamento_pf_valor_total_classe_media, 0)
-        + COALESCE(financiamento_pf_valor_fora_mcmv, 0)            AS valor_total_calculado
+        + COALESCE(financiamento_pf_valor_fora_mcmv, 0)            AS valor_total_calculado,
+    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
 FROM {{ source('conjuntura_bronze', 'bronze_fgts_financiamentos_habitacionais') }}

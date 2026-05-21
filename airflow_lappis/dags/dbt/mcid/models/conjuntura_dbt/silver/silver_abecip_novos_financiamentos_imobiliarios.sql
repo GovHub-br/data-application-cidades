@@ -41,16 +41,19 @@ total AS (
         SUM(posicao_ano_unidades)                       AS uh_ano
     FROM base
     GROUP BY ano, mes
+),
+
+unificado AS (
+    SELECT ano, mes, banco, valor_ano_milhoes, uh_ano FROM agrupado
+    UNION ALL
+    SELECT ano, mes, banco, valor_ano_milhoes, uh_ano FROM total
 )
 
-SELECT ano, mes, banco,
-    (valor_ano_milhoes / 1000.0)::numeric               AS valor_bi,
-    uh_ano                                              AS uh
-FROM agrupado
-
-UNION ALL
-
-SELECT ano, mes, banco,
-    (valor_ano_milhoes / 1000.0)::numeric,
-    uh_ano
-FROM total
+SELECT
+    ano,
+    mes,
+    banco,
+    (valor_ano_milhoes / 1000.0)::numeric   AS valor_bi,
+    uh_ano                                  AS uh,
+    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
+FROM unificado
