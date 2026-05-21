@@ -41,8 +41,8 @@ SELECT
     fgts.trimestre,
 
     fgts.fgts_uh,
-    abecip.sbpe_uh
-
+    abecip.sbpe_uh,
+    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
 FROM fgts
 
 LEFT JOIN abecip

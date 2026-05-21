@@ -16,5 +16,5 @@ SELECT
         ROWS BETWEEN 11 PRECEDING AND CURRENT ROW
     )                                               AS captacao_acum_12m,
     fonte,
-    dt_ingest
+    {{ add_metadata_timestamps('silver') }}
 FROM {{ ref('bronze_abecip_poupanca_sbpe') }}

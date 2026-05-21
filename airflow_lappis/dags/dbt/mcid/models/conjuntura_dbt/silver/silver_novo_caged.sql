@@ -23,7 +23,8 @@ WITH base AS (
         -- Variação estoque vs mesmo mês ano anterior
         ROUND(
             ((estoque::numeric / NULLIF(LAG(estoque, 12) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-        ) AS estoque_var_ano
+        ) AS estoque_var_ano,
+        {{ add_metadata_timestamps('silver') }}
     FROM {{ ref('bronze_novo_caged') }}
 )
 
