@@ -11,6 +11,7 @@ SELECT
     MAX(CASE WHEN nome_empresa = 'Tenda'       THEN ticket_medio_lancamentos_var_tri_ant  END) AS ten_var_tri,
     MAX(CASE WHEN nome_empresa = 'MRV'        THEN ticket_medio_lancamentos_acum_4t20    END) AS mrv_acum,
     MAX(CASE WHEN nome_empresa = 'Direcional'  THEN ticket_medio_lancamentos_acum_4t20    END) AS dir_acum,
-    MAX(CASE WHEN nome_empresa = 'Tenda'       THEN ticket_medio_lancamentos_acum_4t20    END) AS ten_acum
+    MAX(CASE WHEN nome_empresa = 'Tenda'       THEN ticket_medio_lancamentos_acum_4t20    END) AS ten_acum,
+    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
 FROM {{ source('conjuntura_bronze', 'bronze_ticket_medio_empresas') }}
 GROUP BY ano_ticket_medio, trimestre_ticket_medio

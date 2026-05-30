@@ -20,5 +20,5 @@ SELECT
         WHEN EXTRACT(MONTH FROM data_referencia) IN (10,11,12) THEN 4
     END AS trimestre,
     EXTRACT(YEAR FROM data_referencia)::int AS ano,
-    dt_ingest
+    {{ add_metadata_timestamps('silver') }}
 FROM {{ source('conjuntura_bronze', 'bronze_fgv_incc_m') }}

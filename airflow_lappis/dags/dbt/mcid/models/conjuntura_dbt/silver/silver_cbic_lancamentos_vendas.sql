@@ -44,6 +44,6 @@ SELECT
     cbic_vendas_mcmv_perc_regiao_nordeste,
     cbic_vendas_mcmv_perc_regiao_centro_oeste,
     cbic_vendas_mcmv_perc_regiao_sudeste,
-    cbic_vendas_mcmv_perc_regiao_sul
-
+    cbic_vendas_mcmv_perc_regiao_sul,
+    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
 FROM {{ source('conjuntura_bronze', 'bronze_cbic_lancamentos_vendas') }}

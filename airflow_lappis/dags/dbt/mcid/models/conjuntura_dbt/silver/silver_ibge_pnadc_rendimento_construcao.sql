@@ -13,7 +13,8 @@ WITH construcao AS (
             WHEN RIGHT(periodo, 2)::int IN (10,11,12) THEN 4
         END                             AS trimestre,
         MAX(CASE WHEN categoria_id = '47949' THEN valor END) AS rendimento_construcao,
-        MAX(CASE WHEN categoria_id = '47946' THEN valor END) AS rendimento_total
+        MAX(CASE WHEN categoria_id = '47946' THEN valor END) AS rendimento_total,
+        MAX(dt_ingest)                  AS dt_ingest
     FROM {{ ref('bronze_ibge_pnadc_rendimento_construcao') }}
     GROUP BY periodo, data_referencia
 )
@@ -31,5 +32,6 @@ SELECT
     ) AS var_mes,
     ROUND(
         ((rendimento_construcao / NULLIF(LAG(rendimento_construcao, 12) OVER (ORDER BY periodo), 0)) - 1) * 100, 1
-    ) AS var_ano
+    ) AS var_ano,
+    {{ add_metadata_timestamps('silver') }}
 FROM construcao
