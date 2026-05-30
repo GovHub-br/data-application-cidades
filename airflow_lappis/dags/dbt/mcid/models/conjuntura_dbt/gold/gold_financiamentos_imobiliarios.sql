@@ -17,17 +17,17 @@ WITH pivotado AS (
 
 dez25 AS (
     SELECT pf_concessoes, pf_taxa_juros, pf_inadimplencia, pj_concessoes, pj_taxa_juros, pj_inadimplencia, dt_ingest, dt_silver
-    FROM pivotado WHERE data_referencia = '2025-12-01'
+    FROM pivotado WHERE data_referencia = '202501-12-01'
 ),
 
 nov25 AS (
     SELECT pf_concessoes, pf_taxa_juros, pf_inadimplencia, pj_concessoes, pj_taxa_juros, pj_inadimplencia, dt_ingest, dt_silver
-    FROM pivotado WHERE data_referencia = '2025-11-01'
+    FROM pivotado WHERE data_referencia = '202501-11-01'
 ),
 
 dez24 AS (
     SELECT pf_concessoes, pf_taxa_juros, pf_inadimplencia, pj_concessoes, pj_taxa_juros, pj_inadimplencia, dt_ingest, dt_silver
-    FROM pivotado WHERE data_referencia = '2024-12-01'
+    FROM pivotado WHERE data_referencia = '202401-12-01'
 ),
 
 acum_dez25 AS (
@@ -37,7 +37,7 @@ acum_dez25 AS (
         MAX(dt_ingest)      AS dt_ingest,
         MAX(dt_silver)      AS dt_silver
     FROM pivotado
-    WHERE data_referencia BETWEEN '2025-01-01' AND '2025-12-01'
+    WHERE data_referencia BETWEEN '202501-01-01' AND '202501-12-01'
 ),
 
 acum_dez24 AS (
@@ -47,7 +47,7 @@ acum_dez24 AS (
         MAX(dt_ingest)      AS dt_ingest,
         MAX(dt_silver)      AS dt_silver
     FROM pivotado
-    WHERE data_referencia BETWEEN '2024-01-01' AND '2024-12-01'
+    WHERE data_referencia BETWEEN '202401-01-01' AND '202401-12-01'
 ),
 
 resultado AS (
