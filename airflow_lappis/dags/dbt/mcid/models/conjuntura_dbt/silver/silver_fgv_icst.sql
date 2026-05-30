@@ -12,5 +12,5 @@ SELECT
         ((icst_sem_ajuste_sazonal / NULLIF(LAG(icst_sem_ajuste_sazonal, 12) OVER (ORDER BY data_referencia), 0)) - 1) * 100,
         2
     ) AS var_12_meses,
-    dt_ingest
+    {{ add_metadata_timestamps('silver') }}
 FROM {{ source('conjuntura_bronze', 'bronze_fgv_icst') }}

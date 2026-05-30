@@ -10,5 +10,5 @@ SELECT
             OVER (ORDER BY data_referencia::date), 0) - 1) * 100,
         2
     )                                                                       AS var_12_meses_calc,
-    dt_ingest::timestamp                                                    AS dt_ingest
+    {{ add_metadata_timestamps('silver') }}
 FROM {{ ref('bronze_fipezap_locacao') }}

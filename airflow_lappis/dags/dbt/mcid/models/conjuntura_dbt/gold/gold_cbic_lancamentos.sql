@@ -1,80 +1,39 @@
 {{ config(materialized='table') }}
 
 WITH base AS (
-
     SELECT
         ano,
         trimestre,
         cbic_lancamentos_total  AS total,
         cbic_lancamentos_mcmv   AS mcmv,
-        cbic_lancamentos_demais AS demais
+        cbic_lancamentos_demais AS demais,
+        dt_ingest,
+        dt_silver
     FROM {{ ref('silver_cbic_lancamentos_vendas') }}
-
 ),
 
 periodos AS (
-
-    SELECT
-        1 AS ordem,
-        '4º TRI 2025' AS periodo,
-        total,
-        mcmv,
-        demais
-    FROM base
-    WHERE ano = 2025
-      AND trimestre = 4
-
+    SELECT 1 AS ordem, '4º TRI 2025' AS periodo, total, mcmv, demais, dt_ingest, dt_silver
+    FROM base WHERE ano = 2025 AND trimestre = 4
     UNION ALL
-
-    SELECT
-        2,
-        '3º TRI 2025',
-        total,
-        mcmv,
-        demais
-    FROM base
-    WHERE ano = 2025
-      AND trimestre = 3
-
+    SELECT 2, '3º TRI 2025', total, mcmv, demais, dt_ingest, dt_silver
+    FROM base WHERE ano = 2025 AND trimestre = 3
     UNION ALL
-
-    SELECT
-        3,
-        '4º TRI 2024',
-        total,
-        mcmv,
-        demais
-    FROM base
-    WHERE ano = 2024
-      AND trimestre = 4
-
+    SELECT 3, '4º TRI 2024', total, mcmv, demais, dt_ingest, dt_silver
+    FROM base WHERE ano = 2024 AND trimestre = 4
     UNION ALL
-
-    SELECT
-        4,
-        '12 MESES - DEZ/2025',
-        SUM(total),
-        SUM(mcmv),
-        SUM(demais)
-    FROM base
-    WHERE ano = 2025
-
+    SELECT 4, '12 MESES - DEZ/2025', SUM(total), SUM(mcmv), SUM(demais), MAX(dt_ingest), MAX(dt_silver)
+    FROM base WHERE ano = 2025
     UNION ALL
-
-    SELECT
-        5,
-        '12 MESES - DEZ/2024',
-        SUM(total),
-        SUM(mcmv),
-        SUM(demais)
-    FROM base
-    WHERE ano = 2024
+    SELECT 5, '12 MESES - DEZ/2024', SUM(total), SUM(mcmv), SUM(demais), MAX(dt_ingest), MAX(dt_silver)
+    FROM base WHERE ano = 2024
 )
 
 SELECT
     periodo,
     total,
     mcmv,
-    demais
+    demais,
+    {{ add_metadata_timestamps('gold') }}
 FROM periodos
 ORDER BY ordem

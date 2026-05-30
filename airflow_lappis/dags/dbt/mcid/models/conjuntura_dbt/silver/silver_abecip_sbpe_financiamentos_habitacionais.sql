@@ -35,5 +35,6 @@ SELECT
     ) AS sbpe_aq_var_12m,
     ROUND(
         ((sbpe_total::numeric / NULLIF(LAG(sbpe_total, 12) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-    ) AS sbpe_total_var_12m
+    ) AS sbpe_total_var_12m,
+    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
 FROM {{ source('conjuntura_bronze', 'bronze_abecip_sbpe_financiamentos_habitacionais') }}

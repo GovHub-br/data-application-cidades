@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 WITH base AS (
-    SELECT ano, mes, banco, valor_bi, uh
+    SELECT ano, mes, banco, valor_bi, uh, dt_ingest, dt_silver
     FROM {{ ref('silver_abecip_novos_financiamentos_imobiliarios') }}
 ),
 
@@ -14,10 +14,10 @@ total AS (
 com_perc AS (
     SELECT
         b.ano, b.mes, b.banco,
-        ROUND(b.valor_bi::numeric, 1)                                       AS valor_bi,
-        ROUND((b.valor_bi / NULLIF(t.total_bi, 0)) * 100, 1)               AS perc_valor,
+        ROUND(b.valor_bi::numeric, 1)                                        AS valor_bi,
+        ROUND((b.valor_bi / NULLIF(t.total_bi, 0)) * 100, 1)                 AS perc_valor,
         b.uh,
-        ROUND((b.uh::numeric / NULLIF(t.total_uh, 0)) * 100, 1)           AS perc_uh,
+        ROUND((b.uh::numeric / NULLIF(t.total_uh, 0)) * 100, 1)              AS perc_uh,
         CASE b.banco
             WHEN 'TOTAL'                THEN 0
             WHEN 'CEF (CAIXA)'          THEN 1
@@ -27,7 +27,9 @@ com_perc AS (
             WHEN 'BRB'                  THEN 5
             WHEN 'BB (BANCO DO BRASIL)' THEN 6
             WHEN 'DEMAIS'               THEN 7
-        END AS ordem
+        END                                                                   AS ordem,
+        b.dt_ingest,
+        b.dt_silver
     FROM base b
     LEFT JOIN total t ON b.ano = t.ano AND b.mes = t.mes
 ),
@@ -45,7 +47,8 @@ SELECT
     c.uh,
     c.perc_uh,
     ROUND(((c.uh::numeric / NULLIF(a.uh_ant, 0)) - 1) * 100, 0)           AS var_ano_uh,
-    c.ordem
+    c.ordem,
+    {{ add_metadata_timestamps('gold') }}
 FROM com_perc c
 LEFT JOIN ano_anterior a ON c.banco = a.banco
     AND a.ano = c.ano - 1
