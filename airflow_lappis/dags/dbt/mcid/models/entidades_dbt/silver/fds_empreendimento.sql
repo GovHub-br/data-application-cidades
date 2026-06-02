@@ -39,12 +39,12 @@ with
         where ic_credito = '0'
           and vr_liberado is not null
         group by right(apf, 6)
-    ),
+    )
 
 select
     c.apf,
 
-    -- 1. Entidade Organizadora
+    -- Entidade Organizadora
     c.eo_nome,
     -- CNPJ padronizado para 14 dígitos (62% da fonte vem com 13, faltando zero à esquerda)
     lpad(c.eo_cnpj, 14, '0') as eo_cnpj,
@@ -54,7 +54,7 @@ select
     c.eo_substituta_nome,
     c.eo_substituta_cnpj,
 
-    -- 2. Dados do Empreendimento
+    -- Dados do Empreendimento
     c.empreendimento_nome,
     -- Construtora: 100% placeholder no FDS ('NÃO INFORMADO', cnpj='0').
     -- Ao que parece no MCMV Entidades a EO faz o papel de construtora.
@@ -69,12 +69,12 @@ select
     -- Heurística: 3,3 pessoas por família
     floor(greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) * 3.3)::int as pessoas_atendidas,
 
-    -- 3. Localização
+    -- Localização
     c.municipio,
     c.uf,
     c.cod_ibge,
 
-    -- 4. Tipologia (códigos ainda pendentes de decodificação, mantendo os dois)
+    -- Tipologia (códigos ainda pendentes de decodificação, mantendo os dois)
     c.co_tipo_edificacao,
     case c.co_tipo_edificacao
         when 1 then 'Casa'
@@ -85,7 +85,7 @@ select
     c.co_regime_obra,
     c.co_modalidade,
 
-    -- 5. Valores Contratuais
+    -- Valores Contratuais
     coalesce(c.vr_total_investimento, 0.0) as valor_contratado,
     coalesce(c.vr_financiamento_fds, 0.0) as valor_financiamento_fds,
     coalesce(c.vr_total_contrapartidas, 0.0) as valor_contrapartidas,
@@ -95,23 +95,23 @@ select
         else 0.0
     end as valor_por_uh,
 
-    -- 6. Datas do Contrato
+    -- Datas do Contrato
     -- Tratamento: data sentinel 1900-01-01 → NULL (1 caso: APF 63520415)
     nullif(c.dt_contratacao, '1900-01-01'::date) as dt_contratacao,
     nullif(c.dt_inicio_obra, '1900-01-01'::date) as dt_inicio_obra,
     c.dt_previsao_conclusao,
 
-    -- 7. Situação (complementar da INT 059 como fonte primária de status textual)
+    -- Situação (complementar da INT 059 como fonte primária de status textual)
     coalesce(i.situacao_gefus, 'Não mapeado') as situacao_gefus,
     coalesce(i.fase_contrato, 'Não mapeada') as fase_contrato,
     o.co_situacao_operacao,
     o.co_andamento_operacao,
 
-    -- 8. Evolução Física
+    -- Evolução Física
     coalesce(o.pct_obra_prevista, 0.0) as percentual_obra_prevista,
     coalesce(o.pct_obra_realizada, 0.0) as percentual_execucao_fisica,
 
-    -- 9. UHs — Entregas e Status
+    -- UHs — Entregas e Status
     -- OBS: qt_uh_concluidas é NULL na fonte FDS mesmo quando há alienação.
     -- Usar qt_uh_alienadas como indicador real de entrega.
     coalesce(o.qt_uh_concluidas, 0) as qt_uh_concluidas,
@@ -120,7 +120,7 @@ select
     coalesce(o.qt_uh_construcao_parcial, 0) as qt_uh_construcao_parcial,
     coalesce(o.qt_uh_ocupacao_irregular, 0) as qt_uh_ocupacao_irregular,
 
-    -- 10. Taxa de entrega (UHs alienadas / UHs contratadas)
+    -- Taxa de entrega (UHs alienadas / UHs contratadas)
     case
         when greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) > 0
         then round(
@@ -131,18 +131,18 @@ select
         else 0.0
     end as pct_entrega,
 
-    -- 11. Paralisação e Alertas
+    -- Paralisação e Alertas
     o.dt_paralisacao,
     o.co_classificacao_paralisado,
     o.ic_invadido,
     o.dt_invasao,
 
-    -- 12. Datas de marcos
+    -- Datas de marcos
     o.dt_conclusao_obra,
     o.dt_entrega,
     o.dt_previsao_entrega,
 
-    -- 13. Evolução Financeira (acumulado)
+    -- Evolução Financeira (acumulado)
     coalesce(d.vr_total_desembolsado, 0.0) as valor_desembolsado,
     coalesce(d.qt_liberacoes_total, 0) as qt_liberacoes,
     d.dt_ultima_liberacao,
@@ -152,7 +152,7 @@ select
         else 0.0
     end as percentual_execucao_financeira,
 
-    -- 14. Divergência Físico-Financeira (gap em pontos percentuais)
+    -- Divergência Físico-Financeira (gap em pontos percentuais)
     case
         when coalesce(c.vr_total_investimento, 0.0) > 0
         then round(
@@ -163,12 +163,12 @@ select
         else 0.0
     end as divergencia_fisico_financeira,
 
-    -- 15. Trabalho Social
+    -- Trabalho Social
     ts.co_situacao_trabalho_social,
     ts.pct_execucao_ts,
     ts.dt_aprovacao_pts,
 
-    -- 16. Tempo entre contratação e início da obra (dias)
+    -- Tempo entre contratação e início da obra (dias)
     -- Usa as datas já tratadas (sentinel 1900 → NULL)
     case
         when nullif(c.dt_inicio_obra, '1900-01-01'::date) is not null
@@ -176,7 +176,7 @@ select
         then (c.dt_inicio_obra - c.dt_contratacao)
     end as dias_contratacao_inicio,
 
-    -- 17. Coordenadas GPS (DMS)
+    -- Coordenadas GPS (DMS)
     -- Tratamento: GPS (0,0,0) → NULL (32 casos = 9%).
     -- Evita pontos em locais aleatórios do mapa
     nullif(c.gps_lat_grau, 0) as gps_lat_grau,
