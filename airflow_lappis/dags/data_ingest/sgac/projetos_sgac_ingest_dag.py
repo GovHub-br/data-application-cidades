@@ -11,6 +11,8 @@ from cliente_postgres import ClientPostgresDB
 from postgres_helpers import get_postgres_conn
 import pandas as pd
 import io
+import os
+import tempfile
 
 # Configurações básicas da DAG
 default_args = {
@@ -112,7 +114,7 @@ with DAG(
     dag_id="email_projetos_sgac_ingest",
     default_args=default_args,
     description="Processa anexos do email de dados do SGAC e insere no db",
-    schedule_interval=get_dynamic_schedule("email_projetos_sgac_ingest"),
+    schedule_interval=get_dynamic_schedule("email_projetos_sgac_ingest", default="15 12 * * *"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     tags=["email", "projetos", "sgac"],
@@ -145,22 +147,28 @@ with DAG(
             logging.info(
                 "CSV processado com sucesso. Dados encontrados: %s", total_linhas
             )
-            return csv_data
+            
+            fd, file_path = tempfile.mkstemp(prefix="sgac_email_data_", suffix=".csv")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(csv_data)
+                
+            return file_path
         except Exception as e:
             logging.error("Erro no processamento dos emails: %s", str(e))
             raise
 
     def insert_data_to_db(**context: Dict[str, Any]) -> None:
         """Insere no Postgres os dados retornados pela task de processamento do e-mail."""
+        file_path = None
         try:
             task_instance: Any = context["ti"]
-            csv_data: Any = task_instance.xcom_pull(task_ids="process_emails")
+            file_path = task_instance.xcom_pull(task_ids="process_emails")
 
-            if not csv_data:
+            if not file_path or not os.path.exists(file_path):
                 logging.warning("Nenhum dado para inserir no banco.")
                 return
 
-            df = pd.read_csv(io.StringIO(csv_data))
+            df = pd.read_csv(file_path)
             if df.empty:
                 logging.warning("CSV recebido sem registros para insercao.")
                 return
@@ -186,6 +194,9 @@ with DAG(
         except Exception as e:
             logging.error("Erro ao inserir dados no banco: %s", str(e))
             raise
+        finally:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
 
     #tarefa 1: processar os e-mails e extrair o CSV
     process_emails_task = PythonOperator(
