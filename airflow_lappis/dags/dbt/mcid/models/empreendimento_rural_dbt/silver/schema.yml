@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: empreendimento_rural
+    description: Tabela Silver (Visão Unificada) de Empreendimentos MCMV Rural.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: Chave primária (Arranjo Produtivo Financeiro). ID único do empreendimento.
+        data_tests:
+          - not_null
+          - unique
+
+

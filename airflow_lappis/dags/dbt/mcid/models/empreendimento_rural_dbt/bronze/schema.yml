@@ -1,0 +1,101 @@
+version: 2
+
+models:
+  - name: cadastro_pj_rural
+    description: Cadastro PJ mensal do MCMV Rural.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: cadastro_pf
+    description: Cadastro de beneficiários PF mensal do MCMV Rural.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: obra_mensal_rural
+    description: Evolução física da obra mensal do MCMV Rural.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: financeiro_mensal_rural
+    description: Detalhes de desembolsos financeiros mensais do MCMV Rural.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: prioritarios_snh
+    description: Tabela geral de dados prioritários disponibilizados pela SNH para a modalidade Rural.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: prioritarios_caixa
+    description: Dados prioritários de empreendimentos recebidos da CAIXA (Rural).
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: prioritarios_bb
+    description: Dados prioritários de empreendimentos recebidos do Banco do Brasil (Rural).
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: trabalho_social_caixa
+    description: Base de Trabalho Social do PNHR pela CAIXA.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: trabalho_social_bb
+    description: Base de Trabalho Social do PNHR pelo Banco do Brasil.
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: int_pnhr_caixa
+    description: Detalhes históricos de empreendimentos Caixa PJ (PNHR).
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+
+  - name: int_pnhr_bb
+    description: Detalhes históricos de empreendimentos BB PJ (PNHR).
+    meta:
+      tags:
+        - bronze
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.

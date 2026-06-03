@@ -1,0 +1,80 @@
+version: 2
+
+models:
+  - name: ficha_empreendimento_rural
+    description: Tabela Gold projetada especificamente para alimentar o componente visual de "Ficha do Empreendimento" nos Dashboards do MCMV Rural.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: resumo_gerencial_rural
+    description: Visão agregada Gold contendo os grandes KPIs e somatórios (UHs, Pessoas Atendidas, Valores) do MCMV Rural.
+    meta:
+      tags:
+        - gold
+
+  - name: panorama_estadual_rural
+    description: Visão Gold agregada por UF para alimentar o dashboard "Panorama Estadual" do MCMV Rural.
+    meta:
+      tags:
+        - gold
+
+  - name: mapa_nacional_rural
+    description: Visão Gold geográfica para alimentar mapas coropléticos e gráficos por região no Superset para o MCMV Rural.
+    meta:
+      tags:
+        - gold
+
+  - name: ficha_trabalho_social
+    description: Modelo Gold de acompanhamento do Plano de Trabalho Social (PTS) do MCMV Rural.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF do empreendimento.
+        data_tests:
+          - not_null
+
+  - name: perfil_beneficiarios
+    description: Modelo Gold contendo dados socioeconômicos agregados dos beneficiários do MCMV Rural.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF do empreendimento.
+        data_tests:
+          - not_null
+
+  - name: infraestrutura_agua_saneamento
+    description: Modelo Gold focado no escopo rural específico de cisternas e efluentes.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF do empreendimento.
+        data_tests:
+          - not_null
+
+  - name: evolucao_financeira_rural
+    description: Série temporal mensal de liberações financeiras por empreendimento (APF × mês) consolidado para o Rural.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: APF do empreendimento (8 dígitos, normalizado).
+        data_tests:
+          - not_null
+      - name: mes
+        description: Primeiro dia do mês da(s) liberação(ões) (date, truncado).
+        data_tests:
+          - not_null

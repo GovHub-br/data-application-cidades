@@ -31,6 +31,14 @@ models:
       gold:
         +materialized: table
 
+    empreendimento_rural_dbt:
+      +materialized: table
+      +schema: empreendimento_rural
+      silver:
+        +materialized: table
+      gold:
+        +materialized: table
+
     conjuntura_dbt:
       +materialized: table
       +schema: conjuntura

@@ -36,6 +36,40 @@ sources:
         description: >
           Tabela de referência do IBGE com os 27 estados brasileiros.
           Contém sigla, nome completo e região. Usada para enriquecer dashboards.
+      - name: novo_mcmv_rural_cad_pj_mensal
+        description: Cadastro PJ mensal do MCMV Rural.
+      - name: novo_mcmv_rural_cadastro_pf_mensal
+        description: Cadastro de beneficiários PF mensal do MCMV Rural.
+      - name: novo_mcmv_rural_obra_mensal
+        description: Evolução física da obra mensal do MCMV Rural.
+      - name: novo_mcmv_rural_financeiro_mensal
+        description: Detalhes de desembolsos financeiros mensais do MCMV Rural.
+      - name: dados_prioritarios_disponibilizados_snh_empreendimentos
+        description: Tabela geral de dados prioritários disponibilizados pela SNH.
+      - name: dados_prioritarios_recebidos_bb_empreendimentos
+        description: Dados prioritários de empreendimentos recebidos do Banco do Brasil.
+      - name: dados_prioritarios_recebidos_bb_entregas
+        description: Dados de entregas recebidos do Banco do Brasil.
+      - name: dados_prioritarios_recebidos_caixa_entregas
+        description: Dados de entregas recebidos da CAIXA.
+      - name: int_andamento_obra_bb
+        description: Acompanhamento mensal de andamento de obras do BB.
+      - name: int_andamento_obra_caixa
+        description: Acompanhamento mensal de andamento de obras da CAIXA.
+      - name: int_financeiro_int055_liberacoes_caixa_bb
+        description: Histórico de liberações financeiras de Caixa e BB.
+      - name: int_empreendimentos_int_065_pnhr_caixa_pj
+        description: Detalhes históricos de empreendimentos Caixa PJ (PNHR).
+      - name: int_empreendimentos_int_057_pnhr_bb_pj
+        description: Detalhes históricos de empreendimentos BB PJ (PNHR).
+      - name: base_trabalho_social_pnhr_bb
+        description: Base de Trabalho Social do PNHR pelo Banco do Brasil.
+      - name: base_trabalho_social_pnhr_rural_caixa
+        description: Base de Trabalho Social do PNHR pela CAIXA.
+      - name: novo_mcmv_inicio_obra
+        description: Histórico e início das obras do Novo MCMV.
+      - name: oferta_publica
+        description: Contratos da Oferta Pública (PNHR).
 
   - name: ibge
     schema: ibge
