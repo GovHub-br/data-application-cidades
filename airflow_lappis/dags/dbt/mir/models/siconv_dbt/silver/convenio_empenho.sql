@@ -11,7 +11,9 @@ with
             sum(valor_empenho) as total_empenhado,
             count(id_empenho) as qtd_empenhos,
             string_agg(distinct natureza_despesa::text, ', ') as naturezas_despesa,
-            string_agg(distinct desc_situacao_empenho, ', ') as situacoes_empenho
+            string_agg(distinct desc_situacao_empenho, ', ') as situacoes_empenho,
+            min(data_emissao) as primeiro_empenho,
+            max(data_emissao) as ultimo_empenho
         from {{ ref("empenho") }}
         group by nr_convenio
     )
@@ -21,6 +23,8 @@ select
     e.total_empenhado,
     e.qtd_empenhos,
     e.naturezas_despesa,
-    e.situacoes_empenho
+    e.situacoes_empenho,
+    e.primeiro_empenho,
+    e.ultimo_empenho
 from convenio c
 left join empenho_agg e on c.nr_convenio = e.nr_convenio
