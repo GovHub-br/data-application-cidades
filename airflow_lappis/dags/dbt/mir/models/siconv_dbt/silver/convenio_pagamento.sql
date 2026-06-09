@@ -5,33 +5,22 @@ with
         select *
         from {{ ref("convenio") }}
     ),
-    pagamento_agg as (
-        select
-            nr_convenio,
-            count(id_dl) as qtd_pagamentos,
-            sum(vl_pago) as total_pago,
-            string_agg(distinct identif_fornecedor, ', ') as fornecedores,
-            string_agg(distinct nome_fornecedor, ', ') as nomes_fornecedores,
-            string_agg(distinct tp_mov_financeira, ', ') as tipos_movimento,
-            min(data_pag) as primeiro_pagamento,
-            max(data_pag) as ultimo_pagamento
+    pagamento as (
+        select *
         from {{ ref("pagamento") }}
-        group by nr_convenio
     )
 
 select
     c.*,
-    p.qtd_pagamentos,
-    p.total_pago,
-    p.fornecedores,
-    p.nomes_fornecedores,
-    p.tipos_movimento,
-    p.primeiro_pagamento,
-    p.ultimo_pagamento,
-    case 
-        when p.ultimo_pagamento > c.dia_fim_vigenc_conv 
-        then 'SIM' 
-        else 'NÃO' 
-    end as pagamento_apos_vigencia
+    p.nr_mov_fin,
+    p.identif_fornecedor,
+    p.nome_fornecedor,
+    p.tp_mov_financeira,
+    p.data_pag,
+    p.nr_dl,
+    p.desc_dl,
+    p.vl_pago,
+    p.id_dl,
+    p.data_emissao_dl
 from convenio c
-left join pagamento_agg p on c.nr_convenio = p.nr_convenio
+left join pagamento p on c.nr_convenio = p.nr_convenio

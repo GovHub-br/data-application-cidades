@@ -5,28 +5,29 @@ with
         select *
         from {{ ref("convenio") }}
     ),
-    licitacao_agg as (
-        select
-            nr_convenio,
-            count(id_licitacao) as qtd_licitacoes,
-            sum(valor_licitacao) as total_contratado,
-            string_agg(distinct modalidade_licitacao, ', ') as modalidades,
-            string_agg(distinct status_licitacao, ', ') as status,
-            string_agg(distinct situacao_aceite_processo_execu, ', ') as situacoes_aceite,
-            min(data_homologacao_licitacao) as primeira_homologacao,
-            max(data_homologacao_licitacao) as ultima_homologacao
+    licitacao as (
+        select *
         from {{ ref("licitacao") }}
-        group by nr_convenio
     )
 
 select
     c.*,
-    l.qtd_licitacoes,
-    l.total_contratado,
-    l.modalidades,
-    l.status,
-    l.situacoes_aceite,
-    l.primeira_homologacao,
-    l.ultima_homologacao
+    l.id_licitacao,
+    l.nr_licitacao,
+    l.modalidade_licitacao,
+    l.tp_processo_compra,
+    l.tipo_licitacao,
+    l.nr_processo_licitacao,
+    l.data_publicacao_licitacao,
+    l.data_abertura_licitacao,
+    l.data_encerramento_licitacao,
+    l.data_homologacao_licitacao,
+    l.status_licitacao,
+    l.situacao_aceite_processo_execu,
+    l.sistema_origem,
+    l.situacao_sistema,
+    l.valor_licitacao,
+    l.data_analise_aceite,
+    l.data_envio_analise
 from convenio c
-left join licitacao_agg l on c.nr_convenio = l.nr_convenio
+left join licitacao l on c.nr_convenio = l.nr_convenio

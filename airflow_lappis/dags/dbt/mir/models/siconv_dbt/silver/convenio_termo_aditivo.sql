@@ -5,32 +5,21 @@ with
         select *
         from {{ ref("convenio") }}
     ),
-    termo_aditivo_agg as (
-        select
-            nr_convenio,
-            count(numero_ta) as qtd_termos_aditivos,
-            sum(vl_global_ta) as total_valor_aditivado,
-            sum(vl_repasse_ta) as total_repasse_aditivado,
-            sum(vl_contrapartida_ta) as total_contrapartida_aditivada,
-            min(dt_assinatura_ta) as primeiro_aditivo,
-            max(dt_assinatura_ta) as ultimo_aditivo,
-            max(dt_fim_ta) as novo_prazo_vigencia,
-            string_agg(distinct tipo_ta, ', ') as tipos_aditivo,
-            string_agg(distinct justificativa_ta, ' | ') as justificativas
+    termo_aditivo as (
+        select *
         from {{ ref("termo_aditivo") }}
-        group by nr_convenio
     )
 
 select
     c.*,
-    t.qtd_termos_aditivos,
-    t.total_valor_aditivado,
-    t.total_repasse_aditivado,
-    t.total_contrapartida_aditivada,
-    t.primeiro_aditivo,
-    t.ultimo_aditivo,
-    t.novo_prazo_vigencia,
-    t.tipos_aditivo,
-    t.justificativas
+    t.numero_ta,
+    t.tipo_ta,
+    t.vl_global_ta,
+    t.vl_repasse_ta,
+    t.vl_contrapartida_ta,
+    t.dt_assinatura_ta,
+    t.dt_inicio_ta,
+    t.dt_fim_ta,
+    t.justificativa_ta
 from convenio c
-left join termo_aditivo_agg t on c.nr_convenio = t.nr_convenio
+left join termo_aditivo t on c.nr_convenio = t.nr_convenio

@@ -5,30 +5,28 @@ with
         select *
         from {{ ref("proposta") }}
     ),
-    meta_agg as (
-        select
-            id_proposta,
-            count(id_meta) as qtd_metas,
-            sum(vl_meta) as valor_total_metas,
-            string_agg(distinct desc_meta, ' | ') as descricoes_metas,
-            string_agg(distinct uf_meta, ', ') as ufs_atendidas,
-            string_agg(distinct municipio_meta, ', ') as municipios_atendidos,
-            string_agg(distinct endereco_meta, ' | ') as enderecos,
-            min(data_inicio_meta) as inicio_metas,
-            max(data_fim_meta) as fim_metas
+    meta_crono_fisico as (
+        select *
         from {{ ref("meta_crono_fisico") }}
-        group by id_proposta
     )
 
 select
     p.*,
-    m.qtd_metas,
-    m.valor_total_metas,
-    m.descricoes_metas,
-    m.ufs_atendidas,
-    m.municipios_atendidos,
-    m.enderecos,
-    m.inicio_metas,
-    m.fim_metas
+    m.id_meta,
+    m.nr_convenio as nr_convenio_meta,
+    m.nr_meta,
+    m.tipo_meta,
+    m.desc_meta,
+    m.data_inicio_meta,
+    m.data_fim_meta,
+    m.uf_meta,
+    m.municipio_meta,
+    m.endereco_meta,
+    m.cep_meta,
+    m.qtd_meta,
+    m.und_fornecimento_meta,
+    m.vl_meta,
+    m.cod_programa,
+    m.nome_programa
 from proposta p
-left join meta_agg m on p.id_proposta = m.id_proposta
+left join meta_crono_fisico m on p.id_proposta = m.id_proposta

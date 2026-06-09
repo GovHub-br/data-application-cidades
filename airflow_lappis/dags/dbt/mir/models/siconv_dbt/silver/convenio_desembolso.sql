@@ -5,24 +5,22 @@ with
         select *
         from {{ ref("convenio") }}
     ),
-    desembolso_agg as (
-        select 
-            nr_convenio,
-            sum(vl_desembolsado) as total_desembolsado_real,
-            max(qtd_dias_sem_desembolso) as max_dias_sem_desembolso,
-            count(id_desembolso) as qtd_desembolsos,
-            min(data_desembolso) as primeiro_desembolso,
-            max(data_desembolso) as ultimo_desembolso
+    desembolso as (
+        select *
         from {{ ref("desembolso") }}
-        group by nr_convenio
     )
 
 select
     c.*,
-    d.total_desembolsado_real,
-    d.max_dias_sem_desembolso,
-    d.qtd_desembolsos,
-    d.primeiro_desembolso,
-    d.ultimo_desembolso
+    d.id_desembolso,
+    d.dt_ult_desembolso,
+    d.qtd_dias_sem_desembolso,
+    d.data_desembolso,
+    d.ano_desembolso,
+    d.mes_desembolso,
+    d.nr_siafi,
+    d.ug_emitente_dh,
+    d.observacao_dh,
+    d.vl_desembolsado
 from convenio c
-left join desembolso_agg d on c.nr_convenio = d.nr_convenio
+left join desembolso d on c.nr_convenio = d.nr_convenio
