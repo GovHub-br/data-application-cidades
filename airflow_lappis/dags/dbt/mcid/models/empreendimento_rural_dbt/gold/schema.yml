@@ -78,3 +78,24 @@ models:
         description: Primeiro dia do mês da(s) liberação(ões) (date, truncado).
         data_tests:
           - not_null
+
+  - name: execucao_fisica_financeira_chart_rural
+    description: Série temporal de execução física e financeira por APF para o MCMV Rural, pronta para gráficos de comparação.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: apf
+        description: APF do empreendimento.
+        data_tests:
+          - not_null
+      - name: apf_municipio_empreendimento
+        description: Texto concatenado com APF, município, UF e nome do empreendimento.
+      - name: mes
+        description: Mês de referência no formato YYYY-MM-DD.
+        data_tests:
+          - not_null
+      - name: pct_obra_realizada
+        description: Percentual de execução física acumulada.
+      - name: pct_executado_financeiro
+        description: Percentual de execução financeira acumulada.
