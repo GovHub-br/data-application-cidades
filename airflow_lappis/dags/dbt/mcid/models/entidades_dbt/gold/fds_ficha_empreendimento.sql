@@ -12,6 +12,7 @@ select
     -- Nomes formatados
     upper(empreendimento_nome) as nome_empreendimento,
     eo_cnpj as cnpj_eo,
+    regexp_replace(eo_cnpj, '^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$', '\1.\2.\3/\4-\5') as cnpj_eo_formatado,
     upper(eo_nome) as nome_eo,
     agente_financeiro,
 
@@ -19,13 +20,37 @@ select
     quantidade_uh,
     pessoas_atendidas,
     tipologia,
+    
+    -- Tradução de Códigos de Negócio (FDS)
     co_regime_obra,
+    case co_regime_obra
+        when 1 then 'Empreitada Global'
+        when 2 then 'Autogestão'
+        else 'Outro (' || coalesce(co_regime_obra::text, 'N/A') || ')'
+    end as regime_obra,
+    
     co_modalidade,
+    case co_modalidade
+        when 1 then 'Aquisição de Terreno e Projeto'
+        when 2 then 'Elaboração de Projeto'
+        when 3 then 'Produção de Unidades Novas'
+        when 4 then 'Requalificação'
+        else 'Outro (' || coalesce(co_modalidade::text, 'N/A') || ')'
+    end as modalidade,
     
     -- Localização
     municipio,
     uf,
     concat(municipio, '/', uf) as municipio_uf,
+    concat('BR-', uf) as iso_3166_2,
+    case
+        when uf in ('AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO') then 'Norte'
+        when uf in ('AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE') then 'Nordeste'
+        when uf in ('DF', 'GO', 'MT', 'MS') then 'Centro-Oeste'
+        when uf in ('ES', 'MG', 'RJ', 'SP') then 'Sudeste'
+        when uf in ('PR', 'RS', 'SC') then 'Sul'
+        else 'Não Informado'
+    end as regiao_nome,
     gps_lat_grau,
     gps_lat_minuto,
     gps_lat_segundo,
