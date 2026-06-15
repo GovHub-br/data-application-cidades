@@ -63,3 +63,4 @@ Descreva o resultado esperado.
 - [ ] Registros não correspondentes foram analisados
 - [ ] Resultado foi validado
 - [ ] Regras foram documentadas
+-

@@ -7,6 +7,7 @@ assignees: ''
 
 ---
 
+
 ## Contexto
 
 Descreva o problema de qualidade ou padronização dos dados.

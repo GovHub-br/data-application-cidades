@@ -54,6 +54,8 @@ Liste entidades, tabelas, endpoints, arquivos ou campos necessários.
 - [ ] Validar volume extraído
 - [ ] Documentar limitações da fonte
 
+
+
 ## Critérios de aceite
 
 - [ ] Dados foram extraídos corretamente

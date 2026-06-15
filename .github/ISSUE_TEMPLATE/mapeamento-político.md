@@ -7,6 +7,7 @@ assignees: ''
 
 ---
 
+
 ## Contexto
 
 Descreva o objetivo do mapeamento político.

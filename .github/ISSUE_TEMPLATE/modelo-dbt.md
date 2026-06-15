@@ -7,6 +7,7 @@ assignees: ''
 
 ---
 
+
 ## Contexto
 
 Descreva a necessidade do modelo dbt.

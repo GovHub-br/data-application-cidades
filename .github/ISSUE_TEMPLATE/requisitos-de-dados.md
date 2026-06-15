@@ -58,6 +58,7 @@ Descreva o que precisa ser descoberto, definido ou refinado.
 - [ ] Quebrar demanda em tarefas técnicas
 - [ ] Validar requisitos com solicitante
 
+
 ## Critérios de aceite
 
 - [ ] Perguntas de negócio foram respondidas

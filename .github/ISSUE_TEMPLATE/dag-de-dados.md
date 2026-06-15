@@ -58,6 +58,7 @@ Explique o que a DAG deve executar.
 - [ ] Logs permitem rastrear falhas
 - [ ] Documentação mínima foi criada
 
+
 ## Observações
 
 Adicione links, prints, erros, logs ou referências.

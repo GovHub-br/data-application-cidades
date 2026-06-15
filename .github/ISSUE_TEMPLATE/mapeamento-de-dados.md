@@ -47,6 +47,7 @@ Liste regras, filtros e condições.
 - [ ] Validar com área solicitante
 - [ ] Criar documentação
 
+
 ## Critérios de aceite
 
 - [ ] Campos de origem e destino foram mapeados

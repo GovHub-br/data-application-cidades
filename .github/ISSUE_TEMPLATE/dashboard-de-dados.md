@@ -55,6 +55,7 @@ Explique o que o dashboard deve permitir acompanhar ou decidir.
 - [ ] Publicar dashboard
 - [ ] Documentar regras dos indicadores
 
+
 ## Critérios de aceite
 
 - [ ] Indicadores estão corretos
