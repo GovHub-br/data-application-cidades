@@ -9,55 +9,48 @@ assignees: ''
 
 ## Contexto
 
-Descreva o motivo da criação ou alteração da DAG.
+Descreva a necessidade da DAG.
 
-## Objetivo da DAG
+## Objetivo
 
 Explique o que a DAG deve executar.
 
 ## Fonte dos dados
 
-- Nome da fonte:
-- Tipo da fonte:
+- Fonte:
+- Tipo:
 - Localização:
-- Responsável:
 - Frequência de atualização:
 
 ## Destino dos dados
 
 - Banco/schema:
-- Tabela/modelo:
+- Tabela:
 - Ambiente:
-- Camada: bronze / silver / gold
+- Camada:
 
 ## Periodicidade
 
-- Frequência de execução:
-- Horário esperado:
-- Existe dependência de outra DAG?
+- Frequência:
+- Horário:
+- Dependências:
 
 ## Tarefas
 
-- [ ] Validar fonte de dados
-- [ ] Validar acesso
-- [ ] Definir estratégia de execução
-- [ ] Criar ou alterar DAG
+- [ ] Validar fonte e acesso
+- [ ] Criar ou ajustar DAG
 - [ ] Configurar dependências
-- [ ] Configurar logs e alertas
-- [ ] Testar execução local
-- [ ] Testar execução em ambiente de homologação
+- [ ] Testar execução
 - [ ] Validar dados gerados
-- [ ] Documentar DAG
+- [ ] Documentar processo
 
 ## Critérios de aceite
 
 - [ ] DAG executa sem erro
-- [ ] Dados são gerados no destino esperado
-- [ ] Periodicidade está configurada corretamente
-- [ ] Dependências foram validadas
-- [ ] Logs permitem rastrear falhas
+- [ ] Dados chegam ao destino esperado
+- [ ] Periodicidade está correta
 - [ ] Documentação mínima foi criada
 
 ## Observações
 
-Adicione links, prints, erros, logs ou referências.
+Adicione links, prints, logs ou referências.

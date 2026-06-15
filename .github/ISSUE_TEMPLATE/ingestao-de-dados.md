@@ -9,65 +9,49 @@ assignees: ''
 
 ## Contexto
 
-Descreva a necessidade de ingestão dos dados.
+Descreva a necessidade da ingestão.
 
-## Objetivo da ingestão
+## Objetivo
 
-Explique o que precisa ser ingerido e para qual finalidade.
+Explique quais dados serão ingeridos e para onde.
 
-## Fonte dos dados
+## Fonte
 
-- Nome da fonte:
-- Tipo da fonte: API / banco / planilha / CSV / parquet / scraping / outro
+- Fonte:
+- Tipo:
 - Localização:
-- Responsável:
-- Frequência de atualização:
-- Status do acesso:
+- Frequência:
 
-## Destino dos dados
+## Destino
 
 - Banco/schema:
 - Tabela:
+- Camada:
 - Ambiente:
-- Camada: raw / bronze / silver / gold
 
-## Estratégia de ingestão
+## Estratégia
 
 - [ ] Carga completa
-- [ ] Carga incremental
-- [ ] Carga particionada
-- [ ] Carga sob demanda
-- [ ] Outra
-
-## Chaves e controle
-
-- Chave primária:
-- Campo de data de atualização:
-- Regra para duplicidades:
-- Regra para reprocessamento:
-- Existe histórico a ser mantido?
+- [ ] Incremental
+- [ ] Particionada
+- [ ] Sob demanda
 
 ## Tarefas
 
-- [ ] Validar fonte de dados
-- [ ] Validar acesso
+- [ ] Validar fonte e acesso
 - [ ] Definir estratégia de ingestão
 - [ ] Criar estrutura de destino
 - [ ] Implementar ingestão
-- [ ] Tratar duplicidades
-- [ ] Criar controle de execução
 - [ ] Validar dados ingeridos
 - [ ] Documentar processo
 
 ## Critérios de aceite
 
-- [ ] Dados são ingeridos no destino esperado
-- [ ] Estratégia de ingestão está definida
-- [ ] Processo pode ser reexecutado com segurança
-- [ ] Duplicidades foram tratadas ou justificadas
-- [ ] Dados ingeridos foram validados
-- [ ] Documentação mínima foi criada
+- [ ] Dados chegam ao destino correto
+- [ ] Processo pode ser reexecutado
+- [ ] Duplicidades foram tratadas
+- [ ] Ingestão foi validada
 
 ## Observações
 
-Adicione links, prints, exemplos de dados, erros ou referências.
+Adicione links, exemplos ou referências.

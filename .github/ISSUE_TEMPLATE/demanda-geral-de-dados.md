@@ -17,8 +17,6 @@ Explique o resultado esperado.
 
 ## Tipo de demanda
 
-Marque o que se aplica:
-
 - [ ] DAG
 - [ ] dbt
 - [ ] Extração
@@ -36,23 +34,17 @@ Marque o que se aplica:
 
 ## Fontes envolvidas
 
-Liste bases, sistemas, APIs, planilhas, arquivos ou outras fontes.
-
 - 
 - 
 - 
 
 ## Entregáveis esperados
 
-Liste o que deve ser entregue ao final.
-
 - 
 - 
 - 
 
-## Perguntas abertas
-
-Liste dúvidas que precisam ser respondidas antes de iniciar a execução.
+## Dúvidas abertas
 
 - 
 - 
@@ -66,7 +58,7 @@ Liste dúvidas que precisam ser respondidas antes de iniciar a execução.
 - [ ] Levantar fontes
 - [ ] Levantar requisitos
 - [ ] Definir entregáveis
-- [ ] Quebrar em tarefas técnicas
+- [ ] Quebrar tarefas técnicas
 - [ ] Validar próximos passos
 
 ## Critérios de aceite
@@ -75,8 +67,8 @@ Liste dúvidas que precisam ser respondidas antes de iniciar a execução.
 - [ ] Tipo da issue foi classificado
 - [ ] Próximas tarefas foram definidas
 - [ ] Responsável foi definido
-- [ ] Critérios mínimos de entrega foram definidos
+- [ ] Critérios mínimos foram definidos
 
 ## Observações
 
-Adicione links, prints, documentos, exemplos ou referências.
+Adicione links, documentos ou referências.
