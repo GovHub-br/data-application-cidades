@@ -1,0 +1,202 @@
+version: 2
+
+models:
+  - name: fds_empreendimento
+    description: >
+      Tabela Silver (Visão Unificada) de Empreendimentos FDS do Novo MCMV Entidades.
+      Consolida as 6 bronzes: fds_cadastro_pj, fds_obra_mensal, fds_int_059_caixa_pj,
+      fds_trabalho_social, fds_financeiro_mensal e fds_dados_prioritarios_entregas.
+      Gera uma visão por APF pronta para alimentar os dashboards de Ficha,
+      Panorama Estadual, Panorama por Entidade e Alertas.
+    meta:
+      tags:
+        - silver
+        - entidades
+    columns:
+      - name: apf
+        description: Chave primária — APF normalizado para 8 dígitos.
+        data_tests:
+          - unique
+          - not_null
+
+      # Entidade Organizadora
+      - name: eo_nome
+        description: Nome da Entidade Organizadora responsável pelo empreendimento.
+      - name: eo_cnpj
+        description: >
+          CNPJ da EO (apenas dígitos). Chave para agregação por entidade.
+          Aplicado LPAD para garantir 14 dígitos (62% da fonte possui 13 dígitos).
+      - name: co_nivel_hab_eo
+        description: "Nível de habilitação da EO (1 a 6). Decodificação pendente."
+      - name: ic_substituicao_eo
+        description: Indica se houve substituição da EO (true/false).
+
+      # Empreendimento
+      - name: empreendimento_nome
+        description: Nome do empreendimento.
+      - name: construtora_nome
+        description: "Nome da construtora. ATENÇÃO: no FDS é sempre 'NÃO INFORMADO' (placeholder), pois a EO faz o papel da construtora."
+      - name: construtora_cnpj
+        description: "CNPJ da construtora. ATENÇÃO: no FDS é sempre '0'."
+      - name: quantidade_uh
+        description: >
+          Total de UHs. Calculado como GREATEST(qt_uh_construcao, qt_uh_projeto),
+          pois os campos são mutuamente exclusivos na fonte (quando um > 0, o outro é 0).
+      - name: qt_uh_construcao
+        description: "UHs em construção (bruto)."
+      - name: qt_uh_projeto
+        description: "UHs em projeto (bruto)."
+      - name: pessoas_atendidas
+        description: "Estimativa heurística: (quantidade_uh × 3.3) arredondado para baixo."
+      - name: tipologia
+        description: "Tipo de edificação: Casa, Misto, Apartamento."
+      - name: co_regime_obra
+        description: "Regime de obra: 1(?), 2(?). Decodificação pendente."
+      - name: co_modalidade
+        description: "Modalidade: 1(?), 2(?), 3(?), 4(?). Decodificação pendente."
+
+      # Localização
+      - name: municipio
+        description: Município do empreendimento.
+      - name: uf
+        description: UF do empreendimento (2 caracteres).
+      - name: cod_ibge
+        description: Código IBGE do município.
+
+      # Valores contratuais
+      - name: valor_contratado
+        description: Valor total do investimento (FDS + contrapartidas) em R$.
+      - name: valor_financiamento_fds
+        description: Parcela do financiamento FDS em R$.
+      - name: valor_contrapartidas
+        description: Total de contrapartidas em R$.
+      - name: valor_por_uh
+        description: Custo unitário por UH (valor_contratado / quantidade_uh).
+
+      # Datas
+      - name: dt_contratacao
+        description: Data de assinatura do contrato. Datas '1900-01-01' tratadas como NULL.
+      - name: dt_inicio_obra
+        description: Data de início efetivo da obra. Datas '1900-01-01' tratadas como NULL.
+      - name: dt_previsao_conclusao
+        description: Data prevista de conclusão da obra.
+
+      # Situação
+      - name: situacao_gefus
+        description: "Status da CAIXA (ex: NORMAL, PARALISADA, NAO_INICIADA_CLAUSULA_SUSPENSIVA)."
+      - name: fase_contrato
+        description: Fase do contrato na CAIXA.
+      - name: co_situacao_operacao
+        description: "Código de situação: 1(241), 11(56), 3(23), 2(19), 5(2), 16(2). Pendente."
+      - name: co_andamento_operacao
+        description: Código de andamento da operação.
+
+      # Evolução Física
+      - name: percentual_obra_prevista
+        description: Percentual de obra previsto (0-100).
+      - name: percentual_execucao_fisica
+        description: Percentual de obra realizado (0-100).
+
+      # UHs e Entregas
+      - name: qt_uh_concluidas
+        description: >
+          UHs com obra concluída. ATENÇÃO: campo não confiável na base FDS —
+          retorna NULL mesmo quando há UHs alienadas (4 casos, todos modalidade 3
+          lotes pulverizados/aquisição). Não usar como indicador de entrega.
+      - name: qt_uh_alienadas
+        description: >
+          UHs alienadas (chaves entregues). Indicador confiável de entrega efetiva
+          no FDS. A taxa de entrega (pct_entrega) é calculada sobre este campo.
+      - name: pct_entrega
+        description: "Taxa de entrega: (qt_uh_alienadas / quantidade_uh) × 100."
+
+      # Evolução Financeira
+      - name: valor_desembolsado
+        description: >
+          Total desembolsado acumulado. Calculado com ABS(vr_liberado) para
+          registros com ic_credito='0' (liberações reais).
+      - name: percentual_execucao_financeira
+        description: "(valor_desembolsado / valor_contratado) × 100."
+      - name: divergencia_fisico_financeira
+        description: >
+          Gap em pontos percentuais entre execução financeira e física.
+          Positivo = financeiro adiantado. Negativo = financeiro atrasado.
+          Fórmula: pct_exec_financeira - pct_obra_realizada.
+
+      # Paralisação e Alertas
+      - name: dt_paralisacao
+        description: Data de paralisação da obra (quando aplicável).
+      - name: ic_invadido
+        description: Indica se o empreendimento foi invadido.
+
+      # Trabalho Social
+      - name: co_situacao_trabalho_social
+        description: "Código de situação do TS: 1(44), 5(34), 2(8), 6(3). Pendente."
+      - name: pct_execucao_ts
+        description: Percentual de execução do trabalho social (0-100).
+
+      # Tempo
+      - name: dias_contratacao_inicio
+        description: Dias entre contratação e início da obra.
+
+      # GPS
+      - name: gps_lat_grau
+        description: "Latitude (Graus). Coordenadas zeradas (0,0,0) foram tratadas como NULL para evitar marcações no Golfo da Guiné."
+      - name: gps_lat_minuto
+        description: "Latitude (Minutos)."
+      - name: gps_lat_segundo
+        description: "Latitude (Segundos)."
+      - name: gps_long_grau
+        description: "Longitude (Graus)."
+      - name: gps_long_minuto
+        description: "Longitude (Minutos)."
+      - name: gps_long_segundo
+        description: "Longitude (Segundos)."
+
+  - name: fds_evolucao_financeira
+    description: >
+      Tabela Silver de Evolução Financeira FDS. Série temporal mensal de
+      liberações por empreendimento (APF × mês). Usa ABS(vr_liberado) para
+      liberações reais (ic_credito='0'). JOIN com fds_empreendimento pela
+      raiz de 6 dígitos. Inclui eo_cnpj/eo_nome para agregação por EO.
+    meta:
+      tags:
+        - silver
+        - entidades
+    columns:
+      - name: apf
+        description: APF do empreendimento (8 dígitos).
+        data_tests:
+          - not_null
+      - name: eo_cnpj
+        description: CNPJ da EO (para agregação por entidade nos golds).
+      - name: eo_nome
+        description: Nome da EO.
+      - name: mes
+        description: Primeiro dia do mês da(s) liberação(ões) (date truncado).
+        data_tests:
+          - not_null
+      - name: qt_liberacoes
+        description: Quantidade de liberações financeiras no mês.
+      - name: vr_liberado_mes
+        description: Soma de ABS(vr_liberado) no mês em R$.
+        data_tests:
+          - not_null
+      - name: vr_pago_obra_mes
+        description: Parcela destinada à obra no mês em R$.
+      - name: vr_pago_pts_mes
+        description: Parcela destinada ao trabalho social no mês em R$.
+      - name: vr_pago_incc_mes
+        description: Parcela de ajuste INCC no mês em R$.
+      - name: vr_acumulado
+        description: >
+          Desembolso acumulado progressivo por APF até o mês corrente.
+          Calculado via SUM(vr_liberado_mes) OVER (PARTITION BY apf ORDER BY mes).
+      - name: pct_executado_financeiro
+        description: "(vr_acumulado / valor_contratado) × 100."
+      - name: valor_contratado
+        description: Valor total contratado do empreendimento (herdado da silver).
+      - name: municipio
+        description: Município do empreendimento.
+      - name: uf
+        description: UF do empreendimento.

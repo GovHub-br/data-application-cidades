@@ -1,0 +1,110 @@
+version: 2
+
+models:
+  - name: fds_ficha_empreendimento
+    description: >
+      Tabela Gold do MCMV Entidades (FDS) contendo 1 linha por empreendimento (APF).
+      É a tabela central para alimentar o Superset com os dados detalhados.
+      Utilizada nos KPIs: Mapa de Atuação, Semáforo de Alertas, Divergência 
+      Físico-Financeira e Distribuição por Tipo.
+    meta:
+      tags:
+        - gold
+        - entidades
+        - superset
+    columns:
+      - name: apf
+        description: Identificador do empreendimento (APF).
+        data_tests:
+          - unique
+          - not_null
+      - name: nome_empreendimento
+        description: Nome padronizado do empreendimento em maiúsculas.
+      - name: cnpj_eo
+        description: CNPJ da Entidade Organizadora (apenas números, 14 dígitos).
+      - name: cnpj_eo_formatado
+        description: CNPJ da Entidade Organizadora formatado (XX.XXX.XXX/XXXX-XX) para exibição.
+      - name: nome_eo
+        description: Nome padronizado da Entidade Organizadora em maiúsculas.
+      - name: quantidade_uh
+        description: Total de UHs corrigido (maior valor entre construção e projeto).
+      - name: pessoas_atendidas
+        description: Métrica heurística (quantidade_uh × 3.3).
+      - name: regime_obra
+        description: Regime de execução da obra decodificado (ex. Empreitada Global, Autogestão).
+      - name: modalidade
+        description: > 
+          Modalidade de atendimento do programa decodificada.
+          1 = Aquisição de terreno e elaboração de projeto
+          2 = Elaboração de projeto (quando o terreno já existe)
+          3 = Produção de unidades novas (A construção em si - é a mais comum e justifica ter várias na base)
+          4 = Produção de unidades requalificadas (Reforma/Retrofit de prédios antigos)
+      - name: apf_municipio_empreendimento
+        description: Campo concatenado "APF - Município/UF - Nome" usado como filtro no Dashboard.
+      - name: semaforo_alerta
+        description: >
+          Regra de negócio para o gráfico de semáforo. Categorias:
+          Paralisada, Cláusula Suspensiva, Não Iniciada, 
+          Em Andamento, Concluída.
+      - name: divergencia_fisico_financeira
+        description: Gap em p.p. entre percentual_execucao_financeira e percentual_execucao_fisica.
+      - name: status_entrega
+        description: Regra de negócio (Totalmente Entregue, Entrega Parcial, Não Entregue) calculada sobre a taxa de alienação.
+
+  - name: fds_panorama_entidade
+    description: >
+      Tabela Gold do MCMV Entidades (FDS) agregada por Entidade Organizadora (CNPJ).
+      É a tabela principal para os KPIs: Card Resumo, Ranking Interativo e
+      Ranking de Risco. Contém agregações ponderadas e scores.
+    meta:
+      tags:
+        - gold
+        - entidades
+        - superset
+    columns:
+      - name: cnpj_eo
+        description: CNPJ da Entidade Organizadora (14 dígitos).
+        data_tests:
+          - unique
+          - not_null
+      - name: nome_eo
+        description: Nome da EO.
+      - name: total_empreendimentos
+        description: Quantidade de APFs associados a esta EO.
+      - name: media_execucao_fisica
+        description: Percentual médio de execução física ponderado pelo valor do investimento.
+      - name: taxa_entrega_geral
+        description: Percentual total de UHs alienadas em relação ao total contratado da EO.
+      - name: score_risco
+        description: >
+          Pontuação de risco da EO. Soma os pesos:
+          1 ponto (Atraso: físico < previsto),
+          2 pontos (Obra Paralisada),
+          1 ponto (Divergência Financeira Adiantada grave: < -5 p.p.).
+      - name: classificacao_risco
+        description: "Regra de negócio baseada no score: Baixo, Médio ou Alto Risco."
+
+  - name: fds_evolucao_financeira_chart
+    description: >
+      Tabela Gold de evolução financeira do MCMV Entidades (FDS).
+      Estrutura de série temporal (1 linha por APF/Mês) pronta para plotar
+      no Superset gráficos de linha (Acumulado) e barra (Desembolso mensal).
+      Herda o cnpj_eo para permitir filtro direto por entidade.
+    meta:
+      tags:
+        - gold
+        - entidades
+        - superset
+    columns:
+      - name: apf
+        description: APF do empreendimento.
+      - name: cnpj_eo
+        description: CNPJ da Entidade.
+      - name: mes
+        description: Primeiro dia do mês da medição financeira.
+      - name: valor_liberado_mensal
+        description: Soma dos valores de liberação ocorridos naquele mês.
+      - name: valor_desembolsado_acumulado
+        description: Valor total acumulado desembolsado para aquele APF até o mês atual da linha.
+      - name: pct_executado_financeiro
+        description: Relação entre o acumulado financeiro e o valor de investimento total do contrato.
