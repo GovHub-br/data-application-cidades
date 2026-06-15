@@ -7,6 +7,7 @@ sources:
       Schema de dados brutos do banco cidades.
       Contém os dados ingeridos das fontes GFAR, CAIXA e SNH para o programa MCMV.
     tables:
+      # Fontes FAR
       - name: novo_mcmv_far_consolidado
         description: >
           Tabela consolidada do GFAR com todas as propostas FAR do Novo MCMV.
@@ -36,6 +37,48 @@ sources:
         description: >
           Tabela de referência do IBGE com os 27 estados brasileiros.
           Contém sigla, nome completo e região. Usada para enriquecer dashboards.
+      - name: api_ibge_regioes
+        description: >
+          Tabela de referência do IBGE com as 5 regiões brasileiras.
+          Contém id e nome (Norte, Nordeste, Centro-Oeste, Sudeste, Sul).
+      - name: dados_prioritarios_recebidos_caixa_entregas
+        description: >
+          Snapshot de entregas reportadas pela CAIXA. Contém 11.540 registros
+          de múltiplos programas.
+
+      # Fontes FDS (Entidades)
+      - name: novo_mcmv_fds_cad_pj_mensal
+        description: >
+          Cadastro PJ mensal do MCMV Entidades (FDS). 343 empreendimentos
+          contratados a partir de ago/2024. 89 colunas text com dados de
+          Entidade Organizadora, construtora, UHs, composição financeira,
+          GPS, datas, substituição de EO e indicadores. Snapshot mensal.
+      - name: novo_mcmv_fds_obra_mensal
+        description: >
+          Evolução física da obra FDS. 343 registros (1 por empreendimento).
+          47 colunas text com situação da operação, percentual previsto/realizado,
+          UHs concluídas/alienadas, paralisação, invasão e datas de entrega.
+      - name: novo_mcmv_fds_financeiro_mensal
+        description: >
+          Série temporal de liberações financeiras FDS. 16.124 registros para
+          750 APFs (111 do Novo MCMV). APF em 6 dígitos. ATENÇÃO: ic_credito=0
+          são liberações reais (valores negativos), usar ABS(). ic_credito=1
+          são devoluções (20 registros).
+      - name: novo_mcmv_fds_trabalho_social_mensal
+        description: >
+          Acompanhamento do Trabalho Técnico Social FDS. 89 registros com
+          situação, datas de aprovação PTS, convênio, relatórios e portaria.
+      
+      # Fontes Complementares
+      - name: int_empreendimentos_int_059_fds_caixa_pj
+        description: >
+          Tabela complementar da CAIXA (INT 059) com 856 registros.
+          Contém dados do legado e do Novo MCMV. Importante para filtros
+          como situacao_gefus e fase_contrato.
+      - name: api_ibge_municipios
+        description: >
+          Tabela de referência do IBGE com os municípios brasileiros.
+          Contém id, nome, microrregião, mesorregião e códigos relacionados.
 
   - name: ibge
     schema: ibge
