@@ -1,6 +1,6 @@
 ---
 name: Dashboard de Dados
-about: Criar, alterar ou validar dashboard
+about: Criar, alterar ou validar dashboard de dados
 title: ''
 labels: ''
 assignees: ''
@@ -13,53 +13,52 @@ Descreva a necessidade do dashboard.
 
 ## Objetivo
 
-Explique o que o dashboard deve permitir acompanhar ou decidir.
+Explique o que o dashboard deve acompanhar ou responder.
 
 ## Público-alvo
 
 - Usuários:
 - Área:
-- Frequência de uso:
+- Responsável pela validação:
 
-## Indicadores necessários
+## Indicadores
 
-| Indicador | Definição | Fonte | Regra de cálculo | Filtro |
-|----------|-----------|-------|------------------|--------|
-|          |           |       |                  |        |
+| Indicador | Definição | Fonte | Regra |
+|----------|-----------|-------|-------|
+|          |           |       |       |
 
 ## Filtros e recortes
 
 - Período:
 - Território:
-- Órgão:
-- Ator político:
-- Partido:
 - Categoria:
 - Outros:
 
-## Fonte ou tabela de consumo
+## Fonte de consumo
 
-- Nome da tabela:
+- Tabela:
 - Camada:
 - Atualização:
-- Responsável:
 
 ## Tarefas
 
 - [ ] Validar indicadores
-- [ ] Validar tabela de consumo
+- [ ] Validar fonte de consumo
 - [ ] Definir layout
 - [ ] Construir visualizações
 - [ ] Configurar filtros
 - [ ] Validar números
 - [ ] Publicar dashboard
-- [ ] Documentar regras dos indicadores
-
+- [ ] Documentar regras
 
 ## Critérios de aceite
 
 - [ ] Indicadores estão corretos
-- [ ] Filtros funcionam corretamente
+- [ ] Filtros funcionam
 - [ ] Dashboard usa fonte validada
-- [ ] Visualizações respondem às perguntas de negócio
-- [ ] Solicitante validou a entrega
+- [ ] Visualizações respondem ao objetivo
+- [ ] Entrega foi validada
+
+## Observações
+
+Adicione links, prints ou referências.

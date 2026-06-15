@@ -1,6 +1,6 @@
 ---
 name: Extração de Dados
-about: Solicitar ou implementar extração de dados de uma fonte
+about: Solicitar ou implementar extração de dados
 title: ''
 labels: ''
 assignees: ''
@@ -11,34 +11,27 @@ assignees: ''
 
 Descreva por que os dados precisam ser extraídos.
 
-## Fonte de dados
+## Objetivo
 
-- Nome:
-- Tipo: API / banco / planilha / CSV / parquet / scraping / outro
+Explique quais dados precisam ser extraídos e para qual uso.
+
+## Fonte dos dados
+
+- Fonte:
+- Tipo: API / banco / planilha / CSV / outro
 - Localização:
-- Responsável:
 - Status do acesso:
-- Documentação disponível?
+- Documentação:
 
 ## Dados necessários
 
-Liste entidades, tabelas, endpoints, arquivos ou campos necessários.
-
 - 
 - 
 - 
-
-## Filtros ou recortes
-
-- Período:
-- Região:
-- Órgão:
-- Ator político:
-- Outros filtros:
 
 ## Periodicidade
 
-- [ ] Extração única
+- [ ] Única
 - [ ] Diária
 - [ ] Semanal
 - [ ] Mensal
@@ -46,20 +39,19 @@ Liste entidades, tabelas, endpoints, arquivos ou campos necessários.
 
 ## Tarefas
 
-- [ ] Validar fonte
-- [ ] Validar acesso
-- [ ] Mapear campos necessários
+- [ ] Validar fonte e acesso
+- [ ] Mapear dados necessários
 - [ ] Implementar extração
-- [ ] Armazenar dados brutos
 - [ ] Validar volume extraído
-- [ ] Documentar limitações da fonte
-
-
+- [ ] Documentar fonte e limitações
 
 ## Critérios de aceite
 
 - [ ] Dados foram extraídos corretamente
-- [ ] Fonte foi registrada
-- [ ] Volume foi validado
-- [ ] Erros e limitações foram documentados
-- [ ] Dados estão disponíveis para próxima etapa
+- [ ] Fonte foi validada
+- [ ] Volume foi conferido
+- [ ] Dados estão disponíveis para uso
+
+## Observações
+
+Adicione links, exemplos ou referências.

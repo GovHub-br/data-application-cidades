@@ -7,14 +7,13 @@ assignees: ''
 
 ---
 
-
 ## Contexto
 
-Descreva o problema de qualidade ou padronização dos dados.
+Descreva o problema ou necessidade de tratamento.
 
-## Base ou tabela envolvida
+## Base envolvida
 
-- Nome:
+- Base/tabela:
 - Localização:
 - Camada:
 - Responsável:
@@ -25,14 +24,10 @@ Descreva o problema de qualidade ou padronização dos dados.
 - [ ] Duplicidades
 - [ ] Tipos incorretos
 - [ ] Datas inconsistentes
-- [ ] Categorias fora do padrão
-- [ ] Nomes não padronizados
-- [ ] Dados incompletos
+- [ ] Campos fora do padrão
 - [ ] Outro
 
 ## Regras de tratamento
-
-Liste as regras esperadas.
 
 - 
 - 
@@ -42,15 +37,17 @@ Liste as regras esperadas.
 
 - [ ] Identificar inconsistências
 - [ ] Definir regras de tratamento
-- [ ] Aplicar limpeza
-- [ ] Padronizar campos
-- [ ] Remover ou tratar duplicidades
+- [ ] Aplicar limpeza/padronização
 - [ ] Validar resultado
 - [ ] Documentar regras aplicadas
 
 ## Critérios de aceite
 
-- [ ] Dados tratados conforme regras definidas
-- [ ] Inconsistências foram reduzidas ou justificadas
-- [ ] Regras aplicadas estão documentadas
-- [ ] Dados estão prontos para cruzamento, modelagem ou consumo
+- [ ] Dados tratados conforme regras
+- [ ] Inconsistências foram corrigidas ou justificadas
+- [ ] Resultado foi validado
+- [ ] Regras foram documentadas
+
+## Observações
+
+Adicione exemplos, links ou prints.

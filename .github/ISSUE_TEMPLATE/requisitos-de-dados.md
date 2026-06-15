@@ -9,60 +9,59 @@ assignees: ''
 
 ## Contexto
 
-Explique a demanda ou problema que precisa ser entendido.
+Descreva a demanda que precisa ser entendida.
 
-## Objetivo da elicitação
+## Objetivo
 
-Descreva o que precisa ser descoberto, definido ou refinado.
+Explique o que precisa ser definido ou refinado.
 
-## Solicitante ou área interessada
+## Solicitante
 
 - Nome:
 - Área:
 - Responsável pela validação:
+- Prazo:
 
 ## Perguntas de negócio
 
-- Qual decisão será tomada com esses dados?
-- Quem será o usuário final?
-- Qual problema a entrega precisa resolver?
+- Qual problema será resolvido?
+- Quem usará a entrega?
 - Quais indicadores são necessários?
 - Qual granularidade é esperada?
-- Qual periodicidade de atualização?
+- Qual periodicidade?
+- Quais fontes devem ser usadas?
 - Quais filtros ou recortes são necessários?
-- Quais fontes devem ser consideradas?
-- Existe regra de negócio já definida?
-- Existe prazo ou entrega associada?
 
-## Requisitos funcionais
+## Requisitos
 
-- 
-- 
-- 
-
-## Requisitos técnicos
+### Funcionais
 
 - 
 - 
+
+### Técnicos
+
+- 
 - 
 
-## Tarefas derivadas
+## Tarefas
 
 - [ ] Levantar perguntas de negócio
 - [ ] Definir escopo
 - [ ] Mapear fontes
 - [ ] Definir indicadores
-- [ ] Definir granularidade
-- [ ] Definir periodicidade
 - [ ] Definir entregáveis
-- [ ] Quebrar demanda em tarefas técnicas
-- [ ] Validar requisitos com solicitante
-
+- [ ] Quebrar tarefas técnicas
+- [ ] Validar requisitos
 
 ## Critérios de aceite
 
-- [ ] Perguntas de negócio foram respondidas
-- [ ] Requisitos funcionais foram definidos
-- [ ] Requisitos técnicos foram definidos
-- [ ] Tarefas foram quebradas
-- [ ] Escopo foi validado
+- [ ] Perguntas foram respondidas
+- [ ] Escopo foi definido
+- [ ] Requisitos foram documentados
+- [ ] Entregáveis foram definidos
+- [ ] Próximas tarefas foram criadas
+
+## Observações
+
+Adicione links, atas ou documentos.

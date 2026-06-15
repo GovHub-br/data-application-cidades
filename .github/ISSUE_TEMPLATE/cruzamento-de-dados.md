@@ -11,56 +11,49 @@ assignees: ''
 
 Explique por que as bases precisam ser cruzadas.
 
+## Objetivo
+
+Descreva o resultado esperado do cruzamento.
+
 ## Bases envolvidas
 
 ### Base 1
 
 - Nome:
 - Localização:
-- Chave de cruzamento:
+- Chave:
 - Granularidade:
 
 ### Base 2
 
 - Nome:
 - Localização:
-- Chave de cruzamento:
+- Chave:
 - Granularidade:
-
-## Objetivo do cruzamento
-
-Descreva o resultado esperado.
 
 ## Regras de cruzamento
 
 - Tipo de join:
 - Chaves:
-- Tratamento de registros sem correspondência:
 - Tratamento de duplicidades:
-- Regras de prioridade:
-
-## Resultado esperado
-
-- Tabela de saída:
-- Campos esperados:
-- Camada:
-- Consumidor final:
+- Tratamento de registros sem correspondência:
 
 ## Tarefas
 
-- [ ] Validar granularidade das bases
-- [ ] Validar chaves de cruzamento
+- [ ] Validar granularidade
+- [ ] Validar chaves
 - [ ] Definir regra de join
 - [ ] Executar cruzamento
-- [ ] Validar perdas ou duplicidades
-- [ ] Gerar tabela final
+- [ ] Validar perdas e duplicidades
 - [ ] Documentar regras
 
 ## Critérios de aceite
 
-- [ ] Cruzamento executado corretamente
+- [ ] Cruzamento foi executado corretamente
 - [ ] Chaves foram validadas
-- [ ] Registros não correspondentes foram analisados
-- [ ] Resultado foi validado
+- [ ] Resultado foi conferido
 - [ ] Regras foram documentadas
--
+
+## Observações
+
+Adicione queries, links ou exemplos.

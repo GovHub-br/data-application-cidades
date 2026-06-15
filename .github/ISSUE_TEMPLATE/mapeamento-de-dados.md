@@ -1,6 +1,6 @@
 ---
 name: Mapeamento de Dados
-about: Mapear campos, fontes, regras e destinos de dados
+about: Mapear fontes, campos, regras e destinos de dados
 title: ''
 labels: ''
 assignees: ''
@@ -19,13 +19,11 @@ Explique o objetivo do mapeamento.
 
 ## Mapeamento de campos
 
-| Campo origem | Fonte | Campo destino | Tipo | Regra de transformação | Obrigatório |
-|-------------|-------|---------------|------|--------------------------|-------------|
-|             |       |               |      |                          |             |
+| Campo origem | Fonte | Campo destino | Regra |
+|-------------|-------|---------------|-------|
+|             |       |               |       |
 
 ## Regras de negócio
-
-Liste regras, filtros e condições.
 
 - 
 - 
@@ -40,17 +38,19 @@ Liste regras, filtros e condições.
 ## Tarefas
 
 - [ ] Levantar fontes
-- [ ] Mapear campos de origem
-- [ ] Definir campos de destino
-- [ ] Validar tipos de dados
-- [ ] Mapear regras de transformação
-- [ ] Validar com área solicitante
-- [ ] Criar documentação
-
+- [ ] Mapear campos
+- [ ] Definir regras
+- [ ] Levantar dúvidas
+- [ ] Validar mapeamento
+- [ ] Documentar
 
 ## Critérios de aceite
 
-- [ ] Campos de origem e destino foram mapeados
+- [ ] Fontes foram mapeadas
+- [ ] Campos foram relacionados
 - [ ] Regras foram documentadas
-- [ ] Dúvidas foram respondidas ou registradas
-- [ ] Mapeamento foi validado
+- [ ] Dúvidas foram registradas ou respondidas
+
+## Observações
+
+Adicione links, planilhas ou referências.

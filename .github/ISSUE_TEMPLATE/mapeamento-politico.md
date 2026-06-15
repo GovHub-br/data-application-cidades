@@ -7,48 +7,38 @@ assignees: ''
 
 ---
 
-
 ## Contexto
 
 Descreva o objetivo do mapeamento político.
 
 ## Escopo
 
-- Atores políticos:
+- Atores:
 - Órgãos:
 - Partidos:
 - Territórios:
-- Mandatos:
-- Período analisado:
+- Período:
+- Tema:
 
-## Perguntas que o mapeamento deve responder
-
-- 
-- 
-- 
-
-## Fontes de dados
+## Fontes
 
 - Fonte:
-- Tipo:
 - Link/localização:
-- Responsável:
-- Atualização:
+- Frequência de atualização:
 
-## Entidades e relações
+## Relações a mapear
 
-| Entidade | Relação | Fonte | Regra | Observação |
-|---------|---------|-------|-------|------------|
-|         |         |       |       |            |
+| Entidade | Relação | Fonte | Regra |
+|---------|---------|-------|-------|
+|         |         |       |       |
 
 ## Tarefas
 
-- [ ] Definir escopo político
+- [ ] Definir escopo
 - [ ] Identificar fontes
 - [ ] Mapear atores
 - [ ] Mapear relações
-- [ ] Mapear recortes territoriais
-- [ ] Validar regras de classificação
+- [ ] Validar regras
 - [ ] Gerar base final
 - [ ] Documentar metodologia
 
@@ -57,5 +47,9 @@ Descreva o objetivo do mapeamento político.
 - [ ] Escopo foi definido
 - [ ] Atores e relações foram mapeados
 - [ ] Fontes foram registradas
-- [ ] Regras de classificação foram documentadas
 - [ ] Base final foi validada
+- [ ] Metodologia foi documentada
+
+## Observações
+
+Adicione links, documentos ou referências.
