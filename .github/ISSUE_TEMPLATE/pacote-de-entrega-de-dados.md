@@ -9,13 +9,13 @@ assignees: ''
 
 ## Contexto
 
-Explique qual demanda está sendo empacotada para entrega.
+Explique qual demanda está sendo empacotada.
 
-## Objetivo do pacote
+## Objetivo
 
-Descreva o que precisa ser entregue e para quem.
+Descreva o que será entregue e para quem.
 
-## Entregáveis incluídos
+## Entregáveis
 
 - [ ] Base bruta
 - [ ] Base tratada
@@ -26,12 +26,10 @@ Descreva o que precisa ser entregue e para quem.
 - [ ] Dashboard
 - [ ] Relatório
 - [ ] Dicionário de dados
-- [ ] Documentação técnica
-- [ ] Documentação de regras de negócio
+- [ ] Documentação
 - [ ] Evidências de validação
-- [ ] Outro
 
-## Links dos entregáveis
+## Links
 
 - Repositório:
 - Tabela:
@@ -39,46 +37,35 @@ Descreva o que precisa ser entregue e para quem.
 - Relatório:
 - Documentação:
 - Evidências:
-- Outros links:
 
-## Validações realizadas
+## Validações
 
-- [ ] Validação de volume
-- [ ] Validação de campos obrigatórios
-- [ ] Validação de duplicidades
-- [ ] Validação de regras de negócio
-- [ ] Validação de indicadores
-- [ ] Validação com solicitante
+- [ ] Volume
+- [ ] Campos obrigatórios
+- [ ] Duplicidades
+- [ ] Regras de negócio
+- [ ] Indicadores
 - [ ] Validação técnica
-
-## Pendências conhecidas
-
-Liste limitações, débitos técnicos ou pontos que precisam ser acompanhados depois da entrega.
-
-- 
-- 
-- 
+- [ ] Validação com solicitante
 
 ## Tarefas
 
 - [ ] Reunir entregáveis
 - [ ] Conferir documentação
-- [ ] Conferir permissões de acesso
+- [ ] Conferir acessos
 - [ ] Gerar evidências
-- [ ] Registrar limitações
-- [ ] Enviar para validação final
-- [ ] Corrigir ajustes finais
+- [ ] Registrar pendências
+- [ ] Enviar para validação
 - [ ] Concluir entrega
 
 ## Critérios de aceite
 
-- [ ] Todos os entregáveis foram reunidos
+- [ ] Entregáveis foram reunidos
 - [ ] Links estão acessíveis
 - [ ] Documentação mínima foi criada
 - [ ] Evidências foram anexadas
-- [ ] Pendências foram registradas
-- [ ] Solicitante validou o pacote
+- [ ] Pacote foi validado
 
 ## Observações
 
-Adicione links, evidências, prints, documentos ou referências.
+Adicione links, prints ou pendências.
