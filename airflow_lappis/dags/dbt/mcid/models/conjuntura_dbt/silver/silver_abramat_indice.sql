@@ -5,5 +5,5 @@ SELECT
     indice,
     var_mes,
     var_12_meses,
-    dt_ingest
+    {{ add_metadata_timestamps('silver') }}
 FROM {{ source('conjuntura_bronze', 'bronze_abramat_indice') }}
