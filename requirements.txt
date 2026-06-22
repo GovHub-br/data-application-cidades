@@ -6,3 +6,5 @@ imap-tools==1.10.0
 zeep==4.3.1
 apache-airflow-providers-microsoft-mssql==3.7.2
 openpyxl>=3.1.0
+paramiko>=3.4.0
+python-dotenv==1.2.2
