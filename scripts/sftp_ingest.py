@@ -1,3 +1,4 @@
+import io
 import logging
 import os
 import re
@@ -11,9 +12,21 @@ import paramiko
 import pandas as pd
 from openpyxl import load_workbook
 from sqlalchemy import create_engine, text
+from sqlalchemy import types as sa_types
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
+
+SOCKET_ERRORS = (
+    paramiko.SSHException,
+    EOFError,
+    OSError,
+    ConnectionResetError,
+)
+_CONN_ERROR_STRINGS = (
+    "garbage packet", "eof", "connection reset",
+    "broken pipe", "timed out", "channel closed", "socket is closed",
+)
 
 _LOG_PATH = (
     Path(__file__).parent
@@ -32,7 +45,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 SFTP_HOST     = os.getenv("SFTP_HOST")
-SFTP_PORT     = os.getenv("SFTP_PORT")
+SFTP_PORT     = int(os.getenv("SFTP_PORT") or 22)
 SFTP_USER     = os.getenv("SFTP_USER")
 SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
 
@@ -49,8 +62,9 @@ IGNORED_EXTENSIONS   = {
     ".bashrc", ".bash_logout", ".bash_history", ".profile",
     ".mkshrc", ".viminfo", ".filepart", ".rpt",
 }
-CHUNK_SIZE       = 50_000
-ENCODINGS        = ["utf-8", "latin-1", "cp1252"]
+CHUNK_SIZE            = 200_000
+ENCODING_SCAN_BYTES   = 5 * 1024 * 1024  # 5 MB — suficiente para detectar encoding
+ENCODINGS             = ["utf-8", "latin-1", "cp1252"]
 DELIMITERS       = [";", ",", "|", "\t"]
 TABLE_NAME_LIMIT = 57  # postgres cria _tablename como array type: 1 + 57 + 5(_0001) = 63
 
@@ -77,11 +91,31 @@ def deduplicate_columns(columns: list[str]) -> list[str]:
 def build_table_name(sftp_path: str, inner_filename: str | None = None) -> str:
     parts = Path(sftp_path).parts
     segments = [normalize_name(p) for p in parts if p not in (".", "..")]
-    segments[-1] = normalize_name(Path(parts[-1]).stem)
+
     if inner_filename:
-        segments.append(normalize_name(Path(inner_filename).stem))
-    name = "_".join(segments)
-    return name[:TABLE_NAME_LIMIT]
+        # Ignora o nome do zip; usa pastas + stem do arquivo interno
+        folder_segs = segments[:-1]
+        inner_stem = normalize_name(Path(inner_filename).stem)
+        name = "_".join(folder_segs + [inner_stem])
+        if len(name) <= TABLE_NAME_LIMIT:
+            return name
+        # Muito longo: mantém prefixo das pastas + fim alinhado do stem interno
+        # (preserva a parte mais descritiva, que fica no final do nome)
+        prefix = "_".join(folder_segs)
+        available = TABLE_NAME_LIMIT - len(prefix) - 1  # -1 pelo _ separador
+        if available <= 0:
+            return prefix[:TABLE_NAME_LIMIT]
+        raw_suffix = inner_stem[-available:]
+        us = raw_suffix.find("_")
+        suffix = (
+            raw_suffix[us + 1:] if us >= 0 and raw_suffix[us + 1:]
+            else raw_suffix.lstrip("_")
+        )
+        return f"{prefix}_{suffix}"
+    else:
+        segments[-1] = normalize_name(Path(parts[-1]).stem)
+        name = "_".join(segments)
+        return name[:TABLE_NAME_LIMIT]
 
 
 def resolve_table_name(base: str, registry: dict[str, int]) -> str:
@@ -145,14 +179,13 @@ def download_to_tempfile(sftp: paramiko.SFTPClient, remote_path: str) -> str:
     return tmp.name
 
 def detect_csv_format(file_path: str) -> tuple[str, str]:
-    """Detecta encoding percorrendo o arquivo inteiro linha a linha (sem carregar em RAM)
-    e delimitador a partir dos primeiros 8192 bytes."""
+    """Detecta encoding nos primeiros 5 MB e delimitador nos primeiros 8192 bytes."""
     enc = "latin-1"
     for candidate in ENCODINGS[:-1]:  # utf-8, cp1252 — latin-1 é fallback garantido
         try:
-            with open(file_path, encoding=candidate) as f:
-                for _ in f:
-                    pass
+            with open(file_path, "rb") as f:
+                raw = f.read(ENCODING_SCAN_BYTES)
+            raw.decode(candidate)
             enc = candidate
             break
         except UnicodeDecodeError:
@@ -174,6 +207,28 @@ def detect_csv_format(file_path: str) -> tuple[str, str]:
     return enc, sep
 
 
+def _copy_df_to_pg(df: pd.DataFrame, table_name: str, schema: str, engine) -> None:
+    """Bulk insert via PostgreSQL COPY — 10-20x mais rápido que INSERT."""
+    buf = io.StringIO()
+    df.to_csv(buf, index=False, header=False, na_rep="\\N")
+    buf.seek(0)
+    raw_conn = engine.raw_connection()
+    try:
+        with raw_conn.cursor() as cur:
+            cols = ", ".join(f'"{c}"' for c in df.columns)
+            cur.copy_expert(
+                f"COPY \"{schema}\".\"{table_name}\" ({cols}) "
+                f"FROM STDIN WITH (FORMAT CSV, NULL '\\N')",
+                buf,
+            )
+        raw_conn.commit()
+    except Exception:
+        raw_conn.rollback()
+        raise
+    finally:
+        raw_conn.close()
+
+
 def stream_csv_from_file(file_path: str, table_name: str, engine) -> int:
     """Lê CSV/TXT em chunks de um arquivo em disco."""
     enc, sep = detect_csv_format(file_path)
@@ -187,11 +242,13 @@ def stream_csv_from_file(file_path: str, table_name: str, engine) -> int:
         chunk.columns = deduplicate_columns(
             [normalize_name(str(c)) for c in chunk.columns]
         )
-        chunk.to_sql(table_name, engine, schema=DB_SCHEMA,
-                     if_exists="replace" if first else "append",
-                     index=False)
+        if first:
+            text_dtype = {c: sa_types.Text() for c in chunk.columns}
+            chunk.head(0).to_sql(table_name, engine, schema=DB_SCHEMA,
+                                 if_exists="replace", index=False, dtype=text_dtype)
+            first = False
+        _copy_df_to_pg(chunk, table_name, DB_SCHEMA, engine)
         total += len(chunk)
-        first = False
     return total
 
 
@@ -232,20 +289,26 @@ def stream_xlsx_from_file(file_path: str, table_name: str, engine) -> int:
                 df = pd.DataFrame(buffer, columns=headers)
                 if multi_sheet:
                     df["_sheet"] = sheet_name
-                df.to_sql(table_name, engine, schema=DB_SCHEMA,
-                          if_exists="replace" if first else "append",
-                          index=False)
+                if first:
+                    text_dtype = {c: sa_types.Text() for c in df.columns}
+                    df.head(0).to_sql(table_name, engine, schema=DB_SCHEMA,
+                                      if_exists="replace", index=False,
+                                      dtype=text_dtype)
+                    first = False
+                _copy_df_to_pg(df, table_name, DB_SCHEMA, engine)
                 total += len(df)
-                first = False
                 buffer = []
 
         if buffer:
             df = pd.DataFrame(buffer, columns=headers)
             if multi_sheet:
                 df["_sheet"] = sheet_name
-            df.to_sql(table_name, engine, schema=DB_SCHEMA,
-                      if_exists="replace" if first else "append",
-                      index=False)
+            if first:
+                text_dtype = {c: sa_types.Text() for c in df.columns}
+                df.head(0).to_sql(table_name, engine, schema=DB_SCHEMA,
+                                  if_exists="replace", index=False,
+                                  dtype=text_dtype)
+            _copy_df_to_pg(df, table_name, DB_SCHEMA, engine)
             total += len(df)
 
     wb.close()
@@ -283,6 +346,19 @@ def is_processed(engine, sftp_key: str) -> bool:
         result = conn.execute(
             text(f"SELECT 1 FROM {DB_SCHEMA}.{INGEST_LOG} WHERE sftp_key = :k"),
             {"k": sftp_key},
+        )
+        return result.fetchone() is not None
+
+
+def is_zip_processed(engine, zip_path: str) -> bool:
+    """Checa se o zip já tem ao menos um arquivo interno no log — evita baixar de novo."""
+    with engine.connect() as conn:
+        result = conn.execute(
+            text(
+                f"SELECT 1 FROM {DB_SCHEMA}.{INGEST_LOG}"
+                f" WHERE sftp_key LIKE :prefix LIMIT 1"
+            ),
+            {"prefix": zip_path + "::%"},
         )
         return result.fetchone() is not None
 
@@ -385,8 +461,8 @@ def process_entry(entry: dict, sftp: paramiko.SFTPClient,
     log.info("\n→ %s (%s)", entry["path"], format_size(entry["size"]))
 
     if entry["is_zip"]:
-        if is_processed(engine, entry["path"]):
-            log.info("  zip já totalmente processado, pulando")
+        if is_zip_processed(engine, entry["path"]):
+            log.info("  zip já processado, pulando")
             return
         tmp_path = download_to_tempfile(sftp, entry["path"])
         try:
@@ -396,15 +472,15 @@ def process_entry(entry: dict, sftp: paramiko.SFTPClient,
     else:
         _process_flat(entry, sftp, engine, registry)
 
-SOCKET_ERRORS = (
-    paramiko.SSHException,
-    EOFError,
-    OSError,
-    ConnectionResetError,
-)
+def _is_conn_error(e: Exception) -> bool:
+    return isinstance(e, SOCKET_ERRORS) or any(
+        s in str(e).lower() for s in _CONN_ERROR_STRINGS
+    )
 
 
 def connect_sftp() -> tuple[paramiko.Transport, paramiko.SFTPClient]:
+    if not SFTP_HOST:
+        raise ValueError("SFTP_HOST não encontrada no .env")
     transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
     transport.connect(username=SFTP_USER, password=SFTP_PASSWORD)
     transport.set_keepalive(30)  # keepalive a cada 30s para evitar timeout do servidor
@@ -440,21 +516,26 @@ def main():
     for entry in ordered:
         try:
             process_entry(entry, sftp, engine, registry)
-        except SOCKET_ERRORS as e:
-            log.warning("Conexão perdida (%s), reconectando...", e)
+        except Exception as e:
+            if not _is_conn_error(e):
+                log.error("erro inesperado em %s: %s", entry["path"], e)
+                continue
+            log.warning("Conexão perdida (%s — %s), reconectando...", type(e).__name__, e)
             try:
                 sftp.close()
                 transport.close()
             except Exception:
                 pass
-            transport, sftp = connect_sftp()
+            try:
+                transport, sftp = connect_sftp()
+            except Exception as conn_e:
+                log.error("Falha ao reconectar: %s. Abortando.", conn_e)
+                break
             log.info("Reconectado. Retentando %s ...", entry["path"])
             try:
                 process_entry(entry, sftp, engine, registry)
             except Exception as e2:
                 log.error("erro após reconexão em %s: %s", entry["path"], e2)
-        except Exception as e:
-            log.error("erro inesperado em %s: %s", entry["path"], e)
 
     sftp.close()
     transport.close()
