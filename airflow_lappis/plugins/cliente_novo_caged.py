@@ -37,7 +37,6 @@ class ClienteNovoCaged(ClienteBase):
         """
         path = "/querydata?synchronous=true"
         
-        # Payload parametrizado com Ano e Mês
         payload = {
             "version": "1.0.0",
             "queries": [{
@@ -91,7 +90,6 @@ class ClienteNovoCaged(ClienteBase):
         Trata o JSON complexo do Power BI para um formato amigável para o Postgres.
         """
         try:
-            # Navegação no retorno do PowerBI para pegar os valores (campo 'C')
             raw_values = response['results'][0]['result']['data']['dsr']['DS'][0]['PH'][0]['DM0'][0]['C']
             return {
                 "ano": ano,
@@ -128,7 +126,6 @@ class ClienteNovoCaged(ClienteBase):
                 break
                 
             for mes in meses:
-                # Evita buscar dados de meses futuros no ano atual
                 if ano == ano_atual and meses.index(mes) - 1> mes_atual:
                     break
                     
