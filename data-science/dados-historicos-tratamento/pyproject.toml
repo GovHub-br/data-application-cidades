@@ -1,0 +1,41 @@
+[project]
+name = "dados-historicos-tratamento"
+version = "0.1.0"
+description = "Pacote para classificação e tratamento de dados históricos do MCMV."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "charset-normalizer>=3.4.7",
+    "duckdb>=1.5.4",
+    "ftfy>=6.3.1",
+    "matplotlib>=3.11.0",
+    "pandas>=3.0.3",
+    "psycopg2-binary>=2.9",
+    "python-dotenv>=1.0",
+    "sqlalchemy>=2.0",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.1.0",
+    "pytest>=9.1.1",
+    "ruff>=0.15.18",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true

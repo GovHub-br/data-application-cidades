@@ -1,0 +1,34 @@
+# Virtual environment
+.venv/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Type checking
+.mypy_cache/
+
+# Linting
+.ruff_cache/
+
+# Testing
+.pytest_cache/
+
+# Packaging
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+
+# Data
+data/table_errors/
+data/table_samples/
+data/treated_tables/
+
+# Generated outputs (pipeline)
+data/classificacao_formacao.csv
+data/classificacao_formacao_db.csv
+data/relatorio_divergencias.md
+data/relatorio_divergencias_db.md
