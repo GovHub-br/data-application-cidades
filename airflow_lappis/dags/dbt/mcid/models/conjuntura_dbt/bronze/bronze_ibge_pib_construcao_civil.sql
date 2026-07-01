@@ -18,10 +18,10 @@ with ibge_pib_construcao_civil_bronze as (
             cast(periodo as text) as periodo,
             to_date(periodo || '01', 'YYYYMMDD') as data_referencia,
             cast(
-                replace(
-                    replace(valor, '.', ''),
-                    ',', '.' 
-                ) as numeric
+                nullif(nullif(replace(
+                    replace(trim(valor), '.', ''),
+                    ',', '.'
+                ), ''), '-') as numeric
             ) as valor,
             cast(dt_ingest as timestamp) as dt_ingest
 
