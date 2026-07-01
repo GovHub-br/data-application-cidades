@@ -20,6 +20,7 @@ import unicodedata
 import zipfile
 from stat import S_ISDIR
 from typing import List, Optional, Set, Tuple
+from airflow.models import Variable
 
 import pandas as pd
 
@@ -36,8 +37,12 @@ DIRS_IGNORAR = {
     "/sys", "/usr", "/var", "/root", "/tmp",
 }
 
-# Diretórios raiz a percorrer (limitar para performance e segurança)
-DIRS_RAIZ = ["/home/fabrica", "/home/caixa"]
+# Diretórios base a serem varridos no SFTP
+DIRS_RAIZ = Variable.get(
+    "SFTP_DIRS_RAIZ", 
+    default_var=["/home/fabrica", "/home/caixa"], 
+    deserialize_json=True
+)
 
 MAX_PROFUNDIDADE = 10
 

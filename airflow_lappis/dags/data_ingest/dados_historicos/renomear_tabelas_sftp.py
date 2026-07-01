@@ -21,8 +21,8 @@ from datetime import datetime, timedelta
 from typing import Any, Dict
 
 from airflow import DAG
-from airflow.models import Variable
 from airflow.operators.python import PythonOperator
+from airflow.models import Variable
 
 import json
 import logging
@@ -30,7 +30,7 @@ import psycopg2
 
 from postgres_helpers import get_postgres_conn
 
-SCHEMA = "sftp_v2"
+SCHEMA = Variable.get("SFTP_SCHEMA", default_var="sftp_v2") # Colocar sftp depois dos testes
 LOG_TABLE = "_ingest_log"
 
 default_args = {

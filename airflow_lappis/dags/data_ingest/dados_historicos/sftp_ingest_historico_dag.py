@@ -16,6 +16,7 @@ from typing import Any, Dict, List
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.sftp.hooks.sftp import SFTPHook
+from airflow.models import Variable
 
 import logging
 import psycopg2
@@ -29,7 +30,7 @@ from postgres_helpers import get_postgres_conn
 # ---------------------------------------------------------------------------
 
 SFTP_CONN_ID = "mcid_sftp"
-SCHEMA = "sftp_v2"
+SCHEMA = Variable.get("SFTP_SCHEMA", default_var="sftp_v2") # Colocar sftp depois dos testes
 LOG_TABLE = "_ingest_log"
 
 default_args = {
@@ -139,6 +140,14 @@ def _registrar_ingest(
                      status, rows_inserted, error_message,
                      started_at, finished_at, file_mtime, file_hash)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), to_timestamp(%s), %s)
+                ON CONFLICT (sftp_path, file_hash) 
+                DO UPDATE SET
+                    status = EXCLUDED.status,
+                    target_table = EXCLUDED.target_table,
+                    file_size = EXCLUDED.file_size,
+                    rows_inserted = EXCLUDED.rows_inserted,
+                    error_message = EXCLUDED.error_message,
+                    finished_at = NOW()
                 """,
                 (
                     sftp_path,
