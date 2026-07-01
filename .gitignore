@@ -55,3 +55,6 @@ Thumbs.db
 *.p12
 
 config.toml
+
+.logscripts/sftp_errors_*.log
+scripts/sftp_listing.txt
