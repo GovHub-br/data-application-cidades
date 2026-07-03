@@ -120,7 +120,7 @@ def _obter_arquivos_ja_processados(conn_str: str) -> set:
 
 
 def _registrar_ingest(
-    conn_str: str,
+    conn,
     sftp_path: str,
     file_name: str,
     target_table: str,
@@ -131,13 +131,12 @@ def _registrar_ingest(
     file_mtime: int = None,
     file_hash: str = None,
 ) -> None:
-    """Registra uma entrada no _ingest_log."""
-    with closing(psycopg2.connect(conn_str)) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                INSERT INTO {SCHEMA}.{LOG_TABLE}
-                    (sftp_path, file_name, file_size, target_table,
+    """Registra uma entrada no _ingest_log usando uma conexão persistente."""
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            INSERT INTO {SCHEMA}.{LOG_TABLE}
+                (sftp_path, file_name, file_size, target_table,
                      status, rows_inserted, error_message,
                      started_at, finished_at, file_mtime, file_hash)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), to_timestamp(%s), %s)
@@ -261,10 +260,11 @@ def processar_e_inserir(**context: Dict[str, Any]) -> Dict[str, int]:
 
     hook = SFTPHook(ssh_conn_id=SFTP_CONN_ID)
 
-    with hook.get_conn() as sftp:
-        cliente = ClienteSFTP(sftp)
+    with closing(psycopg2.connect(conn_str)) as persist_conn:
+        with hook.get_conn() as sftp:
+            cliente = ClienteSFTP(sftp)
 
-        for idx, arq_info in enumerate(arquivos_novos, 1):
+            for idx, arq_info in enumerate(arquivos_novos, 1):
             caminho = arq_info["caminho"]
             tamanho = arq_info["tamanho"]
             mtime = arq_info.get("mtime")
@@ -281,7 +281,7 @@ def processar_e_inserir(**context: Dict[str, Any]) -> Dict[str, int]:
                 msg = f"Ignorado: arquivo excede o limite de 100MB para processamento em memória ({tamanho / 1024 / 1024:.1f} MB)"
                 logging.warning(msg)
                 _registrar_ingest(
-                    conn_str, caminho, nome_arquivo, None,
+                    persist_conn, caminho, nome_arquivo, None,
                     tamanho, 0, "skipped", msg,
                     file_mtime=mtime,
                 )
@@ -302,7 +302,7 @@ def processar_e_inserir(**context: Dict[str, Any]) -> Dict[str, int]:
                 if not resultados_parse:
                     logging.warning("Nenhum dado extraído de %s", caminho)
                     _registrar_ingest(
-                        conn_str, caminho, nome_arquivo, None,
+                        persist_conn, caminho, nome_arquivo, None,
                         tamanho, 0, "skipped",
                         "Nenhum dado extraído",
                         file_mtime=mtime, file_hash=file_hash,
@@ -320,7 +320,7 @@ def processar_e_inserir(**context: Dict[str, Any]) -> Dict[str, int]:
                             "DataFrame vazio para %s (de %s)", nome_base, caminho
                         )
                         _registrar_ingest(
-                            conn_str, path_log, nome_arquivo, None,
+                            persist_conn, path_log, nome_arquivo, None,
                             tamanho, 0, "skipped",
                             f"DataFrame vazio: {nome_base}",
                             file_mtime=mtime, file_hash=file_hash,
@@ -375,7 +375,7 @@ def processar_e_inserir(**context: Dict[str, Any]) -> Dict[str, int]:
 
                     # Registra sucesso no log
                     _registrar_ingest(
-                        conn_str, path_log, nome_arquivo,
+                        persist_conn, path_log, nome_arquivo,
                         f"{SCHEMA}.{nome_tabela}",
                         tamanho, qtd_registros, "success",
                         file_mtime=mtime, file_hash=file_hash,
@@ -390,7 +390,7 @@ def processar_e_inserir(**context: Dict[str, Any]) -> Dict[str, int]:
                     "  ✘ ERRO ao processar %s: %s", caminho, str(e)
                 )
                 _registrar_ingest(
-                    conn_str, caminho, nome_arquivo, None,
+                    persist_conn, caminho, nome_arquivo, None,
                     tamanho, 0, "error", str(e)[:500],
                     file_mtime=mtime,
                 )
