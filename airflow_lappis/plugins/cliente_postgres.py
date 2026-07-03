@@ -92,6 +92,7 @@ class ClientPostgresDB:
 
                 try:
                     cursor.execute(create_table_query)
+                    conn.commit()
                     logging.info(
                         f"[cliente_postgres.py] Table {schema}.{table_name} created "
                         f"or already exists"
