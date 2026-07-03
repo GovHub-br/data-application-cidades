@@ -12,11 +12,12 @@ def get_postgres_conn(data_base_name: str = "postgres_default") -> str:
             f"dbname={schema}, user={conn.info.user},"
             f"host={conn.info.host}, port={conn.info.port}"
         )
-        conn.close()
-        return (
+        conn_str = (
             f"dbname={schema} user={conn.info.user} password={conn.info.password} "
             f"host={conn.info.host} port={conn.info.port}"
         )
+        conn.close()
+        return conn_str
     except Exception as e:
         logging.error(f"Failed to obtain PostgreSQL connection: {e}")
         raise
