@@ -17,6 +17,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.sftp.hooks.sftp import SFTPHook
 from airflow.models import Variable
+from contextlib import closing
 
 import logging
 import psycopg2
@@ -51,7 +52,7 @@ def _criar_schema_e_log(conn_str: str) -> None:
     Se a tabela existir mas com colunas antigas, recria-a.
     Compatível com o DDL de scripts/init_sftp_schema.sql.
     """
-    with psycopg2.connect(conn_str) as conn:
+    with closing(psycopg2.connect(conn_str)) as conn:
         with conn.cursor() as cur:
             cur.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};")
 
@@ -102,7 +103,7 @@ def _criar_schema_e_log(conn_str: str) -> None:
 
 def _obter_arquivos_ja_processados(conn_str: str) -> set:
     """Retorna conjunto de caminhos SFTP já processados com sucesso."""
-    with psycopg2.connect(conn_str) as conn:
+    with closing(psycopg2.connect(conn_str)) as conn:
         with conn.cursor() as cur:
             cur.execute(f"""
                 SELECT sftp_path FROM {SCHEMA}.{LOG_TABLE}
@@ -131,7 +132,7 @@ def _registrar_ingest(
     file_hash: str = None,
 ) -> None:
     """Registra uma entrada no _ingest_log."""
-    with psycopg2.connect(conn_str) as conn:
+    with closing(psycopg2.connect(conn_str)) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 f"""

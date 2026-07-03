@@ -23,6 +23,7 @@ from typing import Any, Dict
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
+from contextlib import closing
 
 import json
 import logging
@@ -66,7 +67,7 @@ def renomear_tabelas(**context: Dict[str, Any]) -> Dict[str, str]:
     conn_str = get_postgres_conn()
     resultados = {}
 
-    with psycopg2.connect(conn_str) as conn:
+    with closing(psycopg2.connect(conn_str)) as conn:
         with conn.cursor() as cur:
             for nome_antigo, nome_novo in rename_map.items():
                 try:
