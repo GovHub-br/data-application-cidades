@@ -28,6 +28,7 @@ from stat import S_ISDIR
 from typing import Iterator, Optional, Tuple
 
 import boto3
+from boto3.s3.transfer import TransferConfig
 import paramiko
 import psycopg2
 from dotenv import load_dotenv
@@ -180,6 +181,11 @@ def _criar_schema_e_log(conn_str: str) -> None:
                 CREATE INDEX IF NOT EXISTS idx_ingest_minio_log_status
                 ON {SCHEMA}.{LOG_TABLE} (status);
             """)
+            # Índice parcial para deduplicar erros sem hash (NULL != NULL no UNIQUE padrão)
+            cur.execute(f"""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_ingest_minio_log_sftp_null_hash
+                ON {SCHEMA}.{LOG_TABLE} (sftp_path) WHERE file_hash IS NULL;
+            """)
             conn.commit()
     log.info("Schema '%s' e tabela '%s' garantidos.", SCHEMA, LOG_TABLE)
 
@@ -217,13 +223,26 @@ def _registrar_ingest(
 ) -> None:
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
+            if status == "success":
+                # Remove registros de erro anteriores para evitar duplicatas de hash NULL vs hash calculado
+                cur.execute(
+                    f"DELETE FROM {SCHEMA}.{LOG_TABLE} WHERE sftp_path = %s AND status = 'error'",
+                    (sftp_path,),
+                )
+
+            if file_hash is not None:
+                conflict_clause = "ON CONFLICT (sftp_path, file_hash)"
+            else:
+                # NULL != NULL no UNIQUE padrão — usa índice parcial dedicado
+                conflict_clause = "ON CONFLICT (sftp_path) WHERE file_hash IS NULL"
+
             cur.execute(
                 f"""
                 INSERT INTO {SCHEMA}.{LOG_TABLE}
                     (sftp_path, file_name, file_size, file_mtime, file_hash,
                      minio_key, status, error_message, started_at, finished_at)
                 VALUES (%s, %s, %s, to_timestamp(%s), %s, %s, %s, %s, NOW(), NOW())
-                ON CONFLICT (sftp_path, file_hash)
+                {conflict_clause}
                 DO UPDATE SET
                     status        = EXCLUDED.status,
                     minio_key     = EXCLUDED.minio_key,
@@ -245,6 +264,7 @@ def conectar_sftp() -> Tuple[paramiko.Transport, paramiko.SFTPClient]:
     transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
     transport.connect(username=SFTP_USER, password=SFTP_PASSWORD)
     transport.set_keepalive(30)
+    transport.sock.settimeout(300)
     sftp = paramiko.SFTPClient.from_transport(transport)
     if sftp is None:
         raise RuntimeError("Falha ao abrir sessão SFTP")
@@ -349,12 +369,68 @@ def _garantir_bucket(s3) -> None:
         log.info("Bucket '%s' criado.", MINIO_BUCKET)
 
 
+def _abortar_multiparts_incompletos(s3) -> None:
+    """Aborta todos os multipart uploads incompletos no bucket — evita locks no MinIO."""
+    abortados = 0
+    paginator = s3.get_paginator("list_multipart_uploads")
+    try:
+        for page in paginator.paginate(Bucket=MINIO_BUCKET):
+            for upload in page.get("Uploads", []):
+                s3.abort_multipart_upload(
+                    Bucket=MINIO_BUCKET,
+                    Key=upload["Key"],
+                    UploadId=upload["UploadId"],
+                )
+                abortados += 1
+    except Exception as e:
+        log.warning("Não foi possível listar multipart uploads: %s", e)
+        return
+    if abortados:
+        log.info("%d multipart upload(s) incompleto(s) abortado(s).", abortados)
+    else:
+        log.info("Nenhum multipart upload incompleto encontrado.")
+
+
+def _abortar_multiparts_chave(s3, key: str) -> None:
+    """Aborta uploads incompletos de uma chave específica antes de retentar."""
+    try:
+        paginator = s3.get_paginator("list_multipart_uploads")
+        for page in paginator.paginate(Bucket=MINIO_BUCKET, Prefix=key):
+            for upload in page.get("Uploads", []):
+                if upload["Key"] == key:
+                    s3.abort_multipart_upload(
+                        Bucket=MINIO_BUCKET,
+                        Key=upload["Key"],
+                        UploadId=upload["UploadId"],
+                    )
+    except Exception:
+        pass
+
+
+_TRANSFER_CONFIG = TransferConfig(
+    multipart_chunksize=5 * 1024 * 1024,  # 5 MB por parte (mínimo S3)
+    max_concurrency=1,                     # upload serial — mais estável em conexões instáveis
+)
+
+
 def subir_para_minio(s3, tmp_path: str, nome_destino: str) -> str:
-    """Faz upload streaming do tempfile — eficiente para arquivos grandes."""
     key = f"raw/{nome_destino}"
-    with open(tmp_path, "rb") as f:
-        s3.upload_fileobj(f, MINIO_BUCKET, key)
-    return key
+    for tentativa in range(3):
+        try:
+            with open(tmp_path, "rb") as f:
+                s3.upload_fileobj(f, MINIO_BUCKET, key, Config=_TRANSFER_CONFIG)
+            return key
+        except Exception as e:
+            if tentativa == 2:
+                raise
+            espera = 15 * (tentativa + 1)
+            log.warning(
+                "Upload falhou (tentativa %d/3): %s. Aguardando %ds...",
+                tentativa + 1, e, espera,
+            )
+            _abortar_multiparts_chave(s3, key)
+            time.sleep(espera)
+    raise RuntimeError("unreachable")
 
 def _exibir_preview(sftp: paramiko.SFTPClient) -> None:
     linhas = []
@@ -417,6 +493,9 @@ def processar_arquivo_simples(
         )
         return "success"
     except Exception as e:
+        if _is_conn_error(e):
+            spinner.parar(ok=False)
+            raise
         spinner.parar(ok=False)
         log.error("✗ [%d/%d] %s: %s", idx, total, nome_arquivo, e)
         _registrar_ingest(
@@ -450,6 +529,8 @@ def processar_zip(
         tmp_zip = baixar_para_tempfile(sftp, caminho_zip)
     except Exception as e:
         spinner.parar(ok=False)
+        if _is_conn_error(e):
+            raise
         log.error("✗ [%d/%d] %s (download): %s", idx, total, nome_zip, e)
         _registrar_ingest(
             conn_str, caminho_zip, nome_zip, None,
@@ -513,12 +594,36 @@ def processar_zip(
 
     except zipfile.BadZipFile:
         spinner.parar(ok=False)
-        log.error("✗ [%d/%d] %s — ZIP corrompido", idx, total, nome_zip)
-        _registrar_ingest(
-            conn_str, caminho_zip, nome_zip, None,
-            tamanho, mtime, None, "error", "BadZipFile",
+        log.warning(
+            "⚠ [%d/%d] %s — não reconhecido como ZIP pelo Python, subindo como arquivo bruto...",
+            idx, total, nome_zip,
         )
-        return 0, 1
+        if caminho_zip in ja_inseridos:
+            log.info("  → já inserido como bruto, pulando", )
+            if tmp_zip and os.path.exists(tmp_zip):
+                os.unlink(tmp_zip)
+            return 0, 0
+        nome_destino = gerar_nome_unico(nome_zip, nomes_usados)
+        nomes_usados.add(nome_destino)
+        try:
+            file_hash = _compute_hash(tmp_zip)
+            minio_key = subir_para_minio(s3, tmp_zip, nome_destino)
+            log.info("✓ [%d/%d] %s → raw/%s (bruto)", idx, total, nome_zip, nome_destino)
+            _registrar_ingest(
+                conn_str, caminho_zip, nome_destino, minio_key,
+                tamanho, mtime, file_hash, "success",
+            )
+            return 1, 0
+        except Exception as e2:
+            log.error("✗ [%d/%d] %s (fallback bruto): %s", idx, total, nome_zip, e2)
+            _registrar_ingest(
+                conn_str, caminho_zip, nome_destino, None,
+                tamanho, mtime, None, "error", str(e2)[:500],
+            )
+            return 0, 1
+        finally:
+            if tmp_zip and os.path.exists(tmp_zip):
+                os.unlink(tmp_zip)
     finally:
         if tmp_zip and os.path.exists(tmp_zip):
             os.unlink(tmp_zip)
@@ -561,6 +666,7 @@ def main() -> None:
 
     s3 = criar_cliente_minio()
     _garantir_bucket(s3)
+    _abortar_multiparts_incompletos(s3)
 
     log.info("Conectando ao SFTP %s@%s:%s ...", SFTP_USER, SFTP_HOST, SFTP_PORT)
     transport, sftp = conectar_sftp()
