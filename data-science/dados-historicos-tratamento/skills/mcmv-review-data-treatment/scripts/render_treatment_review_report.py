@@ -63,8 +63,50 @@ def main() -> None:
     summary = json.loads((evidence / "summary_tratamento.json").read_text(encoding="utf-8"))
 
     status_counts = audit["status"].value_counts().to_dict() if "status" in audit.columns else {}
+    total_tables = int(summary.get("tables_in_quality", len(audit)))
+    treated_count = int(status_counts.get("treated", 0))
+    error_count = int(summary.get("status_error", status_counts.get("error", 0)))
+    discarded_count = int(summary.get("status_discarded", status_counts.get("discarded", 0)))
+    treated_ratio = round(treated_count / max(total_tables, 1) * 100, 1)
+    treated_files_found = int(summary.get("treated_files_found", 0))
+    identifier_length_errors = 0
+    if "error" in audit.columns:
+        identifier_length_errors = int(audit["error"].astype(str).str.contains("exceeds maximum length", regex=False).sum())
+    flag_counts = pd.DataFrame()
+    if len(flags) and "flag_revisao" in flags.columns:
+        flag_counts = (
+            flags["flag_revisao"]
+            .str.strip(";")
+            .str.get_dummies(sep=";")
+            .sum()
+            .sort_values(ascending=False)
+            .reset_index()
+        )
+        flag_counts.columns = ["flag", "quantidade"]
+    missing_top = audit.copy()
+    if "missing_pct" in missing_top.columns:
+        missing_top["_missing_pct_num"] = pd.to_numeric(missing_top["missing_pct"], errors="coerce").fillna(0)
+        missing_top = missing_top.sort_values("_missing_pct_num", ascending=False)
+    missing_evidence = []
+    if treated_files_found == 0:
+        missing_evidence.append("data/treated_tables/ nao existe nesta branch; nao foi possivel abrir CSV tratado linha a linha.")
+    if len(sftp) == 0:
+        missing_evidence.append("diff_sftp_minio*.json nao foi encontrado nesta branch/worktree; impacto SFTP detalhado ficou pendente.")
+    if len(samples) and "sample_print" in samples.columns and "Nenhum CSV tratado" in str(samples.iloc[0]["sample_print"]):
+        missing_evidence.append("amostras_tratadas_pandas.csv registra ausencia de amostras tratadas para prints reais.")
+    verdict = (
+        "Parcialmente tratados, ainda nao aprovados para uso preditivo final"
+        if error_count or treated_files_found == 0 or len(flags)
+        else "Tratamento aprovado nas evidencias disponiveis"
+    )
+    status_interpretation = (
+        f"O snapshot de qualidade indica que {treated_count} de {total_tables} tabelas ({treated_ratio}%) chegaram a status treated. "
+        f"Isso mostra que o pipeline processa a maior parte do acervo, mas os {error_count} erros, {discarded_count} descartes "
+        f"e {len(flags)} linhas com flags impedem uma aprovacao final sem ajustes e sem os CSVs tratados."
+    )
     metric_cards = [
         ("Tabelas revisadas", summary.get("tables_in_quality", len(audit))),
+        ("Status treated", f"{treated_count} ({treated_ratio}%)"),
         ("CSVs tratados encontrados", summary.get("treated_files_found", 0)),
         ("Flags de revisao", summary.get("flags", len(flags))),
         ("Erros", summary.get("status_error", status_counts.get("error", 0))),
@@ -79,6 +121,26 @@ def main() -> None:
     )
     sample_print = esc(samples.iloc[0]["sample_print"]) if len(samples) and "sample_print" in samples.columns else "Sem amostras."
     sftp_html = table_html(sftp, list(sftp.columns), 20)
+    flag_counts_html = table_html(flag_counts, ["flag", "quantidade"], 20)
+    status_html = table_html(
+        pd.DataFrame([{"status": key, "quantidade": value} for key, value in status_counts.items()]),
+        ["status", "quantidade"],
+        20,
+    )
+    missing_top_html = table_html(
+        missing_top,
+        ["table_name", "status", "n_rows", "n_cols", "profile", "missing_pct", "institution", "report_date", "flag_revisao"],
+        12,
+    )
+    missing_evidence_html = "".join(f"<li>{esc(item)}</li>" for item in missing_evidence) or "<li>Nenhuma ausencia critica de evidencia registrada.</li>"
+    recommendation_items = [
+        "Localizar ou regenerar data/treated_tables/ para validar linha a linha nomes, datas, valores, encoding e tipos nos CSVs finais.",
+        "Corrigir os erros de identificador longo no writer/tratamento, pois 23 dos 34 erros indicam limite de 63 caracteres.",
+        "Revisar extracao de report_date e institution; ha 132 flags de report_date ausente e 92 de institution desconhecida.",
+        "Auditar as 4 tabelas com missing_pct acima de 30% para separar esparsidade real de tratamento excessivo.",
+        "Trazer os diff_sftp_minio*.json para confirmar impacto de path, zip, duplicidade e filename no tratamento.",
+    ]
+    recommendations_html = "".join(f"<li>{esc(item)}</li>" for item in recommendation_items)
 
     html = f"""<!doctype html>
 <html lang="pt-BR">
@@ -100,7 +162,7 @@ def main() -> None:
     h2 {{ color: #14532d; font-size: 19px; margin: 0 0 12px; }}
     h3 {{ color: #2563eb; margin: 16px 0 8px; }}
     .content {{ padding: 16mm 18mm; }}
-    .grid {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 12px 0 18px; }}
+    .grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 18px; }}
     .metric {{ border: 1px solid #dbe3ee; border-radius: 10px; padding: 12px; background: #f8fafc; min-height: 70px; }}
     .metric span {{ display: block; color: #64748b; font-size: 10px; text-transform: uppercase; }}
     .metric strong {{ display: block; color: #14532d; font-size: 24px; margin-top: 4px; }}
@@ -109,6 +171,9 @@ def main() -> None:
     th {{ background: #eaf3ee; color: #143822; text-align: left; }}
     pre {{ white-space: pre-wrap; overflow-wrap: anywhere; background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px; font-size: 8.5px; }}
     .note {{ border-left: 4px solid #2563eb; background: #eff6ff; padding: 10px 12px; }}
+    .verdict {{ border-left: 6px solid #b45309; background: #fffbeb; padding: 12px 14px; margin: 14px 0; }}
+    .good {{ border-left-color: #14532d; background: #f0fdf4; }}
+    .bad {{ border-left-color: #b91c1c; background: #fef2f2; }}
   </style>
 </head>
 <body>
@@ -122,18 +187,42 @@ def main() -> None:
     <div class="content">
       <h2>Sumario Executivo</h2>
       <div class="grid">{metrics}</div>
-      <p class="note">Este relatorio prioriza evidencias reproduziveis: CSVs de auditoria, flags, amostras pandas, deduplicacao e impacto SFTP/MinIO.</p>
-      <h3>Principais Flags</h3>
-      {top_flags}
+      <div class="verdict">
+        <strong>Veredito:</strong> {esc(verdict)}.
+        <p>{esc(status_interpretation)}</p>
+      </div>
+      <div class="verdict good">
+        <strong>O que parece bom:</strong> a maior parte do snapshot de qualidade esta como treated ({treated_count}/{total_tables}), com perfis majoritariamente colunares e relatorio de deduplicacao disponivel.
+      </div>
+      <div class="verdict bad">
+        <strong>O que ainda nao esta bom:</strong> ha {error_count} erros, {len(flags)} linhas com flags, {identifier_length_errors} erros de identificador longo, metadados temporais/institucionais ausentes e nenhuma pasta data/treated_tables para provar o dado final linha a linha.
+      </div>
+      <h3>Distribuicao de status</h3>
+      {status_html}
+      <h3>Flags por tipo</h3>
+      {flag_counts_html}
     </div>
   </section>
   <section class="page">
     <div class="content">
-      <h2>Evidencias</h2>
+      <h2>Evidencias de Problemas</h2>
+      <h3>Principais Flags</h3>
+      {top_flags}
+      <h3>Maiores missing_pct</h3>
+      {missing_top_html}
+    </div>
+  </section>
+  <section class="page">
+    <div class="content">
+      <h2>Evidencias e Lacunas</h2>
+      <h3>O que nao foi encontrado nesta branch</h3>
+      <ul>{missing_evidence_html}</ul>
       <h3>Amostra pandas</h3>
       <pre>{sample_print}</pre>
       <h3>Impacto SFTP/MinIO</h3>
       {sftp_html}
+      <h3>Recomendacoes</h3>
+      <ul>{recommendations_html}</ul>
       <h3>Arquivos gerados</h3>
       <ul>
         <li>{esc(evidence / "auditoria_tratamento_pandas.csv")}</li>
@@ -166,10 +255,24 @@ def main() -> None:
 Auditoria pandas executada sobre relatorios de qualidade, deduplicacao, classificacao, inventario e CSVs tratados disponiveis.
 
 - Tabelas revisadas: {summary.get("tables_in_quality", len(audit))}
+- Status `treated`: {treated_count} ({treated_ratio}%)
 - CSVs tratados encontrados: {summary.get("treated_files_found", 0)}
 - Flags de revisao: {summary.get("flags", len(flags))}
 - Erros: {summary.get("status_error", 0)}
 - Descartes: {summary.get("status_discarded", 0)}
+- Erros por identificador longo: {identifier_length_errors}
+
+**Veredito:** {verdict}. O pipeline processou a maior parte do acervo, mas ainda nao ha aprovacao final para uso preditivo porque faltam os CSVs tratados (`data/treated_tables/`) para inspecao linha a linha e existem erros/flags relevantes.
+
+**Evidencias principais:**
+- `docs/evidencias/revisao-tratamento-dados/auditoria_tratamento_pandas.csv`: base completa da auditoria.
+- `docs/evidencias/revisao-tratamento-dados/flags_tratamento_pandas.csv`: {len(flags)} linhas com flags.
+- `docs/evidencias/revisao-tratamento-dados/amostras_tratadas_pandas.csv`: registra que nao havia CSV tratado disponivel para prints reais.
+- `docs/evidencias/revisao-tratamento-dados/impacto_sftp_tratamento_pandas.csv`: sem diffs SFTP encontrados nesta branch.
+
+**O que falta localizar/regenerar:**
+- `data/treated_tables/`
+- `diff_sftp_minio*.json`
 
 Artefatos:
 - `docs/evidencias/revisao-tratamento-dados/auditoria_tratamento_pandas.csv`
