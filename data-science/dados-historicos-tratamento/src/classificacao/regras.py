@@ -81,12 +81,16 @@ HEADER_IS_DATA = "HEADER_IS_DATA"
 HEADER_IS_REAL = "HEADER_IS_REAL"
 AMBIGUOUS = "AMBIGUOUS"
 
-# Padrões de nomes de tabelas sem utilidade (R2)
+# Padrões de nomes de tabelas sem utilidade (R2).
+# O padrão tab_arquivos_dados tem uma exceção auditada na issue #96:
+# quando os dados reais estão em célula pipe-delimited, a evidência de
+# conteúdo prevalece sobre a heurística por nome.
 PADROES_SEM_UTILIDADE: tuple[str, ...] = (
     "tab_arquivos_dados",
     "loginfesta",
     "novo_relat_rio_executivo",
 )
+PADROES_SEM_UTILIDADE_PIPE_EXCECAO: tuple[str, ...] = ("tab_arquivos_dados",)
 
 # Thresholds
 _VAZIA_MAX_BYTES = 5 * 1024  # 5KB
@@ -121,8 +125,11 @@ def r1_vazia(file_size: int, n_cols: int) -> bool:
     return file_size < _VAZIA_MAX_BYTES and n_cols <= 1
 
 
-def r2_dados_sem_utilidade(table_name: str) -> bool:
+def r2_dados_sem_utilidade(table_name: str, df: pd.DataFrame | None = None) -> bool:
     """R2: tabela sem utilidade — nome corresponde a padrão conhecido."""
+    if df is not None and any(p in table_name for p in PADROES_SEM_UTILIDADE_PIPE_EXCECAO):
+        if r3_separador_pipe(df):
+            return False
     return any(p in table_name for p in PADROES_SEM_UTILIDADE)
 
 
@@ -628,7 +635,7 @@ def classificar_formacao(
         return (CABECALHO_PRIMEIRA_LINHA_2, "high", "")
 
     # R2: dados sem utilidade (por nome) — tem prioridade sobre R1
-    if r2_dados_sem_utilidade(table_name):
+    if r2_dados_sem_utilidade(table_name, df):
         return (DADOS_SEM_UTILIDADE, "high", "")
 
     # R1: vazia

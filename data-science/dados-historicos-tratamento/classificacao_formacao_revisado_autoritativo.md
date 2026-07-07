@@ -175,7 +175,7 @@ Terceira sub-tabela tem cabeçalho composto por 4 linhas.
 ### `separador_|`
 Tabela com nomes das colunas adequados, porém linhas possuem dados separados pelo caractere "|".
 
-**Exemplos**: `bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras`,`bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos`,`bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj`,`bb_2013_06_junho_pmcmv_18062013_tab_proponentes`,`bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas`,`
+**Exemplos**: `bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras`,`bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados`,`bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos`,`bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj`,`bb_2013_06_junho_pmcmv_18062013_tab_proponentes`,`bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas`
 
 ### `vazia`
 Tabela sem dados. Detectada pelo tamanho do arquivo (< 5KB) e número de colunas
@@ -187,7 +187,7 @@ Tabela sem dados. Detectada pelo tamanho do arquivo (< 5KB) e número de colunas
 Tabelas sem dados de interesse para a análise, identificadas manualmente pelo nome
 do arquivo. Excluídas do processamento.
 
-**Exemplos:** `bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados`, `bb_2015_08_agosto_loginfesta`,`caixa_002_2018_novo_relat_rio_executivo_maio2018`,`caixa_002_2018_novo_relat_rio_executivo`
+**Exemplos:** `bb_2015_08_agosto_loginfesta`,`caixa_002_2018_novo_relat_rio_executivo_maio2018`,`caixa_002_2018_novo_relat_rio_executivo`
 
 ---
 

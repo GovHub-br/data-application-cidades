@@ -125,6 +125,22 @@ def test_r2_padroes_conhecidos() -> None:
     assert r2_dados_sem_utilidade("caixa_002_2018_novo_relat_rio_executivo") is True
 
 
+def test_r2_tab_arquivos_dados_com_pipe_nao_descarta() -> None:
+    df = pd.DataFrame({"registro": ["2023-01-01|123|responsavel|email@gov.br"]})
+    assert (
+        r2_dados_sem_utilidade(
+            "bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados", df
+        )
+        is False
+    )
+    prof = profile_estrutural(df, file_size=10_000)
+    formacao, conf, _notes = classificar_formacao(
+        "bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados", df, prof
+    )
+    assert formacao == SEPARADOR_PIPE
+    assert conf == "high"
+
+
 def test_r2_nome_normal() -> None:
     assert r2_dados_sem_utilidade("bb_2019_2019_05_07_pf_pf") is False
 

@@ -124,14 +124,14 @@
   <section class="page">
     <div class="content">
       <h2 class="section-title">Sumario Executivo</h2>
-      <p class="lead">A revisao consolidou os CSVs de classificacao, qualidade, inventario e deduplicacao. As cinco divergencias criticas de baixa confianca foram corrigidas para <b>separador pipe</b>, com evidencias cruzadas em inventario, dedup e relatorio de tratamento.</p>
+      <p class="lead">A revisao consolidou os CSVs de classificacao, qualidade, inventario, deduplicacao e amostras reais do PostgreSQL. Foram corrigidas seis tabelas para <b>separador pipe</b>, incluindo o falso descarte de <code>tab_arquivos_dados</code>.</p>
       <div class="kpis">
         <div class="kpi"><div class="num">754</div><div class="label">registros auditados</div></div>
         <div class="kpi"><div class="num">0</div><div class="label">confidence=low</div></div>
-        <div class="kpi"><div class="num">5</div><div class="label">corrigidas issue #96</div></div>
-        <div class="kpi"><div class="num">0</div><div class="label">amostras brutas locais</div></div>
+        <div class="kpi"><div class="num">6</div><div class="label">corrigidas issue #96</div></div>
+        <div class="kpi"><div class="num">6</div><div class="label">prints reais DB</div></div>
       </div>
-      <div class="callout warning"><b>Ponto de controle:</b> a branch atual nao contem <code>data/table_samples/</code>. Portanto, esta entrega comprova a auditoria completa dos CSVs de controle com pandas e evidencia versionada. A varredura linha a linha dos CSVs brutos deve ser reexecutada quando as amostras forem disponibilizadas ou via modo DB.</div>
+      <div class="callout"><b>Ponto de controle:</b> a branch atual nao contem <code>data/table_samples/</code>, entao as seis divergencias foram comprovadas por consulta DB com pandas. O PDF traz print bruto e print apos split por pipe.</div>
       <div class="figure">
         <img src="assets/revisao-classificacao-issue-96/distribuicao-categorias.png" />
         <div class="caption">Figura 1 - Distribuicao revisada das categorias estruturais.</div>
@@ -147,9 +147,9 @@
   <section class="page">
     <div class="content">
       <h2 class="section-title">Resultado Consolidado</h2>
-      <table><thead><tr><th>Categoria</th><th>Quantidade</th></tr></thead><tbody><tr><td>bem_formada</td><td>351</td></tr><tr><td>sub_tabelas_1</td><td>273</td></tr><tr><td>cabecalho_composto_2</td><td>50</td></tr><tr><td>cabecalho_na_primeira_linha_1</td><td>36</td></tr><tr><td>sub_tabelas_3</td><td>19</td></tr><tr><td>separador pipe</td><td>5</td></tr><tr><td>cabecalho_composto_1</td><td>4</td></tr><tr><td>dados_sem_utilidade</td><td>4</td></tr><tr><td>sem_cabecalho</td><td>3</td></tr><tr><td>vazia</td><td>2</td></tr><tr><td>cabecalho_na_segunda_linha</td><td>2</td></tr><tr><td>sub_tabelas_2</td><td>1</td></tr><tr><td>cabecalho_na_primeira_linha_2</td><td>1</td></tr><tr><td>cabecalho_na_terceira_linha_2</td><td>1</td></tr><tr><td>cabecalho_na_terceira_linha_1</td><td>1</td></tr><tr><td>sub_tabelas_4</td><td>1</td></tr></tbody></table>
+      <table><thead><tr><th>Categoria</th><th>Quantidade</th></tr></thead><tbody><tr><td>bem_formada</td><td>351</td></tr><tr><td>sub_tabelas_1</td><td>273</td></tr><tr><td>cabecalho_composto_2</td><td>50</td></tr><tr><td>cabecalho_na_primeira_linha_1</td><td>36</td></tr><tr><td>sub_tabelas_3</td><td>19</td></tr><tr><td>separador pipe</td><td>6</td></tr><tr><td>cabecalho_composto_1</td><td>4</td></tr><tr><td>dados_sem_utilidade</td><td>3</td></tr><tr><td>sem_cabecalho</td><td>3</td></tr><tr><td>vazia</td><td>2</td></tr><tr><td>cabecalho_na_segunda_linha</td><td>2</td></tr><tr><td>sub_tabelas_2</td><td>1</td></tr><tr><td>cabecalho_na_primeira_linha_2</td><td>1</td></tr><tr><td>cabecalho_na_terceira_linha_2</td><td>1</td></tr><tr><td>cabecalho_na_terceira_linha_1</td><td>1</td></tr><tr><td>sub_tabelas_4</td><td>1</td></tr></tbody></table>
       <h3>Flags de revisao geradas pelo pandas</h3>
-      <table><thead><tr><th>Flag</th><th>Quantidade</th></tr></thead><tbody><tr><td>qualidade_vs_inventario</td><td>100</td></tr><tr><td>corrigida_issue96</td><td>5</td></tr><tr><td>classificacao_vs_inventario</td><td>2</td></tr></tbody></table>
+      <table><thead><tr><th>Flag</th><th>Quantidade</th></tr></thead><tbody><tr><td>qualidade_vs_inventario</td><td>100</td></tr><tr><td>corrigida_issue96</td><td>6</td></tr><tr><td>classificacao_vs_inventario</td><td>2</td></tr></tbody></table>
       <div class="callout"><b>Leitura:</b> as flags restantes indicam principalmente diferencas entre inventario e qualidade/tratamento, em especial erros de persistencia por limite de identificador no PostgreSQL. Elas nao alteram a classificacao estrutural revisada da issue #96.</div>
     </div>
     <div class="footer"><span>Distribuicao e flags</span><span>2</span></div>
@@ -158,29 +158,38 @@
   <section class="page">
     <div class="content">
       <h2 class="section-title">Tabelas Corrigidas</h2>
-      <table><thead><tr><th>Tabela</th><th>Classificacao final</th><th>Confianca</th><th>Inventario</th><th>Linhas</th><th>Colunas</th><th>Status qualidade</th><th>Perfil qualidade</th><th>Hash</th><th>Tamanho</th></tr></thead><tbody><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>200</td><td>21</td><td>treated</td><td>separador_pipe</td><td>8d61d5fa385840d4bfd849478fb60927</td><td>1022</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>146</td><td>20</td><td>treated</td><td>separador_pipe</td><td>c9cd51a7558307b235f19229c38c2d02</td><td>292</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>200</td><td>8</td><td>treated</td><td>separador_pipe</td><td>4e8772e5fb9230efd39076acc58f1283</td><td>596</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_proponentes</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>200</td><td>8</td><td>treated</td><td>separador_pipe</td><td>8c74cdcaf7b0d3b2f13ae2c918510888</td><td>526</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>200</td><td>11</td><td>treated</td><td>separador_pipe</td><td>bb22066999232d68c8354aae96a3a88e</td><td>1374</td></tr></tbody></table>
+      <table><thead><tr><th>Tabela</th><th>Classificacao final</th><th>Confianca</th><th>Inventario</th><th>Linhas</th><th>Colunas</th><th>Status qualidade</th><th>Perfil qualidade</th><th>Hash</th><th>Tamanho</th></tr></thead><tbody><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>1022</td><td>17</td><td>treated</td><td>separador_pipe</td><td>8d61d5fa385840d4bfd849478fb60927</td><td>1022</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>2</td><td>6</td><td>treated</td><td>separador_pipe</td><td>1505e84e3fe623a5bf7b062846d7023d</td><td>2</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>292</td><td>16</td><td>treated</td><td>separador_pipe</td><td>c9cd51a7558307b235f19229c38c2d02</td><td>292</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>596</td><td>4</td><td>treated</td><td>separador_pipe</td><td>4e8772e5fb9230efd39076acc58f1283</td><td>596</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_proponentes</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>526</td><td>4</td><td>treated</td><td>separador_pipe</td><td>8c74cdcaf7b0d3b2f13ae2c918510888</td><td>526</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas</td><td>separador pipe</td><td>high</td><td>separador pipe</td><td>1374</td><td>7</td><td>treated</td><td>separador_pipe</td><td>bb22066999232d68c8354aae96a3a88e</td><td>1374</td></tr></tbody></table>
       <h3>Disponibilidade das amostras brutas</h3>
-      <table><thead><tr><th>Tabela</th><th>Caminho esperado</th><th>Existe</th><th>Evidencia fallback</th></tr></thead><tbody><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_proponentes</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_proponentes.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr></tbody></table>
+      <table><thead><tr><th>Tabela</th><th>Caminho esperado</th><th>Existe</th><th>Evidencia fallback</th></tr></thead><tbody><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_proponentes</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_proponentes.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas</td><td>/home/juan-pablo/CIDADES/data-application-cidades/data-science/dados-historicos-tratamento/data/table_samples/bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas.csv</td><td>False</td><td>data/exemplos_por_categoria.md; data/inventario_dados.csv; docs/relatorio-tratamento-v1.md</td></tr></tbody></table>
     </div>
     <div class="footer"><span>Correcoes e disponibilidade</span><span>3</span></div>
   </section>
 
   <section class="page">
     <div class="content">
-      <h2 class="section-title">Print Real de Amostra Versionada</h2>
-      <p>O print abaixo vem de <code>data/exemplos_por_categoria.md</code>, arquivo versionado do proprio pipeline. Ele demonstra a estrutura de <b>separador pipe</b>: uma coluna com valores contendo <code>|</code>.</p>
-      <pre>Dimensoes: 200 linhas x 1 coluna
-Coluna: cod_operacaocod_sit_obracod_re
-
-0  23157|0|0|0|||||||2013-04-30|
-1  27175|6|0|0|||||||2011-09-13|
-2  29302|0|0|0||||||||2010-07-05
-3  29350|6|0|0|||||||2012-06-08|
-4  29536|2|0|0|||||||2013-01-10|</pre>
-      <h3>Evidencia de nao duplicidade</h3>
-      <p>As cinco tabelas corrigidas compartilham formacao estrutural, mas os hashes e tamanhos no <code>_dedup_map</code> sao diferentes. Portanto, elas nao foram tratadas como conteudo identico.</p>
+      <h2 class="section-title">Erro e Correcao Comprovados</h2>
+      <table><thead><tr><th>Tabela</th><th>Classificacao antes</th><th>Status antes</th><th>Classificacao corrigida</th><th>Status corrigido</th><th>Linhas corrigidas</th><th>Colunas pos-split</th><th>Celulas pipe na amostra</th><th>Erro identificado</th><th>Como consertar</th></tr></thead><tbody><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras</td><td>vazia</td><td>discarded</td><td>separador_|</td><td>treated</td><td>1022</td><td>17</td><td>8</td><td>Classificacao antiga descartava tabela, mas a amostra bruta contem valores pipe-delimited.</td><td>Classificar como separador_|, reprocessar com tratar_separador_pipe() e manter teste de regressao para a familia tab_*.</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados</td><td>dados_sem_utilidade</td><td>discarded</td><td>separador_|</td><td>treated</td><td>2</td><td>6</td><td>2</td><td>Classificacao antiga descartava tabela, mas a amostra bruta contem valores pipe-delimited.</td><td>Classificar como separador_|, reprocessar com tratar_separador_pipe() e manter teste de regressao para a familia tab_*.</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos</td><td>vazia</td><td>discarded</td><td>separador_|</td><td>treated</td><td>292</td><td>16</td><td>8</td><td>Classificacao antiga descartava tabela, mas a amostra bruta contem valores pipe-delimited.</td><td>Classificar como separador_|, reprocessar com tratar_separador_pipe() e manter teste de regressao para a familia tab_*.</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_contratos_pj</td><td>vazia</td><td>discarded</td><td>separador_|</td><td>treated</td><td>596</td><td>4</td><td>8</td><td>Classificacao antiga descartava tabela, mas a amostra bruta contem valores pipe-delimited.</td><td>Classificar como separador_|, reprocessar com tratar_separador_pipe() e manter teste de regressao para a familia tab_*.</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_proponentes</td><td>vazia</td><td>discarded</td><td>separador_|</td><td>treated</td><td>526</td><td>4</td><td>8</td><td>Classificacao antiga descartava tabela, mas a amostra bruta contem valores pipe-delimited.</td><td>Classificar como separador_|, reprocessar com tratar_separador_pipe() e manter teste de regressao para a familia tab_*.</td></tr><tr><td>bb_2013_06_junho_pmcmv_18062013_tab_unidades_concluidas</td><td>vazia</td><td>discarded</td><td>separador_|</td><td>treated</td><td>1374</td><td>7</td><td>8</td><td>Classificacao antiga descartava tabela, mas a amostra bruta contem valores pipe-delimited.</td><td>Classificar como separador_|, reprocessar com tratar_separador_pipe() e manter teste de regressao para a familia tab_*.</td></tr></tbody></table>
+      <p class="small">A evidencia acima foi salva em <code>correcoes_classificacao_db_pandas.csv</code>. Ela mostra a classificacao anterior, a classificacao corrigida, a quantidade de linhas brutas e quantas colunas surgem apos o split por pipe.</p>
     </div>
-    <div class="footer"><span>Print e hash</span><span>4</span></div>
+    <div class="footer"><span>Evidencia before/after</span><span>4</span></div>
+  </section>
+
+  <section class="page">
+    <div class="content">
+      <h2 class="section-title">Print Real da Amostra DB</h2>
+      <p>Print pandas real da tabela <code>bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados</code>. O primeiro bloco mostra o erro estrutural: valores com <code>|</code> dentro de uma unica coluna. O segundo bloco mostra a correcao esperada: expansao por separador pipe.</p>
+      <h3>Antes: amostra bruta</h3>
+      <pre>datacnpj_bbresp_arqtel_resp_arqe_mail_resp_arqdata_pos_arq
+2013-06-17|00000000|CARLOS THIAGO DE AGUIAR NOGUEIRA GO...
+2013-06-17|00000000|CARLOS THIAGO DE AGUIAR NOGUEIRA GO...</pre>
+      <h3>Depois: split por pipe</h3>
+      <pre>   campo_1  campo_2                          campo_3    campo_4                  campo_5    campo_6
+2013-06-17 00000000 CARLOS THIAGO DE AGUIAR NOGUE... 6131026187 c.thiago.gomes@bb.com.br 2013-06-17
+2013-06-17 00000000 CARLOS THIAGO DE AGUIAR NOGUE... 6131026187 c.thiago.gomes@bb.com.br 2013-06-17</pre>
+      <h3>Evidencia de nao duplicidade</h3>
+      <p>As seis tabelas corrigidas compartilham formacao estrutural, mas os hashes e tamanhos no <code>_dedup_map</code> sao diferentes. Portanto, elas nao foram tratadas como conteudo identico.</p>
+    </div>
+    <div class="footer"><span>Print e hash</span><span>5</span></div>
   </section>
 
   <section class="page">
@@ -190,16 +199,19 @@ Coluna: cod_operacaocod_sit_obracod_re
         <thead><tr><th>Arquivo</th><th>Conteudo</th></tr></thead>
         <tbody>
           <tr><td><code>auditoria_classificacao_completa_pandas.csv</code></td><td>754 linhas cruzando classificacao, inventario, qualidade, dedup e flags.</td></tr>
-          <tr><td><code>flags_revisao_pandas.csv</code></td><td>105 linhas com pontos de atencao para revisoes futuras.</td></tr>
+          <tr><td><code>flags_revisao_pandas.csv</code></td><td>106 linhas com pontos de atencao para revisoes futuras.</td></tr>
           <tr><td><code>correcoes_classificacao_pandas.csv</code></td><td>Antes/depois das classificacoes corrigidas.</td></tr>
           <tr><td><code>correcoes_qualidade_pandas.csv</code></td><td>Antes/depois do status de qualidade das tabelas corrigidas.</td></tr>
+          <tr><td><code>correcoes_inventario_pandas.csv</code></td><td>Antes/depois do inventario para comprovar persistencia da correcao.</td></tr>
+          <tr><td><code>correcoes_classificacao_db_pandas.csv</code></td><td>Evidencia DB do erro e da correcao proposta para as seis tabelas pipe.</td></tr>
+          <tr><td><code>amostras_pipe_db_pandas.csv</code></td><td>Prints reais do banco antes e depois do split por pipe.</td></tr>
           <tr><td><code>amostras_disponibilidade_pandas.csv</code></td><td>Comprovacao de ausencia das amostras brutas locais e fontes fallback.</td></tr>
         </tbody>
       </table>
       <h3>Resumo para resposta da issue</h3>
-      <div class="callout">Foi executada auditoria pandas nos CSVs de controle. As cinco tabelas divergentes foram corrigidas para separador pipe; os snapshots ficaram sem linhas <code>confidence=low</code>. A inspecao linha a linha dos brutos depende de disponibilizar <code>data/table_samples/</code> ou acesso DB.</div>
+      <div class="callout">Foi executada auditoria pandas nos CSVs de controle e nas amostras DB. As seis tabelas divergentes foram corrigidas para separador pipe; os snapshots ficaram sem linhas <code>confidence=low</code>, e <code>tab_arquivos_dados</code> deixou de ser falso descarte.</div>
     </div>
-    <div class="footer"><span>Artefatos de evidencia</span><span>5</span></div>
+    <div class="footer"><span>Artefatos de evidencia</span><span>6</span></div>
   </section>
 </body>
 </html>

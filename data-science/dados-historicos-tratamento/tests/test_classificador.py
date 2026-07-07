@@ -86,8 +86,8 @@ TABELAS_CONHECIDAS: dict[str, str] = {
     "bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras": "separador_|",
     # vazia
     "caixa_001_2016_bext_31102016": "vazia",
-    # dados_sem_utilidade
-    "bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados": "dados_sem_utilidade",
+    # separador_| — falso descarte revisado na issue #96
+    "bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados": "separador_|",
     # cabecalho_composto_2 — second example (8.2a)
     "bb_2011_08_agosto_relatorio_min__cidades_16ago11": "cabecalho_composto_2",
     # sub_tabelas_1 — second example (8.2a)

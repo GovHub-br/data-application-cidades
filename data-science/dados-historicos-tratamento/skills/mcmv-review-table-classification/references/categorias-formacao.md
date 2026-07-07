@@ -6,7 +6,7 @@ Use this reference when deciding the structural category of a table sample.
 
 Rules are applied in fixed order; first match wins:
 
-1. `dados_sem_utilidade`: table name contains known non-data/log patterns such as `tab_arquivos_dados`, `loginfesta`, or `novo_relat_rio_executivo`.
+1. `dados_sem_utilidade`: table name contains known non-data/log patterns such as `tab_arquivos_dados`, `loginfesta`, or `novo_relat_rio_executivo`, unless the actual data cells show pipe-delimited records.
 2. `vazia`: file is very small and has at most one column.
 3. `separador_|`: data cells contain pipe-delimited records that must be expanded.
 4. `bem_formada`: headers are real descriptive column names and column types are coherent.
@@ -43,3 +43,4 @@ Rules are applied in fixed order; first match wins:
 - Distinguish `cabecalho_composto_*` from `sub_tabelas_*`: composite headers describe one table; sub-tables contain multiple independent blocks.
 - Treat low-confidence fallback categories as review targets, not final truth.
 - A table can be structurally valid but still questionable for ML if keys, period, or source context are missing.
+- Do not discard `tab_arquivos_dados` only by name when a pandas/DB sample contains values with `|`; in that case, mark the old category as a false discard and reclassify as `separador_|`.

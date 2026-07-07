@@ -28,6 +28,7 @@ Execute a partir da raiz do repositorio `data-application-cidades`:
 ```bash
 python3 -m venv .review-venv
 .review-venv/bin/pip install pandas matplotlib
+.review-venv/bin/python data-science/dados-historicos-tratamento/scripts/revisao_classificacao_db_evidencias.py
 .review-venv/bin/python data-science/dados-historicos-tratamento/scripts/revisao_issue96_evidencias.py
 .review-venv/bin/python data-science/dados-historicos-tratamento/scripts/render_issue96_profissional.py
 ```
@@ -46,4 +47,4 @@ google-chrome --headless --disable-gpu --no-sandbox --no-pdf-header-footer --pri
 - `docs/evidencias/revisao-classificacao-issue-96/*.csv`
 - `docs/assets/revisao-classificacao-issue-96/*.png`
 
-Nota: quando `data/table_samples/` e `diff_sftp_minio*.json` estiverem disponiveis na branch, rode novamente para capturar prints reais das amostras brutas e impacto SFTP/MinIO detalhado.
+Nota: se `.env` estiver preenchido, o primeiro script consulta o PostgreSQL e gera prints reais das amostras pipe antes/depois da correcao. Quando `data/table_samples/` e `diff_sftp_minio*.json` estiverem disponiveis na branch, rode novamente para complementar o impacto SFTP/MinIO detalhado.

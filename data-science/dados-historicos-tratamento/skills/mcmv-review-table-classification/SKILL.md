@@ -47,12 +47,14 @@ If the current checkout does not contain them, search nearby workspace roots. If
 
 4. Inspect each table with pandas:
    - Open the corresponding sample in `data/table_samples/`.
+   - If local samples are unavailable and DB credentials are configured in `.env`, query the source schema with pandas/psql and save the sample prints as evidence before deciding.
    - Use `pd.read_csv(path, sep="\t", index_col=0, dtype=str, keep_default_na=False)` for the main inspection.
    - Also inspect raw text for delimiter/path/encoding surprises when pandas output is suspicious.
    - Capture evidence for each reviewed table: shape, columns, first 5-10 rows, empty-row ratio, unnamed-column ratio, pipe-cell count, header-like rows, and table-block separators.
    - Compare actual structure with the 17 category definitions.
    - Decide whether the problem is the automatic rule, the manual reference, the sample/path mapping, or an unclear table.
    - Save compact sample prints in the review report. For large batches, include full prints for corrected/uncertain tables and summarized metrics for unchanged tables.
+   - For every corrected table, include both evidence of the error and evidence of the correction: old classification/status, raw sample print, revised classification, expanded sample print, and the concrete command or rule needed to fix it.
 
 5. Apply corrections conservatively:
    - If the manual reference is clearly wrong, update `classificacao_formacao_revisado_autoritativo.md`.
@@ -125,6 +127,7 @@ docs/revisao-classificacao-issue-96.pdf
 - Treat `classificacao_formacao_revisado_autoritativo.md` as the manual authority, but not infallible.
 - A final category must be supported by pandas inspection of the sample when samples are available.
 - A category correction needs visible evidence from sample structure, sample print, table name, or source mapping.
+- For `separador pipe`, content evidence wins over name heuristics. If a table name matches a discard pattern such as `tab_arquivos_dados` but the data cells contain pipe-delimited records, classify it as `separador_|`, document the false discard, and show before/after split evidence.
 - A rules-code change needs a recurring pattern or a high-impact false classification, not only a one-off disagreement.
 - Keep uncertain cases explicit with a reason and suggested next check.
 - For predictive MCMV use, flag tables that are structurally valid but analytically weak: no APF/empreendimento key, unclear period, source ambiguity, excessive sparseness, or report-style aggregation.
@@ -168,3 +171,15 @@ expanded = df[first_col].str.split("|", expand=True)
 print(df[[first_col]].head(5).to_string())
 print(expanded.head(5).to_string())
 ```
+
+## Project Evidence Scripts
+
+When working in `data-science/dados-historicos-tratamento`, prefer the project scripts so the evidence is reproducible:
+
+```bash
+.review-venv/bin/python data-science/dados-historicos-tratamento/scripts/revisao_classificacao_db_evidencias.py
+.review-venv/bin/python data-science/dados-historicos-tratamento/scripts/revisao_issue96_evidencias.py
+.review-venv/bin/python data-science/dados-historicos-tratamento/scripts/render_issue96_profissional.py
+```
+
+The DB script writes `correcoes_classificacao_db_pandas.csv`, `amostras_pipe_db_pandas.csv`, and `resumo_db_classificacao_pandas.csv`. The final PDF must include these artifacts whenever they exist.

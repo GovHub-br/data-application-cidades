@@ -87,7 +87,7 @@ bb_2013_06_junho_entrada_bb_20130604,treated,680,34,colunar_denso,bb,2013-06-04,
 bb_2013_06_junho_entrada_bb_20130618,treated,680,34,colunar_denso,bb,2013-06-18,2.9930795847750864,,,
 bb_2013_06_junho_entrada_bb_20130630,treated,680,34,colunar_denso,bb,2013-06-30,2.9930795847750864,,,
 bb_2013_06_junho_pmcmv_18062013_tab_andamento_obras,treated,200,21,separador_pipe,bb,2013-06-01,0.0,0,0,0
-bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados,discarded,0,0,dados_sem_utilidade,bb,2013-06-01,0.0,0,0,0
+bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados,treated,2,6,separador_pipe,bb,2013-06-01,0.0,0,0,0
 bb_2013_06_junho_pmcmv_18062013_tab_beneficiarios_fgts,treated,30552,16,colunar_denso,bb,2013-06-01,1.4806722964126735,,,
 bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos,treated,146,20,separador_pipe,bb,2013-06-01,0.0,0,0,0
 bb_2013_06_junho_pmcmv_18062013_tab_contratos_pf_fgts,treated,38232,30,colunar_denso,bb,2013-06-01,2.3271953686266307,,,

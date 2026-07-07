@@ -38,6 +38,10 @@ TARGETS = {
         "n_rows": 200,
         "n_cols": 21,
     },
+    "bb_2013_06_junho_pmcmv_18062013_tab_arquivos_dados": {
+        "n_rows": 200,
+        "n_cols": 6,
+    },
     "bb_2013_06_junho_pmcmv_18062013_tab_caracterizacoes_entornos": {
         "n_rows": 146,
         "n_cols": 20,
@@ -56,6 +60,11 @@ TARGETS = {
     },
 }
 
+INVENTORY_FILES = [
+    ROOT / "data" / "inventario_dados.csv",
+    ROOT / "data" / "inventario_tabelas.csv",
+]
+
 
 def read_csv(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, dtype=str).fillna("")
@@ -64,6 +73,24 @@ def read_csv(path: Path) -> pd.DataFrame:
 def write_csv(df: pd.DataFrame, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
+
+
+def apply_db_dimensions() -> None:
+    db_path = EVIDENCIAS / "correcoes_classificacao_db_pandas.csv"
+    if not db_path.exists():
+        return
+    db = read_csv(db_path)
+    for _, row in db.iterrows():
+        table = str(row.get("table_name", ""))
+        if table not in TARGETS:
+            continue
+        try:
+            n_rows = int(float(row.get("n_rows_corrigido", TARGETS[table]["n_rows"])))
+            n_cols = int(float(row.get("n_cols_corrigido", TARGETS[table]["n_cols"])))
+        except ValueError:
+            continue
+        TARGETS[table]["n_rows"] = n_rows
+        TARGETS[table]["n_cols"] = n_cols
 
 
 def update_classification(path: Path) -> pd.DataFrame:
@@ -86,7 +113,11 @@ def update_quality(path: Path, inventario: pd.DataFrame) -> pd.DataFrame:
         mask = df["table_name"].eq(table)
         if not mask.any():
             continue
-        if table in inv.index:
+        if (
+            table in inv.index
+            and str(inv.at[table, "n_linhas"]) not in {"", "0", "0.0"}
+            and str(inv.at[table, "n_colunas"]) not in {"", "0", "0.0"}
+        ):
             n_rows = inv.at[table, "n_linhas"]
             n_cols = inv.at[table, "n_colunas"]
             institution = inv.at[table, "instituicao"]
@@ -111,6 +142,35 @@ def update_quality(path: Path, inventario: pd.DataFrame) -> pd.DataFrame:
         if "error" in df.columns:
             df.loc[mask, "error"] = ""
     write_csv(df, path)
+    after = df[df["table_name"].isin(TARGETS)].copy()
+    return before.merge(after, on="table_name", suffixes=("_antes", "_depois"))
+
+
+def update_inventory(path: Path) -> pd.DataFrame:
+    df = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False)
+    before = df[df["table_name"].isin(TARGETS)].copy()
+    for table, defaults in TARGETS.items():
+        mask = df["table_name"].eq(table)
+        if not mask.any():
+            continue
+        df.loc[mask, "formacao"] = "separador_|"
+        df.loc[mask, "status_tratamento"] = "tratado"
+        df.loc[mask, "instituicao"] = "bb"
+        df.loc[mask, "perfil"] = "separador_pipe"
+        df.loc[mask, "report_date"] = "2013-06-01"
+        df.loc[mask, "n_linhas"] = str(defaults["n_rows"])
+        df.loc[mask, "n_colunas"] = str(defaults["n_cols"])
+        df.loc[mask, "missing_pct"] = "0.0"
+        df.loc[mask, "encoding_issues"] = "0"
+        df.loc[mask, "date_parse_errors"] = "0"
+        df.loc[mask, "type_coercion_warnings"] = "0"
+        if "score_utilidade_preditiva" in df.columns:
+            df.loc[mask, "score_utilidade_preditiva"] = "0"
+        if "classificacao_utilidade" in df.columns:
+            df.loc[mask, "classificacao_utilidade"] = "Baixa"
+        if "campos_uteis_preditiva" in df.columns:
+            df.loc[mask, "campos_uteis_preditiva"] = "campos_expandir_pipe"
+    df.to_csv(path, sep="\t", index=False)
     after = df[df["table_name"].isin(TARGETS)].copy()
     return before.merge(after, on="table_name", suffixes=("_antes", "_depois"))
 
@@ -292,10 +352,12 @@ def write_figures(audit: pd.DataFrame, corrections: pd.DataFrame, sftp: pd.DataF
 def main() -> None:
     EVIDENCIAS.mkdir(parents=True, exist_ok=True)
     ASSETS.mkdir(parents=True, exist_ok=True)
+    apply_db_dimensions()
     inventario = pd.read_csv(INVENTARIO, sep="\t", dtype=str).fillna("")
 
     class_corrections = pd.concat([update_classification(path) for path in CLASS_FILES], ignore_index=True)
     quality_corrections = pd.concat([update_quality(path, inventario) for path in QUALITY_FILES], ignore_index=True)
+    inventory_corrections = pd.concat([update_inventory(path) for path in INVENTORY_FILES], ignore_index=True)
 
     audit = build_audit()
     sftp = build_sftp_summary()
@@ -313,6 +375,7 @@ def main() -> None:
 
     write_csv(class_corrections, EVIDENCIAS / "correcoes_classificacao_pandas.csv")
     write_csv(quality_corrections, EVIDENCIAS / "correcoes_qualidade_pandas.csv")
+    write_csv(inventory_corrections, EVIDENCIAS / "correcoes_inventario_pandas.csv")
     write_csv(audit, EVIDENCIAS / "auditoria_classificacao_completa_pandas.csv")
     write_csv(audit[audit["flag_revisao"].ne("")], EVIDENCIAS / "flags_revisao_pandas.csv")
     write_csv(samples, EVIDENCIAS / "amostras_disponibilidade_pandas.csv")

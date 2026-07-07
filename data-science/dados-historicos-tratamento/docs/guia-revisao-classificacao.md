@@ -37,7 +37,7 @@ As regras são aplicadas em ordem fixa. A primeira que der match vence.
 
 | Ordem | Regra | Condição | Categoria |
 |-------|-------|----------|-----------|
-| 1 | **R2** | Nome da tabela contém `tab_arquivos_dados`, `loginfesta` ou `novo_relat_rio_executivo` | `dados_sem_utilidade` |
+| 1 | **R2** | Nome da tabela contém `tab_arquivos_dados`, `loginfesta` ou `novo_relat_rio_executivo`, exceto quando a amostra real contém registros com separador pipe | `dados_sem_utilidade` |
 | 2 | **R1** | Arquivo < 5KB **E** ≤ 1 coluna | `vazia` |
 | 3 | **R3** | Células contêm `\|` nos dados (não no header) | `separador_\|` |
 | 4 | **R3b** | Header é `HEADER_IS_REAL` (>80% nomes reais, <10% valores de dados) → valida consistência de tipos via **R4** | `bem_formada` |
