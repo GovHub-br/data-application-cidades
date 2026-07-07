@@ -327,13 +327,16 @@ class ClienteSFTP:
             "ministeriocidades": "mcidades"
         }
 
-        # Aplica as abreviações separando as palavras por '_'
-        partes = nome.split('_')
-        partes_abreviadas = [abreviacoes.get(p, p) for p in partes]
-        nome = '_'.join(partes_abreviadas)
-
         if nome and nome[0].isdigit():
             nome = f"_{nome}"
+
+        # Aplica as abreviações apenas se o nome for estourar o limite de 63 caracteres
+        if len(nome) > 63:
+            partes = nome.split('_')
+            partes_abreviadas = [abreviacoes.get(p, p) for p in partes]
+            nome = '_'.join(partes_abreviadas)
+
+
 
         if len(nome) > 63:
             import logging
