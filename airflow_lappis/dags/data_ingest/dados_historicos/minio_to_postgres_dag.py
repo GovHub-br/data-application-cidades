@@ -188,6 +188,11 @@ def processar_arquivos(**context):
                         logging.info(f"  -> Convertendo Excel para CSV temporário: {nome_base}")
                         # Converte a planilha para CSV para o DuckDB engolir em alta velocidade
                         df = pd.read_excel(ext_file, dtype=str)
+                        
+                        # Limpa colunas e linhas 100% vazias ("fantasmas" do Excel que estouram o limite de colunas do Postgres)
+                        df = df.dropna(axis=1, how='all')
+                        df = df.dropna(axis=0, how='all')
+                        
                         csv_path = ext_file + ".csv"
                         df.to_csv(csv_path, index=False, sep=",")
                         ext_file = csv_path # Aponta o DuckDB para o CSV recém criado
