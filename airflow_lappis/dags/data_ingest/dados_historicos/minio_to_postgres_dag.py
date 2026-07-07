@@ -211,7 +211,15 @@ def processar_arquivos(**context):
                     duck_conn.execute(f"CREATE SCHEMA IF NOT EXISTS pg.{SCHEMA};")
                     
                     # normalize_names=true converte as COLUNAS para lowercase e troca espaços por _
-                    query = f"CREATE TABLE IF NOT EXISTS pg.{SCHEMA}.{tabela_alvo} AS SELECT * FROM read_csv_auto('{ext_file}', ignore_errors=true, normalize_names=true);"
+                    # Injetamos dinamicamente arquivo_origem e dt_ingest usando SQL puro
+                    query = f"""
+                        CREATE TABLE IF NOT EXISTS pg.{SCHEMA}.{tabela_alvo} AS 
+                        SELECT 
+                            *, 
+                            '{sftp_path}' AS arquivo_origem,
+                            current_timestamp AS dt_ingest
+                        FROM read_csv_auto('{ext_file}', ignore_errors=true, normalize_names=true);
+                    """
                     duck_conn.execute(query)
                     
                     # Conta linhas (só pra log)
