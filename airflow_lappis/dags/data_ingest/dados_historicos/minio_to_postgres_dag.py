@@ -4,30 +4,23 @@ import zipfile
 import shutil
 from datetime import datetime
 from contextlib import closing
-
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
-
 import psycopg2
 import boto3
 import duckdb
-
 from helpers.postgres_helpers import get_postgres_conn
 import sys
-# Adiciona o diretório plugins ao path para o Airflow achar localmente
 sys.path.append(os.path.join(os.environ.get("AIRFLOW_HOME", "/opt/airflow"), "plugins"))
 from cliente_sftp import ClienteSFTP
 
-# ---------------------------------------------------------------------------
-# Configurações e Variáveis
-# ---------------------------------------------------------------------------
+# ====================== CONFIGURAÇÕES ======================
 SCHEMA = Variable.get("sftp_schema", default_var="sftp_v2")
 MINIO_LOG_TABLE = "_ingest_minio_log"
 DUCKDB_LOG_TABLE = "_ingest_log"
 TEMP_DIR = "/tmp/airflow_duckdb_ingest"
 
-# Carrega do .env (Airflow injeta variáveis de ambiente)
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
@@ -38,9 +31,7 @@ default_args = {
     "retries": 1,
 }
 
-# ---------------------------------------------------------------------------
-# Funções Auxiliares
-# ---------------------------------------------------------------------------
+# ====================== FUNÇÕES AUXILIARES ======================
 def _garantir_tabela_log(conn_str: str):
     """Cria a tabela de log original no Postgres se ela não existir."""
     with closing(psycopg2.connect(conn_str)) as conn:
@@ -103,9 +94,7 @@ def _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, 
             """, (sftp_path, file_name, file_hash, file_size, file_mtime, target_table, status, rows_inserted, error_message))
             conn.commit()
 
-# ---------------------------------------------------------------------------
-# Tasks
-# ---------------------------------------------------------------------------
+# ====================== TASKS ======================
 def descobrir_pendentes(**context):
     """Encontra arquivos para processar."""
     conn_str = get_postgres_conn()
@@ -114,7 +103,7 @@ def descobrir_pendentes(**context):
     pendentes = _obter_arquivos_pendentes(conn_str)
     logging.info(f"Encontrados {len(pendentes)} arquivos pendentes para o DuckDB.")
     
-    # Passa a lista pro XCom
+
     context['ti'].xcom_push(key='pendentes', value=pendentes)
 
 def processar_arquivos(**context):
@@ -126,10 +115,8 @@ def processar_arquivos(**context):
 
     conn_str = get_postgres_conn()
     
-    # Garante diretório temporário
     os.makedirs(TEMP_DIR, exist_ok=True)
     
-    # Cliente MinIO
     s3 = boto3.client(
         's3',
         endpoint_url=f"http://{MINIO_ENDPOINT}",
@@ -137,7 +124,8 @@ def processar_arquivos(**context):
         aws_secret_access_key=MINIO_SECRET_KEY,
     )
 
-    for arquivo in pendentes:
+    total = len(pendentes)
+    for idx, arquivo in enumerate(pendentes, 1):
         minio_key = arquivo['minio_key']
         file_name = arquivo['file_name']
         sftp_path = arquivo['sftp_path']
@@ -146,15 +134,17 @@ def processar_arquivos(**context):
         file_mtime = arquivo['file_mtime']
         local_zip_path = os.path.join(TEMP_DIR, file_name)
         
-        logging.info(f"Processando {minio_key}...")
+        logging.info("=" * 60)
+        logging.info(f"[{idx}/{total}] Processando {minio_key} ({file_size} bytes)")
+        
         _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, None, "processing")
         
         try:
-            # 1. Download do MinIO para /tmp
+            #Download do MinIO para /tmp
             logging.info(f"  -> Baixando {minio_key} para {local_zip_path}")
             s3.download_file(MINIO_BUCKET, minio_key, local_zip_path)
             
-            # 2. Descompactação
+
             ext_dir = os.path.join(TEMP_DIR, f"extracted_{file_name}")
             os.makedirs(ext_dir, exist_ok=True)
             
@@ -168,12 +158,9 @@ def processar_arquivos(**context):
                 # Se não for zip, só move pra pasta extraida
                 shutil.move(local_zip_path, os.path.join(ext_dir, file_name))
                 arquivos_extraidos = [os.path.join(ext_dir, file_name)]
-                
-            # 3. DuckDB
+
             logging.info("  -> Iniciando DuckDB e conectando no PostgreSQL...")
             
-            # Formata a connection string pro DuckDB
-            # Pega as variaveis do db dw do .env
             pg_host = os.getenv("DB_DW_HOST_MCID")
             pg_db = os.getenv("DB_DW_DBNAME_MCID")
             pg_user = os.getenv("DB_DW_USER_MCID")
@@ -184,30 +171,36 @@ def processar_arquivos(**context):
             duck_conn.execute("INSTALL postgres;")
             duck_conn.execute("LOAD postgres;")
             
-            # Atacha o Postgres dentro do DuckDB!
+    
             duck_conn.execute(f"ATTACH 'dbname={pg_db} user={pg_user} host={pg_host} password={pg_pass} port={pg_port}' AS pg (TYPE POSTGRES);")
             
             linhas_totais = 0
-            # Para cada arquivo dentro do ZIP
             for ext_file in arquivos_extraidos:
-                # Só processamos CSV e TXT
-                if ext_file.lower().endswith('.csv') or ext_file.lower().endswith('.txt'):
-                    
-                    # Usa apenas o nome final do arquivo extraído (ignora pastas e nome do zip pai)
+                is_excel = ext_file.lower().endswith('.xlsx') or ext_file.lower().endswith('.xls')
+                is_csv = ext_file.lower().endswith('.csv') or ext_file.lower().endswith('.txt')
+                
+                if is_excel or is_csv:
                     nome_base = os.path.basename(ext_file)
-                        
-                    # Usa a mesmíssima função de sanitização da sua classe SFTP
                     tabela_alvo = ClienteSFTP.gerar_nome_tabela(nome_base)
+                    
+                    if is_excel:
+                        import pandas as pd
+                        logging.info(f"  -> Convertendo Excel para CSV temporário: {nome_base}")
+                        # Converte a planilha para CSV para o DuckDB engolir em alta velocidade
+                        df = pd.read_excel(ext_file, dtype=str)
+                        csv_path = ext_file + ".csv"
+                        df.to_csv(csv_path, index=False, sep=",")
+                        ext_file = csv_path # Aponta o DuckDB para o CSV recém criado
                     
                     logging.info(f"  -> Inserindo {ext_file} na tabela pg.{SCHEMA}.{tabela_alvo}")
                     
                     # Cria schema caso não exista
                     duck_conn.execute(f"CREATE SCHEMA IF NOT EXISTS pg.{SCHEMA};")
-                    
-                    # normalize_names=true converte as COLUNAS para lowercase e troca espaços por _
-                    # Injetamos dinamicamente arquivo_origem e dt_ingest usando SQL puro
+                    # Evita silenciosamente pular a inserção se tiver nomes duplicados na mesma rodada
+                    duck_conn.execute(f"DROP TABLE IF EXISTS pg.{SCHEMA}.{tabela_alvo};")
+            
                     query = f"""
-                        CREATE TABLE IF NOT EXISTS pg.{SCHEMA}.{tabela_alvo} AS 
+                        CREATE TABLE pg.{SCHEMA}.{tabela_alvo} AS 
                         SELECT 
                             *, 
                             '{sftp_path}' AS arquivo_origem,
@@ -215,8 +208,7 @@ def processar_arquivos(**context):
                         FROM read_csv_auto('{ext_file}', ignore_errors=true, normalize_names=true);
                     """
                     duck_conn.execute(query)
-                    
-                    # Conta linhas (só pra log)
+
                     res = duck_conn.execute(f"SELECT COUNT(*) FROM pg.{SCHEMA}.{tabela_alvo}").fetchone()
                     linhas_totais += res[0]
                     
@@ -228,7 +220,6 @@ def processar_arquivos(**context):
             _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, None, "error", error_message=str(e))
             
         finally:
-            # 4. Limpeza
             logging.info("  -> Limpando arquivos temporários...")
             if os.path.exists(local_zip_path):
                 try: os.remove(local_zip_path)
@@ -236,9 +227,7 @@ def processar_arquivos(**context):
             if 'ext_dir' in locals() and os.path.exists(ext_dir):
                 shutil.rmtree(ext_dir, ignore_errors=True)
 
-# ---------------------------------------------------------------------------
-# DAG
-# ---------------------------------------------------------------------------
+# ========================== DAGS ========================================
 with DAG(
     dag_id="minio_to_postgres_duckdb",
     default_args=default_args,
