@@ -73,7 +73,7 @@ def _obter_arquivos_pendentes(conn_str: str) -> list:
         with conn.cursor() as cur:
             # Pega com sucesso no MinIO que não estão com sucesso no DuckDB (cruzando por sftp_path)
             query = f"""
-                SELECT m.minio_key, m.file_name, m.sftp_path, m.file_hash
+                SELECT m.minio_key, m.file_name, m.sftp_path, m.file_hash, m.file_size, m.file_mtime
                 FROM {SCHEMA}.{MINIO_LOG_TABLE} m
                 LEFT JOIN {SCHEMA}.{DUCKDB_LOG_TABLE} d
                   ON m.sftp_path = d.sftp_path AND d.status = 'success'
@@ -81,24 +81,26 @@ def _obter_arquivos_pendentes(conn_str: str) -> list:
                   AND d.id IS NULL
             """
             cur.execute(query)
-            pendentes = [{"minio_key": row[0], "file_name": row[1], "sftp_path": row[2], "file_hash": row[3]} for row in cur.fetchall()]
+            pendentes = [{"minio_key": row[0], "file_name": row[1], "sftp_path": row[2], "file_hash": row[3], "file_size": row[4], "file_mtime": row[5]} for row in cur.fetchall()]
     return pendentes
 
-def _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, target_table, status, rows_inserted=0, error_message=None):
+def _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, target_table, status, rows_inserted=0, error_message=None):
     with closing(psycopg2.connect(conn_str)) as conn:
         with conn.cursor() as cur:
             cur.execute(f"""
                 INSERT INTO {SCHEMA}.{DUCKDB_LOG_TABLE}
-                    (sftp_path, file_name, file_hash, target_table, status, rows_inserted, error_message, finished_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                    (sftp_path, file_name, file_hash, file_size, file_mtime, target_table, status, rows_inserted, error_message, finished_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                 ON CONFLICT (sftp_path, file_hash) 
                 DO UPDATE SET
                     status = EXCLUDED.status,
                     target_table = EXCLUDED.target_table,
+                    file_size = EXCLUDED.file_size,
+                    file_mtime = EXCLUDED.file_mtime,
                     rows_inserted = EXCLUDED.rows_inserted,
                     error_message = EXCLUDED.error_message,
                     finished_at = NOW()
-            """, (sftp_path, file_name, file_hash, target_table, status, rows_inserted, error_message))
+            """, (sftp_path, file_name, file_hash, file_size, file_mtime, target_table, status, rows_inserted, error_message))
             conn.commit()
 
 # ---------------------------------------------------------------------------
@@ -140,10 +142,12 @@ def processar_arquivos(**context):
         file_name = arquivo['file_name']
         sftp_path = arquivo['sftp_path']
         file_hash = arquivo['file_hash']
+        file_size = arquivo['file_size']
+        file_mtime = arquivo['file_mtime']
         local_zip_path = os.path.join(TEMP_DIR, file_name)
         
         logging.info(f"Processando {minio_key}...")
-        _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, None, "processing")
+        _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, None, "processing")
         
         try:
             # 1. Download do MinIO para /tmp
@@ -214,12 +218,12 @@ def processar_arquivos(**context):
                     res = duck_conn.execute(f"SELECT COUNT(*) FROM pg.{SCHEMA}.{tabela_alvo}").fetchone()
                     linhas_totais += res[0]
                     
-            _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, f"{SCHEMA}.{tabela_alvo}", "success", rows_inserted=linhas_totais)
+            _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, f"{SCHEMA}.{tabela_alvo}", "success", rows_inserted=linhas_totais)
             logging.info(f"  ✔ Sucesso! {linhas_totais} linhas processadas.")
             
         except Exception as e:
             logging.error(f"  ✘ ERRO: {str(e)}")
-            _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, None, "error", error_message=str(e))
+            _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, None, "error", error_message=str(e))
             
         finally:
             # 4. Limpeza
