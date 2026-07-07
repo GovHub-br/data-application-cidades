@@ -30,12 +30,25 @@ Execute a partir da raiz de `data-application-cidades`:
 .review-venv/bin/python data-science/dados-historicos-tratamento/skills/mcmv-review-data-treatment/scripts/render_treatment_review_report.py --root data-science/dados-historicos-tratamento
 ```
 
+## Gerar Evidencias do Banco
+
+Quando o `.env` do pipeline estiver preenchido e o banco estiver acessivel, gere evidencias linha a linha das discordancias:
+
+```bash
+cd data-science/dados-historicos-tratamento
+/home/juan-pablo/CIDADES/data-application-cidades/.review-venv/bin/python scripts/revisao_tratamento_db_evidencias.py
+cd /home/juan-pablo/CIDADES/data-application-cidades
+.review-venv/bin/python data-science/dados-historicos-tratamento/skills/mcmv-review-data-treatment/scripts/render_treatment_review_report.py --root data-science/dados-historicos-tratamento
+```
+
 Saidas padrao:
 
 - `docs/evidencias/revisao-tratamento-dados/auditoria_tratamento_pandas.csv`
 - `docs/evidencias/revisao-tratamento-dados/flags_tratamento_pandas.csv`
 - `docs/evidencias/revisao-tratamento-dados/amostras_tratadas_pandas.csv`
 - `docs/evidencias/revisao-tratamento-dados/impacto_sftp_tratamento_pandas.csv`
+- `docs/evidencias/revisao-tratamento-dados/resumo_db_tratamento_pandas.csv`
+- `docs/evidencias/revisao-tratamento-dados/discordancias_tratamento_db_pandas.csv`
 - `docs/revisao-tratamento-dados.html`
 - `docs/revisao-tratamento-dados.pdf`
 - `docs/resposta-revisao-tratamento-dados.md`

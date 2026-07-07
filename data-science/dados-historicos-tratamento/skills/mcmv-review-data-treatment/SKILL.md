@@ -126,6 +126,15 @@ python data-science/dados-historicos-tratamento/skills/mcmv-review-data-treatmen
 python data-science/dados-historicos-tratamento/skills/mcmv-review-data-treatment/scripts/render_treatment_review_report.py --root data-science/dados-historicos-tratamento
 ```
 
+When the database `.env` is configured and read-only DB evidence is needed, run the project DB evidence script before rendering:
+
+```bash
+cd data-science/dados-historicos-tratamento
+/home/juan-pablo/CIDADES/data-application-cidades/.review-venv/bin/python scripts/revisao_tratamento_db_evidencias.py
+cd /home/juan-pablo/CIDADES/data-application-cidades
+.review-venv/bin/python data-science/dados-historicos-tratamento/skills/mcmv-review-data-treatment/scripts/render_treatment_review_report.py --root data-science/dados-historicos-tratamento
+```
+
 ## Decision Rules
 
 - Do not claim row-by-row raw validation when `data/table_samples/` or treated CSVs are absent; say which evidence was available.
