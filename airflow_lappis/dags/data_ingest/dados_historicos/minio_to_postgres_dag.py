@@ -1,0 +1,236 @@
+import os
+import logging
+import zipfile
+import shutil
+from datetime import datetime
+from contextlib import closing
+
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.models import Variable
+
+import psycopg2
+import boto3
+import duckdb
+
+from helpers.postgres_helpers import get_postgres_conn
+
+# ---------------------------------------------------------------------------
+# Configurações e Variáveis
+# ---------------------------------------------------------------------------
+SCHEMA = Variable.get("sftp_schema", default_var="sftp")
+MINIO_LOG_TABLE = "_ingest_minio_log"
+DUCKDB_LOG_TABLE = "_ingest_duckdb_log"
+TEMP_DIR = "/tmp/airflow_duckdb_ingest"
+
+# Carrega do .env (Airflow injeta variáveis de ambiente)
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET")
+
+default_args = {
+    "owner": "airflow",
+    "retries": 1,
+}
+
+# ---------------------------------------------------------------------------
+# Funções Auxiliares
+# ---------------------------------------------------------------------------
+def _garantir_tabela_log(conn_str: str):
+    """Cria a tabela de log do DuckDB no Postgres se ela não existir."""
+    with closing(psycopg2.connect(conn_str)) as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};")
+            cur.execute(f"""
+                CREATE TABLE IF NOT EXISTS {SCHEMA}.{DUCKDB_LOG_TABLE} (
+                    id              SERIAL PRIMARY KEY,
+                    minio_key       TEXT NOT NULL,
+                    target_table    TEXT,
+                    status          TEXT DEFAULT 'pending',
+                    rows_inserted   BIGINT,
+                    error_message   TEXT,
+                    started_at      TIMESTAMPTZ DEFAULT NOW(),
+                    finished_at     TIMESTAMPTZ,
+                    UNIQUE (minio_key)
+                );
+            """)
+            conn.commit()
+    logging.info(f"Tabela de log {SCHEMA}.{DUCKDB_LOG_TABLE} verificada/criada.")
+
+def _obter_arquivos_pendentes(conn_str: str) -> list:
+    """Busca arquivos que estão no MinIO, mas não foram carregados no Postgres."""
+    with closing(psycopg2.connect(conn_str)) as conn:
+        with conn.cursor() as cur:
+            # Pega minio_key com sucesso no MinIO que não estão com sucesso no DuckDB
+            query = f"""
+                SELECT m.minio_key, m.file_name
+                FROM {SCHEMA}.{MINIO_LOG_TABLE} m
+                LEFT JOIN {SCHEMA}.{DUCKDB_LOG_TABLE} d
+                  ON m.minio_key = d.minio_key AND d.status = 'success'
+                WHERE m.status = 'success'
+                  AND d.id IS NULL
+            """
+            cur.execute(query)
+            pendentes = [{"minio_key": row[0], "file_name": row[1]} for row in cur.fetchall()]
+    return pendentes
+
+def _registrar_duckdb_log(conn_str, minio_key, target_table, status, rows_inserted=0, error_message=None):
+    with closing(psycopg2.connect(conn_str)) as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                INSERT INTO {SCHEMA}.{DUCKDB_LOG_TABLE}
+                    (minio_key, target_table, status, rows_inserted, error_message, finished_at)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (minio_key) 
+                DO UPDATE SET
+                    status = EXCLUDED.status,
+                    target_table = EXCLUDED.target_table,
+                    rows_inserted = EXCLUDED.rows_inserted,
+                    error_message = EXCLUDED.error_message,
+                    finished_at = NOW()
+            """, (minio_key, target_table, status, rows_inserted, error_message))
+            conn.commit()
+
+# ---------------------------------------------------------------------------
+# Tasks
+# ---------------------------------------------------------------------------
+def descobrir_pendentes(**context):
+    """Encontra arquivos para processar."""
+    conn_str = get_postgres_conn()
+    _garantir_tabela_log(conn_str)
+    
+    pendentes = _obter_arquivos_pendentes(conn_str)
+    logging.info(f"Encontrados {len(pendentes)} arquivos pendentes para o DuckDB.")
+    
+    # Passa a lista pro XCom
+    context['ti'].xcom_push(key='pendentes', value=pendentes)
+
+def processar_arquivos(**context):
+    """Baixa do MinIO, processa no DuckDB e apaga."""
+    pendentes = context['ti'].xcom_pull(key='pendentes', task_ids='descobrir_pendentes')
+    if not pendentes:
+        logging.info("Nada a processar.")
+        return
+
+    conn_str = get_postgres_conn()
+    
+    # Garante diretório temporário
+    os.makedirs(TEMP_DIR, exist_ok=True)
+    
+    # Cliente MinIO
+    s3 = boto3.client(
+        's3',
+        endpoint_url=f"http://{MINIO_ENDPOINT}",
+        aws_access_key_id=MINIO_ACCESS_KEY,
+        aws_secret_access_key=MINIO_SECRET_KEY,
+    )
+
+    for arquivo in pendentes:
+        minio_key = arquivo['minio_key']
+        file_name = arquivo['file_name']
+        local_zip_path = os.path.join(TEMP_DIR, file_name)
+        
+        logging.info(f"Processando {minio_key}...")
+        _registrar_duckdb_log(conn_str, minio_key, None, "processing")
+        
+        try:
+            # 1. Download do MinIO para /tmp
+            logging.info(f"  -> Baixando {minio_key} para {local_zip_path}")
+            s3.download_file(MINIO_BUCKET, minio_key, local_zip_path)
+            
+            # 2. Descompactação
+            ext_dir = os.path.join(TEMP_DIR, f"extracted_{file_name}")
+            os.makedirs(ext_dir, exist_ok=True)
+            
+            arquivos_extraidos = []
+            if local_zip_path.lower().endswith('.zip'):
+                logging.info(f"  -> Extraindo ZIP...")
+                with zipfile.ZipFile(local_zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(ext_dir)
+                arquivos_extraidos = [os.path.join(ext_dir, f) for f in os.listdir(ext_dir)]
+            else:
+                # Se não for zip, só move pra pasta extraida
+                shutil.move(local_zip_path, os.path.join(ext_dir, file_name))
+                arquivos_extraidos = [os.path.join(ext_dir, file_name)]
+                
+            # 3. DuckDB
+            logging.info("  -> Iniciando DuckDB e conectando no PostgreSQL...")
+            
+            # Formata a connection string pro DuckDB
+            # Pega as variaveis do db dw do .env
+            pg_host = os.getenv("DB_DW_HOST_MCID")
+            pg_db = os.getenv("DB_DW_DBNAME_MCID")
+            pg_user = os.getenv("DB_DW_USER_MCID")
+            pg_pass = os.getenv("DB_DW_PASSWORD_MCID")
+            pg_port = os.getenv("DB_DW_PORT_MCID")
+            
+            duck_conn = duckdb.connect(':memory:')
+            duck_conn.execute("INSTALL postgres;")
+            duck_conn.execute("LOAD postgres;")
+            
+            # Atacha o Postgres dentro do DuckDB!
+            duck_conn.execute(f"ATTACH 'dbname={pg_db} user={pg_user} host={pg_host} password={pg_pass} port={pg_port}' AS pg (TYPE POSTGRES);")
+            
+            linhas_totais = 0
+            # Para cada arquivo dentro do ZIP
+            for ext_file in arquivos_extraidos:
+                # Só processamos CSV e TXT (se for XLSX teremos que usar Pandas pra converter, a implementar se necessário)
+                if ext_file.lower().endswith('.csv') or ext_file.lower().endswith('.txt'):
+                    nome_base = os.path.basename(ext_file).split('.')[0].lower().replace(" ", "_")
+                    tabela_alvo = f"duck_{nome_base}" # Prefixamos duck_ para evitar colisão inicial
+                    
+                    logging.info(f"  -> Inserindo {ext_file} na tabela pg.{SCHEMA}.{tabela_alvo}")
+                    
+                    # Cria schema caso não exista
+                    duck_conn.execute(f"CREATE SCHEMA IF NOT EXISTS pg.{SCHEMA};")
+                    
+                    # Carrega direto do disco para o Postgres usando vetorização DuckDB
+                    # O auto-detect do DuckDB cuida do schema das colunas
+                    query = f"CREATE TABLE IF NOT EXISTS pg.{SCHEMA}.{tabela_alvo} AS SELECT * FROM read_csv_auto('{ext_file}', ignore_errors=true);"
+                    duck_conn.execute(query)
+                    
+                    # Conta linhas (só pra log)
+                    res = duck_conn.execute(f"SELECT COUNT(*) FROM pg.{SCHEMA}.{tabela_alvo}").fetchone()
+                    linhas_totais += res[0]
+                    
+            _registrar_duckdb_log(conn_str, minio_key, "varias", "success", rows_inserted=linhas_totais)
+            logging.info(f"  ✔ Sucesso! {linhas_totais} linhas processadas.")
+            
+        except Exception as e:
+            logging.error(f"  ✘ ERRO: {str(e)}")
+            _registrar_duckdb_log(conn_str, minio_key, None, "error", error_message=str(e))
+            
+        finally:
+            # 4. Limpeza
+            logging.info("  -> Limpando arquivos temporários...")
+            if os.path.exists(local_zip_path):
+                try: os.remove(local_zip_path)
+                except: pass
+            if 'ext_dir' in locals() and os.path.exists(ext_dir):
+                shutil.rmtree(ext_dir, ignore_errors=True)
+
+# ---------------------------------------------------------------------------
+# DAG
+# ---------------------------------------------------------------------------
+with DAG(
+    dag_id="minio_to_postgres_duckdb",
+    default_args=default_args,
+    description="Lê logs do MinIO, baixa arquivos pesados p/ /tmp, e usa DuckDB para carga no Postgres",
+    schedule=None,
+    start_date=datetime(2026, 1, 1),
+    catchup=False,
+    tags=["minio", "duckdb", "postgres"],
+) as dag:
+
+    task_descobrir = PythonOperator(
+        task_id="descobrir_pendentes",
+        python_callable=descobrir_pendentes,
+    )
+
+    task_processar = PythonOperator(
+        task_id="processar_arquivos",
+        python_callable=processar_arquivos,
+    )
+
+    task_descobrir >> task_processar
