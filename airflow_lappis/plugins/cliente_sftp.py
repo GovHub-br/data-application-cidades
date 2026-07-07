@@ -21,13 +21,9 @@ import zipfile
 from stat import S_ISDIR
 from typing import List, Optional, Set, Tuple
 from airflow.models import Variable
-
 import pandas as pd
 
 
-# ---------------------------------------------------------------------------
-# Constantes
-# ---------------------------------------------------------------------------
 
 EXTENSOES_SUPORTADAS = {".csv", ".txt", ".xlsx", ".xls", ".zip"}
 
@@ -37,10 +33,10 @@ DIRS_IGNORAR = {
     "/sys", "/usr", "/var", "/root", "/tmp",
 }
 
-# Diretórios base a serem varridos no SFTP
+
 DIRS_RAIZ = Variable.get(
     "SFTP_DIRS_RAIZ", 
-    default_var=["/home/fabrica", "/home/caixa"], 
+    default_var=["/home/fabrica"], 
     deserialize_json=True
 )
 
@@ -57,9 +53,6 @@ class ClienteSFTP:
         """
         self.sftp = sftp_conn
 
-    # ------------------------------------------------------------------
-    # Listagem
-    # ------------------------------------------------------------------
 
     def listar_arquivos_recursivo(
         self,
@@ -150,10 +143,6 @@ class ClienteSFTP:
 
         return resultados
 
-    # ------------------------------------------------------------------
-    # Download
-    # ------------------------------------------------------------------
-
     def baixar_arquivo(self, caminho_remoto: str) -> bytes:
         """Faz download de um arquivo SFTP para memória.
 
@@ -168,9 +157,6 @@ class ClienteSFTP:
         buffer.seek(0)
         return buffer.read()
 
-    # ------------------------------------------------------------------
-    # Leitura / Parse
-    # ------------------------------------------------------------------
 
     def baixar_e_ler(
         self, caminho_remoto: str
@@ -214,7 +200,6 @@ class ClienteSFTP:
 
     def _ler_csv_txt(self, conteudo: bytes, nome: str) -> pd.DataFrame:
         """Lê CSV/TXT tentando detectar separador e encoding de forma robusta."""
-        # Tenta encodings comuns
         for encoding in ("utf-8", "latin-1", "cp1252"):
             try:
                 texto = conteudo.decode(encoding)
@@ -223,21 +208,17 @@ class ClienteSFTP:
                 continue
         else:
             texto = conteudo.decode("latin-1", errors="replace")
-
-        # Tenta separadores do mais estrito para o mais comum
         separadores = ["|", ";", "\t", ","]
         melhor_df = None
 
         for sep in separadores:
             try:
-                # Tenta ler. Se der erro (ex: C engine expected 2 fields, saw 3), cai no except
                 df = pd.read_csv(io.StringIO(texto), sep=sep, dtype=str)
-                
-                # Se leu sem erro e dividiu em mais de uma coluna, achamos o separador!
+            
                 if len(df.columns) > 1:
                     return df
                 
-                # Se não deu erro mas só tem 1 coluna, guarda como backup
+                
                 if melhor_df is None:
                     melhor_df = df
             except Exception:
@@ -247,7 +228,7 @@ class ClienteSFTP:
             logging.warning("Arquivo %s parseado com 1 coluna. Usando como fallback.", nome)
             return melhor_df
 
-        # Se todos falharem (ex: arquivo com linhas inconsistentes), força ler com ';' pulando erros
+       
         logging.warning("Falha ao detectar delimitador limpo para %s. Forçando ';' e ignorando erros...", nome)
         try:
             return pd.read_csv(
@@ -304,10 +285,6 @@ class ClienteSFTP:
 
         return resultados
 
-    # ------------------------------------------------------------------
-    # Nomeação de tabelas
-    # ------------------------------------------------------------------
-
     @staticmethod
     def gerar_nome_tabela(nome_arquivo: str) -> str:
         """Gera nome de tabela Postgres válido a partir do nome do arquivo.
@@ -335,31 +312,35 @@ class ClienteSFTP:
                 nome = nome[: -len(ext)]
                 break
 
-        # Remove acentos
         nfkd = unicodedata.normalize("NFKD", nome)
         nome = "".join(c for c in nfkd if not unicodedata.combining(c))
-
-        # Lowercase
         nome = nome.lower()
-
-        # Substitui caracteres não alfanuméricos por _
         nome = re.sub(r"[^a-z0-9]", "_", nome)
-
-        # Colapsa underscores múltiplos e remove dos extremos
         nome = re.sub(r"_+", "_", nome).strip("_")
 
-        # Prefixo se começa com dígito
+        # Dicionário de abreviações
+        abreviacoes = {
+            "dados": "dd",
+            "prioritarios": "pr",
+            "contratacoes": "contr",
+            "semanal": "sem",
+            "ministeriocidades": "mcidades"
+        }
+
+        # Aplica as abreviações separando as palavras por '_'
+        partes = nome.split('_')
+        partes_abreviadas = [abreviacoes.get(p, p) for p in partes]
+        nome = '_'.join(partes_abreviadas)
+
         if nome and nome[0].isdigit():
             nome = f"_{nome}"
 
-        # Trunca em 63 chars
-        nome = nome[:63]
+        if len(nome) > 63:
+            import logging
+            logging.warning(f"ATENCAO: Nome da tabela '{nome}' ({len(nome)} chars) excedeu 63 caracteres! Adicione mais siglas no dicionário em cliente_sftp.py.")
+            nome = nome[:63]
 
         return nome
-
-    # ------------------------------------------------------------------
-    # Utilitários privados
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _extrair_extensao(nome: str) -> str:
