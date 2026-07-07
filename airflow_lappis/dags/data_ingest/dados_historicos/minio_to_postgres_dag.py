@@ -14,6 +14,10 @@ import boto3
 import duckdb
 
 from helpers.postgres_helpers import get_postgres_conn
+import sys
+# Adiciona o diretório plugins ao path para o Airflow achar localmente
+sys.path.append(os.path.join(os.environ.get("AIRFLOW_HOME", "/opt/airflow"), "plugins"))
+from cliente_sftp import ClienteSFTP
 
 # ---------------------------------------------------------------------------
 # Configurações e Variáveis
@@ -182,19 +186,28 @@ def processar_arquivos(**context):
             linhas_totais = 0
             # Para cada arquivo dentro do ZIP
             for ext_file in arquivos_extraidos:
-                # Só processamos CSV e TXT (se for XLSX teremos que usar Pandas pra converter, a implementar se necessário)
+                # Só processamos CSV e TXT
                 if ext_file.lower().endswith('.csv') or ext_file.lower().endswith('.txt'):
-                    nome_base = os.path.basename(ext_file).split('.')[0].lower().replace(" ", "_")
-                    tabela_alvo = f"duck_{nome_base}" # Prefixamos duck_ para evitar colisão inicial
+                    
+                    # Removemos a raiz para focar nos diretórios importantes
+                    caminho_limpo = sftp_path.replace("/home/fabrica/", "")
+                    if sftp_path.lower().endswith('.zip'):
+                        # Se for ZIP, a tabela junta o caminho do zip + arquivo interno
+                        nome_interno = os.path.basename(ext_file)
+                        nome_base = f"{caminho_limpo}_{nome_interno}"
+                    else:
+                        nome_base = caminho_limpo
+                        
+                    # Usa a mesmíssima função de sanitização da sua classe SFTP
+                    tabela_alvo = ClienteSFTP.gerar_nome_tabela(nome_base)
                     
                     logging.info(f"  -> Inserindo {ext_file} na tabela pg.{SCHEMA}.{tabela_alvo}")
                     
                     # Cria schema caso não exista
                     duck_conn.execute(f"CREATE SCHEMA IF NOT EXISTS pg.{SCHEMA};")
                     
-                    # Carrega direto do disco para o Postgres usando vetorização DuckDB
-                    # O auto-detect do DuckDB cuida do schema das colunas
-                    query = f"CREATE TABLE IF NOT EXISTS pg.{SCHEMA}.{tabela_alvo} AS SELECT * FROM read_csv_auto('{ext_file}', ignore_errors=true);"
+                    # normalize_names=true converte as COLUNAS para lowercase e troca espaços por _
+                    query = f"CREATE TABLE IF NOT EXISTS pg.{SCHEMA}.{tabela_alvo} AS SELECT * FROM read_csv_auto('{ext_file}', ignore_errors=true, normalize_names=true);"
                     duck_conn.execute(query)
                     
                     # Conta linhas (só pra log)
