@@ -1,0 +1,4 @@
+interface:
+  display_name: "MCMV Table Classification Review"
+  short_description: "Review MCMV historical table classifications"
+  default_prompt: "Use $mcmv-review-table-classification to review MCMV historical table classifications for issue #96."
