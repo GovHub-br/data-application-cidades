@@ -137,6 +137,19 @@ def processar_arquivos(**context):
         logging.info("=" * 60)
         logging.info(f"[{idx}/{total}] Processando {minio_key} ({file_size} bytes)")
         
+        # Verifica se o arquivo já foi processado (útil caso a task do Airflow sofra retry após queda de energia)
+        ja_processado = False
+        with closing(psycopg2.connect(conn_str)) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT status FROM {SCHEMA}.{DUCKDB_LOG_TABLE} WHERE sftp_path = %s AND file_hash = %s", (sftp_path, file_hash))
+                row = cur.fetchone()
+                if row and row[0] == 'success':
+                    ja_processado = True
+        
+        if ja_processado:
+            logging.info("  -> Arquivo já processado com sucesso em uma tentativa anterior. Pulando...")
+            continue
+        
         _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, None, "processing")
         
         try:
