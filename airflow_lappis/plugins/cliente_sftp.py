@@ -334,9 +334,15 @@ class ClienteSFTP:
         if len(nome) > 63:
             partes = nome.split('_')
             partes_abreviadas = [abreviacoes.get(p, p) for p in partes]
-            nome = '_'.join(partes_abreviadas)
-
-
+            novo_nome = '_'.join(partes_abreviadas)
+            
+            if novo_nome != nome:
+                import logging
+                logging.info(f"  -> Nome muito longo! Aplicando dicionario de abreviacoes:")
+                logging.info(f"     De : {nome} ({len(nome)} chars)")
+                logging.info(f"     P/ : {novo_nome} ({len(novo_nome)} chars)")
+                
+            nome = novo_nome
 
         if len(nome) > 63:
             import logging

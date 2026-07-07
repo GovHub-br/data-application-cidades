@@ -209,11 +209,17 @@ def processar_arquivos(**context):
                     """
                     duck_conn.execute(query)
 
-                    res = duck_conn.execute(f"SELECT COUNT(*) FROM pg.{SCHEMA}.{tabela_alvo}").fetchone()
-                    linhas_totais += res[0]
+                    res_linhas = duck_conn.execute(f"SELECT COUNT(*) FROM pg.{SCHEMA}.{tabela_alvo}").fetchone()
+                    linhas_totais += res_linhas[0]
                     
+                    res_cols = duck_conn.execute(f"DESCRIBE pg.{SCHEMA}.{tabela_alvo}").fetchall()
+                    num_colunas = len(res_cols)
+                    
+                    logging.info(f"  -> Tabela: {SCHEMA}.{tabela_alvo} | Colunas: {num_colunas} | Linhas inseridas: {res_linhas[0]}")
+                    
+            # Registra sucesso no final
             _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, f"{SCHEMA}.{tabela_alvo}", "success", rows_inserted=linhas_totais)
-            logging.info(f"  ✔ Sucesso! {linhas_totais} linhas processadas.")
+            logging.info(f"  ✔ Sucesso! {linhas_totais} linhas processadas no total.")
             
         except Exception as e:
             logging.error(f"  ✘ ERRO: {str(e)}")
