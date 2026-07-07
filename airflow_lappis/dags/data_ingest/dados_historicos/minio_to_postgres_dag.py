@@ -193,14 +193,8 @@ def processar_arquivos(**context):
                 # Só processamos CSV e TXT
                 if ext_file.lower().endswith('.csv') or ext_file.lower().endswith('.txt'):
                     
-                    # Removemos a raiz para focar nos diretórios importantes
-                    caminho_limpo = sftp_path.replace("/home/fabrica/", "")
-                    if sftp_path.lower().endswith('.zip'):
-                        # Se for ZIP, a tabela junta o caminho do zip + arquivo interno
-                        nome_interno = os.path.basename(ext_file)
-                        nome_base = f"{caminho_limpo}_{nome_interno}"
-                    else:
-                        nome_base = caminho_limpo
+                    # Usa apenas o nome final do arquivo extraído (ignora pastas e nome do zip pai)
+                    nome_base = os.path.basename(ext_file)
                         
                     # Usa a mesmíssima função de sanitização da sua classe SFTP
                     tabela_alvo = ClienteSFTP.gerar_nome_tabela(nome_base)
