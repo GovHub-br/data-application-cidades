@@ -276,9 +276,50 @@ def processar_arquivos(**context):
                             *, 
                             '{sftp_path}' AS arquivo_origem,
                             current_timestamp AS dt_ingest
-                        FROM read_csv_auto('{ext_file}', ignore_errors=true, normalize_names=true);
+                        FROM read_csv_auto('{ext_file}', ignore_errors=true, normalize_names=true, sample_size=-1);
                     """
-                    duck_conn.execute(query)
+                    
+                    try:
+                        duck_conn.execute(query)
+                    except Exception as fallback_err:
+                        if "sniffing file" in str(fallback_err).lower() and not is_excel:
+                            logging.warning("  -> [FALLBACK] DuckDB falhou no sniffing do CSV. Tentando 'lavar' o arquivo com Pandas...")
+                            import pandas as pd
+                            # Tenta com o motor do python que tem heurísticas mais permissivas
+                            try:
+                                df_fallback = pd.read_csv(ext_file, sep=None, engine='python', on_bad_lines='skip', dtype=str)
+                            except Exception:
+                                # Se o sniffer do python também falhar, tenta forçar delimitador padrão ou ponto-e-vírgula
+                                try:
+                                    df_fallback = pd.read_csv(ext_file, sep=';', on_bad_lines='skip', dtype=str)
+                                except Exception:
+                                    df_fallback = pd.read_csv(ext_file, sep=',', on_bad_lines='skip', dtype=str)
+                                    
+                            df_fallback = df_fallback.dropna(axis=1, how='all')
+                            df_fallback = df_fallback.dropna(axis=0, how='all')
+                            
+                            # Limpa os nomes das colunas
+                            cols = pd.Series(df_fallback.columns)
+                            for dup in cols[cols.duplicated()].unique():
+                                dup_indices = cols[cols == dup].index.tolist()
+                                for i, idx in enumerate(dup_indices):
+                                    if i != 0: cols.iat[idx] = f"{dup}_{i}"
+                            df_fallback.columns = cols
+
+                            clean_csv = ext_file + ".clean.csv"
+                            df_fallback.to_csv(clean_csv, index=False, sep=",")
+                            
+                            query_fallback = f"""
+                                CREATE TABLE pg.{SCHEMA}.{tabela_alvo} AS 
+                                SELECT 
+                                    *, 
+                                    '{sftp_path}' AS arquivo_origem,
+                                    current_timestamp AS dt_ingest
+                                FROM read_csv_auto('{clean_csv}', ignore_errors=true, normalize_names=true);
+                            """
+                            duck_conn.execute(query_fallback)
+                        else:
+                            raise fallback_err
 
                     res_linhas = duck_conn.execute(f"SELECT COUNT(*) FROM pg.{SCHEMA}.{tabela_alvo}").fetchone()
                     linhas_totais += res_linhas[0]
