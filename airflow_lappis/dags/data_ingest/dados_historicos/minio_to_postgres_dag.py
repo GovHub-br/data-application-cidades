@@ -282,8 +282,11 @@ def processar_arquivos(**context):
                     try:
                         duck_conn.execute(query)
                     except Exception as fallback_err:
-                        if "sniffing file" in str(fallback_err).lower() and not is_excel:
-                            logging.warning("  -> [FALLBACK] DuckDB falhou no sniffing do CSV. Tentando 'lavar' o arquivo com Pandas...")
+                        err_msg = str(fallback_err).lower()
+                        is_csv_choke = any(kw in err_msg for kw in ["sniffing file", "pqputcopydata", "unexpected eof", "internal error"])
+                        
+                        if is_csv_choke and not is_excel:
+                            logging.warning(f"  -> [FALLBACK] DuckDB falhou ao processar o CSV nativamente (Erro: {err_msg[:60]}...). Tentando 'lavar' o arquivo com Pandas...")
                             import pandas as pd
                             # Tenta com o motor do python que tem heurísticas mais permissivas
                             try:
