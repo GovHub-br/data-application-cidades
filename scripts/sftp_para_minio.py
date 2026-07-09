@@ -13,10 +13,14 @@ Controle de reprocessamento via tabela sftp._ingest_minio_log no PostgreSQL.
 Arquivos são processados do menor para o maior: Analise_SNH primeiro, depois GEFUS.
 """
 
+import argparse
 import hashlib
 import itertools
 import logging
 import os
+import re
+import shutil
+import subprocess
 import sys
 import tempfile
 import threading
@@ -57,8 +61,8 @@ LOG_TABLE = "_ingest_minio_log"
 DIRS_RAIZ             = ["/home/fabrica"]
 EXTENSOES_SUPORTADAS  = {".csv", ".txt", ".xlsx", ".xls", ".zip"}
 MAX_PROFUNDIDADE      = 10
-PASTAS_IGNORAR        = {"CadUnico"}
-PASTAS_LISTAR_PREVIEW = ["Analise_SNH", "GEFUS"]
+PASTAS_IGNORAR        = set()  # "CadUnico" liberado pela infra
+PASTAS_LISTAR_PREVIEW = ["Analise_SNH", "GEFUS", "CadUnico"]
 
 SOCKET_ERRORS = (paramiko.SSHException, EOFError, OSError, ConnectionResetError)
 _CONN_ERROR_STRINGS = (
@@ -309,7 +313,7 @@ def listar_arquivos(
 
 def baixar_para_tempfile(sftp: paramiko.SFTPClient, caminho: str) -> str:
     """Baixa para disco — evita OOM em arquivos grandes."""
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(caminho).suffix)
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(caminho).suffix, dir="/var/tmp")
     try:
         sftp.getfo(caminho, tmp)
         tmp.flush()
@@ -507,6 +511,85 @@ def processar_arquivo_simples(
         if tmp_path and os.path.exists(tmp_path):
             os.unlink(tmp_path)
 
+def _baixar_volumes_complementares(
+    sftp: paramiko.SFTPClient, caminho_zip: str, tmp_zip: str, tmp_dir: str
+) -> bool:
+    """Baixa volumes .z01/.z02… com mesmo stem para tmp_dir. Retorna True se encontrou."""
+    dir_sftp = caminho_zip.rsplit("/", 1)[0]
+    nome_zip = caminho_zip.rsplit("/", 1)[-1]
+    stem = nome_zip[:-4] if nome_zip.lower().endswith(".zip") else nome_zip
+
+    entries = sftp.listdir_attr(dir_sftp)
+    volumes = sorted(
+        e.filename for e in entries
+        if e.filename != nome_zip
+        and e.filename.startswith(stem)
+        and re.match(r"\.z\d+$", e.filename[len(stem):], re.IGNORECASE)
+    )
+    if not volumes:
+        return False
+
+    log.info("  → %d volume(s) complementar(es): %s", len(volumes), volumes)
+    shutil.copy2(tmp_zip, os.path.join(tmp_dir, nome_zip))
+    for vol_name in volumes:
+        vol_dest = os.path.join(tmp_dir, vol_name)
+        with open(vol_dest, "wb") as fh:
+            sftp.getfo(f"{dir_sftp}/{vol_name}", fh)
+        log.info("  → baixado: %s (%.1f MiB)", vol_name, os.path.getsize(vol_dest) / 1_048_576)
+    return True
+
+
+def _tem_eocd(data: bytes) -> bool:
+    return b"PK\x05\x06" in data
+
+
+def _preparar_multivolume_implicito(
+    sftp: paramiko.SFTPClient, caminho_zip: str, tmp_zip: str, tmp_dir: str
+) -> "Optional[str]":
+    """Detecta volumes complementares com nomes distintos verificando presença/ausência de EOCD.
+    Só age quando o arquivo atual tem EOCD mas não extrai sozinho (é o último volume).
+    Retorna o caminho do arquivo a passar para 7z, ou None."""
+    dir_sftp = caminho_zip.rsplit("/", 1)[0]
+    nome_zip = caminho_zip.rsplit("/", 1)[-1]
+
+    with open(tmp_zip, "rb") as f:
+        f.seek(max(0, os.path.getsize(tmp_zip) - 100))
+        atual_tem_eocd = _tem_eocd(f.read())
+
+    if not atual_tem_eocd:
+        return None
+
+    candidatos = [
+        e.filename for e in sftp.listdir_attr(dir_sftp)
+        if e.filename != nome_zip and e.filename.lower().endswith(".zip")
+    ]
+    if not candidatos:
+        return None
+
+    parceiros = []
+    for cand in candidatos:
+        try:
+            with sftp.open(f"{dir_sftp}/{cand}", "rb") as fh:
+                fh.seek(-100, 2)
+                cand_tem_eocd = _tem_eocd(fh.read(100))
+        except Exception:
+            continue
+        if not cand_tem_eocd:
+            parceiros.append(cand)
+
+    if not parceiros:
+        return None
+
+    log.info("  → parceiro(s) multi-volume implícito(s): %s", parceiros)
+    shutil.copy2(tmp_zip, os.path.join(tmp_dir, nome_zip))
+    for i, parc in enumerate(sorted(parceiros), 1):
+        dest = os.path.join(tmp_dir, nome_zip[:-4] + f".z{i:02d}")
+        with open(dest, "wb") as fh:
+            sftp.getfo(f"{dir_sftp}/{parc}", fh)
+        log.info("  → .z%02d: %s (%.1f MiB)", i, parc, os.path.getsize(dest) / 1_048_576)
+    return os.path.join(tmp_dir, nome_zip)
+
+
 def processar_zip(
     sftp: paramiko.SFTPClient,
     s3,
@@ -562,7 +645,7 @@ def processar_zip(
                 tmp_interno = None
                 try:
                     with tempfile.NamedTemporaryFile(
-                        delete=False, suffix=ext_interna
+                        delete=False, suffix=ext_interna, dir="/var/tmp"
                     ) as tf:
                         tf.write(zf.read(info.filename))
                         tmp_interno = tf.name
@@ -594,15 +677,113 @@ def processar_zip(
 
     except zipfile.BadZipFile:
         spinner.parar(ok=False)
-        log.warning(
-            "⚠ [%d/%d] %s — não reconhecido como ZIP pelo Python, subindo como arquivo bruto...",
-            idx, total, nome_zip,
-        )
+
         if caminho_zip in ja_inseridos:
-            log.info("  → já inserido como bruto, pulando", )
-            if tmp_zip and os.path.exists(tmp_zip):
-                os.unlink(tmp_zip)
+            log.info("  → já inserido como bruto, pulando")
             return 0, 0
+
+        with open(tmp_zip, "rb") as _f:
+            _magic = _f.read(16).hex()
+        log.warning(
+            "⚠ [%d/%d] %s — não reconhecido pelo Python (magic: %s), tentando extratores alternativos...",
+            idx, total, nome_zip, _magic,
+        )
+
+        tmp_dir = None
+        extraido = False
+        for extrator in ("unzip", "7z"):
+            tmp_dir = tempfile.mkdtemp(dir="/var/tmp")
+            if extrator == "unzip":
+                cmd: list[str] = ["unzip", "-o", tmp_zip, "-d", tmp_dir]
+            else:
+                cmd = ["7z", "e", tmp_zip, f"-o{tmp_dir}", "-y"]
+            try:
+                res = subprocess.run(cmd, capture_output=True, timeout=300)
+                log.warning("  [%s] rc=%d stderr=%s", extrator, res.returncode, res.stderr.decode(errors="replace")[:200])
+                if res.returncode in (0, 1) and any(Path(tmp_dir).iterdir()):
+                    log.info("  → extraído com %s (rc=%d)", extrator, res.returncode)
+                    extraido = True
+                    break
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                pass
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            tmp_dir = None
+
+        if not extraido:
+            tmp_dir_vols = tempfile.mkdtemp(dir="/var/tmp")
+            tmp_dir_extract = tempfile.mkdtemp(dir="/var/tmp")
+            try:
+                if _baixar_volumes_complementares(sftp, caminho_zip, tmp_zip, tmp_dir_vols):
+                    alvo_7z: Optional[str] = os.path.join(tmp_dir_vols, nome_zip)
+                else:
+                    alvo_7z = _preparar_multivolume_implicito(sftp, caminho_zip, tmp_zip, tmp_dir_vols)
+
+                if alvo_7z:
+                    cmd_mv = ["7z", "e", alvo_7z, f"-o{tmp_dir_extract}", "-y"]
+                    try:
+                        res_mv = subprocess.run(cmd_mv, capture_output=True, timeout=600)
+                        log.info(
+                            "  [7z multi-vol] rc=%d stderr=%s",
+                            res_mv.returncode,
+                            res_mv.stderr.decode(errors="replace")[:200],
+                        )
+                        if res_mv.returncode in (0, 1) and any(Path(tmp_dir_extract).iterdir()):
+                            log.info("  → extraído como multi-volume (rc=%d)", res_mv.returncode)
+                            extraido = True
+                            tmp_dir = tmp_dir_extract
+                            tmp_dir_extract = None
+                    except (subprocess.TimeoutExpired, FileNotFoundError):
+                        pass
+            except Exception as e_mv:
+                log.warning("  → tentativa multi-volume falhou: %s", e_mv)
+            finally:
+                shutil.rmtree(tmp_dir_vols, ignore_errors=True)
+                if tmp_dir_extract:
+                    shutil.rmtree(tmp_dir_extract, ignore_errors=True)
+
+        if extraido and tmp_dir:
+            try:
+                for arq_path in sorted(Path(tmp_dir).rglob("*")):
+                    if arq_path.is_dir():
+                        continue
+                    nome_interno = arq_path.name
+                    ext_interna  = _extensao(nome_interno)
+                    if ext_interna not in EXTENSOES_SUPORTADAS or ext_interna == ".zip":
+                        continue
+                    caminho_log = f"{caminho_zip}@{nome_interno}"
+                    if caminho_log in ja_inseridos:
+                        log.info("  ↳ %s — já inserido, pulando", nome_interno)
+                        continue
+                    nome_destino = gerar_nome_unico(nome_interno, nomes_usados)
+                    nomes_usados.add(nome_destino)
+                    spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
+                    try:
+                        file_hash = _compute_hash(str(arq_path))
+                        minio_key = subir_para_minio(s3, str(arq_path), nome_destino)
+                        log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
+                        _registrar_ingest(
+                            conn_str, caminho_log, nome_destino, minio_key,
+                            arq_path.stat().st_size, mtime, file_hash, "success",
+                        )
+                        sucesso += 1
+                    except Exception as e:
+                        log.error("  ✗ ↳ %s: %s", nome_interno, e)
+                        _registrar_ingest(
+                            conn_str, caminho_log, nome_destino, None,
+                            arq_path.stat().st_size, mtime, None, "error", str(e)[:500],
+                        )
+                        erro += 1
+            finally:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            spinner.parar(ok=erro == 0)
+            log.info(
+                "✓ [%d/%d] %s — %d ok, %d erro(s) (extrator alternativo)",
+                idx, total, nome_zip, sucesso, erro,
+            )
+            return sucesso, erro
+
+        # Último fallback: sobe o arquivo bruto
+        log.warning("⚠ [%d/%d] %s — extratores falharam, subindo como arquivo bruto...", idx, total, nome_zip)
         nome_destino = gerar_nome_unico(nome_zip, nomes_usados)
         nomes_usados.add(nome_destino)
         try:
@@ -620,10 +801,6 @@ def processar_zip(
                 conn_str, caminho_zip, nome_destino, None,
                 tamanho, mtime, None, "error", str(e2)[:500],
             )
-            return 0, 1
-        finally:
-            if tmp_zip and os.path.exists(tmp_zip):
-                os.unlink(tmp_zip)
     finally:
         if tmp_zip and os.path.exists(tmp_zip):
             os.unlink(tmp_zip)
@@ -649,6 +826,15 @@ def _processar_entry(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--pasta", metavar="PASTA",
+        help="Processa só esta pasta (ex: CadUnico). Repita para várias.",
+        action="append", dest="pastas",
+    )
+    args = parser.parse_args()
+    pastas_filtro = args.pastas or PASTAS_LISTAR_PREVIEW
+
     if not SFTP_PASSWORD:
         raise ValueError("SFTP_PASSWORD não encontrada no .env")
 
@@ -677,7 +863,7 @@ def main() -> None:
         _exibir_preview(sftp)
 
         todos_arquivos = []
-        for pasta in PASTAS_LISTAR_PREVIEW:
+        for pasta in pastas_filtro:
             arquivos_pasta = []
             for dir_raiz in DIRS_RAIZ:
                 log.info("Varrendo %s/%s ...", dir_raiz, pasta)
