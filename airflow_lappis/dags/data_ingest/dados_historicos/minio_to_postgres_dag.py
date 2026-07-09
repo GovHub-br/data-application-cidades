@@ -58,20 +58,33 @@ def _garantir_tabela_log(conn_str: str):
             conn.commit()
     logging.info(f"Tabela de log {SCHEMA}.{DUCKDB_LOG_TABLE} verificada/criada.")
 
-def _obter_arquivos_pendentes(conn_str: str) -> list:
+def _obter_arquivos_pendentes(conn_str: str, arquivos_especificos: list = None) -> list:
     """Busca arquivos que estão no MinIO, mas não foram carregados no Postgres."""
     with closing(psycopg2.connect(conn_str)) as conn:
         with conn.cursor() as cur:
-            # Pega com sucesso no MinIO que não estão com sucesso no DuckDB (cruzando por sftp_path)
-            query = f"""
-                SELECT m.minio_key, m.file_name, m.sftp_path, m.file_hash, m.file_size, m.file_mtime
-                FROM {SCHEMA}.{MINIO_LOG_TABLE} m
-                LEFT JOIN {SCHEMA}.{DUCKDB_LOG_TABLE} d
-                  ON m.sftp_path = d.sftp_path AND d.status = 'success'
-                WHERE m.status = 'success'
-                  AND d.id IS NULL
-            """
-            cur.execute(query)
+            if arquivos_especificos:
+                # Modo Ad-hoc: Força buscar apenas os arquivos solicitados no MinIO
+                # Usa query parametrizada para segurança
+                format_strings = ','.join(['%s'] * len(arquivos_especificos))
+                query = f"""
+                    SELECT minio_key, file_name, sftp_path, file_hash, file_size, file_mtime
+                    FROM {SCHEMA}.{MINIO_LOG_TABLE}
+                    WHERE sftp_path IN ({format_strings})
+                      AND status = 'success'
+                """
+                cur.execute(query, tuple(arquivos_especificos))
+            else:
+                # Modo Normal: Pega com sucesso no MinIO que não estão com sucesso no DuckDB
+                query = f"""
+                    SELECT m.minio_key, m.file_name, m.sftp_path, m.file_hash, m.file_size, m.file_mtime
+                    FROM {SCHEMA}.{MINIO_LOG_TABLE} m
+                    LEFT JOIN {SCHEMA}.{DUCKDB_LOG_TABLE} d
+                      ON m.sftp_path = d.sftp_path AND d.status = 'success'
+                    WHERE m.status = 'success'
+                      AND d.id IS NULL
+                """
+                cur.execute(query)
+                
             pendentes = [{"minio_key": row[0], "file_name": row[1], "sftp_path": row[2], "file_hash": row[3], "file_size": row[4], "file_mtime": row[5]} for row in cur.fetchall()]
     return pendentes
 
@@ -100,7 +113,14 @@ def descobrir_pendentes(**context):
     conn_str = get_postgres_conn()
     _garantir_tabela_log(conn_str)
     
-    pendentes = _obter_arquivos_pendentes(conn_str)
+    # Checa se o usuário enviou uma lista específica de arquivos via config da DAG
+    dag_run_conf = context.get('dag_run').conf if context.get('dag_run') else None
+    arquivos_especificos = dag_run_conf.get('arquivos_especificos') if dag_run_conf else None
+    
+    if arquivos_especificos:
+        logging.info(f"Modo AD-HOC ativado! Processando lista manual de {len(arquivos_especificos)} arquivos.")
+        
+    pendentes = _obter_arquivos_pendentes(conn_str, arquivos_especificos)
     logging.info(f"Encontrados {len(pendentes)} arquivos pendentes para o DuckDB.")
     
 
@@ -124,6 +144,9 @@ def processar_arquivos(**context):
         aws_secret_access_key=MINIO_SECRET_KEY,
     )
 
+    dag_run_conf = context.get('dag_run').conf if context.get('dag_run') else None
+    is_ad_hoc = bool(dag_run_conf and dag_run_conf.get('arquivos_especificos'))
+
     total = len(pendentes)
     for idx, arquivo in enumerate(pendentes, 1):
         minio_key = arquivo['minio_key']
@@ -138,14 +161,16 @@ def processar_arquivos(**context):
         logging.info(f"[{idx}/{total}] Processando {minio_key} ({file_size} bytes)")
         
         # Verifica se o arquivo já foi processado (útil caso a task do Airflow sofra retry após queda de energia)
+        # Se for modo AD-HOC, ignora a checagem pois o usuário quer forçar o reprocessamento
         ja_processado = False
-        with closing(psycopg2.connect(conn_str)) as conn:
-            with conn.cursor() as cur:
-                cur.execute(f"SELECT status FROM {SCHEMA}.{DUCKDB_LOG_TABLE} WHERE sftp_path = %s AND file_hash = %s", (sftp_path, file_hash))
-                row = cur.fetchone()
-                if row and row[0] == 'success':
-                    ja_processado = True
-        
+        if not is_ad_hoc:
+            with closing(psycopg2.connect(conn_str)) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(f"SELECT status FROM {SCHEMA}.{DUCKDB_LOG_TABLE} WHERE sftp_path = %s AND file_hash = %s", (sftp_path, file_hash))
+                    row = cur.fetchone()
+                    if row and row[0] == 'success':
+                        ja_processado = True
+            
         if ja_processado:
             logging.info("  -> Arquivo já processado com sucesso em uma tentativa anterior. Pulando...")
             continue
