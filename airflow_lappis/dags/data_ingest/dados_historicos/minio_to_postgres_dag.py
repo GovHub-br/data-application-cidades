@@ -199,13 +199,41 @@ def processar_arquivos(**context):
                     if is_excel:
                         import pandas as pd
                         logging.info(f"  -> Convertendo Excel para CSV temporário: {nome_base}")
-                        # Converte a planilha para CSV para o DuckDB engolir em alta velocidade
-                        df = pd.read_excel(ext_file, dtype=str)
+                        # Converte a planilha lendo os dados brutos sem assumir cabeçalho
+                        df = pd.read_excel(ext_file, dtype=str, header=None)
                         
-                        # Limpa colunas e linhas 100% vazias ("fantasmas" do Excel que estouram o limite de colunas do Postgres)
+                        # Limpa colunas e linhas 100% vazias
                         df = df.dropna(axis=1, how='all')
                         df = df.dropna(axis=0, how='all')
+                        df = df.reset_index(drop=True)
                         
+                        if not df.empty:
+                            # Heurística: encontra o cabeçalho real pulando títulos mesclados no topo
+                            head_search = df.head(30)
+                            filled_counts = head_search.notna().sum(axis=1)
+                            max_filled = filled_counts.max()
+                            
+                            # O cabeçalho real costuma ser a primeira linha com pelo menos 80% do preenchimento máximo
+                            best_header_idx = filled_counts[filled_counts >= (max_filled * 0.8)].index[0]
+                            
+                            raw_headers = df.iloc[best_header_idx].tolist()
+                            clean_headers = []
+                            for i, val in enumerate(raw_headers):
+                                val_str = str(val).strip() if pd.notna(val) else ""
+                                clean_headers.append(val_str if val_str else f"unnamed_{i}")
+                            
+                            df.columns = clean_headers
+                            df = df.iloc[best_header_idx + 1:]
+                            
+                            # Desduplica nomes de colunas (Postgres não suporta colunas com mesmo nome)
+                            cols = pd.Series(df.columns)
+                            for dup in cols[cols.duplicated()].unique():
+                                dup_indices = cols[cols == dup].index.tolist()
+                                for i, idx in enumerate(dup_indices):
+                                    if i != 0:
+                                        cols.iat[idx] = f"{dup}_{i}"
+                            df.columns = cols
+
                         csv_path = ext_file + ".csv"
                         df.to_csv(csv_path, index=False, sep=",")
                         ext_file = csv_path # Aponta o DuckDB para o CSV recém criado
