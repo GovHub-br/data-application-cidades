@@ -180,7 +180,14 @@ def processar_arquivos(**context):
         try:
             #Download do MinIO para /tmp
             logging.info(f"  -> Baixando {minio_key} para {local_zip_path}")
-            s3.download_file(MINIO_BUCKET, minio_key, local_zip_path)
+            try:
+                s3.download_file(MINIO_BUCKET, minio_key, local_zip_path)
+            except Exception as e_download:
+                if "404" in str(e_download) or "Not Found" in str(e_download):
+                    logging.warning(f"  -> Arquivo não encontrado no MinIO (404). Pode ter sido deletado na origem. Marcando erro e pulando.")
+                    _registrar_duckdb_log(conn_str, sftp_path, file_name, file_hash, file_size, file_mtime, None, "error", error_message="404 Not Found no MinIO")
+                    continue
+                raise e_download
             
 
             ext_dir = os.path.join(TEMP_DIR, f"extracted_{file_name}")
@@ -290,13 +297,13 @@ def processar_arquivos(**context):
                             import pandas as pd
                             # Tenta com o motor do python que tem heurísticas mais permissivas
                             try:
-                                df_fallback = pd.read_csv(ext_file, sep=None, engine='python', on_bad_lines='skip', dtype=str)
+                                df_fallback = pd.read_csv(ext_file, sep=None, engine='python', on_bad_lines='skip', dtype=str, encoding='utf-8', encoding_errors='replace')
                             except Exception:
-                                # Se o sniffer do python também falhar, tenta forçar delimitador padrão ou ponto-e-vírgula
+                                # Se o sniffer do python também falhar ou der erro de encoding, tenta forçar delimitador padrão e encoding latin1 (padrão Brasil)
                                 try:
-                                    df_fallback = pd.read_csv(ext_file, sep=';', on_bad_lines='skip', dtype=str)
+                                    df_fallback = pd.read_csv(ext_file, sep=';', on_bad_lines='skip', dtype=str, encoding='latin1', encoding_errors='replace')
                                 except Exception:
-                                    df_fallback = pd.read_csv(ext_file, sep=',', on_bad_lines='skip', dtype=str)
+                                    df_fallback = pd.read_csv(ext_file, sep=',', on_bad_lines='skip', dtype=str, encoding='latin1', encoding_errors='replace')
                                     
                             df_fallback = df_fallback.dropna(axis=1, how='all')
                             df_fallback = df_fallback.dropna(axis=0, how='all')
