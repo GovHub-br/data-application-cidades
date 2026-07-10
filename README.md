@@ -76,7 +76,9 @@ This will:
 Start all services using Docker Compose:
 
 ```bash
-docker-compose up -d
+make up
+# ou diretamente:
+docker compose -f infra/docker-compose.yml up -d
 ```
 
 Access the different components:
@@ -107,16 +109,19 @@ make test
 
 ```
 .
-├── airflow/
-│   ├── dags/
-│   └── plugins/
-├── dbt/
-│   └── models/
-├── jupyter/
-│   └── notebooks/
-├── superset/
-│   └── dashboards/
-├── docker-compose.yml
+├── dags/                 # DAGs do Airflow (data_ingest, dashboards, dbt/*_cosmos_dag.py)
+├── plugins/              # clientes e plugins do Airflow
+├── helpers/              # funcoes auxiliares
+├── templates/            # templates (ex: consultas SIAPE)
+├── dbt/                  # projeto dbt (mcid)
+│   └── mcid/
+├── scripts/              # scripts avulsos (ex: ingestao SFTP)
+├── tests/
+├── infra/                # execucao local (compose, Dockerfiles, airflow.cfg, env)
+│   ├── airflow/
+│   ├── docker/
+│   ├── env/
+│   └── docker-compose.yml
 ├── Makefile
 └── README.md
 ```
