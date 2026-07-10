@@ -51,6 +51,7 @@ def gerar_relatorio_qualidade(
     - ``profile`` — perfil estrutural (ou reason para descartadas)
     - ``institution`` — ``bb``, ``caixa`` ou ``unknown``
     - ``report_date`` — data de referência extraída do nome
+    - ``data_de_movimento`` — data de movimento preservada da coluna 0 (vazio se não aplicável)
     - ``missing_pct`` — percentual de valores ausentes
     - ``encoding_issues`` — contagem de problemas de encoding
     - ``date_parse_errors`` — contagem de falhas no parsing de datas
@@ -76,6 +77,7 @@ def gerar_relatorio_qualidade(
         "profile",
         "institution",
         "report_date",
+        "data_de_movimento",
         "missing_pct",
         "encoding_issues",
         "date_parse_errors",

@@ -664,6 +664,9 @@ def extrair_periodo_filename(table_name: str) -> str | None:
 
     Padrões testados em ordem (primeiro match vence):
 
+    0a. ``historico_recente_(20\d{2})(\d{2})_``: ex ``historico_recente_202406_snh_...``
+    0b. ``o_recente_(20\d{2})(\d{2})_``: ex ``o_recente_202406_snh_...``
+    0c. Prefixos truncados: ``^(ecente|storico)_(20\d{2})_(\d{2})_``
     1. ``DD_MM_YYYY`` no final: ``r'_(\d{2})_(\d{2})_(\d{4})$'``
     2. ``YYYYMMDD`` no final: ``r'_(\d{8})$'``
     3. ``DDMMYYYY`` no final: ``r'(\d{8})$'`` (se não capturado por #2,
@@ -684,6 +687,33 @@ def extrair_periodo_filename(table_name: str) -> str | None:
         Data no formato ``'YYYY-MM-DD'`` ou ``None``.
     """
     name = table_name.strip()
+
+    # 0a. historico_recente_YYYYMM_... (ex: historico_recente_202406_snh_...)
+    m = re.search(r"historico_recente_(20\d{2})(\d{2})_", name)
+    if m:
+        year, month = m.group(1), m.group(2)
+        try:
+            return f"{year}-{month}-01"
+        except (ValueError, TypeError):
+            pass
+
+    # 0b. o_recente_YYYYMM_... (ex: o_recente_202406_snh_...)
+    m = re.search(r"o_recente_(20\d{2})(\d{2})_", name)
+    if m:
+        year, month = m.group(1), m.group(2)
+        try:
+            return f"{year}-{month}-01"
+        except (ValueError, TypeError):
+            pass
+
+    # 0c. Prefixos truncados: ecente_YYYY_MM_... ou storico_YYYY_MM_...
+    m = re.search(r"^(ecente|storico)_(20\d{2})_(\d{2})_", name)
+    if m:
+        year, month = m.group(2), m.group(3)
+        try:
+            return f"{year}-{month}-01"
+        except (ValueError, TypeError):
+            pass
 
     # 1. DD_MM_YYYY no final
     m = re.search(r"_(\d{2})_(\d{2})_(\d{4})$", name)
@@ -939,6 +969,28 @@ def tratar_bem_formada(
     report_date = extrair_periodo_filename(table_name)
     instituicao = inferir_instituicao(table_name)
 
+    # 3a. Normaliza data_de_movimento se presente
+    dm_value: str | None = None
+    if "data_de_movimento" in df.columns:
+        # Normaliza datas DD/MM/YYYY -> YYYY-MM-DD
+        def _norm_dm(val: Any) -> str | None:
+            if pd.isna(val):
+                return None
+            s = str(val).strip()
+            # Tenta DD/MM/YYYY
+            m = re.match(r"(\d{2})/(\d{2})/(\d{4})", s)
+            if m:
+                return f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+            # Tenta YYYY-MM-DD (já normalizado)
+            if re.match(r"\d{4}-\d{2}-\d{2}", s):
+                return s
+            return s
+
+        df["data_de_movimento"] = df["data_de_movimento"].apply(_norm_dm)
+        non_null = df["data_de_movimento"].dropna()
+        if len(non_null) > 0:
+            dm_value = str(non_null.iloc[0])
+
     # 4. Adiciona metadados
     df = adicionar_metadados(
         df=df,
@@ -954,6 +1006,7 @@ def tratar_bem_formada(
         "profile": perfil,
         "institution": instituicao,
         "report_date": report_date,
+        "data_de_movimento": dm_value,
         "n_cols_original": n_cols_original,
         "n_cols_tratado": len(df.columns),
         "n_rows": n_rows,

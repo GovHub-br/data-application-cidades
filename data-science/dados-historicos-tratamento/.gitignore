@@ -26,6 +26,10 @@ build/
 data/table_errors/
 data/table_samples/
 data/treated_tables/
+data/dados_historicos/table_samples
+data/dados_historicos_formatados/table_samples
+data/sftp/table_samples
+data/sftp/artefatos/amostra*
 
 # Generated outputs (pipeline)
 data/classificacao_formacao.csv

@@ -13,6 +13,7 @@ O módulo oferece duas fontes de dados:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import duckdb
@@ -31,6 +32,48 @@ def _resolve_data_dir(data_dir: Path | str | None) -> Path:
     return Path(data_dir) if data_dir is not None else _DATA_DIR
 
 
+def _detectar_data_movimento_col0(path: Path) -> bool:
+    """Detecta se a coluna 0 contém datas de movimento (DD/MM/YYYY ou YYYY-MM-DD).
+
+    Lê as primeiras 20 linhas do CSV tab-separated, ignora o cabeçalho (linha 0),
+    e verifica se pelo menos 80% dos valores não-nulos na coluna 0 correspondem
+    a padrões de data ``\\d{2}/\\d{2}/\\d{4}`` ou ``\\d{4}-\\d{2}-\\d{2}``.
+
+    Retorna ``True`` se a coluna 0 parece conter datas (data_de_movimento),
+    ``False`` caso contrário (provavelmente é um índice de linha numérico).
+    """
+    date_pattern = re.compile(r"^\d{2}/\d{2}/\d{4}$|^\d{4}-\d{2}-\d{2}$")
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = []
+            for i, line in enumerate(f):
+                if i >= 20:
+                    break
+                lines.append(line)
+    except Exception:
+        return False
+
+    # Precisamos de pelo menos 1 linha de dados além do cabeçalho.
+    if len(lines) < 2:
+        return False
+
+    # Ignora cabeçalho (linha 0); extrai coluna 0 das linhas de dados.
+    values: list[str] = []
+    for line in lines[1:]:
+        parts = line.strip().split("\t")
+        if parts:
+            val = parts[0].strip()
+            if val:  # não-nulo
+                values.append(val)
+
+    if not values:
+        return False
+
+    matches = sum(1 for v in values if date_pattern.match(v))
+    return (matches / len(values)) >= 0.80
+
+
 def carregar_csv(path: Path | str) -> pd.DataFrame:
     """Lê um CSV tab-separated como strings, com a primeira coluna como índice.
 
@@ -38,9 +81,58 @@ def carregar_csv(path: Path | str) -> pd.DataFrame:
     ``sep="\\t"``, ``dtype=str``, ``on_bad_lines="skip"``, ``index_col=0``.
     O ``index_col=0`` descarta a coluna de índice de linha (0,1,2...) que existe
     em todas as amostras, deixando ``df.columns`` apenas com colunas de dados.
+
+    Quando a coluna 0 contém datas de movimento (detectado por
+    ``_detectar_data_movimento_col0``), a coluna é mantida como uma coluna regular
+    ``data_de_movimento`` em vez de ser usada como índice.
     """
+    path_obj = Path(path)
+
+    if _detectar_data_movimento_col0(path_obj):
+        # Lê sem index_col=0 para preservar a coluna de datas
+        df = pd.read_csv(
+            path_obj,
+            sep="\t",
+            dtype=str,
+            on_bad_lines="skip",
+        )
+
+        # Renomeia a primeira coluna se o cabeçalho for genérico
+        first_col_name: str = str(df.columns[0])
+        first_col_str = first_col_name.lower().strip()
+        is_generic: bool = (
+            first_col_str == "0"
+            or first_col_str == ""
+            or first_col_str == "unnamed:0"
+            or first_col_str == "unnamed_0"
+            or first_col_str.startswith("unnamed")
+        )
+
+        col_name = "data_de_movimento" if is_generic else first_col_name
+        if is_generic:
+            df.rename(columns={first_col_name: col_name}, inplace=True)
+
+        # Normaliza valores de data para ISO (YYYY-MM-DD)
+        def _normalize_date(val: object) -> object:
+            if val is None or (isinstance(val, float) and pd.isna(val)):
+                return val
+            val_str = str(val).strip()
+            # DD/MM/YYYY → YYYY-MM-DD
+            m = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", val_str)
+            if m:
+                return f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+            # Já está em YYYY-MM-DD ou outro formato — mantém como está
+            return val_str
+
+        df[col_name] = df[col_name].apply(_normalize_date)
+
+        # Normaliza nomes de coluna para str (consistência com o comportamento padrão)
+        df.columns = [str(c) for c in df.columns]
+        return df
+
+    # Comportamento padrão: usa a primeira coluna como índice
     df = pd.read_csv(
-        Path(path),
+        path_obj,
         sep="\t",
         dtype=str,
         on_bad_lines="skip",
