@@ -5,6 +5,9 @@ Objetivo: entender COMO o SFTP é atualizado entre uma carga e outra
 (os arquivos são sobrescritos? os antigos são movidos para outra pasta?).
 Para isso gravamos uma "fotografia" da árvore de arquivos (path, tamanho, mtime)
 e, na próxima vez, comparamos o estado atual contra essa fotografia.
+O diff classifica cada arquivo em: novo, modificado, movido (sumiu de um path e
+apareceu em outro), copiado (apareceu em outro path mas o original permanece,
+ex.: arquivamento em GEFUS/ANTERIORES) ou removido.
 
 Uso:
     # grava a fotografia do estado atual (rode logo após a 1ª ingestão)
@@ -177,6 +180,25 @@ def detect_moves(added: dict, removed: dict) -> list[dict]:
     return moves
 
 
+def detect_copies(added: dict, new_files: dict) -> list[dict]:
+    """Casa arquivos novos com arquivos ainda presentes em outro caminho pelo
+    par (nome do arquivo, tamanho): sinal de arquivamento por CÓPIA — o
+    original permanece no lugar (ex.: cópia para GEFUS/ANTERIORES).
+    Remove os casados de `added` (mutação intencional)."""
+    index: dict[tuple[str, int], str] = {}
+    for path, meta in new_files.items():
+        if path not in added:
+            index.setdefault((Path(path).name, meta["size"]), path)
+
+    copies: list[dict] = []
+    for path in list(added.keys()):
+        src = index.get((Path(path).name, added[path]["size"]))
+        if src:
+            copies.append({"from": src, "to": path, "size": added[path]["size"]})
+            del added[path]
+    return copies
+
+
 def diff_snapshots(old: dict, new: dict) -> dict:
     old_files: dict[str, dict] = old["files"]
     new_files: dict[str, dict] = new["files"]
@@ -197,7 +219,8 @@ def diff_snapshots(old: dict, new: dict) -> dict:
         else:
             unchanged += 1
 
-    moves = detect_moves(added, removed)  # consome added/removed casados
+    moves = detect_moves(added, removed)    # consome added/removed casados
+    copies = detect_copies(added, new_files)  # consome added casados
 
     return {
         "old_captured_at": old.get("captured_at"),
@@ -206,13 +229,14 @@ def diff_snapshots(old: dict, new: dict) -> dict:
         "removed":   [{"path": p, **m} for p, m in sorted(removed.items())],
         "modified":  sorted(modified, key=lambda x: x["path"]),
         "moved":     sorted(moves, key=lambda x: x["to"]),
+        "copied":    sorted(copies, key=lambda x: x["to"]),
         "unchanged": unchanged,
     }
 
 
 def interpret(d: dict) -> str:
     """Heurística para responder: como o SFTP atualiza?"""
-    if not (d["added"] or d["removed"] or d["modified"] or d["moved"]):
+    if not (d["added"] or d["removed"] or d["modified"] or d["moved"] or d["copied"]):
         return "Nada mudou desde o último snapshot."
     sinais = []
     if d["modified"]:
@@ -224,6 +248,11 @@ def interpret(d: dict) -> str:
         sinais.append(
             f"{len(d['moved'])} arquivo(s) com mesmo nome+tamanho mudaram de pasta "
             "→ indício de que os ANTIGOS são MOVIDOS/ARQUIVADOS."
+        )
+    if d["copied"]:
+        sinais.append(
+            f"{len(d['copied'])} arquivo(s) novo(s) idênticos a arquivos ainda presentes "
+            "→ indício de que os antigos são COPIADOS para pasta de histórico."
         )
     if d["added"] and not d["modified"] and not d["moved"]:
         sinais.append(
@@ -252,8 +281,8 @@ def print_report(d: dict, limit: int | None) -> None:
     print("=" * 70)
     print(
         f"novos={len(d['added'])}  modificados={len(d['modified'])}  "
-        f"movidos={len(d['moved'])}  removidos={len(d['removed'])}  "
-        f"inalterados={d['unchanged']}"
+        f"movidos={len(d['moved'])}  copiados={len(d['copied'])}  "
+        f"removidos={len(d['removed'])}  inalterados={d['unchanged']}"
     )
 
     section("NOVOS", d["added"],
@@ -264,6 +293,8 @@ def print_report(d: dict, limit: int | None) -> None:
                        f"mtime {format_mtime(x['old_mtime'])}→{format_mtime(x['new_mtime'])}"))
     section("MOVIDOS (provável arquivamento)", d["moved"],
             lambda x: f"» {x['from']}\n      → {x['to']}  ({format_size(x['size'])})")
+    section("COPIADOS (provável arquivamento por cópia; original permanece)", d["copied"],
+            lambda x: f"= {x['from']}\n      → {x['to']}  ({format_size(x['size'])})")
     section("REMOVIDOS", d["removed"],
             lambda x: f"- {x['path']}  ({format_size(x['size'])})")
 
