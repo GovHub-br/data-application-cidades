@@ -59,7 +59,17 @@ sources:
         description: >
           Rendimento médio mensal real na construção civil (PNAD Contínua trimestral).
           Agregado 6391, variável 5932. Tipagem aplicada: text→int, text→numeric.
-      
+      - name: ibge_pim_pf_brasil
+        description: >
+          Pesquisa Industrial Mensal - Produção Física (PIM-PF), Brasil.
+          Agregado 8888, variáveis 12606, 12607, 11601-11604, classificação 544[129314].
+          Tipagem aplicada: text→int, text→numeric.
+      - name: ibge_pmc_construcao
+        description: >
+          Pesquisa Mensal de Comércio (PMC), material de construção.
+          Agregado 8880, variáveis 7169, 7170, 11708-11711, classificação 11046 (receita nominal e volume).
+          Tipagem aplicada: text→int, text→numeric.
+
   - name: fgv
     schema: fgv
     description: >
