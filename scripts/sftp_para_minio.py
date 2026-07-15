@@ -436,6 +436,47 @@ def subir_para_minio(s3, tmp_path: str, nome_destino: str) -> str:
             time.sleep(espera)
     raise RuntimeError("unreachable")
 
+
+class _HashingReader:
+    """Wrapper que calcula hash SHA-256 enquanto os dados são lidos."""
+    def __init__(self, src):
+        self._src = src
+        self._hasher = hashlib.sha256()
+
+    def read(self, n=-1):
+        chunk = self._src.read(n)
+        if chunk:
+            self._hasher.update(chunk)
+        return chunk
+
+    @property
+    def hexdigest(self) -> str:
+        return self._hasher.hexdigest()
+
+
+def _subir_stream_com_hash(s3, nome_destino: str, stream_factory) -> Tuple[str, str]:
+    """Faz upload a partir de um stream (sem temp file), retornando (minio_key, file_hash).
+    stream_factory é um callable que retorna um context manager com .read()."""
+    key = f"raw/{nome_destino}"
+    for tentativa in range(3):
+        try:
+            with stream_factory() as src:
+                reader = _HashingReader(src)
+                s3.upload_fileobj(reader, MINIO_BUCKET, key, Config=_TRANSFER_CONFIG)
+            return key, reader.hexdigest
+        except Exception as e:
+            if tentativa == 2:
+                raise
+            espera = 15 * (tentativa + 1)
+            log.warning(
+                "Upload stream falhou (tentativa %d/3): %s. Aguardando %ds...",
+                tentativa + 1, e, espera,
+            )
+            _abortar_multiparts_chave(s3, key)
+            time.sleep(espera)
+    raise RuntimeError("unreachable")
+
+
 def _exibir_preview(sftp: paramiko.SFTPClient) -> None:
     linhas = []
     for dir_raiz in DIRS_RAIZ:
@@ -642,16 +683,11 @@ def processar_zip(
                 nomes_usados.add(nome_destino)
 
                 spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
-                tmp_interno = None
                 try:
-                    with tempfile.NamedTemporaryFile(
-                        delete=False, suffix=ext_interna, dir="/var/tmp"
-                    ) as tf:
-                        tf.write(zf.read(info.filename))
-                        tmp_interno = tf.name
-
-                    file_hash = _compute_hash(tmp_interno)
-                    minio_key = subir_para_minio(s3, tmp_interno, nome_destino)
+                    minio_key, file_hash = _subir_stream_com_hash(
+                        s3, nome_destino,
+                        lambda fn=info.filename: zf.open(fn),
+                    )
                     log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
                     _registrar_ingest(
                         conn_str, caminho_log, nome_destino, minio_key,
@@ -665,9 +701,6 @@ def processar_zip(
                         info.file_size, mtime, None, "error", str(e)[:500],
                     )
                     erro += 1
-                finally:
-                    if tmp_interno and os.path.exists(tmp_interno):
-                        os.unlink(tmp_interno)
 
         spinner.parar(ok=erro == 0)
         log.info(
