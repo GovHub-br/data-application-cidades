@@ -43,8 +43,8 @@ schema `sftp` do Postgres.
 
 Para cada objeto em `raw/`:
 
-1. **Amostra** dos primeiros 64 KB (via HTTP Range) → detecta **encoding**
-   (`charset_normalizer`) e **delimitador/dialeto** (`;`, `|`, `\t`, `,`).
+1. **Amostra** dos primeiros 64 KB (via HTTP Range) → detecta **encoding** (utf-8 ou cp1252)
+   e **delimitador/dialeto** (`;`, `|`, `\t`, `,`) — via `lake_utils.py`.
 2. **Download** para um tempfile (em `MASKING_TMPDIR`, não em `/tmp`).
 3. **Mascaramento**:
    - **CSV/TXT**: streaming linha a linha (memória constante mesmo em arquivos de GBs).
@@ -89,8 +89,12 @@ evita o **duplo-HMAC** (aplicar HMAC sobre um token já gerado). Use `--force` p
 ### Dependências
 ```bash
 VIRTUAL_ENV=.venv uv pip install "pyarrow>=15.0.0" boto3
-# já usados pelo projeto: pandas, psycopg2, openpyxl, charset-normalizer, python-dotenv
+# já usados pelo projeto: pandas, psycopg2, openpyxl, python-dotenv
 ```
+
+O script importa `lake_utils.py` (módulo compartilhado com `raw_para_staging.py`: detecção de
+encoding/dialeto, normalização de header, hash e helpers S3), então rode-o com `scripts/`
+acessível (`.venv/bin/python scripts/mascarar_minio.py`).
 
 ---
 

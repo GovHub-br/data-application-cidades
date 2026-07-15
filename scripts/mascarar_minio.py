@@ -40,19 +40,26 @@ import re
 import sys
 import tempfile
 import time
-import unicodedata
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import boto3
 import pandas as pd
 import psycopg2
 from boto3.s3.transfer import TransferConfig
-from charset_normalizer import from_bytes
 from dotenv import load_dotenv
 from psycopg2.extras import Json
+
+from lake_utils import (
+    baixar,
+    criar_cliente_minio,
+    detectar_dialeto,
+    detectar_encoding,
+    md5_arquivo,
+    norm_header,
+    sample_bytes,
+)
 
 load_dotenv()
 
@@ -141,16 +148,8 @@ def _conn_str() -> str:
     )
 
 
-def criar_cliente_minio():
-    endpoint = MINIO_ENDPOINT
-    if not endpoint.startswith("http"):
-        endpoint = f"http://{endpoint}"
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=MINIO_ACCESS_KEY,
-        aws_secret_access_key=MINIO_SECRET_KEY,
-    )
+def _cliente_minio():
+    return criar_cliente_minio(MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY)
 
 
 _TRANSFER_CONFIG = TransferConfig(
@@ -241,13 +240,6 @@ def _redigir(valor: str) -> str:
 
 
 # Detecção de header / colunas sensíveis
-def _norm_header(texto: str) -> str:
-    s = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
-    s = s.lower().strip().strip('"').strip("﻿").strip()
-    s = re.sub(r"[^a-z0-9]+", "_", s).strip("_")
-    return s
-
-
 def _categoria(norm: str) -> Optional[str]:
     """Categoria base da coluna (sem aplicar a regra condicional de CEP/endereço)."""
     if P_CPF.search(norm):
@@ -279,7 +271,7 @@ def classificar(header: List[str], real_encoding: str) -> Tuple[List[dict], bool
             texto = cell.encode("latin-1", "surrogateescape").decode(real_encoding, "replace")
         except Exception:
             texto = cell
-        normed.append((idx, cell, _norm_header(texto)))
+        normed.append((idx, cell, norm_header(texto)))
 
     cats = {idx: _categoria(n) for idx, _, n in normed}
     has_pf = any(c in _PF_INDICATOR_CATS for c in cats.values())
@@ -307,50 +299,6 @@ def classificar(header: List[str], real_encoding: str) -> Tuple[List[dict], bool
             {"idx": idx, "column": original, "category": cat, "action": action}
         )
     return targets, has_pf
-
-
-# Detecção de encoding / dialeto
-def _detectar_encoding(sample: bytes) -> str:
-    best = from_bytes(sample).best()
-    return best.encoding if best and best.encoding else "cp1252"
-
-
-def _detectar_dialeto(sample: bytes, real_encoding: str) -> Optional[Tuple[str, str, bool]]:
-    """Retorna (delimitador, lineterminator, fully_quoted) ou None se não parecer tabular.
-
-    Usa csv.reader (e não a primeira linha física) porque há arquivos com quebras de
-    linha DENTRO de campos aspeados do header (ex.: '"Data de\\nMovimento";...') — a
-    primeira linha física nesses casos não contém o delimitador.
-    """
-    texto = sample.decode(real_encoding, errors="replace")
-    lineterm = "\r\n" if "\r\n" in texto else "\n"
-    stripped = texto.lstrip("﻿")
-    if not stripped.strip():
-        return None
-
-    melhor_delim, melhor_campos = None, 1
-    for d in [";", "|", "\t", ","]:
-        try:
-            primeiro_registro = next(csv.reader(io.StringIO(stripped), delimiter=d, quotechar='"'), None)
-        except csv.Error:
-            continue
-        # sample pode cortar no meio de um campo aspeado; ainda assim o nº de campos
-        # do primeiro registro indica se o delimitador é plausível
-        if primeiro_registro and len(primeiro_registro) > melhor_campos:
-            melhor_delim, melhor_campos = d, len(primeiro_registro)
-    if melhor_delim is None:
-        return None
-    fully_quoted = stripped.startswith('"')
-    return melhor_delim, lineterm, fully_quoted
-
-
-# Hash de arquivo
-def _md5(path: str) -> str:
-    h = hashlib.md5()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 16), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 # Processamento CSV/TXT (streaming, byte-preserving via latin-1)
@@ -514,20 +462,6 @@ def _ja_mascarado(s3, key: str) -> bool:
         return False
 
 
-def _sample_bytes(s3, key: str, n: int = 65536) -> bytes:
-    return s3.get_object(Bucket=MINIO_BUCKET, Key=key, Range=f"bytes=0-{n - 1}")["Body"].read()
-
-
-def _baixar(s3, key: str, suffix: str) -> str:
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=TMPDIR)
-    try:
-        s3.download_fileobj(MINIO_BUCKET, key, tmp)
-        tmp.flush()
-    finally:
-        tmp.close()
-    return tmp.name
-
-
 def _subir(s3, path: str, key: str) -> None:
     with open(path, "rb") as f:
         s3.upload_fileobj(f, MINIO_BUCKET, key, Config=_TRANSFER_CONFIG)
@@ -583,12 +517,12 @@ def processar_objeto(
 
     src = dst = None
     try:
-        sample = _sample_bytes(s3, key)
-        real_encoding = _detectar_encoding(sample)
+        sample = sample_bytes(s3, MINIO_BUCKET, key)
+        real_encoding = detectar_encoding(sample)
         rec["encoding"] = real_encoding
 
         if ext in SUPPORTED_TABULAR:
-            dialeto = _detectar_dialeto(sample, real_encoding)
+            dialeto = detectar_dialeto(sample, real_encoding)
             if dialeto is None:
                 rec["status"] = "skipped_no_header"
                 rec["duration_s"] = round(time.time() - t0, 2)
@@ -596,8 +530,8 @@ def processar_objeto(
             delim, lineterm, fully_quoted = dialeto
             rec["delimiter"] = delim
 
-            src = _baixar(s3, key, ext)
-            rec["hash_before"] = _md5(src)
+            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            rec["hash_before"] = md5_arquivo(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
                 return rec
@@ -621,8 +555,8 @@ def processar_objeto(
             _verificar_roundtrip_tabular(src, dst, delim, total)
 
         elif ext in SUPPORTED_EXCEL:
-            src = _baixar(s3, key, ext)
-            rec["hash_before"] = _md5(src)
+            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            rec["hash_before"] = md5_arquivo(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
                 return rec
@@ -656,7 +590,7 @@ def processar_objeto(
             rec["status"] = "skipped_unsupported"
             return rec
 
-        rec["hash_after"] = _md5(dst)
+        rec["hash_after"] = md5_arquivo(dst)
 
         if apply:
             _subir(s3, dst, key)
@@ -735,7 +669,7 @@ def main() -> None:
     _criar_control_table(conn_str)
     masked_hashes = set() if args.force else _carregar_masked_hashes(conn_str)
 
-    s3 = criar_cliente_minio()
+    s3 = _cliente_minio()
 
     registros: List[dict] = []
     contagem: Dict[str, int] = {}
