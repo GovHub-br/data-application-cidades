@@ -4,8 +4,8 @@
 Utilitários compartilhados dos scripts do data lake (MinIO).
 
 Reúne o que mais de uma etapa do pipeline usa: detecção de encoding/dialeto dos arquivos
-heterogêneos do raw/, normalização de nome de coluna, hash de arquivo e helpers de
-S3/MinIO (cliente, amostra por Range, download para tempfile).
+heterogêneos do raw/, normalização de nome de coluna, hash de arquivo, leitura de bases
+Access (.mdb) e helpers de S3/MinIO (cliente, amostra por Range, download para tempfile).
 
 Usado por `mascarar_minio.py` e `raw_para_staging.py`. Cada script mantém o que é próprio
 dele (conexão Postgres, tabela de controle, regras de negócio).
@@ -15,6 +15,8 @@ import csv
 import hashlib
 import io
 import re
+import shutil
+import subprocess
 import tempfile
 import unicodedata
 from typing import List, Optional, Tuple
@@ -130,6 +132,73 @@ def normalizar_colunas(header: List[str]) -> Tuple[List[str], dict]:
         finais.append(nome)
         mapa[original] = nome
     return finais, mapa
+
+
+# Bases Access (.mdb) — leitura via mdbtools
+#
+# ATENÇÃO: mdbtools é READ-ONLY (mdb-export/tables/schema/count/json...). Não existe
+# mdb-import: não há como reescrever um .mdb. Escrever Access no Linux só via Java
+# (Jackcess/UCanAccess). Quem precisar MODIFICAR um .mdb tem que falhar explicitamente
+# em vez de fingir que gravou.
+#
+# mdb-export já entrega CSV em UTF-8 (converte do encoding interno do JET), com vírgula
+# como separador e campos de texto entre aspas — por isso o caminho .mdb não precisa de
+# detectar_encoding/detectar_dialeto.
+MDB_EXT = {".mdb", ".accdb"}
+MDB_DELIM = ","
+MDB_ENCODING = "utf-8"
+
+
+def mdb_disponivel() -> bool:
+    """True se o binário mdbtools está no PATH."""
+    return shutil.which("mdb-tables") is not None
+
+
+def mdb_tabelas(path: str) -> List[str]:
+    """Nomes das tabelas de usuário do .mdb (mdbtools já omite as MSys* de sistema)."""
+    r = subprocess.run(["mdb-tables", "-1", path], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"mdb-tables falhou: {r.stderr.strip() or 'erro desconhecido'}")
+    return [t.strip() for t in r.stdout.splitlines() if t.strip()]
+
+
+def mdb_contar(path: str, tabela: str) -> int:
+    """Nº de linhas da tabela. -1 se o mdb-count falhar (não é motivo p/ abortar)."""
+    r = subprocess.run(["mdb-count", path, tabela], capture_output=True, text=True)
+    if r.returncode != 0:
+        return -1
+    try:
+        return int(r.stdout.strip())
+    except ValueError:
+        return -1
+
+
+def mdb_header(path: str, tabela: str) -> List[str]:
+    """Só o cabeçalho da tabela — sem materializar as linhas.
+
+    Tabelas de .mdb podem ter milhões de linhas (ex.: acompanhamento_termino_obra com 6,1M),
+    então lê o stdout incrementalmente e para na 1ª linha, matando o processo em seguida.
+    """
+    p = subprocess.Popen(["mdb-export", path, tabela], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, text=True, encoding=MDB_ENCODING)
+    try:
+        linha = p.stdout.readline() if p.stdout else ""
+    finally:
+        p.kill()
+        p.wait()
+    if not linha.strip():
+        return []
+    return next(csv.reader(io.StringIO(linha), delimiter=MDB_DELIM, quotechar='"'), [])
+
+
+def mdb_export_para_csv(path: str, tabela: str, dst: str) -> None:
+    """Exporta a tabela inteira para um CSV em disco (streaming, memória constante)."""
+    with open(dst, "wb") as f:
+        r = subprocess.run(["mdb-export", path, tabela], stdout=f, stderr=subprocess.PIPE)
+    if r.returncode != 0:
+        raise RuntimeError(
+            f"mdb-export falhou em '{tabela}': {r.stderr.decode('utf-8', 'replace').strip()}"
+        )
 
 
 # Hash de arquivo

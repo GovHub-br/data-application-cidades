@@ -43,12 +43,18 @@ from dotenv import load_dotenv
 from psycopg2.extras import Json
 
 from lake_utils import (
+    MDB_DELIM,
+    MDB_ENCODING,
+    MDB_EXT,
     baixar,
     criar_cliente_minio,
     detectar_dialeto,
     detectar_encoding,
     encoding_fallback,
     md5_arquivo,
+    mdb_disponivel,
+    mdb_export_para_csv,
+    mdb_tabelas,
     normalizar_colunas,
     norm_header,
     sample_bytes,
@@ -80,6 +86,7 @@ if TMPDIR:
 
 SUPPORTED_TABULAR = {".csv", ".txt"}
 SUPPORTED_EXCEL   = {".xlsx"}
+SUPPORTED_MDB     = MDB_EXT          # .mdb/.accdb (Access) — via mdbtools
 UNSUPPORTED       = {".xls", ".zip"}
 
 LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
@@ -130,7 +137,7 @@ def _criar_control_table(conn_str: str) -> None:
                     status        TEXT,
                     error_message TEXT,
                     created_at    TIMESTAMPTZ DEFAULT NOW(),
-                    UNIQUE (raw_key, source_hash)
+                    UNIQUE (raw_key, staging_key, source_hash)
                 );
             """)
             cur.execute(f"""
@@ -165,7 +172,7 @@ def _registrar_control(conn_str: str, rec: dict) -> None:
                     (execution_id, raw_key, staging_key, source_hash, n_linhas, n_colunas,
                      n_bad_lines, encoding, delimiter, column_map, status, error_message)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (raw_key, source_hash) DO UPDATE SET
+                ON CONFLICT (raw_key, staging_key, source_hash) DO UPDATE SET
                     execution_id  = EXCLUDED.execution_id,
                     staging_key   = EXCLUDED.staging_key,
                     n_linhas      = EXCLUDED.n_linhas,
@@ -222,9 +229,11 @@ class _BadLineCounter:
 def _converter_tabular(
     src_path: str, dst_path: str, delim: str, real_encoding: str,
     source_file: str, source_hash: str, ingested_at: str,
-    chunksize: int, bad_mode: str,
+    chunksize: int, bad_mode: str, extra_meta: Optional[dict] = None,
 ) -> Tuple[int, int, int, dict, str]:
     """Retorna (n_linhas, n_colunas, n_bad_lines, column_map, encoding_usado).
+
+    extra_meta: pares extras p/ os metadados do parquet (ex.: {"table": "..."} no caso .mdb).
 
     encoding_usado pode diferir de real_encoding: a detecção olha só o sample de 64 KB, e um
     byte que o encoding não aceita pode aparecer depois. Nesse caso cai para latin-1 (que
@@ -240,7 +249,7 @@ def _converter_tabular(
         try:
             resultado = _converter_tabular_1x(
                 src_path, dst_path, delim, encoding, source_file, source_hash,
-                ingested_at, chunksize, bad_mode,
+                ingested_at, chunksize, bad_mode, extra_meta,
             )
             return (*resultado, encoding)
         except UnicodeDecodeError as e:
@@ -257,7 +266,7 @@ def _converter_tabular(
 def _converter_tabular_1x(
     src_path: str, dst_path: str, delim: str, real_encoding: str,
     source_file: str, source_hash: str, ingested_at: str,
-    chunksize: int, bad_mode: str,
+    chunksize: int, bad_mode: str, extra_meta: Optional[dict] = None,
 ) -> Tuple[int, int, int, dict]:
     """Uma passada de conversão com um encoding fixo. Retorna (n_linhas, n_colunas, n_bad, map)."""
     bad_counter = _BadLineCounter()
@@ -304,6 +313,8 @@ def _converter_tabular_1x(
                     b"delimiter": delim.encode("utf-8"),
                     b"column_map": json.dumps(column_map, ensure_ascii=False).encode("utf-8"),
                 }
+                for k, v in (extra_meta or {}).items():
+                    meta[k.encode("utf-8")] = str(v).encode("utf-8")
                 schema = pa.schema(campos, metadata=meta)
                 writer = pq.ParquetWriter(dst_path, schema, compression="snappy")
 
@@ -451,6 +462,69 @@ def processar_objeto(
                 if os.path.exists(dst):
                     os.unlink(dst)
             return [rec]
+
+        # MDB/ACCDB (uma tabela por parquet)
+        if ext in SUPPORTED_MDB:
+            if not mdb_disponivel():
+                raise RuntimeError(
+                    "mdbtools não encontrado no PATH — necessário para ler .mdb "
+                    "(instale o pacote 'mdbtools')."
+                )
+            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            source_hash = md5_arquivo(src)
+            if (key, source_hash) in convertidos:
+                rec = _novo_registro(execution_id, key)
+                rec["source_hash"] = source_hash
+                rec["status"] = "skipped_already"
+                return [rec]
+
+            ingested_at = datetime.now(timezone.utc).isoformat()
+            recs: List[dict] = []
+            for tabela in mdb_tabelas(src):
+                rec = _novo_registro(execution_id, key)
+                rec["source_hash"] = source_hash
+                # mdb-export sempre entrega CSV vírgula em UTF-8 — sem detecção necessária
+                rec["encoding"] = MDB_ENCODING
+                rec["delimiter"] = MDB_DELIM
+                staging_key = _staging_key(key, f"__{norm_header(tabela) or 'tabela'}")
+                rec["staging_key"] = staging_key
+
+                csv_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv", dir=TMPDIR).name
+                dst = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet", dir=TMPDIR).name
+                try:
+                    mdb_export_para_csv(src, tabela, csv_tmp)
+                    if os.path.getsize(csv_tmp) == 0:
+                        rec["status"] = "skipped_no_header"
+                        recs.append(rec)
+                        continue
+                    n_linhas, n_colunas, n_bad, column_map, enc_usado = _converter_tabular(
+                        csv_tmp, dst, MDB_DELIM, MDB_ENCODING,
+                        os.path.basename(key), source_hash, ingested_at, chunksize, bad_mode,
+                        extra_meta={"table": tabela},
+                    )
+                    if n_colunas == 0:
+                        rec["status"] = "skipped_no_header"
+                        recs.append(rec)
+                        continue
+                    rec.update(n_linhas=n_linhas, n_colunas=n_colunas, n_bad_lines=n_bad,
+                               column_map=column_map, encoding=enc_usado)
+                    _verificar_parquet(dst, n_linhas)
+                    if apply:
+                        _subir(s3, dst, staging_key)
+                        rec["status"] = "converted"
+                    else:
+                        _subir(s3, dst, _dryrun_key(staging_key))
+                        rec["status"] = "dry_run"
+                except Exception as e:  # noqa: BLE001 — falha numa tabela não derruba as outras
+                    rec["status"] = "error"
+                    rec["error_message"] = f"tabela '{tabela}': {e}"[:500]
+                    log.error("✗ %s [%s]: %s", key, tabela, e)
+                finally:
+                    for p in (csv_tmp, dst):
+                        if os.path.exists(p):
+                            os.unlink(p)
+                recs.append(rec)
+            return recs
 
         # XLSX (uma aba por parquet)
         if ext in SUPPORTED_EXCEL:

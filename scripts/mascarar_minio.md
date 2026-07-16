@@ -50,6 +50,7 @@ Para cada objeto em `raw/`:
    - **CSV/TXT**: streaming linha a linha (memória constante mesmo em arquivos de GBs).
    - **XLSX**: pré-scan barato do header em modo `read_only`; só carrega o workbook completo
      na RAM se houver PII a mascarar.
+   - **MDB/ACCDB**: **somente verificação** — ver "Bases Access (.mdb)" abaixo.
 4. **Verificação round-trip** (CSV/TXT): confere que nº de linhas e nº de colunas do header
    foram preservados. Se divergir → status `error`, **não sobrescreve**.
 5. **Sobrescreve** o objeto em `raw/` (só com `--apply`) e marca a tag `masked=true`.
@@ -61,6 +62,29 @@ O arquivo é lido e reescrito em **latin-1** (mapeia todos os 256 bytes 1:1), en
 coluna **não mascarada** é gravada byte-idêntica, independentemente do encoding real do
 arquivo. Só as colunas-alvo são trocadas por texto ASCII (token/`***`). O encoding real é
 detectado apenas para interpretar corretamente os **nomes** das colunas no matching.
+
+### Bases Access (.mdb) — só verificação, nunca reescrita
+
+O lake tem **128 arquivos `.mdb` (~105 GB)**. Eles são lidos via **`mdbtools`** (binário do
+sistema), que é **read-only**: não existe `mdb-import`. Reescrever um Access no Linux só seria
+possível via Java (Jackcess/UCanAccess).
+
+Por isso, para `.mdb` o script **apenas verifica** se há coluna sensível em alguma tabela:
+
+| Resultado | Status |
+|---|---|
+| Nenhuma coluna sensível (caso de todos os 128 hoje) | `skipped_no_pii` |
+| **Alguma coluna sensível** | **`error`** — falha explícita, nada é gravado |
+
+A falha é deliberada: sem poder reescrever o arquivo, marcar como `masked` seria mentira e
+deixaria PII no lake em silêncio. Se acontecer, trate à parte (converter e descartar o `.mdb`,
+ou usar Jackcess via Java).
+
+**Por que não têm PII** (verificado em amostra das 4 famílias): `MCidades_AO_1/2/3` (96 arqs),
+`CCI_CCA` (30), `AF` (1) e `CCI_CCA_ATUAL` (1) são dados de empreendimento/obra e analítico
+agregado. O mais próximo de PII é `Gênero`, `Entidades.CGC` (PJ) e
+`tab_empreendimentos.txt_logradouro` — endereço do **empreendimento**, preservado corretamente
+pela regra condicional (só mascara CEP/endereço com indicador de PF na mesma tabela).
 
 ### Idempotência (não re-mascara)
 

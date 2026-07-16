@@ -52,11 +52,17 @@ from dotenv import load_dotenv
 from psycopg2.extras import Json
 
 from lake_utils import (
+    MDB_ENCODING,
+    MDB_EXT,
     baixar,
     criar_cliente_minio,
     detectar_dialeto,
     detectar_encoding,
     md5_arquivo,
+    mdb_contar,
+    mdb_disponivel,
+    mdb_header,
+    mdb_tabelas,
     norm_header,
     sample_bytes,
 )
@@ -93,6 +99,7 @@ if TMPDIR:
 
 SUPPORTED_TABULAR = {".csv", ".txt"}
 SUPPORTED_EXCEL   = {".xlsx"}
+SUPPORTED_MDB     = MDB_EXT          # .mdb/.accdb — só LEITURA (ver _analisar_mdb)
 UNSUPPORTED       = {".xls", ".zip"}
 
 # csv pode ter campos grandes (linhas longas de bases bancárias)
@@ -446,6 +453,36 @@ def _mascarar_xlsx(src_path: str, dst_path: str) -> Tuple[List[dict], bool, int,
     return all_targets, has_pf_any, total, alterados, has_formulas
 
 
+# Análise de .mdb (Access) — LEITURA APENAS
+def _analisar_mdb(src_path: str) -> Tuple[List[dict], bool, int]:
+    """Varre as tabelas do .mdb procurando colunas sensíveis. Retorna (targets, has_pf, linhas).
+
+    NÃO mascara: mdbtools é read-only e não existe forma de reescrever um .mdb sem Java
+    (Jackcess/UCanAccess). Esta função só responde "tem PII?" — se tiver, o chamador falha
+    explicitamente, porque gravar PII silenciosamente no lake seria pior que um erro visível.
+
+    Hoje as 4 famílias de .mdb do lake (AO_1/2/3, CCI_CCA, AF) são dados de empreendimento/obra
+    e analítico agregado: sem CPF/nome/nascimento. O que existe é Gênero, Entidades.CGC (PJ) e
+    tab_empreendimentos.txt_logradouro (endereço do EMPREENDIMENTO) — este último é preservado
+    pela regra condicional de CEP/endereço, que só dispara com indicador de PF na tabela.
+    """
+    targets: List[dict] = []
+    has_pf_any = False
+    total = 0
+    for tabela in mdb_tabelas(src_path):
+        header = mdb_header(src_path, tabela)
+        if not header:
+            continue
+        n = mdb_contar(src_path, tabela)
+        if n > 0:
+            total += n
+        # mdb-export já entrega UTF-8, então o encoding aqui é conhecido
+        t, has_pf = classificar(header, MDB_ENCODING)
+        has_pf_any = has_pf_any or has_pf
+        targets.extend({**x, "table": tabela} for x in t)
+    return targets, has_pf_any, total
+
+
 # S3 helpers
 def _listar_objetos(s3, prefix: str):
     pag = s3.get_paginator("list_objects_v2")
@@ -553,6 +590,42 @@ def processar_objeto(
                 return rec
 
             _verificar_roundtrip_tabular(src, dst, delim, total)
+
+        elif ext in SUPPORTED_MDB:
+            # .mdb é somente-leitura (mdbtools não escreve): aqui só verificamos se há PII.
+            if not mdb_disponivel():
+                raise RuntimeError(
+                    "mdbtools não encontrado no PATH — necessário para ler .mdb "
+                    "(instale o pacote 'mdbtools')."
+                )
+            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            rec["hash_before"] = md5_arquivo(src)
+            if rec["hash_before"] in masked_hashes:
+                rec["status"] = "skipped_already"
+                return rec
+
+            targets, has_pf, total = _analisar_mdb(src)
+            rec.update(
+                has_pf_indicator=has_pf,
+                masked_columns=[
+                    {k: t[k] for k in ("column", "category", "action")} for t in targets
+                ],
+                registros_total=total,
+            )
+            if not targets:
+                rec["status"] = "skipped_no_pii"
+                return rec
+
+            # Tem PII e não há como reescrever .mdb — falhar alto em vez de fingir que mascarou.
+            cols = ", ".join(f"{t['table']}.{t['column']}" for t in targets[:5])
+            rec["status"] = "error"
+            rec["error_message"] = (
+                f"PII encontrada em .mdb ({len(targets)} coluna(s): {cols}) — mdbtools é "
+                "read-only e não há como reescrever o arquivo. Tratar à parte (converter e "
+                "descartar o .mdb, ou usar Jackcess/UCanAccess via Java)."
+            )[:500]
+            log.error("✗ %s: %s", key, rec["error_message"])
+            return rec
 
         elif ext in SUPPORTED_EXCEL:
             src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)

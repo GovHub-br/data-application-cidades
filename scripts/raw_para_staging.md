@@ -18,6 +18,21 @@ etapa seguinte (Staging → DB via dbt/DuckDB) consumir dados uniformes e eficie
   original→normalizado nos metadados do parquet e na tabela de controle.
 - Adiciona **colunas de linhagem**: `_source_file`, `_ingested_at`, `_source_hash`.
 
+### Formatos de entrada
+
+| Formato | Saída |
+|---|---|
+| CSV / TXT | 1 parquet (`staging/<nome>.parquet`) |
+| XLSX | 1 parquet por aba (`staging/<nome>__<aba>.parquet`; aba única → sem sufixo) |
+| **MDB / ACCDB** (Access) | **1 parquet por tabela** (`staging/<nome>__<tabela>.parquet`) |
+| XLS legado, ZIP | `skipped_unsupported` |
+
+**`.mdb`**: lidos via **`mdbtools`** (binário do sistema, não é lib Python). O `mdb-export`
+já entrega CSV vírgula em **UTF-8**, então esse caminho não usa a detecção de encoding/dialeto
+— vai direto para o mesmo conversor streaming do CSV. Uma falha numa tabela não derruba as
+outras (aquela part vira `error`, as demais seguem). São 128 arquivos / ~105 GB no lake
+(famílias `MCidades_AO_1/2/3`, `CCI_CCA`, `AF`).
+
 
 ### Detecção de encoding (pt-BR)
 `charset_normalizer` puro confunde cp1252 com cp1250/latin2 nos dados brasileiros (`0xE3` vira
