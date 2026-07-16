@@ -3,9 +3,14 @@
 """
 Ingestão de arquivos do SFTP para o MinIO (camada raw).
 
-Percorre Analise_SNH e GEFUS em /home/fabrica, baixa todos os arquivos
-suportados (CSV, TXT, XLSX, XLS, ZIP — expandindo ZIPs internamente) e os sobe
-para raw/ no MinIO com o nome original do arquivo.
+Percorre Analise_SNH, GEFUS e CadUnico em /home/fabrica, além de
+/home/caixa.geavo/GEAVO, baixa todos os arquivos suportados (CSV, TXT, XLSX,
+XLS, MDB, ZIP — expandindo ZIPs internamente) e os sobe para raw/ no MinIO com
+o nome original do arquivo.
+
+Arquivos .mdb extraídos de um ZIP recebem o stem do ZIP como prefixo
+(MC20260227__MCidades_AO_1.mdb), pois o mesmo nome interno se repete em todos os
+zips e a data de referência só existe no nome do ZIP.
 
 Colisões de nome recebem sufixo contador: arquivo_0000.csv, arquivo_0001.csv, ...
 
@@ -58,11 +63,18 @@ PG_DBNAME   = os.environ["DB_DW_DBNAME_MCID"]
 SCHEMA    = os.environ.get("SFTP_SCHEMA", "sftp")
 LOG_TABLE = "_ingest_minio_log"
 
-DIRS_RAIZ             = ["/home/fabrica"]
-EXTENSOES_SUPORTADAS  = {".csv", ".txt", ".xlsx", ".xls", ".zip"}
+EXTENSOES_SUPORTADAS  = {".csv", ".txt", ".xlsx", ".xls", ".zip", ".mdb"}
+# Extensões cujos nomes se repetem entre zips (ex.: MCidades_AO_1.mdb em todo
+# MC2026*.zip). A data só existe no nome do zip, então ela vai para o destino.
+EXTENSOES_PREFIXAR_ORIGEM = {".mdb"}
 MAX_PROFUNDIDADE      = 10
 PASTAS_IGNORAR        = set()  # "CadUnico" liberado pela infra
-PASTAS_LISTAR_PREVIEW = ["Analise_SNH", "GEFUS", "CadUnico"]
+PASTAS_MONITORADAS    = [
+    "/home/fabrica/Analise_SNH",
+    "/home/fabrica/GEFUS",
+    "/home/fabrica/CadUnico",
+    "/home/caixa.geavo/GEAVO",
+]
 
 SOCKET_ERRORS = (paramiko.SSHException, EOFError, OSError, ConnectionResetError)
 _CONN_ERROR_STRINGS = (
@@ -338,6 +350,14 @@ def _compute_hash(file_path: str) -> str:
     return md5.hexdigest()
 
 
+def _nome_com_origem(nome_zip: str, nome_interno: str) -> str:
+    """Prefixa o nome interno com o stem do zip quando a extensão repete entre zips."""
+    if _extensao(nome_interno) not in EXTENSOES_PREFIXAR_ORIGEM:
+        return nome_interno
+    stem_zip = nome_zip[:-4] if nome_zip.lower().endswith(".zip") else nome_zip
+    return f"{stem_zip}__{nome_interno}"
+
+
 def gerar_nome_unico(nome: str, usados: set) -> str:
     if nome not in usados:
         return nome
@@ -477,18 +497,16 @@ def _subir_stream_com_hash(s3, nome_destino: str, stream_factory) -> Tuple[str, 
     raise RuntimeError("unreachable")
 
 
-def _exibir_preview(sftp: paramiko.SFTPClient) -> None:
+def _exibir_preview(sftp: paramiko.SFTPClient, pastas: list) -> None:
     linhas = []
-    for dir_raiz in DIRS_RAIZ:
-        for pasta in PASTAS_LISTAR_PREVIEW:
-            caminho = f"{dir_raiz}/{pasta}"
-            arquivos = sorted(listar_arquivos(sftp, caminho), key=lambda x: x[1])
-            if not arquivos:
-                continue
-            linhas.append(f"[{caminho}] — {len(arquivos)} arquivos")
-            for caminho_arq, tamanho, _ in arquivos:
-                linhas.append(f"  {format_size(tamanho):>10}  {caminho_arq}")
-            linhas.append("")
+    for caminho in pastas:
+        arquivos = sorted(listar_arquivos(sftp, caminho), key=lambda x: x[1])
+        if not arquivos:
+            continue
+        linhas.append(f"[{caminho}] — {len(arquivos)} arquivos")
+        for caminho_arq, tamanho, _ in arquivos:
+            linhas.append(f"  {format_size(tamanho):>10}  {caminho_arq}")
+        linhas.append("")
 
     preview_path = Path(__file__).parent / "preview_arquivos.txt"
     preview_path.write_text("\n".join(linhas), encoding="utf-8")
@@ -672,6 +690,10 @@ def processar_zip(
                 ext_interna  = _extensao(nome_interno)
 
                 if ext_interna not in EXTENSOES_SUPORTADAS or ext_interna == ".zip":
+                    log.info(
+                        "  ↳ %s — extensão '%s' não suportada, pulando",
+                        nome_interno, ext_interna or "(sem extensão)",
+                    )
                     continue
 
                 caminho_log = f"{caminho_zip}@{nome_interno}"
@@ -679,7 +701,9 @@ def processar_zip(
                     log.info("  ↳ %s — já inserido, pulando", nome_interno)
                     continue
 
-                nome_destino = gerar_nome_unico(nome_interno, nomes_usados)
+                nome_destino = gerar_nome_unico(
+                    _nome_com_origem(nome_zip, nome_interno), nomes_usados
+                )
                 nomes_usados.add(nome_destino)
 
                 spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
@@ -782,12 +806,18 @@ def processar_zip(
                     nome_interno = arq_path.name
                     ext_interna  = _extensao(nome_interno)
                     if ext_interna not in EXTENSOES_SUPORTADAS or ext_interna == ".zip":
+                        log.info(
+                            "  ↳ %s — extensão '%s' não suportada, pulando",
+                            nome_interno, ext_interna or "(sem extensão)",
+                        )
                         continue
                     caminho_log = f"{caminho_zip}@{nome_interno}"
                     if caminho_log in ja_inseridos:
                         log.info("  ↳ %s — já inserido, pulando", nome_interno)
                         continue
-                    nome_destino = gerar_nome_unico(nome_interno, nomes_usados)
+                    nome_destino = gerar_nome_unico(
+                        _nome_com_origem(nome_zip, nome_interno), nomes_usados
+                    )
                     nomes_usados.add(nome_destino)
                     spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
                     try:
@@ -858,20 +888,57 @@ def _processar_entry(
     return (1, 0) if resultado == "success" else (0, 1) if resultado == "error" else (0, 0)
 
 
+def _resolver_pastas(filtros: Optional[list]) -> list:
+    """Converte os valores de --pasta em caminhos completos.
+    Aceita nome curto (casado contra PASTAS_MONITORADAS) ou caminho absoluto."""
+    if not filtros:
+        return list(PASTAS_MONITORADAS)
+
+    resolvidas = []
+    for filtro in filtros:
+        if filtro.startswith("/"):
+            resolvidas.append(filtro.rstrip("/"))
+            continue
+        casadas = [p for p in PASTAS_MONITORADAS if p.rsplit("/", 1)[-1] == filtro]
+        if not casadas:
+            raise ValueError(
+                f"Pasta '{filtro}' não é monitorada. Opções: "
+                + ", ".join(p.rsplit("/", 1)[-1] for p in PASTAS_MONITORADAS)
+                + " (ou passe um caminho absoluto)"
+            )
+        resolvidas.extend(casadas)
+    return resolvidas
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--pasta", metavar="PASTA",
-        help="Processa só esta pasta (ex: CadUnico). Repita para várias.",
+        help="Processa só esta pasta (nome, ex: CadUnico, ou caminho completo). "
+             "Repita para várias.",
         action="append", dest="pastas",
     )
+    parser.add_argument(
+        "--preview", action="store_true",
+        help="Só lista os arquivos das pastas e sai, sem baixar nem subir nada.",
+    )
     args = parser.parse_args()
-    pastas_filtro = args.pastas or PASTAS_LISTAR_PREVIEW
+    pastas_filtro = _resolver_pastas(args.pastas)
 
     if not SFTP_PASSWORD:
         raise ValueError("SFTP_PASSWORD não encontrada no .env")
 
     log.info("Log: %s", _LOG_FILE)
+
+    if args.preview:
+        log.info("Conectando ao SFTP %s@%s:%s ...", SFTP_USER, SFTP_HOST, SFTP_PORT)
+        transport, sftp = conectar_sftp()
+        try:
+            _exibir_preview(sftp, pastas_filtro)
+        finally:
+            sftp.close()
+            transport.close()
+        return
 
     conn_str = _conn_str()
     _criar_schema_e_log(conn_str)
@@ -893,14 +960,12 @@ def main() -> None:
     total_sucesso = total_erro = 0
 
     try:
-        _exibir_preview(sftp)
+        _exibir_preview(sftp, pastas_filtro)
 
         todos_arquivos = []
         for pasta in pastas_filtro:
-            arquivos_pasta = []
-            for dir_raiz in DIRS_RAIZ:
-                log.info("Varrendo %s/%s ...", dir_raiz, pasta)
-                arquivos_pasta.extend(listar_arquivos(sftp, f"{dir_raiz}/{pasta}"))
+            log.info("Varrendo %s ...", pasta)
+            arquivos_pasta = list(listar_arquivos(sftp, pasta))
             arquivos_pasta.sort(key=lambda x: x[1])
             todos_arquivos.extend(arquivos_pasta)
 
