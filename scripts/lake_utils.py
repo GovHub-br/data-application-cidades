@@ -24,18 +24,32 @@ csv.field_size_limit(2**31 - 1)
 
 
 # Detecção de encoding / dialeto
+
+# cp1252 NÃO define estes 5 bytes — decodificar com ele estoura UnicodeDecodeError.
+# Aparecem de fato no lake: há arquivos com mojibake da origem (ex.: b'PARTICIPA\x9d\xd1ES'
+# onde deveria estar 'PARTICIPAÇÕES'), provavelmente de conversão errada num sistema legado.
+# Nenhum encoding decodifica isso "certo"; o que importa é não quebrar nem perder o byte.
+_CP1252_INDEFINIDOS = frozenset({0x81, 0x8D, 0x8F, 0x90, 0x9D})
+
+
 def detectar_encoding(sample: bytes) -> str:
-    """Detecta o encoding real de um arquivo de dados pt-BR.
+    """Detecta o encoding de um arquivo de dados pt-BR: utf-8, cp1252 ou latin-1.
 
-    Diferente do `charset_normalizer` puro (que confunde cp1252 com cp1250/latin2 nos dados
-    brasileiros — 0xE3 vira 'ă' em vez de 'ã'), aqui a decisão é essencialmente **utf-8 ou
-    cp1252**, que cobre praticamente todos os arquivos de governo pt-BR:
+    O `charset_normalizer` puro confunde cp1252 com cp1250/latin2 nesses dados (0xE3 vira 'ă'
+    em vez de 'ã'), então a decisão aqui é feita à mão:
 
-      - Sample só-ASCII: retorna cp1252 (nunca falha em bytes acentuados que apareçam depois
-        no arquivo; utf-8 poderia estourar).
-      - Sample com sequências multibyte utf-8 válidas: utf-8 (tolerando truncamento do sample).
-      - Caso contrário: cp1252.
+      - Sample com sequências multibyte utf-8 válidas -> utf-8 (tolera truncamento do sample).
+      - Sample com algum byte indefinido em cp1252 -> latin-1, que mapeia os 256 bytes e nunca
+        estoura (esses arquivos já vêm com mojibake; latin-1 preserva o byte em vez de falhar).
+      - Caso contrário -> cp1252 (correto p/ o intervalo 0x80-0x9F em exports Windows pt-BR:
+        aspas curvas, travessão etc., que latin-1 leria como controles C1).
+
+    ATENÇÃO: a decisão é feita sobre o SAMPLE. Um byte indefinido pode aparecer só depois dele
+    — por isso quem decodifica o arquivo inteiro deve usar `encoding_fallback()` ao pegar
+    UnicodeDecodeError, em vez de confiar cegamente neste retorno.
     """
+    if any(byte in _CP1252_INDEFINIDOS for byte in sample):
+        return "latin-1"
     if all(byte < 0x80 for byte in sample):
         return "cp1252"
     try:
@@ -46,6 +60,15 @@ def detectar_encoding(sample: bytes) -> str:
         if e.start >= len(sample) - 3:
             return "utf-8"
         return "cp1252"
+
+
+def encoding_fallback(encoding: str) -> Optional[str]:
+    """Próximo encoding a tentar quando `encoding` estourou no arquivo inteiro.
+
+    utf-8 e cp1252 podem falhar em bytes que não existem no sample (64 KB) mas aparecem
+    depois. latin-1 aceita qualquer byte, então é o fim da cadeia: None = não há fallback.
+    """
+    return None if encoding == "latin-1" else "latin-1"
 
 
 def detectar_dialeto(sample: bytes, real_encoding: str) -> Optional[Tuple[str, str, bool]]:

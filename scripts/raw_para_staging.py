@@ -47,6 +47,7 @@ from lake_utils import (
     criar_cliente_minio,
     detectar_dialeto,
     detectar_encoding,
+    encoding_fallback,
     md5_arquivo,
     normalizar_colunas,
     norm_header,
@@ -222,14 +223,43 @@ def _converter_tabular(
     src_path: str, dst_path: str, delim: str, real_encoding: str,
     source_file: str, source_hash: str, ingested_at: str,
     chunksize: int, bad_mode: str,
-) -> Tuple[int, int, int, dict]:
-    """Retorna (n_linhas, n_colunas, n_bad_lines, column_map).
+) -> Tuple[int, int, int, dict, str]:
+    """Retorna (n_linhas, n_colunas, n_bad_lines, column_map, encoding_usado).
+
+    encoding_usado pode diferir de real_encoding: a detecção olha só o sample de 64 KB, e um
+    byte que o encoding não aceita pode aparecer depois. Nesse caso cai para latin-1 (que
+    mapeia os 256 bytes) e reinicia a conversão — ver `encoding_fallback` em lake_utils.
 
     bad_mode:
       - 'skip'  (default): engine C (rápido) descarta linhas mal-formadas; n_bad não é contado (-1).
       - 'count': engine Python (mais lento) descarta E conta as linhas mal-formadas.
       - 'error': falha o arquivo na 1ª linha mal-formada.
     """
+    encoding = real_encoding
+    while True:
+        try:
+            resultado = _converter_tabular_1x(
+                src_path, dst_path, delim, encoding, source_file, source_hash,
+                ingested_at, chunksize, bad_mode,
+            )
+            return (*resultado, encoding)
+        except UnicodeDecodeError as e:
+            proximo = encoding_fallback(encoding)
+            if proximo is None:
+                raise
+            log.warning(
+                "%s: %s não decodifica o arquivo inteiro (%s) — refazendo com %s.",
+                source_file, encoding, e, proximo,
+            )
+            encoding = proximo
+
+
+def _converter_tabular_1x(
+    src_path: str, dst_path: str, delim: str, real_encoding: str,
+    source_file: str, source_hash: str, ingested_at: str,
+    chunksize: int, bad_mode: str,
+) -> Tuple[int, int, int, dict]:
+    """Uma passada de conversão com um encoding fixo. Retorna (n_linhas, n_colunas, n_bad, map)."""
     bad_counter = _BadLineCounter()
     if bad_mode == "count":
         engine, on_bad = "python", bad_counter
@@ -400,12 +430,14 @@ def processar_objeto(
 
             dst = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet", dir=TMPDIR).name
             try:
-                n_linhas, n_colunas, n_bad, column_map = _converter_tabular(
+                n_linhas, n_colunas, n_bad, column_map, enc_usado = _converter_tabular(
                     src, dst, delim, real_encoding, os.path.basename(key),
                     source_hash, ingested_at, chunksize, bad_mode,
                 )
+                # o encoding registrado é o que de fato decodificou o arquivo (pode ter caído
+                # para latin-1 no fallback), não o palpite feito sobre o sample
                 rec.update(n_linhas=n_linhas, n_colunas=n_colunas, n_bad_lines=n_bad,
-                           column_map=column_map)
+                           column_map=column_map, encoding=enc_usado)
                 _verificar_parquet(dst, n_linhas)
                 if apply:
                     _subir(s3, dst, staging_key)
