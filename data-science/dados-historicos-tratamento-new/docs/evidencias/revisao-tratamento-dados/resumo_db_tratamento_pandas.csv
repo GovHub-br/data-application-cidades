@@ -1,0 +1,2 @@
+schema_fonte,schema_tratado,qualidade_linhas,tratadas,descartadas,erros,missing_gt_30,institution_unknown,report_date_missing,discordancias_amostradas
+dados_historicos,dados_historicos_formatados,395,385,10,0,13,80,99,35
