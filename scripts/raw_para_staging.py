@@ -18,8 +18,10 @@ Decisões do projeto:
 IMPORTANTE (ordem no pipeline): rode DEPOIS do mascaramento (`mascarar_minio.py --apply`),
 senão o parquet conterá PII (staging lê raw/ como está).
 
-Idempotência: tabela de controle sftp._staging_log com UNIQUE(raw_key, source_hash); objetos
-já convertidos (mesmo hash) são pulados. Use --force para reprocessar.
+Idempotência: tabela de controle sftp._staging_log com UNIQUE(raw_key, staging_key,
+source_hash); objetos já convertidos (mesmo hash) são pulados. Use --force para reprocessar.
+O staging_key entra na chave porque XLSX/MDB geram N parts (uma por aba/tabela) com o mesmo
+par (raw_key, source_hash) — sem ele o upsert deixaria só 1 registro por arquivo.
 """
 
 import argparse
@@ -208,11 +210,74 @@ def _subir(s3, path: str, key: str) -> None:
 
 
 # Conversão CSV/TXT -> Parquet (streaming, chunked)
-def _staging_key(raw_key: str, sufixo_aba: str = "") -> str:
-    """raw/<...>/<nome>.<ext> -> staging/<...>/<nome>[__aba].parquet"""
+def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
+    """raw/<...>/<nome>.<ext> -> staging/<...>/<nome>.<ext>[__parte].parquet
+
+    A extensão de origem é MANTIDA no nome. Sem isso, `foo.csv`, `foo.txt` e `foo.xlsx`
+    virariam todos `foo.parquet` e um sobrescreveria o outro — e o lake tem esses gêmeos
+    (ex.: BB_AF_DIEMP_ANDAMENTO_OBRA_20250403 existe em .xlsx, .csv e .txt). Como as keys do
+    raw/ são únicas, manter a extensão torna a colisão impossível por construção.
+
+    sufixo_parte: aba de XLSX ou tabela de .mdb (`__<nome>`), quando o arquivo gera N parquets.
+    """
     rel = raw_key[len(RAW_PREFIX):] if raw_key.startswith(RAW_PREFIX) else raw_key
-    stem = rel.rsplit(".", 1)[0] if "." in rel.rsplit("/", 1)[-1] else rel
-    return f"{STAGING_PREFIX}{stem}{sufixo_aba}.parquet"
+    return f"{STAGING_PREFIX}{rel}{sufixo_parte}.parquet"
+
+
+# Colunas de padding: exports de Excel podem arrastar a largura inteira da planilha
+# (16.384 = limite de colunas do Excel). Ex. real: 2024_08_SNH_..._AF_BB.csv tem 16.382
+# colunas, das quais 16.345 não têm nome NEM valor algum — puro lixo do export.
+#
+# A regra é conservadora: só descarta coluna SEM NOME **e** 100% vazia. Colunas sem nome mas
+# com dado ficam (seriam perda de dado), e colunas nomeadas ficam mesmo que vazias. No arquivo
+# citado isso preserva as 2 últimas colunas (`Não se aplica`, `Obra Não Iniciada`), que são
+# listas de validação do Excel vazadas no export — feias, mas têm conteúdo.
+#
+# Descobrir "100% vazia" exige varrer o arquivo, então só fazemos essa passada extra quando o
+# header tem mais que LIMITE_COLS_SEM_NOME colunas anônimas — assim os arquivos normais
+# (0 ou poucas) não pagam nada.
+LIMITE_COLS_SEM_NOME = 10
+
+
+def _e_sem_nome(coluna: str) -> bool:
+    """pandas nomeia header vazio como 'Unnamed: N'."""
+    return str(coluna).startswith("Unnamed:")
+
+
+def _n_colunas_arquivo(src_path: str, delim: str, encoding: str) -> int:
+    """Nº de colunas do header (lê só o header, nrows=0)."""
+    return len(pd.read_csv(src_path, sep=delim, dtype=str, nrows=0,
+                           encoding=encoding, quotechar='"').columns)
+
+
+def _colunas_a_manter(
+    src_path: str, delim: str, encoding: str, chunksize: int,
+) -> Optional[List[str]]:
+    """Nomes das colunas que devem ir p/ o parquet, ou None se não há padding a limpar.
+
+    None = nada a fazer (caso da esmagadora maioria dos arquivos) → sem passada extra.
+    """
+    todas = list(pd.read_csv(src_path, sep=delim, dtype=str, nrows=0,
+                             encoding=encoding, quotechar='"').columns)
+    anonimas = [c for c in todas if _e_sem_nome(c)]
+    if len(anonimas) <= LIMITE_COLS_SEM_NOME:
+        return None  # arquivo normal: nem varre o conteúdo
+
+    # varre o arquivo p/ saber quais anônimas têm algum valor (só essas escapam do descarte)
+    com_dado = set()
+    reader = pd.read_csv(src_path, sep=delim, dtype=str, keep_default_na=False,
+                         na_filter=False, encoding=encoding, quotechar='"',
+                         chunksize=chunksize, on_bad_lines="skip", engine="c",
+                         usecols=anonimas)
+    for chunk in reader:
+        for c in chunk.columns:
+            if c not in com_dado and (chunk[c].str.strip() != "").any():
+                com_dado.add(c)
+        if len(com_dado) == len(anonimas):
+            break  # todas têm dado: nada a descartar
+
+    manter = [c for c in todas if not _e_sem_nome(c) or c in com_dado]
+    return None if len(manter) == len(todas) else manter
 
 
 class _BadLineCounter:
@@ -277,6 +342,14 @@ def _converter_tabular_1x(
     else:  # skip
         engine, on_bad = "c", "skip"
 
+    # descarta colunas de padding do Excel; usecols evita até parsear (um chunk de 200k linhas
+    # x 16.382 colunas estouraria a memória à toa)
+    manter = _colunas_a_manter(src_path, delim, real_encoding, chunksize)
+    if manter is not None:
+        log.info("%s: %d colunas de padding descartadas (mantidas %d).",
+                 source_file, _n_colunas_arquivo(src_path, delim, real_encoding) - len(manter),
+                 len(manter))
+
     reader = pd.read_csv(
         src_path,
         sep=delim,
@@ -288,6 +361,7 @@ def _converter_tabular_1x(
         chunksize=chunksize,
         on_bad_lines=on_bad,
         engine=engine,
+        usecols=manter,
     )
 
     writer: Optional[pq.ParquetWriter] = None
