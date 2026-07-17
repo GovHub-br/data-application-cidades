@@ -33,14 +33,21 @@ import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from stat import S_ISDIR
 from typing import Iterator, Optional, Tuple
 
-import boto3
 from boto3.s3.transfer import TransferConfig
 import paramiko
 import psycopg2
 from dotenv import load_dotenv
+
+# plugins/ (ClienteMinio/ClienteSftp) está na PYTHONPATH dentro do container Airflow; rodando
+# standalone, adiciona airflow_lappis/plugins ao sys.path para o import resolver.
+_plugins = Path(__file__).resolve().parents[1] / "airflow_lappis" / "plugins"
+if _plugins.is_dir() and str(_plugins) not in sys.path:
+    sys.path.insert(0, str(_plugins))
+
+from cliente_minio import ClienteMinio  # noqa: E402
+from cliente_sftp import ClienteSftp  # noqa: E402
 
 load_dotenv()
 
@@ -76,11 +83,8 @@ PASTAS_MONITORADAS    = [
     "/home/caixa.geavo/GEAVO",
 ]
 
-SOCKET_ERRORS = (paramiko.SSHException, EOFError, OSError, ConnectionResetError)
-_CONN_ERROR_STRINGS = (
-    "garbage packet", "eof", "connection reset",
-    "broken pipe", "timed out", "channel closed", "socket is closed",
-)
+# Erro de conexão (queda de socket): delegado ao cliente SFTP.
+_is_conn_error = ClienteSftp.is_conn_error
 
 _LOG_FILE = (
     Path(__file__).parent
@@ -274,53 +278,16 @@ def _registrar_ingest(
             )
             conn.commit()
 
-def conectar_sftp() -> Tuple[paramiko.Transport, paramiko.SFTPClient]:
-    if not SFTP_HOST:
-        raise ValueError("SFTP_HOST não encontrada no .env")
-    transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
-    transport.connect(username=SFTP_USER, password=SFTP_PASSWORD)
-    transport.set_keepalive(30)
-    transport.sock.settimeout(300)
-    sftp = paramiko.SFTPClient.from_transport(transport)
-    if sftp is None:
-        raise RuntimeError("Falha ao abrir sessão SFTP")
-    return transport, sftp
-
-
-def _is_conn_error(e: Exception) -> bool:
-    return isinstance(e, SOCKET_ERRORS) or any(
-        s in str(e).lower() for s in _CONN_ERROR_STRINGS
-    )
-
-
 def _extensao(nome: str) -> str:
     pos = nome.rfind(".")
     return nome[pos:].lower() if pos != -1 else ""
 
 
-def listar_arquivos(
-    sftp: paramiko.SFTPClient,
-    caminho: str,
-    profundidade: int = 0,
-) -> Iterator[Tuple[str, int, int]]:
-    """Gera (caminho_completo, tamanho, mtime) para cada arquivo suportado."""
-    if profundidade > MAX_PROFUNDIDADE:
-        return
-    try:
-        itens = sftp.listdir_attr(caminho)
-    except IOError:
-        log.warning("Sem acesso ou inexistente: %s", caminho)
-        return
-
-    for item in itens:
-        caminho_completo = f"{caminho.rstrip('/')}/{item.filename}"
-        if S_ISDIR(item.st_mode):
-            if item.filename in PASTAS_IGNORAR:
-                log.info("Ignorando pasta excluída: %s", caminho_completo)
-                continue
-            yield from listar_arquivos(sftp, caminho_completo, profundidade + 1)
-        elif _extensao(item.filename) in EXTENSOES_SUPORTADAS:
-            yield caminho_completo, item.st_size or 0, item.st_mtime or 0
+def _listar_arquivos(sftp_cli: ClienteSftp, caminho: str) -> Iterator[Tuple[str, int, int]]:
+    """Lista arquivos suportados sob `caminho` (via ClienteSftp)."""
+    return sftp_cli.listar_arquivos(
+        caminho, extensoes=EXTENSOES_SUPORTADAS, pastas_ignorar=PASTAS_IGNORAR
+    )
 
 
 def baixar_para_tempfile(sftp: paramiko.SFTPClient, caminho: str) -> str:
@@ -372,135 +339,30 @@ def gerar_nome_unico(nome: str, usados: set) -> str:
 def _label(nome: str, tamanho: int, idx: int, total: int) -> str:
     return f"[{idx}/{total}] {nome} ({format_size(tamanho)})"
 
-def criar_cliente_minio():
-    endpoint = MINIO_ENDPOINT
-    if not endpoint.startswith("http"):
-        endpoint = f"http://{endpoint}"
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=MINIO_ACCESS_KEY,
-        aws_secret_access_key=MINIO_SECRET_KEY,
+# Upload serial em partes de 5 MB — mais estável em conexões instáveis (mín. S3 = 5 MB).
+_SFTP_TRANSFER = TransferConfig(multipart_chunksize=5 * 1024 * 1024, max_concurrency=1)
+
+
+def subir_para_minio(minio: ClienteMinio, tmp_path: str, nome_destino: str) -> str:
+    return minio.upload_arquivo(
+        tmp_path, f"raw/{nome_destino}", transfer_config=_SFTP_TRANSFER
     )
 
-def _garantir_bucket(s3) -> None:
-    """Cria o bucket se não existir. A pasta raw/ surge no primeiro upload."""
-    try:
-        s3.head_bucket(Bucket=MINIO_BUCKET)
-        log.info("Bucket '%s' já existe.", MINIO_BUCKET)
-    except Exception:
-        s3.create_bucket(Bucket=MINIO_BUCKET)
-        log.info("Bucket '%s' criado.", MINIO_BUCKET)
 
-
-def _abortar_multiparts_incompletos(s3) -> None:
-    """Aborta todos os multipart uploads incompletos no bucket — evita locks no MinIO."""
-    abortados = 0
-    paginator = s3.get_paginator("list_multipart_uploads")
-    try:
-        for page in paginator.paginate(Bucket=MINIO_BUCKET):
-            for upload in page.get("Uploads", []):
-                s3.abort_multipart_upload(
-                    Bucket=MINIO_BUCKET,
-                    Key=upload["Key"],
-                    UploadId=upload["UploadId"],
-                )
-                abortados += 1
-    except Exception as e:
-        log.warning("Não foi possível listar multipart uploads: %s", e)
-        return
-    if abortados:
-        log.info("%d multipart upload(s) incompleto(s) abortado(s).", abortados)
-    else:
-        log.info("Nenhum multipart upload incompleto encontrado.")
-
-
-def _abortar_multiparts_chave(s3, key: str) -> None:
-    """Aborta uploads incompletos de uma chave específica antes de retentar."""
-    try:
-        paginator = s3.get_paginator("list_multipart_uploads")
-        for page in paginator.paginate(Bucket=MINIO_BUCKET, Prefix=key):
-            for upload in page.get("Uploads", []):
-                if upload["Key"] == key:
-                    s3.abort_multipart_upload(
-                        Bucket=MINIO_BUCKET,
-                        Key=upload["Key"],
-                        UploadId=upload["UploadId"],
-                    )
-    except Exception:
-        pass
-
-
-_TRANSFER_CONFIG = TransferConfig(
-    multipart_chunksize=5 * 1024 * 1024,  # 5 MB por parte (mínimo S3)
-    max_concurrency=1,                     # upload serial — mais estável em conexões instáveis
-)
-
-
-def subir_para_minio(s3, tmp_path: str, nome_destino: str) -> str:
-    key = f"raw/{nome_destino}"
-    for tentativa in range(3):
-        try:
-            with open(tmp_path, "rb") as f:
-                s3.upload_fileobj(f, MINIO_BUCKET, key, Config=_TRANSFER_CONFIG)
-            return key
-        except Exception as e:
-            if tentativa == 2:
-                raise
-            espera = 15 * (tentativa + 1)
-            log.warning(
-                "Upload falhou (tentativa %d/3): %s. Aguardando %ds...",
-                tentativa + 1, e, espera,
-            )
-            _abortar_multiparts_chave(s3, key)
-            time.sleep(espera)
-    raise RuntimeError("unreachable")
-
-
-class _HashingReader:
-    """Wrapper que calcula hash SHA-256 enquanto os dados são lidos."""
-    def __init__(self, src):
-        self._src = src
-        self._hasher = hashlib.sha256()
-
-    def read(self, n=-1):
-        chunk = self._src.read(n)
-        if chunk:
-            self._hasher.update(chunk)
-        return chunk
-
-    @property
-    def hexdigest(self) -> str:
-        return self._hasher.hexdigest()
-
-
-def _subir_stream_com_hash(s3, nome_destino: str, stream_factory) -> Tuple[str, str]:
-    """Faz upload a partir de um stream (sem temp file), retornando (minio_key, file_hash).
+def _subir_stream_com_hash(
+    minio: ClienteMinio, nome_destino: str, stream_factory
+) -> Tuple[str, str]:
+    """Upload a partir de um stream (sem temp file), retornando (minio_key, file_hash).
     stream_factory é um callable que retorna um context manager com .read()."""
-    key = f"raw/{nome_destino}"
-    for tentativa in range(3):
-        try:
-            with stream_factory() as src:
-                reader = _HashingReader(src)
-                s3.upload_fileobj(reader, MINIO_BUCKET, key, Config=_TRANSFER_CONFIG)
-            return key, reader.hexdigest
-        except Exception as e:
-            if tentativa == 2:
-                raise
-            espera = 15 * (tentativa + 1)
-            log.warning(
-                "Upload stream falhou (tentativa %d/3): %s. Aguardando %ds...",
-                tentativa + 1, e, espera,
-            )
-            _abortar_multiparts_chave(s3, key)
-            time.sleep(espera)
-    raise RuntimeError("unreachable")
+    return minio.subir_stream_com_hash(
+        f"raw/{nome_destino}", stream_factory, transfer_config=_SFTP_TRANSFER
+    )
 
 
-def _exibir_preview(sftp: paramiko.SFTPClient, pastas: list) -> None:
+def _exibir_preview(sftp_cli: ClienteSftp, pastas: list) -> None:
     linhas = []
     for caminho in pastas:
-        arquivos = sorted(listar_arquivos(sftp, caminho), key=lambda x: x[1])
+        arquivos = sorted(_listar_arquivos(sftp_cli, caminho), key=lambda x: x[1])
         if not arquivos:
             continue
         linhas.append(f"[{caminho}] — {len(arquivos)} arquivos")
@@ -522,7 +384,7 @@ def _exibir_preview(sftp: paramiko.SFTPClient, pastas: list) -> None:
 
 def processar_arquivo_simples(
     sftp: paramiko.SFTPClient,
-    s3,
+    minio: ClienteMinio,
     conn_str: str,
     caminho_sftp: str,
     tamanho: int,
@@ -547,7 +409,7 @@ def processar_arquivo_simples(
     try:
         tmp_path  = baixar_para_tempfile(sftp, caminho_sftp)
         file_hash = _compute_hash(tmp_path)
-        minio_key = subir_para_minio(s3, tmp_path, nome_destino)
+        minio_key = subir_para_minio(minio, tmp_path, nome_destino)
         spinner.parar(ok=True)
         log.info("✓ [%d/%d] %s → raw/%s", idx, total, nome_arquivo, nome_destino)
         _registrar_ingest(
@@ -651,7 +513,7 @@ def _preparar_multivolume_implicito(
 
 def processar_zip(
     sftp: paramiko.SFTPClient,
-    s3,
+    minio: ClienteMinio,
     conn_str: str,
     caminho_zip: str,
     tamanho: int,
@@ -709,7 +571,7 @@ def processar_zip(
                 spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
                 try:
                     minio_key, file_hash = _subir_stream_com_hash(
-                        s3, nome_destino,
+                        minio, nome_destino,
                         lambda fn=info.filename: zf.open(fn),
                     )
                     log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
@@ -822,7 +684,7 @@ def processar_zip(
                     spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
                     try:
                         file_hash = _compute_hash(str(arq_path))
-                        minio_key = subir_para_minio(s3, str(arq_path), nome_destino)
+                        minio_key = subir_para_minio(minio, str(arq_path), nome_destino)
                         log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
                         _registrar_ingest(
                             conn_str, caminho_log, nome_destino, minio_key,
@@ -851,7 +713,7 @@ def processar_zip(
         nomes_usados.add(nome_destino)
         try:
             file_hash = _compute_hash(tmp_zip)
-            minio_key = subir_para_minio(s3, tmp_zip, nome_destino)
+            minio_key = subir_para_minio(minio, tmp_zip, nome_destino)
             log.info("✓ [%d/%d] %s → raw/%s (bruto)", idx, total, nome_zip, nome_destino)
             _registrar_ingest(
                 conn_str, caminho_zip, nome_destino, minio_key,
@@ -871,18 +733,18 @@ def processar_zip(
     return sucesso, erro
 
 def _processar_entry(
-    sftp, s3, conn_str, caminho, tamanho, mtime,
+    sftp, minio, conn_str, caminho, tamanho, mtime,
     nomes_usados, ja_inseridos, idx, total,
 ) -> Tuple[int, int]:
     """Despacha para simples ou zip. Retorna (sucesso, erro)."""
     ext = _extensao(caminho.rsplit("/", 1)[-1])
     if ext == ".zip":
         return processar_zip(
-            sftp, s3, conn_str, caminho, tamanho, mtime,
+            sftp, minio, conn_str, caminho, tamanho, mtime,
             nomes_usados, ja_inseridos, idx, total,
         )
     resultado = processar_arquivo_simples(
-        sftp, s3, conn_str, caminho, tamanho, mtime,
+        sftp, minio, conn_str, caminho, tamanho, mtime,
         nomes_usados, ja_inseridos, idx, total,
     )
     return (1, 0) if resultado == "success" else (0, 1) if resultado == "error" else (0, 0)
@@ -910,35 +772,30 @@ def _resolver_pastas(filtros: Optional[list]) -> list:
     return resolvidas
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--pasta", metavar="PASTA",
-        help="Processa só esta pasta (nome, ex: CadUnico, ou caminho completo). "
-             "Repita para várias.",
-        action="append", dest="pastas",
-    )
-    parser.add_argument(
-        "--preview", action="store_true",
-        help="Só lista os arquivos das pastas e sai, sem baixar nem subir nada.",
-    )
-    args = parser.parse_args()
-    pastas_filtro = _resolver_pastas(args.pastas)
+# Execução
+def run(pastas: Optional[list] = None, preview: bool = False) -> Tuple[int, int]:
+    """Ingere os arquivos do SFTP para raw/ no MinIO. Retorna (sucesso, erro).
+
+    Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run()).
+    Não há dry-run: a ingestão é idempotente pelo controle sftp._ingest_minio_log.
+    """
+    pastas_filtro = _resolver_pastas(pastas)
 
     if not SFTP_PASSWORD:
         raise ValueError("SFTP_PASSWORD não encontrada no .env")
 
     log.info("Log: %s", _LOG_FILE)
 
-    if args.preview:
+    sftp_cli = ClienteSftp()
+
+    if preview:
         log.info("Conectando ao SFTP %s@%s:%s ...", SFTP_USER, SFTP_HOST, SFTP_PORT)
-        transport, sftp = conectar_sftp()
+        sftp_cli.conectar()
         try:
-            _exibir_preview(sftp, pastas_filtro)
+            _exibir_preview(sftp_cli, pastas_filtro)
         finally:
-            sftp.close()
-            transport.close()
-        return
+            sftp_cli.fechar()
+        return 0, 0
 
     conn_str = _conn_str()
     _criar_schema_e_log(conn_str)
@@ -950,22 +807,22 @@ def main() -> None:
         len(ja_inseridos), len(nomes_usados),
     )
 
-    s3 = criar_cliente_minio()
-    _garantir_bucket(s3)
-    _abortar_multiparts_incompletos(s3)
+    minio = ClienteMinio()
+    minio.garantir_bucket()
+    minio.abortar_multiparts_incompletos()
 
     log.info("Conectando ao SFTP %s@%s:%s ...", SFTP_USER, SFTP_HOST, SFTP_PORT)
-    transport, sftp = conectar_sftp()
+    sftp = sftp_cli.conectar()
 
     total_sucesso = total_erro = 0
 
     try:
-        _exibir_preview(sftp, pastas_filtro)
+        _exibir_preview(sftp_cli, pastas_filtro)
 
         todos_arquivos = []
         for pasta in pastas_filtro:
             log.info("Varrendo %s ...", pasta)
-            arquivos_pasta = list(listar_arquivos(sftp, pasta))
+            arquivos_pasta = list(_listar_arquivos(sftp_cli, pasta))
             arquivos_pasta.sort(key=lambda x: x[1])
             todos_arquivos.extend(arquivos_pasta)
 
@@ -976,7 +833,7 @@ def main() -> None:
         for idx, (caminho, tamanho, mtime) in enumerate(todos_arquivos, 1):
             try:
                 s, e = _processar_entry(
-                    sftp, s3, conn_str, caminho, tamanho, mtime,
+                    sftp, minio, conn_str, caminho, tamanho, mtime,
                     nomes_usados, ja_inseridos, idx, total,
                 )
                 total_sucesso += s
@@ -993,13 +850,7 @@ def main() -> None:
                     type(e).__name__, e,
                 )
                 try:
-                    sftp.close()
-                    transport.close()
-                except Exception:
-                    pass
-
-                try:
-                    transport, sftp = conectar_sftp()
+                    sftp = sftp_cli.reconectar()
                     log.info("Reconectado. Retentando %s ...", caminho)
                 except Exception as conn_e:
                     log.error("Falha ao reconectar: %s. Abortando.", conn_e)
@@ -1007,7 +858,7 @@ def main() -> None:
 
                 try:
                     s, e = _processar_entry(
-                        sftp, s3, conn_str, caminho, tamanho, mtime,
+                        sftp, minio, conn_str, caminho, tamanho, mtime,
                         nomes_usados, ja_inseridos, idx, total,
                     )
                     total_sucesso += s
@@ -1017,8 +868,7 @@ def main() -> None:
                     total_erro += 1
 
     finally:
-        sftp.close()
-        transport.close()
+        sftp_cli.fechar()
 
     error_lines = sum(
         1 for line in _LOG_FILE.read_text(encoding="utf-8").splitlines()
@@ -1030,6 +880,23 @@ def main() -> None:
     )
     if error_lines:
         log.warning("%d linha(s) ERROR no log → %s", error_lines, _LOG_FILE)
+    return total_sucesso, total_erro
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--pasta", metavar="PASTA",
+        help="Processa só esta pasta (nome, ex: CadUnico, ou caminho completo). "
+             "Repita para várias.",
+        action="append", dest="pastas",
+    )
+    parser.add_argument(
+        "--preview", action="store_true",
+        help="Só lista os arquivos das pastas e sai, sem baixar nem subir nada.",
+    )
+    args = parser.parse_args()
+    run(pastas=args.pastas, preview=args.preview)
 
 
 if __name__ == "__main__":

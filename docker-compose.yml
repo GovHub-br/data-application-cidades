@@ -9,6 +9,10 @@ x-airflow-common: &airflow-common
     - ./airflow_lappis/dags:${AIRFLOW_HOME}/dags/
     - ./airflow_lappis/plugins:${AIRFLOW_HOME}/plugins/
     - ./airflow_lappis/helpers:${AIRFLOW_HOME}/helpers/
+    # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag)
+    - ./scripts:${AIRFLOW_HOME}/scripts/
+    # Temporários dos scripts (Base_PF_FGTS ~2 GB): NÃO usar /tmp (tmpfs em RAM)
+    - lake_tmp:/opt/airflow/lake_tmp
     - ./airflow_lappis/dags/dbt/ipea/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
   depends_on: &airflow-common-depends-on
     postgres:
@@ -31,7 +35,10 @@ x-airflow-environment: &airflow-common-env
   AIRFLOW__WEBSERVER__NAVBAR_COLOR: '#98DFFF'
   AIRFLOW__WEBSERVER__RELOAD_ON_PLUGIN_CHANGE: 'true'
   AIRFLOW__WEBSERVER__SECRET_KEY: '42'
-  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:$PYTHONPATH"
+  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts:$PYTHONPATH"
+  # Temporários dos scripts do data lake — sobrescreve os caminhos de host do .env
+  LAKE_TMPDIR: /opt/airflow/lake_tmp
+  MASKING_TMPDIR: /opt/airflow/lake_tmp
   _AIRFLOW_DB_MIGRATE: 'true'
   _AIRFLOW_WWW_USER_CREATE: 'true'
   _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
@@ -131,3 +138,4 @@ services:
 volumes:
   postgres-db:
   airflow_logs:
+  lake_tmp:

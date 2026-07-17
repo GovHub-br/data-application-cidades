@@ -8,8 +8,10 @@ RUN apt-get update \
          libgdal-dev \
          unixodbc-dev \
          libpq-dev \
+         mdbtools \
          vim \
          unzip \
+         p7zip-full \
          git \
          curl \
   && sed -i 's,^\(MinProtocol[ ]*=\).*,\1'TLSv1.0',g' /etc/ssl/openssl.cnf \

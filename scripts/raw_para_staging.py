@@ -40,7 +40,6 @@ import pandas as pd
 import psycopg2
 import pyarrow as pa
 import pyarrow.parquet as pq
-from boto3.s3.transfer import TransferConfig
 from dotenv import load_dotenv
 from psycopg2.extras import Json
 
@@ -48,8 +47,6 @@ from lake_utils import (
     MDB_DELIM,
     MDB_ENCODING,
     MDB_EXT,
-    baixar,
-    criar_cliente_minio,
     detectar_dialeto,
     detectar_encoding,
     encoding_fallback,
@@ -59,8 +56,15 @@ from lake_utils import (
     mdb_tabelas,
     normalizar_colunas,
     norm_header,
-    sample_bytes,
 )
+
+# plugins/ (ClienteMinio) está na PYTHONPATH dentro do container Airflow; rodando standalone,
+# adiciona airflow_lappis/plugins ao sys.path para o import resolver.
+_plugins = Path(__file__).resolve().parents[1] / "airflow_lappis" / "plugins"
+if _plugins.is_dir() and str(_plugins) not in sys.path:
+    sys.path.insert(0, str(_plugins))
+
+from cliente_minio import ClienteMinio  # noqa: E402
 
 load_dotenv()
 
@@ -104,19 +108,12 @@ for _h in (logging.FileHandler(_LOG_FILE, encoding="utf-8"), logging.StreamHandl
     logging.root.addHandler(_h)
 log = logging.getLogger(__name__)
 
-_TRANSFER_CONFIG = TransferConfig(multipart_chunksize=8 * 1024 * 1024, max_concurrency=2)
-
-
 # Infra: conexões / controle
 def _conn_str() -> str:
     return (
         f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
         f"user={PG_USER} password={PG_PASSWORD}"
     )
-
-
-def _cliente_minio():
-    return criar_cliente_minio(MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY)
 
 
 def _criar_control_table(conn_str: str) -> None:
@@ -194,19 +191,6 @@ def _registrar_control(conn_str: str, rec: dict) -> None:
                 ),
             )
             conn.commit()
-
-
-# S3 helpers
-def _listar_objetos(s3, prefix: str):
-    pag = s3.get_paginator("list_objects_v2")
-    for page in pag.paginate(Bucket=MINIO_BUCKET, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            yield obj["Key"], obj["Size"]
-
-
-def _subir(s3, path: str, key: str) -> None:
-    with open(path, "rb") as f:
-        s3.upload_fileobj(f, MINIO_BUCKET, key, Config=_TRANSFER_CONFIG)
 
 
 # Conversão CSV/TXT -> Parquet (streaming, chunked)
@@ -474,7 +458,7 @@ def _novo_registro(execution_id: str, raw_key: str) -> dict:
 
 
 def processar_objeto(
-    s3, key: str, execution_id: str, apply: bool, convertidos: set,
+    minio: ClienteMinio, key: str, execution_id: str, apply: bool, convertidos: set,
     chunksize: int, bad_mode: str,
 ) -> List[dict]:
     """Retorna lista de registros (XLSX pode gerar 1 por aba)."""
@@ -488,7 +472,7 @@ def processar_objeto(
 
     src = None
     try:
-        sample = sample_bytes(s3, MINIO_BUCKET, key)
+        sample = minio.sample_bytes(key)
         real_encoding = detectar_encoding(sample)
 
         # CSV / TXT
@@ -502,7 +486,7 @@ def processar_objeto(
             delim, _lineterm, _fq = dialeto
             rec["delimiter"] = delim
 
-            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
             source_hash = md5_arquivo(src)
             rec["source_hash"] = source_hash
             if (key, source_hash) in convertidos:
@@ -525,10 +509,10 @@ def processar_objeto(
                            column_map=column_map, encoding=enc_usado)
                 _verificar_parquet(dst, n_linhas)
                 if apply:
-                    _subir(s3, dst, staging_key)
+                    minio.upload_arquivo(dst, staging_key)
                     rec["status"] = "converted"
                 else:
-                    _subir(s3, dst, _dryrun_key(staging_key))
+                    minio.upload_arquivo(dst, _dryrun_key(staging_key))
                     rec["status"] = "dry_run"
                 if n_bad > 0:
                     log.warning("%s — %d linha(s) mal-formada(s) descartada(s)", key, n_bad)
@@ -544,7 +528,7 @@ def processar_objeto(
                     "mdbtools não encontrado no PATH — necessário para ler .mdb "
                     "(instale o pacote 'mdbtools')."
                 )
-            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
             source_hash = md5_arquivo(src)
             if (key, source_hash) in convertidos:
                 rec = _novo_registro(execution_id, key)
@@ -584,10 +568,10 @@ def processar_objeto(
                                column_map=column_map, encoding=enc_usado)
                     _verificar_parquet(dst, n_linhas)
                     if apply:
-                        _subir(s3, dst, staging_key)
+                        minio.upload_arquivo(dst, staging_key)
                         rec["status"] = "converted"
                     else:
-                        _subir(s3, dst, _dryrun_key(staging_key))
+                        minio.upload_arquivo(dst, _dryrun_key(staging_key))
                         rec["status"] = "dry_run"
                 except Exception as e:  # noqa: BLE001 — falha numa tabela não derruba as outras
                     rec["status"] = "error"
@@ -602,7 +586,7 @@ def processar_objeto(
 
         # XLSX (uma aba por parquet)
         if ext in SUPPORTED_EXCEL:
-            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
             source_hash = md5_arquivo(src)
             if (key, source_hash) in convertidos:
                 rec = _novo_registro(execution_id, key)
@@ -632,10 +616,10 @@ def processar_objeto(
                     rec.update(n_linhas=n_linhas, n_colunas=n_colunas, column_map=column_map)
                     _verificar_parquet(dst, n_linhas)
                     if apply:
-                        _subir(s3, dst, staging_key)
+                        minio.upload_arquivo(dst, staging_key)
                         rec["status"] = "converted"
                     else:
-                        _subir(s3, dst, _dryrun_key(staging_key))
+                        minio.upload_arquivo(dst, _dryrun_key(staging_key))
                         rec["status"] = "dry_run"
                 finally:
                     if os.path.exists(dst):
@@ -664,7 +648,7 @@ def _dryrun_key(staging_key: str) -> str:
 
 
 # Auditoria (parquet)
-def _gravar_auditoria(s3, execution_id: str, registros: List[dict]) -> None:
+def _gravar_auditoria(minio: ClienteMinio, execution_id: str, registros: List[dict]) -> None:
     df = pd.DataFrame(registros)
     if "column_map" in df.columns:
         df["column_map"] = df["column_map"].apply(lambda v: json.dumps(v, ensure_ascii=False))
@@ -673,10 +657,88 @@ def _gravar_auditoria(s3, execution_id: str, registros: List[dict]) -> None:
     buf = _io.BytesIO()
     df.to_parquet(buf, engine="pyarrow", index=False)
     key = f"{AUDIT_PREFIX}execution_id={execution_id}/part-0.parquet"
-    s3.put_object(Bucket=MINIO_BUCKET, Key=key, Body=buf.getvalue())
+    minio.put_object(key, buf.getvalue())
     local = Path(__file__).parent / f"auditoria_staging_{execution_id}.parquet"
     df.to_parquet(local, engine="pyarrow", index=False)
     log.info("Auditoria: s3://%s/%s (cópia local: %s)", MINIO_BUCKET, key, local)
+
+
+# Execução
+def run(
+    apply: bool = False,
+    force: bool = False,
+    limit: int = 0,
+    pattern: str = "",
+    only_ext: str = "",
+    max_size_mb: int = 0,
+    chunksize: int = 200_000,
+    bad_lines: str = "skip",
+    prefix: Optional[str] = None,
+) -> Dict[str, int]:
+    """Converte os objetos de raw/ para Parquet em staging/. Retorna a contagem por status.
+
+    Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run(apply=True)).
+    """
+    prefix = prefix if prefix is not None else RAW_PREFIX
+    execution_id = uuid.uuid4().hex
+    only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
+
+    log.info("=" * 70)
+    log.info("Execução %s | modo=%s | prefixo=%s", execution_id,
+             "APPLY (staging/)" if apply else "DRY-RUN (staging_dryrun/)", prefix)
+    log.info("=" * 70)
+
+    conn_str = _conn_str()
+    _criar_control_table(conn_str)
+    convertidos = set() if force else _carregar_convertidos(conn_str)
+
+    minio = ClienteMinio()
+
+    registros: List[dict] = []
+    contagem: Dict[str, int] = {}
+    processados = 0
+
+    for key, size in minio.listar_objetos(prefix):
+        if pattern and pattern not in key:
+            continue
+        ext = os.path.splitext(key)[1].lower()
+        if only_ext_set and ext not in only_ext_set:
+            continue
+        if os.path.basename(key).startswith("~$"):
+            continue
+        if max_size_mb and size > max_size_mb * 1024 * 1024:
+            continue
+        if limit and processados >= limit:
+            break
+        processados += 1
+
+        recs = processar_objeto(minio, key, execution_id, apply, convertidos,
+                                chunksize, bad_lines)
+        registros.extend(recs)
+        for rec in recs:
+            contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
+            if rec["source_hash"] is not None and rec["status"] != "skipped_already":
+                _registrar_control(conn_str, rec)
+
+        r0 = recs[0]
+        icone = {"converted": "✓", "dry_run": "◐", "error": "✗"}.get(r0["status"], "·")
+        log.info(
+            "%s [%d] %s — %s | abas/parts=%d | linhas=%d | cols=%d",
+            icone, processados, key, r0["status"], len(recs),
+            sum(r["n_linhas"] for r in recs), r0["n_colunas"],
+        )
+
+    if registros:
+        _gravar_auditoria(minio, execution_id, registros)
+
+    log.info("=" * 70)
+    log.info("Concluído. Objetos: %d | parts geradas: %d", processados, len(registros))
+    for status, n in sorted(contagem.items()):
+        log.info("  %-20s %d", status, n)
+    if not apply:
+        log.info("DRY-RUN — nada em staging/. Prévia em staging_dryrun/")
+    log.info("Log: %s", _LOG_FILE)
+    return contagem
 
 
 # Main
@@ -699,65 +761,17 @@ def main() -> None:
     parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
     args = parser.parse_args()
 
-    execution_id = uuid.uuid4().hex
-    apply = args.apply
-    only_ext = {("." + e.strip().lstrip(".")).lower() for e in args.only_ext.split(",") if e.strip()}
-
-    log.info("=" * 70)
-    log.info("Execução %s | modo=%s | prefixo=%s", execution_id,
-             "APPLY (staging/)" if apply else "DRY-RUN (staging_dryrun/)", args.prefix)
-    log.info("=" * 70)
-
-    conn_str = _conn_str()
-    _criar_control_table(conn_str)
-    convertidos = set() if args.force else _carregar_convertidos(conn_str)
-
-    s3 = _cliente_minio()
-
-    registros: List[dict] = []
-    contagem: Dict[str, int] = {}
-    processados = 0
-
-    for key, size in _listar_objetos(s3, args.prefix):
-        if args.pattern and args.pattern not in key:
-            continue
-        ext = os.path.splitext(key)[1].lower()
-        if only_ext and ext not in only_ext:
-            continue
-        if os.path.basename(key).startswith("~$"):
-            continue
-        if args.max_size_mb and size > args.max_size_mb * 1024 * 1024:
-            continue
-        if args.limit and processados >= args.limit:
-            break
-        processados += 1
-
-        recs = processar_objeto(s3, key, execution_id, apply, convertidos,
-                                args.chunksize, args.bad_lines)
-        registros.extend(recs)
-        for rec in recs:
-            contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
-            if rec["source_hash"] is not None and rec["status"] != "skipped_already":
-                _registrar_control(conn_str, rec)
-
-        r0 = recs[0]
-        icone = {"converted": "✓", "dry_run": "◐", "error": "✗"}.get(r0["status"], "·")
-        log.info(
-            "%s [%d] %s — %s | abas/parts=%d | linhas=%d | cols=%d",
-            icone, processados, key, r0["status"], len(recs),
-            sum(r["n_linhas"] for r in recs), r0["n_colunas"],
-        )
-
-    if registros:
-        _gravar_auditoria(s3, execution_id, registros)
-
-    log.info("=" * 70)
-    log.info("Concluído. Objetos: %d | parts geradas: %d", processados, len(registros))
-    for status, n in sorted(contagem.items()):
-        log.info("  %-20s %d", status, n)
-    if not apply:
-        log.info("DRY-RUN — nada em staging/. Prévia em staging_dryrun/")
-    log.info("Log: %s", _LOG_FILE)
+    run(
+        apply=args.apply,
+        force=args.force,
+        limit=args.limit,
+        pattern=args.pattern,
+        only_ext=args.only_ext,
+        max_size_mb=args.max_size_mb,
+        chunksize=args.chunksize,
+        bad_lines=args.bad_lines,
+        prefix=args.prefix,
+    )
 
 
 if __name__ == "__main__":

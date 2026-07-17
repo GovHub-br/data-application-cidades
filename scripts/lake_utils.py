@@ -4,8 +4,8 @@
 Utilitários compartilhados dos scripts do data lake (MinIO).
 
 Reúne o que mais de uma etapa do pipeline usa: detecção de encoding/dialeto dos arquivos
-heterogêneos do raw/, normalização de nome de coluna, hash de arquivo, leitura de bases
-Access (.mdb) e helpers de S3/MinIO (cliente, amostra por Range, download para tempfile).
+heterogêneos do raw/, normalização de nome de coluna, hash de arquivo e leitura de bases
+Access (.mdb). O I/O de S3/MinIO fica em airflow_lappis/plugins/cliente_minio.py (ClienteMinio).
 
 Usado por `mascarar_minio.py` e `raw_para_staging.py`. Cada script mantém o que é próprio
 dele (conexão Postgres, tabela de controle, regras de negócio).
@@ -17,7 +17,6 @@ import io
 import re
 import shutil
 import subprocess
-import tempfile
 import unicodedata
 from typing import List, Optional, Tuple
 
@@ -210,33 +209,8 @@ def md5_arquivo(path: str) -> str:
     return h.hexdigest()
 
 
-# MinIO (S3) helpers
-def criar_cliente_minio(endpoint: str, access_key: str, secret_key: str):
-    import boto3
-
-    if not endpoint.startswith("http"):
-        endpoint = f"http://{endpoint}"
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-
-
-def sample_bytes(s3, bucket: str, key: str, n: int = 65536) -> bytes:
-    return s3.get_object(Bucket=bucket, Key=key, Range=f"bytes=0-{n - 1}")["Body"].read()
-
-
-def baixar(s3, bucket: str, key: str, suffix: str, tmpdir: Optional[str] = None) -> str:
-    """Baixa o objeto para um tempfile em disco (evita OOM em arquivos grandes)."""
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=tmpdir)
-    try:
-        s3.download_fileobj(bucket, key, tmp)
-        tmp.flush()
-    finally:
-        tmp.close()
-    return tmp.name
+# NOTA: os helpers de S3/MinIO (cliente, amostra por Range, download) foram movidos para
+# airflow_lappis/plugins/cliente_minio.py (classe ClienteMinio), usada pelos scripts e pela DAG.
 
 
 def format_size(size_bytes: float) -> str:

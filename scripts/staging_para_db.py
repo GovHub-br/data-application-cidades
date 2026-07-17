@@ -52,6 +52,14 @@ from dotenv import load_dotenv
 
 from lake_utils import format_size, norm_header
 
+# plugins/ (ClienteMinio) está na PYTHONPATH dentro do container Airflow; rodando standalone,
+# adiciona airflow_lappis/plugins ao sys.path para o import resolver.
+_plugins = Path(__file__).resolve().parents[1] / "airflow_lappis" / "plugins"
+if _plugins.is_dir() and str(_plugins) not in sys.path:
+    sys.path.insert(0, str(_plugins))
+
+from cliente_minio import ClienteMinio  # noqa: E402
+
 load_dotenv()
 
 MINIO_ENDPOINT   = os.environ["MINIO_ENDPOINT"]
@@ -393,26 +401,93 @@ def processar_objeto(
         rec["_segundos"] = round(time.time() - t0, 2)
 
 
-# S3 helpers (listagem via boto3, como nos demais scripts)
-def _listar_objetos(s3, prefix: str):
-    pag = s3.get_paginator("list_objects_v2")
-    for page in pag.paginate(Bucket=MINIO_BUCKET, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            yield obj["Key"], obj["Size"]
-
-
 # Auditoria (parquet)
-def _gravar_auditoria(s3, execution_id: str, registros: List[dict]) -> None:
+def _gravar_auditoria(minio: ClienteMinio, execution_id: str, registros: List[dict]) -> None:
     import io as _io
 
     df = pd.DataFrame(registros)
     buf = _io.BytesIO()
     df.to_parquet(buf, engine="pyarrow", index=False)
     key = f"{AUDIT_PREFIX}execution_id={execution_id}/part-0.parquet"
-    s3.put_object(Bucket=MINIO_BUCKET, Key=key, Body=buf.getvalue())
+    minio.put_object(key, buf.getvalue())
     local = Path(__file__).parent / f"auditoria_db_{execution_id}.parquet"
     df.to_parquet(local, engine="pyarrow", index=False)
     log.info("Auditoria: s3://%s/%s (cópia local: %s)", MINIO_BUCKET, key, local)
+
+
+# Execução
+def run(
+    apply: bool = False,
+    force: bool = False,
+    limit: int = 0,
+    pattern: str = "",
+    prefix: Optional[str] = None,
+    max_size_mb: int = 0,
+    memory_limit: Optional[str] = None,
+    threads: Optional[int] = None,
+) -> Dict[str, int]:
+    """Materializa os parquets de staging/ no Postgres. Retorna a contagem por status.
+
+    Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run(apply=True)).
+    """
+    prefix = prefix if prefix is not None else STAGING_PREFIX
+    memory_limit = memory_limit or os.environ.get("DUCKDB_MEMORY_LIMIT", "4GB")
+    threads = threads if threads is not None else int(os.environ.get("DUCKDB_THREADS", 4))
+    execution_id = uuid.uuid4().hex
+
+    log.info("=" * 70)
+    log.info("Execução %s | modo=%s | prefixo=%s", execution_id,
+             f"APPLY (Postgres {SCHEMA}.*)" if apply else "DRY-RUN (nada gravado)", prefix)
+    log.info("=" * 70)
+
+    conn_str = _conn_str()
+    _criar_control_table(conn_str)
+    carregados = set() if force else _carregar_carregados(conn_str)
+
+    minio = ClienteMinio()
+    fs = _fs_minio()
+
+    registros: List[dict] = []
+    contagem: Dict[str, int] = {}
+    processados = 0
+
+    for key, size in minio.listar_objetos(prefix):
+        if not key.lower().endswith(".parquet"):
+            continue
+        if pattern and pattern not in key:
+            continue
+        if max_size_mb and size > max_size_mb * 1024 * 1024:
+            continue
+        if limit and processados >= limit:
+            break
+        processados += 1
+
+        rec = processar_objeto(
+            conn_str, fs, key, execution_id, apply, carregados, memory_limit, threads,
+        )
+        registros.append(rec)
+        contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
+        if rec["source_hash"] is not None and rec["status"] != "skipped_already":
+            _registrar_control(conn_str, rec)
+
+        icone = {"loaded": "✓", "dry_run": "◐", "error": "✗"}.get(rec["status"], "·")
+        log.info(
+            "%s [%d] %s (%s) — %s | tabela=%s | linhas=%d | cols=%d | %.1fs",
+            icone, processados, key, format_size(size), rec["status"],
+            rec["target_table"], rec["n_linhas"], rec["n_colunas"], rec["_segundos"],
+        )
+
+    if registros:
+        _gravar_auditoria(minio, execution_id, registros)
+
+    log.info("=" * 70)
+    log.info("Concluído. Objetos: %d", processados)
+    for status, n in sorted(contagem.items()):
+        log.info("  %-20s %d", status, n)
+    if not apply:
+        log.info("DRY-RUN — nenhuma tabela criada. Use --apply para gravar no Postgres.")
+    log.info("Log: %s", _LOG_FILE)
+    return contagem
 
 
 # Main
@@ -436,63 +511,16 @@ def main() -> None:
                         help="Threads do pg_duckdb p/ esta sessão (default 4).")
     args = parser.parse_args()
 
-    execution_id = uuid.uuid4().hex
-    apply = args.apply
-
-    log.info("=" * 70)
-    log.info("Execução %s | modo=%s | prefixo=%s", execution_id,
-             f"APPLY (Postgres {SCHEMA}.*)" if apply else "DRY-RUN (nada gravado)", args.prefix)
-    log.info("=" * 70)
-
-    conn_str = _conn_str()
-    _criar_control_table(conn_str)
-    carregados = set() if args.force else _carregar_carregados(conn_str)
-
-    from lake_utils import criar_cliente_minio
-
-    s3 = criar_cliente_minio(MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY)
-    fs = _fs_minio()
-
-    registros: List[dict] = []
-    contagem: Dict[str, int] = {}
-    processados = 0
-
-    for key, size in _listar_objetos(s3, args.prefix):
-        if not key.lower().endswith(".parquet"):
-            continue
-        if args.pattern and args.pattern not in key:
-            continue
-        if args.max_size_mb and size > args.max_size_mb * 1024 * 1024:
-            continue
-        if args.limit and processados >= args.limit:
-            break
-        processados += 1
-
-        rec = processar_objeto(
-            conn_str, fs, key, execution_id, apply, carregados, args.memory_limit, args.threads,
-        )
-        registros.append(rec)
-        contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
-        if rec["source_hash"] is not None and rec["status"] != "skipped_already":
-            _registrar_control(conn_str, rec)
-
-        icone = {"loaded": "✓", "dry_run": "◐", "error": "✗"}.get(rec["status"], "·")
-        log.info(
-            "%s [%d] %s (%s) — %s | tabela=%s | linhas=%d | cols=%d | %.1fs",
-            icone, processados, key, format_size(size), rec["status"],
-            rec["target_table"], rec["n_linhas"], rec["n_colunas"], rec["_segundos"],
-        )
-
-    if registros:
-        _gravar_auditoria(s3, execution_id, registros)
-
-    log.info("=" * 70)
-    log.info("Concluído. Objetos: %d", processados)
-    for status, n in sorted(contagem.items()):
-        log.info("  %-20s %d", status, n)
-    if not apply:
-        log.info("DRY-RUN — nenhuma tabela criada. Use --apply para gravar no Postgres.")
-    log.info("Log: %s", _LOG_FILE)
+    run(
+        apply=args.apply,
+        force=args.force,
+        limit=args.limit,
+        pattern=args.pattern,
+        prefix=args.prefix,
+        max_size_mb=args.max_size_mb,
+        memory_limit=args.memory_limit,
+        threads=args.threads,
+    )
 
 
 if __name__ == "__main__":

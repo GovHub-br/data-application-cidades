@@ -41,6 +41,11 @@ target/
 dbt_packages/
 logs/
 
+# Artefatos gerados pelos scripts do data lake (logs, auditoria, preview)
+scripts/*.log
+scripts/auditoria_*.parquet
+scripts/preview_arquivos.txt
+
 # Jupyter
 **/*.ipynb_checkpoints/
 **/*.ipynb

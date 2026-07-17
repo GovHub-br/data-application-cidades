@@ -47,15 +47,12 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import psycopg2
-from boto3.s3.transfer import TransferConfig
 from dotenv import load_dotenv
 from psycopg2.extras import Json
 
 from lake_utils import (
     MDB_ENCODING,
     MDB_EXT,
-    baixar,
-    criar_cliente_minio,
     detectar_dialeto,
     detectar_encoding,
     md5_arquivo,
@@ -64,8 +61,15 @@ from lake_utils import (
     mdb_header,
     mdb_tabelas,
     norm_header,
-    sample_bytes,
 )
+
+# plugins/ (ClienteMinio) está na PYTHONPATH dentro do container Airflow; rodando standalone,
+# adiciona airflow_lappis/plugins ao sys.path para o import resolver.
+_plugins = Path(__file__).resolve().parents[1] / "airflow_lappis" / "plugins"
+if _plugins.is_dir() and str(_plugins) not in sys.path:
+    sys.path.insert(0, str(_plugins))
+
+from cliente_minio import ClienteMinio  # noqa: E402
 
 load_dotenv()
 
@@ -153,16 +157,6 @@ def _conn_str() -> str:
         f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
         f"user={PG_USER} password={PG_PASSWORD}"
     )
-
-
-def _cliente_minio():
-    return criar_cliente_minio(MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY)
-
-
-_TRANSFER_CONFIG = TransferConfig(
-    multipart_chunksize=8 * 1024 * 1024,
-    max_concurrency=2,
-)
 
 
 def _criar_control_table(conn_str: str) -> None:
@@ -483,39 +477,6 @@ def _analisar_mdb(src_path: str) -> Tuple[List[dict], bool, int]:
     return targets, has_pf_any, total
 
 
-# S3 helpers
-def _listar_objetos(s3, prefix: str):
-    pag = s3.get_paginator("list_objects_v2")
-    for page in pag.paginate(Bucket=MINIO_BUCKET, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            yield obj["Key"], obj["Size"]
-
-
-def _ja_mascarado(s3, key: str) -> bool:
-    try:
-        tags = s3.get_object_tagging(Bucket=MINIO_BUCKET, Key=key).get("TagSet", [])
-        return any(t["Key"] == "masked" and t["Value"] == "true" for t in tags)
-    except Exception:
-        return False
-
-
-def _subir(s3, path: str, key: str) -> None:
-    with open(path, "rb") as f:
-        s3.upload_fileobj(f, MINIO_BUCKET, key, Config=_TRANSFER_CONFIG)
-
-
-def _tag_mascarado(s3, key: str, execution_id: str, masked_hash: str) -> None:
-    s3.put_object_tagging(
-        Bucket=MINIO_BUCKET,
-        Key=key,
-        Tagging={"TagSet": [
-            {"Key": "masked", "Value": "true"},
-            {"Key": "execution_id", "Value": execution_id},
-            {"Key": "masked_hash", "Value": masked_hash},
-        ]},
-    )
-
-
 # Processamento de um objeto
 def _novo_registro(execution_id: str, key: str) -> dict:
     return {
@@ -541,7 +502,8 @@ def _novo_registro(execution_id: str, key: str) -> dict:
 
 
 def processar_objeto(
-    s3, conn_str: str, key: str, execution_id: str, apply: bool, masked_hashes: set,
+    minio: ClienteMinio, conn_str: str, key: str, execution_id: str, apply: bool,
+    masked_hashes: set,
 ) -> dict:
     t0 = time.time()
     rec = _novo_registro(execution_id, key)
@@ -554,7 +516,7 @@ def processar_objeto(
 
     src = dst = None
     try:
-        sample = sample_bytes(s3, MINIO_BUCKET, key)
+        sample = minio.sample_bytes(key)
         real_encoding = detectar_encoding(sample)
         rec["encoding"] = real_encoding
 
@@ -567,7 +529,7 @@ def processar_objeto(
             delim, lineterm, fully_quoted = dialeto
             rec["delimiter"] = delim
 
-            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
             rec["hash_before"] = md5_arquivo(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
@@ -598,7 +560,7 @@ def processar_objeto(
                     "mdbtools não encontrado no PATH — necessário para ler .mdb "
                     "(instale o pacote 'mdbtools')."
                 )
-            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
             rec["hash_before"] = md5_arquivo(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
@@ -628,7 +590,7 @@ def processar_objeto(
             return rec
 
         elif ext in SUPPORTED_EXCEL:
-            src = baixar(s3, MINIO_BUCKET, key, ext, TMPDIR)
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
             rec["hash_before"] = md5_arquivo(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
@@ -666,12 +628,12 @@ def processar_objeto(
         rec["hash_after"] = md5_arquivo(dst)
 
         if apply:
-            _subir(s3, dst, key)
-            _tag_mascarado(s3, key, execution_id, rec["hash_after"])
+            minio.upload_arquivo(dst, key)
+            minio.marcar_mascarado(key, execution_id, rec["hash_after"])
             rec["status"] = "masked"
         else:
             preview_key = DRYRUN_PREFIX + key[len(RAW_PREFIX):] if key.startswith(RAW_PREFIX) else DRYRUN_PREFIX + key
-            _subir(s3, dst, preview_key)
+            minio.upload_arquivo(dst, preview_key)
             rec["status"] = "dry_run"
 
         return rec
@@ -689,7 +651,7 @@ def processar_objeto(
 
 
 # Auditoria (parquet)
-def _gravar_auditoria(s3, execution_id: str, registros: List[dict]) -> str:
+def _gravar_auditoria(minio: ClienteMinio, execution_id: str, registros: List[dict]) -> str:
     df = pd.DataFrame(registros)
     if "masked_columns" in df.columns:
         df["masked_columns"] = df["masked_columns"].apply(
@@ -699,12 +661,100 @@ def _gravar_auditoria(s3, execution_id: str, registros: List[dict]) -> str:
     df.to_parquet(buf, engine="pyarrow", index=False)
     buf.seek(0)
     key = f"{AUDIT_PREFIX}execution_id={execution_id}/part-0.parquet"
-    s3.put_object(Bucket=MINIO_BUCKET, Key=key, Body=buf.getvalue())
+    minio.put_object(key, buf.getvalue())
 
     local = Path(__file__).parent / f"auditoria_mascaramento_{execution_id}.parquet"
     df.to_parquet(local, engine="pyarrow", index=False)
     log.info("Auditoria: s3://%s/%s (cópia local: %s)", MINIO_BUCKET, key, local)
     return key
+
+
+# Execução
+def run(
+    apply: bool = False,
+    force: bool = False,
+    limit: int = 0,
+    pattern: str = "",
+    only_ext: str = "",
+    max_size_mb: int = 0,
+    prefix: Optional[str] = None,
+) -> Dict[str, int]:
+    """Mascara PII nos objetos de raw/. Retorna a contagem por status.
+
+    Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run(apply=True)).
+    """
+    if not HMAC_SECRET:
+        raise SystemExit(
+            "MASKING_HMAC_SECRET não definida no .env — necessária para tokenizar CPF/NIS."
+        )
+
+    prefix = prefix if prefix is not None else RAW_PREFIX
+    execution_id = uuid.uuid4().hex
+    only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
+
+    log.info("=" * 70)
+    log.info("Execução %s | modo=%s | prefixo=%s", execution_id,
+             "APPLY (sobrescreve raw/)" if apply else "DRY-RUN (masked_dryrun/)", prefix)
+    log.info("=" * 70)
+
+    conn_str = _conn_str()
+    _criar_control_table(conn_str)
+    masked_hashes = set() if force else _carregar_masked_hashes(conn_str)
+
+    minio = ClienteMinio()
+
+    registros: List[dict] = []
+    contagem: Dict[str, int] = {}
+    processados = 0
+
+    for key, size in minio.listar_objetos(prefix):
+        if pattern and pattern not in key:
+            continue
+        ext = os.path.splitext(key)[1].lower()
+        if only_ext_set and ext not in only_ext_set:
+            continue
+        # arquivos de lock/temporários do Excel (~$...) não são planilhas reais
+        if os.path.basename(key).startswith("~$"):
+            continue
+        if max_size_mb and size > max_size_mb * 1024 * 1024:
+            continue
+        if limit and processados >= limit:
+            break
+        processados += 1
+
+        if not force and minio.esta_mascarado(key):
+            rec = _novo_registro(execution_id, key)
+            rec["status"] = "skipped_already"
+            registros.append(rec)
+            contagem["skipped_already"] = contagem.get("skipped_already", 0) + 1
+            log.info("→ [%d] %s — já mascarado (tag), pulando", processados, key)
+            continue
+
+        rec = processar_objeto(minio, conn_str, key, execution_id, apply, masked_hashes)
+        registros.append(rec)
+        contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
+
+        if rec["hash_before"] is not None:
+            _registrar_control(conn_str, rec)
+
+        icone = {"masked": "✓", "dry_run": "◐", "error": "✗"}.get(rec["status"], "·")
+        log.info(
+            "%s [%d] %s — %s | cols=%d | linhas=%d/%d",
+            icone, processados, key, rec["status"],
+            len(rec["masked_columns"]), rec["registros_alterados"], rec["registros_total"],
+        )
+
+    if registros:
+        _gravar_auditoria(minio, execution_id, registros)
+
+    log.info("=" * 70)
+    log.info("Concluído. Objetos: %d", processados)
+    for status, n in sorted(contagem.items()):
+        log.info("  %-20s %d", status, n)
+    if not apply:
+        log.info("DRY-RUN — nada foi sobrescrito em raw/. Prévia em %s", DRYRUN_PREFIX)
+    log.info("Log: %s", _LOG_FILE)
+    return contagem
 
 
 # Main
@@ -724,77 +774,15 @@ def main() -> None:
     parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
     args = parser.parse_args()
 
-    if not HMAC_SECRET:
-        raise SystemExit(
-            "MASKING_HMAC_SECRET não definida no .env — necessária para tokenizar CPF/NIS."
-        )
-
-    execution_id = uuid.uuid4().hex
-    apply = args.apply
-    only_ext = {("." + e.strip().lstrip(".")).lower() for e in args.only_ext.split(",") if e.strip()}
-
-    log.info("=" * 70)
-    log.info("Execução %s | modo=%s | prefixo=%s", execution_id,
-             "APPLY (sobrescreve raw/)" if apply else "DRY-RUN (masked_dryrun/)", args.prefix)
-    log.info("=" * 70)
-
-    conn_str = _conn_str()
-    _criar_control_table(conn_str)
-    masked_hashes = set() if args.force else _carregar_masked_hashes(conn_str)
-
-    s3 = _cliente_minio()
-
-    registros: List[dict] = []
-    contagem: Dict[str, int] = {}
-    processados = 0
-
-    for key, size in _listar_objetos(s3, args.prefix):
-        if args.pattern and args.pattern not in key:
-            continue
-        ext = os.path.splitext(key)[1].lower()
-        if only_ext and ext not in only_ext:
-            continue
-        # arquivos de lock/temporários do Excel (~$...) não são planilhas reais
-        if os.path.basename(key).startswith("~$"):
-            continue
-        if args.max_size_mb and size > args.max_size_mb * 1024 * 1024:
-            continue
-        if args.limit and processados >= args.limit:
-            break
-        processados += 1
-
-        if not args.force and _ja_mascarado(s3, key):
-            rec = _novo_registro(execution_id, key)
-            rec["status"] = "skipped_already"
-            registros.append(rec)
-            contagem["skipped_already"] = contagem.get("skipped_already", 0) + 1
-            log.info("→ [%d] %s — já mascarado (tag), pulando", processados, key)
-            continue
-
-        rec = processar_objeto(s3, conn_str, key, execution_id, apply, masked_hashes)
-        registros.append(rec)
-        contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
-
-        if rec["hash_before"] is not None:
-            _registrar_control(conn_str, rec)
-
-        icone = {"masked": "✓", "dry_run": "◐", "error": "✗"}.get(rec["status"], "·")
-        log.info(
-            "%s [%d] %s — %s | cols=%d | linhas=%d/%d",
-            icone, processados, key, rec["status"],
-            len(rec["masked_columns"]), rec["registros_alterados"], rec["registros_total"],
-        )
-
-    if registros:
-        _gravar_auditoria(s3, execution_id, registros)
-
-    log.info("=" * 70)
-    log.info("Concluído. Objetos: %d", processados)
-    for status, n in sorted(contagem.items()):
-        log.info("  %-20s %d", status, n)
-    if not apply:
-        log.info("DRY-RUN — nada foi sobrescrito em raw/. Prévia em %s", DRYRUN_PREFIX)
-    log.info("Log: %s", _LOG_FILE)
+    run(
+        apply=args.apply,
+        force=args.force,
+        limit=args.limit,
+        pattern=args.pattern,
+        only_ext=args.only_ext,
+        max_size_mb=args.max_size_mb,
+        prefix=args.prefix,
+    )
 
 
 if __name__ == "__main__":
