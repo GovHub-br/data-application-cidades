@@ -1,11 +1,20 @@
-# `staging_para_db.py` — Ingestão Staging → Postgres (via DuckDB)
+# `staging_para_db.py` — Ingestão Staging → Postgres (via pg_duckdb)
 
-Quarta e última etapa do pipeline do data lake. Lê cada parquet de `staging/` **direto do
-MinIO** (httpfs) e materializa uma tabela no Postgres usando a extensão `postgres` do DuckDB
-(`ATTACH` + `CREATE TABLE AS`) — os dados **não passam pelo Python**.
+Quarta e última etapa do pipeline do data lake. Para cada parquet de `staging/`, dispara um
+`DROP TABLE` + `CREATE TABLE AS ... FROM read_parquet('s3://...')` **direto no Postgres**
+via `psycopg2` — é a extensão `pg_duckdb` (motor DuckDB embarcado no Postgres) que lê o
+objeto do MinIO usando o secret S3 já configurado no servidor. Os dados **não passam pelo
+processo Python**; o script só decide quais parquets carregar (metadados lidos localmente,
+via footer do parquet) e envia o SQL.
 
 > **Ordem importa:** rode **depois** do `raw_para_staging.py --apply`, que é quem popula
 > `staging/`.
+
+> **Pré-requisito:** `pg_duckdb` instalado/ativo no Postgres, `duckdb.postgres_role`
+> apontando para o mesmo usuário de `DB_DW_USER_MCID`, e um secret S3
+> (`duckdb.create_simple_secret`) já criado numa sessão desse usuário — setup feito uma vez
+> na VM, fora do escopo deste script. Sem isso, `read_parquet` falha com erro de
+> permissão/credenciais (`No credentials are provided` ou `duckdb.postgres_role`).
 
 ---
 
@@ -19,9 +28,10 @@ MinIO** (httpfs) e materializa uma tabela no Postgres usando a extensão `postgr
 - **Verifica** a carga: `count(*)` no Postgres tem que bater com o nº de linhas do parquet
   (senão a tabela não é dada como carregada).
 
-### Por que DuckDB
-Lê o parquet do MinIO e escreve no Postgres num único `CREATE TABLE AS`, sem materializar os
-dados na memória do processo Python — o que importa nos arquivos de ~2 GB / 10 M linhas.
+### Por que pg_duckdb
+O `CREATE TABLE AS` roda inteiro dentro do Postgres — leitura do MinIO e escrita na tabela
+são a mesma operação, sem passar pelo processo Python nem por outro serviço intermediário.
+Importa nos arquivos de ~2 GB / 10 M linhas: nada disso é materializado na memória do script.
 
 ### Tipagem: TEXT vs `character varying`
 O DuckDB mapeia `VARCHAR` para `character varying` **sem limite de tamanho**, que no Postgres
@@ -58,14 +68,18 @@ Para cada objeto em `staging/`:
 | `DB_DW_HOST_MCID`, `DB_DW_PORT_MCID`, `DB_DW_USER_MCID`, `DB_DW_PASSWORD_MCID`, `DB_DW_DBNAME_MCID` | sim | Postgres de destino |
 | `SFTP_SCHEMA` | não (default `sftp`) | Schema de destino e do controle |
 | `STAGING_PREFIX` | não (default `staging/`) | Prefixo de entrada |
-| `DUCKDB_MEMORY_LIMIT` | não (default `4GB`) | Limite de memória do DuckDB |
-| `DUCKDB_THREADS` | não (default `4`) | Threads do DuckDB |
-| `LAKE_TMPDIR` / `MASKING_TMPDIR` | recomendado | Dir de *spill* do DuckDB. **Não use `/tmp`** se for tmpfs (RAM). |
+| `DUCKDB_MEMORY_LIMIT` | não (default `4GB`) | `SET duckdb.max_memory` na sessão (pg_duckdb), *best-effort* |
+| `DUCKDB_THREADS` | não (default `4`) | `SET duckdb.threads` na sessão (pg_duckdb), *best-effort* |
+
+`DUCKDB_MEMORY_LIMIT`/`DUCKDB_THREADS` (ou `--memory-limit`/`--threads`) ajustam GUCs do
+`pg_duckdb` só para a conexão desta execução — se a role não tiver permissão para alterá-los,
+o script loga um aviso e segue a carga normalmente (não é motivo para abortar).
 
 ### Dependências
-`duckdb` (nova, já em `pyproject.toml`) + `pyarrow`, `boto3`, `psycopg2`, `pandas`,
-`python-dotenv`, já usadas pelo projeto. O DuckDB instala/carrega as extensões `httpfs` e
-`postgres` na primeira execução (precisa de saída para a internet uma vez).
+`pyarrow`, `boto3`, `psycopg2`, `pandas`, `python-dotenv` — já usadas pelo projeto. **Não
+depende mais do pacote Python `duckdb`**: quem lê o parquet é o `pg_duckdb` dentro do
+Postgres (ver pré-requisito no topo deste documento); o Python só lê o footer do parquet
+via `pyarrow` (metadados) e dispara o SQL via `psycopg2`.
 
 Importa `lake_utils.py`, então rode com `scripts/` acessível.
 
@@ -97,8 +111,8 @@ python scripts/staging_para_db.py --apply
 | `--pattern STR` | Só objetos cuja key contém `STR`. |
 | `--prefix P` | Prefixo a varrer (default `staging/`). |
 | `--max-size-mb N` | Pula objetos maiores que N MB. |
-| `--memory-limit` | Limite de memória do DuckDB (default `4GB`). |
-| `--threads` | Threads do DuckDB (default `4`). |
+| `--memory-limit` | `duckdb.max_memory` na sessão do pg_duckdb (default `4GB`). |
+| `--threads` | `duckdb.threads` na sessão do pg_duckdb (default `4`). |
 
 ---
 
@@ -158,5 +172,8 @@ Uma tabela de controle por etapa, todas no schema `sftp`:
 - **Sempre dry-run antes do `--apply`** e confira os nomes de tabela gerados.
 - **Fatiar** por tamanho; se algo falhar no meio, o já carregado não se perde (idempotência
   por `source_hash`).
-- Ajuste `--memory-limit` ao que a máquina tem; o DuckDB faz *spill* para `LAKE_TMPDIR`.
+- Ajuste `--memory-limit`/`--threads` ao que o Postgres da VM tem disponível — é o mesmo
+  processo que atende outras conexões; `duckdb.max_memory` alto demais pode competir por RAM
+  com o resto do servidor. *Spill* em disco (`duckdb.temporary_directory`) é config do
+  servidor, fora do escopo deste script.
 - Rode **depois** do `raw_para_staging.py --apply` (ver aviso no topo).

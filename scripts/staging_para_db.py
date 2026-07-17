@@ -1,19 +1,30 @@
 # scripts/staging_para_db.py
 
 """
-Ingestão Staging (Parquet no MinIO) -> Postgres, via DuckDB.
+Ingestão Staging (Parquet no MinIO) -> Postgres, via pg_duckdb.
 
-Quarta e última etapa do pipeline do data lake. Lê cada parquet de staging/ direto do MinIO
-(httpfs) e materializa uma tabela no Postgres usando a extensão `postgres` do DuckDB
-(ATTACH + CREATE TABLE AS), sem passar os dados pelo Python.
+Quarta e última etapa do pipeline do data lake. Para cada parquet de staging/, executa um
+DROP + CREATE TABLE AS ... FROM read_parquet('s3://...') diretamente no Postgres — é a
+extensão `pg_duckdb` (motor DuckDB embarcado no Postgres) que lê o objeto do MinIO usando o
+secret S3 já configurado no servidor. Os dados não passam pelo processo Python; este script
+só decide QUAIS parquets carregar e dispara o SQL via psycopg2.
+
+Pré-requisito (fora do escopo deste script, feito uma vez na VM): pg_duckdb instalado e
+ativo no Postgres, `duckdb.postgres_role` apontando para o mesmo usuário de
+DB_DW_USER_MCID, e um secret S3 (`duckdb.create_simple_secret`) criado numa sessão desse
+mesmo usuário. Sem isso, read_parquet falha com erro de permissão/credenciais — ver
+staging_para_db.md.
 
 Decisões do projeto:
   - Todas as colunas como TEXT — mantém a decisão do staging (tudo string); a tipagem
     (datas/números) fica para o dbt. Carga nunca falha por inferência de tipo errada.
   - Replace por arquivo: cada parquet vira/substitui uma tabela (DROP + CREATE TABLE AS
-    dentro de uma transação, então leitores enxergam a tabela antiga até o commit).
+    dentro de uma única transação Postgres, então leitores enxergam a tabela antiga até o
+    commit; se falhar, rollback e a tabela antiga continua de pé).
   - Colunas de linhagem (`_source_file`, `_ingested_at`, `_source_hash`) do staging são
     preservadas na tabela final.
+  - Metadados (nº de linhas, colunas, hash) são lidos localmente via pyarrow, só o footer
+    do parquet — decide idempotência/dry-run sem precisar de uma conexão ao Postgres.
 
 IMPORTANTE (ordem no pipeline): rode DEPOIS do `raw_para_staging.py --apply`, que é quem
 popula staging/.
@@ -34,7 +45,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import duckdb
 import pandas as pd
 import psycopg2
 import pyarrow.parquet as pq
@@ -60,10 +70,6 @@ CONTROL_TABLE = "_staging_to_dw_log"
 
 STAGING_PREFIX = os.environ.get("STAGING_PREFIX", "staging/")
 AUDIT_PREFIX   = "audit/db/"
-
-TMPDIR = os.environ.get("LAKE_TMPDIR") or os.environ.get("MASKING_TMPDIR") or None
-if TMPDIR:
-    os.makedirs(TMPDIR, exist_ok=True)
 
 # Postgres trunca identificadores em 63 bytes; truncar aqui (com sufixo determinístico)
 # evita colisão silenciosa entre nomes longos que compartilham o mesmo prefixo.
@@ -240,65 +246,83 @@ def _ler_metadados(fs, staging_key: str) -> Tuple[int, List[str], Optional[str],
     return n_linhas, colunas, _get(b"source_hash"), _get(b"source_file")
 
 
-# DuckDB
-def _conectar_duckdb(memory_limit: str, threads: int):
-    con = duckdb.connect()
-    con.execute("INSTALL httpfs; LOAD httpfs;")
-    con.execute("INSTALL postgres; LOAD postgres;")
-    con.execute(f"SET memory_limit='{memory_limit}';")
-    con.execute(f"SET threads={threads};")
-    if TMPDIR:
-        con.execute(f"SET temp_directory='{TMPDIR}';")
-
-    endpoint = MINIO_ENDPOINT
-    use_ssl = endpoint.startswith("https://")
-    for pref in ("http://", "https://"):
-        if endpoint.startswith(pref):
-            endpoint = endpoint[len(pref):]
-    con.execute("SET s3_region='us-east-1';")
-    con.execute("SET s3_url_style='path';")  # MinIO usa path-style, não virtual-host
-    con.execute(f"SET s3_endpoint='{endpoint}';")
-    con.execute(f"SET s3_use_ssl={'true' if use_ssl else 'false'};")
-    con.execute(f"SET s3_access_key_id='{MINIO_ACCESS_KEY}';")
-    con.execute(f"SET s3_secret_access_key='{MINIO_SECRET_KEY}';")
-    return con
+# Carga via pg_duckdb (SQL executado no próprio Postgres)
+_MEMORY_LIMIT_RE = re.compile(r"^\d+(KB|MB|GB|TB)?$", re.IGNORECASE)
 
 
-def _attach_postgres(con) -> None:
-    dsn = (
-        f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
-        f"user={PG_USER} password={PG_PASSWORD}"
-    )
-    con.execute(f"ATTACH '{dsn}' AS pg (TYPE POSTGRES);")
+def _ajustar_recursos_sessao(conn, memory_limit: str, threads: int) -> None:
+    """Aplica limites de recursos do pg_duckdb nesta sessão (best-effort).
+
+    `duckdb.max_memory`/`duckdb.threads` são GUCs da extensão pg_duckdb, válidos só pra
+    conexão atual. Se a role não tiver permissão pra alterá-los (ou a versão instalada não
+    os expuser), loga um aviso e segue — não é motivo pra abortar a carga. Cada SET roda no
+    seu próprio commit/rollback: um SET que falha deixa a transação abortada no Postgres, e
+    sem o rollback aqui o DROP/CREATE seguinte falharia também por tabela.
+    """
+    if not _MEMORY_LIMIT_RE.match(memory_limit):
+        log.warning("memory-limit %r em formato inesperado, ignorando ajuste.", memory_limit)
+    else:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(f"SET duckdb.max_memory = '{memory_limit}';")
+            conn.commit()
+        except psycopg2.Error as e:
+            conn.rollback()
+            log.warning("Não foi possível ajustar duckdb.max_memory: %s", e)
+    try:
+        with conn.cursor() as cur:
+            cur.execute(f"SET duckdb.threads = {int(threads)};")
+        conn.commit()
+    except psycopg2.Error as e:
+        conn.rollback()
+        log.warning("Não foi possível ajustar duckdb.threads: %s", e)
 
 
 def _select_texto(colunas_parquet: List[str], colunas_pg: List[str]) -> str:
-    """SELECT com todas as colunas explicitamente CAST para VARCHAR (-> TEXT no Postgres)."""
+    """SELECT com todas as colunas explicitamente CAST para VARCHAR (-> TEXT no Postgres).
+
+    pg_duckdb expõe o retorno de read_parquet() como um único registro opaco pro parser do
+    Postgres: as colunas não podem ser referenciadas como "coluna" direto, tem que ser via
+    r['coluna'] (alias da função + acesso por chave) — sem isso dá "column ... does not
+    exist" com um HINT nesse sentido.
+    """
     partes = [
-        f'CAST("{orig}" AS VARCHAR) AS "{final}"'
+        f"""CAST(r['{orig.replace("'", "''")}'] AS VARCHAR) AS "{final}\""""
         for orig, final in zip(colunas_parquet, colunas_pg)
     ]
     return ", ".join(partes)
 
 
 def _carregar_tabela(
-    con, staging_key: str, tabela: str, colunas_parquet: List[str], colunas_pg: List[str],
+    conn_str: str, staging_key: str, tabela: str,
+    colunas_parquet: List[str], colunas_pg: List[str],
+    memory_limit: str, threads: int,
 ) -> int:
-    """DROP + CREATE TABLE AS na mesma transação; retorna nº de linhas na tabela final."""
+    """DROP + CREATE TABLE AS na mesma transação Postgres; retorna nº de linhas carregadas.
+
+    O read_parquet roda dentro do Postgres via pg_duckdb (extensão), usando o secret S3 já
+    configurado no servidor — o parquet nunca passa pelo processo Python.
+    """
     uri = f"s3://{MINIO_BUCKET}/{staging_key}"
     select = _select_texto(colunas_parquet, colunas_pg)
-    con.execute("BEGIN TRANSACTION;")
+    conn = psycopg2.connect(conn_str)
     try:
-        con.execute(f'DROP TABLE IF EXISTS pg.{SCHEMA}."{tabela}";')
-        con.execute(
-            f'CREATE TABLE pg.{SCHEMA}."{tabela}" AS '
-            f"SELECT {select} FROM read_parquet('{uri}');"
-        )
-        con.execute("COMMIT;")
+        _ajustar_recursos_sessao(conn, memory_limit, threads)
+        with conn.cursor() as cur:
+            cur.execute(f'DROP TABLE IF EXISTS {SCHEMA}."{tabela}";')
+            cur.execute(
+                f'CREATE TABLE {SCHEMA}."{tabela}" AS SELECT {select} FROM read_parquet(%s) AS r;',
+                (uri,),
+            )
+        conn.commit()
+        with conn.cursor() as cur:
+            cur.execute(f'SELECT count(*) FROM {SCHEMA}."{tabela}";')
+            return cur.fetchone()[0]
     except Exception:
-        con.execute("ROLLBACK;")
+        conn.rollback()
         raise
-    return con.execute(f'SELECT count(*) FROM pg.{SCHEMA}."{tabela}";').fetchone()[0]
+    finally:
+        conn.close()
 
 
 # Processamento de um objeto
@@ -319,7 +343,8 @@ def _novo_registro(execution_id: str, staging_key: str) -> dict:
 
 
 def processar_objeto(
-    con, fs, staging_key: str, execution_id: str, apply: bool, carregados: set,
+    conn_str: str, fs, staging_key: str, execution_id: str, apply: bool, carregados: set,
+    memory_limit: str, threads: int,
 ) -> dict:
     t0 = time.time()
     rec = _novo_registro(execution_id, staging_key)
@@ -351,7 +376,9 @@ def processar_objeto(
             rec["status"] = "dry_run"
             return rec
 
-        n_pg = _carregar_tabela(con, staging_key, tabela, colunas_parquet, colunas_pg)
+        n_pg = _carregar_tabela(
+            conn_str, staging_key, tabela, colunas_parquet, colunas_pg, memory_limit, threads,
+        )
         if n_pg != n_linhas:
             raise ValueError(f"nº de linhas divergem: postgres={n_pg} != parquet={n_linhas}")
         rec["status"] = "loaded"
@@ -391,7 +418,7 @@ def _gravar_auditoria(s3, execution_id: str, registros: List[dict]) -> None:
 # Main
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Ingestão Staging (Parquet/MinIO) -> Postgres via DuckDB."
+        description="Ingestão Staging (Parquet/MinIO) -> Postgres via pg_duckdb."
     )
     parser.add_argument("--apply", action="store_true",
                         help="Cria/substitui as tabelas no Postgres. Sem esta flag roda em dry-run.")
@@ -404,9 +431,9 @@ def main() -> None:
     parser.add_argument("--max-size-mb", type=int, default=0,
                         help="Pula objetos maiores que N MB (0 = sem limite).")
     parser.add_argument("--memory-limit", default=os.environ.get("DUCKDB_MEMORY_LIMIT", "4GB"),
-                        help="Limite de memória do DuckDB (default 4GB).")
+                        help="Limite de memória do pg_duckdb p/ esta sessão (default 4GB).")
     parser.add_argument("--threads", type=int, default=int(os.environ.get("DUCKDB_THREADS", 4)),
-                        help="Threads do DuckDB (default 4).")
+                        help="Threads do pg_duckdb p/ esta sessão (default 4).")
     args = parser.parse_args()
 
     execution_id = uuid.uuid4().hex
@@ -425,40 +452,36 @@ def main() -> None:
 
     s3 = criar_cliente_minio(MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY)
     fs = _fs_minio()
-    con = _conectar_duckdb(args.memory_limit, args.threads)
-    if apply:
-        _attach_postgres(con)
 
     registros: List[dict] = []
     contagem: Dict[str, int] = {}
     processados = 0
 
-    try:
-        for key, size in _listar_objetos(s3, args.prefix):
-            if not key.lower().endswith(".parquet"):
-                continue
-            if args.pattern and args.pattern not in key:
-                continue
-            if args.max_size_mb and size > args.max_size_mb * 1024 * 1024:
-                continue
-            if args.limit and processados >= args.limit:
-                break
-            processados += 1
+    for key, size in _listar_objetos(s3, args.prefix):
+        if not key.lower().endswith(".parquet"):
+            continue
+        if args.pattern and args.pattern not in key:
+            continue
+        if args.max_size_mb and size > args.max_size_mb * 1024 * 1024:
+            continue
+        if args.limit and processados >= args.limit:
+            break
+        processados += 1
 
-            rec = processar_objeto(con, fs, key, execution_id, apply, carregados)
-            registros.append(rec)
-            contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
-            if rec["source_hash"] is not None and rec["status"] != "skipped_already":
-                _registrar_control(conn_str, rec)
+        rec = processar_objeto(
+            conn_str, fs, key, execution_id, apply, carregados, args.memory_limit, args.threads,
+        )
+        registros.append(rec)
+        contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
+        if rec["source_hash"] is not None and rec["status"] != "skipped_already":
+            _registrar_control(conn_str, rec)
 
-            icone = {"loaded": "✓", "dry_run": "◐", "error": "✗"}.get(rec["status"], "·")
-            log.info(
-                "%s [%d] %s (%s) — %s | tabela=%s | linhas=%d | cols=%d | %.1fs",
-                icone, processados, key, format_size(size), rec["status"],
-                rec["target_table"], rec["n_linhas"], rec["n_colunas"], rec["_segundos"],
-            )
-    finally:
-        con.close()
+        icone = {"loaded": "✓", "dry_run": "◐", "error": "✗"}.get(rec["status"], "·")
+        log.info(
+            "%s [%d] %s (%s) — %s | tabela=%s | linhas=%d | cols=%d | %.1fs",
+            icone, processados, key, format_size(size), rec["status"],
+            rec["target_table"], rec["n_linhas"], rec["n_colunas"], rec["_segundos"],
+        )
 
     if registros:
         _gravar_auditoria(s3, execution_id, registros)
