@@ -1,0 +1,97 @@
+version: 2
+
+# ---------------------------------------------------------------------------
+# RASCUNHO gerado pela skill document-semantic-layer — PENDENTE DE REVISÃO
+# HUMANA. Nada aqui é documentação aprovada. Ver relatório da execução para
+# o detalhamento completo de cada pendência.
+# ---------------------------------------------------------------------------
+#
+# Nenhum semantic_model foi declarado nesta rodada. Este subject area
+# (conjuntura_dbt) tem 20 modelos .sql em gold/, mas:
+#
+# 1) CAMADA 0 AUSENTE (19/20 modelos) — gold/schema.yml só documenta
+#    `description` de tabela/coluna para 1 dos 20 modelos gold. Pela regra da
+#    skill (SKILL.md, passo 3: "se a description da tabela, ou de qualquer
+#    coluna candidata a entidade/dimensão/medida, estiver vazia ou for
+#    insuficiente, pare aqui"), os 19 modelos abaixo estão BLOQUEADOS até um
+#    humano completar a camada 0 (description de tabela + colunas) no
+#    gold/schema.yml — não é algo que esta skill deva inferir/inventar:
+#      - gold_abecip_novos_financiamentos_imobiliarios
+#      - gold_balancos_empresas_lancamentos
+#      - gold_balancos_empresas_vendas
+#      - gold_cbic_lancamentos_regiao
+#      - gold_cbic_lancamentos
+#      - gold_cbic_vendas_regiao
+#      - gold_cbic_vendas
+#      - gold_empregos_construcao
+#      - gold_fgts_renda_familiar
+#      - gold_financiamento_pf_por_faixa
+#      - gold_financiamentos_habitacionais
+#      - gold_financiamentos_imobiliarios
+#      - gold_ibge_pnad_construcao
+#      - gold_indicadores_financiamento_pf
+#      - gold_pib_construcao_civil
+#      - gold_precos_construcao
+#      - gold_saldo_caderneta_poupanca
+#      - gold_ticket_medio_vs_incc
+#      - gold_uh_condicao_uso
+#
+# 2) FORA DE ESCOPO DO SEMANTIC LAYER (1/20 modelos) — gold_indices_mercado_imobiliario
+#    É o único modelo com camada 0 completa (description de tabela + das 4
+#    colunas: periodo, imob_var, fipezap_var, icst_var, abramat_var; tem
+#    também um data_test row_count_match). Mesmo assim, NÃO qualifica para
+#    semantic_model, pela regra do checklist.md ("Nunca declare
+#    semantic_models sobre um modelo já pré-agregado/pivotado ... UNION ALL
+#    que mistura mais de um nível de agregação numa coluna genérica cujo
+#    significado depende de outra coluna da mesma linha"):
+#
+#    - A própria description da tabela diz: "Estruturada com 4 períodos de
+#      comparação para consumo direto no Superset" — é uma tabela de
+#      serialização/rollup para BI, não um fato atômico.
+#    - O grain é sintético: 4 linhas hardcoded na CTE `periodos` (janelas de
+#      comparação como "DEZ 25 vs. NOV 25", "JAN-DEZ/25"), não um grain de
+#      negócio real testável.
+#    - Denormaliza 4 séries de índice independentes (IMOB/Infomoney,
+#      FipeZap, ICST/FGV-IBRE, ABRAMAT) como colunas-irmãs de uma mesma
+#      linha, vindas de 4 modelos silver distintos via LEFT JOIN.
+#    - O mais importante: em 3 das 4 colunas de medida, o SIGNIFICADO da
+#      coluna muda conforme o valor de `periodo`/`ordem` na mesma linha —
+#      exatamente o padrão que o checklist veta:
+#        * fipezap_var: ordem=1 usa var_mensal simples; ordem=2 usa uma razão
+#          encadeada de variações mensais; ordem=3/4 usam var_ano (YTD). São
+#          fórmulas de negócio diferentes na mesma coluna física.
+#        * icst_var: ordem=1/2/3/4 comparam pares de datas diferentes
+#          (atual×anterior, atual×ano anterior, atual×ano anterior de novo,
+#          ano anterior×ano retrasado) — mesma coluna, bases de comparação
+#          diferentes por linha.
+#        * abramat_var: ordem=1 usa var_mes (variação mensal) da fonte;
+#          ordem=2/3 usam var_12_meses (variação anual) avaliado em
+#          data_atual; ordem=4 usa var_12_meses avaliado em data_anterior —
+#          mistura variação mensal e anual na mesma coluna.
+#      Só `imob_var` usa uma fórmula única e consistente (retorno entre
+#      close_fim_mes de duas datas variáveis por linha) — não teria, isolada,
+#      o problema acima, mas como as outras 3 medidas da mesma tabela têm,
+#      e MetricFlow calcularia todas a partir do mesmo semantic_model,
+#      manter a tabela inteira fora do semantic layer é a opção mais segura.
+#    - Consequência prática: declarar `measures`/`agg` sobre estas colunas
+#      produziria erros silenciosos (ex.: somar/mediar variações percentuais
+#      que já misturam MoM e YoY do mesmo índice).
+#
+#    O grain atômico de origem (silver_imob_infomoney, silver_fipezap_locacao,
+#    silver_fgv_icst, silver_abramat_indice — cada um com valor/variação por
+#    data_referencia, sem pivot) seria o candidato natural para semântica
+#    futura. Isso fica fora do escopo desta execução por instrução explícita:
+#    conjuntura_dbt é o único subject area do repositório com schemas físicos
+#    separados por camada (conjuntura_bronze/silver/gold), então a regra
+#    padrão da skill ("prefira gold; documente silver só quando não houver
+#    gold para o subject area") se aplica sem exceção aqui — ao contrário de
+#    empreendimento_far_dbt, que tem um motivo específico (schema físico
+#    único, registrado em CONTEXT.md) para documentar as duas camadas.
+#
+# GLOSSÁRIO — pendências (siglas sem expansão em nenhuma description lida):
+#   IMOB, FIPEZAP, ABRAMAT, FGV, FGV-IBRE, IBGE, PIB, PF, UH, CBIC, FGTS,
+#   PNAD, INCC. ICST tem expansão parcial em silver/schema.yml ("Índice de
+#   Confiança do Setor de Construção (ICST) da FGV-IBRE"), mas FGV-IBRE em si
+#   não é expandido. Nenhum significado foi inventado — ver relatório.
+
+semantic_models: []

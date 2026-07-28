@@ -1,0 +1,214 @@
+version: 2
+
+# NOTA (decisão registrada em CONTEXT.md, 2026-07-27): este subject area não
+# separa bronze/silver/gold em schemas físicos distintos (só conjuntura_dbt
+# faz isso neste repositório) e o graphrag-tais ainda não consome
+# semantic_models.yml/MetricFlow (só Table/Column via OpenMetadata). Por
+# isso, silver e gold estão documentados aqui em paralelo, por decisão
+# explícita do time — apesar de `empreendimento` (silver) e
+# `ficha_empreendimento` (gold, ao lado) terem o MESMO grain (apf) e
+# medidas equivalentes. Essa duplicação de entidade/medida entre as duas
+# camadas PRECISA de resolução (escolher uma como canônica) antes de
+# qualquer Rota A/B do graphrag-tais ser implementada — ver CONTEXT.md.
+
+semantic_models:
+  - name: empreendimento
+    model: ref('empreendimento')
+    description: >
+      Visão Silver unificada de Empreendimentos FAR do Novo MCMV — 1 linha
+      por APF. Consolida cadastro_pj, consolidado, obra_mensal e
+      dados_prioritarios_caixa (bronze) pela chave APF. Grain idêntico ao de
+      gold.ficha_empreendimento (ver nota de duplicação acima).
+    defaults:
+      agg_time_dimension: dt_contratacao
+
+    entities:
+      - name: apf
+        type: primary
+        expr: apf
+        # Evidência: description "Chave primária (Arranjo Produtivo
+        # Financeiro). ID único do empreendimento contratado na Caixa."
+        # PENDENTE_REVISAO_HUMANA: sem data_test (unique/not_null) para apf
+        # neste schema.yml — reforçar.
+
+    dimensions:
+      - name: uf
+        type: categorical
+        description: "Unidade Federativa (UF) do empreendimento."
+      - name: municipio
+        type: categorical
+        description: "Nome do município onde o empreendimento está localizado."
+      - name: situacao_empreendimento
+        type: categorical
+        description: >
+          Status/Situação gerencial atual da obra (ex: ENTREGUE, EM
+          ANDAMENTO, PARALISADA).
+      - name: tipologia
+        type: categorical
+        description: >
+          Classificação do tipo de construção. Calculado a partir de
+          co_tipo_edificacao (Casa Térrea, Apartamento, Sobrado, Misto).
+      - name: agente_financeiro
+        type: categorical
+        description: "Banco responsável pelo financiamento/gestão (ex: CAIXA)."
+      - name: portaria_selecao
+        type: categorical
+        description: "Número da portaria MCID de seleção ou enquadramento da proposta."
+      - name: co_originacao
+        type: categorical
+        description: >
+          Código de originação do empreendimento (1 = Seleção, 2 =
+          Calamidade). PENDENTE de glossário/legenda completa — ver métodos
+          adicionais usados no case de gold.ficha_empreendimento (metodo),
+          que sugerem valores além dos 2 documentados aqui.
+      - name: co_tipo_demanda
+        type: categorical
+        description: >
+          Código do tipo de demanda (1 = Cadastro Habitacional).
+          PENDENTE_CAMADA_0: description original documenta só o código 1,
+          mas gold.ficha_empreendimento.demanda (case) trata 7 códigos
+          diferentes — domínio de valores desta coluna está incompleto na
+          description de origem; precisa de humano completar o schema.yml
+          da silver antes de considerar este item resolvido.
+      - name: dt_contratacao
+        type: time
+        type_params: {time_granularity: day}
+        description: "Data de assinatura do contrato de financiamento da obra."
+      - name: dt_previsao_entrega
+        type: time
+        type_params: {time_granularity: day}
+        description: "Previsão estipulada para a entrega oficial do empreendimento."
+      - name: dt_conclusao_obra
+        type: time
+        type_params: {time_granularity: day}
+        description: "Data em que a obra física atingiu 100% (se aplicável)."
+      - name: dt_entrega
+        type: time
+        type_params: {time_granularity: day}
+        description: "Data de entrega das chaves aos beneficiários finais (se aplicável)."
+
+    measures:
+      - name: valor_contratado
+        agg: sum
+        description: "Valor total de investimento (Recurso FAR + Contrapartidas), em R$."
+      - name: valor_aporte_adicional
+        agg: sum
+        description: "Valor total de aportes ou suplementações adicionais liberadas durante a obra, em R$."
+      - name: valor_desembolsado
+        agg: sum
+        description: "Total financeiro já repassado/liberado para a construtora até a medição atual, em R$."
+      - name: quantidade_uh
+        agg: sum
+        description: "Número total de Unidades Habitacionais (UHs) no empreendimento."
+      - name: pessoas_atendidas
+        agg: sum
+        description: >
+          Estimativa de pessoas diretamente beneficiadas (heurística:
+          quantidade_uh * 3.3, arredondado para baixo).
+      - name: qtd_empreendimentos
+        agg: count_distinct
+        expr: apf
+        description: "Quantidade de empreendimentos distintos (por APF)."
+
+      # --- PENDENTE_REVISAO_HUMANA: razão/percentual pré-calculado, sum distorce ---
+      - name: valor_por_uh
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Custo unitário estimado por UH (valor_contratado / quantidade_uh).
+          Razão pré-calculada por empreendimento — sum/average direto
+          distorce; deveria ser razão de somas (sum(valor_contratado) /
+          sum(quantidade_uh)).
+      - name: percentual_execucao_fisica
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Porcentagem (0-100) do andamento físico da obra. A description
+          original não define a régua de agregação entre empreendimentos
+          (média simples vs. ponderada).
+      - name: percentual_execucao_financeira
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Percentual do recurso liberado sobre o valor total
+          (valor_desembolsado / valor_contratado * 100). Mesmo problema de
+          régua de agregação que percentual_execucao_fisica.
+
+  - name: evolucao_financeira
+    model: ref('evolucao_financeira')
+    description: >
+      Série temporal mensal de liberações financeiras por empreendimento
+      (APF × mês). Relação 1:N com `empreendimento` (via raiz de 6 dígitos
+      do APF). Cobertura: ~79% dos empreendimentos (651/823).
+    defaults:
+      agg_time_dimension: mes
+
+    entities:
+      - name: apf
+        type: foreign
+        expr: apf
+        # Referencia a entidade primary `apf` do semantic_model
+        # `empreendimento` acima. Este modelo não tem entidade primary
+        # própria: grain real é composto (apf, mes) — resolvido via
+        # entidade foreign + dimensão de tempo `mes`, padrão MetricFlow
+        # para fatos transacionais/série temporal.
+        # Evidência do grain: description do modelo ("Grão: apf x mes") +
+        # data_tests not_null em apf e mes (sem teste de unicidade
+        # combinada apf+mes declarado — PENDENTE reforçar com
+        # `unique_combination_of_columns`).
+
+    dimensions:
+      - name: mes
+        type: time
+        type_params: {time_granularity: month}
+        description: "Primeiro dia do mês da(s) liberação(ões) (date, truncado)."
+      - name: municipio
+        type: categorical
+        description: "Município do empreendimento. (contexto copiado de empreendimento no JOIN — repetido em toda linha do mesmo APF)"
+      - name: uf
+        type: categorical
+        description: "UF do empreendimento. (contexto copiado de empreendimento no JOIN — repetido em toda linha do mesmo APF)"
+
+    measures:
+      - name: qt_liberacoes
+        agg: sum
+        description: "Quantidade de liberações financeiras individuais no mês."
+      - name: vr_liberado_mes
+        agg: sum
+        description: "Soma de todos os valores liberados no mês em R$."
+      - name: vr_pago_obra_mes
+        agg: sum
+        description: "Parcela destinada à obra/edificação no mês em R$."
+      - name: vr_pago_terreno_mes
+        agg: sum
+        description: "Parcela destinada ao terreno no mês em R$."
+      - name: vr_pago_pts_mes
+        agg: sum
+        description: "Parcela destinada ao trabalho social (PTS) no mês em R$."
+      - name: vr_pago_incc_mes
+        agg: sum
+        description: "Parcela de ajuste INCC no mês em R$."
+
+      # --- PENDENTE_REVISAO_HUMANA: valor repetido/acumulado por partição, sum sobrecontaria ---
+      - name: valor_contratado
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Valor total contratado do empreendimento (herdado da silver
+          empreendimento). ARMADILHA DE FAN-OUT: este valor é constante e
+          repetido em TODA linha (apf, mes) do mesmo APF — sum() aqui
+          multiplica o valor real pelo número de meses com dados,
+          superestimando o total. Não deve ser somado neste grain; usar
+          sempre o measure equivalente do semantic_model `empreendimento`
+          (grain 1:1 por apf).
+      - name: vr_acumulado
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Desembolso acumulado progressivo por APF até o mês corrente
+          (SUM() OVER PARTITION BY apf ORDER BY mes). ARMADILHA: é um
+          total corrente (running total) — sum() entre meses do mesmo APF
+          soma acumulados sobre acumulados. Uso correto exige MAX por
+          (apf) filtrado num mês, nunca sum().
+      - name: pct_executado_financeiro
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Percentual do desembolso acumulado sobre o valor contratado.
+          Mesmo problema de régua de agregação de percentual_execucao_*
+          em `empreendimento`, agravado por também ser cumulativo mês a
+          mês (mesma armadilha de vr_acumulado).

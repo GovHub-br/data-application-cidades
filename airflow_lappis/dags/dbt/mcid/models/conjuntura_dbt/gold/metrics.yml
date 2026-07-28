@@ -1,0 +1,18 @@
+version: 2
+
+# ---------------------------------------------------------------------------
+# RASCUNHO gerado pela skill document-semantic-layer — PENDENTE DE REVISÃO
+# HUMANA.
+# ---------------------------------------------------------------------------
+#
+# Nenhuma métrica declarada nesta rodada. Regra da skill (checklist.md):
+# "Toda métrica referencia uma medida existente e documentada — nunca uma
+# expressão solta." Como nenhum semantic_model foi qualificado em
+# gold/semantic_models.yml (mesma pasta) — 19 dos 20 modelos gold bloqueados
+# por camada 0 ausente, e o único completo (gold_indices_mercado_imobiliario)
+# classificado fora de escopo do semantic layer (tabela de rollup/BI com
+# colunas cujo significado muda por linha) — não há nenhuma measure-base
+# válida para lastrear uma métrica. Ver semantic_models.yml e o relatório da
+# execução para o detalhamento.
+
+metrics: []

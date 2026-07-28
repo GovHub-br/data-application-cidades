@@ -1,0 +1,288 @@
+version: 2
+
+# FORA DE ESCOPO (checklist.md, regra "modelo pré-agregado/pivotado"):
+# resumo_gerencial, panorama_estadual e mapa_nacional NÃO têm semantic_model
+# aqui. São rollups já agregados (GROUP BY que reduz o grain de
+# ficha_empreendimento) ou pivots com UNION ALL de níveis de agregação
+# diferentes numa coluna genérica (panorama_estadual.valor_1..4,
+# mapa_nacional.nivel='uf'|'regiao'). Declarar measures/agg sobre eles
+# produziria erros de dupla agregação (média de médias). O grain atômico
+# real do subject area já está documentado em ficha_empreendimento (aqui) e
+# em empreendimento (silver, ao lado) — consultas de negócio devem agregar
+# a partir de um desses dois, nunca dos três rollups citados.
+
+semantic_models:
+  - name: ficha_empreendimento
+    model: ref('ficha_empreendimento')
+    description: >
+      Ficha do Empreendimento (FAR/Novo MCMV) — uma linha por APF, com regras
+      de negócio finais de status, prazo e ritmo físico-financeiro. Passthrough
+      1:1 de silver.empreendimento (mesmo grain), com colunas adicionais
+      calculadas na camada gold.
+    defaults:
+      agg_time_dimension: dt_contratacao
+
+    entities:
+      - name: apf
+        type: primary
+        expr: apf
+        # Evidência: silver.empreendimento.apf documentado como "Chave
+        # primária ... ID único do empreendimento contratado na Caixa."
+        # ficha_empreendimento é select direto de base_silver (sem group by/
+        # join que altere grain) — mesma chave, mesma cardinalidade.
+        # PENDENTE_REVISAO_HUMANA: não há data_test (unique/not_null) para
+        # apf declarado no gold/schema.yml desta tabela — reforçar.
+
+    dimensions:
+      # --- Categóricas, transformação própria da camada gold (description já existe no gold/schema.yml) ---
+      - name: metodo
+        type: categorical
+        description: >
+          Método de originação/seleção do empreendimento (ex. SELEÇÃO,
+          CALAMIDADE/EMERGÊNCIA).
+      - name: demanda
+        type: categorical
+        description: >
+          Tipo de demanda habitacional atendida pelo projeto (ex. CADASTRO
+          HABITACIONAL).
+      - name: municipio_uf
+        type: categorical
+        description: >
+          Localização do empreendimento no formato "Município/UF" (ex.
+          "Horizonte/CE").
+      - name: status_execucao_simplificado
+        type: categorical
+        description: >
+          Regra de negócio: traduz a porcentagem física em status categóricos
+          (Não Iniciado, Em Andamento, Concluído).
+      - name: status_prazo
+        type: categorical
+        description: >
+          Regra de negócio: compara a data de previsão de entrega com a data
+          atual. Alerta "Em Atraso" se não entregue e data limite vencida.
+      - name: ritmo_fisico_financeiro
+        type: categorical
+        description: >
+          Regra de negócio: compara % de execução física com % de desembolso
+          financeiro (tolerância de 5%) — "Ritmo Equilibrado", "Desembolso
+          Adiantado" ou "Desembolso Atrasado".
+
+      # --- Categóricas, passthrough (herdadas de silver.empreendimento, sem transformação) ---
+      - name: uf
+        type: categorical
+        description: "Unidade Federativa (UF) do empreendimento. (herdado de silver.empreendimento)"
+      - name: municipio
+        type: categorical
+        description: "Nome do município onde o empreendimento está localizado. (herdado de silver.empreendimento)"
+      - name: situacao_empreendimento
+        type: categorical
+        description: >
+          Status/Situação gerencial atual da obra (ex: ENTREGUE, EM
+          ANDAMENTO, PARALISADA). (herdado de silver.empreendimento)
+      - name: tipologia
+        type: categorical
+        description: >
+          Classificação do tipo de construção: Casa Térrea, Apartamento,
+          Sobrado ou Misto. (herdado de silver.empreendimento)
+      - name: agente_financeiro
+        type: categorical
+        description: >
+          Banco responsável pelo financiamento/gestão (ex: CAIXA). (herdado
+          de silver.empreendimento)
+      - name: portaria_selecao
+        type: categorical
+        description: >
+          Número da portaria MCID de seleção ou enquadramento da proposta.
+          (herdado de silver.empreendimento)
+
+      # --- Temporais, passthrough (herdadas de silver.empreendimento) ---
+      - name: dt_contratacao
+        type: time
+        type_params: {time_granularity: day}
+        description: "Data de assinatura do contrato de financiamento da obra. (herdado de silver.empreendimento)"
+      - name: dt_previsao_entrega
+        type: time
+        type_params: {time_granularity: day}
+        description: "Previsão estipulada para a entrega oficial do empreendimento. (herdado de silver.empreendimento)"
+      - name: dt_conclusao_obra
+        type: time
+        type_params: {time_granularity: day}
+        description: "Data em que a obra física atingiu 100% (se aplicável). (herdado de silver.empreendimento)"
+      - name: dt_entrega
+        type: time
+        type_params: {time_granularity: day}
+        description: "Data de entrega das chaves aos beneficiários finais (se aplicável). (herdado de silver.empreendimento)"
+
+    measures:
+      - name: valor_contratado
+        agg: sum
+        description: >
+          Valor total de investimento contratado (Recurso FAR +
+          Contrapartidas), em R$. (herdado de silver.empreendimento)
+      - name: valor_aporte_adicional
+        agg: sum
+        description: >
+          Valor total de aportes ou suplementações adicionais liberadas
+          durante a obra, em R$. (herdado de silver.empreendimento)
+      - name: valor_desembolsado
+        agg: sum
+        description: >
+          Total financeiro já repassado/liberado para a construtora até a
+          medição atual, em R$. (herdado de silver.empreendimento)
+      - name: quantidade_uh
+        agg: sum
+        description: >
+          Número total de Unidades Habitacionais (UHs) no empreendimento.
+          (herdado de silver.empreendimento)
+      - name: pessoas_atendidas
+        agg: sum
+        description: >
+          Estimativa de pessoas diretamente beneficiadas (cálculo heurístico:
+          quantidade_uh * 3.3, arredondado para baixo). (herdado de
+          silver.empreendimento)
+      - name: qtd_empreendimentos
+        agg: count_distinct
+        expr: apf
+        description: "Quantidade de empreendimentos distintos (por APF)."
+
+      # --- PENDENTE_REVISAO_HUMANA: agg não pode ser decidido com segurança a partir da description original ---
+      - name: valor_por_uh
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Custo unitário estimado por UH (valor_contratado / quantidade_uh),
+          em R$. (herdado de silver.empreendimento) — é uma razão pré-
+          calculada por empreendimento; `sum`/`average` direto sobre esta
+          coluna distorce o resultado agregado (deveria ser recalculada como
+          razão de somas: sum(valor_contratado)/sum(quantidade_uh)).
+      - name: percentual_execucao_fisica
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Porcentagem (0 a 100) do andamento físico da obra reportado pela
+          medição atual. (herdado de silver.empreendimento) — a description
+          original não define a régua de agregação entre empreendimentos
+          (média simples vs. ponderada por UH/valor); precisa de decisão de
+          negócio.
+      - name: percentual_execucao_financeira
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Percentual do recurso liberado sobre o valor total
+          (valor_desembolsado / valor_contratado * 100). (herdado de
+          silver.empreendimento) — mesmo problema de régua de agregação que
+          percentual_execucao_fisica.
+
+  - name: evolucao_financeira_chart
+    model: ref('evolucao_financeira_chart')
+    description: >
+      Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira".
+      Mesmo grain de silver.evolucao_financeira (apf × mês), enriquecida com
+      nome do empreendimento, nome do estado e labels de mês formatados.
+    defaults:
+      agg_time_dimension: mes
+
+    entities:
+      - name: apf
+        type: foreign
+        expr: apf
+        # Mesmo padrão de silver.evolucao_financeira: grain real é (apf,
+        # mes), não apf isolado. apf aqui referencia a entidade primary
+        # declarada em ficha_empreendimento (mesma tabela pai).
+
+    dimensions:
+      - name: mes
+        type: time
+        type_params: {time_granularity: month}
+        description: "Data do mês da liberação (tipo DATE, para ordenação)."
+      - name: mes_label
+        type: categorical
+        description: "Label do mês no formato 'YYYY-MM' (para eixo X do gráfico)."
+      - name: mes_label_br
+        type: categorical
+        description: "Label do mês no formato 'MM/YYYY' (formato brasileiro)."
+      - name: municipio
+        type: categorical
+        description: "Município do empreendimento. (herdado de silver.evolucao_financeira)"
+      - name: uf
+        type: categorical
+        description: "Sigla da UF. (herdado de silver.evolucao_financeira)"
+      - name: estado
+        type: categorical
+        description: "Nome completo do estado em maiúsculo (da tabela IBGE)."
+      - name: nome_empreendimento
+        type: categorical
+        description: "Nome do empreendimento em maiúsculo (da ficha_empreendimento)."
+
+    measures:
+      - name: vr_liberado_mes
+        agg: sum
+        description: >
+          Valor total liberado no mês em R$ (arredondado para 2 casas,
+          herdado de silver.evolucao_financeira — arredondamento não
+          altera semântica).
+      - name: qt_liberacoes
+        agg: sum
+        description: >
+          PENDENTE_CAMADA_0: coluna qt_liberacoes é selecionada no SQL deste
+          modelo mas não está documentada no gold/schema.yml — herda
+          description de silver.evolucao_financeira ("Quantidade de
+          liberações financeiras individuais no mês.") como evidência, mas
+          o schema.yml da gold deveria listar a coluna explicitamente.
+
+      # --- PENDENTE_REVISAO_HUMANA: mesmas armadilhas de fan-out da silver.evolucao_financeira ---
+      - name: vr_acumulado
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Desembolso acumulado progressivo até o mês, em R$. ARMADILHA:
+          running total (mesma de silver.evolucao_financeira.vr_acumulado)
+          — sum() entre meses do mesmo APF soma acumulados sobre
+          acumulados.
+      - name: valor_contratado
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Valor total contratado do empreendimento em R$. ARMADILHA:
+          repetido em toda linha (apf, mes) do mesmo APF — sum() aqui
+          multiplica o valor real pelo número de meses. Usar sempre o
+          measure equivalente de ficha_empreendimento (grain 1:1 por apf).
+      - name: pct_executado_financeiro
+        agg: PENDENTE_REVISAO_HUMANA
+        description: >
+          Percentual acumulado do desembolso sobre o contrato (0-100).
+          Cumulativo mês a mês — mesma régua de agregação indefinida +
+          armadilha de running total.
+
+  - name: execucao_fisica_financeira_chart
+    model: ref('execucao_fisica_financeira_chart')
+    description: >
+      Gráfico de acompanhamento de execução física × financeira. Grain
+      (apf, mes) construído via FULL OUTER JOIN entre evolucao_financeira
+      (silver) e obra_mensal (bronze), com preenchimento LOCF (last value
+      carried forward) para meses sem medição nova.
+    defaults:
+      agg_time_dimension: mes
+
+    entities:
+      - name: apf
+        type: foreign
+        expr: apf
+
+    dimensions:
+      - name: mes
+        type: time
+        type_params: {time_granularity: month}
+        description: >
+          Mês de referência no formato YYYY-MM-DD. ATENÇÃO: coluna física é
+          texto formatado via to_char(), não tipo DATE — validar cast antes
+          de expor como dimensão de tempo no MetricFlow.
+
+    measures: []
+    # Nenhuma measure proposta. pct_obra_realizada e pct_executado_financeiro
+    # são as duas únicas colunas numéricas e ambas são:
+    # (a) percentuais (régua de agregação indefinida na description
+    #     original, mesmo padrão PENDENTE_REVISAO_HUMANA já visto), e
+    # (b) reconstruídas via LOCF com fallback para 0.0 quando não há dado
+    #     (coalesce(..., 0.0) no SQL) — uma média ingênua sobre elas mistura
+    #     valor real, valor arrastado (LOCF) e zero "sem dado", o que é
+    #     enganoso sem filtrar por proveniência do dado.
+    # PENDENTE_REVISAO_HUMANA (nível modelo, não coluna): decidir com o
+    # time de negócio se pct_obra_realizada/pct_executado_financeiro devem
+    # virar measures com agg explícito assumindo essa distorção, ou se este
+    # modelo deve permanecer fora do semantic layer (só BI direto).

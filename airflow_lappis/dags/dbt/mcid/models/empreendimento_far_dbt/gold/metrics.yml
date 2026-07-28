@@ -1,0 +1,56 @@
+version: 2
+
+metrics:
+  - name: total_valor_contratado_far
+    type: simple
+    label: "Total de valor contratado (FAR)"
+    description: >
+      Soma do valor total de investimento contratado (Recurso FAR +
+      Contrapartidas) dos empreendimentos.
+    type_params: {measure: valor_contratado}
+
+  - name: total_valor_desembolsado_far
+    type: simple
+    label: "Total de valor desembolsado (FAR)"
+    description: >
+      Soma do total financeiro já repassado/liberado aos empreendimentos até
+      a medição atual.
+    type_params: {measure: valor_desembolsado}
+
+  - name: total_uh_contratadas
+    type: simple
+    label: "Total de Unidades Habitacionais contratadas"
+    description: "Soma das Unidades Habitacionais (UHs) nos empreendimentos."
+    type_params: {measure: quantidade_uh}
+
+  - name: total_pessoas_atendidas
+    type: simple
+    label: "Total de pessoas atendidas"
+    description: >
+      Soma da estimativa de pessoas diretamente beneficiadas pelos
+      empreendimentos.
+    type_params: {measure: pessoas_atendidas}
+
+  - name: qtd_empreendimentos
+    type: simple
+    label: "Quantidade de empreendimentos"
+    description: "Contagem de empreendimentos distintos (por APF)."
+    type_params: {measure: qtd_empreendimentos}
+
+  - name: total_valor_liberado_periodo
+    type: simple
+    label: "Total liberado no período"
+    description: >
+      Soma dos valores liberados no mês (evolucao_financeira_chart),
+      agregável por período.
+    type_params: {measure: vr_liberado_mes}
+
+  - name: total_liberacoes_periodo
+    type: simple
+    label: "Total de liberações no período"
+    description: "Soma da quantidade de liberações financeiras individuais no período."
+    type_params: {measure: qt_liberacoes}
+
+  # Nenhuma métrica proposta a partir de execucao_fisica_financeira_chart —
+  # não há measure "segura" documentada nesse modelo (ver nota em
+  # gold/semantic_models.yml).

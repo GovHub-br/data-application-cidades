@@ -1,0 +1,42 @@
+version: 2
+
+# Mesma ressalva de silver/semantic_models.yml: métricas abaixo se sobrepõem
+# às de gold/metrics.yml (mesmo grain, mesma medida) — duplicação aceita
+# nesta rodada, pendente de resolução (ver CONTEXT.md).
+
+metrics:
+  - name: total_valor_contratado_far_silver
+    type: simple
+    label: "Total de valor contratado (FAR)"
+    description: "Soma do valor total de investimento contratado (Recurso FAR + Contrapartidas)."
+    type_params: {measure: valor_contratado}
+
+  - name: total_valor_desembolsado_far_silver
+    type: simple
+    label: "Total de valor desembolsado (FAR)"
+    description: "Soma do total financeiro já repassado/liberado aos empreendimentos até a medição atual."
+    type_params: {measure: valor_desembolsado}
+
+  - name: total_uh_contratadas_silver
+    type: simple
+    label: "Total de Unidades Habitacionais contratadas"
+    description: "Soma das Unidades Habitacionais (UHs) nos empreendimentos."
+    type_params: {measure: quantidade_uh}
+
+  - name: qtd_empreendimentos_silver
+    type: simple
+    label: "Quantidade de empreendimentos"
+    description: "Contagem de empreendimentos distintos (por APF)."
+    type_params: {measure: qtd_empreendimentos}
+
+  - name: total_valor_liberado_periodo
+    type: simple
+    label: "Total liberado no período"
+    description: "Soma dos valores liberados no mês, agregável por período (medida evolucao_financeira.vr_liberado_mes)."
+    type_params: {measure: vr_liberado_mes}
+
+  - name: total_liberacoes_periodo
+    type: simple
+    label: "Total de liberações no período"
+    description: "Soma da quantidade de liberações financeiras individuais no período."
+    type_params: {measure: qt_liberacoes}
