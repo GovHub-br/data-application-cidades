@@ -39,6 +39,12 @@ models:
       gold:
         +materialized: table
 
+    indicadores_mcmv_dbt:
+      +materialized: table
+      +schema: mcmv_indicadores
+      gold:
+        +materialized: table
+
     conjuntura_dbt:
       +materialized: table
       +schema: conjuntura

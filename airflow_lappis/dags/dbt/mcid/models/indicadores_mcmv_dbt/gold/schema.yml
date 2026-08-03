@@ -1,0 +1,134 @@
+version: 2
+
+models:
+  - name: indicadores_gargalo_desempenho
+    description: >
+      Tabela Gold unificada por empreendimento/APF para identificar gargalos e desempenho
+      do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução física,
+      baixa execução financeira, paralisação, falta de atualização recente,
+      contratos sem evolução e saldo financeiro a desembolsar. Alimenta alertas
+      estratégicos e dashboards da feature #53.
+    meta:
+      tags:
+        - gold
+        - mcmv
+        - indicadores
+        - gargalo
+        - dashboard
+    columns:
+      - name: id_indicador
+        description: Chave técnica única no formato frente:apf.
+        data_tests:
+          - unique
+          - not_null
+      - name: frente
+        description: Frente do MCMV. Valores esperados FAR e FDS.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["FAR", "FDS"]
+      - name: apf
+        description: Identificador APF do empreendimento.
+        data_tests:
+          - not_null
+      - name: responsavel_tipo
+        description: Tipo do responsável usado para agrupamento de gargalos.
+      - name: responsavel_nome
+        description: Nome do responsável. Para FAR usa tomador/proponente; para FDS usa entidade organizadora.
+      - name: status_prazo
+        description: >
+          Classificação de prazo. Em Atraso quando a previsão de conclusão/entrega
+          está vencida e a execução física é menor que 100%.
+      - name: status_ritmo
+        description: Classificação físico-financeira herdada das golds FAR/FDS.
+      - name: saldo_contratado_a_desembolsar
+        description: Diferença positiva entre valor contratado e valor desembolsado acumulado.
+      - name: percentual_saldo_a_desembolsar
+        description: Percentual do contrato ainda não desembolsado.
+      - name: gap_fisico_financeiro_pp
+        description: Diferença em pontos percentuais entre execução financeira e execução física.
+      - name: dias_sem_atualizacao
+        description: Dias desde a última liberação/medição física disponível para a APF.
+      - name: dias_atraso
+        description: Dias corridos de atraso quando a previsão está vencida e a obra não está concluída.
+      - name: dias_paralisacao
+        description: Dias desde a paralisação quando a frente possui data de paralisação.
+      - name: flag_atraso
+        description: True quando status_prazo indica atraso ou dias_atraso é maior que zero.
+      - name: flag_paralisacao
+        description: True quando há data/situação textual de paralisação.
+      - name: flag_sem_atualizacao_recente
+        description: True para obra não concluída sem atualização há mais de 90 dias ou sem data de atualização.
+      - name: flag_baixa_execucao_fisica
+        description: >
+          True quando a execução física está pelo menos 10 p.p. abaixo do previsto,
+          a previsão está vencida sem conclusão, ou a obra contratada há mais de
+          365 dias ainda está abaixo de 30%.
+      - name: flag_baixa_execucao_financeira
+        description: >
+          True quando a execução financeira está mais de 10 p.p. abaixo da física,
+          ou contrato com mais de 365 dias tem execução financeira abaixo de 30%.
+      - name: flag_gargalo_financeiro
+        description: True quando pelo menos 30% do contrato ainda não foi desembolsado e a obra está abaixo de 95% físico.
+      - name: flag_contrato_sem_evolucao
+        description: True quando contrato com mais de 180 dias não tem execução física nem financeira.
+      - name: flag_entrega_em_risco
+        description: True quando empreendimento não concluído tem atraso, paralisação, baixa execução ou falta de atualização.
+      - name: score_gargalo
+        description: >
+          Score ponderado: atraso 2, paralisação 2, sem atualização 1,
+          baixa execução física 1, baixa execução financeira 1, gargalo financeiro 1,
+          contrato sem evolução 1.
+      - name: classificacao_gargalo
+        description: Baixo (0), Médio (1-2), Alto (3-4), Crítico (>=5).
+        data_tests:
+          - accepted_values:
+              values: ["Baixo", "Médio", "Alto", "Crítico"]
+      - name: indicadores_acionados
+        description: Lista textual das flags acionadas para auditoria e tooltip no dashboard.
+      - name: dt_calculo
+        description: Data em que o modelo foi calculado.
+
+  - name: resumo_gargalo_desempenho_dashboard
+    description: >
+      Tabela Gold agregada para dashboard de gargalos e desempenho do MCMV.
+      Gera cards e rankings nos níveis nacional, frente, UF, município e responsável.
+    meta:
+      tags:
+        - gold
+        - mcmv
+        - dashboard
+        - gargalo
+    columns:
+      - name: nivel_agregacao
+        description: Nível da linha agregada. Valores nacional, frente, uf, municipio e responsavel.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["nacional", "frente", "uf", "municipio", "responsavel"]
+      - name: total_empreendimentos
+        description: Quantidade de empreendimentos/APFs no agrupamento.
+      - name: total_uh
+        description: Total de unidades habitacionais no agrupamento.
+      - name: valor_contratado
+        description: Soma do valor contratado no agrupamento.
+      - name: valor_desembolsado
+        description: Soma do valor desembolsado no agrupamento.
+      - name: saldo_contratado_a_desembolsar
+        description: Soma do saldo contratado ainda não desembolsado.
+      - name: media_execucao_fisica
+        description: Execução física média do agrupamento.
+      - name: media_execucao_financeira
+        description: Execução financeira média do agrupamento.
+      - name: media_score_gargalo
+        description: Score médio de gargalo do agrupamento.
+      - name: atraso_medio_dias
+        description: Média de dias de atraso entre casos atrasados.
+      - name: qtd_entregas_em_risco
+        description: Quantidade de empreendimentos com entrega em risco.
+      - name: qtd_casos_criticos
+        description: Quantidade de empreendimentos com classificação Crítico.
+      - name: percentual_entregas_em_risco
+        description: Percentual de empreendimentos em risco no agrupamento.
+      - name: percentual_casos_criticos
+        description: Percentual de empreendimentos críticos no agrupamento.
