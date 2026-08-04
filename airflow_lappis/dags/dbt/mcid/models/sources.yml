@@ -204,3 +204,57 @@ sources:
         description: Ticket médio de lançamentos por empresa.
       - name: bronze_mcid_orcamento_por_acao
         description: Orçamento do MCID por ação governamental.
+
+  - name: fgts
+    schema: __dados_brutos
+    description: >
+      Schema para os dados integrados do FGTS (MCMV Pró-Moradia, etc).
+    tables:
+      - name: dados_abertos_mcmv_fgts_analitico
+        description: Dados abertos analíticos do MCMV FGTS.
+      - name: dados_abertos_mcmv_fgts_sintetico
+        description: Dados abertos sintéticos do MCMV FGTS.
+      - name: fgts_canal_tab_ao_1_contratos_fgts
+        description: Tabela de contratos do FGTS.
+      - name: fgts_canal_tab_ao_1_operacoes_pj_pf
+        description: Tabela de operações pessoa jurídica/pessoa física do FGTS.
+      - name: fgts_canal_tab_ao_1_tab_empreendimentos
+        description: Tabela base de empreendimentos do FGTS.
+      - name: fgts_canal_tab_ao_1_tab_empreendimentos_construtor
+        description: Tabela de construtores dos empreendimentos do FGTS.
+      - name: fgts_canal_tab_ao_1_tab_empreendimentos_gps
+        description: Tabela de coordenadas (GPS) dos empreendimentos do FGTS.
+      - name: fgts_canal_tab_ao_1_tab_empreendimentos_posicoes
+        description: Tabela de posições dos empreendimentos do FGTS.
+      - name: fgts_canal_tab_ao_2_operacoes_paralisadas_fgts_setorpublico
+        description: Tabela de operações paralisadas do FGTS no setor público.
+      - name: fgts_canal_tab_ao_2_tab_desembolsos_fgts
+        description: Tabela de desembolsos do FGTS.
+      - name: fgts_canal_tab_ao_2_tab_execucoes_obras
+        description: Tabela de execuções de obras do FGTS.
+      - name: fgts_canal_tab_ao_3_acompanhamento_termino_obra
+        description: Tabela de acompanhamento de término de obra do FGTS.
+      - name: fgts_canal_tab_cci_cca_cca_analitico
+        description: Dados analíticos de financiamentos pessoa física CCA do FGTS.
+      - name: fgts_canal_tab_cci_cca_cci_analitico
+        description: Dados analíticos de financiamentos pessoa física CCI do FGTS.
+      - name: fgts_canal_tab_cci_cca_pro_cotista
+        description: Dados de financiamentos pessoa física pró-cotista do FGTS.
+      - name: fgts_canal_tdom_ao_1_area
+        description: Domínio de área para contratos do FGTS.
+      - name: fgts_canal_tdom_ao_1_entidades
+        description: Domínio de entidades do FGTS.
+      - name: fgts_canal_tdom_ao_1_linha
+        description: Domínio de linha para contratos do FGTS.
+      - name: fgts_canal_tdom_ao_1_modalidade
+        description: Domínio de modalidade para contratos do FGTS.
+      - name: fgts_canal_tdom_ao_1_municipios
+        description: Domínio de municípios para empreendimentos do FGTS.
+      - name: fgts_canal_tdom_ao_1_situacao_da_obra
+        description: Domínio de situação da obra do FGTS.
+      - name: fgts_canal_tdom_cci_cca_faixa_de_renda
+        description: Domínio de faixa de renda para financiamentos pessoa física do FGTS.
+      - name: fgts_sftp_empreendimentos_base_pj
+        description: Base pessoa jurídica (SFTP) dos empreendimentos do FGTS.
+      - name: fgts_site_contratacao_diaria
+        description: Dados de orçamento provenientes de contratação diária do site FGTS.

@@ -52,5 +52,9 @@ models:
         +materialized: table
         +schema: conjuntura_gold
 
+    fgts_dbt:
+      +materialized: table
+      +schema: fgts_dbt
+
 on-run-start:
   - '{{create_udfs()}}'

@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: silver_fgts_contratos
+    description: "Tabela consolidada com informações dos contratos do FGTS e seus domínios."
+    columns:
+      - name: cod_contrato
+        description: "Código identificador único do contrato."
+        tests:
+          - unique
+          - not_null
+
+  - name: silver_fgts_empreendimentos
+    description: "Visão central de empreendimentos do FGTS e municípios relacionados."
+    columns:
+      - name: cod_empreendimento
+        description: "Código identificador único do empreendimento."
+        tests:
+          - unique
+          - not_null
+
+  - name: silver_fgts_empreendimentos_posicoes
+    description: "Histórico de posições dos empreendimentos, com flag de posição recente."
+    columns:
+      - name: is_posicao_recente
+        description: "Flag booleana indicando se é a posição temporal mais recente do empreendimento (TRUE ou FALSE)."
+
+  - name: silver_fgts_execucao_obras
+    description: "Dados de execução física da obra e acompanhamento de paralisações."
+
+  - name: silver_fgts_desembolsos
+    description: "Dados de liberações e desembolsos por contrato."
+
+  - name: silver_fgts_conclusao_entrega
+    description: "Status de conclusão e entrega de unidades habitacionais/empreendimentos."
+
+  - name: silver_fgts_financiamentos_pf
+    description: "Financiamentos de Pessoa Física integrados (CCI e CCA) e faixa de renda."
+
+  - name: silver_fgts_orcamento
+    description: "Valores alocados e empenhados por programa."
+
+  - name: silver_fgts_entidades
+    description: "Domínio de entidades construtoras do FGTS."
