@@ -70,6 +70,12 @@ PG_DBNAME   = os.environ["DB_DW_DBNAME_MCID"]
 SCHEMA    = os.environ.get("SFTP_SCHEMA", "sftp")
 LOG_TABLE = "_ingest_minio_log"
 
+# Download SFTP em JANELAS via readv: memoria limitada ao tamanho da janela, sem OOM em
+# arquivos de dezenas de GB. NAO usar prefetch(max_concurrent_requests) do paramiko: em
+# rapida o throttle esvazia _prefetch_extents cedo, marca _prefetch_done antes da hora e
+# TRAVA. readv emite as reqs da janela de uma vez -> throughput sem o bug.
+_DOWNLOAD_WINDOW = int(os.environ.get("LAKE_SFTP_WINDOW_MB", "16")) * 1024 * 1024
+
 EXTENSOES_SUPORTADAS  = {".csv", ".txt", ".xlsx", ".xls", ".zip", ".mdb"}
 # Extensões cujos nomes se repetem entre zips (ex.: MCidades_AO_1.mdb em todo
 # MC2026*.zip). A data só existe no nome do zip, então ela vai para o destino.
@@ -86,6 +92,11 @@ PASTAS_MONITORADAS    = [
 # Erro de conexão (queda de socket): delegado ao cliente SFTP.
 _is_conn_error = ClienteSftp.is_conn_error
 
+# Artefatos locais (arquivo de log, preview_arquivos.txt) — úteis rodando standalone, mas o
+# diretório do script pode não ser gravável (ex.: bind-mount no Airflow). Controlado por
+# LAKE_LOCAL_ARTIFACTS (default "1"): o container do Airflow define "0" para desligá-los. O log
+# em stderr fica sempre ativo (o Airflow o captura na UI).
+_LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in ("0", "false", "no")
 _LOG_FILE = (
     Path(__file__).parent
     / f"sftp_ingest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -95,19 +106,24 @@ _formatter = logging.Formatter(
     datefmt="%H:%M:%S",
 )
 
-logging.root.setLevel(logging.INFO)
-logging.root.addHandler(
-    (lambda h: (h.setFormatter(_formatter), h)[1])(
-        logging.FileHandler(_LOG_FILE, encoding="utf-8")
-    )
-)
-logging.root.addHandler(
-    (lambda h: (h.setFormatter(_formatter), h)[1])(
-        logging.StreamHandler(sys.stderr)
-    )
-)
-
 log = logging.getLogger(__name__)
+if _LOCAL_ARTIFACTS:
+    # Standalone: o script gerencia os próprios handlers (stderr + arquivo de log).
+    logging.root.setLevel(logging.INFO)
+    for _h in (logging.StreamHandler(sys.stderr),
+               logging.FileHandler(_LOG_FILE, encoding="utf-8")):
+        _h.setFormatter(_formatter)
+        logging.root.addHandler(_h)
+# Sob o Airflow (_LOCAL_ARTIFACTS=0) NÃO adicionamos handlers ao root: o logger propaga para os
+# handlers do Airflow (a saída vai para a UI). Um StreamHandler(sys.stderr) aqui criaria loop
+# infinito — o Airflow redireciona stderr de volta ao logging e cada linha se multiplica.
+
+# A animação do spinner só faz sentido num terminal, onde o `\r` sobrescreve a linha. Sob o Airflow
+# (stdout não-TTY, capturado linha-a-linha) cada frame vira uma linha de log — flood. Fora de um TTY
+# o spinner vira no-op e emite só uma linha ao iniciar o download; a conclusão já é logada pelos
+# chamadores. `sys.stdout.isatty()` também cobre standalone com saída redirecionada para arquivo.
+_ANIMAR = sys.stdout.isatty()
+
 
 class _Spinner:
     _FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
@@ -122,6 +138,9 @@ class _Spinner:
     def iniciar(self, mensagem: str) -> None:
         with self._lock:
             self._msg = mensagem
+        if not _ANIMAR:
+            log.info("⬇ %s", mensagem)
+            return
         self._ativo = True
         self._thread = threading.Thread(target=self._girar, daemon=True)
         self._thread.start()
@@ -131,6 +150,8 @@ class _Spinner:
             self._msg = mensagem
 
     def parar(self, ok: bool = True) -> None:
+        if not _ANIMAR:
+            return
         self._ativo = False
         if self._thread:
             self._thread.join()
@@ -211,13 +232,37 @@ def _criar_schema_e_log(conn_str: str) -> None:
 
 
 def _obter_ja_inseridos(conn_str: str) -> set:
+    """sftp_paths que já foram ingeridos com sucesso ALGUMA VEZ (skip padrão).
+
+    Filtra por `file_hash IS NOT NULL` — e não por `status = 'success'` — de propósito: todo
+    caminho de ingestão bem-sucedida grava o hash, falhas gravam NULL, e o verificar_minio.py
+    rebaixa o status p/ 'error' sem tocar no hash. Assim um arquivo já ingerido continua sendo
+    pulado mesmo que o objeto tenha sido deletado do MinIO ou o status tenha virado 'error'
+    (deleção "gruda"). Falhas reais de ingestão (hash NULL) seguem sendo re-tentadas.
+    """
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
             cur.execute(f"""
                 SELECT sftp_path FROM {SCHEMA}.{LOG_TABLE}
-                WHERE status = 'success'
+                WHERE file_hash IS NOT NULL
             """)
             return {row[0] for row in cur.fetchall()}
+
+
+def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
+    """sftp_paths já ingeridos cujo objeto AINDA está no MinIO (skip do modo --reingest-deleted).
+
+    Só pula o que continua presente no lake; arquivos já ingeridos mas cujo objeto foi removido
+    ficam de fora do skip → podem ser reingeridos. `presentes` é o conjunto de minio_keys de raw/.
+    """
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                SELECT sftp_path, minio_key FROM {SCHEMA}.{LOG_TABLE}
+                WHERE file_hash IS NOT NULL
+            """)
+            return {sftp_path for sftp_path, minio_key in cur.fetchall()
+                    if minio_key in presentes}
 
 
 def _obter_nomes_usados(conn_str: str) -> set:
@@ -228,6 +273,29 @@ def _obter_nomes_usados(conn_str: str) -> set:
                 WHERE status = 'success'
             """)
             return {row[0] for row in cur.fetchall()}
+
+
+def _obter_zips_completos(conn_str: str) -> dict:
+    # ZIPs 100% ingeridos: todos os membros com file_hash e um mtime único. Se esse mtime
+    # bate com o do SFTP, o conteudo e o mesmo -> pula sem baixar. Mapa zip -> mtime.
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                SELECT split_part(sftp_path, '@', 1) AS zip,
+                       bool_and(file_hash IS NOT NULL) AS completo,
+                       min(EXTRACT(EPOCH FROM file_mtime))::bigint AS mtime_min,
+                       max(EXTRACT(EPOCH FROM file_mtime))::bigint AS mtime_max
+                FROM {SCHEMA}.{LOG_TABLE}
+                GROUP BY 1
+            """)
+            return {
+                zip_path: mtime_min
+                for zip_path, completo, mtime_min, mtime_max in cur.fetchall()
+                if completo
+                and mtime_min is not None
+                and mtime_min == mtime_max
+                and zip_path.lower().endswith(".zip")
+            }
 
 
 def _registrar_ingest(
@@ -290,14 +358,55 @@ def _listar_arquivos(sftp_cli: ClienteSftp, caminho: str) -> Iterator[Tuple[str,
     )
 
 
+def _dir_download() -> str:
+    # LAKE_TMPDIR (volume dedicado) so se for GRAVAVEL; senao /var/tmp (disco).
+    # Evita quebrar se o volume nao tiver permissao p/ o usuario do container.
+    lake = os.environ.get("LAKE_TMPDIR")
+    if lake and os.path.isdir(lake) and os.access(lake, os.W_OK):
+        return lake
+    return "/var/tmp"
+
+
 def baixar_para_tempfile(sftp: paramiko.SFTPClient, caminho: str) -> str:
-    """Baixa para disco — evita OOM em arquivos grandes."""
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(caminho).suffix, dir="/var/tmp")
+    # Baixa em janelas via readv (memoria ~= janela) + log de progresso. Seguro p/ dezenas
+    # de GB e sem o bug do prefetch limitado do paramiko (ver _DOWNLOAD_WINDOW).
+    tmpdir = _dir_download()
+    file_size = sftp.stat(caminho).st_size or 0
+    tmp = tempfile.NamedTemporaryFile(
+        delete=False, suffix=Path(caminho).suffix, dir=tmpdir
+    )
+    baixado = 0
+    inicio = time.monotonic()
+    ultimo_log = inicio
     try:
-        sftp.getfo(caminho, tmp)
+        with sftp.open(caminho, "rb") as rf:
+            while baixado < file_size:
+                janela = min(_DOWNLOAD_WINDOW, file_size - baixado)
+                antes = baixado
+                for bloco in rf.readv([(baixado, janela)]):
+                    if not bloco:
+                        break
+                    tmp.write(bloco)
+                    baixado += len(bloco)
+                    agora = time.monotonic()
+                    if agora - ultimo_log >= 15:
+                        pct = (baixado / file_size * 100) if file_size else 0.0
+                        log.info(
+                            "    … %s / %s (%.1f%%)",
+                            format_size(baixado), format_size(file_size), pct,
+                        )
+                        ultimo_log = agora
+                if baixado == antes:  # EOF antes do esperado — evita loop infinito
+                    break
         tmp.flush()
     finally:
         tmp.close()
+    dur = time.monotonic() - inicio
+    mbps = (baixado / 1e6 / dur) if dur else 0.0
+    log.info(
+        "    ✓ download completo: %s em %.0fs (%.1f MB/s)",
+        format_size(baixado), dur, mbps,
+    )
     return tmp.name
 
 def format_size(size_bytes: int) -> str:
@@ -339,8 +448,17 @@ def gerar_nome_unico(nome: str, usados: set) -> str:
 def _label(nome: str, tamanho: int, idx: int, total: int) -> str:
     return f"[{idx}/{total}] {nome} ({format_size(tamanho)})"
 
-# Upload serial em partes de 5 MB — mais estável em conexões instáveis (mín. S3 = 5 MB).
-_SFTP_TRANSFER = TransferConfig(multipart_chunksize=5 * 1024 * 1024, max_concurrency=1)
+# Upload multipart PARALELO: varios streams enchem melhor o link (ex.: MinIO atras de VPN,
+# onde 1 stream fica preso na latencia ~1 MB/s). s3transfer paraleliza mesmo com stream
+# nao-seekable de zip (le as partes em ordem -> hash correto; sobe ate max_concurrency em
+# paralelo). Memoria ~ max_in_memory_chunks(10) x chunk. 32 MB x 10.000 = teto ~320 GB.
+# Ajustavel por env sem redeploy (concurrency=1 volta ao serial).
+_UPLOAD_CONCURRENCY = int(os.environ.get("LAKE_UPLOAD_CONCURRENCY", "10"))
+_UPLOAD_CHUNK_MB    = int(os.environ.get("LAKE_UPLOAD_CHUNK_MB", "32"))
+_SFTP_TRANSFER = TransferConfig(
+    multipart_chunksize=_UPLOAD_CHUNK_MB * 1024 * 1024,
+    max_concurrency=_UPLOAD_CONCURRENCY,
+)
 
 
 def subir_para_minio(minio: ClienteMinio, tmp_path: str, nome_destino: str) -> str:
@@ -349,13 +467,32 @@ def subir_para_minio(minio: ClienteMinio, tmp_path: str, nome_destino: str) -> s
     )
 
 
+def _progresso_upload(rotulo: str, total: int):
+    # Callback do boto3 (recebe os bytes de cada parte) que loga o upload a cada ~15s.
+    estado = {"enviado": 0, "ultimo": time.monotonic()}
+
+    def cb(n: int) -> None:
+        estado["enviado"] += n
+        agora = time.monotonic()
+        if agora - estado["ultimo"] >= 15:
+            pct = (estado["enviado"] / total * 100) if total else 0.0
+            log.info(
+                "    ⇡ %s: %s / %s (%.1f%%)",
+                rotulo, format_size(estado["enviado"]), format_size(total), pct,
+            )
+            estado["ultimo"] = agora
+
+    return cb
+
+
 def _subir_stream_com_hash(
-    minio: ClienteMinio, nome_destino: str, stream_factory
+    minio: ClienteMinio, nome_destino: str, stream_factory, progress_cb=None
 ) -> Tuple[str, str]:
     """Upload a partir de um stream (sem temp file), retornando (minio_key, file_hash).
     stream_factory é um callable que retorna um context manager com .read()."""
     return minio.subir_stream_com_hash(
-        f"raw/{nome_destino}", stream_factory, transfer_config=_SFTP_TRANSFER
+        f"raw/{nome_destino}", stream_factory,
+        transfer_config=_SFTP_TRANSFER, progress_cb=progress_cb,
     )
 
 
@@ -370,16 +507,16 @@ def _exibir_preview(sftp_cli: ClienteSftp, pastas: list) -> None:
             linhas.append(f"  {format_size(tamanho):>10}  {caminho_arq}")
         linhas.append("")
 
-    preview_path = Path(__file__).parent / "preview_arquivos.txt"
-    preview_path.write_text("\n".join(linhas), encoding="utf-8")
-
     log.info("=" * 60)
     log.info("PREVIEW — arquivos disponíveis nas pastas monitoradas")
     log.info("=" * 60)
     for linha in linhas:
         if linha:
             log.info(linha)
-    log.info("Preview salvo em %s", preview_path)
+    if _LOCAL_ARTIFACTS:
+        preview_path = Path(__file__).parent / "preview_arquivos.txt"
+        preview_path.write_text("\n".join(linhas), encoding="utf-8")
+        log.info("Preview salvo em %s", preview_path)
     log.info("=" * 60)
 
 def processar_arquivo_simples(
@@ -511,6 +648,41 @@ def _preparar_multivolume_implicito(
     return os.path.join(tmp_dir, nome_zip)
 
 
+def _peek_zip_membros(sftp: paramiko.SFTPClient, caminho_zip: str) -> Optional[list]:
+    # Le so o indice do ZIP via SFTP (sem prefetch = so uns KB, nao baixa tudo) e lista os
+    # membros suportados. None se nao for ZIP valido -> download normal cuida disso.
+    try:
+        with sftp.open(caminho_zip, "rb") as fh:
+            with zipfile.ZipFile(fh) as zf:  # type: ignore[arg-type]
+                membros = []
+                for info in zf.infolist():
+                    if info.is_dir():
+                        continue
+                    nome_interno = info.filename.rsplit("/", 1)[-1]
+                    ext = _extensao(nome_interno)
+                    if ext in EXTENSOES_SUPORTADAS and ext != ".zip":
+                        membros.append(nome_interno)
+                return membros
+    except Exception:
+        return None
+
+
+def _zip_pulavel_sem_download(
+    sftp: paramiko.SFTPClient, caminho_zip: str, mtime: int,
+    ja_inseridos: set, zip_completos: dict,
+) -> Optional[str]:
+    # Motivo p/ pular o ZIP sem baixar, ou None. (1) mtime bate (sem I/O); (2) peek do
+    # indice remoto: pula se todos os membros ja estao em ja_inseridos.
+    if zip_completos.get(caminho_zip) == mtime:
+        return "já ingerido (mtime inalterado)"
+    membros = _peek_zip_membros(sftp, caminho_zip)
+    if membros is not None and all(
+        f"{caminho_zip}@{m}" in ja_inseridos for m in membros
+    ):
+        return "todos os membros já inseridos (sem download)"
+    return None
+
+
 def processar_zip(
     sftp: paramiko.SFTPClient,
     minio: ClienteMinio,
@@ -520,12 +692,20 @@ def processar_zip(
     mtime: int,
     nomes_usados: set,
     ja_inseridos: set,
+    zip_completos: dict,
     idx: int = 0,
     total: int = 0,
 ) -> Tuple[int, int]:
     """Retorna (qtd_sucesso, qtd_erro)."""
     sucesso = erro = 0
     nome_zip = caminho_zip.rsplit("/", 1)[-1]
+
+    motivo = _zip_pulavel_sem_download(
+        sftp, caminho_zip, mtime, ja_inseridos, zip_completos
+    )
+    if motivo:
+        log.info("→ [%d/%d] %s — %s, pulando", idx, total, nome_zip, motivo)
+        return 0, 0
 
     spinner.iniciar(_label(nome_zip, tamanho, idx, total))
     tmp_zip = None
@@ -569,10 +749,15 @@ def processar_zip(
                 nomes_usados.add(nome_destino)
 
                 spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
+                log.info(
+                    "  ↳ subindo %s (%s descomprimido) → raw/%s ...",
+                    nome_interno, format_size(info.file_size), nome_destino,
+                )
                 try:
                     minio_key, file_hash = _subir_stream_com_hash(
                         minio, nome_destino,
                         lambda fn=info.filename: zf.open(fn),
+                        progress_cb=_progresso_upload(nome_interno, info.file_size),
                     )
                     log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
                     _registrar_ingest(
@@ -734,14 +919,14 @@ def processar_zip(
 
 def _processar_entry(
     sftp, minio, conn_str, caminho, tamanho, mtime,
-    nomes_usados, ja_inseridos, idx, total,
+    nomes_usados, ja_inseridos, zip_completos, idx, total,
 ) -> Tuple[int, int]:
     """Despacha para simples ou zip. Retorna (sucesso, erro)."""
     ext = _extensao(caminho.rsplit("/", 1)[-1])
     if ext == ".zip":
         return processar_zip(
             sftp, minio, conn_str, caminho, tamanho, mtime,
-            nomes_usados, ja_inseridos, idx, total,
+            nomes_usados, ja_inseridos, zip_completos, idx, total,
         )
     resultado = processar_arquivo_simples(
         sftp, minio, conn_str, caminho, tamanho, mtime,
@@ -773,11 +958,20 @@ def _resolver_pastas(filtros: Optional[list]) -> list:
 
 
 # Execução
-def run(pastas: Optional[list] = None, preview: bool = False) -> Tuple[int, int]:
+def run(
+    pastas: Optional[list] = None,
+    preview: bool = False,
+    reingest_deleted: bool = False,
+) -> Tuple[int, int]:
     """Ingere os arquivos do SFTP para raw/ no MinIO. Retorna (sucesso, erro).
 
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run()).
     Não há dry-run: a ingestão é idempotente pelo controle sftp._ingest_minio_log.
+
+    reingest_deleted=False (padrão): um arquivo já ingerido alguma vez NÃO é reingerido, mesmo
+    que o objeto tenha sido removido do MinIO (a deleção "gruda").
+    reingest_deleted=True: reingere só os arquivos já ingeridos cujo objeto foi removido do
+    MinIO; os que ainda existem no lake continuam sendo pulados (não duplica).
     """
     pastas_filtro = _resolver_pastas(pastas)
 
@@ -800,16 +994,32 @@ def run(pastas: Optional[list] = None, preview: bool = False) -> Tuple[int, int]
     conn_str = _conn_str()
     _criar_schema_e_log(conn_str)
 
-    ja_inseridos = _obter_ja_inseridos(conn_str)
-    nomes_usados = _obter_nomes_usados(conn_str)
-    log.info(
-        "%d sftp_paths já inseridos | %d nomes em uso no MinIO",
-        len(ja_inseridos), len(nomes_usados),
-    )
-
     minio = ClienteMinio()
     minio.garantir_bucket()
     minio.abortar_multiparts_incompletos()
+
+    if reingest_deleted:
+        # Só pula o que ainda está presente no MinIO; reingere os já-ingeridos que sumiram.
+        presentes = {key for key, _ in minio.listar_objetos("raw/")}
+        ja_inseridos = _obter_ja_inseridos_presentes(conn_str, presentes)
+        # nome de destino livre p/ os deletados -> reingeridos com o nome original (sem sufixo)
+        nomes_usados = {key.rsplit("/", 1)[-1] for key in presentes}
+        # fast-path por mtime desligado: queremos reingerir os ZIPs deletados
+        zip_completos: dict = {}
+        log.info(
+            "MODO --reingest-deleted | %d objetos presentes em raw/ | %d já-ingeridos ainda "
+            "presentes (pulados); ausentes serão reingeridos",
+            len(presentes), len(ja_inseridos),
+        )
+    else:
+        ja_inseridos = _obter_ja_inseridos(conn_str)
+        nomes_usados = _obter_nomes_usados(conn_str)
+        zip_completos = _obter_zips_completos(conn_str)
+        log.info(
+            "%d sftp_paths já ingeridos (pulados) | %d nomes em uso | %d ZIPs completos "
+            "(skip pré-download por mtime)",
+            len(ja_inseridos), len(nomes_usados), len(zip_completos),
+        )
 
     log.info("Conectando ao SFTP %s@%s:%s ...", SFTP_USER, SFTP_HOST, SFTP_PORT)
     sftp = sftp_cli.conectar()
@@ -834,7 +1044,7 @@ def run(pastas: Optional[list] = None, preview: bool = False) -> Tuple[int, int]
             try:
                 s, e = _processar_entry(
                     sftp, minio, conn_str, caminho, tamanho, mtime,
-                    nomes_usados, ja_inseridos, idx, total,
+                    nomes_usados, ja_inseridos, zip_completos, idx, total,
                 )
                 total_sucesso += s
                 total_erro    += e
@@ -859,7 +1069,7 @@ def run(pastas: Optional[list] = None, preview: bool = False) -> Tuple[int, int]
                 try:
                     s, e = _processar_entry(
                         sftp, minio, conn_str, caminho, tamanho, mtime,
-                        nomes_usados, ja_inseridos, idx, total,
+                        nomes_usados, ja_inseridos, zip_completos, idx, total,
                     )
                     total_sucesso += s
                     total_erro    += e
@@ -870,13 +1080,18 @@ def run(pastas: Optional[list] = None, preview: bool = False) -> Tuple[int, int]
     finally:
         sftp_cli.fechar()
 
-    error_lines = sum(
-        1 for line in _LOG_FILE.read_text(encoding="utf-8").splitlines()
-        if " ERROR " in line
+    # sem arquivo de log (Airflow), não há como reler para contar ERRORs — pula a contagem
+    error_lines = (
+        sum(
+            1 for line in _LOG_FILE.read_text(encoding="utf-8").splitlines()
+            if " ERROR " in line
+        )
+        if _LOCAL_ARTIFACTS and _LOG_FILE.exists()
+        else 0
     )
     log.info(
         "Concluído. Sucesso: %d | Erro: %d | Log: %s",
-        total_sucesso, total_erro, _LOG_FILE,
+        total_sucesso, total_erro, _LOG_FILE if _LOCAL_ARTIFACTS else "(stderr)",
     )
     if error_lines:
         log.warning("%d linha(s) ERROR no log → %s", error_lines, _LOG_FILE)
@@ -895,8 +1110,14 @@ def main() -> None:
         "--preview", action="store_true",
         help="Só lista os arquivos das pastas e sai, sem baixar nem subir nada.",
     )
+    parser.add_argument(
+        "--reingest-deleted", action="store_true", dest="reingest_deleted",
+        help="Reingere arquivos que já foram ingeridos mas cujo objeto foi REMOVIDO do MinIO. "
+             "Os que ainda existem no lake continuam sendo pulados (não duplica). Sem esta flag, "
+             "o padrão nunca reingere um arquivo já ingerido, mesmo deletado.",
+    )
     args = parser.parse_args()
-    run(pastas=args.pastas, preview=args.preview)
+    run(pastas=args.pastas, preview=args.preview, reingest_deleted=args.reingest_deleted)
 
 
 if __name__ == "__main__":

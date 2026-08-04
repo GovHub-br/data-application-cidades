@@ -39,6 +39,9 @@ x-airflow-environment: &airflow-common-env
   # Temporários dos scripts do data lake — sobrescreve os caminhos de host do .env
   LAKE_TMPDIR: /opt/airflow/lake_tmp
   MASKING_TMPDIR: /opt/airflow/lake_tmp
+  # Desliga os artefatos locais dos scripts (log em arquivo, cópia de auditoria, preview):
+  # o bind-mount de scripts/ não é gravável pelo usuário do container. Logs vão p/ stderr (UI).
+  LAKE_LOCAL_ARTIFACTS: "0"
   _AIRFLOW_DB_MIGRATE: 'true'
   _AIRFLOW_WWW_USER_CREATE: 'true'
   _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
@@ -51,6 +54,20 @@ x-airflow-environment: &airflow-common-env
   # USAR ESSA ENV NOS CÓDIGOS PARA NÃO HAVER CONFLITOS
   
 services:
+  # Ajusta o dono do volume lake_tmp (criado root:root, sem escrita p/ o usuário do
+  # container) para o UID do airflow. Sem isso os scripts do data lake falham ao gravar
+  # temporários (PermissionError). Roda uma vez e sai antes do airflow subir.
+  lake-tmp-init:
+    build: .
+    user: "0:0"
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - "mkdir -p /opt/airflow/lake_tmp && chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/lake_tmp && chmod -R 775 /opt/airflow/lake_tmp"
+    volumes:
+      - lake_tmp:/opt/airflow/lake_tmp
+    restart: "no"
+
   # Airflow Services
   airflow:
     <<: *airflow-common
@@ -58,6 +75,11 @@ services:
     # do airflow localmente e assim melhorar a velocidade inicialização
     # doc do standalone: https://airflow.apache.org/docs/apache-airflow/2.8.1/start.html
     command: standalone
+    depends_on:
+      postgres:
+        condition: service_healthy
+      lake-tmp-init:
+        condition: service_completed_successfully
     ports:
       - "8080:8080"
     healthcheck:

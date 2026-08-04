@@ -1,5 +1,7 @@
+import errno
 import logging
 import os
+import socket
 import tempfile
 from stat import S_ISDIR
 from typing import Iterator, Optional, Tuple
@@ -7,7 +9,24 @@ from typing import Iterator, Optional, Tuple
 import paramiko
 
 # Erros que indicam queda de conexão (justificam reconectar e retentar).
-SOCKET_ERRORS = (paramiko.SSHException, EOFError, OSError, ConnectionResetError)
+SOCKET_ERRORS = (
+    paramiko.SSHException,
+    EOFError,
+    ConnectionResetError,
+    BrokenPipeError,
+    socket.timeout,
+)
+# OSError genérico com um destes errno = problema de rede (não erro local de arquivo).
+_NET_ERRNOS = {
+    errno.ECONNRESET, errno.ECONNABORTED, errno.EPIPE, errno.ETIMEDOUT,
+    errno.ECONNREFUSED, errno.EHOSTUNREACH, errno.ENETUNREACH,
+    errno.ENETRESET, errno.ENOTCONN, errno.ESHUTDOWN,
+}
+# Erros locais de I/O que NÃO são queda de conexão (não devem disparar reconexão).
+_LOCAL_IO_ERRORS = (
+    PermissionError, FileNotFoundError, IsADirectoryError,
+    NotADirectoryError, FileExistsError,
+)
 _CONN_ERROR_STRINGS = (
     "garbage packet",
     "eof",
@@ -92,9 +111,14 @@ class ClienteSftp:
 
     @staticmethod
     def is_conn_error(e: Exception) -> bool:
-        return isinstance(e, SOCKET_ERRORS) or any(
-            s in str(e).lower() for s in _CONN_ERROR_STRINGS
-        )
+        # Erro local de arquivo nunca é queda de conexão (ex.: PermissionError no tmpdir).
+        if isinstance(e, _LOCAL_IO_ERRORS):
+            return False
+        if isinstance(e, SOCKET_ERRORS):
+            return True
+        if isinstance(e, OSError) and e.errno in _NET_ERRNOS:
+            return True
+        return any(s in str(e).lower() for s in _CONN_ERROR_STRINGS)
 
     # Operações
     def listar_arquivos(

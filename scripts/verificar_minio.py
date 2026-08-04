@@ -160,7 +160,10 @@ def main() -> None:
     log.info("  ✗ Erros:       %d", erro)
     if ausente + divergente > 0:
         log.info(
-            "%d arquivo(s) marcado(s) como 'error' — serão reinseridos na próxima execução.",
+            "%d arquivo(s) ausente(s)/divergente(s) marcado(s) como 'error'. A ingestão NÃO os "
+            "reinsere automaticamente (o padrão pula qualquer arquivo já ingerido, mesmo "
+            "deletado). Para reinserir os que sumiram: "
+            "sftp_para_minio.py --reingest-deleted.",
             ausente + divergente,
         )
     log.info("Log: %s", _LOG_FILE)
