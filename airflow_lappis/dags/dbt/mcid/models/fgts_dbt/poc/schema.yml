@@ -1,0 +1,168 @@
+version: 2
+
+models:
+
+  # ==========================================================================
+  # SILVER -- leem parquet da staging, query inteira executada pelo DuckDB
+  # ==========================================================================
+
+  - name: silver_poc_contratos
+    tests:
+      - sem_linhas_duplicadas
+    description: >
+      GRAO: uma linha por contrato.
+      Contratos do FGTS com tres dominios. Padrao exercitado: join fato x
+      dominios, parsing financeiro e data com fuso.
+    columns:
+      - name: cod_contrato
+        description: Codigo identificador unico do contrato.
+        tests:
+          - unique
+          - not_null
+      - name: area_descricao
+        tests: [not_null]
+      - name: modalidade_descricao
+        tests: [not_null]
+      - name: cod_empreendimento
+        tests: [not_null]
+      - name: data_assinatura
+        description: >
+          timestamptz, interpretado no fuso America/Sao_Paulo. NULL quando
+          ausente ou irreconhecivel -- agregacoes ignoram nulo e ficam corretas.
+      - name: ano_orcamento
+        description: NULL quando nao informado.
+      - name: valor_contratado
+        description: >
+          numeric(15,2). NULL quando nao informado -- zero seria mentira e
+          distorceria media. A gold decide se exibe zero, com medida_ou_zero().
+
+  - name: silver_poc_empreendimentos
+    tests:
+      - sem_linhas_duplicadas
+    description: >
+      GRAO: uma linha por empreendimento.
+      Empreendimentos com construtora, municipio e coordenadas. Padroes
+      exercitados: join de quatro arquivos, pivot de formato longo para colunas
+      via max(case when), e nullif('None') para o texto literal que a origem
+      grava no lugar de nulo.
+
+      Difere do silver_fgts_empreendimentos de producao por nao ler
+      fgts_sftp_empreendimentos_base_pj, que nao existe na staging -- com ele
+      voltariam o coalesce entre fontes concorrentes e o join por expressao.
+    columns:
+      - name: cod_empreendimento
+        tests:
+          - unique
+          - not_null
+      - name: municipio_uf
+        description: UF do municipio; 'ND' quando sem correspondencia.
+        tests: [not_null]
+      - name: quantidade_uh
+        description: Unidades habitacionais financiadas; NULL quando ausente.
+      - name: gps_lat
+        description: Latitude como texto; 'Não Informado' quando ausente.
+        tests: [not_null]
+      - name: gps_long
+        description: Longitude como texto; 'Não Informado' quando ausente.
+        tests: [not_null]
+      - name: nome_construtora
+        tests: [not_null]
+
+  - name: silver_poc_posicoes
+    tests:
+      - sem_linhas_duplicadas
+    description: >
+      GRAO: uma linha por empreendimento e mes de posicao.
+      Historico mensal de posicao dos empreendimentos. Padrao exercitado:
+      window function row_number() para marcar a posicao mais recente.
+    columns:
+      - name: cod_empreendimento
+        tests:
+          - not_null
+          - relationships:
+              to: ref('silver_poc_empreendimentos')
+              field: cod_empreendimento
+      - name: is_posicao_atual
+        description: TRUE na linha mais recente de cada empreendimento.
+        tests: [not_null]
+      - name: percentual_executado
+        description: NULL quando nao informado.
+      - name: data_inicio
+        description: timestamptz; NULL quando ausente.
+      - name: data_termino
+        description: timestamptz; NULL quando ausente.
+
+  - name: silver_poc_financiamentos_pf
+    tests:
+      - sem_linhas_duplicadas
+    description: >
+      GRAO: uma linha por contrato de financiamento e origem.
+      Financiamentos pessoa fisica unificando CCI, CCA e pro-cotista. Padrao
+      exercitado: union all de tres arquivos com joins de dominio proprios e
+      nomes de coluna divergentes entre origens.
+    columns:
+      - name: numero_do_contrato
+        tests: [not_null]
+      - name: origem_pf
+        description: Procedencia do registro.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['CCI', 'CCA', 'PRO-COTISTA']
+      - name: faixa_renda_descricao
+        tests: [not_null]
+      - name: valor_financiamento
+        description: NULL quando nao informado.
+
+  - name: silver_poc_execucao_obras
+    tests:
+      - sem_linhas_duplicadas
+    description: >
+      GRAO: uma linha por contrato e mes de avaliacao.
+      Execucao fisica e paralisacoes. Padroes exercitados: flag booleana
+      derivada de left join que pode nao casar, e duas mascaras de data
+      diferentes na mesma tabela resolvidas por uma unica chamada de
+      parse_timestamp com lista de formatos.
+    columns:
+      - name: cod_contrato
+        tests: [not_null]
+      - name: is_paralisada
+        tests: [not_null]
+      - name: situacao_obra_descricao
+        tests: [not_null]
+      - name: dias_sem_evolucao
+        description: >
+          NULL para contrato nao paralisado -- nao se aplica, e zero sugeriria
+          que houve medicao e deu zero.
+      - name: dt_ultimo_bm
+        description: timestamptz; NULL quando nao ha medicao.
+      - name: percentual_previsto
+        description: NULL quando nao informado.
+      - name: percentual_realizado
+        description: NULL quando nao informado.
+
+  # ==========================================================================
+  # GOLD -- Postgres puro, sem referencia a MinIO, parquet ou pg_duckdb
+  # ==========================================================================
+
+  - name: gold_poc_contratos_por_modalidade
+    description: Agregacao de contratos por ano orcamentario, modalidade e area.
+    columns:
+      - name: ano_orcamento
+        tests: [not_null]
+      - name: qtd_contratos
+        tests: [not_null]
+
+  - name: gold_poc_panorama_uf
+    description: >
+      Panorama por UF cruzando quatro silvers de granularidades diferentes,
+      usando silver_poc_contratos como tabela-ponte entre obra (por contrato) e
+      empreendimento. Padroes exercitados: count(distinct) com filter, filtro
+      pela posicao mais recente e divisao protegida com nullif.
+    columns:
+      - name: municipio_uf
+        tests:
+          - unique
+          - not_null
+      - name: qtd_empreendimentos
+        tests: [not_null]

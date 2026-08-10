@@ -204,3 +204,94 @@ sources:
         description: Ticket médio de lançamentos por empresa.
       - name: bronze_mcid_orcamento_por_acao
         description: Orçamento do MCID por ação governamental.
+
+  - name: fgts_staging
+    description: >
+      Parquets da camada de staging no MinIO. Nao sao tabelas do Postgres:
+      cada entrada aqui e um objeto no object storage, lido pela silver via
+      pg_duckdb. Declarados como source para que o dbt registre a dependencia
+      no manifest -- e dai que o OpenMetadata monta a linhagem. Sem isso os
+      models que leem parquet aparecem orfaos no catalogo.
+    meta:
+      # Prefixo comum. Pode ser sobrescrito em runtime com a var
+      # fgts_staging_prefix, util para apontar para um bucket de teste.
+      prefixo: "s3://data-lake-mcid/staging"
+    tables:
+      - name: contratos
+        description: Contratos do FGTS, camada de staging.
+        meta:
+          arquivo: fgts_canal_tab_ao_1_contratos_fgts.csv.parquet
+      - name: area
+        description: Dominio de area, camada de staging.
+        meta:
+          arquivo: fgts_canal_tdom_ao_1_area.csv.parquet
+      - name: linha
+        description: Dominio de linha, camada de staging.
+        meta:
+          arquivo: fgts_canal_tdom_ao_1_linha.csv.parquet
+      - name: modalidade
+        description: Dominio de modalidade, camada de staging.
+        meta:
+          arquivo: fgts_canal_tdom_ao_1_modalidade.csv.parquet
+
+      # --- empreendimentos -------------------------------------------------
+      - name: empreendimentos
+        description: Tabela base de empreendimentos do FGTS.
+        meta:
+          arquivo: fgts_canal_tab_ao_1_tab_empreendimentos.csv.parquet
+      - name: empreendimentos_construtor
+        description: Construtores dos empreendimentos.
+        meta:
+          arquivo: fgts_canal_tab_ao_1_tab_empreendimentos_construtor.csv.parquet
+      - name: empreendimentos_gps
+        description: >
+          Coordenadas dos empreendimentos em formato longo -- uma linha por
+          caracteristica (GPS LATITUDE GRAU, GPS LONGITUDE GRAU). Exige pivot.
+        meta:
+          arquivo: fgts_canal_tab_ao_1_tab_empreendimentos_gps.csv.parquet
+      - name: empreendimentos_base_pj
+        description: >
+          Base pessoa juridica vinda do SFTP. CONFERIR A EXTENSAO: a origem
+          nao e csv como as demais, entao o sufixo pode nao ser .csv.parquet.
+        meta:
+          arquivo: fgts_sftp_empreendimentos_base_pj.csv.parquet
+      - name: empreendimentos_posicoes
+        description: Historico de posicoes mensais dos empreendimentos.
+        meta:
+          arquivo: fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.csv.parquet
+      - name: municipios
+        description: Dominio de municipios.
+        meta:
+          arquivo: fgts_canal_tdom_ao_1_municipios.csv.parquet
+
+      # --- pessoa fisica ---------------------------------------------------
+      - name: cci_analitico
+        description: Financiamentos pessoa fisica CCI.
+        meta:
+          arquivo: fgts_canal_tab_cci_cca_cci_analitico.csv.parquet
+      - name: cca_analitico
+        description: Financiamentos pessoa fisica CCA.
+        meta:
+          arquivo: fgts_canal_tab_cci_cca_cca_analitico.csv.parquet
+      - name: pro_cotista
+        description: Financiamentos pessoa fisica pro-cotista.
+        meta:
+          arquivo: fgts_canal_tab_cci_cca_pro_cotista.csv.parquet
+      - name: faixa_de_renda
+        description: Dominio de faixa de renda.
+        meta:
+          arquivo: fgts_canal_tdom_cci_cca_faixa_de_renda.csv.parquet
+
+      # --- obras -----------------------------------------------------------
+      - name: execucoes_obras
+        description: Execucao fisica das obras por contrato.
+        meta:
+          arquivo: fgts_canal_tab_ao_2_tab_execucoes_obras.csv.parquet
+      - name: operacoes_paralisadas
+        description: Operacoes paralisadas do setor publico.
+        meta:
+          arquivo: fgts_canal_tab_ao_2_operacoes_paralisadas_fgts_setorpublico.csv.parquet
+      - name: situacao_da_obra
+        description: Dominio de situacao da obra.
+        meta:
+          arquivo: fgts_canal_tdom_ao_1_situacao_da_obra.csv.parquet
