@@ -35,6 +35,13 @@
       <h2>Contexto</h2>
       <div class="prosa">{{ d.contexto | markdown }}</div>
 
+      {% if d.get("citacao") %}
+        <blockquote class="citacao">
+          <div class="prosa">{{ d.citacao.texto | markdown }}</div>
+          <cite>{{ d.citacao.autoria }}</cite>
+        </blockquote>
+      {% endif %}
+
       <h2>O que a plataforma faz</h2>
       <div class="prosa">{{ d.o_que_faz | markdown }}</div>
     </div>

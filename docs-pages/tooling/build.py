@@ -174,10 +174,14 @@ def _contexto(acervo: dict[str, Any]) -> dict[str, Any]:
     camadas = dados.camadas_de(modelos)
     por_dominio = [(d["rotulo"], d["total"]) for d in dominios]
 
+    linhas = dados.montar_linhas(curadoria, dominios)
+
     return {
         "abas": ABAS,
         "escopo": escopo,
-        "m": metricas,
+        "programa": curadoria["programa"],
+        "linhas": linhas,
+        "m": {**metricas, "linhas_cobertas": sum(1 for x in linhas if x["coberta"])},
         "dominios": dominios,
         "entregas": entregas,
         "entregas_por_trimestre": dados.agrupar_por_trimestre(entregas),

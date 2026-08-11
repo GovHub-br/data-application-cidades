@@ -11,6 +11,7 @@
       é lido direto do repositório a cada publicação.
     </p>
     <span class="hero__periodo">{{ periodo }}</span>
+    <div class="hero__nota">{{ programa.resumo | markdown }}</div>
   </div>
 </div>
 
@@ -62,6 +63,50 @@
         </p>
       </a>
     {% endfor %}
+  </div>
+</section>
+
+<section class="container">
+  <h2>Cobertura do programa</h2>
+  <p class="secao__intro">
+    O {{ programa.nome }} opera em {{ linhas | length }} linhas, subsidiadas e
+    financiadas, cada uma com fundo, público e curador próprios — e com dados que
+    chegam por canais distintos. A plataforma cobre hoje
+    {{ m.linhas_cobertas }} delas. As demais estão mapeadas e ainda sem pipeline.
+    O domínio de Conjuntura não aparece aqui porque não é uma linha do programa:
+    é o ambiente econômico que atravessa todas elas.
+  </p>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Linha</th>
+          <th>Vertente</th>
+          <th>Fundo</th>
+          <th>Público-alvo</th>
+          <th>Curador</th>
+          <th>Na plataforma</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for linha in linhas %}
+          <tr{% if not linha.coberta %} class="linha--descoberta"{% endif %}>
+            <td><strong>{{ linha.nome }}</strong></td>
+            <td>{{ linha.vertente }}</td>
+            <td>{{ linha.fundo }}</td>
+            <td>{{ linha.publico }}</td>
+            <td>{{ linha.curador }}</td>
+            <td>
+              {% if linha.coberta %}
+                <a href="{{ rel }}{{ linha.href }}">{{ linha.modelos }} modelos →</a>
+              {% else %}
+                <span class="pendente">ainda não</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </section>
 

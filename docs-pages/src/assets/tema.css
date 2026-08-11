@@ -674,6 +674,70 @@ code {
   font-weight: 600;
 }
 
+/* ---------- Citação ---------- */
+
+.citacao {
+  margin: 1.5rem 0;
+  padding: 1.1rem 1.3rem;
+  background: var(--bg-white);
+  border-left: 4px solid var(--accent-orange);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  box-shadow: var(--shadow-md);
+}
+
+.citacao .prosa p {
+  margin: 0;
+  font-size: 1.02rem;
+  font-style: italic;
+  color: var(--text-strong);
+}
+
+.citacao cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Nota do hero ---------- */
+
+.hero__nota {
+  margin-top: 1.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  max-width: 70ch;
+}
+
+.hero__nota p {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* ---------- Cobertura das linhas ---------- */
+
+.linha--descoberta {
+  color: var(--text-muted);
+}
+
+.pendente {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.lista-perguntas--destaque li {
+  font-size: 1.02rem;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
 /* ---------- Trilha de navegação ---------- */
 
 .trilha {
