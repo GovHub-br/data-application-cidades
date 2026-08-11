@@ -43,6 +43,19 @@ models:
       gold:
         +materialized: table
         +schema: conjuntura_gold
+    
+    conjuntura_continuo_dbt:
+      +materialized: table
+      +schema: conjuntura_continuo
+      bronze:
+        +materialized: table
+        +schema: conjuntura_continuo_bronze
+      silver:
+        +materialized: table
+        +schema: conjuntura_continuo_silver
+      gold:
+        +materialized: table
+        +schema: conjuntura_continuo_gold
 
 on-run-start:
   - '{{create_udfs()}}'

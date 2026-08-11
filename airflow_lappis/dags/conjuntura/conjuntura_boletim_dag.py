@@ -21,15 +21,30 @@ profile_config = ProfileConfig(
 # DAGs de ingestão que alimentam as fontes usadas pelos modelos
 # conjuntura_dbt (schemas raw: abecip, bacen, fgv, fipe, ibge, infomoney).
 INGEST_DAG_IDS = [
-    "abecip_poupanca_trimestral_ingest_dag",
-    "bacen_sgs_ingest_dag",
-    "icst_ingest_dag",
-    "incc_m_ingest_dag",
-    "fipezap_trimestral_ingest_dag",
-    "ibge_ingest_dag",
-    "infomoney_imob",
-]
+    "ibge_ingest_dag", # PIB da construção civil (),
+                       # Produção física industrial e vendas da construção
+                       # SINAPI
+                       # PNAD Contínua
+                       # Rendimento médio real
 
+    "lancamentos_ingest_dag", # Empresas do setor imobiliário
+    "vendas_ingest_dag", # Empresas do setor imobiliário
+
+    "bacen_sgs_ingest_dag", # Financiamentos Imobiliários (),
+                            # Crédito Imobiliário / PIB
+    "abecip_poupanca_trimestral_ingest_dag", # SBPE Const,
+                                             # Novos financiamentos imobiliários,
+                                             # SBPE Aquisição
+                                             # Saldo caderneta de poupança
+
+    "incc_m_ingest_dag",
+
+    "dotacao_execucao_outras_fontes_mcid_ingest_dag", # OGU
+
+    "infomoney_imob",
+    "fipezap_trimestral_ingest_dag",
+    "icst_ingest_dag",
+]
 
 @dag(
     dag_id="conjuntura_boletim_dag",
@@ -45,6 +60,7 @@ INGEST_DAG_IDS = [
     description=(
         "Orquestra todas as ingestões usadas pelo boletim de conjuntura e, "
         "em seguida, roda os modelos dbt de conjuntura_dbt (bronze/silver/gold)."
+        "DAGs presentes: " + ", ".join(INGEST_DAG_IDS)
     ),
 )
 def conjuntura_boletim_dag() -> None:
