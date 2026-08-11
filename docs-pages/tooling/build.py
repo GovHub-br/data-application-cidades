@@ -228,6 +228,23 @@ def _copiar_assets() -> None:
     shutil.copytree(ASSETS_DIR, destino)
 
 
+def _validar_markup(paginas: list[Path]) -> int:
+    """Detecta markup que vazou escapado para a pagina, em vez de renderizar.
+
+    O autoescape do Jinja e o comportamento certo para texto do acervo, mas
+    engole SVG e HTML gerados que nao venham como Markup. O sintoma e a pagina
+    imprimir o codigo-fonte do grafico.
+    """
+    problemas = 0
+    for pagina in paginas:
+        html = pagina.read_text(encoding="utf-8")
+        for vazamento in ("&lt;svg", "&lt;p ", "&lt;div"):
+            if vazamento in html:
+                log.error("markup escapado em %s: %s", pagina.name, vazamento)
+                problemas += 1
+    return problemas
+
+
 def _validar_links(paginas: list[Path]) -> int:
     """Confere se todo href/src relativo aponta para um arquivo existente."""
     padrao = re.compile(r'(?:href|src)="([^"#:]+)"')
@@ -307,9 +324,9 @@ def main() -> int:
 
     _copiar_assets()
 
-    quebrados = _validar_links(escritas)
-    if quebrados:
-        log.error("%d link(s) interno(s) quebrado(s)", quebrados)
+    falhas = _validar_links(escritas) + _validar_markup(escritas)
+    if falhas:
+        log.error("%d problema(s) na saida; site nao publicavel", falhas)
         return 1
 
     log.info("site pronto em %s (%d páginas)", SITE_DIR, len(escritas))
