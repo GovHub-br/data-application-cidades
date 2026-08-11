@@ -1,0 +1,2312 @@
+{
+  "gerado_em": "2026-08-11T17:59:32.097452+00:00",
+  "resumo": {
+    "total_commits": 284,
+    "total_prs": 27,
+    "prs_mergeados": 19,
+    "total_autores": 34,
+    "primeiro_commit": "2024-12-12T19:54:30Z",
+    "ultimo_commit": "2026-08-11T14:48:04-03:00"
+  },
+  "commits": [
+    {
+      "sha": "ed45e80f",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T14:48:04-03:00",
+      "titulo": "docs: adiciona design do site de roadmap e documentacao narrativa",
+      "tipo": "docs"
+    },
+    {
+      "sha": "0444e820",
+      "autor": "Juan Pablo",
+      "data": "2026-07-10T12:41:18-03:00",
+      "titulo": "Adiciona script de dif entre Minio e sftp (#101)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "cbd3c07f",
+      "autor": "Gustavo Melo",
+      "data": "2026-07-08T10:18:03-03:00",
+      "titulo": "refact: implementa capacidade do script de identificar copias de arquivos",
+      "tipo": "refact"
+    },
+    {
+      "sha": "447ec502",
+      "autor": "Lucas Bottino",
+      "data": "2026-06-23T11:29:37-03:00",
+      "titulo": "feat: adiciona script de renomear tabelas",
+      "tipo": "feat"
+    },
+    {
+      "sha": "604d3df7",
+      "autor": "Lucas Bottino",
+      "data": "2026-06-23T11:18:59-03:00",
+      "titulo": "feat: adiciona script de inserção histórica do SFTP atualizado",
+      "tipo": "feat"
+    },
+    {
+      "sha": "903d4c9a",
+      "autor": "Gustavo Melo",
+      "data": "2026-06-22T10:32:47-03:00",
+      "titulo": "feat: adiciona script de diff de arquivos do SFTP",
+      "tipo": "feat"
+    },
+    {
+      "sha": "120b351e",
+      "autor": "Lucas Bottino",
+      "data": "2026-06-18T09:53:57-03:00",
+      "titulo": "feat: adiciona script de inserção histórica do SFTP",
+      "tipo": "feat"
+    },
+    {
+      "sha": "4f6c0f87",
+      "autor": "Gustavo Melo",
+      "data": "2026-06-15T12:31:56-03:00",
+      "titulo": "feat: pipeline dbt da linha entidades (FDS) do MCMV (#86)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "84652771",
+      "autor": "Juan Pablo",
+      "data": "2026-06-15T10:58:38-03:00",
+      "titulo": "Juan ricarte template issue (#87)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "c15b20a8",
+      "autor": "Lucas Bottino",
+      "data": "2026-06-12T13:32:31-03:00",
+      "titulo": "feat: adiciona correções nas bronzes do ibge e imob",
+      "tipo": "feat"
+    },
+    {
+      "sha": "56d3e118",
+      "autor": "Lucas Bottino",
+      "data": "2026-05-30T16:34:56-03:00",
+      "titulo": "feat: corrige bloco financiamentos imobiliarios bacen",
+      "tipo": "feat"
+    },
+    {
+      "sha": "fb57c285",
+      "autor": "Lucas Bottino",
+      "data": "2026-05-21T10:30:33-03:00",
+      "titulo": "feat: altera modelos dbt gold da conjuntura adicionando datas",
+      "tipo": "feat"
+    },
+    {
+      "sha": "5ee1684a",
+      "autor": "Lucas Bottino",
+      "data": "2026-05-21T10:04:14-03:00",
+      "titulo": "feat: altera modelos dbt silver da conjuntura adicionando datas",
+      "tipo": "feat"
+    },
+    {
+      "sha": "647850b3",
+      "autor": "Lucas Bottino",
+      "data": "2026-05-21T10:03:31-03:00",
+      "titulo": "feat: adiciona macro para definição de datas nos modelos dbt silver e gold",
+      "tipo": "feat"
+    },
+    {
+      "sha": "148610f9",
+      "autor": "Gustavo Melo",
+      "data": "2026-05-18T11:44:23-03:00",
+      "titulo": "feat: evolucao financeira da obra FAR (#23)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "ed45330b",
+      "autor": "Juan-Ricarte",
+      "data": "2026-05-14T11:58:42-03:00",
+      "titulo": "Add all templates",
+      "tipo": "outro"
+    },
+    {
+      "sha": "f972b9c9",
+      "autor": "Juan Pablo",
+      "data": "2026-05-12T20:38:10-03:00",
+      "titulo": "Update issue templates",
+      "tipo": "outro"
+    },
+    {
+      "sha": "e0190ab7",
+      "autor": "Juan Pablo",
+      "data": "2026-05-12T15:45:04-03:00",
+      "titulo": "Update issue templates (#17)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "702477e8",
+      "autor": "Milena Fernandes Rocha",
+      "data": "2026-05-08T13:07:13-03:00",
+      "titulo": "feat(conjuntura): modelos dbt bronze, silver e gold para conjuntura (#16)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "7809629d",
+      "autor": "Gustavo Melo",
+      "data": "2026-05-08T11:22:09-03:00",
+      "titulo": "feat: agregacao de empreendimentos far por estado (#13)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "8cddb583",
+      "autor": "Lucas Bottino",
+      "data": "2026-05-07T22:40:36-03:00",
+      "titulo": "Ingestão FipeZAP — Índice de Locação Residencial (#10)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "b1ca2e14",
+      "autor": "Lucas Bottino",
+      "data": "2026-05-07T22:01:51-03:00",
+      "titulo": "Ingestão ABECIP - Caderneta de poupança SBPE Mensal (#9)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "6bdaa2ec",
+      "autor": "Milena Fernandes Rocha",
+      "data": "2026-05-07T16:08:00-03:00",
+      "titulo": "Feat/ingestao infomoney (#14)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "0e1077a7",
+      "autor": "mat054",
+      "data": "2026-04-18T18:23:59-03:00",
+      "titulo": "feat: aumentei o escopo das ingestões do ibge",
+      "tipo": "feat"
+    },
+    {
+      "sha": "badd1285",
+      "autor": "mat054",
+      "data": "2026-04-14T14:45:04-03:00",
+      "titulo": "doc: documentacao api ibge",
+      "tipo": "doc"
+    },
+    {
+      "sha": "3efd9d49",
+      "autor": "mat054",
+      "data": "2026-03-08T12:30:06-03:00",
+      "titulo": "feat(ibge e bacen): adicionando dags e clientes do ibge e bacen para o relatorio",
+      "tipo": "outro"
+    },
+    {
+      "sha": "99100618",
+      "autor": "mat054",
+      "data": "2026-03-03T10:23:41-03:00",
+      "titulo": "feat(relatorio): testando ingestao de dados da API do IBGE",
+      "tipo": "outro"
+    },
+    {
+      "sha": "d9d05325",
+      "autor": "Gustavo Melo",
+      "data": "2026-05-05T09:59:34-03:00",
+      "titulo": "feat: DBTs bronze, silver e gold para empreendimentos far (#8)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "6904b045",
+      "autor": "Gustavo Melo",
+      "data": "2026-05-04T14:41:17-03:00",
+      "titulo": "feat: dags para extracao de indices MRV (#4)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "49643963",
+      "autor": "Gustavo Melo",
+      "data": "2026-04-24T15:56:37-03:00",
+      "titulo": "feat: dags para extração de indices FGV (#2)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "2e0740b2",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2026-04-12T13:40:05-03:00",
+      "titulo": "149 feat ingestão dos dados do sisbolsas (#193)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "265946ac",
+      "autor": "Mateushqms",
+      "data": "2026-04-10T15:52:07-03:00",
+      "titulo": "fix: correcao na tipagem devido a uma mudanca na API",
+      "tipo": "fix"
+    },
+    {
+      "sha": "d54730d0",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-04-10T14:50:04-03:00",
+      "titulo": "chore: renomeia tabelas de teds e dag na dir mir",
+      "tipo": "chore"
+    },
+    {
+      "sha": "d16a54a6",
+      "autor": "Mateushqms",
+      "data": "2026-04-10T13:40:12-03:00",
+      "titulo": "feat: camada bronze notas credito dos teds",
+      "tipo": "feat"
+    },
+    {
+      "sha": "b2497a41",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-04-09T16:59:47-03:00",
+      "titulo": "chore: renomeia tabela e dag apropriadamente",
+      "tipo": "chore"
+    },
+    {
+      "sha": "8844508a",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-04-09T16:57:41-03:00",
+      "titulo": "fix: ingestões colunas RPs opcionais",
+      "tipo": "fix"
+    },
+    {
+      "sha": "503914f7",
+      "autor": "Luana",
+      "data": "2026-04-09T14:23:56-03:00",
+      "titulo": "fix: typo na dag de deputados",
+      "tipo": "fix"
+    },
+    {
+      "sha": "395649de",
+      "autor": "Mateushqms",
+      "data": "2026-04-09T09:56:56-03:00",
+      "titulo": "refactor: correcao dos nomes dos emails e nomes das dags",
+      "tipo": "refactor"
+    },
+    {
+      "sha": "8e1c76ef",
+      "autor": "Mateushqms",
+      "data": "2026-04-08T22:04:14-03:00",
+      "titulo": "feat: criacao da dag de extracao das notas de credito dos teds mir",
+      "tipo": "feat"
+    },
+    {
+      "sha": "a86bb897",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-04-08T17:43:57-03:00",
+      "titulo": "feat: dag extração programação ação por ptres",
+      "tipo": "feat"
+    },
+    {
+      "sha": "6a53a6ed",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-04-08T11:42:58-03:00",
+      "titulo": "feat: dag extração programação financeira mir",
+      "tipo": "feat"
+    },
+    {
+      "sha": "b26aa77e",
+      "autor": "Wallyson Souza",
+      "data": "2026-04-06T17:04:48-03:00",
+      "titulo": "feat(sgac): adiciona ingestao de projetos via anexo CSV de email (#140)",
+      "tipo": "feat(sgac)"
+    },
+    {
+      "sha": "5a6d7bf8",
+      "autor": "Luana",
+      "data": "2026-04-06T12:24:28-03:00",
+      "titulo": "Fix dedup deputados com unique key composta",
+      "tipo": "outro"
+    },
+    {
+      "sha": "f4e5fe55",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-04-06T09:06:44-03:00",
+      "titulo": "feat: parametrização data recebimento email dags mir (#139)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "93eab5b6",
+      "autor": "Luana",
+      "data": "2026-04-02T11:00:58-03:00",
+      "titulo": "fix: incluindo todos os deputados ativos e nao ativos",
+      "tipo": "fix"
+    },
+    {
+      "sha": "b171cced",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-04-02T09:14:58-03:00",
+      "titulo": "feat: task unica ingest & insert xcom bloat prevent",
+      "tipo": "feat"
+    },
+    {
+      "sha": "decb10eb",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-04-02T09:06:39-03:00",
+      "titulo": "feat: bulk logic IMAP eficience",
+      "tipo": "feat"
+    },
+    {
+      "sha": "c2820627",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-31T14:53:29-03:00",
+      "titulo": "chore: remove declaração desnecessária cloude",
+      "tipo": "chore"
+    },
+    {
+      "sha": "9e7fc729",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-29T20:46:57-03:00",
+      "titulo": "test: testagem de cruzamento logo partidos",
+      "tipo": "test"
+    },
+    {
+      "sha": "641523d8",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-29T20:46:32-03:00",
+      "titulo": "feat(silver): silver parlamentares e logo seed",
+      "tipo": "outro"
+    },
+    {
+      "sha": "5681a8c1",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-28T20:05:02-03:00",
+      "titulo": "chore: padronizando sources names",
+      "tipo": "chore"
+    },
+    {
+      "sha": "eac9e75f",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-28T20:00:13-03:00",
+      "titulo": "chore: restruturação de schemas dados_abertos dbt",
+      "tipo": "chore"
+    },
+    {
+      "sha": "fb0ec561",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-27T23:19:42-03:00",
+      "titulo": "feat(bronze): emendas tesouro gerencial",
+      "tipo": "outro"
+    },
+    {
+      "sha": "3dea3c4c",
+      "autor": "Lucas Bottino",
+      "data": "2026-03-27T11:38:10-03:00",
+      "titulo": "feat/dag: adiciona dag para consumo as dotacoes e execucoes de outras fontes",
+      "tipo": "feat/dag"
+    },
+    {
+      "sha": "db2a4989",
+      "autor": "Lucas Bottino",
+      "data": "2026-03-27T10:51:19-03:00",
+      "titulo": "feat/dag: adiciona dag para consumo de orçamento por ação",
+      "tipo": "feat/dag"
+    },
+    {
+      "sha": "b75cffe3",
+      "autor": "Lucas Bottino",
+      "data": "2026-03-25T13:31:36-03:00",
+      "titulo": "feat/dag: adiciona dag para consumo de notas de empenho de parlamentares via email",
+      "tipo": "feat/dag"
+    },
+    {
+      "sha": "1ca0c3c1",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-20T15:16:03-03:00",
+      "titulo": "feat(dag): siafi email empenhos emendas parlamentares",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "9427e2b3",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-18T22:15:57-03:00",
+      "titulo": "feat: silver planos cruzada com parlamentares",
+      "tipo": "feat"
+    },
+    {
+      "sha": "ee444beb",
+      "autor": "Mateushqms",
+      "data": "2026-03-18T13:39:41-03:00",
+      "titulo": "feat: camada bronze empenhos ted",
+      "tipo": "feat"
+    },
+    {
+      "sha": "e892d363",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-18T11:20:10-03:00",
+      "titulo": "feat: fallback csv vazio ingest",
+      "tipo": "feat"
+    },
+    {
+      "sha": "5127bf87",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-17T10:44:55-03:00",
+      "titulo": "chore: adapta tests para versão correta do dbt",
+      "tipo": "chore"
+    },
+    {
+      "sha": "aa7cec5e",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-17T10:33:06-03:00",
+      "titulo": "chore: remove testes desnecessarios",
+      "tipo": "chore"
+    },
+    {
+      "sha": "1ac8f637",
+      "autor": "Mateushqms",
+      "data": "2026-03-16T18:15:22-03:00",
+      "titulo": "refactor: otimizacao das dags que faziam processos de chunks desnecessários",
+      "tipo": "refactor"
+    },
+    {
+      "sha": "355d5082",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-13T11:06:44-03:00",
+      "titulo": "feat(dag): siafi email empenhos parlamentares",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "3362b41f",
+      "autor": "Mateushqms",
+      "data": "2026-03-16T14:52:04-03:00",
+      "titulo": "refactor: ajustes para nao dar erro no sonar",
+      "tipo": "refactor"
+    },
+    {
+      "sha": "e62fb62b",
+      "autor": "Mateushqms",
+      "data": "2026-03-16T14:00:37-03:00",
+      "titulo": "feat: atualizar cliente TED e pipelines MIR no ingestão de dados",
+      "tipo": "feat"
+    },
+    {
+      "sha": "4021d4c2",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-13T21:08:15-03:00",
+      "titulo": "fix: refs pastas mir inesistentes (#100)",
+      "tipo": "fix"
+    },
+    {
+      "sha": "28072edc",
+      "autor": "Mateus Henrique Queiroz Magalhães Sousa",
+      "data": "2026-03-13T15:24:09-03:00",
+      "titulo": "Chore/update airflow dag connections (#98)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "290fd1db",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-07T18:28:14-03:00",
+      "titulo": "feat: camada bronze senadores e docs",
+      "tipo": "feat"
+    },
+    {
+      "sha": "aac564f9",
+      "autor": "Mateus Henrique Queiroz Magalhães Sousa",
+      "data": "2026-03-07T19:38:17-03:00",
+      "titulo": "Feat/camada bronze completa (#93)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "2ce2451e",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-05T19:21:42-03:00",
+      "titulo": "style: lint dags emendas",
+      "tipo": "style"
+    },
+    {
+      "sha": "38d79f5e",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-05T15:19:36-03:00",
+      "titulo": "style: aplicado lint senadores",
+      "tipo": "style"
+    },
+    {
+      "sha": "b6d18692",
+      "autor": "cibelinda",
+      "data": "2026-03-04T17:12:52-03:00",
+      "titulo": "feat: implementa ingestão de senadores",
+      "tipo": "feat"
+    },
+    {
+      "sha": "f3fdd7aa",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-04T15:27:36-03:00",
+      "titulo": "fix: sources missing transferegov_emendas",
+      "tipo": "fix"
+    },
+    {
+      "sha": "5ddf37d3",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-03-04T14:56:39-03:00",
+      "titulo": "feat: modelagem bronze emendas",
+      "tipo": "feat"
+    },
+    {
+      "sha": "b93650d4",
+      "autor": "Mateushqms",
+      "data": "2026-03-04T14:49:04-03:00",
+      "titulo": "fix: ajustes na identacao e add url imagem",
+      "tipo": "fix"
+    },
+    {
+      "sha": "ae81b845",
+      "autor": "Mateushqms",
+      "data": "2026-03-04T12:04:21-03:00",
+      "titulo": "feat: criacao da camanda bronze para deputados",
+      "tipo": "feat"
+    },
+    {
+      "sha": "da376a4f",
+      "autor": "Mateushqms",
+      "data": "2026-03-04T10:17:56-03:00",
+      "titulo": "feat: criacao da dag e cliente para extrair os partidos dos deputados",
+      "tipo": "feat"
+    },
+    {
+      "sha": "d5ff5943",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-02T10:27:12-03:00",
+      "titulo": "feat: dag extração finalidade paginada (#68)",
+      "tipo": "feat"
+    },
+    {
+      "sha": "fc208f24",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-02T10:00:00-03:00",
+      "titulo": "Passagem da coluna dt_ingest pelos modelos (#63)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "b2f7c638",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-02T09:46:19-03:00",
+      "titulo": "feat(metadata): nova tabela de metadados (dt-transform) (#62)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "e737cba9",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-02-26T17:16:08-03:00",
+      "titulo": "feat: extração historico pagamento emendas",
+      "tipo": "feat"
+    },
+    {
+      "sha": "06c36e27",
+      "autor": "Mateushqms",
+      "data": "2026-02-26T10:19:53-03:00",
+      "titulo": "refactor: atribuição desnecessária de dag_instance",
+      "tipo": "refactor"
+    },
+    {
+      "sha": "50e81bac",
+      "autor": "Mateushqms",
+      "data": "2026-02-26T00:05:38-03:00",
+      "titulo": "chore: aplica a formatacao do codigo",
+      "tipo": "chore"
+    },
+    {
+      "sha": "5e025028",
+      "autor": "Mateushqms",
+      "data": "2026-02-26T00:02:19-03:00",
+      "titulo": "feat: dag ingestao plano de trabalho",
+      "tipo": "feat"
+    },
+    {
+      "sha": "b3aab078",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-02-25T22:08:17-03:00",
+      "titulo": "feat: dag extração ordem pagamento e bancária",
+      "tipo": "feat"
+    },
+    {
+      "sha": "b9604e95",
+      "autor": "Tiago Santos Bittencourt",
+      "data": "2026-02-14T18:01:42-03:00",
+      "titulo": "feat: nova dag relatorios gestao novo",
+      "tipo": "feat"
+    },
+    {
+      "sha": "bdc0e30e",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-02-04T16:31:51-03:00",
+      "titulo": "feat(dag): extração paginada para  eficiêcia (#61)",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "31d605d7",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-01-26T16:58:38-03:00",
+      "titulo": "feat(metas): dag de extração metas_especiais (#60)",
+      "tipo": "feat(metas)"
+    },
+    {
+      "sha": "3c51ea4d",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-01-26T14:33:09-03:00",
+      "titulo": "feat(dag): extração documentos hábeis transferegov (#57)",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "a83d875a",
+      "autor": "João Henrique Egewarth",
+      "data": "2026-01-19T14:20:08-03:00",
+      "titulo": "Create LICENSE (#64)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "94840d11",
+      "autor": "arthrok",
+      "data": "2026-01-06T16:16:36-03:00",
+      "titulo": "change(ci): retira condicao de lint apenas em mr",
+      "tipo": "change(ci)"
+    },
+    {
+      "sha": "0e099059",
+      "autor": "arthrok",
+      "data": "2026-01-06T15:58:50-03:00",
+      "titulo": "fix(ci): ajusta nome da imagem pra lower case",
+      "tipo": "fix(ci)"
+    },
+    {
+      "sha": "698557cf",
+      "autor": "arthrok",
+      "data": "2026-01-06T15:54:34-03:00",
+      "titulo": "change(ci): bypass lint temporariamente",
+      "tipo": "change(ci)"
+    },
+    {
+      "sha": "2ad34926",
+      "autor": "Tiago Bittencourt",
+      "data": "2025-12-12T17:40:25-03:00",
+      "titulo": "feat(schedule): retorno default, evita dag break (#56)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "dabb2946",
+      "autor": "arthrok",
+      "data": "2025-12-03T21:19:03-03:00",
+      "titulo": "fix(ci): corrige path da pasta de actions",
+      "tipo": "fix(ci)"
+    },
+    {
+      "sha": "8f2e9b43",
+      "autor": "arthrok",
+      "data": "2025-12-03T21:17:36-03:00",
+      "titulo": "feat(ci): adiciona sqlfluff no ci",
+      "tipo": "feat(ci)"
+    },
+    {
+      "sha": "29b12a60",
+      "autor": "Mateus de Castro",
+      "data": "2025-12-03T14:13:30-03:00",
+      "titulo": "Feat ingest relatorio gestao e pncp (#48)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "97c6cc93",
+      "autor": "Mateus Henrique Queiroz Magalhães Sousa",
+      "data": "2025-12-02T22:42:05-03:00",
+      "titulo": "Feat/ingestao executor especial transferegov (#46)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "d496251b",
+      "autor": "Leonardo Bonetti",
+      "data": "2025-12-02T22:25:34-03:00",
+      "titulo": "WIP: feat(transferegov): Adiciona ingestor de empenho especial (#45)",
+      "tipo": "WIP"
+    },
+    {
+      "sha": "14b01289",
+      "autor": "arthrok",
+      "data": "2025-12-01T14:22:06-03:00",
+      "titulo": "feat(ci): modulariza action do poetry",
+      "tipo": "feat(ci)"
+    },
+    {
+      "sha": "6df0667c",
+      "autor": "arthrok",
+      "data": "2025-12-01T00:11:36-03:00",
+      "titulo": "refactor(ci): refatora ci corrigindo stages e jobs",
+      "tipo": "outro"
+    },
+    {
+      "sha": "3f811e25",
+      "autor": "Tiago Bittencourt",
+      "data": "2025-11-21T17:51:41-03:00",
+      "titulo": "feat(dags): paramentização do schedule das dags usando Airflow vars",
+      "tipo": "feat(dags)"
+    },
+    {
+      "sha": "697701c5",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-11-23T23:19:58-03:00",
+      "titulo": "Feat/cliente GitHub (#43)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "73d6d5ee",
+      "autor": "GabrielaTiago",
+      "data": "2025-11-19T12:52:40-03:00",
+      "titulo": "feat(docs): adiciona template de mensagem de commit",
+      "tipo": "feat(docs)"
+    },
+    {
+      "sha": "0bf25096",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-11-19T09:11:01-03:00",
+      "titulo": "feat(dags): padroniza transferegov",
+      "tipo": "feat(dags)"
+    },
+    {
+      "sha": "318cb3f6",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-11-19T09:03:59-03:00",
+      "titulo": "feat(dags): renomeia pasta do transferegov e esquema de inserção",
+      "tipo": "feat(dags)"
+    },
+    {
+      "sha": "16ea34d0",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-11-19T08:37:54-03:00",
+      "titulo": "feat(airflow): ingestao de programas e plano de acao transferegov",
+      "tipo": "outro"
+    },
+    {
+      "sha": "d6a2222b",
+      "autor": "mat054",
+      "data": "2025-10-27T15:49:14-03:00",
+      "titulo": "fix(linter): corrigindo erros de formatacao do linter",
+      "tipo": "fix(linter)"
+    },
+    {
+      "sha": "bcba8c9d",
+      "autor": "mat054",
+      "data": "2025-10-27T15:33:10-03:00",
+      "titulo": "fix(schema oficial): removendo schema de todas as tabelas juntas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "5acf698f",
+      "autor": "mat054",
+      "data": "2025-10-27T15:29:15-03:00",
+      "titulo": "feat(macros): adicionando schema das macros na pasta das macros",
+      "tipo": "outro"
+    },
+    {
+      "sha": "767e1320",
+      "autor": "mat054",
+      "data": "2025-10-27T15:28:49-03:00",
+      "titulo": "feat(contratos bronze): adicionando schemas das tabelas bronze de contratos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "ea3555eb",
+      "autor": "mat054",
+      "data": "2025-10-27T15:28:22-03:00",
+      "titulo": "feat(contratos gold): adiconando schema das tabelas gold de contratos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "678ecf7b",
+      "autor": "mat054",
+      "data": "2025-10-27T15:27:56-03:00",
+      "titulo": "feat(contratos silver): adicionando schema das tabelas silver de contratos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "15add641",
+      "autor": "mat054",
+      "data": "2025-10-27T15:27:14-03:00",
+      "titulo": "feat(contratos views): adicionando schema das views de contratos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "3b5037d7",
+      "autor": "mat054",
+      "data": "2025-10-27T15:26:31-03:00",
+      "titulo": "feat(orcamento bronze): adicionando schema das tabelas bronze de orcamento",
+      "tipo": "outro"
+    },
+    {
+      "sha": "5031426a",
+      "autor": "mat054",
+      "data": "2025-10-27T15:25:47-03:00",
+      "titulo": "feat(pessoas bronze): adicionando schema das tabelas bronze de pessoas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "900afb19",
+      "autor": "mat054",
+      "data": "2025-10-27T15:22:16-03:00",
+      "titulo": "feat(pessoas gold): adicionando schema das tabelas gold de pessoas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "086d9b78",
+      "autor": "mat054",
+      "data": "2025-10-27T15:21:40-03:00",
+      "titulo": "feat(pessoas silver): adicionando schema das tabelas silver de pessoas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "0d436079",
+      "autor": "mat054",
+      "data": "2025-10-27T15:20:44-03:00",
+      "titulo": "feat(ted bronze): adicionando schema da pasta bronze de teds",
+      "tipo": "outro"
+    },
+    {
+      "sha": "ac8cb8f9",
+      "autor": "mat054",
+      "data": "2025-10-27T15:20:08-03:00",
+      "titulo": "feat(ted gold): adicionando schema da pasta gold de teds",
+      "tipo": "outro"
+    },
+    {
+      "sha": "1fb24a48",
+      "autor": "mat054",
+      "data": "2025-10-27T15:19:38-03:00",
+      "titulo": "feat(ted views): adicionando schema de views de ted",
+      "tipo": "outro"
+    },
+    {
+      "sha": "eb3d2cb1",
+      "autor": "mat054",
+      "data": "2025-10-27T15:19:07-03:00",
+      "titulo": "feat(silver ted): adicionando schema da silver de dados de ted",
+      "tipo": "outro"
+    },
+    {
+      "sha": "7f40e766",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-10-27T12:08:31-03:00",
+      "titulo": "fix/pf-tesouro-ingest",
+      "tipo": "outro"
+    },
+    {
+      "sha": "a727f39c",
+      "autor": "João Egewarth",
+      "data": "2025-10-25T14:00:37-03:00",
+      "titulo": "feat: altera a ingestão de ncs e pfs de teds para usar o id do plano de ação ao invés da UG emitente",
+      "tipo": "feat"
+    },
+    {
+      "sha": "fc048dd1",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-10-20T15:18:37-03:00",
+      "titulo": "fix/dag-nota-de-crédito",
+      "tipo": "outro"
+    },
+    {
+      "sha": "17aa8cca",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-10-14T23:43:28-03:00",
+      "titulo": "bug: retira servidores fora do orgao",
+      "tipo": "bug"
+    },
+    {
+      "sha": "bb1ce3a4",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-09-30T10:45:50-03:00",
+      "titulo": "fix/makefile",
+      "tipo": "outro"
+    },
+    {
+      "sha": "fc50d94a",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-09-30T09:03:34-03:00",
+      "titulo": "feat(docker): adiciona driver do postgres no superset",
+      "tipo": "outro"
+    },
+    {
+      "sha": "787b7d06",
+      "autor": "Marcus Martins",
+      "data": "2025-09-19T14:26:09-03:00",
+      "titulo": "migração de pipeline para github",
+      "tipo": "outro"
+    },
+    {
+      "sha": "b814560f",
+      "autor": "Carla Rocha",
+      "data": "2025-09-08T14:01:42-03:00",
+      "titulo": "Update README.md",
+      "tipo": "outro"
+    },
+    {
+      "sha": "f5a3214f",
+      "autor": "Carla Rocha",
+      "data": "2025-09-08T12:12:07-03:00",
+      "titulo": "Update README.md",
+      "tipo": "outro"
+    },
+    {
+      "sha": "c5e7c6d2",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-08-28T18:08:01-03:00",
+      "titulo": "fix(dag): muda estrategia de update da tabela visao orcamentaria",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "dac20e16",
+      "autor": "Mateus de Castro",
+      "data": "2025-08-19T23:23:08Z",
+      "titulo": "Dbt docs",
+      "tipo": "outro"
+    },
+    {
+      "sha": "6794e4c0",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-08-18T14:22:06-03:00",
+      "titulo": "feat(dbt): adiciona modelo dbt para visao orcamentaria",
+      "tipo": "feat(dbt)"
+    },
+    {
+      "sha": "75df421b",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-08-16T15:50:54-03:00",
+      "titulo": "delete(dags): exclui dags inutilizadas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "5b1b0018",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-08-15T19:48:40Z",
+      "titulo": "fix(dag): ajusta e refatora ingestao para nota de credito",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "c828fb5a",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-08-14T14:29:24-03:00",
+      "titulo": "feat(visao_orcamentaria): implementa limpeza e padronização de valores para inserção no banco",
+      "tipo": "outro"
+    },
+    {
+      "sha": "46b79c89",
+      "autor": "Mateus de Castro",
+      "data": "2025-08-13T15:25:01Z",
+      "titulo": "quantitativo alocados e ocupados e duplicatas de afastamento consolidado",
+      "tipo": "outro"
+    },
+    {
+      "sha": "d70c58f6",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-08-12T00:54:41-03:00",
+      "titulo": "feat(dt_ingest): adiciona data de ingestão e atualização para todas as ingestões",
+      "tipo": "outro"
+    },
+    {
+      "sha": "10f971fd",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-08-11T12:40:51Z",
+      "titulo": "Feat/visao orcamentaria ingest dag",
+      "tipo": "outro"
+    },
+    {
+      "sha": "3c659429",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-08-06T15:43:51-03:00",
+      "titulo": "feat(siape): melhora logging por processamento de CPF e data de ingestao",
+      "tipo": "feat(siape)"
+    },
+    {
+      "sha": "801df72e",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-08-04T11:36:02-03:00",
+      "titulo": "feat/estrutura dags de ingestao",
+      "tipo": "outro"
+    },
+    {
+      "sha": "2304b2e6",
+      "autor": "Mateus de Castro",
+      "data": "2025-07-22T18:10:56Z",
+      "titulo": "feat(gold):nova tabela gold",
+      "tipo": "feat(gold)"
+    },
+    {
+      "sha": "c56194a9",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-07-20T18:49:38-03:00",
+      "titulo": "feat(siape): implementa parsing de multiplos registros para dados funcionais",
+      "tipo": "feat(siape)"
+    },
+    {
+      "sha": "55491893",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-07-16T16:32:12-03:00",
+      "titulo": "fix/dbt-lista-servidores",
+      "tipo": "outro"
+    },
+    {
+      "sha": "f0fc57ac",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-07-12T14:56:23Z",
+      "titulo": "feat/dt_ingest dados funcionais",
+      "tipo": "outro"
+    },
+    {
+      "sha": "6ad6fd7b",
+      "autor": "VictorSzk",
+      "data": "2025-07-09T16:41:14Z",
+      "titulo": "Fix/silver afastamentos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "0346142d",
+      "autor": "VictorSzk",
+      "data": "2025-06-23T13:27:30Z",
+      "titulo": "Terceirizados",
+      "tipo": "outro"
+    },
+    {
+      "sha": "fb18015d",
+      "autor": "Mateus de Castro",
+      "data": "2025-06-20T16:32:35Z",
+      "titulo": "Tabelas silvers (correlação entre unidades uorgs, correlação entre cargos siape e siorg)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "75190df9",
+      "autor": "VictorSzk",
+      "data": "2025-06-13T14:42:03Z",
+      "titulo": "Aposentadorias",
+      "tipo": "outro"
+    },
+    {
+      "sha": "e835da96",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-06-12T12:30:52-03:00",
+      "titulo": "hotfix/pensoes-instituidas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "27e3e78b",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-06-12T14:48:56Z",
+      "titulo": "feat(siape): dag de ingestao de pensoes instituidas",
+      "tipo": "feat(siape)"
+    },
+    {
+      "sha": "91b3e84b",
+      "autor": "arthrok",
+      "data": "2025-06-09T23:02:28-03:00",
+      "titulo": "feat(ci): adiciona deploy dbt-docs",
+      "tipo": "feat(ci)"
+    },
+    {
+      "sha": "52f504c5",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-06-06T15:36:13Z",
+      "titulo": "Fix/ingestao siorg",
+      "tipo": "outro"
+    },
+    {
+      "sha": "ec960391",
+      "autor": "João Freitas",
+      "data": "2025-06-04T04:00:09Z",
+      "titulo": "fix pessoas models",
+      "tipo": "outro"
+    },
+    {
+      "sha": "ed3b1dc4",
+      "autor": "João Freitas",
+      "data": "2025-06-04T03:13:06Z",
+      "titulo": "Modelagem siape",
+      "tipo": "outro"
+    },
+    {
+      "sha": "e6ad3928",
+      "autor": "Joyce Dionizio",
+      "data": "2025-06-03T20:03:05Z",
+      "titulo": "Fix/dag lista uorgs",
+      "tipo": "outro"
+    },
+    {
+      "sha": "a1730a02",
+      "autor": "Joyce Dionizio",
+      "data": "2025-06-03T19:35:52Z",
+      "titulo": "fix: corrige data",
+      "tipo": "fix"
+    },
+    {
+      "sha": "496ac7f8",
+      "autor": "Joyce Dionizio",
+      "data": "2025-06-03T18:16:38Z",
+      "titulo": "Fix/dag ingestion siape",
+      "tipo": "outro"
+    },
+    {
+      "sha": "894edf2d",
+      "autor": "Joyce Dionizio",
+      "data": "2025-06-03T17:42:46Z",
+      "titulo": "Fix/dag ingestion siape",
+      "tipo": "outro"
+    },
+    {
+      "sha": "669306bf",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-05-30T16:52:11-03:00",
+      "titulo": "feat(dag): adiciona task de ingestao de teds enviadas",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "de5477ad",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-05-30T12:25:44-03:00",
+      "titulo": "feat(dag): adiciona dag de ingestao dos terceirizados",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "2ba491d3",
+      "autor": "Joyce",
+      "data": "2025-05-29T16:37:47-03:00",
+      "titulo": "fix(dag): corrige problema na dag",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "bed849eb",
+      "autor": "Joyce",
+      "data": "2025-05-29T15:35:21-03:00",
+      "titulo": "feat(plugin): separa responsabilidades das queries",
+      "tipo": "outro"
+    },
+    {
+      "sha": "6ff919ac",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-29T18:24:53Z",
+      "titulo": "fix(dag): adiciona pk na tabela",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "693b670b",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-28T16:37:48Z",
+      "titulo": "feat: adiciona dag de debug",
+      "tipo": "feat"
+    },
+    {
+      "sha": "ca881fb0",
+      "autor": "Joyce",
+      "data": "2025-05-28T08:16:16-03:00",
+      "titulo": "feat: adiciona logging pra debugar",
+      "tipo": "feat"
+    },
+    {
+      "sha": "e7beaf46",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-28T15:46:32Z",
+      "titulo": "fix: evita que o sonar acesse arquivos com permissao negada",
+      "tipo": "fix"
+    },
+    {
+      "sha": "55308953",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-05-23T14:36:29-03:00",
+      "titulo": "feat(dbt): adiciona modelos dbt do siorg",
+      "tipo": "feat(dbt)"
+    },
+    {
+      "sha": "1b5f76ea",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-23T11:10:46Z",
+      "titulo": "Feat/dbt pessoas estrutura organizacional cargos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "61a6b445",
+      "autor": "joao",
+      "data": "2025-05-22T19:48:39-03:00",
+      "titulo": "created dados_pa table at siape bronze tenant",
+      "tipo": "outro"
+    },
+    {
+      "sha": "3d90f4a3",
+      "autor": "joao",
+      "data": "2025-05-22T19:29:17-03:00",
+      "titulo": "created dados_pessoais table at siape bronze tenant",
+      "tipo": "outro"
+    },
+    {
+      "sha": "9fb786a8",
+      "autor": "joao",
+      "data": "2025-05-22T18:16:39-03:00",
+      "titulo": "created servidores and dados_uorg tables at siape bronze tenant",
+      "tipo": "outro"
+    },
+    {
+      "sha": "07ef73af",
+      "autor": "joao",
+      "data": "2025-05-22T15:29:40-03:00",
+      "titulo": "created uorgs table at bronze tenant",
+      "tipo": "outro"
+    },
+    {
+      "sha": "2ae554da",
+      "autor": "joao",
+      "data": "2025-05-22T12:31:21-03:00",
+      "titulo": "feat: adicionando siape",
+      "tipo": "feat"
+    },
+    {
+      "sha": "5aa1e4d6",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-21T17:36:12Z",
+      "titulo": "Feat/dag siorg",
+      "tipo": "outro"
+    },
+    {
+      "sha": "06e28d93",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-21T16:25:39Z",
+      "titulo": "Feat dbt docs",
+      "tipo": "outro"
+    },
+    {
+      "sha": "181c1e65",
+      "autor": "VictorSzk",
+      "data": "2025-05-20T13:25:30-03:00",
+      "titulo": "Arrumando novas colunas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "447757a9",
+      "autor": "VictorSzk",
+      "data": "2025-05-19T17:38:18-03:00",
+      "titulo": "Nova coluna",
+      "tipo": "outro"
+    },
+    {
+      "sha": "aa6f0db6",
+      "autor": "João Henrique Egewarth",
+      "data": "2025-05-16T13:25:32Z",
+      "titulo": "Adicionando coluna de beneficiário/emitente do TED.",
+      "tipo": "outro"
+    },
+    {
+      "sha": "8000e9a9",
+      "autor": "João Henrique Egewarth",
+      "data": "2025-05-14T21:57:44Z",
+      "titulo": "alterando regex de num de transferencia para pegar mais cenários",
+      "tipo": "outro"
+    },
+    {
+      "sha": "350f48c6",
+      "autor": "João Henrique Egewarth",
+      "data": "2025-05-14T20:06:06Z",
+      "titulo": "Fix: Fix: alterando regex de numero de transferencia para pegar novos cenários das NEs de 2022",
+      "tipo": "Fix"
+    },
+    {
+      "sha": "6a3ce718",
+      "autor": "João Henrique Egewarth",
+      "data": "2025-05-14T19:29:42Z",
+      "titulo": "Fix: alterando regex de numero de transferencia para pegar novos cenários das NEs de 2022",
+      "tipo": "Fix"
+    },
+    {
+      "sha": "a2c9593f",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-14T18:25:24Z",
+      "titulo": "feat(pk): adiciona colunas de despesa como pk em empenhos",
+      "tipo": "feat(pk)"
+    },
+    {
+      "sha": "d3381940",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-05-13T20:15:53-03:00",
+      "titulo": "feat(dbt): adiciona num_transf como parte do cruzamento de pfs",
+      "tipo": "feat(dbt)"
+    },
+    {
+      "sha": "be6a9aab",
+      "autor": "VictorSzk",
+      "data": "2025-05-12T18:54:50-03:00",
+      "titulo": "Adicionando num_tranf",
+      "tipo": "outro"
+    },
+    {
+      "sha": "31d74a05",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-12T17:09:22Z",
+      "titulo": "Fix/ajuste drop",
+      "tipo": "outro"
+    },
+    {
+      "sha": "e4f759aa",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-05-12T13:42:11-03:00",
+      "titulo": "Revert \"fix(drop): ajusta dag de drop\"",
+      "tipo": "outro"
+    },
+    {
+      "sha": "5d07400c",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-05-12T13:39:20-03:00",
+      "titulo": "fix(drop): ajusta dag de drop",
+      "tipo": "fix(drop)"
+    },
+    {
+      "sha": "9a8e5d20",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-12T15:49:12Z",
+      "titulo": "feat(pf): adiciona pf-descricao",
+      "tipo": "feat(pf)"
+    },
+    {
+      "sha": "0bab7761",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-12T14:19:05Z",
+      "titulo": "feat(param): adiciona funcao param para passar ano de backfill",
+      "tipo": "feat(param)"
+    },
+    {
+      "sha": "a770fb13",
+      "autor": "Joyce",
+      "data": "2025-05-12T07:26:59-03:00",
+      "titulo": "feat(cliente): normaliza dados dos dependentes",
+      "tipo": "outro"
+    },
+    {
+      "sha": "8b7b299f",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-05-10T20:28:31-03:00",
+      "titulo": "feat(tags): ajusta e adiciona tags",
+      "tipo": "feat(tags)"
+    },
+    {
+      "sha": "afd6b66a",
+      "autor": "VictorSzk",
+      "data": "2025-05-08T15:06:05-03:00",
+      "titulo": "Adding columns",
+      "tipo": "outro"
+    },
+    {
+      "sha": "1fc09667",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-08T15:01:24Z",
+      "titulo": "Fix/afastamento dependentes",
+      "tipo": "outro"
+    },
+    {
+      "sha": "886ff34f",
+      "autor": "Joyce",
+      "data": "2025-05-08T10:26:53-03:00",
+      "titulo": "fix(dags): insere coluna cpf nas tabelas",
+      "tipo": "fix(dags)"
+    },
+    {
+      "sha": "c0aa67dd",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-08T13:06:35Z",
+      "titulo": "Fix/dags ingest",
+      "tipo": "outro"
+    },
+    {
+      "sha": "7913294a",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-08T12:39:34Z",
+      "titulo": "Fix/dags ingest",
+      "tipo": "outro"
+    },
+    {
+      "sha": "0e190fde",
+      "autor": "Joyce",
+      "data": "2025-05-08T08:45:25-03:00",
+      "titulo": "fix(sql): corrige sql",
+      "tipo": "fix(sql)"
+    },
+    {
+      "sha": "7f01726d",
+      "autor": "Joyce",
+      "data": "2025-05-08T08:19:25-03:00",
+      "titulo": "fix(dag): corrige ingestao malformada",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "35953fe2",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-07T17:59:47Z",
+      "titulo": "Feat/dags ingest siape",
+      "tipo": "outro"
+    },
+    {
+      "sha": "16581ff5",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-07T16:45:32Z",
+      "titulo": "Feat/siape dados pessoais",
+      "tipo": "outro"
+    },
+    {
+      "sha": "d697d879",
+      "autor": "Joyce",
+      "data": "2025-05-07T12:49:54-03:00",
+      "titulo": "fix(dag): corrige nome da tabela",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "9d9237aa",
+      "autor": "Joyce",
+      "data": "2025-05-07T11:22:33-03:00",
+      "titulo": "fix(dag): corrige erro na ingestao dos dados",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "57b98a18",
+      "autor": "Joyce",
+      "data": "2025-05-07T10:42:30-03:00",
+      "titulo": "feat(dag): adiciona dag para excluir tabelas",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "74cf8102",
+      "autor": "Joyce",
+      "data": "2025-05-06T20:19:48-03:00",
+      "titulo": "refactor(table): altera nome da tabela",
+      "tipo": "outro"
+    },
+    {
+      "sha": "a5272955",
+      "autor": "Joyce",
+      "data": "2025-05-06T18:23:58-03:00",
+      "titulo": "fix(dag): corrige coluna inexistente",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "55dc18de",
+      "autor": "Joyce",
+      "data": "2025-05-06T17:25:25-03:00",
+      "titulo": "refactor(dag): adiciona logica para varios cpfs",
+      "tipo": "outro"
+    },
+    {
+      "sha": "1e54c793",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-06T14:00:14Z",
+      "titulo": "feat(siape): adiciona dag lista de servidore",
+      "tipo": "feat(siape)"
+    },
+    {
+      "sha": "04f49c2b",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-06T13:30:18Z",
+      "titulo": "Feat/siape lista uorgs",
+      "tipo": "outro"
+    },
+    {
+      "sha": "34ebbcf0",
+      "autor": "VictorSzk",
+      "data": "2025-05-05T22:11:45Z",
+      "titulo": "Feat/gold ted",
+      "tipo": "outro"
+    },
+    {
+      "sha": "adce4daf",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-05-05T21:49:25Z",
+      "titulo": "Feat/test dbt",
+      "tipo": "outro"
+    },
+    {
+      "sha": "55a9d4df",
+      "autor": "pedro.rossi1",
+      "data": "2025-05-05T18:44:52-03:00",
+      "titulo": "fix: compose: adicionando env local de exemplo",
+      "tipo": "fix"
+    },
+    {
+      "sha": "2262189e",
+      "autor": "Joyce Dionizio",
+      "data": "2025-05-05T17:20:29Z",
+      "titulo": "Fix/cliente siape",
+      "tipo": "outro"
+    },
+    {
+      "sha": "5b791157",
+      "autor": "mat054",
+      "data": "2025-04-30T12:50:34-03:00",
+      "titulo": "fix dbt contratos_faturas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "8bacd704",
+      "autor": "Mateus de Castro",
+      "data": "2025-04-29T16:11:15Z",
+      "titulo": "Fix dash faturas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "78fb2366",
+      "autor": "Joyce Dionizio",
+      "data": "2025-04-29T13:33:39Z",
+      "titulo": "feat(siape): ajusta variaveis do ambiente",
+      "tipo": "feat(siape)"
+    },
+    {
+      "sha": "f96d7b95",
+      "autor": "Joyce",
+      "data": "2025-04-28T18:24:31-03:00",
+      "titulo": "feat(templates): adiciona templates de todas req do siape",
+      "tipo": "outro"
+    },
+    {
+      "sha": "7d63fc57",
+      "autor": "VictorSzk",
+      "data": "2025-04-28T16:47:05-03:00",
+      "titulo": "Alterando scheduler",
+      "tipo": "outro"
+    },
+    {
+      "sha": "17c02f3a",
+      "autor": "Joyce Dionizio",
+      "data": "2025-04-28T17:56:39Z",
+      "titulo": "Feat/siape ingest",
+      "tipo": "outro"
+    },
+    {
+      "sha": "cdfdb7d2",
+      "autor": "VictorSzk",
+      "data": "2025-04-23T15:01:11-03:00",
+      "titulo": "introduzindo dbt docs",
+      "tipo": "outro"
+    },
+    {
+      "sha": "9f6c5126",
+      "autor": "VictorSzk",
+      "data": "2025-04-22T15:24:26-03:00",
+      "titulo": "Consertando config",
+      "tipo": "outro"
+    },
+    {
+      "sha": "02d71680",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-04-21T02:56:03Z",
+      "titulo": "Feat/ingestao nc tesouro",
+      "tipo": "outro"
+    },
+    {
+      "sha": "7836f6fb",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-04-17T20:12:30Z",
+      "titulo": "feat(insert): ajusta o insert das tabelas do tesouro",
+      "tipo": "outro"
+    },
+    {
+      "sha": "bfb75c10",
+      "autor": "mat054",
+      "data": "2025-04-16T22:29:44-03:00",
+      "titulo": "alteracao ingestao cronogramas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "e5ec6082",
+      "autor": "VictorSzk",
+      "data": "2025-04-15T20:52:01Z",
+      "titulo": "Ted models",
+      "tipo": "outro"
+    },
+    {
+      "sha": "1a92f06f",
+      "autor": "arthrok",
+      "data": "2025-04-14T10:25:05-03:00",
+      "titulo": "feat(dbt): parametriza profiles.yml com variaveis de ambiente",
+      "tipo": "feat(dbt)"
+    },
+    {
+      "sha": "954f8187",
+      "autor": "VictorSzk",
+      "data": "2025-04-12T13:36:12Z",
+      "titulo": "Fix/join gold",
+      "tipo": "outro"
+    },
+    {
+      "sha": "9acb605e",
+      "autor": "VictorSzk",
+      "data": "2025-04-11T16:13:21Z",
+      "titulo": "Feat/fix time gaps",
+      "tipo": "outro"
+    },
+    {
+      "sha": "51d850de",
+      "autor": "mat054",
+      "data": "2025-04-11T07:53:49-03:00",
+      "titulo": "snapshot de cronogramas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "91889b8b",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-04-09T17:58:34-03:00",
+      "titulo": "fix(postgres): ajusta conexao postgres de unidade organizacional",
+      "tipo": "outro"
+    },
+    {
+      "sha": "61252874",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-04-09T14:51:32-03:00",
+      "titulo": "feat(column): adiciona possibilidade de mapeamento nulo para colunas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "163b0aac",
+      "autor": "VictorSzk",
+      "data": "2025-04-09T12:21:40Z",
+      "titulo": "Fix/small sintax fix",
+      "tipo": "outro"
+    },
+    {
+      "sha": "aaa8a3e3",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-04-08T22:32:27Z",
+      "titulo": "feaat(dags): adiciona dag de pfs e ajustas dags do email",
+      "tipo": "feaat(dags)"
+    },
+    {
+      "sha": "41b36b2b",
+      "autor": "Joyce",
+      "data": "2025-04-07T17:59:12-03:00",
+      "titulo": "fix(plugin): corrige schema",
+      "tipo": "fix(plugin)"
+    },
+    {
+      "sha": "c618d24a",
+      "autor": "Mateus de Castro",
+      "data": "2025-04-07T17:35:18Z",
+      "titulo": "Feat silver gold",
+      "tipo": "outro"
+    },
+    {
+      "sha": "1adce596",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-04-07T11:33:21Z",
+      "titulo": "Fix/email",
+      "tipo": "outro"
+    },
+    {
+      "sha": "feb8a557",
+      "autor": "VictorSzk",
+      "data": "2025-04-05T20:13:36Z",
+      "titulo": "Modelos ted",
+      "tipo": "outro"
+    },
+    {
+      "sha": "c64d790e",
+      "autor": "Joyce",
+      "data": "2025-04-02T20:16:49-03:00",
+      "titulo": "fix(dag): corrige variavel restante",
+      "tipo": "fix(dag)"
+    },
+    {
+      "sha": "d96dee95",
+      "autor": "Joyce",
+      "data": "2025-04-02T19:58:08-03:00",
+      "titulo": "feat(dags): corrige variaveis no restante das dags",
+      "tipo": "feat(dags)"
+    },
+    {
+      "sha": "a1cf6d32",
+      "autor": "Joyce Dionizio",
+      "data": "2025-04-02T13:57:45Z",
+      "titulo": "refactor(dags): altera logica para setar variaveis",
+      "tipo": "outro"
+    },
+    {
+      "sha": "454a4606",
+      "autor": "Matheus Dias Maciel",
+      "data": "2025-04-01T20:12:13+02:00",
+      "titulo": "Redirecting dbt logs to another folder",
+      "tipo": "outro"
+    },
+    {
+      "sha": "e3899e3f",
+      "autor": "Pedro Rossi",
+      "data": "2025-03-31T15:18:22Z",
+      "titulo": "feat: adicionando CD",
+      "tipo": "feat"
+    },
+    {
+      "sha": "2bd09519",
+      "autor": "Matheus Dias Maciel",
+      "data": "2025-03-31T15:09:13+02:00",
+      "titulo": "Ignoring non empty logs folder in Astronomer Cosmos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "dbd3e3fb",
+      "autor": "Joyce Dionizio",
+      "data": "2025-03-29T14:22:00Z",
+      "titulo": "Feat/extract multi ug",
+      "tipo": "outro"
+    },
+    {
+      "sha": "4dd0cde0",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-28T11:05:31-03:00",
+      "titulo": "fix(null): trata os nulos nas notas de creditos",
+      "tipo": "fix(null)"
+    },
+    {
+      "sha": "d5f18813",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-03-28T10:13:55Z",
+      "titulo": "feat(cliente): ajusta retorno das notas de credito",
+      "tipo": "outro"
+    },
+    {
+      "sha": "ef39d09c",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-03-27T18:00:46Z",
+      "titulo": "feat(dag): adiciona dag de ingestao das notas de creditos do siafi",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "67aacff6",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-23T23:41:15-03:00",
+      "titulo": "feat(dag): adiciona dag de insercao dos planos de acao",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "573f1d16",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-03-24T01:55:55Z",
+      "titulo": "Siafi/nota empenho",
+      "tipo": "outro"
+    },
+    {
+      "sha": "b1a9ecc2",
+      "autor": "arthrok",
+      "data": "2025-03-23T20:03:47-03:00",
+      "titulo": "fix(requirements): ajusta versão das libs e retira libs padrões da imagem",
+      "tipo": "outro"
+    },
+    {
+      "sha": "2bca40fb",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-23T18:52:58-03:00",
+      "titulo": "fix(beneficiario): ajusta insercao dos beneficiarios",
+      "tipo": "outro"
+    },
+    {
+      "sha": "ae2c5894",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-03-17T17:55:35Z",
+      "titulo": "Siafi/programacao financeira",
+      "tipo": "outro"
+    },
+    {
+      "sha": "f8a04917",
+      "autor": "VictorSzk",
+      "data": "2025-03-12T20:30:53Z",
+      "titulo": "Feat/nova gold",
+      "tipo": "outro"
+    },
+    {
+      "sha": "153f0bd7",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-10T22:14:43-03:00",
+      "titulo": "fix(postgres): ajusta query de selecao dos beneficiarios",
+      "tipo": "outro"
+    },
+    {
+      "sha": "c5bf052f",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-07T15:20:27-03:00",
+      "titulo": "hotfix(schema): ajusta os esquemas para os teds",
+      "tipo": "outro"
+    },
+    {
+      "sha": "3333ef99",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-07T14:53:15-03:00",
+      "titulo": "feat(dag): adiciona dag de insercao da programacao financeira",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "63f5df04",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-06T11:24:02-03:00",
+      "titulo": "fix(insert): ajusta os parametros da insercao de teds",
+      "tipo": "fix(insert)"
+    },
+    {
+      "sha": "dd58ba5a",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-03-05T19:43:58-03:00",
+      "titulo": "feat(dag): adiciona dag de insercao das notas de credito",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "c970f9ba",
+      "autor": "arthrok",
+      "data": "2025-02-28T17:25:54-03:00",
+      "titulo": "Revert \"Merge branch 'feat/testes-unitarios' into 'main'\"",
+      "tipo": "outro"
+    },
+    {
+      "sha": "8cf35b86",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-02-28T19:31:51Z",
+      "titulo": "feat(dag): adiciona dag de ingestao dos beneficiarios",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "f26051cd",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-02-26T14:26:15Z",
+      "titulo": "Feat/testes unitarios",
+      "tipo": "outro"
+    },
+    {
+      "sha": "387ec2a4",
+      "autor": "VictorSzk",
+      "data": "2025-02-23T19:03:40Z",
+      "titulo": "fix(dbt): consertando nome de colunas",
+      "tipo": "fix(dbt)"
+    },
+    {
+      "sha": "b076e933",
+      "autor": "arthrok",
+      "data": "2025-02-20T19:39:44-03:00",
+      "titulo": "fix(cosmos): adiciona nova env com o path do airflow e ajusta para o cosmos",
+      "tipo": "fix(cosmos)"
+    },
+    {
+      "sha": "90c0b20c",
+      "autor": "Mateus de Castro",
+      "data": "2025-02-19T20:26:51Z",
+      "titulo": "feat(cronograma):adicionei inserted at dentro cronogramas empenhos e faturas e...",
+      "tipo": "outro"
+    },
+    {
+      "sha": "dc56cc67",
+      "autor": "Matheus Dias Maciel",
+      "data": "2025-02-16T13:28:42Z",
+      "titulo": "Adding Cosmos dag",
+      "tipo": "outro"
+    },
+    {
+      "sha": "72dd8a17",
+      "autor": "VictorSzk",
+      "data": "2025-02-16T11:08:14Z",
+      "titulo": "Fix/org models",
+      "tipo": "outro"
+    },
+    {
+      "sha": "a089ed1a",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-02-12T14:28:42Z",
+      "titulo": "feat(trigger): adiciona trigger para ativar a dag de inativos depois dos...",
+      "tipo": "outro"
+    },
+    {
+      "sha": "fb157982",
+      "autor": "davi-aguiar-vieira",
+      "data": "2025-02-11T14:53:11-03:00",
+      "titulo": "fix(email): ajusta parametro de assunto do email",
+      "tipo": "fix(email)"
+    },
+    {
+      "sha": "db299358",
+      "autor": "Arthur Melo",
+      "data": "2025-02-10T15:50:52Z",
+      "titulo": "fix(ci): corrige erro de importação do mypath no ci",
+      "tipo": "fix(ci)"
+    },
+    {
+      "sha": "7750741d",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-02-09T20:38:42Z",
+      "titulo": "fix(insert)",
+      "tipo": "outro"
+    },
+    {
+      "sha": "91563bb1",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-02-09T20:37:02Z",
+      "titulo": "feat(dag): adiciona dag de ingestao dos contratos inativos",
+      "tipo": "feat(dag)"
+    },
+    {
+      "sha": "9edbf417",
+      "autor": "MatDias97",
+      "data": "2025-02-04T22:45:54+01:00",
+      "titulo": "Removendo notebook",
+      "tipo": "outro"
+    },
+    {
+      "sha": "664d41db",
+      "autor": "Davi de Aguiar Vieira",
+      "data": "2025-02-04T21:42:12Z",
+      "titulo": "Feat/migrar dags",
+      "tipo": "outro"
+    },
+    {
+      "sha": "17f3df2b",
+      "autor": "Arthur Melo",
+      "data": "2025-02-04T18:54:45Z",
+      "titulo": "Fix/ci",
+      "tipo": "outro"
+    },
+    {
+      "sha": "0352e6f9",
+      "autor": "arthrok",
+      "data": "2025-01-30T14:37:08-03:00",
+      "titulo": "fix: removendo arquivo de init da pasta airflow",
+      "tipo": "fix"
+    },
+    {
+      "sha": "b93a79e1",
+      "autor": "VictorSzk",
+      "data": "2025-01-28T16:34:51Z",
+      "titulo": "Chore/org pastas",
+      "tipo": "outro"
+    },
+    {
+      "sha": "a349f96f",
+      "autor": "MatDias97",
+      "data": "2025-01-27T09:45:31+01:00",
+      "titulo": "Adding Siape and Siafi clients",
+      "tipo": "outro"
+    },
+    {
+      "sha": "8d1d5037",
+      "autor": "MatDias97",
+      "data": "2025-01-09T21:46:07+01:00",
+      "titulo": "Adding Clients to Airflow plugins",
+      "tipo": "outro"
+    },
+    {
+      "sha": "7ab04fa7",
+      "autor": "Pedro Rossi",
+      "data": "2025-01-07T13:17:57Z",
+      "titulo": "refactor: melhorando a inicialização do docker-compose",
+      "tipo": "refactor"
+    },
+    {
+      "sha": "a7593b5b",
+      "autor": "MatDias97",
+      "data": "2024-12-16T18:31:09Z",
+      "titulo": "Addding sql formatting and linting",
+      "tipo": "outro"
+    },
+    {
+      "sha": "72346d17",
+      "autor": "MatDias97",
+      "data": "2024-12-12T22:32:12Z",
+      "titulo": "Initial setup for new repository",
+      "tipo": "outro"
+    },
+    {
+      "sha": "c40983c5",
+      "autor": "MatDias97",
+      "data": "2024-12-12T19:54:30Z",
+      "titulo": "Initial commit",
+      "tipo": "outro"
+    }
+  ],
+  "prs": [
+    {
+      "numero": 102,
+      "titulo": "refact: melhoras no script de snapshot",
+      "autor": "gusrberto",
+      "criado_em": "2026-07-08T13:27:39Z",
+      "mergeado_em": "2026-07-10T14:09:37Z",
+      "estado": "MERGED",
+      "labels": [
+        "Cidades"
+      ],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/102",
+      "corpo": "Adiciona ao script `sftp_snapshot.py` a capacidade de detectar cópia de arquivos entre diretórios do SFTP.\r\n- Um arquivo novo cujo *nome+tamanho* coincide com um arquivo ainda presente em outro path é classificado como copiado (origem -> destino), não como novo."
+    },
+    {
+      "numero": 101,
+      "titulo": "Adiciona script de dif entre Minio e sftp",
+      "autor": "Juan-Ricarte",
+      "criado_em": "2026-07-07T01:53:23Z",
+      "mergeado_em": "2026-07-10T15:41:18Z",
+      "estado": "MERGED",
+      "labels": [
+        "Cidades",
+        "Ciência de Dados"
+      ],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/101",
+      "corpo": ""
+    },
+    {
+      "numero": 100,
+      "titulo": "refact: refatorando estrutura de pastas do projeto",
+      "autor": "gusrberto",
+      "criado_em": "2026-07-01T23:37:44Z",
+      "mergeado_em": null,
+      "estado": "OPEN",
+      "labels": [
+        "Cidades"
+      ],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/100",
+      "corpo": "Estrutura do projeto refatorado seguindo a estrutura do [MinC](https://github.com/GovHub-br/data-application-minc)"
+    },
+    {
+      "numero": 99,
+      "titulo": "feat: ingestão dos dados do sftp",
+      "autor": "gusrberto",
+      "criado_em": "2026-07-01T20:11:34Z",
+      "mergeado_em": "2026-07-01T20:47:44Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/99",
+      "corpo": "Foram feitos dois scripts:\r\n- [x] Script de inserção de dados do SFTP no banco do projeto;\r\n- [x] Script de snapshots para descobrir alterações que ocorreram no SFTP entre períodos diferentes.\r\n\r\nResolve as issues #91 e #92"
+    },
+    {
+      "numero": 93,
+      "titulo": "test(cliente_infomoney): adiciona testes unitários para extração de c…",
+      "autor": "gabryelns",
+      "criado_em": "2026-06-30T20:20:51Z",
+      "mergeado_em": null,
+      "estado": "OPEN",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/93",
+      "corpo": "## Descrição\r\n\r\nAdiciona testes unitários para `airflow_lappis/plugins/cliente_infomoney.py`, cobrindo as rotinas de extração de cotações financeiras (`ClienteInfomoney.get_daily_series`).\r\n\r\nAs chamadas HTTP externas (API Alpha Vantage) são mockadas com `respx`, interceptando a camada `httpx.Client.request` usada por `ClienteBase`. Isso garante que nenhuma requisição real seja feita durante os testes, ao mesmo tempo em que valida a integração real entre `ClienteInfomoney` e a lógica de retry/parsing herdada de `ClienteBase`.\r\n\r\nIssue: https://github.com/GovHub-br/data-application-gov-hub/issues/314\r\n\r\n## O que foi testado\r\n\r\n- ✅ Retorno bem-sucedido da série temporal diária\r\n- ✅ Parâmetros corretos enviados na query string (`function`, `symbol`, `apikey`, `outputsize`)\r\n- ✅ Payload vazio retorna lista vazia\r\n- ✅ Limite de API atingido (`Information`) retorna lista vazia\r\n- ✅ Símbolo inválido (`Error Message`) retorna lista vazia\r\n- ✅ Erro HTTP 500 persistente propaga exceção após esgotar as tentativas de retry\r\n- ✅ Recuperação após falha transitória (retry bem-sucedido na 2ª tentativa)\r\n- ✅ Timeout propaga exceção\r\n- ✅ Inicialização correta do cliente (`api_key` e `base_url`)\r\n\r\n## Como testar\r\n\r\n```bash\r\npip install pytest httpx respx pytest-mock\r\npytest tests/test_plugins/test_cliente_infomoney.py -v\r\n```\r\n\r\nTodos os 9 testes passam localmente.\r\n\r\n## Issue relacionada\r\n\r\n(https://github.com/GovHub-br/data-application-gov-hub/issues/314)"
+    },
+    {
+      "numero": 88,
+      "titulo": "Feat/dbt rural",
+      "autor": "MilenaFRocha",
+      "criado_em": "2026-06-17T18:33:19Z",
+      "mergeado_em": null,
+      "estado": "OPEN",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/88",
+      "corpo": "Resolve parte da issue #32 .\r\nSão os dbts (Bronze, Silver e Gold) do Rural."
+    },
+    {
+      "numero": 87,
+      "titulo": "Juan ricarte template issue",
+      "autor": "Juan-Ricarte",
+      "criado_em": "2026-06-15T13:42:52Z",
+      "mergeado_em": "2026-06-15T13:58:39Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/87",
+      "corpo": ""
+    },
+    {
+      "numero": 86,
+      "titulo": "feat: pipeline dbt da linha entidades (FDS) do MCMV",
+      "autor": "gusrberto",
+      "criado_em": "2026-06-02T13:22:52Z",
+      "mergeado_em": "2026-06-15T15:31:56Z",
+      "estado": "MERGED",
+      "labels": [
+        "Cidades"
+      ],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/86",
+      "corpo": "Resolve as issues #78, #79 e #80\r\n\r\nCriação das 3 camadas do pipeline de transformação dos dados do MCMV Entidades.\r\n- [x] Camada bronze com tratamanto e normalização das tabelas;\r\n- [x] Camada silver com cruzamentos e integração das tabelas;\r\n- [x] Camada gold com tabelas criadas a partir da silvers para consumo no Superset;"
+    },
+    {
+      "numero": 82,
+      "titulo": "feat: adicao de tabelas bronze para o mcmv entidades",
+      "autor": "gusrberto",
+      "criado_em": "2026-05-27T16:29:50Z",
+      "mergeado_em": null,
+      "estado": "CLOSED",
+      "labels": [
+        "Cidades",
+        "Entidades"
+      ],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/82",
+      "corpo": "Resolve a issue #78\r\n\r\n**Checklist das tarefas concluídas:**\r\n- [x] Criação das bronzes das fontes primárias (Cadastro PJ, Obra, Financeiro, TS).\r\n- [x] Criação das bronzes das fontes complementares essenciais (INT 059 CAIXA e Entregas CAIXA).\r\n- [x] Padronização de `nu_apf` com a macro `normalize_apf`.\r\n- [x] Conversão de datas BR para DATE (`parse_date_br`).\r\n- [x] Conversão de valores financeiros BR para NUMERIC (`parse_financial_value`) - com tratamento da regra de inversão de sinal nas liberações financeiras (`ic_credito=0` → valores negativos usando `ABS()`).\r\n- [x] Padronização de percentuais físicos (`parse_numeric`).\r\n- [x] Limpeza de CNPJs (remoção de formatação para deixar apenas dígitos).\r\n- [x] Documentação e testes no `schema.yml` (`not_null` na chave `apf` e `row_count_match`)."
+    },
+    {
+      "numero": 76,
+      "titulo": "Fixture/ajustes conjuntura",
+      "autor": "bottinolucas",
+      "criado_em": "2026-05-26T13:42:02Z",
+      "mergeado_em": "2026-05-30T19:58:02Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/76",
+      "corpo": "### Descrição\r\nAdiciona rastreabilidade completa de datas em todos os modelos dbt do pipeline de conjuntura, permitindo identificar quando cada dado foi coletado e quando cada camada foi materializada.\r\nO que foi feito:\r\n\r\n### O que foi feito? \r\n- Criado macro add_metadata_timestamps(layer, has_ingest_date) em macros/add_metadata_timestamps.sql, que padroniza a inserção das colunas de auditoria em todos os modelos Silver e Gold\r\n- Adicionado dt_ingest (propagado da Bronze), dt_silver (current_timestamp na materialização) em todos os 19 modelos Silver\r\n- Adicionado dt_ingest, dt_silver e dt_gold (current_timestamp na materialização) em todos os 20 modelos Gold\r\n- Bronzes com inserção manual (sem pipeline) recebem NULL::timestamp em dt_ingest — sinalizando explicitamente a ausência de rastreabilidade de coleta\r\n- Modelos com GROUP BY propagam dt_ingest via MAX(dt_ingest); modelos com múltiplas fontes utilizam GREATEST(a.dt_ingest, b.dt_ingest) para refletir a ingestão mais recente\r\n- Queries do dashboard Superset atualizadas com dt_ingest AS \"Data Atualização\" em todos os charts implementados\r\n\r\n# Impacto \r\nNenhuma coluna existente foi alterada ou removida — apenas adição de colunas novas. Sem breaking changes."
+    },
+    {
+      "numero": 23,
+      "titulo": "feat: evolucao financeira da obra FAR",
+      "autor": "gusrberto",
+      "criado_em": "2026-05-14T16:44:30Z",
+      "mergeado_em": "2026-05-18T14:44:23Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/23",
+      "corpo": "Resolve a issue #20 \r\n\r\nCria as camadas bronze, silver e gold de evolução financeira que:\r\n\r\n- [x] Limpar e tipar os dados brutos da tabela financeiro_mensal (bronze)\r\n- [x] Agregar as liberações por APF e mês, calcular o desembolso acumulado e fazer o JOIN com os empreendimentos (silver);\r\n- [x] Expor os dados ao Superset em formato display-ready, seguindo a convenção do projeto onde apenas modelos gold são consumidos pelo BI (gold)"
+    },
+    {
+      "numero": 18,
+      "titulo": "Update issue templates",
+      "autor": "Juan-Ricarte",
+      "criado_em": "2026-05-12T23:38:11Z",
+      "mergeado_em": "2026-05-12T23:39:39Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/18",
+      "corpo": ""
+    },
+    {
+      "numero": 17,
+      "titulo": "Update issue templates",
+      "autor": "Juan-Ricarte",
+      "criado_em": "2026-05-12T18:42:57Z",
+      "mergeado_em": "2026-05-12T18:45:04Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/17",
+      "corpo": ""
+    },
+    {
+      "numero": 16,
+      "titulo": "Feat/conjuntura dbt",
+      "autor": "MilenaFRocha",
+      "criado_em": "2026-05-07T18:30:56Z",
+      "mergeado_em": "2026-05-08T16:07:14Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/16",
+      "corpo": "refs #216\r\nrefs #217"
+    },
+    {
+      "numero": 15,
+      "titulo": "Feat/ingestao novo caged",
+      "autor": "MilenaFRocha",
+      "criado_em": "2026-05-07T17:50:37Z",
+      "mergeado_em": null,
+      "estado": "OPEN",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/15",
+      "corpo": "refs #223"
+    },
+    {
+      "numero": 14,
+      "titulo": "Feat/ingestao infomoney",
+      "autor": "MilenaFRocha",
+      "criado_em": "2026-05-07T17:37:23Z",
+      "mergeado_em": "2026-05-07T19:08:00Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/14",
+      "corpo": "refs #220\r\nhttps://github.com/GovHub-br/data-application-gov-hub/issues/220"
+    },
+    {
+      "numero": 13,
+      "titulo": "feat: agregacao de empreendimentos far por estado",
+      "autor": "gusrberto",
+      "criado_em": "2026-05-07T01:08:48Z",
+      "mergeado_em": "2026-05-08T14:22:09Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/13",
+      "corpo": "- [x] Nova tabela gold de `panorama_estadual` que agrega as informações dos empreendimentos do Novo MCMV FAR em diferentes tipos de charts;\r\n- [x] Criação de nova aba `Estados` na Dashboard do FAR no Superset para visualização da gold criada;"
+    },
+    {
+      "numero": 11,
+      "titulo": "Ingestão BACEN SGS — Financiamentos Imobiliários PF/PJ",
+      "autor": "bottinolucas",
+      "criado_em": "2026-05-03T23:06:10Z",
+      "mergeado_em": null,
+      "estado": "CLOSED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/11",
+      "corpo": "Implementa a ingestão das séries temporais do BACEN SGS para financiamentos imobiliários, consumindo a API REST pública sem autenticação.\r\n \r\n### Arquivos adicionados\r\n- `airflow_lappis/plugins/cliente_bacen.py`\r\n- `airflow_lappis/dags/data_ingest/bacen/bacen_financiamentos_imobiliarios_historico_ingest_dag.py`\r\n- `airflow_lappis/dags/data_ingest/bacen/bacen_financiamentos_imobiliarios_trimestral_ingest_dag.py`\r\n### Séries ingeridas\r\n \r\n| Código | Coluna | Segmento |\r\n|---|---|---|\r\n| 20704 | pf_concessoes_rs_mi | PF |\r\n| 20774 | pf_taxa_juros_aa | PF |\r\n| 21151 | pf_inadimplencia_pct | PF |\r\n| 20692 | pj_concessoes_rs_mi | PJ |\r\n| 20763 | pj_taxa_juros_aa | PJ |\r\n| 21139 | pj_inadimplencia_pct | PJ |\r\n \r\n### Decisões técnicas\r\n- Cliente genérico — recebe `{codigo_sgs: \"nome_coluna\"}`, sem conhecimento das séries. Novas séries do BACEN podem ser ingeridas criando uma nova DAG sem modificar o cliente\r\n- DataFrame flat com uma linha por mês — sem coluna `segmento`, colunas prefixadas por `pf_` e `pj_`\r\n- DAG histórica com `schedule_interval=None` — execução manual única desde 01/03/2011\r\n- DAG trimestral com schedule dinâmico — puxa o trimestre anterior completo\r\n- Tratamento de exceções do Airflow: `AirflowFailException` para falha na API, `AirflowSkipException` quando BACEN ainda não publicou o trimestre\r\n### Tabela destino\r\n`bacen.financiamentos_imobiliarios`"
+    },
+    {
+      "numero": 10,
+      "titulo": "Ingestão FipeZAP — Índice de Locação Residencial",
+      "autor": "bottinolucas",
+      "criado_em": "2026-05-03T23:04:00Z",
+      "mergeado_em": "2026-05-08T01:40:37Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/10",
+      "corpo": "## Descrição \r\n\r\nImplementa a ingestão do Índice FipeZAP de locação residencial a partir do XLSX histórico disponibilizado publicamente pela FIPE.\r\n \r\n### Arquivos adicionados\r\n- `airflow_lappis/plugins/cliente_fipezap.py`\r\n- `airflow_lappis/dags/data_ingest/fipezap/fipezap_historico_ingest_dag.py`\r\n- `airflow_lappis/dags/data_ingest/fipezap/fipezap_trimestral_ingest_dag.py`\r\n### Dados ingeridos\r\n- `imoveis_residenciais_locacao_var_mensal_total` — variação mensal (%) da locação residencial\r\n- `imoveis_residenciais_locacao_var_ano_total` — variação em 12 meses (%) da locação residencial\r\n### Decisões técnicas\r\n- XLSX baixado em memória via `BytesIO` — nenhum arquivo salvo em disco\r\n- DAG trimestral regrava a série completa a cada execução via upsert — captura revisões retroativas automaticamente (comportamento confirmado durante o mapeamento)\r\n- DAG histórica com `schedule_interval=None` — execução manual única\r\n- Tratamento de exceções do Airflow: `AirflowFailException` para falha no download, `AirflowSkipException` para XLSX vazio\r\n### Tabela destino\r\n`fipezap.indice_locacao`"
+    },
+    {
+      "numero": 9,
+      "titulo": "Ingestão ABECIP - Caderneta de poupança SBPE Mensal",
+      "autor": "bottinolucas",
+      "criado_em": "2026-05-03T23:02:35Z",
+      "mergeado_em": "2026-05-08T01:01:52Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/9",
+      "corpo": "## Descrição \r\n\r\nImplementa a ingestão dos dados de Saldo da Caderneta de Poupança SBPE Mensal da ABECIP, a partir do XLSX disponibilizado publicamente no site da associação.\r\n \r\n### Arquivos adicionados\r\n- `airflow_lappis/plugins/cliente_abecip.py`\r\n- `airflow_lappis/dags/data_ingest/abecip/abecip_poupanca_historico_ingest_dag.py`\r\n- `airflow_lappis/dags/data_ingest/abecip/abecip_poupanca_trimestral_ingest_dag.py`\r\n### Dados ingeridos — aba `SBPE_Mensal`\r\n- `deposito` — R$ milhões\r\n- `retirada` — R$ milhões\r\n- `captacao_liquida_valor` — R$ milhões\r\n- `captacao_liquida_pct` — %\r\n- `rendimento` — R$ milhões\r\n- `saldo` — R$ milhões\r\n### Decisões técnicas\r\n- Cliente faz scraping da página ABECIP antes do download para obter sempre a URL atual do XLSX — o nome do arquivo muda a cada atualização (ex: `cp-historico-marco20261.xlsx` → `cp-historico-abril20261.xlsx`)\r\n- XLSX baixado em memória via `BytesIO` — nenhum arquivo salvo em disco\r\n- Filtro de linhas futuras — descarta meses preenchidos com zero sem saldo no XLSX\r\n- Filtro de linhas anuais — descarta registros `Total.YYYY` mantendo apenas registros mensais\r\n- DAG trimestral regrava a série completa via upsert — captura revisões retroativas\r\n- Tratamento de exceções do Airflow: `AirflowFailException` para falha no scraping ou download, `AirflowSkipException` para XLSX vazio\r\n- Valores em R$ milhões — conversão de unidade é responsabilidade do dbt\r\n- Cliente estruturado para receber novos datasets da ABECIP (ex: SBPE de financiamento) via novos métodos `fetch_and_transform_*` sem necessidade de criar um novo cliente\r\n### Tabela destino\r\n`abecip.poupanca_sbpe_mensal`"
+    },
+    {
+      "numero": 8,
+      "titulo": "feat: DBTs bronze, silver e gold para empreendimentos far",
+      "autor": "gusrberto",
+      "criado_em": "2026-05-03T21:06:42Z",
+      "mergeado_em": "2026-05-05T12:59:35Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/8",
+      "corpo": "Resolve a issue #7"
+    },
+    {
+      "numero": 6,
+      "titulo": "Feature/ingestao dados habitacao",
+      "autor": "MilenaFRocha",
+      "criado_em": "2026-04-28T11:26:33Z",
+      "mergeado_em": null,
+      "estado": "CLOSED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/6",
+      "corpo": "Closes #220\r\nCloses #223\r\nCloses #217\r\nCriação de templates das issues."
+    },
+    {
+      "numero": 5,
+      "titulo": "Dados de ingestão do Far e conjuntura (Dags e DBTs)",
+      "autor": "MilenaFRocha",
+      "criado_em": "2026-04-28T02:35:48Z",
+      "mergeado_em": null,
+      "estado": "CLOSED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/5",
+      "corpo": ""
+    },
+    {
+      "numero": 4,
+      "titulo": "feat: dags para extracao de indices MRV",
+      "autor": "gusrberto",
+      "criado_em": "2026-04-26T22:58:55Z",
+      "mergeado_em": "2026-05-04T17:41:18Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/4",
+      "corpo": "- [x] DAG `airflow_lappis/dags/data_ingest/mrv/lancamentos_ingest_dag.py`para extração dos Lançamentos trimestrais (e anuais) da MRV a partir de um arquivo XLSX obtido do site da MRV;\r\n- [x] DAG `airflow_lappis/dags/data_ingest/mrv/vendas_ingest_dag.py` para extração das Vendas Líquidas trimestrais (e anuais) da MRV a partir de um arquivo XLSX obtido do site da MRV;"
+    },
+    {
+      "numero": 3,
+      "titulo": "Cidades relatorio",
+      "autor": "mat054",
+      "criado_em": "2026-04-22T11:32:30Z",
+      "mergeado_em": "2026-05-07T01:56:01Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/3",
+      "corpo": "## Ingestões do IBGE + BACEN relacionado à Conjuntura\r\n\r\nDocumentação das ingestões do ibge: https://docs.google.com/document/d/1CQq1vLgNtc5YN_aFODu8TttZhleq7Mx-NnIQkh1kD8E/edit?tab=t.0\r\n\r\nVariables do airflow:\r\nKey: IBGE_CONFIGURACOES\r\nValue:\r\n[\r\n {\"agregado\": 5932, \"variaveis\": \"6564|6563|6562|6561\", \"tabela\": \"pib_construcao\", \"periodos\": \"-20\", \"classificacao_id\": 11255, \"categoria\": 90694},\r\n {\"agregado\": 2296, \"variaveis\": \"48|1196|1197|1198\", \"tabela\": \"sinapi\", \"periodos\": \"-30\"},\r\n {\"agregado\": 2072, \"variaveis\": \"933\", \"tabela\": \"pib_consolidado_trimestral_bruto\", \"periodos\": \"-20\"},\r\n {\"agregado\": 1846, \"variaveis\": \"585\", \"tabela\": \"pib_corrente_milhoes_brl\", \"periodos\": \"-20\", \"classificacao_id\": 11255, \"categoria\": \"all\"},\r\n {\"agregado\": 585, \"variaveis\": \"632|1908|1924\", \"tabela\": \"paic_resultados\", \"periodos\": \"-10\"},\r\n {\"agregado\": 586, \"variaveis\": \"631|1816|673|1780\", \"tabela\": \"paic_pessoal_salarial\", \"periodos\": \"-10\"},\r\n {\"agregado\": 591, \"variaveis\": \"1930|1931|1932\", \"tabela\": \"paic_obras\", \"periodos\": \"-10\"},\r\n {\"agregado\": 6323, \"variaveis\": \"4090\", \"tabela\": \"pnad_trabalho_construcao\", \"periodos\": \"-12\", \"classificacao_id\": 888, \"categoria\": \"47946|47949\"},\r\n {\"agregado\": 6391, \"variaveis\": \"5932\", \"tabela\": \"pnad_rendimento_construcao\", \"periodos\": \"-12\", \"classificacao_id\": 888, \"categoria\": \"47946|47949\"},\r\n {\"agregado\": 7521, \"variaveis\": \"606\", \"tabela\": \"pnadc_populacao_decis_renda\", \"periodos\": \"-5\", \"classificacao_id\": 1019, \"categoria\": \"all\"},\r\n {\"agregado\": 7531, \"variaveis\": \"10824\", \"tabela\": \"pnadc_rendimento_domiciliar_real\", \"periodos\": \"-5\", \"classificacao_id\": 1019, \"categoria\": \"all\"},\r\n {\"agregado\": 6821, \"variaveis\": \"162|10114\", \"tabela\": \"pnadc_habitacao_condicao\", \"periodos\": \"-5\", \"classificacao_id\": 63, \"categoria\": \"4343|1055|2519|1058\"}\r\n]"
+    },
+    {
+      "numero": 2,
+      "titulo": "feat: dags para extração de indices FGV",
+      "autor": "gusrberto",
+      "criado_em": "2026-04-16T20:15:34Z",
+      "mergeado_em": "2026-04-24T18:56:38Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/2",
+      "corpo": "- [x] DAG `airflow_lappis/dags/data_ingest/fgv/incc_m_ingest_dag.py`para extração do índice INCC-M da FGV a partir de um arquivo XLSX do site da Sinduscon-PR;\r\n- [x] DAG `airflow_lappis/dags/data_ingest/fgv/icst_ingest_dag.py` para extração do índice ICST da FGV a partir de um CSV obtido a partir de um scraper no site FGVDados;\r\n\r\n**OBS**: Para a segunda DAG é necessário ter uma conta na plataforma FGVDados, e colocar as credenciais na parte de \"Variables\" do Airflow com os nomes `dados_fgv_email` e `dados_fgv_password`:\r\n\r\n<img width=\"684\" height=\"85\" alt=\"image\" src=\"https://github.com/user-attachments/assets/cb89864d-576e-402a-adaa-fefb25dfdde9\" />"
+    },
+    {
+      "numero": 1,
+      "titulo": "refactor dags siac, simac e shnis",
+      "autor": "MilenaFRocha",
+      "criado_em": "2026-04-15T01:27:44Z",
+      "mergeado_em": "2026-04-15T01:28:02Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/1",
+      "corpo": "Criei duas branchs sem querer"
+    }
+  ]
+}

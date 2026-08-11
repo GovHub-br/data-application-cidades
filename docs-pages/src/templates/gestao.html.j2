@@ -1,0 +1,70 @@
+{% extends "base.html.j2" %}
+
+{% block conteudo %}
+<div class="hero">
+  <div class="container">
+    <h1>O que foi entregue</h1>
+    <p>
+      A leitura de gestão do roadmap: que problema cada fase resolveu, o que
+      chegou às mãos de quem decide e a evidência que sustenta cada afirmação.
+    </p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="numeros">
+    <div class="numero">
+      <div class="numero__valor">{{ m.total_fontes_sistemas }}</div>
+      <div class="numero__rotulo">Sistemas integrados</div>
+    </div>
+    <div class="numero numero--acento">
+      <div class="numero__valor">{{ m.total_gold }}</div>
+      <div class="numero__rotulo">Tabelas prontas para uso</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ m.total_testes }}</div>
+      <div class="numero__rotulo">Verificações de qualidade</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ m.meses_projeto }}</div>
+      <div class="numero__rotulo">Meses de construção</div>
+    </div>
+  </div>
+</div>
+
+<section class="container">
+  <p class="aviso">
+    <strong>Em construção.</strong> A timeline de fases, com o texto negocial de
+    cada uma e as evidências ligadas, é a fatia 2 da entrega. Ela será gerada a
+    partir do <code>roadmap.yml</code>, que ainda precisa do recorte de períodos
+    validado pela equipe.
+  </p>
+</section>
+
+<section class="container">
+  <h2>Entregas recentes</h2>
+  <p class="secao__intro">
+    Últimos pull requests integrados ao projeto, ainda sem a narrativa de fase.
+  </p>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Entrega</th>
+          <th>PR</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pr in prs_recentes %}
+          <tr>
+            <td>{{ pr.data }}</td>
+            <td>{{ pr.titulo }}</td>
+            <td><a href="{{ pr.url }}">#{{ pr.numero }}</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
