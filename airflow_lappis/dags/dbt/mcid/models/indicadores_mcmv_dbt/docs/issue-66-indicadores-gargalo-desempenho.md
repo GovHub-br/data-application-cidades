@@ -39,6 +39,13 @@ Checagem somente leitura realizada com a VPN ativa:
 
 Conclusão: o MinIO está acessível pela VPN e contém as camadas raw e staging usadas como origem do pipeline. A modelagem dos indicadores permanece baseada nas golds já materializadas no PostgreSQL, mas a origem foi confirmada no bucket `data-lake-mcid`.
 
+Complemento para o relógio de metas e alertas: a varredura completa do MinIO
+identificou 6.697 objetos, incluindo 754 CSVs em `raw/dados_historicos/`,
+619 arquivos de dados prioritários SNH, 278 arquivos com sinal de entregas de
+UH, 1.134 arquivos com sinal de execução física e 242 arquivos com sinal
+financeiro/desembolso. A nota técnica está em
+`docs/issue-66-fontes-minio-relogio-alertas.md`.
+
 ## Regras de Indicadores
 
 | Indicador | Regra |
