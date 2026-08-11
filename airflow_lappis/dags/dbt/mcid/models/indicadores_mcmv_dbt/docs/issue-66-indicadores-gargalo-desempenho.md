@@ -27,14 +27,17 @@ As bases foram conferidas no PostgreSQL `cidades`:
 
 ## Checagem MinIO
 
-Tentativa somente leitura realizada:
+Checagem somente leitura realizada com a VPN ativa:
 
-- `MINIO_ENDPOINT=minio:9000`: falhou porque o host `minio` é nome interno do Docker e não resolve no host.
-- `localhost:9000`: falhou com conexão recusada.
-- `docker-compose.yml`: a composição atual não expõe serviço MinIO nesta branch.
-- `docker ps`: não havia container em execução no ambiente local no momento da checagem.
+- `MINIO_ENDPOINT=10.0.0.56:9000`: conexão TCP aberta.
+- Protocolo válido: `http`.
+- Bucket acessível: `data-lake-mcid`.
+- Prefixos encontrados na raiz: `audit/`, `raw/`, `staging/`, `staging_dryrun/` e `test/`.
+- `raw/`: arquivos originais do MCMV, incluindo bases recentes `SNH_PMCMV_DADOS_PRIORITARIOS`.
+- `raw/dados_historicos/`: 754 arquivos CSV históricos.
+- `staging/`: arquivos parquet derivados das bases raw.
 
-Conclusão: o MinIO não estava acessível diretamente a partir do ambiente atual. A modelagem foi feita sobre as tabelas dbt já materializadas no PostgreSQL, que são as saídas estruturadas das cargas do MCMV. Quando o serviço MinIO estiver exposto, a checagem complementar recomendada é listar o bucket configurado em `MINIO_BUCKET` e comparar prefixos de origem contra as sources do dbt.
+Conclusão: o MinIO está acessível pela VPN e contém as camadas raw e staging usadas como origem do pipeline. A modelagem dos indicadores permanece baseada nas golds já materializadas no PostgreSQL, mas a origem foi confirmada no bucket `data-lake-mcid`.
 
 ## Regras de Indicadores
 
