@@ -674,6 +674,19 @@ code {
   font-weight: 600;
 }
 
+/* ---------- Indicação de fonte ---------- */
+
+.fonte {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0.4rem 0 1.4rem;
+  padding-left: 0.7rem;
+  border-left: 3px solid var(--borda);
+}
+
 /* ---------- Citação ---------- */
 
 .citacao {
