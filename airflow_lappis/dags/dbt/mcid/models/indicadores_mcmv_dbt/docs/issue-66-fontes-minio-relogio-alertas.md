@@ -115,6 +115,18 @@ inferida do MinIO.
 - `docs/evidencias/issue-66-minio-contratacoes-semanais-modalidade.csv`
 - `docs/evidencias/issue-66-minio-entregas-atuais-resumo.csv`
 - `docs/evidencias/issue-66-minio-serie-contratacoes-semanais.csv`
+- `docs/evidencias/issue-66-frentes-contratos-valores-agregados.csv`
+- `docs/evidencias/issue-66-frentes-arquivos-monitorados.csv`
+- `docs/evidencias/issue-66-frentes-top-ufs.csv`
+- `docs/evidencias/issue-66-fnhis-fontes-propostas.csv`
+- `docs/evidencias/issue-66-matriz-frentes-dashboard.csv`
+
+## Matriz Por Frente
+
+A leitura detalhada por programa/frente esta documentada em
+`docs/issue-66-matriz-frentes-relogio-alertas.md`. Ela separa MCMV ciclo
+2023-2026, FAR, Entidades/FDS, Rural, FNHIS, Faixa 3/FGTS, Faixa 2/FGTS/SBPE,
+Reforma Casa Brasil, dados historicos e SFTP operacional.
 
 ## Recomendacao Para a Proxima Modelagem
 
