@@ -3,9 +3,12 @@ graficos.py: gera SVG estatico para os graficos do site.
 
 Sem biblioteca de charts: sao poucos tipos, e SVG inline imprime, vira PDF e
 nao depende de JavaScript.
+
+O retorno e Markup para atravessar o autoescape do Jinja: os rotulos vindos do
+acervo sao escapados aqui, um a um, antes de entrar no SVG.
 """
 
-from xml.sax.saxutils import escape
+from markupsafe import Markup, escape
 
 LARGURA = 760
 ALTURA_BARRA = 26
@@ -16,10 +19,10 @@ COR_PADRAO = "#7A34F3"
 
 def barras_horizontais(
     dados: list[tuple[str, int]], cores: dict[str, str] | None = None
-) -> str:
+) -> Markup:
     """Barras horizontais com rotulo a esquerda e valor na ponta."""
     if not dados:
-        return '<p class="secao__intro">Sem dados para exibir.</p>'
+        return Markup('<p class="secao__intro">Sem dados para exibir.</p>')
 
     cores = cores or {}
     maximo = max(valor for _, valor in dados) or 1
@@ -44,13 +47,13 @@ def barras_horizontais(
             f'font-weight="700" fill="#666666">{valor}</text>'
         )
     partes.append("</svg>")
-    return "".join(partes)
+    return Markup("".join(partes))
 
 
-def colunas(dados: list[tuple[str, int]], cor: str = COR_PADRAO) -> str:
+def colunas(dados: list[tuple[str, int]], cor: str = COR_PADRAO) -> Markup:
     """Colunas verticais para series temporais curtas."""
     if not dados:
-        return '<p class="secao__intro">Sem dados para exibir.</p>'
+        return Markup('<p class="secao__intro">Sem dados para exibir.</p>')
 
     altura = 240
     base = altura - 34
@@ -76,4 +79,4 @@ def colunas(dados: list[tuple[str, int]], cor: str = COR_PADRAO) -> str:
             f'font-size="11" fill="#666666">{escape(rotulo)}</text>'
         )
     partes.append("</svg>")
-    return "".join(partes)
+    return Markup("".join(partes))
