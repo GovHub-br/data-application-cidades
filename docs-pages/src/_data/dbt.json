@@ -1,0 +1,3154 @@
+{
+  "gerado_em": "2026-08-11T18:28:09.868518+00:00",
+  "resumo": {
+    "total_modelos": 152,
+    "total_testes": 216,
+    "total_dominios": 11,
+    "total_fontes": 79,
+    "por_camada": {
+      "bronze": 64,
+      "gold": 43,
+      "silver": 39,
+      "outros": 6
+    },
+    "por_projeto": {
+      "ipea": 57,
+      "mcid": 75,
+      "mir": 20
+    },
+    "por_dominio": {
+      "conjuntura": 50,
+      "pessoas": 32,
+      "contratos": 15,
+      "emendas": 14,
+      "empreendimento_far": 13,
+      "entidades": 11,
+      "ted": 8,
+      "metadata": 3,
+      "dados_abertos": 3,
+      "empenhos_ted": 2,
+      "orcamento": 1
+    }
+  },
+  "modelos": [
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "bronze",
+      "nome": "contratos",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/bronze/contratos.sql",
+      "descricao": "Tabela com informações sobre contratos, incluindo detalhes como o valor do contrato, a data de início e término, e o status do contrato. Esta tabela é fundamental para entender a execução e o cumprimento dos contratos firmados. A tabela é atualizada diariamente e contém dados de contratos firmados pelo IPEA. A tabela realiza validações e limpezas dos dados extraídos do ComprasGov, incluindo formatação adequada de valores numéricos, remoção de caracteres especiais em CPF/CNPJ e normalização de datas.",
+      "testes": 11,
+      "linhas": 124,
+      "refs": [],
+      "sources": [
+        "compras_gov.contratos"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "bronze",
+      "nome": "cronogramas",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/bronze/cronogramas.sql",
+      "descricao": "Essa tabela contém informações sobre as despesas mensais programadas para cada contrato. Os dados são extraídos da tabela cronograma do ComprasGov, com valores formatados adequadamente. Apresenta o planejamento financeiro do contrato distribuído em parcelas mensais.",
+      "testes": 6,
+      "linhas": 25,
+      "refs": [],
+      "sources": [
+        "compras_gov.cronograma"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "bronze",
+      "nome": "empenhos",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/bronze/empenhos.sql",
+      "descricao": "Essa tabela contém informações sobre os empenhos de cada contrato extraídos do ComprasGov. Os dados são formatados adequadamente para garantir consistência nos tipos numéricos e de data. Registra os compromissos de pagamento assumidos pela administração para cada contrato.",
+      "testes": 10,
+      "linhas": 59,
+      "refs": [],
+      "sources": [
+        "compras_gov.empenhos"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "bronze",
+      "nome": "empenhos_tesouro",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/bronze/empenhos_tesouro.sql",
+      "descricao": "Essa tabela contém informações sobre movimentação financeira dos empenhos extraídos do SIAFI. Contém dados de empenhos do Tesouro Nacional com formatação de valores financeiros através da macro parse_financial_value. Apresenta valores para as diferentes etapas da execução orçamentária (empenho, liquidação, pagamento).",
+      "testes": 6,
+      "linhas": 50,
+      "refs": [],
+      "sources": [
+        "siafi.empenhos_tesouro"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "bronze",
+      "nome": "faturas",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/bronze/faturas.sql",
+      "descricao": "Essa tabela contém informações sobre as faturas emitidas mensalmente de cada contrato. Os dados são extraídos da tabela faturas do ComprasGov com formatação adequada de valores numéricos e datas. A tabela inclui um processamento adicional para extrair informações dos empenhos a partir do campo JSON dados_empenho.",
+      "testes": 14,
+      "linhas": 52,
+      "refs": [],
+      "sources": [
+        "compras_gov.faturas"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "gold",
+      "nome": "contratos_comparativo_mensal",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/gold/contratos_comparativo_mensal.sql",
+      "descricao": "Essa tabela contém um comparativo mensal dos contratos, discriminando  os valores empenhados, liquidados e pagos do SIAFI,  programados e faturados do ComprasGov. Permite a identificação de inconsistências entre os sistemas e o acompanhamento detalhado  da execução financeira mensal de cada contrato.",
+      "testes": 0,
+      "linhas": 46,
+      "refs": [
+        "contratos_estagios",
+        "cronogramas_faturas_mensal",
+        "preenchimento_meses"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "gold",
+      "nome": "contratos_resumo",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/gold/contratos_resumo.sql",
+      "descricao": "Essa tabela contém um resumo dos contratos, informações contratuais como valor global e valor pago,  e situação atual, como em vigência ou pendente de baixa. Facilita a análise gerencial dos contratos com indicadores chave como status de pagamento, tipo de fornecedor, e identificação de contratos continuados (com vigência superior a dois anos e mais de uma parcela).",
+      "testes": 0,
+      "linhas": 54,
+      "refs": [
+        "contratos",
+        "contratos_empenhos"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "gold",
+      "nome": "contratos_somatorio",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/gold/contratos_somatorio.sql",
+      "descricao": "Essa tabela contém somatórios dos valores de cronograma, fatura, empenho, liquidação e pagamento para cada contrato. Facilita análises agregadas sobre a execução financeira total de cada contrato, com indicadores importantes  como o orçamento pendente de execução.",
+      "testes": 0,
+      "linhas": 19,
+      "refs": [
+        "contratos_comparativo_mensal"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "silver",
+      "nome": "contratos_empenhos",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/silver/contratos_empenhos.sql",
+      "descricao": "Essa tabela combina as informações de movimentação financeira dos empenhos com os ids de contrato do IPEA. Realiza uma complexa estratégia de join entre os contratos e empenhos do tesouro, tentando várias abordagens para relacionar os dados do SIAFI com os contratos do ComprasGov usando:  1) número de empenho e CNPJ/CPF, 2) número de processo, 3) CNPJ/CPF único, e 4) informação complementar.",
+      "testes": 0,
+      "linhas": 211,
+      "refs": [
+        "empenhos_tesouro",
+        "identificadores"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "silver",
+      "nome": "contratos_estagios",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/silver/contratos_estagios.sql",
+      "descricao": "Essa tabela combina as informações de movimentação financeira dos empenhos com os ids de contrato do IPEA mensalmente. Utiliza uma estratégia de join em cascata, tentando correlacionar os estágios das despesas do SIAFI com os  contratos do ComprasGov através de várias combinações de chaves, incluindo número de empenho, CNPJ/CPF, número  de processo e informações complementares.",
+      "testes": 0,
+      "linhas": 117,
+      "refs": [
+        "estagios_mensal",
+        "identificadores"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "silver",
+      "nome": "contratos_faturas",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/silver/contratos_faturas.sql",
+      "descricao": "Essa tabela integra informações detalhadas de faturas com dados dos contratos relacionados. Permite uma visão completa de cada fatura no contexto do seu contrato, incluindo dados como número de contrato, processo, objeto e fornecedor. Facilita a análise financeira das faturas em conjunto com seus respectivos contratos.",
+      "testes": 0,
+      "linhas": 54,
+      "refs": [
+        "contratos",
+        "faturas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "silver",
+      "nome": "cronogramas_faturas_mensal",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/silver/cronogramas_faturas_mensal.sql",
+      "descricao": "Essa tabela discrimina os valores programados e faturados mensalmente pelo ComprasGov para cada contrato. Combina dados dos cronogramas com as faturas pagas e pendentes, agrupando por contrato e mês de referência, e calculando o saldo contratual disponível (diferença entre o valor programado e os valores faturados).",
+      "testes": 0,
+      "linhas": 81,
+      "refs": [
+        "cronogramas"
+      ],
+      "sources": [
+        "compras_gov.faturas"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "silver",
+      "nome": "estagios_mensal",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/silver/estagios_mensal.sql",
+      "descricao": "Essa tabela discrimina os valores empenhados, liquidados e pagos mensalmente extraídos do SIAFI para cada contrato. Transforma e agrega os dados da tabela empenhos_tesouro do SIAFI, padronizando formatos e consolidando valores  por número de empenho, mês e CNPJ/CPF.",
+      "testes": 0,
+      "linhas": 135,
+      "refs": [
+        "empenhos_tesouro"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "outros",
+      "nome": "identificadores",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/views/identificadores.sql",
+      "descricao": "Essa tabela contém os identificadores dos contratos, empenhos e faturas. Consolida os números de empenho encontrados em diferentes fontes (contratos, faturas, empenhos)  e padroniza informações como processo e CNPJ/CPF para facilitar joins entre as tabelas. Também cria um campo info_complementar que combina unidade gestora, modalidade e número de contrato/licitação.",
+      "testes": 0,
+      "linhas": 60,
+      "refs": [
+        "contratos",
+        "empenhos",
+        "faturas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "contratos",
+      "camada": "outros",
+      "nome": "preenchimento_meses",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/contratos_dbt/views/preenchimento_meses.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 18,
+      "refs": [
+        "cronogramas_faturas_mensal"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "metadata",
+      "camada": "outros",
+      "nome": "models_metadata",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/metadata/models_metadata.sql",
+      "descricao": "Tabela central de metadados que armazena informações sobre todos os modelos dbt executados. Cada linha representa um modelo único, identificado pela combinação de schema e table_name. A tabela é atualizada de forma incremental, mantendo histórico das execuções.",
+      "testes": 3,
+      "linhas": 68,
+      "refs": [],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "orcamento",
+      "camada": "bronze",
+      "nome": "visao_orcamentaria_total",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/orcamento_dbt/bronze/visao_orcamentaria_total.sql",
+      "descricao": "Esta tabela contém a visão consolidada da execução orçamentária total, apresentando informações agregadas sobre os recursos disponíveis, empenhados, liquidados e pagos.",
+      "testes": 0,
+      "linhas": 48,
+      "refs": [],
+      "sources": [
+        "siafi.visao_orcamentaria_total"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "afastamento_historico",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/afastamento_historico.sql",
+      "descricao": "Tabela bronze que armazena o histórico de afastamentos dos servidores. Contém informações detalhadas sobre cada período de afastamento, incluindo datas, tipo, e amparo legal. Os dados são limpos e padronizados a partir da fonte original.",
+      "testes": 0,
+      "linhas": 134,
+      "refs": [],
+      "sources": [
+        "siape.afastamento_historico"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "cargos_funcoes",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/cargos_funcoes.sql",
+      "descricao": "Tabela bronze que representa as funções e cargos extraídos do sistema SIORG. Ela contém informações sobre o código e nome do cargo/função, nível hierárquico, categoria funcional, regras de autoridade, além de dados normativos (ato normativo) e as diversas denominações associadas a cada cargo/função. Os dados são expandidos a partir de arrays JSON para facilitar a análise.",
+      "testes": 0,
+      "linhas": 62,
+      "refs": [],
+      "sources": [
+        "siorg.cargos_funcao"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_afastamento",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_afastamento.sql",
+      "descricao": "Tabela bronze com dados atuais de afastamentos dos servidores.",
+      "testes": 0,
+      "linhas": 110,
+      "refs": [],
+      "sources": [
+        "siape.dados_afastamento"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_curriculo",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_curriculo.sql",
+      "descricao": "Tabela bronze que representa dados curriculares e experiências profissionais dos servidores públicos. Inclui informações sobre cursos realizados, instituições de ensino, tempo de experiência, projetos desenvolvidos e vínculos com órgãos ou empresas. As datas foram padronizadas para o primeiro dia do mês (`dt_mes_`) e os dados textuais foram limpos de caracteres inválidos.",
+      "testes": 0,
+      "linhas": 46,
+      "refs": [],
+      "sources": [
+        "siape.dados_curriculo"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_dependentes",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_dependentes.sql",
+      "descricao": "Tabela bronze que contém informações sobre os dependentes dos servidores públicos. Inclui grau de parentesco, condições de dependência, benefícios associados e o período em que a dependência esteve ativa. Os dados foram tratados para remover valores inválidos como 'NaN' e '00000000', e datas foram convertidas para o formato `DATE`.",
+      "testes": 0,
+      "linhas": 54,
+      "refs": [],
+      "sources": [
+        "siape.dados_dependentes"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_escolares",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_escolares.sql",
+      "descricao": "Tabela bronze que armazena dados sobre a formação educacional dos servidores públicos. Inclui informações sobre escolaridade, titulação e cursos associados às matrículas funcionais. Os dados foram limpos para remover valores vazios e o CPF foi padronizado contendo apenas dígitos.",
+      "testes": 0,
+      "linhas": 29,
+      "refs": [],
+      "sources": [
+        "siape.dados_escolares"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_financeiros",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_financeiros.sql",
+      "descricao": "Tabela bronze que armazena dados financeiros associados a servidores públicos. Contém informações detalhadas sobre rubricas (proventos e descontos), valores pagos, períodos de referência e data de pagamento. Os dados passam por limpeza e transformação de formatos monetários e temporais para garantir consistência e padronização.",
+      "testes": 0,
+      "linhas": 128,
+      "refs": [],
+      "sources": [
+        "siape.dados_financeiros"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_funcionais",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_funcionais.sql",
+      "descricao": "Tabela bronze que armazena os dados funcionais dos servidores, contendo informações sobre cargos, funções, regimes jurídicos, ocorrências de ingresso e aposentadoria, e dados de unidades organizacionais (lotação e exercício). As datas são padronizadas, os CPFs higienizados e os valores tratados para garantir integridade e legibilidade dos dados.",
+      "testes": 0,
+      "linhas": 88,
+      "refs": [],
+      "sources": [
+        "siape.dados_funcionais"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_pa",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_pa.sql",
+      "descricao": "Tabela bronze com dados de pensionistas e alimentados.",
+      "testes": 0,
+      "linhas": 41,
+      "refs": [],
+      "sources": [
+        "siape.dados_pa"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_pessoais",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_pessoais.sql",
+      "descricao": "Tabela bronze com dados pessoais dos servidores.",
+      "testes": 0,
+      "linhas": 53,
+      "refs": [],
+      "sources": [
+        "siape.dados_pessoais"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "dados_uorg",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/dados_uorg.sql",
+      "descricao": "Tabela bronze com dados das Unidades Organizacionais (UORGs).",
+      "testes": 0,
+      "linhas": 47,
+      "refs": [],
+      "sources": [
+        "siape.dados_uorg"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "estrutura_organizacional_cargos",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/estrutura_organizacional_cargos.sql",
+      "descricao": "Tabela gold contendo a estrutura organizacional de unidades com informações expandidas de cargos e instâncias. Os dados foram transformados para extrair e normalizar os campos aninhados no JSON armazenado na coluna `cargos`. A tabela inclui apenas uma instância por código, priorizando a de maior ordem de grandeza.",
+      "testes": 0,
+      "linhas": 79,
+      "refs": [],
+      "sources": [
+        "siorg.estrutura_organizacional_cargos"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "lista_servidores",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/lista_servidores.sql",
+      "descricao": "Tabela bronze com a lista de servidores e suas UORGs.",
+      "testes": 0,
+      "linhas": 9,
+      "refs": [],
+      "sources": [
+        "siape.lista_servidores"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "lista_uorgs",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/lista_uorgs.sql",
+      "descricao": "Tabela bronze com a lista de UORGs.",
+      "testes": 0,
+      "linhas": 9,
+      "refs": [],
+      "sources": [
+        "siape.lista_uorgs"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "terceirizados",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/terceirizados.sql",
+      "descricao": "Tabela gold contendo informações de trabalhadores terceirizados oriundos do sistema ComprasGov. Inclui dados relacionados ao contrato, função, jornada, remuneração e benefícios, com tratamento de campos textuais e numéricos para padronização.",
+      "testes": 0,
+      "linhas": 22,
+      "refs": [],
+      "sources": [
+        "compras_gov.terceirizados"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "bronze",
+      "nome": "unidade_organizacional",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/bronze/unidade_organizacional.sql",
+      "descricao": "Tabela gold que representa a hierarquia das unidades organizacionais extraídas do sistema Siorg. A hierarquia é construída de forma recursiva, partindo de uma unidade raiz definida manualmente. A tabela traz dados estruturados sobre as unidades, seus vínculos parentais e o nível de profundidade hierárquica.",
+      "testes": 0,
+      "linhas": 43,
+      "refs": [],
+      "sources": [
+        "siorg.unidade_organizacional"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "aposentadorias_resumo",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/aposentadorias_resumo.sql",
+      "descricao": "Tabela de resumo dos servidores aposentados, contendo informações detalhadas sobre a data de ingresso no serviço público, data de aposentadoria e tempo de serviço público calculado em anos, meses e dias. A granularidade da tabela é por CPF, ou seja, cada linha representa um servidor aposentado único.",
+      "testes": 0,
+      "linhas": 35,
+      "refs": [
+        "servidores_detalhados"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "cargos_consolidado",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/cargos_consolidado.sql",
+      "descricao": "Tabela que consolida informações de cargos ocupados e vagos no serviço público, a partir da junção entre os dados do SIAPE (servidores ativos e detalhados) e os dados do SIORG (estrutura de cargos disponíveis). Essa junção é feita com base no CPF do titular do cargo. Quando os campos do SIAPE estão nulos, o cargo provavelmente está vago. A tabela pode ser utilizada para identificar cargos vagos por unidade organizacional.",
+      "testes": 0,
+      "linhas": 34,
+      "refs": [
+        "estrutura_organizacional_cargos",
+        "servidores_detalhados"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "distribuicao_genero",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/distribuicao_genero.sql",
+      "descricao": "Tabela agregada que apresenta a distribuição percentual de servidores por gênero, enriquecida com informações de modalidade PGD, escolaridade e deficiência física. A análise considera apenas servidores ativos com dados completos nas bases do SIAPE, SIORG e dados de uorg. A granularidade é por gênero, com cálculo de percentual em relação ao total.",
+      "testes": 0,
+      "linhas": 10,
+      "refs": [
+        "servidores_completos"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "distribuicao_mapa_uf",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/distribuicao_mapa_uf.sql",
+      "descricao": "Tabela com a distribuição geográfica completa de servidores por Unidade Federativa (UF). Retorna todos os 27 estados brasileiros com suas respectivas contagens de servidores e percentuais. Estados sem servidores aparecem com valor 0. Útil para visualizações em mapas e análises de distribuição geográfica do quadro de pessoal.",
+      "testes": 0,
+      "linhas": 39,
+      "refs": [
+        "dados_funcionais",
+        "dados_uorg",
+        "estados_brasil"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "distribuicao_raca_cor",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/distribuicao_raca_cor.sql",
+      "descricao": "Tabela agregada que apresenta a distribuição de servidores por raça/cor, enriquecida com informações de modalidade PGD, escolaridade e deficiência física. A análise considera apenas servidores ativos com dados completos nas bases do SIAPE, SIORG e dados de uorg. A granularidade é por raça/cor, ordenada pela quantidade de servidores.",
+      "testes": 0,
+      "linhas": 6,
+      "refs": [
+        "servidores_completos"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "distribuicao_situacao_funcional",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/distribuicao_situacao_funcional.sql",
+      "descricao": "Tabela agregada que apresenta a distribuição de servidores por situação funcional, categorizando e padronizando as diferentes situações registradas no SIAPE. As situações funcionais são normalizadas em categorias como Ativo permanente, Cedido, Requisitado, Aposentado, Pensionista, Cargo comissionado e Estagiário. A análise inclui dados enriquecidos com informações de modalidade PGD e unidade organizacional.",
+      "testes": 0,
+      "linhas": 35,
+      "refs": [
+        "dados_funcionais",
+        "dados_uorg"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "hierarquia",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/hierarquia.sql",
+      "descricao": "Tabela que correlaciona dados do SIAPE (dados funcionais e pessoais dos servidores) com a estrutura organizacional do SIORG, atribuindo uma métrica de hierarquia aos cargos com base na codificação da função. A hierarquia é determinada por uma fórmula baseada na categoria e no nível do cargo. A tabela também indica se o cargo é de carreira ou de nomeação livre, além de consolidar informações sobre o servidor e sua chefia imediata.",
+      "testes": 0,
+      "linhas": 155,
+      "refs": [
+        "dados_funcionais",
+        "dados_pessoais",
+        "estrutura_organizacional_cargos",
+        "unidade_organizacional"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "kpis_servidores",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/kpis_servidores.sql",
+      "descricao": "Tabela de KPIs (Key Performance Indicators) consolidados sobre o quadro de pessoal, incluindo métricas de contagem total de servidores, servidores ativos permanentes, aposentados, estagiários e terceirizados. Esta tabela fornece uma visão rápida e consolidada dos principais indicadores quantitativos de recursos humanos da organização. Cada linha representa um KPI específico com seu respectivo valor.",
+      "testes": 0,
+      "linhas": 49,
+      "refs": [
+        "dados_funcionais",
+        "terceirizados"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "resumo_quadro_pessoal",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/resumo_quadro_pessoal.sql",
+      "descricao": "Tabela resumo com a distribuição dos servidores públicos por cargo efetivo, gênero, situação funcional e unidade federativa da unidade de exercício (UF). A granularidade é agregada, e cada linha representa uma combinação única desses atributos, com a respectiva contagem de servidores.",
+      "testes": 0,
+      "linhas": 10,
+      "refs": [
+        "servidores_detalhados"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "gold",
+      "nome": "tabela_servidores_agregada",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/gold/tabela_servidores_agregada.sql",
+      "descricao": "Tabela agregada de servidores com informações consolidadas por cargo, gênero, situação funcional e localização (cidade/estado). Cada linha representa uma combinação única desses atributos com a respectiva contagem de servidores. Útil para análises detalhadas e exibição em tabelas de dashboard.",
+      "testes": 0,
+      "linhas": 62,
+      "refs": [
+        "dados_funcionais",
+        "dados_pessoais",
+        "dados_uorg"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "silver",
+      "nome": "afastamento_consolidado",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/silver/afastamento_consolidado.sql",
+      "descricao": "Tabela gold que consolida os registros de afastamento dos servidores, integrando as fontes  `dados_afastamento` e `afastamento_historico`, com enriquecimento de informações vindas de  `dados_pessoais` (nome do servidor) e `dados_funcionais` (função e unidade de exercício). O processo inclui deduplicação inteligente priorizando os registros mais confiáveis,  utilizando lógica de ranking e partição por CPF e data de início do afastamento.",
+      "testes": 0,
+      "linhas": 121,
+      "refs": [
+        "afastamento_historico",
+        "dados_afastamento",
+        "dados_funcionais",
+        "dados_pessoais"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "silver",
+      "nome": "quantitativo_alocados_ocupados",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/silver/quantitativo_alocados_ocupados.sql",
+      "descricao": "Tabela gold que consolida e compara os quantitativos de cargos ocupados e cargos previstos em funções de chefia, correlacionando os dados dos sistemas SIAPE e SIORG. A lógica aplica uma combinação heurística de códigos de função com base na estrutura dos códigos e siglas das unidades organizacionais, com objetivo de identificar inconsistências, sobras ou vacâncias entre as vagas disponíveis e as efetivamente ocupadas.",
+      "testes": 0,
+      "linhas": 109,
+      "refs": [
+        "dados_funcionais",
+        "estrutura_organizacional_cargos"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "silver",
+      "nome": "servidores_completos",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/silver/servidores_completos.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 102,
+      "refs": [
+        "dados_funcionais",
+        "dados_uorg",
+        "hierarquia",
+        "servidores_detalhados"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "silver",
+      "nome": "servidores_detalhados",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/silver/servidores_detalhados.sql",
+      "descricao": "Tabela gold que consolida dados pessoais, funcionais, educacionais e organizacionais dos servidores. Integra informações de múltiplas fontes do SIAPE, combinando registros de identificação, vínculo funcional, escolaridade, endereço da unidade de exercício e metadados de transações. Essa visão é útil para análises completas do perfil dos servidores ativos e inativos, permitindo estudos sociodemográficos, funcionais e institucionais detalhados.",
+      "testes": 0,
+      "linhas": 160,
+      "refs": [
+        "dados_escolares",
+        "dados_funcionais",
+        "dados_pessoais",
+        "dados_uorg",
+        "lista_servidores",
+        "lista_uorgs"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "silver",
+      "nome": "tabela_correlacao_cargos",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/silver/tabela_correlacao_cargos.sql",
+      "descricao": "Tabela final que correlaciona cargos entre os sistemas SIAPE e SIORG, utilizando  combinações de códigos e unidades organizacionais. Cada linha representa um servidor  com informações enriquecidas da função e da chefia, além da hierarquia do cargo e  dados pessoais básicos. Essa tabela é útil para analisar discrepâncias, estruturar  a hierarquia funcional e verificar se as funções atribuídas no SIAPE estão  corretamente refletidas no SIORG.",
+      "testes": 0,
+      "linhas": 188,
+      "refs": [
+        "dados_funcionais",
+        "dados_pessoais",
+        "estrutura_organizacional_cargos",
+        "unidade_organizacional"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "pessoas",
+      "camada": "silver",
+      "nome": "unidades_organizacionais_siorg_siape",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/pessoas_dbt/silver/unidades_organizacionais_siorg_siape.sql",
+      "descricao": "Tabela que correlaciona as unidades organizacionais do SIAPE e do SIORG, com base na correspondência entre os códigos e siglas das unidades.  Essa tabela é utilizada para identificar quais unidades estão presentes  em ambos os sistemas, apenas no SIAPE ou apenas no SIORG.",
+      "testes": 0,
+      "linhas": 55,
+      "refs": [
+        "dados_uorg",
+        "lista_uorgs",
+        "unidade_organizacional"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "bronze",
+      "nome": "nc_tesouro",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/bronze/nc_tesouro.sql",
+      "descricao": "Esta tabela registra informações detalhadas sobre as Notas de Crédito emitidas no âmbito da execução orçamentária e financeira do governo federal.  As Notas de Crédito representam autorizações para a realização de despesas, sendo fundamentais para o controle e acompanhamento da execução orçamentária.",
+      "testes": 0,
+      "linhas": 32,
+      "refs": [],
+      "sources": [
+        "siafi.nc_tesouro"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "bronze",
+      "nome": "pf_tesouro",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/bronze/pf_tesouro.sql",
+      "descricao": "Esta tabela contém registros de Programações Financeiras extraídas do SIAFI, detalhando informações como tipo de programação, data de execução e valor.  A tabela é atualizada diariamente e reflete as autorizações de movimentação financeira no âmbito da execução orçamentária federal.",
+      "testes": 2,
+      "linhas": 33,
+      "refs": [],
+      "sources": [
+        "siafi.pf_tesouro"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "bronze",
+      "nome": "planos_acao",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/bronze/planos_acao.sql",
+      "descricao": "Esta tabela armazena informações detalhadas sobre os Planos de Ação vinculados a programas públicos. Ela consolida dados sobre as unidades envolvidas na execução, prazos de vigência, valores, justificativas, formas de execução e instrumentos utilizados. Serve como base para o acompanhamento, análise e auditoria  da implementação de ações públicas em diferentes formatos de execução.",
+      "testes": 0,
+      "linhas": 37,
+      "refs": [],
+      "sources": [
+        "transfere_gov.planos_acao"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "gold",
+      "nome": "ted_resumo_orcamentario",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/gold/ted_resumo_orcamentario.sql",
+      "descricao": "Tabela de consolidação orçamentária e financeira por Plano de Ação, baseada em informações de valores firmados, orçamentos recebidos e devolvidos, empenhos, despesas e transferências financeiras.  Os dados são integrados de diferentes fontes (notas de crédito, empenhos e programações financeiras) para fornecer um resumo abrangente da execução orçamentária e financeira de transferências intergovernamentais.",
+      "testes": 0,
+      "linhas": 117,
+      "refs": [
+        "empenhos_plano_acao",
+        "nc_plano_acao",
+        "pf_plano_acao",
+        "planos_acao"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "silver",
+      "nome": "empenhos_plano_acao",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/silver/empenhos_plano_acao.sql",
+      "descricao": "Esta tabela estabelece a relação entre os empenhos registrados no SIAFI e os respectivos Planos de Ação,  permitindo o rastreamento das despesas públicas desde a origem do crédito até sua execução.",
+      "testes": 0,
+      "linhas": 36,
+      "refs": [
+        "empenhos_tesouro",
+        "num_transf_n_plano_acao"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "silver",
+      "nome": "nc_plano_acao",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/silver/nc_plano_acao.sql",
+      "descricao": "Esta tabela estabelece a relação entre as Notas de Crédito registradas no SIAFI e os respectivos Planos de Ação,  permitindo o rastreamento das movimentações financeiras desde a origem do crédito até sua aplicação.",
+      "testes": 0,
+      "linhas": 38,
+      "refs": [
+        "nc_tesouro",
+        "num_transf_n_plano_acao"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "silver",
+      "nome": "pf_plano_acao",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/silver/pf_plano_acao.sql",
+      "descricao": "Esta tabela consolida as programações financeiras executadas no âmbito do SIAFI que estão relacionadas a Planos de Ação.",
+      "testes": 0,
+      "linhas": 74,
+      "refs": [
+        "num_transf_n_plano_acao",
+        "pf_tesouro"
+      ],
+      "sources": [
+        "transfere_gov.programacao_financeira"
+      ]
+    },
+    {
+      "projeto": "ipea",
+      "dominio": "ted",
+      "camada": "outros",
+      "nome": "num_transf_n_plano_acao",
+      "caminho": "airflow_lappis/dags/dbt/ipea/models/ted_dbt/views/num_transf_n_plano_acao.sql",
+      "descricao": "View responsável por mapear o número de transferência (`num_transf`) ao respectivo Plano de Ação (`plano_acao`).  Utiliza dados de Notas de Crédito do TransfereGov e do SIAFI para realizar o cruzamento entre diferentes sistemas.",
+      "testes": 0,
+      "linhas": 37,
+      "refs": [],
+      "sources": [
+        "siafi.nc_tesouro",
+        "transfere_gov.notas_de_credito"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_abecip_poupanca_sbpe",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_abecip_poupanca_sbpe.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 13,
+      "refs": [],
+      "sources": [
+        "abecip.poupanca_sbpe_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_bacen_financiamentos_imobiliarios",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_bacen_financiamentos_imobiliarios.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 15,
+      "refs": [],
+      "sources": [
+        "bacen.financiamentos_imobiliarios"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_fgv_icst",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_fgv_icst.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 15,
+      "refs": [],
+      "sources": [
+        "fgv.icst"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_fgv_incc_m",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_fgv_incc_m.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 22,
+      "refs": [],
+      "sources": [
+        "fgv.incc_m"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_fipezap_locacao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_fipezap_locacao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 10,
+      "refs": [],
+      "sources": [
+        "fipe.indice_locacao"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_ibge_pib_construcao_civil",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_ibge_pib_construcao_civil.sql",
+      "descricao": "Produto Interno Bruto (PIB) da construção civil por município, em valores correntes e constantes. Dados extraídos do IBGE, com cobertura de 2010 a 2021 para os 5.570 municípios brasileiros. Tipagem aplicada: text→int, text→numeric.",
+      "testes": 1,
+      "linhas": 32,
+      "refs": [],
+      "sources": [
+        "ibge.pib_construcao"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_ibge_pnadc_ocupados_construcao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_ibge_pnadc_ocupados_construcao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 17,
+      "refs": [],
+      "sources": [
+        "ibge.pnadc_ocupados_construcao"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_ibge_pnadc_rendimento_construcao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_ibge_pnadc_rendimento_construcao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 17,
+      "refs": [],
+      "sources": [
+        "ibge.pnadc_rendimento_construcao"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_ibge_sinapi",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_ibge_sinapi.sql",
+      "descricao": "Índice Nacional de Custo da Construção (SINAPI) por município, em valores correntes. Dados extraídos do IBGE, com cobertura de 2010 a 2021 para os 5.570 municípios brasileiros. Tipagem aplicada: text→int, text→numeric.",
+      "testes": 1,
+      "linhas": 33,
+      "refs": [],
+      "sources": [
+        "ibge.sinapi"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_imob_infomoney",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_imob_infomoney.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 12,
+      "refs": [],
+      "sources": [
+        "infomoney.acoes_imob"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "bronze",
+      "nome": "bronze_novo_caged",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/bronze/bronze_novo_caged.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 10,
+      "refs": [],
+      "sources": [
+        "novo_caged.saldo_estoque_construcao_edificios"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_abecip_novos_financiamentos_imobiliarios",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_abecip_novos_financiamentos_imobiliarios.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 56,
+      "refs": [
+        "silver_abecip_novos_financiamentos_imobiliarios"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_balancos_empresas_lancamentos",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_balancos_empresas_lancamentos.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 99,
+      "refs": [
+        "silver_balancos_empresas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_balancos_empresas_vendas",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_balancos_empresas_vendas.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 99,
+      "refs": [
+        "silver_balancos_empresas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_cbic_lancamentos",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_cbic_lancamentos.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 39,
+      "refs": [
+        "silver_cbic_lancamentos_vendas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_cbic_lancamentos_regiao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_cbic_lancamentos_regiao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 71,
+      "refs": [
+        "silver_cbic_lancamentos_vendas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_cbic_vendas",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_cbic_vendas.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 39,
+      "refs": [
+        "silver_cbic_lancamentos_vendas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_cbic_vendas_regiao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_cbic_vendas_regiao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 71,
+      "refs": [
+        "silver_cbic_lancamentos_vendas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_empregos_construcao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_empregos_construcao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 75,
+      "refs": [
+        "silver_novo_caged"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_fgts_renda_familiar",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_fgts_renda_familiar.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 71,
+      "refs": [
+        "silver_fgts_financiamentos_habitacionais"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_financiamento_pf_por_faixa",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_financiamento_pf_por_faixa.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 101,
+      "refs": [
+        "silver_fgts_financiamentos_habitacionais"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_financiamentos_habitacionais",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_financiamentos_habitacionais.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 58,
+      "refs": [
+        "silver_financiamentos_habitacionais"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_financiamentos_imobiliarios",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_financiamentos_imobiliarios.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 94,
+      "refs": [
+        "silver_bacen_financiamentos_imobiliarios"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_ibge_pnad_construcao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_ibge_pnad_construcao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 54,
+      "refs": [
+        "silver_ibge_pnadc_ocupados_construcao",
+        "silver_ibge_pnadc_rendimento_construcao"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_indicadores_financiamento_pf",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_indicadores_financiamento_pf.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 87,
+      "refs": [
+        "silver_abecip_sbpe_financiamentos_habitacionais",
+        "silver_fgts_financiamentos_habitacionais"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_indices_mercado_imobiliario",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_indices_mercado_imobiliario.sql",
+      "descricao": "Tabela gold consolidada com variações dos principais índices do mercado imobiliário: IMOB (Infomoney), FIPEZAP (locação), ICST (FGV-IBRE) e ABRAMAT. Estruturada com 4 períodos de comparação para consumo direto no Superset. Origem: silver_imob_infomoney, silver_fipezap_locacao, silver_fgv_icst, silver_abramat_indice.",
+      "testes": 1,
+      "linhas": 75,
+      "refs": [
+        "silver_abramat_indice",
+        "silver_fgv_icst",
+        "silver_fipezap_locacao",
+        "silver_imob_infomoney"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_pib_construcao_civil",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_pib_construcao_civil.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 30,
+      "refs": [
+        "silver_ibge_pib_construcao_civil"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_precos_construcao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_precos_construcao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 48,
+      "refs": [
+        "silver_fgv_incc_m",
+        "silver_ibge_sinapi"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_saldo_caderneta_poupanca",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_saldo_caderneta_poupanca.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 49,
+      "refs": [
+        "silver_abecip_poupanca_sbpe"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_ticket_medio_vs_incc",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_ticket_medio_vs_incc.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 59,
+      "refs": [
+        "silver_fgv_incc_m",
+        "silver_ticket_medio_empresas"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "gold",
+      "nome": "gold_uh_condicao_uso",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/gold/gold_uh_condicao_uso.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 74,
+      "refs": [
+        "silver_abecip_sbpe_financiamentos_habitacionais",
+        "silver_fgts_financiamentos_habitacionais"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_abecip_novos_financiamentos_imobiliarios",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_abecip_novos_financiamentos_imobiliarios.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 59,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_abecip_novos_financiamentos_imobiliarios"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_abecip_poupanca_sbpe",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_abecip_poupanca_sbpe.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 20,
+      "refs": [
+        "bronze_abecip_poupanca_sbpe"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_abecip_sbpe_financiamentos_habitacionais",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_abecip_sbpe_financiamentos_habitacionais.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 40,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_abecip_sbpe_financiamentos_habitacionais"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_abramat_indice",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_abramat_indice.sql",
+      "descricao": "Índice ABRAMAT de custos da construção civil. Camada silver com dados mockados a partir do relatório (ingestão via PDF). Origem: conjuntura_bronze.bronze_abramat_indice.",
+      "testes": 0,
+      "linhas": 9,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_abramat_indice"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_bacen_financiamentos_imobiliarios",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_bacen_financiamentos_imobiliarios.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 8,
+      "refs": [
+        "bronze_bacen_financiamentos_imobiliarios"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_balancos_empresas",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_balancos_empresas.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 11,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_balancos_empresas"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_cbic_lancamentos_vendas",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_cbic_lancamentos_vendas.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 49,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_cbic_lancamentos_vendas"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_fgts_financiamentos_habitacionais",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_fgts_financiamentos_habitacionais.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 39,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_fgts_financiamentos_habitacionais"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_fgv_icst",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_fgv_icst.sql",
+      "descricao": "Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE. Camada silver com variações mensais e em 12 meses calculadas via LAG. Origem: conjuntura_bronze.bronze_fgv_icst.",
+      "testes": 0,
+      "linhas": 16,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_fgv_icst"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_fgv_incc_m",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_fgv_incc_m.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 24,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_fgv_incc_m"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_financiamentos_habitacionais",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_financiamentos_habitacionais.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 50,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_abecip_sbpe_financiamentos_habitacionais",
+        "conjuntura_bronze.bronze_fgts_financiamentos_habitacionais"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_fipezap_locacao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_fipezap_locacao.sql",
+      "descricao": "Índice FipeZap de locação residencial. Camada silver com tipagem correta e variação em 12 meses calculada. Origem: conjuntura_bronze.bronze_fipezap_locacao.",
+      "testes": 0,
+      "linhas": 14,
+      "refs": [
+        "bronze_fipezap_locacao"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_ibge_pib_construcao_civil",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_ibge_pib_construcao_civil.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 9,
+      "refs": [
+        "bronze_ibge_pib_construcao_civil"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_ibge_pnadc_ocupados_construcao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_ibge_pnadc_ocupados_construcao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 41,
+      "refs": [
+        "bronze_ibge_pnadc_ocupados_construcao"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_ibge_pnadc_rendimento_construcao",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_ibge_pnadc_rendimento_construcao.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 37,
+      "refs": [
+        "bronze_ibge_pnadc_rendimento_construcao"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_ibge_sinapi",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_ibge_sinapi.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 22,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_ibge_sinapi"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_imob_infomoney",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_imob_infomoney.sql",
+      "descricao": "Índice IMOB da Infomoney agregado mensalmente (fechamento do último dia útil). Camada silver com variações mensais, em 12 meses e acumulado da série calculados. Origem: conjuntura_bronze.bronze_imob_infomoney.",
+      "testes": 0,
+      "linhas": 49,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_imob_infomoney"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_novo_caged",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_novo_caged.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 31,
+      "refs": [
+        "bronze_novo_caged"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "conjuntura",
+      "camada": "silver",
+      "nome": "silver_ticket_medio_empresas",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/conjuntura_dbt/silver/silver_ticket_medio_empresas.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 17,
+      "refs": [],
+      "sources": [
+        "conjuntura_bronze.bronze_ticket_medio_empresas"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "bronze",
+      "nome": "cadastro_pj",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/bronze/cadastro_pj.sql",
+      "descricao": "Cadastro detalhado de pessoa jurídica (empreendimento contratado). 822 empreendimentos com composição financeira completa, coordenadas GPS, tipologia, construtora, datas-chave e indicadores do empreendimento.",
+      "testes": 1,
+      "linhas": 80,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_far_cad_pj_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "bronze",
+      "nome": "consolidado",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/bronze/consolidado.sql",
+      "descricao": "Dados do GFAR consolidado com propostas e contratos FAR do Novo MCMV. Cobre todo o ciclo de vida: da proposta protocolizada até a contratação. Contém 15.091 registros (13.216 propostas únicas, 940 com APF). Tipagem aplicada: text→int, text→date, text→numeric, text→boolean.",
+      "testes": 1,
+      "linhas": 92,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_far_consolidado"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "bronze",
+      "nome": "dados_prioritarios_caixa",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/bronze/dados_prioritarios_caixa.sql",
+      "descricao": "Snapshot consolidado dos dados prioritários recebidos da CAIXA. Filtrado apenas para modalidade FAR (4.443 empreendimentos). Contém situação atual, percentual de execução, valores e coordenadas.",
+      "testes": 0,
+      "linhas": 85,
+      "refs": [],
+      "sources": [
+        "raw.dados_prioritarios_recebidos_caixa_empreendimentos"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "bronze",
+      "nome": "financeiro_mensal",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/bronze/financeiro_mensal.sql",
+      "descricao": "Série temporal de liberações financeiras. Contém 6.069 registros para 638 APFs (média de 9,5 liberações por empreendimento). Cada registro representa uma liberação de recurso com decomposição por componente.",
+      "testes": 0,
+      "linhas": 52,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_far_financeiro_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "bronze",
+      "nome": "obra_mensal",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/bronze/obra_mensal.sql",
+      "descricao": "Evolução física da obra. Snapshot mensal com percentual previsto/realizado, situação da obra, UHs concluídas e datas de paralisação/retomada/entrega. 822 registros (1 por empreendimento no snapshot atual).",
+      "testes": 1,
+      "linhas": 78,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_far_obra_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "gold",
+      "nome": "evolucao_financeira_chart",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/gold/evolucao_financeira_chart.sql",
+      "descricao": "Visão Gold display-ready para o gráfico de \"Evolução Físico-Financeira\" no Superset. Consome a silver evolucao_financeira e enriquece com nome do empreendimento, nome do estado (IBGE) e labels de mês formatados. Uma linha por APF × mês.",
+      "testes": 0,
+      "linhas": 57,
+      "refs": [
+        "evolucao_financeira",
+        "ficha_empreendimento"
+      ],
+      "sources": [
+        "raw.api_ibge_uf"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "gold",
+      "nome": "execucao_fisica_financeira_chart",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/gold/execucao_fisica_financeira_chart.sql",
+      "descricao": "Tabela Gold para o gráfico de acompanhamento da execução física e financeira. Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal.",
+      "testes": 0,
+      "linhas": 82,
+      "refs": [
+        "empreendimento",
+        "evolucao_financeira",
+        "obra_mensal"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "gold",
+      "nome": "ficha_empreendimento",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/gold/ficha_empreendimento.sql",
+      "descricao": "Tabela Gold projetada especificamente para alimentar o componente visual de \"Ficha do Empreendimento\"  nos Dashboards. Ela consome os dados da camada Silver (empreendimento) e injeta regras de negócio finais como cálculo de status, prazos e ritmo financeiro.",
+      "testes": 0,
+      "linhas": 104,
+      "refs": [
+        "empreendimento"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "gold",
+      "nome": "mapa_nacional",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/gold/mapa_nacional.sql",
+      "descricao": "Visão Gold geográfica para alimentar mapas coropléticos (Country Map) e gráficos por região no Superset. Contém duas visões filtradas pela coluna 'nivel': 'uf' (27 linhas, uma por estado com código ISO 3166-2) e 'regiao' (5 linhas, uma por macrorregião). Usa a tabela IBGE api_ibge_uf como referência.",
+      "testes": 0,
+      "linhas": 79,
+      "refs": [
+        "ficha_empreendimento"
+      ],
+      "sources": [
+        "raw.api_ibge_uf"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "gold",
+      "nome": "panorama_estadual",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/gold/panorama_estadual.sql",
+      "descricao": "Visão Gold agregada por UF para alimentar o dashboard \"Panorama Estadual\". Consolida todos os empreendimentos de um estado em seções distintas, cada uma identificada pela coluna 'secao'. A ferramenta de BI filtra WHERE secao = 'X' para montar cada card do painel.",
+      "testes": 0,
+      "linhas": 249,
+      "refs": [
+        "ficha_empreendimento"
+      ],
+      "sources": [
+        "raw.api_ibge_uf"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "gold",
+      "nome": "resumo_gerencial",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/gold/resumo_gerencial.sql",
+      "descricao": "Visão agregada Gold contendo os grandes KPIs e somatórios (UHs, Pessoas Atendidas, Valores)  agrupados por tipologia e situação. Perfeita para os gráficos de pizza e barras dos painéis gerenciais.",
+      "testes": 0,
+      "linhas": 33,
+      "refs": [
+        "ficha_empreendimento"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "silver",
+      "nome": "empreendimento",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/silver/empreendimento.sql",
+      "descricao": "Tabela Silver (Visão Unificada) de Empreendimentos FAR do Novo MCMV. Esta tabela consolida as informações da camada bronze cruzando as tabelas cadastro_pj, consolidado, obra_mensal e dados_prioritarios_caixa através da chave APF. Gera uma visão final pronta para alimentar painéis e dashboards.",
+      "testes": 0,
+      "linhas": 85,
+      "refs": [
+        "cadastro_pj",
+        "consolidado",
+        "dados_prioritarios_caixa",
+        "obra_mensal"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "empreendimento_far",
+      "camada": "silver",
+      "nome": "evolucao_financeira",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/empreendimento_far_dbt/silver/evolucao_financeira.sql",
+      "descricao": "Tabela Silver de Evolução Financeira dos Empreendimentos FAR. Série temporal mensal de liberações financeiras por empreendimento (APF × mês). Agrega as liberações da bronze financeiro_mensal e faz o JOIN com a silver empreendimento usando a raiz de 6 dígitos do APF: LEFT(cad_pj.apf, 6) = RIGHT(fin.apf, 6). Cobertura: ~79% dos empreendimentos (651/823) possuem dados financeiros. Relação 1:N com empreendimento (1 APF → N meses de liberações).",
+      "testes": 3,
+      "linhas": 110,
+      "refs": [
+        "empreendimento",
+        "financeiro_mensal"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "bronze",
+      "nome": "fds_cadastro_pj",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/bronze/fds_cadastro_pj.sql",
+      "descricao": "Cadastro detalhado de pessoa jurídica do MCMV Entidades (FDS). 343 empreendimentos contratados a partir de ago/2024 com dados de Entidade Organizadora, construtora, composição financeira completa, coordenadas GPS, tipologia, regime de obra e indicadores.",
+      "testes": 2,
+      "linhas": 124,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_fds_cad_pj_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "bronze",
+      "nome": "fds_dados_prioritarios_entregas",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/bronze/fds_dados_prioritarios_entregas.sql",
+      "descricao": "Snapshot de entregas reportadas pela CAIXA. Contém 11.540 registros de múltiplos programas. O filtro para FDS ocorrerá na silver.",
+      "testes": 0,
+      "linhas": 34,
+      "refs": [],
+      "sources": [
+        "raw.dados_prioritarios_recebidos_caixa_entregas"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "bronze",
+      "nome": "fds_financeiro_mensal",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/bronze/fds_financeiro_mensal.sql",
+      "descricao": "Série temporal de liberações financeiras FDS. 16.124 registros para 750 APFs. ATENÇÃO: ic_credito='0' são liberações reais (vr_liberado negativo, usar ABS). ic_credito='1' são devoluções (20 registros). APF fonte em 6 dígitos, normalizado para 8 via normalize_apf.",
+      "testes": 1,
+      "linhas": 58,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_fds_financeiro_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "bronze",
+      "nome": "fds_int_059_caixa_pj",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/bronze/fds_int_059_caixa_pj.sql",
+      "descricao": "Dados complementares da CAIXA (INT 059). Contém 856 registros, misturando legado e Novo MCMV. Importante para filtros de Novo PMCMV-E e status específicos como NAO_INICIADA_CLAUSULA_SUSPENSIVA.",
+      "testes": 0,
+      "linhas": 95,
+      "refs": [],
+      "sources": [
+        "raw.int_empreendimentos_int_059_fds_caixa_pj"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "bronze",
+      "nome": "fds_obra_mensal",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/bronze/fds_obra_mensal.sql",
+      "descricao": "Evolução física da obra FDS. Snapshot mensal com percentual previsto/realizado, situação da operação, UHs concluídas/alienadas, paralisação, invasão e datas de entrega. 343 registros (1 por empreendimento no snapshot atual).",
+      "testes": 2,
+      "linhas": 91,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_fds_obra_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "bronze",
+      "nome": "fds_trabalho_social",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/bronze/fds_trabalho_social.sql",
+      "descricao": "Acompanhamento do Trabalho Técnico Social FDS. 89 registros com situação do TS, datas de aprovação PTS, convênio, relatórios, percentual de execução e portaria.",
+      "testes": 1,
+      "linhas": 42,
+      "refs": [],
+      "sources": [
+        "raw.novo_mcmv_fds_trabalho_social_mensal"
+      ]
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "gold",
+      "nome": "fds_evolucao_financeira_chart",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/gold/fds_evolucao_financeira_chart.sql",
+      "descricao": "Tabela Gold de evolução financeira do MCMV Entidades (FDS). Estrutura de série temporal (1 linha por APF/Mês) pronta para plotar no Superset gráficos de linha (Acumulado) e barra (Desembolso mensal). Herda o cnpj_eo para permitir filtro direto por entidade.",
+      "testes": 0,
+      "linhas": 59,
+      "refs": [
+        "fds_evolucao_financeira",
+        "fds_ficha_empreendimento"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "gold",
+      "nome": "fds_ficha_empreendimento",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/gold/fds_ficha_empreendimento.sql",
+      "descricao": "Tabela Gold do MCMV Entidades (FDS) contendo 1 linha por empreendimento (APF). É a tabela central para alimentar o Superset com os dados detalhados. Utilizada nos KPIs: Mapa de Atuação, Semáforo de Alertas, Divergência  Físico-Financeira e Distribuição por Tipo.",
+      "testes": 2,
+      "linhas": 126,
+      "refs": [
+        "fds_empreendimento"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "gold",
+      "nome": "fds_panorama_entidade",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/gold/fds_panorama_entidade.sql",
+      "descricao": "Tabela Gold do MCMV Entidades (FDS) agregada por Entidade Organizadora (CNPJ). É a tabela principal para os KPIs: Card Resumo, Ranking Interativo e Ranking de Risco. Contém agregações ponderadas e scores.",
+      "testes": 2,
+      "linhas": 76,
+      "refs": [
+        "fds_empreendimento"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "silver",
+      "nome": "fds_empreendimento",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/silver/fds_empreendimento.sql",
+      "descricao": "Tabela Silver (Visão Unificada) de Empreendimentos FDS do Novo MCMV Entidades. Consolida as 6 bronzes: fds_cadastro_pj, fds_obra_mensal, fds_int_059_caixa_pj, fds_trabalho_social, fds_financeiro_mensal e fds_dados_prioritarios_entregas. Gera uma visão por APF pronta para alimentar os dashboards de Ficha, Panorama Estadual, Panorama por Entidade e Alertas.",
+      "testes": 2,
+      "linhas": 194,
+      "refs": [
+        "fds_cadastro_pj",
+        "fds_financeiro_mensal",
+        "fds_int_059_caixa_pj",
+        "fds_obra_mensal",
+        "fds_trabalho_social"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "entidades",
+      "camada": "silver",
+      "nome": "fds_evolucao_financeira",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/entidades_dbt/silver/fds_evolucao_financeira.sql",
+      "descricao": "Tabela Silver de Evolução Financeira FDS. Série temporal mensal de liberações por empreendimento (APF × mês). Usa ABS(vr_liberado) para liberações reais (ic_credito='0'). JOIN com fds_empreendimento pela raiz de 6 dígitos. Inclui eo_cnpj/eo_nome para agregação por EO.",
+      "testes": 3,
+      "linhas": 117,
+      "refs": [
+        "fds_empreendimento",
+        "fds_financeiro_mensal"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mcid",
+      "dominio": "metadata",
+      "camada": "outros",
+      "nome": "models_metadata",
+      "caminho": "airflow_lappis/dags/dbt/mcid/models/metadata/models_metadata.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 59,
+      "refs": [],
+      "sources": []
+    },
+    {
+      "projeto": "mir",
+      "dominio": "dados_abertos",
+      "camada": "bronze",
+      "nome": "deputados",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/dados_abertos_dbt/bronze/deputados.sql",
+      "descricao": "Tabela com informações básicas sobre deputados federais obtidas por meio da API de Dados Abertos da Câmara dos Deputados. Contém dados cadastrais e institucionais como identificador, nome parlamentar, partido, unidade federativa, legislatura e e-mail institucional. Esta tabela representa a camada bronze do pipeline, aplicando padronização de tipos, pequenas transformações e ajuste de fuso horário na data de ingestão. Os dados são provenientes da fonte dados_abertos.deputados (camada raw) e passam por conversão explícita de tipos para garantir consistência e rastreabilidade.",
+      "testes": 8,
+      "linhas": 20,
+      "refs": [],
+      "sources": [
+        "camara_deputados.deputados"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "dados_abertos",
+      "camada": "bronze",
+      "nome": "senadores",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/dados_abertos_dbt/bronze/senadores.sql",
+      "descricao": "Tabela com informações básicas sobre senadores federais obtidas por meio da API de Dados Abertos do Senado Federal. Contém dados cadastrais e institucionais como identificador, nome parlamentar, sexo, forma de tratamento, partido, unidade federativa, URLs de foto e página, e e-mail institucional. Esta tabela representa a camada bronze do pipeline, aplicando padronização de tipos, pequenas transformações e ajuste de fuso horário na data de ingestão. Os dados são provenientes da fonte senado_federal.senadores (camada raw) e passam por conversão explícita de tipos para garantir consistência e rastreabilidade.",
+      "testes": 10,
+      "linhas": 21,
+      "refs": [],
+      "sources": [
+        "senado_federal.senadores"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "dados_abertos",
+      "camada": "silver",
+      "nome": "parlamentares",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/dados_abertos_dbt/silver/parlamentares.sql",
+      "descricao": "Tabela silver que unifica informações de deputados e senadores em uma visão única de parlamentares, incluindo partido, UF, foto e logo do partido.",
+      "testes": 9,
+      "linhas": 77,
+      "refs": [
+        "deputados",
+        "partidos_logo",
+        "partidos_map",
+        "senadores"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "documentos_habeis",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/documentos_habeis.sql",
+      "descricao": "Tabela com informações sobre documentos hábeis relacionados a emendas parlamentares do TransfereGov. Contém dados sobre a emissão, situação, unidades gestoras envolvidas, valores e referências orçamentárias dos documentos hábeis vinculados aos empenhos. Os dados são extraídos da tabela documentos_habeis_especiais do TransfereGov Emendas, com formatação adequada de valores numéricos e datas.",
+      "testes": 12,
+      "linhas": 34,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.documentos_habeis_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "empenhos_especiais",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/empenhos_especiais.sql",
+      "descricao": "Tabela com informações sobre empenhos (Notas de Empenho) relacionados a emendas parlamentares do TransfereGov. Contém dados sobre a execução orçamentária dos empenhos, incluindo valores, beneficiários, classificação orçamentária e situação. Os dados são extraídos da tabela empenhos_especiais do TransfereGov Emendas, com formatação adequada de valores numéricos e datas.",
+      "testes": 11,
+      "linhas": 39,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.empenhos_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "executor",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/executor.sql",
+      "descricao": "Tabela com informações detalhadas sobre os executores dos planos de ação das emendas. Contém dados cadastrais do executor, detalhes do objeto da execução, valores financeiros de custeio  e investimento, além de informações bancárias para a gestão dos recursos. Os dados são oriundos da API 'executor_especial' do Transferegov.",
+      "testes": 7,
+      "linhas": 28,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.executor_especial"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "finalidades",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/finalidades.sql",
+      "descricao": "Tabela que detalha as finalidades das emendas especiais, vinculando cada executor às áreas  de políticas públicas beneficiadas. Permite identificar em quais setores (Saúde, Educação, etc.)  o recurso está sendo aplicado conforme a classificação do Transferegov.",
+      "testes": 3,
+      "linhas": 16,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.finalidades_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "historico_pagamentos",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/historico_pagamentos.sql",
+      "descricao": "Tabela com informações sobre o histórico de eventos das ordens de pagamento relacionadas a emendas parlamentares do TransfereGov. Contém dados sobre os eventos (situações) ocorridos ao longo do ciclo de vida de cada ordem de pagamento, incluindo data/hora da ocorrência e descrição do evento. Os dados são extraídos da tabela historico_pagamento_especial do TransfereGov Emendas.",
+      "testes": 4,
+      "linhas": 17,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.historico_pagamentos_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "metas",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/metas.sql",
+      "descricao": "Tabela que detalha as metas físicas e financeiras estabelecidas por cada executor.  Contém o planejamento de execução, discriminando valores de emendas, recursos próprios,  rendimentos e doações, além da quantidade física e o tempo estimado (meses) para a meta.",
+      "testes": 8,
+      "linhas": 27,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.metas_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "ordens_bancarias",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/ordens_bancarias.sql",
+      "descricao": "Tabela com informações sobre ordens de pagamento e ordens bancárias relacionadas a emendas parlamentares do TransfereGov. Contém dados sobre a emissão, situação e assinaturas das ordens de pagamento e bancárias, incluindo vinculação ao SIAFI e referência ao documento hábil de origem. Os dados são extraídos da tabela ordem_pagamento_ordem_bancaria_especial do TransfereGov Emendas, com formatação adequada de datas.",
+      "testes": 9,
+      "linhas": 25,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.ordens_bancarias_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "planos_acoes",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/planos_acoes.sql",
+      "descricao": "Tabela com informações sobre os planos de ação especiais relacionados a emendas parlamentares do TransfereGov. Contém dados sobre beneficiários, dados bancários, emendas parlamentares, classificação orçamentária, impedimentos e valores de custeio e investimento. Os dados são extraídos da tabela planos_acao_especiais do TransfereGov Emendas, com formatação adequada de valores numéricos.",
+      "testes": 9,
+      "linhas": 39,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.planos_acao_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "planos_trabalho_especial",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/planos_trabalho_especial.sql",
+      "descricao": "Tabela com informações sobre os planos de trabalho especiais relacionados a emendas parlamentares do TransfereGov. Contém dados sobre o planejamento de execução, incluindo situação, prazos, indicadores de orçamento próprio, classificação orçamentária e justificativas de prorrogação. Os dados são extraídos da tabela plano_trabalho_especial do TransfereGov Emendas.",
+      "testes": 5,
+      "linhas": 23,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.plano_trabalho_especial"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "programas",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/programas.sql",
+      "descricao": "Tabela com informações sobre programas especiais do TransfereGov relacionados a emendas parlamentares. Contém dados sobre a execução financeira dos programas, incluindo valores de necessidade financeira, disponibilização, impedimentos e documentos hábeis gerados. Os dados são extraídos da tabela programas_especiais do TransfereGov Emendas, com formatação adequada de valores numéricos e datas.",
+      "testes": 14,
+      "linhas": 31,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.programas_especiais"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "relatorio_gestao",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/relatorio_gestao.sql",
+      "descricao": "Tabela que armazena a situação e o parecer final do Relatório de Gestão  vinculado ao Plano de Ação das emendas especiais.",
+      "testes": 2,
+      "linhas": 15,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.relatorio_gestao_especial"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "relatorio_gestao_novo",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/relatorio_gestao_novo.sql",
+      "descricao": "Tabela que armazena os registros do Novo Relatório de Gestão das Emendas Especiais.  Contém o detalhamento da execução financeira por Plano de Ação, incluindo valores  executados, pendentes e o status de tramitação do relatório.",
+      "testes": 5,
+      "linhas": 18,
+      "refs": [],
+      "sources": [
+        "transferegov_emendas.relatorios_gestao_novo_especial"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "bronze",
+      "nome": "tg_emendas",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/bronze/tg_emendas.sql",
+      "descricao": "Tabela com informações de execução orçamentária do SIAFI para empenhos do Tesouro vinculados a emendas parlamentares. Reúne classificações orçamentárias, autor da emenda, localização (UF e município) e valores agregados de despesas empenhadas, liquidadas e pagas. Os dados são extraídos da tabela empenhos_tesouro_emendas_parlamentares do SIAFI, com padronização de datas e valores monetários.",
+      "testes": 10,
+      "linhas": 54,
+      "refs": [],
+      "sources": [
+        "siafi.ne_tesouro_emendas"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "emendas",
+      "camada": "silver",
+      "nome": "planos_partidos",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/emendas_dbt/silver/planos_partidos.sql",
+      "descricao": "Tabela silver que integra as informações dos planos de ação especiais relacionados a emendas parlamentares do TransfereGov com metadados de parlamentares (deputados e senadores). A partir da tabela bronze planos_acoes e das bases de deputados e senadores, enriquece cada plano de ação com dados de identificação do parlamentar, partido, UF, foto e e-mail.",
+      "testes": 11,
+      "linhas": 96,
+      "refs": [
+        "deputados",
+        "planos_acoes",
+        "senadores"
+      ],
+      "sources": []
+    },
+    {
+      "projeto": "mir",
+      "dominio": "empenhos_ted",
+      "camada": "bronze",
+      "nome": "empenhos_tesouro_ted",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/empenhos_ted_dbt/bronze/empenhos_tesouro_ted.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 37,
+      "refs": [],
+      "sources": [
+        "siafi.ne_tesouro"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "empenhos_ted",
+      "camada": "bronze",
+      "nome": "nc_tesouro_mir",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/empenhos_ted_dbt/bronze/nc_tesouro_mir.sql",
+      "descricao": "",
+      "testes": 0,
+      "linhas": 99,
+      "refs": [],
+      "sources": [
+        "siafi.nc_tesouro_pos__2026",
+        "siafi.nc_tesouro_pre_2026"
+      ]
+    },
+    {
+      "projeto": "mir",
+      "dominio": "metadata",
+      "camada": "outros",
+      "nome": "models_metadata",
+      "caminho": "airflow_lappis/dags/dbt/mir/models/metadata/models_metadata.sql",
+      "descricao": "Tabela central de metadados que armazena informações sobre todos os modelos dbt executados. Cada linha representa um modelo único, identificado pela combinação de schema e table_name. A tabela é atualizada de forma incremental, mantendo histórico das execuções.",
+      "testes": 3,
+      "linhas": 68,
+      "refs": [],
+      "sources": []
+    }
+  ],
+  "linhagem": [
+    {
+      "de": "contratos_estagios",
+      "para": "contratos_comparativo_mensal",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "cronogramas_faturas_mensal",
+      "para": "contratos_comparativo_mensal",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "preenchimento_meses",
+      "para": "contratos_comparativo_mensal",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "contratos",
+      "para": "contratos_resumo",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "contratos_empenhos",
+      "para": "contratos_resumo",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "contratos_comparativo_mensal",
+      "para": "contratos_somatorio",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "empenhos_tesouro",
+      "para": "contratos_empenhos",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "identificadores",
+      "para": "contratos_empenhos",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "estagios_mensal",
+      "para": "contratos_estagios",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "identificadores",
+      "para": "contratos_estagios",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "contratos",
+      "para": "contratos_faturas",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "faturas",
+      "para": "contratos_faturas",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "cronogramas",
+      "para": "cronogramas_faturas_mensal",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "empenhos_tesouro",
+      "para": "estagios_mensal",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "contratos",
+      "para": "identificadores",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "empenhos",
+      "para": "identificadores",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "faturas",
+      "para": "identificadores",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "cronogramas_faturas_mensal",
+      "para": "preenchimento_meses",
+      "projeto": "ipea",
+      "dominio": "contratos"
+    },
+    {
+      "de": "servidores_detalhados",
+      "para": "aposentadorias_resumo",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "estrutura_organizacional_cargos",
+      "para": "cargos_consolidado",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "servidores_detalhados",
+      "para": "cargos_consolidado",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "servidores_completos",
+      "para": "distribuicao_genero",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "distribuicao_mapa_uf",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_uorg",
+      "para": "distribuicao_mapa_uf",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "estados_brasil",
+      "para": "distribuicao_mapa_uf",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "servidores_completos",
+      "para": "distribuicao_raca_cor",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "distribuicao_situacao_funcional",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_uorg",
+      "para": "distribuicao_situacao_funcional",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "hierarquia",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_pessoais",
+      "para": "hierarquia",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "estrutura_organizacional_cargos",
+      "para": "hierarquia",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "unidade_organizacional",
+      "para": "hierarquia",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "kpis_servidores",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "terceirizados",
+      "para": "kpis_servidores",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "servidores_detalhados",
+      "para": "resumo_quadro_pessoal",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "tabela_servidores_agregada",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_pessoais",
+      "para": "tabela_servidores_agregada",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_uorg",
+      "para": "tabela_servidores_agregada",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "afastamento_historico",
+      "para": "afastamento_consolidado",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_afastamento",
+      "para": "afastamento_consolidado",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "afastamento_consolidado",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_pessoais",
+      "para": "afastamento_consolidado",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "quantitativo_alocados_ocupados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "estrutura_organizacional_cargos",
+      "para": "quantitativo_alocados_ocupados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "servidores_completos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_uorg",
+      "para": "servidores_completos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "hierarquia",
+      "para": "servidores_completos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "servidores_detalhados",
+      "para": "servidores_completos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_escolares",
+      "para": "servidores_detalhados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "servidores_detalhados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_pessoais",
+      "para": "servidores_detalhados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_uorg",
+      "para": "servidores_detalhados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "lista_servidores",
+      "para": "servidores_detalhados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "lista_uorgs",
+      "para": "servidores_detalhados",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_funcionais",
+      "para": "tabela_correlacao_cargos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_pessoais",
+      "para": "tabela_correlacao_cargos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "estrutura_organizacional_cargos",
+      "para": "tabela_correlacao_cargos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "unidade_organizacional",
+      "para": "tabela_correlacao_cargos",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "dados_uorg",
+      "para": "unidades_organizacionais_siorg_siape",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "lista_uorgs",
+      "para": "unidades_organizacionais_siorg_siape",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "unidade_organizacional",
+      "para": "unidades_organizacionais_siorg_siape",
+      "projeto": "ipea",
+      "dominio": "pessoas"
+    },
+    {
+      "de": "empenhos_plano_acao",
+      "para": "ted_resumo_orcamentario",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "nc_plano_acao",
+      "para": "ted_resumo_orcamentario",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "pf_plano_acao",
+      "para": "ted_resumo_orcamentario",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "planos_acao",
+      "para": "ted_resumo_orcamentario",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "empenhos_tesouro",
+      "para": "empenhos_plano_acao",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "num_transf_n_plano_acao",
+      "para": "empenhos_plano_acao",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "nc_tesouro",
+      "para": "nc_plano_acao",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "num_transf_n_plano_acao",
+      "para": "nc_plano_acao",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "num_transf_n_plano_acao",
+      "para": "pf_plano_acao",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "pf_tesouro",
+      "para": "pf_plano_acao",
+      "projeto": "ipea",
+      "dominio": "ted"
+    },
+    {
+      "de": "silver_abecip_novos_financiamentos_imobiliarios",
+      "para": "gold_abecip_novos_financiamentos_imobiliarios",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_balancos_empresas",
+      "para": "gold_balancos_empresas_lancamentos",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_balancos_empresas",
+      "para": "gold_balancos_empresas_vendas",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_cbic_lancamentos_vendas",
+      "para": "gold_cbic_lancamentos",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_cbic_lancamentos_vendas",
+      "para": "gold_cbic_lancamentos_regiao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_cbic_lancamentos_vendas",
+      "para": "gold_cbic_vendas",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_cbic_lancamentos_vendas",
+      "para": "gold_cbic_vendas_regiao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_novo_caged",
+      "para": "gold_empregos_construcao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fgts_financiamentos_habitacionais",
+      "para": "gold_fgts_renda_familiar",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fgts_financiamentos_habitacionais",
+      "para": "gold_financiamento_pf_por_faixa",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_financiamentos_habitacionais",
+      "para": "gold_financiamentos_habitacionais",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_bacen_financiamentos_imobiliarios",
+      "para": "gold_financiamentos_imobiliarios",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_ibge_pnadc_ocupados_construcao",
+      "para": "gold_ibge_pnad_construcao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_ibge_pnadc_rendimento_construcao",
+      "para": "gold_ibge_pnad_construcao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_abecip_sbpe_financiamentos_habitacionais",
+      "para": "gold_indicadores_financiamento_pf",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fgts_financiamentos_habitacionais",
+      "para": "gold_indicadores_financiamento_pf",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_abramat_indice",
+      "para": "gold_indices_mercado_imobiliario",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fgv_icst",
+      "para": "gold_indices_mercado_imobiliario",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fipezap_locacao",
+      "para": "gold_indices_mercado_imobiliario",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_imob_infomoney",
+      "para": "gold_indices_mercado_imobiliario",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_ibge_pib_construcao_civil",
+      "para": "gold_pib_construcao_civil",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fgv_incc_m",
+      "para": "gold_precos_construcao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_ibge_sinapi",
+      "para": "gold_precos_construcao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_abecip_poupanca_sbpe",
+      "para": "gold_saldo_caderneta_poupanca",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fgv_incc_m",
+      "para": "gold_ticket_medio_vs_incc",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_ticket_medio_empresas",
+      "para": "gold_ticket_medio_vs_incc",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_abecip_sbpe_financiamentos_habitacionais",
+      "para": "gold_uh_condicao_uso",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "silver_fgts_financiamentos_habitacionais",
+      "para": "gold_uh_condicao_uso",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "bronze_abecip_poupanca_sbpe",
+      "para": "silver_abecip_poupanca_sbpe",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "bronze_bacen_financiamentos_imobiliarios",
+      "para": "silver_bacen_financiamentos_imobiliarios",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "bronze_fipezap_locacao",
+      "para": "silver_fipezap_locacao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "bronze_ibge_pib_construcao_civil",
+      "para": "silver_ibge_pib_construcao_civil",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "bronze_ibge_pnadc_ocupados_construcao",
+      "para": "silver_ibge_pnadc_ocupados_construcao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "bronze_ibge_pnadc_rendimento_construcao",
+      "para": "silver_ibge_pnadc_rendimento_construcao",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "bronze_novo_caged",
+      "para": "silver_novo_caged",
+      "projeto": "mcid",
+      "dominio": "conjuntura"
+    },
+    {
+      "de": "evolucao_financeira",
+      "para": "evolucao_financeira_chart",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "ficha_empreendimento",
+      "para": "evolucao_financeira_chart",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "empreendimento",
+      "para": "execucao_fisica_financeira_chart",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "evolucao_financeira",
+      "para": "execucao_fisica_financeira_chart",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "obra_mensal",
+      "para": "execucao_fisica_financeira_chart",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "empreendimento",
+      "para": "ficha_empreendimento",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "ficha_empreendimento",
+      "para": "mapa_nacional",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "ficha_empreendimento",
+      "para": "panorama_estadual",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "ficha_empreendimento",
+      "para": "resumo_gerencial",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "cadastro_pj",
+      "para": "empreendimento",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "consolidado",
+      "para": "empreendimento",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "dados_prioritarios_caixa",
+      "para": "empreendimento",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "obra_mensal",
+      "para": "empreendimento",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "empreendimento",
+      "para": "evolucao_financeira",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "financeiro_mensal",
+      "para": "evolucao_financeira",
+      "projeto": "mcid",
+      "dominio": "empreendimento_far"
+    },
+    {
+      "de": "fds_evolucao_financeira",
+      "para": "fds_evolucao_financeira_chart",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_ficha_empreendimento",
+      "para": "fds_evolucao_financeira_chart",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_empreendimento",
+      "para": "fds_ficha_empreendimento",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_empreendimento",
+      "para": "fds_panorama_entidade",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_cadastro_pj",
+      "para": "fds_empreendimento",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_financeiro_mensal",
+      "para": "fds_empreendimento",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_int_059_caixa_pj",
+      "para": "fds_empreendimento",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_obra_mensal",
+      "para": "fds_empreendimento",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_trabalho_social",
+      "para": "fds_empreendimento",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_empreendimento",
+      "para": "fds_evolucao_financeira",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "fds_financeiro_mensal",
+      "para": "fds_evolucao_financeira",
+      "projeto": "mcid",
+      "dominio": "entidades"
+    },
+    {
+      "de": "deputados",
+      "para": "parlamentares",
+      "projeto": "mir",
+      "dominio": "dados_abertos"
+    },
+    {
+      "de": "partidos_logo",
+      "para": "parlamentares",
+      "projeto": "mir",
+      "dominio": "dados_abertos"
+    },
+    {
+      "de": "partidos_map",
+      "para": "parlamentares",
+      "projeto": "mir",
+      "dominio": "dados_abertos"
+    },
+    {
+      "de": "senadores",
+      "para": "parlamentares",
+      "projeto": "mir",
+      "dominio": "dados_abertos"
+    },
+    {
+      "de": "deputados",
+      "para": "planos_partidos",
+      "projeto": "mir",
+      "dominio": "emendas"
+    },
+    {
+      "de": "planos_acoes",
+      "para": "planos_partidos",
+      "projeto": "mir",
+      "dominio": "emendas"
+    },
+    {
+      "de": "senadores",
+      "para": "planos_partidos",
+      "projeto": "mir",
+      "dominio": "emendas"
+    }
+  ],
+  "fontes": [
+    "abecip.poupanca_sbpe_mensal",
+    "bacen.financiamentos_imobiliarios",
+    "camara_deputados.deputados",
+    "compras_gov.contratos",
+    "compras_gov.cronograma",
+    "compras_gov.empenhos",
+    "compras_gov.faturas",
+    "compras_gov.terceirizados",
+    "conjuntura_bronze.bronze_abecip_novos_financiamentos_imobiliarios",
+    "conjuntura_bronze.bronze_abecip_sbpe_financiamentos_habitacionais",
+    "conjuntura_bronze.bronze_abramat_indice",
+    "conjuntura_bronze.bronze_balancos_empresas",
+    "conjuntura_bronze.bronze_cbic_lancamentos_vendas",
+    "conjuntura_bronze.bronze_fgts_financiamentos_habitacionais",
+    "conjuntura_bronze.bronze_fgv_icst",
+    "conjuntura_bronze.bronze_fgv_incc_m",
+    "conjuntura_bronze.bronze_ibge_sinapi",
+    "conjuntura_bronze.bronze_imob_infomoney",
+    "conjuntura_bronze.bronze_ticket_medio_empresas",
+    "fgv.icst",
+    "fgv.incc_m",
+    "fipe.indice_locacao",
+    "ibge.pib_construcao",
+    "ibge.pnadc_ocupados_construcao",
+    "ibge.pnadc_rendimento_construcao",
+    "ibge.sinapi",
+    "infomoney.acoes_imob",
+    "novo_caged.saldo_estoque_construcao_edificios",
+    "raw.api_ibge_uf",
+    "raw.dados_prioritarios_recebidos_caixa_empreendimentos",
+    "raw.dados_prioritarios_recebidos_caixa_entregas",
+    "raw.int_empreendimentos_int_059_fds_caixa_pj",
+    "raw.novo_mcmv_far_cad_pj_mensal",
+    "raw.novo_mcmv_far_consolidado",
+    "raw.novo_mcmv_far_financeiro_mensal",
+    "raw.novo_mcmv_far_obra_mensal",
+    "raw.novo_mcmv_fds_cad_pj_mensal",
+    "raw.novo_mcmv_fds_financeiro_mensal",
+    "raw.novo_mcmv_fds_obra_mensal",
+    "raw.novo_mcmv_fds_trabalho_social_mensal",
+    "senado_federal.senadores",
+    "siafi.empenhos_tesouro",
+    "siafi.nc_tesouro",
+    "siafi.nc_tesouro_pos__2026",
+    "siafi.nc_tesouro_pre_2026",
+    "siafi.ne_tesouro",
+    "siafi.ne_tesouro_emendas",
+    "siafi.pf_tesouro",
+    "siafi.visao_orcamentaria_total",
+    "siape.afastamento_historico",
+    "siape.dados_afastamento",
+    "siape.dados_curriculo",
+    "siape.dados_dependentes",
+    "siape.dados_escolares",
+    "siape.dados_financeiros",
+    "siape.dados_funcionais",
+    "siape.dados_pa",
+    "siape.dados_pessoais",
+    "siape.dados_uorg",
+    "siape.lista_servidores",
+    "siape.lista_uorgs",
+    "siorg.cargos_funcao",
+    "siorg.estrutura_organizacional_cargos",
+    "siorg.unidade_organizacional",
+    "transfere_gov.notas_de_credito",
+    "transfere_gov.planos_acao",
+    "transfere_gov.programacao_financeira",
+    "transferegov_emendas.documentos_habeis_especiais",
+    "transferegov_emendas.empenhos_especiais",
+    "transferegov_emendas.executor_especial",
+    "transferegov_emendas.finalidades_especiais",
+    "transferegov_emendas.historico_pagamentos_especiais",
+    "transferegov_emendas.metas_especiais",
+    "transferegov_emendas.ordens_bancarias_especiais",
+    "transferegov_emendas.plano_trabalho_especial",
+    "transferegov_emendas.planos_acao_especiais",
+    "transferegov_emendas.programas_especiais",
+    "transferegov_emendas.relatorio_gestao_especial",
+    "transferegov_emendas.relatorios_gestao_novo_especial"
+  ]
+}

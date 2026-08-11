@@ -1,0 +1,55 @@
+name: Docs Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs-pages/**"
+      - ".github/workflows/docs-pages.yaml"
+  pull_request:
+    paths:
+      - "docs-pages/**"
+      - ".github/workflows/docs-pages.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # O build roda offline, a partir do acervo versionado em src/_data/.
+      - name: Build
+        run: make docs-build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-pages/site
+
+  deploy:
+    name: Deploy
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
