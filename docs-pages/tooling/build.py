@@ -138,6 +138,26 @@ def _validar_links(paginas: list[Path]) -> int:
     return quebrados
 
 
+def _validar_curadoria(dominios: list[dict[str, Any]]) -> int:
+    """Dominio curado que nao casa nenhum modelo e, quase sempre, slug errado.
+
+    O slug precisa ser o nome da pasta em models/<slug>_dbt/. Sem esta checagem
+    o erro passa: o build publica uma pagina vazia e ninguem percebe. Um dominio
+    declarado antes da implementacao e legitimo, mas precisa dizer isso com
+    `sem_modelos: true` no dominios.yml.
+    """
+    problemas = 0
+    for dominio in dominios:
+        if dominio["total"] == 0 and not dominio.get("sem_modelos"):
+            log.error(
+                "dominio '%s' nao casou nenhum modelo — confira se o slug e o nome "
+                "da pasta em models/<slug>_dbt/, ou declare sem_modelos: true",
+                dominio["slug"],
+            )
+            problemas += 1
+    return problemas
+
+
 def _contexto(acervo: dict[str, Any]) -> dict[str, Any]:
     """Monta tudo que os templates consomem."""
     git, dbt, airflow = acervo["git"], acervo["dbt"], acervo["airflow"]
@@ -205,6 +225,8 @@ def main() -> int:
         return 1
 
     contexto = _contexto(acervo)
+    if _validar_curadoria(contexto["dominios"]):
+        return 1
 
     ambiente = Environment(
         loader=FileSystemLoader(TEMPLATES_DIR),
