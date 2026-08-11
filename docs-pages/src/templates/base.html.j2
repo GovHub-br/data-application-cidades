@@ -17,6 +17,19 @@
   <body>
     {% include "_partials/nav.html.j2" %}
 
+    {# `rel` vazio significa que esta e a capa: nao ha para onde voltar. #}
+    {% if rel %}
+      <div class="trilha">
+        <div class="container">
+          <a class="trilha__voltar" href="{{ rel }}index.html">
+            <span aria-hidden="true">←</span> Início
+          </a>
+          <span class="trilha__separador" aria-hidden="true">/</span>
+          <span class="trilha__atual">{{ titulo }}</span>
+        </div>
+      </div>
+    {% endif %}
+
     <main>
       {% block conteudo %}{% endblock %}
     </main>

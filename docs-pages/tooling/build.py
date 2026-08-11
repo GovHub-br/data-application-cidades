@@ -24,11 +24,14 @@ from tooling.common import ASSETS_DIR, SITE_DIR, SRC_DIR, TEMPLATES_DIR, log, re
 
 CORES_CAMADA = {"bronze": "#B45309", "silver": "#64748B", "gold": "#7A34F3"}
 
+# `rotulo` nomeia a visao; `publico` diz para quem ela e — juntos, deixam a
+# barra superior explicita sobre o que cada aba entrega, sem exigir um clique.
 ABAS = [
     {
         "id": "gestao",
         "href": "gestao/index.html",
-        "rotulo": "Gestão",
+        "rotulo": "Visão de gestão",
+        "publico": "para quem decide",
         "pergunta": "O que foi entregue e que problema resolveu?",
         "resumo": (
             "O histórico de entregas na linguagem de quem decide, com a evidência "
@@ -38,7 +41,8 @@ ABAS = [
     {
         "id": "tecnico",
         "href": "tecnico/index.html",
-        "rotulo": "Técnico",
+        "rotulo": "Visão técnica",
+        "publico": "para quem constrói",
         "pergunta": "Como funciona e como eu mexo nisso?",
         "resumo": ("Fontes, DAGs, modelos dbt e camadas, lidos direto do código."),
     },
@@ -46,6 +50,7 @@ ABAS = [
         "id": "vitrine",
         "href": "vitrine/index.html",
         "rotulo": "Vitrine",
+        "publico": "para quem chega agora",
         "pergunta": "Por que isso importa e como replicar?",
         "resumo": "A narrativa institucional do projeto e o caminho para outros órgãos.",
     },
@@ -57,13 +62,13 @@ PAGINAS: list[dict[str, Any]] = [
         "saida": "gestao/index.html",
         "template": "gestao.html.j2",
         "aba": "gestao",
-        "titulo": "Gestão",
+        "titulo": "Visão de gestão",
     },
     {
         "saida": "tecnico/index.html",
         "template": "tecnico.html.j2",
         "aba": "tecnico",
-        "titulo": "Técnico",
+        "titulo": "Visão técnica",
     },
     {
         "saida": "vitrine/index.html",
