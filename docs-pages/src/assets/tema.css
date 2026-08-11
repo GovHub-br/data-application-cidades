@@ -259,7 +259,13 @@ h3 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
-  margin: -2rem 0 0;
+  margin: 1.25rem 0 0;
+}
+
+/* Só quando os números vêm logo abaixo do hero: aí eles sobem sobre ele de
+   propósito. No meio da página essa margem negativa cobriria o texto acima. */
+.numeros--hero {
+  margin-top: -2rem;
 }
 
 .numero {
@@ -425,7 +431,8 @@ code {
   border-radius: var(--radius-md);
   padding: 1.25rem 1.4rem;
   position: sticky;
-  top: 84px;
+  /* Fica abaixo do cabeçalho fixo (64px) sem encostar nele. */
+  top: 80px;
 }
 
 .lateral h3 {
@@ -682,9 +689,15 @@ code {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.4;
   margin: 0.4rem 0 1.4rem;
   padding-left: 0.7rem;
   border-left: 3px solid var(--borda);
+}
+
+/* Dentro de um card a fonte é a última linha: não precisa da folga de baixo. */
+.card .fonte {
+  margin-bottom: 0;
 }
 
 /* ---------- Citação ---------- */
