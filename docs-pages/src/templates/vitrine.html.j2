@@ -17,29 +17,44 @@
   <p class="secao__intro">
     Informação sobre a mesma política pública vive espalhada em sistemas que não
     conversam entre si. Responder a uma pergunta simples de gestão exige extração
-    manual, planilha a planilha, com resultado que envelhece no dia seguinte e
-    não pode ser auditado.
+    manual, planilha a planilha, com resultado que envelhece no dia seguinte e não
+    pode ser auditado.
   </p>
 
   <h2>A resposta desta aplicação</h2>
   <p class="secao__intro">
-    Uma plataforma que integra {{ m.total_fontes_sistemas }} sistemas, orquestra
-    {{ m.total_dags }} rotinas de ingestão e mantém {{ m.total_modelos }} modelos
-    de transformação versionados, com {{ m.total_testes }} verificações
-    automáticas de qualidade. O resultado é reprodutível: qualquer número pode ser
-    rastreado até a fonte.
+    Para o {{ escopo.rotulo }}, a plataforma integra {{ m.total_sistemas }} fontes,
+    orquestra {{ m.total_dags }} rotinas de ingestão e mantém
+    {{ m.total_modelos }} modelos de transformação versionados, com
+    {{ m.total_testes }} verificações automáticas de qualidade. Delas saem
+    {{ m.total_gold }} tabelas prontas para painel e relatório. O resultado é
+    reprodutível: qualquer número pode ser rastreado até a fonte.
   </p>
 
+  <h2>As frentes</h2>
+  <div class="cards">
+    {% for dominio in dominios %}
+      <a class="card" href="{{ rel }}{{ dominio.href }}">
+        <span class="card__tag">{{ dominio.rotulo }}</span>
+        <h3>{{ dominio.subtitulo }}</h3>
+        <p>{{ dominio.perguntas[0] }}</p>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="container">
   <h2>Replicabilidade</h2>
   <p class="secao__intro">
     Todo o código é aberto e a arquitetura usa apenas software livre — Airflow,
     dbt, Postgres e Superset. Outro órgão pode partir deste repositório, trocar as
-    fontes e manter o mesmo desenho de camadas.
+    fontes e manter o mesmo desenho de camadas. Este próprio site é gerado do
+    repositório, e o mecanismo acompanha o código.
   </p>
 
   <p class="aviso">
-    <strong>Em construção.</strong> Os casos de uso concretos, com painéis e
-    depoimentos, chegam na fatia 4, junto com o acervo de documentos.
+    <strong>Em construção.</strong> Os casos de uso com painéis e depoimentos
+    chegam junto com o acervo de documentos da equipe.
   </p>
 </section>
 {% endblock %}

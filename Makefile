@@ -40,7 +40,7 @@ DOCS_RUN := PYTHONPATH=$(DOCS_DIR) $(DOCS_PY)
 
 $(DOCS_PY):
 	python3 -m venv $(DOCS_VENV)
-	$(DOCS_VENV)/bin/pip install --quiet --upgrade pip jinja2 pyyaml
+	$(DOCS_VENV)/bin/pip install --quiet --upgrade pip jinja2 pyyaml markdown
 
 docs-setup: $(DOCS_PY)
 
