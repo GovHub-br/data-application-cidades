@@ -1,0 +1,124 @@
+{% extends "base.html.j2" %}
+
+{% block conteudo %}
+<div class="hero">
+  <div class="container">
+    <h1>Como a plataforma funciona</h1>
+    <p>
+      Orquestração em Airflow, transformação em dbt sobre Postgres e visualização
+      em Superset. Todo o inventário desta página é lido do código a cada
+      publicação, então não desatualiza em silêncio.
+    </p>
+  </div>
+</div>
+
+<section class="container">
+  <h2>Fontes e ingestão</h2>
+  <p class="secao__intro">
+    {{ m.total_clientes }} clientes de integração alimentam {{ m.total_dags }}
+    DAGs. O agendamento da maioria é resolvido em execução pela Variable
+    <code>dynamic_schedules</code>, e por isso aparece como <em>dinâmico</em>.
+  </p>
+  <div class="filtro">
+    <input
+      type="search"
+      placeholder="Filtrar sistema…"
+      aria-label="Filtrar sistemas"
+      data-filtro-alvo="tabela-clientes"
+      data-filtro-contador="contador-clientes"
+    />
+    <span class="filtro__contador" id="contador-clientes"
+      >{{ clientes | length }} registros</span
+    >
+  </div>
+  <div class="tabela-wrap">
+    <table id="tabela-clientes">
+      <thead>
+        <tr>
+          <th>Sistema</th>
+          <th>DAGs</th>
+          <th>Operações expostas</th>
+          <th>Arquivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cliente in clientes %}
+          <tr>
+            <td><strong>{{ cliente.sistema }}</strong></td>
+            <td>{{ cliente.dags }}</td>
+            <td>{{ cliente.total_metodos }}</td>
+            <td><code>{{ cliente.arquivo }}</code></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="container">
+  <h2>Modelos dbt por domínio</h2>
+  <p class="secao__intro">
+    {{ m.total_modelos }} modelos em {{ m.total_projetos }} projetos dbt, com
+    {{ m.total_testes }} testes declarados. A linhagem completa em Mermaid entra
+    nas páginas de domínio, na fatia 3.
+  </p>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Domínio</th>
+          <th>Projeto</th>
+          <th>Bronze</th>
+          <th>Silver</th>
+          <th>Gold</th>
+          <th>Testes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dominio in dominios %}
+          <tr>
+            <td><strong>{{ dominio.rotulo }}</strong></td>
+            <td>{{ dominio.projeto }}</td>
+            <td>{{ dominio.camadas.get("bronze", 0) }}</td>
+            <td>{{ dominio.camadas.get("silver", 0) }}</td>
+            <td>{{ dominio.camadas.get("gold", 0) }}</td>
+            <td>{{ dominio.testes }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="container">
+  <h2>Rodando localmente</h2>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Comando</th>
+          <th>O que faz</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>make setup</code></td>
+          <td>Instala dependências e hooks de git</td>
+        </tr>
+        <tr>
+          <td><code>docker-compose up -d</code></td>
+          <td>Sobe Airflow, Superset, Postgres e Jupyter</td>
+        </tr>
+        <tr>
+          <td><code>make docs-collect</code></td>
+          <td>Atualiza o acervo deste site a partir do repositório</td>
+        </tr>
+        <tr>
+          <td><code>make docs-serve</code></td>
+          <td>Gera o site e serve em <code>localhost:8000</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

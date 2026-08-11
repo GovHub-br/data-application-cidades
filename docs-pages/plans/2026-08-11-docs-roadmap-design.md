@@ -2,7 +2,7 @@
 
 **Data:** 2026-08-11
 **Repositório:** `GovHub-br/data-application-cidades`
-**Status:** design validado, pronto para planejamento de implementação
+**Status:** design validado; fatia 1 (esqueleto vivo) implementada em `docs-pages/`
 
 ## Objetivo
 
@@ -34,28 +34,28 @@ Três estágios separados por contrato de dados.
 
 ### 1. Coleta
 
-Quatro coletores independentes em `scripts/docs/collectors/`, cada um com uma
+Quatro coletores independentes em `docs-pages/tooling/collectors/`, cada um com uma
 responsabilidade e uma saída própria:
 
 | Coletor | Lê | Produz |
 |---|---|---|
 | `git_pr.py` | `git log` e `gh pr list --json` | commits e PRs com data, autor, labels, corpo |
-| `dbt.py` | `manifest.json` dos três projetos e `descriptions.yml` | modelos, camadas, linhagem, testes |
-| `airflow.py` | AST dos arquivos em `dags/` e `plugins/` | DAGs, schedules, clientes e fontes |
-| `assets.py` | `docs_src/acervo/` | documentos enviados, com metadados |
+| `dbt_models.py` | árvore de `models/` e `schema.yml` dos três projetos | modelos, camadas, linhagem, testes |
+| `airflow_dags.py` | AST dos arquivos em `dags/` e `plugins/` | DAGs, schedules, clientes e fontes |
+| `assets.py` | `docs-pages/src/acervo/` | documentos enviados, com metadados |
 
-Cada coletor grava um JSON em `docs_src/_data/`. Rodam isolados: a falha de um não
+Cada coletor grava um JSON em `docs-pages/src/_data/`. Rodam isolados: a falha de um não
 impede os demais.
 
 ### 2. Curadoria
 
-`docs_src/` guarda a narrativa escrita à mão, versionada em Markdown e YAML.
+`docs-pages/src/` guarda a narrativa escrita à mão, versionada em Markdown e YAML.
 `roadmap.yml` define as fases e as amarra aos dados coletados por consulta.
 
 ### 3. Build
 
-`scripts/docs/build.py` resolve as consultas, renderiza os templates Jinja2 e
-escreve HTML estático em `site/`. O GitHub Actions publica em Pages a cada push
+`docs-pages/tooling/build.py` resolve as consultas, renderiza os templates Jinja2 e
+escreve HTML estático em `docs-pages/site/`. O GitHub Actions publica em Pages a cada push
 na `main`.
 
 **Invariante:** nenhum número é digitado à mão em HTML. A prosa nunca é gerada;
@@ -155,26 +155,30 @@ Cabeçalho, abas, rodapé e cards vivem em parciais Jinja.
 Coletar e construir são comandos distintos:
 
 ```
-make docs-collect   # usa rede: gh, git, dbt parse → docs_src/_data/*.json
-make docs-build     # offline: Jinja2 e mermaid-cli → site/
+make docs-collect   # usa rede: gh e git → docs-pages/src/_data/*.json
+make docs-build     # offline: Jinja2 e mermaid-cli → docs-pages/site/
 make docs-serve     # build e servidor local em http://localhost:8000
 ```
+
+Os alvos criam e usam um virtualenv próprio em `docs-pages/.venv`, com apenas
+`jinja2` e `pyyaml`. Rodar o site não exige Airflow, dbt nem Poetry instalados.
 
 Os JSONs coletados ficam **versionados**. Assim o build no CI não depende de rede
 nem de banco, o diff de uma coleta mostra o que mudou no acervo, e um build falho
 nunca destrói a última versão boa dos dados.
 
-`site/` entra no `.gitignore`: o deploy é por Actions, não por pasta.
+`docs-pages/site/` entra no `.gitignore`: o deploy é por Actions, não por pasta.
 
 ### Preview local
 
-`make docs-serve` roda o build e sobe `python -m http.server` sobre `site/` — sem
-dependência adicional. O visual pode ser conferido inteiro antes de qualquer push.
+`make docs-serve` roda o build e sobe `python -m http.server` sobre
+`docs-pages/site/` — sem dependência adicional. O visual pode ser conferido
+inteiro antes de qualquer push.
 
 Para que o mesmo HTML funcione em `localhost:8000/` e em
-`govhub-br.github.io/data-application-cidades/`, os templates usam um filtro Jinja
-que resolve caminhos relativos à página corrente. Nenhuma URL absoluta é escrita
-nos templates.
+`govhub-br.github.io/data-application-cidades/`, cada página recebe do build a
+variável `rel` — o prefixo relativo à sua profundidade. Nenhuma URL absoluta é
+escrita nos templates.
 
 O `mermaid-cli` exige Node. Localmente, se `npx` não estiver disponível, o build
 emite um aviso e insere um placeholder no lugar do diagrama, seguindo adiante — o
@@ -182,10 +186,10 @@ restante do visual continua conferível.
 
 ### CI
 
-Um job `docs` no workflow existente, disparado em push na `main` e em PRs que
-tocam `docs_src/` ou `scripts/docs/`:
+Workflow próprio em `.github/workflows/docs-pages.yaml`, disparado em push na
+`main` e em PRs que tocam `docs-pages/`:
 
-1. `make docs-build` (Poetry e `npx mmdc`)
+1. `make docs-build` (Python 3.11 e `npx mmdc`)
 2. em PR: publica o site como artefato para revisão visual antes do merge
 3. em `main`: `upload-pages-artifact` e `deploy-pages`
 
@@ -201,10 +205,13 @@ Testes em `tests/docs/` cobrem os coletores (com fixtures de `manifest.json` e d
 saída do `gh`) e o resolvedor de consultas do `roadmap.yml`, que concentra a lógica
 real. Um smoke test renderiza o site completo e valida os links internos.
 
-## Premissa a validar
+## Premissa resolvida
 
-`dbt parse` deve gerar o `manifest.json` sem conexão ao Postgres. Se exigir banco,
-o plano B é versionar os manifests gerados no ambiente da equipe.
+A dependência de `dbt parse` — e portanto de conexão ao Postgres — foi eliminada
+na implementação. A convenção de pastas do repositório
+(`<projeto>/models/<domínio>_dbt/<camada>/<modelo>.sql`) já carrega projeto,
+domínio e camada, e os `ref()`/`source()` no SQL dão a linhagem. O coletor lê a
+árvore de arquivos e o `schema.yml`, rodando offline e sem dbt instalado.
 
 ## Plano de entrega
 
@@ -222,7 +229,7 @@ Quatro fatias, cada uma publicável por si:
 Nenhuma bloqueia a fatia 1.
 
 1. **Documentos** — apresentações, atas, planilhas de entrega e prints de
-   dashboards do Superset, colocados em `docs_src/acervo/`.
+   dashboards do Superset, colocados em `docs-pages/src/acervo/`.
 2. **Recorte de fases** — os períodos que fazem sentido para a gestão. Rascunho
    proposto a partir do histórico de PRs, depois corrigido pela equipe.
 3. **Domínios** — confirmar se o recorte de nove bate com o produto real.

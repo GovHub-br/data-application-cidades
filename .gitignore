@@ -36,6 +36,9 @@ htmlcov/
 build/
 *.egg-info/
 
+# Site de documentacao gerado (o acervo em docs-pages/src/_data/ e versionado)
+docs-pages/site/
+
 # DBT
 target/
 dbt_packages/

@@ -1,0 +1,476 @@
+/*
+ * tema.css — identidade visual GovHub aplicada ao site de documentacao.
+ *
+ * A fonte Inter e usada quando disponivel no sistema; nao ha @import de CDN
+ * porque o site publicado nao depende de rede externa. Para fixar a Inter em
+ * qualquer maquina, versionar o .woff2 em assets/fontes/ e declarar @font-face.
+ */
+
+:root {
+  /* Marca */
+  --primary-purple: #7a34f3;
+  --secondary-purple: #8b5cf6;
+  --purple-400: #9249ca;
+  --purple-600: #7c3aad;
+  --purple-700: #5b21b6;
+  --accent-orange: #f97316;
+
+  /* Texto */
+  --text-strong: #202020;
+  --text-body: #2d3748;
+  --text-muted: #666666;
+  --text-white: #ffffff;
+
+  /* Fundos */
+  --bg-white: #ffffff;
+  --bg-light: #f7f7f7;
+  --bg-subtle: #f8f9fa;
+  --borda: #e5e7eb;
+
+  /* Semanticas */
+  --color-success: #10b981;
+  --camada-bronze: #b45309;
+  --camada-silver: #64748b;
+  --camada-gold: #7a34f3;
+
+  --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: "SFMono-Regular", ui-monospace, "JetBrains Mono", Menlo, monospace;
+
+  --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 8px 30px rgba(0, 0, 0, 0.15);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --transition-normal: all 0.2s ease;
+  --largura-max: 1120px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  color: var(--text-body);
+  background: var(--bg-light);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--purple-700);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text-strong);
+  line-height: 1.25;
+  margin: 0 0 0.6rem;
+}
+
+h2 {
+  font-size: 1.6rem;
+  color: var(--purple-700);
+}
+
+h3 {
+  font-size: 1.15rem;
+}
+
+.container {
+  max-width: var(--largura-max);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ---------- Navegacao ---------- */
+
+.topo {
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--borda);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.topo__interno {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  min-height: 64px;
+  flex-wrap: wrap;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+}
+
+.marca:hover {
+  text-decoration: none;
+}
+
+.marca__ponto {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+}
+
+.abas {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.abas a {
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: var(--transition-normal);
+}
+
+.abas a:hover {
+  background: var(--bg-subtle);
+  color: var(--purple-700);
+  text-decoration: none;
+}
+
+.abas a[aria-current="page"] {
+  background: var(--primary-purple);
+  color: var(--text-white);
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+  color: var(--text-white);
+  padding: 3.5rem 0 3rem;
+}
+
+.hero h1 {
+  color: var(--text-white);
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  max-width: 22ch;
+}
+
+.hero p {
+  font-size: 1.1rem;
+  max-width: 62ch;
+  opacity: 0.94;
+  margin: 0.5rem 0 0;
+}
+
+.hero__periodo {
+  display: inline-block;
+  margin-top: 1.25rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* ---------- Numeros ---------- */
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin: -2rem 0 0;
+}
+
+.numero {
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 1.1rem 1.2rem;
+  border-top: 3px solid var(--primary-purple);
+}
+
+.numero--acento {
+  border-top-color: var(--accent-orange);
+}
+
+.numero__valor {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.numero__rotulo {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+
+/* ---------- Secoes e cards ---------- */
+
+section {
+  padding: 2.5rem 0;
+}
+
+.secao__intro {
+  color: var(--text-muted);
+  max-width: 70ch;
+  margin: 0 0 1.5rem;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  display: block;
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: 1.4rem;
+  color: var(--text-body);
+  transition: var(--transition-normal);
+}
+
+.card:hover {
+  text-decoration: none;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--secondary-purple);
+}
+
+.card h3 {
+  color: var(--purple-700);
+  margin-bottom: 0.35rem;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.card__tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-purple);
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- Tabelas ---------- */
+
+.tabela-wrap {
+  overflow-x: auto;
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--borda);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92rem;
+}
+
+thead th {
+  background: var(--primary-purple);
+  color: var(--text-white);
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid var(--borda);
+}
+
+tbody tr:nth-child(even) {
+  background: var(--bg-subtle);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--bg-subtle);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+/* ---------- Badges de camada ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-white);
+  background: var(--text-muted);
+}
+
+.badge--bronze {
+  background: var(--camada-bronze);
+}
+.badge--silver {
+  background: var(--camada-silver);
+}
+.badge--gold {
+  background: var(--camada-gold);
+}
+
+/* ---------- Filtro de tabela ---------- */
+
+.filtro {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filtro input {
+  flex: 1 1 260px;
+  max-width: 340px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: var(--bg-white);
+}
+
+.filtro input:focus {
+  outline: 2px solid var(--secondary-purple);
+  outline-offset: 1px;
+  border-color: var(--secondary-purple);
+}
+
+.filtro__contador {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+@media print {
+  .filtro {
+    display: none;
+  }
+}
+
+/* ---------- Grafico ---------- */
+
+.grafico {
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.grafico svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ---------- Rodape ---------- */
+
+.rodape {
+  background: var(--text-strong);
+  color: rgba(255, 255, 255, 0.75);
+  padding: 2rem 0;
+  font-size: 0.9rem;
+  margin-top: 2rem;
+}
+
+.rodape a {
+  color: var(--text-white);
+}
+
+.rodape__gerado {
+  opacity: 0.6;
+  font-size: 0.82rem;
+  margin-top: 0.4rem;
+}
+
+.aviso {
+  background: #fff7ed;
+  border-left: 4px solid var(--accent-orange);
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+}
+
+/* ---------- Impressao ---------- */
+
+@media print {
+  .topo,
+  .rodape {
+    display: none;
+  }
+
+  body {
+    background: var(--bg-white);
+  }
+
+  .hero {
+    background: none;
+    color: var(--text-strong);
+    padding: 0 0 1rem;
+  }
+
+  .hero h1 {
+    color: var(--purple-700);
+  }
+
+  .numero,
+  .card,
+  .tabela-wrap {
+    box-shadow: none;
+    border: 1px solid var(--borda);
+    break-inside: avoid;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .abas {
+    margin-left: 0;
+    width: 100%;
+  }
+}

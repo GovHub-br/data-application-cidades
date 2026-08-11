@@ -1,0 +1,17 @@
+<header class="topo">
+  <div class="container topo__interno">
+    <a class="marca" href="{{ rel }}index.html">
+      <span class="marca__ponto" aria-hidden="true"></span>
+      Gov Hub BR <span style="font-weight: 500; color: var(--text-muted)">· Cidades</span>
+    </a>
+
+    <nav class="abas" aria-label="Visões do projeto">
+      {% for aba in abas %}
+        <a
+          href="{{ rel }}{{ aba.href }}"
+          {% if aba.id == aba_atual %}aria-current="page"{% endif %}
+        >{{ aba.rotulo }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+</header>
