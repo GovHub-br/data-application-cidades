@@ -134,31 +134,90 @@ h3 {
   background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
 }
 
+.marca__escopo {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--primary-purple);
+  line-height: 1.2;
+}
+
 .abas {
   display: flex;
-  gap: 0.25rem;
+  align-items: stretch;
+  gap: 0.3rem;
   margin-left: auto;
   flex-wrap: wrap;
 }
 
-.abas a {
-  padding: 0.5rem 0.9rem;
+.abas__legenda {
+  align-self: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  padding-right: 0.6rem;
+  margin-right: 0.2rem;
+  border-right: 1px solid var(--borda);
+}
+
+.aba {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.4rem 0.85rem;
   border-radius: var(--radius-sm);
+  border: 1px solid transparent;
   color: var(--text-body);
-  font-weight: 500;
-  font-size: 0.95rem;
   transition: var(--transition-normal);
 }
 
-.abas a:hover {
+.aba__rotulo {
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.aba__publico {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+
+.aba:hover {
   background: var(--bg-subtle);
-  color: var(--purple-700);
+  border-color: var(--borda);
   text-decoration: none;
 }
 
-.abas a[aria-current="page"] {
+.aba:hover .aba__rotulo {
+  color: var(--purple-700);
+}
+
+.aba[aria-current="page"] {
   background: var(--primary-purple);
+  border-color: var(--primary-purple);
   color: var(--text-white);
+}
+
+.aba[aria-current="page"] .aba__publico {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@media (max-width: 720px) {
+  .abas__legenda {
+    display: none;
+  }
+
+  .aba {
+    padding: 0.4rem 0.65rem;
+  }
+
+  .aba__publico {
+    display: none;
+  }
 }
 
 /* ---------- Hero ---------- */
@@ -615,15 +674,40 @@ code {
   font-weight: 600;
 }
 
-/* ---------- Navegação de volta ---------- */
+/* ---------- Trilha de navegação ---------- */
 
-.voltar {
-  display: inline-block;
-  color: var(--text-white);
-  opacity: 0.85;
-  font-size: 0.9rem;
+.trilha {
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.86rem;
+}
+
+.trilha .container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.trilha__voltar {
   font-weight: 600;
-  margin-bottom: 0.8rem;
+  color: var(--purple-700);
+}
+
+.trilha__separador {
+  color: var(--borda);
+}
+
+.trilha__atual {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+@media print {
+  .trilha {
+    display: none;
+  }
 }
 
 .hero--dominio h1 {

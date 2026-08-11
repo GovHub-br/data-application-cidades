@@ -2,15 +2,23 @@
   <div class="container topo__interno">
     <a class="marca" href="{{ rel }}index.html">
       <span class="marca__ponto" aria-hidden="true"></span>
-      Gov Hub BR <span style="font-weight: 500; color: var(--text-muted)">· Cidades</span>
+      <span>
+        Gov Hub BR
+        <small class="marca__escopo">{{ escopo.sigla }}</small>
+      </span>
     </a>
 
-    <nav class="abas" aria-label="Visões do projeto">
+    <nav class="abas" aria-label="Escolha a visão do projeto">
+      <span class="abas__legenda" aria-hidden="true">Visões</span>
       {% for aba in abas %}
         <a
+          class="aba"
           href="{{ rel }}{{ aba.href }}"
           {% if aba.id == aba_atual %}aria-current="page"{% endif %}
-        >{{ aba.rotulo }}</a>
+        >
+          <span class="aba__rotulo">{{ aba.rotulo }}</span>
+          <span class="aba__publico">{{ aba.publico }}</span>
+        </a>
       {% endfor %}
     </nav>
   </div>
