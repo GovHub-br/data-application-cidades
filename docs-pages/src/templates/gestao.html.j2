@@ -5,8 +5,8 @@
   <div class="container">
     <h1>O que foi entregue</h1>
     <p>
-      A leitura de gestão do roadmap: que problema cada fase resolveu, o que
-      chegou às mãos de quem decide e a evidência que sustenta cada afirmação.
+      A leitura de gestão do trabalho no {{ escopo.rotulo }}: o que existe hoje,
+      o que cada domínio resolve e onde está a evidência de cada entrega.
     </p>
   </div>
 </div>
@@ -14,8 +14,8 @@
 <div class="container">
   <div class="numeros">
     <div class="numero">
-      <div class="numero__valor">{{ m.total_fontes_sistemas }}</div>
-      <div class="numero__rotulo">Sistemas integrados</div>
+      <div class="numero__valor">{{ m.total_sistemas }}</div>
+      <div class="numero__rotulo">Fontes integradas</div>
     </div>
     <div class="numero numero--acento">
       <div class="numero__valor">{{ m.total_gold }}</div>
@@ -33,18 +33,39 @@
 </div>
 
 <section class="container">
-  <p class="aviso">
-    <strong>Em construção.</strong> A timeline de fases, com o texto negocial de
-    cada uma e as evidências ligadas, é a fatia 2 da entrega. Ela será gerada a
-    partir do <code>roadmap.yml</code>, que ainda precisa do recorte de períodos
-    validado pela equipe.
+  <h2>As três frentes</h2>
+  <p class="secao__intro">
+    O trabalho se organiza em domínios. Cada um responde a um conjunto próprio de
+    perguntas de gestão.
   </p>
+
+  {% for dominio in dominios %}
+    <div class="frente">
+      <div class="frente__cabecalho">
+        <h3><a href="{{ rel }}{{ dominio.href }}">{{ dominio.rotulo }}</a></h3>
+        <span class="frente__numeros">
+          {{ dominio.total }} modelos · {{ dominio.camadas.get("gold", 0) }} tabelas de uso ·
+          {{ dominio.entregas | length }} entregas
+        </span>
+      </div>
+      <div class="prosa">{{ dominio.contexto | markdown }}</div>
+      <ul class="lista-perguntas">
+        {% for pergunta in dominio.perguntas %}
+          <li>{{ pergunta }}</li>
+        {% endfor %}
+      </ul>
+      <a class="frente__link" href="{{ rel }}{{ dominio.href }}"
+        >Ver o que foi feito em {{ dominio.rotulo }} →</a
+      >
+    </div>
+  {% endfor %}
 </section>
 
 <section class="container">
   <h2>Entregas recentes</h2>
   <p class="secao__intro">
-    Últimos pull requests integrados ao projeto, ainda sem a narrativa de fase.
+    As {{ entregas[:8] | length }} mais recentes de {{ m.total_entregas }}.
+    <a href="{{ rel }}entregas/index.html">Ver o histórico completo →</a>
   </p>
   <div class="tabela-wrap">
     <table>
@@ -52,15 +73,27 @@
         <tr>
           <th>Data</th>
           <th>Entrega</th>
-          <th>PR</th>
+          <th>Domínio</th>
+          <th>Referência</th>
         </tr>
       </thead>
       <tbody>
-        {% for pr in prs_recentes %}
+        {% for entrega in entregas[:8] %}
           <tr>
-            <td>{{ pr.data }}</td>
-            <td>{{ pr.titulo }}</td>
-            <td><a href="{{ pr.url }}">#{{ pr.numero }}</a></td>
+            <td>{{ entrega.data | data }}</td>
+            <td>{{ entrega.titulo }}</td>
+            <td>
+              {% for dominio in entrega.dominios %}
+                <a href="{{ rel }}dominios/{{ dominio.slug }}/index.html">{{ dominio.rotulo }}</a>
+              {% endfor %}
+            </td>
+            <td>
+              {% if entrega.url %}
+                <a href="{{ entrega.url }}">{{ entrega.referencia }}</a>
+              {% else %}
+                <span class="entrega__ref">{{ entrega.referencia }}</span>
+              {% endif %}
+            </td>
           </tr>
         {% endfor %}
       </tbody>

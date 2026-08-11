@@ -1,0 +1,126 @@
+# Curadoria do escopo e dos domínios de dados do Ministério das Cidades.
+#
+# Este é o arquivo mantido à mão. Números, modelos, fontes e entregas são
+# resolvidos pelo build a partir do acervo — aqui fica só o que o código não
+# sabe dizer: o recorte do escopo e o que cada domínio significa.
+#
+# O repositório também hospeda os projetos dbt `ipea` e `mir`, de outras
+# aplicações. O bloco `escopo` abaixo é o que mantém o site restrito ao MCID:
+# tudo que não estiver nele fica fora das contagens e das páginas.
+#
+# REVISAR: os textos de contexto foram escritos a partir da evidência do
+# repositório e do conhecimento público sobre cada sistema. A equipe deve
+# validar a linguagem institucional antes da publicação.
+
+escopo:
+  rotulo: Ministério das Cidades
+  sigla: MCID
+  projetos_dbt: [mcid]
+  grupos_dag:
+    - data_ingest/abecip
+    - data_ingest/bacen
+    - data_ingest/fgv
+    - data_ingest/fipe
+    - data_ingest/ibge
+    - data_ingest/infomoney
+    - data_ingest/mrv
+    - data_ingest/tesouro_gerencial/mcid
+    - dbt/mcid
+  # Ingestões que não são DAG: rodam como script sobre o SFTP do agente operador
+  # e alimentam o schema `raw`, de onde saem FAR e Entidades.
+  ingestoes_script:
+    - rotulo: SFTP do agente operador
+      arquivos:
+        - scripts/sftp_ingest.py
+        - scripts/sftp_snapshot.py
+        - scripts/sftp_minio_diff.py
+        - scripts/sftp_rename_tables.py
+      descricao: |
+        Carga das bases da Caixa disponibilizadas por SFTP, com snapshot para
+        detectar o que mudou entre períodos e conferência contra o MinIO.
+
+dominios:
+  - slug: conjuntura
+    rotulo: Conjuntura
+    subtitulo: Termômetro do mercado imobiliário e da construção civil
+    contexto: |
+      Política habitacional não se planeja no vácuo: crédito, emprego, custo de
+      obra e preço de imóvel mudam o que é possível fazer e a que custo. Este
+      domínio reúne, num só lugar, os indicadores que descrevem esse ambiente —
+      hoje espalhados por associações setoriais, bancos e institutos de pesquisa,
+      cada um com seu formato, sua periodicidade e seu site.
+    o_que_faz: |
+      A ingestão busca cada indicador na fonte original — planilha, API ou página
+      web —, a camada silver padroniza períodos e unidades e a gold entrega as
+      séries prontas para o painel, todas na mesma chave de tempo. É isso que
+      permite cruzar crédito, emprego e preço na mesma tela.
+    perguntas:
+      - Como está o crédito imobiliário e a poupança que o financia?
+      - O custo da construção sobe mais rápido que o preço de venda?
+      - O emprego na construção civil acompanha o volume de lançamentos?
+    sistemas: [ABECIP, BACEN, FGV, FIPE, IBGE, InfoMoney, Novo CAGED, CBIC, MRV]
+    chaves:
+      [
+        conjuntura,
+        abecip,
+        bacen,
+        fgv,
+        fipe,
+        fipezap,
+        ibge,
+        infomoney,
+        caged,
+        cbic,
+        incc,
+        icst,
+        poupanca,
+        poupança,
+        mrv,
+        imobiliario,
+        imobiliário,
+        balancos,
+        lancamentos,
+      ]
+
+  - slug: empreendimento_far
+    rotulo: Empreendimento FAR
+    subtitulo: Obras do Minha Casa Minha Vida pelo Fundo de Arrendamento Residencial
+    contexto: |
+      O FAR financia empreendimentos habitacionais destinados às famílias de
+      menor renda no Minha Casa Minha Vida. Acompanhar essas obras exige juntar
+      cadastro do empreendimento, execução física, execução financeira e
+      informação do agente operador — que chegam em arquivos separados, com
+      recortes e periodicidades diferentes.
+    o_que_faz: |
+      As tabelas bronze recebem os arquivos como vieram; a silver reconstrói o
+      empreendimento como entidade única, com sua evolução financeira ao longo do
+      tempo; a gold entrega a ficha do empreendimento, o panorama por estado, o
+      mapa nacional e os gráficos de execução física e financeira.
+    perguntas:
+      - Em que pé está cada empreendimento, física e financeiramente?
+      - Como os recursos se distribuem entre os estados?
+      - A execução da obra acompanha o desembolso?
+    sistemas: [Caixa, SFTP do agente operador]
+    # 'mcmv' fica fora: as duas linhas sao MCMV, e a chave casaria as duas.
+    chaves: [far, empreendimento, obra, panorama, mapa nacional, sftp]
+
+  - slug: entidades
+    rotulo: Entidades
+    subtitulo: Linha do MCMV operada por entidades, via FDS
+    contexto: |
+      Na modalidade Entidades, a produção habitacional é conduzida por
+      associações, cooperativas e movimentos de moradia, com recursos do Fundo de
+      Desenvolvimento Social. As perguntas são as mesmas do FAR, mas o sujeito é
+      outro: a entidade organizadora, que responde pela obra e pelo trabalho
+      social junto às famílias.
+    o_que_faz: |
+      O pipeline replica a estrutura do FAR sobre as tabelas do FDS — cadastro,
+      obra mensal, financeiro mensal, trabalho social e entregas prioritárias — e
+      entrega na gold o panorama por entidade, a ficha do empreendimento e a
+      evolução financeira.
+    perguntas:
+      - Que entidades conduzem empreendimentos, e com que desempenho?
+      - Como evolui o financeiro de cada obra do FDS?
+      - O trabalho social acompanha a execução da obra?
+    sistemas: [Caixa, SFTP do agente operador]
+    chaves: [entidades, fds, trabalho social, mcmv entidades, sftp]

@@ -3,12 +3,12 @@
 {% block conteudo %}
 <div class="hero">
   <div class="container">
-    <h1>Dados públicos de Cidades, de sistema fragmentado a ativo estratégico</h1>
+    <h1>Dados do Ministério das Cidades, de sistema fragmentado a ativo de gestão</h1>
     <p>
-      Este site conta o que foi construído nesta aplicação de dados: as fontes
-      integradas, os modelos que transformam dado bruto em indicador e as
-      entregas que chegaram à gestão. Cada número abaixo é lido direto do
-      repositório a cada publicação.
+      Este site conta o que foi construído na aplicação de dados do
+      {{ escopo.rotulo }}: as fontes integradas, os modelos que transformam dado
+      bruto em indicador e as entregas que chegaram à gestão. Cada número abaixo
+      é lido direto do repositório a cada publicação.
     </p>
     <span class="hero__periodo">{{ periodo }}</span>
   </div>
@@ -17,31 +17,53 @@
 <div class="container">
   <div class="numeros">
     <div class="numero">
-      <div class="numero__valor">{{ m.total_fontes_sistemas }}</div>
-      <div class="numero__rotulo">Sistemas integrados</div>
+      <div class="numero__valor">{{ m.total_sistemas }}</div>
+      <div class="numero__rotulo">Fontes integradas</div>
     </div>
     <div class="numero">
       <div class="numero__valor">{{ m.total_dags }}</div>
       <div class="numero__rotulo">DAGs de ingestão</div>
     </div>
-    <div class="numero numero--acento">
+    <div class="numero">
       <div class="numero__valor">{{ m.total_modelos }}</div>
       <div class="numero__rotulo">Modelos dbt</div>
+    </div>
+    <div class="numero numero--acento">
+      <div class="numero__valor">{{ m.total_gold }}</div>
+      <div class="numero__rotulo">Tabelas de uso</div>
     </div>
     <div class="numero">
       <div class="numero__valor">{{ m.total_testes }}</div>
       <div class="numero__rotulo">Testes de qualidade</div>
     </div>
     <div class="numero">
-      <div class="numero__valor">{{ m.total_dominios }}</div>
-      <div class="numero__rotulo">Domínios de dados</div>
-    </div>
-    <div class="numero">
-      <div class="numero__valor">{{ m.total_commits }}</div>
-      <div class="numero__rotulo">Commits</div>
+      <div class="numero__valor">{{ m.total_entregas }}</div>
+      <div class="numero__rotulo">Entregas</div>
     </div>
   </div>
 </div>
+
+<section class="container">
+  <h2>Domínios de dados</h2>
+  <p class="secao__intro">
+    Cada domínio é uma linha de produto que vai da fonte ao uso. Clique para ver
+    o contexto, o que foi construído e o histórico de entregas.
+  </p>
+  <div class="cards">
+    {% for dominio in dominios %}
+      <a class="card card--dominio" href="{{ rel }}{{ dominio.href }}">
+        <span class="card__tag">{{ dominio.total }} modelos · {{ dominio.entregas | length }} entregas</span>
+        <h3>{{ dominio.rotulo }}</h3>
+        <p>{{ dominio.subtitulo }}</p>
+        <p class="card__camadas">
+          {% for camada, quantidade in dominio.camadas.items() %}
+            <span class="badge badge--{{ camada }}">{{ camada }} {{ quantidade }}</span>
+          {% endfor %}
+        </p>
+      </a>
+    {% endfor %}
+  </div>
+</section>
 
 <section class="container">
   <h2>Por onde começar</h2>
@@ -70,33 +92,11 @@
 </section>
 
 <section class="container">
-  <h2>Domínios de dados</h2>
+  <h2>Peso de cada domínio</h2>
   <p class="secao__intro">
-    Cada domínio é uma linha de produto que vai da fonte ao uso. As páginas
-    completas, com linhagem e histórico, chegam na fatia 3.
+    Modelos dbt por domínio — uma medida de onde está concentrado o esforço de
+    transformação.
   </p>
-  <div class="cards">
-    {% for dominio in dominios %}
-      <div class="card">
-        <span class="card__tag">{{ dominio.projeto }}</span>
-        <h3>{{ dominio.rotulo }}</h3>
-        <p>
-          {{ dominio.total }} modelos ·
-          {% for camada, quantidade in dominio.camadas.items() %}
-            <span class="badge badge--{{ camada }}">{{ camada }} {{ quantidade }}</span>
-          {% endfor %}
-        </p>
-      </div>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="container">
-  <h2>Ritmo de construção</h2>
-  <p class="secao__intro">
-    Commits por trimestre, do primeiro commit até hoje. A leitura narrada desse
-    ritmo — o que cada fase resolveu — é o conteúdo da aba Gestão.
-  </p>
-  <div class="grafico">{{ grafico_trimestres }}</div>
+  <div class="grafico">{{ grafico_dominios }}</div>
 </section>
 {% endblock %}
