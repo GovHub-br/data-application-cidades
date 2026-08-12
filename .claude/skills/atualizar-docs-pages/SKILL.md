@@ -11,6 +11,10 @@ O site é **híbrido**: os fatos são lidos do repositório a cada build, a narr
 escrita à mão. Você edita só a narrativa. Se um número está errado no site, a
 correção nunca é no texto — é no código ou na coleta.
 
+**Layout, espaçamento e alinhamento:** [references/layout.md](references/layout.md)
+— tokens, grades, medida de leitura, componentes e as armadilhas já encontradas.
+Leia antes de criar página ou componente novo.
+
 ## O que é gerado e o que é seu
 
 | Arquivo | Natureza | Você edita? |
@@ -105,7 +109,8 @@ que só aparece neste assunto.
    `fonte`. Se a informação não está no relatório, ela não entra — nem como
    frase de ligação.
 6. **Espaçamento se ajusta pelos tokens.** `tema.css` tem uma escala
-   (`--esp-1` a `--esp-6`); mexa nela, não em valores soltos por regra.
+   (`--esp-1` a `--esp-6`); mexa nela, não em valores soltos por regra. Os
+   padrões completos estão em [references/layout.md](references/layout.md).
 
 ## Quando o build falha
 
