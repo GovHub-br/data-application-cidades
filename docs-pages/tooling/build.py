@@ -19,7 +19,7 @@ import markdown
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from markupsafe import Markup, escape
 
-from tooling import dados, graficos
+from tooling import dados, graficos, mermaid
 from tooling.common import ASSETS_DIR, SITE_DIR, SRC_DIR, TEMPLATES_DIR, log, read_json
 
 CORES_CAMADA = {"bronze": "#B45309", "silver": "#64748B", "gold": "#7A34F3"}
@@ -138,6 +138,35 @@ def _validar_links(paginas: list[Path]) -> int:
     return quebrados
 
 
+BLOCOS_COM_FONTE = ("papel", "resumo", "gov_hub", "parceria", "arquitetura")
+BLOCOS_COM_ITENS = ("problema", "perguntas", "produtos")
+
+
+def _validar_fontes(programa: dict[str, Any], dominios: list[dict[str, Any]]) -> int:
+    """Todo texto da vitrine precisa declarar a secao do relatorio de origem.
+
+    A vitrine nao publica afirmacao nossa: cada bloco vem do relatorio tecnico e
+    exibe a procedencia na propria pagina. Sem esta checagem a regra depende de
+    quem edita lembrar dela.
+    """
+    problemas = 0
+    for nome in BLOCOS_COM_FONTE + BLOCOS_COM_ITENS:
+        bloco = programa.get(nome)
+        if not isinstance(bloco, dict) or not bloco.get("fonte"):
+            log.error("programa.%s precisa declarar `fonte` no dominios.yml", nome)
+            problemas += 1
+    for dominio in dominios:
+        origem = dominio.get("no_relatorio")
+        if not isinstance(origem, dict) or not origem.get("fonte"):
+            log.error(
+                "dominio '%s' precisa de `no_relatorio` com `fonte`: e o texto "
+                "que a vitrine publica",
+                dominio["slug"],
+            )
+            problemas += 1
+    return problemas
+
+
 def _validar_curadoria(dominios: list[dict[str, Any]]) -> int:
     """Dominio curado que nao casa nenhum modelo e, quase sempre, slug errado.
 
@@ -174,10 +203,21 @@ def _contexto(acervo: dict[str, Any]) -> dict[str, Any]:
     camadas = dados.camadas_de(modelos)
     por_dominio = [(d["rotulo"], d["total"]) for d in dominios]
 
+    linhas = dados.montar_linhas(curadoria, dominios)
+    sem_svg = mermaid.preparar(dominios, {m["nome"]: m for m in modelos})
+    if sem_svg:
+        log.warning(
+            "%d diagrama(s) sem SVG: a pagina mostra o texto Mermaid. "
+            "Rode o build com Node disponivel para gera-los",
+            sem_svg,
+        )
+
     return {
         "abas": ABAS,
         "escopo": escopo,
-        "m": metricas,
+        "programa": curadoria["programa"],
+        "linhas": linhas,
+        "m": {**metricas, "linhas_cobertas": sum(1 for x in linhas if x["coberta"])},
         "dominios": dominios,
         "entregas": entregas,
         "entregas_por_trimestre": dados.agrupar_por_trimestre(entregas),
@@ -225,7 +265,9 @@ def main() -> int:
         return 1
 
     contexto = _contexto(acervo)
-    if _validar_curadoria(contexto["dominios"]):
+    if _validar_curadoria(contexto["dominios"]) + _validar_fontes(
+        contexto["programa"], contexto["dominios"]
+    ):
         return 1
 
     ambiente = Environment(

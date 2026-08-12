@@ -34,15 +34,33 @@ docs-pages/
 │   ├── collect.py    orquestra os coletores
 │   ├── collectors/   git+PRs, dbt, Airflow, acervo
 │   ├── build.py      renderiza os templates
-│   └── graficos.py   gera os SVG dos gráficos
+│   ├── dados.py      agrega acervo e curadoria, aplica o escopo
+│   ├── graficos.py   gera os SVG dos gráficos
+│   └── mermaid.py    gera e renderiza a linhagem das tabelas gold
 ├── src/
 │   ├── _data/        acervo coletado (JSON versionado)
+│   ├── _diagramas/   SVG das linhagens, em cache por hash (versionado)
+│   ├── dominios.yml  curadoria: escopo, programa e contexto dos domínios
 │   ├── templates/    Jinja2 — uma página por template
 │   ├── assets/       tema.css e app.js
 │   └── acervo/       documentos enviados pela equipe (a criar)
 ├── plans/            design e planos
 └── site/             saída do build (ignorada pelo git)
 ```
+
+## Diagramas de linhagem
+
+Cada tabela gold tem um diagrama do fluxo que a constrói, da fonte até ela. O
+texto Mermaid é gerado dos `ref()` e `source()` do próprio SQL — não é desenhado
+à mão e não sai do lugar quando o modelo muda.
+
+O SVG é renderizado pelo `mermaid-cli`, que precisa de Node e de um Chrome, e
+fica em cache em `src/_diagramas/<hash>.svg`, versionado. A chave é o hash do
+texto do diagrama: um diagrama só é re-renderizado quando a linhagem muda. É o
+que permite ao CI construir o site sem Node instalado.
+
+Sem Node na máquina, o build segue adiante: a página mostra a definição Mermaid
+no lugar do desenho, e avisa quantos diagramas ficaram sem SVG.
 
 ## O que é gerado e o que é escrito
 

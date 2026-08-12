@@ -135,6 +135,30 @@ def montar_dominios(
     return sorted(dominios, key=lambda d: -d["total"])
 
 
+def montar_linhas(
+    curadoria: dict[str, Any], dominios: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Linhas do programa com a cobertura resolvida contra os dominios reais.
+
+    Uma linha aponta para um slug em `dominio`; se esse slug nao existir entre
+    os dominios curados, a linha e tratada como nao coberta em vez de gerar
+    link morto.
+    """
+    por_slug = {d["slug"]: d for d in dominios}
+    linhas = []
+    for linha in curadoria.get("linhas", []):
+        dominio = por_slug.get(linha.get("dominio") or "")
+        linhas.append(
+            {
+                **linha,
+                "coberta": dominio is not None,
+                "href": dominio["href"] if dominio else None,
+                "modelos": dominio["total"] if dominio else 0,
+            }
+        )
+    return linhas
+
+
 def entregas_do_escopo(
     git: dict[str, Any], dominios: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:

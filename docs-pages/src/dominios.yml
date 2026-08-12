@@ -8,9 +8,14 @@
 # aplicações. O bloco `escopo` abaixo é o que mantém o site restrito ao MCID:
 # tudo que não estiver nele fica fora das contagens e das páginas.
 #
-# REVISAR: os textos de contexto foram escritos a partir da evidência do
-# repositório e do conhecimento público sobre cada sistema. A equipe deve
-# validar a linguagem institucional antes da publicação.
+# FONTE DO CONTEXTO: relatório técnico "MCMV — acompanhamento da política pelo
+# dado" (Lab Livre/FCTE-UnB e SNH), somado à evidência do próprio repositório.
+#
+# REVISAR ANTES DE PUBLICAR:
+#  1. As citações estão atribuídas por cargo, não por nome. Publicar o nome de
+#     uma servidora num site público exige o consentimento dela.
+#  2. Os números de escala do programa (UH contratadas, R$ investidos) estão
+#     comentados de propósito — ver `numeros_a_confirmar` no fim do arquivo.
 
 escopo:
   rotulo: Ministério das Cidades
@@ -29,35 +34,228 @@ escopo:
   # Ingestões que não são DAG: rodam como script sobre o SFTP do agente operador
   # e alimentam o schema `raw`, de onde saem FAR e Entidades.
   ingestoes_script:
-    - rotulo: SFTP do agente operador
+    - rotulo: SFTP da Caixa Econômica Federal
       arquivos:
         - scripts/sftp_ingest.py
         - scripts/sftp_snapshot.py
         - scripts/sftp_minio_diff.py
         - scripts/sftp_rename_tables.py
       descricao: |
-        Carga das bases da Caixa disponibilizadas por SFTP, com snapshot para
-        detectar o que mudou entre períodos e conferência contra o MinIO.
+        Espinha dorsal do fluxo de dados do MCMV subsidiado. O acesso direto ao
+        SFTP foi conquistado em 2026 — antes disso a equipe trabalhava sobre um
+        dump estático do banco do Ministério. Os scripts fazem a carga, o
+        snapshot que detecta o que mudou entre períodos e a conferência contra o
+        MinIO.
+
+# Contexto do programa que a plataforma acompanha. Alimenta a capa e a vitrine.
+#
+# REGRA DESTE BLOCO: nada aqui pode ser afirmação nossa. Todo texto vem do
+# relatório técnico do projeto, e cada bloco declara a seção de origem no campo
+# `fonte`, exibida na própria página. Se uma informação não está no relatório,
+# ela não entra — nem como frase de ligação.
+programa:
+  nome: Minha Casa, Minha Vida
+  sigla: MCMV
+  marco_legal: Lei nº 14.620/2023
+  documento:
+    titulo: MCMV — acompanhamento da política pelo dado
+    autoria: Lab Livre/FCTE-UnB e Secretaria Nacional de Habitação
+  papel:
+    texto: |
+      O déficit habitacional brasileiro é estrutural, persistente e
+      profundamente desigual. Segundo estimativas da Fundação João Pinheiro,
+      calculadas a partir dos microdados da PNAD Contínua e do Censo Demográfico
+      do IBGE, o déficit acumulado supera oito milhões de moradias, concentradas
+      majoritariamente nas faixas de menor renda — famílias que não possuem
+      capacidade de financiamento pelo mercado privado. É nesse contexto que o
+      Minha Casa, Minha Vida se constitui como o principal instrumento
+      operacional da política habitacional do governo federal brasileiro.
+    fonte: Seção 1.1
+  resumo:
+    texto: |
+      Criado originalmente em 2009 pela Lei nº 11.977, em resposta à crise
+      econômica global, o programa foi reestruturado e relançado em 2023 sob a
+      Lei nº 14.620. Atende famílias em áreas urbanas com renda bruta familiar
+      mensal de até R$ 8.000,00 e famílias em áreas rurais com renda bruta anual
+      de até R$ 96.000,00, organizadas em três faixas de renda progressivas.
+    fonte: Seção 1.1
+  gov_hub:
+    texto: |
+      O Gov Hub é uma plataforma de código aberto voltada à integração,
+      qualificação e disponibilização de dados governamentais, desenvolvida pelo
+      Laboratório de Competências em Software Livre (Lab Livre) da Faculdade de
+      Ciências e Tecnologias em Engenharia (FCTE) da Universidade de Brasília,
+      em parceria com o Instituto de Pesquisa Econômica Aplicada (IPEA).
+    fonte: Seção 1.1
+  parceria:
+    texto: |
+      Esta aplicação é uma iniciativa conjunta entre a Universidade de Brasília
+      (Lab Livre/FCTE) e a Secretaria Nacional de Habitação, no âmbito do
+      TED nº 02/2025.
+    fonte: Abstract
+  problema:
+    fonte: Seção 1.1 — dimensões identificadas nas reuniões de diagnóstico com
+      as equipes do Ministério ao longo do primeiro semestre de 2026
+    itens:
+      - titulo: Processamento artesanal e sobrecarga operacional
+        texto: |
+          A equipe consome tempo substantivo baixando planilhas de portais,
+          recebendo dados por e-mail e WhatsApp, e tratando arquivos Excel
+          manualmente. A coleta de mais de 30 indicadores para o Boletim de
+          Conjuntura é feita de forma artesanal por uma única servidora.
+      - titulo: Falta de padronização nas fontes
+        texto: |
+          Os layouts dos arquivos enviados pela Caixa mudam com frequência —
+          colunas trocam de nome ou de formato —, quebrando rotinas e exigindo
+          limpeza constante. O mesmo empreendimento pode aparecer com
+          identificadores diferentes quando muda de status.
+      - titulo: Isolamento tecnológico e defasagem temporal
+        texto: |
+          Os dados de habitação não estão nos sistemas estruturantes
+          tradicionais do governo federal, mas numa camada adicional gerida em
+          parceria com a Caixa. A defasagem chega a dois meses no caso do Rural.
+      - titulo: Rigidez de acesso e conformidade com a LGPD
+        texto: |
+          O Ministério atua como custodiante dos arquivos fechados enviados pela
+          Caixa. Dados com CPF e informações pessoais dos beneficiários exigem
+          anonimização antes de qualquer processamento fora da infraestrutura do
+          Ministério.
+  perguntas:
+    fonte: Seção 1.1 — questões analíticas centrais do projeto
+    itens:
+      - Eficiência da inovação — a construção industrializada (off-site) é realmente mais rápida e mais barata do que a alvenaria convencional no âmbito do MCMV?
+      - Gargalos de execução — onde o fluxo de produção está travando? A disparidade entre a medição física e o desembolso financeiro indica uma paralisação real ou uma falha de leitura do sistema?
+      - Impacto macroeconômico — qual é a correlação entre os investimentos do programa habitacional e os indicadores de emprego (CAGED), renda, produção industrial e PIB regional?
+      - Alocação estratégica — a distribuição do orçamento e a contratação de novas obras estão focadas nas regiões com o maior déficit habitacional?
+      - Equidade e alcance social — o programa está efetivamente contemplando os grupos mais vulneráveis, conforme mandatado pela Lei nº 14.620/2023 e pela Portaria nº 738/2024?
+  arquitetura:
+    texto: |
+      A arquitetura segue o padrão Medallion, que organiza os dados em três
+      camadas progressivas de qualidade e abstração — Bronze, Prata e Ouro. A
+      orquestração dos pipelines é gerenciada pelo Apache Airflow; as
+      transformações, pelo dbt; e a visualização, pelo Apache Superset.
+
+      A escolha não é apenas técnica: é também uma resposta às restrições de
+      segurança e conformidade com a LGPD. Dados com informações pessoais de
+      beneficiários permanecem na infraestrutura do Ministério nas camadas
+      Bronze e Prata. Somente dados anonimizados ou agregados transitam para a
+      infraestrutura do Lab Livre.
+    fonte: Seção 4
+  produtos:
+    fonte: Seção 5 — produtos previstos, em estágios distintos de implementação
+    itens:
+      - titulo: Dados operacionais para as equipes
+        texto: |
+          O produto mais imediato é disponibilizar, às equipes de cada linha,
+          dados limpos, atualizados e confiáveis em substituição às planilhas
+          manuais. Representa a diferença entre verificar o dado antes de usar e
+          confiar no dado para focar na análise.
+      - titulo: Dashboards e painéis de monitoramento
+        texto: |
+          Painel geral do programa, painéis por linha e painel de conjuntura,
+          com acompanhamento por empreendimento, execução física ante desembolso
+          financeiro e alertas de obras críticas.
+      - titulo: Relatórios e Boletim de Conjuntura
+        texto: |
+          Automação da coleta dos indicadores externos, geração de rascunho do
+          boletim a partir de templates com valores atualizados, e alertas quando
+          algum indicador variar acima do esperado.
+      - titulo: Consulta em linguagem natural (RAG)
+        texto: |
+          Interface que permite ao gestor perguntar em português e receber
+          respostas fundamentadas nos dados do programa, construída sobre a
+          camada Ouro.
+
+# As linhas do MCMV e o que a plataforma já cobre. `dominio` aponta para o slug
+# quando existe pipeline; `null` significa linha ainda não coberta.
+linhas:
+  - nome: FAR
+    vertente: Subsidiada
+    fundo: FAR / OGU
+    publico: Faixas 1 e 2, urbana
+    curador: DPH
+    dominio: empreendimento_far
+  - nome: Entidades
+    vertente: Subsidiada
+    fundo: FDS / OGU
+    publico: Faixa 1 urbana, via entidades organizadoras
+    curador: DPSM
+    dominio: entidades
+  - nome: Rural (PNHR)
+    vertente: Subsidiada
+    fundo: OGU
+    publico: Faixa 1 rural
+    curador: DHR
+    dominio: null
+  - nome: FNHIS Sub-50
+    vertente: Subsidiada
+    fundo: FNHIS / OGU
+    publico: Municípios com menos de 50 mil habitantes
+    curador: DHR
+    dominio: null
+  - nome: FGTS
+    vertente: Financiada
+    fundo: FGTS
+    publico: Faixas 1, 2 e 3, urbana
+    curador: DPH
+    dominio: null
+  - nome: MCMV Cidades
+    vertente: Financiada
+    fundo: FGTS + OGU
+    publico: Faixas 1, 2 e 3
+    curador: DPH
+    dominio: null
+  - nome: Pró-Moradia
+    vertente: Financiada
+    fundo: FGTS
+    publico: Setor público
+    curador: DPH
+    dominio: null
+  - nome: Classe Média
+    vertente: Financiada
+    fundo: FGTS
+    publico: Renda de até R$ 12.000/mês
+    curador: DPH
+    dominio: null
 
 dominios:
   - slug: conjuntura
     rotulo: Conjuntura
-    subtitulo: Termômetro do mercado imobiliário e da construção civil
+    subtitulo: O ambiente econômico em que a política habitacional opera
+    # Descrição usada na vitrine: precisa vir do relatório, sem frase nossa.
+    no_relatorio:
+      texto: |
+        O Boletim de Conjuntura, produzido trimestralmente pelo DPP, agrega
+        cerca de 30 indicadores econômicos externos, coletados de forma
+        artesanal a partir de uma variedade de fontes.
+      fonte: Seção 3.7
     contexto: |
       Política habitacional não se planeja no vácuo: crédito, emprego, custo de
-      obra e preço de imóvel mudam o que é possível fazer e a que custo. Este
-      domínio reúne, num só lugar, os indicadores que descrevem esse ambiente —
-      hoje espalhados por associações setoriais, bancos e institutos de pesquisa,
-      cada um com seu formato, sua periodicidade e seu site.
+      obra e preço de imóvel mudam o que é possível fazer e a que custo. Esses
+      indicadores existem, mas espalhados por associações setoriais, bancos e
+      institutos de pesquisa — cada um com seu formato, sua periodicidade e seu
+      site.
+
+      O Boletim de Conjuntura, publicado trimestralmente, costura mais de trinta
+      desses indicadores numa narrativa integrada sobre o mercado habitacional.
+      Hoje essa coleta é inteiramente manual, o que faz do boletim um produto de
+      custo de produção alto para o volume de informação que entrega.
     o_que_faz: |
       A ingestão busca cada indicador na fonte original — planilha, API ou página
       web —, a camada silver padroniza períodos e unidades e a gold entrega as
       séries prontas para o painel, todas na mesma chave de tempo. É isso que
-      permite cruzar crédito, emprego e preço na mesma tela.
+      permite cruzar crédito, emprego e preço na mesma tela, e o que substitui a
+      coleta manual que hoje sustenta o boletim.
+    citacao:
+      texto: |
+        A coleta dos mais de trinta indicadores do Boletim de Conjuntura é feita
+        de forma artesanal, por uma única servidora.
+      autoria: Diagnóstico do projeto, primeiro semestre de 2026
     perguntas:
       - Como está o crédito imobiliário e a poupança que o financia?
       - O custo da construção sobe mais rápido que o preço de venda?
       - O emprego na construção civil acompanha o volume de lançamentos?
+      - O investimento do programa se correlaciona com o PIB regional?
     sistemas: [ABECIP, BACEN, FGV, FIPE, IBGE, InfoMoney, Novo CAGED, CBIC, MRV]
     chaves:
       [
@@ -84,43 +282,98 @@ dominios:
 
   - slug: empreendimento_far
     rotulo: Empreendimento FAR
-    subtitulo: Obras do Minha Casa Minha Vida pelo Fundo de Arrendamento Residencial
+    subtitulo: A maior linha do MCMV subsidiado, obra a obra
+    no_relatorio:
+      texto: |
+        O FAR é, quantitativamente, a modalidade dominante do MCMV subsidiado.
+        Atende famílias urbanas nas Faixas 1 e 2, e o monitoramento da execução
+        é o ponto crítico sob a perspectiva dos dados.
+      fonte: Seção 2.2
     contexto: |
-      O FAR financia empreendimentos habitacionais destinados às famílias de
-      menor renda no Minha Casa Minha Vida. Acompanhar essas obras exige juntar
-      cadastro do empreendimento, execução física, execução financeira e
-      informação do agente operador — que chegam em arquivos separados, com
-      recortes e periodicidades diferentes.
+      O Fundo de Arrendamento Residencial é a modalidade dominante do MCMV
+      subsidiado. Atende famílias urbanas das Faixas 1 e 2, tem a Caixa como
+      agente operador exclusivo e é curado pelo Departamento de Produção
+      Habitacional. Aqui o Estado assume o risco integral de crédito: a família
+      recebe a moradia sem contrair dívida de mercado.
+
+      O monitoramento da execução é o ponto crítico sob a perspectiva dos dados.
+      O relatório de obras iniciadas chega semanalmente por e-mail; a execução
+      física e financeira por empreendimento chega mensalmente pelo SFTP, com
+      atraso de um a dois meses. Em situações de emergência, como as enchentes do
+      Rio Grande do Sul, planilhas chegaram por WhatsApp. O efeito é a
+      desconfiança: gasta-se tempo conferindo o dado antes de usá-lo, enquanto as
+      demandas de instâncias superiores exigem resposta no mesmo dia.
     o_que_faz: |
       As tabelas bronze recebem os arquivos como vieram; a silver reconstrói o
       empreendimento como entidade única, com sua evolução financeira ao longo do
       tempo; a gold entrega a ficha do empreendimento, o panorama por estado, o
-      mapa nacional e os gráficos de execução física e financeira.
+      mapa nacional e os gráficos de execução física e financeira. É o material
+      que permite comparar medição física e desembolso — a discrepância que
+      indica se uma obra travou de fato ou se é falha de leitura do sistema.
+    citacao:
+      texto: |
+        A dor principal é a confiança no dado. Como dependemos das informações
+        que a Caixa envia, as pessoas têm receio de usar o dado sem confirmar
+        antes, o que gasta muito tempo.
+      autoria: Equipe do FAR, reunião de diagnóstico
     perguntas:
       - Em que pé está cada empreendimento, física e financeiramente?
+      - Onde a execução da obra descolou do desembolso?
       - Como os recursos se distribuem entre os estados?
-      - A execução da obra acompanha o desembolso?
-    sistemas: [Caixa, SFTP do agente operador]
+      - A contratação está indo para onde o déficit é maior?
+    sistemas: [Caixa Econômica Federal, SFTP, Dados Prioritários]
     # 'mcmv' fica fora: as duas linhas sao MCMV, e a chave casaria as duas.
     chaves: [far, empreendimento, obra, panorama, mapa nacional, sftp]
 
   - slug: entidades
     rotulo: Entidades
-    subtitulo: Linha do MCMV operada por entidades, via FDS
+    subtitulo: Produção habitacional conduzida por quem mora
+    no_relatorio:
+      texto: |
+        Destina-se às famílias da Faixa 1 organizadas por Entidades
+        Organizadoras — cooperativas habitacionais, associações de moradores,
+        sindicatos ou movimentos sociais. É a modalidade de menor escala, mas de
+        maior complexidade social e organizacional.
+      fonte: Seção 2.3
     contexto: |
-      Na modalidade Entidades, a produção habitacional é conduzida por
-      associações, cooperativas e movimentos de moradia, com recursos do Fundo de
-      Desenvolvimento Social. As perguntas são as mesmas do FAR, mas o sujeito é
-      outro: a entidade organizadora, que responde pela obra e pelo trabalho
-      social junto às famílias.
+      Na modalidade Entidades, financiada pelo Fundo de Desenvolvimento Social, a
+      produção é conduzida por cooperativas habitacionais, associações de
+      moradores, sindicatos e movimentos de moradia. Atende exclusivamente a
+      Faixa 1, e a seleção das famílias obedece a critérios de vulnerabilidade
+      verificados por cruzamento com o Cadastro Único.
+
+      É a modalidade de menor escala e maior complexidade social — e tem um vetor
+      de risco que não existe nas outras. O Trabalho Social é obrigatório: começa
+      antes da obra, percorre a execução e se estende à pós-ocupação. O relatório
+      de acompanhamento é condição para a liberação de parcelas, e sua ausência
+      paralisa o repasse financeiro. Acompanhar o trabalho social, portanto, é
+      acompanhar risco de paralisação.
     o_que_faz: |
       O pipeline replica a estrutura do FAR sobre as tabelas do FDS — cadastro,
       obra mensal, financeiro mensal, trabalho social e entregas prioritárias — e
       entrega na gold o panorama por entidade, a ficha do empreendimento e a
-      evolução financeira.
+      evolução financeira. A tabela de trabalho social é única neste ecossistema:
+      nenhuma outra linha do programa tem equivalente.
     perguntas:
       - Que entidades conduzem empreendimentos, e com que desempenho?
+      - Onde há risco de paralisação por relatório de trabalho social pendente?
       - Como evolui o financeiro de cada obra do FDS?
-      - O trabalho social acompanha a execução da obra?
-    sistemas: [Caixa, SFTP do agente operador]
+    sistemas: [Caixa Econômica Federal, SFTP, Cadastro Único]
     chaves: [entidades, fds, trabalho social, mcmv entidades, sftp]
+
+# Números de escala do programa: NÃO publicados até a equipe conciliar.
+# O relatório técnico traz três valores incompatíveis para o total de UH
+# contratadas (1,69 milhão no abstract, 1,698 milhão na seção 2.6.2 e "mais de
+# dois milhões" na seção 1.1), e marca o total do FAR como pendente de
+# conferência. Os percentuais por linha usam o subsidiado como denominador, mas
+# o texto os apresenta como percentual do programa inteiro.
+# Depois de conciliados, mover para o bloco `programa` e exibir com data-base.
+numeros_a_confirmar:
+  - metrica: UH contratadas no programa
+    valores_no_relatorio: ["1,69 milhão", "1,698 milhão", "mais de 2 milhões"]
+  - metrica: UH contratadas no FAR
+    valores_no_relatorio: ["1.352 mil"]
+    observacao: marcado pela própria equipe como pendente de conferência
+  - metrica: Recursos comprometidos
+    valores_no_relatorio: ["R$ 110 bilhões"]
+    observacao: consistente em dois pontos do relatório, mas sem data-base

@@ -47,6 +47,14 @@
 
   --transition-normal: all 0.2s ease;
   --largura-max: 1120px;
+
+  /* Escala de espaçamento. Ajustar aqui muda o respiro do site inteiro. */
+  --esp-1: 0.5rem;
+  --esp-2: 0.85rem;
+  --esp-3: 1.25rem;
+  --esp-4: 1.75rem;
+  --esp-5: 2.5rem;
+  --esp-6: 4rem;
 }
 
 *,
@@ -60,7 +68,7 @@ body {
   font-family: var(--font-family-base);
   color: var(--text-body);
   background: var(--bg-light);
-  line-height: 1.6;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -77,8 +85,8 @@ h1,
 h2,
 h3 {
   color: var(--text-strong);
-  line-height: 1.25;
-  margin: 0 0 0.6rem;
+  line-height: 1.3;
+  margin: 0 0 var(--esp-2);
 }
 
 h2 {
@@ -86,14 +94,30 @@ h2 {
   color: var(--purple-700);
 }
 
+/* Um h2 que aparece depois de conteúdo precisa de folga acima dele. */
+* + h2 {
+  margin-top: var(--esp-5);
+}
+
+* + h3 {
+  margin-top: var(--esp-4);
+}
+
 h3 {
   font-size: 1.15rem;
+}
+
+.colunas h3 {
+  font-size: 1.05rem;
+  color: var(--purple-700);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .container {
   max-width: var(--largura-max);
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 var(--esp-4);
 }
 
 /* ---------- Navegacao ---------- */
@@ -225,7 +249,7 @@ h3 {
 .hero {
   background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
   color: var(--text-white);
-  padding: 3.5rem 0 3rem;
+  padding: var(--esp-6) 0 3.25rem;
 }
 
 .hero h1 {
@@ -240,13 +264,14 @@ h3 {
   font-size: 1.1rem;
   max-width: 62ch;
   opacity: 0.94;
-  margin: 0.5rem 0 0;
+  margin: var(--esp-2) 0 0;
+  line-height: 1.6;
 }
 
 .hero__periodo {
   display: inline-block;
-  margin-top: 1.25rem;
-  padding: 0.3rem 0.8rem;
+  margin-top: var(--esp-4);
+  padding: 0.35rem 0.9rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.18);
   font-size: 0.88rem;
@@ -257,16 +282,26 @@ h3 {
 
 .numeros {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin: -2rem 0 0;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--esp-3);
+  margin: var(--esp-4) 0 0;
+}
+
+/* Só quando os números vêm logo abaixo do hero: aí eles sobem sobre ele de
+   propósito. No meio da página essa margem negativa cobriria o texto acima. */
+.numeros--hero {
+  margin-top: -2rem;
+}
+
+.numeros--hero + * {
+  margin-top: var(--esp-4);
 }
 
 .numero {
   background: var(--bg-white);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  padding: 1.1rem 1.2rem;
+  padding: var(--esp-3) 1.35rem;
   border-top: 3px solid var(--primary-purple);
 }
 
@@ -288,25 +323,41 @@ h3 {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 600;
-  margin-top: 0.2rem;
+  margin-top: 0.35rem;
 }
 
 /* ---------- Secoes e cards ---------- */
 
 section {
-  padding: 2.5rem 0;
+  padding: var(--esp-5) 0;
+}
+
+/* Evita somar os dois paddings entre seções vizinhas, sem colar o título da
+   seguinte no fim da anterior. */
+section + section {
+  padding-top: var(--esp-4);
 }
 
 .secao__intro {
   color: var(--text-muted);
   max-width: 70ch;
-  margin: 0 0 1.5rem;
+  margin: 0 0 var(--esp-4);
 }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: var(--esp-3);
+}
+
+/* Conjuntos de quatro itens: duas colunas largas em vez de 3+1, que deixa um
+   card órfão e estreito na segunda linha. */
+.cards--2col {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+}
+
+.cards--dominios {
+  margin-top: var(--esp-5);
 }
 
 .card {
@@ -314,7 +365,7 @@ section {
   background: var(--bg-white);
   border: 1px solid var(--borda);
   border-radius: var(--radius-md);
-  padding: 1.4rem;
+  padding: var(--esp-4);
   color: var(--text-body);
   transition: var(--transition-normal);
 }
@@ -328,7 +379,9 @@ section {
 
 .card h3 {
   color: var(--purple-700);
-  margin-bottom: 0.35rem;
+  margin-bottom: var(--esp-2);
+  margin-top: 0;
+  line-height: 1.35;
 }
 
 .card p {
@@ -337,14 +390,24 @@ section {
   color: var(--text-muted);
 }
 
+.card .prosa p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.card .prosa p:last-child {
+  margin-bottom: 0;
+}
+
 .card__tag {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--primary-purple);
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--esp-2);
 }
 
 /* ---------- Tabelas ---------- */
@@ -354,6 +417,7 @@ section {
   background: var(--bg-white);
   border-radius: var(--radius-md);
   border: 1px solid var(--borda);
+  margin-bottom: var(--esp-3);
 }
 
 table {
@@ -366,14 +430,20 @@ thead th {
   background: var(--primary-purple);
   color: var(--text-white);
   text-align: left;
-  padding: 0.7rem 0.9rem;
+  padding: var(--esp-2) var(--esp-3);
   font-weight: 600;
   white-space: nowrap;
 }
 
 tbody td {
-  padding: 0.6rem 0.9rem;
+  padding: var(--esp-2) var(--esp-3);
   border-top: 1px solid var(--borda);
+  vertical-align: top;
+}
+
+/* Sem isso a descrição fica espremida e a linha cresce em altura. */
+.tabela-modelos td:nth-child(3) {
+  min-width: 380px;
 }
 
 tbody tr:nth-child(even) {
@@ -415,7 +485,7 @@ code {
 .colunas {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
-  gap: 2.5rem;
+  gap: var(--esp-6);
   align-items: start;
 }
 
@@ -423,9 +493,10 @@ code {
   background: var(--bg-white);
   border: 1px solid var(--borda);
   border-radius: var(--radius-md);
-  padding: 1.25rem 1.4rem;
+  padding: var(--esp-4);
   position: sticky;
-  top: 84px;
+  /* Fica abaixo do cabeçalho fixo (64px) sem encostar nele. */
+  top: 80px;
 }
 
 .lateral h3 {
@@ -457,17 +528,19 @@ code {
 }
 
 .prosa p {
-  margin: 0 0 0.9rem;
+  margin: 0 0 var(--esp-3);
+  line-height: 1.7;
 }
 
 .prosa ul,
 .prosa ol {
-  margin: 0 0 0.9rem;
-  padding-left: 1.3rem;
+  margin: 0 0 var(--esp-3);
+  padding-left: 1.4rem;
 }
 
 .prosa li {
-  margin-bottom: 0.3rem;
+  margin-bottom: var(--esp-1);
+  line-height: 1.65;
 }
 
 .prosa h2,
@@ -475,15 +548,15 @@ code {
 .prosa h4 {
   font-size: 1rem;
   color: var(--purple-700);
-  margin: 1.2rem 0 0.5rem;
+  margin: var(--esp-4) 0 var(--esp-2);
 }
 
 .prosa--entrega {
   background: var(--bg-subtle);
   border-left: 3px solid var(--secondary-purple);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  padding: 0.9rem 1.1rem 0.4rem;
-  margin-top: 0.8rem;
+  padding: var(--esp-3) var(--esp-4) var(--esp-1);
+  margin-top: var(--esp-3);
   font-size: 0.94rem;
 }
 
@@ -494,7 +567,7 @@ code {
 }
 
 .lista-perguntas li {
-  padding: 0.5rem 0 0.5rem 1.4rem;
+  padding: var(--esp-2) 0 var(--esp-2) 1.5rem;
   border-bottom: 1px solid var(--borda);
   position: relative;
   font-size: 0.94rem;
@@ -520,7 +593,7 @@ code {
 }
 
 .lista-dags li {
-  margin-bottom: 0.3rem;
+  margin-bottom: var(--esp-1);
   word-break: break-all;
 }
 
@@ -559,20 +632,22 @@ code {
 .linha-tempo {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 1.5rem;
+  padding: 0 0 0 var(--esp-4);
   border-left: 2px solid var(--borda);
 }
 
 .entrega {
   position: relative;
-  padding: 0 0 1.8rem 0.4rem;
+  padding: 0 0 var(--esp-5) var(--esp-1);
 }
 
 .entrega::before {
   content: "";
   position: absolute;
-  left: -1.94rem;
-  top: 0.45rem;
+  /* Centro do marcador sobre a linha: recua o padding da lista e metade da
+     própria largura (10px + 2px de borda de cada lado = 14px). */
+  left: calc(-1 * var(--esp-4) - 6px);
+  top: 0.55rem;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -587,7 +662,7 @@ code {
 .entrega__meta {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--esp-2);
   flex-wrap: wrap;
   font-size: 0.82rem;
   color: var(--text-muted);
@@ -599,7 +674,7 @@ code {
 }
 
 .entrega h3 {
-  margin: 0.2rem 0 0.1rem;
+  margin: var(--esp-1) 0 0.15rem;
   font-size: 1.05rem;
   color: var(--text-strong);
 }
@@ -644,17 +719,16 @@ code {
   background: var(--bg-white);
   border: 1px solid var(--borda);
   border-radius: var(--radius-md);
-  padding: 1.5rem;
-  margin-bottom: 1.25rem;
+  padding: var(--esp-4);
+  margin-bottom: var(--esp-3);
 }
 
+/* Título e números empilhados: alinhados às pontas opostas, os números
+   ficavam soltos no canto e desconectados do domínio que descrevem. */
 .frente__cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.6rem;
+  margin-bottom: var(--esp-3);
+  padding-bottom: var(--esp-2);
+  border-bottom: 1px solid var(--borda);
 }
 
 .frente__cabecalho h3 {
@@ -663,15 +737,274 @@ code {
 }
 
 .frente__numeros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-1) var(--esp-3);
+  margin: var(--esp-1) 0 0;
   font-size: 0.85rem;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+/* Separador só entre itens: antes do primeiro ele fica solto. */
+.frente__numeros span + span::before {
+  content: "· ";
+  color: var(--secondary-purple);
+}
+
+/* Texto dentro do bloco herda a medida de leitura, não a largura do card. */
+.frente .prosa,
+.frente .lista-perguntas {
+  max-width: 76ch;
 }
 
 .frente__link {
   display: inline-block;
   margin-top: 0.9rem;
   font-weight: 600;
+}
+
+/* ---------- Legenda das camadas do diagrama ---------- */
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-3);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--esp-4);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.legenda li {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-1);
+}
+
+.legenda__cor {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Espelham os classDef de tooling/mermaid.py. */
+.legenda__cor--fonte {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+.legenda__cor--bronze {
+  background: #fef3e2;
+  border: 1px solid #b45309;
+}
+.legenda__cor--silver {
+  background: #f1f5f9;
+  border: 1px solid #64748b;
+}
+.legenda__cor--gold {
+  background: #f3ebff;
+  border: 1px solid #7a34f3;
+}
+.legenda__cor--alvo {
+  background: #7a34f3;
+  border: 1px solid #5b21b6;
+}
+
+/* ---------- Tabela gold e seu fluxo ---------- */
+
+.gold {
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: var(--esp-4);
+  margin-bottom: var(--esp-3);
+}
+
+.gold__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  flex-wrap: wrap;
+}
+
+.gold__cabecalho h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  word-break: break-word;
+}
+
+.gold__descricao {
+  margin: var(--esp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.fluxo {
+  margin-top: var(--esp-3);
+  border-top: 1px solid var(--borda);
+  padding-top: var(--esp-2);
+}
+
+.fluxo > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--purple-700);
+  list-style-position: outside;
+}
+
+.fluxo > summary:hover {
+  color: var(--primary-purple);
+}
+
+.fluxo__diagrama {
+  margin: var(--esp-3) 0;
+  padding: var(--esp-3);
+  background: var(--bg-subtle);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.fluxo__diagrama svg {
+  display: block;
+  /* Sem teto de largura: encolher para caber deixava os rótulos ilegíveis.
+     Quem rola é o container. */
+  max-width: none;
+  height: auto;
+}
+
+.fluxo__fonte {
+  margin-top: var(--esp-2);
+}
+
+.fluxo__fonte > summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.fluxo__fonte pre {
+  margin: var(--esp-2) 0 0;
+  padding: var(--esp-3);
+  background: var(--text-strong);
+  color: #e5e7eb;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.fluxo__fonte pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+@media print {
+  .fluxo[open] .fluxo__fonte {
+    display: none;
+  }
+}
+
+/* ---------- Indicação de fonte ---------- */
+
+.fonte {
+  font-size: 0.78rem;
+  margin-top: var(--esp-3);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  margin-bottom: var(--esp-5);
+  padding-left: var(--esp-2);
+  border-left: 3px solid var(--borda);
+}
+
+/* Como última linha de um card ou do aside, a folga de baixo sobra. */
+.card .fonte,
+.lateral .fonte {
+  margin-bottom: 0;
+}
+
+/* O último bloco de fonte de uma coluna não precisa empurrar o rodapé. */
+.colunas > div > .fonte:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Citação ---------- */
+
+.citacao {
+  margin: var(--esp-4) 0;
+  padding: var(--esp-4);
+  background: var(--bg-white);
+  border-left: 4px solid var(--accent-orange);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  box-shadow: var(--shadow-md);
+}
+
+.citacao .prosa p {
+  margin: 0;
+  font-size: 1.02rem;
+  font-style: italic;
+  color: var(--text-strong);
+}
+
+.citacao cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Nota do hero ---------- */
+
+.hero__nota {
+  margin-top: 1.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  max-width: 70ch;
+}
+
+.hero__nota p {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* ---------- Cobertura das linhas ---------- */
+
+.linha--descoberta {
+  color: var(--text-muted);
+}
+
+.pendente {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.lista-perguntas--destaque {
+  max-width: 80ch;
+}
+
+.lista-perguntas--destaque li {
+  font-size: 1rem;
+  padding-top: var(--esp-3);
+  padding-bottom: var(--esp-3);
+  line-height: 1.6;
 }
 
 /* ---------- Trilha de navegação ---------- */
@@ -724,10 +1057,25 @@ code {
   word-break: break-word;
 }
 
-.celula-refs code {
+.celula-dominios {
+  min-width: 190px;
+}
+
+.celula-dominios .chip {
+  margin-bottom: 0.2rem;
+}
+
+.celula-refs {
+  min-width: 240px;
+}
+
+.celula-refs code,
+.celula-refs .chip {
   display: inline-block;
-  margin: 0 0.2rem 0.2rem 0;
+  margin: 0 0.2rem 0.25rem 0;
   font-size: 0.78rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Filtro de tabela ---------- */
@@ -789,7 +1137,8 @@ code {
 .rodape {
   background: var(--text-strong);
   color: rgba(255, 255, 255, 0.75);
-  padding: 2rem 0;
+  padding: var(--esp-5) 0;
+  margin-top: var(--esp-5);
   font-size: 0.9rem;
   margin-top: 2rem;
 }
@@ -809,7 +1158,8 @@ code {
   border-left: 4px solid var(--accent-orange);
   padding: 0.9rem 1.1rem;
   border-radius: var(--radius-sm);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
 }
 
 /* ---------- Impressao ---------- */

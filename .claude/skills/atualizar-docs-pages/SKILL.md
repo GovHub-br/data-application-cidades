@@ -11,11 +11,16 @@ O site é **híbrido**: os fatos são lidos do repositório a cada build, a narr
 escrita à mão. Você edita só a narrativa. Se um número está errado no site, a
 correção nunca é no texto — é no código ou na coleta.
 
+**Layout, espaçamento e alinhamento:** [references/layout.md](references/layout.md)
+— tokens, grades, medida de leitura, componentes e as armadilhas já encontradas.
+Leia antes de criar página ou componente novo.
+
 ## O que é gerado e o que é seu
 
 | Arquivo | Natureza | Você edita? |
 |---|---|---|
 | `docs-pages/src/_data/*.json` | acervo lido do repo | **Não.** Sai de `make docs-collect` |
+| `docs-pages/src/_diagramas/*.svg` | linhagem das golds, em cache | **Não.** O build regenera quando a linhagem muda |
 | `docs-pages/src/dominios.yml` | escopo e contexto curado | **Sim.** É o arquivo principal |
 | `docs-pages/src/templates/*.j2` | estrutura e texto de abertura | Sim, com cuidado |
 | `docs-pages/src/assets/tema.css` | identidade visual | Sim |
@@ -46,6 +51,10 @@ de só atualizar contadores.
 | Incluir um domínio novo | novo item em `dominios.yml` → `dominios` |
 | Incluir/excluir DAGs ou projeto dbt do escopo | `dominios.yml` → `escopo` |
 | Texto de abertura de uma visão | `templates/gestao|tecnico|vitrine.html.j2` |
+| Texto da vitrine | `dominios.yml` → `programa`; todo bloco exige `fonte` |
+| Aparência dos diagramas de linhagem | `tooling/mermaid.py` → `ESTILOS` |
+| Espaçamento de qualquer página | `tema.css` → tokens `--esp-1` a `--esp-6` |
+| Linhas do programa e o que já tem pipeline | `dominios.yml` → `linhas` |
 | Rótulo das abas ou das páginas | `tooling/build.py` → `ABAS` e `PAGINAS` |
 
 ## Domínio novo
@@ -67,6 +76,17 @@ domínio existe de propósito antes da implementação, declare `sem_modelos: tr
       - Pergunta de gestão que este domínio responde?
     sistemas: [Nome do sistema de origem]
     chaves: [termo, outro termo]
+    # Obrigatório: é o texto que a vitrine publica, e a vitrine só publica o
+    # que vem do relatório técnico. Sem este bloco o build falha.
+    no_relatorio:
+      texto: |
+        Trecho do relatório que descreve este domínio.
+      fonte: Seção X.Y
+    # Opcional: citação em destaque na página do domínio.
+    citacao:
+      texto: |
+        Fala do diagnóstico que resume a dor deste domínio.
+      autoria: Cargo de quem falou, não o nome
 ```
 
 `chaves` são termos em minúsculas procurados no título, no corpo e na referência de
@@ -84,17 +104,28 @@ que só aparece neste assunto.
    link interno quebrado e em markup escapado — são erros que passariam batido.
 4. **Commite o acervo junto.** Os JSONs são versionados: sem eles, o build do CI
    não reproduz o site.
+5. **Na vitrine, nada é afirmação nossa.** Todo bloco vem do relatório técnico e
+   declara a seção de origem, exibida na página. O build recusa bloco sem
+   `fonte`. Se a informação não está no relatório, ela não entra — nem como
+   frase de ligação.
+6. **Espaçamento se ajusta pelos tokens.** `tema.css` tem uma escala
+   (`--esp-1` a `--esp-6`); mexa nela, não em valores soltos por regra. Os
+   padrões completos estão em [references/layout.md](references/layout.md).
 
 ## Quando o build falha
 
 | Mensagem | Causa |
 |---|---|
 | `acervo incompleto` | falta rodar `make docs-collect` |
+| `falta docs-pages/src/dominios.yml` | curadoria ausente ou movida |
 | `dominio 'x' nao casou nenhum modelo` | slug não bate com a pasta em `models/` |
+| `dominio 'x' precisa de no_relatorio com fonte` | falta o bloco que a vitrine publica |
+| `programa.X precisa declarar fonte` | bloco da vitrine sem a seção de origem |
 | `link quebrado em ...` | href aponta para página que não existe; confira o `rel` |
 | `markup escapado em ...` | HTML/SVG gerado chegou ao template sem ser `Markup` |
 | `'x' is undefined` | template usa variável que `_contexto()` não fornece |
 | `N entrega(s) fora do escopo` | não é erro: são entregas de `ipea`/`mir`, fora do MCID |
+| `coletor X falhou` | não derruba o build: usa a coleta anterior |
 
 ## Antes de considerar pronto
 
@@ -102,3 +133,4 @@ que só aparece neste assunto.
 - [ ] Nenhum número foi digitado à mão
 - [ ] O acervo (`src/_data/*.json`) está no commit, se você rodou a coleta
 - [ ] O texto novo diz o que o domínio resolve, não o que o código faz
+- [ ] Se mexeu na vitrine, cada bloco tem `fonte` apontando para o relatório
