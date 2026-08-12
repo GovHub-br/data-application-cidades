@@ -293,6 +293,10 @@ h3 {
   margin-top: -2rem;
 }
 
+.numeros--hero + * {
+  margin-top: var(--esp-4);
+}
+
 .numero {
   background: var(--bg-white);
   border-radius: var(--radius-md);
@@ -435,6 +439,11 @@ tbody td {
   padding: var(--esp-2) var(--esp-3);
   border-top: 1px solid var(--borda);
   vertical-align: top;
+}
+
+/* Sem isso a descrição fica espremida e a linha cresce em altura. */
+.tabela-modelos td:nth-child(3) {
+  min-width: 380px;
 }
 
 tbody tr:nth-child(even) {
@@ -635,8 +644,10 @@ code {
 .entrega::before {
   content: "";
   position: absolute;
-  left: -2.32rem;
-  top: 0.5rem;
+  /* Centro do marcador sobre a linha: recua o padding da lista e metade da
+     própria largura (10px + 2px de borda de cada lado = 14px). */
+  left: calc(-1 * var(--esp-4) - 6px);
+  top: 0.55rem;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -712,13 +723,12 @@ code {
   margin-bottom: var(--esp-3);
 }
 
+/* Título e números empilhados: alinhados às pontas opostas, os números
+   ficavam soltos no canto e desconectados do domínio que descrevem. */
 .frente__cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.6rem;
+  margin-bottom: var(--esp-3);
+  padding-bottom: var(--esp-2);
+  border-bottom: 1px solid var(--borda);
 }
 
 .frente__cabecalho h3 {
@@ -727,9 +737,25 @@ code {
 }
 
 .frente__numeros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-1) var(--esp-3);
+  margin: var(--esp-1) 0 0;
   font-size: 0.85rem;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+/* Separador só entre itens: antes do primeiro ele fica solto. */
+.frente__numeros span + span::before {
+  content: "· ";
+  color: var(--secondary-purple);
+}
+
+/* Texto dentro do bloco herda a medida de leitura, não a largura do card. */
+.frente .prosa,
+.frente .lista-perguntas {
+  max-width: 76ch;
 }
 
 .frente__link {
@@ -1031,10 +1057,25 @@ code {
   word-break: break-word;
 }
 
-.celula-refs code {
+.celula-dominios {
+  min-width: 190px;
+}
+
+.celula-dominios .chip {
+  margin-bottom: 0.2rem;
+}
+
+.celula-refs {
+  min-width: 240px;
+}
+
+.celula-refs code,
+.celula-refs .chip {
   display: inline-block;
-  margin: 0 0.2rem 0.2rem 0;
+  margin: 0 0.2rem 0.25rem 0;
   font-size: 0.78rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Filtro de tabela ---------- */
