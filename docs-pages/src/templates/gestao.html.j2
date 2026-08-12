@@ -43,10 +43,11 @@
     <div class="frente">
       <div class="frente__cabecalho">
         <h3><a href="{{ rel }}{{ dominio.href }}">{{ dominio.rotulo }}</a></h3>
-        <span class="frente__numeros">
-          {{ dominio.total }} modelos · {{ dominio.camadas.get("gold", 0) }} tabelas de uso ·
-          {{ dominio.entregas | length }} entregas
-        </span>
+        <p class="frente__numeros">
+          <span>{{ dominio.total }} modelos</span>
+          <span>{{ dominio.camadas.get("gold", 0) }} tabelas de uso</span>
+          <span>{{ dominio.entregas | length }} entregas</span>
+        </p>
       </div>
       <div class="prosa">{{ dominio.contexto | markdown }}</div>
       <ul class="lista-perguntas">
@@ -82,9 +83,11 @@
           <tr>
             <td>{{ entrega.data | data }}</td>
             <td>{{ entrega.titulo }}</td>
-            <td>
+            <td class="celula-dominios">
               {% for dominio in entrega.dominios %}
-                <a href="{{ rel }}dominios/{{ dominio.slug }}/index.html">{{ dominio.rotulo }}</a>
+                <a class="chip chip--link" href="{{ rel }}dominios/{{ dominio.slug }}/index.html"
+                  >{{ dominio.rotulo }}</a
+                >
               {% endfor %}
             </td>
             <td>
