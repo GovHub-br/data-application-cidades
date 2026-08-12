@@ -1162,6 +1162,150 @@ code {
   line-height: 1.65;
 }
 
+/* ---------- Vitrine: texto na medida, apoio na margem ---------- */
+
+/* Hero com painel: sem isso sobra 40% de área vazia à direita. */
+.hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: var(--esp-6);
+  align-items: start;
+}
+
+.hero--vitrine h1 {
+  max-width: 18ch;
+}
+
+.painel {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-md);
+  padding: var(--esp-4);
+}
+
+.painel__titulo {
+  margin: 0 0 var(--esp-3);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.painel__lista {
+  margin: 0;
+  display: grid;
+  gap: var(--esp-3);
+}
+
+.painel__lista div {
+  display: flex;
+  align-items: baseline;
+  gap: var(--esp-2);
+}
+
+.painel__lista dt {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.6ch;
+}
+
+.painel__lista dt small {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.painel__lista dd {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.painel__nota {
+  margin: var(--esp-3) 0 0;
+  padding-top: var(--esp-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 0.74rem;
+  opacity: 0.75;
+}
+
+/* Variante clara, para uso fora do hero. */
+.painel--claro {
+  background: var(--bg-white);
+  border-color: var(--borda);
+  color: var(--text-body);
+}
+
+.painel--claro .painel__titulo {
+  color: var(--purple-700);
+  opacity: 1;
+}
+
+/* Texto na medida de leitura, procedência na margem: o vão à direita deixa de
+   ser vazio e a leitura para de ser interrompida pela mesma linha em toda
+   seção. */
+.bloco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
+  gap: var(--esp-6);
+  align-items: start;
+}
+
+.bloco__texto > :first-child {
+  margin-top: 0;
+}
+
+.bloco__nota {
+  display: grid;
+  gap: var(--esp-3);
+  padding-top: 0.35rem;
+}
+
+.fonte--margem {
+  display: block;
+  margin: 0;
+  border-left: 3px solid var(--secondary-purple);
+  /* Nota de margem é referência curta: sem caixa alta ela não vira bloco. */
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 900px) {
+  .hero__grid,
+  .bloco {
+    grid-template-columns: 1fr;
+    gap: var(--esp-4);
+  }
+
+  .hero--vitrine h1 {
+    max-width: 22ch;
+  }
+}
+
+/* Numeral do card como marcador de sequência, não como rótulo miúdo. */
+.card--numerado {
+  display: flex;
+  gap: var(--esp-3);
+  align-items: flex-start;
+}
+
+.card__numero {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--borda);
+  font-variant-numeric: tabular-nums;
+}
+
+.card--numerado h3 {
+  margin-top: 0;
+}
+
 /* ---------- Impressao ---------- */
 
 @media print {

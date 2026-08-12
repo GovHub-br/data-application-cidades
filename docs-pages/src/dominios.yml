@@ -94,8 +94,10 @@ programa:
       TED nº 02/2025.
     fonte: Abstract
   problema:
-    fonte: Seção 1.1 — dimensões identificadas nas reuniões de diagnóstico com
-      as equipes do Ministério ao longo do primeiro semestre de 2026
+    fonte: Seção 1.1
+    intro: |
+      Dimensões identificadas nas reuniões de diagnóstico com as equipes do
+      Ministério ao longo do primeiro semestre de 2026.
     itens:
       - titulo: Processamento artesanal e sobrecarga operacional
         texto: |
@@ -121,7 +123,9 @@ programa:
           anonimização antes de qualquer processamento fora da infraestrutura do
           Ministério.
   perguntas:
-    fonte: Seção 1.1 — questões analíticas centrais do projeto
+    fonte: Seção 1.1
+    intro: |
+      Questões analíticas centrais perseguidas pelo projeto.
     itens:
       - Eficiência da inovação — a construção industrializada (off-site) é realmente mais rápida e mais barata do que a alvenaria convencional no âmbito do MCMV?
       - Gargalos de execução — onde o fluxo de produção está travando? A disparidade entre a medição física e o desembolso financeiro indica uma paralisação real ou uma falha de leitura do sistema?
@@ -142,7 +146,9 @@ programa:
       infraestrutura do Lab Livre.
     fonte: Seção 4
   produtos:
-    fonte: Seção 5 — produtos previstos, em estágios distintos de implementação
+    fonte: Seção 5
+    intro: |
+      Produtos previstos, em estágios distintos de implementação.
     itens:
       - titulo: Dados operacionais para as equipes
         texto: |
