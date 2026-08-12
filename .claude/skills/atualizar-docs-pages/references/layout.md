@@ -120,6 +120,13 @@ tempo já saíram da linha uma vez por causa disso.
 | `.fonte` | procedência do texto | obrigatório em bloco da vitrine |
 | `.trilha` | volta para a capa | sai do `base.html.j2`, não repetir no template |
 | `.legenda` | camadas do diagrama | as cores espelham `tooling/mermaid.py` → `ESTILOS` |
+| `.topo` / `.abas` / `.aba` | cabeçalho fixo com as três visões | cada aba tem rótulo e público; `aria-current` marca a ativa |
+| `.marca` / `.marca__escopo` | assinatura Gov Hub com a sigla do escopo | a sigla vem de `escopo.sigla`, não é texto fixo |
+| `.hero__nota` | texto de apoio dentro do hero | régua de topo translúcida; não usar para texto longo |
+| `.linha--descoberta` / `.pendente` | linha do programa ainda sem pipeline | sinaliza ausência sem esconder a linha |
+| `.grafico` | SVG gerado em `tooling/graficos.py` | os gráficos são SVG estático, sem biblioteca de charts |
+| `.filtro` | busca instantânea sobre uma tabela | ligado por `data-filtro-alvo`; some na impressão |
+| `.aviso` | ressalva em destaque | acento laranja; um por página, no máximo |
 
 ## Conteúdo que transborda
 
