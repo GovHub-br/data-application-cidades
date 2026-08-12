@@ -107,6 +107,13 @@ h3 {
   font-size: 1.15rem;
 }
 
+.colunas h3 {
+  font-size: 1.05rem;
+  color: var(--purple-700);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .container {
   max-width: var(--largura-max);
   margin: 0 auto;
@@ -321,8 +328,10 @@ section {
   padding: var(--esp-5) 0;
 }
 
+/* Evita somar os dois paddings entre seções vizinhas, sem colar o título da
+   seguinte no fim da anterior. */
 section + section {
-  padding-top: var(--esp-2);
+  padding-top: var(--esp-4);
 }
 
 .secao__intro {
@@ -335,6 +344,16 @@ section + section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
   gap: var(--esp-3);
+}
+
+/* Conjuntos de quatro itens: duas colunas largas em vez de 3+1, que deixa um
+   card órfão e estreito na segunda linha. */
+.cards--2col {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+}
+
+.cards--dominios {
+  margin-top: var(--esp-5);
 }
 
 .card {
@@ -356,8 +375,9 @@ section + section {
 
 .card h3 {
   color: var(--purple-700);
-  margin-bottom: var(--esp-1);
+  margin-bottom: var(--esp-2);
   margin-top: 0;
+  line-height: 1.35;
 }
 
 .card p {
@@ -366,9 +386,19 @@ section + section {
   color: var(--text-muted);
 }
 
+.card .prosa p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.card .prosa p:last-child {
+  margin-bottom: 0;
+}
+
 .card__tag {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -860,18 +890,25 @@ code {
 
 .fonte {
   font-size: 0.78rem;
+  margin-top: var(--esp-3);
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   line-height: 1.4;
-  margin: 0.4rem 0 1.4rem;
-  padding-left: 0.7rem;
+  margin-bottom: var(--esp-5);
+  padding-left: var(--esp-2);
   border-left: 3px solid var(--borda);
 }
 
-/* Dentro de um card a fonte é a última linha: não precisa da folga de baixo. */
-.card .fonte {
+/* Como última linha de um card ou do aside, a folga de baixo sobra. */
+.card .fonte,
+.lateral .fonte {
+  margin-bottom: 0;
+}
+
+/* O último bloco de fonte de uma coluna não precisa empurrar o rodapé. */
+.colunas > div > .fonte:last-child {
   margin-bottom: 0;
 }
 
@@ -933,10 +970,15 @@ code {
   color: var(--text-muted);
 }
 
+.lista-perguntas--destaque {
+  max-width: 80ch;
+}
+
 .lista-perguntas--destaque li {
-  font-size: 1.02rem;
-  padding-top: 0.7rem;
-  padding-bottom: 0.7rem;
+  font-size: 1rem;
+  padding-top: var(--esp-3);
+  padding-bottom: var(--esp-3);
+  line-height: 1.6;
 }
 
 /* ---------- Trilha de navegação ---------- */

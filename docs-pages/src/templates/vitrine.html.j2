@@ -24,7 +24,7 @@
 <section class="container">
   <h2>O problema</h2>
   <p class="secao__intro">{{ programa.problema.fonte }}.</p>
-  <div class="cards">
+  <div class="cards cards--2col">
     {% for item in programa.problema.itens %}
       <div class="card">
         <span class="card__tag">{{ loop.index }}</span>
@@ -67,7 +67,7 @@
 <section class="container">
   <h2>Produtos de dados previstos</h2>
   <p class="secao__intro">{{ programa.produtos.fonte }}.</p>
-  <div class="cards">
+  <div class="cards cards--2col">
     {% for item in programa.produtos.itens %}
       <div class="card">
         <h3>{{ item.titulo }}</h3>
