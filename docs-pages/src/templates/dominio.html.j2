@@ -77,23 +77,47 @@
     <h2>O que sai para uso</h2>
     <p class="secao__intro">
       As tabelas gold são o ponto de contato entre o pipeline e quem consome:
-      painel, relatório ou análise.
+      painel, relatório ou análise. Cada uma traz o diagrama do fluxo que a
+      constrói, gerado a partir das dependências declaradas no próprio SQL.
     </p>
-    <div class="cards">
-      {% for modelo in d.gold %}
-        <div class="card card--modelo">
+    <ul class="legenda">
+      <li><span class="legenda__cor legenda__cor--fonte"></span> Fonte de origem</li>
+      <li><span class="legenda__cor legenda__cor--bronze"></span> Bronze</li>
+      <li><span class="legenda__cor legenda__cor--silver"></span> Silver</li>
+      <li><span class="legenda__cor legenda__cor--gold"></span> Gold</li>
+      <li><span class="legenda__cor legenda__cor--alvo"></span> A tabela em questão</li>
+    </ul>
+    {% for modelo in d.gold %}
+      <div class="gold">
+        <div class="gold__cabecalho">
           <span class="badge badge--gold">gold</span>
           <h3>{{ modelo.nome }}</h3>
-          <p>
-            {% if modelo.descricao %}
-              {{ modelo.descricao }}
-            {% else %}
-              Sem descrição declarada no <code>schema.yml</code>.
-            {% endif %}
-          </p>
         </div>
-      {% endfor %}
-    </div>
+        <p class="gold__descricao">
+          {% if modelo.descricao %}
+            {{ modelo.descricao }}
+          {% else %}
+            Sem descrição declarada no <code>schema.yml</code>.
+          {% endif %}
+        </p>
+
+        <details class="fluxo">
+          <summary>Como esta tabela é construída</summary>
+          {% if modelo.diagrama_svg %}
+            <div class="fluxo__diagrama">{{ modelo.diagrama_svg }}</div>
+          {% else %}
+            <p class="secao__intro">
+              Diagrama ainda não renderizado. O texto abaixo é a definição do
+              fluxo, em Mermaid.
+            </p>
+          {% endif %}
+          <details class="fluxo__fonte">
+            <summary>Ver a definição em Mermaid</summary>
+            <pre><code>{{ modelo.diagrama }}</code></pre>
+          </details>
+        </details>
+      </div>
+    {% endfor %}
   </section>
 {% endif %}
 

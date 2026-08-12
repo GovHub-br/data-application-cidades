@@ -19,7 +19,7 @@ import markdown
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from markupsafe import Markup, escape
 
-from tooling import dados, graficos
+from tooling import dados, graficos, mermaid
 from tooling.common import ASSETS_DIR, SITE_DIR, SRC_DIR, TEMPLATES_DIR, log, read_json
 
 CORES_CAMADA = {"bronze": "#B45309", "silver": "#64748B", "gold": "#7A34F3"}
@@ -204,6 +204,13 @@ def _contexto(acervo: dict[str, Any]) -> dict[str, Any]:
     por_dominio = [(d["rotulo"], d["total"]) for d in dominios]
 
     linhas = dados.montar_linhas(curadoria, dominios)
+    sem_svg = mermaid.preparar(dominios, {m["nome"]: m for m in modelos})
+    if sem_svg:
+        log.warning(
+            "%d diagrama(s) sem SVG: a pagina mostra o texto Mermaid. "
+            "Rode o build com Node disponivel para gera-los",
+            sem_svg,
+        )
 
     return {
         "abas": ABAS,

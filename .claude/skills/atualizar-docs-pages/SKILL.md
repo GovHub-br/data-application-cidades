@@ -16,6 +16,7 @@ correção nunca é no texto — é no código ou na coleta.
 | Arquivo | Natureza | Você edita? |
 |---|---|---|
 | `docs-pages/src/_data/*.json` | acervo lido do repo | **Não.** Sai de `make docs-collect` |
+| `docs-pages/src/_diagramas/*.svg` | linhagem das golds, em cache | **Não.** O build regenera quando a linhagem muda |
 | `docs-pages/src/dominios.yml` | escopo e contexto curado | **Sim.** É o arquivo principal |
 | `docs-pages/src/templates/*.j2` | estrutura e texto de abertura | Sim, com cuidado |
 | `docs-pages/src/assets/tema.css` | identidade visual | Sim |
@@ -46,6 +47,8 @@ de só atualizar contadores.
 | Incluir um domínio novo | novo item em `dominios.yml` → `dominios` |
 | Incluir/excluir DAGs ou projeto dbt do escopo | `dominios.yml` → `escopo` |
 | Texto de abertura de uma visão | `templates/gestao|tecnico|vitrine.html.j2` |
+| Texto da vitrine | `dominios.yml` → `programa`; todo bloco exige `fonte` |
+| Aparência dos diagramas de linhagem | `tooling/mermaid.py` → `ESTILOS` |
 | Rótulo das abas ou das páginas | `tooling/build.py` → `ABAS` e `PAGINAS` |
 
 ## Domínio novo

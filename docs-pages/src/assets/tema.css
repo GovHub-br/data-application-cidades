@@ -708,6 +708,154 @@ code {
   font-weight: 600;
 }
 
+/* ---------- Legenda das camadas do diagrama ---------- */
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-3);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--esp-4);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.legenda li {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-1);
+}
+
+.legenda__cor {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Espelham os classDef de tooling/mermaid.py. */
+.legenda__cor--fonte {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+.legenda__cor--bronze {
+  background: #fef3e2;
+  border: 1px solid #b45309;
+}
+.legenda__cor--silver {
+  background: #f1f5f9;
+  border: 1px solid #64748b;
+}
+.legenda__cor--gold {
+  background: #f3ebff;
+  border: 1px solid #7a34f3;
+}
+.legenda__cor--alvo {
+  background: #7a34f3;
+  border: 1px solid #5b21b6;
+}
+
+/* ---------- Tabela gold e seu fluxo ---------- */
+
+.gold {
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: var(--esp-4);
+  margin-bottom: var(--esp-3);
+}
+
+.gold__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  flex-wrap: wrap;
+}
+
+.gold__cabecalho h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  word-break: break-word;
+}
+
+.gold__descricao {
+  margin: var(--esp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.fluxo {
+  margin-top: var(--esp-3);
+  border-top: 1px solid var(--borda);
+  padding-top: var(--esp-2);
+}
+
+.fluxo > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--purple-700);
+  list-style-position: outside;
+}
+
+.fluxo > summary:hover {
+  color: var(--primary-purple);
+}
+
+.fluxo__diagrama {
+  margin: var(--esp-3) 0;
+  padding: var(--esp-3);
+  background: var(--bg-subtle);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.fluxo__diagrama svg {
+  display: block;
+  /* Sem teto de largura: encolher para caber deixava os rótulos ilegíveis.
+     Quem rola é o container. */
+  max-width: none;
+  height: auto;
+}
+
+.fluxo__fonte {
+  margin-top: var(--esp-2);
+}
+
+.fluxo__fonte > summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.fluxo__fonte pre {
+  margin: var(--esp-2) 0 0;
+  padding: var(--esp-3);
+  background: var(--text-strong);
+  color: #e5e7eb;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.fluxo__fonte pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+@media print {
+  .fluxo[open] .fluxo__fonte {
+    display: none;
+  }
+}
+
 /* ---------- Indicação de fonte ---------- */
 
 .fonte {
