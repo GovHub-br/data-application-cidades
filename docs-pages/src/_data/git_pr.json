@@ -1,22 +1,54 @@
 {
-  "gerado_em": "2026-08-11T18:28:06.610081+00:00",
+  "gerado_em": "2026-08-13T13:47:03.520431+00:00",
   "data_fork": "2026-04-13",
   "resumo": {
-    "total_commits": 286,
-    "total_merges": 197,
-    "total_prs": 27,
-    "prs_mergeados": 19,
-    "total_entregas": 195,
+    "total_commits": 299,
+    "total_merges": 199,
+    "total_prs": 29,
+    "prs_mergeados": 21,
+    "total_entregas": 206,
     "entregas_documentadas": 12,
     "total_autores": 34,
     "primeiro_commit": "2024-12-12T19:54:30Z",
-    "ultimo_commit": "2026-08-11T15:17:31-03:00",
+    "ultimo_commit": "2026-08-11T21:29:08-03:00",
     "por_momento": {
-      "cidades": 19,
-      "base": 176
+      "cidades": 21,
+      "base": 185
     }
   },
   "entregas": [
+    {
+      "id": "pr-124",
+      "origem": "pr",
+      "momento": "cidades",
+      "referencia": "#124",
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/124",
+      "titulo": "Docs/roadmap site",
+      "tipo": "outro",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-12T00:55:35Z",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "pr-123",
+      "origem": "pr",
+      "momento": "cidades",
+      "referencia": "#123",
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/123",
+      "titulo": "Docs/roadmap site",
+      "tipo": "outro",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T18:46:57Z",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
     {
       "id": "pr-101",
       "origem": "pr",
@@ -629,6 +661,22 @@
       "arquivos": []
     },
     {
+      "id": "merge-f054d6c6",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#99",
+      "url": null,
+      "titulo": "Dag tesouro email",
+      "tipo": "outro",
+      "autor": "Mateus Henrique Queiroz Magalhães Sousa",
+      "data": "2026-03-17T16:47:47-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
       "id": "merge-fe6c63da",
       "origem": "pr_base",
       "momento": "base",
@@ -638,6 +686,38 @@
       "tipo": "outro",
       "autor": "Mateus Henrique Queiroz Magalhães Sousa",
       "data": "2026-03-17T10:47:55-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "merge-eca7d44a",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#102",
+      "url": null,
+      "titulo": "Refatoracao dags",
+      "tipo": "outro",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-16T19:14:09-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "merge-309cd76c",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#101",
+      "url": null,
+      "titulo": "Ted mir",
+      "tipo": "outro",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-16T19:07:41-03:00",
       "labels": [],
       "corpo": "",
       "checklist": [],
@@ -693,6 +773,54 @@
       "arquivos": []
     },
     {
+      "id": "merge-558e0aa2",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#88",
+      "url": null,
+      "titulo": "Source emendas",
+      "tipo": "outro",
+      "autor": "Mateus Henrique Queiroz Magalhães Sousa",
+      "data": "2026-03-04T15:31:45-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "merge-404f0b1d",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#87",
+      "url": null,
+      "titulo": "Bronze emendas",
+      "tipo": "outro",
+      "autor": "Mateus Henrique Queiroz Magalhães Sousa",
+      "data": "2026-03-04T15:13:46-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "merge-c7e01c2f",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#86",
+      "url": null,
+      "titulo": "Bronze deputados",
+      "tipo": "outro",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-04T14:53:32-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
       "id": "merge-df0bc448",
       "origem": "pr_base",
       "momento": "base",
@@ -702,6 +830,22 @@
       "tipo": "outro",
       "autor": "Tiago Bittencourt",
       "data": "2026-03-04T14:43:57-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "merge-d68d0bd0",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#76",
+      "url": null,
+      "titulo": "Historico pagamento",
+      "tipo": "outro",
+      "autor": "Tiago Bittencourt",
+      "data": "2026-03-03T14:29:57-03:00",
       "labels": [],
       "corpo": "",
       "checklist": [],
@@ -910,6 +1054,38 @@
       "tipo": "outro",
       "autor": "Arthur Melo",
       "data": "2025-10-15T09:20:05-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "merge-31985cdb",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#13",
+      "url": null,
+      "titulo": "Makefile",
+      "tipo": "outro",
+      "autor": "Arthur Melo",
+      "data": "2025-09-30T10:47:38-03:00",
+      "labels": [],
+      "corpo": "",
+      "checklist": [],
+      "issues": [],
+      "arquivos": []
+    },
+    {
+      "id": "merge-b8fb78f8",
+      "origem": "pr_base",
+      "momento": "base",
+      "referencia": "#11",
+      "url": null,
+      "titulo": "7 migrar pipeline gitlab para github",
+      "tipo": "outro",
+      "autor": "Arthur Melo",
+      "data": "2025-09-30T10:11:18-03:00",
       "labels": [],
       "corpo": "",
       "checklist": [],
@@ -3191,6 +3367,97 @@
   ],
   "commits": [
     {
+      "sha": "82c2bbc4",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T21:29:08-03:00",
+      "titulo": "docs(skill): completa a referencia com os componentes que faltavam",
+      "tipo": "outro"
+    },
+    {
+      "sha": "33880079",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T21:28:38-03:00",
+      "titulo": "docs(skill): adiciona referencia dos padroes de layout",
+      "tipo": "outro"
+    },
+    {
+      "sha": "22a77c08",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T21:25:49-03:00",
+      "titulo": "docs(skill): corrige exemplo que quebrava o build e cobre os guardas novos",
+      "tipo": "outro"
+    },
+    {
+      "sha": "bfec4235",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T21:21:43-03:00",
+      "titulo": "style(docs-pages): corrige alinhamento na visao de gestao e nas paginas de dominio",
+      "tipo": "outro"
+    },
+    {
+      "sha": "7d4c77e4",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T21:17:03-03:00",
+      "titulo": "style(docs-pages): corrige alinhamento e espacamento da vitrine",
+      "tipo": "outro"
+    },
+    {
+      "sha": "da04f668",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T21:00:29-03:00",
+      "titulo": "feat(docs-pages): diagrama Mermaid do fluxo que constroi cada tabela gold",
+      "tipo": "outro"
+    },
+    {
+      "sha": "ddea631d",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T20:51:39-03:00",
+      "titulo": "style(docs-pages): amplia o espacamento em todo o site",
+      "tipo": "outro"
+    },
+    {
+      "sha": "379c9547",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T20:48:59-03:00",
+      "titulo": "fix(docs-pages): corrige numeros sobrepostos ao texto fora do hero",
+      "tipo": "outro"
+    },
+    {
+      "sha": "14ce4b39",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T20:44:31-03:00",
+      "titulo": "docs(docs-pages): vitrine passa a vir integralmente do relatorio tecnico",
+      "tipo": "outro"
+    },
+    {
+      "sha": "9c7a761b",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T20:38:11-03:00",
+      "titulo": "docs(docs-pages): reescreve a curadoria com o contexto institucional do MCMV",
+      "tipo": "outro"
+    },
+    {
+      "sha": "4b9e5147",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T15:38:12-03:00",
+      "titulo": "feat: adiciona skill para manter a parte curada do site docs-pages",
+      "tipo": "funcionalidade"
+    },
+    {
+      "sha": "8fad2cda",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T15:32:44-03:00",
+      "titulo": "feat(docs-pages): identifica as visoes na barra superior e adiciona trilha",
+      "tipo": "outro"
+    },
+    {
+      "sha": "bb1c9543",
+      "autor": "LuizaMaluf",
+      "data": "2026-08-11T15:29:40-03:00",
+      "titulo": "feat(docs-pages): restringe o site ao MCID e aprofunda as entregas",
+      "tipo": "outro"
+    },
+    {
       "sha": "68ad991f",
       "autor": "LuizaMaluf",
       "data": "2026-08-11T15:17:31-03:00",
@@ -5194,6 +5461,28 @@
     }
   ],
   "prs": [
+    {
+      "numero": 124,
+      "titulo": "Docs/roadmap site",
+      "autor": "LuizaMaluf",
+      "criado_em": "2026-08-12T00:52:01Z",
+      "mergeado_em": "2026-08-12T00:55:35Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/124",
+      "corpo": ""
+    },
+    {
+      "numero": 123,
+      "titulo": "Docs/roadmap site",
+      "autor": "LuizaMaluf",
+      "criado_em": "2026-08-11T18:34:44Z",
+      "mergeado_em": "2026-08-11T18:46:57Z",
+      "estado": "MERGED",
+      "labels": [],
+      "url": "https://github.com/GovHub-br/data-application-cidades/pull/123",
+      "corpo": ""
+    },
     {
       "numero": 102,
       "titulo": "refact: melhoras no script de snapshot",
