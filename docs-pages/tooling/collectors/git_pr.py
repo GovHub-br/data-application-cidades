@@ -131,17 +131,22 @@ def _entrega_de_pr(pr: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _referencia_do_merge(titulo: str, prs_conhecidos: set[int]) -> Any:
+def _referencia_do_merge(titulo: str, data: str, prs_conhecidos: set[int]) -> Any:
     """Devolve (origem, referencia, branch) do merge, ou None se nao for entrega.
 
     Tres casos: PR deste repositorio (ja coletado pelo gh, com corpo), PR
     herdado do repositorio de origem (so o merge sobrou no historico) e merge de
     branch, o formato do periodo GitLab.
+
+    Os dois repositorios numeram PRs na mesma faixa, entao o numero sozinho nao
+    diz de quem e o merge: quando este fork chegou ao #123, o #123 herdado da
+    base seria descartado como duplicata e a entrega sumiria do historico. A
+    data e que desempata — antes do fork, o PR so pode ser da base.
     """
     pr_ref = RE_PR_MERGE.search(titulo)
     if pr_ref:
         numero, branch = int(pr_ref.group(1)), pr_ref.group(2)
-        if numero in prs_conhecidos:
+        if numero in prs_conhecidos and data[:10] >= DATA_FORK:
             return None
         return "pr_base", f"#{numero}", branch
 
@@ -156,7 +161,7 @@ def _referencia_do_merge(titulo: str, prs_conhecidos: set[int]) -> Any:
 
 def _entrega_de_merge(merge: dict[str, str], prs_conhecidos: set[int]) -> Any:
     """Converte um merge em entrega, quando ele representa trabalho concluido."""
-    identificacao = _referencia_do_merge(merge["titulo"], prs_conhecidos)
+    identificacao = _referencia_do_merge(merge["titulo"], merge["data"], prs_conhecidos)
     if not identificacao:
         return None
 
