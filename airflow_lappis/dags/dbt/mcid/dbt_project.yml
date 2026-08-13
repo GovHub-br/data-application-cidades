@@ -47,15 +47,14 @@ models:
     conjuntura_continuo_dbt:
       +materialized: table
       +schema: conjuntura_continuo
-      bronze:
-        +materialized: table
-        +schema: conjuntura_continuo_bronze
+      # Sem camada bronze: o parquet de staging já sai tipado (Etapa 02) e a
+      # silver lê direto via pg_duckdb (read_parquet).
       silver:
         +materialized: table
         +schema: conjuntura_continuo_silver
       gold:
         +materialized: table
-        +schema: conjuntura_continuo_gold
+        +schema: conjuntura_continuo_mart
 
 on-run-start:
   - '{{create_udfs()}}'

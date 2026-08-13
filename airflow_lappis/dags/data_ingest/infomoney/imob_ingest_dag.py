@@ -6,6 +6,8 @@ from airflow.models import Variable
 from postgres_helpers import get_postgres_conn
 from cliente_postgres import ClientPostgresDB
 from cliente_infomoney import ClienteInfomoney
+from cliente_minio import upload_raw_json
+from ingestor_lake import registros_para_staging_parquet
 
 # Configurações padrão
 DEFAULT_ARGS = {
@@ -67,6 +69,7 @@ def infomoney_imob_dag() -> None:
     
                 dados_imob.append(registro)
 
+        # Postgres: upsert por (symbol, data_pregao) -> preserva histórico.
         db.insert_data(
             dados_imob,
             table_name="acoes_imob",
@@ -74,7 +77,11 @@ def infomoney_imob_dag() -> None:
             conflict_fields=["symbol", "data_pregao"],
             primary_key=["symbol", "data_pregao"]
         )
-        
+
+        # Lake (full-refresh): raw = payload cru da API (json); parquet tipado.
+        upload_raw_json("infomoney", "acoes_imob", dados_imob_raw)
+        registros_para_staging_parquet("infomoney", "acoes_imob", dados_imob)
+
         logging.info("Carga finalizada com sucesso no schema infomoney.")
 
     

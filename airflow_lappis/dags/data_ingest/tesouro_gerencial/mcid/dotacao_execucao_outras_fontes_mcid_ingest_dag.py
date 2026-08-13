@@ -12,6 +12,8 @@ from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from cliente_email import fetch_and_process_email
 from cliente_postgres import ClientPostgresDB
+from cliente_minio import upload_raw_bytes, upload_fallback_json
+from ingestor_lake import registros_para_staging_parquet
 from postgres_helpers import get_postgres_conn
 from schedule_loader import get_dynamic_schedule
 
@@ -163,6 +165,22 @@ with DAG(
                 "dotacao_execucao_outras_fontes_mcid",
                 schema="siafi",
             )
+
+            # Raw nativo (CSV do email) + fallback json + parquet tipado.
+            upload_raw_bytes(
+                "siafi-tesouro-gerencial",
+                "dotacao_execucao_outras_fontes_mcid",
+                csv_data.encode("utf-8"),
+                ext="csv",
+                content_type="text/csv",
+            )
+            upload_fallback_json(
+                "siafi-tesouro-gerencial", "dotacao_execucao_outras_fontes_mcid", data
+            )
+            registros_para_staging_parquet(
+                "siafi-tesouro-gerencial", "dotacao_execucao_outras_fontes_mcid", data
+            )
+
             logging.info("Dados inseridos com sucesso no banco de dados.")
         except Exception as e:
             logging.error("Erro ao inserir dados no banco: %s", str(e))
