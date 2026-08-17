@@ -10,3 +10,15 @@ mcid:
       dbname: "{{ env_var('DB_DW_DBNAME_MCID', 'cidades') }}"
       # schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'empreendimento_far') }}"
       schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'conjuntura') }}"
+    staging_duckdb:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_MCID_PATH', '/tmp/mcid_staging.duckdb') }}"
+      threads: 4
+      extensions:
+        - httpfs
+      settings:
+        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') }}"
+        s3_access_key_id: "{{ env_var('MINIO_ACCESS_KEY') }}"
+        s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
+        s3_url_style: path
+        s3_use_ssl: false

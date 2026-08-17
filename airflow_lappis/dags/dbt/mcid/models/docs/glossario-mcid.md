@@ -9,7 +9,7 @@ dashboard.
 - `raw`: arquivo bruto no MinIO/Object Storage, preservado como recebido da fonte.
 - `staging`: arquivo estruturado no MinIO, geralmente Parquet, pronto para leitura por DuckDB/dbt.
 - `bronze`: cópia fiel ou projeção mínima da staging para o ambiente analítico. Não deve aplicar regra de negócio.
-- `silver`: primeira camada tratada no Postgres. Deve tipar, normalizar nomes, chaves, datas, valores e campos técnicos.
+- `silver`: primeira camada tratada. Deve tipar, normalizar nomes, chaves, datas, valores e campos técnicos. Para o MCMV, deve ser gerada somente a partir do MinIO `staging/` via DuckDB.
 - `mart_dashboard`: modelo final exclusivamente consumido por dashboard. Deve ter grão e métricas documentados.
 - `gold`: camada analítica final. Pode conter marts de dashboard, indicadores oficiais e agregações publicáveis.
 

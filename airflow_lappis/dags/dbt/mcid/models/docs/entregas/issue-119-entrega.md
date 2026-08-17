@@ -1,5 +1,13 @@
 # Issue #119 — Entrega: Padronizacao Silver e Base para Marts de Dashboard
 
+## Correcao Arquitetural Importante
+
+A regra vigente do projeto e que a silver MCMV deve ser gerada somente a partir
+do MinIO `staging/`, usando DuckDB para ler os Parquets. As contagens e
+validacoes feitas em Postgres devem ser tratadas como evidencia/inventario, nao
+como implementacao final da silver. A correcao esta documentada em
+`issue-119-correcao-arquitetura-duckdb-staging.md`.
+
 ## Resumo para colar na issue
 
 Foi implementada a primeira versao padronizada da camada `mcmv_silver`, usando o glossario MCID como referencia semantica para nomes, grao, chaves, datas, territorios, status, valores e campos tecnicos.

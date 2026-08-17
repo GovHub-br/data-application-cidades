@@ -7,9 +7,9 @@ A arquitetura considerada é:
 1. Fonte envia dados para Object Storage.
 2. MinIO mantém `raw/` e `staging/`.
 3. Airflow orquestra a leitura.
-4. dbt, com DuckDB adapter quando necessário, lê staging e materializa no ambiente analítico.
+4. dbt, com DuckDB adapter, lê obrigatoriamente `staging/` no MinIO.
 5. Bronze é cópia fiel/projeção mínima da staging.
-6. Silver é a camada tratada no Postgres: nomes, tipos, chaves, datas, valores e campos técnicos.
+6. Silver é a camada tratada: nomes, tipos, chaves, datas, valores e campos técnicos. A origem da transformação deve ser sempre MinIO `staging/` via DuckDB.
 7. Gold/marts alimentam Superset e planilhas.
 
 Esta issue não cria indicadores de gargalo/desempenho. O objetivo é definir e
@@ -72,7 +72,7 @@ Evidências:
 - Criadas evidências de inventário, matriz semântica e priorização.
 - Reforçado teste de chave em `empreendimento_far_dbt/silver/schema.yml`:
   - `empreendimento.apf`: `unique` e `not_null`.
-- Criado módulo dbt `mcmv_silver_dbt`, materializado no schema `mcmv_silver`.
+- Criado módulo dbt `mcmv_silver_dbt`, agora condicionado ao target DuckDB para evitar execução indevida lendo Postgres.
 - Criadas bases padronizadas por frente:
   - `silver_mcmv_minha_casa_minha_vida_base`
   - `silver_mcmv_far_base`

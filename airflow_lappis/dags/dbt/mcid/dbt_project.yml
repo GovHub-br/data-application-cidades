@@ -46,6 +46,7 @@ models:
         +materialized: table
 
     mcmv_silver_dbt:
+      +enabled: "{{ target.type == 'duckdb' }}"
       +materialized: table
       +schema: mcmv_silver
       silver:

@@ -7,7 +7,7 @@ A issue #117 ainda nao foi concluida. O trabalho feito ate agora ajuda a embasar
 ## O que ja existe como insumo
 
 - POC operacional com MinIO/SFTP como origem de staging/raw.
-- Modelos dbt materializando silver padronizada no Postgres.
+- Diretriz corrigida: modelos dbt da silver MCMV devem ler MinIO `staging/` via DuckDB; Postgres pode ser destino analitico, nao fonte da silver.
 - Separacao conceitual validada:
   - MinIO: raw/staging e preservacao de origem.
   - Bronze: copia fiel/projecao minima da staging.
@@ -22,9 +22,9 @@ A issue #117 ainda nao foi concluida. O trabalho feito ate agora ajuda a embasar
 Fonte
   -> MinIO raw/staging
   -> Airflow
+  -> DuckDB lendo staging/
   -> dbt
-  -> Postgres bronze
-  -> Postgres silver
+  -> silver tratada
   -> Postgres gold/marts
   -> Superset / planilhas / relatorios
 ```
@@ -35,13 +35,13 @@ Recomendacao inicial:
 
 - Preservar a origem no MinIO em `raw/` e `staging/`.
 - Usar bronze como copia fiel/projecao minima da staging para rastreabilidade.
-- Usar silver no Postgres para tratamento, padronizacao semantica e contrato comum por frente.
+- Gerar silver por DuckDB a partir de `staging/`, com tratamento, padronizacao semantica e contrato comum por frente.
 - Usar gold/marts para dashboards, evitando que Superset dependa diretamente de tabelas silver instaveis.
 - Adotar campos tecnicos de auditoria e historico para reprocessamento e comparacao temporal.
 
 ## Alternativas que o ADR deve comparar
 
-- Bronze apenas no MinIO versus bronze materializada no Postgres.
+- Bronze apenas como copia/projecao da staging no MinIO versus bronze materializada no Postgres.
 - Consumo direto da staging versus copia bronze rastreavel.
 - Historico por snapshot completo versus incremental/hash de linha.
 - Gold/marts como tabelas materializadas versus views.

@@ -9,6 +9,7 @@ Esta pasta consolida textos prontos para anexar ou colar nas issues GitHub.
 - `issue-117-status-adr-pendente.md`: status da arquitetura de producao; registra que o ADR ainda precisa ser formalizado.
 - `issue-66-entrega-indicadores-historicos-relogio-alertas.md`: entrega dos indicadores historicos, fontes do relogio de metas e base de alertas.
 - `issue-119-ajuste-frentes-faltantes.md`: evidencia do ajuste das frentes faltantes na silver, com SUB50/FNHIS conectado e Pro-Moradia ainda sem fonte confirmada.
+- `issue-119-correcao-arquitetura-duckdb-staging.md`: correcao de arquitetura para garantir que silvers sejam geradas somente a partir do MinIO `staging/` via DuckDB.
 
 ## Observacao de Commit
 
