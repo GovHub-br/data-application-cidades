@@ -1,0 +1,72 @@
+version: 2
+
+sources:
+  - name: poc_raw
+    description: >
+      Arquivos originais em raw/ no MinIO. No dbt-duckdb a "source" é a própria chamada de
+      leitura: é no external_location que entram delimitador, encoding e header — exatamente
+      os parâmetros que hoje o raw_para_staging.py descobre em runtime com
+      lake_utils.detectar_encoding / detectar_dialeto. Aqui eles são ESTÁTICOS, declarados
+      arquivo a arquivo (ver R3/R4 no README).
+    schema: main
+    tables:
+      - name: clientes_csv
+        description: CSV utf-8, delimitador ';'
+        config:
+          external_location: >-
+            read_csv('s3://poc-lake/raw/clientes.csv', delim=';', header=true,
+            all_varchar=true, encoding='utf-8', normalize_names=true, filename=true)
+
+      - name: clientes_txt
+        description: TXT utf-8, delimitador '|'
+        config:
+          external_location: >-
+            read_csv('s3://poc-lake/raw/clientes.txt', delim='|', header=true,
+            all_varchar=true, encoding='utf-8', normalize_names=true, filename=true)
+
+      - name: clientes_xlsx
+        description: >
+          XLSX lido direto de s3:// pela extensão excel (confirmado funcionando por range
+          request no smoke test). read_xlsx não tem normalize_names nem filename.
+        config:
+          external_location: >-
+            read_xlsx('s3://poc-lake/raw/clientes.xlsx', header=true, all_varchar=true)
+
+      - name: mcid_contratacoes
+        description: >
+          AMOSTRA REAL do lake: raw/Dados_Prioritarios_Contratacoes_MCMV_FAR_FDS_RURAL_
+          Semanal_20250730.xlsx, 96 linhas. Traz APF, valor e data no formato brasileiro —
+          é o que exercita os UDFs portados sobre semântica real do MCid.
+          ATENÇÃO — aqui NÃO se usa all_varchar=true, ao contrário do CSV. Numa planilha as
+          células de data já são tipadas, e all_varchar devolve o SERIAL do Excel ("45839")
+          em vez da data: o parser de data brasileira recebe um número e devolve NULL em
+          100% das linhas. Sem all_varchar o DuckDB infere DATE corretamente.
+          (O pandas do pipeline atual, com dtype=str, converte o serial e devolve
+          "2025-07-01 00:00:00" — comportamento diferente para o mesmo arquivo.)
+        config:
+          external_location: >-
+            read_xlsx('s3://poc-lake/raw/amostra__Dados_Prioritarios_Contratacoes_MCMV_FAR_FDS_RURAL_Semanal_20250730.xlsx',
+            header=true)
+
+      - name: mcid_andamento_obra
+        description: >
+          AMOSTRA REAL do lake (raw/CAIXA_AF_GEHIS_ANDAMENTO_OBRA_M20250612.TXT, truncada por
+          Range). cp1252, delimitador '|'. Encoding e delimitador vêm do que o
+          lake_utils.detectar_encoding/detectar_dialeto apuraram — ver resultados/amostra.json.
+          O DuckDB não os adivinha: só detecta BOM.
+          NOTA: este extrato do lake contém apenas o cabeçalho repetido, sem linhas de dados.
+        config:
+          external_location: >-
+            read_csv('s3://poc-lake/raw/amostra__CAIXA_AF_GEHIS_ANDAMENTO_OBRA_M20250612.TXT',
+            delim='|', header=true, all_varchar=true, encoding='cp1252',
+            normalize_names=true, filename=true)
+
+      - name: clientes_latin1
+        description: >
+          Mesmo conteúdo em latin-1. encoding='latin-1' é NATIVO no DuckDB (não precisa da
+          extensão encodings) — mas rejeita todo o intervalo C1 (0x80-0x9F), ao contrário do
+          latin-1 do Python. Ver resultados/matriz_encoding.md.
+        config:
+          external_location: >-
+            read_csv('s3://poc-lake/raw/clientes_latin1.csv', delim=';', header=true,
+            all_varchar=true, encoding='latin-1', normalize_names=true, filename=true)

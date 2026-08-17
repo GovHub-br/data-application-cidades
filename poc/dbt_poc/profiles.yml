@@ -1,0 +1,36 @@
+# Profile da POC. Fica DENTRO do projeto de propósito: rodar com DBT_PROFILES_DIR=$PWD
+# garante que nunca se misture com o ~/.dbt/profiles.yml (que o compose da raiz monta
+# apontando para o DW de produção).
+poc_lake:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # Arquivo, não :memory: — o ATTACH do Postgres e as macros precisam persistir
+      # entre as fases do dbt.
+      path: "{{ env_var('POC_DUCKDB_PATH') }}"
+      # threads: 1 é obrigatório com ATTACH de Postgres: escrita multi-thread em
+      # catálogo anexado vaza semáforos (dbt-duckdb #596).
+      threads: 1
+      schema: main
+      extensions:
+        - httpfs
+        - parquet
+        - excel
+        - encodings
+        - postgres
+      secrets:
+        - type: s3
+          key_id: "{{ env_var('POC_MINIO_ACCESS_KEY') }}"
+          secret: "{{ env_var('POC_MINIO_SECRET_KEY') }}"
+          region: us-east-1
+          # host[:porta], SEM esquema — diferente do MINIO_ENDPOINT do repo, que o
+          # ClienteMinio prefixa com http://
+          endpoint: "{{ env_var('POC_MINIO_ENDPOINT') }}"
+          url_style: path
+          use_ssl: false
+      attach:
+        - path: "postgresql://{{ env_var('POC_PG_USER') }}:{{ env_var('POC_PG_PASSWORD') }}@{{ env_var('POC_PG_HOST') }}:{{ env_var('POC_PG_PORT') }}/{{ env_var('POC_PG_DBNAME') }}"
+          type: postgres
+          alias: pg
+      external_root: "s3://{{ env_var('POC_MINIO_BUCKET') }}/bronze"

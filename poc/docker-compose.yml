@@ -1,0 +1,57 @@
+# Infra ISOLADA da POC. Nome de projeto, portas e volumes próprios: nada aqui encosta
+# no MinIO (10.0.0.56) nem no DW (10.0.0.50) de produção.
+name: poc-lake-duckdb
+
+services:
+  minio:
+    # Imagens Community saíram do Docker Hub (out/2025); tag fixa no quay, a última
+    # com console completo.
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: pocadmin
+      MINIO_ROOT_PASSWORD: pocadmin123
+    ports:
+      - "9100:9000"
+      - "9101:9001"
+    volumes:
+      - poc_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "mc alias set poc http://minio:9000 pocadmin pocadmin123 &&
+                  mc mb --ignore-existing poc/poc-lake &&
+                  mc ls poc/"
+    restart: "no"
+
+  postgres:
+    # pg_duckdb já embutido: reproduz o artefato D (o CTAS all-varchar de hoje) e
+    # permite testar a Opção 2 (view sobre o parquet tipado) sem infra extra.
+    image: pgduckdb/pgduckdb:17-v1.1.1
+    environment:
+      POSTGRES_USER: poc
+      POSTGRES_PASSWORD: poc
+      POSTGRES_DB: poc_dw
+    ports:
+      - "5442:5432"
+    volumes:
+      - poc_pg_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U poc -d poc_dw"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  poc_minio_data:
+  poc_pg_data:

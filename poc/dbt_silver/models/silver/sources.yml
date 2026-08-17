@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    description: >
+      Bronze do lake: parquet TIPADO no MinIO, exposto como view pelo pg_duckdb
+      (scripts/gerar_views_bronze.py). A view não materializa nada — o dado vive só no
+      parquet. Do ponto de vista do dbt-postgres é uma source como qualquer outra.
+    tables:
+      - name: caixa_andamento_obra
+        description: >
+          Família CAIXA_AF_GEHIS_ANDAMENTO_OBRA. Em produção são 219 arquivos com 2
+          encodings e 3 delimitadores; aqui, 16 arquivos reais amostrados. Tudo isso é
+          problema da bronze — a silver vê uma tabela tipada e pronta.
+        columns:
+          - name: nu_apf
+            description: APF normalizado para 8 dígitos pela macro DuckDB portada.
+          - name: anomes
+            description: Chave de partição do parquet (integer).

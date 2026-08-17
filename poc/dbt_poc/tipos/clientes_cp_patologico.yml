@@ -1,0 +1,10 @@
+familia: clientes_cp_patologico
+tabela: clientes_cp_patologico
+colunas:
+  codigo_cliente: {tipo: texto}
+  nome_do_cliente: {tipo: texto}
+  data_de_cadastro: {tipo: data_br}
+  valor_do_contrato: {tipo: valor_br}
+  ativo: {tipo: sn_bool}
+  cpf: {tipo: texto}
+  observacao: {tipo: texto}

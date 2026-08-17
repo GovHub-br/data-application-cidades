@@ -1,0 +1,16 @@
+familia: amostra_dados_historicos_caixa_grafico_mcmv
+tabela: caixa_grafico_mcmv
+colunas:
+  situacao:
+    tipo: texto
+    alternativas: [unnamed_0]
+  quantidade:
+    tipo: valor_br
+    alternativas: [unnamed_1]
+  rotulo_base:
+    tipo: texto
+    alternativas: [unnamed_8]
+  data_base:
+    tipo: data_br
+    alternativas: [unnamed_9]
+ignorar: [unnamed_2, unnamed_3, unnamed_4, publicacao_site_pmcmv, unnamed_6]

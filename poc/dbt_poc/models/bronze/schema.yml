@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: bronze_clientes_csv
+    description: Bronze tipada a partir do CSV (artefato C).
+    columns:
+      - name: codigo_cliente
+        description: Zeros à esquerda no raw ("000123"), INTEGER na bronze.
+        tests: [not_null, unique]
+      - name: nome_do_cliente
+        tests: [not_null]
+      - name: data_de_cadastro
+        description: 3 formatos no raw (DD/MM/YYYY, YYYYMMDD, ISO) — DATE na bronze.
+      - name: valor_do_contrato
+        description: 4 formatos no raw — DECIMAL(15,2) na bronze.
+        tests: [not_null]  # poc_parse_valor_br devolve 0.00, nunca null (igual ao mcid)
+      - name: ativo
+        tests:
+          - accepted_values:
+              values: [true, false]
+
+  - name: bronze_clientes_txt
+    description: Mesma tipagem, origem TXT com delimitador '|'.
+    columns:
+      - name: codigo_cliente
+        tests: [not_null, unique]
+
+  - name: bronze_clientes_xlsx
+    description: Mesma tipagem, origem XLSX lido direto de s3://.
+    columns:
+      - name: codigo_cliente
+        tests: [not_null, unique]

@@ -83,16 +83,27 @@ AUDIT_PREFIX   = "audit/db/"
 # evita colisão silenciosa entre nomes longos que compartilham o mesmo prefixo.
 PG_MAX_IDENT = 63
 
+# Artefatos locais (arquivo de log, cópia local da auditoria) — úteis rodando standalone, mas o
+# diretório do script pode não ser gravável (ex.: bind-mount no Airflow). Controlado por
+# LAKE_LOCAL_ARTIFACTS (default "1"): o container do Airflow define "0" para desligá-los. O log
+# em stderr fica sempre ativo (o Airflow o captura na UI).
+_LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in ("0", "false", "no")
 _LOG_FILE = (
     Path(__file__).parent
     / f"staging_para_db_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 )
 _formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
-logging.root.setLevel(logging.INFO)
-for _h in (logging.FileHandler(_LOG_FILE, encoding="utf-8"), logging.StreamHandler(sys.stderr)):
-    _h.setFormatter(_formatter)
-    logging.root.addHandler(_h)
 log = logging.getLogger(__name__)
+if _LOCAL_ARTIFACTS:
+    # Standalone: o script gerencia os próprios handlers (stderr + arquivo de log).
+    logging.root.setLevel(logging.INFO)
+    for _h in (logging.StreamHandler(sys.stderr),
+               logging.FileHandler(_LOG_FILE, encoding="utf-8")):
+        _h.setFormatter(_formatter)
+        logging.root.addHandler(_h)
+# Sob o Airflow (_LOCAL_ARTIFACTS=0) NÃO adicionamos handlers ao root: o logger propaga para os
+# handlers do Airflow (a saída vai para a UI). Um StreamHandler(sys.stderr) aqui criaria loop
+# infinito — o Airflow redireciona stderr de volta ao logging e cada linha se multiplica.
 
 
 # Infra: conexões / controle
@@ -410,9 +421,12 @@ def _gravar_auditoria(minio: ClienteMinio, execution_id: str, registros: List[di
     df.to_parquet(buf, engine="pyarrow", index=False)
     key = f"{AUDIT_PREFIX}execution_id={execution_id}/part-0.parquet"
     minio.put_object(key, buf.getvalue())
-    local = Path(__file__).parent / f"auditoria_db_{execution_id}.parquet"
-    df.to_parquet(local, engine="pyarrow", index=False)
-    log.info("Auditoria: s3://%s/%s (cópia local: %s)", MINIO_BUCKET, key, local)
+    if _LOCAL_ARTIFACTS:
+        local = Path(__file__).parent / f"auditoria_db_{execution_id}.parquet"
+        df.to_parquet(local, engine="pyarrow", index=False)
+        log.info("Auditoria: s3://%s/%s (cópia local: %s)", MINIO_BUCKET, key, local)
+    else:
+        log.info("Auditoria: s3://%s/%s", MINIO_BUCKET, key)
 
 
 # Execução

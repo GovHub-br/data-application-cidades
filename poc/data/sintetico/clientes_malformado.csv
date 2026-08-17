@@ -1,0 +1,103 @@
+Código Cliente;Nome do Cliente;Data de Cadastro;Valor do Contrato;Ativo;CPF;Observação
+000001;João da Silva;27/02/2024;107.474,94;S;6c031199972a8469;sem observação
+000002;Ana da Silva;23/03/2021;00000000208497,71;N;72ff5d2a386ecbe0;
+000003;Antônio Ço-Testé;15/11/2024;443144.89;N;27cd813047229389;"campo com ; ponto-e-vírgula dentro"
+000004;Luíza da Silva;08/07/2020;633.053,44;N;0b1f9163ce9ff57f;campo com | pipe dentro
+000005;Ângela da Silva;2025-06-15;869.694,37;N;3139d32c93cd59bf;sem observação
+000006;Ana Sá;20210411;;N;7412b29347294739;"campo com ""aspas"" no meio"
+000007;Maria Assunção;28/12/2021;679.515,87;S;a28defe39bf00273;"campo com ; ponto-e-vírgula dentro"
+000008;Ângela Sá;16/05/2021;721.591,81;S;5304317faf42e12f;sem observação
+000009;José Ço-Testé;20200306;00000000221232,08;N;a7cad415366eb16f;campo com | pipe dentro
+000010;Camões Sá;28/07/2022;588.638,95;N;95a76d79bf3c4c06;campo com | pipe dentro
+000011;Camões Assunção;;95.326,63;S;1c11f735dc713d96;"campo com ; ponto-e-vírgula dentro"
+000012;Maria Ço-Testé;25/10/2023;624.835,48;N;405cacec877409a9;
+000013;Ana Sá;16/01/2024;279787.96;N;4b22d3081c8eaee9;campo com | pipe dentro
+000014;Maria Ferreira;2020-01-07;524903.33;S;e9a1fa6f81f76d1c;sem observação
+000015;Antônio Ço-Testé;01/08/2023;799.551,47;S;f4188f3f8a14be62;
+000016;Ana Müller;25/10/2021;921.407,46;N;0ed42f1a3d4cbf37;"campo com ; ponto-e-vírgula dentro"
+000017;João da Silva;07/02/2024;558.583,97;S;a8e56e0c20de435d;campo com | pipe dentro
+000018;Ângela Gonçalves;26/06/2021;00000000974037,27;S;4fcca39ab683d2e6;campo com | pipe dentro
+000019;Luíza Ferreira;16/01/2025;67.137,28;N;969b666205628059;
+000020;José Müller;27/03/2021;240063.07;S;080aadfbe7c99b26;"campo com ""aspas"" no meio"
+000021;João Müller;02/05/2021;00000000138740,69;N;c8dcd19f3e351128;campo com | pipe dentro
+000022;Camões Gonçalves;12/07/2020;00000000431072,54;N;baa4b71add2467ac;sem observação
+000023;João da Silva;20220404;260736.13;S;894a05e430b187ef;campo com | pipe dentro
+000024;Maria Ferreira;10/01/2021;464.657,09;S;a6f2f7b80cf35b58;
+000025;Ana da Silva;20250312;509.232,52;N;dd59ba7136b82481;campo com | pipe dentro
+000026;Ana Gonçalves;15/02/2022;299.106,58;N;f512c4c3b253d218;
+000027;Íris Gonçalves;23/01/2021;NaN;S;504867babf7b539b;sem observação
+000028;Ana Müller;03/09/2022;59643.20;S;2f923996d9f195d0;sem observação
+000029;João Sá;31/10/2024;258.176,72;S;14fcdd549e8fc965;campo com | pipe dentro
+000030;Ângela Assunção;29/03/2025;250281.40;N;21813d25655238a6;"campo com ""aspas"" no meio"
+000031;Íris Assunção;20250317;651.333,58;S;89a2688b12c136e0;"campo com ; ponto-e-vírgula dentro"
+000032;Ângela Assunção;2020-09-28;387478.31;N;702cdd20286218b8;
+000033;Antônio Müller;10/07/2024;313.922,70;S;e0ccedc5f05db76e;"campo com ; ponto-e-vírgula dentro"
+000034;Antônio da Silva;27/12/2024;00000000295443,34;S;57c700aab7b56ea7;"campo com ; ponto-e-vírgula dentro"
+000035;Antônio Müller;27/09/2022;NaN;N;46d483f3d450281c;sem observação
+000036;Ana Assunção;28/04/2024;None;N;0279b6a68f9797b0;sem observação
+000037;João Sá;25/01/2025;610.806,47;S;20a045026e068097;sem observação
+000038;Antônio Assunção;2025-01-15;None;S;3fe12e47ae9bec36;sem observação
+000039;Luíza Ço-Testé;2023-02-20;00000000785885,79;S;ee0caeb5ecfedb99;"campo com ; ponto-e-vírgula dentro"
+000040;Maria Ço-Testé;18/07/2024;00000000772344,22;N;ee49f329c84a7b28;campo com | pipe dentro
+000041;José Assunção;20201122;900.301,04;N;3317347038f16a81;campo com | pipe dentro
+000042;Luíza Assunção;20240807;692.095,03;S;5408f9ac6601ddd0;"campo com ""aspas"" no meio"
+000043;João Ço-Testé;25/07/2021;00000000884643,86;N;0710d430f071d879;sem observação
+000044;Antônio Gonçalves;2023-04-04;625.551,13;N;ba81edd9587ef344;"campo com ""aspas"" no meio"
+000045;Camões Müller;13/11/2022;267096.24;S;6fa17735b572f3d0;sem observação
+000046;Ângela Ço-Testé;07/01/2023;;N;11e9cdaa6e6981a3;"campo com ""aspas"" no meio"
+000047;Luíza Sá;02/10/2024;NaN;N;6703b6365380b904;"campo com ""aspas"" no meio"
+000048;Ângela Gonçalves;27/01/2021;;N;8c459ce267f48ad5;sem observação
+000049;Antônio Assunção;06/03/2021;00000000337903,83;N;713162697118e364;"campo com ; ponto-e-vírgula dentro"
+000050;Ângela Ferreira;2024-06-13;690856.21;S;83f4a9a948a639d0;
+000051;Luíza da Silva;2024-08-03;235.553,39;S;0640be0f25b8fd4b;sem observação
+000052;José Ferreira;20230605;929.182,53;S;b24445a7b7e58481;campo com | pipe dentro
+000053;Íris Ferreira;14/05/2021;902238.96;S;6cd66193c7468f59;"campo com ; ponto-e-vírgula dentro"
+000054;Maria Ço-Testé;15/05/2025;00000000261304,71;S;222282e174daaebf;campo com | pipe dentro
+000055;Ângela Müller;04/05/2023;642413.56;N;e827a1b9d4a02e53;
+000056;Íris Gonçalves;2024-03-03;00000000259250,96;N;c715b2b9c40c5d91;
+000057;Íris Sá;04/05/2021;245.885,36;N;51d87c6455fa1ab8;
+000058;João Gonçalves;04/11/2020;224346.90;S;68586eba6a34c854;"campo com ""aspas"" no meio"
+000059;Ângela Ferreira;01/05/2022;948792.49;S;e172b725db52ca58;
+000060;Camões Ferreira;2020-01-13;894.906,49;N;bf5d2fdf89c8d2ab;
+000061;José Ferreira;25/03/2021;00000000352458,49;N;2a405f12b963f37f;campo com | pipe dentro
+000062;Maria Müller;29/12/2022;695.206,72;S;a48b3dbe157d94a1;campo com | pipe dentro
+000063;Maria Ço-Testé;03/08/2022;221.942,41;N;56666f9f53ac2ab9;campo com | pipe dentro
+000064;Antônio Ço-Testé;20250502;493.153,10;S;8a175dfebfc00dc8;sem observação
+000065;Luíza Gonçalves;24/08/2023;;S;d6d7b3b833094d35;sem observação
+000066;Maria Gonçalves;15/09/2020;487.624,27;N;5e6fea07c4536f1d;"campo com ; ponto-e-vírgula dentro"
+000067;João Ço-Testé;04/08/2024;26.926,74;N;ad66a1bd93676a02;campo com | pipe dentro
+000068;Camões Sá;10/02/2021;254647.80;S;c5c14eb4b27b3d90;"campo com ""aspas"" no meio"
+000069;João Ço-Testé;20230305;693.656,54;N;8186a57611a72609;"campo com ""aspas"" no meio"
+000070;Ana Ço-Testé;20220510;666.460,46;N;272a6d8eb5122df8;campo com | pipe dentro
+000071;Maria Sá;2022-12-04;812.271,68;N;6f81cf4f7701f7bb;
+000072;Antônio Assunção;10/10/2024;None;S;76f72255c01f36bf;
+000073;Camões Assunção;28/02/2020;222.424,62;N;4223623bcc3ebdde;"campo com ""aspas"" no meio"
+000074;Antônio Müller;2023-12-07;00000000994116,66;S;3dc9829015eabb27;campo com | pipe dentro
+000075;Íris Müller;01/04/2024;00000000514664,91;N;046a0df5cafda613;sem observação
+000076;Antônio Gonçalves;08/04/2022;386.946,74;N;87ea7ff58db06746;"campo com ""aspas"" no meio"
+000077;Camões Sá;01/02/2023;321518.34;N;1ee34dc43b048a8b;"campo com ; ponto-e-vírgula dentro"
+000078;Luíza da Silva;01/03/2024;200846.23;S;7bf47042bd1531c8;"campo com ""aspas"" no meio"
+000079;Ângela Müller;;238534.37;N;4d6168bd2defe193;sem observação
+000080;Ângela Gonçalves;15/07/2021;731.296,37;S;de53790aa34b6cf6;campo com | pipe dentro
+000081;João Ço-Testé;26/01/2020;00000000357257,56;S;0d270659f72ada9b;"campo com ""aspas"" no meio"
+000082;Íris da Silva;10/08/2024;00000000660022,73;S;2631d00b26d794d3;
+000083;Antônio da Silva;23/05/2021;625085.77;S;85c7504bc693da11;campo com | pipe dentro
+000084;Íris Ferreira;2021-08-31;NaN;S;f5c9b0479c10c572;sem observação
+000085;José Sá;08/03/2021;182.257,30;S;00af5b3a2812859a;campo com | pipe dentro
+000086;Íris Sá;01/05/2023;741.297,36;N;dc0f2fcfb3f6fe0d;campo com | pipe dentro
+000087;João Sá;2021-04-23;618440.80;S;1d61fac36cd5e859;
+000088;José Sá;2020-11-01;62536.09;S;4ebfa5c3cae9b4a7;
+000089;Antônio Ferreira;11/09/2020;988.468,51;N;8a3c3b5e801ef1da;campo com | pipe dentro
+000090;Íris da Silva;09/05/2023;00000000633040,41;N;176132ed069f14f1;"campo com ; ponto-e-vírgula dentro"
+000091;Ana Ço-Testé;20231008;00000000793006,97;S;84dad06a7872bdeb;campo com | pipe dentro
+000092;Antônio Gonçalves;13/04/2023;492842.11;N;5553b2fe6889803e;"campo com ""aspas"" no meio"
+000093;João Ço-Testé;25/11/2020;694770.36;N;c2b01cfdd045dd1c;
+000094;Ana Ferreira;29/06/2020;423.809,98;S;de8ede0ba85c6e4a;
+000095;Íris Ferreira;21/04/2020;522.708,96;N;0d366dfcc28ebd70;"campo com ; ponto-e-vírgula dentro"
+000096;Antônio Müller;2020-09-25;00000000508258,89;S;f920264c0763fcd0;
+000097;José Sá;20/11/2020;97.737,52;S;d7665cdafe049059;sem observação
+000098;Íris da Silva;20230819;00000000306040,91;N;d5b077e06a5d932b;campo com | pipe dentro
+000099;Íris Gonçalves;24/07/2022;532.930,76;S;11df12d7dd30de89;"campo com ""aspas"" no meio"
+000100;Camões Assunção;20250328;296.579,00;N;96418cedd664d264;
+999997;coluna;a;menos
+999998;a;mais;1;2;3;4;5;6;7;8

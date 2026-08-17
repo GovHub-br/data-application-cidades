@@ -171,10 +171,12 @@ class ClienteMinio:
         stream_factory,
         tentativas: int = 3,
         transfer_config: Optional[TransferConfig] = None,
+        progress_cb=None,
     ) -> Tuple[str, str]:
         """Upload a partir de um stream (sem temp file). Retorna (key, sha256).
 
-        stream_factory é um callable que retorna um context manager com .read()."""
+        stream_factory é um callable que retorna um context manager com .read().
+        progress_cb (opcional) é o Callback do boto3: recebe os bytes de cada parte."""
         config = transfer_config or self._DEFAULT_TRANSFER
         import time
 
@@ -182,7 +184,9 @@ class ClienteMinio:
             try:
                 with stream_factory() as src:
                     reader = _HashingReader(src)
-                    self.s3.upload_fileobj(reader, self.bucket, key, Config=config)
+                    self.s3.upload_fileobj(
+                        reader, self.bucket, key, Config=config, Callback=progress_cb
+                    )
                 return key, reader.hexdigest
             except Exception as e:
                 if tentativa == tentativas - 1:

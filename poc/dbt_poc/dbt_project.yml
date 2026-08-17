@@ -1,0 +1,35 @@
+name: poc_lake
+version: "1.0.0"
+config-version: 2
+profile: poc_lake
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+clean-targets: ["target", "dbt_packages", "logs"]
+
+vars:
+  # Timestamp fixo: sem isso _ingested_at muda a cada run e os parquets deixam de ser
+  # comparáveis byte a byte entre execuções (8 bytes/linha de ruído na medição).
+  ingested_at: "{{ env_var('POC_INGESTED_AT', '2026-08-05T00:00:00') }}"
+
+models:
+  poc_lake:
+    bronze:
+      +materialized: external
+      +format: parquet
+      # snappy = o mesmo codec do pyarrow em raw_para_staging.py, senão a comparação
+      # de tamanho estaria medindo compressão, não tipagem.
+      +options:
+        compression: snappy
+    baseline:
+      +materialized: external
+      +format: parquet
+      +options:
+        compression: snappy
+    silver:
+      +materialized: table
+      +database: pg
+      +schema: silver
+
+on-run-start:
+  - "{{ create_poc_macros() }}"

@@ -1,0 +1,35 @@
+# ÚNICO artefato escrito à mão por família. 219 arquivos em produção -> este arquivo.
+#
+# O manifesto já sabe QUAIS arquivos, com QUAL encoding e QUAL delimitador. O que ele não
+# pode saber é a SEMÂNTICA: que dt_prevista_conclusao é uma data brasileira e nu_apf é um
+# APF que precisa normalizar. É isso que este YAML declara.
+
+familia: amostra_caixa_af_gehis_andamento_obra_m
+tabela: caixa_andamento_obra
+particao: anomes
+
+# Um dos 16 arquivos (M20220908) está corrompido na origem: o header tem 4 campos e as
+# linhas de dados têm 8. Com null_padding o DuckDB expõe os campos excedentes como
+# column4..column7, e a inspeção mostrou onde os valores realmente estão:
+#   campo 4 (dt_prevista_inauguracao_situacao_obra) -> data de CONCLUSÃO (65 linhas)
+#   column6 -> situacao_obra (65 linhas)   |   column7 -> situacao_obra (1022 linhas)
+# 65 + 1022 = 1087 = todas as linhas do arquivo, e as duas são mutuamente exclusivas.
+# O pipeline atual (pandas) mantém só 4 colunas e DESCARTA esses campos: perde
+# situacao_obra inteiro nesse arquivo.
+
+colunas:
+  anomes:
+    tipo: integer
+  nu_apf:
+    tipo: apf                      # -> poc_normalize_apf
+  dt_prevista_conclusao:
+    tipo: data_br                  # -> poc_parse_date_br
+    alternativas: [dt_prevista_inauguracao_situacao_obra]
+  dt_prevista_inauguracao:
+    tipo: data_br
+  situacao_obra:
+    tipo: texto
+    alternativas: [column7, column6]
+
+# Colunas que aparecem em algum arquivo mas não entram na bronze (vazias no arquivo torto).
+ignorar: [column4, column5]

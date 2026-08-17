@@ -1,0 +1,10 @@
+.venv/
+.duckdb/
+target/
+logs/
+dbt_packages/
+data/amostra_real/
+resultados/
+.env
+*.log
+__pycache__/

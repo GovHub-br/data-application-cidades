@@ -1,0 +1,24 @@
+# Projeto dbt-POSTGRES da POC — o análogo do airflow_lappis/dags/dbt/mcid.
+#
+# O ponto que este projeto existe para provar: depois que a bronze vira parquet tipado no
+# MinIO exposto como view, a silver continua sendo dbt-postgres comum. Dialeto Postgres,
+# UDFs Postgres, macros Jinja — nada disso muda. O DuckDB não aparece aqui.
+name: poc_silver
+version: "1.0.0"
+config-version: 2
+profile: poc_silver
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+clean-targets: ["target", "dbt_packages", "logs"]
+
+models:
+  poc_silver:
+    silver:
+      +materialized: table
+      # Sem `+schema` aqui: o dbt CONCATENA custom schema com o do target, e sairia
+      # "silver_silver". O schema já vem do profile.
+
+# Mesmo padrão do projeto mcid: os UDFs são criados no início de cada run.
+on-run-start:
+  - "{{ create_udfs() }}"
