@@ -1,0 +1,71 @@
+version: 2
+
+seeds:
+  - name: issue_118_mcmv_serie_temporal_piloto
+    description: >
+      Seed de evidencia da issue #118 com serie anual de UHs contratadas,
+      separando OGU/subsidiado e FGTS/financiado.
+    columns:
+      - name: ano
+        data_tests:
+          - not_null
+          - unique
+      - name: snapshot_date
+        data_tests:
+          - not_null
+      - name: source_file
+        data_tests:
+          - not_null
+
+models:
+  - name: historico_mcmv_serie_temporal_snapshot
+    description: >
+      Base piloto versionada para estrategia de dados historicos do MCMV.
+      Gera uma linha por ano e linha historica, com snapshot_date, hash_linha,
+      janela de validade e indicador de registro corrente.
+    columns:
+      - name: id_historico_snapshot
+        description: Chave tecnica unica da versao do registro historico.
+        data_tests:
+          - not_null
+          - unique
+      - name: id_negocio_historico
+        description: Chave logica estavel por programa, linha historica e ano.
+        data_tests:
+          - not_null
+      - name: programa
+        data_tests:
+          - not_null
+      - name: linha_historica
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['OGU/Subsidiado', 'FGTS/Financiado']
+      - name: granularidade_temporal
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['ano']
+      - name: ano
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        data_tests:
+          - not_null
+      - name: quantidade_uh
+        data_tests:
+          - not_null
+      - name: snapshot_date
+        data_tests:
+          - not_null
+      - name: hash_linha
+        data_tests:
+          - not_null
+      - name: dt_valid_from
+        data_tests:
+          - not_null
+      - name: is_current
+        data_tests:
+          - not_null

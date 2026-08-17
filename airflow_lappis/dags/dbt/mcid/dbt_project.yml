@@ -51,6 +51,12 @@ models:
       silver:
         +materialized: table
 
+    mcmv_historico_dbt:
+      +materialized: table
+      +schema: mcmv_historico
+      piloto:
+        +materialized: table
+
     conjuntura_dbt:
       +materialized: table
       +schema: conjuntura
@@ -66,3 +72,9 @@ models:
 
 on-run-start:
   - '{{create_udfs()}}'
+
+seeds:
+  mcid:
+    mcmv_historico:
+      +schema: mcmv_historico
+      +quote_columns: false

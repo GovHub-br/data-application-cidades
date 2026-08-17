@@ -1,0 +1,13 @@
+campo,tipo,obrigatorio,descricao
+id_historico_snapshot,text,sim,Chave tecnica unica da versao do registro no snapshot.
+id_negocio_historico,text,sim,Chave logica estavel do registro de negocio.
+dt_referencia,date,sim,Data que o dado representa no negocio.
+snapshot_date,date,sim,Data do snapshot/captura processada.
+source_file,text,sim,Arquivo ou artefato usado como origem.
+source_path,text,sim,Caminho logico no MinIO/staging.
+hash_linha,text,sim,Hash do conteudo relevante para detectar mudanca e reprocessamento.
+dt_ingest,timestamp,sim,Data/hora de ingestao no ambiente analitico.
+dt_valid_from,timestamp,sim,Inicio da validade da versao.
+dt_valid_to,timestamp,nao,Fim da validade da versao; nulo indica versao corrente.
+is_current,boolean,sim,Indica a versao corrente da chave logica.
+estrategia_versionamento,text,sim,Tipo de versionamento aplicado.
