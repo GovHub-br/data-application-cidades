@@ -39,3 +39,9 @@ macros:
       Macro que converte valores financeiros em texto para numeric(15,2).
       Suporta formato GFAR (zeros à esquerda + vírgula), brasileiro padrão
       (ponto milhar + vírgula decimal) e formato numérico simples.
+
+  - name: mcmv_silver_empty_contract
+    description: >
+      Macro que cria um select vazio com o contrato comum da camada
+      mcmv_silver. Usada para frentes ainda sem fonte carregada no staging,
+      preservando schema físico estável para dashboards e cargas futuras.

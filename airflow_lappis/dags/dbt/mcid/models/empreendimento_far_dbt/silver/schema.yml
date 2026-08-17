@@ -13,6 +13,9 @@ models:
     columns:
       - name: apf
         description: Chave primária (Arranjo Produtivo Financeiro). ID único do empreendimento contratado na Caixa.
+        data_tests:
+          - unique
+          - not_null
       
       # Dados do Empreendimento
       - name: portaria_selecao

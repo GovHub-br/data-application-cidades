@@ -45,6 +45,12 @@ models:
       gold:
         +materialized: table
 
+    mcmv_silver_dbt:
+      +materialized: table
+      +schema: mcmv_silver
+      silver:
+        +materialized: table
+
     conjuntura_dbt:
       +materialized: table
       +schema: conjuntura

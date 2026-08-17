@@ -1,0 +1,11 @@
+fonte,tabela,registros_total,registros_validos,observacao
+FAR,empreendimento_far.empreendimento,1646,1646,Silver legada ja materializada no Postgres.
+Entidades,entidades_fds.fds_empreendimento,343,343,Silver legada ja materializada no Postgres.
+Conjuntura,conjuntura_silver.silver_fgts_financiamentos_habitacionais,47,47,Silver de FGTS habitacional ja materializada no Postgres.
+Rural BB,sftp.int057_ministeriocidades_pnhr_bb_empreendimentos_20241031,1087,1085,Registros validos possuem pelo menos 40 campos apos split por separador pipe.
+Rural CAIXA,sftp.int065_ministeriocidades_pnhr_caixa_empreendimentos_20240830,8419,8389,Registros validos possuem pelo menos 40 campos apos split por separador pipe.
+Classe Media,sftp.pmcmv_faixa3_mcid_2026_06_26,110979,110979,Todos os registros consultados possuem contrato preenchido.
+Reforma Casa Brasil,sftp.pmcmv_reformas_mcid_2026_06_26,100859,100859,Todos os registros consultados possuem contrato preenchido.
+MCMV Cidades,sftp.pmcmv_cidades_mcid_2026_03_01,197,197,Todos os registros consultados possuem contrato preenchido.
+Pro-Moradia,sftp,0,0,Nenhuma tabela encontrada para pro_moradia/promoradia/moradia no inventario Postgres.
+SUB50/FNHIS,MinIO raw + __dados_brutos,8328,8328,Fontes localizadas: 7121 propostas apresentadas e 1207 propostas selecionadas em novo_mcmv_fnhis_sub_50_*; silver materializa quando as tabelas existirem em __dados_brutos.

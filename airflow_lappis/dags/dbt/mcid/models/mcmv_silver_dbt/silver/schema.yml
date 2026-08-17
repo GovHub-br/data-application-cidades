@@ -1,0 +1,81 @@
+version: 2
+
+sources:
+  - name: sftp_mcmv
+    schema: sftp
+    description: >
+      Fontes carregadas a partir do SFTP/MinIO para montagem da camada silver
+      padronizada do Minha Casa Minha Vida.
+    tables:
+      - name: pmcmv_faixa3_mcid_2026_06_26
+        description: Base GEAVO/FGTS de contratos PMCMV Faixa 3 / Classe Media.
+      - name: pmcmv_reformas_mcid_2026_06_26
+        description: Base GEAVO/FGTS de contratos Reforma Casa Brasil.
+      - name: pmcmv_cidades_mcid_2026_03_01
+        description: Base PMCMV Cidades / emendas e entes publicos.
+      - name: int057_ministeriocidades_pnhr_bb_empreendimentos_20241031
+        description: Base PNHR/Rural Banco do Brasil, recebida com linhas em separador pipe.
+      - name: int065_ministeriocidades_pnhr_caixa_empreendimentos_20240830
+        description: Base PNHR/Rural CAIXA, recebida com linhas em separador pipe.
+
+models:
+  - name: silver_mcmv_frentes_base
+    description: >
+      Uniao padronizada das bases silver por frente do MCMV. Mantem contrato
+      comum para APF, contrato, empreendimento, territorio, responsavel, UHs,
+      valores, execucao, status e datas.
+    columns:
+      - name: id_silver_frente
+        description: Identificador tecnico do registro padronizado.
+        data_tests:
+          - not_null
+      - name: programa
+        description: Programa de referencia.
+        data_tests:
+          - not_null
+      - name: frente_mcmv
+        description: Frente/linha operacional do MCMV.
+        data_tests:
+          - not_null
+      - name: apf
+        description: APF quando existente na fonte.
+      - name: contrato
+        description: Numero de contrato quando existente na fonte.
+      - name: codigo_empreendimento
+        description: Codigo fisico do empreendimento ou chave equivalente.
+      - name: quantidade_empreendimentos
+        description: Quantidade de empreendimentos representada no registro.
+      - name: quantidade_contratos
+        description: Quantidade de contratos representada no registro.
+      - name: quantidade_uh
+        description: Quantidade de unidades habitacionais contratadas/monitoradas.
+      - name: valor_contratado
+        description: Valor contratado ou investimento de referencia.
+      - name: valor_desembolsado
+        description: Valor desembolsado/liberado quando disponivel.
+      - name: dt_silver
+        description: Timestamp de geracao da camada silver.
+
+  - name: silver_mcmv_minha_casa_minha_vida_base
+    description: Recorte geral operacional do programa, consolidando as frentes disponiveis.
+  - name: silver_mcmv_far_base
+    description: Base padronizada da frente FAR.
+  - name: silver_mcmv_entidades_base
+    description: Base padronizada da frente Entidades/FDS.
+  - name: silver_mcmv_rural_base
+    description: Base padronizada da frente Rural/PNHR a partir das tabelas INT057 e INT065.
+  - name: silver_mcmv_classe_media_base
+    description: Base padronizada da frente Classe Media / Faixa 3 com dados GEAVO/FGTS.
+  - name: silver_mcmv_cidades_base
+    description: Base padronizada da frente MCMV Cidades.
+  - name: silver_mcmv_reforma_base
+    description: Base padronizada da frente Reforma Casa Brasil com dados GEAVO/FGTS.
+  - name: silver_mcmv_conjuntura_base
+    description: Base padronizada de indicadores de conjuntura, incluindo FGTS habitacional.
+  - name: silver_mcmv_pro_moradia_base
+    description: Contrato padronizado da frente Pro-Moradia; fonte ainda nao localizada no schema sftp.
+  - name: silver_mcmv_sub50_base
+    description: >
+      Base padronizada da frente SUB50/FNHIS a partir das propostas apresentadas
+      e selecionadas quando as tabelas novo_mcmv_fnhis_sub_50_* estiverem
+      materializadas no schema __dados_brutos.
