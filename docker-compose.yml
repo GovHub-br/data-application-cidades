@@ -1,6 +1,9 @@
 # Base configuration for Airflow services
 x-airflow-common: &airflow-common
-  build: .
+  build:
+    context: .
+    # Use host DNS during image builds; Docker bridge DNS can fail resolving PyPI locally.
+    network: host
   user: "${AIRFLOW_UID:-50000}:0"
   env_file:
     - .env
@@ -31,7 +34,12 @@ x-airflow-environment: &airflow-common-env
   AIRFLOW__WEBSERVER__NAVBAR_COLOR: '#98DFFF'
   AIRFLOW__WEBSERVER__RELOAD_ON_PLUGIN_CHANGE: 'true'
   AIRFLOW__WEBSERVER__SECRET_KEY: '42'
-  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:$PYTHONPATH"
+  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers"
+  DB_DW_HOST: ${DB_DW_HOST_MCID}
+  DB_DW_PORT: ${DB_DW_PORT_MCID}
+  DB_DW_USER: ${DB_DW_USER_MCID}
+  DB_DW_PASSWORD: ${DB_DW_PASSWORD_MCID}
+  DB_DW_DBNAME: ${DB_DW_DBNAME_MCID}
   _AIRFLOW_DB_MIGRATE: 'true'
   _AIRFLOW_WWW_USER_CREATE: 'true'
   _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
