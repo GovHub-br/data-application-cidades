@@ -1,0 +1,116 @@
+source:
+  type: postgres
+  serviceName: Cidades
+  serviceConnection:
+    config:
+      type: Postgres
+      hostPort: ${DB_DW_HOST}:${DB_DW_PORT}
+      username: ${DB_DW_USER}
+      authType:
+        password: ${DB_DW_PASSWORD}
+      database: ${DB_DW_DBNAME}
+      sslMode: disable
+
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+      includeTables: true
+      includeViews: true
+      schemaFilterPattern:
+        includes:
+          - '^conjuntura_bronze$'
+          - '^conjuntura_gold$'
+          - '^conjuntura_silver$'
+          - '^empreendimento_far$'
+          - '^entidades_fds$'
+      # Allowlist auditada: somente modelos dbt com descricao de modelo,
+      # tags/tier/certification e 100% das colunas documentadas.
+      tableFilterPattern:
+        includes:
+          - '^bronze_abecip_poupanca_sbpe$'
+          - '^bronze_bacen_financiamentos_imobiliarios$'
+          - '^bronze_fgv_icst$'
+          - '^bronze_fgv_incc_m$'
+          - '^bronze_fipezap_locacao$'
+          - '^bronze_ibge_pib_construcao_civil$'
+          - '^bronze_ibge_pnadc_ocupados_construcao$'
+          - '^bronze_ibge_pnadc_rendimento_construcao$'
+          - '^bronze_ibge_sinapi$'
+          - '^bronze_imob_infomoney$'
+          - '^bronze_novo_caged$'
+          - '^silver_abecip_novos_financiamentos_imobiliarios$'
+          - '^silver_abecip_poupanca_sbpe$'
+          - '^silver_abecip_sbpe_financiamentos_habitacionais$'
+          - '^silver_abramat_indice$'
+          - '^silver_bacen_financiamentos_imobiliarios$'
+          - '^silver_balancos_empresas$'
+          - '^silver_cbic_lancamentos_vendas$'
+          - '^silver_fgts_financiamentos_habitacionais$'
+          - '^silver_fgv_icst$'
+          - '^silver_fgv_incc_m$'
+          - '^silver_financiamentos_habitacionais$'
+          - '^silver_fipezap_locacao$'
+          - '^silver_ibge_pib_construcao_civil$'
+          - '^silver_ibge_pnadc_ocupados_construcao$'
+          - '^silver_ibge_pnadc_rendimento_construcao$'
+          - '^silver_ibge_sinapi$'
+          - '^silver_imob_infomoney$'
+          - '^silver_novo_caged$'
+          - '^silver_ticket_medio_empresas$'
+          - '^gold_abecip_novos_financiamentos_imobiliarios$'
+          - '^gold_balancos_empresas_lancamentos$'
+          - '^gold_balancos_empresas_vendas$'
+          - '^gold_cbic_lancamentos$'
+          - '^gold_cbic_lancamentos_regiao$'
+          - '^gold_cbic_vendas$'
+          - '^gold_cbic_vendas_regiao$'
+          - '^gold_empregos_construcao$'
+          - '^gold_fgts_renda_familiar$'
+          - '^gold_financiamento_pf_por_faixa$'
+          - '^gold_financiamentos_habitacionais$'
+          - '^gold_financiamentos_imobiliarios$'
+          - '^gold_ibge_pnad_construcao$'
+          - '^gold_indicadores_financiamento_pf$'
+          - '^gold_indices_mercado_imobiliario$'
+          - '^gold_pib_construcao_civil$'
+          - '^gold_precos_construcao$'
+          - '^gold_saldo_caderneta_poupanca$'
+          - '^gold_ticket_medio_vs_incc$'
+          - '^gold_uh_condicao_uso$'
+          - '^cadastro_pj$'
+          - '^consolidado$'
+          - '^dados_prioritarios_caixa$'
+          - '^financeiro_mensal$'
+          - '^obra_mensal$'
+          - '^empreendimento$'
+          - '^evolucao_financeira$'
+          - '^evolucao_financeira_chart$'
+          - '^execucao_fisica_financeira_chart$'
+          - '^ficha_empreendimento$'
+          - '^mapa_nacional$'
+          - '^panorama_estadual$'
+          - '^resumo_gerencial$'
+          - '^fds_cadastro_pj$'
+          - '^fds_dados_prioritarios_entregas$'
+          - '^fds_financeiro_mensal$'
+          - '^fds_int_059_caixa_pj$'
+          - '^fds_obra_mensal$'
+          - '^fds_trabalho_social$'
+          - '^fds_empreendimento$'
+          - '^fds_evolucao_financeira$'
+          - '^fds_evolucao_financeira_chart$'
+          - '^fds_ficha_empreendimento$'
+          - '^fds_panorama_entidade$'
+
+sink:
+  type: metadata-rest
+  config:
+    bulk_sink_batch_size: 10
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: ${OM_HOST}
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${INGESTION_TOKEN}

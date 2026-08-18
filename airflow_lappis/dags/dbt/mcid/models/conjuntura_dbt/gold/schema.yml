@@ -1,28 +1,980 @@
 version: 2
+
 models:
-  - name: gold_indices_mercado_imobiliario
+  - name: gold_abecip_novos_financiamentos_imobiliarios
     description: >
-      Tabela gold consolidada com variações dos principais índices do mercado imobiliário:
-      IMOB (Infomoney), FIPEZAP (locação), ICST (FGV-IBRE) e ABRAMAT.
-      Estruturada com 4 períodos de comparação para consumo direto no Superset.
-      Origem: silver_imob_infomoney, silver_fipezap_locacao, silver_fgv_icst, silver_abramat_indice.
-    meta: {}
-    tags:
-      - gold
-      - indices
-      - mercado_imobiliario
+      Uma linha por ano, mes e banco com o volume de novos financiamentos
+      imobiliarios da ABECIP, participacao no total e variacao contra o mesmo
+      mes do ano anterior, tanto em valor quanto em unidades habitacionais.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FontesInstitucionais.ABECIP"
+          - "MCID.IndicadoresConjunturais.FinanciamentoImobiliario"
+    columns:
+      - name: ano
+        description: Ano de referencia dos financiamentos.
+      - name: mes
+        description: Mes de referencia dos financiamentos.
+      - name: banco
+        description: Instituicao financeira ou linha de totalizacao informada pela ABECIP.
+      - name: valor_bi
+        description: Valor dos novos financiamentos no mes, em bilhoes de reais.
+      - name: perc_valor
+        description: Participacao percentual do banco no valor financiado do mes.
+      - name: var_ano_valor
+        description: Variacao percentual do valor contra o mesmo banco e mes do ano anterior.
+      - name: uh
+        description: Quantidade de unidades habitacionais financiadas no mes.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: perc_uh
+        description: Participacao percentual do banco nas unidades financiadas do mes.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: var_ano_uh
+        description: Variacao percentual das unidades contra o mesmo banco e mes do ano anterior.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: ordem
+        description: Ordem de exibicao das instituicoes financeiras nos paineis.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_balancos_empresas_lancamentos
+    description: >
+      Uma linha por empresa de capital aberto com variacoes percentuais dos
+      lancamentos imobiliarios do primeiro trimestre de 2026 contra o trimestre
+      anterior, o mesmo trimestre de 2025 e janelas acumuladas de doze meses.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.LancamentoImobiliario"
+    columns:
+      - name: nome_empresa
+        description: Nome da incorporadora ou construtora analisada.
+      - name: variacao_4t25
+        description: Variacao percentual dos lancamentos do primeiro trimestre de 2026 contra o quarto trimestre de 2025.
+      - name: variacao_1t25
+        description: Variacao percentual dos lancamentos do primeiro trimestre de 2026 contra o primeiro trimestre de 2025.
+      - name: variacao_12m_26_25
+        description: Variacao percentual dos lancamentos acumulados em doze meses de 2026 contra a janela equivalente de 2025.
+      - name: variacao_12m_25_24
+        description: Variacao percentual dos lancamentos acumulados em doze meses de 2025 contra a janela equivalente de 2024.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_balancos_empresas_vendas
+    description: >
+      Uma linha por empresa de capital aberto com variacoes percentuais das
+      vendas imobiliarias do primeiro trimestre de 2026 contra o trimestre
+      anterior, o mesmo trimestre de 2025 e janelas acumuladas de doze meses.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.VendaImobiliaria"
+    columns:
+      - name: nome_empresa
+        description: Nome da incorporadora ou construtora analisada.
+      - name: variacao_4t25
+        description: Variacao percentual das vendas do primeiro trimestre de 2026 contra o quarto trimestre de 2025.
+      - name: variacao_1t25
+        description: Variacao percentual das vendas do primeiro trimestre de 2026 contra o primeiro trimestre de 2025.
+      - name: variacao_12m_26_25
+        description: Variacao percentual das vendas acumuladas em doze meses de 2026 contra a janela equivalente de 2025.
+      - name: variacao_12m_25_24
+        description: Variacao percentual das vendas acumuladas em doze meses de 2025 contra a janela equivalente de 2024.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_cbic_lancamentos
+    description: >
+      Uma linha por periodo comparativo com a quantidade de lancamentos
+      imobiliarios apurada pela CBIC, separando unidades do MCMV, demais
+      segmentos e o total do mercado.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FontesInstitucionais.CBIC"
+          - "MCID.IndicadoresConjunturais.LancamentoImobiliario"
     columns:
       - name: periodo
-        description: "Período de comparação (ex: DEZ 25 vs. NOV 25, JAN-DEZ/25)."
+        description: Rotulo do trimestre ou da janela anual apresentada no painel.
+      - name: total
+        description: Quantidade total de unidades lancadas no periodo.
+      - name: mcmv
+        description: Quantidade de unidades do MCMV lancadas no periodo.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: demais
+        description: Quantidade de unidades lancadas fora do MCMV no periodo.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_cbic_lancamentos_regiao
+    description: >
+      Uma linha por macrorregiao com os lancamentos imobiliarios totais e do
+      MCMV no quarto trimestre de 2025, incluindo a participacao do programa no
+      periodo atual e nos dois periodos usados para comparacao.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FontesInstitucionais.CBIC"
+          - "MCID.IndicadoresConjunturais.LancamentoImobiliario"
+    columns:
+      - name: regiao
+        description: Nome da macrorregiao brasileira.
+      - name: total
+        description: Quantidade total de unidades lancadas na regiao no quarto trimestre de 2025.
+      - name: mcmv
+        description: Quantidade de unidades do MCMV lancadas na regiao no quarto trimestre de 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: perc_mcmv_4t25
+        description: Participacao percentual do MCMV nos lancamentos regionais do quarto trimestre de 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: perc_mcmv_3t25
+        description: Participacao percentual do MCMV nos lancamentos regionais do terceiro trimestre de 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: perc_mcmv_4t24
+        description: Participacao percentual do MCMV nos lancamentos regionais do quarto trimestre de 2024.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_cbic_vendas
+    description: >
+      Uma linha por periodo comparativo com a quantidade de vendas de imoveis
+      apurada pela CBIC, separando unidades do MCMV, demais segmentos e o total
+      do mercado.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FontesInstitucionais.CBIC"
+          - "MCID.IndicadoresConjunturais.VendaImobiliaria"
+    columns:
+      - name: periodo
+        description: Rotulo do trimestre ou da janela anual apresentada no painel.
+      - name: total
+        description: Quantidade total de unidades vendidas no periodo.
+      - name: mcmv
+        description: Quantidade de unidades do MCMV vendidas no periodo.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: demais
+        description: Quantidade de unidades vendidas fora do MCMV no periodo.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_cbic_vendas_regiao
+    description: >
+      Uma linha por macrorregiao com as vendas imobiliarias totais e do MCMV no
+      quarto trimestre de 2025, incluindo a participacao do programa no periodo
+      atual e nos dois periodos usados para comparacao.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FontesInstitucionais.CBIC"
+          - "MCID.IndicadoresConjunturais.VendaImobiliaria"
+    columns:
+      - name: regiao
+        description: Nome da macrorregiao brasileira.
+      - name: total
+        description: Quantidade total de unidades vendidas na regiao no quarto trimestre de 2025.
+      - name: mcmv
+        description: Quantidade de unidades do MCMV vendidas na regiao no quarto trimestre de 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: perc_mcmv_4t25
+        description: Participacao percentual do MCMV nas vendas regionais do quarto trimestre de 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: perc_mcmv_3t25
+        description: Participacao percentual do MCMV nas vendas regionais do terceiro trimestre de 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: perc_mcmv_4t24
+        description: Participacao percentual do MCMV nas vendas regionais do quarto trimestre de 2024.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_empregos_construcao
+    description: >
+      Uma linha por ano e trimestre com criacao liquida de empregos formais e
+      estoque de postos na construcao, suas variacoes e os indicadores
+      acumulados no ano, calculados a partir do Novo Caged.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.NovoCAGED"
+    columns:
+      - name: ano
+        description: Ano de referencia dos indicadores de emprego.
+      - name: trimestre
+        description: Trimestre de referencia dos indicadores de emprego.
+      - name: mes_ini
+        description: Primeiro mes coberto pelo trimestre.
+      - name: mes_fim
+        description: Ultimo mes coberto pelo trimestre.
+      - name: criacao_liquida_saldo
+        description: Saldo liquido de empregos formais criados no trimestre.
+      - name: saldo_var_tri_pct
+        description: Variacao percentual do saldo liquido contra o trimestre imediatamente anterior.
+      - name: total_postos_estoque
+        description: Estoque de postos formais observado ao fim do trimestre.
+      - name: estoque_var_ano_pct
+        description: Variacao percentual do estoque contra o mesmo trimestre do ano anterior.
+      - name: saldo_acum_ano
+        description: Saldo liquido de empregos acumulado desde o inicio do ano.
+      - name: estoque_acum_ano
+        description: Maior estoque de postos observado no ano ate o trimestre.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_fgts_renda_familiar
+    description: >
+      Uma linha por faixa de renda ou categoria de financiamento com unidades
+      novas e usadas financiadas pelo FGTS em 2024 e 2025 e suas respectivas
+      variacoes percentuais anuais.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FundosEFontes.FGTS"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: ordem
+        description: Ordem de exibicao das faixas de renda e totalizadores.
+      - name: categoria
+        description: Faixa de renda ou categoria do financiamento habitacional.
+      - name: uh_usadas_2024
+        description: Quantidade de unidades habitacionais usadas financiadas em 2024.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: uh_novas_2024
+        description: Quantidade de unidades habitacionais novas financiadas em 2024.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: uh_usadas_2025
+        description: Quantidade de unidades habitacionais usadas financiadas em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: var_usadas
+        description: Variacao percentual das unidades usadas financiadas em 2025 contra 2024.
+      - name: uh_novas_2025
+        description: Quantidade de unidades habitacionais novas financiadas em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: var_novas
+        description: Variacao percentual das unidades novas financiadas em 2025 contra 2024.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+
+  - name: gold_financiamento_pf_por_faixa
+    description: >
+      Uma linha por faixa ou modalidade do financiamento habitacional para
+      pessoa fisica, comparando quantidades de unidades e valores contratados
+      em 2024 e 2025 a partir dos dados do FGTS.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FundosEFontes.FGTS"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: ordem
+        description: Ordem de exibicao das faixas, modalidades e totalizadores.
+      - name: categoria
+        description: Faixa de renda ou modalidade do financiamento para pessoa fisica.
+      - name: uh_2024
+        description: Quantidade de unidades habitacionais financiadas em 2024.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: val_bi_2024
+        description: Valor financiado em 2024, em bilhoes de reais.
+      - name: uh_2025
+        description: Quantidade de unidades habitacionais financiadas em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: val_bi_2025
+        description: Valor financiado em 2025, em bilhoes de reais.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_financiamentos_habitacionais
+    description: >
+      Uma linha por periodo comparativo com a quantidade de unidades
+      habitacionais financiadas pelas fontes FGTS e SBPE em trimestres e janelas
+      acumuladas selecionadas de 2024 e 2025.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FundosEFontes.FGTS"
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: periodo
+        description: Rotulo do trimestre ou da janela anual apresentada no painel.
+      - name: fgts_uh
+        description: Quantidade de unidades habitacionais financiadas com recursos do FGTS.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.FGTS"
+              - "MCID.Identificadores.UH"
+      - name: sbpe_uh
+        description: Quantidade de unidades habitacionais financiadas com recursos do SBPE.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_financiamentos_imobiliarios
+    description: >
+      Uma linha por periodo comparativo com concessoes, taxas de juros e
+      inadimplencia do financiamento imobiliario para pessoas fisicas e
+      juridicas, incluindo totais acumulados de concessoes em doze meses.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FontesInstitucionais.BACEN"
+          - "MCID.IndicadoresConjunturais.FinanciamentoImobiliario"
+    columns:
+      - name: periodo
+        description: Mes ou janela acumulada usada na comparacao dos indicadores.
+      - name: pf_concessoes
+        description: Valor das concessoes para pessoas fisicas, em milhoes de reais.
+      - name: pf_taxa_juros
+        description: Taxa anual de juros do financiamento para pessoas fisicas, em percentual.
+      - name: pf_inadimplencia
+        description: Taxa de inadimplencia das pessoas fisicas, em percentual.
+      - name: pj_concessoes
+        description: Valor das concessoes para pessoas juridicas, em milhoes de reais.
+      - name: pj_taxa_juros
+        description: Taxa anual de juros do financiamento para pessoas juridicas, em percentual.
+      - name: pj_inadimplencia
+        description: Taxa de inadimplencia das pessoas juridicas, em percentual.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_ibge_pnad_construcao
+    description: >
+      Uma linha por trimestre com populacao ocupada e rendimento medio na
+      construcao e no total da economia, acompanhados das variacoes publicadas
+      pela PNAD Continua do IBGE.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PNADContinua"
+          - "MCID.FontesInstitucionais.IBGE"
+    columns:
+      - name: ano
+        description: Ano de referencia dos indicadores da PNAD Continua.
+      - name: trimestre
+        description: Trimestre de referencia dos indicadores da PNAD Continua.
+      - name: periodo
+        description: Identificador do periodo de referencia usado nas fontes de ocupacao e rendimento.
+      - name: pnad_const_milhares
+        description: Quantidade de pessoas ocupadas na construcao, em milhares.
+      - name: pnad_total_milhares
+        description: Quantidade total de pessoas ocupadas, em milhares.
+      - name: pnad_const_var_mes
+        description: Variacao percentual da ocupacao na construcao contra o periodo anterior.
+      - name: pnad_const_var_ano
+        description: Variacao percentual anual da ocupacao na construcao.
+      - name: rend_const_rs
+        description: Rendimento medio das pessoas ocupadas na construcao, em reais.
+      - name: rend_total_rs
+        description: Rendimento medio do total de pessoas ocupadas, em reais.
+      - name: rend_const_var_mes
+        description: Variacao percentual do rendimento na construcao contra o periodo anterior.
+      - name: rend_const_var_ano
+        description: Variacao percentual anual do rendimento na construcao.
+      - name: dt_ingest
+        description: Timestamp mais recente das ingestoes de ocupacao e rendimento.
+      - name: dt_silver
+        description: Timestamp mais recente dos processamentos Silver de ocupacao e rendimento.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_indicadores_financiamento_pf
+    description: >
+      Registro consolidado dos principais indicadores de financiamento
+      habitacional para pessoa fisica em 2025, com volumes do FGTS, SBPE e
+      Pro-Cotista e variacoes percentuais contra 2024.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FundosEFontes.FGTS"
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: mcmv_sbpe_uh_25
+        description: Quantidade combinada de unidades financiadas pelo FGTS e adquiridas via SBPE em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: mcmv_sbpe_val_bi_25
+        description: Valor combinado dos financiamentos FGTS e das aquisicoes SBPE em 2025, em bilhoes de reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+              - "MCID.FundosEFontes.SBPE"
+      - name: mcmv_sbpe_var_uh
+        description: Variacao percentual anual da quantidade combinada de unidades financiadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: mcmv_sbpe_var_val
+        description: Variacao percentual anual do valor combinado dos financiamentos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_const_uh_25
+        description: Quantidade de unidades financiadas pelo SBPE para construcao em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: sbpe_const_bi_25
+        description: Valor financiado pelo SBPE para construcao em 2025, em bilhoes de reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_const_var_uh
+        description: Variacao percentual anual das unidades financiadas pelo SBPE para construcao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: sbpe_const_var_bi
+        description: Variacao percentual anual do valor financiado pelo SBPE para construcao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: pro_cotista_uh_25
+        description: Quantidade de unidades financiadas pela modalidade Pro-Cotista em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: pro_cotista_val_bi_25
+        description: Valor financiado pela modalidade Pro-Cotista em 2025, em bilhoes de reais.
+      - name: pro_cotista_var_uh
+        description: Variacao percentual anual das unidades financiadas pela modalidade Pro-Cotista.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: pro_cotista_var_val
+        description: Variacao percentual anual do valor financiado pela modalidade Pro-Cotista.
+      - name: fin_pf_uh_25
+        description: Quantidade total de unidades financiadas para pessoa fisica pelo FGTS em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.FGTS"
+              - "MCID.Identificadores.UH"
+      - name: fin_pf_val_bi_25
+        description: Valor total financiado para pessoa fisica pelo FGTS em 2025, em bilhoes de reais.
+      - name: fin_pf_var_uh
+        description: Variacao percentual anual da quantidade total financiada para pessoa fisica.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.FGTS"
+              - "MCID.Identificadores.UH"
+      - name: fin_pf_var_val
+        description: Variacao percentual anual do valor total financiado para pessoa fisica.
+      - name: dt_ingest
+        description: Timestamp mais recente das ingestoes FGTS e ABECIP usadas no calculo.
+      - name: dt_silver
+        description: Timestamp mais recente dos processamentos Silver usados no calculo.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_indices_mercado_imobiliario
+    description: >
+      Uma linha por periodo de comparacao com variacoes dos indices IMOB,
+      FIPEZAP de locacao, ICST e ABRAMAT, consolidando fontes de mercado para
+      consumo direto em paineis de conjuntura imobiliaria.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+        - indices
+        - mercado_imobiliario
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.IMOB"
+          - "MCID.FontesInstitucionais.B3"
+          - "MCID.IndicadoresConjunturais.FipeZapLocacao"
+          - "MCID.IndicadoresConjunturais.ICST"
+          - "MCID.FontesInstitucionais.FGVIBRE"
+          - "MCID.IndicadoresConjunturais.IndiceABRAMAT"
+          - "MCID.FontesInstitucionais.ABRAMAT"
+    columns:
+      - name: periodo
+        description: Periodo ou janela usada para comparar os indices de mercado.
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values:
+                - "DEZ 25 vs. NOV 25"
+                - "DEZ 25 vs. DEZ 24"
+                - "JAN-DEZ/25"
+                - "JAN-DEZ/24"
       - name: imob_var
-        description: Variação percentual do Índice IMOB no período.
+        description: Variacao percentual do indice IMOB no periodo.
       - name: fipezap_var
-        description: Variação percentual do Índice FipeZap de locação no período.
+        description: Variacao percentual do indice FIPEZAP de locacao no periodo.
       - name: icst_var
-        description: Variação percentual do Índice ICST (sem ajuste sazonal) no período.
+        description: Variacao percentual do ICST sem ajuste sazonal no periodo.
       - name: abramat_var
-        description: Variação percentual do Índice ABRAMAT no período.
-    data_tests:
-      - row_count_match:
-          source_table: conjuntura_silver.silver_fgv_icst
-          target_table: conjuntura_gold.gold_indices_mercado_imobiliario
+        description: Variacao percentual do indice ABRAMAT no periodo.
+      - name: dt_ingest
+        description: Timestamp mais recente das ingestoes das quatro fontes de indices.
+      - name: dt_silver
+        description: Timestamp mais recente dos processamentos Silver das quatro fontes.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+  - name: gold_pib_construcao_civil
+    description: >
+      Uma linha por tipo de indicador do PIB da construcao civil com as
+      variacoes percentuais trimestrais do quarto trimestre de 2024 aos quatro
+      trimestres de 2025, conforme a serie do IBGE.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PIBConstrucaoCivil"
+          - "MCID.FontesInstitucionais.IBGE"
+    columns:
+      - name: indicador
+        description: Tipo de variacao do PIB da construcao civil representado na linha.
+      - name: tri_2024_4
+        description: Valor percentual do indicador no quarto trimestre de 2024.
+      - name: tri_2025_1
+        description: Valor percentual do indicador no primeiro trimestre de 2025.
+      - name: tri_2025_2
+        description: Valor percentual do indicador no segundo trimestre de 2025.
+      - name: tri_2025_3
+        description: Valor percentual do indicador no terceiro trimestre de 2025.
+      - name: tri_2025_4
+        description: Valor percentual do indicador no quarto trimestre de 2025.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_precos_construcao
+    description: >
+      Registro consolidado dos custos e variacoes do SINAPI e do INCC-M em
+      dezembro de 2025, incluindo referencias anuais de dezembro de 2024 para
+      comparacao dos precos da construcao.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.SINAPI"
+          - "MCID.FontesInstitucionais.IBGE"
+          - "MCID.IndicadoresConjunturais.INCCM"
+          - "MCID.FontesInstitucionais.FGVIBRE"
+    columns:
+      - name: sinapi_custo_m2_dez25
+        description: Custo nacional da construcao por metro quadrado no SINAPI em dezembro de 2025, em reais.
+      - name: sinapi_var_mes_dez25
+        description: Variacao percentual mensal do SINAPI em dezembro de 2025.
+      - name: sinapi_var_12m_dez25
+        description: Variacao percentual do SINAPI em doze meses ate dezembro de 2025.
+      - name: sinapi_var_12m_dez24
+        description: Variacao percentual do SINAPI em doze meses ate dezembro de 2024.
+      - name: incc_indice_dez25
+        description: Nivel do indice INCC-M em dezembro de 2025.
+      - name: incc_var_mes_dez25
+        description: Variacao percentual mensal do INCC-M em dezembro de 2025.
+      - name: incc_var_12m_dez25
+        description: Variacao percentual do INCC-M em doze meses ate dezembro de 2025.
+      - name: incc_var_12m_dez24
+        description: Variacao percentual do INCC-M em doze meses ate dezembro de 2024.
+      - name: dt_ingest
+        description: Timestamp mais recente das ingestoes SINAPI e INCC-M usadas no calculo.
+      - name: dt_silver
+        description: Timestamp mais recente dos processamentos Silver usados no calculo.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_saldo_caderneta_poupanca
+    description: >
+      Uma linha por periodo comparativo com a captacao liquida da caderneta de
+      poupanca do SBPE em meses selecionados e nos acumulados anuais de 2024 e
+      2025, expressa em bilhoes de reais.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.CaptacaoLiquida"
+    columns:
+      - name: ordem
+        description: Ordem cronologica e de exibicao dos periodos comparativos.
+      - name: periodo
+        description: Mes ou janela anual representada na linha.
+      - name: cap_liq_bi
+        description: Captacao liquida da poupanca SBPE no periodo, em bilhoes de reais.
+      - name: dt_ingest
+        description: Timestamp da ingestao mais recente entre os registros de origem.
+      - name: dt_silver
+        description: Timestamp de processamento da camada Silver de origem.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_ticket_medio_vs_incc
+    description: >
+      Uma linha por trimestre comparando as variacoes do ticket medio das
+      empresas MRV, Direcional e Tenda com o INCC-M, tanto no trimestre quanto
+      no acumulado desde o quarto trimestre de 2020.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.IndicadoresConjunturais.TicketMedio"
+          - "MCID.IndicadoresConjunturais.INCCM"
+          - "MCID.FontesInstitucionais.FGVIBRE"
+    columns:
+      - name: ano
+        description: Ano de referencia da comparacao trimestral.
+      - name: trimestre
+        description: Trimestre de referencia da comparacao.
+      - name: incc_var_tri
+        description: Variacao percentual do INCC-M no trimestre.
+      - name: mrv_var_tri
+        description: Variacao percentual do ticket medio da MRV no trimestre.
+      - name: dir_var_tri
+        description: Variacao percentual do ticket medio da Direcional no trimestre.
+      - name: ten_var_tri
+        description: Variacao percentual do ticket medio da Tenda no trimestre.
+      - name: incc_acum_4t20
+        description: Variacao percentual acumulada do INCC-M desde o quarto trimestre de 2020.
+      - name: mrv_acum_4t20
+        description: Variacao percentual acumulada do ticket medio da MRV desde o quarto trimestre de 2020.
+      - name: dir_acum_4t20
+        description: Variacao percentual acumulada do ticket medio da Direcional desde o quarto trimestre de 2020.
+      - name: ten_acum_4t20
+        description: Variacao percentual acumulada do ticket medio da Tenda desde o quarto trimestre de 2020.
+      - name: dt_ingest
+        description: Timestamp mais recente das ingestoes de ticket medio e INCC-M.
+      - name: dt_silver
+        description: Timestamp mais recente dos processamentos Silver usados na comparacao.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.
+
+  - name: gold_uh_condicao_uso
+    description: >
+      Uma linha por fonte de financiamento e total geral com as unidades
+      habitacionais novas e usadas financiadas em 2024 e 2025 e suas variacoes
+      percentuais anuais, combinando FGTS e SBPE.
+    config:
+      tags:
+        - gold
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.FundosEFontes.FGTS"
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: ordem
+        description: Ordem de exibicao das fontes de financiamento e do total.
+      - name: categoria
+        description: Fonte ou agrupamento do financiamento habitacional.
+      - name: uh_usadas_2024
+        description: Quantidade de unidades habitacionais usadas financiadas em 2024.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: uh_novas_2024
+        description: Quantidade de unidades habitacionais novas financiadas em 2024.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: uh_usadas_2025
+        description: Quantidade de unidades habitacionais usadas financiadas em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: var_usadas
+        description: Variacao percentual das unidades usadas financiadas em 2025 contra 2024.
+      - name: uh_novas_2025
+        description: Quantidade de unidades habitacionais novas financiadas em 2025.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: var_novas
+        description: Variacao percentual das unidades novas financiadas em 2025 contra 2024.
+      - name: dt_ingest
+        description: Timestamp mais recente das ingestoes FGTS e SBPE usadas no calculo.
+      - name: dt_silver
+        description: Timestamp mais recente dos processamentos Silver usados no calculo.
+      - name: dt_gold
+        description: Timestamp de geracao deste registro na camada Gold.

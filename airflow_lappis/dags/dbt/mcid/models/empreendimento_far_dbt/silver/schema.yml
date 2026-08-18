@@ -3,126 +3,183 @@ version: 2
 models:
   - name: empreendimento
     description: >
-      Tabela Silver (Visão Unificada) de Empreendimentos FAR do Novo MCMV.
-      Esta tabela consolida as informações da camada bronze cruzando as tabelas
-      cadastro_pj, consolidado, obra_mensal e dados_prioritarios_caixa através da chave APF.
-      Gera uma visão final pronta para alimentar painéis e dashboards.
-    meta:
+      Visao unificada Silver de empreendimentos FAR do Novo MCMV. Consolida dados
+      cadastrais, contratuais, localizacao, tipologia, situacao, execucao fisica
+      e execucao financeira a partir das tabelas bronze cadastro_pj, consolidado,
+      obra_mensal e dados_prioritarios_caixa.
+    config:
       tags:
         - silver
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
     columns:
       - name: apf
-        description: Chave primária (Arranjo Produtivo Financeiro). ID único do empreendimento contratado na Caixa.
-      
-      # Dados do Empreendimento
+        description: Chave principal do empreendimento, com APF normalizado para 8 digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
       - name: portaria_selecao
-        description: Número da portaria MCID de seleção ou enquadramento da proposta.
+        description: Numero da portaria MCID de selecao ou contratacao; assume "Nao informada" quando ausente.
       - name: proponente_cnpj
-        description: CNPJ do ente público ou empresa proponente.
+        description: CNPJ do proponente original da proposta.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
       - name: proponente_nome
-        description: Nome social do proponente original da proposta.
+        description: Nome do proponente original da proposta.
       - name: tomador_cnpj
-        description: CNPJ do ente ou empresa tomadora do financiamento/recurso.
+        description: CNPJ do tomador do financiamento ou recurso.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
       - name: tomador_nome
-        description: Nome social do tomador do financiamento/recurso.
+        description: Nome do tomador do financiamento ou recurso.
       - name: empreendimento_nome
-        description: Nome final do empreendimento após a contratação.
+        description: Nome do empreendimento contratado.
       - name: quantidade_uh
-        description: Número total de Unidades Habitacionais (UHs) no empreendimento.
+        description: Quantidade total de unidades habitacionais do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
       - name: municipio
-        description: Nome do município onde o empreendimento está localizado.
+        description: Municipio onde o empreendimento esta localizado.
       - name: uf
-        description: Unidade Federativa (UF) do empreendimento.
+        description: Unidade federativa onde o empreendimento esta localizado.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
       - name: co_originacao
-        description: Código de originação do empreendimento (1 = Seleção, 2 = Calamidade).
+        description: Codigo de originacao do empreendimento.
       - name: co_tipo_demanda
-        description: Código do tipo de demanda (1 = Cadastro Habitacional).
+        description: Codigo do tipo de demanda habitacional atendida.
       - name: situacao_empreendimento
-        description: "Status/Situação gerencial atual da obra (ex: ENTREGUE, EM ANDAMENTO, PARALISADA)."
+        description: Situacao gerencial atual do empreendimento, priorizada a partir dos dados da CAIXA.
+      - name: codigo_tipologia
+        description: Codigo numerico da tipologia da edificacao.
       - name: tipologia
-        description: >
-          Classificação do tipo de construção. Calculado a partir de co_tipo_edificacao:
-          (Casa Térrea, Apartamento, Sobrado, Misto).
+        description: Tipologia descritiva da edificacao, derivada do codigo de tipo de edificacao.
       - name: pessoas_atendidas
-        description: >
-          Estimativa de pessoas diretamente beneficiadas.
-          Cálculo heurístico: (quantidade_uh * 3.3 pessoas por família) arredondado para baixo.
-
-      # Dados do Contrato
+        description: Estimativa de pessoas atendidas, calculada por quantidade de UHs multiplicada por 3,3.
       - name: valor_contratado
-        description: Valor total de investimento (Recurso FAR + Contrapartidas).
+        description: Valor total contratado ou investido no empreendimento.
       - name: agente_financeiro
-        description: "Banco responsável pelo financiamento/gestão (ex: CAIXA)."
+        description: Agente financeiro responsavel pelo contrato ou acompanhamento do empreendimento.
       - name: dt_contratacao
-        description: Data de assinatura do contrato de financiamento da obra.
+        description: Data de contratacao do empreendimento.
       - name: valor_aporte_adicional
-        description: Valor total de aportes ou suplementações adicionais liberadas durante a obra.
+        description: Valor de aporte adicional ou suplementacao associado ao empreendimento.
       - name: valor_por_uh
-        description: Custo unitário estimado por UH (valor_contratado / quantidade_uh).
-
-      # Evolução Física
+        description: Valor medio contratado por unidade habitacional.
       - name: percentual_execucao_fisica
-        description: Porcentagem (0 a 100) do andamento físico da obra reportado pela medição atual.
+        description: Percentual de execucao fisica consolidado, priorizando obra_mensal e dados prioritarios da CAIXA.
       - name: dt_conclusao_obra
-        description: Data em que a obra física atingiu 100% (se aplicável).
+        description: Data de conclusao fisica da obra, quando informada.
       - name: dt_entrega
-        description: Data de entrega das chaves aos beneficiários finais (se aplicável).
+        description: Data de entrega do empreendimento, quando informada.
       - name: dt_previsao_entrega
-        description: Previsão estipulada para a entrega oficial do empreendimento.
-
-      # Evolução Financeira
+        description: Data prevista de entrega do empreendimento.
       - name: valor_desembolsado
-        description: Total financeiro já repassado/liberado para a construtora até a medição atual.
+        description: Valor total desembolsado acumulado.
       - name: percentual_execucao_financeira
         description: >
-          Percentual do recurso liberado sobre o valor total.
-          Cálculo: (valor_desembolsado / valor_contratado) * 100.
+          Percentual de execucao financeira calculado como o valor desembolsado
+          sobre o valor contratado, multiplicado por 100.
 
   - name: evolucao_financeira
     description: >
-      Tabela Silver de Evolução Financeira dos Empreendimentos FAR.
-      Série temporal mensal de liberações financeiras por empreendimento (APF × mês).
-      Agrega as liberações da bronze financeiro_mensal e faz o JOIN com a silver
-      empreendimento usando a raiz de 6 dígitos do APF: LEFT(cad_pj.apf, 6) = RIGHT(fin.apf, 6).
-      Cobertura: ~79% dos empreendimentos (651/823) possuem dados financeiros.
-      Relação 1:N com empreendimento (1 APF → N meses de liberações).
-    meta:
+      Serie temporal Silver da evolucao financeira dos empreendimentos FAR, com
+      uma linha por APF e mes de liberacao. Agrega os desembolsos da tabela bronze
+      financeiro_mensal e os relaciona ao modelo Silver empreendimento pela raiz
+      de 6 digitos do APF. Registra valores mensais por componente, desembolso
+      acumulado, percentual de execucao financeira e contexto territorial.
+    config:
       tags:
         - silver
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
+          - "MCID.ExecucaoDeEmpreendimentos.Desembolso"
     columns:
       - name: apf
-        description: APF do empreendimento (8 dígitos, normalizado).
-        data_tests:
+        description: Chave do empreendimento, com APF normalizado para 8 digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+        tests:
           - not_null
       - name: mes
-        description: Primeiro dia do mês da(s) liberação(ões) (date, truncado).
-        data_tests:
+        description: Primeiro dia do mes de referencia das liberacoes financeiras.
+        tests:
           - not_null
       - name: qt_liberacoes
-        description: Quantidade de liberações financeiras individuais no mês.
+        description: Quantidade de liberacoes financeiras individuais agregadas no mes.
       - name: vr_liberado_mes
-        description: Soma de todos os valores liberados no mês em R$.
-        data_tests:
+        description: Soma dos valores financeiros liberados no mes, em reais.
+        tests:
           - not_null
       - name: vr_pago_obra_mes
-        description: Parcela destinada à obra/edificação no mês em R$.
+        description: Valor mensal destinado a obra ou edificacao, em reais.
       - name: vr_pago_terreno_mes
-        description: Parcela destinada ao terreno no mês em R$.
+        description: Valor mensal destinado ao terreno, em reais.
       - name: vr_pago_pts_mes
-        description: Parcela destinada ao trabalho social (PTS) no mês em R$.
+        description: Valor mensal destinado ao Projeto de Trabalho Social (PTS), em reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ExecucaoDeEmpreendimentos.PTS"
       - name: vr_pago_incc_mes
-        description: Parcela de ajuste INCC no mês em R$.
+        description: Valor mensal referente a ajuste pelo INCC, em reais.
+      - name: vr_pago_aporte_mes
+        description: Valor mensal de aportes adicionais, em reais.
+      - name: vr_pago_equipamentos_mes
+        description: Valor mensal destinado a equipamentos, em reais.
+      - name: vr_pago_manutencao_mes
+        description: Valor mensal destinado a manutencao, em reais.
+      - name: vr_pago_legalizacao_mes
+        description: Valor mensal destinado a legalizacao, em reais.
       - name: vr_acumulado
         description: >
-          Desembolso acumulado progressivo por APF até o mês corrente.
-          Calculado via SUM(vr_liberado_mes) OVER (PARTITION BY apf ORDER BY mes).
+          Desembolso acumulado progressivamente por APF ate o mes corrente, por
+          meio da soma dos valores mensais ordenados pelo mes de referencia.
       - name: pct_executado_financeiro
         description: >
-          Percentual do desembolso acumulado sobre o valor contratado.
-          Cálculo: (vr_acumulado / valor_contratado) * 100.
+          Percentual de execucao financeira calculado como o desembolso acumulado
+          sobre o valor contratado, multiplicado por 100.
       - name: valor_contratado
-        description: Valor total contratado do empreendimento (herdado da silver empreendimento).
+        description: Valor total contratado, herdado do modelo Silver empreendimento.
       - name: municipio
-        description: Município do empreendimento.
+        description: Municipio onde o empreendimento esta localizado.
       - name: uf
-        description: UF do empreendimento.
+        description: Unidade federativa onde o empreendimento esta localizado.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"

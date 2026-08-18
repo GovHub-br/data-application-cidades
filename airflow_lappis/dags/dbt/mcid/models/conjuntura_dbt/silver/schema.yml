@@ -1,90 +1,1088 @@
 version: 2
+
 models:
-  - name: silver_fgv_icst
+  - name: silver_abecip_novos_financiamentos_imobiliarios
     description: >
-      Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE.
-      Camada silver com variações mensais e em 12 meses calculadas via LAG.
-      Origem: conjuntura_bronze.bronze_fgv_icst.
-    meta: {}
-    tags:
-      - silver
-      - icst
-      - fgv
+      Serie mensal Silver dos novos financiamentos imobiliarios informados pela
+      ABECIP. Consolida os agentes em grupos bancarios, inclui uma linha de total
+      por periodo e apresenta o valor acumulado no ano em bilhoes e a quantidade
+      de unidades habitacionais financiadas.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.FontesInstitucionais.ABECIP"
+          - "MCID.IndicadoresConjunturais.FinanciamentoImobiliario"
+    columns:
+      - name: ano
+        description: Ano de referencia dos financiamentos imobiliarios.
+      - name: mes
+        description: Mes de referencia dos financiamentos imobiliarios.
+      - name: banco
+        description: Grupo bancario padronizado ou categoria TOTAL do periodo.
+      - name: valor_bi
+        description: Valor acumulado dos financiamentos no ano, convertido para bilhoes de reais.
+      - name: uh
+        description: Quantidade acumulada de unidades habitacionais financiadas no ano.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: dt_ingest
+        description: Campo de compatibilidade sem timestamp de ingestao na origem, preenchido com nulo.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_abecip_poupanca_sbpe
+    description: >
+      Serie mensal Silver da poupanca do Sistema Brasileiro de Poupanca e
+      Emprestimo publicada pela ABECIP. Mantem depositos, retiradas, captacao,
+      rendimentos e saldo e acrescenta a captacao liquida em bilhoes e seu
+      acumulado movel de doze meses.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.FontesInstitucionais.ABECIP"
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.CaptacaoLiquida"
     columns:
       - name: data_referencia
-        description: Data de referência do índice (mensal).
+        description: Data mensal de referencia dos valores da poupanca SBPE.
+      - name: deposito
+        description: Valor total de depositos realizados no periodo.
+      - name: retirada
+        description: Valor total de retiradas realizadas no periodo.
+      - name: captacao_liquida_valor
+        description: Saldo monetario entre depositos e retiradas no periodo.
+      - name: captacao_liquida_pct
+        description: Variacao percentual da captacao liquida no periodo.
+      - name: rendimento
+        description: Valor dos rendimentos creditados no periodo.
+      - name: saldo
+        description: Saldo total da poupanca SBPE ao fim do periodo.
+      - name: captacao_liquida_bi
+        description: Captacao liquida do periodo convertida para bilhoes de reais.
+      - name: captacao_acum_12m
+        description: Soma movel da captacao liquida no mes corrente e nos onze meses anteriores.
+      - name: fonte
+        description: Identificacao da fonte informada no dado de origem.
+      - name: dt_ingest
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_abecip_sbpe_financiamentos_habitacionais
+    description: >
+      Serie mensal Silver dos financiamentos habitacionais do SBPE publicados
+      pela ABECIP. Organiza unidades e valores de construcao e aquisicao, separa
+      imoveis novos e usados e calcula variacoes mensais e em doze meses para os
+      principais indicadores.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.FontesInstitucionais.ABECIP"
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: trimestre
+        description: Trimestre de referencia do financiamento habitacional.
+      - name: ano
+        description: Ano de referencia do financiamento habitacional.
+      - name: mes
+        description: Mes de referencia do financiamento habitacional.
+      - name: sbpe_const
+        description: Quantidade de unidades habitacionais financiadas para construcao pelo SBPE.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_aquisicao
+        description: Quantidade de unidades habitacionais financiadas para aquisicao pelo SBPE.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_total
+        description: Quantidade total de unidades habitacionais financiadas pelo SBPE.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_const_milhoes
+        description: Valor dos financiamentos para construcao, em milhoes de reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_aquisicao_milhoes
+        description: Valor dos financiamentos para aquisicao, em milhoes de reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_total_milhoes
+        description: Valor total dos financiamentos do SBPE, em milhoes de reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_aq_novos_uh
+        description: Quantidade de imoveis novos financiados para aquisicao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: sbpe_aq_usados_uh
+        description: Quantidade de imoveis usados financiados para aquisicao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: sbpe_aq_novos_milhoes
+        description: Valor financiado para aquisicao de imoveis novos, em milhoes de reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_aq_usados_milhoes
+        description: Valor financiado para aquisicao de imoveis usados, em milhoes de reais.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_const_var_mes
+        description: Variacao percentual mensal da quantidade financiada para construcao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_aq_var_mes
+        description: Variacao percentual mensal da quantidade financiada para aquisicao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_total_var_mes
+        description: Variacao percentual mensal da quantidade total financiada.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_const_var_12m
+        description: Variacao percentual em doze meses da quantidade financiada para construcao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_aq_var_12m
+        description: Variacao percentual em doze meses da quantidade financiada para aquisicao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: sbpe_total_var_12m
+        description: Variacao percentual em doze meses da quantidade total financiada.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+      - name: dt_ingest
+        description: Campo de compatibilidade sem timestamp de ingestao na origem, preenchido com nulo.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_abramat_indice
+    description: >
+      Serie mensal Silver do Indice ABRAMAT, que acompanha o faturamento
+      deflacionado da industria de materiais para construcao. Disponibiliza o
+      nivel do indice e suas variacoes mensal e em doze meses com os timestamps
+      de rastreabilidade do processamento.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+        - abramat
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.IndiceABRAMAT"
+          - "MCID.FontesInstitucionais.ABRAMAT"
+    columns:
+      - name: data_referencia
+        description: Data mensal de referencia do indice ABRAMAT.
+      - name: indice
+        description: Valor do indice ABRAMAT no periodo.
+      - name: var_mes
+        description: Variacao percentual do indice em relacao ao mes anterior.
+      - name: var_12_meses
+        description: Variacao percentual do indice em relacao ao mesmo mes do ano anterior.
+      - name: dt_ingest
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_bacen_financiamentos_imobiliarios
+    description: >
+      Serie Silver de indicadores de financiamentos imobiliarios publicados pelo
+      Banco Central. Cada linha representa um tipo de indicador em uma data de
+      referencia, preservando seu valor numerico e a rastreabilidade da carga.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.FontesInstitucionais.BACEN"
+          - "MCID.IndicadoresConjunturais.FinanciamentoImobiliario"
+    columns:
+      - name: tipo
+        description: Tipo de indicador de financiamento imobiliario medido.
+      - name: data_referencia
+        description: Data de referencia do indicador de financiamento imobiliario.
+        tests:
+          - not_null
+          - date_year_between:
+              min_year: 1900
+              max_year: 2100
+      - name: valor
+        description: Valor numerico do indicador no periodo.
+      - name: dt_ingest
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_balancos_empresas
+    description: >
+      Serie trimestral Silver dos balancos de empresas do setor imobiliario.
+      Organiza, por empresa e periodo fiscal, os indicadores de lancamentos e
+      vendas utilizados nas comparacoes conjunturais da camada Gold.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.LancamentoImobiliario"
+          - "MCID.IndicadoresConjunturais.VendaImobiliaria"
+    columns:
+      - name: nome_empresa
+        description: Nome padronizado da empresa do setor imobiliario.
+      - name: ano_balanco
+        description: Ano fiscal de referencia do balanco da empresa.
+      - name: trimestre_balanco
+        description: Trimestre fiscal de referencia do balanco da empresa.
+      - name: lancamento
+        description: Indicador de lancamentos imobiliarios divulgado pela empresa no periodo.
+      - name: vendas
+        description: Indicador de vendas imobiliarias divulgado pela empresa no periodo.
+      - name: dt_ingest
+        description: Campo de compatibilidade sem timestamp de ingestao na origem, preenchido com nulo.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_cbic_lancamentos_vendas
+    description: >
+      Serie trimestral Silver de lancamentos e vendas imobiliarias da CBIC.
+      Reune totais nacionais, recortes do MCMV e das demais modalidades, valores
+      por regiao e participacoes percentuais regionais do programa habitacional.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.FontesInstitucionais.CBIC"
+          - "MCID.IndicadoresConjunturais.LancamentoImobiliario"
+          - "MCID.IndicadoresConjunturais.VendaImobiliaria"
+    columns:
+      - name: ano
+        description: Ano de referencia dos lancamentos e vendas imobiliarias.
+      - name: trimestre
+        description: Trimestre de referencia dos lancamentos e vendas imobiliarias.
+      - name: cbic_lancamentos_total
+        description: Quantidade total de unidades imobiliarias lancadas no periodo.
+      - name: cbic_lancamentos_mcmv
+        description: Quantidade de unidades do MCMV lancadas no periodo.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_demais
+        description: Quantidade de unidades fora do MCMV lancadas no periodo.
+      - name: cbic_vendas_total
+        description: Quantidade total de unidades imobiliarias vendidas no periodo.
+      - name: cbic_vendas_mcmv
+        description: Quantidade de unidades do MCMV vendidas no periodo.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_demais
+        description: Quantidade de unidades fora do MCMV vendidas no periodo.
+      - name: cbic_lancamentos_regiao_norte
+        description: Quantidade de unidades lancadas na regiao Norte.
+      - name: cbic_lancamentos_regiao_nordeste
+        description: Quantidade de unidades lancadas na regiao Nordeste.
+      - name: cbic_lancamentos_regiao_centro_oeste
+        description: Quantidade de unidades lancadas na regiao Centro-Oeste.
+      - name: cbic_lancamentos_regiao_sudeste
+        description: Quantidade de unidades lancadas na regiao Sudeste.
+      - name: cbic_lancamentos_regiao_sul
+        description: Quantidade de unidades lancadas na regiao Sul.
+      - name: cbic_lancamentos_mcmv_regiao_norte
+        description: Quantidade de unidades do MCMV lancadas na regiao Norte.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_regiao_nordeste
+        description: Quantidade de unidades do MCMV lancadas na regiao Nordeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_regiao_centro_oeste
+        description: Quantidade de unidades do MCMV lancadas na regiao Centro-Oeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_regiao_sudeste
+        description: Quantidade de unidades do MCMV lancadas na regiao Sudeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_regiao_sul
+        description: Quantidade de unidades do MCMV lancadas na regiao Sul.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_regiao_norte
+        description: Quantidade de unidades vendidas na regiao Norte.
+      - name: cbic_vendas_regiao_nordeste
+        description: Quantidade de unidades vendidas na regiao Nordeste.
+      - name: cbic_vendas_regiao_centro_oeste
+        description: Quantidade de unidades vendidas na regiao Centro-Oeste.
+      - name: cbic_vendas_regiao_sudeste
+        description: Quantidade de unidades vendidas na regiao Sudeste.
+      - name: cbic_vendas_regiao_sul
+        description: Quantidade de unidades vendidas na regiao Sul.
+      - name: cbic_vendas_mcmv_regiao_norte
+        description: Quantidade de unidades do MCMV vendidas na regiao Norte.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_regiao_nordeste
+        description: Quantidade de unidades do MCMV vendidas na regiao Nordeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_regiao_centro_oeste
+        description: Quantidade de unidades do MCMV vendidas na regiao Centro-Oeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_regiao_sudeste
+        description: Quantidade de unidades do MCMV vendidas na regiao Sudeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_regiao_sul
+        description: Quantidade de unidades do MCMV vendidas na regiao Sul.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_perc_regiao_norte
+        description: Participacao percentual do MCMV nos lancamentos da regiao Norte.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_perc_regiao_nordeste
+        description: Participacao percentual do MCMV nos lancamentos da regiao Nordeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_perc_regiao_centro_oeste
+        description: Participacao percentual do MCMV nos lancamentos da regiao Centro-Oeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_perc_regiao_sudeste
+        description: Participacao percentual do MCMV nos lancamentos da regiao Sudeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_lancamentos_mcmv_perc_regiao_sul
+        description: Participacao percentual do MCMV nos lancamentos da regiao Sul.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_perc_regiao_norte
+        description: Participacao percentual do MCMV nas vendas da regiao Norte.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_perc_regiao_nordeste
+        description: Participacao percentual do MCMV nas vendas da regiao Nordeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_perc_regiao_centro_oeste
+        description: Participacao percentual do MCMV nas vendas da regiao Centro-Oeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_perc_regiao_sudeste
+        description: Participacao percentual do MCMV nas vendas da regiao Sudeste.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: cbic_vendas_mcmv_perc_regiao_sul
+        description: Participacao percentual do MCMV nas vendas da regiao Sul.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ProgramasHabitacionais.MCMV"
+      - name: dt_ingest
+        description: Campo de compatibilidade sem timestamp de ingestao na origem, preenchido com nulo.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_fgts_financiamentos_habitacionais
+    description: >
+      Serie mensal Silver dos financiamentos habitacionais para pessoa fisica
+      com recursos do FGTS. Detalha unidades e valores por faixa, Pro-Cotista,
+      classe media e operacoes fora do MCMV e calcula o valor total consolidado.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.FundosEFontes.FGTS"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: ano
+        description: Ano de referencia dos financiamentos habitacionais do FGTS.
+      - name: mes
+        description: Mes de referencia dos financiamentos habitacionais do FGTS.
+      - name: trimestre
+        description: Trimestre de referencia dos financiamentos habitacionais do FGTS.
+      - name: financiamento_pf_uh_total_geral
+        description: Quantidade total de unidades habitacionais financiadas para pessoa fisica.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_total_geral
+        description: Valor total dos financiamentos habitacionais para pessoa fisica.
+      - name: financiamento_pf_uh_total_faixa_1
+        description: Quantidade de unidades financiadas para pessoa fisica na faixa 1.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_total_faixa_1
+        description: Valor dos financiamentos para pessoa fisica na faixa 1.
+      - name: financiamento_pf_uh_total_faixa_2
+        description: Quantidade de unidades financiadas para pessoa fisica na faixa 2.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_total_faixa_2
+        description: Valor dos financiamentos para pessoa fisica na faixa 2.
+      - name: financiamento_pf_uh_faixa_3_sem_fundo_social
+        description: Quantidade de unidades da faixa 3 financiadas sem Fundo Social.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_faixa_3_sem_fundo_social
+        description: Valor dos financiamentos da faixa 3 sem Fundo Social.
+      - name: financiamento_pf_uh_faixa_3_fundo_social
+        description: Quantidade de unidades da faixa 3 financiadas com Fundo Social.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_faixa_3_fundo_social
+        description: Valor dos financiamentos da faixa 3 com Fundo Social.
+      - name: financiamento_pf_uh_total_classe_media
+        description: Quantidade de unidades financiadas para o segmento de classe media.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_total_classe_media
+        description: Valor dos financiamentos para o segmento de classe media.
+      - name: financiamento_pf_uh_pro_cotista_geral
+        description: Quantidade total de unidades financiadas pela modalidade Pro-Cotista.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_pro_cotista_geral
+        description: Valor total dos financiamentos pela modalidade Pro-Cotista.
+      - name: financiamento_pf_uh_pro_cotista_faixa_1
+        description: Quantidade de unidades Pro-Cotista financiadas na faixa 1.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_pro_cotista_faixa_1
+        description: Valor dos financiamentos Pro-Cotista na faixa 1.
+      - name: financiamento_pf_uh_pro_cotista_faixa_2
+        description: Quantidade de unidades Pro-Cotista financiadas na faixa 2.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_pro_cotista_faixa_2
+        description: Valor dos financiamentos Pro-Cotista na faixa 2.
+      - name: financiamento_pf_uh_pro_cotista_faixa_3
+        description: Quantidade de unidades Pro-Cotista financiadas na faixa 3.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_pro_cotista_faixa_3
+        description: Valor dos financiamentos Pro-Cotista na faixa 3.
+      - name: financiamento_pf_uh_pro_cotista_classe_media
+        description: Quantidade de unidades Pro-Cotista financiadas para a classe media.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_pro_cotista_classe_media
+        description: Valor dos financiamentos Pro-Cotista para a classe media.
+      - name: financiamento_pf_uh_fora_mcmv
+        description: Quantidade de unidades financiadas fora do MCMV.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: financiamento_pf_valor_fora_mcmv
+        description: Valor dos financiamentos realizados fora do MCMV.
+      - name: valor_total_calculado
+        description: Soma calculada dos valores das faixas, classe media e operacoes fora do MCMV.
+      - name: dt_ingest
+        description: Campo de compatibilidade sem timestamp de ingestao na origem, preenchido com nulo.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_fgv_icst
+    description: >
+      Serie mensal Silver do Indice de Confianca da Construcao da FGV IBRE.
+      Mantem os indices com e sem ajuste sazonal e calcula variacoes percentuais
+      em relacao ao mes anterior e ao mesmo mes do ano anterior.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+        - icst
+        - fgv
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.ICST"
+          - "MCID.FontesInstitucionais.FGVIBRE"
+    columns:
+      - name: data_referencia
+        description: Data mensal de referencia do ICST.
+        tests:
+          - unique
+          - not_null
       - name: icst_com_ajuste_sazonal
         description: Valor do ICST com ajuste sazonal.
       - name: icst_sem_ajuste_sazonal
         description: Valor do ICST sem ajuste sazonal.
       - name: var_mes
-        description: Variação percentual em relação ao mês anterior.
+        description: Variacao percentual do ICST sem ajuste em relacao ao mes anterior.
       - name: var_12_meses
-        description: Variação percentual em relação ao mesmo mês do ano anterior.
+        description: Variacao percentual do ICST sem ajuste em relacao ao mesmo mes do ano anterior.
       - name: dt_ingest
-        description: Data de ingestão do registro.
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
 
-  - name: silver_imob_infomoney
+  - name: silver_fgv_incc_m
     description: >
-      Índice IMOB da Infomoney agregado mensalmente (fechamento do último dia útil).
-      Camada silver com variações mensais, em 12 meses e acumulado da série calculados.
-      Origem: conjuntura_bronze.bronze_imob_infomoney.
-    meta: {}
-    tags:
-      - silver
-      - imob
-      - infomoney
+      Serie mensal Silver do INCC-M publicado pela FGV. Preserva o nivel do
+      indice e suas variacoes mensal, anual e em doze meses e calcula a variacao
+      trimestral, o trimestre calendario e o ano de referencia.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.INCCM"
+          - "MCID.FontesInstitucionais.FGVIBRE"
     columns:
+      - name: mes
+        description: Timestamp mensal conforme informado pela fonte da FGV.
       - name: data_referencia
-        description: Primeiro dia do mês de referência.
-      - name: close_fim_mes
-        description: Valor de fechamento do último dia útil do mês.
+        description: Data mensal de referencia do INCC-M.
+        tests:
+          - unique
+          - not_null
+      - name: indice
+        description: Valor do INCC-M no periodo.
+      - name: var_ano
+        description: Variacao percentual acumulada do INCC-M no ano.
       - name: var_mes
-        description: Variação percentual em relação ao mês anterior.
+        description: Variacao percentual do INCC-M em relacao ao mes anterior.
       - name: var_12_meses
-        description: Variação percentual em relação ao mesmo mês do ano anterior.
-      - name: var_acum_serie
-        description: Variação acumulada desde o início da série.
+        description: Variacao percentual acumulada do INCC-M em doze meses.
+      - name: var_tri
+        description: Variacao percentual do indice em relacao ao valor de tres meses antes.
+      - name: trimestre
+        description: Trimestre calendario derivado da data de referencia.
+      - name: ano
+        description: Ano calendario derivado da data de referencia.
+      - name: dt_ingest
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_financiamentos_habitacionais
+    description: >
+      Consolidacao trimestral Silver do volume de unidades habitacionais
+      financiadas pelo FGTS e pelo SBPE. Agrega as series de origem por ano e
+      trimestre para permitir a comparacao direta entre as duas fontes.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.FundosEFontes.FGTS"
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.FinanciamentoHabitacional"
+    columns:
+      - name: ano
+        description: Ano de referencia da consolidacao dos financiamentos.
+      - name: trimestre
+        description: Trimestre de referencia da consolidacao dos financiamentos.
+      - name: fgts_uh
+        description: Quantidade trimestral de unidades habitacionais financiadas pelo FGTS.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.FGTS"
+              - "MCID.Identificadores.UH"
+      - name: sbpe_uh
+        description: Quantidade trimestral de unidades habitacionais financiadas para construcao pelo SBPE.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.FundosEFontes.SBPE"
+              - "MCID.Identificadores.UH"
+      - name: dt_ingest
+        description: Campo de compatibilidade sem timestamp de ingestao na origem, preenchido com nulo.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
 
   - name: silver_fipezap_locacao
     description: >
-      Índice FipeZap de locação residencial.
-      Camada silver com tipagem correta e variação em 12 meses calculada.
-      Origem: conjuntura_bronze.bronze_fipezap_locacao.
-    meta: {}
-    tags:
-      - silver
-      - fipezap
-      - fipe
+      Serie mensal Silver do indice FipeZap de locacao residencial. Padroniza a
+      data e as variacoes mensal e acumulada no ano e calcula a comparacao com o
+      valor observado doze meses antes.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+        - fipezap
+        - fipe
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.FipeZapLocacao"
     columns:
       - name: data_referencia
-        description: Data de referência do índice (mensal).
+        description: Data mensal de referencia do indice de locacao residencial.
       - name: var_mensal
-        description: "Variação percentual mensal (em decimal, ex: 0.0068)."
+        description: Variacao mensal dos precos de locacao residencial informada pela fonte.
       - name: var_ano
-        description: Variação percentual acumulada no ano (em decimal).
+        description: Variacao acumulada no ano dos precos de locacao residencial.
       - name: var_12_meses_calc
-        description: Variação percentual em 12 meses calculada via LAG.
+        description: Variacao percentual calculada em relacao ao valor observado doze meses antes.
       - name: dt_ingest
-        description: Data de ingestão do registro.
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
 
-  - name: silver_abramat_indice
+  - name: silver_ibge_pib_construcao_civil
     description: >
-      Índice ABRAMAT de custos da construção civil.
-      Camada silver com dados mockados a partir do relatório (ingestão via PDF).
-      Origem: conjuntura_bronze.bronze_abramat_indice.
-    meta: {}
-    tags:
-      - silver
-      - abramat
+      Serie Silver de variaveis do PIB da construcao civil publicadas pelo IBGE.
+      Seleciona os indicadores de interesse, mantem o periodo de referencia e
+      converte o valor recebido para a escala percentual usada nas analises.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PIBConstrucaoCivil"
+          - "MCID.FontesInstitucionais.IBGE"
+    columns:
+      - name: variavel_id
+        description: Identificador da variavel estatistica de PIB no IBGE.
+      - name: periodo
+        description: Periodo de referencia no formato publicado pelo IBGE.
+      - name: valor_percentual
+        description: Valor do indicador convertido para a escala percentual de analise.
+      - name: dt_ingest
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_ibge_pnadc_ocupados_construcao
+    description: >
+      Serie mensal Silver da quantidade de pessoas ocupadas na construcao segundo
+      a PNAD Continua do IBGE. Transforma categorias em colunas, deriva dimensoes
+      de calendario e calcula variacoes em relacao ao periodo anterior e ao mesmo
+      periodo do ano anterior.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PNADContinua"
+          - "MCID.FontesInstitucionais.IBGE"
+    columns:
+      - name: periodo
+        description: Periodo mensal de referencia no formato YYYYMM.
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('silver_ibge_pnadc_rendimento_construcao')
+              field: periodo
+      - name: data_referencia
+        description: Data mensal derivada do periodo da PNAD Continua.
+      - name: ano
+        description: Ano derivado do periodo de referencia.
+      - name: mes
+        description: Mes derivado do periodo de referencia.
+      - name: trimestre
+        description: Trimestre calendario derivado do mes de referencia.
+      - name: ocupados_construcao
+        description: Quantidade de pessoas ocupadas na atividade de construcao.
+      - name: ocupados_total
+        description: Quantidade total de pessoas ocupadas no recorte de comparacao.
+      - name: var_mes
+        description: Variacao percentual dos ocupados na construcao em relacao ao periodo anterior.
+      - name: var_ano
+        description: Variacao percentual dos ocupados na construcao em relacao a doze periodos antes.
+      - name: dt_ingest
+        description: Timestamp mais recente de ingestao entre os registros agregados da origem.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_ibge_pnadc_rendimento_construcao
+    description: >
+      Serie mensal Silver do rendimento das pessoas ocupadas na construcao
+      segundo a PNAD Continua do IBGE. Transforma categorias em colunas, deriva
+      dimensoes de calendario e calcula variacoes em relacao ao periodo anterior
+      e ao mesmo periodo do ano anterior.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PNADContinua"
+          - "MCID.FontesInstitucionais.IBGE"
+    columns:
+      - name: periodo
+        description: Periodo mensal de referencia no formato YYYYMM.
+        tests:
+          - unique
+          - not_null
+      - name: data_referencia
+        description: Data mensal derivada do periodo da PNAD Continua.
+      - name: ano
+        description: Ano derivado do periodo de referencia.
+      - name: mes
+        description: Mes derivado do periodo de referencia.
+      - name: trimestre
+        description: Trimestre calendario derivado do mes de referencia.
+      - name: rendimento_construcao
+        description: Valor do rendimento das pessoas ocupadas na atividade de construcao.
+      - name: rendimento_total
+        description: Valor do rendimento total no recorte de comparacao.
+      - name: var_mes
+        description: Variacao percentual do rendimento da construcao em relacao ao periodo anterior.
+      - name: var_ano
+        description: Variacao percentual do rendimento da construcao em relacao a doze periodos antes.
+      - name: dt_ingest
+        description: Timestamp mais recente de ingestao entre os registros agregados da origem.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_ibge_sinapi
+    description: >
+      Serie mensal Silver do SINAPI publicado pelo IBGE. Transforma as variaveis
+      da fonte em custo por metro quadrado e variacoes mensal, acumulada no ano e
+      em doze meses para acompanhamento dos custos da construcao civil.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.SINAPI"
+          - "MCID.FontesInstitucionais.IBGE"
     columns:
       - name: data_referencia
-        description: Data de referência do índice (mensal).
-      - name: indice
-        description: Valor absoluto do índice ABRAMAT.
+        description: Data mensal de referencia dos indicadores do SINAPI.
+        tests:
+          - unique
+          - not_null
+      - name: custo_m2
+        description: Custo medio da construcao por metro quadrado no periodo.
       - name: var_mes
-        description: Variação percentual em relação ao mês anterior.
-      - name: var_12_meses
-        description: Variação percentual em relação ao mesmo mês do ano anterior.
+        description: Variacao percentual mensal do custo da construcao.
+      - name: var_ano
+        description: Variacao percentual acumulada no ano do custo da construcao.
+      - name: var_12m
+        description: Variacao percentual acumulada em doze meses do custo da construcao.
       - name: dt_ingest
-        description: Data de ingestão do registro.
+        description: Timestamp mais recente de ingestao entre os registros agregados da origem.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_imob_infomoney
+    description: >
+      Serie mensal Silver do indice imobiliario IMOB obtido da Infomoney. Usa o
+      fechamento do ultimo pregao de cada mes e calcula variacoes mensal, em doze
+      meses e acumulada desde o inicio da serie.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+        - imob
+        - infomoney
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.IMOB"
+          - "MCID.FontesInstitucionais.B3"
+    columns:
+      - name: data_referencia
+        description: Primeiro dia do mes de referencia da cotacao do IMOB.
+        tests:
+          - unique
+          - not_null
+      - name: close_fim_mes
+        description: Valor de fechamento do ultimo pregao observado no mes.
+      - name: var_mes
+        description: Variacao percentual do fechamento em relacao ao mes anterior.
+      - name: var_12_meses
+        description: Variacao percentual do fechamento em relacao ao mesmo mes do ano anterior.
+      - name: var_acum_serie
+        description: Variacao percentual acumulada desde o primeiro mes da serie.
+      - name: dt_ingest
+        description: Timestamp mais recente de ingestao das cotacoes agregadas no mes.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_novo_caged
+    description: >
+      Serie mensal Silver da movimentacao e do estoque de empregos formais na
+      construcao de edificios segundo o Novo CAGED. Mantem admissoes,
+      desligamentos e saldo, deriva o trimestre e calcula variacoes mensais do
+      saldo e anuais do estoque.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.NovoCAGED"
+    columns:
+      - name: ano
+        description: Ano de referencia da movimentacao de empregos formais.
+      - name: mes
+        description: Mes de referencia da movimentacao de empregos formais.
+      - name: admitidos
+        description: Quantidade de trabalhadores admitidos no periodo.
+      - name: desligados
+        description: Quantidade de trabalhadores desligados no periodo.
+      - name: saldo
+        description: Saldo de empregos entre admissoes e desligamentos no periodo.
+      - name: estoque
+        description: Estoque de empregos formais ao fim do periodo.
+      - name: variacao
+        description: Variacao do estoque de empregos informada na fonte.
+      - name: trimestre
+        description: Trimestre calendario derivado do mes de referencia.
+      - name: saldo_var_mes
+        description: Variacao percentual do saldo de empregos em relacao ao mes anterior.
+      - name: estoque_var_ano
+        description: Variacao percentual do estoque em relacao ao mesmo mes do ano anterior.
+      - name: dt_ingest
+        description: Timestamp em que o registro de origem foi ingerido.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.
+
+  - name: silver_ticket_medio_empresas
+    description: >
+      Serie trimestral Silver do ticket medio de lancamentos das empresas MRV,
+      Direcional e Tenda. Converte as empresas em colunas e apresenta, por
+      periodo, o ticket, sua variacao trimestral e o acumulado desde o quarto
+      trimestre de 2020.
+    config:
+      tags:
+        - silver
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier2"
+        tags:
+          - "Certification.Silver"
+        glossary:
+          - "MCID.IndicadoresConjunturais.TicketMedio"
+    columns:
+      - name: ano
+        description: Ano de referencia do ticket medio de lancamentos.
+      - name: trimestre
+        description: Trimestre de referencia do ticket medio de lancamentos.
+      - name: mrv_ticket
+        description: Ticket medio dos lancamentos da MRV no periodo.
+      - name: dir_ticket
+        description: Ticket medio dos lancamentos da Direcional no periodo.
+      - name: ten_ticket
+        description: Ticket medio dos lancamentos da Tenda no periodo.
+      - name: mrv_var_tri
+        description: Variacao percentual trimestral do ticket medio da MRV.
+      - name: dir_var_tri
+        description: Variacao percentual trimestral do ticket medio da Direcional.
+      - name: ten_var_tri
+        description: Variacao percentual trimestral do ticket medio da Tenda.
+      - name: mrv_acum
+        description: Variacao acumulada do ticket medio da MRV desde o quarto trimestre de 2020.
+      - name: dir_acum
+        description: Variacao acumulada do ticket medio da Direcional desde o quarto trimestre de 2020.
+      - name: ten_acum
+        description: Variacao acumulada do ticket medio da Tenda desde o quarto trimestre de 2020.
+      - name: dt_ingest
+        description: Campo de compatibilidade sem timestamp de ingestao na origem, preenchido com nulo.
+      - name: dt_silver
+        description: Timestamp de processamento do registro na camada Silver.

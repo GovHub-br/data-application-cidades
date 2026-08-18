@@ -1,186 +1,605 @@
 version: 2
 
 models:
-
-  # Consolidado GFAR
-
   - name: consolidado
     description: >
-      Dados do GFAR consolidado com propostas e contratos FAR do Novo MCMV.
-      Cobre todo o ciclo de vida: da proposta protocolizada até a contratação.
-      Contém 15.091 registros (13.216 propostas únicas, 940 com APF).
-      Tipagem aplicada: text→int, text→date, text→numeric, text→boolean.
-    meta:
+      Dados do GFAR consolidados com propostas e contratos FAR do Novo MCMV.
+      Cobre o ciclo de vida da proposta, da protocolizacao ate a contratacao,
+      com identificadores, situacao, localizacao, tipologia, valores, infraestrutura
+      do entorno, datas de referencia e metadados de carga.
+    config:
       tags:
         - bronze
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
     columns:
       - name: id_proposta
-        description: Identificador único da proposta no GFAR (UUID).
+        description: Identificador unico da proposta no GFAR.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.IDProposta"
       - name: apf
-        description: APF normalizado para 8 dígitos (chave de integração principal).
+        description: APF normalizado para 8 digitos, usado como chave principal de integracao.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+      - name: nu_operacao_af
+        description: Numero da operacao junto ao agente financeiro, quando informado.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.NumeroOperacao"
       - name: portaria_contratacao
-        description: Número da portaria MCID de seleção/contratação.
+        description: Numero da portaria MCID associada a selecao ou contratacao.
       - name: co_situacao_contratada
-        description: "Situação da contratação: 1=Contratado, 2=Distratado, 3=Outro, NULL=Não contratado."
+        description: Codigo da situacao da proposta contratada.
+      - name: co_situacao_protocolizada
+        description: Codigo da situacao da proposta protocolizada.
+      - name: co_fase
+        description: Codigo da fase da proposta no fluxo GFAR.
+      - name: co_etapa
+        description: Codigo da etapa da proposta no fluxo GFAR.
+      - name: co_status
+        description: Codigo de status da proposta no GFAR.
       - name: proponente_nome
-        description: Nome social do proponente (ente público ou construtora).
+        description: Nome do proponente da proposta, como ente publico ou construtora.
       - name: proponente_cnpj
-        description: CNPJ do proponente (apenas dígitos).
+        description: CNPJ do proponente, normalizado apenas com digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
+      - name: co_tipo_proponente
+        description: Codigo do tipo de proponente.
       - name: tomador_nome
-        description: Nome social do tomador do financiamento.
+        description: Nome do tomador do financiamento ou recurso.
       - name: tomador_cnpj
-        description: CNPJ do tomador (apenas dígitos).
+        description: CNPJ do tomador, normalizado apenas com digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
       - name: empreendimento_nome
-        description: Nome do empreendimento (prioriza nome de contratação sobre protocolo).
-      - name: qt_uh
-        description: Quantidade de unidades habitacionais.
+        description: Nome do empreendimento, priorizando o nome de contratacao sobre o nome da proposta.
+      - name: agente_financeiro
+        description: Agente financeiro responsavel pelo empreendimento.
+      - name: municipio
+        description: Municipio onde o empreendimento esta localizado.
+      - name: uf
+        description: Unidade federativa do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
+      - name: regiao
+        description: Regiao geografica associada ao empreendimento.
+      - name: cod_ibge
+        description: Codigo IBGE do municipio.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CodigoIBGE"
+      - name: logradouro
+        description: Logradouro do empreendimento.
+      - name: bairro
+        description: Bairro do empreendimento.
+      - name: cep
+        description: CEP do empreendimento.
       - name: co_tipo_edificacao
-        description: "Tipologia: 1=Casa Térrea, 2=Apartamento, 3=Sobrado, 4=Misto."
+        description: Codigo da tipologia da edificacao, como casa terrea, apartamento, sobrado ou misto.
+      - name: qt_uh
+        description: Quantidade de unidades habitacionais do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: co_tipo_demanda
+        description: Codigo do tipo de demanda habitacional atendida.
+      - name: co_originacao
+        description: Codigo de originacao do empreendimento, como selecao ou calamidade.
       - name: valor_far
-        description: Valor do empréstimo FAR em R$ (numeric 15,2).
+        description: Valor do emprestimo FAR em reais.
       - name: valor_contrapartidas
-        description: Valor total de contrapartidas em R$ (numeric 15,2).
-    data_tests:
+        description: Valor total de contrapartidas em reais.
+      - name: ic_energia_eletrica
+        description: Indica se ha energia eletrica ou iluminacao publica no entorno.
+      - name: ic_agua_potavel
+        description: Indica se ha agua potavel no entorno.
+      - name: ic_esgoto
+        description: Indica se ha rede de esgoto e coleta de lixo no entorno.
+      - name: ic_via_pavimentada
+        description: Indica se ha via pavimentada no entorno.
+      - name: ic_drenagem
+        description: Indica se ha drenagem pluvial no entorno.
+      - name: ic_educacao_infantil
+        description: Indica se ha equipamento de educacao infantil no entorno.
+      - name: ic_saude_ubs
+        description: Indica se ha unidade basica de saude no entorno.
+      - name: ic_terreno_doado
+        description: Indica se o terreno foi doado.
+      - name: dt_protocolo
+        description: Data de protocolo da proposta.
+      - name: dt_recebimento_gfar
+        description: Data de recebimento da proposta no GFAR.
+      - name: dt_movimento
+        description: Data de movimento ou referencia do registro.
+      - name: dt_vencimento_portaria
+        description: Data de vencimento da portaria de contratacao.
+      - name: arquivo_de_origem
+        description: Nome ou identificador do arquivo de origem usado na carga.
+      - name: criado_em
+        description: Timestamp de criacao do registro no processo de ingestao.
+    tests:
       - row_count_match:
           source_table: __dados_brutos.novo_mcmv_far_consolidado
           target_table: empreendimento_far.consolidado
 
-  # Cadastro PJ
-
   - name: cadastro_pj
     description: >
-      Cadastro detalhado de pessoa jurídica (empreendimento contratado).
-      822 empreendimentos com composição financeira completa, coordenadas GPS,
-      tipologia, construtora, datas-chave e indicadores do empreendimento.
-    meta:
+      Cadastro mensal detalhado de pessoa juridica e empreendimento contratado.
+      Contem identificadores, construtora, ente publico, localizacao, codigos de
+      tipologia, coordenadas, composicao financeira, datas-chave, indicadores e
+      metadados de carga.
+    config:
       tags:
         - bronze
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
     columns:
       - name: apf
-        description: APF normalizado para 8 dígitos.
+        description: APF normalizado para 8 digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+      - name: id_proposta
+        description: Identificador da proposta associada ao empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.IDProposta"
+      - name: agente_financeiro
+        description: Agente financeiro responsavel pelo contrato.
+      - name: empreendimento_nome
+        description: Nome do empreendimento contratado.
       - name: construtora_nome
-        description: Nome da construtora responsável.
+        description: Nome da construtora responsavel.
       - name: construtora_cnpj
-        description: CNPJ da construtora (apenas dígitos).
+        description: CNPJ da construtora, normalizado apenas com digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
+      - name: co_ente_publico
+        description: Codigo do ente publico proponente.
+      - name: municipio
+        description: Municipio do empreendimento.
+      - name: uf
+        description: Unidade federativa do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
+      - name: cod_ibge
+        description: Codigo IBGE do municipio.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CodigoIBGE"
+      - name: co_tipo_edificacao
+        description: Codigo da tipologia da edificacao.
+      - name: co_tipo_administracao
+        description: Codigo do tipo de administracao do empreendimento.
+      - name: co_linha_atendimento
+        description: Codigo da linha de atendimento habitacional.
+      - name: co_tipo_demanda
+        description: Codigo do tipo de demanda habitacional.
+      - name: co_tipo_empreendimento
+        description: Codigo do tipo de empreendimento.
       - name: qt_uh
         description: Quantidade de unidades habitacionais contratadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: gps_lat_grau
+        description: Grau da latitude em formato DMS.
+      - name: gps_lat_minuto
+        description: Minuto da latitude em formato DMS.
+      - name: gps_lat_segundo
+        description: Segundo da latitude em formato DMS.
+      - name: gps_long_grau
+        description: Grau da longitude em formato DMS.
+      - name: gps_long_minuto
+        description: Minuto da longitude em formato DMS.
+      - name: gps_long_segundo
+        description: Segundo da longitude em formato DMS.
+      - name: gps_datum
+        description: Datum geodesico informado para as coordenadas GPS.
       - name: vr_emprestimo_far
-        description: Valor do empréstimo FAR em R$.
+        description: Valor do emprestimo FAR em reais.
+      - name: vr_contrapartida_ente_publico
+        description: Valor de contrapartida do ente publico em reais.
       - name: vr_total_investimento
-        description: Valor total do investimento (FAR + contrapartidas) em R$.
+        description: Valor total do investimento, incluindo FAR e contrapartidas.
       - name: vr_obra_edificacao
-        description: Valor destinado à obra/edificação em R$.
+        description: Valor destinado a obra e edificacao.
       - name: vr_terreno
-        description: Valor do terreno em R$.
+        description: Valor destinado ao terreno.
+      - name: vr_trabalho_social
+        description: Valor destinado ao trabalho social.
+      - name: vr_equipamento_uso_comum
+        description: Valor destinado a equipamentos de uso comum.
+      - name: vr_legalizacao
+        description: Valor destinado a legalizacao do empreendimento.
+      - name: vr_seguro_obrigatorio
+        description: Valor destinado a seguros obrigatorios.
       - name: dt_contratacao
         description: Data de assinatura do contrato.
       - name: dt_inicio_obra
-        description: Data de início efetivo da obra.
+        description: Data de inicio da obra.
       - name: dt_previsao_conclusao
-        description: Data prevista de conclusão da obra.
-      - name: gps_lat_grau
-        description: Latitude em graus (formato DMS, componente grau).
-      - name: gps_long_grau
-        description: Longitude em graus (formato DMS, componente grau).
-    data_tests:
+        description: Data prevista de conclusao da obra.
+      - name: dt_apresentacao_orcamento
+        description: Data de apresentacao do orcamento.
+      - name: dt_movimento
+        description: Data de movimento ou referencia do registro.
+      - name: ic_terreno_doado
+        description: Indica se o terreno foi doado.
+      - name: ic_aquecimento_solar
+        description: Indica previsao ou existencia de sistema de aquecimento solar.
+      - name: ic_energia_alternativa
+        description: Indica previsao ou existencia de energia alternativa.
+      - name: ic_area_comercial
+        description: Indica previsao de area comercial no empreendimento.
+      - name: arquivo_de_origem
+        description: Nome ou identificador do arquivo de origem usado na carga.
+      - name: criado_em
+        description: Timestamp de criacao do registro no processo de ingestao.
+    tests:
       - row_count_match:
           source_table: __dados_brutos.novo_mcmv_far_cad_pj_mensal
           target_table: empreendimento_far.cadastro_pj
 
-  # Obra Mensal
-
   - name: obra_mensal
     description: >
-      Evolução física da obra. Snapshot mensal com percentual previsto/realizado,
-      situação da obra, UHs concluídas e datas de paralisação/retomada/entrega.
-      822 registros (1 por empreendimento no snapshot atual).
-    meta:
+      Snapshot mensal da evolucao fisica da obra dos empreendimentos FAR.
+      Contem situacao, percentuais de execucao, quantidades e valores de UHs,
+      informacoes de invasao/paralisacao, marcos de obra, entrega, assinatura,
+      acoes corretivas e metadados de carga.
+    config:
       tags:
         - bronze
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
     columns:
       - name: apf
-        description: APF normalizado para 8 dígitos.
+        description: APF normalizado para 8 digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
       - name: co_situacao_obra
-        description: "Código da situação: 1=Não iniciada, 2=Paralisada, 11=Em andamento."
+        description: Codigo da situacao atual da obra.
+      - name: dt_alteracao_situacao
+        description: Data de alteracao da situacao da obra.
       - name: pct_obra_prevista
-        description: Percentual de obra previsto para a data de referência (0-100).
+        description: Percentual de obra previsto para a data de referencia.
       - name: pct_obra_realizada
-        description: Percentual de obra efetivamente realizado (0-100).
-      - name: qt_uh_concluidas
-        description: Quantidade de UHs com obra concluída.
-      - name: dt_conclusao_obra
-        description: Data de conclusão da obra (quando concluída).
-      - name: dt_entrega
-        description: Data de entrega do empreendimento aos beneficiários.
+        description: Percentual de obra efetivamente realizado.
+      - name: qt_uh_concluidas_adaptadas
+        description: Quantidade de unidades habitacionais concluidas adaptadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: qt_uh_alienadas
+        description: Quantidade de unidades habitacionais alienadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: qt_uh_sem_habitese
+        description: Quantidade de unidades habitacionais sem habitese.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: qt_uh_construcao_parcial
+        description: Quantidade de unidades habitacionais em construcao parcial.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: qt_uh_ociosas_retomadas
+        description: Quantidade de unidades habitacionais ociosas retomadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: qt_uh_invadidas
+        description: Quantidade de unidades habitacionais invadidas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: vr_uh_alienadas
+        description: Valor total das unidades habitacionais alienadas.
+      - name: vr_uh_a_alienar
+        description: Valor total das unidades habitacionais a alienar.
+      - name: vr_uh_sem_habitese
+        description: Valor total das unidades habitacionais sem habitese.
+      - name: vr_uh_em_construcao
+        description: Valor total das unidades habitacionais em construcao.
+      - name: vr_uh_ociosas_retomadas
+        description: Valor total das unidades habitacionais ociosas retomadas.
+      - name: qt_uh_a_alienar
+        description: Quantidade de unidades habitacionais a alienar.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: ic_invadido
+        description: Indica se o empreendimento possui ocorrencia de invasao.
+      - name: dt_invasao
+        description: Data da invasao, quando informada.
+      - name: providencias_invasao
+        description: Providencias adotadas em relacao a invasao.
       - name: dt_paralisacao
-        description: Data de paralisação da obra (quando paralisada).
+        description: Data de paralisacao da obra, quando aplicavel.
+      - name: co_classificacao_paralisado
+        description: Codigo de classificacao da paralisacao.
+      - name: co_motivo_cancelamento
+        description: Codigo do motivo de cancelamento ou distrato.
+      - name: dt_previsao_conclusao_retomada
+        description: Data prevista de conclusao apos retomada.
+      - name: dt_conclusao_retomada
+        description: Data de conclusao da obra apos retomada.
+      - name: dt_conclusao_obra
+        description: Data de conclusao da obra.
+      - name: dt_repactuacao
+        description: Data de repactuacao.
+      - name: dt_legalizacao
+        description: Data de legalizacao.
+      - name: dt_previsao_entrega
+        description: Data prevista de entrega do empreendimento.
+      - name: dt_entrega
+        description: Data de entrega do empreendimento.
+      - name: dt_primeira_assinatura_pf
+        description: Data da primeira assinatura de pessoa fisica.
+      - name: dt_ultima_assinatura_pf
+        description: Data da ultima assinatura de pessoa fisica.
+      - name: dt_acionamento_seguradora
+        description: Data de acionamento da seguradora.
+      - name: dt_contratacao_vigilancia
+        description: Data de contratacao de vigilancia.
+      - name: dt_construtor_substituto
+        description: Data de contratacao ou indicacao de construtor substituto.
       - name: dt_movimento
-        description: Data de referência do snapshot.
-    data_tests:
+        description: Data de movimento ou referencia do snapshot.
+      - name: arquivo_de_origem
+        description: Nome ou identificador do arquivo de origem usado na carga.
+      - name: criado_em
+        description: Timestamp de criacao do registro no processo de ingestao.
+    tests:
       - row_count_match:
           source_table: __dados_brutos.novo_mcmv_far_obra_mensal
           target_table: empreendimento_far.obra_mensal
 
-  # Financeiro Mensal
-
   - name: financeiro_mensal
     description: >
-      Série temporal de liberações financeiras. Contém 6.069 registros para
-      638 APFs (média de 9,5 liberações por empreendimento). Cada registro
-      representa uma liberação de recurso com decomposição por componente.
-    meta:
+      Serie temporal de liberacoes financeiras dos empreendimentos FAR.
+      Cada registro representa um movimento financeiro com tipo, indicador de credito,
+      valor liberado, decomposicao por componente, datas e metadados de carga.
+    config:
       tags:
         - bronze
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
+          - "MCID.ExecucaoDeEmpreendimentos.Desembolso"
     columns:
       - name: apf
-        description: APF normalizado para 8 dígitos.
+        description: APF normalizado para 8 digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
       - name: co_tipo_movimento
-        description: "Tipo: 1=Liberação obra, 5=INCC/ajuste."
+        description: Codigo do tipo de movimento financeiro.
+      - name: co_tipo_lib_recurso
+        description: Codigo do tipo de liberacao de recurso.
+      - name: co_tipo_registro
+        description: Codigo textual do tipo de registro financeiro.
+      - name: ic_credito
+        description: Indicador de credito ou debito do movimento.
       - name: vr_liberado
-        description: Valor total liberado nesta operação em R$.
+        description: Valor total liberado na operacao.
+      - name: vr_movimento
+        description: Valor do movimento financeiro.
       - name: vr_pago_obra
-        description: Parcela destinada à obra/edificação em R$.
+        description: Parcela paga referente a obra do empreendimento.
       - name: vr_pago_terreno
-        description: Parcela destinada ao terreno em R$.
+        description: Parcela paga referente ao terreno.
       - name: vr_pago_trabalho_social
-        description: Parcela destinada ao trabalho social (PTS) em R$.
+        description: Parcela paga referente ao trabalho social.
+      - name: vr_pago_equipamentos
+        description: Parcela paga referente a equipamentos publicos ou de uso comum.
+      - name: vr_pago_aporte
+        description: Parcela paga referente a aporte ou suplementacao.
+      - name: vr_pago_manutencao
+        description: Parcela paga referente a despesas de manutencao.
       - name: vr_pago_incc
-        description: Parcela de ajuste INCC em R$.
-      - name: dt_liberacao
-        description: Data efetiva da liberação do recurso.
+        description: Parcela paga referente a INCC ou ajuste de correcao.
+      - name: vr_pago_legalizacao
+        description: Parcela paga referente a cartorios e legalizacao.
       - name: dt_movimento
-        description: Data de registro/movimento no sistema.
-
-  # Dados Prioritários CAIXA
+        description: Data de movimento ou registro financeiro.
+      - name: dt_liberacao
+        description: Data efetiva da liberacao do recurso.
+      - name: dt_remessa
+        description: Data de remessa do movimento.
+      - name: identificador
+        description: Identificador textual do registro financeiro.
+      - name: arquivo_de_origem
+        description: Nome ou identificador do arquivo de origem usado na carga.
+      - name: criado_em
+        description: Timestamp de criacao do registro no processo de ingestao.
 
   - name: dados_prioritarios_caixa
     description: >
-      Snapshot consolidado dos dados prioritários recebidos da CAIXA.
-      Filtrado apenas para modalidade FAR (4.443 empreendimentos).
-      Contém situação atual, percentual de execução, valores e coordenadas.
-    meta:
+      Snapshot dos dados prioritarios recebidos da CAIXA, filtrado para a modalidade FAR.
+      Contem identificacao, localizacao, situacao, execucao fisica, valores,
+      unidades habitacionais, datas, endereco, coordenadas, observacoes e metadados.
+    config:
       tags:
         - bronze
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
     columns:
       - name: apf
-        description: APF no formato CAIXA (8 dígitos).
+        description: APF do empreendimento no formato recebido da CAIXA.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+      - name: agente_financeiro
+        description: Agente financeiro responsavel pelo empreendimento.
+      - name: empreendimento_nome
+        description: Nome do empreendimento.
+      - name: uf
+        description: Unidade federativa do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
+      - name: municipio
+        description: Municipio do empreendimento.
+      - name: cod_ibge
+        description: Codigo IBGE do municipio.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CodigoIBGE"
+      - name: modalidade
+        description: Modalidade habitacional informada pela CAIXA; esta tabela mantem apenas FAR.
       - name: situacao
-        description: "Situação textual: EM ANDAMENTO, CONCLUÍDO, PARALISADO, etc."
+        description: Situacao atual do empreendimento.
+      - name: situacao_detalhamento
+        description: Detalhamento textual da situacao do empreendimento.
       - name: pct_execucao
-        description: Percentual de execução física reportado pela CAIXA (0-100).
+        description: Percentual de execucao fisica informado pela CAIXA.
       - name: valor_contratado
-        description: Valor total contratado em R$.
-      - name: valor_desembolsado
-        description: Valor total desembolsado acumulado em R$.
+        description: Valor contratado do empreendimento.
       - name: valor_aporte_adicional
-        description: Valor de aporte/suplementação adicional em R$.
+        description: Valor de aporte adicional ou suplementacao.
+      - name: valor_desembolsado
+        description: Valor total desembolsado acumulado.
       - name: uh_contratadas
-        description: Quantidade de UHs contratadas.
+        description: Quantidade de unidades habitacionais contratadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
       - name: uh_entregues
-        description: Quantidade de UHs já entregues.
-      - name: latitude
-        description: Latitude em formato decimal.
-      - name: longitude
-        description: Longitude em formato decimal.
+        description: Quantidade de unidades habitacionais entregues.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: uh_vigentes
+        description: Quantidade de unidades habitacionais vigentes.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
       - name: dt_contratacao
-        description: Data de contratação do empreendimento.
+        description: Data de contratacao do empreendimento.
+      - name: dt_previsao_entrega
+        description: Data prevista de entrega do empreendimento.
+      - name: dt_movimento
+        description: Data de movimento ou referencia do snapshot.
+      - name: logradouro
+        description: Logradouro do imovel.
+      - name: bairro
+        description: Bairro do imovel.
+      - name: cep
+        description: CEP do imovel.
+      - name: latitude
+        description: Latitude do imovel em formato decimal.
+      - name: longitude
+        description: Longitude do imovel em formato decimal.
+      - name: valor_desembolsado_ano
+        description: Valor desembolsado no ano de referencia.
+      - name: uh_a_entregar
+        description: Quantidade de unidades habitacionais a serem entregues.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: uh_distratadas
+        description: Quantidade de unidades habitacionais distratadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: observacoes
+        description: Observacoes textuais recebidas da CAIXA.
+      - name: arquivo_de_origem
+        description: Nome ou identificador do arquivo de origem usado na carga.
+      - name: criado_em
+        description: Timestamp de criacao do registro no processo de ingestao.

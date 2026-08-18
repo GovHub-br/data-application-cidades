@@ -9,7 +9,7 @@ WITH mensal AS (
             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )                                        AS close_fim_mes,
         dt_ingest
-    FROM {{ source('conjuntura_bronze', 'bronze_imob_infomoney') }}
+    FROM {{ ref('bronze_imob_infomoney') }}
     WHERE symbol = 'IMOB.SA'
 ),
 

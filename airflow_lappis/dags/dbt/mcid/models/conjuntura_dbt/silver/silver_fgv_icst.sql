@@ -13,4 +13,4 @@ SELECT
         2
     ) AS var_12_meses,
     {{ add_metadata_timestamps('silver') }}
-FROM {{ source('conjuntura_bronze', 'bronze_fgv_icst') }}
+FROM {{ ref('bronze_fgv_icst') }}

@@ -21,4 +21,4 @@ SELECT
     END AS trimestre,
     EXTRACT(YEAR FROM data_referencia)::int AS ano,
     {{ add_metadata_timestamps('silver') }}
-FROM {{ source('conjuntura_bronze', 'bronze_fgv_incc_m') }}
+FROM {{ ref('bronze_fgv_incc_m') }}

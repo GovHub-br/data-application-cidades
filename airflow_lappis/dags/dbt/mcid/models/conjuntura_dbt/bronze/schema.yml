@@ -1,60 +1,432 @@
 version: 2
 
 models:
+  - name: bronze_abecip_poupanca_sbpe
+    description: >
+      Serie mensal da poupanca do Sistema Brasileiro de Poupanca e Emprestimo
+      publicada pela ABECIP. Preserva depositos, retiradas, captacao liquida,
+      rendimentos e saldo com tipagem padronizada para a camada Bronze.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.FontesInstitucionais.ABECIP"
+          - "MCID.FundosEFontes.SBPE"
+          - "MCID.IndicadoresConjunturais.CaptacaoLiquida"
+    columns:
+      - name: data_referencia
+        description: Data de referencia mensal dos valores da poupanca SBPE.
+      - name: deposito
+        description: Valor total de depositos realizados no periodo.
+      - name: retirada
+        description: Valor total de retiradas realizadas no periodo.
+      - name: captacao_liquida_valor
+        description: Saldo monetario entre depositos e retiradas no periodo.
+      - name: captacao_liquida_pct
+        description: Variacao percentual da captacao liquida no periodo.
+      - name: rendimento
+        description: Valor de rendimentos creditados no periodo.
+      - name: saldo
+        description: Saldo total da poupanca SBPE ao fim do periodo.
+      - name: fonte
+        description: Identificacao da fonte informada no dado de origem.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
+  - name: bronze_bacen_financiamentos_imobiliarios
+    description: >
+      Serie de financiamentos imobiliarios publicada pelo Banco Central. Uma
+      linha representa um tipo de indicador em um periodo mensal, com valor e
+      data de referencia convertidos para tipos adequados ao processamento.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.FontesInstitucionais.BACEN"
+          - "MCID.IndicadoresConjunturais.FinanciamentoImobiliario"
+    columns:
+      - name: tipo
+        description: Tipo de indicador de financiamento imobiliario medido.
+      - name: data
+        description: Periodo textual conforme recebido da fonte.
+      - name: data_referencia
+        description: Data mensal DD/MM/YYYY derivada do periodo informado na fonte.
+        tests:
+          - not_null
+          - date_year_between:
+              min_year: 1900
+              max_year: 2100
+      - name: valor
+        description: Valor numerico do indicador no periodo.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
+  - name: bronze_fgv_icst
+    description: >
+      Serie mensal do Indice de Confianca da Construcao da FGV IBRE. Normaliza
+      o periodo e os valores com e sem ajuste sazonal para uso nas camadas
+      analiticas de conjuntura.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.ICST"
+          - "MCID.FontesInstitucionais.FGVIBRE"
+    columns:
+      - name: mes
+        description: Mes de referencia no formato textual recebido da FGV.
+      - name: data_referencia
+        description: Primeiro dia do mes de referencia convertido para data.
+      - name: icst_com_ajuste_sazonal
+        description: Valor do ICST com ajuste sazonal.
+      - name: icst_sem_ajuste_sazonal
+        description: Valor do ICST sem ajuste sazonal.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
+  - name: bronze_fgv_incc_m
+    description: >
+      Serie mensal do Indice Nacional de Custo da Construcao - Mercado da FGV.
+      Converte o indice e suas variacoes mensal, anual e em doze meses para
+      valores numericos, mantendo o periodo original e a data de referencia.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.INCCM"
+          - "MCID.FontesInstitucionais.FGVIBRE"
+    columns:
+      - name: mes
+        description: Timestamp do mes conforme informado na fonte.
+      - name: data_referencia
+        description: Data mensal derivada do campo de mes da fonte.
+      - name: indice
+        description: Valor do INCC-M no periodo.
+      - name: var_ano
+        description: Variacao percentual acumulada no ano.
+      - name: var_mes
+        description: Variacao percentual em relacao ao mes anterior.
+      - name: var_12_meses
+        description: Variacao percentual acumulada em doze meses.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
+  - name: bronze_fipezap_locacao
+    description: >
+      Serie mensal do Indice FipeZap de locacao residencial. Padroniza a data,
+      as variacoes de preco e os metadados da fonte para alimentar indicadores
+      do mercado imobiliario.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.FipeZapLocacao"
+    columns:
+      - name: data_referencia
+        description: Data de referencia mensal do indice de locacao residencial.
+      - name: imoveis_residenciais_locacao_var_mensal_total
+        description: Variacao percentual mensal total dos precos de locacao residencial.
+      - name: imoveis_residenciais_locacao_var_ano_total
+        description: Variacao percentual acumulada no ano dos precos de locacao residencial.
+      - name: fonte
+        description: Identificacao da fonte informada no dado de origem.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
   - name: bronze_ibge_pib_construcao_civil
     description: >
-      Produto Interno Bruto (PIB) da construção civil por município, em valores correntes e constantes.
-      Dados extraídos do IBGE, com cobertura de 2010 a 2021 para os 5.570 municípios brasileiros.
-      Tipagem aplicada: text→int, text→numeric.
-    meta:
+      Valores do Produto Interno Bruto relacionados a construcao civil,
+      publicados pelo IBGE por localidade, classificacao, categoria e periodo.
+      Normaliza dimensoes textuais e converte o valor para formato numerico.
+    config:
       tags:
         - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PIBConstrucaoCivil"
+          - "MCID.FontesInstitucionais.IBGE"
     columns:
       - name: variavel_id
-        description: "Ano de referência do PIB"
+        description: Identificador da variavel estatistica no IBGE.
       - name: variavel_nome
-        description: Código IBGE do município (7 dígitos).
+        description: Nome da variavel estatistica no IBGE.
+      - name: localidade_id
+        description: Identificador da localidade na classificacao do IBGE.
+      - name: localidade_nome
+        description: Nome padronizado em caixa alta da localidade.
+      - name: classificacao_id
+        description: Identificador da classificacao estatistica.
+      - name: classificacao
+        description: Nome padronizado da classificacao estatistica.
+      - name: categoria_id
+        description: Identificador da categoria dentro da classificacao.
+      - name: categoria
+        description: Nome padronizado da categoria estatistica.
       - name: unidade
-        description: Nome do município.
+        description: Unidade de medida do valor publicado.
       - name: periodo
-        description: PIB da construção civil em valores correntes (R$).
+        description: Periodo de referencia no formato recebido do IBGE.
       - name: data_referencia
-        description: PIB da construção civil em valores constantes (R$ de 2010).
+        description: Data derivada do periodo de referencia do registro.
       - name: valor
-        description: PIB da construção civil em valores constantes (R$ de 2010)
-      - name: localidade
-        description: PIB da construção civil em valores constantes (R$ de 2010)
+        description: Valor numerico do indicador de PIB da construcao civil.
       - name: dt_ingest
-        description: PIB da construção civil em valores constantes (R$ de 2010)
-    data_tests:
+        description: Timestamp em que o registro foi ingerido na origem.
+    tests:
       - row_count_match:
           source_table: ibge.pib_construcao
-          target_table: conjuntura.bronze_ibge_pib_construcao_civil
-  
-  - name: bronze_ibge_sinapi
+          target_table: conjuntura_bronze.bronze_ibge_pib_construcao_civil
+
+  - name: bronze_ibge_pnadc_ocupados_construcao
     description: >
-      Índice Nacional de Custo da Construção (SINAPI) por município, em valores correntes.
-      Dados extraídos do IBGE, com cobertura de 2010 a 2021 para os 5.570 municípios brasileiros.
-      Tipagem aplicada: text→int, text→numeric.
-    meta:
+      Quantidade de pessoas ocupadas na construcao segundo a PNAD Continua do
+      IBGE. Uma linha representa uma variavel, localidade, categoria e periodo,
+      com dimensoes e valor convertidos para tipos consistentes.
+    config:
       tags:
         - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PNADContinua"
+          - "MCID.FontesInstitucionais.IBGE"
     columns:
       - name: variavel_id
-        description: "Ano de referência do SINAPI"
+        description: Identificador da variavel estatistica no IBGE.
       - name: variavel_nome
-        description: Código IBGE do município (7 dígitos).
+        description: Nome da variavel estatistica no IBGE.
+      - name: localidade_id
+        description: Identificador da localidade no IBGE.
+      - name: localidade_nome
+        description: Nome da localidade no IBGE.
+      - name: classificacao_id
+        description: Identificador da classificacao estatistica.
+      - name: classificacao_nome
+        description: Nome da classificacao estatistica.
+      - name: categoria_id
+        description: Identificador da categoria estatistica.
+      - name: categoria_nome
+        description: Nome da categoria estatistica.
       - name: unidade
-        description: Nome do município.
+        description: Unidade de medida da quantidade publicada.
       - name: periodo
-        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
+        description: Periodo de referencia no formato YYYYMM.
+      - name: data_referencia
+        description: Data mensal derivada do periodo do registro.
       - name: valor
-        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
+        description: Quantidade de pessoas ocupadas na construcao para o recorte.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
+  - name: bronze_ibge_pnadc_rendimento_construcao
+    description: >
+      Rendimento das pessoas ocupadas na construcao segundo a PNAD Continua do
+      IBGE. Uma linha representa uma variavel, localidade, categoria e periodo,
+      com dimensoes e valor convertidos para tipos consistentes.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.PNADContinua"
+          - "MCID.FontesInstitucionais.IBGE"
+    columns:
+      - name: variavel_id
+        description: Identificador da variavel estatistica no IBGE.
+      - name: variavel_nome
+        description: Nome da variavel estatistica no IBGE.
+      - name: localidade_id
+        description: Identificador da localidade no IBGE.
+      - name: localidade_nome
+        description: Nome da localidade no IBGE.
+      - name: classificacao_id
+        description: Identificador da classificacao estatistica.
+      - name: classificacao_nome
+        description: Nome da classificacao estatistica.
+      - name: categoria_id
+        description: Identificador da categoria estatistica.
+      - name: categoria_nome
+        description: Nome da categoria estatistica.
+      - name: unidade
+        description: Unidade de medida do rendimento publicado.
+      - name: periodo
+        description: Periodo de referencia no formato YYYYMM.
+      - name: data_referencia
+        description: Data mensal derivada do periodo do registro.
+      - name: valor
+        description: Valor do rendimento da construcao para o recorte estatistico.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
+  - name: bronze_ibge_sinapi
+    description: >
+      Serie do Sistema Nacional de Pesquisa de Custos e Indices da Construcao
+      Civil publicada pelo IBGE. Organiza valores por localidade, classificacao,
+      categoria e periodo e normaliza os tipos recebidos da fonte.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.SINAPI"
+          - "MCID.FontesInstitucionais.IBGE"
+    columns:
+      - name: variavel_id
+        description: Identificador da variavel estatistica no IBGE.
+      - name: variavel_nome
+        description: Nome da variavel estatistica no IBGE.
+      - name: localidade_id
+        description: Identificador da localidade no IBGE.
       - name: localidade
-        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
-      - name: dt_ingest 
-        description: Índice Nacional de Custo da Construção (SINAPI) em valores correntes (R$).
-    data_tests:
+        description: Nome padronizado em caixa alta da localidade.
+      - name: classificacao_id
+        description: Identificador da classificacao estatistica.
+      - name: classificacao
+        description: Nome padronizado da classificacao estatistica.
+      - name: categoria_id
+        description: Identificador da categoria estatistica.
+      - name: categoria
+        description: Nome padronizado da categoria estatistica.
+      - name: unidade
+        description: Unidade de medida do indicador do SINAPI.
+      - name: periodo
+        description: Periodo de referencia no formato recebido do IBGE.
+      - name: data_referencia
+        description: Data mensal derivada do periodo do registro.
+      - name: valor
+        description: Valor numerico do custo ou indice do SINAPI.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+    tests:
       - row_count_match:
-          source_table: ibge.sinapi 
-          target_table: conjuntura.bronze_ibge_sinapi
+          source_table: ibge.sinapi
+          target_table: conjuntura_bronze.bronze_ibge_sinapi
+
+  - name: bronze_imob_infomoney
+    description: >
+      Cotacoes diarias do indice imobiliario IMOB obtidas da Infomoney. Uma
+      linha representa um pregao, com precos de abertura, maxima, minima e
+      fechamento, volume negociado e identificador do ativo.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.IMOB"
+          - "MCID.FontesInstitucionais.B3"
+    columns:
+      - name: symbol
+        description: Simbolo do indice ou ativo no provedor de cotacoes.
+      - name: data_pregao
+        description: Data do pregao a que os precos se referem.
+      - name: open
+        description: Preco de abertura no pregao.
+      - name: high
+        description: Maior preco observado no pregao.
+      - name: low
+        description: Menor preco observado no pregao.
+      - name: close
+        description: Preco de fechamento no pregao.
+      - name: volume
+        description: Volume negociado no pregao.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.
+
+  - name: bronze_novo_caged
+    description: >
+      Serie mensal de movimentacao e estoque de empregos formais da construcao
+      de edificios no Novo CAGED. Consolida admissoes, desligamentos, saldo,
+      estoque e variacao para cada ano e mes.
+    config:
+      tags:
+        - bronze
+        - conjuntura
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier3"
+        tags:
+          - "Certification.Bronze"
+        glossary:
+          - "MCID.IndicadoresConjunturais.NovoCAGED"
+    columns:
+      - name: ano
+        description: Ano de referencia da movimentacao de empregos.
+      - name: mes
+        description: Mes de referencia da movimentacao de empregos.
+      - name: admitidos
+        description: Quantidade de trabalhadores admitidos no periodo.
+      - name: desligados
+        description: Quantidade de trabalhadores desligados no periodo.
+      - name: saldo
+        description: Saldo de empregos, calculado entre admissoes e desligamentos.
+      - name: estoque
+        description: Estoque de empregos formais ao fim do periodo.
+      - name: variacao
+        description: Variacao percentual do estoque de empregos no periodo.
+      - name: dt_ingest
+        description: Timestamp em que o registro foi ingerido na origem.

@@ -181,7 +181,7 @@ sources:
       - name: bronze_imob_infomoney
         description: Índice IMOB da Infomoney com dados diários de fechamento.
       - name: bronze_abramat_indice
-        description: Índice ABRAMAT de custos da construção civil.
+        description: Índice ABRAMAT de faturamento deflacionado da indústria de materiais para construção.
       - name: bronze_fgts_financiamentos_habitacionais
         description: Financiamentos habitacionais do FGTS por faixa e modalidade.
       - name: bronze_abecip_sbpe_financiamentos_habitacionais

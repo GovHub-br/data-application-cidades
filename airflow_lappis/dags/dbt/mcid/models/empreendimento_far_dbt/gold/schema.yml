@@ -3,49 +3,160 @@ version: 2
 models:
   - name: ficha_empreendimento
     description: >
-      Tabela Gold projetada especificamente para alimentar o componente visual de "Ficha do Empreendimento" 
-      nos Dashboards. Ela consome os dados da camada Silver (empreendimento) e injeta regras de negócio finais
-      como cálculo de status, prazos e ritmo financeiro.
-    meta:
+      Tabela Gold para alimentar a ficha individual do empreendimento em dashboards.
+      Formata identificadores, nomes, localizacao, escopo, metodo, demanda, situacao,
+      indicadores contratuais, execucao fisica, prazos e ritmo fisico-financeiro.
+    config:
       tags:
         - gold
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
     columns:
       - name: apf
-        description: APF (Autorização de Projeto de Financiamento) do empreendimento.
-      - name: municipio_uf
-        description: Localização do empreendimento no formato "Município/UF" (ex. "Horizonte/CE").
-      - name: metodo
-        description: Método de originação/seleção do empreendimento (ex. SELEÇÃO, CALAMIDADE/EMERGÊNCIA).
-      - name: demanda
-        description: Tipo de demanda habitacional atendida pelo projeto (ex. CADASTRO HABITACIONAL).
+        description: Chave principal do empreendimento, com APF normalizado para 8 digitos.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+      - name: portaria_selecao
+        description: Numero da portaria MCID de selecao ou contratacao.
       - name: nome_empreendimento
-        description: Nome do empreendimento em maiúsculo (padronizado).
+        description: Nome do empreendimento em caixa alta, padronizado para exibicao.
+      - name: proponente_cnpj
+        description: CNPJ do proponente original da proposta.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
+      - name: nome_proponente
+        description: Nome do proponente em caixa alta, padronizado para exibicao.
+      - name: tomador_cnpj
+        description: CNPJ do tomador do financiamento ou recurso.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
+      - name: nome_tomador
+        description: Nome do tomador em caixa alta, padronizado para exibicao.
+      - name: agente_financeiro
+        description: Agente financeiro responsavel pelo empreendimento.
+      - name: quantidade_uh
+        description: Quantidade total de unidades habitacionais do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: pessoas_atendidas
+        description: Estimativa de pessoas atendidas, calculada por quantidade de UHs multiplicada por 3,3.
+      - name: tipologia
+        description: Tipologia descritiva da edificacao.
+      - name: municipio
+        description: Municipio onde o empreendimento esta localizado.
+      - name: uf
+        description: Unidade federativa onde o empreendimento esta localizado.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
+      - name: municipio_uf
+        description: Localizacao compacta no formato municipio/UF.
+      - name: apf_municipio_empreendimento
+        description: Texto de busca que concatena APF, municipio/UF e nome do empreendimento.
+      - name: metodo
+        description: Metodo de originacao do empreendimento, derivado do codigo de originacao.
+      - name: demanda
+        description: Tipo de demanda habitacional atendida, derivado do codigo de demanda.
+      - name: situacao_empreendimento
+        description: Situacao gerencial atual do empreendimento.
       - name: status_execucao_simplificado
-        description: >
-          Regra de negócio: Traduz a porcentagem física em status categóricos (Não Iniciado, Em Andamento, Concluído).
+        description: Status simplificado da execucao fisica, classificado como Nao Iniciado, Em Andamento, Concluido ou Status Desconhecido.
+      - name: valor_contratado
+        description: Valor total contratado ou investido no empreendimento.
+      - name: valor_aporte_adicional
+        description: Valor de aporte adicional ou suplementacao associado ao empreendimento.
+      - name: valor_por_uh
+        description: Valor medio contratado por unidade habitacional.
+      - name: dt_contratacao
+        description: Data de contratacao do empreendimento.
+      - name: percentual_execucao_fisica
+        description: Percentual consolidado de execucao fisica do empreendimento.
+      - name: dt_previsao_entrega
+        description: Data prevista de entrega do empreendimento.
+      - name: dt_conclusao_obra
+        description: Data de conclusao fisica da obra, quando informada.
+      - name: dt_entrega
+        description: Data de entrega do empreendimento, quando informada.
       - name: status_prazo
-        description: >
-          Regra de negócio: Analisa a data de previsão de entrega com a data atual. 
-          Alerta se o empreendimento está "Em Atraso" (não entregue e data limite vencida).
+        description: Status de prazo calculado a partir da situacao e da data prevista de entrega.
+      - name: valor_desembolsado
+        description: Valor total desembolsado acumulado.
+      - name: percentual_execucao_financeira
+        description: Percentual de execucao financeira calculado como valor desembolsado sobre valor contratado.
       - name: ritmo_fisico_financeiro
-        description: >
-          Regra de negócio: Compara o % de execução física com o % de desembolso financeiro.
-          Aplica uma tolerância de 5% para classificar como "Ritmo Equilibrado", "Desembolso Adiantado" ou "Desembolso Atrasado".
+        description: Classificacao do ritmo fisico-financeiro comparando execucao financeira e execucao fisica com tolerancia de 5 pontos percentuais.
 
   - name: resumo_gerencial
     description: >
-      Visão agregada Gold contendo os grandes KPIs e somatórios (UHs, Pessoas Atendidas, Valores) 
-      agrupados por tipologia e situação. Perfeita para os gráficos de pizza e barras dos painéis gerenciais.
-    meta:
+      Tabela Gold agregada para indicadores gerenciais dos empreendimentos FAR.
+      Resume quantidade de empreendimentos, UHs, pessoas atendidas, valores
+      contratados e desembolsados, execucao fisica media e valor medio por UH
+      por situacao, tipologia e status.
+    config:
       tags:
         - gold
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.Desembolso"
     columns:
+      - name: situacao_empreendimento
+        description: Situacao gerencial do empreendimento usada como dimensao de agrupamento.
+      - name: tipologia
+        description: Tipologia da edificacao usada como dimensao de agrupamento.
+      - name: status_execucao_simplificado
+        description: Status simplificado de execucao fisica usado como dimensao de agrupamento.
+      - name: status_prazo
+        description: Status de prazo usado como dimensao de agrupamento.
       - name: total_empreendimentos
-        description: Contagem total de APFs que se enquadram naquele perfil.
+        description: Quantidade total de empreendimentos no grupo.
       - name: total_uhs
-        description: Somatório de Unidades Habitacionais.
+        description: Somatorio de unidades habitacionais no grupo.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: total_pessoas_atendidas
+        description: Somatorio estimado de pessoas atendidas no grupo.
+      - name: somatorio_valor_contratado
+        description: Somatorio do valor contratado dos empreendimentos no grupo.
+      - name: somatorio_valor_desembolsado
+        description: Somatorio do valor desembolsado dos empreendimentos no grupo.
       - name: media_execucao_fisica
-        description: Execução física média (0-100) daquele grupo de empreendimentos.
+        description: Media do percentual de execucao fisica no grupo.
+      - name: media_valor_por_uh
+        description: Media do valor contratado por unidade habitacional no grupo.
 
   - name: panorama_estadual
     description: >
@@ -53,12 +164,30 @@ models:
       Consolida todos os empreendimentos de um estado em seções distintas, cada uma
       identificada pela coluna 'secao'. A ferramenta de BI filtra WHERE secao = 'X'
       para montar cada card do painel.
-    meta:
+    config:
       tags:
         - gold
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
     columns:
       - name: uf
         description: Sigla da Unidade Federativa (ex. MT, BA, CE).
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
+      - name: estado
+        description: Nome completo do estado associado a UF, conforme referencia do IBGE.
       - name: secao
         description: >
           Identificador da seção do dashboard que esta linha alimenta.
@@ -69,12 +198,18 @@ models:
         description: >
           Valor da dimensão dentro da seção. Para 'metodo' pode ser SELEÇÃO ou CALAMIDADE.
           Para 'situacao' pode ser EM ANDAMENTO, PARALISADO, etc. Para 'header' é sempre 'resumo'.
+      - name: ordem
+        description: Ordem numerica de exibicao da dimensao dentro da secao do dashboard.
       - name: qtd_empreendimentos
         description: >
           Contagem de empreendimentos naquela combinação UF+seção+dimensão.
           Na seção 'header', este campo contém o total de municípios atendidos.
       - name: qtd_uhs
         description: Somatório de Unidades Habitacionais naquela combinação.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
       - name: valor_1
         description: "Na seção 'header': valor total contratado no estado. NULL nas demais seções."
       - name: valor_2
@@ -92,26 +227,52 @@ models:
       por região no Superset. Contém duas visões filtradas pela coluna 'nivel':
       'uf' (27 linhas, uma por estado com código ISO 3166-2) e 'regiao' (5 linhas,
       uma por macrorregião). Usa a tabela IBGE api_ibge_uf como referência.
-    meta:
+    config:
       tags:
         - gold
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
     columns:
       - name: uf
         description: "Sigla da UF (quando nivel='uf') ou sigla da região (quando nivel='regiao')."
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
       - name: estado_nome
         description: "Nome completo do estado (quando nivel='uf') ou nome da região (quando nivel='regiao')."
       - name: iso_3166_2
         description: "Código ISO 3166-2 no formato 'BR-XX' para o Country Map do Superset. NULL para nível região."
+      - name: regiao_sigla
+        description: Sigla da macrorregiao IBGE associada a UF ou a agregacao regional.
       - name: regiao_nome
         description: Nome da macrorregião IBGE (Norte, Nordeste, Sudeste, Sul, Centro-Oeste).
       - name: nivel
         description: "Discriminador: 'uf' para dados estaduais, 'regiao' para dados regionais."
-      - name: total_uhs
-        description: Somatório de Unidades Habitacionais naquela UF ou região.
+      - name: total_municipios
+        description: Quantidade de municipios atendidos naquela UF ou somatorio na regiao.
       - name: total_empreendimentos
         description: Contagem de empreendimentos (APFs) naquela UF ou região.
+      - name: total_uhs
+        description: Somatório de Unidades Habitacionais naquela UF ou região.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
       - name: total_valor_contratado
         description: Soma dos valores contratados em R$.
+      - name: total_valor_desembolsado
+        description: Soma dos valores desembolsados em R$ naquela UF ou regiao.
       - name: media_execucao_fisica
         description: Média do percentual de execução física dos empreendimentos (0-100).
 
@@ -120,12 +281,30 @@ models:
       Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira" no Superset.
       Consome a silver evolucao_financeira e enriquece com nome do empreendimento,
       nome do estado (IBGE) e labels de mês formatados. Uma linha por APF × mês.
-    meta:
+    config:
       tags:
         - gold
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
     columns:
       - name: apf
         description: APF do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
       - name: nome_empreendimento
         description: Nome do empreendimento em maiúsculo (da ficha_empreendimento).
       - name: apf_municipio_empreendimento
@@ -134,6 +313,10 @@ models:
         description: Município do empreendimento.
       - name: uf
         description: Sigla da UF.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
       - name: estado
         description: Nome completo do estado em maiúsculo (da tabela IBGE).
       - name: mes
@@ -142,8 +325,22 @@ models:
         description: "Label do mês no formato 'YYYY-MM' (para eixo X do gráfico)."
       - name: mes_label_br
         description: "Label do mês no formato 'MM/YYYY' (formato brasileiro)."
+      - name: qt_liberacoes
+        description: Quantidade de liberacoes financeiras registradas para o empreendimento no mes.
       - name: vr_liberado_mes
         description: Valor total liberado no mês em R$ (arredondado para 2 casas).
+      - name: vr_pago_obra_mes
+        description: Valor pago no mes referente a obra e edificacao, em R$.
+      - name: vr_pago_terreno_mes
+        description: Valor pago no mes referente ao terreno, em R$.
+      - name: vr_pago_pts_mes
+        description: Valor pago no mes referente ao trabalho social, em R$.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.ExecucaoDeEmpreendimentos.PTS"
+      - name: vr_pago_incc_mes
+        description: Valor pago no mes referente a INCC ou ajuste de correcao, em R$.
       - name: vr_acumulado
         description: Desembolso acumulado progressivo até o mês em R$.
       - name: valor_contratado
@@ -154,13 +351,34 @@ models:
   - name: execucao_fisica_financeira_chart
     description: >
       Tabela Gold para o gráfico de acompanhamento da execução física e financeira.
-      Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal.
-    meta:
+      Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal,
+      produzindo uma linha por APF e mes com os percentuais preenchidos para a serie temporal.
+    config:
       tags:
         - gold
+        - empreendimento_far
+        - mcid
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVFAR"
+          - "MCID.FundosEFontes.FAR"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
     columns:
       - name: apf
         description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+      - name: apf_municipio_empreendimento
+        description: Texto de busca que concatena APF, municipio/UF e nome do empreendimento.
       - name: mes
         description: Mês de referência no formato YYYY-MM-DD.
       - name: pct_obra_realizada

@@ -1,110 +1,324 @@
 version: 2
 
 models:
-  - name: fds_ficha_empreendimento
+  - name: fds_evolucao_financeira_chart
     description: >
-      Tabela Gold do MCMV Entidades (FDS) contendo 1 linha por empreendimento (APF).
-      É a tabela central para alimentar o Superset com os dados detalhados.
-      Utilizada nos KPIs: Mapa de Atuação, Semáforo de Alertas, Divergência 
-      Físico-Financeira e Distribuição por Tipo.
-    meta:
+      Uma linha por APF e mês, preparada para gráficos de evolução no Superset.
+      Expõe desembolsos mensais e acumulados, componentes financeiros, períodos
+      formatados, localização e o percentual físico atual do empreendimento
+      junto à série financeira histórica.
+    config:
       tags:
         - gold
         - entidades
+        - mcid
         - superset
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVEntidades"
+          - "MCID.FundosEFontes.FDS"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
+          - "MCID.ExecucaoDeEmpreendimentos.Desembolso"
+          - "MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial"
     columns:
       - name: apf
-        description: Identificador do empreendimento (APF).
-        data_tests:
+        description: APF do empreendimento associado à série financeira.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fds_ficha_empreendimento')
+              field: apf
+      - name: cnpj_eo
+        description: CNPJ de 14 dígitos da Entidade Organizadora.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
+      - name: nome_eo
+        description: Nome da Entidade Organizadora convertido para letras maiúsculas.
+      - name: apf_municipio_empreendimento
+        description: Rótulo que combina APF, município, UF e nome do empreendimento.
+      - name: mes
+        description: Mês da liberação formatado como texto no padrão AAAA-MM-DD.
+      - name: ano
+        description: Primeiro dia do ano da liberação, formatado como AAAA-MM-DD.
+      - name: trimestre
+        description: Primeiro dia do trimestre da liberação, formatado como AAAA-MM-DD.
+      - name: valor_liberado_mensal
+        description: Soma das liberações reais ocorridas no mês, em reais.
+      - name: valor_obra_mensal
+        description: Valor mensal pago para obra, em reais.
+      - name: valor_terreno_mensal
+        description: Valor mensal pago para terreno, em reais.
+      - name: valor_ts_mensal
+        description: Valor mensal pago para trabalho social, em reais.
+      - name: valor_projeto_mensal
+        description: Valor mensal pago para projeto, em reais.
+      - name: valor_incc_mensal
+        description: Valor mensal pago para despesas de INCC, em reais.
+      - name: valor_desembolsado_acumulado
+        description: Desembolso acumulado do empreendimento até o mês da linha, em reais.
+      - name: percentual_execucao_financeira
+        description: Percentual do desembolso acumulado sobre o valor contratado.
+      - name: percentual_execucao_fisica
+        description: Percentual físico atual, repetido na série mensal para comparação.
+      - name: municipio
+        description: Nome do município do empreendimento.
+      - name: uf
+        description: Sigla da unidade federativa do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
+
+  - name: fds_ficha_empreendimento
+    description: >
+      Uma linha por APF com a ficha analítica do empreendimento do MCMV
+      Entidades. Formata identificadores e nomes, decodifica tipologia e
+      modalidade e reúne localização, alertas, valores, execução, entrega e
+      trabalho social para consumo em painéis.
+    config:
+      tags:
+        - gold
+        - entidades
+        - mcid
+        - superset
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVEntidades"
+          - "MCID.FundosEFontes.FDS"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
+          - "MCID.ExecucaoDeEmpreendimentos.Desembolso"
+          - "MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial"
+    columns:
+      - name: apf
+        description: Identificador de oito dígitos do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.APF"
+        tests:
           - unique
           - not_null
+          - relationships:
+              to: ref('fds_empreendimento')
+              field: apf
       - name: nome_empreendimento
-        description: Nome padronizado do empreendimento em maiúsculas.
+        description: Nome do empreendimento convertido para letras maiúsculas.
       - name: cnpj_eo
-        description: CNPJ da Entidade Organizadora (apenas números, 14 dígitos).
+        description: CNPJ de 14 dígitos da Entidade Organizadora.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
       - name: cnpj_eo_formatado
-        description: CNPJ da Entidade Organizadora formatado (XX.XXX.XXX/XXXX-XX) para exibição.
+        description: CNPJ da Entidade Organizadora formatado como XX.XXX.XXX/XXXX-XX.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
       - name: nome_eo
-        description: Nome padronizado da Entidade Organizadora em maiúsculas.
+        description: Nome da Entidade Organizadora convertido para letras maiúsculas.
+      - name: agente_financeiro
+        description: Nome do agente financeiro responsável pela operação.
       - name: quantidade_uh
-        description: Total de UHs corrigido (maior valor entre construção e projeto).
+        description: Quantidade total de unidades habitacionais do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
       - name: pessoas_atendidas
-        description: Métrica heurística (quantidade_uh × 3.3).
+        description: Estimativa inteira de pessoas atendidas com base em 3,3 pessoas por unidade.
+      - name: tipologia
+        description: Tipo de edificação decodificado na camada silver.
+      - name: co_regime_obra
+        description: Código do regime de execução da obra.
       - name: regime_obra
-        description: Regime de execução da obra decodificado (ex. Empreitada Global, Autogestão).
+        description: Regime de obra decodificado como Empreitada Global, Autogestão ou Outro.
+      - name: co_modalidade
+        description: Código da modalidade do empreendimento.
       - name: modalidade
-        description: > 
-          Modalidade de atendimento do programa decodificada.
-          1 = Aquisição de terreno e elaboração de projeto
-          2 = Elaboração de projeto (quando o terreno já existe)
-          3 = Produção de unidades novas (A construção em si - é a mais comum e justifica ter várias na base)
-          4 = Produção de unidades requalificadas (Reforma/Retrofit de prédios antigos)
+        description: >
+          Modalidade decodificada como Aquisição de Terreno e Projeto,
+          Elaboração de Projeto, Produção de Unidades Novas, Requalificação ou
+          Outro.
+      - name: municipio
+        description: Nome do município onde se localiza o empreendimento.
+      - name: uf
+        description: Sigla da unidade federativa do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UF"
+      - name: municipio_uf
+        description: Rótulo geográfico formado por município e UF separados por barra.
+      - name: iso_3166_2
+        description: Código da unidade federativa no formato BR-UF.
+      - name: regiao_nome
+        description: Região brasileira derivada da unidade federativa.
+      - name: gps_lat_grau
+        description: Componente de graus da latitude em coordenadas DMS.
+      - name: gps_lat_minuto
+        description: Componente de minutos da latitude em coordenadas DMS.
+      - name: gps_lat_segundo
+        description: Componente de segundos da latitude em coordenadas DMS.
+      - name: gps_long_grau
+        description: Componente de graus da longitude em coordenadas DMS.
+      - name: gps_long_minuto
+        description: Componente de minutos da longitude em coordenadas DMS.
+      - name: gps_long_segundo
+        description: Componente de segundos da longitude em coordenadas DMS.
       - name: apf_municipio_empreendimento
-        description: Campo concatenado "APF - Município/UF - Nome" usado como filtro no Dashboard.
+        description: Rótulo que combina APF, município, UF e nome do empreendimento.
+      - name: situacao_gefus
+        description: Situação contratual do empreendimento informada pelo GEFUS.
       - name: semaforo_alerta
         description: >
-          Regra de negócio para o gráfico de semáforo. Categorias:
-          Paralisada, Cláusula Suspensiva, Não Iniciada, 
-          Em Andamento, Concluída.
+          Classificação operacional derivada da situação e da execução física:
+          Paralisada, Cláusula Suspensiva, Não Iniciada, Em Andamento ou
+          Concluída.
+      - name: indicativo_paralisacao
+        description: Indicador Sim ou Não derivado da existência de data de paralisação.
+      - name: valor_contratado
+        description: Valor total do investimento contratado, em reais.
+      - name: valor_financiamento_fds
+        description: Valor financiado com recursos do FDS, em reais.
+      - name: valor_contrapartidas
+        description: Valor total das contrapartidas, em reais.
+      - name: valor_por_uh
+        description: Valor contratado por unidade habitacional, em reais.
+      - name: dt_contratacao
+        description: Data de contratação do empreendimento.
+      - name: valor_desembolsado
+        description: Valor total desembolsado para o empreendimento, em reais.
+      - name: percentual_execucao_financeira
+        description: Percentual do valor desembolsado sobre o valor contratado.
+      - name: percentual_obra_prevista
+        description: Percentual de execução física previsto.
+      - name: percentual_execucao_fisica
+        description: Percentual de execução física realizado.
+      - name: dt_inicio_obra
+        description: Data de início da obra.
+      - name: dt_previsao_conclusao
+        description: Data prevista para conclusão da obra.
+      - name: dt_conclusao_obra
+        description: Data efetiva de conclusão da obra.
       - name: divergencia_fisico_financeira
-        description: Gap em p.p. entre percentual_execucao_financeira e percentual_execucao_fisica.
+        description: Diferença, em pontos percentuais, entre a execução financeira e a física.
+      - name: status_ritmo_obra
+        description: >
+          Classificação da divergência como Desembolso Adiantado, Desembolso
+          Atrasado ou Ritmo Equilibrado, usando tolerância de cinco pontos
+          percentuais.
+      - name: qt_uh_alienadas
+        description: Quantidade de unidades habitacionais alienadas.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: pct_entrega
+        description: Percentual de unidades alienadas sobre o total do empreendimento.
+      - name: dt_entrega
+        description: Data efetiva de entrega do empreendimento.
       - name: status_entrega
-        description: Regra de negócio (Totalmente Entregue, Entrega Parcial, Não Entregue) calculada sobre a taxa de alienação.
+        description: Classificação como Totalmente Entregue, Entrega Parcial ou Não Entregue.
+      - name: pct_execucao_ts
+        description: Percentual de execução do trabalho social.
 
   - name: fds_panorama_entidade
     description: >
-      Tabela Gold do MCMV Entidades (FDS) agregada por Entidade Organizadora (CNPJ).
-      É a tabela principal para os KPIs: Card Resumo, Ranking Interativo e
-      Ranking de Risco. Contém agregações ponderadas e scores.
-    meta:
+      Uma linha por CNPJ de Entidade Organizadora com totais de empreendimentos,
+      unidades, pessoas e valores, indicadores ponderados de execução e entrega,
+      abrangência territorial e classificação de risco calculada a partir dos
+      empreendimentos associados.
+    config:
       tags:
         - gold
         - entidades
+        - mcid
         - superset
+    meta:
+      openmetadata:
+        tier: "Tier.Tier1"
+        tags:
+          - "Certification.Gold"
+        glossary:
+          - "MCID.ProgramasHabitacionais.MCMV"
+          - "MCID.ProgramasHabitacionais.MCMV.MCMVEntidades"
+          - "MCID.FundosEFontes.FDS"
+          - "MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica"
+          - "MCID.ExecucaoDeEmpreendimentos.ExecucaoFinanceira"
+          - "MCID.ExecucaoDeEmpreendimentos.Desembolso"
     columns:
       - name: cnpj_eo
-        description: CNPJ da Entidade Organizadora (14 dígitos).
-        data_tests:
+        description: CNPJ de 14 dígitos que identifica a Entidade Organizadora agregada.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.CNPJ"
+        tests:
           - unique
           - not_null
       - name: nome_eo
-        description: Nome da EO.
+        description: Nome em letras maiúsculas da Entidade Organizadora.
       - name: total_empreendimentos
-        description: Quantidade de APFs associados a esta EO.
+        description: Quantidade de empreendimentos associados à Entidade Organizadora.
+      - name: total_uhs_contratadas
+        description: Soma das unidades habitacionais contratadas pela Entidade Organizadora.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: total_uhs_entregues
+        description: Soma das unidades habitacionais alienadas nos empreendimentos da entidade.
+        meta:
+          openmetadata:
+            glossary:
+              - "MCID.Identificadores.UH"
+      - name: total_pessoas_atendidas
+        description: Soma das estimativas de pessoas atendidas nos empreendimentos da entidade.
+      - name: valor_total_contratado
+        description: Soma dos valores contratados dos empreendimentos, em reais.
+      - name: valor_total_desembolsado
+        description: Soma dos valores desembolsados dos empreendimentos, em reais.
       - name: media_execucao_fisica
-        description: Percentual médio de execução física ponderado pelo valor do investimento.
+        description: Percentual médio de execução física ponderado pelo valor contratado.
+      - name: media_execucao_financeira
+        description: Percentual do valor total desembolsado sobre o valor total contratado.
       - name: taxa_entrega_geral
-        description: Percentual total de UHs alienadas em relação ao total contratado da EO.
+        description: Percentual das unidades alienadas sobre as unidades contratadas da entidade.
+      - name: qtd_obras_atrasadas
+        description: Quantidade de obras cuja execução física está abaixo do percentual previsto.
+      - name: qtd_obras_paralisadas
+        description: Quantidade de obras com data de paralisação registrada.
+      - name: qtd_obras_divergencia_financeira
+        description: Quantidade de obras com divergência físico-financeira inferior a menos cinco pontos.
+      - name: qtd_estados_atuacao
+        description: Quantidade distinta de unidades federativas com empreendimentos da entidade.
+      - name: qtd_municipios_atuacao
+        description: Quantidade distinta de municípios com empreendimentos da entidade.
       - name: score_risco
         description: >
-          Pontuação de risco da EO. Soma os pesos:
-          1 ponto (Atraso: físico < previsto),
-          2 pontos (Obra Paralisada),
-          1 ponto (Divergência Financeira Adiantada grave: < -5 p.p.).
+          Soma de um ponto por obra atrasada, dois por obra paralisada e um por
+          obra com divergência financeira grave.
       - name: classificacao_risco
-        description: "Regra de negócio baseada no score: Baixo, Médio ou Alto Risco."
-
-  - name: fds_evolucao_financeira_chart
-    description: >
-      Tabela Gold de evolução financeira do MCMV Entidades (FDS).
-      Estrutura de série temporal (1 linha por APF/Mês) pronta para plotar
-      no Superset gráficos de linha (Acumulado) e barra (Desembolso mensal).
-      Herda o cnpj_eo para permitir filtro direto por entidade.
-    meta:
-      tags:
-        - gold
-        - entidades
-        - superset
-    columns:
-      - name: apf
-        description: APF do empreendimento.
-      - name: cnpj_eo
-        description: CNPJ da Entidade.
-      - name: mes
-        description: Primeiro dia do mês da medição financeira.
-      - name: valor_liberado_mensal
-        description: Soma dos valores de liberação ocorridos naquele mês.
-      - name: valor_desembolsado_acumulado
-        description: Valor total acumulado desembolsado para aquele APF até o mês atual da linha.
-      - name: pct_executado_financeiro
-        description: Relação entre o acumulado financeiro e o valor de investimento total do contrato.
+        description: Classificação Baixo, Médio ou Alto Risco derivada do score de risco.
