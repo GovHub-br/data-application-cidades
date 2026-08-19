@@ -183,8 +183,7 @@ def add_zip_members(
                     info
                     for info in zf.infolist()
                     if not info.is_dir()
-                    and Path(info.filename).suffix.lower()
-                    in SUPPORTED_IN_ZIP_EXTENSIONS
+                    and Path(info.filename).suffix.lower() in SUPPORTED_IN_ZIP_EXTENSIONS
                     and not Path(info.filename).name.startswith(".")
                 ]
                 if not inner_files:
@@ -193,8 +192,10 @@ def add_zip_members(
 
                 for info in inner_files:
                     inner_path = normalize_path(info.filename)
-                    compare_path = inner_path if match_mode == "filename" else (
-                        f"{relative_path}::{inner_path}"
+                    compare_path = (
+                        inner_path
+                        if match_mode == "filename"
+                        else (f"{relative_path}::{inner_path}")
                     )
                     add_file(
                         files,
@@ -288,9 +289,11 @@ def capture_minio_snapshot(
             key = comparison_key(path_key, match_mode)
             files[key] = {
                 "size": int(obj.get("Size") or 0),
-                "mtime": int(obj["LastModified"].timestamp())
-                if obj.get("LastModified")
-                else None,
+                "mtime": (
+                    int(obj["LastModified"].timestamp())
+                    if obj.get("LastModified")
+                    else None
+                ),
                 "original_path": normalize_path(path_key),
             }
 
@@ -362,7 +365,9 @@ def print_report(diff: dict, limit: int | None) -> None:
     section(
         "SO NO MINIO",
         diff["added"],
-        lambda x: f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})",
+        lambda x: (
+            f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})"
+        ),
     )
     section(
         "DIFERENTES",
@@ -376,7 +381,9 @@ def print_report(diff: dict, limit: int | None) -> None:
     section(
         "SO NO SFTP",
         diff["removed"],
-        lambda x: f"- {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})",
+        lambda x: (
+            f"- {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})"
+        ),
     )
 
 

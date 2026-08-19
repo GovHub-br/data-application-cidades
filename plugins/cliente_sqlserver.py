@@ -1,6 +1,5 @@
 import logging
-import re
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 
 

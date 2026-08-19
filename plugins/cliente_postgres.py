@@ -283,14 +283,12 @@ class ClientPostgresDB:
         with psycopg2.connect(self.conn_str) as conn:
             with conn.cursor() as cursor:
                 # Get existing columns
-                cursor.execute(
-                    f"""
+                cursor.execute(f"""
                     SELECT column_name
                     FROM information_schema.columns
                     WHERE table_schema = '{schema}'
                     AND table_name = '{table_name}'
-                """
-                )
+                """)
                 existing_columns = [row[0] for row in cursor.fetchall()]
 
                 # Add columns that don't exist

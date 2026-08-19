@@ -1,11 +1,9 @@
 import io
 import logging
-import re
 from datetime import datetime
 from typing import Optional
 
 import pandas as pd
-import requests
 from bs4 import BeautifulSoup
 
 from cliente_base import ClienteBase
@@ -35,9 +33,7 @@ class ClienteAbecip(ClienteBase):
     """
 
     BASE_URL = "https://www.abecip.org.br"
-    PAGINA_POUPANCA = (
-        "/credito-imobiliario/indicadores/caderneta-de-poupanca"
-    )
+    PAGINA_POUPANCA = "/credito-imobiliario/indicadores/caderneta-de-poupanca"
     ABA_POUPANCA = "SBPE_Mensal"
 
     # Índices de coluna na planilha (0-based), a partir da linha 6
@@ -57,8 +53,7 @@ class ClienteAbecip(ClienteBase):
             base_url=self.BASE_URL,
             headers={
                 "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36"
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"
                 )
             },
         )
@@ -81,9 +76,7 @@ class ClienteAbecip(ClienteBase):
             URL completa do XLSX ou None em caso de falha.
         """
         url_pagina = f"{self.BASE_URL}{pagina_path}"
-        logging.info(
-            f"[cliente_abecip.py] Buscando URL do XLSX em: {url_pagina}"
-        )
+        logging.info(f"[cliente_abecip.py] Buscando URL do XLSX em: {url_pagina}")
 
         try:
             _, html = self.request(
@@ -92,23 +85,15 @@ class ClienteAbecip(ClienteBase):
                 response_type="text",
             )
         except Exception as e:
-            logging.error(
-                f"[cliente_abecip.py] Erro ao acessar página ABECIP: {e}"
-            )
+            logging.error(f"[cliente_abecip.py] Erro ao acessar página ABECIP: {e}")
             return None
 
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup.find_all("a", href=True):
             href = tag["href"]
             if pattern in href:
-                url = (
-                    href
-                    if href.startswith("http")
-                    else f"{self.BASE_URL}{href}"
-                )
-                logging.info(
-                    f"[cliente_abecip.py] URL do XLSX encontrada: {url}"
-                )
+                url = href if href.startswith("http") else f"{self.BASE_URL}{href}"
+                logging.info(f"[cliente_abecip.py] URL do XLSX encontrada: {url}")
                 return url
 
         logging.error(
@@ -132,9 +117,7 @@ class ClienteAbecip(ClienteBase):
 
             return content
         except Exception as e:
-            logging.error(
-                f"[cliente_abecip.py] Erro ao baixar XLSX: {e}"
-            )
+            logging.error(f"[cliente_abecip.py] Erro ao baixar XLSX: {e}")
             return None
 
     def fetch_and_transform_poupanca(self) -> Optional[pd.DataFrame]:
@@ -176,24 +159,15 @@ class ClienteAbecip(ClienteBase):
 
             # Mantém apenas registros mensais (datetime) — descarta
             # linhas anuais (Total.YYYY), rodapé e futuras vazias
-            df = df[
-                df["data_referencia"].apply(
-                    lambda x: isinstance(x, datetime)
-                )
-            ].copy()
+            df = df[df["data_referencia"].apply(lambda x: isinstance(x, datetime))].copy()
 
             # Descarta meses futuros sem dados (captacao = 0 e saldo vazio)
-            df = df[
-                ~(
-                    (df["captacao_liquida_valor"] == 0)
-                    & df["saldo"].isna()
-                )
-            ].copy()
+            df = df[~((df["captacao_liquida_valor"] == 0) & df["saldo"].isna())].copy()
 
             # Normaliza data para string 'yyyy-MM-dd'
-            df["data_referencia"] = pd.to_datetime(
-                df["data_referencia"]
-            ).dt.strftime("%Y-%m-%d")
+            df["data_referencia"] = pd.to_datetime(df["data_referencia"]).dt.strftime(
+                "%Y-%m-%d"
+            )
 
             # Converte colunas numéricas
             cols_numericas = [c for c in self.COLUNAS_NOMES if c != "data_referencia"]
@@ -212,7 +186,5 @@ class ClienteAbecip(ClienteBase):
             return df
 
         except Exception as e:
-            logging.error(
-                f"[cliente_abecip.py] Erro ao processar XLSX de poupança: {e}"
-            )
+            logging.error(f"[cliente_abecip.py] Erro ao processar XLSX de poupança: {e}")
             return None

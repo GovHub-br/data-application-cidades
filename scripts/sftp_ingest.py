@@ -24,13 +24,17 @@ SOCKET_ERRORS = (
     ConnectionResetError,
 )
 _CONN_ERROR_STRINGS = (
-    "garbage packet", "eof", "connection reset",
-    "broken pipe", "timed out", "channel closed", "socket is closed",
+    "garbage packet",
+    "eof",
+    "connection reset",
+    "broken pipe",
+    "timed out",
+    "channel closed",
+    "socket is closed",
 )
 
 _LOG_PATH = (
-    Path(__file__).parent
-    / f"sftp_errors_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+    Path(__file__).parent / f"sftp_errors_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 )
 
 logging.basicConfig(
@@ -44,29 +48,36 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-SFTP_HOST     = os.getenv("SFTP_HOST")
-SFTP_PORT     = int(os.getenv("SFTP_PORT") or 22)
-SFTP_USER     = os.getenv("SFTP_USER")
+SFTP_HOST = os.getenv("SFTP_HOST")
+SFTP_PORT = int(os.getenv("SFTP_PORT") or 22)
+SFTP_USER = os.getenv("SFTP_USER")
 SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
 
-DB_HOST     = os.getenv("DB_DW_HOST_MCID")
-DB_PORT     = os.getenv("DB_DW_PORT_MCID")
-DB_USER     = os.getenv("DB_DW_USER_MCID")
+DB_HOST = os.getenv("DB_DW_HOST_MCID")
+DB_PORT = os.getenv("DB_DW_PORT_MCID")
+DB_USER = os.getenv("DB_DW_USER_MCID")
 DB_PASSWORD = os.getenv("DB_DW_PASSWORD_MCID")
-DB_NAME     = os.getenv("DB_DW_DBNAME_MCID")
-DB_SCHEMA   = "sftp"
-INGEST_LOG  = "_ingest_log"
+DB_NAME = os.getenv("DB_DW_DBNAME_MCID")
+DB_SCHEMA = "sftp"
+INGEST_LOG = "_ingest_log"
 
 SUPPORTED_EXTENSIONS = {".csv", ".txt", ".xlsx"}
-IGNORED_EXTENSIONS   = {
-    ".bashrc", ".bash_logout", ".bash_history", ".profile",
-    ".mkshrc", ".viminfo", ".filepart", ".rpt",
+IGNORED_EXTENSIONS = {
+    ".bashrc",
+    ".bash_logout",
+    ".bash_history",
+    ".profile",
+    ".mkshrc",
+    ".viminfo",
+    ".filepart",
+    ".rpt",
 }
-CHUNK_SIZE            = 200_000
-ENCODING_SCAN_BYTES   = 5 * 1024 * 1024  # 5 MB — suficiente para detectar encoding
-ENCODINGS             = ["utf-8", "latin-1", "cp1252"]
-DELIMITERS       = [";", ",", "|", "\t"]
+CHUNK_SIZE = 200_000
+ENCODING_SCAN_BYTES = 5 * 1024 * 1024  # 5 MB — suficiente para detectar encoding
+ENCODINGS = ["utf-8", "latin-1", "cp1252"]
+DELIMITERS = [";", ",", "|", "\t"]
 TABLE_NAME_LIMIT = 57  # postgres cria _tablename como array type: 1 + 57 + 5(_0001) = 63
+
 
 def normalize_name(name: str) -> str:
     name = name.lower()
@@ -108,7 +119,8 @@ def build_table_name(sftp_path: str, inner_filename: str | None = None) -> str:
         raw_suffix = inner_stem[-available:]
         us = raw_suffix.find("_")
         suffix = (
-            raw_suffix[us + 1:] if us >= 0 and raw_suffix[us + 1:]
+            raw_suffix[us + 1 :]
+            if us >= 0 and raw_suffix[us + 1 :]
             else raw_suffix.lstrip("_")
         )
         return f"{prefix}_{suffix}"
@@ -134,6 +146,7 @@ def format_size(size_bytes: int) -> str:
         value /= 1024
     return f"{value:.1f} PB"
 
+
 def collect_sftp_files(sftp: paramiko.SFTPClient) -> list[dict]:
     entries = []
 
@@ -151,12 +164,14 @@ def collect_sftp_files(sftp: paramiko.SFTPClient) -> list[dict]:
             elif ext in IGNORED_EXTENSIONS or item.filename.startswith("."):
                 continue
             else:
-                entries.append({
-                    "path": full_path,
-                    "size": item.st_size or 0,
-                    "ext": ext,
-                    "is_zip": ext == ".zip",
-                })
+                entries.append(
+                    {
+                        "path": full_path,
+                        "size": item.st_size or 0,
+                        "ext": ext,
+                        "is_zip": ext == ".zip",
+                    }
+                )
 
     walk(".")
     return entries
@@ -164,7 +179,7 @@ def collect_sftp_files(sftp: paramiko.SFTPClient) -> list[dict]:
 
 def sort_files(entries: list[dict]) -> list[dict]:
     non_zip = sorted([e for e in entries if not e["is_zip"]], key=lambda x: x["size"])
-    zips    = sorted([e for e in entries if e["is_zip"]],     key=lambda x: x["size"])
+    zips = sorted([e for e in entries if e["is_zip"]], key=lambda x: x["size"])
     return non_zip + zips
 
 
@@ -177,6 +192,7 @@ def download_to_tempfile(sftp: paramiko.SFTPClient, remote_path: str) -> str:
     finally:
         tmp.close()
     return tmp.name
+
 
 def detect_csv_format(file_path: str) -> tuple[str, str]:
     """Detecta encoding nos primeiros 5 MB e delimitador nos primeiros 8192 bytes."""
@@ -217,7 +233,7 @@ def _copy_df_to_pg(df: pd.DataFrame, table_name: str, schema: str, engine) -> No
         with raw_conn.cursor() as cur:
             cols = ", ".join(f'"{c}"' for c in df.columns)
             cur.copy_expert(
-                f"COPY \"{schema}\".\"{table_name}\" ({cols}) "
+                f'COPY "{schema}"."{table_name}" ({cols}) '
                 f"FROM STDIN WITH (FORMAT CSV, NULL '\\N')",
                 buf,
             )
@@ -236,16 +252,28 @@ def stream_csv_from_file(file_path: str, table_name: str, engine) -> int:
 
     total = 0
     first = True
-    for chunk in pd.read_csv(file_path, sep=sep, encoding=enc, chunksize=CHUNK_SIZE,
-                              low_memory=False, on_bad_lines="skip"):
+    for chunk in pd.read_csv(
+        file_path,
+        sep=sep,
+        encoding=enc,
+        chunksize=CHUNK_SIZE,
+        low_memory=False,
+        on_bad_lines="skip",
+    ):
         chunk = chunk.loc[:, ~chunk.columns.str.match(r"^Unnamed: \d+$")]
         chunk.columns = deduplicate_columns(
             [normalize_name(str(c)) for c in chunk.columns]
         )
         if first:
             text_dtype = {c: sa_types.Text() for c in chunk.columns}
-            chunk.head(0).to_sql(table_name, engine, schema=DB_SCHEMA,
-                                 if_exists="replace", index=False, dtype=text_dtype)
+            chunk.head(0).to_sql(
+                table_name,
+                engine,
+                schema=DB_SCHEMA,
+                if_exists="replace",
+                index=False,
+                dtype=text_dtype,
+            )
             first = False
         _copy_df_to_pg(chunk, table_name, DB_SCHEMA, engine)
         total += len(chunk)
@@ -266,7 +294,8 @@ def stream_xlsx_from_file(file_path: str, table_name: str, engine) -> int:
         # Filtra apenas colunas com header real (não-None, não vazio).
         # openpyxl read_only retorna células formatadas além dos dados — ignoramos todas.
         valid_indices = [
-            i for i, c in enumerate(header_cells)
+            i
+            for i, c in enumerate(header_cells)
             if c.value is not None and str(c.value).strip() != ""
         ]
         if not valid_indices:
@@ -281,19 +310,23 @@ def stream_xlsx_from_file(file_path: str, table_name: str, engine) -> int:
         first = True
         for row in rows_iter:
             row_list = list(row)
-            buffer.append([
-                row_list[i].value if i < len(row_list) else None
-                for i in valid_indices
-            ])
+            buffer.append(
+                [row_list[i].value if i < len(row_list) else None for i in valid_indices]
+            )
             if len(buffer) >= CHUNK_SIZE:
                 df = pd.DataFrame(buffer, columns=headers)
                 if multi_sheet:
                     df["_sheet"] = sheet_name
                 if first:
                     text_dtype = {c: sa_types.Text() for c in df.columns}
-                    df.head(0).to_sql(table_name, engine, schema=DB_SCHEMA,
-                                      if_exists="replace", index=False,
-                                      dtype=text_dtype)
+                    df.head(0).to_sql(
+                        table_name,
+                        engine,
+                        schema=DB_SCHEMA,
+                        if_exists="replace",
+                        index=False,
+                        dtype=text_dtype,
+                    )
                     first = False
                 _copy_df_to_pg(df, table_name, DB_SCHEMA, engine)
                 total += len(df)
@@ -305,9 +338,14 @@ def stream_xlsx_from_file(file_path: str, table_name: str, engine) -> int:
                 df["_sheet"] = sheet_name
             if first:
                 text_dtype = {c: sa_types.Text() for c in df.columns}
-                df.head(0).to_sql(table_name, engine, schema=DB_SCHEMA,
-                                  if_exists="replace", index=False,
-                                  dtype=text_dtype)
+                df.head(0).to_sql(
+                    table_name,
+                    engine,
+                    schema=DB_SCHEMA,
+                    if_exists="replace",
+                    index=False,
+                    dtype=text_dtype,
+                )
             _copy_df_to_pg(df, table_name, DB_SCHEMA, engine)
             total += len(df)
 
@@ -328,6 +366,7 @@ def load_file_from_disk(file_path: str, ext: str, table_name: str, engine) -> in
         return stream_xlsx_from_file(file_path, table_name, engine)
     log.warning("extensão não suportada: %s", ext)
     return -1
+
 
 def ensure_ingest_log(engine) -> None:
     with engine.begin() as conn:
@@ -377,9 +416,11 @@ def mark_processed(engine, sftp_key: str, table_name: str, rows: int) -> None:
             {"k": sftp_key, "t": table_name, "r": rows},
         )
 
+
 def get_engine():
-    url = (f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}"
-           f"@{DB_HOST}:{DB_PORT}/{DB_NAME}")
+    url = (
+        f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}" f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
     return create_engine(url)
 
 
@@ -387,8 +428,8 @@ def ensure_schema(engine) -> None:
     with engine.begin() as conn:
         conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {DB_SCHEMA}"))
 
-def _process_zip(tmp_path: str, sftp_path: str,
-                 engine, registry: dict[str, int]) -> None:
+
+def _process_zip(tmp_path: str, sftp_path: str, engine, registry: dict[str, int]) -> None:
     try:
         zf = zipfile.ZipFile(tmp_path)
     except zipfile.BadZipFile as e:
@@ -396,7 +437,8 @@ def _process_zip(tmp_path: str, sftp_path: str,
         return
 
     inner_files = [
-        f for f in zf.namelist()
+        f
+        for f in zf.namelist()
         if Path(f).suffix.lower() in SUPPORTED_EXTENSIONS
         and not Path(f).name.startswith(".")
     ]
@@ -405,9 +447,9 @@ def _process_zip(tmp_path: str, sftp_path: str,
         return
 
     for inner in inner_files:
-        sftp_key   = f"{sftp_path}::{inner}"
-        inner_ext  = Path(inner).suffix.lower()
-        base_name  = build_table_name(sftp_path, inner)
+        sftp_key = f"{sftp_path}::{inner}"
+        inner_ext = Path(inner).suffix.lower()
+        base_name = build_table_name(sftp_path, inner)
         table_name = resolve_table_name(base_name, registry)
 
         if is_processed(engine, sftp_key):
@@ -427,10 +469,11 @@ def _process_zip(tmp_path: str, sftp_path: str,
             os.unlink(inner_tmp)
 
 
-def _process_flat(entry: dict, sftp: paramiko.SFTPClient,
-                  engine, registry: dict[str, int]) -> None:
+def _process_flat(
+    entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]
+) -> None:
     path = entry["path"]
-    ext  = entry["ext"]
+    ext = entry["ext"]
 
     if ext not in SUPPORTED_EXTENSIONS:
         log.warning("extensão não suportada, pulando: %s", path)
@@ -440,7 +483,7 @@ def _process_flat(entry: dict, sftp: paramiko.SFTPClient,
         log.info("  já processado, pulando: %s", path)
         return
 
-    base_name  = build_table_name(path)
+    base_name = build_table_name(path)
     table_name = resolve_table_name(base_name, registry)
     log.info("  → %s.%s", DB_SCHEMA, table_name)
 
@@ -456,8 +499,9 @@ def _process_flat(entry: dict, sftp: paramiko.SFTPClient,
         os.unlink(tmp_path)
 
 
-def process_entry(entry: dict, sftp: paramiko.SFTPClient,
-                  engine, registry: dict[str, int]) -> None:
+def process_entry(
+    entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]
+) -> None:
     log.info("\n→ %s (%s)", entry["path"], format_size(entry["size"]))
 
     if entry["is_zip"]:
@@ -471,6 +515,7 @@ def process_entry(entry: dict, sftp: paramiko.SFTPClient,
             os.unlink(tmp_path)
     else:
         _process_flat(entry, sftp, engine, registry)
+
 
 def _is_conn_error(e: Exception) -> bool:
     return isinstance(e, SOCKET_ERRORS) or any(
@@ -502,9 +547,9 @@ def main():
     entries = collect_sftp_files(sftp)
     ordered = sort_files(entries)
 
-    total_size    = sum(e["size"] for e in ordered)
+    total_size = sum(e["size"] for e in ordered)
     non_zip_count = sum(1 for e in ordered if not e["is_zip"])
-    zip_count     = sum(1 for e in ordered if e["is_zip"])
+    zip_count = sum(1 for e in ordered if e["is_zip"])
     log.info("%d arquivos | %s", len(ordered), format_size(total_size))
     log.info("  %d não-zip (primeiro) | %d zip (depois)", non_zip_count, zip_count)
 
@@ -541,7 +586,8 @@ def main():
     transport.close()
 
     error_count = sum(
-        1 for line in _LOG_PATH.read_text(encoding="utf-8").splitlines()
+        1
+        for line in _LOG_PATH.read_text(encoding="utf-8").splitlines()
         if " ERROR " in line
     )
     log.info("Concluído. Erros: %d → %s", error_count, _LOG_PATH)

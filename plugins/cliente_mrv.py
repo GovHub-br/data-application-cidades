@@ -74,9 +74,7 @@ class ClienteMRV:
                 continue
 
             planilhas = [
-                doc
-                for doc in documentos
-                if doc.get("internal_name") == self.CAT_PLANILHA
+                doc for doc in documentos if doc.get("internal_name") == self.CAT_PLANILHA
             ]
 
             if not planilhas:
@@ -116,7 +114,7 @@ class ClienteMRV:
         try:
             arquivo_em_memoria = io.BytesIO(response.content)
             nome_aba = "Dados Oper. MRV&Co | Oper.Data"
-            
+
             # Limpa o binário da requisição
             del response
 
@@ -137,7 +135,7 @@ class ClienteMRV:
         except Exception as e:
             logging.error(f"[cliente_mrv.py] Erro ao processar Excel: {e}")
             return None
-    
+
     def _extrair_bloco_operacional(
         self,
         df_bruto: pd.DataFrame,
@@ -148,7 +146,7 @@ class ClienteMRV:
         """
         Função genérica que localiza uma seção âncora, encontra a 'MRV Incorporação',
         extrai as linhas especificadas pelos offsets e transpõe para o formato tabular.
-        """ 
+        """
         logging.info(f"[cliente_mrv.py] Extraindo seção '{nome_secao}'...")
 
         try:
@@ -177,7 +175,7 @@ class ClienteMRV:
             # Calcula as linhas exatas a serem extraídas usando os offsets mapeados
             indices_alvo = [idx_subgrupo + offset for offset in offsets_linhas]
             colunas_alvo = [0] + list(range(2, df_bruto.shape[1]))
-            
+
             df_kpis = df_bruto.iloc[indices_alvo, colunas_alvo].copy()
 
             df_kpis.index = nomes_colunas
@@ -193,9 +191,7 @@ class ClienteMRV:
             df_tabela["periodo"] = df_tabela["periodo"].apply(
                 lambda x: x.split(" / ")[0].strip() if " / " in str(x) else str(x)
             )
-            df_tabela["periodo"] = df_tabela["periodo"].str.replace(
-                ".0", "", regex=False
-            )
+            df_tabela["periodo"] = df_tabela["periodo"].str.replace(".0", "", regex=False)
 
             # Usa o primeiro KPI passado como âncora de nulidade para limpar lixo
             kpi_ancora = nomes_colunas[0]
@@ -234,10 +230,10 @@ class ClienteMRV:
             nomes_colunas=[
                 "vgv_lancamentos_milhoes",
                 "unidades",
-                "preco_medio_unidade_mil"
+                "preco_medio_unidade_mil",
             ],
         )
-        
+
         if df_tabela is None:
             return None
 
@@ -271,7 +267,7 @@ class ClienteMRV:
         df_bruto = self._ler_dados_operacionais(link_recente)
         if df_bruto is None:
             return None
-        
+
         df_tabela = self._extrair_bloco_operacional(
             df_bruto=df_bruto,
             nome_secao="Vendas Líquidas %MRV",
@@ -279,10 +275,10 @@ class ClienteMRV:
             nomes_colunas=[
                 "vendas_liquidas_milhoes",
                 "unidades",
-                "preco_medio_unidade_mil"
+                "preco_medio_unidade_mil",
             ],
         )
-        
+
         if df_tabela is None:
             return None
 
@@ -300,4 +296,3 @@ class ClienteMRV:
         )
 
         return registros
-

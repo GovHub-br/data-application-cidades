@@ -4,7 +4,13 @@ from datetime import datetime, timedelta
 from airflow.decorators import dag
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
+from cosmos import (
+    DbtTaskGroup,
+    ExecutionConfig,
+    ProfileConfig,
+    ProjectConfig,
+    RenderConfig,
+)
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
 from schedule_loader import get_dynamic_schedule
 
@@ -21,34 +27,32 @@ profile_config = ProfileConfig(
 # DAGs de ingestão que alimentam as fontes usadas pelos modelos
 # conjuntura_dbt (schemas raw: abecip, bacen, fgv, fipe, ibge, infomoney).
 INGEST_DAG_IDS = [
-    "ibge_ingest_dag", # PIB da construção civil (),
-                       # Produção física industrial e vendas da construção
-                       # SINAPI
-                       # PNAD Contínua
-                       # Rendimento médio real
-
-    "lancamentos_ingest_dag", # Empresas do setor imobiliário
-    "vendas_ingest_dag", # Empresas do setor imobiliário
-
-    "bacen_sgs_ingest_dag", # Financiamentos Imobiliários (),
-                            # Crédito Imobiliário / PIB
-    "abecip_poupanca_trimestral_ingest_dag", # SBPE Const,
-                                             # Novos financiamentos imobiliários,
-                                             # SBPE Aquisição
-                                             # Saldo caderneta de poupança
-
+    "ibge_ingest_dag",  # PIB da construção civil (),
+    # Produção física industrial e vendas da construção
+    # SINAPI
+    # PNAD Contínua
+    # Rendimento médio real
+    "lancamentos_ingest_dag",  # Empresas do setor imobiliário
+    "vendas_ingest_dag",  # Empresas do setor imobiliário
+    "bacen_sgs_ingest_dag",  # Financiamentos Imobiliários (),
+    # Crédito Imobiliário / PIB
+    "abecip_poupanca_trimestral_ingest_dag",  # SBPE Const,
+    # Novos financiamentos imobiliários,
+    # SBPE Aquisição
+    # Saldo caderneta de poupança
     "incc_m_ingest_dag",
-
-    "dotacao_execucao_outras_fontes_mcid_ingest_dag", # OGU
-
+    "dotacao_execucao_outras_fontes_mcid_ingest_dag",  # OGU
     "infomoney_imob",
     "fipezap_trimestral_ingest_dag",
     "icst_ingest_dag",
 ]
 
+
 @dag(
     dag_id="conjuntura_boletim_dag",
-    schedule_interval=get_dynamic_schedule("conjuntura_boletim_dag", default="0 10 * * 5"),
+    schedule_interval=get_dynamic_schedule(
+        "conjuntura_boletim_dag", default="0 10 * * 5"
+    ),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={

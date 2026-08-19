@@ -6,6 +6,7 @@ sem incluir o nome do zip no caminho).
 
 Execução: python scripts/sftp_rename_tables.py [--dry-run]
 """
+
 import os
 import re
 import sys
@@ -16,13 +17,13 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-DB_HOST     = os.getenv("DB_DW_HOST_MCID")
-DB_PORT     = os.getenv("DB_DW_PORT_MCID")
-DB_USER     = os.getenv("DB_DW_USER_MCID")
+DB_HOST = os.getenv("DB_DW_HOST_MCID")
+DB_PORT = os.getenv("DB_DW_PORT_MCID")
+DB_USER = os.getenv("DB_DW_USER_MCID")
 DB_PASSWORD = os.getenv("DB_DW_PASSWORD_MCID")
-DB_NAME     = os.getenv("DB_DW_DBNAME_MCID")
-DB_SCHEMA   = "sftp"
-INGEST_LOG  = "_ingest_log"
+DB_NAME = os.getenv("DB_DW_DBNAME_MCID")
+DB_SCHEMA = "sftp"
+INGEST_LOG = "_ingest_log"
 TABLE_NAME_LIMIT = 57
 
 
@@ -51,7 +52,8 @@ def build_table_name_new(sftp_key: str) -> str:
         raw_suffix = inner_stem[-available:]
         us = raw_suffix.find("_")
         suffix = (
-            raw_suffix[us + 1:] if us >= 0 and raw_suffix[us + 1:]
+            raw_suffix[us + 1 :]
+            if us >= 0 and raw_suffix[us + 1 :]
             else raw_suffix.lstrip("_")
         )
         return f"{prefix}_{suffix}"
@@ -76,8 +78,11 @@ def main() -> None:
         print("=== DRY RUN — nenhuma alteração será aplicada ===\n")
 
     conn = psycopg2.connect(
-        host=DB_HOST, port=int(DB_PORT or 5432),
-        user=DB_USER, password=DB_PASSWORD, dbname=DB_NAME,
+        host=DB_HOST,
+        port=int(DB_PORT or 5432),
+        user=DB_USER,
+        password=DB_PASSWORD,
+        dbname=DB_NAME,
     )
     conn.autocommit = False
     cur = conn.cursor()
@@ -105,7 +110,7 @@ def main() -> None:
         plan.append((sftp_key, old_name, new_name))
 
     to_rename = [(k, o, n) for k, o, n in plan if o != n]
-    unchanged  = [(k, o, n) for k, o, n in plan if o == n]
+    unchanged = [(k, o, n) for k, o, n in plan if o == n]
     print(f"Sem mudança:   {len(unchanged)}")
     print(f"Para renomear: {len(to_rename)}\n")
 
@@ -132,9 +137,7 @@ def main() -> None:
 
         print(f"  ✓ {old_name}  →  {new_name}")
         if not dry_run:
-            cur.execute(
-                f'ALTER TABLE "{DB_SCHEMA}"."{old_name}" RENAME TO "{new_name}"'
-            )
+            cur.execute(f'ALTER TABLE "{DB_SCHEMA}"."{old_name}" RENAME TO "{new_name}"')
             cur.execute(
                 f"UPDATE {DB_SCHEMA}.{INGEST_LOG}"
                 f" SET table_name = %s WHERE sftp_key = %s",

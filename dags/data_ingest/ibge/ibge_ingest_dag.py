@@ -25,7 +25,7 @@ CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, defaul
     },
     tags=["ibge", "pib_construcao", "sinapi"],
 )
-def ibge_ingest_dag() -> None:
+def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simples
     """DAG para ingestão de dados do IBGE no PostgreSQL.
 
     Usa dynamic task mapping para criar uma task paralela
@@ -47,18 +47,20 @@ def ibge_ingest_dag() -> None:
                 conn.commit()
             logging.info(f"Schema '{schema}' garantido com sucesso.")
         except psycopg2.errors.UniqueViolation:
-            logging.warning(f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado).")
+            logging.warning(
+                f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado)."
+            )
 
     @task
     def fetch_and_store_mapped(config: dict) -> None:
         logging.info(f"Iniciando ingestão: {config['tabela']}")
-        
-        agregado=config["agregado"]
-        variaveis=config["variaveis"]
-        tabela=config["tabela"]
-        periodos=config.get("periodos", "-20")
-        classificacao_id=config.get("classificacao_id")
-        categoria=config.get("categoria")
+
+        agregado = config["agregado"]
+        variaveis = config["variaveis"]
+        tabela = config["tabela"]
+        periodos = config.get("periodos", "-20")
+        classificacao_id = config.get("classificacao_id")
+        categoria = config.get("categoria")
 
         api = ClienteIBGE()
         postgres_conn_str = get_postgres_conn()
@@ -82,14 +84,24 @@ def ibge_ingest_dag() -> None:
         registros = ClienteIBGE.transformar_resposta(dados_api)
 
         if registros:
-            logging.info(
-                f"Inserindo {len(registros)} registros em ibge.{tabela}"
-            )
+            logging.info(f"Inserindo {len(registros)} registros em ibge.{tabela}")
             db.insert_data(
                 registros,
                 tabela,
-                conflict_fields=["variavel_id", "localidade_id", "periodo", "classificacao_id", "categoria_id"],
-                primary_key=["variavel_id", "localidade_id", "periodo", "classificacao_id", "categoria_id"],
+                conflict_fields=[
+                    "variavel_id",
+                    "localidade_id",
+                    "periodo",
+                    "classificacao_id",
+                    "categoria_id",
+                ],
+                primary_key=[
+                    "variavel_id",
+                    "localidade_id",
+                    "periodo",
+                    "classificacao_id",
+                    "categoria_id",
+                ],
                 schema="ibge",
             )
             logging.info(f"Ingestão de {tabela} concluída")

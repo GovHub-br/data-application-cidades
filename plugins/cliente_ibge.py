@@ -1,6 +1,5 @@
 import http
 import logging
-from typing import Optional
 from cliente_base import ClienteBase
 
 
@@ -46,11 +45,7 @@ class ClienteIBGE(ClienteBase):
         Returns:
             Lista de dicionários com os dados ou None em caso de falha.
         """
-        path = (
-            f"/agregados/{agregado}"
-            f"/periodos/{periodos}"
-            f"/variaveis/{variaveis}"
-        )
+        path = f"/agregados/{agregado}" f"/periodos/{periodos}" f"/variaveis/{variaveis}"
 
         params = {
             "localidades": f"{nivel}[{localidade}]",
@@ -64,14 +59,11 @@ class ClienteIBGE(ClienteBase):
             f"variaveis={variaveis}, periodos={periodos}"
         )
 
-        status, data = self.request(
-            http.HTTPMethod.GET, path, params=params
-        )
+        status, data = self.request(http.HTTPMethod.GET, path, params=params)
 
         if status == http.HTTPStatus.OK and isinstance(data, list):
             logging.info(
-                f"[cliente_ibge.py] Successfully fetched data for "
-                f"agregado={agregado}"
+                f"[cliente_ibge.py] Successfully fetched data for " f"agregado={agregado}"
             )
             return data
         else:
@@ -106,7 +98,7 @@ class ClienteIBGE(ClienteBase):
                 class_nomes = []
                 cat_ids = []
                 cat_nomes = []
-                
+
                 for c in resultado.get("classificacoes", []):
                     class_ids.append(c["id"])
                     class_nomes.append(c["nome"])
@@ -114,7 +106,7 @@ class ClienteIBGE(ClienteBase):
                     for k, v in cat_dict.items():
                         cat_ids.append(k)
                         cat_nomes.append(v)
-                        
+
                 classificacao_id = "|".join(class_ids) if class_ids else "0"
                 classificacao_nome = " | ".join(class_nomes) if class_nomes else ""
                 categoria_id = "|".join(cat_ids) if cat_ids else "0"
