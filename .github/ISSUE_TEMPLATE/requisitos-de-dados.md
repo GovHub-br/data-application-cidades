@@ -9,83 +9,59 @@ assignees: ''
 
 ## Contexto
 
-Explique a demanda, problema ou oportunidade que precisa ser entendida.
+Descreva a demanda que precisa ser entendida.
 
-## Objetivo da elicitação
+## Objetivo
 
-Descreva o que precisa ser descoberto, definido ou refinado.
+Explique o que precisa ser definido ou refinado.
 
-## Solicitante ou área interessada
+## Solicitante
 
 - Nome:
 - Área:
 - Responsável pela validação:
-- Prazo esperado:
+- Prazo:
 
 ## Perguntas de negócio
 
-Responda ou complemente as perguntas abaixo.
-
-- Qual decisão será tomada com esses dados?
-- Quem será o usuário final?
-- Qual problema a entrega precisa resolver?
+- Qual problema será resolvido?
+- Quem usará a entrega?
 - Quais indicadores são necessários?
 - Qual granularidade é esperada?
-- Qual periodicidade de atualização?
+- Qual periodicidade?
+- Quais fontes devem ser usadas?
 - Quais filtros ou recortes são necessários?
-- Quais fontes devem ser consideradas?
-- Existe regra de negócio já definida?
-- Existe prazo ou entrega associada?
 
-## Requisitos funcionais
+## Requisitos
 
-Liste o que a entrega precisa fazer ou permitir.
+### Funcionais
 
 - 
 - 
-- 
 
-## Requisitos técnicos
-
-Liste dependências, tecnologias, ambientes, fontes e restrições técnicas.
+### Técnicos
 
 - 
 - 
-- 
 
-## Entregáveis esperados
-
-- [ ] Base tratada
-- [ ] Tabela gold
-- [ ] Modelo dbt
-- [ ] DAG
-- [ ] Dashboard
-- [ ] Relatório
-- [ ] Dicionário de dados
-- [ ] Documentação técnica
-- [ ] Outro
-
-## Tarefas derivadas
+## Tarefas
 
 - [ ] Levantar perguntas de negócio
 - [ ] Definir escopo
-- [ ] Mapear fontes de dados
+- [ ] Mapear fontes
 - [ ] Definir indicadores
-- [ ] Definir granularidade
-- [ ] Definir periodicidade
 - [ ] Definir entregáveis
-- [ ] Quebrar demanda em tarefas técnicas
-- [ ] Validar requisitos com solicitante
+- [ ] Quebrar tarefas técnicas
+- [ ] Validar requisitos
 
 ## Critérios de aceite
 
-- [ ] Perguntas de negócio foram respondidas
-- [ ] Requisitos funcionais foram definidos
-- [ ] Requisitos técnicos foram definidos
+- [ ] Perguntas foram respondidas
+- [ ] Escopo foi definido
+- [ ] Requisitos foram documentados
 - [ ] Entregáveis foram definidos
-- [ ] Tarefas foram quebradas
-- [ ] Escopo foi validado
+- [ ] Próximas tarefas foram criadas
 
 ## Observações
 
-Adicione links, atas, documentos, prints ou referências.
+Adicione links, atas ou documentos.

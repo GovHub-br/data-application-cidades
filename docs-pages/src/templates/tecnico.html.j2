@@ -1,0 +1,153 @@
+{% extends "base.html.j2" %}
+
+{% block conteudo %}
+<div class="hero">
+  <div class="container">
+    <h1>Como a plataforma funciona</h1>
+    <p>
+      Orquestração em Airflow, transformação em dbt sobre Postgres e visualização
+      em Superset. O inventário desta página é lido do código a cada publicação,
+      então não desatualiza em silêncio.
+    </p>
+  </div>
+</div>
+
+<section class="container">
+  <h2>Recorte deste site</h2>
+  <p class="secao__intro">
+    O repositório hospeda mais de uma aplicação. Este site cobre apenas o
+    {{ escopo.rotulo }}: o projeto dbt
+    {% for projeto in escopo.projetos_dbt %}<code>{{ projeto }}</code>{% endfor %}, as
+    {{ m.total_dags }} DAGs dos grupos listados em <code>dominios.yml</code> e as
+    ingestões por script sobre o SFTP. Os projetos <code>ipea</code> e
+    <code>mir</code>, de outras aplicações, ficam fora das contagens.
+  </p>
+</section>
+
+<section class="container">
+  <h2>Ingestão</h2>
+  <p class="secao__intro">
+    {{ m.total_dags }} DAGs no escopo. O agendamento da maioria é resolvido em
+    execução pela Variable <code>dynamic_schedules</code>, e por isso aparece
+    como <em>dinâmico</em> — o cron real está no ambiente, não no código.
+  </p>
+  <div class="filtro">
+    <input
+      type="search"
+      placeholder="Filtrar DAG…"
+      aria-label="Filtrar DAGs"
+      data-filtro-alvo="tabela-dags"
+      data-filtro-contador="contador-dags"
+    />
+    <span class="filtro__contador" id="contador-dags">{{ dags | length }} registros</span>
+  </div>
+  <div class="tabela-wrap">
+    <table id="tabela-dags">
+      <thead>
+        <tr>
+          <th>DAG</th>
+          <th>Grupo</th>
+          <th>Schedule</th>
+          <th>O que faz</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dag in dags %}
+          <tr>
+            <td><code>{{ dag.dag_id }}</code></td>
+            <td>{{ dag.grupo }}</td>
+            <td>{{ dag.schedule or "—" }}</td>
+            <td>{{ dag.descricao }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="container">
+  <h2>Ingestão por script</h2>
+  <p class="secao__intro">
+    Nem toda carga é DAG. As bases da Caixa que alimentam FAR e Entidades chegam
+    por SFTP e são carregadas por script.
+  </p>
+  {% for ingestao in escopo.ingestoes_script %}
+    <div class="frente">
+      <h3>{{ ingestao.rotulo }}</h3>
+      <div class="prosa">{{ ingestao.descricao | markdown }}</div>
+      <div class="entrega__arquivos">
+        {% for arquivo in ingestao.arquivos %}
+          <code>{{ arquivo }}</code>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</section>
+
+<section class="container">
+  <h2>Modelos dbt por domínio</h2>
+  <p class="secao__intro">
+    {{ m.total_modelos }} modelos e {{ m.total_testes }} testes declarados.
+    A tabela completa de cada domínio, com descrição e dependências, está na sua
+    página.
+  </p>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Domínio</th>
+          <th>Bronze</th>
+          <th>Silver</th>
+          <th>Gold</th>
+          <th>Testes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dominio in dominios %}
+          <tr>
+            <td><strong>{{ dominio.rotulo }}</strong></td>
+            <td>{{ dominio.camadas.get("bronze", 0) }}</td>
+            <td>{{ dominio.camadas.get("silver", 0) }}</td>
+            <td>{{ dominio.camadas.get("gold", 0) }}</td>
+            <td>{{ dominio.testes }}</td>
+            <td><a href="{{ rel }}{{ dominio.href }}">detalhar →</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="container">
+  <h2>Rodando localmente</h2>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Comando</th>
+          <th>O que faz</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>make setup</code></td>
+          <td>Instala dependências e hooks de git</td>
+        </tr>
+        <tr>
+          <td><code>docker-compose up -d</code></td>
+          <td>Sobe Airflow, Superset, Postgres e Jupyter</td>
+        </tr>
+        <tr>
+          <td><code>make docs-collect</code></td>
+          <td>Atualiza o acervo deste site a partir do repositório</td>
+        </tr>
+        <tr>
+          <td><code>make docs-serve</code></td>
+          <td>Gera o site e serve em <code>localhost:8000</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

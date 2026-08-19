@@ -11,76 +11,52 @@ assignees: ''
 
 Explique a necessidade da tabela gold.
 
-## Objetivo da tabela
+## Objetivo
 
-Descreva o uso esperado da tabela gold.
+Descreva o uso esperado da tabela.
 
-## Consumidores da tabela
+## Consumidores
 
 - Dashboard:
 - Relatório:
 - API:
 - Área:
-- Outro:
 
 ## Fontes de origem
 
-- Tabela/base 1:
-- Tabela/base 2:
-- Tabela/base 3:
+- 
+- 
+- 
 
 ## Granularidade
 
-Descreva o nível de detalhe esperado.
+Descreva o nível de detalhe da tabela.
 
-Exemplo: uma linha por município, parlamentar, proposição, órgão, data, evento, usuário etc.
+## Campos principais
 
-## Campos esperados
-
-| Campo | Tipo | Descrição | Regra | Obrigatório |
-|------|------|-----------|-------|-------------|
-|      |      |           |       |             |
-
-## Regras de negócio
-
-Liste filtros, cálculos, classificações e transformações necessárias.
-
-- 
-- 
-- 
-
-## Qualidade dos dados
-
-- [ ] IDs obrigatórios não podem ser nulos
-- [ ] Chave principal não pode duplicar
-- [ ] Campos de data devem estar padronizados
-- [ ] Métricas devem bater com a fonte
-- [ ] Campos categóricos devem respeitar valores esperados
-- [ ] Dados devem ser validados com consumidor final
+| Campo | Tipo | Descrição | Regra |
+|------|------|-----------|-------|
+|      |      |           |       |
 
 ## Tarefas
 
 - [ ] Definir granularidade
 - [ ] Mapear fontes
 - [ ] Mapear campos
-- [ ] Definir regras de negócio
-- [ ] Criar transformação
+- [ ] Definir regras
 - [ ] Criar tabela gold
 - [ ] Criar testes de qualidade
-- [ ] Validar métricas
+- [ ] Validar dados
 - [ ] Documentar tabela
-- [ ] Validar com consumidor final
 
 ## Critérios de aceite
 
-- [ ] Tabela gold foi criada no local correto
+- [ ] Tabela foi criada no local correto
 - [ ] Granularidade está correta
 - [ ] Campos foram documentados
-- [ ] Regras de negócio foram aplicadas
-- [ ] Testes de qualidade foram executados
 - [ ] Dados foram validados
 - [ ] Tabela está pronta para consumo
 
 ## Observações
 
-Adicione links, queries, documentação, prints ou referências.
+Adicione queries, links ou referências.

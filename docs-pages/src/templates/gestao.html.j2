@@ -1,0 +1,106 @@
+{% extends "base.html.j2" %}
+
+{% block conteudo %}
+<div class="hero">
+  <div class="container">
+    <h1>O que foi entregue</h1>
+    <p>
+      A leitura de gestão do trabalho no {{ escopo.rotulo }}: o que existe hoje,
+      o que cada domínio resolve e onde está a evidência de cada entrega.
+    </p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="numeros numeros--hero">
+    <div class="numero">
+      <div class="numero__valor">{{ m.total_sistemas }}</div>
+      <div class="numero__rotulo">Fontes integradas</div>
+    </div>
+    <div class="numero numero--acento">
+      <div class="numero__valor">{{ m.total_gold }}</div>
+      <div class="numero__rotulo">Tabelas prontas para uso</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ m.total_testes }}</div>
+      <div class="numero__rotulo">Verificações de qualidade</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ m.meses_projeto }}</div>
+      <div class="numero__rotulo">Meses de construção</div>
+    </div>
+  </div>
+</div>
+
+<section class="container">
+  <h2>As três frentes</h2>
+  <p class="secao__intro">
+    O trabalho se organiza em domínios. Cada um responde a um conjunto próprio de
+    perguntas de gestão.
+  </p>
+
+  {% for dominio in dominios %}
+    <div class="frente">
+      <div class="frente__cabecalho">
+        <h3><a href="{{ rel }}{{ dominio.href }}">{{ dominio.rotulo }}</a></h3>
+        <p class="frente__numeros">
+          <span>{{ dominio.total }} modelos</span>
+          <span>{{ dominio.camadas.get("gold", 0) }} tabelas de uso</span>
+          <span>{{ dominio.entregas | length }} entregas</span>
+        </p>
+      </div>
+      <div class="prosa">{{ dominio.contexto | markdown }}</div>
+      <ul class="lista-perguntas">
+        {% for pergunta in dominio.perguntas %}
+          <li>{{ pergunta }}</li>
+        {% endfor %}
+      </ul>
+      <a class="frente__link" href="{{ rel }}{{ dominio.href }}"
+        >Ver o que foi feito em {{ dominio.rotulo }} →</a
+      >
+    </div>
+  {% endfor %}
+</section>
+
+<section class="container">
+  <h2>Entregas recentes</h2>
+  <p class="secao__intro">
+    As {{ entregas[:8] | length }} mais recentes de {{ m.total_entregas }}.
+    <a href="{{ rel }}entregas/index.html">Ver o histórico completo →</a>
+  </p>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Entrega</th>
+          <th>Domínio</th>
+          <th>Referência</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entrega in entregas[:8] %}
+          <tr>
+            <td>{{ entrega.data | data }}</td>
+            <td>{{ entrega.titulo }}</td>
+            <td class="celula-dominios">
+              {% for dominio in entrega.dominios %}
+                <a class="chip chip--link" href="{{ rel }}dominios/{{ dominio.slug }}/index.html"
+                  >{{ dominio.rotulo }}</a
+                >
+              {% endfor %}
+            </td>
+            <td>
+              {% if entrega.url %}
+                <a href="{{ entrega.url }}">{{ entrega.referencia }}</a>
+              {% else %}
+                <span class="entrega__ref">{{ entrega.referencia }}</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

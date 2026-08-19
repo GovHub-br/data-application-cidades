@@ -1,6 +1,6 @@
 ---
 name: Modelo dbt
-about: Criar, alterar ou validar modelos dbt
+about: Criar, ajustar ou validar modelo dbt
 title: ''
 labels: ''
 assignees: ''
@@ -13,52 +13,42 @@ Descreva a necessidade do modelo dbt.
 
 ## Objetivo
 
-Explique qual transformação ou modelagem precisa ser feita.
+Explique a transformação ou modelagem esperada.
 
 ## Modelos envolvidos
 
-- Modelo de origem:
-- Modelo intermediário:
-- Modelo final:
-- Camada: staging / intermediate / mart / gold
+- Modelo origem:
+- Modelo destino:
+- Camada:
 
 ## Regras de transformação
 
-Liste as regras esperadas.
-
 - 
 - 
 - 
 
-## Campos esperados
+## Campos principais
 
-| Campo | Tipo | Origem | Regra | Obrigatório |
-|------|------|--------|-------|-------------|
-|      |      |        |       |             |
-
-## Testes esperados
-
-- [ ] Teste de unicidade
-- [ ] Teste de não nulo
-- [ ] Teste de relacionamento
-- [ ] Teste de valores aceitos
-- [ ] Teste de regra de negócio
-- [ ] Teste de volume/contagem
+| Campo | Tipo | Origem | Regra |
+|------|------|--------|-------|
+|      |      |        |       |
 
 ## Tarefas
 
 - [ ] Mapear fontes
-- [ ] Criar ou alterar modelo dbt
+- [ ] Criar ou ajustar modelo dbt
 - [ ] Criar testes
+- [ ] Executar dbt run
+- [ ] Executar dbt test
 - [ ] Atualizar documentação
-- [ ] Executar `dbt run`
-- [ ] Executar `dbt test`
-- [ ] Validar resultado com solicitante
 
 ## Critérios de aceite
 
 - [ ] Modelo executa sem erro
-- [ ] Testes passam com sucesso
-- [ ] Campos estão documentados
-- [ ] Regras de negócio foram aplicadas
-- [ ] Dados foram validados
+- [ ] Testes passam
+- [ ] Regras foram aplicadas
+- [ ] Campos foram documentados
+
+## Observações
+
+Adicione links, queries ou referências.

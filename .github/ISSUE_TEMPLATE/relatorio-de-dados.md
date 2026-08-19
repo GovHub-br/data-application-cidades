@@ -11,15 +11,14 @@ assignees: ''
 
 Descreva a necessidade do relatório.
 
-## Objetivo do relatório
+## Objetivo
 
-Explique qual pergunta, problema ou demanda o relatório deve responder.
+Explique o que o relatório deve responder.
 
 ## Público-alvo
 
 - Destinatários:
 - Área:
-- Uso esperado:
 - Responsável pela validação:
 
 ## Período analisado
@@ -27,21 +26,18 @@ Explique qual pergunta, problema ou demanda o relatório deve responder.
 - Data inicial:
 - Data final:
 - Periodicidade:
-- Recorte temporal:
 
-## Indicadores ou análises necessárias
-
-Liste os indicadores, métricas, cruzamentos ou análises esperadas.
+## Indicadores ou análises
 
 - 
 - 
 - 
 
-## Fontes de dados
+## Fontes
 
-- Fonte 1:
-- Fonte 2:
-- Fonte 3:
+- 
+- 
+- 
 
 ## Formato esperado
 
@@ -52,38 +48,25 @@ Liste os indicadores, métricas, cruzamentos ou análises esperadas.
 - [ ] Apresentação
 - [ ] Outro
 
-## Estrutura sugerida do relatório
-
-- Resumo executivo:
-- Metodologia:
-- Fontes utilizadas:
-- Indicadores:
-- Análises:
-- Conclusões:
-- Limitações:
-
 ## Tarefas
 
-- [ ] Definir escopo do relatório
-- [ ] Validar fontes de dados
-- [ ] Extrair dados
-- [ ] Tratar dados
+- [ ] Definir escopo
+- [ ] Validar fontes
+- [ ] Extrair/tratar dados
 - [ ] Calcular indicadores
 - [ ] Gerar visualizações
 - [ ] Redigir análise
 - [ ] Revisar números
-- [ ] Registrar fontes e limitações
-- [ ] Emitir relatório final
+- [ ] Entregar relatório
 
 ## Critérios de aceite
 
-- [ ] Relatório responde ao objetivo definido
-- [ ] Dados utilizados foram validados
+- [ ] Relatório responde ao objetivo
+- [ ] Dados foram validados
 - [ ] Indicadores estão corretos
 - [ ] Fontes foram documentadas
-- [ ] Limitações foram registradas
 - [ ] Relatório foi entregue no formato esperado
 
 ## Observações
 
-Adicione links, documentos, prints, exemplos ou referências.
+Adicione links, documentos ou referências.

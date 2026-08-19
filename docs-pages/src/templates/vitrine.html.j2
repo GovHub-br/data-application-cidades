@@ -1,0 +1,127 @@
+{#
+  vitrine.html.j2 — todo o texto desta página vem do relatório técnico do
+  projeto, via bloco `programa` do dominios.yml. Cada seção exibe a origem.
+  Não escrever prosa própria aqui: se algo precisa ser dito, precisa antes
+  existir no relatório.
+#}
+{% extends "base.html.j2" %}
+
+{% block conteudo %}
+<div class="hero">
+  <div class="container">
+    <h1>{{ programa.documento.titulo }}</h1>
+    <p>{{ programa.papel.texto }}</p>
+    <span class="hero__periodo">{{ programa.marco_legal }}</span>
+  </div>
+</div>
+
+<section class="container">
+  <h2>O programa</h2>
+  <div class="prosa">{{ programa.resumo.texto | markdown }}</div>
+  <p class="fonte">Relatório técnico · {{ programa.resumo.fonte }}</p>
+</section>
+
+<section class="container">
+  <h2>O problema</h2>
+  <p class="secao__intro">{{ programa.problema.fonte }}.</p>
+  <div class="cards cards--2col">
+    {% for item in programa.problema.itens %}
+      <div class="card">
+        <span class="card__tag">{{ loop.index }}</span>
+        <h3>{{ item.titulo }}</h3>
+        <div class="prosa">{{ item.texto | markdown }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="container">
+  <h2>As questões analíticas centrais</h2>
+  <p class="secao__intro">{{ programa.perguntas.fonte }}.</p>
+  <ul class="lista-perguntas lista-perguntas--destaque">
+    {% for pergunta in programa.perguntas.itens %}
+      <li>{{ pergunta }}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="container">
+  <h2>A plataforma</h2>
+  <div class="colunas">
+    <div>
+      <div class="prosa">{{ programa.gov_hub.texto | markdown }}</div>
+      <p class="fonte">Relatório técnico · {{ programa.gov_hub.fonte }}</p>
+
+      <h3>Arquitetura</h3>
+      <div class="prosa">{{ programa.arquitetura.texto | markdown }}</div>
+      <p class="fonte">Relatório técnico · {{ programa.arquitetura.fonte }}</p>
+    </div>
+    <aside class="lateral">
+      <h3>Quem faz</h3>
+      <div class="prosa">{{ programa.parceria.texto | markdown }}</div>
+      <p class="fonte">Relatório técnico · {{ programa.parceria.fonte }}</p>
+    </aside>
+  </div>
+</section>
+
+<section class="container">
+  <h2>Produtos de dados previstos</h2>
+  <p class="secao__intro">{{ programa.produtos.fonte }}.</p>
+  <div class="cards cards--2col">
+    {% for item in programa.produtos.itens %}
+      <div class="card">
+        <h3>{{ item.titulo }}</h3>
+        <div class="prosa">{{ item.texto | markdown }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="container">
+  <h2>O que já está construído</h2>
+  <p class="secao__intro">
+    Os números desta seção não vêm do relatório: são lidos do repositório a cada
+    publicação.
+  </p>
+  <div class="numeros">
+    <div class="numero">
+      <div class="numero__valor">{{ m.linhas_cobertas }}/{{ linhas | length }}</div>
+      <div class="numero__rotulo">Linhas com pipeline</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ m.total_sistemas }}</div>
+      <div class="numero__rotulo">Fontes integradas</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ m.total_modelos }}</div>
+      <div class="numero__rotulo">Modelos dbt</div>
+    </div>
+    <div class="numero numero--acento">
+      <div class="numero__valor">{{ m.total_gold }}</div>
+      <div class="numero__rotulo">Tabelas de uso</div>
+    </div>
+  </div>
+
+  <div class="cards cards--dominios">
+    {% for dominio in dominios %}
+      <a class="card" href="{{ rel }}{{ dominio.href }}">
+        <span class="card__tag">{{ dominio.total }} modelos</span>
+        <h3>{{ dominio.rotulo }}</h3>
+        <div class="prosa">{{ dominio.no_relatorio.texto | markdown }}</div>
+        <p class="fonte">Relatório técnico · {{ dominio.no_relatorio.fonte }}</p>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="container">
+  <p class="aviso">
+    <strong>Origem do conteúdo.</strong> Todo o texto desta página vem do
+    relatório técnico <em>{{ programa.documento.titulo }}</em>
+    ({{ programa.documento.autoria }}), com a seção de origem indicada em cada
+    bloco. Os números de escala do programa que constam no relatório não são
+    exibidos: há valores divergentes entre seções, pendentes de conciliação pela
+    equipe.
+  </p>
+</section>
+{% endblock %}

@@ -11,77 +11,54 @@ assignees: ''
 
 Descreva a necessidade do dashboard.
 
-## Objetivo do dashboard
+## Objetivo
 
-Explique o que o dashboard deve permitir acompanhar, analisar ou decidir.
+Explique o que o dashboard deve acompanhar ou responder.
 
 ## Público-alvo
 
 - Usuários:
 - Área:
-- Frequência de uso:
 - Responsável pela validação:
 
-## Perguntas que o dashboard deve responder
+## Indicadores
 
-- 
-- 
-- 
-
-## Indicadores necessários
-
-| Indicador | Definição | Fonte | Regra de cálculo | Filtro |
-|----------|-----------|-------|------------------|--------|
-|          |           |       |                  |        |
+| Indicador | Definição | Fonte | Regra |
+|----------|-----------|-------|-------|
+|          |           |       |       |
 
 ## Filtros e recortes
 
 - Período:
 - Território:
-- Órgão:
-- Ator político:
-- Partido:
 - Categoria:
 - Outros:
 
-## Fonte ou tabela de consumo
+## Fonte de consumo
 
-- Nome da tabela:
-- Banco/schema:
+- Tabela:
 - Camada:
-- Frequência de atualização:
-- Responsável:
-
-## Ferramenta
-
-- [ ] Superset
-- [ ] Metabase
-- [ ] Power BI
-- [ ] Looker
-- [ ] Planilha
-- [ ] Outra
+- Atualização:
 
 ## Tarefas
 
-- [ ] Validar perguntas de negócio
 - [ ] Validar indicadores
-- [ ] Validar tabela de consumo
+- [ ] Validar fonte de consumo
 - [ ] Definir layout
 - [ ] Construir visualizações
 - [ ] Configurar filtros
 - [ ] Validar números
 - [ ] Publicar dashboard
-- [ ] Documentar regras dos indicadores
+- [ ] Documentar regras
 
 ## Critérios de aceite
 
 - [ ] Indicadores estão corretos
-- [ ] Filtros funcionam corretamente
+- [ ] Filtros funcionam
 - [ ] Dashboard usa fonte validada
-- [ ] Visualizações respondem às perguntas de negócio
-- [ ] Regras dos indicadores foram documentadas
-- [ ] Solicitante validou a entrega
+- [ ] Visualizações respondem ao objetivo
+- [ ] Entrega foi validada
 
 ## Observações
 
-Adicione links, prints, protótipos, dashboards de referência ou documentos.
+Adicione links, prints ou referências.
