@@ -7,10 +7,7 @@ from postgres_helpers import get_postgres_conn
 from cliente_bacen import ClienteBacen
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
-
-
+from base_file_parser import registros_para_staging_parquet
 
 
 @dag(
@@ -45,8 +42,11 @@ def bacen_sgs_ingest_dag() -> None:
         db = ClientPostgresDB(postgres_conn_str)
 
         # Lê o JSON do Airflow Variable e monta a lista de configs.
-        # Deslocado para dentro da task para evitar parse frequente pelo Top-Level do Scheduler.
-        BACEN_SERIES_RAW = Variable.get("BACEN_SERIES", deserialize_json=True, default_var={})
+        # Deslocado para dentro da task para evitar parse frequente pelo
+        # Top-Level do Scheduler.
+        BACEN_SERIES_RAW = Variable.get(
+            "BACEN_SERIES", deserialize_json=True, default_var={}
+        )
         if isinstance(BACEN_SERIES_RAW, list):
             BACEN_SERIES_RAW = BACEN_SERIES_RAW[0] if len(BACEN_SERIES_RAW) > 0 else {}
         CONFIGURACOES = [{"tipo": k, "codigo": v} for k, v in BACEN_SERIES_RAW.items()]
@@ -100,13 +100,7 @@ def bacen_sgs_ingest_dag() -> None:
         if todas_series:
             upload_raw_json("bacen", "financiamentos_imobiliarios", raw_por_serie)
             registros_para_staging_parquet(
-                "bacen",
-                "financiamentos_imobiliarios",
-                todas_series,
-                typers={
-                    "data": lambda s: pd.to_datetime(s, dayfirst=True, errors="coerce"),
-                    "valor": lambda s: pd.to_numeric(s, errors="coerce"),
-                },
+                "bacen", "financiamentos_imobiliarios", todas_series
             )
 
     fetch_and_store_all_series()

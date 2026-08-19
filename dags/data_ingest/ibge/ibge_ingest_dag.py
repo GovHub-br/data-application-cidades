@@ -1,4 +1,3 @@
-import io
 import logging
 from airflow.decorators import dag, task
 from airflow.models import Variable
@@ -7,8 +6,8 @@ from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_ibge import ClienteIBGE
 from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_json, download_raw_json, upload_staging_parquet
-import pandas as pd
+from cliente_minio import upload_raw_json, download_raw_json
+from base_file_parser import registros_para_staging_parquet
 import psycopg2
 
 CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default_var=[])
@@ -47,18 +46,20 @@ def ibge_ingest_dag() -> None:
                 conn.commit()
             logging.info(f"Schema '{schema}' garantido com sucesso.")
         except psycopg2.errors.UniqueViolation:
-            logging.warning(f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado).")
+            logging.warning(
+                f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado)."
+            )
 
     @task
     def fetch_and_store_mapped(config: dict) -> None:
         logging.info(f"Iniciando ingestão: {config['tabela']}")
-        
-        agregado=config["agregado"]
-        variaveis=config["variaveis"]
-        tabela=config["tabela"]
-        periodos=config.get("periodos", "-20")
-        classificacao_id=config.get("classificacao_id")
-        categoria=config.get("categoria")
+
+        agregado = config["agregado"]
+        variaveis = config["variaveis"]
+        tabela = config["tabela"]
+        periodos = config.get("periodos", "-20")
+        classificacao_id = config.get("classificacao_id")
+        categoria = config.get("categoria")
 
         api = ClienteIBGE()
         postgres_conn_str = get_postgres_conn()
@@ -82,14 +83,24 @@ def ibge_ingest_dag() -> None:
         registros = ClienteIBGE.transformar_resposta(dados_api)
 
         if registros:
-            logging.info(
-                f"Inserindo {len(registros)} registros em ibge.{tabela}"
-            )
+            logging.info(f"Inserindo {len(registros)} registros em ibge.{tabela}")
             db.insert_data(
                 registros,
                 tabela,
-                conflict_fields=["variavel_id", "localidade_id", "periodo", "classificacao_id", "categoria_id"],
-                primary_key=["variavel_id", "localidade_id", "periodo", "classificacao_id", "categoria_id"],
+                conflict_fields=[
+                    "variavel_id",
+                    "localidade_id",
+                    "periodo",
+                    "classificacao_id",
+                    "categoria_id",
+                ],
+                primary_key=[
+                    "variavel_id",
+                    "localidade_id",
+                    "periodo",
+                    "classificacao_id",
+                    "categoria_id",
+                ],
                 schema="ibge",
             )
             logging.info(f"Ingestão de {tabela} concluída")
@@ -97,17 +108,12 @@ def ibge_ingest_dag() -> None:
             logging.warning(f"Nenhum registro extraído dos dados da API para {tabela}")
 
     @task(trigger_rule="all_done")
-    def gera_parquet_tipado(config: dict) -> None:
-        """1.2 Transformação → parquet TIPADO na staging do MinIO.
+    def gera_parquet_staging(config: dict) -> None:
+        """1.2 Transformação → parquet (texto) na staging do MinIO.
 
-        Lê o raw json do MinIO, aplica os casts (a mesma tipagem que a camada
-        bronze fazia em SQL) e sobe o parquet já tipado. A silver depois só faz
-        `select * from read_parquet('s3://...')` via pg_duckdb — por isso o
-        parquet precisa sair daqui com os tipos finais.
-
-        O schema de saída do IBGE é uniforme para qualquer agregado (sempre as
-        mesmas colunas de transformar_resposta), então esta tipagem serve para
-        todas as tabelas do IBGE.
+        Lê o raw json do MinIO e sobe o parquet como texto — sem tipagem
+        Python pelo meio. A tipagem final (numeric/date) fica por conta do dbt
+        (camada silver), que lê a staging via `read_parquet('s3://...')`.
 
         trigger_rule=all_done + o guard abaixo garantem que uma tabela cujo
         fetch falhou (ex.: HTTP 500 do IBGE) NÃO bloqueie o parquet das demais:
@@ -129,49 +135,11 @@ def ibge_ingest_dag() -> None:
             logging.warning(f"Sem registros para gerar parquet: ibge.{tabela}")
             return
 
-        df = pd.DataFrame(registros)
-
-        # ids -> inteiros nuláveis
-        for col in ["variavel_id", "localidade_id", "classificacao_id", "categoria_id"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
-
-        # nomes -> texto normalizado (upper/trim), como na bronze
-        for col in ["localidade_nome", "classificacao_nome", "categoria_nome"]:
-            df[col] = df[col].astype("string").str.strip().str.upper()
-        df = df.rename(
-            columns={"classificacao_nome": "classificacao", "categoria_nome": "categoria"}
-        )
-
-        df["variavel_nome"] = df["variavel_nome"].astype("string")
-        df["unidade"] = df["unidade"].astype("string")
-        df["periodo"] = df["periodo"].astype("string")
-        periodos = df["periodo"].astype(str).tolist()
-        df["data_referencia"] = pd.to_datetime(
-            [f"{p}01" for p in periodos], format="%Y%m%d", errors="coerce"
-        )
-
-        # valor: a API v3 do IBGE usa PONTO como decimal ("1891.63"), sem
-        # separador de milhar. Portanto só coage — NÃO remover o ponto (isso
-        # corrompia o decimal, ex.: 1891.63 -> 189163). "..."/"-"/"" viram nulo.
-        valor = (
-            df["valor"]
-            .astype("string")
-            .str.strip()
-            .replace({"": None, "-": None, "...": None})
-        )
-        df["valor"] = pd.to_numeric(valor, errors="coerce")
-        df["dt_ingest"] = pd.to_datetime(df["dt_ingest"], errors="coerce")
-
-        buffer = io.BytesIO()
-        df.to_parquet(buffer, engine="pyarrow", index=False)
-        upload_staging_parquet("ibge", tabela, buffer.getvalue())
-        logging.info(
-            f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)"
-        )
+        registros_para_staging_parquet("ibge", tabela, registros)
 
     setup = setup_schema()
     fetch = fetch_and_store_mapped.expand(config=CONFIGURACOES)
-    parquet = gera_parquet_tipado.expand(config=CONFIGURACOES)
+    parquet = gera_parquet_staging.expand(config=CONFIGURACOES)
     setup >> fetch >> parquet
 
 

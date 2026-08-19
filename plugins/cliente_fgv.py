@@ -4,7 +4,7 @@ import urllib.parse
 import re
 import html
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 import pandas as pd
 import requests
@@ -18,7 +18,7 @@ class LegacySSLAdapter(HTTPAdapter):
     e permitir conexão com servidores IIS legados (ASP.NET).
     """
 
-    def init_poolmanager(self, *args, **kwargs):
+    def init_poolmanager(self, *args: Any, **kwargs: Any) -> None:
         context = create_urllib3_context()
         context.set_ciphers("DEFAULT@SECLEVEL=1")
         kwargs["ssl_context"] = context
@@ -76,6 +76,7 @@ class ClienteSinduscon:
                 skiprows=3,
                 usecols="A:E",
                 names=["mes", "indice", "var_mes", "var_ano", "var_12_meses"],
+                dtype=str,
             )
 
             # Remove as linhas vazias ou o rodapé de "Fonte FGV"
@@ -132,14 +133,8 @@ class ClienteFGVDados:
            chamadas no formato:
            callDataAction("...", "screenservices/...", "HASH", ...)
         """
-        logging.info(
-            "[cliente_fgv.py] Buscando hashes"
-            " dinâmicas do OutSystems..."
-        )
-        url_base = (
-            "https://autenticacao-ibre.fgv.br"
-            "/ProdutosDigitais/"
-        )
+        logging.info("[cliente_fgv.py] Buscando hashes" " dinâmicas do OutSystems...")
+        url_base = "https://autenticacao-ibre.fgv.br" "/ProdutosDigitais/"
 
         # Fallbacks caso algo falhe
         resultado = {
@@ -174,21 +169,12 @@ class ClienteFGVDados:
                 if token:
                     resultado["moduleVersion"] = token
         except Exception as e:
-            logging.warning(
-                "[cliente_fgv.py] Falha ao buscar"
-                f" moduleversioninfo: {e}"
-            )
+            logging.warning("[cliente_fgv.py] Falha ao buscar" f" moduleversioninfo: {e}")
 
         # apiVersions e URLs do BL01_Login.mvc.js
         try:
-            url_js = (
-                url_base
-                + "scripts/ProdutosDigitais"
-                ".Blocks.BL01_Login.mvc.js"
-            )
-            res_js = self.session.get(
-                url_js, timeout=10, headers=headers_get
-            )
+            url_js = url_base + "scripts/ProdutosDigitais" ".Blocks.BL01_Login.mvc.js"
+            res_js = self.session.get(url_js, timeout=10, headers=headers_get)
             if res_js.status_code == 200:
                 js = res_js.text
 
@@ -227,10 +213,7 @@ class ClienteFGVDados:
                         resultado[k_hash] = api_hash
                         resultado[k_url] = url_path
         except Exception as e:
-            logging.warning(
-                "[cliente_fgv.py] Falha ao buscar"
-                f" BL01_Login.mvc.js: {e}"
-            )
+            logging.warning("[cliente_fgv.py] Falha ao buscar" f" BL01_Login.mvc.js: {e}")
 
         logging.info(
             "[cliente_fgv.py] Hashes:"
@@ -276,7 +259,7 @@ class ClienteFGVDados:
                 estados[partes[i + 2]] = partes[i + 3]
             i += 4
         return estados
-    
+
     def _autenticar(self, hashes_dinamicas: dict) -> Optional[str]:
         """
         Executa o fluxo de login no portal OutSystems e prepara a sessão
@@ -300,7 +283,7 @@ class ClienteFGVDados:
         # Autenticação OutSystems
         self.session.get("https://autenticacao-ibre.fgv.br/ProdutosDigitais/")
         self.session.headers.update({"X-CSRFToken": ""})
-    
+
         url_cf = (
             "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
             + hashes_dinamicas["url_cloudflare"]
@@ -405,7 +388,7 @@ class ClienteFGVDados:
             logging.error("[cliente_fgv.py] Credenciais rejeitadas/login falhou.")
             return None
 
-        url_redir = dados_resposta["data"]["URL_Gratuito"]
+        url_redir: str = dados_resposta["data"]["URL_Gratuito"]
         logging.info("[cliente_fgv.py] Acesso autorizado. Migrando para ASP.NET.")
 
         headers_to_remove = [
@@ -420,7 +403,7 @@ class ClienteFGVDados:
         # Limpeza de headers modernos para transição
         for h in headers_to_remove:
             self.session.headers.pop(h, None)
-        
+
         return url_redir
 
     def _buscar_serie_icst(self, url_redir: str) -> bool:
@@ -487,7 +470,7 @@ class ClienteFGVDados:
             },
             headers=headers_ajax,
         )
-        
+
         return True
 
     def _configurar_consulta(self) -> bool:
@@ -591,7 +574,7 @@ class ClienteFGVDados:
             payload_viz["__EVENTVALIDATION"] = estados["__EVENTVALIDATION"]
 
         self.session.post(url_consulta, data=payload_viz, headers=headers_ajax_consulta)
-    
+
         return True
 
     def _baixar_e_parsear_csv(self) -> Optional[list[dict]]:
@@ -669,6 +652,7 @@ class ClienteFGVDados:
                     encoding="latin1",
                     header=0,
                     names=["mes", "icst_com_ajuste_sazonal", "icst_sem_ajuste_sazonal"],
+                    dtype=str,
                 )
 
                 # Adiciona data de ingestão
@@ -716,4 +700,3 @@ class ClienteFGVDados:
             return None
 
         return self._baixar_e_parsear_csv()
-

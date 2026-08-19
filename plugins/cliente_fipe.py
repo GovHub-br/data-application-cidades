@@ -45,8 +45,7 @@ class ClienteFipeZap(ClienteBase):
             base_url=self.BASE_URL,
             headers={
                 "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36"
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"
                 )
             },
         )
@@ -64,28 +63,23 @@ class ClienteFipeZap(ClienteBase):
         nenhum arquivo é salvo em disco.
 
         Returns:
-            DataFrame com colunas:
-                - data_referencia (str 'yyyy-MM-dd')
-                - imoveis_residenciais_locacao_var_mensal_total (float)
-                - imoveis_residenciais_locacao_var_ano_total (float)
-                - dt_ingest (str ISO 8601)
+            DataFrame com todas as colunas como texto — fiel ao valor original
+            da planilha (data_referencia,
+            imoveis_residenciais_locacao_var_mensal_total,
+            imoveis_residenciais_locacao_var_ano_total, dt_ingest). A tipagem
+            real fica por conta do dbt (camada silver).
             Ou None em caso de falha.
         """
         logging.info(
-            f"[cliente_fipezap.py] Baixando XLSX de: "
-            f"{self.BASE_URL}{self.XLSX_PATH}"
+            f"[cliente_fipezap.py] Baixando XLSX de: " f"{self.BASE_URL}{self.XLSX_PATH}"
         )
 
         try:
             _, content = self.request(
-                "GET",
-                f"{self.BASE_URL}{self.XLSX_PATH}",
-                response_type="bytes"
-            ) 
-        except requests.exceptions.RequestException as e:
-            logging.error(
-                f"[cliente_fipezap.py] Erro ao baixar o XLSX: {e}"
+                "GET", f"{self.BASE_URL}{self.XLSX_PATH}", response_type="bytes"
             )
+        except requests.exceptions.RequestException as e:
+            logging.error(f"[cliente_fipezap.py] Erro ao baixar o XLSX: {e}")
             return None
 
         # Guarda os bytes brutos do XLSX p/ a camada raw do data lake (formato nativo).
@@ -96,11 +90,12 @@ class ClienteFipeZap(ClienteBase):
                 io.BytesIO(content),
                 sheet_name=self.ABA,
                 header=None,
+                dtype=str,
             )
 
             # Extrai apenas as colunas necessárias dentro da janela de dados
             df = df_raw.iloc[
-                self.LINHA_INICIO_DADOS:self.LINHA_FIM_DADOS,
+                self.LINHA_INICIO_DADOS : self.LINHA_FIM_DADOS,
                 [self.COL_DATA, self.COL_VAR_MENSAL, self.COL_VAR_ANO],
             ].copy()
 
@@ -112,21 +107,6 @@ class ClienteFipeZap(ClienteBase):
 
             # Remove linhas sem data (rodapé residual)
             df = df[pd.notna(df["data_referencia"])].copy()
-
-            # Normaliza data para string 'yyyy-MM-dd'
-            df["data_referencia"] = pd.to_datetime(
-                df["data_referencia"]
-            ).dt.strftime("%Y-%m-%d")
-
-            # Converte valores para numérico
-            df["imoveis_residenciais_locacao_var_mensal_total"] = pd.to_numeric(
-                df["imoveis_residenciais_locacao_var_mensal_total"],
-                errors="coerce",
-            )
-            df["imoveis_residenciais_locacao_var_ano_total"] = pd.to_numeric(
-                df["imoveis_residenciais_locacao_var_ano_total"],
-                errors="coerce",
-            )
 
             df["dt_ingest"] = datetime.now().isoformat()
 
@@ -140,7 +120,5 @@ class ClienteFipeZap(ClienteBase):
             return df
 
         except Exception as e:
-            logging.error(
-                f"[cliente_fipezap.py] Erro ao processar o XLSX: {e}"
-            )
+            logging.error(f"[cliente_fipezap.py] Erro ao processar o XLSX: {e}")
             return None

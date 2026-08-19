@@ -13,7 +13,7 @@ from airflow.operators.python import PythonOperator
 from cliente_email import fetch_and_process_email
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
+from base_file_parser import registros_para_staging_parquet
 from postgres_helpers import get_postgres_conn
 from schedule_loader import get_dynamic_schedule
 
@@ -62,7 +62,7 @@ SKIPROWS = 12
 
 
 def _patched_format_csv(
-    csv_data: str,
+    csv_data: str | bytes,
     column_mapping: Optional[Dict[int, str]],
     skiprows: int,
 ) -> pd.DataFrame:
@@ -79,6 +79,7 @@ def _patched_format_csv(
             sep="\t",
             engine="python",
             on_bad_lines="skip",
+            dtype=str,
         )
         column_names: List[str] = [
             column_mapping.get(i, f"col_{i}") for i in range(len(df.columns))
@@ -92,6 +93,7 @@ def _patched_format_csv(
             sep="\t",
             engine="python",
             on_bad_lines="skip",
+            dtype=str,
         )
     return df
 
@@ -150,7 +152,7 @@ with DAG(
                     "Nenhum dado foi encontrado para inserção no BD"
                 )
 
-            df = pd.read_csv(io.StringIO(csv_data))
+            df = pd.read_csv(io.StringIO(csv_data), dtype=str)
             data = df.to_dict(orient="records")
 
             for record in data:
@@ -158,7 +160,6 @@ with DAG(
 
             postgres_conn_str = get_postgres_conn()
             db = ClientPostgresDB(postgres_conn_str)
-
 
             db.insert_data(
                 data,

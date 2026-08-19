@@ -7,8 +7,7 @@ from postgres_helpers import get_postgres_conn
 from cliente_bacen_imobiliario import ClienteBacenImobiliario
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
+from base_file_parser import registros_para_staging_parquet
 
 
 @dag(
@@ -53,15 +52,7 @@ def bacen_credito_pib_ingest_dag() -> None:
 
         # Lake (full-refresh): raw = json da API; parquet tipado.
         upload_raw_json("bacen", tabela, registros)
-        registros_para_staging_parquet(
-            "bacen",
-            tabela,
-            registros,
-            typers={
-                "data": lambda s: pd.to_datetime(s, errors="coerce"),
-                "valor": lambda s: pd.to_numeric(s, errors="coerce"),
-            },
-        )
+        registros_para_staging_parquet("bacen", tabela, registros)
         logging.info(f"Crédito/PIB: {len(registros)} pontos ingeridos.")
 
     fetch_and_store()

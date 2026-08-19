@@ -6,8 +6,7 @@ from postgres_helpers import get_postgres_conn
 from cliente_fgv import ClienteSinduscon
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
+from base_file_parser import registros_para_staging_parquet
 
 
 @dag(
@@ -50,25 +49,12 @@ def incc_m_ingest_dag() -> None:
                 schema="fgv",
             )
 
-            # Raw nativo (XLSX) + fallback json + parquet tipado (full-refresh).
-            # A série histórica traz '...' nas variações antigas -> to_numeric
-            # coage p/ NaN e evita coluna object mista no parquet.
+            # Raw nativo (XLSX) + fallback json + parquet (texto) (full-refresh).
             raw_xlsx = getattr(api, "ultimo_conteudo_xlsx", None)
             if raw_xlsx:
                 upload_raw_bytes("fgv", tabela, raw_xlsx, ext="xlsx")
             upload_fallback_json("fgv", tabela, registros)
-            registros_para_staging_parquet(
-                "fgv",
-                tabela,
-                registros,
-                typers={
-                    "mes": lambda s: pd.to_datetime(s, errors="coerce"),
-                    "indice": lambda s: pd.to_numeric(s, errors="coerce"),
-                    "var_mes": lambda s: pd.to_numeric(s, errors="coerce"),
-                    "var_ano": lambda s: pd.to_numeric(s, errors="coerce"),
-                    "var_12_meses": lambda s: pd.to_numeric(s, errors="coerce"),
-                },
-            )
+            registros_para_staging_parquet("fgv", tabela, registros)
 
             logging.info(f"Ingestão de {tabela} concluída com sucesso.")
         else:

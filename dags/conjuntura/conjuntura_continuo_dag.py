@@ -5,10 +5,16 @@ from datetime import datetime, timedelta
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
+from cosmos import (
+    DbtTaskGroup,
+    ExecutionConfig,
+    ProfileConfig,
+    ProjectConfig,
+    RenderConfig,
+)
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
 from schedule_loader import get_dynamic_schedule
-from ingestor_lake import IngestorBalancoEmpresas
+from base_file_parser import BaseFileParser
 
 dbt_log_path = "/tmp/dbt_logs"  # NOSONAR
 os.makedirs(dbt_log_path, exist_ok=True)
@@ -39,11 +45,13 @@ INGEST_DAG_IDS = [
     "icst_ingest_dag",
 ]
 
-# Ingestores manuais (Template Method): convertem arquivos já colocados no RAW
-# (CSV/XLSX/TXT) em parquet tipado na staging. Adicionar novas classes aqui
-# conforme os dados manuais forem chegando (ver README do conjuntura_continuo_dbt).
-INGESTORES_MANUAIS = [
-    IngestorBalancoEmpresas,
+# Fontes manuais (Template Method): arquivos já colocados no RAW (CSV/XLSX/TXT)
+# viram parquet (texto) na staging. Adicionar config aqui conforme os dados
+# manuais forem chegando (ver README do conjuntura_continuo_dbt) — só precisa
+# de subclasse de BaseFileParser se o arquivo tiver alguma particularidade
+# estrutural (header/sheet_name fora do padrão, JSON aninhado).
+FONTES_MANUAIS = [
+    {"fonte": "empresas", "dado": "balanco_lancamentos_vendas", "formato": "xlsx"},
 ]
 
 
@@ -81,9 +89,7 @@ def conjuntura_continuo_dag() -> None:
     instável não deve travar o boletim — os modelos daquela fonte ficam com o
     último parquet que deu certo.
     """
-    fontes_prontas = EmptyOperator(
-        task_id="fontes_prontas", trigger_rule="all_done"
-    )
+    fontes_prontas = EmptyOperator(task_id="fontes_prontas", trigger_rule="all_done")
 
     for ingest_dag_id in INGEST_DAG_IDS:
         trigger = TriggerDagRunOperator(
@@ -101,13 +107,11 @@ def conjuntura_continuo_dag() -> None:
         Uma falha isolada (ex.: arquivo ainda não colocado no RAW) apenas loga
         e segue — o dado fica com o último parquet válido.
         """
-        for ingestor_cls in INGESTORES_MANUAIS:
-            ingestor = ingestor_cls()
+        for config in FONTES_MANUAIS:
+            ingestor = BaseFileParser(**config)
             try:
                 ingestor.gerar_staging_parquet()
-                logging.info(
-                    f"Parquet manual gerado: {ingestor.fonte}.{ingestor.dado}"
-                )
+                logging.info(f"Parquet manual gerado: {ingestor.fonte}.{ingestor.dado}")
             except Exception as exc:  # noqa: BLE001 - fonte externa instável
                 logging.warning(
                     f"Ingestor manual falhou ({ingestor.fonte}.{ingestor.dado}): "

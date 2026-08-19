@@ -6,7 +6,7 @@ from postgres_helpers import get_postgres_conn
 from cliente_mrv import ClienteMRV
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
+from base_file_parser import registros_para_staging_parquet
 
 
 @dag(
@@ -64,4 +64,3 @@ def vendas_ingest_dag() -> None:
 
 
 dag_instance = vendas_ingest_dag()
-

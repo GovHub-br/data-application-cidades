@@ -5,7 +5,7 @@ from airflow.models import Variable
 from cliente_fgv import ClienteFGVDados
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
+from base_file_parser import registros_para_staging_parquet
 from postgres_helpers import get_postgres_conn
 from schedule_loader import get_dynamic_schedule
 

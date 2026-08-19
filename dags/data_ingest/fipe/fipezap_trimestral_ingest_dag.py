@@ -2,12 +2,16 @@ import logging
 from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
-from airflow.exceptions import AirflowException, AirflowFailException, AirflowSkipException
+from airflow.exceptions import (
+    AirflowException,
+    AirflowFailException,
+    AirflowSkipException,
+)
 
 from cliente_fipe import ClienteFipeZap
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
+from base_file_parser import registros_para_staging_parquet
 from postgres_helpers import get_postgres_conn
 from schedule_loader import get_dynamic_schedule
 
@@ -18,6 +22,7 @@ default_args = {
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
+
 
 @dag(
     dag_id="fipezap_trimestral_ingest_dag",
@@ -90,9 +95,7 @@ def fipezap_trimestral_ingest_dag() -> None:
         except (AirflowFailException, AirflowSkipException):
             raise
         except Exception as e:
-            logger.error(
-                "[fipezap_trimestral_dag] Erro inesperado na ingestão: %s", e
-            )
+            logger.error("[fipezap_trimestral_dag] Erro inesperado na ingestão: %s", e)
             raise AirflowException(
                 f"[fipezap_trimestral_dag] Erro inesperado: {e}"
             ) from e

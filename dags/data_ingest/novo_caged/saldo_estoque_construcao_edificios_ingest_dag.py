@@ -6,11 +6,13 @@ from postgres_helpers import get_postgres_conn
 from cliente_novo_caged import ClienteNovoCaged
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
+from base_file_parser import registros_para_staging_parquet
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("novo_caged_construcao_edificios", default="@monthly"),
+    schedule_interval=get_dynamic_schedule(
+        "novo_caged_construcao_edificios", default="@monthly"
+    ),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
@@ -21,15 +23,18 @@ from ingestor_lake import registros_para_staging_parquet
     tags=["cidades", "novo_caged", "construcao", "saldo", "estoque"],
 )
 def novo_caged_construcao_edificios() -> None:
-    """DAG para buscar e armazenar dados de saldo e estoque na construção de edifícios (Novo Caged)."""
+    """DAG para buscar e armazenar dados de saldo e estoque na construção
+    de edifícios (Novo Caged)."""
 
     @task
     def fetch_and_store_caged() -> None:
-        logging.info("[saldo_estoque_construcao_edificios.py] Iniciando extração (Novo Caged)")
+        logging.info(
+            "[saldo_estoque_construcao_edificios.py] Iniciando extração (Novo Caged)"
+        )
 
         api = ClienteNovoCaged()
         db = ClientPostgresDB(get_postgres_conn())
-        
+
         target_table = "saldo_estoque_construcao_edificios"
         schema = "novo_caged"
 
@@ -48,12 +53,12 @@ def novo_caged_construcao_edificios() -> None:
             db.insert_data(
                 caged_data,
                 target_table,
-                conflict_fields=["ano","mes"],
-                primary_key=["ano","mes"],
+                conflict_fields=["ano", "mes"],
+                primary_key=["ano", "mes"],
                 schema=schema,
             )
 
-            # Lake (full-refresh): raw = json da API; parquet tipado.
+            # Lake (full-refresh): raw = json da API; parquet (texto) na staging.
             upload_raw_json("novo_caged", target_table, caged_data)
             registros_para_staging_parquet("novo_caged", target_table, caged_data)
 
@@ -62,7 +67,10 @@ def novo_caged_construcao_edificios() -> None:
                 f"Total de {len(caged_data)} registros processados."
             )
         else:
-            logging.warning("[saldo_estoque_construcao_edificios.py] Nenhum dado retornado da API do Caged.")
+            logging.warning(
+                "[saldo_estoque_construcao_edificios.py] Nenhum dado retornado "
+                "da API do Caged."
+            )
 
     fetch_and_store_caged()
 

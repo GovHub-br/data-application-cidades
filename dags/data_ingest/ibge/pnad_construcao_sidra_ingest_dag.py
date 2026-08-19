@@ -7,8 +7,7 @@ from postgres_helpers import get_postgres_conn
 from cliente_ibge_sidra import ClienteIbgeSidra
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
+from base_file_parser import registros_para_staging_parquet
 
 # PNAD-C por grupamento de atividade (classificação 888):
 #   categorias 47946 = Total, 47949 = Construção.
@@ -70,12 +69,7 @@ def ibge_pnad_construcao_sidra_ingest_dag() -> None:
 
         # Lake (full-refresh): raw = json da API SIDRA; parquet tipado.
         upload_raw_json("ibge", tabela, registros)
-        registros_para_staging_parquet(
-            "ibge",
-            tabela,
-            registros,
-            typers={"valor": lambda s: pd.to_numeric(s, errors="coerce")},
-        )
+        registros_para_staging_parquet("ibge", tabela, registros)
         logging.info(f"SIDRA {tabela}: {len(registros)} registros ingeridos.")
 
     fetch_and_store.expand(config=CONFIGS)
