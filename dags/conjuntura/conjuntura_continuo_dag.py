@@ -15,7 +15,7 @@ os.makedirs(dbt_log_path, exist_ok=True)
 os.environ[DBT_LOG_PATH_ENVVAR] = dbt_log_path
 
 profile_config = ProfileConfig(
-    profiles_yml_filepath=f"{os.environ['AIRFLOW_REPO_BASE']}/dags/dbt/mcid/profiles.yml",
+    profiles_yml_filepath=f"{os.environ['AIRFLOW_REPO_BASE']}/dbt/mcid/profiles.yml",
     profile_name="mcid",
     target_name="prod",
 )
@@ -118,7 +118,7 @@ def conjuntura_continuo_dag() -> None:
 
     dbt_conjuntura_continuo = DbtTaskGroup(
         group_id="dbt_conjuntura_continuo",
-        project_config=ProjectConfig(f"{os.environ['AIRFLOW_REPO_BASE']}/dags/dbt/mcid"),
+        project_config=ProjectConfig(f"{os.environ['AIRFLOW_REPO_BASE']}/dbt/mcid"),
         profile_config=profile_config,
         execution_config=ExecutionConfig(
             dbt_executable_path=f"{os.environ['AIRFLOW_REPO_BASE']}/.local/bin/dbt",

@@ -1,15 +1,24 @@
+# O nome do projeto e fixo para nao depender do diretorio de onde o Compose e
+# chamado: com o arquivo em infra/, o padrao seria "infra", o que criaria
+# containers e volumes separados dos que ja existem.
+name: data-application-cidades
+
 # Base configuration for Airflow services
 x-airflow-common: &airflow-common
-  build: .
+  build:
+    context: ..
+    dockerfile: infra/docker/airflow/Dockerfile
   user: "${AIRFLOW_UID:-50000}:0"
   env_file:
-    - .env
+    - ../.env
   volumes:
-    - ./airflow_lappis/airflow.cfg:${AIRFLOW_HOME}/airflow.cfg
-    - ./airflow_lappis/dags:${AIRFLOW_HOME}/dags/
-    - ./airflow_lappis/plugins:${AIRFLOW_HOME}/plugins/
-    - ./airflow_lappis/helpers:${AIRFLOW_HOME}/helpers/
-    - ./airflow_lappis/dags/dbt/ipea/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
+    - ./airflow/airflow.cfg:${AIRFLOW_HOME}/airflow.cfg
+    - ../dags:${AIRFLOW_HOME}/dags/
+    - ../plugins:${AIRFLOW_HOME}/plugins/
+    - ../helpers:${AIRFLOW_HOME}/helpers/
+    - ../templates:${AIRFLOW_HOME}/templates/
+    - ../dbt:${AIRFLOW_HOME}/dbt/
+    - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
   depends_on: &airflow-common-depends-on
     postgres:
       condition: service_healthy
@@ -67,7 +76,7 @@ services:
   postgres:
     image: postgres:17-alpine
     env_file:
-      - .env
+      - ../.env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -87,8 +96,8 @@ services:
   # Analytics Tools
   superset:
     build:
-      context: .
-      dockerfile: Dockerfile.superset  # Custom Dockerfile with PostgreSQL drivers
+      context: ..
+      dockerfile: infra/docker/superset/Dockerfile  # Custom Dockerfile with PostgreSQL drivers
     environment:
       SUPERSET_SECRET_KEY: 'supersetadmin'
       SUPERSET_ENV: development
@@ -123,7 +132,7 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./notebooks:/home/jovyan/notebooks
+      - ../notebooks:/home/jovyan/notebooks
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     restart: always

@@ -60,7 +60,7 @@ de só atualizar contadores.
 ## Domínio novo
 
 O `slug` **precisa** ser o nome da pasta em
-`airflow_lappis/dags/dbt/<projeto>/models/<slug>_dbt/`, senão nenhum modelo casa.
+`dbt/<projeto>/models/<slug>_dbt/`, senão nenhum modelo casa.
 O build falha quando isso acontece — é quase sempre erro de digitação. Se o
 domínio existe de propósito antes da implementação, declare `sem_modelos: true`.
 
