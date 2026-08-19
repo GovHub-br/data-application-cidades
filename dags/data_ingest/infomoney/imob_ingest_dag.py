@@ -32,7 +32,7 @@ def infomoney_imob_dag() -> None:
     """
 
     @task
-    def fetch_and_load_imob():
+    def fetch_and_load_imob() -> None:
         logging.info("Iniciando extração Infomoney (IMOB.SA)...")
 
         config = Variable.get("api_key_alphavantage", deserialize_json=True)

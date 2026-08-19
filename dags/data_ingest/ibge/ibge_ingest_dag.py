@@ -1,5 +1,6 @@
 import io
 import logging
+from typing import Any
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from datetime import datetime, timedelta
@@ -165,12 +166,8 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
         # valor: a API v3 do IBGE usa PONTO como decimal ("1891.63"), sem
         # separador de milhar. Portanto só coage — NÃO remover o ponto (isso
         # corrompia o decimal, ex.: 1891.63 -> 189163). "..."/"-"/"" viram nulo.
-        valor = (
-            df["valor"]
-            .astype("string")
-            .str.strip()
-            .replace({"": None, "-": None, "...": None})
-        )
+        nulos: dict[str, Any] = {"": None, "-": None, "...": None}
+        valor = df["valor"].astype("string").str.strip().replace(nulos)
         df["valor"] = pd.to_numeric(valor, errors="coerce")
         df["dt_ingest"] = pd.to_datetime(df["dt_ingest"], errors="coerce")
 

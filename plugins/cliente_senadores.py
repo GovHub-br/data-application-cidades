@@ -1,5 +1,7 @@
 import http
 import logging
+from typing import cast
+
 from cliente_base import ClienteBase
 
 
@@ -45,7 +47,7 @@ class ClienteSenadores(ClienteBase):
                     f"[cliente_senadores.py] Successfully fetched "
                     f"{len(parlamentares)} senadores"
                 )
-                return parlamentares
+                return cast(list, parlamentares)
             except Exception as e:
                 logging.error(
                     f"[cliente_senadores.py] Erro ao parsear JSON do Senado: {e}"

@@ -70,7 +70,7 @@ SKIPROWS = 10
 # A formatação do CSV estava como utf-16.
 # Função criada para consumo sem erro de formatação
 def _patched_format_csv(
-    csv_data: str,
+    csv_data: str | bytes,
     column_mapping: Optional[Dict[int, str]],
     skiprows: int,
 ) -> pd.DataFrame:

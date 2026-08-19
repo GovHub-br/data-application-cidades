@@ -4,7 +4,7 @@ import urllib.parse
 import re
 import html
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 import pandas as pd
 import requests
@@ -18,7 +18,7 @@ class LegacySSLAdapter(HTTPAdapter):
     e permitir conexão com servidores IIS legados (ASP.NET).
     """
 
-    def init_poolmanager(self, *args, **kwargs):
+    def init_poolmanager(self, *args: Any, **kwargs: Any) -> None:
         context = create_urllib3_context()
         context.set_ciphers("DEFAULT@SECLEVEL=1")
         kwargs["ssl_context"] = context
@@ -387,7 +387,7 @@ class ClienteFGVDados:
             logging.error("[cliente_fgv.py] Credenciais rejeitadas/login falhou.")
             return None
 
-        url_redir = dados_resposta["data"]["URL_Gratuito"]
+        url_redir: str = dados_resposta["data"]["URL_Gratuito"]
         logging.info("[cliente_fgv.py] Acesso autorizado. Migrando para ASP.NET.")
 
         headers_to_remove = [

@@ -24,8 +24,10 @@ import os
 import stat
 import sys
 import zipfile
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import boto3
 import paramiko
@@ -113,7 +115,7 @@ def connect_sftp() -> tuple[paramiko.Transport, paramiko.SFTPClient]:
     return transport, sftp
 
 
-def connect_minio(endpoint: str):
+def connect_minio(endpoint: str) -> Any:
     if not MINIO_ACCESS_KEY or not MINIO_SECRET_KEY:
         raise ValueError("Credenciais MinIO incompletas em .env/local.env")
     return boto3.client(
@@ -341,7 +343,7 @@ def diff_snapshots(old: dict, new: dict, compare_mtime: bool = False) -> dict:
 
 
 def print_report(diff: dict, limit: int | None) -> None:
-    def section(title: str, items: list, fmt) -> None:
+    def section(title: str, items: list, fmt: Callable[[dict], str]) -> None:
         print(f"\n## {title} ({len(items)})")
         shown = items if limit is None else items[:limit]
         for item in shown:

@@ -35,6 +35,7 @@ import logging
 import os
 import stat
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
@@ -103,7 +104,7 @@ def walk_sftp(sftp: paramiko.SFTPClient) -> dict[str, dict]:
     """Percorre a árvore inteira e devolve {path: {size, mtime}}."""
     files: dict[str, dict] = {}
 
-    def walk(path: str):
+    def walk(path: str) -> None:
         try:
             items = sftp.listdir_attr(path)
         except Exception as e:
@@ -151,7 +152,8 @@ def save_snapshot(snap: dict) -> Path:
 
 
 def load_snapshot(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
+    data: dict = json.loads(path.read_text(encoding="utf-8"))
+    return data
 
 
 def list_snapshots() -> list[Path]:
@@ -278,7 +280,7 @@ def interpret(d: dict) -> str:
 
 
 def print_report(d: dict, limit: int | None) -> None:
-    def section(title: str, items: list, fmt) -> None:
+    def section(title: str, items: list, fmt: Callable[[dict], str]) -> None:
         print(f"\n## {title} ({len(items)})")
         shown = items if limit is None else items[:limit]
         for it in shown:
@@ -331,7 +333,7 @@ def print_report(d: dict, limit: int | None) -> None:
 
 
 # Comandos
-def cmd_snapshot(args) -> None:
+def cmd_snapshot(args: argparse.Namespace) -> None:
     transport, sftp = connect_sftp()
     try:
         snap = capture_snapshot(sftp)
@@ -341,7 +343,7 @@ def cmd_snapshot(args) -> None:
     save_snapshot(snap)
 
 
-def cmd_diff(args) -> None:
+def cmd_diff(args: argparse.Namespace) -> None:
     # Modo offline: dois snapshots em disco, sem se conectar ao SFTP.
     if args.from_snap and args.to_snap:
         old = load_snapshot(Path(args.from_snap))
@@ -376,7 +378,7 @@ def cmd_diff(args) -> None:
         log.info("Diff em JSON: %s", args.json)
 
 
-def cmd_list(args) -> None:
+def cmd_list(args: argparse.Namespace) -> None:
     snaps = list_snapshots()
     if not snaps:
         print(f"Nenhum snapshot em {SNAPSHOT_DIR}")

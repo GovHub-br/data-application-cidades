@@ -20,7 +20,9 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-pd.read_csv = partial(pd.read_csv, sep="\t", on_bad_lines="skip")
+pd.read_csv = partial(  # type: ignore[assignment]
+    pd.read_csv, sep="\t", on_bad_lines="skip"
+)
 
 COLUMN_MAPPING_NC = {
     0: "emissao_dia",

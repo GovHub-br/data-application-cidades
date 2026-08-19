@@ -62,7 +62,7 @@ SKIPROWS = 12
 
 
 def _patched_format_csv(
-    csv_data: str,
+    csv_data: str | bytes,
     column_mapping: Optional[Dict[int, str]],
     skiprows: int,
 ) -> pd.DataFrame:

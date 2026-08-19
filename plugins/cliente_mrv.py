@@ -84,7 +84,7 @@ class ClienteMRV:
 
             planilha_mais_recente = planilhas[0]
             trimestre = planilha_mais_recente.get("file_quarter")
-            link = planilha_mais_recente.get("permalink")
+            link: str | None = planilha_mais_recente.get("permalink")
 
             if link:
                 logging.info(

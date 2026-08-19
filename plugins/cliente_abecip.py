@@ -1,7 +1,7 @@
 import io
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, cast
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -90,7 +90,7 @@ class ClienteAbecip(ClienteBase):
 
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup.find_all("a", href=True):
-            href = tag["href"]
+            href = str(tag["href"])
             if pattern in href:
                 url = href if href.startswith("http") else f"{self.BASE_URL}{href}"
                 logging.info(f"[cliente_abecip.py] URL do XLSX encontrada: {url}")
@@ -115,7 +115,7 @@ class ClienteAbecip(ClienteBase):
                 response_type="bytes",
             )
 
-            return content
+            return cast(bytes, content)
         except Exception as e:
             logging.error(f"[cliente_abecip.py] Erro ao baixar XLSX: {e}")
             return None

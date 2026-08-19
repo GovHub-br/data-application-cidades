@@ -13,6 +13,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from sqlalchemy import create_engine, text
 from sqlalchemy import types as sa_types
+from sqlalchemy.engine import Engine
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -150,7 +151,7 @@ def format_size(size_bytes: int) -> str:
 def collect_sftp_files(sftp: paramiko.SFTPClient) -> list[dict]:
     entries = []
 
-    def walk(path: str):
+    def walk(path: str) -> None:
         try:
             items = sftp.listdir_attr(path)
         except Exception as e:
@@ -223,7 +224,9 @@ def detect_csv_format(file_path: str) -> tuple[str, str]:
     return enc, sep
 
 
-def _copy_df_to_pg(df: pd.DataFrame, table_name: str, schema: str, engine) -> None:
+def _copy_df_to_pg(
+    df: pd.DataFrame, table_name: str, schema: str, engine: Engine
+) -> None:
     """Bulk insert via PostgreSQL COPY — 10-20x mais rápido que INSERT."""
     buf = io.StringIO()
     df.to_csv(buf, index=False, header=False, na_rep="\\N")
@@ -245,7 +248,7 @@ def _copy_df_to_pg(df: pd.DataFrame, table_name: str, schema: str, engine) -> No
         raw_conn.close()
 
 
-def stream_csv_from_file(file_path: str, table_name: str, engine) -> int:
+def stream_csv_from_file(file_path: str, table_name: str, engine: Engine) -> int:
     """Lê CSV/TXT em chunks de um arquivo em disco."""
     enc, sep = detect_csv_format(file_path)
     log.info("    encoding=%s, sep=%s", enc, repr(sep))
@@ -280,7 +283,7 @@ def stream_csv_from_file(file_path: str, table_name: str, engine) -> int:
     return total
 
 
-def stream_xlsx_from_file(file_path: str, table_name: str, engine) -> int:
+def stream_xlsx_from_file(file_path: str, table_name: str, engine: Engine) -> int:
     """Lê XLSX linha a linha com openpyxl read_only — não carrega a planilha inteira."""
     wb = load_workbook(file_path, read_only=True, data_only=True)
     total = 0
@@ -359,7 +362,7 @@ def write_bytes_to_tempfile(data: bytes, suffix: str) -> str:
         return tmp.name
 
 
-def load_file_from_disk(file_path: str, ext: str, table_name: str, engine) -> int:
+def load_file_from_disk(file_path: str, ext: str, table_name: str, engine: Engine) -> int:
     if ext in (".csv", ".txt"):
         return stream_csv_from_file(file_path, table_name, engine)
     if ext == ".xlsx":
@@ -368,7 +371,7 @@ def load_file_from_disk(file_path: str, ext: str, table_name: str, engine) -> in
     return -1
 
 
-def ensure_ingest_log(engine) -> None:
+def ensure_ingest_log(engine: Engine) -> None:
     with engine.begin() as conn:
         conn.execute(text(f"""
             CREATE TABLE IF NOT EXISTS {DB_SCHEMA}.{INGEST_LOG} (
@@ -380,7 +383,7 @@ def ensure_ingest_log(engine) -> None:
         """))
 
 
-def is_processed(engine, sftp_key: str) -> bool:
+def is_processed(engine: Engine, sftp_key: str) -> bool:
     with engine.connect() as conn:
         result = conn.execute(
             text(f"SELECT 1 FROM {DB_SCHEMA}.{INGEST_LOG} WHERE sftp_key = :k"),
@@ -389,7 +392,7 @@ def is_processed(engine, sftp_key: str) -> bool:
         return result.fetchone() is not None
 
 
-def is_zip_processed(engine, zip_path: str) -> bool:
+def is_zip_processed(engine: Engine, zip_path: str) -> bool:
     """Checa se o zip já tem ao menos um arquivo interno no log — evita baixar de novo."""
     with engine.connect() as conn:
         result = conn.execute(
@@ -402,7 +405,7 @@ def is_zip_processed(engine, zip_path: str) -> bool:
         return result.fetchone() is not None
 
 
-def mark_processed(engine, sftp_key: str, table_name: str, rows: int) -> None:
+def mark_processed(engine: Engine, sftp_key: str, table_name: str, rows: int) -> None:
     with engine.begin() as conn:
         conn.execute(
             text(f"""
@@ -417,19 +420,21 @@ def mark_processed(engine, sftp_key: str, table_name: str, rows: int) -> None:
         )
 
 
-def get_engine():
+def get_engine() -> Engine:
     url = (
         f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}" f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     return create_engine(url)
 
 
-def ensure_schema(engine) -> None:
+def ensure_schema(engine: Engine) -> None:
     with engine.begin() as conn:
         conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {DB_SCHEMA}"))
 
 
-def _process_zip(tmp_path: str, sftp_path: str, engine, registry: dict[str, int]) -> None:
+def _process_zip(
+    tmp_path: str, sftp_path: str, engine: Engine, registry: dict[str, int]
+) -> None:
     try:
         zf = zipfile.ZipFile(tmp_path)
     except zipfile.BadZipFile as e:
@@ -470,7 +475,7 @@ def _process_zip(tmp_path: str, sftp_path: str, engine, registry: dict[str, int]
 
 
 def _process_flat(
-    entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]
+    entry: dict, sftp: paramiko.SFTPClient, engine: Engine, registry: dict[str, int]
 ) -> None:
     path = entry["path"]
     ext = entry["ext"]
@@ -500,7 +505,7 @@ def _process_flat(
 
 
 def process_entry(
-    entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]
+    entry: dict, sftp: paramiko.SFTPClient, engine: Engine, registry: dict[str, int]
 ) -> None:
     log.info("\n→ %s (%s)", entry["path"], format_size(entry["size"]))
 
@@ -535,7 +540,7 @@ def connect_sftp() -> tuple[paramiko.Transport, paramiko.SFTPClient]:
     return transport, sftp
 
 
-def main():
+def main() -> None:
     if not SFTP_PASSWORD:
         raise ValueError("SFTP_PASSWORD não encontrada no .env")
 

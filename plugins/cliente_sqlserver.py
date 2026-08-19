@@ -40,6 +40,7 @@ class ClientSQLServerDB:
                 )
                 return []
 
+            assert cursor.description is not None
             columns = [description[0] for description in cursor.description]
             records = [dict(zip(columns, row)) for row in rows]
 

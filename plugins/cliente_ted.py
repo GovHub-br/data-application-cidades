@@ -148,7 +148,7 @@ class ClienteTed(ClienteBase):
 
         status, data = self.request(http.HTTPMethod.GET, endpoint, headers=headers)
 
-        if status in http.HTTPStatus.OK and isinstance(data, list):
+        if status == http.HTTPStatus.OK and isinstance(data, list):
             logging.info(
                 f"[cliente_ted.py] Sucesso ao buscar {len(data)} programas "
                 f"no offset {offset}."

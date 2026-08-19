@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, cast
 from cliente_base import ClienteBase
 
 
@@ -30,4 +30,4 @@ class ClienteInfomoney(ClienteBase):
             )
             return []
 
-        return dados["Time Series (Daily)"]
+        return cast(List[Dict[str, Any]], dados["Time Series (Daily)"])
