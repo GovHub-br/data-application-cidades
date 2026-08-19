@@ -1,30 +1,35 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-WITH pivotado AS (
-    SELECT
-        variavel_id,
-        MAX(CASE WHEN periodo = '202404' THEN valor_percentual END) AS t_4t24,
-        MAX(CASE WHEN periodo = '202501' THEN valor_percentual END) AS t_1t25,
-        MAX(CASE WHEN periodo = '202502' THEN valor_percentual END) AS t_2t25,
-        MAX(CASE WHEN periodo = '202503' THEN valor_percentual END) AS t_3t25,
-        MAX(CASE WHEN periodo = '202504' THEN valor_percentual END) AS t_4t25,
-        MAX(dt_ingest)                                              AS dt_ingest,
-        MAX(dt_silver)                                              AS dt_silver
-    FROM {{ ref('silver_ibge_pib_construcao_civil') }}
-    GROUP BY variavel_id
-)
+with
+    pivotado as (
+        select
+            variavel_id,
+            max(case when periodo = '202404' then valor_percentual end) as t_4t24,
+            max(case when periodo = '202501' then valor_percentual end) as t_1t25,
+            max(case when periodo = '202502' then valor_percentual end) as t_2t25,
+            max(case when periodo = '202503' then valor_percentual end) as t_3t25,
+            max(case when periodo = '202504' then valor_percentual end) as t_4t25,
+            max(dt_ingest) as dt_ingest,
+            max(dt_silver) as dt_silver
+        from {{ ref("silver_ibge_pib_construcao_civil") }}
+        group by variavel_id
+    )
 
-SELECT
-    CASE variavel_id
-        WHEN 6564 THEN 'Trim./Trim. Imediatamente Anterior'
-        WHEN 6563 THEN 'Acumulada ao Longo do Ano'
-        WHEN 6562 THEN 'Acum. Últimos 4 Trimestres'
-    END                         AS indicador,
-    ROUND(t_4t24, 1)            AS tri_2024_4,
-    ROUND(t_1t25, 1)            AS tri_2025_1,
-    ROUND(t_2t25, 1)            AS tri_2025_2,
-    ROUND(t_3t25, 1)            AS tri_2025_3,
-    ROUND(t_4t25, 1)            AS tri_2025_4,
-    {{ add_metadata_timestamps('gold') }}
-FROM pivotado
-ORDER BY variavel_id DESC
+select
+    case
+        variavel_id
+        when 6564
+        then 'Trim./Trim. Imediatamente Anterior'
+        when 6563
+        then 'Acumulada ao Longo do Ano'
+        when 6562
+        then 'Acum. Últimos 4 Trimestres'
+    end as indicador,
+    round(t_4t24, 1) as tri_2024_4,
+    round(t_1t25, 1) as tri_2025_1,
+    round(t_2t25, 1) as tri_2025_2,
+    round(t_3t25, 1) as tri_2025_3,
+    round(t_4t25, 1) as tri_2025_4,
+    {{ add_metadata_timestamps("gold") }}
+from pivotado
+order by variavel_id desc

@@ -1,8 +1,8 @@
 -- UDF para normalizar APF para formato canônico de 8 dígitos
 -- O APF aparece em 3 formatos diferentes nas tabelas:
---   GFAR consolidado: "0626780-03" (com traço)
---   CAIXA/CAD_PJ:     "62678003"   (8 dígitos)
---   Financeiro mensal: "626780"     (6 dígitos, sem dígitos verificadores)
+-- GFAR consolidado: "0626780-03" (com traço)
+-- CAIXA/CAD_PJ:     "62678003"   (8 dígitos)
+-- Financeiro mensal: "626780"     (6 dígitos, sem dígitos verificadores)
 -- Esta função normaliza todos para o formato de 8 dígitos sem traço.
 {% macro create_f_normalize_apf() %}
 

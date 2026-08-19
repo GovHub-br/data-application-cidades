@@ -35,6 +35,7 @@ import logging
 import os
 import stat
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
@@ -51,17 +52,23 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-SFTP_HOST     = os.getenv("SFTP_HOST")
-SFTP_PORT     = os.getenv("SFTP_PORT")
-SFTP_USER     = os.getenv("SFTP_USER")
+SFTP_HOST = os.getenv("SFTP_HOST")
+SFTP_PORT = os.getenv("SFTP_PORT")
+SFTP_USER = os.getenv("SFTP_USER")
 SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
 
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots"
 
 # Ruído que não interessa rastrear (config de shell, temporários do SFTP).
 IGNORED_EXTENSIONS = {
-    ".bashrc", ".bash_logout", ".bash_history", ".profile",
-    ".mkshrc", ".viminfo", ".filepart", ".rpt",
+    ".bashrc",
+    ".bash_logout",
+    ".bash_history",
+    ".profile",
+    ".mkshrc",
+    ".viminfo",
+    ".filepart",
+    ".rpt",
 }
 
 
@@ -97,7 +104,7 @@ def walk_sftp(sftp: paramiko.SFTPClient) -> dict[str, dict]:
     """Percorre a árvore inteira e devolve {path: {size, mtime}}."""
     files: dict[str, dict] = {}
 
-    def walk(path: str):
+    def walk(path: str) -> None:
         try:
             items = sftp.listdir_attr(path)
         except Exception as e:
@@ -145,7 +152,8 @@ def save_snapshot(snap: dict) -> Path:
 
 
 def load_snapshot(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
+    data: dict = json.loads(path.read_text(encoding="utf-8"))
+    return data
 
 
 def list_snapshots() -> list[Path]:
@@ -203,7 +211,7 @@ def diff_snapshots(old: dict, new: dict) -> dict:
     old_files: dict[str, dict] = old["files"]
     new_files: dict[str, dict] = new["files"]
 
-    added   = {p: m for p, m in new_files.items() if p not in old_files}
+    added = {p: m for p, m in new_files.items() if p not in old_files}
     removed = {p: m for p, m in old_files.items() if p not in new_files}
 
     modified: list[dict] = []
@@ -211,25 +219,29 @@ def diff_snapshots(old: dict, new: dict) -> dict:
     for path in old_files.keys() & new_files.keys():
         o, n = old_files[path], new_files[path]
         if o["size"] != n["size"] or o["mtime"] != n["mtime"]:
-            modified.append({
-                "path": path,
-                "old_size": o["size"], "new_size": n["size"],
-                "old_mtime": o["mtime"], "new_mtime": n["mtime"],
-            })
+            modified.append(
+                {
+                    "path": path,
+                    "old_size": o["size"],
+                    "new_size": n["size"],
+                    "old_mtime": o["mtime"],
+                    "new_mtime": n["mtime"],
+                }
+            )
         else:
             unchanged += 1
 
-    moves = detect_moves(added, removed)    # consome added/removed casados
+    moves = detect_moves(added, removed)  # consome added/removed casados
     copies = detect_copies(added, new_files)  # consome added casados
 
     return {
         "old_captured_at": old.get("captured_at"),
         "new_captured_at": new.get("captured_at"),
-        "added":     [{"path": p, **m} for p, m in sorted(added.items())],
-        "removed":   [{"path": p, **m} for p, m in sorted(removed.items())],
-        "modified":  sorted(modified, key=lambda x: x["path"]),
-        "moved":     sorted(moves, key=lambda x: x["to"]),
-        "copied":    sorted(copies, key=lambda x: x["to"]),
+        "added": [{"path": p, **m} for p, m in sorted(added.items())],
+        "removed": [{"path": p, **m} for p, m in sorted(removed.items())],
+        "modified": sorted(modified, key=lambda x: x["path"]),
+        "moved": sorted(moves, key=lambda x: x["to"]),
+        "copied": sorted(copies, key=lambda x: x["to"]),
         "unchanged": unchanged,
     }
 
@@ -268,7 +280,7 @@ def interpret(d: dict) -> str:
 
 
 def print_report(d: dict, limit: int | None) -> None:
-    def section(title: str, items: list, fmt) -> None:
+    def section(title: str, items: list, fmt: Callable[[dict], str]) -> None:
         print(f"\n## {title} ({len(items)})")
         shown = items if limit is None else items[:limit]
         for it in shown:
@@ -285,18 +297,35 @@ def print_report(d: dict, limit: int | None) -> None:
         f"removidos={len(d['removed'])}  inalterados={d['unchanged']}"
     )
 
-    section("NOVOS", d["added"],
-            lambda x: f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})")
-    section("MODIFICADOS", d["modified"],
-            lambda x: (f"~ {x['path']}  "
-                       f"{format_size(x['old_size'])}→{format_size(x['new_size'])}  "
-                       f"mtime {format_mtime(x['old_mtime'])}→{format_mtime(x['new_mtime'])}"))
-    section("MOVIDOS (provável arquivamento)", d["moved"],
-            lambda x: f"» {x['from']}\n      → {x['to']}  ({format_size(x['size'])})")
-    section("COPIADOS (provável arquivamento por cópia; original permanece)", d["copied"],
-            lambda x: f"= {x['from']}\n      → {x['to']}  ({format_size(x['size'])})")
-    section("REMOVIDOS", d["removed"],
-            lambda x: f"- {x['path']}  ({format_size(x['size'])})")
+    section(
+        "NOVOS",
+        d["added"],
+        lambda x: (
+            f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})"
+        ),
+    )
+    section(
+        "MODIFICADOS",
+        d["modified"],
+        lambda x: (
+            f"~ {x['path']}  "
+            f"{format_size(x['old_size'])}→{format_size(x['new_size'])}  "
+            f"mtime {format_mtime(x['old_mtime'])}→{format_mtime(x['new_mtime'])}"
+        ),
+    )
+    section(
+        "MOVIDOS (provável arquivamento)",
+        d["moved"],
+        lambda x: f"» {x['from']}\n      → {x['to']}  ({format_size(x['size'])})",
+    )
+    section(
+        "COPIADOS (provável arquivamento por cópia; original permanece)",
+        d["copied"],
+        lambda x: f"= {x['from']}\n      → {x['to']}  ({format_size(x['size'])})",
+    )
+    section(
+        "REMOVIDOS", d["removed"], lambda x: f"- {x['path']}  ({format_size(x['size'])})"
+    )
 
     print("\n" + "-" * 70)
     print("INTERPRETAÇÃO:", interpret(d))
@@ -304,7 +333,7 @@ def print_report(d: dict, limit: int | None) -> None:
 
 
 # Comandos
-def cmd_snapshot(args) -> None:
+def cmd_snapshot(args: argparse.Namespace) -> None:
     transport, sftp = connect_sftp()
     try:
         snap = capture_snapshot(sftp)
@@ -314,7 +343,7 @@ def cmd_snapshot(args) -> None:
     save_snapshot(snap)
 
 
-def cmd_diff(args) -> None:
+def cmd_diff(args: argparse.Namespace) -> None:
     # Modo offline: dois snapshots em disco, sem se conectar ao SFTP.
     if args.from_snap and args.to_snap:
         old = load_snapshot(Path(args.from_snap))
@@ -322,8 +351,11 @@ def cmd_diff(args) -> None:
     else:
         base = latest_snapshot()
         if base is None:
-            log.error("Nenhum snapshot encontrado em %s. "
-                      "Rode 'python sftp_snapshot.py snapshot' primeiro.", SNAPSHOT_DIR)
+            log.error(
+                "Nenhum snapshot encontrado em %s. "
+                "Rode 'python sftp_snapshot.py snapshot' primeiro.",
+                SNAPSHOT_DIR,
+            )
             sys.exit(1)
         log.info("Baseline: %s", base.name)
         old = load_snapshot(base)
@@ -341,20 +373,23 @@ def cmd_diff(args) -> None:
 
     if args.json:
         Path(args.json).write_text(
-            json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+            json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         log.info("Diff em JSON: %s", args.json)
 
 
-def cmd_list(args) -> None:
+def cmd_list(args: argparse.Namespace) -> None:
     snaps = list_snapshots()
     if not snaps:
         print(f"Nenhum snapshot em {SNAPSHOT_DIR}")
         return
     for s in snaps:
         meta = load_snapshot(s)
-        print(f"{s.name}  {meta.get('captured_at')}  "
-              f"{meta.get('file_count')} arquivos  "
-              f"{format_size(meta.get('total_size', 0))}")
+        print(
+            f"{s.name}  {meta.get('captured_at')}  "
+            f"{meta.get('file_count')} arquivos  "
+            f"{format_size(meta.get('total_size', 0))}"
+        )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -363,16 +398,33 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("snapshot", help="grava fotografia do estado atual do SFTP")
 
-    pd = sub.add_parser("diff", help="compara SFTP atual (ou dois snapshots) e mostra o diff")
-    pd.add_argument("--save", action="store_true",
-                    help="grava o estado atual como novo snapshot (nova baseline)")
-    pd.add_argument("--from", dest="from_snap", metavar="SNAPSHOT.json",
-                    help="diff offline: snapshot de origem")
-    pd.add_argument("--to", dest="to_snap", metavar="SNAPSHOT.json",
-                    help="diff offline: snapshot de destino")
+    pd = sub.add_parser(
+        "diff", help="compara SFTP atual (ou dois snapshots) e mostra o diff"
+    )
+    pd.add_argument(
+        "--save",
+        action="store_true",
+        help="grava o estado atual como novo snapshot (nova baseline)",
+    )
+    pd.add_argument(
+        "--from",
+        dest="from_snap",
+        metavar="SNAPSHOT.json",
+        help="diff offline: snapshot de origem",
+    )
+    pd.add_argument(
+        "--to",
+        dest="to_snap",
+        metavar="SNAPSHOT.json",
+        help="diff offline: snapshot de destino",
+    )
     pd.add_argument("--json", metavar="ARQUIVO.json", help="também grava o diff em JSON")
-    pd.add_argument("--limit", type=int, default=None,
-                    help="limita itens listados por seção (padrão: todos)")
+    pd.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="limita itens listados por seção (padrão: todos)",
+    )
 
     sub.add_parser("list", help="lista snapshots gravados")
     return p

@@ -1,6 +1,5 @@
 import logging
-import re
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 from airflow.providers.microsoft.mssql.hooks.mssql import MsSqlHook
 
 
@@ -41,6 +40,7 @@ class ClientSQLServerDB:
                 )
                 return []
 
+            assert cursor.description is not None
             columns = [description[0] for description in cursor.description]
             records = [dict(zip(columns, row)) for row in rows]
 

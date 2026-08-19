@@ -1,39 +1,61 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-WITH base AS (
-    SELECT
-        ano,
-        trimestre,
-        cbic_lancamentos_total  AS total,
-        cbic_lancamentos_mcmv   AS mcmv,
-        cbic_lancamentos_demais AS demais,
-        dt_ingest,
-        dt_silver
-    FROM {{ ref('silver_cbic_lancamentos_vendas') }}
-),
+with
+    base as (
+        select
+            ano,
+            trimestre,
+            cbic_lancamentos_total as total,
+            cbic_lancamentos_mcmv as mcmv,
+            cbic_lancamentos_demais as demais,
+            dt_ingest,
+            dt_silver
+        from {{ ref("silver_cbic_lancamentos_vendas") }}
+    ),
 
-periodos AS (
-    SELECT 1 AS ordem, '4º TRI 2025' AS periodo, total, mcmv, demais, dt_ingest, dt_silver
-    FROM base WHERE ano = 2025 AND trimestre = 4
-    UNION ALL
-    SELECT 2, '3º TRI 2025', total, mcmv, demais, dt_ingest, dt_silver
-    FROM base WHERE ano = 2025 AND trimestre = 3
-    UNION ALL
-    SELECT 3, '4º TRI 2024', total, mcmv, demais, dt_ingest, dt_silver
-    FROM base WHERE ano = 2024 AND trimestre = 4
-    UNION ALL
-    SELECT 4, '12 MESES - DEZ/2025', SUM(total), SUM(mcmv), SUM(demais), MAX(dt_ingest), MAX(dt_silver)
-    FROM base WHERE ano = 2025
-    UNION ALL
-    SELECT 5, '12 MESES - DEZ/2024', SUM(total), SUM(mcmv), SUM(demais), MAX(dt_ingest), MAX(dt_silver)
-    FROM base WHERE ano = 2024
-)
+    periodos as (
+        select
+            1 as ordem,
+            '4º TRI 2025' as periodo,
+            total,
+            mcmv,
+            demais,
+            dt_ingest,
+            dt_silver
+        from base
+        where ano = 2025 and trimestre = 4
+        union all
+        select 2, '3º TRI 2025', total, mcmv, demais, dt_ingest, dt_silver
+        from base
+        where ano = 2025 and trimestre = 3
+        union all
+        select 3, '4º TRI 2024', total, mcmv, demais, dt_ingest, dt_silver
+        from base
+        where ano = 2024 and trimestre = 4
+        union all
+        select
+            4,
+            '12 MESES - DEZ/2025',
+            sum(total),
+            sum(mcmv),
+            sum(demais),
+            max(dt_ingest),
+            max(dt_silver)
+        from base
+        where ano = 2025
+        union all
+        select
+            5,
+            '12 MESES - DEZ/2024',
+            sum(total),
+            sum(mcmv),
+            sum(demais),
+            max(dt_ingest),
+            max(dt_silver)
+        from base
+        where ano = 2024
+    )
 
-SELECT
-    periodo,
-    total,
-    mcmv,
-    demais,
-    {{ add_metadata_timestamps('gold') }}
-FROM periodos
-ORDER BY ordem
+select periodo, total, mcmv, demais, {{ add_metadata_timestamps("gold") }}
+from periodos
+order by ordem

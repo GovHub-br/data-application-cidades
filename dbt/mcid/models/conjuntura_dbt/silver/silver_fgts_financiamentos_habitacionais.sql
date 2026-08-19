@@ -1,6 +1,6 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-SELECT
+select
     ano,
     mes,
     trimestre,
@@ -30,10 +30,10 @@ SELECT
     financiamento_pf_valor_fora_mcmv,
     -- Campos calculados
     financiamento_pf_valor_total_faixa_1
-        + financiamento_pf_valor_total_faixa_2
-        + COALESCE(financiamento_pf_valor_faixa_3_sem_fundo_social, 0)
-        + COALESCE(financiamento_pf_valor_faixa_3_fundo_social, 0)
-        + COALESCE(financiamento_pf_valor_total_classe_media, 0)
-        + COALESCE(financiamento_pf_valor_fora_mcmv, 0)            AS valor_total_calculado,
-    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
-FROM {{ source('conjuntura_bronze', 'bronze_fgts_financiamentos_habitacionais') }}
+    + financiamento_pf_valor_total_faixa_2
+    + coalesce(financiamento_pf_valor_faixa_3_sem_fundo_social, 0)
+    + coalesce(financiamento_pf_valor_faixa_3_fundo_social, 0)
+    + coalesce(financiamento_pf_valor_total_classe_media, 0)
+    + coalesce(financiamento_pf_valor_fora_mcmv, 0) as valor_total_calculado,
+    {{ add_metadata_timestamps("silver", has_ingest_date=false) }}
+from {{ source("conjuntura_bronze", "bronze_fgts_financiamentos_habitacionais") }}

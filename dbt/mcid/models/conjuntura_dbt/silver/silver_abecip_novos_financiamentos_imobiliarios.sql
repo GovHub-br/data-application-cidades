@@ -1,59 +1,74 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-WITH base AS (
-    SELECT
-        ano,
-        mes,
-        id_agente,
-        agente,
-        posicao_mes_rs_milhoes,
-        posicao_mes_unidades,
-        posicao_ano_rs_milhoes,
-        posicao_ano_unidades
-    FROM {{ source('conjuntura_bronze', 'bronze_abecip_novos_financiamentos_imobiliarios') }}
-),
+with
+    base as (
+        select
+            ano,
+            mes,
+            id_agente,
+            agente,
+            posicao_mes_rs_milhoes,
+            posicao_mes_unidades,
+            posicao_ano_rs_milhoes,
+            posicao_ano_unidades
+        from
+            {{
+                source(
+                    "conjuntura_bronze",
+                    "bronze_abecip_novos_financiamentos_imobiliarios",
+                )
+            }}
+    ),
 
-agrupado AS (
-    SELECT
-        ano,
-        mes,
-        CASE
-            WHEN agente = 'CAIXA'           THEN 'CEF (CAIXA)'
-            WHEN agente = 'ITAÚ UNIBANCO'   THEN 'ITAU'
-            WHEN agente = 'BRADESCO'        THEN 'BRADESCO'
-            WHEN agente = 'SANTANDER'       THEN 'SANTANDER'
-            WHEN agente = 'BRB'             THEN 'BRB'
-            WHEN agente = 'BANCO DO BRASIL' THEN 'BB (BANCO DO BRASIL)'
-            ELSE 'DEMAIS'
-        END                                             AS banco,
-        SUM(posicao_ano_rs_milhoes)                     AS valor_ano_milhoes,
-        SUM(posicao_ano_unidades)                       AS uh_ano
-    FROM base
-    GROUP BY ano, mes, banco
-),
+    agrupado as (
+        select
+            ano,
+            mes,
+            case
+                when agente = 'CAIXA'
+                then 'CEF (CAIXA)'
+                when agente = 'ITAÚ UNIBANCO'
+                then 'ITAU'
+                when agente = 'BRADESCO'
+                then 'BRADESCO'
+                when agente = 'SANTANDER'
+                then 'SANTANDER'
+                when agente = 'BRB'
+                then 'BRB'
+                when agente = 'BANCO DO BRASIL'
+                then 'BB (BANCO DO BRASIL)'
+                else 'DEMAIS'
+            end as banco,
+            sum(posicao_ano_rs_milhoes) as valor_ano_milhoes,
+            sum(posicao_ano_unidades) as uh_ano
+        from base
+        group by ano, mes, banco
+    ),
 
-total AS (
-    SELECT
-        ano,
-        mes,
-        'TOTAL'                                         AS banco,
-        SUM(posicao_ano_rs_milhoes)                     AS valor_ano_milhoes,
-        SUM(posicao_ano_unidades)                       AS uh_ano
-    FROM base
-    GROUP BY ano, mes
-),
+    total as (
+        select
+            ano,
+            mes,
+            'TOTAL' as banco,
+            sum(posicao_ano_rs_milhoes) as valor_ano_milhoes,
+            sum(posicao_ano_unidades) as uh_ano
+        from base
+        group by ano, mes
+    ),
 
-unificado AS (
-    SELECT ano, mes, banco, valor_ano_milhoes, uh_ano FROM agrupado
-    UNION ALL
-    SELECT ano, mes, banco, valor_ano_milhoes, uh_ano FROM total
-)
+    unificado as (
+        select ano, mes, banco, valor_ano_milhoes, uh_ano
+        from agrupado
+        union all
+        select ano, mes, banco, valor_ano_milhoes, uh_ano
+        from total
+    )
 
-SELECT
+select
     ano,
     mes,
     banco,
-    (valor_ano_milhoes / 1000.0)::numeric   AS valor_bi,
-    uh_ano                                  AS uh,
-    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
-FROM unificado
+    (valor_ano_milhoes / 1000.0)::numeric as valor_bi,
+    uh_ano as uh,
+    {{ add_metadata_timestamps("silver", has_ingest_date=false) }}
+from unificado

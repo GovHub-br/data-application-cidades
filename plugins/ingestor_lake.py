@@ -19,7 +19,7 @@ import io
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import pandas as pd
 
@@ -32,12 +32,13 @@ from cliente_minio import (
 
 def num_br(serie: "pd.Series[Any]") -> "pd.Series[Any]":
     """Número em formato pt-BR ('1.234,56' -> 1234.56); '-'/'' -> nulo."""
+    nulos: dict[str, Any] = {"": None, "-": None}
     limpa = (
         serie.astype("string")
         .str.strip()
         .str.replace(".", "", regex=False)
         .str.replace(",", ".", regex=False)
-        .replace({"": None, "-": None})
+        .replace(nulos)
     )
     return pd.to_numeric(limpa, errors="coerce")
 
@@ -98,11 +99,16 @@ class IngestorLake(ABC):
     # ------------------------- parse por FORMATO (fechado) --------------------
     def _para_dataframe(self, raw: bytes) -> pd.DataFrame:
         if self.formato == "csv":
-            return pd.read_csv(io.BytesIO(raw), **self._read_kwargs())
+            return cast(pd.DataFrame, pd.read_csv(io.BytesIO(raw), **self._read_kwargs()))
         if self.formato == "txt":
-            return pd.read_csv(io.BytesIO(raw), sep=self._sep, **self._read_kwargs())
+            return cast(
+                pd.DataFrame,
+                pd.read_csv(io.BytesIO(raw), sep=self._sep, **self._read_kwargs()),
+            )
         if self.formato == "xlsx":
-            return pd.read_excel(io.BytesIO(raw), **self._read_kwargs())
+            return cast(
+                pd.DataFrame, pd.read_excel(io.BytesIO(raw), **self._read_kwargs())
+            )
         if self.formato == "json":
             return self._json_para_dataframe(json.loads(raw.decode("utf-8")))
         raise ValueError(f"[ingestor_lake] Formato não suportado: {self.formato}")

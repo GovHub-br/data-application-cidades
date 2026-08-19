@@ -62,4 +62,3 @@ def lancamentos_ingest_dag() -> None:
 
 
 dag_instance = lancamentos_ingest_dag()
-

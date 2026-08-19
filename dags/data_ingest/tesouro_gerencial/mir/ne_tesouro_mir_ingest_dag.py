@@ -1,4 +1,5 @@
 from typing import Dict, Any, List
+import pandas as pd
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
@@ -95,7 +96,7 @@ with DAG(
         )
         return bool(result and result[0][0])
 
-    def _normalize_optional_columns(df):
+    def _normalize_optional_columns(df: pd.DataFrame) -> pd.DataFrame:
         for column in OPTIONAL_COLUMNS:
             if column not in df.columns:
                 df[column] = None
@@ -108,7 +109,7 @@ with DAG(
             schema=SCHEMA_NAME,
         )
 
-    def _insert_dataframe(df, db: ClientPostgresDB) -> int:
+    def _insert_dataframe(df: pd.DataFrame, db: ClientPostgresDB) -> int:
         df = _normalize_optional_columns(df)
         df = df[df["ne_ccor_ano_emissao"].astype(str).str.startswith("20")]
         records = df.to_dict(orient="records")

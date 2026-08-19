@@ -1,11 +1,7 @@
 {% macro test_verificacao_tipagem(model, nome_tabela, nome_coluna, tipo_esperado) %}
     with
         column_info as (
-            select
-                table_schema,
-                table_name,
-                column_name,
-                data_type
+            select table_schema, table_name, column_name, data_type
             from information_schema.columns
             where
                 table_schema || '.' || table_name = '{{ nome_tabela }}'
