@@ -11,9 +11,9 @@ from typing import Any
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DOCS_DIR = ROOT_DIR / "docs-pages"
-DBT_DIR = ROOT_DIR / "airflow_lappis" / "dags" / "dbt"
-DAGS_DIR = ROOT_DIR / "airflow_lappis" / "dags"
-PLUGINS_DIR = ROOT_DIR / "airflow_lappis" / "plugins"
+DBT_DIR = ROOT_DIR / "dbt"
+DAGS_DIR = ROOT_DIR / "dags"
+PLUGINS_DIR = ROOT_DIR / "plugins"
 SRC_DIR = DOCS_DIR / "src"
 DATA_DIR = SRC_DIR / "_data"
 ACERVO_DIR = SRC_DIR / "acervo"

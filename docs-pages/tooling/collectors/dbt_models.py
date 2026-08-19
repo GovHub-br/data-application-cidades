@@ -16,7 +16,7 @@ from typing import Any
 
 import yaml
 
-from tooling.common import DBT_DIR, log
+from tooling.common import DBT_DIR, ROOT_DIR, log
 
 RE_REF = re.compile(r"""ref\(\s*['"]([^'"]+)['"]\s*\)""")
 RE_SOURCE = re.compile(r"""source\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)""")
@@ -100,7 +100,7 @@ def coletar() -> dict[str, Any]:
                     "dominio": dominio,
                     "camada": camada,
                     "nome": nome,
-                    "caminho": str(sql.relative_to(DBT_DIR.parents[2])),
+                    "caminho": str(sql.relative_to(ROOT_DIR)),
                     "descricao": descricoes.get(nome, ""),
                     "testes": testes.get(nome, 0),
                     "linhas": conteudo.count("\n") + 1,
