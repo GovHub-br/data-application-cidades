@@ -76,7 +76,11 @@ This will:
 Start all services using Docker Compose:
 
 ```bash
-docker-compose up -d
+make up
+
+# Equivalente sem o Makefile. O --env-file e necessario: com o compose em
+# infra/, o Compose procuraria o .env nesse diretorio, e nao na raiz.
+docker compose --env-file .env -f infra/docker-compose.yml up -d
 ```
 
 Access the different components:
@@ -107,16 +111,20 @@ make test
 
 ```
 .
-├── airflow/
-│   ├── dags/
-│   └── plugins/
-├── dbt/
-│   └── models/
-├── jupyter/
-│   └── notebooks/
-├── superset/
-│   └── dashboards/
-├── docker-compose.yml
+├── dags/                 # DAGs do Airflow (data_ingest, dashboards, dbt/*_cosmos_dag.py)
+├── plugins/              # clientes e plugins do Airflow
+├── helpers/              # funcoes auxiliares
+├── templates/            # templates (ex: consultas SIAPE)
+├── dbt/                  # projeto dbt (mcid)
+│   └── mcid/
+├── scripts/              # scripts avulsos (ex: ingestao SFTP)
+├── docs-pages/           # site de documentacao publicado no GitHub Pages
+├── tests/
+├── infra/                # execucao local (compose, Dockerfiles, airflow.cfg, env)
+│   ├── airflow/
+│   ├── docker/
+│   ├── env/
+│   └── docker-compose.yml
 ├── Makefile
 └── README.md
 ```
