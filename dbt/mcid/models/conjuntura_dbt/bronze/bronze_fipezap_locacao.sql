@@ -1,9 +1,13 @@
 {{ config(materialized="table") }}
 
-SELECT
-    CAST(data_referencia                                AS DATE)      AS data_referencia,
-    CAST(imoveis_residenciais_locacao_var_mensal_total  AS NUMERIC)   AS imoveis_residenciais_locacao_var_mensal_total,
-    CAST(imoveis_residenciais_locacao_var_ano_total     AS NUMERIC)   AS imoveis_residenciais_locacao_var_ano_total,
-    CAST(fonte                                          AS VARCHAR)   AS fonte,
-    CAST(dt_ingest                                      AS TIMESTAMP) AS dt_ingest
-FROM {{ source('fipe', 'indice_locacao') }}
+select
+    cast(data_referencia as date) as data_referencia,
+    cast(
+        imoveis_residenciais_locacao_var_mensal_total as numeric
+    ) as imoveis_residenciais_locacao_var_mensal_total,
+    cast(
+        imoveis_residenciais_locacao_var_ano_total as numeric
+    ) as imoveis_residenciais_locacao_var_ano_total,
+    cast(fonte as varchar) as fonte,
+    cast(dt_ingest as timestamp) as dt_ingest
+from {{ source("fipe", "indice_locacao") }}

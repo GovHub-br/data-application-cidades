@@ -1,6 +1,6 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-SELECT
+select
     trimestre,
     ano,
     mes,
@@ -18,23 +18,59 @@ SELECT
     sbpe_aq_novos_milhoes,
     sbpe_aq_usados_milhoes,
     -- Calculados
-    ROUND(
-        ((sbpe_const::numeric / NULLIF(LAG(sbpe_const) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-    ) AS sbpe_const_var_mes,
-    ROUND(
-        ((sbpe_aquisicao::numeric / NULLIF(LAG(sbpe_aquisicao) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-    ) AS sbpe_aq_var_mes,
-    ROUND(
-        ((sbpe_total::numeric / NULLIF(LAG(sbpe_total) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-    ) AS sbpe_total_var_mes,
-    ROUND(
-        ((sbpe_const::numeric / NULLIF(LAG(sbpe_const, 12) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-    ) AS sbpe_const_var_12m,
-    ROUND(
-        ((sbpe_aquisicao::numeric / NULLIF(LAG(sbpe_aquisicao, 12) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-    ) AS sbpe_aq_var_12m,
-    ROUND(
-        ((sbpe_total::numeric / NULLIF(LAG(sbpe_total, 12) OVER (ORDER BY ano, mes), 0)) - 1) * 100, 1
-    ) AS sbpe_total_var_12m,
-    {{ add_metadata_timestamps('silver', has_ingest_date=false) }}
-FROM {{ source('conjuntura_bronze', 'bronze_abecip_sbpe_financiamentos_habitacionais') }}
+    round(
+        ((sbpe_const::numeric / nullif(lag(sbpe_const) over (order by ano, mes), 0)) - 1)
+        * 100,
+        1
+    ) as sbpe_const_var_mes,
+    round(
+        (
+            (
+                sbpe_aquisicao::numeric
+                / nullif(lag(sbpe_aquisicao) over (order by ano, mes), 0)
+            )
+            - 1
+        )
+        * 100,
+        1
+    ) as sbpe_aq_var_mes,
+    round(
+        ((sbpe_total::numeric / nullif(lag(sbpe_total) over (order by ano, mes), 0)) - 1)
+        * 100,
+        1
+    ) as sbpe_total_var_mes,
+    round(
+        (
+            (
+                sbpe_const::numeric
+                / nullif(lag(sbpe_const, 12) over (order by ano, mes), 0)
+            )
+            - 1
+        )
+        * 100,
+        1
+    ) as sbpe_const_var_12m,
+    round(
+        (
+            (
+                sbpe_aquisicao::numeric
+                / nullif(lag(sbpe_aquisicao, 12) over (order by ano, mes), 0)
+            )
+            - 1
+        )
+        * 100,
+        1
+    ) as sbpe_aq_var_12m,
+    round(
+        (
+            (
+                sbpe_total::numeric
+                / nullif(lag(sbpe_total, 12) over (order by ano, mes), 0)
+            )
+            - 1
+        )
+        * 100,
+        1
+    ) as sbpe_total_var_12m,
+    {{ add_metadata_timestamps("silver", has_ingest_date=false) }}
+from {{ source("conjuntura_bronze", "bronze_abecip_sbpe_financiamentos_habitacionais") }}

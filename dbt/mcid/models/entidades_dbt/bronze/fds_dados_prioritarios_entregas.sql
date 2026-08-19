@@ -5,7 +5,6 @@
 -- Esta tabela contém TODAS as linhas (FAR, FDS, etc). O filtro por programa
 -- será feito na silver via JOIN com cadastro_pj FDS.
 -- Campos-chave: qt_uh_entregues, dt_entrega (série temporal de entregas)
-
 with
     entregas_raw as (
         select
@@ -16,7 +15,7 @@ with
             nullif(trim(agente_financeiro), '') as agente_financeiro,
 
             -- Entregas
-            {{ parse_int('qt_uh_entregues') }} as qt_uh_entregues,
+            {{ parse_int("qt_uh_entregues") }} as qt_uh_entregues,
 
             -- Datas
             {{ target.schema }}.parse_date_br(dt_entrega) as dt_entrega,

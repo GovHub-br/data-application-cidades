@@ -1,12 +1,9 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
 -- Gold do conjuntura contínuo: PNAD-C — rendimento médio real da construção x
 -- total (R$), trimestre móvel. Página 3, seção 4. Fonte: IBGE via SIDRA
 -- (automatizado). Obs.: série deflacionada — o IBGE re-baseia a cada trimestre.
-
-with base as (
-    select * from {{ ref('silver_continuo_ibge_pnad_construcao_rendimento') }}
-)
+with base as (select * from {{ ref("silver_continuo_ibge_pnad_construcao_rendimento") }})
 
 select
     periodo,

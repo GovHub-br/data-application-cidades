@@ -1,9 +1,8 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
 -- Gold do conjuntura contínuo: Novos Financiamentos Imobiliários por banco
 -- (SBPE — Caixa, Bradesco, Itaú, Santander, BB), acumulado no ano.
 -- Página 3, seção 6. Dado MANUAL (boletim.xlsx / manual_conjuntura.dados_mensais).
-
 select
     periodo,
     ano,
@@ -21,8 +20,14 @@ select
     abecip_sbpe_fin_milhoes_acum_santander,
     abecip_sbpe_fin_milhoes_acum_bb,
     abecip_sbpe_fin_milhoes_acum_total
-from {{ ref('silver_continuo_manual_mensais') }}
-where coalesce(abecip_sbpe_fin_uh_acum_caixa, abecip_sbpe_fin_uh_acum_bradesco,
-               abecip_sbpe_fin_uh_acum_itau, abecip_sbpe_fin_uh_acum_santander,
-               abecip_sbpe_fin_uh_acum_bb) is not null
+from {{ ref("silver_continuo_manual_mensais") }}
+where
+    coalesce(
+        abecip_sbpe_fin_uh_acum_caixa,
+        abecip_sbpe_fin_uh_acum_bradesco,
+        abecip_sbpe_fin_uh_acum_itau,
+        abecip_sbpe_fin_uh_acum_santander,
+        abecip_sbpe_fin_uh_acum_bb
+    )
+    is not null
 order by ano desc, mes desc

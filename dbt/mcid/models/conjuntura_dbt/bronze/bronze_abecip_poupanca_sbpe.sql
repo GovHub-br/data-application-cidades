@@ -1,13 +1,13 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-SELECT
-    CAST(data_referencia        AS DATE)      AS data_referencia,
-    CAST(deposito               AS NUMERIC)   AS deposito,
-    CAST(retirada               AS NUMERIC)   AS retirada,
-    CAST(captacao_liquida_valor AS NUMERIC)   AS captacao_liquida_valor,
-    CAST(captacao_liquida_pct   AS NUMERIC)   AS captacao_liquida_pct,
-    CAST(rendimento             AS NUMERIC)   AS rendimento,
-    CAST(saldo                  AS NUMERIC)   AS saldo,
-    CAST(fonte                  AS VARCHAR)   AS fonte,
-    CAST(dt_ingest              AS TIMESTAMP) AS dt_ingest
-FROM {{ source('abecip', 'poupanca_sbpe_mensal') }}
+select
+    cast(data_referencia as date) as data_referencia,
+    cast(deposito as numeric) as deposito,
+    cast(retirada as numeric) as retirada,
+    cast(captacao_liquida_valor as numeric) as captacao_liquida_valor,
+    cast(captacao_liquida_pct as numeric) as captacao_liquida_pct,
+    cast(rendimento as numeric) as rendimento,
+    cast(saldo as numeric) as saldo,
+    cast(fonte as varchar) as fonte,
+    cast(dt_ingest as timestamp) as dt_ingest
+from {{ source("abecip", "poupanca_sbpe_mensal") }}
