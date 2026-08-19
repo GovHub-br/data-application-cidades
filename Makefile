@@ -4,7 +4,7 @@ COMPOSE_FILE := infra/docker-compose.yml
 ENV_FILE := .env
 COMPOSE := docker compose --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
 
-export PYTHONPATH := $(CURDIR)/dags:$(CURDIR)/plugins:$(CURDIR)/helpers
+export PYTHONPATH := $(CURDIR):$(CURDIR)/dags:$(CURDIR)/plugins:$(CURDIR)/helpers
 export MYPYPATH := $(CURDIR):$(CURDIR)/dags:$(CURDIR)/helpers:$(CURDIR)/plugins
 
 setup:

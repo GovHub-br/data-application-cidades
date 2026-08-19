@@ -118,6 +118,7 @@ disable_error_code = ["arg-type", "attr-defined"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+pythonpath = [".", "dags", "plugins", "helpers"]
 
 [tool.sqlfmt]
 line_length = 90
