@@ -161,6 +161,9 @@ class ClienteAbecip(ClienteBase):
         if content is None:
             return None
 
+        # Guarda os bytes brutos do XLSX p/ a camada raw do data lake (formato nativo).
+        self.ultimo_conteudo_xlsx = content
+
         try:
             df_raw = pd.read_excel(
                 io.BytesIO(content),

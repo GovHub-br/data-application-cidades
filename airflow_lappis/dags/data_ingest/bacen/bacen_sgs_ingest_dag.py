@@ -6,6 +6,9 @@ from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_bacen import ClienteBacen
 from cliente_postgres import ClientPostgresDB
+from cliente_minio import upload_raw_json
+from ingestor_lake import registros_para_staging_parquet
+import pandas as pd
 
 
 
@@ -48,6 +51,9 @@ def bacen_sgs_ingest_dag() -> None:
             BACEN_SERIES_RAW = BACEN_SERIES_RAW[0] if len(BACEN_SERIES_RAW) > 0 else {}
         CONFIGURACOES = [{"tipo": k, "codigo": v} for k, v in BACEN_SERIES_RAW.items()]
 
+        todas_series: list[dict] = []
+        raw_por_serie: dict = {}
+
         for config in CONFIGURACOES:
             tipo = config["tipo"]
             codigo = config["codigo"]
@@ -59,6 +65,9 @@ def bacen_sgs_ingest_dag() -> None:
             if not dados:
                 logging.warning(f"Nenhum dado retornado da API BACEN para tipo={tipo}")
                 continue
+
+            # Raw nativo (API -> json): guarda o payload cru por série.
+            raw_por_serie[tipo] = dados
 
             registros = [
                 {
@@ -75,6 +84,7 @@ def bacen_sgs_ingest_dag() -> None:
                 f"bacen.financiamentos_imobiliarios (tipo={tipo})"
             )
 
+            # Postgres: upsert por (tipo, data) -> preserva histórico (trimestral).
             db.insert_data(
                 registros,
                 "financiamentos_imobiliarios",
@@ -83,7 +93,21 @@ def bacen_sgs_ingest_dag() -> None:
                 schema="bacen",
             )
 
+            todas_series.extend(registros)
             logging.info(f"Ingestão de tipo={tipo} concluída com sucesso.")
+
+        # Lake (full-refresh): raw = payload cru da API (json); parquet tipado.
+        if todas_series:
+            upload_raw_json("bacen", "financiamentos_imobiliarios", raw_por_serie)
+            registros_para_staging_parquet(
+                "bacen",
+                "financiamentos_imobiliarios",
+                todas_series,
+                typers={
+                    "data": lambda s: pd.to_datetime(s, dayfirst=True, errors="coerce"),
+                    "valor": lambda s: pd.to_numeric(s, errors="coerce"),
+                },
+            )
 
     fetch_and_store_all_series()
 

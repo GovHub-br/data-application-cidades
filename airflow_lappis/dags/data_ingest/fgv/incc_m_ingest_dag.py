@@ -5,6 +5,9 @@ from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_fgv import ClienteSinduscon
 from cliente_postgres import ClientPostgresDB
+from cliente_minio import upload_raw_bytes, upload_fallback_json
+from ingestor_lake import registros_para_staging_parquet
+import pandas as pd
 
 
 @dag(
@@ -38,6 +41,7 @@ def incc_m_ingest_dag() -> None:
         if registros:
             logging.info(f"Inserindo {len(registros)} registros em fgv.{tabela}")
 
+            # Postgres: upsert por mes -> preserva histórico (trimestral).
             db.insert_data(
                 data=registros,
                 table_name=tabela,
@@ -45,6 +49,27 @@ def incc_m_ingest_dag() -> None:
                 primary_key=["mes"],
                 schema="fgv",
             )
+
+            # Raw nativo (XLSX) + fallback json + parquet tipado (full-refresh).
+            # A série histórica traz '...' nas variações antigas -> to_numeric
+            # coage p/ NaN e evita coluna object mista no parquet.
+            raw_xlsx = getattr(api, "ultimo_conteudo_xlsx", None)
+            if raw_xlsx:
+                upload_raw_bytes("fgv", tabela, raw_xlsx, ext="xlsx")
+            upload_fallback_json("fgv", tabela, registros)
+            registros_para_staging_parquet(
+                "fgv",
+                tabela,
+                registros,
+                typers={
+                    "mes": lambda s: pd.to_datetime(s, errors="coerce"),
+                    "indice": lambda s: pd.to_numeric(s, errors="coerce"),
+                    "var_mes": lambda s: pd.to_numeric(s, errors="coerce"),
+                    "var_ano": lambda s: pd.to_numeric(s, errors="coerce"),
+                    "var_12_meses": lambda s: pd.to_numeric(s, errors="coerce"),
+                },
+            )
+
             logging.info(f"Ingestão de {tabela} concluída com sucesso.")
         else:
             logging.warning("Nenhum registro extraído para INCC-M da FGV.")

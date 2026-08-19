@@ -29,10 +29,14 @@ class ClienteSinduscon:
     """
     Cliente para extração de dados INCC-M da FGV no site da Sinduscon.
 
-    Fonte: https://sindusconpr.com.br/download/10984/1364
+    Fonte (série histórica XLSX, link estável que redireciona p/ o arquivo atual):
+    https://sindusconpr.com.br/economia/indices-economicos/incc-m-fgv/9547-serie-historica-incc-m-fgv/
     """
 
-    URL_INCC = "https://sindusconpr.com.br/download/10984/1364"
+    URL_INCC = (
+        "https://sindusconpr.com.br/economia/indices-economicos/"
+        "incc-m-fgv/9547-serie-historica-incc-m-fgv/"
+    )
 
     def __init__(self) -> None:
         logging.info("[cliente_fgv.py] Initialized ClienteFGV")
@@ -60,6 +64,9 @@ class ClienteSinduscon:
         except requests.exceptions.RequestException as e:
             logging.error(f"[cliente_fgv.py] Erro ao baixar o arquivo da FGV: {e}")
             return None
+
+        # Guarda os bytes brutos do XLSX p/ a camada raw do data lake (formato nativo).
+        self.ultimo_conteudo_xlsx = response.content
 
         try:
             # Lendo o Excel em memória
@@ -653,6 +660,8 @@ class ClienteFGVDados:
         )
 
         if res_csv.status_code == 200 and is_valid_type:
+            # Guarda os bytes brutos do CSV p/ a camada raw do data lake (nativo).
+            self.ultimo_conteudo_csv = res_csv.content
             try:
                 df = pd.read_csv(
                     io.BytesIO(res_csv.content),

@@ -4,6 +4,8 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from cliente_fgv import ClienteFGVDados
 from cliente_postgres import ClientPostgresDB
+from cliente_minio import upload_raw_bytes, upload_fallback_json
+from ingestor_lake import registros_para_staging_parquet
 from postgres_helpers import get_postgres_conn
 from schedule_loader import get_dynamic_schedule
 
@@ -45,6 +47,7 @@ def icst_ingest_dag() -> None:
         if registros:
             logging.info(f"Inserindo {len(registros)} registros em fgv.{tabela}")
 
+            # Postgres: upsert por mes -> preserva histórico (trimestral).
             db.insert_data(
                 data=registros,
                 table_name=tabela,
@@ -52,6 +55,15 @@ def icst_ingest_dag() -> None:
                 primary_key=["mes"],
                 schema="fgv",
             )
+
+            # Raw nativo (CSV) + fallback json + parquet tipado (full-refresh).
+            raw_csv = getattr(api, "ultimo_conteudo_csv", None)
+            if raw_csv:
+                upload_raw_bytes(
+                    "fgv", tabela, raw_csv, ext="csv", content_type="text/csv"
+                )
+            upload_fallback_json("fgv", tabela, registros)
+            registros_para_staging_parquet("fgv", tabela, registros)
 
             logging.info(f"Ingestão da {tabela} concluída com sucesso.")
         else:
