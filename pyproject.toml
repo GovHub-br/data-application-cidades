@@ -22,6 +22,7 @@ sqlalchemy = "*"
 zeep = "*"
 imap-tools = "*"
 astronomer-cosmos = "*"
+pyarrow = "*"
 boto3 = "*"
 
 [tool.poetry.group.dev.dependencies]

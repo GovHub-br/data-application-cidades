@@ -6,6 +6,8 @@ from airflow.exceptions import AirflowException, AirflowFailException, AirflowSk
 
 from cliente_fipe import ClienteFipeZap
 from cliente_postgres import ClientPostgresDB
+from cliente_minio import upload_raw_bytes, upload_fallback_json
+from ingestor_lake import registros_para_staging_parquet
 from postgres_helpers import get_postgres_conn
 from schedule_loader import get_dynamic_schedule
 
@@ -65,6 +67,7 @@ def fipezap_trimestral_ingest_dag() -> None:
                 len(registros),
             )
 
+            # Postgres: upsert por data_referencia -> preserva histórico (trimestral).
             db.insert_data(
                 registros,
                 table_name="indice_locacao",
@@ -72,6 +75,13 @@ def fipezap_trimestral_ingest_dag() -> None:
                 conflict_fields=["data_referencia"],
                 primary_key=["data_referencia"],
             )
+
+            # Raw nativo (XLSX) + fallback json + parquet tipado (full-refresh).
+            raw_xlsx = getattr(cliente, "ultimo_conteudo_xlsx", None)
+            if raw_xlsx:
+                upload_raw_bytes("fipe", "indice_locacao", raw_xlsx, ext="xlsx")
+            upload_fallback_json("fipe", "indice_locacao", registros)
+            registros_para_staging_parquet("fipe", "indice_locacao", registros)
 
             logger.info(
                 "[fipezap_trimestral_dag] Ingestão trimestral concluída com sucesso"

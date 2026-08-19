@@ -5,6 +5,8 @@ from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_mrv import ClienteMRV
 from cliente_postgres import ClientPostgresDB
+from cliente_minio import upload_raw_json
+from ingestor_lake import registros_para_staging_parquet
 
 
 @dag(
@@ -39,6 +41,7 @@ def lancamentos_ingest_dag() -> None:
         if registros:
             logging.info(f"Inserindo {len(registros)} registros em mrv.{tabela}")
 
+            # Postgres: upsert por periodo -> preserva histórico (trimestral).
             db.insert_data(
                 data=registros,
                 table_name=tabela,
@@ -46,6 +49,11 @@ def lancamentos_ingest_dag() -> None:
                 primary_key=["periodo"],
                 schema="mrv",
             )
+
+            # Lake (full-refresh) para o conjuntura contínuo: raw + parquet tipado.
+            upload_raw_json("mrv", tabela, registros)
+            registros_para_staging_parquet("mrv", tabela, registros)
+
             logging.info(f"Ingestão de {tabela} concluída com sucesso.")
         else:
             logging.warning("Nenhum registro extraído para Lançamentos da MRV.")

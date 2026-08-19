@@ -1,0 +1,134 @@
+version: 2
+
+# Gold do conjuntura contínuo: 1 modelo por gráfico/card do boletim (regra
+# aprovada pelo usuário). Organizado pelas páginas do boletim (ref.: 4T2025).
+# Fonte de cada gold: [AUTOMATIZADO] (API/parquet) ou [MANUAL] (boletim.xlsx,
+# manual_conjuntura.dados_trimestrais/dados_mensais — fonte mais confiável).
+
+models:
+  # PÁGINA 1 — PIB DA CONSTRUÇÃO CIVIL
+  - name: gold_continuo_pib_construcao_civil
+    description: >
+      [AUTOMATIZADO] PIB da construção civil em % de crescimento, direto da
+      API do IBGE (trim/trim anterior, trim vs mesmo trim ano anterior,
+      acum. ano, acum. 4 trimestres), por trimestre. Apoio/comparação à
+      gold_continuo_pib_construcao_civil_pct (fonte manual, oficial do
+      boletim) — a coluna trim/trim costuma divergir um pouco por revisão
+      de dessazonalização do IBGE.
+  - name: gold_continuo_pib_construcao_civil_pct
+    description: >
+      [MANUAL] PIB da construção civil em % de crescimento (trim/trim
+      anterior, acum. ano, acum. 4 trimestres) — o gráfico da página 1.
+
+  # PÁGINA 2 — BALANÇO DAS EMPRESAS + FINANCIAMENTOS IMOBILIÁRIOS
+  - name: gold_continuo_balancos_empresas
+    description: >
+      [MANUAL] Lançamentos e vendas por construtora (MRV, Cury, Tenda,
+      Direcional, Pacaembu, Plano&Plano), com as variações % que o boletim
+      mostra (trim. anterior, mesmo trim. ano anterior, acumulado mesmo
+      período ano anterior). Fonte: boletim.xlsx / dados_trimestrais (as
+      variações por empresa já vêm calculadas na planilha oficial) —
+      substituiu manual_conjuntura.empresas_balanco_lancamentos_vendas, que
+      só tinha os valores absolutos. Validado vs boletim 3T25 (MRV
+      lançamentos): -31,8%≈-32%, -19,3%≈-19%, +20,4%≈+20%.
+  - name: gold_continuo_balancos_empresas_totais
+    description: >
+      [MANUAL] Lançamentos e vendas TOTAIS (soma de todas as empresas), com
+      variações trim. anterior / mesmo trim. ano anterior / acumulada.
+  - name: gold_continuo_financiamentos_imobiliarios_pf_pj
+    description: >
+      [AUTOMATIZADO] Concessões (R$ mi), taxa de juros (a.a.) e inadimplência
+      (%) de financiamentos imobiliários PF e PJ. Fonte: BACEN SGS.
+  - name: gold_continuo_financiamentos_habitacionais
+    description: >
+      [MANUAL] Financiamentos Habitacionais (UH) — FGTS-PJ e SBPE Construção,
+      trimestral e acumulado 12 meses.
+
+  # PÁGINA 3 — EMPREGOS · PNAD · PRODUÇÃO FÍSICA E VENDAS · NOVOS FINANCIAMENTOS
+  - name: gold_continuo_empregos_caged
+    description: >
+      [MANUAL] Saldo e estoque de empregos na construção civil x total da
+      economia (CAGED). silver_continuo_novo_caged (API, recorte "edifícios")
+      fica como apoio/validação.
+  - name: gold_continuo_pnad_ocupados
+    description: >
+      [AUTOMATIZADO] Pessoas ocupadas na construção x total (mil pessoas),
+      trimestre móvel. Fonte: IBGE/SIDRA. Bate exato com o boletim.
+  - name: gold_continuo_pnad_rendimento
+    description: >
+      [AUTOMATIZADO] Rendimento médio real da construção x total (R$),
+      trimestre móvel. Fonte: IBGE/SIDRA. Obs.: série deflacionada, re-base
+      trimestral do IBGE pode diferir de boletins passados.
+  - name: gold_continuo_producao_fisica
+    description: >
+      [AUTOMATIZADO] Produção Física (PIM-PF, agregado 8886) e Vendas de
+      material de construção (PMC, agregado 8757/categoria 56734) —
+      variações dessazonalizadas mês, acum. ano e 12 meses.
+  - name: gold_continuo_novos_financiamentos_banco
+    description: >
+      [MANUAL] Novos Financiamentos Imobiliários SBPE por banco (Caixa,
+      Bradesco, Itaú, Santander, BB), acumulado no ano.
+
+  # PÁGINA 4 — CRÉDITO/PIB · FGTS/FS-PF POR RENDA · UH POR CONDIÇÃO · FUNDING
+  - name: gold_continuo_credito_pib
+    description: "[AUTOMATIZADO] Crédito Imobiliário / PIB (%), série mensal. Fonte: BCB Olinda."
+  - name: gold_continuo_financiamento_pf_faixa
+    description: >
+      [MANUAL] Financiamento PF por Faixa de Renda (UH e R$ mi) — Faixa 1/2/3
+      (com e sem Fundo Social), Classe Média, Fora do MCMV. Usado nas
+      páginas 4 e 5.
+  - name: gold_continuo_uh_condicao_uso
+    description: >
+      [MANUAL] N° de UH por condição de uso — SBPE Aquisição (novos x
+      usados). Obs.: recorte FGTS-PF por condição de uso não está disponível
+      na planilha oficial.
+  - name: gold_continuo_funding
+    description: >
+      [MANUAL] Estrutura de Funding — estoques de SBPE, FGTS, LCI, LCA, CRI,
+      CRA, LIG (R$ bi).
+
+  # PÁGINA 5 — CANAL FGTS · SALDO POUPANÇA
+  - name: gold_continuo_canal_fgts
+    description: "[MANUAL] Canal FGTS Pró-Cotista, por faixa de renda (UH e R$ mi)."
+  - name: gold_continuo_saldo_poupanca
+    description: >
+      [AUTOMATIZADO] Poupança SBPE — captação líquida e saldo. Fonte: ABECIP.
+      Bate exato com o boletim.
+
+  # PÁGINA 6 — OGU · PREÇOS (SINAPI, INCC, TICKET MÉDIO, FGTS VALOR MÉDIO)
+  - name: gold_continuo_ogu
+    description: >
+      [AUTOMATIZADO] OGU — dotação, empenho, pagamento e restos a pagar do
+      MCID (SIAFI/Tesouro Gerencial), filtrado pelas 7 ações do gráfico do
+      boletim. Empenho/Pagamento batem ~2% vs boletim 4T25; Dotação fica
+      abaixo porque a ação 00XF (MCMV/FGTS) não tem dotação orçamentária no
+      SIAFI (operação de crédito reembolsável fora do OGU tradicional).
+  - name: gold_continuo_sinapi
+    description: >
+      [AUTOMATIZADO] SINAPI — custo médio m², variações. Fonte: IBGE. Bate
+      exato com o boletim.
+  - name: gold_continuo_incc_m
+    description: "[AUTOMATIZADO] INCC-M — número índice e variações mensais. Fonte: FGV."
+  - name: gold_continuo_ticket_medio
+    description: >
+      [MANUAL] Ticket médio de lançamentos (MRV, Direcional, Tenda, Cury) vs
+      INCC trimestral — número índice e variações, base 4T2020.
+  - name: gold_continuo_fgts_valor_medio
+    description: >
+      [MANUAL] FGTS — valor médio dos imóveis financiados (total e Faixa 1),
+      variações. Bate exato com o boletim.
+
+  # PÁGINA 7 — ÍNDICES DA CONSTRUÇÃO
+  - name: gold_continuo_indice_imob
+    description: >
+      [MANUAL] Índice IMOB — variações mensais. silver_continuo_infomoney_imob
+      (Alpha Vantage) fica como apoio/nível bruto.
+  - name: gold_continuo_fipezap
+    description: >
+      [MANUAL] Índice FipeZap de locação — número índice e variações mensais.
+      silver_continuo_fipezap_locacao (FIPE) fica como apoio.
+  - name: gold_continuo_icst
+    description: >
+      [MANUAL] Índice ICST (confiança na construção, série original sem
+      ajuste sazonal) — variações mensais. silver_continuo_fgv_icst fica
+      como apoio.
