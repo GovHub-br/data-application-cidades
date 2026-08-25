@@ -8,9 +8,9 @@
 -- lexicográfica de "MM/YYYY" (agrupa por mês antes de ano).
 
 select
-    to_date(mes, 'MM/YYYY')                                        as data_referencia,
-    mes                                                             as periodo,
-    replace(icst_com_ajuste_sazonal, ',', '.')::numeric             as icst_com_ajuste_sazonal,
-    replace(icst_sem_ajuste_sazonal, ',', '.')::numeric             as icst_sem_ajuste_sazonal,
-    dt_ingest
-from read_parquet('s3://data-lake-mcid/staging/fgv/icst.parquet')
+    strptime(r['mes']::text, '%m/%Y')::date                             as data_referencia,
+    r['mes']::text                                                       as periodo,
+    replace(r['icst_com_ajuste_sazonal']::text, ',', '.')::numeric       as icst_com_ajuste_sazonal,
+    replace(r['icst_sem_ajuste_sazonal']::text, ',', '.')::numeric       as icst_sem_ajuste_sazonal,
+    r['dt_ingest']::text as dt_ingest
+from read_parquet('s3://data-lake-mcid/staging/fgv/icst.parquet') as r
