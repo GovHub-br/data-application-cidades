@@ -19,9 +19,15 @@ x-airflow-common: &airflow-common
     - ../templates:${AIRFLOW_HOME}/templates/
     - ../dbt:${AIRFLOW_HOME}/dbt/
     - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
+    # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag)
+    - ../scripts:${AIRFLOW_HOME}/scripts/
+    # Temporários dos scripts (arquivos de GBs): NÃO usar /tmp (tmpfs em RAM)
+    - lake_tmp:/opt/airflow/lake_tmp
   depends_on: &airflow-common-depends-on
     postgres:
       condition: service_healthy
+    lake-tmp-init:
+      condition: service_completed_successfully
 
 # Common environment variables for Airflow
 x-airflow-environment: &airflow-common-env
@@ -40,7 +46,13 @@ x-airflow-environment: &airflow-common-env
   AIRFLOW__WEBSERVER__NAVBAR_COLOR: '#98DFFF'
   AIRFLOW__WEBSERVER__RELOAD_ON_PLUGIN_CHANGE: 'true'
   AIRFLOW__WEBSERVER__SECRET_KEY: '42'
-  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:$PYTHONPATH"
+  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts:$PYTHONPATH"
+  # Temporários dos scripts do data lake — sobrescreve os caminhos de host do .env
+  LAKE_TMPDIR: /opt/airflow/lake_tmp
+  MASKING_TMPDIR: /opt/airflow/lake_tmp
+  # Desliga os artefatos locais dos scripts (log em arquivo, preview): o bind-mount de
+  # scripts/ não é gravável pelo usuário do container. Logs vão p/ stderr (UI).
+  LAKE_LOCAL_ARTIFACTS: "0"
   _AIRFLOW_DB_MIGRATE: 'true'
   _AIRFLOW_WWW_USER_CREATE: 'true'
   _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
@@ -53,6 +65,22 @@ x-airflow-environment: &airflow-common-env
   # USAR ESSA ENV NOS CÓDIGOS PARA NÃO HAVER CONFLITOS
   
 services:
+  # Ajusta o dono do volume lake_tmp (criado root:root, sem escrita p/ o usuário do
+  # container) para o UID do airflow. Sem isso os scripts do data lake falham ao gravar
+  # temporários (PermissionError). Roda uma vez e sai antes do airflow subir.
+  lake-tmp-init:
+    build:
+      context: ..
+      dockerfile: infra/docker/airflow/Dockerfile
+    user: "0:0"
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - "mkdir -p /opt/airflow/lake_tmp && chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/lake_tmp && chmod -R 775 /opt/airflow/lake_tmp"
+    volumes:
+      - lake_tmp:/opt/airflow/lake_tmp
+    restart: "no"
+
   # Airflow Services
   airflow:
     <<: *airflow-common
@@ -140,3 +168,4 @@ services:
 volumes:
   postgres-db:
   airflow_logs:
+  lake_tmp:

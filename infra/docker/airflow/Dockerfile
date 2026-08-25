@@ -12,6 +12,10 @@ RUN apt-get update \
          unzip \
          git \
          curl \
+         # mdbtools: binário do sistema (não é lib Python) que o raw_para_staging.py usa
+         # para ler os .mdb/.accdb do lake — sem ele a conversão dessa família falha em
+         # bloco no mdb_disponivel().
+         mdbtools \
   && sed -i 's,^\(MinProtocol[ ]*=\).*,\1'TLSv1.0',g' /etc/ssl/openssl.cnf \
   && sed -i 's,^\(CipherString[ ]*=\).*,\1'DEFAULT@SECLEVEL=1',g' /etc/ssl/openssl.cnf \
   && curl -O http://acraiz.icpbrasil.gov.br/credenciadas/CertificadosAC-ICP-Brasil/ACcompactado.zip \
