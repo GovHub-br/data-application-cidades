@@ -1,8 +1,16 @@
 {{ config(materialized='table') }}
 
+-- Período dinâmico — ver comentário em gold_cbic_lancamentos.sql. As
+-- colunas de percentual antes tinham o trimestre no próprio nome
+-- (perc_mcmv_4t25/perc_mcmv_3t25/perc_mcmv_4t24), o que só fazia sentido
+-- travado no 4T2025 — renomeadas para atual/tri_anterior/ano_anterior, e
+-- o trimestre de cada uma vem explícito em periodo_atual/periodo_tri_anterior/
+-- periodo_ano_anterior.
+
 WITH periodos AS (
     SELECT
         ano, trimestre,
+        ano * 4 + trimestre AS periodo_idx,
         cbic_lancamentos_regiao_norte               AS total_norte,
         cbic_lancamentos_mcmv_regiao_norte          AS mcmv_norte,
         cbic_lancamentos_mcmv_perc_regiao_norte     AS perc_norte,
@@ -24,39 +32,46 @@ WITH periodos AS (
 ),
 
 regioes AS (
-    SELECT 'NORTE' AS regiao, total_norte AS total, mcmv_norte AS mcmv, perc_norte AS perc_mcmv, ano, trimestre, dt_ingest, dt_silver FROM periodos
+    SELECT 'NORTE' AS regiao, total_norte AS total, mcmv_norte AS mcmv, perc_norte AS perc_mcmv, ano, trimestre, periodo_idx, dt_ingest, dt_silver FROM periodos
     UNION ALL
-    SELECT 'NORDESTE', total_nordeste, mcmv_nordeste, perc_nordeste, ano, trimestre, dt_ingest, dt_silver FROM periodos
+    SELECT 'NORDESTE', total_nordeste, mcmv_nordeste, perc_nordeste, ano, trimestre, periodo_idx, dt_ingest, dt_silver FROM periodos
     UNION ALL
-    SELECT 'CENTRO-OESTE', total_centro_oeste, mcmv_centro_oeste, perc_centro_oeste, ano, trimestre, dt_ingest, dt_silver FROM periodos
+    SELECT 'CENTRO-OESTE', total_centro_oeste, mcmv_centro_oeste, perc_centro_oeste, ano, trimestre, periodo_idx, dt_ingest, dt_silver FROM periodos
     UNION ALL
-    SELECT 'SUDESTE', total_sudeste, mcmv_sudeste, perc_sudeste, ano, trimestre, dt_ingest, dt_silver FROM periodos
+    SELECT 'SUDESTE', total_sudeste, mcmv_sudeste, perc_sudeste, ano, trimestre, periodo_idx, dt_ingest, dt_silver FROM periodos
     UNION ALL
-    SELECT 'SUL', total_sul, mcmv_sul, perc_sul, ano, trimestre, dt_ingest, dt_silver FROM periodos
+    SELECT 'SUL', total_sul, mcmv_sul, perc_sul, ano, trimestre, periodo_idx, dt_ingest, dt_silver FROM periodos
+),
+
+referencia AS (
+    SELECT MAX(periodo_idx) AS idx_atual FROM regioes
 ),
 
 periodo_atual AS (
     SELECT regiao, total, mcmv, perc_mcmv, ano, trimestre, dt_ingest, dt_silver
-    FROM regioes WHERE ano = 2025 AND trimestre = 4
+    FROM regioes, referencia WHERE periodo_idx = idx_atual
 ),
 
 periodo_anterior AS (
-    SELECT regiao, perc_mcmv FROM regioes
-    WHERE ano = 2025 AND trimestre = 3
+    SELECT regiao, perc_mcmv, ano, trimestre FROM regioes, referencia
+    WHERE periodo_idx = idx_atual - 1
 ),
 
 periodo_ano_anterior AS (
-    SELECT regiao, perc_mcmv FROM regioes
-    WHERE ano = 2024 AND trimestre = 4
+    SELECT regiao, perc_mcmv, ano, trimestre FROM regioes, referencia
+    WHERE periodo_idx = idx_atual - 4
 )
 
 SELECT
     atual.regiao,
     atual.total,
     atual.mcmv,
-    ROUND(atual.perc_mcmv::numeric, 1)      AS perc_mcmv_4t25,
-    ROUND(ant.perc_mcmv::numeric, 1)        AS perc_mcmv_3t25,
-    ROUND(aa.perc_mcmv::numeric, 1)         AS perc_mcmv_4t24,
+    atual.trimestre || 'º TRI ' || atual.ano                   AS periodo_atual,
+    ROUND(atual.perc_mcmv::numeric, 1)                          AS perc_mcmv_atual,
+    ant.trimestre || 'º TRI ' || ant.ano                        AS periodo_tri_anterior,
+    ROUND(ant.perc_mcmv::numeric, 1)                            AS perc_mcmv_tri_anterior,
+    aa.trimestre || 'º TRI ' || aa.ano                          AS periodo_ano_anterior,
+    ROUND(aa.perc_mcmv::numeric, 1)                             AS perc_mcmv_ano_anterior,
     {{ add_metadata_timestamps('gold') }}
 FROM periodo_atual atual
 LEFT JOIN periodo_anterior ant ON atual.regiao = ant.regiao
