@@ -16,8 +16,9 @@ MAP_MESES = {
     "setembro": "09",
     "outubro": "10",
     "novembro": "11",
-    "dezembro": "12"
+    "dezembro": "12",
 }
+
 
 class ClienteNovoCaged(ClienteBase):
     def __init__(self) -> None:
@@ -45,51 +46,160 @@ class ClienteNovoCaged(ClienteBase):
         path = "/querydata?synchronous=true"
 
         where = [
-            {"Condition": {"In": {"Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "e"}}, "Property": "Grande Grupamento"}}], "Values": [[{"Literal": {"Value": "'Construção'"}}]]}}},
+            {
+                "Condition": {
+                    "In": {
+                        "Expressions": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": "e"}},
+                                    "Property": "Grande Grupamento",
+                                }
+                            }
+                        ],
+                        "Values": [[{"Literal": {"Value": "'Construção'"}}]],
+                    }
+                }
+            },
         ]
         if cnae_divisao:
             where.append(
-                {"Condition": {"In": {"Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "e"}}, "Property": "CNAE 2.0 Divisão"}}], "Values": [[{"Literal": {"Value": f"'{cnae_divisao}'"}}]]}}}
+                {
+                    "Condition": {
+                        "In": {
+                            "Expressions": [
+                                {
+                                    "Column": {
+                                        "Expression": {"SourceRef": {"Source": "e"}},
+                                        "Property": "CNAE 2.0 Divisão",
+                                    }
+                                }
+                            ],
+                            "Values": [[{"Literal": {"Value": f"'{cnae_divisao}'"}}]],
+                        }
+                    }
+                }
             )
         where.append(
-            {"Condition": {"In": {"Expressions": [
-                {"Column": {"Expression": {"SourceRef": {"Source": "l"}}, "Property": "Ano"}},
-                {"Column": {"Expression": {"SourceRef": {"Source": "l"}}, "Property": "Mês"}}
-            ], "Values": [[{"Literal": {"Value": f"{ano}L"}}, {"Literal": {"Value": f"'{mes.lower()}'"}}]]}}}
+            {
+                "Condition": {
+                    "In": {
+                        "Expressions": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": "l"}},
+                                    "Property": "Ano",
+                                }
+                            },
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": "l"}},
+                                    "Property": "Mês",
+                                }
+                            },
+                        ],
+                        "Values": [
+                            [
+                                {"Literal": {"Value": f"{ano}L"}},
+                                {"Literal": {"Value": f"'{mes.lower()}'"}},
+                            ]
+                        ],
+                    }
+                }
+            }
         )
 
         payload = {
             "version": "1.0.0",
-            "queries": [{
-                "Query": {
-                    "Commands": [{
-                        "SemanticQueryDataShapeCommand": {
-                            "Query": {
-                                "Version": 2,
-                                "From": [
-                                    {"Name": "e", "Entity": "Econômico", "Type": 0},
-                                    {"Name": "m", "Entity": "Medidas", "Type": 0},
-                                    {"Name": "l", "Entity": "LocalDateTable_9b82530a-b08e-43fc-8e3a-39c225627f7d", "Type": 0}
-                                ],
-                                "Select": [
-                                    {"Measure": {"Expression": {"SourceRef": {"Source": "m"}}, "Property": "Admitidos"}, "Name": "Admitidos"},
-                                    {"Measure": {"Expression": {"SourceRef": {"Source": "m"}}, "Property": "Desligados"}, "Name": "Desligados"},
-                                    {"Measure": {"Expression": {"SourceRef": {"Source": "m"}}, "Property": "Saldo"}, "Name": "Saldo"},
-                                    {"Measure": {"Expression": {"SourceRef": {"Source": "m"}}, "Property": "Estoque Mensal"}, "Name": "Estoque"},
-                                    {"Measure": {"Expression": {"SourceRef": {"Source": "m"}}, "Property": "Vr. Relativa"}, "Name": "Variacao"}
-                                ],
-                                "Where": where
-                            },
-                            "Binding": {
-                                "Primary": {"Groupings": [{"Projections": [0, 1, 2, 3, 4]}]},
-                                "DataReduction": {"DataVolume": 3, "Primary": {"Window": {"Count": 10}}}
+            "queries": [
+                {
+                    "Query": {
+                        "Commands": [
+                            {
+                                "SemanticQueryDataShapeCommand": {
+                                    "Query": {
+                                        "Version": 2,
+                                        "From": [
+                                            {
+                                                "Name": "e",
+                                                "Entity": "Econômico",
+                                                "Type": 0,
+                                            },
+                                            {"Name": "m", "Entity": "Medidas", "Type": 0},
+                                            {
+                                                "Name": "l",
+                                                "Entity": "LocalDateTable_9b82530a-b08e-43fc-8e3a-39c225627f7d",
+                                                "Type": 0,
+                                            },
+                                        ],
+                                        "Select": [
+                                            {
+                                                "Measure": {
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
+                                                    "Property": "Admitidos",
+                                                },
+                                                "Name": "Admitidos",
+                                            },
+                                            {
+                                                "Measure": {
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
+                                                    "Property": "Desligados",
+                                                },
+                                                "Name": "Desligados",
+                                            },
+                                            {
+                                                "Measure": {
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
+                                                    "Property": "Saldo",
+                                                },
+                                                "Name": "Saldo",
+                                            },
+                                            {
+                                                "Measure": {
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
+                                                    "Property": "Estoque Mensal",
+                                                },
+                                                "Name": "Estoque",
+                                            },
+                                            {
+                                                "Measure": {
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
+                                                    "Property": "Vr. Relativa",
+                                                },
+                                                "Name": "Variacao",
+                                            },
+                                        ],
+                                        "Where": where,
+                                    },
+                                    "Binding": {
+                                        "Primary": {
+                                            "Groupings": [
+                                                {"Projections": [0, 1, 2, 3, 4]}
+                                            ]
+                                        },
+                                        "DataReduction": {
+                                            "DataVolume": 3,
+                                            "Primary": {"Window": {"Count": 10}},
+                                        },
+                                    },
+                                }
                             }
-                        }
-                    }]
-                },
-                "DatasetId": "4859b5fd-e3ad-4a7c-95fe-aa62fc046d96"
-            }],
-            "modelId": 3021080
+                        ]
+                    },
+                    "DatasetId": "4859b5fd-e3ad-4a7c-95fe-aa62fc046d96",
+                }
+            ],
+            "modelId": 3021080,
         }
 
         status, response = self.request("POST", path, json=payload)
@@ -99,12 +209,16 @@ class ClienteNovoCaged(ClienteBase):
 
         return None
 
-    def _parse_response(self, response: Dict[str, Any], ano: int, mes: str) -> Optional[Dict[str, Any]]:
+    def _parse_response(
+        self, response: Dict[str, Any], ano: int, mes: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Trata o JSON complexo do Power BI para um formato amigável para o Postgres.
         """
         try:
-            raw_values = response['results'][0]['result']['data']['dsr']['DS'][0]['PH'][0]['DM0'][0]['C']
+            raw_values = response["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][
+                0
+            ]["DM0"][0]["C"]
             return {
                 "ano": ano,
                 "mes": MAP_MESES.get(mes.lower(), mes),
@@ -112,10 +226,12 @@ class ClienteNovoCaged(ClienteBase):
                 "desligados": raw_values[1],
                 "saldo": raw_values[2],
                 "estoque": raw_values[3],
-                "variacao": raw_values[4]
+                "variacao": raw_values[4],
             }
         except (KeyError, IndexError, TypeError) as e:
-            logging.error(f"[ClienteNovoCaged] Erro ao fazer o parse da resposta para {mes}/{ano}: {e}")
+            logging.error(
+                f"[ClienteNovoCaged] Erro ao fazer o parse da resposta para {mes}/{ano}: {e}"
+            )
             return None
 
     def obter_historico(
@@ -133,8 +249,20 @@ class ClienteNovoCaged(ClienteBase):
         if not anos:
             anos = [2024, 2025, 2026]
         if not meses:
-            meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", 
-                     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+            meses = [
+                "janeiro",
+                "fevereiro",
+                "março",
+                "abril",
+                "maio",
+                "junho",
+                "julho",
+                "agosto",
+                "setembro",
+                "outubro",
+                "novembro",
+                "dezembro",
+            ]
 
         historico_caged = []
         ano_atual = datetime.now().year
@@ -144,15 +272,15 @@ class ClienteNovoCaged(ClienteBase):
 
             if ano > ano_atual:
                 break
-                
+
             for mes in meses:
-                if ano == ano_atual and meses.index(mes) - 1> mes_atual:
+                if ano == ano_atual and meses.index(mes) - 1 > mes_atual:
                     break
-                    
+
                 logging.info(f"[ClienteNovoCaged] Processando {mes}/{ano}...")
                 dados = self.obter_dados_mensais(ano, mes, cnae_divisao=cnae_divisao)
-                
+
                 if dados:
                     historico_caged.append(dados)
-        
+
         return historico_caged
