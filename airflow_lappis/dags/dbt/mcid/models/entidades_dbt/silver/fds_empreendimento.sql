@@ -43,6 +43,8 @@ with
 
 select
     c.apf,
+    dim.id_empreendimento,
+    dim.fase_empreendimento,
 
     -- Entidade Organizadora
     c.eo_nome,
@@ -187,6 +189,7 @@ select
     case when c.gps_long_grau != 0 then c.gps_long_segundo end as gps_long_segundo
 
 from cadastro c
+left join {{ ref("dim_empreendimento") }} dim on c.apf = dim.apf
 left join obra o on c.apf = o.apf
 left join int059 i on c.apf = i.apf
 left join trabalho_social ts on c.apf = ts.apf

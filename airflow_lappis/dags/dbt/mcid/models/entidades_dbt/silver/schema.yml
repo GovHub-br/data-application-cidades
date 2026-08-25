@@ -18,6 +18,12 @@ models:
         data_tests:
           - unique
           - not_null
+      - name: id_empreendimento
+        description: >
+          Chave lógica estável do empreendimento (hash do APF-âncora da Fase
+          Projeto). Liga APFs de fases distintas do mesmo empreendimento.
+      - name: fase_empreendimento
+        description: "Fase do empreendimento: Projeto, Obra ou Desligamento."
 
       # Entidade Organizadora
       - name: eo_nome
@@ -200,3 +206,45 @@ models:
         description: Município do empreendimento.
       - name: uf
         description: UF do empreendimento.
+
+  - name: dim_empreendimento
+    description: >
+      Dimensão de empreendimento FDS que resolve a identidade estável
+      (id_empreendimento) a partir do APF-âncora (Fase Projeto), ligando APFs de
+      fases distintas (Projeto/Obra/Desligamento). Fontes: seed curado
+      (seed_apf_fase_fds), INT059 (nu_apf_nao_obra) e eventos de mudança de fase.
+      Grao: 1 linha por (id_empreendimento, apf).
+    meta:
+      tags:
+        - silver
+        - entidades
+        - dim_empreendimento
+    columns:
+      - name: id_empreendimento
+        description: Chave lógica estável do empreendimento (hash do APF-âncora).
+        data_tests:
+          - not_null
+      - name: apf
+        description: APF (chave física) normalizado para 8 dígitos.
+        data_tests:
+          - not_null
+          - unique
+      - name: fase_empreendimento
+        description: "Fase do empreendimento: Projeto, Obra ou Desligamento."
+        data_tests:
+          - accepted_values:
+              values: ["Projeto", "Obra", "Desligamento"]
+      - name: apf_ancora
+        description: "True quando este APF é a âncora (Fase Projeto/fallback)."
+      - name: nome_empreendimento_canonico
+        description: Nome canônico do empreendimento (da seed curada, quando disponível).
+      - name: origem_mapeamento
+        description: "Origem do mapeamento: ABR26 (seed), evento ou fallback."
+      - name: dt_valid_from
+        description: Início da validade (herdado do contrato #118).
+      - name: dt_valid_to
+        description: "Fim da validade (v1: null)."
+      - name: is_current
+        description: "Indicador de registro corrente (v1: true)."
+      - name: hash_linha
+        description: Hash da linha para detecção de mudanças.

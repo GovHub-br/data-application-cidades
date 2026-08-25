@@ -79,3 +79,6 @@ seeds:
     mcmv_historico:
       +schema: mcmv_historico
       +quote_columns: false
+    entidades_fds:
+      +schema: entidades_fds
+      +quote_columns: false

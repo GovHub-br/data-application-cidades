@@ -10,6 +10,13 @@ Esta pasta consolida textos prontos para anexar ou colar nas issues GitHub.
 - `issue-66-entrega-indicadores-historicos-relogio-alertas.md`: entrega dos indicadores historicos, fontes do relogio de metas e base de alertas.
 - `issue-119-ajuste-frentes-faltantes.md`: evidencia do ajuste das frentes faltantes na silver, com SUB50/FNHIS conectado e Pro-Moradia ainda sem fonte confirmada.
 - `issue-119-correcao-arquitetura-duckdb-staging.md`: correcao de arquitetura para garantir que silvers sejam geradas somente a partir do MinIO `staging/` via DuckDB.
+- `issue-130-dicionario-indicadores.md`: dicionario dos indicadores do reloginho (grupo A) e de gargalo/desempenho (grupo B) com os 14 campos solicitados na issue #130, incluindo fontes, regras, granularidades e pendencias (meta oficial, serie historica e validacao de negocio).
+- `issue-130-matriz-indicador-fonte-campo-regra.csv`: matriz indicador x fonte x tabela x campos x regra para os grupos A (reloginho, status pendente) e B (gargalo, status definido a validar) da issue #130.
+- `issue-130-checklist-validacao-negocio.md`: checklist de validacao de negocio (Fase 5) com 19 decisoes em 4 blocos (metas, regras do reloginho, limiares do gargalo e outras decisoes) para levar a area responsavel.
+- `issue-130-decisoes-pendentes-validacao.csv`: planilha das 19 decisoes pendentes de validacao, com valor atual de referencia, resposta esperada e indicadores bloqueados, para registro das respostas da area.
+- `issue-130-estrategia-apf-fases.md`: estrategia de identidade de empreendimento na silver (APF variavel por fase) revisada pelo @oracle; define `id_empreendimento` (hash do APF-ancora), `dim_empreendimento`, fontes de mapeamento e testes dbt.
+- `issue-130-validacao-tecnica-fases-2-4.md`: validacao tecnica das fases 2-4 (cobertura historica, regras de calculo e calculos em amostra com acesso ao banco `cidades`); registra a duplicacao 2x por APF, a serie mensal 2024-06+ e a comparacao com a referencia #66.
+- `issue-130-resumo-final.md`: resumo final consolidado da issue #130 (artefatos, validacoes empiricas, implementacao APF/fases, decisoes pendentes e pendencias para fechar).
 
 ## Observacao de Commit
 

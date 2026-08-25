@@ -180,6 +180,8 @@ models:
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
+      - name: apf_nao_obra
+        description: "APF da fase Projeto (nao-obra) vinculado ao APF da fase Obra. Fonte do vinculo de fase."
       - name: selecao_pmcmv_e
         description: "Filtro principal: 'NOVO PMCMV-E' identifica contratos do novo programa."
       - name: situacao_gefus
@@ -208,3 +210,27 @@ models:
         description: Quantidade de unidades entregues naquele movimento.
       - name: dt_entrega
         description: Data da entrega efetiva.
+
+  # Eventos de Mudanca de Fase
+
+  - name: fds_mudanca_fase_eventos
+    description: >
+      Eventos de mudanca de fase FDS, derivados de fds_cadastro_pj onde
+      ic_mudanca_fase = true. Registra o APF de origem e o APF de destino
+      (apf_mudanca_fase) da mudanca de fase. No snapshot atual esta vazio
+      (mudancas ja resolvidas); o vinculo operacional vem do INT059.
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: apf
+        description: APF de origem (fase anterior) normalizado para 8 dígitos.
+        data_tests:
+          - not_null
+      - name: apf_mudanca_fase
+        description: APF de destino (nova fase) normalizado para 8 dígitos.
+      - name: dt_movimento
+        description: Data de referência do movimento.
+      - name: arquivo_de_origem
+        description: Arquivo de origem do registro.

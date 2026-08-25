@@ -12,6 +12,7 @@ with
         select
             -- Identificação
             {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ target.schema }}.normalize_apf(nu_apf_nao_obra) as apf_nao_obra,
             nullif(trim(no_empreeendmento), '') as empreendimento_nome,
 
             -- Seleção MCMV (campo-chave para filtrar Novo vs Legado)
