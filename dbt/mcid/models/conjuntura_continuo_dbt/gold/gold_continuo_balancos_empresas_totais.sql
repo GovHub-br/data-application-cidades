@@ -8,7 +8,6 @@ select
     periodo,
     ano,
     trimestre,
-    make_date(ano::int, (nullif(left(trimestre, 1), '')::int - 1) * 3 + 1, 1) as data_referencia,
     lancamentos_totais,
     var_lancamentos_totais_tri_anterior,
     var_lancamentos_totais_mesmo_tri_ano_anterior,

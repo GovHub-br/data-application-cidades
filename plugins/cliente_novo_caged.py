@@ -31,12 +31,33 @@ class ClienteNovoCaged(ClienteBase):
         super().__init__(base_url=base_url, headers=headers)
         logging.info("[ClienteNovoCaged] Cliente iniciado com sucesso.")
 
-    def obter_dados_mensais(self, ano: int, mes: str) -> Optional[Dict[str, Any]]:
+    def obter_dados_mensais(
+        self, ano: int, mes: str, cnae_divisao: Optional[str] = "Construção de Edifícios"
+    ) -> Optional[Dict[str, Any]]:
         """
-        Busca os dados de Construção de Edifícios para um mês/ano específico.
+        Busca os dados de empregos na construção para um mês/ano específico.
+
+        `cnae_divisao` filtra por "CNAE 2.0 Divisão" (ex: "Construção de
+        Edifícios", "Serviços Especializados para Construção", "Obras de
+        Infraestrutura"). Passar `None` remove esse filtro e retorna o total
+        da construção (todas as divisões, "Grande Grupamento" = Construção).
         """
         path = "/querydata?synchronous=true"
-        
+
+        where = [
+            {"Condition": {"In": {"Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "e"}}, "Property": "Grande Grupamento"}}], "Values": [[{"Literal": {"Value": "'Construção'"}}]]}}},
+        ]
+        if cnae_divisao:
+            where.append(
+                {"Condition": {"In": {"Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "e"}}, "Property": "CNAE 2.0 Divisão"}}], "Values": [[{"Literal": {"Value": f"'{cnae_divisao}'"}}]]}}}
+            )
+        where.append(
+            {"Condition": {"In": {"Expressions": [
+                {"Column": {"Expression": {"SourceRef": {"Source": "l"}}, "Property": "Ano"}},
+                {"Column": {"Expression": {"SourceRef": {"Source": "l"}}, "Property": "Mês"}}
+            ], "Values": [[{"Literal": {"Value": f"{ano}L"}}, {"Literal": {"Value": f"'{mes.lower()}'"}}]]}}}
+        )
+
         payload = {
             "version": "1.0.0",
             "queries": [{
@@ -57,14 +78,7 @@ class ClienteNovoCaged(ClienteBase):
                                     {"Measure": {"Expression": {"SourceRef": {"Source": "m"}}, "Property": "Estoque Mensal"}, "Name": "Estoque"},
                                     {"Measure": {"Expression": {"SourceRef": {"Source": "m"}}, "Property": "Vr. Relativa"}, "Name": "Variacao"}
                                 ],
-                                "Where": [
-                                    {"Condition": {"In": {"Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "e"}}, "Property": "Grande Grupamento"}}], "Values": [[{"Literal": {"Value": "'Construção'"}}]]}}},
-                                    {"Condition": {"In": {"Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "e"}}, "Property": "CNAE 2.0 Divisão"}}], "Values": [[{"Literal": {"Value": "'Construção de Edifícios'"}}]]}}},
-                                    {"Condition": {"In": {"Expressions": [
-                                        {"Column": {"Expression": {"SourceRef": {"Source": "l"}}, "Property": "Ano"}},
-                                        {"Column": {"Expression": {"SourceRef": {"Source": "l"}}, "Property": "Mês"}}
-                                    ], "Values": [[{"Literal": {"Value": f"{ano}L"}}, {"Literal": {"Value": f"'{mes.lower()}'"}}]]}}}
-                                ]
+                                "Where": where
                             },
                             "Binding": {
                                 "Primary": {"Groupings": [{"Projections": [0, 1, 2, 3, 4]}]},
@@ -82,7 +96,7 @@ class ClienteNovoCaged(ClienteBase):
 
         if status == HTTPStatus.OK and response:
             return self._parse_response(response, ano, mes)
-        
+
         return None
 
     def _parse_response(self, response: Dict[str, Any], ano: int, mes: str) -> Optional[Dict[str, Any]]:
@@ -104,10 +118,16 @@ class ClienteNovoCaged(ClienteBase):
             logging.error(f"[ClienteNovoCaged] Erro ao fazer o parse da resposta para {mes}/{ano}: {e}")
             return None
 
-    def obter_historico(self, anos: Optional[List[int]] = None, meses: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    def obter_historico(
+        self,
+        anos: Optional[List[int]] = None,
+        meses: Optional[List[str]] = None,
+        cnae_divisao: Optional[str] = "Construção de Edifícios",
+    ) -> List[Dict[str, Any]]:
         """
-        Busca os dados de Construção de Edifícios para uma lista de anos e meses.
+        Busca os dados de empregos na construção para uma lista de anos e meses.
         Se não fornecidos, busca do histórico padrão (2024 até o ano/mês atual).
+        `cnae_divisao`: ver `obter_dados_mensais` (None = total da construção).
         Retorna uma lista de dicionários pronta para inserção no banco de dados.
         """
         if not anos:
@@ -130,7 +150,7 @@ class ClienteNovoCaged(ClienteBase):
                     break
                     
                 logging.info(f"[ClienteNovoCaged] Processando {mes}/{ano}...")
-                dados = self.obter_dados_mensais(ano, mes)
+                dados = self.obter_dados_mensais(ano, mes, cnae_divisao=cnae_divisao)
                 
                 if dados:
                     historico_caged.append(dados)

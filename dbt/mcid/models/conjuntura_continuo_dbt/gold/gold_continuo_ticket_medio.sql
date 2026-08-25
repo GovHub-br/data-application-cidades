@@ -8,7 +8,6 @@ select
     periodo,
     ano,
     trimestre,
-    make_date(ano::int, (nullif(left(trimestre, 1), '')::int - 1) * 3 + 1, 1) as data_referencia,
     precos_incc_tri,
     incc_var_tri_ant,
     incc_var_acum_4t2020,
