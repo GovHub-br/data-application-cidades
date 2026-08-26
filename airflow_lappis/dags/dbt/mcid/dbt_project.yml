@@ -57,6 +57,9 @@ models:
       +schema: mcmv_historico
       piloto:
         +materialized: table
+      empreendimentos:
+        +materialized: table
+        +enabled: "{{ target.type == 'duckdb' }}"
 
     conjuntura_dbt:
       +materialized: table

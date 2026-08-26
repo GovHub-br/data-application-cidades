@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: historico_mcmv_empreendimentos_snapshot
+    description: >
+      Serie historica mensal de empreendimentos MCMV (FAR, Entidades/FDS e
+      Rural/PNHR) a partir das tabelas de interface do SFTP (INT040 FAR CAIXA,
+      INT054 FAR BB, INT059 FDS CAIXA, INT057 PNHR BB, INT065 PNHR CAIXA) lidas
+      do MinIO staging/ via DuckDB. Grao: empreendimento x mes (dt_referencia,
+      extraida do nome do arquivo).
+    columns:
+      - name: id_historico_snapshot
+        description: Chave tecnica unica por frente, APF e mes de referencia.
+        data_tests:
+          - not_null
+          - unique
+      - name: programa
+        data_tests:
+          - not_null
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['FAR', 'Entidades', 'Rural']
+      - name: apf
+        description: APF (chave de empreendimento). Pode variar por fase no tempo.
+      - name: quantidade_uh
+        description: Unidades habitacionais do empreendimento no snapshot.
+      - name: quantidade_uh_entregues
+        description: Unidades habitacionais entregues no snapshot.
+      - name: valor_contratado
+        description: Valor contratado (R$).
+      - name: valor_desembolsado
+        description: Valor desembolsado/liberado (R$).
+      - name: percentual_execucao_fisica
+        description: Percentual de execucao fisica da obra.
+      - name: status_operacional
+        description: Situacao da obra/operacao no snapshot.
+      - name: dt_referencia
+        description: Mes de referencia do snapshot (extraido do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_movimento
+        description: Data de movimento informada pela fonte (campo auxiliar).
+      - name: dt_contratacao
+        description: Data de contratacao/assinatura do empreendimento.
+      - name: dt_inicio_obra
+        description: Data de inicio da obra.
+      - name: dt_entrega
+        description: Data de entrega (quando disponivel na fonte).
+      - name: fonte_tabela
+        data_tests:
+          - not_null
+      - name: source_file
+        description: Caminho do arquivo staging de origem (contem a data no nome).
+
+  - name: snapshot_mcmv_empreendimentos_atual
+    description: >
+      Snapshot corrente (estado atual) derivado do modelo historico: uma linha
+      por (frente, APF) com o ultimo mes de referencia disponivel.
+    columns:
+      - name: id_historico_snapshot
+        description: Identificador herdado da versao corrente do empreendimento.
+        data_tests:
+          - not_null
+          - unique
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+      - name: apf
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        data_tests:
+          - not_null
+      - name: fonte_tabela
+        data_tests:
+          - not_null

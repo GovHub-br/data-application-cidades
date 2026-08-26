@@ -17,6 +17,9 @@ Esta pasta consolida textos prontos para anexar ou colar nas issues GitHub.
 - `issue-130-estrategia-apf-fases.md`: estrategia de identidade de empreendimento na silver (APF variavel por fase) revisada pelo @oracle; define `id_empreendimento` (hash do APF-ancora), `dim_empreendimento`, fontes de mapeamento e testes dbt.
 - `issue-130-validacao-tecnica-fases-2-4.md`: validacao tecnica das fases 2-4 (cobertura historica, regras de calculo e calculos em amostra com acesso ao banco `cidades`); registra a duplicacao 2x por APF, a serie mensal 2024-06+ e a comparacao com a referencia #66.
 - `issue-130-resumo-final.md`: resumo final consolidado da issue #130 (artefatos, validacoes empiricas, implementacao APF/fases, decisoes pendentes e pendencias para fechar).
+- `issue-130-pendencias-encoding-canonicalizacao-sftp-minio.md`: registro das pendencias de encoding (mojibake) e canonicalizacao (`gefus_*`/`_canonicas.csv`) das bases SFTP no MinIO; decisao de usar MinIO como fonte e reaproveitar o pipeline local de tratamento.
+- `issue-130-d1-reconciliacao-novo-mcmv-far.md`: analise da sobreposicao SFTP x Novo MCMV (D1, opcao B — FAR disjunto, FDS sobreposto) e mapeamento de colunas do `novo_mcmv_far` (cad_pj + obra_mensal) para o contrato comum do modelo.
+- `issue-130-implementacao-modelos-historicos-empreendimentos.md`: documentacao da implementacao dos modelos historicos de empreendimentos (historico mensal FAR/FDS/Rural + snapshot corrente derivado), fontes, decisoes, validacao e pendencias.
 
 ## Observacao de Commit
 
