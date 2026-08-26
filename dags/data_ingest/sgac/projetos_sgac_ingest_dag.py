@@ -99,7 +99,7 @@ COLUMN_MAPPING = {
     75: "fiscal_e_substituto",
     76: "numero_siafi",
     77: "atribuido_a",
-    78: "atribuido_a_claims"
+    78: "atribuido_a_claims",
 }
 
 EMAIL_SUBJECT = "SGAC"
@@ -122,7 +122,10 @@ with DAG(
         EMAIL = creds["email"]
         PASSWORD = creds["password"]
         IMAP_SERVER = creds["imap_server"]
-        SENDER_EMAIL = Variable.get("sender_email_sgac", default_var=creds["sender_email"],)
+        SENDER_EMAIL = Variable.get(
+            "sender_email_sgac",
+            default_var=creds["sender_email"],
+        )
 
         try:
             logging.info("Iniciando o processamento dos emails...")
@@ -185,19 +188,17 @@ with DAG(
             logging.error("Erro ao inserir dados no banco: %s", str(e))
             raise
 
-    #tarefa 1: processar os e-mails e extrair o CSV
+    # tarefa 1: processar os e-mails e extrair o CSV
     process_emails_task = PythonOperator(
         task_id="process_emails",
         python_callable=process_email_data,
         provide_context=True,
     )
-    #tarefa 2: inserir os dados no banco de dados
+    # tarefa 2: inserir os dados no banco de dados
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
         provide_context=True,
     )
-    #Fluxo da DAG
+    # Fluxo da DAG
     process_emails_task >> insert_to_db_task
-
-    

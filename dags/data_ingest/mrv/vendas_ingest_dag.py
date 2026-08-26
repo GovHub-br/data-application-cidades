@@ -64,4 +64,3 @@ def vendas_ingest_dag() -> None:
 
 
 dag_instance = vendas_ingest_dag()
-

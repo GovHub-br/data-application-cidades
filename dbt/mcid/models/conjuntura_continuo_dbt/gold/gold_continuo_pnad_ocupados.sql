@@ -1,12 +1,9 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
 -- Gold do conjuntura contínuo: PNAD-C — pessoas ocupadas na construção x total
 -- (mil pessoas), trimestre móvel. Página 3, seção 4. Fonte: IBGE via SIDRA
 -- (automatizado). Bate exato com o boletim.
-
-with base as (
-    select * from {{ ref('silver_continuo_ibge_pnad_construcao_ocupados') }}
-)
+with base as (select * from {{ ref("silver_continuo_ibge_pnad_construcao_ocupados") }})
 
 select
     periodo,

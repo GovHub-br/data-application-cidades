@@ -1,9 +1,8 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
 -- Gold do conjuntura contínuo: Estrutura de Funding — SBPE, FGTS, LCI, LCA,
 -- CRI, CRA, LIG (estoques, R$ bi). Página 4. Dado MANUAL (boletim.xlsx /
 -- manual_conjuntura.dados_mensais).
-
 select
     periodo,
     ano,
@@ -16,6 +15,6 @@ select
     anbima_estoque_cri,
     anbima_estoque_cra,
     anbima_estoque_lig
-from {{ ref('silver_continuo_manual_mensais') }}
+from {{ ref("silver_continuo_manual_mensais") }}
 where coalesce(funding_sbpe, funding_fgts) is not null
 order by ano desc, mes desc

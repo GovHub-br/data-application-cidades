@@ -1,58 +1,60 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-WITH t_4t25 AS (
-    SELECT fgts_uh, sbpe_uh, dt_ingest, dt_silver
-    FROM {{ ref('silver_financiamentos_habitacionais') }}
-    WHERE ano = 2025 AND trimestre = 4
-),
+with
+    t_4t25 as (
+        select fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from {{ ref("silver_financiamentos_habitacionais") }}
+        where ano = 2025 and trimestre = 4
+    ),
 
-t_3t25 AS (
-    SELECT fgts_uh, sbpe_uh, dt_ingest, dt_silver
-    FROM {{ ref('silver_financiamentos_habitacionais') }}
-    WHERE ano = 2025 AND trimestre = 3
-),
+    t_3t25 as (
+        select fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from {{ ref("silver_financiamentos_habitacionais") }}
+        where ano = 2025 and trimestre = 3
+    ),
 
-t_4t24 AS (
-    SELECT fgts_uh, sbpe_uh, dt_ingest, dt_silver
-    FROM {{ ref('silver_financiamentos_habitacionais') }}
-    WHERE ano = 2024 AND trimestre = 4
-),
+    t_4t24 as (
+        select fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from {{ ref("silver_financiamentos_habitacionais") }}
+        where ano = 2024 and trimestre = 4
+    ),
 
-acum_25 AS (
-    SELECT
-        SUM(fgts_uh)        AS fgts_uh,
-        SUM(sbpe_uh)        AS sbpe_uh,
-        MAX(dt_ingest)      AS dt_ingest,
-        MAX(dt_silver)      AS dt_silver
-    FROM {{ ref('silver_financiamentos_habitacionais') }}
-    WHERE ano = 2025
-),
+    acum_25 as (
+        select
+            sum(fgts_uh) as fgts_uh,
+            sum(sbpe_uh) as sbpe_uh,
+            max(dt_ingest) as dt_ingest,
+            max(dt_silver) as dt_silver
+        from {{ ref("silver_financiamentos_habitacionais") }}
+        where ano = 2025
+    ),
 
-acum_24 AS (
-    SELECT
-        SUM(fgts_uh)        AS fgts_uh,
-        SUM(sbpe_uh)        AS sbpe_uh,
-        MAX(dt_ingest)      AS dt_ingest,
-        MAX(dt_silver)      AS dt_silver
-    FROM {{ ref('silver_financiamentos_habitacionais') }}
-    WHERE ano = 2024
-),
+    acum_24 as (
+        select
+            sum(fgts_uh) as fgts_uh,
+            sum(sbpe_uh) as sbpe_uh,
+            max(dt_ingest) as dt_ingest,
+            max(dt_silver) as dt_silver
+        from {{ ref("silver_financiamentos_habitacionais") }}
+        where ano = 2024
+    ),
 
-resultado AS (
-    SELECT '4º TRI 2025'        AS periodo, fgts_uh, sbpe_uh, dt_ingest, dt_silver FROM t_4t25
-    UNION ALL
-    SELECT '3º TRI 2025',                   fgts_uh, sbpe_uh, dt_ingest, dt_silver FROM t_3t25
-    UNION ALL
-    SELECT '4º TRI 2024',                   fgts_uh, sbpe_uh, dt_ingest, dt_silver FROM t_4t24
-    UNION ALL
-    SELECT '12 MESES - DEZ/2025',           fgts_uh, sbpe_uh, dt_ingest, dt_silver FROM acum_25
-    UNION ALL
-    SELECT '12 MESES - DEZ/2024',           fgts_uh, sbpe_uh, dt_ingest, dt_silver FROM acum_24
-)
+    resultado as (
+        select '4º TRI 2025' as periodo, fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from t_4t25
+        union all
+        select '3º TRI 2025', fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from t_3t25
+        union all
+        select '4º TRI 2024', fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from t_4t24
+        union all
+        select '12 MESES - DEZ/2025', fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from acum_25
+        union all
+        select '12 MESES - DEZ/2024', fgts_uh, sbpe_uh, dt_ingest, dt_silver
+        from acum_24
+    )
 
-SELECT
-    periodo,
-    fgts_uh,
-    sbpe_uh,
-    {{ add_metadata_timestamps('gold') }}
-FROM resultado
+select periodo, fgts_uh, sbpe_uh, {{ add_metadata_timestamps("gold") }}
+from resultado

@@ -1,7 +1,7 @@
 import logging
 import io
 import zipfile
-from typing import Optional, cast, List, Dict
+from typing import Optional, List, Dict
 import pandas as pd
 from pandas.errors import EmptyDataError
 from imap_tools import MailBox, AND
@@ -79,9 +79,8 @@ def fetch_email_with_zip(
         ):
             for attachment in msg.attachments:
                 if attachment.filename.lower().endswith(".zip"):
-                    zip_payloads.append(cast(bytes, attachment.payload))
+                    zip_payloads.append(attachment.payload)
     return zip_payloads
-
 
 
 def fetch_email_with_csv(
@@ -92,11 +91,13 @@ def fetch_email_with_csv(
     csv_payloads: List[bytes] = []
     with MailBox(imap_server).login(email, password) as mailbox:
         # bulk=True: single IMAP FETCH command for all messages (avoids overquota)
-        for msg in mailbox.fetch(AND(date=today, from_=sender_email, subject=subject), bulk=True):
+        for msg in mailbox.fetch(
+            AND(date=today, from_=sender_email, subject=subject), bulk=True
+        ):
             for attachment in msg.attachments:
                 file_name = (attachment.filename or "").lower()
                 if file_name.endswith(".csv"):
-                    csv_payloads.append(cast(bytes, attachment.payload))
+                    csv_payloads.append(attachment.payload)
     return csv_payloads
 
 
@@ -163,6 +164,7 @@ def fetch_and_process_email(
             return combined_df.to_csv(index=False)
 
         logging.warning("Nenhum CSV processado.")
+        return None
     except Exception as e:
         logging.error(f"Erro ao processar e-mails: {e}")
         raise

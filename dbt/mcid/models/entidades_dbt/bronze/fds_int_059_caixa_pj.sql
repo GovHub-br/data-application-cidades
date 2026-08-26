@@ -3,10 +3,10 @@
 -- Bronze: INT 059 — empreendimentos FDS da CAIXA (complementar)
 -- Fonte: int_empreendimentos_int_059_fds_caixa_pj
 -- OBS: Esta tabela contém TANTO legado (PMCMV-E) quanto Novo MCMV.
---      Filtrar por no_selecao_pmcmv_e = 'NOVO PMCMV-E' para manter apenas Novo MCMV (305 registros).
+-- Filtrar por no_selecao_pmcmv_e = 'NOVO PMCMV-E' para manter apenas Novo MCMV (305
+-- registros).
 -- Campos exclusivos não presentes nas fontes primárias:
---   situacao_gefus, fase_contrato, situacao_empreendimento, no_selecao_pmcmv_e
-
+-- situacao_gefus, fase_contrato, situacao_empreendimento, no_selecao_pmcmv_e
 with
     int059_raw as (
         select
@@ -24,7 +24,9 @@ with
 
             -- Proponente (Entidade Organizadora)
             nullif(trim(razao_social_proponente), '') as eo_nome,
-            nullif(regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), '') as eo_cnpj,
+            nullif(
+                regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), ''
+            ) as eo_cnpj,
             nullif(trim(email_entidade), '') as eo_email,
 
             -- Localização
@@ -34,24 +36,27 @@ with
             nullif(trim(no_regiao), '') as regiao,
 
             -- UHs
-            {{ parse_int('qt_unidade_financiadas') }} as qt_uh_financiadas,
-            {{ parse_int('qt_unidades_concluidas') }} as qt_uh_concluidas,
-            {{ parse_int('qt_unidades_entregues') }} as qt_uh_entregues,
-            {{ parse_int('quantidade_uh_adaptadas') }} as qt_uh_adaptadas,
+            {{ parse_int("qt_unidade_financiadas") }} as qt_uh_financiadas,
+            {{ parse_int("qt_unidades_concluidas") }} as qt_uh_concluidas,
+            {{ parse_int("qt_unidades_entregues") }} as qt_uh_entregues,
+            {{ parse_int("quantidade_uh_adaptadas") }} as qt_uh_adaptadas,
 
             -- Execução física
-            {{ parse_numeric('percentual_obra_realizado', 'numeric(6, 2)') }} as pct_obra_realizado,
+            {{ parse_numeric("percentual_obra_realizado", "numeric(6, 2)") }}
+            as pct_obra_realizado,
 
             -- Valores financeiros
-            {{ parse_financial_value('vr_emprestimo_original') }} as vr_emprestimo_original,
-            {{ parse_financial_value('vlr_operacao') }} as vr_operacao,
-            {{ parse_financial_value('vr_investimento') }} as vr_investimento,
-            {{ parse_financial_value('vr_liberado') }} as vr_liberado,
-            {{ parse_financial_value('vr_liberado_sisfin') }} as vr_liberado_sisfin,
-            {{ parse_financial_value('vr_projeto') }} as vr_projeto,
-            {{ parse_financial_value('vr_obra') }} as vr_obra,
-            {{ parse_financial_value('valor_aporte_adicional') }} as vr_aporte_adicional,
-            {{ parse_financial_value('valor_aporte_adicional_contratado') }} as vr_aporte_contratado,
+            {{ parse_financial_value("vr_emprestimo_original") }}
+            as vr_emprestimo_original,
+            {{ parse_financial_value("vlr_operacao") }} as vr_operacao,
+            {{ parse_financial_value("vr_investimento") }} as vr_investimento,
+            {{ parse_financial_value("vr_liberado") }} as vr_liberado,
+            {{ parse_financial_value("vr_liberado_sisfin") }} as vr_liberado_sisfin,
+            {{ parse_financial_value("vr_projeto") }} as vr_projeto,
+            {{ parse_financial_value("vr_obra") }} as vr_obra,
+            {{ parse_financial_value("valor_aporte_adicional") }} as vr_aporte_adicional,
+            {{ parse_financial_value("valor_aporte_adicional_contratado") }}
+            as vr_aporte_contratado,
 
             -- Tipologia
             nullif(trim(dsc_tipologia), '') as tipologia,
@@ -76,12 +81,12 @@ with
             {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
 
             -- Coordenadas GPS
-            {{ parse_numeric('gps_latitude_grau') }} as gps_lat_grau,
-            {{ parse_numeric('gps_latitude_minuto') }} as gps_lat_minuto,
-            {{ parse_numeric('gps_latitude_segundo') }} as gps_lat_segundo,
-            {{ parse_numeric('gps_longitude_grau') }} as gps_long_grau,
-            {{ parse_numeric('gps_longitude_minuto') }} as gps_long_minuto,
-            {{ parse_numeric('gps_longitude_segundo') }} as gps_long_segundo,
+            {{ parse_numeric("gps_latitude_grau") }} as gps_lat_grau,
+            {{ parse_numeric("gps_latitude_minuto") }} as gps_lat_minuto,
+            {{ parse_numeric("gps_latitude_segundo") }} as gps_lat_segundo,
+            {{ parse_numeric("gps_longitude_grau") }} as gps_long_grau,
+            {{ parse_numeric("gps_longitude_minuto") }} as gps_long_minuto,
+            {{ parse_numeric("gps_longitude_segundo") }} as gps_long_segundo,
 
             -- Metadados
             arquivo_de_origem,

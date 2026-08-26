@@ -4,16 +4,12 @@
 -- Consome a silver evolucao_financeira e prepara os dados no formato ideal
 -- para o gráfico de "Evolução Físico-Financeira" do dashboard.
 -- Adiciona: label do mês, nome do estado, campos de busca/filtro.
-
 with
-    evolucao as (
-        select * from {{ ref("evolucao_financeira") }}
-    ),
+    evolucao as (select * from {{ ref("evolucao_financeira") }}),
 
     -- Referência IBGE para nome completo do estado
     ibge_uf as (
-        select sigla, upper(nome) as estado
-        from {{ source("raw", "api_ibge_uf") }}
+        select sigla, upper(nome) as estado from {{ source("raw", "api_ibge_uf") }}
     ),
 
     -- Trazer nome do empreendimento da ficha

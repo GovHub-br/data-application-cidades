@@ -31,10 +31,7 @@ class ClienteBacenImobiliario:
         params={} aqui: o encoding de espaço como '+' quebra o $filter do OData
         do Olinda (HTTP 400).
         """
-        url = (
-            f"{self.BASE}?$filter=Info eq '{info}'"
-            f"&$orderby=Data&$format=json"
-        )
+        url = f"{self.BASE}?$filter=Info eq '{info}'" f"&$orderby=Data&$format=json"
         headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
         resp = requests.get(url, headers=headers, timeout=60)
         resp.raise_for_status()

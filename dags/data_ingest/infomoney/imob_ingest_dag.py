@@ -16,13 +16,14 @@ DEFAULT_ARGS = {
     "retry_delay": timedelta(minutes=5),
 }
 
+
 @dag(
     dag_id="infomoney_imob",
     schedule_interval="@daily",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=DEFAULT_ARGS,
-    tags=["cidades","infomoney", "imob", "cotações","conjuntura"],
+    tags=["cidades", "infomoney", "imob", "cotações", "conjuntura"],
 )
 def infomoney_imob_dag() -> None:
     """
@@ -31,19 +32,16 @@ def infomoney_imob_dag() -> None:
     """
 
     @task
-    def fetch_and_load_imob():
+    def fetch_and_load_imob() -> None:
         logging.info("Iniciando extração Infomoney (IMOB.SA)...")
-        
-  
+
         config = Variable.get("api_key_alphavantage", deserialize_json=True)
         API_KEY = config.get("api_key")
         SYMBOL = config.get("acao")
-        
-     
+
         api = ClienteInfomoney(api_key=API_KEY)
         db = ClientPostgresDB(get_postgres_conn())
-        
-      
+
         dados_imob_raw = api.get_daily_series(SYMBOL)
 
         if not dados_imob_raw:
@@ -64,9 +62,9 @@ def infomoney_imob_dag() -> None:
                     "low": float(valores["3. low"]),
                     "close": float(valores["4. close"]),
                     "volume": int(valores["5. volume"]),
-                    "dt_ingest": dt_ingest
+                    "dt_ingest": dt_ingest,
                 }
-    
+
                 dados_imob.append(registro)
 
         # Postgres: upsert por (symbol, data_pregao) -> preserva histórico.
@@ -75,7 +73,7 @@ def infomoney_imob_dag() -> None:
             table_name="acoes_imob",
             schema="infomoney",
             conflict_fields=["symbol", "data_pregao"],
-            primary_key=["symbol", "data_pregao"]
+            primary_key=["symbol", "data_pregao"],
         )
 
         # Lake (full-refresh): raw = payload cru da API (json); parquet tipado.
@@ -84,7 +82,6 @@ def infomoney_imob_dag() -> None:
 
         logging.info("Carga finalizada com sucesso no schema infomoney.")
 
-    
     fetch_and_load_imob()
 
 

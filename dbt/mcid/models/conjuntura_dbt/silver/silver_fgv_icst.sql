@@ -1,16 +1,32 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-SELECT
+select
     data_referencia,
     icst_com_ajuste_sazonal,
     icst_sem_ajuste_sazonal,
-    ROUND(
-        ((icst_sem_ajuste_sazonal / NULLIF(LAG(icst_sem_ajuste_sazonal, 1) OVER (ORDER BY data_referencia), 0)) - 1) * 100,
+    round(
+        (
+            (
+                icst_sem_ajuste_sazonal / nullif(
+                    lag(icst_sem_ajuste_sazonal, 1) over (order by data_referencia), 0
+                )
+            )
+            - 1
+        )
+        * 100,
         2
-    ) AS var_mes,
-    ROUND(
-        ((icst_sem_ajuste_sazonal / NULLIF(LAG(icst_sem_ajuste_sazonal, 12) OVER (ORDER BY data_referencia), 0)) - 1) * 100,
+    ) as var_mes,
+    round(
+        (
+            (
+                icst_sem_ajuste_sazonal / nullif(
+                    lag(icst_sem_ajuste_sazonal, 12) over (order by data_referencia), 0
+                )
+            )
+            - 1
+        )
+        * 100,
         2
-    ) AS var_12_meses,
-    {{ add_metadata_timestamps('silver') }}
-FROM {{ source('conjuntura_bronze', 'bronze_fgv_icst') }}
+    ) as var_12_meses,
+    {{ add_metadata_timestamps("silver") }}
+from {{ source("conjuntura_bronze", "bronze_fgv_icst") }}
