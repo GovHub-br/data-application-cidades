@@ -50,22 +50,53 @@ distribuicao do gargalo exige `dbt run --select indicadores_mcmv_dbt`.
 | Piloto #118 (seed) | anual | 2009-2025 | contratadas (OGU/FGTS) | nacional, 2 linhas |
 | `dados_historicos.historico_recente_*` | mensal | 2024-06 a 2026-03 | contratadas + entregues | CAIXA+BB, por APF/UF/municipio |
 | `__dados_brutos.dados_prioritarios_recebidos_*` | snapshot | 2026-01-31 | contratadas + entregues + vigentes | CAIXA+BB, por APF |
+| `historico_mcmv_empreendimentos_snapshot` (GEFUS/SFTP) | mensal | 2019-12 em diante | contratadas + entregues (FAR/Rural); contratadas (FDS, entregues NULL) | FAR/FDS/Rural, grao empreendimento x mes |
 
 Achado relevante: **existe serie mensal de contratadas E entregues de 2024-06 a
 2026-03** (22 meses), por APF/UF/municipio. Isso viabiliza `ritmo_medio_mensal`,
 `ritmo_necessario` e `projecao_entrega` a partir de 2024-06 — contrariando a
-premissa inicial de que nao havia serie mensal.
+premissa inicial de que nao havia serie mensal. Alem disso, o modelo GEFUS
+(`historico_mcmv_empreendimentos_snapshot`) estende a serie mensal de entregues
+para **FAR e Rural desde 2019-12**; ver a "Ressalva GEFUS" abaixo.
 
 ### Lacunas sinalizadas
 
 1. **Hiato OGU/Subsidiado 2020-2023**: zeros na serie anual (ausencia real vs dado
    nao coletado - a classificar com a area).
-2. **Sem serie mensal antes de 2024-06**: o reloginho mensal so e reconstruivel a
-   partir de junho/2024; antes disso ha apenas a serie anual de contratadas.
-3. **Sem serie historica de entregues antes de 2024-06**: entregues so aparecem na
-   janela mensal recente e no snapshot.
+2. **Sem serie mensal antes de 2024-06 na fonte SNH**: a fonte SNH
+   (`historico_recente_*`) so cobre 2024-06+; o GEFUS
+   (`historico_mcmv_empreendimentos_snapshot`) estende a serie mensal para 2019-12
+   (ver "Ressalva GEFUS").
+3. **Serie de entregues antes de 2024-06 restrita ao GEFUS (FAR/Rural)**: na fonte
+   SNH os entregues so aparecem na janela 2024-06+ e no snapshot; o GEFUS tem
+   entregues mensais desde 2019-12 para FAR/Rural (FDS sem entregues), ainda sem
+   validacao em amostra (ver "Ressalva GEFUS").
 4. **Meta oficial ausente**: nao ha tabela de metas; so a "meta visual" 2.214.810.
 5. **Pro-Moradia e SUB50/FNHIS com 0 registros** na silver (fonte nao materializada).
+
+### Ressalva GEFUS (serie mensal 2019-12+, ainda NAO validada em amostra)
+
+O modelo `historico_mcmv_empreendimentos_snapshot` (SFTP/GEFUS, MinIO `staging/`)
+estende a cobertura de entregues para FAR e Rural desde 2019-12, mas **nao passou
+pela validacao em amostra** que foi aplicada a fonte SNH na Fase 4. Ressalvas:
+
+1. **FDS (Entidades) sem entregues no GEFUS**: `quantidade_uh_entregues` e NULL na
+   interface INT059 (o campo de entregues nao esta mapeado nessa fonte). A FDS
+   tambem nao traz UF (`null`) nem `dt_entrega`. Para a FDS, a serie de entregues
+   continua limitada a SNH 2024-06+.
+2. **Qualidade ainda nao consolidada**: typos de coluna (`sg_uf_muncicipio`,
+   `no_empreeendmento`), coluna temporal inconsistente no INT057 (`idt_movimento` vs
+   `dt_movimento`), `qt_unidades` vazio em algumas linhas do INT057 e reentregas
+   (`_0000`, `_V2`) + arquivos `VALIDACAO` excluidos por filtro ad-hoc (a
+   canonicalizacao definitiva via `_canonicas.csv` e a correcao de encoding/mojibake
+   seguem pendentes, P1/P2).
+3. **INT065 no grao empreendimento (carta de credito individual)**: ~8x mais
+   empreendimentos PNHR que o INT057, com media de 23 UH; sem ajuste necessario,
+   mas exige cuidado na agregacao de contratadas/entregues da frente Rural.
+4. **Conclusao**: o GEFUS e fonte candidata para a serie historica de entregues do
+   reloginho (FAR/Rural), mas so deve ser considerado oficial apos (a) validacao em
+   amostra contra os valores de referencia da #66 e (b) conclusao da canonicalizacao
+   (P2). Ate la, a fonte SNH (2024-06+) permanece a unica validada empiricamente.
 
 ## Fase 3 - Regras de Calculo
 
@@ -172,7 +203,9 @@ ciclo 2026 - o que reforca o alerta "meta em risco" que o reloginho deve apontar
 
 1. **Cobertura**: o reloginho e viavel a partir de junho/2024 (serie mensal de
    contratadas + entregues, por APF/UF/municipio) e de 2009-2025 (serie anual de
-   contratadas OGU/FGTS). Antes de 2024 nao ha serie mensal nem de entregues.
+   contratadas OGU/FGTS). O modelo GEFUS estende a serie mensal de entregues para
+   FAR e Rural desde 2019-12, mas ainda sem validacao em amostra (ver "Ressalva
+   GEFUS").
 2. **Deduplicacao**: obrigatoria (2x duplicacao em todas as tabelas prioritarias).
    Confirmada como regra de negocio de primeiro nivel.
 3. **Regras**: formulas do reloginho validadas; limiares de gargalo documentados
@@ -188,3 +221,6 @@ ciclo 2026 - o que reforca o alerta "meta em risco" que o reloginho deve apontar
   status_relogio).
 - Definir o termino do ciclo MCMV 2023-2026 (para "meses restantes").
 - Classificar o hiato OGU 2020-2023 (ausencia real vs dado nao coletado).
+- Validar em amostra a serie GEFUS 2019-12+ (FAR/Rural) contra a referencia #66 e
+  concluir a canonicalizacao/encoding (P1/P2) antes de adota-la como fonte oficial
+  de entregues do reloginho.

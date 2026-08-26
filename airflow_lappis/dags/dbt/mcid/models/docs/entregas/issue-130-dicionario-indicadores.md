@@ -15,9 +15,21 @@ Pontos-chave:
   (atraso 2, paralisacao 2, sem atualizacao 1, baixa execucao fisica 1, baixa
   execucao financeira 1, gargalo financeiro 1, contrato sem evolucao 1) e faixas de
   classificacao Baixo/Medio/Alto/Critico.
+- Grupo C (frentes financiadas + FNHIS): 7 indicadores DOCUMENTADOS e NAO
+  materializados (contratos/valor para Faixa 3/FGTS, Faixa 2/SBPE e Reforma;
+  propostas para FNHIS/SUB50). Sem serie historica: visao por snapshot/agregado.
 - Validacao de negocio e a Fase 5 (nao executada); "Responsavel pela validacao" =
   "A definir (area de negocio)" para todos os indicadores.
 - Nenhum modelo dbt foi criado ou alterado nesta fase.
+- **Reconciliacao com as fases 2-4 e com o modelo GEFUS**: este dicionario (fase
+  0-1) presumia a inexistencia de serie mensal de entregues. A validacao tecnica
+  (fases 2-4) confirmou serie mensal de contratadas E entregues 2024-06 a 2026-03
+  (SNH, `historico_recente_*`), e o modelo `historico_mcmv_empreendimentos_snapshot`
+  (GEFUS/SFTP) acrescenta serie mensal de entregues desde 2019-12 para FAR e Rural.
+  Os campos de granularidade temporal/territorial e periodo historico dos
+  indicadores afetados (`uh_contratadas`, `uh_entregues`, `perc_meta_entregue`,
+  `gap_uh_meta`, `ritmo_medio_mensal`, `ritmo_necessario`, `projecao_entrega`,
+  `status_relogio`) foram atualizados.
 
 ## Fonte dos dados
 
@@ -34,6 +46,8 @@ Arquivos-fonte utilizados nesta consolidacao:
 - `models/mcmv_historico_dbt/piloto/schema.yml`
 - `seeds/mcmv_historico/issue_118_mcmv_serie_temporal_piloto.csv`
 - `models/docs/entregas/issue-118-entrega-final.md`
+- `models/docs/entregas/issue-130-implementacao-modelos-historicos-empreendimentos.md`
+- `models/docs/entregas/issue-130-d1-reconciliacao-novo-mcmv-far.md`
 
 ## Notas transversais (leitura obrigatoria)
 
@@ -42,19 +56,29 @@ Arquivos-fonte utilizados nesta consolidacao:
    ou `retomada` no nome; a meta deve ser carregada como parametro/tabela de metas
    oficial, nao inferida do MinIO. Nos docs existe apenas uma "meta visual" de
    2.214.810 UHs (MCMV ciclo 2023-2026), usada somente como referencia de progresso.
-2. **Serie historica limitada**: o piloto #118 cobre somente UH CONTRATADAS, com
-   granularidade anual 2009-2025, separando OGU/Subsidiado e FGTS/Financiado. NAO
-   existe serie historica de entregues, nem granularidade mensal, nem granularidade
-   territorial. Isso afeta `uh_entregues`, `ritmo_medio_mensal`, `ritmo_necessario` e
-   `projecao_entrega`.
+2. **Serie historica (reconciliada)**: tres fontes historicas coexistem e devem
+   ser lidas em conjunto:
+   - Piloto #118 (seed): anual 2009-2025, somente CONTRATADAS, OGU/Subsidiado e
+     FGTS/Financiado, nacional (sem granularidade territorial).
+   - GEFUS/SFTP (`historico_mcmv_empreendimentos_snapshot`): mensal 2019-12 em
+     diante, grao empreendimento x mes; FAR e Rural com contratadas E entregues,
+     FDS com contratadas e entregues NULL.
+   - SNH (`historico_recente_*`): mensal 2024-06 a 2026-03, contratadas E
+     entregues, CAIXA+BB, por APF/UF/municipio.
+   Conclusao: a serie de entregues NAO comeca apenas em 2024-06 — FAR e Rural tem
+   entregues mensais desde 2019-12 (GEFUS). A FDS (Entidades) e a unica frente sem
+   serie de entregues anterior a 2024-06. Isso condiciona `uh_entregues`,
+   `ritmo_medio_mensal`, `ritmo_necessario` e `projecao_entrega`.
 3. **Hiato OGU/Subsidiado 2020-2023**: a serie apresenta zeros nesse periodo, que
    devem ser classificados como periodo ausente/incompleto (ausencia real vs dado nao
    coletado) antes de qualquer leitura de tendencia.
 4. **Snapshot pontual 30/06/2026**: contratadas 1.874.623, entregues 1.543.432 e
    vigentes 313.884, por APF/UF/municipio/agente financeiro. E um ponto no tempo, nao
    uma serie.
-5. **Materializacao**: grupo A documentado e nao materializado em gold/mart; grupo B
-   implementado em `indicadores_gargalo_desempenho` (regras e score definidos).
+5. **Materializacao**: grupo A e grupo C documentados e nao materializados em
+   gold/mart; grupo B implementado em `indicadores_gargalo_desempenho` (regras e
+   score definidos). O modelo `historico_mcmv_empreendimentos_snapshot` (GEFUS) e o
+   unico modelo de serie historica de empreendimentos ja materializado em codigo dbt.
 6. **Campos fisicos**: campos preferenciais seguem `glossario-mcid.md` e
    `issue-119-matriz-glossario-campos.csv` (ex.: `quantidade_uh`,
    `quantidade_uh_entregues`, `valor_contratado`, `valor_desembolsado`,
@@ -94,13 +118,13 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Nome | uh_contratadas |
 | Definicao | Unidades habitacionais contratadas ate a data de referencia. |
 | Objetivo | Ponteiro principal de contratacao do reloginho; mede o andamento de contratacao contra a meta. |
-| Fonte | Bases mensais SNH dados prioritarios: `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv` e `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt` (campo UH Contratadas). Serie historica: seed `issue_118_mcmv_serie_temporal_piloto` (2009-2025). |
+| Fonte | Bases mensais SNH dados prioritarios: `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv` e `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt` (campo UH Contratadas). Serie historica: seed `issue_118_mcmv_serie_temporal_piloto` (anual 2009-2025) + `historico_mcmv_empreendimentos_snapshot` (GEFUS, mensal 2019-12+) + `historico_recente_*` (SNH, mensal 2024-06+). |
 | Tabelas e campos utilizados | Silver mcmv (a definir). Campos preferenciais: `quantidade_uh` (aliases: `qt_uh`, `uh_contratadas`, `unidades_qt`, `uh`), `dt_referencia`, `apf`, `uf`, `municipio`, `codigo_ibge_municipio`. |
 | Regra de calculo | Soma de UHs contratadas ate a data de referencia. Snapshot 30/06/2026: 1.874.623 UHs (CAIXA + BB), 84,64% da meta visual. |
-| Granularidade temporal | Mensal (snapshots) para o dado atual; anual (2009-2025) na serie historica. |
+| Granularidade temporal | Mensal (GEFUS 2019-12+ e SNH 2024-06+) para o dado recente; anual (2009-2025) na serie historica do piloto #118. |
 | Granularidade territorial | APF, UF, municipio, agente financeiro (bases mensais); a serie historica e nacional por linha (OGU/Subsidiado e FGTS/Financiado). |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro, modalidade, ciclo. |
-| Periodo historico disponivel | Serie anual 2009-2025 (piloto #118, somente contratadas, separando OGU/Subsidiado e FGTS/Financiado); snapshot pontual 30/06/2026. |
+| Periodo historico disponivel | Serie anual 2009-2025 (piloto #118, somente contratadas, OGU/Subsidiado e FGTS/Financiado) + serie mensal GEFUS 2019-12+ (FAR/FDS/Rural, grao empreendimento) + serie mensal SNH 2024-06 a 2026-03 (CAIXA+BB, por APF/UF/municipio); snapshot pontual 30/06/2026. |
 | Tratamento de valores nulos | Nao definido. Hiato OGU/Subsidiado 2020-2023 aparece como zeros na serie: periodo ausente/incompleto a classificar (ausencia real vs dado nao coletado). |
 | Tratamento de duplicidades | Deduplicacao por APF/contrato para evitar dupla contagem entre arquivos de contratacao e entrega (issue-66). |
 | Unidade de medida | Unidades habitacionais (UH). |
@@ -113,13 +137,13 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Nome | uh_entregues |
 | Definicao | Unidades habitacionais entregues ate a data de referencia. |
 | Objetivo | Ponteiro de entrega do reloginho; deve ser exibido separadamente de contratadas para evitar leitura otimista. |
-| Fonte | Arquivos de entrega: `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv` (`QT_UH_ENTREGUES`) e `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB.csv` (Numero de Unidades Entregues); e campo UH Entregues nas bases mensais 202606 CAIXA + BB. |
+| Fonte | Arquivos de entrega: `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv` (`QT_UH_ENTREGUES`) e `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB.csv` (Numero de Unidades Entregues); campo UH Entregues nas bases mensais 202606 CAIXA + BB; e `historico_mcmv_empreendimentos_snapshot` (GEFUS, `quantidade_uh_entregues`, mensal 2019-12+ para FAR/Rural). |
 | Tabelas e campos utilizados | Silver mcmv (a definir). Campo preferencial `quantidade_uh_entregues` (aliases: `qt_uh_alienadas`, `qt_unidades_entregues`, `numero_de_unidades_entregues`), `dt_referencia`, `apf`, `uf`, `municipio`. |
 | Regra de calculo | Soma de UHs entregues ate a data de referencia. Snapshot 30/06/2026: 1.543.432 (bases mensais CAIXA + BB) ou 1.518.598 (arquivos de entrega por evento), 69,69% da meta visual. Dois caminhos com totais diferentes: definir qual e o oficial. |
-| Granularidade temporal | Mensal (snapshot pontual). NAO existe serie historica de entregues. |
-| Granularidade territorial | APF, UF, municipio, agente financeiro (snapshot). NAO existe serie historica territorial de entregues. |
+| Granularidade temporal | Mensal (serie GEFUS 2019-12+ para FAR/Rural; serie SNH 2024-06 a 2026-03 para todas as frentes) + snapshot 30/06/2026. |
+| Granularidade territorial | APF, UF, municipio, agente financeiro (serie SNH 2024-06+ e snapshot). GEFUS 2019-12+ por empreendimento/APF (UF/municipio quando disponivel na fonte). |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro, modalidade. |
-| Periodo historico disponivel | Somente snapshot 30/06/2026; nao existe serie historica de entregues (piloto #118 cobre apenas contratadas). |
+| Periodo historico disponivel | Serie mensal GEFUS 2019-12+ (FAR/Rural, grao empreendimento) + serie mensal SNH 2024-06 a 2026-03 (CAIXA+BB, por APF/UF/municipio) + snapshot 30/06/2026. FDS (Entidades) sem entregues no GEFUS (NULL), coberta apenas pela SNH 2024-06+. Piloto #118 cobre apenas contratadas (anual 2009-2025). |
 | Tratamento de valores nulos | NULL em frentes sem entrega (ver silver); demais casos nao definido. |
 | Tratamento de duplicidades | Deduplicacao por APF/contrato para evitar dupla contagem entre arquivos de contratacao e entrega (issue-66). |
 | Unidade de medida | Unidades habitacionais (UH). |
@@ -157,7 +181,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Granularidade temporal | Mensal (snapshot). |
 | Granularidade territorial | Nacional; por frente/UF conforme grao de uh_entregues. |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro, ciclo. |
-| Periodo historico disponivel | Somente snapshot 30/06/2026; nao existe serie historica de entregues. |
+| Periodo historico disponivel | Serie mensal GEFUS 2019-12+ (FAR/Rural) + serie mensal SNH 2024-06+ (todas as frentes) + snapshot 30/06/2026; regra contra meta do ciclo pendente (meta oficial nao definida). |
 | Tratamento de valores nulos | Nao definido; depende de uh_meta_total e de uh_entregues (NULL em frentes sem entrega). |
 | Tratamento de duplicidades | Herda a deduplicacao de uh_entregues. |
 | Unidade de medida | Percentual (%). |
@@ -176,7 +200,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Granularidade temporal | Mensal (snapshot). |
 | Granularidade territorial | Nacional; por frente/UF conforme grao de uh_entregues. |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro, ciclo. |
-| Periodo historico disponivel | Depende de uh_entregues (somente snapshot) e da meta oficial (pendente). |
+| Periodo historico disponivel | Depende de uh_entregues (serie mensal GEFUS 2019-12+ / SNH 2024-06+) e da meta oficial (pendente). |
 | Tratamento de valores nulos | Nao definido. |
 | Tratamento de duplicidades | Herda a deduplicacao de uh_entregues. |
 | Unidade de medida | Unidades habitacionais (UH). |
@@ -195,7 +219,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Granularidade temporal | Mensal. |
 | Granularidade territorial | Nao definido; aplicavel por frente/UF conforme grao de uh_entregues. |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro. |
-| Periodo historico disponivel | NAO existe serie mensal de entregues; o calculo depende de snapshots mensais que ainda nao existem como serie. |
+| Periodo historico disponivel | Viavel a partir da serie mensal de entregues: GEFUS 2019-12+ (FAR/Rural) e SNH 2024-06+ (todas as frentes); janela de observacao do denominador ainda a definir. |
 | Tratamento de valores nulos | Nao definido. |
 | Tratamento de duplicidades | Herda a deduplicacao de uh_entregues. |
 | Unidade de medida | UHs/mes. |
@@ -214,7 +238,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Granularidade temporal | Mensal. |
 | Granularidade territorial | Nao definido; aplicavel por frente/UF conforme grao. |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro, ciclo. |
-| Periodo historico disponivel | Depende da meta oficial (pendente) e de uh_entregues (somente snapshot). |
+| Periodo historico disponivel | Depende da meta oficial (pendente) e de uh_entregues (serie mensal GEFUS 2019-12+ / SNH 2024-06+); termino do ciclo a definir. |
 | Tratamento de valores nulos | Nao definido. |
 | Tratamento de duplicidades | Herda a deduplicacao de uh_entregues. |
 | Unidade de medida | UHs/mes. |
@@ -233,7 +257,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Granularidade temporal | Mensal. |
 | Granularidade territorial | Nao definido. |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro, ciclo. |
-| Periodo historico disponivel | NAO ha serie mensal de entregues para projetar; o calculo depende de uma serie de snapshots. |
+| Periodo historico disponivel | Serie mensal de entregues disponivel (GEFUS 2019-12+ / SNH 2024-06+); janela do ritmo recente e termino do ciclo ainda a definir. |
 | Tratamento de valores nulos | Nao definido. |
 | Tratamento de duplicidades | Herda a deduplicacao de uh_entregues. |
 | Unidade de medida | Unidades habitacionais (UH). |
@@ -252,7 +276,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Granularidade temporal | Mensal (snapshot). |
 | Granularidade territorial | Nacional e por frente; extensao por UF/municipio a definir. |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro. |
-| Periodo historico disponivel | Sem serie historica; visao pontual por snapshot. |
+| Periodo historico disponivel | Calculavel mensal a partir de 2019-12 (FAR/Rural via GEFUS) ou 2024-06 (todas as frentes via SNH) uma vez definidas faixas de corte e meta oficial; hoje visao pontual por snapshot. |
 | Tratamento de valores nulos | Nao definido. |
 | Tratamento de duplicidades | Nao aplicavel (status derivado agregado). |
 | Unidade de medida | Categorico (No prazo / Atencao / Risco). |
@@ -452,6 +476,153 @@ Contexto comum do grupo B:
 | Unidade de medida | Score numerico inteiro + categorico (Baixo / Medio / Alto / Critico). |
 | Responsavel pela validacao | A definir (area de negocio). |
 
+## Grupo C - Indicadores das frentes financiadas e FNHIS (7)
+
+Contexto comum do grupo C (frentes que nao usam UH como ponteiro):
+
+- Ponteiro em contratos e/ou valor financiado (nao UH), conforme issue-66
+  ("Regras Para a Gold do Relogio" preve `kpi` = contratos / valor financiado /
+  UH). A equivalencia contratos/valor -> UH e decisao de negocio PENDENTE.
+- Fonte: snapshots/agregados atuais; NAO ha serie historica documentada para
+  estas frentes (diferente dos grupos A/B, que tem GEFUS/SNH/piloto #118).
+- Campo oficial de valor (`vr_evento` vs `vr_investimento`) PENDENTE de decisao.
+- Meta por frente/programa/ano PENDENTE (tabela oficial de metas nao existe).
+- Granularidade temporal: agregado por ano/faixa no snapshot (sem serie mensal).
+- Responsavel pela validacao: A definir (area de negocio) para todos.
+
+### propostas_fnhis_sub50
+
+| Campo | Valor |
+|---|---|
+| Nome | propostas_fnhis_sub50 |
+| Definicao | Propostas apresentadas e selecionadas da frente FNHIS/SUB50. |
+| Objetivo | Ponteiro da frente FNHIS/SUB50 no reloginho (progresso por proposta, nao UH). |
+| Fonte | `raw/novo_mcmv_fnhis_sub_50_propostas_apresentadas.csv` e `raw/novo_mcmv_fnhis_sub_50_propostas_selecionadas.csv`. |
+| Tabelas e campos utilizados | A definir na silver; campos de propostas (apresentadas/selecionadas) por UF/municipio. |
+| Regra de calculo | Contagem de propostas apresentadas e selecionadas; regra de conversao para UH PENDENTE (proposta vs contrato vs UH). |
+| Granularidade temporal | Snapshot pontual; sem serie historica documentada. |
+| Granularidade territorial | Nacional; por UF/municipio conforme fonte. |
+| Filtros aplicaveis | Frente, UF, municipio, status da proposta. |
+| Periodo historico disponivel | Somente snapshot atual; sem serie historica. |
+| Tratamento de valores nulos | Nao definido. |
+| Tratamento de duplicidades | Nao definido. |
+| Unidade de medida | Propostas (contagem). |
+| Responsavel pela validacao | A definir (area de negocio). |
+
+### contratos_faixa3_fgts
+
+| Campo | Valor |
+|---|---|
+| Nome | contratos_faixa3_fgts |
+| Definicao | Numero de contratos da frente Faixa 3 / FGTS. |
+| Objetivo | Ponteiro de contratacao da Faixa 3 no reloginho. |
+| Fonte | `raw/PMCMV_FAIXA3_MCID_2026_07_31.csv`. |
+| Tabelas e campos utilizados | Campo de contratos por ano/faixa (`003`); `vr_evento` e `vr_investimento` para o valor. |
+| Regra de calculo | Soma de contratos por ano/faixa. Referencia: 2025 = 44.001, 2026 = 89.149, total 133.150 (faixa 003). |
+| Granularidade temporal | Agregado por ano/faixa (snapshot). |
+| Granularidade territorial | Nacional; por UF/municipio a definir conforme fonte. |
+| Filtros aplicaveis | Faixa, ano, UF, municipio. |
+| Periodo historico disponivel | Snapshot 31/07/2026; sem serie historica documentada. |
+| Tratamento de valores nulos | Nao definido. |
+| Tratamento de duplicidades | Nao definido. |
+| Unidade de medida | Contratos (contagem). |
+| Responsavel pela validacao | A definir (area de negocio). |
+
+### valor_financiado_faixa3_fgts
+
+| Campo | Valor |
+|---|---|
+| Nome | valor_financiado_faixa3_fgts |
+| Definicao | Valor financiado da frente Faixa 3 / FGTS. |
+| Objetivo | Ponteiro de valor financiado da Faixa 3 (meta por valor, nao UH). |
+| Fonte | `raw/PMCMV_FAIXA3_MCID_2026_07_31.csv`. |
+| Tabelas e campos utilizados | `vr_evento` ou `vr_investimento` (campo oficial PENDENTE). |
+| Regra de calculo | Soma do valor financiado por ano/faixa. Referencia (faixa 003): total 27,93 Bi (`vr_evento`) ou 38,85 Bi (`vr_investimento`). |
+| Granularidade temporal | Agregado por ano/faixa (snapshot). |
+| Granularidade territorial | Nacional; por UF/municipio a definir. |
+| Filtros aplicaveis | Faixa, ano, UF, municipio. |
+| Periodo historico disponivel | Snapshot 31/07/2026; sem serie historica documentada. |
+| Tratamento de valores nulos | Nao definido. |
+| Tratamento de duplicidades | Nao definido. |
+| Unidade de medida | R$ (valor financiado). |
+| Responsavel pela validacao | A definir (area de negocio). |
+
+### contratos_faixa2_sbpe
+
+| Campo | Valor |
+|---|---|
+| Nome | contratos_faixa2_sbpe |
+| Definicao | Numero de contratos da frente Faixa 2 / FGTS/SBPE. |
+| Objetivo | Ponteiro de contratacao da Faixa 2 no reloginho. |
+| Fonte | `raw/fgts_canal_tab_ao_1_contratos_fgts.csv` e snapshots `gefus_anteriores_base_pf_fgts_*`. |
+| Tabelas e campos utilizados | Campo de contratos por contrato/UF/municipio/faixa. |
+| Regra de calculo | Soma de contratos; modelagem gold propria (ingestao incremental) ainda a definir. |
+| Granularidade temporal | Snapshot/incremental; sem serie historica documentada. |
+| Granularidade territorial | Nacional; por UF/municipio/faixa/status. |
+| Filtros aplicaveis | Faixa, UF, municipio, status, data de referencia. |
+| Periodo historico disponivel | Snapshot atual; sem serie historica documentada. |
+| Tratamento de valores nulos | Nao definido. |
+| Tratamento de duplicidades | Nao definido. |
+| Unidade de medida | Contratos (contagem). |
+| Responsavel pela validacao | A definir (area de negocio). |
+
+### valor_desembolsado_faixa2_sbpe
+
+| Campo | Valor |
+|---|---|
+| Nome | valor_desembolsado_faixa2_sbpe |
+| Definicao | Valor desembolsado da frente Faixa 2 / FGTS/SBPE. |
+| Objetivo | Ponteiro de desembolso da Faixa 2 (acompanhamento de execucao financeira). |
+| Fonte | `raw/fgts_canal_tab_ao_2_tab_desembolsos_fgts.csv` e `raw/fgts_canal_tab_ao_2_tab_execucoes_obras.csv`. |
+| Tabelas e campos utilizados | Campos de desembolso e execucao por contrato. |
+| Regra de calculo | Soma de desembolso por contrato/UF/municipio/faixa. |
+| Granularidade temporal | Snapshot/incremental; sem serie historica documentada. |
+| Granularidade territorial | Nacional; por UF/municipio/faixa/status. |
+| Filtros aplicaveis | Faixa, UF, municipio, status, data de referencia. |
+| Periodo historico disponivel | Snapshot atual; sem serie historica documentada. |
+| Tratamento de valores nulos | Nao definido. |
+| Tratamento de duplicidades | Nao definido. |
+| Unidade de medida | R$ (valor desembolsado). |
+| Responsavel pela validacao | A definir (area de negocio). |
+
+### contratos_reforma
+
+| Campo | Valor |
+|---|---|
+| Nome | contratos_reforma |
+| Definicao | Numero de contratos da frente Reforma Casa Brasil. |
+| Objetivo | Ponteiro de contratacao da Reforma no reloginho. |
+| Fonte | `raw/reforma_casa_brasil_contratacao.csv` (consolidada) e `raw/PMCMV_REFORMAS_MCID_2026_07_31.csv` (snapshot SFTP). |
+| Tabelas e campos utilizados | Campo de contratos por ano/faixa (`001`/`002`); `vr_evento` e `vr_investimento` para o valor. |
+| Regra de calculo | Soma de contratos por ano/faixa. Referencia consolidada 2025 = 36.647, 2026 = 14.865; snapshot SFTP total = 126.407 (001/002). |
+| Granularidade temporal | Agregado por ano/faixa (snapshot). |
+| Granularidade territorial | Nacional; por UF/municipio a definir. |
+| Filtros aplicaveis | Faixa, ano, UF, municipio. |
+| Periodo historico disponivel | Snapshot 31/07/2026 (SFTP) e consolidada 02/03/2026; sem serie historica documentada. |
+| Tratamento de valores nulos | Nao definido. |
+| Tratamento de duplicidades | Nao definido. |
+| Unidade de medida | Contratos (contagem). |
+| Responsavel pela validacao | A definir (area de negocio). |
+
+### valor_financiado_reforma
+
+| Campo | Valor |
+|---|---|
+| Nome | valor_financiado_reforma |
+| Definicao | Valor financiado da frente Reforma Casa Brasil. |
+| Objetivo | Ponteiro de valor financiado da Reforma (meta por valor, nao UH). |
+| Fonte | `raw/reforma_casa_brasil_contratacao.csv` (consolidada) e `raw/PMCMV_REFORMAS_MCID_2026_07_31.csv` (snapshot SFTP). |
+| Tabelas e campos utilizados | `vr_evento` ou `vr_investimento` (campo oficial PENDENTE). |
+| Regra de calculo | Soma do valor financiado por ano/faixa. Referencia consolidada 2025 = 531,4 Mi (`vr_evento`); snapshot SFTP total = 3,06 Bi. |
+| Granularidade temporal | Agregado por ano/faixa (snapshot). |
+| Granularidade territorial | Nacional; por UF/municipio a definir. |
+| Filtros aplicaveis | Faixa, ano, UF, municipio. |
+| Periodo historico disponivel | Snapshot 31/07/2026 (SFTP) e consolidada 02/03/2026; sem serie historica documentada. |
+| Tratamento de valores nulos | Nao definido. |
+| Tratamento de duplicidades | Nao definido. |
+| Unidade de medida | R$ (valor financiado). |
+| Responsavel pela validacao | A definir (area de negocio). |
+
 ## Pontos de atencao / ambiguidades
 
 - **Meta oficial pendente**: todos os indicadores percentuais, de gap, ritmo e
@@ -459,10 +630,18 @@ Contexto comum do grupo B:
 - **Dois totais de entrega**: as bases mensais CAIXA + BB somam 1.543.432 UHs
   entregues, enquanto os arquivos de entrega por evento somam 1.518.598 UHs; a
   regra oficial de qual caminho usar esta pendente.
-- **Ausencia de serie de entregues**: `uh_entregues`, `ritmo_medio_mensal`,
-  `ritmo_necessario` e `projecao_entrega` nao podem ser calculados como serie hoje.
+- **Serie de entregues (reconciliada)**: `uh_entregues`, `ritmo_medio_mensal`,
+  `ritmo_necessario` e `projecao_entrega` sao calculaveis como serie mensal:
+  GEFUS 2019-12+ (FAR/Rural) e SNH 2024-06+ (todas as frentes). A FDS (Entidades)
+  nao tem entregues no GEFUS (NULL).
 - **Hiato OGU/Subsidiado 2020-2023**: zeros na serie devem ser classificados como
   ausencia real vs dado nao coletado.
-- **Granularidade mensal/territorial historica**: inexistente no piloto #118
-  (somente anual e nacional, para contratadas).
+- **Granularidade mensal/territorial historica**: o piloto #118 e somente anual e
+  nacional (contratadas). As series mensais complementam com grao
+  empreendimento/APF: GEFUS 2019-12+ (FAR/FDS/Rural) e SNH 2024-06+
+  (APF/UF/municipio, contratadas E entregues).
 - **Faixas de corte do `status_relogio`**: nao definidas nos docs.
+- **Frentes financiadas e FNHIS (grupo C)**: ponteiros em contratos/valor (nao UH)
+  documentados, mas sem serie historica, com campo de valor (`vr_evento` vs
+  `vr_investimento`), meta por frente e regra de equivalencia contratos->UH
+  pendentes de decisao de negocio.
