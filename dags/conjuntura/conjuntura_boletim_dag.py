@@ -12,7 +12,7 @@ from cosmos import (
     RenderConfig,
 )
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
-from schedule_loader import get_dynamic_schedule
+from clientes.schedule_loader import get_dynamic_schedule
 
 dbt_log_path = "/tmp/dbt_logs"  # NOSONAR
 os.makedirs(dbt_log_path, exist_ok=True)

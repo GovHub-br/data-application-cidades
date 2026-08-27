@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Any, cast
-from cliente_base import ClienteBase
+from clientes.cliente_base import ClienteBase
 
 
 class ClienteInfomoney(ClienteBase):

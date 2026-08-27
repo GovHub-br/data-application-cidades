@@ -7,10 +7,10 @@ import logging
 import json
 import pandas as pd
 import io
-from schedule_loader import get_dynamic_schedule
-from cliente_email import fetch_and_process_email
-from cliente_postgres import ClientPostgresDB
-from postgres_helpers import get_postgres_conn
+from clientes.schedule_loader import get_dynamic_schedule
+from clientes.cliente_email import fetch_and_process_email
+from clientes.cliente_postgres import ClientPostgresDB
+from helpers.postgres_helpers import get_postgres_conn
 from functools import partial
 
 default_args = {

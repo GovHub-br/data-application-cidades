@@ -2,12 +2,12 @@ import logging
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from datetime import datetime, timedelta
-from schedule_loader import get_dynamic_schedule
-from postgres_helpers import get_postgres_conn
-from cliente_bacen import ClienteBacen
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
+from clientes.schedule_loader import get_dynamic_schedule
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.cliente_bacen import ClienteBacen
+from clientes.cliente_postgres import ClientPostgresDB
+from clientes.cliente_minio import upload_raw_json
+from clientes.ingestor_lake import registros_para_staging_parquet
 import pandas as pd
 
 

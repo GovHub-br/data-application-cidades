@@ -5,9 +5,9 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 import yaml
 
-from postgres_helpers import get_postgres_conn
-from cliente_postgres import ClientPostgresDB
-from cliente_pncp import ClientePNCP
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.cliente_postgres import ClientPostgresDB
+from clientes.cliente_pncp import ClientePNCP
 
 
 @dag(

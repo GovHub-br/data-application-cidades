@@ -9,10 +9,10 @@ import pandas as pd
 import io
 import re
 import zipfile
-from schedule_loader import get_dynamic_schedule
-from cliente_email import fetch_email_with_zip
-from cliente_postgres import ClientPostgresDB
-from postgres_helpers import get_postgres_conn
+from clientes.schedule_loader import get_dynamic_schedule
+from clientes.cliente_email import fetch_email_with_zip
+from clientes.cliente_postgres import ClientPostgresDB
+from helpers.postgres_helpers import get_postgres_conn
 
 # Configurações básicas da DAG
 default_args = {

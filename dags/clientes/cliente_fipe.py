@@ -6,7 +6,7 @@ from typing import Optional
 import pandas as pd
 import requests
 
-from cliente_base import ClienteBase
+from clientes.cliente_base import ClienteBase
 
 
 class ClienteFipeZap(ClienteBase):

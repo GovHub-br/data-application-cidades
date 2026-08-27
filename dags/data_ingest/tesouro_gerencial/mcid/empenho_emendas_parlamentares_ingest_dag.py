@@ -9,10 +9,10 @@ from airflow import DAG
 from airflow.exceptions import AirflowSkipException
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
-from cliente_email import fetch_and_process_email
-from cliente_postgres import ClientPostgresDB
-from postgres_helpers import get_postgres_conn
-from schedule_loader import get_dynamic_schedule
+from clientes.cliente_email import fetch_and_process_email
+from clientes.cliente_postgres import ClientPostgresDB
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.schedule_loader import get_dynamic_schedule
 
 default_args = {
     "owner": "Lucas",

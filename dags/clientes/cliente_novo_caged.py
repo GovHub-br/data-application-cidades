@@ -1,7 +1,7 @@
 import logging
 from http import HTTPStatus
 from datetime import datetime
-from cliente_base import ClienteBase
+from clientes.cliente_base import ClienteBase
 from typing import Optional, Dict, Any, List
 
 MAP_MESES = {

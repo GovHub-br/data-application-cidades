@@ -3,10 +3,10 @@ from datetime import datetime, timedelta
 from typing import Dict, List, TypedDict, cast
 from airflow.decorators import dag, task
 from airflow.models import Variable
-from cliente_postgres import ClientPostgresDB
-from cliente_sqlserver import ClientSQLServerDB
-from postgres_helpers import get_postgres_conn
-from schedule_loader import get_dynamic_schedule
+from clientes.cliente_postgres import ClientPostgresDB
+from clientes.cliente_sqlserver import ClientSQLServerDB
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.schedule_loader import get_dynamic_schedule
 
 
 class SQLServerTableConfig(TypedDict):

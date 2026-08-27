@@ -1,9 +1,9 @@
 import logging
 from airflow.decorators import dag, task
 from datetime import datetime
-from postgres_helpers import get_postgres_conn
-from cliente_transferegov_emendas import ClienteTransfereGov
-from cliente_postgres import ClientPostgresDB
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.cliente_transferegov_emendas import ClienteTransfereGov
+from clientes.cliente_postgres import ClientPostgresDB
 
 
 @dag(

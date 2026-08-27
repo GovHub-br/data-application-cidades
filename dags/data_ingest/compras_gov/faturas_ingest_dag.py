@@ -1,10 +1,10 @@
 import logging
 from airflow.decorators import dag, task
 from datetime import datetime, timedelta
-from schedule_loader import get_dynamic_schedule
-from cliente_contratos import ClienteContratos
-from cliente_postgres import ClientPostgresDB
-from postgres_helpers import get_postgres_conn
+from clientes.schedule_loader import get_dynamic_schedule
+from clientes.cliente_contratos import ClienteContratos
+from clientes.cliente_postgres import ClientPostgresDB
+from helpers.postgres_helpers import get_postgres_conn
 
 
 @dag(

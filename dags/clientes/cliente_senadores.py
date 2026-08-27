@@ -2,7 +2,7 @@ import http
 import logging
 from typing import cast
 
-from cliente_base import ClienteBase
+from clientes.cliente_base import ClienteBase
 
 
 class ClienteSenadores(ClienteBase):

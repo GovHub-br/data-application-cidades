@@ -23,7 +23,7 @@ from typing import Any, Callable, cast
 
 import pandas as pd
 
-from cliente_minio import (
+from clientes.cliente_minio import (
     download_raw_bytes,
     upload_raw_bytes,
     upload_staging_parquet,

@@ -4,18 +4,18 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-import cliente_email
+import clientes.cliente_email
 import pandas as pd
 from airflow import DAG
 from airflow.exceptions import AirflowSkipException
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
-from cliente_email import fetch_and_process_email
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
-from postgres_helpers import get_postgres_conn
-from schedule_loader import get_dynamic_schedule
+from clientes.cliente_email import fetch_and_process_email
+from clientes.cliente_postgres import ClientPostgresDB
+from clientes.cliente_minio import upload_raw_bytes, upload_fallback_json
+from clientes.ingestor_lake import registros_para_staging_parquet
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.schedule_loader import get_dynamic_schedule
 
 default_args = {
     "owner": "Lucas",

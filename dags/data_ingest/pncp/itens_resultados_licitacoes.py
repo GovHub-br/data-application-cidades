@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
 
-from postgres_helpers import get_postgres_conn
-from cliente_postgres import ClientPostgresDB
-from cliente_pncp import ClientePNCP
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.cliente_postgres import ClientPostgresDB
+from clientes.cliente_pncp import ClientePNCP
 
 
 def padronizar_colunas_json(lista_de_dicts: list[dict]) -> list[dict]:

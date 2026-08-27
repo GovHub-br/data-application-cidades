@@ -1,7 +1,7 @@
 import http
 from typing import Optional
 
-from cliente_base import ClienteBase
+from clientes.cliente_base import ClienteBase
 
 
 class ClienteSiorg(ClienteBase):

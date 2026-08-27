@@ -13,8 +13,6 @@ x-airflow-common: &airflow-common
   volumes:
     - ./airflow/airflow.cfg:${AIRFLOW_HOME}/airflow.cfg
     - ../dags:${AIRFLOW_HOME}/dags/
-    - ../plugins:${AIRFLOW_HOME}/plugins/
-    - ../helpers:${AIRFLOW_HOME}/helpers/
     - ../templates:${AIRFLOW_HOME}/templates/
     - ../dbt:${AIRFLOW_HOME}/dbt/
     - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
@@ -41,12 +39,9 @@ x-airflow-environment: &airflow-common-env
   AIRFLOW__WEBSERVER__NAVBAR_COLOR: '#98DFFF'
   AIRFLOW__WEBSERVER__RELOAD_ON_PLUGIN_CHANGE: 'true'
   AIRFLOW__WEBSERVER__SECRET_KEY: '42'
-  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:$PYTHONPATH"
   _AIRFLOW_DB_MIGRATE: 'true'
   _AIRFLOW_WWW_USER_CREATE: 'true'
-  _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
   _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
-  AIRFLOW__CORE__PLUGINS_FOLDER: ${AIRFLOW_HOME}/plugins
   AIRFLOW__CORE__DAGS_FOLDER: ${AIRFLOW_HOME}/dags
   AIRFLOW_REPO_BASE: ${AIRFLOW_HOME}
   # A ENV AIRFLOW_REPO_BASE É IMPORTANTE PARA SINCRONIZAR COM O SISTEMA DE PASTAS

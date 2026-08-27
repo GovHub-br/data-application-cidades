@@ -6,7 +6,7 @@ from typing import Optional, cast
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from cliente_base import ClienteBase
+from clientes.cliente_base import ClienteBase
 
 
 class ClienteAbecip(ClienteBase):

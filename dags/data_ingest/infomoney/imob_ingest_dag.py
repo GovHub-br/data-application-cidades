@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from airflow.decorators import dag, task
 from airflow.models import Variable
 
-from postgres_helpers import get_postgres_conn
-from cliente_postgres import ClientPostgresDB
-from cliente_infomoney import ClienteInfomoney
-from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.cliente_postgres import ClientPostgresDB
+from clientes.cliente_infomoney import ClienteInfomoney
+from clientes.cliente_minio import upload_raw_json
+from clientes.ingestor_lake import registros_para_staging_parquet
 
 # Configurações padrão
 DEFAULT_ARGS = {

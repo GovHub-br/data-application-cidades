@@ -10,9 +10,9 @@ from typing import Dict
 from airflow.decorators import dag, task
 from airflow.models import Variable
 
-from postgres_helpers import get_postgres_conn
-from cliente_postgres import ClientPostgresDB
-from cliente_github import ClienteGitHub
+from helpers.postgres_helpers import get_postgres_conn
+from clientes.cliente_postgres import ClientPostgresDB
+from clientes.cliente_github import ClienteGitHub
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
