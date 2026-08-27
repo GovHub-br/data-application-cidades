@@ -63,7 +63,7 @@ with DAG(
     dag_id="email_notas_credito_ingest",
     default_args=default_args,
     description="Processa anexos das NCs vindo de dois emails, formata e insere no db",
-    schedule_interval=get_dynamic_schedule("nc_tesouro_ingest_dag"),
+    schedule=get_dynamic_schedule("nc_tesouro_ingest_dag"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     tags=["email", "ncs", "tesouro"],
@@ -200,35 +200,30 @@ with DAG(
     process_emails_enviadas_task = PythonOperator(
         task_id="process_emails_enviadas",
         python_callable=process_email_data_enviadas,
-        provide_context=True,
     )
 
     # Tarefa 2: Processar os e-mails de notas de crédito recebidas
     process_emails_recebidas_task = PythonOperator(
         task_id="process_emails_recebidas",
         python_callable=process_email_data_recebidas,
-        provide_context=True,
     )
 
     # Tarefa 3: Combinar os dados dos dois emails
     combine_data_task = PythonOperator(
         task_id="combine_data",
         python_callable=combine_data,
-        provide_context=True,
     )
 
     # Tarefa 4: Inserir os dados no banco de dados
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
-        provide_context=True,
     )
 
     # Tarefa 5: Limpar duplicados no banco de dados
     clean_duplicates_task = PythonOperator(
         task_id="clean_duplicates",
         python_callable=clean_duplicates,
-        provide_context=True,
     )
 
     # Fluxo da DAG

@@ -50,7 +50,7 @@ INGEST_DAG_IDS = [
 
 @dag(
     dag_id="conjuntura_boletim_dag",
-    schedule_interval=get_dynamic_schedule(
+    schedule=get_dynamic_schedule(
         "conjuntura_boletim_dag", default="0 10 * * 5"
     ),
     start_date=datetime(2025, 1, 1),

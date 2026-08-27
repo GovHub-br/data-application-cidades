@@ -27,7 +27,7 @@ GITHUB_BRANCH = "main"
 
 @dag(
     dag_id="dashboard_servidores_json",
-    schedule_interval="0 6 * * *",  # Executa diariamente às 6h
+    schedule="0 6 * * *",  # Executa diariamente às 6h
     start_date=datetime(2025, 11, 16),
     catchup=False,
     default_args={

@@ -12,7 +12,7 @@ from helpers.postgres_helpers import get_postgres_conn
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("nota_empenho_siafi_ingest_dag"),
+    schedule=get_dynamic_schedule("nota_empenho_siafi_ingest_dag"),
     start_date=datetime(2023, 3, 17),
     catchup=False,
     default_args={

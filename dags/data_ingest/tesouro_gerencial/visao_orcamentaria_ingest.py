@@ -66,7 +66,7 @@ with DAG(
         "DAG processa anexos da visão orçamentária total IPEA "
         "vindo do email, formata e insere no db"
     ),
-    schedule_interval=get_dynamic_schedule("visao_orcamentaria_ingest"),
+    schedule=get_dynamic_schedule("visao_orcamentaria_ingest"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     tags=["email", "visao_orcamentaria", "tesouro"],
@@ -311,13 +311,11 @@ with DAG(
     process_emails_task = PythonOperator(
         task_id="process_emails",
         python_callable=process_email_data,
-        provide_context=True,
     )
 
     insert_and_clean_task = PythonOperator(
         task_id="insert_and_clean",
         python_callable=insert_and_clean_data,
-        provide_context=True,
     )
 
     # Fluxo da DAG

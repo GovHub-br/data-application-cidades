@@ -26,7 +26,7 @@ default_args = {
 
 @dag(
     dag_id="fipezap_trimestral_ingest_dag",
-    schedule_interval=get_dynamic_schedule("fipezap_trimestral"),
+    schedule=get_dynamic_schedule("fipezap_trimestral"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=default_args,

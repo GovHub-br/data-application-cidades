@@ -63,7 +63,7 @@ expected_columns = list(COLUMN_MAPPING.values())
 with DAG(
     dag_id="email_notas_credito_ingest_mir_ate_2025",
     default_args=default_args,
-    schedule_interval=get_dynamic_schedule("email_notas_credito_ingest_mir_ate_2025"),
+    schedule=get_dynamic_schedule("email_notas_credito_ingest_mir_ate_2025"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     tags=["MIR", "SIAFI", "notas_credito"],
@@ -197,31 +197,26 @@ with DAG(
     process_emails_enviadas_task = PythonOperator(
         task_id="process_emails_enviadas",
         python_callable=process_email_data_enviadas,
-        provide_context=True,
     )
 
     process_emails_recebidas_task = PythonOperator(
         task_id="process_emails_recebidas",
         python_callable=process_email_data_recebidas,
-        provide_context=True,
     )
 
     combine_data_task = PythonOperator(
         task_id="combine_data",
         python_callable=combine_data,
-        provide_context=True,
     )
 
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
-        provide_context=True,
     )
 
     clean_duplicates_task = PythonOperator(
         task_id="clean_duplicates",
         python_callable=clean_duplicates,
-        provide_context=True,
     )
 
     (

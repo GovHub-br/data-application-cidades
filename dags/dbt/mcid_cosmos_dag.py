@@ -19,7 +19,7 @@ my_cosmos_dag = DbtDag(
     execution_config=ExecutionConfig(
         dbt_executable_path=f"{os.environ['AIRFLOW_REPO_BASE']}/.local/bin/dbt",
     ),
-    schedule_interval=" 0 1 * * *",
+    schedule=" 0 1 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     dag_id="mcid_cosmos_dag",

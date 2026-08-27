@@ -8,7 +8,7 @@ from clientes.cliente_postgres import ClientPostgresDB
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("senadores_ingest_dag"),
+    schedule=get_dynamic_schedule("senadores_ingest_dag"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={

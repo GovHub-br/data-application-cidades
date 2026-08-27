@@ -110,7 +110,7 @@ with DAG(
     dag_id="email_projetos_sgac_ingest",
     default_args=default_args,
     description="Processa anexos do email de dados do SGAC e insere no db",
-    schedule_interval=get_dynamic_schedule("email_projetos_sgac_ingest"),
+    schedule=get_dynamic_schedule("email_projetos_sgac_ingest"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     tags=["email", "projetos", "sgac"],
@@ -192,13 +192,11 @@ with DAG(
     process_emails_task = PythonOperator(
         task_id="process_emails",
         python_callable=process_email_data,
-        provide_context=True,
     )
     # tarefa 2: inserir os dados no banco de dados
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
-        provide_context=True,
     )
     # Fluxo da DAG
     process_emails_task >> insert_to_db_task

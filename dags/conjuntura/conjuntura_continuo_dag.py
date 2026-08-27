@@ -55,7 +55,7 @@ INGESTORES_MANUAIS = [
 
 @dag(
     dag_id="conjuntura_continuo_dag",
-    schedule_interval=get_dynamic_schedule(
+    schedule=get_dynamic_schedule(
         "conjuntura_continuo_dag", default="0 8 * * 1"
     ),
     start_date=datetime(2025, 1, 1),

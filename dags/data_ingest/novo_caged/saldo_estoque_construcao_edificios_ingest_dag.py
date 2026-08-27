@@ -10,7 +10,7 @@ from clientes.ingestor_lake import registros_para_staging_parquet
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule(
+    schedule=get_dynamic_schedule(
         "novo_caged_construcao_edificios", default="@monthly"
     ),
     start_date=datetime(2025, 1, 1),

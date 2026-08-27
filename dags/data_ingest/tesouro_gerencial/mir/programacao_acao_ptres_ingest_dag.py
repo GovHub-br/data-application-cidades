@@ -53,7 +53,7 @@ with DAG(
         "Processa anexo consolidado de programações de ação por PTRES "
         "por email e insere no db"
     ),
-    schedule_interval=get_dynamic_schedule("programacao_acao_ptres_ingest_dag"),
+    schedule=get_dynamic_schedule("programacao_acao_ptres_ingest_dag"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     tags=["email", "ptres", "tesouro", "MIR"],
@@ -140,21 +140,18 @@ with DAG(
     process_email_task = PythonOperator(
         task_id="process_email",
         python_callable=process_email_data,
-        provide_context=True,
     )
 
     # Tarefa 2: Inserir os dados no db
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
-        provide_context=True,
     )
 
     # Tarefa 3: Limpar duplicados no banco de dados
     clean_duplicates_task = PythonOperator(
         task_id="clean_duplicates",
         python_callable=clean_duplicates,
-        provide_context=True,
     )
 
     # Fluxo da DAG

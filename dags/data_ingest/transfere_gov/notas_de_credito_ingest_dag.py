@@ -8,7 +8,7 @@ from clientes.cliente_ted import ClienteTed
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("notas_de_credito_ingest_dag"),
+    schedule=get_dynamic_schedule("notas_de_credito_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={

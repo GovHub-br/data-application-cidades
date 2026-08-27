@@ -61,7 +61,7 @@ SKIPROWS = 3
 with DAG(
     dag_id="email_notas_credito_ingest_mir_pos_2026",
     default_args=default_args,
-    schedule_interval=get_dynamic_schedule("email_notas_credito_ingest_mir_post_2026"),
+    schedule=get_dynamic_schedule("email_notas_credito_ingest_mir_post_2026"),
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["MIR", "email", "notas_credito"],

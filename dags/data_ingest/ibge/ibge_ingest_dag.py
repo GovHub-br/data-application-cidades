@@ -12,11 +12,9 @@ from clientes.cliente_minio import upload_raw_json, download_raw_json, upload_st
 import pandas as pd
 import psycopg2
 
-CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default_var=[])
-
 
 @dag(
-    schedule_interval=get_dynamic_schedule("ibge_ingest_dag"),
+    schedule=get_dynamic_schedule("ibge_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={
@@ -32,6 +30,10 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
     Usa dynamic task mapping para criar uma task paralela
     para cada configuração de agregado definida em CONFIGURACOES.
     """
+
+    @task
+    def get_configuracoes() -> list[dict]:
+        return Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default_var=[])
 
     @task
     def setup_schema() -> None:
@@ -51,7 +53,9 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
             logging.warning(
                 f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado)."
             )
-
+        except Exception as e:
+            logging.error(f"Erro ao criar schema {schema}: {e}")
+            raise
     @task
     def fetch_and_store_mapped(config: dict) -> None:
         logging.info(f"Iniciando ingestão: {config['tabela']}")
@@ -178,9 +182,10 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
             f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)"
         )
 
+    configs = get_configuracoes()
     setup = setup_schema()
-    fetch = fetch_and_store_mapped.expand(config=CONFIGURACOES)
-    parquet = gera_parquet_tipado.expand(config=CONFIGURACOES)
+    fetch = fetch_and_store_mapped.expand(config=configs)
+    parquet = gera_parquet_tipado.expand(config=configs)
     setup >> fetch >> parquet
 
 
