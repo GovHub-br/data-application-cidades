@@ -1,4 +1,7 @@
-FROM apache/airflow:2.8.1-python3.11
+FROM apache/airflow:3.3.1-python3.11
+
+# acraiz.icpbrasil.gov.br não envia toda a cadeia de certificados
+# por isso a conexão TLS é rejeitada pelo curl / openssl
 
 USER root
 RUN apt-get update \
@@ -12,8 +15,6 @@ RUN apt-get update \
          unzip \
          git \
          curl \
-  && sed -i 's,^\(MinProtocol[ ]*=\).*,\1'TLSv1.0',g' /etc/ssl/openssl.cnf \
-  && sed -i 's,^\(CipherString[ ]*=\).*,\1'DEFAULT@SECLEVEL=1',g' /etc/ssl/openssl.cnf \
   && curl -O http://acraiz.icpbrasil.gov.br/credenciadas/CertificadosAC-ICP-Brasil/ACcompactado.zip \
   && unzip -o ACcompactado.zip -d /usr/local/share/ca-certificates/ \
   && update-ca-certificates \
@@ -31,10 +32,10 @@ RUN apt-get update \
   && locale-gen en_US.UTF-8 pt_BR.UTF-8 \
   && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
-USER airflow
-WORKDIR ${AIRFLOW_HOME}
-
 # Para rodar o airflow só precisamos instalar as dependências visto que o código
 # sempre será sincronizado via git sync ou via volumes localmente
+# Deve ser instalado como root para tornar-se somente leitura
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN uv pip install --no-cache-dir -r requirements.txt
+
+USER airflow

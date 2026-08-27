@@ -8,9 +8,8 @@ x-airflow-common: &airflow-common
   build:
     context: ..
     dockerfile: infra/docker/airflow/Dockerfile
+  image: govhub-airflow:3.3.1
   user: "${AIRFLOW_UID:-50000}:0"
-  env_file:
-    - ../.env
   volumes:
     - ./airflow/airflow.cfg:${AIRFLOW_HOME}/airflow.cfg
     - ../dags:${AIRFLOW_HOME}/dags/
@@ -25,6 +24,8 @@ x-airflow-common: &airflow-common
 
 # Common environment variables for Airflow
 x-airflow-environment: &airflow-common-env
+  AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-ChangeIt}
+  # AIRFLOW__CORE__EXECUTION_API_SERVER_URL: ${AIRFLOW__CORE__EXECUTION_API_SERVER_URL:-http://airflow-api-server:8080/execution} # Caso não use airflow standalone
   AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
   AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
   AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -58,7 +59,7 @@ services:
     <<: *airflow-common
     # Usamos o comando de standalone aqui para não rodar múltiplos containers
     # do airflow localmente e assim melhorar a velocidade inicialização
-    # doc do standalone: https://airflow.apache.org/docs/apache-airflow/2.8.1/start.html
+    # doc do standalone: https://airflow.apache.org/docs/apache-airflow/3.3.1/start.html
     command: standalone
     ports:
       - "8080:8080"
@@ -75,8 +76,10 @@ services:
   # Postgres database
   postgres:
     image: postgres:17-alpine
-    env_file:
-      - ../.env
+    # Injeção de .env fora do contexto do compose.yml (parent dirs) não funciona (Docker Compose version 2.40.3)
+    # .env no mesmo diretório do compose.yml é sempre injetado automaticamente
+    # env_file:
+    #   - ../.env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
