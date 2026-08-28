@@ -16,52 +16,101 @@ x-airflow-common: &airflow-common
     - ../templates:${AIRFLOW_HOME}/templates/
     - ../dbt:${AIRFLOW_HOME}/dbt/
     - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
+    - airflow_logs:${AIRFLOW_HOME}/logs
   depends_on: &airflow-common-depends-on
     postgres:
       condition: service_healthy
-
-# Common environment variables for Airflow
-x-airflow-environment: &airflow-common-env
-  AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-ChangeIt}
-  # AIRFLOW__CORE__EXECUTION_API_SERVER_URL: ${AIRFLOW__CORE__EXECUTION_API_SERVER_URL:-http://airflow-api-server:8080/execution} # Caso não use airflow standalone
-  AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
-  AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
-  AIRFLOW__CORE__EXECUTOR: LocalExecutor
-  AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
-  AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-  AIRFLOW__CORE__TEST_CONNECTION: Enabled
-  AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
-  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
-  AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
-  AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
-  _AIRFLOW_DB_MIGRATE: 'true'
-  _AIRFLOW_WWW_USER_CREATE: 'true'
-  _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
-  AIRFLOW__CORE__DAGS_FOLDER: ${AIRFLOW_HOME}/dags
-  AIRFLOW_REPO_BASE: ${AIRFLOW_HOME}
-  # A ENV AIRFLOW_REPO_BASE É IMPORTANTE PARA SINCRONIZAR COM O SISTEMA DE PASTAS
-  # DO AIRFLOW EM HOMOLOG E PROD, ELES POSSUEM UMA ESTRUTURA DE PASTAS DIFERENTE
-  # USAR ESSA ENV NOS CÓDIGOS PARA NÃO HAVER CONFLITOS
+  environment: &airflow-common-env
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-ChangeIt}
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: ${AIRFLOW__CORE__EXECUTION_API_SERVER_URL:-http://airflow-api-server:8080/execution} # Caso não use airflow standalone
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
+    AIRFLOW__CORE__LOAD_EXAMPLES: false
+    AIRFLOW__CORE__TEST_CONNECTION: Enabled
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: false
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: false
+    _AIRFLOW_DB_MIGRATE: true
+    _AIRFLOW_WWW_USER_CREATE: true
+    _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+    _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+    AIRFLOW__CORE__DAGS_FOLDER: ${AIRFLOW_HOME}/dags
+    AIRFLOW_REPO_BASE: ${AIRFLOW_HOME}
+    # A ENV AIRFLOW_REPO_BASE É IMPORTANTE PARA SINCRONIZAR COM O SISTEMA DE PASTAS
+    # DO AIRFLOW EM HOMOLOG E PROD, ELES POSSUEM UMA ESTRUTURA DE PASTAS DIFERENTE
+    # USAR ESSA ENV NOS CÓDIGOS PARA NÃO HAVER CONFLITOS
   
 services:
   # Airflow Services
-  airflow:
+  airflow-init:
     <<: *airflow-common
-    # Usamos o comando de standalone aqui para não rodar múltiplos containers
-    # do airflow localmente e assim melhorar a velocidade inicialização
-    # doc do standalone: https://airflow.apache.org/docs/apache-airflow/3.3.1/start.html
-    command: standalone
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        /entrypoint airflow version
+        SENTINEL_FILE="/opt/airflow/logs/.airflow_init_done"
+        if [ -f "$$SENTINEL_FILE" ]; then
+          echo "Airflow já inicializado (sentinela encontrado: $$SENTINEL_FILE)."
+          exit 0
+        fi
+        /entrypoint airflow config list >/dev/null
+        mkdir -p /opt/airflow/{logs,plugins,config}
+        chown -R "$${AIRFLOW_UID:-50000}:0" /opt/airflow/{logs,plugins,config}
+        touch "$$SENTINEL_FILE"
+        echo "Inicialização concluida!"
+    restart: no
+    user: "0:0"
+
+  airflow-api-server:
+    <<: *airflow-common
+    command: api-server
     ports:
       - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
     healthcheck:
       test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
       interval: 10s
-      timeout: 60s
+      timeout: 10s
       start_period: 60s
       retries: 5
-    restart: always
-    environment:
-      <<: *airflow-common-env
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
   # Postgres database
   postgres:
@@ -88,6 +137,7 @@ services:
 
   # Analytics Tools
   superset:
+    profiles: [analysis]
     build:
       context: ..
       dockerfile: infra/docker/superset/Dockerfile  # Custom Dockerfile with PostgreSQL drivers
@@ -114,6 +164,7 @@ services:
       "
 
   jupyter:
+    profiles: [analysis]
     image: jupyter/base-notebook:latest
     command: >
       jupyter lab 
