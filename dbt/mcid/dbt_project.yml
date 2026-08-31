@@ -31,6 +31,16 @@ models:
       gold:
         +materialized: table
 
+    # Reconstrução do empreendimento_far a partir do data lake, em vez do dump
+    # __dados_brutos. A bronze aqui é o schema `bronze` do Postgres, carregado pelo
+    # scripts/staging_para_bronze.py — por isso não há pasta bronze/ neste projeto: a
+    # silver é quem tipa o texto que vem da bronze.
+    empreendimento_far_dbt_v2:
+      +materialized: table
+      +schema: empreendimento_far_v2
+      silver:
+        +materialized: table
+
     entidades_dbt:
       +materialized: table
       +schema: entidades_fds

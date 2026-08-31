@@ -38,22 +38,29 @@ def detectar_encoding(sample: bytes) -> str:
     """Detecta o encoding de um arquivo de dados pt-BR: utf-8, cp1252 ou latin-1.
 
     O `charset_normalizer` puro confunde cp1252 com cp1250/latin2 nesses dados (0xE3 vira
-    'ă' em vez de 'ã'), então a decisão aqui é feita à mão:
+    'ă' em vez de 'ã'), então a decisão aqui é feita à mão, NESTA ORDEM:
 
-      - Sample com sequências multibyte utf-8 válidas -> utf-8 (tolera truncamento do
-        sample).
+      - Sample só com ASCII -> cp1252. Não há evidência de encoding; cp1252 é o palpite
+        seguro p/ export Windows pt-BR, caso apareça byte alto depois do sample.
+      - Sample que decodifica como utf-8 -> utf-8 (tolera truncamento no fim do sample).
       - Sample com algum byte indefinido em cp1252 -> latin-1, que mapeia os 256 bytes e
         nunca estoura (esses arquivos já vêm com mojibake; latin-1 preserva o byte em vez
         de falhar).
       - Caso contrário -> cp1252 (correto p/ o intervalo 0x80-0x9F em exports Windows
         pt-BR: aspas curvas, travessão etc., que latin-1 leria como controles C1).
 
+    A ORDEM IMPORTA e o teste de utf-8 tem que vir ANTES do de bytes indefinidos: 0x81,
+    0x8D, 0x8F, 0x90 e 0x9D não são só "indefinidos no cp1252", são também bytes de
+    continuação utf-8 perfeitamente válidos — 'Á' é C3 81 e 'Í' é C3 8D. Testando os
+    indefinidos primeiro, toda planilha utf-8 com 'Á' ou 'Í' (ou seja, meio lake pt-BR)
+    era lida como latin-1 e virava mojibake na staging ('JAGUARIÚNA' -> 'JAGUARIÃNA').
+    Um sample que é utf-8 válido é utf-8: a heurística dos indefinidos só faz sentido
+    para o que NÃO decodifica como utf-8.
+
     ATENÇÃO: a decisão é feita sobre o SAMPLE. Um byte indefinido pode aparecer só depois
     dele — por isso quem decodifica o arquivo inteiro deve usar `encoding_fallback()` ao
     pegar UnicodeDecodeError, em vez de confiar cegamente neste retorno.
     """
-    if any(byte in _CP1252_INDEFINIDOS for byte in sample):
-        return "latin-1"
     if all(byte < 0x80 for byte in sample):
         return "cp1252"
     try:
@@ -63,7 +70,9 @@ def detectar_encoding(sample: bytes) -> str:
         # erro só nos últimos bytes = provável char utf-8 cortado no fim do sample
         if e.start >= len(sample) - 3:
             return "utf-8"
-        return "cp1252"
+    if any(byte in _CP1252_INDEFINIDOS for byte in sample):
+        return "latin-1"
+    return "cp1252"
 
 
 def encoding_fallback(encoding: str) -> Optional[str]:

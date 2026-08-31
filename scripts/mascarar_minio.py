@@ -125,23 +125,61 @@ P_ENDER = re.compile(
 # "ic_benef_sit_rua" (flag indicadora de situação de rua)
 P_ENDER_EXC = re.compile(r"objetivo|sit_rua|(^|_)ic(_|$)")
 P_NASC = re.compile(r"nascimento|dt_?nasc|data_?nasc|dat_nasc")
-P_NOME_INC = re.compile(
-    r"mutuario|beneficiario|comprador|titular|proponente|responsavel|"
-    r"conjuge|dependente|completo"
-)
+# Atributo pessoal sensível (LGPD art. 5º II). Instituição não tem raça nem deficiência,
+# então a coluna também é prova de que o arquivo trata de pessoa física.
+# Categoria própria porque antes esses campos só eram protegidos por acidente
+# (`cod_cor_raca_beneficiario` casava com "beneficiario" e virava "nome"); com o prefixo
+# de código passando a excluir nome, ficariam a descoberto.
+P_SENSIVEL = re.compile(r"cor_raca|(^|_)raca(_|$)|etnia|deficiencia|(^|_)pcd(_|$)")
+
+# Papéis que, na prática, sempre denotam PESSOA FÍSICA. Mascarados incondicionalmente.
+P_NOME_PESSOA = re.compile(r"mutuario|beneficiario|comprador|conjuge|dependente|completo")
+# Papéis que tanto podem ser pessoa quanto INSTITUIÇÃO. No Novo MCMV FAR, por exemplo, o
+# "proponente" é a prefeitura ou o estado, e o "titular" é o ente público — mascarar isso
+# destrói dado público sem proteger ninguém. Só viram PII com indicador forte no arquivo.
+P_NOME_AMBIGUO = re.compile(r"titular|proponente|responsavel")
+
 P_NOME_EXC = re.compile(
     r"empreendimento|municipio|(^|_)uf(_|$)|agente|banco|entidade|orgao|"
     r"logradouro|bairro|arquivo|razao|social|programa|modalidade|situacao|"
     r"fantasia|projeto|obra|construtora|incorporadora|"
+    # instituição explícita: ente público não é pessoa
+    r"ente_publico|(^|_)publico(_|$)|prefeitura|estado|uniao|governo|"
+    # "titularidade" é o REGIME do imóvel (próprio/cedido), não o nome de alguém
+    r"titularidade|"
     # colunas com papel (mutuario/beneficiario/titular...) mas que não são NOME:
     # identificadores PJ, códigos, valores, flags e datas
     r"cnpj|cpf|sexo|(^|_)tipo(_|$)|(^|_)vr(_|$)|valor|prest|parcela|"
     r"(^|_)qt(_|$)|(^|_)ic(_|$)|(^|_)dt(_|$)|(^|_)mulher(_|$)|pdc|pcd|objetivo"
 )
+# Prefixo de CÓDIGO/IDENTIFICADOR: o conteúdo é um código, não texto de nome
+# (`co_ente_publico_proponente` guarda '1', não o nome de uma pessoa). Vale só para a
+# categoria "nome" — `co_cep` continua sendo CEP.
+P_CODIGO = re.compile(r"^(co|cod|nu|num|qt|id)_")
 
-# categorias que indicam presença de PF no arquivo (habilitam mascaramento de
-# CEP/endereço)
-_PF_INDICATOR_CATS = {"cpf", "nis", "nascimento", "nome"}
+# Indicadores de que o arquivo contém PESSOA FÍSICA.
+#
+# FORTE = identificador estrutural de PF. A presença da coluna é prova: não existe CPF,
+# NIS ou data de nascimento de prefeitura.
+# FRACO = inferido por palavra-chave no nome da coluna, que é justamente onde moram os
+# falsos positivos.
+#
+# Só o indicador FORTE destrava o mascaramento de CEP/endereço e dos papéis ambíguos.
+# Antes bastava qualquer "nome" — e um único falso positivo
+# (`co_ente_publico_proponente` casando com "proponente") fazia o arquivo inteiro perder
+# logradouro, bairro e CEP DO EMPREENDIMENTO, que é obra pública e não endereço de
+# ninguém. Como o mascaramento reescreve o raw/ no lugar, esse dado não volta.
+_PF_INDICATOR_FORTE = {"cpf", "nis", "nascimento", "sensivel"}
+_PF_INDICATOR_FRACO = {"nome"}
+_PF_INDICATOR_CATS = _PF_INDICATOR_FORTE | _PF_INDICATOR_FRACO
+
+# Categorias decididas por um único padrão, na ordem de precedência.
+_CATEGORIAS_DIRETAS = [
+    (P_CPF, "cpf"),
+    (P_NIS, "nis"),
+    (P_NASC, "nascimento"),
+    (P_SENSIVEL, "sensivel"),
+]
 
 # Arquivos SEM cabeçalho: o matching por NOME de coluna não tem o que casar, e o arquivo
 # sairia como `skipped_no_pii` com a PII intacta. Aqui a posição das colunas é DECLARADA à
@@ -167,9 +205,30 @@ _ACAO_POR_CATEGORIA = {
     "nis": "hmac",
     "nascimento": "redact",
     "nome": "redact",
+    "sensivel": "redact",
     "cep": "redact",
     "endereco": "redact",
 }
+
+
+def _avisar_mascaramento_sem_prova(key: str, rec: dict) -> None:
+    """Avisa quando um arquivo é mascarado sem nenhuma prova estrutural de pessoa física.
+
+    O mascaramento reescreve o raw/ NO LUGAR: o valor original não volta sem reingerir da
+    origem. Então todo arquivo que perde dado sem ter CPF/NIS/nascimento/atributo sensível
+    merece uma linha no log para alguém conferir — foi assim que a família FAR perdeu
+    logradouro, bairro e CEP do empreendimento sem ninguém notar.
+    """
+    if rec.get("status") not in ("masked", "dry_run"):
+        return
+    cats = {m["category"] for m in (rec.get("masked_columns") or [])}
+    if cats and not (cats & _PF_INDICATOR_FORTE):
+        log.warning(
+            "%s — mascarado SEM indicador forte de PF (só %s). Confira se não é dado "
+            "institucional/de empreendimento antes de aplicar.",
+            key,
+            ", ".join(sorted(cats)),
+        )
 
 
 def targets_por_posicao(key: str) -> Optional[List[dict]]:
@@ -332,15 +391,19 @@ def _redigir(valor: str) -> str:
 
 # Detecção de header / colunas sensíveis
 def _categoria(norm: str) -> Optional[str]:
-    """Categoria base da coluna (sem aplicar a regra condicional de CEP/endereço)."""
-    if P_CPF.search(norm):
-        return "cpf"
-    if P_NIS.search(norm):
-        return "nis"
-    if P_NASC.search(norm):
-        return "nascimento"
-    if P_NOME_INC.search(norm) and not P_NOME_EXC.search(norm):
-        return "nome"
+    """Categoria base da coluna (sem aplicar a regra condicional de CEP/endereço).
+
+    A ordem importa: identificador estrutural (CPF/NIS/nascimento/sensível) vence papel,
+    e papel vence CEP/endereço.
+    """
+    for padrao, categoria in _CATEGORIAS_DIRETAS:
+        if padrao.search(norm):
+            return categoria
+    if not P_NOME_EXC.search(norm) and not P_CODIGO.search(norm):
+        if P_NOME_PESSOA.search(norm):
+            return "nome"
+        if P_NOME_AMBIGUO.search(norm):
+            return "nome_ambiguo"
     if norm == "nome":
         return "nome_bare"
     if P_CEP.search(norm):
@@ -370,6 +433,7 @@ def classificar(  # noqa: C901
         normed.append((idx, cell, norm_header(texto)))
 
     cats = {idx: _categoria(n) for idx, _, n in normed}
+    has_pf_forte = any(c in _PF_INDICATOR_FORTE for c in cats.values())
     has_pf = any(c in _PF_INDICATOR_CATS for c in cats.values())
 
     targets: List[dict] = []
@@ -379,14 +443,25 @@ def classificar(  # noqa: C901
             continue
         if cat in ("cpf", "nis"):
             action = "hmac"
-        elif cat in ("nascimento", "nome"):
+        elif cat in ("nascimento", "nome", "sensivel"):
             action = "redact"
+        elif cat == "nome_ambiguo":
+            # proponente/titular/responsável: instituição ou pessoa, não dá pra saber pelo
+            # nome da coluna. Só mascara com PROVA de PF no arquivo (CPF/NIS/nascimento).
+            if not has_pf_forte:
+                continue
+            cat, action = "nome", "redact"
         elif cat == "nome_bare":
             if not has_pf:
                 continue
             cat, action = "nome", "redact"
         elif cat in ("cep", "endereco"):
-            if not has_pf:  # PJ/empreendimento -> preserva
+            # `has_pf` (e não só o forte): uma lista de mutuários com endereço e sem CPF
+            # continua sendo endereço residencial. Depois da separação de papéis, a
+            # categoria "nome" só vem de papel de pessoa, então voltou a ser confiável —
+            # quem trazia falso positivo (proponente/titular) agora é "nome_ambiguo" e
+            # não entra nesta conta.
+            if not has_pf:  # PJ/empreendimento/obra pública -> preserva
                 continue
             action = "redact"
         else:
@@ -904,6 +979,7 @@ def run(  # noqa: C901
         rec = processar_objeto(minio, conn_str, key, execution_id, apply, masked_hashes)
         registros.append(rec)
         contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
+        _avisar_mascaramento_sem_prova(key, rec)
 
         if rec["hash_before"] is not None:
             _registrar_control(conn_str, rec)

@@ -103,6 +103,13 @@ SUPPORTED_JSON = {".json"}  # registros já achatados (list[dict]) pelo cliente 
 UNSUPPORTED = {".xls", ".zip"}
 SUPORTADAS = SUPPORTED_TABULAR | SUPPORTED_EXCEL | SUPPORTED_MDB | SUPPORTED_JSON
 
+# Pastas de raw/ (primeiro nível após o prefixo) que nunca viram parquet em staging/.
+# dados_historicos/ já passa por tratamento próprio de um membro da equipe para ciência
+# de dados — gerar parquet full-text por cima seria trabalho duplicado e uma segunda
+# versão divergente do mesmo dado. Continua sendo mascarado normalmente (mascarar_minio.py
+# não tem essa exclusão): isso é só sobre pular a conversão para staging/.
+PASTAS_IGNORADAS = {"dados_historicos"}
+
 LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
 
 
@@ -1048,6 +1055,12 @@ def run(  # noqa: C901
         if key.endswith("/"):
             continue
         if os.path.basename(key).startswith("~$"):
+            continue
+        # Antes do descarte de gêmeos de propósito: se um objeto de pasta ignorada
+        # entrasse na lista, poderia vencer o gêmeo de outra pasta pelo mesmo stem e
+        # fazer o dado bom sair como skipped_duplicado sem nunca virar parquet.
+        rel = key[len(prefix) :] if key.startswith(prefix) else key
+        if rel.split("/", 1)[0] in PASTAS_IGNORADAS:
             continue
         todos.append((key, size))
 
