@@ -12,6 +12,7 @@ dependencies = [
     "minio>=7.0",
     "pandas>=3.0.3",
     "psycopg2-binary>=2.9",
+    "pyarrow>=25.0.1",
     "python-dotenv>=1.0",
     "sqlalchemy>=2.0",
     "tqdm>=4.0",

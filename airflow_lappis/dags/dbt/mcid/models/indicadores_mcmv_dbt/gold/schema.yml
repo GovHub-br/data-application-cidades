@@ -89,6 +89,98 @@ models:
       - name: dt_calculo
         description: Data em que o modelo foi calculado.
 
+  - name: indicadores_reloginho
+    description: >
+      Tabela Gold do reloginho MCMV (grupo A): série mensal SNH deduplicada por
+      APF, lida de staging/dados_historicos/ (parquets canônicos do dump
+      tratado) via MinIO/DuckDB. Uma linha por (agente_financeiro, dt_referencia)
+      com os acumulados uh_contratadas, uh_entregues e uh_vigentes, o número de
+      APFs distintos (n_apf) e a contagem corrida de meses observados por
+      agente (n_meses_observados). Alimenta o resumo do reloginho e a
+      reconciliação com a referência #66. Requer target staging_duckdb.
+    meta:
+      tags:
+        - gold
+        - mcmv
+        - indicadores
+        - reloginho
+        - dados-historicos
+    columns:
+      - name: dt_referencia
+        description: >
+          Data de referência (primeiro dia do mês) derivada do nome do arquivo
+          histórico (YYYMM, ex. 2026-03-01 para historico_recente_202603_...).
+        data_tests:
+          - not_null
+      - name: agente_financeiro
+        description: >
+          Agente financeiro da série SNH (normalizado em maiúsculas). Valores
+          esperados: BB (Banco do Brasil) e CAIXA.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+          - unique:
+              combination_of_columns:
+                - agente_financeiro
+                - dt_referencia
+      - name: uh_contratadas
+        description: Soma de unidades habitacionais contratadas no mês de referência.
+        data_tests:
+          - not_null
+      - name: uh_entregues
+        description: Soma acumulada de unidades habitacionais entregues no mês de referência.
+        data_tests:
+          - not_null
+      - name: uh_vigentes
+        description: Soma de unidades habitacionais vigentes no mês de referência.
+      - name: n_apf
+        description: Número de APFs distintos considerados no mês de referência após a dedup.
+      - name: n_meses_observados
+        description: >
+          Contagem corrida de meses observados por agente até a linha atual
+          (usada no cálculo do ritmo médio mensal de entregas).
+
+  - name: resumo_reloginho_dashboard
+    description: >
+      Tabela Gold do reloginho para dashboard: uma linha por agente_financeiro
+      com o último mês observado da série mensal SNH (uh_contratadas,
+      uh_entregues, uh_vigentes), o número de meses observados e o ritmo médio
+      mensal de entregas (uh_entregues do último mês / n_meses_observados).
+      Requer target staging_duckdb.
+    meta:
+      tags:
+        - gold
+        - mcmv
+        - indicadores
+        - reloginho
+        - dashboard
+        - dados-historicos
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro da série SNH (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - unique
+      - name: dt_ultimo_mes
+        description: Último dt_referencia observado para o agente.
+        data_tests:
+          - not_null
+      - name: uh_contratadas_ultimo
+        description: Unidades habitacionais contratadas no último mês observado.
+      - name: uh_entregues_ultimo
+        description: Unidades habitacionais entregues (acumulado) no último mês observado.
+      - name: uh_vigentes_ultimo
+        description: Unidades habitacionais vigentes no último mês observado.
+      - name: n_apf_ultimo
+        description: Número de APFs distintos no último mês observado.
+      - name: n_meses_observados
+        description: Total de meses observados na série do agente.
+      - name: ritmo_medio_mensal
+        description: >
+          Ritmo médio mensal de entregas = uh_entregues do último mês dividido
+          pelo número de meses observados.
+
   - name: resumo_gargalo_desempenho_dashboard
     description: >
       Tabela Gold agregada para dashboard de gargalos e desempenho do MCMV.

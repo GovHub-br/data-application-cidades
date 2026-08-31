@@ -286,7 +286,101 @@ Arquivos locais (para referência offline):
 ├── data/relatorio_divergencias_db.md   # divergências vs. referência
 └── data/treated_tables/_quality_report.csv  # métricas de qualidade
 ```
+---
 
+## Exportação de tabelas para MinIO
+
+O script `scripts/exportar_tabelas_minio.py` exporta tabelas para um bucket MinIO nos formatos CSV ou Parquet. Opera em dois modos:
+
+- **Modo PostgreSQL** (padrão): lê tabelas de um schema do PostgreSQL
+- **Modo diretório local** (`--source-dir`): lê arquivos CSV tab-separated de um diretório local
+
+É standalone — não depende do pipeline `main.py`.
+
+### Uso básico
+
+```bash
+# Modo PostgreSQL (padrão)
+uv run python scripts/exportar_tabelas_minio.py
+
+# Modo diretório local
+uv run python scripts/exportar_tabelas_minio.py --source-dir data/treated_tables
+```
+
+No modo PostgreSQL, sem argumentos, exporta todas as tabelas do schema `dados_historicos` em CSV para `raw/dados_historicos/`. No modo diretório local, lista todos os `*.csv` do diretório e exporta para `staging/dados_historicos/`.
+
+### Parâmetros
+
+| Parâmetro | Tipo | Default | Descrição |
+|---|---|---|---|
+| `--schema-name` | str | `dados_historicos` | Schema PostgreSQL de origem (ignorado com `--source-dir`) |
+| `--minio-prefix` | str | *condicional* | Prefixo dos objetos no bucket. Default: `raw/dados_historicos` (modo PG) ou `staging/dados_historicos` (modo `--source-dir`) |
+| `--tables` | list | todas | Tabelas/arquivos específicos a exportar. No modo `--source-dir`, usa o nome limpo (sem `_tratado`, sem `.csv`) |
+| `--parquet` | flag | desativado | Converte para Parquet (string schema, compressão Snappy) |
+| `--source-dir` | str | — | Diretório local com CSVs tab-separated. Ativa modo diretório local (sem PostgreSQL) |
+| `--log-path` | str | `data/minio_export_log.csv` | Arquivo de log persistente |
+
+### Exemplos — Modo PostgreSQL
+
+```bash
+# Exportar tabelas específicas em Parquet
+uv run python scripts/exportar_tabelas_minio.py \
+    --tables bb_far_2020 caixa_fgts_2019 \
+    --parquet
+
+# Exportar schema SFTP com prefixo customizado
+uv run python scripts/exportar_tabelas_minio.py \
+    --schema-name sftp \
+    --minio-prefix raw/sftp
+
+# Apenas CSV (default), tabela única
+uv run python scripts/exportar_tabelas_minio.py \
+    --tables caixa_pnhr_2021
+```
+
+### Exemplos — Modo diretório local
+
+```bash
+# Exportar todas as tabelas tratadas como Parquet para staging
+uv run python scripts/exportar_tabelas_minio.py \
+    --source-dir data/treated_tables \
+    --parquet
+
+# Exportar apenas uma tabela específica (nome limpo, sem _tratado e .csv)
+uv run python scripts/exportar_tabelas_minio.py \
+    --source-dir data/treated_tables \
+    --tables bb_2011_01_janeiro_rel_11jan2011
+
+# CSV (default) com prefixo customizado
+uv run python scripts/exportar_tabelas_minio.py \
+    --source-dir data/treated_tables \
+    --minio-prefix custom/prefix
+```
+
+### Limpeza de nome de arquivo (modo `--source-dir`)
+
+No modo diretório local, o nome do objeto MinIO é derivado do nome do arquivo CSV:
+1. Remove a extensão `.csv`
+2. Remove o sufixo `_tratado` (se presente)
+
+Exemplo: `bb_2011_01_janeiro_rel_11jan2011_tratado.csv` → `bb_2011_01_janeiro_rel_11jan2011`
+
+O parâmetro `--tables` faz match pelo nome limpo, então o usuário não precisa saber se o arquivo em disco tem `_tratado.csv` ou não.
+
+### Log de exportação
+
+O arquivo de log (`--log-path`) registra cada exportação com as colunas:
+`source_table`, `destination_path`, `rows`, `bytes`, `format`, `status`, `written_at`.
+
+Status possíveis: `success`, `skipped_empty` (tabela/arquivo sem registros), `error`.
+
+No modo `--source-dir`, a coluna `source_table` contém o nome limpo do arquivo.
+
+### Dependências
+
+- **Modo PostgreSQL:** requer `.env` com credenciais PostgreSQL e MinIO configuradas (veja `.env.example`)
+- **Modo diretório local (`--source-dir`):** requer apenas credenciais MinIO no `.env` — PostgreSQL é opcional
+- O pacote `pyarrow` é necessário para o modo `--parquet` — instalado automaticamente via `uv sync`
 ---
 
 ## SFTP — Batimento e análise

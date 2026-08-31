@@ -44,6 +44,10 @@ models:
       +schema: mcmv_indicadores
       gold:
         +materialized: table
+        indicadores_reloginho:
+          +enabled: "{{ target.type == 'duckdb' }}"
+        resumo_reloginho_dashboard:
+          +enabled: "{{ target.type == 'duckdb' }}"
 
     mcmv_silver_dbt:
       +enabled: "{{ target.type == 'duckdb' }}"
