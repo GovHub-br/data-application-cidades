@@ -133,11 +133,17 @@ P_NASC = re.compile(r"nascimento|dt_?nasc|data_?nasc|dat_nasc")
 P_SENSIVEL = re.compile(r"cor_raca|(^|_)raca(_|$)|etnia|deficiencia|(^|_)pcd(_|$)")
 
 # Papéis que, na prática, sempre denotam PESSOA FÍSICA. Mascarados incondicionalmente.
-P_NOME_PESSOA = re.compile(r"mutuario|beneficiario|comprador|conjuge|dependente|completo")
+P_NOME_PESSOA = re.compile(r"comprador|conjuge|dependente|completo")
 # Papéis que tanto podem ser pessoa quanto INSTITUIÇÃO. No Novo MCMV FAR, por exemplo, o
 # "proponente" é a prefeitura ou o estado, e o "titular" é o ente público — mascarar isso
 # destrói dado público sem proteger ninguém. Só viram PII com indicador forte no arquivo.
-P_NOME_AMBIGUO = re.compile(r"titular|proponente|responsavel")
+#
+# "mutuario" e "beneficiario" entraram aqui em 2026-08-31, vindos do incondicional. O
+# histórico do lake (853 decisões) mostrou que mascará-los sem prova nunca protegeu
+# ninguém: das 761 aplicações corretas, 100% eram em arquivos que TAMBÉM tinham CPF, NIS
+# ou nascimento — e as 30 sem prova eram todas institucionais ("Beneficiários" de emenda
+# parlamentar, "BENEFICIARIO" de cadastro PJ, "mutuario_final" de tabela de programas).
+P_NOME_AMBIGUO = re.compile(r"titular|proponente|responsavel|mutuario|beneficiario")
 
 P_NOME_EXC = re.compile(
     r"empreendimento|municipio|(^|_)uf(_|$)|agente|banco|entidade|orgao|"
@@ -147,6 +153,11 @@ P_NOME_EXC = re.compile(
     r"ente_publico|(^|_)publico(_|$)|prefeitura|estado|uniao|governo|"
     # "titularidade" é o REGIME do imóvel (próprio/cedido), não o nome de alguém
     r"titularidade|"
+    # METADADO: em catálogo de dados, "nome" descreve uma COLUNA, não uma pessoa.
+    # `NomeCompletoColuna` casava com "completo" e o catálogo inteiro perdia a coluna
+    # (30 arquivos em 2026-08-31). Como CEP/endereço só são liberados por um indicador
+    # de PF, tirar o "nome" daqui também devolve o `Endereço Remetente` do catálogo.
+    r"coluna|campo|atributo|conjunto|(^|_)tabela|dicionario|metadado|"
     # colunas com papel (mutuario/beneficiario/titular...) mas que não são NOME:
     # identificadores PJ, códigos, valores, flags e datas
     r"cnpj|cpf|sexo|(^|_)tipo(_|$)|(^|_)vr(_|$)|valor|prest|parcela|"
@@ -155,7 +166,9 @@ P_NOME_EXC = re.compile(
 # Prefixo de CÓDIGO/IDENTIFICADOR: o conteúdo é um código, não texto de nome
 # (`co_ente_publico_proponente` guarda '1', não o nome de uma pessoa). Vale só para a
 # categoria "nome" — `co_cep` continua sendo CEP.
-P_CODIGO = re.compile(r"^(co|cod|nu|num|qt|id)_")
+# `qtd_` além de `qt_`: `qtd_beneficiario_indicado` é uma CONTAGEM e virava "nome"; como
+# "nome" é indicador de PF, ainda destravava dsc_endereco e num_cep no mesmo arquivo.
+P_CODIGO = re.compile(r"^(co|cod|nu|num|qtd?|id)_")
 
 # Indicadores de que o arquivo contém PESSOA FÍSICA.
 #
@@ -446,8 +459,9 @@ def classificar(  # noqa: C901
         elif cat in ("nascimento", "nome", "sensivel"):
             action = "redact"
         elif cat == "nome_ambiguo":
-            # proponente/titular/responsável: instituição ou pessoa, não dá pra saber pelo
-            # nome da coluna. Só mascara com PROVA de PF no arquivo (CPF/NIS/nascimento).
+            # proponente/titular/responsável/mutuário/beneficiário: instituição ou pessoa,
+            # não dá pra saber pelo nome da coluna. Só mascara com PROVA de PF no arquivo
+            # (CPF/NIS/nascimento).
             if not has_pf_forte:
                 continue
             cat, action = "nome", "redact"
