@@ -1,0 +1,1182 @@
+# scripts/raw_para_staging.py
+
+"""
+Conversão Raw -> Staging (Parquet) do data lake (MinIO).
+
+Percorre os objetos de raw/ (CSV/TXT/XLSX/MDB/JSON), detecta separador e encoding de cada
+arquivo, e grava a versão colunar em Parquet em staging/, para a etapa seguinte
+(Staging->DB via dbt/DuckDB) consumir dados já em formato eficiente e uniforme.
+
+A staging espelha a estrutura de pastas do raw/ inteiro (não só sftp/), trocando o arquivo
+de origem por parquet e SEM a extensão de origem no nome:
+
+    raw/sftp/fabrica/GEFUS/foo.csv -> staging/sftp/fabrica/GEFUS/foo.parquet
+
+Decisões do projeto:
+  - Todas as colunas como STRING — a tipagem (datas/números) fica para o dbt/DuckDB.
+  - pandas (chunked) + pyarrow ParquetWriter: streaming memory-bounded, suporta qualquer
+    encoding Python (cp1250/cp1252/utf-8).
+  - Nomes de coluna normalizados para snake_case ASCII (dedup); header original guardado
+    nos metadados do parquet e na tabela de controle.
+  - Colunas de linhagem `_source_file`, `_ingested_at`, `_source_hash` em cada parquet.
+
+IMPORTANTE (ordem no pipeline): rode DEPOIS do mascaramento (`mascarar_minio.py --apply`),
+senão o parquet conterá PII (staging lê raw/ como está).
+
+Idempotência: tabela de controle lake._staging_log com UNIQUE(raw_key, staging_key,
+source_hash); objetos já convertidos (mesmo hash) são pulados. Use --force para
+reprocessar. O staging_key entra na chave porque XLSX/MDB geram N parts (uma por
+aba/tabela) com o mesmo par (raw_key, source_hash) — sem ele o upsert deixaria só 1
+registro por arquivo.
+"""
+
+import argparse
+import json
+import logging
+import os
+import sys
+import tempfile
+import time
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
+import psycopg2
+import pyarrow as pa
+import pyarrow.parquet as pq
+from dotenv import load_dotenv
+from psycopg2.extras import Json
+
+from lake_utils import (
+    MDB_DELIM,
+    MDB_ENCODING,
+    MDB_EXT,
+    detectar_dialeto,
+    detectar_encoding,
+    encoding_fallback,
+    md5_arquivo,
+    mdb_disponivel,
+    mdb_export_para_csv,
+    mdb_tabelas,
+    normalizar_colunas,
+    norm_header,
+)
+
+# plugins/ (ClienteMinio) está na PYTHONPATH dentro do container Airflow; rodando
+# standalone, adiciona plugins/ ao sys.path para o import resolver.
+_plugins = Path(__file__).resolve().parents[1] / "plugins"
+if _plugins.is_dir() and str(_plugins) not in sys.path:
+    sys.path.insert(0, str(_plugins))
+
+from cliente_minio import ClienteMinio  # noqa: E402
+
+load_dotenv()
+
+MINIO_ENDPOINT = os.environ["MINIO_ENDPOINT"]
+MINIO_ACCESS_KEY = os.environ["MINIO_ACCESS_KEY"]
+MINIO_SECRET_KEY = os.environ["MINIO_SECRET_KEY"]
+MINIO_BUCKET = os.environ["MINIO_BUCKET"]
+
+PG_HOST = os.environ["DB_DW_HOST_MCID"]
+PG_PORT = int(os.environ.get("DB_DW_PORT_MCID", 5432))
+PG_USER = os.environ["DB_DW_USER_MCID"]
+PG_PASSWORD = os.environ["DB_DW_PASSWORD_MCID"]
+PG_DBNAME = os.environ["DB_DW_DBNAME_MCID"]
+
+SCHEMA = os.environ.get("LAKE_SCHEMA", "lake")
+CONTROL_TABLE = "_staging_log"
+
+RAW_PREFIX = os.environ.get("MASKING_PREFIX", "raw/")
+STAGING_PREFIX = os.environ.get("STAGING_PREFIX", "staging/")
+AUDIT_PREFIX = "audit/staging/"
+
+TMPDIR = os.environ.get("LAKE_TMPDIR") or os.environ.get("MASKING_TMPDIR") or None
+if TMPDIR:
+    os.makedirs(TMPDIR, exist_ok=True)
+
+SUPPORTED_TABULAR = {".csv", ".txt"}
+SUPPORTED_EXCEL = {".xlsx"}
+SUPPORTED_MDB = MDB_EXT  # .mdb/.accdb (Access) — via mdbtools
+SUPPORTED_JSON = {".json"}  # registros já achatados (list[dict]) pelo cliente da fonte
+UNSUPPORTED = {".xls", ".zip"}
+SUPORTADAS = SUPPORTED_TABULAR | SUPPORTED_EXCEL | SUPPORTED_MDB | SUPPORTED_JSON
+
+LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
+
+
+# Gêmeos: o mesmo dado aparece no lake em mais de um formato (ex.:
+# 202601_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB existe em .txt e .xlsx, com 1289 linhas e
+# 40 colunas EM AMBOS) e, desde que raw/ ganhou estrutura de pastas, também em mais de
+# um lugar (ex.: Base_PF_FGTS_20260107.txt existe em caixa.geavo/GEAVO/ e em
+# fabrica/GEFUS/; e a pasta ANTERIORES/ do SFTP guarda cópia de arquivos da pasta
+# corrente). Converter todos geraria N tabelas do mesmo dado na staging.
+#
+# A identidade do gêmeo é o NOME DO ARQUIVO, sem extensão e sem pasta: para cada nome
+# sobrevive UM único objeto no lake inteiro, escolhido por esta ordem:
+#
+#   1. formato suportado na frente de não-suportado — senão um .xls (que o script não
+#      lê) descartaria o .csv equivalente e o dado sumiria da staging;
+#   2. texto (.csv, .txt) na frente de planilha, porque o mascaramento reescreve
+#      texto byte a byte em transporte latin-1 — nenhuma coluna não-alvo muda —
+#      enquanto no .xlsx ele precisa reescrever a pasta de trabalho e perde o
+#      cache de fórmulas;
+#   3. .csv antes de .txt e .xlsx antes de .xls, por consistência;
+#   4. empate (mesma extensão em pasta ou caixa diferente: GEAVO/FOO.TXT e GEFUS/foo.txt)
+#      -> menor key na ordem lexicográfica, para a escolha não variar entre execuções e
+#      não trocar de parquet.
+#
+# Extensão fora da lista fica por último (nunca ganha de uma conhecida).
+PRECEDENCIA_EXT = [".csv", ".txt", ".xlsx", ".xls", ".mdb", ".accdb", ".json"]
+
+
+def _rank_ext(ext: str) -> Tuple[int, int]:
+    ext = ext.lower()
+    # Suportado sempre antes de não-suportado, independente da posição na lista: .xls
+    # vem antes de .mdb em PRECEDENCIA_EXT, mas o script não lê .xls e lê .mdb.
+    suportado = 0 if ext in SUPORTADAS else 1
+    try:
+        return (suportado, PRECEDENCIA_EXT.index(ext))
+    except ValueError:
+        return (suportado, len(PRECEDENCIA_EXT))
+
+
+def _stem_sem_extensao(key: str) -> str:
+    """Nome do arquivo sem extensão e sem pasta — a identidade que os gêmeos compartilham.
+
+    Deliberadamente ignora a pasta: o mesmo nome em `GEFUS/` e em `GEFUS/ANTERIORES/` é
+    o mesmo dado, e só um deve virar parquet.
+    """
+    return os.path.splitext(os.path.basename(key))[0]
+
+
+def _descartar_gemeos(
+    candidatos: List[Tuple[str, int]],
+) -> Tuple[List[Tuple[str, int]], List[str]]:
+    """Separa (mantidos, descartados) entre objetos que só diferem na extensão."""
+    por_stem: Dict[str, List[Tuple[str, int]]] = {}
+    for key, size in candidatos:
+        por_stem.setdefault(_stem_sem_extensao(key), []).append((key, size))
+
+    mantidos: List[Tuple[str, int]] = []
+    descartados: List[str] = []
+    for _stem, grupo in por_stem.items():
+        if len(grupo) == 1:
+            mantidos.append(grupo[0])
+            continue
+        ordenado = sorted(
+            grupo, key=lambda kv: (_rank_ext(os.path.splitext(kv[0])[1]), kv[0])
+        )
+        mantidos.append(ordenado[0])
+        descartados.extend(k for k, _ in ordenado[1:])
+    # Preserva a ordem da listagem do MinIO (previsível no log).
+    ordem = {k: i for i, (k, _) in enumerate(candidatos)}
+    mantidos.sort(key=lambda kv: ordem[kv[0]])
+    return mantidos, descartados
+
+
+# Artefatos locais (arquivo de log, cópia local da auditoria) — úteis rodando standalone,
+# mas o diretório do script pode não ser gravável (ex.: bind-mount no Airflow). Controlado
+# por LAKE_LOCAL_ARTIFACTS (default "1"): o container do Airflow define "0" para
+# desligá-los. O log em stderr fica sempre ativo (o Airflow o captura na UI).
+_LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
+    "0",
+    "false",
+    "no",
+)
+_LOG_FILE = (
+    Path(__file__).parent
+    / f"raw_para_staging_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+)
+_formatter = logging.Formatter(
+    "%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
+)
+log = logging.getLogger(__name__)
+if _LOCAL_ARTIFACTS:
+    # Standalone: o script gerencia os próprios handlers (stderr + arquivo de log).
+    logging.root.setLevel(logging.INFO)
+    for _h in (
+        logging.StreamHandler(sys.stderr),
+        logging.FileHandler(_LOG_FILE, encoding="utf-8"),
+    ):
+        _h.setFormatter(_formatter)
+        logging.root.addHandler(_h)
+# Sob o Airflow (_LOCAL_ARTIFACTS=0) NÃO adicionamos handlers ao root: o logger propaga
+# para os handlers do Airflow (a saída vai para a UI). Um StreamHandler(sys.stderr) aqui
+# criaria loop infinito — o Airflow redireciona stderr de volta ao logging e cada linha se
+# multiplica.
+
+
+# Infra: conexões / controle
+def _conn_str() -> str:
+    return (
+        f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
+        f"user={PG_USER} password={PG_PASSWORD}"
+    )
+
+
+def _criar_control_table(conn_str: str) -> None:
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};")
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {SCHEMA}.{CONTROL_TABLE} (
+                    id            SERIAL PRIMARY KEY,
+                    execution_id  TEXT,
+                    raw_key       TEXT NOT NULL,
+                    staging_key   TEXT,
+                    source_hash   TEXT,
+                    n_linhas      BIGINT,
+                    n_colunas     INT,
+                    n_bad_lines   BIGINT,
+                    encoding      TEXT,
+                    delimiter     TEXT,
+                    column_map    JSONB,
+                    status        TEXT,
+                    error_message TEXT,
+                    created_at    TIMESTAMPTZ DEFAULT NOW(),
+                    UNIQUE (raw_key, staging_key, source_hash)
+                );
+            """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_staging_log_status
+                ON {SCHEMA}.{CONTROL_TABLE} (status);
+            """
+            )
+            conn.commit()
+    log.info("Tabela de controle %s.%s garantida.", SCHEMA, CONTROL_TABLE)
+
+
+def _carregar_convertidos(conn_str: str) -> set:
+    """(raw_key, source_hash) já convertidos e gravados em staging/ (status 'converted').
+
+    Só o `--apply` (status 'converted') conta para idempotência; execuções dry-run
+    (status 'dry_run') não bloqueiam reprocessamento.
+    """
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT raw_key, source_hash FROM {SCHEMA}.{CONTROL_TABLE}
+                WHERE status = 'converted' AND source_hash IS NOT NULL
+            """
+            )
+            return {(r[0], r[1]) for r in cur.fetchall()}
+
+
+def _registrar_control(conn_str: str, rec: dict) -> None:
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {SCHEMA}.{CONTROL_TABLE}
+                    (execution_id, raw_key, staging_key, source_hash, n_linhas, n_colunas,
+                     n_bad_lines, encoding, delimiter, column_map, status, error_message)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (raw_key, staging_key, source_hash) DO UPDATE SET
+                    execution_id  = EXCLUDED.execution_id,
+                    staging_key   = EXCLUDED.staging_key,
+                    n_linhas      = EXCLUDED.n_linhas,
+                    n_colunas     = EXCLUDED.n_colunas,
+                    n_bad_lines   = EXCLUDED.n_bad_lines,
+                    encoding      = EXCLUDED.encoding,
+                    delimiter     = EXCLUDED.delimiter,
+                    column_map    = EXCLUDED.column_map,
+                    status        = EXCLUDED.status,
+                    error_message = EXCLUDED.error_message,
+                    created_at    = NOW()
+                """,
+                (
+                    rec["execution_id"],
+                    rec["raw_key"],
+                    rec["staging_key"],
+                    rec["source_hash"],
+                    rec["n_linhas"],
+                    rec["n_colunas"],
+                    rec["n_bad_lines"],
+                    rec["encoding"],
+                    rec["delimiter"],
+                    Json(rec["column_map"]),
+                    rec["status"],
+                    rec["error_message"],
+                ),
+            )
+            conn.commit()
+
+
+# Conversão CSV/TXT -> Parquet (streaming, chunked)
+def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
+    """raw/<pastas>/<nome>.<ext> -> staging/<pastas>/<nome>[__parte].parquet
+
+    A staging espelha a estrutura de pastas de raw/, trocando o arquivo de origem por
+    parquet. A extensão de origem NÃO entra no nome: `foo.csv` e `foo.txt` são o mesmo
+    dado em dois formatos e viram um único `foo.parquet` — quem garante que só um deles
+    chega aqui é o descarte de gêmeos (`_descartar_gemeos`), que mantém um objeto por
+    nome no lake inteiro.
+
+    O descarte roda sobre a listagem completa, antes dos filtros de recorte, então o
+    conjunto final da staging é o mesmo independente de como a execução foi fatiada —
+    ver `run()`.
+
+    sufixo_parte: aba de XLSX ou tabela de .mdb (`__<nome>`), quando o arquivo gera N
+    parquets.
+    """
+    rel = raw_key[len(RAW_PREFIX) :] if raw_key.startswith(RAW_PREFIX) else raw_key
+    return f"{STAGING_PREFIX}{os.path.splitext(rel)[0]}{sufixo_parte}.parquet"
+
+
+# Colunas de padding: exports de Excel podem arrastar a largura inteira da planilha
+# (16.384 = limite de colunas do Excel). Ex. real: 2024_08_SNH_..._AF_BB.csv tem 16.382
+# colunas, das quais 16.345 não têm nome NEM valor algum — puro lixo do export. A regra é
+# conservadora: só descarta coluna SEM NOME **e** 100% vazia. Colunas sem nome mas com
+# dado ficam (seriam perda de dado), e colunas nomeadas ficam mesmo que vazias. No arquivo
+# citado isso preserva as 2 últimas colunas (`Não se aplica`, `Obra Não Iniciada`), que
+# são listas de validação do Excel vazadas no export — feias, mas têm conteúdo. Descobrir
+# "100% vazia" exige varrer o arquivo, então só fazemos essa passada extra quando o header
+# tem mais que LIMITE_COLS_SEM_NOME colunas anônimas — assim os arquivos normais (0 ou
+# poucas) não pagam nada.
+LIMITE_COLS_SEM_NOME = 10
+
+
+def _e_sem_nome(coluna: str) -> bool:
+    """pandas nomeia header vazio como 'Unnamed: N'."""
+    return str(coluna).startswith("Unnamed:")
+
+
+def _n_colunas_arquivo(src_path: str, delim: str, encoding: str) -> int:
+    """Nº de colunas do header (lê só o header, nrows=0)."""
+    return len(
+        pd.read_csv(
+            src_path, sep=delim, dtype=str, nrows=0, encoding=encoding, quotechar='"'
+        ).columns
+    )
+
+
+def _colunas_a_manter(
+    src_path: str,
+    delim: str,
+    encoding: str,
+    chunksize: int,
+) -> Optional[List[str]]:
+    """Nomes das colunas que devem ir p/ o parquet, ou None se não há padding a limpar.
+
+    None = nada a fazer (caso da esmagadora maioria dos arquivos) → sem passada extra.
+    """
+    todas = list(
+        pd.read_csv(
+            src_path, sep=delim, dtype=str, nrows=0, encoding=encoding, quotechar='"'
+        ).columns
+    )
+    anonimas = [c for c in todas if _e_sem_nome(c)]
+    if len(anonimas) <= LIMITE_COLS_SEM_NOME:
+        return None  # arquivo normal: nem varre o conteúdo
+
+    # varre o arquivo p/ saber quais anônimas têm algum valor (só essas escapam do
+    # descarte)
+    com_dado = set()
+    reader = pd.read_csv(
+        src_path,
+        sep=delim,
+        dtype=str,
+        keep_default_na=False,
+        na_filter=False,
+        encoding=encoding,
+        quotechar='"',
+        chunksize=chunksize,
+        on_bad_lines="skip",
+        engine="c",
+        usecols=anonimas,
+    )
+    for chunk in reader:
+        for c in chunk.columns:
+            if c not in com_dado and (chunk[c].str.strip() != "").any():
+                com_dado.add(c)
+        if len(com_dado) == len(anonimas):
+            break  # todas têm dado: nada a descartar
+
+    manter = [c for c in todas if not _e_sem_nome(c) or c in com_dado]
+    return None if len(manter) == len(todas) else manter
+
+
+class _BadLineCounter:
+    """Conta linhas ruins descartadas pelo pandas (on_bad_lines=callable)."""
+
+    def __init__(self) -> None:
+        self.n = 0
+
+    def __call__(self, bad_line: List[str]) -> None:
+        self.n += 1
+        return None  # descarta a linha
+
+
+def _converter_tabular(
+    src_path: str,
+    dst_path: str,
+    delim: str,
+    real_encoding: str,
+    source_file: str,
+    source_hash: str,
+    ingested_at: str,
+    chunksize: int,
+    bad_mode: str,
+    extra_meta: Optional[dict] = None,
+) -> Tuple[int, int, int, dict, str]:
+    """Retorna (n_linhas, n_colunas, n_bad_lines, column_map, encoding_usado).
+
+    extra_meta: pares extras p/ os metadados do parquet (ex.: {"table": "..."} no caso
+    .mdb).
+
+    encoding_usado pode diferir de real_encoding: a detecção olha só o sample de 64 KB, e
+    um byte que o encoding não aceita pode aparecer depois. Nesse caso cai para latin-1
+    (que mapeia os 256 bytes) e reinicia a conversão — ver `encoding_fallback` em
+    lake_utils.
+
+    bad_mode:
+      - 'skip'  (default): engine C (rápido) descarta linhas mal-formadas; n_bad não é
+        contado (-1).
+      - 'count': engine Python (mais lento) descarta E conta as linhas mal-formadas.
+      - 'error': falha o arquivo na 1ª linha mal-formada.
+    """
+    encoding = real_encoding
+    while True:
+        try:
+            resultado = _converter_tabular_1x(
+                src_path,
+                dst_path,
+                delim,
+                encoding,
+                source_file,
+                source_hash,
+                ingested_at,
+                chunksize,
+                bad_mode,
+                extra_meta,
+            )
+            return (*resultado, encoding)
+        except UnicodeDecodeError as e:
+            proximo = encoding_fallback(encoding)
+            if proximo is None:
+                raise
+            log.warning(
+                "%s: %s não decodifica o arquivo inteiro (%s) — refazendo com %s.",
+                source_file,
+                encoding,
+                e,
+                proximo,
+            )
+            encoding = proximo
+
+
+def _converter_tabular_1x(
+    src_path: str,
+    dst_path: str,
+    delim: str,
+    real_encoding: str,
+    source_file: str,
+    source_hash: str,
+    ingested_at: str,
+    chunksize: int,
+    bad_mode: str,
+    extra_meta: Optional[dict] = None,
+) -> Tuple[int, int, int, dict]:
+    """Uma passada de conversão com um encoding fixo. Retorna (n_linhas, n_colunas, n_bad,
+    map)."""
+    bad_counter = _BadLineCounter()
+    engine: Any
+    on_bad: Any
+    if bad_mode == "count":
+        engine, on_bad = "python", bad_counter
+    elif bad_mode == "error":
+        engine, on_bad = "c", "error"
+    else:  # skip
+        engine, on_bad = "c", "skip"
+
+    # descarta colunas de padding do Excel; usecols evita até parsear (um chunk de 200k
+    # linhas x 16.382 colunas estouraria a memória à toa)
+    manter = _colunas_a_manter(src_path, delim, real_encoding, chunksize)
+    if manter is not None:
+        log.info(
+            "%s: %d colunas de padding descartadas (mantidas %d).",
+            source_file,
+            _n_colunas_arquivo(src_path, delim, real_encoding) - len(manter),
+            len(manter),
+        )
+
+    reader = pd.read_csv(
+        src_path,
+        sep=delim,
+        dtype=str,
+        keep_default_na=False,
+        na_filter=False,
+        encoding=real_encoding,
+        quotechar='"',
+        chunksize=chunksize,
+        on_bad_lines=on_bad,
+        engine=engine,
+        usecols=manter,
+    )
+
+    writer: Optional[pq.ParquetWriter] = None
+    schema: Optional[pa.Schema] = None
+    nomes_finais: List[str] = []
+    column_map: dict = {}
+    n_linhas = 0
+    n_colunas = 0
+
+    try:
+        for chunk in reader:
+            if writer is None:
+                header_original = list(chunk.columns)
+                nomes_finais, column_map = normalizar_colunas(
+                    [str(c) for c in header_original]
+                )
+                n_colunas = len(nomes_finais)
+                # todas as colunas string + colunas de linhagem
+                campos = [pa.field(n, pa.string()) for n in nomes_finais]
+                campos += [pa.field(c, pa.string()) for c in LINEAGE_COLS]
+                meta = {
+                    b"source_file": source_file.encode("utf-8"),
+                    b"source_hash": source_hash.encode("utf-8"),
+                    b"encoding": real_encoding.encode("utf-8"),
+                    b"delimiter": delim.encode("utf-8"),
+                    b"column_map": json.dumps(column_map, ensure_ascii=False).encode(
+                        "utf-8"
+                    ),
+                }
+                for k, v in (extra_meta or {}).items():
+                    meta[k.encode("utf-8")] = str(v).encode("utf-8")
+                schema = pa.schema(campos, metadata=meta)
+                writer = pq.ParquetWriter(dst_path, schema, compression="snappy")
+
+            chunk.columns = nomes_finais
+            chunk["_source_file"] = source_file
+            chunk["_ingested_at"] = ingested_at
+            chunk["_source_hash"] = source_hash
+            table = pa.Table.from_pandas(chunk, schema=schema, preserve_index=False)
+            writer.write_table(table)
+            n_linhas += len(chunk)
+    finally:
+        if writer is not None:
+            writer.close()
+
+    # em modo 'skip' as linhas ruins não são contadas → -1 sinaliza "não contado"
+    n_bad = bad_counter.n if bad_mode == "count" else -1
+    return n_linhas, n_colunas, n_bad, column_map
+
+
+# Conversão XLSX -> Parquet (uma aba por parquet)
+def _abas_xlsx(src_path: str) -> List[str]:
+    import openpyxl
+
+    wb = openpyxl.load_workbook(src_path, read_only=True)
+    try:
+        return list(wb.sheetnames)
+    finally:
+        wb.close()
+
+
+def _converter_xlsx_aba(
+    src_path: str,
+    aba: str,
+    dst_path: str,
+    source_file: str,
+    source_hash: str,
+    ingested_at: str,
+) -> Tuple[int, int, dict]:
+    """Converte uma aba para parquet. Retorna (n_linhas, n_colunas, column_map)."""
+    df = pd.read_excel(src_path, sheet_name=aba, dtype=str, header=0, engine="openpyxl")
+    df = df.fillna("")
+    header_original = [str(c) for c in df.columns]
+    nomes_finais, column_map = normalizar_colunas(header_original)
+    df.columns = nomes_finais
+    df["_source_file"] = source_file
+    df["_ingested_at"] = ingested_at
+    df["_source_hash"] = source_hash
+
+    campos = [pa.field(n, pa.string()) for n in nomes_finais]
+    campos += [pa.field(c, pa.string()) for c in LINEAGE_COLS]
+    meta = {
+        b"source_file": source_file.encode("utf-8"),
+        b"source_hash": source_hash.encode("utf-8"),
+        b"sheet": aba.encode("utf-8"),
+        b"column_map": json.dumps(column_map, ensure_ascii=False).encode("utf-8"),
+    }
+    schema = pa.schema(campos, metadata=meta)
+    table = pa.Table.from_pandas(df.astype(str), schema=schema, preserve_index=False)
+    pq.write_table(table, dst_path, compression="snappy")
+    return len(df), len(nomes_finais), column_map
+
+
+# Conversão JSON -> Parquet (registros já achatados pelo cliente da fonte: list[dict])
+def _converter_json(
+    src_path: str,
+    dst_path: str,
+    source_file: str,
+    source_hash: str,
+    ingested_at: str,
+) -> Tuple[int, int, dict]:
+    """Converte raw/<fonte>/<dado>.json (list[dict]) para parquet full-text.
+
+    Retorna (n_linhas, n_colunas, column_map). Formas fora de list[dict] não são tratadas
+    aqui — só chega em raw/ o formato achatado pelo cliente da fonte; se vier diferente, a
+    exceção do pandas sobe e processar_objeto marca status="error" no objeto, sem derrubar
+    a execução.
+    """
+    with open(src_path, "r", encoding="utf-8") as f:
+        registros = json.load(f)
+
+    df = pd.json_normalize(registros)
+    df = df.fillna("")
+    for col in df.columns:
+        if df[col].map(lambda v: isinstance(v, (list, dict))).any():
+            df[col] = df[col].apply(
+                lambda v: (
+                    json.dumps(v, ensure_ascii=False, default=str)
+                    if isinstance(v, (list, dict))
+                    else v
+                )
+            )
+    df = df.astype(str)
+
+    header_original = [str(c) for c in df.columns]
+    nomes_finais, column_map = normalizar_colunas(header_original)
+    df.columns = nomes_finais
+    df["_source_file"] = source_file
+    df["_ingested_at"] = ingested_at
+    df["_source_hash"] = source_hash
+
+    campos = [pa.field(n, pa.string()) for n in nomes_finais]
+    campos += [pa.field(c, pa.string()) for c in LINEAGE_COLS]
+    meta = {
+        b"source_file": source_file.encode("utf-8"),
+        b"source_hash": source_hash.encode("utf-8"),
+        b"column_map": json.dumps(column_map, ensure_ascii=False).encode("utf-8"),
+    }
+    schema = pa.schema(campos, metadata=meta)
+    table = pa.Table.from_pandas(df, schema=schema, preserve_index=False)
+    pq.write_table(table, dst_path, compression="snappy")
+    return len(df), len(nomes_finais), column_map
+
+
+# Verificação
+def _verificar_parquet(dst_path: str, n_esperado: int) -> None:
+    pf = pq.ParquetFile(dst_path)
+    n = pf.metadata.num_rows
+    if n != n_esperado:
+        raise ValueError(f"parquet: nº de linhas divergem ({n} != {n_esperado})")
+
+
+# Processamento de um objeto
+def _novo_registro(execution_id: str, raw_key: str) -> dict:
+    return {
+        "execution_id": execution_id,
+        "raw_key": raw_key,
+        "staging_key": None,
+        "source_hash": None,
+        "n_linhas": 0,
+        "n_colunas": 0,
+        "n_bad_lines": 0,
+        "encoding": None,
+        "delimiter": None,
+        "column_map": {},
+        "status": None,
+        "error_message": None,
+    }
+
+
+def processar_objeto(  # noqa: C901
+    minio: ClienteMinio,
+    key: str,
+    execution_id: str,
+    apply: bool,
+    convertidos: set,
+    chunksize: int,
+    bad_mode: str,
+) -> List[dict]:
+    """Retorna lista de registros (XLSX pode gerar 1 por aba)."""
+    t0 = time.time()
+    ext = os.path.splitext(key)[1].lower()
+
+    if ext in UNSUPPORTED:
+        rec = _novo_registro(execution_id, key)
+        rec["status"] = "skipped_unsupported"
+        return [rec]
+
+    src = None
+    try:
+        sample = minio.sample_bytes(key)
+        real_encoding = detectar_encoding(sample)
+
+        # CSV / TXT
+        if ext in SUPPORTED_TABULAR:
+            rec = _novo_registro(execution_id, key)
+            rec["encoding"] = real_encoding
+            dialeto = detectar_dialeto(sample, real_encoding)
+            if dialeto is None:
+                rec["status"] = "skipped_no_header"
+                return [rec]
+            delim, _lineterm, _fq = dialeto
+            rec["delimiter"] = delim
+
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
+            source_hash = md5_arquivo(src)
+            rec["source_hash"] = source_hash
+            if (key, source_hash) in convertidos:
+                rec["status"] = "skipped_already"
+                return [rec]
+
+            staging_key = _staging_key(key)
+            rec["staging_key"] = staging_key
+            ingested_at = datetime.now(timezone.utc).isoformat()
+
+            dst = tempfile.NamedTemporaryFile(
+                delete=False, suffix=".parquet", dir=TMPDIR
+            ).name
+            try:
+                n_linhas, n_colunas, n_bad, column_map, enc_usado = _converter_tabular(
+                    src,
+                    dst,
+                    delim,
+                    real_encoding,
+                    os.path.basename(key),
+                    source_hash,
+                    ingested_at,
+                    chunksize,
+                    bad_mode,
+                )
+                # o encoding registrado é o que de fato decodificou o arquivo (pode ter
+                # caído para latin-1 no fallback), não o palpite feito sobre o sample
+                rec.update(
+                    n_linhas=n_linhas,
+                    n_colunas=n_colunas,
+                    n_bad_lines=n_bad,
+                    column_map=column_map,
+                    encoding=enc_usado,
+                )
+                _verificar_parquet(dst, n_linhas)
+                if apply:
+                    minio.upload_arquivo(dst, staging_key)
+                    rec["status"] = "converted"
+                else:
+                    minio.upload_arquivo(dst, _dryrun_key(staging_key))
+                    rec["status"] = "dry_run"
+                if n_bad > 0:
+                    log.warning(
+                        "%s — %d linha(s) mal-formada(s) descartada(s)", key, n_bad
+                    )
+            finally:
+                if os.path.exists(dst):
+                    os.unlink(dst)
+            return [rec]
+
+        # MDB/ACCDB (uma tabela por parquet)
+        if ext in SUPPORTED_MDB:
+            if not mdb_disponivel():
+                raise RuntimeError(
+                    "mdbtools não encontrado no PATH — necessário para ler .mdb "
+                    "(instale o pacote 'mdbtools')."
+                )
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
+            source_hash = md5_arquivo(src)
+            if (key, source_hash) in convertidos:
+                rec = _novo_registro(execution_id, key)
+                rec["source_hash"] = source_hash
+                rec["status"] = "skipped_already"
+                return [rec]
+
+            ingested_at = datetime.now(timezone.utc).isoformat()
+            recs: List[dict] = []
+            for tabela in mdb_tabelas(src):
+                rec = _novo_registro(execution_id, key)
+                rec["source_hash"] = source_hash
+                # mdb-export sempre entrega CSV vírgula em UTF-8 — sem detecção necessária
+                rec["encoding"] = MDB_ENCODING
+                rec["delimiter"] = MDB_DELIM
+                staging_key = _staging_key(key, f"__{norm_header(tabela) or 'tabela'}")
+                rec["staging_key"] = staging_key
+
+                csv_tmp = tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".csv", dir=TMPDIR
+                ).name
+                dst = tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".parquet", dir=TMPDIR
+                ).name
+                try:
+                    mdb_export_para_csv(src, tabela, csv_tmp)
+                    if os.path.getsize(csv_tmp) == 0:
+                        rec["status"] = "skipped_no_header"
+                        recs.append(rec)
+                        continue
+                    n_linhas, n_colunas, n_bad, column_map, enc_usado = (
+                        _converter_tabular(
+                            csv_tmp,
+                            dst,
+                            MDB_DELIM,
+                            MDB_ENCODING,
+                            os.path.basename(key),
+                            source_hash,
+                            ingested_at,
+                            chunksize,
+                            bad_mode,
+                            extra_meta={"table": tabela},
+                        )
+                    )
+                    if n_colunas == 0:
+                        rec["status"] = "skipped_no_header"
+                        recs.append(rec)
+                        continue
+                    rec.update(
+                        n_linhas=n_linhas,
+                        n_colunas=n_colunas,
+                        n_bad_lines=n_bad,
+                        column_map=column_map,
+                        encoding=enc_usado,
+                    )
+                    _verificar_parquet(dst, n_linhas)
+                    if apply:
+                        minio.upload_arquivo(dst, staging_key)
+                        rec["status"] = "converted"
+                    else:
+                        minio.upload_arquivo(dst, _dryrun_key(staging_key))
+                        rec["status"] = "dry_run"
+                except (
+                    Exception
+                ) as e:  # noqa: BLE001 — falha numa tabela não derruba as outras
+                    rec["status"] = "error"
+                    rec["error_message"] = f"tabela '{tabela}': {e}"[:500]
+                    log.error("✗ %s [%s]: %s", key, tabela, e)
+                finally:
+                    for p in (csv_tmp, dst):
+                        if os.path.exists(p):
+                            os.unlink(p)
+                recs.append(rec)
+            return recs
+
+        # JSON (registros já achatados pelo cliente da fonte -> um parquet full-text)
+        if ext in SUPPORTED_JSON:
+            rec = _novo_registro(execution_id, key)
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
+            source_hash = md5_arquivo(src)
+            rec["source_hash"] = source_hash
+            if (key, source_hash) in convertidos:
+                rec["status"] = "skipped_already"
+                return [rec]
+
+            staging_key = _staging_key(key)
+            rec["staging_key"] = staging_key
+            ingested_at = datetime.now(timezone.utc).isoformat()
+            dst = tempfile.NamedTemporaryFile(
+                delete=False, suffix=".parquet", dir=TMPDIR
+            ).name
+            try:
+                n_linhas, n_colunas, column_map = _converter_json(
+                    src, dst, os.path.basename(key), source_hash, ingested_at
+                )
+                if n_colunas == 0:
+                    rec["status"] = "skipped_no_header"
+                    return [rec]
+                rec.update(n_linhas=n_linhas, n_colunas=n_colunas, column_map=column_map)
+                _verificar_parquet(dst, n_linhas)
+                if apply:
+                    minio.upload_arquivo(dst, staging_key)
+                    rec["status"] = "converted"
+                else:
+                    minio.upload_arquivo(dst, _dryrun_key(staging_key))
+                    rec["status"] = "dry_run"
+            finally:
+                if os.path.exists(dst):
+                    os.unlink(dst)
+            return [rec]
+
+        # XLSX (uma aba por parquet)
+        if ext in SUPPORTED_EXCEL:
+            src = minio.baixar_para_tempfile(key, ext, TMPDIR)
+            source_hash = md5_arquivo(src)
+            if (key, source_hash) in convertidos:
+                rec = _novo_registro(execution_id, key)
+                rec["source_hash"] = source_hash
+                rec["status"] = "skipped_already"
+                return [rec]
+
+            ingested_at = datetime.now(timezone.utc).isoformat()
+            abas = _abas_xlsx(src)
+            multi = len(abas) > 1
+            recs = []
+            for aba in abas:
+                rec = _novo_registro(execution_id, key)
+                rec["source_hash"] = source_hash
+                sufixo = f"__{norm_header(aba) or 'aba'}" if multi else ""
+                staging_key = _staging_key(key, sufixo)
+                rec["staging_key"] = staging_key
+                dst = tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".parquet", dir=TMPDIR
+                ).name
+                try:
+                    n_linhas, n_colunas, column_map = _converter_xlsx_aba(
+                        src,
+                        aba,
+                        dst,
+                        os.path.basename(key),
+                        source_hash,
+                        ingested_at,
+                    )
+                    if n_colunas == 0:
+                        rec["status"] = "skipped_no_header"
+                        recs.append(rec)
+                        continue
+                    rec.update(
+                        n_linhas=n_linhas, n_colunas=n_colunas, column_map=column_map
+                    )
+                    _verificar_parquet(dst, n_linhas)
+                    if apply:
+                        minio.upload_arquivo(dst, staging_key)
+                        rec["status"] = "converted"
+                    else:
+                        minio.upload_arquivo(dst, _dryrun_key(staging_key))
+                        rec["status"] = "dry_run"
+                finally:
+                    if os.path.exists(dst):
+                        os.unlink(dst)
+                recs.append(rec)
+            return recs
+
+        rec = _novo_registro(execution_id, key)
+        rec["status"] = "skipped_unsupported"
+        return [rec]
+
+    except Exception as e:  # noqa: BLE001
+        rec = _novo_registro(execution_id, key)
+        rec["status"] = "error"
+        rec["error_message"] = str(e)[:500]
+        log.error("✗ %s: %s", key, e)
+        return [rec]
+    finally:
+        _ = round(time.time() - t0, 2)
+        if src and os.path.exists(src):
+            os.unlink(src)
+
+
+def _dryrun_key(staging_key: str) -> str:
+    return "staging_dryrun/" + staging_key[len(STAGING_PREFIX) :]
+
+
+# Auditoria (parquet)
+def _gravar_auditoria(
+    minio: ClienteMinio, execution_id: str, registros: List[dict]
+) -> None:
+    df = pd.DataFrame(registros)
+    if "column_map" in df.columns:
+        df["column_map"] = df["column_map"].apply(
+            lambda v: json.dumps(v, ensure_ascii=False)
+        )
+    import io as _io
+
+    buf = _io.BytesIO()
+    df.to_parquet(buf, engine="pyarrow", index=False)
+    key = f"{AUDIT_PREFIX}execution_id={execution_id}/part-0.parquet"
+    minio.put_object(key, buf.getvalue())
+    if _LOCAL_ARTIFACTS:
+        local = Path(__file__).parent / f"auditoria_staging_{execution_id}.parquet"
+        df.to_parquet(local, engine="pyarrow", index=False)
+        log.info("Auditoria: s3://%s/%s (cópia local: %s)", MINIO_BUCKET, key, local)
+    else:
+        log.info("Auditoria: s3://%s/%s", MINIO_BUCKET, key)
+
+
+# Execução
+def run(  # noqa: C901
+    apply: bool = False,
+    force: bool = False,
+    limit: int = 0,
+    pattern: str = "",
+    only_ext: str = "",
+    max_size_mb: int = 0,
+    chunksize: int = 200_000,
+    bad_lines: str = "skip",
+    prefix: Optional[str] = None,
+) -> Dict[str, int]:
+    """Converte os objetos de raw/ para Parquet em staging/. Retorna a contagem por
+    status.
+
+    Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run(apply=True)).
+    """
+    prefix = prefix if prefix is not None else RAW_PREFIX
+    execution_id = uuid.uuid4().hex
+    only_ext_set = {
+        ("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()
+    }
+
+    log.info("=" * 70)
+    log.info(
+        "Execução %s | modo=%s | prefixo=%s",
+        execution_id,
+        "APPLY (staging/)" if apply else "DRY-RUN (staging_dryrun/)",
+        prefix,
+    )
+    log.info("=" * 70)
+
+    conn_str = _conn_str()
+    _criar_control_table(conn_str)
+    convertidos = set() if force else _carregar_convertidos(conn_str)
+
+    minio = ClienteMinio()
+
+    registros: List[dict] = []
+    contagem: Dict[str, int] = {}
+    processados = 0
+
+    # A listagem é materializada porque o descarte de gêmeos precisa enxergar o conjunto
+    # todo: só dá para saber que um .xlsx tem um .txt equivalente depois de ver os dois.
+    #
+    # E precisa enxergá-lo ANTES dos filtros do usuário (--pattern/--only-ext/
+    # --max-size-mb), senão cada recorte elegeria um vencedor. Rodar `--only-ext csv` e
+    # depois `--only-ext txt` faria os dois formatos do mesmo nome escreverem no MESMO
+    # parquet, o segundo sobrescrevendo o primeiro — e fatiar a carga por extensão é
+    # justamente como se roda o lake inteiro pela primeira vez. Com o descarte antes, o
+    # conjunto final da staging é o mesmo independente de como a execução foi fatiada;
+    # os filtros só decidem que parte dele é construída agora.
+    todos: List[Tuple[str, int]] = []
+    for key, size in minio.listar_objetos(prefix):
+        # Marcadores de pasta: objetos de 0 byte com a key terminando em "/", criados
+        # por cliente/console S3 ao "criar diretório". Não são arquivo — desde que raw/
+        # ganhou estrutura de pastas eles aparecem na listagem e virariam
+        # skipped_unsupported, poluindo contagem e auditoria à toa.
+        if key.endswith("/"):
+            continue
+        if os.path.basename(key).startswith("~$"):
+            continue
+        todos.append((key, size))
+
+    vencedores, gemeos = _descartar_gemeos(todos)
+
+    def _selecionado(key: str, size: int) -> bool:
+        if pattern and pattern not in key:
+            return False
+        if only_ext_set and os.path.splitext(key)[1].lower() not in only_ext_set:
+            return False
+        if max_size_mb and size > max_size_mb * 1024 * 1024:
+            return False
+        return True
+
+    candidatos = [(k, s) for k, s in vencedores if _selecionado(k, s)]
+
+    # Só reporta os gêmeos que o recorte atual teria processado — numa execução
+    # `--only-ext txt` interessa saber quais .txt perderam para um .csv, não os 149
+    # descartes do lake inteiro.
+    tamanho = dict(todos)
+    gemeos_no_recorte = [k for k in gemeos if _selecionado(k, tamanho[k])]
+    for key in gemeos_no_recorte:
+        rec = _novo_registro(execution_id, key)
+        rec["status"] = "skipped_duplicado"
+        registros.append(rec)
+        contagem["skipped_duplicado"] = contagem.get("skipped_duplicado", 0) + 1
+    if gemeos_no_recorte:
+        log.info(
+            "%d objeto(s) descartado(s) por já existirem em outro formato "
+            "(ver skipped_duplicado na auditoria).",
+            len(gemeos_no_recorte),
+        )
+
+    for key, size in candidatos:
+        if limit and processados >= limit:
+            break
+        processados += 1
+
+        recs = processar_objeto(
+            minio, key, execution_id, apply, convertidos, chunksize, bad_lines
+        )
+        registros.extend(recs)
+        for rec in recs:
+            contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
+            if rec["source_hash"] is not None and rec["status"] != "skipped_already":
+                _registrar_control(conn_str, rec)
+
+        r0 = recs[0]
+        icone = {"converted": "✓", "dry_run": "◐", "error": "✗"}.get(r0["status"], "·")
+        log.info(
+            "%s [%d] %s — %s | abas/parts=%d | linhas=%d | cols=%d",
+            icone,
+            processados,
+            key,
+            r0["status"],
+            len(recs),
+            sum(r["n_linhas"] for r in recs),
+            r0["n_colunas"],
+        )
+
+    if registros:
+        _gravar_auditoria(minio, execution_id, registros)
+
+    log.info("=" * 70)
+    log.info("Concluído. Objetos: %d | parts geradas: %d", processados, len(registros))
+    for status, n in sorted(contagem.items()):
+        log.info("  %-20s %d", status, n)
+    if not apply:
+        log.info("DRY-RUN — nada em staging/. Prévia em staging_dryrun/")
+    log.info("Log: %s", _LOG_FILE)
+    return contagem
+
+
+# Main
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Conversão Raw -> Staging (Parquet) no MinIO."
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Grava em staging/. Sem esta flag roda em dry-run (staging_dryrun/).",
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Reprocessa objetos já convertidos."
+    )
+    parser.add_argument(
+        "--limit", type=int, default=0, help="Processa no máximo N objetos."
+    )
+    parser.add_argument("--pattern", default="", help="Filtra por substring na key.")
+    parser.add_argument(
+        "--only-ext", default="", help="Extensões a processar, ex.: csv,txt"
+    )
+    parser.add_argument(
+        "--max-size-mb",
+        type=int,
+        default=0,
+        help="Pula objetos maiores que N MB (0 = sem limite).",
+    )
+    parser.add_argument(
+        "--chunksize",
+        type=int,
+        default=200_000,
+        help="Linhas por chunk na leitura CSV/TXT (default 200k).",
+    )
+    parser.add_argument(
+        "--bad-lines",
+        choices=["skip", "count", "error"],
+        default="skip",
+        help="Linhas mal-formadas: 'skip' descarta (rápido, engine C, sem contagem); "
+        "'count' descarta e conta (engine Python, mais lento); 'error' falha o arquivo.",
+    )
+    parser.add_argument(
+        "--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/)."
+    )
+    args = parser.parse_args()
+
+    run(
+        apply=args.apply,
+        force=args.force,
+        limit=args.limit,
+        pattern=args.pattern,
+        only_ext=args.only_ext,
+        max_size_mb=args.max_size_mb,
+        chunksize=args.chunksize,
+        bad_lines=args.bad_lines,
+        prefix=args.prefix,
+    )
+
+
+if __name__ == "__main__":
+    main()

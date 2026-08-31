@@ -61,3 +61,8 @@ config.toml
 
 .logscripts/sftp_errors_*.log
 scripts/sftp_listing.txt
+
+# Artefatos locais dos scripts do data lake (LAKE_LOCAL_ARTIFACTS=1)
+scripts/*.log
+scripts/preview_arquivos.txt
+scripts/auditoria_*.parquet
