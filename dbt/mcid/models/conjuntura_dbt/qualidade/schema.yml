@@ -1,0 +1,112 @@
+version: 2
+
+# Camada de qualidade do produto Conjuntura: medições sobre os próprios
+# modelos — completude, estrutura e mudanças de estrutura entre retratos.
+#
+# Estes modelos descrevem o acervo, não o fenômeno habitacional. Servem para
+# detectar lacuna de preenchimento e alteração de contrato antes que elas
+# apareçam como número errado no painel.
+
+models:
+  - name: gold_qualidade_inventario
+    description: >
+      Uma linha por modelo do produto com a camada a que pertence, a
+      estratégia de materialização e a contagem de linhas na última medição.
+    columns:
+      - name: camada
+        description: >
+          Camada do medalhão a que o modelo pertence.
+      - name: schema_dado
+        description: >
+          Schema físico em que o modelo é materializado.
+      - name: model
+        description: >
+          Nome do modelo.
+      - name: materializacao
+        description: >
+          Forma como o modelo é materializado, distinguindo reconstrução
+          integral de carga incremental.
+      - name: linhas
+        description: >
+          Quantidade de linhas do modelo na medição.
+      - name: medido_em
+        description: >
+          Momento em que a medição foi realizada.
+  - name: gold_qualidade_completude
+    description: >
+      Uma linha por modelo e coluna com a fração de registros preenchidos,
+      usada para acompanhar lacunas de preenchimento ao longo do tempo.
+    columns:
+      - name: schema_dado
+        description: >
+          Schema físico em que o modelo é materializado.
+      - name: model
+        description: >
+          Nome do modelo.
+      - name: coluna
+        description: >
+          Nome da coluna medida.
+      - name: linhas
+        description: >
+          Quantidade total de linhas do modelo na medição.
+      - name: preenchidas
+        description: >
+          Quantidade de linhas em que a coluna não está nula.
+      - name: completude
+        description: >
+          Fração das linhas em que a coluna está preenchida, entre zero e
+          um.
+      - name: medido_em
+        description: >
+          Momento em que a medição foi realizada.
+  - name: gold_qualidade_schema
+    description: >
+      Uma linha por modelo e coluna com o tipo e a posição observados,
+      formando o retrato da estrutura usado para detectar mudanças de
+      contrato.
+    columns:
+      - name: schema_dado
+        description: >
+          Schema físico em que o modelo é materializado.
+      - name: model
+        description: >
+          Nome do modelo.
+      - name: coluna
+        description: >
+          Nome da coluna observada.
+      - name: tipo
+        description: >
+          Tipo de dado da coluna no momento da observação.
+      - name: posicao
+        description: >
+          Posição ordinal da coluna no modelo.
+      - name: visto_em
+        description: >
+          Momento em que a estrutura foi observada.
+  - name: gold_qualidade_schema_drift
+    description: >
+      Uma linha por coluna que mudou entre dois retratos consecutivos da
+      estrutura, indicando entrada, saída ou alteração de tipo.
+    columns:
+      - name: model
+        description: >
+          Nome do modelo em que a mudança foi detectada.
+      - name: coluna
+        description: >
+          Nome da coluna que mudou.
+      - name: mudanca
+        description: >
+          Natureza da mudança observada, distinguindo coluna nova, coluna
+          removida e alteração de tipo.
+      - name: tipo_antes
+        description: >
+          Tipo de dado da coluna no retrato anterior.
+      - name: tipo_agora
+        description: >
+          Tipo de dado da coluna no retrato atual.
+      - name: retrato_anterior
+        description: >
+          Momento do retrato usado como referência.
+      - name: retrato_atual
+        description: >
+          Momento do retrato comparado.

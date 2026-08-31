@@ -23,46 +23,134 @@ models:
     metadata:
       +materialized: incremental
       +schema: metadata
+      +meta:
+        governance:
+          product: metadata
+          owner_key: admin
+          classification: restricted
+          rag_publication: prohibited
     empreendimento_far_dbt:
       +materialized: table
       +schema: empreendimento_far
+      +meta:
+        governance:
+          product: empreendimento_far
+          owner_key: admin
+      bronze:
+        +materialized: table
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: admin
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
       silver:
         +materialized: table
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: admin
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
       gold:
         +materialized: table
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: admin
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
 
     entidades_dbt:
       +materialized: table
       +schema: entidades_fds
+      +meta:
+        governance:
+          product: entidades_fds
+          owner_key: admin
+      bronze:
+        +materialized: table
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: admin
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
       silver:
         +materialized: table
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: admin
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
       gold:
         +materialized: table
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: admin
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
 
     conjuntura_dbt:
       +materialized: table
-      +schema: conjuntura
+      +schema: conjuntura_continuo
+      +meta:
+        governance:
+          product: conjuntura
+          owner_key: admin
+      # Bronze: espelho textual do parquet de staging. A Bronze é espelho do
+      # raw, e a Silver é o único lugar de achatamento e tipagem.
+      #
+      # MATERIALIZAÇÃO É `table`, NÃO `materialized_view`: as MVs estavam
+      # derrubando o banco (decisão do time em 2026-08-29). Não reverter.
       bronze:
         +materialized: table
-        +schema: conjuntura_bronze
-      silver:
-        +materialized: table
-        +schema: conjuntura_silver
-      gold:
-        +materialized: table
-        +schema: conjuntura_gold
-    
-    conjuntura_continuo_dbt:
-      +materialized: table
-      +schema: conjuntura_continuo
-      # Sem camada bronze: o parquet de staging já sai tipado (Etapa 02) e a
-      # silver lê direto via pg_duckdb (read_parquet).
+        +schema: conjuntura_continuo_bronze
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: admin
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
       silver:
         +materialized: table
         +schema: conjuntura_continuo_silver
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: admin
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
       gold:
         +materialized: table
         +schema: conjuntura_continuo_mart
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: admin
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+      qualidade:
+        +materialized: table
+        +schema: conjuntura_continuo_mart
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: admin
+            layer: quality
+            classification: restricted
+            rag_publication: prohibited
 
 on-run-start:
   - '{{create_udfs()}}'

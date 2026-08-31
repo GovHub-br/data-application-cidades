@@ -1,0 +1,34 @@
+version: 2
+
+# Registro técnico de execução dos modelos, usado para expor a data da última
+# atualização nos painéis. Descreve o acervo, não o fenômeno de negócio.
+
+models:
+  - name: models_metadata
+    description: >
+      Uma linha por modelo materializado no projeto, com o schema e o banco em
+      que reside, a estratégia de materialização e o momento da última
+      transformação bem-sucedida.
+    columns:
+      - name: schema_name
+        description: >
+          Schema físico em que o modelo é materializado.
+      - name: table_name
+        description: >
+          Nome da tabela materializada.
+      - name: database_name
+        description: >
+          Banco de dados em que o modelo reside.
+      - name: materialization
+        description: >
+          Forma como o modelo é materializado, distinguindo reconstrução
+          integral de carga incremental.
+      - name: description
+        description: >
+          Descrição do modelo declarada no projeto.
+      - name: dt_transform
+        description: >
+          Momento da última transformação bem-sucedida do modelo.
+      - name: run_id
+        description: >
+          Identificador da execução que produziu o registro.

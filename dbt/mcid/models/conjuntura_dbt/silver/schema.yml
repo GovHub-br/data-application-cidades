@@ -1,90 +1,1549 @@
 version: 2
+
+# Documentação dos modelos silver do conjuntura contínuo, organizada pelas
+# páginas/seções do Boletim de Conjuntura do Setor Habitacional (ref.: 4T2025).
+
+# Legenda:
+#   [OK]         pronto e materializado
+#   [A-FAZER]    automatizável — falta implementar (portar DAG / novo endpoint / recorte IBGE)
+#   [MANUAL]     inserir na mão (tabela Postgres, como o empresas)
+#   [DERIVADO]   calcular a partir de dados que já temos (no gold)
+#   [SEM FONTE]  não teremos o dado (sem acesso / descartado)
 models:
-  - name: silver_fgv_icst
+  # PÁGINA 1 — 1. PIB DA CONSTRUÇÃO CIVIL  +  2. LANÇAMENTOS E VENDAS
+  - name: silver_continuo_ibge_pib_construcao_civil
     description: >
-      Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE.
-      Camada silver com variações mensais e em 12 meses calculadas via LAG.
-      Origem: conjuntura_bronze.bronze_fgv_icst.
-    meta: {}
-    tags:
-      - silver
-      - icst
-      - fgv
+      Uma linha por trimestre e variável com o PIB da construção civil apurado
+      pelo IBGE, incluindo o valor do índice e as taxas de variação da série.
     columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
       - name: data_referencia
-        description: Data de referência do índice (mensal).
-      - name: icst_com_ajuste_sazonal
-        description: Valor do ICST com ajuste sazonal.
-      - name: icst_sem_ajuste_sazonal
-        description: Valor do ICST sem ajuste sazonal.
-      - name: var_mes
-        description: Variação percentual em relação ao mês anterior.
-      - name: var_12_meses
-        description: Variação percentual em relação ao mesmo mês do ano anterior.
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
       - name: dt_ingest
-        description: Data de ingestão do registro.
-
-  - name: silver_imob_infomoney
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_pib_construcao_civil_pct
     description: >
-      Índice IMOB da Infomoney agregado mensalmente (fechamento do último dia útil).
-      Camada silver com variações mensais, em 12 meses e acumulado da série calculados.
-      Origem: conjuntura_bronze.bronze_imob_infomoney.
-    meta: {}
-    tags:
-      - silver
-      - imob
-      - infomoney
+      Uma linha por trimestre com as três taxas de variação do PIB da
+      construção civil: contra o trimestre imediatamente anterior, acumulada
+      no ano e acumulada em quatro trimestres.
     columns:
-      - name: data_referencia
-        description: Primeiro dia do mês de referência.
-      - name: close_fim_mes
-        description: Valor de fechamento do último dia útil do mês.
-      - name: var_mes
-        description: Variação percentual em relação ao mês anterior.
-      - name: var_12_meses
-        description: Variação percentual em relação ao mesmo mês do ano anterior.
-      - name: var_acum_serie
-        description: Variação acumulada desde o início da série.
-
-  - name: silver_fipezap_locacao
+      - name: periodo
+        description: >
+          Rótulo do trimestre a que a observação se refere.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: pib_const_trimestre_anterior
+        description: >
+          Variação percentual do produto da construção em relação ao
+          trimestre imediatamente anterior.
+      - name: pib_const_taxa_acumulada_ano
+        description: >
+          Variação percentual do produto da construção acumulada desde o
+          início do ano.
+      - name: pib_const_taxa_acumulada_4_trimestres
+        description: >
+          Variação percentual do produto da construção acumulada em quatro
+          trimestres.
+  - name: silver_continuo_ibge_pib_consolidado_trimestral
     description: >
-      Índice FipeZap de locação residencial.
-      Camada silver com tipagem correta e variação em 12 meses calculada.
-      Origem: conjuntura_bronze.bronze_fipezap_locacao.
-    meta: {}
-    tags:
-      - silver
-      - fipezap
-      - fipe
+      Uma linha por trimestre e variável com o PIB consolidado do país apurado
+      pelo IBGE, usado como base de comparação para o recorte da construção.
     columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
       - name: data_referencia
-        description: Data de referência do índice (mensal).
-      - name: var_mensal
-        description: "Variação percentual mensal (em decimal, ex: 0.0068)."
-      - name: var_ano
-        description: Variação percentual acumulada no ano (em decimal).
-      - name: var_12_meses_calc
-        description: Variação percentual em 12 meses calculada via LAG.
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
       - name: dt_ingest
-        description: Data de ingestão do registro.
-
-  - name: silver_abramat_indice
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_pib_corrente
     description: >
-      Índice ABRAMAT de custos da construção civil.
-      Camada silver com dados mockados a partir do relatório (ingestão via PDF).
-      Origem: conjuntura_bronze.bronze_abramat_indice.
-    meta: {}
-    tags:
-      - silver
-      - abramat
+      Uma linha por trimestre e variável com o PIB a preços correntes apurado
+      pelo IBGE, em milhões de reais.
+  # [SEM FONTE] 2. Lançamentos e Vendas (CBIC) — por região e totais Total/MCMV/
+  #             Demais. NÃO temos acesso a esse dado.
+
+  # PÁGINA 2 — 2. BALANÇO DAS EMPRESAS  +  3. FINANCIAMENTOS IMOBILIÁRIOS
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_empresas_balanco_lancamentos_vendas
+    description: >
+      Uma linha por incorporadora e trimestre com as unidades lançadas e
+      vendidas e suas variações percentuais, conforme divulgado nos balanços
+      trimestrais das empresas de capital aberto.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do trimestre a que a observação se refere.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: empresa
+        description: >
+          Incorporadora habitacional a que os números se referem.
+      - name: lancamentos
+        description: >
+          Unidades habitacionais lançadas no trimestre.
+      - name: lancamentos_tri_anterior
+        description: >
+          Variação percentual das unidades lançadas em relação ao trimestre
+          imediatamente anterior.
+      - name: lancamentos_mesmo_tri_ano_anterior
+        description: >
+          Variação percentual das unidades lançadas em relação ao mesmo
+          trimestre do ano anterior.
+      - name: lancamento_acumulado_mesmo_periodo_ano_anterior
+        description: >
+          Variação percentual das unidades lançadas no acumulado do ano
+          contra igual período do ano anterior.
+      - name: vendas
+        description: >
+          Unidades habitacionais vendidas no trimestre.
+      - name: vendas_tri_anterior
+        description: >
+          Variação percentual das unidades vendidas em relação ao trimestre
+          imediatamente anterior.
+      - name: vendas_mesmo_tri_ano_anterior
+        description: >
+          Variação percentual das unidades vendidas em relação ao mesmo
+          trimestre do ano anterior.
+      - name: vendas_acumulado_mesmo_periodo_ano_anterior
+        description: >
+          Variação percentual das unidades vendidas no acumulado do ano
+          contra igual período do ano anterior.
+  - name: silver_continuo_bacen_financiamentos_imobiliarios
+    description: >
+      Uma linha por mês e medida com as concessões de crédito imobiliário,
+      taxas de juros e inadimplência apuradas pelo BACEN, separadas entre
+      pessoa física e pessoa jurídica.
+  # [MANUAL] Financiamentos Habitacionais (UH): FGTS-PJ e SBPE Const — inserir
+  #          na mão (trimestre + 12 meses).
+
+  # PÁGINA 3 (DADOS MENSAIS) — 4. EMPREGOS · RENDIMENTO/PNAD ·
+  #                            5. PRODUÇÃO FÍSICA E VENDAS · 6. CRÉDITO
+    columns:
+      - name: data
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: tipo
+        description: >
+          Medida do crédito imobiliário registrada na linha, distinguindo
+          volume concedido, taxa de juros e inadimplência, e separando
+          pessoa física de pessoa jurídica.
+      - name: valor
+        description: >
+          Valor da medida indicada na linha, na unidade correspondente ao
+          tipo.
+  - name: silver_continuo_ibge_pmc_construcao
+    description: >
+      Uma linha por mês e variável com as variações do volume de vendas no
+      varejo de material de construção apuradas pelo IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_pim_pf_brasil
+    description: >
+      Uma linha por mês e variável com as variações da produção física dos
+      insumos típicos da construção civil apuradas pelo IBGE.
+  # PNAD-C construção via SIDRA (o /dados do IBGE v3 está 500 nos agregados 6323/6391)
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_pnad_construcao_ocupados
+    description: >
+      Uma linha por trimestre móvel e variável com a população ocupada na
+      construção civil e no total da economia, em milhares de pessoas,
+      conforme a PNAD Contínua do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_pnad_construcao_rendimento
+    description: >
+      Uma linha por trimestre móvel e variável com o rendimento médio real na
+      construção civil e no total dos ocupados, em reais, conforme a PNAD
+      Contínua do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_pnadc_rendimento_domiciliar
+    description: >
+      Uma linha por trimestre móvel e variável com o rendimento domiciliar
+      real apurado pela PNAD Contínua do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_pnadc_populacao_decis_renda
+    description: >
+      Uma linha por trimestre móvel e décimo de renda com a distribuição da
+      população brasileira apurada pela PNAD Contínua do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_novo_caged
+    description: >
+      Uma linha por mês com admissões, desligamentos, saldo líquido e estoque
+      de postos formais na construção de edifícios, conforme o Novo CAGED.
+  # [MANUAL] 6. Novos Financiamentos Imobiliários por banco (CEF/Itaú/Bradesco/
+  #          Santander/BB/demais) — inserir na mão (ABECIP informativo).
+
+  # PÁGINA 4 — CRÉDITO/PIB (BACEN) · FGTS/FS-PF POR RENDA · UH POR CONDIÇÃO ·
+  #            ESTRUTURA DE FUNDING
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: admitidos
+        description: >
+          Quantidade de trabalhadores admitidos no mês.
+      - name: desligados
+        description: >
+          Quantidade de trabalhadores desligados no mês.
+      - name: saldo
+        description: >
+          Diferença entre admissões e desligamentos no mês, positiva quando
+          houve criação líquida de postos.
+      - name: estoque
+        description: >
+          Quantidade total de postos de trabalho formais ao fim do mês.
+      - name: variacao
+        description: >
+          Variação percentual do estoque de postos em relação ao mês
+          anterior.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_bacen_credito_pib
+    description: >
+      Uma linha por mês com o saldo da carteira de crédito imobiliário
+      expresso como percentual do Produto Interno Bruto, conforme o BACEN.
+  # [MANUAL] FGTS/FS-PF por Renda Familiar (UH usadas x novas).
+  # [MANUAL] N° UH por condição de uso: FGTS-PF e SBPE Aquisição.
+  # [MANUAL] Estrutura de Funding (SBPE/FGTS/LCI/FII/CRI/LIG).
+
+  # PÁGINA 5 — PRATICAMENTE TODA MANUAL (MCMV FIN · SBPE · CANAL FGTS · FAIXAS)
+    columns:
+      - name: data
+        description: >
+          Último dia do mês a que a observação se refere.
+      - name: valor
+        description: >
+          Saldo da carteira de crédito imobiliário expresso como percentual
+          do Produto Interno Bruto.
+  - name: silver_continuo_abecip_poupanca_sbpe
+    description: >
+      Uma linha por mês com depósitos, retiradas, captação líquida e saldo das
+      cadernetas de poupança do SBPE, conforme a ABECIP.
     columns:
       - name: data_referencia
-        description: Data de referência do índice (mensal).
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: deposito
+        description: >
+          Valor depositado nas cadernetas no mês, em milhões de reais.
+      - name: retirada
+        description: >
+          Valor retirado das cadernetas no mês, em milhões de reais.
+      - name: captacao_liquida_valor
+        description: >
+          Diferença entre depósitos e retiradas no mês, negativa quando as
+          retiradas superam os depósitos, em milhões de reais.
+      - name: captacao_liquida_pct
+        description: >
+          Captação líquida do mês expressa como percentual do saldo.
+      - name: saldo
+        description: >
+          Saldo total das cadernetas ao fim do mês, em milhões de reais.
+  - name: silver_continuo_sbpe_financiamentos_aquisicao
+    description: >
+      Uma linha por mês com o financiamento imobiliário e a captação de
+      poupança do SBPE, abertos por destinação, por condição de uso do imóvel
+      e por instituição financeira.
+  # [MANUAL] Falta na pág. 5: MCMV FIN PF + SBPE AQ; MCMV FIN PF CCI/CCA/ProCot;
+  #          FGTS PF Apoio Produção; FIN PF Total; Financiamento PF por faixa.
+
+  # PÁGINA 6 — 6. OGU  +  7. PREÇOS
+    columns:
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: sbpe_fin_uh_const
+        description: >
+          Unidades habitacionais financiadas no mês com destinação à
+          construção.
+      - name: sbpe_fin_uh_aquisicao
+        description: >
+          Unidades habitacionais financiadas no mês com destinação à
+          aquisição.
+      - name: sbpe_fin_uh_total
+        description: >
+          Total de unidades habitacionais financiadas no mês.
+      - name: sbpe_fin_milhoes_const
+        description: >
+          Valor financiado no mês com destinação à construção, em milhões de
+          reais.
+      - name: sbpe_fin_milhoes_aquisicao
+        description: >
+          Valor financiado no mês com destinação à aquisição, em milhões de
+          reais.
+      - name: sbpe_fin_milhoes_total
+        description: >
+          Valor total financiado no mês, em milhões de reais.
+      - name: sbpe_fin_uh_aq_novos
+        description: >
+          Unidades novas adquiridas com financiamento no mês.
+      - name: sbpe_fin_uh_aq_usados
+        description: >
+          Unidades usadas adquiridas com financiamento no mês.
+      - name: sbpe_fin_milhoes_aq_novos
+        description: >
+          Valor financiado na aquisição de unidades novas no mês, em milhões
+          de reais.
+      - name: sbpe_fin_milhoes_aq_usados
+        description: >
+          Valor financiado na aquisição de unidades usadas no mês, em
+          milhões de reais.
+      - name: sbpe_fin_uh_acum_total
+        description: >
+          Total de unidades financiadas desde o início do ano até o mês de
+          referência.
+      - name: sbpe_fin_milhoes_acum_total
+        description: >
+          Valor total financiado desde o início do ano até o mês de
+          referência, em milhões de reais.
+      - name: sbpe_captacao_poupanca_milhoes
+        description: >
+          Captação líquida das cadernetas de poupança no mês, em milhões de
+          reais.
+      - name: sbpe_fin_uh_acum_caixa
+        description: >
+          Unidades financiadas pela Caixa Econômica Federal desde o início
+          do ano até o mês de referência.
+      - name: sbpe_fin_uh_acum_caixa_perc
+        description: >
+          Participação pela Caixa Econômica Federal nas unidades financiadas
+          no ano, em percentual.
+      - name: sbpe_fin_milhoes_acum_caixa
+        description: >
+          Valor financiado pela Caixa Econômica Federal desde o início do
+          ano até o mês de referência, em milhões de reais.
+      - name: sbpe_fin_milhoes_acum_caixa_perc
+        description: >
+          Participação pela Caixa Econômica Federal no valor financiado no
+          ano, em percentual.
+      - name: sbpe_fin_uh_acum_bradesco
+        description: >
+          Unidades financiadas pelo Bradesco desde o início do ano até o mês
+          de referência.
+      - name: sbpe_fin_uh_acum_bradesco_perc
+        description: >
+          Participação pelo Bradesco nas unidades financiadas no ano, em
+          percentual.
+      - name: sbpe_fin_milhoes_acum_bradesco
+        description: >
+          Valor financiado pelo Bradesco desde o início do ano até o mês de
+          referência, em milhões de reais.
+      - name: sbpe_fin_milhoes_acum_bradesco_perc
+        description: >
+          Participação pelo Bradesco no valor financiado no ano, em
+          percentual.
+      - name: sbpe_fin_uh_acum_itau
+        description: >
+          Unidades financiadas pelo Itaú Unibanco desde o início do ano até
+          o mês de referência.
+      - name: sbpe_fin_uh_acum_itau_perc
+        description: >
+          Participação pelo Itaú Unibanco nas unidades financiadas no ano,
+          em percentual.
+      - name: sbpe_fin_milhoes_acum_itau
+        description: >
+          Valor financiado pelo Itaú Unibanco desde o início do ano até o
+          mês de referência, em milhões de reais.
+      - name: sbpe_fin_milhoes_acum_itau_perc
+        description: >
+          Participação pelo Itaú Unibanco no valor financiado no ano, em
+          percentual.
+      - name: sbpe_fin_uh_acum_santander
+        description: >
+          Unidades financiadas pelo Santander desde o início do ano até o
+          mês de referência.
+      - name: sbpe_fin_uh_acum_santander_perc
+        description: >
+          Participação pelo Santander nas unidades financiadas no ano, em
+          percentual.
+      - name: sbpe_fin_milhoes_acum_santander
+        description: >
+          Valor financiado pelo Santander desde o início do ano até o mês de
+          referência, em milhões de reais.
+      - name: sbpe_fin_milhoes_acum_santander_perc
+        description: >
+          Participação pelo Santander no valor financiado no ano, em
+          percentual.
+      - name: sbpe_fin_uh_acum_bb
+        description: >
+          Unidades financiadas pelo Banco do Brasil desde o início do ano
+          até o mês de referência.
+      - name: sbpe_fin_uh_acum_bb_perc
+        description: >
+          Participação pelo Banco do Brasil nas unidades financiadas no ano,
+          em percentual.
+      - name: sbpe_fin_milhoes_acum_bb
+        description: >
+          Valor financiado pelo Banco do Brasil desde o início do ano até o
+          mês de referência, em milhões de reais.
+      - name: sbpe_fin_milhoes_acum_bb_perc
+        description: >
+          Participação pelo Banco do Brasil no valor financiado no ano, em
+          percentual.
+  - name: silver_continuo_siafi_dotacao_execucao
+    description: >
+      Uma linha por ação de governo e unidade gestora com a dotação, o
+      empenho, o pagamento e os restos a pagar da execução orçamentária
+      federal, conforme o SIAFI.
+    columns:
+      - name: unidade_orcamentaria_codigo
+        description: >
+          Código da unidade orçamentária responsável pela despesa.
+      - name: unidade_orcamentaria_nome
+        description: >
+          Nome da unidade orçamentária responsável pela despesa.
+      - name: acao_governo_codigo
+        description: >
+          Código da ação de governo a que a despesa pertence.
+      - name: acao_governo_nome
+        description: >
+          Nome da ação de governo a que a despesa pertence.
+      - name: programa_governo_codigo
+        description: >
+          Código do programa de governo que abriga a ação.
+      - name: programa_governo_nome
+        description: >
+          Nome do programa de governo que abriga a ação.
+      - name: plano_orcamentario_codigo
+        description: >
+          Código do plano orçamentário, que detalha a ação em finalidades
+          específicas.
+      - name: plano_orcamentario_funcao
+        description: >
+          Função de governo em que a despesa se classifica.
+      - name: plano_orcamentario_subfuncao
+        description: >
+          Subfunção de governo em que a despesa se classifica.
+      - name: plano_orcamentario_programa
+        description: >
+          Programa ao qual o plano orçamentário se vincula.
+      - name: plano_orcamentario_acao
+        description: >
+          Ação à qual o plano orçamentário se vincula.
+      - name: plano_orcamentario_medida
+        description: >
+          Medida associada ao plano orçamentário.
+      - name: plano_orcamentario_descricao
+        description: >
+          Descrição da finalidade do plano orçamentário.
+      - name: elemento_despesa_codigo
+        description: >
+          Código do elemento de despesa, que classifica a natureza do gasto.
+      - name: elemento_despesa_nome
+        description: >
+          Nome do elemento de despesa, que classifica a natureza do gasto.
+      - name: orgao_uge_codigo
+        description: >
+          Código do órgão da unidade gestora.
+      - name: orgao_uge_nome
+        description: >
+          Nome do órgão da unidade gestora.
+      - name: uge_matriz_filial
+        description: >
+          Indica se a unidade gestora é matriz ou filial.
+      - name: ug_executora_codigo
+        description: >
+          Código da unidade gestora que executou a despesa.
+      - name: ug_executora_nome
+        description: >
+          Nome da unidade gestora que executou a despesa.
+      - name: fixacao_despesa_loa
+        description: >
+          Valor da despesa fixado na lei orçamentária anual, em reais.
+      - name: dotacao_inicial
+        description: >
+          Valor autorizado no início do exercício, em reais.
+      - name: dotacao_atualizada
+        description: >
+          Valor autorizado após créditos adicionais e remanejamentos, em
+          reais.
+      - name: credito_disponivel
+        description: >
+          Parcela da dotação ainda disponível para empenho, em reais.
+      - name: despesas_empenhadas
+        description: >
+          Valor comprometido por empenho no exercício, em reais.
+      - name: despesas_empenhadas_a_liquidar
+        description: >
+          Valor empenhado cuja entrega ainda não foi reconhecida, em reais.
+      - name: despesas_liquidadas_a_pagar
+        description: >
+          Valor cuja entrega foi reconhecida mas ainda não foi paga, em
+          reais.
+      - name: despesas_pagas
+        description: >
+          Valor efetivamente pago no exercício, em reais.
+      - name: restos_a_pagar_inscritos
+        description: >
+          Valor de exercícios anteriores inscrito para pagamento futuro, em
+          reais.
+      - name: restos_a_pagar_pagos
+        description: >
+          Valor de restos a pagar quitado no exercício, em reais.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_sinapi
+    description: >
+      Uma linha por mês e variável com o custo de construção por metro
+      quadrado apurado pelo SINAPI, incluindo material e mão de obra.
+    data_tests:
+      - sem_coluna_sensivel:
+          config:
+            severity: error
+      - silver_contract:
+          config:
+            severity: warn
+          arguments:
+            expected_columns:
+              - periodo
+              - data_referencia
+              - variavel_id
+              - variavel
+              - unidade
+              - localidade_id
+              - localidade
+              - classificacao_id
+              - classificacao
+              - categoria_id
+              - categoria
+              - valor
+              - dt_ingest
+            allow_additional_columns: false
+            required_columns: [periodo, data_referencia, variavel, unidade, valor]
+            not_null_columns: [periodo, data_referencia, variavel, valor]
+            freshness_column: data_referencia
+            freshness_days: 90
+            min_completeness:
+              periodo: 1.0
+              data_referencia: 1.0
+            expected_data_types:
+              periodo: text
+              data_referencia: date
+              variavel_id: bigint
+              variavel: text
+              unidade: text
+              localidade_id: bigint
+              localidade: text
+              classificacao_id: bigint
+              classificacao: text
+              categoria_id: bigint
+              categoria: text
+              valor: double precision
+              dt_ingest: timestamp without time zone
+            trimmed_text_columns: [periodo, variavel, unidade]
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_fgv_incc_m
+    description: >
+      Uma linha por mês com o número índice do INCC-M apurado pela FGV e suas
+      variações no mês, no acumulado do ano e em doze meses.
+  # [SEM FONTE] 6. Desembolsos de Obras CEF (FAR/Rural/FDS) — sem fonte direta;
+  #             talvez abstrair do próprio OGU (alta chance de dar errado).
+  # [SEM FONTE] 7. FGTS — Valor Médio dos Imóveis — não teremos.
+  # [DERIVADO/MANUAL] 7. Variação do ticket médio vs INCC — calcular a partir dos
+  #             balanços das empresas + INCC-M, ou inserir manualmente depois.
+
+  # PÁGINA 7 — 8. ÍNDICES DA CONSTRUÇÃO
+    columns:
+      - name: mes
+        description: >
+          Primeiro dia do mês a que a observação se refere.
       - name: indice
-        description: Valor absoluto do índice ABRAMAT.
+        description: >
+          Número índice do custo da construção habitacional na base da
+          série.
       - name: var_mes
-        description: Variação percentual em relação ao mês anterior.
+        description: >
+          Variação percentual do índice em relação ao mês anterior.
+      - name: var_ano
+        description: >
+          Variação percentual do índice acumulada desde o início do ano.
       - name: var_12_meses
-        description: Variação percentual em relação ao mesmo mês do ano anterior.
+        description: >
+          Variação percentual do índice acumulada em doze meses.
+  - name: silver_continuo_infomoney_imob
+    description: >
+      Uma linha por pregão com a pontuação de abertura, máxima, mínima e
+      fechamento do índice IMOB, que acompanha as ações do setor imobiliário
+      na B3.
+    columns:
+      - name: symbol
+        description: >
+          Código do índice de ações acompanhado.
+      - name: data_pregao
+        description: >
+          Data do pregão a que a cotação se refere.
+      - name: open
+        description: >
+          Pontuação do índice na abertura do pregão.
+      - name: high
+        description: >
+          Maior pontuação atingida pelo índice no pregão.
+      - name: low
+        description: >
+          Menor pontuação atingida pelo índice no pregão.
+      - name: close
+        description: >
+          Pontuação do índice no encerramento do pregão.
+      - name: volume
+        description: >
+          Volume negociado no pregão.
       - name: dt_ingest
-        description: Data de ingestão do registro.
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_fipezap_locacao
+    description: >
+      Uma linha por mês com o número índice do FipeZap de locação residencial
+      e suas variações no mês e no acumulado do ano, conforme a FIPE.
+    columns:
+      - name: data_referencia
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: imoveis_residenciais_locacao_numero_indice_total
+        description: >
+          Número índice do preço de locação residencial anunciado, no total
+          das cidades pesquisadas.
+      - name: imoveis_residenciais_locacao_var_mensal_total
+        description: >
+          Variação percentual do índice de locação em relação ao mês
+          anterior.
+      - name: imoveis_residenciais_locacao_var_ano_total
+        description: >
+          Variação percentual do índice de locação acumulada desde o início
+          do ano.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_fgv_icst
+    description: >
+      Uma linha por mês com o Índice de Confiança da Construção apurado pela
+      FGV-IBRE, nas séries com e sem ajuste sazonal.
+  # [SEM FONTE] 8. Índice ABRAMAT — dados inconsistentes, NÃO vamos tentar;
+  #             talvez inserir manualmente depois.
+
+  # APOIO / NÃO APARECE DIRETO NO BOLETIM 4T25 (base estrutural anual IBGE)
+    columns:
+      - name: data_referencia
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: periodo
+        description: >
+          Rótulo do mês a que a observação se refere.
+      - name: icst_com_ajuste_sazonal
+        description: >
+          Índice de confiança da construção com ajuste sazonal, que remove o
+          padrão recorrente do calendário e permite comparar meses
+          consecutivos.
+      - name: icst_sem_ajuste_sazonal
+        description: >
+          Índice de confiança da construção na série original, sem tratamento
+          do padrão sazonal.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_paic_resultados
+    description: >
+      Uma linha por ano e variável com receita, custos e valor adicionado das
+      empresas de construção, conforme a Pesquisa Anual da Indústria da
+      Construção do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_paic_pessoal_salarial
+    description: >
+      Uma linha por ano e variável com o pessoal ocupado e a massa salarial
+      das empresas de construção, conforme a Pesquisa Anual da Indústria da
+      Construção do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_ibge_paic_obras
+    description: >
+      Uma linha por ano e variável com o valor das obras e serviços executados
+      pelas empresas de construção, conforme a Pesquisa Anual da Indústria da
+      Construção do IBGE.
+
+  # ========================================================================
+  # FONTE MANUAL COMPLETA — planilha oficial do boletim (boletim.xlsx)
+  # Carregada em manual_conjuntura.dados_trimestrais / dados_mensais.
+  # São tabelas largas (todas as variáveis do dicionário); o gold seleciona
+  # as séries por seção. Substituem os manuais soltos anteriores.
+  # ========================================================================
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: variavel_id
+        description: >
+          Código da variável pesquisada, conforme a numeração da pesquisa de
+          origem.
+      - name: variavel
+        description: >
+          Nome da variável pesquisada, que define o que o valor da linha
+          mede.
+      - name: unidade
+        description: >
+          Unidade de medida em que o valor é expresso.
+      - name: localidade_id
+        description: >
+          Código da localidade a que a observação se refere.
+      - name: localidade
+        description: >
+          Nome da localidade a que a observação se refere.
+      - name: classificacao_id
+        description: >
+          Código do eixo de classificação que recorta a pesquisa.
+      - name: classificacao
+        description: >
+          Nome do eixo de classificação que recorta a pesquisa.
+      - name: categoria_id
+        description: >
+          Código da categoria dentro do eixo de classificação.
+      - name: categoria
+        description: >
+          Nome da categoria dentro do eixo de classificação, que delimita o
+          subconjunto observado.
+      - name: valor
+        description: >
+          Valor apurado para a variável e o recorte desta linha, na unidade
+          indicada.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_manual_trimestrais
+    description: >
+      Uma linha por trimestre com as séries do boletim de conjuntura
+      habitacional cuja origem não é consultável por interface programática,
+      incluindo balanços de incorporadoras e apurações da CBIC.
+  - name: silver_continuo_manual_mensais
+    description: >
+      Uma linha por mês com as séries do boletim de conjuntura habitacional
+      cuja origem não é consultável por interface programática, incluindo
+      indicadores de crédito, preços e financiamento habitacional.
+  - name: silver_continuo_abecip_financiamentos
+    description: >
+      Uma linha por mês com as unidades e o valor de financiamento imobiliário
+      do SBPE, separados entre destinação à construção e à aquisição, conforme
+      a ABECIP.
+    columns:
+      - name: data_referencia
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: unidades_construcao
+        description: >
+          Unidades habitacionais financiadas no mês com destinação à
+          construção.
+      - name: unidades_aquisicao
+        description: >
+          Unidades habitacionais financiadas no mês com destinação à
+          aquisição.
+      - name: unidades_total
+        description: >
+          Total de unidades habitacionais financiadas no mês.
+      - name: valor_construcao_milhoes
+        description: >
+          Valor financiado no mês com destinação à construção, em milhões de
+          reais.
+      - name: valor_aquisicao_milhoes
+        description: >
+          Valor financiado no mês com destinação à aquisição, em milhões de
+          reais.
+      - name: valor_total_milhoes
+        description: >
+          Valor total financiado no mês, em milhões de reais.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_abecip_instituicoes
+    description: >
+      Uma linha por instituição financeira, mês e modalidade com as unidades e
+      o valor de financiamento imobiliário do SBPE no mês e no acumulado do
+      ano, conforme a ABECIP.
+    columns:
+      - name: competencia
+        description: >
+          Mês de competência do relatório que apurou os valores.
+      - name: data_referencia
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: modalidade
+        description: >
+          Destinação do financiamento, separando construção de aquisição e o
+          total das duas.
+      - name: instituicao
+        description: >
+          Instituição financeira que concedeu o financiamento.
+      - name: volume_mensal_milhoes
+        description: >
+          Valor financiado no mês, em milhões de reais.
+      - name: unidades_mensais
+        description: >
+          Quantidade de unidades financiadas no mês.
+      - name: volume_acumulado_ano_milhoes
+        description: >
+          Valor financiado desde o início do ano até o mês de referência, em
+          milhões de reais.
+      - name: unidades_acumuladas_ano
+        description: >
+          Quantidade de unidades financiadas desde o início do ano até o mês
+          de referência.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_fgts_valor_medio_imoveis
+    description: >
+      Uma linha por mês com o valor médio dos imóveis financiados pelo FGTS,
+      no conjunto das operações e na faixa de menor renda, e suas variações.
+    columns:
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: valor_medio_fgts
+        description: >
+          Valor médio dos imóveis financiados com recursos do fundo de
+          garantia, em reais.
+      - name: var_fgts_mes
+        description: >
+          Variação percentual do valor médio em relação ao mês anterior.
+      - name: var_fgts_12m
+        description: >
+          Variação percentual do valor médio acumulada em doze meses.
+      - name: var_fgts_acum_ano
+        description: >
+          Variação percentual do valor médio acumulada desde o início do
+          ano.
+      - name: valor_medio_fgts_f1
+        description: >
+          Valor médio dos imóveis financiados na faixa de menor renda do
+          programa, em reais.
+      - name: var_fgts_f1_mes
+        description: >
+          Variação percentual do valor médio da faixa de menor renda em
+          relação ao mês anterior.
+      - name: var_fgts_f1_12m
+        description: >
+          Variação percentual do valor médio da faixa de menor renda
+          acumulada em doze meses.
+      - name: var_fgts_f1_acum_ano
+        description: >
+          Variação percentual do valor médio da faixa de menor renda
+          acumulada desde o início do ano.
+  - name: silver_continuo_geavo_cci_cca
+    description: >
+      Uma linha por mês, faixa de renda e instrumento de crédito com as
+      unidades habitacionais e o valor financiado a pessoa física no
+      desligamento de empreendimentos construídos com recursos do FGTS.
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: carteira
+        description: >
+          Instrumento de crédito que originou a operação, distinguindo cédula
+          de crédito imobiliário de carteira de crédito associativo.
+      - name: faixa_codigo
+        description: >
+          Código da faixa de renda familiar tal como registrado na origem,
+          incluindo os desdobramentos internos de cada faixa.
+      - name: faixa
+        description: >
+          Faixa de renda familiar do beneficiário, consolidada a partir do
+          código de origem.
+      - name: e_mcmv
+        description: >
+          Indica se a operação pertence ao programa habitacional federal ou
+          ocorre fora dele.
+      - name: modalidade
+        description: >
+          Modalidade de financiamento sob a qual a operação foi contratada.
+      - name: uh
+        description: >
+          Quantidade de unidades habitacionais financiadas.
+      - name: valor
+        description: >
+          Valor total financiado, em reais.
+      - name: dt_silver
+        description: >
+          Momento do último processamento do registro.
+  - name: silver_continuo_geavo_fgts_pf
+    description: >
+      Uma linha por mês, faixa de renda e condição de uso com as unidades
+      habitacionais e o valor financiado a pessoa física com recursos do FGTS.
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: faixa
+        description: >
+          Faixa de renda familiar do beneficiário no programa habitacional.
+      - name: tipo_imovel
+        description: >
+          Condição de uso do imóvel financiado, distinguindo unidade nova de
+          unidade usada.
+      - name: qtd_unidades
+        description: >
+          Quantidade de unidades habitacionais financiadas.
+      - name: valor_emprestimo
+        description: >
+          Valor total emprestado, em reais.
+      - name: dt_silver
+        description: >
+          Momento do último processamento do registro.
+  - name: silver_continuo_geavo_fgts_pj
+    description: >
+      Uma linha por trimestre com as unidades habitacionais e os contratos de
+      financiamento à produção habitacional com recursos do FGTS.
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: fgts_pj_uh
+        description: >
+          Unidades habitacionais cuja produção foi financiada com recursos
+          do fundo de garantia no trimestre.
+      - name: fgts_pj_qtd_contratos
+        description: >
+          Quantidade de contratos de financiamento à produção firmados no
+          trimestre.
+      - name: dt_silver
+        description: >
+          Momento do último processamento do registro.
+  - name: silver_continuo_gefus_fundo_social
+    description: >
+      Uma linha por mês e condição de uso com as unidades habitacionais e o
+      valor financiado com recursos do Fundo Social.
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: condicao_imovel
+        description: >
+          Condição de uso do imóvel financiado, distinguindo unidade nova de
+          unidade usada.
+      - name: tipo_codigo
+        description: >
+          Código da modalidade de operação tal como registrado na origem.
+      - name: uh
+        description: >
+          Quantidade de unidades habitacionais financiadas.
+      - name: valor
+        description: >
+          Valor total financiado, em reais.
+      - name: dt_silver
+        description: >
+          Momento do último processamento do registro.
+  - name: silver_continuo_novo_caged_servicos_especializados
+    description: >
+      Uma linha por mês com admissões, desligamentos, saldo líquido e estoque
+      de postos formais em serviços especializados para construção, conforme o
+      Novo CAGED.
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: admitidos
+        description: >
+          Quantidade de trabalhadores admitidos no mês.
+      - name: desligados
+        description: >
+          Quantidade de trabalhadores desligados no mês.
+      - name: saldo
+        description: >
+          Diferença entre admissões e desligamentos no mês, positiva quando
+          houve criação líquida de postos.
+      - name: estoque
+        description: >
+          Quantidade total de postos de trabalho formais ao fim do mês.
+      - name: variacao
+        description: >
+          Variação percentual do estoque de postos em relação ao mês
+          anterior.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: silver_continuo_novo_caged_total
+    description: >
+      Uma linha por mês com admissões, desligamentos, saldo líquido e estoque
+      de postos formais no conjunto da construção civil, conforme o Novo
+      CAGED.
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: admitidos
+        description: >
+          Quantidade de trabalhadores admitidos no mês.
+      - name: desligados
+        description: >
+          Quantidade de trabalhadores desligados no mês.
+      - name: saldo
+        description: >
+          Diferença entre admissões e desligamentos no mês, positiva quando
+          houve criação líquida de postos.
+      - name: estoque
+        description: >
+          Quantidade total de postos de trabalho formais ao fim do mês.
+      - name: variacao
+        description: >
+          Variação percentual do estoque de postos em relação ao mês
+          anterior.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+

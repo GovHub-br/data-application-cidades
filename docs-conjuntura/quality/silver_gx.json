@@ -1,0 +1,483 @@
+{
+  "version": 1,
+  "models": [
+    "empreendimento",
+    "evolucao_financeira",
+    "fds_empreendimento",
+    "fds_evolucao_financeira",
+    "silver_continuo_abecip_financiamentos",
+    "silver_continuo_abecip_instituicoes",
+    "silver_continuo_abecip_poupanca_sbpe",
+    "silver_continuo_bacen_credito_pib",
+    "silver_continuo_bacen_financiamentos_imobiliarios",
+    "silver_continuo_empresas_balanco_lancamentos_vendas",
+    "silver_continuo_fgts_valor_medio_imoveis",
+    "silver_continuo_fgv_icst",
+    "silver_continuo_fgv_incc_m",
+    "silver_continuo_fipezap_locacao",
+    "silver_continuo_geavo_cci_cca",
+    "silver_continuo_geavo_fgts_pf",
+    "silver_continuo_geavo_fgts_pj",
+    "silver_continuo_gefus_fundo_social",
+    "silver_continuo_ibge_paic_obras",
+    "silver_continuo_ibge_paic_pessoal_salarial",
+    "silver_continuo_ibge_paic_resultados",
+    "silver_continuo_ibge_pib_consolidado_trimestral",
+    "silver_continuo_ibge_pib_construcao_civil",
+    "silver_continuo_ibge_pib_corrente",
+    "silver_continuo_ibge_pim_pf_brasil",
+    "silver_continuo_ibge_pmc_construcao",
+    "silver_continuo_ibge_pnad_construcao_ocupados",
+    "silver_continuo_ibge_pnad_construcao_rendimento",
+    "silver_continuo_ibge_pnadc_populacao_decis_renda",
+    "silver_continuo_ibge_pnadc_rendimento_domiciliar",
+    "silver_continuo_ibge_sinapi",
+    "silver_continuo_infomoney_imob",
+    "silver_continuo_manual_mensais",
+    "silver_continuo_manual_trimestrais",
+    "silver_continuo_novo_caged",
+    "silver_continuo_novo_caged_servicos_especializados",
+    "silver_continuo_novo_caged_total",
+    "silver_continuo_pib_construcao_civil_pct",
+    "silver_continuo_sbpe_financiamentos_aquisicao",
+    "silver_continuo_siafi_dotacao_execucao"
+  ],
+  "checks": [
+    {
+      "model": "empreendimento",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "empreendimento",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "evolucao_financeira",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "evolucao_financeira",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "fds_empreendimento",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "fds_empreendimento",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "fds_evolucao_financeira",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "fds_evolucao_financeira",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_abecip_financiamentos",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_abecip_financiamentos",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_abecip_instituicoes",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_abecip_instituicoes",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_abecip_poupanca_sbpe",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_abecip_poupanca_sbpe",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_bacen_credito_pib",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_bacen_credito_pib",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_bacen_financiamentos_imobiliarios",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_bacen_financiamentos_imobiliarios",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_empresas_balanco_lancamentos_vendas",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_empresas_balanco_lancamentos_vendas",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fgts_valor_medio_imoveis",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fgts_valor_medio_imoveis",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fgv_icst",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fgv_icst",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fgv_incc_m",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fgv_incc_m",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fipezap_locacao",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_fipezap_locacao",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_geavo_cci_cca",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_geavo_cci_cca",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_geavo_fgts_pf",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_geavo_fgts_pf",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_geavo_fgts_pj",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_geavo_fgts_pj",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_gefus_fundo_social",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_gefus_fundo_social",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_paic_obras",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_paic_obras",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_paic_pessoal_salarial",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_paic_pessoal_salarial",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_paic_resultados",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_paic_resultados",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pib_consolidado_trimestral",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pib_consolidado_trimestral",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pib_construcao_civil",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pib_construcao_civil",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pib_corrente",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pib_corrente",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pim_pf_brasil",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pim_pf_brasil",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pmc_construcao",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pmc_construcao",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnad_construcao_ocupados",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnad_construcao_ocupados",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnad_construcao_rendimento",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnad_construcao_rendimento",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnadc_populacao_decis_renda",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnadc_populacao_decis_renda",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnadc_rendimento_domiciliar",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_pnadc_rendimento_domiciliar",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectTableColumnsToMatchSet",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectColumnValuesToNotBeNull",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectColumnValuesToNotBeNull",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectColumnValuesToNotBeNull",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectColumnValuesToNotBeNull",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectColumnProportionOfNonNullValuesToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_ibge_sinapi",
+      "expectation": "ExpectColumnProportionOfNonNullValuesToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_infomoney_imob",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_infomoney_imob",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_manual_mensais",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_manual_mensais",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_manual_trimestrais",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_manual_trimestrais",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_novo_caged",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_novo_caged",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_novo_caged_servicos_especializados",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_novo_caged_servicos_especializados",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_novo_caged_total",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_novo_caged_total",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_pib_construcao_civil_pct",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_pib_construcao_civil_pct",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_sbpe_financiamentos_aquisicao",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_sbpe_financiamentos_aquisicao",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_siafi_dotacao_execucao",
+      "expectation": "ExpectTableColumnCountToBeBetween",
+      "success": true
+    },
+    {
+      "model": "silver_continuo_siafi_dotacao_execucao",
+      "expectation": "ExpectTableRowCountToBeBetween",
+      "success": true
+    }
+  ],
+  "passed": true
+}

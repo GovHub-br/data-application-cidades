@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from cliente_base import ClienteBase
+from cliente_base import ClienteBase, LayoutFonteMudou
 
 
 class ClienteAbecip(ClienteBase):
@@ -137,6 +137,46 @@ class ClienteAbecip(ClienteBase):
             )
             return None
 
+
+    @staticmethod
+    def _conferir_poupanca(df: "pd.DataFrame") -> None:
+        """Valida que os campos da poupança são internamente coerentes.
+
+        As colunas são lidas por POSIÇÃO (`COLUNAS_IDX`), então uma inserção
+        ou reordenação na origem faria a gente gravar série trocada sem erro
+        nenhum. As identidades abaixo amarram as posições ao significado:
+
+            captacao_liquida = deposito - retirada          (vale em 535/535)
+            saldo[t] = saldo[t-1] + captacao + rendimento   (vale em 526/534)
+
+        A primeira é exata e serve como checagem dura. A segunda falha em 8
+        meses ao longo de 44 anos de série (mudança de metodologia na
+        origem), então é avaliada por proporção — não pode derrubar a
+        ingestão por causa de exceção histórica, mas desalinha em massa se as
+        colunas trocarem.
+        """
+        d = df.sort_values("data_referencia").reset_index(drop=True)
+
+        cap = (d["deposito"] - d["retirada"] - d["captacao_liquida_valor"]).abs()
+        comparavel = cap.notna()
+        if comparavel.sum() and (cap[comparavel] > 0.01).mean() > 0.01:
+            raise LayoutFonteMudou(
+                "[cliente_abecip.py] Layout da aba de poupança mudou: "
+                "`captacao_liquida` deixou de ser `deposito - retirada` em "
+                f"{(cap[comparavel] > 0.01).mean():.0%} das linhas. Conferir COLUNAS_IDX."
+            )
+
+        saldo = (
+            d["saldo"].shift(1) + d["captacao_liquida_valor"] + d["rendimento"] - d["saldo"]
+        ).abs()
+        comparavel2 = saldo.notna()
+        if comparavel2.sum() and (saldo[comparavel2] > 1.0).mean() > 0.10:
+            raise LayoutFonteMudou(
+                "[cliente_abecip.py] Layout da aba de poupança mudou: a evolução "
+                f"do saldo não fecha em {(saldo[comparavel2] > 1.0).mean():.0%} dos "
+                "meses. Conferir COLUNAS_IDX."
+            )
+
     def fetch_and_transform_poupanca(self) -> Optional[pd.DataFrame]:
         """
         Baixa e processa o XLSX de Saldo da Caderneta de Poupança (SBPE Mensal).
@@ -165,11 +205,33 @@ class ClienteAbecip(ClienteBase):
         self.ultimo_conteudo_xlsx = content
 
         try:
-            df_raw = pd.read_excel(
-                io.BytesIO(content),
-                sheet_name=self.ABA_POUPANCA,
-                header=None,
-            )
+            # Nome exato primeiro; prefixo só como plano B. Nome fixo quebra
+            # em silêncio quando a origem renomeia (aconteceu com a MRV em
+            # 2026-08), mas prefixo solto é pior: esta planilha tem as abas
+            # 'SBPE' E 'SBPE_Mensal', e casar por prefixo pegava a errada —
+            # devolvendo zero registro sem erro. Se o plano B ficar ambíguo,
+            # falha alto em vez de escolher por conta própria.
+            planilha = pd.ExcelFile(io.BytesIO(content))
+            abas = planilha.sheet_names
+            if self.ABA_POUPANCA in abas:
+                nome_aba = self.ABA_POUPANCA
+            else:
+                candidatas = [
+                    a for a in abas
+                    if a.strip().lower().startswith(self.ABA_POUPANCA.lower())
+                ]
+                if len(candidatas) != 1:
+                    raise LayoutFonteMudou(
+                        f"[cliente_abecip.py] Aba {self.ABA_POUPANCA!r} não encontrada e "
+                        f"o prefixo casou com {len(candidatas)} abas ({candidatas}). "
+                        f"Abas disponíveis: {abas}"
+                    )
+                nome_aba = candidatas[0]
+                logging.warning(
+                    "[cliente_abecip.py] Aba %r não existe mais; usando %r por prefixo",
+                    self.ABA_POUPANCA, nome_aba,
+                )
+            df_raw = pd.read_excel(planilha, sheet_name=nome_aba, header=None)
 
             df = df_raw.iloc[6:, self.COLUNAS_IDX].copy()
             df.columns = self.COLUNAS_NOMES
@@ -203,6 +265,8 @@ class ClienteAbecip(ClienteBase):
             df["dt_ingest"] = datetime.now().isoformat()
             df = df.reset_index(drop=True)
 
+            self._conferir_poupanca(df)
+
             logging.info(
                 f"[cliente_abecip.py] Poupança: {len(df)} registros | "
                 f"De {df['data_referencia'].min()} "
@@ -211,8 +275,124 @@ class ClienteAbecip(ClienteBase):
 
             return df
 
+        except LayoutFonteMudou:
+            # propaga: é diagnóstico acionável, não erro de parse
+            raise
         except Exception as e:
             logging.error(
                 f"[cliente_abecip.py] Erro ao processar XLSX de poupança: {e}"
+            )
+            return None
+
+    # ------------------------------------------------------------------
+    # Financiamentos SBPE por modalidade (Construção / Aquisição)
+    # ------------------------------------------------------------------
+
+    PAGINA_FINANCIAMENTO = "/credito-imobiliario/indicadores/financiamento"
+    ABA_FINANCIAMENTO = "BD_Unidades"
+
+    #: Ordem das colunas na aba (0-based). Não é lida do cabeçalho porque ele
+    #: é mesclado em duas linhas ("Unidades Financiadas" / "Valores em R$"
+    #: acima de "Construção | Aquisição | Total"), o que o pandas não resolve
+    #: sozinho. A posição é conferida em tempo de execução pela identidade
+    #: Total == Construção + Aquisição — ver `_conferir_totais`.
+    COLUNAS_FIN_NOMES = [
+        "data_referencia",
+        "unidades_construcao",
+        "unidades_aquisicao",
+        "unidades_total",
+        "valor_construcao_milhoes",
+        "valor_aquisicao_milhoes",
+        "valor_total_milhoes",
+    ]
+
+    @staticmethod
+    def _conferir_totais(df: pd.DataFrame) -> None:
+        """Valida que Total == Construção + Aquisição nas duas métricas.
+
+        Serve de guarda contra o pior modo de falha desta fonte: a ABECIP
+        inserir ou reordenar uma coluna e a extração passar a ler a série
+        errada **sem erro nenhum**. Se a identidade quebrar, é porque as
+        posições mudaram — melhor falhar alto do que gravar dado trocado.
+        """
+        for total, partes in (
+            ("unidades_total", ("unidades_construcao", "unidades_aquisicao")),
+            ("valor_total_milhoes", ("valor_construcao_milhoes", "valor_aquisicao_milhoes")),
+        ):
+            soma = df[list(partes)].sum(axis=1)
+            # tolerância relativa: os valores em R$ têm arredondamento na origem
+            divergente = ((df[total] - soma).abs() > (df[total].abs() * 0.001 + 1)).sum()
+            if divergente:
+                raise LayoutFonteMudou(
+                    f"[cliente_abecip.py] Layout da aba mudou: {divergente} linhas "
+                    f"onde {total} != {' + '.join(partes)}. Conferir posição das "
+                    f"colunas em {ClienteAbecip.ABA_FINANCIAMENTO}."
+                )
+
+    def fetch_and_transform_financiamentos(self) -> Optional[pd.DataFrame]:
+        """Série mensal de financiamentos SBPE por modalidade.
+
+        Fonte: aba `BD_Unidades` do XLSX de unidades da página de
+        financiamento da ABECIP. Traz unidades e valores (R$ milhões) para
+        Construção, Aquisição e Total, desde 2002.
+
+        É a fonte do indicador "Financiamentos Habitacionais (UH) — SBPE
+        Const." do boletim: a soma trimestral de `unidades_construcao` bate
+        EXATO com o publicado em 1T2025 (19.130), 3T2025 (43.782), 4T2025
+        (47.766) e 1T2026 (47.609), e o acumulado de 12 meses de mar/2026
+        (161.338) também.
+        """
+        url = self._get_xlsx_url(self.PAGINA_FINANCIAMENTO, "unidades")
+        if not url:
+            return None
+
+        conteudo = self._download_xlsx(url)
+        if not conteudo:
+            return None
+        self.ultimo_conteudo_xlsx_financiamentos = conteudo
+
+        try:
+            planilha = pd.ExcelFile(io.BytesIO(conteudo))
+            abas = [a for a in planilha.sheet_names if a.strip().lower().startswith("bd_unidades")]
+            if not abas:
+                raise ValueError(
+                    f"aba de unidades não encontrada; abas: {planilha.sheet_names}"
+                )
+
+            bruto = pd.read_excel(planilha, sheet_name=abas[0], header=None)
+
+            # O cabeçalho ocupa linhas mescladas; em vez de fixar a linha de
+            # início, fica só o que tem data válida na primeira coluna.
+            df = bruto.iloc[:, : len(self.COLUNAS_FIN_NOMES)].copy()
+            df.columns = self.COLUNAS_FIN_NOMES
+            df["data_referencia"] = pd.to_datetime(
+                df["data_referencia"], errors="coerce"
+            )
+            df = df[df["data_referencia"].notna()].copy()
+
+            for coluna in self.COLUNAS_FIN_NOMES[1:]:
+                df[coluna] = pd.to_numeric(df[coluna], errors="coerce")
+
+            # meses futuros já vêm como linha vazia na planilha
+            df = df[df["unidades_total"].notna()].copy()
+
+            self._conferir_totais(df)
+
+            df["data_referencia"] = df["data_referencia"].dt.strftime("%Y-%m-%d")
+            df["dt_ingest"] = datetime.now().isoformat()
+            df["fonte"] = "ABECIP"
+
+            logging.info(
+                f"[cliente_abecip.py] Financiamentos: {len(df)} registros | "
+                f"De {df['data_referencia'].min()} até {df['data_referencia'].max()}"
+            )
+            return df
+
+        except LayoutFonteMudou:
+            # propaga: é diagnóstico acionável, não erro de parse
+            raise
+        except Exception as e:
+            logging.error(
+                f"[cliente_abecip.py] Erro ao processar XLSX de financiamentos: {e}"
             )
             return None

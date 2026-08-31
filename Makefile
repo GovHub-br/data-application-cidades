@@ -87,5 +87,53 @@ docs-serve: docs-build
 docs-clean:
 	rm -rf $(DOCS_DIR)/site
 
+# Nunca publique `dbt docs generate` diretamente: manifest/catalog completos
+# incluem bronze e SQL compilado. Este alvo usa diretório temporário privado e
+# publica exclusivamente o catálogo de metadados permitido.
+conjuntura-docs:
+	poetry run dbt deps --project-dir dbt/mcid
+	poetry run python scripts/conjuntura/gerar_docs_seguros.py
+
+conjuntura-docs-pdf: conjuntura-docs
+	soffice --headless --convert-to pdf --outdir docs-conjuntura docs-conjuntura/pipeline.html
+
+# Audita somente descrições YAML e não acessa tabelas ou arquivos de dados.
+# Use `GOVERNANCE_STRICT=--strict make governance-audit` ao transformar os
+# achados em gate de CI.
+governance-audit:
+	poetry run python scripts/governance/auditar_metadados.py $(GOVERNANCE_STRICT)
+
+# Executa no GX os contratos Silver declarados no YAML do dbt. O relatório é
+# sanitizado e não contém linhas nem valores inesperados.
+gx-silver:
+	poetry run python scripts/governance/validar_silver_gx.py $(GX_STRICT)
+
+governance-load-strategies:
+	poetry run python scripts/governance/auditar_estrategias_carga.py $(GOVERNANCE_STRICT)
+
+# Gera docs dbt em diretório temporário privado e persiste somente a projeção
+# semântica filtrada de Silver/Gold.
+openmetadata-catalog:
+	poetry run python scripts/governance/gerar_catalogo_openmetadata_seguro.py
+
+# Cria o payload seguro para OpenMetadata. Acrescente `--confirmar` em
+# OPENMETADATA_ARGS somente após preencher URL e token no .env.
+openmetadata-sync: openmetadata-catalog
+	poetry run python scripts/governance/sincronizar_openmetadata.py $(OPENMETADATA_ARGS)
+
+# A conferência contra os boletins publicados virou teste do dbt: roda no
+# mesmo `dbt build` que já roda, em vez de script com conexão própria.
+conjuntura-validar-boletins:
+	cd dbt/mcid && poetry run dbt seed --select boletim_gabarito \
+		&& poetry run dbt test --select conjuntura_gabarito_do_boletim
+
+# Congela as edições do boletim (as fontes revisam o passado).
+# É `dbt snapshot`, não script: o snapshot guarda o HISTÓRICO das revisões,
+# não um retrato, e é o que responde "por que o boletim publicou X e hoje é Y".
+conjuntura-congelar:
+	cd dbt/mcid && poetry run dbt snapshot
+
 .PHONY: setup format lint lint-ci test compose-config up down logs-airflow \
-	docs-setup docs-collect docs-build docs-serve docs-clean
+	docs-setup docs-collect docs-build docs-serve docs-clean conjuntura-docs \
+	conjuntura-docs-pdf conjuntura-validar-boletins conjuntura-congelar \
+	governance-audit gx-silver governance-load-strategies openmetadata-catalog openmetadata-sync

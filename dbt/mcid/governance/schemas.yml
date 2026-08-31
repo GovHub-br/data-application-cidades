@@ -1,0 +1,85 @@
+version: 1
+
+# Registro semântico dos schemas físicos. Não contém caminhos, SQL, contagens
+# ou exemplos de dados. A sincronização para OpenMetadata usa este arquivo
+# como fonte de descrição de schema.
+schemas:
+  - name: conjuntura_continuo_bronze
+    product: conjuntura
+    layer: bronze
+    owner_key: admin
+    classification: restricted
+    # Publicada no catálogo para que a linhagem alcance a origem: sem a Bronze
+    # o grafo começa na Silver e o consumidor não vê de onde o número veio.
+    # Continua PROIBIDA para RAG e marcada como `Uso.NaoConsumivel` — o que se
+    # publica é a existência e a topologia, nunca o conteúdo.
+    rag_publication: prohibited
+    publicar_no_catalogo: true
+    description: Camada fiel de ingestão do produto Conjuntura, preservada para rastreabilidade e processamento interno.
+
+  - name: conjuntura_continuo_silver
+    product: conjuntura
+    layer: silver
+    owner_key: admin
+    classification: internal
+    rag_publication: eligible_after_security_validation
+    description: Camada tratada e conformada de indicadores do setor habitacional para uso analítico interno autorizado.
+
+  - name: conjuntura_continuo_mart
+    product: conjuntura
+    layer: gold
+    owner_key: admin
+    classification: internal
+    rag_publication: eligible_after_security_validation
+    description: Camada curada de consumo do produto Conjuntura para boletins, dashboards e aplicações autorizadas.
+
+  - name: empreendimento_far
+    product: empreendimento_far
+    layer: mixed
+    owner_key: admin
+    classification: internal
+    rag_publication: determined_per_model
+    description: Schema do produto Empreendimento FAR, com ativos operacionais e analíticos do Fundo de Arrendamento Residencial.
+
+  - name: entidades_fds
+    product: entidades_fds
+    layer: mixed
+    owner_key: admin
+    classification: internal
+    rag_publication: determined_per_model
+    description: Schema do produto Entidades FDS, com ativos operacionais e analíticos do Fundo de Desenvolvimento Social.
+
+  - name: metadata
+    product: metadata
+    layer: technical
+    owner_key: admin
+    classification: restricted
+    rag_publication: prohibited
+    description: Metadados técnicos e operacionais do pipeline de dados.
+
+  - name: conjuntura_bronze
+    product: conjuntura_legacy
+    layer: bronze
+    owner_key: admin
+    classification: restricted
+    lifecycle_status: retirement_candidate
+    rag_publication: prohibited
+    description: Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco.
+
+  - name: conjuntura_silver
+    product: conjuntura_legacy
+    layer: silver
+    owner_key: admin
+    classification: restricted
+    lifecycle_status: retirement_candidate
+    rag_publication: prohibited
+    description: Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco.
+
+  - name: conjuntura_gold
+    product: conjuntura_legacy
+    layer: gold
+    owner_key: admin
+    classification: restricted
+    lifecycle_status: retirement_candidate
+    rag_publication: prohibited
+    description: Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco.

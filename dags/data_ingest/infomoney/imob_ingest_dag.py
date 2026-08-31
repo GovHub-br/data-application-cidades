@@ -78,9 +78,25 @@ def infomoney_imob_dag() -> None:
             primary_key=["symbol", "data_pregao"]
         )
 
-        # Lake (full-refresh): raw = payload cru da API (json); parquet tipado.
+        # Lake (full-refresh): raw = payload cru da API (json) do dia; parquet
+        # = histórico COMPLETO acumulado no Postgres (upsert), não só o lote
+        # "compact" do dia (a API só devolve ~100 pregões por vez) -- senão o
+        # parquet nunca cresce além disso e quebra qualquer gold que precise
+        # de mais de ~5 meses de histórico (ex.: variação vs mesmo mês do ano
+        # anterior). Parquet e bronze permanecem textuais; a silver normaliza
+        # os formatos pt-BR e US antes de qualquer cálculo.
         upload_raw_json("infomoney", "acoes_imob", dados_imob_raw)
-        registros_para_staging_parquet("infomoney", "acoes_imob", dados_imob)
+
+        colunas = ["symbol", "data_pregao", "open", "high", "low", "close", "volume", "dt_ingest"]
+        linhas = db.execute_query(
+            f"SELECT {', '.join(colunas)} FROM infomoney.acoes_imob ORDER BY data_pregao"
+        )
+        dados_imob_completo = []
+        for linha in linhas:
+            registro = dict(zip(colunas, linha))
+            dados_imob_completo.append(registro)
+
+        registros_para_staging_parquet("infomoney", "acoes_imob", dados_imob_completo)
 
         logging.info("Carga finalizada com sucesso no schema infomoney.")
 

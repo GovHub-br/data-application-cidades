@@ -41,7 +41,7 @@ INGEST_DAG_IDS = [
 
 # Ingestores manuais (Template Method): convertem arquivos já colocados no RAW
 # (CSV/XLSX/TXT) em parquet tipado na staging. Adicionar novas classes aqui
-# conforme os dados manuais forem chegando (ver README do conjuntura_continuo_dbt).
+# conforme os dados manuais forem chegando (ver README do conjuntura_dbt).
 INGESTORES_MANUAIS = [
     IngestorBalancoEmpresas,
 ]
@@ -64,7 +64,7 @@ INGESTORES_MANUAIS = [
         "Orquestra o boletim de conjuntura CONTÍNUO (semanal): dispara as "
         "ingestões automatizadas (que geram os parquets de staging), converte os "
         "dados manuais para parquet tipado (Template Method) e roda o dbt "
-        "conjuntura_continuo_dbt (silver via pg_duckdb read_parquet + gold). "
+        "conjuntura_dbt (silver via pg_duckdb read_parquet + gold). "
         "DAGs de ingestão: " + ", ".join(INGEST_DAG_IDS)
     ),
 )
@@ -75,7 +75,7 @@ def conjuntura_continuo_dag() -> None:
       1. Dispara as DAGs de ingestão automatizadas (Etapas 01/02 das fontes com
          API) em paralelo e aguarda a conclusão de todas.
       2. Gera os parquets tipados dos dados manuais já presentes no RAW.
-      3. Roda o dbt `conjuntura_continuo_dbt` (silver + gold do exercício atual).
+      3. Roda o dbt `conjuntura_dbt` (silver + gold do exercício atual).
 
     O dbt roda mesmo que alguma fonte falhe (trigger_rule=all_done): uma fonte
     instável não deve travar o boletim — os modelos daquela fonte ficam com o
@@ -123,7 +123,7 @@ def conjuntura_continuo_dag() -> None:
         execution_config=ExecutionConfig(
             dbt_executable_path=f"{os.environ['AIRFLOW_REPO_BASE']}/.local/bin/dbt",
         ),
-        render_config=RenderConfig(select=["conjuntura_continuo_dbt"]),
+        render_config=RenderConfig(select=["conjuntura_dbt"]),
     )
 
     [fontes_prontas, manuais_prontos] >> dbt_conjuntura_continuo

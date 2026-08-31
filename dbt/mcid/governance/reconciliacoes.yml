@@ -1,0 +1,44 @@
+version: 1
+
+# Inventário de cruzamentos entre versões ou extrações independentes. Só entra
+# como "active" quando período, universo, unidade e agregação são equivalentes.
+# A comparação nunca deve transformar diferenças de recorte em falha de dado.
+reconciliations:
+  - id: abecip_financiamentos_xlsx_relatorio
+    status: active
+    product: conjuntura
+    implementation: tests/conjuntura_cruzamento_abecip.sql
+    left_model: silver_continuo_abecip_financiamentos
+    right_model: silver_continuo_abecip_instituicoes
+    join_grain: ano
+    measures: [unidades, volume]
+    tolerance: percentual de 0,5 por cento, com piso de uma unidade
+    rationale: >
+      As duas extrações independentes da ABECIP representam o agregado anual
+      de aquisições e construção após a mesma regra de agregação.
+
+  - id: geavo_fgts_pf_x_base_fundo_social
+    status: blocked_not_equivalent
+    product: conjuntura
+    left_model: silver_continuo_geavo_fgts_pf
+    right_source: PMCMV_FAIXA3_MCID
+    rationale: >
+      As bases são complementares, com universos diferentes; não constituem
+      duas versões equivalentes da mesma série para reconciliação automática.
+
+  - id: geavo_cci_cca_x_fgts_pf_legado
+    status: blocked_not_equivalent
+    product: conjuntura
+    left_model: silver_continuo_geavo_cci_cca
+    right_model: silver_continuo_geavo_fgts_pf
+    rationale: >
+      Os recortes de carteira e a regra de classificação diferem. O CCI mais
+      CCA é a fonte editorial para financiamento por faixa; a outra série
+      permanece como recorte analítico distinto.
+
+  - id: serie_publicada_x_serie_corrente_revisada
+    status: frozen_edition_required
+    product: conjuntura
+    rationale: >
+      Indicadores sujeitos a revisão retroativa devem ser comparados com a
+      safra congelada da edição, não com o dado corrente.

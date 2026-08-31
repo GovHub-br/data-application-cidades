@@ -1,0 +1,125 @@
+version: 1
+
+# Domínios, produtos de dados e catalogação, declarados aqui e aplicados no
+# OpenMetadata pela sincronização. Nada é criado pela interface: o que está
+# escrito neste arquivo é o que existe no catálogo, e o que não está some no
+# próximo sync.
+#
+# A instância é compartilhada entre ministérios. Por isso a hierarquia começa
+# no órgão e só depois desce para o assunto — sem esse nível, os produtos de
+# habitação ficariam lado a lado com orçamento e Rouanet de outro ministério,
+# sem nada indicando a quem pertencem.
+
+dominios:
+  - name: MCid
+    display_name: Ministério das Cidades
+    domain_type: Aggregate
+    owner_key: mcid_data_engineering
+    description: >
+      Dados produzidos e mantidos pelo Ministério das Cidades, abrangendo as
+      políticas públicas urbanas sob sua responsabilidade.
+
+  - name: Habitacao
+    display_name: Habitação
+    # o FQN do subdomínio é `MCid.Habitacao`; os produtos precisam referenciá-lo
+    # assim, e não pelo nome curto — foi o que fez a primeira aplicação falhar.
+    parent: MCid
+    domain_type: Aggregate
+    owner_key: mcid_data_engineering
+    description: >
+      Política habitacional: produção, financiamento, execução de
+      empreendimentos e acompanhamento do mercado imobiliário residencial.
+
+#: `mcid-data-engineering` é o time responsável pelos três produtos. É um
+#: grupo, não uma pessoa: a responsabilidade é da equipe, e a rotatividade de
+#: pessoas não deve invalidar a titularidade do dado.
+proprietarios:
+  mcid_data_engineering:
+    type: team
+    name: mcid-data-engineering
+
+produtos:
+  - name: conjuntura
+    display_name: Conjuntura Habitacional
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - conjuntura_continuo_bronze
+      - conjuntura_continuo_silver
+      - conjuntura_continuo_mart
+    description: >
+      Indicadores de acompanhamento do setor habitacional brasileiro: produto
+      da construção civil, emprego, crédito imobiliário, financiamento
+      habitacional, custos de construção e índices de mercado, em séries
+      mensais e trimestrais.
+
+  - name: empreendimento_far
+    display_name: Empreendimento FAR
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - empreendimento_far
+    description: >
+      Empreendimentos habitacionais contratados com recursos do Fundo de
+      Arrendamento Residencial, com execução física, execução financeira,
+      trabalho social e entrega de unidades.
+
+  - name: entidades_fds
+    display_name: Entidades FDS
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - entidades_fds
+    description: >
+      Empreendimentos habitacionais conduzidos por entidades organizadoras com
+      recursos do Fundo de Desenvolvimento Social, com cadastro das entidades,
+      contratação e acompanhamento de obra.
+
+#: Certificação por camada. Gold é o que se publica e se consome; Silver
+#: sustenta a Gold mas não é destino final; Bronze não é apresentada.
+#: A certificação segue a camada, não o modelo, para não virar avaliação
+#: subjetiva de qualidade caso a caso.
+certificacao_por_camada:
+  gold: Tier1
+  silver: Tier2
+  bronze: Tier3
+  # FAR e Entidades mantêm ativos operacionais e analíticos no mesmo schema.
+  # Como são schemas de consumo, recebem a mesma certificação da Gold.
+  mixed: Tier1
+
+#: Etiquetas aplicadas a toda tabela de um produto, derivadas do que já está
+#: declarado no `dbt_project.yml`. Reproduzem o padrão do schema de
+#: referência, em que produto, camada e organização aparecem em 100% das
+#: tabelas.
+etiquetas_automaticas:
+  organizacao: dbtTags.mcid
+  por_produto:
+    conjuntura: dbtTags.conjuntura
+    empreendimento_far: dbtTags.empreendimento_far
+    entidades_fds: dbtTags.entidades_fds
+  por_camada:
+    bronze: dbtTags.bronze
+    silver: dbtTags.silver
+    gold: dbtTags.gold
+
+#: Certificação de curadoria, por camada. É diferente do Tier: o Tier mede a
+#: criticidade do ativo para o negócio, e esta atesta o nível de curadoria a
+#: que ele foi submetido. A interface mostra as duas em campos separados.
+certificacao_de_curadoria_por_camada:
+  gold: Certification.Gold
+  silver: Certification.Silver
+  bronze: Certification.Bronze
+  mixed: Certification.Gold
+
+#: Permissão de uso, por camada. É diferente de certificação: a certificação
+#: diz o quanto o ativo importa; esta diz se ele pode ser consumido.
+#:
+#: A Bronze é publicada no catálogo de propósito — sem ela a linhagem começa
+#: no meio do caminho e ninguém consegue ver de onde o número veio. Mas ela
+#: entra marcada como não consumível, que é o equivalente ao tracejado do
+#: diagrama: importante de ver, proibido de usar.
+permissao_de_uso_por_camada:
+  bronze: Uso.NaoConsumivel
+  silver: Uso.ApoioInterno
+  gold: Uso.Consumivel
+  mixed: Uso.Consumivel

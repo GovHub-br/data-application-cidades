@@ -182,16 +182,15 @@ jobs:
 
       - name: Gerar DBT docs
         env:
-          DB_DW_HOST: ${{ secrets.DB_DW_HOST }}
-          DB_DW_DBNAME: ${{ secrets.DB_DW_DBNAME }}
-          DB_DW_USER: ${{ secrets.DB_DW_USER }}
-          DB_DW_PASSWORD: ${{ secrets.DB_DW_PASSWORD }}
+          DB_DW_HOST_MCID: ${{ secrets.DB_DW_HOST }}
+          DB_DW_DBNAME_MCID: ${{ secrets.DB_DW_DBNAME }}
+          DB_DW_USER_MCID: ${{ secrets.DB_DW_USER }}
+          DB_DW_PASSWORD_MCID: ${{ secrets.DB_DW_PASSWORD }}
         run: |
-          cd "${{ env.DBT_PROJECT_DIR }}"
-          dbt deps
-          dbt docs generate
-          mkdir -p public
-          mv target/* public/
+          dbt deps --project-dir "${{ env.DBT_PROJECT_DIR }}"
+          python scripts/conjuntura/gerar_docs_seguros.py \
+            --dbt-command dbt \
+            --public-dir "${{ env.DBT_PROJECT_DIR }}/public"
 
       - name: Finalizar VPN
         if: always()

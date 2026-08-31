@@ -5,6 +5,20 @@ from typing import Any, Optional, Tuple
 from http import HTTPStatus
 
 
+class LayoutFonteMudou(Exception):
+    """A estrutura do arquivo da fonte mudou de forma que invalida a extração.
+
+    Levantada pelos clients quando uma invariante do dado deixa de valer —
+    por exemplo, quando as colunas de uma planilha são lidas por posição e a
+    origem insere ou reordena uma coluna.
+
+    Existe como tipo próprio para **não ser confundida com erro de parse**:
+    os clients capturam exceções genéricas e devolvem `None`, o que
+    transformaria o diagnóstico numa linha de log perdida. Esta deve
+    propagar, para que a falha chegue com a causa junto.
+    """
+
+
 class ClienteBase:
     DEFAULT_TIMEOUT = 10
     DEFAULT_MAX_RETRIES = 3
