@@ -61,3 +61,94 @@ empreendimento_far:
     - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet"
       data_regex: "^(\\d{6})_SNH_PMCMV"
       tabela: dados_prioritarios_recebidos_caixa_empreendimentos
+
+empreendimento_rural:
+  descricao: >-
+    Novo MCMV Rural e PNHR histórico — cadastro PJ e PF, obra mensal, financeiro
+    mensal, dados prioritários (SNH/CAIXA/BB), integrações PNHR (INT065 CAIXA,
+    INT057 BB, INT055 liberações) e as bases de trabalho social.
+    Alimenta o empreendimento_rural_dbt.
+  schema: bronze
+  objetos:
+    # ATENÇÃO — dependência entre famílias:
+    # dados_prioritarios_recebidos_caixa_empreendimentos NÃO é declarado aqui. É a
+    # mesma tabela da família empreendimento_far (o snapshot da CAIXA cobre todas as
+    # modalidades; a silver prioritarios_caixa deste dbt filtra modalidade='RURAL').
+    # Declarar de novo faria duas famílias dropar e recriar a mesma tabela, cada uma
+    # com sua própria linha na lake._bronze_log. Então:
+    #   rode `--familia empreendimento_far` antes (ou junto) de
+    #   `--familia empreendimento_rural`, senão a silver prioritarios_caixa não acha
+    #   a tabela.
+
+    # --- Origens confirmadas no snapshot do SFTP (scripts/snapshots/) ---
+
+    # <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.csv — competência é o PREFIXO.
+    # O padrão termina em `AF_BB.parquet` de propósito, para não casar com o
+    # `..._DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB`, que é outra tabela.
+    # Remessas antigas usam `aaaa_mm_` (com underscore) e não casam com o regex:
+    # elas ficam de fora da escolha de versão, o que é o desejado — vence a mais nova.
+    - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet"
+      data_regex: "^(\\d{6})_SNH_PMCMV"
+      tabela: dados_prioritarios_recebidos_bb_empreendimentos
+
+    # INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_<aaaammdd> — data completa
+    # no nome, o default de 6 a 8 dígitos já ordena certo.
+    - padrao: "staging/*INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet"
+      tabela: int_empreendimentos_int_065_pnhr_caixa_pj
+
+    # INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_<aaaammdd>.
+    # Existem no lake variantes `_SUBSTITUIDO`, `_VALIDACAO` e
+    # `ALTERACAO_LAYOUT_PARA_VALIDACAO`: o `_` antes de `.parquet` no fim do padrão
+    # é o que as mantém fora.
+    - padrao: "staging/*INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet"
+      tabela: int_empreendimentos_int_057_pnhr_bb_pj
+
+    # INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_<aaaammdd> — série de liberações
+    # do PNHR, consumida pela silver liberacoes_pnhr.
+    - padrao: "staging/*INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet"
+      tabela: int_financeiro_int055_liberacoes_caixa_bb
+
+    # --- TODO: origens DEDUZIDAS, ainda não confirmadas contra a staging/ ---
+    #
+    # As entradas abaixo vêm do SharePoint, que não aparece no snapshot do SFTP do
+    # repo, então o nome do arquivo foi deduzido da convenção do FAR
+    # (MONIT_CAD_PJ_FAR_MENSAL_<aaaamm> -> MONIT_CAD_PJ_RURAL_MENSAL_<aaaamm>).
+    # ANTES DE RODAR COM --apply, confirme com:
+    #   python scripts/staging_para_bronze.py --familia empreendimento_rural
+    # O dry-run resolve cada padrão e falha nomeando o que não casou; corrija o
+    # `padrao` (e o `data_regex`, se a data não for os últimos 6-8 dígitos do nome)
+    # com a key real e apague este bloco de TODO.
+
+    # TODO confirmar: MONIT_CAD_PJ_RURAL_MENSAL_<aaaamm>_<hhmmss>, como no FAR — o
+    # regex isola a competência para o sufixo de hora não ordenar as versões.
+    - padrao: "staging/*MONIT_CAD_PJ_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PJ_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_cad_pj_mensal
+
+    # TODO confirmar: cadastro de beneficiários PF mensal do Rural.
+    - padrao: "staging/*MONIT_CAD_PF_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PF_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_cadastro_pf_mensal
+
+    # TODO confirmar: evolução física da obra mensal do Rural.
+    - padrao: "staging/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_OBRA_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_obra_mensal
+
+    # TODO confirmar: desembolsos financeiros mensais do Rural.
+    - padrao: "staging/*MONIT_MOV_FINANC_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_FINANC_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_financeiro_mensal
+
+    # TODO confirmar: dados prioritários disponibilizados pela SNH. É a base da
+    # silver empreendimento_rural, então é a entrada mais crítica desta lista.
+    - padrao: "staging/*DADOS_PRIORITARIOS_DISPONIBILIZADOS_SNH*.parquet"
+      tabela: dados_prioritarios_disponibilizados_snh_empreendimentos
+
+    # TODO confirmar: base de Trabalho Social do PNHR pela CAIXA.
+    - padrao: "staging/*TRABALHO_SOCIAL_PNHR_RURAL_CAIXA*.parquet"
+      tabela: base_trabalho_social_pnhr_rural_caixa
+
+    # TODO confirmar: base de Trabalho Social do PNHR pelo BB.
+    - padrao: "staging/*TRABALHO_SOCIAL_PNHR_BB*.parquet"
+      tabela: base_trabalho_social_pnhr_bb
