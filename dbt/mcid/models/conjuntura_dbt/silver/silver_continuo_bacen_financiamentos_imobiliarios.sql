@@ -3,39 +3,38 @@
 -- Silver do conjuntura contínuo: financiamentos imobiliários PF/PJ (BACEN SGS).
 -- Página 2/3, seção 3.
 --
--- Reescrita em 2026-08-28 pra nova arquitetura: a bronze materializa o
--- parquet de staging (espelho do raw) e a silver ACHATA + TIPA.
+-- Contrato de saída: formato longo (data, tipo, valor), que é o que o gold
+-- consome. São sete tipos — seis do SGS mais o índice crédito/PIB, que vem
+-- de outro endpoint e por isso mora em parquet separado.
 --
--- Formato do raw (BACEN SGS): uma única linha, com uma coluna por série e
--- a série inteira aninhada como JSON dentro da coluna:
---   pf_concessoes_rs_mi = [{"data": "01/03/2011", "valor": "5841"}, ...]
--- O achatamento despivota as 7 séries pra formato longo (data, tipo, valor),
--- que é o contrato que o gold espera.
+-- Lê o parquet como a nossa DAG o grava: já achatado em (tipo, data, valor).
+-- A versão anterior desta silver despivotava sete colunas de JSON aninhado,
+-- partindo de um staging que espelhava o raw da API. Esse pressuposto veio do
+-- refactor de 28/08 e foi abandonado em 30/08 para o IBGE, quando as silvers
+-- viraram passthrough tipado; BACEN e CAGED ficaram para trás e só não
+-- quebraram porque as DAGs não rodaram nesse intervalo. Aqui a correção é a
+-- mesma: a Etapa 02 achata, a silver tipa.
 --
--- `data` vem como texto DD/MM/YYYY no raw e é convertido pra date aqui —
--- sem isso o `order by data desc` do gold ordenaria alfabeticamente.
+-- `data` chega como texto DD/MM/YYYY e vira date aqui — sem isso o
+-- `order by data desc` do gold ordenaria alfabeticamente, e 01/12/2025
+-- passaria a valer mais que 01/07/2026.
 
-with bronze as (
-    select * from {{ ref('bronze_continuo_bacen_financiamentos_imobiliarios') }}
+with sgs as (
+    select
+        to_date(data, 'DD/MM/YYYY')             as data,
+        tipo                                    as tipo,
+        nullif(btrim(valor), '')::numeric       as valor
+    from {{ ref('bronze_continuo_bacen_financiamentos_imobiliarios') }}
 ),
 
-series as (
-    select t.tipo, t.serie
-    from bronze b
-    cross join lateral (values
-        ('pf_concessoes_rs_mi',        b.pf_concessoes_rs_mi),
-        ('pf_taxa_juros_aa',           b.pf_taxa_juros_aa),
-        ('pf_inadimplencia_pct',       b.pf_inadimplencia_pct),
-        ('pj_concessoes_rs_mi',        b.pj_concessoes_rs_mi),
-        ('pj_taxa_juros_aa',           b.pj_taxa_juros_aa),
-        ('pj_inadimplencia_pct',       b.pj_inadimplencia_pct),
-        ('indice_imobiliario_por_pib', b.indice_imobiliario_por_pib)
-    ) as t(tipo, serie)
+credito_pib as (
+    select
+        data                                    as data,
+        'indice_imobiliario_por_pib'            as tipo,
+        valor                                   as valor
+    from {{ ref('silver_continuo_bacen_credito_pib') }}
 )
 
-select
-    to_date(elem ->> 'data', 'DD/MM/YYYY')      as data,
-    series.tipo                                 as tipo,
-    nullif(elem ->> 'valor', '')::numeric       as valor
-from series
-cross join lateral jsonb_array_elements(series.serie::jsonb) as elem
+select data, tipo, valor from sgs
+union all
+select data, tipo, valor from credito_pib

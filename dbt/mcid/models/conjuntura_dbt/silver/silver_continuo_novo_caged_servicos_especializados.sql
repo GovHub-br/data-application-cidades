@@ -8,6 +8,11 @@
 -- traz tudo como texto — sem o cast aqui, o gold quebra na hora de fazer
 -- conta (`estoque - lag(estoque, 12)` dava "operator does not exist:
 -- text - text").
+--
+-- `dt_ingest` e não `_ingested_at`: a nossa DAG grava `dt_ingest`, e as
+-- colunas `_source_file/_ingested_at/_source_hash` só aparecem quando outro
+-- processo reescreve o parquet. `dt_ingest` existe nas duas formas, então é
+-- a única que sobrevive a qualquer dos dois escritores.
 
 select
     ano::int                       as ano,
@@ -17,5 +22,5 @@ select
     saldo::numeric                 as saldo,
     estoque::numeric               as estoque,
     variacao::numeric              as variacao,
-    _ingested_at                   as dt_ingest
+    dt_ingest                      as dt_ingest
 from {{ ref('bronze_continuo_novo_caged_servicos_especializados') }}

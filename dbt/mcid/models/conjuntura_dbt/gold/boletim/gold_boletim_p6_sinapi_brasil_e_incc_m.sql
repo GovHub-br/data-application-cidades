@@ -15,12 +15,18 @@ from (
 
     with 
 edicoes as (
-    select distinct periodo as edicao,
-           (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
-           right(periodo, 4)::int as ano_ed,
-           left(periodo, 1)::int  as tri_ed
-    from {{ ref('gold_continuo_pib_construcao_civil_pct') }}
-    where right(periodo, 4)::int >= 2025
+    select
+        (extract(quarter from t)::int::text || 'T'
+         || extract(year from t)::int::text)                as edicao,
+        (extract(year from t)::int * 4
+         + extract(quarter from t)::int)                    as k,
+        extract(year from t)::int                           as ano_ed,
+        extract(quarter from t)::int                        as tri_ed
+    from generate_series(
+        make_date(2025, 1, 1),
+        date_trunc('quarter', current_date)::date,
+        interval '3 months'
+    ) as t
 ),
     sin as (
         select (left(periodo, 4)::int * 12 + right(periodo, 2)::int) as m,

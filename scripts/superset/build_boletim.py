@@ -38,12 +38,19 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pathlib
 import re
 import sys
 import unicodedata
 from dataclasses import dataclass, field
 
 import requests
+from dotenv import load_dotenv
+
+# Credenciais do `.env`, como no resto dos scripts. Antes o script dependia de
+# as variáveis já estarem exportadas no shell, e sem isso morria num KeyError
+# de `SUPERSET_URL` antes de publicar coisa alguma.
+load_dotenv(pathlib.Path(__file__).resolve().parents[2] / ".env")
 
 MART = "conjuntura_continuo_mart"
 SILVER = "conjuntura_continuo_silver"
@@ -67,15 +74,32 @@ class Quadro:
 # --------------------------------------------------------------------------
 # Blocos reutilizados
 
-#: edições disponíveis, a partir dos trimestres que existem no gold de PIB
+#: Edições do boletim, geradas pelo CALENDÁRIO — não derivadas de um
+#: indicador.
+#:
+#: Antes esta lista saía dos trimestres presentes no gold de PIB, e isso
+#: acoplava a existência da edição à publicação de um único indicador: com o
+#: PIB do 2T2026 ainda não divulgado pelo IBGE, as edições 2026.2 e 2026.3
+#: simplesmente não existiam, embora quase todas as demais fontes já
+#: cobrissem esses trimestres.
+#:
+#: A edição do boletim é um fato do calendário. Se uma fonte atrasa, a edição
+#: continua existindo e a célula correspondente fica vazia — que é a
+#: informação correta a dar: "ainda não chegou", e não "não existe".
 EDICOES = f"""
 edicoes as (
-    select distinct periodo as edicao,
-           (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
-           right(periodo, 4)::int as ano_ed,
-           left(periodo, 1)::int  as tri_ed
-    from {MART}.gold_continuo_pib_construcao_civil_pct
-    where right(periodo, 4)::int >= {PRIMEIRO_ANO}
+    select
+        (extract(quarter from t)::int::text || 'T'
+         || extract(year from t)::int::text)                as edicao,
+        (extract(year from t)::int * 4
+         + extract(quarter from t)::int)                    as k,
+        extract(year from t)::int                           as ano_ed,
+        extract(quarter from t)::int                        as tri_ed
+    from generate_series(
+        make_date({PRIMEIRO_ANO}, 1, 1),
+        date_trunc('quarter', current_date)::date,
+        interval '3 months'
+    ) as t
 )"""
 
 
@@ -870,11 +894,6 @@ QUADROS: list[Quadro] = quadros()
 #: `pendente=True` marca o que está a caminho — dado identificado, ingestão
 #: combinada — para não se confundir com o que não tem fonte nenhuma.
 SEM_FONTE = [
-    (3, "6. Crédito", "Novos Financiamentos por Banco — competências recentes",
-     "PENDENTE, não ausente: os boletins mensais da ABECIP têm a tabela completa "
-     "(inclusive BRB), em URL pública e previsível. A ingestão das competências "
-     "2025-10 em diante foi combinada com o time que opera o OCR. Até lá o quadro "
-     "abaixo mostra só o histórico da planilha manual, que termina em 09/2025."),
     (6, "6. OGU", "OGU e Desembolsos de Obras",
      "O boletim congela o SIAFI na data da edição (‘Dados de 02/01/26’); nossa "
      "extração é sempre a posição corrente, então nenhuma célula reproduz."),

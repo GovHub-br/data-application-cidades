@@ -5,32 +5,53 @@
 --
 -- Uma linha por EDIÇÃO (coluna `edicao`), com as colunas na ordem
 -- impressa. O filtro do Superset seleciona a edição; o dashboard não
--- calcula nada — este SQL rodava como dataset virtual e voltava ao
--- engine a cada carregamento de página.
+-- calcula nada.
+--
+-- Lê a tabela controlada do CBIC, não a planilha manual. As duas guardavam
+-- a mesma abertura por região, e a manual parou de ser preenchida — o
+-- 2T2026 saía vazio no boletim enquanto o dado estava inteiro aqui. Uma
+-- fonte só por indicador: a que a migração `0003` mantém.
+--
+-- Chave da tabela é (ano, trimestre); a edição é montada a partir dela, para
+-- não depender de texto livre em coluna de período.
 
-select "edicao", "regiao", "TOTAL", "MCMV", "% MCMV"
-from (
+with edicoes as (
+    select
+        (extract(quarter from t)::int::text || 'T'
+         || extract(year from t)::int::text)                as edicao,
+        (extract(year from t)::int * 4
+         + extract(quarter from t)::int)                    as k
+    from generate_series(
+        make_date(2025, 1, 1),
+        date_trunc('quarter', current_date)::date,
+        interval '3 months'
+    ) as t
+),
 
-    with 
-edicoes as (
-    select distinct periodo as edicao,
-           (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
-           right(periodo, 4)::int as ano_ed,
-           left(periodo, 1)::int  as tri_ed
-    from {{ ref('gold_continuo_pib_construcao_civil_pct') }}
-    where right(periodo, 4)::int >= 2025
+cbic as (
+    select ano * 4 + trimestre as k, *
+    from {{ source('conjuntura_bronze', 'bronze_cbic_lancamentos_vendas') }}
 )
-    select e.edicao, x.regiao, x.total as "TOTAL", x.mcmv as "MCMV",
-           round((x.mcmv / nullif(x.total, 0) * 100)::numeric, 0) as "% MCMV", x.ordem
-    from edicoes e
-    join manual_conjuntura.dados_trimestrais d on d.periodo = e.edicao
-    cross join lateral (
-        select 'NORTE' as regiao, 1 as ordem, (case when btrim(d.cbic_vendas_total_n::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_total_n::text, E' \t\r\n\u00a0')::numeric end) total, (case when btrim(d.cbic_vendas_mcmv_n::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_mcmv_n::text, E' \t\r\n\u00a0')::numeric end) mcmv
-        union all select 'NORDESTE', 2, (case when btrim(d.cbic_vendas_total_ne::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_total_ne::text, E' \t\r\n\u00a0')::numeric end), (case when btrim(d.cbic_vendas_mcmv_ne::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_mcmv_ne::text, E' \t\r\n\u00a0')::numeric end)
-        union all select 'CENTRO-OESTE', 3, (case when btrim(d.cbic_vendas_total_co::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_total_co::text, E' \t\r\n\u00a0')::numeric end), (case when btrim(d.cbic_vendas_mcmv_co::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_mcmv_co::text, E' \t\r\n\u00a0')::numeric end)
-        union all select 'SUDESTE', 4, (case when btrim(d.cbic_vendas_total_se::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_total_se::text, E' \t\r\n\u00a0')::numeric end), (case when btrim(d.cbic_vendas_mcmv_se::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_mcmv_se::text, E' \t\r\n\u00a0')::numeric end)
-        union all select 'SUL', 5, (case when btrim(d.cbic_vendas_total_s::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_total_s::text, E' \t\r\n\u00a0')::numeric end), (case when btrim(d.cbic_vendas_mcmv_s::text, E' \t\r\n\u00a0') ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$' then btrim(d.cbic_vendas_mcmv_s::text, E' \t\r\n\u00a0')::numeric end)
-    ) x
-    
-) q
-order by edicao, ordem
+
+select
+    e.edicao,
+    x.regiao,
+    x.total                                                  as "TOTAL",
+    x.mcmv                                                   as "MCMV",
+    round((x.mcmv::numeric / nullif(x.total, 0) * 100), 0)    as "% MCMV"
+from edicoes e
+join cbic d on d.k = e.k
+cross join lateral (
+    select 'NORTE'        as regiao, 1 as ordem,
+           d.cbic_vendas_regiao_norte              as total,
+           d.cbic_vendas_mcmv_regiao_norte         as mcmv
+    union all select 'NORDESTE',     2,
+           d.cbic_vendas_regiao_nordeste,      d.cbic_vendas_mcmv_regiao_nordeste
+    union all select 'CENTRO-OESTE', 3,
+           d.cbic_vendas_regiao_centro_oeste,  d.cbic_vendas_mcmv_regiao_centro_oeste
+    union all select 'SUDESTE',      4,
+           d.cbic_vendas_regiao_sudeste,       d.cbic_vendas_mcmv_regiao_sudeste
+    union all select 'SUL',          5,
+           d.cbic_vendas_regiao_sul,           d.cbic_vendas_mcmv_regiao_sul
+) x
+order by e.edicao, x.ordem
