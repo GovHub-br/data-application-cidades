@@ -250,63 +250,74 @@ sources:
           registros, 45 colunas text (o dump antigo em __dados_brutos tinha essas
           mesmas linhas duplicadas 2x).
           Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.
-      # Família empreendimento_rural. As contagens de linha ficam de fora: as
-      # tabelas do Rural ainda não foram carregadas uma primeira vez, então
-      # qualquer número aqui seria chute. Preencher depois do primeiro --apply.
+      # Família empreendimento_rural. Origens conferidas contra a listagem da
+      # staging/ (mc ls, 2026-09-01); as contagens de linha ficam de fora porque as
+      # tabelas ainda não foram carregadas uma vez — preencher após o primeiro --apply.
       - name: novo_mcmv_rural_cad_pj_mensal
         description: >
           Cadastro PJ do empreendimento Rural contratado (entidade organizadora,
           composição do investimento, cisternas/efluentes, prazos). Colunas text.
-          Origem: MONIT_CAD_PJ_RURAL_MENSAL_<aaaamm> (a confirmar na staging/).
+          Origem: MONIT_CAD_PJ_RURAL_MENSAL_<aaaamm>, competência vigente 202607.
       - name: novo_mcmv_rural_cadastro_pf_mensal
         description: >
           Cadastro de beneficiários PF do Rural, com perfil socioeconômico
           (renda, pessoas por família, Bolsa Família, BPC). Colunas text.
-          Origem: MONIT_CAD_PF_RURAL_MENSAL_<aaaamm> (a confirmar na staging/).
+          Origem: MONIT_CADASTRO_PF_RURAL_MENSAL_<aaaamm>, vigente 202607.
       - name: novo_mcmv_rural_obra_mensal
         description: >
           Evolução física da obra do Rural, snapshot mensal. Colunas text.
-          Origem: MONIT_MOV_OBRA_RURAL_MENSAL_<aaaamm> (a confirmar na staging/).
+          Origem: MONIT_MOV_OBRA_RURAL_MENSAL_<aaaamm>, vigente 202607.
       - name: novo_mcmv_rural_financeiro_mensal
         description: >
           Série de liberações financeiras do Rural, decomposta por componente
           (obra, TS, ATEC, cisternas/efluentes, custos indiretos). Colunas text.
-          Origem: MONIT_MOV_FINANC_RURAL_MENSAL_<aaaamm> (a confirmar na staging/).
+          Origem: MONIT_MOV_FINANC_RURAL_MENSAL_<aaaamm>, vigente 202607.
       - name: dados_prioritarios_disponibilizados_snh_empreendimentos
         description: >
           Snapshot de dados prioritários da SNH, todas as modalidades; a silver
           prioritarios_snh filtra modalidade='RURAL'. Colunas text.
-          Origem: SharePoint da SNH (a confirmar na staging/).
+          Origem: export canônico staging/sharepoint/
+          dados_prioritarios_disponibilizados_snh_empreendimentos.parquet — snapshot de
+          2026-08-25, sobrescrito in-place, NÃO acompanha o feed mensal.
       - name: dados_prioritarios_recebidos_bb_empreendimentos
         description: >
           Snapshot de dados prioritários do Banco do Brasil, todas as
           modalidades; a silver prioritarios_bb filtra modalidade='RURAL'.
           Mesmo layout do arquivo da CAIXA. Colunas text.
-          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.
+          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB, vigente 202606 — um mês
+          atrás da CAIXA (202607), porque o BB envia com atraso.
       - name: int_empreendimentos_int_065_pnhr_caixa_pj
         description: >
           Histórico de empreendimentos PNHR na CAIXA (integração INT065), com
           composição de investimento e execução física. Colunas text.
-          Origem: INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_<aaaammdd>.
+          Origem: INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_<aaaammdd>. O feed
+          para em 20241129: o PNHR é programa encerrado, a série não avança mais.
       - name: int_empreendimentos_int_057_pnhr_bb_pj
         description: >
           Histórico de empreendimentos PNHR no Banco do Brasil (integração
           INT057). Não traz nu_apf: o APF sai do número do contrato do
           empreendimento. Colunas text.
-          Origem: INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_<aaaammdd>.
+          Origem: INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_<aaaammdd>, também
+          parado em 20241129.
       - name: int_financeiro_int055_liberacoes_caixa_bb
         description: >
           Liberações de recurso de CAIXA e BB (integração INT055), de todos os
           programas; a silver liberacoes_pnhr filtra no_programa like '%PNHR%'.
           Não decompõe o valor por componente. Colunas text.
-          Origem: INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_<aaaammdd>.
+          Origem: INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_<aaaammdd>, vigente
+          20250318. Chega zipado do SFTP e é expandido para .TXT na entrada; a extensão
+          de origem não entra na key de staging.
       - name: base_trabalho_social_pnhr_rural_caixa
         description: >
           Base de acompanhamento do Trabalho Social (PTS) do PNHR pela CAIXA:
           situação do TS, valores global/desembolsado e % de execução. Colunas text.
-          Origem: SharePoint da SNH (a confirmar na staging/).
+          Origem: export canônico staging/sharepoint/
+          base_trabalho_social_pnhr_rural_caixa.parquet. Key exata em vez de padrão: o
+          feed datado (Trabalho Social/MCMV_RURAL_TS_CAIXA_BB_<aaaamm>) vira um parquet
+          por aba e o sufixo da aba muda de nome todo mês. Snapshot de 2026-08-25.
       - name: base_trabalho_social_pnhr_bb
         description: >
           Base de acompanhamento do Trabalho Social (PTS) do PNHR pelo Banco do
           Brasil. Layout próprio, diferente do da CAIXA. Colunas text.
-          Origem: SharePoint da SNH (a confirmar na staging/).
+          Origem: export canônico staging/sharepoint/base_trabalho_social_pnhr_bb.parquet,
+          mesma ressalva do da CAIXA. Snapshot de 2026-08-25.
