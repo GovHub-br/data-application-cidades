@@ -6,17 +6,10 @@ source:
       type: Superset
       hostPort: ${SUPERSET_HOST_PORT}
       connection:
-        type: Postgres
-        scheme: postgresql+psycopg2
-        username: superset
-        authType:
-          password: ${SUPERSET_PASSWORD}
-        hostPort: 10.0.0.73:5432
-        database: superset
-        sslMode: disable
-      # Se seu Superset usa SSL/TLS com verificação custom:
-      # Para validar o certificado, acrescente `verifySSL: validate` (ou
-      # `ignore`). Sem marcador ${...} em comentário — o render levanta.
+        type: SupersetAPI
+        username: ${SUPERSET_USERNAME}
+        password: ${SUPERSET_PASSWORD}
+        provider: db
 
   sourceConfig:
     config:
