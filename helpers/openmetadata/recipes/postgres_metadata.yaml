@@ -1,0 +1,52 @@
+source:
+  type: postgres
+  serviceName: Cidades
+  serviceConnection:
+    config:
+      type: Postgres
+      hostPort: ${DB_DW_HOST}:${DB_DW_PORT}
+      username: ${DB_DW_USER}
+      authType:
+        password: ${DB_DW_PASSWORD}
+      database: ${DB_DW_DBNAME}
+      sslMode: disable
+
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+      includeTables: true
+      includeViews: true
+      # NÃO remover. O default é `true`, e rodar esta recipe contra um banco
+      # incompleto — ambiente restaurado pela metade, VPN caindo no meio,
+      # schema ainda não materializado — marca como deletado TUDO que o
+      # catálogo tem e o banco não, sem avisar. Armadilha registrada pela
+      # equipe do MinC depois de acontecer.
+      markDeletedTables: false
+      # Lista derivada de `dbt/mcid/governance/schemas.yml`. O teste
+      # `test_recipes_cobrem_os_schemas_declarados` falha quando as duas
+      # divergem — manter a mão foi o que deixou a allowlist anterior
+      # descrevendo os schemas legados por semanas.
+      schemaFilterPattern:
+        includes:
+          - '^conjuntura_bronze$'
+          - '^conjuntura_continuo_bronze$'
+          - '^conjuntura_continuo_mart$'
+          - '^conjuntura_continuo_silver$'
+          - '^conjuntura_gold$'
+          - '^conjuntura_silver$'
+          - '^empreendimento_far$'
+          - '^entidades_fds$'
+          - '^metadata$'
+
+sink:
+  type: metadata-rest
+  config:
+    bulk_sink_batch_size: 10
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: ${OM_HOST}
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${INGESTION_TOKEN}

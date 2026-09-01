@@ -45,6 +45,11 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       silver:
         +materialized: table
         +meta:
@@ -54,6 +59,11 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       gold:
         +materialized: table
         +meta:
@@ -63,6 +73,11 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     entidades_dbt:
       +materialized: table
@@ -80,6 +95,11 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       silver:
         +materialized: table
         +meta:
@@ -89,6 +109,11 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       gold:
         +materialized: table
         +meta:
@@ -98,6 +123,11 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     conjuntura_dbt:
       +materialized: table
@@ -121,6 +151,11 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       silver:
         +materialized: table
         +schema: conjuntura_continuo_silver
@@ -131,6 +166,11 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       gold:
         +materialized: table
         +schema: conjuntura_continuo_mart
@@ -141,6 +181,11 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
       qualidade:
         +materialized: table
         +schema: conjuntura_continuo_mart

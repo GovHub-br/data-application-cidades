@@ -1,0 +1,29 @@
+source:
+  type: dbt
+  serviceName: Cidades
+  # Para apontar a outro serviço, troque o valor acima. NÃO deixe um
+  # marcador ${...} em comentário: o render varre o arquivo inteiro e
+  # levanta com 'sem valor para', mesmo a linha estando comentada.
+  sourceConfig:
+    config:
+      type: DBT
+      dbtConfigSource:
+        dbtConfigType: local
+        dbtManifestFilePath: ${DBT_TARGET_DIR}/manifest.json
+        dbtCatalogFilePath: ${DBT_TARGET_DIR}/catalog.json
+        dbtRunResultsFilePath: ${DBT_TARGET_DIR}/run_results.json
+      dbtUpdateDescriptions: true
+      includeTags: true
+
+sink:
+  type: metadata-rest
+  config:
+    bulk_sink_batch_size: 10
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: ${OM_HOST}
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${INGESTION_TOKEN}

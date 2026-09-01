@@ -1,0 +1,55 @@
+source:
+  type: superset
+  serviceName: Cidades - Superset
+  serviceConnection:
+    config:
+      type: Superset
+      hostPort: ${SUPERSET_HOST_PORT}
+      connection:
+        type: Postgres
+        scheme: postgresql+psycopg2
+        username: superset
+        authType:
+          password: ${SUPERSET_PASSWORD}
+        hostPort: 10.0.0.73:5432
+        database: superset
+        sslMode: disable
+      # Se seu Superset usa SSL/TLS com verificação custom:
+      # Para validar o certificado, acrescente `verifySSL: validate` (ou
+      # `ignore`). Sem marcador ${...} em comentário — o render levanta.
+
+  sourceConfig:
+    config:
+      type: DashboardMetadata
+      # includeDataModels: true
+      # includeDraftDashboard: true
+      # lineageInformation:
+      #   dbServicePrefixes:
+      #     - Cidades.cidades
+      # Se quiser restringir:
+      # dashboardFilterPattern:
+      #   includes: ["^.*$"]
+      # chartFilterPattern:
+      #   includes: ["^.*$"]
+      # projectFilterPattern:
+      #   includes: ["^.*$"]
+      # dataModelFilterPattern:
+      #   includes: ["^.*$"]
+
+processor:
+  type: orm-profiler
+  config: {}
+
+sink:
+  type: metadata-rest
+  config:
+    bulk_sink_batch_size: 10
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: ${OM_HOST}
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${INGESTION_TOKEN}
+    storeServiceConnection: true

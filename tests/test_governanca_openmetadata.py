@@ -585,3 +585,141 @@ def test_chave_nao_aparece_nos_dois_lugares() -> None:
     )
     assert coluna["constraint"] != "PRIMARY_KEY"
     assert r.constraints_da_tabela(rest, {"apf"})[0]["constraintType"] == "PRIMARY_KEY"
+
+
+# ── recipes dos conectores ──────────────────────────────────────────────────
+def _recipe(nome: str) -> dict:
+    import yaml
+
+    caminho = RAIZ / "helpers" / "openmetadata" / "recipes" / f"{nome}.yaml"
+    return yaml.safe_load(caminho.read_text(encoding="utf-8"))
+
+
+def test_recipes_cobrem_os_schemas_declarados() -> None:
+    """O filtro da recipe tem de ser o mesmo `schemas.yml` da governança.
+
+    Manter as duas listas à mão foi o que deixou a recipe descrevendo os
+    schemas legados (`conjuntura_gold`) por semanas, enquanto os models
+    reais eram `conjuntura_continuo_mart`.
+    """
+    declarados = {s["name"] for s in comum.carregar("schemas.yml")["schemas"]}
+    for nome in ("postgres_metadata", "postgres_profiler", "postgres_classifier"):
+        config = _recipe(nome)["source"]["sourceConfig"]["config"]
+        na_recipe = {
+            padrao.strip("^$") for padrao in config["schemaFilterPattern"]["includes"]
+        }
+        assert na_recipe == declarados, f"{nome} diverge de schemas.yml"
+
+
+def test_ingestao_nunca_marca_tabela_como_deletada() -> None:
+    """O default é `true` e apaga catálogo inteiro contra banco incompleto."""
+    config = _recipe("postgres_metadata")["source"]["sourceConfig"]["config"]
+    assert config.get("markDeletedTables") is False
+
+
+def test_recipes_apontam_para_os_servicos_certos() -> None:
+    """serviceName errado anexa metadado a um serviço que não existe."""
+    assert _recipe("postgres_metadata")["source"]["serviceName"] == "Cidades"
+    assert _recipe("dbt_metadata")["source"]["serviceName"] == "Cidades"
+    assert _recipe("superset_metadata")["source"]["serviceName"] == "Cidades - Superset"
+    assert _recipe("airflow_metadata")["source"]["serviceName"] == "airflow"
+
+
+def test_ingestao_roda_em_virtualenv_isolado() -> None:
+    """Não é preferência: é a única forma no Airflow 2.
+
+    `openmetadata-ingestion` exige SQLAlchemy >=2.0 e `apache-airflow 2.8.1`
+    exige <2.0. Testadas 1.10, 1.11, 1.12 e 1.13 — nenhuma convive no mesmo
+    ambiente. Assar na imagem (como faz o data-application-minc, que está em
+    Airflow 3) quebraria o build.
+    """
+    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    assert "task.virtualenv" in dag
+    assert "system_site_packages=False" in dag
+    assert "expect_airflow=False" in dag
+
+
+def test_pacote_de_ingestao_acompanha_a_linha_do_servidor() -> None:
+    """Cliente e servidor de linhas diferentes divergem no schema das entidades."""
+    import sys
+
+    sys.path.insert(0, str(RAIZ / "helpers"))
+    from openmetadata.config import OPENMETADATA_REQUIREMENTS
+
+    pacote = next(
+        r for r in OPENMETADATA_REQUIREMENTS if r.startswith("openmetadata-ingestion")
+    )
+    assert "==1.13.3" in pacote, "o servidor é OpenMetadata 1.13.3"
+
+
+def test_requirements_da_imagem_nao_carrega_o_pacote_de_ingestao() -> None:
+    """Se entrar aqui, o build da imagem do Airflow quebra pelo SQLAlchemy."""
+    requisitos = (RAIZ / "requirements.txt").read_text(encoding="utf-8")
+    assert "openmetadata-ingestion" not in requisitos
+
+
+# ── governança que o conector dbt carrega ───────────────────────────────────
+def test_dbt_declara_dominio_tier_e_dono_para_o_conector() -> None:
+    """O conector dbt lê `meta.openmetadata` e leva ao catálogo.
+
+    Declarado por CAMADA no `dbt_project.yml`, ao lado do `meta.governance`
+    que já existia — anotar os 140 models um a um seria a mesma informação
+    repetida 140 vezes.
+    """
+    import yaml
+
+    projeto = yaml.safe_load(
+        (RAIZ / "dbt" / "mcid" / "dbt_project.yml").read_text(encoding="utf-8")
+    )
+    dominios = comum.carregar("dominios.yml")
+    tiers = dominios["certificacao_por_camada"]
+    por_produto = {p["name"]: p["domain"] for p in dominios["produtos"]}
+    dono = dominios["proprietarios"]["mcid_data_engineering"]["name"]
+
+    encontrados = 0
+
+    def visitar(no: object) -> None:
+        nonlocal encontrados
+        if not isinstance(no, dict):
+            return
+        meta = (no.get("+meta") or {}) if isinstance(no.get("+meta"), dict) else {}
+        gov_ = meta.get("governance") or {}
+        om = meta.get("openmetadata")
+        if gov_.get("layer") in tiers and gov_.get("product") in por_produto:
+            assert om, f"camada {gov_} sem meta.openmetadata"
+            assert om["domain"] == por_produto[gov_["product"]]
+            assert om["tier"] == f"Tier.{tiers[gov_['layer']]}"
+            assert om["owner"] == dono
+            encontrados += 1
+        for filho in no.values():
+            visitar(filho)
+
+    visitar(projeto.get("models"))
+    assert encontrados >= 9, f"esperava ao menos 9 camadas anotadas, achei {encontrados}"
+
+
+def test_toda_recipe_recebe_os_marcadores_que_pede() -> None:
+    """Marcador sem valor derruba a task na renderização.
+
+    Vale para o arquivo INTEIRO: `rendering.py` faz substituição textual e
+    depois varre tudo, comentário incluído. Duas recipes vieram da branch com
+    `${...}` em linha comentada, que quebraria a execução sem nunca ter sido
+    exercitado.
+    """
+    import re
+    import sys
+
+    sys.path.insert(0, str(RAIZ / "helpers"))
+    from openmetadata.config import _RECIPES_DEFINIDAS
+
+    marcador = re.compile(r"\$\{(\w+)\}")
+    # o `runner` injeta este depois de gerar os artefatos do dbt
+    injetados_em_runtime = {"DBT_TARGET_DIR"}
+
+    for recipe in _RECIPES_DEFINIDAS:
+        caminho = RAIZ / "helpers" / "openmetadata" / "recipes"
+        texto = (caminho / f"{recipe.task_id}.yaml").read_text(encoding="utf-8")
+        pedidos = set(marcador.findall(texto))
+        fornecidos = set(recipe.replacements) | set(recipe.segredos)
+        faltando = pedidos - fornecidos - injetados_em_runtime
+        assert not faltando, f"{recipe.task_id}: sem valor para {sorted(faltando)}"
