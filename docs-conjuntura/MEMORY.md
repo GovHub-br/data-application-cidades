@@ -90,6 +90,77 @@ reformata dezenas de arquivos não relacionados).
 
 ## 0.2 Diário
 
+### 2026-09-01 · Claude · O conector apaga a certificação (e como isso apareceu)
+
+**A armadilha mais perigosa encontrada até agora. Ler antes de rodar qualquer
+ingestão nativa.**
+
+#### O que aconteceu
+
+Rodamos a recipe `dbt_metadata` pela primeira vez, contra um catálogo que
+estava 140/140 em tudo. Resultado: **a certificação das 140 tabelas foi
+apagada.** Domínio, produto de dados, etiquetas e glossário sobreviveram;
+`certification` virou nulo em todas.
+
+Causa: o conector escreve a entidade da tabela **sem** o campo `certification`,
+e o `createOrUpdate` do OpenMetadata substitui o que estava lá por nulo. Não há
+erro, aviso ou log — a ingestão termina dizendo sucesso.
+
+#### Por que foi detectado
+
+Porque tiramos um **snapshot da auditoria ANTES** de rodar. Sem ele, a
+certificação teria sumido em silêncio, exatamente como as 85 descrições de
+rodapé sumiram em julho e só foram descobertas seis semanas depois.
+
+**Regra: antes de qualquer primeira execução de recipe, rodar
+`make governance-audit-om` e guardar a saída.**
+
+#### O conserto, que virou estrutura
+
+`reaplicar_governanca` é agora a **última task** da
+`dags/openmetadata_ingestion_dag.py`, depois de todas as recipes. A ordem
+deixou de ser recomendação e virou dependência do grafo, com teste que falha se
+ela sair do fim. O `scripts/` passou a ser montado no container para a task
+alcançar o script.
+
+Consequência de projeto: **a governança REST não pode ser aposentada enquanto o
+conector não souber escrever certificação.** Não é dívida técnica esquecida; é
+reparo obrigatório de algo que o conector destrói.
+
+#### Padrão do dia: a API aceita o incompleto e devolve 200
+
+Três vezes, a mesma forma de falha:
+
+1. **Certificação enviada em `/tags`** — 200, descartada em silêncio.
+2. **`ordinalPosition`** — PATCH devolve 200 com o valor no corpo da resposta,
+   e a releitura vem vazia. Só 1347 das 2244 colunas persistiram; testados
+   PATCH, PUT, renumeração contígua e três caminhos de leitura. Não resolvido.
+3. **`mcidRelatedTables` com só `id` e `type`** — 200, e a interface renderiza
+   entradas em branco, porque usa `name` e `fullyQualifiedName` como rótulo. Só
+   apareceu porque o Lucas olhou a tela.
+
+**Nenhuma das três apareceu como erro em log, sync ou auditoria.** A lição é
+que resposta 200 do OpenMetadata não é prova de escrita: conferir relendo.
+
+#### Outras coisas desta rodada
+
+- **`meta.dag` de 12 para 25 de 31.** Os 13 caminhos do IBGE foram atribuídos a
+  `ibge_ingest_dag` **por eliminação**: só duas DAGs escrevem em
+  `staging/ibge/`, e a outra produz nomes que não correspondem a nenhuma source
+  declarada. Confirmar item a item pela Airflow Variable `IBGE_CONFIGURACOES`.
+- **DAG de origem propagada pela linhagem**: 80 models, nas três camadas. Um
+  model herda as DAGs dos ancestrais; cinco têm mais de uma.
+- **Relações semânticas para Silver e Gold**: 98 tabelas, derivadas do grafo do
+  dbt e do contrato de dimensão temporal. A Bronze fica de fora — dela se
+  publica topologia, não significado. O catálogo de julho, que cobre FAR e FDS
+  por `apf`/`cnpj`, foi preservado.
+- **`.env`**: `DB_DW_PASSWORD_MCID` continha `)` sem aspas e quebrava qualquer
+  `source .env` na linha 23 — tudo depois dela sumia, incluindo as credenciais
+  do OpenMetadata. Corrigido com aspas simples.
+- **A armadilha do dbt 1.10+ NÃO se aplica aqui**: testado, `dbt parse` passa
+  com `meta` no topo de 24 models e `+meta` de projeto.
+
+
 ### 2026-09-01 · Claude · A integração já existia: `origin/refactor/openmetadata`
 
 **LEIA ANTES DE ESCREVER QUALQUER COISA NOVA DE OPENMETADATA.**

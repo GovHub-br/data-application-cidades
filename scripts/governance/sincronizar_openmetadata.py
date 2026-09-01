@@ -235,6 +235,9 @@ def request(session: requests.Session, method: str, url: str, **kwargs: Any) -> 
 
 
 #: Campos de coluna comparados para decidir se vale reescrever o array inteiro.
+#: Campo que não está aqui NUNCA é escrito: a comparação não vê divergência e
+#: o patch não sai. `ordinalPosition` ficou de fora na primeira versão e a
+#: posição física das 2244 colunas simplesmente não subia.
 CAMPOS_DE_COLUNA = (
     "dataType",
     "dataLength",
@@ -242,6 +245,7 @@ CAMPOS_DE_COLUNA = (
     "scale",
     "description",
     "constraint",
+    "ordinalPosition",
 )
 
 

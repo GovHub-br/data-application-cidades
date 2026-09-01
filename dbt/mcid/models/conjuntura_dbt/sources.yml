@@ -13,9 +13,12 @@ sources:
     #
     #   - as 5 de `sftp/` chegam por transferência do agente operador; não há
     #     DAG que as escreva, e o campo fica ausente de propósito;
-    #   - as 14 do IBGE saem de `ibge_ingest_dag`, que lê a lista de datasets da
-    #     Airflow Variable `IBGE_CONFIGURACOES`. Quais parquets ela produz está
-    #     no Airflow, não aqui. Preencher no chute publicaria linhagem falsa.
+    #   - as do IBGE saem de `ibge_ingest_dag`, atribuída POR ELIMINAÇÃO: só
+    #     duas DAGs escrevem em `staging/ibge/`, e a outra
+    #     (`pnad_construcao_sidra_ingest_dag`) produz `pnad_construcao_ocupados`
+    #     e `pnad_construcao_rendimento`, que não correspondem a nenhuma source
+    #     declarada. Para confirmar item a item, olhar a Airflow Variable
+    #     `IBGE_CONFIGURACOES`, que é de onde a DAG lê a lista de datasets.
     #
     # Quem souber a resposta acrescenta a linha; o catálogo passa a mostrar a
     # DAG de origem do dado sem que ninguém precise ler código.
@@ -105,66 +108,79 @@ sources:
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/paic_obras.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
       - name: ibge_paic_pessoal_salarial
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/paic_pessoal_salarial.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: ibge_paic_resultados
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/paic_resultados.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
       - name: ibge_pib_consolidado_trimestral
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/pib_consolidado_trimestral_bruto.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pib_construcao_civil
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/pib_construcao.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: ibge_pib_corrente
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/pib_corrente_milhoes_brl.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pim_pf_brasil
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/ibge_pim_pf_brasil.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
       - name: ibge_pmc_construcao
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/ibge_pmc_construcao.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
       - name: ibge_pnad_construcao_ocupados
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/pnad_trabalho_construcao.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
       - name: ibge_pnad_construcao_rendimento
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/pnad_rendimento_construcao.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
       - name: ibge_pnadc_populacao_decis_renda
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/pnadc_populacao_decis_renda.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pnadc_rendimento_domiciliar
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/pnadc_rendimento_domiciliar_real.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_sinapi
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
           caminho: staging/ibge/sinapi.parquet
+          dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: infomoney_imob
         description: "Cotações diárias do índice IMOB da B3 (via Alpha Vantage)."

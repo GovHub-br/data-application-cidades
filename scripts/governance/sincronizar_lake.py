@@ -255,35 +255,107 @@ def sincronizar_containers(
     return identificadores
 
 
-def anotar_dag_de_origem(om: ClienteOM, tabela: dict, arquivo: Arquivo) -> None:
-    """Grava na tabela qual DAG produziu o arquivo que ela lê.
+def _dags_diretas(arquivos: list[Arquivo]) -> dict[str, set[str]]:
+    """Models Bronze que leem um arquivo do lake com DAG declarada."""
+    direto: dict[str, set[str]] = {}
+    for arquivo in arquivos:
+        if not arquivo.dag:
+            continue
+        for modelo in arquivo.bronze:
+            direto.setdefault(modelo, set()).add(arquivo.dag)
+    return direto
 
-    A linhagem já responde isso, mas exige percorrer o grafo. Como propriedade,
-    a resposta aparece na própria página da tabela. Só grava o que está
-    declarado em `meta.dag`; as 19 sem declaração ficam sem a propriedade, e
-    não com um valor inventado.
+
+def dags_por_modelo(arquivos: list[Arquivo]) -> dict[str, set[str]]:
+    """DAG de origem de CADA model, propagada pela linhagem.
+
+    A DAG é declarada uma vez, na fonte do lake (`meta.dag` no `sources.yml`).
+    Só a Bronze a lê diretamente — mas a pergunta "quem trouxe esse dado" vale
+    para a Gold que o boletim publica, não só para a Bronze que ninguém abre.
+    Então ela sobe pelo grafo: um model herda as DAGs de todos os seus
+    ancestrais.
+
+    Um model pode ter mais de uma: `gold_boletim_p3_empregos_construcao_caged`
+    junta três recortes do CAGED, cada um com a sua ingestão.
     """
-    if not arquivo.dag:
+    if not CATALOGO.exists():
+        return {}
+    catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    por_id = {m["id"]: m for m in catalogo.get("models", [])}
+    por_nome = {m["name"]: m for m in catalogo.get("models", [])}
+
+    direto = _dags_diretas(arquivos)
+    resolvido: dict[str, set[str]] = {}
+
+    def subir(nome: str, visitando: set[str]) -> set[str]:
+        if nome in resolvido:
+            return resolvido[nome]
+        if nome in visitando:  # ciclo não deveria existir, mas não trava
+            return set()
+        visitando.add(nome)
+        modelo = por_nome.get(nome)
+        saida = set(direto.get(nome, ()))
+        for pai in (modelo or {}).get("depends_on") or []:
+            ancestral = por_id.get(pai)
+            if ancestral:
+                saida |= subir(ancestral["name"], visitando)
+        visitando.discard(nome)
+        resolvido[nome] = saida
+        return saida
+
+    for nome in por_nome:
+        subir(nome, set())
+    return {nome: dags for nome, dags in resolvido.items() if dags}
+
+
+def anotar_dags_de_origem(
+    om: ClienteOM, arquivos: list[Arquivo], servico: str, banco: str
+) -> None:
+    """Grava em cada tabela a DAG que originou o dado dela.
+
+    A linhagem já responde isso, mas exige percorrer o grafo inteiro até o
+    parquet. Como propriedade, a resposta aparece na própria página da tabela.
+    Só grava o que está declarado; model sem ancestral no lake fica sem a
+    propriedade, e não com um valor inventado.
+    """
+    print("DAG de origem")
+    mapa = dags_por_modelo(arquivos)
+    if not mapa:
         return
-    atual = (tabela.get("extension") or {}).get("mcidDagDeOrigem")
-    if atual == arquivo.dag:
-        om.conformes += 1
-        return
-    om.patch(
-        "tables",
-        tabela["id"],
-        [
-            {
-                "op": "add",
-                "path": "/extension",
-                "value": {
-                    **(tabela.get("extension") or {}),
-                    "mcidDagDeOrigem": arquivo.dag,
-                },
-            }
-        ],
-        f"DAG de origem de {tabela['name']}",
-    )
+    schemas = schema_por_modelo()
+    escritas = 0
+    for modelo, dags in sorted(mapa.items()):
+        schema = schemas.get(modelo)
+        if not schema:
+            continue
+        fqn = f"{servico}.{banco}.{schema}.{modelo}"
+        if not om.confirmar:
+            om.atualizados += 1
+            continue
+        tabela = om.existe("tables", fqn, campos="extension")
+        if not tabela:
+            continue
+        valor = ", ".join(sorted(dags))
+        if (tabela.get("extension") or {}).get("mcidDagDeOrigem") == valor:
+            om.conformes += 1
+            continue
+        om.patch(
+            "tables",
+            tabela["id"],
+            [
+                {
+                    "op": "add",
+                    "path": "/extension",
+                    "value": {
+                        **(tabela.get("extension") or {}),
+                        "mcidDagDeOrigem": valor,
+                    },
+                }
+            ],
+            f"DAG de origem de {modelo}",
+        )
+        escritas += 1
+    print(f"  {len(mapa)} models com DAG de origem ({escritas} atualizados)")
 
 
 def sincronizar_linhagem(
@@ -321,7 +393,6 @@ def sincronizar_linhagem(
                     f"{faltou} não encontrado"
                 )
                 continue
-            anotar_dag_de_origem(om, tabela, arquivo)
             if origem in om.montante("table", tabela["id"]):
                 om.conformes += 1
                 continue
@@ -469,6 +540,7 @@ def sincronizar(
     arquivos = carregar_arquivos()
     identificadores = sincronizar_containers(om, declarado, arquivos)
     sincronizar_linhagem(om, arquivos, identificadores, servico_banco, banco)
+    anotar_dags_de_origem(om, arquivos, servico_banco, banco)
     sincronizar_orquestracao(om, donos, arquivos, identificadores)
 
 

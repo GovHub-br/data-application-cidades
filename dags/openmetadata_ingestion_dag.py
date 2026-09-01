@@ -15,6 +15,7 @@ coluna.
 """
 
 from datetime import datetime, timedelta
+from typing import Any
 
 from airflow.decorators import dag, task
 from schedule_loader import get_dynamic_schedule
@@ -31,6 +32,28 @@ from openmetadata.config import (
 #: Cache do virtualenv, compartilhado pelas tasks para não reinstalar 255
 #: pacotes a cada uma.
 VENV_CACHE = "/tmp/airflow_venvs"
+
+
+def _encadear(glossario: Any, tarefas: dict, relacoes: Any, governanca: Any) -> None:
+    """Liga as tasks na ordem em que uma depende da outra.
+
+    Glossário antes das recipes, porque os FQNs que os `schema.yml` do dbt
+    referenciam precisam existir para a ingestão resolvê-los. E a governança
+    SEMPRE por último: o conector dbt apaga a certificação das tabelas, e esta
+    é a task que a devolve.
+    """
+    anterior = glossario
+    for task_id in RECIPE_PIPELINE:
+        # RECIPE_PIPELINE é a ordem completa; ALL_RECIPES já veio filtrado
+        # pelas flags, então o que estiver desligado simplesmente não entra.
+        if task_id not in tarefas:
+            continue
+        anterior >> tarefas[task_id]
+        anterior = tarefas[task_id]
+        if task_id == "dbt_metadata":
+            anterior >> relacoes
+            anterior = relacoes
+    anterior >> governanca
 
 
 @dag(
@@ -142,6 +165,38 @@ def openmetadata_ingestion_dag() -> None:
         )
         logging.info("Relações semânticas do MCID sincronizadas: %s", resumo)
 
+    @task(task_id="reaplicar_governanca")
+    def reaplicar_governanca() -> None:
+        """Reaplica a governança DEPOIS do conector. É obrigatório.
+
+        O conector dbt escreve a entidade da tabela sem o campo
+        `certification`, e o `createOrUpdate` do OpenMetadata substitui o que
+        estava lá por nulo: uma execução apagou a certificação das 140 tabelas
+        de uma vez, em silêncio. Domínio, produto e etiqueta sobreviveram;
+        certificação não.
+
+        Roda no ambiente do Airflow, não no virtualenv: o script usa só
+        `requests` e `yaml`, e precisa do `scripts/` montado no container.
+        """
+        import logging
+        import os
+        import subprocess
+
+        caminho = f"{os.environ['AIRFLOW_REPO_BASE']}/scripts/governance"
+        resultado = subprocess.run(
+            ["python", f"{caminho}/sincronizar_governanca.py", "--confirmar"],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=caminho,
+        )
+        logging.info("Governança reaplicada:\n%s", resultado.stdout[-4000:])
+        if resultado.returncode != 0:
+            raise RuntimeError(
+                "Falha ao reaplicar a governança. O catálogo pode ter ficado "
+                f"sem certificação:\n{resultado.stderr[-2000:]}"
+            )
+
     # O glossário vem ANTES das recipes: os FQNs que os `schema.yml` do dbt
     # referenciam em `meta.openmetadata.glossary` precisam existir para que a
     # ingestão dbt consiga resolvê-los.
@@ -161,17 +216,7 @@ def openmetadata_ingestion_dag() -> None:
         for recipe in ALL_RECIPES
     }
 
-    anterior = glossario
-    for task_id in RECIPE_PIPELINE:
-        # RECIPE_PIPELINE é a ordem completa; ALL_RECIPES já veio filtrado
-        # pelas flags, então o que estiver desligado simplesmente não entra.
-        if task_id not in tarefas:
-            continue
-        anterior >> tarefas[task_id]
-        anterior = tarefas[task_id]
-        if task_id == "dbt_metadata":
-            anterior >> relacoes
-            anterior = relacoes
+    _encadear(glossario, tarefas, relacoes, reaplicar_governanca())
 
 
 openmetadata_ingestion_dag()

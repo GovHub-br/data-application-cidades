@@ -431,6 +431,138 @@ def _relacionar_termo(om: ClienteOM, t: dict, relacionados: list[str]) -> None:
         )
 
 
+#: Colunas do contrato de dimensão temporal (macro `dimensao_temporal.sql`).
+#: São o que torna duas séries do conjuntura comparáveis entre si — e o que
+#: responde "com o que eu posso cruzar esta tabela".
+GRANULARIDADE_TEMPORAL = (
+    "data_referencia",
+    "periodo",
+    "ano",
+    "mes",
+    "trimestre",
+    "edicao",
+)
+
+#: Camadas que recebem relações semânticas. A Bronze fica de fora: ela é cópia
+#: fiel da origem, e o que se publica dela é a topologia, não o significado.
+CAMADAS_COM_RELACOES = {"silver", "gold"}
+
+
+def vizinhanca_do_modelo(catalogo: dict) -> dict[str, dict[str, list[str]]]:
+    """De quem cada model lê e quem lê dele, direto do grafo do dbt."""
+    por_id = {m["id"]: m["name"] for m in catalogo.get("models", [])}
+    acima: dict[str, list[str]] = {}
+    abaixo: dict[str, list[str]] = {}
+    for modelo in catalogo.get("models", []):
+        nome = modelo["name"]
+        for pai in modelo.get("depends_on") or []:
+            if pai in por_id:
+                acima.setdefault(nome, []).append(por_id[pai])
+                abaixo.setdefault(por_id[pai], []).append(nome)
+    return {
+        m["name"]: {
+            "le_de": sorted(acima.get(m["name"], [])),
+            "lido_por": sorted(abaixo.get(m["name"], [])),
+        }
+        for m in catalogo.get("models", [])
+    }
+
+
+def markdown_das_relacoes(modelo: dict, vizinhos: dict[str, list[str]]) -> str:
+    """Texto que descreve com o que a tabela se relaciona e por qual chave.
+
+    Sai do grafo do dbt e do contrato de dimensão temporal — nada é inferido
+    por semelhança de nome. Não cria FK física nem aresta de linhagem: é
+    auxílio de descoberta, para quem procura "com o que posso cruzar isto".
+    """
+    colunas = {c["name"] for c in modelo.get("columns") or []}
+    grao = [c for c in GRANULARIDADE_TEMPORAL if c in colunas]
+    linhas = []
+    if grao:
+        linhas.append(
+            "**Granularidade temporal:** `" + "`, `".join(grao) + "`. "
+            "Séries que compartilham estas colunas são comparáveis entre si "
+            "no mesmo período."
+        )
+    if vizinhos["le_de"]:
+        linhas.append("**Lê de:** " + ", ".join(f"`{n}`" for n in vizinhos["le_de"]))
+    if vizinhos["lido_por"]:
+        linhas.append(
+            "**É lido por:** " + ", ".join(f"`{n}`" for n in vizinhos["lido_por"])
+        )
+    if not linhas:
+        return ""
+    linhas.append(
+        "_Derivado do grafo do dbt e do contrato de dimensão temporal. "
+        "Não constitui chave estrangeira nem aresta de linhagem._"
+    )
+    return "\n\n".join(linhas)
+
+
+def _referencias_dos_vizinhos(
+    om: ClienteOM, catalogo: dict, vizinhos: dict, servico: str, banco: str
+) -> list[dict]:
+    """Atalhos navegáveis para as tabelas vizinhas no grafo."""
+    por_nome = {m["name"]: m for m in catalogo.get("models", [])}
+    referencias = []
+    for vizinho in vizinhos["le_de"] + vizinhos["lido_por"]:
+        outro = por_nome.get(vizinho)
+        if not outro:
+            continue
+        entidade = om.existe(
+            "tables", f"{servico}.{banco}.{outro['schema']}.{outro['name']}"
+        )
+        if entidade:
+            # `id` e `type` sozinhos não bastam: a interface usa `name` e
+            # `fullyQualifiedName` como rótulo do link, e sem eles a lista
+            # aparece com entradas em branco.
+            referencias.append(referencia(entidade, "table"))
+    return referencias
+
+
+def sincronizar_relacoes_semanticas(om: ClienteOM, servico: str, banco: str) -> None:
+    """Publica vizinhança e granularidade nas tabelas Silver e Gold."""
+    if not CATALOGO.exists():
+        return
+    print("Relações semânticas")
+    catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    vizinhanca = vizinhanca_do_modelo(catalogo)
+    escritas = 0
+    for modelo in catalogo.get("models", []):
+        if modelo.get("layer") not in CAMADAS_COM_RELACOES:
+            continue
+        texto_md = markdown_das_relacoes(modelo, vizinhanca[modelo["name"]])
+        if not texto_md:
+            continue
+        fqn = f"{servico}.{banco}.{modelo['schema']}.{modelo['name']}"
+        if not om.confirmar:
+            om.atualizados += 1
+            continue
+        tabela = om.existe("tables", fqn, campos="extension")
+        if not tabela:
+            continue
+        relacionadas = _referencias_dos_vizinhos(
+            om, catalogo, vizinhanca[modelo["name"]], servico, banco
+        )
+        desejado = {
+            **(tabela.get("extension") or {}),
+            "mcidSemanticRelationships": texto_md,
+        }
+        if relacionadas:
+            desejado["mcidRelatedTables"] = relacionadas
+        if not operacoes_de_diferenca(tabela, {"extension": desejado}):
+            om.conformes += 1
+            continue
+        om.patch(
+            "tables",
+            tabela["id"],
+            [{"op": "add", "path": "/extension", "value": desejado}],
+            f"relações de {modelo['name']}",
+        )
+        escritas += 1
+    print(f"  {escritas} tabelas Silver/Gold com relações publicadas")
+
+
 # ── catalogação de schemas, tabelas e colunas ───────────────────────────────
 def vocabulario_declarado(termos: dict) -> set[str]:
     """FQNs de glossário que este repo declara — e portanto governa.
@@ -808,6 +940,7 @@ def main() -> int:
         om, donos, dominios, nosso_glossario, config["servico"], config["banco"]
     )
     catalogar_tabelas(om, donos, dominios, termos, config["servico"], config["banco"])
+    sincronizar_relacoes_semanticas(om, config["servico"], config["banco"])
 
     return om.resumo()
 

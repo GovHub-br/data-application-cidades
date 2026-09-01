@@ -723,3 +723,168 @@ def test_toda_recipe_recebe_os_marcadores_que_pede() -> None:
         fornecidos = set(recipe.replacements) | set(recipe.segredos)
         faltando = pedidos - fornecidos - injetados_em_runtime
         assert not faltando, f"{recipe.task_id}: sem valor para {sorted(faltando)}"
+
+
+def test_posicao_da_coluna_entra_na_comparacao() -> None:
+    """Campo fora de `CAMPOS_DE_COLUNA` nunca é escrito.
+
+    A comparação não vê divergência, o patch não sai, e o campo fica vazio
+    para sempre sem erro nenhum. Aconteceu com `ordinalPosition`.
+    """
+    assert "ordinalPosition" in estrutura.CAMPOS_DE_COLUNA
+    atual = [
+        {"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": None}
+    ]
+    desejada = [
+        {"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": 3}
+    ]
+    assert estrutura.colunas_divergem(atual, desejada)
+
+
+# ── ordem entre conector e governança ───────────────────────────────────────
+def test_governanca_roda_depois_do_conector() -> None:
+    """Não é preferência: é reparo obrigatório.
+
+    O conector dbt escreve a entidade da tabela sem o campo `certification`, e
+    o `createOrUpdate` do OpenMetadata substitui o que estava lá por nulo. Uma
+    execução apagou a certificação das 140 tabelas de uma vez, em silêncio —
+    domínio, produto e etiqueta sobreviveram; certificação não. A task de
+    reaplicação é o que devolve, e tem de ser a ÚLTIMA.
+    """
+    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    assert "reaplicar_governanca" in dag
+    assert "sincronizar_governanca.py" in dag
+    # a reaplicação é o destino final do encadeamento
+    assert "anterior >> governanca" in dag
+    corpo = dag[dag.index("def _encadear") :]
+    assert corpo.index("anterior >> governanca") > corpo.index(
+        "for task_id in RECIPE_PIPELINE"
+    )
+
+
+def test_scripts_estao_montados_no_container() -> None:
+    """A task de reaplicação executa `scripts/governance/` dentro do Airflow."""
+    compose = (RAIZ / "infra" / "docker-compose.yml").read_text(encoding="utf-8")
+    assert "../scripts:${AIRFLOW_HOME}/scripts/" in compose
+
+
+def test_dag_de_origem_declarada_onde_existe_dag() -> None:
+    """`meta.dag` só é declarada quando há DAG. Ausência é resposta, não falta.
+
+    As 5 do SFTP chegam por transferência do agente operador e
+    `financiamentos_por_instituicao` é extração manual — nenhuma tem DAG que a
+    escreva. Preencher seria publicar linhagem falsa.
+    """
+    import yaml
+
+    caminho = RAIZ / "dbt" / "mcid" / "models" / "conjuntura_dbt" / "sources.yml"
+    documento = yaml.safe_load(caminho.read_text(encoding="utf-8"))
+    com_caminho = [
+        t
+        for fonte in documento["sources"]
+        for t in (fonte.get("tables") or [])
+        if (t.get("meta") or {}).get("caminho")
+    ]
+    sem_dag = [
+        (t.get("meta") or {})["caminho"]
+        for t in com_caminho
+        if not (t.get("meta") or {}).get("dag")
+    ]
+    assert len(com_caminho) == 31
+    # só as 5 do SFTP e a extração manual da ABECIP podem ficar sem
+    for caminho_sem in sem_dag:
+        assert "sftp/" in caminho_sem or "por_instituicao" in caminho_sem, caminho_sem
+    assert len(sem_dag) == 6
+
+
+# ── DAG de origem propagada (mcidDagDeOrigem) ───────────────────────────────
+def test_dag_de_origem_sobe_pela_linhagem() -> None:
+    """A DAG é declarada na Bronze e vale para a Gold que o boletim publica.
+
+    "Quem trouxe esse dado" é pergunta de quem lê a Gold, não de quem abre a
+    Bronze. Declarar só onde o arquivo é lido deixaria 80% dos models sem
+    resposta.
+    """
+    import sincronizar_lake as lake
+
+    arquivos = lake.carregar_arquivos()
+    mapa = lake.dags_por_modelo(arquivos)
+    assert mapa, "nenhum model recebeu DAG de origem"
+    camadas = gov.camadas_por_modelo()
+    por_camada = {
+        c: sum(1 for m in mapa if camadas.get(m) == c)
+        for c in ("bronze", "silver", "gold")
+    }
+    # a propagação tem de alcançar as três camadas, não só a Bronze
+    assert por_camada["silver"] > 0 and por_camada["gold"] > 0, por_camada
+
+
+def test_model_sem_ancestral_no_lake_fica_sem_dag() -> None:
+    """Ausência é resposta. FAR e FDS leem de `__dados_brutos`, não do lake."""
+    import sincronizar_lake as lake
+
+    mapa = lake.dags_por_modelo(lake.carregar_arquivos())
+    assert "cadastro_pj" not in mapa
+    assert "fds_cadastro_pj" not in mapa
+
+
+def test_model_com_varias_origens_lista_todas() -> None:
+    """Uma Gold pode juntar recortes com ingestões diferentes."""
+    import sincronizar_lake as lake
+
+    mapa = lake.dags_por_modelo(lake.carregar_arquivos())
+    varias = [nome for nome, dags in mapa.items() if len(dags) > 1]
+    assert varias, "esperava ao menos um model com mais de uma DAG de origem"
+
+
+# ── relações semânticas de Silver e Gold ────────────────────────────────────
+def test_relacoes_saem_do_grafo_e_do_contrato_temporal() -> None:
+    """Nada é inferido por semelhança de nome."""
+    modelo = {
+        "name": "gold_x",
+        "columns": [{"name": "data_referencia"}, {"name": "edicao"}, {"name": "valor"}],
+    }
+    texto = gov.markdown_das_relacoes(
+        modelo, {"le_de": ["silver_y"], "lido_por": ["gold_boletim_z"]}
+    )
+    assert "`data_referencia`, `edicao`" in texto
+    assert "`silver_y`" in texto and "`gold_boletim_z`" in texto
+    # deixa explícito que não é chave estrangeira nem linhagem
+    assert "Não constitui chave estrangeira" in texto
+
+
+def test_tabela_sem_grao_nem_vizinho_nao_recebe_texto() -> None:
+    vazio = gov.markdown_das_relacoes(
+        {"name": "x", "columns": [{"name": "coisa"}]}, {"le_de": [], "lido_por": []}
+    )
+    assert vazio == ""
+
+
+def test_bronze_fica_de_fora_das_relacoes() -> None:
+    """Da Bronze se publica topologia, não significado."""
+    assert "bronze" not in gov.CAMADAS_COM_RELACOES
+    assert gov.CAMADAS_COM_RELACOES == {"silver", "gold"}
+
+
+def test_vizinhanca_le_o_grafo_nos_dois_sentidos() -> None:
+    catalogo = {
+        "models": [
+            {"id": "model.a", "name": "a", "depends_on": []},
+            {"id": "model.b", "name": "b", "depends_on": ["model.a"]},
+        ]
+    }
+    v = gov.vizinhanca_do_modelo(catalogo)
+    assert v["b"]["le_de"] == ["a"]
+    assert v["a"]["lido_por"] == ["b"]
+
+
+def test_tabela_relacionada_carrega_o_que_a_interface_precisa() -> None:
+    """`id` e `type` sozinhos deixam a lista com entradas em branco na tela."""
+    entidade = {
+        "id": "abc",
+        "name": "silver_y",
+        "fullyQualifiedName": "Cidades.cidades.s.silver_y",
+    }
+    ref = comum.referencia(entidade, "table")
+    assert set(ref) == {"id", "type", "name", "fullyQualifiedName"}
+    assert ref["type"] == "table"

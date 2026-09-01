@@ -266,3 +266,23 @@ propriedades_customizadas:
       é sabidamente não comparável. Registra também a justificativa de cada
       bloqueio, para que a ausência de um cruzamento seja uma decisão
       documentada e não um esquecimento.
+
+  #: Estas duas JÁ EXISTEM na instância, criadas pela integração que vivia em
+  #: `origin/refactor/openmetadata`. Ficam declaradas aqui para o repo assumir
+  #: o que escreve nelas — a sincronização não recria o que já existe, então a
+  #: descrição original delas é preservada.
+  - name: mcidRelatedTables
+    entidade: table
+    tipo: entityReferenceList
+    description: >
+      Atalhos navegáveis para as tabelas vizinhas no grafo do dbt: de onde esta
+      tabela lê e quem lê dela.
+
+  - name: mcidSemanticRelationships
+    entidade: table
+    tipo: markdown
+    description: >
+      Granularidade de junção e vizinhança da tabela, para responder com o que
+      ela pode ser cruzada. Auxílio de descoberta: não cria chave estrangeira
+      nem aresta de linhagem.
+
