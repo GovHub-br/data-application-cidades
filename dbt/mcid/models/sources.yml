@@ -250,3 +250,37 @@ sources:
           registros, 45 colunas text (o dump antigo em __dados_brutos tinha essas
           mesmas linhas duplicadas 2x).
           Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.
+
+      # Família entidades_fds. Mesma resolução por padrão da família do FAR.
+      - name: novo_mcmv_fds_cad_pj_mensal
+        description: >
+          Cadastro PJ do empreendimento FDS (Entidade Organizadora, construtora,
+          UHs, composição financeira, GPS, datas). 364 registros, 90 colunas text.
+          Origem: MONIT_CAD_PJ_FDS_MENSAL_<aaaamm>.
+      - name: novo_mcmv_fds_obra_mensal
+        description: >
+          Evolução física da obra FDS, snapshot mensal (percentual previsto/realizado,
+          UHs concluídas/alienadas, paralisação, invasão). 364 registros, 48 colunas text.
+          Origem: MONIT_MOV_OBRA_FDS_MENSAL_<aaaamm>.
+      - name: novo_mcmv_fds_financeiro_mensal
+        description: >
+          Série de liberações financeiras FDS por componente. APF em 6 dígitos e
+          ic_credito='0' com valor negativo nas liberações reais. 16.887 registros,
+          25 colunas text.
+          Origem: MONIT_MOV_FINANC_FDS_MENSAL_<aaaamm>.
+      - name: novo_mcmv_fds_trabalho_social_mensal
+        description: >
+          Acompanhamento do Trabalho Técnico Social FDS (situação, datas do PTS,
+          convênio, percentual de execução, portaria). 141 registros, 15 colunas text.
+          Origem: MONIT_EXEC_TS_FDS_MENSAL_<aaaamm>.
+      - name: int_empreendimentos_int_059_fds_caixa_pj
+        description: >
+          Complementar da CAIXA (INT 059) com legado e Novo MCMV juntos; traz
+          situacao_gefus, fase_contrato e no_selecao_pmcmv_e. 916 registros,
+          74 colunas text.
+          Origem: INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_<aaaammdd>.
+      - name: dados_prioritarios_recebidos_caixa_entregas
+        description: >
+          Entregas reportadas pela CAIXA, todas as modalidades. 11.677 registros,
+          8 colunas text (o dump antigo em __dados_brutos tinha essas linhas duplicadas 2x).
+          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.

@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
 -- Silver: Evolução Financeira FDS — Série temporal de desembolsos por empreendimento
--- Agrega as liberações da bronze fds_financeiro_mensal por APF e mês.
+-- Agrega as liberações de fds_financeiro_mensal por APF e mês.
 -- OBS: No FDS, ic_credito='0' são liberações reais (valores negativos), usar ABS().
 -- JOIN com fds_empreendimento usando raiz de 6 dígitos.
 -- Grão: 1 linha por APF × mês (relação 1:N com empreendimento)

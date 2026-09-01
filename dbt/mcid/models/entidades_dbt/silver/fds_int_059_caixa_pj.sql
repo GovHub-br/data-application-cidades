@@ -1,10 +1,9 @@
 {{ config(materialized="table") }}
 
--- Bronze: INT 059 — empreendimentos FDS da CAIXA (complementar)
--- Fonte: int_empreendimentos_int_059_fds_caixa_pj
--- OBS: Esta tabela contém TANTO legado (PMCMV-E) quanto Novo MCMV.
--- Filtrar por no_selecao_pmcmv_e = 'NOVO PMCMV-E' para manter apenas Novo MCMV (305
--- registros).
+-- Silver: INT 059 — empreendimentos FDS da CAIXA (complementar)
+-- Fonte: bronze.int_empreendimentos_int_059_fds_caixa_pj
+-- OBS: Esta tabela contém TANTO legado (PMCMV-E) quanto Novo MCMV. Filtrar por
+-- no_selecao_pmcmv_e = 'NOVO PMCMV-E' para manter apenas Novo MCMV.
 -- Campos exclusivos não presentes nas fontes primárias:
 -- situacao_gefus, fase_contrato, situacao_empreendimento, no_selecao_pmcmv_e
 with
@@ -89,10 +88,10 @@ with
             {{ parse_numeric("gps_longitude_segundo") }} as gps_long_segundo,
 
             -- Metadados
-            arquivo_de_origem,
-            criado_em
+            _source_file as arquivo_de_origem,
+            nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("raw", "int_empreendimentos_int_059_fds_caixa_pj") }}
+        from {{ source("staging_lake", "int_empreendimentos_int_059_fds_caixa_pj") }}
     )
 
 select *

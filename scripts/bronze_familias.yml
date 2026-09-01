@@ -27,7 +27,7 @@
 empreendimento_far:
   descricao: >-
     Novo MCMV FAR — consolidado GFAR, cadastro PJ, obra mensal, financeiro mensal e
-    dados prioritários da CAIXA. Alimenta o empreendimento_far_dbt_v2.
+    dados prioritários da CAIXA. Alimenta o empreendimento_far_dbt.
     Fontes reais do SharePoint, uma versão nova por mês; carrega sempre a mais recente.
   schema: bronze
   objetos:
@@ -61,3 +61,39 @@ empreendimento_far:
     - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet"
       data_regex: "^(\\d{6})_SNH_PMCMV"
       tabela: dados_prioritarios_recebidos_caixa_empreendimentos
+
+entidades_fds:
+  descricao: >-
+    Novo MCMV Entidades (FDS) — cadastro PJ, obra mensal, financeiro mensal e trabalho
+    social do GFAR, mais o INT059 da CAIXA e as entregas dos dados prioritários.
+    Alimenta o entidades_dbt. Mesma cadência do FAR: uma versão nova por mês,
+    carrega sempre a mais recente.
+  schema: bronze
+  objetos:
+    # MONIT_<dado>_FDS_MENSAL_<aaaamm>_<hhmmss>.CSV — como no FAR, o regex isola a
+    # competência; o default pegaria o sufixo de hora, que não ordena por período.
+    - padrao: "staging/*MONIT_CAD_PJ_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PJ_FDS_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_fds_cad_pj_mensal
+
+    - padrao: "staging/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_OBRA_FDS_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_fds_obra_mensal
+
+    - padrao: "staging/*MONIT_MOV_FINANC_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_FINANC_FDS_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_fds_financeiro_mensal
+
+    - padrao: "staging/*MONIT_EXEC_TS_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_EXEC_TS_FDS_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_fds_trabalho_social_mensal
+
+    # INT059_..._EMPREENDIMENTOS_<aaaammdd>.TXT — data completa no nome. Há também um
+    # `_VALIDACAO_<aaaammdd>` antigo no lake; ele casa com o padrão mas perde por data.
+    - padrao: "staging/*INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet"
+      tabela: int_empreendimentos_int_059_fds_caixa_pj
+
+    # Entregas reportadas pela CAIXA, todas as modalidades — o filtro FDS é na silver.
+    - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet"
+      data_regex: "^(\\d{6})_SNH_PMCMV"
+      tabela: dados_prioritarios_recebidos_caixa_entregas

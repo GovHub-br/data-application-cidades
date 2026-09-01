@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
--- Bronze: Obra Mensal — evolução física do empreendimento FDS (Entidades)
--- Fonte: novo_mcmv_fds_obra_mensal
+-- Silver: Obra Mensal — evolução física do empreendimento FDS (Entidades)
+-- Fonte: bronze.novo_mcmv_fds_obra_mensal
 -- Saída: dados de obra limpos e tipados
 with
     obra_raw as (
@@ -110,10 +110,10 @@ with
             {{ target.schema }}.parse_date_br(dh_movimento) as dt_movimento,
 
             -- Metadados
-            arquivo_de_origem,
-            criado_em
+            _source_file as arquivo_de_origem,
+            nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("raw", "novo_mcmv_fds_obra_mensal") }}
+        from {{ source("staging_lake", "novo_mcmv_fds_obra_mensal") }}
     )
 
 select *
