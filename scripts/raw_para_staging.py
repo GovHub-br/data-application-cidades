@@ -1087,8 +1087,13 @@ def run(  # noqa: C901
 
     vencedores, gemeos = _descartar_gemeos(todos)
 
+    # `pattern` aceita vários substrings separados por vírgula (OR entre eles). Um
+    # arquivo específico por vírgula evita reprocessar o lake inteiro para consertar
+    # meia dúzia de origens — e a listagem do raw/ roda uma vez só, não uma por padrão.
+    padroes = [x.strip() for x in pattern.split(",") if x.strip()]
+
     def _selecionado(key: str, size: int) -> bool:
-        if pattern and pattern not in key:
+        if padroes and not any(p in key for p in padroes):
             return False
         if only_ext_set and os.path.splitext(key)[1].lower() not in only_ext_set:
             return False
@@ -1169,9 +1174,13 @@ def main() -> None:
     parser.add_argument(
         "--limit", type=int, default=0, help="Processa no máximo N objetos."
     )
-    parser.add_argument("--pattern", default="", help="Filtra por substring na key.")
     parser.add_argument(
-        "--only-ext", default="", help="Extensões a processar, ex.: csv,txt"
+        "--pattern",
+        default="",
+        help=(
+            "Só objetos cuja key contenha este substring. Aceita vários separados por "
+            "vírgula (OR): --pattern 'INT065_...20241129,base_trabalho_social_pnhr_bb'."
+        ),
     )
     parser.add_argument(
         "--max-size-mb",
