@@ -39,13 +39,16 @@ import json
 import logging
 import os
 import re
+import shutil
 import sys
 import tempfile
 import time
 import uuid
+import xml.etree.ElementTree as ET
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import IO, Dict, List, Optional, Tuple
 
 import pandas as pd
 import psycopg2
@@ -53,7 +56,6 @@ from dotenv import load_dotenv
 from psycopg2.extras import Json
 
 from lake_utils import (
-    MDB_ENCODING,
     MDB_EXT,
     detectar_dialeto,
     detectar_encoding,
@@ -427,22 +429,30 @@ def _categoria(norm: str) -> Optional[str]:
 
 
 def classificar(  # noqa: C901
-    header: List[str], real_encoding: str
+    header: List[str], real_encoding: Optional[str]
 ) -> Tuple[List[dict], bool]:
     """
     Retorna (targets, has_pf_indicator).
     targets: [{idx, column, category, action}] já com a regra condicional aplicada.
-    header vem lido em latin-1; reinterpretamos cada célula no encoding real p/ o
-    matching.
+
+    `real_encoding` só se aplica a header lido como texto latin-1 sobre bytes de outro
+    encoding (o caminho CSV/TXT): aí cada célula é re-decodificada antes do matching.
+
+    Passe **None** quando o header já é texto Unicode correto — xlsx e mdb entregam
+    `str` de verdade, e o round-trip por latin-1 DESTRÓI os acentos ('Beneficiário' vira
+    'Benefici?rio', que não casa com "beneficiario"). Isso deixava em claro qualquer
+    coluna cujo único sinal de PII fosse palavra acentuada.
     """
     normed: List[Tuple[int, str, str]] = []  # (idx, original_header, norm)
     for idx, cell in enumerate(header):
-        try:
-            texto = cell.encode("latin-1", "surrogateescape").decode(
-                real_encoding, "replace"
-            )
-        except Exception:
-            texto = cell
+        texto = cell
+        if real_encoding is not None:
+            try:
+                texto = cell.encode("latin-1", "surrogateescape").decode(
+                    real_encoding, "replace"
+                )
+            except Exception:  # noqa: BLE001
+                texto = cell
         normed.append((idx, cell, norm_header(texto)))
 
     cats = {idx: _categoria(n) for idx, _, n in normed}
@@ -599,7 +609,8 @@ def _xlsx_tem_alvo(src_path: str) -> Tuple[bool, bool]:
             if first is None:
                 continue
             header = [str(c) if c is not None else "" for c in first]
-            targets, has_pf = classificar(header, "utf-8")
+            # None: openpyxl entrega str Unicode; re-decodificar destruiria acentos.
+            targets, has_pf = classificar(header, None)
             has_pf_any = has_pf_any or has_pf
             if targets:
                 tem_alvo = True
@@ -608,65 +619,382 @@ def _xlsx_tem_alvo(src_path: str) -> Tuple[bool, bool]:
         wb.close()
 
 
-def _mascarar_xlsx(  # noqa: C901
+# --- Reescrita do xlsx em streaming -----------------------------------------------
+#
+# Um xlsx é um zip de XMLs. Em vez de carregar o workbook inteiro (openpyxl materializa
+# TODA célula como objeto: um arquivo de 106 MB, cujo sheet1.xml tem 368 MB
+# descomprimidos, passa de 3 GB de RAM e leva a task a OOM), copiamos cada entrada do zip
+# byte a byte e transformamos apenas o XML das planilhas com alvo, linha a linha.
+#
+# Ganho colateral: o que não é tocado sai IDÊNTICO — modelo PowerPivot
+# (xl/model/item.data), calcChain, styles, gráficos. O caminho antigo passava tudo pelo
+# DOM do openpyxl e perdia o valor em cache das fórmulas.
+
+_XL_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+# São DOIS namespaces de relacionamento, fáceis de confundir: o `package/2006` nomeia os
+# elementos DENTRO do .rels, e o `officeDocument/2006` é o do atributo `r:id` que aparece
+# em workbook.xml. Usar o primeiro para ler o r:id devolve None e o arquivo passa como se
+# não tivesse planilha nenhuma.
+_REL_ID_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+_Q = f"{{{_XL_NS}}}"
+_RE_COL = re.compile(r"([A-Z]+)")
+# sem isto o ElementTree serializa as <row> reescritas com prefixo ns0: e uma declaração
+# de namespace por linha — válido, mas infla o arquivo e polui o diff.
+ET.register_namespace("", _XL_NS)
+
+
+def _col_de_ref(ref: str) -> int:
+    """Índice 0-based da coluna a partir da referência da célula ('AB12' -> 27)."""
+    m = _RE_COL.match(ref or "")
+    if not m:
+        return -1
+    n = 0
+    for ch in m.group(1):
+        n = n * 26 + (ord(ch) - 64)
+    return n - 1
+
+
+def _sheets_do_zip(zin: zipfile.ZipFile) -> List[Tuple[str, str]]:
+    """[(nome da aba, caminho do xml no zip)], na ordem do workbook.
+
+    A ordem de `xl/worksheets/sheetN.xml` NÃO corresponde à ordem das abas, e o nome do
+    arquivo não tem relação com o nome da aba — a ligação é workbook.xml -> rels.
+    """
+    rels: Dict[str, str] = {}
+    with zin.open("xl/_rels/workbook.xml.rels") as f:
+        for el in ET.parse(f).getroot():
+            destino = el.get("Target", "")
+            if destino.startswith("/"):
+                destino = destino[1:]
+            elif not destino.startswith("xl/"):
+                destino = "xl/" + destino
+            rels[el.get("Id", "")] = destino.replace("/./", "/")
+
+    saida: List[Tuple[str, str]] = []
+    with zin.open("xl/workbook.xml") as f:
+        raiz = ET.parse(f).getroot()
+        for sheet in raiz.iter(f"{_Q}sheet"):
+            rid = sheet.get(f"{{{_REL_ID_NS}}}id", "")
+            if rid in rels:
+                saida.append((sheet.get("name", ""), rels[rid]))
+    return saida
+
+
+def _ler_shared_strings(zin: zipfile.ZipFile) -> List[str]:
+    if "xl/sharedStrings.xml" not in zin.namelist():
+        return []
+    valores: List[str] = []
+    with zin.open("xl/sharedStrings.xml") as f:
+        for _, el in ET.iterparse(f, events=("end",)):
+            if el.tag == f"{_Q}si":
+                valores.append("".join(t.text or "" for t in el.iter(f"{_Q}t")))
+                el.clear()
+    return valores
+
+
+def _header_da_sheet(zin: zipfile.ZipFile, caminho: str, compart: List[str]) -> List[str]:
+    """Primeira linha da planilha, respeitando buracos (célula ausente = coluna vazia)."""
+    with zin.open(caminho) as f:
+        for _, el in ET.iterparse(f, events=("end",)):
+            if el.tag != f"{_Q}row":
+                continue
+            celulas: Dict[int, str] = {}
+            for c in el.findall(f"{_Q}c"):
+                v = c.find(f"{_Q}v")
+                if v is None or v.text is None:
+                    inline = c.find(f"{_Q}is")
+                    texto = (
+                        "".join(t.text or "" for t in inline.iter(f"{_Q}t"))
+                        if inline is not None
+                        else ""
+                    )
+                else:
+                    texto = compart[int(v.text)] if c.get("t") == "s" else (v.text or "")
+                celulas[_col_de_ref(c.get("r", ""))] = texto
+            el.clear()
+            if not celulas:
+                return []
+            return [celulas.get(i, "") for i in range(max(celulas) + 1)]
+    return []
+
+
+def _indices_compartilhados(zin: zipfile.ZipFile, sheets: List[Tuple[str, set]]) -> set:
+    """Índices de sharedStrings que podem ser apagados com segurança.
+
+    Uma string compartilhada pode ser referenciada por várias células. Apagar uma que
+    também é usada FORA de coluna-alvo destruiria dado legítimo; deixar uma usada só por
+    célula-alvo vaza o valor original, porque o texto continua no sharedStrings.xml mesmo
+    depois de a célula virar `***`. Varre TODAS as planilhas (inclusive as sem alvo) para
+    montar os dois conjuntos.
+    """
+    de_alvo: set = set()
+    de_fora: set = set()
+    for caminho, alvos in sheets:
+        with zin.open(caminho) as f:
+            for _, el in ET.iterparse(f, events=("end",)):
+                if el.tag != f"{_Q}row":
+                    continue
+                for c in el.findall(f"{_Q}c"):
+                    if c.get("t") != "s":
+                        continue
+                    v = c.find(f"{_Q}v")
+                    if v is None or v.text is None:
+                        continue
+                    destino = de_alvo if _col_de_ref(c.get("r", "")) in alvos else de_fora
+                    destino.add(int(v.text))
+                el.clear()
+    return de_alvo - de_fora
+
+
+def _reescrever_shared_strings(fin: IO[bytes], fout: IO[bytes], apagar: set) -> None:
+    fout.write(b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>')
+    fout.write(f'<sst xmlns="{_XL_NS}">'.encode())
+    i = 0
+    for _, el in ET.iterparse(fin, events=("end",)):
+        if el.tag != f"{_Q}si":
+            continue
+        if i in apagar:
+            fout.write(f"<si><t>{REDACTION}</t></si>".encode())
+        else:
+            fout.write(ET.tostring(el, encoding="utf-8"))
+        i += 1
+        el.clear()
+    fout.write(b"</sst>")
+
+
+def _transformar_row(
+    bruto: bytes, acoes: Dict[int, str], compart: List[str]
+) -> Tuple[bytes, bool]:
+    """Recebe UMA <row> como bytes, devolve (bytes reescritos, alterou?).
+
+    A row vem sem declaração de namespace (ela mora no default do <worksheet>), então é
+    embrulhada antes do parse e desembrulhada depois.
+    """
+    raiz = ET.fromstring(b'<w xmlns="' + _XL_NS.encode() + b'">' + bruto + b"</w>")
+    row = raiz[0]
+    mudou = _mascarar_linha(row, acoes, compart)
+    return ET.tostring(row, encoding="utf-8"), mudou
+
+
+class _RecorteSheet:
+    """Máquina de estados do recorte de <sheetData> no XML da planilha.
+
+    Três estados: PRÓLOGO (antes de <sheetData>), DADOS (entre as <row>) e EPÍLOGO (depois
+    de </sheetData>). Prólogo e epílogo são copiados byte a byte; nos dados, cada <row> é
+    isolada, transformada e devolvida. A margem de 64 bytes que fica retida no buffer
+    garante que uma marcação partida entre dois blocos de leitura não passe despercebida.
+    """
+
+    MARGEM = 64
+    FIM_ROW = b"</row>"
+    FIM_DADOS = b"</sheetData>"
+
+    def __init__(
+        self, fout: IO[bytes], acoes: Dict[int, str], compart: List[str]
+    ) -> None:
+        self.fout = fout
+        self.acoes = acoes
+        self.compart = compart
+        self.buf = b""
+        self.total = 0
+        self.alterados = 0
+        self.primeira = True
+        self.em_dados = False
+        self.terminou = False
+
+    def alimentar(self, bloco: bytes) -> None:
+        self.buf += bloco
+        while self._passo():
+            pass
+
+    def finalizar(self) -> None:
+        while self._passo():
+            pass
+        self.fout.write(self.buf)
+        self.buf = b""
+
+    def _reter(self) -> bool:
+        """Escoa o buffer deixando a margem de segurança. Sempre encerra a rodada."""
+        if len(self.buf) > self.MARGEM:
+            self.fout.write(self.buf[: -self.MARGEM])
+            self.buf = self.buf[-self.MARGEM :]
+        return False
+
+    def _passo(self) -> bool:
+        if self.terminou:
+            self.fout.write(self.buf)
+            self.buf = b""
+            return False
+        if not self.em_dados:
+            return self._passo_prologo()
+        return self._passo_dados()
+
+    def _passo_prologo(self) -> bool:
+        i = self.buf.find(b"<sheetData")
+        if i < 0:
+            return self._reter()
+        j = self.buf.find(b">", i)
+        if j < 0:
+            return False
+        self.fout.write(self.buf[: j + 1])
+        # <sheetData/> = planilha sem linhas: já é epílogo
+        self.em_dados = self.buf[j - 1 : j] != b"/"
+        self.terminou = not self.em_dados
+        self.buf = self.buf[j + 1 :]
+        return True
+
+    def _passo_dados(self) -> bool:
+        i = self.buf.find(b"<row")
+        f = self.buf.find(self.FIM_DADOS)
+        if i < 0 or (0 <= f < i):
+            if f < 0:
+                return self._reter()
+            self.fout.write(self.buf[: f + len(self.FIM_DADOS)])
+            self.buf = self.buf[f + len(self.FIM_DADOS) :]
+            self.terminou = True
+            return True
+
+        fim_tag = self.buf.find(b">", i)
+        j = self.buf.find(self.FIM_ROW, i)
+        if fim_tag < 0 or (j < 0 and self.buf[fim_tag - 1 : fim_tag] != b"/"):
+            # <row> ainda incompleta: escoa só o que vem ANTES dela e espera o resto.
+            # Usar a margem fixa aqui cortaria bytes de dentro da linha quando ela é maior
+            # que o bloco de leitura — a linha some do arquivo de saída.
+            if i > 0:
+                self.fout.write(self.buf[:i])
+                self.buf = self.buf[i:]
+            return False
+        if self.buf[fim_tag - 1 : fim_tag] == b"/":  # <row .../> vazia
+            self.fout.write(self.buf[: fim_tag + 1])
+            self.buf = self.buf[fim_tag + 1 :]
+            return True
+
+        self.fout.write(self.buf[:i])
+        bruto = self.buf[i : j + len(self.FIM_ROW)]
+        self.buf = self.buf[j + len(self.FIM_ROW) :]
+        if self.primeira:  # cabeçalho: nunca mascarado
+            self.primeira = False
+            self.fout.write(bruto)
+            return True
+        self.total += 1
+        saida, mudou = _transformar_row(bruto, self.acoes, self.compart)
+        self.alterados += 1 if mudou else 0
+        self.fout.write(saida)
+        return True
+
+
+def _reescrever_sheet(
+    fin: IO[bytes], fout: IO[bytes], acoes: Dict[int, str], compart: List[str]
+) -> Tuple[int, int]:
+    """Copia a planilha trocando as células-alvo. Retorna (linhas, linhas alteradas).
+
+    Recorte byte a byte: tudo que está FORA de <sheetData> (largura de coluna, autofiltro,
+    painéis congelados, formatação condicional, mesclagens, o próprio <worksheet> com suas
+    declarações de namespace) é copiado sem passar por parser. Só as <row> são
+    materializadas, uma de cada vez — daí a memória ser proporcional à maior linha, não ao
+    arquivo.
+
+    Reconstruir o XML a partir do ElementTree parecia mais simples e foi a primeira
+    tentativa, mas descartava silenciosamente todos os irmãos de <sheetData>: a planilha
+    saía legível e sem formatação nenhuma.
+
+    O valor mascarado é gravado como `inlineStr`, o que evita ter de inserir entradas
+    novas em sharedStrings.xml (que é reescrito à parte, só para apagar).
+    """
+    rec = _RecorteSheet(fout, acoes, compart)
+    while True:
+        bloco = fin.read(1 << 20)
+        if not bloco:
+            rec.finalizar()
+            break
+        rec.alimentar(bloco)
+    return rec.total, rec.alterados
+
+
+def _mascarar_linha(row: ET.Element, acoes: Dict[int, str], compart: List[str]) -> bool:
+    """Substitui in-place as células-alvo de uma <row>. Retorna se algo mudou."""
+    mudou = False
+    for c in row.findall(f"{_Q}c"):
+        acao = acoes.get(_col_de_ref(c.get("r", "")))
+        if acao is None:
+            continue
+        formula = c.find(f"{_Q}f")
+        v = c.find(f"{_Q}v")
+        atual = ""
+        if v is not None and v.text is not None:
+            atual = compart[int(v.text)] if c.get("t") == "s" else v.text
+        elif formula is None:
+            inline = c.find(f"{_Q}is")
+            if inline is None:
+                continue
+            atual = "".join(t.text or "" for t in inline.iter(f"{_Q}t"))
+        # Célula de fórmula em coluna-alvo: a fórmula é removida junto com o valor em
+        # cache. Preservá-la deixaria o Excel recalcular a PII no próximo open.
+        if formula is None and not str(atual).strip():
+            continue
+        for filho in list(c):
+            c.remove(filho)
+        c.set("t", "inlineStr")
+        alvo = ET.SubElement(ET.SubElement(c, f"{_Q}is"), f"{_Q}t")
+        alvo.text = _hmac_token(str(atual)) if acao == "hmac" else _redigir(str(atual))
+        mudou = True
+    return mudou
+
+
+def _mascarar_xlsx(
     src_path: str, dst_path: str
 ) -> Tuple[List[dict], bool, int, int, bool]:
     """Retorna (targets, has_pf, registros_total, registros_alterados, has_formulas).
 
-    Só deve ser chamada quando _xlsx_tem_alvo() indicou PII — carrega o workbook
-    completo (DOM em RAM) para poder reescrever células preservando o restante.
+    Reescrita em streaming (ver bloco acima): memória proporcional à maior LINHA, não ao
+    arquivo. Um xlsx de 106 MB com 167 mil linhas sai em ~275 MB de pico, contra >3 GB da
+    versão que carregava o DOM.
 
-    has_formulas: True se alguma célula não-alvo contém fórmula. Fórmulas são preservadas
-    no arquivo de saída (nunca são tratadas como alvo de mascaramento), mas o openpyxl não
-    recalcula: o valor em cache dessas células se perde ao salvar e só é restaurado quando
-    o arquivo é reaberto (e resalvo) num Excel real. Leitores programáticos (pandas,
-    data_only) verão None nessas células até lá — sinalizado na auditoria para quem for
-    consumir o dado.
+    `has_formulas` hoje é sempre False: fórmulas em coluna não-alvo saem byte-idênticas
+    (o XML é copiado), então não há mais perda de valor em cache para sinalizar. O campo
+    fica para não quebrar o contrato com a auditoria.
     """
-    import openpyxl
-
-    wb = openpyxl.load_workbook(src_path)
-    total = alterados = 0
     all_targets: List[dict] = []
     has_pf_any = False
-    has_formulas = False
+    total = alterados = 0
 
-    for ws in wb.worksheets:
-        rows = ws.iter_rows()
-        try:
-            header_cells = next(rows)
-        except StopIteration:
-            continue
-        header = [str(c.value) if c.value is not None else "" for c in header_cells]
-        targets, has_pf = classificar(header, "utf-8")
-        has_pf_any = has_pf_any or has_pf
-        idx_action = [(t["idx"], t["action"]) for t in targets]
-        idx_alvo = {t["idx"] for t in targets}
-        if targets:
-            all_targets.extend({**t, "sheet": ws.title} for t in targets)
-        for row in rows:
+    with zipfile.ZipFile(src_path) as zin:
+        compart = _ler_shared_strings(zin)
+        por_sheet: Dict[str, Dict[int, str]] = {}
+        for nome_aba, caminho in _sheets_do_zip(zin):
+            header = _header_da_sheet(zin, caminho, compart)
+            if not header:
+                continue
+            targets, has_pf = classificar(header, None)  # o XML já entrega str
+            has_pf_any = has_pf_any or has_pf
             if targets:
-                total += 1
-            row_alterada = False
-            for idx, cell in enumerate(row):
-                if cell.data_type == "f" and idx not in idx_alvo:
-                    has_formulas = True
-            for idx, action in idx_action:
-                if idx < len(row):
-                    cell = row[idx]
-                    val = cell.value
-                    if val is not None and str(val).strip() != "":
-                        cell.value = (
-                            _hmac_token(str(val))
-                            if action == "hmac"
-                            else _redigir(str(val))
-                        )
-                        row_alterada = True
-            if row_alterada:
-                alterados += 1
+                all_targets.extend({**t, "sheet": nome_aba} for t in targets)
+                por_sheet[caminho] = {t["idx"]: t["action"] for t in targets}
 
-    wb.save(dst_path)
-    return all_targets, has_pf_any, total, alterados, has_formulas
+        if not all_targets:
+            shutil.copyfile(src_path, dst_path)
+            return all_targets, has_pf_any, 0, 0, False
+
+        todas = [(c, set(por_sheet.get(c, {}))) for _, c in _sheets_do_zip(zin)]
+        apagar = _indices_compartilhados(zin, todas)
+
+        with zipfile.ZipFile(dst_path, "w", zipfile.ZIP_DEFLATED) as zout:
+            for info in zin.infolist():
+                if info.filename in por_sheet:
+                    with zin.open(info) as fin, zout.open(info.filename, "w") as fout:
+                        n, a = _reescrever_sheet(
+                            fin, fout, por_sheet[info.filename], compart
+                        )
+                        total += n
+                        alterados += a
+                elif info.filename == "xl/sharedStrings.xml" and apagar:
+                    with zin.open(info) as fin, zout.open(info.filename, "w") as fout:
+                        _reescrever_shared_strings(fin, fout, apagar)
+                else:
+                    with zin.open(info) as fin, zout.open(info, "w") as fout:
+                        shutil.copyfileobj(fin, fout, 1 << 18)
+
+    return all_targets, has_pf_any, total, alterados, False
 
 
 # Análise de .mdb (Access) — LEITURA APENAS
@@ -695,8 +1023,8 @@ def _analisar_mdb(src_path: str) -> Tuple[List[dict], bool, int]:
         n = mdb_contar(src_path, tabela)
         if n > 0:
             total += n
-        # mdb-export já entrega UTF-8, então o encoding aqui é conhecido
-        t, has_pf = classificar(header, MDB_ENCODING)
+        # mdb_header já devolve str decodificado de MDB_ENCODING: nada a reinterpretar
+        t, has_pf = classificar(header, None)
         has_pf_any = has_pf_any or has_pf
         targets.extend({**x, "table": tabela} for x in t)
     return targets, has_pf_any, total
