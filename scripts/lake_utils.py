@@ -57,9 +57,40 @@ def detectar_encoding(sample: bytes) -> str:
         # erro só nos últimos bytes = provável char utf-8 cortado no fim do sample
         if e.start >= len(sample) - 3:
             return "utf-8"
+    # utf-8 "sujo": um punhado de bytes inválidos não desfaz um arquivo que é utf-8 no
+    # resto. Sem esta checagem, UM byte estranho no meio de um arquivo grande jogava a
+    # decisão para cp1252/latin-1, e aí TODO acento do arquivo virava mojibake — o
+    # cabeçalho junto. Comparar sequências multibyte válidas contra bytes inválidos
+    # separa os dois casos: um utf-8 com um byte solto tem milhares de sequências
+    # válidas e um punhado de erros; um cp1252 de verdade tem o oposto, porque cada
+    # acento isolado é uma sequência utf-8 inválida.
+    validas, invalidas = _contar_sequencias_utf8(sample)
+    if validas > invalidas:
+        return "utf-8"
     if any(byte in _CP1252_INDEFINIDOS for byte in sample):
         return "latin-1"
     return "cp1252"
+
+
+def _contar_sequencias_utf8(sample: bytes) -> Tuple[int, int]:
+    """(sequências multibyte utf-8 válidas, bytes que não formam sequência válida)."""
+    validas = invalidas = 0
+    i, n = 0, len(sample)
+    while i < n:
+        b = sample[i]
+        if b < 0x80:
+            i += 1
+            continue
+        largura = 2 if b >> 5 == 0b110 else 3 if b >> 4 == 0b1110 else 4 if b >> 3 == 0b11110 else 0
+        if largura and i + largura <= n and all(
+            sample[i + k] >> 6 == 0b10 for k in range(1, largura)
+        ):
+            validas += 1
+            i += largura
+        else:
+            invalidas += 1
+            i += 1
+    return validas, invalidas
 
 
 def encoding_fallback(encoding: str) -> Optional[str]:
@@ -104,9 +135,43 @@ def detectar_dialeto(
     return melhor_delim, lineterm, fully_quoted
 
 
+# Reparo de mojibake
+# Marcadores do round-trip utf-8 -> latin-1/cp1252: "Ã" cobre os acentos latinos
+# (Ã£=ã, Ã©=é, Ã³=ó...), "Â" os símbolos (Âº, Â°) e "â€" a pontuação tipográfica.
+_MARCAS_MOJIBAKE = ("Ã", "Â", "â€")
+
+
+def corrigir_mojibake_texto(texto: str) -> str:
+    """Desfaz o round-trip utf-8 -> latin-1 quando ele é reversível sem perda.
+
+    Um arquivo utf-8 lido como latin-1 vira mojibake: os bytes C3 A3 ("ã") são exibidos
+    como "Ã£". A transformação é byte a byte e não perde informação, então re-encodar em
+    latin-1 e decodificar em utf-8 recupera o original exatamente.
+
+    Conservadora de propósito — só mexe quando as três condições valem:
+      1. o texto contém um marcador de mojibake (senão não há o que corrigir);
+      2. ele é representável em latin-1 (senão não veio desse round-trip);
+      3. os bytes resultantes são utf-8 válido (senão a "correção" seria um chute).
+
+    Texto já correto passa incólume: "José" não tem marcador e volta igual.
+    """
+    if not texto or not any(m in texto for m in _MARCAS_MOJIBAKE):
+        return texto
+    try:
+        return texto.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # não veio de um round-trip latin-1/utf-8 limpo: melhor não adivinhar
+        return texto
+
+
 # Normalização de nome de coluna
 def norm_header(texto: str) -> str:
-    """Normaliza um nome de coluna para snake_case ASCII."""
+    """Normaliza um nome de coluna para snake_case ASCII.
+
+    Repara mojibake antes de tirar o acento: sem isso, "municÃ­pio" perderia o "Ã­" e
+    viraria "municapio" em vez de "municipio".
+    """
+    texto = corrigir_mojibake_texto(texto)
     s = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
     s = s.lower().strip().strip('"').strip("﻿").strip()
     s = re.sub(r"[^a-z0-9]+", "_", s).strip("_")
