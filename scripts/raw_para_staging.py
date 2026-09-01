@@ -3,31 +3,22 @@
 """
 Conversão Raw -> Staging (Parquet) do data lake (MinIO).
 
-Percorre os objetos de raw/ (CSV/TXT/XLSX/MDB/JSON), detecta separador e encoding de cada
-arquivo, e grava a versão colunar em Parquet em staging/, para a etapa seguinte
-(Staging->DB via dbt/DuckDB) consumir dados já em formato eficiente e uniforme.
-
-A staging espelha a estrutura de pastas do raw/ inteiro (não só sftp/), trocando o arquivo
-de origem por parquet e SEM a extensão de origem no nome:
-
-    raw/sftp/fabrica/GEFUS/foo.csv -> staging/sftp/fabrica/GEFUS/foo.parquet
+Percorre raw/ (CSV/TXT/XLSX/MDB/JSON), detecta separador e encoding de cada arquivo e
+grava a versão colunar em staging/, espelhando a estrutura de pastas sem a extensão de
+origem: raw/sftp/fabrica/GEFUS/foo.csv -> staging/sftp/fabrica/GEFUS/foo.parquet
 
 Decisões do projeto:
-  - Todas as colunas como STRING — a tipagem (datas/números) fica para o dbt/DuckDB.
-  - pandas (chunked) + pyarrow ParquetWriter: streaming memory-bounded, suporta qualquer
-    encoding Python (cp1250/cp1252/utf-8).
-  - Nomes de coluna normalizados para snake_case ASCII (dedup); header original guardado
-    nos metadados do parquet e na tabela de controle.
-  - Colunas de linhagem `_source_file`, `_ingested_at`, `_source_hash` em cada parquet.
+  - Todas as colunas como STRING — a tipagem fica para o dbt/DuckDB.
+  - pandas (chunked) + pyarrow ParquetWriter: streaming memory-bounded.
+  - Colunas em snake_case ASCII (dedup); header original nos metadados do parquet.
+  - Linhagem `_source_file`, `_ingested_at`, `_source_hash` em cada parquet.
 
-IMPORTANTE (ordem no pipeline): rode DEPOIS do mascaramento (`mascarar_minio.py --apply`),
-senão o parquet conterá PII (staging lê raw/ como está).
+Rode DEPOIS do `mascarar_minio.py --apply`: a staging lê o raw/ como está, e fora de ordem
+o parquet sai com PII.
 
-Idempotência: tabela de controle lake._staging_log com UNIQUE(raw_key, staging_key,
-source_hash); objetos já convertidos (mesmo hash) são pulados. Use --force para
-reprocessar. O staging_key entra na chave porque XLSX/MDB geram N parts (uma por
-aba/tabela) com o mesmo par (raw_key, source_hash) — sem ele o upsert deixaria só 1
-registro por arquivo.
+Idempotência: lake._staging_log com UNIQUE(raw_key, staging_key, source_hash). O
+staging_key entra na chave porque XLSX/MDB geram N parts com o mesmo (raw_key,
+source_hash). Use --force para reprocessar.
 """
 
 import argparse
@@ -103,45 +94,31 @@ SUPPORTED_JSON = {".json"}  # registros já achatados (list[dict]) pelo cliente 
 UNSUPPORTED = {".xls", ".zip"}
 SUPORTADAS = SUPPORTED_TABULAR | SUPPORTED_EXCEL | SUPPORTED_MDB | SUPPORTED_JSON
 
-# Pastas de raw/ (primeiro nível após o prefixo) que nunca viram parquet em staging/.
-# dados_historicos/ já passa por tratamento próprio de um membro da equipe para ciência
-# de dados — gerar parquet full-text por cima seria trabalho duplicado e uma segunda
-# versão divergente do mesmo dado. Continua sendo mascarado normalmente (mascarar_minio.py
-# não tem essa exclusão): isso é só sobre pular a conversão para staging/.
+# Pastas de raw/ que nunca viram parquet: dados_historicos/ tem tratamento próprio da
+# equipe de ciência de dados. Segue sendo mascarada normalmente.
 PASTAS_IGNORADAS = {"dados_historicos"}
 
 LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
 
 
-# Gêmeos: o mesmo dado aparece no lake em mais de um formato (ex.:
-# 202601_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB existe em .txt e .xlsx, com 1289 linhas e
-# 40 colunas EM AMBOS) e, desde que raw/ ganhou estrutura de pastas, também em mais de
-# um lugar (ex.: Base_PF_FGTS_20260107.txt existe em caixa.geavo/GEAVO/ e em
-# fabrica/GEFUS/; e a pasta ANTERIORES/ do SFTP guarda cópia de arquivos da pasta
-# corrente). Converter todos geraria N tabelas do mesmo dado na staging.
+# Gêmeos: o mesmo dado aparece no lake em mais de um formato e em mais de uma pasta, e
+# converter todos geraria N tabelas iguais na staging. A identidade é o NOME DO ARQUIVO,
+# sem extensão e sem pasta; para cada nome sobrevive um objeto, escolhido por:
 #
-# A identidade do gêmeo é o NOME DO ARQUIVO, sem extensão e sem pasta: para cada nome
-# sobrevive UM único objeto no lake inteiro, escolhido por esta ordem:
-#
-#   1. formato suportado na frente de não-suportado — senão um .xls (que o script não
-#      lê) descartaria o .csv equivalente e o dado sumiria da staging;
-#   2. texto (.csv, .txt) na frente de planilha, porque o mascaramento reescreve
-#      texto byte a byte em transporte latin-1 — nenhuma coluna não-alvo muda —
-#      enquanto no .xlsx ele precisa reescrever a pasta de trabalho e perde o
-#      cache de fórmulas;
+#   1. formato suportado antes de não-suportado, senão um .xls descarta o .csv equivalente
+#      e o dado some da staging;
+#   2. texto antes de planilha, porque o mascaramento reescreve texto byte a byte e no
+#      xlsx precisa remontar a pasta de trabalho;
 #   3. .csv antes de .txt e .xlsx antes de .xls, por consistência;
-#   4. empate (mesma extensão em pasta ou caixa diferente: GEAVO/FOO.TXT e GEFUS/foo.txt)
-#      -> menor key na ordem lexicográfica, para a escolha não variar entre execuções e
-#      não trocar de parquet.
+#   4. empate -> menor key lexicográfica, para a escolha não variar entre execuções.
 #
-# Extensão fora da lista fica por último (nunca ganha de uma conhecida).
+# Extensão fora da lista fica por último.
 PRECEDENCIA_EXT = [".csv", ".txt", ".xlsx", ".xls", ".mdb", ".accdb", ".json"]
 
 
 def _rank_ext(ext: str) -> Tuple[int, int]:
     ext = ext.lower()
-    # Suportado sempre antes de não-suportado, independente da posição na lista: .xls
-    # vem antes de .mdb em PRECEDENCIA_EXT, mas o script não lê .xls e lê .mdb.
+    # suportado vence a posição na lista: .xls vem antes de .mdb, mas o script só lê .mdb
     suportado = 0 if ext in SUPORTADAS else 1
     try:
         return (suportado, PRECEDENCIA_EXT.index(ext))
@@ -183,10 +160,8 @@ def _descartar_gemeos(
     return mantidos, descartados
 
 
-# Artefatos locais (arquivo de log, cópia local da auditoria) — úteis rodando standalone,
-# mas o diretório do script pode não ser gravável (ex.: bind-mount no Airflow). Controlado
-# por LAKE_LOCAL_ARTIFACTS (default "1"): o container do Airflow define "0" para
-# desligá-los. O log em stderr fica sempre ativo (o Airflow o captura na UI).
+# Artefatos locais (log em arquivo, cópia da auditoria): úteis standalone, mas o diretório
+# do script pode não ser gravável. O container do Airflow define LAKE_LOCAL_ARTIFACTS=0.
 _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
     "0",
     "false",
@@ -209,10 +184,8 @@ if _LOCAL_ARTIFACTS:
     ):
         _h.setFormatter(_formatter)
         logging.root.addHandler(_h)
-# Sob o Airflow (_LOCAL_ARTIFACTS=0) NÃO adicionamos handlers ao root: o logger propaga
-# para os handlers do Airflow (a saída vai para a UI). Um StreamHandler(sys.stderr) aqui
-# criaria loop infinito — o Airflow redireciona stderr de volta ao logging e cada linha se
-# multiplica.
+# Sob o Airflow o logger só propaga: um StreamHandler(sys.stderr) aqui multiplicaria cada
+# linha, porque o Airflow redireciona stderr de volta ao logging.
 
 
 # Infra: conexões / controle
@@ -319,15 +292,9 @@ def _registrar_control(conn_str: str, rec: dict) -> None:
 def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
     """raw/<pastas>/<nome>.<ext> -> staging/<pastas>/<nome>[__parte].parquet
 
-    A staging espelha a estrutura de pastas de raw/, trocando o arquivo de origem por
-    parquet. A extensão de origem NÃO entra no nome: `foo.csv` e `foo.txt` são o mesmo
-    dado em dois formatos e viram um único `foo.parquet` — quem garante que só um deles
-    chega aqui é o descarte de gêmeos (`_descartar_gemeos`), que mantém um objeto por
-    nome no lake inteiro.
-
-    O descarte roda sobre a listagem completa, antes dos filtros de recorte, então o
-    conjunto final da staging é o mesmo independente de como a execução foi fatiada —
-    ver `run()`.
+    A extensão de origem não entra no nome: `foo.csv` e `foo.txt` são o mesmo dado e viram
+    um único `foo.parquet`. Quem garante que só um deles chega aqui é o
+    `_descartar_gemeos`.
 
     sufixo_parte: aba de XLSX ou tabela de .mdb (`__<nome>`), quando o arquivo gera N
     parquets.
@@ -336,16 +303,10 @@ def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
     return f"{STAGING_PREFIX}{os.path.splitext(rel)[0]}{sufixo_parte}.parquet"
 
 
-# Colunas de padding: exports de Excel podem arrastar a largura inteira da planilha
-# (16.384 = limite de colunas do Excel). Ex. real: 2024_08_SNH_..._AF_BB.csv tem 16.382
-# colunas, das quais 16.345 não têm nome NEM valor algum — puro lixo do export. A regra é
-# conservadora: só descarta coluna SEM NOME **e** 100% vazia. Colunas sem nome mas com
-# dado ficam (seriam perda de dado), e colunas nomeadas ficam mesmo que vazias. No arquivo
-# citado isso preserva as 2 últimas colunas (`Não se aplica`, `Obra Não Iniciada`), que
-# são listas de validação do Excel vazadas no export — feias, mas têm conteúdo. Descobrir
-# "100% vazia" exige varrer o arquivo, então só fazemos essa passada extra quando o header
-# tem mais que LIMITE_COLS_SEM_NOME colunas anônimas — assim os arquivos normais (0 ou
-# poucas) não pagam nada.
+# Colunas de padding: export de Excel pode arrastar a largura inteira da planilha (16.384
+# colunas). A regra é conservadora — só descarta coluna sem nome E 100% vazia. Como saber
+# se está vazia exige varrer o arquivo, a passada extra só roda quando o header passa
+# deste limite de colunas anônimas.
 LIMITE_COLS_SEM_NOME = 10
 
 
@@ -434,13 +395,10 @@ def _converter_tabular(
 ) -> Tuple[int, int, int, dict, str]:
     """Retorna (n_linhas, n_colunas, n_bad_lines, column_map, encoding_usado).
 
-    extra_meta: pares extras p/ os metadados do parquet (ex.: {"table": "..."} no caso
-    .mdb).
+    extra_meta: pares extras p/ os metadados do parquet (ex.: {"table": "..."} no .mdb).
 
-    encoding_usado pode diferir de real_encoding: a detecção olha só o sample de 64 KB, e
-    um byte que o encoding não aceita pode aparecer depois. Nesse caso cai para latin-1
-    (que mapeia os 256 bytes) e reinicia a conversão — ver `encoding_fallback` em
-    lake_utils.
+    encoding_usado pode diferir de real_encoding: a detecção só olha o sample de 64 KB, e
+    um byte recusado depois faz cair para latin-1 e reiniciar a conversão.
 
     bad_mode:
       - 'skip'  (default): engine C (rápido) descarta linhas mal-formadas; n_bad não é
@@ -1036,29 +994,19 @@ def run(  # noqa: C901
     contagem: Dict[str, int] = {}
     processados = 0
 
-    # A listagem é materializada porque o descarte de gêmeos precisa enxergar o conjunto
-    # todo: só dá para saber que um .xlsx tem um .txt equivalente depois de ver os dois.
-    #
-    # E precisa enxergá-lo ANTES dos filtros do usuário (--pattern/--only-ext/
-    # --max-size-mb), senão cada recorte elegeria um vencedor. Rodar `--only-ext csv` e
-    # depois `--only-ext txt` faria os dois formatos do mesmo nome escreverem no MESMO
-    # parquet, o segundo sobrescrevendo o primeiro — e fatiar a carga por extensão é
-    # justamente como se roda o lake inteiro pela primeira vez. Com o descarte antes, o
-    # conjunto final da staging é o mesmo independente de como a execução foi fatiada;
-    # os filtros só decidem que parte dele é construída agora.
+    # A listagem é materializada e o descarte de gêmeos roda ANTES dos filtros do usuário:
+    # cada recorte elegeria um vencedor diferente, e `--only-ext csv` seguido de
+    # `--only-ext txt` faria os dois formatos escreverem no mesmo parquet. Assim a staging
+    # final independe de como a execução foi fatiada.
     todos: List[Tuple[str, int]] = []
     for key, size in minio.listar_objetos(prefix):
-        # Marcadores de pasta: objetos de 0 byte com a key terminando em "/", criados
-        # por cliente/console S3 ao "criar diretório". Não são arquivo — desde que raw/
-        # ganhou estrutura de pastas eles aparecem na listagem e virariam
-        # skipped_unsupported, poluindo contagem e auditoria à toa.
+        # marcador de pasta (0 byte, key terminando em "/"): não é arquivo
         if key.endswith("/"):
             continue
         if os.path.basename(key).startswith("~$"):
             continue
-        # Antes do descarte de gêmeos de propósito: se um objeto de pasta ignorada
-        # entrasse na lista, poderia vencer o gêmeo de outra pasta pelo mesmo stem e
-        # fazer o dado bom sair como skipped_duplicado sem nunca virar parquet.
+        # antes do descarte de gêmeos: um objeto de pasta ignorada poderia vencer pelo
+        # mesmo stem e mandar o dado bom para skipped_duplicado
         rel = key[len(prefix) :] if key.startswith(prefix) else key
         if rel.split("/", 1)[0] in PASTAS_IGNORADAS:
             continue
@@ -1077,9 +1025,7 @@ def run(  # noqa: C901
 
     candidatos = [(k, s) for k, s in vencedores if _selecionado(k, s)]
 
-    # Só reporta os gêmeos que o recorte atual teria processado — numa execução
-    # `--only-ext txt` interessa saber quais .txt perderam para um .csv, não os 149
-    # descartes do lake inteiro.
+    # só reporta os gêmeos que o recorte atual teria processado
     tamanho = dict(todos)
     gemeos_no_recorte = [k for k in gemeos if _selecionado(k, tamanho[k])]
     for key in gemeos_no_recorte:

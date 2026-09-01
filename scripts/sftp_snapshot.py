@@ -1,13 +1,10 @@
 """
 sftp_snapshot.py: captura snapshots do estado do SFTP e gera diffs estilo git.
 
-Objetivo: entender COMO o SFTP é atualizado entre uma carga e outra
-(os arquivos são sobrescritos? os antigos são movidos para outra pasta?).
-Para isso gravamos uma "fotografia" da árvore de arquivos (path, tamanho, mtime)
-e, na próxima vez, comparamos o estado atual contra essa fotografia.
-O diff classifica cada arquivo em: novo, modificado, movido (sumiu de um path e
-apareceu em outro), copiado (apareceu em outro path mas o original permanece,
-ex.: arquivamento em GEFUS/ANTERIORES) ou removido.
+Serve para entender como o SFTP é atualizado entre uma carga e outra: grava uma fotografia
+da árvore (path, tamanho, mtime) e compara o estado atual contra ela. Cada arquivo é
+classificado em novo, modificado, movido, copiado (apareceu em outro path mas o original
+permanece, ex.: arquivamento em GEFUS/ANTERIORES) ou removido.
 
 Uso:
     # grava a fotografia do estado atual (rode logo após a 1ª ingestão)

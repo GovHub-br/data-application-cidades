@@ -4,30 +4,26 @@
 Mascaramento de PII (dados de pessoa física) na camada raw/ do data lake (MinIO).
 
 Percorre os objetos de raw/, detecta colunas sensíveis pelo header e mascara os valores,
-sobrescrevendo o objeto no lugar (o raw deixa de conter PII).
+sobrescrevendo o objeto no lugar — o raw deixa de conter PII.
 
-Técnica (decisão do projeto):
-  - Identificadores (CPF, NIS) -> token HMAC-SHA256 determinístico (mesmo valor gera o
-    mesmo token em todas as bases; irreversível; preserva join/contagem de distintos).
-  - Quasi-identificadores (nome de PF, endereço, CEP, data de nascimento) -> redação
-    (valor fixo).
-  - CEP/endereço só são mascarados quando o arquivo tem algum indicador de PF (CPF/NIS/
-    nascimento/nome-PF); em bases PJ/empreendimento o CEP é preservado.
+Técnica:
+  - Identificadores (CPF, NIS) -> token HMAC-SHA256 determinístico: irreversível, mas
+    preserva join e contagem de distintos entre bases.
+  - Quasi-identificadores (nome de PF, endereço, CEP, nascimento) -> redação.
+  - CEP/endereço só são mascarados quando o arquivo tem indicador de PF; em base
+    PJ/empreendimento o CEP é preservado.
 
-Segurança do dado não-alvo: o arquivo é lido e reescrito em transporte latin-1 (byte a
-byte), então qualquer coluna não mascarada é gravada byte-idêntica, independentemente do
-encoding real do arquivo. Apenas as colunas-alvo são substituídas por texto ASCII
-(token/redação). O encoding real é detectado só para interpretar corretamente os NOMES das
-colunas (matching).
+O arquivo é lido e reescrito em transporte latin-1, byte a byte, então coluna não
+mascarada sai byte-idêntica seja qual for o encoding real. O encoding só é detectado para
+interpretar os NOMES das colunas.
 
-Idempotência: objetos já mascarados recebem a tag `masked=true`; execuções seguintes os
-pulam (evita duplo-HMAC). Use --force para reprocessar.
+Idempotência: objeto já mascarado recebe a tag `masked=true` e é pulado nas execuções
+seguintes, evitando duplo-HMAC. --force reprocessa.
 
-Auditoria/linhagem: cada execução grava um parquet em audit/masking/execution_id=<uuid>/
-no MinIO e registra cada arquivo em lake._masking_log no Postgres.
+Auditoria: um parquet por execução em audit/masking/execution_id=<uuid>/ no MinIO, e uma
+linha por arquivo em lake._masking_log no Postgres.
 
-Por padrão roda em DRY-RUN (não sobrescreve raw/; grava a prévia em masked_dryrun/). Use
---apply para efetivar a sobrescrita.
+Roda em DRY-RUN por padrão, gravando a prévia em masked_dryrun/; --apply sobrescreve.
 """
 
 import argparse

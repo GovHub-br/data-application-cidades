@@ -3,41 +3,29 @@
 """
 Carga Staging (Parquet no MinIO) -> Bronze (tabelas no Postgres), via pg_duckdb.
 
-Terceira etapa do pipeline do data lake, depois de raw/ -> staging/. Para cada parquet
-declarado numa família, executa um DROP + CREATE TABLE AS ... FROM read_parquet('s3://...')
-direto no Postgres: é a extensão `pg_duckdb` (motor DuckDB embarcado) que lê o objeto do
-MinIO usando o secret S3 do servidor. Os dados não passam pelo processo Python;
-este script só decide O QUE carregar e dispara o SQL via psycopg2.
+Terceira etapa do pipeline, depois de raw/ -> staging/. Para cada parquet declarado numa
+família, dispara um DROP + CREATE TABLE AS ... FROM read_parquet('s3://...') no Postgres:
+quem lê o objeto do MinIO é a extensão pg_duckdb, com o secret S3 do servidor. O dado não
+passa pelo processo Python.
 
-Diferente do raw_para_staging.py, este NÃO é um script generalista: ele não varre a
-staging/ inteira. Só um pequeno subconjunto da staging vira tabela (o que alimenta modelos
-dbt), então a carga é dirigida por família, declarada em scripts/bronze_familias.yml, e
-`--familia` é obrigatório.
+Diferente do raw_para_staging.py, não é generalista: só um subconjunto da staging vira
+tabela (o que alimenta modelo dbt), então a carga é dirigida por família, declarada em
+scripts/bronze_familias.yml, e `--familia` é obrigatório.
 
 Decisões do projeto:
-  - Todas as colunas como TEXT — mantém a decisão da staging (tudo string). A tipagem
-    (datas/números) fica para a silver do dbt. A carga nunca falha por inferência errada.
-  - Nomes de coluna normalizados para snake_case ASCII (normalizar_colunas) e truncados em
-    63 bytes. Os parquets vindos do raw_para_staging.py já chegam normalizados — aqui é
-    garantia e defesa para parquets de outros caminhos (ex.: DAGs de ingestão),
-    além de dar uma base estável para comparar schemas entre cargas incrementais.
-  - Full refresh por objeto: DROP + CREATE TABLE AS numa única transação Postgres. Não tem
-    como duplicar linha, leitores enxergam a tabela antiga até o commit, e se falhar o
-    rollback deixa a antiga de pé. É a saída simples no lugar de um upsert de verdade, que
-    exigiria catálogo/chave declarada.
-  - Colunas de linhagem (`_source_file`, `_ingested_at`, `_source_hash`) são preservadas.
-  - Metadados (nº de linhas, colunas, hash) vêm do footer do parquet via pyarrow, sem
-    baixar o arquivo — decide idempotência e dry-run sem tocar no Postgres.
+  - Todas as colunas como TEXT, mantendo a staging. A tipagem fica para a silver do dbt.
+  - Colunas em snake_case ASCII, truncadas em 63 bytes; linhagem preservada.
+  - Full refresh por objeto: DROP + CTAS numa transação só. Não duplica linha, e o
+    rollback deixa a tabela antiga de pé. É a saída simples no lugar de um upsert real.
+  - Metadados (linhas, colunas, hash) vêm do footer do parquet, sem baixar o arquivo.
 
-Pré-requisito (fora do escopo deste script, feito uma vez na VM): pg_duckdb instalado e
-ativo, e um secret S3 (`duckdb.create_simple_secret`) criado para o usuário de
-DB_DW_USER_MCID. Sem isso, read_parquet falha com erro de credenciais.
+Pré-requisito, feito uma vez na VM: pg_duckdb ativo e um secret S3
+(`duckdb.create_simple_secret`) para o usuário de DB_DW_USER_MCID.
 
-IMPORTANTE (ordem no pipeline): rode DEPOIS do `raw_para_staging.py --apply`, que popula a
-staging/.
+Rode DEPOIS do `raw_para_staging.py --apply`, que popula a staging/.
 
-Idempotência: tabela de controle lake._bronze_log com UNIQUE(familia, staging_key,
-source_hash); objetos já carregados (mesmo hash) são pulados. Use --force para recarregar.
+Idempotência: lake._bronze_log com UNIQUE(familia, staging_key, source_hash). Use --force
+para recarregar.
 """
 
 import argparse
