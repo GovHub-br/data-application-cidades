@@ -9,18 +9,18 @@ with
         select
             -- Identificadores
             {{ target.schema }}.normalize_apf(nu_apf) as apf,
-            nullif(trim(nu_contrato_emprendimento), '') as nu_contrato_empreend,
-            nullif(trim(no_empreendimento), '') as empreendimento_nome,
-            nullif(trim(co_agente_financeiro), '') as agente_financeiro_codigo,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_emprendimento)), '') as nu_contrato_empreend,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(co_agente_financeiro)), '') as agente_financeiro_codigo,
 
             -- Entidade Organizadora (EO)
-            nullif(trim(no_entidade_organizadora), '') as eo_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_entidade_organizadora)), '') as eo_nome,
             nullif(regexp_replace(trim(nu_cnpj_entidade), '[^0-9]', '', 'g'), '') as eo_cnpj,
 
             -- Localização
-            nullif(trim(no_municipio), '') as municipio,
-            nullif(trim(sg_uf), '') as uf,
-            nullif(trim(co_municipio_ibge), '') as cod_ibge,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_municipio)), '') as municipio,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(sg_uf)), '') as uf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(co_municipio_ibge)), '') as cod_ibge,
 
             -- Quantidades
             {{ parse_int('qtde_uh_inicial') }} as qtde_uh_inicial,
@@ -48,7 +48,7 @@ with
             -- Prazos e Execução
             {{ parse_int('pz_construcao') }} as prazo_construcao,
             {{ parse_numeric('pc_obra_realizado', 'numeric(6, 2)') }} as percentual_execucao_fisica,
-            nullif(trim(no_situacao_obra), '') as situacao_obra,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_situacao_obra)), '') as situacao_obra,
 
             -- Datas
             case
@@ -73,9 +73,9 @@ with
             end as dt_movimento,
 
             -- Linhagem da bronze do lake
-            nullif(trim(origem), '') as origem,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(origem)), '') as origem,
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "int_empreendimentos_int_065_pnhr_caixa_pj") }}
     )

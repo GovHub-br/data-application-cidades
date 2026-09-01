@@ -9,40 +9,40 @@ with
         select
             -- Identificação
             {{ target.schema }}.normalize_apf(codigo_da_operacao_no_agente_financeiro) as apf,
-            nullif(trim(identificador_da_operacao_na_snh), '') as id_operacao_snh,
-            nullif(trim(codigo_da_operacao_no_agente_financeiro), '') as cod_operacao_agente,
-            nullif(trim(nome_do_agente_financeiro), '') as agente_financeiro,
-            nullif(trim(nome_do_empreendimento), '') as empreendimento_nome,
-            nullif(trim(modalidade), '') as modalidade,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(identificador_da_operacao_na_snh)), '') as id_operacao_snh,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(codigo_da_operacao_no_agente_financeiro)), '') as cod_operacao_agente,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_do_agente_financeiro)), '') as agente_financeiro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_do_empreendimento)), '') as empreendimento_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(modalidade)), '') as modalidade,
 
             -- Construtora / Entidade
-            nullif(trim(nome_da_construtora_entidade), '') as construtora_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_da_construtora_entidade)), '') as construtora_nome,
             nullif(regexp_replace(trim(nome_da_construtora_entidade_2_cnpj_da_construtora_entidade), '[^0-9]', '', 'g'), '') as construtora_cnpj,
 
             -- Localização
-            nullif(trim(municipio), '') as municipio,
-            nullif(trim(sigla_da_uf), '') as uf,
-            nullif(trim(nome_da_uf), '') as estado_nome,
-            nullif(trim(nome_da_regiao), '') as regiao,
-            nullif(trim(codigo_ibge_do_municipio), '') as cod_ibge,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(municipio)), '') as municipio,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(sigla_da_uf)), '') as uf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_da_uf)), '') as estado_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_da_regiao)), '') as regiao,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(codigo_ibge_do_municipio)), '') as cod_ibge,
 
             -- Endereço
-            nullif(trim(logradouro), '') as logradouro,
-            nullif(trim(numero_do_imovel), '') as numero_imovel,
-            nullif(trim(complemento_do_logradouro), '') as complemento_logradouro,
-            nullif(trim(bairro), '') as bairro,
-            nullif(trim(cep), '') as cep,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(logradouro)), '') as logradouro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(numero_do_imovel)), '') as numero_imovel,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(complemento_do_logradouro)), '') as complemento_logradouro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(bairro)), '') as bairro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(cep)), '') as cep,
 
             -- Coordenadas
             {{ parse_numeric('latitude', 'numeric(12, 8)') }} as latitude,
             {{ parse_numeric('longitude', 'numeric(12, 8)') }} as longitude,
 
             -- Situação e Fase
-            nullif(trim(situacao_do_empreendimento), '') as situacao,
-            nullif(trim(detalhamento_da_situacao_do_empreendimento), '') as situacao_detalhamento,
-            nullif(trim(situacao_da_empreendimento_agrupada), '') as situacao_agrupada,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_do_empreendimento)), '') as situacao,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(detalhamento_da_situacao_do_empreendimento)), '') as situacao_detalhamento,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_da_empreendimento_agrupada)), '') as situacao_agrupada,
             case when trim(mudou_de_fase) = 'Sim' then true else false end as mudou_de_fase,
-            nullif(trim(apf_da_fase_obra), '') as apf_fase_obra,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(apf_da_fase_obra)), '') as apf_fase_obra,
             case when trim(novo_mcmv_sim_nao) = 'Sim' then true else false end as ic_novo_mcmv,
 
             -- Execução Física (%)
@@ -85,7 +85,7 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "dados_prioritarios_disponibilizados_snh_empreendimentos") }}
         where trim(upper(modalidade)) = 'RURAL'

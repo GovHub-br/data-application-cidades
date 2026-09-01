@@ -9,18 +9,18 @@ with
         select
             -- Identificadores
             {{ target.schema }}.normalize_apf(contrato) as apf,
-            nullif(trim(contrato), '') as contrato,
-            nullif(trim(recurso), '') as recurso,
-            nullif(trim(nome_empreendimento), '') as empreendimento_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(contrato)), '') as contrato,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(recurso)), '') as recurso,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_empreendimento)), '') as empreendimento_nome,
 
             -- Localização
-            nullif(trim(municipio), '') as municipio,
-            nullif(trim(uf), '') as uf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(municipio)), '') as municipio,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(uf)), '') as uf,
 
             -- Quantidades e Tipologia
             {{ parse_int('uh') }} as qt_uh,
-            nullif(trim(tipologia), '') as tipologia,
-            nullif(trim(fase_mcmv), '') as fase_mcmv,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(tipologia)), '') as tipologia,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(fase_mcmv)), '') as fase_mcmv,
 
             -- Valores
             {{ parse_financial_value('vr_global_ts') }} as vr_global_ts,
@@ -31,13 +31,13 @@ with
             -- Execução e Status
             {{ parse_numeric('percentual_execucao_ts', 'numeric(6, 2)') }} as percentual_execucao_ts,
             {{ parse_numeric('percentual_obra', 'numeric(6, 2)') }} as percentual_obra,
-            nullif(trim(situacao_ts), '') as situacao_ts,
-            nullif(trim(motivo_situacao_ts_atrasado_paralisado), '') as motivo_situacao_ts,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_ts)), '') as situacao_ts,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(motivo_situacao_ts_atrasado_paralisado)), '') as motivo_situacao_ts,
 
             -- Outros Metadados
-            nullif(trim(portaria_adotada), '') as portaria_adotada,
-            nullif(trim(instrumento_de_planejamento), '') as instrumento_planejamento,
-            nullif(trim(natureza_execucao), '') as natureza_execucao,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(portaria_adotada)), '') as portaria_adotada,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(instrumento_de_planejamento)), '') as instrumento_planejamento,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(natureza_execucao)), '') as natureza_execucao,
 
             -- Datas
             {{ target.schema }}.parse_date_br(data_da_contratacao) as dt_contratacao,
@@ -50,7 +50,7 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "base_trabalho_social_pnhr_rural_caixa") }}
     )

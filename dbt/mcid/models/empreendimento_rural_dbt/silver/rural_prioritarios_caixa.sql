@@ -9,18 +9,18 @@ with
         select
             -- Identificação
             {{ target.schema }}.normalize_apf(apf) as apf,
-            nullif(trim(agente_financeiro), '') as agente_financeiro,
-            nullif(trim(nome_empreendimento), '') as empreendimento_nome,
-            nullif(trim(modalidade), '') as modalidade,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(agente_financeiro)), '') as agente_financeiro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_empreendimento)), '') as empreendimento_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(modalidade)), '') as modalidade,
 
             -- Localização
-            nullif(trim(uf), '') as uf,
-            nullif(trim(municipio), '') as municipio,
-            nullif(trim(codigo_ibge_do_municipio), '') as cod_ibge,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(uf)), '') as uf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(municipio)), '') as municipio,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(codigo_ibge_do_municipio)), '') as cod_ibge,
 
             -- Situação
-            nullif(trim(situacao_do_empreendimento), '') as situacao,
-            nullif(trim(detalhamento_da_situacao_do_empreendimento), '') as situacao_detalhamento,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_do_empreendimento)), '') as situacao,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(detalhamento_da_situacao_do_empreendimento)), '') as situacao_detalhamento,
 
             -- Execução física (%)
             {{ parse_numeric('"exec"', 'numeric(6, 2)') }} as percentual_execucao_fisica,
@@ -39,9 +39,9 @@ with
             {{ parse_int('quantidade_de_uhs_distratadas') }} as uh_distratadas,
 
             -- Endereço
-            nullif(trim(logradouro_do_imovel), '') as logradouro,
-            nullif(trim(bairro_do_imovel), '') as bairro,
-            nullif(trim(cep_do_imovel), '') as cep,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(logradouro_do_imovel)), '') as logradouro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(bairro_do_imovel)), '') as bairro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(cep_do_imovel)), '') as cep,
 
             -- Coordenadas
             {{ parse_numeric('latitude_do_imovel', 'numeric(12, 8)') }} as latitude,
@@ -65,11 +65,11 @@ with
             end as dt_movimento,
 
             -- Observações
-            nullif(trim(observacoes), '') as observacoes,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(observacoes)), '') as observacoes,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "dados_prioritarios_recebidos_caixa_empreendimentos") }}
         where trim(upper(modalidade)) = 'RURAL'

@@ -9,18 +9,18 @@ with
         select
             -- Identificação
             {{ target.schema }}.normalize_apf(nu_apf_com_dv) as apf,
-            nullif(trim(nu_contrato_empreend), '') as nu_contrato_empreend,
-            nullif(trim(no_empreendimento), '') as empreendimento_nome,
-            nullif(trim(co_agente_finan), '') as agente_financeiro_codigo,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_empreend)), '') as nu_contrato_empreend,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(co_agente_finan)), '') as agente_financeiro_codigo,
 
             -- Entidade Organizadora (EO)
-            nullif(trim(no_nome_eo), '') as eo_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_nome_eo)), '') as eo_nome,
             nullif(regexp_replace(trim(co_cnpj_eo), '[^0-9]', '', 'g'), '') as eo_cnpj,
 
             -- Localização
-            nullif(trim(no_municipio), '') as municipio,
-            nullif(trim(sg_uf), '') as uf,
-            nullif(trim(nu_ibge_empreend), '') as cod_ibge,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_municipio)), '') as municipio,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(sg_uf)), '') as uf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_ibge_empreend)), '') as cod_ibge,
 
             -- Tipologia e Quantidades
             {{ parse_int('nu_modalidade') }} as modalidade_codigo,
@@ -63,7 +63,7 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "novo_mcmv_rural_cad_pj_mensal") }}
     )

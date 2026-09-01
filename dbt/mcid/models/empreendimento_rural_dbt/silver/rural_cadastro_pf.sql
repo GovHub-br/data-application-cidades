@@ -8,28 +8,28 @@ with
     cad_pf_raw as (
         select
             -- Identificadores
-            nullif(trim(nu_registro), '') as nu_registro,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_registro)), '') as nu_registro,
             {{ target.schema }}.normalize_apf(nu_apf_com_dv) as apf,
-            nullif(trim(nu_contrato_empreendimento), '') as nu_contrato_empreendimento,
-            nullif(trim(nu_contrato_nidividual), '') as nu_contrato_individual,
-            nullif(trim(no_empreendimento), '') as empreendimento_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_empreendimento)), '') as nu_contrato_empreendimento,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_nidividual)), '') as nu_contrato_individual,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
 
             -- Entidade Organizadora (EO)
-            nullif(trim(no_eo_empreendimento), '') as eo_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_eo_empreendimento)), '') as eo_nome,
             nullif(regexp_replace(trim(co_cnpj_eo), '[^0-9]', '', 'g'), '') as eo_cnpj,
 
             -- Localização
-            nullif(trim(no_end_beneficiario), '') as endereco_beneficiario,
-            nullif(trim(no_municipio), '') as municipio,
-            nullif(trim(sg_uf), '') as uf,
-            nullif(trim(nu_municipio_ibge), '') as cod_ibge,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_end_beneficiario)), '') as endereco_beneficiario,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_municipio)), '') as municipio,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(sg_uf)), '') as uf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_municipio_ibge)), '') as cod_ibge,
 
             -- Dados do Beneficiário
-            nullif(trim(no_beneficiario), '') as beneficiario_nome,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_beneficiario)), '') as beneficiario_nome,
             nullif(regexp_replace(trim(nu_cpf_beneficiario), '[^0-9]', '', 'g'), '') as beneficiario_cpf,
-            nullif(trim(co_sexo_benef), '') as beneficiario_sexo,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(co_sexo_benef)), '') as beneficiario_sexo,
             {{ parse_int('nu_estado_civil') }} as estado_civil_codigo,
-            nullif(trim(no_tipo_beneficiario), '') as tipo_beneficiario,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_tipo_beneficiario)), '') as tipo_beneficiario,
             {{ parse_int('co_sit_funcidaria') }} as situacao_funcionaria_codigo,
 
             -- Demografia e Indicadores Sociais
@@ -51,7 +51,7 @@ with
 
             -- Distrato
             case when trim(ic_distrato) = 'S' then true else false end as ic_distrato,
-            nullif(trim(co_motivo_distrato), '') as co_motivo_distrato,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(co_motivo_distrato)), '') as co_motivo_distrato,
 
             -- Datas
             {{ target.schema }}.parse_date_br(dt_contratacao) as dt_contratacao,
@@ -62,7 +62,7 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "novo_mcmv_rural_cadastro_pf_mensal") }}
     )

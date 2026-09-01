@@ -113,14 +113,28 @@ def colunas(cur, schema: str, tabela: str) -> List[Tuple[str, str]]:
 
 
 def n_linhas(cur, schema: str, tabela: str) -> int:
-    cur.execute(f'select count(*) from "{schema}"."{tabela}"')
-    return int(cur.fetchone()[0])
+    """Linhas da tabela, ou -1 se ela não existe.
+
+    Tabela ausente é situação normal aqui: o diagnóstico costuma rodar logo depois de um
+    `dbt build` que falhou no meio, e é justamente aí que ele é mais útil. Abortar o
+    relatório inteiro porque um model não materializou seria o pior momento para abortar.
+    """
+    try:
+        cur.execute(f'select count(*) from "{schema}"."{tabela}"')
+        return int(cur.fetchone()[0])
+    except psycopg2.Error:
+        cur.connection.rollback()
+        return -1
 
 
 def secao_mojibake(cur, schema: str, tabelas: List[str]) -> List[str]:
     """Conta linhas com marcador de mojibake em cada coluna textual."""
     out, achou = [], False
     for tab in tabelas:
+        if n_linhas(cur, schema, tab) < 0:
+            out.append(f"| `{tab}` | **(não materializada)** | — |")
+            achou = True
+            continue
         cols = [c for c, t in colunas(cur, schema, tab) if t in ("text", "character varying")]
         if not cols:
             continue
@@ -133,7 +147,7 @@ def secao_mojibake(cur, schema: str, tabelas: List[str]) -> List[str]:
             cur.connection.rollback()
             continue
         n = int(cur.fetchone()[0])
-        total = n_linhas(cur, schema, tab)
+        total = max(n_linhas(cur, schema, tab), 0)
         if n:
             achou = True
             piores = []
@@ -155,7 +169,10 @@ def secao_nulos(cur, schema: str, tabelas: List[str], limiar: float) -> List[str
     out = ["| tabela | coluna | % nulo/vazio |", "|---|---|---|"]
     for tab in tabelas:
         total = n_linhas(cur, schema, tab)
-        if not total:
+        if total < 0:
+            out.append(f"| `{tab}` | **(não materializada)** | — |")
+            continue
+        if total == 0:
             out.append(f"| `{tab}` | (tabela vazia) | — |")
             continue
         for c, t in colunas(cur, schema, tab):
@@ -177,11 +194,9 @@ def secao_nulos(cur, schema: str, tabelas: List[str], limiar: float) -> List[str
 def secao_duplicidade(cur, schema: str, chaves: Dict[str, List[str]]) -> List[str]:
     out = ["| model | chave | linhas | chaves distintas | duplicadas |", "|---|---|---|---|---|"]
     for model, ks in chaves.items():
-        try:
-            total = n_linhas(cur, schema, model)
-        except psycopg2.Error:
-            cur.connection.rollback()
-            out.append(f"| `{model}` | — | (não existe) | — | — |")
+        total = n_linhas(cur, schema, model)
+        if total < 0:
+            out.append(f"| `{model}` | — | **(não materializada)** | — | — |")
             continue
         cols = ", ".join(f'"{k}"' for k in ks)
         cur.execute(f'select count(*) from (select distinct {cols} from "{schema}"."{model}") d')

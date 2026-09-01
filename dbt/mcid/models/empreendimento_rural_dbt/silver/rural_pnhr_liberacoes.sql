@@ -12,7 +12,7 @@ with
     liberacoes_raw as (
         select
             {{ target.schema }}.normalize_apf(nu_apf) as apf,
-            nullif(trim(no_programa), '') as programa,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_programa)), '') as programa,
 
             -- Valores
             {{ parse_financial_value("vr_valor") }} as vr_liberado,
@@ -28,12 +28,12 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "int_financeiro_int055_liberacoes_caixa_bb") }}
         where
             nu_apf is not null
-            and nullif(trim(data_liberacao), '') is not null
+            and nullif(trim({{ target.schema }}.corrigir_mojibake(data_liberacao)), '') is not null
             and trim(upper(no_programa)) like '%PNHR%'
     )
 

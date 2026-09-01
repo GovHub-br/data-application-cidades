@@ -41,7 +41,7 @@ with
             -- Paralisados e Motivos
             {{ parse_int('co_classificacao_paralisados') }} as co_classificacao_paralisados,
             {{ parse_int('co_classificacao_nao_retomada') }} as co_classificacao_nao_retomada,
-            nullif(trim(no_detalhe_paralisacao_retomada), '') as detalhe_paralisacao_retomada,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(no_detalhe_paralisacao_retomada)), '') as detalhe_paralisacao_retomada,
             {{ parse_int('co_motivo_desimobilizacao') }} as co_motivo_desimobilizacao,
             {{ parse_int('co_motivo_distrato_empreendimento') }} as co_motivo_distrato,
 
@@ -61,7 +61,7 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim(_ingested_at), '')::timestamp as criado_em
+            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ source("staging_lake", "novo_mcmv_rural_obra_mensal") }}
     )
