@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
--- Bronze: Cadastro PJ Mensal — dados do empreendimento FDS (Entidades)
--- Fonte: novo_mcmv_fds_cad_pj_mensal
+-- Silver: Cadastro PJ Mensal — dados do empreendimento FDS (Entidades)
+-- Fonte: bronze.novo_mcmv_fds_cad_pj_mensal
 -- Saída: dados cadastrais limpos e tipados, incluindo Entidade Organizadora
 with
     cad_pj_raw as (
@@ -155,10 +155,10 @@ with
             as vr_aquecimento_solar,
 
             -- Metadados
-            arquivo_de_origem,
-            criado_em
+            _source_file as arquivo_de_origem,
+            nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("raw", "novo_mcmv_fds_cad_pj_mensal") }}
+        from {{ source("staging_lake", "novo_mcmv_fds_cad_pj_mensal") }}
     )
 
 select *

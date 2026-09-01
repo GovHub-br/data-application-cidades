@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
--- Bronze: Trabalho Social Mensal — acompanhamento do TTS (Entidades)
--- Fonte: novo_mcmv_fds_trabalho_social_mensal
+-- Silver: Trabalho Social Mensal — acompanhamento do TTS (Entidades)
+-- Fonte: bronze.novo_mcmv_fds_trabalho_social_mensal
 -- Saída: dados de trabalho social tipados
 with
     ts_raw as (
@@ -36,10 +36,10 @@ with
             {{ target.schema }}.parse_date_br(dh_movimento) as dt_movimento,
 
             -- Metadados
-            arquivo_de_origem,
-            criado_em
+            _source_file as arquivo_de_origem,
+            nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("raw", "novo_mcmv_fds_trabalho_social_mensal") }}
+        from {{ source("staging_lake", "novo_mcmv_fds_trabalho_social_mensal") }}
     )
 
 select *

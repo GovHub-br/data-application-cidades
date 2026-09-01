@@ -1,9 +1,9 @@
 {{ config(materialized="table") }}
 
--- Bronze: Dados Prioritários CAIXA — Entregas por empreendimento
--- Fonte: dados_prioritarios_recebidos_caixa_entregas (11.540 registros, 7 colunas)
--- Esta tabela contém TODAS as linhas (FAR, FDS, etc). O filtro por programa
--- será feito na silver via JOIN com cadastro_pj FDS.
+-- Silver: Dados Prioritários CAIXA — Entregas por empreendimento
+-- Fonte: bronze.dados_prioritarios_recebidos_caixa_entregas
+-- Esta tabela contém TODAS as linhas (FAR, FDS, etc). O filtro por programa é
+-- feito por quem consome, no JOIN com o cadastro PJ do FDS.
 -- Campos-chave: qt_uh_entregues, dt_entrega (série temporal de entregas)
 with
     entregas_raw as (
@@ -22,10 +22,10 @@ with
             {{ target.schema }}.parse_date_br(data_de_movimento) as dt_movimento,
 
             -- Metadados
-            arquivo_de_origem,
-            criado_em
+            _source_file as arquivo_de_origem,
+            nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("raw", "dados_prioritarios_recebidos_caixa_entregas") }}
+        from {{ source("staging_lake", "dados_prioritarios_recebidos_caixa_entregas") }}
     )
 
 select *
