@@ -42,7 +42,7 @@ with
             {{ target.schema }}.parse_date_br(data_contratacao_empreendimento) as dt_contratacao,
             {{ target.schema }}.parse_date_br(data_primeiro_relatorio) as dt_primeiro_relatorio,
             {{ target.schema }}.parse_date_br(data_ultimo_relatorio) as dt_ultimo_relatorio,
-            {{ target.schema }}.parse_date_br(dt_entrega_data_da_assinatura_do_primeiro_contrato_de_pessoa_fi) as dt_entrega,
+            {{ target.schema }}.parse_date_br(data_da_assinatura_do_primeiro_contrato_de_pessoa_fisica) as dt_entrega,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,

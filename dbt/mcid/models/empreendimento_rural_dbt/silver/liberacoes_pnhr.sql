@@ -13,7 +13,6 @@ with
         select
             {{ target.schema }}.normalize_apf(nu_apf) as apf,
             nullif(trim(no_programa), '') as programa,
-            nullif(trim(co_agente_financeiro), '') as agente_financeiro_codigo,
 
             -- Valores
             {{ parse_financial_value("vr_valor") }} as vr_liberado,

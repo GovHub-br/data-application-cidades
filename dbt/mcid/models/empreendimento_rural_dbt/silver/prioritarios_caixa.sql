@@ -23,7 +23,7 @@ with
             nullif(trim(detalhamento_da_situacao_do_empreendimento), '') as situacao_detalhamento,
 
             -- Execução física (%)
-            {{ parse_numeric('percentual_exec', 'numeric(6, 2)') }} as percentual_execucao_fisica,
+            {{ parse_numeric('"exec"', 'numeric(6, 2)') }} as percentual_execucao_fisica,
 
             -- Valores
             {{ parse_financial_value('valor_contratado') }} as valor_contratado,

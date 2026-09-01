@@ -41,7 +41,9 @@ with
 
             -- Datas
             {{ target.schema }}.parse_date_br(data_da_contratacao) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(data_primeiro_relatorio) as dt_primeiro_relatorio,
+            -- A base da CAIXA não informa a data do primeiro relatório (só a do
+            -- BB tem). Mantido nulo para as duas silver terem o mesmo formato.
+            null::date as dt_primeiro_relatorio,
             {{ target.schema }}.parse_date_br(dt_entrega) as dt_entrega,
             {{ target.schema }}.parse_date_br(dt_ultimo_avt) as dt_ultimo_avt,
             {{ target.schema }}.parse_date_br(dt_avf) as dt_avf,
