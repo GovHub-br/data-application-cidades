@@ -1,9 +1,9 @@
 collate-sqllineage==1.6.0
-sqlparse==0.5
+sqlparse==0.6.0
 astronomer-cosmos==1.9.0
 dbt-postgres==1.7.13
 imap-tools==1.10.0
-zeep==4.3.1
+zeep==4.3.3
 apache-airflow-providers-microsoft-mssql==3.7.2
 openpyxl>=3.1.0
 paramiko>=3.4.0
