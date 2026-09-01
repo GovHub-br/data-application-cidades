@@ -58,10 +58,8 @@ select
         pbb.eo_cnpj
     ) as entidade_organizadora_cnpj,
 
-    upper(coalesce(
-        s.construtora_nome,
-        s.construtora_nome
-    )) as construtora_nome,
+    -- Só o SNH traz construtora; o coalesce herdado repetia o mesmo campo duas vezes.
+    upper(s.construtora_nome) as construtora_nome,
 
     s.construtora_cnpj,
 
