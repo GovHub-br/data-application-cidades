@@ -14,7 +14,7 @@ with
             apf,
             date_trunc('month', dt_alteracao_situacao) as mes_fisica,
             max(percentual_obra_realizada) as pct_obra_realizada
-        from {{ ref("obra_mensal_rural") }}
+        from {{ ref("rural_obra_mensal") }}
         where dt_alteracao_situacao is not null
         group by 1, 2
     ),
@@ -25,7 +25,7 @@ with
             municipio,
             uf,
             empreendimento_nome
-        from {{ ref("empreendimento_rural") }}
+        from {{ ref("rural_empreendimento") }}
     ),
 
     base as (

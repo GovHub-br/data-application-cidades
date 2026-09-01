@@ -4,7 +4,7 @@ models:
 
   # Novo MCMV Rural — monitoramento mensal
 
-  - name: cadastro_pj_rural
+  - name: rural_cadastro_pj
     description: >
       Cadastro PJ do empreendimento contratado no Novo MCMV Rural: entidade
       organizadora, composição do investimento, cisternas/efluentes, prazo de
@@ -31,7 +31,7 @@ models:
       - name: percentual_obra_realizada
         description: Percentual de obra realizada informado no cadastro PJ.
 
-  - name: cadastro_pf
+  - name: rural_cadastro_pf
     description: >
       Cadastro de beneficiários (pessoa física) do Novo MCMV Rural, com perfil
       socioeconômico: renda familiar, pessoas por família, Bolsa Família, BPC,
@@ -56,7 +56,7 @@ models:
       - name: vr_renda_familiar
         description: Renda familiar declarada em R$ (numeric 15,2).
 
-  - name: obra_mensal_rural
+  - name: rural_obra_mensal
     description: >
       Evolução física da obra no Novo MCMV Rural, snapshot mensal por APF:
       percentual previsto/realizado, UHs concluídas e alienadas, paralisação,
@@ -76,7 +76,7 @@ models:
           Data da última alteração de situação. É a data usada como eixo temporal
           da execução física na gold execucao_fisica_financeira_chart_rural.
 
-  - name: financeiro_mensal_rural
+  - name: rural_financeiro_mensal
     description: >
       Série de liberações financeiras do Novo MCMV Rural, decomposta por
       componente (obra, trabalho social, ATEC, cisternas/efluentes e custos
@@ -94,7 +94,7 @@ models:
 
   # Dados prioritários — visão de acompanhamento por agente
 
-  - name: prioritarios_snh
+  - name: rural_prioritarios_snh
     description: >
       Dados prioritários disponibilizados pela SNH, filtrados para
       `modalidade = 'RURAL'`. É a espinha dorsal da silver empreendimento_rural:
@@ -116,7 +116,7 @@ models:
       - name: percentual_execucao_fisica
         description: Percentual de execução física da obra (numeric 6,2).
 
-  - name: prioritarios_caixa
+  - name: rural_prioritarios_caixa
     description: >
       Dados prioritários recebidos da CAIXA, filtrados para
       `modalidade = 'RURAL'`. Lê a mesma tabela bronze do FAR
@@ -131,7 +131,7 @@ models:
       - name: valor_desembolsado
         description: Valor desembolsado acumulado em R$ (numeric 15,2).
 
-  - name: prioritarios_bb
+  - name: rural_prioritarios_bb
     description: >
       Dados prioritários recebidos do Banco do Brasil, filtrados para
       `modalidade = 'RURAL'`. Mesmo layout do prioritarios_caixa.
@@ -146,7 +146,7 @@ models:
 
   # PNHR histórico — integrações INT
 
-  - name: int_pnhr_caixa
+  - name: rural_pnhr_caixa
     description: >
       Histórico de empreendimentos PNHR na CAIXA (integração INT065). Cobre os
       contratos anteriores ao Novo MCMV Rural, com composição de investimento,
@@ -160,7 +160,7 @@ models:
       - name: percentual_execucao_fisica
         description: Percentual de obra realizado (numeric 6,2).
 
-  - name: int_pnhr_bb
+  - name: rural_pnhr_bb
     description: >
       Histórico de empreendimentos PNHR no Banco do Brasil (integração INT057).
       Diferente da CAIXA, o APF é derivado do número do contrato do
@@ -174,7 +174,7 @@ models:
       - name: percentual_execucao_financeira
         description: Percentual de execução financeira da obra (numeric 6,2).
 
-  - name: liberacoes_pnhr
+  - name: rural_pnhr_liberacoes
     description: >
       Liberações de recurso do PNHR (integração INT055 CAIXA/BB), tipadas e já
       filtradas por `no_programa like '%PNHR%'`. Existe para que a gold
@@ -197,7 +197,7 @@ models:
 
   # Trabalho Social (PTS)
 
-  - name: trabalho_social_caixa
+  - name: rural_trabalho_social_caixa
     description: >
       Base de acompanhamento do Plano de Trabalho Social (PTS) do PNHR pela
       CAIXA: situação do TS, valor global e desembolsado, % de execução do TS e
@@ -223,7 +223,7 @@ models:
           Valor de TS não desembolsado em empreendimentos já concluídos, em R$.
           Só existe na base da CAIXA — o BB não informa esta coluna.
 
-  - name: trabalho_social_bb
+  - name: rural_trabalho_social_bb
     description: >
       Base de acompanhamento do Plano de Trabalho Social (PTS) do PNHR pelo Banco
       do Brasil. Mesmo papel do trabalho_social_caixa, mas o layout de origem é
@@ -248,7 +248,7 @@ models:
 
   # Visão unificada
 
-  - name: empreendimento_rural
+  - name: rural_empreendimento
     description: >
       Visão unificada do empreendimento Rural. Parte do prioritarios_snh e
       resolve cada atributo por coalesce na ordem SNH → agente (CAIXA/BB) →

@@ -5,7 +5,7 @@
 
 with
     cadastro_pf as (
-        select * from {{ ref("cadastro_pf") }}
+        select * from {{ ref("rural_cadastro_pf") }}
     ),
 
     agregado as (

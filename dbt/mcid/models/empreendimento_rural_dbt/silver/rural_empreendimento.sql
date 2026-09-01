@@ -5,27 +5,27 @@
 
 with
     snh as (
-        select * from {{ ref("prioritarios_snh") }}
+        select * from {{ ref("rural_prioritarios_snh") }}
     ),
 
     caixa as (
-        select * from {{ ref("prioritarios_caixa") }}
+        select * from {{ ref("rural_prioritarios_caixa") }}
     ),
 
     bb as (
-        select * from {{ ref("prioritarios_bb") }}
+        select * from {{ ref("rural_prioritarios_bb") }}
     ),
 
     cad_pj as (
-        select * from {{ ref("cadastro_pj_rural") }}
+        select * from {{ ref("rural_cadastro_pj") }}
     ),
 
     pnhr_caixa as (
-        select * from {{ ref("int_pnhr_caixa") }}
+        select * from {{ ref("rural_pnhr_caixa") }}
     ),
 
     pnhr_bb as (
-        select * from {{ ref("int_pnhr_bb") }}
+        select * from {{ ref("rural_pnhr_bb") }}
     )
 
 select

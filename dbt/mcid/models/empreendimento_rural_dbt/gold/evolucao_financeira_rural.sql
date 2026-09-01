@@ -14,7 +14,7 @@ with
             vr_desembolso_atec as vr_pago_atec,
             vr_desembolso_cisternas_efluentes as vr_pago_cisternas_efluentes,
             vr_desembolso_custos_indiretos as vr_pago_custos_indiretos
-        from {{ ref("financeiro_mensal_rural") }}
+        from {{ ref("rural_financeiro_mensal") }}
         where dt_liberacao_recurso is not null
     ),
 
@@ -30,7 +30,7 @@ with
             0.00 as vr_pago_atec,
             0.00 as vr_pago_cisternas_efluentes,
             0.00 as vr_pago_custos_indiretos
-        from {{ ref("liberacoes_pnhr") }}
+        from {{ ref("rural_pnhr_liberacoes") }}
     ),
 
     union_financeiro as (
@@ -55,7 +55,7 @@ with
     ),
 
     empreendimento as (
-        select * from {{ ref("empreendimento_rural") }}
+        select * from {{ ref("rural_empreendimento") }}
     ),
 
     evolucao as (

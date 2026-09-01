@@ -5,7 +5,7 @@
 
 with
     base_silver as (
-        select * from {{ ref("empreendimento_rural") }}
+        select * from {{ ref("rural_empreendimento") }}
     )
 
 select
