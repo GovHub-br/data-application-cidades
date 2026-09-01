@@ -1,26 +1,67 @@
 #!/usr/bin/env python3
-"""Sincroniza a projeção semântica segura do dbt com OpenMetadata.
+"""Sincroniza a estrutura do catálogo — schema, tabela, coluna e linhagem.
 
 Não envia manifest dbt bruto: esse artefato contém SQL compilado e referências
 de camadas restritas. A entrada é exclusivamente o catálogo já filtrado por
 ``exportar_catalogo_openmetadata.py``. Por padrão, o comando apenas materializa
 o payload local; ``--confirmar`` é necessário para escrever no OpenMetadata.
+
+Este script cuida só da ESTRUTURA. Domínio, produto de dados, proprietário,
+etiqueta, certificação e glossário são governança e ficam em
+``sincronizar_governanca.py`` — antes os dois mexiam em `/owners` e o segundo a
+rodar desfazia o primeiro.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
+import re
+import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 import requests
-from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CATALOG = ROOT / "docs-conjuntura" / "openmetadata_semantic_catalog.json"
-DEFAULT_PAYLOAD = ROOT / "docs-conjuntura" / "openmetadata_sync_payload.json"
+from governanca_comum import RAIZ, ambiente, carregar, mesmo_texto
+from linhagem_colunas import agrupar_por_aresta, derivar, schema_do_catalogo
+from restricoes_dbt import (
+    Restricoes,
+    carregar as carregar_restricoes,
+    constraints_da_tabela,
+)
+
+DEFAULT_CATALOG = RAIZ / "docs-conjuntura" / "openmetadata_semantic_catalog.json"
+DEFAULT_PAYLOAD = RAIZ / "docs-conjuntura" / "openmetadata_sync_payload.json"
+
+#: Tipos do PostgreSQL para o vocabulário do OpenMetadata. O mapa é explícito
+#: de propósito: a versão anterior colapsava tudo em sete tipos e carimbava
+#: `VARCHAR(65535)` em cada coluna textual — 868 colunas descritas com um
+#: comprimento que nenhuma delas tem.
+TIPOS = {
+    "smallint": "SMALLINT",
+    "integer": "INT",
+    "bigint": "BIGINT",
+    "boolean": "BOOLEAN",
+    "date": "DATE",
+    "double precision": "DOUBLE",
+    "real": "FLOAT",
+    "text": "TEXT",
+    "uuid": "UUID",
+    "bytea": "BYTES",
+    "json": "JSON",
+    "jsonb": "JSON",
+    "interval": "INTERVAL",
+    "time without time zone": "TIME",
+    "time with time zone": "TIME",
+    "timestamp without time zone": "TIMESTAMP",
+    "timestamp with time zone": "TIMESTAMPZ",
+}
+#: `character varying` sem limite não tem comprimento a declarar. Publicar como
+#: TEXT é fiel; publicar como VARCHAR obrigaria a inventar um tamanho.
+TIPOS_TEXTO_SEM_LIMITE = {"character varying", "varchar", "character", "bpchar"}
+PARAMETROS = re.compile(r"^([a-z ]+?)\s*\((\d+)(?:\s*,\s*(\d+))?\)$")
 
 
 def api_base(url: str) -> str:
@@ -32,76 +73,111 @@ def api_base(url: str) -> str:
     return f"{base}/api/v1"
 
 
-def om_data_type(value: str | None) -> str:
-    data_type = (value or "").lower()
-    if "timestamp" in data_type:
-        return "TIMESTAMP"
-    if data_type == "date":
-        return "DATE"
-    if "bool" in data_type:
-        return "BOOLEAN"
-    if "bigint" in data_type:
-        return "BIGINT"
-    if "int" in data_type:
-        return "INT"
-    if any(token in data_type for token in ("numeric", "decimal", "double", "real")):
-        return "DOUBLE"
-    if "json" in data_type:
-        return "JSON"
-    return "VARCHAR"
+def om_column(column: dict, restricoes: Restricoes | None = None) -> dict:
+    """Traduz a coluna preservando tipo, precisão, comprimento e posição."""
+    bruto = (column.get("data_type") or "").strip().lower()
+    resultado: dict = {"name": column["name"], "description": column["description"]}
 
-
-def om_column(column: dict) -> dict:
-    """Converte um tipo SQL para a representação mínima exigida pelo OM."""
-    result = {
-        "name": column["name"],
-        "dataType": om_data_type(column.get("data_type")),
-        "description": column["description"],
-    }
-    # A API da instância requer comprimento explícito para VARCHAR, mesmo
-    # quando a origem PostgreSQL usa TEXT (sem limite declarado).
-    if result["dataType"] == "VARCHAR":
-        result["dataLength"] = 65535
-    return result
-
-
-def schema_description(schema: str) -> str:
-    """Descrição determinística de schema, sem consultar nem expor dados."""
-    normalized = schema.lower()
-    if normalized.endswith("_silver") or "_silver_" in normalized:
-        layer = "camada Silver, com dados tratados e contratos de qualidade"
-    elif normalized.endswith("_mart") or "_gold" in normalized or "_gold_" in normalized:
-        layer = "camada Gold, com métricas e visões prontas para consumo analítico"
+    if bruto.endswith("[]"):
+        interno = om_column({**column, "data_type": bruto[:-2]})
+        resultado["dataType"] = "ARRAY"
+        resultado["arrayDataType"] = interno["dataType"]
+        resultado["dataTypeDisplay"] = bruto
     else:
-        layer = "camada publicável do produto de dados"
-    return f"Schema {schema}: {layer}."
+        casado = PARAMETROS.match(bruto)
+        base = casado.group(1).strip() if casado else bruto
+        primeiro = int(casado.group(2)) if casado else None
+        segundo = int(casado.group(3)) if casado and casado.group(3) else None
+
+        if base in ("numeric", "decimal"):
+            resultado["dataType"] = "NUMERIC"
+            if primeiro is not None:
+                resultado["precision"] = primeiro
+                resultado["scale"] = segundo or 0
+        elif base in TIPOS_TEXTO_SEM_LIMITE:
+            if primeiro is not None:
+                resultado["dataType"] = "VARCHAR"
+                resultado["dataLength"] = primeiro
+            else:
+                resultado["dataType"] = "TEXT"
+        else:
+            resultado["dataType"] = TIPOS.get(base, "TEXT")
+        if bruto:
+            resultado["dataTypeDisplay"] = bruto
+
+    if column.get("ordinal") is not None:
+        resultado["ordinalPosition"] = column["ordinal"]
+    # O dbt não tem `primary key`, tem teste: `unique` + `not_null` é a chave.
+    restricao = restricoes.restricao_da_coluna(column["name"]) if restricoes else None
+    if restricao:
+        resultado["constraint"] = restricao
+    return resultado
+
+
+#: Materialização do dbt para o tipo de entidade do OpenMetadata. Antes toda
+#: entidade era `Regular`, inclusive as views.
+TIPOS_DE_TABELA = {
+    "table": "Regular",
+    "incremental": "Regular",
+    "view": "View",
+    "materialized_view": "MaterializedView",
+    "ephemeral": "Regular",
+}
 
 
 def build_payload(catalog: dict, service: str, database: str) -> dict:
+    """Monta o payload estrutural a partir do catálogo semântico filtrado."""
+    declarados = {
+        item["name"]: item for item in carregar("schemas.yml").get("schemas", [])
+    }
     models = catalog.get("models", [])
+    todas_restricoes = carregar_restricoes()
     by_id = {model["id"]: model for model in models}
     tables = []
-    schemas = {}
+    schemas: dict[str, dict] = {}
     ids_to_fqn = {}
+
+    ausentes = sorted({m["schema"] for m in models} - declarados.keys())
+    if ausentes:
+        # Antes, um schema não declarado recebia uma frase montada por regra de
+        # sufixo do nome. Descrição de catálogo é curadoria: se não foi escrita,
+        # tem de faltar em voz alta.
+        raise RuntimeError(
+            "Schemas presentes no catálogo e ausentes de governance/schemas.yml: "
+            + ", ".join(ausentes)
+        )
+
     for model in models:
         fqn = f"{service}.{database}.{model['schema']}.{model['name']}"
         ids_to_fqn[model["id"]] = fqn
+        declarado = declarados[model["schema"]]
         schemas.setdefault(
             model["schema"],
             {
                 "name": model["schema"],
                 "database": f"{service}.{database}",
-                "description": schema_description(model["schema"]),
+                "description": declarado["description"],
+                **(
+                    {"displayName": declarado["display_name"]}
+                    if declarado.get("display_name")
+                    else {}
+                ),
             },
         )
-        table = {
+        restricoes = todas_restricoes.get(model["name"])
+        colunas_publicadas = {coluna["name"] for coluna in model["columns"]}
+        tabela = {
             "name": model["name"],
             "databaseSchema": f"{service}.{database}.{model['schema']}",
             "description": model["description"],
-            "tableType": "Regular",
-            "columns": [om_column(column) for column in model["columns"]],
+            "tableType": TIPOS_DE_TABELA.get(model.get("materialized"), "Regular"),
+            "columns": [om_column(coluna, restricoes) for coluna in model["columns"]],
         }
-        tables.append(table)
+        if restricoes:
+            chaves = constraints_da_tabela(restricoes, colunas_publicadas)
+            if chaves:
+                tabela["tableConstraints"] = chaves
+        tables.append(tabela)
 
     # A projeção só conecta entidades publicáveis. Dependências de Bronze/Raw
     # permanecem fora do OpenMetadata/RAG, mas a linhagem Silver -> Gold e
@@ -120,22 +196,29 @@ def build_payload(catalog: dict, service: str, database: str) -> dict:
     }
 
 
-def required_environment() -> tuple[str, str, str, str]:
-    names = (
-        "OPENMETADATA_URL",
-        "OPENMETADATA_JWT_TOKEN",
-        "OPENMETADATA_DATABASE_SERVICE",
-        "OPENMETADATA_DATABASE_NAME",
-    )
-    missing = [name for name in names if not os.getenv(name)]
-    if missing:
-        raise RuntimeError("Variáveis OpenMetadata ausentes: " + ", ".join(missing))
-    return tuple(os.environ[name] for name in names)  # type: ignore[return-value]
+#: Reescrever o array de colunas de uma tabela larga leva bem mais que os 30
+#: segundos originais — a sincronização morreu no meio por causa disso, com a
+#: metade das descrições aplicada e a outra metade não.
+TEMPO_LIMITE = 120
+#: Timeout e queda de conexão são transitórios; falhar a carga inteira por
+#: causa de um deles obriga a recomeçar do zero uma operação de 140 tabelas.
+TENTATIVAS = 3
 
 
-def request(session: requests.Session, method: str, url: str, **kwargs) -> dict:
-    response = session.request(method, url, timeout=30, **kwargs)
-    body = response.json() if response.content else {}
+def request(session: requests.Session, method: str, url: str, **kwargs: Any) -> dict:
+    for tentativa in range(1, TENTATIVAS + 1):
+        try:
+            response = session.request(method, url, timeout=TEMPO_LIMITE, **kwargs)
+            break
+        except (requests.Timeout, requests.ConnectionError) as exc:
+            if tentativa == TENTATIVAS:
+                raise RuntimeError(
+                    f"OpenMetadata não respondeu em {TENTATIVAS} tentativas: {exc}"
+                ) from exc
+            espera = 5 * tentativa
+            print(f"  rede instável ({type(exc).__name__}); nova tentativa em {espera}s")
+            time.sleep(espera)
+    body: dict = response.json() if response.content else {}
     if not response.ok:
         message = body.get("message") if isinstance(body, dict) else None
         raise RuntimeError(
@@ -147,29 +230,127 @@ def request(session: requests.Session, method: str, url: str, **kwargs) -> dict:
             str(item.get("message", "erro de validação"))
             for item in body.get("failedRequest", [])
         ]
-        raise RuntimeError(
-            "OpenMetadata recusou a operação: "
-            + "; ".join(messages[:3])
-        )
+        raise RuntimeError("OpenMetadata recusou a operação: " + "; ".join(messages[:3]))
     return body
 
 
-def sync(payload: dict, url: str, token: str, owner_fqn: str) -> None:
+#: Campos de coluna comparados para decidir se vale reescrever o array inteiro.
+CAMPOS_DE_COLUNA = (
+    "dataType",
+    "dataLength",
+    "precision",
+    "scale",
+    "description",
+    "constraint",
+)
+
+
+def colunas_divergem(atuais: list[dict], desejadas: list[dict]) -> bool:
+    """Diz se as colunas publicadas diferem do que o dbt documenta."""
+    por_nome = {c["name"]: c for c in atuais}
+    if set(por_nome) != {c["name"] for c in desejadas}:
+        return True
+    for desejada in desejadas:
+        atual = por_nome[desejada["name"]]
+        for campo in CAMPOS_DE_COLUNA:
+            if campo == "description":
+                if not mesmo_texto(atual.get(campo), desejada.get(campo)):
+                    return True
+            elif (atual.get(campo) or None) != (desejada.get(campo) or None):
+                return True
+    return False
+
+
+def patch_json(session: requests.Session, url: str, operacoes: list[dict]) -> dict:
+    return request(
+        session,
+        "PATCH",
+        url,
+        headers={"Content-Type": "application/json-patch+json"},
+        json=operacoes,
+    )
+
+
+def linhagem_de_colunas(payload: dict) -> dict[tuple[str, str], list[dict]]:
+    """Mapeamento coluna a coluna por aresta, em FQN completo.
+
+    Publica só a correspondência entre colunas; o SQL é lido localmente para
+    derivá-la e nunca sai daqui.
+    """
+    fqn_por_modelo = {
+        tabela["name"]: f"{tabela['databaseSchema']}.{tabela['name']}"
+        for tabela in payload["tables"]
+    }
+    vinculos, _ = derivar(schema_do_catalogo())
+    resultado: dict[tuple[str, str], list[dict]] = {}
+    for (origem, destino), colunas in agrupar_por_aresta(vinculos).items():
+        if origem not in fqn_por_modelo or destino not in fqn_por_modelo:
+            continue
+        resultado[(fqn_por_modelo[origem], fqn_por_modelo[destino])] = [
+            {
+                "fromColumns": [f"{fqn_por_modelo[origem]}.{c}" for c in origens],
+                "toColumn": f"{fqn_por_modelo[destino]}.{coluna}",
+            }
+            for origens, coluna in colunas
+        ]
+    return resultado
+
+
+def publicar_linhagem(
+    session: requests.Session, base: str, payload: dict, entities: dict[str, str]
+) -> None:
+    """Publica a linhagem entre tabelas, com o mapeamento de coluna embutido.
+
+    O OpenMetadata guarda a linhagem de coluna DENTRO da aresta entre as duas
+    tabelas, então ela vai junto e não numa segunda passada.
+    """
+    colunas_por_aresta = linhagem_de_colunas(payload)
+    for edge in payload["lineage"]:
+        corpo: dict = {
+            "fromEntity": {"id": entities[edge["from_fqn"]], "type": "table"},
+            "toEntity": {"id": entities[edge["to_fqn"]], "type": "table"},
+            "description": "Dependência semântica declarada pelo dbt.",
+        }
+        mapeamento = colunas_por_aresta.get((edge["from_fqn"], edge["to_fqn"]))
+        if mapeamento:
+            corpo["lineageDetails"] = {"columnsLineage": mapeamento}
+        request(session, "PUT", f"{base}/lineage", json={"edge": corpo})
+    com_coluna = sum(
+        1
+        for edge in payload["lineage"]
+        if (edge["from_fqn"], edge["to_fqn"]) in colunas_por_aresta
+    )
+    total = len(payload["lineage"])
+    print(f"Linhagem: {total} arestas, {com_coluna} com mapeamento de coluna.")
+
+
+def sync(payload: dict, url: str, token: str) -> None:
     base = api_base(url)
     session = requests.Session()
-    session.headers.update({"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
-    owner_response = request(
-        session,
-        "GET",
-        f"{base}/users/name/{quote(owner_fqn, safe='')}",
+    session.headers.update(
+        {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     )
-    owner = {
-        "id": owner_response["id"],
-        "type": "user",
-        "name": owner_response["name"],
-        "fullyQualifiedName": owner_response["fullyQualifiedName"],
-    }
-    request(session, "PUT", f"{base}/databaseSchemas/bulk", json=payload["database_schemas"])
+    request(
+        session, "PUT", f"{base}/databaseSchemas/bulk", json=payload["database_schemas"]
+    )
+    # O `PUT` cria o que falta e atualiza o nome de exibição, mas NÃO sobrescreve
+    # descrição já preenchida: a instância preserva o texto existente quando a
+    # atualização vem de ingestão. Foi assim que as descrições de rodapé da
+    # primeira carga sobreviveram à documentação curada do dbt — o catálogo
+    # parecia documentado e trazia "Modelo da camada gold do produto conjuntura"
+    # em 85 tabelas. Descrição, portanto, só entra por PATCH.
+    for schema in payload["database_schemas"]:
+        fqn = f"{schema['database']}.{schema['name']}"
+        atual = request(
+            session, "GET", f"{base}/databaseSchemas/name/{quote(fqn, safe='')}"
+        )
+        if not mesmo_texto(atual.get("description"), schema["description"]):
+            patch_json(
+                session,
+                f"{base}/databaseSchemas/{atual['id']}",
+                [{"op": "add", "path": "/description", "value": schema["description"]}],
+            )
+
     # A instância aceita a rota bulk, mas rejeita mais de uma entidade por
     # requisição. O envio unitário pela rota bulk é idempotente e compatível
     # com esse comportamento, além de isolar falhas por tabela.
@@ -182,31 +363,28 @@ def sync(payload: dict, url: str, token: str, owner_fqn: str) -> None:
             ) from exc
 
     entities = {}
+    ajustadas = 0
     for table in payload["tables"]:
         fqn = f"{table['databaseSchema']}.{table['name']}"
-        entity = request(session, "GET", f"{base}/tables/name/{quote(fqn, safe='')}")
+        entity = request(
+            session, "GET", f"{base}/tables/name/{quote(fqn, safe='')}?fields=columns"
+        )
         entities[fqn] = entity["id"]
-    for entity_id in entities.values():
-        request(
-            session,
-            "PATCH",
-            f"{base}/tables/{entity_id}",
-            headers={"Content-Type": "application/json-patch+json"},
-            json=[{"op": "replace", "path": "/owners", "value": [owner]}],
-        )
-    for edge in payload["lineage"]:
-        request(
-            session,
-            "PUT",
-            f"{base}/lineage",
-            json={
-                "edge": {
-                    "fromEntity": {"id": entities[edge["from_fqn"]], "type": "table"},
-                    "toEntity": {"id": entities[edge["to_fqn"]], "type": "table"},
-                    "description": "Dependência semântica declarada pelo dbt.",
-                }
-            },
-        )
+        operacoes = []
+        if not mesmo_texto(entity.get("description"), table["description"]):
+            operacoes.append(
+                {"op": "add", "path": "/description", "value": table["description"]}
+            )
+        # Reescrever `/columns` substitui o array inteiro e leva junto a etiqueta
+        # de glossário que a governança pendura na coluna. É por isso que a ordem
+        # do `make openmetadata` é estrutura primeiro, governança depois.
+        if colunas_divergem(entity.get("columns") or [], table["columns"]):
+            operacoes.append({"op": "add", "path": "/columns", "value": table["columns"]})
+        if operacoes:
+            patch_json(session, f"{base}/tables/{entity['id']}", operacoes)
+            ajustadas += 1
+    print(f"Descrição e colunas ajustadas em {ajustadas} tabelas.")
+    publicar_linhagem(session, base, payload, entities)
 
 
 def main() -> int:
@@ -218,14 +396,14 @@ def main() -> int:
     parser.add_argument("--confirmar", action="store_true")
     args = parser.parse_args()
 
-    load_dotenv(ROOT / ".env", override=False)
-    service = args.service or os.getenv("OPENMETADATA_DATABASE_SERVICE")
-    database = args.database or os.getenv("OPENMETADATA_DATABASE_NAME")
-    if not service or not database:
-        raise RuntimeError("Informe OPENMETADATA_DATABASE_SERVICE e OPENMETADATA_DATABASE_NAME.")
+    config = ambiente(exigir_acesso=args.confirmar)
+    service = args.service or config["servico"]
+    database = args.database or config["banco"]
     catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
     payload = build_payload(catalog, service, database)
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    args.output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(
         "Payload seguro: "
         f"{len(payload['database_schemas'])} schemas, "
@@ -234,9 +412,8 @@ def main() -> int:
     if not args.confirmar:
         print("Dry-run concluído. Use --confirmar para sincronizar com OpenMetadata.")
         return 0
-    url, token, _, _ = required_environment()
-    sync(payload, url, token, os.getenv("OPENMETADATA_OWNER_FQN", "admin"))
-    print("Catálogo e linhagem semântica sincronizados com OpenMetadata.")
+    sync(payload, config["url"], config["token"])
+    print("Estrutura e linhagem sincronizadas com OpenMetadata.")
     return 0
 
 

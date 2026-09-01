@@ -116,10 +116,36 @@ governance-load-strategies:
 openmetadata-catalog:
 	poetry run python scripts/governance/gerar_catalogo_openmetadata_seguro.py
 
-# Cria o payload seguro para OpenMetadata. Acrescente `--confirmar` em
-# OPENMETADATA_ARGS somente após preencher URL e token no .env.
+# Estrutura: schema, tabela, coluna e linhagem. Cria o payload seguro para
+# OpenMetadata. Acrescente `--confirmar` em OPENMETADATA_ARGS somente após
+# preencher URL e token no .env (o modelo está em infra/env/.env.example).
 openmetadata-sync: openmetadata-catalog
 	poetry run python scripts/governance/sincronizar_openmetadata.py $(OPENMETADATA_ARGS)
+
+# Governança: domínio, produto de dados, proprietário, classificação, etiqueta,
+# tier, certificação, permissão de uso e glossário. Sem URL/token no ambiente
+# roda offline e só imprime o que está declarado.
+openmetadata-governanca:
+	poetry run python scripts/governance/sincronizar_governanca.py $(OPENMETADATA_ARGS)
+
+# A ordem importa: não se pendura domínio, produto nem etiqueta em tabela que
+# ainda não existe no catálogo. Estrutura primeiro, governança depois. E
+# reescrever as colunas substitui o array inteiro, levando junto a etiqueta de
+# glossário que a governança pendura nelas — por isso nunca o contrário.
+openmetadata: openmetadata-sync openmetadata-governanca openmetadata-lake
+
+# Data lake e orquestração: MinIO como serviço de armazenamento, cada parquet
+# como container, e a linhagem DAG -> parquet -> Bronze. Roda por último: liga
+# containers a tabelas que precisam existir antes.
+openmetadata-lake:
+	poetry run python scripts/governance/sincronizar_lake.py $(OPENMETADATA_ARGS)
+
+# Confere o que está NA INSTÂNCIA contra o que o repo declara. O
+# `governance-audit` audita se a documentação foi escrita; este audita se ela
+# chegou. A distância entre as duas já foi de 85 tabelas.
+# Use `OPENMETADATA_AUDIT=--strict` para transformar em gate de CI.
+governance-audit-om:
+	poetry run python scripts/governance/auditar_openmetadata.py $(OPENMETADATA_AUDIT)
 
 # A conferência contra os boletins publicados virou teste do dbt: roda no
 # mesmo `dbt build` que já roda, em vez de script com conexão própria.
@@ -136,4 +162,6 @@ conjuntura-congelar:
 .PHONY: setup format lint lint-ci test compose-config up down logs-airflow \
 	docs-setup docs-collect docs-build docs-serve docs-clean conjuntura-docs \
 	conjuntura-docs-pdf conjuntura-validar-boletins conjuntura-congelar \
-	governance-audit gx-silver governance-load-strategies openmetadata-catalog openmetadata-sync
+	governance-audit gx-silver governance-load-strategies openmetadata-catalog \
+	openmetadata-sync openmetadata-governanca openmetadata-lake openmetadata \
+	governance-audit-om

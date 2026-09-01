@@ -38,8 +38,26 @@ proprietarios:
     type: team
     name: mcid-data-engineering
 
+#: `termos` liga o produto ao eixo do glossário que o descreve. Sem isso o
+#: vocabulário existe e o produto não aponta para ele: quem chega pelo
+#: glossário não encontra o produto, e quem chega pelo produto não encontra
+#: o vocabulário.
+#:
+#: Os FQNs abaixo são os COMPLETOS, conferidos um a um contra a instância.
+#: `MCMVFAR` e `MCMVEntidades` ficam sob `MCMV`, não direto sob o eixo —
+#: montar o FQN concatenando eixo + folha erra nesses dois e devolve 404.
+#:
+#: `experts` são as PESSOAS que respondem pelo conteúdo — diferente de
+#: `owner_key`, que é a titularidade do time.
+#:
+#: DECISÃO (2026-08-31, Lucas): fica vazio por ora. O mecanismo está pronto
+#: e lê daqui; atribuir responsabilidade nominal a alguém é decisão do time,
+#: não de automação. Para preencher, acrescente `experts: [usuario1, ...]`
+#: no produto — o nome é o `name` do usuário no OpenMetadata.
 produtos:
   - name: conjuntura
+    termos:
+      - MCID.IndicadoresConjunturais
     display_name: Conjuntura Habitacional
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
@@ -54,6 +72,10 @@ produtos:
       mensais e trimestrais.
 
   - name: empreendimento_far
+    termos:
+      - MCID.FundosEFontes.FAR
+      - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+      - MCID.ExecucaoDeEmpreendimentos
     display_name: Empreendimento FAR
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
@@ -65,6 +87,10 @@ produtos:
       trabalho social e entrega de unidades.
 
   - name: entidades_fds
+    termos:
+      - MCID.FundosEFontes.FDS
+      - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+      - MCID.Atores.EntidadeOrganizadora
     display_name: Entidades FDS
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
@@ -122,4 +148,121 @@ permissao_de_uso_por_camada:
   bronze: Uso.NaoConsumivel
   silver: Uso.ApoioInterno
   gold: Uso.Consumivel
-  mixed: Uso.Consumivel
+  # `mixed` de propósito não tem entrada. Ela só descreve SCHEMA — o de FAR e o
+  # de Entidades guardam as três camadas juntas —, e permissão de uso é
+  # instrução ao consumidor: dizer que o schema é consumível quando 11 das
+  # tabelas dele são explicitamente não consumíveis seria uma contradição
+  # visível na tela. As tabelas recebem a permissão da própria camada.
+
+#: Classificações e etiquetas que a catalogação aplica. Precisam existir na
+#: instância ANTES de serem penduradas: até esta seção existir, o sync pedia
+#: `Uso.NaoConsumivel` e `dbtTags.mcid` sem que nenhuma das duas tivesse sido
+#: criada, e o OpenMetadata recusava a etiquetagem tabela a tabela.
+#:
+#: `dbtTags` é criada pelo conector dbt do OpenMetadata e é COMPARTILHADA com
+#: os outros ministérios da instância. Usamos os mesmos nomes que o conector
+#: usaria — assim a migração futura encontra o terreno pronto em vez de um
+#: vocabulário paralelo — mas nunca alteramos o que já está lá.
+classificacoes:
+  - name: Uso
+    display_name: Permissão de uso
+    #: Exclusiva: um ativo tem exatamente uma permissão de uso. Duas ao mesmo
+    #: tempo seria contradição, não nuance. O campo é imutável depois de criada.
+    mutuamente_exclusivas: true
+    #: Os textos abaixo são os que já estavam na instância, trazidos para cá
+    #: verbatim. A classificação existia sem estar declarada em lugar nenhum —
+    #: era exatamente o tipo de conteúdo que some quando ninguém sabe de onde
+    #: veio. Agora o arquivo é a fonte, e o sync não os reescreve com versão
+    #: mais pobre.
+    description: >
+      Indica se um ativo pode ser consumido diretamente. Separa a importância
+      do ativo, que a certificação já expressa, da permissão de uso: há dados
+      essenciais à rastreabilidade que não devem alimentar análise, painel ou
+      resposta automatizada.
+    etiquetas:
+      - name: Consumivel
+        display_name: Consumível
+        description: >
+          Ativo curado e liberado para consumo em análise, painel e aplicação
+          autorizada.
+      - name: ApoioInterno
+        display_name: Apoio interno
+        description: >
+          Ativo íntegro e necessário ao pipeline, porém não destinado a consumo
+          direto: serve de insumo ou de apoio à validação.
+      - name: NaoConsumivel
+        display_name: Não consumível
+        description: >
+          Ativo preservado para rastreabilidade e linhagem, que NÃO deve ser
+          usado em análise, painel ou resposta automatizada. Aparece no
+          catálogo para que a origem do dado seja visível, não para ser
+          consultado.
+
+  - name: dbtTags
+    #: COMPARTILHADA. A instância é de vários ministérios e esta classificação
+    #: já carrega as etiquetas de outros (`rouanet`, `salic`, `sgac`…). Só
+    #: criamos o que falta: nem a classificação nem etiqueta existente é
+    #: alterada por nós. Reescrever a descrição dela seria mexer no vocabulário
+    #: de quem divide a instância conosco.
+    compartilhada: true
+    #: Não exclusiva: uma tabela é ao mesmo tempo do órgão, do produto e da
+    #: camada. As três convivem, como no schema de referência.
+    mutuamente_exclusivas: false
+    description: >
+      Origem, produto e camada do ativo conforme declarado no projeto dbt.
+    etiquetas:
+      - name: mcid
+        display_name: MCid
+        description: Ativo produzido e mantido pelo Ministério das Cidades.
+      - name: conjuntura
+        display_name: Conjuntura
+        description: Ativo do produto de dados Conjuntura Habitacional.
+      - name: empreendimento_far
+        display_name: Empreendimento FAR
+        description: Ativo do produto de dados Empreendimento FAR.
+      - name: entidades_fds
+        display_name: Entidades FDS
+        description: Ativo do produto de dados Entidades FDS.
+      - name: bronze
+        display_name: Bronze
+        description: Ativo da camada que preserva a representação recebida da origem.
+      - name: silver
+        display_name: Silver
+        description: Ativo da camada tratada, tipada e conformada.
+      - name: gold
+        display_name: Gold
+        description: Ativo da camada curada de consumo.
+
+#: Classificações nativas do OpenMetadata. São conferidas antes do uso e nunca
+#: criadas nem alteradas por nós: são vocabulário da ferramenta, compartilhado
+#: com os outros ministérios da instância.
+classificacoes_nativas:
+  - Tier
+  - Certification
+
+#: Propriedades customizadas do MCID. O tipo de entidade é GLOBAL na instância:
+#: uma propriedade criada em `table` aparece para todos os ministérios. Por isso
+#: o prefixo `mcid`, que já era a convenção das duas existentes
+#: (`mcidRelatedTables`, `mcidSemanticRelationships`) — e por isso só entra aqui
+#: o que não tem lugar melhor no modelo do OpenMetadata.
+#:
+#: Nada é preenchido no chute: só entra propriedade cujo valor já está
+#: declarado em algum arquivo deste repo.
+propriedades_customizadas:
+  - name: mcidDagDeOrigem
+    entidade: table
+    tipo: string
+    #: vem de `meta.dag` no sources.yml, via o arquivo do lake que a tabela lê
+    description: >
+      DAG de ingestão que produz o arquivo lido por esta tabela. Responde quem
+      trouxe o dado sem precisar percorrer o grafo de linhagem.
+
+  - name: mcidReconciliacoes
+    entidade: dataProduct
+    tipo: markdown
+    #: vem de governance/reconciliacoes.yml
+    description: >
+      Cruzamentos entre séries deste produto, com o que foi conferido e o que
+      é sabidamente não comparável. Registra também a justificativa de cada
+      bloqueio, para que a ausência de um cruzamento seja uma decisão
+      documentada e não um esquecimento.

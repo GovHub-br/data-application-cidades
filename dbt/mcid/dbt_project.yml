@@ -26,7 +26,7 @@ models:
       +meta:
         governance:
           product: metadata
-          owner_key: admin
+          owner_key: mcid_data_engineering
           classification: restricted
           rag_publication: prohibited
     empreendimento_far_dbt:
@@ -35,13 +35,13 @@ models:
       +meta:
         governance:
           product: empreendimento_far
-          owner_key: admin
+          owner_key: mcid_data_engineering
       bronze:
         +materialized: table
         +meta:
           governance:
             product: empreendimento_far
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: bronze
             classification: restricted
             rag_publication: prohibited
@@ -50,7 +50,7 @@ models:
         +meta:
           governance:
             product: empreendimento_far
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
@@ -59,7 +59,7 @@ models:
         +meta:
           governance:
             product: empreendimento_far
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
@@ -70,13 +70,13 @@ models:
       +meta:
         governance:
           product: entidades_fds
-          owner_key: admin
+          owner_key: mcid_data_engineering
       bronze:
         +materialized: table
         +meta:
           governance:
             product: entidades_fds
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: bronze
             classification: restricted
             rag_publication: prohibited
@@ -85,7 +85,7 @@ models:
         +meta:
           governance:
             product: entidades_fds
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
@@ -94,7 +94,7 @@ models:
         +meta:
           governance:
             product: entidades_fds
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
@@ -105,7 +105,7 @@ models:
       +meta:
         governance:
           product: conjuntura
-          owner_key: admin
+          owner_key: mcid_data_engineering
       # Bronze: espelho textual do parquet de staging. A Bronze é espelho do
       # raw, e a Silver é o único lugar de achatamento e tipagem.
       #
@@ -117,7 +117,7 @@ models:
         +meta:
           governance:
             product: conjuntura
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: bronze
             classification: restricted
             rag_publication: prohibited
@@ -127,7 +127,7 @@ models:
         +meta:
           governance:
             product: conjuntura
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
@@ -137,7 +137,7 @@ models:
         +meta:
           governance:
             product: conjuntura
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
@@ -147,7 +147,7 @@ models:
         +meta:
           governance:
             product: conjuntura
-            owner_key: admin
+            owner_key: mcid_data_engineering
             layer: quality
             classification: restricted
             rag_publication: prohibited

@@ -53,7 +53,8 @@ EXCLUDED_RESOURCE_TYPES = {"snapshot", "seed", "source"}
 def load_json(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Artefato dbt privado ausente: {path}")
-    return json.loads(path.read_text(encoding="utf-8"))
+    conteudo: dict = json.loads(path.read_text(encoding="utf-8"))
+    return conteudo
 
 
 def load_yaml(path: Path) -> dict:
@@ -62,7 +63,9 @@ def load_yaml(path: Path) -> dict:
 
 def is_sensitive_identifier(value: str) -> bool:
     lowered = value.lower()
-    return lowered == "cep" or any(pattern in lowered for pattern in SENSITIVE_IDENTIFIERS)
+    return lowered == "cep" or any(
+        pattern in lowered for pattern in SENSITIVE_IDENTIFIERS
+    )
 
 
 def unsafe_description(value: str) -> str | None:
@@ -87,7 +90,9 @@ def fail(violations: list[str], message: str) -> None:
 CAMADAS_SO_PARA_LINHAGEM = {"bronze"}
 
 
-def model_export(node_id: str, node: dict, catalog: dict, violations: list[str]) -> dict | None:
+def model_export(
+    node_id: str, node: dict, catalog: dict, violations: list[str]
+) -> dict | None:
     governance = node.get("meta", {}).get("governance", {})
     elegivel_rag = (
         governance.get("rag_publication") == "eligible_after_security_validation"
@@ -97,13 +102,15 @@ def model_export(node_id: str, node: dict, catalog: dict, violations: list[str])
         return None
 
     description = (node.get("description") or "").strip()
-    documentation_status = "curated"
+    # variável própria: antes o laço de colunas reaproveitava este nome e o
+    # status publicado para a TABELA acabava sendo o da última coluna lida.
+    status_da_tabela = "curated"
     if not description or unsafe_description(description):
         description = (
             f"Modelo da camada {governance.get('layer', 'analítica')} do produto "
             f"{governance.get('product', 'MCID')}."
         )
-        documentation_status = "derived_convention"
+        status_da_tabela = "derived_convention"
 
     catalog_columns = catalog.get("nodes", {}).get(node_id, {}).get("columns", {})
     declared_columns = node.get("columns", {})
@@ -115,7 +122,7 @@ def model_export(node_id: str, node: dict, catalog: dict, violations: list[str])
             continue
         declared = declared_columns.get(column_name, {})
         column_description = (declared.get("description") or "").strip()
-        documentation_status = "curated"
+        documentation_status = "curated"  # status desta coluna, não o da tabela
         # Enquanto o YAML é curado, o catálogo recebe uma descrição
         # determinística baseada somente no nome técnico. Isso impede campos
         # mudos no RAG sem vazar exemplos, mapeamentos ou conteúdo de dados.
@@ -125,7 +132,15 @@ def model_export(node_id: str, node: dict, catalog: dict, violations: list[str])
         columns.append(
             {
                 "name": column_name,
+                # tipo como o banco o declara, com precisão e comprimento
+                # (`numeric(15,2)`, `character varying(50)`): é o que permite
+                # ao sync publicar o tipo fiel em vez de colapsar tudo em
+                # VARCHAR de tamanho fixo.
                 "data_type": catalog_column.get("type") or declared.get("data_type"),
+                # posição física da coluna na tabela. As colunas são ordenadas
+                # por nome neste arquivo (determinismo do artefato), então sem
+                # este campo a ordem original se perderia.
+                "ordinal": catalog_column.get("index"),
                 "description": column_description,
                 "documentation_status": documentation_status,
             }
@@ -143,7 +158,10 @@ def model_export(node_id: str, node: dict, catalog: dict, violations: list[str])
         "schema": node.get("schema"),
         "name": node.get("alias") or node.get("name"),
         "description": description,
-        "documentation_status": documentation_status,
+        "documentation_status": status_da_tabela,
+        # materialização do dbt: é o que diz se a entidade no catálogo é
+        # tabela, view ou view materializada.
+        "materialized": node.get("config", {}).get("materialized"),
         "depends_on": [
             dependency
             for dependency in node.get("depends_on", {}).get("nodes", [])
@@ -197,7 +215,9 @@ def main() -> None:
         "models": models,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    args.output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     print(f"Catálogo semântico seguro: {args.output} ({len(models)} models)")
 
 

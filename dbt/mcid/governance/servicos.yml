@@ -1,0 +1,156 @@
+version: 1
+
+# Serviço de banco e database no OpenMetadata.
+#
+# O service e o database JÁ EXISTEM na instância: são criados por quem a
+# administra, com a conexão e as credenciais. Este arquivo não os cria e nunca
+# toca em conexão — ele só preenche o que estava vazio: descrição, dono,
+# domínio e etiquetas.
+#
+# Por que os nomes não estão escritos aqui: eles são resolvidos de
+# `OPENMETADATA_DATABASE_SERVICE` e `OPENMETADATA_DATABASE_NAME`. Repetir o
+# nome no YAML criaria uma segunda verdade que sai de sincronia com o `.env` na
+# primeira vez que a instância for trocada por outra (homologação, produção).
+# O YAML declara a semântica; o ambiente diz a qual instância aplicá-la.
+#
+# Nenhum dos dois declara nome de exibição, de propósito: o nome real já é
+# `Cidades` e `cidades`, e um rótulo inventado por cima só existiria no nosso
+# YAML. Some daí que o bot de ingestão é proibido de alterar nome de exibição
+# (`IngestionBotRole`, regra `DisplayName-Deny`) — declarar um seria pedir uma
+# recusa a cada execução.
+
+servico:
+  tipo: databaseService
+  owner_key: mcid_data_engineering
+  domain: MCid
+  tags:
+    - dbtTags.mcid
+  description: >
+    Warehouse analítico do Ministério das Cidades, onde residem as camadas
+    Bronze, Silver e Gold dos produtos de dados de habitação. Reúne indicadores
+    de conjuntura do setor habitacional, empreendimentos do Fundo de
+    Arrendamento Residencial e operações do Fundo de Desenvolvimento Social.
+
+banco:
+  tipo: database
+  owner_key: mcid_data_engineering
+  domain: MCid
+  tags:
+    - dbtTags.mcid
+  description: >
+    Base analítica dos produtos de dados de habitação do Ministério das
+    Cidades. Cada produto ocupa os seus próprios schemas, separados por camada,
+    e a certificação e a permissão de uso de cada ativo acompanham a camada em
+    que ele está.
+
+# ── Data lake (MinIO) ───────────────────────────────────────────────────────
+#
+# Diferente do serviço de banco, este NÃO existe na instância: nós o criamos.
+# Por isso o nome está declarado aqui, e não resolvido do ambiente — quem cria
+# é quem nomeia.
+#
+# Registrado SEM `connection`: o lake entra no catálogo para que a linhagem
+# alcance a origem, não para que o OpenMetadata leia o bucket. Credencial de
+# MinIO não entra em instância compartilhada entre ministérios; se um dia a
+# ingestão nativa for ligada, a conexão é acrescentada por quem administra.
+#
+# O que se publica é existência e topologia: prefixo, formato e a ligação com a
+# bronze. Nunca conteúdo de objeto, contagem de linha ou amostra.
+lake:
+  tipo: storageService
+  name: Cidades - MinIO
+  service_type: S3
+  owner_key: mcid_data_engineering
+  domain: MCid
+  tags:
+    - dbtTags.mcid
+  description: >
+    Data lake do Ministério das Cidades. Guarda a cópia fiel recebida de cada
+    origem institucional e a conversão em parquet que alimenta a camada Bronze
+    dos produtos de dados.
+
+  buckets:
+    data-lake-mcid:
+      description: >
+        Bucket do data lake dos produtos de dados de habitação.
+
+  # Camadas do lake, na ordem em que o dado atravessa.
+  camadas:
+    staging:
+      description: >
+        Conversão em parquet das origens institucionais, com a estrutura
+        recebida preservada. É a fonte direta da camada Bronze.
+
+  # Descrição de cada prefixo: quem apura o dado que ali está. Os arquivos em
+  # si herdam a descrição já curada em `sources.yml` — não se duplica texto.
+  prefixos:
+    abecip: Extrações da Associação Brasileira das Entidades de Crédito Imobiliário e Poupança.
+    bacen: Séries do Banco Central do Brasil.
+    fgv: Índices apurados pela Fundação Getulio Vargas.
+    fipe: Índices apurados pela Fundação Instituto de Pesquisas Econômicas.
+    ibge: Pesquisas e índices do Instituto Brasileiro de Geografia e Estatística.
+    infomoney: Cotações de mercado de capitais do setor imobiliário.
+    novo_caged: Movimentação de emprego formal do Novo CAGED.
+    sftp: Extrações recebidas por transferência direta do agente operador.
+    siafi-tesouro-gerencial: Execução orçamentária extraída do Tesouro Gerencial.
+
+# ── Orquestração (Airflow) ──────────────────────────────────────────────────
+#
+# O serviço é COMPARTILHADO: hospeda as DAGs de vários projetos do laboratório,
+# não só as nossas. Medido em 2026-08-31: 86 pipelines, das quais 22 são deste
+# repositório e 64 são de outros (`siape`, `ipea`, `mir`, `pncp`, `api_*`).
+#
+# Por isso ele NÃO recebe dono, domínio nem etiqueta do MCid. Marcar
+# infraestrutura compartilhada como nossa é o mesmo erro de reescrever a
+# classificação `dbtTags` do MinC: o catálogo passaria a afirmar uma
+# titularidade que não existe, e quem procura o dono do Airflow acharia um time
+# que responde por um quarto dele.
+#
+# `compartilhado: true` faz a sincronização remover a marcação do MCid se ela
+# estiver lá — foi aplicada por engano e o sync precisa saber desfazer.
+#
+# O que continua marcado como nosso são as DAGs individuais que são nossas,
+# declaradas em `meta.dag` no `sources.yml`. Essas sim têm dono e domínio.
+orquestracao:
+  tipo: pipelineService
+  name: airflow
+  compartilhado: true
+  description: >
+    Orquestração compartilhada do laboratório. Hospeda as DAGs de ingestão e
+    transformação de vários projetos; a titularidade de cada fluxo está na
+    própria DAG, não no serviço.
+
+  #: O serviço é de todos; as DAGs deste repositório são nossas. A titularidade
+  #: desce um nível: fica na DAG, que é onde ela é verdadeira.
+  dags:
+    owner_key: mcid_data_engineering
+    domain: MCid
+    tags:
+      - dbtTags.mcid
+
+# ── Consumo (Superset) ──────────────────────────────────────────────────────
+#
+# Diferente do Airflow, este serviço É nosso: a instância tem um por órgão
+# (`Cidades - Superset`, `IPEA - Superset`), e os dashboards dentro dele são do
+# MCid.
+#
+# ⚠️ A ingestão do Superset no OpenMetadata é de 2026-07-22. Os charts que os
+# nossos scripts criam — os 26 `Conjuntura | …` do `bootstrap_conjuntura.py` e
+# os 21 `Boletim | …` do `build_boletim.py` — foram criados depois e NÃO estão
+# no catálogo. Dos 113 charts que estão, nenhum tem prefixo declarado por nós.
+#
+# Por isso a linhagem gold -> chart -> dashboard (HU-28) fica pela metade: sem
+# os charts certos no catálogo, ligar os que estão lá exigiria adivinhar pelo
+# título, e linhagem errada é pior que linhagem ausente.
+consumo:
+  tipo: dashboardService
+  name: Cidades - Superset
+  owner_key: mcid_data_engineering
+  domain: MCid
+  tags:
+    - dbtTags.mcid
+  description: >
+    Camada de visualização dos produtos de dados do Ministério das Cidades.
+    Publica os painéis de acompanhamento do setor habitacional e as edições do
+    boletim de conjuntura, sempre a partir das tabelas da camada Gold.
+

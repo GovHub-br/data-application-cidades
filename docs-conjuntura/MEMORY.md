@@ -90,6 +90,549 @@ reformata dezenas de arquivos não relacionados).
 
 ## 0.2 Diário
 
+### 2026-09-01 · Claude · A integração já existia: `origin/refactor/openmetadata`
+
+**LEIA ANTES DE ESCREVER QUALQUER COISA NOVA DE OPENMETADATA.**
+
+A integração do MCID com o OpenMetadata **já existe neste repositório**, na
+branch `origin/refactor/openmetadata` (`4d6d9ae`, 2026-08-18, arthrok). Nunca
+foi mergeada: está **29 commits atrás da `main`** e no layout antigo
+`airflow_lappis/dags/`, que a `main` não tem mais — por isso não aparece em
+busca nenhuma feita a partir da árvore atual. Eu construí uma implementação
+paralela sem saber que ela existia.
+
+Ela tem: 6 recipes de conector (postgres metadata/profiler/classifier, dbt,
+airflow, superset), DAG agendada, glossário com 63 termos, catálogo de relações
+semânticas com 1.255 linhas, 3 arquivos de teste e três documentos de cobertura.
+
+**A MinC portou daqui e evoluiu.** O `semantic_relationships.py` deles ainda
+valida `kind: MCIDSemanticRelationshipCatalog`. É a origem das propriedades
+`mcidRelatedTables` e `mcidSemanticRelationships` que aparecem na instância sem
+estar declaradas em lugar nenhum da `main` — mistério que ficou aberto na
+entrada de 31/08.
+
+**E explica a ingestão parada em 21-23/07:** a DAG que a roda nunca chegou à
+`main`.
+
+#### O que é redundante e o que é complemento
+
+Redundante com o conector: estrutura, descrição, coluna, teste, Superset,
+Airflow. Eles fazem melhor porque rodam sozinhos.
+
+Só existe aqui: produto de dados, classificação `Uso`, certificação, MinIO no
+catálogo, linhagem coluna a coluna, chaves e a auditoria.
+
+A forma deles de declarar governança é mais leve: `meta.openmetadata` dentro do
+`schema.yml` (279 pontos), carregada pelo conector dbt, em vez de push REST.
+
+Comparação completa em `docs/governance/comparacao-minc-openmetadata.md`.
+A HU-33 foi reescrita: não é migrar, é recuperar o que já era nosso.
+
+#### Armadilha nova e destrutiva, registrada por eles
+
+**`markDeletedTables` tem default `true`.** Rodar `postgres_metadata` contra um
+banco incompleto marca como deletado tudo que o catálogo tem e o banco não. Um
+ambiente restaurado pela metade apaga catálogo inteiro sem avisar. Pôr
+`markDeletedTables: false` ANTES da primeira execução.
+
+#### Decisão do Lucas
+
+Commitar o trabalho desta sessão como está e, depois, integrar as duas
+abordagens.
+
+
+### 2026-09-01 · Claude · HU-11, 21, 22, 27, 28 — e a descoberta que reposiciona a HU-33
+
+#### O que ficou pronto
+
+- **HU-27 · linhagem coluna a coluna.** `scripts/governance/linhagem_colunas.py`,
+  com `sqlglot`. **156 arestas, 130 com mapeamento, 720 colunas.** Deriva de
+  verdade: `data_referencia <- periodo` (é o `to_date`),
+  `custo_medio_m2 <- valor + variavel_id` (é o `case when`). Heurística de nome
+  igual erraria os dois. **O SQL é lido localmente e nunca publicado**, e a
+  linhagem não vaza coluna sensível nem em princípio — o schema que alimenta o
+  parser vem do catálogo, que já as omite.
+- **HU-11 · chaves.** `scripts/governance/restricoes_dbt.py`. O dbt não tem
+  `primary key`, tem teste: `unique` + `not_null` é a chave. Aplicadas 2 PKs e
+  13 `NOT_NULL`.
+- **HU-28 (parcial).** Serviço `Cidades - Superset` documentado; antes sem
+  descrição e com dono `admin`.
+- **HU-22 (parcial).** Reconciliações bloqueadas publicadas em
+  `mcidReconciliacoes`, com a justificativa de cada uma.
+- **HU-29 ganhou o grupo `qualidade`**, que compara testes declarados no dbt
+  com test cases na instância.
+
+#### ARMADILHA: chave primária não pode ir em dois lugares
+
+A instância **recusa a tabela inteira** se a mesma coluna vier marcada como
+chave na coluna E em `tableConstraints`: *"A column already tagged as a primary
+key and table constraint also includes primary key"*. Chave fica só em
+`tableConstraints` (que comporta chave composta); a coluna recebe `NOT_NULL`.
+
+#### `fds_panorama_entidade` ficou sem chave publicada
+
+A chave dele é `cnpj_eo`, coluna que o catálogo omite pelo filtro de
+identificador sensível. É a **HU-13 cobrando de forma concreta**: o catálogo
+não consegue declarar a granularidade da tabela porque esconde a própria chave
+dela.
+
+#### A DESCOBERTA: a ingestão nativa do `Cidades` parou em 21-23/07
+
+Três HUs que pareciam trabalho nosso **não estão bloqueadas por código**:
+
+| | situação |
+|---|---|
+| HU-21 (qualidade) | **já entregue pelo conector dbt**: os 16 test cases de coluna existem, com `Success` de 2026-07-23 |
+| HU-28 (Superset) | ingestão de 2026-07-22; os 26 charts `Conjuntura \| …` e os 21 `Boletim \| …` vieram depois e não estão lá |
+| HU-25 (DAGs) | 22 das nossas no catálogo, o resto não |
+
+**Isso reposiciona a HU-33.** Migrar para os conectores deixa de ser
+modernização futura e vira o conserto de algo que já existe e parou de rodar. O
+`Cidades` tem pipeline de ingestão configurado (tipo `metadata`), e os test
+cases mostram que uma ingestão dbt já rodou em algum momento.
+
+#### Erro meu, registrado porque a lição vale
+
+Afirmei que 3 test cases `unique` faltavam. **Não faltavam.** Duas evidências
+erradas apontaram para o mesmo lado: a primeira comparação usou uma listagem de
+500 quando existem 953, e os 3 caíram fora da página; ao "confirmar", consultei
+`dataQuality/testCases/name/<nome>` — mas o FQN de test case é
+`<tabela>.<coluna>.<nome>`, então o 404 era da consulta, não da ausência.
+
+**Duas evidências erradas concordando é exatamente quando se confirma por um
+terceiro caminho.** Quase escrevi 3 test cases à mão, duplicando o conector e
+divergindo no nome — o erro que a HU-33 manda evitar.
+
+
+### 2026-08-31 · Claude · Linhagem de coluna e o achado do SFTP datado
+
+#### HU-27 — linhagem coluna a coluna, sem publicar SQL
+
+`scripts/governance/linhagem_colunas.py`. Usa `sqlglot` (já estava no venv) para
+derivar de verdade, não por semelhança de nome. **156 arestas, 130 com
+mapeamento de coluna, 720 colunas com origem.**
+
+Exemplo real do `gold_continuo_sinapi`, que mostra por que heurística de nome
+não serviria:
+
+    periodo             -> periodo
+    periodo             -> data_referencia      (é o to_date)
+    valor, variavel_id  -> custo_medio_m2       (é o case when)
+
+**O SQL nunca sai daqui.** É lido e analisado localmente; o que se publica é só
+o par origem→destino. E a linhagem não consegue vazar coluna sensível **nem em
+princípio**: o schema que alimenta o parser vem do catálogo semântico, que já
+as omite, e `_origens()` só devolve coluna que exista nesse schema. Não é
+vigilância, é construção.
+
+Os 47 models que o parser não lê são as bronzes, que usam `read_parquet` via a
+macro `fonte_lake`. A linhagem delas já vem dos containers do lake.
+
+#### Auditoria de exposição (a pedido do Lucas)
+
+Conferido na instância: **0** colunas publicadas com nome de identificador de
+pessoa (de 2244), **0** descrições com caminho técnico ou valor tipo CPF/CNPJ,
+**nenhum** `sqlQuery` nas arestas de linhagem.
+
+#### O ACHADO: as 5 fontes SFTP têm data cravada no caminho
+
+`plugins/ingestor_lake.py` declara a convenção: Etapa 02 escreve
+`staging/<fonte>/<dado>.parquet`, **sem data**. As 26 fontes com DAG seguem. As
+5 do SFTP não — caem direto do agente operador com o nome do sistema de origem:
+`staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_20260707.parquet`.
+
+**O defeito é silencioso e não é do catálogo, é da ingestão:** na próxima
+entrega da CAIXA o `read_parquet` continua lendo a de julho, sem erro, até
+alguém reparar.
+
+Glob não resolve: cada entrega é retrato completo do histórico (o silver de
+FGTS-PF filtra `dt_assinatura` sobre base que vai até antes de 2020), então
+`Base_PF_FGTS_*.parquet` duplicaria tudo.
+
+**Status: PARADO.** O Lucas achou decisão arquitetural robusta demais para
+resolver de improviso e vai validar com o time. Registrado como **HU-34** no
+backlog, com a proposta (raw datado + staging canônico) e o interino de
+catálogo. **Nada foi aplicado** — nem a troca dos containers de arquivo por
+pasta.
+
+
+### 2026-08-31 · Claude · Épicos 4 e 5 — produto de dados e glossário
+
+#### O que entrou
+
+- **Produtos de dados** com etiquetas e termos do eixo que os descreve:
+  `conjuntura` → `IndicadoresConjunturais`; `empreendimento_far` →
+  `FundosEFontes.FAR`, `MCMV.MCMVFAR`, `ExecucaoDeEmpreendimentos`;
+  `entidades_fds` → `FundosEFontes.FDS`, `MCMV.MCMVEntidades`,
+  `Atores.EntidadeOrganizadora`.
+- **Propriedades customizadas**, seguindo a convenção `mcid` que já existia:
+  `mcidDagDeOrigem` (table) — a DAG que produziu o arquivo, vinda de `meta.dag`;
+  `mcidReconciliacoes` (dataProduct) — o resumo de `reconciliacoes.yml`, com a
+  justificativa de cada bloqueio, para que a ausência de um cruzamento seja
+  decisão documentada e não esquecimento.
+- **Glossário** com dono (`mcid-data-engineering`) e `references` verificadas
+  em 3 termos de instituição.
+
+#### ARMADILHA: FQN de termo aninhado não é eixo + folha
+
+Montei `MCID.ProgramasHabitacionais.MCMVFAR` concatenando o eixo com o nome da
+folha, tirado de uma listagem que só guardava o último segmento. O certo é
+`MCID.ProgramasHabitacionais.MCMV.MCMVFAR` — os dois ficam sob `MCMV`.
+
+Duas consequências que valem mais que o erro em si:
+
+1. **Um FQN errado derruba o patch inteiro.** Os produtos FAR e FDS ficaram sem
+   nenhuma etiqueta por causa de um termo, não sem aquele termo.
+2. **Eu havia escrito no YAML que os FQNs "foram conferidos contra a
+   instância".** Não foram: foram inferidos. A frase era falsa e teria
+   sobrevivido no arquivo. Ao declarar FQN, listar o `fullyQualifiedName`
+   completo — nunca remontá-lo.
+
+Há teste travando os dois casos.
+
+#### Propriedade customizada: o tipo de entidade é GLOBAL
+
+Criar propriedade em `table` faz ela aparecer para TODOS os ministérios da
+instância. Por isso o prefixo `mcid` (convenção que já existia em
+`mcidRelatedTables` e `mcidSemanticRelationships`) e por isso só criamos, nunca
+removemos: as outras podem não ser nossas.
+
+A rota `DELETE /metadata/types/{id}/customProperties/{nome}` devolve 404; para
+remover, é JSON Patch com `remove` no índice do array `customProperties`.
+
+E de novo o padrão do dia: **`customProperties` só vem se for pedido em
+`fields`** — sem isso a lista chega vazia e a propriedade é recriada a cada
+execução.
+
+#### Pendente destes dois épicos: PESSOAS
+
+`experts` (produtos e domínios) e `revisores` (glossário) ficaram VAZIOS de
+propósito. Nomear quem responde pelo conteúdo e quem aprova termo novo é
+decisão de pessoas, não de automação. O time `mcid-data-engineering` tem três
+integrantes na instância — Arthur Alves Melo, Joao Egewarth, Mateus de Castro.
+Falta o Lucas dizer quem entra em cada papel; o mecanismo já está pronto e lê
+de `dominios.yml` e `termos_mcid.yml`.
+
+
+### 2026-08-31 · Claude · Auditoria automatizada e data lake no catálogo
+
+Continuação da entrada anterior do mesmo dia. Fecha a **HU-29** e o **épico 7**.
+
+#### `make governance-audit-om` (HU-29)
+
+`scripts/governance/auditar_openmetadata.py` compara a INSTÂNCIA com o
+declarado e relata cobertura por produto. Não confundir com
+`governance-audit`, que audita se a documentação foi escrita: este audita se
+ela chegou. A distância entre as duas já foi de 85 tabelas.
+
+Hoje: 140/140 em descrição, colunas, domínio, produto, dono, tier,
+certificação, uso e etiquetas; 38 tabelas e 231 colunas com glossário;
+2244/2244 colunas com descrição. **Nenhuma pendência.**
+
+**Ela se pagou na primeira execução**, achando o que a conferência manual não
+via: a relação `Arquitetura.Bronze -> Silver` tinha sumido.
+
+#### Três defeitos de LEITURA, todos invisíveis como erro
+
+O padrão do dia: o valor certo estava na instância, a comparação é que não
+achava. Nenhum aparecia como falha; todos faziam o sync reescrever para sempre.
+
+1. **Campo não pedido não vem.** `dataProducts` não estava na lista de
+   `fields`, então a resposta não o trazia, a comparação via "ausente" e as
+   **140 tabelas eram reescritas em toda execução**.
+2. **A instância escapa `=`, `'` e `"` como entidade HTML** ao gravar
+   descrição. Comparando cru, 6 tabelas divergiam para sempre.
+3. **O FQN cita segmento que contém ponto**:
+   `...staging.ibge."sinapi.parquet"`. Montando sem aspas, as 33 folhas do
+   lake nunca eram encontradas e o sync as recriava a cada rodada — sem
+   duplicar, porque o PUT é upsert, mas sem nunca convergir.
+
+Depois dos três: **duas execuções seguidas com `atualizados=0`**.
+
+#### Mais duas armadilhas
+
+4. **`domains` tem formato diferente na criação e no patch.** Criação exige
+   lista de FQN em texto (`["MCid"]`); patch exige objeto de referência. O
+   objeto na criação devolve `400 Invalid request format` **sem dizer qual
+   campo** — e derruba a criação inteira, que aqui cascateou em 78 falhas.
+   Solução adotada: **criação mínima, governança sempre por patch.** Contorna
+   a assimetria em qualquer entidade.
+5. **A relação de glossário é bidirecional** e o patch substitui a lista.
+   Declarar só `A -> B` fazia B apagar o vínculo de A ao receber o seu. Agora
+   as relações são fechadas nos dois sentidos antes de aplicar.
+
+#### O sync desfazia curadoria de gente
+
+Alguém aplicou `MCID.IndicadoresConjunturais` no schema
+`conjuntura_continuo_mart` pela interface. A regra de mescla tratava
+**qualquer** etiqueta de glossário como nossa, e o sync a removia toda
+execução. Agora só sai etiqueta que esteja declarada em `termos_mcid.yml`;
+termo de terceiro fica. Vale para tabela, coluna e schema.
+
+#### Épico 7 — o lake e a orquestração (HU-23 a HU-26)
+
+`make openmetadata-lake` (`scripts/governance/sincronizar_lake.py`).
+
+- **MinIO** entrou como `Cidades - MinIO`, **sem `connection`**: o lake é
+  publicado para catálogo e linhagem, não para ingestão nativa. Credencial de
+  MinIO não entra em instância compartilhada entre ministérios.
+- **46 containers**: `data-lake-mcid -> staging -> <prefixo> -> <arquivo>.parquet`.
+  Os 9 prefixos descritos por quem apura o dado; os arquivos herdam a descrição
+  já curada no `sources.yml` — não se duplica texto.
+- **33 arestas parquet -> Bronze.** O mapeamento saiu exato e sem VPN: o
+  caminho está em `meta.caminho` e qual Bronze lê qual arquivo está na chamada
+  `fonte_lake('<fonte>')` do SQL do model. **31 models, 31 sources, 1:1**, sem
+  órfã nem sobra. Há teste travando isso.
+- **Airflow**: o serviço `airflow` já existia e é NOSSO (o MinC tem
+  `MinC - Airflow` à parte). Tinha 80 pipelines, 0 com domínio, 13 com
+  descrição e nenhuma linhagem. Agora documentado, e as DAGs de ingestão
+  declaradas são criadas quando faltam.
+
+Cadeia conferida ponta a ponta:
+
+    pipeline  airflow.abecip_financiamentos_ingest_dag
+      -> container  staging/abecip/financiamentos_modalidade.parquet
+         -> table  bronze_continuo_abecip_financiamentos
+            -> table  silver_continuo_abecip_financiamentos -> ...
+
+#### `meta.dag` no sources.yml — e por que 19 estão vazias
+
+O vínculo DAG -> arquivo é **declaração, não inferência**. 12 das 31 foram
+resolvidas lendo `registros_para_staging_parquet(fonte, dado)` no código. As
+outras 19 **não são conhecíveis pelo repo**:
+
+- as **5 de `sftp/`** chegam por transferência do agente operador; não há DAG
+  que as escreva, e o campo fica ausente de propósito;
+- as **14 do IBGE** saem de `ibge_ingest_dag`, que lê a lista de datasets da
+  Airflow Variable `IBGE_CONFIGURACOES`. Quais parquets ela produz está no
+  Airflow, não aqui. **Preencher no chute publicaria linhagem falsa.**
+
+Quem souber a resposta acrescenta a linha e o catálogo passa a mostrar a DAG de
+origem sem ninguém ler código.
+
+#### Ordem de execução (atualizada)
+
+    make openmetadata   # sync -> governanca -> lake
+
+O lake vem por último: liga containers a tabelas que precisam existir antes.
+
+#### Pendente
+
+Igual à entrada anterior, menos a HU-29. Some: nome de exibição do serviço
+(exige administrador), `make openmetadata-catalog` com VPN, HU-13, HU-15, e as
+19 `meta.dag` acima.
+
+
+### 2026-08-31 · Claude · OpenMetadata aplicado na instância — épicos 0 a 3
+
+**Estado: aplicado e conferido.** Diferente da entrada anterior do mesmo dia,
+que era "declarado, não aplicado". As credenciais entraram no `.env` e os dois
+sincronizadores rodaram contra
+`openmetadata.clusterlab.lappis.rocks` (OM 1.13.3), service `Cidades`, database
+`cidades`.
+
+#### Resultado, conferido tabela a tabela na instância
+
+| | antes | agora |
+|---|---|---|
+| Descrições de tabela curadas | 0/140 | **140/140** |
+| Colunas fiéis ao dbt | — | **140/140 tabelas** |
+| Colunas com `VARCHAR(65535)` inventado | 546+ | **0** |
+| Descrição de schema curada | 0/5 | **5/5** |
+| Certificação | 0/140 | **140/140** |
+| Tier, permissão de uso, produto, dono | parcial | **140/140** |
+| Termo de glossário | 0 | **38 tabelas, 231 colunas** |
+| Ativos por produto (índice de busca) | 0 | **116 / 13 / 11** |
+
+Serviço e database documentados: descrição, dono `mcid-data-engineering`,
+domínio `MCid`.
+
+#### ARMADILHAS DA INSTÂNCIA — ler antes de mexer
+
+Todas custaram diagnóstico. Nenhuma aparece na documentação do OpenMetadata.
+
+1. **Certificação NÃO é etiqueta.** É campo próprio (`/certification`).
+   Mandada dentro de `/tags`, a API devolve **200 e descarta em silêncio**. Foi
+   por isso que a primeira aplicação saiu com Tier e uso e sem certificação
+   nenhuma, sem erro em lugar nenhum. O OM preenche `appliedDate` e
+   `expiryDate` sozinho, com validade de **30 dias** — é o sync recorrente que
+   renova. Se o sync parar de rodar, a certificação expira.
+2. **`PUT` não sobrescreve descrição já preenchida.** A instância preserva o
+   texto existente quando a atualização vem de ingestão. Consequência: as 85
+   descrições de rodapé da carga de 30/08 ("Modelo da camada gold do produto
+   conjuntura") sobreviveram à documentação curada de 31/08. **O catálogo
+   parecia documentado e não estava.** Descrição só entra por PATCH.
+3. **O OM escapa `=`, `'` e `"` como entidade HTML** ao gravar descrição
+   (`ic_credito&#61;&#39;0&#39;`). Comparando cru, toda descrição com um desses
+   caracteres diverge **para sempre**: o sync reescreve, a instância reescapa,
+   e na execução seguinte a diferença reaparece. Comparar com `html.unescape`.
+4. **`relatedTerms` é `TermRelation`**, com `term` e `relationType` — não
+   referência de entidade. Referência solta dá HTTP 500. Usamos `relatedTo`.
+5. **O `ingestion-bot` é proibido de alterar nome de exibição**
+   (`IngestionBotRole`, `DefaultBotPolicy`, regra `DisplayName-Deny`). E JSON
+   Patch é tudo ou nada: enquanto o `displayName` ia no mesmo patch, o 403
+   derrubava descrição, dono, domínio e etiqueta junto. Foi assim que o
+   database ficou vazio sem erro visível. Nome de exibição vai em patch
+   separado.
+6. **O serviço vive em `services/databaseServices`**, não em
+   `databaseServices`. Na raiz dá 404 e o serviço parece não existir.
+7. **`dbtTags` é COMPARTILHADA** com o MinC (`rouanet`, `salic`, `sgac`).
+   Marcada `compartilhada: true` em `dominios.yml`: criamos o que falta e nunca
+   alteramos classificação nem etiqueta existente.
+8. **A classificação `Uso` já existia**, com textos melhores que os que eu
+   tinha escrito, e não estava declarada em lugar nenhum. Trazidos para o
+   `dominios.yml` verbatim em vez de sobrescritos.
+9. **Timeout de 30s não basta** para reescrever o array de colunas de uma
+   tabela larga — a sincronização morreu no meio por isso. Agora 120s com três
+   tentativas.
+10. **`assets` do produto de dados fica 0** mesmo com tudo associado: é uma
+    relação separada, preenchida pelo lado do produto, e **não é a que a
+    interface usa**. A aba de ativos lê o índice de busca
+    (`dataProducts.fullyQualifiedName`), que mostra 116/13/11 corretamente.
+    Não persiga esse zero.
+
+#### ORDEM DE EXECUÇÃO — é dependência, não preferência
+
+    make openmetadata   # estrutura primeiro, governança depois
+
+Reescrever `/columns` **substitui o array inteiro** e leva junto a etiqueta de
+glossário que a governança pendura na coluna. Rodar governança antes de
+estrutura perde as 231 colunas etiquetadas. Aconteceu hoje.
+
+#### Correção de rotulagem
+
+A camada agora sai do **modelo**, não do schema. `empreendimento_far` e
+`entidades_fds` são declarados `mixed` porque guardam as três camadas no mesmo
+schema; a regra antiga dava `Tier1`, `Certification.Gold` e `Uso.Consumivel`
+às **11 tabelas bronze** desses produtos. Os layers do catálogo batem 1 a 1
+com os diretórios do dbt — conferido. `mixed` também deixou de receber
+permissão de uso: marcar o schema consumível enquanto 11 tabelas dentro dele
+são explicitamente não consumíveis é contradição visível na tela.
+
+#### Pendente
+
+1. **Nome de exibição do serviço** — está "Data Warehouse MCid", deveria ser o
+   nome real. Só quem tem perfil de administrador troca, pela interface. O
+   `display_name` foi retirado do `servicos.yml` (decisão do Lucas: nome real,
+   não rótulo inventado).
+2. **`make openmetadata-catalog`** (exige VPN e banco). O exportador passou a
+   carregar `index` e `materialized`, mas o JSON commitado é anterior:
+   `ordinalPosition` sai vazio e toda tabela consta como `Regular`, inclusive
+   as views.
+3. **HU-13** — as 14 colunas de CNPJ de FAR e FDS continuam fora do catálogo.
+   Todas são CNPJ de pessoa jurídica, registro público, e são a chave que liga
+   a construtora entre as tabelas. Decisão do Lucas pendente.
+4. **HU-15** — política das 489 colunas da bronze.
+5. **HU-29** — auditoria automatizada do lado do OpenMetadata. Hoje a
+   conferência é manual, feita na mão a cada rodada.
+
+
+### 2026-08-31 · Claude · Backlog do OpenMetadata e Épicos 0–3 implementados
+
+**Estado: declarado, testado e NÃO aplicado.** O `.env` do repo não tem
+`OPENMETADATA_URL` nem `OPENMETADATA_JWT_TOKEN` — as credenciais que rodaram o
+sync em 30/08 se perderam. Tudo abaixo roda em modo offline e passa em teste;
+nada foi escrito no catálogo.
+
+#### Backlog
+
+`docs/governance/backlog-openmetadata.md` — 33 HUs em 9 épicos, com o
+conjuntura como molde para `empreendimento_far` e `entidades_fds`. Decisões do
+Lucas registradas: manter o script próprio agora e migrar para os conectores
+nativos depois (HU-33); o bot é tanto o `ingestion-bot` do OpenMetadata quanto
+as nossas DAGs como Pipeline Service.
+
+#### Três defeitos que travavam a etiquetagem
+
+1. **As classificações nunca foram criadas.** O sync aplicava
+   `Uso.NaoConsumivel`, `dbtTags.mcid` e `Certification.Gold` sem que nenhuma
+   existisse na instância — `dbtTags` normalmente vem do conector dbt, que não
+   rodamos, e `Uso` é inteiramente nossa. O PATCH de tags era recusado tabela a
+   tabela. É a explicação do "código presente, etiquetas ausentes" de 31/08.
+2. **Três donos em conflito.** `sincronizar_openmetadata.py` carimbava o
+   usuário `admin` nas tabelas; `dominios.yml` declarava o time
+   `mcid-data-engineering` nos produtos; `schemas.yml` tinha `owner_key: admin`
+   e ninguém lia. Agora `dominios.yml` é a única fonte e `admin` não existe
+   mais em nenhum YAML.
+3. **A camada vinha do schema, não do modelo.** `empreendimento_far` e
+   `entidades_fds` são declarados `mixed` porque guardam bronze, silver e gold
+   no mesmo schema. Usar a camada do schema daria `Tier1`, `Certification.Gold`
+   e `Uso.Consumivel` às **11 tabelas bronze** desses dois produtos — o oposto
+   do que a camada diz. A camada agora sai do catálogo semântico, por modelo.
+   Há teste para isso.
+
+#### Separação de responsabilidade
+
+Os dois scripts disputavam `/owners` e o segundo a rodar desfazia o primeiro.
+
+| Comando | O que faz |
+|---|---|
+| `make openmetadata-sync` | estrutura: schema, tabela, coluna, linhagem |
+| `make openmetadata-governanca` | governança: dono, domínio, produto, etiqueta, tier, certificação, uso, glossário |
+| `make openmetadata` | os dois, nessa ordem |
+
+`scripts/governance/governanca_comum.py` (novo) concentra `.env`, cliente da
+API, resolução de proprietário e cálculo do patch mínimo.
+
+#### O que mudou no conteúdo publicado
+
+- **Tipo de coluna fiel.** `om_column()` colapsava tudo em sete tipos e
+  carimbava `dataLength: 65535` em toda coluna textual. Agora: 868 colunas como
+  TEXT sem comprimento inventado, 112 com precisão e escala reais
+  (`numeric(15,2)` → precision 15, scale 2), `timestamp with time zone`
+  distinguido de `without`, array com o tipo interno declarado.
+- **Descrição de schema vem do YAML.** `schema_description()` deduzia a camada
+  pelo sufixo do nome e montava um texto genérico, enquanto `schemas.yml` já
+  tinha descrição curada. Schema sem entrada no YAML agora **falha o sync** em
+  vez de receber texto automático. Os 9 schemas ganharam `display_name`.
+- **Serviço e banco documentados** (`governance/servicos.yml`, novo). Não
+  criamos nem tocamos em conexão — quem administra a instância é dono disso.
+  Preenchemos o que estava vazio: descrição, nome, dono, domínio, etiqueta.
+- **Glossário.** Os 9 termos de `glossary.yml` nunca chegavam ao OpenMetadata —
+  o vocabulário de camada e de período ficava fora do lugar onde se procura por
+  ele. Entraram 8 termos novos (`MCID.Arquitetura.*`, `MCID.Governanca.*`,
+  incluindo os eixos-pai, que não existiam), 9 termos com sinônimo e 12 com
+  termo relacionado. `references` (URL) ficou de fora: não publico endereço que
+  não conferi.
+- **Termo de glossário na coluna** (`aplica_a_colunas`). `PeriodoReferencia`
+  cobre `data_referencia`, `periodo`, `ano`, `mes` e `trimestre`; `Safra` cobre
+  `edicao`. É o mesmo conceito em 140 tabelas, e o contrato da dimensão
+  temporal é o que garante que seja mesmo o mesmo.
+- **Idempotência.** `operacoes_de_diferenca()` emite patch só do que difere,
+  ignorando o que a API acrescenta (href, deleted). Rodar duas vezes deve
+  terminar com `atualizados=0`.
+- **Mescla de etiquetas.** Substituímos só o que governamos (`dbtTags`, `Uso`,
+  `Tier`, `Certification`, glossário); `PII` e classificações de terceiros na
+  instância compartilhada são preservadas.
+
+#### Armadilhas novas
+
+- **`aplica_a` ora é lista inline, ora bloco.** Inserir chave logo depois dela
+  quebra o YAML. Inserir depois da linha `- fqn:` é sempre seguro. (Reincidência
+  do aviso de 31/08 sobre editar YAML com regex.)
+- **`mutuallyExclusive` é imutável** depois da classificação criada; incluí-lo
+  no patch faz a API recusar toda atualização.
+- **Eixo-pai do glossário precisa ser declarado.** Criar
+  `MCID.Governanca.Safra` sem `MCID.Governanca` devolve 404. A instância só tem
+  os sete eixos originais.
+
+#### Pendente
+
+1. **Credenciais.** Sem `OPENMETADATA_URL` e `OPENMETADATA_JWT_TOKEN` nada é
+   aplicado. O modelo comentado está em `infra/env/.env.example`.
+2. **Regenerar o catálogo semântico** (`make openmetadata-catalog`, exige VPN e
+   banco). O exportador passou a carregar `index` e `materialized`, mas o JSON
+   commitado é anterior: `ordinalPosition` sai vazio e toda tabela sai como
+   `Regular`. O código tolera a ausência.
+3. **HU-13 (PII) continua bloqueada** por decisão do Lucas: coluna sensível hoje
+   some do catálogo, o que faz o catálogo descrever um schema que não é o real.
+4. `make lint` já falhava antes por mypy em `auditar_metadados.py`,
+   `inventariar_colunas.py` e `validar_silver_gx.py` (16 erros, todos
+   anteriores). Os arquivos desta entrega estão limpos; adicionei
+   `mypy_path = "scripts/governance"` ao `pyproject.toml`, que resolveu os
+   `import-not-found` entre módulos irmãos.
+
+
 ### 2026-08-31 · Claude · Documentação semântica e governança no OpenMetadata
 
 **Estado: documentação do dbt 100% pronta; catalogação parcialmente aplicada.**

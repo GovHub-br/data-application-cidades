@@ -103,6 +103,10 @@ ignore = []
 [tool.mypy]
 python_version = "3.11"
 files = ["**/*.py"]
+# Os scripts de governança se importam entre si como módulos irmãos (é assim
+# que rodam: `python scripts/governance/x.py`). Sem este caminho o mypy não
+# resolve nenhum deles e todo tipo que atravessa a fronteira vira Any.
+mypy_path = "scripts/governance"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
