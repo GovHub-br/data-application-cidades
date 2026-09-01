@@ -115,6 +115,13 @@ LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
 # Extensão fora da lista fica por último.
 PRECEDENCIA_EXT = [".csv", ".txt", ".xlsx", ".xls", ".mdb", ".accdb", ".json"]
 
+# Ignorar a pasta pressupõe que ela é só um CANAL alternativo do mesmo arquivo (SFTP vs
+# SharePoint, GEFUS/ vs GEFUS/ANTERIORES/). Não vale para fontes de extração automatizada
+# (PDF/OCR) que usam nomes padronizados por dado e a pasta É a competência ou a entidade
+# (abecip/2025-10/, construtoras/tenda/): aí o nome se repete de propósito, e ignorar a
+# pasta juntaria dados diferentes num "gêmeo" só e descartaria quase tudo.
+FONTES_COM_PASTA_NA_IDENTIDADE = {"abecip", "construtoras", "mrv"}
+
 
 def _rank_ext(ext: str) -> Tuple[int, int]:
     ext = ext.lower()
@@ -127,11 +134,17 @@ def _rank_ext(ext: str) -> Tuple[int, int]:
 
 
 def _stem_sem_extensao(key: str) -> str:
-    """Nome do arquivo sem extensão e sem pasta — a identidade que os gêmeos compartilham.
+    """Identidade que os gêmeos compartilham: nome do arquivo sem extensão.
 
-    Deliberadamente ignora a pasta: o mesmo nome em `GEFUS/` e em `GEFUS/ANTERIORES/` é
-    o mesmo dado, e só um deve virar parquet.
+    Ignora a pasta por padrão — o mesmo nome em `GEFUS/` e em `GEFUS/ANTERIORES/` é o
+    mesmo dado chegando por dois canais, e só um deve virar parquet. Exceção: fontes em
+    `FONTES_COM_PASTA_NA_IDENTIDADE`, onde a pasta faz parte do dado (ver comentário
+    acima) — aí a identidade é o caminho relativo inteiro, não só o nome do arquivo.
     """
+    rel = key[len(RAW_PREFIX) :] if key.startswith(RAW_PREFIX) else key
+    fonte = rel.split("/", 1)[0]
+    if fonte in FONTES_COM_PASTA_NA_IDENTIDADE:
+        return os.path.splitext(rel)[0]
     return os.path.splitext(os.path.basename(key))[0]
 
 
