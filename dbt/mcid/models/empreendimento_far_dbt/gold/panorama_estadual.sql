@@ -1,19 +1,19 @@
 {{ config(materialized="table") }}
 
--- Gold: Panorama Estadual — Painel agregado por UF
--- Consolida todos os empreendimentos de um estado em KPIs, distribuições
--- por método/demanda/portaria, situação de obra e execução financeira.
--- Alimenta o dashboard "Panorama do Estado" (visão macro).
+-- Gold: Panorama Estadual — painel agregado por UF
+-- Cada seção do dashboard vira um bloco do union all, identificado por `secao`:
+-- o BI filtra WHERE secao = 'X' para montar cada card.
 with
     fichas as (select * from {{ ref("ficha_empreendimento") }}),
 
-    -- Tabela de referência IBGE para traduzir sigla UF → nome completo do estado
+    -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
+    -- dobraria as somas
     ibge_uf as (
-        select sigla, upper(nome) as estado from {{ source("raw", "api_ibge_uf") }}
+        select distinct sigla, upper(nome) as estado
+        from {{ source("raw", "api_ibge_uf") }}
     ),
 
-    -- Seção 1: Header — Grandes números por UF
-    -- KPIs: Municípios, Empreendimentos, UHs, Valor Total
+    -- Seção 1: header — grandes números por UF
     header as (
         select
             uf,
@@ -23,7 +23,6 @@ with
             coalesce(sum(valor_contratado), 0.0) as total_valor_contratado,
             coalesce(sum(valor_desembolsado), 0.0) as total_valor_desembolsado,
             coalesce(sum(valor_aporte_adicional), 0.0) as total_valor_aporte_adicional,
-            -- Valor médio por UH no estado
             case
                 when coalesce(sum(quantidade_uh), 0) > 0
                 then sum(valor_contratado) / sum(quantidade_uh)
@@ -33,8 +32,7 @@ with
         group by uf
     ),
 
-    -- Seção 2: Seleção e Enquadramento — Distribuição de UHs
-    -- por Método, Portaria (Referência) e Demanda
+    -- Seção 2: distribuição de UHs por método, portaria e demanda
     dist_metodo as (
         select
             uf,
@@ -48,7 +46,6 @@ with
     dist_portaria as (
         select
             uf,
-            -- Prefixo amigável para exibição no dashboard
             case
                 when portaria_selecao = 'Não informada'
                 then 'Não informada'
@@ -70,10 +67,8 @@ with
         group by uf, demanda
     ),
 
-    -- Seção 3: Situação do Empreendimento — Tabela de status
-    -- Agrupa por situação da obra com contagem de empreendimentos, UHs e %
-    -- Usa CROSS JOIN com esqueleto fixo para garantir que todas as 6 categorias
-    -- apareçam para cada UF, mesmo que zeradas (requisito visual do dashboard).
+    -- Seção 3: situação da obra. O esqueleto fixo garante as 6 categorias em toda
+    -- UF, mesmo zeradas — a tabela do dashboard espera altura constante.
     skeleton_situacao(situacao, ordem) as (
         values
             ('CONCLUÍDO E ENTREGUE', 1),
@@ -86,12 +81,10 @@ with
 
     ufs as (select distinct uf from fichas),
 
-    -- Gera todas as combinações UF x Situação
     grade_situacao as (
         select u.uf, s.situacao, s.ordem from ufs u cross join skeleton_situacao s
     ),
 
-    -- Dados reais agrupados
     situacao_real as (
         select
             uf,
@@ -102,7 +95,6 @@ with
         group by uf, situacao_empreendimento
     ),
 
-    -- LEFT JOIN: garante 0/0 para combinações sem dados
     dist_situacao as (
         select
             g.uf,
@@ -114,8 +106,7 @@ with
         left join situacao_real r on g.uf = r.uf and g.situacao = r.situacao
     ),
 
-    -- Seção 4: Execução Física — Distribuição por faixa percentual
-    -- Faixas: <40%, 41-55%, 56-75%, >75%
+    -- Seção 4: execução física por faixa percentual
     dist_execucao_fisica as (
         select
             uf,
@@ -144,9 +135,6 @@ with
             end
     )
 
--- Query final: UNION ALL de todas as seções num formato pivot
--- Cada linha tem uf + secao + dimensao + métricas, permitindo que o
--- BI filtre por secao para montar cada card do dashboard.
 select
     h.uf,
     i.estado,

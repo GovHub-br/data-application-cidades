@@ -274,11 +274,9 @@ def _criar_control_table(conn_str: str) -> None:
 def _carregar_carregados(conn_str: str, familia: str) -> set:
     """(staging_key, source_hash, staging_etag) já materializados ('loaded') na família.
 
-    O `staging_etag` precisa entrar na chave: `source_hash` é o hash do arquivo em raw/, e
-    o mesmo raw pode gerar um parquet DIFERENTE se o raw_para_staging.py mudar (foi o que
-    aconteceu na correção do detectar_encoding — o raw era o mesmo, mas o parquet saiu com
-    o texto certo em vez de mojibake). Só com o hash da origem, a bronze pularia a recarga
-    e continuaria servindo o parquet antigo silenciosamente.
+    O `staging_etag` entra na chave porque o `source_hash` é do arquivo em raw/, e o mesmo
+    raw gera parquet diferente quando o raw_para_staging.py muda — sem o etag a bronze
+    pularia a recarga e continuaria servindo o parquet antigo.
 
     Só o `--apply` (status 'loaded') conta para idempotência; dry-runs não bloqueiam.
     """
@@ -351,15 +349,12 @@ def _truncar_ident(nome: str) -> str:
 def _colunas_postgres(nomes: List[str]) -> Tuple[List[str], bool]:
     """Normaliza p/ snake_case, trunca em 63 bytes e deduplica.
 
-    `normalizar_colunas` (lake_utils) é a mesma função usada no raw_para_staging.py, então
-    um parquet que veio de lá passa incólume; o trabalho real acontece para parquets
-    gerados por outros caminhos.
+    Usa a mesma `normalizar_colunas` do raw_para_staging.py, então parquet vindo de lá
+    passa incólume; o trabalho real é para parquets de outros caminhos.
 
-    Ressalva: `norm_header` faz `.strip("_")`, o que comeria o prefixo das colunas de
-    linhagem (`_source_file`, `_ingested_at`, `_source_hash`). O underscore inicial é
-    convenção da staging para separar linhagem de dado, então é reposto aqui — sem isso a
-    bronze renomearia essas três colunas silenciosamente. Repor underscore nunca gera
-    colisão nova (só torna o nome mais distinto), e a dedup abaixo cobre o resto.
+    Ressalva: `norm_header` faz `.strip("_")` e comeria o prefixo das colunas de linhagem
+    (`_source_file`, `_ingested_at`, `_source_hash`), que é convenção da staging — o
+    underscore é reposto aqui, e a dedup abaixo cobre eventual colisão.
 
     Retorna (finais, houve_mudanca).
     """
@@ -841,6 +836,14 @@ def main() -> None:
         help="Threads do pg_duckdb p/ esta sessão (default 4).",
     )
     args = parser.parse_args()
+
+    # Sob o Airflow o root logger já vem configurado; rodando como CLI ninguém configura,
+    # e o script fica MUDO — sem uma linha de log, mesmo carregando tabela.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)-7s %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
     if args.listar:
         _listar_familias()

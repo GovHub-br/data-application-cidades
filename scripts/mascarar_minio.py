@@ -127,24 +127,14 @@ P_ENDER = re.compile(
 # "ic_benef_sit_rua" (flag indicadora de situação de rua)
 P_ENDER_EXC = re.compile(r"objetivo|sit_rua|(^|_)ic(_|$)")
 P_NASC = re.compile(r"nascimento|dt_?nasc|data_?nasc|dat_nasc")
-# Atributo pessoal sensível (LGPD art. 5º II). Instituição não tem raça nem deficiência,
-# então a coluna também é prova de que o arquivo trata de pessoa física.
-# Categoria própria porque antes esses campos só eram protegidos por acidente
-# (`cod_cor_raca_beneficiario` casava com "beneficiario" e virava "nome"); com o prefixo
-# de código passando a excluir nome, ficariam a descoberto.
+# Atributo sensível (LGPD art. 5º II). Instituição não tem raça nem deficiência, então a
+# coluna também serve de prova de que o arquivo trata de pessoa física.
 P_SENSIVEL = re.compile(r"cor_raca|(^|_)raca(_|$)|etnia|deficiencia|(^|_)pcd(_|$)")
 
-# Papéis que, na prática, sempre denotam PESSOA FÍSICA. Mascarados incondicionalmente.
+# Papéis que sempre denotam pessoa física. Mascarados incondicionalmente.
 P_NOME_PESSOA = re.compile(r"comprador|conjuge|dependente|completo")
-# Papéis que tanto podem ser pessoa quanto INSTITUIÇÃO. No Novo MCMV FAR, por exemplo, o
-# "proponente" é a prefeitura ou o estado, e o "titular" é o ente público — mascarar isso
-# destrói dado público sem proteger ninguém. Só viram PII com indicador forte no arquivo.
-#
-# "mutuario" e "beneficiario" entraram aqui em 2026-08-31, vindos do incondicional. O
-# histórico do lake (853 decisões) mostrou que mascará-los sem prova nunca protegeu
-# ninguém: das 761 aplicações corretas, 100% eram em arquivos que TAMBÉM tinham CPF, NIS
-# ou nascimento — e as 30 sem prova eram todas institucionais ("Beneficiários" de emenda
-# parlamentar, "BENEFICIARIO" de cadastro PJ, "mutuario_final" de tabela de programas).
+# Papéis que tanto podem ser pessoa quanto instituição: no FAR o "proponente" é a
+# prefeitura. Só viram PII com indicador forte no arquivo.
 P_NOME_AMBIGUO = re.compile(r"titular|proponente|responsavel|mutuario|beneficiario")
 
 P_NOME_EXC = re.compile(
@@ -155,35 +145,21 @@ P_NOME_EXC = re.compile(
     r"ente_publico|(^|_)publico(_|$)|prefeitura|estado|uniao|governo|"
     # "titularidade" é o REGIME do imóvel (próprio/cedido), não o nome de alguém
     r"titularidade|"
-    # METADADO: em catálogo de dados, "nome" descreve uma COLUNA, não uma pessoa.
-    # `NomeCompletoColuna` casava com "completo" e o catálogo inteiro perdia a coluna
-    # (30 arquivos em 2026-08-31). Como CEP/endereço só são liberados por um indicador
-    # de PF, tirar o "nome" daqui também devolve o `Endereço Remetente` do catálogo.
+    # metadado: em catálogo de dados "nome" descreve uma COLUNA, não uma pessoa
     r"coluna|campo|atributo|conjunto|(^|_)tabela|dicionario|metadado|"
     # colunas com papel (mutuario/beneficiario/titular...) mas que não são NOME:
     # identificadores PJ, códigos, valores, flags e datas
     r"cnpj|cpf|sexo|(^|_)tipo(_|$)|(^|_)vr(_|$)|valor|prest|parcela|"
     r"(^|_)qt(_|$)|(^|_)ic(_|$)|(^|_)dt(_|$)|(^|_)mulher(_|$)|pdc|pcd|objetivo"
 )
-# Prefixo de CÓDIGO/IDENTIFICADOR: o conteúdo é um código, não texto de nome
-# (`co_ente_publico_proponente` guarda '1', não o nome de uma pessoa). Vale só para a
-# categoria "nome" — `co_cep` continua sendo CEP.
-# `qtd_` além de `qt_`: `qtd_beneficiario_indicado` é uma CONTAGEM e virava "nome"; como
-# "nome" é indicador de PF, ainda destravava dsc_endereco e num_cep no mesmo arquivo.
+# Prefixo de código: o conteúdo é um identificador, não texto de nome
+# (`co_ente_publico_proponente` guarda '1'). Vale só para a categoria "nome".
 P_CODIGO = re.compile(r"^(co|cod|nu|num|qtd?|id)_")
 
-# Indicadores de que o arquivo contém PESSOA FÍSICA.
-#
-# FORTE = identificador estrutural de PF. A presença da coluna é prova: não existe CPF,
-# NIS ou data de nascimento de prefeitura.
-# FRACO = inferido por palavra-chave no nome da coluna, que é justamente onde moram os
-# falsos positivos.
-#
-# Só o indicador FORTE destrava o mascaramento de CEP/endereço e dos papéis ambíguos.
-# Antes bastava qualquer "nome" — e um único falso positivo
-# (`co_ente_publico_proponente` casando com "proponente") fazia o arquivo inteiro perder
-# logradouro, bairro e CEP DO EMPREENDIMENTO, que é obra pública e não endereço de
-# ninguém. Como o mascaramento reescreve o raw/ no lugar, esse dado não volta.
+# Indicadores de que o arquivo contém pessoa física. FORTE é estrutural (não existe CPF de
+# prefeitura); FRACO é inferido por palavra-chave, e é onde moram os falsos positivos.
+# Só o FORTE destrava CEP/endereço e os papéis ambíguos — como o mascaramento reescreve o
+# raw/ no lugar, um falso positivo apaga dado público em definitivo.
 _PF_INDICATOR_FORTE = {"cpf", "nis", "nascimento", "sensivel"}
 _PF_INDICATOR_FRACO = {"nome"}
 _PF_INDICATOR_CATS = _PF_INDICATOR_FORTE | _PF_INDICATOR_FRACO
@@ -196,17 +172,9 @@ _CATEGORIAS_DIRETAS = [
     (P_SENSIVEL, "sensivel"),
 ]
 
-# Arquivos SEM cabeçalho: o matching por NOME de coluna não tem o que casar, e o arquivo
-# sairia como `skipped_no_pii` com a PII intacta. Aqui a posição das colunas é DECLARADA à
-# mão, por key exata, depois de conferir o conteúdo. Não é detecção: nada é inferido em
-# tempo de execução e qualquer arquivo fora deste mapa segue o caminho normal.
-#
-# Estar neste mapa também significa "este arquivo não tem linha de cabeçalho": a linha 0 é
-# dado e passa pelo mascaramento como qualquer outra (ver `_mascarar_tabular`).
-#
-# CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_M202112.TXT — 6 colunas, delimitador '|'. Conferido em
-# 300 linhas: a coluna 2 valida como CPF em 298 (as 2 restantes são CPF que
-# perdeu o zero à esquerda) e a coluna 3 valida como NIS em 248/248.
+# Arquivos SEM cabeçalho, onde o matching por nome não teria o que casar: a posição das
+# colunas é declarada à mão, por key exata, depois de conferir o conteúdo. Estar aqui
+# também significa que a linha 0 é dado, não cabeçalho (ver `_mascarar_tabular`).
 COLUNAS_POR_POSICAO: Dict[str, Dict[int, str]] = {
     "raw/sftp/fabrica/GEFUS/ANTERIORES/CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_M202112.TXT": {
         2: "cpf",
@@ -227,12 +195,10 @@ _ACAO_POR_CATEGORIA = {
 
 
 def _avisar_mascaramento_sem_prova(key: str, rec: dict) -> None:
-    """Avisa quando um arquivo é mascarado sem nenhuma prova estrutural de pessoa física.
+    """Avisa quando um arquivo é mascarado sem prova estrutural de pessoa física.
 
-    O mascaramento reescreve o raw/ NO LUGAR: o valor original não volta sem reingerir da
-    origem. Então todo arquivo que perde dado sem ter CPF/NIS/nascimento/atributo sensível
-    merece uma linha no log para alguém conferir — foi assim que a família FAR perdeu
-    logradouro, bairro e CEP do empreendimento sem ninguém notar.
+    Como a reescrita é no lugar, o valor não volta sem reingerir da origem — todo
+    mascaramento sem CPF/NIS/nascimento/sensível merece conferência.
     """
     if rec.get("status") not in ("masked", "dry_run"):
         return
@@ -295,10 +261,8 @@ if _LOCAL_ARTIFACTS:
     ):
         _h.setFormatter(_formatter)
         logging.root.addHandler(_h)
-# Sob o Airflow (_LOCAL_ARTIFACTS=0) NÃO adicionamos handlers ao root: o logger propaga
-# para os handlers do Airflow (a saída vai para a UI). Um StreamHandler(sys.stderr) aqui
-# criaria loop infinito — o Airflow redireciona stderr de volta ao logging e cada linha se
-# multiplica.
+# Sob o Airflow o logger só propaga: um StreamHandler(sys.stderr) aqui multiplicaria cada
+# linha, porque o Airflow redireciona stderr de volta ao logging.
 
 
 # Infra: conexões
@@ -435,13 +399,10 @@ def classificar(  # noqa: C901
     Retorna (targets, has_pf_indicator).
     targets: [{idx, column, category, action}] já com a regra condicional aplicada.
 
-    `real_encoding` só se aplica a header lido como texto latin-1 sobre bytes de outro
-    encoding (o caminho CSV/TXT): aí cada célula é re-decodificada antes do matching.
-
-    Passe **None** quando o header já é texto Unicode correto — xlsx e mdb entregam
-    `str` de verdade, e o round-trip por latin-1 DESTRÓI os acentos ('Beneficiário' vira
-    'Benefici?rio', que não casa com "beneficiario"). Isso deixava em claro qualquer
-    coluna cujo único sinal de PII fosse palavra acentuada.
+    `real_encoding` vale só para header lido como latin-1 sobre bytes de outro encoding
+    (CSV/TXT), que é re-decodificado antes do matching. Passe None quando o header já é
+    Unicode correto (xlsx, mdb): o round-trip por latin-1 destrói os acentos e
+    'Beneficiário' deixa de casar com "beneficiario".
     """
     normed: List[Tuple[int, str, str]] = []  # (idx, original_header, norm)
     for idx, cell in enumerate(header):
@@ -469,9 +430,7 @@ def classificar(  # noqa: C901
         elif cat in ("nascimento", "nome", "sensivel"):
             action = "redact"
         elif cat == "nome_ambiguo":
-            # proponente/titular/responsável/mutuário/beneficiário: instituição ou pessoa,
-            # não dá pra saber pelo nome da coluna. Só mascara com PROVA de PF no arquivo
-            # (CPF/NIS/nascimento).
+            # papel que pode ser instituição: só mascara com prova de PF no arquivo
             if not has_pf_forte:
                 continue
             cat, action = "nome", "redact"
@@ -480,11 +439,8 @@ def classificar(  # noqa: C901
                 continue
             cat, action = "nome", "redact"
         elif cat in ("cep", "endereco"):
-            # `has_pf` (e não só o forte): uma lista de mutuários com endereço e sem CPF
-            # continua sendo endereço residencial. Depois da separação de papéis, a
-            # categoria "nome" só vem de papel de pessoa, então voltou a ser confiável —
-            # quem trazia falso positivo (proponente/titular) agora é "nome_ambiguo" e
-            # não entra nesta conta.
+            # basta o indicador fraco: lista de mutuários sem CPF ainda é endereço
+            # residencial. Os papéis que davam falso positivo hoje são "nome_ambiguo".
             if not has_pf:  # PJ/empreendimento/obra pública -> preserva
                 continue
             action = "redact"
@@ -621,25 +577,19 @@ def _xlsx_tem_alvo(src_path: str) -> Tuple[bool, bool]:
 
 # --- Reescrita do xlsx em streaming -----------------------------------------------
 #
-# Um xlsx é um zip de XMLs. Em vez de carregar o workbook inteiro (openpyxl materializa
-# TODA célula como objeto: um arquivo de 106 MB, cujo sheet1.xml tem 368 MB
-# descomprimidos, passa de 3 GB de RAM e leva a task a OOM), copiamos cada entrada do zip
-# byte a byte e transformamos apenas o XML das planilhas com alvo, linha a linha.
-#
-# Ganho colateral: o que não é tocado sai IDÊNTICO — modelo PowerPivot
-# (xl/model/item.data), calcChain, styles, gráficos. O caminho antigo passava tudo pelo
-# DOM do openpyxl e perdia o valor em cache das fórmulas.
+# Um xlsx é um zip de XMLs. Em vez de carregar o workbook (o openpyxl materializa toda
+# célula como objeto e estoura a memória da task em planilhas grandes), copiamos cada
+# entrada do zip byte a byte e transformamos linha a linha só as planilhas com alvo.
+# Efeito colateral bom: o que não é tocado sai idêntico, inclusive modelo PowerPivot,
+# calcChain e o valor em cache das fórmulas.
 
 _XL_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-# São DOIS namespaces de relacionamento, fáceis de confundir: o `package/2006` nomeia os
-# elementos DENTRO do .rels, e o `officeDocument/2006` é o do atributo `r:id` que aparece
-# em workbook.xml. Usar o primeiro para ler o r:id devolve None e o arquivo passa como se
-# não tivesse planilha nenhuma.
+# atenção: este é o namespace do atributo `r:id` em workbook.xml, diferente do
+# `package/2006` que nomeia os elementos dentro do .rels
 _REL_ID_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 _Q = f"{{{_XL_NS}}}"
 _RE_COL = re.compile(r"([A-Z]+)")
-# sem isto o ElementTree serializa as <row> reescritas com prefixo ns0: e uma declaração
-# de namespace por linha — válido, mas infla o arquivo e polui o diff.
+# sem isto cada <row> reescrita sai com prefixo ns0: e uma declaração de namespace própria
 ET.register_namespace("", _XL_NS)
 
 
@@ -721,11 +671,10 @@ def _header_da_sheet(zin: zipfile.ZipFile, caminho: str, compart: List[str]) -> 
 def _indices_compartilhados(zin: zipfile.ZipFile, sheets: List[Tuple[str, set]]) -> set:
     """Índices de sharedStrings que podem ser apagados com segurança.
 
-    Uma string compartilhada pode ser referenciada por várias células. Apagar uma que
-    também é usada FORA de coluna-alvo destruiria dado legítimo; deixar uma usada só por
-    célula-alvo vaza o valor original, porque o texto continua no sharedStrings.xml mesmo
-    depois de a célula virar `***`. Varre TODAS as planilhas (inclusive as sem alvo) para
-    montar os dois conjuntos.
+    A mesma string pode ser referenciada por várias células: apagar uma usada fora de
+    coluna-alvo destrói dado legítimo, e manter uma usada só por célula-alvo vaza o valor
+    original, que continua no sharedStrings.xml depois de a célula virar `***`. Por isso a
+    varredura cobre todas as planilhas, inclusive as sem alvo.
     """
     de_alvo: set = set()
     de_fora: set = set()
@@ -857,9 +806,8 @@ class _RecorteSheet:
         fim_tag = self.buf.find(b">", i)
         j = self.buf.find(self.FIM_ROW, i)
         if fim_tag < 0 or (j < 0 and self.buf[fim_tag - 1 : fim_tag] != b"/"):
-            # <row> ainda incompleta: escoa só o que vem ANTES dela e espera o resto.
-            # Usar a margem fixa aqui cortaria bytes de dentro da linha quando ela é maior
-            # que o bloco de leitura — a linha some do arquivo de saída.
+            # <row> incompleta: escoa só o que vem antes dela e espera o resto. Cortar
+            # pela margem comeria bytes da linha maior que o bloco de leitura.
             if i > 0:
                 self.fout.write(self.buf[:i])
                 self.buf = self.buf[i:]
@@ -888,18 +836,12 @@ def _reescrever_sheet(
 ) -> Tuple[int, int]:
     """Copia a planilha trocando as células-alvo. Retorna (linhas, linhas alteradas).
 
-    Recorte byte a byte: tudo que está FORA de <sheetData> (largura de coluna, autofiltro,
-    painéis congelados, formatação condicional, mesclagens, o próprio <worksheet> com suas
-    declarações de namespace) é copiado sem passar por parser. Só as <row> são
-    materializadas, uma de cada vez — daí a memória ser proporcional à maior linha, não ao
-    arquivo.
+    Recorte byte a byte: tudo fora de <sheetData> é copiado sem passar por parser e só as
+    <row> são materializadas, uma por vez — a memória fica proporcional à maior linha.
+    Reconstruir o XML pelo ElementTree seria mais simples, mas descarta silenciosamente os
+    irmãos de <sheetData> e a planilha sai sem formatação nenhuma.
 
-    Reconstruir o XML a partir do ElementTree parecia mais simples e foi a primeira
-    tentativa, mas descartava silenciosamente todos os irmãos de <sheetData>: a planilha
-    saía legível e sem formatação nenhuma.
-
-    O valor mascarado é gravado como `inlineStr`, o que evita ter de inserir entradas
-    novas em sharedStrings.xml (que é reescrito à parte, só para apagar).
+    O valor mascarado vai como `inlineStr`, sem inserir entradas em sharedStrings.xml.
     """
     rec = _RecorteSheet(fout, acoes, compart)
     while True:
@@ -946,13 +888,9 @@ def _mascarar_xlsx(
 ) -> Tuple[List[dict], bool, int, int, bool]:
     """Retorna (targets, has_pf, registros_total, registros_alterados, has_formulas).
 
-    Reescrita em streaming (ver bloco acima): memória proporcional à maior LINHA, não ao
-    arquivo. Um xlsx de 106 MB com 167 mil linhas sai em ~275 MB de pico, contra >3 GB da
-    versão que carregava o DOM.
-
-    `has_formulas` hoje é sempre False: fórmulas em coluna não-alvo saem byte-idênticas
-    (o XML é copiado), então não há mais perda de valor em cache para sinalizar. O campo
-    fica para não quebrar o contrato com a auditoria.
+    Reescrita em streaming (ver bloco acima): a memória é proporcional à maior linha, não
+    ao arquivo. `has_formulas` hoje é sempre False — fórmulas fora de coluna-alvo saem
+    byte-idênticas, e o campo só continua existindo pelo contrato com a auditoria.
     """
     all_targets: List[dict] = []
     has_pf_any = False
@@ -1002,16 +940,9 @@ def _analisar_mdb(src_path: str) -> Tuple[List[dict], bool, int]:
     """Varre as tabelas do .mdb procurando colunas sensíveis. Retorna (targets, has_pf,
     linhas).
 
-    NÃO mascara: mdbtools é read-only e não existe forma de reescrever um .mdb sem Java
-    (Jackcess/UCanAccess). Esta função só responde "tem PII?" — se tiver, o chamador falha
-    explicitamente, porque gravar PII silenciosamente no lake seria pior que um erro
-    visível.
-
-    Hoje as 4 famílias de .mdb do lake (AO_1/2/3, CCI_CCA, AF) são dados de
-    empreendimento/obra e analítico agregado: sem CPF/nome/nascimento. O que existe é
-    Gênero, Entidades.CGC (PJ) e tab_empreendimentos.txt_logradouro (endereço do
-    EMPREENDIMENTO) — este último é preservado pela regra condicional de CEP/endereço, que
-    só dispara com indicador de PF na tabela.
+    NÃO mascara: o mdbtools é read-only e reescrever um .mdb exigiria Java. A função só
+    responde "tem PII?"; se tiver, o chamador falha, porque gravar PII em silêncio no lake
+    seria pior que um erro visível.
     """
     targets: List[dict] = []
     has_pf_any = False
@@ -1290,10 +1221,7 @@ def run(  # noqa: C901
     processados = 0
 
     for key, size in minio.listar_objetos(prefix):
-        # Marcadores de pasta: objetos de 0 byte com a key terminando em "/", criados
-        # por cliente/console S3 ao "criar diretório". Não são arquivo — desde que raw/
-        # ganhou estrutura de pastas eles aparecem na listagem e virariam
-        # skipped_unsupported, poluindo contagem e auditoria à toa.
+        # marcador de pasta (0 byte, key terminando em "/"): não é arquivo
         if key.endswith("/"):
             continue
         if pattern and pattern not in key:

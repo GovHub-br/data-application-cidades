@@ -1,5 +1,6 @@
 {{ config(materialized="table") }}
 
+-- Gold: Resumo Gerencial — KPIs agregados por situação, tipologia e status
 with base_fichas as (select * from {{ ref("ficha_empreendimento") }})
 
 select

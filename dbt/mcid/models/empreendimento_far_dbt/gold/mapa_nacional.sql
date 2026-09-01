@@ -1,28 +1,25 @@
 {{ config(materialized="table") }}
 
--- Gold: Mapa Nacional — Visão geográfica para o Superset
--- Produz duas visões complementares:
--- 1. Por UF: alimenta o mapa de calor estadual
--- 2. Por Região: alimenta o gráfico de barras por macrorregião
--- Utiliza a tabela IBGE de referência para enriquecer com nome do estado,
--- código ISO e macrorregião sem necessidade de mapeamento manual.
+-- Gold: Mapa Nacional — agregação geográfica para o Superset
+-- Duas visões empilhadas, discriminadas por `nivel`: uma por UF (com código ISO
+-- para o Country Map) e uma por macrorregião. A tabela IBGE traz nome e região.
 with
     fichas as (select * from {{ ref("ficha_empreendimento") }}),
 
-    -- Referência IBGE: sigla, nome do estado, região
+    -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
+    -- dobraria as somas
     ibge_uf as (
-        select sigla, nome as estado_nome, regiao_sigla, regiao_nome
+        select distinct sigla, nome as estado_nome, regiao_sigla, regiao_nome
         from {{ source("raw", "api_ibge_uf") }}
     ),
 
-    -- Agregação por UF
     agg_uf as (
         select
             f.uf,
             i.estado_nome,
             i.regiao_sigla,
             i.regiao_nome,
-            -- Código ISO 3166-2 para o Country Map do Superset (formato BR-XX)
+            -- Código ISO 3166-2 exigido pelo Country Map do Superset
             'BR-' || f.uf as iso_3166_2,
             count(distinct f.municipio_uf) as total_municipios,
             count(f.apf) as total_empreendimentos,
@@ -35,7 +32,7 @@ with
         group by f.uf, i.estado_nome, i.regiao_sigla, i.regiao_nome
     )
 
--- Seção UF: cada linha = 1 estado com KPIs e código ISO para o mapa
+-- Nível UF: uma linha por estado
 select
     uf,
     estado_nome,
@@ -53,7 +50,7 @@ from agg_uf
 
 union all
 
--- Seção Região: agrega os estados por macrorregião
+-- Nível região: agrega os estados por macrorregião
 select
     regiao_sigla as uf,
     regiao_nome as estado_nome,

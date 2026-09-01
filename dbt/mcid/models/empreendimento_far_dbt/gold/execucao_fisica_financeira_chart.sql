@@ -1,5 +1,8 @@
 {{ config(materialized="table") }}
 
+-- Gold: Execução Física × Financeira (chart) — as duas curvas na mesma série mensal
+-- O full outer join junta meses que existem só num dos lados, e o LOCF arrasta o
+-- último valor válido para os meses vazios (senão a linha despencaria para 0%).
 with
     financeira as (
         select apf, mes, pct_executado_financeiro from {{ ref("evolucao_financeira") }}
@@ -29,8 +32,7 @@ with
         full outer join fisica o on f.apf = o.apf and f.mes = o.mes_fisica
     ),
 
-    -- Cria grupos para cada vez que um valor NÃO NULO aparece (técnica para LOCF no
-    -- Postgres)
+    -- LOCF passo 1: o count() acumulado cria um grupo por valor não nulo
     base_grp as (
         select
             apf,
@@ -44,11 +46,7 @@ with
         from base
     ),
 
-    -- Preenche os valores nulos com o primeiro valor de cada grupo (que é o último
-    -- valor válido arrastado)
-    -- A partir de agora, se o físico parou em 50% no mês 1 e no mês 2 só o financeiro
-    -- subiu, o gráfico ainda exibirá o físico estável em 50% no mês 2, evitando aquelas
-    -- quedas de linha indesejadas para 0%.
+    -- LOCF passo 2: dentro do grupo, o primeiro valor é o último válido arrastado
     base_preenchida as (
         select
             apf,

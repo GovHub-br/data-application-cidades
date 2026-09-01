@@ -1,11 +1,11 @@
 {{ config(materialized="table") }}
 
--- Silver: Empreendimento FAR — Visão unificada
+-- Silver: Empreendimento FAR — visão unificada
 -- Reúne dados cadastrais, contratuais e status físico-financeiro de cada APF.
 with
     cadastro as (select * from {{ ref("cadastro_pj") }}),
 
-    -- Consolidado pode ter mais de uma proposta para o mesmo ID, pegamos a mais recente
+    -- O consolidado pode ter mais de uma proposta por ID; fica a mais recente
     consolidado as (
         select *
         from
@@ -55,11 +55,11 @@ select
         then 'Misto'
         else 'Não Informado'
     end as tipologia,
-    -- Heurística baseada em 3.3 pessoas por família
+    -- Heurística de 3,3 pessoas por família
     floor(c.qt_uh * 3.3)::int as pessoas_atendidas,
 
     -- 2. Dados do Contrato
-    -- O valor total do investimento engloba FAR + Contrapartidas
+    -- O investimento total engloba FAR + contrapartidas
     coalesce(c.vr_total_investimento, 0.0) as valor_contratado,
     c.agente_financeiro,
     c.dt_contratacao,

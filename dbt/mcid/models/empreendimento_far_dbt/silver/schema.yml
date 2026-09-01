@@ -1,20 +1,191 @@
 version: 2
 
 models:
-  - name: empreendimento
+
+  # Consolidado GFAR
+
+  - name: consolidado
     description: >
-      Tabela Silver (Visão Unificada) de Empreendimentos FAR do Novo MCMV.
-      Esta tabela consolida as informações da camada bronze cruzando as tabelas
-      cadastro_pj, consolidado, obra_mensal e dados_prioritarios_caixa através da chave APF.
-      Gera uma visão final pronta para alimentar painéis e dashboards.
+      Dados do GFAR consolidado com propostas e contratos FAR do Novo MCMV.
+      Cobre todo o ciclo de vida: da proposta protocolizada até a contratação.
+      Contém 15.231 registros. Tipagem aplicada sobre a bronze do data lake:
+      text→int, text→date, text→numeric, text→boolean.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: id_proposta
+        description: Identificador único da proposta no GFAR (UUID).
+      - name: apf
+        description: APF normalizado para 8 dígitos (chave de integração principal).
+      - name: portaria_contratacao
+        description: Número da portaria MCID de seleção/contratação.
+      - name: co_situacao_contratada
+        description: "Situação da contratação: 1=Contratado, 2=Distratado, 3=Outro, NULL=Não contratado."
+      - name: proponente_nome
+        description: Nome social do proponente (ente público ou construtora).
+      - name: proponente_cnpj
+        description: CNPJ do proponente (apenas dígitos).
+      - name: tomador_nome
+        description: Nome social do tomador do financiamento.
+      - name: tomador_cnpj
+        description: CNPJ do tomador (apenas dígitos).
+      - name: empreendimento_nome
+        description: Nome do empreendimento (prioriza nome de contratação sobre protocolo).
+      - name: qt_uh
+        description: Quantidade de unidades habitacionais.
+      - name: co_tipo_edificacao
+        description: "Tipologia: 1=Casa Térrea, 2=Apartamento, 3=Sobrado, 4=Misto."
+      - name: valor_far
+        description: Valor do empréstimo FAR em R$ (numeric 15,2).
+      - name: valor_contrapartidas
+        description: Valor total de contrapartidas em R$ (numeric 15,2).
+
+  # Cadastro PJ
+
+  - name: cadastro_pj
+    description: >
+      Cadastro detalhado de pessoa jurídica (empreendimento contratado).
+      876 empreendimentos com composição financeira completa, coordenadas GPS,
+      tipologia, construtora, datas-chave e indicadores do empreendimento.
     meta:
       tags:
         - silver
     columns:
       - name: apf
-        description: Chave primária (Arranjo Produtivo Financeiro). ID único do empreendimento contratado na Caixa.
-      
-      # Dados do Empreendimento
+        description: APF normalizado para 8 dígitos.
+      - name: construtora_nome
+        description: Nome da construtora responsável.
+      - name: construtora_cnpj
+        description: CNPJ da construtora (apenas dígitos).
+      - name: qt_uh
+        description: Quantidade de unidades habitacionais contratadas.
+      - name: vr_emprestimo_far
+        description: Valor do empréstimo FAR em R$.
+      - name: vr_total_investimento
+        description: Valor total do investimento (FAR + contrapartidas) em R$.
+      - name: vr_obra_edificacao
+        description: Valor destinado à obra/edificação em R$.
+      - name: vr_terreno
+        description: Valor do terreno em R$.
+      - name: dt_contratacao
+        description: Data de assinatura do contrato.
+      - name: dt_inicio_obra
+        description: Data de início efetivo da obra.
+      - name: dt_previsao_conclusao
+        description: Data prevista de conclusão da obra.
+      - name: gps_lat_grau
+        description: Latitude em graus (formato DMS, componente grau).
+      - name: gps_long_grau
+        description: Longitude em graus (formato DMS, componente grau).
+
+  # Obra Mensal
+
+  - name: obra_mensal
+    description: >
+      Evolução física da obra. Snapshot mensal com percentual previsto/realizado,
+      situação da obra, UHs concluídas e datas de paralisação/retomada/entrega.
+      876 registros (1 por empreendimento no snapshot atual).
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: co_situacao_obra
+        description: "Código da situação: 1=Não iniciada, 2=Paralisada, 11=Em andamento."
+      - name: pct_obra_prevista
+        description: Percentual de obra previsto para a data de referência (0-100).
+      - name: pct_obra_realizada
+        description: Percentual de obra efetivamente realizado (0-100).
+      - name: dt_conclusao_obra
+        description: Data de conclusão da obra (quando concluída).
+      - name: dt_entrega
+        description: Data de entrega do empreendimento aos beneficiários.
+      - name: dt_paralisacao
+        description: Data de paralisação da obra (quando paralisada).
+      - name: dt_movimento
+        description: Data de referência do snapshot.
+
+  # Financeiro Mensal
+
+  - name: financeiro_mensal
+    description: >
+      Série temporal de liberações financeiras. Contém 11.596 registros.
+      Cada registro representa uma liberação de recurso com decomposição
+      por componente.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: co_tipo_movimento
+        description: "Tipo: 1=Liberação obra, 5=INCC/ajuste."
+      - name: vr_liberado
+        description: Valor total liberado nesta operação em R$.
+      - name: vr_pago_obra
+        description: Parcela destinada à obra/edificação em R$.
+      - name: vr_pago_terreno
+        description: Parcela destinada ao terreno em R$.
+      - name: vr_pago_trabalho_social
+        description: Parcela destinada ao trabalho social (PTS) em R$.
+      - name: vr_pago_incc
+        description: Parcela de ajuste INCC em R$.
+      - name: dt_liberacao
+        description: Data efetiva da liberação do recurso.
+      - name: dt_movimento
+        description: Data de registro/movimento no sistema.
+
+  # Dados Prioritários CAIXA
+
+  - name: dados_prioritarios_caixa
+    description: >
+      Snapshot consolidado dos dados prioritários recebidos da CAIXA.
+      Filtrado apenas para modalidade FAR (4.504 empreendimentos, de 15.031 no
+      total). Contém situação atual, percentual de execução, valores e coordenadas.
+      Nota: a versão equivalente em __dados_brutos tem essas mesmas linhas
+      duplicadas 2x (29.846 linhas, 8.886 FAR); a bronze do lake não tem.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: APF no formato CAIXA (8 dígitos).
+      - name: situacao
+        description: "Situação textual: EM ANDAMENTO, CONCLUÍDO, PARALISADO, etc."
+      - name: pct_execucao
+        description: Percentual de execução física reportado pela CAIXA (0-100).
+      - name: valor_contratado
+        description: Valor total contratado em R$.
+      - name: valor_desembolsado
+        description: Valor total desembolsado acumulado em R$.
+      - name: valor_aporte_adicional
+        description: Valor de aporte/suplementação adicional em R$.
+      - name: uh_contratadas
+        description: Quantidade de UHs contratadas.
+      - name: uh_entregues
+        description: Quantidade de UHs já entregues.
+      - name: latitude
+        description: Latitude em formato decimal.
+      - name: longitude
+        description: Longitude em formato decimal.
+      - name: dt_contratacao
+        description: Data de contratação do empreendimento.
+
+  # Visão unificada
+
+  - name: empreendimento
+    description: >
+      Visão unificada do empreendimento FAR: cruza cadastro_pj,
+      consolidado, obra_mensal e dados_prioritarios_caixa pela
+      chave APF. É a base de toda a camada gold.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: apf
+        description: Chave primária. ID único do empreendimento contratado na CAIXA.
       - name: portaria_selecao
         description: Número da portaria MCID de seleção ou enquadramento da proposta.
       - name: proponente_cnpj
@@ -38,54 +209,46 @@ models:
       - name: co_tipo_demanda
         description: Código do tipo de demanda (1 = Cadastro Habitacional).
       - name: situacao_empreendimento
-        description: "Status/Situação gerencial atual da obra (ex: ENTREGUE, EM ANDAMENTO, PARALISADA)."
+        description: "Status/situação gerencial atual da obra (ex: ENTREGUE, EM ANDAMENTO, PARALISADA)."
       - name: tipologia
         description: >
-          Classificação do tipo de construção. Calculado a partir de co_tipo_edificacao:
+          Classificação do tipo de construção, derivada de co_tipo_edificacao
           (Casa Térrea, Apartamento, Sobrado, Misto).
       - name: pessoas_atendidas
         description: >
-          Estimativa de pessoas diretamente beneficiadas.
-          Cálculo heurístico: (quantidade_uh * 3.3 pessoas por família) arredondado para baixo.
-
-      # Dados do Contrato
+          Estimativa de pessoas beneficiadas, por heurística de 3,3 pessoas por
+          família: floor(quantidade_uh * 3.3).
       - name: valor_contratado
-        description: Valor total de investimento (Recurso FAR + Contrapartidas).
+        description: Valor total de investimento (recurso FAR + contrapartidas).
       - name: agente_financeiro
         description: "Banco responsável pelo financiamento/gestão (ex: CAIXA)."
       - name: dt_contratacao
         description: Data de assinatura do contrato de financiamento da obra.
       - name: valor_aporte_adicional
-        description: Valor total de aportes ou suplementações adicionais liberadas durante a obra.
+        description: Valor total de aportes ou suplementações liberadas durante a obra.
       - name: valor_por_uh
         description: Custo unitário estimado por UH (valor_contratado / quantidade_uh).
-
-      # Evolução Física
       - name: percentual_execucao_fisica
-        description: Porcentagem (0 a 100) do andamento físico da obra reportado pela medição atual.
+        description: Percentual (0-100) do andamento físico da obra na medição atual.
       - name: dt_conclusao_obra
         description: Data em que a obra física atingiu 100% (se aplicável).
       - name: dt_entrega
         description: Data de entrega das chaves aos beneficiários finais (se aplicável).
       - name: dt_previsao_entrega
         description: Previsão estipulada para a entrega oficial do empreendimento.
-
-      # Evolução Financeira
       - name: valor_desembolsado
-        description: Total financeiro já repassado/liberado para a construtora até a medição atual.
+        description: Total já repassado para a construtora até a medição atual.
       - name: percentual_execucao_financeira
-        description: >
-          Percentual do recurso liberado sobre o valor total.
-          Cálculo: (valor_desembolsado / valor_contratado) * 100.
+        description: "Percentual do recurso liberado: (valor_desembolsado / valor_contratado) * 100."
+
+  # Evolução Financeira
 
   - name: evolucao_financeira
     description: >
-      Tabela Silver de Evolução Financeira dos Empreendimentos FAR.
-      Série temporal mensal de liberações financeiras por empreendimento (APF × mês).
-      Agrega as liberações da bronze financeiro_mensal e faz o JOIN com a silver
-      empreendimento usando a raiz de 6 dígitos do APF: LEFT(cad_pj.apf, 6) = RIGHT(fin.apf, 6).
-      Cobertura: ~79% dos empreendimentos (651/823) possuem dados financeiros.
-      Relação 1:N com empreendimento (1 APF → N meses de liberações).
+      Série temporal mensal de liberações por empreendimento (APF × mês).
+      Agrega o financeiro_mensal e junta com empreendimento pela raiz
+      de 6 dígitos do APF: LEFT(empreendimento.apf, 6) = RIGHT(financeiro.apf, 6).
+      Relação 1:N com empreendimento.
     meta:
       tags:
         - silver
@@ -114,14 +277,12 @@ models:
         description: Parcela de ajuste INCC no mês em R$.
       - name: vr_acumulado
         description: >
-          Desembolso acumulado progressivo por APF até o mês corrente.
-          Calculado via SUM(vr_liberado_mes) OVER (PARTITION BY apf ORDER BY mes).
+          Desembolso acumulado progressivo por APF até o mês corrente, via
+          SUM(vr_liberado_mes) OVER (PARTITION BY apf ORDER BY mes).
       - name: pct_executado_financeiro
-        description: >
-          Percentual do desembolso acumulado sobre o valor contratado.
-          Cálculo: (vr_acumulado / valor_contratado) * 100.
+        description: "Percentual do acumulado sobre o contrato: (vr_acumulado / valor_contratado) * 100."
       - name: valor_contratado
-        description: Valor total contratado do empreendimento (herdado da silver empreendimento).
+        description: Valor total contratado do empreendimento (herdado de empreendimento).
       - name: municipio
         description: Município do empreendimento.
       - name: uf

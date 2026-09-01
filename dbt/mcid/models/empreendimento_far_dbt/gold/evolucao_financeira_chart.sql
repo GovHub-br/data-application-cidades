@@ -1,18 +1,17 @@
 {{ config(materialized="table") }}
 
--- Gold: Evolução Financeira (Chart) — Visualização para o Superset
--- Consome a silver evolucao_financeira e prepara os dados no formato ideal
--- para o gráfico de "Evolução Físico-Financeira" do dashboard.
--- Adiciona: label do mês, nome do estado, campos de busca/filtro.
+-- Gold: Evolução Financeira (chart) — série APF × mês pronta para o gráfico
+-- Enriquece a silver com nome do empreendimento, estado por extenso e labels de mês.
 with
     evolucao as (select * from {{ ref("evolucao_financeira") }}),
 
-    -- Referência IBGE para nome completo do estado
+    -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
+    -- dobraria as linhas da série
     ibge_uf as (
-        select sigla, upper(nome) as estado from {{ source("raw", "api_ibge_uf") }}
+        select distinct sigla, upper(nome) as estado
+        from {{ source("raw", "api_ibge_uf") }}
     ),
 
-    -- Trazer nome do empreendimento da ficha
     ficha as (
         select apf, nome_empreendimento, apf_municipio_empreendimento
         from {{ ref("ficha_empreendimento") }}
@@ -29,7 +28,7 @@ select
     e.uf,
     i.estado,
 
-    -- Série temporal (para eixo X do gráfico)
+    -- Série temporal (eixo X do gráfico)
     e.mes,
     to_char(e.mes, 'YYYY-MM') as mes_label,
     to_char(e.mes, 'MM/YYYY') as mes_label_br,

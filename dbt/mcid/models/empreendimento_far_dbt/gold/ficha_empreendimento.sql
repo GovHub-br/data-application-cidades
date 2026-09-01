@@ -1,5 +1,7 @@
 {{ config(materialized="table") }}
 
+-- Gold: Ficha do Empreendimento — uma linha por APF para o dashboard
+-- Aplica as regras de negócio finais (status, prazo, ritmo) sobre a silver.
 with base_silver as (select * from {{ ref("empreendimento") }})
 
 select
@@ -25,8 +27,7 @@ select
     uf,
     concat(municipio, '/', uf) as municipio_uf,
 
-    -- Concatenação: APF - Municipio/UF - Nome Empreendimento
-    -- para busca na Dashboard
+    -- Chave de busca no dashboard: APF - Município/UF - Nome
     concat(
         apf, ' - ', municipio, '/', uf, ' - ', upper(empreendimento_nome)
     ) as apf_municipio_empreendimento,
@@ -84,7 +85,7 @@ select
     dt_conclusao_obra,
     dt_entrega,
 
-    -- Regra de Negócio: Atraso na Entrega
+    -- Regra de negócio: atraso na entrega
     case
         when situacao_empreendimento != 'ENTREGUE' and dt_previsao_entrega < current_date
         then 'Em Atraso'
@@ -97,8 +98,7 @@ select
     valor_desembolsado,
     percentual_execucao_financeira,
 
-    -- Regra de Negócio: Ritmo Físico-Financeiro
-    -- Compara se o desembolso está aderente à execução física (margem de 5%)
+    -- Regra de negócio: aderência do desembolso à execução física (margem de 5%)
     case
         when percentual_execucao_financeira > (percentual_execucao_fisica + 5)
         then 'Desembolso Adiantado'

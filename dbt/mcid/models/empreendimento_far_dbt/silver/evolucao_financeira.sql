@@ -1,10 +1,8 @@
 {{ config(materialized="table") }}
 
--- Silver: Evolução Financeira — Série temporal de desembolsos por empreendimento
--- Agrega as liberações da bronze financeiro_mensal por APF e mês.
--- JOIN com empreendimento usando raiz de 6 dígitos (LEFT/RIGHT) para calcular
--- o percentual de execução financeira sobre o valor contratado.
--- Grão: 1 linha por APF × mês (relação 1:N com empreendimento)
+-- Silver: Evolução Financeira — série temporal de desembolsos por empreendimento
+-- Agrega as liberações do financeiro_mensal por APF × mês e calcula o acumulado.
+-- O join com empreendimento é pela raiz de 6 dígitos do APF (o financeiro usa 6).
 with
     financeiro as (select * from {{ ref("financeiro_mensal") }}),
 
@@ -13,10 +11,7 @@ with
     -- Agregação mensal: soma todas as liberações do mês por APF
     mensal as (
         select
-            -- Chave raiz de 6 dígitos para JOIN posterior
             right(f.apf, 6) as apf_raiz,
-
-            -- Mês da liberação (truncado ao primeiro dia)
             date_trunc('month', f.dt_liberacao) as mes,
 
             -- Totais do mês
@@ -38,8 +33,6 @@ with
         group by right(f.apf, 6), date_trunc('month', f.dt_liberacao)
     ),
 
-    -- JOIN com empreendimento via raiz 6 dígitos
-    -- e cálculo do acumulado com window function
     evolucao as (
         select
             e.apf,
@@ -62,7 +55,7 @@ with
                 partition by e.apf order by m.mes
             ) as vr_acumulado,
 
-            -- Contexto do empreendimento (para cálculo de %)
+            -- Contexto do empreendimento (para o cálculo do %)
             e.valor_contratado,
             e.municipio,
             e.uf

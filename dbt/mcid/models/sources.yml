@@ -224,28 +224,29 @@ sources:
       _ingested_at e _source_hash. A tipagem acontece na silver.
       Carga full refresh por família (ver scripts/bronze_familias.yml).
     tables:
-      # Família empreendimento_far
+      # Família empreendimento_far. A origem é resolvida por padrão (a versão mais
+      # recente vence), então as contagens são da carga corrente, não fixas.
       - name: novo_mcmv_far_consolidado
         description: >
           Consolidado do GFAR com as propostas FAR do Novo MCMV, do protocolo à
-          contratação. 15.091 registros, 100 colunas text.
-          Origem: staging/sharepoint/novo_mcmv_far_consolidado.parquet.
+          contratação. 15.231 registros, 100 colunas text.
+          Origem: HIS_MCIDADES_CONSOLIDADO_<aaaammdd>.
       - name: novo_mcmv_far_cad_pj_mensal
         description: >
           Cadastro PJ do empreendimento contratado (composição financeira, GPS,
-          tipologia, construtora, datas). 822 registros, 85 colunas text.
-          Origem: staging/sharepoint/novo_mcmv_far_cad_pj_mensal.parquet.
+          tipologia, construtora, datas). 876 registros, 85 colunas text.
+          Origem: MONIT_CAD_PJ_FAR_MENSAL_<aaaamm>.
       - name: novo_mcmv_far_obra_mensal
         description: >
-          Evolução física da obra, snapshot mensal. 822 registros, 43 colunas text.
-          Origem: staging/sharepoint/novo_mcmv_far_obra_mensal.parquet.
+          Evolução física da obra, snapshot mensal. 876 registros, 43 colunas text.
+          Origem: MONIT_MOV_OBRA_FAR_MENSAL_<aaaamm>.
       - name: novo_mcmv_far_financeiro_mensal
         description: >
-          Série de liberações financeiras por componente. 6.069 registros, 26 colunas
-          text. Origem: staging/sharepoint/novo_mcmv_far_financeiro_mensal.parquet.
+          Série de liberações financeiras por componente. 11.596 registros, 26 colunas
+          text. Origem: MONIT_MOV_FINANC_FAR_MENSAL_<aaaamm>.
       - name: dados_prioritarios_recebidos_caixa_empreendimentos
         description: >
-          Snapshot de dados prioritários da CAIXA, todas as modalidades. 14.923
+          Snapshot de dados prioritários da CAIXA, todas as modalidades. 15.031
           registros, 45 colunas text (o dump antigo em __dados_brutos tinha essas
-          mesmas linhas duplicadas 2x). Origem:
-          staging/sharepoint/dados_prioritarios_recebidos_caixa_empreendimentos.parquet.
+          mesmas linhas duplicadas 2x).
+          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.
