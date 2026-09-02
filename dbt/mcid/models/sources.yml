@@ -104,13 +104,26 @@ sources:
           Agregado 6391, variável 5932. Tipagem aplicada: text→int, text→numeric.
       - name: ibge_pim_pf_brasil
         description: >
-          Pesquisa Industrial Mensal - Produção Física (PIM-PF), Brasil.
-          Agregado 8888, variáveis 12606, 12607, 11601-11604, classificação 544[129314].
+          Pesquisa Industrial Mensal - Produção Física (PIM-PF), insumos típicos
+          da construção civil.
+          Agregado exigido pelos modelos: 8886 ("Produção física industrial dos
+          insumos típicos da construção civil"), variáveis 11601-11604, sem
+          classificação — é tabela dedicada.
+          ⚠️ A Variable `IBGE_CONFIGURACOES` ainda pede o agregado 8888 ("por
+          seções e atividades industriais", classificação 544[129314]), que é a
+          indústria brasileira inteira, não a construção. Enquanto não for
+          corrigida, esta tabela carrega a série errada.
           Tipagem aplicada: text→int, text→numeric.
       - name: ibge_pmc_construcao
         description: >
           Pesquisa Mensal de Comércio (PMC), material de construção.
-          Agregado 8880, variáveis 7169, 7170, 11708-11711, classificação 11046 (receita nominal e volume).
+          Agregado exigido pelos modelos: 8757 ("receita nominal e volume de
+          vendas de materiais de construção"), variáveis 11708-11711,
+          classificação 11046, categoria 56732 (índice de volume de vendas).
+          ⚠️ A Variable `IBGE_CONFIGURACOES` ainda pede o agregado 8880, de
+          varejo geral, cujas categorias são 56733/56734. Por isso a 56732 não
+          existe na silver e o `gold_continuo_producao_fisica` deixa as colunas
+          da PMC nulas — preencher com 56734 daria número plausível e falso.
           Tipagem aplicada: text→int, text→numeric.
 
   - name: fgv

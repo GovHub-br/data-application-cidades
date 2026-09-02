@@ -42,7 +42,9 @@ pmc as (
     -- VAREJO GERAL — trocou falha visível por dado errado silencioso.
     -- Revertido no mesmo dia.
     --
-    -- Correção de verdade: ver `docs-conjuntura/o-que-falta-vs-boletins.md`.
+    -- Correção de verdade: acertar o agregado na Variable
+    -- `IBGE_CONFIGURACOES` (8757, categoria 56732) — ver a descrição da
+    -- fonte `ibge_pmc_construcao` em models/sources.yml.
     where categoria_id = 56732
     group by periodo
 )
