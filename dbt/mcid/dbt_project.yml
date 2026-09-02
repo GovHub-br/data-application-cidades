@@ -33,18 +33,18 @@ models:
       gold:
         +materialized: table
 
-    # Um schema por camada, como no conjuntura_dbt: batendo o olho no banco fica
-    # evidente o que é silver e o que é gold. Com um schema só, os 13 models da silver e
-    # as 9 tabelas que o Superset consome apareciam misturados na mesma listagem.
-    # A bronze não entra aqui: é o schema `bronze`, carregado pelo staging_para_bronze.py.
+    # Um schema só para o domínio, com a camada no prefixo do nome da tabela
+    # (bronze_*, silver_*, gold_*). Batendo o olho no banco a listagem sai ordenada
+    # por camada, e o Superset aponta para um schema único.
+    # A bronze também vive aqui, carregada pelo scripts/staging_para_bronze.py
+    # (família `empreendimento_rural` do bronze_familias.yml) — não é dbt.
     empreendimento_rural_dbt:
       +materialized: table
+      +schema: empreendimento_rural
       silver:
         +materialized: table
-        +schema: empreendimento_rural_silver
       gold:
         +materialized: table
-        +schema: empreendimento_rural_gold
 
     entidades_dbt:
       +materialized: table

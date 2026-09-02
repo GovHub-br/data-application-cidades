@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
 -- Silver: Cadastro PF Rural (Beneficiários)
--- Fonte: bronze.novo_mcmv_rural_cadastro_pf_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_cadastro_pf (parquet da staging/ carregado pelo staging_para_bronze.py)
 -- Saída: dados socioeconômicos dos beneficiários do programa Rural limpos e tipados
 
 with
@@ -64,7 +64,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_rural_cadastro_pf_mensal") }}
+        from {{ source("bronze_rural", "bronze_cadastro_pf") }}
     )
 
 select *

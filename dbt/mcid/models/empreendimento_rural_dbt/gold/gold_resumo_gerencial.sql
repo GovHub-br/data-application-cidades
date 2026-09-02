@@ -5,7 +5,7 @@
 
 with
     base_fichas as (
-        select * from {{ ref("ficha_empreendimento_rural") }}
+        select * from {{ ref("gold_ficha_empreendimento") }}
     )
 
 select

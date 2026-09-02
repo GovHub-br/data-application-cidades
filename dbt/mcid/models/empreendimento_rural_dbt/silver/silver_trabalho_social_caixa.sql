@@ -1,15 +1,15 @@
 {{ config(materialized="table") }}
 
--- Silver: Trabalho Social PNHR Banco do Brasil
--- Fonte: bronze.base_trabalho_social_pnhr_bb (parquet da staging/ carregado pelo staging_para_bronze.py)
--- Saída: dados de trabalho social do BB limpos e tipados
+-- Silver: Trabalho Social PNHR CAIXA
+-- Fonte: bronze.bronze_trabalho_social_caixa (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Saída: dados de trabalho social da Caixa limpos e tipados
 
 with
-    ts_bb_raw as (
+    ts_caixa_raw as (
         select
             -- Identificadores
-            {{ target.schema }}.normalize_apf(contrato_registro_ao) as apf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(contrato_registro_ao)), '') as contrato,
+            {{ target.schema }}.normalize_apf(contrato) as apf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(contrato)), '') as contrato,
             nullif(trim({{ target.schema }}.corrigir_mojibake(recurso)), '') as recurso,
             nullif(trim({{ target.schema }}.corrigir_mojibake(nome_empreendimento)), '') as empreendimento_nome,
 
@@ -23,9 +23,10 @@ with
             nullif(trim({{ target.schema }}.corrigir_mojibake(fase_mcmv)), '') as fase_mcmv,
 
             -- Valores
-            {{ parse_financial_value('vr_total_ts') }} as vr_global_ts,
-            {{ parse_financial_value('vr_desembolsado_ts') }} as vr_desembolsado_ts,
-            {{ parse_financial_value('vr_a_desembolsar_ts') }} as vr_a_desembolsar_nao_concluidos,
+            {{ parse_financial_value('vr_global_ts') }} as vr_global_ts,
+            {{ parse_financial_value('vr_desembolsado') }} as vr_desembolsado_ts,
+            {{ parse_financial_value('vr_a_desembolsar_nao_concluidos') }} as vr_a_desembolsar_nao_concluidos,
+            {{ parse_financial_value('vr_nao_desembolsado_concluidos') }} as vr_nao_desembolsado_concluidos,
 
             -- Execução e Status
             {{ parse_numeric('percentual_execucao_ts', 'numeric(6, 2)') }} as percentual_execucao_ts,
@@ -34,22 +35,25 @@ with
             nullif(trim({{ target.schema }}.corrigir_mojibake(motivo_situacao_ts_atrasado_paralisado)), '') as motivo_situacao_ts,
 
             -- Outros Metadados
-            nullif(trim({{ target.schema }}.corrigir_mojibake(portaria_ts_utilizada)), '') as portaria_adotada,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(portaria_adotada)), '') as portaria_adotada,
             nullif(trim({{ target.schema }}.corrigir_mojibake(instrumento_de_planejamento)), '') as instrumento_planejamento,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(forma_natureza_de_execucao_direta_indireta_mista_pelo_af)), '') as natureza_execucao,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(natureza_execucao)), '') as natureza_execucao,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(data_contratacao_empreendimento) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(data_primeiro_relatorio) as dt_primeiro_relatorio,
-            {{ target.schema }}.parse_date_br(data_ultimo_relatorio) as dt_ultimo_relatorio,
-            {{ target.schema }}.parse_date_br(data_da_assinatura_do_primeiro_contrato_de_pessoa_fisica) as dt_entrega,
+            {{ target.schema }}.parse_date_br(data_da_contratacao) as dt_contratacao,
+            -- A base da CAIXA não informa a data do primeiro relatório (só a do
+            -- BB tem). Mantido nulo para as duas silver terem o mesmo formato.
+            null::date as dt_primeiro_relatorio,
+            {{ target.schema }}.parse_date_br(dt_entrega) as dt_entrega,
+            {{ target.schema }}.parse_date_br(dt_ultimo_avt) as dt_ultimo_avt,
+            {{ target.schema }}.parse_date_br(dt_avf) as dt_avf,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "base_trabalho_social_pnhr_bb") }}
+        from {{ source("bronze_rural", "bronze_trabalho_social_caixa") }}
     )
 
 select *
-from ts_bb_raw
+from ts_caixa_raw

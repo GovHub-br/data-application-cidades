@@ -13,7 +13,7 @@ with
             vr_desembolsado_ts,
             percentual_execucao_ts,
             percentual_obra
-        from {{ ref("rural_trabalho_social_caixa") }}
+        from {{ ref("silver_trabalho_social_caixa") }}
     ),
 
     ts_bb as (
@@ -25,7 +25,7 @@ with
             vr_desembolsado_ts,
             percentual_execucao_ts,
             percentual_obra
-        from {{ ref("rural_trabalho_social_bb") }}
+        from {{ ref("silver_trabalho_social_bb") }}
     ),
 
     ts_union as (
@@ -42,7 +42,7 @@ with
             uf,
             programa,
             quantidade_uh
-        from {{ ref("ficha_empreendimento_rural") }}
+        from {{ ref("gold_ficha_empreendimento") }}
     )
 
 select

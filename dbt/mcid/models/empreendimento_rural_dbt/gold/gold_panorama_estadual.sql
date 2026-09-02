@@ -6,7 +6,7 @@
 
 with
     fichas as (
-        select * from {{ ref("ficha_empreendimento_rural") }}
+        select * from {{ ref("gold_ficha_empreendimento") }}
     ),
 
     -- Tabela de referência IBGE para traduzir sigla UF → nome completo do estado.

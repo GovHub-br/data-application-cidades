@@ -5,7 +5,7 @@
 
 with
     cadastro_pf as (
-        select * from {{ ref("rural_cadastro_pf") }}
+        select * from {{ ref("silver_cadastro_pf") }}
     ),
 
     agregado as (
@@ -37,7 +37,7 @@ with
             uf,
             programa,
             quantidade_uh
-        from {{ ref("ficha_empreendimento_rural") }}
+        from {{ ref("gold_ficha_empreendimento") }}
     )
 
 select

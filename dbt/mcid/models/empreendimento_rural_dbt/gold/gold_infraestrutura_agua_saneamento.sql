@@ -13,7 +13,7 @@ with
             programa,
             agente_financeiro,
             quantidade_uh
-        from {{ ref("ficha_empreendimento_rural") }}
+        from {{ ref("gold_ficha_empreendimento") }}
     ),
 
     cpj as (
@@ -23,7 +23,7 @@ with
             coalesce(vr_cisterna, 0.00) as vr_cisterna_pj,
             coalesce(qt_efluente, 0) as qt_efluente_pj,
             coalesce(vr_efluente, 0.00) as vr_efluente_pj
-        from {{ ref("rural_cadastro_pj") }}
+        from {{ ref("silver_cadastro_pj") }}
     ),
 
     cpf_agregado as (
@@ -31,7 +31,7 @@ with
             apf,
             sum(coalesce(qt_cisterna, 0)) as qt_cisterna_pf,
             sum(coalesce(qt_efluente, 0)) as qt_efluente_pf
-        from {{ ref("rural_cadastro_pf") }}
+        from {{ ref("silver_cadastro_pf") }}
         group by apf
     ),
 
@@ -40,7 +40,7 @@ with
             apf,
             coalesce(vr_cisterna, 0.00) as vr_cisterna_cx,
             coalesce(vr_efluentes, 0.00) as vr_efluentes_cx
-        from {{ ref("rural_pnhr_caixa") }}
+        from {{ ref("silver_pnhr_caixa") }}
     ),
 
     pbb as (
@@ -48,7 +48,7 @@ with
             apf,
             coalesce(vr_cisterna, 0.00) as vr_cisterna_bb,
             coalesce(vr_efluentes, 0.00) as vr_efluentes_bb
-        from {{ ref("rural_pnhr_bb") }}
+        from {{ ref("silver_pnhr_bb") }}
     )
 
 select

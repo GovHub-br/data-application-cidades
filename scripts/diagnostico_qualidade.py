@@ -42,78 +42,80 @@ MOJIBAKE = ["Ã", "Â", "â€", "�"]
 DOMINIOS: Dict[str, dict] = {
     "rural": {
         "bronze": [
-            "novo_mcmv_rural_cad_pj_mensal",
-            "novo_mcmv_rural_cadastro_pf_mensal",
-            "novo_mcmv_rural_obra_mensal",
-            "novo_mcmv_rural_financeiro_mensal",
-            "dados_prioritarios_disponibilizados_snh_empreendimentos",
-            "dados_prioritarios_recebidos_caixa_empreendimentos",
-            "dados_prioritarios_recebidos_bb_empreendimentos",
-            "int_empreendimentos_int_065_pnhr_caixa_pj",
-            "int_empreendimentos_int_057_pnhr_bb_pj",
-            "int_financeiro_int055_liberacoes_caixa_bb",
-            "base_trabalho_social_pnhr_rural_caixa",
-            "base_trabalho_social_pnhr_bb",
+            "bronze_cadastro_pj",
+            "bronze_cadastro_pf",
+            "bronze_obra_mensal",
+            "bronze_financeiro_mensal",
+            "bronze_prioritarios_snh",
+            "bronze_prioritarios_caixa",
+            "bronze_prioritarios_bb",
+            "bronze_pnhr_caixa",
+            "bronze_pnhr_bb",
+            "bronze_pnhr_liberacoes",
+            "bronze_trabalho_social_caixa",
+            "bronze_trabalho_social_bb",
         ],
-        "schema_silver": "empreendimento_rural_silver",
-        "schema_gold": "empreendimento_rural_gold",
+        # Um schema só para o domínio; a camada está no prefixo do nome da tabela.
+        "schema_bronze": "empreendimento_rural",
+        "schema_silver": "empreendimento_rural",
+        "schema_gold": "empreendimento_rural",
         # Todos os models de cada camada. Separado das chaves de propósito: nem todo
-        # model tem chave natural declarável (rural_financeiro_mensal são várias
+        # model tem chave natural declarável (silver_financeiro_mensal são várias
         # liberações por APF), mas todos entram no perfil de nulos e de mojibake.
         "models_silver": [
-            "rural_empreendimento", "rural_prioritarios_snh", "rural_prioritarios_caixa",
-            "rural_prioritarios_bb", "rural_cadastro_pj", "rural_cadastro_pf",
-            "rural_pnhr_caixa", "rural_pnhr_bb", "rural_pnhr_liberacoes",
-            "rural_trabalho_social_caixa", "rural_trabalho_social_bb",
-            "rural_obra_mensal", "rural_financeiro_mensal",
+            "silver_empreendimento", "silver_prioritarios_snh", "silver_prioritarios_caixa",
+            "silver_prioritarios_bb", "silver_cadastro_pj", "silver_cadastro_pf",
+            "silver_pnhr_caixa", "silver_pnhr_bb", "silver_pnhr_liberacoes",
+            "silver_trabalho_social_caixa", "silver_trabalho_social_bb",
+            "silver_obra_mensal", "silver_financeiro_mensal",
         ],
         "models_gold": [
-            "ficha_empreendimento_rural", "resumo_gerencial_rural",
-            "panorama_estadual_rural", "mapa_nacional_rural",
-            "evolucao_financeira_rural", "execucao_fisica_financeira_chart_rural",
-            "ficha_trabalho_social", "perfil_beneficiarios",
-            "infraestrutura_agua_saneamento",
+            "gold_ficha_empreendimento", "gold_resumo_gerencial",
+            "gold_panorama_estadual", "gold_mapa_nacional",
+            "gold_evolucao_financeira", "gold_execucao_fisica_financeira",
+            "gold_ficha_trabalho_social", "gold_perfil_beneficiarios",
+            "gold_infraestrutura_agua_saneamento",
         ],
         # model -> chave natural esperada, por camada (o schema vem de qual bloco)
         "chaves_silver": {
-            "rural_empreendimento": ["apf"],
-            "rural_prioritarios_snh": ["apf"],
-            "rural_prioritarios_caixa": ["apf"],
-            "rural_prioritarios_bb": ["apf"],
-            "rural_cadastro_pj": ["apf"],
-            "rural_pnhr_caixa": ["apf"],
-            "rural_pnhr_bb": ["apf"],
-            "rural_trabalho_social_caixa": ["apf"],
-            "rural_trabalho_social_bb": ["apf"],
-            "rural_obra_mensal": ["apf"],
+            "silver_empreendimento": ["apf"],
+            "silver_prioritarios_snh": ["apf"],
+            "silver_prioritarios_caixa": ["apf"],
+            "silver_prioritarios_bb": ["apf"],
+            "silver_cadastro_pj": ["apf"],
+            "silver_pnhr_caixa": ["apf"],
+            "silver_pnhr_bb": ["apf"],
+            "silver_trabalho_social_caixa": ["apf"],
+            "silver_trabalho_social_bb": ["apf"],
+            "silver_obra_mensal": ["apf"],
         },
         "chaves_gold": {
-            "ficha_empreendimento_rural": ["apf"],
-            "evolucao_financeira_rural": ["apf", "mes"],
-            "ficha_trabalho_social": ["apf", "agente_financeiro"],
-            "perfil_beneficiarios": ["apf"],
-            "infraestrutura_agua_saneamento": ["apf"],
+            "gold_ficha_empreendimento": ["apf"],
+            "gold_evolucao_financeira": ["apf", "mes"],
+            "gold_ficha_trabalho_social": ["apf", "agente_financeiro"],
+            "gold_perfil_beneficiarios": ["apf"],
+            "gold_infraestrutura_agua_saneamento": ["apf"],
         },
         # campos de corte: os valores reais importam porque viram condição de join
         "cortes": [
-            ("rural_prioritarios_snh", "agente_financeiro"),
-            ("rural_prioritarios_snh", "modalidade"),
-            ("rural_prioritarios_snh", "situacao"),
-            ("rural_empreendimento", "agente_financeiro"),
-            ("ficha_empreendimento_rural", "programa"),
-            ("ficha_empreendimento_rural", "status_execucao_simplificado"),
-            ("ficha_empreendimento_rural", "status_prazo"),
+            ("silver_prioritarios_snh", "agente_financeiro"),
+            ("silver_prioritarios_snh", "modalidade"),
+            ("silver_prioritarios_snh", "situacao"),
+            ("silver_empreendimento", "agente_financeiro"),
+            ("gold_ficha_empreendimento", "programa"),
+            ("gold_ficha_empreendimento", "status_execucao_simplificado"),
+            ("gold_ficha_empreendimento", "status_prazo"),
         ],
         # cobertura: (esquerda, direita, coluna de junção) — quantos da esquerda acham par
         "joins": [
-            ("rural_prioritarios_snh", "rural_prioritarios_caixa", "apf"),
-            ("rural_prioritarios_snh", "rural_prioritarios_bb", "apf"),
-            ("rural_prioritarios_snh", "rural_cadastro_pj", "apf"),
-            ("rural_prioritarios_snh", "rural_pnhr_caixa", "apf"),
-            ("rural_prioritarios_snh", "rural_pnhr_bb", "apf"),
-            ("rural_empreendimento", "rural_cadastro_pf", "apf"),
-            ("rural_empreendimento", "rural_trabalho_social_caixa", "apf"),
-            ("rural_empreendimento", "rural_obra_mensal", "apf"),
+            ("silver_prioritarios_snh", "silver_prioritarios_caixa", "apf"),
+            ("silver_prioritarios_snh", "silver_prioritarios_bb", "apf"),
+            ("silver_prioritarios_snh", "silver_cadastro_pj", "apf"),
+            ("silver_prioritarios_snh", "silver_pnhr_caixa", "apf"),
+            ("silver_prioritarios_snh", "silver_pnhr_bb", "apf"),
+            ("silver_empreendimento", "silver_cadastro_pf", "apf"),
+            ("silver_empreendimento", "silver_trabalho_social_caixa", "apf"),
+            ("silver_empreendimento", "silver_obra_mensal", "apf"),
         ],
     }
 }
@@ -276,7 +278,11 @@ def secao_joins(cur, schema: str, joins: List[Tuple[str, str, str]]) -> List[str
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dominio", default="rural", choices=sorted(DOMINIOS))
-    ap.add_argument("--schema-bronze", default="bronze")
+    ap.add_argument(
+        "--schema-bronze",
+        default=None,
+        help="sobrepõe o schema_bronze do domínio (default: o do DOMINIOS)",
+    )
     ap.add_argument(
         "--limiar-nulo",
         type=float,
@@ -295,7 +301,7 @@ def main() -> None:
         p(f"# Diagnóstico de qualidade — domínio {args.dominio}\n")
 
         p("## 1. Mojibake residual (bronze)\n")
-        for l in secao_mojibake(cur, args.schema_bronze, cfg["bronze"]):
+        for l in secao_mojibake(cur, args.schema_bronze or cfg["schema_bronze"], cfg["bronze"]):
             p(l)
         p(f"\n## 2a. Mojibake residual — silver ({silver})\n")
         for l in secao_mojibake(cur, silver, sorted(cfg["models_silver"])):

@@ -1,15 +1,15 @@
 {{ config(materialized="table") }}
 
--- Silver: Integração Caixa PJ (PNHR)
--- Fonte: bronze.int_empreendimentos_int_065_pnhr_caixa_pj (parquet da staging/ carregado pelo staging_para_bronze.py)
--- Saída: dados cadastrais e financeiros históricos da Caixa PJ limpos e tipados
+-- Silver: Integração BB PJ (PNHR)
+-- Fonte: bronze.bronze_pnhr_bb (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Saída: dados cadastrais e financeiros históricos do BB PJ limpos e tipados
 
 with
-    int_caixa_raw as (
+    int_bb_raw as (
         select
             -- Identificadores
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_emprendimento)), '') as nu_contrato_empreend,
+            {{ target.schema }}.normalize_apf(nu_contrato_empreendimento) as apf,
+            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_empreendimento)), '') as nu_contrato_empreendimento,
             nullif(trim({{ target.schema }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
             nullif(trim({{ target.schema }}.corrigir_mojibake(co_agente_financeiro)), '') as agente_financeiro_codigo,
 
@@ -23,13 +23,12 @@ with
             nullif(trim({{ target.schema }}.corrigir_mojibake(co_municipio_ibge)), '') as cod_ibge,
 
             -- Quantidades
-            {{ parse_int('qtde_uh_inicial') }} as qtde_uh_inicial,
-            {{ parse_int('qtde_unidades') }} as qt_unidades,
+            {{ parse_int('qt_unidades') }} as qt_unidades,
             {{ parse_int('qt_unidades_concluidas') }} as qt_unidades_concluidas,
             {{ parse_int('qt_unidades_entregues') }} as qt_unidades_entregues,
 
             -- Valores
-            {{ parse_financial_value('vr_investimento_pnhr') }} as vr_investimento,
+            {{ parse_financial_value('vr_investimento') }} as vr_investimento,
             {{ parse_financial_value('vr_operacao') }} as vr_operacao,
             {{ parse_financial_value('vr_edificacao') }} as vr_edificacao,
             {{ parse_financial_value('vr_atec') }} as vr_atec,
@@ -41,13 +40,12 @@ with
             {{ parse_financial_value('vr_cisterna') }} as vr_cisterna,
             {{ parse_financial_value('vr_efluentes') }} as vr_efluentes,
             {{ parse_financial_value('vr_contrapartida') }} as vr_contrapartida,
-            {{ parse_financial_value('vr_emprestimo') }} as vr_emprestimo,
-            {{ parse_financial_value('vr_subsidio_fgts') }} as vr_subsidio_fgts,
             {{ parse_financial_value('vr_liberado') }} as vr_liberado,
 
             -- Prazos e Execução
-            {{ parse_int('pz_construcao') }} as prazo_construcao,
-            {{ parse_numeric('pc_obra_realizado', 'numeric(6, 2)') }} as percentual_execucao_fisica,
+            {{ parse_int('pz_obra') }} as prazo_obra,
+            {{ parse_numeric('pc_execucao_fisica_obra', 'numeric(6, 2)') }} as percentual_execucao_fisica,
+            {{ parse_numeric('pc_execucao_financeira_obra', 'numeric(6, 2)') }} as percentual_execucao_financeira,
             nullif(trim({{ target.schema }}.corrigir_mojibake(no_situacao_obra)), '') as situacao_obra,
 
             -- Datas
@@ -77,8 +75,8 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "int_empreendimentos_int_065_pnhr_caixa_pj") }}
+        from {{ source("bronze_rural", "bronze_pnhr_bb") }}
     )
 
 select *
-from int_caixa_raw
+from int_bb_raw

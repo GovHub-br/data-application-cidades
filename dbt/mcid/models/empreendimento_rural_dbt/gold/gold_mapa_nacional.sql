@@ -5,7 +5,7 @@
 
 with
     fichas as (
-        select * from {{ ref("ficha_empreendimento_rural") }}
+        select * from {{ ref("gold_ficha_empreendimento") }}
     ),
 
     -- Referência IBGE: sigla, nome do estado, região.

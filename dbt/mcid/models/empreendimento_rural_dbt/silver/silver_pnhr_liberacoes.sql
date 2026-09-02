@@ -1,12 +1,12 @@
 {{ config(materialized="table") }}
 
 -- Silver: Liberações históricas do PNHR (INT055 CAIXA/BB)
--- Fonte: bronze.int_financeiro_int055_liberacoes_caixa_bb (parquet da staging/ carregado
+-- Fonte: bronze.bronze_pnhr_liberacoes (parquet da staging/ carregado
 -- pelo staging_para_bronze.py)
 -- Saída: uma linha por liberação de recurso do PNHR, tipada, para a série financeira.
 --
 -- Existe para tirar a tipagem do INT055 de dentro da gold: antes o
--- gold/evolucao_financeira_rural.sql lia o text cru do dump e fazia parse ali dentro.
+-- gold/gold_evolucao_financeira.sql lia o text cru do dump e fazia parse ali dentro.
 -- O filtro de programa (%PNHR%) fica aqui, junto do resto da regra de leitura da fonte.
 with
     liberacoes_raw as (
@@ -30,7 +30,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "int_financeiro_int055_liberacoes_caixa_bb") }}
+        from {{ source("bronze_rural", "bronze_pnhr_liberacoes") }}
         where
             nu_apf is not null
             and nullif(trim({{ target.schema }}.corrigir_mojibake(data_liberacao)), '') is not null

@@ -1,8 +1,8 @@
 version: 2
 models:
-- name: ficha_empreendimento_rural
+- name: gold_ficha_empreendimento
   description: 'Tabela Gold que alimenta a "Ficha do Empreendimento" no dashboard do MCMV Rural. Consome
-    a silver empreendimento_rural e injeta as regras de negócio finais: programa (Novo MCMV Rural vs.
+    a silver_empreendimento e injeta as regras de negócio finais: programa (Novo MCMV Rural vs.
     PNHR histórico), status de execução, status de prazo, valor por UH e ritmo físico-financeiro. Uma
     linha por empreendimento (APF).
 
@@ -18,7 +18,7 @@ models:
     - unique
     - relationships:
         arguments:
-          to: ref('rural_empreendimento')
+          to: ref('silver_empreendimento')
           field: apf
   - name: programa
     description: 'Regra de negócio: NOVO MCMV RURAL quando ic_novo_mcmv, senão PNHR (HISTÓRICO).
@@ -149,7 +149,7 @@ models:
     - sem_mojibake:
         config:
           severity: warn
-- name: resumo_gerencial_rural
+- name: gold_resumo_gerencial
   description: 'Visão agregada Gold com os KPIs gerenciais (empreendimentos, UHs, UHs entregues, pessoas
     atendidas, valores e médias) agrupados por agente financeiro, programa, situação, tipologia e status.
     Alimenta os gráficos de pizza e barra do painel gerencial.
@@ -172,7 +172,7 @@ models:
     - not_null:
         config:
           severity: warn
-- name: panorama_estadual_rural
+- name: gold_panorama_estadual
   description: 'Visão Gold por UF em formato longo (uma seção por linha) para o dashboard "Panorama Estadual":
     header com os grandes números e distribuições por agente financeiro, programa, situação e faixa de
     execução física. A seção de situação usa uma grade fixa de 4 status, então UF sem empreendimento em
@@ -215,7 +215,7 @@ models:
         - uf
         - secao
         - dimensao
-- name: mapa_nacional_rural
+- name: gold_mapa_nacional
   description: 'Visão Gold geográfica para o mapa coroplético e os gráficos por região. Traz duas visões
     no mesmo formato, distinguidas pela coluna `nivel`: por UF (com código ISO 3166-2) e por região. Enriquecida
     com a referência IBGE.
@@ -258,7 +258,7 @@ models:
         colunas:
         - uf
         - nivel
-- name: evolucao_financeira_rural
+- name: gold_evolucao_financeira
   description: 'Série temporal Gold de liberações por APF × mês, com acumulado progressivo e percentual
     executado sobre o valor contratado. Une o financeiro mensal do Novo MCMV Rural (decomposto por componente)
     com as liberações históricas do PNHR vindas da silver liberacoes_pnhr — o INT055 não decompõe por
@@ -275,7 +275,7 @@ models:
     - not_null
     - relationships:
         arguments:
-          to: ref('rural_empreendimento')
+          to: ref('silver_empreendimento')
           field: apf
   - name: mes
     description: Primeiro dia do mês da(s) liberação(ões), truncado.
@@ -306,7 +306,7 @@ models:
         colunas:
         - apf
         - mes
-- name: execucao_fisica_financeira_chart_rural
+- name: gold_execucao_fisica_financeira
   description: 'Série temporal Gold comparando execução física e financeira por APF × mês, pronta para
     o gráfico de linhas. Faz full outer join entre as duas séries e preenche os buracos com o último valor
     conhecido (last observation carried forward), para que a linha não caia a zero em mês sem movimento.
@@ -322,7 +322,7 @@ models:
     - not_null
     - relationships:
         arguments:
-          to: ref('rural_empreendimento')
+          to: ref('silver_empreendimento')
           field: apf
   - name: apf_municipio_empreendimento
     description: Rótulo concatenado com APF, município, UF e nome do empreendimento.
@@ -340,7 +340,7 @@ models:
         colunas:
         - apf
         - mes
-- name: ficha_trabalho_social
+- name: gold_ficha_trabalho_social
   description: 'Modelo Gold de acompanhamento do Plano de Trabalho Social (PTS). Empilha as bases de trabalho
     social da CAIXA e do BB e cruza com a ficha do empreendimento, permitindo comparar o ritmo do trabalho
     social com o da obra. Uma linha por APF × agente financeiro.
@@ -356,7 +356,7 @@ models:
     - not_null
     - relationships:
         arguments:
-          to: ref('rural_empreendimento')
+          to: ref('silver_empreendimento')
           field: apf
   - name: situacao_trabalho_social
     description: Situação do PTS em maiúsculo; NÃO INFORMADO quando ausente.
@@ -409,7 +409,7 @@ models:
         colunas:
         - apf
         - agente_financeiro
-- name: perfil_beneficiarios
+- name: gold_perfil_beneficiarios
   description: 'Modelo Gold com o perfil socioeconômico agregado dos beneficiários por empreendimento:
     total de beneficiários, média de pessoas por família e proporção de mulheres, Bolsa Família e BPC.
     Agregado da silver cadastro_pf. Uma linha por APF; só aparecem APFs com beneficiário cadastrado (inner
@@ -426,7 +426,7 @@ models:
     - not_null
     - relationships:
         arguments:
-          to: ref('rural_empreendimento')
+          to: ref('silver_empreendimento')
           field: apf
   - name: percentual_mulheres
     description: Proporção de beneficiárias mulheres sobre o total cadastrado, em %.
@@ -437,7 +437,7 @@ models:
     - not_null:
         config:
           severity: warn
-- name: infraestrutura_agua_saneamento
+- name: gold_infraestrutura_agua_saneamento
   description: 'Modelo Gold do escopo rural específico de cisternas e efluentes: quantidade e investimento
     por empreendimento. Quantidades vêm do cadastro PJ e, na ausência dele, da soma do cadastro PF; valores
     vêm do cadastro PJ e, na ausência, do histórico PNHR do agente correspondente.
@@ -453,7 +453,7 @@ models:
     - not_null
     - relationships:
         arguments:
-          to: ref('rural_empreendimento')
+          to: ref('silver_empreendimento')
           field: apf
   - name: valor_investimento_saneamento_total
     description: Soma do investimento em cisternas e efluentes em R$.

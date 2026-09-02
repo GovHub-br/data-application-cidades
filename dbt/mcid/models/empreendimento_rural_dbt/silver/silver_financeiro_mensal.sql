@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
 -- Silver: Série histórica de desembolsos financeiros (Rural)
--- Fonte: bronze.novo_mcmv_rural_financeiro_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_financeiro_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
 -- Saída: liberações financeiras limpas e tipadas por APF
 
 with
@@ -35,7 +35,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_rural_financeiro_mensal") }}
+        from {{ source("bronze_rural", "bronze_financeiro_mensal") }}
     )
 
 select *
