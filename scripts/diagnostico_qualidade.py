@@ -55,9 +55,27 @@ DOMINIOS: Dict[str, dict] = {
             "base_trabalho_social_pnhr_rural_caixa",
             "base_trabalho_social_pnhr_bb",
         ],
-        "schema_dbt": "empreendimento_rural",
-        # model -> chave natural esperada
-        "chaves": {
+        "schema_silver": "empreendimento_rural_silver",
+        "schema_gold": "empreendimento_rural_gold",
+        # Todos os models de cada camada. Separado das chaves de propósito: nem todo
+        # model tem chave natural declarável (rural_financeiro_mensal são várias
+        # liberações por APF), mas todos entram no perfil de nulos e de mojibake.
+        "models_silver": [
+            "rural_empreendimento", "rural_prioritarios_snh", "rural_prioritarios_caixa",
+            "rural_prioritarios_bb", "rural_cadastro_pj", "rural_cadastro_pf",
+            "rural_pnhr_caixa", "rural_pnhr_bb", "rural_pnhr_liberacoes",
+            "rural_trabalho_social_caixa", "rural_trabalho_social_bb",
+            "rural_obra_mensal", "rural_financeiro_mensal",
+        ],
+        "models_gold": [
+            "ficha_empreendimento_rural", "resumo_gerencial_rural",
+            "panorama_estadual_rural", "mapa_nacional_rural",
+            "evolucao_financeira_rural", "execucao_fisica_financeira_chart_rural",
+            "ficha_trabalho_social", "perfil_beneficiarios",
+            "infraestrutura_agua_saneamento",
+        ],
+        # model -> chave natural esperada, por camada (o schema vem de qual bloco)
+        "chaves_silver": {
             "rural_empreendimento": ["apf"],
             "rural_prioritarios_snh": ["apf"],
             "rural_prioritarios_caixa": ["apf"],
@@ -68,6 +86,8 @@ DOMINIOS: Dict[str, dict] = {
             "rural_trabalho_social_caixa": ["apf"],
             "rural_trabalho_social_bb": ["apf"],
             "rural_obra_mensal": ["apf"],
+        },
+        "chaves_gold": {
             "ficha_empreendimento_rural": ["apf"],
             "evolucao_financeira_rural": ["apf", "mes"],
             "ficha_trabalho_social": ["apf", "agente_financeiro"],
@@ -197,9 +217,10 @@ def secao_nulos(cur, schema: str, tabelas: List[str], limiar: float) -> List[str
     return out if len(out) > 2 else ["Nenhuma coluna acima do limiar."]
 
 
-def secao_duplicidade(cur, schema: str, chaves: Dict[str, List[str]]) -> List[str]:
+def secao_duplicidade(cur, schema_de: Dict[str, str], chaves: Dict[str, List[str]]) -> List[str]:
     out = ["| model | chave | linhas | chaves distintas | duplicadas |", "|---|---|---|---|---|"]
     for model, ks in chaves.items():
+        schema = schema_de[model]
         total = n_linhas(cur, schema, model)
         if total < 0:
             out.append(f"| `{model}` | — | **(não materializada)** | — | — |")
@@ -213,9 +234,10 @@ def secao_duplicidade(cur, schema: str, chaves: Dict[str, List[str]]) -> List[st
     return out
 
 
-def secao_cortes(cur, schema: str, cortes: List[Tuple[str, str]]) -> List[str]:
+def secao_cortes(cur, schema_de: Dict[str, str], cortes: List[Tuple[str, str]]) -> List[str]:
     out = []
     for model, col in cortes:
+        schema = schema_de[model]
         try:
             cur.execute(
                 f'''select coalesce("{col}"::text, '(null)'), count(*)
@@ -263,7 +285,10 @@ def main() -> None:
     )
     args = ap.parse_args()
     cfg = DOMINIOS[args.dominio]
-    sd = cfg["schema_dbt"]
+    silver, gold = cfg["schema_silver"], cfg["schema_gold"]
+    chaves = {**cfg["chaves_silver"], **cfg["chaves_gold"]}
+    schema_de = {m: silver for m in cfg["models_silver"]}
+    schema_de.update({m: gold for m in cfg["models_gold"]})
 
     with conectar() as conn, conn.cursor() as cur:
         p = print
@@ -272,24 +297,29 @@ def main() -> None:
         p("## 1. Mojibake residual (bronze)\n")
         for l in secao_mojibake(cur, args.schema_bronze, cfg["bronze"]):
             p(l)
-        p(f"\n## 2. Mojibake residual (silver/gold, schema {sd})\n")
-        for l in secao_mojibake(cur, sd, sorted(cfg["chaves"])):
+        p(f"\n## 2a. Mojibake residual — silver ({silver})\n")
+        for l in secao_mojibake(cur, silver, sorted(cfg["models_silver"])):
+            p(l)
+        p(f"\n## 2b. Mojibake residual — gold ({gold})\n")
+        for l in secao_mojibake(cur, gold, sorted(cfg["models_gold"])):
             p(l)
 
         p(f"\n## 3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio\n")
-        for l in secao_nulos(cur, sd, sorted(cfg["chaves"]), args.limiar_nulo):
+        for l in secao_nulos(cur, silver, sorted(cfg["models_silver"]), args.limiar_nulo):
+            p(l)
+        for l in secao_nulos(cur, gold, sorted(cfg["models_gold"]), args.limiar_nulo)[2:]:
             p(l)
 
         p("\n## 4. Duplicidade na chave natural\n")
-        for l in secao_duplicidade(cur, sd, cfg["chaves"]):
+        for l in secao_duplicidade(cur, schema_de, chaves):
             p(l)
 
         p("\n## 5. Cobertura dos joins\n")
-        for l in secao_joins(cur, sd, cfg["joins"]):
+        for l in secao_joins(cur, silver, cfg["joins"]):
             p(l)
 
         p("\n## 6. Valores reais dos campos de corte\n")
-        for l in secao_cortes(cur, sd, cfg["cortes"]):
+        for l in secao_cortes(cur, schema_de, cfg["cortes"]):
             p(l)
 
 
