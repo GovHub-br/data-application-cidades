@@ -53,7 +53,15 @@ with
             empreendimento_nome,
             percentual_execucao_fisica,
             fonte_execucao_fisica,
-            dt_referencia_execucao_fisica
+            dt_referencia_execucao_fisica,
+            -- Posição de desembolso informada pelos prioritários (ESTOQUE). A série
+            -- financeira desta gold é FLUXO e pode estar incompleta — no 29712236 o
+            -- estoque diz 100% e a série soma 75,7%. As duas ficam no mesmo registro
+            -- para o gráfico poder mostrar a série sem contradizer o card da ficha.
+            case
+                when coalesce(valor_contratado, 0) > 0
+                then round((valor_desembolsado / valor_contratado) * 100, 2)
+            end as pct_financeiro_estoque
         from {{ ref("silver_empreendimento") }}
     ),
 
@@ -91,6 +99,7 @@ select
 
     -- Física: a medição corrente, constante ao longo do eixo, com a data que a produziu.
     f.percentual_execucao_fisica as pct_obra_realizada,
+    f.pct_financeiro_estoque,
     f.fonte_execucao_fisica,
     f.dt_referencia_execucao_fisica,
 

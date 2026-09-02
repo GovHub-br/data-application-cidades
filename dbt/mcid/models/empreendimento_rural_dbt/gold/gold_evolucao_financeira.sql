@@ -8,7 +8,17 @@ with
         select
             apf,
             date_trunc('month', dt_liberacao_recurso) as mes,
-            vr_movimento as vr_liberado,
+
+            -- Convenção de sinal do MONIT, documentada no FAR e no FDS e ignorada aqui:
+            --   ic_credito = '0' -> débito: é a LIBERAÇÃO real, e vem com valor negativo
+            --   ic_credito = '1' -> crédito: é DEVOLUÇÃO de recurso, e vem positivo
+            -- Somar vr_movimento cru fazia liberação subtrair e devolução somar — o
+            -- acumulado saía com o sinal invertido em todo empreendimento do Novo MCMV
+            -- Rural que tem série. Liberação entra positiva, devolução entra negativa.
+            case
+                when ic_credito = '1' then -abs(vr_movimento)
+                else abs(vr_movimento)
+            end as vr_liberado,
             vr_desembolso_obra as vr_pago_obra,
             vr_desembolso_trabalho_social as vr_pago_ts,
             vr_desembolso_atec as vr_pago_atec,

@@ -151,6 +151,53 @@ models:
     - sem_mojibake:
         config:
           severity: warn
+  - name: fonte_execucao_fisica
+    description: >
+      Fonte que produziu o percentual de execução física, propagada da silver. Publicar o
+      número sem a procedência foi o que deixou a ficha (33,90%) e o gráfico (100,00%)
+      discordarem na mesma tela sem ninguém saber por quê.
+  - name: dt_referencia_execucao_fisica
+    description: Data de medição da fonte que venceu para a execução física.
+  - name: fonte_valor_desembolsado
+    description: Fonte que produziu o valor desembolsado.
+  - name: dt_referencia_valor_desembolsado
+    description: Data de medição da fonte que venceu para o valor desembolsado.
+  - name: fonte_situacao
+    description: Fonte que produziu a situação do empreendimento.
+  - name: dt_referencia_consolidada
+    description: Data da medição mais recente que entrou na linha, qualquer que seja o campo.
+  - name: dias_desde_ultima_medicao
+    description: >
+      `current_date - dt_referencia_consolidada`. Serve para o dashboard marcar número
+      velho: no 63665048 a ficha vinha publicando uma medição de 10 meses antes.
+  - name: vr_acumulado_liberacoes
+    description: >
+      Soma da série de liberações (FLUXO), para ser confrontada com `valor_desembolsado`,
+      que é ESTOQUE. Quando as duas não fecham é a série que está incompleta: o INT055 só
+      traz o que CAIXA e BB reportaram por aquela integração e o feed para em 2025-03, então
+      contrato antigo tem história anterior ao arquivo. No APF 29712236 o estoque diz 100%
+      do contratado e a série soma 75,7%.
+  - name: percentual_acumulado_liberacoes
+    description: >
+      `vr_acumulado_liberacoes` sobre o valor contratado. É o número que o gráfico plota.
+  - name: qt_meses_com_liberacao
+    description: Meses com liberação registrada na série. Zero/nulo = sem série financeira.
+  - name: diferenca_estoque_menos_serie
+    description: >
+      `valor_desembolsado - vr_acumulado_liberacoes`. Positivo = a série não cobre todo o
+      desembolso informado. Negativo merece investigação: a série passou do estoque.
+  - name: consistencia_desembolso
+    description: >
+      Marca desembolso acima de contratado + aportes. Acontece de verdade (suplementação),
+      mas é também a assinatura de erro de sinal ou liberação duplicada na origem. Marcado
+      em vez de limitado: um `least(pct, 100)` esconderia justamente o caso a olhar.
+    data_tests:
+      - accepted_values:
+          arguments:
+            values: [Dentro do Contratado, Desembolso Acima do Contratado, Sem Informação]
+          config:
+            severity: warn
+
 - name: gold_resumo_gerencial
   description: 'Visão agregada Gold com os KPIs gerenciais (empreendimentos, UHs, UHs entregues, pessoas
     atendidas, valores e médias) agrupados por agente financeiro, programa, situação, tipologia e status.
@@ -464,22 +511,3 @@ models:
     - not_null:
         config:
           severity: warn
-  - name: fonte_execucao_fisica
-    description: >
-      Fonte que produziu o percentual de execução física, propagada da silver. Publicar o
-      número sem a procedência foi o que deixou a ficha (33,90%) e o gráfico (100,00%)
-      discordarem na mesma tela sem ninguém saber por quê.
-  - name: dt_referencia_execucao_fisica
-    description: Data de medição da fonte que venceu para a execução física.
-  - name: fonte_valor_desembolsado
-    description: Fonte que produziu o valor desembolsado.
-  - name: dt_referencia_valor_desembolsado
-    description: Data de medição da fonte que venceu para o valor desembolsado.
-  - name: fonte_situacao
-    description: Fonte que produziu a situação do empreendimento.
-  - name: dt_referencia_consolidada
-    description: Data da medição mais recente que entrou na linha, qualquer que seja o campo.
-  - name: dias_desde_ultima_medicao
-    description: >
-      `current_date - dt_referencia_consolidada`. Serve para o dashboard marcar número
-      velho: no 63665048 a ficha vinha publicando uma medição de 10 meses antes.

@@ -15,15 +15,37 @@ with
     -- `situacao_normalizada` existe porque a origem manda a mesma situação em duas grafias
     -- — "Concluído e Entregue" (8.549 linhas) e "CONCLUÍDO E ENTREGUE" (20) — e as regras
     -- comparavam só com a maiúscula. Resultado: 20 dos ~8.569 entregues eram reconhecidos.
+    -- Acumulado da SÉRIE de liberações, por APF. Existe só para ser confrontado com o
+    -- valor_desembolsado (que é ESTOQUE, vindo dos prioritários). São duas medições
+    -- independentes da mesma grandeza e ninguém as reconciliava: no APF 29712236 o
+    -- estoque diz R$ 280.000 (100% do contratado) e a série soma 75,7%. O dashboard
+    -- mostrava as duas na mesma tela como se fossem a mesma coisa.
+    --
+    -- A série é um PISO, não a verdade: o INT055 só traz o que CAIXA e BB reportaram por
+    -- aquela integração, e o feed para em 2025-03. Contrato de 2009 tem história anterior
+    -- ao que existe no arquivo. Por isso o estoque continua sendo o número da ficha — mas
+    -- agora com o acumulado da série ao lado, e a diferença explícita.
+    serie as (
+        select
+            apf,
+            max(vr_acumulado) as vr_acumulado_liberacoes,
+            count(*) as qt_meses_com_liberacao
+        from {{ ref("gold_evolucao_financeira") }}
+        group by apf
+    ),
+
     calculado as (
         select
-            *,
+            b.*,
+            se.vr_acumulado_liberacoes,
+            se.qt_meses_com_liberacao,
             upper(trim(situacao_empreendimento)) as situacao_normalizada,
             case
                 when coalesce(valor_contratado, 0) > 0
                 then round((valor_desembolsado / valor_contratado) * 100, 2)
             end as pct_execucao_financeira
-        from base_silver
+        from base_silver b
+        left join serie se on b.apf = se.apf
     )
 
 select
@@ -101,8 +123,35 @@ select
     end as status_prazo,
 
     -- Evolução Financeira
+    --
+    -- `valor_desembolsado` é ESTOQUE (posição informada pelos prioritários) e
+    -- `vr_acumulado_liberacoes` é FLUXO (soma da série de liberações). Medem a mesma
+    -- grandeza por caminhos diferentes e podem não fechar — quando não fecham, é a série
+    -- que está incompleta, não o estoque que está errado. As duas ficam visíveis, com a
+    -- diferença calculada, para o dashboard poder mostrar a série sem contradizer o card.
     valor_desembolsado,
     pct_execucao_financeira as percentual_execucao_financeira,
+    vr_acumulado_liberacoes,
+    qt_meses_com_liberacao,
+    case
+        when coalesce(valor_contratado, 0) > 0 and vr_acumulado_liberacoes is not null
+        then round((vr_acumulado_liberacoes / valor_contratado) * 100, 2)
+    end as percentual_acumulado_liberacoes,
+    case
+        when valor_desembolsado is not null and vr_acumulado_liberacoes is not null
+        then round(valor_desembolsado - vr_acumulado_liberacoes, 2)
+    end as diferenca_estoque_menos_serie,
+
+    -- Desembolso acima do contratado é possível de verdade (aporte, suplementação), mas
+    -- também é a assinatura de erro de sinal ou de liberação duplicada na origem. Marcar
+    -- em vez de limitar: um `least(pct, 100)` esconderia o caso que precisa ser olhado.
+    case
+        when valor_desembolsado is null or coalesce(valor_contratado, 0) <= 0
+            then 'Sem Informação'
+        when valor_desembolsado > (valor_contratado + coalesce(valor_aporte_adicional, 0))
+            then 'Desembolso Acima do Contratado'
+        else 'Dentro do Contratado'
+    end as consistencia_desembolso,
 
     -- Regra de Negócio: Ritmo Físico-Financeiro (margem de 5%)
     -- Comparar um lado conhecido com um lado desconhecido não produz ritmo nenhum.
