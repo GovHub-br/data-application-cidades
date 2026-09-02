@@ -45,3 +45,31 @@ models:
           - not_null
       - name: dt_ingest
         description: Timestamp da materialização desta camada.
+
+  - name: bronze_reloginho_snh_entregas_evento
+    description: >
+      Bronze do reloginho — entregas por EVENTO (fluxo), CAIXA + BB. Empilha
+      `o_recente_*_af_caixa_entregas` e `*_da_entrega_da_unidade_af_bb` de
+      staging/dados_historicos/ via MinIO/DuckDB. Uma linha por linha de origem,
+      sem dedup; helpers harmonizados `dt_evento` e `qt_uh_entregues_evento`.
+      Complementa bronze_reloginho_snh_serie_mensal (que traz o acumulado).
+      Requer target staging_duckdb.
+    meta:
+      tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
+    columns:
+      - name: apf
+        description: APF do empreendimento (texto, cru).
+      - name: dt_evento
+        description: Data da entrega (coalesce de dt_entrega / dt_ass_doc).
+      - name: qt_uh_entregues_evento
+        description: UH entregues no evento (coalesce de qt_uh_entregues / numero_de_unidades_entregues).
+      - name: dt_referencia
+        description: Mês do arquivo (snapshot) — não é a data do evento.
+      - name: source_file
+        description: Caminho do objeto parquet de origem.
+        data_tests:
+          - not_null
+      - name: hash_linha
+        description: Hash MD5 do evento (dedup na silver).
+        data_tests:
+          - not_null

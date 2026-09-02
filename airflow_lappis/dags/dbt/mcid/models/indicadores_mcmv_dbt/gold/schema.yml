@@ -187,6 +187,33 @@ models:
       - name: n_meses_observados
         description: Contagem corrida de meses observados por (agente, frente).
 
+  - name: indicadores_reloginho_entregas
+    description: >
+      Tabela Gold do reloginho (grupo A) — entregas: fluxo por evento vs
+      acumulado do snapshot, lado a lado, por (agente_financeiro,
+      dt_referencia). Serve à decisão #5 da #130 (qual é o total oficial de UH
+      entregues) e ao ritmo_recente. `dif_evento_vs_snapshot` deve tender a ~0.
+      Requer target staging_duckdb.
+    meta:
+      tags: [gold, mcmv, indicadores, reloginho, dados-historicos, entregas]
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro (BB ou CAIXA).
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Primeiro dia do mês de referência.
+        data_tests:
+          - not_null
+      - name: uh_entregues_evento_mes
+        description: UH entregues no mês (fluxo, da silver de evento).
+      - name: uh_entregues_evento_acum
+        description: Soma corrida do fluxo de entregas até o mês.
+      - name: uh_entregues_snapshot
+        description: UH entregues acumuladas reportadas no snapshot (indicadores_reloginho).
+      - name: dif_evento_vs_snapshot
+        description: uh_entregues_evento_acum menos uh_entregues_snapshot.
+
   - name: resumo_reloginho_dashboard
     description: >
       Tabela Gold do reloginho para dashboard: uma linha por agente_financeiro

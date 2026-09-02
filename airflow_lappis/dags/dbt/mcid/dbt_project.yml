@@ -60,6 +60,8 @@ models:
           +enabled: "{{ target.type == 'duckdb' }}"
         indicadores_reloginho_frente:
           +enabled: "{{ target.type == 'duckdb' }}"
+        indicadores_reloginho_entregas:
+          +enabled: "{{ target.type == 'duckdb' }}"
         resumo_reloginho_dashboard:
           +enabled: "{{ target.type == 'duckdb' }}"
 
@@ -77,6 +79,10 @@ models:
         +materialized: table
       empreendimentos:
         +materialized: table
+        +enabled: "{{ target.type == 'duckdb' }}"
+      serie_executiva:
+        +materialized: table
+        +schema: mcmv_historico
         +enabled: "{{ target.type == 'duckdb' }}"
 
     conjuntura_dbt:

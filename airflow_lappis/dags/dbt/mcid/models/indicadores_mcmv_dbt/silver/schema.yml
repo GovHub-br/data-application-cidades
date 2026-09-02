@@ -51,3 +51,32 @@ models:
         description: Hash MD5 herdado da bronze.
         data_tests:
           - not_null
+
+  - name: silver_reloginho_snh_entregas_mes
+    description: >
+      Silver do reloginho (grupo A) — entregas por evento agregadas ao mês do
+      EVENTO. Lê bronze_reloginho_snh_entregas_evento, deduplica eventos
+      repetidos por hash_linha e soma por (agente_financeiro, apf, mes_evento).
+      É o fluxo real de entregas (base do ritmo_recente e do caminho alternativo
+      do total de entregas — decisão #5). Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, reloginho, dados-historicos, entregas]
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+      - name: apf
+        description: APF do empreendimento.
+        data_tests:
+          - not_null
+      - name: mes_evento
+        description: Primeiro dia do mês em que a UH foi entregue.
+        data_tests:
+          - not_null
+      - name: uh_entregues_evento_mes
+        description: UH entregues no mês, por APF (fluxo).
+      - name: n_eventos
+        description: Número de eventos de entrega deduplicados no mês/APF.

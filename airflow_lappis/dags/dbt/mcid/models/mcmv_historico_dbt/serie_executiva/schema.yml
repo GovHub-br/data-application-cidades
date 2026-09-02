@@ -1,0 +1,101 @@
+version: 2
+
+models:
+  - name: bronze_mcmv_serie_executiva_historica
+    description: >
+      Bronze — série executiva histórica do MCMV (~2010-2018), cópia fiel.
+      Empilha (union_by_name) quatro famílias de `staging/dados_historicos/`:
+      bases_relatório_executivo, min_cidades, entrada_bb e bext. Uma linha por
+      linha de origem; colunas cruas + auditoria (fonte_familia, source_file,
+      dt_referencia = mês-snapshot, report_date_parsed, dt_ingest, hash_linha).
+      Cada família tem 2-3 gerações de schema — a harmonização fica na silver.
+      Requer target staging_duckdb.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
+    columns:
+      - name: fonte_familia
+        description: bases_relatorio_executivo | min_cidades | entrada_bb | bext.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["bases_relatorio_executivo", "min_cidades", "entrada_bb", "bext"]
+      - name: dt_referencia
+        description: Mês do snapshot (report_date normalizado; fallback pelo nome do arquivo).
+      - name: source_file
+        description: Caminho do objeto parquet de origem.
+        data_tests:
+          - not_null
+      - name: hash_linha
+        description: Hash MD5 (source_file + content_hash + sequência) — surrogate de linha.
+        data_tests:
+          - not_null
+          - unique
+
+  - name: silver_mcmv_serie_executiva_historica
+    description: >
+      Silver — série executiva histórica no contrato comum. Aplica o mapa de
+      colunas (doc issue-130-proposta-bronze-series-historicas.md) via
+      coalesce_present(), tipa (UH→bigint, valores→double, datas→date),
+      classifica linha_ogu_fgts (para o piloto #118) e deduplica por
+      (fonte_familia, chave_natural, dt_referencia) mantendo o snapshot mais
+      recente do mês. Grão: registro de origem (empreendimento ou contrato).
+      Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, serie-executiva, preditivo]
+    columns:
+      - name: fonte_familia
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot.
+        data_tests:
+          - not_null
+      - name: uf
+        description: UF (maiúsculas). Pode ser nulo em min_cidades/bext antigos (sem UF na origem).
+      - name: linha_ogu_fgts
+        description: >
+          OGU/Subsidiado quando o subsídio OGU domina; FGTS/Financiado quando o
+          FGTS domina; nulo quando não há subsídio informado.
+        data_tests:
+          - accepted_values:
+              values: ["OGU/Subsidiado", "FGTS/Financiado"]
+      - name: uh_contratadas
+        description: UH contratadas do registro (harmonizado das ~6 origens).
+      - name: uh_entregues
+        description: UH entregues do registro.
+      - name: subsidio_fgts
+        description: Valor de subsídio/complemento FGTS (R$).
+      - name: subsidio_ogu
+        description: Valor de subsídio/complemento OGU (R$).
+
+  - name: gold_mcmv_serie_historica_mensal
+    description: >
+      Gold — série histórica mensal do MCMV (pré-2024) para análise preditiva.
+      Agrega a silver por (dt_referencia, fonte_familia, nivel_agregacao, uf,
+      linha_ogu_fgts) via GROUPING SETS (nacional + uf). NÃO somar entre
+      fonte_familia (bases_relatório_executivo e min_cidades se sobrepõem
+      2014-2016) — usar prioridade_familia para escolher uma série contínua.
+      Requer target staging_duckdb.
+    meta:
+      tags: [gold, mcmv, dados-historicos, serie-executiva, preditivo]
+    columns:
+      - name: dt_referencia
+        data_tests:
+          - not_null
+      - name: fonte_familia
+        data_tests:
+          - not_null
+      - name: prioridade_familia
+        description: 1 bases_relatorio_executivo, 2 min_cidades, 3 entrada_bb, 4 bext (menor = preferencial).
+      - name: nivel_agregacao
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["nacional", "uf"]
+      - name: linha_ogu_fgts
+        data_tests:
+          - not_null
+      - name: uh_contratadas
+        description: Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
+      - name: uh_entregues
+        description: Soma de UH entregues no recorte.
