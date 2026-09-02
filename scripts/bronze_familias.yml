@@ -62,6 +62,113 @@ empreendimento_far:
       data_regex: "^(\\d{6})_SNH_PMCMV"
       tabela: dados_prioritarios_recebidos_caixa_empreendimentos
 
+empreendimento_rural:
+  descricao: >-
+    Novo MCMV Rural e PNHR histórico — cadastro PJ e PF, obra mensal, financeiro
+    mensal, dados prioritários (SNH/CAIXA/BB), integrações PNHR (INT065 CAIXA,
+    INT057 BB, INT055 liberações) e as bases de trabalho social.
+    Alimenta o empreendimento_rural_dbt.
+  schema: bronze
+  objetos:
+    # ATENÇÃO — dependência entre famílias:
+    # dados_prioritarios_recebidos_caixa_empreendimentos NÃO é declarado aqui. É a
+    # mesma tabela da família empreendimento_far (o snapshot da CAIXA cobre todas as
+    # modalidades; a silver prioritarios_caixa deste dbt filtra modalidade='RURAL').
+    # Declarar de novo faria duas famílias dropar e recriar a mesma tabela, cada uma
+    # com sua própria linha na lake._bronze_log. Então:
+    #   rode `--familia empreendimento_far` antes (ou junto) de
+    #   `--familia empreendimento_rural`, senão a silver prioritarios_caixa não acha
+    #   a tabela.
+
+    # --- Feed mensal do SharePoint (pasta "Novo MCMV - Rural") ---
+    # Os quatro conferidos contra a listagem da staging/: competência vigente 202607.
+    # Os mesmos nomes reaparecem nas subpastas "RURAL - <assunto> - Mensal/" com
+    # competências antigas (202512, 202601); como o `*` do fnmatch casa `/`, os dois
+    # conjuntos entram na disputa e vence a competência mais recente — o desejado.
+    # O regex isola a competência (aaaamm) porque há um sufixo de hora depois dela, e o
+    # default (últimos 6-8 dígitos) pegaria a hora.
+    #
+    # Os irmãos _LAYOUT_, _SEMANAL_ e _DIARIO_ dos mesmos assuntos NÃO casam, porque o
+    # padrão exige `_MENSAL_`. Não é acidente: o dbt do rural é mensal.
+
+    - padrao: "staging/*MONIT_CAD_PJ_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PJ_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_cad_pj_mensal
+
+    # CADASTRO_PF, não CAD_PF: o de PJ abrevia, o de PF não.
+    - padrao: "staging/*MONIT_CADASTRO_PF_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_CADASTRO_PF_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_cadastro_pf_mensal
+
+    - padrao: "staging/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_OBRA_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_obra_mensal
+
+    - padrao: "staging/*MONIT_MOV_FINANC_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_FINANC_RURAL_MENSAL_(\\d{6})"
+      tabela: novo_mcmv_rural_financeiro_mensal
+
+    # --- Feed do SFTP (GEFUS) ---
+
+    # <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.csv — competência é o PREFIXO.
+    # O padrão termina em `AF_BB.parquet` de propósito, para não casar com o
+    # `..._DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB`, que é outra tabela.
+    # Remessas antigas usam `aaaa_mm_` (com underscore) e não casam com o regex: ficam
+    # com chave de ordenação vazia e perdem, o que é o desejado. Vigente 202606 — um mês
+    # atrás da CAIXA (202607), porque o BB envia com atraso.
+    - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet"
+      data_regex: "^(\\d{6})_SNH_PMCMV"
+      tabela: dados_prioritarios_recebidos_bb_empreendimentos
+
+    # INT065/INT057: o feed para em 20241129 — o PNHR é programa encerrado, a série não
+    # avança mais. O regex ancora a data logo após `EMPREENDIMENTOS_`, o que exclui as
+    # variantes `_VALIDACAO_`, `_SUBSTITUIDO` e `ALTERACAO_LAYOUT_PARA_VALIDACAO_` (nelas
+    # o regex não casa, a chave fica vazia e elas perdem). Sem a âncora, uma remessa de
+    # validação com data mais nova venceria a remessa boa.
+    - padrao: "staging/*INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet"
+      data_regex: "EMPREENDIMENTOS_(\\d{8})"
+      tabela: int_empreendimentos_int_065_pnhr_caixa_pj
+
+    - padrao: "staging/*INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet"
+      data_regex: "EMPREENDIMENTOS_(\\d{8})"
+      tabela: int_empreendimentos_int_057_pnhr_bb_pj
+
+    # --- Exports canônicos achatados em staging/sharepoint/ ---
+    # Estes três não têm versão datada utilizável, então a origem é key exata.
+    #
+    # O prioritários SNH só existe nesta forma: a pasta
+    # "Dados Prioritarios - Disponibilizados SNH/" guarda outra coisa (base_ogu_* com
+    # abas), não o snapshot de empreendimentos.
+    #
+    # O trabalho social TEM feed datado — "Trabalho Social/MCMV_RURAL_TS_CAIXA_BB_<aaaamm>"
+    # — mas cada mês vira um parquet por aba e o sufixo da aba muda de nome todo mês
+    # (__ts_pnhr_af_bb_01_2026, __ts_af_bb_06_2026, __ts_af_bb_pnhr_07_26, __bb, ...).
+    # Não há padrão estável para pescar "a aba do BB do mês mais recente". Enquanto a
+    # origem não tiver convenção de nome, a key exata é a única leitura confiável.
+    #
+    # RESSALVA: os três são snapshots de 2026-08-25 e NÃO acompanham o feed mensal. São
+    # sobrescritos in-place, então o full refresh segue correto, mas a atualidade depende
+    # de alguém regerar o export.
+    - staging_key: staging/sharepoint/dados_prioritarios_disponibilizados_snh_empreendimentos.parquet
+      tabela: dados_prioritarios_disponibilizados_snh_empreendimentos
+
+    - staging_key: staging/sharepoint/base_trabalho_social_pnhr_rural_caixa.parquet
+      tabela: base_trabalho_social_pnhr_rural_caixa
+
+    - staging_key: staging/sharepoint/base_trabalho_social_pnhr_bb.parquet
+      tabela: base_trabalho_social_pnhr_bb
+
+    # --- INT055: liberações do PNHR ---
+    # Vem zipado do SFTP; o sftp_para_minio.py expande na entrada, então em raw/ os 44
+    # objetos datados chegam como .TXT (8,9-10 MB cada) e o raw_para_staging converte
+    # todos (lake._staging_log: 45 linhas `converted`, contando o export canônico
+    # raw/sharepoint/int_financeiro_int055_liberacoes_caixa_bb.csv).
+    # O _staging_key descarta a extensão de origem, então o .TXT maiúsculo virou
+    # ..._<aaaammdd>.parquet normalmente. Vigente 20250318.
+    # Regex ancorado depois de LIBERACOES_CAIXA_BB_ pela mesma razão do INT065/INT057.
+    - padrao: "staging/*INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet"
+      data_regex: "LIBERACOES_CAIXA_BB_(\\d{8})"
+      tabela: int_financeiro_int055_liberacoes_caixa_bb
 entidades_fds:
   descricao: >-
     Novo MCMV Entidades (FDS) — cadastro PJ, obra mensal, financeiro mensal e trabalho

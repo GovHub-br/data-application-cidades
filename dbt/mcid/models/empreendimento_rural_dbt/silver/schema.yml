@@ -1,0 +1,417 @@
+version: 2
+models:
+- name: rural_cadastro_pj
+  description: 'Cadastro PJ do empreendimento contratado no Novo MCMV Rural: entidade organizadora, composição
+    do investimento, cisternas/efluentes, prazo de construção e datas-chave. Tipagem aplicada sobre a
+    bronze do data lake: text→int, text→date, text→numeric, text→boolean.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos (chave de integração principal).
+    data_tests:
+    - not_null
+  - name: eo_nome
+    description: Nome da entidade organizadora (EO) responsável pelo empreendimento.
+  - name: eo_cnpj
+    description: CNPJ da entidade organizadora (apenas dígitos).
+  - name: modalidade_codigo
+    description: Código da modalidade do empreendimento no Rural.
+  - name: qt_uh_contratadas
+    description: Quantidade de unidades habitacionais contratadas.
+  - name: vr_investimento_total
+    description: Valor total de investimento em R$ (numeric 15,2).
+  - name: qt_cisterna
+    description: Quantidade de cisternas previstas no empreendimento.
+  - name: percentual_obra_realizada
+    description: Percentual de obra realizada informado no cadastro PJ.
+- name: rural_cadastro_pf
+  description: 'Cadastro de beneficiários (pessoa física) do Novo MCMV Rural, com perfil socioeconômico:
+    renda familiar, pessoas por família, Bolsa Família, BPC, subsídio e distrato. Uma linha por beneficiário.
+    Alimenta a gold perfil_beneficiarios.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: nu_registro
+    description: Identificador do registro do beneficiário na remessa.
+  - name: apf
+    description: APF normalizado para 8 dígitos do empreendimento do beneficiário.
+  - name: beneficiario_cpf
+    description: CPF do beneficiário (apenas dígitos).
+  - name: beneficiario_sexo
+    description: 'Sexo declarado: F ou M.'
+  - name: ic_benef_bolsa_familia
+    description: Indicador booleano de beneficiário do Bolsa Família.
+  - name: ic_benef_bpc
+    description: Indicador booleano de beneficiário do BPC.
+  - name: vr_renda_familiar
+    description: Renda familiar declarada em R$ (numeric 15,2).
+- name: rural_obra_mensal
+  description: 'Evolução física da obra no Novo MCMV Rural, snapshot mensal por APF: percentual previsto/realizado,
+    UHs concluídas e alienadas, paralisação, retomada e datas de entrega.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos.
+    data_tests:
+    - not_null
+  - name: percentual_obra_realizada
+    description: Percentual de obra realizada (numeric 6,2).
+  - name: percentual_obra_prevista
+    description: Percentual de obra previsto no cronograma (numeric 6,2).
+  - name: dt_alteracao_situacao
+    description: 'Data da última alteração de situação. É a data usada como eixo temporal da execução
+      física na gold execucao_fisica_financeira_chart_rural.
+
+      '
+- name: rural_financeiro_mensal
+  description: 'Série de liberações financeiras do Novo MCMV Rural, decomposta por componente (obra, trabalho
+    social, ATEC, cisternas/efluentes e custos indiretos). Várias linhas por APF.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos.
+    data_tests:
+    - not_null
+  - name: dt_liberacao_recurso
+    description: Data da liberação do recurso; eixo temporal da série financeira.
+  - name: vr_movimento
+    description: Valor total do movimento financeiro em R$ (numeric 15,2).
+- name: rural_prioritarios_snh
+  description: 'Dados prioritários disponibilizados pela SNH, filtrados para `modalidade = ''RURAL''`.
+    É a espinha dorsal da silver empreendimento_rural: todos os outros insumos entram por left join sobre
+    esta base.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos.
+    data_tests:
+    - not_null
+  - name: modalidade
+    description: Modalidade do empreendimento; o model filtra por RURAL.
+  - name: situacao
+    description: Situação do empreendimento informada pela SNH.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: ic_novo_mcmv
+    description: 'Indicador booleano que separa Novo MCMV Rural de PNHR histórico. É o que define a coluna
+      `programa` na gold.
+
+      '
+  - name: percentual_execucao_fisica
+    description: Percentual de execução física da obra (numeric 6,2).
+  - name: municipio
+    description: Nome do município.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: estado_nome
+    description: Nome da UF por extenso.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: regiao
+    description: Nome da região.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: construtora_nome
+    description: Nome da construtora/entidade.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+- name: rural_prioritarios_caixa
+  description: 'Dados prioritários recebidos da CAIXA, filtrados para `modalidade = ''RURAL''`. Lê a mesma
+    tabela bronze do FAR (dados_prioritarios_recebidos_caixa_empreendimentos), que é um snapshot de todas
+    as modalidades — o recorte Rural é feito aqui.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos.
+    data_tests:
+    - not_null
+  - name: valor_desembolsado
+    description: Valor desembolsado acumulado em R$ (numeric 15,2).
+- name: rural_prioritarios_bb
+  description: 'Dados prioritários recebidos do Banco do Brasil, filtrados para `modalidade = ''RURAL''`.
+    Mesmo layout do prioritarios_caixa.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos.
+    data_tests:
+    - not_null
+  - name: valor_desembolsado
+    description: Valor desembolsado acumulado em R$ (numeric 15,2).
+  - name: municipio
+    description: Nome do município.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: situacao
+    description: Situação do empreendimento na origem.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+- name: rural_pnhr_caixa
+  description: 'Histórico de empreendimentos PNHR na CAIXA (integração INT065). Cobre os contratos anteriores
+    ao Novo MCMV Rural, com composição de investimento, cisternas/efluentes e execução física.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos, derivado de nu_apf.
+    data_tests:
+    - not_null
+  - name: percentual_execucao_fisica
+    description: Percentual de obra realizado (numeric 6,2).
+  - name: municipio
+    description: Nome do município.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: eo_nome
+    description: Nome da entidade organizadora.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: situacao_obra
+    description: Situação da obra informada pelo agente.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+- name: rural_pnhr_bb
+  description: 'Histórico de empreendimentos PNHR no Banco do Brasil (integração INT057). Diferente da
+    CAIXA, o APF é derivado do número do contrato do empreendimento, porque o INT057 não traz nu_apf.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado a partir de nu_contrato_empreendimento.
+    data_tests:
+    - not_null
+  - name: percentual_execucao_financeira
+    description: Percentual de execução financeira da obra (numeric 6,2).
+- name: rural_pnhr_liberacoes
+  description: 'Liberações de recurso do PNHR (integração INT055 CAIXA/BB), tipadas e já filtradas por
+    `no_programa like ''%PNHR%''`. Existe para que a gold evolucao_financeira_rural não precise ler e
+    parsear text cru: antes o INT055 era lido direto do dump dentro da gold.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos.
+    data_tests:
+    - not_null
+  - name: dt_liberacao
+    description: 'Data da liberação. O INT055 chega com ISO em algumas remessas e dd/mm/aaaa em outras;
+      o model trata os dois formatos.
+
+      '
+    data_tests:
+    - not_null
+  - name: vr_liberado
+    description: Valor liberado em R$ (numeric 15,2).
+- name: rural_trabalho_social_caixa
+  description: 'Base de acompanhamento do Plano de Trabalho Social (PTS) do PNHR pela CAIXA: situação
+    do TS, valor global e desembolsado, % de execução do TS e % de obra reportado. Alimenta a gold ficha_trabalho_social.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF normalizado para 8 dígitos, derivado do número do contrato.
+    data_tests:
+    - not_null
+  - name: situacao_ts
+    description: Situação do trabalho social informada pela CAIXA.
+  - name: percentual_execucao_ts
+    description: Percentual de execução do trabalho social (numeric 6,2).
+  - name: percentual_obra
+    description: 'Percentual de obra reportado na própria base de TS. É comparado com o percentual_execucao_ts
+      na gold para medir a defasagem físico-social.
+
+      '
+  - name: vr_a_desembolsar_nao_concluidos
+    description: Valor de TS a desembolsar em empreendimentos não concluídos, em R$.
+  - name: vr_nao_desembolsado_concluidos
+    description: 'Valor de TS não desembolsado em empreendimentos já concluídos, em R$. Só existe na base
+      da CAIXA — o BB não informa esta coluna.
+
+      '
+- name: rural_trabalho_social_bb
+  description: 'Base de acompanhamento do Plano de Trabalho Social (PTS) do PNHR pelo Banco do Brasil.
+    Mesmo papel do trabalho_social_caixa, mas o layout de origem é diferente: os nomes das colunas de
+    valor e de data não coincidem e a base não traz vr_nao_desembolsado_concluidos.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: 'APF normalizado para 8 dígitos, derivado de contrato_registro_ao (o equivalente ao `contrato`
+      da base da CAIXA).
+
+      '
+    data_tests:
+    - not_null
+  - name: situacao_ts
+    description: Situação do trabalho social informada pelo BB.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: percentual_execucao_ts
+    description: Percentual de execução do trabalho social (numeric 6,2).
+  - name: dt_ultimo_relatorio
+    description: 'Data do último relatório de TS. Só existe na base do BB — a da CAIXA traz dt_ultimo_avt
+      e dt_avf no lugar.
+
+      '
+  - name: municipio
+    description: Nome do município.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+- name: rural_empreendimento
+  description: 'Visão unificada do empreendimento Rural. Parte do prioritarios_snh e resolve cada atributo
+    por coalesce na ordem SNH → agente (CAIXA/BB) → cadastro PJ → histórico PNHR, para que um empreendimento
+    apareça uma única vez com o melhor dado disponível. É a base de toda a camada gold.
+
+    '
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: Chave primária. APF normalizado para 8 dígitos.
+    data_tests:
+    - not_null
+    - unique
+  - name: ic_novo_mcmv
+    description: 'Booleano que separa Novo MCMV Rural de PNHR histórico. Vem do SNH e, na ausência dele,
+      da presença do APF no cadastro PJ do Novo MCMV.
+
+      '
+  - name: quantidade_uh_contratadas
+    description: UHs contratadas, resolvidas por coalesce entre as fontes.
+  - name: valor_contratado
+    description: Valor contratado em R$, resolvido por coalesce entre as fontes.
+  - name: percentual_execucao_fisica
+    description: Percentual de execução física, resolvido por coalesce entre as fontes.
+  - name: municipio
+    description: Nome do município.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: estado_nome
+    description: Nome da UF por extenso.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: regiao
+    description: Nome da região.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: entidade_organizadora_nome
+    description: Nome da entidade organizadora.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: construtora_nome
+    description: Nome da construtora/entidade.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: situacao_empreendimento
+    description: Situação resolvida por coalesce entre as fontes.
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn

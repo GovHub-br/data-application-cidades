@@ -328,11 +328,19 @@ def _e_sem_nome(coluna: str) -> bool:
     return str(coluna).startswith("Unnamed:")
 
 
-def _n_colunas_arquivo(src_path: str, delim: str, encoding: str) -> int:
+def _n_colunas_arquivo(
+    src_path: str, delim: str, encoding: str, encoding_errors: str = "strict"
+) -> int:
     """Nº de colunas do header (lê só o header, nrows=0)."""
     return len(
         pd.read_csv(
-            src_path, sep=delim, dtype=str, nrows=0, encoding=encoding, quotechar='"'
+            src_path,
+            sep=delim,
+            dtype=str,
+            nrows=0,
+            encoding=encoding,
+            encoding_errors=encoding_errors,
+            quotechar='"',
         ).columns
     )
 
@@ -342,6 +350,7 @@ def _colunas_a_manter(
     delim: str,
     encoding: str,
     chunksize: int,
+    encoding_errors: str = "strict",
 ) -> Optional[List[str]]:
     """Nomes das colunas que devem ir p/ o parquet, ou None se não há padding a limpar.
 
@@ -349,7 +358,13 @@ def _colunas_a_manter(
     """
     todas = list(
         pd.read_csv(
-            src_path, sep=delim, dtype=str, nrows=0, encoding=encoding, quotechar='"'
+            src_path,
+            sep=delim,
+            dtype=str,
+            nrows=0,
+            encoding=encoding,
+            encoding_errors=encoding_errors,
+            quotechar='"',
         ).columns
     )
     anonimas = [c for c in todas if _e_sem_nome(c)]
@@ -366,6 +381,7 @@ def _colunas_a_manter(
         keep_default_na=False,
         na_filter=False,
         encoding=encoding,
+        encoding_errors=encoding_errors,
         quotechar='"',
         chunksize=chunksize,
         on_bad_lines="skip",
@@ -410,8 +426,10 @@ def _converter_tabular(
 
     extra_meta: pares extras p/ os metadados do parquet (ex.: {"table": "..."} no .mdb).
 
-    encoding_usado pode diferir de real_encoding: a detecção só olha o sample de 64 KB, e
-    um byte recusado depois faz cair para latin-1 e reiniciar a conversão.
+    encoding_usado pode diferir de real_encoding: a detecção só olha o sample de 64 KB e
+    um byte recusado depois força uma segunda passada. Nesse caso o retorno vem sufixado
+    ("utf-8+replace"), e é isso que fica gravado no lake._staging_log e nos metadados do
+    parquet — dá para listar os arquivos afetados sem reprocessar nada.
 
     bad_mode:
       - 'skip'  (default): engine C (rápido) descarta linhas mal-formadas; n_bad não é
@@ -419,7 +437,24 @@ def _converter_tabular(
       - 'count': engine Python (mais lento) descarta E conta as linhas mal-formadas.
       - 'error': falha o arquivo na 1ª linha mal-formada.
     """
+    # Ordem das tentativas, e por que ela é essa:
+    #
+    #   1. o encoding detectado, em modo estrito;
+    #   2. o MESMO encoding com errors="replace";
+    #   3. só então latin-1.
+    #
+    # O passo 2 é o que impede o estrago que motivou esta função. Antes, um único byte
+    # inválido em qualquer ponto de um arquivo utf-8 derrubava a leitura inteira para
+    # latin-1 — e latin-1 aceita todos os 256 bytes, então "sucedia" transformando TODO
+    # acento do arquivo em mojibake: "município" (C3 AD) virava "municÃ­pio", e depois o
+    # norm_header o reduzia a "municapio". O cabeçalho ia junto, então até os nomes de
+    # coluna saíam corrompidos.
+    #
+    # Com errors="replace" o dano fica onde ele realmente está: os poucos bytes inválidos
+    # viram U+FFFD e o resto do arquivo é decodificado corretamente. Preserva a
+    # propriedade de "a carga nunca quebra" sem mentir sobre o conteúdo.
     encoding = real_encoding
+    encoding_errors = "strict"
     while True:
         try:
             resultado = _converter_tabular_1x(
@@ -433,20 +468,36 @@ def _converter_tabular(
                 chunksize,
                 bad_mode,
                 extra_meta,
+                encoding_errors,
             )
-            return (*resultado, encoding)
+            usado = encoding if encoding_errors == "strict" else f"{encoding}+replace"
+            return (*resultado, usado)
         except UnicodeDecodeError as e:
+            if encoding_errors == "strict":
+                log.warning(
+                    "%s: %s não decodifica o arquivo inteiro (%s) — refazendo com "
+                    "errors=replace (bytes inválidos viram U+FFFD; o resto do arquivo "
+                    "fica intacto).",
+                    source_file,
+                    encoding,
+                    e,
+                )
+                encoding_errors = "replace"
+                continue
             proximo = encoding_fallback(encoding)
             if proximo is None:
                 raise
             log.warning(
-                "%s: %s não decodifica o arquivo inteiro (%s) — refazendo com %s.",
+                "%s: %s+replace ainda falhou (%s) — último recurso, refazendo com %s. "
+                "ATENÇÃO: latin-1 aceita qualquer byte e vai gerar mojibake se o arquivo "
+                "for utf-8.",
                 source_file,
                 encoding,
                 e,
                 proximo,
             )
             encoding = proximo
+            encoding_errors = "strict"
 
 
 def _converter_tabular_1x(
@@ -460,6 +511,7 @@ def _converter_tabular_1x(
     chunksize: int,
     bad_mode: str,
     extra_meta: Optional[dict] = None,
+    encoding_errors: str = "strict",
 ) -> Tuple[int, int, int, dict]:
     """Uma passada de conversão com um encoding fixo. Retorna (n_linhas, n_colunas, n_bad,
     map)."""
@@ -475,12 +527,15 @@ def _converter_tabular_1x(
 
     # descarta colunas de padding do Excel; usecols evita até parsear (um chunk de 200k
     # linhas x 16.382 colunas estouraria a memória à toa)
-    manter = _colunas_a_manter(src_path, delim, real_encoding, chunksize)
+    manter = _colunas_a_manter(
+        src_path, delim, real_encoding, chunksize, encoding_errors
+    )
     if manter is not None:
         log.info(
             "%s: %d colunas de padding descartadas (mantidas %d).",
             source_file,
-            _n_colunas_arquivo(src_path, delim, real_encoding) - len(manter),
+            _n_colunas_arquivo(src_path, delim, real_encoding, encoding_errors)
+            - len(manter),
             len(manter),
         )
 
@@ -491,6 +546,7 @@ def _converter_tabular_1x(
         keep_default_na=False,
         na_filter=False,
         encoding=real_encoding,
+        encoding_errors=encoding_errors,
         quotechar='"',
         chunksize=chunksize,
         on_bad_lines=on_bad,
@@ -519,7 +575,11 @@ def _converter_tabular_1x(
                 meta = {
                     b"source_file": source_file.encode("utf-8"),
                     b"source_hash": source_hash.encode("utf-8"),
-                    b"encoding": real_encoding.encode("utf-8"),
+                    b"encoding": (
+                        real_encoding
+                        if encoding_errors == "strict"
+                        else f"{real_encoding}+{encoding_errors}"
+                    ).encode("utf-8"),
                     b"delimiter": delim.encode("utf-8"),
                     b"column_map": json.dumps(column_map, ensure_ascii=False).encode(
                         "utf-8"
@@ -1027,8 +1087,13 @@ def run(  # noqa: C901
 
     vencedores, gemeos = _descartar_gemeos(todos)
 
+    # `pattern` aceita vários substrings separados por vírgula (OR entre eles). Um
+    # arquivo específico por vírgula evita reprocessar o lake inteiro para consertar
+    # meia dúzia de origens — e a listagem do raw/ roda uma vez só, não uma por padrão.
+    padroes = [x.strip() for x in pattern.split(",") if x.strip()]
+
     def _selecionado(key: str, size: int) -> bool:
-        if pattern and pattern not in key:
+        if padroes and not any(p in key for p in padroes):
             return False
         if only_ext_set and os.path.splitext(key)[1].lower() not in only_ext_set:
             return False
@@ -1109,9 +1174,13 @@ def main() -> None:
     parser.add_argument(
         "--limit", type=int, default=0, help="Processa no máximo N objetos."
     )
-    parser.add_argument("--pattern", default="", help="Filtra por substring na key.")
     parser.add_argument(
-        "--only-ext", default="", help="Extensões a processar, ex.: csv,txt"
+        "--pattern",
+        default="",
+        help=(
+            "Só objetos cuja key contenha este substring. Aceita vários separados por "
+            "vírgula (OR): --pattern 'INT065_...20241129,base_trabalho_social_pnhr_bb'."
+        ),
     )
     parser.add_argument(
         "--max-size-mb",
