@@ -98,76 +98,76 @@ select
     -- ------------------------------------------------------------------------------
 
     -- UHs
-    {%- set uh_contratadas = [
+    {% set uh_contratadas = [
         ('s.uh_contratadas', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.uh_contratadas', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.uh_contratadas', 'b.dt_movimento', 'prioritarios_bb'),
         ('pcx.qt_unidades', 'pcx.dt_movimento', 'pnhr_caixa'),
         ('pbb.qt_unidades', 'pbb.dt_movimento', 'pnhr_bb'),
         ('cpj.qt_uh_contratadas', 'null', 'cadastro_pj'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(uh_contratadas, tipo='int') }} as quantidade_uh_contratadas,
 
-    {%- set uh_entregues = [
+    {% set uh_entregues = [
         ('s.uh_entregues', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.uh_entregues', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.uh_entregues', 'b.dt_movimento', 'prioritarios_bb'),
         ('o.qt_uh_concluidas', 'o.dt_movimento', 'obra_mensal'),
         ('pcx.qt_unidades_entregues', 'pcx.dt_movimento', 'pnhr_caixa'),
         ('pbb.qt_unidades_entregues', 'pbb.dt_movimento', 'pnhr_bb'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(uh_entregues, tipo='int') }} as quantidade_uh_entregues,
 
-    {%- set uh_vigentes = [
+    {% set uh_vigentes = [
         ('s.uh_vigentes', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.uh_vigentes', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.uh_vigentes', 'b.dt_movimento', 'prioritarios_bb'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(uh_vigentes, tipo='int') }} as quantidade_uh_vigentes,
 
-    {%- set uh_distratadas = [
+    {% set uh_distratadas = [
         ('s.uh_distratadas', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.uh_distratadas', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.uh_distratadas', 'b.dt_movimento', 'prioritarios_bb'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(uh_distratadas, tipo='int') }} as quantidade_uh_distratadas,
 
     -- Valores contratuais
-    {%- set contratado = [
+    {% set contratado = [
         ('s.valor_contratado', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.valor_contratado', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.valor_contratado', 'b.dt_movimento', 'prioritarios_bb'),
         ('pcx.vr_investimento', 'pcx.dt_movimento', 'pnhr_caixa'),
         ('pbb.vr_investimento', 'pbb.dt_movimento', 'pnhr_bb'),
         ('cpj.vr_investimento_total', 'null', 'cadastro_pj'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(contratado) }} as valor_contratado,
     {{ valor_mais_recente(contratado, retornar='fonte') }} as fonte_valor_contratado,
 
-    {%- set aporte = [
+    {% set aporte = [
         ('s.valor_aporte_adicional', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.valor_aporte_adicional', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.valor_aporte_adicional', 'b.dt_movimento', 'prioritarios_bb'),
         ('cpj.vr_aporte', 'null', 'cadastro_pj'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(aporte) }} as valor_aporte_adicional,
 
     -- Desembolso: a divergência mais cara. No 63665048 eram R$ 293.314 de diferença
     -- entre o snapshot do SNH e o feed da CAIXA do mês.
-    {%- set desembolsado = [
+    {% set desembolsado = [
         ('s.valor_desembolsado', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.valor_desembolsado', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.valor_desembolsado', 'b.dt_movimento', 'prioritarios_bb'),
         ('pcx.vr_liberado', 'pcx.dt_movimento', 'pnhr_caixa'),
         ('pbb.vr_liberado', 'pbb.dt_movimento', 'pnhr_bb'),
         ('cpj.vr_liberado', 'cpj.dt_ultima_liberacao', 'cadastro_pj'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(desembolsado) }} as valor_desembolsado,
     {{ valor_mais_recente(desembolsado, retornar='fonte') }} as fonte_valor_desembolsado,
     {{ valor_mais_recente(desembolsado, retornar='data') }} as dt_referencia_valor_desembolsado,
 
     -- Execução física (%)
-    {%- set fisica = [
+    {% set fisica = [
         ('s.percentual_execucao_fisica', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.percentual_execucao_fisica', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.percentual_execucao_fisica', 'b.dt_movimento', 'prioritarios_bb'),
@@ -175,19 +175,19 @@ select
         ('pcx.percentual_execucao_fisica', 'pcx.dt_movimento', 'pnhr_caixa'),
         ('pbb.percentual_execucao_fisica', 'pbb.dt_movimento', 'pnhr_bb'),
         ('cpj.percentual_obra_realizada', 'null', 'cadastro_pj'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(fisica) }} as percentual_execucao_fisica,
     {{ valor_mais_recente(fisica, retornar='fonte') }} as fonte_execucao_fisica,
     {{ valor_mais_recente(fisica, retornar='data') }} as dt_referencia_execucao_fisica,
 
     -- Situação
-    {%- set situacao = [
+    {% set situacao = [
         ('s.situacao', 's.dt_referencia', 'prioritarios_snh'),
         ('cx.situacao', 'cx.dt_movimento', 'prioritarios_caixa'),
         ('b.situacao', 'b.dt_movimento', 'prioritarios_bb'),
         ('pcx.situacao_obra', 'pcx.dt_movimento', 'pnhr_caixa'),
         ('pbb.situacao_obra', 'pbb.dt_movimento', 'pnhr_bb'),
-    ] -%}
+    ] %}
     {{ valor_mais_recente(situacao, tipo='text') }} as situacao_empreendimento,
     {{ valor_mais_recente(situacao, tipo='text', retornar='fonte') }} as fonte_situacao,
 
