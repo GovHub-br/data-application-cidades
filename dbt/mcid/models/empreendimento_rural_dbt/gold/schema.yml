@@ -56,7 +56,7 @@ models:
           - Concluído
           - Não Iniciado
           - Em Andamento
-          - Status Desconhecido
+          - Sem Informação
         config:
           severity: warn
   - name: status_prazo
@@ -71,6 +71,7 @@ models:
           - Entregue
           - Em Atraso
           - Dentro do Prazo
+          - Sem Previsão
         config:
           severity: warn
   - name: percentual_execucao_financeira
@@ -87,6 +88,7 @@ models:
           - Desembolso Adiantado
           - Desembolso Atrasado
           - Ritmo Equilibrado
+          - Sem Informação
         config:
           severity: warn
   - name: tipologia
@@ -372,6 +374,7 @@ models:
           - Trabalho Social Atrasado
           - Trabalho Social Adiantado
           - Ritmo Alinhado
+          - Sem Informação
         config:
           severity: warn
   - name: agente_financeiro
@@ -461,3 +464,22 @@ models:
     - not_null:
         config:
           severity: warn
+  - name: fonte_execucao_fisica
+    description: >
+      Fonte que produziu o percentual de execução física, propagada da silver. Publicar o
+      número sem a procedência foi o que deixou a ficha (33,90%) e o gráfico (100,00%)
+      discordarem na mesma tela sem ninguém saber por quê.
+  - name: dt_referencia_execucao_fisica
+    description: Data de medição da fonte que venceu para a execução física.
+  - name: fonte_valor_desembolsado
+    description: Fonte que produziu o valor desembolsado.
+  - name: dt_referencia_valor_desembolsado
+    description: Data de medição da fonte que venceu para o valor desembolsado.
+  - name: fonte_situacao
+    description: Fonte que produziu a situação do empreendimento.
+  - name: dt_referencia_consolidada
+    description: Data da medição mais recente que entrou na linha, qualquer que seja o campo.
+  - name: dias_desde_ultima_medicao
+    description: >
+      `current_date - dt_referencia_consolidada`. Serve para o dashboard marcar número
+      velho: no 63665048 a ficha vinha publicando uma medição de 10 meses antes.

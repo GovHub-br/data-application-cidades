@@ -30,7 +30,6 @@ with
             case
                 when coalesce(sum(quantidade_uh), 0) > 0
                 then sum(valor_contratado) / sum(quantidade_uh)
-                else 0.00
             end as valor_medio_por_uh
         from fichas
         group by uf

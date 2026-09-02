@@ -6,6 +6,24 @@
 with
     base_silver as (
         select * from {{ ref("silver_empreendimento") }}
+    ),
+
+    -- A execução financeira era recalculada três vezes no mesmo select (uma para a coluna,
+    -- duas dentro do CASE do ritmo). Uma vez só, aqui, para as três leituras não poderem
+    -- divergir entre si.
+    --
+    -- `situacao_normalizada` existe porque a origem manda a mesma situação em duas grafias
+    -- — "Concluído e Entregue" (8.549 linhas) e "CONCLUÍDO E ENTREGUE" (20) — e as regras
+    -- comparavam só com a maiúscula. Resultado: 20 dos ~8.569 entregues eram reconhecidos.
+    calculado as (
+        select
+            *,
+            upper(trim(situacao_empreendimento)) as situacao_normalizada,
+            case
+                when coalesce(valor_contratado, 0) > 0
+                then round((valor_desembolsado / valor_contratado) * 100, 2)
+            end as pct_execucao_financeira
+        from base_silver
     )
 
 select
@@ -47,18 +65,20 @@ select
     -- Status do Projeto
     situacao_empreendimento,
     case
-        when percentual_execucao_fisica = 100 or situacao_empreendimento in ('CONCLUÍDO E ENTREGUE', 'CONCLUIDA', 'ENTREGUE') then 'Concluído'
+        when situacao_normalizada in ('CONCLUÍDO E ENTREGUE', 'CONCLUIDA', 'CONCLUÍDA', 'ENTREGUE')
+            then 'Concluído'
+        when percentual_execucao_fisica is null then 'Sem Informação'
+        when percentual_execucao_fisica >= 100 then 'Concluído'
         when percentual_execucao_fisica = 0 then 'Não Iniciado'
-        when percentual_execucao_fisica > 0 and percentual_execucao_fisica < 100 then 'Em Andamento'
-        else 'Status Desconhecido'
+        else 'Em Andamento'
     end as status_execucao_simplificado,
 
     -- Valores Contratuais
     valor_contratado,
     valor_aporte_adicional,
     case
-        when quantidade_uh_contratadas > 0 then round((valor_contratado / quantidade_uh_contratadas), 2)
-        else 0.00
+        when coalesce(quantidade_uh_contratadas, 0) > 0
+        then round((valor_contratado / quantidade_uh_contratadas), 2)
     end as valor_por_uh,
     dt_contratacao,
 
@@ -68,26 +88,40 @@ select
     dt_conclusao_obra,
 
     -- Regra de Negócio: Atraso na Entrega
+    --
+    -- 'Sem Previsão' não é um detalhe: dt_previsao_entrega é nula em 99,8% da carteira, e o
+    -- `else 'Dentro do Prazo'` anterior classificava toda essa massa como em dia. A coluna
+    -- afirmava pontualidade sobre empreendimentos cujo prazo ninguém informou.
     case
-        when situacao_empreendimento in ('CONCLUÍDO E ENTREGUE', 'CONCLUIDA', 'ENTREGUE') then 'Entregue'
+        when situacao_normalizada in ('CONCLUÍDO E ENTREGUE', 'CONCLUIDA', 'CONCLUÍDA', 'ENTREGUE')
+            then 'Entregue'
+        when dt_previsao_entrega is null then 'Sem Previsão'
         when dt_previsao_entrega < current_date then 'Em Atraso'
         else 'Dentro do Prazo'
     end as status_prazo,
 
     -- Evolução Financeira
     valor_desembolsado,
-    case
-        when valor_contratado > 0 then round((valor_desembolsado / valor_contratado) * 100, 2)
-        else 0.00
-    end as percentual_execucao_financeira,
+    pct_execucao_financeira as percentual_execucao_financeira,
 
     -- Regra de Negócio: Ritmo Físico-Financeiro (margem de 5%)
+    -- Comparar um lado conhecido com um lado desconhecido não produz ritmo nenhum.
     case
-        when (case when valor_contratado > 0 then (valor_desembolsado / valor_contratado) * 100 else 0.00 end) > (percentual_execucao_fisica + 5)
-        then 'Desembolso Adiantado'
-        when (case when valor_contratado > 0 then (valor_desembolsado / valor_contratado) * 100 else 0.00 end) < (percentual_execucao_fisica - 5)
-        then 'Desembolso Atrasado'
+        when pct_execucao_financeira is null or percentual_execucao_fisica is null
+            then 'Sem Informação'
+        when pct_execucao_financeira > percentual_execucao_fisica + 5 then 'Desembolso Adiantado'
+        when pct_execucao_financeira < percentual_execucao_fisica - 5 then 'Desembolso Atrasado'
         else 'Ritmo Equilibrado'
-    end as ritmo_fisico_financeiro
+    end as ritmo_fisico_financeiro,
 
-from base_silver
+    -- Procedência: de onde saiu cada medição e de quando ela é. Sem isto, um número de dez
+    -- meses atrás aparece no dashboard com a mesma autoridade de um de ontem.
+    fonte_execucao_fisica,
+    dt_referencia_execucao_fisica,
+    fonte_valor_desembolsado,
+    dt_referencia_valor_desembolsado,
+    fonte_situacao,
+    dt_referencia_consolidada,
+    (current_date - dt_referencia_consolidada) as dias_desde_ultima_medicao
+
+from calculado

@@ -60,19 +60,35 @@ select
     f.agente_financeiro,
     f.quantidade_uh,
 
-    -- Quantidades de Cisternas e Efluentes (Coalesce entre cadastro PJ e soma de PF)
-    coalesce(c.qt_cisterna_pj, cpf.qt_cisterna_pf, 0) as qt_cisternas,
-    coalesce(c.qt_efluente_pj, cpf.qt_efluente_pf, 0) as qt_efluentes,
+    -- Quantidades de Cisternas e Efluentes (cadastro PJ, ou soma do PF)
+    --
+    -- Sem o `, 0` no fim dos coalesce. As fontes de cisterna/efluente cobrem ~1% da
+    -- carteira, então o zero final afirmava "este empreendimento não tem cisterna" para
+    -- 98,8% dos empreendimentos, quando a leitura correta é "a origem não informa". Era o
+    -- que fazia esta gold somar zeros e parecer que o programa quase não instala nada.
+    coalesce(c.qt_cisterna_pj, cpf.qt_cisterna_pf) as qt_cisternas,
+    coalesce(c.qt_efluente_pj, cpf.qt_efluente_pf) as qt_efluentes,
 
     -- Valores de Investimento
-    coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb, 0.00) as valor_investimento_cisternas,
-    coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb, 0.00) as valor_investimento_efluentes,
+    coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb) as valor_investimento_cisternas,
+    coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb) as valor_investimento_efluentes,
 
-    -- Investimento Total em Saneamento Alternativo Rural
+    -- Investimento Total em Saneamento Alternativo Rural.
+    -- Nulo quando NENHUM dos dois componentes é conhecido; quando um dos dois é conhecido,
+    -- soma o que se sabe (o `+` sozinho anularia o total por causa do outro nulo).
+    case
+        when coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb) is null
+         and coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb) is null
+        then null
+        else coalesce(coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb), 0.00)
+           + coalesce(coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb), 0.00)
+    end as valor_investimento_saneamento_total,
+
+    -- Permite separar "não instalou" de "não sabemos", que a soma de zeros misturava.
     (
-        coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb, 0.00) +
-        coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb, 0.00)
-    ) as valor_investimento_saneamento_total
+        coalesce(c.qt_cisterna_pj, cpf.qt_cisterna_pf) is not null
+        or coalesce(c.qt_efluente_pj, cpf.qt_efluente_pf) is not null
+    ) as tem_informacao_saneamento
 
 from fichas f
 left join cpj c on f.apf = c.apf

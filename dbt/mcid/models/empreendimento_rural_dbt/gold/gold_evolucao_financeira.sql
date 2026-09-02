@@ -25,11 +25,13 @@ with
             apf,
             date_trunc('month', dt_liberacao) as mes,
             vr_liberado,
-            0.00 as vr_pago_obra,
-            0.00 as vr_pago_ts,
-            0.00 as vr_pago_atec,
-            0.00 as vr_pago_cisternas_efluentes,
-            0.00 as vr_pago_custos_indiretos
+            -- NULL, e não 0.00: o INT055 não decompõe o valor por componente. Zero
+            -- afirmaria "não houve desembolso de obra"; o arquivo simplesmente não informa.
+            null::numeric as vr_pago_obra,
+            null::numeric as vr_pago_ts,
+            null::numeric as vr_pago_atec,
+            null::numeric as vr_pago_cisternas_efluentes,
+            null::numeric as vr_pago_custos_indiretos
         from {{ ref("silver_pnhr_liberacoes") }}
     ),
 
@@ -65,12 +67,14 @@ with
             m.qt_liberacoes,
 
             -- Valores mensais
-            coalesce(m.vr_liberado_mes, 0.00) as vr_liberado_mes,
-            coalesce(m.vr_pago_obra_mes, 0.00) as vr_pago_obra_mes,
-            coalesce(m.vr_pago_ts_mes, 0.00) as vr_pago_ts_mes,
-            coalesce(m.vr_pago_atec_mes, 0.00) as vr_pago_atec_mes,
-            coalesce(m.vr_pago_cisternas_efluentes_mes, 0.00) as vr_pago_cisternas_efluentes_mes,
-            coalesce(m.vr_pago_custos_indiretos_mes, 0.00) as vr_pago_custos_indiretos_mes,
+            -- Sem coalesce para 0: componente nulo significa "a fonte não decompõe"
+            -- (caso do INT055), e somar zeros aí produziria um total de obra falso.
+            m.vr_liberado_mes,
+            m.vr_pago_obra_mes,
+            m.vr_pago_ts_mes,
+            m.vr_pago_atec_mes,
+            m.vr_pago_cisternas_efluentes_mes,
+            m.vr_pago_custos_indiretos_mes,
 
             -- Acumulado progressivo por APF
             sum(m.vr_liberado_mes) over (
@@ -101,10 +105,11 @@ select
 
     -- Acumulado e percentual
     vr_acumulado,
+    -- Sem `else 0.00`: contrato sem valor conhecido não permite calcular percentual, e
+    -- publicar 0% seria afirmar que nada foi executado.
     case
         when coalesce(valor_contratado, 0.00) > 0
         then round((vr_acumulado / valor_contratado) * 100, 2)
-        else 0.00
     end as pct_executado_financeiro,
 
     valor_contratado,
