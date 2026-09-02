@@ -200,9 +200,7 @@ class Superset:
         # então é o único mecanismo usado aqui.
         pagina = self.session.get(f"{self.base_url}/login/", timeout=30)
         pagina.raise_for_status()
-        achado = re.search(
-            r'name="csrf_token"[^>]*value="([^"]+)"', pagina.text
-        )
+        achado = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', pagina.text)
         self.session.post(
             f"{self.base_url}/login/",
             data={

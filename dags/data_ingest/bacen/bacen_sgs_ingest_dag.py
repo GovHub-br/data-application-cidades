@@ -11,8 +11,6 @@ from ingestor_lake import registros_para_staging_parquet
 import pandas as pd
 
 
-
-
 @dag(
     schedule_interval=get_dynamic_schedule("bacen_sgs_ingest_dag"),
     start_date=datetime(2023, 1, 1),
@@ -45,8 +43,11 @@ def bacen_sgs_ingest_dag() -> None:
         db = ClientPostgresDB(postgres_conn_str)
 
         # Lê o JSON do Airflow Variable e monta a lista de configs.
-        # Deslocado para dentro da task para evitar parse frequente pelo Top-Level do Scheduler.
-        BACEN_SERIES_RAW = Variable.get("BACEN_SERIES", deserialize_json=True, default_var={})
+        # Deslocado para dentro da task para evitar parse frequente pelo
+        # Top-Level do Scheduler.
+        BACEN_SERIES_RAW = Variable.get(
+            "BACEN_SERIES", deserialize_json=True, default_var={}
+        )
         if isinstance(BACEN_SERIES_RAW, list):
             BACEN_SERIES_RAW = BACEN_SERIES_RAW[0] if len(BACEN_SERIES_RAW) > 0 else {}
         CONFIGURACOES = [{"tipo": k, "codigo": v} for k, v in BACEN_SERIES_RAW.items()]

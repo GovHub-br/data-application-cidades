@@ -33,6 +33,7 @@ BUCKET = "data-lake-mcid"
 PREFIXO = "raw/abecip/"
 DADO = "financiamentos_por_instituicao"
 
+
 def _competencias(cliente) -> dict[str, str]:
     """Competência -> chave do objeto, para tudo que existe no raw."""
     encontradas: dict[str, str] = {}
@@ -43,9 +44,7 @@ def _competencias(cliente) -> dict[str, str]:
             argumentos["ContinuationToken"] = token
         resposta = cliente.list_objects_v2(**argumentos)
         for objeto in resposta.get("Contents", []):
-            achado = re.match(
-                rf"{PREFIXO}(\d{{4}}-\d{{2}})/{DADO}\.json$", objeto["Key"]
-            )
+            achado = re.match(rf"{PREFIXO}(\d{{4}}-\d{{2}})/{DADO}\.json$", objeto["Key"])
             if achado:
                 encontradas[achado.group(1)] = objeto["Key"]
         if not resposta.get("IsTruncated"):

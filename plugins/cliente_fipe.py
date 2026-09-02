@@ -45,8 +45,7 @@ class ClienteFipeZap(ClienteBase):
             base_url=self.BASE_URL,
             headers={
                 "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36"
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"
                 )
             },
         )
@@ -54,7 +53,6 @@ class ClienteFipeZap(ClienteBase):
             "[cliente_fipezap.py] Initialized ClienteFipeZap "
             f"com base_url: {self.BASE_URL}"
         )
-
 
     @staticmethod
     def _conferir_coerencia_indice(df: "pd.DataFrame") -> None:
@@ -121,20 +119,15 @@ class ClienteFipeZap(ClienteBase):
             Ou None em caso de falha.
         """
         logging.info(
-            f"[cliente_fipezap.py] Baixando XLSX de: "
-            f"{self.BASE_URL}{self.XLSX_PATH}"
+            f"[cliente_fipezap.py] Baixando XLSX de: " f"{self.BASE_URL}{self.XLSX_PATH}"
         )
 
         try:
             _, content = self.request(
-                "GET",
-                f"{self.BASE_URL}{self.XLSX_PATH}",
-                response_type="bytes"
-            ) 
-        except requests.exceptions.RequestException as e:
-            logging.error(
-                f"[cliente_fipezap.py] Erro ao baixar o XLSX: {e}"
+                "GET", f"{self.BASE_URL}{self.XLSX_PATH}", response_type="bytes"
             )
+        except requests.exceptions.RequestException as e:
+            logging.error(f"[cliente_fipezap.py] Erro ao baixar o XLSX: {e}")
             return None
 
         # Guarda os bytes brutos do XLSX p/ a camada raw do data lake (formato nativo).
@@ -154,8 +147,13 @@ class ClienteFipeZap(ClienteBase):
             # abaixo já remove o rodapé real, então basta ir até o fim da
             # planilha.
             df = df_raw.iloc[
-                self.LINHA_INICIO_DADOS:,
-                [self.COL_DATA, self.COL_NUMERO_INDICE, self.COL_VAR_MENSAL, self.COL_VAR_ANO],
+                self.LINHA_INICIO_DADOS :,
+                [
+                    self.COL_DATA,
+                    self.COL_NUMERO_INDICE,
+                    self.COL_VAR_MENSAL,
+                    self.COL_VAR_ANO,
+                ],
             ].copy()
 
             df.columns = [
@@ -169,9 +167,9 @@ class ClienteFipeZap(ClienteBase):
             df = df[pd.notna(df["data_referencia"])].copy()
 
             # Normaliza data para string 'yyyy-MM-dd'
-            df["data_referencia"] = pd.to_datetime(
-                df["data_referencia"]
-            ).dt.strftime("%Y-%m-%d")
+            df["data_referencia"] = pd.to_datetime(df["data_referencia"]).dt.strftime(
+                "%Y-%m-%d"
+            )
 
             # Converte valores para numérico
             for coluna in (
@@ -198,7 +196,5 @@ class ClienteFipeZap(ClienteBase):
             # propaga: é diagnóstico acionável, não erro de parse
             raise
         except Exception as e:
-            logging.error(
-                f"[cliente_fipezap.py] Erro ao processar o XLSX: {e}"
-            )
+            logging.error(f"[cliente_fipezap.py] Erro ao processar o XLSX: {e}")
             return None

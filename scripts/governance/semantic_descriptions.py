@@ -6,7 +6,6 @@ campo sem contexto no catálogo enquanto a descrição curada no YAML é criada.
 
 from __future__ import annotations
 
-
 STANDARD_DESCRIPTIONS = {
     "periodo": "Rótulo do período de referência da observação.",
     "data_referencia": "Data que identifica o período de referência da observação.",

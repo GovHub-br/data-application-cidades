@@ -23,10 +23,15 @@ MAP_MESES = {
 class ClienteNovoCaged(ClienteBase):
     def __init__(self) -> None:
         base_url = "https://wabi-brazil-south-api.analysis.windows.net/public/reports"
+        user_agent = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
+        )
+
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
             "X-PowerBI-ResourceKey": "5b95b481-bfbc-4287-935e-ce2b20015ab6",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+            "User-Agent": user_agent,
             "Referer": "https://app.powerbi.com/",
         }
         super().__init__(base_url=base_url, headers=headers)

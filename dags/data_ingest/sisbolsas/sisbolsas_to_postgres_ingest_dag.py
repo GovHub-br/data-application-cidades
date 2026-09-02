@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, TypedDict
+from typing import Dict, List, TypedDict, cast
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from cliente_postgres import ClientPostgresDB
@@ -21,10 +21,13 @@ TABLES_TO_SYNC_VARIABLE = "sisbolsas_tables_to_sync"
 
 
 def _load_tables_from_variable() -> List[SQLServerTableConfig]:
-    return Variable.get(
-        TABLES_TO_SYNC_VARIABLE,
-        default_var=[],
-        deserialize_json=True,
+    return cast(
+        List[SQLServerTableConfig],
+        Variable.get(
+            TABLES_TO_SYNC_VARIABLE,
+            default_var=[],
+            deserialize_json=True,
+        ),
     )
 
 

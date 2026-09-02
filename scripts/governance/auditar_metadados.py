@@ -125,7 +125,9 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
                 if efetiva(text):
                     documented_resources += 1
                 elif text:
-                    findings.append(Finding(path, resource_id, "", "texto_de_preenchimento"))
+                    findings.append(
+                        Finding(path, resource_id, "", "texto_de_preenchimento")
+                    )
                 else:
                     findings.append(Finding(path, resource_id, "", "descricao_ausente"))
                 findings.extend(check_text(path, resource_id, "", text))
@@ -138,7 +140,9 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
                         documented_columns += 1
                     elif column_text:
                         findings.append(
-                            Finding(path, resource_id, column_name, "texto_de_preenchimento")
+                            Finding(
+                                path, resource_id, column_name, "texto_de_preenchimento"
+                            )
                         )
                     else:
                         findings.append(
@@ -148,7 +152,11 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
                         check_text(path, resource_id, column_name, column_text)
                     )
 
-    return findings, (documented_resources, total_resources), (documented_columns, total_columns)
+    return (
+        findings,
+        (documented_resources, total_resources),
+        (documented_columns, total_columns),
+    )
 
 
 def check_text(path: Path, resource: str, field: str, text: str) -> list[Finding]:
@@ -172,7 +180,10 @@ def main() -> int:
         if extra.exists():
             f2, (r2, rt2), (c2, ct2) = audit(extra)
             findings += f2
-            res_ok += r2; res_tot += rt2; col_ok += c2; col_tot += ct2
+            res_ok += r2
+            res_tot += rt2
+            col_ok += c2
+            col_tot += ct2
     import collections
 
     # nós que existem no projeto mas não têm sequer entrada em YAML
@@ -189,7 +200,9 @@ def main() -> int:
     inventario = nos_do_manifesto(args.manifest)
     sem_yaml = sorted(n for n in inventario if n not in declarados)
     for nome in sem_yaml:
-        findings.append(Finding(Path(inventario[nome]), f"model.{nome}", "", "sem_entrada_yaml"))
+        findings.append(
+            Finding(Path(inventario[nome]), f"model.{nome}", "", "sem_entrada_yaml")
+        )
     if inventario:
         cobertos = len(inventario) - len(sem_yaml)
         print(
@@ -202,7 +215,10 @@ def main() -> int:
         f"Recursos com descrição efetiva: {res_ok}/{res_tot} ({pct(res_ok, res_tot)})  ·  "
         f"Colunas: {col_ok}/{col_tot} ({pct(col_ok, col_tot)})"
     )
-    print("Achados por regra: " + (", ".join(f"{k}={v}" for k, v in por_regra.most_common()) or "nenhum"))
+    print(
+        "Achados por regra: "
+        + (", ".join(f"{k}={v}" for k, v in por_regra.most_common()) or "nenhum")
+    )
     if args.resumo:
         return 1 if args.strict and findings else 0
     for finding in findings:

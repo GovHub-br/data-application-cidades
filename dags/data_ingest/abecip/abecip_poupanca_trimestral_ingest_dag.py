@@ -2,7 +2,11 @@ import logging
 from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
-from airflow.exceptions import AirflowException, AirflowFailException, AirflowSkipException
+from airflow.exceptions import (
+    AirflowException,
+    AirflowFailException,
+    AirflowSkipException,
+)
 
 from cliente_abecip import ClienteAbecip
 from cliente_postgres import ClientPostgresDB
@@ -18,6 +22,7 @@ default_args = {
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
+
 
 @dag(
     dag_id="abecip_poupanca_trimestral_ingest_dag",
@@ -36,9 +41,7 @@ def abecip_poupanca_trimestral_ingest_dag() -> None:
 
     @task
     def fetch_and_store() -> None:
-        logger.info(
-            "[abecip_poupanca_trimestral_dag] Iniciando ingestão trimestral"
-        )
+        logger.info("[abecip_poupanca_trimestral_dag] Iniciando ingestão trimestral")
 
         try:
             cliente = ClienteAbecip()
@@ -81,22 +84,16 @@ def abecip_poupanca_trimestral_ingest_dag() -> None:
             # Raw nativo (XLSX) + fallback json + parquet tipado (full-refresh).
             raw_xlsx = getattr(cliente, "ultimo_conteudo_xlsx", None)
             if raw_xlsx:
-                upload_raw_bytes(
-                    "abecip", "poupanca_sbpe_mensal", raw_xlsx, ext="xlsx"
-                )
+                upload_raw_bytes("abecip", "poupanca_sbpe_mensal", raw_xlsx, ext="xlsx")
             upload_fallback_json("abecip", "poupanca_sbpe_mensal", registros)
             registros_para_staging_parquet("abecip", "poupanca_sbpe_mensal", registros)
 
-            logger.info(
-                "[abecip_poupanca_trimestral_dag] Ingestão trimestral concluída"
-            )
+            logger.info("[abecip_poupanca_trimestral_dag] Ingestão trimestral concluída")
 
         except (AirflowFailException, AirflowSkipException):
             raise
         except Exception as e:
-            logger.error(
-                "[abecip_poupanca_trimestral_dag] Erro inesperado: %s", e
-            )
+            logger.error("[abecip_poupanca_trimestral_dag] Erro inesperado: %s", e)
             raise AirflowException(
                 f"[abecip_poupanca_trimestral_dag] Erro inesperado: {e}"
             ) from e

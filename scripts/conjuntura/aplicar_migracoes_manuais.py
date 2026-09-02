@@ -16,7 +16,6 @@ from pathlib import Path
 import psycopg2
 from dotenv import load_dotenv
 
-
 ROOT = Path(__file__).resolve().parents[2]
 DIRETORIO = ROOT / "scripts" / "database"
 
@@ -35,7 +34,10 @@ def migracoes(diretorio: Path) -> list[Path]:
     """
     encontrados = sorted(
         diretorio.glob("*.sql"),
-        key=lambda p: (int(m.group(1)) if (m := re.match(r"(\d+)", p.name)) else 10**9, p.name),
+        key=lambda p: (
+            int(m.group(1)) if (m := re.match(r"(\d+)", p.name)) else 10**9,
+            p.name,
+        ),
     )
     sem_prefixo = [p.name for p in encontrados if not re.match(r"\d+__", p.name)]
     if sem_prefixo:
@@ -62,7 +64,9 @@ def main() -> None:
         pedidos = {nome.strip() for nome in args.somente.split(",")}
         disponiveis = {p.name for p in paths}
         if faltando := pedidos - disponiveis:
-            raise SystemExit("Não encontrado em scripts/database: " + ", ".join(sorted(faltando)))
+            raise SystemExit(
+                "Não encontrado em scripts/database: " + ", ".join(sorted(faltando))
+            )
         paths = [p for p in paths if p.name in pedidos]
 
     if args.dry_run:

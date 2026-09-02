@@ -80,7 +80,9 @@ def conectar():
     )
 
 
-def colunas_do_schema(cur, schema: str, tabela: str | None) -> dict[str, list[tuple[str, str]]]:
+def colunas_do_schema(
+    cur, schema: str, tabela: str | None
+) -> dict[str, list[tuple[str, str]]]:
     cur.execute(
         """
         select table_name, column_name, data_type
@@ -175,7 +177,9 @@ def main() -> int:
     p.add_argument("--tabela")
     p.add_argument("--contrato", action="store_true", help="inclui o silver_contract")
     p.add_argument("--yaml", type=pathlib.Path, help="grava o YAML proposto")
-    p.add_argument("--perfil", type=pathlib.Path, help="grava as contagens (estrutura, sem conteúdo)")
+    p.add_argument(
+        "--perfil", type=pathlib.Path, help="grava as contagens (estrutura, sem conteúdo)"
+    )
     args = p.parse_args()
 
     conexao = conectar()
@@ -192,9 +196,7 @@ def main() -> int:
     conexao.close()
 
     total = sum(len(v["colunas"]) for v in perfis.values())
-    a_descrever = sum(
-        1 for v in perfis.values() for n in v["colunas"] if n not in COMUNS
-    )
+    a_descrever = sum(1 for v in perfis.values() for n in v["colunas"] if n not in COMUNS)
     print(
         f"{args.schema}: {len(inventario)} tabelas, {total} colunas — "
         f"{total - a_descrever} já cobertas pelo vocabulário comum, "

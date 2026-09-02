@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from cliente_base import ClienteBase
 from safe_request import request_safe
 
-
 # logging.basicConfig(
 #     level=logging.INFO,  # ou DEBUG para depurar
 #     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

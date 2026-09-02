@@ -5,7 +5,13 @@ from datetime import datetime, timedelta
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
+from cosmos import (
+    DbtTaskGroup,
+    ExecutionConfig,
+    ProfileConfig,
+    ProjectConfig,
+    RenderConfig,
+)
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
 from schedule_loader import get_dynamic_schedule
 from ingestor_lake import IngestorBalancoEmpresas
@@ -81,9 +87,7 @@ def conjuntura_continuo_dag() -> None:
     instável não deve travar o boletim — os modelos daquela fonte ficam com o
     último parquet que deu certo.
     """
-    fontes_prontas = EmptyOperator(
-        task_id="fontes_prontas", trigger_rule="all_done"
-    )
+    fontes_prontas = EmptyOperator(task_id="fontes_prontas", trigger_rule="all_done")
 
     for ingest_dag_id in INGEST_DAG_IDS:
         trigger = TriggerDagRunOperator(
@@ -105,9 +109,7 @@ def conjuntura_continuo_dag() -> None:
             ingestor = ingestor_cls()
             try:
                 ingestor.gerar_staging_parquet()
-                logging.info(
-                    f"Parquet manual gerado: {ingestor.fonte}.{ingestor.dado}"
-                )
+                logging.info(f"Parquet manual gerado: {ingestor.fonte}.{ingestor.dado}")
             except Exception as exc:  # noqa: BLE001 - fonte externa instável
                 logging.warning(
                     f"Ingestor manual falhou ({ingestor.fonte}.{ingestor.dado}): "

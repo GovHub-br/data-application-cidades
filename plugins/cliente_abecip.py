@@ -1,11 +1,9 @@
 import io
 import logging
-import re
 from datetime import datetime
-from typing import Optional
+from typing import Optional, cast
 
 import pandas as pd
-import requests
 from bs4 import BeautifulSoup
 
 from cliente_base import ClienteBase, LayoutFonteMudou
@@ -35,9 +33,7 @@ class ClienteAbecip(ClienteBase):
     """
 
     BASE_URL = "https://www.abecip.org.br"
-    PAGINA_POUPANCA = (
-        "/credito-imobiliario/indicadores/caderneta-de-poupanca"
-    )
+    PAGINA_POUPANCA = "/credito-imobiliario/indicadores/caderneta-de-poupanca"
     ABA_POUPANCA = "SBPE_Mensal"
 
     # Índices de coluna na planilha (0-based), a partir da linha 6
@@ -57,8 +53,7 @@ class ClienteAbecip(ClienteBase):
             base_url=self.BASE_URL,
             headers={
                 "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36"
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"
                 )
             },
         )
@@ -81,9 +76,7 @@ class ClienteAbecip(ClienteBase):
             URL completa do XLSX ou None em caso de falha.
         """
         url_pagina = f"{self.BASE_URL}{pagina_path}"
-        logging.info(
-            f"[cliente_abecip.py] Buscando URL do XLSX em: {url_pagina}"
-        )
+        logging.info(f"[cliente_abecip.py] Buscando URL do XLSX em: {url_pagina}")
 
         try:
             _, html = self.request(
@@ -92,23 +85,15 @@ class ClienteAbecip(ClienteBase):
                 response_type="text",
             )
         except Exception as e:
-            logging.error(
-                f"[cliente_abecip.py] Erro ao acessar página ABECIP: {e}"
-            )
+            logging.error(f"[cliente_abecip.py] Erro ao acessar página ABECIP: {e}")
             return None
 
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup.find_all("a", href=True):
-            href = tag["href"]
+            href = str(tag["href"])
             if pattern in href:
-                url = (
-                    href
-                    if href.startswith("http")
-                    else f"{self.BASE_URL}{href}"
-                )
-                logging.info(
-                    f"[cliente_abecip.py] URL do XLSX encontrada: {url}"
-                )
+                url = href if href.startswith("http") else f"{self.BASE_URL}{href}"
+                logging.info(f"[cliente_abecip.py] URL do XLSX encontrada: {url}")
                 return url
 
         logging.error(
@@ -130,13 +115,10 @@ class ClienteAbecip(ClienteBase):
                 response_type="bytes",
             )
 
-            return content
+            return cast(bytes, content)
         except Exception as e:
-            logging.error(
-                f"[cliente_abecip.py] Erro ao baixar XLSX: {e}"
-            )
+            logging.error(f"[cliente_abecip.py] Erro ao baixar XLSX: {e}")
             return None
-
 
     @staticmethod
     def _conferir_poupanca(df: "pd.DataFrame") -> None:
@@ -167,7 +149,10 @@ class ClienteAbecip(ClienteBase):
             )
 
         saldo = (
-            d["saldo"].shift(1) + d["captacao_liquida_valor"] + d["rendimento"] - d["saldo"]
+            d["saldo"].shift(1)
+            + d["captacao_liquida_valor"]
+            + d["rendimento"]
+            - d["saldo"]
         ).abs()
         comparavel2 = saldo.notna()
         if comparavel2.sum() and (saldo[comparavel2] > 1.0).mean() > 0.10:
@@ -217,7 +202,8 @@ class ClienteAbecip(ClienteBase):
                 nome_aba = self.ABA_POUPANCA
             else:
                 candidatas = [
-                    a for a in abas
+                    a
+                    for a in abas
                     if a.strip().lower().startswith(self.ABA_POUPANCA.lower())
                 ]
                 if len(candidatas) != 1:
@@ -229,7 +215,8 @@ class ClienteAbecip(ClienteBase):
                 nome_aba = candidatas[0]
                 logging.warning(
                     "[cliente_abecip.py] Aba %r não existe mais; usando %r por prefixo",
-                    self.ABA_POUPANCA, nome_aba,
+                    self.ABA_POUPANCA,
+                    nome_aba,
                 )
             df_raw = pd.read_excel(planilha, sheet_name=nome_aba, header=None)
 
@@ -238,24 +225,15 @@ class ClienteAbecip(ClienteBase):
 
             # Mantém apenas registros mensais (datetime) — descarta
             # linhas anuais (Total.YYYY), rodapé e futuras vazias
-            df = df[
-                df["data_referencia"].apply(
-                    lambda x: isinstance(x, datetime)
-                )
-            ].copy()
+            df = df[df["data_referencia"].apply(lambda x: isinstance(x, datetime))].copy()
 
             # Descarta meses futuros sem dados (captacao = 0 e saldo vazio)
-            df = df[
-                ~(
-                    (df["captacao_liquida_valor"] == 0)
-                    & df["saldo"].isna()
-                )
-            ].copy()
+            df = df[~((df["captacao_liquida_valor"] == 0) & df["saldo"].isna())].copy()
 
             # Normaliza data para string 'yyyy-MM-dd'
-            df["data_referencia"] = pd.to_datetime(
-                df["data_referencia"]
-            ).dt.strftime("%Y-%m-%d")
+            df["data_referencia"] = pd.to_datetime(df["data_referencia"]).dt.strftime(
+                "%Y-%m-%d"
+            )
 
             # Converte colunas numéricas
             cols_numericas = [c for c in self.COLUNAS_NOMES if c != "data_referencia"]
@@ -279,9 +257,7 @@ class ClienteAbecip(ClienteBase):
             # propaga: é diagnóstico acionável, não erro de parse
             raise
         except Exception as e:
-            logging.error(
-                f"[cliente_abecip.py] Erro ao processar XLSX de poupança: {e}"
-            )
+            logging.error(f"[cliente_abecip.py] Erro ao processar XLSX de poupança: {e}")
             return None
 
     # ------------------------------------------------------------------
@@ -317,7 +293,10 @@ class ClienteAbecip(ClienteBase):
         """
         for total, partes in (
             ("unidades_total", ("unidades_construcao", "unidades_aquisicao")),
-            ("valor_total_milhoes", ("valor_construcao_milhoes", "valor_aquisicao_milhoes")),
+            (
+                "valor_total_milhoes",
+                ("valor_construcao_milhoes", "valor_aquisicao_milhoes"),
+            ),
         ):
             soma = df[list(partes)].sum(axis=1)
             # tolerância relativa: os valores em R$ têm arredondamento na origem
@@ -353,7 +332,11 @@ class ClienteAbecip(ClienteBase):
 
         try:
             planilha = pd.ExcelFile(io.BytesIO(conteudo))
-            abas = [a for a in planilha.sheet_names if a.strip().lower().startswith("bd_unidades")]
+            abas = [
+                a
+                for a in planilha.sheet_names
+                if a.strip().lower().startswith("bd_unidades")
+            ]
             if not abas:
                 raise ValueError(
                     f"aba de unidades não encontrada; abas: {planilha.sheet_names}"
@@ -365,9 +348,7 @@ class ClienteAbecip(ClienteBase):
             # início, fica só o que tem data válida na primeira coluna.
             df = bruto.iloc[:, : len(self.COLUNAS_FIN_NOMES)].copy()
             df.columns = self.COLUNAS_FIN_NOMES
-            df["data_referencia"] = pd.to_datetime(
-                df["data_referencia"], errors="coerce"
-            )
+            df["data_referencia"] = pd.to_datetime(df["data_referencia"], errors="coerce")
             df = df[df["data_referencia"].notna()].copy()
 
             for coluna in self.COLUNAS_FIN_NOMES[1:]:

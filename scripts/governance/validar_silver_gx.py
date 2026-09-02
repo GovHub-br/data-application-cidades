@@ -192,8 +192,9 @@ def main() -> int:
         for expectation in expectations(contracts.get(model_name, {})):
             # GX escreve barras de progresso no terminal. Elas não são
             # diagnóstico persistível e podem confundir o log do Airflow.
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
-                io.StringIO()
+            with (
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(io.StringIO()),
             ):
                 result = batch.validate(expectation)
             checks.append(
@@ -211,9 +212,13 @@ def main() -> int:
         "passed": all(check["success"] for check in checks),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    args.output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     failures = sum(not check["success"] for check in checks)
-    print(f"GX Silver: {len(checks)} verificações, {failures} falhas. Relatório: {args.output}")
+    print(
+        f"GX Silver: {len(checks)} verificações, {failures} falhas. Relatório: {args.output}"
+    )
     return 1 if args.strict and failures else 0
 
 

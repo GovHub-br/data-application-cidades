@@ -53,9 +53,7 @@ def verificar_catalogo_publico(caminho: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--saida", type=Path, default=RAIZ / "build" / "pipeline.html"
-    )
+    parser.add_argument("--saida", type=Path, default=RAIZ / "build" / "pipeline.html")
     parser.add_argument(
         "--public-dir",
         type=Path,

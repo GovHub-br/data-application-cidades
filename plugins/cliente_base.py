@@ -32,11 +32,7 @@ class ClienteBase:
         )
 
     def request(
-        self, 
-        method: str, 
-        path: str,
-        response_type: str = "json",
-        **kwargs: Any
+        self, method: str, path: str, response_type: str = "json", **kwargs: Any
     ) -> Tuple[HTTPStatus, Any]:
         """
         Faz uma requisição HTTP em até DEFAULT_MAX_RETRIES+1 tentativas.
@@ -54,18 +50,14 @@ class ClienteBase:
         for attempt in range(self.DEFAULT_MAX_RETRIES):
             try:
                 logging.info(
-                    f"[cliente_base.py] Attempt {attempt + 1} for {method} "
-                    f"{path}"
+                    f"[cliente_base.py] Attempt {attempt + 1} for {method} " f"{path}"
                 )
 
                 response = self.client.request(
-                    method, 
-                    path,
-                    follow_redirects=True,
-                    **kwargs
+                    method, path, follow_redirects=True, **kwargs
                 )
                 response.raise_for_status()
-    
+
                 if response_type == "json":
                     payload = response.json()
                 elif response_type == "text":
@@ -73,9 +65,7 @@ class ClienteBase:
                 elif response_type == "bytes":
                     payload = response.content
                 else:
-                    raise ValueError(
-                        f"Unsupported response_type: {response_type}"
-                    )
+                    raise ValueError(f"Unsupported response_type: {response_type}")
 
                 logging.info(
                     f"[cliente_base.py] Request successful with status "

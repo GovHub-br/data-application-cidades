@@ -47,10 +47,18 @@ def main() -> int:
             }
         )
     rows.sort(key=lambda row: (str(row["product"]), str(row["layer"]), row["model"]))
-    payload = {"version": 1, "summary": Counter(row["materialized"] for row in rows), "models": rows}
+    payload = {
+        "version": 1,
+        "summary": Counter(row["materialized"] for row in rows),
+        "models": rows,
+    }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=dict), encoding="utf-8")
-    unknown = sum(row["load_strategy"] == "materializacao_nao_classificada" for row in rows)
+    args.output.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, default=dict), encoding="utf-8"
+    )
+    unknown = sum(
+        row["load_strategy"] == "materializacao_nao_classificada" for row in rows
+    )
     print(f"Estratégias de carga: {len(rows)} modelos, {unknown} não classificadas.")
     return 1 if args.strict and unknown else 0
 

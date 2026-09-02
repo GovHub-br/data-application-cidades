@@ -32,7 +32,9 @@ from restricoes_dbt import (
     constraints_da_tabela,
 )
 
-DEFAULT_CATALOG = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
+DEFAULT_CATALOG = (
+    RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
+)
 DEFAULT_PAYLOAD = RAIZ / "build" / "openmetadata_sync_payload.json"
 
 #: Tipos do PostgreSQL para o vocabulário do OpenMetadata. O mapa é explícito

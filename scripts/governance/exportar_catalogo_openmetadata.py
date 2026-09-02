@@ -180,7 +180,11 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=ROOT / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json",
+        default=ROOT
+        / "dbt"
+        / "mcid"
+        / "governance"
+        / "openmetadata_semantic_catalog.json",
     )
     args = parser.parse_args()
 

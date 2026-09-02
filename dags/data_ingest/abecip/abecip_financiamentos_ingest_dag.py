@@ -2,7 +2,11 @@ import logging
 from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
-from airflow.exceptions import AirflowException, AirflowFailException, AirflowSkipException
+from airflow.exceptions import (
+    AirflowException,
+    AirflowFailException,
+    AirflowSkipException,
+)
 
 from cliente_abecip import ClienteAbecip
 from cliente_postgres import ClientPostgresDB
@@ -82,7 +86,9 @@ def abecip_financiamentos_ingest_dag() -> None:
             if bruto:
                 upload_raw_bytes("abecip", "financiamentos_modalidade", bruto, ext="xlsx")
             upload_fallback_json("abecip", "financiamentos_modalidade", registros)
-            registros_para_staging_parquet("abecip", "financiamentos_modalidade", registros)
+            registros_para_staging_parquet(
+                "abecip", "financiamentos_modalidade", registros
+            )
 
             logger.info("[abecip_financiamentos] Ingestão concluída com sucesso")
 

@@ -10,7 +10,9 @@ from ingestor_lake import registros_para_staging_parquet
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("novo_caged_servicos_especializados_construcao", default="@monthly"),
+    schedule_interval=get_dynamic_schedule(
+        "novo_caged_servicos_especializados_construcao", default="@monthly"
+    ),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
@@ -28,7 +30,9 @@ def novo_caged_servicos_especializados_construcao() -> None:
 
     @task
     def fetch_and_store_caged() -> None:
-        logging.info("[saldo_estoque_servicos_especializados_construcao.py] Iniciando extração (Novo Caged)")
+        logging.info(
+            "[saldo_estoque_servicos_especializados_construcao.py] Iniciando extração (Novo Caged)"
+        )
 
         api = ClienteNovoCaged()
         db = ClientPostgresDB(get_postgres_conn())
@@ -36,7 +40,9 @@ def novo_caged_servicos_especializados_construcao() -> None:
         target_table = "saldo_estoque_servicos_especializados_construcao"
         schema = "novo_caged"
 
-        caged_data = api.obter_historico(cnae_divisao="Serviços Especializados para Construção")
+        caged_data = api.obter_historico(
+            cnae_divisao="Serviços Especializados para Construção"
+        )
 
         if caged_data:
             for record in caged_data:
@@ -64,7 +70,9 @@ def novo_caged_servicos_especializados_construcao() -> None:
                 f"Total de {len(caged_data)} registros processados."
             )
         else:
-            logging.warning("[saldo_estoque_servicos_especializados_construcao.py] Nenhum dado retornado da API do Caged.")
+            logging.warning(
+                "[saldo_estoque_servicos_especializados_construcao.py] Nenhum dado retornado da API do Caged."
+            )
 
     fetch_and_store_caged()
 
