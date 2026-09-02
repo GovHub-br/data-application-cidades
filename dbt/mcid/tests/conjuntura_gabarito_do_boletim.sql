@@ -9,7 +9,7 @@
 -- FipeZap revisam meses já publicados, então uma célula pode divergir por a
 -- fonte ter mudado depois da edição. O que este teste garante é que nenhuma
 -- divergência passe despercebida. Para saber o que o boletim viu na época,
--- use os snapshots (`conjuntura_continuo_snapshots.snap_boletim_*`).
+-- use os snapshots (`conjuntura_snapshots.snap_boletim_*`).
 --
 -- Falha se a célula esperada não existir no gold — coordenada errada é
 -- defeito de verdade, e silenciar isso esvaziaria o teste.

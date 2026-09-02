@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p2_vendas_por_construtora_variacao %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

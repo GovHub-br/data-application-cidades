@@ -1,4 +1,4 @@
-{{ config(materialized='table', schema='conjuntura_continuo_mart') }}
+{{ config(materialized='table', schema='conjuntura_mart') }}
 
 -- Inventário dos models do conjuntura: camada, materialização e volume.
 --
@@ -35,5 +35,5 @@ select
     ))[1]::text::bigint                   as linhas,
     current_timestamp                     as medido_em
 from information_schema.tables
-where table_schema in ('conjuntura_continuo_bronze', 'conjuntura_continuo_silver', 'conjuntura_continuo_mart')
+where table_schema in ('conjuntura_bronze', 'conjuntura_silver', 'conjuntura_mart')
 order by 1, 3

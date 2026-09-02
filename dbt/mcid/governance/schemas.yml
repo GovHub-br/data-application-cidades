@@ -6,7 +6,7 @@ version: 1
 # ou exemplos de dados. A sincronização para OpenMetadata usa este arquivo
 # como fonte de descrição de schema.
 schemas:
-  - name: conjuntura_continuo_bronze
+  - name: conjuntura_bronze
     display_name: Conjuntura · Bronze
     product: conjuntura
     layer: bronze
@@ -20,7 +20,7 @@ schemas:
     publicar_no_catalogo: true
     description: Camada fiel de ingestão do produto Conjuntura, preservada para rastreabilidade e processamento interno.
 
-  - name: conjuntura_continuo_silver
+  - name: conjuntura_silver
     display_name: Conjuntura · Silver
     product: conjuntura
     layer: silver
@@ -29,7 +29,7 @@ schemas:
     rag_publication: eligible_after_security_validation
     description: Camada tratada e conformada de indicadores do setor habitacional para uso analítico interno autorizado.
 
-  - name: conjuntura_continuo_mart
+  - name: conjuntura_mart
     display_name: Conjuntura · Gold
     product: conjuntura
     layer: gold
@@ -65,32 +65,3 @@ schemas:
     rag_publication: prohibited
     description: Metadados técnicos e operacionais do pipeline de dados.
 
-  - name: conjuntura_bronze
-    display_name: Conjuntura · Bronze (legado)
-    product: conjuntura_legacy
-    layer: bronze
-    owner_key: mcid_data_engineering
-    classification: restricted
-    lifecycle_status: retirement_candidate
-    rag_publication: prohibited
-    description: Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco.
-
-  - name: conjuntura_silver
-    display_name: Conjuntura · Silver (legado)
-    product: conjuntura_legacy
-    layer: silver
-    owner_key: mcid_data_engineering
-    classification: restricted
-    lifecycle_status: retirement_candidate
-    rag_publication: prohibited
-    description: Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco.
-
-  - name: conjuntura_gold
-    display_name: Conjuntura · Gold (legado)
-    product: conjuntura_legacy
-    layer: gold
-    owner_key: mcid_data_engineering
-    classification: restricted
-    lifecycle_status: retirement_candidate
-    rag_publication: prohibited
-    description: Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco.

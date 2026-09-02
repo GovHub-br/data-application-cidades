@@ -370,7 +370,7 @@ def test_relacao_entre_termos_e_declarada_nos_dois_sentidos() -> None:
 def test_termo_pendurado_por_pessoa_nao_e_removido() -> None:
     """Só tiramos termo que o repo declara.
 
-    O schema `conjuntura_continuo_mart` tinha `MCID.IndicadoresConjunturais`
+    O schema `conjuntura_mart` tinha `MCID.IndicadoresConjunturais`
     aplicado na mão. O sync o removia toda execução: nunca convergia e desfazia
     curadoria de quem trabalha na instância.
     """
@@ -600,7 +600,7 @@ def test_recipes_cobrem_os_schemas_declarados() -> None:
 
     Manter as duas listas à mão foi o que deixou a recipe descrevendo os
     schemas legados (`conjuntura_gold`) por semanas, enquanto os models
-    reais eram `conjuntura_continuo_mart`.
+    reais eram `conjuntura_mart`.
     """
     declarados = {s["name"] for s in comum.carregar("schemas.yml")["schemas"]}
     for nome in ("postgres_metadata", "postgres_profiler", "postgres_classifier"):

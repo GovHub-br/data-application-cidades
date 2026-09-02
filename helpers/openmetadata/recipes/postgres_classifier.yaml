@@ -21,15 +21,12 @@ source:
       sampleDataCount: 50
       schemaFilterPattern:
         includes:
-          - '^conjuntura_bronze$'
-          - '^conjuntura_continuo_bronze$'
-          - '^conjuntura_continuo_mart$'
-          - '^conjuntura_continuo_silver$'
-          - '^conjuntura_gold$'
-          - '^conjuntura_silver$'
-          - '^empreendimento_far$'
-          - '^entidades_fds$'
-          - '^metadata$'
+          - "^conjuntura_bronze$"
+          - "^conjuntura_silver$"
+          - "^conjuntura_mart$"
+          - "^empreendimento_far$"
+          - "^entidades_fds$"
+          - "^metadata$"
       # Deve permanecer identica a allowlist de postgres_metadata.yaml.
 
 processor:

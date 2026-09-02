@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

@@ -21,7 +21,7 @@ from urllib.parse import quote_plus
 import requests
 from dotenv import load_dotenv
 
-GOLD_SCHEMA = "conjuntura_continuo_mart"
+GOLD_SCHEMA = "conjuntura_mart"
 DATABASE_NAME = "Cidades"
 
 GOLDS = [

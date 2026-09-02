@@ -1,4 +1,4 @@
-{{ config(materialized='table', schema='conjuntura_continuo_mart') }}
+{{ config(materialized='table', schema='conjuntura_mart') }}
 
 -- Perfil de completude de todos os models silver e gold do conjuntura.
 -- Uma linha por coluna, com % de preenchimento.
@@ -14,4 +14,4 @@
 -- origem e pode conter coluna com identificador de pessoa, que não deve
 -- aparecer em camada de consumo. Ver `macros/coluna_sensivel.sql`.
 
-{{ perfil_completude(['conjuntura_continuo_silver', 'conjuntura_continuo_mart']) }}
+{{ perfil_completude(['conjuntura_silver', 'conjuntura_mart']) }}

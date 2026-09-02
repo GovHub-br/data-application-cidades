@@ -22,10 +22,10 @@ significa, e o significado não depende de olhar o que está dentro dela.
 
 Uso:
     poetry run python scripts/governance/inventariar_colunas.py \\
-        --schema conjuntura_continuo_silver --contrato
+        --schema conjuntura_silver --contrato
 
     poetry run python scripts/governance/inventariar_colunas.py \\
-        --schema conjuntura_continuo_mart --tabela gold_continuo_icst
+        --schema conjuntura_mart --tabela gold_continuo_icst
 """
 
 from __future__ import annotations

@@ -568,7 +568,7 @@ def vocabulario_declarado(termos: dict) -> set[str]:
     """FQNs de glossário que este repo declara — e portanto governa.
 
     Um termo que não está aqui foi pendurado por uma pessoa e não é nosso para
-    tirar. O schema `conjuntura_continuo_mart` tinha `MCID.IndicadoresConjunturais`
+    tirar. O schema `conjuntura_mart` tinha `MCID.IndicadoresConjunturais`
     aplicado na mão, e o sync o removia a cada execução: nunca convergia, e
     desfazia curadoria alheia de quebra.
     """

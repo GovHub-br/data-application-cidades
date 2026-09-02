@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

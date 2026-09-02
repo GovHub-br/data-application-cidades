@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p2_financiamentos_imobiliarios_bacen %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

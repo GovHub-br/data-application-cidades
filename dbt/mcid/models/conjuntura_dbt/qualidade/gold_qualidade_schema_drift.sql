@@ -1,4 +1,4 @@
-{{ config(materialized='table', schema='conjuntura_continuo_mart') }}
+{{ config(materialized='table', schema='conjuntura_mart') }}
 
 -- Diferença entre o retrato de schema mais recente e o anterior: colunas que
 -- APARECERAM, SUMIRAM ou MUDARAM DE TIPO.

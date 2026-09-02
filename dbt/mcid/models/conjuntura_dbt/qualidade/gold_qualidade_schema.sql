@@ -1,4 +1,4 @@
-{{ config(materialized='incremental', schema='conjuntura_continuo_mart', unique_key=['model','coluna','visto_em']) }}
+{{ config(materialized='incremental', schema='conjuntura_mart', unique_key=['model','coluna','visto_em']) }}
 
 -- Retrato do schema de cada model silver/gold: uma linha por coluna, com tipo
 -- e data da medição.
@@ -22,7 +22,7 @@ select
     ordinal_position::int         as posicao,
     current_date                  as visto_em
 from information_schema.columns
-where table_schema in ('conjuntura_continuo_silver', 'conjuntura_continuo_mart', 'conjuntura_continuo_bronze')
+where table_schema in ('conjuntura_silver', 'conjuntura_mart', 'conjuntura_bronze')
   and table_name not like 'gold_qualidade%'
 
 {% if is_incremental() %}

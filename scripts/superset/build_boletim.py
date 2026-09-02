@@ -51,8 +51,8 @@ from dotenv import load_dotenv
 # de `SUPERSET_URL` antes de publicar coisa alguma.
 load_dotenv(pathlib.Path(__file__).resolve().parents[2] / ".env")
 
-MART = "conjuntura_continuo_mart"
-SILVER = "conjuntura_continuo_silver"
+MART = "conjuntura_mart"
+SILVER = "conjuntura_silver"
 
 #: primeira edição oferecida no filtro. Antes disso, as séries mensais
 #: (CAGED e produção física começam em 2024-01) não têm 12 meses de retaguarda.
@@ -1017,7 +1017,7 @@ def sql_do_quadro(q: Quadro) -> str:
     return f"select {colunas}\nfrom (\n{q.sql}\n) q\norder by edicao, {q.ordenar}"
 
 
-SCHEMA = "conjuntura_continuo_mart"
+SCHEMA = "conjuntura_mart"
 DATABASE_NAME = "Cidades"
 SLUG = "boletim-conjuntura"
 TITULO = "Boletim de Conjuntura — Trimestral"

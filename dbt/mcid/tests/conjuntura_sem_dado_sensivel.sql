@@ -17,8 +17,8 @@ select
     column_name  as coluna
 from information_schema.columns
 where table_schema in (
-    'conjuntura_continuo_bronze',
-    'conjuntura_continuo_silver',
-    'conjuntura_continuo_mart'
+    'conjuntura_bronze',
+    'conjuntura_silver',
+    'conjuntura_mart'
 )
   and {{ expressao_sensivel('column_name') }}

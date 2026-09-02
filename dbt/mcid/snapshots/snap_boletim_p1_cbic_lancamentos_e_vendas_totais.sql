@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p1_cbic_lancamentos_e_vendas_totais %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

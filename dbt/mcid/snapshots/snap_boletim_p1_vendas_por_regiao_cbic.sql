@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p1_vendas_por_regiao_cbic %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

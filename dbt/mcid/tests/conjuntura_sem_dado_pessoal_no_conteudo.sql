@@ -16,7 +16,7 @@
     {% set colunas = run_query(
         "select table_schema, table_name, column_name
          from information_schema.columns
-         where table_schema in ('conjuntura_continuo_silver','conjuntura_continuo_mart')
+         where table_schema in ('conjuntura_silver','conjuntura_mart')
            and data_type in ('text','character varying','character')
          order by 1,2,3") %}
     {% for linha in colunas.rows %}

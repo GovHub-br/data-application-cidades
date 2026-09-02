@@ -91,14 +91,12 @@ def ler_quadros(edicao: str, de_arquivo: pathlib.Path | None) -> dict[str, list[
     )
     cursor = conexao.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cursor.execute("""select table_name from information_schema.tables
-           where table_schema='conjuntura_continuo_mart'
+           where table_schema='conjuntura_mart'
              and table_name like 'gold_boletim_p%' order by table_name""")
     saida = {}
     for linha in cursor.fetchall():
         nome = linha["table_name"]
-        cursor.execute(
-            f"select * from conjuntura_continuo_mart.{nome} where edicao=%s", (edicao,)
-        )
+        cursor.execute(f"select * from conjuntura_mart.{nome} where edicao=%s", (edicao,))
         saida[nome] = [dict(r) for r in cursor.fetchall()]
     conexao.close()
     resultado: dict[str, list[dict]] = saida

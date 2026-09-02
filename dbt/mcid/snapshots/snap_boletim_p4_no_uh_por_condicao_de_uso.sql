@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p4_no_uh_por_condicao_de_uso %}
 {{ config(
-    target_schema='conjuntura_continuo_snapshots',
+    target_schema='conjuntura_snapshots',
     unique_key='chave',
     strategy='check',
     check_cols='all',

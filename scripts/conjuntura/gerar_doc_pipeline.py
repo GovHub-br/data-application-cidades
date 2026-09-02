@@ -317,7 +317,7 @@ def carregar_contagens() -> dict[str, int]:
                 "dbt",
                 "show",
                 "--inline",
-                "select model, linhas from conjuntura_continuo_mart.gold_qualidade_inventario",
+                "select model, linhas from conjuntura_mart.gold_qualidade_inventario",
                 "--output",
                 "json",
                 "--limit",

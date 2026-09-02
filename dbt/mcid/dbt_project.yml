@@ -131,7 +131,7 @@ models:
 
     conjuntura_dbt:
       +materialized: table
-      +schema: conjuntura_continuo
+      +schema: conjuntura
       +meta:
         governance:
           product: conjuntura
@@ -143,7 +143,7 @@ models:
       # derrubando o banco (decisão do time em 2026-08-29). Não reverter.
       bronze:
         +materialized: table
-        +schema: conjuntura_continuo_bronze
+        +schema: conjuntura_bronze
         +meta:
           governance:
             product: conjuntura
@@ -158,7 +158,7 @@ models:
             owner: mcid-data-engineering
       silver:
         +materialized: table
-        +schema: conjuntura_continuo_silver
+        +schema: conjuntura_silver
         +meta:
           governance:
             product: conjuntura
@@ -173,7 +173,7 @@ models:
             owner: mcid-data-engineering
       gold:
         +materialized: table
-        +schema: conjuntura_continuo_mart
+        +schema: conjuntura_mart
         +meta:
           governance:
             product: conjuntura
@@ -188,7 +188,7 @@ models:
             owner: mcid-data-engineering
       qualidade:
         +materialized: table
-        +schema: conjuntura_continuo_mart
+        +schema: conjuntura_mart
         +meta:
           governance:
             product: conjuntura

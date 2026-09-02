@@ -183,34 +183,9 @@ sources:
   - name: conjuntura_bronze
     schema: conjuntura_bronze
     description: >
-      Schema bronze do projeto conjuntura. Contém dados brutos tipados
-      provenientes de diversas fontes do setor imobiliário e de construção civil.
+      Tabelas do bronze do conjuntura carregadas fora do dbt. Depois da
+      aposentadoria do schema legado, resta a CBIC, que não tem DAG de ingestão
+      e chega por carga manual.
     tables:
-      - name: bronze_fgv_icst
-        description: Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE.
-      - name: bronze_imob_infomoney
-        description: Índice IMOB da Infomoney com dados diários de fechamento.
-      - name: bronze_abramat_indice
-        description: Índice ABRAMAT de custos da construção civil.
-      - name: bronze_fgts_financiamentos_habitacionais
-        description: Financiamentos habitacionais do FGTS por faixa e modalidade.
-      - name: bronze_abecip_sbpe_financiamentos_habitacionais
-        description: Financiamentos habitacionais SBPE da ABECIP.
-      - name: bronze_abecip_novos_financiamentos_imobiliarios
-        description: Novos financiamentos imobiliários por agente financeiro (ABECIP).
-      - name: bronze_bacen_financiamentos_imobiliarios
-        description: Financiamentos imobiliários PF e PJ do Banco Central.
-      - name: bronze_ibge_pib_construcao_civil
-        description: PIB da construção civil do IBGE.
-      - name: bronze_ibge_sinapi
-        description: Índice SINAPI do IBGE.
-      - name: bronze_fgv_incc_m
-        description: Índice Nacional de Custo da Construção (INCC-M) da FGV.
       - name: bronze_cbic_lancamentos_vendas
-        description: Lançamentos e vendas do setor imobiliário da CBIC.
-      - name: bronze_balancos_empresas
-        description: Balanços trimestrais de empresas do setor imobiliário.
-      - name: bronze_ticket_medio_empresas
-        description: Ticket médio de lançamentos por empresa.
-      - name: bronze_mcid_orcamento_por_acao
-        description: Orçamento do MCID por ação governamental.
+        description: Lançamentos e vendas de imóveis por região (CBIC), carga manual.

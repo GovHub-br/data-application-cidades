@@ -23,7 +23,7 @@ select
         when column_name !~ '^[a-z]'                       then 'nao comeca com letra'
     end as problema
 from information_schema.columns
-where table_schema in ('conjuntura_continuo_silver', 'conjuntura_continuo_mart')
+where table_schema in ('conjuntura_silver', 'conjuntura_mart')
   and (
         column_name like 'unnamed%'
      or column_name ~ '[^a-z0-9_]'
