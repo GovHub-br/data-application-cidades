@@ -26,16 +26,16 @@ profile_config = ProfileConfig(
     target_name="prod",
 )
 
-# Ingestões automatizadas que alimentam o conjuntura contínuo. São as mesmas
-# fontes do boletim trimestral: além de carregar o Postgres, agora também geram
-# o parquet tipado na staging (Etapa 02) consumido pela silver via pg_duckdb.
+# Ingestões automatizadas que alimentam o conjuntura. Além de carregar o
+# Postgres, geram o parquet tipado na staging (Etapa 02) consumido pela silver
+# via pg_duckdb.
 INGEST_DAG_IDS = [
     "ibge_ingest_dag",  # PIB, SINAPI, PIM-PF, PMC
     "ibge_pnad_construcao_sidra_ingest_dag",  # PNAD-C ocupados+rendimento (pág. 3)
     "novo_caged_construcao_edificios",  # empregos: saldo + estoque (pág. 3)
     "novo_caged_total_construcao",  # empregos: total da construção (pág. 3)
     "novo_caged_servicos_especializados_construcao",  # empregos (pág. 3)
-    # MRV lançamentos/vendas: fora do contínuo — as construtoras entram via
+    # MRV lançamentos/vendas: fora da lista — as construtoras entram via
     # o dado manual `empresas` (balanços), que já engloba a MRV.
     "bacen_sgs_ingest_dag",
     "bacen_credito_pib_ingest_dag",  # Crédito Imobiliário / PIB (pág. 4)
@@ -56,10 +56,8 @@ INGESTORES_MANUAIS = [
 
 
 @dag(
-    dag_id="conjuntura_continuo_dag",
-    schedule_interval=get_dynamic_schedule(
-        "conjuntura_continuo_dag", default="0 8 * * 1"
-    ),
+    dag_id="conjuntura_dag",
+    schedule_interval=get_dynamic_schedule("conjuntura_dag", default="0 8 * * 1"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
@@ -67,17 +65,17 @@ INGESTORES_MANUAIS = [
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["conjuntura", "continuo", "dbt", "orquestracao"],
+    tags=["conjuntura", "dbt", "orquestracao"],
     description=(
-        "Orquestra o boletim de conjuntura CONTÍNUO (semanal): dispara as "
+        "Orquestra o boletim de conjuntura (semanal): dispara as "
         "ingestões automatizadas (que geram os parquets de staging), converte os "
         "dados manuais para parquet tipado (Template Method) e roda o dbt "
         "conjuntura_dbt (silver via pg_duckdb read_parquet + gold). "
         "DAGs de ingestão: " + ", ".join(INGEST_DAG_IDS)
     ),
 )
-def conjuntura_continuo_dag() -> None:
-    """DAG guarda-chuva do boletim de conjuntura contínuo.
+def conjuntura_dag() -> None:
+    """DAG guarda-chuva do boletim de conjuntura.
 
     Fluxo:
       1. Dispara as DAGs de ingestão automatizadas (Etapas 01/02 das fontes com
@@ -120,8 +118,8 @@ def conjuntura_continuo_dag() -> None:
 
     manuais_prontos = gera_parquets_manuais()
 
-    dbt_conjuntura_continuo = DbtTaskGroup(
-        group_id="dbt_conjuntura_continuo",
+    dbt_conjuntura = DbtTaskGroup(
+        group_id="dbt_conjuntura",
         project_config=ProjectConfig(f"{os.environ['AIRFLOW_REPO_BASE']}/dbt/mcid"),
         profile_config=profile_config,
         execution_config=ExecutionConfig(
@@ -130,7 +128,7 @@ def conjuntura_continuo_dag() -> None:
         render_config=RenderConfig(select=["conjuntura_dbt"]),
     )
 
-    [fontes_prontas, manuais_prontos] >> dbt_conjuntura_continuo
+    [fontes_prontas, manuais_prontos] >> dbt_conjuntura
 
 
-dag_instance = conjuntura_continuo_dag()
+dag_instance = conjuntura_dag()
