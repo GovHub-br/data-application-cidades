@@ -21,18 +21,47 @@
     create or replace function {{ target.schema }}.corrigir_mojibake(in_text text)
     returns text
     as $$
+    declare
+        atual text := in_text;
+        tentativa text;
+        i int;
     begin
         if in_text is null then
             return null;
         end if;
-        -- Ã cobre os acentos latinos, Â os símbolos (º, °), â€ a pontuação tipográfica
-        if in_text !~ '[ÃÂ]|â€' then
-            return in_text;
-        end if;
-        return convert_from(convert_to(in_text, 'LATIN1'), 'UTF8');
-    exception
-        when others then
-            return in_text;
+
+        -- Até 3 passadas: há texto que passou pelo round-trip mais de uma vez
+        -- ("SÃƒÂ£o" é o mojibake do mojibake de "São"). Para no ponto fixo.
+        for i in 1..3 loop
+            -- Ã cobre os acentos latinos, Â os símbolos (º, °), â€ a pontuação
+            if atual !~ '[ÃÂ]|â€' then
+                return atual;
+            end if;
+
+            begin
+                -- WIN1252 primeiro, e não LATIN1: a corrupção veio de ler utf-8 como
+                -- cp1252, e só o cp1252 tem € (0x80), aspas curvas (0x93/0x94) e
+                -- travessão (0x97). Com LATIN1 sozinho, todo texto livre com pontuação
+                -- tipográfica levantava e voltava intacto — era o caso dos 9.603
+                -- situacao_detalhamento da CAIXA.
+                tentativa := convert_from(convert_to(atual, 'WIN1252'), 'UTF8');
+            exception
+                when others then
+                    begin
+                        tentativa := convert_from(convert_to(atual, 'LATIN1'), 'UTF8');
+                    exception
+                        when others then
+                            return atual;
+                    end;
+            end;
+
+            if tentativa = atual then
+                return atual;
+            end if;
+            atual := tentativa;
+        end loop;
+
+        return atual;
     end;
     $$
     language plpgsql

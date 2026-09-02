@@ -28,6 +28,12 @@ from typing import Dict, List, Tuple
 import psycopg2
 from dotenv import load_dotenv
 
+# O relatório sai por stdout e é redirecionado para um .md. No Windows o stdout usa
+# cp1252 por padrão, o que substitui todo acento por "?" no arquivo — justamente num
+# relatório sobre encoding.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 load_dotenv()
 
 # Marcadores do round-trip utf-8 -> latin-1, mais o U+FFFD que o errors="replace" deixa.
