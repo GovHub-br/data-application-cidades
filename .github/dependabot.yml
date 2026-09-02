@@ -1,0 +1,66 @@
+# Atualizações automáticas de dependências.
+# Documentação: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Python — pyproject.toml (Poetry) e requirements.txt na raiz
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "Infra"
+
+  # Python — site de documentação
+  - package-ecosystem: "pip"
+    directory: "/docs-pages"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "Infra"
+
+  # Actions usadas nos workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - "Infra"
+
+  # Imagens base dos containers
+  - package-ecosystem: "docker"
+    directory: "/infra/docker/airflow"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "Infra"
+
+  - package-ecosystem: "docker"
+    directory: "/infra/docker/airflow-mcp"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "Infra"
+
+  - package-ecosystem: "docker"
+    directory: "/infra/docker/superset"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "Infra"
