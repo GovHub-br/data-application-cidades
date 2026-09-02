@@ -32,8 +32,8 @@ from restricoes_dbt import (
     constraints_da_tabela,
 )
 
-DEFAULT_CATALOG = RAIZ / "docs-conjuntura" / "openmetadata_semantic_catalog.json"
-DEFAULT_PAYLOAD = RAIZ / "docs-conjuntura" / "openmetadata_sync_payload.json"
+DEFAULT_CATALOG = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
+DEFAULT_PAYLOAD = RAIZ / "build" / "openmetadata_sync_payload.json"
 
 #: Tipos do PostgreSQL para o vocabulário do OpenMetadata. O mapa é explícito
 #: de propósito: a versão anterior colapsava tudo em sete tipos e carimbava
@@ -405,6 +405,7 @@ def main() -> int:
     database = args.database or config["banco"]
     catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
     payload = build_payload(catalog, service, database)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
     )

@@ -46,7 +46,7 @@ from governanca_comum import (
 )
 
 MODELOS = RAIZ / "dbt" / "mcid" / "models"
-CATALOGO = RAIZ / "docs-conjuntura" / "openmetadata_semantic_catalog.json"
+CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 #: A macro registra a dependência do model bronze na fonte do lake. Ler a
 #: chamada é ler a declaração — não há SQL compilado nem caminho de dado aqui.
 CHAMADA_FONTE = re.compile(r"fonte_lake\(\s*['\"]([^'\"]+)['\"]")

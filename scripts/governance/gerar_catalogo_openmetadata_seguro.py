@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[2]
 DBT_PROJECT = ROOT / "dbt" / "mcid"
 EXPORTER = ROOT / "scripts" / "governance" / "exportar_catalogo_openmetadata.py"
-OUTPUT = ROOT / "docs-conjuntura" / "openmetadata_semantic_catalog.json"
+OUTPUT = ROOT / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 
 
 def main() -> int:

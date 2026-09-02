@@ -31,7 +31,7 @@ from sqlglot.lineage import lineage
 from governanca_comum import RAIZ
 
 MODELOS = RAIZ / "dbt" / "mcid" / "models"
-CATALOGO = RAIZ / "docs-conjuntura" / "openmetadata_semantic_catalog.json"
+CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 
 REF = re.compile(r"\{\{\s*ref\(\s*['\"]([^'\"]+)['\"]\s*\)\s*\}\}")
 #: O que sobra de Jinja depois de resolver o `ref` é configuração e macro, que

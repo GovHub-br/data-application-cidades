@@ -40,7 +40,6 @@ import json
 import os
 import pathlib
 import re
-import sys
 import unicodedata
 from dataclasses import dataclass, field
 
@@ -103,7 +102,6 @@ edicoes as (
 )"""
 
 
-
 def num(coluna: str) -> str:
     """Cast numérico tolerante para as colunas `text` dos balanços.
 
@@ -114,8 +112,10 @@ def num(coluna: str) -> str:
     correto para célula em branco na planilha de origem.
     """
     limpo = f"btrim({coluna}::text, E' \\t\\r\\n\\u00a0')"
-    return (f"(case when {limpo} ~ '^-?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$' "
-            f"then {limpo}::numeric end)")
+    return (
+        f"(case when {limpo} ~ '^-?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$' "
+        f"then {limpo}::numeric end)"
+    )
 
 
 def _serie_trimestral(tabela: str, colunas: str) -> str:
@@ -133,8 +133,14 @@ def pagina_01() -> list[Quadro]:
             pagina=1,
             secao="1. PIB da Construção Civil",
             titulo="PIB Construção Civil (em % de Crescimento)",
-            colunas=["indicador", "4 trim. antes", "3 trim. antes", "2 trim. antes",
-                     "trim. anterior", "trimestre selecionado"],
+            colunas=[
+                "indicador",
+                "4 trim. antes",
+                "3 trim. antes",
+                "2 trim. antes",
+                "trim. anterior",
+                "trimestre selecionado",
+            ],
             sql=f"""
     with {EDICOES},
     serie as (
@@ -219,8 +225,15 @@ def pagina_01() -> list[Quadro]:
             pagina=1,
             secao="2. Lançamentos e Vendas",
             titulo="CBIC — Lançamentos e Vendas (totais)",
-            colunas=["periodo", "Lançamentos TOTAL", "Lançamentos MCMV", "Lançamentos DEMAIS",
-                     "Vendas TOTAL", "Vendas MCMV", "Vendas DEMAIS"],
+            colunas=[
+                "periodo",
+                "Lançamentos TOTAL",
+                "Lançamentos MCMV",
+                "Lançamentos DEMAIS",
+                "Vendas TOTAL",
+                "Vendas MCMV",
+                "Vendas DEMAIS",
+            ],
             sql=f"""
     with {EDICOES},
     s as (
@@ -258,8 +271,13 @@ def pagina_02() -> list[Quadro]:
             pagina=2,
             secao="3. Balanços das Empresas",
             titulo="Lançamentos por construtora (variação %)",
-            colunas=["empresa", "vs. trim. anterior", "vs. mesmo trim. ano ant.",
-                     "12m atual / 12m anterior", "12m anterior / 12m retrasado"],
+            colunas=[
+                "empresa",
+                "vs. trim. anterior",
+                "vs. mesmo trim. ano ant.",
+                "12m atual / 12m anterior",
+                "12m anterior / 12m retrasado",
+            ],
             sql=f"""
     with {EDICOES},
     serie as (
@@ -287,8 +305,13 @@ def pagina_02() -> list[Quadro]:
             pagina=2,
             secao="3. Balanços das Empresas",
             titulo="Vendas por construtora (variação %)",
-            colunas=["empresa", "vs. trim. anterior", "vs. mesmo trim. ano ant.",
-                     "12m atual / 12m anterior", "12m anterior / 12m retrasado"],
+            colunas=[
+                "empresa",
+                "vs. trim. anterior",
+                "vs. mesmo trim. ano ant.",
+                "12m atual / 12m anterior",
+                "12m anterior / 12m retrasado",
+            ],
             sql=f"""
     with {EDICOES},
     serie as (
@@ -316,8 +339,13 @@ def pagina_02() -> list[Quadro]:
             pagina=2,
             secao="3. Balanços das Empresas",
             titulo="Totais das empresas levantadas (variação %)",
-            colunas=["indicador", "vs. trim. anterior", "vs. mesmo trim. ano ant.",
-                     "12m atual / 12m anterior", "12m anterior / 12m retrasado"],
+            colunas=[
+                "indicador",
+                "vs. trim. anterior",
+                "vs. mesmo trim. ano ant.",
+                "12m atual / 12m anterior",
+                "12m anterior / 12m retrasado",
+            ],
             sql=f"""
     with {EDICOES},
     soma as (
@@ -357,9 +385,15 @@ def pagina_02() -> list[Quadro]:
             pagina=2,
             secao="3. Balanços das Empresas",
             titulo="Financiamentos Imobiliários (BACEN)",
-            colunas=["periodo", "PF Concessões (R$ mi)", "PF Taxa de Juros (%a.a)",
-                     "PF Inadimplência (%)", "PJ Concessões (R$ mi)",
-                     "PJ Taxa de Juros (%a.a)", "PJ Inadimplência (%)"],
+            colunas=[
+                "periodo",
+                "PF Concessões (R$ mi)",
+                "PF Taxa de Juros (%a.a)",
+                "PF Inadimplência (%)",
+                "PJ Concessões (R$ mi)",
+                "PJ Taxa de Juros (%a.a)",
+                "PJ Inadimplência (%)",
+            ],
             sql=f"""
     with {EDICOES},
     mes as (
@@ -453,8 +487,13 @@ def pagina_03() -> list[Quadro]:
             pagina=3,
             secao="4. Empregos",
             titulo="PNAD Contínua — Ocupados e Rendimento Médio Real",
-            colunas=["periodo", "Ocupados Construção (mil)", "Ocupados Total (mil)",
-                     "Rendimento Construção (R$)", "Rendimento Total (R$)"],
+            colunas=[
+                "periodo",
+                "Ocupados Construção (mil)",
+                "Ocupados Total (mil)",
+                "Rendimento Construção (R$)",
+                "Rendimento Total (R$)",
+            ],
             sql=f"""
     with {EDICOES},
     base as (
@@ -477,9 +516,15 @@ def pagina_03() -> list[Quadro]:
             pagina=3,
             secao="5. Produção Física Industrial e Vendas da Construção",
             titulo="Produção Industrial e Volume de Vendas (variação %)",
-            colunas=["indicador", "PROD mesmo mês ano ant.", "PROD mês anterior",
-                     "PROD mês de referência", "VENDAS mesmo mês ano ant.",
-                     "VENDAS mês anterior", "VENDAS mês de referência"],
+            colunas=[
+                "indicador",
+                "PROD mesmo mês ano ant.",
+                "PROD mês anterior",
+                "PROD mês de referência",
+                "VENDAS mesmo mês ano ant.",
+                "VENDAS mês anterior",
+                "VENDAS mês de referência",
+            ],
             sql=f"""
     with {EDICOES},
     mes as (
@@ -563,9 +608,14 @@ def pagina_04() -> list[Quadro]:
             pagina=4,
             secao="6. Crédito",
             titulo="Nº UH por Condição de Uso",
-            colunas=["fonte", "Trim. ano anterior — UH Usadas", "Trim. ano anterior — UH Novas",
-                     "Trim. selecionado — UH Usadas", "Trim. selecionado — UH Novas",
-                     "Trim. selecionado — UH Total"],
+            colunas=[
+                "fonte",
+                "Trim. ano anterior — UH Usadas",
+                "Trim. ano anterior — UH Novas",
+                "Trim. selecionado — UH Usadas",
+                "Trim. selecionado — UH Novas",
+                "Trim. selecionado — UH Total",
+            ],
             sql=f"""
     with {EDICOES},
     mes as (
@@ -604,7 +654,12 @@ def pagina_05() -> list[Quadro]:
             pagina=5,
             secao="7. SBPE Construção",
             titulo="SBPE Construção — unidades e valor (acum. no trimestre)",
-            colunas=["indicador", "Trim. ano anterior", "Trim. selecionado", "Variação %"],
+            colunas=[
+                "indicador",
+                "Trim. ano anterior",
+                "Trim. selecionado",
+                "Variação %",
+            ],
             sql=f"""
 with {EDICOES},
 mes as (
@@ -629,7 +684,7 @@ select r.edicao, 'Valor (R$ bilhões)',
 from ref r
 """,
             nota="Fonte ABECIP automatizada. Conferido vs boletim 1T26: 47.609 un, "
-                 "R$ 11,22 bi, +149% e +83% — os quatro exatos.",
+            "R$ 11,22 bi, +149% e +83% — os quatro exatos.",
         ),
         Quadro(
             pagina=5,
@@ -660,8 +715,13 @@ from ref r
             pagina=5,
             secao="7. Financiamento PF",
             titulo="Financiamento PF MCMV por faixa",
-            colunas=["faixa", "Trim. ano anterior — Nº UH", "Trim. ano anterior — FIN (Bi R$)",
-                     "Trim. selecionado — Nº UH", "Trim. selecionado — FIN (Bi R$)"],
+            colunas=[
+                "faixa",
+                "Trim. ano anterior — Nº UH",
+                "Trim. ano anterior — FIN (Bi R$)",
+                "Trim. selecionado — Nº UH",
+                "Trim. selecionado — FIN (Bi R$)",
+            ],
             sql=f"""
     with {EDICOES},
     mes as (
@@ -729,6 +789,33 @@ def pagina_06() -> list[Quadro]:
     return [
         Quadro(
             pagina=6,
+            secao="6. OGU",
+            titulo="OGU",
+            colunas=[
+                "Ação",
+                "Projeto / Atividade",
+                "Dotação atual",
+                "Empenho",
+                "Pagamento",
+                "RAP inscrito",
+                "Pag. RAP",
+                "Pag. total",
+            ],
+            nota="Fonte: SIAFI. Valores em milhões de reais.",
+            ordenar="edicao",
+            #: DIFERENTE dos outros quadros: o OGU não tem série por edição.
+            #: `gold_continuo_ogu` guarda uma extração pontual, e o model do
+            #: dbt faz cross join com as edições justamente para o filtro não
+            #: mentir — o retrato é o mesmo em qualquer trimestre escolhido, e
+            #: a coluna `Extração` diz de quando ele é.
+            sql=f"""
+    select "edicao", "Ação", "Projeto / Atividade", "Dotação atual", "Empenho",
+           "Pagamento", "RAP inscrito", "Pag. RAP", "Pag. total", "Extração"
+    from {MART}.gold_boletim_p6_ogu
+""",
+        ),
+        Quadro(
+            pagina=6,
             secao="7. Preços",
             titulo="SINAPI (Brasil) e INCC-M",
             colunas=["indicador", "SINAPI", "INCC-M"],
@@ -771,9 +858,17 @@ def pagina_06() -> list[Quadro]:
             pagina=6,
             secao="7. Preços",
             titulo="Ticket médio das unidades lançadas vs. INCC",
-            colunas=["periodo", "INCC trimestral", "MRV trimestral", "Direcional trimestral",
-                     "Tenda trimestral", "INCC acum. 4T20", "MRV acum. 4T20",
-                     "Direcional acum. 4T20", "Tenda acum. 4T20"],
+            colunas=[
+                "periodo",
+                "INCC trimestral",
+                "MRV trimestral",
+                "Direcional trimestral",
+                "Tenda trimestral",
+                "INCC acum. 4T20",
+                "MRV acum. 4T20",
+                "Direcional acum. 4T20",
+                "Tenda acum. 4T20",
+            ],
             sql=f"""
     with {EDICOES},
     serie as (
@@ -808,7 +903,13 @@ def pagina_07() -> list[Quadro]:
             pagina=7,
             secao="8. Índices da Construção",
             titulo="Índices da Construção (variação %)",
-            colunas=["indicador", "Índice IMOB", "Índice ABRAMAT", "Índice FipeZap", "Índice ICST"],
+            colunas=[
+                "indicador",
+                "Índice IMOB",
+                "Índice ABRAMAT",
+                "Índice FipeZap",
+                "Índice ICST",
+            ],
             sql=f"""
     with {EDICOES},
     ref as (select edicao, ano_ed, tri_ed, ano_ed * 12 + tri_ed * 3 as m0 from edicoes),
@@ -868,6 +969,7 @@ def pagina_07() -> list[Quadro]:
         ),
     ]
 
+
 #: Cada página do boletim é uma função. Para incluir ou tirar um quadro,
 #: mexe-se só na função da página correspondente — nada mais no arquivo
 #: precisa mudar, e o construtor monta as abas a partir daqui.
@@ -894,9 +996,13 @@ QUADROS: list[Quadro] = quadros()
 #: `pendente=True` marca o que está a caminho — dado identificado, ingestão
 #: combinada — para não se confundir com o que não tem fonte nenhuma.
 SEM_FONTE = [
-    (6, "6. OGU", "OGU e Desembolsos de Obras",
-     "O boletim congela o SIAFI na data da edição (‘Dados de 02/01/26’); nossa "
-     "extração é sempre a posição corrente, então nenhuma célula reproduz."),
+    (
+        6,
+        "6. OGU",
+        "OGU e Desembolsos de Obras",
+        "O boletim congela o SIAFI na data da edição (‘Dados de 02/01/26’); nossa "
+        "extração é sempre a posição corrente, então nenhuma célula reproduz.",
+    ),
 ]
 
 
@@ -973,23 +1079,41 @@ class Superset:
 
     def criar(self, recurso: str, payload: dict) -> int:
         if self.dry_run:
-            print(f"  [dry-run] criaria {recurso}: {payload.get('table_name') or payload.get('slice_name') or payload.get('dashboard_title')}")
+            print(
+                f"  [dry-run] criaria {recurso}: {payload.get('table_name') or payload.get('slice_name') or payload.get('dashboard_title')}"
+            )
             return -1
-        r = self.s.post(f"{self.base}/api/v1/{recurso}/", headers=self.h, json=payload, timeout=90)
+        r = self.s.post(
+            f"{self.base}/api/v1/{recurso}/", headers=self.h, json=payload, timeout=90
+        )
         if not r.ok:
-            raise RuntimeError(f"{recurso} recusado (HTTP {r.status_code}): {r.text[:300]}")
+            raise RuntimeError(
+                f"{recurso} recusado (HTTP {r.status_code}): {r.text[:300]}"
+            )
         return r.json()["id"]
 
     def atualizar(self, recurso: str, ident, payload: dict) -> None:
         if self.dry_run:
             print(f"  [dry-run] atualizaria {recurso} {ident}")
             return
-        r = self.s.put(f"{self.base}/api/v1/{recurso}/{ident}", headers=self.h, json=payload, timeout=90)
+        r = self.s.put(
+            f"{self.base}/api/v1/{recurso}/{ident}",
+            headers=self.h,
+            json=payload,
+            timeout=90,
+        )
         if not r.ok:
-            raise RuntimeError(f"{recurso} {ident} recusado (HTTP {r.status_code}): {r.text[:300]}")
+            raise RuntimeError(
+                f"{recurso} {ident} recusado (HTTP {r.status_code}): {r.text[:300]}"
+            )
 
     def dados(self, query_context: dict) -> tuple[bool, str]:
-        r = self.s.post(f"{self.base}/api/v1/chart/data", headers=self.h, json=query_context, timeout=180)
+        r = self.s.post(
+            f"{self.base}/api/v1/chart/data",
+            headers=self.h,
+            json=query_context,
+            timeout=180,
+        )
         if not r.ok:
             return False, str(r.json().get("message"))[:120]
         return True, f"{r.json()['result'][0].get('rowcount')} linhas"
@@ -1052,11 +1176,19 @@ def garantir_quadro(api: Superset, q: Quadro, cache: dict) -> int | None:
         "force": False,
         "queries": [
             {
-                "filters": [], "extras": {"having": "", "where": ""},
-                "applied_time_extras": {}, "columns": visiveis, "metrics": [],
-                "orderby": [], "annotation_layers": [], "row_limit": 1000,
-                "series_limit": 0, "order_desc": False, "url_params": {},
-                "custom_params": {}, "custom_form_data": {},
+                "filters": [],
+                "extras": {"having": "", "where": ""},
+                "applied_time_extras": {},
+                "columns": visiveis,
+                "metrics": [],
+                "orderby": [],
+                "annotation_layers": [],
+                "row_limit": 1000,
+                "series_limit": 0,
+                "order_desc": False,
+                "url_params": {},
+                "custom_params": {},
+                "custom_form_data": {},
             }
         ],
         "form_data": params,
@@ -1102,12 +1234,11 @@ def construir_pagina(api: Superset, numero: int, cache: dict) -> list[dict]:
     return nos
 
 
-
-
 #: as páginas construíveis saem do próprio spec — acrescentar uma
 #: `pagina_08()` acima já a torna construível, sem tocar aqui.
-CONSTRUTORES = {n: (lambda api, cache, n=n: construir_pagina(api, n, cache))
-                for n in sorted(PAGINAS)}
+CONSTRUTORES = {
+    n: (lambda api, cache, n=n: construir_pagina(api, n, cache)) for n in sorted(PAGINAS)
+}
 
 
 # --------------------------------------------------------------------------
@@ -1123,8 +1254,13 @@ def nos_da_pagina_publicada(layout: dict, numero: int) -> list[dict]:
     for row in layout[tab].get("children", []):
         filho = layout.get(layout[row]["children"][0], {})
         if filho.get("type") == "CHART":
-            nos.append({"tipo": "CHART", "chart": filho["meta"]["chartId"],
-                        "titulo": filho["meta"].get("sliceName", "")})
+            nos.append(
+                {
+                    "tipo": "CHART",
+                    "chart": filho["meta"]["chartId"],
+                    "titulo": filho["meta"].get("sliceName", ""),
+                }
+            )
         elif filho.get("type") == "MARKDOWN":
             nos.append({"tipo": "MARKDOWN_BRUTO", "code": filho["meta"]["code"]})
     return nos
@@ -1132,32 +1268,63 @@ def nos_da_pagina_publicada(layout: dict, numero: int) -> list[dict]:
 
 def monta_layout(por_pagina: dict[int, list[dict]]) -> str:
     layout = {
-        "ROOT_ID": {"id": "ROOT_ID", "type": "ROOT", "children": [TABS_ID], "parents": [], "meta": {}},
-        TABS_ID: {"id": TABS_ID, "type": "TABS", "children": [], "parents": ["ROOT_ID"], "meta": {}},
+        "ROOT_ID": {
+            "id": "ROOT_ID",
+            "type": "ROOT",
+            "children": [TABS_ID],
+            "parents": [],
+            "meta": {},
+        },
+        TABS_ID: {
+            "id": TABS_ID,
+            "type": "TABS",
+            "children": [],
+            "parents": ["ROOT_ID"],
+            "meta": {},
+        },
     }
     for pg in sorted(por_pagina):
         tab, rotulo = f"TAB-P{pg}", f"Página {pg}"
         layout[TABS_ID]["children"].append(tab)
-        layout[tab] = {"id": tab, "type": "TAB", "children": [], "parents": ["ROOT_ID", TABS_ID],
-                       "meta": {"text": rotulo, "defaultText": rotulo, "placeholder": rotulo}}
+        layout[tab] = {
+            "id": tab,
+            "type": "TAB",
+            "children": [],
+            "parents": ["ROOT_ID", TABS_ID],
+            "meta": {"text": rotulo, "defaultText": rotulo, "placeholder": rotulo},
+        }
         for i, no in enumerate(por_pagina[pg]):
             row = f"ROW-P{pg}-{i:02d}"
             layout[tab]["children"].append(row)
             if no["tipo"] == "CHART":
                 nid = f"CHART-{no['chart']}"
-                meta = {"chartId": no["chart"], "width": 12, "height": 50,
-                        "sliceName": no["titulo"], "index": f"{i:03d}"}
+                meta = {
+                    "chartId": no["chart"],
+                    "width": 12,
+                    "height": 50,
+                    "sliceName": no["titulo"],
+                    "index": f"{i:03d}",
+                }
                 tipo = "CHART"
             else:
                 nid = f"MARKDOWN-P{pg}-{i:02d}"
                 code = no.get("code") or f"### ⚠️ {no['titulo']}\n\n{no['motivo']}"
                 meta = {"width": 12, "height": 20, "code": code}
                 tipo = "MARKDOWN"
-            layout[row] = {"id": row, "type": "ROW", "children": [nid],
-                           "parents": ["ROOT_ID", TABS_ID, tab],
-                           "meta": {"background": "BACKGROUND_TRANSPARENT"}}
-            layout[nid] = {"id": nid, "type": tipo, "children": [],
-                           "parents": ["ROOT_ID", TABS_ID, tab, row], "meta": meta}
+            layout[row] = {
+                "id": row,
+                "type": "ROW",
+                "children": [nid],
+                "parents": ["ROOT_ID", TABS_ID, tab],
+                "meta": {"background": "BACKGROUND_TRANSPARENT"},
+            }
+            layout[nid] = {
+                "id": nid,
+                "type": tipo,
+                "children": [],
+                "parents": ["ROOT_ID", TABS_ID, tab, row],
+                "meta": meta,
+            }
     return json.dumps(layout)
 
 
@@ -1170,15 +1337,22 @@ def filtro_de_edicao(dataset_id: int) -> dict:
     editar Python e republicar — decisão sobre trimestre não mora em código.
     """
     return {
-        "id": FILTRO_ID, "name": "Trimestre", "filterType": "filter_select",
+        "id": FILTRO_ID,
+        "name": "Trimestre",
+        "filterType": "filter_select",
         "type": "NATIVE_FILTER",
         "targets": [{"column": {"name": "edicao"}, "datasetId": dataset_id}],
         "defaultDataMask": {},
-        "controlValues": {"multiSelect": False, "enableEmptyFilter": True,
-                          "defaultToFirstItem": False, "searchAllOptions": False,
-                          "inverseSelection": False},
+        "controlValues": {
+            "multiSelect": False,
+            "enableEmptyFilter": True,
+            "defaultToFirstItem": False,
+            "searchAllOptions": False,
+            "inverseSelection": False,
+        },
         "scope": {"rootPath": ["ROOT_ID"], "excluded": []},
-        "cascadeParentIds": [], "description": "Edição do boletim",
+        "cascadeParentIds": [],
+        "description": "Edição do boletim",
     }
 
 
@@ -1188,18 +1362,27 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    alvo = ([int(x) for x in args.paginas.split(",")] if args.paginas
-            else sorted(CONSTRUTORES))
+    alvo = (
+        [int(x) for x in args.paginas.split(",")]
+        if args.paginas
+        else sorted(CONSTRUTORES)
+    )
     api = Superset(dry_run=args.dry_run)
 
     cache = {
-        "db": next(d["id"] for d in api.listar("database") if d["database_name"] == DATABASE_NAME),
+        "db": next(
+            d["id"] for d in api.listar("database") if d["database_name"] == DATABASE_NAME
+        ),
         "datasets": {d["table_name"]: d["id"] for d in api.listar("dataset")},
         "charts": {c["slice_name"]: c["id"] for c in api.listar("chart")},
     }
 
     publicado = api.get("dashboard", SLUG)
-    layout_atual = json.loads(publicado["position_json"]) if publicado and publicado.get("position_json") else {}
+    layout_atual = (
+        json.loads(publicado["position_json"])
+        if publicado and publicado.get("position_json")
+        else {}
+    )
 
     por_pagina: dict[int, list[dict]] = {}
     for pg in sorted(CONSTRUTORES):
@@ -1216,16 +1399,22 @@ def main() -> None:
         print("\n[dry-run] layout não gravado.")
         return
 
-    ds_filtro = next((n["chart"] for p in por_pagina.values() for n in p if n["tipo"] == "CHART"), None)
+    ds_filtro = next(
+        (n["chart"] for p in por_pagina.values() for n in p if n["tipo"] == "CHART"), None
+    )
     dataset_filtro = api.get("chart", ds_filtro)["datasource_id"] if ds_filtro else None
     payload = {
-        "dashboard_title": TITULO, "slug": SLUG, "published": True,
+        "dashboard_title": TITULO,
+        "slug": SLUG,
+        "published": True,
         "position_json": monta_layout(por_pagina),
     }
     if dataset_filtro:
         payload["json_metadata"] = json.dumps(
-            {"native_filter_configuration": [filtro_de_edicao(dataset_filtro)],
-             "cross_filters_enabled": False}
+            {
+                "native_filter_configuration": [filtro_de_edicao(dataset_filtro)],
+                "cross_filters_enabled": False,
+            }
         )
 
     if publicado:
@@ -1243,9 +1432,13 @@ def main() -> None:
             chart = api.get("chart", no["chart"]) or {}
             atuais = {d["id"] for d in (chart.get("dashboards") or [])}
             if did not in atuais:
-                api.atualizar("chart", no["chart"], {"dashboards": sorted(atuais | {did})})
+                api.atualizar(
+                    "chart", no["chart"], {"dashboards": sorted(atuais | {did})}
+                )
 
-    ligados = api.s.get(f"{api.base}/api/v1/dashboard/{SLUG}/charts", timeout=30).json()["result"]
+    ligados = api.s.get(f"{api.base}/api/v1/dashboard/{SLUG}/charts", timeout=30).json()[
+        "result"
+    ]
     print(f"charts ligados: {len(ligados)}")
     print(f"URL: {api.base}/superset/dashboard/{SLUG}/")
 

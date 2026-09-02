@@ -526,7 +526,7 @@ if __name__ == "__main__":
         description="Gera catálogo público seguro de metadados."
     )
     parser.add_argument(
-        "saida", nargs="?", type=Path, default=RAIZ / "docs-conjuntura" / "pipeline.html"
+        "saida", nargs="?", type=Path, default=RAIZ / "build" / "pipeline.html"
     )
     parser.add_argument(
         "--target-dir",

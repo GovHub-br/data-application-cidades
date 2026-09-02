@@ -45,7 +45,7 @@ from governanca_comum import (
     texto,
 )
 
-CATALOGO = RAIZ / "docs-conjuntura" / "openmetadata_semantic_catalog.json"
+CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 
 #: Classificações cujo conteúdo é nosso. Numa tabela, as etiquetas destas
 #: classificações são substituídas pelo que o YAML declara; as de qualquer

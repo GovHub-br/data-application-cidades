@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "dbt" / "mcid" / "target" / "manifest.json"
-DEFAULT_OUTPUT = ROOT / "docs-conjuntura" / "quality" / "load_strategies.json"
+DEFAULT_OUTPUT = ROOT / "build" / "quality" / "load_strategies.json"
 
 
 def strategy(materialized: str) -> str:

@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DBT_PROJECT = ROOT / "dbt" / "mcid"
 MODELS_ROOT = DBT_PROJECT / "models"
 DEFAULT_MANIFEST = DBT_PROJECT / "target" / "manifest.json"
-DEFAULT_REPORT = ROOT / "docs-conjuntura" / "quality" / "silver_gx.json"
+DEFAULT_REPORT = ROOT / "build" / "quality" / "silver_gx.json"
 RESULT_FORMAT = {
     "result_format": "BASIC",
     "partial_unexpected_count": 0,

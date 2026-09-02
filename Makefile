@@ -95,7 +95,7 @@ conjuntura-docs:
 	poetry run python scripts/conjuntura/gerar_docs_seguros.py
 
 conjuntura-docs-pdf: conjuntura-docs
-	soffice --headless --convert-to pdf --outdir docs-conjuntura docs-conjuntura/pipeline.html
+	soffice --headless --convert-to pdf --outdir build build/pipeline.html
 
 # Audita somente descrições YAML e não acessa tabelas ou arquivos de dados.
 # Use `GOVERNANCE_STRICT=--strict make governance-audit` ao transformar os

@@ -58,7 +58,7 @@ GOLDS = [
 #: impressa: as abas do dashboard reproduzem o boletim para que a conferência
 #: manual contra o PDF seja lado a lado, sem procurar indicador.
 #:
-#: Fonte: `dbt/mcid/models/conjuntura_dbt/VALIDACAO_BOLETIM.md`, que
+#: Fonte: validação indicador a indicador do boletim (documentação interna), que
 #: mapeia cada item publicado ao seu gold.
 PAGINAS_BOLETIM: list[tuple[str, list[str]]] = [
     (
