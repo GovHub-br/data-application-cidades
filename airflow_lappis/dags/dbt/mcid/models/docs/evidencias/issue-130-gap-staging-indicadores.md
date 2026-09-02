@@ -4,6 +4,16 @@
 > (leitura via `mc`). Objetivo: registrar o estado atual do `staging/` do MinIO em
 > relacao ao que os indicadores da #130 precisam, e sinalizar as lacunas que os
 > re-tratamentos de `dados_historicos` e `sftp` devem cobrir.
+>
+> **Atualizacao 2026-09-02:** o gold do reloginho (grupo A) passou a existir e foi
+> refatorado em bronze -> silver -> gold
+> (`bronze_reloginho_snh_serie_mensal` -> `silver_reloginho_snh_apf_mes` ->
+> `indicadores_reloginho` / `indicadores_reloginho_frente` /
+> `resumo_reloginho_dashboard`), lendo `staging/dados_historicos/*ecente_*` via
+> DuckDB. Ver `docs/entregas/issue-130-refatoracao-medalhao-reloginho.md`. Os
+> status "bloqueado" da secao 4 abaixo valem so para os indicadores dependentes de
+> META OFICIAL; `uh_contratadas`, `uh_entregues` e `ritmo_medio_mensal` estao
+> materializados.
 
 ## Resumo
 
@@ -14,7 +24,10 @@
     **< 500 tabelas canonicas**.
   - `sftp`: 2.842 parquets em `staging/sftp/` — alvo e **1.453 tabelas canonicas**.
 - O ponteiro "atual" do reloginho (SNH 202606) so existe em `raw/`, sem equivalente
-  em `staging/`.
+  em `staging/` — a serie tratada vai ate 2026-03.
+- O gold do reloginho (grupo A) le a serie mensal `historico_recente_*` de
+  `staging/dados_historicos/` via DuckDB, nas camadas bronze/silver/gold (ver nota
+  de atualizacao acima). Depende do `staging/dados_historicos` tratado.
 - Os indicadores de gargalo (grupo B) nao dependem dessas bases (leem FAR/FDS do
   Postgres), portanto nao sao afetados pelos re-tratamentos.
 
@@ -91,14 +104,14 @@ entre o fim da serie tratada (2026-03) e o "agora".
 | Indicador | Fonte atual nos docs | Staging esperado | Status |
 |---|---|---|---|
 | `uh_meta_total` | tabela oficial de metas | parametro/tabela de metas | pendente de negocio (nao e MinIO) |
-| `uh_contratadas` | `raw/202606_SNH_*` + seed #118 | `staging/dados_historicos` (serie) + staging SNH (atual) | **bloqueado** (re-tratamento DH + SNH) |
-| `uh_entregues` | `raw/202606_SNH_*_ENTREGAS` + bases mensais | `staging/dados_historicos` (serie) + staging SNH | **bloqueado** |
-| `perc_meta_contratada` | derivado | idem `uh_contratadas` + meta | bloqueado (meta + DH) |
-| `perc_meta_entregue` | derivado | idem `uh_entregues` + meta | bloqueado (meta + DH) |
-| `gap_uh_meta` | derivado | idem `uh_entregues` + meta | bloqueado (meta + DH) |
-| `ritmo_medio_mensal` | serie mensal entregas | `staging/dados_historicos.historico_recente_*` | **bloqueado** (DH) |
-| `ritmo_necessario` | derivado | meta + serie entregas + fim ciclo | bloqueado (meta + DH) |
-| `projecao_entrega` | derivado | meta + serie entregas | bloqueado (meta + DH) |
+| `uh_contratadas` | `historico_recente_*` (serie) + `raw/202606_SNH_*` (atual) | `staging/dados_historicos.historico_recente_*` + staging SNH (atual) | **materializado** para a serie 2024-06..2026-03 (`indicadores_reloginho` / `_frente`); ponteiro atual (SNH 202606) pendente |
+| `uh_entregues` | `historico_recente_*` (acumulado) + `raw/202606_SNH_*_ENTREGAS` (atual) | `staging/dados_historicos.historico_recente_*` + staging SNH | **materializado** para a serie 2024-06..2026-03; ponteiro atual pendente |
+| `perc_meta_contratada` | derivado | idem `uh_contratadas` + meta | bloqueado (meta) |
+| `perc_meta_entregue` | derivado | idem `uh_entregues` + meta | bloqueado (meta) |
+| `gap_uh_meta` | derivado | idem `uh_entregues` + meta | bloqueado (meta) |
+| `ritmo_medio_mensal` | serie mensal entregas acumuladas | `staging/dados_historicos.historico_recente_*` | **materializado** (`resumo_reloginho_dashboard`); janela do denominador a confirmar (decisao #8) |
+| `ritmo_necessario` | derivado | meta + serie entregas + fim ciclo | bloqueado (meta + fim de ciclo) |
+| `projecao_entrega` | derivado | meta + serie entregas | bloqueado (meta + janela ritmo recente) |
 | `status_relogio` | derivado | demais + faixas de corte | bloqueado (faixas + meta) |
 
 ### Grupo B — Gargalo/desempenho (9)
@@ -115,7 +128,9 @@ unico e a materializacao (`dbt run`), que requer credencial Postgres.
 2. **Re-tratamento `sftp`** deve reduzir `staging/sftp/` de 2.842 para as **1.453
    tabelas canonicas**.
 3. **Criar staging para a base SNH atual** (`202606_SNH_*`) — fora do escopo dos dois
-   re-tratamentos, mas necessaria para o ponteiro atual do reloginho.
-4. Quando o staging estiver tratado: reapontar o piloto #118 (`mcmv_historico`) do
-   seed para `staging/dados_historicos`, e construir a gold do reloginho (grupo A)
-   lendo staging via DuckDB.
+   re-tratamentos, mas necessaria para o ponteiro atual do reloginho (sem ela a
+   serie do reloginho termina em 2026-03).
+4. ~~Construir a gold do reloginho (grupo A) lendo staging via DuckDB.~~ **FEITO**
+   (2026-09-02) — bronze/silver/gold em `indicadores_mcmv_dbt/`, ver
+   `docs/entregas/issue-130-refatoracao-medalhao-reloginho.md`. Resta reapontar o
+   piloto #118 (`mcmv_historico`) do seed para `staging/dados_historicos`.

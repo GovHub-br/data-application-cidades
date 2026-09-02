@@ -1,5 +1,15 @@
 # Issue #130 - Resumo Final Consolidado
 
+> **Atualizacao 2026-09-02:** apos este resumo, o reloginho (grupo A) foi
+> refatorado para aderir a arquitetura medalhao — o gold que lia parquet direto
+> virou bronze -> silver -> gold (`bronze_reloginho_snh_serie_mensal` ->
+> `silver_reloginho_snh_apf_mes` -> `indicadores_reloginho` +
+> `indicadores_reloginho_frente` + `resumo_reloginho_dashboard`). Tambem foi
+> verificada a cobertura historica mensal por frente (FAR / Entidades / Rural).
+> Docs: `issue-130-aderencia-arquitetura-medalhao-reloginho.md`,
+> `issue-130-refatoracao-medalhao-reloginho.md`,
+> `../arquitetura-medalhao-mcid.md`.
+
 ## Resumo executivo
 
 A issue #130 ("Validar indicadores dos dados historicos para o reloginho") foi
@@ -73,9 +83,10 @@ O trabalho se dividiu em:
 
 1. **Rodar dbt** — CONCLUIDO (dbt-core 1.12 via venv isolado; seed + entidades_dbt + gargalo + 24 testes OK). Resta `silver_mcmv_entidades_base` (target duckdb, aguarda staging sftp).
 2. **Materializar `mcmv_indicadores`** (gargalo) — CONCLUIDO (1.989 linhas). **`mcmv_historico`** (piloto #118) segue pendente (seed-based; aguarda staging dados_historicos).
-3. **Fase 5** — validar as 10 decisoes acima com a area responsavel.
-4. **Fase 6** — documentar regras finais, limitacoes e evidencias de negocio.
-5. **Duplicacao 2x por APF na frente FAR** — achado do teste `unique id_indicador` do gargalo (823 duplicatas). `ficha_empreendimento` FAR com 2x exata por APF; FDS limpa. **Levar aos colegas** para decidir onde deduplicar (bronze/silver/gargalo). Registrado em `issue-130-validacao-tecnica-fases-2-4.md`.
+3. **Reloginho (grupo A) em camadas medalhao** — CONCLUIDO no codigo (bronze/silver/gold, `dbt parse`/`compile` OK). Pendente `dbt run`/`dbt test` da linhagem com credencial MinIO e anexar a matriz `indicadores_reloginho_frente` como evidencia. Ver `issue-130-refatoracao-medalhao-reloginho.md`.
+4. **Fase 5** — validar as 10 decisoes acima com a area responsavel.
+5. **Fase 6** — documentar regras finais, limitacoes e evidencias de negocio.
+6. **Duplicacao 2x por APF na frente FAR** — achado do teste `unique id_indicador` do gargalo (823 duplicatas). `ficha_empreendimento` FAR com 2x exata por APF; FDS limpa. **Levar aos colegas** para decidir onde deduplicar (bronze/silver/gargalo). Registrado em `issue-130-validacao-tecnica-fases-2-4.md`. (No reloginho a dedup 2x por APF ja e neutralizada na `silver_reloginho_snh_apf_mes`.)
 
 ## Como validar a implementacao
 

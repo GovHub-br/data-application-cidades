@@ -20,6 +20,8 @@ Esta pasta consolida textos prontos para anexar ou colar nas issues GitHub.
 - `issue-130-pendencias-encoding-canonicalizacao-sftp-minio.md`: registro das pendencias de encoding (mojibake) e canonicalizacao (`gefus_*`/`_canonicas.csv`) das bases SFTP no MinIO; decisao de usar MinIO como fonte e reaproveitar o pipeline local de tratamento.
 - `issue-130-d1-reconciliacao-novo-mcmv-far.md`: analise da sobreposicao SFTP x Novo MCMV (D1, opcao B — FAR disjunto, FDS sobreposto) e mapeamento de colunas do `novo_mcmv_far` (cad_pj + obra_mensal) para o contrato comum do modelo.
 - `issue-130-implementacao-modelos-historicos-empreendimentos.md`: documentacao da implementacao dos modelos historicos de empreendimentos (historico mensal FAR/FDS/Rural + snapshot corrente derivado), fontes, decisoes, validacao e pendencias.
+- `issue-130-aderencia-arquitetura-medalhao-reloginho.md`: analise de aderencia dos indicadores do reloginho (grupo A) a arquitetura medalhao; conclui que o Gold le a staging direto sem camadas Bronze/Silver, que a agregacao historica multi-mes exigida na Bronze ocorre dentro do Gold, e lista desvios, pontos aderentes e recomendacoes de refatoracao.
+- `issue-130-refatoracao-medalhao-reloginho.md`: entrega da quebra do reloginho (grupo A) em bronze (`bronze_reloginho_snh_serie_mensal`) -> silver (`silver_reloginho_snh_apf_mes`) -> gold (`indicadores_reloginho` + nova `indicadores_reloginho_frente`), decisoes, validacao dbt e verificacao de cobertura historica mensal das frentes FAR, Entidades e Rural na serie SNH (com matriz de inventario de arquivos e teste `assert_reloginho_frente_cobertura_mensal`).
 
 ## Observacao de Commit
 

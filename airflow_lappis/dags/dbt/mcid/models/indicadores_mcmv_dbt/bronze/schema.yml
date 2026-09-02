@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: bronze_reloginho_snh_serie_mensal
+    description: >
+      Bronze do reloginho (grupo A): cópia fiel da série mensal SNH de dados
+      prioritários (CAIXA + BB), empilhando todos os snapshots
+      `historico_recente_*` (e variantes truncadas) de
+      staging/dados_historicos/ via MinIO/DuckDB. Uma linha por linha de
+      origem, sem deduplicação e sem regra de negócio; colunas da fonte
+      preservadas (union_by_name entre CAIXA e BB). dt_referencia derivada do
+      nome do arquivo. Exclui os fluxos de entrega por evento
+      (`o_recente_*_entregas`, `*_entrega_da_unidade_af_b`). Requer target
+      staging_duckdb.
+    meta:
+      tags:
+        - bronze
+        - mcmv
+        - reloginho
+        - dados-historicos
+    columns:
+      - name: dt_referencia
+        description: >
+          Primeiro dia do mês do snapshot, derivado do nome do arquivo
+          (YYYYMM ou YYYY_MM). Nulo quando o nome não traz data reconhecível.
+      - name: agente_arquivo
+        description: Agente financeiro inferido do nome do arquivo (BB ou CAIXA).
+      - name: modalidade
+        description: >
+          Frente do MCMV como vem na origem (FAR, Entidades, RURAL/Rural).
+          Normalizada em frente_mcmv na silver.
+      - name: apf
+        description: Autorização Para Financiamento — chave do empreendimento (texto, cru).
+      - name: source_file
+        description: Caminho completo do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: prioridade_reentrega
+        description: >
+          Prioridade de desempate para reentregas do mesmo mês:
+          3 = correção, 2 = versão vsNN, 1 = arquivo base.
+      - name: hash_linha
+        description: Hash MD5 do conteúdo-chave da linha (auditoria / detecção de mudança).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.

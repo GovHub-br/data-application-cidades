@@ -1388,6 +1388,40 @@ def tratar_bem_formada(
         if len(non_null) > 0:
             dm_value = str(non_null.iloc[0])
 
+    # 3b. Normalização de domínio (localização + status) — aditiva e opcional.
+    # Aplica-se apenas se a referência IBGE e o mapa de status existirem;
+    # protegido por try/except para que a ausência deles NÃO quebre o pipeline.
+    try:
+        from classificacao.normalizacao_dominio import (
+            carregar_mapa_status,
+            carregar_referencia_ibge,
+            detectar_colunas_status,
+            normalizar_localizacao,
+            normalizar_status,
+        )
+
+        referencia = carregar_referencia_ibge()
+        if referencia is not None and not referencia.empty:
+            df = normalizar_localizacao(df)
+            cobertura = df.attrs.get("_localizacao_cobertura")
+            if cobertura:
+                warnings.append(
+                    "Normalização de localização: "
+                    f"{cobertura['n_linhas']} linhas, "
+                    f"{cobertura['n_nao_mapeadas']} com localização não-mapeada"
+                )
+
+        mapa_status = carregar_mapa_status()
+        if mapa_status:
+            for col in detectar_colunas_status(df):
+                df[f"{col}_canonico"] = normalizar_status(df[col], mapa_status)
+                warnings.append(
+                    f"Status canônico gerado para coluna '{col}' "
+                    f"(coluna '{col}_canonico')"
+                )
+    except Exception as exc:  # noqa: BLE001 - domínio não pode quebrar o pipeline
+        warnings.append(f"Normalização de domínio ignorada: {exc}")
+
     # 4. Adiciona metadados
     df = adicionar_metadados(
         df=df,

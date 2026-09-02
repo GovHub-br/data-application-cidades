@@ -1,5 +1,18 @@
 # Issue #130 - Dicionario de Indicadores do Reloginho (Fase 0-1)
 
+> **Atualizacao 2026-09-02:** este documento e da Fase 0-1 (dicionario). Desde
+> entao os indicadores factuais do reloginho (`uh_contratadas`, `uh_entregues`,
+> `n_apf`, `ritmo_medio_mensal`) foram materializados em bronze -> silver -> gold
+> (`bronze_reloginho_snh_serie_mensal` -> `silver_reloginho_snh_apf_mes` ->
+> `indicadores_reloginho` / `indicadores_reloginho_frente` /
+> `resumo_reloginho_dashboard`), lendo a serie mensal SNH 2024-06..2026-03 de
+> `staging/dados_historicos/` via DuckDB. Ver
+> `issue-130-refatoracao-medalhao-reloginho.md` e
+> `issue-130-aderencia-arquitetura-medalhao-reloginho.md`. Seguem NAO
+> materializados os indicadores dependentes da meta oficial (`uh_meta_total`,
+> `perc_meta_*`, `gap_uh_meta`, `ritmo_necessario`, `projecao_entrega`,
+> `status_relogio`) e o grupo C (frentes financiadas + FNHIS).
+
 ## Resumo
 
 Este documento consolida os indicadores do reloginho (componente de acompanhamento
@@ -9,7 +22,10 @@ da issue #130: dicionario de indicadores + matriz indicador x fonte x campo x re
 
 Pontos-chave:
 
-- Grupo A (reloginho): 10 indicadores DOCUMENTADOS e NAO materializados em gold/mart.
+- Grupo A (reloginho): 10 indicadores documentados. Os factuais
+  (`uh_contratadas`, `uh_entregues`, `n_apf`, `ritmo_medio_mensal`) ja
+  materializados em gold; os dependentes de meta oficial seguem so documentados
+  (ver nota de atualizacao acima).
 - Grupo B (gargalo/desempenho): 9 itens JA IMPLEMENTADOS em
   `mcmv_indicadores.indicadores_gargalo_desempenho`, com regras, pesos do score
   (atraso 2, paralisacao 2, sem atualizacao 1, baixa execucao fisica 1, baixa
@@ -20,7 +36,8 @@ Pontos-chave:
   propostas para FNHIS/SUB50). Sem serie historica: visao por snapshot/agregado.
 - Validacao de negocio e a Fase 5 (nao executada); "Responsavel pela validacao" =
   "A definir (area de negocio)" para todos os indicadores.
-- Nenhum modelo dbt foi criado ou alterado nesta fase.
+- Nenhum modelo dbt foi criado ou alterado NA FASE 0-1 (changes posteriores
+  criaram a linhagem bronze/silver/gold do reloginho — ver nota de atualizacao).
 - **Reconciliacao com as fases 2-4 e com o modelo GEFUS**: este dicionario (fase
   0-1) presumia a inexistencia de serie mensal de entregues. A validacao tecnica
   (fases 2-4) confirmou serie mensal de contratadas E entregues 2024-06 a 2026-03
@@ -75,10 +92,14 @@ Arquivos-fonte utilizados nesta consolidacao:
 4. **Snapshot pontual 30/06/2026**: contratadas 1.874.623, entregues 1.543.432 e
    vigentes 313.884, por APF/UF/municipio/agente financeiro. E um ponto no tempo, nao
    uma serie.
-5. **Materializacao**: grupo A e grupo C documentados e nao materializados em
-   gold/mart; grupo B implementado em `indicadores_gargalo_desempenho` (regras e
-   score definidos). O modelo `historico_mcmv_empreendimentos_snapshot` (GEFUS) e o
-   unico modelo de serie historica de empreendimentos ja materializado em codigo dbt.
+5. **Materializacao** (atualizado 2026-09-02): grupo A factual materializado em
+   `indicadores_mcmv_dbt/` (bronze `bronze_reloginho_snh_serie_mensal`, silver
+   `silver_reloginho_snh_apf_mes`, gold `indicadores_reloginho` +
+   `indicadores_reloginho_frente` + `resumo_reloginho_dashboard`; target
+   `staging_duckdb`); grupo A dependente de meta e grupo C seguem so documentados;
+   grupo B implementado em `indicadores_gargalo_desempenho`. Serie historica de
+   empreendimentos: `historico_mcmv_empreendimentos_snapshot` (GEFUS) e
+   `historico_mcmv_serie_temporal_snapshot` (piloto #118, ainda seed-based).
 6. **Campos fisicos**: campos preferenciais seguem `glossario-mcid.md` e
    `issue-119-matriz-glossario-campos.csv` (ex.: `quantidade_uh`,
    `quantidade_uh_entregues`, `valor_contratado`, `valor_desembolsado`,
@@ -119,7 +140,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Definicao | Unidades habitacionais contratadas ate a data de referencia. |
 | Objetivo | Ponteiro principal de contratacao do reloginho; mede o andamento de contratacao contra a meta. |
 | Fonte | Bases mensais SNH dados prioritarios: `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv` e `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt` (campo UH Contratadas). Serie historica: seed `issue_118_mcmv_serie_temporal_piloto` (anual 2009-2025) + `historico_mcmv_empreendimentos_snapshot` (GEFUS, mensal 2019-12+) + `historico_recente_*` (SNH, mensal 2024-06+). |
-| Tabelas e campos utilizados | Silver mcmv (a definir). Campos preferenciais: `quantidade_uh` (aliases: `qt_uh`, `uh_contratadas`, `unidades_qt`, `uh`), `dt_referencia`, `apf`, `uf`, `municipio`, `codigo_ibge_municipio`. |
+| Tabelas e campos utilizados | Serie SNH: `silver_reloginho_snh_apf_mes` (`uh_contratadas`, `apf`, `dt_referencia`, `uf`, `codigo_ibge_municipio`) -> gold `indicadores_reloginho` / `indicadores_reloginho_frente`. Campos preferenciais para as demais fontes: `quantidade_uh`, `dt_referencia`, `apf`, `uf`, `municipio`, `codigo_ibge_municipio`. |
 | Regra de calculo | Soma de UHs contratadas ate a data de referencia. Snapshot 30/06/2026: 1.874.623 UHs (CAIXA + BB), 84,64% da meta visual. |
 | Granularidade temporal | Mensal (GEFUS 2019-12+ e SNH 2024-06+) para o dado recente; anual (2009-2025) na serie historica do piloto #118. |
 | Granularidade territorial | APF, UF, municipio, agente financeiro (bases mensais); a serie historica e nacional por linha (OGU/Subsidiado e FGTS/Financiado). |
@@ -138,7 +159,7 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Definicao | Unidades habitacionais entregues ate a data de referencia. |
 | Objetivo | Ponteiro de entrega do reloginho; deve ser exibido separadamente de contratadas para evitar leitura otimista. |
 | Fonte | Arquivos de entrega: `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv` (`QT_UH_ENTREGUES`) e `raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB.csv` (Numero de Unidades Entregues); campo UH Entregues nas bases mensais 202606 CAIXA + BB; e `historico_mcmv_empreendimentos_snapshot` (GEFUS, `quantidade_uh_entregues`, mensal 2019-12+ para FAR/Rural). |
-| Tabelas e campos utilizados | Silver mcmv (a definir). Campo preferencial `quantidade_uh_entregues` (aliases: `qt_uh_alienadas`, `qt_unidades_entregues`, `numero_de_unidades_entregues`), `dt_referencia`, `apf`, `uf`, `municipio`. |
+| Tabelas e campos utilizados | Serie SNH: `silver_reloginho_snh_apf_mes` (`uh_entregues` acumulado, `apf`, `dt_referencia`) -> gold `indicadores_reloginho` / `indicadores_reloginho_frente`. Campo preferencial nas demais fontes: `quantidade_uh_entregues`, `dt_referencia`, `apf`, `uf`, `municipio`. |
 | Regra de calculo | Soma de UHs entregues ate a data de referencia. Snapshot 30/06/2026: 1.543.432 (bases mensais CAIXA + BB) ou 1.518.598 (arquivos de entrega por evento), 69,69% da meta visual. Dois caminhos com totais diferentes: definir qual e o oficial. |
 | Granularidade temporal | Mensal (serie GEFUS 2019-12+ para FAR/Rural; serie SNH 2024-06 a 2026-03 para todas as frentes) + snapshot 30/06/2026. |
 | Granularidade territorial | APF, UF, municipio, agente financeiro (serie SNH 2024-06+ e snapshot). GEFUS 2019-12+ por empreendimento/APF (UF/municipio quando disponivel na fonte). |
@@ -214,8 +235,8 @@ Arquivos-fonte utilizados nesta consolidacao:
 | Definicao | Entregas acumuladas divididas pelos meses observados (ritmo medio de entrega). |
 | Objetivo | Medir o ritmo medio de entrega; base para comparacao com o ritmo necessario. |
 | Fonte | Derivado de uh_entregues (snapshots mensais). |
-| Tabelas e campos utilizados | `quantidade_uh_entregues`; `dt_referencia`. A gold do relogio tambem preve `ritmo_recente` (media movel semanal/mensal). |
-| Regra de calculo | Entregas acumuladas / meses observados. |
+| Tabelas e campos utilizados | `resumo_reloginho_dashboard` (`uh_entregues_ultimo`, `n_meses_observados`), a partir de `indicadores_reloginho`. A gold do relogio tambem preve `ritmo_recente` (media movel semanal/mensal). |
+| Regra de calculo | Entregas acumuladas / meses observados. Implementacao atual (`resumo_reloginho_dashboard`): `uh_entregues` do ultimo mes / `n_meses_observados` (contagem corrida de meses da serie do agente). Janela do denominador a confirmar (decisao #8). |
 | Granularidade temporal | Mensal. |
 | Granularidade territorial | Nao definido; aplicavel por frente/UF conforme grao de uh_entregues. |
 | Filtros aplicaveis | Frente, UF, municipio, agente financeiro. |

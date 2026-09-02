@@ -13,6 +13,8 @@ mcid:
     staging_duckdb:
       type: duckdb
       path: "{{ env_var('DUCKDB_MCID_PATH', '/tmp/mcid_staging.duckdb') }}"
+      database: mcid_staging
+      schema: mcmv_indicadores
       threads: 4
       extensions:
         - httpfs

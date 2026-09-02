@@ -19,7 +19,7 @@ clean-targets:
 
 models:
   mcid:
-    +database: cidades
+    +database: "{{ 'cidades' if target.type == 'postgres' else 'mcid_staging' }}"
     metadata:
       +materialized: incremental
       +schema: metadata
@@ -42,9 +42,23 @@ models:
     indicadores_mcmv_dbt:
       +materialized: table
       +schema: mcmv_indicadores
+      # Camadas do reloginho (grupo A) — leem staging/dados_historicos via
+      # MinIO/DuckDB, portanto só habilitadas no target staging_duckdb.
+      # O gargalo (grupo B) roda no Postgres e não é afetado.
+      bronze:
+        +materialized: table
+        +schema: mcmv_indicadores
+        +enabled: "{{ target.type == 'duckdb' }}"
+      silver:
+        +materialized: table
+        +schema: mcmv_indicadores
+        +enabled: "{{ target.type == 'duckdb' }}"
       gold:
         +materialized: table
+        +schema: mcmv_indicadores
         indicadores_reloginho:
+          +enabled: "{{ target.type == 'duckdb' }}"
+        indicadores_reloginho_frente:
           +enabled: "{{ target.type == 'duckdb' }}"
         resumo_reloginho_dashboard:
           +enabled: "{{ target.type == 'duckdb' }}"
@@ -79,7 +93,7 @@ models:
         +schema: conjuntura_gold
 
 on-run-start:
-  - '{{create_udfs()}}'
+  - "{% if target.type == 'postgres' %}{{ create_udfs() }}{% endif %}"
 
 seeds:
   mcid:

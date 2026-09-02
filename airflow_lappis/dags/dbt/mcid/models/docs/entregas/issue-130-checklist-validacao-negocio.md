@@ -137,7 +137,9 @@ faixa `001`/`002`/`003`?
 
 **Contexto:** Na base mensal a frente Rural aparece com dois rotulos (`RURAL` e
 `Rural`), que devem ser normalizados antes da gold para evitar duplicidade visual e
-de contagem.
+de contagem. **Ja implementado tecnicamente** na `silver_reloginho_snh_apf_mes`
+(`RURAL`/`Rural` -> `frente_mcmv = 'Rural'`); falta a confirmacao de negocio e a
+padronizacao das faixas `001`/`002`/`003` das frentes financiadas.
 
 **Resposta esperada:** confirmacao da padronizacao.
 
@@ -156,7 +158,10 @@ de contagem.
 observados"? (desde o inicio do ciclo, desde a primeira entrega, ou janela movel?)
 
 **Contexto:** `ritmo_medio_mensal` e definido como entregas acumuladas divididas
-pelos meses observados; a janela de observacao nao esta definida.
+pelos meses observados; a janela de observacao nao esta definida. **Implementacao
+atual** (`resumo_reloginho_dashboard`): `uh_entregues` do ultimo mes /
+`n_meses_observados` (contagem corrida de todos os meses da serie do agente,
+2024-06 em diante). A area deve confirmar se e essa a janela.
 
 **Resposta esperada:** definicao da janela (inicio do ciclo; 1a entrega; janela
 movel).

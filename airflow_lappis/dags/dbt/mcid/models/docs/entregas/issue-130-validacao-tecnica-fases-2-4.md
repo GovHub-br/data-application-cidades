@@ -35,13 +35,16 @@ os valores de referencia registrados nos docs da #66.
 
 | Schema esperado | Modelo | Situacao |
 |---|---|---|
-| mcmv_indicadores | indicadores_gargalo_desempenho + resumo_* | AUSENTE (dbt nao executado) |
-| mcmv_historico | historico_mcmv_serie_temporal_snapshot (piloto #118) | AUSENTE (dbt nao executado) |
+| mcmv_indicadores | indicadores_gargalo_desempenho + resumo_* | materializado depois (1.989 linhas) — ver secao Fase 2-4 |
+| mcmv_indicadores | reloginho (bronze/silver/gold) | criado em 2026-09-02 (`dbt compile` OK; `dbt run` pendente de credencial MinIO) |
+| mcmv_historico | historico_mcmv_serie_temporal_snapshot (piloto #118) | AUSENTE (seed-based; aguarda staging dados_historicos) |
 | mcmv_metas | (tabela de metas oficial) | NAO EXISTE |
 
-Consequencia: os indicadores de gargalo (grupo B) e o piloto historico estao
-definidos em codigo dbt, mas **nao materializados** neste banco. A validacao da
-distribuicao do gargalo exige `dbt run --select indicadores_mcmv_dbt`.
+Consequencia (na data da Fase 2): os indicadores de gargalo (grupo B) e o piloto
+historico estavam definidos em codigo dbt mas **nao materializados**. Atualizacao:
+o gargalo foi materializado (ver Fase 2-4) e o reloginho (grupo A) foi
+implementado em camadas medalhao (ver
+`issue-130-refatoracao-medalhao-reloginho.md`).
 
 ### Cobertura temporal por fonte
 
@@ -215,8 +218,9 @@ ciclo 2026 - o que reforca o alerta "meta em risco" que o reloginho deve apontar
 
 ## Pendentes (bloqueios para fechar as fases 2-4)
 
-- Materializar `mcmv_indicadores` e `mcmv_historico` (`dbt run`) para validar a
-  distribuicao do gargalo e o piloto historico no banco.
+- Materializar `mcmv_historico` (piloto #118) e rodar `dbt run`/`dbt test` da
+  linhagem do reloginho (bronze/silver/gold) com credencial MinIO. O gargalo
+  (`mcmv_indicadores`) ja foi materializado (ver Fase 2-4).
 - Definir a meta oficial (desbloqueia perc_meta, gap, ritmo_necessario, projecao,
   status_relogio).
 - Definir o termino do ciclo MCMV 2023-2026 (para "meses restantes").

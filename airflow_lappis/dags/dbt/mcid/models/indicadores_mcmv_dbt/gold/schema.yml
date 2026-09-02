@@ -91,13 +91,16 @@ models:
 
   - name: indicadores_reloginho
     description: >
-      Tabela Gold do reloginho MCMV (grupo A): série mensal SNH deduplicada por
-      APF, lida de staging/dados_historicos/ (parquets canônicos do dump
-      tratado) via MinIO/DuckDB. Uma linha por (agente_financeiro, dt_referencia)
-      com os acumulados uh_contratadas, uh_entregues e uh_vigentes, o número de
-      APFs distintos (n_apf) e a contagem corrida de meses observados por
-      agente (n_meses_observados). Alimenta o resumo do reloginho e a
-      reconciliação com a referência #66. Requer target staging_duckdb.
+      Tabela Gold do reloginho MCMV (grupo A): série mensal SNH consolidada por
+      agente. Lê a silver silver_reloginho_snh_apf_mes (ingestão/tipagem/dedup
+      ficam nas camadas bronze e silver — ver
+      docs/entregas/issue-130-refatoracao-medalhao-reloginho.md). Uma linha por
+      (agente_financeiro, dt_referencia) com os acumulados uh_contratadas,
+      uh_entregues e uh_vigentes, o número de APFs distintos (n_apf) e a
+      contagem corrida de meses observados por agente (n_meses_observados).
+      Saída idêntica à versão anterior — a reconciliação com a referência #66
+      continua válida. Alimenta o resumo do reloginho. Requer target
+      staging_duckdb.
     meta:
       tags:
         - gold
@@ -120,10 +123,6 @@ models:
           - not_null
           - accepted_values:
               values: ["BB", "CAIXA"]
-          - unique:
-              combination_of_columns:
-                - agente_financeiro
-                - dt_referencia
       - name: uh_contratadas
         description: Soma de unidades habitacionais contratadas no mês de referência.
         data_tests:
@@ -140,6 +139,53 @@ models:
         description: >
           Contagem corrida de meses observados por agente até a linha atual
           (usada no cálculo do ritmo médio mensal de entregas).
+
+  - name: indicadores_reloginho_frente
+    description: >
+      Tabela Gold do reloginho MCMV (grupo A) com quebra por frente. Mesma
+      regra de indicadores_reloginho, com frente_mcmv (FAR / Entidades /
+      Rural) no grão. Uma linha por (agente_financeiro, frente_mcmv,
+      dt_referencia). Somar todas as frentes reproduz indicadores_reloginho.
+      Base da verificação de cobertura histórica por frente
+      (assert_reloginho_frente_cobertura_mensal). Requer target staging_duckdb.
+    meta:
+      tags:
+        - gold
+        - mcmv
+        - indicadores
+        - reloginho
+        - dados-historicos
+    columns:
+      - name: dt_referencia
+        description: Data de referência (primeiro dia do mês).
+        data_tests:
+          - not_null
+      - name: agente_financeiro
+        description: Agente financeiro (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+      - name: frente_mcmv
+        description: Frente do MCMV. Valores esperados FAR, Entidades e Rural.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["FAR", "Entidades", "Rural"]
+      - name: uh_contratadas
+        description: Soma de unidades habitacionais contratadas no mês, na frente.
+        data_tests:
+          - not_null
+      - name: uh_entregues
+        description: Soma acumulada de unidades habitacionais entregues no mês, na frente.
+        data_tests:
+          - not_null
+      - name: uh_vigentes
+        description: Soma de unidades habitacionais vigentes no mês, na frente.
+      - name: n_apf
+        description: Número de APFs distintos no mês, na frente, após a dedup.
+      - name: n_meses_observados
+        description: Contagem corrida de meses observados por (agente, frente).
 
   - name: resumo_reloginho_dashboard
     description: >

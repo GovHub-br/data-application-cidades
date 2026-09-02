@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: silver_reloginho_snh_apf_mes
+    description: >
+      Silver do reloginho (grupo A): série mensal SNH tipada, com domínio
+      normalizado e deduplicada por APF. Grão: uma linha por
+      (agente_financeiro, apf, dt_referencia), com frente_mcmv canônica
+      (FAR / Entidades / Rural) derivada de `modalidade`. A chave de dedup é
+      a mesma validada na reconciliação contra a referência #66. Requer
+      target staging_duckdb.
+    meta:
+      tags:
+        - silver
+        - mcmv
+        - reloginho
+        - dados-historicos
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro normalizado em maiúsculas (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+      - name: frente_mcmv
+        description: >
+          Frente do MCMV canônica a partir de `modalidade`. Valores esperados
+          FAR, Entidades e Rural. Nulo quando a origem não informa modalidade.
+        data_tests:
+          - accepted_values:
+              values: ["FAR", "Entidades", "Rural"]
+      - name: apf
+        description: Autorização Para Financiamento — chave do empreendimento.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Primeiro dia do mês de referência (derivado do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: uh_contratadas
+        description: Unidades habitacionais contratadas do APF no snapshot do mês.
+      - name: uh_entregues
+        description: Unidades habitacionais entregues (acumulado) do APF no snapshot do mês.
+      - name: uh_vigentes
+        description: Unidades habitacionais vigentes do APF no snapshot do mês.
+      - name: uf
+        description: UF do empreendimento (maiúsculas).
+      - name: codigo_ibge_municipio
+        description: Código IBGE do município.
+      - name: hash_linha
+        description: Hash MD5 herdado da bronze.
+        data_tests:
+          - not_null

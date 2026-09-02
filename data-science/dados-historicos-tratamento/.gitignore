@@ -30,6 +30,7 @@ data/dados_historicos/table_samples
 data/dados_historicos_formatados/table_samples
 data/sftp/table_samples
 data/sftp/artefatos/amostra*
+data/sftp_tratado/
 
 # Generated outputs (pipeline)
 data/classificacao_formacao.csv
