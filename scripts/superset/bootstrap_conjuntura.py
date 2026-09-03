@@ -151,26 +151,12 @@ class Dashboard:
 
 
 DASHBOARDS = [
-    Dashboard(
-        "Conjuntura Habitacional — 2026.1",
-        "conjuntura-2026-1",
-        "Recorte operacional: 1º trimestre de 2026. "
-        "A safra publicada ainda não está congelada.",
-        "2026-01-01 : 2026-03-31",
-    ),
-    Dashboard(
-        "Conjuntura Habitacional — 2026.2",
-        "conjuntura-2026-2",
-        "Recorte operacional: 2º trimestre de 2026. "
-        "A safra publicada ainda não está congelada.",
-        "2026-04-01 : 2026-06-30",
-    ),
-    Dashboard(
-        "Conjuntura Habitacional — 2026.3",
-        "conjuntura-2026-3",
-        "Painel corrente do 3º trimestre de 2026; dados sujeitos a revisão.",
-        "2026-07-01 : 2026-09-30",
-    ),
+    # Um dashboard por trimestre já existiu aqui — 2026.1, 2026.2, 2026.3 —,
+    # três cópias do mesmo conjunto de charts que só diferiam no
+    # `default_filters`. É duplicação: o recorte por trimestre é FILTRO, não
+    # dashboard. O `build_boletim.py` já monta assim, num dashboard só com
+    # filtro nativo na coluna `edicao`. Recriá-los aqui ressuscitava painéis
+    # que a equipe tinha decidido não manter.
     Dashboard(
         "Conjuntura Habitacional — Contínuo",
         "conjuntura-continuo",

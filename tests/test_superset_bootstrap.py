@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -96,3 +97,17 @@ def test_chart_ausente_e_criado() -> None:
 
     assert len(ids) == 1 and not api.atualizados
     assert api.criados[0]["datasource_id"] == 222
+
+
+def test_bootstrap_nao_cria_dashboard_por_trimestre() -> None:
+    """O recorte por trimestre é filtro, não dashboard.
+
+    O bootstrap declarava um dashboard por trimestre — 2026.1, 2026.2, 2026.3 —,
+    três cópias do mesmo conjunto de charts que só diferiam no `default_filters`.
+    O `build_boletim.py` já monta um dashboard só, com filtro nativo na coluna
+    `edicao`. Rodar o bootstrap ressuscitava os painéis duplicados.
+    """
+    modulo = _bootstrap()
+    slugs = {d.slug for d in modulo.DASHBOARDS}
+    por_trimestre = {s for s in slugs if re.fullmatch(r"conjuntura-\d{4}-\d", s)}
+    assert not por_trimestre, f"dashboard por trimestre não deve existir: {por_trimestre}"
