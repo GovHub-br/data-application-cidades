@@ -34,6 +34,12 @@ CONSTRUTOR = RAIZ / "scripts" / "superset" / "build_boletim.py"
 #: sugeriria variação onde há proporção.
 COMPARATIVA = re.compile(r"vs\.|12m|varia|var\b|x \d|acum", re.IGNORECASE)
 
+#: O impresso anuncia a natureza do dado uma vez, na página em que ela muda.
+ROTULO_DE_BLOCO = {1: "Dados trimestrais", 3: "Dados mensais"}
+
+#: Seções que o boletim imprime sem número.
+SECOES_SEM_NUMERO = {"3. Balanços das Empresas"}
+
 
 def slug(texto: str) -> str:
     base = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
@@ -518,16 +524,30 @@ def montar(
     # começa numa página e continua na seguinte, sem repetir o título. Reiniciar
     # a cada página imprimia o cabeçalho duas vezes.
     secao_atual = None
+    rotulo_atual = None
     for pagina in sorted(por_pagina):
         partes.append(f'<div class="folha pagina"><span class="np">{pagina}</span>')
+        # O impresso anuncia a natureza do dado quando ela muda, e só então:
+        # a página 1 abre com DADOS TRIMESTRAIS, a 3 com DADOS MENSAIS, e as
+        # demais seguem sem repetir o rótulo.
+        rotulo = ROTULO_DE_BLOCO.get(pagina)
+        if rotulo and rotulo != rotulo_atual:
+            rotulo_atual = rotulo
+            partes.append(f'<div class="rotulo">{html.escape(rotulo)}</div>')
         for q in por_pagina[pagina]:
             if q["secao"] != secao_atual:
                 secao_atual = q["secao"]
                 numero_secao, _, titulo_secao = secao_atual.partition(". ")
-                partes.append(
-                    f'<h2><span class="n">{html.escape(numero_secao)}.</span>'
-                    f"{html.escape(titulo_secao)}</h2>"
-                )
+                # O impresso não numera "Balanços das empresas": entre a seção 2
+                # e a 4 não há um "3." na página. Numerar aqui inventaria uma
+                # seção que o boletim não tem.
+                if secao_atual in SECOES_SEM_NUMERO:
+                    partes.append(f"<h2>{html.escape(titulo_secao)}</h2>")
+                else:
+                    partes.append(
+                        f'<h2><span class="n">{html.escape(numero_secao)}.</span>'
+                        f"{html.escape(titulo_secao)}</h2>"
+                    )
             partes.append('<div class="grade">')
             linhas = dados.get(q["tabela"], [])
             if q["tabela"] == "gld_boletim_p4_credito_imobiliario_pib":
@@ -538,10 +558,14 @@ def montar(
                 partes.append(cartoes_dos_totais(linhas))
             elif q["tabela"] == "gld_boletim_p2_totais_das_empresas_levantadas_variacao":
                 partes.append(cartoes_das_empresas(linhas))
-            partes.append("</div>")
+            # A leitura entra DENTRO da grade, como no impresso: ao lado do
+            # quadro quando ele é estreito, abaixo quando é largo. Fora da
+            # grade ela ficava sempre embaixo, o que o boletim só faz nas
+            # páginas de tabela larga.
             chave = leitura_do_quadro.get(q["tabela"])
             if chave and leitura.get(chave):
                 partes.append(bloco_leitura(leitura[chave], gerado=texto_gerado))
+            partes.append("</div>")
         partes.append("</div>")
 
     partes.append(fechamento(meta))

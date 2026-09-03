@@ -561,23 +561,47 @@ def pagina_03() -> list[Quadro]:
             pagina=3,
             secao="6. Crédito",
             titulo="Novos Financiamentos Imobiliários por Banco (acum. no ano)",
-            colunas=["banco", "UH acum. ano", "R$ bi acum. ano", "% UH", "fonte"],
+            # Nome, ordem e agregação vêm do impresso: seis bancos nomeados e o
+            # resto somado em DEMAIS. `fonte` é procedência de ingestão, não
+            # conteúdo do boletim, e fica fora do quadro.
+            colunas=["banco", "VALOR (R$ bi)", "% valor", "UH", "% UH"],
             sql=f"""
     with {EDICOES},
-    ref as (select edicao, ano_ed, tri_ed * 3 as mes_ed from edicoes)
-    select r.edicao, g.instituicao as banco,
-           g.uh_acumulado_ano as "UH acum. ano",
-           round((g.volume_acumulado_ano_milhoes / 1000)::numeric, 1) as "R$ bi acum. ano",
-           round((g.uh_participacao * 100)::numeric, 1) as "% UH",
-           g.fonte as "fonte",
-           case when g.instituicao = 'TOTAL' then 0 else 1 end as ordem_grupo,
-           coalesce(g.uh_acumulado_ano, 0) as ordem
-    from ref r
-    join {MART}.gld_financiamentos_instituicao g
-      on g.ano = r.ano_ed and g.mes = r.mes_ed
+    ref as (select edicao, ano_ed, tri_ed * 3 as mes_ed from edicoes),
+    rotulos as (
+        select * from (values
+            ('TOTAL','TOTAL',0), ('CAIXA','CEF',1), ('ITAU UNIBANCO','ITAÚ',2),
+            ('BRADESCO','BRADESCO',3), ('SANTANDER','SANTANDER',4),
+            ('BRB','BRB',5), ('BANCO DO BRASIL','BB',6)
+        ) as r(origem, rotulo, ordem)
+    ),
+    bruto as (
+        select r.edicao, coalesce(x.rotulo, 'DEMAIS') as banco,
+               coalesce(x.ordem, 7) as ordem,
+               g.uh_acumulado_ano as uh, g.volume_acumulado_ano_milhoes as volume
+        from ref r
+        join {MART}.gld_financiamentos_instituicao g
+          on g.ano = r.ano_ed and g.mes = r.mes_ed
+        left join rotulos x on x.origem = g.instituicao
+    ),
+    totais as (
+        select edicao, sum(uh) as uh_total, sum(volume) as volume_total
+        from bruto where banco = 'TOTAL' group by edicao
+    ),
+    agregado as (
+        select edicao, banco, ordem, sum(uh) as uh, sum(volume) as volume
+        from bruto group by edicao, banco, ordem
+    )
+    select a.edicao, a.banco,
+           round((a.volume / 1000)::numeric, 1) as "VALOR (R$ bi)",
+           round((100.0 * a.volume / nullif(t.volume_total,0))::numeric, 1) as "% valor",
+           a.uh as "UH",
+           round((100.0 * a.uh / nullif(t.uh_total,0))::numeric, 1) as "% UH",
+           a.ordem
+    from agregado a join totais t on t.edicao = a.edicao
     """,
-            ordenar="ordem_grupo, ordem desc",
-            nota="Tabela única: ABECIP automatizada onde existe, planilha manual no histórico.",
+            ordenar="ordem",
+            nota="Fonte: ABECIP. Bancos fora dos seis nomeados somados em DEMAIS.",
         ),
     ]
 

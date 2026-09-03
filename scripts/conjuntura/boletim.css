@@ -59,8 +59,12 @@ td.pos{color:var(--alta);font-weight:700}
 td.neg{color:var(--baixa);font-weight:700}
 .fonte{font-size:.74rem;color:var(--fonte-cor);margin:.5rem 0 0}
 .vazio{color:var(--tinta-fraca);font-style:italic;margin:.3rem 0 0}
+/* A leitura vive dentro da grade, ao lado do quadro quando cabe. `align-self`
+   a mantém no topo em vez de esticá-la até a altura da tabela vizinha. */
 .leitura{background:var(--barra);border-left:4px solid var(--ambar);padding:.7rem .9rem;
-  margin:.9rem 0;font-size:.82rem;font-weight:600;letter-spacing:.01em;text-transform:uppercase;line-height:1.45}
+  margin:0;align-self:start;font-size:.82rem;font-weight:600;letter-spacing:.01em;
+  text-transform:uppercase;line-height:1.45}
+.grade > .leitura{max-width:none}
 /* Leitura redigida por máquina: barra tracejada e etiqueta, para que a
    diferença entre apurado e redigido seja visível sem depender só de cor. */
 .leitura.gerada{border-left-style:dashed}
