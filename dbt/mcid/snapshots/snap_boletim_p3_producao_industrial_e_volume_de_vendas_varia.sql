@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p3_producao_industrial_e_volume_de_vendas_varia %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "PROD mesmo mês ano ant.", "PROD mês anterior", "PROD mês de referência", "VENDAS mesmo mês ano ant.", "VENDAS mês anterior", "VENDAS mês de referência"
-from {{ ref('gold_boletim_p3_producao_industrial_e_volume_de_vendas_varia') }}
+from {{ ref('gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia') }}
 
 {% endsnapshot %}

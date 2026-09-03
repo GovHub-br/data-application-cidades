@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p2_lancamentos_por_construtora_variacao %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("empresa"::text, '') as chave,
     edicao,
     "empresa", "vs. trim. anterior", "vs. mesmo trim. ano ant.", "12m atual / 12m anterior", "12m anterior / 12m retrasado"
-from {{ ref('gold_boletim_p2_lancamentos_por_construtora_variacao') }}
+from {{ ref('gld_boletim_p2_lancamentos_por_construtora_variacao') }}
 
 {% endsnapshot %}

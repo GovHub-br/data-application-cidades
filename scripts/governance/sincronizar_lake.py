@@ -275,7 +275,7 @@ def dags_por_modelo(arquivos: list[Arquivo]) -> dict[str, set[str]]:
     Então ela sobe pelo grafo: um model herda as DAGs de todos os seus
     ancestrais.
 
-    Um model pode ter mais de uma: `gold_boletim_p3_empregos_construcao_caged`
+    Um model pode ter mais de uma: `gld_boletim_p3_empregos_construcao_caged`
     junta três recortes do CAGED, cada um com a sua ingestão.
     """
     if not CATALOGO.exists():

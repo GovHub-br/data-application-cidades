@@ -11,7 +11,7 @@ version: 2
 #   [SEM FONTE]  não teremos o dado (sem acesso / descartado)
 models:
   # PÁGINA 1 — 1. PIB DA CONSTRUÇÃO CIVIL  +  2. LANÇAMENTOS E VENDAS
-  - name: silver_continuo_ibge_pib_construcao_civil
+  - name: slv_ibge_pib_construcao_civil
     description: >
       Uma linha por trimestre e variável com o PIB da construção civil apurado
       pelo IBGE, incluindo o valor do índice e as taxas de variação da série.
@@ -59,7 +59,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_pib_construcao_civil_pct
+  - name: slv_pib_construcao_civil_pct
     description: >
       Uma linha por trimestre com as três taxas de variação do PIB da
       construção civil: contra o trimestre imediatamente anterior, acumulada
@@ -86,7 +86,7 @@ models:
         description: >
           Variação percentual do produto da construção acumulada em quatro
           trimestres.
-  - name: silver_continuo_ibge_pib_consolidado_trimestral
+  - name: slv_ibge_pib_consolidado_trimestral
     description: >
       Uma linha por trimestre e variável com o PIB consolidado do país apurado
       pelo IBGE, usado como base de comparação para o recorte da construção.
@@ -134,7 +134,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_pib_corrente
+  - name: slv_ibge_pib_corrente
     description: >
       Uma linha por trimestre e variável com o PIB a preços correntes apurado
       pelo IBGE, em milhões de reais.
@@ -186,7 +186,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_empresas_balanco_lancamentos_vendas
+  - name: slv_empresas_balanco_lancamentos_vendas
     description: >
       Uma linha por incorporadora e trimestre com as unidades lançadas e
       vendidas e suas variações percentuais, conforme divulgado nos balanços
@@ -234,7 +234,7 @@ models:
         description: >
           Variação percentual das unidades vendidas no acumulado do ano
           contra igual período do ano anterior.
-  - name: silver_continuo_bacen_financiamentos_imobiliarios
+  - name: slv_bacen_financiamentos_imobiliarios
     description: >
       Uma linha por mês e medida com as concessões de crédito imobiliário,
       taxas de juros e inadimplência apuradas pelo BACEN, separadas entre
@@ -257,7 +257,7 @@ models:
         description: >
           Valor da medida indicada na linha, na unidade correspondente ao
           tipo.
-  - name: silver_continuo_ibge_pmc_construcao
+  - name: slv_ibge_pmc_construcao
     description: >
       Uma linha por mês e variável com as variações do volume de vendas no
       varejo de material de construção apuradas pelo IBGE.
@@ -305,7 +305,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_pim_pf_brasil
+  - name: slv_ibge_pim_pf_brasil
     description: >
       Uma linha por mês e variável com as variações da produção física dos
       insumos típicos da construção civil apuradas pelo IBGE.
@@ -354,7 +354,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_pnad_construcao_ocupados
+  - name: slv_ibge_pnad_construcao_ocupados
     description: >
       Uma linha por trimestre móvel e variável com a população ocupada na
       construção civil e no total da economia, em milhares de pessoas,
@@ -403,7 +403,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_pnad_construcao_rendimento
+  - name: slv_ibge_pnad_construcao_rendimento
     description: >
       Uma linha por trimestre móvel e variável com o rendimento médio real na
       construção civil e no total dos ocupados, em reais, conforme a PNAD
@@ -452,7 +452,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_pnadc_rendimento_domiciliar
+  - name: slv_ibge_pnadc_rendimento_domiciliar
     description: >
       Uma linha por trimestre móvel e variável com o rendimento domiciliar
       real apurado pela PNAD Contínua do IBGE.
@@ -500,7 +500,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_pnadc_populacao_decis_renda
+  - name: slv_ibge_pnadc_populacao_decis_renda
     description: >
       Uma linha por trimestre móvel e décimo de renda com a distribuição da
       população brasileira apurada pela PNAD Contínua do IBGE.
@@ -548,7 +548,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_novo_caged
+  - name: slv_novo_caged
     description: >
       Uma linha por mês com admissões, desligamentos, saldo líquido e estoque
       de postos formais na construção de edifícios, conforme o Novo CAGED.
@@ -584,7 +584,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_bacen_credito_pib
+  - name: slv_bacen_credito_pib
     description: >
       Uma linha por mês com o saldo da carteira de crédito imobiliário
       expresso como percentual do Produto Interno Bruto, conforme o BACEN.
@@ -601,7 +601,7 @@ models:
         description: >
           Saldo da carteira de crédito imobiliário expresso como percentual
           do Produto Interno Bruto.
-  - name: silver_continuo_abecip_poupanca_sbpe
+  - name: slv_abecip_poupanca_sbpe
     description: >
       Uma linha por mês com depósitos, retiradas, captação líquida e saldo das
       cadernetas de poupança do SBPE, conforme a ABECIP.
@@ -625,7 +625,7 @@ models:
       - name: saldo
         description: >
           Saldo total das cadernetas ao fim do mês, em milhões de reais.
-  - name: silver_continuo_sbpe_financiamentos_aquisicao
+  - name: slv_sbpe_financiamentos_aquisicao
     description: >
       Uma linha por mês com o financiamento imobiliário e a captação de
       poupança do SBPE, abertos por destinação, por condição de uso do imóvel
@@ -769,7 +769,7 @@ models:
         description: >
           Participação pelo Banco do Brasil no valor financiado no ano, em
           percentual.
-  - name: silver_continuo_siafi_dotacao_execucao
+  - name: slv_siafi_dotacao_execucao
     description: >
       Uma linha por ação de governo e unidade gestora com a dotação, o
       empenho, o pagamento e os restos a pagar da execução orçamentária
@@ -872,7 +872,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_sinapi
+  - name: slv_ibge_sinapi
     description: >
       Uma linha por mês e variável com o custo de construção por metro
       quadrado apurado pelo SINAPI, incluindo material e mão de obra.
@@ -965,7 +965,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_fgv_incc_m
+  - name: slv_fgv_incc_m
     description: >
       Uma linha por mês com o número índice do INCC-M apurado pela FGV e suas
       variações no mês, no acumulado do ano e em doze meses.
@@ -993,7 +993,7 @@ models:
       - name: var_12_meses
         description: >
           Variação percentual do índice acumulada em doze meses.
-  - name: silver_continuo_infomoney_imob
+  - name: slv_infomoney_imob
     description: >
       Uma linha por pregão com a pontuação de abertura, máxima, mínima e
       fechamento do índice IMOB, que acompanha as ações do setor imobiliário
@@ -1023,7 +1023,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_fipezap_locacao
+  - name: slv_fipezap_locacao
     description: >
       Uma linha por mês com o número índice do FipeZap de locação residencial
       e suas variações no mês e no acumulado do ano, conforme a FIPE.
@@ -1046,7 +1046,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_fgv_icst
+  - name: slv_fgv_icst
     description: >
       Uma linha por mês com o Índice de Confiança da Construção apurado pela
       FGV-IBRE, nas séries com e sem ajuste sazonal.
@@ -1073,7 +1073,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_paic_resultados
+  - name: slv_ibge_paic_resultados
     description: >
       Uma linha por ano e variável com receita, custos e valor adicionado das
       empresas de construção, conforme a Pesquisa Anual da Indústria da
@@ -1122,7 +1122,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_paic_pessoal_salarial
+  - name: slv_ibge_paic_pessoal_salarial
     description: >
       Uma linha por ano e variável com o pessoal ocupado e a massa salarial
       das empresas de construção, conforme a Pesquisa Anual da Indústria da
@@ -1171,7 +1171,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_ibge_paic_obras
+  - name: slv_ibge_paic_obras
     description: >
       Uma linha por ano e variável com o valor das obras e serviços executados
       pelas empresas de construção, conforme a Pesquisa Anual da Indústria da
@@ -1179,7 +1179,7 @@ models:
 
   # ========================================================================
   # FONTE MANUAL COMPLETA — planilha oficial do boletim (boletim.xlsx)
-  # Carregada em manual_conjuntura.dados_trimestrais / dados_mensais.
+  # Carregada em conjuntura.bnz_manual_dados_trimestrais / dados_mensais.
   # São tabelas largas (todas as variáveis do dicionário); o gold seleciona
   # as séries por seção. Substituem os manuais soltos anteriores.
   # ========================================================================
@@ -1227,17 +1227,17 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_manual_trimestrais
+  - name: slv_manual_trimestrais
     description: >
       Uma linha por trimestre com as séries do boletim de conjuntura
       habitacional cuja origem não é consultável por interface programática,
       incluindo balanços de incorporadoras e apurações da CBIC.
-  - name: silver_continuo_manual_mensais
+  - name: slv_manual_mensais
     description: >
       Uma linha por mês com as séries do boletim de conjuntura habitacional
       cuja origem não é consultável por interface programática, incluindo
       indicadores de crédito, preços e financiamento habitacional.
-  - name: silver_continuo_abecip_financiamentos
+  - name: slv_abecip_financiamentos
     description: >
       Uma linha por mês com as unidades e o valor de financiamento imobiliário
       do SBPE, separados entre destinação à construção e à aquisição, conforme
@@ -1277,7 +1277,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_abecip_instituicoes
+  - name: slv_abecip_instituicoes
     description: >
       Uma linha por instituição financeira, mês e modalidade com as unidades e
       o valor de financiamento imobiliário do SBPE no mês e no acumulado do
@@ -1319,7 +1319,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_fgts_valor_medio_imoveis
+  - name: slv_fgts_valor_medio_imoveis
     description: >
       Uma linha por mês com o valor médio dos imóveis financiados pelo FGTS,
       no conjunto das operações e na faixa de menor renda, e suas variações.
@@ -1360,7 +1360,7 @@ models:
         description: >
           Variação percentual do valor médio da faixa de menor renda
           acumulada desde o início do ano.
-  - name: silver_continuo_geavo_cci_cca
+  - name: slv_geavo_cci_cca
     description: >
       Uma linha por mês, faixa de renda e instrumento de crédito com as
       unidades habitacionais e o valor financiado a pessoa física no
@@ -1403,7 +1403,7 @@ models:
       - name: dt_silver
         description: >
           Momento do último processamento do registro.
-  - name: silver_continuo_geavo_fgts_pf
+  - name: slv_geavo_fgts_pf
     description: >
       Uma linha por mês, faixa de renda e condição de uso com as unidades
       habitacionais e o valor financiado a pessoa física com recursos do FGTS.
@@ -1430,7 +1430,7 @@ models:
       - name: dt_silver
         description: >
           Momento do último processamento do registro.
-  - name: silver_continuo_geavo_fgts_pj
+  - name: slv_geavo_fgts_pj
     description: >
       Uma linha por trimestre com as unidades habitacionais e os contratos de
       financiamento à produção habitacional com recursos do FGTS.
@@ -1452,7 +1452,7 @@ models:
       - name: dt_silver
         description: >
           Momento do último processamento do registro.
-  - name: silver_continuo_gefus_fundo_social
+  - name: slv_gefus_fundo_social
     description: >
       Uma linha por mês e condição de uso com as unidades habitacionais e o
       valor financiado com recursos do Fundo Social.
@@ -1482,7 +1482,7 @@ models:
       - name: dt_silver
         description: >
           Momento do último processamento do registro.
-  - name: silver_continuo_novo_caged_servicos_especializados
+  - name: slv_novo_caged_servicos_especializados
     description: >
       Uma linha por mês com admissões, desligamentos, saldo líquido e estoque
       de postos formais em serviços especializados para construção, conforme o
@@ -1514,7 +1514,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: silver_continuo_novo_caged_total
+  - name: slv_novo_caged_total
     description: >
       Uma linha por mês com admissões, desligamentos, saldo líquido e estoque
       de postos formais no conjunto da construção civil, conforme o Novo

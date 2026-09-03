@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "Trim. ano anterior", "Trim. selecionado", "Variação %"
-from {{ ref('gold_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri') }}
+from {{ ref('gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri') }}
 
 {% endsnapshot %}

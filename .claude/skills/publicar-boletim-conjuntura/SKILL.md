@@ -19,7 +19,7 @@ A página é **híbrida**, como o `docs-pages`: o número é lido, o texto é es
 
 | O que | De onde | Pode ser gerado? |
 |---|---|---|
-| Quadros de dados | tabelas `gold_boletim_p<N>_*` | não — é leitura |
+| Quadros de dados | tabelas `gld_boletim_p<N>_*` | não — é leitura |
 | Leitura dos números | modelo, ancorado nos deltas da própria página | **sim** |
 | Projeção de terceiro (ABECIP, SINDUSCON, CBIC) | `boletim-editorial.yml` | **NÃO** |
 | Visão MCID | `boletim-editorial.yml` | **NÃO** |
@@ -34,7 +34,7 @@ a seção não sai** — e a página diz que não saiu, em vez de fingir complet
 
 | | |
 |---|---|
-| Dados | `conjuntura_mart.gold_boletim_p<N>_*` — 21 quadros, 7 páginas |
+| Dados | `conjuntura.gld_boletim_p<N>_*` — 21 quadros, 7 páginas |
 | Estrutura | `scripts/superset/build_boletim.py`, lista `Quadro` (página, seção, título, colunas, nota) |
 | Filtro de edição | coluna `edicao` (`'1T2026'`) em todos os quadros |
 | Validação | `scripts/conjuntura/dados/gabarito-boletins.yml` — 32 checagens contra 3 edições |
@@ -89,4 +89,4 @@ quando alguém do time revisar e disser que sai.
   `'1T2026'`. Filtrar pelo campo errado devolve vazio sem erro.
 - **Fonte revisa o passado.** Republicar uma edição antiga com dado corrente
   muda números já impressos. Para reproduzir a edição como publicada, leia dos
-  snapshots (`conjuntura_snapshots`), não do mart.
+  snapshots (`conjuntura`), não do mart.

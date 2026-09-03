@@ -10,30 +10,30 @@
 -- que a fonte não traz dado novo há tempo demais e alguém precisa olhar.
 
 with fontes as (
-    select 'gold_continuo_sinapi'        as model, 'mensal'     as frequencia,
-           max(data_referencia)          as mais_recente from {{ ref('gold_continuo_sinapi') }}
+    select 'gld_sinapi'        as model, 'mensal'     as frequencia,
+           max(data_referencia)          as mais_recente from {{ ref('gld_sinapi') }}
     union all
-    select 'gold_continuo_incc_m', 'mensal', max(mes) from {{ ref('gold_continuo_incc_m') }}
+    select 'gld_incc_m', 'mensal', max(mes) from {{ ref('gld_incc_m') }}
     union all
-    select 'gold_continuo_fipezap', 'mensal', max(data_referencia) from {{ ref('gold_continuo_fipezap') }}
+    select 'gld_fipezap', 'mensal', max(data_referencia) from {{ ref('gld_fipezap') }}
     union all
-    select 'gold_continuo_icst', 'mensal', max(data_referencia) from {{ ref('gold_continuo_icst') }}
+    select 'gld_icst', 'mensal', max(data_referencia) from {{ ref('gld_icst') }}
     union all
-    select 'gold_continuo_indice_imob', 'mensal', max(data_referencia) from {{ ref('gold_continuo_indice_imob') }}
+    select 'gld_indice_imob', 'mensal', max(data_referencia) from {{ ref('gld_indice_imob') }}
     union all
-    select 'gold_continuo_saldo_poupanca', 'mensal', max(data_referencia) from {{ ref('gold_continuo_saldo_poupanca') }}
+    select 'gld_saldo_poupanca', 'mensal', max(data_referencia) from {{ ref('gld_saldo_poupanca') }}
     union all
-    select 'gold_continuo_credito_pib', 'mensal', max(data) from {{ ref('gold_continuo_credito_pib') }}
+    select 'gld_credito_pib', 'mensal', max(data) from {{ ref('gld_credito_pib') }}
     union all
-    select 'gold_continuo_empregos_caged', 'mensal', max(make_date(ano, mes, 1)) from {{ ref('gold_continuo_empregos_caged') }}
+    select 'gld_empregos_caged', 'mensal', max(make_date(ano, mes, 1)) from {{ ref('gld_empregos_caged') }}
     union all
-    select 'gold_continuo_producao_fisica', 'mensal', max(data_referencia) from {{ ref('gold_continuo_producao_fisica') }}
+    select 'gld_producao_fisica', 'mensal', max(data_referencia) from {{ ref('gld_producao_fisica') }}
     union all
-    select 'gold_continuo_financiamentos_habitacionais', 'trimestral',
-           max(make_date(ano, trimestre * 3, 1)) from {{ ref('gold_continuo_financiamentos_habitacionais') }}
+    select 'gld_financiamentos_habitacionais', 'trimestral',
+           max(make_date(ano, trimestre * 3, 1)) from {{ ref('gld_financiamentos_habitacionais') }}
     union all
-    select 'gold_continuo_pib_construcao_civil', 'trimestral', max(data_referencia)
-      from {{ ref('gold_continuo_pib_construcao_civil') }}
+    select 'gld_pib_construcao_civil', 'trimestral', max(data_referencia)
+      from {{ ref('gld_pib_construcao_civil') }}
 ),
 
 limites as (

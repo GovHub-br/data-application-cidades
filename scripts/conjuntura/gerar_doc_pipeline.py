@@ -62,7 +62,7 @@ def _rotulo(corpo: str) -> str | None:
 def dominio_de(chave: str, modelos: dict, manifest: dict, _memo=None) -> str:
     """Domínio de um model, resolvido pela LINHAGEM e não pelo nome.
 
-    O nome não serve: `gold_continuo_sinapi` não diz "ibge" em lugar nenhum,
+    O nome não serve: `gld_sinapi` não diz "ibge" em lugar nenhum,
     e a primeira versão jogava 29 dos 30 golds num balde "Outros" — o que
     esvaziava justamente a parte do documento que interessa. Subindo a
     linhagem até a fonte, o gold herda o domínio de quem o alimenta.
@@ -300,7 +300,7 @@ def colunas_do_model(manifest: dict, catalog: dict, chave: str) -> list[dict]:
 
 
 def carregar_contagens() -> dict[str, int]:
-    """Nº de linhas por model, lido de `gold_qualidade_inventario`.
+    """Nº de linhas por model, lido de `gld_qualidade_inventario`.
 
     O `catalog.json` do dbt-postgres só traz `has_stats`, sem `num_rows` —
     por isso a contagem vem do model de inventário que o próprio projeto
@@ -317,7 +317,7 @@ def carregar_contagens() -> dict[str, int]:
                 "dbt",
                 "show",
                 "--inline",
-                "select model, linhas from conjuntura_mart.gold_qualidade_inventario",
+                "select model, linhas from conjuntura.gld_qualidade_inventario",
                 "--output",
                 "json",
                 "--limit",

@@ -3,8 +3,8 @@
 -- Item 9 do checklist ("cruzamentos de dados de bases antigas com bases
 -- novas"). As duas fontes chegam por caminhos completamente diferentes:
 --
---   XLSX de unidades          -> `silver_continuo_abecip_financiamentos`
---   relatório mensal (OCR)    -> `silver_continuo_abecip_instituicoes`
+--   XLSX de unidades          -> `slv_abecip_financiamentos`
+--   relatório mensal (OCR)    -> `slv_abecip_instituicoes`
 --
 -- Se as duas concordam, é forte indício de que ambas estão certas. Quando
 -- divergirem, uma das duas quebrou — e é exatamente isso que queremos saber
@@ -21,7 +21,7 @@ with do_xlsx as (
         ano,
         sum(unidades_total)      as unidades,
         sum(valor_total_milhoes) as volume
-    from {{ ref('silver_continuo_abecip_financiamentos') }}
+    from {{ ref('slv_abecip_financiamentos') }}
     group by ano
 ),
 
@@ -30,7 +30,7 @@ do_relatorio as (
         ano,
         max(unidades_acumuladas_ano)      as unidades,
         max(volume_acumulado_ano_milhoes) as volume
-    from {{ ref('silver_continuo_abecip_instituicoes') }}
+    from {{ ref('slv_abecip_instituicoes') }}
     where modalidade = 'total_aquisicao_construcao'
       and instituicao = 'TOTAL'
     group by ano

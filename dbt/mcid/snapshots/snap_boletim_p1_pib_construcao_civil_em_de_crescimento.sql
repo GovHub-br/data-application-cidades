@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p1_pib_construcao_civil_em_de_crescimento %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "4 trim. antes", "3 trim. antes", "2 trim. antes", "trim. anterior", "trimestre selecionado"
-from {{ ref('gold_boletim_p1_pib_construcao_civil_em_de_crescimento') }}
+from {{ ref('gld_boletim_p1_pib_construcao_civil_em_de_crescimento') }}
 
 {% endsnapshot %}

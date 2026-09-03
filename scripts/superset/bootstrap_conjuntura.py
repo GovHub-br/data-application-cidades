@@ -21,37 +21,37 @@ from urllib.parse import quote_plus
 import requests
 from dotenv import load_dotenv
 
-GOLD_SCHEMA = "conjuntura_mart"
+GOLD_SCHEMA = "conjuntura"
 DATABASE_NAME = "Cidades"
 
 GOLDS = [
-    "gold_continuo_balancos_empresas",
-    "gold_continuo_balancos_empresas_totais",
-    "gold_continuo_canal_fgts",
-    "gold_continuo_credito_pib",
-    "gold_continuo_empregos_caged",
-    "gold_continuo_fgts_valor_medio",
-    "gold_continuo_financiamento_pf_faixa",
-    "gold_continuo_financiamentos_habitacionais",
-    "gold_continuo_financiamentos_imobiliarios_pf_pj",
-    "gold_continuo_financiamentos_instituicao",
-    "gold_continuo_fipezap",
-    "gold_continuo_funding",
-    "gold_continuo_icst",
-    "gold_continuo_incc_m",
-    "gold_continuo_indice_imob",
-    "gold_continuo_novos_financiamentos_banco",
-    "gold_continuo_ogu",
-    "gold_continuo_pib_construcao_civil",
-    "gold_continuo_pib_construcao_civil_pct",
-    "gold_continuo_pnad_ocupados",
-    "gold_continuo_pnad_rendimento",
-    "gold_continuo_producao_fisica",
-    "gold_continuo_saldo_poupanca",
-    "gold_continuo_sinapi",
-    "gold_continuo_ticket_medio",
-    "gold_continuo_uh_condicao_uso",
-    "gold_continuo_fundo_social",
+    "gld_balancos_empresas",
+    "gld_balancos_empresas_totais",
+    "gld_canal_fgts",
+    "gld_credito_pib",
+    "gld_empregos_caged",
+    "gld_fgts_valor_medio",
+    "gld_financiamento_pf_faixa",
+    "gld_financiamentos_habitacionais",
+    "gld_financiamentos_imobiliarios_pf_pj",
+    "gld_financiamentos_instituicao",
+    "gld_fipezap",
+    "gld_funding",
+    "gld_icst",
+    "gld_incc_m",
+    "gld_indice_imob",
+    "gld_novos_financiamentos_banco",
+    "gld_ogu",
+    "gld_pib_construcao_civil",
+    "gld_pib_construcao_civil_pct",
+    "gld_pnad_ocupados",
+    "gld_pnad_rendimento",
+    "gld_producao_fisica",
+    "gld_saldo_poupanca",
+    "gld_sinapi",
+    "gld_ticket_medio",
+    "gld_uh_condicao_uso",
+    "gld_fundo_social",
 ]
 
 #: Estrutura do Boletim de Conjuntura, página a página. A ordem aqui é a ordem
@@ -64,64 +64,64 @@ PAGINAS_BOLETIM: list[tuple[str, list[str]]] = [
     (
         "Pág. 1 — PIB da Construção Civil",
         [
-            "gold_continuo_pib_construcao_civil_pct",
-            "gold_continuo_pib_construcao_civil",
+            "gld_pib_construcao_civil_pct",
+            "gld_pib_construcao_civil",
         ],
     ),
     (
         "Pág. 2 — Balanço das Empresas · Financiamentos Imobiliários",
         [
-            "gold_continuo_balancos_empresas",
-            "gold_continuo_balancos_empresas_totais",
-            "gold_continuo_financiamentos_imobiliarios_pf_pj",
-            "gold_continuo_financiamentos_habitacionais",
+            "gld_balancos_empresas",
+            "gld_balancos_empresas_totais",
+            "gld_financiamentos_imobiliarios_pf_pj",
+            "gld_financiamentos_habitacionais",
         ],
     ),
     (
         "Pág. 3 — Empregos · PNAD · Produção Física · Novos Financiamentos",
         [
-            "gold_continuo_empregos_caged",
-            "gold_continuo_pnad_ocupados",
-            "gold_continuo_pnad_rendimento",
-            "gold_continuo_producao_fisica",
-            "gold_continuo_novos_financiamentos_banco",
+            "gld_empregos_caged",
+            "gld_pnad_ocupados",
+            "gld_pnad_rendimento",
+            "gld_producao_fisica",
+            "gld_novos_financiamentos_banco",
             # Sucessor de `novos_financiamentos_banco`: mesmo indicador do
             # boletim, fonte nova. Convivem até a aposentadoria do antigo.
-            "gold_continuo_financiamentos_instituicao",
+            "gld_financiamentos_instituicao",
         ],
     ),
     (
         "Pág. 4 — Crédito/PIB · Faixa de Renda · Condição de Uso · Funding",
         [
-            "gold_continuo_credito_pib",
-            "gold_continuo_financiamento_pf_faixa",
-            "gold_continuo_uh_condicao_uso",
-            "gold_continuo_funding",
+            "gld_credito_pib",
+            "gld_financiamento_pf_faixa",
+            "gld_uh_condicao_uso",
+            "gld_funding",
         ],
     ),
     (
         "Pág. 5 — Canal FGTS · Poupança",
         [
-            "gold_continuo_canal_fgts",
-            "gold_continuo_saldo_poupanca",
+            "gld_canal_fgts",
+            "gld_saldo_poupanca",
         ],
     ),
     (
         "Pág. 6 — OGU · Preços",
         [
-            "gold_continuo_ogu",
-            "gold_continuo_sinapi",
-            "gold_continuo_incc_m",
-            "gold_continuo_ticket_medio",
-            "gold_continuo_fgts_valor_medio",
+            "gld_ogu",
+            "gld_sinapi",
+            "gld_incc_m",
+            "gld_ticket_medio",
+            "gld_fgts_valor_medio",
         ],
     ),
     (
         "Pág. 7 — Índices da Construção",
         [
-            "gold_continuo_indice_imob",
-            "gold_continuo_fipezap",
-            "gold_continuo_icst",
+            "gld_indice_imob",
+            "gld_fipezap",
+            "gld_icst",
         ],
     ),
     (
@@ -130,15 +130,15 @@ PAGINAS_BOLETIM: list[tuple[str, list[str]]] = [
         # conferência lado a lado perder o sentido.
         "Complementos (fora do boletim impresso)",
         [
-            "gold_continuo_fundo_social",
+            "gld_fundo_social",
         ],
     ),
 ]
 
 TEMPORAL_COLUMN = {
-    "gold_continuo_credito_pib": "data",
-    "gold_continuo_financiamentos_imobiliarios_pf_pj": "data",
-    "gold_continuo_incc_m": "mes",
+    "gld_credito_pib": "data",
+    "gld_financiamentos_imobiliarios_pf_pj": "data",
+    "gld_incc_m": "mes",
 }
 
 
@@ -488,7 +488,7 @@ def dashboard_position_por_pagina(chart_por_gold: dict[str, int]) -> str:
 
 
 def nome_do_chart(gold: str) -> str:
-    return f"Conjuntura | {gold.removeprefix('gold_continuo_').replace('_', ' ').title()}"
+    return f"Conjuntura | {gold.removeprefix('gld_').replace('_', ' ').title()}"
 
 
 def get_or_create_dashboards(api: Superset, chart_ids: list[int]) -> None:

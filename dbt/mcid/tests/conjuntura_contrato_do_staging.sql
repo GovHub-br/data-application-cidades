@@ -12,7 +12,7 @@
 -- para variação real de série sem deixar passar um colapso de ordem de
 -- grandeza.
 --
--- Complementa `gold_qualidade_schema_drift`: o drift avisa no dia seguinte,
+-- Complementa `gld_qualidade_schema_drift`: o drift avisa no dia seguinte,
 -- comparando retratos; este falha na hora, dentro do build.
 
 {% set linhas = [] %}
@@ -22,7 +22,7 @@
         {% if piso %}
             {% do linhas.append(
                 "select '" ~ no.name ~ "'::text as fonte, count(*)::bigint as linhas, "
-                ~ piso ~ "::bigint as minimo from conjuntura_bronze.bronze_continuo_" ~ no.name
+                ~ piso ~ "::bigint as minimo from conjuntura.bnz_" ~ no.name
             ) %}
         {% endif %}
     {% endfor %}

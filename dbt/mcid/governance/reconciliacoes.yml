@@ -8,8 +8,8 @@ reconciliations:
     status: active
     product: conjuntura
     implementation: tests/conjuntura_cruzamento_abecip.sql
-    left_model: silver_continuo_abecip_financiamentos
-    right_model: silver_continuo_abecip_instituicoes
+    left_model: slv_abecip_financiamentos
+    right_model: slv_abecip_instituicoes
     join_grain: ano
     measures: [unidades, volume]
     tolerance: percentual de 0,5 por cento, com piso de uma unidade
@@ -20,7 +20,7 @@ reconciliations:
   - id: geavo_fgts_pf_x_base_fundo_social
     status: blocked_not_equivalent
     product: conjuntura
-    left_model: silver_continuo_geavo_fgts_pf
+    left_model: slv_geavo_fgts_pf
     right_source: PMCMV_FAIXA3_MCID
     rationale: >
       As bases são complementares, com universos diferentes; não constituem
@@ -29,8 +29,8 @@ reconciliations:
   - id: geavo_cci_cca_x_fgts_pf_legado
     status: blocked_not_equivalent
     product: conjuntura
-    left_model: silver_continuo_geavo_cci_cca
-    right_model: silver_continuo_geavo_fgts_pf
+    left_model: slv_geavo_cci_cca
+    right_model: slv_geavo_fgts_pf
     rationale: >
       Os recortes de carteira e a regra de classificação diferem. O CCI mais
       CCA é a fonte editorial para financiamento por faixa; a outra série

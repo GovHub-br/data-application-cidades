@@ -65,7 +65,7 @@ def estrutura_dos_quadros() -> list[dict]:
                 "secao": campo("secao"),
                 "titulo": titulo,
                 "nota": campo("nota"),
-                "tabela": f"gold_boletim_p{pagina.group(1)}_{slug(titulo)}",
+                "tabela": f"gld_boletim_p{pagina.group(1)}_{slug(titulo)}",
             }
         )
     return quadros
@@ -91,12 +91,12 @@ def ler_quadros(edicao: str, de_arquivo: pathlib.Path | None) -> dict[str, list[
     )
     cursor = conexao.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cursor.execute("""select table_name from information_schema.tables
-           where table_schema='conjuntura_mart'
-             and table_name like 'gold_boletim_p%' order by table_name""")
+           where table_schema='conjuntura'
+             and table_name like 'gld_boletim_p%' order by table_name""")
     saida = {}
     for linha in cursor.fetchall():
         nome = linha["table_name"]
-        cursor.execute(f"select * from conjuntura_mart.{nome} where edicao=%s", (edicao,))
+        cursor.execute(f"select * from conjuntura.{nome} where edicao=%s", (edicao,))
         saida[nome] = [dict(r) for r in cursor.fetchall()]
     conexao.close()
     resultado: dict[str, list[dict]] = saida
@@ -150,29 +150,29 @@ def celula(coluna: str, valor: Any, extras: str = "") -> str:
 #:   `linhas`  compara a linha alvo com uma linha base, coluna a coluna
 #:   `colunas` compara duas colunas dentro da MESMA linha
 PILULAS: dict[str, dict[str, list[tuple[str, str, str]]]] = {
-    "gold_boletim_p2_financiamentos_imobiliarios_bacen": {
+    "gld_boletim_p2_financiamentos_imobiliarios_bacen": {
         "linhas": [
             ("Mês de referência", "Mês anterior", "mês ant."),
             ("Mês de referência", "Mesmo mês do ano anterior", "ano ant."),
         ]
     },
-    "gold_boletim_p2_financiamentos_habitacionais_uh": {
+    "gld_boletim_p2_financiamentos_habitacionais_uh": {
         "linhas": [
             ("Trimestre selecionado", "Trimestre anterior", "tri. ant."),
             ("Trimestre selecionado", "Mesmo trim. do ano anterior", "ano ant."),
         ]
     },
-    "gold_boletim_p3_empregos_construcao_caged": {
+    "gld_boletim_p3_empregos_construcao_caged": {
         "linhas": [
             ("Mês de referência", "Mês anterior", "mês ant."),
             ("Mês de referência", "Mesmo mês do ano anterior", "ano ant."),
             ("Acumulado no trimestre", "Acum. no trim. do ano anterior", "ano ant."),
         ]
     },
-    "gold_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re": {
+    "gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re": {
         "linhas": [("jan-fev-mar 2026", "out-nov-dez 2025", "trim. ant.")]
     },
-    "gold_boletim_p4_no_uh_por_condicao_de_uso": {
+    "gld_boletim_p4_no_uh_por_condicao_de_uso": {
         "colunas": [
             (
                 "Trim. selecionado — UH Usadas",
@@ -186,7 +186,7 @@ PILULAS: dict[str, dict[str, list[tuple[str, str, str]]]] = {
             ),
         ]
     },
-    "gold_boletim_p5_financiamento_pf_mcmv_por_faixa": {
+    "gld_boletim_p5_financiamento_pf_mcmv_por_faixa": {
         "colunas": [
             ("Trim. selecionado — Nº UH", "Trim. ano anterior — Nº UH", "ano ant."),
             (
@@ -453,17 +453,17 @@ def montar(
     # A leitura é ancorada no QUADRO que ela comenta, não na seção: uma seção
     # pode ter vários quadros, e o texto se refere a um deles.
     leitura_do_quadro = {
-        "gold_boletim_p1_pib_construcao_civil_em_de_crescimento": "pib",
-        "gold_boletim_p1_cbic_lancamentos_e_vendas_totais": "lancamentos_e_vendas",
-        "gold_boletim_p3_novos_financiamentos_imobiliarios_por_banco_": "credito",
-        "gold_boletim_p4_credito_imobiliario_pib": "credito_pib",
-        "gold_boletim_p4_no_uh_por_condicao_de_uso": "condicao_de_uso",
-        "gold_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida": (
+        "gld_boletim_p1_pib_construcao_civil_em_de_crescimento": "pib",
+        "gld_boletim_p1_cbic_lancamentos_e_vendas_totais": "lancamentos_e_vendas",
+        "gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_": "credito",
+        "gld_boletim_p4_credito_imobiliario_pib": "credito_pib",
+        "gld_boletim_p4_no_uh_por_condicao_de_uso": "condicao_de_uso",
+        "gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida": (
             "poupanca_e_financiamento"
         ),
-        "gold_boletim_p5_financiamento_pf_mcmv_por_faixa": "financiamento_pf_mcmv",
-        "gold_boletim_p6_sinapi_brasil_e_incc_m": "precos",
-        "gold_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc": "ticket_medio",
+        "gld_boletim_p5_financiamento_pf_mcmv_por_faixa": "financiamento_pf_mcmv",
+        "gld_boletim_p6_sinapi_brasil_e_incc_m": "precos",
+        "gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc": "ticket_medio",
     }
 
     # `secao_atual` vive FORA do laço de página: no PPTX a seção "6. Crédito"
@@ -482,13 +482,13 @@ def montar(
                 )
             partes.append('<div class="grade">')
             linhas = dados.get(q["tabela"], [])
-            if q["tabela"] == "gold_boletim_p4_credito_imobiliario_pib":
+            if q["tabela"] == "gld_boletim_p4_credito_imobiliario_pib":
                 partes.append(grafico_credito(linhas))
             else:
                 partes.append(tabela_html(q, linhas))
-            if q["tabela"] == "gold_boletim_p1_cbic_lancamentos_e_vendas_totais":
+            if q["tabela"] == "gld_boletim_p1_cbic_lancamentos_e_vendas_totais":
                 partes.append(cartoes_dos_totais(linhas))
-            elif q["tabela"] == "gold_boletim_p2_totais_das_empresas_levantadas_variacao":
+            elif q["tabela"] == "gld_boletim_p2_totais_das_empresas_levantadas_variacao":
                 partes.append(cartoes_das_empresas(linhas))
             partes.append("</div>")
             chave = leitura_do_quadro.get(q["tabela"])
@@ -498,7 +498,7 @@ def montar(
 
     partes.append(fechamento(meta))
     partes.append(
-        '<div class="rodape">Quadros lidos das tabelas <code>gold_boletim_*</code>, '
+        '<div class="rodape">Quadros lidos das tabelas <code>gld_boletim_*</code>, '
         "as mesmas que alimentam o dashboard do Superset. Texto editorial transcrito "
         f"de <i>{html.escape(meta.get('fonte_da_transcricao', 'boletim publicado'))}</i>."
         "</div>"

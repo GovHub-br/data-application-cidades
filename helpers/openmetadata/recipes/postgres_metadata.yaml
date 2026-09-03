@@ -28,9 +28,7 @@ source:
       # descrevendo os schemas legados por semanas.
       schemaFilterPattern:
         includes:
-          - "^conjuntura_bronze$"
-          - "^conjuntura_silver$"
-          - "^conjuntura_mart$"
+          - "^conjuntura$"
           - "^empreendimento_far$"
           - "^entidades_fds$"
           - "^metadata$"

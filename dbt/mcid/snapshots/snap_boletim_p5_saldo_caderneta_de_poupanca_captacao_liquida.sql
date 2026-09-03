@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Cap. Líq. (Bi)"
-from {{ ref('gold_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida') }}
+from {{ ref('gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida') }}
 
 {% endsnapshot %}

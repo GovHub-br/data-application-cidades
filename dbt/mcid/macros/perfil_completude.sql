@@ -4,7 +4,7 @@
 
     Existe porque "a base está completa?" não é respondível olhando model por
     model — e porque completude que ninguém mede vira surpresa no dashboard.
-    O resultado é materializado em `gold_qualidade_completude`, então dá pra
+    O resultado é materializado em `gld_qualidade_completude`, então dá pra
     acompanhar a evolução e pendurar teste em cima.
 
     Usa o catálogo do Postgres (`information_schema`) pra descobrir as

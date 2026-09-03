@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p6_sinapi_brasil_e_incc_m %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "SINAPI", "INCC-M"
-from {{ ref('gold_boletim_p6_sinapi_brasil_e_incc_m') }}
+from {{ ref('gld_boletim_p6_sinapi_brasil_e_incc_m') }}
 
 {% endsnapshot %}

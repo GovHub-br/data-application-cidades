@@ -3,7 +3,7 @@
   "generated_at": "2026-09-01T03:50:20.943502+00:00",
   "schemas": [
     {
-      "name": "conjuntura_bronze",
+      "name": "conjuntura",
       "display_name": "Conjuntura · Bronze",
       "product": "conjuntura",
       "layer": "bronze",
@@ -14,7 +14,7 @@
       "description": "Camada fiel de ingestão do produto Conjuntura, preservada para rastreabilidade e processamento interno."
     },
     {
-      "name": "conjuntura_silver",
+      "name": "conjuntura",
       "display_name": "Conjuntura · Silver",
       "product": "conjuntura",
       "layer": "silver",
@@ -24,7 +24,7 @@
       "description": "Camada tratada e conformada de indicadores do setor habitacional para uso analítico interno autorizado."
     },
     {
-      "name": "conjuntura_mart",
+      "name": "conjuntura",
       "display_name": "Conjuntura · Gold",
       "product": "conjuntura",
       "layer": "gold",
@@ -64,7 +64,7 @@
       "description": "Metadados técnicos e operacionais do pipeline de dados."
     },
     {
-      "name": "conjuntura_bronze",
+      "name": "conjuntura",
       "display_name": "Conjuntura · Bronze (legado)",
       "product": "conjuntura_legacy",
       "layer": "bronze",
@@ -75,7 +75,7 @@
       "description": "Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco."
     },
     {
-      "name": "conjuntura_silver",
+      "name": "conjuntura",
       "display_name": "Conjuntura · Silver (legado)",
       "product": "conjuntura_legacy",
       "layer": "silver",
@@ -146,13 +146,13 @@
   ],
   "models": [
     {
-      "id": "model.mcid.bronze_continuo_abecip_financiamentos",
+      "id": "model.mcid.bnz_abecip_financiamentos",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_abecip_financiamentos",
+      "schema": "conjuntura",
+      "name": "bnz_abecip_financiamentos",
       "description": "Financiamento imobiliário com recursos da poupança, separado entre destinação à construção e à aquisição, em unidades e em milhões de reais, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -225,13 +225,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_abecip_instituicoes",
+      "id": "model.mcid.bnz_abecip_instituicoes",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_abecip_instituicoes",
+      "schema": "conjuntura",
+      "name": "bnz_abecip_instituicoes",
       "description": "Financiamento imobiliário com recursos da poupança aberto por instituição financeira, em unidades e em milhões de reais acumulados no ano.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -360,13 +360,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_abecip_poupanca_sbpe",
+      "id": "model.mcid.bnz_abecip_poupanca_sbpe",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_abecip_poupanca_sbpe",
+      "schema": "conjuntura",
+      "name": "bnz_abecip_poupanca_sbpe",
       "description": "Movimento das cadernetas de poupança do sistema habitacional, com depósitos, retiradas, captação líquida e saldo, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -439,13 +439,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_bacen_credito_pib",
+      "id": "model.mcid.bnz_bacen_credito_pib",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_bacen_credito_pib",
+      "schema": "conjuntura",
+      "name": "bnz_bacen_credito_pib",
       "description": "Saldo da carteira de crédito imobiliário expresso como percentual do Produto Interno Bruto, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -504,13 +504,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_bacen_financiamentos_imobiliarios",
+      "id": "model.mcid.bnz_bacen_financiamentos_imobiliarios",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_bacen_financiamentos_imobiliarios",
+      "schema": "conjuntura",
+      "name": "bnz_bacen_financiamentos_imobiliarios",
       "description": "Crédito imobiliário concedido a pessoa física e jurídica, com volume, taxa de juros média e inadimplência da carteira, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -590,13 +590,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_fgv_icst",
+      "id": "model.mcid.bnz_fgv_icst",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_fgv_icst",
+      "schema": "conjuntura",
+      "name": "bnz_fgv_icst",
       "description": "Índice de confiança do empresariado da construção, nas séries com e sem ajuste sazonal, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -634,13 +634,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_fgv_incc_m",
+      "id": "model.mcid.bnz_fgv_incc_m",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_fgv_incc_m",
+      "schema": "conjuntura",
+      "name": "bnz_fgv_incc_m",
       "description": "Índice de custo da construção habitacional, com número índice e variações percentuais, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -692,13 +692,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_fipezap_locacao",
+      "id": "model.mcid.bnz_fipezap_locacao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_fipezap_locacao",
+      "schema": "conjuntura",
+      "name": "bnz_fipezap_locacao",
       "description": "Índice de preços de locação residencial anunciados, com número índice e variações percentuais, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -750,13 +750,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_geavo_cca_analitico",
+      "id": "model.mcid.bnz_geavo_cca_analitico",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_geavo_cca_analitico",
+      "schema": "conjuntura",
+      "name": "bnz_geavo_cca_analitico",
       "description": "Contratos de financiamento habitacional a pessoa física originados de carteira de crédito associativo, em detalhe por contrato.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -1102,13 +1102,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_geavo_cci_analitico",
+      "id": "model.mcid.bnz_geavo_cci_analitico",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_geavo_cci_analitico",
+      "schema": "conjuntura",
+      "name": "bnz_geavo_cci_analitico",
       "description": "Contratos de financiamento habitacional a pessoa física originados de cédula de crédito imobiliário, em detalhe por contrato.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -1433,13 +1433,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_geavo_fgts_pf",
+      "id": "model.mcid.bnz_geavo_fgts_pf",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_geavo_fgts_pf",
+      "schema": "conjuntura",
+      "name": "bnz_geavo_fgts_pf",
       "description": "Financiamento habitacional a pessoa física com recursos do fundo de garantia, por faixa de renda e condição de uso do imóvel.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -1484,13 +1484,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_geavo_fgts_pj",
+      "id": "model.mcid.bnz_geavo_fgts_pj",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_geavo_fgts_pj",
+      "schema": "conjuntura",
+      "name": "bnz_geavo_fgts_pj",
       "description": "Financiamento à produção habitacional com recursos do fundo de garantia, em unidades habitacionais contratadas.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -1675,13 +1675,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_gefus_fundo_social",
+      "id": "model.mcid.bnz_gefus_fundo_social",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_gefus_fundo_social",
+      "schema": "conjuntura",
+      "name": "bnz_gefus_fundo_social",
       "description": "Financiamento habitacional custeado pelo fundo social, em unidades habitacionais e valor, por condição de uso do imóvel.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2006,13 +2006,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_paic_obras",
+      "id": "model.mcid.bnz_ibge_paic_obras",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_paic_obras",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_paic_obras",
       "description": "Valor anual das obras e serviços executados pelas empresas de construção, por tipo de obra.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2113,13 +2113,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_paic_pessoal_salarial",
+      "id": "model.mcid.bnz_ibge_paic_pessoal_salarial",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_paic_pessoal_salarial",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_paic_pessoal_salarial",
       "description": "Pessoal ocupado e massa salarial anual das empresas de construção.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2220,13 +2220,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_paic_resultados",
+      "id": "model.mcid.bnz_ibge_paic_resultados",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_paic_resultados",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_paic_resultados",
       "description": "Resultados econômicos anuais das empresas de construção, com receita, custos e valor adicionado.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2327,13 +2327,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pib_consolidado_trimestral",
+      "id": "model.mcid.bnz_ibge_pib_consolidado_trimestral",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pib_consolidado_trimestral",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pib_consolidado_trimestral",
       "description": "Produto Interno Bruto consolidado do país em série trimestral.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2434,13 +2434,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pib_construcao_civil",
+      "id": "model.mcid.bnz_ibge_pib_construcao_civil",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pib_construcao_civil",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pib_construcao_civil",
       "description": "Produto Interno Bruto da construção civil brasileira em série trimestral, com valor e taxas de variação.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2541,13 +2541,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pib_corrente",
+      "id": "model.mcid.bnz_ibge_pib_corrente",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pib_corrente",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pib_corrente",
       "description": "Produto Interno Bruto a preços correntes, em milhões de reais, por trimestre.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2648,13 +2648,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pim_pf_brasil",
+      "id": "model.mcid.bnz_ibge_pim_pf_brasil",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pim_pf_brasil",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pim_pf_brasil",
       "description": "Produção física dos insumos típicos da construção civil, em variações percentuais mensais.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2755,13 +2755,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pmc_construcao",
+      "id": "model.mcid.bnz_ibge_pmc_construcao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pmc_construcao",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pmc_construcao",
       "description": "Volume de vendas no varejo de material de construção, em variações percentuais mensais.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2862,13 +2862,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pnad_construcao_ocupados",
+      "id": "model.mcid.bnz_ibge_pnad_construcao_ocupados",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pnad_construcao_ocupados",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pnad_construcao_ocupados",
       "description": "População ocupada na construção civil e no conjunto da economia, em milhares de pessoas, por trimestre móvel.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -2969,13 +2969,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pnad_construcao_rendimento",
+      "id": "model.mcid.bnz_ibge_pnad_construcao_rendimento",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pnad_construcao_rendimento",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pnad_construcao_rendimento",
       "description": "Rendimento médio real de quem trabalha na construção civil e do conjunto dos ocupados, por trimestre móvel.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3076,13 +3076,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pnadc_populacao_decis_renda",
+      "id": "model.mcid.bnz_ibge_pnadc_populacao_decis_renda",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pnadc_populacao_decis_renda",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pnadc_populacao_decis_renda",
       "description": "Distribuição da população brasileira por décimo de renda, por trimestre móvel.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3183,13 +3183,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_pnadc_rendimento_domiciliar",
+      "id": "model.mcid.bnz_ibge_pnadc_rendimento_domiciliar",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_pnadc_rendimento_domiciliar",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_pnadc_rendimento_domiciliar",
       "description": "Rendimento domiciliar real por trimestre móvel.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3290,13 +3290,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_ibge_sinapi",
+      "id": "model.mcid.bnz_ibge_sinapi",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_ibge_sinapi",
+      "schema": "conjuntura",
+      "name": "bnz_ibge_sinapi",
       "description": "Custo de referência da construção habitacional por metro quadrado, incluindo material e mão de obra, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3397,13 +3397,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_infomoney_imob",
+      "id": "model.mcid.bnz_infomoney_imob",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_infomoney_imob",
+      "schema": "conjuntura",
+      "name": "bnz_infomoney_imob",
       "description": "Índice de ações das empresas do setor imobiliário listadas na bolsa brasileira, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3469,13 +3469,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_novo_caged",
+      "id": "model.mcid.bnz_novo_caged",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_novo_caged",
+      "schema": "conjuntura",
+      "name": "bnz_novo_caged",
       "description": "Movimentação de emprego formal na construção de edifícios, com admissões, desligamentos, saldo e estoque de postos, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3562,13 +3562,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_novo_caged_servicos_especializados",
+      "id": "model.mcid.bnz_novo_caged_servicos_especializados",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_novo_caged_servicos_especializados",
+      "schema": "conjuntura",
+      "name": "bnz_novo_caged_servicos_especializados",
       "description": "Movimentação de emprego formal em serviços especializados para construção, com saldo e estoque de postos, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3655,13 +3655,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_novo_caged_total",
+      "id": "model.mcid.bnz_novo_caged_total",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_novo_caged_total",
+      "schema": "conjuntura",
+      "name": "bnz_novo_caged_total",
       "description": "Movimentação de emprego formal no conjunto da construção civil, com saldo e estoque de postos, por mês.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -3748,13 +3748,13 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.bronze_continuo_siafi_dotacao_execucao",
+      "id": "model.mcid.bnz_siafi_dotacao_execucao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "bronze",
       "classification": "restricted",
-      "schema": "conjuntura_bronze",
-      "name": "bronze_continuo_siafi_dotacao_execucao",
+      "schema": "conjuntura",
+      "name": "bnz_siafi_dotacao_execucao",
       "description": "Execução orçamentária federal em habitação, com dotação, empenho, pagamento e restos a pagar por ação de governo.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -8506,18 +8506,18 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.gold_boletim_p1_cbic_lancamentos_e_vendas_totais",
+      "id": "model.mcid.gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p1_cbic_lancamentos_e_vendas_totais",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
       "description": "Uma linha por edição do boletim e periodo com o quadro CBIC — Lançamentos e Vendas (totais) da página 1, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct"
+        "model.mcid.gld_pib_construcao_civil_pct"
       ],
       "columns": [
         {
@@ -8580,18 +8580,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p1_lancamentos_por_regiao_cbic",
+      "id": "model.mcid.gld_boletim_p1_lancamentos_por_regiao_cbic",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p1_lancamentos_por_regiao_cbic",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_lancamentos_por_regiao_cbic",
       "description": "Uma linha por edição do boletim e regiao com o quadro Lançamentos por Região (CBIC) da página 1, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct"
+        "model.mcid.gld_pib_construcao_civil_pct"
       ],
       "columns": [
         {
@@ -8633,18 +8633,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p1_pib_construcao_civil_em_de_crescimento",
+      "id": "model.mcid.gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p1_pib_construcao_civil_em_de_crescimento",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
       "description": "Uma linha por edição do boletim e indicador com o quadro PIB Construção Civil (em % de Crescimento) da página 1, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct"
+        "model.mcid.gld_pib_construcao_civil_pct"
       ],
       "columns": [
         {
@@ -8700,18 +8700,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p1_vendas_por_regiao_cbic",
+      "id": "model.mcid.gld_boletim_p1_vendas_por_regiao_cbic",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p1_vendas_por_regiao_cbic",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_vendas_por_regiao_cbic",
       "description": "Uma linha por edição do boletim e regiao com o quadro Vendas por Região (CBIC) da página 1, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct"
+        "model.mcid.gld_pib_construcao_civil_pct"
       ],
       "columns": [
         {
@@ -8753,19 +8753,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p2_financiamentos_habitacionais_uh",
+      "id": "model.mcid.gld_boletim_p2_financiamentos_habitacionais_uh",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p2_financiamentos_habitacionais_uh",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_financiamentos_habitacionais_uh",
       "description": "Uma linha por edição do boletim e periodo com o quadro Financiamentos Habitacionais (UH) da página 2, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_financiamentos_habitacionais"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_financiamentos_habitacionais"
       ],
       "columns": [
         {
@@ -8800,19 +8800,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p2_financiamentos_imobiliarios_bacen",
+      "id": "model.mcid.gld_boletim_p2_financiamentos_imobiliarios_bacen",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p2_financiamentos_imobiliarios_bacen",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_financiamentos_imobiliarios_bacen",
       "description": "Uma linha por edição do boletim e periodo com o quadro Financiamentos Imobiliários (BACEN) da página 2, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_financiamentos_imobiliarios_pf_pj"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_financiamentos_imobiliarios_pf_pj"
       ],
       "columns": [
         {
@@ -8875,19 +8875,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p2_lancamentos_por_construtora_variacao",
+      "id": "model.mcid.gld_boletim_p2_lancamentos_por_construtora_variacao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p2_lancamentos_por_construtora_variacao",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_lancamentos_por_construtora_variacao",
       "description": "Uma linha por edição do boletim e empresa com o quadro Lançamentos por construtora (variação %) da página 2, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_balancos_empresas"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_balancos_empresas"
       ],
       "columns": [
         {
@@ -8936,20 +8936,20 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p2_totais_das_empresas_levantadas_variacao",
+      "id": "model.mcid.gld_boletim_p2_totais_das_empresas_levantadas_variacao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p2_totais_das_empresas_levantadas_variacao",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_totais_das_empresas_levantadas_variacao",
       "description": "Uma linha por edição do boletim e indicador com o quadro Totais das empresas levantadas (variação %) da página 2, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_balancos_empresas",
-        "model.mcid.gold_continuo_balancos_empresas_totais"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_balancos_empresas",
+        "model.mcid.gld_balancos_empresas_totais"
       ],
       "columns": [
         {
@@ -8998,19 +8998,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p2_vendas_por_construtora_variacao",
+      "id": "model.mcid.gld_boletim_p2_vendas_por_construtora_variacao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p2_vendas_por_construtora_variacao",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_vendas_por_construtora_variacao",
       "description": "Uma linha por edição do boletim e empresa com o quadro Vendas por construtora (variação %) da página 2, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_balancos_empresas"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_balancos_empresas"
       ],
       "columns": [
         {
@@ -9059,19 +9059,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p3_empregos_construcao_caged",
+      "id": "model.mcid.gld_boletim_p3_empregos_construcao_caged",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p3_empregos_construcao_caged",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_empregos_construcao_caged",
       "description": "Uma linha por edição do boletim e periodo com o quadro Empregos Construção (CAGED) da página 3, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_empregos_caged"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_empregos_caged"
       ],
       "columns": [
         {
@@ -9106,19 +9106,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
+      "id": "model.mcid.gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
       "description": "Uma linha por edição do boletim e banco com o quadro Novos Financiamentos Imobiliários por Banco (acum. no ano) da página 3, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_financiamentos_instituicao"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_financiamentos_instituicao"
       ],
       "columns": [
         {
@@ -9167,20 +9167,20 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
+      "id": "model.mcid.gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
       "description": "Uma linha por edição do boletim e periodo com o quadro PNAD Contínua — Ocupados e Rendimento Médio Real da página 3, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_pnad_ocupados",
-        "model.mcid.gold_continuo_pnad_rendimento"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_pnad_ocupados",
+        "model.mcid.gld_pnad_rendimento"
       ],
       "columns": [
         {
@@ -9229,19 +9229,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
+      "id": "model.mcid.gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
       "description": "Uma linha por edição do boletim e indicador com o quadro Produção Industrial e Volume de Vendas (variação %) da página 3, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_producao_fisica"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_producao_fisica"
       ],
       "columns": [
         {
@@ -9304,19 +9304,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p4_credito_imobiliario_pib",
+      "id": "model.mcid.gld_boletim_p4_credito_imobiliario_pib",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p4_credito_imobiliario_pib",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p4_credito_imobiliario_pib",
       "description": "Uma linha por edição do boletim e periodo com o quadro Crédito Imobiliário / PIB (%) da página 4, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_credito_pib"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_credito_pib"
       ],
       "columns": [
         {
@@ -9344,19 +9344,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p4_no_uh_por_condicao_de_uso",
+      "id": "model.mcid.gld_boletim_p4_no_uh_por_condicao_de_uso",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p4_no_uh_por_condicao_de_uso",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p4_no_uh_por_condicao_de_uso",
       "description": "Uma linha por edição do boletim e fonte com o quadro Nº UH por Condição de Uso da página 4, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_uh_condicao_uso"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_uh_condicao_uso"
       ],
       "columns": [
         {
@@ -9412,19 +9412,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p5_financiamento_pf_mcmv_por_faixa",
+      "id": "model.mcid.gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p5_financiamento_pf_mcmv_por_faixa",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
       "description": "Uma linha por edição do boletim e faixa com o quadro Financiamento PF MCMV por faixa da página 5, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_financiamento_pf_faixa"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_financiamento_pf_faixa"
       ],
       "columns": [
         {
@@ -9473,19 +9473,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
+      "id": "model.mcid.gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
       "description": "Uma linha por edição do boletim e periodo com o quadro Saldo Caderneta de Poupança — Captação Líquida (R$ bi) da página 5, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_saldo_poupanca"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_saldo_poupanca"
       ],
       "columns": [
         {
@@ -9513,19 +9513,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
+      "id": "model.mcid.gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
       "description": "Uma linha por edição do boletim e indicador com o quadro SBPE Construção — unidades e valor (acum. no trimestre) da página 5, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.silver_continuo_abecip_financiamentos"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.slv_abecip_financiamentos"
       ],
       "columns": [
         {
@@ -9567,20 +9567,20 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p6_sinapi_brasil_e_incc_m",
+      "id": "model.mcid.gld_boletim_p6_sinapi_brasil_e_incc_m",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p6_sinapi_brasil_e_incc_m",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p6_sinapi_brasil_e_incc_m",
       "description": "Uma linha por edição do boletim e indicador com o quadro SINAPI (Brasil) e INCC-M da página 6, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_sinapi",
-        "model.mcid.gold_continuo_incc_m"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_sinapi",
+        "model.mcid.gld_incc_m"
       ],
       "columns": [
         {
@@ -9615,19 +9615,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
+      "id": "model.mcid.gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
       "description": "Uma linha por edição do boletim e periodo com o quadro Ticket médio das unidades lançadas vs. INCC da página 6, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_ticket_medio"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_ticket_medio"
       ],
       "columns": [
         {
@@ -9704,21 +9704,21 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_p7_indices_da_construcao_variacao",
+      "id": "model.mcid.gld_boletim_p7_indices_da_construcao_variacao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_p7_indices_da_construcao_variacao",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p7_indices_da_construcao_variacao",
       "description": "Uma linha por edição do boletim e indicador com o quadro Índices da Construção (variação %) da página 7, reproduzindo as colunas do impresso.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_pib_construcao_civil_pct",
-        "model.mcid.gold_continuo_indice_imob",
-        "model.mcid.gold_continuo_fipezap",
-        "model.mcid.gold_continuo_icst"
+        "model.mcid.gld_pib_construcao_civil_pct",
+        "model.mcid.gld_indice_imob",
+        "model.mcid.gld_fipezap",
+        "model.mcid.gld_icst"
       ],
       "columns": [
         {
@@ -9767,38 +9767,38 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_boletim_valores",
+      "id": "model.mcid.gld_boletim_valores",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_boletim_valores",
+      "schema": "conjuntura",
+      "name": "gld_boletim_valores",
       "description": "Uma linha por célula dos quadros do boletim, com o modelo de origem, a página, a edição, o rótulo da linha, o nome da coluna e o valor numérico quando aplicável.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_boletim_p1_pib_construcao_civil_em_de_crescimento",
-        "model.mcid.gold_boletim_p1_lancamentos_por_regiao_cbic",
-        "model.mcid.gold_boletim_p1_vendas_por_regiao_cbic",
-        "model.mcid.gold_boletim_p1_cbic_lancamentos_e_vendas_totais",
-        "model.mcid.gold_boletim_p2_lancamentos_por_construtora_variacao",
-        "model.mcid.gold_boletim_p2_vendas_por_construtora_variacao",
-        "model.mcid.gold_boletim_p2_totais_das_empresas_levantadas_variacao",
-        "model.mcid.gold_boletim_p2_financiamentos_imobiliarios_bacen",
-        "model.mcid.gold_boletim_p2_financiamentos_habitacionais_uh",
-        "model.mcid.gold_boletim_p3_empregos_construcao_caged",
-        "model.mcid.gold_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
-        "model.mcid.gold_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
-        "model.mcid.gold_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
-        "model.mcid.gold_boletim_p4_credito_imobiliario_pib",
-        "model.mcid.gold_boletim_p4_no_uh_por_condicao_de_uso",
-        "model.mcid.gold_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
-        "model.mcid.gold_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
-        "model.mcid.gold_boletim_p5_financiamento_pf_mcmv_por_faixa",
-        "model.mcid.gold_boletim_p6_sinapi_brasil_e_incc_m",
-        "model.mcid.gold_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
-        "model.mcid.gold_boletim_p7_indices_da_construcao_variacao"
+        "model.mcid.gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
+        "model.mcid.gld_boletim_p1_lancamentos_por_regiao_cbic",
+        "model.mcid.gld_boletim_p1_vendas_por_regiao_cbic",
+        "model.mcid.gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
+        "model.mcid.gld_boletim_p2_lancamentos_por_construtora_variacao",
+        "model.mcid.gld_boletim_p2_vendas_por_construtora_variacao",
+        "model.mcid.gld_boletim_p2_totais_das_empresas_levantadas_variacao",
+        "model.mcid.gld_boletim_p2_financiamentos_imobiliarios_bacen",
+        "model.mcid.gld_boletim_p2_financiamentos_habitacionais_uh",
+        "model.mcid.gld_boletim_p3_empregos_construcao_caged",
+        "model.mcid.gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
+        "model.mcid.gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
+        "model.mcid.gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
+        "model.mcid.gld_boletim_p4_credito_imobiliario_pib",
+        "model.mcid.gld_boletim_p4_no_uh_por_condicao_de_uso",
+        "model.mcid.gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
+        "model.mcid.gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
+        "model.mcid.gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
+        "model.mcid.gld_boletim_p6_sinapi_brasil_e_incc_m",
+        "model.mcid.gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
+        "model.mcid.gld_boletim_p7_indices_da_construcao_variacao"
       ],
       "columns": [
         {
@@ -9854,18 +9854,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_balancos_empresas",
+      "id": "model.mcid.gld_balancos_empresas",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_balancos_empresas",
+      "schema": "conjuntura",
+      "name": "gld_balancos_empresas",
       "description": "Uma linha por incorporadora de capital aberto e trimestre com as unidades lançadas e vendidas e suas variações percentuais contra o trimestre anterior, contra o mesmo trimestre do ano anterior e no acumulado do ano.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_manual_trimestrais"
+        "model.mcid.slv_manual_trimestrais"
       ],
       "columns": [
         {
@@ -9970,18 +9970,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_balancos_empresas_totais",
+      "id": "model.mcid.gld_balancos_empresas_totais",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_balancos_empresas_totais",
+      "schema": "conjuntura",
+      "name": "gld_balancos_empresas_totais",
       "description": "Uma linha por trimestre com o total de unidades lançadas e vendidas pelo conjunto das incorporadoras acompanhadas e as variações percentuais contra o trimestre anterior, o mesmo trimestre do ano anterior e o acumulado do ano.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_manual_trimestrais"
+        "model.mcid.slv_manual_trimestrais"
       ],
       "columns": [
         {
@@ -10079,18 +10079,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_canal_fgts",
+      "id": "model.mcid.gld_canal_fgts",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_canal_fgts",
+      "schema": "conjuntura",
+      "name": "gld_canal_fgts",
       "description": "Uma linha por mês com as unidades habitacionais e o valor financiado na modalidade Pró-Cotista do FGTS, abertos por faixa de renda familiar.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_manual_mensais"
+        "model.mcid.slv_manual_mensais"
       ],
       "columns": [
         {
@@ -10195,18 +10195,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_credito_pib",
+      "id": "model.mcid.gld_credito_pib",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_credito_pib",
+      "schema": "conjuntura",
+      "name": "gld_credito_pib",
       "description": "Uma linha por mês com o saldo da carteira de crédito imobiliário expresso como percentual do Produto Interno Bruto, conforme o BACEN.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_bacen_credito_pib"
+        "model.mcid.slv_bacen_credito_pib"
       ],
       "columns": [
         {
@@ -10227,20 +10227,20 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_empregos_caged",
+      "id": "model.mcid.gld_empregos_caged",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_empregos_caged",
+      "schema": "conjuntura",
+      "name": "gld_empregos_caged",
       "description": "Uma linha por mês com a criação líquida e o estoque de empregos formais na construção civil apurados pelo Novo CAGED, abertos entre construção de edifícios, serviços especializados e o total do setor.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_novo_caged",
-        "model.mcid.silver_continuo_novo_caged_servicos_especializados",
-        "model.mcid.silver_continuo_novo_caged_total"
+        "model.mcid.slv_novo_caged",
+        "model.mcid.slv_novo_caged_servicos_especializados",
+        "model.mcid.slv_novo_caged_total"
       ],
       "columns": [
         {
@@ -10352,18 +10352,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_fgts_valor_medio",
+      "id": "model.mcid.gld_fgts_valor_medio",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_fgts_valor_medio",
+      "schema": "conjuntura",
+      "name": "gld_fgts_valor_medio",
       "description": "Uma linha por mês com o valor médio dos imóveis financiados pelo FGTS, no conjunto das operações e na faixa de menor renda, e suas variações no mês, no acumulado do ano e em doze meses.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_fgts_valor_medio_imoveis"
+        "model.mcid.slv_fgts_valor_medio_imoveis"
       ],
       "columns": [
         {
@@ -10447,18 +10447,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_financiamento_pf_faixa",
+      "id": "model.mcid.gld_financiamento_pf_faixa",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_financiamento_pf_faixa",
+      "schema": "conjuntura",
+      "name": "gld_financiamento_pf_faixa",
       "description": "Uma linha por mês com as unidades habitacionais e o valor financiado a pessoa física pelo FGTS, abertos por faixa de renda familiar do MCMV, faixa de classe média e operações sem faixa atribuída.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_geavo_cci_cca"
+        "model.mcid.slv_geavo_cci_cca"
       ],
       "columns": [
         {
@@ -10584,19 +10584,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_financiamentos_habitacionais",
+      "id": "model.mcid.gld_financiamentos_habitacionais",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_financiamentos_habitacionais",
+      "schema": "conjuntura",
+      "name": "gld_financiamentos_habitacionais",
       "description": "Uma linha por trimestre com as unidades habitacionais financiadas pelo FGTS na produção e pelo SBPE na construção, no trimestre e no acumulado de doze meses.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_geavo_fgts_pj",
-        "model.mcid.silver_continuo_abecip_financiamentos"
+        "model.mcid.slv_geavo_fgts_pj",
+        "model.mcid.slv_abecip_financiamentos"
       ],
       "columns": [
         {
@@ -10666,18 +10666,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_financiamentos_imobiliarios_pf_pj",
+      "id": "model.mcid.gld_financiamentos_imobiliarios_pf_pj",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_financiamentos_imobiliarios_pf_pj",
+      "schema": "conjuntura",
+      "name": "gld_financiamentos_imobiliarios_pf_pj",
       "description": "Uma linha por mês com as concessões de crédito imobiliário, taxas de juros e inadimplência apuradas pelo BACEN, separadas entre pessoa física e pessoa jurídica.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_bacen_financiamentos_imobiliarios"
+        "model.mcid.slv_bacen_financiamentos_imobiliarios"
       ],
       "columns": [
         {
@@ -10733,19 +10733,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_financiamentos_instituicao",
+      "id": "model.mcid.gld_financiamentos_instituicao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_financiamentos_instituicao",
+      "schema": "conjuntura",
+      "name": "gld_financiamentos_instituicao",
       "description": "Uma linha por instituição financeira e mês com as unidades e o valor de financiamento imobiliário do SBPE acumulados no ano e a participação de cada instituição no total do sistema, conforme a ABECIP.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_abecip_instituicoes",
-        "model.mcid.silver_continuo_manual_mensais"
+        "model.mcid.slv_abecip_instituicoes",
+        "model.mcid.slv_manual_mensais"
       ],
       "columns": [
         {
@@ -10843,18 +10843,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_fipezap",
+      "id": "model.mcid.gld_fipezap",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_fipezap",
+      "schema": "conjuntura",
+      "name": "gld_fipezap",
       "description": "Uma linha por mês com o número índice do FipeZap de locação residencial e suas variações contra o mês anterior, contra o mesmo mês do ano anterior e no acumulado do ano.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_fipezap_locacao"
+        "model.mcid.slv_fipezap_locacao"
       ],
       "columns": [
         {
@@ -10917,18 +10917,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_funding",
+      "id": "model.mcid.gld_funding",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_funding",
+      "schema": "conjuntura",
+      "name": "gld_funding",
       "description": "Uma linha por mês com o estoque das fontes que financiam o crédito imobiliário, incluindo poupança do SBPE, FGTS e os instrumentos de mercado LCI, LCA, CRI, CRA e LIG, em bilhões de reais.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_manual_mensais"
+        "model.mcid.slv_manual_mensais"
       ],
       "columns": [
         {
@@ -11012,18 +11012,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_fundo_social",
+      "id": "model.mcid.gld_fundo_social",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_fundo_social",
+      "schema": "conjuntura",
+      "name": "gld_fundo_social",
       "description": "Uma linha por mês com as unidades habitacionais e o valor financiado com recursos do Fundo Social, separados entre imóveis novos e usados.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_gefus_fundo_social"
+        "model.mcid.slv_gefus_fundo_social"
       ],
       "columns": [
         {
@@ -11121,18 +11121,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_icst",
+      "id": "model.mcid.gld_icst",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_icst",
+      "schema": "conjuntura",
+      "name": "gld_icst",
       "description": "Uma linha por mês com o Índice de Confiança da Construção apurado pela FGV-IBRE, nas séries com e sem ajuste sazonal, e suas variações contra o mês anterior e o mesmo mês do ano anterior.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_fgv_icst"
+        "model.mcid.slv_fgv_icst"
       ],
       "columns": [
         {
@@ -11216,18 +11216,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_incc_m",
+      "id": "model.mcid.gld_incc_m",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_incc_m",
+      "schema": "conjuntura",
+      "name": "gld_incc_m",
       "description": "Uma linha por mês com o número índice do INCC-M apurado pela FGV e suas variações no mês, no acumulado do ano e em doze meses.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_fgv_incc_m"
+        "model.mcid.slv_fgv_incc_m"
       ],
       "columns": [
         {
@@ -11283,18 +11283,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_indice_imob",
+      "id": "model.mcid.gld_indice_imob",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_indice_imob",
+      "schema": "conjuntura",
+      "name": "gld_indice_imob",
       "description": "Uma linha por mês com as variações do índice IMOB, que acompanha as ações do setor imobiliário na B3, contra o mês anterior, contra o mesmo mês do ano anterior e no acumulado do ano.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_infomoney_imob"
+        "model.mcid.slv_infomoney_imob"
       ],
       "columns": [
         {
@@ -11350,18 +11350,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_novos_financiamentos_banco",
+      "id": "model.mcid.gld_novos_financiamentos_banco",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_novos_financiamentos_banco",
+      "schema": "conjuntura",
+      "name": "gld_novos_financiamentos_banco",
       "description": "Uma linha por mês com as unidades e o valor de novos financiamentos imobiliários do SBPE acumulados no ano, abertos por instituição financeira, conforme a ABECIP.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_manual_mensais"
+        "model.mcid.slv_manual_mensais"
       ],
       "columns": [
         {
@@ -11494,18 +11494,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_ogu",
+      "id": "model.mcid.gld_ogu",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_ogu",
+      "schema": "conjuntura",
+      "name": "gld_ogu",
       "description": "Uma linha por ação de governo com a dotação, o empenho, o pagamento e os restos a pagar da execução orçamentária federal em habitação, conforme o SIAFI, na posição da extração.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_siafi_dotacao_execucao"
+        "model.mcid.slv_siafi_dotacao_execucao"
       ],
       "columns": [
         {
@@ -11575,18 +11575,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_pib_construcao_civil",
+      "id": "model.mcid.gld_pib_construcao_civil",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_pib_construcao_civil",
+      "schema": "conjuntura",
+      "name": "gld_pib_construcao_civil",
       "description": "Uma linha por trimestre com as variações percentuais do PIB da construção civil apuradas pelo IBGE, contra o trimestre anterior, contra o mesmo trimestre do ano anterior, acumulada no ano e acumulada em quatro trimestres.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_ibge_pib_construcao_civil"
+        "model.mcid.slv_ibge_pib_construcao_civil"
       ],
       "columns": [
         {
@@ -11642,18 +11642,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_pib_construcao_civil_pct",
+      "id": "model.mcid.gld_pib_construcao_civil_pct",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_pib_construcao_civil_pct",
+      "schema": "conjuntura",
+      "name": "gld_pib_construcao_civil_pct",
       "description": "Uma linha por trimestre com as três taxas de variação do PIB da construção civil publicadas no boletim: contra o trimestre imediatamente anterior, acumulada no ano e acumulada em quatro trimestres.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_pib_construcao_civil_pct"
+        "model.mcid.slv_pib_construcao_civil_pct"
       ],
       "columns": [
         {
@@ -11709,18 +11709,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_pnad_ocupados",
+      "id": "model.mcid.gld_pnad_ocupados",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_pnad_ocupados",
+      "schema": "conjuntura",
+      "name": "gld_pnad_ocupados",
       "description": "Uma linha por trimestre móvel com a população ocupada na construção civil e no total da economia, em milhares de pessoas, conforme a PNAD Contínua do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_ibge_pnad_construcao_ocupados"
+        "model.mcid.slv_ibge_pnad_construcao_ocupados"
       ],
       "columns": [
         {
@@ -11762,18 +11762,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_pnad_rendimento",
+      "id": "model.mcid.gld_pnad_rendimento",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_pnad_rendimento",
+      "schema": "conjuntura",
+      "name": "gld_pnad_rendimento",
       "description": "Uma linha por trimestre móvel com o rendimento médio real de quem trabalha na construção civil e do conjunto dos ocupados, em reais, conforme a PNAD Contínua do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_ibge_pnad_construcao_rendimento"
+        "model.mcid.slv_ibge_pnad_construcao_rendimento"
       ],
       "columns": [
         {
@@ -11815,19 +11815,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_producao_fisica",
+      "id": "model.mcid.gld_producao_fisica",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_producao_fisica",
+      "schema": "conjuntura",
+      "name": "gld_producao_fisica",
       "description": "Uma linha por mês com as variações da produção física dos insumos típicos da construção e do volume de vendas de material de construção apuradas pelo IBGE, no mês, no acumulado do ano e em doze meses.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_ibge_pim_pf_brasil",
-        "model.mcid.silver_continuo_ibge_pmc_construcao"
+        "model.mcid.slv_ibge_pim_pf_brasil",
+        "model.mcid.slv_ibge_pmc_construcao"
       ],
       "columns": [
         {
@@ -11890,18 +11890,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_saldo_poupanca",
+      "id": "model.mcid.gld_saldo_poupanca",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_saldo_poupanca",
+      "schema": "conjuntura",
+      "name": "gld_saldo_poupanca",
       "description": "Uma linha por mês com os depósitos, retiradas, captação líquida e saldo das cadernetas de poupança do SBPE, conforme a ABECIP.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_abecip_poupanca_sbpe"
+        "model.mcid.slv_abecip_poupanca_sbpe"
       ],
       "columns": [
         {
@@ -11950,18 +11950,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_sinapi",
+      "id": "model.mcid.gld_sinapi",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_sinapi",
+      "schema": "conjuntura",
+      "name": "gld_sinapi",
       "description": "Uma linha por mês com o custo de construção por metro quadrado apurado pelo SINAPI, incluindo material e mão de obra, e suas variações no mês, no acumulado do ano e em doze meses.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_ibge_sinapi"
+        "model.mcid.slv_ibge_sinapi"
       ],
       "columns": [
         {
@@ -12010,19 +12010,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_ticket_medio",
+      "id": "model.mcid.gld_ticket_medio",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_ticket_medio",
+      "schema": "conjuntura",
+      "name": "gld_ticket_medio",
       "description": "Uma linha por trimestre comparando as variações do ticket médio das unidades lançadas por MRV, Direcional, Tenda e Cury com o INCC-M, no trimestre e no acumulado desde o quarto trimestre de 2020.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.gold_continuo_incc_m",
-        "model.mcid.silver_continuo_manual_trimestrais"
+        "model.mcid.gld_incc_m",
+        "model.mcid.slv_manual_trimestrais"
       ],
       "columns": [
         {
@@ -12169,20 +12169,20 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.gold_continuo_uh_condicao_uso",
+      "id": "model.mcid.gld_uh_condicao_uso",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "gold",
       "classification": "internal",
-      "schema": "conjuntura_mart",
-      "name": "gold_continuo_uh_condicao_uso",
+      "schema": "conjuntura",
+      "name": "gld_uh_condicao_uso",
       "description": "Uma linha por mês com as unidades habitacionais financiadas separadas entre imóveis novos e usados, distinguindo os recursos do FGTS dos recursos do SBPE destinados à aquisição.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.silver_continuo_geavo_fgts_pf",
-        "model.mcid.silver_continuo_manual_mensais",
-        "model.mcid.silver_continuo_abecip_financiamentos"
+        "model.mcid.slv_geavo_fgts_pf",
+        "model.mcid.slv_manual_mensais",
+        "model.mcid.slv_abecip_financiamentos"
       ],
       "columns": [
         {
@@ -12868,18 +12868,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_abecip_financiamentos",
+      "id": "model.mcid.slv_abecip_financiamentos",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_abecip_financiamentos",
+      "schema": "conjuntura",
+      "name": "slv_abecip_financiamentos",
       "description": "Uma linha por mês com as unidades e o valor de financiamento imobiliário do SBPE, separados entre destinação à construção e à aquisição, conforme a ABECIP.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_abecip_financiamentos"
+        "model.mcid.bnz_abecip_financiamentos"
       ],
       "columns": [
         {
@@ -12956,18 +12956,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_abecip_instituicoes",
+      "id": "model.mcid.slv_abecip_instituicoes",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_abecip_instituicoes",
+      "schema": "conjuntura",
+      "name": "slv_abecip_instituicoes",
       "description": "Uma linha por instituição financeira, mês e modalidade com as unidades e o valor de financiamento imobiliário do SBPE no mês e no acumulado do ano, conforme a ABECIP.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_abecip_instituicoes"
+        "model.mcid.bnz_abecip_instituicoes"
       ],
       "columns": [
         {
@@ -13051,18 +13051,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_abecip_poupanca_sbpe",
+      "id": "model.mcid.slv_abecip_poupanca_sbpe",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_abecip_poupanca_sbpe",
+      "schema": "conjuntura",
+      "name": "slv_abecip_poupanca_sbpe",
       "description": "Uma linha por mês com depósitos, retiradas, captação líquida e saldo das cadernetas de poupança do SBPE, conforme a ABECIP.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_abecip_poupanca_sbpe"
+        "model.mcid.bnz_abecip_poupanca_sbpe"
       ],
       "columns": [
         {
@@ -13111,18 +13111,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_bacen_credito_pib",
+      "id": "model.mcid.slv_bacen_credito_pib",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_bacen_credito_pib",
+      "schema": "conjuntura",
+      "name": "slv_bacen_credito_pib",
       "description": "Uma linha por mês com o saldo da carteira de crédito imobiliário expresso como percentual do Produto Interno Bruto, conforme o BACEN.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_bacen_credito_pib"
+        "model.mcid.bnz_bacen_credito_pib"
       ],
       "columns": [
         {
@@ -13143,18 +13143,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_bacen_financiamentos_imobiliarios",
+      "id": "model.mcid.slv_bacen_financiamentos_imobiliarios",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_bacen_financiamentos_imobiliarios",
+      "schema": "conjuntura",
+      "name": "slv_bacen_financiamentos_imobiliarios",
       "description": "Uma linha por mês e medida com as concessões de crédito imobiliário, taxas de juros e inadimplência apuradas pelo BACEN, separadas entre pessoa física e pessoa jurídica.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_bacen_financiamentos_imobiliarios"
+        "model.mcid.bnz_bacen_financiamentos_imobiliarios"
       ],
       "columns": [
         {
@@ -13182,13 +13182,13 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_empresas_balanco_lancamentos_vendas",
+      "id": "model.mcid.slv_empresas_balanco_lancamentos_vendas",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_empresas_balanco_lancamentos_vendas",
+      "schema": "conjuntura",
+      "name": "slv_empresas_balanco_lancamentos_vendas",
       "description": "Uma linha por incorporadora e trimestre com as unidades lançadas e vendidas e suas variações percentuais, conforme divulgado nos balanços trimestrais das empresas de capital aberto.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -13282,13 +13282,13 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_fgts_valor_medio_imoveis",
+      "id": "model.mcid.slv_fgts_valor_medio_imoveis",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_fgts_valor_medio_imoveis",
+      "schema": "conjuntura",
+      "name": "slv_fgts_valor_medio_imoveis",
       "description": "Uma linha por mês com o valor médio dos imóveis financiados pelo FGTS, no conjunto das operações e na faixa de menor renda, e suas variações.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -13368,18 +13368,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_fgv_icst",
+      "id": "model.mcid.slv_fgv_icst",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_fgv_icst",
+      "schema": "conjuntura",
+      "name": "slv_fgv_icst",
       "description": "Uma linha por mês com o Índice de Confiança da Construção apurado pela FGV-IBRE, nas séries com e sem ajuste sazonal.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_fgv_icst"
+        "model.mcid.bnz_fgv_icst"
       ],
       "columns": [
         {
@@ -13421,18 +13421,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_fgv_incc_m",
+      "id": "model.mcid.slv_fgv_incc_m",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_fgv_incc_m",
+      "schema": "conjuntura",
+      "name": "slv_fgv_incc_m",
       "description": "Uma linha por mês com o número índice do INCC-M apurado pela FGV e suas variações no mês, no acumulado do ano e em doze meses.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_fgv_incc_m"
+        "model.mcid.bnz_fgv_incc_m"
       ],
       "columns": [
         {
@@ -13474,18 +13474,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_fipezap_locacao",
+      "id": "model.mcid.slv_fipezap_locacao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_fipezap_locacao",
+      "schema": "conjuntura",
+      "name": "slv_fipezap_locacao",
       "description": "Uma linha por mês com o número índice do FipeZap de locação residencial e suas variações no mês e no acumulado do ano, conforme a FIPE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_fipezap_locacao"
+        "model.mcid.bnz_fipezap_locacao"
       ],
       "columns": [
         {
@@ -13527,19 +13527,19 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_geavo_cci_cca",
+      "id": "model.mcid.slv_geavo_cci_cca",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_geavo_cci_cca",
+      "schema": "conjuntura",
+      "name": "slv_geavo_cci_cca",
       "description": "Uma linha por mês, faixa de renda e instrumento de crédito com as unidades habitacionais e o valor financiado a pessoa física no desligamento de empreendimentos construídos com recursos do FGTS.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_geavo_cci_analitico",
-        "model.mcid.bronze_continuo_geavo_cca_analitico"
+        "model.mcid.bnz_geavo_cci_analitico",
+        "model.mcid.bnz_geavo_cca_analitico"
       ],
       "columns": [
         {
@@ -13623,18 +13623,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_geavo_fgts_pf",
+      "id": "model.mcid.slv_geavo_fgts_pf",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_geavo_fgts_pf",
+      "schema": "conjuntura",
+      "name": "slv_geavo_fgts_pf",
       "description": "Uma linha por mês, faixa de renda e condição de uso com as unidades habitacionais e o valor financiado a pessoa física com recursos do FGTS.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_geavo_fgts_pf"
+        "model.mcid.bnz_geavo_fgts_pf"
       ],
       "columns": [
         {
@@ -13690,18 +13690,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_geavo_fgts_pj",
+      "id": "model.mcid.slv_geavo_fgts_pj",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_geavo_fgts_pj",
+      "schema": "conjuntura",
+      "name": "slv_geavo_fgts_pj",
       "description": "Uma linha por trimestre com as unidades habitacionais e os contratos de financiamento à produção habitacional com recursos do FGTS.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_geavo_fgts_pj"
+        "model.mcid.bnz_geavo_fgts_pj"
       ],
       "columns": [
         {
@@ -13743,18 +13743,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_gefus_fundo_social",
+      "id": "model.mcid.slv_gefus_fundo_social",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_gefus_fundo_social",
+      "schema": "conjuntura",
+      "name": "slv_gefus_fundo_social",
       "description": "Uma linha por mês e condição de uso com as unidades habitacionais e o valor financiado com recursos do Fundo Social.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_gefus_fundo_social"
+        "model.mcid.bnz_gefus_fundo_social"
       ],
       "columns": [
         {
@@ -13817,18 +13817,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_paic_obras",
+      "id": "model.mcid.slv_ibge_paic_obras",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_paic_obras",
+      "schema": "conjuntura",
+      "name": "slv_ibge_paic_obras",
       "description": "Uma linha por ano e variável com o valor das obras e serviços executados pelas empresas de construção, conforme a Pesquisa Anual da Indústria da Construção do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_paic_obras"
+        "model.mcid.bnz_ibge_paic_obras"
       ],
       "columns": [
         {
@@ -13926,18 +13926,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_paic_pessoal_salarial",
+      "id": "model.mcid.slv_ibge_paic_pessoal_salarial",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_paic_pessoal_salarial",
+      "schema": "conjuntura",
+      "name": "slv_ibge_paic_pessoal_salarial",
       "description": "Uma linha por ano e variável com o pessoal ocupado e a massa salarial das empresas de construção, conforme a Pesquisa Anual da Indústria da Construção do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_paic_pessoal_salarial"
+        "model.mcid.bnz_ibge_paic_pessoal_salarial"
       ],
       "columns": [
         {
@@ -14035,18 +14035,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_paic_resultados",
+      "id": "model.mcid.slv_ibge_paic_resultados",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_paic_resultados",
+      "schema": "conjuntura",
+      "name": "slv_ibge_paic_resultados",
       "description": "Uma linha por ano e variável com receita, custos e valor adicionado das empresas de construção, conforme a Pesquisa Anual da Indústria da Construção do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_paic_resultados"
+        "model.mcid.bnz_ibge_paic_resultados"
       ],
       "columns": [
         {
@@ -14144,18 +14144,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pib_consolidado_trimestral",
+      "id": "model.mcid.slv_ibge_pib_consolidado_trimestral",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pib_consolidado_trimestral",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pib_consolidado_trimestral",
       "description": "Uma linha por trimestre e variável com o PIB consolidado do país apurado pelo IBGE, usado como base de comparação para o recorte da construção.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pib_consolidado_trimestral"
+        "model.mcid.bnz_ibge_pib_consolidado_trimestral"
       ],
       "columns": [
         {
@@ -14253,18 +14253,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pib_construcao_civil",
+      "id": "model.mcid.slv_ibge_pib_construcao_civil",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pib_construcao_civil",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pib_construcao_civil",
       "description": "Uma linha por trimestre e variável com o PIB da construção civil apurado pelo IBGE, incluindo o valor do índice e as taxas de variação da série.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pib_construcao_civil"
+        "model.mcid.bnz_ibge_pib_construcao_civil"
       ],
       "columns": [
         {
@@ -14362,18 +14362,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pib_corrente",
+      "id": "model.mcid.slv_ibge_pib_corrente",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pib_corrente",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pib_corrente",
       "description": "Uma linha por trimestre e variável com o PIB a preços correntes apurado pelo IBGE, em milhões de reais.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pib_corrente"
+        "model.mcid.bnz_ibge_pib_corrente"
       ],
       "columns": [
         {
@@ -14471,18 +14471,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pim_pf_brasil",
+      "id": "model.mcid.slv_ibge_pim_pf_brasil",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pim_pf_brasil",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pim_pf_brasil",
       "description": "Uma linha por mês e variável com as variações da produção física dos insumos típicos da construção civil apuradas pelo IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pim_pf_brasil"
+        "model.mcid.bnz_ibge_pim_pf_brasil"
       ],
       "columns": [
         {
@@ -14580,18 +14580,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pmc_construcao",
+      "id": "model.mcid.slv_ibge_pmc_construcao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pmc_construcao",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pmc_construcao",
       "description": "Uma linha por mês e variável com as variações do volume de vendas no varejo de material de construção apuradas pelo IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pmc_construcao"
+        "model.mcid.bnz_ibge_pmc_construcao"
       ],
       "columns": [
         {
@@ -14689,18 +14689,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pnad_construcao_ocupados",
+      "id": "model.mcid.slv_ibge_pnad_construcao_ocupados",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pnad_construcao_ocupados",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pnad_construcao_ocupados",
       "description": "Uma linha por trimestre móvel e variável com a população ocupada na construção civil e no total da economia, em milhares de pessoas, conforme a PNAD Contínua do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pnad_construcao_ocupados"
+        "model.mcid.bnz_ibge_pnad_construcao_ocupados"
       ],
       "columns": [
         {
@@ -14798,18 +14798,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pnad_construcao_rendimento",
+      "id": "model.mcid.slv_ibge_pnad_construcao_rendimento",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pnad_construcao_rendimento",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pnad_construcao_rendimento",
       "description": "Uma linha por trimestre móvel e variável com o rendimento médio real na construção civil e no total dos ocupados, em reais, conforme a PNAD Contínua do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pnad_construcao_rendimento"
+        "model.mcid.bnz_ibge_pnad_construcao_rendimento"
       ],
       "columns": [
         {
@@ -14907,18 +14907,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pnadc_populacao_decis_renda",
+      "id": "model.mcid.slv_ibge_pnadc_populacao_decis_renda",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pnadc_populacao_decis_renda",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pnadc_populacao_decis_renda",
       "description": "Uma linha por trimestre móvel e décimo de renda com a distribuição da população brasileira apurada pela PNAD Contínua do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pnadc_populacao_decis_renda"
+        "model.mcid.bnz_ibge_pnadc_populacao_decis_renda"
       ],
       "columns": [
         {
@@ -15016,18 +15016,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_pnadc_rendimento_domiciliar",
+      "id": "model.mcid.slv_ibge_pnadc_rendimento_domiciliar",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_pnadc_rendimento_domiciliar",
+      "schema": "conjuntura",
+      "name": "slv_ibge_pnadc_rendimento_domiciliar",
       "description": "Uma linha por trimestre móvel e variável com o rendimento domiciliar real apurado pela PNAD Contínua do IBGE.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_pnadc_rendimento_domiciliar"
+        "model.mcid.bnz_ibge_pnadc_rendimento_domiciliar"
       ],
       "columns": [
         {
@@ -15125,18 +15125,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_ibge_sinapi",
+      "id": "model.mcid.slv_ibge_sinapi",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_ibge_sinapi",
+      "schema": "conjuntura",
+      "name": "slv_ibge_sinapi",
       "description": "Uma linha por mês e variável com o custo de construção por metro quadrado apurado pelo SINAPI, incluindo material e mão de obra.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_ibge_sinapi"
+        "model.mcid.bnz_ibge_sinapi"
       ],
       "columns": [
         {
@@ -15234,18 +15234,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_infomoney_imob",
+      "id": "model.mcid.slv_infomoney_imob",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_infomoney_imob",
+      "schema": "conjuntura",
+      "name": "slv_infomoney_imob",
       "description": "Uma linha por pregão com a pontuação de abertura, máxima, mínima e fechamento do índice IMOB, que acompanha as ações do setor imobiliário na B3.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_infomoney_imob"
+        "model.mcid.bnz_infomoney_imob"
       ],
       "columns": [
         {
@@ -15308,13 +15308,13 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_manual_mensais",
+      "id": "model.mcid.slv_manual_mensais",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_manual_mensais",
+      "schema": "conjuntura",
+      "name": "slv_manual_mensais",
       "description": "Uma linha por mês com as séries do boletim de conjuntura habitacional cuja origem não é consultável por interface programática, incluindo indicadores de crédito, preços e financiamento habitacional.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -16591,13 +16591,13 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_manual_trimestrais",
+      "id": "model.mcid.slv_manual_trimestrais",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_manual_trimestrais",
+      "schema": "conjuntura",
+      "name": "slv_manual_trimestrais",
       "description": "Uma linha por trimestre com as séries do boletim de conjuntura habitacional cuja origem não é consultável por interface programática, incluindo balanços de incorporadoras e apurações da CBIC.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -17566,18 +17566,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_novo_caged",
+      "id": "model.mcid.slv_novo_caged",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_novo_caged",
+      "schema": "conjuntura",
+      "name": "slv_novo_caged",
       "description": "Uma linha por mês com admissões, desligamentos, saldo líquido e estoque de postos formais na construção de edifícios, conforme o Novo CAGED.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_novo_caged"
+        "model.mcid.bnz_novo_caged"
       ],
       "columns": [
         {
@@ -17640,18 +17640,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_novo_caged_servicos_especializados",
+      "id": "model.mcid.slv_novo_caged_servicos_especializados",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_novo_caged_servicos_especializados",
+      "schema": "conjuntura",
+      "name": "slv_novo_caged_servicos_especializados",
       "description": "Uma linha por mês com admissões, desligamentos, saldo líquido e estoque de postos formais em serviços especializados para construção, conforme o Novo CAGED.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_novo_caged_servicos_especializados"
+        "model.mcid.bnz_novo_caged_servicos_especializados"
       ],
       "columns": [
         {
@@ -17714,18 +17714,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_novo_caged_total",
+      "id": "model.mcid.slv_novo_caged_total",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_novo_caged_total",
+      "schema": "conjuntura",
+      "name": "slv_novo_caged_total",
       "description": "Uma linha por mês com admissões, desligamentos, saldo líquido e estoque de postos formais no conjunto da construção civil, conforme o Novo CAGED.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_novo_caged_total"
+        "model.mcid.bnz_novo_caged_total"
       ],
       "columns": [
         {
@@ -17788,13 +17788,13 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_pib_construcao_civil_pct",
+      "id": "model.mcid.slv_pib_construcao_civil_pct",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_pib_construcao_civil_pct",
+      "schema": "conjuntura",
+      "name": "slv_pib_construcao_civil_pct",
       "description": "Uma linha por trimestre com as três taxas de variação do PIB da construção civil: contra o trimestre imediatamente anterior, acumulada no ano e acumulada em quatro trimestres.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -17846,13 +17846,13 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_sbpe_financiamentos_aquisicao",
+      "id": "model.mcid.slv_sbpe_financiamentos_aquisicao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_sbpe_financiamentos_aquisicao",
+      "schema": "conjuntura",
+      "name": "slv_sbpe_financiamentos_aquisicao",
       "description": "Uma linha por mês com o financiamento imobiliário e a captação de poupança do SBPE, abertos por destinação, por condição de uso do imóvel e por instituição financeira.",
       "documentation_status": "curated",
       "materialized": "table",
@@ -18107,18 +18107,18 @@
       "rag_eligivel": true
     },
     {
-      "id": "model.mcid.silver_continuo_siafi_dotacao_execucao",
+      "id": "model.mcid.slv_siafi_dotacao_execucao",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
       "layer": "silver",
       "classification": "internal",
-      "schema": "conjuntura_silver",
-      "name": "silver_continuo_siafi_dotacao_execucao",
+      "schema": "conjuntura",
+      "name": "slv_siafi_dotacao_execucao",
       "description": "Uma linha por ação de governo e unidade gestora com a dotação, o empenho, o pagamento e os restos a pagar da execução orçamentária federal, conforme o SIAFI.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bronze_continuo_siafi_dotacao_execucao"
+        "model.mcid.bnz_siafi_dotacao_execucao"
       ],
       "columns": [
         {

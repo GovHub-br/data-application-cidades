@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p2_financiamentos_habitacionais_uh %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "FGTS-PJ", "SBPE Const."
-from {{ ref('gold_boletim_p2_financiamentos_habitacionais_uh') }}
+from {{ ref('gld_boletim_p2_financiamentos_habitacionais_uh') }}
 
 {% endsnapshot %}

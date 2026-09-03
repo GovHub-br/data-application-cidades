@@ -9,7 +9,7 @@
 -- FipeZap revisam meses já publicados, então uma célula pode divergir por a
 -- fonte ter mudado depois da edição. O que este teste garante é que nenhuma
 -- divergência passe despercebida. Para saber o que o boletim viu na época,
--- use os snapshots (`conjuntura_snapshots.snap_boletim_*`).
+-- use os snapshots (`conjuntura.snap_boletim_*`).
 --
 -- Falha se a célula esperada não existir no gold — coordenada errada é
 -- defeito de verdade, e silenciar isso esvaziaria o teste.
@@ -20,7 +20,7 @@ with esperado as (
 
 obtido as (
     select modelo, edicao, linha, coluna, valor
-    from {{ ref('gold_boletim_valores') }}
+    from {{ ref('gld_boletim_valores') }}
 ),
 
 comparado as (
@@ -48,6 +48,6 @@ comparado as (
 
 -- Falha só em coordenada inválida. Divergência de valor NÃO falha: as fontes
 -- revisam o passado, e um teste vermelho o tempo todo vira ruído que se
--- aprende a ignorar. As divergências ficam visíveis em `gold_boletim_valores`
+-- aprende a ignorar. As divergências ficam visíveis em `gld_boletim_valores`
 -- contra o seed, e o que o boletim viu na época está nos snapshots.
 select * from comparado where veredito = 'COORDENADA_INVALIDA'

@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p7_indices_da_construcao_variacao %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "Índice IMOB", "Índice ABRAMAT", "Índice FipeZap", "Índice ICST"
-from {{ ref('gold_boletim_p7_indices_da_construcao_variacao') }}
+from {{ ref('gld_boletim_p7_indices_da_construcao_variacao') }}
 
 {% endsnapshot %}

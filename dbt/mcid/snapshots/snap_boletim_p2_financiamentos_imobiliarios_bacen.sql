@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p2_financiamentos_imobiliarios_bacen %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "PF Concessões (R$ mi)", "PF Taxa de Juros (%a.a)", "PF Inadimplência (%)", "PJ Concessões (R$ mi)", "PJ Taxa de Juros (%a.a)", "PJ Inadimplência (%)"
-from {{ ref('gold_boletim_p2_financiamentos_imobiliarios_bacen') }}
+from {{ ref('gld_boletim_p2_financiamentos_imobiliarios_bacen') }}
 
 {% endsnapshot %}

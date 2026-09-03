@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p3_empregos_construcao_caged %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Criação Líquida (Saldo)", "Total de Postos (Estoque)"
-from {{ ref('gold_boletim_p3_empregos_construcao_caged') }}
+from {{ ref('gld_boletim_p3_empregos_construcao_caged') }}
 
 {% endsnapshot %}

@@ -9,126 +9,126 @@ version: 2
 # time de desenvolvimento e não é metadado de consumo do catálogo.
 
 models:
-  - name: bronze_continuo_abecip_financiamentos
+  - name: bnz_abecip_financiamentos
     description: >
       Financiamento imobiliário com recursos da poupança, separado entre
       destinação à construção e à aquisição, em unidades e em milhões de
       reais, por mês.
-  - name: bronze_continuo_abecip_instituicoes
+  - name: bnz_abecip_instituicoes
     description: >
       Financiamento imobiliário com recursos da poupança aberto por
       instituição financeira, em unidades e em milhões de reais acumulados no
       ano.
-  - name: bronze_continuo_abecip_poupanca_sbpe
+  - name: bnz_abecip_poupanca_sbpe
     description: >
       Movimento das cadernetas de poupança do sistema habitacional, com
       depósitos, retiradas, captação líquida e saldo, por mês.
-  - name: bronze_continuo_bacen_credito_pib
+  - name: bnz_bacen_credito_pib
     description: >
       Saldo da carteira de crédito imobiliário expresso como percentual do
       Produto Interno Bruto, por mês.
-  - name: bronze_continuo_bacen_financiamentos_imobiliarios
+  - name: bnz_bacen_financiamentos_imobiliarios
     description: >
       Crédito imobiliário concedido a pessoa física e jurídica, com volume,
       taxa de juros média e inadimplência da carteira, por mês.
-  - name: bronze_continuo_fgv_icst
+  - name: bnz_fgv_icst
     description: >
       Índice de confiança do empresariado da construção, nas séries com e sem
       ajuste sazonal, por mês.
-  - name: bronze_continuo_fgv_incc_m
+  - name: bnz_fgv_incc_m
     description: >
       Índice de custo da construção habitacional, com número índice e
       variações percentuais, por mês.
-  - name: bronze_continuo_fipezap_locacao
+  - name: bnz_fipezap_locacao
     description: >
       Índice de preços de locação residencial anunciados, com número índice e
       variações percentuais, por mês.
-  - name: bronze_continuo_geavo_cca_analitico
+  - name: bnz_geavo_cca_analitico
     description: >
       Contratos de financiamento habitacional a pessoa física originados de
       carteira de crédito associativo, em detalhe por contrato.
-  - name: bronze_continuo_geavo_cci_analitico
+  - name: bnz_geavo_cci_analitico
     description: >
       Contratos de financiamento habitacional a pessoa física originados de
       cédula de crédito imobiliário, em detalhe por contrato.
-  - name: bronze_continuo_geavo_fgts_pf
+  - name: bnz_geavo_fgts_pf
     description: >
       Financiamento habitacional a pessoa física com recursos do fundo de
       garantia, por faixa de renda e condição de uso do imóvel.
-  - name: bronze_continuo_geavo_fgts_pj
+  - name: bnz_geavo_fgts_pj
     description: >
       Financiamento à produção habitacional com recursos do fundo de garantia,
       em unidades habitacionais contratadas.
-  - name: bronze_continuo_gefus_fundo_social
+  - name: bnz_gefus_fundo_social
     description: >
       Financiamento habitacional custeado pelo fundo social, em unidades
       habitacionais e valor, por condição de uso do imóvel.
-  - name: bronze_continuo_ibge_paic_obras
+  - name: bnz_ibge_paic_obras
     description: >
       Valor anual das obras e serviços executados pelas empresas de
       construção, por tipo de obra.
-  - name: bronze_continuo_ibge_paic_pessoal_salarial
+  - name: bnz_ibge_paic_pessoal_salarial
     description: >
       Pessoal ocupado e massa salarial anual das empresas de construção.
-  - name: bronze_continuo_ibge_paic_resultados
+  - name: bnz_ibge_paic_resultados
     description: >
       Resultados econômicos anuais das empresas de construção, com receita,
       custos e valor adicionado.
-  - name: bronze_continuo_ibge_pib_consolidado_trimestral
+  - name: bnz_ibge_pib_consolidado_trimestral
     description: >
       Produto Interno Bruto consolidado do país em série trimestral.
-  - name: bronze_continuo_ibge_pib_construcao_civil
+  - name: bnz_ibge_pib_construcao_civil
     description: >
       Produto Interno Bruto da construção civil brasileira em série
       trimestral, com valor e taxas de variação.
-  - name: bronze_continuo_ibge_pib_corrente
+  - name: bnz_ibge_pib_corrente
     description: >
       Produto Interno Bruto a preços correntes, em milhões de reais, por
       trimestre.
-  - name: bronze_continuo_ibge_pim_pf_brasil
+  - name: bnz_ibge_pim_pf_brasil
     description: >
       Produção física dos insumos típicos da construção civil, em variações
       percentuais mensais.
-  - name: bronze_continuo_ibge_pmc_construcao
+  - name: bnz_ibge_pmc_construcao
     description: >
       Volume de vendas no varejo de material de construção, em variações
       percentuais mensais.
-  - name: bronze_continuo_ibge_pnad_construcao_ocupados
+  - name: bnz_ibge_pnad_construcao_ocupados
     description: >
       População ocupada na construção civil e no conjunto da economia, em
       milhares de pessoas, por trimestre móvel.
-  - name: bronze_continuo_ibge_pnad_construcao_rendimento
+  - name: bnz_ibge_pnad_construcao_rendimento
     description: >
       Rendimento médio real de quem trabalha na construção civil e do conjunto
       dos ocupados, por trimestre móvel.
-  - name: bronze_continuo_ibge_pnadc_populacao_decis_renda
+  - name: bnz_ibge_pnadc_populacao_decis_renda
     description: >
       Distribuição da população brasileira por décimo de renda, por trimestre
       móvel.
-  - name: bronze_continuo_ibge_pnadc_rendimento_domiciliar
+  - name: bnz_ibge_pnadc_rendimento_domiciliar
     description: >
       Rendimento domiciliar real por trimestre móvel.
-  - name: bronze_continuo_ibge_sinapi
+  - name: bnz_ibge_sinapi
     description: >
       Custo de referência da construção habitacional por metro quadrado,
       incluindo material e mão de obra, por mês.
-  - name: bronze_continuo_infomoney_imob
+  - name: bnz_infomoney_imob
     description: >
       Índice de ações das empresas do setor imobiliário listadas na bolsa
       brasileira, por mês.
-  - name: bronze_continuo_novo_caged
+  - name: bnz_novo_caged
     description: >
       Movimentação de emprego formal na construção de edifícios, com
       admissões, desligamentos, saldo e estoque de postos, por mês.
-  - name: bronze_continuo_novo_caged_servicos_especializados
+  - name: bnz_novo_caged_servicos_especializados
     description: >
       Movimentação de emprego formal em serviços especializados para
       construção, com saldo e estoque de postos, por mês.
-  - name: bronze_continuo_novo_caged_total
+  - name: bnz_novo_caged_total
     description: >
       Movimentação de emprego formal no conjunto da construção civil, com
       saldo e estoque de postos, por mês.
-  - name: bronze_continuo_siafi_dotacao_execucao
+  - name: bnz_siafi_dotacao_execucao
     description: >
       Execução orçamentária federal em habitação, com dotação, empenho,
       pagamento e restos a pagar por ação de governo.

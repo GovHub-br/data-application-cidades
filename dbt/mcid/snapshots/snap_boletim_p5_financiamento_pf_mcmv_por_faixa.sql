@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p5_financiamento_pf_mcmv_por_faixa %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("faixa"::text, '') as chave,
     edicao,
     "faixa", "Trim. ano anterior — Nº UH", "Trim. ano anterior — FIN (Bi R$)", "Trim. selecionado — Nº UH", "Trim. selecionado — FIN (Bi R$)"
-from {{ ref('gold_boletim_p5_financiamento_pf_mcmv_por_faixa') }}
+from {{ ref('gld_boletim_p5_financiamento_pf_mcmv_por_faixa') }}
 
 {% endsnapshot %}

@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p1_lancamentos_por_regiao_cbic %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("regiao"::text, '') as chave,
     edicao,
     "regiao", "TOTAL", "MCMV", "% MCMV"
-from {{ ref('gold_boletim_p1_lancamentos_por_regiao_cbic') }}
+from {{ ref('gld_boletim_p1_lancamentos_por_regiao_cbic') }}
 
 {% endsnapshot %}

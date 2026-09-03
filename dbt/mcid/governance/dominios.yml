@@ -62,9 +62,7 @@ produtos:
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
     schemas:
-      - conjuntura_bronze
-      - conjuntura_silver
-      - conjuntura_mart
+      - conjuntura
     description: >
       Indicadores de acompanhamento do setor habitacional brasileiro: produto
       da construção civil, emprego, crédito imobiliário, financiamento

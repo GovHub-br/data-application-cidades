@@ -10,7 +10,7 @@ version: 2
 
 models:
   # PÁGINA 1 — PIB DA CONSTRUÇÃO CIVIL
-  - name: gold_continuo_pib_construcao_civil
+  - name: gld_pib_construcao_civil
     description: >
       Uma linha por trimestre com as variações percentuais do PIB da
       construção civil apuradas pelo IBGE, contra o trimestre anterior, contra
@@ -42,7 +42,7 @@ models:
         description: >
           Variação percentual do produto da construção acumulada em quatro
           trimestres.
-  - name: gold_continuo_pib_construcao_civil_pct
+  - name: gld_pib_construcao_civil_pct
     description: >
       Uma linha por trimestre com as três taxas de variação do PIB da
       construção civil publicadas no boletim: contra o trimestre imediatamente
@@ -73,7 +73,7 @@ models:
         description: >
           Variação percentual do produto da construção acumulada em quatro
           trimestres.
-  - name: gold_continuo_balancos_empresas
+  - name: gld_balancos_empresas
     description: >
       Uma linha por incorporadora de capital aberto e trimestre com as
       unidades lançadas e vendidas e suas variações percentuais contra o
@@ -129,7 +129,7 @@ models:
         description: >
           Variação percentual das unidades vendidas no acumulado do ano
           contra igual período do ano anterior.
-  - name: gold_continuo_balancos_empresas_totais
+  - name: gld_balancos_empresas_totais
     description: >
       Uma linha por trimestre com o total de unidades lançadas e vendidas pelo
       conjunto das incorporadoras acompanhadas e as variações percentuais
@@ -184,7 +184,7 @@ models:
         description: >
           Variação percentual do total vendido no acumulado do ano contra
           igual período do ano anterior.
-  - name: gold_continuo_financiamentos_imobiliarios_pf_pj
+  - name: gld_financiamentos_imobiliarios_pf_pj
     description: >
       Uma linha por mês com as concessões de crédito imobiliário, taxas de
       juros e inadimplência apuradas pelo BACEN, separadas entre pessoa física
@@ -215,7 +215,7 @@ models:
       - name: inadimplencia_pj_pct
         description: >
           Parcela da carteira de pessoa jurídica em atraso, em percentual.
-  - name: gold_continuo_financiamentos_habitacionais
+  - name: gld_financiamentos_habitacionais
     description: >
       Uma linha por trimestre com as unidades habitacionais financiadas pelo
       FGTS na produção e pelo SBPE na construção, no trimestre e no acumulado
@@ -254,7 +254,7 @@ models:
         description: >
           Unidades habitacionais com construção financiada por recursos da
           poupança, acumuladas em doze meses.
-  - name: gold_continuo_empregos_caged
+  - name: gld_empregos_caged
     description: >
       Uma linha por mês com a criação líquida e o estoque de empregos formais
       na construção civil apurados pelo Novo CAGED, abertos entre construção
@@ -318,7 +318,7 @@ models:
         description: >
           Quantidade total de postos de trabalho formais no conjunto da
           construção civil ao fim do mês.
-  - name: gold_continuo_pnad_ocupados
+  - name: gld_pnad_ocupados
     description: >
       Uma linha por trimestre móvel com a população ocupada na construção
       civil e no total da economia, em milhares de pessoas, conforme a PNAD
@@ -339,7 +339,7 @@ models:
       - name: ocupados_total_mil
         description: >
           População ocupada no conjunto da economia, em milhares de pessoas.
-  - name: gold_continuo_pnad_rendimento
+  - name: gld_pnad_rendimento
     description: >
       Uma linha por trimestre móvel com o rendimento médio real de quem
       trabalha na construção civil e do conjunto dos ocupados, em reais,
@@ -361,7 +361,7 @@ models:
       - name: rendimento_total_rs
         description: >
           Rendimento médio real do conjunto dos ocupados, em reais.
-  - name: gold_continuo_producao_fisica
+  - name: gld_producao_fisica
     description: >
       Uma linha por mês com as variações da produção física dos insumos
       típicos da construção e do volume de vendas de material de construção
@@ -395,7 +395,7 @@ models:
       - name: pmc_var_12_meses
         description: >
           Variação percentual do volume de vendas acumulada em doze meses.
-  - name: gold_continuo_novos_financiamentos_banco
+  - name: gld_novos_financiamentos_banco
     description: >
       Uma linha por mês com as unidades e o valor de novos financiamentos
       imobiliários do SBPE acumulados no ano, abertos por instituição
@@ -470,7 +470,7 @@ models:
         description: >
           Valor financiado pelo conjunto das instituições desde o início do
           ano até o mês de referência, em milhões de reais.
-  - name: gold_continuo_credito_pib
+  - name: gld_credito_pib
     description: >
       Uma linha por mês com o saldo da carteira de crédito imobiliário
       expresso como percentual do Produto Interno Bruto, conforme o BACEN.
@@ -482,7 +482,7 @@ models:
         description: >
           Saldo da carteira de crédito imobiliário expresso como percentual
           do Produto Interno Bruto.
-  - name: gold_continuo_financiamento_pf_faixa
+  - name: gld_financiamento_pf_faixa
     description: >
       Uma linha por mês com as unidades habitacionais e o valor financiado a
       pessoa física pelo FGTS, abertos por faixa de renda familiar do MCMV,
@@ -551,7 +551,7 @@ models:
         description: >
           Valor financiado a pessoa física em operações sem faixa atribuída,
           em milhões de reais.
-  - name: gold_continuo_uh_condicao_uso
+  - name: gld_uh_condicao_uso
     description: >
       Uma linha por mês com as unidades habitacionais financiadas separadas
       entre imóveis novos e usados, distinguindo os recursos do FGTS dos
@@ -609,7 +609,7 @@ models:
         description: >
           Valor financiado na aquisição de unidades usadas com recursos da
           poupança, em milhões de reais.
-  - name: gold_continuo_funding
+  - name: gld_funding
     description: >
       Uma linha por mês com o estoque das fontes que financiam o crédito
       imobiliário, incluindo poupança do SBPE, FGTS e os instrumentos de
@@ -653,7 +653,7 @@ models:
       - name: anbima_estoque_lig
         description: >
           Estoque de letras imobiliárias garantidas, em bilhões de reais.
-  - name: gold_continuo_canal_fgts
+  - name: gld_canal_fgts
     description: >
       Uma linha por mês com as unidades habitacionais e o valor financiado na
       modalidade Pró-Cotista do FGTS, abertos por faixa de renda familiar.
@@ -720,7 +720,7 @@ models:
           Valor financiado na faixa de classe média na modalidade destinada
           a quem tem conta vinculada ao fundo de garantia, em milhões de
           reais.
-  - name: gold_continuo_saldo_poupanca
+  - name: gld_saldo_poupanca
     description: >
       Uma linha por mês com os depósitos, retiradas, captação líquida e saldo
       das cadernetas de poupança do SBPE, conforme a ABECIP.
@@ -745,7 +745,7 @@ models:
       - name: saldo
         description: >
           Saldo total das cadernetas ao fim do mês, em milhões de reais.
-  - name: gold_continuo_ogu
+  - name: gld_ogu
     description: >
       Uma linha por ação de governo com a dotação, o empenho, o pagamento e os
       restos a pagar da execução orçamentária federal em habitação, conforme o
@@ -781,7 +781,7 @@ models:
       - name: dt_referencia_extracao
         description: >
           Data da posição orçamentária a que os valores se referem.
-  - name: gold_continuo_sinapi
+  - name: gld_sinapi
     description: >
       Uma linha por mês com o custo de construção por metro quadrado apurado
       pelo SINAPI, incluindo material e mão de obra, e suas variações no mês,
@@ -806,7 +806,7 @@ models:
       - name: var_12_meses
         description: >
           Variação percentual do custo acumulada em doze meses.
-  - name: gold_continuo_incc_m
+  - name: gld_incc_m
     description: >
       Uma linha por mês com o número índice do INCC-M apurado pela FGV e suas
       variações no mês, no acumulado do ano e em doze meses.
@@ -836,7 +836,7 @@ models:
         description: >
           Variação acumulada em doze meses tal como divulgada pela
           instituição que apura o índice.
-  - name: gold_continuo_ticket_medio
+  - name: gld_ticket_medio
     description: >
       Uma linha por trimestre comparando as variações do ticket médio das
       unidades lançadas por MRV, Direcional, Tenda e Cury com o INCC-M, no
@@ -916,7 +916,7 @@ models:
         description: >
           Variação percentual do preço médio da Cury acumulada desde o
           quarto trimestre de 2020.
-  - name: gold_continuo_fgts_valor_medio
+  - name: gld_fgts_valor_medio
     description: >
       Uma linha por mês com o valor médio dos imóveis financiados pelo FGTS,
       no conjunto das operações e na faixa de menor renda, e suas variações no
@@ -962,7 +962,7 @@ models:
         description: >
           Variação percentual do valor médio da faixa de menor renda
           acumulada desde o início do ano.
-  - name: gold_continuo_indice_imob
+  - name: gld_indice_imob
     description: >
       Uma linha por mês com as variações do índice IMOB, que acompanha as
       ações do setor imobiliário na B3, contra o mês anterior, contra o mesmo
@@ -991,7 +991,7 @@ models:
       - name: indice_imob_var_acum_ano
         description: >
           Variação percentual do índice acumulada desde o início do ano.
-  - name: gold_continuo_fipezap
+  - name: gld_fipezap
     description: >
       Uma linha por mês com o número índice do FipeZap de locação residencial
       e suas variações contra o mês anterior, contra o mesmo mês do ano
@@ -1024,7 +1024,7 @@ models:
         description: >
           Variação percentual do índice de locação acumulada desde o início
           do ano.
-  - name: gold_continuo_icst
+  - name: gld_icst
     description: >
       Uma linha por mês com o Índice de Confiança da Construção apurado pela
       FGV-IBRE, nas séries com e sem ajuste sazonal, e suas variações contra o
@@ -1070,7 +1070,7 @@ models:
         description: >
           Variação percentual do índice sem ajuste acumulada desde o início
           do ano.
-  - name: gold_continuo_financiamentos_instituicao
+  - name: gld_financiamentos_instituicao
     description: >
       Uma linha por instituição financeira e mês com as unidades e o valor de
       financiamento imobiliário do SBPE acumulados no ano e a participação de
@@ -1120,7 +1120,7 @@ models:
       - name: dt_ingest
         description: >
           Momento em que o registro entrou no acervo.
-  - name: gold_continuo_fundo_social
+  - name: gld_fundo_social
     description: >
       Uma linha por mês com as unidades habitacionais e o valor financiado com
       recursos do Fundo Social, separados entre imóveis novos e usados.

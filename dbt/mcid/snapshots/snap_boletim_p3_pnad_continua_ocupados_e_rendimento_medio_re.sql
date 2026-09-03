@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Ocupados Construção (mil)", "Ocupados Total (mil)", "Rendimento Construção (R$)", "Rendimento Total (R$)"
-from {{ ref('gold_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re') }}
+from {{ ref('gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re') }}
 
 {% endsnapshot %}

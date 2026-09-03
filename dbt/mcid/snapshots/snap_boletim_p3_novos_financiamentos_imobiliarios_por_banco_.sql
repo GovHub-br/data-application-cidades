@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p3_novos_financiamentos_imobiliarios_por_banco_ %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("banco"::text, '') as chave,
     edicao,
     "banco", "UH acum. ano", "R$ bi acum. ano", "% UH", "fonte"
-from {{ ref('gold_boletim_p3_novos_financiamentos_imobiliarios_por_banco_') }}
+from {{ ref('gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_') }}
 
 {% endsnapshot %}

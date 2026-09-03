@@ -19,8 +19,8 @@ Um modelo entra nas recipes de Postgres somente quando atende a todos os itens:
 
 | Schema físico | Modelos auditados | Aprovados | Colunas documentadas |
 |---|---:|---:|---:|
-| `conjuntura_bronze` | 11 | 11 | 99/99 |
-| `conjuntura_silver` | 19 | 19 | 224/224 |
+| `conjuntura` | 11 | 11 | 99/99 |
+| `conjuntura` | 19 | 19 | 224/224 |
 | `conjuntura_gold` | 20 | 20 | 200/200 |
 | `empreendimento_far` | 13 | 13 | 308/308 |
 | `entidades_fds` | 11 | 11 | 384/384 |
@@ -35,7 +35,7 @@ Um modelo entra nas recipes de Postgres somente quando atende a todos os itens:
 
 ## Modelos aprovados
 
-### `conjuntura_bronze`
+### `conjuntura`
 
 `bronze_abecip_poupanca_sbpe`, `bronze_bacen_financiamentos_imobiliarios`,
 `bronze_fgv_icst`, `bronze_fgv_incc_m`, `bronze_fipezap_locacao`,
@@ -43,7 +43,7 @@ Um modelo entra nas recipes de Postgres somente quando atende a todos os itens:
 `bronze_ibge_pnadc_rendimento_construcao`, `bronze_ibge_sinapi`,
 `bronze_imob_infomoney`, `bronze_novo_caged`.
 
-### `conjuntura_silver`
+### `conjuntura`
 
 `silver_abecip_novos_financiamentos_imobiliarios`,
 `silver_abecip_poupanca_sbpe`,

@@ -31,7 +31,7 @@ termos:
     description: >
       Fundação Instituto de Pesquisas Econômicas, responsável pela apuração de
       índices de preço de imóveis residenciais anunciados.
-    aplica_a: [gold_continuo_fipezap, silver_continuo_fipezap_locacao]
+    aplica_a: [gld_fipezap, slv_fipezap_locacao]
 
   - fqn: MCID.FontesInstitucionais.InfoMoney
     references: [{name: "InfoMoney", endpoint: "https://www.infomoney.com.br"}]
@@ -40,7 +40,7 @@ termos:
     description: >
       Provedor de cotações do mercado de capitais utilizado para acompanhar o
       índice de ações do setor imobiliário.
-    aplica_a: [gold_continuo_indice_imob, silver_continuo_infomoney_imob]
+    aplica_a: [gld_indice_imob, slv_infomoney_imob]
 
   - fqn: MCID.FontesInstitucionais.SIAFI
     references: [{name: "Tesouro Gerencial", endpoint: "https://tesourogerencial.tesouro.gov.br"}]
@@ -51,7 +51,7 @@ termos:
     description: >
       Sistema Integrado de Administração Financeira do Governo Federal, origem
       dos dados de execução orçamentária.
-    aplica_a: [gold_continuo_ogu, silver_continuo_siafi_dotacao_execucao]
+    aplica_a: [gld_ogu, slv_siafi_dotacao_execucao]
 
   # ── Fundos e fontes de recurso
   - fqn: MCID.FundosEFontes.FundoSocial
@@ -61,7 +61,7 @@ termos:
     description: >
       Fundo que custeia parcela do financiamento habitacional destinado às
       faixas de menor renda, complementando os recursos do FGTS.
-    aplica_a: [gold_continuo_fundo_social, silver_continuo_gefus_fundo_social]
+    aplica_a: [gld_fundo_social, slv_gefus_fundo_social]
 
   - fqn: MCID.FundosEFontes.LCI
     synonyms: ["LCI"]
@@ -71,7 +71,7 @@ termos:
     description: >
       Título de renda fixa lastreado em créditos imobiliários, usado como
       fonte de captação para o financiamento habitacional.
-    aplica_a: [gold_continuo_funding]
+    aplica_a: [gld_funding]
 
   - fqn: MCID.FundosEFontes.CRI
     synonyms: ["CRI"]
@@ -81,7 +81,7 @@ termos:
     description: >
       Título lastreado em fluxos de recebíveis imobiliários, usado como fonte
       de captação de mercado para o setor.
-    aplica_a: [gold_continuo_funding]
+    aplica_a: [gld_funding]
 
   - fqn: MCID.FundosEFontes.LIG
     synonyms: ["LIG"]
@@ -91,7 +91,7 @@ termos:
     description: >
       Título de renda fixa com garantia de carteira de créditos imobiliários,
       usado como fonte de captação de longo prazo.
-    aplica_a: [gold_continuo_funding]
+    aplica_a: [gld_funding]
 
   # ── Indicadores conjunturais
   - fqn: MCID.IndicadoresConjunturais.ProducaoFisicaIndustrial
@@ -102,7 +102,7 @@ termos:
     description: >
       Medida da variação do volume produzido pela indústria dos insumos
       típicos da construção civil.
-    aplica_a: [gold_continuo_producao_fisica, silver_continuo_ibge_pim_pf_brasil]
+    aplica_a: [gld_producao_fisica, slv_ibge_pim_pf_brasil]
 
   - fqn: MCID.IndicadoresConjunturais.VendasMaterialConstrucao
     name: VendasMaterialConstrucao
@@ -110,7 +110,7 @@ termos:
     description: >
       Medida da variação do volume de vendas de material de construção no
       comércio varejista.
-    aplica_a: [gold_continuo_producao_fisica, silver_continuo_ibge_pmc_construcao]
+    aplica_a: [gld_producao_fisica, slv_ibge_pmc_construcao]
 
   - fqn: MCID.IndicadoresConjunturais.CreditoPIB
     synonyms: ["Crédito imobiliário sobre o PIB"]
@@ -120,7 +120,7 @@ termos:
     description: >
       Relação entre o saldo da carteira de crédito imobiliário e o Produto
       Interno Bruto, usada para medir a profundidade do crédito habitacional.
-    aplica_a: [gold_continuo_credito_pib, silver_continuo_bacen_credito_pib]
+    aplica_a: [gld_credito_pib, slv_bacen_credito_pib]
 
   - fqn: MCID.IndicadoresConjunturais.ValorMedioImovel
     related_terms: ["MCID.Identificadores.UH"]
@@ -129,7 +129,7 @@ termos:
     description: >
       Valor médio dos imóveis objeto de financiamento habitacional em um
       período, usado para acompanhar o poder de compra do beneficiário.
-    aplica_a: [gold_continuo_fgts_valor_medio, silver_continuo_fgts_valor_medio_imoveis]
+    aplica_a: [gld_fgts_valor_medio, slv_fgts_valor_medio_imoveis]
 
   - fqn: MCID.IndicadoresConjunturais.Funding
     synonyms: ["Captação"]
@@ -138,7 +138,7 @@ termos:
     description: >
       Composição das fontes de recurso que lastreiam o crédito imobiliário,
       entre poupança, fundos e instrumentos de mercado.
-    aplica_a: [gold_continuo_funding]
+    aplica_a: [gld_funding]
 
   - fqn: MCID.IndicadoresConjunturais.ExecucaoOrcamentaria
     synonyms: ["Execução do OGU"]
@@ -147,7 +147,7 @@ termos:
     description: >
       Acompanhamento da dotação, do empenho, do pagamento e dos restos a pagar
       das ações orçamentárias federais em habitação.
-    aplica_a: [gold_continuo_ogu, silver_continuo_siafi_dotacao_execucao]
+    aplica_a: [gld_ogu, slv_siafi_dotacao_execucao]
 
   # ── Identificadores e recortes
   - fqn: MCID.Identificadores.FaixaDeRenda
@@ -158,10 +158,10 @@ termos:
       Recorte de renda familiar que determina as condições de financiamento e
       subsídio aplicáveis ao beneficiário no programa habitacional.
     aplica_a:
-      - gold_continuo_financiamento_pf_faixa
-      - gold_continuo_canal_fgts
-      - silver_continuo_geavo_fgts_pf
-      - silver_continuo_geavo_cci_cca
+      - gld_financiamento_pf_faixa
+      - gld_canal_fgts
+      - slv_geavo_fgts_pf
+      - slv_geavo_cci_cca
 
   - fqn: MCID.Identificadores.CondicaoDeUso
     related_terms: ["MCID.Identificadores.UH"]
@@ -171,10 +171,10 @@ termos:
       Distinção entre unidade nova e unidade usada no financiamento
       habitacional, usada para acompanhar a produção frente à revenda.
     aplica_a:
-      - gold_continuo_uh_condicao_uso
-      - gold_continuo_fundo_social
-      - silver_continuo_geavo_fgts_pf
-      - silver_continuo_gefus_fundo_social
+      - gld_uh_condicao_uso
+      - gld_fundo_social
+      - slv_geavo_fgts_pf
+      - slv_gefus_fundo_social
 
   - fqn: MCID.ProgramasHabitacionais.MCMV.ProCotista
     related_terms: ["MCID.FundosEFontes.FGTS"]
@@ -184,7 +184,7 @@ termos:
     description: >
       Modalidade de financiamento habitacional destinada a quem possui conta
       vinculada ao FGTS, com condições distintas das demais faixas.
-    aplica_a: [gold_continuo_canal_fgts]
+    aplica_a: [gld_canal_fgts]
 
   # ── Eixos que faltavam no glossário: arquitetura e governança
   #
@@ -260,93 +260,93 @@ termos:
 #: produto. Sem este mapeamento o vocabulário existe mas não etiqueta nada.
 aplicacao_de_termos_existentes:
   MCID.FontesInstitucionais.IBGE:
-    - gold_continuo_pib_construcao_civil
-    - gold_continuo_pib_construcao_civil_pct
-    - gold_continuo_pnad_ocupados
-    - gold_continuo_pnad_rendimento
-    - gold_continuo_producao_fisica
-    - gold_continuo_sinapi
+    - gld_pib_construcao_civil
+    - gld_pib_construcao_civil_pct
+    - gld_pnad_ocupados
+    - gld_pnad_rendimento
+    - gld_producao_fisica
+    - gld_sinapi
   MCID.FontesInstitucionais.BACEN:
-    - gold_continuo_financiamentos_imobiliarios_pf_pj
-    - gold_continuo_credito_pib
+    - gld_financiamentos_imobiliarios_pf_pj
+    - gld_credito_pib
   MCID.FontesInstitucionais.ABECIP:
-    - gold_continuo_saldo_poupanca
-    - gold_continuo_novos_financiamentos_banco
-    - gold_continuo_financiamentos_instituicao
+    - gld_saldo_poupanca
+    - gld_novos_financiamentos_banco
+    - gld_financiamentos_instituicao
   MCID.FontesInstitucionais.FGVIBRE:
-    - gold_continuo_incc_m
-    - gold_continuo_icst
-    - gold_continuo_ticket_medio
+    - gld_incc_m
+    - gld_icst
+    - gld_ticket_medio
   MCID.FontesInstitucionais.B3:
-    - gold_continuo_indice_imob
+    - gld_indice_imob
   # a Caixa é agente operador, não fonte de apuração: o termo já existe em
   # `Atores` e é de lá que ele se aplica
   MCID.Atores.CAIXA:
-    - silver_continuo_geavo_fgts_pf
-    - silver_continuo_geavo_fgts_pj
-    - silver_continuo_geavo_cci_cca
-    - silver_continuo_gefus_fundo_social
+    - slv_geavo_fgts_pf
+    - slv_geavo_fgts_pj
+    - slv_geavo_cci_cca
+    - slv_gefus_fundo_social
   MCID.FundosEFontes.FGTS:
-    - gold_continuo_financiamentos_habitacionais
-    - gold_continuo_financiamento_pf_faixa
-    - gold_continuo_canal_fgts
-    - gold_continuo_fgts_valor_medio
-    - gold_continuo_uh_condicao_uso
-    - gold_continuo_fundo_social
+    - gld_financiamentos_habitacionais
+    - gld_financiamento_pf_faixa
+    - gld_canal_fgts
+    - gld_fgts_valor_medio
+    - gld_uh_condicao_uso
+    - gld_fundo_social
   MCID.FundosEFontes.SBPE:
-    - gold_continuo_financiamentos_habitacionais
-    - gold_continuo_saldo_poupanca
-    - gold_continuo_novos_financiamentos_banco
-    - gold_continuo_financiamentos_instituicao
-    - gold_continuo_uh_condicao_uso
-    - gold_continuo_funding
+    - gld_financiamentos_habitacionais
+    - gld_saldo_poupanca
+    - gld_novos_financiamentos_banco
+    - gld_financiamentos_instituicao
+    - gld_uh_condicao_uso
+    - gld_funding
   MCID.IndicadoresConjunturais.PIBConstrucaoCivil:
-    - gold_continuo_pib_construcao_civil
-    - gold_continuo_pib_construcao_civil_pct
+    - gld_pib_construcao_civil
+    - gld_pib_construcao_civil_pct
   MCID.IndicadoresConjunturais.NovoCAGED:
-    - gold_continuo_empregos_caged
+    - gld_empregos_caged
   MCID.IndicadoresConjunturais.PNADContinua:
-    - gold_continuo_pnad_ocupados
-    - gold_continuo_pnad_rendimento
+    - gld_pnad_ocupados
+    - gld_pnad_rendimento
   MCID.IndicadoresConjunturais.SINAPI:
-    - gold_continuo_sinapi
+    - gld_sinapi
   MCID.IndicadoresConjunturais.INCCM:
-    - gold_continuo_incc_m
-    - gold_continuo_ticket_medio
+    - gld_incc_m
+    - gld_ticket_medio
   MCID.IndicadoresConjunturais.ICST:
-    - gold_continuo_icst
+    - gld_icst
   MCID.IndicadoresConjunturais.IMOB:
-    - gold_continuo_indice_imob
+    - gld_indice_imob
   MCID.IndicadoresConjunturais.FipeZapLocacao:
-    - gold_continuo_fipezap
+    - gld_fipezap
   MCID.IndicadoresConjunturais.TicketMedio:
-    - gold_continuo_ticket_medio
+    - gld_ticket_medio
   MCID.IndicadoresConjunturais.CaptacaoLiquida:
-    - gold_continuo_saldo_poupanca
+    - gld_saldo_poupanca
   MCID.IndicadoresConjunturais.FinanciamentoHabitacional:
-    - gold_continuo_financiamentos_habitacionais
-    - gold_continuo_financiamento_pf_faixa
-    - gold_continuo_uh_condicao_uso
+    - gld_financiamentos_habitacionais
+    - gld_financiamento_pf_faixa
+    - gld_uh_condicao_uso
   MCID.IndicadoresConjunturais.FinanciamentoImobiliario:
-    - gold_continuo_financiamentos_imobiliarios_pf_pj
-    - gold_continuo_novos_financiamentos_banco
-    - gold_continuo_financiamentos_instituicao
+    - gld_financiamentos_imobiliarios_pf_pj
+    - gld_novos_financiamentos_banco
+    - gld_financiamentos_instituicao
   MCID.IndicadoresConjunturais.LancamentoImobiliario:
-    - gold_continuo_balancos_empresas
-    - gold_continuo_balancos_empresas_totais
+    - gld_balancos_empresas
+    - gld_balancos_empresas_totais
   MCID.IndicadoresConjunturais.VendaImobiliaria:
-    - gold_continuo_balancos_empresas
-    - gold_continuo_balancos_empresas_totais
+    - gld_balancos_empresas
+    - gld_balancos_empresas_totais
   MCID.Identificadores.UH:
-    - gold_continuo_financiamentos_habitacionais
-    - gold_continuo_financiamento_pf_faixa
-    - gold_continuo_uh_condicao_uso
-    - gold_continuo_canal_fgts
-    - gold_continuo_fundo_social
+    - gld_financiamentos_habitacionais
+    - gld_financiamento_pf_faixa
+    - gld_uh_condicao_uso
+    - gld_canal_fgts
+    - gld_fundo_social
   MCID.ProgramasHabitacionais.MCMV:
-    - gold_continuo_financiamento_pf_faixa
-    - gold_continuo_canal_fgts
-    - gold_continuo_fundo_social
+    - gld_financiamento_pf_faixa
+    - gld_canal_fgts
+    - gld_fundo_social
 
 #: O glossário como entidade, não só os termos dentro dele (HU-20). Sem dono
 #: declarado, vocabulário novo entra sem ninguém responder por ele.

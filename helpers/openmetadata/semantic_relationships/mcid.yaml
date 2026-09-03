@@ -14,7 +14,7 @@ scope:
   column_count: 1215
   fqn_format: '{service}.{database}.{schema}.{table}'
   tables_by_schema:
-    conjuntura_bronze:
+    conjuntura:
     - bronze_abecip_poupanca_sbpe
     - bronze_bacen_financiamentos_imobiliarios
     - bronze_fgv_icst
@@ -47,7 +47,7 @@ scope:
     - gold_saldo_caderneta_poupanca
     - gold_ticket_medio_vs_incc
     - gold_uh_condicao_uso
-    conjuntura_silver:
+    conjuntura:
     - silver_abecip_novos_financiamentos_imobiliarios
     - silver_abecip_poupanca_sbpe
     - silver_abecip_sbpe_financiamentos_habitacionais
@@ -672,8 +672,8 @@ relationships:
     confidence: high
   - id: conjuntura_pnad_periodo_dbt_contract
     semantic_key: periodo
-    source: conjuntura_silver.silver_ibge_pnadc_ocupados_construcao.periodo
-    target: conjuntura_silver.silver_ibge_pnadc_rendimento_construcao.periodo
+    source: conjuntura.silver_ibge_pnadc_ocupados_construcao.periodo
+    target: conjuntura.silver_ibge_pnadc_rendimento_construcao.periodo
     join: exact
     cardinality: one_to_one
     validation: dbt_relationships_test
@@ -986,7 +986,7 @@ search_groups:
   members:
   - conjuntura_gold.gold_balancos_empresas_lancamentos.nome_empresa
   - conjuntura_gold.gold_balancos_empresas_vendas.nome_empresa
-  - conjuntura_silver.silver_balancos_empresas.nome_empresa
+  - conjuntura.silver_balancos_empresas.nome_empresa
   - empreendimento_far.cadastro_pj.construtora_nome
   - empreendimento_far.consolidado.proponente_nome
   - empreendimento_far.consolidado.tomador_nome
@@ -1066,9 +1066,9 @@ search_groups:
 - id: datas
   member_count: 244
   members_by_schema:
-    conjuntura_bronze: 23
+    conjuntura: 23
     conjuntura_gold: 59
-    conjuntura_silver: 49
+    conjuntura: 49
     empreendimento_far: 46
     entidades_fds: 67
   selector: semantic_group=data
@@ -1082,8 +1082,8 @@ search_groups:
 - id: codigos_de_dominio
   member_count: 71
   members_by_schema:
-    conjuntura_bronze: 16
-    conjuntura_silver: 1
+    conjuntura: 16
+    conjuntura: 1
     empreendimento_far: 25
     entidades_fds: 29
   selector: semantic_group=codigo_generico
@@ -1097,7 +1097,7 @@ search_groups:
 - id: nomes_genericos
   member_count: 21
   members_by_schema:
-    conjuntura_bronze: 11
+    conjuntura: 11
     empreendimento_far: 4
     entidades_fds: 6
   selector: semantic_group=nome_generico
@@ -1155,8 +1155,8 @@ model_join_logic:
     predicates:
     - o.periodo = r.periodo
     upstream_columns:
-    - conjuntura_silver.silver_ibge_pnadc_ocupados_construcao.periodo
-    - conjuntura_silver.silver_ibge_pnadc_rendimento_construcao.periodo
+    - conjuntura.silver_ibge_pnadc_ocupados_construcao.periodo
+    - conjuntura.silver_ibge_pnadc_rendimento_construcao.periodo
   - model: conjuntura_gold.gold_indices_mercado_imobiliario
     join_count: 10
     predicates:
@@ -1175,10 +1175,10 @@ model_join_logic:
     predicates:
     - e.ano = i.ano AND e.trimestre = i.trimestre
     upstream_columns:
-    - conjuntura_silver.silver_ticket_medio_empresas.ano
-    - conjuntura_silver.silver_ticket_medio_empresas.trimestre
-    - conjuntura_silver.silver_fgv_incc_m.data_referencia
-  - model: conjuntura_silver.silver_financiamentos_habitacionais
+    - conjuntura.silver_ticket_medio_empresas.ano
+    - conjuntura.silver_ticket_medio_empresas.trimestre
+    - conjuntura.silver_fgv_incc_m.data_referencia
+  - model: conjuntura.silver_financiamentos_habitacionais
     join_count: 1
     predicates:
     - fgts.ano = abecip.ano AND fgts.trimestre = abecip.trimestre

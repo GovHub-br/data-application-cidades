@@ -60,7 +60,7 @@ O manifest regenerado passou a apontar os quatro upstreams como
 `model.mcid.bronze_*`, permitindo que o OpenMetadata apresente
 Bronze → Silver corretamente.
 
-Sete relações físicas de `conjuntura_bronze` não possuem modelo SQL local e
+Sete relações físicas de `conjuntura` não possuem modelo SQL local e
 continuam corretamente como `source()`: novos financiamentos ABECIP,
 financiamentos habitacionais ABECIP/SBPE, ABRAMAT, balanços de empresas, CBIC,
 FGTS e ticket médio de empresas.

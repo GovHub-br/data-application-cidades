@@ -6,37 +6,20 @@ version: 1
 # ou exemplos de dados. A sincronização para OpenMetadata usa este arquivo
 # como fonte de descrição de schema.
 schemas:
-  - name: conjuntura_bronze
-    display_name: Conjuntura · Bronze
+  - name: conjuntura
+    display_name: Conjuntura
     product: conjuntura
-    layer: bronze
-    owner_key: mcid_data_engineering
-    classification: restricted
-    # Publicada no catálogo para que a linhagem alcance a origem: sem a Bronze
-    # o grafo começa na Silver e o consumidor não vê de onde o número veio.
-    # Continua PROIBIDA para RAG e marcada como `Uso.NaoConsumivel` — o que se
-    # publica é a existência e a topologia, nunca o conteúdo.
-    rag_publication: prohibited
-    publicar_no_catalogo: true
-    description: Camada fiel de ingestão do produto Conjuntura, preservada para rastreabilidade e processamento interno.
-
-  - name: conjuntura_silver
-    display_name: Conjuntura · Silver
-    product: conjuntura
-    layer: silver
+    layer: mixed
     owner_key: mcid_data_engineering
     classification: internal
-    rag_publication: eligible_after_security_validation
-    description: Camada tratada e conformada de indicadores do setor habitacional para uso analítico interno autorizado.
-
-  - name: conjuntura_mart
-    display_name: Conjuntura · Gold
-    product: conjuntura
-    layer: gold
-    owner_key: mcid_data_engineering
-    classification: internal
-    rag_publication: eligible_after_security_validation
-    description: Camada curada de consumo do produto Conjuntura para boletins, dashboards e aplicações autorizadas.
+    # Schema único: a camada de cada tabela vem do prefixo do nome e do
+    # `meta.governance.layer` do modelo, não do schema. Por isso `mixed` e
+    # `determined_per_model`, como no empreendimento_far.
+    rag_publication: determined_per_model
+    description: >-
+      Schema do produto Conjuntura, com as camadas distinguidas pelo prefixo do
+      nome: `bnz_` para a ingestão fiel, `slv_` para o dado conformado e `gld_`
+      para o consumo. As tabelas `bnz_manual_*` são cargas manuais sem DAG.
 
   - name: empreendimento_far
     display_name: Empreendimento FAR

@@ -8,7 +8,7 @@ version: 2
 # mesma tabela.
 
 models:
-  - name: gold_boletim_p1_pib_construcao_civil_em_de_crescimento
+  - name: gld_boletim_p1_pib_construcao_civil_em_de_crescimento
     description: >
       Uma linha por edição do boletim e indicador com o quadro PIB Construção
       Civil (em % de Crescimento) da página 1, reproduzindo as colunas do
@@ -41,7 +41,7 @@ models:
         description: >
           Valor da coluna trimestre selecionado do quadro impresso, para a
           linha e a edição indicadas.
-  - name: gold_boletim_p1_lancamentos_por_regiao_cbic
+  - name: gld_boletim_p1_lancamentos_por_regiao_cbic
     description: >
       Uma linha por edição do boletim e regiao com o quadro Lançamentos por
       Região (CBIC) da página 1, reproduzindo as colunas do impresso.
@@ -65,7 +65,7 @@ models:
         description: >
           Valor da coluna % MCMV do quadro impresso, para a linha e a edição
           indicadas.
-  - name: gold_boletim_p1_vendas_por_regiao_cbic
+  - name: gld_boletim_p1_vendas_por_regiao_cbic
     description: >
       Uma linha por edição do boletim e regiao com o quadro Vendas por Região
       (CBIC) da página 1, reproduzindo as colunas do impresso.
@@ -89,7 +89,7 @@ models:
         description: >
           Valor da coluna % MCMV do quadro impresso, para a linha e a edição
           indicadas.
-  - name: gold_boletim_p1_cbic_lancamentos_e_vendas_totais
+  - name: gld_boletim_p1_cbic_lancamentos_e_vendas_totais
     description: >
       Uma linha por edição do boletim e periodo com o quadro CBIC —
       Lançamentos e Vendas (totais) da página 1, reproduzindo as colunas do
@@ -126,7 +126,7 @@ models:
         description: >
           Valor da coluna Vendas DEMAIS do quadro impresso, para a linha e a
           edição indicadas.
-  - name: gold_boletim_p2_lancamentos_por_construtora_variacao
+  - name: gld_boletim_p2_lancamentos_por_construtora_variacao
     description: >
       Uma linha por edição do boletim e empresa com o quadro Lançamentos por
       construtora (variação %) da página 2, reproduzindo as colunas do
@@ -155,7 +155,7 @@ models:
         description: >
           Valor da coluna 12m anterior / 12m retrasado do quadro impresso,
           para a linha e a edição indicadas.
-  - name: gold_boletim_p2_vendas_por_construtora_variacao
+  - name: gld_boletim_p2_vendas_por_construtora_variacao
     description: >
       Uma linha por edição do boletim e empresa com o quadro Vendas por
       construtora (variação %) da página 2, reproduzindo as colunas do
@@ -184,7 +184,7 @@ models:
         description: >
           Valor da coluna 12m anterior / 12m retrasado do quadro impresso,
           para a linha e a edição indicadas.
-  - name: gold_boletim_p2_totais_das_empresas_levantadas_variacao
+  - name: gld_boletim_p2_totais_das_empresas_levantadas_variacao
     description: >
       Uma linha por edição do boletim e indicador com o quadro Totais das
       empresas levantadas (variação %) da página 2, reproduzindo as colunas do
@@ -213,7 +213,7 @@ models:
         description: >
           Valor da coluna 12m anterior / 12m retrasado do quadro impresso,
           para a linha e a edição indicadas.
-  - name: gold_boletim_p2_financiamentos_imobiliarios_bacen
+  - name: gld_boletim_p2_financiamentos_imobiliarios_bacen
     description: >
       Uma linha por edição do boletim e periodo com o quadro Financiamentos
       Imobiliários (BACEN) da página 2, reproduzindo as colunas do impresso.
@@ -249,7 +249,7 @@ models:
         description: >
           Valor da coluna PJ Inadimplência (%) do quadro impresso, para a
           linha e a edição indicadas.
-  - name: gold_boletim_p2_financiamentos_habitacionais_uh
+  - name: gld_boletim_p2_financiamentos_habitacionais_uh
     description: >
       Uma linha por edição do boletim e periodo com o quadro Financiamentos
       Habitacionais (UH) da página 2, reproduzindo as colunas do impresso.
@@ -269,7 +269,7 @@ models:
         description: >
           Valor da coluna SBPE Const. do quadro impresso, para a linha e a
           edição indicadas.
-  - name: gold_boletim_p3_empregos_construcao_caged
+  - name: gld_boletim_p3_empregos_construcao_caged
     description: >
       Uma linha por edição do boletim e periodo com o quadro Empregos
       Construção (CAGED) da página 3, reproduzindo as colunas do impresso.
@@ -289,7 +289,7 @@ models:
         description: >
           Valor da coluna Total de Postos (Estoque) do quadro impresso, para
           a linha e a edição indicadas.
-  - name: gold_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re
+  - name: gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re
     description: >
       Uma linha por edição do boletim e periodo com o quadro PNAD Contínua —
       Ocupados e Rendimento Médio Real da página 3, reproduzindo as colunas do
@@ -318,7 +318,7 @@ models:
         description: >
           Valor da coluna Rendimento Total (R$) do quadro impresso, para a
           linha e a edição indicadas.
-  - name: gold_boletim_p3_producao_industrial_e_volume_de_vendas_varia
+  - name: gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia
     description: >
       Uma linha por edição do boletim e indicador com o quadro Produção
       Industrial e Volume de Vendas (variação %) da página 3, reproduzindo as
@@ -355,7 +355,7 @@ models:
         description: >
           Valor da coluna VENDAS mês de referência do quadro impresso, para
           a linha e a edição indicadas.
-  - name: gold_boletim_p3_novos_financiamentos_imobiliarios_por_banco_
+  - name: gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_
     description: >
       Uma linha por edição do boletim e banco com o quadro Novos
       Financiamentos Imobiliários por Banco (acum. no ano) da página 3,
@@ -384,7 +384,7 @@ models:
         description: >
           Valor da coluna fonte do quadro impresso, para a linha e a edição
           indicadas.
-  - name: gold_boletim_p4_credito_imobiliario_pib
+  - name: gld_boletim_p4_credito_imobiliario_pib
     description: >
       Uma linha por edição do boletim e periodo com o quadro Crédito
       Imobiliário / PIB (%) da página 4, reproduzindo as colunas do impresso.
@@ -400,7 +400,7 @@ models:
         description: >
           Valor da coluna Crédito Imobiliário / PIB do quadro impresso, para
           a linha e a edição indicadas.
-  - name: gold_boletim_p4_no_uh_por_condicao_de_uso
+  - name: gld_boletim_p4_no_uh_por_condicao_de_uso
     description: >
       Uma linha por edição do boletim e fonte com o quadro Nº UH por Condição
       de Uso da página 4, reproduzindo as colunas do impresso.
@@ -432,7 +432,7 @@ models:
         description: >
           Valor da coluna Trim. selecionado — UH Total do quadro impresso,
           para a linha e a edição indicadas.
-  - name: gold_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri
+  - name: gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri
     description: >
       Uma linha por edição do boletim e indicador com o quadro SBPE Construção
       — unidades e valor (acum. no trimestre) da página 5, reproduzindo as
@@ -457,7 +457,7 @@ models:
         description: >
           Valor da coluna Variação % do quadro impresso, para a linha e a
           edição indicadas.
-  - name: gold_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida
+  - name: gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida
     description: >
       Uma linha por edição do boletim e periodo com o quadro Saldo Caderneta
       de Poupança — Captação Líquida (R$ bi) da página 5, reproduzindo as
@@ -474,7 +474,7 @@ models:
         description: >
           Valor da coluna Cap. Líq. (Bi) do quadro impresso, para a linha e
           a edição indicadas.
-  - name: gold_boletim_p5_financiamento_pf_mcmv_por_faixa
+  - name: gld_boletim_p5_financiamento_pf_mcmv_por_faixa
     description: >
       Uma linha por edição do boletim e faixa com o quadro Financiamento PF
       MCMV por faixa da página 5, reproduzindo as colunas do impresso.
@@ -502,7 +502,7 @@ models:
         description: >
           Valor da coluna Trim. selecionado — FIN (Bi R$) do quadro
           impresso, para a linha e a edição indicadas.
-  - name: gold_boletim_p6_sinapi_brasil_e_incc_m
+  - name: gld_boletim_p6_sinapi_brasil_e_incc_m
     description: >
       Uma linha por edição do boletim e indicador com o quadro SINAPI (Brasil)
       e INCC-M da página 6, reproduzindo as colunas do impresso.
@@ -522,7 +522,7 @@ models:
         description: >
           Valor da coluna INCC-M do quadro impresso, para a linha e a edição
           indicadas.
-  - name: gold_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc
+  - name: gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc
     description: >
       Uma linha por edição do boletim e periodo com o quadro Ticket médio das
       unidades lançadas vs. INCC da página 6, reproduzindo as colunas do
@@ -567,7 +567,7 @@ models:
         description: >
           Valor da coluna Tenda acum. 4T20 do quadro impresso, para a linha
           e a edição indicadas.
-  - name: gold_boletim_p7_indices_da_construcao_variacao
+  - name: gld_boletim_p7_indices_da_construcao_variacao
     description: >
       Uma linha por edição do boletim e indicador com o quadro Índices da
       Construção (variação %) da página 7, reproduzindo as colunas do
@@ -596,7 +596,7 @@ models:
         description: >
           Valor da coluna Índice ICST do quadro impresso, para a linha e a
           edição indicadas.
-  - name: gold_boletim_valores
+  - name: gld_boletim_valores
     description: >
       Uma linha por célula dos quadros do boletim, com o modelo de origem, a
       página, a edição, o rótulo da linha, o nome da coluna e o valor numérico

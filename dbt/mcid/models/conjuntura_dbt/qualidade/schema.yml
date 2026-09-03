@@ -8,7 +8,7 @@ version: 2
 # apareçam como número errado no painel.
 
 models:
-  - name: gold_qualidade_inventario
+  - name: gld_qualidade_inventario
     description: >
       Uma linha por modelo do produto com a camada a que pertence, a
       estratégia de materialização e a contagem de linhas na última medição.
@@ -32,7 +32,7 @@ models:
       - name: medido_em
         description: >
           Momento em que a medição foi realizada.
-  - name: gold_qualidade_completude
+  - name: gld_qualidade_completude
     description: >
       Uma linha por modelo e coluna com a fração de registros preenchidos,
       usada para acompanhar lacunas de preenchimento ao longo do tempo.
@@ -59,7 +59,7 @@ models:
       - name: medido_em
         description: >
           Momento em que a medição foi realizada.
-  - name: gold_qualidade_schema
+  - name: gld_qualidade_schema
     description: >
       Uma linha por modelo e coluna com o tipo e a posição observados,
       formando o retrato da estrutura usado para detectar mudanças de
@@ -83,7 +83,7 @@ models:
       - name: visto_em
         description: >
           Momento em que a estrutura foi observada.
-  - name: gold_qualidade_schema_drift
+  - name: gld_qualidade_schema_drift
     description: >
       Uma linha por coluna que mudou entre dois retratos consecutivos da
       estrutura, indicando entrada, saída ou alteração de tipo.

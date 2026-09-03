@@ -122,7 +122,7 @@ sources:
           classificação 11046, categoria 56732 (índice de volume de vendas).
           ⚠️ A Variable `IBGE_CONFIGURACOES` ainda pede o agregado 8880, de
           varejo geral, cujas categorias são 56733/56734. Por isso a 56732 não
-          existe na silver e o `gold_continuo_producao_fisica` deixa as colunas
+          existe na silver e o `gld_producao_fisica` deixa as colunas
           da PMC nulas — preencher com 56734 daria número plausível e falso.
           Tipagem aplicada: text→int, text→numeric.
 
@@ -193,12 +193,12 @@ sources:
           Contém depósitos, retiradas, captação líquida, rendimento e saldo.
           Tipagem aplicada: text→date, text→numeric.
 
-  - name: conjuntura_bronze
-    schema: conjuntura_bronze
+  - name: conjuntura
+    schema: conjuntura
     description: >
       Tabelas do bronze do conjuntura carregadas fora do dbt. Depois da
       aposentadoria do schema legado, resta a CBIC, que não tem DAG de ingestão
       e chega por carga manual.
     tables:
-      - name: bronze_cbic_lancamentos_vendas
+      - name: bnz_cbic_lancamentos_vendas
         description: Lançamentos e vendas de imóveis por região (CBIC), carga manual.

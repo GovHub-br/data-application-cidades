@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p1_cbic_lancamentos_e_vendas_totais %}
 {{ config(
-    target_schema='conjuntura_snapshots',
+    target_schema='conjuntura',
     unique_key='chave',
     strategy='check',
     check_cols='all',
@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Lançamentos TOTAL", "Lançamentos MCMV", "Lançamentos DEMAIS", "Vendas TOTAL", "Vendas MCMV", "Vendas DEMAIS"
-from {{ ref('gold_boletim_p1_cbic_lancamentos_e_vendas_totais') }}
+from {{ ref('gld_boletim_p1_cbic_lancamentos_e_vendas_totais') }}
 
 {% endsnapshot %}
