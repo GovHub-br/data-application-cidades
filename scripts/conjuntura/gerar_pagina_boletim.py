@@ -272,8 +272,12 @@ def tabela_html(quadro: dict, linhas: list[dict]) -> str:
         )
         corpo += f'<tr><th scope="row">{html.escape(bruto)}</th>{celulas}</tr>'
     nota = f'<p class="fonte">{html.escape(quadro["nota"])}</p>' if quadro["nota"] else ""
+    # Quadro largo ocupa a linha inteira da grade. Espremido numa coluna, ou ele
+    # rola na horizontal — e barra de rolagem em PDF é coluna perdida — ou fica
+    # ilegível. No impresso, tabela larga também toma a página toda.
+    largo = " largo" if len(colunas) > 4 else ""
     return (
-        f'<div class="quadro"><h3>{html.escape(quadro["titulo"])}</h3>'
+        f'<div class="quadro{largo}"><h3>{html.escape(quadro["titulo"])}</h3>'
         f'<div class="rolagem"><table><thead><tr>{cabecalho}</tr></thead>'
         f"<tbody>{corpo}</tbody></table></div>{nota}</div>"
     )

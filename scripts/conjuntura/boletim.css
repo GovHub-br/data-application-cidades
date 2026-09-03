@@ -65,6 +65,9 @@ td.neg{color:var(--baixa);font-weight:700}
   margin:0;align-self:start;font-size:.82rem;font-weight:600;letter-spacing:.01em;
   text-transform:uppercase;line-height:1.45}
 .grade > .leitura{max-width:none}
+/* Tabela com muitas colunas toma a linha inteira: numa coluna estreita ela
+   rolaria na horizontal, e a leitura ao lado não compensa a perda. */
+.quadro.largo{grid-column:1/-1}
 /* Leitura redigida por máquina: barra tracejada e etiqueta, para que a
    diferença entre apurado e redigido seja visível sem depender só de cor. */
 .leitura.gerada{border-left-style:dashed}
@@ -118,3 +121,30 @@ td.neg{color:var(--baixa);font-weight:700}
 .pil.alta{background:var(--alta-fundo);color:var(--alta)}
 .pil.baixa{background:var(--baixa-fundo);color:var(--baixa)}
 .pil.neutra{background:var(--barra);color:var(--tinta-fraca)}
+
+/* ── Impressão ──────────────────────────────────────────────────────────────
+   O boletim nasce impresso, e o PDF é destino de primeira classe aqui. Sem
+   estas regras o navegador corta quadro e cartão ao meio na virada de página:
+   o cabeçalho de um cartão fica numa folha e o valor na seguinte.
+
+   `break-before: page` em `.pagina` faz cada página do boletim começar numa
+   folha nova, como no impresso — a moldura passa a significar a mesma coisa
+   nos dois destinos. */
+@media print {
+  .pagina{break-before:page;border:none;box-shadow:none;padding:0 0 1rem;
+    margin-bottom:0}
+  .pagina:first-of-type{break-before:auto}
+  .quadro,.cartao,.cartoes,.leitura,.aviso,.grafico{break-inside:avoid}
+  h2,h3,.rotulo{break-after:avoid}
+  .topo{position:static}
+  /* Em A4 a grade de 340px vira uma coluna só e a leitura cai para baixo do
+     quadro. Reduzir o mínimo devolve a leitura ao lado, como no impresso —
+     mas o quadro largo continua tomando a linha toda, senão a tabela é
+     recortada e o PDF perde coluna. */
+  .grade{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.8rem}
+  .rolagem{overflow:visible}
+  table{font-size:.78rem}
+  td,tbody th,thead th{padding:.26rem .38rem}
+  body{font-size:13px}
+}
+@page{size:A4;margin:12mm 10mm}
