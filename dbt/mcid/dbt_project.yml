@@ -17,6 +17,14 @@ clean-targets:
   - "dbt_packages"
   - "logs"
 
+seeds:
+  mcid:
+    # O gabarito do boletim é insumo de teste, mas mora junto do produto: com o
+    # schema unificado, tudo do conjuntura vive em `conjuntura`. Sem isto o seed
+    # cai no schema do profile e o teste do gabarito quebra procurando por ele.
+    boletim_gabarito:
+      +schema: conjuntura
+
 models:
   mcid:
     +database: cidades
