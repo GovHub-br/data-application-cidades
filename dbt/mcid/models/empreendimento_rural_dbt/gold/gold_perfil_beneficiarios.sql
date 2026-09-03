@@ -5,14 +5,16 @@
 
 with
     cadastro_pf as (
-        select * from {{ ref("rural_cadastro_pf") }}
+        select * from {{ ref("silver_cadastro_pf") }}
     ),
 
     agregado as (
         select
             apf,
             count(nu_registro) as total_beneficiarios_cadastrados,
-            avg(coalesce(qt_pessoas_familia, 0)) as media_pessoas_familia,
+            -- avg() já ignora nulo. Com o coalesce, beneficiário sem tamanho de família
+            -- informado entrava na média como "família de 0 pessoas" e puxava tudo para baixo.
+            avg(qt_pessoas_familia) as media_pessoas_familia,
 
             -- Gênero
             sum(case when upper(trim(beneficiario_sexo)) = 'F' then 1 else 0 end) as total_mulheres,
@@ -23,7 +25,9 @@ with
             sum(case when ic_benef_bpc then 1 else 0 end) as total_beneficiarios_bpc,
 
             -- Renda Familiar
-            avg(coalesce(vr_renda_familiar, 0.00)) as renda_familiar_media
+            -- Mesmo caso, e mais grave: renda não informada entrava como R$ 0,00 e
+            -- rebaixava a renda média do empreendimento.
+            avg(vr_renda_familiar) as renda_familiar_media
 
         from cadastro_pf
         group by apf
@@ -37,7 +41,7 @@ with
             uf,
             programa,
             quantidade_uh
-        from {{ ref("ficha_empreendimento_rural") }}
+        from {{ ref("gold_ficha_empreendimento") }}
     )
 
 select
@@ -49,34 +53,40 @@ select
     f.quantidade_uh,
 
     -- Métricas de Cadastro e Demografia
-    coalesce(a.total_beneficiarios_cadastrados, 0) as total_beneficiarios_cadastrados,
-    round(coalesce(a.media_pessoas_familia, 0.00), 1) as media_pessoas_familia,
+    --
+    -- O cadastro PF cobre ~1% da carteira. Com `coalesce(..., 0)` os outros 99%
+    -- apareciam como empreendimentos com zero beneficiários cadastrados, zero mulheres e
+    -- renda média zero — o que somado em qualquer agregação do Superset destrói a média.
+    -- Nulo é a leitura correta: não há cadastro, não há número.
+    a.total_beneficiarios_cadastrados,
+    round(a.media_pessoas_familia, 1) as media_pessoas_familia,
 
     -- Proporção de Gênero
-    coalesce(a.total_mulheres, 0) as total_mulheres,
+    a.total_mulheres,
     case
         when coalesce(a.total_beneficiarios_cadastrados, 0) > 0
         then round((a.total_mulheres::numeric / a.total_beneficiarios_cadastrados) * 100, 2)
-        else 0.00
     end as percentual_mulheres,
 
     -- Proporção de Benefícios Sociais
-    coalesce(a.total_beneficiarios_bolsa_familia, 0) as total_beneficiarios_bolsa_familia,
+    a.total_beneficiarios_bolsa_familia,
     case
         when coalesce(a.total_beneficiarios_cadastrados, 0) > 0
         then round((a.total_beneficiarios_bolsa_familia::numeric / a.total_beneficiarios_cadastrados) * 100, 2)
-        else 0.00
     end as percentual_bolsa_familia,
 
-    coalesce(a.total_beneficiarios_bpc, 0) as total_beneficiarios_bpc,
+    a.total_beneficiarios_bpc,
     case
         when coalesce(a.total_beneficiarios_cadastrados, 0) > 0
         then round((a.total_beneficiarios_bpc::numeric / a.total_beneficiarios_cadastrados) * 100, 2)
-        else 0.00
     end as percentual_bpc,
 
     -- Renda
-    round(coalesce(a.renda_familiar_media, 0.00), 2) as renda_familiar_media
+    round(a.renda_familiar_media, 2) as renda_familiar_media,
+
+    -- Diz explicitamente se este empreendimento tem cadastro PF, para o dashboard poder
+    -- filtrar em vez de diluir a carteira inteira numa média de nulos.
+    (a.apf is not null) as tem_cadastro_pf
 
 from fichas f
 inner join agregado a on f.apf = a.apf

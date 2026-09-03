@@ -1,6 +1,6 @@
 version: 2
 models:
-- name: rural_cadastro_pj
+- name: silver_cadastro_pj
   description: 'Cadastro PJ do empreendimento contratado no Novo MCMV Rural: entidade organizadora, composição
     do investimento, cisternas/efluentes, prazo de construção e datas-chave. Tipagem aplicada sobre a
     bronze do data lake: text→int, text→date, text→numeric, text→boolean.
@@ -28,10 +28,10 @@ models:
     description: Quantidade de cisternas previstas no empreendimento.
   - name: percentual_obra_realizada
     description: Percentual de obra realizada informado no cadastro PJ.
-- name: rural_cadastro_pf
+- name: silver_cadastro_pf
   description: 'Cadastro de beneficiários (pessoa física) do Novo MCMV Rural, com perfil socioeconômico:
     renda familiar, pessoas por família, Bolsa Família, BPC, subsídio e distrato. Uma linha por beneficiário.
-    Alimenta a gold perfil_beneficiarios.
+    Alimenta a gold gold_perfil_beneficiarios.
 
     '
   meta:
@@ -52,7 +52,7 @@ models:
     description: Indicador booleano de beneficiário do BPC.
   - name: vr_renda_familiar
     description: Renda familiar declarada em R$ (numeric 15,2).
-- name: rural_obra_mensal
+- name: silver_obra_mensal
   description: 'Evolução física da obra no Novo MCMV Rural, snapshot mensal por APF: percentual previsto/realizado,
     UHs concluídas e alienadas, paralisação, retomada e datas de entrega.
 
@@ -71,10 +71,10 @@ models:
     description: Percentual de obra previsto no cronograma (numeric 6,2).
   - name: dt_alteracao_situacao
     description: 'Data da última alteração de situação. É a data usada como eixo temporal da execução
-      física na gold execucao_fisica_financeira_chart_rural.
+      física na gold gold_execucao_fisica_financeira.
 
       '
-- name: rural_financeiro_mensal
+- name: silver_financeiro_mensal
   description: 'Série de liberações financeiras do Novo MCMV Rural, decomposta por componente (obra, trabalho
     social, ATEC, cisternas/efluentes e custos indiretos). Várias linhas por APF.
 
@@ -91,9 +91,9 @@ models:
     description: Data da liberação do recurso; eixo temporal da série financeira.
   - name: vr_movimento
     description: Valor total do movimento financeiro em R$ (numeric 15,2).
-- name: rural_prioritarios_snh
+- name: silver_prioritarios_snh
   description: 'Dados prioritários disponibilizados pela SNH, filtrados para `modalidade = ''RURAL''`.
-    É a espinha dorsal da silver empreendimento_rural: todos os outros insumos entram por left join sobre
+    É a espinha dorsal da silver_empreendimento: todos os outros insumos entram por left join sobre
     esta base.
 
     '
@@ -150,7 +150,7 @@ models:
     - sem_mojibake:
         config:
           severity: warn
-- name: rural_prioritarios_caixa
+- name: silver_prioritarios_caixa
   description: 'Dados prioritários recebidos da CAIXA, filtrados para `modalidade = ''RURAL''`. Lê a mesma
     tabela bronze do FAR (dados_prioritarios_recebidos_caixa_empreendimentos), que é um snapshot de todas
     as modalidades — o recorte Rural é feito aqui.
@@ -166,7 +166,7 @@ models:
     - not_null
   - name: valor_desembolsado
     description: Valor desembolsado acumulado em R$ (numeric 15,2).
-- name: rural_prioritarios_bb
+- name: silver_prioritarios_bb
   description: 'Dados prioritários recebidos do Banco do Brasil, filtrados para `modalidade = ''RURAL''`.
     Mesmo layout do prioritarios_caixa.
 
@@ -199,7 +199,7 @@ models:
     - sem_mojibake:
         config:
           severity: warn
-- name: rural_pnhr_caixa
+- name: silver_pnhr_caixa
   description: 'Histórico de empreendimentos PNHR na CAIXA (integração INT065). Cobre os contratos anteriores
     ao Novo MCMV Rural, com composição de investimento, cisternas/efluentes e execução física.
 
@@ -238,7 +238,7 @@ models:
     - sem_mojibake:
         config:
           severity: warn
-- name: rural_pnhr_bb
+- name: silver_pnhr_bb
   description: 'Histórico de empreendimentos PNHR no Banco do Brasil (integração INT057). Diferente da
     CAIXA, o APF é derivado do número do contrato do empreendimento, porque o INT057 não traz nu_apf.
 
@@ -253,9 +253,9 @@ models:
     - not_null
   - name: percentual_execucao_financeira
     description: Percentual de execução financeira da obra (numeric 6,2).
-- name: rural_pnhr_liberacoes
+- name: silver_pnhr_liberacoes
   description: 'Liberações de recurso do PNHR (integração INT055 CAIXA/BB), tipadas e já filtradas por
-    `no_programa like ''%PNHR%''`. Existe para que a gold evolucao_financeira_rural não precise ler e
+    `no_programa like ''%PNHR%''`. Existe para que a gold gold_evolucao_financeira não precise ler e
     parsear text cru: antes o INT055 era lido direto do dump dentro da gold.
 
     '
@@ -276,9 +276,9 @@ models:
     - not_null
   - name: vr_liberado
     description: Valor liberado em R$ (numeric 15,2).
-- name: rural_trabalho_social_caixa
+- name: silver_trabalho_social_caixa
   description: 'Base de acompanhamento do Plano de Trabalho Social (PTS) do PNHR pela CAIXA: situação
-    do TS, valor global e desembolsado, % de execução do TS e % de obra reportado. Alimenta a gold ficha_trabalho_social.
+    do TS, valor global e desembolsado, % de execução do TS e % de obra reportado. Alimenta a gold gold_ficha_trabalho_social.
 
     '
   meta:
@@ -305,7 +305,7 @@ models:
       da CAIXA — o BB não informa esta coluna.
 
       '
-- name: rural_trabalho_social_bb
+- name: silver_trabalho_social_bb
   description: 'Base de acompanhamento do Plano de Trabalho Social (PTS) do PNHR pelo Banco do Brasil.
     Mesmo papel do trabalho_social_caixa, mas o layout de origem é diferente: os nomes das colunas de
     valor e de data não coincidem e a base não traz vr_nao_desembolsado_concluidos.
@@ -347,7 +347,7 @@ models:
     - sem_mojibake:
         config:
           severity: warn
-- name: rural_empreendimento
+- name: silver_empreendimento
   description: 'Visão unificada do empreendimento Rural. Parte do prioritarios_snh e resolve cada atributo
     por coalesce na ordem SNH → agente (CAIXA/BB) → cadastro PJ → histórico PNHR, para que um empreendimento
     apareça uma única vez com o melhor dado disponível. É a base de toda a camada gold.
@@ -415,3 +415,34 @@ models:
     - sem_mojibake:
         config:
           severity: warn
+  - name: fonte_execucao_fisica
+    description: >
+      Qual fonte produziu o `percentual_execucao_fisica` desta linha (prioritarios_snh,
+      prioritarios_caixa, prioritarios_bb, obra_mensal, pnhr_caixa, pnhr_bb, cadastro_pj).
+      Existe porque as fontes discordam: no APF 63665048 o SNH dizia 33,90% e a CAIXA e o
+      MONIT de obra diziam 100,00%. Sem a procedência, o número aparece no dashboard sem
+      como conferir de onde veio.
+    data_tests:
+      - accepted_values:
+          arguments:
+            values: [prioritarios_snh, prioritarios_caixa, prioritarios_bb, obra_mensal,
+                     pnhr_caixa, pnhr_bb, cadastro_pj]
+          config:
+            severity: warn
+  - name: dt_referencia_execucao_fisica
+    description: >
+      Data de medição da fonte que venceu para a execução física. É o que permite dizer
+      "100% (CAIXA, ref. 31/07/2026)" em vez de só "100%".
+  - name: fonte_valor_desembolsado
+    description: Idem, para o valor desembolsado.
+  - name: dt_referencia_valor_desembolsado
+    description: Data de medição da fonte que venceu para o valor desembolsado.
+  - name: fonte_valor_contratado
+    description: Idem, para o valor contratado.
+  - name: fonte_situacao
+    description: Idem, para a situação do empreendimento.
+  - name: dt_referencia_consolidada
+    description: >
+      Data da medição mais recente que entrou nesta linha, qualquer que seja o campo. É a
+      idade do empreendimento na visão consolidada — serve para o dashboard avisar quando
+      um número é velho, em vez de apresentá-lo com a mesma autoridade de um de ontem.

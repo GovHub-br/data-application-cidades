@@ -1,8 +1,8 @@
 {{ config(materialized="table") }}
 
--- Silver: Dados Prioritários Banco do Brasil (Rural)
--- Fonte: bronze.dados_prioritarios_recebidos_bb_empreendimentos (parquet da staging/ carregado pelo staging_para_bronze.py)
--- Saída: dados prioritários do BB limpos, tipados e filtrados para modalidade Rural
+-- Silver: Dados Prioritários CAIXA (Rural)
+-- Fonte: bronze.bronze_prioritarios_caixa (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Saída: dados prioritários da Caixa limpos, tipados e filtrados para modalidade RURAL
 
 with
     prioritarios_raw as (
@@ -71,7 +71,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "dados_prioritarios_recebidos_bb_empreendimentos") }}
+        from {{ source("bronze_rural", "bronze_prioritarios_caixa") }}
         where trim(upper(modalidade)) = 'RURAL'
     )
 

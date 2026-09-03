@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
 -- Silver: Evolução física mensal da obra (Rural)
--- Fonte: bronze.novo_mcmv_rural_obra_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_obra_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
 -- Saída: dados de andamento da obra limpos e tipados por APF
 
 with
@@ -63,7 +63,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_rural_obra_mensal") }}
+        from {{ source("bronze_rural", "bronze_obra_mensal") }}
     )
 
 select *

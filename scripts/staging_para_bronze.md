@@ -117,8 +117,19 @@ parquet e falha se divergirem.
 ## 5. Idempotência
 
 Tabela de controle `lake._bronze_log`, com `UNIQUE (familia, staging_key, source_hash)`.
-O `source_hash` vem dos metadados do parquet (gravado lá pelo `raw_para_staging.py`), então
-um parquet que não mudou é pulado com `skipped_already`. Use `--force` para recarregar.
+
+O que decide se um objeto é pulado é o par **(origem, destino)** — quatro campos:
+
+| Campo | Por que está na chave |
+|---|---|
+| `staging_key` | qual parquet |
+| `source_hash` | metadado do parquet, vem do arquivo em `raw/` |
+| `staging_etag` | o mesmo `raw/` gera parquet diferente quando o `raw_para_staging.py` muda |
+| `target_table` | `schema.tabela` de destino |
+
+Sem o `target_table` a idempotência olharia só a origem: renomear a tabela ou mudar o
+schema no YAML deixa o arquivo intacto, e a carga pularia tudo com `skipped_already`
+deixando o destino novo **vazio, em silêncio**. Use `--force` para recarregar de todo jeito.
 
 Statuses: `loaded`, `dry_run`, `error`, `skipped_already`, `skipped_empty`.
 

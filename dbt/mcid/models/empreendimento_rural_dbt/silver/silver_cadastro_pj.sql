@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
 -- Silver: Cadastro PJ Rural
--- Fonte: bronze.novo_mcmv_rural_cad_pj_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_cadastro_pj (parquet da staging/ carregado pelo staging_para_bronze.py)
 -- Saída: dados cadastrais limpos e tipados do empreendimento contratado
 
 with
@@ -65,7 +65,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_rural_cad_pj_mensal") }}
+        from {{ source("bronze_rural", "bronze_cadastro_pj") }}
     )
 
 select *

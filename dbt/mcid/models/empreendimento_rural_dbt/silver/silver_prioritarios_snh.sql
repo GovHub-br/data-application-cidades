@@ -1,7 +1,7 @@
 {{ config(materialized="table") }}
 
 -- Silver: Dados Prioritários SNH (Rural)
--- Fonte: bronze.dados_prioritarios_disponibilizados_snh_empreendimentos (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_prioritarios_snh (parquet da staging/ carregado pelo staging_para_bronze.py)
 -- Saída: dados prioritários gerais limpos, tipados e filtrados para modalidade Rural
 
 with
@@ -87,7 +87,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "dados_prioritarios_disponibilizados_snh_empreendimentos") }}
+        from {{ source("bronze_rural", "bronze_prioritarios_snh") }}
         where trim(upper(modalidade)) = 'RURAL'
     )
 

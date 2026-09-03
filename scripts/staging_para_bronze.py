@@ -24,7 +24,9 @@ Pré-requisito, feito uma vez na VM: pg_duckdb ativo e um secret S3
 
 Rode DEPOIS do `raw_para_staging.py --apply`, que popula a staging/.
 
-Idempotência: lake._bronze_log com UNIQUE(familia, staging_key, source_hash). Use --force
+Idempotência: lake._bronze_log com UNIQUE(familia, staging_key, source_hash). O que
+pula a recarga é o par (origem, destino): staging_key + source_hash + staging_etag +
+target_table — mudar o schema ou o nome da tabela no YAML recarrega. Use --force
 para recarregar.
 """
 
@@ -260,11 +262,18 @@ def _criar_control_table(conn_str: str) -> None:
 
 
 def _carregar_carregados(conn_str: str, familia: str) -> set:
-    """(staging_key, source_hash, staging_etag) já materializados ('loaded') na família.
+    """(staging_key, source_hash, staging_etag, target_table) já 'loaded' na família.
 
     O `staging_etag` entra na chave porque o `source_hash` é do arquivo em raw/, e o mesmo
     raw gera parquet diferente quando o raw_para_staging.py muda — sem o etag a bronze
     pularia a recarga e continuaria servindo o parquet antigo.
+
+    O `target_table` entra pela mesma razão, do outro lado: idempotência é sobre o par
+    (origem, destino), não só sobre a origem. Renomear a tabela ou mudar o schema no
+    bronze_familias.yml deixa o arquivo de origem intacto — sem o destino na chave, a
+    carga pularia os 12 objetos com `skipped_already` e o schema novo ficaria vazio, em
+    silêncio. Foi exatamente o que aconteceu quando o rural saiu de `bronze.*` para
+    `empreendimento_rural.bronze_*`.
 
     Só o `--apply` (status 'loaded') conta para idempotência; dry-runs não bloqueiam.
     """
@@ -272,13 +281,13 @@ def _carregar_carregados(conn_str: str, familia: str) -> set:
         with conn.cursor() as cur:
             cur.execute(
                 f"""
-                SELECT staging_key, source_hash, staging_etag
+                SELECT staging_key, source_hash, staging_etag, target_table
                 FROM {LAKE_SCHEMA}.{CONTROL_TABLE}
                 WHERE familia = %s AND status = 'loaded' AND source_hash IS NOT NULL
                 """,
                 (familia,),
             )
-            return {(r[0], r[1], r[2]) for r in cur.fetchall()}
+            return {(r[0], r[1], r[2], r[3]) for r in cur.fetchall()}
 
 
 def _registrar_control(conn_str: str, rec: dict) -> None:
@@ -621,7 +630,7 @@ def processar_objeto(
             rec["status"] = "skipped_empty"
             return rec
 
-        chave = (staging_key, source_hash, rec["staging_etag"])
+        chave = (staging_key, source_hash, rec["staging_etag"], rec["target_table"])
         if source_hash is not None and chave in carregados:
             rec["status"] = "skipped_already"
             return rec

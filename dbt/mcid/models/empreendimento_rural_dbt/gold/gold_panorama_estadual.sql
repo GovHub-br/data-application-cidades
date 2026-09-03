@@ -6,7 +6,7 @@
 
 with
     fichas as (
-        select * from {{ ref("ficha_empreendimento_rural") }}
+        select * from {{ ref("gold_ficha_empreendimento") }}
     ),
 
     -- Tabela de referência IBGE para traduzir sigla UF → nome completo do estado.
@@ -30,7 +30,6 @@ with
             case
                 when coalesce(sum(quantidade_uh), 0) > 0
                 then sum(valor_contratado) / sum(quantidade_uh)
-                else 0.00
             end as valor_medio_por_uh
         from fichas
         group by uf

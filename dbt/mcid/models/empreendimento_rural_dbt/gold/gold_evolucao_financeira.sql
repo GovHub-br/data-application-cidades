@@ -8,13 +8,23 @@ with
         select
             apf,
             date_trunc('month', dt_liberacao_recurso) as mes,
-            vr_movimento as vr_liberado,
+
+            -- Convenção de sinal do MONIT, documentada no FAR e no FDS e ignorada aqui:
+            --   ic_credito = '0' -> débito: é a LIBERAÇÃO real, e vem com valor negativo
+            --   ic_credito = '1' -> crédito: é DEVOLUÇÃO de recurso, e vem positivo
+            -- Somar vr_movimento cru fazia liberação subtrair e devolução somar — o
+            -- acumulado saía com o sinal invertido em todo empreendimento do Novo MCMV
+            -- Rural que tem série. Liberação entra positiva, devolução entra negativa.
+            case
+                when ic_credito = '1' then -abs(vr_movimento)
+                else abs(vr_movimento)
+            end as vr_liberado,
             vr_desembolso_obra as vr_pago_obra,
             vr_desembolso_trabalho_social as vr_pago_ts,
             vr_desembolso_atec as vr_pago_atec,
             vr_desembolso_cisternas_efluentes as vr_pago_cisternas_efluentes,
             vr_desembolso_custos_indiretos as vr_pago_custos_indiretos
-        from {{ ref("rural_financeiro_mensal") }}
+        from {{ ref("silver_financeiro_mensal") }}
         where dt_liberacao_recurso is not null
     ),
 
@@ -25,12 +35,14 @@ with
             apf,
             date_trunc('month', dt_liberacao) as mes,
             vr_liberado,
-            0.00 as vr_pago_obra,
-            0.00 as vr_pago_ts,
-            0.00 as vr_pago_atec,
-            0.00 as vr_pago_cisternas_efluentes,
-            0.00 as vr_pago_custos_indiretos
-        from {{ ref("rural_pnhr_liberacoes") }}
+            -- NULL, e não 0.00: o INT055 não decompõe o valor por componente. Zero
+            -- afirmaria "não houve desembolso de obra"; o arquivo simplesmente não informa.
+            null::numeric as vr_pago_obra,
+            null::numeric as vr_pago_ts,
+            null::numeric as vr_pago_atec,
+            null::numeric as vr_pago_cisternas_efluentes,
+            null::numeric as vr_pago_custos_indiretos
+        from {{ ref("silver_pnhr_liberacoes") }}
     ),
 
     union_financeiro as (
@@ -55,7 +67,7 @@ with
     ),
 
     empreendimento as (
-        select * from {{ ref("rural_empreendimento") }}
+        select * from {{ ref("silver_empreendimento") }}
     ),
 
     evolucao as (
@@ -65,12 +77,14 @@ with
             m.qt_liberacoes,
 
             -- Valores mensais
-            coalesce(m.vr_liberado_mes, 0.00) as vr_liberado_mes,
-            coalesce(m.vr_pago_obra_mes, 0.00) as vr_pago_obra_mes,
-            coalesce(m.vr_pago_ts_mes, 0.00) as vr_pago_ts_mes,
-            coalesce(m.vr_pago_atec_mes, 0.00) as vr_pago_atec_mes,
-            coalesce(m.vr_pago_cisternas_efluentes_mes, 0.00) as vr_pago_cisternas_efluentes_mes,
-            coalesce(m.vr_pago_custos_indiretos_mes, 0.00) as vr_pago_custos_indiretos_mes,
+            -- Sem coalesce para 0: componente nulo significa "a fonte não decompõe"
+            -- (caso do INT055), e somar zeros aí produziria um total de obra falso.
+            m.vr_liberado_mes,
+            m.vr_pago_obra_mes,
+            m.vr_pago_ts_mes,
+            m.vr_pago_atec_mes,
+            m.vr_pago_cisternas_efluentes_mes,
+            m.vr_pago_custos_indiretos_mes,
 
             -- Acumulado progressivo por APF
             sum(m.vr_liberado_mes) over (
@@ -101,10 +115,11 @@ select
 
     -- Acumulado e percentual
     vr_acumulado,
+    -- Sem `else 0.00`: contrato sem valor conhecido não permite calcular percentual, e
+    -- publicar 0% seria afirmar que nada foi executado.
     case
         when coalesce(valor_contratado, 0.00) > 0
         then round((vr_acumulado / valor_contratado) * 100, 2)
-        else 0.00
     end as pct_executado_financeiro,
 
     valor_contratado,
