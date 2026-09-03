@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_cadastro_pj") }}
 
 -- Silver: Cadastro PJ Mensal — dados detalhados do empreendimento contratado
--- Fonte: bronze.novo_mcmv_far_cad_pj_mensal (822 registros, 85 colunas text)
+-- Fonte: empreendimento_far.bronze_cad_pj_mensal (822 registros, 85 colunas text)
 -- Saída: dados cadastrais limpos e tipados
 with
     cad_pj_raw as (
@@ -89,7 +89,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_far_cad_pj_mensal") }}
+        from {{ source("bronze_far", "bronze_cad_pj_mensal") }}
     )
 
 select *

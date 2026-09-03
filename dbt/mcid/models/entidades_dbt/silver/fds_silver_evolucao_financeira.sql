@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_evolucao_financeira") }}
 
 -- Silver: Evolução Financeira FDS — Série temporal de desembolsos por empreendimento
 -- Agrega as liberações de fds_financeiro_mensal por APF e mês.
@@ -6,9 +6,9 @@
 -- JOIN com fds_empreendimento usando raiz de 6 dígitos.
 -- Grão: 1 linha por APF × mês (relação 1:N com empreendimento)
 with
-    financeiro as (select * from {{ ref("fds_financeiro_mensal") }}),
+    financeiro as (select * from {{ ref("fds_silver_financeiro_mensal") }}),
 
-    empreendimento as (select * from {{ ref("fds_empreendimento") }}),
+    empreendimento as (select * from {{ ref("fds_silver_empreendimento") }}),
 
     -- Agregação mensal: soma todas as liberações reais do mês por APF
     -- Filtra apenas ic_credito='0' (liberações reais) e aplica ABS()

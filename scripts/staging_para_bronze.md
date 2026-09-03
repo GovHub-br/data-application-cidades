@@ -19,16 +19,16 @@ parquets que viram tabela. Cada objeto tem `tabela` mais **uma** das duas formas
 
 ```yaml
 empreendimento_far:
-  schema: bronze
+  schema: empreendimento_far
   objetos:
     # (a) key exata — dado que é um arquivo só, sem versões
     - staging_key: staging/sharepoint/novo_mcmv_far_consolidado.parquet
-      tabela: novo_mcmv_far_consolidado
+      tabela: bronze_consolidado
 
     # (b) padrão — dado que chega periodicamente; vence a DATA mais recente
     - padrao: "staging/*MONIT_CAD_PJ_FAR_MENSAL_*.parquet"
       data_regex: "MONIT_CAD_PJ_FAR_MENSAL_(\\d{6})"
-      tabela: novo_mcmv_far_cad_pj_mensal
+      tabela: bronze_cad_pj_mensal
 ```
 
 Adicionar dado novo à bronze = adicionar uma entrada no YAML. Nada no `.py` muda.
@@ -78,8 +78,8 @@ Quem lê o parquet é o **pg_duckdb**, dentro do Postgres — o dado não passa 
 Python. O script só decide o que carregar e dispara:
 
 ```sql
-DROP TABLE IF EXISTS bronze."novo_mcmv_far_consolidado";
-CREATE TABLE bronze."novo_mcmv_far_consolidado" AS
+DROP TABLE IF EXISTS empreendimento_far."bronze_consolidado";
+CREATE TABLE empreendimento_far."bronze_consolidado" AS
 SELECT CAST(r['co_tipo_registro'] AS VARCHAR) AS "co_tipo_registro", ...
 FROM read_parquet('s3://data-lake-mcid/staging/sharepoint/novo_mcmv_far_consolidado.parquet') AS r;
 ```

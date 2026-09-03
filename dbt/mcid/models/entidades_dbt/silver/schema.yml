@@ -4,7 +4,7 @@ models:
 
   # Cadastro PJ (Entidade Organizadora + Empreendimento)
 
-  - name: fds_cadastro_pj
+  - name: fds_silver_cadastro_pj
     description: >
       Cadastro detalhado de pessoa jurídica do MCMV Entidades (FDS), com dados de
       Entidade Organizadora, construtora, composição financeira, coordenadas GPS,
@@ -61,7 +61,7 @@ models:
 
   # Obra Mensal
 
-  - name: fds_obra_mensal
+  - name: fds_silver_obra_mensal
     description: >
       Evolução física da obra FDS. Snapshot mensal com percentual previsto/realizado,
       situação da operação, UHs concluídas/alienadas, paralisação, invasão e
@@ -96,7 +96,7 @@ models:
 
   # Financeiro Mensal
 
-  - name: fds_financeiro_mensal
+  - name: fds_silver_financeiro_mensal
     description: >
       Série temporal de liberações financeiras FDS, com 16.887 registros que cobrem
       legado e Novo MCMV — o recorte do Novo MCMV sai do join por APF na
@@ -133,7 +133,7 @@ models:
 
   # Trabalho Social
 
-  - name: fds_trabalho_social
+  - name: fds_silver_trabalho_social
     description: >
       Acompanhamento do Trabalho Técnico Social FDS: situação do TS, datas de
       aprovação do PTS, convênio, relatórios, percentual de execução e portaria.
@@ -162,7 +162,7 @@ models:
 
   # INT 059 (Complementar)
 
-  - name: fds_int_059_caixa_pj
+  - name: fds_silver_int_059_caixa_pj
     description: >
       Dados complementares da CAIXA (INT 059), 916 registros misturando legado e
       Novo MCMV. Importante para filtros de Novo PMCMV-E e status específicos
@@ -187,7 +187,7 @@ models:
 
   # Entregas (Complementar)
 
-  - name: fds_dados_prioritarios_entregas
+  - name: fds_silver_dados_prioritarios_entregas
     description: >
       Snapshot de entregas reportadas pela CAIXA, com 11.677 registros de múltiplos
       programas. Hoje nenhum model consome esta tabela — a entrega efetiva do FDS
@@ -206,7 +206,7 @@ models:
 
   # Visões unificadas
 
-  - name: fds_empreendimento
+  - name: fds_silver_empreendimento
     description: >
       Tabela Silver (Visão Unificada) de Empreendimentos FDS do Novo MCMV Entidades.
       Consolida cinco tipagens: fds_cadastro_pj, fds_obra_mensal, fds_int_059_caixa_pj,
@@ -358,7 +358,7 @@ models:
       - name: gps_long_segundo
         description: "Longitude (Segundos)."
 
-  - name: fds_evolucao_financeira
+  - name: fds_silver_evolucao_financeira
     description: >
       Tabela Silver de Evolução Financeira FDS. Série temporal mensal de
       liberações por empreendimento (APF × mês). Usa ABS(vr_liberado) para

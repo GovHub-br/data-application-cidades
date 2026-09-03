@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_evolucao_financeira_chart") }}
 
 -- Gold: Gráfico de Evolução Financeiro-Física FDS
 -- Objetivo: Alimentar o Superset com a série temporal de desembolsos.
@@ -6,11 +6,11 @@
 -- (percentual_execucao_fisica) é projetada de forma estática para 
 -- acompanhamento do valor atual contra a curva histórica de desembolso.
 with
-    evolucao_mensal as (select * from {{ ref("fds_evolucao_financeira") }}),
+    evolucao_mensal as (select * from {{ ref("fds_silver_evolucao_financeira") }}),
 
     ficha as (
         select apf, apf_municipio_empreendimento, percentual_execucao_fisica
-        from {{ ref("fds_ficha_empreendimento") }}
+        from {{ ref("fds_gold_ficha_empreendimento") }}
     )
 
 select

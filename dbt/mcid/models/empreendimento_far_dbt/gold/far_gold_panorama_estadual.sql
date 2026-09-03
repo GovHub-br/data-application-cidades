@@ -1,10 +1,10 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_panorama_estadual") }}
 
 -- Gold: Panorama Estadual — painel agregado por UF
 -- Cada seção do dashboard vira um bloco do union all, identificado por `secao`:
 -- o BI filtra WHERE secao = 'X' para montar cada card.
 with
-    fichas as (select * from {{ ref("ficha_empreendimento") }}),
+    fichas as (select * from {{ ref("far_gold_ficha_empreendimento") }}),
 
     -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
     -- dobraria as somas

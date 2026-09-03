@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_cadastro_pj") }}
 
 -- Silver: Cadastro PJ Mensal — dados do empreendimento FDS (Entidades)
--- Fonte: bronze.novo_mcmv_fds_cad_pj_mensal
+-- Fonte: empreendimentos_fds.bronze_cad_pj_mensal
 -- Saída: dados cadastrais limpos e tipados, incluindo Entidade Organizadora
 with
     cad_pj_raw as (
@@ -158,7 +158,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_fds_cad_pj_mensal") }}
+        from {{ source("bronze_fds", "bronze_cad_pj_mensal") }}
     )
 
 select *

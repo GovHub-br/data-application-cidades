@@ -1,9 +1,9 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_evolucao_financeira_chart") }}
 
 -- Gold: Evolução Financeira (chart) — série APF × mês pronta para o gráfico
 -- Enriquece a silver com nome do empreendimento, estado por extenso e labels de mês.
 with
-    evolucao as (select * from {{ ref("evolucao_financeira") }}),
+    evolucao as (select * from {{ ref("far_silver_evolucao_financeira") }}),
 
     -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
     -- dobraria as linhas da série
@@ -14,7 +14,7 @@ with
 
     ficha as (
         select apf, nome_empreendimento, apf_municipio_empreendimento
-        from {{ ref("ficha_empreendimento") }}
+        from {{ ref("far_gold_ficha_empreendimento") }}
     )
 
 select

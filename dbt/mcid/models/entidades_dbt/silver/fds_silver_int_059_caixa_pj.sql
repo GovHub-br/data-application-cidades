@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_int_059_caixa_pj") }}
 
 -- Silver: INT 059 — empreendimentos FDS da CAIXA (complementar)
--- Fonte: bronze.int_empreendimentos_int_059_fds_caixa_pj
+-- Fonte: empreendimentos_fds.bronze_int_059_caixa_pj
 -- OBS: Esta tabela contém TANTO legado (PMCMV-E) quanto Novo MCMV. Filtrar por
 -- no_selecao_pmcmv_e = 'NOVO PMCMV-E' para manter apenas Novo MCMV.
 -- Campos exclusivos não presentes nas fontes primárias:
@@ -91,7 +91,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "int_empreendimentos_int_059_fds_caixa_pj") }}
+        from {{ source("bronze_fds", "bronze_int_059_caixa_pj") }}
     )
 
 select *

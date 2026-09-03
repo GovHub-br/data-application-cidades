@@ -1,11 +1,12 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_execucao_fisica_financeira_chart") }}
 
 -- Gold: Execução Física × Financeira (chart) — as duas curvas na mesma série mensal
 -- O full outer join junta meses que existem só num dos lados, e o LOCF arrasta o
 -- último valor válido para os meses vazios (senão a linha despencaria para 0%).
 with
     financeira as (
-        select apf, mes, pct_executado_financeiro from {{ ref("evolucao_financeira") }}
+        select apf, mes, pct_executado_financeiro
+        from {{ ref("far_silver_evolucao_financeira") }}
     ),
 
     fisica as (
@@ -13,13 +14,14 @@ with
             apf,
             date_trunc('month', dt_alteracao_situacao) as mes_fisica,
             max(pct_obra_realizada) as pct_obra_realizada
-        from {{ ref("obra_mensal") }}
+        from {{ ref("far_silver_obra_mensal") }}
         where dt_alteracao_situacao is not null
         group by 1, 2
     ),
 
     empreendimento as (
-        select apf, municipio, uf, empreendimento_nome from {{ ref("empreendimento") }}
+        select apf, municipio, uf, empreendimento_nome
+        from {{ ref("far_silver_empreendimento") }}
     ),
 
     base as (

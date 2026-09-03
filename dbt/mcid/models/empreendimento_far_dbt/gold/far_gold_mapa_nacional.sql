@@ -1,10 +1,10 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_mapa_nacional") }}
 
 -- Gold: Mapa Nacional — agregação geográfica para o Superset
 -- Duas visões empilhadas, discriminadas por `nivel`: uma por UF (com código ISO
 -- para o Country Map) e uma por macrorregião. A tabela IBGE traz nome e região.
 with
-    fichas as (select * from {{ ref("ficha_empreendimento") }}),
+    fichas as (select * from {{ ref("far_gold_ficha_empreendimento") }}),
 
     -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
     -- dobraria as somas

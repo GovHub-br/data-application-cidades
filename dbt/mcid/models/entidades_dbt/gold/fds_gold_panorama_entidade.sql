@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_panorama_entidade") }}
 
 with
-    silver as (select * from {{ ref("fds_empreendimento") }}),
+    silver as (select * from {{ ref("fds_silver_empreendimento") }}),
 
     agregacao_eo as (
         select

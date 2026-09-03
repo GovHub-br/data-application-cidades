@@ -152,7 +152,7 @@ models:
           severity: warn
 - name: silver_prioritarios_caixa
   description: 'Dados prioritários recebidos da CAIXA, filtrados para `modalidade = ''RURAL''`. Lê a mesma
-    tabela bronze do FAR (dados_prioritarios_recebidos_caixa_empreendimentos), que é um snapshot de todas
+    origem do FAR (empreendimento_far.bronze_dados_prioritarios_caixa), que é um snapshot de todas
     as modalidades — o recorte Rural é feito aqui.
 
     '

@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_consolidado") }}
 
 -- Silver: Consolidado GFAR — propostas e dados de seleção/contratação
--- Fonte: bronze.novo_mcmv_far_consolidado (15.091 registros, 100 colunas text)
+-- Fonte: empreendimento_far.bronze_consolidado (15.091 registros, 100 colunas text)
 -- Saída: apenas colunas relevantes para a ficha do empreendimento, com tipagem correta
 with
     consolidado_raw as (
@@ -109,7 +109,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_far_consolidado") }}
+        from {{ source("bronze_far", "bronze_consolidado") }}
     )
 
 select *

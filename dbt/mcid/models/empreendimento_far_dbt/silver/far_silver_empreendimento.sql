@@ -1,9 +1,9 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_empreendimento") }}
 
 -- Silver: Empreendimento FAR — visão unificada
 -- Reúne dados cadastrais, contratuais e status físico-financeiro de cada APF.
 with
-    cadastro as (select * from {{ ref("cadastro_pj") }}),
+    cadastro as (select * from {{ ref("far_silver_cadastro_pj") }}),
 
     -- O consolidado pode ter mais de uma proposta por ID; fica a mais recente
     consolidado as (
@@ -16,15 +16,15 @@ with
                         partition by id_proposta
                         order by dt_movimento desc, dt_protocolo desc
                     ) as rn
-                from {{ ref("consolidado") }}
+                from {{ ref("far_silver_consolidado") }}
                 where id_proposta is not null
             ) t
         where rn = 1
     ),
 
-    obra as (select * from {{ ref("obra_mensal") }}),
+    obra as (select * from {{ ref("far_silver_obra_mensal") }}),
 
-    caixa as (select * from {{ ref("dados_prioritarios_caixa") }})
+    caixa as (select * from {{ ref("far_silver_dados_prioritarios_caixa") }})
 
 select
     c.apf,

@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: ficha_empreendimento
+  - name: far_gold_ficha_empreendimento
     description: >
       Tabela Gold que alimenta a "Ficha do Empreendimento" nos dashboards.
       Consome a silver empreendimento e injeta as regras de negócio finais:
@@ -33,7 +33,7 @@ models:
           Regra de negócio: compara o % de execução física com o % de desembolso, com
           tolerância de 5% ("Ritmo Equilibrado", "Desembolso Adiantado" ou "Atrasado").
 
-  - name: resumo_gerencial
+  - name: far_gold_resumo_gerencial
     description: >
       Visão agregada Gold com os grandes KPIs (UHs, pessoas atendidas, valores)
       agrupados por situação, tipologia e status. Alimenta os gráficos de pizza e
@@ -49,7 +49,7 @@ models:
       - name: media_execucao_fisica
         description: Execução física média (0-100) daquele grupo de empreendimentos.
 
-  - name: panorama_estadual
+  - name: far_gold_panorama_estadual
     description: >
       Visão Gold agregada por UF para o dashboard "Panorama Estadual".
       Consolida os empreendimentos de um estado em seções distintas, identificadas
@@ -86,7 +86,7 @@ models:
       - name: total_empreendimentos_uf
         description: "Na seção 'header': total de empreendimentos no estado. NULL nas demais seções."
 
-  - name: mapa_nacional
+  - name: far_gold_mapa_nacional
     description: >
       Visão Gold geográfica para mapas coropléticos (Country Map) e gráficos por
       região no Superset. Duas visões filtradas pela coluna 'nivel': 'uf' (27 linhas,
@@ -114,7 +114,7 @@ models:
       - name: media_execucao_fisica
         description: Média do percentual de execução física dos empreendimentos (0-100).
 
-  - name: evolucao_financeira_chart
+  - name: far_gold_evolucao_financeira_chart
     description: >
       Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira".
       Consome a silver evolucao_financeira e enriquece com nome do
@@ -150,7 +150,7 @@ models:
       - name: pct_executado_financeiro
         description: "Percentual acumulado do desembolso sobre o contrato (0-100)."
 
-  - name: execucao_fisica_financeira_chart
+  - name: far_gold_execucao_fisica_financeira_chart
     description: >
       Tabela Gold para o gráfico de acompanhamento da execução física e financeira.
       Junta a silver de evolução financeira com a de obra mensal, arrastando o último

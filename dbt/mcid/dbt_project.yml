@@ -23,8 +23,11 @@ models:
     metadata:
       +materialized: incremental
       +schema: metadata
-    # Sem pasta bronze/: a bronze é o schema `bronze` do Postgres, carregado pelo
-    # scripts/staging_para_bronze.py a partir do data lake, e a silver tipa o texto de lá.
+    # Um schema por domínio, com a camada no prefixo do nome da tabela (bronze_*,
+    # silver_*, gold_*). Como nome de model é único no projeto inteiro, o arquivo leva o
+    # token do domínio (far_silver_cadastro_pj) e o `alias` do config define o nome no
+    # banco (silver_cadastro_pj) — é o alias que segue o padrão, não o nome do model.
+    # A bronze não é dbt: vive no mesmo schema, carregada pelo staging_para_bronze.py.
     empreendimento_far_dbt:
       +materialized: table
       +schema: empreendimento_far
@@ -48,7 +51,7 @@ models:
 
     entidades_dbt:
       +materialized: table
-      +schema: entidades_fds
+      +schema: empreendimentos_fds
       silver:
         +materialized: table
       gold:

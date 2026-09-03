@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_obra_mensal") }}
 
 -- Silver: Obra Mensal — evolução física do empreendimento FDS (Entidades)
--- Fonte: bronze.novo_mcmv_fds_obra_mensal
+-- Fonte: empreendimentos_fds.bronze_obra_mensal
 -- Saída: dados de obra limpos e tipados
 with
     obra_raw as (
@@ -113,7 +113,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_fds_obra_mensal") }}
+        from {{ source("bronze_fds", "bronze_obra_mensal") }}
     )
 
 select *

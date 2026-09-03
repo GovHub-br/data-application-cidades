@@ -1,8 +1,8 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_ficha_empreendimento") }}
 
 -- Gold: Ficha do Empreendimento — uma linha por APF para o dashboard
 -- Aplica as regras de negócio finais (status, prazo, ritmo) sobre a silver.
-with base_silver as (select * from {{ ref("empreendimento") }})
+with base_silver as (select * from {{ ref("far_silver_empreendimento") }})
 
 select
     -- Identificadores

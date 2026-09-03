@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_financeiro_mensal") }}
 
 -- Silver: Financeiro Mensal — liberações financeiras FDS (Entidades)
--- Fonte: bronze.novo_mcmv_fds_financeiro_mensal
+-- Fonte: empreendimentos_fds.bronze_financeiro_mensal
 -- Saída: série temporal de liberações com valores tipados por componente
 -- OBS:     ic_credito=0 => débito (liberação real, valor negativo no vr_liberado)
 -- ic_credito=1 => crédito (devolução, valor positivo)
@@ -50,7 +50,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_fds_financeiro_mensal") }}
+        from {{ source("bronze_fds", "bronze_financeiro_mensal") }}
     )
 
 select *

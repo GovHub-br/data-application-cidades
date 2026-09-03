@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: fds_ficha_empreendimento
+  - name: fds_gold_ficha_empreendimento
     description: >
       Tabela Gold do MCMV Entidades (FDS) contendo 1 linha por empreendimento (APF).
       É a tabela central para alimentar o Superset com os dados detalhados.
@@ -51,7 +51,7 @@ models:
       - name: status_entrega
         description: Regra de negócio (Totalmente Entregue, Entrega Parcial, Não Entregue) calculada sobre a taxa de alienação.
 
-  - name: fds_panorama_entidade
+  - name: fds_gold_panorama_entidade
     description: >
       Tabela Gold do MCMV Entidades (FDS) agregada por Entidade Organizadora (CNPJ).
       É a tabela principal para os KPIs: Card Resumo, Ranking Interativo e
@@ -84,7 +84,7 @@ models:
       - name: classificacao_risco
         description: "Regra de negócio baseada no score: Baixo, Médio ou Alto Risco."
 
-  - name: fds_evolucao_financeira_chart
+  - name: fds_gold_evolucao_financeira_chart
     description: >
       Tabela Gold de evolução financeira do MCMV Entidades (FDS).
       Estrutura de série temporal (1 linha por APF/Mês) pronta para plotar

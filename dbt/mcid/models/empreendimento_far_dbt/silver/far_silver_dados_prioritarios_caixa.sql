@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_dados_prioritarios_caixa") }}
 
 -- Silver: Dados Prioritários CAIXA — snapshot consolidado da CAIXA
--- Fonte: bronze.dados_prioritarios_recebidos_caixa_empreendimentos (4.443 FAR de 14.923)
+-- Fonte: empreendimento_far.bronze_dados_prioritarios_caixa (4.443 FAR de 14.923)
 -- Saída: apenas empreendimentos FAR, com tipagem correta
 -- Nota: filtra apenas modalidade FAR nesta camada silver
 with
@@ -87,12 +87,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from
-            {{
-                source(
-                    "staging_lake", "dados_prioritarios_recebidos_caixa_empreendimentos"
-                )
-            }}
+        from {{ source("bronze_far", "bronze_dados_prioritarios_caixa") }}
         where trim(modalidade) = 'FAR'
     )
 

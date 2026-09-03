@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_trabalho_social") }}
 
 -- Silver: Trabalho Social Mensal — acompanhamento do TTS (Entidades)
--- Fonte: bronze.novo_mcmv_fds_trabalho_social_mensal
+-- Fonte: empreendimentos_fds.bronze_trabalho_social
 -- Saída: dados de trabalho social tipados
 with
     ts_raw as (
@@ -39,7 +39,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_fds_trabalho_social_mensal") }}
+        from {{ source("bronze_fds", "bronze_trabalho_social") }}
     )
 
 select *

@@ -4,7 +4,7 @@ models:
 
   # Consolidado GFAR
 
-  - name: consolidado
+  - name: far_silver_consolidado
     description: >
       Dados do GFAR consolidado com propostas e contratos FAR do Novo MCMV.
       Cobre todo o ciclo de vida: da proposta protocolizada até a contratação.
@@ -43,7 +43,7 @@ models:
 
   # Cadastro PJ
 
-  - name: cadastro_pj
+  - name: far_silver_cadastro_pj
     description: >
       Cadastro detalhado de pessoa jurídica (empreendimento contratado).
       876 empreendimentos com composição financeira completa, coordenadas GPS,
@@ -81,7 +81,7 @@ models:
 
   # Obra Mensal
 
-  - name: obra_mensal
+  - name: far_silver_obra_mensal
     description: >
       Evolução física da obra. Snapshot mensal com percentual previsto/realizado,
       situação da obra, UHs concluídas e datas de paralisação/retomada/entrega.
@@ -109,7 +109,7 @@ models:
 
   # Financeiro Mensal
 
-  - name: financeiro_mensal
+  - name: far_silver_financeiro_mensal
     description: >
       Série temporal de liberações financeiras. Contém 11.596 registros.
       Cada registro representa uma liberação de recurso com decomposição
@@ -139,7 +139,7 @@ models:
 
   # Dados Prioritários CAIXA
 
-  - name: dados_prioritarios_caixa
+  - name: far_silver_dados_prioritarios_caixa
     description: >
       Snapshot consolidado dos dados prioritários recebidos da CAIXA.
       Filtrado apenas para modalidade FAR (4.504 empreendimentos, de 15.031 no
@@ -175,7 +175,7 @@ models:
 
   # Visão unificada
 
-  - name: empreendimento
+  - name: far_silver_empreendimento
     description: >
       Visão unificada do empreendimento FAR: cruza cadastro_pj,
       consolidado, obra_mensal e dados_prioritarios_caixa pela
@@ -243,7 +243,7 @@ models:
 
   # Evolução Financeira
 
-  - name: evolucao_financeira
+  - name: far_silver_evolucao_financeira
     description: >
       Série temporal mensal de liberações por empreendimento (APF × mês).
       Agrega o financeiro_mensal e junta com empreendimento pela raiz

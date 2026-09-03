@@ -1,12 +1,12 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_evolucao_financeira") }}
 
 -- Silver: Evolução Financeira — série temporal de desembolsos por empreendimento
 -- Agrega as liberações do financeiro_mensal por APF × mês e calcula o acumulado.
 -- O join com empreendimento é pela raiz de 6 dígitos do APF (o financeiro usa 6).
 with
-    financeiro as (select * from {{ ref("financeiro_mensal") }}),
+    financeiro as (select * from {{ ref("far_silver_financeiro_mensal") }}),
 
-    empreendimento as (select * from {{ ref("empreendimento") }}),
+    empreendimento as (select * from {{ ref("far_silver_empreendimento") }}),
 
     -- Agregação mensal: soma todas as liberações do mês por APF
     mensal as (

@@ -1,7 +1,7 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_financeiro_mensal") }}
 
 -- Silver: Financeiro Mensal — liberações financeiras do empreendimento
--- Fonte: bronze.novo_mcmv_far_financeiro_mensal (6.069 registros, 26 colunas text)
+-- Fonte: empreendimento_far.bronze_financeiro_mensal (6.069 registros, 26 colunas text)
 -- Saída: série temporal de liberações com valores tipados por componente
 with
     financeiro_raw as (
@@ -46,7 +46,7 @@ with
             _source_file as arquivo_de_origem,
             nullif(trim(_ingested_at), '')::timestamp as criado_em
 
-        from {{ source("staging_lake", "novo_mcmv_far_financeiro_mensal") }}
+        from {{ source("bronze_far", "bronze_financeiro_mensal") }}
     )
 
 select *

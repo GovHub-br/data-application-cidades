@@ -1,6 +1,6 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_ficha_empreendimento") }}
 
-with silver as (select * from {{ ref("fds_empreendimento") }})
+with silver as (select * from {{ ref("fds_silver_empreendimento") }})
 
 select
     -- Identificadores

@@ -1,13 +1,13 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_empreendimento") }}
 
 -- Silver: Empreendimento FDS — Visão unificada
 -- Reúne dados cadastrais, EO, status físico-financeiro e TS de cada APF.
 -- Cruza: fds_cadastro_pj + fds_obra_mensal + fds_int_059_caixa_pj + fds_trabalho_social
 -- Alimenta: ficha_empreendimento, panorama_estadual, panorama_entidades (golds)
 with
-    cadastro as (select * from {{ ref("fds_cadastro_pj") }}),
+    cadastro as (select * from {{ ref("fds_silver_cadastro_pj") }}),
 
-    obra as (select * from {{ ref("fds_obra_mensal") }}),
+    obra as (select * from {{ ref("fds_silver_obra_mensal") }}),
 
     -- INT 059: filtrar apenas Novo MCMV-E e desduplicar por APF
     int059 as (
@@ -19,13 +19,13 @@ with
                     row_number() over (
                         partition by apf order by dt_movimento desc nulls last
                     ) as rn
-                from {{ ref("fds_int_059_caixa_pj") }}
+                from {{ ref("fds_silver_int_059_caixa_pj") }}
                 where selecao_pmcmv_e = 'NOVO PMCMV-E'
             ) t
         where rn = 1
     ),
 
-    trabalho_social as (select * from {{ ref("fds_trabalho_social") }}),
+    trabalho_social as (select * from {{ ref("fds_silver_trabalho_social") }}),
 
     -- Desembolso acumulado: soma ABS das liberações reais (ic_credito = '0')
     desembolso_acumulado as (
@@ -34,7 +34,7 @@ with
             sum(abs(vr_liberado)) as vr_total_desembolsado,
             count(*) as qt_liberacoes_total,
             max(dt_liberacao) as dt_ultima_liberacao
-        from {{ ref("fds_financeiro_mensal") }}
+        from {{ ref("fds_silver_financeiro_mensal") }}
         where ic_credito = '0' and vr_liberado is not null
         group by right(apf, 6)
     )
