@@ -1,3 +1,3 @@
 select *
-from {{ ref("historico_mcmv_serie_temporal_snapshot") }}
+from {{ ref("silver_mcmv_historico_serie_anual_ogu_fgts") }}
 where quantidade_uh < 0

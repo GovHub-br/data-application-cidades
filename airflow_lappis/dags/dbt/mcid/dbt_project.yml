@@ -74,16 +74,75 @@ models:
 
     mcmv_historico_dbt:
       +materialized: table
-      +schema: mcmv_historico
+      +meta:
+        governance:
+          product: mcmv_historico
+          owner_key: mcid_data_engineering
+
+      bronze:
+        +materialized: table
+        +schema: bronze
+        +enabled: "{{ target.type == 'duckdb' }}"
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+
+      silver:
+        +materialized: table
+        +schema: silver
+        +enabled: "{{ target.type == 'duckdb' }}"
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+
+      gold:
+        +materialized: table
+        +schema: gold
+        +enabled: "{{ target.type == 'duckdb' }}"
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+      # Piloto #118: série anual OGU/FGTS a partir de seed — roda no Postgres
+      # (não lê MinIO), materializa no schema silver.
       piloto:
         +materialized: table
-      empreendimentos:
-        +materialized: table
-        +enabled: "{{ target.type == 'duckdb' }}"
-      serie_executiva:
-        +materialized: table
-        +schema: mcmv_historico
-        +enabled: "{{ target.type == 'duckdb' }}"
+        +schema: silver
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
 
     conjuntura_dbt:
       +materialized: table

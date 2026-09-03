@@ -15,7 +15,7 @@ mcid:
       path: "{{ env_var('DUCKDB_MCID_PATH', '/tmp/mcid_staging.duckdb') }}"
       database: mcid_staging
       schema: mcmv_indicadores
-      threads: 4
+      threads: "{{ env_var('DUCKDB_MCID_THREADS', '4') | int }}"
       extensions:
         - httpfs
       settings:
@@ -24,3 +24,14 @@ mcid:
         s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
         s3_url_style: path
         s3_use_ssl: false
+        # Guardas de recurso. As bronzes históricas fazem union_by_name de
+        # muitos parquets; a materialização default do DuckDB
+        # (preserve_insertion_order=true) buffra o resultado inteiro em RAM
+        # antes de gravar e derrama dezenas de GB no temp_directory. A ordem
+        # não importa aqui: bronzes são empilhamento append-only e a dedup na
+        # silver é por chave explícita; o gold faz seu próprio ORDER BY.
+        # Todos overridáveis por env var — default = comportamento anterior + spill em disco controlado.
+        preserve_insertion_order: false
+        memory_limit: "{{ env_var('DUCKDB_MCID_MEMORY_LIMIT', '10GB') }}"
+        temp_directory: "{{ env_var('DUCKDB_MCID_TEMP_DIR', '/tmp/duckdb_mcid_tmp') }}"
+        max_temp_directory_size: "{{ env_var('DUCKDB_MCID_MAX_TEMP', '60GB') }}"

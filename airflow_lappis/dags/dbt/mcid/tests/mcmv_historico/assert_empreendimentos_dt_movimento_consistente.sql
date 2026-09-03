@@ -4,7 +4,7 @@
 select
     fonte_tabela,
     count(*) as divergencias
-from {{ ref('historico_mcmv_empreendimentos_snapshot') }}
+from {{ ref('silver_mcmv_historico_empreendimento') }}
 where dt_movimento is not null
   and date_trunc('month', dt_movimento) <> date_trunc('month', dt_referencia)
 group by fonte_tabela

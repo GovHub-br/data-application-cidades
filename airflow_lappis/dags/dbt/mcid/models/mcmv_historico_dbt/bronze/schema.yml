@@ -1,0 +1,83 @@
+version: 2
+
+models:
+  - name: bronze_mcmv_historico_empreendimento_sftp
+    description: >
+      Bronze — cópia fiel da série histórica mensal de empreendimentos MCMV das
+      interfaces do SFTP/GEFUS (INT040 FAR CAIXA, INT054 FAR BB, INT059 FDS
+      CAIXA, INT057 PNHR BB, INT065 PNHR CAIXA). Uma linha por linha de origem
+      (sem dedup), colunas preservadas (union_by_name), sem tipagem.
+      dt_referencia extraída do nome do arquivo. Grão: empreendimento × mês ×
+      interface. Requer target staging_duckdb.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
+    columns:
+      - name: fonte_interface
+        description: Interface GEFUS de origem (discriminador de frente na silver).
+        data_tests:
+          - not_null
+      - name: source_file
+        description: Caminho do parquet de origem (contém a data no nome).
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês de referência do snapshot (derivado do nome do arquivo).
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_mcmv_historico_empreendimento_snh
+    description: >
+      Bronze — cópia fiel da série mensal SNH "dados prioritários" por
+      empreendimento MCMV (historico_recente_*, 2024-06+). Traz a coluna
+      `modalidade` (FAR / Entidades / Rural). Exclui os fluxos de entrega por
+      evento (%entrega%). Uma linha por linha de origem (sem dedup), colunas
+      preservadas, sem tipagem. Preserva agente_arquivo, prioridade_reentrega e
+      dt_referencia usados pelo reloginho. Grão: empreendimento × mês. Requer
+      target staging_duckdb.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, empreendimento, snh, reloginho]
+    columns:
+      - name: modalidade
+        description: Frente informada pela fonte (FAR / Entidades / RURAL / Rural).
+      - name: agente_arquivo
+        description: BB ou CAIXA, derivado do nome do arquivo.
+      - name: dt_referencia
+        description: Mês de referência do snapshot (derivado do nome do arquivo).
+      - name: source_file
+        data_tests:
+          - not_null
+      - name: hash_linha
+        description: Hash de conteúdo da linha (mesma chave do bronze do reloginho).
+
+  - name: bronze_mcmv_historico_serie_executiva
+    description: >
+      Bronze — série executiva histórica do MCMV (~2010-2018), cópia fiel.
+      Empilha (union_by_name) quatro famílias de `staging/dados_historicos/`:
+      bases_relatório_executivo, min_cidades, entrada_bb e bext. Uma linha por
+      linha de origem; colunas cruas + auditoria (fonte_familia, source_file,
+      dt_referencia = mês-snapshot, report_date_parsed, dt_ingest, hash_linha).
+      Cada família tem 2-3 gerações de schema — a harmonização fica na silver.
+      Requer target staging_duckdb.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
+    columns:
+      - name: fonte_familia
+        description: bases_relatorio_executivo | min_cidades | entrada_bb | bext.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["bases_relatorio_executivo", "min_cidades", "entrada_bb", "bext"]
+      - name: dt_referencia
+        description: Mês do snapshot (report_date normalizado; fallback pelo nome do arquivo).
+      - name: source_file
+        description: Caminho do objeto parquet de origem.
+        data_tests:
+          - not_null
+      - name: hash_linha
+        description: Hash MD5 (source_file + content_hash + sequência) — surrogate de linha.
+        data_tests:
+          - not_null
+          - unique

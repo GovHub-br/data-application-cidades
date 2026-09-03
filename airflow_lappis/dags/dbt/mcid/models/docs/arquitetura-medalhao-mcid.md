@@ -196,9 +196,9 @@ MinIO).
 |---|---|
 | Convenção medalhão em dbt (bronze/silver/gold) | **Implementada** em `conjuntura_dbt`, `empreendimento_far_dbt`, `entidades_dbt` |
 | Silver MCMV lendo `staging/` via DuckDB | Diretriz definida (#119); refatoração fonte-a-fonte **parcial** |
-| Bronze materializada no Postgres como cópia fiel da Staging | **Parcial** — existe para conjuntura; para MCMV histórico ainda não |
+| Bronze materializada no Postgres como cópia fiel da Staging | **Parcial** — existe para conjuntura. Para o MCMV histórico há bronze fiel em DuckDB (`bronze_mcmv_historico_empreendimento_sftp` / `_snh`); promoção para Postgres pendente do ADR #117 |
 | Data Quality como gate antes da Bronze, com alerta | **Não implementado** como portão; hoje são testes dbt de saída |
-| Série histórica multi-mês na Bronze | Reloginho (grupo A) **refatorado** em bronze → silver → gold em `indicadores_mcmv_dbt/` (ver `issue-130-refatoracao-medalhao-reloginho.md`). Séries históricas adicionais implementadas: entregas por evento SNH e série executiva pré-2024 (4 famílias, base preditiva) — ver `issue-130-entrega-series-historicas-tier1-tier2.md`. Tudo em DuckDB; promoção para Postgres pendente do ADR #117 |
+| Série histórica multi-mês na Bronze | Reloginho (grupo A) **refatorado** em bronze → silver → gold em `indicadores_mcmv_dbt/` (ver `issue-130-refatoracao-medalhao-reloginho.md`). Eixo histórico de empreendimentos **migrado para o padrão medalhão** (`separacao-silver-historico-por-frente.md`): bronze fiel SFTP+SNH → silver por frente (`silver_mcmv_historico_empreendimento_far`/`_fds`/`_rural` + consolidado) → gold snapshot corrente; série executiva pré-2024 renomeada (`bronze/silver/gold_mcmv_historico_serie_*`). Tudo em DuckDB; promoção para Postgres pendente do ADR #117 |
 | Dicionário / catálogo / drift / completude | Existem como scripts e CSVs em `data-science/dados-historicos-tratamento/` e `openspec/`; não materializados como modelos |
 | ADR formal de arquitetura de produção | **Pendente** (issue #117) — este documento é insumo, não substitui o ADR |
 

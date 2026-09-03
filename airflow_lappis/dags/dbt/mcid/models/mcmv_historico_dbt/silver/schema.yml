@@ -1,0 +1,128 @@
+version: 2
+
+models:
+  - name: silver_mcmv_historico_empreendimento_far
+    description: >
+      Silver — série histórica mensal de empreendimentos MCMV da frente FAR
+      (SFTP INT040/INT054 ∪ SNH modalidade=FAR), contrato semântico comum,
+      tipada, deduplicada por (frente_mcmv, apf, dt_referencia). Precedência SNH
+      na janela sobreposta. Grão: empreendimento × mês. Requer target
+      staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, empreendimento, far]
+    columns: &contrato_empreendimento
+      - name: id_historico_snapshot
+        description: Chave técnica única por frente, APF e mês de referência.
+        data_tests:
+          - not_null
+          - unique
+      - name: id_negocio_historico
+        description: Chave lógica estável (programa + frente + APF), constante entre meses.
+        data_tests:
+          - not_null
+      - name: programa
+        data_tests:
+          - not_null
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural"]
+      - name: apf
+        description: APF / contrato do empreendimento.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês de referência do snapshot (nome do arquivo).
+        data_tests:
+          - not_null
+      - name: fonte_serie
+        description: Origem da linha mantida na dedup.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["sftp", "snh"]
+      - name: quantidade_uh
+        description: Unidades habitacionais contratadas no snapshot.
+      - name: quantidade_uh_entregues
+        description: Unidades habitacionais entregues no snapshot.
+      - name: valor_contratado
+        description: Valor contratado (R$), parse de formato brasileiro.
+      - name: valor_desembolsado
+        description: Valor desembolsado/liberado (R$).
+      - name: percentual_execucao_fisica
+        description: Percentual de execução física da obra.
+      - name: status_operacional
+        description: Situação da obra/operação no snapshot.
+      - name: dt_movimento
+        description: Data de movimento da fonte (auxiliar; coalesce entre fontes).
+
+  - name: silver_mcmv_historico_empreendimento_fds
+    description: >
+      Silver — série histórica mensal de empreendimentos MCMV da frente
+      FDS/Entidades (SFTP INT059 ∪ SNH modalidade=ENTIDADES). Contrato comum,
+      dedup por (frente_mcmv, apf, dt_referencia), precedência SNH. Grão:
+      empreendimento × mês. Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, empreendimento, fds]
+    columns: *contrato_empreendimento
+
+  - name: silver_mcmv_historico_empreendimento_rural
+    description: >
+      Silver — série histórica mensal de empreendimentos MCMV da frente Rural
+      (SFTP INT057/INT065 ∪ SNH modalidade=RURAL). Contrato comum, dedup por
+      (frente_mcmv, apf, dt_referencia), precedência SNH. Grão: empreendimento ×
+      mês. Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, empreendimento, rural]
+    columns: *contrato_empreendimento
+
+  - name: silver_mcmv_historico_empreendimento
+    description: >
+      Silver — série histórica mensal de empreendimentos MCMV consolidada:
+      UNION das silvers por frente (FAR, FDS/Entidades, Rural), mesmo contrato.
+      Substitui o snapshot único multi-frente anterior. Grão: empreendimento ×
+      mês × frente. Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, empreendimento, consolidado]
+    columns: *contrato_empreendimento
+
+  - name: silver_mcmv_historico_serie_executiva
+    description: >
+      Silver — série executiva histórica no contrato comum. Aplica o mapa de
+      colunas (doc issue-130-proposta-bronze-series-historicas.md) via
+      coalesce_present(), tipa (UH→bigint, valores→double, datas→date),
+      classifica linha_ogu_fgts (para o piloto #118) e deduplica por
+      (fonte_familia, chave_natural, dt_referencia) mantendo o snapshot mais
+      recente do mês. Grão: registro de origem (empreendimento ou contrato).
+      Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, serie-executiva, preditivo]
+    columns:
+      - name: fonte_familia
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot.
+        data_tests:
+          - not_null
+      - name: uf
+        description: UF (maiúsculas). Pode ser nulo em min_cidades/bext antigos (sem UF na origem).
+      - name: linha_ogu_fgts
+        description: >
+          OGU/Subsidiado quando o subsídio OGU domina; FGTS/Financiado quando o
+          FGTS domina; nulo quando não há subsídio informado.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["OGU/Subsidiado", "FGTS/Financiado"]
+      - name: uh_contratadas
+        description: UH contratadas do registro (harmonizado das ~6 origens).
+      - name: uh_entregues
+        description: UH entregues do registro.
+      - name: subsidio_fgts
+        description: Valor de subsídio/complemento FGTS (R$).
+      - name: subsidio_ogu
+        description: Valor de subsídio/complemento OGU (R$).

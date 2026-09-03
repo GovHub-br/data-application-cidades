@@ -17,7 +17,7 @@
 --
 -- Target obrigatorio: staging_duckdb (gating em dbt_project.yml).
 
-{% set bronze = ref('bronze_mcmv_serie_executiva_historica') %}
+{% set bronze = ref('bronze_mcmv_historico_serie_executiva') %}
 
 with
 

@@ -18,11 +18,12 @@ seeds:
           - not_null
 
 models:
-  - name: historico_mcmv_serie_temporal_snapshot
+  - name: silver_mcmv_historico_serie_anual_ogu_fgts
     description: >
-      Base piloto versionada para estrategia de dados historicos do MCMV.
-      Gera uma linha por ano e linha historica, com snapshot_date, hash_linha,
-      janela de validade e indicador de registro corrente.
+      Silver — serie historica ANUAL de UHs contratadas do MCMV separando
+      OGU/Subsidiado e FGTS/Financiado (base piloto da issue #118). Uma linha
+      por ano e linha historica, com snapshot_date, hash_linha, janela de
+      validade e indicador de registro corrente. Roda no Postgres (seed).
     columns:
       - name: id_historico_snapshot
         description: Chave tecnica unica da versao do registro historico.

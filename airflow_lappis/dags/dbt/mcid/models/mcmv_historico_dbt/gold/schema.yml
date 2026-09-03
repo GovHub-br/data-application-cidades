@@ -1,0 +1,61 @@
+version: 2
+
+models:
+  - name: gold_mcmv_snapshot_empreendimento_atual
+    description: >
+      Gold — snapshot corrente (estado atual) derivado da silver histórica
+      consolidada: uma linha por (frente, APF) com o último mês de referência
+      disponível. Consolidado apenas — filtrável por frente_mcmv.
+    meta:
+      tags: [gold, mcmv, dados-historicos, empreendimento, snapshot]
+    columns:
+      - name: id_historico_snapshot
+        description: Identificador herdado da versão corrente do empreendimento.
+        data_tests:
+          - not_null
+          - unique
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+      - name: apf
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        data_tests:
+          - not_null
+      - name: fonte_tabela
+        data_tests:
+          - not_null
+
+  - name: gold_mcmv_historico_serie_mensal
+    description: >
+      Gold — série histórica mensal do MCMV (pré-2024) para análise preditiva.
+      Agrega a silver_mcmv_historico_serie_executiva por (dt_referencia,
+      fonte_familia, nivel_agregacao, uf, linha_ogu_fgts) via GROUPING SETS
+      (nacional + uf). NÃO somar entre fonte_familia (bases_relatório_executivo
+      e min_cidades se sobrepõem 2014-2016) — usar prioridade_familia para
+      escolher uma série contínua. Requer target staging_duckdb.
+    meta:
+      tags: [gold, mcmv, dados-historicos, serie-executiva, preditivo]
+    columns:
+      - name: dt_referencia
+        data_tests:
+          - not_null
+      - name: fonte_familia
+        data_tests:
+          - not_null
+      - name: prioridade_familia
+        description: 1 bases_relatorio_executivo, 2 min_cidades, 3 entrada_bb, 4 bext (menor = preferencial).
+      - name: nivel_agregacao
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["nacional", "uf"]
+      - name: linha_ogu_fgts
+        data_tests:
+          - not_null
+      - name: uh_contratadas
+        description: Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
+      - name: uh_entregues
+        description: Soma de UH entregues no recorte.

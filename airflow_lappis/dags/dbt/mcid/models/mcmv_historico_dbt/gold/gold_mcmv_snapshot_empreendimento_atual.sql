@@ -1,13 +1,14 @@
 {{ config(materialized="table") }}
 
--- Snapshot corrente (estado atual) derivado do modelo historico (decisao D2).
+-- Snapshot corrente (estado atual) derivado da silver historica consolidada.
 -- Mantem apenas o ultimo mes (dt_referencia) por (frente, apf). O id_historico_snapshot
 -- herdado identifica unicamente a versao corrente de cada empreendimento.
+-- Consolidado apenas (filtravel por frente_mcmv) — nao ha versao por frente.
 
 with ultimo as (
     select *,
            row_number() over (partition by frente_mcmv, apf order by dt_referencia desc) as rn
-    from {{ ref('historico_mcmv_empreendimentos_snapshot') }}
+    from {{ ref('silver_mcmv_historico_empreendimento') }}
 )
 
 select

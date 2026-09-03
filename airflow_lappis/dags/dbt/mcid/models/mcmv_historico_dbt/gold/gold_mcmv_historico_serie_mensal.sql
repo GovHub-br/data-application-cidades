@@ -2,7 +2,7 @@
 
 -- GOLD — serie historica mensal do MCMV (pre-2024) para analise preditiva.
 --
--- Agrega a silver_mcmv_serie_executiva_historica por
+-- Agrega a silver_mcmv_historico_serie_executiva por
 -- (dt_referencia, fonte_familia, nivel_agregacao, uf, linha_ogu_fgts):
 -- UH contratadas/entregues/concluidas, valores e subsidios. Niveis via
 -- GROUPING SETS: 'nacional' e 'uf'.
@@ -45,7 +45,7 @@ base as (
         valor_liberado,
         subsidio_fgts,
         subsidio_ogu
-    from {{ ref("silver_mcmv_serie_executiva_historica") }}
+    from {{ ref("silver_mcmv_historico_serie_executiva") }}
     where dt_referencia is not null
 ),
 

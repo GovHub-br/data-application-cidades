@@ -16,7 +16,7 @@
 --   bext                       *bext*                         grao contrato PF (CAIXA)
 --
 -- Cada familia tem 2-3 geracoes de schema; a harmonizacao (mapa de colunas) fica
--- na silver silver_mcmv_serie_executiva_historica. Aqui: union_by_name + colunas
+-- na silver silver_mcmv_historico_serie_executiva. Aqui: union_by_name + colunas
 -- de auditoria. `dt_referencia` = mes-snapshot: report_date normalizado, com
 -- fallback pelo nome do arquivo.
 --
