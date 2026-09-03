@@ -429,9 +429,13 @@ def montar(
 ) -> str:
     meta = editorial["edicoes"][edicao]
     leitura = meta.get("leitura") or {}
-    # `transcrito` veio de um boletim publicado; qualquer outra origem foi
-    # redigida por máquina e precisa aparecer como rascunho na página.
-    texto_gerado = meta.get("origem") != "transcrito"
+    # Três origens, três tratamentos:
+    #   transcrito  copiado de um boletim publicado — o rodapé nomeia o arquivo
+    #   gerado      redigido por máquina e não revisado — sai como RASCUNHO
+    #   revisado    redigido por máquina e conferido pelo time — sem marca,
+    #               mas o rodapé preserva a procedência
+    origem = meta.get("origem", "gerado")
+    texto_gerado = origem == "gerado"
     divergentes = [v for v in validacao if v["status"] == "DIVERGE"]
 
     partes = [
@@ -544,12 +548,16 @@ def montar(
     partes.append(
         '<div class="rodape">Quadros lidos das tabelas <code>gld_boletim_*</code>, '
         "as mesmas que alimentam o dashboard do Superset. "
-        + (
-            "Texto editorial transcrito de <i>"
-            f"{html.escape(meta.get('fonte_da_transcricao', 'boletim publicado'))}</i>."
-            if meta.get("origem") == "transcrito"
-            else "Leitura dos números redigida por máquina e ainda não revisada."
-        )
+        + {
+            "transcrito": (
+                "Texto editorial transcrito de <i>"
+                f"{html.escape(meta.get('fonte_da_transcricao', 'boletim publicado'))}"
+                "</i>."
+            ),
+            "revisado": (
+                "Leitura dos números redigida por máquina e revisada pela equipe."
+            ),
+        }.get(origem, "Leitura dos números redigida por máquina e ainda não revisada.")
         + "</div>"
     )
     return "\n".join(p for p in partes if p)

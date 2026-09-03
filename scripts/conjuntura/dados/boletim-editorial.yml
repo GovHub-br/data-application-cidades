@@ -139,12 +139,14 @@ edicoes:
   # Ministério é posição do órgão. Nenhuma das duas se deduz dos quadros.
   # Para incluí-las, alguém do time precisa escrevê-las aqui.
   #
-  # Ao revisar o texto, troque `origem` para `revisado` — a marca de rascunho
-  # sai sozinha.
+  # `origem: revisado` — o texto foi redigido por máquina e conferido pelo time
+  # em 03/09/2026. A marca de rascunho sai; o rodapé continua registrando que a
+  # leitura não foi transcrita de um boletim publicado, porque isso é fato sobre
+  # o documento, não aviso sobre o processo.
   "2T2026":
     titulo: Boletim do segundo trimestre de 2026
     publicado_em: 2026-09-03
-    origem: gerado
+    origem: revisado
     leitura:
       pib: >
         RETRAÇÃO DE 0,4% NO TRIMESTRE, APÓS ALTA DE 2,8% NO TRIMESTRE ANTERIOR.
