@@ -1,0 +1,128 @@
+version: 2
+
+models:
+  - name: bronze_rural_cadastro_pj
+    description: >
+      Bronze — cópia fiel do cadastro PJ Rural / PNHR (empreendimento), lida de
+      mcmv_staging.novo_mcmv_rural_cad_pj_mensal. Recorte Novo MCMV Rural (~127).
+      APF de nu_apf_com_dv. Requer target staging_duckdb.
+    meta:
+      tags: [bronze, rural, empreendimento]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos (de nu_apf_com_dv).
+        data_tests: [not_null]
+      - name: nu_contrato_empreendimento
+        description: Número do contrato do empreendimento (chave alternativa).
+      - name: eo_nome
+        description: Nome da Entidade Organizadora.
+      - name: eo_cnpj
+        description: CNPJ da EO (apenas dígitos).
+      - name: qt_uh_contratadas
+        description: Quantidade de UHs contratadas.
+      - name: vr_total_investimento
+        description: Valor total do investimento em R$.
+      - name: pct_obra_realizada
+        description: Percentual de obra realizado (0-100).
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_rural_cadastro_pf
+    description: >
+      Bronze — cópia fiel do cadastro PF Rural (beneficiários), lida de
+      mcmv_staging.novo_mcmv_rural_cadastro_pf_mensal. Grão: contrato individual.
+    meta:
+      tags: [bronze, rural, beneficiario]
+    columns:
+      - name: apf
+        description: APF do empreendimento (de nu_apf_com_dv).
+      - name: cpf_beneficiario
+        description: CPF do beneficiário (apenas dígitos).
+      - name: vr_renda_familiar
+        description: Renda familiar em R$.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_rural_financeiro_mensal
+    description: >
+      Bronze — série de liberações financeiras Rural, lida de
+      mcmv_staging.novo_mcmv_rural_financeiro_mensal. APF fonte em 6 dígitos.
+    meta:
+      tags: [bronze, rural, empreendimento]
+    columns:
+      - name: apf
+        description: APF normalizado (6 dígitos na fonte → join pela raiz de 6 na silver).
+      - name: vr_desembolso_obra
+        description: Parcela de desembolso destinada à obra em R$.
+      - name: dt_liberacao
+        description: Data efetiva da liberação do recurso.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_rural_obra_mensal
+    description: >
+      Bronze — evolução física da obra Rural (snapshot mensal), lida de
+      mcmv_staging.novo_mcmv_rural_obra_mensal. APF de nu_apf.
+    meta:
+      tags: [bronze, rural, empreendimento]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: pct_obra_realizada
+        description: Percentual de obra realizado (0-100).
+      - name: qt_uh_alienadas
+        description: UHs alienadas (indicador de entrega).
+      - name: dt_paralisacao
+        description: Data de paralisação (quando aplicável).
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_rural_int065_caixa
+    description: >
+      Bronze — cópia fiel do INT 065 (empreendimentos PNHR CAIXA PJ), lida de
+      mcmv_staging.int_empreendimentos_int_065_pnhr_caixa_pj. Contém legado PNHR
+      + Novo MCMV Rural (~8.508). APF de nu_apf (casa parcialmente com o cadastro).
+    meta:
+      tags: [bronze, rural, empreendimento, agente-caixa]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: nu_contrato_empreendimento
+        description: Número do contrato do empreendimento.
+      - name: situacao_obra
+        description: Situação textual da obra.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_rural_int057_bb
+    description: >
+      Bronze — cópia fiel do INT 057 (empreendimentos PNHR BB PJ), lida de
+      mcmv_staging.int_empreendimentos_int_057_pnhr_bb_pj. SEM coluna de APF —
+      chave é nu_contrato_empreendimento (não casa com o cadastro no snapshot atual).
+      Fonte standalone para linhagem/uso futuro.
+    meta:
+      tags: [bronze, rural, empreendimento, agente-bb]
+    columns:
+      - name: nu_contrato_empreendimento
+        description: Número do contrato do empreendimento (chave — não há APF nesta fonte).
+      - name: pct_execucao_fisica
+        description: Percentual de execução física da obra (0-100).
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_rural_dados_prioritarios_snh
+    description: >
+      Bronze — snapshot corrente SNH (30/09/2025), modalidade Rural. NÃO é a série
+      mensal. Chave: normalize_apf(codigo_da_operacao_no_agente_financeiro).
+      127/127 casam com o cadastro PJ Rural.
+    meta:
+      tags: [bronze, rural, snh]
+    columns:
+      - name: apf
+        description: APF normalizado (de codigo_da_operacao_no_agente_financeiro).
+      - name: situacao
+        description: Situação do empreendimento reportada pela SNH.
+      - name: valor_desembolsado
+        description: Valor desembolsado total acumulado em R$.
+      - name: source_file
+        data_tests: [not_null]

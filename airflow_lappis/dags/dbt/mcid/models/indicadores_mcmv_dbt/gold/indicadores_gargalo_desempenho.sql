@@ -10,7 +10,7 @@ with
             apf,
             max(mes::date) as dt_ultima_liberacao,
             sum(vr_liberado_mes) as valor_liberado_historico
-        from {{ ref("evolucao_financeira") }}
+        from {{ ref("silver_far_evolucao_financeira") }}
         group by apf
     ),
 
@@ -18,12 +18,9 @@ with
         select
             apf,
             max(
-                case
-                    when mes ~ '^\d{4}-\d{2}-\d{2}$' then mes::date
-                    when mes ~ '^\d{4}-\d{2}$' then to_date(mes, 'YYYY-MM')
-                end
+                try_cast(mes as date)
             ) as dt_ultima_medicao_fisica
-        from {{ ref("execucao_fisica_financeira_chart") }}
+        from {{ ref("gold_far_execucao_fisica_financeira_chart") }}
         group by apf
     ),
 
@@ -31,13 +28,10 @@ with
         select
             apf,
             max(
-                case
-                    when mes ~ '^\d{4}-\d{2}-\d{2}$' then mes::date
-                    when mes ~ '^\d{4}-\d{2}$' then to_date(mes, 'YYYY-MM')
-                end
+                try_cast(mes as date)
             ) as dt_ultima_liberacao,
             sum(valor_liberado_mensal) as valor_liberado_historico
-        from {{ ref("fds_evolucao_financeira_chart") }}
+        from {{ ref("gold_fds_evolucao_financeira_chart") }}
         group by apf
     ),
 
@@ -84,7 +78,7 @@ with
                 ),
                 '1900-01-01'::date
             ) as dt_ultima_atualizacao
-        from {{ ref("ficha_empreendimento") }} f
+        from {{ ref("gold_far_ficha_empreendimento") }} f
         left join far_ultima_financeira ff on f.apf = ff.apf
         left join far_ultima_fisica fu on f.apf = fu.apf
     ),
@@ -138,8 +132,8 @@ with
                 ),
                 '1900-01-01'::date
             ) as dt_ultima_atualizacao
-        from {{ ref("fds_ficha_empreendimento") }} f
-        left join {{ ref("fds_empreendimento") }} e on f.apf = e.apf
+        from {{ ref("gold_fds_ficha_empreendimento") }} f
+        left join {{ ref("silver_fds_empreendimento") }} e on f.apf = e.apf
         left join fds_ultima_financeira fu on f.apf = fu.apf
     ),
 

@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: ficha_empreendimento
+  - name: gold_far_ficha_empreendimento
     description: >
       Tabela Gold projetada especificamente para alimentar o componente visual de "Ficha do Empreendimento" 
       nos Dashboards. Ela consome os dados da camada Silver (empreendimento) e injeta regras de negócio finais
@@ -32,7 +32,7 @@ models:
           Regra de negócio: Compara o % de execução física com o % de desembolso financeiro.
           Aplica uma tolerância de 5% para classificar como "Ritmo Equilibrado", "Desembolso Adiantado" ou "Desembolso Atrasado".
 
-  - name: resumo_gerencial
+  - name: gold_far_resumo_gerencial
     description: >
       Visão agregada Gold contendo os grandes KPIs e somatórios (UHs, Pessoas Atendidas, Valores) 
       agrupados por tipologia e situação. Perfeita para os gráficos de pizza e barras dos painéis gerenciais.
@@ -47,7 +47,7 @@ models:
       - name: media_execucao_fisica
         description: Execução física média (0-100) daquele grupo de empreendimentos.
 
-  - name: panorama_estadual
+  - name: gold_far_panorama_estadual
     description: >
       Visão Gold agregada por UF para alimentar o dashboard "Panorama Estadual".
       Consolida todos os empreendimentos de um estado em seções distintas, cada uma
@@ -86,7 +86,7 @@ models:
       - name: total_empreendimentos_uf
         description: "Na seção 'header': total de empreendimentos no estado. NULL nas demais seções."
 
-  - name: mapa_nacional
+  - name: gold_far_mapa_nacional
     description: >
       Visão Gold geográfica para alimentar mapas coropléticos (Country Map) e gráficos
       por região no Superset. Contém duas visões filtradas pela coluna 'nivel':
@@ -115,7 +115,7 @@ models:
       - name: media_execucao_fisica
         description: Média do percentual de execução física dos empreendimentos (0-100).
 
-  - name: evolucao_financeira_chart
+  - name: gold_far_evolucao_financeira_chart
     description: >
       Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira" no Superset.
       Consome a silver evolucao_financeira e enriquece com nome do empreendimento,
@@ -151,7 +151,7 @@ models:
       - name: pct_executado_financeiro
         description: "Percentual acumulado do desembolso sobre o contrato (0-100)."
 
-  - name: execucao_fisica_financeira_chart
+  - name: gold_far_execucao_fisica_financeira_chart
     description: >
       Tabela Gold para o gráfico de acompanhamento da execução física e financeira.
       Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal.

@@ -24,27 +24,180 @@ models:
       +materialized: incremental
       +schema: metadata
     empreendimento_far_dbt:
+      # Migrado para MinIO/DuckDB (change migracao-bronze-minio-mcmv). Lê a
+      # staging via source mcmv_staging → só roda no target staging_duckdb;
+      # fora da carga noturna (Cosmos = prod) até o ADR #117.
       +materialized: table
-      +schema: empreendimento_far
-      silver:
-        +materialized: table
-      gold:
-        +materialized: table
+      +enabled: "{{ target.type == 'duckdb' }}"
+      +meta:
+        governance:
+          product: empreendimento_far
+          owner_key: mcid_data_engineering
 
-    entidades_dbt:
-      +materialized: table
-      +schema: entidades_fds
+      bronze:
+        +materialized: table
+        +schema: bronze
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+
       silver:
         +materialized: table
+        +schema: silver
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+
       gold:
         +materialized: table
+        +schema: gold
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+    empreendimento_fds_dbt:
+      # Migrado para MinIO/DuckDB (change migracao-bronze-minio-mcmv). Antes
+      # entidades_dbt / schema entidades_fds. Lê a staging via source mcmv_staging
+      # → só roda no target staging_duckdb; fora da carga noturna até o ADR #117.
+      +materialized: table
+      +enabled: "{{ target.type == 'duckdb' }}"
+      +meta:
+        governance:
+          product: empreendimento_fds
+          owner_key: mcid_data_engineering
+
+      bronze:
+        +materialized: table
+        +schema: bronze
+        +meta:
+          governance:
+            product: empreendimento_fds
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+
+      silver:
+        +materialized: table
+        +schema: silver
+        +meta:
+          governance:
+            product: empreendimento_fds
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+
+      gold:
+        +materialized: table
+        +schema: gold
+        +meta:
+          governance:
+            product: empreendimento_fds
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+    empreendimento_rural_dbt:
+      # Domínio novo (change migracao-bronze-minio-mcmv). Frente Rural / PNHR,
+      # ponta a ponta. Lê a staging via source mcmv_staging → só no staging_duckdb.
+      +materialized: table
+      +enabled: "{{ target.type == 'duckdb' }}"
+      +meta:
+        governance:
+          product: empreendimento_rural
+          owner_key: mcid_data_engineering
+
+      bronze:
+        +materialized: table
+        +schema: bronze
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+
+      silver:
+        +materialized: table
+        +schema: silver
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+
+      gold:
+        +materialized: table
+        +schema: gold
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     indicadores_mcmv_dbt:
       +materialized: table
       +schema: mcmv_indicadores
       # Camadas do reloginho (grupo A) — leem staging/dados_historicos via
       # MinIO/DuckDB, portanto só habilitadas no target staging_duckdb.
-      # O gargalo (grupo B) roda no Postgres e não é afetado.
+      # O gargalo (grupo B) depende dos golds FAR/FDS por ref(); como a
+      # change migracao-bronze-minio-mcmv moveu FAR/FDS para duckdb, o grupo B
+      # também passa a rodar só no staging_duckdb (fora da carga noturna até #117).
       bronze:
         +materialized: table
         +schema: mcmv_indicadores
@@ -56,14 +209,7 @@ models:
       gold:
         +materialized: table
         +schema: mcmv_indicadores
-        indicadores_reloginho:
-          +enabled: "{{ target.type == 'duckdb' }}"
-        indicadores_reloginho_frente:
-          +enabled: "{{ target.type == 'duckdb' }}"
-        indicadores_reloginho_entregas:
-          +enabled: "{{ target.type == 'duckdb' }}"
-        resumo_reloginho_dashboard:
-          +enabled: "{{ target.type == 'duckdb' }}"
+        +enabled: "{{ target.type == 'duckdb' }}"
 
     mcmv_silver_dbt:
       +enabled: "{{ target.type == 'duckdb' }}"

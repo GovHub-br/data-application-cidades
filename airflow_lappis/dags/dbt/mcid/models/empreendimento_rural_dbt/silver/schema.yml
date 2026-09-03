@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: silver_rural_empreendimento
+    description: >
+      Silver — visão unificada por APF da frente Rural / PNHR (Novo MCMV Rural).
+      MESMO contrato de colunas de saída de silver_fds_empreendimento (D7): colunas
+      sem equivalente no Rural (fase, GPS, trabalho social mensal, dt_inicio_obra)
+      saem NULL/default. Espinha: bronze_rural_cadastro_pj; enriquecida por obra,
+      financeiro (raiz de 6), INT065 CAIXA e SNH. Grão: 1 linha por APF.
+    meta:
+      tags: [silver, rural, empreendimento]
+    columns:
+      - name: apf
+        description: Chave primária — APF normalizado para 8 dígitos.
+        data_tests:
+          - unique
+          - not_null
+      - name: id_empreendimento
+        description: Chave lógica estável (md5 do APF; Rural não tem fases distintas).
+      - name: eo_cnpj
+        description: CNPJ da EO (LPAD 14 dígitos). Chave para agregação por entidade.
+      - name: quantidade_uh
+        description: GREATEST(qt_uh_contratadas, qt_uh_selecionadas).
+      - name: valor_contratado
+        description: Valor total do investimento em R$.
+      - name: valor_desembolsado
+        description: Desembolso acumulado (soma dos componentes de desembolso do financeiro).
+      - name: percentual_execucao_fisica
+        description: Percentual de obra realizado (0-100), coalesce obra/cadastro/int065/SNH.
+      - name: percentual_execucao_financeira
+        description: (valor_desembolsado / valor_contratado) × 100.
+      - name: situacao_gefus
+        description: Situação textual (int065.situacao_obra / SNH).
+      - name: tem_dados_snh
+        description: Indica se o APF tem correspondência no snapshot SNH (30/09/2025).
+
+  - name: silver_rural_evolucao_financeira
+    description: >
+      Silver — série temporal mensal de desembolsos por APF (Rural). Espelho de
+      silver_fds_evolucao_financeira; componentes sem equivalente no Rural saem NULL.
+      JOIN com silver_rural_empreendimento pela raiz de 6 dígitos.
+    meta:
+      tags: [silver, rural]
+    columns:
+      - name: apf
+        description: APF do empreendimento (8 dígitos).
+        data_tests: [not_null]
+      - name: mes
+        description: Primeiro dia do mês da(s) liberação(ões).
+        data_tests: [not_null]
+      - name: vr_liberado_mes
+        description: Soma dos desembolsos do mês em R$.
+        data_tests: [not_null]
+      - name: vr_acumulado
+        description: Desembolso acumulado progressivo por APF.
+      - name: pct_executado_financeiro
+        description: (vr_acumulado / valor_contratado) × 100.

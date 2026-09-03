@@ -121,7 +121,9 @@ O `+database` é resolvido dinamicamente:
 
 ### 4.1 Sources (`models/sources.yml`)
 
-- `raw` (schema `__dados_brutos`) — snapshots Novo MCMV e dados prioritários CAIXA.
+- `mcmv_staging` — external source dbt-duckdb (`meta.external_location` →
+  `s3://<bucket>/staging/sharepoint/{name}.parquet`), 28 tabelas FAR/FDS/Rural + compartilhadas.
+  Substitui o antigo `raw` (`__dados_brutos`), **removido** (`migracao-bronze-minio-mcmv`).
 - `ibge`, `fgv`, `bacen`, `novo_caged`, `infomoney`, `fipe`, `abecip` — conjuntura.
 - `conjuntura_bronze` — schema bronze já materializado da conjuntura.
 
@@ -138,11 +140,12 @@ O `+database` é resolvido dinamicamente:
 | Pasta | Schema | Camadas | Motor |
 |---|---|---|---|
 | `conjuntura_dbt/` | `conjuntura_{bronze,silver,gold}` | bronze + silver + gold | Postgres |
-| `empreendimento_far_dbt/` | `empreendimento_far` | bronze + silver + gold | Postgres |
-| `entidades_dbt/` | `entidades_fds` | bronze + silver + gold | Postgres |
+| `empreendimento_far_dbt/` | `bronze` / `silver` / `gold` | bronze + silver + gold | **DuckDB only** (migrado — `migracao-bronze-minio-mcmv`) |
+| `empreendimento_fds_dbt/` | `bronze` / `silver` / `gold` | bronze + silver + gold | **DuckDB only** (era `entidades_dbt` / `entidades_fds`) |
+| `empreendimento_rural_dbt/` | `bronze` / `silver` / `gold` | bronze + silver + gold | **DuckDB only** (frente nova) |
 | `mcmv_silver_dbt/` | `mcmv_silver` | silver (por frente) | **DuckDB only** (`+enabled: target.type == 'duckdb'`) |
-| `mcmv_historico_dbt/` | `mcmv_historico` | histórico/snapshot (piloto + empreendimentos) | seed / DuckDB |
-| `indicadores_mcmv_dbt/` | `mcmv_indicadores` | gold (reloginho + gargalo) | Postgres (gargalo) / DuckDB (reloginho) |
+| `mcmv_historico_dbt/` | `bronze` / `silver` / `gold` (+ `mcmv_historico` seed piloto) | histórico/snapshot | seed / DuckDB |
+| `indicadores_mcmv_dbt/` | `mcmv_indicadores` | gold (reloginho + gargalo) | **DuckDB only** (gargalo passou a depender dos golds FAR/FDS) |
 | `metadata/` | `metadata` | incremental | Postgres |
 
 ### 4.4 Materialização
@@ -194,9 +197,9 @@ MinIO).
 
 | Item | Situação |
 |---|---|
-| Convenção medalhão em dbt (bronze/silver/gold) | **Implementada** em `conjuntura_dbt`, `empreendimento_far_dbt`, `entidades_dbt` |
+| Convenção medalhão em dbt (bronze/silver/gold) | **Implementada** em `conjuntura_dbt`, `empreendimento_far_dbt`, `empreendimento_fds_dbt`, `empreendimento_rural_dbt`, `mcmv_historico_dbt` |
 | Silver MCMV lendo `staging/` via DuckDB | Diretriz definida (#119); refatoração fonte-a-fonte **parcial** |
-| Bronze materializada no Postgres como cópia fiel da Staging | **Parcial** — existe para conjuntura. Para o MCMV histórico há bronze fiel em DuckDB (`bronze_mcmv_historico_empreendimento_sftp` / `_snh`); promoção para Postgres pendente do ADR #117 |
+| Bronze materializada no Postgres como cópia fiel da Staging | **Parcial** — existe para conjuntura. FAR/FDS/Rural e o MCMV histórico têm bronze fiel **em DuckDB** lendo `staging/` via `mcmv_staging` (`migracao-bronze-minio-mcmv`, `separacao-silver-historico-por-frente`); promoção para Postgres pendente do ADR #117 |
 | Data Quality como gate antes da Bronze, com alerta | **Não implementado** como portão; hoje são testes dbt de saída |
 | Série histórica multi-mês na Bronze | Reloginho (grupo A) **refatorado** em bronze → silver → gold em `indicadores_mcmv_dbt/` (ver `issue-130-refatoracao-medalhao-reloginho.md`). Eixo histórico de empreendimentos **migrado para o padrão medalhão** (`separacao-silver-historico-por-frente.md`): bronze fiel SFTP+SNH → silver por frente (`silver_mcmv_historico_empreendimento_far`/`_fds`/`_rural` + consolidado) → gold snapshot corrente; série executiva pré-2024 renomeada (`bronze/silver/gold_mcmv_historico_serie_*`). Tudo em DuckDB; promoção para Postgres pendente do ADR #117 |
 | Dicionário / catálogo / drift / completude | Existem como scripts e CSVs em `data-science/dados-historicos-tratamento/` e `openspec/`; não materializados como modelos |

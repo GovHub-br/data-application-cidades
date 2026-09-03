@@ -1,0 +1,272 @@
+version: 2
+
+models:
+
+  # Cadastro PJ (Entidade Organizadora + Empreendimento)
+
+  - name: bronze_fds_cadastro_pj
+    description: >
+      Cadastro detalhado de pessoa jurídica do MCMV Entidades (FDS).
+      343 empreendimentos contratados a partir de ago/2024 com dados de
+      Entidade Organizadora, construtora, composição financeira completa,
+      coordenadas GPS, tipologia, regime de obra e indicadores.
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos (chave de integração principal).
+        data_tests:
+          - not_null
+      - name: eo_nome
+        description: Nome da Entidade Organizadora responsável.
+      - name: eo_cnpj
+        description: CNPJ da Entidade Organizadora (apenas dígitos).
+      - name: co_nivel_hab_eo
+        description: "Nível de habilitação da EO (1 a 6)."
+      - name: ic_substituicao_eo
+        description: Indica se houve substituição da EO (true/false).
+      - name: construtora_nome
+        description: Nome da construtora responsável.
+      - name: construtora_cnpj
+        description: CNPJ da construtora (apenas dígitos).
+      - name: municipio
+        description: Nome do município.
+      - name: uf
+        description: Sigla da UF (2 caracteres).
+      - name: cod_ibge
+        description: Código IBGE do município.
+      - name: co_tipo_edificacao
+        description: "Tipo de edificação: 1=Casa, 2=Misto, 3=Apartamento."
+      - name: co_regime_obra
+        description: "Regime de obra: 1=Empreitada Global(?), 2=Autoconstrução(?)."
+      - name: co_modalidade
+        description: "Modalidade: 1=Construção(?), 2=Aquisição(?), 3=Requalificação(?), 4=Outro(?)."
+      - name: qt_uh_construcao
+        description: Quantidade de unidades habitacionais em construção.
+      - name: vr_financiamento_fds
+        description: Valor do financiamento FDS em R$.
+      - name: vr_total_investimento
+        description: Valor total do investimento (FDS + contrapartidas) em R$.
+      - name: vr_total_contrapartidas
+        description: Valor total de contrapartidas em R$.
+      - name: dt_contratacao
+        description: Data de assinatura do contrato.
+      - name: dt_inicio_obra
+        description: Data de início efetivo da obra.
+      - name: dt_previsao_conclusao
+        description: Data prevista de conclusão da obra.
+  # Obra Mensal
+
+  - name: bronze_fds_obra_mensal
+    description: >
+      Evolução física da obra FDS. Snapshot mensal com percentual previsto/realizado,
+      situação da operação, UHs concluídas/alienadas, paralisação, invasão e
+      datas de entrega. 343 registros (1 por empreendimento no snapshot atual).
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        data_tests:
+          - not_null
+      - name: co_situacao_operacao
+        description: "Código de situação: 1(241), 2(19), 3(23), 5(2), 11(56), 16(2). Decodificação pendente."
+      - name: pct_obra_prevista
+        description: Percentual de obra previsto para a data de referência (0-100).
+      - name: pct_obra_realizada
+        description: Percentual de obra efetivamente realizado (0-100).
+      - name: qt_uh_concluidas
+        description: Quantidade de UHs com obra concluída.
+      - name: qt_uh_alienadas
+        description: Quantidade de UHs alienadas (chaves entregues).
+      - name: dt_conclusao_obra
+        description: Data de conclusão da obra (quando concluída).
+      - name: dt_entrega
+        description: Data de entrega do empreendimento aos beneficiários.
+      - name: dt_paralisacao
+        description: Data de paralisação da obra (quando paralisada).
+      - name: dt_movimento
+        description: Data de referência do snapshot.
+  # Financeiro Mensal
+
+  - name: bronze_fds_financeiro_mensal
+    description: >
+      Série temporal de liberações financeiras FDS. 16.124 registros para
+      750 APFs. ATENÇÃO: ic_credito='0' são liberações reais (vr_liberado negativo,
+      usar ABS). ic_credito='1' são devoluções (20 registros). APF fonte em
+      6 dígitos, normalizado para 8 via normalize_apf.
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        data_tests:
+          - not_null
+      - name: ic_credito
+        description: "Indicador: '0'=débito (liberação real, valor negativo), '1'=crédito (devolução)."
+      - name: co_tipo_movimento
+        description: Tipo de movimento financeiro.
+      - name: vr_liberado
+        description: Valor liberado em R$ (NEGATIVO para liberações reais ic_credito=0).
+      - name: vr_pago_obra
+        description: Parcela destinada à obra/edificação em R$.
+      - name: vr_pago_trabalho_social
+        description: Parcela destinada ao trabalho social em R$.
+      - name: vr_pago_incc
+        description: Parcela de ajuste INCC em R$.
+      - name: pct_evolucao
+        description: Percentual de evolução no momento da liberação.
+      - name: dt_liberacao
+        description: Data efetiva da liberação do recurso.
+      - name: dt_movimento
+        description: Data de registro/movimento no sistema.
+
+  # Trabalho Social
+
+  - name: bronze_fds_trabalho_social
+    description: >
+      Acompanhamento do Trabalho Técnico Social FDS. 89 registros com
+      situação do TS, datas de aprovação PTS, convênio, relatórios,
+      percentual de execução e portaria.
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        data_tests:
+          - not_null
+      - name: co_situacao_trabalho_social
+        description: "Código de situação do TS: 1(44), 2(8), 5(34), 6(3). Decodificação pendente."
+      - name: dt_aprovacao_pts
+        description: Data de aprovação do Projeto de Trabalho Social.
+      - name: dt_assinatura_convenio
+        description: Data de assinatura do convênio de TS.
+      - name: pct_execucao_ts
+        description: Percentual de execução do trabalho social (0-100).
+      - name: nu_portaria_ts
+        description: Número da portaria de TS.
+      - name: dt_movimento
+        description: Data de referência do snapshot.
+
+  # INT 059 (Complementar)
+
+  - name: bronze_fds_int059_caixa
+    description: >
+      Dados complementares da CAIXA (INT 059). Contém 856 registros, misturando
+      legado e Novo MCMV. Importante para filtros de Novo PMCMV-E e status
+      específicos como NAO_INICIADA_CLAUSULA_SUSPENSIVA.
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: apf_nao_obra
+        description: "APF da fase Projeto (nao-obra) vinculado ao APF da fase Obra. Fonte do vinculo de fase."
+      - name: selecao_pmcmv_e
+        description: "Filtro principal: 'NOVO PMCMV-E' identifica contratos do novo programa."
+      - name: situacao_gefus
+        description: "Status do contrato na CAIXA (ex: NAO_INICIADA_CLAUSULA_SUSPENSIVA, PARALISADA)."
+      - name: fase_contrato
+        description: "Fase do contrato (ex: CONSTRUCAO)."
+      - name: eo_nome
+        description: Nome da Entidade Organizadora (proponente).
+      - name: qt_uh_financiadas
+        description: Quantidade de UHs financiadas.
+
+  # Entregas (Complementar)
+
+  - name: bronze_fds_entregas
+    description: >
+      Entregas reportadas por empreendimento — CAIXA + BB empilhados
+      (union all by name), multi-programa. O filtro para FDS ocorre na silver.
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: agente
+        description: CAIXA ou BB (origem do registro).
+        data_tests:
+          - accepted_values:
+              values: ['CAIXA', 'BB']
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: qt_uh_entregues
+        description: Quantidade de unidades entregues (BB via numero_de_unidades_entregues).
+      - name: dt_entrega
+        description: Data da entrega efetiva (BB via dt_ass_doc).
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_fds_dados_prioritarios
+    description: >
+      Dados prioritários CAIXA para a frente FDS (filtro modalidade Entidades,
+      ~863 linhas). Espelho de bronze_far_dados_prioritarios_caixa. A fonte BB
+      não tem linhas de modalidade Entidades — CAIXA-only.
+    meta:
+      tags: [bronze, entidades]
+    columns:
+      - name: apf
+        description: APF (formato CAIXA, 8 dígitos).
+      - name: situacao
+        description: Situação textual do empreendimento.
+      - name: valor_contratado
+        description: Valor total contratado em R$.
+      - name: valor_desembolsado
+        description: Valor total desembolsado acumulado em R$.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_fds_dados_prioritarios_snh
+    description: >
+      Snapshot corrente SNH (30/09/2025), modalidade Entidades. NÃO é a série
+      mensal. Chave: normalize_apf(codigo_da_operacao_no_agente_financeiro).
+      ~247/335 casam com silver_fds_empreendimento.
+    meta:
+      tags: [bronze, entidades, snh]
+    columns:
+      - name: apf
+        description: APF normalizado (de codigo_da_operacao_no_agente_financeiro).
+      - name: situacao
+        description: Situação do empreendimento reportada pela SNH.
+      - name: valor_contratado_total
+        description: Valor contratado total (original + aporte) em R$.
+      - name: uh_entregues
+        description: Unidades habitacionais entregues (acumulado).
+      - name: source_file
+        data_tests: [not_null]
+
+  # Eventos de Mudanca de Fase
+
+  - name: bronze_fds_mudanca_fase_eventos
+    description: >
+      Eventos de mudanca de fase FDS, derivados de fds_cadastro_pj onde
+      ic_mudanca_fase = true. Registra o APF de origem e o APF de destino
+      (apf_mudanca_fase) da mudanca de fase. No snapshot atual esta vazio
+      (mudancas ja resolvidas); o vinculo operacional vem do INT059.
+    meta:
+      tags:
+        - bronze
+        - entidades
+    columns:
+      - name: apf
+        description: APF de origem (fase anterior) normalizado para 8 dígitos.
+        data_tests:
+          - not_null
+      - name: apf_mudanca_fase
+        description: APF de destino (nova fase) normalizado para 8 dígitos.
+      - name: dt_movimento
+        description: Data de referência do movimento.
+      - name: source_file
+        description: Arquivo de origem na staging.
+        data_tests: [not_null]

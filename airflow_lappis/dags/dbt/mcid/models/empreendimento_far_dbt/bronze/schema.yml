@@ -2,17 +2,14 @@ version: 2
 
 models:
 
-  # Consolidado GFAR
-
-  - name: consolidado
+  - name: bronze_far_consolidado
     description: >
-      Dados do GFAR consolidado com propostas e contratos FAR do Novo MCMV.
-      Cobre todo o ciclo de vida: da proposta protocolizada até a contratação.
-      Contém 15.091 registros (13.216 propostas únicas, 940 com APF).
-      Tipagem aplicada: text→int, text→date, text→numeric, text→boolean.
+      Bronze — cópia fiel do GFAR consolidado (propostas e contratos FAR do Novo
+      MCMV), lida de mcmv_staging.novo_mcmv_far_consolidado via MinIO/DuckDB.
+      Cobre da proposta protocolizada à contratação. Grão: 1 linha por linha da
+      fonte, sem dedup. Requer target staging_duckdb.
     meta:
-      tags:
-        - bronze
+      tags: [bronze, far, empreendimento]
     columns:
       - name: id_proposta
         description: Identificador único da proposta no GFAR (UUID).
@@ -40,21 +37,21 @@ models:
         description: Valor do empréstimo FAR em R$ (numeric 15,2).
       - name: valor_contrapartidas
         description: Valor total de contrapartidas em R$ (numeric 15,2).
-    data_tests:
-      - row_count_match:
-          source_table: __dados_brutos.novo_mcmv_far_consolidado
-          target_table: empreendimento_far.consolidado
+      - name: source_file
+        description: Arquivo de origem na staging (contém a data no nome).
+        data_tests: [not_null]
+      - name: hash_linha
+        description: Hash de conteúdo da linha (_source_hash da staging).
+      - name: dt_referencia
+        description: Mês de referência do snapshot (derivado do nome do arquivo).
 
-  # Cadastro PJ
-
-  - name: cadastro_pj
+  - name: bronze_far_cadastro_pj
     description: >
-      Cadastro detalhado de pessoa jurídica (empreendimento contratado).
-      822 empreendimentos com composição financeira completa, coordenadas GPS,
-      tipologia, construtora, datas-chave e indicadores do empreendimento.
+      Bronze — cópia fiel do cadastro PJ mensal (empreendimento contratado),
+      lida de mcmv_staging.novo_mcmv_far_cad_pj_mensal. Composição financeira,
+      coordenadas GPS, tipologia, construtora, datas-chave. Requer staging_duckdb.
     meta:
-      tags:
-        - bronze
+      tags: [bronze, far, empreendimento]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -68,35 +65,26 @@ models:
         description: Valor do empréstimo FAR em R$.
       - name: vr_total_investimento
         description: Valor total do investimento (FAR + contrapartidas) em R$.
-      - name: vr_obra_edificacao
-        description: Valor destinado à obra/edificação em R$.
-      - name: vr_terreno
-        description: Valor do terreno em R$.
       - name: dt_contratacao
         description: Data de assinatura do contrato.
       - name: dt_inicio_obra
         description: Data de início efetivo da obra.
       - name: dt_previsao_conclusao
         description: Data prevista de conclusão da obra.
-      - name: gps_lat_grau
-        description: Latitude em graus (formato DMS, componente grau).
-      - name: gps_long_grau
-        description: Longitude em graus (formato DMS, componente grau).
-    data_tests:
-      - row_count_match:
-          source_table: __dados_brutos.novo_mcmv_far_cad_pj_mensal
-          target_table: empreendimento_far.cadastro_pj
+      - name: source_file
+        data_tests: [not_null]
+      - name: hash_linha
+        description: Hash de conteúdo da linha.
+      - name: dt_referencia
+        description: Mês de referência do snapshot.
 
-  # Obra Mensal
-
-  - name: obra_mensal
+  - name: bronze_far_obra_mensal
     description: >
-      Evolução física da obra. Snapshot mensal com percentual previsto/realizado,
-      situação da obra, UHs concluídas e datas de paralisação/retomada/entrega.
-      822 registros (1 por empreendimento no snapshot atual).
+      Bronze — cópia fiel da evolução física da obra (snapshot mensal), lida de
+      mcmv_staging.novo_mcmv_far_obra_mensal. Percentual previsto/realizado,
+      situação, UHs concluídas, datas de paralisação/retomada/entrega.
     meta:
-      tags:
-        - bronze
+      tags: [bronze, far, empreendimento]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -106,8 +94,6 @@ models:
         description: Percentual de obra previsto para a data de referência (0-100).
       - name: pct_obra_realizada
         description: Percentual de obra efetivamente realizado (0-100).
-      - name: qt_uh_concluidas
-        description: Quantidade de UHs com obra concluída.
       - name: dt_conclusao_obra
         description: Data de conclusão da obra (quando concluída).
       - name: dt_entrega
@@ -116,21 +102,20 @@ models:
         description: Data de paralisação da obra (quando paralisada).
       - name: dt_movimento
         description: Data de referência do snapshot.
-    data_tests:
-      - row_count_match:
-          source_table: __dados_brutos.novo_mcmv_far_obra_mensal
-          target_table: empreendimento_far.obra_mensal
+      - name: source_file
+        data_tests: [not_null]
+      - name: hash_linha
+        description: Hash de conteúdo da linha.
+      - name: dt_referencia
+        description: Mês de referência do snapshot.
 
-  # Financeiro Mensal
-
-  - name: financeiro_mensal
+  - name: bronze_far_financeiro_mensal
     description: >
-      Série temporal de liberações financeiras. Contém 6.069 registros para
-      638 APFs (média de 9,5 liberações por empreendimento). Cada registro
-      representa uma liberação de recurso com decomposição por componente.
+      Bronze — cópia fiel da série de liberações financeiras, lida de
+      mcmv_staging.novo_mcmv_far_financeiro_mensal. Cada linha = uma liberação de
+      recurso com decomposição por componente. APF em 6 dígitos → normalize_apf.
     meta:
-      tags:
-        - bronze
+      tags: [bronze, far, empreendimento]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -150,17 +135,32 @@ models:
         description: Data efetiva da liberação do recurso.
       - name: dt_movimento
         description: Data de registro/movimento no sistema.
+      - name: source_file
+        data_tests: [not_null]
+      - name: hash_linha
+        description: Hash de conteúdo da linha.
 
-  # Dados Prioritários CAIXA
-
-  - name: dados_prioritarios_caixa
+  - name: bronze_far_contratacao
     description: >
-      Snapshot consolidado dos dados prioritários recebidos da CAIXA.
-      Filtrado apenas para modalidade FAR (4.443 empreendimentos).
-      Contém situação atual, percentual de execução, valores e coordenadas.
+      Bronze — cópia fiel de mcmv_staging.novo_mcmv_far_contratacao. Fonte
+      praticamente vazia (1 linha no snapshot atual); materializada para
+      completude/linhagem, não consumida pela silver.
     meta:
-      tags:
-        - bronze
+      tags: [bronze, far, empreendimento]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_far_dados_prioritarios_caixa
+    description: >
+      Bronze — cópia fiel dos dados prioritários CAIXA, lida de
+      mcmv_staging.dados_prioritarios_recebidos_caixa_empreendimentos. Filtrada
+      para modalidade FAR (recorte de frente). Situação atual, execução, valores,
+      coordenadas.
+    meta:
+      tags: [bronze, far, empreendimento]
     columns:
       - name: apf
         description: APF no formato CAIXA (8 dígitos).
@@ -178,9 +178,102 @@ models:
         description: Quantidade de UHs contratadas.
       - name: uh_entregues
         description: Quantidade de UHs já entregues.
-      - name: latitude
-        description: Latitude em formato decimal.
-      - name: longitude
-        description: Longitude em formato decimal.
       - name: dt_contratacao
         description: Data de contratação do empreendimento.
+      - name: source_file
+        data_tests: [not_null]
+      - name: hash_linha
+        description: Hash de conteúdo da linha.
+
+  - name: bronze_far_dados_prioritarios_bb
+    description: >
+      Bronze — cópia fiel dos dados prioritários BB (frente FAR), espelho de
+      bronze_far_dados_prioritarios_caixa para o agente Banco do Brasil.
+      Lida de mcmv_staging.dados_prioritarios_recebidos_bb_empreendimentos, filtrada FAR.
+    meta:
+      tags: [bronze, far, empreendimento]
+    columns:
+      - name: apf
+        description: APF no formato BB (8 dígitos).
+      - name: situacao
+        description: Situação textual do empreendimento.
+      - name: valor_contratado
+        description: Valor total contratado em R$.
+      - name: valor_desembolsado
+        description: Valor total desembolsado acumulado em R$.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_far_dados_prioritarios_snh
+    description: >
+      Bronze — snapshot corrente SNH (data_de_referencia 30/09/2025), frente FAR.
+      Lida de mcmv_staging.dados_prioritarios_disponibilizados_snh_empreendimentos.
+      NÃO é a série mensal (essa é bronze_mcmv_historico_empreendimento_snh).
+      Chave: normalize_apf(codigo_da_operacao_no_agente_financeiro). ~813/822
+      casam com silver_far_empreendimento.
+    meta:
+      tags: [bronze, far, empreendimento, snh]
+    columns:
+      - name: apf
+        description: APF normalizado (de codigo_da_operacao_no_agente_financeiro).
+      - name: situacao
+        description: Situação do empreendimento reportada pela SNH.
+      - name: valor_contratado_total
+        description: Valor contratado total (original + aporte) em R$.
+      - name: valor_desembolsado
+        description: Valor desembolsado total acumulado em R$.
+      - name: uh_entregues
+        description: Unidades habitacionais entregues (acumulado).
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_far_int040_caixa
+    description: >
+      Bronze — cópia fiel do INT 040 (empreendimentos FAR CAIXA PJ), colunas
+      preservadas como texto. O nu_apf desta interface está num espaço de
+      identificador distinto do APF do cadastro PJ — não casa por normalize_apf;
+      materializada para uso futuro (precisa de de-para de APF para entrar na silver).
+    meta:
+      tags: [bronze, far, empreendimento, agente-caixa]
+    columns:
+      - name: apf
+        description: normalize_apf(nu_apf) — não casa 1:1 com o APF do cadastro (ver descrição do modelo).
+      - name: nu_apf_origem
+        description: nu_apf cru da interface INT040.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_far_int054_bb
+    description: >
+      Bronze — cópia fiel do INT 054 (empreendimentos FAR BB PJ), colunas
+      preservadas como texto. Mesmo caveat de identificador do bronze_far_int040_caixa.
+    meta:
+      tags: [bronze, far, empreendimento, agente-bb]
+    columns:
+      - name: apf
+        description: normalize_apf(nu_apf) — não casa 1:1 com o APF do cadastro.
+      - name: nu_apf_origem
+        description: nu_apf cru da interface INT054.
+      - name: source_file
+        data_tests: [not_null]
+
+  - name: bronze_far_trabalho_social
+    description: >
+      Bronze — Trabalho Técnico Social FAR, CAIXA + BB empilhados (union all by
+      name) com contrato comum e coluna `agente`. Grão: contrato/recurso (sem APF).
+    meta:
+      tags: [bronze, far, trabalho-social]
+    columns:
+      - name: agente
+        description: CAIXA ou BB (origem do registro).
+        data_tests:
+          - accepted_values:
+              values: ['CAIXA', 'BB']
+      - name: contrato
+        description: Número do contrato/registro AO.
+      - name: vr_ts_global
+        description: Valor global do trabalho social em R$.
+      - name: pct_execucao_ts
+        description: Percentual de execução do trabalho social (0-100).
+      - name: source_file
+        data_tests: [not_null]

@@ -14,6 +14,9 @@ select
     apf::text as apf,
     apf::text as contrato,
     apf::text as codigo_empreendimento,
+    -- FAR não tem o conceito de fase de empreendimento (só FDS/Rural); mantido para
+    -- alinhar o contrato do union em silver_mcmv_frentes_base.
+    null::text as fase_empreendimento,
     empreendimento_nome::text as nome_empreendimento,
     null::text as codigo_ibge_municipio,
     municipio::text as municipio,
@@ -39,5 +42,5 @@ select
     coalesce(dt_entrega, dt_conclusao_obra, dt_previsao_entrega, dt_contratacao)::date as dt_ultima_atualizacao,
     'FAR vem da silver existente empreendimento_far.empreendimento.'::text as observacao_silver,
     current_timestamp as dt_silver
-from {{ ref("empreendimento") }}
+from {{ ref("silver_far_empreendimento") }}
 where apf is not null

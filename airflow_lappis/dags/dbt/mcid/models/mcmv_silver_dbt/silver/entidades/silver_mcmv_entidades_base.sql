@@ -40,6 +40,6 @@ select
     max(coalesce(dt_ultima_liberacao, dt_entrega, dt_previsao_entrega, dt_contratacao))::date as dt_ultima_atualizacao,
     'Entidades/FDS agrupado por id_empreendimento. Regra max validada empiricamente para UH (duplicadas) e financeiro (valor_contratado/valor_desembolsado sao totais unicos por empreendimento, nao particionados entre fases).'::text as observacao_silver,
     current_timestamp as dt_silver
-from {{ ref("fds_empreendimento") }}
+from {{ ref("silver_fds_empreendimento") }}
 where apf is not null
 group by coalesce(id_empreendimento, apf)

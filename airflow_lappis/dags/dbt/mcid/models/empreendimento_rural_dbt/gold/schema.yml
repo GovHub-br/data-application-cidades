@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: gold_rural_ficha_empreendimento
+    description: >
+      Gold — 1 linha por empreendimento (APF) da frente Rural / PNHR. Espelho de
+      gold_fds_ficha_empreendimento; consome silver_rural_empreendimento e injeta
+      regras de negócio (semáforo, status de entrega, divergência físico-financeira).
+    meta:
+      tags: [gold, rural, superset]
+    columns:
+      - name: apf
+        description: Identificador do empreendimento (APF).
+        data_tests:
+          - unique
+          - not_null
+      - name: nome_empreendimento
+        description: Nome padronizado do empreendimento em maiúsculas.
+      - name: cnpj_eo
+        description: CNPJ da Entidade Organizadora (14 dígitos).
+      - name: semaforo_alerta
+        description: Regra de negócio para o gráfico de semáforo.
+      - name: divergencia_fisico_financeira
+        description: Gap em p.p. entre execução financeira e física.
+      - name: status_entrega
+        description: Totalmente Entregue / Entrega Parcial / Não Entregue.
+
+  - name: gold_rural_panorama
+    description: >
+      Gold — agregação por Entidade Organizadora (CNPJ) da frente Rural. Espelho de
+      gold_fds_panorama_entidade: card resumo, ranking e score de risco.
+    meta:
+      tags: [gold, rural, superset]
+    columns:
+      - name: cnpj_eo
+        description: CNPJ da Entidade Organizadora (14 dígitos).
+        data_tests:
+          - unique
+          - not_null
+      - name: total_empreendimentos
+        description: Quantidade de APFs associados a esta EO.
+      - name: score_risco
+        description: Pontuação de risco composta (atraso + paralisação + divergência).
+      - name: classificacao_risco
+        description: Baixo / Médio / Alto Risco.

@@ -42,7 +42,10 @@ gold de um mesmo produto de dados. Ele aparece em:
 | `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
 | `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
 | `indicadores_mcmv` | `reloginho`, `gargalo`, ... | Reloginho (grupo A), gargalo/desempenho (grupo B) |
-| `mcmv_historico` | `mcmv` | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) |
+| `mcmv_historico` | `mcmv_historico` | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) |
+
+O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_far_…`,
+`silver_mcmv_historico_…` — nunca como sufixo.
 
 Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 `dbt_project.yml`.
@@ -72,21 +75,26 @@ Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 Formato:
 
 ```
-<camada>_<assunto>[_<recorte>]
+<camada>_<token-dominio>_<assunto>[_<recorte>]
 ```
 
 - `<camada>` ∈ `bronze` | `silver` | `gold` | `quality`.
+- `<token-dominio>` — token da seção 2 (`far`, `fds`, `rural`, `conjuntura`,
+  `reloginho`, `mcmv_historico`, ...), **logo após a camada**.
 - `<assunto>` — substantivo do que a tabela representa (`consolidado`,
   `empreendimento`, `evolucao_financeira`, `serie_mensal`).
-- `<recorte>` — frente, domínio, agregação ou consumidor
-  (`_far`, `_fds`, `_rural`, `_uf`, `_mensal`, `_chart`, `_dashboard`).
+- `<recorte>` — desambiguação adicional: agregação, consumidor ou (no caso do
+  domínio `mcmv_historico`, cujo token não é a frente) a própria frente
+  (`_uf`, `_mensal`, `_chart`, `_dashboard`, `_far`, `_fds`, `_rural`).
 
-**O nome precisa ser único no schema da camada.** Se `<assunto>` sozinho puder
-colidir entre domínios/frentes, o token de domínio é **obrigatório**:
+**O nome precisa ser único no schema da camada.** Como o token de domínio é
+obrigatório e vem logo após a camada, `<assunto>` sozinho nunca colide:
 
-- `silver_empreendimento` ❌ (colide entre FAR, FDS, Rural)
-- `silver_empreendimento_far`, `silver_empreendimento_fds`,
-  `silver_empreendimento_rural` ✅
+- `silver_empreendimento` ❌ (sem token; colidiria entre FAR, FDS, Rural)
+- `silver_far_empreendimento`, `silver_fds_empreendimento`,
+  `silver_rural_empreendimento` ✅
+- `silver_mcmv_historico_empreendimento_far` ✅ (token `mcmv_historico`; a frente
+  `_far` é recorte porque o token do domínio histórico não é a frente)
 
 O nome do arquivo `.sql` **é** o nome da tabela. Não usar `alias`.
 
@@ -94,9 +102,9 @@ O nome do arquivo `.sql` **é** o nome da tabela. Não usar `alias`.
 
 | Camada | Bom | Evitar |
 |---|---|---|
-| Bronze | `bronze_consolidado_far`, `bronze_reloginho_snh_serie_mensal` | `consolidado`, `far_raw`, `stg_far` |
-| Silver | `silver_empreendimento_far`, `silver_reloginho_snh_apf_mes` | `empreendimento`, `empreendimento_tratado` |
-| Gold | `gold_evolucao_financeira_far`, `gold_ficha_empreendimento_far`, `gold_serie_historica_mensal` | `evolucao_financeira_chart` sem prefixo, `mart_ficha` |
+| Bronze | `bronze_far_consolidado`, `bronze_reloginho_snh_serie_mensal` | `consolidado`, `bronze_consolidado_far`, `far_raw`, `stg_far` |
+| Silver | `silver_far_empreendimento`, `silver_reloginho_snh_apf_mes` | `empreendimento`, `silver_empreendimento_far`, `empreendimento_tratado` |
+| Gold | `gold_far_evolucao_financeira`, `gold_far_ficha_empreendimento`, `gold_mcmv_historico_serie_mensal` | `evolucao_financeira_chart` sem prefixo, `gold_ficha_empreendimento_far`, `mart_ficha` |
 | Qualidade | `quality_reloginho_reconciliacao_66`, `quality_far_completude` | `assert_*` como modelo (isso é teste, fica em `tests/`) |
 
 ### Regras de coluna
@@ -249,8 +257,8 @@ lugar de achatamento, tipagem, domínio e dedup.
 | Modelo / bloco | Desvio | Ação |
 |---|---|---|
 | `conjuntura_dbt` (schemas `conjuntura_bronze`/`_silver`/`_gold`) | Schema por domínio | Repontar `+schema` para `bronze`/`silver`/`gold`; tabelas já têm prefixo de camada. View de compat nos nomes de schema antigos enquanto o Superset migra |
-| `empreendimento_far_dbt` (schema único `empreendimento_far`) | Schema por domínio; `silver/empreendimento.sql` e `evolucao_financeira.sql` sem prefixo; golds `*_chart`/`ficha_*`/`panorama_*` sem prefixo | Mover para `bronze`/`silver`/`gold`; renomear tabelas com prefixo + token `_far`; view/alias de compat até migrar cards |
-| `entidades_dbt` (schema `entidades_fds`, prefixo `fds_`) | Schema por domínio; domínio deveria ser `empreendimento_fds` | Renomear domínio; mover para schemas globais; manter token `_fds` no nome da tabela |
+| ~~`empreendimento_far_dbt` (schema único `empreendimento_far`)~~ | Schema por domínio; silver/gold sem prefixo | **Feito** (`migracao-bronze-minio-mcmv`): schemas globais `bronze`/`silver`/`gold`; renomeado `<camada>_far_<assunto>` (token após a camada); fonte `raw` → `mcmv_staging` (MinIO/DuckDB, `+enabled: duckdb`) |
+| ~~`entidades_dbt` (schema `entidades_fds`, prefixo `fds_`)~~ | Schema por domínio; domínio deveria ser `empreendimento_fds` | **Feito** (`migracao-bronze-minio-mcmv`): domínio → `empreendimento_fds_dbt` (`product: empreendimento_fds`); schemas globais; `<camada>_fds_<assunto>`. `seeds/entidades_fds/` (schema do seed `seed_apf_fase_fds`) segue como resíduo menor |
 | `indicadores_mcmv_dbt/{bronze,silver,gold}` (schema `mcmv_indicadores`) | Schema por domínio | Repontar para `bronze`/`silver`/`gold`; nomes já prefixados |
 | ~~`mcmv_historico_dbt/{piloto,empreendimentos,serie_executiva}`~~ | Sem prefixo de camada; schema `mcmv_historico` | **Feito** (`separacao-silver-historico-por-frente`): modelos classificados em `bronze/silver/gold/`, renomeados com prefixo + token `mcmv_historico`, schemas globais via `get_custom_schema` também no DuckDB. `seeds/mcmv_historico/` (schema do seed do piloto) segue como resíduo menor |
 
@@ -265,8 +273,8 @@ data máxima de referência, cards sem erro.
 
 - [ ] Domínio existe na seção 2 (senão, registrar + criar bloco no `dbt_project.yml`).
 - [ ] Pasta: `models/<dominio>_dbt/<camada>/`.
-- [ ] Arquivo `<camada>_<assunto>[_<recorte>].sql` — sem `alias`.
-- [ ] Nome único dentro do schema da camada (token de domínio se houver risco de colisão).
+- [ ] Arquivo `<camada>_<token-dominio>_<assunto>[_<recorte>].sql` — sem `alias`.
+- [ ] Nome único dentro do schema da camada (token de domínio logo após a camada).
 - [ ] `{{ config(materialized="table") }}` (ou herdado).
 - [ ] `+schema` da camada = `bronze` / `silver` / `gold`.
 - [ ] Bronze: cópia fiel, sem tipagem, sem dedup; `source_file`, `dt_ingest`, `hash_linha`, `dt_referencia`.

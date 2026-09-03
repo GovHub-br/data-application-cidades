@@ -21,6 +21,17 @@
     try_cast(round({{ parse_hist_double(col) }}) as bigint)
 {%- endmacro %}
 
+-- parse_hist_numeric(col): valor monetário como numeric(15,2). Substitui a macro
+-- Postgres `parse_financial_value` (que usa o operador `~`) nos modelos que leem
+-- a staging MinIO via DuckDB. Reusa `parse_hist_double`, que já absorve o formato
+-- GFAR com zeros à esquerda ("0000000034679700,00"), o brasileiro ("34.679.700,00")
+-- e o dot-decimal. Diferença vs. `parse_financial_value`: entrada nula/vazia/`NaN`
+-- vira NULL (não `0.00`) — comportamento medalhão correto; conferir na
+-- reconciliação de somas (task 6.5) que nenhuma agregação regride.
+{% macro parse_hist_numeric(col) -%}
+    try_cast({{ parse_hist_double(col) }} as numeric(15, 2))
+{%- endmacro %}
+
 {% macro parse_hist_date(col) -%}
     try_cast(nullif(nullif(trim(cast({{ col }} as varchar)), ''), 'None') as date)
 {%- endmacro %}

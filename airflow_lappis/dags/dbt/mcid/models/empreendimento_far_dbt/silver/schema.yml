@@ -1,11 +1,12 @@
 version: 2
 
 models:
-  - name: empreendimento
+  - name: silver_far_empreendimento
     description: >
       Tabela Silver (Visão Unificada) de Empreendimentos FAR do Novo MCMV.
       Esta tabela consolida as informações da camada bronze cruzando as tabelas
-      cadastro_pj, consolidado, obra_mensal e dados_prioritarios_caixa através da chave APF.
+      bronze_far_cadastro_pj, bronze_far_consolidado, bronze_far_obra_mensal e
+      bronze_far_dados_prioritarios_caixa através da chave APF.
       Gera uma visão final pronta para alimentar painéis e dashboards.
     meta:
       tags:
@@ -81,12 +82,12 @@ models:
           Percentual do recurso liberado sobre o valor total.
           Cálculo: (valor_desembolsado / valor_contratado) * 100.
 
-  - name: evolucao_financeira
+  - name: silver_far_evolucao_financeira
     description: >
       Tabela Silver de Evolução Financeira dos Empreendimentos FAR.
       Série temporal mensal de liberações financeiras por empreendimento (APF × mês).
-      Agrega as liberações da bronze financeiro_mensal e faz o JOIN com a silver
-      empreendimento usando a raiz de 6 dígitos do APF: LEFT(cad_pj.apf, 6) = RIGHT(fin.apf, 6).
+      Agrega as liberações da bronze_far_financeiro_mensal e faz o JOIN com a
+      silver_far_empreendimento usando a raiz de 6 dígitos do APF: LEFT(cad_pj.apf, 6) = RIGHT(fin.apf, 6).
       Cobertura: ~79% dos empreendimentos (651/823) possuem dados financeiros.
       Relação 1:N com empreendimento (1 APF → N meses de liberações).
     meta:
