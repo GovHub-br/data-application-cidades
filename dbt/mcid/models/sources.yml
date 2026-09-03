@@ -4,81 +4,16 @@ sources:
   - name: raw
     schema: __dados_brutos
     description: >
-      Schema de dados brutos do banco cidades.
-      Contém os dados ingeridos das fontes GFAR, CAIXA e SNH para o programa MCMV.
+      Dump antigo do banco cidades. Última dependência dos dbts nesse schema: a tabela
+      de referência de UF do IBGE, que não existe em nenhuma outra fonte. O resto das
+      tabelas do MCMV saiu daqui para as bronze_* de cada domínio, carregadas do data
+      lake pelo scripts/staging_para_bronze.py.
     tables:
-      # Fontes FAR
-      - name: novo_mcmv_far_consolidado
-        description: >
-          Tabela consolidada do GFAR com todas as propostas FAR do Novo MCMV.
-          Contém 15.091 registros (13.216 propostas únicas), incluindo propostas
-          não contratadas, contratadas e distratadas. Todas as colunas são text.
-      - name: novo_mcmv_far_cad_pj_mensal
-        description: >
-          Cadastro detalhado de pessoa jurídica (empreendimento) com 82 colunas.
-          Contém 822 empreendimentos contratados com dados de composição financeira,
-          coordenadas GPS, tipologia, construtora e datas-chave. Snapshot mensal.
-      - name: novo_mcmv_far_obra_mensal
-        description: >
-          Dados de evolução física da obra com 40 colunas. Contém 822 registros
-          (1 por empreendimento). Inclui percentual previsto/realizado, situação
-          da obra, UHs concluídas e datas de paralisação/retomada.
-      - name: novo_mcmv_far_financeiro_mensal
-        description: >
-          Dados de liberações financeiras com série temporal. Contém 6.069 registros
-          para 638 APFs (média de 9,5 liberações por empreendimento). Detalha
-          valores pagos por componente (obra, terreno, PTS, INCC).
-      - name: dados_prioritarios_recebidos_caixa_empreendimentos
-        description: >
-          Dados prioritários recebidos da CAIXA com snapshot consolidado.
-          Contém 4.443 empreendimentos FAR com situação, percentual de execução,
-          valores contratados/desembolsados, UHs e coordenadas geográficas.
       - name: api_ibge_uf
         description: >
-          Tabela de referência do IBGE com os 27 estados brasileiros.
-          Contém sigla, nome completo e região. Usada para enriquecer dashboards.
-      - name: api_ibge_regioes
-        description: >
-          Tabela de referência do IBGE com as 5 regiões brasileiras.
-          Contém id e nome (Norte, Nordeste, Centro-Oeste, Sudeste, Sul).
-      - name: dados_prioritarios_recebidos_caixa_entregas
-        description: >
-          Snapshot de entregas reportadas pela CAIXA. Contém 11.540 registros
-          de múltiplos programas.
-
-      # Fontes FDS (Entidades)
-      - name: novo_mcmv_fds_cad_pj_mensal
-        description: >
-          Cadastro PJ mensal do MCMV Entidades (FDS). 343 empreendimentos
-          contratados a partir de ago/2024. 89 colunas text com dados de
-          Entidade Organizadora, construtora, UHs, composição financeira,
-          GPS, datas, substituição de EO e indicadores. Snapshot mensal.
-      - name: novo_mcmv_fds_obra_mensal
-        description: >
-          Evolução física da obra FDS. 343 registros (1 por empreendimento).
-          47 colunas text com situação da operação, percentual previsto/realizado,
-          UHs concluídas/alienadas, paralisação, invasão e datas de entrega.
-      - name: novo_mcmv_fds_financeiro_mensal
-        description: >
-          Série temporal de liberações financeiras FDS. 16.124 registros para
-          750 APFs (111 do Novo MCMV). APF em 6 dígitos. ATENÇÃO: ic_credito=0
-          são liberações reais (valores negativos), usar ABS(). ic_credito=1
-          são devoluções (20 registros).
-      - name: novo_mcmv_fds_trabalho_social_mensal
-        description: >
-          Acompanhamento do Trabalho Técnico Social FDS. 89 registros com
-          situação, datas de aprovação PTS, convênio, relatórios e portaria.
-      
-      # Fontes Complementares
-      - name: int_empreendimentos_int_059_fds_caixa_pj
-        description: >
-          Tabela complementar da CAIXA (INT 059) com 856 registros.
-          Contém dados do legado e do Novo MCMV. Importante para filtros
-          como situacao_gefus e fase_contrato.
-      - name: api_ibge_municipios
-        description: >
-          Tabela de referência do IBGE com os municípios brasileiros.
-          Contém id, nome, microrregião, mesorregião e códigos relacionados.
+          Referência do IBGE com os 27 estados: sigla, nome e região. Traz cada UF
+          duplicada (54 linhas para 27 siglas), então todo join com ela precisa de
+          `distinct` para não dobrar as somas.
 
   - name: ibge
     schema: ibge
@@ -214,3 +149,175 @@ sources:
         description: Ticket médio de lançamentos por empresa.
       - name: bronze_mcid_orcamento_por_acao
         description: Orçamento do MCID por ação governamental.
+
+  - name: bronze_far
+    schema: empreendimento_far
+    description: >
+      Camada bronze do domínio FAR, no mesmo schema das silver e gold do domínio
+      (empreendimento_far), com a camada no prefixo do nome da tabela: bronze_*.
+      Não é dbt: cada tabela é um parquet de staging/ (MinIO) materializado no
+      Postgres pelo scripts/staging_para_bronze.py via pg_duckdb, família
+      `empreendimento_far` do scripts/bronze_familias.yml. Tudo text, colunas em
+      snake_case, mais as colunas de linhagem _source_file, _ingested_at e
+      _source_hash. A tipagem acontece na silver. Carga full refresh por família.
+      A origem é resolvida por padrão (a versão mais recente vence), então as
+      contagens abaixo são da carga corrente, não fixas.
+    tables:
+      - name: bronze_consolidado
+        description: >
+          Consolidado do GFAR com as propostas FAR do Novo MCMV, do protocolo à
+          contratação. 15.231 registros, 100 colunas text.
+          Origem: HIS_MCIDADES_CONSOLIDADO_<aaaammdd>.
+      - name: bronze_cad_pj_mensal
+        description: >
+          Cadastro PJ do empreendimento contratado (composição financeira, GPS,
+          tipologia, construtora, datas). 876 registros, 85 colunas text.
+          Origem: MONIT_CAD_PJ_FAR_MENSAL_<aaaamm>.
+      - name: bronze_obra_mensal
+        description: >
+          Evolução física da obra, snapshot mensal. 876 registros, 43 colunas text.
+          Origem: MONIT_MOV_OBRA_FAR_MENSAL_<aaaamm>.
+      - name: bronze_financeiro_mensal
+        description: >
+          Série de liberações financeiras por componente. 11.596 registros, 26 colunas
+          text. Origem: MONIT_MOV_FINANC_FAR_MENSAL_<aaaamm>.
+      - name: bronze_dados_prioritarios_caixa
+        description: >
+          Snapshot de dados prioritários da CAIXA, todas as modalidades; a
+          silver_dados_prioritarios_caixa filtra modalidade='FAR'. 15.031 registros,
+          45 colunas text (o dump antigo em __dados_brutos tinha essas mesmas linhas
+          duplicadas 2x). O mesmo arquivo alimenta a família empreendimento_rural;
+          cada domínio carrega a sua cópia no seu schema, para não criar dependência
+          entre famílias.
+          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.
+
+  - name: bronze_fds
+    schema: empreendimentos_fds
+    description: >
+      Camada bronze do domínio Entidades (FDS), no mesmo schema das silver e gold do
+      domínio (empreendimentos_fds), com a camada no prefixo do nome da tabela:
+      bronze_*. Não é dbt: cada tabela é um parquet de staging/ (MinIO) materializado
+      no Postgres pelo scripts/staging_para_bronze.py via pg_duckdb, família
+      `entidades_fds` do scripts/bronze_familias.yml. Tudo text, colunas em snake_case,
+      mais as colunas de linhagem _source_file, _ingested_at e _source_hash. A tipagem
+      acontece na silver. Mesma resolução por padrão da família do FAR.
+    tables:
+      - name: bronze_cad_pj_mensal
+        description: >
+          Cadastro PJ do empreendimento FDS (Entidade Organizadora, construtora,
+          UHs, composição financeira, GPS, datas). 364 registros, 90 colunas text.
+          Origem: MONIT_CAD_PJ_FDS_MENSAL_<aaaamm>.
+      - name: bronze_obra_mensal
+        description: >
+          Evolução física da obra FDS, snapshot mensal (percentual previsto/realizado,
+          UHs concluídas/alienadas, paralisação, invasão). 364 registros, 48 colunas text.
+          Origem: MONIT_MOV_OBRA_FDS_MENSAL_<aaaamm>.
+      - name: bronze_financeiro_mensal
+        description: >
+          Série de liberações financeiras FDS por componente. APF em 6 dígitos e
+          ic_credito='0' com valor negativo nas liberações reais. 16.887 registros,
+          25 colunas text.
+          Origem: MONIT_MOV_FINANC_FDS_MENSAL_<aaaamm>.
+      - name: bronze_trabalho_social
+        description: >
+          Acompanhamento do Trabalho Técnico Social FDS (situação, datas do PTS,
+          convênio, percentual de execução, portaria). 141 registros, 15 colunas text.
+          Origem: MONIT_EXEC_TS_FDS_MENSAL_<aaaamm>.
+      - name: bronze_int_059_caixa_pj
+        description: >
+          Complementar da CAIXA (INT 059) com legado e Novo MCMV juntos; traz
+          situacao_gefus, fase_contrato e no_selecao_pmcmv_e. 916 registros,
+          74 colunas text.
+          Origem: INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_<aaaammdd>.
+      - name: bronze_dados_prioritarios_entregas
+        description: >
+          Entregas reportadas pela CAIXA, todas as modalidades. 11.677 registros,
+          8 colunas text (o dump antigo em __dados_brutos tinha essas linhas duplicadas 2x).
+          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.
+
+  - name: bronze_rural
+    schema: empreendimento_rural
+    description: >
+      Camada bronze do domínio Rural, no mesmo schema das silver e gold do domínio
+      (empreendimento_rural), com a camada no prefixo do nome da tabela: bronze_*.
+      Não é dbt: cada tabela é um parquet de staging/ (MinIO) materializado no
+      Postgres pelo scripts/staging_para_bronze.py via pg_duckdb, família
+      `empreendimento_rural` do scripts/bronze_familias.yml. Tudo text, colunas em
+      snake_case, mais as colunas de linhagem _source_file, _ingested_at e
+      _source_hash. A tipagem acontece na silver. Carga full refresh por família.
+    tables:
+      - name: bronze_cadastro_pj
+        description: >
+          Cadastro PJ do empreendimento Rural contratado (entidade organizadora,
+          composição do investimento, cisternas/efluentes, prazos). Colunas text.
+          Origem: MONIT_CAD_PJ_RURAL_MENSAL_<aaaamm>, competência vigente 202607.
+      - name: bronze_cadastro_pf
+        description: >
+          Cadastro de beneficiários PF do Rural, com perfil socioeconômico
+          (renda, pessoas por família, Bolsa Família, BPC). Colunas text.
+          Origem: MONIT_CADASTRO_PF_RURAL_MENSAL_<aaaamm>, vigente 202607.
+      - name: bronze_obra_mensal
+        description: >
+          Evolução física da obra do Rural, snapshot mensal. Colunas text.
+          Origem: MONIT_MOV_OBRA_RURAL_MENSAL_<aaaamm>, vigente 202607.
+      - name: bronze_financeiro_mensal
+        description: >
+          Série de liberações financeiras do Rural, decomposta por componente
+          (obra, TS, ATEC, cisternas/efluentes, custos indiretos). Colunas text.
+          Origem: MONIT_MOV_FINANC_RURAL_MENSAL_<aaaamm>, vigente 202607.
+      - name: bronze_prioritarios_snh
+        description: >
+          Snapshot de dados prioritários da SNH, todas as modalidades; a
+          silver_prioritarios_snh filtra modalidade='RURAL'. Colunas text.
+          Origem: export canônico staging/sharepoint/
+          dados_prioritarios_disponibilizados_snh_empreendimentos.parquet — snapshot avulso,
+          sobrescrito in-place, NÃO acompanha o feed mensal.
+      - name: bronze_prioritarios_caixa
+        description: >
+          Snapshot de dados prioritários da CAIXA, todas as modalidades; a
+          silver_prioritarios_caixa filtra modalidade='RURAL'. Colunas text.
+          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA, vigente 202607.
+          O mesmo arquivo alimenta a família empreendimento_far; cada domínio carrega
+          a sua cópia no seu schema, para não criar dependência entre famílias.
+      - name: bronze_prioritarios_bb
+        description: >
+          Snapshot de dados prioritários do Banco do Brasil, todas as modalidades;
+          a silver_prioritarios_bb filtra modalidade='RURAL'. Mesmo layout do
+          arquivo da CAIXA. Colunas text.
+          Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB, vigente 202606 — um mês
+          atrás da CAIXA (202607), porque o BB envia com atraso.
+      - name: bronze_pnhr_caixa
+        description: >
+          Histórico de empreendimentos PNHR na CAIXA (integração INT065), com
+          composição de investimento e execução física. Colunas text.
+          Origem: INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_<aaaammdd>. O feed
+          para em 20241129: o PNHR é programa encerrado, a série não avança mais.
+      - name: bronze_pnhr_bb
+        description: >
+          Histórico de empreendimentos PNHR no Banco do Brasil (integração
+          INT057). Não traz nu_apf: o APF sai do número do contrato do
+          empreendimento. Colunas text.
+          Origem: INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_<aaaammdd>, também
+          parado em 20241129.
+      - name: bronze_pnhr_liberacoes
+        description: >
+          Liberações de recurso de CAIXA e BB (integração INT055), de todos os
+          programas; a silver_pnhr_liberacoes filtra no_programa like '%PNHR%'.
+          Não decompõe o valor por componente. Colunas text.
+          Origem: INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_<aaaammdd>, vigente
+          20250318. Chega zipado do SFTP e é expandido para .TXT na entrada; a extensão
+          de origem não entra na key de staging.
+      - name: bronze_trabalho_social_caixa
+        description: >
+          Base de acompanhamento do Trabalho Social (PTS) do PNHR pela CAIXA:
+          situação do TS, valores global/desembolsado e % de execução. Colunas text.
+          Origem: export canônico staging/sharepoint/
+          base_trabalho_social_pnhr_rural_caixa.parquet. Key exata em vez de padrão: o
+          feed datado (Trabalho Social/MCMV_RURAL_TS_CAIXA_BB_<aaaamm>) vira um parquet
+          por aba e o sufixo da aba muda de nome todo mês. Snapshot avulso.
+      - name: bronze_trabalho_social_bb
+        description: >
+          Base de acompanhamento do Trabalho Social (PTS) do PNHR pelo Banco do
+          Brasil. Layout próprio, diferente do da CAIXA. Colunas text.
+          Origem: export canônico staging/sharepoint/base_trabalho_social_pnhr_bb.parquet,
+          mesma ressalva do da CAIXA.

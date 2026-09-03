@@ -1,0 +1,207 @@
+# scripts/bronze_familias.yml
+#
+# Registro das famílias da camada bronze. Cada família é um recorte de negócio que vira um
+# conjunto de tabelas no Postgres, carregado pelo scripts/staging_para_bronze.py.
+#
+# Diferente do raw->staging (que varre o lake inteiro), a bronze é seletiva: só um pequeno
+# subconjunto da staging/ vira tabela, porque só esse subconjunto alimenta modelos dbt.
+# Adicionar dado novo à bronze = adicionar uma entrada aqui.
+#
+# Campos de uma família:
+#   descricao  texto livre, aparece no --listar
+#   schema     schema do Postgres onde as tabelas são criadas
+#   objetos    lista de entradas, cada uma com `tabela` e UMA das duas formas de origem:
+#
+#     staging_key  key exata do parquet. Use para dado que é um arquivo só, sem versões.
+#
+#     padrao       glob de keys; vence a de DATA mais recente. Use para dado que chega
+#                  periodicamente, com a data no nome do arquivo. `*` casa qualquer coisa,
+#                  inclusive `/`. A data é extraída do nome do arquivo por `data_regex`
+#                  (default: o último grupo de 6 a 8 dígitos), e o desempate é pela key.
+#     data_regex   opcional; regex com UM grupo de captura, aplicado ao NOME do arquivo,
+#                  cujo valor ordena as versões. Só necessário quando o default erra.
+#
+# Ao usar `padrao`, o arquivo escolhido em cada execução aparece no log e fica gravado em
+# lake._bronze_log.staging_key — dá para auditar qual versão gerou cada carga.
+
+empreendimento_far:
+  descricao: >-
+    Novo MCMV FAR — consolidado GFAR, cadastro PJ, obra mensal, financeiro mensal e
+    dados prioritários da CAIXA. Alimenta o empreendimento_far_dbt.
+    Fontes reais do SharePoint, uma versão nova por mês; carrega sempre a mais recente.
+    As tabelas ficam no MESMO schema das silver e gold do domínio (empreendimento_far),
+    com a camada no prefixo do nome.
+  schema: empreendimento_far
+  objetos:
+    # Os padrões não fixam a pasta de propósito: o descarte de gêmeos do
+    # raw_para_staging.py mantém UM objeto por nome no lake inteiro, então o arquivo
+    # canônico pode estar em sharepoint/ ou em sftp/ dependendo de quem chegou primeiro
+    # (os DADOS_PRIORITARIOS, por exemplo, vencem em staging/sftp/fabrica/GEFUS/).
+    # Como o `*` do fnmatch casa `/`, `staging/*NOME_*` acha em qualquer profundidade.
+
+    # HIS_MCIDADES_CONSOLIDADO_<aaaammdd>.csv — data completa no nome
+    - padrao: "staging/*HIS_MCIDADES_CONSOLIDADO_*.parquet"
+      tabela: bronze_consolidado
+
+    # MONIT_CAD_PJ_FAR_MENSAL_<aaaamm>_<hhmmss>.CSV — o regex isola a competência
+    # (aaaamm); sem ele o default pegaria o sufixo de hora, que não ordena por período.
+    - padrao: "staging/*MONIT_CAD_PJ_FAR_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PJ_FAR_MENSAL_(\\d{6})"
+      tabela: bronze_cad_pj_mensal
+
+    - padrao: "staging/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_OBRA_FAR_MENSAL_(\\d{6})"
+      tabela: bronze_obra_mensal
+
+    - padrao: "staging/*MONIT_MOV_FINANC_FAR_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_FINANC_FAR_MENSAL_(\\d{6})"
+      tabela: bronze_financeiro_mensal
+
+    # <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv — competência é o PREFIXO.
+    # O `_ENTREGAS` no fim é outra tabela (5 colunas): o padrão termina em
+    # `AF_CAIXA.parquet` justamente para não casar com ele.
+    - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet"
+      data_regex: "^(\\d{6})_SNH_PMCMV"
+      tabela: bronze_dados_prioritarios_caixa
+
+empreendimento_rural:
+  descricao: >-
+    Novo MCMV Rural e PNHR histórico — cadastro PJ e PF, obra mensal, financeiro
+    mensal, dados prioritários (SNH/CAIXA/BB), integrações PNHR (INT065 CAIXA,
+    INT057 BB, INT055 liberações) e as bases de trabalho social.
+    Alimenta o empreendimento_rural_dbt. As tabelas ficam no MESMO schema das silver
+    e gold do domínio (empreendimento_rural), com a camada no prefixo do nome.
+  schema: empreendimento_rural
+  objetos:
+    # --- Feed mensal do SharePoint (pasta "Novo MCMV - Rural") ---
+    # Os mesmos nomes reaparecem nas subpastas "RURAL - <assunto> - Mensal/" com
+    # competências antigas; como o `*` do fnmatch casa `/`, os dois conjuntos entram na
+    # disputa e vence a competência mais recente — o desejado. O regex isola a competência
+    # (aaaamm) porque há um sufixo de hora depois dela, que o default pegaria.
+    #
+    # Os irmãos _LAYOUT_, _SEMANAL_ e _DIARIO_ NÃO casam, porque o padrão exige
+    # `_MENSAL_`. Não é acidente: o dbt do rural é mensal.
+
+    - padrao: "staging/*MONIT_CAD_PJ_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PJ_RURAL_MENSAL_(\\d{6})"
+      tabela: bronze_cadastro_pj
+
+    # CADASTRO_PF, não CAD_PF: o de PJ abrevia, o de PF não.
+    - padrao: "staging/*MONIT_CADASTRO_PF_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_CADASTRO_PF_RURAL_MENSAL_(\\d{6})"
+      tabela: bronze_cadastro_pf
+
+    - padrao: "staging/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_OBRA_RURAL_MENSAL_(\\d{6})"
+      tabela: bronze_obra_mensal
+
+    - padrao: "staging/*MONIT_MOV_FINANC_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_FINANC_RURAL_MENSAL_(\\d{6})"
+      tabela: bronze_financeiro_mensal
+
+    # --- Feed do SFTP (GEFUS) ---
+
+    # <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.csv — competência é o PREFIXO.
+    # O padrão termina em `AF_BB.parquet` de propósito, para não casar com o
+    # `..._DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB`, que é outra tabela.
+    # Remessas antigas usam `aaaa_mm_` (com underscore) e não casam com o regex: ficam
+    # com chave de ordenação vazia e perdem, o que é o desejado. O BB envia com atraso,
+    # então costuma estar uma competência atrás da CAIXA.
+    - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet"
+      data_regex: "^(\\d{6})_SNH_PMCMV"
+      tabela: bronze_prioritarios_bb
+
+    # <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv — competência é o PREFIXO.
+    # O `_ENTREGAS` no fim é outra tabela: o padrão termina em `AF_CAIXA.parquet`
+    # justamente para não casar com ele.
+    # É o MESMO arquivo de origem da família empreendimento_far, e é de propósito:
+    # cada domínio carrega a sua cópia no seu próprio schema, então não existe ordem
+    # obrigatória entre as famílias e nenhuma dropa a tabela da outra. O snapshot cobre
+    # todas as modalidades; a silver_prioritarios_caixa filtra modalidade='RURAL'.
+    - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet"
+      data_regex: "^(\\d{6})_SNH_PMCMV"
+      tabela: bronze_prioritarios_caixa
+
+    # INT065/INT057: o feed para em 20241129 — o PNHR é programa encerrado, a série não
+    # avança mais. O regex ancora a data logo após `EMPREENDIMENTOS_`, o que exclui as
+    # variantes `_VALIDACAO_`, `_SUBSTITUIDO` e `ALTERACAO_LAYOUT_PARA_VALIDACAO_` (nelas
+    # o regex não casa, a chave fica vazia e elas perdem). Sem a âncora, uma remessa de
+    # validação com data mais nova venceria a remessa boa.
+    - padrao: "staging/*INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet"
+      data_regex: "EMPREENDIMENTOS_(\\d{8})"
+      tabela: bronze_pnhr_caixa
+
+    - padrao: "staging/*INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet"
+      data_regex: "EMPREENDIMENTOS_(\\d{8})"
+      tabela: bronze_pnhr_bb
+
+    # --- Exports canônicos achatados em staging/sharepoint/ ---
+    # Estes três não têm versão datada utilizável, então a origem é key exata.
+    #
+    # O prioritários SNH só existe nesta forma: a pasta
+    # "Dados Prioritarios - Disponibilizados SNH/" guarda outra coisa (base_ogu_* com
+    # abas), não o snapshot de empreendimentos.
+    #
+    # O trabalho social TEM feed datado — "Trabalho Social/MCMV_RURAL_TS_CAIXA_BB_<aaaamm>"
+    # — mas cada mês vira um parquet por aba e o sufixo da aba muda de nome todo mês
+    # (__ts_pnhr_af_bb_01_2026, __ts_af_bb_06_2026, __ts_af_bb_pnhr_07_26, __bb, ...).
+    # Não há padrão estável para pescar "a aba do BB do mês mais recente". Enquanto a
+    # origem não tiver convenção de nome, a key exata é a única leitura confiável.
+    #
+    # RESSALVA: os três são snapshots avulsos e NÃO acompanham o feed mensal. São
+    # sobrescritos in-place, então o full refresh segue correto, mas a atualidade depende
+    # de alguém regerar o export.
+    - staging_key: staging/sharepoint/dados_prioritarios_disponibilizados_snh_empreendimentos.parquet
+      tabela: bronze_prioritarios_snh
+
+    - staging_key: staging/sharepoint/base_trabalho_social_pnhr_rural_caixa.parquet
+      tabela: bronze_trabalho_social_caixa
+
+    - staging_key: staging/sharepoint/base_trabalho_social_pnhr_bb.parquet
+      tabela: bronze_trabalho_social_bb
+
+    # --- INT055: liberações do PNHR ---
+    # Vem zipado do SFTP; o sftp_para_minio.py expande na entrada, então em raw/ os
+    # objetos datados chegam como .TXT. O _staging_key descarta a extensão de origem, e o
+    # .TXT maiúsculo vira ..._<aaaammdd>.parquet normalmente.
+    # Regex ancorado depois de LIBERACOES_CAIXA_BB_ pela mesma razão do INT065/INT057.
+    - padrao: "staging/*INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet"
+      data_regex: "LIBERACOES_CAIXA_BB_(\\d{8})"
+      tabela: bronze_pnhr_liberacoes
+
+entidades_fds:
+  descricao: >-
+    Novo MCMV Entidades (FDS) — cadastro PJ, obra mensal, financeiro mensal e trabalho
+    social do GFAR, mais o INT059 da CAIXA e as entregas dos dados prioritários.
+    Alimenta o entidades_dbt. Mesma cadência do FAR: uma versão nova por mês,
+    carrega sempre a mais recente. As tabelas ficam no MESMO schema das silver e gold
+    do domínio (empreendimentos_fds), com a camada no prefixo do nome.
+  schema: empreendimentos_fds
+  objetos:
+    # MONIT_<dado>_FDS_MENSAL_<aaaamm>_<hhmmss>.CSV — como no FAR, o regex isola a
+    # competência; o default pegaria o sufixo de hora, que não ordena por período.
+    - padrao: "staging/*MONIT_CAD_PJ_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PJ_FDS_MENSAL_(\\d{6})"
+      tabela: bronze_cad_pj_mensal
+
+    - padrao: "staging/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_OBRA_FDS_MENSAL_(\\d{6})"
+      tabela: bronze_obra_mensal
+
+    - padrao: "staging/*MONIT_MOV_FINANC_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_MOV_FINANC_FDS_MENSAL_(\\d{6})"
+      tabela: bronze_financeiro_mensal
+
+    - padrao: "staging/*MONIT_EXEC_TS_FDS_MENSAL_*.parquet"
+      data_regex: "MONIT_EXEC_TS_FDS_MENSAL_(\\d{6})"
+      tabela: bronze_trabalho_social
+
+    # INT059_..._EMPREENDIMENTOS_<aaaammdd>.TXT — data completa no nome. Há também um
+    # `_VALIDACAO_<aaaammdd>` antigo no lake; ele casa com o padrão mas perde por data.
+    - padrao: "staging/*INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet"
+      tabela: bronze_int_059_caixa_pj
+
+    # Entregas reportadas pela CAIXA, todas as modalidades — o filtro FDS é na silver.
+    - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet"
+      data_regex: "^(\\d{6})_SNH_PMCMV"
+      tabela: bronze_dados_prioritarios_entregas

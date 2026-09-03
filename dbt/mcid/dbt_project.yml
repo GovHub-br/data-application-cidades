@@ -23,6 +23,11 @@ models:
     metadata:
       +materialized: incremental
       +schema: metadata
+    # Um schema por domínio, com a camada no prefixo do nome da tabela (bronze_*,
+    # silver_*, gold_*). Como nome de model é único no projeto inteiro, o arquivo leva o
+    # token do domínio (far_silver_cadastro_pj) e o `alias` do config define o nome no
+    # banco (silver_cadastro_pj) — é o alias que segue o padrão, não o nome do model.
+    # A bronze não é dbt: vive no mesmo schema, carregada pelo staging_para_bronze.py.
     empreendimento_far_dbt:
       +materialized: table
       +schema: empreendimento_far
@@ -31,9 +36,22 @@ models:
       gold:
         +materialized: table
 
+    # Um schema só para o domínio, com a camada no prefixo do nome da tabela
+    # (bronze_*, silver_*, gold_*). Batendo o olho no banco a listagem sai ordenada
+    # por camada, e o Superset aponta para um schema único.
+    # A bronze também vive aqui, carregada pelo scripts/staging_para_bronze.py
+    # (família `empreendimento_rural` do bronze_familias.yml) — não é dbt.
+    empreendimento_rural_dbt:
+      +materialized: table
+      +schema: empreendimento_rural
+      silver:
+        +materialized: table
+      gold:
+        +materialized: table
+
     entidades_dbt:
       +materialized: table
-      +schema: entidades_fds
+      +schema: empreendimentos_fds
       silver:
         +materialized: table
       gold:

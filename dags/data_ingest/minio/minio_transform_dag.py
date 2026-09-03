@@ -76,7 +76,13 @@ def minio_transform_dag() -> None:
 
     @task
     def raw_para_staging() -> None:
-        """Converte os objetos de raw/ para Parquet full-text em staging/."""
+        """Converte os objetos de raw/ para Parquet full-text em staging/.
+
+        Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em raw_para_staging.py):
+        já tem tratamento próprio de um membro da equipe para ciência de dados, e gerar
+        parquet full-text por cima seria trabalho duplicado. Continua sendo mascarada
+        normalmente pela task anterior.
+        """
         from raw_para_staging import run as run_staging
 
         p = get_current_context()["params"]

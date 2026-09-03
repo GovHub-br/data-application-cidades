@@ -1,0 +1,513 @@
+version: 2
+models:
+- name: gold_ficha_empreendimento
+  description: 'Tabela Gold que alimenta a "Ficha do Empreendimento" no dashboard do MCMV Rural. Consome
+    a silver_empreendimento e injeta as regras de negócio finais: programa (Novo MCMV Rural vs.
+    PNHR histórico), status de execução, status de prazo, valor por UH e ritmo físico-financeiro. Uma
+    linha por empreendimento (APF).
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+    data_tests:
+    - not_null
+    - unique
+    - relationships:
+        arguments:
+          to: ref('silver_empreendimento')
+          field: apf
+  - name: programa
+    description: 'Regra de negócio: NOVO MCMV RURAL quando ic_novo_mcmv, senão PNHR (HISTÓRICO).
+
+      '
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - NOVO MCMV RURAL
+          - PNHR (HISTÓRICO)
+        config:
+          severity: warn
+  - name: pessoas_atendidas
+    description: 'Estimativa de pessoas atendidas: UHs contratadas × 3,3 (média de moradores por domicílio),
+      truncada para inteiro.
+
+      '
+  - name: municipio_uf
+    description: Localização no formato "Município/UF".
+  - name: apf_municipio_empreendimento
+    description: 'Rótulo concatenado "APF - Município/UF - EMPREENDIMENTO", usado como dimensão de filtro
+      no Superset.
+
+      '
+  - name: status_execucao_simplificado
+    description: 'Regra de negócio: traduz o percentual físico em categorias (Não Iniciado, Em Andamento,
+      Concluído, Status Desconhecido).
+
+      '
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Concluído
+          - Não Iniciado
+          - Em Andamento
+          - Sem Informação
+        config:
+          severity: warn
+  - name: status_prazo
+    description: 'Regra de negócio: compara a previsão de entrega com a data atual. Alerta "Em Atraso"
+      quando não foi entregue e a data venceu.
+
+      '
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Entregue
+          - Em Atraso
+          - Dentro do Prazo
+          - Sem Previsão
+        config:
+          severity: warn
+  - name: percentual_execucao_financeira
+    description: Valor desembolsado sobre valor contratado, em %.
+  - name: ritmo_fisico_financeiro
+    description: 'Regra de negócio: compara o % de execução física com o % de desembolso, com tolerância
+      de 5% (Ritmo Equilibrado, Desembolso Adiantado ou Atrasado).
+
+      '
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Desembolso Adiantado
+          - Desembolso Atrasado
+          - Ritmo Equilibrado
+          - Sem Informação
+        config:
+          severity: warn
+  - name: tipologia
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Novo MCMV Rural
+          - PNHR (Rural)
+        config:
+          severity: warn
+  - name: nome_empreendimento
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: municipio
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: uf
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: quantidade_uh
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: valor_contratado
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: valor_desembolsado
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: percentual_execucao_fisica
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: nome_entidade_organizadora
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: nome_construtora
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: fonte_execucao_fisica
+    description: >
+      Fonte que produziu o percentual de execução física, propagada da silver. Publicar o
+      número sem a procedência foi o que deixou a ficha (33,90%) e o gráfico (100,00%)
+      discordarem na mesma tela sem ninguém saber por quê.
+  - name: dt_referencia_execucao_fisica
+    description: Data de medição da fonte que venceu para a execução física.
+  - name: fonte_valor_desembolsado
+    description: Fonte que produziu o valor desembolsado.
+  - name: dt_referencia_valor_desembolsado
+    description: Data de medição da fonte que venceu para o valor desembolsado.
+  - name: fonte_situacao
+    description: Fonte que produziu a situação do empreendimento.
+  - name: dt_referencia_consolidada
+    description: Data da medição mais recente que entrou na linha, qualquer que seja o campo.
+  - name: dias_desde_ultima_medicao
+    description: >
+      `current_date - dt_referencia_consolidada`. Serve para o dashboard marcar número
+      velho: uma fonte de boa cobertura pode estar meses atrás dos feeds mensais.
+  - name: vr_acumulado_liberacoes
+    description: >
+      Soma da série de liberações (FLUXO), para ser confrontada com `valor_desembolsado`,
+      que é ESTOQUE. Quando as duas não fecham é a série que está incompleta: o INT055 só
+      traz o que CAIXA e BB reportaram por aquela integração e o feed para em 2025-03, então
+      contrato antigo tem história anterior ao arquivo. No APF 29712236 o estoque diz 100%
+      do contratado e a série soma 75,7%.
+  - name: percentual_acumulado_liberacoes
+    description: >
+      `vr_acumulado_liberacoes` sobre o valor contratado. É o número que o gráfico plota.
+  - name: qt_meses_com_liberacao
+    description: Meses com liberação registrada na série. Zero/nulo = sem série financeira.
+  - name: diferenca_estoque_menos_serie
+    description: >
+      `valor_desembolsado - vr_acumulado_liberacoes`. Positivo = a série não cobre todo o
+      desembolso informado. Negativo merece investigação: a série passou do estoque.
+  - name: consistencia_desembolso
+    description: >
+      Marca desembolso acima de contratado + aportes. Acontece de verdade (suplementação),
+      mas é também a assinatura de erro de sinal ou liberação duplicada na origem. Marcado
+      em vez de limitado: um `least(pct, 100)` esconderia justamente o caso a olhar.
+    data_tests:
+      - accepted_values:
+          arguments:
+            values: [Dentro do Contratado, Desembolso Acima do Contratado, Sem Informação]
+          config:
+            severity: warn
+
+- name: gold_resumo_gerencial
+  description: 'Visão agregada Gold com os KPIs gerenciais (empreendimentos, UHs, UHs entregues, pessoas
+    atendidas, valores e médias) agrupados por agente financeiro, programa, situação, tipologia e status.
+    Alimenta os gráficos de pizza e barra do painel gerencial.
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: total_empreendimentos
+    description: Contagem de APFs no grupo.
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: media_valor_por_uh
+    description: Média do valor por UH dos empreendimentos do grupo.
+  - name: total_uhs
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+- name: gold_panorama_estadual
+  description: 'Visão Gold por UF em formato longo (uma seção por linha) para o dashboard "Panorama Estadual":
+    header com os grandes números e distribuições por agente financeiro, programa, situação e faixa de
+    execução física. A seção de situação usa uma grade fixa de 4 status, então UF sem empreendimento em
+    determinado status aparece com zero em vez de faltar.
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: uf
+    description: Sigla da UF.
+  - name: secao
+    description: 'Qual bloco do painel a linha alimenta: header, agente_financeiro, programa, situacao
+      ou execucao_fisica.
+
+      '
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - header
+          - agente_financeiro
+          - programa
+          - situacao
+          - execucao_fisica
+        config:
+          severity: warn
+  - name: ordem
+    description: Ordem de exibição dentro da seção (0 quando não se aplica).
+  - name: estado
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  data_tests:
+  - unique_combinacao:
+      arguments:
+        colunas:
+        - uf
+        - secao
+        - dimensao
+- name: gold_mapa_nacional
+  description: 'Visão Gold geográfica para o mapa coroplético e os gráficos por região. Traz duas visões
+    no mesmo formato, distinguidas pela coluna `nivel`: por UF (com código ISO 3166-2) e por região. Enriquecida
+    com a referência IBGE.
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: nivel
+    description: uf ou regiao — indica a granularidade da linha.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - uf
+          - regiao
+        config:
+          severity: warn
+  - name: iso_3166_2
+    description: Código ISO 3166-2 (BR-XX), nulo nas linhas de região.
+  - name: total_empreendimentos
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: total_uhs
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: estado_nome
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  data_tests:
+  - unique_combinacao:
+      arguments:
+        colunas:
+        - uf
+        - nivel
+- name: gold_evolucao_financeira
+  description: 'Série temporal Gold de liberações por APF × mês, com acumulado progressivo e percentual
+    executado sobre o valor contratado. Une o financeiro mensal do Novo MCMV Rural (decomposto por componente)
+    com as liberações históricas do PNHR vindas da silver liberacoes_pnhr — o INT055 não decompõe por
+    componente, então essas linhas entram só no total liberado.
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF do empreendimento (8 dígitos, normalizado).
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('silver_empreendimento')
+          field: apf
+  - name: mes
+    description: Primeiro dia do mês da(s) liberação(ões), truncado.
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: vr_acumulado
+    description: Soma progressiva do valor liberado por APF ao longo dos meses.
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: pct_executado_financeiro
+    description: vr_acumulado sobre valor_contratado, em %.
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: vr_liberado_mes
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  data_tests:
+  - unique_combinacao:
+      arguments:
+        colunas:
+        - apf
+        - mes
+- name: gold_execucao_fisica_financeira
+  description: 'Série temporal Gold comparando execução física e financeira por APF × mês, pronta para
+    o gráfico de linhas. Faz full outer join entre as duas séries e preenche os buracos com o último valor
+    conhecido (last observation carried forward), para que a linha não caia a zero em mês sem movimento.
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF do empreendimento.
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('silver_empreendimento')
+          field: apf
+  - name: apf_municipio_empreendimento
+    description: Rótulo concatenado com APF, município, UF e nome do empreendimento.
+  - name: mes
+    description: Mês de referência no formato YYYY-MM-DD.
+    data_tests:
+    - not_null
+  - name: pct_obra_realizada
+    description: Percentual de execução física acumulada.
+  - name: pct_executado_financeiro
+    description: Percentual de execução financeira acumulada.
+  data_tests:
+  - unique_combinacao:
+      arguments:
+        colunas:
+        - apf
+        - mes
+- name: gold_ficha_trabalho_social
+  description: 'Modelo Gold de acompanhamento do Plano de Trabalho Social (PTS). Empilha as bases de trabalho
+    social da CAIXA e do BB e cruza com a ficha do empreendimento, permitindo comparar o ritmo do trabalho
+    social com o da obra. Uma linha por APF × agente financeiro.
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF do empreendimento.
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('silver_empreendimento')
+          field: apf
+  - name: situacao_trabalho_social
+    description: Situação do PTS em maiúsculo; NÃO INFORMADO quando ausente.
+  - name: ritmo_social_fisico
+    description: 'Regra de negócio: compara o % de obra reportado no PTS com o % de execução do trabalho
+      social, com tolerância de 10%.
+
+      '
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - Trabalho Social Atrasado
+          - Trabalho Social Adiantado
+          - Ritmo Alinhado
+          - Sem Informação
+        config:
+          severity: warn
+  - name: agente_financeiro
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - CAIXA
+          - BB
+        config:
+          severity: warn
+  - name: valor_global_ts
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: percentual_execucao_ts
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+  - name: nome_empreendimento
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  - name: municipio
+    data_tests:
+    - sem_mojibake:
+        config:
+          severity: warn
+  data_tests:
+  - unique_combinacao:
+      arguments:
+        colunas:
+        - apf
+        - agente_financeiro
+- name: gold_perfil_beneficiarios
+  description: 'Modelo Gold com o perfil socioeconômico agregado dos beneficiários por empreendimento:
+    total de beneficiários, média de pessoas por família e proporção de mulheres, Bolsa Família e BPC.
+    Agregado da silver cadastro_pf. Uma linha por APF; só aparecem APFs com beneficiário cadastrado (inner
+    join).
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF do empreendimento.
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('silver_empreendimento')
+          field: apf
+  - name: percentual_mulheres
+    description: Proporção de beneficiárias mulheres sobre o total cadastrado, em %.
+  - name: renda_familiar_media
+    description: Média da renda familiar declarada em R$.
+  - name: total_beneficiarios_cadastrados
+    data_tests:
+    - not_null:
+        config:
+          severity: warn
+- name: gold_infraestrutura_agua_saneamento
+  description: 'Modelo Gold do escopo rural específico de cisternas e efluentes: quantidade e investimento
+    por empreendimento. Quantidades vêm do cadastro PJ e, na ausência dele, da soma do cadastro PF; valores
+    vêm do cadastro PJ e, na ausência, do histórico PNHR do agente correspondente.
+
+    '
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF do empreendimento.
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('silver_empreendimento')
+          field: apf
+  - name: valor_investimento_saneamento_total
+    description: Soma do investimento em cisternas e efluentes em R$.
+    data_tests:
+    - not_null:
+        config:
+          severity: warn

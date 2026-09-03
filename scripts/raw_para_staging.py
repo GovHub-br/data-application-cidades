@@ -3,31 +3,22 @@
 """
 Conversão Raw -> Staging (Parquet) do data lake (MinIO).
 
-Percorre os objetos de raw/ (CSV/TXT/XLSX/MDB/JSON), detecta separador e encoding de cada
-arquivo, e grava a versão colunar em Parquet em staging/, para a etapa seguinte
-(Staging->DB via dbt/DuckDB) consumir dados já em formato eficiente e uniforme.
-
-A staging espelha a estrutura de pastas do raw/ inteiro (não só sftp/), trocando o arquivo
-de origem por parquet e SEM a extensão de origem no nome:
-
-    raw/sftp/fabrica/GEFUS/foo.csv -> staging/sftp/fabrica/GEFUS/foo.parquet
+Percorre raw/ (CSV/TXT/XLSX/MDB/JSON), detecta separador e encoding de cada arquivo e
+grava a versão colunar em staging/, espelhando a estrutura de pastas sem a extensão de
+origem: raw/sftp/fabrica/GEFUS/foo.csv -> staging/sftp/fabrica/GEFUS/foo.parquet
 
 Decisões do projeto:
-  - Todas as colunas como STRING — a tipagem (datas/números) fica para o dbt/DuckDB.
-  - pandas (chunked) + pyarrow ParquetWriter: streaming memory-bounded, suporta qualquer
-    encoding Python (cp1250/cp1252/utf-8).
-  - Nomes de coluna normalizados para snake_case ASCII (dedup); header original guardado
-    nos metadados do parquet e na tabela de controle.
-  - Colunas de linhagem `_source_file`, `_ingested_at`, `_source_hash` em cada parquet.
+  - Todas as colunas como STRING — a tipagem fica para o dbt/DuckDB.
+  - pandas (chunked) + pyarrow ParquetWriter: streaming memory-bounded.
+  - Colunas em snake_case ASCII (dedup); header original nos metadados do parquet.
+  - Linhagem `_source_file`, `_ingested_at`, `_source_hash` em cada parquet.
 
-IMPORTANTE (ordem no pipeline): rode DEPOIS do mascaramento (`mascarar_minio.py --apply`),
-senão o parquet conterá PII (staging lê raw/ como está).
+Rode DEPOIS do `mascarar_minio.py --apply`: a staging lê o raw/ como está, e fora de ordem
+o parquet sai com PII.
 
-Idempotência: tabela de controle lake._staging_log com UNIQUE(raw_key, staging_key,
-source_hash); objetos já convertidos (mesmo hash) são pulados. Use --force para
-reprocessar. O staging_key entra na chave porque XLSX/MDB geram N parts (uma por
-aba/tabela) com o mesmo par (raw_key, source_hash) — sem ele o upsert deixaria só 1
-registro por arquivo.
+Idempotência: lake._staging_log com UNIQUE(raw_key, staging_key, source_hash). O
+staging_key entra na chave porque XLSX/MDB geram N parts com o mesmo (raw_key,
+source_hash). Use --force para reprocessar.
 """
 
 import argparse
@@ -103,38 +94,38 @@ SUPPORTED_JSON = {".json"}  # registros já achatados (list[dict]) pelo cliente 
 UNSUPPORTED = {".xls", ".zip"}
 SUPORTADAS = SUPPORTED_TABULAR | SUPPORTED_EXCEL | SUPPORTED_MDB | SUPPORTED_JSON
 
+# Pastas de raw/ que nunca viram parquet: dados_historicos/ tem tratamento próprio da
+# equipe de ciência de dados. Segue sendo mascarada normalmente.
+PASTAS_IGNORADAS = {"dados_historicos"}
+
 LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
 
 
-# Gêmeos: o mesmo dado aparece no lake em mais de um formato (ex.:
-# 202601_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB existe em .txt e .xlsx, com 1289 linhas e
-# 40 colunas EM AMBOS) e, desde que raw/ ganhou estrutura de pastas, também em mais de
-# um lugar (ex.: Base_PF_FGTS_20260107.txt existe em caixa.geavo/GEAVO/ e em
-# fabrica/GEFUS/; e a pasta ANTERIORES/ do SFTP guarda cópia de arquivos da pasta
-# corrente). Converter todos geraria N tabelas do mesmo dado na staging.
+# Gêmeos: o mesmo dado aparece no lake em mais de um formato e em mais de uma pasta, e
+# converter todos geraria N tabelas iguais na staging. A identidade é o NOME DO ARQUIVO,
+# sem extensão e sem pasta; para cada nome sobrevive um objeto, escolhido por:
 #
-# A identidade do gêmeo é o NOME DO ARQUIVO, sem extensão e sem pasta: para cada nome
-# sobrevive UM único objeto no lake inteiro, escolhido por esta ordem:
-#
-#   1. formato suportado na frente de não-suportado — senão um .xls (que o script não
-#      lê) descartaria o .csv equivalente e o dado sumiria da staging;
-#   2. texto (.csv, .txt) na frente de planilha, porque o mascaramento reescreve
-#      texto byte a byte em transporte latin-1 — nenhuma coluna não-alvo muda —
-#      enquanto no .xlsx ele precisa reescrever a pasta de trabalho e perde o
-#      cache de fórmulas;
+#   1. formato suportado antes de não-suportado, senão um .xls descarta o .csv equivalente
+#      e o dado some da staging;
+#   2. texto antes de planilha, porque o mascaramento reescreve texto byte a byte e no
+#      xlsx precisa remontar a pasta de trabalho;
 #   3. .csv antes de .txt e .xlsx antes de .xls, por consistência;
-#   4. empate (mesma extensão em pasta ou caixa diferente: GEAVO/FOO.TXT e GEFUS/foo.txt)
-#      -> menor key na ordem lexicográfica, para a escolha não variar entre execuções e
-#      não trocar de parquet.
+#   4. empate -> menor key lexicográfica, para a escolha não variar entre execuções.
 #
-# Extensão fora da lista fica por último (nunca ganha de uma conhecida).
+# Extensão fora da lista fica por último.
 PRECEDENCIA_EXT = [".csv", ".txt", ".xlsx", ".xls", ".mdb", ".accdb", ".json"]
+
+# Ignorar a pasta pressupõe que ela é só um CANAL alternativo do mesmo arquivo (SFTP vs
+# SharePoint, GEFUS/ vs GEFUS/ANTERIORES/). Não vale para fontes de extração automatizada
+# (PDF/OCR) que usam nomes padronizados por dado e a pasta É a competência ou a entidade
+# (abecip/2025-10/, construtoras/tenda/): aí o nome se repete de propósito, e ignorar a
+# pasta juntaria dados diferentes num "gêmeo" só e descartaria quase tudo.
+FONTES_COM_PASTA_NA_IDENTIDADE = {"abecip", "construtoras", "mrv"}
 
 
 def _rank_ext(ext: str) -> Tuple[int, int]:
     ext = ext.lower()
-    # Suportado sempre antes de não-suportado, independente da posição na lista: .xls
-    # vem antes de .mdb em PRECEDENCIA_EXT, mas o script não lê .xls e lê .mdb.
+    # suportado vence a posição na lista: .xls vem antes de .mdb, mas o script só lê .mdb
     suportado = 0 if ext in SUPORTADAS else 1
     try:
         return (suportado, PRECEDENCIA_EXT.index(ext))
@@ -143,11 +134,17 @@ def _rank_ext(ext: str) -> Tuple[int, int]:
 
 
 def _stem_sem_extensao(key: str) -> str:
-    """Nome do arquivo sem extensão e sem pasta — a identidade que os gêmeos compartilham.
+    """Identidade que os gêmeos compartilham: nome do arquivo sem extensão.
 
-    Deliberadamente ignora a pasta: o mesmo nome em `GEFUS/` e em `GEFUS/ANTERIORES/` é
-    o mesmo dado, e só um deve virar parquet.
+    Ignora a pasta por padrão — o mesmo nome em `GEFUS/` e em `GEFUS/ANTERIORES/` é o
+    mesmo dado chegando por dois canais, e só um deve virar parquet. Exceção: fontes em
+    `FONTES_COM_PASTA_NA_IDENTIDADE`, onde a pasta faz parte do dado (ver comentário
+    acima) — aí a identidade é o caminho relativo inteiro, não só o nome do arquivo.
     """
+    rel = key[len(RAW_PREFIX) :] if key.startswith(RAW_PREFIX) else key
+    fonte = rel.split("/", 1)[0]
+    if fonte in FONTES_COM_PASTA_NA_IDENTIDADE:
+        return os.path.splitext(rel)[0]
     return os.path.splitext(os.path.basename(key))[0]
 
 
@@ -176,10 +173,8 @@ def _descartar_gemeos(
     return mantidos, descartados
 
 
-# Artefatos locais (arquivo de log, cópia local da auditoria) — úteis rodando standalone,
-# mas o diretório do script pode não ser gravável (ex.: bind-mount no Airflow). Controlado
-# por LAKE_LOCAL_ARTIFACTS (default "1"): o container do Airflow define "0" para
-# desligá-los. O log em stderr fica sempre ativo (o Airflow o captura na UI).
+# Artefatos locais (log em arquivo, cópia da auditoria): úteis standalone, mas o diretório
+# do script pode não ser gravável. O container do Airflow define LAKE_LOCAL_ARTIFACTS=0.
 _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
     "0",
     "false",
@@ -202,10 +197,8 @@ if _LOCAL_ARTIFACTS:
     ):
         _h.setFormatter(_formatter)
         logging.root.addHandler(_h)
-# Sob o Airflow (_LOCAL_ARTIFACTS=0) NÃO adicionamos handlers ao root: o logger propaga
-# para os handlers do Airflow (a saída vai para a UI). Um StreamHandler(sys.stderr) aqui
-# criaria loop infinito — o Airflow redireciona stderr de volta ao logging e cada linha se
-# multiplica.
+# Sob o Airflow o logger só propaga: um StreamHandler(sys.stderr) aqui multiplicaria cada
+# linha, porque o Airflow redireciona stderr de volta ao logging.
 
 
 # Infra: conexões / controle
@@ -312,15 +305,9 @@ def _registrar_control(conn_str: str, rec: dict) -> None:
 def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
     """raw/<pastas>/<nome>.<ext> -> staging/<pastas>/<nome>[__parte].parquet
 
-    A staging espelha a estrutura de pastas de raw/, trocando o arquivo de origem por
-    parquet. A extensão de origem NÃO entra no nome: `foo.csv` e `foo.txt` são o mesmo
-    dado em dois formatos e viram um único `foo.parquet` — quem garante que só um deles
-    chega aqui é o descarte de gêmeos (`_descartar_gemeos`), que mantém um objeto por
-    nome no lake inteiro.
-
-    O descarte roda sobre a listagem completa, antes dos filtros de recorte, então o
-    conjunto final da staging é o mesmo independente de como a execução foi fatiada —
-    ver `run()`.
+    A extensão de origem não entra no nome: `foo.csv` e `foo.txt` são o mesmo dado e viram
+    um único `foo.parquet`. Quem garante que só um deles chega aqui é o
+    `_descartar_gemeos`.
 
     sufixo_parte: aba de XLSX ou tabela de .mdb (`__<nome>`), quando o arquivo gera N
     parquets.
@@ -329,16 +316,10 @@ def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
     return f"{STAGING_PREFIX}{os.path.splitext(rel)[0]}{sufixo_parte}.parquet"
 
 
-# Colunas de padding: exports de Excel podem arrastar a largura inteira da planilha
-# (16.384 = limite de colunas do Excel). Ex. real: 2024_08_SNH_..._AF_BB.csv tem 16.382
-# colunas, das quais 16.345 não têm nome NEM valor algum — puro lixo do export. A regra é
-# conservadora: só descarta coluna SEM NOME **e** 100% vazia. Colunas sem nome mas com
-# dado ficam (seriam perda de dado), e colunas nomeadas ficam mesmo que vazias. No arquivo
-# citado isso preserva as 2 últimas colunas (`Não se aplica`, `Obra Não Iniciada`), que
-# são listas de validação do Excel vazadas no export — feias, mas têm conteúdo. Descobrir
-# "100% vazia" exige varrer o arquivo, então só fazemos essa passada extra quando o header
-# tem mais que LIMITE_COLS_SEM_NOME colunas anônimas — assim os arquivos normais (0 ou
-# poucas) não pagam nada.
+# Colunas de padding: export de Excel pode arrastar a largura inteira da planilha (16.384
+# colunas). A regra é conservadora — só descarta coluna sem nome E 100% vazia. Como saber
+# se está vazia exige varrer o arquivo, a passada extra só roda quando o header passa
+# deste limite de colunas anônimas.
 LIMITE_COLS_SEM_NOME = 10
 
 
@@ -347,11 +328,19 @@ def _e_sem_nome(coluna: str) -> bool:
     return str(coluna).startswith("Unnamed:")
 
 
-def _n_colunas_arquivo(src_path: str, delim: str, encoding: str) -> int:
+def _n_colunas_arquivo(
+    src_path: str, delim: str, encoding: str, encoding_errors: str = "strict"
+) -> int:
     """Nº de colunas do header (lê só o header, nrows=0)."""
     return len(
         pd.read_csv(
-            src_path, sep=delim, dtype=str, nrows=0, encoding=encoding, quotechar='"'
+            src_path,
+            sep=delim,
+            dtype=str,
+            nrows=0,
+            encoding=encoding,
+            encoding_errors=encoding_errors,
+            quotechar='"',
         ).columns
     )
 
@@ -361,6 +350,7 @@ def _colunas_a_manter(
     delim: str,
     encoding: str,
     chunksize: int,
+    encoding_errors: str = "strict",
 ) -> Optional[List[str]]:
     """Nomes das colunas que devem ir p/ o parquet, ou None se não há padding a limpar.
 
@@ -368,7 +358,13 @@ def _colunas_a_manter(
     """
     todas = list(
         pd.read_csv(
-            src_path, sep=delim, dtype=str, nrows=0, encoding=encoding, quotechar='"'
+            src_path,
+            sep=delim,
+            dtype=str,
+            nrows=0,
+            encoding=encoding,
+            encoding_errors=encoding_errors,
+            quotechar='"',
         ).columns
     )
     anonimas = [c for c in todas if _e_sem_nome(c)]
@@ -385,6 +381,7 @@ def _colunas_a_manter(
         keep_default_na=False,
         na_filter=False,
         encoding=encoding,
+        encoding_errors=encoding_errors,
         quotechar='"',
         chunksize=chunksize,
         on_bad_lines="skip",
@@ -427,13 +424,12 @@ def _converter_tabular(
 ) -> Tuple[int, int, int, dict, str]:
     """Retorna (n_linhas, n_colunas, n_bad_lines, column_map, encoding_usado).
 
-    extra_meta: pares extras p/ os metadados do parquet (ex.: {"table": "..."} no caso
-    .mdb).
+    extra_meta: pares extras p/ os metadados do parquet (ex.: {"table": "..."} no .mdb).
 
-    encoding_usado pode diferir de real_encoding: a detecção olha só o sample de 64 KB, e
-    um byte que o encoding não aceita pode aparecer depois. Nesse caso cai para latin-1
-    (que mapeia os 256 bytes) e reinicia a conversão — ver `encoding_fallback` em
-    lake_utils.
+    encoding_usado pode diferir de real_encoding: a detecção só olha o sample de 64 KB e
+    um byte recusado depois força uma segunda passada. Nesse caso o retorno vem sufixado
+    ("utf-8+replace"), e é isso que fica gravado no lake._staging_log e nos metadados do
+    parquet — dá para listar os arquivos afetados sem reprocessar nada.
 
     bad_mode:
       - 'skip'  (default): engine C (rápido) descarta linhas mal-formadas; n_bad não é
@@ -441,7 +437,15 @@ def _converter_tabular(
       - 'count': engine Python (mais lento) descarta E conta as linhas mal-formadas.
       - 'error': falha o arquivo na 1ª linha mal-formada.
     """
+    # Tenta, nesta ordem: o encoding detectado em modo estrito; o MESMO encoding com
+    # errors="replace"; só então latin-1.
+    #
+    # O passo 2 mantém o dano onde ele está: os poucos bytes inválidos viram U+FFFD e o
+    # resto do arquivo decodifica certo. Cair direto para latin-1 nunca falha — aceita os
+    # 256 bytes — e por isso transformaria TODO acento do arquivo em mojibake, cabeçalho
+    # incluso.
     encoding = real_encoding
+    encoding_errors = "strict"
     while True:
         try:
             resultado = _converter_tabular_1x(
@@ -455,20 +459,36 @@ def _converter_tabular(
                 chunksize,
                 bad_mode,
                 extra_meta,
+                encoding_errors,
             )
-            return (*resultado, encoding)
+            usado = encoding if encoding_errors == "strict" else f"{encoding}+replace"
+            return (*resultado, usado)
         except UnicodeDecodeError as e:
+            if encoding_errors == "strict":
+                log.warning(
+                    "%s: %s não decodifica o arquivo inteiro (%s) — refazendo com "
+                    "errors=replace (bytes inválidos viram U+FFFD; o resto do arquivo "
+                    "fica intacto).",
+                    source_file,
+                    encoding,
+                    e,
+                )
+                encoding_errors = "replace"
+                continue
             proximo = encoding_fallback(encoding)
             if proximo is None:
                 raise
             log.warning(
-                "%s: %s não decodifica o arquivo inteiro (%s) — refazendo com %s.",
+                "%s: %s+replace ainda falhou (%s) — último recurso, refazendo com %s. "
+                "ATENÇÃO: latin-1 aceita qualquer byte e vai gerar mojibake se o arquivo "
+                "for utf-8.",
                 source_file,
                 encoding,
                 e,
                 proximo,
             )
             encoding = proximo
+            encoding_errors = "strict"
 
 
 def _converter_tabular_1x(
@@ -482,6 +502,7 @@ def _converter_tabular_1x(
     chunksize: int,
     bad_mode: str,
     extra_meta: Optional[dict] = None,
+    encoding_errors: str = "strict",
 ) -> Tuple[int, int, int, dict]:
     """Uma passada de conversão com um encoding fixo. Retorna (n_linhas, n_colunas, n_bad,
     map)."""
@@ -497,12 +518,15 @@ def _converter_tabular_1x(
 
     # descarta colunas de padding do Excel; usecols evita até parsear (um chunk de 200k
     # linhas x 16.382 colunas estouraria a memória à toa)
-    manter = _colunas_a_manter(src_path, delim, real_encoding, chunksize)
+    manter = _colunas_a_manter(
+        src_path, delim, real_encoding, chunksize, encoding_errors
+    )
     if manter is not None:
         log.info(
             "%s: %d colunas de padding descartadas (mantidas %d).",
             source_file,
-            _n_colunas_arquivo(src_path, delim, real_encoding) - len(manter),
+            _n_colunas_arquivo(src_path, delim, real_encoding, encoding_errors)
+            - len(manter),
             len(manter),
         )
 
@@ -513,6 +537,7 @@ def _converter_tabular_1x(
         keep_default_na=False,
         na_filter=False,
         encoding=real_encoding,
+        encoding_errors=encoding_errors,
         quotechar='"',
         chunksize=chunksize,
         on_bad_lines=on_bad,
@@ -541,7 +566,11 @@ def _converter_tabular_1x(
                 meta = {
                     b"source_file": source_file.encode("utf-8"),
                     b"source_hash": source_hash.encode("utf-8"),
-                    b"encoding": real_encoding.encode("utf-8"),
+                    b"encoding": (
+                        real_encoding
+                        if encoding_errors == "strict"
+                        else f"{real_encoding}+{encoding_errors}"
+                    ).encode("utf-8"),
                     b"delimiter": delim.encode("utf-8"),
                     b"column_map": json.dumps(column_map, ensure_ascii=False).encode(
                         "utf-8"
@@ -1029,32 +1058,33 @@ def run(  # noqa: C901
     contagem: Dict[str, int] = {}
     processados = 0
 
-    # A listagem é materializada porque o descarte de gêmeos precisa enxergar o conjunto
-    # todo: só dá para saber que um .xlsx tem um .txt equivalente depois de ver os dois.
-    #
-    # E precisa enxergá-lo ANTES dos filtros do usuário (--pattern/--only-ext/
-    # --max-size-mb), senão cada recorte elegeria um vencedor. Rodar `--only-ext csv` e
-    # depois `--only-ext txt` faria os dois formatos do mesmo nome escreverem no MESMO
-    # parquet, o segundo sobrescrevendo o primeiro — e fatiar a carga por extensão é
-    # justamente como se roda o lake inteiro pela primeira vez. Com o descarte antes, o
-    # conjunto final da staging é o mesmo independente de como a execução foi fatiada;
-    # os filtros só decidem que parte dele é construída agora.
+    # A listagem é materializada e o descarte de gêmeos roda ANTES dos filtros do usuário:
+    # cada recorte elegeria um vencedor diferente, e `--only-ext csv` seguido de
+    # `--only-ext txt` faria os dois formatos escreverem no mesmo parquet. Assim a staging
+    # final independe de como a execução foi fatiada.
     todos: List[Tuple[str, int]] = []
     for key, size in minio.listar_objetos(prefix):
-        # Marcadores de pasta: objetos de 0 byte com a key terminando em "/", criados
-        # por cliente/console S3 ao "criar diretório". Não são arquivo — desde que raw/
-        # ganhou estrutura de pastas eles aparecem na listagem e virariam
-        # skipped_unsupported, poluindo contagem e auditoria à toa.
+        # marcador de pasta (0 byte, key terminando em "/"): não é arquivo
         if key.endswith("/"):
             continue
         if os.path.basename(key).startswith("~$"):
+            continue
+        # antes do descarte de gêmeos: um objeto de pasta ignorada poderia vencer pelo
+        # mesmo stem e mandar o dado bom para skipped_duplicado
+        rel = key[len(prefix) :] if key.startswith(prefix) else key
+        if rel.split("/", 1)[0] in PASTAS_IGNORADAS:
             continue
         todos.append((key, size))
 
     vencedores, gemeos = _descartar_gemeos(todos)
 
+    # `pattern` aceita vários substrings separados por vírgula (OR entre eles). Um
+    # arquivo específico por vírgula evita reprocessar o lake inteiro para consertar
+    # meia dúzia de origens — e a listagem do raw/ roda uma vez só, não uma por padrão.
+    padroes = [x.strip() for x in pattern.split(",") if x.strip()]
+
     def _selecionado(key: str, size: int) -> bool:
-        if pattern and pattern not in key:
+        if padroes and not any(p in key for p in padroes):
             return False
         if only_ext_set and os.path.splitext(key)[1].lower() not in only_ext_set:
             return False
@@ -1064,9 +1094,7 @@ def run(  # noqa: C901
 
     candidatos = [(k, s) for k, s in vencedores if _selecionado(k, s)]
 
-    # Só reporta os gêmeos que o recorte atual teria processado — numa execução
-    # `--only-ext txt` interessa saber quais .txt perderam para um .csv, não os 149
-    # descartes do lake inteiro.
+    # só reporta os gêmeos que o recorte atual teria processado
     tamanho = dict(todos)
     gemeos_no_recorte = [k for k in gemeos if _selecionado(k, tamanho[k])]
     for key in gemeos_no_recorte:
@@ -1137,9 +1165,13 @@ def main() -> None:
     parser.add_argument(
         "--limit", type=int, default=0, help="Processa no máximo N objetos."
     )
-    parser.add_argument("--pattern", default="", help="Filtra por substring na key.")
     parser.add_argument(
-        "--only-ext", default="", help="Extensões a processar, ex.: csv,txt"
+        "--pattern",
+        default="",
+        help=(
+            "Só objetos cuja key contenha este substring. Aceita vários separados por "
+            "vírgula (OR): --pattern 'INT065_...20241129,base_trabalho_social_pnhr_bb'."
+        ),
     )
     parser.add_argument(
         "--max-size-mb",

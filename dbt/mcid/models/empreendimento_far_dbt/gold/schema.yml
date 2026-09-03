@@ -1,11 +1,11 @@
 version: 2
 
 models:
-  - name: ficha_empreendimento
+  - name: far_gold_ficha_empreendimento
     description: >
-      Tabela Gold projetada especificamente para alimentar o componente visual de "Ficha do Empreendimento" 
-      nos Dashboards. Ela consome os dados da camada Silver (empreendimento) e injeta regras de negócio finais
-      como cálculo de status, prazos e ritmo financeiro.
+      Tabela Gold que alimenta a "Ficha do Empreendimento" nos dashboards.
+      Consome a silver empreendimento e injeta as regras de negócio finais:
+      status de execução, status de prazo e ritmo físico-financeiro.
     meta:
       tags:
         - gold
@@ -22,20 +22,22 @@ models:
         description: Nome do empreendimento em maiúsculo (padronizado).
       - name: status_execucao_simplificado
         description: >
-          Regra de negócio: Traduz a porcentagem física em status categóricos (Não Iniciado, Em Andamento, Concluído).
+          Regra de negócio: traduz a porcentagem física em status categóricos
+          (Não Iniciado, Em Andamento, Concluído).
       - name: status_prazo
         description: >
-          Regra de negócio: Analisa a data de previsão de entrega com a data atual. 
-          Alerta se o empreendimento está "Em Atraso" (não entregue e data limite vencida).
+          Regra de negócio: compara a data de previsão de entrega com a data atual.
+          Alerta "Em Atraso" quando o empreendimento não foi entregue e a data venceu.
       - name: ritmo_fisico_financeiro
         description: >
-          Regra de negócio: Compara o % de execução física com o % de desembolso financeiro.
-          Aplica uma tolerância de 5% para classificar como "Ritmo Equilibrado", "Desembolso Adiantado" ou "Desembolso Atrasado".
+          Regra de negócio: compara o % de execução física com o % de desembolso, com
+          tolerância de 5% ("Ritmo Equilibrado", "Desembolso Adiantado" ou "Atrasado").
 
-  - name: resumo_gerencial
+  - name: far_gold_resumo_gerencial
     description: >
-      Visão agregada Gold contendo os grandes KPIs e somatórios (UHs, Pessoas Atendidas, Valores) 
-      agrupados por tipologia e situação. Perfeita para os gráficos de pizza e barras dos painéis gerenciais.
+      Visão agregada Gold com os grandes KPIs (UHs, pessoas atendidas, valores)
+      agrupados por situação, tipologia e status. Alimenta os gráficos de pizza e
+      barras dos painéis gerenciais.
     meta:
       tags:
         - gold
@@ -47,12 +49,11 @@ models:
       - name: media_execucao_fisica
         description: Execução física média (0-100) daquele grupo de empreendimentos.
 
-  - name: panorama_estadual
+  - name: far_gold_panorama_estadual
     description: >
-      Visão Gold agregada por UF para alimentar o dashboard "Panorama Estadual".
-      Consolida todos os empreendimentos de um estado em seções distintas, cada uma
-      identificada pela coluna 'secao'. A ferramenta de BI filtra WHERE secao = 'X'
-      para montar cada card do painel.
+      Visão Gold agregada por UF para o dashboard "Panorama Estadual".
+      Consolida os empreendimentos de um estado em seções distintas, identificadas
+      pela coluna 'secao'. O BI filtra WHERE secao = 'X' para montar cada card.
     meta:
       tags:
         - gold
@@ -61,10 +62,9 @@ models:
         description: Sigla da Unidade Federativa (ex. MT, BA, CE).
       - name: secao
         description: >
-          Identificador da seção do dashboard que esta linha alimenta.
-          Valores possíveis: 'header' (KPIs gerais), 'metodo' (distribuição por método de originação),
-          'portaria' (distribuição por portaria de referência), 'demanda' (distribuição por tipo de demanda),
-          'situacao' (distribuição por status da obra), 'execucao_fisica' (distribuição por faixa de execução).
+          Identificador da seção do dashboard que esta linha alimenta. Valores possíveis:
+          'header' (KPIs gerais), 'metodo', 'portaria', 'demanda', 'situacao' e
+          'execucao_fisica'.
       - name: dimensao
         description: >
           Valor da dimensão dentro da seção. Para 'metodo' pode ser SELEÇÃO ou CALAMIDADE.
@@ -86,12 +86,11 @@ models:
       - name: total_empreendimentos_uf
         description: "Na seção 'header': total de empreendimentos no estado. NULL nas demais seções."
 
-  - name: mapa_nacional
+  - name: far_gold_mapa_nacional
     description: >
-      Visão Gold geográfica para alimentar mapas coropléticos (Country Map) e gráficos
-      por região no Superset. Contém duas visões filtradas pela coluna 'nivel':
-      'uf' (27 linhas, uma por estado com código ISO 3166-2) e 'regiao' (5 linhas,
-      uma por macrorregião). Usa a tabela IBGE api_ibge_uf como referência.
+      Visão Gold geográfica para mapas coropléticos (Country Map) e gráficos por
+      região no Superset. Duas visões filtradas pela coluna 'nivel': 'uf' (27 linhas,
+      com código ISO 3166-2) e 'regiao' (5 linhas). Usa a api_ibge_uf como referência.
     meta:
       tags:
         - gold
@@ -115,11 +114,11 @@ models:
       - name: media_execucao_fisica
         description: Média do percentual de execução física dos empreendimentos (0-100).
 
-  - name: evolucao_financeira_chart
+  - name: far_gold_evolucao_financeira_chart
     description: >
-      Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira" no Superset.
-      Consome a silver evolucao_financeira e enriquece com nome do empreendimento,
-      nome do estado (IBGE) e labels de mês formatados. Uma linha por APF × mês.
+      Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira".
+      Consome a silver evolucao_financeira e enriquece com nome do
+      empreendimento, nome do estado (IBGE) e labels de mês. Uma linha por APF × mês.
     meta:
       tags:
         - gold
@@ -151,10 +150,11 @@ models:
       - name: pct_executado_financeiro
         description: "Percentual acumulado do desembolso sobre o contrato (0-100)."
 
-  - name: execucao_fisica_financeira_chart
+  - name: far_gold_execucao_fisica_financeira_chart
     description: >
       Tabela Gold para o gráfico de acompanhamento da execução física e financeira.
-      Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal.
+      Junta a silver de evolução financeira com a de obra mensal, arrastando o último
+      valor válido (LOCF) para os meses sem medição.
     meta:
       tags:
         - gold
