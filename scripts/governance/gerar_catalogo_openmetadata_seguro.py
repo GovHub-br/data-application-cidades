@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import argparse
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -17,13 +19,22 @@ OUTPUT = ROOT / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.j
 
 
 def main() -> int:
+    # O executável do dbt não é o mesmo em todo lugar: no ambiente do time é
+    # `poetry run dbt`, no CI é `dbt` puro. O `gerar_docs_seguros.py` já aceitava
+    # a escolha; este fixava poetry e quebrava fora dele.
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dbt-command",
+        default="poetry run dbt",
+        help="executável do dbt (padrão: 'poetry run dbt'; no CI, 'dbt')",
+    )
+    args = parser.parse_args()
+
     load_dotenv(ROOT / ".env", override=False)
     with tempfile.TemporaryDirectory(prefix="openmetadata-dbt-") as private_target:
         subprocess.run(
             [
-                "poetry",
-                "run",
-                "dbt",
+                *shlex.split(args.dbt_command),
                 "docs",
                 "generate",
                 "--profiles-dir",

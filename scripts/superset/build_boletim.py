@@ -1034,7 +1034,11 @@ class Superset:
     """
 
     def __init__(self, dry_run: bool = False) -> None:
-        self.base = os.environ["SUPERSET_URL"].rstrip("/")
+        # A URL tem dois nomes no projeto: estes scripts sempre pediram
+        # `SUPERSET_URL`, mas o `.env.example` e a integração do OpenMetadata
+        # declaram `SUPERSET_HOST_PORT`. Aceita os dois.
+        url = os.getenv("SUPERSET_URL") or os.environ["SUPERSET_HOST_PORT"]
+        self.base = url.rstrip("/")
         self.dry_run = dry_run
         self.s = requests.Session()
         pagina = self.s.get(f"{self.base}/login/", timeout=30)

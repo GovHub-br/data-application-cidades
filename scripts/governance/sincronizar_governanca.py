@@ -845,6 +845,23 @@ def catalogar_tabelas(
                 )
                 om.atualizados += 1
                 continue
+            prefixos = tuple(produto.get("prefixos_de_tabela") or ())
+            alheias = [
+                t["name"]
+                for t in tabelas
+                if prefixos
+                and not t["name"].startswith(prefixos)
+                and t["name"] not in camadas
+            ]
+            if alheias:
+                print(
+                    f"  {schema}: {len(alheias)} tabelas fora da convenção de "
+                    f"prefixo e ausentes do catálogo — não catalogadas: "
+                    + ", ".join(sorted(alheias)[:6])
+                    + (" …" if len(alheias) > 6 else "")
+                )
+                tabelas = [t for t in tabelas if t["name"] not in set(alheias)]
+
             print(f"  {schema}: {len(tabelas)} tabelas")
 
             for tab in tabelas:

@@ -888,3 +888,28 @@ def test_tabela_relacionada_carrega_o_que_a_interface_precisa() -> None:
     ref = comum.referencia(entidade, "table")
     assert set(ref) == {"id", "type", "name", "fullyQualifiedName"}
     assert ref["type"] == "table"
+
+
+def test_conjuntura_declara_prefixos_para_nao_catalogar_tabela_alheia() -> None:
+    """O schema `conjuntura` é compartilhado com tabelas de outra origem.
+
+    Depois da unificação num schema só, as `silver_fgts_*` — ~10 M de linhas
+    que nenhum modelo deste repositório produz — passaram a conviver com a
+    nossa saída do dbt. A catalogação percorre TODAS as tabelas do schema; sem
+    a trava de prefixo ela marcaria aquelas como produto Conjuntura.
+    """
+    produtos = {p["name"]: p for p in comum.carregar("dominios.yml")["produtos"]}
+    conjuntura = produtos["conjuntura"]
+    assert conjuntura["schemas"] == ["conjuntura"], "o produto deve viver num schema só"
+    assert set(conjuntura["prefixos_de_tabela"]) == {"bnz_", "slv_", "gld_", "snap_"}
+
+
+def test_modelos_do_conjuntura_seguem_a_convencao_de_prefixo() -> None:
+    """Um modelo fora da convenção sairia do catálogo sem ninguém perceber."""
+    raiz = RAIZ / "dbt" / "mcid" / "models" / "conjuntura_dbt"
+    fora = [
+        p.stem
+        for p in raiz.rglob("*.sql")
+        if not p.stem.startswith(("bnz_", "slv_", "gld_"))
+    ]
+    assert not fora, f"modelos fora da convenção: {fora}"

@@ -1,37 +1,16 @@
 {
   "version": 1,
-  "generated_at": "2026-09-01T03:50:20.943502+00:00",
+  "generated_at": "2026-09-03T00:27:12.147411+00:00",
   "schemas": [
     {
       "name": "conjuntura",
-      "display_name": "Conjuntura · Bronze",
+      "display_name": "Conjuntura",
       "product": "conjuntura",
-      "layer": "bronze",
-      "owner_key": "mcid_data_engineering",
-      "classification": "restricted",
-      "rag_publication": "prohibited",
-      "publicar_no_catalogo": true,
-      "description": "Camada fiel de ingestão do produto Conjuntura, preservada para rastreabilidade e processamento interno."
-    },
-    {
-      "name": "conjuntura",
-      "display_name": "Conjuntura · Silver",
-      "product": "conjuntura",
-      "layer": "silver",
+      "layer": "mixed",
       "owner_key": "mcid_data_engineering",
       "classification": "internal",
-      "rag_publication": "eligible_after_security_validation",
-      "description": "Camada tratada e conformada de indicadores do setor habitacional para uso analítico interno autorizado."
-    },
-    {
-      "name": "conjuntura",
-      "display_name": "Conjuntura · Gold",
-      "product": "conjuntura",
-      "layer": "gold",
-      "owner_key": "mcid_data_engineering",
-      "classification": "internal",
-      "rag_publication": "eligible_after_security_validation",
-      "description": "Camada curada de consumo do produto Conjuntura para boletins, dashboards e aplicações autorizadas."
+      "rag_publication": "determined_per_model",
+      "description": "Schema do produto Conjuntura, com as camadas distinguidas pelo prefixo do nome: `bnz_` para a ingestão fiel, `slv_` para o dado conformado e `gld_` para o consumo. As tabelas `bnz_manual_*` são cargas manuais sem DAG."
     },
     {
       "name": "empreendimento_far",
@@ -62,39 +41,6 @@
       "classification": "restricted",
       "rag_publication": "prohibited",
       "description": "Metadados técnicos e operacionais do pipeline de dados."
-    },
-    {
-      "name": "conjuntura",
-      "display_name": "Conjuntura · Bronze (legado)",
-      "product": "conjuntura_legacy",
-      "layer": "bronze",
-      "owner_key": "mcid_data_engineering",
-      "classification": "restricted",
-      "lifecycle_status": "retirement_candidate",
-      "rag_publication": "prohibited",
-      "description": "Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco."
-    },
-    {
-      "name": "conjuntura",
-      "display_name": "Conjuntura · Silver (legado)",
-      "product": "conjuntura_legacy",
-      "layer": "silver",
-      "owner_key": "mcid_data_engineering",
-      "classification": "restricted",
-      "lifecycle_status": "retirement_candidate",
-      "rag_publication": "prohibited",
-      "description": "Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco."
-    },
-    {
-      "name": "conjuntura_gold",
-      "display_name": "Conjuntura · Gold (legado)",
-      "product": "conjuntura_legacy",
-      "layer": "gold",
-      "owner_key": "mcid_data_engineering",
-      "classification": "restricted",
-      "lifecycle_status": "retirement_candidate",
-      "rag_publication": "prohibited",
-      "description": "Schema físico legado do produto Conjuntura, mantido temporariamente até auditoria de dependências no banco."
     }
   ],
   "glossary_terms": [
@@ -238,27 +184,6 @@
       "depends_on": [],
       "columns": [
         {
-          "name": "_ingested_at",
-          "data_type": "text",
-          "ordinal": 16,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "_source_file",
-          "data_type": "text",
-          "ordinal": 15,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "_source_hash",
-          "data_type": "text",
-          "ordinal": 17,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
           "name": "competencia_referencia",
           "data_type": "text",
           "ordinal": 1,
@@ -374,14 +299,14 @@
       "columns": [
         {
           "name": "captacao_liquida_pct",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 5,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "captacao_liquida_valor",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 4,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
@@ -395,7 +320,7 @@
         },
         {
           "name": "deposito",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 2,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
@@ -416,21 +341,21 @@
         },
         {
           "name": "rendimento",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 6,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "retirada",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 3,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "saldo",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 7,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
@@ -451,27 +376,6 @@
       "materialized": "table",
       "depends_on": [],
       "columns": [
-        {
-          "name": "_ingested_at",
-          "data_type": "text",
-          "ordinal": 6,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "_source_file",
-          "data_type": "text",
-          "ordinal": 5,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "_source_hash",
-          "data_type": "text",
-          "ordinal": 7,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
         {
           "name": "data",
           "data_type": "text",
@@ -517,72 +421,30 @@
       "depends_on": [],
       "columns": [
         {
-          "name": "_ingested_at",
+          "name": "data",
           "data_type": "text",
-          "ordinal": 9,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "ordinal": 2,
+          "description": "Data de referência da observação.",
           "documentation_status": "derived_convention"
         },
         {
-          "name": "_source_file",
+          "name": "dt_ingest",
           "data_type": "text",
-          "ordinal": 8,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "ordinal": 4,
+          "description": "Momento de ingestão do registro no pipeline.",
           "documentation_status": "derived_convention"
         },
         {
-          "name": "_source_hash",
-          "data_type": "text",
-          "ordinal": 10,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "indice_imobiliario_por_pib",
-          "data_type": "text",
-          "ordinal": 7,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "pf_concessoes_rs_mi",
+          "name": "tipo",
           "data_type": "text",
           "ordinal": 1,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
-          "name": "pf_inadimplencia_pct",
+          "name": "valor",
           "data_type": "text",
           "ordinal": 3,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "pf_taxa_juros_aa",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "pj_concessoes_rs_mi",
-          "data_type": "text",
-          "ordinal": 4,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "pj_inadimplencia_pct",
-          "data_type": "text",
-          "ordinal": 6,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "pj_taxa_juros_aa",
-          "data_type": "text",
-          "ordinal": 5,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         }
@@ -3411,7 +3273,7 @@
       "columns": [
         {
           "name": "close",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 6,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
@@ -3432,21 +3294,21 @@
         },
         {
           "name": "high",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 4,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "low",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 5,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "open",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 3,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
@@ -3460,7 +3322,7 @@
         },
         {
           "name": "volume",
-          "data_type": "double precision",
+          "data_type": "text",
           "ordinal": 7,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
@@ -3481,27 +3343,6 @@
       "materialized": "table",
       "depends_on": [],
       "columns": [
-        {
-          "name": "_ingested_at",
-          "data_type": "text",
-          "ordinal": 10,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "_source_file",
-          "data_type": "text",
-          "ordinal": 9,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "_source_hash",
-          "data_type": "text",
-          "ordinal": 11,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
         {
           "name": "admitidos",
           "data_type": "text",
@@ -5953,7 +5794,7 @@
         {
           "name": "agente_financeiro",
           "data_type": "text",
-          "ordinal": 14,
+          "ordinal": 12,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -5967,427 +5808,413 @@
         {
           "name": "co_andamento_operacao",
           "data_type": "integer",
-          "ordinal": 36,
+          "ordinal": 34,
           "description": "Código de andamento da operação.",
           "documentation_status": "curated"
         },
         {
           "name": "co_classificacao_paralisado",
           "data_type": "integer",
-          "ordinal": 46,
+          "ordinal": 44,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "co_modalidade",
           "data_type": "integer",
-          "ordinal": 25,
+          "ordinal": 23,
           "description": "Modalidade: 1(?), 2(?), 3(?), 4(?). Decodificação pendente.",
           "documentation_status": "curated"
         },
         {
           "name": "co_nivel_hab_eo",
           "data_type": "integer",
-          "ordinal": 6,
+          "ordinal": 4,
           "description": "Nível de habilitação da EO (1 a 6). Decodificação pendente.",
           "documentation_status": "curated"
         },
         {
           "name": "co_regime_obra",
           "data_type": "integer",
-          "ordinal": 24,
+          "ordinal": 22,
           "description": "Regime de obra: 1(?), 2(?). Decodificação pendente.",
           "documentation_status": "curated"
         },
         {
           "name": "co_situacao_operacao",
           "data_type": "integer",
-          "ordinal": 35,
+          "ordinal": 33,
           "description": "Código de situação: 1(241), 11(56), 3(23), 2(19), 5(2), 16(2). Pendente.",
           "documentation_status": "curated"
         },
         {
           "name": "co_situacao_trabalho_social",
           "data_type": "integer",
-          "ordinal": 57,
+          "ordinal": 55,
           "description": "Código de situação do TS: 1(44), 5(34), 2(8), 6(3). Pendente.",
           "documentation_status": "curated"
         },
         {
           "name": "co_tipo_edificacao",
           "data_type": "integer",
-          "ordinal": 22,
+          "ordinal": 20,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "cod_ibge",
           "data_type": "text",
-          "ordinal": 21,
+          "ordinal": 19,
           "description": "Código IBGE do município.",
           "documentation_status": "curated"
         },
         {
           "name": "construtora_nome",
           "data_type": "text",
-          "ordinal": 12,
+          "ordinal": 10,
           "description": "Nome da construtora. ATENÇÃO: no FDS é sempre 'NÃO INFORMADO' (placeholder), pois a EO faz o papel da construtora.",
           "documentation_status": "curated"
         },
         {
           "name": "dias_contratacao_inicio",
           "data_type": "integer",
-          "ordinal": 60,
+          "ordinal": 58,
           "description": "Dias entre contratação e início da obra.",
           "documentation_status": "curated"
         },
         {
           "name": "divergencia_fisico_financeira",
           "data_type": "numeric",
-          "ordinal": 56,
+          "ordinal": 54,
           "description": "Gap em pontos percentuais entre execução financeira e física. Positivo = financeiro adiantado. Negativo = financeiro atrasado. Fórmula: pct_exec_financeira - pct_obra_realizada.",
           "documentation_status": "curated"
         },
         {
           "name": "dt_aprovacao_pts",
           "data_type": "date",
-          "ordinal": 59,
+          "ordinal": 57,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "dt_conclusao_obra",
           "data_type": "date",
-          "ordinal": 49,
+          "ordinal": 47,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "dt_contratacao",
           "data_type": "date",
-          "ordinal": 30,
+          "ordinal": 28,
           "description": "Data de assinatura do contrato. Datas '1900-01-01' tratadas como NULL.",
           "documentation_status": "curated"
         },
         {
           "name": "dt_entrega",
           "data_type": "date",
-          "ordinal": 50,
+          "ordinal": 48,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "dt_inicio_obra",
           "data_type": "date",
-          "ordinal": 31,
+          "ordinal": 29,
           "description": "Data de início efetivo da obra. Datas '1900-01-01' tratadas como NULL.",
           "documentation_status": "curated"
         },
         {
           "name": "dt_invasao",
           "data_type": "date",
-          "ordinal": 48,
+          "ordinal": 46,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "dt_paralisacao",
           "data_type": "date",
-          "ordinal": 45,
+          "ordinal": 43,
           "description": "Data de paralisação da obra (quando aplicável).",
           "documentation_status": "curated"
         },
         {
           "name": "dt_previsao_conclusao",
           "data_type": "date",
-          "ordinal": 32,
+          "ordinal": 30,
           "description": "Data prevista de conclusão da obra.",
           "documentation_status": "curated"
         },
         {
           "name": "dt_previsao_entrega",
           "data_type": "date",
-          "ordinal": 51,
+          "ordinal": 49,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "dt_substituicao_eo",
           "data_type": "date",
-          "ordinal": 8,
+          "ordinal": 6,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "dt_ultima_liberacao",
           "data_type": "date",
-          "ordinal": 54,
+          "ordinal": 52,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "empreendimento_nome",
           "data_type": "text",
-          "ordinal": 11,
+          "ordinal": 9,
           "description": "Nome do empreendimento.",
           "documentation_status": "curated"
         },
         {
           "name": "eo_nome",
           "data_type": "text",
-          "ordinal": 4,
+          "ordinal": 2,
           "description": "Nome da Entidade Organizadora responsável pelo empreendimento.",
           "documentation_status": "curated"
         },
         {
           "name": "eo_substituta_nome",
           "data_type": "text",
-          "ordinal": 9,
+          "ordinal": 7,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "fase_contrato",
           "data_type": "text",
-          "ordinal": 34,
+          "ordinal": 32,
           "description": "Fase do contrato na CAIXA.",
           "documentation_status": "curated"
         },
         {
-          "name": "fase_empreendimento",
-          "data_type": "text",
-          "ordinal": 3,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
           "name": "gps_lat_grau",
           "data_type": "numeric",
-          "ordinal": 61,
+          "ordinal": 59,
           "description": "Latitude (Graus). Coordenadas zeradas (0,0,0) foram tratadas como NULL para evitar marcações no Golfo da Guiné.",
           "documentation_status": "curated"
         },
         {
           "name": "gps_lat_minuto",
           "data_type": "numeric",
-          "ordinal": 62,
+          "ordinal": 60,
           "description": "Latitude (Minutos).",
           "documentation_status": "curated"
         },
         {
           "name": "gps_lat_segundo",
           "data_type": "numeric",
-          "ordinal": 63,
+          "ordinal": 61,
           "description": "Latitude (Segundos).",
           "documentation_status": "curated"
         },
         {
           "name": "gps_long_grau",
           "data_type": "numeric",
-          "ordinal": 64,
+          "ordinal": 62,
           "description": "Longitude (Graus).",
           "documentation_status": "curated"
         },
         {
           "name": "gps_long_minuto",
           "data_type": "numeric",
-          "ordinal": 65,
+          "ordinal": 63,
           "description": "Longitude (Minutos).",
           "documentation_status": "curated"
         },
         {
           "name": "gps_long_segundo",
           "data_type": "numeric",
-          "ordinal": 66,
+          "ordinal": 64,
           "description": "Longitude (Segundos).",
           "documentation_status": "curated"
         },
         {
           "name": "ic_invadido",
           "data_type": "boolean",
-          "ordinal": 47,
+          "ordinal": 45,
           "description": "Indica se o empreendimento foi invadido.",
           "documentation_status": "curated"
         },
         {
           "name": "ic_substituicao_eo",
           "data_type": "boolean",
-          "ordinal": 7,
+          "ordinal": 5,
           "description": "Indica se houve substituição da EO (true/false).",
           "documentation_status": "curated"
         },
         {
-          "name": "id_empreendimento",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
           "name": "municipio",
           "data_type": "text",
-          "ordinal": 19,
+          "ordinal": 17,
           "description": "Município do empreendimento.",
           "documentation_status": "curated"
         },
         {
           "name": "pct_entrega",
           "data_type": "numeric",
-          "ordinal": 44,
+          "ordinal": 42,
           "description": "Taxa de entrega: (qt_uh_alienadas / quantidade_uh) × 100.",
           "documentation_status": "curated"
         },
         {
           "name": "pct_execucao_ts",
           "data_type": "numeric(6,2)",
-          "ordinal": 58,
+          "ordinal": 56,
           "description": "Percentual de execução do trabalho social (0-100).",
           "documentation_status": "curated"
         },
         {
           "name": "percentual_execucao_financeira",
           "data_type": "numeric",
-          "ordinal": 55,
+          "ordinal": 53,
           "description": "(valor_desembolsado / valor_contratado) × 100.",
           "documentation_status": "curated"
         },
         {
           "name": "percentual_execucao_fisica",
           "data_type": "numeric",
-          "ordinal": 38,
+          "ordinal": 36,
           "description": "Percentual de obra realizado (0-100).",
           "documentation_status": "curated"
         },
         {
           "name": "percentual_obra_prevista",
           "data_type": "numeric",
-          "ordinal": 37,
+          "ordinal": 35,
           "description": "Percentual de obra previsto (0-100).",
           "documentation_status": "curated"
         },
         {
           "name": "pessoas_atendidas",
           "data_type": "integer",
-          "ordinal": 18,
+          "ordinal": 16,
           "description": "Estimativa heurística: (quantidade_uh × 3.3) arredondado para baixo.",
           "documentation_status": "curated"
         },
         {
           "name": "qt_liberacoes",
           "data_type": "bigint",
-          "ordinal": 53,
+          "ordinal": 51,
           "description": "Quantidade do fenômeno medido no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "qt_uh_alienadas",
           "data_type": "integer",
-          "ordinal": 40,
+          "ordinal": 38,
           "description": "UHs alienadas (chaves entregues). Indicador confiável de entrega efetiva no FDS. A taxa de entrega (pct_entrega) é calculada sobre este campo.",
           "documentation_status": "curated"
         },
         {
           "name": "qt_uh_concluidas",
           "data_type": "integer",
-          "ordinal": 39,
+          "ordinal": 37,
           "description": "UHs com obra concluída. ATENÇÃO: campo não confiável na base FDS — retorna NULL mesmo quando há UHs alienadas (4 casos, todos modalidade 3 lotes pulverizados/aquisição). Não usar como indicador de entrega.",
           "documentation_status": "curated"
         },
         {
           "name": "qt_uh_construcao",
           "data_type": "integer",
-          "ordinal": 16,
+          "ordinal": 14,
           "description": "UHs em construção (bruto).",
           "documentation_status": "curated"
         },
         {
           "name": "qt_uh_construcao_parcial",
           "data_type": "integer",
-          "ordinal": 42,
+          "ordinal": 40,
           "description": "Quantidade do fenômeno medido no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "qt_uh_ocupacao_irregular",
           "data_type": "integer",
-          "ordinal": 43,
+          "ordinal": 41,
           "description": "Quantidade do fenômeno medido no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "qt_uh_projeto",
           "data_type": "integer",
-          "ordinal": 17,
+          "ordinal": 15,
           "description": "UHs em projeto (bruto).",
           "documentation_status": "curated"
         },
         {
           "name": "qt_uh_sem_habitese",
           "data_type": "integer",
-          "ordinal": 41,
+          "ordinal": 39,
           "description": "Quantidade do fenômeno medido no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "quantidade_uh",
           "data_type": "integer",
-          "ordinal": 15,
+          "ordinal": 13,
           "description": "Total de UHs. Calculado como GREATEST(qt_uh_construcao, qt_uh_projeto), pois os campos são mutuamente exclusivos na fonte (quando um > 0, o outro é 0).",
           "documentation_status": "curated"
         },
         {
           "name": "situacao_gefus",
           "data_type": "text",
-          "ordinal": 33,
+          "ordinal": 31,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "tipologia",
           "data_type": "text",
-          "ordinal": 23,
+          "ordinal": 21,
           "description": "Tipo de edificação: Casa, Misto, Apartamento.",
           "documentation_status": "curated"
         },
         {
           "name": "uf",
           "data_type": "text",
-          "ordinal": 20,
+          "ordinal": 18,
           "description": "UF do empreendimento (2 caracteres).",
           "documentation_status": "curated"
         },
         {
           "name": "valor_contrapartidas",
           "data_type": "numeric",
-          "ordinal": 28,
+          "ordinal": 26,
           "description": "Total de contrapartidas em R$.",
           "documentation_status": "curated"
         },
         {
           "name": "valor_contratado",
           "data_type": "numeric",
-          "ordinal": 26,
+          "ordinal": 24,
           "description": "Valor total do investimento (FDS + contrapartidas) em R$.",
           "documentation_status": "curated"
         },
         {
           "name": "valor_desembolsado",
           "data_type": "numeric",
-          "ordinal": 52,
+          "ordinal": 50,
           "description": "Total desembolsado acumulado. Calculado com ABS(vr_liberado) para registros com ic_credito='0' (liberações reais).",
           "documentation_status": "curated"
         },
         {
           "name": "valor_financiamento_fds",
           "data_type": "numeric",
-          "ordinal": 27,
+          "ordinal": 25,
           "description": "Parcela do financiamento FDS em R$.",
           "documentation_status": "curated"
         },
         {
           "name": "valor_por_uh",
           "data_type": "numeric",
-          "ordinal": 29,
+          "ordinal": 27,
           "description": "Custo unitário por UH (valor_contratado / quantidade_uh).",
           "documentation_status": "curated"
         }
@@ -7201,345 +7028,338 @@
           "documentation_status": "curated"
         },
         {
-          "name": "apf_nao_obra",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
           "name": "aquecimento_solar",
-          "data_type": "text",
-          "ordinal": 36,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "arquivo_de_origem",
-          "data_type": "text",
-          "ordinal": 51,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "co_regime_execucao",
-          "data_type": "text",
-          "ordinal": 30,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "cod_ibge",
-          "data_type": "text",
-          "ordinal": 13,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "criado_em",
-          "data_type": "timestamp without time zone",
-          "ordinal": 52,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "dt_contratacao",
-          "data_type": "date",
-          "ordinal": 38,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "dt_inicio_obra",
-          "data_type": "date",
-          "ordinal": 39,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "dt_legalizacao",
-          "data_type": "date",
-          "ordinal": 41,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "dt_maxima_liberacao",
-          "data_type": "date",
-          "ordinal": 42,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "dt_movimento",
-          "data_type": "date",
-          "ordinal": 44,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "dt_termino_obra",
-          "data_type": "date",
-          "ordinal": 40,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "dt_ultima_entrega",
-          "data_type": "date",
-          "ordinal": 43,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "empreendimento_nome",
-          "data_type": "text",
-          "ordinal": 3,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "eo_nome",
-          "data_type": "text",
-          "ordinal": 8,
-          "description": "Nome da Entidade Organizadora (proponente).",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "fase_contrato",
-          "data_type": "text",
-          "ordinal": 6,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "gps_lat_grau",
-          "data_type": "numeric",
-          "ordinal": 45,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "gps_lat_minuto",
-          "data_type": "numeric",
-          "ordinal": 46,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "gps_lat_segundo",
-          "data_type": "numeric",
-          "ordinal": 47,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "gps_long_grau",
-          "data_type": "numeric",
-          "ordinal": 48,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "gps_long_minuto",
-          "data_type": "numeric",
-          "ordinal": 49,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "gps_long_segundo",
-          "data_type": "numeric",
-          "ordinal": 50,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "infraestrutura_externa",
-          "data_type": "text",
-          "ordinal": 37,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "modalidade_requalificacao",
-          "data_type": "text",
-          "ordinal": 32,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "municipio",
-          "data_type": "text",
-          "ordinal": 11,
-          "description": "Município associado ao recorte geográfico do indicador.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "pct_obra_realizado",
-          "data_type": "numeric(6,2)",
-          "ordinal": 19,
-          "description": "Participação ou variação percentual no recorte definido pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "qt_uh_adaptadas",
-          "data_type": "integer",
-          "ordinal": 18,
-          "description": "Quantidade do fenômeno medido no período de referência.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "qt_uh_concluidas",
-          "data_type": "integer",
-          "ordinal": 16,
-          "description": "Quantidade do fenômeno medido no período de referência.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "qt_uh_entregues",
-          "data_type": "integer",
-          "ordinal": 17,
-          "description": "Quantidade do fenômeno medido no período de referência.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "qt_uh_financiadas",
-          "data_type": "integer",
-          "ordinal": 15,
-          "description": "Quantidade de UHs financiadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "regiao",
-          "data_type": "text",
-          "ordinal": 14,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "regime_construcao",
-          "data_type": "text",
-          "ordinal": 31,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "selecao_pmcmv_e",
-          "data_type": "text",
-          "ordinal": 4,
-          "description": "Filtro principal: 'NOVO PMCMV-E' identifica contratos do novo programa.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "situacao_empreendimento",
-          "data_type": "text",
-          "ordinal": 7,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "situacao_gefus",
-          "data_type": "text",
-          "ordinal": 5,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "terreno_doado",
-          "data_type": "text",
-          "ordinal": 34,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
-        },
-        {
-          "name": "tipo_terreno",
           "data_type": "text",
           "ordinal": 35,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
-          "name": "tipo_unidade",
+          "name": "arquivo_de_origem",
           "data_type": "text",
-          "ordinal": 33,
+          "ordinal": 50,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
-          "name": "tipologia",
+          "name": "co_regime_execucao",
           "data_type": "text",
           "ordinal": 29,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
-          "name": "uf",
+          "name": "cod_ibge",
           "data_type": "text",
           "ordinal": 12,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "criado_em",
+          "data_type": "timestamp without time zone",
+          "ordinal": 51,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_contratacao",
+          "data_type": "date",
+          "ordinal": 37,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_inicio_obra",
+          "data_type": "date",
+          "ordinal": 38,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_legalizacao",
+          "data_type": "date",
+          "ordinal": 40,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_maxima_liberacao",
+          "data_type": "date",
+          "ordinal": 41,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_movimento",
+          "data_type": "date",
+          "ordinal": 43,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_termino_obra",
+          "data_type": "date",
+          "ordinal": 39,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_ultima_entrega",
+          "data_type": "date",
+          "ordinal": 42,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "empreendimento_nome",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "eo_nome",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Nome da Entidade Organizadora (proponente).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "fase_contrato",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "gps_lat_grau",
+          "data_type": "numeric",
+          "ordinal": 44,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "gps_lat_minuto",
+          "data_type": "numeric",
+          "ordinal": 45,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "gps_lat_segundo",
+          "data_type": "numeric",
+          "ordinal": 46,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "gps_long_grau",
+          "data_type": "numeric",
+          "ordinal": 47,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "gps_long_minuto",
+          "data_type": "numeric",
+          "ordinal": 48,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "gps_long_segundo",
+          "data_type": "numeric",
+          "ordinal": 49,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "infraestrutura_externa",
+          "data_type": "text",
+          "ordinal": 36,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "modalidade_requalificacao",
+          "data_type": "text",
+          "ordinal": 31,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Município associado ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pct_obra_realizado",
+          "data_type": "numeric(6,2)",
+          "ordinal": 18,
+          "description": "Participação ou variação percentual no recorte definido pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_adaptadas",
+          "data_type": "integer",
+          "ordinal": 17,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_concluidas",
+          "data_type": "integer",
+          "ordinal": 15,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_entregues",
+          "data_type": "integer",
+          "ordinal": 16,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_financiadas",
+          "data_type": "integer",
+          "ordinal": 14,
+          "description": "Quantidade de UHs financiadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "regiao",
+          "data_type": "text",
+          "ordinal": 13,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "regime_construcao",
+          "data_type": "text",
+          "ordinal": 30,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "selecao_pmcmv_e",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Filtro principal: 'NOVO PMCMV-E' identifica contratos do novo programa.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "situacao_empreendimento",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "situacao_gefus",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "terreno_doado",
+          "data_type": "text",
+          "ordinal": 33,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "tipo_terreno",
+          "data_type": "text",
+          "ordinal": 34,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "tipo_unidade",
+          "data_type": "text",
+          "ordinal": 32,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "tipologia",
+          "data_type": "text",
+          "ordinal": 28,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 11,
           "description": "Unidade da Federação associada ao recorte geográfico do indicador.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_aporte_adicional",
           "data_type": "numeric(15,2)",
-          "ordinal": 27,
+          "ordinal": 26,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_aporte_contratado",
           "data_type": "numeric(15,2)",
-          "ordinal": 28,
+          "ordinal": 27,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_emprestimo_original",
           "data_type": "numeric(15,2)",
-          "ordinal": 20,
+          "ordinal": 19,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_investimento",
           "data_type": "numeric(15,2)",
-          "ordinal": 22,
+          "ordinal": 21,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_liberado",
           "data_type": "numeric(15,2)",
-          "ordinal": 23,
+          "ordinal": 22,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_liberado_sisfin",
           "data_type": "numeric(15,2)",
-          "ordinal": 24,
+          "ordinal": 23,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_obra",
           "data_type": "numeric(15,2)",
-          "ordinal": 26,
+          "ordinal": 25,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_operacao",
           "data_type": "numeric(15,2)",
-          "ordinal": 21,
+          "ordinal": 20,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "vr_projeto",
           "data_type": "numeric(15,2)",
-          "ordinal": 25,
+          "ordinal": 24,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         }
@@ -8506,1354 +8326,6 @@
       "rag_eligivel": false
     },
     {
-      "id": "model.mcid.gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
-      "description": "Uma linha por edição do boletim e periodo com o quadro CBIC — Lançamentos e Vendas (totais) da página 1, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct"
-      ],
-      "columns": [
-        {
-          "name": "Lançamentos DEMAIS",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna Lançamentos DEMAIS do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Lançamentos MCMV",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna Lançamentos MCMV do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Lançamentos TOTAL",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna Lançamentos TOTAL do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Vendas DEMAIS",
-          "data_type": "numeric",
-          "ordinal": 8,
-          "description": "Valor da coluna Vendas DEMAIS do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Vendas MCMV",
-          "data_type": "numeric",
-          "ordinal": 7,
-          "description": "Valor da coluna Vendas MCMV do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Vendas TOTAL",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna Vendas TOTAL do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p1_lancamentos_por_regiao_cbic",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p1_lancamentos_por_regiao_cbic",
-      "description": "Uma linha por edição do boletim e regiao com o quadro Lançamentos por Região (CBIC) da página 1, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct"
-      ],
-      "columns": [
-        {
-          "name": "% MCMV",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna % MCMV do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "MCMV",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna MCMV do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "TOTAL",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna TOTAL do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "regiao",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna regiao do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
-      "description": "Uma linha por edição do boletim e indicador com o quadro PIB Construção Civil (em % de Crescimento) da página 1, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct"
-      ],
-      "columns": [
-        {
-          "name": "2 trim. antes",
-          "data_type": "double precision",
-          "ordinal": 5,
-          "description": "Valor da coluna 2 trim. antes do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "3 trim. antes",
-          "data_type": "double precision",
-          "ordinal": 4,
-          "description": "Valor da coluna 3 trim. antes do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "4 trim. antes",
-          "data_type": "double precision",
-          "ordinal": 3,
-          "description": "Valor da coluna 4 trim. antes do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "indicador",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "trim. anterior",
-          "data_type": "double precision",
-          "ordinal": 6,
-          "description": "Valor da coluna trim. anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "trimestre selecionado",
-          "data_type": "double precision",
-          "ordinal": 7,
-          "description": "Valor da coluna trimestre selecionado do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p1_vendas_por_regiao_cbic",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p1_vendas_por_regiao_cbic",
-      "description": "Uma linha por edição do boletim e regiao com o quadro Vendas por Região (CBIC) da página 1, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct"
-      ],
-      "columns": [
-        {
-          "name": "% MCMV",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna % MCMV do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "MCMV",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna MCMV do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "TOTAL",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna TOTAL do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "regiao",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna regiao do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p2_financiamentos_habitacionais_uh",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p2_financiamentos_habitacionais_uh",
-      "description": "Uma linha por edição do boletim e periodo com o quadro Financiamentos Habitacionais (UH) da página 2, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_financiamentos_habitacionais"
-      ],
-      "columns": [
-        {
-          "name": "FGTS-PJ",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna FGTS-PJ do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "SBPE Const.",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna SBPE Const. do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p2_financiamentos_imobiliarios_bacen",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p2_financiamentos_imobiliarios_bacen",
-      "description": "Uma linha por edição do boletim e periodo com o quadro Financiamentos Imobiliários (BACEN) da página 2, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_financiamentos_imobiliarios_pf_pj"
-      ],
-      "columns": [
-        {
-          "name": "PF Concessões (R$ mi)",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna PF Concessões (R$ mi) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "PF Inadimplência (%)",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna PF Inadimplência (%) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "PF Taxa de Juros (%a.a)",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna PF Taxa de Juros (%a.a) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "PJ Concessões (R$ mi)",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna PJ Concessões (R$ mi) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "PJ Inadimplência (%)",
-          "data_type": "numeric",
-          "ordinal": 8,
-          "description": "Valor da coluna PJ Inadimplência (%) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "PJ Taxa de Juros (%a.a)",
-          "data_type": "numeric",
-          "ordinal": 7,
-          "description": "Valor da coluna PJ Taxa de Juros (%a.a) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p2_lancamentos_por_construtora_variacao",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p2_lancamentos_por_construtora_variacao",
-      "description": "Uma linha por edição do boletim e empresa com o quadro Lançamentos por construtora (variação %) da página 2, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_balancos_empresas"
-      ],
-      "columns": [
-        {
-          "name": "12m anterior / 12m retrasado",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna 12m anterior / 12m retrasado do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "12m atual / 12m anterior",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna 12m atual / 12m anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "empresa",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna empresa do impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "vs. mesmo trim. ano ant.",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "vs. trim. anterior",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna vs. trim. anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p2_totais_das_empresas_levantadas_variacao",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p2_totais_das_empresas_levantadas_variacao",
-      "description": "Uma linha por edição do boletim e indicador com o quadro Totais das empresas levantadas (variação %) da página 2, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_balancos_empresas",
-        "model.mcid.gld_balancos_empresas_totais"
-      ],
-      "columns": [
-        {
-          "name": "12m anterior / 12m retrasado",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna 12m anterior / 12m retrasado do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "12m atual / 12m anterior",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna 12m atual / 12m anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "indicador",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "vs. mesmo trim. ano ant.",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "vs. trim. anterior",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna vs. trim. anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p2_vendas_por_construtora_variacao",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p2_vendas_por_construtora_variacao",
-      "description": "Uma linha por edição do boletim e empresa com o quadro Vendas por construtora (variação %) da página 2, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_balancos_empresas"
-      ],
-      "columns": [
-        {
-          "name": "12m anterior / 12m retrasado",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna 12m anterior / 12m retrasado do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "12m atual / 12m anterior",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna 12m atual / 12m anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "empresa",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna empresa do impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "vs. mesmo trim. ano ant.",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "vs. trim. anterior",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna vs. trim. anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p3_empregos_construcao_caged",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p3_empregos_construcao_caged",
-      "description": "Uma linha por edição do boletim e periodo com o quadro Empregos Construção (CAGED) da página 3, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_empregos_caged"
-      ],
-      "columns": [
-        {
-          "name": "Criação Líquida (Saldo)",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna Criação Líquida (Saldo) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Total de Postos (Estoque)",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna Total de Postos (Estoque) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
-      "description": "Uma linha por edição do boletim e banco com o quadro Novos Financiamentos Imobiliários por Banco (acum. no ano) da página 3, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_financiamentos_instituicao"
-      ],
-      "columns": [
-        {
-          "name": "% UH",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna % UH do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "R$ bi acum. ano",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna R$ bi acum. ano do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "UH acum. ano",
-          "data_type": "double precision",
-          "ordinal": 3,
-          "description": "Valor da coluna UH acum. ano do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "banco",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna banco do impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "fonte",
-          "data_type": "text",
-          "ordinal": 6,
-          "description": "Valor da coluna fonte do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
-      "description": "Uma linha por edição do boletim e periodo com o quadro PNAD Contínua — Ocupados e Rendimento Médio Real da página 3, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_pnad_ocupados",
-        "model.mcid.gld_pnad_rendimento"
-      ],
-      "columns": [
-        {
-          "name": "Ocupados Construção (mil)",
-          "data_type": "bigint",
-          "ordinal": 3,
-          "description": "Valor da coluna Ocupados Construção (mil) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Ocupados Total (mil)",
-          "data_type": "bigint",
-          "ordinal": 4,
-          "description": "Valor da coluna Ocupados Total (mil) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Rendimento Construção (R$)",
-          "data_type": "bigint",
-          "ordinal": 5,
-          "description": "Valor da coluna Rendimento Construção (R$) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Rendimento Total (R$)",
-          "data_type": "bigint",
-          "ordinal": 6,
-          "description": "Valor da coluna Rendimento Total (R$) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
-      "description": "Uma linha por edição do boletim e indicador com o quadro Produção Industrial e Volume de Vendas (variação %) da página 3, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_producao_fisica"
-      ],
-      "columns": [
-        {
-          "name": "PROD mesmo mês ano ant.",
-          "data_type": "double precision",
-          "ordinal": 3,
-          "description": "Valor da coluna PROD mesmo mês ano ant. do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "PROD mês anterior",
-          "data_type": "double precision",
-          "ordinal": 4,
-          "description": "Valor da coluna PROD mês anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "PROD mês de referência",
-          "data_type": "double precision",
-          "ordinal": 5,
-          "description": "Valor da coluna PROD mês de referência do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "VENDAS mesmo mês ano ant.",
-          "data_type": "double precision",
-          "ordinal": 6,
-          "description": "Valor da coluna VENDAS mesmo mês ano ant. do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "VENDAS mês anterior",
-          "data_type": "double precision",
-          "ordinal": 7,
-          "description": "Valor da coluna VENDAS mês anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "VENDAS mês de referência",
-          "data_type": "double precision",
-          "ordinal": 8,
-          "description": "Valor da coluna VENDAS mês de referência do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "indicador",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p4_credito_imobiliario_pib",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p4_credito_imobiliario_pib",
-      "description": "Uma linha por edição do boletim e periodo com o quadro Crédito Imobiliário / PIB (%) da página 4, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_credito_pib"
-      ],
-      "columns": [
-        {
-          "name": "Crédito Imobiliário / PIB",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna Crédito Imobiliário / PIB do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p4_no_uh_por_condicao_de_uso",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p4_no_uh_por_condicao_de_uso",
-      "description": "Uma linha por edição do boletim e fonte com o quadro Nº UH por Condição de Uso da página 4, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_uh_condicao_uso"
-      ],
-      "columns": [
-        {
-          "name": "Trim. ano anterior — UH Novas",
-          "data_type": "double precision",
-          "ordinal": 4,
-          "description": "Valor da coluna Trim. ano anterior — UH Novas do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. ano anterior — UH Usadas",
-          "data_type": "double precision",
-          "ordinal": 3,
-          "description": "Valor da coluna Trim. ano anterior — UH Usadas do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. selecionado — UH Novas",
-          "data_type": "double precision",
-          "ordinal": 6,
-          "description": "Valor da coluna Trim. selecionado — UH Novas do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. selecionado — UH Total",
-          "data_type": "numeric",
-          "ordinal": 7,
-          "description": "Valor da coluna Trim. selecionado — UH Total do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. selecionado — UH Usadas",
-          "data_type": "double precision",
-          "ordinal": 5,
-          "description": "Valor da coluna Trim. selecionado — UH Usadas do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "fonte",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna fonte do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
-      "description": "Uma linha por edição do boletim e faixa com o quadro Financiamento PF MCMV por faixa da página 5, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_financiamento_pf_faixa"
-      ],
-      "columns": [
-        {
-          "name": "Trim. ano anterior — FIN (Bi R$)",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna Trim. ano anterior — FIN (Bi R$) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. ano anterior — Nº UH",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna Trim. ano anterior — Nº UH do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. selecionado — FIN (Bi R$)",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna Trim. selecionado — FIN (Bi R$) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. selecionado — Nº UH",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna Trim. selecionado — Nº UH do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "faixa",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna faixa do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
-      "description": "Uma linha por edição do boletim e periodo com o quadro Saldo Caderneta de Poupança — Captação Líquida (R$ bi) da página 5, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_saldo_poupanca"
-      ],
-      "columns": [
-        {
-          "name": "Cap. Líq. (Bi)",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna Cap. Líq. (Bi) do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
-      "description": "Uma linha por edição do boletim e indicador com o quadro SBPE Construção — unidades e valor (acum. no trimestre) da página 5, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.slv_abecip_financiamentos"
-      ],
-      "columns": [
-        {
-          "name": "Trim. ano anterior",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna Trim. ano anterior do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Trim. selecionado",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna Trim. selecionado do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Variação %",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna Variação % do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "indicador",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p6_sinapi_brasil_e_incc_m",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p6_sinapi_brasil_e_incc_m",
-      "description": "Uma linha por edição do boletim e indicador com o quadro SINAPI (Brasil) e INCC-M da página 6, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_sinapi",
-        "model.mcid.gld_incc_m"
-      ],
-      "columns": [
-        {
-          "name": "INCC-M",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna INCC-M do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "SINAPI",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna SINAPI do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "indicador",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
-      "description": "Uma linha por edição do boletim e periodo com o quadro Ticket médio das unidades lançadas vs. INCC da página 6, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_ticket_medio"
-      ],
-      "columns": [
-        {
-          "name": "Direcional acum. 4T20",
-          "data_type": "numeric",
-          "ordinal": 9,
-          "description": "Valor da coluna Direcional acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Direcional trimestral",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna Direcional trimestral do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "INCC acum. 4T20",
-          "data_type": "numeric",
-          "ordinal": 7,
-          "description": "Valor da coluna INCC acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "INCC trimestral",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna INCC trimestral do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "MRV acum. 4T20",
-          "data_type": "numeric",
-          "ordinal": 8,
-          "description": "Valor da coluna MRV acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "MRV trimestral",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna MRV trimestral do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Tenda acum. 4T20",
-          "data_type": "numeric",
-          "ordinal": 10,
-          "description": "Valor da coluna Tenda acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Tenda trimestral",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna Tenda trimestral do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "periodo",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_p7_indices_da_construcao_variacao",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_p7_indices_da_construcao_variacao",
-      "description": "Uma linha por edição do boletim e indicador com o quadro Índices da Construção (variação %) da página 7, reproduzindo as colunas do impresso.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_pib_construcao_civil_pct",
-        "model.mcid.gld_indice_imob",
-        "model.mcid.gld_fipezap",
-        "model.mcid.gld_icst"
-      ],
-      "columns": [
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "indicador",
-          "data_type": "text",
-          "ordinal": 2,
-          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Índice ABRAMAT",
-          "data_type": "numeric",
-          "ordinal": 4,
-          "description": "Valor da coluna Índice ABRAMAT do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Índice FipeZap",
-          "data_type": "numeric",
-          "ordinal": 5,
-          "description": "Valor da coluna Índice FipeZap do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Índice ICST",
-          "data_type": "numeric",
-          "ordinal": 6,
-          "description": "Valor da coluna Índice ICST do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "Índice IMOB",
-          "data_type": "numeric",
-          "ordinal": 3,
-          "description": "Valor da coluna Índice IMOB do quadro impresso, para a linha e a edição indicadas.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
-      "id": "model.mcid.gld_boletim_valores",
-      "product": "conjuntura",
-      "owner_key": "mcid_data_engineering",
-      "layer": "gold",
-      "classification": "internal",
-      "schema": "conjuntura",
-      "name": "gld_boletim_valores",
-      "description": "Uma linha por célula dos quadros do boletim, com o modelo de origem, a página, a edição, o rótulo da linha, o nome da coluna e o valor numérico quando aplicável.",
-      "documentation_status": "curated",
-      "materialized": "table",
-      "depends_on": [
-        "model.mcid.gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
-        "model.mcid.gld_boletim_p1_lancamentos_por_regiao_cbic",
-        "model.mcid.gld_boletim_p1_vendas_por_regiao_cbic",
-        "model.mcid.gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
-        "model.mcid.gld_boletim_p2_lancamentos_por_construtora_variacao",
-        "model.mcid.gld_boletim_p2_vendas_por_construtora_variacao",
-        "model.mcid.gld_boletim_p2_totais_das_empresas_levantadas_variacao",
-        "model.mcid.gld_boletim_p2_financiamentos_imobiliarios_bacen",
-        "model.mcid.gld_boletim_p2_financiamentos_habitacionais_uh",
-        "model.mcid.gld_boletim_p3_empregos_construcao_caged",
-        "model.mcid.gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
-        "model.mcid.gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
-        "model.mcid.gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
-        "model.mcid.gld_boletim_p4_credito_imobiliario_pib",
-        "model.mcid.gld_boletim_p4_no_uh_por_condicao_de_uso",
-        "model.mcid.gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
-        "model.mcid.gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
-        "model.mcid.gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
-        "model.mcid.gld_boletim_p6_sinapi_brasil_e_incc_m",
-        "model.mcid.gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
-        "model.mcid.gld_boletim_p7_indices_da_construcao_variacao"
-      ],
-      "columns": [
-        {
-          "name": "coluna",
-          "data_type": "text",
-          "ordinal": 6,
-          "description": "Nome da coluna do quadro.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "edicao",
-          "data_type": "text",
-          "ordinal": 4,
-          "description": "Trimestre a que a célula se refere, no formato usado pelo boletim.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "linha",
-          "data_type": "text",
-          "ordinal": 5,
-          "description": "Rótulo da linha do quadro.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "modelo",
-          "data_type": "text",
-          "ordinal": 1,
-          "description": "Modelo do quadro a que a célula pertence.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "pagina",
-          "data_type": "integer",
-          "ordinal": 2,
-          "description": "Página do boletim em que o quadro é impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "quadro",
-          "data_type": "text",
-          "ordinal": 3,
-          "description": "Título do quadro tal como aparece no impresso.",
-          "documentation_status": "curated"
-        },
-        {
-          "name": "valor",
-          "data_type": "numeric",
-          "ordinal": 7,
-          "description": "Valor numérico da célula, nulo quando o conteúdo não é numérico.",
-          "documentation_status": "curated"
-        }
-      ],
-      "rag_eligivel": true
-    },
-    {
       "id": "model.mcid.gld_balancos_empresas",
       "product": "conjuntura",
       "owner_key": "mcid_data_engineering",
@@ -10073,6 +8545,1420 @@
           "data_type": "double precision",
           "ordinal": 10,
           "description": "Total de unidades habitacionais vendidas no trimestre pelo conjunto das incorporadoras acompanhadas.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
+      "description": "Uma linha por edição do boletim e periodo com o quadro CBIC — Lançamentos e Vendas (totais) da página 1, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [],
+      "columns": [
+        {
+          "name": "Lançamentos DEMAIS",
+          "data_type": "bigint",
+          "ordinal": 5,
+          "description": "Valor da coluna Lançamentos DEMAIS do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Lançamentos MCMV",
+          "data_type": "bigint",
+          "ordinal": 4,
+          "description": "Valor da coluna Lançamentos MCMV do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Lançamentos TOTAL",
+          "data_type": "bigint",
+          "ordinal": 3,
+          "description": "Valor da coluna Lançamentos TOTAL do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Vendas DEMAIS",
+          "data_type": "bigint",
+          "ordinal": 8,
+          "description": "Valor da coluna Vendas DEMAIS do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Vendas MCMV",
+          "data_type": "bigint",
+          "ordinal": 7,
+          "description": "Valor da coluna Vendas MCMV do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Vendas TOTAL",
+          "data_type": "bigint",
+          "ordinal": 6,
+          "description": "Valor da coluna Vendas TOTAL do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p1_lancamentos_por_regiao_cbic",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_lancamentos_por_regiao_cbic",
+      "description": "Uma linha por edição do boletim e regiao com o quadro Lançamentos por Região (CBIC) da página 1, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [],
+      "columns": [
+        {
+          "name": "% MCMV",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna % MCMV do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "MCMV",
+          "data_type": "integer",
+          "ordinal": 4,
+          "description": "Valor da coluna MCMV do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "TOTAL",
+          "data_type": "integer",
+          "ordinal": 3,
+          "description": "Valor da coluna TOTAL do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "regiao",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna regiao do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
+      "description": "Uma linha por edição do boletim e indicador com o quadro PIB Construção Civil (em % de Crescimento) da página 1, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_pib_construcao_civil_pct"
+      ],
+      "columns": [
+        {
+          "name": "2 trim. antes",
+          "data_type": "double precision",
+          "ordinal": 5,
+          "description": "Valor da coluna 2 trim. antes do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "3 trim. antes",
+          "data_type": "double precision",
+          "ordinal": 4,
+          "description": "Valor da coluna 3 trim. antes do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "4 trim. antes",
+          "data_type": "double precision",
+          "ordinal": 3,
+          "description": "Valor da coluna 4 trim. antes do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "indicador",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "trim. anterior",
+          "data_type": "double precision",
+          "ordinal": 6,
+          "description": "Valor da coluna trim. anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "trimestre selecionado",
+          "data_type": "double precision",
+          "ordinal": 7,
+          "description": "Valor da coluna trimestre selecionado do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p1_vendas_por_regiao_cbic",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p1_vendas_por_regiao_cbic",
+      "description": "Uma linha por edição do boletim e regiao com o quadro Vendas por Região (CBIC) da página 1, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [],
+      "columns": [
+        {
+          "name": "% MCMV",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna % MCMV do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "MCMV",
+          "data_type": "integer",
+          "ordinal": 4,
+          "description": "Valor da coluna MCMV do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "TOTAL",
+          "data_type": "integer",
+          "ordinal": 3,
+          "description": "Valor da coluna TOTAL do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "regiao",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna regiao do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p2_financiamentos_habitacionais_uh",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_financiamentos_habitacionais_uh",
+      "description": "Uma linha por edição do boletim e periodo com o quadro Financiamentos Habitacionais (UH) da página 2, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_financiamentos_habitacionais"
+      ],
+      "columns": [
+        {
+          "name": "FGTS-PJ",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna FGTS-PJ do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "SBPE Const.",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna SBPE Const. do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p2_financiamentos_imobiliarios_bacen",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_financiamentos_imobiliarios_bacen",
+      "description": "Uma linha por edição do boletim e periodo com o quadro Financiamentos Imobiliários (BACEN) da página 2, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_financiamentos_imobiliarios_pf_pj"
+      ],
+      "columns": [
+        {
+          "name": "PF Concessões (R$ mi)",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna PF Concessões (R$ mi) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "PF Inadimplência (%)",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna PF Inadimplência (%) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "PF Taxa de Juros (%a.a)",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna PF Taxa de Juros (%a.a) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "PJ Concessões (R$ mi)",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Valor da coluna PJ Concessões (R$ mi) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "PJ Inadimplência (%)",
+          "data_type": "numeric",
+          "ordinal": 8,
+          "description": "Valor da coluna PJ Inadimplência (%) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "PJ Taxa de Juros (%a.a)",
+          "data_type": "numeric",
+          "ordinal": 7,
+          "description": "Valor da coluna PJ Taxa de Juros (%a.a) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p2_lancamentos_por_construtora_variacao",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_lancamentos_por_construtora_variacao",
+      "description": "Uma linha por edição do boletim e empresa com o quadro Lançamentos por construtora (variação %) da página 2, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_balancos_empresas"
+      ],
+      "columns": [
+        {
+          "name": "12m anterior / 12m retrasado",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Valor da coluna 12m anterior / 12m retrasado do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "12m atual / 12m anterior",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna 12m atual / 12m anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "empresa",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna empresa do impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "vs. mesmo trim. ano ant.",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "vs. trim. anterior",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna vs. trim. anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p2_totais_das_empresas_levantadas_variacao",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_totais_das_empresas_levantadas_variacao",
+      "description": "Uma linha por edição do boletim e indicador com o quadro Totais das empresas levantadas (variação %) da página 2, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_balancos_empresas",
+        "model.mcid.gld_balancos_empresas_totais"
+      ],
+      "columns": [
+        {
+          "name": "12m anterior / 12m retrasado",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Valor da coluna 12m anterior / 12m retrasado do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "12m atual / 12m anterior",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna 12m atual / 12m anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "indicador",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "vs. mesmo trim. ano ant.",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "vs. trim. anterior",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna vs. trim. anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p2_vendas_por_construtora_variacao",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p2_vendas_por_construtora_variacao",
+      "description": "Uma linha por edição do boletim e empresa com o quadro Vendas por construtora (variação %) da página 2, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_balancos_empresas"
+      ],
+      "columns": [
+        {
+          "name": "12m anterior / 12m retrasado",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Valor da coluna 12m anterior / 12m retrasado do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "12m atual / 12m anterior",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna 12m atual / 12m anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "empresa",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna empresa do impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "vs. mesmo trim. ano ant.",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "vs. trim. anterior",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna vs. trim. anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p3_empregos_construcao_caged",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_empregos_construcao_caged",
+      "description": "Uma linha por edição do boletim e periodo com o quadro Empregos Construção (CAGED) da página 3, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_empregos_caged"
+      ],
+      "columns": [
+        {
+          "name": "Criação Líquida (Saldo)",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna Criação Líquida (Saldo) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Total de Postos (Estoque)",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna Total de Postos (Estoque) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
+      "description": "Uma linha por edição do boletim e banco com o quadro Novos Financiamentos Imobiliários por Banco (acum. no ano) da página 3, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_financiamentos_instituicao"
+      ],
+      "columns": [
+        {
+          "name": "% UH",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna % UH do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "R$ bi acum. ano",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna R$ bi acum. ano do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "UH acum. ano",
+          "data_type": "double precision",
+          "ordinal": 3,
+          "description": "Valor da coluna UH acum. ano do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "banco",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna banco do impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "fonte",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Valor da coluna fonte do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
+      "description": "Uma linha por edição do boletim e periodo com o quadro PNAD Contínua — Ocupados e Rendimento Médio Real da página 3, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_pnad_ocupados",
+        "model.mcid.gld_pnad_rendimento"
+      ],
+      "columns": [
+        {
+          "name": "Ocupados Construção (mil)",
+          "data_type": "bigint",
+          "ordinal": 3,
+          "description": "Valor da coluna Ocupados Construção (mil) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Ocupados Total (mil)",
+          "data_type": "bigint",
+          "ordinal": 4,
+          "description": "Valor da coluna Ocupados Total (mil) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Rendimento Construção (R$)",
+          "data_type": "bigint",
+          "ordinal": 5,
+          "description": "Valor da coluna Rendimento Construção (R$) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Rendimento Total (R$)",
+          "data_type": "bigint",
+          "ordinal": 6,
+          "description": "Valor da coluna Rendimento Total (R$) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
+      "description": "Uma linha por edição do boletim e indicador com o quadro Produção Industrial e Volume de Vendas (variação %) da página 3, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_producao_fisica"
+      ],
+      "columns": [
+        {
+          "name": "PROD mesmo mês ano ant.",
+          "data_type": "double precision",
+          "ordinal": 3,
+          "description": "Valor da coluna PROD mesmo mês ano ant. do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "PROD mês anterior",
+          "data_type": "double precision",
+          "ordinal": 4,
+          "description": "Valor da coluna PROD mês anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "PROD mês de referência",
+          "data_type": "double precision",
+          "ordinal": 5,
+          "description": "Valor da coluna PROD mês de referência do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "VENDAS mesmo mês ano ant.",
+          "data_type": "double precision",
+          "ordinal": 6,
+          "description": "Valor da coluna VENDAS mesmo mês ano ant. do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "VENDAS mês anterior",
+          "data_type": "double precision",
+          "ordinal": 7,
+          "description": "Valor da coluna VENDAS mês anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "VENDAS mês de referência",
+          "data_type": "double precision",
+          "ordinal": 8,
+          "description": "Valor da coluna VENDAS mês de referência do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "indicador",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p4_credito_imobiliario_pib",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p4_credito_imobiliario_pib",
+      "description": "Uma linha por edição do boletim e periodo com o quadro Crédito Imobiliário / PIB (%) da página 4, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_credito_pib"
+      ],
+      "columns": [
+        {
+          "name": "Crédito Imobiliário / PIB",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna Crédito Imobiliário / PIB do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p4_no_uh_por_condicao_de_uso",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p4_no_uh_por_condicao_de_uso",
+      "description": "Uma linha por edição do boletim e fonte com o quadro Nº UH por Condição de Uso da página 4, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_uh_condicao_uso"
+      ],
+      "columns": [
+        {
+          "name": "Trim. ano anterior — UH Novas",
+          "data_type": "double precision",
+          "ordinal": 4,
+          "description": "Valor da coluna Trim. ano anterior — UH Novas do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. ano anterior — UH Usadas",
+          "data_type": "double precision",
+          "ordinal": 3,
+          "description": "Valor da coluna Trim. ano anterior — UH Usadas do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. selecionado — UH Novas",
+          "data_type": "double precision",
+          "ordinal": 6,
+          "description": "Valor da coluna Trim. selecionado — UH Novas do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. selecionado — UH Total",
+          "data_type": "numeric",
+          "ordinal": 7,
+          "description": "Valor da coluna Trim. selecionado — UH Total do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. selecionado — UH Usadas",
+          "data_type": "double precision",
+          "ordinal": 5,
+          "description": "Valor da coluna Trim. selecionado — UH Usadas do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "fonte",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna fonte do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
+      "description": "Uma linha por edição do boletim e faixa com o quadro Financiamento PF MCMV por faixa da página 5, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_financiamento_pf_faixa"
+      ],
+      "columns": [
+        {
+          "name": "Trim. ano anterior — FIN (Bi R$)",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna Trim. ano anterior — FIN (Bi R$) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. ano anterior — Nº UH",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna Trim. ano anterior — Nº UH do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. selecionado — FIN (Bi R$)",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Valor da coluna Trim. selecionado — FIN (Bi R$) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. selecionado — Nº UH",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna Trim. selecionado — Nº UH do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "faixa",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna faixa do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
+      "description": "Uma linha por edição do boletim e periodo com o quadro Saldo Caderneta de Poupança — Captação Líquida (R$ bi) da página 5, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_saldo_poupanca"
+      ],
+      "columns": [
+        {
+          "name": "Cap. Líq. (Bi)",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna Cap. Líq. (Bi) do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
+      "description": "Uma linha por edição do boletim e indicador com o quadro SBPE Construção — unidades e valor (acum. no trimestre) da página 5, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.slv_abecip_financiamentos"
+      ],
+      "columns": [
+        {
+          "name": "Trim. ano anterior",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna Trim. ano anterior do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Trim. selecionado",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna Trim. selecionado do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Variação %",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna Variação % do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "indicador",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p6_ogu",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p6_ogu",
+      "description": "Modelo da camada gold do produto conjuntura.",
+      "documentation_status": "derived_convention",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
+        "model.mcid.gld_ogu"
+      ],
+      "columns": [
+        {
+          "name": "Ação",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "Dotação atual",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "Empenho",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "Extração",
+          "data_type": "date",
+          "ordinal": 10,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "Pag. RAP",
+          "data_type": "numeric",
+          "ordinal": 8,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "Pag. total",
+          "data_type": "numeric",
+          "ordinal": 9,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "Pagamento",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "Projeto / Atividade",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "RAP inscrito",
+          "data_type": "numeric",
+          "ordinal": 7,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Identificador da edição editorial do boletim.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p6_sinapi_brasil_e_incc_m",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p6_sinapi_brasil_e_incc_m",
+      "description": "Uma linha por edição do boletim e indicador com o quadro SINAPI (Brasil) e INCC-M da página 6, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_sinapi",
+        "model.mcid.gld_incc_m"
+      ],
+      "columns": [
+        {
+          "name": "INCC-M",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna INCC-M do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "SINAPI",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna SINAPI do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "indicador",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
+      "description": "Uma linha por edição do boletim e periodo com o quadro Ticket médio das unidades lançadas vs. INCC da página 6, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_ticket_medio"
+      ],
+      "columns": [
+        {
+          "name": "Direcional acum. 4T20",
+          "data_type": "numeric",
+          "ordinal": 9,
+          "description": "Valor da coluna Direcional acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Direcional trimestral",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna Direcional trimestral do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "INCC acum. 4T20",
+          "data_type": "numeric",
+          "ordinal": 7,
+          "description": "Valor da coluna INCC acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "INCC trimestral",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna INCC trimestral do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "MRV acum. 4T20",
+          "data_type": "numeric",
+          "ordinal": 8,
+          "description": "Valor da coluna MRV acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "MRV trimestral",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna MRV trimestral do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Tenda acum. 4T20",
+          "data_type": "numeric",
+          "ordinal": 10,
+          "description": "Valor da coluna Tenda acum. 4T20 do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Tenda trimestral",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Valor da coluna Tenda trimestral do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "periodo",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna periodo do impresso.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_p7_indices_da_construcao_variacao",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_p7_indices_da_construcao_variacao",
+      "description": "Uma linha por edição do boletim e indicador com o quadro Índices da Construção (variação %) da página 7, reproduzindo as colunas do impresso.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_indice_imob",
+        "model.mcid.gld_fipezap",
+        "model.mcid.gld_icst"
+      ],
+      "columns": [
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Trimestre a que a linha se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "indicador",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Rótulo da linha do quadro, correspondente à coluna indicador do impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Índice ABRAMAT",
+          "data_type": "numeric",
+          "ordinal": 4,
+          "description": "Valor da coluna Índice ABRAMAT do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Índice FipeZap",
+          "data_type": "numeric",
+          "ordinal": 5,
+          "description": "Valor da coluna Índice FipeZap do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Índice ICST",
+          "data_type": "numeric",
+          "ordinal": 6,
+          "description": "Valor da coluna Índice ICST do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "Índice IMOB",
+          "data_type": "numeric",
+          "ordinal": 3,
+          "description": "Valor da coluna Índice IMOB do quadro impresso, para a linha e a edição indicadas.",
+          "documentation_status": "curated"
+        }
+      ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.gld_boletim_valores",
+      "product": "conjuntura",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "conjuntura",
+      "name": "gld_boletim_valores",
+      "description": "Uma linha por célula dos quadros do boletim, com o modelo de origem, a página, a edição, o rótulo da linha, o nome da coluna e o valor numérico quando aplicável.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.gld_boletim_p1_pib_construcao_civil_em_de_crescimento",
+        "model.mcid.gld_boletim_p1_lancamentos_por_regiao_cbic",
+        "model.mcid.gld_boletim_p1_vendas_por_regiao_cbic",
+        "model.mcid.gld_boletim_p1_cbic_lancamentos_e_vendas_totais",
+        "model.mcid.gld_boletim_p2_lancamentos_por_construtora_variacao",
+        "model.mcid.gld_boletim_p2_vendas_por_construtora_variacao",
+        "model.mcid.gld_boletim_p2_totais_das_empresas_levantadas_variacao",
+        "model.mcid.gld_boletim_p2_financiamentos_imobiliarios_bacen",
+        "model.mcid.gld_boletim_p2_financiamentos_habitacionais_uh",
+        "model.mcid.gld_boletim_p3_empregos_construcao_caged",
+        "model.mcid.gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re",
+        "model.mcid.gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia",
+        "model.mcid.gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_",
+        "model.mcid.gld_boletim_p4_credito_imobiliario_pib",
+        "model.mcid.gld_boletim_p4_no_uh_por_condicao_de_uso",
+        "model.mcid.gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri",
+        "model.mcid.gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida",
+        "model.mcid.gld_boletim_p5_financiamento_pf_mcmv_por_faixa",
+        "model.mcid.gld_boletim_p6_sinapi_brasil_e_incc_m",
+        "model.mcid.gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc",
+        "model.mcid.gld_boletim_p7_indices_da_construcao_variacao"
+      ],
+      "columns": [
+        {
+          "name": "coluna",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Nome da coluna do quadro.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "edicao",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Trimestre a que a célula se refere, no formato usado pelo boletim.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "linha",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Rótulo da linha do quadro.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "modelo",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Modelo do quadro a que a célula pertence.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "pagina",
+          "data_type": "integer",
+          "ordinal": 2,
+          "description": "Página do boletim em que o quadro é impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "quadro",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Título do quadro tal como aparece no impresso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "valor",
+          "data_type": "numeric",
+          "ordinal": 7,
+          "description": "Valor numérico da célula, nulo quando o conteúdo não é numérico.",
           "documentation_status": "curated"
         }
       ],
@@ -13154,7 +13040,8 @@
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
-        "model.mcid.bnz_bacen_financiamentos_imobiliarios"
+        "model.mcid.bnz_bacen_financiamentos_imobiliarios",
+        "model.mcid.slv_bacen_credito_pib"
       ],
       "columns": [
         {
@@ -17798,7 +17685,9 @@
       "description": "Uma linha por trimestre com as três taxas de variação do PIB da construção civil: contra o trimestre imediatamente anterior, acumulada no ano e acumulada em quatro trimestres.",
       "documentation_status": "curated",
       "materialized": "table",
-      "depends_on": [],
+      "depends_on": [
+        "model.mcid.slv_ibge_pib_construcao_civil"
+      ],
       "columns": [
         {
           "name": "ano",

@@ -61,6 +61,17 @@ produtos:
     display_name: Conjuntura Habitacional
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
+    # O schema `conjuntura` é compartilhado: além do nosso produto, ele abriga
+    # tabelas de outra origem (as `silver_fgts_*`, ~10 M de linhas, que nenhum
+    # modelo deste repositório produz ou lê). Sem esta trava, a catalogação
+    # marcaria essas tabelas como produto Conjuntura, o que seria falso.
+    # Só entram no catálogo as que seguem a convenção de camada por prefixo ou
+    # que estejam no catálogo semântico do dbt.
+    prefixos_de_tabela:
+      - bnz_
+      - slv_
+      - gld_
+      - snap_
     schemas:
       - conjuntura
     description: >

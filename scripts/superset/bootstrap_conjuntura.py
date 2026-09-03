@@ -289,11 +289,21 @@ class Superset:
         return response.json()["result"]["id"]
 
 
-def env(name: str) -> str:
-    value = os.getenv(name)
-    if not value:
-        raise SystemExit(f"Variável obrigatória ausente: {name}")
-    return value
+def env(name: str, *alternativos: str) -> str:
+    """Lê a primeira variável definida entre `name` e seus sinônimos.
+
+    A URL do Superset tem dois nomes no projeto: estes scripts sempre pediram
+    `SUPERSET_URL`, enquanto a integração do OpenMetadata e o `.env.example`
+    declaram `SUPERSET_HOST_PORT`. Quem montava o ambiente pelo exemplo não
+    conseguia rodar os scripts. Aceitar os dois evita a pegadinha sem quebrar
+    quem já tem o `.env` antigo.
+    """
+    for candidato in (name, *alternativos):
+        value = os.getenv(candidato)
+        if value:
+            return value
+    nomes = " ou ".join((name, *alternativos))
+    raise SystemExit(f"Variável obrigatória ausente: {nomes}")
 
 
 def get_or_create_database(api: Superset) -> int:
@@ -532,7 +542,7 @@ def main() -> None:
     args = parser.parse_args()
     load_dotenv(".env", override=False)
     api = Superset(
-        env("SUPERSET_URL"),
+        env("SUPERSET_URL", "SUPERSET_HOST_PORT"),
         env("SUPERSET_USERNAME"),
         env("SUPERSET_PASSWORD"),
         args.dry_run,
