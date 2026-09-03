@@ -97,6 +97,19 @@ conjuntura-docs:
 conjuntura-docs-pdf: conjuntura-docs
 	soffice --headless --convert-to pdf --outdir build build/pipeline.html
 
+# Catálogo de fontes: um bloco por quadro do boletim, com o endereço da
+# origem clicável. O PDF sai pelo Chrome, e não pelo soffice, porque só ele
+# preserva a anotação de link — no soffice a URL vira texto morto.
+conjuntura-catalogo:
+	poetry run python scripts/conjuntura/gerar_catalogo_fontes.py \
+		--saida build/catalogo-fontes.html
+	printf '<!doctype html><html lang="pt-BR" data-theme="light"><head><meta charset="utf-8">' > build/catalogo-fontes-impressao.html
+	cat build/catalogo-fontes.html >> build/catalogo-fontes-impressao.html
+	printf '</html>' >> build/catalogo-fontes-impressao.html
+	google-chrome-stable --headless --disable-gpu --no-sandbox \
+		--print-to-pdf=build/Catalogo-Fontes-Conjuntura-Habitacional.pdf \
+		--no-pdf-header-footer file://$$PWD/build/catalogo-fontes-impressao.html
+
 # Audita somente descrições YAML e não acessa tabelas ou arquivos de dados.
 # Use `GOVERNANCE_STRICT=--strict make governance-audit` ao transformar os
 # achados em gate de CI.
@@ -161,7 +174,8 @@ conjuntura-congelar:
 
 .PHONY: setup format lint lint-ci test compose-config up down logs-airflow \
 	docs-setup docs-collect docs-build docs-serve docs-clean conjuntura-docs \
-	conjuntura-docs-pdf conjuntura-validar-boletins conjuntura-congelar \
+	conjuntura-docs-pdf conjuntura-catalogo conjuntura-validar-boletins \
+	conjuntura-congelar \
 	governance-audit gx-silver governance-load-strategies openmetadata-catalog \
 	openmetadata-sync openmetadata-governanca openmetadata-lake openmetadata \
 	governance-audit-om
