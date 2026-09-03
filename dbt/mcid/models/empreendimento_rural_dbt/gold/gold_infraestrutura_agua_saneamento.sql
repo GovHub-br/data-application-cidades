@@ -60,12 +60,9 @@ select
     f.agente_financeiro,
     f.quantidade_uh,
 
-    -- Quantidades de Cisternas e Efluentes (cadastro PJ, ou soma do PF)
-    --
-    -- Sem o `, 0` no fim dos coalesce. As fontes de cisterna/efluente cobrem ~1% da
-    -- carteira, então o zero final afirmava "este empreendimento não tem cisterna" para
-    -- 98,8% dos empreendimentos, quando a leitura correta é "a origem não informa". Era o
-    -- que fazia esta gold somar zeros e parecer que o programa quase não instala nada.
+    -- Quantidades de Cisternas e Efluentes (cadastro PJ, ou soma do PF). Os coalesce não
+    -- terminam em 0: as fontes cobrem ~1% da carteira, e nos outros 99% a leitura correta
+    -- é "a origem não informa", não "não tem cisterna".
     coalesce(c.qt_cisterna_pj, cpf.qt_cisterna_pf) as qt_cisternas,
     coalesce(c.qt_efluente_pj, cpf.qt_efluente_pf) as qt_efluentes,
 

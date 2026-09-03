@@ -8,23 +8,10 @@ with
         select * from {{ ref("silver_empreendimento") }}
     ),
 
-    -- A execução financeira era recalculada três vezes no mesmo select (uma para a coluna,
-    -- duas dentro do CASE do ritmo). Uma vez só, aqui, para as três leituras não poderem
-    -- divergir entre si.
-    --
-    -- `situacao_normalizada` existe porque a origem manda a mesma situação em duas grafias
-    -- — "Concluído e Entregue" (8.549 linhas) e "CONCLUÍDO E ENTREGUE" (20) — e as regras
-    -- comparavam só com a maiúscula. Resultado: 20 dos ~8.569 entregues eram reconhecidos.
-    -- Acumulado da SÉRIE de liberações, por APF. Existe só para ser confrontado com o
-    -- valor_desembolsado (que é ESTOQUE, vindo dos prioritários). São duas medições
-    -- independentes da mesma grandeza e ninguém as reconciliava: no APF 29712236 o
-    -- estoque diz R$ 280.000 (100% do contratado) e a série soma 75,7%. O dashboard
-    -- mostrava as duas na mesma tela como se fossem a mesma coisa.
-    --
-    -- A série é um PISO, não a verdade: o INT055 só traz o que CAIXA e BB reportaram por
-    -- aquela integração, e o feed para em 2025-03. Contrato de 2009 tem história anterior
-    -- ao que existe no arquivo. Por isso o estoque continua sendo o número da ficha — mas
-    -- agora com o acumulado da série ao lado, e a diferença explícita.
+    -- Acumulado da SÉRIE de liberações, para ser confrontado com o valor_desembolsado,
+    -- que é ESTOQUE. A série é um PISO, não a verdade: o INT055 só traz o que CAIXA e BB
+    -- reportaram por aquela integração, então contrato antigo tem história anterior ao
+    -- arquivo. O estoque é o número da ficha; a série fica ao lado, com a diferença.
     serie as (
         select
             apf,
@@ -34,6 +21,8 @@ with
         group by apf
     ),
 
+    -- Normaliza a situação (a origem manda a mesma em duas grafias) e calcula a execução
+    -- financeira uma vez só, para a coluna e o CASE do ritmo não poderem divergir.
     calculado as (
         select
             b.*,
@@ -122,13 +111,10 @@ select
         else 'Dentro do Prazo'
     end as status_prazo,
 
-    -- Evolução Financeira
-    --
-    -- `valor_desembolsado` é ESTOQUE (posição informada pelos prioritários) e
-    -- `vr_acumulado_liberacoes` é FLUXO (soma da série de liberações). Medem a mesma
-    -- grandeza por caminhos diferentes e podem não fechar — quando não fecham, é a série
-    -- que está incompleta, não o estoque que está errado. As duas ficam visíveis, com a
-    -- diferença calculada, para o dashboard poder mostrar a série sem contradizer o card.
+    -- Evolução Financeira: ESTOQUE (valor_desembolsado, dos prioritários) e FLUXO
+    -- (vr_acumulado_liberacoes, da série). Medem a mesma grandeza por caminhos diferentes
+    -- e podem não fechar; quando não fecham, é a série que está incompleta. As duas ficam
+    -- visíveis, com a diferença, para a série não contradizer o card.
     valor_desembolsado,
     pct_execucao_financeira as percentual_execucao_financeira,
     vr_acumulado_liberacoes,

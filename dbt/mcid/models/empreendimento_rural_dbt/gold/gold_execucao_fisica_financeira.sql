@@ -2,36 +2,17 @@
 
 -- Gold: Execução Física x Financeira (Rural) — uma linha por APF × mês da série financeira.
 --
--- O QUE MUDOU E POR QUÊ
---
--- A versão anterior tinha três defeitos que se somavam para produzir números falsos:
---
--- 1. `coalesce(pct, 0.0)` nos dois eixos. Quando não há série financeira para o APF — e não
---    há para ~89% da carteira, porque o MONIT_MOV_FINANC_RURAL cobre pouco e o INT055 só
---    cobre PNHR — o gráfico mostrava "0,0% executado" ao lado de uma ficha dizendo
---    R$ 280.686 desembolsados. Ausência de dado virava afirmação de zero.
---
--- 2. A física vinha direto da silver_obra_mensal, enquanto a ficha vinha da
---    silver_empreendimento. Duas fontes para o mesmo indicador, e elas discordavam: 100%
---    aqui, 33,9% lá, no mesmo empreendimento e na mesma tela. Agora as duas leem a mesma
---    coluna consolidada, que escolhe a fonte pela data de medição.
---
--- 3. O mês da física era `date_trunc('month', dt_alteracao_situacao)` — a data em que a
---    SITUAÇÃO mudou, não a competência da medição. No 63665048 isso jogava uma medição de
---    agosto/2026 em março/2026, num mês onde não havia liberação nenhuma, e o full outer
---    join gerava uma linha órfã que o coalesce então zerava.
---
--- COMO É AGORA
---
 -- A execução física do Rural NÃO é uma série: a bronze é full refresh do arquivo mensal
 -- mais recente, então existe UMA medição por empreendimento, com data de referência. Ela
 -- sai repetida em todos os meses, para ser desenhada como linha de referência sobre a
--- série financeira — que é a única das duas que tem história de verdade.
+-- série financeira — a única das duas que tem história.
 --
--- ATENÇÃO NO SUPERSET: a física deixa de ser uma barra num mês e passa a ser um valor
--- constante ao longo do eixo, e o financeiro passa a ter buracos onde não há dado (antes
--- vinham zeros). Empreendimento sem nenhuma liberação registrada aparece com uma linha só,
--- no mês da medição física, com o financeiro nulo.
+-- A física sai da coluna consolidada da silver_empreendimento, a mesma que alimenta a
+-- ficha, para as duas telas não discordarem.
+--
+-- Ausência de dado é NULL, nunca 0,0%: não há série financeira para ~89% da carteira, e
+-- afirmar zero ali contradiz a ficha. Empreendimento sem liberação registrada aparece com
+-- uma linha só, no mês da medição física, com o financeiro nulo.
 
 with
     -- Série financeira: esta sim é temporal, uma linha por APF × mês de liberação.

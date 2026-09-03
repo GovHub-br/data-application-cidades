@@ -48,8 +48,8 @@ Regras:
    projeto dbt, então o prefixo de camada é o que garante a unicidade.
 2. **`<assunto>` casa entre as camadas.** `bronze_cadastro_pj` -> `silver_cadastro_pj`.
    A linhagem se lê pelo nome, sem abrir o SQL.
-3. **Sem sufixo de tipo de visualização.** Era `execucao_fisica_financeira_chart_rural`;
-   hoje é `gold_execucao_fisica_financeira`. O nome descreve o dado, não o gráfico.
+3. **Sem sufixo de tipo de visualização.** `gold_execucao_fisica_financeira`, não
+   `..._chart`: o nome descreve o dado, não o gráfico.
 4. **Uma pasta por camada** (`silver/`, `gold/`), e o prefixo repete a pasta de
    propósito: no banco não existe pasta.
 

@@ -4,9 +4,6 @@
 -- Fonte: bronze.bronze_pnhr_liberacoes (parquet da staging/ carregado
 -- pelo staging_para_bronze.py)
 -- Saída: uma linha por liberação de recurso do PNHR, tipada, para a série financeira.
---
--- Existe para tirar a tipagem do INT055 de dentro da gold: antes o
--- gold/gold_evolucao_financeira.sql lia o text cru do dump e fazia parse ali dentro.
 -- O filtro de programa (%PNHR%) fica aqui, junto do resto da regra de leitura da fonte.
 with
     liberacoes_raw as (

@@ -255,8 +255,8 @@ models:
     description: Percentual de execução financeira da obra (numeric 6,2).
 - name: silver_pnhr_liberacoes
   description: 'Liberações de recurso do PNHR (integração INT055 CAIXA/BB), tipadas e já filtradas por
-    `no_programa like ''%PNHR%''`. Existe para que a gold gold_evolucao_financeira não precise ler e
-    parsear text cru: antes o INT055 era lido direto do dump dentro da gold.
+    `no_programa like ''%PNHR%''`. Concentra aqui a leitura da fonte, para a gold
+    gold_evolucao_financeira não precisar parsear text cru.
 
     '
   meta:

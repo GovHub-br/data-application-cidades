@@ -5,7 +5,7 @@
 Responde as perguntas que um teste do dbt só consegue responder DEPOIS que alguém
 decidiu o que asseverar:
 
-  - sobrou mojibake em algum valor? (verifica se o reprocessamento do encoding pegou)
+  - sobrou mojibake em algum valor?
   - quais colunas são 100% nulas? (coluna morta: ou a origem mudou, ou o model erra o nome)
   - a chave natural duplica?
   - os left joins da silver casam, ou estão caindo no coalesce em silêncio?
@@ -279,13 +279,8 @@ def secao_joins(cur, schema: str, joins: List[Tuple[str, str, str]]) -> List[str
 # ---------------------------------------------------------------------------------------
 # Procedência e divergência entre fontes
 # ---------------------------------------------------------------------------------------
-# O bug que motivou esta seção: o APF 63665048 mostrava 33,90% de execução física na ficha
-# e 100,00% no gráfico. Não era erro de cálculo — eram duas fontes discordando, e cada gold
-# tinha escolhido uma. O `coalesce` da consolidação punha o snapshot do SNH na frente por
-# cobertura, e ele estava dez meses atrás dos feeds mensais.
-#
-# Um APF não diz o tamanho do problema. Estas duas seções dizem: quantos empreendimentos
-# têm fontes que discordam, de quanto, e qual fonte acabou valendo.
+# Mede quantos empreendimentos têm fontes que discordam da mesma grandeza, de quanto, e
+# qual fonte acabou valendo na consolidação.
 
 # medida -> [(tabela, coluna de valor, coluna de data, rótulo)]
 FONTES_POR_MEDIDA: Dict[str, List[Tuple[str, str, str, str]]] = {
@@ -308,7 +303,7 @@ COLUNA_FONTE: Dict[str, str] = {
     "valor_desembolsado": "fonte_valor_desembolsado",
 }
 
-# Colunas de procedência que a silver_empreendimento passou a expor.
+# Colunas de procedência expostas pela silver_empreendimento.
 PROCEDENCIA = [
     ("silver_empreendimento", "fonte_execucao_fisica"),
     ("silver_empreendimento", "fonte_valor_desembolsado"),

@@ -437,22 +437,13 @@ def _converter_tabular(
       - 'count': engine Python (mais lento) descarta E conta as linhas mal-formadas.
       - 'error': falha o arquivo na 1ª linha mal-formada.
     """
-    # Ordem das tentativas, e por que ela é essa:
+    # Tenta, nesta ordem: o encoding detectado em modo estrito; o MESMO encoding com
+    # errors="replace"; só então latin-1.
     #
-    #   1. o encoding detectado, em modo estrito;
-    #   2. o MESMO encoding com errors="replace";
-    #   3. só então latin-1.
-    #
-    # O passo 2 é o que impede o estrago que motivou esta função. Antes, um único byte
-    # inválido em qualquer ponto de um arquivo utf-8 derrubava a leitura inteira para
-    # latin-1 — e latin-1 aceita todos os 256 bytes, então "sucedia" transformando TODO
-    # acento do arquivo em mojibake: "município" (C3 AD) virava "municÃ­pio", e depois o
-    # norm_header o reduzia a "municapio". O cabeçalho ia junto, então até os nomes de
-    # coluna saíam corrompidos.
-    #
-    # Com errors="replace" o dano fica onde ele realmente está: os poucos bytes inválidos
-    # viram U+FFFD e o resto do arquivo é decodificado corretamente. Preserva a
-    # propriedade de "a carga nunca quebra" sem mentir sobre o conteúdo.
+    # O passo 2 mantém o dano onde ele está: os poucos bytes inválidos viram U+FFFD e o
+    # resto do arquivo decodifica certo. Cair direto para latin-1 nunca falha — aceita os
+    # 256 bytes — e por isso transformaria TODO acento do arquivo em mojibake, cabeçalho
+    # incluso.
     encoding = real_encoding
     encoding_errors = "strict"
     while True:

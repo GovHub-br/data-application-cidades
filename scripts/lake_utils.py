@@ -57,13 +57,9 @@ def detectar_encoding(sample: bytes) -> str:
         # erro só nos últimos bytes = provável char utf-8 cortado no fim do sample
         if e.start >= len(sample) - 3:
             return "utf-8"
-    # utf-8 "sujo": um punhado de bytes inválidos não desfaz um arquivo que é utf-8 no
-    # resto. Sem esta checagem, UM byte estranho no meio de um arquivo grande jogava a
-    # decisão para cp1252/latin-1, e aí TODO acento do arquivo virava mojibake — o
-    # cabeçalho junto. Comparar sequências multibyte válidas contra bytes inválidos
-    # separa os dois casos: um utf-8 com um byte solto tem milhares de sequências
-    # válidas e um punhado de erros; um cp1252 de verdade tem o oposto, porque cada
-    # acento isolado é uma sequência utf-8 inválida.
+    # utf-8 "sujo": um punhado de bytes inválidos não desfaz um arquivo utf-8 no resto.
+    # Contar sequências multibyte válidas contra bytes inválidos separa os dois casos —
+    # um cp1252 de verdade tem o oposto, porque cada acento isolado é sequência inválida.
     validas, invalidas = _contar_sequencias_utf8(sample)
     if validas > invalidas:
         return "utf-8"

@@ -52,12 +52,8 @@ select
     f.programa,
     f.quantidade_uh,
 
-    -- Métricas de Cadastro e Demografia
-    --
-    -- O cadastro PF cobre ~1% da carteira. Com `coalesce(..., 0)` os outros 99%
-    -- apareciam como empreendimentos com zero beneficiários cadastrados, zero mulheres e
-    -- renda média zero — o que somado em qualquer agregação do Superset destrói a média.
-    -- Nulo é a leitura correta: não há cadastro, não há número.
+    -- Métricas de Cadastro e Demografia. O cadastro PF cobre ~1% da carteira; nos outros
+    -- 99% a ausência fica NULL, não 0, senão qualquer média do Superset é destruída.
     a.total_beneficiarios_cadastrados,
     round(a.media_pessoas_familia, 1) as media_pessoas_familia,
 

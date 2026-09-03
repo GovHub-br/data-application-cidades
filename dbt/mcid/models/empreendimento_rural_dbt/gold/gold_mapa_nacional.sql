@@ -52,11 +52,8 @@ with
         group by f.uf, i.estado_nome, i.regiao_sigla, i.regiao_nome
     ),
 
-    -- A linha de região é agregada da BASE, não das linhas de UF.
-    --
-    -- Antes era `avg(media_execucao_fisica)` sobre agg_uf: média de médias. Roraima com 3
-    -- empreendimentos pesava igual à Bahia com 3.000, e o número da região não era a
-    -- execução da região — era a média das médias dos estados dela.
+    -- A região é agregada da BASE, não das linhas de UF: média de médias faria Roraima,
+    -- com 3 empreendimentos, pesar igual à Bahia, com 3.000.
     agg_regiao as (
         select
             i.regiao_sigla,

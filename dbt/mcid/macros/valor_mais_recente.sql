@@ -2,16 +2,10 @@
     Escolhe, entre várias fontes que medem a MESMA coisa, o valor da fonte com a data de
     referência mais recente.
 
-    Por que isso existe: a consolidação do empreendimento vinha de um `coalesce` com ordem
-    de fonte fixa. `coalesce` responde "quem é o primeiro que não é nulo", e a pergunta
-    certa é "quem mediu por último". As duas coincidem só por sorte.
-
-    O caso que expôs o problema: o APF 63665048 tem execução física 33,90% no snapshot do
-    SNH (dt_referencia 2025-09-30) e 100,00% no feed mensal da CAIXA (dt_movimento
-    2026-07-31) e no MONIT de obra (dt_movimento 2026-08-02). O `coalesce` punha o SNH
-    primeiro — por cobertura, não por atualidade — e a ficha publicava um número de dez
-    meses antes. O mesmo vale para valor_desembolsado: 280.686 no SNH contra 574.000 na
-    CAIXA.
+    Um `coalesce` com ordem de fonte fixa responde "quem é o primeiro que não é nulo", e
+    a pergunta certa é "quem mediu por último". As duas coincidem só por sorte: o
+    snapshot do SNH tem a melhor cobertura e costuma vir na frente, mas pode estar meses
+    atrás dos feeds mensais da CAIXA e do MONIT.
 
     Fonte sem data de referência (o cadastro PJ, por exemplo) entra com data nula e o
     `nulls last` a deixa por último: ela é usada só quando é a única que tem valor. É o

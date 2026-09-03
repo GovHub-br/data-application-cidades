@@ -74,15 +74,13 @@ empreendimento_rural:
   schema: empreendimento_rural
   objetos:
     # --- Feed mensal do SharePoint (pasta "Novo MCMV - Rural") ---
-    # Os quatro conferidos contra a listagem da staging/: competência vigente 202607.
     # Os mesmos nomes reaparecem nas subpastas "RURAL - <assunto> - Mensal/" com
-    # competências antigas (202512, 202601); como o `*` do fnmatch casa `/`, os dois
-    # conjuntos entram na disputa e vence a competência mais recente — o desejado.
-    # O regex isola a competência (aaaamm) porque há um sufixo de hora depois dela, e o
-    # default (últimos 6-8 dígitos) pegaria a hora.
+    # competências antigas; como o `*` do fnmatch casa `/`, os dois conjuntos entram na
+    # disputa e vence a competência mais recente — o desejado. O regex isola a competência
+    # (aaaamm) porque há um sufixo de hora depois dela, que o default pegaria.
     #
-    # Os irmãos _LAYOUT_, _SEMANAL_ e _DIARIO_ dos mesmos assuntos NÃO casam, porque o
-    # padrão exige `_MENSAL_`. Não é acidente: o dbt do rural é mensal.
+    # Os irmãos _LAYOUT_, _SEMANAL_ e _DIARIO_ NÃO casam, porque o padrão exige
+    # `_MENSAL_`. Não é acidente: o dbt do rural é mensal.
 
     - padrao: "staging/*MONIT_CAD_PJ_RURAL_MENSAL_*.parquet"
       data_regex: "MONIT_CAD_PJ_RURAL_MENSAL_(\\d{6})"
@@ -107,15 +105,15 @@ empreendimento_rural:
     # O padrão termina em `AF_BB.parquet` de propósito, para não casar com o
     # `..._DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB`, que é outra tabela.
     # Remessas antigas usam `aaaa_mm_` (com underscore) e não casam com o regex: ficam
-    # com chave de ordenação vazia e perdem, o que é o desejado. Vigente 202606 — um mês
-    # atrás da CAIXA (202607), porque o BB envia com atraso.
+    # com chave de ordenação vazia e perdem, o que é o desejado. O BB envia com atraso,
+    # então costuma estar uma competência atrás da CAIXA.
     - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet"
       data_regex: "^(\\d{6})_SNH_PMCMV"
       tabela: bronze_prioritarios_bb
 
     # <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv — competência é o PREFIXO.
     # O `_ENTREGAS` no fim é outra tabela: o padrão termina em `AF_CAIXA.parquet`
-    # justamente para não casar com ele. Vigente 202607.
+    # justamente para não casar com ele.
     # É o MESMO arquivo de origem da família empreendimento_far, e é de propósito:
     # cada domínio carrega a sua cópia no seu próprio schema, então não existe ordem
     # obrigatória entre as famílias e nenhuma dropa a tabela da outra. O snapshot cobre
@@ -150,7 +148,7 @@ empreendimento_rural:
     # Não há padrão estável para pescar "a aba do BB do mês mais recente". Enquanto a
     # origem não tiver convenção de nome, a key exata é a única leitura confiável.
     #
-    # RESSALVA: os três são snapshots de 2026-08-25 e NÃO acompanham o feed mensal. São
+    # RESSALVA: os três são snapshots avulsos e NÃO acompanham o feed mensal. São
     # sobrescritos in-place, então o full refresh segue correto, mas a atualidade depende
     # de alguém regerar o export.
     - staging_key: staging/sharepoint/dados_prioritarios_disponibilizados_snh_empreendimentos.parquet
@@ -163,12 +161,9 @@ empreendimento_rural:
       tabela: bronze_trabalho_social_bb
 
     # --- INT055: liberações do PNHR ---
-    # Vem zipado do SFTP; o sftp_para_minio.py expande na entrada, então em raw/ os 44
-    # objetos datados chegam como .TXT (8,9-10 MB cada) e o raw_para_staging converte
-    # todos (lake._staging_log: 45 linhas `converted`, contando o export canônico
-    # raw/sharepoint/int_financeiro_int055_liberacoes_caixa_bb.csv).
-    # O _staging_key descarta a extensão de origem, então o .TXT maiúsculo virou
-    # ..._<aaaammdd>.parquet normalmente. Vigente 20250318.
+    # Vem zipado do SFTP; o sftp_para_minio.py expande na entrada, então em raw/ os
+    # objetos datados chegam como .TXT. O _staging_key descarta a extensão de origem, e o
+    # .TXT maiúsculo vira ..._<aaaammdd>.parquet normalmente.
     # Regex ancorado depois de LIBERACOES_CAIXA_BB_ pela mesma razão do INT065/INT057.
     - padrao: "staging/*INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet"
       data_regex: "LIBERACOES_CAIXA_BB_(\\d{8})"

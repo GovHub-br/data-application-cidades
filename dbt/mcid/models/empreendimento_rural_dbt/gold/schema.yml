@@ -169,7 +169,7 @@ models:
   - name: dias_desde_ultima_medicao
     description: >
       `current_date - dt_referencia_consolidada`. Serve para o dashboard marcar número
-      velho: no 63665048 a ficha vinha publicando uma medição de 10 meses antes.
+      velho: uma fonte de boa cobertura pode estar meses atrás dos feeds mensais.
   - name: vr_acumulado_liberacoes
     description: >
       Soma da série de liberações (FLUXO), para ser confrontada com `valor_desembolsado`,

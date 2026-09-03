@@ -4,81 +4,16 @@ sources:
   - name: raw
     schema: __dados_brutos
     description: >
-      Schema de dados brutos do banco cidades.
-      Contém os dados ingeridos das fontes GFAR, CAIXA e SNH para o programa MCMV.
+      Dump antigo do banco cidades. Última dependência dos dbts nesse schema: a tabela
+      de referência de UF do IBGE, que não existe em nenhuma outra fonte. O resto das
+      tabelas do MCMV saiu daqui para as bronze_* de cada domínio, carregadas do data
+      lake pelo scripts/staging_para_bronze.py.
     tables:
-      # Fontes FAR
-      - name: novo_mcmv_far_consolidado
-        description: >
-          Tabela consolidada do GFAR com todas as propostas FAR do Novo MCMV.
-          Contém 15.091 registros (13.216 propostas únicas), incluindo propostas
-          não contratadas, contratadas e distratadas. Todas as colunas são text.
-      - name: novo_mcmv_far_cad_pj_mensal
-        description: >
-          Cadastro detalhado de pessoa jurídica (empreendimento) com 82 colunas.
-          Contém 822 empreendimentos contratados com dados de composição financeira,
-          coordenadas GPS, tipologia, construtora e datas-chave. Snapshot mensal.
-      - name: novo_mcmv_far_obra_mensal
-        description: >
-          Dados de evolução física da obra com 40 colunas. Contém 822 registros
-          (1 por empreendimento). Inclui percentual previsto/realizado, situação
-          da obra, UHs concluídas e datas de paralisação/retomada.
-      - name: novo_mcmv_far_financeiro_mensal
-        description: >
-          Dados de liberações financeiras com série temporal. Contém 6.069 registros
-          para 638 APFs (média de 9,5 liberações por empreendimento). Detalha
-          valores pagos por componente (obra, terreno, PTS, INCC).
-      - name: dados_prioritarios_recebidos_caixa_empreendimentos
-        description: >
-          Dados prioritários recebidos da CAIXA com snapshot consolidado.
-          Contém 4.443 empreendimentos FAR com situação, percentual de execução,
-          valores contratados/desembolsados, UHs e coordenadas geográficas.
       - name: api_ibge_uf
         description: >
-          Tabela de referência do IBGE com os 27 estados brasileiros.
-          Contém sigla, nome completo e região. Usada para enriquecer dashboards.
-      - name: api_ibge_regioes
-        description: >
-          Tabela de referência do IBGE com as 5 regiões brasileiras.
-          Contém id e nome (Norte, Nordeste, Centro-Oeste, Sudeste, Sul).
-      - name: dados_prioritarios_recebidos_caixa_entregas
-        description: >
-          Snapshot de entregas reportadas pela CAIXA. Contém 11.540 registros
-          de múltiplos programas.
-
-      # Fontes FDS (Entidades)
-      - name: novo_mcmv_fds_cad_pj_mensal
-        description: >
-          Cadastro PJ mensal do MCMV Entidades (FDS). 343 empreendimentos
-          contratados a partir de ago/2024. 89 colunas text com dados de
-          Entidade Organizadora, construtora, UHs, composição financeira,
-          GPS, datas, substituição de EO e indicadores. Snapshot mensal.
-      - name: novo_mcmv_fds_obra_mensal
-        description: >
-          Evolução física da obra FDS. 343 registros (1 por empreendimento).
-          47 colunas text com situação da operação, percentual previsto/realizado,
-          UHs concluídas/alienadas, paralisação, invasão e datas de entrega.
-      - name: novo_mcmv_fds_financeiro_mensal
-        description: >
-          Série temporal de liberações financeiras FDS. 16.124 registros para
-          750 APFs (111 do Novo MCMV). APF em 6 dígitos. ATENÇÃO: ic_credito=0
-          são liberações reais (valores negativos), usar ABS(). ic_credito=1
-          são devoluções (20 registros).
-      - name: novo_mcmv_fds_trabalho_social_mensal
-        description: >
-          Acompanhamento do Trabalho Técnico Social FDS. 89 registros com
-          situação, datas de aprovação PTS, convênio, relatórios e portaria.
-      
-      # Fontes Complementares
-      - name: int_empreendimentos_int_059_fds_caixa_pj
-        description: >
-          Tabela complementar da CAIXA (INT 059) com 856 registros.
-          Contém dados do legado e do Novo MCMV. Importante para filtros
-          como situacao_gefus e fase_contrato.
-      - name: api_ibge_municipios
-        description: >
-          Tabela de referência do IBGE com os municípios brasileiros.
-          Contém id, nome, microrregião, mesorregião e códigos relacionados.
+          Referência do IBGE com os 27 estados: sigla, nome e região. Traz cada UF
+          duplicada (54 linhas para 27 siglas), então todo join com ela precisa de
+          `distinct` para não dobrar as somas.
 
   - name: ibge
     schema: ibge
@@ -310,7 +245,6 @@ sources:
       `empreendimento_rural` do scripts/bronze_familias.yml. Tudo text, colunas em
       snake_case, mais as colunas de linhagem _source_file, _ingested_at e
       _source_hash. A tipagem acontece na silver. Carga full refresh por família.
-      Origens conferidas contra a listagem real da staging/ (mc ls, 2026-09-01).
     tables:
       - name: bronze_cadastro_pj
         description: >
@@ -336,8 +270,8 @@ sources:
           Snapshot de dados prioritários da SNH, todas as modalidades; a
           silver_prioritarios_snh filtra modalidade='RURAL'. Colunas text.
           Origem: export canônico staging/sharepoint/
-          dados_prioritarios_disponibilizados_snh_empreendimentos.parquet — snapshot de
-          2026-08-25, sobrescrito in-place, NÃO acompanha o feed mensal.
+          dados_prioritarios_disponibilizados_snh_empreendimentos.parquet — snapshot avulso,
+          sobrescrito in-place, NÃO acompanha o feed mensal.
       - name: bronze_prioritarios_caixa
         description: >
           Snapshot de dados prioritários da CAIXA, todas as modalidades; a
@@ -380,10 +314,10 @@ sources:
           Origem: export canônico staging/sharepoint/
           base_trabalho_social_pnhr_rural_caixa.parquet. Key exata em vez de padrão: o
           feed datado (Trabalho Social/MCMV_RURAL_TS_CAIXA_BB_<aaaamm>) vira um parquet
-          por aba e o sufixo da aba muda de nome todo mês. Snapshot de 2026-08-25.
+          por aba e o sufixo da aba muda de nome todo mês. Snapshot avulso.
       - name: bronze_trabalho_social_bb
         description: >
           Base de acompanhamento do Trabalho Social (PTS) do PNHR pelo Banco do
           Brasil. Layout próprio, diferente do da CAIXA. Colunas text.
           Origem: export canônico staging/sharepoint/base_trabalho_social_pnhr_bb.parquet,
-          mesma ressalva do da CAIXA. Snapshot de 2026-08-25.
+          mesma ressalva do da CAIXA.

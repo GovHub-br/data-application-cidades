@@ -81,21 +81,13 @@ select
     s.regiao,
     s.cod_ibge,
 
-    -- ------------------------------------------------------------------------------
-    -- Medições: quem mediu por ÚLTIMO, não quem aparece primeiro na lista de fontes
+    -- Medições: vale quem mediu por ÚLTIMO, não quem aparece primeiro na lista de fontes.
+    -- O snapshot do SNH tem a melhor cobertura, mas é export avulso e pode estar meses
+    -- atrás dos feeds mensais da CAIXA e do MONIT de obra.
     --
-    -- Estas colunas vinham de `coalesce(s.X, cx.X, b.X, ...)` — ordem de fonte fixa, com o
-    -- snapshot do SNH sempre na frente. O SNH tem a melhor cobertura, mas é um export
-    -- avulso: no APF 63665048 ele traz dt_referencia 2025-09-30 enquanto a CAIXA e o MONIT
-    -- de obra trazem 2026-07-31 e 2026-08-02. A ficha publicava 33,90% de execução e
-    -- R$ 280.686 desembolsados quando as fontes atuais diziam 100% e R$ 574.000.
-    --
-    -- Cada medição agora vem acompanhada da fonte e da data que a produziram, para o
-    -- número ser auditável no dashboard em vez de aparecer sem procedência.
-    --
-    -- Nenhuma medição cai para 0 quando não existe. Ausência é NULL: "não sei" e "zero"
-    -- são afirmações diferentes, e a segunda é falsa.
-    -- ------------------------------------------------------------------------------
+    -- Cada medição vem com a fonte e a data que a produziram, para o número ser auditável
+    -- no dashboard. Ausência é NULL, nunca 0: "não sei" e "zero" são afirmações
+    -- diferentes, e a segunda é falsa.
 
     -- UHs
     {% set uh_contratadas = [

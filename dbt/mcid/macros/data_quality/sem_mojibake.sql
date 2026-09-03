@@ -2,13 +2,9 @@
   Teste genérico: falha se a coluna contiver mojibake.
 
   Mojibake é o resultado de ler bytes utf-8 como latin-1/cp1252: "São" vira "SÃ£o",
-  "código" vira "cÃ³digo". Já aconteceu no lake — 739 arquivos foram decodificados como
-  latin-1 porque um único byte inválido derrubava a leitura inteira (corrigido em
-  scripts/lake_utils.py e scripts/raw_para_staging.py).
-
-  O estrago era invisível: quando o cabeçalho do arquivo é ASCII, os NOMES das colunas
-  saem limpos e só os VALORES ficam corrompidos, então nada quebra — o dado errado só
-  aparece no dashboard. Este teste existe para que isso não passe silencioso de novo.
+  "código" vira "cÃ³digo". Quando o cabeçalho do arquivo é ASCII, os NOMES das colunas
+  saem limpos e só os VALORES ficam corrompidos, então nada quebra: o dado errado
+  aparece direto no dashboard. Daí o teste.
 
   Marcadores:
     Ã     acentos latinos (Ã£=ã, Ã©=é, Ã³=ó, Ã§=ç ...)
