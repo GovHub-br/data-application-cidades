@@ -350,20 +350,32 @@ def get_or_create_datasets(api: Superset, database_id: int) -> dict[str, int]:
 
 
 def get_or_create_charts(api: Superset, datasets: dict[str, int]) -> list[int]:
-    existing = {item.get("slice_name"): item["id"] for item in api.list("chart")}
+    """Cria os charts que faltam e REAPONTA os que ficaram órfãos.
+
+    Guardar só o id do chart existente não bastava: quando o dataset muda de
+    lugar — foi o que aconteceu ao unificar os schemas do conjuntura, com
+    `conjuntura_mart.gold_continuo_*` virando `conjuntura.gld_*` — o chart
+    continua existindo com o mesmo nome, apontando para um dataset que já não
+    existe. O chart não some da tela; ele simplesmente para de carregar. Por
+    isso comparamos também o dataset atual, e corrigimos quando divergir.
+    """
+    existing = {
+        item.get("slice_name"): (item["id"], item.get("datasource_id"))
+        for item in api.list("chart")
+    }
     ids: list[int] = []
     for gold, dataset_id in datasets.items():
         title = nome_do_chart(gold)
+        params = {
+            "datasource": f"{dataset_id}__table",
+            "viz_type": "table",
+            "query_mode": "aggregate",
+            "all_columns": [],
+            "groupby": [],
+            "metrics": [],
+            "row_limit": 1000,
+        }
         if title not in existing:
-            params = {
-                "datasource": f"{dataset_id}__table",
-                "viz_type": "table",
-                "query_mode": "aggregate",
-                "all_columns": [],
-                "groupby": [],
-                "metrics": [],
-                "row_limit": 1000,
-            }
             created = api.create(
                 "chart",
                 {
@@ -374,8 +386,26 @@ def get_or_create_charts(api: Superset, datasets: dict[str, int]) -> list[int]:
                     "params": json.dumps(params),
                 },
             )
-            existing[title] = created["id"] if isinstance(created, dict) else created
-        ids.append(existing[title])
+            novo_id = created["id"] if isinstance(created, dict) else created
+            existing[title] = (novo_id, dataset_id)
+        else:
+            chart_id, dataset_atual = existing[title]
+            if dataset_atual != dataset_id:
+                print(
+                    f"{'[dry-run] ' if api.dry_run else ''}reaponta chart "
+                    f"{title!r}: dataset {dataset_atual} -> {dataset_id}"
+                )
+                api.update(
+                    "chart",
+                    chart_id,
+                    {
+                        "datasource_id": dataset_id,
+                        "datasource_type": "table",
+                        "params": json.dumps(params),
+                    },
+                )
+                existing[title] = (chart_id, dataset_id)
+        ids.append(existing[title][0])
     return ids
 
 
