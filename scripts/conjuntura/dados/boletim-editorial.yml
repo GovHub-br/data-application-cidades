@@ -126,3 +126,56 @@ edicoes:
       financiamento_habitacional_pf_uh:
         - "MCMV-Financiamento: 850 mil"
       incompleto: true
+
+  # ── 2T2026 ────────────────────────────────────────────────────────────────
+  #
+  # `origem: gerado` — diferente do 1T2026, esta edição NÃO foi transcrita de um
+  # boletim publicado: não existe PPTX do 2T2026. A leitura abaixo foi redigida
+  # por máquina a partir dos próprios quadros, e cada afirmação é conferível num
+  # número que está na página. Por isso a página sai com marca de rascunho.
+  #
+  # `expectativas_de_mercado` e `visao_mcid` estão AUSENTES de propósito:
+  # projeção de terceiro é número que uma instituição publicou, e a visão do
+  # Ministério é posição do órgão. Nenhuma das duas se deduz dos quadros.
+  # Para incluí-las, alguém do time precisa escrevê-las aqui.
+  #
+  # Ao revisar o texto, troque `origem` para `revisado` — a marca de rascunho
+  # sai sozinha.
+  "2T2026":
+    titulo: Boletim do segundo trimestre de 2026
+    publicado_em: 2026-09-03
+    origem: gerado
+    leitura:
+      pib: >
+        RETRAÇÃO DE 0,4% NO TRIMESTRE, APÓS ALTA DE 2,8% NO TRIMESTRE ANTERIOR.
+        O ACUMULADO EM QUATRO TRIMESTRES PASSA DE 0,1% PARA 0,3%.
+      lancamentos_e_vendas: >
+        LANÇAMENTOS DE 107.161 UNIDADES, 2,6% ACIMA DO TRIMESTRE ANTERIOR E 1,3%
+        ABAIXO DO MESMO TRIMESTRE DE 2025. VENDAS DE 113.676 UNIDADES, 0,7%
+        ACIMA DO TRIMESTRE ANTERIOR E 5,3% ACIMA DO MESMO TRIMESTRE DE 2025.
+        EM 12 MESES, 477.357 LANÇAMENTOS E 447.250 VENDAS.
+      credito: >
+        277.086 UNIDADES FINANCIADAS NO ACUMULADO DO ANO, SOMANDO R$ 93,7
+        BILHÕES. A CAIXA RESPONDE POR 62,7% DAS UNIDADES E R$ 45,9 BILHÕES.
+      credito_pib: >
+        CRÉDITO IMOBILIÁRIO EM 11,05% DO PIB EM MAIO DE 2026, ANTE 10,50% DOZE
+        MESES ANTES. A SÉRIE SOBE EM TODOS OS QUINZE MESES DA JANELA.
+      condicao_de_uso: >
+        FGTS-PF FINANCIOU 99.722 UNIDADES NOVAS E 19.970 USADAS, ANTE 126.142 E
+        31.660 NO MESMO TRIMESTRE DE 2025. O SBPE AQUISIÇÃO APARECE APENAS COM O
+        TOTAL DE 85.872 UNIDADES: A QUEBRA POR CONDIÇÃO DE USO NÃO ESTÁ NA FONTE.
+      poupanca_e_financiamento: >
+        CAPTAÇÃO LÍQUIDA NEGATIVA DE R$ 1,4 BILHÃO NO MÊS DE REFERÊNCIA, APÓS R$
+        2,3 BILHÕES POSITIVOS NO MÊS ANTERIOR. EM 12 MESES, SAÍDA LÍQUIDA DE R$
+        55,1 BILHÕES, CONTRA R$ 52,0 BILHÕES NOS 12 MESES ANTERIORES.
+      financiamento_pf_mcmv: >
+        142.683 UNIDADES E R$ 34,31 BILHÕES NO TRIMESTRE. A FAIXA 1 CONCENTRA
+        57.047 UNIDADES; A FAIXA 3 TEM O MAIOR VALOR FINANCIADO, R$ 7,95 BILHÕES.
+        O QUADRO NÃO TRAZ O TRIMESTRE DO ANO ANTERIOR.
+      precos: >
+        SINAPI A R$ 1.976,40 POR METRO QUADRADO, COM ALTA DE 1,19% NO MÊS E 7,26%
+        EM 12 MESES. INCC-M SOBE 0,85% NO MÊS E 6,71% EM 12 MESES.
+      ticket_medio: >
+        NO TRIMESTRE, O INCC SOBE 2,7%; O TICKET MÉDIO DA MRV CAI 1,5% E OS DA
+        DIRECIONAL E DA TENDA SOBEM 15,7% E 8,3%. DESDE O 4º TRIMESTRE DE 2020,
+        O INCC ACUMULA 51,3% E OS TICKETS MÉDIOS, ENTRE 54,7% E 121,4%.

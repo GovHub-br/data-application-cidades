@@ -61,6 +61,11 @@ td.neg{color:var(--baixa);font-weight:700}
 .vazio{color:var(--tinta-fraca);font-style:italic;margin:.3rem 0 0}
 .leitura{background:var(--barra);border-left:4px solid var(--ambar);padding:.7rem .9rem;
   margin:.9rem 0;font-size:.82rem;font-weight:600;letter-spacing:.01em;text-transform:uppercase;line-height:1.45}
+/* Leitura redigida por máquina: barra tracejada e etiqueta, para que a
+   diferença entre apurado e redigido seja visível sem depender só de cor. */
+.leitura.gerada{border-left-style:dashed}
+.marca-rascunho{display:block;font-size:.62rem;font-weight:700;letter-spacing:.08em;
+  color:var(--fonte-cor);margin-bottom:.35rem;text-transform:uppercase}
 .grafico .barras{display:flex;align-items:flex-end;gap:.35rem;height:190px;padding-top:1.4rem}
 .barra{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative}
 .barra .haste{width:100%;height:var(--h);background:var(--ambar);border-radius:3px 3px 0 0}

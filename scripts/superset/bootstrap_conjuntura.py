@@ -150,20 +150,18 @@ class Dashboard:
     time_range: str
 
 
-DASHBOARDS = [
-    # Um dashboard por trimestre já existiu aqui — 2026.1, 2026.2, 2026.3 —,
-    # três cópias do mesmo conjunto de charts que só diferiam no
-    # `default_filters`. É duplicação: o recorte por trimestre é FILTRO, não
-    # dashboard. O `build_boletim.py` já monta assim, num dashboard só com
-    # filtro nativo na coluna `edicao`. Recriá-los aqui ressuscitava painéis
-    # que a equipe tinha decidido não manter.
-    Dashboard(
-        "Conjuntura Habitacional — Contínuo",
-        "conjuntura-continuo",
-        "Série contínua, mensal e trimestral, do setor habitacional.",
-        "No filter",
-    ),
-]
+#: Vazio de propósito. Este script já declarou quatro dashboards: um por
+#: trimestre (2026.1, 2026.2, 2026.3) e um contínuo. Os três trimestrais eram
+#: cópias que só diferiam no `default_filters` — recorte por período é filtro,
+#: não dashboard. O contínuo caiu depois: hoje só o `Boletim de Conjuntura —
+#: Trimestral`, montado pelo `build_boletim.py` com filtro nativo na coluna
+#: `edicao`, faz sentido para a equipe.
+#:
+#: O que sobra aqui são os datasets das tabelas gold e os charts tabulares de
+#: exploração, que existem sem dashboard próprio. Se voltar a fazer sentido
+#: publicar um painel a partir deles, acrescente a entrada aqui — mas não
+#: recrie o recorte por trimestre.
+DASHBOARDS: list[Dashboard] = []
 
 
 class Superset:

@@ -389,8 +389,20 @@ def data_br(iso: str) -> str:
     return "/".join(reversed(partes)) if len(partes) == 3 else html.escape(str(iso))
 
 
-def bloco_leitura(texto: str) -> str:
-    return f'<aside class="leitura">{html.escape(texto)}</aside>' if texto else ""
+def bloco_leitura(texto: str, gerado: bool = False) -> str:
+    """A leitura de um quadro. `gerado` marca o que foi redigido por máquina.
+
+    A marca não é decorativa: este é um boletim oficial, e quem lê precisa
+    distinguir o que foi apurado do que foi redigido. Ela sai quando alguém do
+    time revisar o texto e trocar `origem` para `revisado` no editorial.
+    """
+    if not texto:
+        return ""
+    marca = '<span class="marca-rascunho">rascunho — redigido por máquina</span>'
+    return (
+        f'<aside class="leitura{" gerada" if gerado else ""}">'
+        f'{marca if gerado else ""}{html.escape(texto)}</aside>'
+    )
 
 
 #: A folha de estilo vive num arquivo próprio: é a identidade visual do
@@ -417,6 +429,9 @@ def montar(
 ) -> str:
     meta = editorial["edicoes"][edicao]
     leitura = meta.get("leitura") or {}
+    # `transcrito` veio de um boletim publicado; qualquer outra origem foi
+    # redigida por máquina e precisa aparecer como rascunho na página.
+    texto_gerado = meta.get("origem") != "transcrito"
     divergentes = [v for v in validacao if v["status"] == "DIVERGE"]
 
     partes = [
@@ -429,6 +444,35 @@ def montar(
         "</div></div>",
         cabecalho_fixo(edicao),
     ]
+
+    if texto_gerado:
+        ausentes = [
+            rotulo
+            for chave, rotulo in (
+                ("dados_posteriores", "Dados posteriores"),
+                ("expectativas_de_mercado", "Expectativas de mercado"),
+                ("visao_mcid", "Visão MCid"),
+            )
+            if not meta.get(chave)
+        ]
+        faltam = (
+            "<p>Sem seção de "
+            + ", ".join(html.escape(a) for a in ausentes)
+            + ": projeção de terceiro é número que uma instituição publicou, e a "
+            "visão do Ministério é posição do órgão. Nenhuma das duas se deduz "
+            "dos quadros, então ficaram de fora em vez de serem preenchidas.</p>"
+            if ausentes
+            else ""
+        )
+        partes.append(
+            '<div class="folha"><div class="aviso"><h3>Edição redigida por máquina, '
+            "ainda não revisada</h3>"
+            "<p>Os quadros vêm das tabelas <code>gld_boletim_*</code> e não foram "
+            "alterados. A leitura dos números foi redigida por máquina a partir "
+            f"desses mesmos quadros, em {data_br(meta['publicado_em'])}.</p>"
+            + faltam
+            + "</div></div>"
+        )
 
     if divergentes:
         itens = "".join(
@@ -493,15 +537,20 @@ def montar(
             partes.append("</div>")
             chave = leitura_do_quadro.get(q["tabela"])
             if chave and leitura.get(chave):
-                partes.append(bloco_leitura(leitura[chave]))
+                partes.append(bloco_leitura(leitura[chave], gerado=texto_gerado))
         partes.append("</div>")
 
     partes.append(fechamento(meta))
     partes.append(
         '<div class="rodape">Quadros lidos das tabelas <code>gld_boletim_*</code>, '
-        "as mesmas que alimentam o dashboard do Superset. Texto editorial transcrito "
-        f"de <i>{html.escape(meta.get('fonte_da_transcricao', 'boletim publicado'))}</i>."
-        "</div>"
+        "as mesmas que alimentam o dashboard do Superset. "
+        + (
+            "Texto editorial transcrito de <i>"
+            f"{html.escape(meta.get('fonte_da_transcricao', 'boletim publicado'))}</i>."
+            if meta.get("origem") == "transcrito"
+            else "Leitura dos números redigida por máquina e ainda não revisada."
+        )
+        + "</div>"
     )
     return "\n".join(p for p in partes if p)
 
