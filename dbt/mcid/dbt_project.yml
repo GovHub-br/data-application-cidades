@@ -290,6 +290,14 @@ models:
             tier: Tier.Tier2
             owner: mcid-data-engineering
 
+    entidades_dbt:
+      +materialized: table
+      +schema: entidades_fds
+      silver:
+        +materialized: table
+      gold:
+        +materialized: table
+
     conjuntura_dbt:
       +materialized: table
       +schema: conjuntura
@@ -302,6 +310,18 @@ models:
       gold:
         +materialized: table
         +schema: conjuntura_gold
+
+    conjuntura_continuo_dbt:
+      +materialized: table
+      +schema: conjuntura_continuo
+      # Sem camada bronze: o parquet de staging já sai tipado (Etapa 02) e a
+      # silver lê direto via pg_duckdb (read_parquet).
+      silver:
+        +materialized: table
+        +schema: conjuntura_continuo_silver
+      gold:
+        +materialized: table
+        +schema: conjuntura_continuo_mart
 
 on-run-start:
   - "{% if target.type == 'postgres' %}{{ create_udfs() }}{% endif %}"

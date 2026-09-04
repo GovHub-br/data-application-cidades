@@ -1,6 +1,85 @@
 version: 2
 
 sources:
+  - name: raw
+    schema: __dados_brutos
+    description: >
+      Schema de dados brutos do banco cidades.
+      Contém os dados ingeridos das fontes GFAR, CAIXA e SNH para o programa MCMV.
+    tables:
+      # Fontes FAR
+      - name: novo_mcmv_far_consolidado
+        description: >
+          Tabela consolidada do GFAR com todas as propostas FAR do Novo MCMV.
+          Contém 15.091 registros (13.216 propostas únicas), incluindo propostas
+          não contratadas, contratadas e distratadas. Todas as colunas são text.
+      - name: novo_mcmv_far_cad_pj_mensal
+        description: >
+          Cadastro detalhado de pessoa jurídica (empreendimento) com 82 colunas.
+          Contém 822 empreendimentos contratados com dados de composição financeira,
+          coordenadas GPS, tipologia, construtora e datas-chave. Snapshot mensal.
+      - name: novo_mcmv_far_obra_mensal
+        description: >
+          Dados de evolução física da obra com 40 colunas. Contém 822 registros
+          (1 por empreendimento). Inclui percentual previsto/realizado, situação
+          da obra, UHs concluídas e datas de paralisação/retomada.
+      - name: novo_mcmv_far_financeiro_mensal
+        description: >
+          Dados de liberações financeiras com série temporal. Contém 6.069 registros
+          para 638 APFs (média de 9,5 liberações por empreendimento). Detalha
+          valores pagos por componente (obra, terreno, PTS, INCC).
+      - name: dados_prioritarios_recebidos_caixa_empreendimentos
+        description: >
+          Dados prioritários recebidos da CAIXA com snapshot consolidado.
+          Contém 4.443 empreendimentos FAR com situação, percentual de execução,
+          valores contratados/desembolsados, UHs e coordenadas geográficas.
+      - name: api_ibge_uf
+        description: >
+          Tabela de referência do IBGE com os 27 estados brasileiros.
+          Contém sigla, nome completo e região. Usada para enriquecer dashboards.
+      - name: api_ibge_regioes
+        description: >
+          Tabela de referência do IBGE com as 5 regiões brasileiras.
+          Contém id e nome (Norte, Nordeste, Centro-Oeste, Sudeste, Sul).
+      - name: dados_prioritarios_recebidos_caixa_entregas
+        description: >
+          Snapshot de entregas reportadas pela CAIXA. Contém 11.540 registros
+          de múltiplos programas.
+
+      # Fontes FDS (Entidades)
+      - name: novo_mcmv_fds_cad_pj_mensal
+        description: >
+          Cadastro PJ mensal do MCMV Entidades (FDS). 343 empreendimentos
+          contratados a partir de ago/2024. 89 colunas text com dados de
+          Entidade Organizadora, construtora, UHs, composição financeira,
+          GPS, datas, substituição de EO e indicadores. Snapshot mensal.
+      - name: novo_mcmv_fds_obra_mensal
+        description: >
+          Evolução física da obra FDS. 343 registros (1 por empreendimento).
+          47 colunas text com situação da operação, percentual previsto/realizado,
+          UHs concluídas/alienadas, paralisação, invasão e datas de entrega.
+      - name: novo_mcmv_fds_financeiro_mensal
+        description: >
+          Série temporal de liberações financeiras FDS. 16.124 registros para
+          750 APFs (111 do Novo MCMV). APF em 6 dígitos. ATENÇÃO: ic_credito=0
+          são liberações reais (valores negativos), usar ABS(). ic_credito=1
+          são devoluções (20 registros).
+      - name: novo_mcmv_fds_trabalho_social_mensal
+        description: >
+          Acompanhamento do Trabalho Técnico Social FDS. 89 registros com
+          situação, datas de aprovação PTS, convênio, relatórios e portaria.
+      
+      # Fontes Complementares
+      - name: int_empreendimentos_int_059_fds_caixa_pj
+        description: >
+          Tabela complementar da CAIXA (INT 059) com 856 registros.
+          Contém dados do legado e do Novo MCMV. Importante para filtros
+          como situacao_gefus e fase_contrato.
+      - name: api_ibge_municipios
+        description: >
+          Tabela de referência do IBGE com os municípios brasileiros.
+          Contém id, nome, microrregião, mesorregião e códigos relacionados.
+
   - name: mcmv_staging
     description: >
       Staging MinIO (bucket data-lake-mcid, prefixo staging/sharepoint/) lida via
@@ -103,7 +182,17 @@ sources:
         description: >
           Rendimento médio mensal real na construção civil (PNAD Contínua trimestral).
           Agregado 6391, variável 5932. Tipagem aplicada: text→int, text→numeric.
-      
+      - name: ibge_pim_pf_brasil
+        description: >
+          Pesquisa Industrial Mensal - Produção Física (PIM-PF), Brasil.
+          Agregado 8888, variáveis 12606, 12607, 11601-11604, classificação 544[129314].
+          Tipagem aplicada: text→int, text→numeric.
+      - name: ibge_pmc_construcao
+        description: >
+          Pesquisa Mensal de Comércio (PMC), material de construção.
+          Agregado 8880, variáveis 7169, 7170, 11708-11711, classificação 11046 (receita nominal e volume).
+          Tipagem aplicada: text→int, text→numeric.
+
   - name: fgv
     schema: fgv
     description: >
