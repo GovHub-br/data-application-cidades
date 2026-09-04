@@ -38,6 +38,9 @@ htmlcov/
 build/
 *.egg-info/
 
+# Site de documentacao gerado (o acervo em docs-pages/src/_data/ e versionado)
+docs-pages/site/
+
 # DBT
 target/
 dbt_packages/
@@ -54,9 +57,17 @@ Thumbs.db
 # OpenSpec
 openspec/
 
-# VPN 
+# VPN
 /connect.sh
 *.ovpn
 *.p12
 
 config.toml
+
+.logscripts/sftp_errors_*.log
+scripts/sftp_listing.txt
+
+# Artefatos locais dos scripts do data lake (LAKE_LOCAL_ARTIFACTS=1)
+scripts/*.log
+scripts/preview_arquivos.txt
+scripts/auditoria_*.parquet
