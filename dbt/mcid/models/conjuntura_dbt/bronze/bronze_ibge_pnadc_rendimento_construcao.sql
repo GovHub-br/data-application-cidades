@@ -1,17 +1,17 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-SELECT
-    CAST(variavel_id        AS INT)       AS variavel_id,
-    CAST(variavel_nome      AS TEXT)      AS variavel_nome,
-    CAST(localidade_id      AS INT)       AS localidade_id,
-    CAST(localidade_nome    AS TEXT)      AS localidade_nome,
-    CAST(classificacao_id   AS TEXT)      AS classificacao_id,
-    CAST(classificacao_nome AS TEXT)      AS classificacao_nome,
-    CAST(categoria_id       AS TEXT)      AS categoria_id,
-    CAST(categoria_nome     AS TEXT)      AS categoria_nome,
-    CAST(unidade            AS TEXT)      AS unidade,
-    CAST(periodo            AS TEXT)      AS periodo,
-    TO_DATE(periodo, 'YYYYMM')           AS data_referencia,
-    CAST(valor              AS NUMERIC)   AS valor,
-    CAST(dt_ingest          AS TIMESTAMP) AS dt_ingest
-FROM {{ source('ibge', 'pnadc_rendimento_construcao') }}
+select
+    cast(variavel_id as int) as variavel_id,
+    cast(variavel_nome as text) as variavel_nome,
+    cast(localidade_id as int) as localidade_id,
+    cast(localidade_nome as text) as localidade_nome,
+    cast(classificacao_id as text) as classificacao_id,
+    cast(classificacao_nome as text) as classificacao_nome,
+    cast(categoria_id as text) as categoria_id,
+    cast(categoria_nome as text) as categoria_nome,
+    cast(unidade as text) as unidade,
+    cast(periodo as text) as periodo,
+    to_date(periodo, 'YYYYMM') as data_referencia,
+    cast(valor as numeric) as valor,
+    cast(dt_ingest as timestamp) as dt_ingest
+from {{ source("ibge", "pnadc_rendimento_construcao") }}

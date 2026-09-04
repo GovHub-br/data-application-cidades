@@ -1,7 +1,8 @@
 {{ config(materialized="table") }}
 
-with ibge_pib_construcao_civil_bronze as (
-        select 
+with
+    ibge_pib_construcao_civil_bronze as (
+        select
             cast(variavel_id as integer) as variavel_id,
             cast(variavel_nome as text) as variavel_nome,
 
@@ -14,13 +15,12 @@ with ibge_pib_construcao_civil_bronze as (
             cast(categoria_id as integer) as categoria_id,
             upper(trim(cast(categoria_nome as text))) as categoria,
 
-            cast (unidade as text) as unidade,
+            cast(unidade as text) as unidade,
             cast(periodo as text) as periodo,
             to_date(periodo || '01', 'YYYYMMDD') as data_referencia,
             cast(
-                replace(
-                    replace(valor, '.', ''),
-                    ',', '.' 
+                nullif(
+                    nullif(replace(replace(trim(valor), '.', ''), ',', '.'), ''), '-'
                 ) as numeric
             ) as valor,
             cast(dt_ingest as timestamp) as dt_ingest

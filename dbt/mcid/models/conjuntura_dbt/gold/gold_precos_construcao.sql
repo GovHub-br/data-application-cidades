@@ -1,41 +1,46 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-WITH sinapi_dez25 AS (
-    SELECT custo_m2, var_mes, var_12m, dt_ingest, dt_silver
-    FROM {{ ref('silver_ibge_sinapi') }} WHERE data_referencia = '2025-12-01'
-),
+with
+    sinapi_dez25 as (
+        select custo_m2, var_mes, var_12m, dt_ingest, dt_silver
+        from {{ ref("silver_ibge_sinapi") }}
+        where data_referencia = '2025-12-01'
+    ),
 
-sinapi_dez24 AS (
-    SELECT var_12m
-    FROM {{ ref('silver_ibge_sinapi') }} WHERE data_referencia = '2024-12-01'
-),
+    sinapi_dez24 as (
+        select var_12m
+        from {{ ref("silver_ibge_sinapi") }}
+        where data_referencia = '2024-12-01'
+    ),
 
-incc_dez25 AS (
-    SELECT indice, var_mes, var_12_meses, dt_ingest, dt_silver
-    FROM {{ ref('silver_fgv_incc_m') }} WHERE data_referencia = '2025-12-01'
-),
+    incc_dez25 as (
+        select indice, var_mes, var_12_meses, dt_ingest, dt_silver
+        from {{ ref("silver_fgv_incc_m") }}
+        where data_referencia = '2025-12-01'
+    ),
 
-incc_dez24 AS (
-    SELECT var_12_meses
-    FROM {{ ref('silver_fgv_incc_m') }} WHERE data_referencia = '2024-12-01'
-),
+    incc_dez24 as (
+        select var_12_meses
+        from {{ ref("silver_fgv_incc_m") }}
+        where data_referencia = '2024-12-01'
+    ),
 
-resultado AS (
-    SELECT
-        ROUND(s25.custo_m2::numeric, 1)             AS sinapi_custo_m2_dez25,
-        ROUND(s25.var_mes::numeric, 2)              AS sinapi_var_mes_dez25,
-        ROUND(s25.var_12m::numeric, 2)              AS sinapi_var_12m_dez25,
-        ROUND(s24.var_12m::numeric, 2)              AS sinapi_var_12m_dez24,
-        ROUND(i25.indice::numeric, 1)               AS incc_indice_dez25,
-        ROUND(i25.var_mes::numeric, 2)              AS incc_var_mes_dez25,
-        ROUND(i25.var_12_meses::numeric, 2)         AS incc_var_12m_dez25,
-        ROUND(i24.var_12_meses::numeric, 2)         AS incc_var_12m_dez24,
-        GREATEST(s25.dt_ingest, i25.dt_ingest)      AS dt_ingest,
-        GREATEST(s25.dt_silver, i25.dt_silver)      AS dt_silver
-    FROM sinapi_dez25 s25, sinapi_dez24 s24, incc_dez25 i25, incc_dez24 i24
-)
+    resultado as (
+        select
+            round(s25.custo_m2::numeric, 1) as sinapi_custo_m2_dez25,
+            round(s25.var_mes::numeric, 2) as sinapi_var_mes_dez25,
+            round(s25.var_12m::numeric, 2) as sinapi_var_12m_dez25,
+            round(s24.var_12m::numeric, 2) as sinapi_var_12m_dez24,
+            round(i25.indice::numeric, 1) as incc_indice_dez25,
+            round(i25.var_mes::numeric, 2) as incc_var_mes_dez25,
+            round(i25.var_12_meses::numeric, 2) as incc_var_12m_dez25,
+            round(i24.var_12_meses::numeric, 2) as incc_var_12m_dez24,
+            greatest(s25.dt_ingest, i25.dt_ingest) as dt_ingest,
+            greatest(s25.dt_silver, i25.dt_silver) as dt_silver
+        from sinapi_dez25 s25, sinapi_dez24 s24, incc_dez25 i25, incc_dez24 i24
+    )
 
-SELECT
+select
     sinapi_custo_m2_dez25,
     sinapi_var_mes_dez25,
     sinapi_var_12m_dez25,
@@ -44,5 +49,5 @@ SELECT
     incc_var_mes_dez25,
     incc_var_12m_dez25,
     incc_var_12m_dez24,
-    {{ add_metadata_timestamps('gold') }}
-FROM resultado
+    {{ add_metadata_timestamps("gold") }}
+from resultado

@@ -1,9 +1,9 @@
-{{ config(materialized='table') }}
+{{ config(materialized="table") }}
 
-SELECT
+select
     variavel_id,
     periodo,
-    CAST(valor AS NUMERIC) / 10.0 AS valor_percentual,
-    {{ add_metadata_timestamps('silver') }}
-FROM {{ ref('bronze_ibge_pib_construcao_civil') }}
-WHERE variavel_id IN (6562, 6563, 6564)
+    cast(valor as numeric) / 10.0 as valor_percentual,
+    {{ add_metadata_timestamps("silver") }}
+from {{ ref("bronze_ibge_pib_construcao_civil") }}
+where variavel_id in (6562, 6563, 6564)

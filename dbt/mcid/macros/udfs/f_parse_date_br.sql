@@ -3,8 +3,7 @@
 
     create or replace function {{ target.schema }}.parse_date_br(in_text text)
     returns date
-    as
-        $$
+    as $$
         select
             case
                 when in_text is null or trim(in_text) = '' then null
