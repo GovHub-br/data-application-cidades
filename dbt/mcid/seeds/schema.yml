@@ -1,0 +1,34 @@
+version: 2
+
+# Valores publicados nas edições do boletim, usados como gabarito de
+# conferência contra o que os modelos produzem hoje.
+
+seeds:
+  - name: boletim_gabarito
+    description: >
+      Uma linha por célula publicada em uma edição do boletim, com a página, o
+      modelo correspondente, o rótulo da linha, o nome da coluna, o valor
+      impresso e a tolerância aceita na comparação.
+    columns:
+      - name: edicao
+        description: >
+          Trimestre da edição do boletim em que o valor foi publicado.
+      - name: pagina
+        description: >
+          Página do boletim em que a célula aparece.
+      - name: modelo
+        description: >
+          Modelo que reproduz o quadro a que a célula pertence.
+      - name: linha
+        description: >
+          Rótulo da linha do quadro.
+      - name: coluna
+        description: >
+          Nome da coluna do quadro.
+      - name: esperado
+        description: >
+          Valor impresso na edição do boletim.
+      - name: tolerancia
+        description: >
+          Diferença absoluta aceita entre o valor impresso e o valor
+          apurado.

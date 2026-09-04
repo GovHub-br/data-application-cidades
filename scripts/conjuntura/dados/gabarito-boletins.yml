@@ -1,0 +1,344 @@
+# Contrato de validação Gold × números efetivamente publicados.
+#
+# Cada item é atômico: uma consulta escalar, um número publicado e a página
+# que permite auditoria humana. Não registrar valores pessoais neste arquivo.
+versao: 1
+escopo: "Boletins trimestrais de 2025 em diante"
+
+edicoes:
+  "2025_3t":
+    arquivo: "Cópia de Boletim de Conjuntura 2025 3T.pptx.pdf"
+  "2025_4t":
+    arquivo: "Boletim de Conjuntura 2025 4T FINAL.pdf"
+  "2026_1t":
+    arquivo: "Boletim de Conjuntura 2026 1T Final.pdf"
+
+checagens:
+  # Este PDF contém uma única lâmina rasterizada. Os números abaixo foram
+  # transcritos por inspeção visual em 29/08/2026; manter a página como 1.
+  - id: balanco_mrv_2025_3t_lancamentos_tri
+    edicao: "2025_3t"
+    indicador: "MRV — lançamentos, variação contra trimestre anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 1
+    sql: "select var_lancamentos_tri_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '3T2025' and empresa = 'MRV'"
+    esperado: -32
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_mrv_2025_3t_lancamentos_ano
+    edicao: "2025_3t"
+    indicador: "MRV — lançamentos, variação contra mesmo trimestre do ano anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 1
+    sql: "select var_lancamentos_mesmo_tri_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '3T2025' and empresa = 'MRV'"
+    esperado: -19
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_mrv_2025_3t_lancamentos_9m
+    edicao: "2025_3t"
+    indicador: "MRV — lançamentos, acumulado de nove meses"
+    gold: gld_balancos_empresas
+    pagina_pdf: 1
+    sql: "select var_lancamentos_acumulado_periodo_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '3T2025' and empresa = 'MRV'"
+    esperado: 20
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_mrv_2025_3t_vendas_tri
+    edicao: "2025_3t"
+    indicador: "MRV — vendas, variação contra trimestre anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 1
+    sql: "select var_vendas_tri_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '3T2025' and empresa = 'MRV'"
+    esperado: -12
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_mrv_2025_3t_vendas_ano
+    edicao: "2025_3t"
+    indicador: "MRV — vendas, variação contra mesmo trimestre do ano anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 1
+    sql: "select var_vendas_mesmo_tri_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '3T2025' and empresa = 'MRV'"
+    esperado: -10
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_mrv_2025_3t_vendas_9m
+    edicao: "2025_3t"
+    indicador: "MRV — vendas, acumulado de nove meses"
+    gold: gld_balancos_empresas
+    pagina_pdf: 1
+    sql: "select var_vendas_acumulado_periodo_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '3T2025' and empresa = 'MRV'"
+    esperado: -5
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: pib_construcao_2026_1t_trim_trim
+    edicao: "2026_1t"
+    indicador: "PIB da construção — variação trimestre contra trimestre"
+    gold: gld_pib_construcao_civil_pct
+    pagina_pdf: 1
+    sql: "select var_trim_trim_anterior from conjuntura.gld_pib_construcao_civil_pct where ano = 2026 and trimestre = 1"
+    esperado: 2.9
+    tolerancia_abs: 0.05
+    classificacao: conforme
+
+  - id: pib_construcao_2026_1t_acum_ano
+    edicao: "2026_1t"
+    indicador: "PIB da construção — acumulado no ano"
+    gold: gld_pib_construcao_civil_pct
+    pagina_pdf: 1
+    sql: "select var_acumulada_ano from conjuntura.gld_pib_construcao_civil_pct where ano = 2026 and trimestre = 1"
+    esperado: 1.3
+    tolerancia_abs: 0.05
+    classificacao: conforme
+
+  - id: pib_construcao_2026_1t_acum_4t
+    edicao: "2026_1t"
+    indicador: "PIB da construção — acumulado em quatro trimestres"
+    gold: gld_pib_construcao_civil_pct
+    pagina_pdf: 1
+    sql: "select var_acumulada_4_trimestres from conjuntura.gld_pib_construcao_civil_pct where ano = 2026 and trimestre = 1"
+    esperado: 0.1
+    tolerancia_abs: 0.05
+    classificacao: conforme
+
+  - id: sinapi_2025_4t_custo_m2
+    edicao: "2025_4t"
+    indicador: "SINAPI Brasil — custo médio por m²"
+    gold: gld_sinapi
+    pagina_pdf: 6
+    sql: "select custo_medio_m2 from conjuntura.gld_sinapi where data_referencia = date '2025-12-01'"
+    esperado: 1891.63
+    tolerancia_abs: 0.05
+    classificacao: conforme
+
+  - id: sinapi_2025_4t_var_mes
+    edicao: "2025_4t"
+    indicador: "SINAPI Brasil — variação mensal"
+    gold: gld_sinapi
+    pagina_pdf: 6
+    sql: "select var_mes from conjuntura.gld_sinapi where data_referencia = date '2025-12-01'"
+    esperado: 0.51
+    tolerancia_abs: 0.02
+    classificacao: conforme
+
+  - id: sinapi_2025_4t_var_12m
+    edicao: "2025_4t"
+    indicador: "SINAPI Brasil — variação em 12 meses"
+    gold: gld_sinapi
+    pagina_pdf: 6
+    sql: "select var_12_meses from conjuntura.gld_sinapi where data_referencia = date '2025-12-01'"
+    esperado: 5.64
+    tolerancia_abs: 0.02
+    classificacao: conforme
+
+  - id: financiamento_2025_4t_fgts_pj
+    edicao: "2025_4t"
+    indicador: "Financiamentos habitacionais — FGTS PJ trimestral (UH)"
+    gold: gld_financiamentos_habitacionais
+    pagina_pdf: 2
+    sql: "select financ_hab_fgts_pj from conjuntura.gld_financiamentos_habitacionais where ano = 2025 and trimestre = 4"
+    esperado: 61212
+    tolerancia_abs: 0
+    classificacao: conforme
+
+  - id: financiamento_2025_4t_sbpe_constr
+    edicao: "2025_4t"
+    indicador: "Financiamentos habitacionais — SBPE construção trimestral (UH)"
+    gold: gld_financiamentos_habitacionais
+    pagina_pdf: 2
+    sql: "select financ_hab_sbpe_constr from conjuntura.gld_financiamentos_habitacionais where ano = 2025 and trimestre = 4"
+    esperado: 47766
+    tolerancia_abs: 0
+    classificacao: conforme
+
+  - id: financiamento_2026_1t_sbpe_constr
+    edicao: "2026_1t"
+    indicador: "Financiamentos habitacionais — SBPE construção trimestral (UH)"
+    gold: gld_financiamentos_habitacionais
+    pagina_pdf: 2
+    sql: "select financ_hab_sbpe_constr from conjuntura.gld_financiamentos_habitacionais where ano = 2026 and trimestre = 1"
+    esperado: 47609
+    tolerancia_abs: 0
+    classificacao: conforme
+
+  - id: financiamento_2026_1t_fgts_pj
+    edicao: "2026_1t"
+    indicador: "Financiamentos habitacionais — FGTS PJ trimestral (UH)"
+    gold: gld_financiamentos_habitacionais
+    pagina_pdf: 2
+    sql: "select financ_hab_fgts_pj from conjuntura.gld_financiamentos_habitacionais where ano = 2026 and trimestre = 1"
+    esperado: 59836
+    tolerancia_abs: 30
+    classificacao: divergencia_esperada
+    motivo: "Base GEAVO é atualizada após a edição; o boletim registra uma safra fechada."
+
+  - id: financiamento_2026_1t_fgts_pj_12m
+    edicao: "2026_1t"
+    indicador: "Financiamentos habitacionais — FGTS PJ acumulado em 12 meses (UH)"
+    gold: gld_financiamentos_habitacionais
+    pagina_pdf: 2
+    sql: "select financ_hab_fgts_pj_acumulado_12_meses from conjuntura.gld_financiamentos_habitacionais where ano = 2026 and trimestre = 1"
+    esperado: 270364
+    tolerancia_abs: 30
+    classificacao: divergencia_esperada
+    motivo: "Base GEAVO é atualizada após a edição; o boletim registra uma safra fechada."
+
+  - id: incc_2026_1t_indice
+    edicao: "2026_1t"
+    indicador: "INCC-M — número índice"
+    gold: gld_incc_m
+    pagina_pdf: 6
+    sql: "select indice from conjuntura.gld_incc_m where mes = date '2026-03-01'"
+    esperado: 1241.72
+    tolerancia_abs: 0.02
+    classificacao: conforme
+
+  - id: incc_2026_1t_var_mes
+    edicao: "2026_1t"
+    indicador: "INCC-M — variação mensal"
+    gold: gld_incc_m
+    pagina_pdf: 6
+    sql: "select var_mes from conjuntura.gld_incc_m where mes = date '2026-03-01'"
+    esperado: 0.35
+    tolerancia_abs: 0.02
+    classificacao: conforme
+
+  - id: incc_2026_1t_var_12m
+    edicao: "2026_1t"
+    indicador: "INCC-M — variação em 12 meses"
+    gold: gld_incc_m
+    pagina_pdf: 6
+    sql: "select var_fonte_12_meses from conjuntura.gld_incc_m where mes = date '2026-03-01'"
+    esperado: 7.32
+    tolerancia_abs: 0.02
+    classificacao: divergencia_esperada
+    motivo: "A FGV revisou retroativamente a série corrente: o Gold calcula 5,81% a partir do XLSX atual, enquanto o boletim preserva a safra publicada de 7,32%."
+
+  - id: indice_imob_2026_1t_var_mes
+    edicao: "2026_1t"
+    indicador: "Índice IMOB — variação mensal"
+    gold: gld_indice_imob
+    pagina_pdf: 7
+    sql: "select indice_imob_var_mes * 100 from conjuntura.gld_indice_imob where data_referencia = date '2026-03-01'"
+    esperado: -9.3
+    tolerancia_abs: 0.15
+    classificacao: conforme
+
+  - id: indice_imob_2026_1t_var_12m
+    edicao: "2026_1t"
+    indicador: "Índice IMOB — variação em 12 meses"
+    gold: gld_indice_imob
+    pagina_pdf: 7
+    sql: "select indice_imob_var_mes_vs_mes_ano_ant * 100 from conjuntura.gld_indice_imob where data_referencia = date '2026-03-01'"
+    esperado: 62.2
+    tolerancia_abs: 0.15
+    classificacao: conforme
+
+  - id: fipezap_2026_1t_var_mes
+    edicao: "2026_1t"
+    indicador: "FipeZap locação — variação mensal"
+    gold: gld_fipezap
+    pagina_pdf: 7
+    sql: "select indice_fipezap_locacao_var_mes * 100 from conjuntura.gld_fipezap where data_referencia = date '2026-03-01'"
+    esperado: 1.1
+    tolerancia_abs: 0.2
+    classificacao: divergencia_esperada
+    motivo: "A série FipeZap é revisada retroativamente; comparar safra publicada, não série corrente."
+
+  - id: fipezap_2026_1t_var_12m
+    edicao: "2026_1t"
+    indicador: "FipeZap locação — variação em 12 meses"
+    gold: gld_fipezap
+    pagina_pdf: 7
+    sql: "select indice_fipezap_locacao_var_mes_vs_mes_ano_ant * 100 from conjuntura.gld_fipezap where data_referencia = date '2026-03-01'"
+    esperado: 8.6
+    tolerancia_abs: 0.2
+    classificacao: divergencia_esperada
+    motivo: "A série FipeZap é revisada retroativamente; comparar safra publicada, não série corrente."
+
+  - id: balanco_tenda_2026_1t_lancamentos_tri
+    edicao: "2026_1t"
+    indicador: "Tenda — lançamentos, variação contra trimestre anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 2
+    sql: "select var_lancamentos_tri_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '1T2026' and empresa = 'Tenda'"
+    esperado: -15
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_tenda_2026_1t_lancamentos_ano
+    edicao: "2026_1t"
+    indicador: "Tenda — lançamentos, variação contra mesmo trimestre do ano anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 2
+    sql: "select var_lancamentos_mesmo_tri_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '1T2026' and empresa = 'Tenda'"
+    esperado: 67
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_tenda_2026_1t_lancamentos_12m
+    edicao: "2026_1t"
+    indicador: "Tenda — lançamentos, variação acumulada em 12 meses"
+    gold: gld_balancos_empresas
+    pagina_pdf: 2
+    sql: "select var_lancamentos_acumulado_periodo_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '1T2026' and empresa = 'Tenda'"
+    esperado: 0
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_tenda_2026_1t_vendas_tri
+    edicao: "2026_1t"
+    indicador: "Tenda — vendas, variação contra trimestre anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 2
+    sql: "select var_vendas_tri_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '1T2026' and empresa = 'Tenda'"
+    esperado: 14
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_tenda_2026_1t_vendas_ano
+    edicao: "2026_1t"
+    indicador: "Tenda — vendas, variação contra mesmo trimestre do ano anterior"
+    gold: gld_balancos_empresas
+    pagina_pdf: 2
+    sql: "select var_vendas_mesmo_tri_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '1T2026' and empresa = 'Tenda'"
+    esperado: 30
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: balanco_tenda_2026_1t_vendas_12m
+    edicao: "2026_1t"
+    indicador: "Tenda — vendas, variação acumulada em 12 meses"
+    gold: gld_balancos_empresas
+    pagina_pdf: 2
+    sql: "select var_vendas_acumulado_periodo_ano_anterior::numeric * 100 from conjuntura.gld_balancos_empresas where periodo = '1T2026' and empresa = 'Tenda'"
+    esperado: 9
+    tolerancia_abs: 0.5
+    classificacao: conforme
+
+  - id: fgts_pf_2026_1t_usados
+    edicao: "2026_1t"
+    indicador: "FGTS-PF — unidades usadas, condição de uso"
+    gold: gld_uh_condicao_uso
+    pagina_pdf: 5
+    sql: "select sum(fgts_pf_uh_usados) from conjuntura.gld_uh_condicao_uso where data_referencia between date '2026-01-01' and date '2026-03-01'"
+    esperado: 46506
+    tolerancia_abs: 0
+    classificacao: gap_conhecido
+    motivo: "A Base_PF_FGTS do GEAVO é contínua até jun/2026, mas o recorte MCMV/faixas não cobre o total Canal FGTS publicado. Integrar fonte complementar ou regra de cobertura antes de uso editorial."
+
+  - id: fgts_pf_2026_1t_novos
+    edicao: "2026_1t"
+    indicador: "FGTS-PF — unidades novas, condição de uso"
+    gold: gld_uh_condicao_uso
+    pagina_pdf: 5
+    sql: "select sum(fgts_pf_uh_novos) from conjuntura.gld_uh_condicao_uso where data_referencia between date '2026-01-01' and date '2026-03-01'"
+    esperado: 124507
+    tolerancia_abs: 0
+    classificacao: gap_conhecido
+    motivo: "A Base_PF_FGTS do GEAVO é contínua até jun/2026, mas o recorte MCMV/faixas não cobre o total Canal FGTS publicado. Integrar fonte complementar ou regra de cobertura antes de uso editorial."

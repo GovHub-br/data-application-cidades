@@ -17,52 +17,189 @@ clean-targets:
   - "dbt_packages"
   - "logs"
 
+seeds:
+  mcid:
+    # O gabarito do boletim é insumo de teste, mas mora junto do produto: com o
+    # schema unificado, tudo do conjuntura vive em `conjuntura`. Sem isto o seed
+    # cai no schema do profile e o teste do gabarito quebra procurando por ele.
+    boletim_gabarito:
+      +schema: conjuntura
+
 models:
   mcid:
     +database: cidades
     metadata:
       +materialized: incremental
       +schema: metadata
+      +meta:
+        governance:
+          product: metadata
+          owner_key: mcid_data_engineering
+          classification: restricted
+          rag_publication: prohibited
     empreendimento_far_dbt:
       +materialized: table
       +schema: empreendimento_far
+      +meta:
+        governance:
+          product: empreendimento_far
+          owner_key: mcid_data_engineering
+      bronze:
+        +materialized: table
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       silver:
         +materialized: table
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       gold:
         +materialized: table
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     entidades_dbt:
       +materialized: table
       +schema: entidades_fds
+      +meta:
+        governance:
+          product: entidades_fds
+          owner_key: mcid_data_engineering
+      bronze:
+        +materialized: table
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       silver:
         +materialized: table
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       gold:
         +materialized: table
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     conjuntura_dbt:
       +materialized: table
       +schema: conjuntura
+      +meta:
+        governance:
+          product: conjuntura
+          owner_key: mcid_data_engineering
+      # Bronze: espelho textual do parquet de staging. A Bronze é espelho do
+      # raw, e a Silver é o único lugar de achatamento e tipagem.
+      #
+      # MATERIALIZAÇÃO É `table`, NÃO `materialized_view`: as MVs estavam
+      # derrubando o banco (decisão do time em 2026-08-29). Não reverter.
       bronze:
         +materialized: table
-        +schema: conjuntura_bronze
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       silver:
         +materialized: table
-        +schema: conjuntura_silver
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       gold:
         +materialized: table
-        +schema: conjuntura_gold
-    
-    conjuntura_continuo_dbt:
-      +materialized: table
-      +schema: conjuntura_continuo
-      # Sem camada bronze: o parquet de staging já sai tipado (Etapa 02) e a
-      # silver lê direto via pg_duckdb (read_parquet).
-      silver:
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+      qualidade:
         +materialized: table
-        +schema: conjuntura_continuo_silver
-      gold:
-        +materialized: table
-        +schema: conjuntura_continuo_mart
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: quality
+            classification: restricted
+            rag_publication: prohibited
 
 on-run-start:
   - '{{create_udfs()}}'

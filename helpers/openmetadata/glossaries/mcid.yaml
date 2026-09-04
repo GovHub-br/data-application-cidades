@@ -1,0 +1,8 @@
+name: MCID
+displayName: Glossário do Ministério das Cidades
+description: >
+  Vocabulário controlado dos programas habitacionais, fundos, atores,
+  identificadores operacionais, etapas de execução e indicadores conjunturais
+  usados nos modelos analíticos do Ministério das Cidades.
+mutuallyExclusive: false
+termsFile: mcid.csv

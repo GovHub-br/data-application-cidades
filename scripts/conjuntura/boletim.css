@@ -1,0 +1,150 @@
+:root{
+  --ambar:#F5B800; --ambar-forte:#D99E00; --ambar-fraco:#FFF3CD;
+  --creme:#FFF8E7; --papel:#FFFDF8; --barra:#E8E4DC;
+  --tinta:#1A1A1A; --tinta-fraca:#5A544A;
+  --alta:#00843D; --alta-fundo:#C6EFCE;
+  --baixa:#C00000; --baixa-fundo:#FFD9DD;
+  --fonte-cor:#1F4E79; --aviso:#8A5A00; --aviso-fundo:#FFF0CC;
+}
+:root:not([data-theme="light"]){ @media (prefers-color-scheme: dark){
+  --ambar:#F5B800; --ambar-forte:#8A6A00; --ambar-fraco:#3A3000;
+  --creme:#22201C; --papel:#161512; --barra:#2A2823;
+  --tinta:#F0EDE6; --tinta-fraca:#B0A99C;
+  --alta:#5BD98C; --alta-fundo:#123A22;
+  --baixa:#FF8A8A; --baixa-fundo:#3D1414;
+  --fonte-cor:#8FB8DE; --aviso:#FFD27F; --aviso-fundo:#3A2E10;
+}}
+:root[data-theme="dark"]{
+  --ambar:#F5B800; --ambar-forte:#8A6A00; --ambar-fraco:#3A3000;
+  --creme:#22201C; --papel:#161512; --barra:#2A2823;
+  --tinta:#F0EDE6; --tinta-fraca:#B0A99C;
+  --alta:#5BD98C; --alta-fundo:#123A22;
+  --baixa:#FF8A8A; --baixa-fundo:#3D1414;
+  --fonte-cor:#8FB8DE; --aviso:#FFD27F; --aviso-fundo:#3A2E10;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--papel);color:var(--tinta);
+  font-family:"Source Sans 3","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.5}
+.folha{max-width:1120px;margin:0 auto 2.5rem;padding:0 1.25rem}
+.capa{background:var(--papel);padding:2.5rem 1.25rem 1.5rem;border-bottom:6px solid var(--ambar)}
+.capa .orgao{font-size:.8rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--tinta-fraca)}
+.capa h1{font-family:Archivo,Impact,sans-serif;font-size:clamp(2rem,5vw,3.1rem);line-height:1.03;
+  margin:.35rem 0 .5rem;font-weight:500;text-wrap:balance}
+.capa h1 b{display:block;font-weight:800}
+.selo{display:inline-block;background:var(--ambar);color:#1A1A1A;font-family:Archivo,sans-serif;
+  font-weight:800;font-size:1.5rem;padding:.15rem .7rem;border-radius:3px}
+.capa .data{color:var(--tinta-fraca);font-size:.9rem;margin-top:.6rem}
+.topo{position:sticky;top:0;z-index:5;background:var(--barra);padding:.6rem 1.25rem;
+  margin-bottom:1.5rem;border-bottom:1px solid var(--ambar-forte);
+  display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap}
+.topo b{font-family:Archivo,sans-serif;font-size:1.05rem}
+.topo span{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-fraca)}
+.rotulo{display:inline-block;background:var(--ambar);color:#1A1A1A;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;font-size:.82rem;padding:.2rem .6rem;margin:1.2rem 0 .6rem}
+h2{font-family:Archivo,sans-serif;font-size:1.3rem;letter-spacing:.02em;text-transform:uppercase;
+  margin:1.4rem 0 .8rem;display:flex;gap:.5rem;align-items:baseline;text-wrap:balance}
+h2 .n{font-size:1.9rem;font-weight:800}
+h3{font-family:Archivo,sans-serif;font-size:.92rem;letter-spacing:.03em;text-transform:uppercase;
+  margin:0 0 .5rem;color:var(--tinta)}
+.grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.1rem;align-items:start}
+.quadro{background:var(--creme);border:1px solid var(--ambar-forte);border-radius:3px;padding:.85rem}
+.rolagem{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+thead th{background:var(--ambar);color:#1A1A1A;text-align:left;font-weight:700;font-size:.76rem;
+  letter-spacing:.03em;text-transform:uppercase;padding:.4rem .5rem;border:1px solid var(--ambar-forte)}
+tbody th{text-align:left;font-weight:700;padding:.34rem .5rem;border:1px solid var(--ambar-forte)}
+td{padding:.34rem .5rem;border:1px solid var(--ambar-forte)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+td.pos{color:var(--alta);font-weight:700}
+td.neg{color:var(--baixa);font-weight:700}
+.fonte{font-size:.74rem;color:var(--fonte-cor);margin:.5rem 0 0}
+.vazio{color:var(--tinta-fraca);font-style:italic;margin:.3rem 0 0}
+/* A leitura vive dentro da grade, ao lado do quadro quando cabe. `align-self`
+   a mantém no topo em vez de esticá-la até a altura da tabela vizinha. */
+.leitura{background:var(--barra);border-left:4px solid var(--ambar);padding:.7rem .9rem;
+  margin:0;align-self:start;font-size:.82rem;font-weight:600;letter-spacing:.01em;
+  text-transform:uppercase;line-height:1.45}
+.grade > .leitura{max-width:none}
+/* Tabela com muitas colunas toma a linha inteira: numa coluna estreita ela
+   rolaria na horizontal, e a leitura ao lado não compensa a perda. */
+.quadro.largo{grid-column:1/-1}
+/* Leitura redigida por máquina: barra tracejada e etiqueta, para que a
+   diferença entre apurado e redigido seja visível sem depender só de cor. */
+.leitura.gerada{border-left-style:dashed}
+.marca-rascunho{display:block;font-size:.62rem;font-weight:700;letter-spacing:.08em;
+  color:var(--fonte-cor);margin-bottom:.35rem;text-transform:uppercase}
+.grafico .barras{display:flex;align-items:flex-end;gap:.35rem;height:190px;padding-top:1.4rem}
+.barra{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative}
+.barra .haste{width:100%;height:var(--h);background:var(--ambar);border-radius:3px 3px 0 0}
+.barra .rot{font-size:.68rem;font-variant-numeric:tabular-nums;margin-bottom:.2rem;white-space:nowrap}
+.barra .eixo{font-size:.63rem;color:var(--tinta-fraca);margin-top:.3rem;white-space:nowrap}
+.aviso{background:var(--aviso-fundo);border-left:4px solid var(--aviso);padding:.8rem 1rem;
+  border-radius:3px;margin:1rem 0;font-size:.86rem}
+.aviso h3{color:var(--aviso);margin-bottom:.4rem}
+.aviso ul{margin:.3rem 0 0;padding-left:1.1rem}
+.aviso li{margin:.25rem 0}
+.rodape{max-width:1120px;margin:2rem auto 3rem;padding:1rem 1.25rem;border-top:1px solid var(--barra);
+  color:var(--tinta-fraca);font-size:.8rem}
+.listas{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.listas h4{font-family:Archivo,sans-serif;font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;margin:0 0 .4rem}
+.listas ul{margin:0;padding-left:1.05rem;font-size:.85rem}
+.listas li{margin:.3rem 0}
+.pos-t{color:var(--alta)} .neu-t{color:var(--tinta-fraca)} .neg-t{color:var(--baixa)}
+@media (prefers-reduced-motion:no-preference){.quadro{transition:none}}
+
+/* Moldura de página: o boletim é impresso, e a rolagem contínua perde a
+   fronteira entre uma página e outra. A folha devolve essa fronteira sem
+   fingir paginação — o conteúdo continua fluindo e reflui no celular. */
+.pagina{background:var(--papel);border:1px solid var(--barra);border-radius:4px;
+  padding:1.4rem 1.4rem 1.8rem;margin-bottom:1.6rem;position:relative;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pagina .np{position:absolute;top:.7rem;right:1rem;font-family:Archivo,sans-serif;
+  font-size:.72rem;font-weight:800;color:var(--tinta-fraca);letter-spacing:.08em}
+.pagina .np::before{content:"PÁG. "}
+.cartoes{display:flex;flex-direction:column;gap:.6rem;min-width:190px}
+.cartao{border:1px solid var(--ambar-forte);border-radius:3px;overflow:hidden}
+.cartao h4{margin:0;background:var(--barra);font-family:Archivo,sans-serif;font-size:.72rem;
+  letter-spacing:.05em;text-transform:uppercase;padding:.35rem .5rem}
+.caixas{display:flex}
+.caixa{flex:1;padding:.45rem .5rem;text-align:center;border-top:1px solid var(--ambar-forte)}
+.caixa + .caixa{border-left:1px solid var(--ambar-forte)}
+.caixa b{display:block;font-family:Archivo,sans-serif;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.caixa span{display:block;font-size:.63rem;line-height:1.25;color:var(--tinta-fraca);margin-top:.15rem}
+.caixa.alta{background:var(--alta-fundo)} .caixa.alta b{color:var(--alta)}
+.caixa.baixa{background:var(--baixa-fundo)} .caixa.baixa b{color:var(--baixa)}
+.caixa.neutra b{color:var(--tinta-fraca)}
+
+/* Pílula de variação: pequena, colada ao número que qualifica. O `title` diz
+   a base da comparação — sem ela um percentual solto não significa nada. */
+.pil{display:inline-block;margin-left:.3rem;padding:0 .25rem;border-radius:2px;
+  font-size:.66rem;font-weight:700;vertical-align:middle;font-variant-numeric:tabular-nums}
+.pil.alta{background:var(--alta-fundo);color:var(--alta)}
+.pil.baixa{background:var(--baixa-fundo);color:var(--baixa)}
+.pil.neutra{background:var(--barra);color:var(--tinta-fraca)}
+
+/* ── Impressão ──────────────────────────────────────────────────────────────
+   O boletim nasce impresso, e o PDF é destino de primeira classe aqui. Sem
+   estas regras o navegador corta quadro e cartão ao meio na virada de página:
+   o cabeçalho de um cartão fica numa folha e o valor na seguinte.
+
+   `break-before: page` em `.pagina` faz cada página do boletim começar numa
+   folha nova, como no impresso — a moldura passa a significar a mesma coisa
+   nos dois destinos. */
+@media print {
+  .pagina{break-before:page;border:none;box-shadow:none;padding:0 0 1rem;
+    margin-bottom:0}
+  .pagina:first-of-type{break-before:auto}
+  .quadro,.cartao,.cartoes,.leitura,.aviso,.grafico{break-inside:avoid}
+  h2,h3,.rotulo{break-after:avoid}
+  .topo{position:static}
+  /* Em A4 a grade de 340px vira uma coluna só e a leitura cai para baixo do
+     quadro. Reduzir o mínimo devolve a leitura ao lado, como no impresso —
+     mas o quadro largo continua tomando a linha toda, senão a tabela é
+     recortada e o PDF perde coluna. */
+  .grade{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.8rem}
+  .rolagem{overflow:visible}
+  table{font-size:.78rem}
+  td,tbody th,thead th{padding:.26rem .38rem}
+  body{font-size:13px}
+}
+@page{size:A4;margin:12mm 10mm}

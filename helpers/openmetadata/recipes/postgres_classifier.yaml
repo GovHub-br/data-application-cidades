@@ -1,0 +1,45 @@
+source:
+  type: postgres
+  serviceName: Cidades
+  serviceConnection:
+    config:
+      type: Postgres
+      hostPort: ${DB_DW_HOST}:${DB_DW_PORT}
+      username: ${DB_DW_USER}
+      authType:
+        password: ${DB_DW_PASSWORD}
+      database: ${DB_DW_DBNAME}
+      sslMode: disable
+
+  sourceConfig:
+    config:
+      type: AutoClassification
+      enableAutoClassification: true
+      # O classificador pode analisar valores no worker para detectar PII, mas
+      # nao persiste linhas brutas na aba Sample Data do OpenMetadata.
+      storeSampleData: false
+      sampleDataCount: 50
+      schemaFilterPattern:
+        includes:
+          - "^conjuntura$"
+          - "^empreendimento_far$"
+          - "^entidades_fds$"
+          - "^metadata$"
+      # Deve permanecer identica a allowlist de postgres_metadata.yaml.
+
+processor:
+  type: orm-profiler
+  config: {}
+
+sink:
+  type: metadata-rest
+  config:
+    bulk_sink_batch_size: 10
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: ${OM_HOST}
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${CLASSIFICATION_TOKEN}

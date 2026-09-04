@@ -1,28 +1,1174 @@
 version: 2
+
+# Gold do produto Conjuntura: um modelo por quadro do boletim, organizado
+# pelas páginas do impresso.
+#
+# As descrições abaixo documentam O DADO — que fenômeno mede, o que é uma
+# linha, em que unidade e de que período. Não registram se a origem é manual
+# ou automatizada, nem por qual model ou DAG o dado passou: isso é assunto do
+# time de desenvolvimento e não é metadado de consumo do catálogo.
+
 models:
-  - name: gold_indices_mercado_imobiliario
+  # PÁGINA 1 — PIB DA CONSTRUÇÃO CIVIL
+  - name: gld_pib_construcao_civil
     description: >
-      Tabela gold consolidada com variações dos principais índices do mercado imobiliário:
-      IMOB (Infomoney), FIPEZAP (locação), ICST (FGV-IBRE) e ABRAMAT.
-      Estruturada com 4 períodos de comparação para consumo direto no Superset.
-      Origem: silver_imob_infomoney, silver_fipezap_locacao, silver_fgv_icst, silver_abramat_indice.
-    meta: {}
-    tags:
-      - gold
-      - indices
-      - mercado_imobiliario
+      Uma linha por trimestre com as variações percentuais do PIB da
+      construção civil apuradas pelo IBGE, contra o trimestre anterior, contra
+      o mesmo trimestre do ano anterior, acumulada no ano e acumulada em
+      quatro trimestres.
     columns:
       - name: periodo
-        description: "Período de comparação (ex: DEZ 25 vs. NOV 25, JAN-DEZ/25)."
-      - name: imob_var
-        description: Variação percentual do Índice IMOB no período.
-      - name: fipezap_var
-        description: Variação percentual do Índice FipeZap de locação no período.
-      - name: icst_var
-        description: Variação percentual do Índice ICST (sem ajuste sazonal) no período.
-      - name: abramat_var
-        description: Variação percentual do Índice ABRAMAT no período.
-    data_tests:
-      - row_count_match:
-          source_table: conjuntura_silver.silver_fgv_icst
-          target_table: conjuntura_gold.gold_indices_mercado_imobiliario
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: var_trim_trim_anterior
+        description: >
+          Variação percentual do produto da construção em relação ao
+          trimestre imediatamente anterior.
+      - name: var_trim_mesmo_trim_ano_anterior
+        description: >
+          Variação percentual do produto da construção em relação ao mesmo
+          trimestre do ano anterior.
+      - name: var_acumulada_ano
+        description: >
+          Variação percentual do produto da construção acumulada desde o
+          início do ano.
+      - name: var_acumulada_4_trimestres
+        description: >
+          Variação percentual do produto da construção acumulada em quatro
+          trimestres.
+  - name: gld_pib_construcao_civil_pct
+    description: >
+      Uma linha por trimestre com as três taxas de variação do PIB da
+      construção civil publicadas no boletim: contra o trimestre imediatamente
+      anterior, acumulada no ano e acumulada em quatro trimestres.
+  # PÁGINA 2 — BALANÇO DAS EMPRESAS + FINANCIAMENTOS IMOBILIÁRIOS
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: var_trim_trim_anterior
+        description: >
+          Variação percentual do produto da construção em relação ao
+          trimestre imediatamente anterior.
+      - name: var_acumulada_ano
+        description: >
+          Variação percentual do produto da construção acumulada desde o
+          início do ano.
+      - name: var_acumulada_4_trimestres
+        description: >
+          Variação percentual do produto da construção acumulada em quatro
+          trimestres.
+  - name: gld_balancos_empresas
+    description: >
+      Uma linha por incorporadora de capital aberto e trimestre com as
+      unidades lançadas e vendidas e suas variações percentuais contra o
+      trimestre anterior, contra o mesmo trimestre do ano anterior e no
+      acumulado do ano.
+    columns:
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: edicao
+        description: >
+          Trimestre a que a observação pertence, no formato usado pelo
+          boletim.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: empresa
+        description: >
+          Incorporadora habitacional a que os números se referem.
+      - name: lancamentos
+        description: >
+          Unidades habitacionais lançadas no trimestre.
+      - name: var_lancamentos_tri_anterior
+        description: >
+          Variação percentual das unidades lançadas em relação ao trimestre
+          imediatamente anterior.
+      - name: var_lancamentos_mesmo_tri_ano_anterior
+        description: >
+          Variação percentual das unidades lançadas em relação ao mesmo
+          trimestre do ano anterior.
+      - name: var_lancamentos_acumulado_periodo_ano_anterior
+        description: >
+          Variação percentual das unidades lançadas no acumulado do ano
+          contra igual período do ano anterior.
+      - name: vendas
+        description: >
+          Unidades habitacionais vendidas no trimestre.
+      - name: var_vendas_tri_anterior
+        description: >
+          Variação percentual das unidades vendidas em relação ao trimestre
+          imediatamente anterior.
+      - name: var_vendas_mesmo_tri_ano_anterior
+        description: >
+          Variação percentual das unidades vendidas em relação ao mesmo
+          trimestre do ano anterior.
+      - name: var_vendas_acumulado_periodo_ano_anterior
+        description: >
+          Variação percentual das unidades vendidas no acumulado do ano
+          contra igual período do ano anterior.
+  - name: gld_balancos_empresas_totais
+    description: >
+      Uma linha por trimestre com o total de unidades lançadas e vendidas pelo
+      conjunto das incorporadoras acompanhadas e as variações percentuais
+      contra o trimestre anterior, o mesmo trimestre do ano anterior e o
+      acumulado do ano.
+    columns:
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: edicao
+        description: >
+          Trimestre a que a observação pertence, no formato usado pelo
+          boletim.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: lancamentos_totais
+        description: >
+          Total de unidades habitacionais lançadas no trimestre pelo
+          conjunto das incorporadoras acompanhadas.
+      - name: var_lancamentos_totais_tri_anterior
+        description: >
+          Variação percentual do total lançado em relação ao trimestre
+          imediatamente anterior.
+      - name: var_lancamentos_totais_mesmo_tri_ano_anterior
+        description: >
+          Variação percentual do total lançado em relação ao mesmo trimestre
+          do ano anterior.
+      - name: var_lancamentos_totais_acumulado_mesmo_periodo_ano_anterior
+        description: >
+          Variação percentual do total lançado no acumulado do ano contra
+          igual período do ano anterior.
+      - name: vendas_totais
+        description: >
+          Total de unidades habitacionais vendidas no trimestre pelo
+          conjunto das incorporadoras acompanhadas.
+      - name: var_vendas_totais_tri_anterior
+        description: >
+          Variação percentual do total vendido em relação ao trimestre
+          imediatamente anterior.
+      - name: var_vendas_totais_mesmo_tri_ano_anterior
+        description: >
+          Variação percentual do total vendido em relação ao mesmo trimestre
+          do ano anterior.
+      - name: var_vendas_totais_acumulado_mesmo_periodo_ano_anterior
+        description: >
+          Variação percentual do total vendido no acumulado do ano contra
+          igual período do ano anterior.
+  - name: gld_financiamentos_imobiliarios_pf_pj
+    description: >
+      Uma linha por mês com as concessões de crédito imobiliário, taxas de
+      juros e inadimplência apuradas pelo BACEN, separadas entre pessoa física
+      e pessoa jurídica.
+    columns:
+      - name: data
+        description: >
+          Primeiro dia do mês a que a observação se refere.
+      - name: concessoes_pf_rs_mi
+        description: >
+          Crédito imobiliário concedido a pessoa física no mês, em milhões
+          de reais.
+      - name: concessoes_pj_rs_mi
+        description: >
+          Crédito imobiliário concedido a pessoa jurídica no mês, em milhões
+          de reais.
+      - name: taxa_juros_pf_aa
+        description: >
+          Taxa de juros média das concessões a pessoa física, em percentual
+          ao ano.
+      - name: taxa_juros_pj_aa
+        description: >
+          Taxa de juros média das concessões a pessoa jurídica, em
+          percentual ao ano.
+      - name: inadimplencia_pf_pct
+        description: >
+          Parcela da carteira de pessoa física em atraso, em percentual.
+      - name: inadimplencia_pj_pct
+        description: >
+          Parcela da carteira de pessoa jurídica em atraso, em percentual.
+  - name: gld_financiamentos_habitacionais
+    description: >
+      Uma linha por trimestre com as unidades habitacionais financiadas pelo
+      FGTS na produção e pelo SBPE na construção, no trimestre e no acumulado
+      de doze meses.
+  # PÁGINA 3 — EMPREGOS · PNAD · PRODUÇÃO FÍSICA E VENDAS · NOVOS FINANCIAMENTOS
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: edicao
+        description: >
+          Trimestre a que a observação pertence, no formato usado pelo
+          boletim.
+      - name: financ_hab_fgts_pj
+        description: >
+          Unidades habitacionais cuja produção foi financiada com recursos
+          do fundo de garantia no trimestre.
+      - name: financ_hab_fgts_pj_acumulado_12_meses
+        description: >
+          Unidades habitacionais financiadas com recursos do fundo de
+          garantia, acumuladas em doze meses.
+      - name: financ_hab_sbpe_constr
+        description: >
+          Unidades habitacionais cuja construção foi financiada com recursos
+          da poupança no trimestre.
+      - name: financ_hab_sbpe_constr_acumulado_12_meses
+        description: >
+          Unidades habitacionais com construção financiada por recursos da
+          poupança, acumuladas em doze meses.
+  - name: gld_empregos_caged
+    description: >
+      Uma linha por mês com a criação líquida e o estoque de empregos formais
+      na construção civil apurados pelo Novo CAGED, abertos entre construção
+      de edifícios, serviços especializados e o total do setor.
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: edificios_saldo
+        description: >
+          Diferença entre admissões e desligamentos no mês na construção de
+          edifícios, positiva quando houve criação líquida de postos.
+      - name: edificios_saldo_var_mes
+        description: >
+          Variação percentual do saldo mensal na construção de edifícios em
+          relação ao mês anterior.
+      - name: edificios_saldo_var_12_meses
+        description: >
+          Variação percentual do saldo na construção de edifícios acumulada
+          em doze meses.
+      - name: edificios_estoque
+        description: >
+          Quantidade total de postos de trabalho formais na construção de
+          edifícios ao fim do mês.
+      - name: servicos_especializados_saldo
+        description: >
+          Diferença entre admissões e desligamentos no mês em serviços
+          especializados para construção, positiva quando houve criação
+          líquida de postos.
+      - name: servicos_especializados_saldo_var_mes
+        description: >
+          Variação percentual do saldo mensal em serviços especializados
+          para construção em relação ao mês anterior.
+      - name: servicos_especializados_saldo_var_12_meses
+        description: >
+          Variação percentual do saldo em serviços especializados para
+          construção acumulada em doze meses.
+      - name: servicos_especializados_estoque
+        description: >
+          Quantidade total de postos de trabalho formais em serviços
+          especializados para construção ao fim do mês.
+      - name: total_construcao_saldo
+        description: >
+          Diferença entre admissões e desligamentos no mês no conjunto da
+          construção civil, positiva quando houve criação líquida de postos.
+      - name: total_construcao_saldo_var_mes
+        description: >
+          Variação percentual do saldo mensal no conjunto da construção
+          civil em relação ao mês anterior.
+      - name: total_construcao_saldo_var_12_meses
+        description: >
+          Variação percentual do saldo no conjunto da construção civil
+          acumulada em doze meses.
+      - name: total_construcao_estoque
+        description: >
+          Quantidade total de postos de trabalho formais no conjunto da
+          construção civil ao fim do mês.
+  - name: gld_pnad_ocupados
+    description: >
+      Uma linha por trimestre móvel com a população ocupada na construção
+      civil e no total da economia, em milhares de pessoas, conforme a PNAD
+      Contínua do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: periodo_nome
+        description: >
+          Nome do trimestre móvel, indicando os três meses que o compõem.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: ocupados_construcao_mil
+        description: >
+          População ocupada na construção civil, em milhares de pessoas.
+      - name: ocupados_total_mil
+        description: >
+          População ocupada no conjunto da economia, em milhares de pessoas.
+  - name: gld_pnad_rendimento
+    description: >
+      Uma linha por trimestre móvel com o rendimento médio real de quem
+      trabalha na construção civil e do conjunto dos ocupados, em reais,
+      conforme a PNAD Contínua do IBGE.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: periodo_nome
+        description: >
+          Nome do trimestre móvel, indicando os três meses que o compõem.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: rendimento_construcao_rs
+        description: >
+          Rendimento médio real de quem trabalha na construção civil, em
+          reais.
+      - name: rendimento_total_rs
+        description: >
+          Rendimento médio real do conjunto dos ocupados, em reais.
+  - name: gld_producao_fisica
+    description: >
+      Uma linha por mês com as variações da produção física dos insumos
+      típicos da construção e do volume de vendas de material de construção
+      apuradas pelo IBGE, no mês, no acumulado do ano e em doze meses.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: pim_pf_var_mes
+        description: >
+          Variação percentual da produção física dos insumos da construção
+          em relação ao mês anterior.
+      - name: pim_pf_var_acum_ano
+        description: >
+          Variação percentual da produção física acumulada desde o início do
+          ano.
+      - name: pim_pf_var_12_meses
+        description: >
+          Variação percentual da produção física acumulada em doze meses.
+      - name: pmc_var_mes
+        description: >
+          Variação percentual do volume de vendas de material de construção
+          em relação ao mês anterior.
+      - name: pmc_var_acum_ano
+        description: >
+          Variação percentual do volume de vendas acumulada desde o início
+          do ano.
+      - name: pmc_var_12_meses
+        description: >
+          Variação percentual do volume de vendas acumulada em doze meses.
+  - name: gld_novos_financiamentos_banco
+    description: >
+      Uma linha por mês com as unidades e o valor de novos financiamentos
+      imobiliários do SBPE acumulados no ano, abertos por instituição
+      financeira, conforme a ABECIP.
+  # PÁGINA 4 — CRÉDITO/PIB · FGTS/FS-PF POR RENDA · UH POR CONDIÇÃO · FUNDING
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: abecip_sbpe_fin_uh_acum_caixa
+        description: >
+          Unidades financiadas pela Caixa Econômica Federal desde o início
+          do ano até o mês de referência.
+      - name: abecip_sbpe_fin_uh_acum_bradesco
+        description: >
+          Unidades financiadas pelo Bradesco desde o início do ano até o mês
+          de referência.
+      - name: abecip_sbpe_fin_uh_acum_itau
+        description: >
+          Unidades financiadas pelo Itaú Unibanco desde o início do ano até
+          o mês de referência.
+      - name: abecip_sbpe_fin_uh_acum_santander
+        description: >
+          Unidades financiadas pelo Santander desde o início do ano até o
+          mês de referência.
+      - name: abecip_sbpe_fin_uh_acum_bb
+        description: >
+          Unidades financiadas pelo Banco do Brasil desde o início do ano
+          até o mês de referência.
+      - name: abecip_sbpe_fin_uh_acum_demais
+        description: >
+          Unidades financiadas pelas demais instituições desde o início do
+          ano até o mês de referência.
+      - name: abecip_sbpe_fin_uh_acum_total
+        description: >
+          Unidades financiadas pelo conjunto das instituições desde o início
+          do ano até o mês de referência.
+      - name: abecip_sbpe_fin_milhoes_acum_caixa
+        description: >
+          Valor financiado pela Caixa Econômica Federal desde o início do
+          ano até o mês de referência, em milhões de reais.
+      - name: abecip_sbpe_fin_milhoes_acum_bradesco
+        description: >
+          Valor financiado pelo Bradesco desde o início do ano até o mês de
+          referência, em milhões de reais.
+      - name: abecip_sbpe_fin_milhoes_acum_itau
+        description: >
+          Valor financiado pelo Itaú Unibanco desde o início do ano até o
+          mês de referência, em milhões de reais.
+      - name: abecip_sbpe_fin_milhoes_acum_santander
+        description: >
+          Valor financiado pelo Santander desde o início do ano até o mês de
+          referência, em milhões de reais.
+      - name: abecip_sbpe_fin_milhoes_acum_bb
+        description: >
+          Valor financiado pelo Banco do Brasil desde o início do ano até o
+          mês de referência, em milhões de reais.
+      - name: abecip_sbpe_fin_milhoes_acum_demais
+        description: >
+          Valor financiado pelas demais instituições desde o início do ano
+          até o mês de referência, em milhões de reais.
+      - name: abecip_sbpe_fin_milhoes_acum_total
+        description: >
+          Valor financiado pelo conjunto das instituições desde o início do
+          ano até o mês de referência, em milhões de reais.
+  - name: gld_credito_pib
+    description: >
+      Uma linha por mês com o saldo da carteira de crédito imobiliário
+      expresso como percentual do Produto Interno Bruto, conforme o BACEN.
+    columns:
+      - name: data
+        description: >
+          Último dia do mês a que a observação se refere.
+      - name: credito_imobiliario_pib_pct
+        description: >
+          Saldo da carteira de crédito imobiliário expresso como percentual
+          do Produto Interno Bruto.
+  - name: gld_financiamento_pf_faixa
+    description: >
+      Uma linha por mês com as unidades habitacionais e o valor financiado a
+      pessoa física pelo FGTS, abertos por faixa de renda familiar do MCMV,
+      faixa de classe média e operações sem faixa atribuída.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: financiamento_pf_uh_total
+        description: >
+          Unidades habitacionais financiadas a pessoa física no conjunto das
+          faixas.
+      - name: financiamento_pf_valor_total
+        description: >
+          Valor financiado a pessoa física no conjunto das faixas, em
+          milhões de reais.
+      - name: financiamento_pf_uh_faixa_1
+        description: >
+          Unidades habitacionais financiadas a pessoa física na faixa de
+          menor renda do programa.
+      - name: financiamento_pf_valor_faixa_1
+        description: >
+          Valor financiado a pessoa física na faixa de menor renda do
+          programa, em milhões de reais.
+      - name: financiamento_pf_uh_faixa_2
+        description: >
+          Unidades habitacionais financiadas a pessoa física na segunda
+          faixa de renda do programa.
+      - name: financiamento_pf_valor_faixa_2
+        description: >
+          Valor financiado a pessoa física na segunda faixa de renda do
+          programa, em milhões de reais.
+      - name: financiamento_pf_uh_faixa_3
+        description: >
+          Unidades habitacionais financiadas a pessoa física na terceira
+          faixa de renda do programa.
+      - name: financiamento_pf_valor_faixa_3
+        description: >
+          Valor financiado a pessoa física na terceira faixa de renda do
+          programa, em milhões de reais.
+      - name: financiamento_pf_uh_classe_media
+        description: >
+          Unidades habitacionais financiadas a pessoa física na faixa de
+          classe média.
+      - name: financiamento_pf_valor_classe_media
+        description: >
+          Valor financiado a pessoa física na faixa de classe média, em
+          milhões de reais.
+      - name: financiamento_pf_uh_nao_classificado
+        description: >
+          Unidades habitacionais financiadas a pessoa física em operações
+          sem faixa atribuída.
+      - name: financiamento_pf_valor_nao_classificado
+        description: >
+          Valor financiado a pessoa física em operações sem faixa atribuída,
+          em milhões de reais.
+  - name: gld_uh_condicao_uso
+    description: >
+      Uma linha por mês com as unidades habitacionais financiadas separadas
+      entre imóveis novos e usados, distinguindo os recursos do FGTS dos
+      recursos do SBPE destinados à aquisição.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: fgts_pf_uh_novos
+        description: >
+          Unidades novas financiadas a pessoa física com recursos do fundo
+          de garantia.
+      - name: fgts_pf_uh_usados
+        description: >
+          Unidades usadas financiadas a pessoa física com recursos do fundo
+          de garantia.
+      - name: fgts_pf_milhoes_novos
+        description: >
+          Valor financiado em unidades novas com recursos do fundo de
+          garantia, em milhões de reais.
+      - name: fgts_pf_milhoes_usados
+        description: >
+          Valor financiado em unidades usadas com recursos do fundo de
+          garantia, em milhões de reais.
+      - name: abecip_sbpe_fin_uh_aq_total
+        description: >
+          Total de unidades adquiridas com financiamento por recursos da
+          poupança.
+      - name: abecip_sbpe_fin_milhoes_aq_total
+        description: >
+          Valor total financiado na aquisição com recursos da poupança, em
+          milhões de reais.
+      - name: abecip_sbpe_fin_uh_aq_novos
+        description: >
+          Unidades novas adquiridas com financiamento por recursos da
+          poupança.
+      - name: abecip_sbpe_fin_uh_aq_usados
+        description: >
+          Unidades usadas adquiridas com financiamento por recursos da
+          poupança.
+      - name: abecip_sbpe_fin_milhoes_aq_novos
+        description: >
+          Valor financiado na aquisição de unidades novas com recursos da
+          poupança, em milhões de reais.
+      - name: abecip_sbpe_fin_milhoes_aq_usados
+        description: >
+          Valor financiado na aquisição de unidades usadas com recursos da
+          poupança, em milhões de reais.
+  - name: gld_funding
+    description: >
+      Uma linha por mês com o estoque das fontes que financiam o crédito
+      imobiliário, incluindo poupança do SBPE, FGTS e os instrumentos de
+      mercado LCI, LCA, CRI, CRA e LIG, em bilhões de reais.
+  # PÁGINA 5 — CANAL FGTS · SALDO POUPANÇA
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: funding_sbpe
+        description: >
+          Estoque das cadernetas de poupança que lastreiam o crédito
+          habitacional, em bilhões de reais.
+      - name: funding_fgts
+        description: >
+          Estoque de recursos do fundo de garantia destinados a habitação,
+          em bilhões de reais.
+      - name: anbima_estoque_lci
+        description: >
+          Estoque de letras de crédito imobiliário, em bilhões de reais.
+      - name: anbima_estoque_lca
+        description: >
+          Estoque de letras de crédito do agronegócio, em bilhões de reais.
+      - name: anbima_estoque_cri
+        description: >
+          Estoque de certificados de recebíveis imobiliários, em bilhões de
+          reais.
+      - name: anbima_estoque_cra
+        description: >
+          Estoque de certificados de recebíveis do agronegócio, em bilhões
+          de reais.
+      - name: anbima_estoque_lig
+        description: >
+          Estoque de letras imobiliárias garantidas, em bilhões de reais.
+  - name: gld_canal_fgts
+    description: >
+      Uma linha por mês com as unidades habitacionais e o valor financiado na
+      modalidade Pró-Cotista do FGTS, abertos por faixa de renda familiar.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: financiamento_pf_uh_pro_cotista_geral
+        description: >
+          Unidades habitacionais financiadas no conjunto das faixas na
+          modalidade destinada a quem tem conta vinculada ao fundo de
+          garantia.
+      - name: financiamento_pf_valor_pro_cotista_geral
+        description: >
+          Valor financiado no conjunto das faixas na modalidade destinada a
+          quem tem conta vinculada ao fundo de garantia, em milhões de
+          reais.
+      - name: financiamento_pf_uh_pro_cotista_faixa_1
+        description: >
+          Unidades habitacionais financiadas na faixa de menor renda do
+          programa na modalidade destinada a quem tem conta vinculada ao
+          fundo de garantia.
+      - name: financiamento_pf_valor_pro_cotista_faixa_1
+        description: >
+          Valor financiado na faixa de menor renda do programa na modalidade
+          destinada a quem tem conta vinculada ao fundo de garantia, em
+          milhões de reais.
+      - name: financiamento_pf_uh_pro_cotista_faixa_2
+        description: >
+          Unidades habitacionais financiadas na segunda faixa de renda do
+          programa na modalidade destinada a quem tem conta vinculada ao
+          fundo de garantia.
+      - name: financiamento_pf_valor_pro_cotista_faixa_2
+        description: >
+          Valor financiado na segunda faixa de renda do programa na
+          modalidade destinada a quem tem conta vinculada ao fundo de
+          garantia, em milhões de reais.
+      - name: financiamento_pf_uh_pro_cotista_faixa_3
+        description: >
+          Unidades habitacionais financiadas na terceira faixa de renda do
+          programa na modalidade destinada a quem tem conta vinculada ao
+          fundo de garantia.
+      - name: financiamento_pf_valor_pro_cotista_faixa_3
+        description: >
+          Valor financiado na terceira faixa de renda do programa na
+          modalidade destinada a quem tem conta vinculada ao fundo de
+          garantia, em milhões de reais.
+      - name: financiamento_pf_uh_pro_cotista_classe_media
+        description: >
+          Unidades habitacionais financiadas na faixa de classe média na
+          modalidade destinada a quem tem conta vinculada ao fundo de
+          garantia.
+      - name: financiamento_pf_valor_pro_cotista_classe_media
+        description: >
+          Valor financiado na faixa de classe média na modalidade destinada
+          a quem tem conta vinculada ao fundo de garantia, em milhões de
+          reais.
+  - name: gld_saldo_poupanca
+    description: >
+      Uma linha por mês com os depósitos, retiradas, captação líquida e saldo
+      das cadernetas de poupança do SBPE, conforme a ABECIP.
+  # PÁGINA 6 — OGU · PREÇOS (SINAPI, INCC, TICKET MÉDIO, FGTS VALOR MÉDIO)
+    columns:
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: deposito
+        description: >
+          Valor depositado nas cadernetas no mês, em milhões de reais.
+      - name: retirada
+        description: >
+          Valor retirado das cadernetas no mês, em milhões de reais.
+      - name: captacao_liquida_valor
+        description: >
+          Diferença entre depósitos e retiradas no mês, negativa quando as
+          retiradas superam os depósitos, em milhões de reais.
+      - name: captacao_liquida_pct
+        description: >
+          Captação líquida do mês expressa como percentual do saldo.
+      - name: saldo
+        description: >
+          Saldo total das cadernetas ao fim do mês, em milhões de reais.
+  - name: gld_ogu
+    description: >
+      Uma linha por ação de governo com a dotação, o empenho, o pagamento e os
+      restos a pagar da execução orçamentária federal em habitação, conforme o
+      SIAFI, na posição da extração.
+    columns:
+      - name: acao_governo_codigo
+        description: >
+          Código da ação de governo a que a despesa pertence.
+      - name: acao_nome
+        description: >
+          Nome da ação de governo a que a despesa pertence.
+      - name: dotacao_atualizada
+        description: >
+          Valor autorizado após créditos adicionais e remanejamentos, em
+          reais.
+      - name: empenho
+        description: >
+          Valor comprometido por empenho no exercício, em reais.
+      - name: pagamento
+        description: >
+          Valor pago no exercício referente a despesas do próprio exercício,
+          em reais.
+      - name: rap_inscrito
+        description: >
+          Valor de exercícios anteriores inscrito para pagamento futuro, em
+          reais.
+      - name: pag_rap
+        description: >
+          Valor de restos a pagar quitado no exercício, em reais.
+      - name: pag_total
+        description: >
+          Soma do pago no exercício com o pago de restos a pagar, em reais.
+      - name: dt_referencia_extracao
+        description: >
+          Data da posição orçamentária a que os valores se referem.
+  - name: gld_sinapi
+    description: >
+      Uma linha por mês com o custo de construção por metro quadrado apurado
+      pelo SINAPI, incluindo material e mão de obra, e suas variações no mês,
+      no acumulado do ano e em doze meses.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: custo_medio_m2
+        description: >
+          Custo de construção por metro quadrado, incluindo material e mão
+          de obra, em reais.
+      - name: var_mes
+        description: >
+          Variação percentual do custo em relação ao mês anterior.
+      - name: var_acum_ano
+        description: >
+          Variação percentual do custo acumulada desde o início do ano.
+      - name: var_12_meses
+        description: >
+          Variação percentual do custo acumulada em doze meses.
+  - name: gld_incc_m
+    description: >
+      Uma linha por mês com o número índice do INCC-M apurado pela FGV e suas
+      variações no mês, no acumulado do ano e em doze meses.
+    columns:
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: indice
+        description: >
+          Número índice do custo da construção habitacional.
+      - name: var_mes
+        description: >
+          Variação percentual do índice em relação ao mês anterior.
+      - name: var_ano
+        description: >
+          Variação percentual do índice acumulada desde o início do ano,
+          calculada sobre a série.
+      - name: var_12_meses
+        description: >
+          Variação percentual do índice acumulada em doze meses, calculada
+          sobre a série.
+      - name: var_fonte_no_ano
+        description: >
+          Variação acumulada no ano tal como divulgada pela instituição que
+          apura o índice.
+      - name: var_fonte_12_meses
+        description: >
+          Variação acumulada em doze meses tal como divulgada pela
+          instituição que apura o índice.
+  - name: gld_ticket_medio
+    description: >
+      Uma linha por trimestre comparando as variações do ticket médio das
+      unidades lançadas por MRV, Direcional, Tenda e Cury com o INCC-M, no
+      trimestre e no acumulado desde o quarto trimestre de 2020.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: edicao
+        description: >
+          Trimestre a que a observação pertence, no formato usado pelo
+          boletim.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: precos_incc_tri
+        description: >
+          Número índice do custo da construção no trimestre.
+      - name: incc_var_tri_ant
+        description: >
+          Variação percentual do custo da construção em relação ao trimestre
+          anterior.
+      - name: incc_var_acum_4t2020
+        description: >
+          Variação percentual do custo da construção acumulada desde o
+          quarto trimestre de 2020.
+      - name: ticket_medio_lancamentos_mrv
+        description: >
+          Preço médio das unidades lançadas pela MRV no trimestre, em reais.
+      - name: ticket_medio_lancamentos_mrv_var_tri_ant
+        description: >
+          Variação percentual do preço médio da MRV em relação ao trimestre
+          anterior.
+      - name: ticket_medio_lancamentos_mrv_var_acum_4t2020
+        description: >
+          Variação percentual do preço médio da MRV acumulada desde o quarto
+          trimestre de 2020.
+      - name: ticket_medio_lancamentos_direcional
+        description: >
+          Preço médio das unidades lançadas pela Direcional no trimestre, em
+          reais.
+      - name: ticket_medio_lancamentos_direcional_var_tri_ant
+        description: >
+          Variação percentual do preço médio da Direcional em relação ao
+          trimestre anterior.
+      - name: ticket_medio_lancamentos_direcional_var_acum_4t2020
+        description: >
+          Variação percentual do preço médio da Direcional acumulada desde o
+          quarto trimestre de 2020.
+      - name: ticket_medio_lancamentos_tenda
+        description: >
+          Preço médio das unidades lançadas pela Tenda no trimestre, em
+          reais.
+      - name: ticket_medio_lancamentos_tenda_var_tri_ant
+        description: >
+          Variação percentual do preço médio da Tenda em relação ao
+          trimestre anterior.
+      - name: ticket_medio_lancamentos_tenda_var_acum_4t2020
+        description: >
+          Variação percentual do preço médio da Tenda acumulada desde o
+          quarto trimestre de 2020.
+      - name: ticket_medio_lancamentos_cury
+        description: >
+          Preço médio das unidades lançadas pela Cury no trimestre, em
+          reais.
+      - name: ticket_medio_lancamentos_cury_var_tri_ant
+        description: >
+          Variação percentual do preço médio da Cury em relação ao trimestre
+          anterior.
+      - name: ticket_medio_lancamentos_cury_var_acum_4t2020
+        description: >
+          Variação percentual do preço médio da Cury acumulada desde o
+          quarto trimestre de 2020.
+  - name: gld_fgts_valor_medio
+    description: >
+      Uma linha por mês com o valor médio dos imóveis financiados pelo FGTS,
+      no conjunto das operações e na faixa de menor renda, e suas variações no
+      mês, no acumulado do ano e em doze meses.
+  # PÁGINA 7 — ÍNDICES DA CONSTRUÇÃO
+    columns:
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: valor_medio_fgts
+        description: >
+          Valor médio dos imóveis financiados com recursos do fundo de
+          garantia, em reais.
+      - name: var_fgts_mes
+        description: >
+          Variação percentual do valor médio em relação ao mês anterior.
+      - name: var_fgts_12m
+        description: >
+          Variação percentual do valor médio acumulada em doze meses.
+      - name: var_fgts_acum_ano
+        description: >
+          Variação percentual do valor médio acumulada desde o início do
+          ano.
+      - name: valor_medio_fgts_f1
+        description: >
+          Valor médio dos imóveis financiados na faixa de menor renda do
+          programa, em reais.
+      - name: var_fgts_f1_mes
+        description: >
+          Variação percentual do valor médio da faixa de menor renda em
+          relação ao mês anterior.
+      - name: var_fgts_f1_12m
+        description: >
+          Variação percentual do valor médio da faixa de menor renda
+          acumulada em doze meses.
+      - name: var_fgts_f1_acum_ano
+        description: >
+          Variação percentual do valor médio da faixa de menor renda
+          acumulada desde o início do ano.
+  - name: gld_indice_imob
+    description: >
+      Uma linha por mês com as variações do índice IMOB, que acompanha as
+      ações do setor imobiliário na B3, contra o mês anterior, contra o mesmo
+      mês do ano anterior e no acumulado do ano.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: indice_imob_var_mes
+        description: >
+          Variação percentual do índice de ações do setor imobiliário em
+          relação ao mês anterior.
+      - name: indice_imob_var_mes_vs_mes_ano_ant
+        description: >
+          Variação percentual do índice em relação ao mesmo mês do ano
+          anterior.
+      - name: indice_imob_var_acum_ano
+        description: >
+          Variação percentual do índice acumulada desde o início do ano.
+  - name: gld_fipezap
+    description: >
+      Uma linha por mês com o número índice do FipeZap de locação residencial
+      e suas variações contra o mês anterior, contra o mesmo mês do ano
+      anterior e no acumulado do ano.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: indice_fipezap_numero_indice_locacao
+        description: >
+          Número índice do preço de locação residencial anunciado.
+      - name: indice_fipezap_locacao_var_mes
+        description: >
+          Variação percentual do índice de locação em relação ao mês
+          anterior.
+      - name: indice_fipezap_locacao_var_mes_vs_mes_ano_ant
+        description: >
+          Variação percentual do índice de locação em relação ao mesmo mês
+          do ano anterior.
+      - name: indice_fipezap_locacao_acum_ano
+        description: >
+          Variação percentual do índice de locação acumulada desde o início
+          do ano.
+  - name: gld_icst
+    description: >
+      Uma linha por mês com o Índice de Confiança da Construção apurado pela
+      FGV-IBRE, nas séries com e sem ajuste sazonal, e suas variações contra o
+      mês anterior e o mesmo mês do ano anterior.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: icst_com_ajuste_sazonal
+        description: >
+          Número índice da confiança da construção com ajuste sazonal, que
+          remove o padrão recorrente do calendário.
+      - name: indice_icst_var_mes_com_ajuste
+        description: >
+          Variação percentual do índice com ajuste sazonal em relação ao mês
+          anterior.
+      - name: indice_icst_var_mes_vs_mes_ano_ant_com_ajuste
+        description: >
+          Variação percentual do índice com ajuste sazonal em relação ao
+          mesmo mês do ano anterior.
+      - name: icst_sem_ajuste_sazonal
+        description: >
+          Número índice da confiança da construção na série original, sem
+          tratamento do padrão sazonal.
+      - name: indice_icst_var_mes_serie_original
+        description: >
+          Variação percentual do índice sem ajuste em relação ao mês
+          anterior.
+      - name: indice_icst_var_mes_vs_mes_ano_ant_serie_original
+        description: >
+          Variação percentual do índice sem ajuste em relação ao mesmo mês
+          do ano anterior.
+      - name: indice_icst_var_acum_ano_serie_original
+        description: >
+          Variação percentual do índice sem ajuste acumulada desde o início
+          do ano.
+  - name: gld_financiamentos_instituicao
+    description: >
+      Uma linha por instituição financeira e mês com as unidades e o valor de
+      financiamento imobiliário do SBPE acumulados no ano e a participação de
+      cada instituição no total do sistema, conforme a ABECIP.
+    columns:
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: competencia
+        description: >
+          Mês de competência a que os valores se referem.
+      - name: fonte
+        description: >
+          Origem do registro, distinguindo o relatório da associação do
+          setor do levantamento próprio.
+      - name: instituicao
+        description: >
+          Instituição financeira que concedeu o financiamento.
+      - name: uh_acumulado_ano
+        description: >
+          Unidades financiadas desde o início do ano até o mês de
+          referência.
+      - name: volume_acumulado_ano_milhoes
+        description: >
+          Valor financiado desde o início do ano até o mês de referência, em
+          milhões de reais.
+      - name: uh_mes
+        description: >
+          Unidades financiadas no mês.
+      - name: volume_mes_milhoes
+        description: >
+          Valor financiado no mês, em milhões de reais.
+      - name: uh_participacao
+        description: >
+          Participação da instituição nas unidades financiadas no ano, em
+          fração do total.
+      - name: volume_participacao
+        description: >
+          Participação da instituição no valor financiado no ano, em fração
+          do total.
+      - name: dt_ingest
+        description: >
+          Momento em que o registro entrou no acervo.
+  - name: gld_fundo_social
+    description: >
+      Uma linha por mês com as unidades habitacionais e o valor financiado com
+      recursos do Fundo Social, separados entre imóveis novos e usados.
+    columns:
+      - name: periodo
+        description: >
+          Rótulo do período a que a observação se refere.
+      - name: ano
+        description: >
+          Ano do período de referência.
+      - name: mes
+        description: >
+          Mês do período de referência.
+      - name: data_referencia
+        description: >
+          Primeiro dia do período a que a observação se refere.
+      - name: trimestre
+        description: >
+          Trimestre do período de referência.
+      - name: fundo_social_uh_total
+        description: >
+          Unidades habitacionais financiadas com recursos do fundo social no
+          conjunto das operações.
+      - name: fundo_social_valor_total
+        description: >
+          Valor financiado com recursos do fundo social no conjunto das
+          operações, em milhões de reais.
+      - name: fundo_social_uh_novos
+        description: >
+          Unidades habitacionais financiadas com recursos do fundo social em
+          unidades novas.
+      - name: fundo_social_valor_novos
+        description: >
+          Valor financiado com recursos do fundo social em unidades novas,
+          em milhões de reais.
+      - name: fundo_social_uh_usados
+        description: >
+          Unidades habitacionais financiadas com recursos do fundo social em
+          unidades usadas.
+      - name: fundo_social_valor_usados
+        description: >
+          Valor financiado com recursos do fundo social em unidades usadas,
+          em milhões de reais.
+      - name: fundo_social_uh_nao_classificado
+        description: >
+          Unidades habitacionais financiadas com recursos do fundo social em
+          operações sem condição de uso atribuída.
+      - name: fundo_social_valor_nao_classificado
+        description: >
+          Valor financiado com recursos do fundo social em operações sem
+          condição de uso atribuída, em milhões de reais.

@@ -52,7 +52,13 @@ class ClienteIBGE(ClienteBase):
         }
 
         if classificacao_id is not None and categoria is not None:
-            params["classificacao"] = f"{classificacao_id}[{categoria}]"
+            # A API separa VARIÁVEIS por `|` mas CATEGORIAS por `,`. Escrever
+            # "47946|47949" aqui produz uma URL inválida e a chamada falha —
+            # foi o que manteve as duas tabelas do PNAD sem ingestão desde que
+            # a configuração passou a pedir duas categorias. Normaliza para
+            # aceitar os dois separadores.
+            categorias = str(categoria).replace("|", ",")
+            params["classificacao"] = f"{classificacao_id}[{categorias}]"
 
         logging.info(
             f"[cliente_ibge.py] Fetching agregado={agregado}, "

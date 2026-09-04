@@ -14,28 +14,73 @@ macros:
   ## UDFS
   - name: create_f_parse_date_br
     description: >
-      Cria a UDF parse_date_br que converte datas nos formatos
-      brasileiros (DD/MM/YYYY, YYYYMMDD, YYYY-MM-DD) para tipo date.
-    arguments:
-      - name: in_text
-        type: text
-        description: >
-          Texto a ser convertido em data.
-          Aceita DD/MM/YYYY (padrão BR), YYYYMMDD (GFAR) e YYYY-MM-DD (ISO).
+      Cria a UDF parse_date_br usada pelos modelos para conversão de data.
 
   - name: create_f_normalize_apf
     description: >
-      Cria a UDF normalize_apf que normaliza o APF para formato canônico
-      de 8 dígitos sem traço. Necessária porque o APF aparece em 3 formatos
-      diferentes nas tabelas fonte (com traço, 8 dígitos, 6 dígitos).
-    arguments:
-      - name: in_text
-        type: text
-        description: >
-          APF em qualquer formato. Ex.: "0626780-03", "62678003", "626780".
+      Cria a UDF normalize_apf usada para normalização do identificador APF.
 
   - name: parse_financial_value
     description: >
       Macro que converte valores financeiros em texto para numeric(15,2).
       Suporta formato GFAR (zeros à esquerda + vírgula), brasileiro padrão
       (ponto milhar + vírgula decimal) e formato numérico simples.
+
+  - name: test_silver_contract
+    description: >
+      Aplica regras técnicas e declarativas de qualidade a um model Silver.
+      As regras de cada model são configuradas no YAML, sem expor valores de
+      dados no resultado do teste.
+    arguments:
+      - name: model
+        description: Model Silver submetido ao contrato.
+      - name: expected_columns
+        description: Layout completo esperado para o model Silver.
+      - name: allow_additional_columns
+        description: Define se colunas fora do layout contratado são aceitas.
+      - name: required_columns
+        description: Colunas que devem existir na estrutura do model.
+      - name: not_null_columns
+        description: Colunas cujo preenchimento é obrigatório.
+      - name: unique_key
+        description: Conjunto de colunas que define a granularidade declarada.
+      - name: freshness_column
+        description: Coluna temporal usada para verificar atualização.
+      - name: freshness_days
+        description: Tolerância de atualização em dias.
+      - name: min_completeness
+        description: Completude mínima declarada por coluna.
+      - name: expected_data_types
+        description: Tipo físico esperado por coluna após o tratamento Silver.
+      - name: accepted_values
+        description: Domínio permitido para colunas categóricas, sem expor violações.
+      - name: value_patterns
+        description: Padrão de formato permitido por coluna.
+      - name: numeric_ranges
+        description: Faixa numérica permitida por coluna.
+      - name: trimmed_text_columns
+        description: Colunas textuais que não podem conter espaços nas extremidades.
+
+  - name: test_sem_coluna_sensivel
+    description: >
+      Falha quando um identificador de dado pessoal está presente no nome de
+      uma coluna da camada de consumo.
+    arguments:
+      - name: model
+        description: Model submetido à verificação de segurança.
+
+  - name: test_silver_reconciliation
+    description: >
+      Compara agregados de duas versões equivalentes de uma fonte, sem retornar
+      chaves ou valores de negócio nas falhas.
+    arguments:
+      - name: model
+        description: Model Silver atual submetido à reconciliação.
+      - name: compare_model
+        description: Relação equivalente usada como base de comparação.
+      - name: key_columns
+        description: Chave de negócio compartilhada pelas duas versões.
+      - name: measures
+        description: Mapeamento da medida atual para a medida da fonte comparada.
+      - name: tolerance
+        description: Tolerância absoluta aceita para a diferença agregada.

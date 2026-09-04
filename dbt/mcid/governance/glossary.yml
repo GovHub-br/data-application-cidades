@@ -1,0 +1,32 @@
+version: 1
+
+# Termos de negócio reutilizados na documentação dbt e sincronizados ao
+# OpenMetadata. As descrições são semânticas e nunca trazem exemplos de dados.
+terms:
+  - id: arquitetura.bronze
+    name: Camada Bronze
+    description: Camada que preserva a representação fiel recebida da origem para rastreabilidade e processamento interno.
+  - id: arquitetura.silver
+    name: Camada Silver
+    description: Camada que aplica tratamento, tipagem, padronização e conformação de conceitos de dados.
+  - id: arquitetura.gold
+    name: Camada Gold
+    description: Camada curada para consumo por produtos analíticos, relatórios e aplicações autorizadas.
+  - id: governanca.periodo_referencia
+    name: Período de referência
+    description: Intervalo temporal ao qual uma observação ou indicador se aplica.
+  - id: governanca.safra
+    name: Safra de publicação
+    description: Conjunto controlado de dados, código e critérios utilizado para produzir uma edição identificável de publicação.
+  - id: governanca.contrato_qualidade
+    name: Contrato de qualidade
+    description: Conjunto declarativo de regras que descreve estrutura, consistência, atualização e uso permitido de um ativo de dados.
+  - id: habitacao.unidade_habitacional
+    name: Unidade habitacional
+    description: Unidade destinada à moradia considerada para medição de oferta, financiamento, produção ou uso habitacional.
+  - id: habitacao.financiamento_habitacional
+    name: Financiamento habitacional
+    description: Operação de crédito ou apoio financeiro destinada à produção, aquisição ou melhoria de habitação.
+  - id: economia.indicador_economico
+    name: Indicador econômico
+    description: Medida estruturada usada para acompanhar fenômeno econômico em período e recorte definidos.

@@ -1,0 +1,625 @@
+version: 2
+
+# Quadros do Boletim de Conjuntura materializados como tabela.
+#
+# Cada modelo reproduz um quadro impresso, com as linhas e as colunas do
+# original. A coluna `edicao` identifica o trimestre; o filtro do painel
+# seleciona a edição, e por isso a série de todas as edições convive na
+# mesma tabela.
+
+models:
+  - name: gld_boletim_p1_pib_construcao_civil_em_de_crescimento
+    description: >
+      Uma linha por edição do boletim e indicador com o quadro PIB Construção
+      Civil (em % de Crescimento) da página 1, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'indicador'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna indicador do
+          impresso.
+      - name: '4 trim. antes'
+        description: >
+          Valor da coluna 4 trim. antes do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: '3 trim. antes'
+        description: >
+          Valor da coluna 3 trim. antes do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: '2 trim. antes'
+        description: >
+          Valor da coluna 2 trim. antes do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: 'trim. anterior'
+        description: >
+          Valor da coluna trim. anterior do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: 'trimestre selecionado'
+        description: >
+          Valor da coluna trimestre selecionado do quadro impresso, para a
+          linha e a edição indicadas.
+  - name: gld_boletim_p1_lancamentos_por_regiao_cbic
+    description: >
+      Uma linha por edição do boletim e regiao com o quadro Lançamentos por
+      Região (CBIC) da página 1, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'regiao'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna regiao do
+          impresso.
+      - name: 'TOTAL'
+        description: >
+          Valor da coluna TOTAL do quadro impresso, para a linha e a edição
+          indicadas.
+      - name: 'MCMV'
+        description: >
+          Valor da coluna MCMV do quadro impresso, para a linha e a edição
+          indicadas.
+      - name: '% MCMV'
+        description: >
+          Valor da coluna % MCMV do quadro impresso, para a linha e a edição
+          indicadas.
+  - name: gld_boletim_p1_vendas_por_regiao_cbic
+    description: >
+      Uma linha por edição do boletim e regiao com o quadro Vendas por Região
+      (CBIC) da página 1, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'regiao'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna regiao do
+          impresso.
+      - name: 'TOTAL'
+        description: >
+          Valor da coluna TOTAL do quadro impresso, para a linha e a edição
+          indicadas.
+      - name: 'MCMV'
+        description: >
+          Valor da coluna MCMV do quadro impresso, para a linha e a edição
+          indicadas.
+      - name: '% MCMV'
+        description: >
+          Valor da coluna % MCMV do quadro impresso, para a linha e a edição
+          indicadas.
+  - name: gld_boletim_p1_cbic_lancamentos_e_vendas_totais
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro CBIC —
+      Lançamentos e Vendas (totais) da página 1, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'Lançamentos TOTAL'
+        description: >
+          Valor da coluna Lançamentos TOTAL do quadro impresso, para a linha
+          e a edição indicadas.
+      - name: 'Lançamentos MCMV'
+        description: >
+          Valor da coluna Lançamentos MCMV do quadro impresso, para a linha
+          e a edição indicadas.
+      - name: 'Lançamentos DEMAIS'
+        description: >
+          Valor da coluna Lançamentos DEMAIS do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'Vendas TOTAL'
+        description: >
+          Valor da coluna Vendas TOTAL do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: 'Vendas MCMV'
+        description: >
+          Valor da coluna Vendas MCMV do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: 'Vendas DEMAIS'
+        description: >
+          Valor da coluna Vendas DEMAIS do quadro impresso, para a linha e a
+          edição indicadas.
+  - name: gld_boletim_p2_lancamentos_por_construtora_variacao
+    description: >
+      Uma linha por edição do boletim e empresa com o quadro Lançamentos por
+      construtora (variação %) da página 2, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'empresa'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna empresa do
+          impresso.
+      - name: 'vs. trim. anterior'
+        description: >
+          Valor da coluna vs. trim. anterior do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'vs. mesmo trim. ano ant.'
+        description: >
+          Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: '12m atual / 12m anterior'
+        description: >
+          Valor da coluna 12m atual / 12m anterior do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: '12m anterior / 12m retrasado'
+        description: >
+          Valor da coluna 12m anterior / 12m retrasado do quadro impresso,
+          para a linha e a edição indicadas.
+  - name: gld_boletim_p2_vendas_por_construtora_variacao
+    description: >
+      Uma linha por edição do boletim e empresa com o quadro Vendas por
+      construtora (variação %) da página 2, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'empresa'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna empresa do
+          impresso.
+      - name: 'vs. trim. anterior'
+        description: >
+          Valor da coluna vs. trim. anterior do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'vs. mesmo trim. ano ant.'
+        description: >
+          Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: '12m atual / 12m anterior'
+        description: >
+          Valor da coluna 12m atual / 12m anterior do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: '12m anterior / 12m retrasado'
+        description: >
+          Valor da coluna 12m anterior / 12m retrasado do quadro impresso,
+          para a linha e a edição indicadas.
+  - name: gld_boletim_p2_totais_das_empresas_levantadas_variacao
+    description: >
+      Uma linha por edição do boletim e indicador com o quadro Totais das
+      empresas levantadas (variação %) da página 2, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'indicador'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna indicador do
+          impresso.
+      - name: 'vs. trim. anterior'
+        description: >
+          Valor da coluna vs. trim. anterior do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'vs. mesmo trim. ano ant.'
+        description: >
+          Valor da coluna vs. mesmo trim. ano ant. do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: '12m atual / 12m anterior'
+        description: >
+          Valor da coluna 12m atual / 12m anterior do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: '12m anterior / 12m retrasado'
+        description: >
+          Valor da coluna 12m anterior / 12m retrasado do quadro impresso,
+          para a linha e a edição indicadas.
+  - name: gld_boletim_p2_financiamentos_imobiliarios_bacen
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro Financiamentos
+      Imobiliários (BACEN) da página 2, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'PF Concessões (R$ mi)'
+        description: >
+          Valor da coluna PF Concessões (R$ mi) do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'PF Taxa de Juros (%a.a)'
+        description: >
+          Valor da coluna PF Taxa de Juros (%a.a) do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'PF Inadimplência (%)'
+        description: >
+          Valor da coluna PF Inadimplência (%) do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'PJ Concessões (R$ mi)'
+        description: >
+          Valor da coluna PJ Concessões (R$ mi) do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'PJ Taxa de Juros (%a.a)'
+        description: >
+          Valor da coluna PJ Taxa de Juros (%a.a) do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'PJ Inadimplência (%)'
+        description: >
+          Valor da coluna PJ Inadimplência (%) do quadro impresso, para a
+          linha e a edição indicadas.
+  - name: gld_boletim_p2_financiamentos_habitacionais_uh
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro Financiamentos
+      Habitacionais (UH) da página 2, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'FGTS-PJ'
+        description: >
+          Valor da coluna FGTS-PJ do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: 'SBPE Const.'
+        description: >
+          Valor da coluna SBPE Const. do quadro impresso, para a linha e a
+          edição indicadas.
+  - name: gld_boletim_p3_empregos_construcao_caged
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro Empregos
+      Construção (CAGED) da página 3, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'Criação Líquida (Saldo)'
+        description: >
+          Valor da coluna Criação Líquida (Saldo) do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'Total de Postos (Estoque)'
+        description: >
+          Valor da coluna Total de Postos (Estoque) do quadro impresso, para
+          a linha e a edição indicadas.
+  - name: gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro PNAD Contínua —
+      Ocupados e Rendimento Médio Real da página 3, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'Ocupados Construção (mil)'
+        description: >
+          Valor da coluna Ocupados Construção (mil) do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: 'Ocupados Total (mil)'
+        description: >
+          Valor da coluna Ocupados Total (mil) do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'Rendimento Construção (R$)'
+        description: >
+          Valor da coluna Rendimento Construção (R$) do quadro impresso,
+          para a linha e a edição indicadas.
+      - name: 'Rendimento Total (R$)'
+        description: >
+          Valor da coluna Rendimento Total (R$) do quadro impresso, para a
+          linha e a edição indicadas.
+  - name: gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia
+    description: >
+      Uma linha por edição do boletim e indicador com o quadro Produção
+      Industrial e Volume de Vendas (variação %) da página 3, reproduzindo as
+      colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'indicador'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna indicador do
+          impresso.
+      - name: 'PROD mesmo mês ano ant.'
+        description: >
+          Valor da coluna PROD mesmo mês ano ant. do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'PROD mês anterior'
+        description: >
+          Valor da coluna PROD mês anterior do quadro impresso, para a linha
+          e a edição indicadas.
+      - name: 'PROD mês de referência'
+        description: >
+          Valor da coluna PROD mês de referência do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'VENDAS mesmo mês ano ant.'
+        description: >
+          Valor da coluna VENDAS mesmo mês ano ant. do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: 'VENDAS mês anterior'
+        description: >
+          Valor da coluna VENDAS mês anterior do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'VENDAS mês de referência'
+        description: >
+          Valor da coluna VENDAS mês de referência do quadro impresso, para
+          a linha e a edição indicadas.
+  - name: gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_
+    description: >
+      Uma linha por edição do boletim e banco com o quadro Novos
+      Financiamentos Imobiliários por Banco (acum. no ano) da página 3,
+      reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'banco'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna banco do
+          impresso.
+      - name: 'UH acum. ano'
+        description: >
+          Valor da coluna UH acum. ano do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: 'R$ bi acum. ano'
+        description: >
+          Valor da coluna R$ bi acum. ano do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: '% UH'
+        description: >
+          Valor da coluna % UH do quadro impresso, para a linha e a edição
+          indicadas.
+      - name: 'fonte'
+        description: >
+          Valor da coluna fonte do quadro impresso, para a linha e a edição
+          indicadas.
+  - name: gld_boletim_p4_credito_imobiliario_pib
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro Crédito
+      Imobiliário / PIB (%) da página 4, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'Crédito Imobiliário / PIB'
+        description: >
+          Valor da coluna Crédito Imobiliário / PIB do quadro impresso, para
+          a linha e a edição indicadas.
+  - name: gld_boletim_p4_no_uh_por_condicao_de_uso
+    description: >
+      Uma linha por edição do boletim e fonte com o quadro Nº UH por Condição
+      de Uso da página 4, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'fonte'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna fonte do
+          impresso.
+      - name: 'Trim. ano anterior — UH Usadas'
+        description: >
+          Valor da coluna Trim. ano anterior — UH Usadas do quadro impresso,
+          para a linha e a edição indicadas.
+      - name: 'Trim. ano anterior — UH Novas'
+        description: >
+          Valor da coluna Trim. ano anterior — UH Novas do quadro impresso,
+          para a linha e a edição indicadas.
+      - name: 'Trim. selecionado — UH Usadas'
+        description: >
+          Valor da coluna Trim. selecionado — UH Usadas do quadro impresso,
+          para a linha e a edição indicadas.
+      - name: 'Trim. selecionado — UH Novas'
+        description: >
+          Valor da coluna Trim. selecionado — UH Novas do quadro impresso,
+          para a linha e a edição indicadas.
+      - name: 'Trim. selecionado — UH Total'
+        description: >
+          Valor da coluna Trim. selecionado — UH Total do quadro impresso,
+          para a linha e a edição indicadas.
+  - name: gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri
+    description: >
+      Uma linha por edição do boletim e indicador com o quadro SBPE Construção
+      — unidades e valor (acum. no trimestre) da página 5, reproduzindo as
+      colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'indicador'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna indicador do
+          impresso.
+      - name: 'Trim. ano anterior'
+        description: >
+          Valor da coluna Trim. ano anterior do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'Trim. selecionado'
+        description: >
+          Valor da coluna Trim. selecionado do quadro impresso, para a linha
+          e a edição indicadas.
+      - name: 'Variação %'
+        description: >
+          Valor da coluna Variação % do quadro impresso, para a linha e a
+          edição indicadas.
+  - name: gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro Saldo Caderneta
+      de Poupança — Captação Líquida (R$ bi) da página 5, reproduzindo as
+      colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'Cap. Líq. (Bi)'
+        description: >
+          Valor da coluna Cap. Líq. (Bi) do quadro impresso, para a linha e
+          a edição indicadas.
+  - name: gld_boletim_p5_financiamento_pf_mcmv_por_faixa
+    description: >
+      Uma linha por edição do boletim e faixa com o quadro Financiamento PF
+      MCMV por faixa da página 5, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'faixa'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna faixa do
+          impresso.
+      - name: 'Trim. ano anterior — Nº UH'
+        description: >
+          Valor da coluna Trim. ano anterior — Nº UH do quadro impresso,
+          para a linha e a edição indicadas.
+      - name: 'Trim. ano anterior — FIN (Bi R$)'
+        description: >
+          Valor da coluna Trim. ano anterior — FIN (Bi R$) do quadro
+          impresso, para a linha e a edição indicadas.
+      - name: 'Trim. selecionado — Nº UH'
+        description: >
+          Valor da coluna Trim. selecionado — Nº UH do quadro impresso, para
+          a linha e a edição indicadas.
+      - name: 'Trim. selecionado — FIN (Bi R$)'
+        description: >
+          Valor da coluna Trim. selecionado — FIN (Bi R$) do quadro
+          impresso, para a linha e a edição indicadas.
+  - name: gld_boletim_p6_sinapi_brasil_e_incc_m
+    description: >
+      Uma linha por edição do boletim e indicador com o quadro SINAPI (Brasil)
+      e INCC-M da página 6, reproduzindo as colunas do impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'indicador'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna indicador do
+          impresso.
+      - name: 'SINAPI'
+        description: >
+          Valor da coluna SINAPI do quadro impresso, para a linha e a edição
+          indicadas.
+      - name: 'INCC-M'
+        description: >
+          Valor da coluna INCC-M do quadro impresso, para a linha e a edição
+          indicadas.
+  - name: gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc
+    description: >
+      Uma linha por edição do boletim e periodo com o quadro Ticket médio das
+      unidades lançadas vs. INCC da página 6, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'periodo'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna periodo do
+          impresso.
+      - name: 'INCC trimestral'
+        description: >
+          Valor da coluna INCC trimestral do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: 'MRV trimestral'
+        description: >
+          Valor da coluna MRV trimestral do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: 'Direcional trimestral'
+        description: >
+          Valor da coluna Direcional trimestral do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'Tenda trimestral'
+        description: >
+          Valor da coluna Tenda trimestral do quadro impresso, para a linha
+          e a edição indicadas.
+      - name: 'INCC acum. 4T20'
+        description: >
+          Valor da coluna INCC acum. 4T20 do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: 'MRV acum. 4T20'
+        description: >
+          Valor da coluna MRV acum. 4T20 do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: 'Direcional acum. 4T20'
+        description: >
+          Valor da coluna Direcional acum. 4T20 do quadro impresso, para a
+          linha e a edição indicadas.
+      - name: 'Tenda acum. 4T20'
+        description: >
+          Valor da coluna Tenda acum. 4T20 do quadro impresso, para a linha
+          e a edição indicadas.
+  - name: gld_boletim_p7_indices_da_construcao_variacao
+    description: >
+      Uma linha por edição do boletim e indicador com o quadro Índices da
+      Construção (variação %) da página 7, reproduzindo as colunas do
+      impresso.
+    columns:
+      - name: 'edicao'
+        description: >
+          Trimestre a que a linha se refere, no formato usado pelo boletim.
+      - name: 'indicador'
+        description: >
+          Rótulo da linha do quadro, correspondente à coluna indicador do
+          impresso.
+      - name: 'Índice IMOB'
+        description: >
+          Valor da coluna Índice IMOB do quadro impresso, para a linha e a
+          edição indicadas.
+      - name: 'Índice ABRAMAT'
+        description: >
+          Valor da coluna Índice ABRAMAT do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: 'Índice FipeZap'
+        description: >
+          Valor da coluna Índice FipeZap do quadro impresso, para a linha e
+          a edição indicadas.
+      - name: 'Índice ICST'
+        description: >
+          Valor da coluna Índice ICST do quadro impresso, para a linha e a
+          edição indicadas.
+  - name: gld_boletim_valores
+    description: >
+      Uma linha por célula dos quadros do boletim, com o modelo de origem, a
+      página, a edição, o rótulo da linha, o nome da coluna e o valor numérico
+      quando aplicável.
+    columns:
+      - name: 'modelo'
+        description: >
+          Modelo do quadro a que a célula pertence.
+      - name: 'pagina'
+        description: >
+          Página do boletim em que o quadro é impresso.
+      - name: 'quadro'
+        description: >
+          Título do quadro tal como aparece no impresso.
+      - name: 'edicao'
+        description: >
+          Trimestre a que a célula se refere, no formato usado pelo boletim.
+      - name: 'linha'
+        description: >
+          Rótulo da linha do quadro.
+      - name: 'coluna'
+        description: >
+          Nome da coluna do quadro.
+      - name: 'valor'
+        description: >
+          Valor numérico da célula, nulo quando o conteúdo não é numérico.

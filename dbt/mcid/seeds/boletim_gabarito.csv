@@ -1,0 +1,171 @@
+edicao,pagina,modelo,linha,coluna,esperado,tolerancia
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Trim./Trim. Imediatamente Anterior,4 trim. antes,-1.0,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Trim./Trim. Imediatamente Anterior,3 trim. antes,-0.1,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Trim./Trim. Imediatamente Anterior,2 trim. antes,0.9,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Trim./Trim. Imediatamente Anterior,trim. anterior,-2.4,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Trim./Trim. Imediatamente Anterior,trimestre selecionado,2.9,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acumulada ao Longo do Ano,4 trim. antes,3.0,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acumulada ao Longo do Ano,3 trim. antes,1.6,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acumulada ao Longo do Ano,2 trim. antes,1.7,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acumulada ao Longo do Ano,trim. anterior,0.5,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acumulada ao Longo do Ano,trimestre selecionado,1.3,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acum. Últimos 4 Trimestres,4 trim. antes,4.6,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acum. Últimos 4 Trimestres,3 trim. antes,3.5,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acum. Últimos 4 Trimestres,2 trim. antes,2.5,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acum. Últimos 4 Trimestres,trim. anterior,0.5,0.06
+1T2026,1,gld_boletim_p1_pib_construcao_civil_em_de_crescimento,Acum. Últimos 4 Trimestres,trimestre selecionado,0.1,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,MRV,vs. trim. anterior,-5,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,MRV,vs. mesmo trim. ano ant.,-9,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,MRV,12m atual / 12m anterior,-3,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,MRV,12m anterior / 12m retrasado,71,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Cury,vs. trim. anterior,109,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Cury,vs. mesmo trim. ano ant.,-12,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Cury,12m atual / 12m anterior,5,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Cury,12m anterior / 12m retrasado,45,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Tenda,vs. trim. anterior,-15,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Tenda,vs. mesmo trim. ano ant.,67,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Tenda,12m atual / 12m anterior,0,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Tenda,12m anterior / 12m retrasado,42,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Direcional,vs. trim. anterior,-35,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Direcional,vs. mesmo trim. ano ant.,-9,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Direcional,12m atual / 12m anterior,1,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Direcional,12m anterior / 12m retrasado,16,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Pacaembu,vs. trim. anterior,-2,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Pacaembu,vs. mesmo trim. ano ant.,85,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Pacaembu,12m atual / 12m anterior,69,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Pacaembu,12m anterior / 12m retrasado,4,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Plano & Plano,vs. trim. anterior,58,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Plano & Plano,vs. mesmo trim. ano ant.,-15,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Plano & Plano,12m atual / 12m anterior,-8,0.06
+1T2026,2,gld_boletim_p2_lancamentos_por_construtora_variacao,Plano & Plano,12m anterior / 12m retrasado,43,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,MRV,vs. trim. anterior,-14,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,MRV,vs. mesmo trim. ano ant.,6,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,MRV,12m atual / 12m anterior,-2,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,MRV,12m anterior / 12m retrasado,6,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Cury,vs. trim. anterior,43,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Cury,vs. mesmo trim. ano ant.,9,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Cury,12m atual / 12m anterior,19,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Cury,12m anterior / 12m retrasado,29,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Tenda,vs. trim. anterior,14,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Tenda,vs. mesmo trim. ano ant.,30,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Tenda,12m atual / 12m anterior,9,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Tenda,12m anterior / 12m retrasado,25,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Direcional,vs. trim. anterior,12,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Direcional,vs. mesmo trim. ano ant.,15,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Direcional,12m atual / 12m anterior,-10,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Direcional,12m anterior / 12m retrasado,34,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Pacaembu,vs. trim. anterior,12,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Pacaembu,vs. mesmo trim. ano ant.,56,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Pacaembu,12m atual / 12m anterior,49,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Pacaembu,12m anterior / 12m retrasado,31,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Plano & Plano,vs. trim. anterior,-43,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Plano & Plano,vs. mesmo trim. ano ant.,-10,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Plano & Plano,12m atual / 12m anterior,-2,0.06
+1T2026,2,gld_boletim_p2_vendas_por_construtora_variacao,Plano & Plano,12m anterior / 12m retrasado,54,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total lançamentos,vs. trim. anterior,6,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total lançamentos,vs. mesmo trim. ano ant.,3,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total lançamentos,12m atual / 12m anterior,5,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total lançamentos,12m anterior / 12m retrasado,41,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total vendas,vs. trim. anterior,1,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total vendas,vs. mesmo trim. ano ant.,14,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total vendas,12m atual / 12m anterior,7,0.06
+1T2026,2,gld_boletim_p2_totais_das_empresas_levantadas_variacao,Total vendas,12m anterior / 12m retrasado,24,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês de referência,PF Concessões (R$ mi),22623,113.11500000000001
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês de referência,PF Taxa de Juros (%a.a),11.6,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês de referência,PF Inadimplência (%),1.4,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês de referência,PJ Concessões (R$ mi),3555,17.775000000000002
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês de referência,PJ Taxa de Juros (%a.a),12.3,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês de referência,PJ Inadimplência (%),1.1,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês anterior,PF Concessões (R$ mi),18176,90.88
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês anterior,PF Taxa de Juros (%a.a),10.7,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês anterior,PF Inadimplência (%),1.4,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês anterior,PJ Concessões (R$ mi),2481,12.405000000000001
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês anterior,PJ Taxa de Juros (%a.a),11.5,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mês anterior,PJ Inadimplência (%),1.0,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mesmo mês do ano anterior,PF Concessões (R$ mi),17490,87.45
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mesmo mês do ano anterior,PF Taxa de Juros (%a.a),10.9,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mesmo mês do ano anterior,PF Inadimplência (%),1.2,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mesmo mês do ano anterior,PJ Concessões (R$ mi),2754,13.77
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mesmo mês do ano anterior,PJ Taxa de Juros (%a.a),10.9,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,Mesmo mês do ano anterior,PJ Inadimplência (%),0.8,0.06
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,12 meses até a referência,PF Concessões (R$ mi),230492,1152.46
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,12 meses até a referência,PJ Concessões (R$ mi),39035,195.175
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,12 meses anteriores,PF Concessões (R$ mi),231286,1156.43
+1T2026,2,gld_boletim_p2_financiamentos_imobiliarios_bacen,12 meses anteriores,PJ Concessões (R$ mi),32953,164.76500000000001
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,Trimestre selecionado,FGTS-PJ,59836,299.18
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,Trimestre selecionado,SBPE Const.,47609,238.04500000000002
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,Trimestre anterior,FGTS-PJ,61212,306.06
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,Trimestre anterior,SBPE Const.,47766,238.83
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,Mesmo trim. do ano anterior,FGTS-PJ,81622,408.11
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,Mesmo trim. do ano anterior,SBPE Const.,19130,95.65
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,12 meses até a referência,FGTS-PJ,270364,1351.82
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,12 meses até a referência,SBPE Const.,161338,806.69
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,12 meses anteriores,FGTS-PJ,284968,1424.84
+1T2026,2,gld_boletim_p2_financiamentos_habitacionais_uh,12 meses anteriores,SBPE Const.,177376,886.88
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Mês de referência,Criação Líquida (Saldo),38316,191.58
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Mês de referência,Total de Postos (Estoque),3063821,15319.105
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Mês anterior,Criação Líquida (Saldo),31656,158.28
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Mês anterior,Total de Postos (Estoque),3025505,15127.525
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Mesmo mês do ano anterior,Criação Líquida (Saldo),22068,110.34
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Mesmo mês do ano anterior,Total de Postos (Estoque),2958689,14793.445
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Acumulado no trimestre,Criação Líquida (Saldo),120547,602.735
+1T2026,3,gld_boletim_p3_empregos_construcao_caged,Acum. no trim. do ano anterior,Criação Líquida (Saldo),101455,507.27500000000003
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,jan-fev-mar 2026,Ocupados Construção (mil),7335,36.675000000000004
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,jan-fev-mar 2026,Ocupados Total (mil),101976,509.88
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,jan-fev-mar 2026,Rendimento Construção (R$),2858,14.290000000000001
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,jan-fev-mar 2026,Rendimento Total (R$),3610,18.05
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,out-nov-dez 2025,Ocupados Construção (mil),7468,37.34
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,out-nov-dez 2025,Ocupados Total (mil),102998,514.99
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,out-nov-dez 2025,Rendimento Construção (R$),2851,14.255
+1T2026,3,gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re,out-nov-dez 2025,Rendimento Total (R$),3555,17.775000000000002
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual mensal,PROD mesmo mês ano ant.,2.8,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual mensal,PROD mês anterior,-6.7,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual mensal,PROD mês de referência,-0.7,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual mensal,VENDAS mesmo mês ano ant.,-0.4,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual mensal,VENDAS mês anterior,0.7,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual mensal,VENDAS mês de referência,1.6,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada no ano,PROD mesmo mês ano ant.,4.1,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada no ano,PROD mês anterior,-6.9,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada no ano,PROD mês de referência,-4.8,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada no ano,VENDAS mesmo mês ano ant.,6.1,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada no ano,VENDAS mês anterior,-5.5,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada no ano,VENDAS mês de referência,-1.0,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada nos últimos 12 meses,PROD mesmo mês ano ant.,6.0,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada nos últimos 12 meses,PROD mês anterior,-3.1,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada nos últimos 12 meses,PROD mês de referência,-3.4,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada nos últimos 12 meses,VENDAS mesmo mês ano ant.,6.7,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada nos últimos 12 meses,VENDAS mês anterior,-2.1,0.06
+1T2026,3,gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia,Variação percentual acumulada nos últimos 12 meses,VENDAS mês de referência,-1.8,0.06
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,FGTS - PF,Trim. ano anterior — UH Usadas,27197,135.985
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,FGTS - PF,Trim. ano anterior — UH Novas,101490,507.45
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,FGTS - PF,Trim. selecionado — UH Usadas,46506,232.53
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,FGTS - PF,Trim. selecionado — UH Novas,124507,622.535
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,SBPE (Aquisição),Trim. ano anterior — UH Usadas,67768,338.84000000000003
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,SBPE (Aquisição),Trim. ano anterior — UH Novas,21570,107.85000000000001
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,SBPE (Aquisição),Trim. selecionado — UH Usadas,55633,278.165
+1T2026,4,gld_boletim_p4_no_uh_por_condicao_de_uso,SBPE (Aquisição),Trim. selecionado — UH Novas,22234,111.17
+1T2026,5,gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida,Mês de referência,Cap. Líq. (Bi),-9.1,0.06
+1T2026,5,gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida,Mês anterior,Cap. Líq. (Bi),-4.1,0.06
+1T2026,5,gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida,Mesmo mês do ano anterior,Cap. Líq. (Bi),-9.2,0.06
+1T2026,5,gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida,12 meses até a referência,Cap. Líq. (Bi),-60.3,0.06
+1T2026,5,gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida,12 meses anteriores,Cap. Líq. (Bi),-37.0,0.06
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Número índice / Custo (R$/m²),SINAPI,1932.2,9.661
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Número índice / Custo (R$/m²),INCC-M,1241.72,6.208600000000001
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Variação mensal (%),SINAPI,0.37,0.06
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Variação mensal (%),INCC-M,0.35,0.06
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Acumulado no ano (%),SINAPI,2.15,0.06
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Acumulado no ano (%),INCC-M,5.81,0.06
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Acumulado em 12 meses (%),SINAPI,6.73,0.06
+1T2026,6,gld_boletim_p6_sinapi_brasil_e_incc_m,Acumulado em 12 meses (%),INCC-M,7.32,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Mês de ref. vs. mês anterior,Índice IMOB,-9.3,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Mês de ref. vs. mês anterior,Índice FipeZap,1.1,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Mês de ref. vs. mês anterior,Índice ICST,2.3,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Mês de ref. vs. mesmo mês do ano ant.,Índice IMOB,62.2,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Mês de ref. vs. mesmo mês do ano ant.,Índice FipeZap,8.6,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Mês de ref. vs. mesmo mês do ano ant.,Índice ICST,-1.4,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Acumulado no ano,Índice IMOB,10.0,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Acumulado no ano,Índice FipeZap,2.4,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Acumulado no ano,Índice ICST,2.6,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Acumulado no ano anterior,Índice IMOB,17.6,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Acumulado no ano anterior,Índice FipeZap,3.2,0.06
+1T2026,7,gld_boletim_p7_indices_da_construcao_variacao,Acumulado no ano anterior,Índice ICST,-1.1,0.06

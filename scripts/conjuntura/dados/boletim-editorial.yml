@@ -1,0 +1,183 @@
+version: 1
+
+# Texto editorial do boletim, por edição.
+#
+# O boletim é híbrido: o NÚMERO é lido das tabelas gold, o TEXTO é escrito.
+# Este arquivo guarda o texto.
+#
+# Três naturezas, com regras diferentes:
+#
+#   leitura           descrição do que a variação mostra. PODE ser redigida por
+#                     modelo, desde que toda afirmação seja conferível num
+#                     número que está na página. Sem causa, sem projeção.
+#   expectativas      projeções de TERCEIROS (ABECIP, SINDUSCON, CBIC). NUNCA
+#                     geradas: são números que essas instituições publicaram, e
+#                     inventá-los é atribuir a elas declaração que não fizeram.
+#   visao_mcid        posição institucional do Ministério. NUNCA gerada.
+#
+# `origem` diz de onde cada bloco veio. `transcrito` significa copiado do PPTX
+# publicado — é a palavra do time, não de máquina.
+
+edicoes:
+  "1T2026":
+    titulo: Boletim do primeiro trimestre de 2026
+    publicado_em: "2026-06-09"
+    origem: transcrito
+    fonte_da_transcricao: "Boletim de Conjuntura 2026 1T Final.pptx"
+
+    leitura:
+      pib: >
+        EXPANSÃO DO PIB NO 1º TRI DE 2026, APÓS RETRAÇÕES NOS TRIMESTRES DE
+        2025. MAS INSUFICIENTE PARA EVITAR A CONTINUIDADE DA REDUÇÃO DO
+        CRESCIMENTO EM 12 MESES.
+      lancamentos_e_vendas: >
+        LANÇAMENTOS (-4,9%) E VENDAS (+4,1%) EM 12 MESES, INDICANDO REDUÇÃO DE
+        ESTOQUES. QUEDA NOS LANÇAMENTOS DO MCMV PODE ESTAR REFLETINDO
+        POSTERGAÇÕES EM FUNÇÃO DAS CORREÇÕES DE RENDA E PREÇO FEITAS APÓS O
+        ENCERRAMENTO DO TRIMESTRE. MCMV CONTINUA PUXANDO O SETOR, COM EXPANSÃO
+        ACIMA DO MERCADO NOS LANÇAMENTOS (+8,7%) E NAS VENDAS (+10,1%), EM 12
+        MESES.
+      credito: >
+        CEF EXPANDINDO FORTEMENTE O CRÉDITO EM FUNÇÃO DAS MUDANÇAS DE REGRAS DO
+        SBPE. DEMAIS BANCOS COM DESEMPENHO MENOS DINÂMICO, O QUE TAMBÉM ESTÁ
+        REFLETINDO O FATO DE TEREM REGISTRADO DESEMPENHO FAVORÁVEL EM 2025.
+        CRÉDITO À PRODUÇÃO CRESCENDO FORTEMENTE, INDICANDO EXPANSÃO FUTURA NO
+        SBPE.
+      credito_pib: >
+        MANUTENÇÃO DA TENDÊNCIA DE EXPANSÃO DO CRÉDITO IMOBILIÁRIO EM % DO PIB.
+      condicao_de_uso: >
+        FINANCIAMENTO NO MCMV MANTEVE A TENDÊNCIA DE EXPANSÃO VERIFICADA DESDE
+        2023. AO CONTRÁRIO DE 2025, QUE REGISTROU RETRAÇÃO DOS USADOS, AMBOS OS
+        TIPOS DE IMÓVEIS APRESENTARAM EXPANSÃO. SBPE PASSOU A APRESENTAR
+        EXPANSÃO EM 2026, SOB INFLUÊNCIA DOS IMÓVEIS NOVOS. NO AGREGADO, O 1º
+        TRI DE 2026 REGISTROU FORTE EXPANSÃO.
+      poupanca_e_financiamento: >
+        POUPANÇA: 5º ANO SEGUIDO DE CAPTAÇÃO NEGATIVA. FINANCIAMENTO À PF (FGTS
+        E SBPE) COM EXPANSÃO RELEVANTE EM 2026. NO FGTS, A MODALIDADE DE
+        FINANCIAMENTO À PF A PARTIR DO DESLIGAMENTO DE UNIDADES CUJOS
+        EMPREENDIMENTOS FORAM CONSTRUÍDOS UTILIZANDO RECURSOS DO FGTS CONTINUA
+        REGISTRANDO CRESCIMENTO MAIS PROFUNDO QUE AS DEMAIS MODALIDADES,
+        REFORÇANDO A RELEVÂNCIA DESSA MODALIDADE PARA A EXPANSÃO DO
+        FINANCIAMENTO HABITACIONAL.
+      financiamento_pf_mcmv: >
+        MCMV-FINANCIAMENTO CRESCEU 35% EM 2026. TODAS AS FAIXAS APRESENTARAM
+        CRESCIMENTO, COM DESTAQUE PARA F1 (+22%) E F3 (+48%). INCORPORAÇÃO DA
+        CLASSE MÉDIA RESPONDENDO POR 26% DA EXPANSÃO OBSERVADA.
+      ogu: >
+        NOVO MCMV: FORTE AMPLIAÇÃO DO NÚMERO DE OBRAS EM ANDAMENTO. ORÇAMENTO
+        REFORÇADO PELA INCORPORAÇÃO DO FUNDO SOCIAL AO MCMV.
+      precos: >
+        CONTINUIDADE DA PRESSÃO DE CUSTOS, EM DECORRÊNCIA DA ELEVAÇÃO DA
+        MÃO-DE-OBRA E DOS MATERIAIS UTILIZADOS NA CONSTRUÇÃO. MAS INCC
+        CONTINUOU A REGISTRAR QUEDA EM 12 MESES, NÃO TENDO SIDO AFETADO PELO
+        CHOQUE DO PETRÓLEO NO TRIMESTRE.
+      ticket_medio: >
+        PREÇOS SUBIRAM MENOS NO ÚLTIMO TRIMESTRE QUE O INCC. ACUMULADO DESDE
+        2023 REVELA FORTE RECOMPOSIÇÃO DE MARGENS, INDICANDO BAIXA PRESSÃO
+        FUTURA SOBRE OS PREÇOS DOS IMÓVEIS.
+      indices:
+        imob: CONTINUIDADE DA VALORIZAÇÃO DAS CONSTRUTORAS NA B3
+        fipezap: CONTINUIDADE DA DESACELERAÇÃO DOS ALUGUÉIS
+        abramat: RECUPERAÇÃO DAS VENDAS DE MATERIAIS
+        icst: RECUPERAÇÃO DA CONFIANÇA
+
+    dados_posteriores:
+      positivos:
+        - "Concessão de Financiamento PJ e PF: em abril, houve aceleração da
+           expansão acumulada no ano: +20% na PJ e +12% na PF, registrado tanto
+           no MCMV quanto no SBPE."
+        - "Novo CAGED: 24 mil novas vagas criadas em abril, rompendo o patamar
+           de 3,1 milhões de postos formais (recorde do setor)."
+      neutros:
+        - "Caderneta de Poupança vinculada ao SBPE: estabilidade em abril,
+           interrompendo as perdas líquidas registradas no 1º Trimestre."
+        - "Rendimento Real na Construção: redução marginal da taxa de expansão
+           em abril (+4%)."
+      negativos:
+        - "INCC-M: forte aceleração em abril e maio, em função do Choque do
+           Petróleo, interrompendo a trajetória de redução do índice acumulado
+           em 12 meses: 6,82% no período terminado em maio de 2026."
+
+    # NUNCA GERADO. Números publicados por terceiros.
+    expectativas_de_mercado:
+      abecip_financiamento_2026:
+        - {item: SBPE, valor: "R$ 180 bi", variacao: "+15%"}
+        - {item: FGTS, valor: "R$ 145 bi", variacao: "+5%"}
+        - {item: LIVRE, valor: "R$ 51 bi", variacao: "+66%"}
+        - {item: SOMA, valor: "R$ 375 bi", variacao: "+16%"}
+      pib_da_construcao_2026:
+        - {fonte: SINDUSCON SP, valor: "+2,7%"}
+        - {fonte: CBIC, valor: "+1,2%"}
+
+    # NUNCA GERADA. Posição institucional do Ministério.
+    visao_mcid:
+      pib_construcao_2026: "+4,0%"
+      fatores:
+        - Lançamentos imobiliários em expansão
+        - Novo recorde do MCMV-Financiamento
+        - Aceleração das obras do MCMV-OGU
+        - Novo SBPE
+        - "Melhoria das condições do RCB (taxa = 0,99% ao mês, prazo 72 meses
+           e ticket máximo de R$ 50 mil)"
+        - Continuidade da expansão da massa salarial real da construção
+      credito_imobiliario_pib: "12,0%"
+      # O PPTX corta a lista de financiamento habitacional na conversão; o que
+      # está legível é o primeiro item. Confirmar no slide antes de publicar.
+      financiamento_habitacional_pf_uh:
+        - "MCMV-Financiamento: 850 mil"
+      incompleto: true
+
+  # ── 2T2026 ────────────────────────────────────────────────────────────────
+  #
+  # `origem: gerado` — diferente do 1T2026, esta edição NÃO foi transcrita de um
+  # boletim publicado: não existe PPTX do 2T2026. A leitura abaixo foi redigida
+  # por máquina a partir dos próprios quadros, e cada afirmação é conferível num
+  # número que está na página. Por isso a página sai com marca de rascunho.
+  #
+  # `expectativas_de_mercado` e `visao_mcid` estão AUSENTES de propósito:
+  # projeção de terceiro é número que uma instituição publicou, e a visão do
+  # Ministério é posição do órgão. Nenhuma das duas se deduz dos quadros.
+  # Para incluí-las, alguém do time precisa escrevê-las aqui.
+  #
+  # `origem: revisado` — o texto foi redigido por máquina e conferido pelo time
+  # em 03/09/2026. A marca de rascunho sai; o rodapé continua registrando que a
+  # leitura não foi transcrita de um boletim publicado, porque isso é fato sobre
+  # o documento, não aviso sobre o processo.
+  "2T2026":
+    titulo: Boletim do segundo trimestre de 2026
+    publicado_em: 2026-09-03
+    origem: revisado
+    leitura:
+      pib: >
+        RETRAÇÃO DE 0,4% NO TRIMESTRE, APÓS ALTA DE 2,8% NO TRIMESTRE ANTERIOR.
+        O ACUMULADO EM QUATRO TRIMESTRES PASSA DE 0,1% PARA 0,3%.
+      lancamentos_e_vendas: >
+        LANÇAMENTOS DE 107.161 UNIDADES, 2,6% ACIMA DO TRIMESTRE ANTERIOR E 1,3%
+        ABAIXO DO MESMO TRIMESTRE DE 2025. VENDAS DE 113.676 UNIDADES, 0,7%
+        ACIMA DO TRIMESTRE ANTERIOR E 5,3% ACIMA DO MESMO TRIMESTRE DE 2025.
+        EM 12 MESES, 477.357 LANÇAMENTOS E 447.250 VENDAS.
+      credito: >
+        277.086 UNIDADES FINANCIADAS NO ACUMULADO DO ANO, SOMANDO R$ 93,7
+        BILHÕES. A CAIXA RESPONDE POR 62,7% DAS UNIDADES E R$ 45,9 BILHÕES.
+      credito_pib: >
+        CRÉDITO IMOBILIÁRIO EM 11,05% DO PIB EM MAIO DE 2026, ANTE 10,50% DOZE
+        MESES ANTES. A SÉRIE SOBE EM TODOS OS QUINZE MESES DA JANELA.
+      condicao_de_uso: >
+        FGTS-PF FINANCIOU 99.722 UNIDADES NOVAS E 19.970 USADAS, ANTE 126.142 E
+        31.660 NO MESMO TRIMESTRE DE 2025. O SBPE AQUISIÇÃO APARECE APENAS COM O
+        TOTAL DE 85.872 UNIDADES: A QUEBRA POR CONDIÇÃO DE USO NÃO ESTÁ NA FONTE.
+      poupanca_e_financiamento: >
+        CAPTAÇÃO LÍQUIDA NEGATIVA DE R$ 1,4 BILHÃO NO MÊS DE REFERÊNCIA, APÓS R$
+        2,3 BILHÕES POSITIVOS NO MÊS ANTERIOR. EM 12 MESES, SAÍDA LÍQUIDA DE R$
+        55,1 BILHÕES, CONTRA R$ 52,0 BILHÕES NOS 12 MESES ANTERIORES.
+      financiamento_pf_mcmv: >
+        142.683 UNIDADES E R$ 34,31 BILHÕES NO TRIMESTRE. A FAIXA 1 CONCENTRA
+        57.047 UNIDADES; A FAIXA 3 TEM O MAIOR VALOR FINANCIADO, R$ 7,95 BILHÕES.
+        O QUADRO NÃO TRAZ O TRIMESTRE DO ANO ANTERIOR.
+      precos: >
+        SINAPI A R$ 1.976,40 POR METRO QUADRADO, COM ALTA DE 1,19% NO MÊS E 7,26%
+        EM 12 MESES. INCC-M SOBE 0,85% NO MÊS E 6,71% EM 12 MESES.
+      ticket_medio: >
+        NO TRIMESTRE, O INCC SOBE 2,7%; O TICKET MÉDIO DA MRV CAI 1,5% E OS DA
+        DIRECIONAL E DA TENDA SOBEM 15,7% E 8,3%. DESDE O 4º TRIMESTRE DE 2020,
+        O INCC ACUMULA 51,3% E OS TICKETS MÉDIOS, ENTRE 54,7% E 121,4%.

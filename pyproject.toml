@@ -24,6 +24,8 @@ imap-tools = "*"
 astronomer-cosmos = "*"
 pyarrow = "*"
 boto3 = "*"
+duckdb = "^1.5.5"
+great-expectations = ">=1.21,<2.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
@@ -98,9 +100,24 @@ exclude = [
 select = ["E", "F", "W", "C90"]
 ignore = []
 
+# `helpers/openmetadata/` é código PORTADO — de `origin/refactor/openmetadata`
+# e do data-application-minc, que evoluiu a mesma integração. Quebrar as
+# funções longas aqui nos afastaria do upstream e encareceria trazer as
+# melhorias deles depois. A complexidade é herdada, não escolhida; se um dia
+# formos donos deste código de verdade, o ignore sai junto.
+[tool.ruff.lint.per-file-ignores]
+"helpers/openmetadata/glossary.py" = ["C901"]
+"helpers/openmetadata/semantic_relationships.py" = ["C901"]
+
 [tool.mypy]
 python_version = "3.11"
 files = ["**/*.py"]
+# Espelha o PYTHONPATH de execução do Airflow
+# (`/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers`) mais o
+# diretório dos scripts de governança, que se importam entre si como módulos
+# irmãos. Sem isso o mypy não resolve nenhum deles e todo tipo que atravessa a
+# fronteira vira Any.
+mypy_path = "scripts/governance:helpers:plugins:dags"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -114,6 +131,13 @@ warn_no_return = true
 warn_unreachable = true
 follow_untyped_imports = true
 disable_error_code = ["arg-type", "attr-defined"]
+
+# O `openmetadata-ingestion` NÃO está instalado no ambiente principal, e isso é
+# deliberado: ele exige SQLAlchemy 2 e o Airflow 2.8.1 exige 1.4. Ele vive só no
+# virtualenv isolado das tasks. Aqui o mypy só precisa parar de procurá-lo.
+[[tool.mypy.overrides]]
+module = ["metadata.*", "airflow.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

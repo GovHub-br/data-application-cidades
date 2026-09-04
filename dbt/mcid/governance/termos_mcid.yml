@@ -1,0 +1,360 @@
+version: 1
+
+# Termos do glossário MCID que o produto Conjuntura usa e que ainda não
+# existiam na instância. O glossário já traz 62 termos em sete eixos; aqui
+# estão apenas os que faltavam, no mesmo formato.
+#
+# `aplica_a` diz a quais modelos o termo se aplica. É o que permite que a
+# sincronização anexe o termo à tabela certa em vez de deixar o vocabulário
+# existir sem uso — hoje o schema de referência tem 20 tabelas etiquetadas e o
+# nosso tem zero.
+#
+# `aplica_a_colunas` faz o mesmo no nível da coluna, por nome. Um conceito como
+# período de referência não pertence a uma tabela: pertence à coluna que o
+# mede, e ela se repete em dezenas de modelos.
+#
+# `synonyms` guarda variante real de nome (sigla, nome por extenso), nunca
+# tradução livre. `related_terms` liga o termo a outro do mesmo glossário.
+# `references` aponta a fonte oficial do conceito. Só entra endereço que foi
+# CONFERIDO respondendo — publicar URL quebrada num catálogo é pior do que
+# não ter URL. Por isso ele existe só nos termos de instituição: os demais
+# são conceitos, cuja fonte normativa não dá para apontar com precisão.
+
+termos:
+  # ── Fontes institucionais: quem apura o dado
+  - fqn: MCID.FontesInstitucionais.FIPE
+    references: [{name: "FIPE", endpoint: "https://www.fipe.org.br"}]
+    synonyms: ["Fundação Instituto de Pesquisas Econômicas"]
+    related_terms: ["MCID.IndicadoresConjunturais.FipeZapLocacao"]
+    name: FIPE
+    display_name: FIPE
+    description: >
+      Fundação Instituto de Pesquisas Econômicas, responsável pela apuração de
+      índices de preço de imóveis residenciais anunciados.
+    aplica_a: [gld_fipezap, slv_fipezap_locacao]
+
+  - fqn: MCID.FontesInstitucionais.InfoMoney
+    references: [{name: "InfoMoney", endpoint: "https://www.infomoney.com.br"}]
+    name: InfoMoney
+    display_name: InfoMoney
+    description: >
+      Provedor de cotações do mercado de capitais utilizado para acompanhar o
+      índice de ações do setor imobiliário.
+    aplica_a: [gld_indice_imob, slv_infomoney_imob]
+
+  - fqn: MCID.FontesInstitucionais.SIAFI
+    references: [{name: "Tesouro Gerencial", endpoint: "https://tesourogerencial.tesouro.gov.br"}]
+    synonyms: ["Sistema Integrado de Administração Financeira do Governo Federal"]
+    related_terms: ["MCID.IndicadoresConjunturais.ExecucaoOrcamentaria"]
+    name: SIAFI
+    display_name: SIAFI
+    description: >
+      Sistema Integrado de Administração Financeira do Governo Federal, origem
+      dos dados de execução orçamentária.
+    aplica_a: [gld_ogu, slv_siafi_dotacao_execucao]
+
+  # ── Fundos e fontes de recurso
+  - fqn: MCID.FundosEFontes.FundoSocial
+    related_terms: ["MCID.FundosEFontes.FGTS"]
+    name: FundoSocial
+    display_name: Fundo Social
+    description: >
+      Fundo que custeia parcela do financiamento habitacional destinado às
+      faixas de menor renda, complementando os recursos do FGTS.
+    aplica_a: [gld_fundo_social, slv_gefus_fundo_social]
+
+  - fqn: MCID.FundosEFontes.LCI
+    synonyms: ["LCI"]
+    related_terms: ["MCID.IndicadoresConjunturais.Funding"]
+    name: LCI
+    display_name: Letra de Crédito Imobiliário
+    description: >
+      Título de renda fixa lastreado em créditos imobiliários, usado como
+      fonte de captação para o financiamento habitacional.
+    aplica_a: [gld_funding]
+
+  - fqn: MCID.FundosEFontes.CRI
+    synonyms: ["CRI"]
+    related_terms: ["MCID.IndicadoresConjunturais.Funding"]
+    name: CRI
+    display_name: Certificado de Recebíveis Imobiliários
+    description: >
+      Título lastreado em fluxos de recebíveis imobiliários, usado como fonte
+      de captação de mercado para o setor.
+    aplica_a: [gld_funding]
+
+  - fqn: MCID.FundosEFontes.LIG
+    synonyms: ["LIG"]
+    related_terms: ["MCID.IndicadoresConjunturais.Funding"]
+    name: LIG
+    display_name: Letra Imobiliária Garantida
+    description: >
+      Título de renda fixa com garantia de carteira de créditos imobiliários,
+      usado como fonte de captação de longo prazo.
+    aplica_a: [gld_funding]
+
+  # ── Indicadores conjunturais
+  - fqn: MCID.IndicadoresConjunturais.ProducaoFisicaIndustrial
+    synonyms: ["PIM-PF", "Produção Industrial Mensal"]
+    related_terms: ["MCID.FontesInstitucionais.IBGE"]
+    name: ProducaoFisicaIndustrial
+    display_name: Produção física industrial
+    description: >
+      Medida da variação do volume produzido pela indústria dos insumos
+      típicos da construção civil.
+    aplica_a: [gld_producao_fisica, slv_ibge_pim_pf_brasil]
+
+  - fqn: MCID.IndicadoresConjunturais.VendasMaterialConstrucao
+    name: VendasMaterialConstrucao
+    display_name: Vendas de material de construção
+    description: >
+      Medida da variação do volume de vendas de material de construção no
+      comércio varejista.
+    aplica_a: [gld_producao_fisica, slv_ibge_pmc_construcao]
+
+  - fqn: MCID.IndicadoresConjunturais.CreditoPIB
+    synonyms: ["Crédito imobiliário sobre o PIB"]
+    related_terms: ["MCID.FontesInstitucionais.BACEN", "MCID.IndicadoresConjunturais.FinanciamentoImobiliario"]
+    name: CreditoPIB
+    display_name: Crédito imobiliário sobre PIB
+    description: >
+      Relação entre o saldo da carteira de crédito imobiliário e o Produto
+      Interno Bruto, usada para medir a profundidade do crédito habitacional.
+    aplica_a: [gld_credito_pib, slv_bacen_credito_pib]
+
+  - fqn: MCID.IndicadoresConjunturais.ValorMedioImovel
+    related_terms: ["MCID.Identificadores.UH"]
+    name: ValorMedioImovel
+    display_name: Valor médio do imóvel financiado
+    description: >
+      Valor médio dos imóveis objeto de financiamento habitacional em um
+      período, usado para acompanhar o poder de compra do beneficiário.
+    aplica_a: [gld_fgts_valor_medio, slv_fgts_valor_medio_imoveis]
+
+  - fqn: MCID.IndicadoresConjunturais.Funding
+    synonyms: ["Captação"]
+    name: Funding
+    display_name: Estrutura de funding
+    description: >
+      Composição das fontes de recurso que lastreiam o crédito imobiliário,
+      entre poupança, fundos e instrumentos de mercado.
+    aplica_a: [gld_funding]
+
+  - fqn: MCID.IndicadoresConjunturais.ExecucaoOrcamentaria
+    synonyms: ["Execução do OGU"]
+    name: ExecucaoOrcamentaria
+    display_name: Execução orçamentária
+    description: >
+      Acompanhamento da dotação, do empenho, do pagamento e dos restos a pagar
+      das ações orçamentárias federais em habitação.
+    aplica_a: [gld_ogu, slv_siafi_dotacao_execucao]
+
+  # ── Identificadores e recortes
+  - fqn: MCID.Identificadores.FaixaDeRenda
+    related_terms: ["MCID.ProgramasHabitacionais.MCMV"]
+    name: FaixaDeRenda
+    display_name: Faixa de renda
+    description: >
+      Recorte de renda familiar que determina as condições de financiamento e
+      subsídio aplicáveis ao beneficiário no programa habitacional.
+    aplica_a:
+      - gld_financiamento_pf_faixa
+      - gld_canal_fgts
+      - slv_geavo_fgts_pf
+      - slv_geavo_cci_cca
+
+  - fqn: MCID.Identificadores.CondicaoDeUso
+    related_terms: ["MCID.Identificadores.UH"]
+    name: CondicaoDeUso
+    display_name: Condição de uso do imóvel
+    description: >
+      Distinção entre unidade nova e unidade usada no financiamento
+      habitacional, usada para acompanhar a produção frente à revenda.
+    aplica_a:
+      - gld_uh_condicao_uso
+      - gld_fundo_social
+      - slv_geavo_fgts_pf
+      - slv_gefus_fundo_social
+
+  - fqn: MCID.ProgramasHabitacionais.MCMV.ProCotista
+    related_terms: ["MCID.FundosEFontes.FGTS"]
+    name: ProCotista
+    display_name: Pró-Cotista
+    parent: MCID.ProgramasHabitacionais.MCMV
+    description: >
+      Modalidade de financiamento habitacional destinada a quem possui conta
+      vinculada ao FGTS, com condições distintas das demais faixas.
+    aplica_a: [gld_canal_fgts]
+
+  # ── Eixos que faltavam no glossário: arquitetura e governança
+  #
+  # Estes seis conceitos existiam só em `governance/glossary.yml`, que alimenta
+  # a documentação do dbt e NUNCA chegava ao OpenMetadata — o vocabulário de
+  # camada e de período ficava fora justamente do lugar onde se procura por
+  # ele. Os eixos-pai entram declarados porque a instância só tem os sete
+  # eixos originais; criar o filho sem o pai devolve 404.
+  - fqn: MCID.Arquitetura
+    name: Arquitetura
+    display_name: Arquitetura de dados
+    description: >
+      Conceitos que descrevem como o dado é organizado em camadas ao longo do
+      seu ciclo de vida.
+
+  - fqn: MCID.Arquitetura.Bronze
+    name: Bronze
+    display_name: Camada Bronze
+    description: >
+      Camada que preserva a representação fiel recebida da origem para
+      rastreabilidade e processamento interno.
+    related_terms: ["MCID.Arquitetura.Silver"]
+
+  - fqn: MCID.Arquitetura.Silver
+    name: Silver
+    display_name: Camada Silver
+    description: >
+      Camada que aplica tratamento, tipagem, padronização e conformação de
+      conceitos de dados.
+    related_terms: ["MCID.Arquitetura.Gold"]
+
+  - fqn: MCID.Arquitetura.Gold
+    name: Gold
+    display_name: Camada Gold
+    description: >
+      Camada curada para consumo por produtos analíticos, relatórios e
+      aplicações autorizadas.
+
+  - fqn: MCID.Governanca
+    name: Governanca
+    display_name: Governança de dados
+    description: >
+      Conceitos que descrevem as regras de produção, identificação e uso
+      autorizado dos ativos de dados.
+
+  - fqn: MCID.Governanca.PeriodoReferencia
+    name: PeriodoReferencia
+    display_name: Período de referência
+    synonyms: ["Competência", "Período"]
+    description: >
+      Intervalo temporal ao qual uma observação ou indicador se aplica.
+    # o contrato de dimensão temporal é o mesmo em toda a Silver e a Gold, o
+    # que torna estas colunas o mesmo conceito em 140 tabelas
+    aplica_a_colunas: [data_referencia, periodo, ano, mes, trimestre]
+
+  - fqn: MCID.Governanca.Safra
+    name: Safra
+    display_name: Safra de publicação
+    synonyms: ["Edição"]
+    description: >
+      Conjunto controlado de dados, código e critérios utilizado para produzir
+      uma edição identificável de publicação.
+    aplica_a_colunas: [edicao]
+
+  - fqn: MCID.Governanca.ContratoDeQualidade
+    name: ContratoDeQualidade
+    display_name: Contrato de qualidade
+    description: >
+      Conjunto declarativo de regras que descreve estrutura, consistência,
+      atualização e uso permitido de um ativo de dados.
+
+#: Termos que já existem no glossário e passam a ser aplicados às tabelas do
+#: produto. Sem este mapeamento o vocabulário existe mas não etiqueta nada.
+aplicacao_de_termos_existentes:
+  MCID.FontesInstitucionais.IBGE:
+    - gld_pib_construcao_civil
+    - gld_pib_construcao_civil_pct
+    - gld_pnad_ocupados
+    - gld_pnad_rendimento
+    - gld_producao_fisica
+    - gld_sinapi
+  MCID.FontesInstitucionais.BACEN:
+    - gld_financiamentos_imobiliarios_pf_pj
+    - gld_credito_pib
+  MCID.FontesInstitucionais.ABECIP:
+    - gld_saldo_poupanca
+    - gld_novos_financiamentos_banco
+    - gld_financiamentos_instituicao
+  MCID.FontesInstitucionais.FGVIBRE:
+    - gld_incc_m
+    - gld_icst
+    - gld_ticket_medio
+  MCID.FontesInstitucionais.B3:
+    - gld_indice_imob
+  # a Caixa é agente operador, não fonte de apuração: o termo já existe em
+  # `Atores` e é de lá que ele se aplica
+  MCID.Atores.CAIXA:
+    - slv_geavo_fgts_pf
+    - slv_geavo_fgts_pj
+    - slv_geavo_cci_cca
+    - slv_gefus_fundo_social
+  MCID.FundosEFontes.FGTS:
+    - gld_financiamentos_habitacionais
+    - gld_financiamento_pf_faixa
+    - gld_canal_fgts
+    - gld_fgts_valor_medio
+    - gld_uh_condicao_uso
+    - gld_fundo_social
+  MCID.FundosEFontes.SBPE:
+    - gld_financiamentos_habitacionais
+    - gld_saldo_poupanca
+    - gld_novos_financiamentos_banco
+    - gld_financiamentos_instituicao
+    - gld_uh_condicao_uso
+    - gld_funding
+  MCID.IndicadoresConjunturais.PIBConstrucaoCivil:
+    - gld_pib_construcao_civil
+    - gld_pib_construcao_civil_pct
+  MCID.IndicadoresConjunturais.NovoCAGED:
+    - gld_empregos_caged
+  MCID.IndicadoresConjunturais.PNADContinua:
+    - gld_pnad_ocupados
+    - gld_pnad_rendimento
+  MCID.IndicadoresConjunturais.SINAPI:
+    - gld_sinapi
+  MCID.IndicadoresConjunturais.INCCM:
+    - gld_incc_m
+    - gld_ticket_medio
+  MCID.IndicadoresConjunturais.ICST:
+    - gld_icst
+  MCID.IndicadoresConjunturais.IMOB:
+    - gld_indice_imob
+  MCID.IndicadoresConjunturais.FipeZapLocacao:
+    - gld_fipezap
+  MCID.IndicadoresConjunturais.TicketMedio:
+    - gld_ticket_medio
+  MCID.IndicadoresConjunturais.CaptacaoLiquida:
+    - gld_saldo_poupanca
+  MCID.IndicadoresConjunturais.FinanciamentoHabitacional:
+    - gld_financiamentos_habitacionais
+    - gld_financiamento_pf_faixa
+    - gld_uh_condicao_uso
+  MCID.IndicadoresConjunturais.FinanciamentoImobiliario:
+    - gld_financiamentos_imobiliarios_pf_pj
+    - gld_novos_financiamentos_banco
+    - gld_financiamentos_instituicao
+  MCID.IndicadoresConjunturais.LancamentoImobiliario:
+    - gld_balancos_empresas
+    - gld_balancos_empresas_totais
+  MCID.IndicadoresConjunturais.VendaImobiliaria:
+    - gld_balancos_empresas
+    - gld_balancos_empresas_totais
+  MCID.Identificadores.UH:
+    - gld_financiamentos_habitacionais
+    - gld_financiamento_pf_faixa
+    - gld_uh_condicao_uso
+    - gld_canal_fgts
+    - gld_fundo_social
+  MCID.ProgramasHabitacionais.MCMV:
+    - gld_financiamento_pf_faixa
+    - gld_canal_fgts
+    - gld_fundo_social
+
+#: O glossário como entidade, não só os termos dentro dele (HU-20). Sem dono
+#: declarado, vocabulário novo entra sem ninguém responder por ele.
+#:
+#: `revisores` fica vazio por decisão do Lucas (2026-08-31). O mecanismo está
+#: pronto: acrescentar o `name` do usuário na lista basta para que o sync o
+#: aplique. Nomear quem aprova termo novo é decisão do time.
+glossario:
+  name: MCID
+  owner_key: mcid_data_engineering
+  revisores: []

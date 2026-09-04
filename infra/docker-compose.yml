@@ -18,6 +18,9 @@ x-airflow-common: &airflow-common
     - ../helpers:${AIRFLOW_HOME}/helpers/
     - ../templates:${AIRFLOW_HOME}/templates/
     - ../dbt:${AIRFLOW_HOME}/dbt/
+    # a DAG do OpenMetadata roda `scripts/governance/` no fim, para
+    # reaplicar o que o conector apaga — ver a nota lá
+    - ../scripts:${AIRFLOW_HOME}/scripts/
     - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
     # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag)
     - ../scripts:${AIRFLOW_HOME}/scripts/
