@@ -4,7 +4,6 @@
 -- Fonte: mcmv_staging.novo_mcmv_rural_cad_pj_mensal (staging/sharepoint via MinIO/DuckDB)
 -- Cópia fiel: só tipagem/normalização técnica, sem dedup.
 -- Grão: 1 linha por empreendimento (127 no snapshot atual — recorte Novo MCMV Rural).
-
 with
     cad_pj_raw as (
         select
@@ -15,9 +14,13 @@ with
             -- Entidade Organizadora
             nullif(trim(no_nome_eo), '') as eo_nome,
             nullif(regexp_replace(trim(co_cnpj_eo), '[^0-9]', '', 'g'), '') as eo_cnpj,
-            case when trim(ic_eo_substituida) = 'S' then true else false end as ic_substituicao_eo,
+            case
+                when trim(ic_eo_substituida) = 'S' then true else false
+            end as ic_substituicao_eo,
             nullif(trim(no_nome_novo_eo), '') as eo_substituta_nome,
-            nullif(regexp_replace(trim(co_cnpj_novo_eo), '[^0-9]', '', 'g'), '') as eo_substituta_cnpj,
+            nullif(
+                regexp_replace(trim(co_cnpj_novo_eo), '[^0-9]', '', 'g'), ''
+            ) as eo_substituta_cnpj,
 
             nullif(trim(co_agente_finan), '') as agente_financeiro,
 
@@ -49,7 +52,8 @@ with
             {{ parse_int('qt_efluente') }} as qt_efluente,
 
             -- Execução física
-            {{ parse_numeric('pc_obra_realizada', 'numeric(6, 2)') }} as pct_obra_realizada,
+            {{ parse_numeric('pc_obra_realizada', 'numeric(6, 2)') }}
+            as pct_obra_realizada,
             {{ parse_int('co_situacao_obra') }} as co_situacao_obra,
             {{ parse_int('pz_construcao') }} as prazo_construcao,
 

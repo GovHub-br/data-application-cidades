@@ -3,7 +3,6 @@
 -- Bronze: Trabalho Social Mensal — acompanhamento do TTS (Entidades)
 -- Fonte: novo_mcmv_fds_trabalho_social_mensal
 -- Saída: dados de trabalho social tipados
-
 with
     ts_raw as (
         select

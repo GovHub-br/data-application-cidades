@@ -3,7 +3,6 @@
 -- Bronze: Obra Mensal — evolução física do empreendimento FDS (Entidades)
 -- Fonte: novo_mcmv_fds_obra_mensal
 -- Saída: dados de obra limpos e tipados
-
 with
     obra_raw as (
         select
@@ -20,7 +19,8 @@ with
 
             -- Percentuais de execução
             {{ parse_numeric('pc_obra_prevista', 'numeric(6, 2)') }} as pct_obra_prevista,
-            {{ parse_numeric('pc_obra_realizada', 'numeric(6, 2)') }} as pct_obra_realizada,
+            {{ parse_numeric('pc_obra_realizada', 'numeric(6, 2)') }}
+            as pct_obra_realizada,
 
             -- UHs
             {{ parse_int('qt_uh_concluidas') }} as qt_uh_concluidas,
@@ -38,28 +38,41 @@ with
             {{ parse_hist_numeric('vr_total_uh_a_alienar') }} as vr_uh_a_alienar,
             {{ parse_hist_numeric('vr_total_uh_sem_habitese') }} as vr_uh_sem_habitese,
             {{ parse_hist_numeric('vr_total_uh_em_construcao') }} as vr_uh_em_construcao,
-            {{ parse_hist_numeric('vr_total_uh_ociosas_retomadas') }} as vr_uh_ociosas_retomadas,
+            {{ parse_hist_numeric('vr_total_uh_ociosas_retomadas') }}
+            as vr_uh_ociosas_retomadas,
 
             -- Titularidade e parcelamento
-            case when trim(ic_titularidade_eo) = 'S' then true else false end as ic_titularidade_eo,
-            case when trim(ic_parcelam_gleba) = 'S' then true else false end as ic_parcelamento_gleba,
+            case
+                when trim(ic_titularidade_eo) = 'S' then true else false
+            end as ic_titularidade_eo,
+            case
+                when trim(ic_parcelam_gleba) = 'S' then true else false
+            end as ic_parcelamento_gleba,
 
             -- Invasão
             case when trim(ic_invadido) = 'S' then true else false end as ic_invadido,
             {{ parse_date_br('dt_invasao') }} as dt_invasao,
-            nullif(nullif(trim(no_providencias_adotadas), ''), 'None') as providencias_invasao,
+            nullif(
+                nullif(trim(no_providencias_adotadas), ''), 'None'
+            ) as providencias_invasao,
 
             -- Paralisação
             {{ parse_date_br('dt_paralisacao') }} as dt_paralisacao,
-            {{ parse_int('co_classificacao_paralisados') }} as co_classificacao_paralisado,
-            {{ parse_int('co_classificacao_nao_retomada') }} as co_classificacao_nao_retomada,
-            nullif(nullif(trim(detalhe_paralisacao_retomada), ''), 'None') as detalhe_paralisacao,
-            {{ parse_date_br('dt_informacao_paralisacao_retomada') }} as dt_info_paralisacao,
+            {{ parse_int('co_classificacao_paralisados') }}
+            as co_classificacao_paralisado,
+            {{ parse_int('co_classificacao_nao_retomada') }}
+            as co_classificacao_nao_retomada,
+            nullif(
+                nullif(trim(detalhe_paralisacao_retomada), ''), 'None'
+            ) as detalhe_paralisacao,
+            {{ parse_date_br('dt_informacao_paralisacao_retomada') }}
+            as dt_info_paralisacao,
             {{ parse_int('co_motivo_desimobilizacao') }} as co_motivo_desimobilizacao,
             {{ parse_int('co_motivo_distrato_empreendimento') }} as co_motivo_distrato,
 
             -- Datas de marcos da obra
-            {{ parse_date_br('dt_prev_conclusao_obra_retomada') }} as dt_previsao_conclusao_retomada,
+            {{ parse_date_br('dt_prev_conclusao_obra_retomada') }}
+            as dt_previsao_conclusao_retomada,
             {{ parse_date_br('dt_conclusao_obra_retomada') }} as dt_conclusao_retomada,
             {{ parse_date_br('dt_conclusao_obra') }} as dt_conclusao_obra,
             {{ parse_date_br('dt_legalizacao_reg') }} as dt_legalizacao,

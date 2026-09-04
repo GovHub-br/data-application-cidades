@@ -1,14 +1,19 @@
 {{ config(materialized="table") }}
 
-with fonte as (
-    select
-        *,
-        row_number() over (order by dt_referencia, nu_contrato, dt_evento, vr_evento) as rn
-    from {{ source("sftp_mcmv", "pmcmv_reformas_mcid_2026_06_26") }}
-)
+with
+    fonte as (
+        select
+            *,
+            row_number() over (
+                order by dt_referencia, nu_contrato, dt_evento, vr_evento
+            ) as rn
+        from {{ source("sftp_mcmv", "pmcmv_reformas_mcid_2026_06_26") }}
+    )
 
 select
-    md5(concat_ws('|', 'reforma', nu_contrato, dt_referencia, dt_evento, rn::text)) as id_silver_frente,
+    md5(
+        concat_ws('|', 'reforma', nu_contrato, dt_referencia, dt_evento, rn::text)
+    ) as id_silver_frente,
     'Minha Casa Minha Vida'::text as programa,
     'Reforma Casa Brasil'::text as frente_mcmv,
     'Financiada'::text as grupo_linha,
@@ -43,8 +48,13 @@ select
     null::date as dt_inicio_obra,
     null::date as dt_previsao_entrega,
     null::date as dt_entrega,
-    coalesce({{ target.schema }}.parse_date_br(dt_remessa), {{ target.schema }}.parse_date_br(dt_ingest), {{ target.schema }}.parse_date_br(dt_referencia)) as dt_ultima_atualizacao,
-    'Dados GEAVO/FGTS; nome e documento do mutuario nao sao expostos nesta silver de dashboard.'::text as observacao_silver,
+    coalesce(
+        {{ target.schema }}.parse_date_br(dt_remessa),
+        {{ target.schema }}.parse_date_br(dt_ingest),
+        {{ target.schema }}.parse_date_br(dt_referencia)
+    ) as dt_ultima_atualizacao,
+    'Dados GEAVO/FGTS; nome e documento do mutuario nao sao expostos nesta silver de dashboard.'
+    ::text as observacao_silver,
     current_timestamp as dt_silver
 from fonte
 where nullif(trim(nu_contrato), '') is not null

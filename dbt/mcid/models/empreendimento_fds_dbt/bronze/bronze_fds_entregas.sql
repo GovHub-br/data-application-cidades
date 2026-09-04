@@ -2,10 +2,9 @@
 
 -- Bronze: Entregas por empreendimento — CAIXA + BB empilhados (union all by name)
 -- Fontes: mcmv_staging.dados_prioritarios_recebidos_caixa_entregas (multi-programa)
---         mcmv_staging.dados_prioritarios_recebidos_bb_entregas
+-- mcmv_staging.dados_prioritarios_recebidos_bb_entregas
 -- Contém TODAS as frentes; o filtro por programa é feito na silver via JOIN
 -- com o cadastro FDS. Campos-chave: qt_uh_entregues, dt_entrega.
-
 with
     caixa as (
         select
@@ -37,6 +36,8 @@ with
         from {{ source("mcmv_staging", "dados_prioritarios_recebidos_bb_entregas") }}
     )
 
-select * from caixa
+select *
+from caixa
 union all by name
-select * from bb
+select *
+from bb

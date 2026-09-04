@@ -4,9 +4,8 @@
 -- Fonte: novo_mcmv_fds_financeiro_mensal
 -- Saída: série temporal de liberações com valores tipados por componente
 -- OBS:     ic_credito=0 => débito (liberação real, valor negativo no vr_liberado)
---          ic_credito=1 => crédito (devolução, valor positivo)
---          Usar ABS(vr_liberado) para obter o valor real de liberação
-
+-- ic_credito=1 => crédito (devolução, valor positivo)
+-- Usar ABS(vr_liberado) para obter o valor real de liberação
 with
     financeiro_raw as (
         select
@@ -31,7 +30,8 @@ with
             {{ parse_hist_numeric('vr_pago_projeto') }} as vr_pago_projeto,
             {{ parse_hist_numeric('vr_pago_aporte_suplementacao') }} as vr_pago_aporte,
             {{ parse_hist_numeric('vr_pago_despesas_incc') }} as vr_pago_incc,
-            {{ parse_hist_numeric('vr_pago_cartorios_legalizacao') }} as vr_pago_legalizacao,
+            {{ parse_hist_numeric('vr_pago_cartorios_legalizacao') }}
+            as vr_pago_legalizacao,
             {{ parse_hist_numeric('vr_pago_seguranca') }} as vr_pago_seguranca,
 
             -- Percentual de evolução

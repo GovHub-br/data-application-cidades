@@ -7,10 +7,10 @@
 -- operador regex `~` e `to_char`/`to_date` por `try_strptime` / `try_cast`.
 --
 -- Formatos cobertos:
---   DD/MM/YYYY            (GFAR, CAIXA)
---   DD/MM/YYYY HH:MM:SS   (timestamps de movimento)
---   YYYYMMDD             (GFAR)
---   YYYY-MM-DD[...]       (ISO — via try_cast)
+-- DD/MM/YYYY            (GFAR, CAIXA)
+-- DD/MM/YYYY HH:MM:SS   (timestamps de movimento)
+-- YYYYMMDD             (GFAR)
+-- YYYY-MM-DD[...]       (ISO — via try_cast)
 -- Qualquer coisa que não case → NULL (try_* nunca levanta erro).
 {% macro parse_date_br(col) -%}
     {%- set t = "nullif(nullif(trim(cast(" ~ col ~ " as varchar)), ''), 'None')" -%}

@@ -6,37 +6,48 @@
 -- Espinha: bronze_rural_cadastro_pj (Novo MCMV Rural, ~127 empreendimentos).
 -- Enriquecida por obra, financeiro (raiz de 6), INT065 CAIXA e SNH (snapshot corrente).
 -- Grão: 1 linha por APF.
-
 with
-    cadastro as (
-        select * from {{ ref("bronze_rural_cadastro_pj") }}
-    ),
+    cadastro as (select * from {{ ref("bronze_rural_cadastro_pj") }}),
 
     obra as (
-        select * from (
-            select *, row_number() over (partition by apf order by dt_movimento desc nulls last) as rn
-            from {{ ref("bronze_rural_obra_mensal") }}
-        ) t where rn = 1
+        select *
+        from
+            (
+                select
+                    *,
+                    row_number() over (
+                        partition by apf order by dt_movimento desc nulls last
+                    ) as rn
+                from {{ ref("bronze_rural_obra_mensal") }}
+            ) t
+        where rn = 1
     ),
 
     int065 as (
-        select * from (
-            select *, row_number() over (partition by apf order by dt_movimento desc nulls last) as rn
-            from {{ ref("bronze_rural_int065_caixa") }}
-            where apf is not null
-        ) t where rn = 1
+        select *
+        from
+            (
+                select
+                    *,
+                    row_number() over (
+                        partition by apf order by dt_movimento desc nulls last
+                    ) as rn
+                from {{ ref("bronze_rural_int065_caixa") }}
+                where apf is not null
+            ) t
+        where rn = 1
     ),
 
-    snh as (
-        select * from {{ ref("bronze_rural_dados_prioritarios_snh") }}
-    ),
+    snh as (select * from {{ ref("bronze_rural_dados_prioritarios_snh") }}),
 
     desembolso_acumulado as (
         select
             right(apf, 6) as apf_raiz,
             sum(
-                coalesce(vr_desembolso_obra, 0) + coalesce(vr_desembolso_trabalho_social, 0)
-                + coalesce(vr_desembolso_atec, 0) + coalesce(vr_desembolso_cisternas_efluentes, 0)
+                coalesce(vr_desembolso_obra, 0)
+                + coalesce(vr_desembolso_trabalho_social, 0)
+                + coalesce(vr_desembolso_atec, 0)
+                + coalesce(vr_desembolso_cisternas_efluentes, 0)
                 + coalesce(vr_desembolso_custos_indiretos, 0)
             ) as vr_total_desembolsado,
             count(*) as qt_liberacoes_total,
@@ -61,14 +72,21 @@ select
     c.eo_substituta_cnpj,
 
     -- Empreendimento
-    coalesce(c.empreendimento_nome, i.empreendimento_nome, sn.empreendimento_nome) as empreendimento_nome,
+    coalesce(
+        c.empreendimento_nome, i.empreendimento_nome, sn.empreendimento_nome
+    ) as empreendimento_nome,
     null::text as construtora_nome,
     null::text as construtora_cnpj,
     coalesce(c.agente_financeiro, i.agente_financeiro) as agente_financeiro,
-    greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)) as quantidade_uh,
+    greatest(
+        coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)
+    ) as quantidade_uh,
     c.qt_uh_contratadas as qt_uh_construcao,
     c.qt_uh_selecionadas as qt_uh_projeto,
-    floor(greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)) * 3.3)::int as pessoas_atendidas,
+    floor(
+        greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0))
+        * 3.3
+    )::int as pessoas_atendidas,
 
     -- Localização
     coalesce(c.municipio, i.municipio, sn.municipio) as municipio,
@@ -84,11 +102,17 @@ select
     -- Valores contratuais
     coalesce(c.vr_total_investimento, i.vr_total_investimento, 0.0) as valor_contratado,
     coalesce(c.vr_emprestimo, i.vr_emprestimo, 0.0) as valor_financiamento_fds,
-    coalesce(c.vr_total_contrapartidas, i.vr_total_contrapartidas, 0.0) as valor_contrapartidas,
+    coalesce(
+        c.vr_total_contrapartidas, i.vr_total_contrapartidas, 0.0
+    ) as valor_contrapartidas,
     case
-        when greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)) > 0
-        then coalesce(c.vr_total_investimento, i.vr_total_investimento, 0.0)
-             / greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0))
+        when
+            greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0))
+            > 0
+        then
+            coalesce(c.vr_total_investimento, i.vr_total_investimento, 0.0) / greatest(
+                coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)
+            )
         else 0.0
     end as valor_por_uh,
 
@@ -105,21 +129,34 @@ select
 
     -- Evolução física
     coalesce(o.pct_obra_prevista, 0.0) as percentual_obra_prevista,
-    coalesce(o.pct_obra_realizada, c.pct_obra_realizada, i.pct_obra_realizada, sn.pct_execucao, 0.0) as percentual_execucao_fisica,
+    coalesce(
+        o.pct_obra_realizada,
+        c.pct_obra_realizada,
+        i.pct_obra_realizada,
+        sn.pct_execucao,
+        0.0
+    ) as percentual_execucao_fisica,
 
     -- UHs
-    coalesce(o.qt_uh_concluidas, c.qt_uh_concluidas, i.qt_uh_concluidas, 0) as qt_uh_concluidas,
+    coalesce(
+        o.qt_uh_concluidas, c.qt_uh_concluidas, i.qt_uh_concluidas, 0
+    ) as qt_uh_concluidas,
     coalesce(o.qt_uh_alienadas, i.qt_uh_entregues, 0) as qt_uh_alienadas,
     coalesce(o.qt_uh_sem_habitese, 0) as qt_uh_sem_habitese,
     coalesce(o.qt_uh_construcao_parcial, 0) as qt_uh_construcao_parcial,
     coalesce(o.qt_uh_ocupacao_irregular, 0) as qt_uh_ocupacao_irregular,
     case
-        when greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)) > 0
-        then round(
-            coalesce(o.qt_uh_alienadas, i.qt_uh_entregues, 0)::numeric
-            / greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)) * 100,
-            2
-        )
+        when
+            greatest(coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0))
+            > 0
+        then
+            round(
+                coalesce(o.qt_uh_alienadas, i.qt_uh_entregues, 0)::numeric / greatest(
+                    coalesce(c.qt_uh_contratadas, 0), coalesce(c.qt_uh_selecionadas, 0)
+                )
+                * 100,
+                2
+            )
         else 0.0
     end as pct_entrega,
 
@@ -130,27 +167,41 @@ select
     o.dt_invasao,
 
     -- Marcos
-    coalesce(o.dt_conclusao_obra, c.dt_conclusao_obra, i.dt_conclusao_obra) as dt_conclusao_obra,
+    coalesce(
+        o.dt_conclusao_obra, c.dt_conclusao_obra, i.dt_conclusao_obra
+    ) as dt_conclusao_obra,
     o.dt_entrega,
     o.dt_previsao_entrega,
 
     -- Evolução financeira
-    coalesce(d.vr_total_desembolsado, c.vr_liberado, i.vr_liberado, 0.0) as valor_desembolsado,
+    coalesce(
+        d.vr_total_desembolsado, c.vr_liberado, i.vr_liberado, 0.0
+    ) as valor_desembolsado,
     coalesce(d.qt_liberacoes_total, 0) as qt_liberacoes,
-    coalesce(d.dt_ultima_liberacao, c.dt_ultima_liberacao, i.dt_ultima_liberacao) as dt_ultima_liberacao,
+    coalesce(
+        d.dt_ultima_liberacao, c.dt_ultima_liberacao, i.dt_ultima_liberacao
+    ) as dt_ultima_liberacao,
     case
         when coalesce(c.vr_total_investimento, i.vr_total_investimento, 0.0) > 0
-        then round(
-            coalesce(d.vr_total_desembolsado, c.vr_liberado, i.vr_liberado, 0.0)
-            / coalesce(c.vr_total_investimento, i.vr_total_investimento) * 100, 2)
+        then
+            round(
+                coalesce(d.vr_total_desembolsado, c.vr_liberado, i.vr_liberado, 0.0)
+                / coalesce(c.vr_total_investimento, i.vr_total_investimento)
+                * 100,
+                2
+            )
         else 0.0
     end as percentual_execucao_financeira,
     case
         when coalesce(c.vr_total_investimento, i.vr_total_investimento, 0.0) > 0
-        then round(
-            coalesce(d.vr_total_desembolsado, c.vr_liberado, i.vr_liberado, 0.0)
-            / coalesce(c.vr_total_investimento, i.vr_total_investimento) * 100
-            - coalesce(o.pct_obra_realizada, c.pct_obra_realizada, 0.0), 2)
+        then
+            round(
+                coalesce(d.vr_total_desembolsado, c.vr_liberado, i.vr_liberado, 0.0)
+                / coalesce(c.vr_total_investimento, i.vr_total_investimento)
+                * 100
+                - coalesce(o.pct_obra_realizada, c.pct_obra_realizada, 0.0),
+                2
+            )
         else 0.0
     end as divergencia_fisico_financeira,
 

@@ -10,7 +10,8 @@ select
     'silver'::text as fonte_camada,
     'conjuntura_silver'::text as fonte_schema,
     'silver_fgts_financiamentos_habitacionais'::text as fonte_tabela,
-    'conjuntura_bronze.bronze_fgts_financiamentos_habitacionais'::text as fonte_minio_staging,
+    'conjuntura_bronze.bronze_fgts_financiamentos_habitacionais'::text
+    as fonte_minio_staging,
     null::text as apf,
     null::text as contrato,
     null::text as codigo_empreendimento,
@@ -37,8 +38,8 @@ select
     null::date as dt_previsao_entrega,
     null::date as dt_entrega,
     make_date(ano::integer, mes::integer, 1) as dt_ultima_atualizacao,
-    'Conjuntura nao tem APF/empreendimento; serve para calibrar alertas e metas do relogio.'::text as observacao_silver,
+    'Conjuntura nao tem APF/empreendimento; serve para calibrar alertas e metas do relogio.'
+    ::text as observacao_silver,
     current_timestamp as dt_silver
 from {{ ref("silver_fgts_financiamentos_habitacionais") }}
-where ano is not null
-  and mes is not null
+where ano is not null and mes is not null

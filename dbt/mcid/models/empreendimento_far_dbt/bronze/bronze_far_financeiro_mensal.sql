@@ -1,9 +1,10 @@
 {{ config(materialized="table") }}
 
 -- Bronze: Financeiro Mensal — liberações financeiras do empreendimento (frente FAR)
--- Fonte: mcmv_staging.novo_mcmv_far_financeiro_mensal (staging/sharepoint via MinIO/DuckDB)
--- Cópia fiel: só tipagem/normalização técnica, sem dedup. APF em 6 dígitos → normalize_apf.
-
+-- Fonte: mcmv_staging.novo_mcmv_far_financeiro_mensal (staging/sharepoint via
+-- MinIO/DuckDB)
+-- Cópia fiel: só tipagem/normalização técnica, sem dedup. APF em 6 dígitos →
+-- normalize_apf.
 with
     financeiro_raw as (
         select
@@ -26,11 +27,13 @@ with
             {{ parse_hist_numeric('vr_pago_obra_empreendimento') }} as vr_pago_obra,
             {{ parse_hist_numeric('vr_pago_terreno') }} as vr_pago_terreno,
             {{ parse_hist_numeric('vr_pago_pts') }} as vr_pago_trabalho_social,
-            {{ parse_hist_numeric('vr_pago_equipamentos_publicos') }} as vr_pago_equipamentos,
+            {{ parse_hist_numeric('vr_pago_equipamentos_publicos') }}
+            as vr_pago_equipamentos,
             {{ parse_hist_numeric('vr_pago_aporte_suplementacao') }} as vr_pago_aporte,
             {{ parse_hist_numeric('vr_pago_despesas_manutencao') }} as vr_pago_manutencao,
             {{ parse_hist_numeric('vr_pago_despesas_incc') }} as vr_pago_incc,
-            {{ parse_hist_numeric('vr_pago_cartorios_legalizacao') }} as vr_pago_legalizacao,
+            {{ parse_hist_numeric('vr_pago_cartorios_legalizacao') }}
+            as vr_pago_legalizacao,
 
             -- Datas
             {{ parse_date_br('dt_movimento') }} as dt_movimento,

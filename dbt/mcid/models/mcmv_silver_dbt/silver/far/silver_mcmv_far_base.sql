@@ -10,7 +10,8 @@ select
     'silver'::text as fonte_camada,
     'empreendimento_far'::text as fonte_schema,
     'empreendimento'::text as fonte_tabela,
-    'raw.novo_mcmv_far_* + dados_prioritarios_recebidos_caixa'::text as fonte_minio_staging,
+    'raw.novo_mcmv_far_* + dados_prioritarios_recebidos_caixa'::text
+    as fonte_minio_staging,
     apf::text as apf,
     apf::text as contrato,
     apf::text as codigo_empreendimento,
@@ -28,7 +29,9 @@ select
     1::integer as quantidade_empreendimentos,
     1::integer as quantidade_contratos,
     quantidade_uh::integer as quantidade_uh,
-    case when dt_entrega is not null then quantidade_uh::integer end as quantidade_uh_entregues,
+    case
+        when dt_entrega is not null then quantidade_uh::integer
+    end as quantidade_uh_entregues,
     valor_contratado::numeric(15, 2) as valor_contratado,
     valor_desembolsado::numeric(15, 2) as valor_desembolsado,
     percentual_execucao_fisica::numeric(10, 2) as percentual_execucao_fisica,
@@ -39,8 +42,10 @@ select
     null::date as dt_inicio_obra,
     dt_previsao_entrega::date as dt_previsao_entrega,
     dt_entrega::date as dt_entrega,
-    coalesce(dt_entrega, dt_conclusao_obra, dt_previsao_entrega, dt_contratacao)::date as dt_ultima_atualizacao,
-    'FAR vem da silver existente empreendimento_far.empreendimento.'::text as observacao_silver,
+    coalesce(dt_entrega, dt_conclusao_obra, dt_previsao_entrega, dt_contratacao)::date
+    as dt_ultima_atualizacao,
+    'FAR vem da silver existente empreendimento_far.empreendimento.'::text
+    as observacao_silver,
     current_timestamp as dt_silver
 from {{ ref("silver_far_empreendimento") }}
 where apf is not null

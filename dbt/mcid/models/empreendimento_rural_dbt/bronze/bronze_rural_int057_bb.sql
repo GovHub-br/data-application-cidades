@@ -5,7 +5,6 @@
 -- Cópia fiel. NÃO tem coluna de APF — chave é nu_contrato_empreendimento.
 -- Não casa com o cadastro PJ Rural pelo contrato no snapshot atual; materializada
 -- como fonte standalone para linhagem/uso futuro.
-
 with
     int057_raw as (
         select
@@ -20,7 +19,9 @@ with
             nullif(trim(co_municipio_ibge), '') as cod_ibge,
 
             nullif(trim(no_entidade_organizadora), '') as eo_nome,
-            nullif(regexp_replace(trim(nu_cnpj_entidade), '[^0-9]', '', 'g'), '') as eo_cnpj,
+            nullif(
+                regexp_replace(trim(nu_cnpj_entidade), '[^0-9]', '', 'g'), ''
+            ) as eo_cnpj,
 
             {{ parse_int('qt_unidades') }} as qt_uh,
             {{ parse_int('qt_unidades_concluidas') }} as qt_uh_concluidas,
@@ -34,8 +35,10 @@ with
             {{ parse_hist_numeric('vr_contrapartida') }} as vr_total_contrapartidas,
             {{ parse_hist_numeric('vr_liberado') }} as vr_liberado,
 
-            {{ parse_numeric('pc_execucao_fisica_obra', 'numeric(6, 2)') }} as pct_execucao_fisica,
-            {{ parse_numeric('pc_execucao_financeira_obra', 'numeric(6, 2)') }} as pct_execucao_financeira,
+            {{ parse_numeric('pc_execucao_fisica_obra', 'numeric(6, 2)') }}
+            as pct_execucao_fisica,
+            {{ parse_numeric('pc_execucao_financeira_obra', 'numeric(6, 2)') }}
+            as pct_execucao_financeira,
             nullif(trim(no_situacao_obra), '') as situacao_obra,
             {{ parse_int('pz_obra') }} as prazo_obra,
 

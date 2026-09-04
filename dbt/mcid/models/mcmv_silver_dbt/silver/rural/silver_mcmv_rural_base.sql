@@ -4,7 +4,6 @@
 -- Consome a silver normalizada empreendimento_rural_dbt (change
 -- migracao-bronze-minio-mcmv, task 5.3) — antes fazia parsing de separador pipe
 -- das INT057/INT065 no schema Postgres sftp.
-
 select
     md5(concat_ws('|', 'rural', apf)) as id_silver_frente,
     'Minha Casa Minha Vida'::text as programa,
@@ -42,8 +41,15 @@ select
     dt_inicio_obra::date as dt_inicio_obra,
     dt_previsao_entrega::date as dt_previsao_entrega,
     dt_entrega::date as dt_entrega,
-    coalesce(dt_entrega, dt_conclusao_obra, dt_previsao_entrega, dt_ultima_liberacao, dt_contratacao)::date as dt_ultima_atualizacao,
-    'Rural vem da silver empreendimento_rural.silver_rural_empreendimento.'::text as observacao_silver,
+    coalesce(
+        dt_entrega,
+        dt_conclusao_obra,
+        dt_previsao_entrega,
+        dt_ultima_liberacao,
+        dt_contratacao
+    )::date as dt_ultima_atualizacao,
+    'Rural vem da silver empreendimento_rural.silver_rural_empreendimento.'::text
+    as observacao_silver,
     current_timestamp as dt_silver
 from {{ ref("silver_rural_empreendimento") }}
 where apf is not null

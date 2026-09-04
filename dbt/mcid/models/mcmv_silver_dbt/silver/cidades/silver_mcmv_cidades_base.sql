@@ -1,7 +1,9 @@
 {{ config(materialized="table") }}
 
 select
-    md5(concat_ws('|', 'mcmv-cidades', nu_contrato, dt_referencia, valor)) as id_silver_frente,
+    md5(
+        concat_ws('|', 'mcmv-cidades', nu_contrato, dt_referencia, valor)
+    ) as id_silver_frente,
     'Minha Casa Minha Vida'::text as programa,
     'MCMV Cidades'::text as frente_mcmv,
     'Subsidiada'::text as grupo_linha,
@@ -36,8 +38,13 @@ select
     null::date as dt_inicio_obra,
     null::date as dt_previsao_entrega,
     null::date as dt_entrega,
-    coalesce({{ target.schema }}.parse_date_br(dt_posicao), {{ target.schema }}.parse_date_br(dt_remessa), {{ target.schema }}.parse_date_br(dt_referencia)) as dt_ultima_atualizacao,
-    'MCMV Cidades tem grão de contrato/ente publico; sem APF na fonte atual.'::text as observacao_silver,
+    coalesce(
+        {{ target.schema }}.parse_date_br(dt_posicao),
+        {{ target.schema }}.parse_date_br(dt_remessa),
+        {{ target.schema }}.parse_date_br(dt_referencia)
+    ) as dt_ultima_atualizacao,
+    'MCMV Cidades tem grão de contrato/ente publico; sem APF na fonte atual.'::text
+    as observacao_silver,
     current_timestamp as dt_silver
 from {{ source("sftp_mcmv", "pmcmv_cidades_mcid_2026_03_01") }}
 where nullif(trim(nu_contrato), '') is not null

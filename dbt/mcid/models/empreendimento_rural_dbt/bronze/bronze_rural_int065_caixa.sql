@@ -4,7 +4,6 @@
 -- Fonte: mcmv_staging.int_empreendimentos_int_065_pnhr_caixa_pj (staging/sharepoint)
 -- Cópia fiel. Contém legado PNHR + Novo MCMV Rural (8.508 linhas). APF de nu_apf
 -- (casa parcialmente com o cadastro PJ — ver silver).
-
 with
     int065_raw as (
         select
@@ -20,7 +19,9 @@ with
             nullif(trim(co_municipio_ibge), '') as cod_ibge,
 
             nullif(trim(no_entidade_organizadora), '') as eo_nome,
-            nullif(regexp_replace(trim(nu_cnpj_entidade), '[^0-9]', '', 'g'), '') as eo_cnpj,
+            nullif(
+                regexp_replace(trim(nu_cnpj_entidade), '[^0-9]', '', 'g'), ''
+            ) as eo_cnpj,
 
             {{ parse_int('qtde_uh_inicial') }} as qt_uh_inicial,
             {{ parse_int('qtde_unidades') }} as qt_uh,
@@ -37,7 +38,8 @@ with
             {{ parse_hist_numeric('vr_subsidio_fgts') }} as vr_subsidio_fgts,
             {{ parse_hist_numeric('vr_liberado') }} as vr_liberado,
 
-            {{ parse_numeric('pc_obra_realizado', 'numeric(6, 2)') }} as pct_obra_realizada,
+            {{ parse_numeric('pc_obra_realizado', 'numeric(6, 2)') }}
+            as pct_obra_realizada,
             nullif(trim(no_situacao_obra), '') as situacao_obra,
             {{ parse_int('pz_construcao') }} as prazo_construcao,
 

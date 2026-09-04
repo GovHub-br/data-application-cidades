@@ -3,7 +3,6 @@
 -- Bronze: Financeiro Mensal Rural — liberações financeiras por empreendimento
 -- Fonte: mcmv_staging.novo_mcmv_rural_financeiro_mensal (staging/sharepoint)
 -- Cópia fiel. APF fonte em 6 dígitos → normalize_apf (join na silver pela raiz de 6).
-
 with
     financeiro_raw as (
         select
@@ -15,8 +14,10 @@ with
             {{ parse_hist_numeric('vr_desembolso_obra') }} as vr_desembolso_obra,
             {{ parse_hist_numeric('vr_desembolso_ts') }} as vr_desembolso_trabalho_social,
             {{ parse_hist_numeric('vr_desembolso_atec') }} as vr_desembolso_atec,
-            {{ parse_hist_numeric('vr_desembolso_cisternas_efluentes') }} as vr_desembolso_cisternas_efluentes,
-            {{ parse_hist_numeric('vr_desembolso_custos_indiretos') }} as vr_desembolso_custos_indiretos,
+            {{ parse_hist_numeric('vr_desembolso_cisternas_efluentes') }}
+            as vr_desembolso_cisternas_efluentes,
+            {{ parse_hist_numeric('vr_desembolso_custos_indiretos') }}
+            as vr_desembolso_custos_indiretos,
 
             {{ parse_numeric('pc_evolucao', 'numeric(6, 2)') }} as pct_evolucao,
 

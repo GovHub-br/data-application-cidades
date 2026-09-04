@@ -2,8 +2,8 @@
 
 -- Bronze: Cadastro PF Rural — beneficiários (grão: 1 linha por contrato individual)
 -- Fonte: mcmv_staging.novo_mcmv_rural_cadastro_pf_mensal (staging/sharepoint)
--- Cópia fiel. Chave de empreendimento: apf (de nu_apf_com_dv) + nu_contrato_empreendimento.
-
+-- Cópia fiel. Chave de empreendimento: apf (de nu_apf_com_dv) +
+-- nu_contrato_empreendimento.
 with
     cad_pf_raw as (
         select
@@ -18,7 +18,9 @@ with
             nullif(trim(sg_uf), '') as uf,
             nullif(trim(nu_municipio_ibge), '') as cod_ibge,
 
-            nullif(regexp_replace(trim(nu_cpf_beneficiario), '[^0-9]', '', 'g'), '') as cpf_beneficiario,
+            nullif(
+                regexp_replace(trim(nu_cpf_beneficiario), '[^0-9]', '', 'g'), ''
+            ) as cpf_beneficiario,
             nullif(trim(no_beneficiario), '') as beneficiario_nome,
             nullif(trim(co_sexo_benef), '') as sexo_beneficiario,
             {{ parse_int('qt_pessoas_familia') }} as qt_pessoas_familia,

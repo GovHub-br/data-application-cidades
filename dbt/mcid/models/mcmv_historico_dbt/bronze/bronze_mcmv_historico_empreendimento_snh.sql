@@ -24,47 +24,51 @@
 -- hash_linha).
 --
 -- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
-
 with
 
-fonte as (
-    select
-        *,
-        filename as source_file,
-        strptime(
-            regexp_extract(
-                regexp_replace(filename, '(20\d{2})_(\d{2})', '\1\2'),
-                '(\d{6})',
-                1
-            ),
-            '%Y%m'
-        )::date as dt_referencia,
-        case
-            when lower(filename) like '%af_bb%' then 'BB'
-            when lower(filename) like '%af_caixa%' then 'CAIXA'
-        end as agente_arquivo,
-        case
-            when lower(filename) like '%correcao%' then 3
-            when regexp_matches(lower(filename), 'vs[0-9]+') then 2
-            else 1
-        end as prioridade_reentrega,
-        current_timestamp as dt_ingest
-    from {{ read_minio_staging_parquet_series(
+    fonte as (
+        select
+            *,
+            filename as source_file,
+            strptime(
+                regexp_extract(
+                    regexp_replace(filename, '(20\d{2})_(\d{2})', '\1\2'), '(\d{6})', 1
+                ),
+                '%Y%m'
+            )::date as dt_referencia,
+            case
+                when lower(filename) like '%af_bb%'
+                then 'BB'
+                when lower(filename) like '%af_caixa%'
+                then 'CAIXA'
+            end as agente_arquivo,
+            case
+                when lower(filename) like '%correcao%'
+                then 3
+                when regexp_matches(lower(filename), 'vs[0-9]+')
+                then 2
+                else 1
+            end as prioridade_reentrega,
+            current_timestamp as dt_ingest
+        from
+            {{ read_minio_staging_parquet_series(
         'dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_*.parquet'
     ) }}
-    where lower(filename) not like '%entrega%'
-)
+        where lower(filename) not like '%entrega%'
+    )
 
 select
     *,
-    md5(concat_ws(
-        '|',
-        coalesce(agente_financeiro::text, agente_arquivo, ''),
-        coalesce(apf::text, ''),
-        coalesce(dt_referencia::text, ''),
-        coalesce(modalidade::text, ''),
-        coalesce(uh_contratadas::text, ''),
-        coalesce(uh_entregues::text, ''),
-        coalesce(uh_vigentes::text, '')
-    )) as hash_linha
+    md5(
+        concat_ws(
+            '|',
+            coalesce(agente_financeiro::text, agente_arquivo, ''),
+            coalesce(apf::text, ''),
+            coalesce(dt_referencia::text, ''),
+            coalesce(modalidade::text, ''),
+            coalesce(uh_contratadas::text, ''),
+            coalesce(uh_entregues::text, ''),
+            coalesce(uh_vigentes::text, '')
+        )
+    ) as hash_linha
 from fonte

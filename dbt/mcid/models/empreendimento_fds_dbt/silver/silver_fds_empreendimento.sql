@@ -4,29 +4,28 @@
 -- Reúne dados cadastrais, EO, status físico-financeiro e TS de cada APF.
 -- Cruza: fds_cadastro_pj + fds_obra_mensal + fds_int_059_caixa_pj + fds_trabalho_social
 -- Alimenta: ficha_empreendimento, panorama_estadual, panorama_entidades (golds)
-
 with
-    cadastro as (
-        select * from {{ ref("bronze_fds_cadastro_pj") }}
-    ),
+    cadastro as (select * from {{ ref("bronze_fds_cadastro_pj") }}),
 
-    obra as (
-        select * from {{ ref("bronze_fds_obra_mensal") }}
-    ),
+    obra as (select * from {{ ref("bronze_fds_obra_mensal") }}),
 
     -- INT 059: filtrar apenas Novo MCMV-E e desduplicar por APF
     int059 as (
-        select * from (
-            select *,
-                   row_number() over(partition by apf order by dt_movimento desc nulls last) as rn
-            from {{ ref("bronze_fds_int059_caixa") }}
-            where selecao_pmcmv_e = 'NOVO PMCMV-E'
-        ) t where rn = 1
+        select *
+        from
+            (
+                select
+                    *,
+                    row_number() over (
+                        partition by apf order by dt_movimento desc nulls last
+                    ) as rn
+                from {{ ref("bronze_fds_int059_caixa") }}
+                where selecao_pmcmv_e = 'NOVO PMCMV-E'
+            ) t
+        where rn = 1
     ),
 
-    trabalho_social as (
-        select * from {{ ref("bronze_fds_trabalho_social") }}
-    ),
+    trabalho_social as (select * from {{ ref("bronze_fds_trabalho_social") }}),
 
     -- Desembolso acumulado: soma ABS das liberações reais (ic_credito = '0')
     desembolso_acumulado as (
@@ -36,16 +35,13 @@ with
             count(*) as qt_liberacoes_total,
             max(dt_liberacao) as dt_ultima_liberacao
         from {{ ref("bronze_fds_financeiro_mensal") }}
-        where ic_credito = '0'
-          and vr_liberado is not null
+        where ic_credito = '0' and vr_liberado is not null
         group by right(apf, 6)
     ),
 
     -- SNH: snapshot corrente (30/09/2025), modalidade Entidades. Enriquecimento
     -- aditivo — 1:1 por APF, ~247/335 casam. Não substitui coluna existente (D6).
-    snh as (
-        select * from {{ ref("bronze_fds_dados_prioritarios_snh") }}
-    )
+    snh as (select * from {{ ref("bronze_fds_dados_prioritarios_snh") }})
 
 select
     c.apf,
@@ -54,7 +50,8 @@ select
 
     -- Entidade Organizadora
     c.eo_nome,
-    -- CNPJ padronizado para 14 dígitos (62% da fonte vem com 13, faltando zero à esquerda)
+    -- CNPJ padronizado para 14 dígitos (62% da fonte vem com 13, faltando zero à
+    -- esquerda)
     lpad(c.eo_cnpj, 14, '0') as eo_cnpj,
     c.co_nivel_hab_eo,
     c.ic_substituicao_eo,
@@ -71,11 +68,15 @@ select
     c.agente_financeiro,
     -- UHs: campos construcao/projeto são mutuamente exclusivos na fonte.
     -- Quando um tem valor o outro é 0. Usar GREATEST para obter o real.
-    greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) as quantidade_uh,
+    greatest(
+        coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)
+    ) as quantidade_uh,
     c.qt_uh_construcao,
     c.qt_uh_projeto,
     -- Heurística: 3,3 pessoas por família
-    floor(greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) * 3.3)::int as pessoas_atendidas,
+    floor(
+        greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) * 3.3
+    )::int as pessoas_atendidas,
 
     -- Localização
     c.municipio,
@@ -84,10 +85,14 @@ select
 
     -- Tipologia (códigos ainda pendentes de decodificação, mantendo os dois)
     c.co_tipo_edificacao,
-    case c.co_tipo_edificacao
-        when 1 then 'Casa'
-        when 2 then 'Misto'
-        when 3 then 'Apartamento'
+    case
+        c.co_tipo_edificacao
+        when 1
+        then 'Casa'
+        when 2
+        then 'Misto'
+        when 3
+        then 'Apartamento'
         else 'Não Informado'
     end as tipologia,
     c.co_regime_obra,
@@ -99,7 +104,9 @@ select
     coalesce(c.vr_total_contrapartidas, 0.0) as valor_contrapartidas,
     case
         when greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) > 0
-        then c.vr_total_investimento / greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0))
+        then
+            c.vr_total_investimento
+            / greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0))
         else 0.0
     end as valor_por_uh,
 
@@ -131,11 +138,13 @@ select
     -- Taxa de entrega (UHs alienadas / UHs contratadas)
     case
         when greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) > 0
-        then round(
-            coalesce(o.qt_uh_alienadas, 0)::numeric
-            / greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) * 100,
-            2
-        )
+        then
+            round(
+                coalesce(o.qt_uh_alienadas, 0)::numeric
+                / greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0))
+                * 100,
+                2
+            )
         else 0.0
     end as pct_entrega,
 
@@ -156,18 +165,23 @@ select
     d.dt_ultima_liberacao,
     case
         when coalesce(c.vr_total_investimento, 0.0) > 0
-        then round((coalesce(d.vr_total_desembolsado, 0.0) / c.vr_total_investimento) * 100, 2)
+        then
+            round(
+                (coalesce(d.vr_total_desembolsado, 0.0) / c.vr_total_investimento) * 100,
+                2
+            )
         else 0.0
     end as percentual_execucao_financeira,
 
     -- Divergência Físico-Financeira (gap em pontos percentuais)
     case
         when coalesce(c.vr_total_investimento, 0.0) > 0
-        then round(
-            (coalesce(d.vr_total_desembolsado, 0.0) / c.vr_total_investimento) * 100
-            - coalesce(o.pct_obra_realizada, 0.0),
-            2
-        )
+        then
+            round(
+                (coalesce(d.vr_total_desembolsado, 0.0) / c.vr_total_investimento) * 100
+                - coalesce(o.pct_obra_realizada, 0.0),
+                2
+            )
         else 0.0
     end as divergencia_fisico_financeira,
 
@@ -179,8 +193,9 @@ select
     -- Tempo entre contratação e início da obra (dias)
     -- Usa as datas já tratadas (sentinel 1900 → NULL)
     case
-        when nullif(c.dt_inicio_obra, '1900-01-01'::date) is not null
-         and nullif(c.dt_contratacao, '1900-01-01'::date) is not null
+        when
+            nullif(c.dt_inicio_obra, '1900-01-01'::date) is not null
+            and nullif(c.dt_contratacao, '1900-01-01'::date) is not null
         then (c.dt_inicio_obra - c.dt_contratacao)
     end as dias_contratacao_inicio,
 

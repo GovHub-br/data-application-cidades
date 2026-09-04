@@ -6,9 +6,9 @@
 -- Desligamento) do mesmo empreendimento.
 --
 -- Fontes (em ordem de precedencia, seed curado vence):
---   1. seed_apf_fase_fds (xlsx RELACAO_APF_FASES_FDS, curado) - mapeamento completo
---   2. fds_mudanca_fase_eventos (ic_mudanca_fase, eventos futuros do NOVO)
---   3. fallback: APFs do cadastro atual nao cobertos (single-fase)
+-- 1. seed_apf_fase_fds (xlsx RELACAO_APF_FASES_FDS, curado) - mapeamento completo
+-- 2. fds_mudanca_fase_eventos (ic_mudanca_fase, eventos futuros do NOVO)
+-- 3. fallback: APFs do cadastro atual nao cobertos (single-fase)
 --
 -- NOTA (INT059): o campo nu_apf_nao_obra do INT059 carrega o vinculo de fase APENAS
 -- para o legado PMCMV-E (125 registros, sem duplicatas), ja cobertos pelo seed.
@@ -17,7 +17,6 @@
 --
 -- Grao: 1 linha por (id_empreendimento, apf).
 -- Regra: id_empreendimento = md5('empreendimento-fds|' || apf_ancora).
-
 with
     seed as (
         select
@@ -52,9 +51,11 @@ with
     ),
 
     uniao as (
-        select * from seed
+        select *
+        from seed
         union all
-        select * from eventos_long
+        select *
+        from eventos_long
         where apf not in (select apf from seed)
     ),
 
@@ -62,8 +63,7 @@ with
         select
             c.apf,
             case
-                when coalesce(c.qt_uh_construcao, 0) > 0
-                  or c.dt_inicio_obra is not null
+                when coalesce(c.qt_uh_construcao, 0) > 0 or c.dt_inicio_obra is not null
                 then 'Obra'
                 else 'Projeto'
             end as fase_empreendimento,
@@ -75,9 +75,11 @@ with
     ),
 
     final as (
-        select * from uniao
+        select *
+        from uniao
         union all
-        select * from fallback
+        select *
+        from fallback
     )
 
 select

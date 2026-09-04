@@ -5,15 +5,10 @@
 -- sem equivalente no Rural (terreno, projeto, INCC, legalização, segurança, aporte)
 -- saem NULL. JOIN com silver_rural_empreendimento pela raiz de 6 dígitos do APF.
 -- Grão: 1 linha por APF × mês.
-
 with
-    financeiro as (
-        select * from {{ ref("bronze_rural_financeiro_mensal") }}
-    ),
+    financeiro as (select * from {{ ref("bronze_rural_financeiro_mensal") }}),
 
-    empreendimento as (
-        select * from {{ ref("silver_rural_empreendimento") }}
-    ),
+    empreendimento as (select * from {{ ref("silver_rural_empreendimento") }}),
 
     mensal as (
         select
@@ -21,8 +16,10 @@ with
             date_trunc('month', f.dt_liberacao) as mes,
             count(*) as qt_liberacoes,
             sum(
-                coalesce(f.vr_desembolso_obra, 0) + coalesce(f.vr_desembolso_trabalho_social, 0)
-                + coalesce(f.vr_desembolso_atec, 0) + coalesce(f.vr_desembolso_cisternas_efluentes, 0)
+                coalesce(f.vr_desembolso_obra, 0)
+                + coalesce(f.vr_desembolso_trabalho_social, 0)
+                + coalesce(f.vr_desembolso_atec, 0)
+                + coalesce(f.vr_desembolso_cisternas_efluentes, 0)
                 + coalesce(f.vr_desembolso_custos_indiretos, 0)
             ) as vr_liberado_mes,
             sum(coalesce(f.vr_desembolso_obra, 0)) as vr_pago_obra_mes,
@@ -48,7 +45,9 @@ with
             null::numeric(15, 2) as vr_pago_aporte_mes,
             null::numeric(15, 2) as vr_pago_legalizacao_mes,
             null::numeric(15, 2) as vr_pago_seguranca_mes,
-            sum(m.vr_liberado_mes) over (partition by e.apf order by m.mes) as vr_acumulado,
+            sum(m.vr_liberado_mes) over (
+                partition by e.apf order by m.mes
+            ) as vr_acumulado,
             e.valor_contratado,
             e.municipio,
             e.uf

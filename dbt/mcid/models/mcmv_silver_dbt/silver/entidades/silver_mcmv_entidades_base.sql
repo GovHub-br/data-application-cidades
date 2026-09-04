@@ -1,7 +1,9 @@
 {{ config(materialized="table") }}
 
 select
-    md5(concat_ws('|', 'entidades', coalesce(id_empreendimento, apf))) as id_silver_frente,
+    md5(
+        concat_ws('|', 'entidades', coalesce(id_empreendimento, apf))
+    ) as id_silver_frente,
     'Minha Casa Minha Vida'::text as programa,
     'Entidades'::text as frente_mcmv,
     'Subsidiada'::text as grupo_linha,
@@ -23,7 +25,8 @@ select
     max(eo_cnpj)::text as responsavel_id,
     max(eo_nome)::text as responsavel_nome,
     max(agente_financeiro)::text as agente_financeiro,
-    count(distinct coalesce(id_empreendimento, apf))::integer as quantidade_empreendimentos,
+    count(distinct coalesce(id_empreendimento, apf))::integer
+    as quantidade_empreendimentos,
     count(distinct apf)::integer as quantidade_contratos,
     max(quantidade_uh)::integer as quantidade_uh,
     max(qt_uh_alienadas)::integer as quantidade_uh_entregues,
@@ -37,8 +40,11 @@ select
     min(dt_inicio_obra)::date as dt_inicio_obra,
     max(dt_previsao_entrega)::date as dt_previsao_entrega,
     max(dt_entrega)::date as dt_entrega,
-    max(coalesce(dt_ultima_liberacao, dt_entrega, dt_previsao_entrega, dt_contratacao))::date as dt_ultima_atualizacao,
-    'Entidades/FDS agrupado por id_empreendimento. Regra max validada empiricamente para UH (duplicadas) e financeiro (valor_contratado/valor_desembolsado sao totais unicos por empreendimento, nao particionados entre fases).'::text as observacao_silver,
+    max(
+        coalesce(dt_ultima_liberacao, dt_entrega, dt_previsao_entrega, dt_contratacao)
+    )::date as dt_ultima_atualizacao,
+    'Entidades/FDS agrupado por id_empreendimento. Regra max validada empiricamente para UH (duplicadas) e financeiro (valor_contratado/valor_desembolsado sao totais unicos por empreendimento, nao particionados entre fases).'
+    ::text as observacao_silver,
     current_timestamp as dt_silver
 from {{ ref("silver_fds_empreendimento") }}
 where apf is not null

@@ -8,20 +8,15 @@
 -- mensal de historico_recente_* (não o fluxo o_recente_*, que é evento).
 --
 -- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
-
 with
 
-base as (
-    select * from {{ ref("indicadores_reloginho") }}
-),
+    base as (select * from {{ ref("indicadores_reloginho") }}),
 
-ultimo_mes as (
-    select
-        agente_financeiro,
-        max(dt_referencia) as dt_ultimo_mes
-    from base
-    group by agente_financeiro
-)
+    ultimo_mes as (
+        select agente_financeiro, max(dt_referencia) as dt_ultimo_mes
+        from base
+        group by agente_financeiro
+    )
 
 select
     b.agente_financeiro,
@@ -31,9 +26,12 @@ select
     b.uh_vigentes as uh_vigentes_ultimo,
     b.n_apf as n_apf_ultimo,
     b.n_meses_observados,
-    round(b.uh_entregues::double / nullif(b.n_meses_observados, 0), 2) as ritmo_medio_mensal
+    round(
+        b.uh_entregues::double / nullif(b.n_meses_observados, 0), 2
+    ) as ritmo_medio_mensal
 from base b
-inner join ultimo_mes u
+inner join
+    ultimo_mes u
     on b.agente_financeiro = u.agente_financeiro
-   and b.dt_referencia = u.dt_ultimo_mes
+    and b.dt_referencia = u.dt_ultimo_mes
 order by b.agente_financeiro

@@ -6,10 +6,9 @@
 -- coluna pode nao existir em nenhum arquivo daquele lote.
 --
 -- - Durante `dbt run`, a relacao ja esta materializada (o dbt constroi as deps
---   antes): o filtro usa as colunas reais.
+-- antes): o filtro usa as colunas reais.
 -- - Durante `dbt parse`/`compile` sem a relacao materializada: retorna `null`
---   (ou `cast(null as <tipo>)`). Compila; o valor real so importa no run.
-
+-- (ou `cast(null as <tipo>)`). Compila; o valor real so importa no run.
 {% macro coalesce_present(relation, aliases, cast_type=none) %}
     {%- set present = [] -%}
     {%- if execute -%}
@@ -24,20 +23,15 @@
                 {%- do cols.append(c.name | lower) -%}
             {%- endfor -%}
             {%- for a in aliases -%}
-                {%- if (a | lower) in cols -%}
-                    {%- do present.append(a) -%}
-                {%- endif -%}
+                {%- if (a | lower) in cols -%} {%- do present.append(a) -%} {%- endif -%}
             {%- endfor -%}
         {%- endif -%}
     {%- endif -%}
     {%- if present | length > 0 -%}
         {%- set expr = 'coalesce(' ~ (present | join(', ')) ~ ')' -%}
-    {%- else -%}
-        {%- set expr = 'null' -%}
+    {%- else -%} {%- set expr = 'null' -%}
     {%- endif -%}
-    {%- if cast_type is not none -%}
-        cast({{ expr }} as {{ cast_type }})
-    {%- else -%}
-        {{ expr }}
+    {%- if cast_type is not none -%} cast({{ expr }} as {{ cast_type }})
+    {%- else -%} {{ expr }}
     {%- endif -%}
 {% endmacro %}

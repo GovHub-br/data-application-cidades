@@ -17,64 +17,84 @@
 -- linha_ogu_fgts) a substituicao futura do seed anual do piloto #118.
 --
 -- Target obrigatorio: staging_duckdb (gating em dbt_project.yml).
-
 with
 
-base as (
-    select
-        dt_referencia,
-        year(dt_referencia) as ano,
-        month(dt_referencia) as mes,
-        fonte_familia,
-        case fonte_familia
-            when 'bases_relatorio_executivo' then 1
-            when 'min_cidades' then 2
-            when 'entrada_bb' then 3
-            when 'bext' then 4
-            else 9
-        end as prioridade_familia,
-        coalesce(uf, 'ND') as uf,
-        coalesce(linha_ogu_fgts, 'Nao classificada') as linha_ogu_fgts,
-        chave_natural,
-        uh_contratadas,
-        uh_entregues,
-        uh_concluidas,
-        uh_em_obras,
-        valor_investimento,
-        valor_emprestimo,
-        valor_liberado,
-        subsidio_fgts,
-        subsidio_ogu
-    from {{ ref("silver_mcmv_historico_serie_executiva") }}
-    where dt_referencia is not null
-),
+    base as (
+        select
+            dt_referencia,
+            year(dt_referencia) as ano,
+            month(dt_referencia) as mes,
+            fonte_familia,
+            case
+                fonte_familia
+                when 'bases_relatorio_executivo'
+                then 1
+                when 'min_cidades'
+                then 2
+                when 'entrada_bb'
+                then 3
+                when 'bext'
+                then 4
+                else 9
+            end as prioridade_familia,
+            coalesce(uf, 'ND') as uf,
+            coalesce(linha_ogu_fgts, 'Nao classificada') as linha_ogu_fgts,
+            chave_natural,
+            uh_contratadas,
+            uh_entregues,
+            uh_concluidas,
+            uh_em_obras,
+            valor_investimento,
+            valor_emprestimo,
+            valor_liberado,
+            subsidio_fgts,
+            subsidio_ogu
+        from {{ ref("silver_mcmv_historico_serie_executiva") }}
+        where dt_referencia is not null
+    ),
 
-agg as (
-    select
-        dt_referencia,
-        ano,
-        mes,
-        fonte_familia,
-        prioridade_familia,
-        case when grouping(uf) = 0 then 'uf' else 'nacional' end as nivel_agregacao,
-        case when grouping(uf) = 0 then uf else 'BR' end as uf,
-        linha_ogu_fgts,
-        count(distinct chave_natural) as n_registros,
-        sum(uh_contratadas) as uh_contratadas,
-        sum(uh_entregues) as uh_entregues,
-        sum(uh_concluidas) as uh_concluidas,
-        sum(uh_em_obras) as uh_em_obras,
-        sum(valor_investimento) as valor_investimento,
-        sum(valor_emprestimo) as valor_emprestimo,
-        sum(valor_liberado) as valor_liberado,
-        sum(subsidio_fgts) as subsidio_fgts,
-        sum(subsidio_ogu) as subsidio_ogu
-    from base
-    group by grouping sets (
-        (dt_referencia, ano, mes, fonte_familia, prioridade_familia, linha_ogu_fgts),
-        (dt_referencia, ano, mes, fonte_familia, prioridade_familia, linha_ogu_fgts, uf)
+    agg as (
+        select
+            dt_referencia,
+            ano,
+            mes,
+            fonte_familia,
+            prioridade_familia,
+            case when grouping(uf) = 0 then 'uf' else 'nacional' end as nivel_agregacao,
+            case when grouping(uf) = 0 then uf else 'BR' end as uf,
+            linha_ogu_fgts,
+            count(distinct chave_natural) as n_registros,
+            sum(uh_contratadas) as uh_contratadas,
+            sum(uh_entregues) as uh_entregues,
+            sum(uh_concluidas) as uh_concluidas,
+            sum(uh_em_obras) as uh_em_obras,
+            sum(valor_investimento) as valor_investimento,
+            sum(valor_emprestimo) as valor_emprestimo,
+            sum(valor_liberado) as valor_liberado,
+            sum(subsidio_fgts) as subsidio_fgts,
+            sum(subsidio_ogu) as subsidio_ogu
+        from base
+        group by
+            grouping sets (
+                (
+                    dt_referencia,
+                    ano,
+                    mes,
+                    fonte_familia,
+                    prioridade_familia,
+                    linha_ogu_fgts
+                ),
+                (
+                    dt_referencia,
+                    ano,
+                    mes,
+                    fonte_familia,
+                    prioridade_familia,
+                    linha_ogu_fgts,
+                    uf
+                )
+            )
     )
-)
 
 select *
 from agg

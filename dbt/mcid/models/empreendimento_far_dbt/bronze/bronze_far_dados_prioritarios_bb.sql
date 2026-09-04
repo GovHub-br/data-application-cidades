@@ -1,9 +1,9 @@
 {{ config(materialized="table") }}
 
 -- Bronze: Dados Prioritários BB — snapshot consolidado do Banco do Brasil (frente FAR)
--- Fonte: mcmv_staging.dados_prioritarios_recebidos_bb_empreendimentos (staging/sharepoint)
+-- Fonte: mcmv_staging.dados_prioritarios_recebidos_bb_empreendimentos
+-- (staging/sharepoint)
 -- Espelho de bronze_far_dados_prioritarios_caixa para o agente BB. Filtra modalidade FAR.
-
 with
     prioritarios_raw as (
         select
@@ -17,7 +17,9 @@ with
 
             nullif(trim(modalidade), '') as modalidade,
             nullif(trim(situacao_do_empreendimento), '') as situacao,
-            nullif(trim(detalhamento_da_situacao_do_empreendimento), '') as situacao_detalhamento,
+            nullif(
+                trim(detalhamento_da_situacao_do_empreendimento), ''
+            ) as situacao_detalhamento,
 
             {{ parse_numeric('percentual_exec', 'numeric(6, 2)') }} as pct_execucao,
 
@@ -39,7 +41,8 @@ with
             {{ parse_numeric('latitude_do_imovel', 'numeric(12, 8)') }} as latitude,
             {{ parse_numeric('longitude_do_imovel', 'numeric(12, 8)') }} as longitude,
 
-            {{ parse_hist_numeric('valor_desembolsado_do_ano_de_referencia') }} as valor_desembolsado_ano,
+            {{ parse_hist_numeric('valor_desembolsado_do_ano_de_referencia') }}
+            as valor_desembolsado_ano,
             {{ parse_int('unidades_habitacionais_a_serem_entregues') }} as uh_a_entregar,
             {{ parse_int('quantidade_de_uhs_distratadas') }} as uh_distratadas,
             nullif(trim(observacoes), '') as observacoes,
@@ -49,7 +52,8 @@ with
             _source_hash as hash_linha,
             {{ hist_dt_referencia_from_filename('arquivo_de_origem') }} as dt_referencia
 
-        from {{ source("mcmv_staging", "dados_prioritarios_recebidos_bb_empreendimentos") }}
+        from
+            {{ source("mcmv_staging", "dados_prioritarios_recebidos_bb_empreendimentos") }}
         where trim(modalidade) = 'FAR'
     )
 

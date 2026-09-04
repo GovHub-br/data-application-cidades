@@ -3,7 +3,6 @@
 -- Gold: indicadores de gargalo e desempenho MCMV.
 -- Uma linha por empreendimento/APF, unificando FAR e FDS para alimentar alertas
 -- estratégicos, rankings de risco e filtros de dashboard.
-
 with
     far_ultima_financeira as (
         select
@@ -15,11 +14,7 @@ with
     ),
 
     far_ultima_fisica as (
-        select
-            apf,
-            max(
-                try_cast(mes as date)
-            ) as dt_ultima_medicao_fisica
+        select apf, max(try_cast(mes as date)) as dt_ultima_medicao_fisica
         from {{ ref("gold_far_execucao_fisica_financeira_chart") }}
         group by apf
     ),
@@ -27,9 +22,7 @@ with
     fds_ultima_financeira as (
         select
             apf,
-            max(
-                try_cast(mes as date)
-            ) as dt_ultima_liberacao,
+            max(try_cast(mes as date)) as dt_ultima_liberacao,
             sum(valor_liberado_mensal) as valor_liberado_historico
         from {{ ref("gold_fds_evolucao_financeira_chart") }}
         group by apf
@@ -45,8 +38,14 @@ with
             f.municipio_uf,
             f.agente_financeiro,
             'Tomador/Proponente'::text as responsavel_tipo,
-            coalesce(nullif(f.tomador_cnpj, ''), nullif(f.proponente_cnpj, '')) as responsavel_id,
-            coalesce(nullif(f.nome_tomador, ''), nullif(f.nome_proponente, 'Não Informado'), f.nome_proponente) as responsavel_nome,
+            coalesce(
+                nullif(f.tomador_cnpj, ''), nullif(f.proponente_cnpj, '')
+            ) as responsavel_id,
+            coalesce(
+                nullif(f.nome_tomador, ''),
+                nullif(f.nome_proponente, 'Não Informado'),
+                f.nome_proponente
+            ) as responsavel_nome,
             f.situacao_empreendimento as situacao_operacional,
             f.status_prazo,
             f.status_execucao_simplificado as status_execucao,
@@ -54,12 +53,20 @@ with
             f.quantidade_uh,
             f.valor_contratado,
             f.valor_desembolsado,
-            coalesce(ff.valor_liberado_historico, f.valor_desembolsado) as valor_liberado_historico,
-            greatest(coalesce(f.valor_contratado, 0) - coalesce(f.valor_desembolsado, 0), 0) as saldo_contratado_a_desembolsar,
+            coalesce(
+                ff.valor_liberado_historico, f.valor_desembolsado
+            ) as valor_liberado_historico,
+            greatest(
+                coalesce(f.valor_contratado, 0) - coalesce(f.valor_desembolsado, 0), 0
+            ) as saldo_contratado_a_desembolsar,
             f.percentual_execucao_fisica,
             null::numeric as percentual_obra_prevista,
             f.percentual_execucao_financeira,
-            round(coalesce(f.percentual_execucao_financeira, 0) - coalesce(f.percentual_execucao_fisica, 0), 2) as gap_fisico_financeiro_pp,
+            round(
+                coalesce(f.percentual_execucao_financeira, 0)
+                - coalesce(f.percentual_execucao_fisica, 0),
+                2
+            ) as gap_fisico_financeiro_pp,
             f.dt_contratacao,
             null::date as dt_inicio_obra,
             f.dt_previsao_entrega as dt_previsao_conclusao,
@@ -97,10 +104,13 @@ with
             f.nome_eo as responsavel_nome,
             f.situacao_gefus as situacao_operacional,
             case
-                when coalesce(f.status_entrega, '') = 'Totalmente Entregue' then 'Entregue'
-                when coalesce(e.dt_previsao_entrega, f.dt_previsao_conclusao) < current_date
+                when coalesce(f.status_entrega, '') = 'Totalmente Entregue'
+                then 'Entregue'
+                when
+                    coalesce(e.dt_previsao_entrega, f.dt_previsao_conclusao)
+                    < current_date
                     and coalesce(f.percentual_execucao_fisica, 0) < 100
-                    then 'Em Atraso'
+                then 'Em Atraso'
                 else 'Dentro do Prazo'
             end as status_prazo,
             f.semaforo_alerta as status_execucao,
@@ -108,23 +118,33 @@ with
             f.quantidade_uh,
             f.valor_contratado,
             f.valor_desembolsado,
-            coalesce(fu.valor_liberado_historico, f.valor_desembolsado) as valor_liberado_historico,
-            greatest(coalesce(f.valor_contratado, 0) - coalesce(f.valor_desembolsado, 0), 0) as saldo_contratado_a_desembolsar,
+            coalesce(
+                fu.valor_liberado_historico, f.valor_desembolsado
+            ) as valor_liberado_historico,
+            greatest(
+                coalesce(f.valor_contratado, 0) - coalesce(f.valor_desembolsado, 0), 0
+            ) as saldo_contratado_a_desembolsar,
             f.percentual_execucao_fisica,
             f.percentual_obra_prevista,
             f.percentual_execucao_financeira,
             f.divergencia_fisico_financeira as gap_fisico_financeiro_pp,
             f.dt_contratacao,
             f.dt_inicio_obra,
-            coalesce(e.dt_previsao_entrega, f.dt_previsao_conclusao) as dt_previsao_conclusao,
+            coalesce(
+                e.dt_previsao_entrega, f.dt_previsao_conclusao
+            ) as dt_previsao_conclusao,
             f.dt_conclusao_obra,
             f.dt_entrega,
             e.dt_paralisacao,
-            coalesce(e.dt_ultima_liberacao, fu.dt_ultima_liberacao) as dt_ultima_liberacao,
+            coalesce(
+                e.dt_ultima_liberacao, fu.dt_ultima_liberacao
+            ) as dt_ultima_liberacao,
             null::date as dt_ultima_medicao_fisica,
             nullif(
                 greatest(
-                    coalesce(e.dt_ultima_liberacao, fu.dt_ultima_liberacao, '1900-01-01'::date),
+                    coalesce(
+                        e.dt_ultima_liberacao, fu.dt_ultima_liberacao, '1900-01-01'::date
+                    ),
                     coalesce(f.dt_entrega, '1900-01-01'::date),
                     coalesce(f.dt_conclusao_obra, '1900-01-01'::date),
                     coalesce(f.dt_inicio_obra, '1900-01-01'::date),
@@ -138,33 +158,38 @@ with
     ),
 
     unificada as (
-        select * from far
+        select *
+        from far
         union all
-        select * from fds
+        select *
+        from fds
     ),
 
     metricas as (
         select
             *,
             case
-                when dt_ultima_atualizacao is not null then current_date - dt_ultima_atualizacao
+                when dt_ultima_atualizacao is not null
+                then current_date - dt_ultima_atualizacao
             end as dias_sem_atualizacao,
             case
-                when dt_previsao_conclusao is not null
+                when
+                    dt_previsao_conclusao is not null
                     and dt_previsao_conclusao < current_date
                     and coalesce(percentual_execucao_fisica, 0) < 100
-                    then current_date - dt_previsao_conclusao
+                then current_date - dt_previsao_conclusao
                 else 0
             end as dias_atraso,
             case
-                when dt_paralisacao is not null
+                when
+                    dt_paralisacao is not null
                     and coalesce(percentual_execucao_fisica, 0) < 100
-                    then current_date - dt_paralisacao
+                then current_date - dt_paralisacao
                 else 0
             end as dias_paralisacao,
             case
                 when coalesce(valor_contratado, 0) > 0
-                    then round(saldo_contratado_a_desembolsar / valor_contratado * 100, 2)
+                then round(saldo_contratado_a_desembolsar / valor_contratado * 100, 2)
                 else 0
             end as percentual_saldo_a_desembolsar
         from unificada
@@ -173,10 +198,7 @@ with
     flags as (
         select
             *,
-            (
-                coalesce(status_prazo, '') = 'Em Atraso'
-                or dias_atraso > 0
-            ) as flag_atraso,
+            (coalesce(status_prazo, '') = 'Em Atraso' or dias_atraso > 0) as flag_atraso,
             (
                 dt_paralisacao is not null
                 or coalesce(situacao_operacional, '') ilike '%PARALIS%'
@@ -193,14 +215,25 @@ with
             (
                 coalesce(percentual_execucao_fisica, 0) < 100
                 and (
-                    coalesce(percentual_execucao_fisica, 0) < coalesce(percentual_obra_prevista, percentual_execucao_fisica) - 10
-                    or (dt_previsao_conclusao < current_date and coalesce(percentual_execucao_fisica, 0) < 100)
-                    or (dt_contratacao < current_date - 365 and coalesce(percentual_execucao_fisica, 0) < 30)
+                    coalesce(percentual_execucao_fisica, 0)
+                    < coalesce(percentual_obra_prevista, percentual_execucao_fisica) - 10
+                    or (
+                        dt_previsao_conclusao < current_date
+                        and coalesce(percentual_execucao_fisica, 0) < 100
+                    )
+                    or (
+                        dt_contratacao < current_date - 365
+                        and coalesce(percentual_execucao_fisica, 0) < 30
+                    )
                 )
             ) as flag_baixa_execucao_fisica,
             (
-                coalesce(percentual_execucao_financeira, 0) < greatest(coalesce(percentual_execucao_fisica, 0) - 10, 0)
-                or (dt_contratacao < current_date - 365 and coalesce(percentual_execucao_financeira, 0) < 30)
+                coalesce(percentual_execucao_financeira, 0)
+                < greatest(coalesce(percentual_execucao_fisica, 0) - 10, 0)
+                or (
+                    dt_contratacao < current_date - 365
+                    and coalesce(percentual_execucao_financeira, 0) < 30
+                )
             ) as flag_baixa_execucao_financeira,
             (
                 coalesce(valor_contratado, 0) > 0
@@ -287,9 +320,12 @@ select
     ) as flag_entrega_em_risco,
     score_gargalo,
     case
-        when score_gargalo >= 5 then 'Crítico'
-        when score_gargalo >= 3 then 'Alto'
-        when score_gargalo >= 1 then 'Médio'
+        when score_gargalo >= 5
+        then 'Crítico'
+        when score_gargalo >= 3
+        then 'Alto'
+        when score_gargalo >= 1
+        then 'Médio'
         else 'Baixo'
     end as classificacao_gargalo,
     concat_ws(

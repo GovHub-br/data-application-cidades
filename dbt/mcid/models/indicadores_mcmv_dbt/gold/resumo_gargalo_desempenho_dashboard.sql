@@ -1,11 +1,8 @@
 {{ config(materialized="table") }}
 
 -- Gold agregada para Superset: cards, rankings e mapas de gargalo/desempenho.
-
 with
-    base as (
-        select * from {{ ref("indicadores_gargalo_desempenho") }}
-    ),
+    base as (select * from {{ ref("indicadores_gargalo_desempenho") }}),
 
     agregada as (
         select
@@ -28,13 +25,23 @@ with
             round(avg(dias_sem_atualizacao), 2) as media_dias_sem_atualizacao,
             count(*) filter (where flag_atraso) as qtd_obras_atrasadas,
             count(*) filter (where flag_paralisacao) as qtd_obras_paralisadas,
-            count(*) filter (where flag_sem_atualizacao_recente) as qtd_sem_atualizacao_recente,
-            count(*) filter (where flag_baixa_execucao_fisica) as qtd_baixa_execucao_fisica,
-            count(*) filter (where flag_baixa_execucao_financeira) as qtd_baixa_execucao_financeira,
+            count(*) filter (
+                where flag_sem_atualizacao_recente
+            ) as qtd_sem_atualizacao_recente,
+            count(*) filter (
+                where flag_baixa_execucao_fisica
+            ) as qtd_baixa_execucao_fisica,
+            count(*) filter (
+                where flag_baixa_execucao_financeira
+            ) as qtd_baixa_execucao_financeira,
             count(*) filter (where flag_gargalo_financeiro) as qtd_gargalo_financeiro,
-            count(*) filter (where flag_contrato_sem_evolucao) as qtd_contrato_sem_evolucao,
+            count(*) filter (
+                where flag_contrato_sem_evolucao
+            ) as qtd_contrato_sem_evolucao,
             count(*) filter (where flag_entrega_em_risco) as qtd_entregas_em_risco,
-            count(*) filter (where classificacao_gargalo = 'Crítico') as qtd_casos_criticos
+            count(*) filter (
+                where classificacao_gargalo = 'Crítico'
+            ) as qtd_casos_criticos
         from base
 
         union all
@@ -59,13 +66,23 @@ with
             round(avg(dias_sem_atualizacao), 2) as media_dias_sem_atualizacao,
             count(*) filter (where flag_atraso) as qtd_obras_atrasadas,
             count(*) filter (where flag_paralisacao) as qtd_obras_paralisadas,
-            count(*) filter (where flag_sem_atualizacao_recente) as qtd_sem_atualizacao_recente,
-            count(*) filter (where flag_baixa_execucao_fisica) as qtd_baixa_execucao_fisica,
-            count(*) filter (where flag_baixa_execucao_financeira) as qtd_baixa_execucao_financeira,
+            count(*) filter (
+                where flag_sem_atualizacao_recente
+            ) as qtd_sem_atualizacao_recente,
+            count(*) filter (
+                where flag_baixa_execucao_fisica
+            ) as qtd_baixa_execucao_fisica,
+            count(*) filter (
+                where flag_baixa_execucao_financeira
+            ) as qtd_baixa_execucao_financeira,
             count(*) filter (where flag_gargalo_financeiro) as qtd_gargalo_financeiro,
-            count(*) filter (where flag_contrato_sem_evolucao) as qtd_contrato_sem_evolucao,
+            count(*) filter (
+                where flag_contrato_sem_evolucao
+            ) as qtd_contrato_sem_evolucao,
             count(*) filter (where flag_entrega_em_risco) as qtd_entregas_em_risco,
-            count(*) filter (where classificacao_gargalo = 'Crítico') as qtd_casos_criticos
+            count(*) filter (
+                where classificacao_gargalo = 'Crítico'
+            ) as qtd_casos_criticos
         from base
         group by frente
 
@@ -91,13 +108,23 @@ with
             round(avg(dias_sem_atualizacao), 2) as media_dias_sem_atualizacao,
             count(*) filter (where flag_atraso) as qtd_obras_atrasadas,
             count(*) filter (where flag_paralisacao) as qtd_obras_paralisadas,
-            count(*) filter (where flag_sem_atualizacao_recente) as qtd_sem_atualizacao_recente,
-            count(*) filter (where flag_baixa_execucao_fisica) as qtd_baixa_execucao_fisica,
-            count(*) filter (where flag_baixa_execucao_financeira) as qtd_baixa_execucao_financeira,
+            count(*) filter (
+                where flag_sem_atualizacao_recente
+            ) as qtd_sem_atualizacao_recente,
+            count(*) filter (
+                where flag_baixa_execucao_fisica
+            ) as qtd_baixa_execucao_fisica,
+            count(*) filter (
+                where flag_baixa_execucao_financeira
+            ) as qtd_baixa_execucao_financeira,
             count(*) filter (where flag_gargalo_financeiro) as qtd_gargalo_financeiro,
-            count(*) filter (where flag_contrato_sem_evolucao) as qtd_contrato_sem_evolucao,
+            count(*) filter (
+                where flag_contrato_sem_evolucao
+            ) as qtd_contrato_sem_evolucao,
             count(*) filter (where flag_entrega_em_risco) as qtd_entregas_em_risco,
-            count(*) filter (where classificacao_gargalo = 'Crítico') as qtd_casos_criticos
+            count(*) filter (
+                where classificacao_gargalo = 'Crítico'
+            ) as qtd_casos_criticos
         from base
         group by frente, uf
 
@@ -123,13 +150,23 @@ with
             round(avg(dias_sem_atualizacao), 2) as media_dias_sem_atualizacao,
             count(*) filter (where flag_atraso) as qtd_obras_atrasadas,
             count(*) filter (where flag_paralisacao) as qtd_obras_paralisadas,
-            count(*) filter (where flag_sem_atualizacao_recente) as qtd_sem_atualizacao_recente,
-            count(*) filter (where flag_baixa_execucao_fisica) as qtd_baixa_execucao_fisica,
-            count(*) filter (where flag_baixa_execucao_financeira) as qtd_baixa_execucao_financeira,
+            count(*) filter (
+                where flag_sem_atualizacao_recente
+            ) as qtd_sem_atualizacao_recente,
+            count(*) filter (
+                where flag_baixa_execucao_fisica
+            ) as qtd_baixa_execucao_fisica,
+            count(*) filter (
+                where flag_baixa_execucao_financeira
+            ) as qtd_baixa_execucao_financeira,
             count(*) filter (where flag_gargalo_financeiro) as qtd_gargalo_financeiro,
-            count(*) filter (where flag_contrato_sem_evolucao) as qtd_contrato_sem_evolucao,
+            count(*) filter (
+                where flag_contrato_sem_evolucao
+            ) as qtd_contrato_sem_evolucao,
             count(*) filter (where flag_entrega_em_risco) as qtd_entregas_em_risco,
-            count(*) filter (where classificacao_gargalo = 'Crítico') as qtd_casos_criticos
+            count(*) filter (
+                where classificacao_gargalo = 'Crítico'
+            ) as qtd_casos_criticos
         from base
         group by frente, uf, municipio
 
@@ -155,13 +192,23 @@ with
             round(avg(dias_sem_atualizacao), 2) as media_dias_sem_atualizacao,
             count(*) filter (where flag_atraso) as qtd_obras_atrasadas,
             count(*) filter (where flag_paralisacao) as qtd_obras_paralisadas,
-            count(*) filter (where flag_sem_atualizacao_recente) as qtd_sem_atualizacao_recente,
-            count(*) filter (where flag_baixa_execucao_fisica) as qtd_baixa_execucao_fisica,
-            count(*) filter (where flag_baixa_execucao_financeira) as qtd_baixa_execucao_financeira,
+            count(*) filter (
+                where flag_sem_atualizacao_recente
+            ) as qtd_sem_atualizacao_recente,
+            count(*) filter (
+                where flag_baixa_execucao_fisica
+            ) as qtd_baixa_execucao_fisica,
+            count(*) filter (
+                where flag_baixa_execucao_financeira
+            ) as qtd_baixa_execucao_financeira,
             count(*) filter (where flag_gargalo_financeiro) as qtd_gargalo_financeiro,
-            count(*) filter (where flag_contrato_sem_evolucao) as qtd_contrato_sem_evolucao,
+            count(*) filter (
+                where flag_contrato_sem_evolucao
+            ) as qtd_contrato_sem_evolucao,
             count(*) filter (where flag_entrega_em_risco) as qtd_entregas_em_risco,
-            count(*) filter (where classificacao_gargalo = 'Crítico') as qtd_casos_criticos
+            count(*) filter (
+                where classificacao_gargalo = 'Crítico'
+            ) as qtd_casos_criticos
         from base
         group by frente, uf, responsavel_tipo, responsavel_id, responsavel_nome
     )
@@ -193,7 +240,11 @@ select
     qtd_contrato_sem_evolucao,
     qtd_entregas_em_risco,
     qtd_casos_criticos,
-    round(qtd_entregas_em_risco::numeric / nullif(total_empreendimentos, 0) * 100, 2) as percentual_entregas_em_risco,
-    round(qtd_casos_criticos::numeric / nullif(total_empreendimentos, 0) * 100, 2) as percentual_casos_criticos,
+    round(
+        qtd_entregas_em_risco::numeric / nullif(total_empreendimentos, 0) * 100, 2
+    ) as percentual_entregas_em_risco,
+    round(
+        qtd_casos_criticos::numeric / nullif(total_empreendimentos, 0) * 100, 2
+    ) as percentual_casos_criticos,
     current_date as dt_calculo
 from agregada

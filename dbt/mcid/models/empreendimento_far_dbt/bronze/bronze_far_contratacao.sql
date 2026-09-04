@@ -3,7 +3,6 @@
 -- Bronze: Contratação FAR — cópia fiel de mcmv_staging.novo_mcmv_far_contratacao.
 -- ATENÇÃO: fonte praticamente vazia (1 linha no snapshot atual). Materializada
 -- para completude/linhagem; não consumida pela silver enquanto não popular.
-
 with
     contratacao_raw as (
         select

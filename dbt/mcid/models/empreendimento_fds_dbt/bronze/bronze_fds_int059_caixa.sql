@@ -3,10 +3,10 @@
 -- Bronze: INT 059 — empreendimentos FDS da CAIXA (complementar)
 -- Fonte: int_empreendimentos_int_059_fds_caixa_pj
 -- OBS: Esta tabela contém TANTO legado (PMCMV-E) quanto Novo MCMV.
---      Filtrar por no_selecao_pmcmv_e = 'NOVO PMCMV-E' para manter apenas Novo MCMV (305 registros).
+-- Filtrar por no_selecao_pmcmv_e = 'NOVO PMCMV-E' para manter apenas Novo MCMV (305
+-- registros).
 -- Campos exclusivos não presentes nas fontes primárias:
---   situacao_gefus, fase_contrato, situacao_empreendimento, no_selecao_pmcmv_e
-
+-- situacao_gefus, fase_contrato, situacao_empreendimento, no_selecao_pmcmv_e
 with
     int059_raw as (
         select
@@ -25,7 +25,9 @@ with
 
             -- Proponente (Entidade Organizadora)
             nullif(trim(razao_social_proponente), '') as eo_nome,
-            nullif(regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), '') as eo_cnpj,
+            nullif(
+                regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), ''
+            ) as eo_cnpj,
             nullif(trim(email_entidade), '') as eo_email,
 
             -- Localização
@@ -41,7 +43,8 @@ with
             {{ parse_int('quantidade_uh_adaptadas') }} as qt_uh_adaptadas,
 
             -- Execução física
-            {{ parse_numeric('percentual_obra_realizado', 'numeric(6, 2)') }} as pct_obra_realizado,
+            {{ parse_numeric('percentual_obra_realizado', 'numeric(6, 2)') }}
+            as pct_obra_realizado,
 
             -- Valores financeiros
             {{ parse_hist_numeric('vr_emprestimo_original') }} as vr_emprestimo_original,
@@ -52,7 +55,8 @@ with
             {{ parse_hist_numeric('vr_projeto') }} as vr_projeto,
             {{ parse_hist_numeric('vr_obra') }} as vr_obra,
             {{ parse_hist_numeric('valor_aporte_adicional') }} as vr_aporte_adicional,
-            {{ parse_hist_numeric('valor_aporte_adicional_contratado') }} as vr_aporte_contratado,
+            {{ parse_hist_numeric('valor_aporte_adicional_contratado') }}
+            as vr_aporte_contratado,
 
             -- Tipologia
             nullif(trim(dsc_tipologia), '') as tipologia,

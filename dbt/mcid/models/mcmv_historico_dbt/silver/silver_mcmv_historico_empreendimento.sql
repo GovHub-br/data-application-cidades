@@ -9,9 +9,11 @@
 -- Alimenta gold_mcmv_snapshot_empreendimento_atual (estado corrente).
 --
 -- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
-
-select * from {{ ref('silver_mcmv_historico_empreendimento_far') }}
+select *
+from {{ ref('silver_mcmv_historico_empreendimento_far') }}
 union all
-select * from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
+select *
+from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
 union all
-select * from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
+select *
+from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
