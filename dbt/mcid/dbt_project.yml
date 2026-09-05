@@ -24,11 +24,14 @@ models:
       +materialized: incremental
       +schema: metadata
     empreendimento_far_dbt:
-      # Migrado para MinIO/DuckDB (change migracao-bronze-minio-mcmv). Lê a
-      # staging via source mcmv_staging → só roda no target staging_duckdb;
-      # fora da carga noturna (Cosmos = prod) até o ADR #117.
+      # Convenção 2026-09-04: schema por frente (bronze único em
+      # dados_historicos; silver/gold compartilham o schema empreendimento_far
+      # já usado pelos colegas — tabelas identificadas pelo prefixo
+      # silver_atual_/gold_atual_). Roda sempre no prod (sem gate de target);
+      # o mecanismo de leitura da staging (script staging_para_bronze.py em vez
+      # de read_minio_staging_parquet_series) é a etapa seguinte, ainda não
+      # implementada.
       +materialized: table
-      +enabled: "{{ target.type == 'duckdb' }}"
       +meta:
         governance:
           product: empreendimento_far
@@ -36,7 +39,7 @@ models:
 
       bronze:
         +materialized: table
-        +schema: bronze
+        +schema: dados_historicos
         +meta:
           governance:
             product: empreendimento_far
@@ -51,7 +54,7 @@ models:
 
       silver:
         +materialized: table
-        +schema: silver
+        +schema: empreendimento_far
         +meta:
           governance:
             product: empreendimento_far
@@ -66,7 +69,7 @@ models:
 
       gold:
         +materialized: table
-        +schema: gold
+        +schema: empreendimento_far
         +meta:
           governance:
             product: empreendimento_far
@@ -80,11 +83,10 @@ models:
             owner: mcid-data-engineering
 
     empreendimento_fds_dbt:
-      # Migrado para MinIO/DuckDB (change migracao-bronze-minio-mcmv). Antes
-      # entidades_dbt / schema entidades_fds. Lê a staging via source mcmv_staging
-      # → só roda no target staging_duckdb; fora da carga noturna até o ADR #117.
+      # Convenção 2026-09-04 — ver empreendimento_far_dbt. Schema silver/gold
+      # compartilhado com os colegas é empreendimentos_fds (plural — mesmo
+      # nome que eles usam em prod).
       +materialized: table
-      +enabled: "{{ target.type == 'duckdb' }}"
       +meta:
         governance:
           product: empreendimento_fds
@@ -92,7 +94,7 @@ models:
 
       bronze:
         +materialized: table
-        +schema: bronze
+        +schema: dados_historicos
         +meta:
           governance:
             product: empreendimento_fds
@@ -107,7 +109,7 @@ models:
 
       silver:
         +materialized: table
-        +schema: silver
+        +schema: empreendimentos_fds
         +meta:
           governance:
             product: empreendimento_fds
@@ -122,7 +124,7 @@ models:
 
       gold:
         +materialized: table
-        +schema: gold
+        +schema: empreendimentos_fds
         +meta:
           governance:
             product: empreendimento_fds
@@ -136,10 +138,8 @@ models:
             owner: mcid-data-engineering
 
     empreendimento_rural_dbt:
-      # Domínio novo (change migracao-bronze-minio-mcmv). Frente Rural / PNHR,
-      # ponta a ponta. Lê a staging via source mcmv_staging → só no staging_duckdb.
+      # Convenção 2026-09-04 — ver empreendimento_far_dbt.
       +materialized: table
-      +enabled: "{{ target.type == 'duckdb' }}"
       +meta:
         governance:
           product: empreendimento_rural
@@ -147,7 +147,7 @@ models:
 
       bronze:
         +materialized: table
-        +schema: bronze
+        +schema: dados_historicos
         +meta:
           governance:
             product: empreendimento_rural
@@ -162,7 +162,7 @@ models:
 
       silver:
         +materialized: table
-        +schema: silver
+        +schema: empreendimento_rural
         +meta:
           governance:
             product: empreendimento_rural
@@ -175,50 +175,66 @@ models:
             tier: Tier.Tier2
             owner: mcid-data-engineering
 
-      gold:
-        +materialized: table
-        +schema: gold
-        +meta:
-          governance:
-            product: empreendimento_rural
-            owner_key: mcid_data_engineering
-            layer: gold
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier1
-            owner: mcid-data-engineering
+      # Sem gold própria hoje: os 2 modelos redundantes com o gold já
+      # entregue pelos colegas (gold_rural_ficha_empreendimento,
+      # gold_rural_panorama) foram aposentados na convenção 2026-09-04 —
+      # nenhum consumidor os referenciava (diferente do far/fds, onde 2
+      # golds alimentam o gargalo).
 
     indicadores_mcmv_dbt:
+      # Convenção 2026-09-04: reloginho não é uma frente — é um domínio
+      # analítico próprio (indicadores de velocidade/gargalo). Silver e gold
+      # (reloginho + gargalo) ficam no schema novo "reloginho".
       +materialized: table
-      +schema: mcmv_indicadores
-      # Camadas do reloginho (grupo A) — leem staging/dados_historicos via
-      # MinIO/DuckDB, portanto só habilitadas no target staging_duckdb.
-      # O gargalo (grupo B) depende dos golds FAR/FDS por ref(); como a
-      # change migracao-bronze-minio-mcmv moveu FAR/FDS para duckdb, o grupo B
-      # também passa a rodar só no staging_duckdb (fora da carga noturna até #117).
+      +schema: reloginho
       bronze:
         +materialized: table
-        +schema: mcmv_indicadores
-        +enabled: "{{ target.type == 'duckdb' }}"
+        +schema: dados_historicos
       silver:
         +materialized: table
-        +schema: mcmv_indicadores
-        +enabled: "{{ target.type == 'duckdb' }}"
+        +schema: reloginho
       gold:
         +materialized: table
-        +schema: mcmv_indicadores
-        +enabled: "{{ target.type == 'duckdb' }}"
+        +schema: reloginho
 
     mcmv_silver_dbt:
-      +enabled: "{{ target.type == 'duckdb' }}"
+      # Convenção 2026-09-04: cada frente (inclusive as sem schema de colega)
+      # ganha schema próprio; tabela silver_historico_base em cada uma (via
+      # alias, já que o nome do arquivo segue frente-qualificado por exigência
+      # de unicidade do dbt). "core" (union de todas as frentes) foi aposentado
+      # — quem precisar do consolidado une os schemas na hora.
       +materialized: table
-      +schema: mcmv_silver
       silver:
         +materialized: table
+        far:
+          +schema: empreendimento_far
+        rural:
+          +schema: empreendimento_rural
+        entidades:
+          +schema: empreendimentos_fds
+        conjuntura:
+          +schema: conjuntura
+        classe_media:
+          +schema: classe_media
+        reforma:
+          +schema: reforma
+        cidades:
+          +schema: cidades
+        sub50:
+          +schema: sub50
+        pro_moradia:
+          +schema: pro_moradia
+        minha_casa_minha_vida:
+          +schema: minha_casa_minha_vida
 
     mcmv_historico_dbt:
+      # Convenção 2026-09-04: bronze e o carrier bruto pré-split (ainda sem
+      # frente) ficam em dados_historicos; os 3 silvers já divididos por
+      # frente (far/fds/rural) usam alias para materializar como
+      # silver_historico_empreendimento no schema de cada frente; os golds
+      # (cross-frente) ganham o schema novo "serie_historica"; o piloto
+      # FGTS/OGU (agregado macro anual, não é frente de empreendimento) usa
+      # o schema conjuntura.
       +materialized: table
       +meta:
         governance:
@@ -227,8 +243,7 @@ models:
 
       bronze:
         +materialized: table
-        +schema: bronze
-        +enabled: "{{ target.type == 'duckdb' }}"
+        +schema: dados_historicos
         +meta:
           governance:
             product: mcmv_historico
@@ -243,8 +258,7 @@ models:
 
       silver:
         +materialized: table
-        +schema: silver
-        +enabled: "{{ target.type == 'duckdb' }}"
+        +schema: dados_historicos
         +meta:
           governance:
             product: mcmv_historico
@@ -259,8 +273,7 @@ models:
 
       gold:
         +materialized: table
-        +schema: gold
-        +enabled: "{{ target.type == 'duckdb' }}"
+        +schema: serie_historica
         +meta:
           governance:
             product: mcmv_historico
@@ -273,11 +286,11 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
-      # Piloto #118: série anual OGU/FGTS a partir de seed — roda no Postgres
-      # (não lê MinIO), materializa no schema silver.
+      # Piloto #118: série anual OGU/FGTS a partir de seed — agregado macro
+      # nacional, não é frente de empreendimento; materializa em conjuntura.
       piloto:
         +materialized: table
-        +schema: silver
+        +schema: conjuntura
         +meta:
           governance:
             product: mcmv_historico

@@ -10,7 +10,7 @@
 -- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
 with
 
-    base as (select * from {{ ref("indicadores_reloginho") }}),
+    base as (select * from {{ ref("gold_indicadores_reloginho") }}),
 
     ultimo_mes as (
         select agente_financeiro, max(dt_referencia) as dt_ultimo_mes

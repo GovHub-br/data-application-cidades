@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_historico_empreendimento", schema="empreendimento_far") }}
 
 -- SILVER — série histórica mensal de empreendimentos MCMV da frente FAR.
 --

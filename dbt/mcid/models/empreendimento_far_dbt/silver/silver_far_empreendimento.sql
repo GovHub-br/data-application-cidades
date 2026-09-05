@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_atual_empreendimento") }}
 
 -- Silver: Empreendimento FAR — Visão unificada
 -- Reúne dados cadastrais, contratuais e status físico-financeiro de cada APF.

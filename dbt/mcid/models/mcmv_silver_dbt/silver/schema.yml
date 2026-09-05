@@ -19,45 +19,13 @@ sources:
         description: Base PNHR/Rural CAIXA, recebida com linhas em separador pipe.
 
 models:
-  - name: silver_mcmv_frentes_base
-    description: >
-      Uniao padronizada das bases silver por frente do MCMV. Mantem contrato
-      comum para APF, contrato, empreendimento, territorio, responsavel, UHs,
-      valores, execucao, status e datas.
-    columns:
-      - name: id_silver_frente
-        description: Identificador tecnico do registro padronizado.
-        data_tests:
-          - not_null
-      - name: programa
-        description: Programa de referencia.
-        data_tests:
-          - not_null
-      - name: frente_mcmv
-        description: Frente/linha operacional do MCMV.
-        data_tests:
-          - not_null
-      - name: apf
-        description: APF quando existente na fonte.
-      - name: contrato
-        description: Numero de contrato quando existente na fonte.
-      - name: codigo_empreendimento
-        description: Codigo fisico do empreendimento ou chave equivalente.
-      - name: quantidade_empreendimentos
-        description: Quantidade de empreendimentos representada no registro.
-      - name: quantidade_contratos
-        description: Quantidade de contratos representada no registro.
-      - name: quantidade_uh
-        description: Quantidade de unidades habitacionais contratadas/monitoradas.
-      - name: valor_contratado
-        description: Valor contratado ou investimento de referencia.
-      - name: valor_desembolsado
-        description: Valor desembolsado/liberado quando disponivel.
-      - name: dt_silver
-        description: Timestamp de geracao da camada silver.
-
   - name: silver_mcmv_minha_casa_minha_vida_base
-    description: Recorte geral operacional do programa, consolidando as frentes disponiveis.
+    description: >
+      Recorte geral operacional do programa, consolidando as frentes
+      disponiveis (uniao direta das bases por frente, exceto Conjuntura —
+      o helper cross-frente silver_mcmv_frentes_base foi aposentado na
+      convencao 2026-09-04: cada frente materializa em schema proprio, e quem
+      precisa do consolidado une na hora).
   - name: silver_mcmv_far_base
     description: Base padronizada da frente FAR.
   - name: silver_mcmv_entidades_base

@@ -21,7 +21,7 @@
 -- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
 with
 
-    base as (select * from {{ ref("silver_reloginho_snh_apf_mes") }}),
+    base as (select * from {{ ref("silver_historico_snh_apf_mes") }}),
 
     mensal as (
         select

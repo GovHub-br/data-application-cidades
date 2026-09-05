@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: gold_mcmv_snapshot_empreendimento_atual
+  - name: gold_snapshot_empreendimento_atual
     description: >
       Gold — snapshot corrente (estado atual) derivado da silver histórica
       consolidada: uma linha por (frente, APF) com o último mês de referência
@@ -27,7 +27,7 @@ models:
         data_tests:
           - not_null
 
-  - name: gold_mcmv_historico_serie_mensal
+  - name: gold_serie_mensal
     description: >
       Gold — série histórica mensal do MCMV (pré-2024) para análise preditiva.
       Agrega a silver_mcmv_historico_serie_executiva por (dt_referencia,

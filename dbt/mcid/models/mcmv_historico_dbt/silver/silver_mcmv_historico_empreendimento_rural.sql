@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_historico_empreendimento", schema="empreendimento_rural") }}
 
 -- SILVER — série histórica mensal de empreendimentos MCMV da frente Rural (PNHR).
 --

@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: silver_reloginho_snh_apf_mes
+  - name: silver_historico_snh_apf_mes
     description: >
       Silver do reloginho (grupo A): série mensal SNH tipada, com domínio
       normalizado e deduplicada por APF. Grão: uma linha por
@@ -52,7 +52,7 @@ models:
         data_tests:
           - not_null
 
-  - name: silver_reloginho_snh_entregas_mes
+  - name: silver_historico_snh_entregas_mes
     description: >
       Silver do reloginho (grupo A) — entregas por evento agregadas ao mês do
       EVENTO. Lê bronze_reloginho_snh_entregas_evento, deduplica eventos

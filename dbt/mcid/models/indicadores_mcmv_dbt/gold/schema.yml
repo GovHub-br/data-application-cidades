@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: indicadores_gargalo_desempenho
+  - name: gold_indicadores_gargalo_desempenho
     description: >
       Tabela Gold unificada por empreendimento/APF para identificar gargalos e desempenho
       do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução física,
@@ -89,7 +89,7 @@ models:
       - name: dt_calculo
         description: Data em que o modelo foi calculado.
 
-  - name: indicadores_reloginho
+  - name: gold_indicadores_reloginho
     description: >
       Tabela Gold do reloginho MCMV (grupo A): série mensal SNH consolidada por
       agente. Lê a silver silver_reloginho_snh_apf_mes (ingestão/tipagem/dedup
@@ -140,7 +140,7 @@ models:
           Contagem corrida de meses observados por agente até a linha atual
           (usada no cálculo do ritmo médio mensal de entregas).
 
-  - name: indicadores_reloginho_frente
+  - name: gold_indicadores_reloginho_frente
     description: >
       Tabela Gold do reloginho MCMV (grupo A) com quebra por frente. Mesma
       regra de indicadores_reloginho, com frente_mcmv (FAR / Entidades /
@@ -187,7 +187,7 @@ models:
       - name: n_meses_observados
         description: Contagem corrida de meses observados por (agente, frente).
 
-  - name: indicadores_reloginho_entregas
+  - name: gold_indicadores_reloginho_entregas
     description: >
       Tabela Gold do reloginho (grupo A) — entregas: fluxo por evento vs
       acumulado do snapshot, lado a lado, por (agente_financeiro,
@@ -214,7 +214,7 @@ models:
       - name: dif_evento_vs_snapshot
         description: uh_entregues_evento_acum menos uh_entregues_snapshot.
 
-  - name: resumo_reloginho_dashboard
+  - name: gold_resumo_reloginho_dashboard
     description: >
       Tabela Gold do reloginho para dashboard: uma linha por agente_financeiro
       com o último mês observado da série mensal SNH (uh_contratadas,
@@ -254,7 +254,7 @@ models:
           Ritmo médio mensal de entregas = uh_entregues do último mês dividido
           pelo número de meses observados.
 
-  - name: resumo_gargalo_desempenho_dashboard
+  - name: gold_resumo_gargalo_desempenho_dashboard
     description: >
       Tabela Gold agregada para dashboard de gargalos e desempenho do MCMV.
       Gera cards e rankings nos níveis nacional, frente, UF, município e responsável.

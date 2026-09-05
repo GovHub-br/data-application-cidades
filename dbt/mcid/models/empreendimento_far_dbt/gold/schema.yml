@@ -3,9 +3,14 @@ version: 2
 models:
   - name: gold_far_ficha_empreendimento
     description: >
-      Tabela Gold projetada especificamente para alimentar o componente visual de "Ficha do Empreendimento" 
-      nos Dashboards. Ela consome os dados da camada Silver (empreendimento) e injeta regras de negócio finais
-      como cálculo de status, prazos e ritmo financeiro.
+      Gold — 1 linha por empreendimento (APF) da frente FAR, consumida pelo
+      gargalo (gold_indicadores_gargalo_desempenho). Materializa como
+      empreendimento_far.gold_atual_ficha_empreendimento (convenção
+      2026-09-04 — schema por frente, prefixo atual_ para o produto
+      current-state que replica o que os colegas já entregam em prod;
+      mantida só pela dependência do gargalo). Consome a silver
+      (silver_atual_empreendimento) e injeta regras de negócio finais como
+      cálculo de status, prazos e ritmo financeiro.
     meta:
       tags:
         - gold
@@ -25,136 +30,19 @@ models:
           Regra de negócio: Traduz a porcentagem física em status categóricos (Não Iniciado, Em Andamento, Concluído).
       - name: status_prazo
         description: >
-          Regra de negócio: Analisa a data de previsão de entrega com a data atual. 
+          Regra de negócio: Analisa a data de previsão de entrega com a data atual.
           Alerta se o empreendimento está "Em Atraso" (não entregue e data limite vencida).
       - name: ritmo_fisico_financeiro
         description: >
           Regra de negócio: Compara o % de execução física com o % de desembolso financeiro.
           Aplica uma tolerância de 5% para classificar como "Ritmo Equilibrado", "Desembolso Adiantado" ou "Desembolso Atrasado".
 
-  - name: gold_far_resumo_gerencial
+  - name: gold_atual_execucao_fisica_financeira_chart
     description: >
-      Visão agregada Gold contendo os grandes KPIs e somatórios (UHs, Pessoas Atendidas, Valores) 
-      agrupados por tipologia e situação. Perfeita para os gráficos de pizza e barras dos painéis gerenciais.
-    meta:
-      tags:
-        - gold
-    columns:
-      - name: total_empreendimentos
-        description: Contagem total de APFs que se enquadram naquele perfil.
-      - name: total_uhs
-        description: Somatório de Unidades Habitacionais.
-      - name: media_execucao_fisica
-        description: Execução física média (0-100) daquele grupo de empreendimentos.
-
-  - name: gold_far_panorama_estadual
-    description: >
-      Visão Gold agregada por UF para alimentar o dashboard "Panorama Estadual".
-      Consolida todos os empreendimentos de um estado em seções distintas, cada uma
-      identificada pela coluna 'secao'. A ferramenta de BI filtra WHERE secao = 'X'
-      para montar cada card do painel.
-    meta:
-      tags:
-        - gold
-    columns:
-      - name: uf
-        description: Sigla da Unidade Federativa (ex. MT, BA, CE).
-      - name: secao
-        description: >
-          Identificador da seção do dashboard que esta linha alimenta.
-          Valores possíveis: 'header' (KPIs gerais), 'metodo' (distribuição por método de originação),
-          'portaria' (distribuição por portaria de referência), 'demanda' (distribuição por tipo de demanda),
-          'situacao' (distribuição por status da obra), 'execucao_fisica' (distribuição por faixa de execução).
-      - name: dimensao
-        description: >
-          Valor da dimensão dentro da seção. Para 'metodo' pode ser SELEÇÃO ou CALAMIDADE.
-          Para 'situacao' pode ser EM ANDAMENTO, PARALISADO, etc. Para 'header' é sempre 'resumo'.
-      - name: qtd_empreendimentos
-        description: >
-          Contagem de empreendimentos naquela combinação UF+seção+dimensão.
-          Na seção 'header', este campo contém o total de municípios atendidos.
-      - name: qtd_uhs
-        description: Somatório de Unidades Habitacionais naquela combinação.
-      - name: valor_1
-        description: "Na seção 'header': valor total contratado no estado. NULL nas demais seções."
-      - name: valor_2
-        description: "Na seção 'header': valor total desembolsado no estado. NULL nas demais seções."
-      - name: valor_3
-        description: "Na seção 'header': valor total de aportes adicionais no estado. NULL nas demais seções."
-      - name: valor_4
-        description: "Na seção 'header': valor médio por UH no estado. NULL nas demais seções."
-      - name: total_empreendimentos_uf
-        description: "Na seção 'header': total de empreendimentos no estado. NULL nas demais seções."
-
-  - name: gold_far_mapa_nacional
-    description: >
-      Visão Gold geográfica para alimentar mapas coropléticos (Country Map) e gráficos
-      por região no Superset. Contém duas visões filtradas pela coluna 'nivel':
-      'uf' (27 linhas, uma por estado com código ISO 3166-2) e 'regiao' (5 linhas,
-      uma por macrorregião). Usa a tabela IBGE api_ibge_uf como referência.
-    meta:
-      tags:
-        - gold
-    columns:
-      - name: uf
-        description: "Sigla da UF (quando nivel='uf') ou sigla da região (quando nivel='regiao')."
-      - name: estado_nome
-        description: "Nome completo do estado (quando nivel='uf') ou nome da região (quando nivel='regiao')."
-      - name: iso_3166_2
-        description: "Código ISO 3166-2 no formato 'BR-XX' para o Country Map do Superset. NULL para nível região."
-      - name: regiao_nome
-        description: Nome da macrorregião IBGE (Norte, Nordeste, Sudeste, Sul, Centro-Oeste).
-      - name: nivel
-        description: "Discriminador: 'uf' para dados estaduais, 'regiao' para dados regionais."
-      - name: total_uhs
-        description: Somatório de Unidades Habitacionais naquela UF ou região.
-      - name: total_empreendimentos
-        description: Contagem de empreendimentos (APFs) naquela UF ou região.
-      - name: total_valor_contratado
-        description: Soma dos valores contratados em R$.
-      - name: media_execucao_fisica
-        description: Média do percentual de execução física dos empreendimentos (0-100).
-
-  - name: gold_far_evolucao_financeira_chart
-    description: >
-      Visão Gold display-ready para o gráfico de "Evolução Físico-Financeira" no Superset.
-      Consome a silver evolucao_financeira e enriquece com nome do empreendimento,
-      nome do estado (IBGE) e labels de mês formatados. Uma linha por APF × mês.
-    meta:
-      tags:
-        - gold
-    columns:
-      - name: apf
-        description: APF do empreendimento.
-      - name: nome_empreendimento
-        description: Nome do empreendimento em maiúsculo (da ficha_empreendimento).
-      - name: apf_municipio_empreendimento
-        description: "Texto concatenado 'APF - Município/UF - Nome' para busca no dashboard."
-      - name: municipio
-        description: Município do empreendimento.
-      - name: uf
-        description: Sigla da UF.
-      - name: estado
-        description: Nome completo do estado em maiúsculo (da tabela IBGE).
-      - name: mes
-        description: Data do mês da liberação (tipo DATE, para ordenação).
-      - name: mes_label
-        description: "Label do mês no formato 'YYYY-MM' (para eixo X do gráfico)."
-      - name: mes_label_br
-        description: "Label do mês no formato 'MM/YYYY' (formato brasileiro)."
-      - name: vr_liberado_mes
-        description: Valor total liberado no mês em R$ (arredondado para 2 casas).
-      - name: vr_acumulado
-        description: Desembolso acumulado progressivo até o mês em R$.
-      - name: valor_contratado
-        description: Valor total contratado do empreendimento em R$.
-      - name: pct_executado_financeiro
-        description: "Percentual acumulado do desembolso sobre o contrato (0-100)."
-
-  - name: gold_far_execucao_fisica_financeira_chart
-    description: >
-      Tabela Gold para o gráfico de acompanhamento da execução física e financeira.
-      Faz o join entre a base silver de evolução financeira e a base bronze de obra mensal.
+      Gold consumida pelo gargalo (gold_indicadores_gargalo_desempenho).
+      Materializa como empreendimento_far.gold_atual_execucao_fisica_financeira_chart
+      (convenção 2026-09-04, ver nota acima). Faz o join entre a silver de
+      evolução financeira e a bronze de obra mensal.
     meta:
       tags:
         - gold

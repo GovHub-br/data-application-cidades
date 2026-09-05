@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_historico_base") }}
 
 {{ mcmv_silver_empty_contract(
     "Pro-Moradia",

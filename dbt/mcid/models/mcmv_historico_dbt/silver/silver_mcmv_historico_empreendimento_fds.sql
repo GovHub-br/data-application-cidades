@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_historico_empreendimento", schema="empreendimentos_fds") }}
 
 -- SILVER — série histórica mensal de empreendimentos MCMV da frente
 -- FDS / Entidades.

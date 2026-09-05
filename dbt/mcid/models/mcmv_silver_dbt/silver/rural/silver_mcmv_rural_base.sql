@@ -1,6 +1,6 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_historico_base") }}
 
--- Base silver da frente Rural para silver_mcmv_frentes_base.
+-- Base silver da frente Rural (materializa como empreendimento_rural.silver_historico_base).
 -- Consome a silver normalizada empreendimento_rural_dbt (change
 -- migracao-bronze-minio-mcmv, task 5.3) — antes fazia parsing de separador pipe
 -- das INT057/INT065 no schema Postgres sftp.

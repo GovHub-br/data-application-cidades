@@ -15,7 +15,7 @@ with
 
     far_ultima_fisica as (
         select apf, max(try_cast(mes as date)) as dt_ultima_medicao_fisica
-        from {{ ref("gold_far_execucao_fisica_financeira_chart") }}
+        from {{ ref("gold_atual_execucao_fisica_financeira_chart") }}
         group by apf
     ),
 
@@ -24,7 +24,7 @@ with
             apf,
             max(try_cast(mes as date)) as dt_ultima_liberacao,
             sum(valor_liberado_mensal) as valor_liberado_historico
-        from {{ ref("gold_fds_evolucao_financeira_chart") }}
+        from {{ ref("gold_atual_evolucao_financeira_chart") }}
         group by apf
     ),
 

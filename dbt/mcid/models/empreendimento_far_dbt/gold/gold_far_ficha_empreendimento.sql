@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_atual_ficha_empreendimento") }}
 
 with
     base_silver as (

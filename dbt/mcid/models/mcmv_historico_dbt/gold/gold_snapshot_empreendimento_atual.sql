@@ -1,17 +1,34 @@
 {{ config(materialized="table") }}
 
--- Snapshot corrente (estado atual) derivado da silver historica consolidada.
+-- Snapshot corrente (estado atual) derivado da silver historica por frente.
 -- Mantem apenas o ultimo mes (dt_referencia) por (frente, apf). O id_historico_snapshot
 -- herdado identifica unicamente a versao corrente de cada empreendimento.
 -- Consolidado apenas (filtravel por frente_mcmv) — nao ha versao por frente.
+--
+-- Uniao direta das 3 silvers por frente (FAR/FDS/Rural) — antes lia do helper
+-- silver_mcmv_historico_empreendimento, aposentado na convencao 2026-09-04
+-- (cada frente materializa como silver_historico_empreendimento no schema da
+-- propria frente; nao ha mais um schema unico onde um union all resolveria
+-- sozinho).
 with
+    consolidado as (
+        select *
+        from {{ ref('silver_mcmv_historico_empreendimento_far') }}
+        union all
+        select *
+        from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
+        union all
+        select *
+        from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
+    ),
+
     ultimo as (
         select
             *,
             row_number() over (
                 partition by frente_mcmv, apf order by dt_referencia desc
             ) as rn
-        from {{ ref('silver_mcmv_historico_empreendimento') }}
+        from consolidado
     )
 
 select

@@ -10,7 +10,7 @@ atual as (
     select
         uh_contratadas,
         uh_entregues
-    from {{ ref("indicadores_reloginho") }}
+    from {{ ref("gold_indicadores_reloginho") }}
     where agente_financeiro = 'CAIXA'
       and dt_referencia = date '2026-03-01'
 ),

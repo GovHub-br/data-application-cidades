@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_atual_evolucao_financeira") }}
 
 -- Silver: Evolução Financeira FDS — Série temporal de desembolsos por empreendimento
 -- Agrega as liberações da bronze fds_financeiro_mensal por APF e mês.

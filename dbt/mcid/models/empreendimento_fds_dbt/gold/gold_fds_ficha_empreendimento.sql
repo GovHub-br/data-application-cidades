@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="gold_atual_ficha_empreendimento") }}
 
 with silver as (select * from {{ ref("silver_fds_empreendimento") }})
 

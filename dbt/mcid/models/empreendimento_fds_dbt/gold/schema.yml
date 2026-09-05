@@ -3,9 +3,13 @@ version: 2
 models:
   - name: gold_fds_ficha_empreendimento
     description: >
-      Tabela Gold do MCMV Entidades (FDS) contendo 1 linha por empreendimento (APF).
-      É a tabela central para alimentar o Superset com os dados detalhados.
-      Utilizada nos KPIs: Mapa de Atuação, Semáforo de Alertas, Divergência 
+      Gold — 1 linha por empreendimento (APF), consumida pelo gargalo
+      (gold_indicadores_gargalo_desempenho). Materializa como
+      empreendimentos_fds.gold_atual_ficha_empreendimento (convenção
+      2026-09-04 — schema por frente, prefixo atual_ para o produto
+      current-state que replica o que os colegas já entregam em prod;
+      mantida só pela dependência do gargalo).
+      Utilizada nos KPIs: Mapa de Atuação, Semáforo de Alertas, Divergência
       Físico-Financeira e Distribuição por Tipo.
     meta:
       tags:
@@ -51,42 +55,11 @@ models:
       - name: status_entrega
         description: Regra de negócio (Totalmente Entregue, Entrega Parcial, Não Entregue) calculada sobre a taxa de alienação.
 
-  - name: gold_fds_panorama_entidade
+  - name: gold_atual_evolucao_financeira_chart
     description: >
-      Tabela Gold do MCMV Entidades (FDS) agregada por Entidade Organizadora (CNPJ).
-      É a tabela principal para os KPIs: Card Resumo, Ranking Interativo e
-      Ranking de Risco. Contém agregações ponderadas e scores.
-    meta:
-      tags:
-        - gold
-        - entidades
-        - superset
-    columns:
-      - name: cnpj_eo
-        description: CNPJ da Entidade Organizadora (14 dígitos).
-        data_tests:
-          - unique
-          - not_null
-      - name: nome_eo
-        description: Nome da EO.
-      - name: total_empreendimentos
-        description: Quantidade de APFs associados a esta EO.
-      - name: media_execucao_fisica
-        description: Percentual médio de execução física ponderado pelo valor do investimento.
-      - name: taxa_entrega_geral
-        description: Percentual total de UHs alienadas em relação ao total contratado da EO.
-      - name: score_risco
-        description: >
-          Pontuação de risco da EO. Soma os pesos:
-          1 ponto (Atraso: físico < previsto),
-          2 pontos (Obra Paralisada),
-          1 ponto (Divergência Financeira Adiantada grave: < -5 p.p.).
-      - name: classificacao_risco
-        description: "Regra de negócio baseada no score: Baixo, Médio ou Alto Risco."
-
-  - name: gold_fds_evolucao_financeira_chart
-    description: >
-      Tabela Gold de evolução financeira do MCMV Entidades (FDS).
+      Gold consumida pelo gargalo (gold_indicadores_gargalo_desempenho).
+      Materializa como empreendimentos_fds.gold_atual_evolucao_financeira_chart
+      (convenção 2026-09-04, ver nota acima).
       Estrutura de série temporal (1 linha por APF/Mês) pronta para plotar
       no Superset gráficos de linha (Acumulado) e barra (Desembolso mensal).
       Herda o cnpj_eo para permitir filtro direto por entidade.

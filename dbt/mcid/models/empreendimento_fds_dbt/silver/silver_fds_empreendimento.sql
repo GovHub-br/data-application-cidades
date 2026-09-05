@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_atual_empreendimento") }}
 
 -- Silver: Empreendimento FDS — Visão unificada
 -- Reúne dados cadastrais, EO, status físico-financeiro e TS de cada APF.
@@ -224,7 +224,7 @@ select
     sn.dt_previsao_termino as snh_dt_previsao_termino
 
 from cadastro c
-left join {{ ref("silver_fds_dim_empreendimento") }} dim on c.apf = dim.apf
+left join {{ ref("silver_atual_dim_empreendimento") }} dim on c.apf = dim.apf
 left join obra o on c.apf = o.apf
 left join int059 i on c.apf = i.apf
 left join trabalho_social ts on c.apf = ts.apf

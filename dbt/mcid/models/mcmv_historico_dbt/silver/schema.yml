@@ -79,16 +79,6 @@ models:
       tags: [silver, mcmv, dados-historicos, empreendimento, rural]
     columns: *contrato_empreendimento
 
-  - name: silver_mcmv_historico_empreendimento
-    description: >
-      Silver — série histórica mensal de empreendimentos MCMV consolidada:
-      UNION das silvers por frente (FAR, FDS/Entidades, Rural), mesmo contrato.
-      Substitui o snapshot único multi-frente anterior. Grão: empreendimento ×
-      mês × frente. Requer target staging_duckdb.
-    meta:
-      tags: [silver, mcmv, dados-historicos, empreendimento, consolidado]
-    columns: *contrato_empreendimento
-
   - name: silver_mcmv_historico_serie_executiva
     description: >
       Silver — série executiva histórica no contrato comum. Aplica o mapa de

@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_atual_empreendimento") }}
 
 -- Silver: Empreendimento Rural (PNHR / MCMV Rural) — visão unificada por APF.
 -- MESMO contrato de colunas de saída de silver_fds_empreendimento (D7 da change

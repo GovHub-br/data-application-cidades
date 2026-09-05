@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_historico_base") }}
 
 {% set apresentadas_relation = none %}
 {% set selecionadas_relation = none %}

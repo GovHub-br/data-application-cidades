@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_historico_base") }}
 
 select
     md5(concat_ws('|', 'conjuntura-fgts', ano::text, mes::text)) as id_silver_frente,

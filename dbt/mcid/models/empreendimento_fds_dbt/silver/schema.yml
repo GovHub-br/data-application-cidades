@@ -207,7 +207,7 @@ models:
       - name: uf
         description: UF do empreendimento.
 
-  - name: silver_fds_dim_empreendimento
+  - name: silver_atual_dim_empreendimento
     description: >
       Dimensão de empreendimento FDS que resolve a identidade estável
       (id_empreendimento) a partir do APF-âncora (Fase Projeto), ligando APFs de

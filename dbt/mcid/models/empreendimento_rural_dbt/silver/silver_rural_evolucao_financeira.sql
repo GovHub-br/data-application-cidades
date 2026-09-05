@@ -1,4 +1,4 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", alias="silver_atual_evolucao_financeira") }}
 
 -- Silver: Evolução Financeira Rural — série temporal mensal de desembolsos por APF.
 -- Espelho de silver_fds_evolucao_financeira (mesmo contrato de saída); componentes
