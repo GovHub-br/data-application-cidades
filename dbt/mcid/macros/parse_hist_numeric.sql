@@ -41,6 +41,21 @@
     try_cast(nullif(nullif(trim(cast({{ col }} as varchar)), ''), 'None') as date)
 {%- endmacro %}
 
+-- Janela de plausibilidade para datas de SNAPSHOT/relatorio (report_date). O
+-- dump `dados_historicos` traz report_date derivado a montante do nome do
+-- arquivo; alguns arquivos usam token YYYYMMDD (ex. "20121009") que o extrator
+-- upstream le como DDMMYYYY -> ano 1009/1031. Fora da janela, devolve NULL para
+-- o fallback pelo nome do arquivo assumir. Nao usar em datas de negocio
+-- (contratacao/entrega), que tem outra faixa valida.
+{% macro hist_snapshot_date_plausivel(date_expr) -%}
+    case
+        when
+            ({{ date_expr }})
+            between date '2007-01-01' and (current_date + interval '1' year)
+        then ({{ date_expr }})
+    end
+{%- endmacro %}
+
 -- Mes de referencia (primeiro dia) a partir de report_date (preferencial) OU do
 -- nome do arquivo. Cobre: report_date ISO; YYYYMMDD / DDMMYYYY (8 digitos);
 -- YYYY[_-]MM; e "<mes-abrev><ano>" em pt-BR (ex. abr2018, dez17, jan_2017).
@@ -52,11 +67,10 @@
         'month',
         try_cast(
             coalesce(
-                try_cast(
-                    nullif(
-                        nullif(trim(cast({{ report_date_col }} as varchar)), ''), 'None'
-                    ) as date
-                ),
+                {{ hist_snapshot_date_plausivel(
+                    "try_cast(nullif(nullif(trim(cast(" ~ report_date_col
+                    ~ " as varchar)), ''), 'None') as date)"
+                ) }},
                 try_strptime(
                     regexp_extract({{ fn }}, '(20[0-2]\d)(0[1-9]|1[0-2])[0-3]\d', 0),
                     '%Y%m%d'

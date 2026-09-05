@@ -26,7 +26,10 @@
 -- não duplicar APF × mês — mesma regra da silver anterior. A separação por
 -- frente é responsabilidade da silver (o discriminador é a interface).
 --
--- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
+-- Lido via pg_duckdb dentro do Postgres prod (duckdb_query envelope, ver
+-- macros/minio_staging_duckdb.sql) — corpo em dialeto DuckDB nativo, sem
+-- alteração de sintaxe.
+{% call duckdb_query() %}
 {% set interfaces = [
     ('INT040', 'INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS'),
     ('INT054', 'INT054_MinisterioCidades_FAR_BB_EMPREENDIMENTOS'),
@@ -69,3 +72,4 @@ select
         )
     ) as hash_linha
 from unido
+{% endcall %}

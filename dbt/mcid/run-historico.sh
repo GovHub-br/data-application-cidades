@@ -19,7 +19,8 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$HERE/../../../.." && pwd)"
+# Layout atual (#128): dbt/mcid/ fica 2 níveis abaixo da raiz do repo.
+REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 TARGET=staging_duckdb
 
 # dbt-core (o dbt-fusion do PATH não parseia este repo). Ordem: $DBT explícito
@@ -68,17 +69,19 @@ BRONZES=(
   bronze_mcmv_historico_empreendimento_sftp
   bronze_mcmv_historico_serie_executiva
 )
+# Silvers e golds são baratos — construídos numa só invocação para o dbt
+# ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
+# juntos) só depois de todos materializados.
 SILVERS=(
   silver_mcmv_historico_empreendimento_far
   silver_mcmv_historico_empreendimento_fds
   silver_mcmv_historico_empreendimento_rural
-  silver_mcmv_historico_empreendimento
   silver_mcmv_historico_serie_executiva
   silver_mcmv_historico_serie_anual_ogu_fgts
 )
 GOLDS=(
-  gold_mcmv_snapshot_empreendimento_atual
-  gold_mcmv_historico_serie_mensal
+  gold_snapshot_empreendimento_atual
+  gold_serie_mensal
 )
 
 build_one() {
@@ -90,11 +93,14 @@ build_one() {
 
 case "${1:-all}" in
   bronzes) for m in "${BRONZES[@]}"; do build_one "$m"; done ;;
-  silvers) for m in "${SILVERS[@]}"; do build_one "$m"; done ;;
-  golds)   for m in "${GOLDS[@]}";   do build_one "$m"; done ;;
+  silvers) "$DBT" build --select "${SILVERS[@]}" --target "$TARGET" ;;
+  golds)   "$DBT" build --select "${GOLDS[@]}"   --target "$TARGET" ;;
+  tests)   "$DBT" test  --select "mcmv_historico_dbt" --target "$TARGET" ;;
   all)
     "$DBT" seed --select issue_118_mcmv_serie_temporal_piloto --target "$TARGET"
-    for m in "${BRONZES[@]}" "${SILVERS[@]}" "${GOLDS[@]}"; do build_one "$m"; done
+    for m in "${BRONZES[@]}"; do build_one "$m"; done
+    "$DBT" build --select "${SILVERS[@]}" --target "$TARGET"
+    "$DBT" build --select "${GOLDS[@]}" --target "$TARGET"
     echo "=================================================================="
     echo "dbt test --select mcmv_historico_dbt"
     echo "=================================================================="

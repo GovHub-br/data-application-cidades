@@ -63,7 +63,8 @@ with
 
 select
     *,
-    {{ parse_hist_date('report_date') }} as report_date_parsed,
+    {{ hist_snapshot_date_plausivel(parse_hist_date('report_date')) }}
+        as report_date_parsed,
     {{ hist_dt_referencia('report_date', 'source_file') }} as dt_referencia,
     current_timestamp as dt_ingest,
     md5(

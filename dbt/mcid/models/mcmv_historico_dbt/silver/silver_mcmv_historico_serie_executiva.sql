@@ -176,7 +176,42 @@ with
                 then 'OGU/Subsidiado'
                 when coalesce(subsidio_fgts, 0) > 0
                 then 'FGTS/Financiado'
-            end as linha_ogu_fgts
+            end as linha_ogu_fgts,
+
+            -- Fallback de dedup por conteudo de negocio quando chave_natural e
+            -- nulo. Substitui hash_linha (que inclui row_number() da bronze e
+            -- por isso nunca colide, nem entre linhas identicas) por um hash
+            -- das proprias colunas ja tipadas aqui, com marcador NULL-safe
+            -- (concat_ws ignora NULL silenciosamente e colidiria NULL com
+            -- string vazia sem isso).
+            md5(
+                concat_ws(
+                    '|',
+                    coalesce(uf, '␀NULL␀'),
+                    coalesce(codigo_ibge_municipio, '␀NULL␀'),
+                    coalesce(municipio, '␀NULL␀'),
+                    coalesce(faixa, '␀NULL␀'),
+                    coalesce(produto, '␀NULL␀'),
+                    coalesce(nome_empreendimento, '␀NULL␀'),
+                    coalesce(responsavel_nome, '␀NULL␀'),
+                    coalesce(responsavel_id, '␀NULL␀'),
+                    coalesce(cast(uh_contratadas as varchar), '␀NULL␀'),
+                    coalesce(cast(uh_entregues as varchar), '␀NULL␀'),
+                    coalesce(cast(uh_concluidas as varchar), '␀NULL␀'),
+                    coalesce(cast(uh_em_obras as varchar), '␀NULL␀'),
+                    coalesce(cast(uh_comercializadas as varchar), '␀NULL␀'),
+                    coalesce(cast(valor_investimento as varchar), '␀NULL␀'),
+                    coalesce(cast(valor_emprestimo as varchar), '␀NULL␀'),
+                    coalesce(cast(valor_liberado as varchar), '␀NULL␀'),
+                    coalesce(cast(subsidio_fgts as varchar), '␀NULL␀'),
+                    coalesce(cast(subsidio_ogu as varchar), '␀NULL␀'),
+                    coalesce(cast(subsidio_total as varchar), '␀NULL␀'),
+                    coalesce(cast(percentual_execucao_fisica as varchar), '␀NULL␀'),
+                    coalesce(cast(dt_contratacao as varchar), '␀NULL␀'),
+                    coalesce(cast(dt_entrega as varchar), '␀NULL␀'),
+                    coalesce(cast(dt_previsao_termino as varchar), '␀NULL␀')
+                )
+            ) as conteudo_hash
         from tipado
     ),
 
@@ -201,12 +236,12 @@ with
             *,
             row_number() over (
                 partition by
-                    fonte_familia, coalesce(chave_natural, hash_linha), dt_referencia
+                    fonte_familia, coalesce(chave_natural, conteudo_hash), dt_referencia
                 order by report_date_parsed desc nulls last, source_file desc
             ) as rn
         from util
     )
 
-select * exclude (rn)
+select * exclude (rn, conteudo_hash)
 from dedup
 where rn = 1

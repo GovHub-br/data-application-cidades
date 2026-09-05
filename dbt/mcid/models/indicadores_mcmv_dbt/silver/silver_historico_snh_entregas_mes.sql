@@ -3,8 +3,9 @@
 -- SILVER do reloginho (grupo A) — entregas por evento agregadas por mes.
 --
 -- Le bronze_reloginho_snh_entregas_evento, deduplica eventos repetidos (o mesmo
--- evento reaparece em snapshots mensais seguintes) por hash_linha, e soma a
--- entrega por (agente, apf, mes do EVENTO). Grao: (agente, apf, mes_evento).
+-- evento reaparece em snapshots mensais seguintes) por hash de conteudo de
+-- negocio (agente, apf, dt_evento, qtd), e soma a entrega por (agente, apf,
+-- mes do EVENTO). Grao: (agente, apf, mes_evento).
 --
 -- mes_evento = mes de dt_entrega/dt_ass_doc (quando a UH foi entregue), NAO o
 -- dt_referencia do arquivo. Assim a serie e um fluxo real de entregas.
@@ -24,15 +25,33 @@ with
             dt_evento,
             date_trunc('month', dt_evento)::date as mes_evento,
             coalesce(qt_uh_entregues_evento, 0) as qt_uh_entregues_evento,
-            dt_referencia as dt_snapshot,
-            hash_linha
+            dt_referencia as dt_snapshot
         from bronze
         where nullif(trim(cast(apf as varchar)), '') is not null
     ),
 
-    dedup as (
-        select *, row_number() over (partition by hash_linha order by dt_snapshot) as rn
+    hashed as (
+        select
+            *,
+            -- Fallback de dedup por conteudo de negocio. Substitui hash_linha
+            -- (unico por construcao na bronze — inclui row_number() do
+            -- source_file — e por isso nunca detectava o mesmo evento
+            -- reaparecendo em snapshots mensais seguintes).
+            md5(
+                concat_ws(
+                    '|',
+                    coalesce(agente_financeiro, '␀NULL␀'),
+                    coalesce(apf, '␀NULL␀'),
+                    coalesce(cast(dt_evento as varchar), '␀NULL␀'),
+                    coalesce(cast(qt_uh_entregues_evento as varchar), '␀NULL␀')
+                )
+            ) as conteudo_hash
         from tipado
+    ),
+
+    dedup as (
+        select *, row_number() over (partition by conteudo_hash order by dt_snapshot) as rn
+        from hashed
     )
 
 select
