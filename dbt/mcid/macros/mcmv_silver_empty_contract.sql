@@ -13,6 +13,7 @@
         null::text as apf,
         null::text as contrato,
         null::text as codigo_empreendimento,
+        null::text as fase_empreendimento,
         null::text as nome_empreendimento,
         null::text as codigo_ibge_municipio,
         null::text as municipio,

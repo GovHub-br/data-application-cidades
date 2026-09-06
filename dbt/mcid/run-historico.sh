@@ -94,7 +94,14 @@ BRONZES=(
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
 # juntos) só depois de todos materializados.
+# silver_atual_dim_empreendimento (dominio empreendimento_fds_dbt) + suas 2 bronzes
+# entram aqui porque silver_mcmv_historico_empreendimento_fds passou a herdar
+# id_empreendimento / fase_empreendimento dela (change id-empreendimento-eixo-historico).
+# Leem o mesmo source('mcmv_staging', …) -> resolvem no staging_duckdb.
 SILVERS=(
+  bronze_fds_cadastro_pj
+  bronze_fds_mudanca_fase_eventos
+  silver_atual_dim_empreendimento
   silver_mcmv_historico_empreendimento_far
   silver_mcmv_historico_empreendimento_fds
   silver_mcmv_historico_empreendimento_rural
@@ -116,11 +123,14 @@ build_one() {
 
 case "${1:-all}" in
   bronzes) for m in "${BRONZES[@]}"; do build_one "$m"; done ;;
-  silvers) "$DBT" build --select "${SILVERS[@]}" --target "$TARGET" ;;
+  silvers)
+    "$DBT" seed --select seed_apf_fase_fds seed_correcao_fase_projeto --target "$TARGET"
+    "$DBT" build --select "${SILVERS[@]}" --target "$TARGET"
+    ;;
   golds)   "$DBT" build --select "${GOLDS[@]}"   --target "$TARGET" ;;
   tests)   "$DBT" test  --select "mcmv_historico_dbt" --target "$TARGET" ;;
   all)
-    "$DBT" seed --select issue_118_mcmv_serie_temporal_piloto --target "$TARGET"
+    "$DBT" seed --select issue_118_mcmv_serie_temporal_piloto seed_apf_fase_fds seed_correcao_fase_projeto --target "$TARGET"
     for m in "${BRONZES[@]}"; do build_one "$m"; done
     "$DBT" build --select "${SILVERS[@]}" --target "$TARGET"
     "$DBT" build --select "${GOLDS[@]}" --target "$TARGET"

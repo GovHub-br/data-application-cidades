@@ -213,6 +213,9 @@ models:
       (id_empreendimento) a partir do APF-âncora (Fase Projeto), ligando APFs de
       fases distintas (Projeto/Obra/Desligamento). Fontes: seed curado
       (seed_apf_fase_fds), INT059 (nu_apf_nao_obra) e eventos de mudança de fase.
+      As colunas fase_corrigida / dt_correcao / origem_correcao são evidência da
+      correção retroativa GEFUS (seed_correcao_fase_projeto) — NÃO sobrescrevem
+      fase_empreendimento (change id-empreendimento-eixo-historico, D4).
       Grao: 1 linha por (id_empreendimento, apf).
     meta:
       tags:
@@ -240,6 +243,20 @@ models:
         description: Nome canônico do empreendimento (da seed curada, quando disponível).
       - name: origem_mapeamento
         description: "Origem do mapeamento: ABR26 (seed), evento ou fallback."
+      - name: fase_corrigida
+        description: >
+          Fase resultante da correção retroativa GEFUS CORRECAO_FASE_PROJETO
+          (seed_correcao_fase_projeto), quando o APF consta lá. NULL caso
+          contrário. Evidência — não sobrescreve fase_empreendimento.
+        data_tests:
+          - accepted_values:
+              values: ["Projeto", "Obra", "Desligamento"]
+              config:
+                severity: warn
+      - name: dt_correcao
+        description: Data do movimento de correção de fase (2026-04-30 no extrato atual).
+      - name: origem_correcao
+        description: "Arquivo de origem da correção (CORREÇÃO_FASE_PROJETO.xlsx)."
       - name: dt_valid_from
         description: Início da validade (herdado do contrato #118).
       - name: dt_valid_to

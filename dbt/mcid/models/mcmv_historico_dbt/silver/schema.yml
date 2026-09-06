@@ -30,9 +30,34 @@ models:
               arguments:
                 values: ["FAR", "Entidades", "Rural"]
       - name: apf
-        description: APF / contrato do empreendimento.
+        description: APF / contrato do empreendimento (chave física da linha).
         data_tests:
           - not_null
+      - name: codigo_empreendimento
+        description: >
+          Chave estável de empreendimento. FDS: id_empreendimento (hash do
+          APF-âncora / Fase Projeto — liga APFs de fase distintas do mesmo
+          empreendimento). FAR/Rural: = apf. Change:
+          id-empreendimento-eixo-historico.
+      - name: id_empreendimento
+        description: >
+          Identidade lógica estável do empreendimento. FDS: da dim
+          silver_atual_dim_empreendimento (#130), fallback
+          md5('empreendimento-fds|' || apf) quando o APF não está na dim.
+          FAR/Rural: = apf.
+        data_tests:
+          - not_null
+      - name: fase_empreendimento
+        description: >
+          Fase administrativa do APF no FDS (Projeto / Obra / Desligamento).
+          NULL para APF fora da dim e para FAR/Rural (não têm fase de APF).
+          NÃO confundir com situacao_canonica (estado físico da obra).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Projeto", "Obra", "Desligamento"]
+              config:
+                severity: warn
       - name: codigo_ibge_municipio
         description: >
           Código IBGE do município, sem sufixo ".0" (limpo por

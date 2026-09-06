@@ -8,11 +8,13 @@
 --
 -- Duas familias de metrica no mesmo grao (D4 da change
 -- serie-historica-situacao-obra-regiao):
--- ESTOQUE  n_empreendimentos (APF distintos na situacao naquele mes) e uh
--- (soma de quantidade_uh);
+-- ESTOQUE  n_empreendimentos (empreendimentos distintos na situacao naquele
+-- mes, por chave_empreendimento = coalesce(id_empreendimento, apf) -- no FDS um
+-- multi-fase conta 1; FAR/Rural chave = apf; change
+-- id-empreendimento-eixo-historico) e uh (soma de quantidade_uh);
 -- FLUXO    entradas / saidas da situacao no mes, por
--- lag(situacao_canonica) over (partition by frente_mcmv, apf
--- order by mes). A primeira observacao de um APF NAO conta como
+-- lag(situacao_canonica) over (partition by frente_mcmv, chave_empreendimento
+-- order by mes). A primeira observacao de um empreendimento NAO conta como
 -- entrada (nao ha situacao anterior). entradas de `paralisada` e a
 -- metrica-chave da #59.
 --
@@ -42,7 +44,9 @@ with
             coalesce(regiao_nome, 'ND') as regiao_nome,
             situacao_canonica,
             quantidade_uh,
-            fonte_serie
+            fonte_serie,
+            coalesce(id_empreendimento, apf) as chave_empreendimento,
+            fase_empreendimento
         from {{ ref('silver_mcmv_historico_empreendimento_far') }}
         where dt_referencia >= date '2019-12-01'
         union all
@@ -56,7 +60,9 @@ with
             coalesce(regiao_nome, 'ND') as regiao_nome,
             situacao_canonica,
             quantidade_uh,
-            fonte_serie
+            fonte_serie,
+            coalesce(id_empreendimento, apf) as chave_empreendimento,
+            fase_empreendimento
         from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
         where dt_referencia >= date '2019-12-01'
         union all
@@ -70,20 +76,25 @@ with
             coalesce(regiao_nome, 'ND') as regiao_nome,
             situacao_canonica,
             quantidade_uh,
-            fonte_serie
+            fonte_serie,
+            coalesce(id_empreendimento, apf) as chave_empreendimento,
+            fase_empreendimento
         from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
         where dt_referencia >= date '2019-12-01'
     ),
 
-    -- Colapsa ao grao (frente, apf, mes): na janela sobreposta 2024-06..2024-11
-    -- a silver mantem a linha SFTP (fim do mes) E a SNH (dia 1) com
-    -- dt_referencia distintos. Prevalece a SNH (mesma precedencia D6/D8), para o
-    -- mes ter 1 linha por APF — senao a lag() cria transicao falsa e o
-    -- estoque/uh dobra.
+    -- Colapsa ao grao (frente, chave_empreendimento, mes). Dois motivos: (a) na
+    -- janela sobreposta 2024-06..2024-11 a silver mantem SFTP (fim do mes) E SNH
+    -- (dia 1) com dt_referencia distintos; (b) FDS multi-fase, o mesmo
+    -- empreendimento reportado por 2-3 APFs de fase no mesmo mes (change
+    -- id-empreendimento-eixo-historico). Precedencia: SNH > SFTP, depois fase
+    -- mais avancada (Desligamento > Obra > Projeto), depois dt_referencia. Sem
+    -- isso a lag() cria transicao falsa (troca de APF Projeto->Obra) e o
+    -- estoque/uh dobra. FAR/Rural: chave = apf, fase nula -> comportamento igual.
     silvers as (
         select
             frente_mcmv,
-            apf,
+            chave_empreendimento,
             mes,
             uf,
             regiao_sigla,
@@ -94,18 +105,26 @@ with
         from unioned
         qualify
             row_number() over (
-                partition by frente_mcmv, apf, mes
-                order by case fonte_serie when 'snh' then 0 else 1 end, dt_referencia desc
+                partition by frente_mcmv, chave_empreendimento, mes
+                order by
+                    case fonte_serie when 'snh' then 0 else 1 end,
+                    case fase_empreendimento
+                        when 'Desligamento' then 0
+                        when 'Obra' then 1
+                        when 'Projeto' then 2
+                        else 3
+                    end,
+                    dt_referencia desc
             )
             = 1
     ),
 
-    -- transicao por APF: a silver ja e grao empreendimento x mes (1 linha).
+    -- transicao por empreendimento: silvers ja e grao empreendimento x mes.
     transicoes as (
         select
             *,
             lag(situacao_canonica) over (
-                partition by frente_mcmv, apf order by mes
+                partition by frente_mcmv, chave_empreendimento order by mes
             ) as situacao_anterior
         from silvers
     ),
@@ -120,7 +139,7 @@ with
             regiao_sigla,
             regiao_nome,
             situacao_canonica as situacao,
-            apf,
+            chave_empreendimento,
             quantidade_uh,
             case
                 when
@@ -140,7 +159,7 @@ with
             regiao_sigla,
             regiao_nome,
             situacao_anterior as situacao,
-            cast(null as varchar) as apf,
+            cast(null as varchar) as chave_empreendimento,
             cast(null as bigint) as quantidade_uh,
             0 as entrada,
             1 as saida
@@ -189,7 +208,7 @@ with
             case
                 when grouping(regiao_sigla) = 0 or grouping(uf) = 0 then max(regiao_nome)
             end as regiao_nome,
-            count(distinct apf) as n_empreendimentos,
+            count(distinct chave_empreendimento) as n_empreendimentos,
             sum(quantidade_uh) as uh,
             sum(entrada) as entradas,
             sum(saida) as saidas

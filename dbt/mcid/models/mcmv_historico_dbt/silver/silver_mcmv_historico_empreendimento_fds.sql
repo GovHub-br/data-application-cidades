@@ -125,6 +125,24 @@ with
             on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
         left join {{ ref('dominio_regiao_uf') }} dr
             on upper(trim(d.uf)) = upper(trim(dr.uf))
+    ),
+
+    -- id_empreendimento + fase_empreendimento (change id-empreendimento-eixo-historico,
+    -- D1): a identidade estavel do empreendimento FDS vem da dim do #130
+    -- (silver_atual_dim_empreendimento), que liga os APFs de fase Projeto/Obra/
+    -- Desligamento de um mesmo empreendimento. APF historico ausente da dim
+    -- (~3% da serie, pre-cadastro atual) cai no fallback md5 -- a MESMA formula do
+    -- braco de fallback da propria dim, entao um APF single-fase resolve igual
+    -- nas duas. O grao da linha continua (frente, apf, dt_referencia).
+    enriquecido_id as (
+        select
+            e.*,
+            coalesce(
+                dim.id_empreendimento, md5('empreendimento-fds|' || e.apf)
+            ) as id_empreendimento,
+            dim.fase_empreendimento
+        from enriquecido_dominio e
+        left join {{ ref('silver_atual_dim_empreendimento') }} dim on e.apf = dim.apf
     )
 
 select
@@ -141,7 +159,9 @@ select
     grao_registro,
     agente_financeiro,
     apf,
-    codigo_empreendimento,
+    -- codigo_empreendimento = chave estavel do empreendimento (D2): alinha com
+    -- silver_mcmv_entidades_base. Era = apf (nu_apf); passa a coalesce(id, apf).
+    coalesce(id_empreendimento, apf) as codigo_empreendimento,
     nome_empreendimento,
     codigo_ibge_municipio,
     municipio,
@@ -169,6 +189,10 @@ select
     situacao_canonica,
     regiao_sigla,
     regiao_nome,
+    -- id_empreendimento / fase_empreendimento ao fim do contrato comum
+    -- (change id-empreendimento-eixo-historico, D1/D2).
+    id_empreendimento,
+    fase_empreendimento,
     current_timestamp as dt_silver
-from enriquecido_dominio
+from enriquecido_id
 where rn = 1

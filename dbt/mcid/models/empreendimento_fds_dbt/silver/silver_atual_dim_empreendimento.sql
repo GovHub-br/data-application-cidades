@@ -17,6 +17,11 @@
 --
 -- Grao: 1 linha por (id_empreendimento, apf).
 -- Regra: id_empreendimento = md5('empreendimento-fds|' || apf_ancora).
+--
+-- Colunas de auditoria fase_corrigida / dt_correcao / origem_correcao vem do
+-- seed_correcao_fase_projeto (GEFUS CORRECAO_FASE_PROJETO) por left join sobre
+-- apf -- EVIDENCIA, nao sobrescreve fase_empreendimento (change
+-- id-empreendimento-eixo-historico, D4).
 with
     seed as (
         select
@@ -80,18 +85,35 @@ with
         union all
         select *
         from fallback
+    ),
+
+    -- Correcao retroativa de fase (GEFUS CORRECAO_FASE_PROJETO, via seed curado
+    -- seed_correcao_fase_projeto -- change id-empreendimento-eixo-historico, D4).
+    -- EVIDENCIA APENAS: nao sobrescreve fase_empreendimento; a correcao fica
+    -- visivel ao lado para auditoria. Promover a precedencia e uma decisao v2.
+    correcao as (
+        select
+            apf::text as apf,
+            fase_corrigida,
+            dt_correcao::date as dt_correcao,
+            arquivo_origem as origem_correcao
+        from {{ ref("seed_correcao_fase_projeto") }}
     )
 
 select
-    md5('empreendimento-fds|' || apf_ancora) as id_empreendimento,
-    apf,
-    fase_empreendimento,
-    (apf = apf_ancora) as apf_ancora,
-    nome_empreendimento as nome_empreendimento_canonico,
-    origem as origem_mapeamento,
+    md5('empreendimento-fds|' || f.apf_ancora) as id_empreendimento,
+    f.apf,
+    f.fase_empreendimento,
+    (f.apf = f.apf_ancora) as apf_ancora,
+    f.nome_empreendimento as nome_empreendimento_canonico,
+    f.origem as origem_mapeamento,
+    c.fase_corrigida,
+    c.dt_correcao,
+    c.origem_correcao,
     current_timestamp as dt_carga,
     current_timestamp as dt_valid_from,
     null::timestamp as dt_valid_to,
     true as is_current,
-    md5(concat_ws('|', apf, fase_empreendimento, apf_ancora)) as hash_linha
-from final
+    md5(concat_ws('|', f.apf, f.fase_empreendimento, f.apf_ancora)) as hash_linha
+from final f
+left join correcao c on f.apf = c.apf

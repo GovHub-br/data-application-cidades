@@ -1,8 +1,12 @@
 {{ config(materialized="table") }}
 
 -- Snapshot corrente (estado atual) derivado da silver historica por frente.
--- Mantem apenas o ultimo mes (dt_referencia) por (frente, apf). O id_historico_snapshot
--- herdado identifica unicamente a versao corrente de cada empreendimento.
+-- Mantem 1 linha por (frente, codigo_empreendimento) com o ultimo mes. No FDS um
+-- empreendimento multi-fase tem 2-3 APFs (Projeto/Obra/Desligamento) e colapsa
+-- para 1 pela chave estavel codigo_empreendimento (= id_empreendimento no FDS,
+-- = apf nas demais frentes; change id-empreendimento-eixo-historico),
+-- prevalecendo a fase mais avancada (Desligamento > Obra > Projeto) e nela o
+-- dt_referencia mais recente. FAR/Rural: fase nula -> so dt_referencia (inalterado).
 -- Consolidado apenas (filtravel por frente_mcmv) — nao ha versao por frente.
 --
 -- Uniao direta das 3 silvers por frente (FAR/FDS/Rural) — antes lia do helper
@@ -26,7 +30,15 @@ with
         select
             *,
             row_number() over (
-                partition by frente_mcmv, apf order by dt_referencia desc
+                partition by frente_mcmv, codigo_empreendimento
+                order by
+                    case fase_empreendimento
+                        when 'Desligamento' then 0
+                        when 'Obra' then 1
+                        when 'Projeto' then 2
+                        else 3
+                    end,
+                    dt_referencia desc
             ) as rn
         from consolidado
     )
@@ -41,6 +53,8 @@ select
     agente_financeiro,
     apf,
     codigo_empreendimento,
+    id_empreendimento,
+    fase_empreendimento,
     nome_empreendimento,
     codigo_ibge_municipio,
     municipio,

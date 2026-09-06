@@ -205,6 +205,11 @@ select
     situacao_canonica,
     regiao_sigla,
     regiao_nome,
+    -- id_empreendimento / fase_empreendimento: contrato comum com o FDS
+    -- (change id-empreendimento-eixo-historico). No Rural o APF ja e o
+    -- empreendimento -- id_empreendimento = apf, sem fase administrativa.
+    apf as id_empreendimento,
+    null::text as fase_empreendimento,
     current_timestamp as dt_silver
 from enriquecido_dominio
 where rn = 1

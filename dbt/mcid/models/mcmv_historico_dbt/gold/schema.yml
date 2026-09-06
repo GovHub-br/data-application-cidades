@@ -4,13 +4,18 @@ models:
   - name: gold_snapshot_empreendimento_atual
     description: >
       Gold — snapshot corrente (estado atual) derivado da silver histórica
-      consolidada: uma linha por (frente, APF) com o último mês de referência
-      disponível. Consolidado apenas — filtrável por frente_mcmv.
+      consolidada: uma linha por (frente, codigo_empreendimento) com o último
+      mês de referência disponível. No FDS, um empreendimento multi-fase colapsa
+      os 2-3 APFs de fase para 1 linha pela chave estável codigo_empreendimento
+      (= id_empreendimento), prevalecendo a fase mais avançada
+      (Desligamento > Obra > Projeto). FAR/Rural inalterados (chave = apf).
+      Consolidado apenas — filtrável por frente_mcmv. Change:
+      id-empreendimento-eixo-historico.
     meta:
       tags: [gold, mcmv, dados-historicos, empreendimento, snapshot]
     columns:
       - name: id_historico_snapshot
-        description: Identificador herdado da versão corrente do empreendimento.
+        description: Identificador herdado da versão corrente do empreendimento (por APF).
         data_tests:
           - not_null
           - unique
@@ -18,8 +23,30 @@ models:
         data_tests:
           - not_null
       - name: apf
+        description: APF da fase escolhida como corrente (física).
         data_tests:
           - not_null
+      - name: codigo_empreendimento
+        description: >
+          Chave estável do empreendimento. FDS: id_empreendimento (hash do
+          APF-âncora); FAR/Rural: = apf. Grão do snapshot.
+        data_tests:
+          - not_null
+          - unique:
+              config:
+                where: "frente_mcmv = 'Entidades'"
+      - name: id_empreendimento
+        description: Identidade lógica estável (= codigo_empreendimento). FAR/Rural = apf.
+      - name: fase_empreendimento
+        description: >
+          Fase administrativa do APF corrente no FDS (Projeto/Obra/Desligamento);
+          NULL para FAR/Rural e APF fora da dim.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Projeto", "Obra", "Desligamento"]
+              config:
+                severity: warn
       - name: dt_referencia
         data_tests:
           - not_null
@@ -74,10 +101,14 @@ models:
       canônica (2019-12 → mês corrente das silvers por frente). Grão:
       (mes, frente_mcmv, situacao_canonica, nivel_geografico, uf, regiao_sigla),
       com nivel_geografico ∈ {nacional, regiao, uf} via GROUPING SETS. Métricas
-      de ESTOQUE — n_empreendimentos (APF distintos na situação no mês), uh — e
-      de FLUXO — entradas / saidas da situação no mês, por lag(situacao_canonica)
-      particionado por (frente_mcmv, apf). **NÃO somar entradas / saidas entre
-      nivel_geografico** (cada transição de APF acontece numa única UF).
+      de ESTOQUE — n_empreendimentos (empreendimentos distintos na situação no
+      mês, por chave_empreendimento = coalesce(id_empreendimento, apf); no FDS
+      um multi-fase conta 1), uh — e de FLUXO — entradas / saidas da situação no
+      mês, por lag(situacao_canonica) particionado por
+      (frente_mcmv, chave_empreendimento). **NÃO somar entradas / saidas entre
+      nivel_geografico** (cada transição acontece numa única UF). Change:
+      id-empreendimento-eixo-historico (antes contava APF distintos — a contagem
+      FDS caiu ~10%; FAR/Rural inalterados).
       `fonte_serie` é a predominante do mês por frente — usar para anotar o pico
       de paralisação de 2024 (virada SFTP→SNH), que o gold NÃO suaviza. Requer
       target staging_duckdb.
@@ -112,13 +143,13 @@ models:
       - name: regiao_sigla
         description: Macrorregião IBGE — chave no nível 'regiao', enriquece o nível 'uf', 'BR' no nacional.
       - name: n_empreendimentos
-        description: APF distintos na situação naquele mês/recorte (estoque).
+        description: Empreendimentos distintos (chave_empreendimento) na situação naquele mês/recorte (estoque).
       - name: uh
         description: Soma de quantidade_uh na situação naquele mês/recorte (estoque).
       - name: entradas
-        description: APF que ENTRARAM na situação no mês (mudança vinda de outra situação). Não somar entre nivel_geografico.
+        description: Empreendimentos que ENTRARAM na situação no mês (mudança vinda de outra situação). Não somar entre nivel_geografico.
       - name: saidas
-        description: APF que SAÍRAM da situação no mês. Não somar entre nivel_geografico.
+        description: Empreendimentos que SAÍRAM da situação no mês. Não somar entre nivel_geografico.
       - name: fonte_situacao
         description: Origem da situação — 'reportada' (sempre, nesta fase; 'derivada' reservado para a série pré-2019).
       - name: fonte_serie
