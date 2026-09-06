@@ -1,11 +1,14 @@
 {{ config(materialized="table") }}
 
 -- Bronze: Obra Mensal — evolução física do empreendimento (frente FAR)
--- Fonte: staging/sharepoint/novo_mcmv_far_obra_mensal.parquet, lido via
--- pg_duckdb dentro do Postgres prod (duckdb_query envelope, ver
--- macros/minio_staging_duckdb.sql).
+-- Fonte: staging/sharepoint/novo_mcmv_far_obra_mensal.parquet, lido por um
+-- processo DuckDB FORA do Postgres (D1 da change
+-- pipeline-bronze-historica-destino-trocavel). O envelope duckdb_query(), que
+-- fazia esta leitura rodar dentro do banco via pg_duckdb, foi removido: e esse
+-- caminho que derrubou o `prod` em 2026-09-05.
+-- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
+-- atachado em `prod_duckdb`.
 -- Cópia fiel: só tipagem/normalização técnica, sem dedup.
-{% call duckdb_query() %}
 with
     obra_raw as (
         select
@@ -87,4 +90,3 @@ with
 
 select *
 from obra_raw
-{% endcall %}

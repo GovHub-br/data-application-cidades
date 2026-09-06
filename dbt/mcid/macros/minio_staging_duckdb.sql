@@ -25,7 +25,17 @@
     corpo do modelo deve ficar dentro do {% call %}, sem lógica adicional
     no nível do dbt fora dele. Ver design.md (D4) da change
     migrar-leitura-staging-pg-duckdb.
+
+    No target `staging_duckdb` (dbt-duckdb standalone) o corpo já roda no
+    motor DuckDB nativo — o envelope duckdb.query() só existe pro pg_duckdb
+    dentro do Postgres. Então aqui é passthrough puro, mantendo o build
+    local funcional. Quando a task 5.x da change remover o target
+    staging_duckdb, este ramo pode voltar a ser incondicional.
 #}
 {% macro duckdb_query() -%}
+{%- if target.type == 'duckdb' -%}
+{{ caller() }}
+{%- else -%}
 select * from duckdb.query($duckdb_query${{ caller() }}$duckdb_query$) r
+{%- endif -%}
 {%- endmacro %}

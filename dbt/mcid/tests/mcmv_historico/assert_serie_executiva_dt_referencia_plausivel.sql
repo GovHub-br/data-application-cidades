@@ -1,7 +1,7 @@
 -- Teste singular: dt_referencia da serie executiva historica deve cair na janela
 -- plausivel do dump (2009-01 a 2019-12). Depois disso a serie mensal e coberta
 -- pelo GEFUS (silver_mcmv_historico_empreendimento) e pela SNH
--- (bronze_mcmv_historico_empreendimento_snh). Retorna linhas fora da janela.
+-- (bronzes bronze_mcmv_historico_empreendimento_snh_*). Retorna linhas fora da janela.
 
 select
     fonte_familia,

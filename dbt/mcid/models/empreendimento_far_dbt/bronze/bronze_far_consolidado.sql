@@ -4,7 +4,10 @@
 -- Fonte: mcmv_staging.novo_mcmv_far_consolidado (staging/sharepoint via MinIO/DuckDB)
 -- Cópia fiel: só tipagem/normalização técnica, sem dedup. Grão: 1 linha por linha da
 -- fonte.
--- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
+-- Destino conforme o target: `staging_duckdb` materializa no arquivo DuckDB
+-- local (modo A, dev), `prod_duckdb` no Postgres atachado (modo C); a
+-- publicação a partir do arquivo local é o modo B (./publicar-historico.sh).
+-- O corpo é o mesmo nos três — ver models/mcmv_historico_dbt/README.md.
 with
     consolidado_raw as (
         select

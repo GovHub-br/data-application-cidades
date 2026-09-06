@@ -10,7 +10,10 @@
 -- uh_entregues_snapshot     = acumulado reportado no snapshot (indicadores_reloginho)
 -- dif_evento_vs_snapshot    = evento_acum - snapshot (deve tender a ~0)
 --
--- Target obrigatorio: staging_duckdb (gating em dbt_project.yml).
+-- Destino conforme o target: `staging_duckdb` materializa no arquivo DuckDB
+-- local (modo A, dev), `prod_duckdb` no Postgres atachado (modo C); a
+-- publicação a partir do arquivo local é o modo B (./publicar-historico.sh).
+-- O corpo é o mesmo nos três — ver models/mcmv_historico_dbt/README.md.
 with
 
     evento_mes as (

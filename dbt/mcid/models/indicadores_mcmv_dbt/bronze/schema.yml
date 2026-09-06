@@ -1,74 +1,74 @@
 version: 2
 
-models:
-  - name: bronze_reloginho_snh_serie_mensal
-    description: >
-      Bronze do reloginho (grupo A): cópia fiel da série mensal SNH de dados
-      prioritários (CAIXA + BB), empilhando todos os snapshots
-      `historico_recente_*` (e variantes truncadas) de
-      staging/dados_historicos/ via MinIO/DuckDB. Uma linha por linha de
-      origem, sem deduplicação e sem regra de negócio; colunas da fonte
-      preservadas (union_by_name entre CAIXA e BB). dt_referencia derivada do
-      nome do arquivo. Exclui os fluxos de entrega por evento
-      (`o_recente_*_entregas`, `*_entrega_da_unidade_af_b`). Requer target
-      staging_duckdb.
-    meta:
-      tags:
-        - bronze
-        - mcmv
-        - reloginho
-        - dados-historicos
-    columns:
-      - name: dt_referencia
-        description: >
-          Primeiro dia do mês do snapshot, derivado do nome do arquivo
-          (YYYYMM ou YYYY_MM). Nulo quando o nome não traz data reconhecível.
-      - name: agente_arquivo
-        description: Agente financeiro inferido do nome do arquivo (BB ou CAIXA).
-      - name: modalidade
-        description: >
-          Frente do MCMV como vem na origem (FAR, Entidades, RURAL/Rural).
-          Normalizada em frente_mcmv na silver.
-      - name: apf
-        description: Autorização Para Financiamento — chave do empreendimento (texto, cru).
-      - name: source_file
-        description: Caminho completo do objeto parquet de origem no MinIO staging.
-        data_tests:
-          - not_null
-      - name: prioridade_reentrega
-        description: >
-          Prioridade de desempate para reentregas do mesmo mês:
-          3 = correção, 2 = versão vsNN, 1 = arquivo base.
-      - name: hash_linha
-        description: Hash MD5 do conteúdo-chave da linha (auditoria / detecção de mudança).
-        data_tests:
-          - not_null
-      - name: dt_ingest
-        description: Timestamp da materialização desta camada.
+# Entregas por EVENTO da SNH, uma tabela POR AGENTE desde a change
+# pipeline-bronze-historica-destino-trocavel (D5). A série mensal SNH
+# (acumulado) está nas bronzes bronze_mcmv_historico_empreendimento_snh_bb /
+# _snh_caixa, em mcmv_historico_dbt; a view passthrough
+# bronze_reloginho_snh_serie_mensal deixou de existir junto com a bronze única
+# que ela envolvia — silver_historico_snh_apf_mes lê as duas bronzes por agente
+# diretamente.
 
-  - name: bronze_reloginho_snh_entregas_evento
+models:
+
+  - name: bronze_reloginho_snh_entregas_evento_bb
     description: >
-      Bronze do reloginho — entregas por EVENTO (fluxo), CAIXA + BB. Empilha
-      `o_recente_*_af_caixa_entregas` e `*_da_entrega_da_unidade_af_bb` de
-      staging/dados_historicos/ via MinIO/DuckDB. Uma linha por linha de origem,
-      sem dedup; helpers harmonizados `dt_evento` e `qt_uh_entregues_evento`.
-      Complementa bronze_reloginho_snh_serie_mensal (que traz o acumulado).
-      Requer target staging_duckdb.
+      Bronze do reloginho — entregas por EVENTO (fluxo), agente BB, cópia
+      fiel do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`. Uma linha por
+      linha de origem, sem dedup. Neste agente as colunas de origem do evento
+      são `dt_ass_doc / numero_de_unidades_entregues`; os helpers harmonizados `dt_evento` e
+      `qt_uh_entregues_evento` normalizam isso para a silver, que une os dois
+      agentes. Complementa a série mensal SNH (que traz o acumulado).
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
     columns:
       - name: apf
         description: APF do empreendimento (texto, cru).
+      - name: agente_arquivo
+        description: Constante `BB` — derivado do nome do arquivo.
       - name: dt_evento
-        description: Data da entrega (coalesce de dt_entrega / dt_ass_doc).
+        description: Data da entrega, harmonizada a partir da coluna do agente.
       - name: qt_uh_entregues_evento
-        description: UH entregues no evento (coalesce de qt_uh_entregues / numero_de_unidades_entregues).
-      - name: dt_referencia
-        description: Mês do arquivo (snapshot) — não é a data do evento.
+        description: UH entregues no evento, harmonizada a partir da coluna do agente.
       - name: source_file
-        description: Caminho do objeto parquet de origem.
+        description: Caminho do objeto parquet de origem no MinIO staging.
         data_tests:
           - not_null
+      - name: dt_referencia
+        description: Mês do arquivo (snapshot) — não é a data do evento.
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Hash MD5 do evento (dedup na silver).
+        data_tests:
+          - not_null
+
+  - name: bronze_reloginho_snh_entregas_evento_caixa
+    description: >
+      Bronze do reloginho — entregas por EVENTO (fluxo), agente CAIXA, cópia
+      fiel do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`. Uma linha por
+      linha de origem, sem dedup. Neste agente as colunas de origem do evento
+      são `dt_entrega / qt_uh_entregues`; os helpers harmonizados `dt_evento` e
+      `qt_uh_entregues_evento` normalizam isso para a silver, que une os dois
+      agentes. Complementa a série mensal SNH (que traz o acumulado).
+    meta:
+      tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
+    columns:
+      - name: apf
+        description: APF do empreendimento (texto, cru).
+      - name: agente_arquivo
+        description: Constante `CAIXA` — derivado do nome do arquivo.
+      - name: dt_evento
+        description: Data da entrega, harmonizada a partir da coluna do agente.
+      - name: qt_uh_entregues_evento
+        description: UH entregues no evento, harmonizada a partir da coluna do agente.
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do arquivo (snapshot) — não é a data do evento.
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
       - name: hash_linha
         description: Hash MD5 do evento (dedup na silver).
         data_tests:

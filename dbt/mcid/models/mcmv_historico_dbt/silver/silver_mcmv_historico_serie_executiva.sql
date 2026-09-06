@@ -2,10 +2,21 @@
 
 -- SILVER — serie executiva historica do MCMV (pre-2024), contrato comum.
 --
--- Le a bronze e aplica o MAPA DE COLUNAS (doc
--- issue-130-proposta-bronze-series-historicas.md) via coalesce_present(), que so
--- referencia as colunas que existem de fato na bronze materializada — cada
--- familia tem 2-3 geracoes de schema.
+-- Le as 4 BRONZES POR FAMILIA (D5 da change
+-- pipeline-bronze-historica-destino-trocavel) e as une aqui, com projecao
+-- explicita por braco: um laco Jinja sobre o mapa de familias monta um CTE por
+-- familia com a MESMA lista de colunas, e o `union all` empilha os quatro. E
+-- aqui — nao mais na bronze — que o mapa de colunas (doc
+-- issue-130-proposta-bronze-series-historicas.md) e aplicado, via
+-- coalesce_present(), que so referencia as colunas existentes de fato NAQUELA
+-- familia (cada uma tem 2-3 geracoes de schema).
+--
+-- Nao ha `union all by name` nem `select * exclude`: todo o SQL desta camada e
+-- Postgres-valido, o que mantem aberta a opcao de roda-la com dbt-postgres.
+--
+-- ORDEM DE BUILD: coalesce_present() introspecciona a relacao no banco em tempo
+-- de COMPILE — as 4 bronzes precisam existir quando esta silver e compilada.
+-- Ver models/mcmv_historico_dbt/README.md.
 --
 -- Grao de saida: 1 registro de origem (empreendimento ou contrato), tipado e
 -- deduplicado por (fonte_familia, chave_natural, dt_referencia) mantendo o
@@ -14,18 +25,16 @@
 -- `linha_ogu_fgts` classifica o registro para a serie do piloto #118:
 -- OGU/Subsidiado quando o subsidio OGU domina; FGTS/Financiado quando o FGTS
 -- domina; os valores brutos ficam expostos para o gold somar os dois.
---
--- Target obrigatorio: staging_duckdb (gating em dbt_project.yml).
-{% set bronze = ref('bronze_mcmv_historico_serie_executiva') %}
+{% set familias = familias_serie_executiva() %}
 
 with
 
-    bronze as (select * from {{ bronze }}),
-
-    mapeado as (
+{% for f in familias %}
+    {%- set b = ref(f.modelo) -%}
+    familia_{{ f.nome }} as (
         select
             'Minha Casa Minha Vida' as programa,
-            fonte_familia,
+            '{{ f.nome }}' as fonte_familia,
             source_file,
             dt_referencia,
             report_date_parsed,
@@ -41,85 +50,126 @@ with
 
             case when lower(source_file) like '%pnhr%' then 'Rural' end as frente_hint,
 
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'cod_apf','codapf','cod_empreendimento','icodigo_empreendimento',
             'codigo_empreendimento_bb','cod_contrato','nr_prpt','contrato_bb','contrato_caixa'
-        ]) }}
+        ], 'varchar') }}
             as chave_natural,
 
-            {{ coalesce_present(bronze, ['uf','csigla_uf']) }} as uf_raw,
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, ['uf','csigla_uf'], 'varchar') }} as uf_raw,
+            {{ coalesce_present(b, [
             'cod_munic_ibge','codmunicibge','cod_municipio','codigo_do_ibge',
             'icodigo_municipio_ibge_sem_dv'
-        ]) }} as codigo_ibge_raw,
-            {{ coalesce_present(bronze, ['municipio','vnome_municipio']) }}
+        ], 'varchar') }} as codigo_ibge_raw,
+            {{ coalesce_present(b, ['municipio','vnome_municipio'], 'varchar') }}
             as municipio_raw,
-            {{ coalesce_present(bronze, ['faixa','cfaixa','num_faixa','faixa_divisao']) }}
+            {{ coalesce_present(b, ['faixa','cfaixa','num_faixa','faixa_divisao'], 'varchar') }}
             as faixa_raw,
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'produto','vnome_produto','iprograma_mcmv','num_programa','fase_mcmv','fase_do_pmcmv'
-        ]) }}
+        ], 'varchar') }}
             as produto_raw,
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'vnome_empreendimento','nomeempreendimento','dsc_empreendimento','empreendimento'
-        ]) }}
+        ], 'varchar') }}
             as nome_empreendimento,
-            {{ coalesce_present(bronze, ['vnome_construtora','construtora','nom_proponente','empresa']) }}
+            {{ coalesce_present(b, ['vnome_construtora','construtora','nom_proponente','empresa'], 'varchar') }}
             as responsavel_nome,
-            {{ coalesce_present(bronze, ['inumero_cnpj','cnpj','cod_cnpj_proponente']) }}
+            {{ coalesce_present(b, ['inumero_cnpj','cnpj','cod_cnpj_proponente'], 'varchar') }}
             as responsavel_id,
 
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'uh','unidades','iqde_uh','qtd_unidade_habitacional','qtd_uh','qde_unidades'
-        ]) }} as uh_contratadas_raw,
-            {{ coalesce_present(bronze, [
+        ], 'varchar') }} as uh_contratadas_raw,
+            {{ coalesce_present(b, [
             'iqde_unidades_entregues','unidades_entregues','iqde_uh_entregues',
             'qtd_unidade_entregue','qtd_entregue','entregues'
-        ]) }} as uh_entregues_raw,
-            {{ coalesce_present(bronze, [
+        ], 'varchar') }} as uh_entregues_raw,
+            {{ coalesce_present(b, [
             'uh_concluidas','unidades_concluidas','iqde_uh_concluidas',
             'qtd_unidade_concluida','qtd_concluida','uh_concluidos'
-        ]) }} as uh_concluidas_raw,
-            {{ coalesce_present(bronze, ['uh_em_obras','unidades_em_obras','iqde_uh_em_obras']) }}
+        ], 'varchar') }} as uh_concluidas_raw,
+            {{ coalesce_present(b, ['uh_em_obras','unidades_em_obras','iqde_uh_em_obras'], 'varchar') }}
             as uh_em_obras_raw,
-            {{ coalesce_present(bronze, ['uh_comercializadas','comercializadas','qtd_comercializadas']) }}
+            {{ coalesce_present(b, ['uh_comercializadas','comercializadas','qtd_comercializadas'], 'varchar') }}
             as uh_comercializadas_raw,
 
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'valor_total_do_investimento','mvalor_investimento','vlr_total_operacao','vlr_total_investimento'
-        ]) }}
+        ], 'varchar') }}
             as valor_investimento_raw,
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'valor_do_emprestimo','mvalor_emprestimo','vlr_emprestimo','vlr_financiamento',
             'mvalor_financiamento','valor_global_de_venda_vgv'
-        ]) }}
+        ], 'varchar') }}
             as valor_emprestimo_raw,
-            {{ coalesce_present(bronze, ['valor_total_liberado','mvalor_desembolso']) }}
+            {{ coalesce_present(b, ['valor_total_liberado','mvalor_desembolso'], 'varchar') }}
             as valor_liberado_raw,
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'subsidio_fgts','siaci_valorsubsidio_fgts','vlr_subsidio_fgts','complemento_fgts'
-        ]) }}
+        ], 'varchar') }}
             as subsidio_fgts_raw,
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'subsidio_ogu','siaci_valorsubsidio_ogu','vlr_subsidio_ogu','complemento_ogu'
-        ]) }} as subsidio_ogu_raw,
-            {{ coalesce_present(bronze, ['mvalor_subsidio']) }} as subsidio_total_raw,
+        ], 'varchar') }} as subsidio_ogu_raw,
+            {{ coalesce_present(b, ['mvalor_subsidio'], 'varchar') }} as subsidio_total_raw,
 
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'obra_executada','de_obra_executada','prc_execucao_obra','percentual_de_obra',
             'vfaixa_perc_obra','obra'
-        ]) }} as pct_execucao_fisica_raw,
+        ], 'varchar') }} as pct_execucao_fisica_raw,
 
-            {{ coalesce_present(bronze, ['data_contratacao','dat_contratacao','data_da_contratacao_bb']) }}
+            {{ coalesce_present(b, ['data_contratacao','dat_contratacao','data_da_contratacao_bb'], 'varchar') }}
             as dt_contratacao_raw,
-            {{ coalesce_present(bronze, ['data_conclusao','dat_entregue','entrega_do_empreendimento']) }}
+            {{ coalesce_present(b, ['data_conclusao','dat_entregue','entrega_do_empreendimento'], 'varchar') }}
             as dt_entrega_raw,
-            {{ coalesce_present(bronze, [
+            {{ coalesce_present(b, [
             'data_prevista_termino_obra','data_prevista_termino_obras','dat_prevista_termino',
             'cronograma_datatermino','dataprevistasr'
-        ]) }}
+        ], 'varchar') }}
             as dt_previsao_termino_raw
-        from bronze
+        from {{ b }}
+    ),
+{% endfor %}
+
+    mapeado as (
+        {% for f in familias %}
+        select
+            programa,
+            fonte_familia,
+            source_file,
+            dt_referencia,
+            report_date_parsed,
+            hash_linha,
+            agente_financeiro,
+            frente_hint,
+            chave_natural,
+            uf_raw,
+            codigo_ibge_raw,
+            municipio_raw,
+            faixa_raw,
+            produto_raw,
+            nome_empreendimento,
+            responsavel_nome,
+            responsavel_id,
+            uh_contratadas_raw,
+            uh_entregues_raw,
+            uh_concluidas_raw,
+            uh_em_obras_raw,
+            uh_comercializadas_raw,
+            valor_investimento_raw,
+            valor_emprestimo_raw,
+            valor_liberado_raw,
+            subsidio_fgts_raw,
+            subsidio_ogu_raw,
+            subsidio_total_raw,
+            pct_execucao_fisica_raw,
+            dt_contratacao_raw,
+            dt_entrega_raw,
+            dt_previsao_termino_raw
+        from familia_{{ f.nome }}
+        {{ "union all" if not loop.last }}
+        {% endfor %}
     ),
 
     tipado as (
@@ -242,6 +292,41 @@ with
         from util
     )
 
-select * exclude (rn, conteudo_hash)
+-- Lista explicita no lugar do `select * exclude (rn, conteudo_hash)` que estava
+-- aqui: `exclude` e sintaxe exclusiva do DuckDB (tarefa 4.2).
+select
+    programa,
+    fonte_familia,
+    frente_mcmv,
+    agente_financeiro,
+    chave_natural,
+    uf,
+    codigo_ibge_municipio,
+    municipio,
+    faixa,
+    produto,
+    nome_empreendimento,
+    responsavel_nome,
+    responsavel_id,
+    uh_contratadas,
+    uh_entregues,
+    uh_concluidas,
+    uh_em_obras,
+    uh_comercializadas,
+    valor_investimento,
+    valor_emprestimo,
+    valor_liberado,
+    subsidio_fgts,
+    subsidio_ogu,
+    subsidio_total,
+    percentual_execucao_fisica,
+    dt_contratacao,
+    dt_entrega,
+    dt_previsao_termino,
+    dt_referencia,
+    report_date_parsed,
+    source_file,
+    hash_linha,
+    linha_ogu_fgts
 from dedup
 where rn = 1

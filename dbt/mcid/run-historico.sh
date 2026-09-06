@@ -4,14 +4,23 @@
 # um modelo por vez, com o DuckDB usando disco com espaço e limite de RAM —
 # evita o "no space left on device" / OOM do union_by_name das bronzes.
 #
+# MODO A (dev) dos três modos da change pipeline-bronze-historica-destino-trocavel:
+#   A — dev         este script (--target staging_duckdb): lê a staging MinIO e
+#                   materializa em cidades.duckdb. NÃO toca o Postgres.
+#   B — publicação  ./publicar-historico.sh: copia as tabelas já materializadas
+#                   no arquivo local para o Postgres via ATTACH. Não relê o MinIO.
+#   C — direto      --target prod_duckdb: lê a staging e escreve no Postgres na
+#                   mesma execução, com o motor DuckDB FORA do banco.
+# O corpo de cada modelo é idêntico nos três; só o target muda.
+#
 # Uso:
 #   ./run-historico.sh                # tudo: seed + bronzes + silvers + golds + testes
-#   ./run-historico.sh bronzes        # só as 3 bronzes
+#   ./run-historico.sh bronzes        # só as 11 bronzes por família deste domínio
 #   ./run-historico.sh silvers        # só as silvers por frente + consolidado
 #   ./run-historico.sh <selector>     # dbt build --select <selector> --target staging_duckdb
 #
 # Overrides (env var):
-#   DUCKDB_MCID_PATH          arquivo .duckdb            (default /mnt/data/duckdb/mcid_staging.duckdb)
+#   DUCKDB_MCID_PATH          arquivo .duckdb            (default /mnt/data/duckdb/cidades.duckdb)
 #   DUCKDB_MCID_TEMP_DIR      dir de spill do DuckDB     (default /mnt/data/duckdb/tmp)
 #   DUCKDB_MCID_MEMORY_LIMIT  limite de RAM do DuckDB    (default 10GB)
 #   DUCKDB_MCID_THREADS       threads do DuckDB          (default 3)
@@ -51,7 +60,7 @@ PY
 fi
 
 # --- storage/temp do DuckDB no disco com espaço + limite de RAM ---
-export DUCKDB_MCID_PATH="${DUCKDB_MCID_PATH:-/mnt/data/duckdb/mcid_staging.duckdb}"
+export DUCKDB_MCID_PATH="${DUCKDB_MCID_PATH:-/mnt/data/duckdb/cidades.duckdb}"
 export DUCKDB_MCID_TEMP_DIR="${DUCKDB_MCID_TEMP_DIR:-/mnt/data/duckdb/tmp}"
 export DUCKDB_MCID_MEMORY_LIMIT="${DUCKDB_MCID_MEMORY_LIMIT:-10GB}"
 export DUCKDB_MCID_THREADS="${DUCKDB_MCID_THREADS:-3}"
@@ -64,10 +73,23 @@ echo
 
 cd "$HERE"
 
+# 13 bronzes por familia (D5 da change pipeline-bronze-historica-destino-trocavel):
+# 2 agentes SNH + 5 interfaces GEFUS + 4 familias da serie executiva aqui, mais
+# 2 agentes de entregas no run-reloginho.sh. Ordem crescente de volume: as
+# maiores (min_cidades, bext) por ultimo. O mapa vive em
+# macros/historico/familias.sql.
 BRONZES=(
-  bronze_mcmv_historico_empreendimento_snh
-  bronze_mcmv_historico_empreendimento_sftp
-  bronze_mcmv_historico_serie_executiva
+  bronze_mcmv_historico_empreendimento_snh_bb
+  bronze_mcmv_historico_empreendimento_snh_caixa
+  bronze_mcmv_historico_empreendimento_int040
+  bronze_mcmv_historico_empreendimento_int054
+  bronze_mcmv_historico_empreendimento_int057
+  bronze_mcmv_historico_empreendimento_int059
+  bronze_mcmv_historico_empreendimento_int065
+  bronze_mcmv_historico_serie_entrada_bb
+  bronze_mcmv_historico_serie_bases_relatorio_executivo
+  bronze_mcmv_historico_serie_min_cidades
+  bronze_mcmv_historico_serie_bext
 )
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural

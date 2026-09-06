@@ -2,7 +2,10 @@
 
 -- SILVER do reloginho (grupo A) — entregas por evento agregadas por mes.
 --
--- Le bronze_reloginho_snh_entregas_evento, deduplica eventos repetidos (o mesmo
+-- Le as BRONZES DE ENTREGA POR AGENTE (bronze_reloginho_snh_entregas_evento_bb
+-- e _caixa) e as une aqui, com projecao explicita e identica por braco — desde
+-- a change pipeline-bronze-historica-destino-trocavel (D5) nao existe mais
+-- bronze unificada de entregas. Deduplica eventos repetidos (o mesmo
 -- evento reaparece em snapshots mensais seguintes) por hash de conteudo de
 -- negocio (agente, apf, dt_evento, qtd), e soma a entrega por (agente, apf,
 -- mes do EVENTO). Grao: (agente, apf, mes_evento).
@@ -10,12 +13,14 @@
 -- mes_evento = mes de dt_entrega/dt_ass_doc (quando a UH foi entregue), NAO o
 -- dt_referencia do arquivo. Assim a serie e um fluxo real de entregas.
 --
--- Target obrigatorio: staging_duckdb (gating em dbt_project.yml).
+-- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
+-- atachado em `prod_duckdb`.
+{% set entregas_familias = familias_snh_entregas() %}
+
 with
 
-    bronze as (select * from {{ ref("bronze_reloginho_snh_entregas_evento") }}),
-
     tipado as (
+        {% for f in entregas_familias %}
         select
             coalesce(
                 upper(nullif(trim(cast(agente_financeiro as varchar)), '')),
@@ -26,8 +31,10 @@ with
             date_trunc('month', dt_evento)::date as mes_evento,
             coalesce(qt_uh_entregues_evento, 0) as qt_uh_entregues_evento,
             dt_referencia as dt_snapshot
-        from bronze
+        from {{ ref(f.modelo) }}
         where nullif(trim(cast(apf as varchar)), '') is not null
+        {{ "union all" if not loop.last }}
+        {% endfor %}
     ),
 
     hashed as (

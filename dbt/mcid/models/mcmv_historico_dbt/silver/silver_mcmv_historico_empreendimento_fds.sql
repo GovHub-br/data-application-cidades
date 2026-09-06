@@ -3,18 +3,22 @@
 -- SILVER — série histórica mensal de empreendimentos MCMV da frente
 -- FDS / Entidades.
 --
--- SFTP  — bronze_mcmv_historico_empreendimento_sftp, interface INT059
--- (FDS CAIXA). Janela 2019-12 → atual.
--- SNH   — bronze_mcmv_historico_empreendimento_snh, modalidade = 'ENTIDADES'.
+-- SFTP  — bronze da interface INT059 (FDS CAIXA). Janela 2019-12 → atual.
+-- SNH   — bronzes por agente (BB, CAIXA), modalidade = 'ENTIDADES'.
 -- Janela 2024-06 → atual.
+--
+-- Desde a change pipeline-bronze-historica-destino-trocavel (D5) cada fonte é
+-- uma TABELA POR FAMÍLIA; a união com projeção explícita acontece aqui.
 --
 -- Grão: empreendimento × mês. Dedup por (frente_mcmv, apf, dt_referencia).
 -- Precedência SNH na janela sobreposta (D6). Ver
 -- models/docs/entregas/separacao-silver-historico-por-frente.md.
 --
--- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
-{% set sftp = ref('bronze_mcmv_historico_empreendimento_sftp') %}
-{% set snh = ref('bronze_mcmv_historico_empreendimento_snh') %}
+-- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
+-- atachado em `prod_duckdb`. Ver models/mcmv_historico_dbt/README.md para a
+-- ordem de build exigida por coalesce_present.
+{% set int059 = ref('bronze_mcmv_historico_empreendimento_int059') %}
+{% set snh_familias = familias_snh_empreendimento() %}
 
 with
 
@@ -53,76 +57,25 @@ with
             source_file,
             hash_linha,
             dt_ingest
-        from {{ sftp }}
-        where
-            fonte_interface = 'INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS'
-            and nullif(trim(nu_apf), '') is not null
+        from {{ int059 }}
+        where nullif(trim(nu_apf), '') is not null
     ),
 
     -- fase 2: min_cidades (grão empreendimento/contrato) traz FDS pré-2019 —
     -- acrescentar CTE lendo a bronze da série executiva filtrada.
-    snh_entidades as (
-        select
-            'Minha Casa Minha Vida'::text as programa,
-            'Entidades'::text as frente_mcmv,
-            'Subsidiada'::text as grupo_linha,
-            'FDS / Entidades'::text as linha_mcmv,
-            'empreendimento_mes'::text as grao_registro,
-            case
-                when upper(nullif(trim(agente_financeiro::text), '')) like 'BB%'
-                then 'Banco do Brasil'
-                when upper(nullif(trim(agente_financeiro::text), '')) like 'CAIXA%'
-                then 'CAIXA'
-                when agente_arquivo = 'BB'
-                then 'Banco do Brasil'
-                when agente_arquivo = 'CAIXA'
-                then 'CAIXA'
-            end::text as agente_financeiro,
-            nullif(trim(apf::text), '')::text as apf,
-            nullif(trim(apf::text), '')::text as codigo_empreendimento,
-            nullif(trim(nome_empreendimento::text), '')::text as nome_empreendimento,
-            nullif(trim(codigo_ibge_do_municipio::text), '')::text
-            as codigo_ibge_municipio,
-            nullif(trim(municipio::text), '')::text as municipio,
-            upper(nullif(trim(uf::text), ''))::text as uf,
-            null::text as responsavel_id,
-            null::text as responsavel_nome,
-            coalesce(
-                {{ parse_hist_bigint('uh_contratadas') }},
-                {{ parse_hist_bigint('uhs_contratadas') }}
-            ) as quantidade_uh,
-            coalesce(
-                {{ parse_hist_bigint('uh_entregues') }},
-                {{ parse_hist_bigint('uhs_entregues') }}
-            ) as quantidade_uh_entregues,
-            {{ parse_hist_double('valor_contratado') }} as valor_contratado,
-            {{ parse_hist_double('valor_desembolsado') }} as valor_desembolsado,
-            {{ parse_hist_double('exec') }} as percentual_execucao_fisica,
-            nullif(trim(situacao_do_empreendimento::text), '')::text
-            as status_operacional,
-            {{ parse_hist_date('data_de_contratacao') }} as dt_contratacao,
-            null::date as dt_inicio_obra,
-            {{ parse_hist_date('dt_entrega') }} as dt_entrega,
-            dt_referencia,
-            {{ parse_hist_date('data_de_movimento') }} as dt_movimento,
-            'snh'::text as fonte_serie,
-            ('SNH_dados_prioritarios_af_' || lower(coalesce(agente_arquivo, 'na')))::text
-            as fonte_tabela,
-            source_file,
-            hash_linha,
-            dt_ingest
-        from {{ snh }}
-        where
-            upper(nullif(trim(modalidade::text), '')) = 'ENTIDADES'
-            and nullif(trim(apf::text), '') is not null
+{% for f in snh_familias %}
+    snh_entidades_{{ f.nome | lower }} as (
+{{ silver_historico_snh_arm(ref(f.modelo), 'Entidades', 'FDS / Entidades', 'ENTIDADES') }}
     ),
-
+{% endfor %}
     unioned as (
         select *
         from fds_caixa
+        {% for f in snh_familias %}
         union all
         select *
-        from snh_entidades
+        from snh_entidades_{{ f.nome | lower }}
+        {% endfor %}
     ),
 
     enriquecido as (

@@ -19,7 +19,13 @@ clean-targets:
 
 models:
   mcid:
-    +database: "{{ 'cidades' if target.type == 'postgres' else 'mcid_staging' }}"
+    # D3 (pipeline-bronze-historica-destino-trocavel): `cidades` constante nos
+    # tres modos. O catalogo local se chama `cidades` (arquivo cidades.duckdb) e
+    # no modo C o Postgres e atachado com alias `cidades` — assim o FQN do no no
+    # manifest.json e `cidades.<schema>.<tabela>` em qualquer execucao, casando
+    # com a tabela real que o OpenMetadata ingere. Substitui o ternario que
+    # apontava para o catalogo `mcid_staging` fora do Postgres.
+    +database: cidades
     metadata:
       +materialized: incremental
       +schema: metadata
@@ -182,6 +188,9 @@ models:
       # golds alimentam o gargalo).
 
     indicadores_mcmv_dbt:
+      # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
+      # porque a D3 o exige como invariante deste eixo).
+      +database: cidades
       # Convenção 2026-09-04: reloginho não é uma frente — é um domínio
       # analítico próprio (indicadores de velocidade/gargalo). Silver e gold
       # (reloginho + gargalo) ficam no schema novo "reloginho".
@@ -228,6 +237,9 @@ models:
           +schema: minha_casa_minha_vida
 
     mcmv_historico_dbt:
+      # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
+      # porque a D3 o exige como invariante deste eixo).
+      +database: cidades
       # Convenção 2026-09-04: bronze e o carrier bruto pré-split (ainda sem
       # frente) ficam em dados_historicos; os 3 silvers já divididos por
       # frente (far/fds/rural) usam alias para materializar como

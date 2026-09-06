@@ -2,10 +2,13 @@
 
 -- SILVER — série histórica mensal de empreendimentos MCMV da frente Rural (PNHR).
 --
--- SFTP  — bronze_mcmv_historico_empreendimento_sftp, interfaces INT057
--- (PNHR BB) e INT065 (PNHR CAIXA). Janela 2019-12 → atual.
--- SNH   — bronze_mcmv_historico_empreendimento_snh, modalidade = 'RURAL'
--- (cobre 'RURAL' da CAIXA e 'Rural' do BB). Janela 2024-06 → atual.
+-- SFTP  — bronzes por interface INT057 (PNHR BB) e INT065 (PNHR CAIXA).
+-- Janela 2019-12 → atual.
+-- SNH   — bronzes por agente (BB, CAIXA), modalidade = 'RURAL' (cobre
+-- 'RURAL' da CAIXA e 'Rural' do BB). Janela 2024-06 → atual.
+--
+-- Desde a change pipeline-bronze-historica-destino-trocavel (D5) cada fonte é
+-- uma TABELA POR FAMÍLIA; a união com projeção explícita acontece aqui.
 --
 -- Grão: empreendimento × mês. Dedup por (frente_mcmv, apf, dt_referencia).
 -- Precedência SNH na janela sobreposta (D6). Ver
@@ -14,9 +17,12 @@
 -- Obs.: INT057 tem a coluna temporal com nome inconsistente entre entregas
 -- (idt_movimento vs dt_movimento) — tratado com coalesce.
 --
--- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
-{% set sftp = ref('bronze_mcmv_historico_empreendimento_sftp') %}
-{% set snh = ref('bronze_mcmv_historico_empreendimento_snh') %}
+-- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
+-- atachado em `prod_duckdb`. Ver models/mcmv_historico_dbt/README.md para a
+-- ordem de build exigida por coalesce_present.
+{% set int057 = ref('bronze_mcmv_historico_empreendimento_int057') %}
+{% set int065 = ref('bronze_mcmv_historico_empreendimento_int065') %}
+{% set snh_familias = familias_snh_empreendimento() %}
 
 with
 
@@ -54,10 +60,8 @@ with
             source_file,
             hash_linha,
             dt_ingest
-        from {{ sftp }}
-        where
-            fonte_interface = 'INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS'
-            and nullif(trim(nu_contrato_empreendimento), '') is not null
+        from {{ int057 }}
+        where nullif(trim(nu_contrato_empreendimento), '') is not null
     ),
 
     rural_caixa as (  -- INT065
@@ -92,78 +96,27 @@ with
             source_file,
             hash_linha,
             dt_ingest
-        from {{ sftp }}
-        where
-            fonte_interface = 'INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS'
-            and nullif(trim(nu_apf), '') is not null
+        from {{ int065 }}
+        where nullif(trim(nu_apf), '') is not null
     ),
 
     -- fase 2: bb_*_pnhr_* mensal (2014-10 → 2018-07) — único sinal de Rural pré-2019.
-    snh_rural as (
-        select
-            'Minha Casa Minha Vida'::text as programa,
-            'Rural'::text as frente_mcmv,
-            'Subsidiada'::text as grupo_linha,
-            'PNHR Rural'::text as linha_mcmv,
-            'empreendimento_mes'::text as grao_registro,
-            case
-                when upper(nullif(trim(agente_financeiro::text), '')) like 'BB%'
-                then 'Banco do Brasil'
-                when upper(nullif(trim(agente_financeiro::text), '')) like 'CAIXA%'
-                then 'CAIXA'
-                when agente_arquivo = 'BB'
-                then 'Banco do Brasil'
-                when agente_arquivo = 'CAIXA'
-                then 'CAIXA'
-            end::text as agente_financeiro,
-            nullif(trim(apf::text), '')::text as apf,
-            nullif(trim(apf::text), '')::text as codigo_empreendimento,
-            nullif(trim(nome_empreendimento::text), '')::text as nome_empreendimento,
-            nullif(trim(codigo_ibge_do_municipio::text), '')::text
-            as codigo_ibge_municipio,
-            nullif(trim(municipio::text), '')::text as municipio,
-            upper(nullif(trim(uf::text), ''))::text as uf,
-            null::text as responsavel_id,
-            null::text as responsavel_nome,
-            coalesce(
-                {{ parse_hist_bigint('uh_contratadas') }},
-                {{ parse_hist_bigint('uhs_contratadas') }}
-            ) as quantidade_uh,
-            coalesce(
-                {{ parse_hist_bigint('uh_entregues') }},
-                {{ parse_hist_bigint('uhs_entregues') }}
-            ) as quantidade_uh_entregues,
-            {{ parse_hist_double('valor_contratado') }} as valor_contratado,
-            {{ parse_hist_double('valor_desembolsado') }} as valor_desembolsado,
-            {{ parse_hist_double('exec') }} as percentual_execucao_fisica,
-            nullif(trim(situacao_do_empreendimento::text), '')::text
-            as status_operacional,
-            {{ parse_hist_date('data_de_contratacao') }} as dt_contratacao,
-            null::date as dt_inicio_obra,
-            {{ parse_hist_date('dt_entrega') }} as dt_entrega,
-            dt_referencia,
-            {{ parse_hist_date('data_de_movimento') }} as dt_movimento,
-            'snh'::text as fonte_serie,
-            ('SNH_dados_prioritarios_af_' || lower(coalesce(agente_arquivo, 'na')))::text
-            as fonte_tabela,
-            source_file,
-            hash_linha,
-            dt_ingest
-        from {{ snh }}
-        where
-            upper(nullif(trim(modalidade::text), '')) = 'RURAL'
-            and nullif(trim(apf::text), '') is not null
+{% for f in snh_familias %}
+    snh_rural_{{ f.nome | lower }} as (
+{{ silver_historico_snh_arm(ref(f.modelo), 'Rural', 'PNHR Rural', 'RURAL') }}
     ),
-
+{% endfor %}
     unioned as (
         select *
         from rural_bb
         union all
         select *
         from rural_caixa
+        {% for f in snh_familias %}
         union all
         select *
-        from snh_rural
+        from snh_rural_{{ f.nome | lower }}
+        {% endfor %}
     ),
 
     enriquecido as (

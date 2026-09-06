@@ -6,7 +6,7 @@
 -- ficam nas camadas bronze/silver (ver models/docs/arquitetura-medalhao-mcid.md
 -- e docs/entregas/issue-130-refatoracao-medalhao-reloginho.md):
 --
--- bronze_reloginho_snh_serie_mensal  -> cópia fiel dos snapshots mensais SNH
+-- bronze_mcmv_historico_empreendimento_snh_bb/_caixa -> cópia fiel dos snapshots mensais SNH
 -- silver_reloginho_snh_apf_mes       -> tipado + domínio + dedup por APF
 -- indicadores_reloginho (este)       -> soma mensal por agente
 -- indicadores_reloginho_frente       -> soma mensal por agente x frente
@@ -18,7 +18,10 @@
 -- A saída é idêntica à versão anterior do modelo (que lia o parquet direto):
 -- a reconciliação contra a referência #66 (CAIXA 2026-03) continua válida.
 --
--- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
+-- Destino conforme o target: `staging_duckdb` materializa no arquivo DuckDB
+-- local (modo A, dev), `prod_duckdb` no Postgres atachado (modo C); a
+-- publicação a partir do arquivo local é o modo B (./publicar-historico.sh).
+-- O corpo é o mesmo nos três — ver models/mcmv_historico_dbt/README.md.
 with
 
     base as (select * from {{ ref("silver_historico_snh_apf_mes") }}),

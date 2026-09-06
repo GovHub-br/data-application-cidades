@@ -2,7 +2,12 @@
 
 -- SILVER do reloginho MCMV (grupo A) — série mensal SNH tratada e deduplicada.
 --
--- Lê a bronze (bronze_reloginho_snh_serie_mensal) e aplica:
+-- Lê as BRONZES SNH POR AGENTE (bronze_mcmv_historico_empreendimento_snh_bb e
+-- _snh_caixa) — desde a change pipeline-bronze-historica-destino-trocavel (D5)
+-- não existe mais bronze unificada, e a união é feita aqui, com projeção
+-- explícita e idêntica por braço. A view intermediária
+-- bronze_reloginho_snh_serie_mensal, que era um passthrough sobre a bronze
+-- única, deixou de existir junto com ela. Aplica:
 -- * tipagem  — texto -> bigint (UH) / date (datas);
 -- * normalização de domínio — agente_financeiro em maiúsculas (BB/CAIXA) e
 -- frente_mcmv canônica a partir de `modalidade` (FAR / Entidades / Rural —
@@ -18,12 +23,14 @@
 -- frente_mcmv da linha sobrevivente. Alimenta as golds indicadores_reloginho
 -- (total por agente) e indicadores_reloginho_frente (quebra por frente).
 --
--- Target obrigatório: staging_duckdb (gating em dbt_project.yml).
+-- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
+-- atachado em `prod_duckdb`.
+{% set snh_familias = familias_snh_empreendimento() %}
+
 with
 
-    bronze as (select * from {{ ref("bronze_reloginho_snh_serie_mensal") }}),
-
     tipado as (
+        {% for f in snh_familias %}
         select
             -- Usa a coluna da fonte (não o nome do arquivo) para não recuperar
             -- linhas que a versão anterior do gold descartava — preserva a
@@ -64,8 +71,10 @@ with
             prioridade_reentrega,
             source_file,
             hash_linha
-        from bronze
+        from {{ ref(f.modelo) }}
         where nullif(trim(apf::text), '') is not null
+        {{ "union all" if not loop.last }}
+        {% endfor %}
     ),
 
     dedup as (
