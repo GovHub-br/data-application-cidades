@@ -28,9 +28,10 @@
 --           TODOS os APFs de fase. Fonte = a do snapshot que trouxe o max.
 --   dt_primeira_entrega  -> espinha silver_mcmv_historico_entrega_apf (evento SNH).
 --   dt_legalizacao       -> sem fonte nesta fase (NULL / 'sem_fonte').
---   dt_previsao_entrega  -> sem fonte nesta fase; a change
---        destravar-datas-obra-entrega-silver-historico (C) projeta
---        data_da_previsao_da_entrega e preenche (Open Question 1, lean).
+--   dt_previsao_entrega  -> MAIOR data prevista observada em qualquer snapshot do
+--        empreendimento (change destravar-datas-obra-entrega-silver-historico:
+--        braco SNH projeta data_da_previsao_da_entrega). Fonte sempre
+--        'snh:dados_prioritarios'. Fill baixo (~2% dos APFs).
 --
 -- `marcos_coerentes` = a cadeia de datas se sustenta (ignorando nulos). É
 -- DIAGNÓSTICO — o modelo não corrige nada.
@@ -62,6 +63,7 @@ with
             dt_conclusao_obra,
             dt_entrega_uh,
             dt_entrega_uh_fonte,
+            dt_previsao_entrega,
             fonte_serie,
             fonte_tabela
         from {{ ref('silver_mcmv_historico_empreendimento_' ~ frente) }}
@@ -101,7 +103,9 @@ with
             max(dt_conclusao_obra) as dt_conclusao_obra_max,
             arg_max(fonte_serie, dt_conclusao_obra) as _conc_fonte_serie,
             arg_max(fonte_tabela, dt_conclusao_obra) as _conc_fonte_tabela,
-            arg_max(dt_referencia, dt_conclusao_obra) as dt_conclusao_obra_max_snapshot
+            arg_max(dt_referencia, dt_conclusao_obra) as dt_conclusao_obra_max_snapshot,
+            max(dt_previsao_entrega) as dt_previsao_entrega_max,
+            arg_max(dt_referencia, dt_previsao_entrega) as dt_previsao_entrega_max_snapshot
         from silver_rows
         group by 1, 2
     ),
@@ -194,9 +198,18 @@ with
                 else en.dt_ultimo_snapshot_entrega
             end as dt_ultima_entrega_dt_snapshot,
 
-            -- sem fonte nesta fase (change C preenche depois)
+            -- dt_legalizacao: sem fonte nesta fase (NULL / 'sem_fonte')
             cast(null as date) as dt_legalizacao,
-            cast(null as date) as dt_previsao_entrega,
+
+            ms.dt_previsao_entrega_max as dt_previsao_entrega,
+            case
+                when ms.dt_previsao_entrega_max is not null
+                then 'snh:dados_prioritarios'
+            end as dt_previsao_entrega_fonte,
+            case
+                when ms.dt_previsao_entrega_max is not null
+                then ms.dt_previsao_entrega_max_snapshot
+            end as dt_previsao_entrega_dt_snapshot,
 
             en.uh_entregues_acumulada
         from estado sr
@@ -239,8 +252,8 @@ select
     cast(null as date) as dt_legalizacao_dt_snapshot,
 
     dt_previsao_entrega,
-    'sem_fonte'::text as dt_previsao_entrega_fonte,
-    cast(null as date) as dt_previsao_entrega_dt_snapshot,
+    coalesce(dt_previsao_entrega_fonte, 'sem_fonte') as dt_previsao_entrega_fonte,
+    dt_previsao_entrega_dt_snapshot,
 
     uh_entregues_acumulada,
 

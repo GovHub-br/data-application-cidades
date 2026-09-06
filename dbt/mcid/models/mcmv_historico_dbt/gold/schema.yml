@@ -12,11 +12,11 @@ models:
       dt_ultima_entrega são o MAIOR valor já resolvido na silver em qualquer
       snapshot (dt_ultima_entrega considera também o max da espinha
       silver_mcmv_historico_entrega_apf sobre todos os APFs de fase);
-      dt_primeira_entrega vem da espinha. dt_legalizacao / dt_previsao_entrega
-      nascem NULL nesta fase (escopo da change
-      destravar-datas-obra-entrega-silver-historico). `marcos_coerentes` é
-      diagnóstico. Change: enriquecer-datas-acompanhamento-historico. Requer
-      target staging_duckdb.
+      dt_primeira_entrega vem da espinha. dt_previsao_entrega = maior data
+      prevista observada (braço SNH; fonte 'snh:dados_prioritarios', fill ~2%).
+      dt_legalizacao nasce NULL nesta fase. `marcos_coerentes` é
+      diagnóstico. Changes: enriquecer-datas-acompanhamento-historico +
+      destravar-datas-obra-entrega-silver-historico. Requer target staging_duckdb.
     meta:
       tags: [gold, mcmv, dados-historicos, empreendimento, marco, linha-do-tempo]
     columns:
@@ -39,12 +39,19 @@ models:
           `sem_fonte`. Herda dt_entrega_uh_fonte da silver.
         data_tests:
           - not_null
+      - name: dt_previsao_entrega
+        description: >
+          Maior data prevista de entrega observada em qualquer snapshot do
+          empreendimento (braço SNH). NULL quando nenhum snapshot reportou.
+          Change: destravar-datas-obra-entrega-silver-historico.
       - name: dt_previsao_entrega_fonte
-        description: Sempre 'sem_fonte' nesta fase (Open Question 1, lean).
+        description: >
+          `snh:dados_prioritarios` quando há data prevista; `sem_fonte` caso
+          contrário. Change: destravar-datas-obra-entrega-silver-historico.
         data_tests:
           - accepted_values:
               arguments:
-                values: ["sem_fonte"]
+                values: ["snh:dados_prioritarios", "sem_fonte"]
       - name: marcos_coerentes
         description: Cadeia de datas coerente ignorando nulos. Diagnóstico — o modelo não corrige.
         data_tests:
@@ -99,14 +106,30 @@ models:
       - name: dt_referencia
         data_tests:
           - not_null
+      - name: quantidade_uh_concluidas
+        description: >
+          UH com obra concluída (estágio anterior a "entregue"), herdada da
+          silver. Só o braço SFTP reporta. Change:
+          destravar-datas-obra-entrega-silver-historico.
       - name: dt_entrega_uh
         description: >
           Data de entrega de UH (substitui a antiga `dt_entrega`, BREAKING).
           Herdada da silver por frente. Change: enriquecer-datas-acompanhamento-historico.
       - name: dt_conclusao_obra
-        description: Data de conclusão física da obra / legalização. Herdada da silver.
+        description: >
+          Data de conclusão física da obra / legalização. Herdada da silver —
+          FDS/FAR do braço SFTP, Rural de dt_efetiva_conclusao. Change:
+          destravar-datas-obra-entrega-silver-historico.
       - name: dt_entrega_uh_fonte
-        description: Origem de `dt_entrega_uh` (`sftp[:INTxxx]` / `snh:entrega_evento`).
+        description: Origem de `dt_entrega_uh` (`sftp:INTxxx` / `snh:entrega_evento`).
+      - name: dt_previsao_entrega
+        description: >
+          Data prevista de entrega (braço SNH), herdada da silver. Fill ~2%.
+          Change: destravar-datas-obra-entrega-silver-historico.
+      - name: qt_uh_previsao_entrega
+        description: >
+          UH previstas para entrega (braço SNH), herdada da silver. Change:
+          destravar-datas-obra-entrega-silver-historico.
       - name: fonte_tabela
         data_tests:
           - not_null

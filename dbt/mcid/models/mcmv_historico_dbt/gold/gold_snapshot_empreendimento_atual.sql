@@ -63,6 +63,9 @@ select
     responsavel_nome,
     quantidade_uh,
     quantidade_uh_entregues,
+    -- change destravar-datas-obra-entrega-silver-historico: conclusao fisica de
+    -- obra (estagio anterior a entrega da UH) e a previsao de entrega do SNH.
+    quantidade_uh_concluidas,
     valor_contratado,
     valor_desembolsado,
     percentual_execucao_fisica,
@@ -75,6 +78,8 @@ select
     dt_entrega_uh,
     dt_conclusao_obra,
     dt_entrega_uh_fonte,
+    dt_previsao_entrega,
+    qt_uh_previsao_entrega,
     dt_referencia,
     dt_movimento,
     fonte_tabela,

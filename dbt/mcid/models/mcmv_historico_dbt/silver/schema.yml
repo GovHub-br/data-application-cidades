@@ -92,27 +92,51 @@ models:
           Unidades habitacionais entregues (acumulado). coalesce(braço da linha,
           valor preservado no grão, espinha silver_mcmv_historico_entrega_apf) —
           só preenche NULL, nunca sobrescreve 0. Change:
-          enriquecer-datas-acompanhamento-historico.
+          enriquecer-datas-acompanhamento-historico. FDS agora tem valor do
+          braço INT059 (change destravar-datas-obra-entrega-silver-historico).
+      - name: quantidade_uh_concluidas
+        description: >
+          Unidades habitacionais com obra concluída (estágio anterior a
+          "entregue"). Só o braço SFTP reporta — INT059 (FDS), INT040/INT054
+          (FAR), INT057/INT065 (Rural); coalesce(braço da linha, valor
+          preservado no grão). NULL no braço SNH. Change:
+          destravar-datas-obra-entrega-silver-historico.
       - name: dt_entrega_uh
         description: >
           Data de entrega de unidades habitacionais (última). Substitui a antiga
           `dt_entrega` (BREAKING). coalesce(dt_ultima_entrega do braço SFTP →
-          mesmo valor preservado no grão → espinha SNH por evento). FDS/Rural:
-          só a espinha nesta fase. Change: enriquecer-datas-acompanhamento-historico.
+          mesmo valor preservado no grão → espinha SNH por evento). FDS: braço
+          INT059 ∪ espinha; FAR: INT040/INT054 ∪ espinha; Rural: INT065 (~11%) ∪
+          espinha (INT057 não tem a coluna). Changes:
+          enriquecer-datas-acompanhamento-historico +
+          destravar-datas-obra-entrega-silver-historico.
       - name: dt_conclusao_obra
         description: >
-          Data de conclusão física da obra / legalização. FAR:
+          Data de conclusão física da obra / legalização. FDS/FAR:
           coalesce(dt_termino_obra, dt_legalizacao) do SFTP; Rural:
-          dt_efetiva_conclusao; FDS: NULL nesta fase (escopo da change
-          destravar-datas-obra-entrega-silver-historico).
+          dt_efetiva_conclusao. Braço SNH: NULL — `data_do_termino` do snapshot
+          SNH é 0% preenchido para FAR/FDS/Rural (change
+          destravar-datas-obra-entrega-silver-historico, task 7.5).
+      - name: dt_previsao_entrega
+        description: >
+          Data prevista de entrega, reportada pelo braço SNH
+          (`data_da_previsao_da_entrega`, ISO). NULL no braço SFTP. Fill baixo
+          (~2% dos APFs — só o SNH reporta). Change:
+          destravar-datas-obra-entrega-silver-historico (resolve a OQ1 do B+D).
+      - name: qt_uh_previsao_entrega
+        description: >
+          Unidades habitacionais previstas para entrega, braço SNH —
+          coalesce(qt_uh_previsao_entrega, unidades_habitacionais_a_serem_entregues).
+          NULL no braço SFTP. Change: destravar-datas-obra-entrega-silver-historico.
       - name: dt_entrega_uh_fonte
         description: >
-          Origem de `dt_entrega_uh`: `sftp[:INTxxx]` (feed mensal GEFUS),
-          `snh:entrega_evento` (espinha) ou NULL quando `dt_entrega_uh` é NULL.
+          Origem de `dt_entrega_uh`: `sftp:INTxxx` (feed mensal GEFUS —
+          INT059/INT040/INT054/INT065), `snh:entrega_evento` (espinha) ou NULL
+          quando `dt_entrega_uh` é NULL.
         data_tests:
           - accepted_values:
               arguments:
-                values: ["sftp", "sftp:INT040", "sftp:INT054", "sftp:INT057", "sftp:INT065", "snh:entrega_evento"]
+                values: ["sftp", "sftp:INT040", "sftp:INT054", "sftp:INT057", "sftp:INT059", "sftp:INT065", "snh:entrega_evento"]
               config:
                 severity: warn
       - name: valor_contratado

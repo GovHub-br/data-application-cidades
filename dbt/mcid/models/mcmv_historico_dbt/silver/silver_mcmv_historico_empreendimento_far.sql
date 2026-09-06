@@ -63,6 +63,14 @@ with
                 {{ parse_hist_date('dt_termino_obra') }},
                 {{ parse_hist_date('dt_legalizacao') }}
             ) as dt_conclusao_obra,
+            -- quantidade_uh_concluidas: coluna presente no INT040; null-guard por
+            -- coalesce_present_parsed contra drift de schema do parquet (change
+            -- destravar-datas-obra-entrega-silver-historico).
+            {{ coalesce_present_parsed(
+                int040, ['qt_unidades_concluidas'], 'parse_hist_bigint', 'bigint'
+            ) }} as quantidade_uh_concluidas,
+            null::date as dt_previsao_entrega,
+            null::bigint as qt_uh_previsao_entrega,
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -104,6 +112,11 @@ with
                 {{ parse_hist_date('dt_termino_obra') }},
                 {{ parse_hist_date('dt_legalizacao') }}
             ) as dt_conclusao_obra,
+            {{ coalesce_present_parsed(
+                int054, ['qt_unidades_concluidas'], 'parse_hist_bigint', 'bigint'
+            ) }} as quantidade_uh_concluidas,
+            null::date as dt_previsao_entrega,
+            null::bigint as qt_uh_previsao_entrega,
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -149,9 +162,11 @@ with
             -- entrega/conclusao vem so do braco SFTP; na janela sobreposta
             -- 2024-06..2024-11 a linha SNH vence a dedup e traz esses campos
             -- nulos -- preserva o valor SFTP do mesmo grao (change
-            -- enriquecer-datas-acompanhamento-historico).
+            -- enriquecer-datas-acompanhamento-historico; quantidade_uh_concluidas
+            -- pela change destravar-datas-obra-entrega-silver-historico).
             max(dt_entrega_uh) over grao as dt_entrega_uh_grao,
             max(dt_conclusao_obra) over grao as dt_conclusao_obra_grao,
+            max(quantidade_uh_concluidas) over grao as quantidade_uh_concluidas_grao,
             max(
                 case when dt_entrega_uh is not null then fonte_tabela end
             ) over grao as fonte_entrega_uh_grao
@@ -238,6 +253,11 @@ select
     -- valor do braco SFTP da linha > mesmo valor preservado no grao > espinha SNH.
     coalesce(dt_entrega_uh, dt_entrega_uh_grao, esp_dt_ultima_entrega) as dt_entrega_uh,
     coalesce(dt_conclusao_obra, dt_conclusao_obra_grao) as dt_conclusao_obra,
+    coalesce(
+        quantidade_uh_concluidas, quantidade_uh_concluidas_grao
+    ) as quantidade_uh_concluidas,
+    dt_previsao_entrega,
+    qt_uh_previsao_entrega,
     case
         when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null
         then coalesce(

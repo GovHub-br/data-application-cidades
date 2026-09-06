@@ -39,7 +39,7 @@ with
             nullif(trim(cnpj_proponente), '')::text as responsavel_id,
             nullif(trim(razao_social_proponente), '')::text as responsavel_nome,
             {{ parse_hist_bigint('qt_unidade_financiadas') }} as quantidade_uh,
-            null::bigint as quantidade_uh_entregues,
+            {{ parse_hist_bigint('qt_unidades_entregues') }} as quantidade_uh_entregues,
             {{ parse_hist_double('vr_investimento') }} as valor_contratado,
             {{ parse_hist_double('vr_liberado') }} as valor_desembolsado,
             {{ parse_hist_double('percentual_obra_realizado') }}
@@ -49,12 +49,17 @@ with
             )::text as status_operacional,
             {{ parse_hist_date('dt_assinatura') }} as dt_contratacao,
             {{ parse_hist_date('dt_inicio_obra') }} as dt_inicio_obra,
-            -- Split de dt_entrega (change enriquecer-datas-acompanhamento-historico).
-            -- INT059 TEM dt_ultima_entrega / dt_termino_obra, mas projeta-las e
-            -- escopo da change destravar-datas-obra-entrega-silver-historico (A);
-            -- aqui o FDS depende so da espinha via coalesce no select final.
-            null::date as dt_entrega_uh,
-            null::date as dt_conclusao_obra,
+            -- Split de dt_entrega + destrave do braco SFTP INT059 (change
+            -- destravar-datas-obra-entrega-silver-historico, A). INT059 traz
+            -- dt_ultima_entrega / dt_termino_obra / dt_legalizacao / as qt_*.
+            {{ parse_hist_date('dt_ultima_entrega') }} as dt_entrega_uh,
+            coalesce(
+                {{ parse_hist_date('dt_termino_obra') }},
+                {{ parse_hist_date('dt_legalizacao') }}
+            ) as dt_conclusao_obra,
+            {{ parse_hist_bigint('qt_unidades_concluidas') }} as quantidade_uh_concluidas,
+            null::date as dt_previsao_entrega,
+            null::bigint as qt_uh_previsao_entrega,
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -91,10 +96,13 @@ with
             max(responsavel_nome) over grao as responsavel_nome_grao,
             max(dt_movimento) over grao as dt_movimento_grao,
             max(quantidade_uh_entregues) over grao as quantidade_uh_entregues_grao,
-            -- entrega/conclusao (nulos no braco INT059 por ora — ver A/C);
-            -- preservados ao longo do grao para o coalesce com a espinha.
+            -- entrega/conclusao vem so do braco SFTP (INT059); na janela sobreposta
+            -- 2024-06..2024-11 a linha SNH vence a dedup e traz esses campos nulos --
+            -- preserva o valor SFTP do mesmo grao; o coalesce no select final cai na
+            -- espinha nas demais lacunas (change destravar-datas-obra-entrega-silver-historico).
             max(dt_entrega_uh) over grao as dt_entrega_uh_grao,
             max(dt_conclusao_obra) over grao as dt_conclusao_obra_grao,
+            max(quantidade_uh_concluidas) over grao as quantidade_uh_concluidas_grao,
             max(
                 case when dt_entrega_uh is not null then fonte_tabela end
             ) over grao as fonte_entrega_uh_grao
@@ -198,14 +206,34 @@ select
     status_operacional,
     dt_contratacao,
     coalesce(dt_inicio_obra, dt_inicio_obra_grao) as dt_inicio_obra,
-    -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING). No FDS o braco
-    -- SFTP nao projeta nenhum dos dois (escopo A/C): dt_entrega_uh vem so da
-    -- espinha; dt_conclusao_obra fica NULL.
+    -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING). Precedencia:
+    -- valor do braco SFTP INT059 da linha > mesmo valor preservado no grao >
+    -- espinha SNH (change destravar-datas-obra-entrega-silver-historico).
     coalesce(dt_entrega_uh, dt_entrega_uh_grao, esp_dt_ultima_entrega) as dt_entrega_uh,
     coalesce(dt_conclusao_obra, dt_conclusao_obra_grao) as dt_conclusao_obra,
+    coalesce(
+        quantidade_uh_concluidas, quantidade_uh_concluidas_grao
+    ) as quantidade_uh_concluidas,
+    dt_previsao_entrega,
+    qt_uh_previsao_entrega,
     case
-        when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null then 'sftp'
-        when esp_dt_ultima_entrega is not null then 'snh:entrega_evento'
+        when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null
+        then coalesce(
+            nullif(
+                'sftp:' || regexp_extract(
+                    coalesce(
+                        case when dt_entrega_uh is not null then fonte_tabela end,
+                        fonte_entrega_uh_grao
+                    ),
+                    '(INT[0-9]+)',
+                    1
+                ),
+                'sftp:'
+            ),
+            'sftp'
+        )
+        when esp_dt_ultima_entrega is not null
+        then 'snh:entrega_evento'
     end as dt_entrega_uh_fonte,
     dt_referencia,
     coalesce(dt_movimento, dt_movimento_grao) as dt_movimento,

@@ -51,8 +51,13 @@ with
             nullif(trim(no_situacao_obra), '')::text as status_operacional,
             {{ parse_hist_date('dt_contrato') }} as dt_contratacao,
             null::date as dt_inicio_obra,
+            -- INT057 nao tem dt_ultima_entrega -- entrega_uh vem so da espinha
+            -- (change destravar-datas-obra-entrega-silver-historico, task 4.4).
             null::date as dt_entrega_uh,
             {{ parse_hist_date('dt_efetiva_conclusao') }} as dt_conclusao_obra,
+            {{ parse_hist_bigint('qt_unidades_concluidas') }} as quantidade_uh_concluidas,
+            null::date as dt_previsao_entrega,
+            null::bigint as qt_uh_previsao_entrega,
             dt_referencia,
             {{ parse_hist_date('coalesce(idt_movimento, dt_movimento)') }}
             as dt_movimento,
@@ -89,8 +94,13 @@ with
             nullif(trim(no_situacao_obra), '')::text as status_operacional,
             {{ parse_hist_date('dt_contrato') }} as dt_contratacao,
             null::date as dt_inicio_obra,
-            null::date as dt_entrega_uh,
+            -- INT065 traz dt_ultima_entrega (~11%) -- OQ2 resolvida "INT065 entra"
+            -- (change destravar-datas-obra-entrega-silver-historico, task 4.3).
+            {{ parse_hist_date('dt_ultima_entrega') }} as dt_entrega_uh,
             {{ parse_hist_date('dt_efetiva_conclusao') }} as dt_conclusao_obra,
+            {{ parse_hist_bigint('qt_unidades_concluidas') }} as quantidade_uh_concluidas,
+            null::date as dt_previsao_entrega,
+            null::bigint as qt_uh_previsao_entrega,
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -127,11 +137,13 @@ with
             max(responsavel_id) over grao as responsavel_id_grao,
             max(responsavel_nome) over grao as responsavel_nome_grao,
             max(dt_movimento) over grao as dt_movimento_grao,
-            -- conclusao vem so do braco SFTP (dt_efetiva_conclusao); entrega_uh
-            -- e sempre nula no Rural (OQ2 lean: so a espinha). Preserva ao longo
-            -- do grao p/ a janela sobreposta com o SNH.
+            -- conclusao vem do braco SFTP (dt_efetiva_conclusao); entrega_uh do
+            -- INT065 (dt_ultima_entrega ~11%), INT057 so via espinha. Preserva ao
+            -- longo do grao p/ a janela sobreposta com o SNH (change
+            -- destravar-datas-obra-entrega-silver-historico).
             max(dt_entrega_uh) over grao as dt_entrega_uh_grao,
             max(dt_conclusao_obra) over grao as dt_conclusao_obra_grao,
+            max(quantidade_uh_concluidas) over grao as quantidade_uh_concluidas_grao,
             max(
                 case when dt_entrega_uh is not null then fonte_tabela end
             ) over grao as fonte_entrega_uh_grao
@@ -212,12 +224,33 @@ select
     dt_contratacao,
     dt_inicio_obra,
     -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING). Rural: entrega_uh
-    -- so da espinha; dt_conclusao_obra do dt_efetiva_conclusao (SFTP INT057/065).
+    -- do INT065 (dt_ultima_entrega) > grao > espinha; dt_conclusao_obra do
+    -- dt_efetiva_conclusao (SFTP INT057/065).
     coalesce(dt_entrega_uh, dt_entrega_uh_grao, esp_dt_ultima_entrega) as dt_entrega_uh,
     coalesce(dt_conclusao_obra, dt_conclusao_obra_grao) as dt_conclusao_obra,
+    coalesce(
+        quantidade_uh_concluidas, quantidade_uh_concluidas_grao
+    ) as quantidade_uh_concluidas,
+    dt_previsao_entrega,
+    qt_uh_previsao_entrega,
     case
-        when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null then 'sftp'
-        when esp_dt_ultima_entrega is not null then 'snh:entrega_evento'
+        when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null
+        then coalesce(
+            nullif(
+                'sftp:' || regexp_extract(
+                    coalesce(
+                        case when dt_entrega_uh is not null then fonte_tabela end,
+                        fonte_entrega_uh_grao
+                    ),
+                    '(INT[0-9]+)',
+                    1
+                ),
+                'sftp:'
+            ),
+            'sftp'
+        )
+        when esp_dt_ultima_entrega is not null
+        then 'snh:entrega_evento'
     end as dt_entrega_uh_fonte,
     dt_referencia,
     coalesce(dt_movimento, dt_movimento_grao) as dt_movimento,

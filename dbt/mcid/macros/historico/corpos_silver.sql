@@ -57,11 +57,25 @@
             null::date as dt_inicio_obra,
             -- Split semantico de dt_entrega (change enriquecer-datas-acompanhamento-historico):
             -- dt_entrega_uh (entrega de UH) x dt_conclusao_obra (conclusao fisica).
-            -- No braco SNH so a CAIXA traz dt_entrega; data_de_termino / demais
-            -- ficam para a change destravar-datas-obra-entrega-silver-historico.
+            -- No braco SNH so a CAIXA traz dt_entrega. data_do_termino so existe no
+            -- snapshot `disponibilizados` e la e 0% preenchido p/ FAR/FDS/Rural --
+            -- dt_conclusao_obra do braco SNH fica null; conclusao de obra vem so do
+            -- braco SFTP (change destravar-datas-obra-entrega-silver-historico).
             {{ coalesce_present_parsed(rel, ['dt_entrega'], 'parse_hist_date', 'date') }}
             as dt_entrega_uh,
             null::date as dt_conclusao_obra,
+            -- quantidade_uh_concluidas: so o braco SFTP tem; null no SNH.
+            null::bigint as quantidade_uh_concluidas,
+            -- previsao de entrega: o braco SNH e a unica fonte
+            -- (data_da_previsao_da_entrega, ISO). qt_uh_previsao_entrega cai em
+            -- unidades_habitacionais_a_serem_entregues quando o agente nao traz a
+            -- coluna direta (change destravar-datas-obra-entrega-silver-historico).
+            {{ coalesce_present_parsed(
+                rel, ['data_da_previsao_da_entrega', 'dt_previsao_entrega'], 'parse_hist_date', 'date'
+            ) }} as dt_previsao_entrega,
+            {{ coalesce_present_parsed(
+                rel, ['qt_uh_previsao_entrega', 'unidades_habitacionais_a_serem_entregues'], 'parse_hist_bigint', 'bigint'
+            ) }} as qt_uh_previsao_entrega,
             dt_referencia,
             {{ parse_hist_date('data_de_movimento') }} as dt_movimento,
             'snh'::text as fonte_serie,
