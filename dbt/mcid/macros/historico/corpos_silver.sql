@@ -33,7 +33,10 @@
             nullif(trim(apf::text), '')::text as apf,
             nullif(trim(apf::text), '')::text as codigo_empreendimento,
             nullif(trim(nome_empreendimento::text), '')::text as nome_empreendimento,
-            nullif(trim(codigo_ibge_do_municipio::text), '')::text
+            -- strip_float_text: no agente CAIXA ~20% dos códigos IBGE chegam
+            -- como "355030.0" (int->float->str). Ver
+            -- docs/varredura-sufixo-float-texto.md.
+            {{ strip_float_text('codigo_ibge_do_municipio') }}::text
             as codigo_ibge_municipio,
             nullif(trim(municipio::text), '')::text as municipio,
             upper(nullif(trim(uf::text), ''))::text as uf,

@@ -359,3 +359,11 @@ seeds:
     entidades_fds:
       +schema: entidades_fds
       +quote_columns: false
+    # Seeds de referência dos testes de qualidade (change
+    # testes-data-quality-dbt): domínios canônicos e retrato de colunas por
+    # família. `cidades` explícito porque o eixo histórico exige o catálogo
+    # `cidades` como invariante (D3 pipeline-bronze-historica-destino-trocavel).
+    data_quality:
+      +database: cidades
+      +schema: data_quality
+      +quote_columns: false

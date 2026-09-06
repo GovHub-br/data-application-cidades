@@ -62,7 +62,10 @@ with
             try_cast(nullif(trim(uh_entregues::text), '') as bigint) as uh_entregues,
             try_cast(nullif(trim(uh_vigentes::text), '') as bigint) as uh_vigentes,
             upper(nullif(trim(uf::text), '')) as uf,
-            nullif(trim(codigo_ibge_do_municipio::text), '') as codigo_ibge_municipio,
+            -- strip_float_text: no agente CAIXA ~20% dos códigos IBGE chegam
+            -- como "355030.0" (int->float->str a montante). Ver
+            -- docs/varredura-sufixo-float-texto.md (change testes-data-quality-dbt).
+            {{ strip_float_text('codigo_ibge_do_municipio') }} as codigo_ibge_municipio,
             nullif(trim(municipio::text), '') as municipio,
             nullif(trim(situacao_do_empreendimento::text), '') as status_operacional,
             try_cast(

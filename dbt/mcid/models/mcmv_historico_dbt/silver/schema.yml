@@ -33,6 +33,13 @@ models:
         description: APF / contrato do empreendimento.
         data_tests:
           - not_null
+      - name: codigo_ibge_municipio
+        description: >
+          Código IBGE do município, sem sufixo ".0" (limpo por
+          strip_float_text no braço SNH). Ver
+          docs/varredura-sufixo-float-texto.md.
+        data_tests:
+          - sem_sufixo_float_texto
       - name: dt_referencia
         description: Mês de referência do snapshot (nome do arquivo).
         data_tests:
@@ -46,10 +53,25 @@ models:
                 values: ["sftp", "snh"]
       - name: quantidade_uh
         description: Unidades habitacionais contratadas no snapshot.
+        data_tests:
+          # Limiar informativo (warn) — sem contrato de obrigatoriedade ainda
+          # (vem do campos_obrigatorios.csv do catalogo-dicionario). Ajustar
+          # quando esse artefato existir. Change: testes-data-quality-dbt.
+          - completude_minima:
+              arguments:
+                min_pct: 0.80
+              config:
+                severity: warn
       - name: quantidade_uh_entregues
         description: Unidades habitacionais entregues no snapshot.
       - name: valor_contratado
         description: Valor contratado (R$), parse de formato brasileiro.
+        data_tests:
+          - completude_minima:
+              arguments:
+                min_pct: 0.70
+              config:
+                severity: warn
       - name: valor_desembolsado
         description: Valor desembolsado/liberado (R$).
       - name: percentual_execucao_fisica
@@ -98,6 +120,21 @@ models:
         description: Mês do snapshot.
         data_tests:
           - not_null
+      # Identificadores já limpos por strip_float_text — gate `error`: uma
+      # falha aqui significa regressão da limpeza (o bronze correspondente
+      # segue em `warn`). Ver docs/varredura-sufixo-float-texto.md.
+      - name: chave_natural
+        description: Chave natural do registro (código de empreendimento/contrato), sem sufixo ".0".
+        data_tests:
+          - sem_sufixo_float_texto
+      - name: codigo_ibge_municipio
+        description: Código IBGE do município (só dígitos), sem sufixo ".0".
+        data_tests:
+          - sem_sufixo_float_texto
+      - name: responsavel_id
+        description: CNPJ do responsável, sem sufixo ".0".
+        data_tests:
+          - sem_sufixo_float_texto
       - name: uf
         description: UF (maiúsculas). Pode ser nulo em min_cidades/bext antigos (sem UF na origem).
       - name: linha_ogu_fgts

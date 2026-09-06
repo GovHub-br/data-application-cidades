@@ -46,7 +46,12 @@ models:
       - name: uf
         description: UF do empreendimento (maiúsculas).
       - name: codigo_ibge_municipio
-        description: Código IBGE do município.
+        description: >
+          Código IBGE do município, sem sufixo ".0" (limpo por strip_float_text
+          — a fonte SNH CAIXA entrega ~20% com ".0"). Ver
+          docs/varredura-sufixo-float-texto.md.
+        data_tests:
+          - sem_sufixo_float_texto
       - name: hash_linha
         description: Hash MD5 herdado da bronze.
         data_tests:

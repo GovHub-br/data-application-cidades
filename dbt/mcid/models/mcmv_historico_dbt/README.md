@@ -69,3 +69,15 @@ contra o `prod` só valem `SELECT` de verificação e as cargas dos modos B/C.
 O catálogo se chama `cidades` nos três modos, para que o FQN do nó no
 `manifest.json` (`cidades.<schema>.<tabela>`) case com a tabela real que o
 OpenMetadata ingere (D3).
+
+## Testes de qualidade
+
+A convenção por camada (bronze detecta / silver contrata / gold reconcilia) e o
+catálogo de testes genéricos estão em
+[`models/docs/convencao-testes-qualidade.md`](../docs/convencao-testes-qualidade.md)
+(change `testes-data-quality-dbt`).
+
+**`verificacao_tipagem` só roda no Postgres** (usa `information_schema`): no
+modo A (DuckDB local) o teste é pulado, então a checagem de tipo das colunas
+vale só na publicação (modos B/C). Os demais testes de qualidade rodam no modo
+A contra o `cidades.duckdb` local.

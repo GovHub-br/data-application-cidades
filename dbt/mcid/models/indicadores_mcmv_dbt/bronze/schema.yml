@@ -20,6 +20,11 @@ models:
       agentes. Complementa a série mensal SNH (que traz o acumulado).
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt).
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: apf
         description: APF do empreendimento (texto, cru).
@@ -52,6 +57,11 @@ models:
       agentes. Complementa a série mensal SNH (que traz o acumulado).
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt).
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: apf
         description: APF do empreendimento (texto, cru).

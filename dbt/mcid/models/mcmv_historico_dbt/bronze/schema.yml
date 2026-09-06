@@ -22,6 +22,13 @@ models:
       silver_mcmv_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_familia
         description: Constante `bases_relatorio_executivo` — discriminador da família na silver.
@@ -30,6 +37,55 @@ models:
           - accepted_values:
               arguments:
                 values: ["bases_relatorio_executivo"]
+      # Colunas de código com sufixo ".0" numa das gerações de schema desta
+      # família (a geração posterior traz `cod_munic_ibge` / `cod_apf` limpos).
+      # Teste em `warn` — defeito de origem, não regressão. Limpeza na silver.
+      # Ver docs/varredura-sufixo-float-texto.md.
+      - name: codmunicibge
+        description: Código IBGE do município (geração antiga; identificador textual).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: codapf
+        description: Código do APF (geração antiga; identificador textual).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: idregistro
+        description: Identificador de registro (geração antiga).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: id_mcmv
+        description: Identificador MCMV (geração antiga).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: cnpj
+        description: CNPJ (geração antiga; identificador textual).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: inumero_cnpj
+        description: CNPJ (variante `i*` de outra geração; identificador textual).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: ano
+        description: >
+          Ano (4 dígitos como texto). Chega com sufixo ".0" numa geração.
+          Não é propagado a silver (a série usa `dt_referencia`) — teste em
+          `warn` para rastrear.
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
       - name: report_date_parsed
         description: report_date normalizado, dentro da janela de plausibilidade.
       - name: source_file
@@ -58,6 +114,13 @@ models:
       silver_mcmv_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_familia
         description: Constante `min_cidades` — discriminador da família na silver.
@@ -94,6 +157,13 @@ models:
       silver_mcmv_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_familia
         description: Constante `entrada_bb` — discriminador da família na silver.
@@ -102,6 +172,37 @@ models:
           - accepted_values:
               arguments:
                 values: ["entrada_bb"]
+      # Colunas de código herdadas da fonte como TEXTO com sufixo ".0"
+      # (int -> float -> str a montante). Teste em `warn`: é defeito de origem
+      # conhecido, não regressão — o bronze é cópia fiel e não corrige. A
+      # limpeza (e o gate `error`) ficam na silver, via `strip_float_text`.
+      # Ver change testes-data-quality-dbt e docs/varredura-sufixo-float-texto.md.
+      - name: codigo_empreendimento_bb
+        description: Código do empreendimento no BB (identificador textual).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: codigo_do_ibge
+        description: Código IBGE do município (identificador textual).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: codigo_do_empreendimento
+        description: >
+          Código do empreendimento (geração tardia da família; poucas linhas).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: numero_da_operacao
+        description: >
+          Número da operação (geração tardia da família; poucas linhas).
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
       - name: report_date_parsed
         description: report_date normalizado, dentro da janela de plausibilidade.
       - name: source_file
@@ -130,6 +231,13 @@ models:
       silver_mcmv_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_familia
         description: Constante `bext` — discriminador da família na silver.
@@ -166,6 +274,13 @@ models:
       mês. A separação por frente é da silver.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS`.
@@ -198,6 +313,13 @@ models:
       mês. A separação por frente é da silver.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT054_MinisterioCidades_FAR_BB_EMPREENDIMENTOS`.
@@ -230,6 +352,13 @@ models:
       mês. A separação por frente é da silver.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS`.
@@ -262,6 +391,13 @@ models:
       mês. A separação por frente é da silver.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS`.
@@ -294,6 +430,13 @@ models:
       mês. A separação por frente é da silver.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS`.
@@ -327,6 +470,13 @@ models:
       usados pelo reloginho. Grão: empreendimento × mês.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, snh, reloginho]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: modalidade
         description: Frente informada pela fonte (FAR / Entidades / RURAL / Rural).
@@ -363,6 +513,13 @@ models:
       usados pelo reloginho. Grão: empreendimento × mês.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, snh, reloginho]
+    data_tests:
+      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # avisa se o conjunto de colunas divergir de
+      # seeds/data_quality/colunas_esperadas.csv. Nível warn.
+      - colunas_esperadas:
+          config:
+            severity: warn
     columns:
       - name: modalidade
         description: Frente informada pela fonte (FAR / Entidades / RURAL / Rural).
@@ -370,6 +527,33 @@ models:
         description: Constante `CAIXA` — derivado do nome do arquivo.
       - name: apf
         description: Autorização Para Financiamento — chave do empreendimento (texto, cru).
+      - name: codigo_ibge_do_municipio
+        description: >
+          Código IBGE do município (identificador textual). ~20% dos valores
+          preenchidos chegam com sufixo ".0" da fonte CAIXA (o agente BB não
+          tem a coluna). Teste em `warn`; limpeza na silver.
+          Ver docs/varredura-sufixo-float-texto.md.
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: cep_do_imovel
+        description: >
+          CEP do imóvel (identificador textual, 8 dígitos). Chega com sufixo
+          ".0" da fonte CAIXA. Não é propagado a nenhuma silver hoje — teste em
+          `warn` para rastrear. Ver docs/varredura-sufixo-float-texto.md.
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
+      - name: numero_do_imovel
+        description: >
+          Número do imóvel no logradouro (inteiro-texto). Chega com sufixo
+          ".0". Não propagado a silver — teste em `warn`.
+        data_tests:
+          - sem_sufixo_float_texto:
+              config:
+                severity: warn
       - name: prioridade_reentrega
         description: >
           Prioridade de desempate para reentregas do mesmo mês:

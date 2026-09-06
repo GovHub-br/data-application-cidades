@@ -178,17 +178,22 @@ with
             fonte_familia,
             coalesce(frente_hint, 'Nao classificada') as frente_mcmv,
             agente_financeiro,
-            nullif(trim(cast(chave_natural as varchar)), '') as chave_natural,
+            -- strip_float_text: os identificadores desta série chegam da fonte
+            -- como texto com sufixo ".0" (int->float->str a montante). Sem a
+            -- limpeza, `chave_natural`/`responsavel_id` não casam em join e o
+            -- `regexp_replace(\D)` do código IBGE transformaria "353470.0" em
+            -- "3534700". Ver docs/varredura-sufixo-float-texto.md.
+            {{ strip_float_text('chave_natural') }} as chave_natural,
             upper(nullif(trim(cast(uf_raw as varchar)), '')) as uf,
             regexp_replace(
-                nullif(trim(cast(codigo_ibge_raw as varchar)), ''), '\D', '', 'g'
+                {{ strip_float_text('codigo_ibge_raw') }}, '\D', '', 'g'
             ) as codigo_ibge_municipio,
             nullif(trim(cast(municipio_raw as varchar)), '') as municipio,
             lower(nullif(trim(cast(faixa_raw as varchar)), '')) as faixa,
             nullif(trim(cast(produto_raw as varchar)), '') as produto,
             nullif(trim(cast(nome_empreendimento as varchar)), '') as nome_empreendimento,
             nullif(trim(cast(responsavel_nome as varchar)), '') as responsavel_nome,
-            nullif(trim(cast(responsavel_id as varchar)), '') as responsavel_id,
+            {{ strip_float_text('responsavel_id') }} as responsavel_id,
 
             {{ parse_hist_bigint('uh_contratadas_raw') }} as uh_contratadas,
             {{ parse_hist_bigint('uh_entregues_raw') }} as uh_entregues,
