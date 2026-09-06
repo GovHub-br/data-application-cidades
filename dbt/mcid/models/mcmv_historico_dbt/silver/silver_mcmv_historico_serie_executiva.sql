@@ -295,6 +295,35 @@ with
                 order by report_date_parsed desc nulls last, source_file desc
             ) as rn
         from util
+    ),
+
+    -- situacao_derivada (D2 da change serie-historica-situacao-obra-regiao):
+    -- esta fonte NAO tem status_operacional; a situacao e derivada SO de
+    -- quantidade, com dominio e nome PROPRIOS — nunca confundir com a
+    -- situacao_canonica reportada das silvers por frente. regiao_* por join ao
+    -- seed dominio_regiao_uf sobre uf (min_cidades/bext antigos sem uf -> nula).
+    enriquecido_dominio as (
+        select
+            d.*,
+            case
+                when
+                    d.dt_contratacao is not null
+                    and coalesce(d.uh_entregues, 0) = 0
+                then 'contratada'
+                when
+                    d.uh_entregues > 0
+                    and d.uh_contratadas is not null
+                    and d.uh_entregues < d.uh_contratadas
+                then 'em_entrega'
+                when d.uh_contratadas > 0 and d.uh_entregues >= d.uh_contratadas
+                then 'concluida'
+                else 'nao_mapeada'
+            end as situacao_derivada,
+            dr.regiao_sigla,
+            dr.regiao_nome
+        from dedup d
+        left join {{ ref('dominio_regiao_uf') }} dr
+            on upper(trim(d.uf)) = upper(trim(dr.uf))
     )
 
 -- Lista explicita no lugar do `select * exclude (rn, conteudo_hash)` que estava
@@ -332,6 +361,9 @@ select
     report_date_parsed,
     source_file,
     hash_linha,
-    linha_ogu_fgts
-from dedup
+    linha_ogu_fgts,
+    situacao_derivada,
+    regiao_sigla,
+    regiao_nome
+from enriquecido_dominio
 where rn = 1

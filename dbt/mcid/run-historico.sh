@@ -104,6 +104,7 @@ SILVERS=(
 GOLDS=(
   gold_snapshot_empreendimento_atual
   gold_serie_mensal
+  gold_serie_situacao_mensal
 )
 
 build_one() {

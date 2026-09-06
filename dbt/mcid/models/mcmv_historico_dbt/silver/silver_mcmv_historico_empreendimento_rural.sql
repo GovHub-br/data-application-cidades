@@ -137,6 +137,32 @@ with
                 order by case fonte_serie when 'snh' then 0 else 1 end, source_file
             ) as rn
         from enriquecido
+    ),
+
+    -- situacao_canonica + regiao_* por left join aos seeds de referência
+    -- (D1/D3 da change serie-historica-situacao-obra-regiao): resolvidas uma
+    -- vez, depois da união e da dedup — status_operacional e uf já estão no
+    -- contrato comum de todos os braços (SFTP e SNH). status cru preservado.
+    -- Rural: ~8,5 k APF sem status na fonte → situacao_canonica = NULL.
+    enriquecido_dominio as (
+        select
+            d.*,
+            case
+                when nullif(trim(d.status_operacional), '') is null
+                then null
+                when lower(trim(d.status_operacional)) in ('null', 'nan')
+                then null
+                when ds.situacao_canonica is not null
+                then ds.situacao_canonica
+                else 'nao_mapeada'
+            end as situacao_canonica,
+            dr.regiao_sigla,
+            dr.regiao_nome
+        from dedup d
+        left join {{ ref('dominio_status') }} ds
+            on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
+        left join {{ ref('dominio_regiao_uf') }} dr
+            on upper(trim(d.uf)) = upper(trim(dr.uf))
     )
 
 select
@@ -176,6 +202,9 @@ select
     source_file,
     hash_linha,
     dt_ingest,
+    situacao_canonica,
+    regiao_sigla,
+    regiao_nome,
     current_timestamp as dt_silver
-from dedup
+from enriquecido_dominio
 where rn = 1

@@ -90,6 +90,32 @@ with
             ) as rn
         from tipado
         where dt_referencia is not null and agente_financeiro is not null
+    ),
+
+    -- situacao_canonica + regiao_* por left join aos seeds de referência
+    -- (D1/D3 da change serie-historica-situacao-obra-regiao), depois da dedup —
+    -- status_operacional cru e o grão (agente, apf, dt_referencia) intactos.
+    -- Os golds do reloginho projetam colunas explícitas e NÃO consomem estas —
+    -- saída dos golds inalterada.
+    enriquecido_dominio as (
+        select
+            d.*,
+            case
+                when nullif(trim(d.status_operacional), '') is null
+                then null
+                when lower(trim(d.status_operacional)) in ('null', 'nan')
+                then null
+                when ds.situacao_canonica is not null
+                then ds.situacao_canonica
+                else 'nao_mapeada'
+            end as situacao_canonica,
+            dr.regiao_sigla,
+            dr.regiao_nome
+        from dedup d
+        left join {{ ref('dominio_status') }} ds
+            on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
+        left join {{ ref('dominio_regiao_uf') }} dr
+            on upper(trim(d.uf)) = upper(trim(dr.uf))
     )
 
 select
@@ -107,6 +133,9 @@ select
     dt_contratacao,
     data_de_movimento,
     source_file,
-    hash_linha
-from dedup
+    hash_linha,
+    situacao_canonica,
+    regiao_sigla,
+    regiao_nome
+from enriquecido_dominio
 where rn = 1

@@ -31,10 +31,11 @@ models:
     description: >
       Gold — série histórica mensal do MCMV (pré-2024) para análise preditiva.
       Agrega a silver_mcmv_historico_serie_executiva por (dt_referencia,
-      fonte_familia, nivel_agregacao, uf, linha_ogu_fgts) via GROUPING SETS
-      (nacional + uf). NÃO somar entre fonte_familia (bases_relatório_executivo
-      e min_cidades se sobrepõem 2014-2016) — usar prioridade_familia para
-      escolher uma série contínua. Requer target staging_duckdb.
+      fonte_familia, nivel_agregacao, regiao_sigla, uf, linha_ogu_fgts) via
+      GROUPING SETS (nacional + regiao + uf). NÃO somar entre fonte_familia
+      (bases_relatório_executivo e min_cidades se sobrepõem 2014-2016) — usar
+      prioridade_familia para escolher uma série contínua. Requer target
+      staging_duckdb.
     meta:
       tags: [gold, mcmv, dados-historicos, serie-executiva, preditivo]
     columns:
@@ -51,7 +52,14 @@ models:
           - not_null
           - accepted_values:
               arguments:
-                values: ["nacional", "uf"]
+                values: ["nacional", "regiao", "uf"]
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) da silver. Chave no nível
+          'regiao'; enriquece as linhas de nível 'uf'; 'BR' no nível 'nacional';
+          'ND' onde a silver não tem uf. Adicional ao contrato.
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla). Nulo no nível 'nacional'. Adicional ao contrato.
       - name: linha_ogu_fgts
         data_tests:
           - not_null
@@ -59,3 +67,59 @@ models:
         description: Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
       - name: uh_entregues
         description: Soma de UH entregues no recorte.
+
+  - name: gold_serie_situacao_mensal
+    description: >
+      Gold — série histórica mensal de empreendimentos por SITUAÇÃO DE OBRA
+      canônica (2019-12 → mês corrente das silvers por frente). Grão:
+      (mes, frente_mcmv, situacao_canonica, nivel_geografico, uf, regiao_sigla),
+      com nivel_geografico ∈ {nacional, regiao, uf} via GROUPING SETS. Métricas
+      de ESTOQUE — n_empreendimentos (APF distintos na situação no mês), uh — e
+      de FLUXO — entradas / saidas da situação no mês, por lag(situacao_canonica)
+      particionado por (frente_mcmv, apf). **NÃO somar entradas / saidas entre
+      nivel_geografico** (cada transição de APF acontece numa única UF).
+      `fonte_serie` é a predominante do mês por frente — usar para anotar o pico
+      de paralisação de 2024 (virada SFTP→SNH), que o gold NÃO suaviza. Requer
+      target staging_duckdb.
+    meta:
+      tags: [gold, mcmv, dados-historicos, empreendimento, situacao-obra, "issue-59"]
+    columns:
+      - name: mes
+        description: Primeiro dia do mês de referência.
+        data_tests:
+          - not_null
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural"]
+      - name: situacao_canonica
+        description: Situação de obra canônica (pode ser 'nao_mapeada'; nunca NULL — linhas sem situação são excluídas do gold).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["nao_iniciada", "em_obras", "paralisada", "concluida", "cancelada", "nao_mapeada"]
+      - name: nivel_geografico
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["nacional", "regiao", "uf"]
+      - name: uf
+        description: UF no nível 'uf' ('ND' quando a silver não tem uf); 'BR' nos demais níveis.
+      - name: regiao_sigla
+        description: Macrorregião IBGE — chave no nível 'regiao', enriquece o nível 'uf', 'BR' no nacional.
+      - name: n_empreendimentos
+        description: APF distintos na situação naquele mês/recorte (estoque).
+      - name: uh
+        description: Soma de quantidade_uh na situação naquele mês/recorte (estoque).
+      - name: entradas
+        description: APF que ENTRARAM na situação no mês (mudança vinda de outra situação). Não somar entre nivel_geografico.
+      - name: saidas
+        description: APF que SAÍRAM da situação no mês. Não somar entre nivel_geografico.
+      - name: fonte_situacao
+        description: Origem da situação — 'reportada' (sempre, nesta fase; 'derivada' reservado para a série pré-2019).
+      - name: fonte_serie
+        description: fonte_serie predominante do mês por frente ('sftp' até 2024-11, 'snh' depois) — para anotar a descontinuidade de série.

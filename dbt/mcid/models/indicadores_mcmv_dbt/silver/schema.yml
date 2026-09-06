@@ -56,6 +56,34 @@ models:
         description: Hash MD5 herdado da bronze.
         data_tests:
           - not_null
+      - name: situacao_canonica
+        description: >
+          Situação de obra canônica (nao_iniciada / em_obras / paralisada /
+          concluida / cancelada) por join ao seed dominio_status sobre
+          lower(trim(status_operacional)). NULL quando status ausente;
+          'nao_mapeada' quando não casa. status_operacional cru preservado.
+          Não consumida pelos golds do reloginho. Change:
+          serie-historica-situacao-obra-regiao.
+        data_tests:
+          - dentro_do_dominio:
+              arguments:
+                seed: dominio_status
+                seed_column: situacao_canonica
+              config:
+                severity: warn
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) por join ao seed
+          dominio_regiao_uf sobre uf. Nula quando a linha não tem uf.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dominio_regiao_uf')
+                field: regiao_sigla
+              config:
+                severity: warn
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla).
 
   - name: silver_historico_snh_entregas_mes
     description: >

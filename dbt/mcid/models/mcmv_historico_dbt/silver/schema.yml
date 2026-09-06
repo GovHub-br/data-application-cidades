@@ -77,9 +77,37 @@ models:
       - name: percentual_execucao_fisica
         description: Percentual de execução física da obra.
       - name: status_operacional
-        description: Situação da obra/operação no snapshot.
+        description: Situação da obra/operação no snapshot (valor cru preservado).
       - name: dt_movimento
         description: Data de movimento da fonte (auxiliar; coalesce entre fontes).
+      - name: situacao_canonica
+        description: >
+          Situação de obra canônica (nao_iniciada / em_obras / paralisada /
+          concluida / cancelada), por join ao seed dominio_status sobre
+          lower(trim(status_operacional)). NULL quando status ausente;
+          'nao_mapeada' quando não casa no seed. Change:
+          serie-historica-situacao-obra-regiao.
+        data_tests:
+          - dentro_do_dominio:
+              arguments:
+                seed: dominio_status
+                seed_column: situacao_canonica
+              config:
+                severity: warn
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) por join ao seed
+          dominio_regiao_uf sobre uf. Nula quando a linha não tem uf (ex.: braço
+          SFTP INT059 do FDS).
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dominio_regiao_uf')
+                field: regiao_sigla
+              config:
+                severity: warn
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla).
 
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
@@ -153,3 +181,28 @@ models:
         description: Valor de subsídio/complemento FGTS (R$).
       - name: subsidio_ogu
         description: Valor de subsídio/complemento OGU (R$).
+      - name: situacao_derivada
+        description: >
+          Situação derivada SÓ de quantidade (esta fonte não tem
+          status_operacional): contratada / em_entrega / concluida /
+          nao_mapeada. Domínio e propósito DISTINTOS de situacao_canonica das
+          silvers por frente — nunca combinar as duas séries sem ressalva.
+          Change: serie-historica-situacao-obra-regiao (D2).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["contratada", "em_entrega", "concluida", "nao_mapeada"]
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) por join ao seed
+          dominio_regiao_uf sobre uf. Nula quando o registro não tem uf
+          (min_cidades e bext antigos).
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dominio_regiao_uf')
+                field: regiao_sigla
+              config:
+                severity: warn
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla).

@@ -60,6 +60,9 @@ select
     dt_movimento,
     fonte_tabela,
     source_file,
+    situacao_canonica,
+    regiao_sigla,
+    regiao_nome,
     dt_silver
 from ultimo
 where rn = 1
