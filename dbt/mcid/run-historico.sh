@@ -73,11 +73,11 @@ echo
 
 cd "$HERE"
 
-# 13 bronzes por familia (D5 da change pipeline-bronze-historica-destino-trocavel):
-# 2 agentes SNH + 5 interfaces GEFUS + 4 familias da serie executiva aqui, mais
-# 2 agentes de entregas no run-reloginho.sh. Ordem crescente de volume: as
-# maiores (min_cidades, bext) por ultimo. O mapa vive em
-# macros/historico/familias.sql.
+# Bronzes por familia (D5 da change pipeline-bronze-historica-destino-trocavel):
+# 2 agentes SNH + 5 interfaces GEFUS + 4 familias da serie executiva + 2 agentes
+# de entregas por evento (compartilhados com o reloginho, alimentam a espinha
+# silver_mcmv_historico_entrega_apf). Ordem crescente de volume: as maiores
+# (min_cidades, bext) por ultimo. O mapa vive em macros/historico/familias.sql.
 BRONZES=(
   bronze_mcmv_historico_empreendimento_snh_bb
   bronze_mcmv_historico_empreendimento_snh_caixa
@@ -90,6 +90,10 @@ BRONZES=(
   bronze_mcmv_historico_serie_bases_relatorio_executivo
   bronze_mcmv_historico_serie_min_cidades
   bronze_mcmv_historico_serie_bext
+  # entregas por evento (grao APF) — mesma fonte do reloginho; alimentam
+  # silver_mcmv_historico_entrega_apf (change enriquecer-datas-acompanhamento-historico).
+  bronze_reloginho_snh_entregas_evento_bb
+  bronze_reloginho_snh_entregas_evento_caixa
 )
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
@@ -102,6 +106,7 @@ SILVERS=(
   bronze_fds_cadastro_pj
   bronze_fds_mudanca_fase_eventos
   silver_atual_dim_empreendimento
+  silver_mcmv_historico_entrega_apf
   silver_mcmv_historico_empreendimento_far
   silver_mcmv_historico_empreendimento_fds
   silver_mcmv_historico_empreendimento_rural
@@ -110,6 +115,7 @@ SILVERS=(
 )
 GOLDS=(
   gold_snapshot_empreendimento_atual
+  gold_marco_empreendimento
   gold_serie_mensal
   gold_serie_situacao_mensal
 )

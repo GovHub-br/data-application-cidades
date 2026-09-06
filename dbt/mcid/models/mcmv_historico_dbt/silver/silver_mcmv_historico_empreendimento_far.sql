@@ -58,7 +58,11 @@ with
             nullif(trim(situacao_obra_gefus), '')::text as status_operacional,
             {{ parse_hist_date('dt_assinatura') }} as dt_contratacao,
             {{ parse_hist_date('dt_inicio_obra') }} as dt_inicio_obra,
-            {{ parse_hist_date('dt_ultima_entrega') }} as dt_entrega,
+            {{ parse_hist_date('dt_ultima_entrega') }} as dt_entrega_uh,
+            coalesce(
+                {{ parse_hist_date('dt_termino_obra') }},
+                {{ parse_hist_date('dt_legalizacao') }}
+            ) as dt_conclusao_obra,
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -95,7 +99,11 @@ with
             nullif(trim(situacao_obra), '')::text as status_operacional,
             {{ parse_hist_date('dt_contratacao') }} as dt_contratacao,
             {{ parse_hist_date('dt_inicio_obra') }} as dt_inicio_obra,
-            {{ parse_hist_date('dt_ultima_entrega') }} as dt_entrega,
+            {{ parse_hist_date('dt_ultima_entrega') }} as dt_entrega_uh,
+            coalesce(
+                {{ parse_hist_date('dt_termino_obra') }},
+                {{ parse_hist_date('dt_legalizacao') }}
+            ) as dt_conclusao_obra,
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -137,7 +145,16 @@ with
             max(dt_inicio_obra) over grao as dt_inicio_obra_grao,
             max(responsavel_id) over grao as responsavel_id_grao,
             max(responsavel_nome) over grao as responsavel_nome_grao,
-            max(dt_movimento) over grao as dt_movimento_grao
+            max(dt_movimento) over grao as dt_movimento_grao,
+            -- entrega/conclusao vem so do braco SFTP; na janela sobreposta
+            -- 2024-06..2024-11 a linha SNH vence a dedup e traz esses campos
+            -- nulos -- preserva o valor SFTP do mesmo grao (change
+            -- enriquecer-datas-acompanhamento-historico).
+            max(dt_entrega_uh) over grao as dt_entrega_uh_grao,
+            max(dt_conclusao_obra) over grao as dt_conclusao_obra_grao,
+            max(
+                case when dt_entrega_uh is not null then fonte_tabela end
+            ) over grao as fonte_entrega_uh_grao
         from unioned
         window grao as (partition by frente_mcmv, apf, dt_referencia)
     ),
@@ -161,6 +178,12 @@ with
     enriquecido_dominio as (
         select
             d.*,
+            -- espinha de entregas por APF (change enriquecer-datas-acompanhamento-historico):
+            -- fallback/refresh de dt_entrega_uh e quantidade_uh_entregues nas
+            -- lacunas do SFTP. Join por apf apenas (a espinha e atributo do APF,
+            -- nao serie mensal).
+            esp.dt_ultima_entrega as esp_dt_ultima_entrega,
+            esp.uh_entregues_acumulada as esp_uh_entregues,
             case
                 when nullif(trim(d.status_operacional), '') is null
                 then null
@@ -177,6 +200,8 @@ with
             on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
         left join {{ ref('dominio_regiao_uf') }} dr
             on upper(trim(d.uf)) = upper(trim(dr.uf))
+        left join {{ ref('silver_mcmv_historico_entrega_apf') }} esp
+            on d.apf = esp.apf
     )
 
 select
@@ -201,14 +226,37 @@ select
     coalesce(responsavel_id, responsavel_id_grao) as responsavel_id,
     coalesce(responsavel_nome, responsavel_nome_grao) as responsavel_nome,
     quantidade_uh,
-    quantidade_uh_entregues,
+    -- coalesce so age sobre NULL (0 explicito e informacao, nao ausencia)
+    coalesce(quantidade_uh_entregues, esp_uh_entregues) as quantidade_uh_entregues,
     valor_contratado,
     valor_desembolsado,
     percentual_execucao_fisica,
     status_operacional,
     dt_contratacao,
     coalesce(dt_inicio_obra, dt_inicio_obra_grao) as dt_inicio_obra,
-    dt_entrega,
+    -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING). Precedencia:
+    -- valor do braco SFTP da linha > mesmo valor preservado no grao > espinha SNH.
+    coalesce(dt_entrega_uh, dt_entrega_uh_grao, esp_dt_ultima_entrega) as dt_entrega_uh,
+    coalesce(dt_conclusao_obra, dt_conclusao_obra_grao) as dt_conclusao_obra,
+    case
+        when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null
+        then coalesce(
+            nullif(
+                'sftp:' || regexp_extract(
+                    coalesce(
+                        case when dt_entrega_uh is not null then fonte_tabela end,
+                        fonte_entrega_uh_grao
+                    ),
+                    '(INT[0-9]+)',
+                    1
+                ),
+                'sftp:'
+            ),
+            'sftp'
+        )
+        when esp_dt_ultima_entrega is not null
+        then 'snh:entrega_evento'
+    end as dt_entrega_uh_fonte,
     dt_referencia,
     coalesce(dt_movimento, dt_movimento_grao) as dt_movimento,
     fonte_serie,

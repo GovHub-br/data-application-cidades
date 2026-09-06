@@ -69,7 +69,12 @@ select
     status_operacional,
     dt_contratacao,
     dt_inicio_obra,
-    dt_entrega,
+    -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING; change
+    -- enriquecer-datas-acompanhamento-historico). dt_entrega_uh_fonte diz se o
+    -- valor veio do feed mensal (sftp[:INTxxx]) ou da espinha (snh:entrega_evento).
+    dt_entrega_uh,
+    dt_conclusao_obra,
+    dt_entrega_uh_fonte,
     dt_referencia,
     dt_movimento,
     fonte_tabela,

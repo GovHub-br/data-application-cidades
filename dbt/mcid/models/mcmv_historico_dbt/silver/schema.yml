@@ -88,7 +88,33 @@ models:
               config:
                 severity: warn
       - name: quantidade_uh_entregues
-        description: Unidades habitacionais entregues no snapshot.
+        description: >
+          Unidades habitacionais entregues (acumulado). coalesce(braço da linha,
+          valor preservado no grão, espinha silver_mcmv_historico_entrega_apf) —
+          só preenche NULL, nunca sobrescreve 0. Change:
+          enriquecer-datas-acompanhamento-historico.
+      - name: dt_entrega_uh
+        description: >
+          Data de entrega de unidades habitacionais (última). Substitui a antiga
+          `dt_entrega` (BREAKING). coalesce(dt_ultima_entrega do braço SFTP →
+          mesmo valor preservado no grão → espinha SNH por evento). FDS/Rural:
+          só a espinha nesta fase. Change: enriquecer-datas-acompanhamento-historico.
+      - name: dt_conclusao_obra
+        description: >
+          Data de conclusão física da obra / legalização. FAR:
+          coalesce(dt_termino_obra, dt_legalizacao) do SFTP; Rural:
+          dt_efetiva_conclusao; FDS: NULL nesta fase (escopo da change
+          destravar-datas-obra-entrega-silver-historico).
+      - name: dt_entrega_uh_fonte
+        description: >
+          Origem de `dt_entrega_uh`: `sftp[:INTxxx]` (feed mensal GEFUS),
+          `snh:entrega_evento` (espinha) ou NULL quando `dt_entrega_uh` é NULL.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["sftp", "sftp:INT040", "sftp:INT054", "sftp:INT057", "sftp:INT065", "snh:entrega_evento"]
+              config:
+                severity: warn
       - name: valor_contratado
         description: Valor contratado (R$), parse de formato brasileiro.
         data_tests:
@@ -153,6 +179,38 @@ models:
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, rural]
     columns: *contrato_empreendimento
+
+  - name: silver_mcmv_historico_entrega_apf
+    description: >
+      Silver — espinha de entregas por APF. Grão: 1 linha por `apf`. Consolida os
+      EVENTOS de entrega de UH da SNH (bronze_reloginho_snh_entregas_evento_bb /
+      _caixa, mesma fonte do reloginho) num atributo estável: dt_primeira_entrega,
+      dt_ultima_entrega, uh_entregues_acumulada, n_eventos, dt_ultimo_snapshot.
+      Dedup por hash de conteúdo (agente, apf, dt_evento, qtd) idêntico ao de
+      silver_historico_snh_entregas_mes — os totais reconciliam. As silvers
+      históricas por frente fazem left join por `apf` para resolver
+      dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP. Change:
+      enriquecer-datas-acompanhamento-historico. Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, entrega, espinha]
+    columns:
+      - name: apf
+        description: APF do empreendimento (chave da linha).
+        data_tests:
+          - not_null
+          - unique
+      - name: agente_financeiro
+        description: Agente do evento mais recente (BB / CAIXA).
+      - name: dt_primeira_entrega
+        description: Menor dt_evento de entrega do APF (evento deduplicado).
+      - name: dt_ultima_entrega
+        description: Maior dt_evento de entrega do APF.
+      - name: uh_entregues_acumulada
+        description: Soma das UH entregues em todos os eventos deduplicados do APF.
+      - name: n_eventos
+        description: Contagem de eventos de entrega deduplicados do APF.
+      - name: dt_ultimo_snapshot
+        description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
 
   - name: silver_mcmv_historico_serie_executiva
     description: >

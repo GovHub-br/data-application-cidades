@@ -1,6 +1,55 @@
 version: 2
 
 models:
+  - name: gold_marco_empreendimento
+    description: >
+      Gold — linha do tempo (marcos) por empreendimento (grão
+      coalesce(id_empreendimento, apf), alinhado ao gold_snapshot). 7 marcos,
+      cada um com `<marco>_fonte` e `<marco>_dt_snapshot`. Só seleciona entre
+      valores observados — nunca interpola.
+      Ordem: dt_contratacao / dt_inicio_obra vêm da linha "estado" vencedora
+      (fase mais avançada -> dt_referencia mais recente); dt_conclusao_obra e
+      dt_ultima_entrega são o MAIOR valor já resolvido na silver em qualquer
+      snapshot (dt_ultima_entrega considera também o max da espinha
+      silver_mcmv_historico_entrega_apf sobre todos os APFs de fase);
+      dt_primeira_entrega vem da espinha. dt_legalizacao / dt_previsao_entrega
+      nascem NULL nesta fase (escopo da change
+      destravar-datas-obra-entrega-silver-historico). `marcos_coerentes` é
+      diagnóstico. Change: enriquecer-datas-acompanhamento-historico. Requer
+      target staging_duckdb.
+    meta:
+      tags: [gold, mcmv, dados-historicos, empreendimento, marco, linha-do-tempo]
+    columns:
+      - name: id_empreendimento
+        description: Chave do empreendimento (= id_empreendimento no FDS, = apf em FAR/Rural).
+        data_tests:
+          - not_null
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural"]
+      - name: dt_contratacao_fonte
+        data_tests:
+          - not_null
+      - name: dt_ultima_entrega_fonte
+        description: >
+          Origem de dt_ultima_entrega: `sftp[:INTxxx]`, `snh:entrega_evento` ou
+          `sem_fonte`. Herda dt_entrega_uh_fonte da silver.
+        data_tests:
+          - not_null
+      - name: dt_previsao_entrega_fonte
+        description: Sempre 'sem_fonte' nesta fase (Open Question 1, lean).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["sem_fonte"]
+      - name: marcos_coerentes
+        description: Cadeia de datas coerente ignorando nulos. Diagnóstico — o modelo não corrige.
+        data_tests:
+          - not_null
+
   - name: gold_snapshot_empreendimento_atual
     description: >
       Gold — snapshot corrente (estado atual) derivado da silver histórica
@@ -50,6 +99,14 @@ models:
       - name: dt_referencia
         data_tests:
           - not_null
+      - name: dt_entrega_uh
+        description: >
+          Data de entrega de UH (substitui a antiga `dt_entrega`, BREAKING).
+          Herdada da silver por frente. Change: enriquecer-datas-acompanhamento-historico.
+      - name: dt_conclusao_obra
+        description: Data de conclusão física da obra / legalização. Herdada da silver.
+      - name: dt_entrega_uh_fonte
+        description: Origem de `dt_entrega_uh` (`sftp[:INTxxx]` / `snh:entrega_evento`).
       - name: fonte_tabela
         data_tests:
           - not_null

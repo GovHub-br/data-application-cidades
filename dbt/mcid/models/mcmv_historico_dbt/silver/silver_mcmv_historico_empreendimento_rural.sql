@@ -51,7 +51,8 @@ with
             nullif(trim(no_situacao_obra), '')::text as status_operacional,
             {{ parse_hist_date('dt_contrato') }} as dt_contratacao,
             null::date as dt_inicio_obra,
-            {{ parse_hist_date('dt_efetiva_conclusao') }} as dt_entrega,
+            null::date as dt_entrega_uh,
+            {{ parse_hist_date('dt_efetiva_conclusao') }} as dt_conclusao_obra,
             dt_referencia,
             {{ parse_hist_date('coalesce(idt_movimento, dt_movimento)') }}
             as dt_movimento,
@@ -88,7 +89,8 @@ with
             nullif(trim(no_situacao_obra), '')::text as status_operacional,
             {{ parse_hist_date('dt_contrato') }} as dt_contratacao,
             null::date as dt_inicio_obra,
-            {{ parse_hist_date('dt_efetiva_conclusao') }} as dt_entrega,
+            null::date as dt_entrega_uh,
+            {{ parse_hist_date('dt_efetiva_conclusao') }} as dt_conclusao_obra,
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -124,7 +126,15 @@ with
             *,
             max(responsavel_id) over grao as responsavel_id_grao,
             max(responsavel_nome) over grao as responsavel_nome_grao,
-            max(dt_movimento) over grao as dt_movimento_grao
+            max(dt_movimento) over grao as dt_movimento_grao,
+            -- conclusao vem so do braco SFTP (dt_efetiva_conclusao); entrega_uh
+            -- e sempre nula no Rural (OQ2 lean: so a espinha). Preserva ao longo
+            -- do grao p/ a janela sobreposta com o SNH.
+            max(dt_entrega_uh) over grao as dt_entrega_uh_grao,
+            max(dt_conclusao_obra) over grao as dt_conclusao_obra_grao,
+            max(
+                case when dt_entrega_uh is not null then fonte_tabela end
+            ) over grao as fonte_entrega_uh_grao
         from unioned
         window grao as (partition by frente_mcmv, apf, dt_referencia)
     ),
@@ -156,6 +166,10 @@ with
                 then ds.situacao_canonica
                 else 'nao_mapeada'
             end as situacao_canonica,
+            -- espinha de entregas por APF (change enriquecer-datas-acompanhamento-historico):
+            -- unica fonte de dt_entrega_uh do Rural (OQ2 lean: INT065 fica p/ A/C).
+            esp.dt_ultima_entrega as esp_dt_ultima_entrega,
+            esp.uh_entregues_acumulada as esp_uh_entregues,
             dr.regiao_sigla,
             dr.regiao_nome
         from dedup d
@@ -163,6 +177,8 @@ with
             on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
         left join {{ ref('dominio_regiao_uf') }} dr
             on upper(trim(d.uf)) = upper(trim(dr.uf))
+        left join {{ ref('silver_mcmv_historico_entrega_apf') }} esp
+            on d.apf = esp.apf
     )
 
 select
@@ -187,14 +203,22 @@ select
     coalesce(responsavel_id, responsavel_id_grao) as responsavel_id,
     coalesce(responsavel_nome, responsavel_nome_grao) as responsavel_nome,
     quantidade_uh,
-    quantidade_uh_entregues,
+    -- coalesce so age sobre NULL (0 explicito e informacao, nao ausencia)
+    coalesce(quantidade_uh_entregues, esp_uh_entregues) as quantidade_uh_entregues,
     valor_contratado,
     valor_desembolsado,
     percentual_execucao_fisica,
     status_operacional,
     dt_contratacao,
     dt_inicio_obra,
-    dt_entrega,
+    -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING). Rural: entrega_uh
+    -- so da espinha; dt_conclusao_obra do dt_efetiva_conclusao (SFTP INT057/065).
+    coalesce(dt_entrega_uh, dt_entrega_uh_grao, esp_dt_ultima_entrega) as dt_entrega_uh,
+    coalesce(dt_conclusao_obra, dt_conclusao_obra_grao) as dt_conclusao_obra,
+    case
+        when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null then 'sftp'
+        when esp_dt_ultima_entrega is not null then 'snh:entrega_evento'
+    end as dt_entrega_uh_fonte,
     dt_referencia,
     coalesce(dt_movimento, dt_movimento_grao) as dt_movimento,
     fonte_serie,

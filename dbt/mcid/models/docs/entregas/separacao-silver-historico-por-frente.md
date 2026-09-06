@@ -61,7 +61,15 @@ Negócio: `programa`, `frente_mcmv`, `grupo_linha`, `linha_mcmv`, `grao_registro
 `codigo_ibge_municipio`, `municipio`, `uf`, `responsavel_id`, `responsavel_nome`,
 `quantidade_uh`, `quantidade_uh_entregues`, `valor_contratado`,
 `valor_desembolsado`, `percentual_execucao_fisica`, `status_operacional`,
-`dt_contratacao`, `dt_inicio_obra`, `dt_entrega`, `dt_referencia`, `dt_movimento`.
+`dt_contratacao`, `dt_inicio_obra`, `dt_entrega_uh`, `dt_conclusao_obra`,
+`dt_entrega_uh_fonte`, `dt_referencia`, `dt_movimento`.
+
+> A antiga coluna única `dt_entrega` virou `dt_entrega_uh` (entrega de UH) +
+> `dt_conclusao_obra` (conclusão física) na change
+> `enriquecer-datas-acompanhamento-historico` — FAR mapeava de `dt_ultima_entrega`
+> e Rural de `dt_efetiva_conclusao`, conceitos diferentes no mesmo campo.
+> `dt_entrega_uh` é resolvida por `coalesce(braço SFTP, espinha
+> silver_mcmv_historico_entrega_apf)` e `dt_entrega_uh_fonte` diz de onde veio.
 
 Técnicas: `id_historico_snapshot` (`md5(frente|apf|dt_referencia)`, único),
 `id_negocio_historico` (`md5(programa|frente|apf)`, estável entre meses),

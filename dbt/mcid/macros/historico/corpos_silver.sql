@@ -55,8 +55,13 @@
             as status_operacional,
             {{ parse_hist_date('data_de_contratacao') }} as dt_contratacao,
             null::date as dt_inicio_obra,
+            -- Split semantico de dt_entrega (change enriquecer-datas-acompanhamento-historico):
+            -- dt_entrega_uh (entrega de UH) x dt_conclusao_obra (conclusao fisica).
+            -- No braco SNH so a CAIXA traz dt_entrega; data_de_termino / demais
+            -- ficam para a change destravar-datas-obra-entrega-silver-historico.
             {{ coalesce_present_parsed(rel, ['dt_entrega'], 'parse_hist_date', 'date') }}
-            as dt_entrega,
+            as dt_entrega_uh,
+            null::date as dt_conclusao_obra,
             dt_referencia,
             {{ parse_hist_date('data_de_movimento') }} as dt_movimento,
             'snh'::text as fonte_serie,
