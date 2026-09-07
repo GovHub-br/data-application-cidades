@@ -217,9 +217,12 @@ with
                 when grouping(regiao_sigla) = 0 or grouping(uf) = 0 then max(regiao_nome)
             end as regiao_nome,
             count(distinct chave_empreendimento) as n_empreendimentos,
-            sum(quantidade_uh) as uh,
-            sum(entrada) as entradas,
-            sum(saida) as saidas
+            -- cast p/ bigint: sum(bigint) -> HUGEINT (int128) no DuckDB, sem
+            -- tipo no Postgres (modo C).
+            -- Change: verificar-tipagem-silver-gold-historico.
+            cast(sum(quantidade_uh) as bigint) as uh,
+            cast(sum(entrada) as bigint) as entradas,
+            cast(sum(saida) as bigint) as saidas
         from eventos
         group by
             grouping sets (

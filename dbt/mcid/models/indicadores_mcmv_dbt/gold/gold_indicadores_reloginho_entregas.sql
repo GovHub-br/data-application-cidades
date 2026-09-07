@@ -43,15 +43,20 @@ with
         from {{ ref("gold_indicadores_reloginho") }}
     )
 
+-- cast p/ bigint em todas as colunas de contagem: sum(bigint) -> HUGEINT
+-- (int128) no DuckDB, sem tipo equivalente no Postgres (modo C).
+-- Change: verificar-tipagem-silver-gold-historico.
 select
     coalesce(e.agente_financeiro, s.agente_financeiro) as agente_financeiro,
     coalesce(e.dt_referencia, s.dt_referencia) as dt_referencia,
-    e.uh_entregues_evento_mes,
-    e.uh_entregues_evento_acum,
-    e.n_eventos,
+    cast(e.uh_entregues_evento_mes as bigint) as uh_entregues_evento_mes,
+    cast(e.uh_entregues_evento_acum as bigint) as uh_entregues_evento_acum,
+    cast(e.n_eventos as bigint) as n_eventos,
     e.n_apf_evento,
-    s.uh_entregues_snapshot,
-    e.uh_entregues_evento_acum - s.uh_entregues_snapshot as dif_evento_vs_snapshot
+    cast(s.uh_entregues_snapshot as bigint) as uh_entregues_snapshot,
+    cast(
+        e.uh_entregues_evento_acum - s.uh_entregues_snapshot as bigint
+    ) as dif_evento_vs_snapshot
 from evento_acum e
 full outer join
     snapshot s

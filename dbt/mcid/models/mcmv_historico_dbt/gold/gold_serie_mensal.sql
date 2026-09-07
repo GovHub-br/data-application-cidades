@@ -108,10 +108,13 @@ with
             case when grouping(uf) = 0 then uf else 'BR' end as uf,
             linha_ogu_fgts,
             count(distinct chave_natural) as n_registros,
-            sum(uh_contratadas) as uh_contratadas,
-            sum(uh_entregues) as uh_entregues,
-            sum(uh_concluidas) as uh_concluidas,
-            sum(uh_em_obras) as uh_em_obras,
+            -- cast p/ bigint: sum(bigint) -> HUGEINT (int128) no DuckDB, sem
+            -- tipo no Postgres (modo C). Total nacional ~1,5 M cabe em bigint.
+            -- Change: verificar-tipagem-silver-gold-historico.
+            cast(sum(uh_contratadas) as bigint) as uh_contratadas,
+            cast(sum(uh_entregues) as bigint) as uh_entregues,
+            cast(sum(uh_concluidas) as bigint) as uh_concluidas,
+            cast(sum(uh_em_obras) as bigint) as uh_em_obras,
             -- BREAKING (change vocabulario-e-qualidade-financeira-historica, D1):
             -- valores de estoque ganham o sufixo _acumulado e o desembolso passa
             -- ao nome canonico. Mapa nome-antigo -> nome-novo no schema.yml e em
@@ -148,7 +151,7 @@ with
             -- correcao de grao da silver. `uh_em_obras` ja estava no contrato
             -- (posicao preservada acima). natureza_serie / "nao somar entre
             -- meses" valem igual as demais colunas de UH.
-            sum(uh_comercializadas) as uh_comercializadas
+            cast(sum(uh_comercializadas) as bigint) as uh_comercializadas
         from base
         group by
             grouping sets (

@@ -61,9 +61,21 @@ Contagens esperadas no build local: ~1 k excedências e ~13 k regressões no FAR
 
 ## Tipagem (`verificacao_tipagem`)
 
-Só roda no **Postgres** (usa `information_schema`). No modo A (DuckDB local) é
-pulado. A checagem de tipo vale na publicação (modos B/C) — fora do escopo da
-change `testes-data-quality-dbt` (D7/D9).
+Teste de coluna: compara `information_schema.columns.data_type` da coluna
+materializada com um `tipo_esperado` (string exata). Resolve a tabela pelo
+relation do modelo (`model.schema` / `model.identifier`).
+
+Change `verificar-tipagem-silver-gold-historico` (2026-09-07): os `tipo_esperado`
+nos `schema.yml` de `mcmv_historico_dbt` e `indicadores_mcmv_dbt` usam os nomes
+do **DuckDB** (`BIGINT`, `VARCHAR`, `DECIMAL(15,2)`, `DOUBLE`, `DATE`,
+`TIMESTAMP WITH TIME ZONE`) — o teste roda e passa no **modo A** (build local).
+Referência dos tipos canônicos: `mcmv_historico_dbt/docs/inventario-tipagem-silver-gold.md`.
+
+Numa materialização no Postgres (modos B/C) os nomes de `data_type` mudam
+(`bigint`, `character varying`, `numeric`, `double precision`, ...); os
+`tipo_esperado` precisam de uma revisão nessa ocasião. Como
+`mcmv_historico_dbt` / `indicadores_mcmv_dbt` não estão em prod hoje, a versão
+DuckDB é a útil.
 
 ## Severidade — como declarar
 

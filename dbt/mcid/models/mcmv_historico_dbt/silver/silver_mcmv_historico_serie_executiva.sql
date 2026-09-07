@@ -432,11 +432,16 @@ with
             max(responsavel_nome) as responsavel_nome,
             max(responsavel_id) as responsavel_id,
 
-            sum(uh_contratadas) as uh_contratadas,
-            sum(uh_entregues) as uh_entregues,
-            sum(uh_concluidas) as uh_concluidas,
-            sum(uh_em_obras) as uh_em_obras,
-            sum(uh_comercializadas) as uh_comercializadas,
+            -- cast p/ bigint: sum(bigint) devolve HUGEINT (int128) no DuckDB,
+            -- sem tipo equivalente no Postgres (modo C). O grão pré-2019 tem
+            -- max ~12 k UH/linha; o total nacional agregado no gold_serie_mensal
+            -- ~1,5 M — cabe em bigint com folga.
+            -- Change: verificar-tipagem-silver-gold-historico.
+            cast(sum(uh_contratadas) as bigint) as uh_contratadas,
+            cast(sum(uh_entregues) as bigint) as uh_entregues,
+            cast(sum(uh_concluidas) as bigint) as uh_concluidas,
+            cast(sum(uh_em_obras) as bigint) as uh_em_obras,
+            cast(sum(uh_comercializadas) as bigint) as uh_comercializadas,
 
             sum(valor_investimento) as valor_investimento,
             sum(valor_financiamento) as valor_financiamento,

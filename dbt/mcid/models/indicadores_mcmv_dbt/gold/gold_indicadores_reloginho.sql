@@ -30,9 +30,12 @@ with
         select
             agente_financeiro,
             dt_referencia,
-            coalesce(sum(uh_contratadas), 0) as uh_contratadas,
-            coalesce(sum(uh_entregues), 0) as uh_entregues,
-            coalesce(sum(uh_vigentes), 0) as uh_vigentes,
+            -- cast p/ bigint: sum(bigint) no DuckDB devolve HUGEINT (int128),
+            -- sem tipo equivalente no Postgres (modo C). Valores nacionais
+            -- ~1,5 M cabem em bigint. Change: verificar-tipagem-silver-gold-historico.
+            cast(coalesce(sum(uh_contratadas), 0) as bigint) as uh_contratadas,
+            cast(coalesce(sum(uh_entregues), 0) as bigint) as uh_entregues,
+            cast(coalesce(sum(uh_vigentes), 0) as bigint) as uh_vigentes,
             count(distinct apf) as n_apf
         from base
         group by agente_financeiro, dt_referencia

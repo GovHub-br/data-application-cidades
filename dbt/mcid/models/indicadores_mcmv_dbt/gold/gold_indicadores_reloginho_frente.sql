@@ -25,9 +25,11 @@ with
             agente_financeiro,
             frente_mcmv,
             dt_referencia,
-            coalesce(sum(uh_contratadas), 0) as uh_contratadas,
-            coalesce(sum(uh_entregues), 0) as uh_entregues,
-            coalesce(sum(uh_vigentes), 0) as uh_vigentes,
+            -- cast p/ bigint: sum(bigint) -> HUGEINT no DuckDB, sem tipo no
+            -- Postgres. Change: verificar-tipagem-silver-gold-historico.
+            cast(coalesce(sum(uh_contratadas), 0) as bigint) as uh_contratadas,
+            cast(coalesce(sum(uh_entregues), 0) as bigint) as uh_entregues,
+            cast(coalesce(sum(uh_vigentes), 0) as bigint) as uh_vigentes,
             count(distinct apf) as n_apf
         from base
         where frente_mcmv is not null

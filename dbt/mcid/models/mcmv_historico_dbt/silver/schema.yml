@@ -26,11 +26,16 @@ models:
             tolerancia: 5
           config: { severity: warn }
     columns: &contrato_empreendimento
+      # verificacao_tipagem (change verificar-tipagem-silver-gold-historico):
+      # tipo_esperado nos nomes do DuckDB (modo A). Ref:
+      # docs/inventario-tipagem-silver-gold.md. As 3 silvers por frente + o
+      # gold_snapshot_empreendimento_atual compartilham este contrato de tipos.
       - name: id_historico_snapshot
         description: Chave técnica única por frente, APF e mês de referência.
         data_tests:
           - not_null
           - unique
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: id_negocio_historico
         description: Chave lógica estável (programa + frente + APF), constante entre meses.
         data_tests:
@@ -48,6 +53,7 @@ models:
         description: APF / contrato do empreendimento (chave física da linha).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: codigo_empreendimento
         description: >
           Chave estável de empreendimento. FDS: id_empreendimento (hash do
@@ -80,10 +86,12 @@ models:
           docs/varredura-sufixo-float-texto.md.
         data_tests:
           - sem_sufixo_float_texto
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: dt_referencia
         description: Mês de referência do snapshot (nome do arquivo).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: fonte_serie
         description: Origem da linha mantida na dedup.
         data_tests:
@@ -102,6 +110,7 @@ models:
                 min_pct: 0.80
               config:
                 severity: warn
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_entregues
         description: >
           Unidades habitacionais entregues (acumulado). coalesce(braço da linha,
@@ -118,6 +127,7 @@ models:
           - quantidade_nao_excede_referencia:
               arguments: { reference: quantidade_uh, fator: 1.0 }
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_concluidas
         description: >
           Unidades habitacionais com obra concluída (estágio anterior a
@@ -132,6 +142,7 @@ models:
           - quantidade_nao_excede_referencia:
               arguments: { reference: quantidade_uh, fator: 1.0 }
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_entrega_uh
         description: >
           Data de entrega de unidades habitacionais (última). Substitui a antiga
@@ -141,6 +152,8 @@ models:
           espinha (INT057 não tem a coluna). Changes:
           enriquecer-datas-acompanhamento-historico +
           destravar-datas-obra-entrega-silver-historico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_conclusao_obra
         description: >
           Data de conclusão física da obra / legalização. FDS/FAR:
@@ -148,17 +161,23 @@ models:
           dt_efetiva_conclusao. Braço SNH: NULL — `data_do_termino` do snapshot
           SNH é 0% preenchido para FAR/FDS/Rural (change
           destravar-datas-obra-entrega-silver-historico, task 7.5).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_previsao_entrega
         description: >
           Data prevista de entrega, reportada pelo braço SNH
           (`data_da_previsao_da_entrega`, ISO). NULL no braço SFTP. Fill baixo
           (~2% dos APFs — só o SNH reporta). Change:
           destravar-datas-obra-entrega-silver-historico (resolve a OQ1 do B+D).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: qt_uh_previsao_entrega
         description: >
           Unidades habitacionais previstas para entrega, braço SNH —
           coalesce(qt_uh_previsao_entrega, unidades_habitacionais_a_serem_entregues).
           NULL no braço SFTP. Change: destravar-datas-obra-entrega-silver-historico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_entrega_uh_fonte
         description: >
           Origem de `dt_entrega_uh`: `sftp:INTxxx` (feed mensal GEFUS —
@@ -186,6 +205,7 @@ models:
           # vocabulario-e-qualidade-financeira-historica (D7/8.3).
           - valor_nao_negativo:
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(15,2)" } }
       - name: valor_desembolsado
         description: >
           Valor desembolsado/liberado (R$) — conceito canônico
@@ -196,12 +216,17 @@ models:
           - acumulado_nao_regride:
               arguments: { partition_by: apf, order_by: dt_referencia }
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(15,2)" } }
       - name: percentual_execucao_fisica
         description: Percentual de execução física da obra.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
       - name: status_operacional
         description: Situação da obra/operação no snapshot (valor cru preservado).
       - name: dt_movimento
         description: Data de movimento da fonte (auxiliar; coalesce entre fontes).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: situacao_canonica
         description: >
           Situação de obra canônica (nao_iniciada / em_obras / paralisada /
@@ -240,22 +265,30 @@ models:
           (`quantidade_de_uhs_distratadas`); NULL nos braços SFTP. `0` (zero
           distratos) é informação, distinto de NULL (fonte omissa). Valores > 0
           são raros (~centenas de linhas).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_vigentes
         description: >
           UH vigentes reportadas pela SNH (`uh_vigentes` ∪ `uhs_vigentes` por
           agente). NULL nos braços SFTP. Reconcilia com `quantidade_uh −
           quantidade_uh_distratadas` só em ~10-18% das linhas (timing / split de
           coluna) — daí o teste de reconciliação ser `warn`.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_ociosas
         description: >
           UH entregues e desocupadas. Braços SFTP INT040/INT054
           (`qt_unidades_ociosas`; sentinela `-1` → NULL). NULL em
           INT059/INT057/INT065 e no braço SNH.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_inicial
         description: >
           UH no escopo inicial do empreendimento. Braço SFTP INT065
           (`qtde_uh_inicial`) — diverge de `quantidade_uh` em ~7% dos APF-mês
           (corte de escopo, sinal de distress). NULL nos demais braços.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: cod_pendencia_obra
         description: >
           Código de pendência de obra, texto cru (INT040/INT054;
@@ -268,6 +301,8 @@ models:
           (INT057 / Rural BB) quando disponível; senão `derivada` como
           `valor_desembolsado / valor_contratado * 100` quando ambos existem e
           `valor_contratado > 0`; senão NULL.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
       - name: percentual_execucao_financeira_fonte
         description: Origem de `percentual_execucao_financeira`.
         data_tests:
@@ -281,6 +316,8 @@ models:
           `percentual_execucao_financeira − percentual_execucao_fisica` em pontos
           percentuais. NULL se qualquer operando for NULL. Negativo (financeiro à
           frente do físico) NÃO é truncado — é o sinal de risco.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
       - name: fonte_valor
         description: >
           `observado` (snapshot real) ou `carregado` (carry-forward do snapshot
@@ -295,6 +332,8 @@ models:
         description: >
           Mês da observação real que originou a linha: = `dt_referencia` nas
           linhas `observado`; mês da última observação nas linhas `carregado`.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
 
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
@@ -363,16 +402,25 @@ models:
         data_tests:
           - not_null
           - unique
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: agente_financeiro
         description: Agente do evento mais recente (BB / CAIXA).
       - name: dt_primeira_entrega
         description: Menor dt_evento de entrega do APF (evento deduplicado).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_ultima_entrega
         description: Maior dt_evento de entrega do APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: uh_entregues_acumulada
         description: Soma das UH entregues em todos os eventos deduplicados do APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_eventos
         description: Contagem de eventos de entrega deduplicados do APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_ultimo_snapshot
         description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
 
@@ -408,16 +456,22 @@ models:
       - name: apf
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: dt_referencia
         description: Mês do snapshot (1º dia).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: pc_obra_prevista
         description: >
           Percentual de obra PREVISTO (curva planejada) — o sinal central desta
           silver, ~100% preenchido na janela.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
       - name: pc_obra_realizada
         description: Percentual de obra REALIZADO no snapshot (~100% preenchido).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
       - name: co_situacao_obra
         description: >
           Código de situação da obra/operação (FAR `co_situacao_obra`; FDS/Rural
@@ -444,12 +498,20 @@ models:
           NULL no FAR). 0% preenchido na janela atual.
       - name: qt_uh_alienadas
         description: UH alienadas (`qt_uh_alienada`). Bem preenchido no Rural (~100%); raro no FDS; 0% no FAR.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: qt_uh_concluidas
         description: UH concluídas — 0% preenchida neste feed (vem do feed de empreendimento, não do de obra).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_conclusao_obra
         description: Data de conclusão de obra reportada pelo feed de obra.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_entrega
         description: Data de entrega do empreendimento (`dt_entrega_do_empreendimento`).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: source_file
         description: Caminho do parquet de origem.
         data_tests:
@@ -459,9 +521,10 @@ models:
     description: >
       Silver — série executiva histórica no contrato comum. Aplica o mapa de
       colunas (doc issue-130-proposta-bronze-series-historicas.md) via
-      coalesce_present(), tipa (UH→bigint, valores R$→numeric(15,2) via
-      parse_hist_numeric — mesmo tipo das fichas atuais; ausência preservada
-      como NULL, não 0.00 — %→double, datas→date).
+      coalesce_present(), tipa (UH→bigint — `cast(sum(...) as bigint)`, senão
+      SUM daria HUGEINT sem tipo no Postgres; valores R$→numeric(15,2) via
+      parse_hist_numeric, que a agregação SUM alarga para numeric(38,2);
+      ausência preservada como NULL, não 0.00 — %→double, datas→date).
       Grão: 1 linha por (fonte_familia, chave_natural, dt_referencia) — o
       EMPREENDIMENTO (bases_relatorio_executivo, entrada_bb) ou o CONTRATO PF
       (bext, min_cidades) inteiro no mês, agregado (SUM) das linhas de movimento
@@ -512,6 +575,7 @@ models:
         description: Mês do snapshot.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       # Identificadores já limpos por strip_float_text — gate `error`: uma
       # falha aqui significa regressão da limpeza (o bronze correspondente
       # segue em `warn`). Ver docs/varredura-sufixo-float-texto.md.
@@ -519,6 +583,7 @@ models:
         description: Chave natural do registro (código de empreendimento/contrato), sem sufixo ".0".
         data_tests:
           - sem_sufixo_float_texto
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: codigo_ibge_municipio
         description: Código IBGE do município (só dígitos), sem sufixo ".0".
         data_tests:
@@ -544,11 +609,14 @@ models:
       # quantidade_nao_excede_referencia (`warn`) trava o aninhamento em
       # uh_contratadas (uh_comercializadas NÃO é aninhada com uh_entregues —
       # ver o doc de auditoria).
+      # verificacao_tipagem BIGINT: cast(sum(...) as bigint) — sem o cast, SUM
+      # daria HUGEINT. Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
         description: UH contratadas do empreendimento/contrato no mês (soma das linhas de movimento).
         data_tests:
           - valor_nao_negativo:
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
         description: UH entregues (acumulado no snapshot).
         data_tests:
@@ -557,6 +625,7 @@ models:
           - quantidade_nao_excede_referencia:
               arguments: { reference: uh_contratadas, fator: 1.0 }
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_concluidas
         description: UH com obra concluída (acumulado no snapshot).
         data_tests:
@@ -565,6 +634,7 @@ models:
           - quantidade_nao_excede_referencia:
               arguments: { reference: uh_contratadas, fator: 1.0 }
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_em_obras
         description: UH em obras no snapshot (medida paralela, não aninhada com entregues/concluídas).
         data_tests:
@@ -573,6 +643,7 @@ models:
           - quantidade_nao_excede_referencia:
               arguments: { reference: uh_contratadas, fator: 1.0 }
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_comercializadas
         description: >
           UH vendidas/reservadas ao beneficiário (antecede a entrega física —
@@ -584,6 +655,7 @@ models:
           - quantidade_nao_excede_referencia:
               arguments: { reference: uh_contratadas, fator: 1.0 }
               config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: grao_familia
         description: >
           Grão da família: 'contrato' (bext e min_cidades — extrato de contrato
@@ -626,6 +698,9 @@ models:
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
+          # DECIMAL(38,2): parse_hist_numeric dá numeric(15,2); a agregação SUM
+          # alarga para (38,2). Change: verificar-tipagem-silver-gold-historico.
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(38,2)" } }
       - name: valor_financiamento
         description: >
           Conceito canônico `valor_financiamento` — operação de crédito

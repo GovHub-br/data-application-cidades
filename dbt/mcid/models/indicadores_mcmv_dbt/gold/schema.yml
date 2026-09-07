@@ -131,6 +131,7 @@ models:
           histórico (YYYMM, ex. 2026-03-01 para historico_recente_202603_...).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: agente_financeiro
         description: >
           Agente financeiro da série SNH (normalizado em maiúsculas). Valores
@@ -139,18 +140,26 @@ models:
           - not_null
           - accepted_values:
               values: ["BB", "CAIXA"]
+      # verificacao_tipagem: cast(... as bigint) — sum(bigint) daria HUGEINT,
+      # sem tipo no Postgres. Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
         description: Soma de unidades habitacionais contratadas no mês de referência.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
         description: Soma acumulada de unidades habitacionais entregues no mês de referência.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
         description: Soma de unidades habitacionais vigentes no mês de referência.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf
         description: Número de APFs distintos considerados no mês de referência após a dedup.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_meses_observados
         description: >
           Contagem corrida de meses observados por agente até a linha atual
@@ -176,6 +185,7 @@ models:
         description: Data de referência (primeiro dia do mês).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: agente_financeiro
         description: Agente financeiro (BB ou CAIXA).
         data_tests:
@@ -188,18 +198,25 @@ models:
           - not_null
           - accepted_values:
               values: ["FAR", "Entidades", "Rural"]
+      # verificacao_tipagem: cast(... as bigint). Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
         description: Soma de unidades habitacionais contratadas no mês, na frente.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
         description: Soma acumulada de unidades habitacionais entregues no mês, na frente.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
         description: Soma de unidades habitacionais vigentes no mês, na frente.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf
         description: Número de APFs distintos no mês, na frente, após a dedup.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_meses_observados
         description: Contagem corrida de meses observados por (agente, frente).
 
@@ -221,14 +238,24 @@ models:
         description: Primeiro dia do mês de referência.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # verificacao_tipagem: cast(... as bigint). Change: verificar-tipagem-silver-gold-historico.
       - name: uh_entregues_evento_mes
         description: UH entregues no mês (fluxo, da silver de evento).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_evento_acum
         description: Soma corrida do fluxo de entregas até o mês.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_snapshot
         description: UH entregues acumuladas reportadas no snapshot (indicadores_reloginho).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dif_evento_vs_snapshot
         description: uh_entregues_evento_acum menos uh_entregues_snapshot.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
   - name: gold_resumo_reloginho_dashboard
     description: >
@@ -255,20 +282,33 @@ models:
         description: Último dt_referencia observado para o agente.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # verificacao_tipagem: bigint herdado do gold_indicadores_reloginho (cast).
+      # Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas_ultimo
         description: Unidades habitacionais contratadas no último mês observado.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_ultimo
         description: Unidades habitacionais entregues (acumulado) no último mês observado.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes_ultimo
         description: Unidades habitacionais vigentes no último mês observado.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf_ultimo
         description: Número de APFs distintos no último mês observado.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_meses_observados
         description: Total de meses observados na série do agente.
       - name: ritmo_medio_mensal
         description: >
           Ritmo médio mensal de entregas = uh_entregues do último mês dividido
           pelo número de meses observados.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
 
   - name: gold_resumo_gargalo_desempenho_dashboard
     description: >

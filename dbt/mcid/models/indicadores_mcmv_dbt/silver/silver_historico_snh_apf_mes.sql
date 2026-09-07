@@ -8,7 +8,14 @@
 -- explícita e idêntica por braço. A view intermediária
 -- bronze_reloginho_snh_serie_mensal, que era um passthrough sobre a bronze
 -- única, deixou de existir junto com ela. Aplica:
--- * tipagem  — texto -> bigint (UH) / date (datas);
+-- * tipagem  — texto -> bigint (UH) / date (datas). As contagens de UH usam
+-- coalesce_present_parsed(['uh_contratadas','uhs_contratadas'], 'parse_hist_bigint')
+-- porque a SNH BB muda o NOME da coluna por safra: `uhs_*` nos snapshots
+-- 2024-06/07/10/11 e 2025-01, `uh_*` a partir de 2025-03. A CAIXA usa sempre
+-- `uh_*` e não tem `uhs_*` — daí coalesce_present (introspecção por família) e
+-- não um coalesce cru, que quebraria o braço CAIXA. Sem isso ~7,7 k linhas BB
+-- (37% do agente) viravam NULL e o gold_indicadores_reloginho do BB lia 0 UH
+-- nesses 5 meses. Mesmo tratamento do silver_historico_snh_arm (silver por frente).
 -- * normalização de domínio — agente_financeiro em maiúsculas (BB/CAIXA) e
 -- frente_mcmv canônica a partir de `modalidade` (FAR / Entidades / Rural —
 -- resolve o RURAL vs Rural entre CAIXA e BB, decisão #6 do
@@ -58,9 +65,18 @@ with
             try_cast(
                 nullif(trim(data_de_movimento::text), '') as date
             ) as data_de_movimento,
-            try_cast(nullif(trim(uh_contratadas::text), '') as bigint) as uh_contratadas,
-            try_cast(nullif(trim(uh_entregues::text), '') as bigint) as uh_entregues,
-            try_cast(nullif(trim(uh_vigentes::text), '') as bigint) as uh_vigentes,
+            -- Nome da coluna varia por safra na SNH BB (`uhs_*` até 2025-01,
+            -- `uh_*` a partir de 2025-03); CAIXA só tem `uh_*`. coalesce_present
+            -- resolve por família em tempo de compilação.
+            {{ coalesce_present_parsed(
+                ref(f.modelo), ["uh_contratadas", "uhs_contratadas"], "parse_hist_bigint", "bigint"
+            ) }} as uh_contratadas,
+            {{ coalesce_present_parsed(
+                ref(f.modelo), ["uh_entregues", "uhs_entregues"], "parse_hist_bigint", "bigint"
+            ) }} as uh_entregues,
+            {{ coalesce_present_parsed(
+                ref(f.modelo), ["uh_vigentes", "uhs_vigentes"], "parse_hist_bigint", "bigint"
+            ) }} as uh_vigentes,
             -- distrato de UH (change enriquecer-quantidades-uh-e-sinais-obra-historico):
             -- só a SNH reporta; 0 é informação, distinto de NULL. Ambos os
             -- agentes trazem a coluna `quantidade_de_uhs_distratadas`.

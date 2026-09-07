@@ -13,6 +13,14 @@
 -- mes_evento = mes de dt_entrega/dt_ass_doc (quando a UH foi entregue), NAO o
 -- dt_referencia do arquivo. Assim a serie e um fluxo real de entregas.
 --
+-- Tipagem/nome de coluna: NAO ha o problema de variante `uh_*`/`uhs_*` que
+-- afeta a serie mensal (silver_historico_snh_apf_mes). A bronze
+-- bronze_snh_entregas ja harmoniza os nomes divergentes por agente
+-- (`qt_uh_entregues` CAIXA / `numero_de_unidades_entregues` BB) via
+-- coalesce_present_cols, expondo `qt_uh_entregues_evento` (bigint) que este
+-- modelo apenas soma. Verificado 2026-09-07 (change
+-- verificar-tipagem-silver-gold-historico, task 1.4).
+--
 -- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
 -- atachado em `prod_duckdb`.
 {% set entregas_familias = familias_snh_entregas() %}
@@ -65,7 +73,9 @@ select
     agente_financeiro,
     apf,
     mes_evento,
-    sum(qt_uh_entregues_evento) as uh_entregues_evento_mes,
+    -- cast p/ bigint: sum(bigint) -> HUGEINT no DuckDB, sem tipo no Postgres
+    -- (modo C). Change: verificar-tipagem-silver-gold-historico.
+    cast(sum(qt_uh_entregues_evento) as bigint) as uh_entregues_evento_mes,
     count(*) as n_eventos,
     min(dt_snapshot) as dt_primeiro_snapshot
 from dedup

@@ -33,16 +33,45 @@ models:
         description: Autorização Para Financiamento — chave do empreendimento.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: dt_referencia
         description: Primeiro dia do mês de referência (derivado do nome do arquivo).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # completude_minima (warn) — guarda contra regressão de mapeamento de
+      # coluna. A SNH BB troca o nome (`uh_*` <-> `uhs_*`) por safra; o modelo
+      # resolve as duas via coalesce_present. Se uma safra futura renomear de
+      # novo e o modelo não acompanhar, a cobertura cai (cada safra ~0,4% das
+      # linhas) e o teste avisa. Cobertura observada pós-correção ~99,8%.
+      # Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
-        description: Unidades habitacionais contratadas do APF no snapshot do mês.
+        description: >
+          Unidades habitacionais contratadas do APF no snapshot do mês. Lê
+          `uh_contratadas` ou `uhs_contratadas` conforme a safra (coalesce_present).
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.97 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
-        description: Unidades habitacionais entregues (acumulado) do APF no snapshot do mês.
+        description: >
+          Unidades habitacionais entregues (acumulado) do APF no snapshot do mês.
+          Lê `uh_entregues` ou `uhs_entregues` conforme a safra.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.97 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
-        description: Unidades habitacionais vigentes do APF no snapshot do mês.
+        description: >
+          Unidades habitacionais vigentes do APF no snapshot do mês. Lê
+          `uh_vigentes` ou `uhs_vigentes` conforme a safra.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.97 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_distratadas
         description: >
           UH distratadas (acumulado) do APF no snapshot do mês, de
@@ -51,6 +80,8 @@ models:
           enriquecer-quantidades-uh-e-sinais-obra-historico. Grão
           (agente_financeiro, apf, dt_referencia) e saída dos golds do reloginho
           inalterados.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uf
         description: UF do empreendimento (maiúsculas).
       - name: codigo_ibge_municipio
@@ -60,6 +91,7 @@ models:
           docs/varredura-sufixo-float-texto.md.
         data_tests:
           - sem_sufixo_float_texto
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: hash_linha
         description: Hash MD5 herdado da bronze.
         data_tests:
@@ -113,11 +145,17 @@ models:
         description: APF do empreendimento.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: mes_evento
         description: Primeiro dia do mês em que a UH foi entregue.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: uh_entregues_evento_mes
-        description: UH entregues no mês, por APF (fluxo).
+        description: UH entregues no mês, por APF (fluxo). `cast(... as bigint)` — sum(bigint) daria HUGEINT.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_eventos
         description: Número de eventos de entrega deduplicados no mês/APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }

@@ -103,7 +103,10 @@ catálogo de testes genéricos estão em
 [`models/docs/convencao-testes-qualidade.md`](../docs/convencao-testes-qualidade.md)
 (change `testes-data-quality-dbt`).
 
-**`verificacao_tipagem` só roda no Postgres** (usa `information_schema`): no
-modo A (DuckDB local) o teste é pulado, então a checagem de tipo das colunas
-vale só na publicação (modos B/C). Os demais testes de qualidade rodam no modo
-A contra o `cidades.duckdb` local.
+**`verificacao_tipagem`** (change `verificar-tipagem-silver-gold-historico`)
+confere o `data_type` das colunas-chave (id, UH, valor R$, data, percentual)
+das silvers e golds contra o tipo canônico documentado em
+[`docs/inventario-tipagem-silver-gold.md`](docs/inventario-tipagem-silver-gold.md).
+Os `tipo_esperado` usam os nomes do DuckDB, então o teste **roda no modo A**
+(`cidades.duckdb` local); numa ida a Postgres os nomes de `data_type` mudam e os
+valores esperados precisam de revisão.

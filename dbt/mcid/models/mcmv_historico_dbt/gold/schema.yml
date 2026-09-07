@@ -20,10 +20,13 @@ models:
     meta:
       tags: [gold, mcmv, dados-historicos, empreendimento, marco, linha-do-tempo]
     columns:
+      # verificacao_tipagem (change verificar-tipagem-silver-gold-historico) —
+      # tipo_esperado nos nomes do DuckDB. Ref: docs/inventario-tipagem-silver-gold.md.
       - name: id_empreendimento
         description: Chave do empreendimento (= id_empreendimento no FDS, = apf em FAR/Rural).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: frente_mcmv
         data_tests:
           - not_null
@@ -44,6 +47,8 @@ models:
           Maior data prevista de entrega observada em qualquer snapshot do
           empreendimento (braço SNH). NULL quando nenhum snapshot reportou.
           Change: destravar-datas-obra-entrega-silver-historico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_previsao_entrega_fonte
         description: >
           `snh:dados_prioritarios` quando há data prevista; `sem_fonte` caso
@@ -56,6 +61,7 @@ models:
         description: Cadeia de datas coerente ignorando nulos. Diagnóstico — o modelo não corrige.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
 
   - name: gold_snapshot_empreendimento_atual
     description: >
@@ -70,11 +76,14 @@ models:
     meta:
       tags: [gold, mcmv, dados-historicos, empreendimento, snapshot]
     columns:
+      # verificacao_tipagem — herda o contrato de tipos das silvers por frente.
+      # Change: verificar-tipagem-silver-gold-historico.
       - name: id_historico_snapshot
         description: Identificador herdado da versão corrente do empreendimento (por APF).
         data_tests:
           - not_null
           - unique
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: frente_mcmv
         data_tests:
           - not_null
@@ -82,6 +91,7 @@ models:
         description: APF da fase escolhida como corrente (física).
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: codigo_empreendimento
         description: >
           Chave estável do empreendimento. FDS: id_empreendimento (hash do
@@ -106,20 +116,27 @@ models:
       - name: dt_referencia
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: quantidade_uh_concluidas
         description: >
           UH com obra concluída (estágio anterior a "entregue"), herdada da
           silver. Só o braço SFTP reporta. Change:
           destravar-datas-obra-entrega-silver-historico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_entrega_uh
         description: >
           Data de entrega de UH (substitui a antiga `dt_entrega`, BREAKING).
           Herdada da silver por frente. Change: enriquecer-datas-acompanhamento-historico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_conclusao_obra
         description: >
           Data de conclusão física da obra / legalização. Herdada da silver —
           FDS/FAR do braço SFTP, Rural de dt_efetiva_conclusao. Change:
           destravar-datas-obra-entrega-silver-historico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_entrega_uh_fonte
         description: Origem de `dt_entrega_uh` (`sftp:INTxxx` / `snh:entrega_evento`).
       - name: dt_previsao_entrega
@@ -177,9 +194,13 @@ models:
           config:
             severity: warn
     columns:
+      # verificacao_tipagem (change verificar-tipagem-silver-gold-historico):
+      # UH agregada = BIGINT via cast(sum(...) as bigint) — sem o cast SUM daria
+      # HUGEINT; valor_* = DECIMAL(38,2) (sum de numeric(15,2)).
       - name: dt_referencia
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: fonte_familia
         data_tests:
           - not_null
@@ -206,6 +227,8 @@ models:
         description: >
           Conceito canônico `valor_investimento_total`, acumulado (estoque).
           Era `valor_investimento` (BREAKING). R$ nominais.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(38,2)" } }
       - name: valor_financiamento_acumulado
         description: >
           Conceito canônico `valor_financiamento` (operação de crédito, sem
@@ -244,14 +267,22 @@ models:
           - not_null
       - name: uh_contratadas
         description: Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
         description: Soma de UH entregues no recorte.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_concluidas
         description: Soma de UH com obra concluída no recorte.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_em_obras
         description: >
           Soma de UH em obras no recorte. Ver natureza_serie — nas séries de
           estoque NÃO somar entre meses.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_comercializadas
         description: >
           Soma de UH vendidas/reservadas ao beneficiário no recorte (só
@@ -259,6 +290,8 @@ models:
           física, não aninhada com uh_entregues). Coluna nova ao fim do contrato
           (change auditar-grao-serie-executiva-historica). Ver natureza_serie —
           nas séries de estoque NÃO somar entre meses.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
   - name: gold_serie_situacao_mensal
     description: >
@@ -280,10 +313,14 @@ models:
     meta:
       tags: [gold, mcmv, dados-historicos, empreendimento, situacao-obra, "issue-59"]
     columns:
+      # verificacao_tipagem (change verificar-tipagem-silver-gold-historico):
+      # `mes` = DATE (date_trunc::date); uh/entradas/saidas = BIGINT via
+      # cast(sum(...) as bigint).
       - name: mes
         description: Primeiro dia do mês de referência.
         data_tests:
           - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: frente_mcmv
         data_tests:
           - not_null
@@ -311,10 +348,16 @@ models:
         description: Empreendimentos distintos (chave_empreendimento) na situação naquele mês/recorte (estoque).
       - name: uh
         description: Soma de quantidade_uh na situação naquele mês/recorte (estoque).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: entradas
         description: Empreendimentos que ENTRARAM na situação no mês (mudança vinda de outra situação). Não somar entre nivel_geografico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: saidas
         description: Empreendimentos que SAÍRAM da situação no mês. Não somar entre nivel_geografico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: fonte_situacao
         description: Origem da situação — 'reportada' (sempre, nesta fase; 'derivada' reservado para a série pré-2019).
       - name: fonte_serie
