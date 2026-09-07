@@ -9,11 +9,14 @@
 -- regiao_nome (macrorregiao IBGE) vem da silver e sao adicionais ao contrato
 -- (colunas ao final; nomes/tipos anteriores preservados).
 --
--- IMPORTANTE — SERIE DE ESTOQUE (natureza_serie = 'estoque'): cada linha e a
--- carteira ACUMULADA no mes-snapshot. NAO somar entre meses (dupla contagem do
--- acumulado) NEM entre fonte_familia de grao diferente (grao_familia: 'contrato'
--- p/ bext, 'empreendimento' p/ as demais). bases_relatorio_executivo e
--- min_cidades se sobrepoem no tempo (2014-2016). Para montar UMA serie continua,
+-- IMPORTANTE — natureza_serie PROPAGADA da silver (nao mais 'estoque' fixo):
+-- 'estoque' (carteira ACUMULADA no mes-snapshot) p/ bases_relatorio_executivo /
+-- min_cidades / bext; 'fluxo' (entrada de novos empreendimentos no mes) p/
+-- entrada_bb. Nas linhas de estoque NAO somar entre meses (dupla contagem do
+-- acumulado). NUNCA somar entre fonte_familia de grao diferente (grao_familia:
+-- 'contrato' p/ bext e min_cidades, 'empreendimento' p/ as demais).
+-- bases_relatorio_executivo e min_cidades se sobrepoem no tempo (2014-2016).
+-- Para montar UMA serie continua,
 -- filtrar por prioridade_familia (menor = preferencial), escolhendo por
 -- (dt_referencia, uf) a familia de menor prioridade com dado. A consolidacao
 -- fica a cargo do consumidor / de um mart posterior. Guardas: testes
@@ -67,11 +70,15 @@ with
             -- somar UH/valor entre graos diferentes — ver o teste
             -- soma_nao_cruza_familia.
             grao_familia,
+            -- natureza_serie por familia (change
+            -- auditar-grao-serie-executiva-historica): propagada da silver.
+            natureza_serie,
             chave_natural,
             uh_contratadas,
             uh_entregues,
             uh_concluidas,
             uh_em_obras,
+            uh_comercializadas,
             valor_investimento,
             valor_financiamento,
             valor_vgv,
@@ -116,7 +123,11 @@ with
             sum(subsidio_ogu) as subsidio_ogu,
             -- colunas novas ao final — contrato de colunas anterior preservado
             -- (exceto os renomes _acumulado acima).
-            'estoque' as natureza_serie,
+            -- natureza_serie propagada da silver (change
+            -- auditar-grao-serie-executiva-historica): 'estoque' p/
+            -- bases_relatorio_executivo / min_cidades / bext, 'fluxo' p/
+            -- entrada_bb. Uniforme dentro de cada (dt_referencia, fonte_familia).
+            max(natureza_serie) as natureza_serie,
             max(grao_familia) as grao_familia,
             sum(valor_vgv) as valor_vgv,
             sum(valor_contrapartidas) as valor_contrapartidas,
@@ -131,7 +142,13 @@ with
             case
                 when grouping(regiao_sigla) = 0 or grouping(uf) = 0
                 then max(regiao_nome)
-            end as regiao_nome
+            end as regiao_nome,
+            -- uh_comercializadas ao FIM do contrato (change
+            -- auditar-grao-serie-executiva-historica, D5): so exposto apos a
+            -- correcao de grao da silver. `uh_em_obras` ja estava no contrato
+            -- (posicao preservada acima). natureza_serie / "nao somar entre
+            -- meses" valem igual as demais colunas de UH.
+            sum(uh_comercializadas) as uh_comercializadas
         from base
         group by
             grouping sets (

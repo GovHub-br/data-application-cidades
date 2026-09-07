@@ -15,6 +15,16 @@ models:
       - desembolso_nao_excede_contratado:
           arguments: { tolerancia: 0.01 }
           config: { severity: warn }
+      # Reconciliação vigentes ≈ contratadas − distratadas (spec
+      # quantidades-uh-historico). Fecha só em ~10-18% das linhas SNH (timing /
+      # split de coluna vigentes×uhs_vigentes) — daí `warn` e tolerância folgada.
+      # Linhas sem nenhuma das duas parcelas (todo o braço SFTP) não entram.
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: quantidade_uh
+            parcela_columns: [quantidade_uh_vigentes, quantidade_uh_distratadas]
+            tolerancia: 5
+          config: { severity: warn }
     columns: &contrato_empreendimento
       - name: id_historico_snapshot
         description: Chave técnica única por frente, APF e mês de referência.
@@ -99,6 +109,15 @@ models:
           só preenche NULL, nunca sobrescreve 0. Change:
           enriquecer-datas-acompanhamento-historico. FDS agora tem valor do
           braço INT059 (change destravar-datas-obra-entrega-silver-historico).
+        data_tests:
+          # Monotonicidade do acumulado + coerência vs. contratadas — só listam
+          # (warn), não filtram. Change: enriquecer-quantidades-uh-e-sinais-obra-historico.
+          - acumulado_nao_regride:
+              arguments: { partition_by: apf, order_by: dt_referencia }
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: quantidade_uh, fator: 1.0 }
+              config: { severity: warn }
       - name: quantidade_uh_concluidas
         description: >
           Unidades habitacionais com obra concluída (estágio anterior a
@@ -106,6 +125,13 @@ models:
           (FAR), INT057/INT065 (Rural); coalesce(braço da linha, valor
           preservado no grão). NULL no braço SNH. Change:
           destravar-datas-obra-entrega-silver-historico.
+        data_tests:
+          - acumulado_nao_regride:
+              arguments: { partition_by: apf, order_by: dt_referencia }
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: quantidade_uh, fator: 1.0 }
+              config: { severity: warn }
       - name: dt_entrega_uh
         description: >
           Data de entrega de unidades habitacionais (última). Substitui a antiga
@@ -167,6 +193,9 @@ models:
         data_tests:
           - valor_nao_negativo:
               config: { severity: warn }
+          - acumulado_nao_regride:
+              arguments: { partition_by: apf, order_by: dt_referencia }
+              config: { severity: warn }
       - name: percentual_execucao_fisica
         description: Percentual de execução física da obra.
       - name: status_operacional
@@ -201,6 +230,71 @@ models:
                 severity: warn
       - name: regiao_nome
         description: Nome da macrorregião IBGE (par de regiao_sigla).
+      # --- quantidades de UH e sinais de obra + execução financeira + carry-forward
+      # (change enriquecer-quantidades-uh-e-sinais-obra-historico). Colunas
+      # esparsas por design (uma fonte/braço traz o conceito, os outros não) —
+      # SEM not_null.
+      - name: quantidade_uh_distratadas
+        description: >
+          UH distratadas (acumulado). Só o braço SNH reporta
+          (`quantidade_de_uhs_distratadas`); NULL nos braços SFTP. `0` (zero
+          distratos) é informação, distinto de NULL (fonte omissa). Valores > 0
+          são raros (~centenas de linhas).
+      - name: quantidade_uh_vigentes
+        description: >
+          UH vigentes reportadas pela SNH (`uh_vigentes` ∪ `uhs_vigentes` por
+          agente). NULL nos braços SFTP. Reconcilia com `quantidade_uh −
+          quantidade_uh_distratadas` só em ~10-18% das linhas (timing / split de
+          coluna) — daí o teste de reconciliação ser `warn`.
+      - name: quantidade_uh_ociosas
+        description: >
+          UH entregues e desocupadas. Braços SFTP INT040/INT054
+          (`qt_unidades_ociosas`; sentinela `-1` → NULL). NULL em
+          INT059/INT057/INT065 e no braço SNH.
+      - name: quantidade_uh_inicial
+        description: >
+          UH no escopo inicial do empreendimento. Braço SFTP INT065
+          (`qtde_uh_inicial`) — diverge de `quantidade_uh` em ~7% dos APF-mês
+          (corte de escopo, sinal de distress). NULL nos demais braços.
+      - name: cod_pendencia_obra
+        description: >
+          Código de pendência de obra, texto cru (INT040/INT054;
+          majoritariamente `SIM`/`NAO` em ~1,7 k linhas do INT040). NULL nos
+          demais braços. `cod_pendencia_entrega` ficou fora de escopo (vazia na
+          fonte — levantamento 2026-09-06). Domínio a decodificar em follow-up.
+      - name: percentual_execucao_financeira
+        description: >
+          % de execução financeira. `reportada` de `pc_execucao_financeira_obra`
+          (INT057 / Rural BB) quando disponível; senão `derivada` como
+          `valor_desembolsado / valor_contratado * 100` quando ambos existem e
+          `valor_contratado > 0`; senão NULL.
+      - name: percentual_execucao_financeira_fonte
+        description: Origem de `percentual_execucao_financeira`.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["reportada", "derivada"]
+              config:
+                severity: warn
+      - name: gap_fisico_financeiro_pp
+        description: >
+          `percentual_execucao_financeira − percentual_execucao_fisica` em pontos
+          percentuais. NULL se qualquer operando for NULL. Negativo (financeiro à
+          frente do físico) NÃO é truncado — é o sinal de risco.
+      - name: fonte_valor
+        description: >
+          `observado` (snapshot real) ou `carregado` (carry-forward do snapshot
+          SNH intermitente — repete a última observação por até
+          `var('carry_forward_max_meses', 3)` meses; NÃO interpola). D6. Filtrar
+          `fonte_valor = 'observado'` para ver só o fato.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["observado", "carregado"]
+      - name: dt_snapshot_efetivo
+        description: >
+          Mês da observação real que originou a linha: = `dt_referencia` nas
+          linhas `observado`; mês da última observação nas linhas `carregado`.
 
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
@@ -215,6 +309,12 @@ models:
       # permanece limpo hoje (0 APF).
       - desembolso_nao_excede_contratado:
           arguments: { tolerancia: 0.01 }
+          config: { severity: warn }
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: quantidade_uh
+            parcela_columns: [quantidade_uh_vigentes, quantidade_uh_distratadas]
+            tolerancia: 5
           config: { severity: warn }
     columns: *contrato_empreendimento
 
@@ -236,6 +336,12 @@ models:
       - desembolso_nao_excede_contratado:
           arguments: { ratio_minimo: 2.0 }
           config: { severity: error }
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: quantidade_uh
+            parcela_columns: [quantidade_uh_vigentes, quantidade_uh_distratadas]
+            tolerancia: 5
+          config: { severity: warn }
     columns: *contrato_empreendimento
 
   - name: silver_mcmv_historico_entrega_apf
@@ -270,17 +376,102 @@ models:
       - name: dt_ultimo_snapshot
         description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
 
+  - name: silver_mcmv_historico_obra_mensal
+    description: >
+      Silver — evolução mensal de obra por empreendimento MCMV (curva prevista ×
+      realizada, situação de obra, ciclo de paralisação/retomada, decomposição
+      de UH por estado, datas de marco). Une as 3 bronzes da família obra_mensal
+      (FAR / FDS / Rural — schemas divergentes, projeção explícita por lista de
+      aliases). Grão `(frente_mcmv, apf, dt_referencia)`. Janela real ≈ 2025-12 →
+      2026-07 (FAR sem 2026-06); NÃO há histórico de obra mensal antes de
+      2025-12. Modelo PARALELO — não entra no contrato comum das silvers por
+      frente nesta change (D4 / Open Question 2). Requer target staging_duckdb.
+      Change: enriquecer-quantidades-uh-e-sinais-obra-historico.
+    meta:
+      tags: [silver, mcmv, dados-historicos, obra]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
+    columns:
+      - name: id_obra_snapshot
+        description: Chave técnica (obra + frente + apf + mês).
+        data_tests:
+          - not_null
+          - unique
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural"]
+      - name: apf
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot (1º dia).
+        data_tests:
+          - not_null
+      - name: pc_obra_prevista
+        description: >
+          Percentual de obra PREVISTO (curva planejada) — o sinal central desta
+          silver, ~100% preenchido na janela.
+      - name: pc_obra_realizada
+        description: Percentual de obra REALIZADO no snapshot (~100% preenchido).
+      - name: co_situacao_obra
+        description: >
+          Código de situação da obra/operação (FAR `co_situacao_obra`; FDS/Rural
+          `co_situacao_operacao`), texto cru — domínio observado {1,2,3,4,5,11,16},
+          a decodificar em follow-up (Non-Goal 2). ~100% preenchido. O
+          `dentro_do_dominio` (warn) fica reservado para quando houver seed de
+          decodificação.
+      - name: co_andamento_operacao
+        description: Código de andamento (FDS/Rural; NULL no FAR). Hoje só o FDS preenche (`0`).
+      - name: dt_paralisacao
+        description: >
+          Data de paralisação da obra. **0% preenchida na fonte hoje** — a
+          coluna existe vazia. O sinal utilizável de paralisação é
+          `co_situacao_obra` / texto, NÃO esta data.
+      - name: co_classificacao_paralisado
+        description: >
+          Código de classificação de paralisação (`co_classificacao_paralisados`
+          da fonte). Preenchido no FDS (~100%, majoritariamente "não
+          paralisado"); 0% no FAR/Rural.
+      - name: detalhe_paralisacao
+        description: >
+          Texto de detalhe da paralisação/retomada (FDS
+          `detalhe_paralisacao_retomada`; Rural `no_detalhe_paralisacao_retomada`;
+          NULL no FAR). 0% preenchido na janela atual.
+      - name: qt_uh_alienadas
+        description: UH alienadas (`qt_uh_alienada`). Bem preenchido no Rural (~100%); raro no FDS; 0% no FAR.
+      - name: qt_uh_concluidas
+        description: UH concluídas — 0% preenchida neste feed (vem do feed de empreendimento, não do de obra).
+      - name: dt_conclusao_obra
+        description: Data de conclusão de obra reportada pelo feed de obra.
+      - name: dt_entrega
+        description: Data de entrega do empreendimento (`dt_entrega_do_empreendimento`).
+      - name: source_file
+        description: Caminho do parquet de origem.
+        data_tests:
+          - not_null
+
   - name: silver_mcmv_historico_serie_executiva
     description: >
       Silver — série executiva histórica no contrato comum. Aplica o mapa de
       colunas (doc issue-130-proposta-bronze-series-historicas.md) via
       coalesce_present(), tipa (UH→bigint, valores R$→numeric(15,2) via
       parse_hist_numeric — mesmo tipo das fichas atuais; ausência preservada
-      como NULL, não 0.00 — %→double, datas→date),
-      classifica linha_ogu_fgts (para o piloto #118) e deduplica por
-      (fonte_familia, chave_natural, dt_referencia) mantendo o snapshot mais
-      recente do mês. Grão: registro de origem (empreendimento ou contrato).
-      Requer target staging_duckdb.
+      como NULL, não 0.00 — %→double, datas→date).
+      Grão: 1 linha por (fonte_familia, chave_natural, dt_referencia) — o
+      EMPREENDIMENTO (bases_relatorio_executivo, entrada_bb) ou o CONTRATO PF
+      (bext, min_cidades) inteiro no mês, agregado (SUM) das linhas de movimento
+      da fonte após dedup de reenvio (`_v2` > base) e dedup de reingestão
+      byte-a-byte. linha_ogu_fgts / situacao_derivada recalculados sobre os
+      valores agregados. natureza_serie por família (estoque / fluxo). Antes
+      esta silver escolhia UMA linha de movimento arbitrária por (chave, mês).
+      Change: auditar-grao-serie-executiva-historica (doc de auditoria
+      docs/auditar-grao-serie-executiva-bases-relat-exec.md). Requer target
+      staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -346,20 +537,79 @@ models:
           - accepted_values:
               arguments:
                 values: ["OGU/Subsidiado", "FGTS/Financiado"]
+      # UH do EMPREENDIMENTO / CONTRATO agregado (soma das linhas de movimento
+      # dedupadas). valor_nao_negativo em `warn` (não `error` como nos campos
+      # financeiros): resíduos negativos de movimento não passam pela quarentena
+      # e não invalidam a linha — change auditar-grao-serie-executiva-historica.
+      # quantidade_nao_excede_referencia (`warn`) trava o aninhamento em
+      # uh_contratadas (uh_comercializadas NÃO é aninhada com uh_entregues —
+      # ver o doc de auditoria).
       - name: uh_contratadas
-        description: UH contratadas do registro (harmonizado das ~6 origens).
+        description: UH contratadas do empreendimento/contrato no mês (soma das linhas de movimento).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
       - name: uh_entregues
-        description: UH entregues do registro.
+        description: UH entregues (acumulado no snapshot).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
+      - name: uh_concluidas
+        description: UH com obra concluída (acumulado no snapshot).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
+      - name: uh_em_obras
+        description: UH em obras no snapshot (medida paralela, não aninhada com entregues/concluídas).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
+      - name: uh_comercializadas
+        description: >
+          UH vendidas/reservadas ao beneficiário (antecede a entrega física —
+          pode exceder uh_entregues; NÃO aninhada com ela). Só
+          bases_relatorio_executivo e min_cidades reportam.
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
       - name: grao_familia
         description: >
-          Grão da família: 'contrato' (bext — extrato de contrato PF
-          individual) ou 'empreendimento' (demais). O consumidor NÃO deve somar
+          Grão da família: 'contrato' (bext e min_cidades — extrato de contrato
+          PF individual) ou 'empreendimento' (bases_relatorio_executivo,
+          entrada_bb). O consumidor NÃO deve somar
           UH/valor entre grãos diferentes. Change:
-          vocabulario-e-qualidade-financeira-historica (D3).
+          vocabulario-e-qualidade-financeira-historica (D3); min_cidades
+          reclassificada de 'empreendimento' para 'contrato' pela auditoria
+          (auditar-grao-serie-executiva-historica).
         data_tests:
           - accepted_values:
               arguments:
                 values: ["contrato", "empreendimento"]
+      - name: natureza_serie
+        description: >
+          Natureza da série por família (auditoria
+          auditar-grao-serie-executiva-historica): 'estoque' — carteira restatada
+          mês a mês (bases_relatorio_executivo, min_cidades, bext); 'fluxo' —
+          entrada de novos empreendimentos na carteira BB (entrada_bb). O gold
+          propaga (não mais 'estoque' fixo). NÃO somar séries de estoque entre
+          meses.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["estoque", "fluxo"]
       # --- Colunas de valor financeiro (glossario-valores-financeiros.md).
       # completude_minima em `warn`: ausência PARCIAL é esperada (uma família /
       # geração de schema não traz o conceito). Change:

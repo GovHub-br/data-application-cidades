@@ -71,6 +71,7 @@ with
             ) }} as quantidade_uh_concluidas,
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
+            {{ historico_uh_sinais_sftp(int040, ociosas=true, pendencia=true) }}
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -117,6 +118,7 @@ with
             ) }} as quantidade_uh_concluidas,
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
+            {{ historico_uh_sinais_sftp(int054, ociosas=true, pendencia=true) }}
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -217,9 +219,10 @@ with
             on upper(trim(d.uf)) = upper(trim(dr.uf))
         left join {{ ref('silver_mcmv_historico_entrega_apf') }} esp
             on d.apf = esp.apf
-    )
+    ),
 
-select
+    resolvido as (
+        select
     md5(
         concat_ws(
             '|', 'empreendimento', frente_mcmv, coalesce(apf, ''), dt_referencia::text
@@ -292,7 +295,30 @@ select
     -- empreendimento -- id_empreendimento = apf, sem fase administrativa.
     apf as id_empreendimento,
     null::text as fase_empreendimento,
-    current_timestamp as dt_silver
+    -- quantidades de UH e sinais de obra (change enriquecer-quantidades-uh-e-sinais-obra-historico).
+    -- Vindas dos braços via historico_uh_sinais_sftp / do braço SNH; NULL onde a
+    -- fonte não reporta (ausência, não zero).
+    quantidade_uh_distratadas,
+    quantidade_uh_vigentes,
+    quantidade_uh_ociosas,
+    quantidade_uh_inicial,
+    cod_pendencia_obra,
+    -- execução financeira: reportada (INT057) quando existe, senão derivada
+    -- (valor_desembolsado / valor_contratado * 100) quando os dois insumos
+    -- existem e valor_contratado > 0; senão NULL.
+    coalesce(
+        percentual_execucao_financeira_reportada,
+        case
+            when valor_contratado > 0 and valor_desembolsado is not null
+            then valor_desembolsado / nullif(valor_contratado, 0) * 100
+        end
+    ) as percentual_execucao_financeira,
+    case
+        when percentual_execucao_financeira_reportada is not null
+        then 'reportada'
+        when valor_contratado > 0 and valor_desembolsado is not null
+        then 'derivada'
+    end as percentual_execucao_financeira_fonte
 from enriquecido_dominio
 where
     rn = 1
@@ -304,3 +330,5 @@ where
         from {{ ref('quarentena_valores_financeiros') }} q
         where q.fonte_familia = 'far_historico' and q.chave_natural = apf
     )
+    )
+{{ historico_silver_tail() }}

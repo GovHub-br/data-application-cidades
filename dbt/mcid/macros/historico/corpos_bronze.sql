@@ -129,6 +129,47 @@ from fonte
 {% endmacro %}
 
 
+{#- Evolucao de obra por empreendimento (MONIT_MOV_OBRA): 1 frente = 1 glob.
+    Copia fiel dos snapshots `_MENSAL_YYYYMM` (glob recursivo sob
+    `sharepoint/Novo MCMV - */`, selecao pela frente NO NOME DO ARQUIVO).
+    `_LAYOUT_` reforcado no where. dt_referencia = 1o dia do mes do sufixo
+    `_YYYYMM`. Grao da fonte: 1 linha por `nu_apf` por arquivo -- a dedup por
+    (apf, dt_referencia) mantendo o snapshot mais recente fica na silver. As 3
+    frentes tem schemas DIVERGENTES (FAR: dt_movimento/co_situacao_obra; FDS/
+    RURAL: dh_movimento/co_situacao_operacao) -- o bronze nao harmoniza, so
+    empilha; a projecao explicita por braco fica em
+    silver_mcmv_historico_obra_mensal. Change:
+    enriquecer-quantidades-uh-e-sinais-obra-historico (D4). -#}
+{% macro bronze_obra_mensal(nome_familia) %}
+{%- set f = familia(familias_obra_mensal(), nome_familia) -%}
+with
+
+    fonte as (
+        select
+            *,
+            '{{ f.frente }}' as frente_mcmv,
+            filename as source_file,
+            strptime(
+                regexp_extract(filename, 'MENSAL_(\d{6})', 1), '%Y%m'
+            )::date as dt_referencia,
+            current_timestamp as dt_ingest
+        from {{ read_minio_staging_parquet_series(f.glob) }}
+        where filename not ilike '%_LAYOUT_%'
+    )
+
+select
+    *,
+    md5(
+        concat_ws(
+            '|',
+            source_file,
+            cast(row_number() over (partition by source_file) as varchar)
+        )
+    ) as hash_linha
+from fonte
+{% endmacro %}
+
+
 {#- SNH entregas por evento: 1 agente = 1 glob. Aqui, diferente das outras
     tres familias, as colunas de data e de quantidade TEM nome diferente por
     agente (CAIXA: dt_entrega/qt_uh_entregues; BB: dt_ass_doc/

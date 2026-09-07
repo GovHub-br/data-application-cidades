@@ -23,6 +23,14 @@
 -- NAO suaviza; expoe `fonte_serie` predominante do mes (por frente) para o
 -- consumidor tratar 2024-06..2024-11 como quebra de serie. Ver o doc de entrega.
 --
+-- CARRY-FORWARD (change enriquecer-quantidades-uh-e-sinais-obra-historico, D6):
+-- as silvers por frente agora emitem linhas `fonte_valor = 'carregado'` nos
+-- meses sem snapshot SNH (arrastam a ultima observacao ate 3 meses). Essas
+-- linhas REPETEM `situacao_canonica` -> a lag() nao ve transicao -> nao geram
+-- `entradas`/`saidas` falsas; so entram no ESTOQUE (n_empreendimentos / uh),
+-- eliminando o serrote de +-128 k UH da serie agregada FAR. Por isso NAO se
+-- filtra `fonte_valor = 'observado'` aqui.
+--
 -- NAO somar `entradas` / `saidas` entre `nivel_geografico` (triplica: cada
 -- transicao de APF acontece numa unica UF).
 --

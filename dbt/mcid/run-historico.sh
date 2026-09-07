@@ -94,6 +94,11 @@ BRONZES=(
   # silver_mcmv_historico_entrega_apf (change enriquecer-datas-acompanhamento-historico).
   bronze_reloginho_snh_entregas_evento_bb
   bronze_reloginho_snh_entregas_evento_caixa
+  # obra mensal (SharePoint) — curva prevista x realizada + situacao de obra
+  # (change enriquecer-quantidades-uh-e-sinais-obra-historico). Janela 202512+.
+  bronze_mcmv_historico_obra_mensal_far
+  bronze_mcmv_historico_obra_mensal_fds
+  bronze_mcmv_historico_obra_mensal_rural
 )
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
@@ -112,6 +117,7 @@ SILVERS=(
   silver_mcmv_historico_empreendimento_rural
   silver_mcmv_historico_serie_executiva
   silver_mcmv_historico_serie_anual_ogu_fgts
+  silver_mcmv_historico_obra_mensal
 )
 GOLDS=(
   gold_snapshot_empreendimento_atual

@@ -60,6 +60,7 @@ with
             {{ parse_hist_bigint('qt_unidades_concluidas') }} as quantidade_uh_concluidas,
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
+            {{ historico_uh_sinais_sftp(int059) }}
             dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -169,9 +170,10 @@ with
             dim.fase_empreendimento
         from enriquecido_dominio e
         left join {{ ref('silver_atual_dim_empreendimento') }} dim on e.apf = dim.apf
-    )
+    ),
 
-select
+    resolvido as (
+        select
     md5(
         concat_ws(
             '|', 'empreendimento', frente_mcmv, coalesce(apf, ''), dt_referencia::text
@@ -249,7 +251,27 @@ select
     -- (change id-empreendimento-eixo-historico, D1/D2).
     id_empreendimento,
     fase_empreendimento,
-    current_timestamp as dt_silver
+    -- quantidades de UH e sinais de obra (change enriquecer-quantidades-uh-e-sinais-obra-historico).
+    -- FDS: braço INT059 não reporta ociosas/inicial/pendencia; braço SNH traz
+    -- distrato/vigência. NULL onde a fonte não reporta.
+    quantidade_uh_distratadas,
+    quantidade_uh_vigentes,
+    quantidade_uh_ociosas,
+    quantidade_uh_inicial,
+    cod_pendencia_obra,
+    coalesce(
+        percentual_execucao_financeira_reportada,
+        case
+            when valor_contratado > 0 and valor_desembolsado is not null
+            then valor_desembolsado / nullif(valor_contratado, 0) * 100
+        end
+    ) as percentual_execucao_financeira,
+    case
+        when percentual_execucao_financeira_reportada is not null
+        then 'reportada'
+        when valor_contratado > 0 and valor_desembolsado is not null
+        then 'derivada'
+    end as percentual_execucao_financeira_fonte
 from enriquecido_id
 where
     rn = 1
@@ -260,3 +282,5 @@ where
         from {{ ref('quarentena_valores_financeiros') }} q
         where q.fonte_familia = 'fds_historico' and q.chave_natural = apf
     )
+    )
+{{ historico_silver_tail() }}

@@ -3,12 +3,12 @@
 Domínios cobertos: `mcmv_historico_dbt` (esta pasta) e as bronzes/silvers do
 reloginho em `models/indicadores_mcmv_dbt/`.
 
-## As 13 bronzes por família
+## As 16 bronzes por família
 
 Desde a change `pipeline-bronze-historica-destino-trocavel` (D5), cada bronze de
-série histórica é **uma tabela por família de origem** — 13 no lugar dos 4
-modelos anteriores. O mapa que define nome, glob e modelo de cada família está
-em [`macros/historico/familias.sql`](../../macros/historico/familias.sql); os
+série histórica é **uma tabela por família de origem**. O mapa que define nome,
+glob e modelo de cada família está em
+[`macros/historico/familias.sql`](../../macros/historico/familias.sql); os
 corpos ficam em `macros/historico/corpos_bronze.sql`, e cada arquivo em
 `bronze/` é uma casca fina que chama o corpo com o nome da família.
 
@@ -18,6 +18,28 @@ corpos ficam em `macros/historico/corpos_bronze.sql`, e cada arquivo em
 | GEFUS (SFTP) | INT040, INT054, INT057, INT059, INT065 | 5 |
 | SNH empreendimento | BB, CAIXA | 2 |
 | reloginho entregas | BB, CAIXA | 2 |
+| obra mensal (SharePoint) | OBRA_FAR, OBRA_FDS, OBRA_RURAL | 3 |
+
+### Família `obra_mensal` (change `enriquecer-quantidades-uh-e-sinais-obra-historico`)
+
+`MONIT_MOV_OBRA_<FRENTE>_MENSAL_YYYYMM` sob
+`staging/sharepoint/Novo MCMV - */` (glob recursivo; frente pela substring **no
+nome do arquivo** — os arquivos FDS/RURAL de 202602+ estão misfiled sob
+`Novo MCMV - FAR/`). `_LAYOUT_` / `_SEMANAL_` / `_DIARIO_` de fora. Janela real
+**202512 → 202607** (não há obra mensal antes disso). Ordem de build:
+
+```
+bronze_mcmv_historico_obra_mensal_far
+bronze_mcmv_historico_obra_mensal_fds     ->  silver_mcmv_historico_obra_mensal
+bronze_mcmv_historico_obra_mensal_rural
+```
+
+A silver `silver_mcmv_historico_obra_mensal` (grão `frente_mcmv × apf ×
+dt_referencia`, schema `mcmv_historico`) é um **modelo paralelo** — não entra no
+`left join` do contrato comum das silvers por frente nesta change (D4). As 3
+bronzes têm schemas divergentes (FAR: `dt_movimento` / `co_situacao_obra`;
+FDS/RURAL: `dh_movimento` / `co_situacao_operacao`), harmonizados na silver por
+`coalesce_present` com lista de aliases (`macros/historico/obra_mensal_arm.sql`).
 
 A **união entre famílias vive na silver**, com projeção explícita por braço:
 nenhum modelo usa `union all by name` nem `select * exclude`.
@@ -35,7 +57,11 @@ colunas que aquela família realmente tem. Quem depende disso:
 - `silver_mcmv_historico_serie_executiva` → as 4 bronzes da série executiva;
 - `silver_mcmv_historico_empreendimento_far` / `_fds` / `_rural` → as 2 bronzes
   SNH (as colunas divergem entre agentes: `uhs_contratadas`/`uhs_entregues` só
-  existem no BB, `dt_entrega` só na CAIXA).
+  existem no BB, `dt_entrega` só na CAIXA) e as bronzes GEFUS (INT040/054/059/065
+  — `qt_unidades_ociosas` / `qtde_uh_inicial` / `cod_pendencia_obra` /
+  `pc_execucao_financeira_obra` são resolvidas por `coalesce_present`);
+- `silver_mcmv_historico_obra_mensal` → as 3 bronzes `obra_mensal` (schemas
+  divergentes por frente).
 
 Consequências práticas:
 

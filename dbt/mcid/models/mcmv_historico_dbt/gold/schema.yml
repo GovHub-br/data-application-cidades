@@ -141,10 +141,14 @@ models:
       fonte_familia, nivel_agregacao, regiao_sigla, uf, linha_ogu_fgts) via
       GROUPING SETS (nacional + regiao + uf).
 
-      SÉRIE DE ESTOQUE (natureza_serie = 'estoque'): cada linha é a carteira
-      ACUMULADA no mês-snapshot. NÃO somar entre meses nem entre fonte_familia
-      de grão diferente (grao_familia). bases_relatório_executivo e min_cidades
-      se sobrepõem 2014-2016 — usar prioridade_familia para uma série contínua.
+      natureza_serie PROPAGADA da silver: 'estoque' (carteira ACUMULADA no
+      mês-snapshot — bases_relatório_executivo / min_cidades / bext) ou 'fluxo'
+      (entrada de novos empreendimentos — entrada_bb). Nas séries de estoque NÃO
+      somar entre meses; NUNCA somar entre fonte_familia de grão diferente
+      (grao_familia: 'contrato' p/ bext e min_cidades). bases_relatório_executivo
+      e min_cidades se sobrepõem 2014-2016 — usar prioridade_familia para uma
+      série contínua. uh_comercializadas / uh_em_obras ao fim do contrato
+      (change auditar-grao-serie-executiva-historica).
 
       VALORES NOMINAIS (R$ da data do fato, 2012-2018) — comparação plurianual
       exige deflator externo (glossario-valores-financeiros.md).
@@ -180,15 +184,20 @@ models:
         data_tests:
           - not_null
       - name: natureza_serie
-        description: Sempre 'estoque' — carteira acumulada no mês-snapshot. Não somar entre meses.
+        description: >
+          Propagada da silver (change auditar-grao-serie-executiva-historica):
+          'estoque' — carteira acumulada no mês-snapshot, não somar entre meses
+          (bases_relatorio_executivo, min_cidades, bext); 'fluxo' — entrada de
+          novos empreendimentos no mês (entrada_bb).
         data_tests:
           - accepted_values:
               arguments:
-                values: ["estoque"]
+                values: ["estoque", "fluxo"]
       - name: grao_familia
         description: >
-          Grão da fonte_familia: 'contrato' (bext) ou 'empreendimento' (demais).
-          Não somar UH/valor entre grãos diferentes no mesmo (dt_referencia, uf).
+          Grão da fonte_familia: 'contrato' (bext, min_cidades) ou
+          'empreendimento' (bases_relatorio_executivo, entrada_bb). Não somar
+          UH/valor entre grãos diferentes no mesmo (dt_referencia, uf).
         data_tests:
           - accepted_values:
               arguments:
@@ -237,6 +246,19 @@ models:
         description: Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
       - name: uh_entregues
         description: Soma de UH entregues no recorte.
+      - name: uh_concluidas
+        description: Soma de UH com obra concluída no recorte.
+      - name: uh_em_obras
+        description: >
+          Soma de UH em obras no recorte. Ver natureza_serie — nas séries de
+          estoque NÃO somar entre meses.
+      - name: uh_comercializadas
+        description: >
+          Soma de UH vendidas/reservadas ao beneficiário no recorte (só
+          bases_relatorio_executivo e min_cidades reportam; antecede a entrega
+          física, não aninhada com uh_entregues). Coluna nova ao fim do contrato
+          (change auditar-grao-serie-executiva-historica). Ver natureza_serie —
+          nas séries de estoque NÃO somar entre meses.
 
   - name: gold_serie_situacao_mensal
     description: >

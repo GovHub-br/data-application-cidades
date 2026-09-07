@@ -87,6 +87,21 @@ select
     situacao_canonica,
     regiao_sigla,
     regiao_nome,
+    -- quantidades de UH e sinais de obra + execução financeira
+    -- (change enriquecer-quantidades-uh-e-sinais-obra-historico). Aditivas ao
+    -- fim do contrato; NULL onde a fonte do último snapshot não reporta.
+    quantidade_uh_distratadas,
+    quantidade_uh_vigentes,
+    quantidade_uh_ociosas,
+    quantidade_uh_inicial,
+    cod_pendencia_obra,
+    percentual_execucao_financeira,
+    percentual_execucao_financeira_fonte,
+    gap_fisico_financeiro_pp,
+    -- fonte_valor = 'carregado' quando o último snapshot do empreendimento é
+    -- carry-forward do SNH intermitente (dt_snapshot_efetivo = mês real). D6.
+    fonte_valor,
+    dt_snapshot_efetivo,
     dt_silver
 from ultimo
 where rn = 1

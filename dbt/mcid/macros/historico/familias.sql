@@ -122,6 +122,40 @@
     ]) }}
 {% endmacro %}
 
+{#- Evolucao de obra por empreendimento (MONIT_MOV_OBRA), 3 frentes.
+    Fonte: os snapshots datados `MONIT_MOV_OBRA_<FRENTE>_MENSAL_YYYYMM` sob
+    `staging/sharepoint/Novo MCMV - */` (glob recursivo `**`). A frente e
+    selecionada pela substring NO NOME DO ARQUIVO, nao pela pasta -- os arquivos
+    FDS/RURAL de 202602+ estao fisicamente sob `Novo MCMV - FAR/` (misfiled).
+    `_LAYOUT_` (dicionario de campos, `_YYYYMMDD`), `_SEMANAL_` e `_DIARIO_`
+    ficam de fora -- o filtro `_MENSAL_` no proprio glob ja os exclui; o corpo
+    reforca com `not ilike '%_LAYOUT_%'`. O flat
+    `staging/sharepoint/novo_mcmv_<frente>_obra_mensal.parquet` (snapshot
+    corrente sobrescrito, sem historico) NAO e usado. Janela real: 202512+.
+    Change enriquecer-quantidades-uh-e-sinais-obra-historico (D4). -#}
+{% macro familias_obra_mensal() %}
+    {{ return([
+        {
+            'nome': 'OBRA_FAR',
+            'modelo': 'bronze_mcmv_historico_obra_mensal_far',
+            'frente': 'FAR',
+            'glob': 'sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet',
+        },
+        {
+            'nome': 'OBRA_FDS',
+            'modelo': 'bronze_mcmv_historico_obra_mensal_fds',
+            'frente': 'Entidades',
+            'glob': 'sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet',
+        },
+        {
+            'nome': 'OBRA_RURAL',
+            'modelo': 'bronze_mcmv_historico_obra_mensal_rural',
+            'frente': 'Rural',
+            'glob': 'sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet',
+        },
+    ]) }}
+{% endmacro %}
+
 {#- Busca uma familia pelo nome dentro de um dos mapas acima. -#}
 {% macro familia(mapa, nome) %}
     {%- for f in mapa -%}

@@ -13,6 +13,42 @@
     referenciar as colunas do seu proprio lote, e quem resolve isso e
     coalesce_present_parsed() sobre a relacao da familia.
 #}
+{#
+    Fragmento das 6 colunas de quantidade de UH e sinais de obra que os braços
+    SFTP GEFUS acrescentam ao contrato comum das silvers por frente (change
+    enriquecer-quantidades-uh-e-sinais-obra-historico). Emite a lista terminando
+    em vírgula — vem logo antes de `dt_referencia` no select do braço, na MESMA
+    posição do fragmento equivalente do braço SNH (corpos_silver.sql).
+
+    - distrato / vigencia: sempre NULL no SFTP (só a SNH reporta, D3).
+    - ociosas: INT040/INT054 (`qt_unidades_ociosas`; sentinela -1 -> NULL).
+    - inicial: INT065 (`qtde_uh_inicial`).
+    - pendencia: INT040/INT054 (`cod_pendencia_obra`, texto cru SIM/NAO;
+      `cod_pendencia_entrega` ficou fora de escopo -- vazia na fonte).
+    - pc_reportada: INT057 (`pc_execucao_financeira_obra`); o derivado
+      (desembolsado/contratado) é calculado no select final da silver.
+
+    coalesce_present[_parsed] introspecciona a relação da bronze -> tolera drift
+    de schema do parquet (a coluna some numa geração => compila como NULL).
+#}
+{% macro historico_uh_sinais_sftp(rel, ociosas=false, inicial=false, pendencia=false, pc_reportada=false) %}
+            null::bigint as quantidade_uh_distratadas,
+            null::bigint as quantidade_uh_vigentes,
+            {% if ociosas -%}
+            nullif({{ coalesce_present_parsed(rel, ['qt_unidades_ociosas'], 'parse_hist_bigint', 'bigint') }}, -1)
+            {%- else -%}null::bigint{%- endif %} as quantidade_uh_ociosas,
+            {% if inicial -%}
+            {{ coalesce_present_parsed(rel, ['qtde_uh_inicial'], 'parse_hist_bigint', 'bigint') }}
+            {%- else -%}null::bigint{%- endif %} as quantidade_uh_inicial,
+            {% if pendencia -%}
+            nullif(nullif(trim({{ coalesce_present(rel, ['cod_pendencia_obra']) }}), ''), 'NULL')::text
+            {%- else -%}null::text{%- endif %} as cod_pendencia_obra,
+            {% if pc_reportada -%}
+            {{ coalesce_present_parsed(rel, ['pc_execucao_financeira_obra'], 'parse_hist_double', 'double') }}
+            {%- else -%}null::double{%- endif %} as percentual_execucao_financeira_reportada,
+{% endmacro %}
+
+
 {% macro silver_historico_snh_arm(rel, frente_mcmv, linha_mcmv, modalidade) %}
         select
             'Minha Casa Minha Vida'::text as programa,
@@ -76,6 +112,22 @@
             {{ coalesce_present_parsed(
                 rel, ['qt_uh_previsao_entrega', 'unidades_habitacionais_a_serem_entregues'], 'parse_hist_bigint', 'bigint'
             ) }} as qt_uh_previsao_entrega,
+            -- Quantidades de UH aditivas (change enriquecer-quantidades-uh-e-sinais-obra-historico).
+            -- distrato / vigencia: SÓ a SNH reporta (D3) -- NULL nos braços SFTP.
+            -- 0 distratos é informação, distinto de NULL (fonte omissa).
+            {{ coalesce_present_parsed(
+                rel, ['quantidade_de_uhs_distratadas'], 'parse_hist_bigint', 'bigint'
+            ) }} as quantidade_uh_distratadas,
+            {{ coalesce_present_parsed(
+                rel, ['uh_vigentes', 'uhs_vigentes'], 'parse_hist_bigint', 'bigint'
+            ) }} as quantidade_uh_vigentes,
+            -- ociosas / inicial / pendencia: SÓ os braços SFTP GEFUS -- NULL no SNH.
+            null::bigint as quantidade_uh_ociosas,
+            null::bigint as quantidade_uh_inicial,
+            null::text as cod_pendencia_obra,
+            -- execucao financeira reportada: só INT057 (Rural BB) -- NULL no SNH.
+            -- O derivado (desembolsado/contratado) é calculado no select final.
+            null::double as percentual_execucao_financeira_reportada,
             dt_referencia,
             {{ parse_hist_date('data_de_movimento') }} as dt_movimento,
             'snh'::text as fonte_serie,

@@ -45,6 +45,20 @@ A silver é o dado tratado. O contrato é gate: falhou, o build para.
 | `unique` / `unique_combinacao` | uma linha por empreendimento / por mês |
 | teste singular | somatórios que não podem regredir entre versões |
 
+### Coerência de séries acumuladas (`warn`)
+
+Change: `enriquecer-quantidades-uh-e-sinais-obra-historico` (D7). Dois testes
+que **só listam** — não filtram, não quarentenam, não alteram a materialização:
+
+| teste | args | pega |
+|---|---|---|
+| `acumulado_nao_regride` | `partition_by`, `order_by` | coluna de acumulado (`quantidade_uh_entregues`, `quantidade_uh_concluidas`, `valor_desembolsado`) que **cai** vs. a observação anterior da mesma partição |
+| `quantidade_nao_excede_referencia` | `reference`, `fator` (default 1.0) | `column > reference * fator` linha-a-linha (ex.: `quantidade_uh_entregues > quantidade_uh`); só compara valores presentes (NULL nunca dispara) — espelha `desembolso_nao_excede_contratado` |
+
+Ambos `severity: warn` nesta change (sem threshold de erro). Aplicados nas
+silvers históricas por frente (`silver_mcmv_historico_empreendimento_{far,fds,rural}`).
+Contagens esperadas no build local: ~1 k excedências e ~13 k regressões no FAR.
+
 ## Tipagem (`verificacao_tipagem`)
 
 Só roda no **Postgres** (usa `information_schema`). No modo A (DuckDB local) é

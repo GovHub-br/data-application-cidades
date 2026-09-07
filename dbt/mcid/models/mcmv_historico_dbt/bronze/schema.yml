@@ -528,6 +528,128 @@ models:
         data_tests:
           - not_null
 
+  # --- família obra_mensal (change enriquecer-quantidades-uh-e-sinais-obra-historico, D4)
+  - name: bronze_mcmv_historico_obra_mensal_far
+    description: >
+      Bronze — evolução de obra por empreendimento MCMV, frente FAR
+      (`MONIT_MOV_OBRA_FAR_MENSAL_YYYYMM`), cópia fiel do glob recursivo
+      `staging/sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet`
+      (seleção da frente pelo NOME DO ARQUIVO; `_LAYOUT_`/`_SEMANAL_`/`_DIARIO_`
+      de fora). Uma linha por linha de origem (grão da fonte: 1 linha / nu_apf /
+      arquivo), colunas preservadas sem tipagem; `dt_referencia` do sufixo
+      `_YYYYMM`; auditoria `frente_mcmv`, `source_file`, `dt_ingest`,
+      `hash_linha`. Janela real 202512 → 202607. Schema DIVERGE de FDS/RURAL
+      (`dt_movimento` / `co_situacao_obra`). Harmonização e dedup ficam em
+      silver_mcmv_historico_obra_mensal.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
+    data_tests:
+      - colunas_esperadas:
+          config:
+            severity: warn
+    columns:
+      - name: frente_mcmv
+        description: Constante `FAR` — discriminador da frente na silver.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR"]
+      - name: nu_apf
+        description: APF do empreendimento (texto cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot (sufixo `_YYYYMM` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_mcmv_historico_obra_mensal_fds
+    description: >
+      Bronze — evolução de obra por empreendimento MCMV, frente FDS / Entidades
+      (`MONIT_MOV_OBRA_FDS_MENSAL_YYYYMM`), cópia fiel. Seleção pelo nome do
+      arquivo — os arquivos FDS de 202602+ estão misfiled sob `Novo MCMV - FAR/`
+      e mesmo assim entram. Janela real 202512 → 202607. Schema com
+      `dh_movimento`, `co_situacao_operacao` + `co_andamento_operacao`,
+      `detalhe_paralisacao_retomada`, `dt_legalizacao_reg`. Demais detalhes: ver
+      bronze_mcmv_historico_obra_mensal_far.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
+    data_tests:
+      - colunas_esperadas:
+          config:
+            severity: warn
+    columns:
+      - name: frente_mcmv
+        description: Constante `Entidades` — discriminador da frente na silver.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Entidades"]
+      - name: nu_apf
+        description: APF do empreendimento (texto cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot (sufixo `_YYYYMM` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_mcmv_historico_obra_mensal_rural
+    description: >
+      Bronze — evolução de obra por empreendimento MCMV, frente Rural / PNHR
+      (`MONIT_MOV_OBRA_RURAL_MENSAL_YYYYMM`), cópia fiel. Janela real 202512 →
+      202607. Schema como o do FDS (`dh_movimento`, `co_situacao_operacao`), com
+      `no_detalhe_paralisacao_retomada` e `dt_previsao_conclusao_obra_retomada`.
+      Demais detalhes: ver bronze_mcmv_historico_obra_mensal_far.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
+    data_tests:
+      - colunas_esperadas:
+          config:
+            severity: warn
+    columns:
+      - name: frente_mcmv
+        description: Constante `Rural` — discriminador da frente na silver.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Rural"]
+      - name: nu_apf
+        description: APF do empreendimento (texto cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot (sufixo `_YYYYMM` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
   - name: bronze_mcmv_historico_empreendimento_snh_caixa
     description: >
       Bronze — série mensal SNH "dados prioritários" por empreendimento MCMV

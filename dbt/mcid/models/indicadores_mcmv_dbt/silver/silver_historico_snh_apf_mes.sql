@@ -61,6 +61,12 @@ with
             try_cast(nullif(trim(uh_contratadas::text), '') as bigint) as uh_contratadas,
             try_cast(nullif(trim(uh_entregues::text), '') as bigint) as uh_entregues,
             try_cast(nullif(trim(uh_vigentes::text), '') as bigint) as uh_vigentes,
+            -- distrato de UH (change enriquecer-quantidades-uh-e-sinais-obra-historico):
+            -- só a SNH reporta; 0 é informação, distinto de NULL. Ambos os
+            -- agentes trazem a coluna `quantidade_de_uhs_distratadas`.
+            try_cast(
+                nullif(trim(quantidade_de_uhs_distratadas::text), '') as bigint
+            ) as quantidade_uh_distratadas,
             upper(nullif(trim(uf::text), '')) as uf,
             -- strip_float_text: no agente CAIXA ~20% dos códigos IBGE chegam
             -- como "355030.0" (int->float->str a montante). Ver
@@ -126,6 +132,7 @@ select
     uh_contratadas,
     uh_entregues,
     uh_vigentes,
+    quantidade_uh_distratadas,
     uf,
     codigo_ibge_municipio,
     municipio,

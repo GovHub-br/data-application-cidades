@@ -43,6 +43,14 @@ models:
         description: Unidades habitacionais entregues (acumulado) do APF no snapshot do mês.
       - name: uh_vigentes
         description: Unidades habitacionais vigentes do APF no snapshot do mês.
+      - name: quantidade_uh_distratadas
+        description: >
+          UH distratadas (acumulado) do APF no snapshot do mês, de
+          `quantidade_de_uhs_distratadas` da SNH (ambos os agentes). `0` é
+          informação, distinto de NULL. Change:
+          enriquecer-quantidades-uh-e-sinais-obra-historico. Grão
+          (agente_financeiro, apf, dt_referencia) e saída dos golds do reloginho
+          inalterados.
       - name: uf
         description: UF do empreendimento (maiúsculas).
       - name: codigo_ibge_municipio
