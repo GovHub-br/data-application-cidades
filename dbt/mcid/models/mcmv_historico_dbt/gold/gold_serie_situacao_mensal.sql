@@ -91,14 +91,25 @@ with
         where dt_referencia >= date '2019-12-01'
     ),
 
-    -- Colapsa ao grao (frente, chave_empreendimento, mes). Dois motivos: (a) na
-    -- janela sobreposta 2024-06..2024-11 a silver mantem SFTP (fim do mes) E SNH
-    -- (dia 1) com dt_referencia distintos; (b) FDS multi-fase, o mesmo
-    -- empreendimento reportado por 2-3 APFs de fase no mesmo mes (change
-    -- id-empreendimento-eixo-historico). Precedencia: SNH > SFTP, depois fase
-    -- mais avancada (Desligamento > Obra > Projeto), depois dt_referencia. Sem
-    -- isso a lag() cria transicao falsa (troca de APF Projeto->Obra) e o
-    -- estoque/uh dobra. FAR/Rural: chave = apf, fase nula -> comportamento igual.
+    -- Colapsa ao grao (frente, chave_empreendimento, mes). A re-dedup SFTP x SNH
+    -- POR APF saiu daqui (change dedup-fonte-silver-historico, D4): a silver por
+    -- frente ja entrega 1 linha por (frente, apf, mes), dt_referencia no 1o do
+    -- mes, precedencia SNH resolvida. Para FAR/Rural (chave = apf, fase nula) o
+    -- row_number() vira no-op.
+    --
+    -- O que RESTA e o desempate ENTRE APF-fases distintos do mesmo empreendimento
+    -- FDS multi-fase (2-3 APFs de fase no mesmo mes). NAO e re-dedup de fonte --
+    -- e a escolha de qual APF-fase representa o empreendimento no mes:
+    --   1. o APF cuja observacao do mes vem do SNH (dados prioritarios por
+    --      agente) prevalece sobre o APF que so o SFTP GEFUS reportou -- o
+    --      `case fonte_serie` continua necessario AQUI (a silver so resolve
+    --      fonte DENTRO de um APF, nao entre APFs). Sem ele o estoque de
+    --      `nao_iniciada` do FDS cai e `em_obras` sobe (a fase Obra de um APF
+    --      SFTP passa a ganhar da fase Projeto do APF SNH) -- muda a serie.
+    --   2. depois, fase mais avancada (Desligamento > Obra > Projeto);
+    --   3. depois, dt_referencia desc.
+    -- Sem esse colapso a lag() cria transicao falsa (troca de APF Projeto->Obra)
+    -- e o estoque/uh dobra.
     silvers as (
         select
             frente_mcmv,

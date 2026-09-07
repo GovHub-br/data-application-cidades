@@ -14,11 +14,13 @@
 -- dessas fontes e uma TABELA POR FAMILIA: não há mais bronze unificada, e a
 -- união com projeção explícita acontece aqui.
 --
--- Grão de saída: empreendimento × mês de referência (dt_referencia). Deduplica
--- por (frente_mcmv, apf, dt_referencia). Na janela sobreposta (2024-06 →
--- 2024-11) prevalece a linha do SNH (D6): mais rica em situação/fase de obra.
--- Colunas que só o SFTP tem (dt_inicio_obra, responsável) são preservadas via
--- coalesce dentro do grão ANTES da escolha da linha.
+-- Grão de saída: empreendimento × mês — 1 linha por (frente_mcmv, apf,
+-- dt_referencia), com dt_referencia normalizado ao 1º dia do mês em cada braço
+-- (change dedup-fonte-silver-historico, D1: o SFTP grava fim de mês, a SNH dia
+-- 1). Na janela sobreposta (2024-06 → 2024-11) prevalece a linha do SNH (D6):
+-- mais rica em situação/fase de obra. Colunas que só o SFTP tem (dt_inicio_obra,
+-- responsável, valor) são preservadas — no grão via coalesce ANTES da escolha
+-- da linha, e entre meses via LOCF na cauda (silver_tail, D3).
 --
 -- Numéricos em formato brasileiro (13.898.046,25) e dot-decimal são absorvidos
 -- por parse_hist_numeric (valores R$) / parse_hist_double (%) / parse_hist_bigint.
@@ -72,7 +74,11 @@ with
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
             {{ historico_uh_sinais_sftp(int040, ociosas=true, pendencia=true) }}
-            dt_referencia,
+            -- grão mensal (change dedup-fonte-silver-historico, D1): o braço SFTP
+            -- GEFUS grava dt_referencia no fim do mês (25-31); a SNH grava dia 1.
+            -- Normaliza ao 1º do mês ANTES do enriquecido/dedup p/ colapsar as
+            -- duas fontes do mesmo APF/mês. Dia exato migra p/ dt_movimento.
+            date_trunc('month', dt_referencia)::date as dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
             fonte_interface::text as fonte_tabela,
@@ -119,7 +125,8 @@ with
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
             {{ historico_uh_sinais_sftp(int054, ociosas=true, pendencia=true) }}
-            dt_referencia,
+            -- grão mensal (change dedup-fonte-silver-historico, D1) — ver far_caixa.
+            date_trunc('month', dt_referencia)::date as dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
             fonte_interface::text as fonte_tabela,

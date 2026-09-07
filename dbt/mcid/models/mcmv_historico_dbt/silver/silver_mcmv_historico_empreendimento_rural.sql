@@ -10,8 +10,10 @@
 -- Desde a change pipeline-bronze-historica-destino-trocavel (D5) cada fonte é
 -- uma TABELA POR FAMÍLIA; a união com projeção explícita acontece aqui.
 --
--- Grão: empreendimento × mês. Dedup por (frente_mcmv, apf, dt_referencia).
--- Precedência SNH na janela sobreposta (D6). Ver
+-- Grão: empreendimento × mês — 1 linha por (frente_mcmv, apf, dt_referencia),
+-- dt_referencia normalizado ao 1º do mês em cada braço (change
+-- dedup-fonte-silver-historico, D1). Precedência SNH na janela sobreposta (D6);
+-- LOCF de valor/responsável na cauda (D3). Ver
 -- models/docs/entregas/separacao-silver-historico-por-frente.md.
 --
 -- Obs.: INT057 tem a coluna temporal com nome inconsistente entre entregas
@@ -59,7 +61,10 @@ with
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
             {{ historico_uh_sinais_sftp(int057, pc_reportada=true) }}
-            dt_referencia,
+            -- grão mensal (change dedup-fonte-silver-historico, D1): braço SFTP
+            -- GEFUS grava dt_referencia no fim do mês; normaliza ao 1º do mês
+            -- ANTES do enriquecido/dedup. Dia exato migra p/ dt_movimento.
+            date_trunc('month', dt_referencia)::date as dt_referencia,
             {{ parse_hist_date('coalesce(idt_movimento, dt_movimento)') }}
             as dt_movimento,
             'sftp'::text as fonte_serie,
@@ -103,7 +108,8 @@ with
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
             {{ historico_uh_sinais_sftp(int065, inicial=true) }}
-            dt_referencia,
+            -- grão mensal (change dedup-fonte-silver-historico, D1) — ver rural_bb.
+            date_trunc('month', dt_referencia)::date as dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
             'sftp'::text as fonte_serie,
             fonte_interface::text as fonte_tabela,

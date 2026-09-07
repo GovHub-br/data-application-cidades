@@ -150,6 +150,19 @@ models:
       - name: fonte_tabela
         data_tests:
           - not_null
+      - name: valor_contratado_preenchido
+        description: >
+          Herdado da silver — true quando valor_contratado/valor_desembolsado do
+          último snapshot vieram de LOCF, não de observação SNH (change
+          dedup-fonte-silver-historico, D3).
+        data_tests:
+          - not_null
+      - name: responsavel_preenchido
+        description: >
+          Herdado da silver — true quando responsavel_id/nome vieram de LOCF do
+          último snapshot SFTP (change dedup-fonte-silver-historico, D3).
+        data_tests:
+          - not_null
 
   - name: gold_serie_mensal
     description: >

@@ -128,7 +128,10 @@
             -- execucao financeira reportada: só INT057 (Rural BB) -- NULL no SNH.
             -- O derivado (desembolsado/contratado) é calculado no select final.
             null::double as percentual_execucao_financeira_reportada,
-            dt_referencia,
+            -- grão mensal (change dedup-fonte-silver-historico, D1): o braço SNH
+            -- ja grava dt_referencia no dia 1 -> date_trunc e idempotente aqui;
+            -- explicito p/ o contrato "cada braco normaliza" e simetria com o SFTP.
+            date_trunc('month', dt_referencia)::date as dt_referencia,
             {{ parse_hist_date('data_de_movimento') }} as dt_movimento,
             'snh'::text as fonte_serie,
             ('SNH_dados_prioritarios_af_' || lower(coalesce(agente_arquivo, 'na')))::text

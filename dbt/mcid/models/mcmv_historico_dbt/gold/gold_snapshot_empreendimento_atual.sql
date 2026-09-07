@@ -102,6 +102,12 @@ select
     -- carry-forward do SNH intermitente (dt_snapshot_efetivo = mês real). D6.
     fonte_valor,
     dt_snapshot_efetivo,
+    -- marcadores de LOCF de coluna (change dedup-fonte-silver-historico, D3):
+    -- true quando valor_contratado/valor_desembolsado ou responsavel_* do último
+    -- snapshot vieram de forward-fill (tipicamente do SFTP antes da virada de
+    -- feed) e não de observação SNH. Herdados da silver.
+    valor_contratado_preenchido,
+    responsavel_preenchido,
     dt_silver
 from ultimo
 where rn = 1

@@ -159,6 +159,56 @@
         select * from resolvido_flag
         union all
         select * from carregado
+    ),
+
+    -- FORWARD-FILL DE COLUNA / LOCF (change dedup-fonte-silver-historico, D3).
+    -- Distinto do carry-forward de linha acima (fonte_valor='carregado', que
+    -- replica a última linha SNH nos meses SEM snapshot): aqui o SNH está
+    -- presente todo mês na virada de feed pós-2024-11, só não traz
+    -- valor_contratado / valor_desembolsado / responsavel_* -- que o braço SFTP
+    -- preenchia até parar. Sem isto o valor bom do SFTP some na virada
+    -- (gold_snapshot FAR responsavel_nome 15%, causa da subestimação de
+    -- ~15 vs ~22 Bi no painel do Reloginho).
+    --
+    -- Preenche NULL com a última observação não-nula do mesmo (frente, apf) em
+    -- mês anterior ou igual, DEPOIS da dedup, sobre a série mensal completa
+    -- (observado + carregado). NÃO preenche percentual_execucao_fisica /
+    -- status_operacional / situacao_canonica (variam no tempo -- NULL na virada
+    -- é a informação honesta). O % financeiro derivado foi calculado no corpo da
+    -- silver ANTES do LOCF: permanece NULL quando o insumo estava ausente
+    -- (não-derivável); o marcador abaixo expõe o caso p/ o consumidor.
+    preenchido as (
+        select
+            * exclude (
+                valor_contratado, valor_desembolsado, responsavel_id, responsavel_nome
+            ),
+            coalesce(
+                valor_contratado, last_value(valor_contratado ignore nulls) over w
+            ) as valor_contratado,
+            coalesce(
+                valor_desembolsado, last_value(valor_desembolsado ignore nulls) over w
+            ) as valor_desembolsado,
+            coalesce(
+                responsavel_id, last_value(responsavel_id ignore nulls) over w
+            ) as responsavel_id,
+            coalesce(
+                responsavel_nome, last_value(responsavel_nome ignore nulls) over w
+            ) as responsavel_nome,
+            -- marcador por grupo: cobre valor_contratado + valor_desembolsado
+            (
+                valor_contratado is null
+                and last_value(valor_contratado ignore nulls) over w is not null
+            ) as valor_contratado_preenchido,
+            (
+                responsavel_nome is null
+                and last_value(responsavel_nome ignore nulls) over w is not null
+            ) as responsavel_preenchido
+        from final
+        window w as (
+            partition by frente_mcmv, apf
+            order by dt_referencia
+            rows between unbounded preceding and current row
+        )
     )
 
 select
@@ -218,6 +268,11 @@ select
     as gap_fisico_financeiro_pp,
     fonte_valor,
     dt_snapshot_efetivo,
+    -- marcadores de LOCF de coluna (change dedup-fonte-silver-historico, D3):
+    -- true quando o valor/responsável da linha veio de forward-fill do último
+    -- snapshot que reportou (tipicamente o SFTP, antes da virada de feed).
+    valor_contratado_preenchido,
+    responsavel_preenchido,
     current_timestamp as dt_silver
-from final
+from preenchido
 {% endmacro %}

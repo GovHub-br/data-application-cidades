@@ -11,6 +11,12 @@ models:
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, far]
     data_tests:
+      # Grão físico mensal (change dedup-fonte-silver-historico, D2): 1 linha por
+      # (frente_mcmv, apf, dt_referencia) com dt_referencia já normalizado ao 1º
+      # do mês. Antes da change quebraria na janela de sobreposição SFTP×SNH.
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
       # Change: vocabulario-e-qualidade-financeira-historica (D7/8.2).
       - desembolso_nao_excede_contratado:
           arguments: { tolerancia: 0.01 }
@@ -88,7 +94,12 @@ models:
           - sem_sufixo_float_texto
           - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: dt_referencia
-        description: Mês de referência do snapshot (nome do arquivo).
+        description: >
+          Mês de referência do snapshot, SEMPRE o 1º dia do mês (change
+          dedup-fonte-silver-historico, D1). O braço SFTP GEFUS grava a data no
+          fim do mês na origem e a SNH no dia 1; ambos são normalizados por
+          `date_trunc('month', ·)` na projeção de cada braço, antes da dedup. O
+          dia exato do corte do snapshot fica em `dt_movimento`.
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
@@ -193,6 +204,10 @@ models:
         description: >
           Valor contratado (R$) — conceito canônico `valor_investimento_total`
           (glossario-valores-financeiros.md). Parse de formato brasileiro.
+          Pode ser LOCF do último snapshot que reportou (tipicamente o SFTP,
+          antes da virada de feed) quando o SNH corrente não traz o valor —
+          `valor_contratado_preenchido = true` marca o caso (change
+          dedup-fonte-silver-historico, D3).
         data_tests:
           - completude_minima:
               arguments:
@@ -209,7 +224,10 @@ models:
       - name: valor_desembolsado
         description: >
           Valor desembolsado/liberado (R$) — conceito canônico
-          `valor_desembolsado_acumulado`.
+          `valor_desembolsado_acumulado`. Pode ser LOCF do último snapshot
+          (marcado por `valor_contratado_preenchido`); como o desembolso é
+          monotônico, o valor carregado é um piso, nunca um teto (change
+          dedup-fonte-silver-historico, D3).
         data_tests:
           - valor_nao_negativo:
               config: { severity: warn }
@@ -334,6 +352,27 @@ models:
           linhas `observado`; mês da última observação nas linhas `carregado`.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # --- marcadores de LOCF de coluna (change dedup-fonte-silver-historico, D3).
+      # Distinto de fonte_valor='carregado' (linha inteira replicada nos meses sem
+      # snapshot): aqui a linha É uma observação SNH real, só o valor/responsável
+      # foi forward-filled do último snapshot que reportou.
+      - name: valor_contratado_preenchido
+        description: >
+          true quando `valor_contratado` e/ou `valor_desembolsado` da linha
+          vieram de LOCF (última observação não-nula do mesmo (frente, apf)),
+          não do snapshot corrente. O % financeiro derivado NÃO é recalculado
+          pós-LOCF — permanece NULL quando o insumo estava ausente.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
+      - name: responsavel_preenchido
+        description: >
+          true quando `responsavel_id` / `responsavel_nome` da linha vieram de
+          LOCF (o braço SNH nunca traz responsável; herdado do último snapshot
+          SFTP do mesmo APF).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
 
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
@@ -344,6 +383,10 @@ models:
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, fds]
     data_tests:
+      # Grão físico mensal (change dedup-fonte-silver-historico, D2).
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
       # Change: vocabulario-e-qualidade-financeira-historica (D7/8.2). FDS
       # permanece limpo hoje (0 APF).
       - desembolso_nao_excede_contratado:
@@ -366,6 +409,10 @@ models:
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, rural]
     data_tests:
+      # Grão físico mensal (change dedup-fonte-silver-historico, D2).
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
       # Change: vocabulario-e-qualidade-financeira-historica (D7/8.2). Rural
       # tem APF com desembolso muito acima do contratado (até 9×): `error`
       # para razão > 2, `warn` para o resto.
