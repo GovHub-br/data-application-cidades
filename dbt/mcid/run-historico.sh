@@ -13,65 +13,36 @@
 #                   mesma execução, com o motor DuckDB FORA do banco.
 # O corpo de cada modelo é idêntico nos três; só o target muda.
 #
+# Contenção de memória (ver _run-common.sh): cada `dbt` roda dentro de um teto
+# RÍGIDO de RAM (cgroup) e as 3 bronzes maiores da série executiva
+# (bases_relatorio_executivo, min_cidades, bext) + a silver da série executiva
+# rodam com --threads 1, para dois modelos pesados nunca coexistirem.
+#
 # Uso:
 #   ./run-historico.sh                # tudo: seed + bronzes + silvers + golds + testes
-#   ./run-historico.sh bronzes        # só as 11 bronzes por família deste domínio
+#   ./run-historico.sh bronzes        # só as bronzes por família deste domínio
 #   ./run-historico.sh silvers        # só as silvers por frente + consolidado
+#   ./run-historico.sh serie          # só a cadeia pesada: 4 bronzes + silver da série executiva
+#   ./run-historico.sh golds          # só os golds
+#   ./run-historico.sh tests          # dbt test --select mcmv_historico_dbt
 #   ./run-historico.sh <selector>     # dbt build --select <selector> --target staging_duckdb
 #
-# Overrides (env var):
-#   DUCKDB_MCID_PATH          arquivo .duckdb            (default /mnt/data/duckdb/cidades.duckdb)
-#   DUCKDB_MCID_TEMP_DIR      dir de spill do DuckDB     (default /mnt/data/duckdb/tmp)
-#   DUCKDB_MCID_MEMORY_LIMIT  limite de RAM do DuckDB    (default 10GB)
-#   DUCKDB_MCID_THREADS       threads do DuckDB          (default 3)
-#   DBT                       binário dbt                (default: dbt no PATH)
+# Overrides (env var): ver cabeçalho de _run-common.sh (DUCKDB_MCID_*, DBT).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Layout atual (#128): dbt/mcid/ fica 2 níveis abaixo da raiz do repo.
-REPO_ROOT="$(cd "$HERE/../.." && pwd)"
-TARGET=staging_duckdb
+# shellcheck source=_run-common.sh
+source "$HERE/_run-common.sh"
 
-# dbt-core (o dbt-fusion do PATH não parseia este repo). Ordem: $DBT explícito
-# → .venv do repo → dbt do PATH.
-if [ -z "${DBT:-}" ]; then
-  if [ -x "$REPO_ROOT/.venv/bin/dbt" ]; then DBT="$REPO_ROOT/.venv/bin/dbt"; else DBT="dbt"; fi
-fi
-
-# --- credenciais (.env do repo; valores têm caracteres especiais → python-dotenv, não `source`) ---
-if ! eval "$(python3 - "$REPO_ROOT" <<'PY'
-import sys, shlex
-try:
-    from dotenv import dotenv_values
-except ModuleNotFoundError:
-    sys.exit(0)  # sem python-dotenv: assume que o ambiente já exportou as vars
-d = {}
-for f in ("local.env", ".env"):
-    try:
-        d.update(dotenv_values(f"{sys.argv[1]}/{f}"))
-    except OSError:
-        pass
-for k, v in d.items():
-    if v is not None:
-        print(f"export {k}={shlex.quote(v)}")
-PY
-)"; then
-  echo "aviso: não consegui carregar os .env automaticamente; garanta MINIO_* no ambiente" >&2
-fi
-
-# --- storage/temp do DuckDB no disco com espaço + limite de RAM ---
-export DUCKDB_MCID_PATH="${DUCKDB_MCID_PATH:-/mnt/data/duckdb/cidades.duckdb}"
-export DUCKDB_MCID_TEMP_DIR="${DUCKDB_MCID_TEMP_DIR:-/mnt/data/duckdb/tmp}"
-export DUCKDB_MCID_MEMORY_LIMIT="${DUCKDB_MCID_MEMORY_LIMIT:-10GB}"
-export DUCKDB_MCID_THREADS="${DUCKDB_MCID_THREADS:-3}"
-mkdir -p "$(dirname "$DUCKDB_MCID_PATH")" "$DUCKDB_MCID_TEMP_DIR"
-
-echo "DuckDB path : $DUCKDB_MCID_PATH"
-echo "DuckDB tmp  : $DUCKDB_MCID_TEMP_DIR"
-echo "RAM limit   : $DUCKDB_MCID_MEMORY_LIMIT   threads: $DUCKDB_MCID_THREADS"
-echo
-
+run_common_banner
 cd "$HERE"
+
+# Carrega TODAS as seeds antes de qualquer build. Num arquivo frio (rebuild do
+# zero) as seeds de referencia dos testes de DQ — `data_quality.colunas_esperadas`,
+# os dominios canonicos, `quarentena_valores_financeiros` — precisam existir ANTES
+# do primeiro `dbt build --select <modelo>`, senao os testes de schema daquele
+# modelo dao Catalog Error. `dbt seed` (sem --select) carrega as 9; e barato.
+seed_all() { run_dbt seed --target "$TARGET"; }
 
 # Bronzes por familia (D5 da change pipeline-bronze-historica-destino-trocavel):
 # 2 agentes SNH + 5 interfaces GEFUS + 4 familias da serie executiva + 2 agentes
@@ -100,9 +71,16 @@ BRONZES=(
   bronze_mcmv_historico_obra_mensal_fds
   bronze_mcmv_historico_obra_mensal_rural
 )
+# Bronzes que sozinhas ja sao grandes o bastante para valer --threads 1 (limita
+# a paralelizacao interna do DuckDB, que e onde o pico de RAM mora). Sao as 3
+# familias volumosas da serie executiva; `entrada_bb` (18k linhas) fica de fora.
+HEAVY="bronze_mcmv_historico_serie_bases_relatorio_executivo bronze_mcmv_historico_serie_min_cidades bronze_mcmv_historico_serie_bext"
+
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
-# juntos) só depois de todos materializados.
+# juntos) só depois de todos materializados. EXCETO
+# silver_mcmv_historico_serie_executiva (uniao das 4 familias + janela sobre
+# ~10M linhas): sai em invocacao propria com --threads 1.
 # silver_atual_dim_empreendimento (dominio empreendimento_fds_dbt) + suas 2 bronzes
 # entram aqui porque silver_mcmv_historico_empreendimento_fds passou a herdar
 # id_empreendimento / fase_empreendimento dela (change id-empreendimento-eixo-historico).
@@ -115,10 +93,10 @@ SILVERS=(
   silver_mcmv_historico_empreendimento_far
   silver_mcmv_historico_empreendimento_fds
   silver_mcmv_historico_empreendimento_rural
-  silver_mcmv_historico_serie_executiva
   silver_mcmv_historico_serie_anual_ogu_fgts
   silver_mcmv_historico_obra_mensal
 )
+SILVER_SERIE=silver_mcmv_historico_serie_executiva
 GOLDS=(
   gold_snapshot_empreendimento_atual
   gold_marco_empreendimento
@@ -127,29 +105,72 @@ GOLDS=(
 )
 
 build_one() {
+  local sel="$1"
+  local extra=()
+  case " $HEAVY " in *" $sel "*) extra=(--threads 1) ;; esac
   echo "=================================================================="
-  echo "dbt build --select $1"
+  echo "dbt build --select $sel ${extra[*]}"
   echo "=================================================================="
-  "$DBT" build --select "$1" --target "$TARGET"
+  run_dbt build --select "$sel" "${extra[@]}" --target "$TARGET"
+}
+
+# silver_mcmv_historico_serie_executiva: união das 4 famílias (~10M linhas) +
+# a dedup (reenvio_rank → conteudo_rank → SUM ao grão de consumo). O SUM/GROUP BY
+# de milhões de grupos NÃO derrama em disco no DuckDB — o pico é ~10,3 GiB
+# medido, e baixar o soft limit só torna tudo 2× mais lento sem mexer nesse
+# operador. Com o teto global de 6G esse modelo levava SIGKILL. Roda então com
+# folga própria: hard 11G (pico + margem) + 2G de swap de almofada (um estouro
+# pequeno degrada pra erro capturável, não SIGKILL). Numa máquina com pouca RAM
+# livre, suba DUCKDB_MCID_SERIE_CGROUP_MAX ou aceite que só este modelo falha
+# (o resto do build e a máquina seguem intactos).
+# Overridável: DUCKDB_MCID_SERIE_MEM / _SERIE_CGROUP_MAX / _SERIE_CGROUP_SWAP_MAX.
+build_silver_serie() {
+  echo "=================================================================="
+  echo "dbt build --select $SILVER_SERIE --threads 1  (limites ampliados: hard 11G)"
+  echo "=================================================================="
+  DUCKDB_MCID_MEMORY_LIMIT="${DUCKDB_MCID_SERIE_MEM:-6GB}" \
+  DUCKDB_MCID_CGROUP_MAX="${DUCKDB_MCID_SERIE_CGROUP_MAX:-11G}" \
+  DUCKDB_MCID_CGROUP_SWAP_MAX="${DUCKDB_MCID_SERIE_CGROUP_SWAP_MAX:-2G}" \
+    run_dbt build --select "$SILVER_SERIE" --threads 1 --target "$TARGET"
 }
 
 case "${1:-all}" in
-  bronzes) for m in "${BRONZES[@]}"; do build_one "$m"; done ;;
-  silvers)
-    "$DBT" seed --select seed_apf_fase_fds seed_correcao_fase_projeto --target "$TARGET"
-    "$DBT" build --select "${SILVERS[@]}" --target "$TARGET"
-    ;;
-  golds)   "$DBT" build --select "${GOLDS[@]}"   --target "$TARGET" ;;
-  tests)   "$DBT" test  --select "mcmv_historico_dbt" --target "$TARGET" ;;
-  all)
-    "$DBT" seed --select issue_118_mcmv_serie_temporal_piloto seed_apf_fase_fds seed_correcao_fase_projeto --target "$TARGET"
+  bronzes)
+    seed_all
     for m in "${BRONZES[@]}"; do build_one "$m"; done
-    "$DBT" build --select "${SILVERS[@]}" --target "$TARGET"
-    "$DBT" build --select "${GOLDS[@]}" --target "$TARGET"
-    echo "=================================================================="
-    echo "dbt test --select mcmv_historico_dbt"
-    echo "=================================================================="
-    "$DBT" test --select "mcmv_historico_dbt" --target "$TARGET"
+    ;;
+  silvers)
+    seed_all
+    run_dbt build --select "${SILVERS[@]}" --target "$TARGET"
+    build_silver_serie
+    ;;
+  serie)
+    seed_all
+    for m in \
+      bronze_mcmv_historico_serie_entrada_bb \
+      bronze_mcmv_historico_serie_bases_relatorio_executivo \
+      bronze_mcmv_historico_serie_min_cidades \
+      bronze_mcmv_historico_serie_bext; do
+      build_one "$m"
+    done
+    build_silver_serie
+    ;;
+  golds)   run_dbt build --select "${GOLDS[@]}"   --target "$TARGET" ;;
+  tests)   run_dbt test  --select "mcmv_historico_dbt" --target "$TARGET" ;;
+  all)
+    seed_all
+    for m in "${BRONZES[@]}"; do build_one "$m"; done
+    run_dbt build --select "${SILVERS[@]}" --target "$TARGET"
+    build_silver_serie
+    run_dbt build --select "${GOLDS[@]}" --target "$TARGET"
+    if [ -z "${DUCKDB_MCID_SKIP_TESTS:-}" ]; then
+      echo "=================================================================="
+      echo "dbt test --select mcmv_historico_dbt"
+      echo "=================================================================="
+      run_dbt test --select "mcmv_historico_dbt" --target "$TARGET"
+    else
+      echo "(DUCKDB_MCID_SKIP_TESTS=1 — fase de testes adiada p/ o chamador)"
+    fi
     ;;
   *) build_one "$1" ;;
 esac

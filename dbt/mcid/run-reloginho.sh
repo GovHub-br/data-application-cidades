@@ -21,6 +21,10 @@
 # bronzes por agente bronze_mcmv_historico_empreendimento_snh_bb/_caixa
 # (mcmv_historico_dbt), reaproveitadas se já estiverem no arquivo.
 #
+# Contenção de memória: ver _run-common.sh — cada `dbt` roda dentro de um teto
+# RÍGIDO de RAM (cgroup). Os modelos do reloginho são estreitos (~300k linhas),
+# então não precisam da serialização por modelo do run-historico.sh.
+#
 # FALHA CONHECIDA: `assert_reloginho_frente_cobertura_mensal` acusa 5 combos
 # (agente × frente) com buraco na série mensal. É lacuna da FONTE — os
 # snapshots `historico_recente_*` da SNH faltam meses no MinIO (BB esparso:
@@ -34,59 +38,19 @@
 #   ./run-reloginho.sh tests          # dbt test --select indicadores_mcmv_dbt
 #   ./run-reloginho.sh <selector>     # dbt build --select <selector> --target staging_duckdb
 #
-# Overrides (env var):
-#   DUCKDB_MCID_PATH          arquivo .duckdb            (default /mnt/data/duckdb/cidades.duckdb)
-#   DUCKDB_MCID_TEMP_DIR      dir de spill do DuckDB     (default /mnt/data/duckdb/tmp)
-#   DUCKDB_MCID_MEMORY_LIMIT  limite de RAM do DuckDB    (default 10GB)
-#   DUCKDB_MCID_THREADS       threads do DuckDB          (default 3)
-#   DBT                       binário dbt                (default: dbt no PATH)
+# Overrides (env var): ver cabeçalho de _run-common.sh (DUCKDB_MCID_*, DBT).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Layout atual (#128): dbt/mcid/ fica 2 níveis abaixo da raiz do repo.
-REPO_ROOT="$(cd "$HERE/../.." && pwd)"
-TARGET=staging_duckdb
+# shellcheck source=_run-common.sh
+source "$HERE/_run-common.sh"
 
-# dbt-core (o dbt-fusion do PATH não parseia este repo). Ordem: $DBT explícito
-# → .venv do repo → dbt do PATH.
-if [ -z "${DBT:-}" ]; then
-  if [ -x "$REPO_ROOT/.venv/bin/dbt" ]; then DBT="$REPO_ROOT/.venv/bin/dbt"; else DBT="dbt"; fi
-fi
-
-# --- credenciais (.env do repo; valores têm caracteres especiais → python-dotenv, não `source`) ---
-if ! eval "$(python3 - "$REPO_ROOT" <<'PY'
-import sys, shlex
-try:
-    from dotenv import dotenv_values
-except ModuleNotFoundError:
-    sys.exit(0)  # sem python-dotenv: assume que o ambiente já exportou as vars
-d = {}
-for f in ("local.env", ".env"):
-    try:
-        d.update(dotenv_values(f"{sys.argv[1]}/{f}"))
-    except OSError:
-        pass
-for k, v in d.items():
-    if v is not None:
-        print(f"export {k}={shlex.quote(v)}")
-PY
-)"; then
-  echo "aviso: não consegui carregar os .env automaticamente; garanta MINIO_* no ambiente" >&2
-fi
-
-# --- storage/temp do DuckDB no disco com espaço + limite de RAM ---
-export DUCKDB_MCID_PATH="${DUCKDB_MCID_PATH:-/mnt/data/duckdb/cidades.duckdb}"
-export DUCKDB_MCID_TEMP_DIR="${DUCKDB_MCID_TEMP_DIR:-/mnt/data/duckdb/tmp}"
-export DUCKDB_MCID_MEMORY_LIMIT="${DUCKDB_MCID_MEMORY_LIMIT:-10GB}"
-export DUCKDB_MCID_THREADS="${DUCKDB_MCID_THREADS:-3}"
-mkdir -p "$(dirname "$DUCKDB_MCID_PATH")" "$DUCKDB_MCID_TEMP_DIR"
-
-echo "DuckDB path : $DUCKDB_MCID_PATH"
-echo "DuckDB tmp  : $DUCKDB_MCID_TEMP_DIR"
-echo "RAM limit   : $DUCKDB_MCID_MEMORY_LIMIT   threads: $DUCKDB_MCID_THREADS"
-echo
-
+run_common_banner
 cd "$HERE"
+
+# Num arquivo frio, as seeds de referência dos testes de DQ precisam existir
+# antes do build (senão Catalog Error nos testes de schema do upstream). Barato.
+[ "${1:-all}" = tests ] || run_dbt seed --target "$TARGET"
 
 # Indicadores de velocidade (reloginho puro) — sem a cadeia de gargalo.
 RELOGINHO=(
@@ -102,17 +66,17 @@ GARGALO=(
 )
 
 case "${1:-all}" in
-  reloginho) "$DBT" build --select "${RELOGINHO[@]}" --target "$TARGET" ;;
-  gargalo)   "$DBT" build --select "${GARGALO[@]}"   --target "$TARGET" ;;
-  tests)     "$DBT" test  --select indicadores_mcmv_dbt --target "$TARGET" ;;
+  reloginho) run_dbt build --select "${RELOGINHO[@]}" --target "$TARGET" ;;
+  gargalo)   run_dbt build --select "${GARGALO[@]}"   --target "$TARGET" ;;
+  tests)     run_dbt test  --select indicadores_mcmv_dbt --target "$TARGET" ;;
   all)
     # Uma invocação: o dbt ordena bronze → silver → gold e roda os testes
     # (inclusive os cross-frente do gargalo) só depois de tudo materializado.
-    "$DBT" build --select "${RELOGINHO[@]}" "${GARGALO[@]}" --target "$TARGET"
+    run_dbt build --select "${RELOGINHO[@]}" "${GARGALO[@]}" --target "$TARGET"
     ;;
   *)
     echo "dbt build --select $1"
-    "$DBT" build --select "$1" --target "$TARGET"
+    run_dbt build --select "$1" --target "$TARGET"
     ;;
 esac
 
