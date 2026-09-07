@@ -1,6 +1,10 @@
 {{ config(materialized="table", alias="silver_atual_evolucao_financeira") }}
 
--- Silver: Evolução Financeira — Série temporal de desembolsos por empreendimento
+-- Silver: Evolução Financeira — liberações CONHECIDAS NO SNAPSHOT do SharePoint,
+-- agrupadas pelo mês da liberação (dt_liberacao). NÃO é a série de desembolsos
+-- do empreendimento: cobre só APF com liberação pós-2024 e é decomposição por
+-- componente, não o total acumulado (esse vem do GEFUS/INT — ver
+-- models/docs/glossario-valores-financeiros.md, D4).
 -- Agrega as liberações da bronze financeiro_mensal por APF e mês.
 -- JOIN com empreendimento usando raiz de 6 dígitos (LEFT/RIGHT) para calcular
 -- o percentual de execução financeira sobre o valor contratado.

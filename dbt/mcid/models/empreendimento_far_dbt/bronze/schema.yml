@@ -111,9 +111,14 @@ models:
 
   - name: bronze_far_financeiro_mensal
     description: >
-      Bronze — cópia fiel da série de liberações financeiras, lida de
-      mcmv_staging.novo_mcmv_far_financeiro_mensal. Cada linha = uma liberação de
-      recurso com decomposição por componente. APF em 6 dígitos → normalize_apf.
+      Bronze — cópia fiel do **snapshot único** de liberações financeiras do
+      SharePoint (mcmv_staging.novo_mcmv_far_financeiro_mensal). Cada linha =
+      uma liberação de recurso com decomposição por componente; `dt_liberacao`
+      cobre liberações desde 2024-06. **NÃO é série temporal**: `dt_referencia`
+      é constante (data do snapshot). É fonte de **decomposição por
+      componente**, não do desembolso acumulado total — esse vem do feed
+      GEFUS/INT (ver models/docs/glossario-valores-financeiros.md, D4). APF em
+      6 dígitos → normalize_apf.
     meta:
       tags: [bronze, far, empreendimento]
     columns:

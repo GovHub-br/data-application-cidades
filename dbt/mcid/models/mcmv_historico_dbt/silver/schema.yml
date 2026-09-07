@@ -10,6 +10,11 @@ models:
       staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, far]
+    data_tests:
+      # Change: vocabulario-e-qualidade-financeira-historica (D7/8.2).
+      - desembolso_nao_excede_contratado:
+          arguments: { tolerancia: 0.01 }
+          config: { severity: warn }
     columns: &contrato_empreendimento
       - name: id_historico_snapshot
         description: Chave técnica única por frente, APF e mês de referência.
@@ -140,15 +145,28 @@ models:
               config:
                 severity: warn
       - name: valor_contratado
-        description: Valor contratado (R$), parse de formato brasileiro.
+        description: >
+          Valor contratado (R$) — conceito canônico `valor_investimento_total`
+          (glossario-valores-financeiros.md). Parse de formato brasileiro.
         data_tests:
           - completude_minima:
               arguments:
                 min_pct: 0.70
               config:
                 severity: warn
+          # `warn` (não `error`): há ~26 snapshots isolados com valor_contratado
+          # negativo no FAR — erro de snapshot pontual, não da chave inteira; a
+          # quarentena por chave removeria meses válidos. Change:
+          # vocabulario-e-qualidade-financeira-historica (D7/8.3).
+          - valor_nao_negativo:
+              config: { severity: warn }
       - name: valor_desembolsado
-        description: Valor desembolsado/liberado (R$).
+        description: >
+          Valor desembolsado/liberado (R$) — conceito canônico
+          `valor_desembolsado_acumulado`.
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
       - name: percentual_execucao_fisica
         description: Percentual de execução física da obra.
       - name: status_operacional
@@ -192,6 +210,12 @@ models:
       empreendimento × mês. Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, fds]
+    data_tests:
+      # Change: vocabulario-e-qualidade-financeira-historica (D7/8.2). FDS
+      # permanece limpo hoje (0 APF).
+      - desembolso_nao_excede_contratado:
+          arguments: { tolerancia: 0.01 }
+          config: { severity: warn }
     columns: *contrato_empreendimento
 
   - name: silver_mcmv_historico_empreendimento_rural
@@ -202,6 +226,16 @@ models:
       mês. Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, rural]
+    data_tests:
+      # Change: vocabulario-e-qualidade-financeira-historica (D7/8.2). Rural
+      # tem APF com desembolso muito acima do contratado (até 9×): `error`
+      # para razão > 2, `warn` para o resto.
+      - desembolso_nao_excede_contratado:
+          arguments: { tolerancia: 0.01 }
+          config: { severity: warn }
+      - desembolso_nao_excede_contratado:
+          arguments: { ratio_minimo: 2.0 }
+          config: { severity: error }
     columns: *contrato_empreendimento
 
   - name: silver_mcmv_historico_entrega_apf
@@ -240,13 +274,45 @@ models:
     description: >
       Silver — série executiva histórica no contrato comum. Aplica o mapa de
       colunas (doc issue-130-proposta-bronze-series-historicas.md) via
-      coalesce_present(), tipa (UH→bigint, valores→double, datas→date),
+      coalesce_present(), tipa (UH→bigint, valores R$→numeric(15,2) via
+      parse_hist_numeric — mesmo tipo das fichas atuais; ausência preservada
+      como NULL, não 0.00 — %→double, datas→date),
       classifica linha_ogu_fgts (para o piloto #118) e deduplica por
       (fonte_familia, chave_natural, dt_referencia) mantendo o snapshot mais
       recente do mês. Grão: registro de origem (empreendimento ou contrato).
       Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Reconciliação da decomposição do investimento (change
+      # vocabulario-e-qualidade-financeira-historica, D7/8.1). A identidade
+      # `investimento = empréstimo + contrapartida + subsídio_total`:
+      #   - bases_relatorio_executivo: fecha EXATO (diferença R$ 0);
+      #   - bext: gap sistemático ~R$ 16-25 k/linha (investimento inclui taxas
+      #     não decompostas nas 3 parcelas);
+      #   - min_cidades: gap ~R$ 26-51 k/linha.
+      # Tolerância R$ 100 k: passa o gap sistemático, pega os desvios grosseiros
+      # (~6,5 k linhas, sobretudo min_cidades > R$ 1 M). `warn`.
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: valor_investimento
+            parcela_columns: [valor_financiamento, valor_contrapartidas, subsidio_total]
+            tolerancia: 100000.00
+          config:
+            severity: warn
+      # Plausibilidade R$/UH por família × faixa contra o seed faixa_valor_uh
+      # (change vocabulario-e-qualidade-financeira-historica, D7). `frente` do
+      # seed = fonte_familia aqui. `warn`. Só `valor_investimento` (estoque
+      # estável); `valor_liberado` é acumulado a partir de zero e a faixa R$/UH
+      # não se aplica bem nos primeiros snapshots.
+      - valor_dentro_faixa_uh:
+          arguments:
+            valor_column: valor_investimento
+            uh_column: uh_contratadas
+            seed: faixa_valor_uh
+            seed_key_columns: { fonte_familia: frente, faixa: faixa }
+          config:
+            severity: warn
     columns:
       - name: fonte_familia
         data_tests:
@@ -284,10 +350,119 @@ models:
         description: UH contratadas do registro (harmonizado das ~6 origens).
       - name: uh_entregues
         description: UH entregues do registro.
+      - name: grao_familia
+        description: >
+          Grão da família: 'contrato' (bext — extrato de contrato PF
+          individual) ou 'empreendimento' (demais). O consumidor NÃO deve somar
+          UH/valor entre grãos diferentes. Change:
+          vocabulario-e-qualidade-financeira-historica (D3).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["contrato", "empreendimento"]
+      # --- Colunas de valor financeiro (glossario-valores-financeiros.md).
+      # completude_minima em `warn`: ausência PARCIAL é esperada (uma família /
+      # geração de schema não traz o conceito). Change:
+      # vocabulario-e-qualidade-financeira-historica (D7).
+      - name: valor_investimento
+        description: >
+          Conceito canônico `valor_investimento_total` — custo total
+          (repasse/financiamento + contrapartida + subsídio), em R$ nominais.
+          De `valor_total_do_investimento` (bases_relatorio) / `vlr_total_operacao`
+          (min_cidades) / `mvalor_investimento` (bext). Nulo em entrada_bb.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.70 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: valor_financiamento
+        description: >
+          Conceito canônico `valor_financiamento` — operação de crédito
+          (empréstimo / financiamento à produção), **sem VGV** (o VGV agora vai
+          em `valor_vgv`). R$ nominais, numeric(15,2). Nome alinhado ao
+          vocabulário das fichas atuais (`valor_financiamento_fds` no FDS/Rural,
+          `valor_far` no FAR). Era `valor_emprestimo`.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.90 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: valor_vgv
+        description: >
+          Conceito canônico `valor_vgv` — valor global de venda das UH. Só a
+          família entrada_bb reporta (`valor_global_de_venda_vgv`); nulo nas
+          demais. Antes caía indevidamente em `valor_emprestimo` /
+          `valor_financiamento`. Change:
+          vocabulario-e-qualidade-financeira-historica (D2).
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.0 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: valor_contrapartidas
+        description: >
+          Conceito canônico `valor_contrapartidas` — aporte de estado /
+          município / entidade. R$ nominais, numeric(15,2). Nome no plural =
+          vocabulário das fichas atuais (`valor_contrapartidas`). De
+          `mvalor_contrapartida_poder_publico` (bext, ~100%) /
+          `valor_contrapartida_poder_publico` ∪ `valor_da_contrapartida_do_poder_publico`
+          (bases_relatorio) / `vlr_contrapartida` (min_cidades, raro). Antes
+          descartada (era `valor_contrapartida`). Change:
+          vocabulario-e-qualidade-financeira-historica (D2).
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.40 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: valor_liberado
+        description: >
+          Conceito canônico `valor_desembolsado_acumulado` — recurso federal
+          liberado, acumulado até o snapshot (estoque). De `valor_total_liberado`
+          (bases_relatorio) / `mvalor_desembolso` (bext). ∅ nas outras famílias.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.40 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
       - name: subsidio_fgts
-        description: Valor de subsídio/complemento FGTS (R$).
+        description: >
+          Conceito canônico `subsidio_fgts` — subsídio/complemento fonte FGTS
+          (R$). **Não somar `subsidio_fgts + subsidio_ogu + subsidio_total`** —
+          é dupla contagem; a leitura correta é
+          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.30 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
       - name: subsidio_ogu
-        description: Valor de subsídio/complemento OGU (R$).
+        description: >
+          Conceito canônico `subsidio_ogu` — subsídio/complemento fonte OGU
+          (R$). Ver a nota anti-soma em `subsidio_fgts`.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.30 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: subsidio_total
+        description: >
+          Conceito canônico `subsidio_total` — subsídio sem split por fonte. Só
+          a família bext reporta assim (`mvalor_subsidio`). **Não somar** com
+          `subsidio_fgts`/`subsidio_ogu` (convenções concorrentes): usar
+          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.0 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
       - name: situacao_derivada
         description: >
           Situação derivada SÓ de quantidade (esta fonte não tem

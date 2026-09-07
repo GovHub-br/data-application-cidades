@@ -1,8 +1,12 @@
 {{ config(materialized="table") }}
 
--- Bronze: Financeiro Mensal — liberações financeiras do empreendimento (frente FAR)
+-- Bronze: Financeiro Mensal — SNAPSHOT ÚNICO de liberações financeiras do
+-- empreendimento (frente FAR).
 -- Fonte: mcmv_staging.novo_mcmv_far_financeiro_mensal (staging/sharepoint via
--- MinIO/DuckDB)
+-- MinIO/DuckDB). NÃO é série temporal: dt_referencia constante; dt_liberacao
+-- desde 2024-06. É feed de DECOMPOSIÇÃO POR COMPONENTE, não do desembolso
+-- acumulado total (esse vem do GEFUS/INT — ver
+-- models/docs/glossario-valores-financeiros.md, D4).
 -- Cópia fiel: só tipagem/normalização técnica, sem dedup. APF em 6 dígitos →
 -- normalize_apf.
 with

@@ -161,19 +161,46 @@ models:
 
   - name: silver_fds_evolucao_financeira
     description: >
-      Tabela Silver de Evolução Financeira FDS. Série temporal mensal de
-      liberações por empreendimento (APF × mês). Usa ABS(vr_liberado) para
-      liberações reais (ic_credito='0'). JOIN com fds_empreendimento pela
-      raiz de 6 dígitos. Inclui eo_cnpj/eo_nome para agregação por EO.
+      Silver de Evolução Financeira FDS — liberações conhecidas no snapshot do
+      SharePoint, agrupadas pelo mês da liberação. NÃO é a série de desembolsos
+      do empreendimento (cobre só APF pós-2024; decomposição por componente,
+      não o total acumulado — ver glossario-valores-financeiros.md, D4). Usa
+      ABS(vr_liberado) para liberações reais (ic_credito='0'). JOIN com
+      fds_empreendimento pela raiz de 6 dígitos. Inclui eo_cnpj/eo_nome para
+      agregação por EO.
     meta:
       tags:
         - silver
         - entidades
+    data_tests:
+      # FDS: o feed só decompõe ~19% -> vr_pago_outros_mes fecha a decomposição
+      # (change vocabulario-e-qualidade-financeira-historica, D5/D7).
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: vr_liberado_mes
+            parcela_columns:
+              - vr_pago_obra_mes
+              - vr_pago_terreno_mes
+              - vr_pago_pts_mes
+              - vr_pago_projeto_mes
+              - vr_pago_incc_mes
+              - vr_pago_aporte_mes
+              - vr_pago_legalizacao_mes
+              - vr_pago_seguranca_mes
+              - vr_pago_outros_mes
+            tolerancia: 1.00
+          config:
+            severity: warn
     columns:
       - name: apf
         description: APF do empreendimento (8 dígitos).
         data_tests:
           - not_null
+      - name: vr_pago_outros_mes
+        description: >
+          Residual da decomposição = vr_liberado_mes − Σ(componentes
+          conhecidos). O feed SharePoint FDS não decompõe ~80% das liberações.
+          Change: vocabulario-e-qualidade-financeira-historica (D5).
       - name: eo_cnpj
         description: CNPJ da EO (para agregação por entidade nos golds).
       - name: eo_nome

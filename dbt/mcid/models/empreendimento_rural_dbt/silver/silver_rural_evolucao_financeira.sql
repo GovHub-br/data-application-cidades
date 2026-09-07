@@ -1,6 +1,9 @@
 {{ config(materialized="table", alias="silver_atual_evolucao_financeira") }}
 
--- Silver: Evolução Financeira Rural — série temporal mensal de desembolsos por APF.
+-- Silver: Evolução Financeira Rural — liberações CONHECIDAS NO SNAPSHOT do
+-- SharePoint, agrupadas pelo mês da liberação. NÃO é a série de desembolsos do
+-- empreendimento (cobre só APF pós-2024; decomposição por componente, não o
+-- total acumulado — feed GEFUS/INT; ver glossario-valores-financeiros.md, D4).
 -- Espelho de silver_fds_evolucao_financeira (mesmo contrato de saída); componentes
 -- sem equivalente no Rural (terreno, projeto, INCC, legalização, segurança, aporte)
 -- saem NULL. JOIN com silver_rural_empreendimento pela raiz de 6 dígitos do APF.
@@ -70,6 +73,12 @@ select
     vr_pago_aporte_mes,
     vr_pago_legalizacao_mes,
     vr_pago_seguranca_mes,
+    -- Residual explícito (change vocabulario-e-qualidade-financeira-historica,
+    -- D5): o Rural monta vr_liberado_mes bottom-up de 5 componentes de
+    -- desembolso, mas só expõe obra e PTS como colunas. vr_pago_outros_mes =
+    -- atec + cisternas/efluentes + custos_indiretos. Fecha a decomposição.
+    greatest(vr_liberado_mes - vr_pago_obra_mes - vr_pago_pts_mes, 0.0)
+    as vr_pago_outros_mes,
     vr_acumulado,
     case
         when coalesce(valor_contratado, 0.0) > 0

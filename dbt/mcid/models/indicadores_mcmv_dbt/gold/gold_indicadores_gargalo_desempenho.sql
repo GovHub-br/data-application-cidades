@@ -3,6 +3,14 @@
 -- Gold: indicadores de gargalo e desempenho MCMV.
 -- Uma linha por empreendimento/APF, unificando FAR e FDS para alimentar alertas
 -- estratégicos, rankings de risco e filtros de dashboard.
+--
+-- FONTE DE DESEMBOLSO (change vocabulario-e-qualidade-financeira-historica, D4):
+-- valor_liberado_historico = valor_desembolsado da ficha (GEFUS/CAIXA), fonte
+-- PRIMÁRIA. O agregado do *_financeiro_mensal (SharePoint) NÃO é mais
+-- coalesce'd por cima da ficha — vira a coluna informativa
+-- valor_desembolsado_componentes (cobertura parcial: só APF com liberação
+-- pós-2024). Os flags financeiros (flag_baixa_execucao_financeira,
+-- flag_gargalo_financeiro) usam percentuais/saldo da ficha, não o SharePoint.
 with
     far_ultima_financeira as (
         select
@@ -53,9 +61,10 @@ with
             f.quantidade_uh,
             f.valor_contratado,
             f.valor_desembolsado,
-            coalesce(
-                ff.valor_liberado_historico, f.valor_desembolsado
-            ) as valor_liberado_historico,
+            -- D4: ficha (GEFUS/CAIXA) é o desembolso acumulado autoritativo.
+            f.valor_desembolsado as valor_liberado_historico,
+            -- agregado SharePoint — informativo, cobertura parcial pós-2024.
+            ff.valor_liberado_historico as valor_desembolsado_componentes,
             greatest(
                 coalesce(f.valor_contratado, 0) - coalesce(f.valor_desembolsado, 0), 0
             ) as saldo_contratado_a_desembolsar,
@@ -118,9 +127,10 @@ with
             f.quantidade_uh,
             f.valor_contratado,
             f.valor_desembolsado,
-            coalesce(
-                fu.valor_liberado_historico, f.valor_desembolsado
-            ) as valor_liberado_historico,
+            -- D4: ficha (GEFUS/CAIXA) é o desembolso acumulado autoritativo.
+            f.valor_desembolsado as valor_liberado_historico,
+            -- agregado SharePoint — informativo, cobertura parcial pós-2024.
+            fu.valor_liberado_historico as valor_desembolsado_componentes,
             greatest(
                 coalesce(f.valor_contratado, 0) - coalesce(f.valor_desembolsado, 0), 0
             ) as saldo_contratado_a_desembolsar,
@@ -283,6 +293,7 @@ select
     valor_contratado,
     valor_desembolsado,
     valor_liberado_historico,
+    valor_desembolsado_componentes,
     saldo_contratado_a_desembolsar,
     percentual_saldo_a_desembolsar,
     percentual_execucao_fisica,

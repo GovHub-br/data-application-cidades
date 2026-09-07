@@ -9,11 +9,25 @@
 -- regiao_nome (macrorregiao IBGE) vem da silver e sao adicionais ao contrato
 -- (colunas ao final; nomes/tipos anteriores preservados).
 --
--- IMPORTANTE — NAO somar entre fonte_familia: bases_relatorio_executivo e
+-- IMPORTANTE — SERIE DE ESTOQUE (natureza_serie = 'estoque'): cada linha e a
+-- carteira ACUMULADA no mes-snapshot. NAO somar entre meses (dupla contagem do
+-- acumulado) NEM entre fonte_familia de grao diferente (grao_familia: 'contrato'
+-- p/ bext, 'empreendimento' p/ as demais). bases_relatorio_executivo e
 -- min_cidades se sobrepoem no tempo (2014-2016). Para montar UMA serie continua,
 -- filtrar por prioridade_familia (menor = preferencial), escolhendo por
 -- (dt_referencia, uf) a familia de menor prioridade com dado. A consolidacao
--- fica a cargo do consumidor / de um mart posterior.
+-- fica a cargo do consumidor / de um mart posterior. Guardas: testes
+-- soma_nao_cruza_familia e cobertura_classificacao_ogu_fgts.
+--
+-- VALORES NOMINAIS (R$ da data do fato, 2012-2018) — comparacao plurianual
+-- exige deflator externo. Ver docs/glossario-valores-financeiros.md.
+--
+-- BREAKING (change vocabulario-e-qualidade-financeira-historica): renome
+-- valor_investimento/financiamento/liberado -> *_acumulado; colunas novas
+-- natureza_serie, grao_familia, valor_vgv, valor_contrapartidas, subsidio_total.
+-- valor_emprestimo -> valor_financiamento e valor_contrapartida ->
+-- valor_contrapartidas (alinhado ao vocabulario das fichas atuais).
+-- Valores monetarios em numeric(15,2) na silver (parse_hist_numeric).
 --
 -- Alimenta: backtest do relogio, tendencia/sazonalidade/drift, e (via
 -- linha_ogu_fgts) a substituicao futura do seed anual do piloto #118.
@@ -48,16 +62,24 @@ with
             coalesce(regiao_sigla, 'ND') as regiao_sigla,
             coalesce(regiao_nome, 'ND') as regiao_nome,
             coalesce(linha_ogu_fgts, 'Nao classificada') as linha_ogu_fgts,
+            -- grao_familia (change vocabulario-e-qualidade-financeira-historica,
+            -- D3): 'contrato' (bext) x 'empreendimento' (demais). Guarda contra
+            -- somar UH/valor entre graos diferentes — ver o teste
+            -- soma_nao_cruza_familia.
+            grao_familia,
             chave_natural,
             uh_contratadas,
             uh_entregues,
             uh_concluidas,
             uh_em_obras,
             valor_investimento,
-            valor_emprestimo,
+            valor_financiamento,
+            valor_vgv,
+            valor_contrapartidas,
             valor_liberado,
             subsidio_fgts,
-            subsidio_ogu
+            subsidio_ogu,
+            subsidio_total
         from {{ ref("silver_mcmv_historico_serie_executiva") }}
         where dt_referencia is not null
     ),
@@ -83,12 +105,22 @@ with
             sum(uh_entregues) as uh_entregues,
             sum(uh_concluidas) as uh_concluidas,
             sum(uh_em_obras) as uh_em_obras,
-            sum(valor_investimento) as valor_investimento,
-            sum(valor_emprestimo) as valor_emprestimo,
-            sum(valor_liberado) as valor_liberado,
+            -- BREAKING (change vocabulario-e-qualidade-financeira-historica, D1):
+            -- valores de estoque ganham o sufixo _acumulado e o desembolso passa
+            -- ao nome canonico. Mapa nome-antigo -> nome-novo no schema.yml e em
+            -- docs/glossario-valores-financeiros.md.
+            sum(valor_investimento) as valor_investimento_acumulado,
+            sum(valor_financiamento) as valor_financiamento_acumulado,
+            sum(valor_liberado) as valor_desembolsado_acumulado,
             sum(subsidio_fgts) as subsidio_fgts,
             sum(subsidio_ogu) as subsidio_ogu,
-            -- colunas novas ao final — contrato de colunas anterior preservado.
+            -- colunas novas ao final — contrato de colunas anterior preservado
+            -- (exceto os renomes _acumulado acima).
+            'estoque' as natureza_serie,
+            max(grao_familia) as grao_familia,
+            sum(valor_vgv) as valor_vgv,
+            sum(valor_contrapartidas) as valor_contrapartidas,
+            sum(subsidio_total) as subsidio_total,
             case
                 when grouping(regiao_sigla) = 0
                 then regiao_sigla

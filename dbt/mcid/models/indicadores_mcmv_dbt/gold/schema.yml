@@ -8,6 +8,12 @@ models:
       baixa execução financeira, paralisação, falta de atualização recente,
       contratos sem evolução e saldo financeiro a desembolsar. Alimenta alertas
       estratégicos e dashboards da feature #53.
+
+      Fonte de desembolso (change vocabulario-e-qualidade-financeira-historica,
+      D4): `valor_liberado_historico` = `valor_desembolsado` da ficha
+      (GEFUS/CAIXA), primário. O agregado do `*_financeiro_mensal` (SharePoint)
+      deixou de ser coalesce'd por cima e virou a coluna informativa
+      `valor_desembolsado_componentes` (cobertura parcial, só APF pós-2024).
     meta:
       tags:
         - gold
@@ -41,6 +47,16 @@ models:
           está vencida e a execução física é menor que 100%.
       - name: status_ritmo
         description: Classificação físico-financeira herdada das golds FAR/FDS.
+      - name: valor_liberado_historico
+        description: >
+          Desembolso acumulado da ficha (GEFUS/CAIXA) — conceito canônico
+          `valor_desembolsado_acumulado`. = `valor_desembolsado` (D4). Antes era
+          `coalesce(<agregado SharePoint>, ficha)`.
+      - name: valor_desembolsado_componentes
+        description: >
+          Soma das liberações conhecidas no snapshot do `*_financeiro_mensal`
+          (SharePoint). **Informativo** — cobertura parcial (só APF com
+          liberação pós-2024); NÃO é o desembolso total. Pode ser NULL.
       - name: saldo_contratado_a_desembolsar
         description: Diferença positiva entre valor contratado e valor desembolsado acumulado.
       - name: percentual_saldo_a_desembolsar

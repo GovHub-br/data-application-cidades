@@ -48,8 +48,8 @@
             {{ coalesce_present_parsed(
                 rel, ['uh_entregues', 'uhs_entregues'], 'parse_hist_bigint', 'bigint'
             ) }} as quantidade_uh_entregues,
-            {{ parse_hist_double('valor_contratado') }} as valor_contratado,
-            {{ parse_hist_double('valor_desembolsado') }} as valor_desembolsado,
+            {{ parse_hist_numeric('valor_contratado') }} as valor_contratado,
+            {{ parse_hist_numeric('valor_desembolsado') }} as valor_desembolsado,
             {{ parse_hist_double('exec') }} as percentual_execucao_fisica,
             nullif(trim(situacao_do_empreendimento::text), '')::text
             as status_operacional,

@@ -45,8 +45,13 @@ models:
 
   - name: bronze_rural_financeiro_mensal
     description: >
-      Bronze — série de liberações financeiras Rural, lida de
-      mcmv_staging.novo_mcmv_rural_financeiro_mensal. APF fonte em 6 dígitos.
+      Bronze — cópia fiel do **snapshot único** de liberações financeiras Rural
+      do SharePoint (mcmv_staging.novo_mcmv_rural_financeiro_mensal).
+      **NÃO é série temporal**: `dt_referencia` constante, `dt_liberacao` cobre
+      liberações desde 2024-07. Fonte de **decomposição por componente**
+      (`vr_desembolso_*`), não do desembolso acumulado total (feed GEFUS/INT —
+      ver glossario-valores-financeiros.md, D4). Sem coluna de total
+      (`vr_liberado`): o total é montado bottom-up. APF fonte em 6 dígitos.
     meta:
       tags: [bronze, rural, empreendimento]
     columns:

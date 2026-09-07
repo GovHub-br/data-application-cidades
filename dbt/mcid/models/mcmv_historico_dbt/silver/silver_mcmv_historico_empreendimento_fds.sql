@@ -40,8 +40,8 @@ with
             nullif(trim(razao_social_proponente), '')::text as responsavel_nome,
             {{ parse_hist_bigint('qt_unidade_financiadas') }} as quantidade_uh,
             {{ parse_hist_bigint('qt_unidades_entregues') }} as quantidade_uh_entregues,
-            {{ parse_hist_double('vr_investimento') }} as valor_contratado,
-            {{ parse_hist_double('vr_liberado') }} as valor_desembolsado,
+            {{ parse_hist_numeric('vr_investimento') }} as valor_contratado,
+            {{ parse_hist_numeric('vr_liberado') }} as valor_desembolsado,
             {{ parse_hist_double('percentual_obra_realizado') }}
             as percentual_execucao_fisica,
             coalesce(
@@ -251,4 +251,12 @@ select
     fase_empreendimento,
     current_timestamp as dt_silver
 from enriquecido_id
-where rn = 1
+where
+    rn = 1
+    -- quarentena (change vocabulario-e-qualidade-financeira-historica, D6):
+    -- anti-join por (fonte_familia = 'fds_historico', chave_natural = apf).
+    and not exists (
+        select 1
+        from {{ ref('quarentena_valores_financeiros') }} q
+        where q.fonte_familia = 'fds_historico' and q.chave_natural = apf
+    )

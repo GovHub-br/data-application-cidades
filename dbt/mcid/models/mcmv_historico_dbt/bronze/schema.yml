@@ -37,6 +37,19 @@ models:
           - accepted_values:
               arguments:
                 values: ["bases_relatorio_executivo"]
+      # valor_nao_negativo em `warn` no bronze (cópia fiel); gate `error` na
+      # silver pós-quarentena. Change:
+      # vocabulario-e-qualidade-financeira-historica (D6/8.3).
+      - name: valor_total_do_investimento
+        description: Investimento total (texto). ~1,3 mil linhas < 0 na fonte (erro de sinal).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+      - name: subsidio_ogu
+        description: Subsídio OGU (texto). ~960 linhas < 0 na fonte.
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
       # Colunas de código com sufixo ".0" numa das gerações de schema desta
       # família (a geração posterior traz `cod_munic_ibge` / `cod_apf` limpos).
       # Teste em `warn` — defeito de origem, não regressão. Limpeza na silver.
@@ -246,6 +259,20 @@ models:
           - accepted_values:
               arguments:
                 values: ["bext"]
+      # valor_nao_negativo em `warn` no bronze — o bronze é cópia fiel; o
+      # negativo fica visível com a contagem e o build conclui. O gate `error`
+      # é na silver, pós-quarentena. Change:
+      # vocabulario-e-qualidade-financeira-historica (D6/8.3).
+      - name: mvalor_investimento
+        description: Investimento total (texto, formato de origem). ~24,6 mil linhas < 0 (erro de sinal na fonte).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+      - name: mvalor_subsidio
+        description: Subsídio total sem split FGTS/OGU (texto). ~20,8 mil linhas < 0 na fonte.
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
       - name: report_date_parsed
         description: report_date normalizado, dentro da janela de plausibilidade.
       - name: source_file

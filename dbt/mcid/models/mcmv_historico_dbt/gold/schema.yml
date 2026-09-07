@@ -139,12 +139,39 @@ models:
       Gold — série histórica mensal do MCMV (pré-2024) para análise preditiva.
       Agrega a silver_mcmv_historico_serie_executiva por (dt_referencia,
       fonte_familia, nivel_agregacao, regiao_sigla, uf, linha_ogu_fgts) via
-      GROUPING SETS (nacional + regiao + uf). NÃO somar entre fonte_familia
-      (bases_relatório_executivo e min_cidades se sobrepõem 2014-2016) — usar
-      prioridade_familia para escolher uma série contínua. Requer target
-      staging_duckdb.
+      GROUPING SETS (nacional + regiao + uf).
+
+      SÉRIE DE ESTOQUE (natureza_serie = 'estoque'): cada linha é a carteira
+      ACUMULADA no mês-snapshot. NÃO somar entre meses nem entre fonte_familia
+      de grão diferente (grao_familia). bases_relatório_executivo e min_cidades
+      se sobrepõem 2014-2016 — usar prioridade_familia para uma série contínua.
+
+      VALORES NOMINAIS (R$ da data do fato, 2012-2018) — comparação plurianual
+      exige deflator externo (glossario-valores-financeiros.md).
+
+      BREAKING (change vocabulario-e-qualidade-financeira-historica) — mapa
+      nome-antigo → nome-novo:
+        valor_investimento → valor_investimento_acumulado
+        valor_emprestimo   → valor_financiamento_acumulado
+        valor_liberado     → valor_desembolsado_acumulado
+      Colunas novas: natureza_serie, grao_familia, valor_vgv,
+      valor_contrapartidas, subsidio_total. Valores monetários em numeric(15,2)
+      na silver (parse_hist_numeric). Requer target staging_duckdb.
     meta:
       tags: [gold, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Change: vocabulario-e-qualidade-financeira-historica (D7).
+      # Cobertura nacional observada 2026-09-06: 75,6% (bext só tem
+      # subsidio_total, sem split FGTS/OGU -> fica 'Nao classificada'). Piso em
+      # 0,60 para pegar regressão sem ruído. Ver §7 do glossário.
+      - cobertura_classificacao_ogu_fgts:
+          arguments:
+            min_pct: 0.60
+          config:
+            severity: warn
+      - soma_nao_cruza_familia:
+          config:
+            severity: warn
     columns:
       - name: dt_referencia
         data_tests:
@@ -152,6 +179,42 @@ models:
       - name: fonte_familia
         data_tests:
           - not_null
+      - name: natureza_serie
+        description: Sempre 'estoque' — carteira acumulada no mês-snapshot. Não somar entre meses.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["estoque"]
+      - name: grao_familia
+        description: >
+          Grão da fonte_familia: 'contrato' (bext) ou 'empreendimento' (demais).
+          Não somar UH/valor entre grãos diferentes no mesmo (dt_referencia, uf).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["contrato", "empreendimento"]
+      - name: valor_investimento_acumulado
+        description: >
+          Conceito canônico `valor_investimento_total`, acumulado (estoque).
+          Era `valor_investimento` (BREAKING). R$ nominais.
+      - name: valor_financiamento_acumulado
+        description: >
+          Conceito canônico `valor_financiamento` (operação de crédito, sem
+          VGV), acumulado. Era `valor_emprestimo` (BREAKING — renome + sufixo).
+      - name: valor_desembolsado_acumulado
+        description: >
+          Conceito canônico `valor_desembolsado_acumulado` — recurso federal
+          liberado acumulado. Era `valor_liberado` (BREAKING). Cobre só
+          bases_relatorio_executivo e bext (∅ nas outras famílias).
+      - name: valor_vgv
+        description: Conceito canônico `valor_vgv` — valor global de venda. Só entrada_bb reporta. Coluna nova.
+      - name: valor_contrapartidas
+        description: Conceito canônico `valor_contrapartidas` — aporte do poder público / entidade. Coluna nova (era `valor_contrapartida` na 1ª versão da change).
+      - name: subsidio_total
+        description: >
+          Conceito canônico `subsidio_total` — subsídio sem split (só bext).
+          **Não somar** `subsidio_fgts + subsidio_ogu + subsidio_total`: usar
+          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`. Coluna nova.
       - name: prioridade_familia
         description: 1 bases_relatorio_executivo, 2 min_cidades, 3 entrada_bb, 4 bext (menor = preferencial).
       - name: nivel_agregacao

@@ -155,10 +155,13 @@ models:
 
   - name: fds_evolucao_financeira
     description: >
-      Tabela Silver de Evolução Financeira FDS. Série temporal mensal de
-      liberações por empreendimento (APF × mês). Usa ABS(vr_liberado) para
-      liberações reais (ic_credito='0'). JOIN com fds_empreendimento pela
-      raiz de 6 dígitos. Inclui eo_cnpj/eo_nome para agregação por EO.
+      Silver de Evolução Financeira FDS — liberações conhecidas no snapshot do
+      SharePoint, agrupadas pelo mês da liberação. NÃO é a série de desembolsos
+      do empreendimento (cobre só APF pós-2024; decomposição por componente,
+      não o total acumulado — ver glossario-valores-financeiros.md, D4). Usa
+      ABS(vr_liberado) para liberações reais (ic_credito='0'). JOIN com
+      fds_empreendimento pela raiz de 6 dígitos. Inclui eo_cnpj/eo_nome para
+      agregação por EO.
     meta:
       tags:
         - silver

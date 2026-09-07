@@ -37,15 +37,34 @@ models:
 
   - name: silver_rural_evolucao_financeira
     description: >
-      Silver — série temporal mensal de desembolsos por APF (Rural). Espelho de
-      silver_fds_evolucao_financeira; componentes sem equivalente no Rural saem NULL.
-      JOIN com silver_rural_empreendimento pela raiz de 6 dígitos.
+      Silver — liberações conhecidas no snapshot do SharePoint (Rural),
+      agrupadas pelo mês da liberação. NÃO é a série de desembolsos do
+      empreendimento (cobre só APF pós-2024; decomposição por componente, não o
+      total acumulado — ver glossario-valores-financeiros.md, D4). Espelho de
+      silver_fds_evolucao_financeira; componentes sem equivalente no Rural saem
+      NULL. JOIN com silver_rural_empreendimento pela raiz de 6 dígitos.
     meta:
       tags: [silver, rural]
+    data_tests:
+      # Rural: vr_liberado_mes é montado bottom-up dos 5 componentes; obra+PTS
+      # são expostos, o resto vai em vr_pago_outros_mes -> fecha por construção
+      # (change vocabulario-e-qualidade-financeira-historica, D5/D7).
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: vr_liberado_mes
+            parcela_columns: [vr_pago_obra_mes, vr_pago_pts_mes, vr_pago_outros_mes]
+            tolerancia: 1.00
+          config:
+            severity: warn
     columns:
       - name: apf
         description: APF do empreendimento (8 dígitos).
         data_tests: [not_null]
+      - name: vr_pago_outros_mes
+        description: >
+          Residual = vr_liberado_mes − obra − PTS (= atec + cisternas/efluentes
+          + custos_indiretos). Change:
+          vocabulario-e-qualidade-financeira-historica (D5).
       - name: mes
         description: Primeiro dia do mês da(s) liberação(ões).
         data_tests: [not_null]

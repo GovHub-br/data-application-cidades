@@ -95,9 +95,12 @@ models:
 
   - name: bronze_fds_financeiro_mensal
     description: >
-      Série temporal de liberações financeiras FDS. 16.124 registros para
-      750 APFs. ATENÇÃO: ic_credito='0' são liberações reais (vr_liberado negativo,
-      usar ABS). ic_credito='1' são devoluções (20 registros). APF fonte em
+      **Snapshot único** de liberações financeiras FDS do SharePoint (não é
+      série temporal — `dt_referencia` constante). 16.124 registros para
+      750 APFs. Fonte de **decomposição por componente**, não do desembolso
+      acumulado total (feed GEFUS/INT — glossario-valores-financeiros.md, D4).
+      ATENÇÃO: ic_credito='0' são liberações reais (vr_liberado negativo, usar
+      ABS). ic_credito='1' são devoluções (20 registros). APF fonte em
       6 dígitos, normalizado para 8 via normalize_apf.
     meta:
       tags:

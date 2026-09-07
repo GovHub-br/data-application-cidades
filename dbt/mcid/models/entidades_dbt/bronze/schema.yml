@@ -105,10 +105,21 @@ models:
 
   - name: fds_financeiro_mensal
     description: >
-      Série temporal de liberações financeiras FDS. 16.124 registros para
-      750 APFs. ATENÇÃO: ic_credito='0' são liberações reais (vr_liberado negativo,
+      **Snapshot único** de liberações financeiras FDS (não é série temporal).
+      16.124 registros para 750 APFs. Fonte de decomposição por componente, não
+      do desembolso total (feed GEFUS/INT — glossario-valores-financeiros.md,
+      D4). ATENÇÃO: ic_credito='0' são liberações reais (vr_liberado negativo,
       usar ABS). ic_credito='1' são devoluções (20 registros). APF fonte em
       6 dígitos, normalizado para 8 via normalize_apf.
+
+      DIVERGÊNCIA CONHECIDA vs `empreendimento_fds_dbt.bronze_fds_financeiro_mensal`
+      (mesma fonte, saída idêntica hoje): esta lê `source('raw', …)` (Postgres
+      __dados_brutos) e usa `parse_financial_value` (nulo/vazio → `0.00`);
+      a outra lê a staging MinIO e usa `parse_hist_numeric` (→ `NULL`, semântica
+      medalhão correta). Consolidar as duas numa só é Open Question 4 da change
+      vocabulario-e-qualidade-financeira-historica — adiado para change própria
+      (toca produto de time distinto; requer reescrever o parser em dialeto
+      Postgres-compatível). Ver models/docs/entregas/vocabulario-qualidade-financeira-historica.md.
     meta:
       tags:
         - bronze

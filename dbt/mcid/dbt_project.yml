@@ -367,3 +367,19 @@ seeds:
       +database: cidades
       +schema: data_quality
       +quote_columns: false
+      # chave_natural / faixa são texto — várias chaves são só dígitos e a
+      # inferência as tornaria BIGINT, quebrando o join com a silver (varchar).
+      # Change: vocabulario-e-qualidade-financeira-historica.
+      quarentena_valores_financeiros:
+        +column_types:
+          fonte_familia: varchar
+          chave_natural: varchar
+          motivo: varchar
+          evidencia: varchar
+      faixa_valor_uh:
+        +column_types:
+          frente: varchar
+          faixa: varchar
+          valor_col: varchar
+          piso: double
+          teto: double

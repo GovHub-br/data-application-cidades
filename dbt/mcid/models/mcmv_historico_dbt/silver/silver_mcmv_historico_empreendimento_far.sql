@@ -21,7 +21,7 @@
 -- coalesce dentro do grão ANTES da escolha da linha.
 --
 -- Numéricos em formato brasileiro (13.898.046,25) e dot-decimal são absorvidos
--- por parse_hist_double / parse_hist_bigint.
+-- por parse_hist_numeric (valores R$) / parse_hist_double (%) / parse_hist_bigint.
 --
 -- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
 -- atachado em `prod_duckdb`. As bronzes precisam existir no compile
@@ -51,8 +51,8 @@ with
             nullif(trim(razao_social_proponente), '')::text as responsavel_nome,
             {{ parse_hist_bigint('qt_unidade_financiadas') }} as quantidade_uh,
             {{ parse_hist_bigint('qt_unidades_entregues') }} as quantidade_uh_entregues,
-            {{ parse_hist_double('vr_investimento') }} as valor_contratado,
-            {{ parse_hist_double('vr_liberado') }} as valor_desembolsado,
+            {{ parse_hist_numeric('vr_investimento') }} as valor_contratado,
+            {{ parse_hist_numeric('vr_liberado') }} as valor_desembolsado,
             {{ parse_hist_double('percentual_obra_realizado') }}
             as percentual_execucao_fisica,
             nullif(trim(situacao_obra_gefus), '')::text as status_operacional,
@@ -100,8 +100,8 @@ with
             nullif(trim(razao_social_proponente), '')::text as responsavel_nome,
             {{ parse_hist_bigint('qt_unidades_habitacionais') }} as quantidade_uh,
             {{ parse_hist_bigint('qt_unidades_entregues') }} as quantidade_uh_entregues,
-            {{ parse_hist_double('vr_investimento') }} as valor_contratado,
-            {{ parse_hist_double('total_liberado_far') }} as valor_desembolsado,
+            {{ parse_hist_numeric('vr_investimento') }} as valor_contratado,
+            {{ parse_hist_numeric('total_liberado_far') }} as valor_desembolsado,
             {{ parse_hist_double('percentual_obra_realizado') }}
             as percentual_execucao_fisica,
             nullif(trim(situacao_obra), '')::text as status_operacional,
@@ -294,4 +294,13 @@ select
     null::text as fase_empreendimento,
     current_timestamp as dt_silver
 from enriquecido_dominio
-where rn = 1
+where
+    rn = 1
+    -- quarentena de registros financeiros invalidos (change
+    -- vocabulario-e-qualidade-financeira-historica, D6): anti-join ao seed
+    -- por (fonte_familia = 'far_historico', chave_natural = apf).
+    and not exists (
+        select 1
+        from {{ ref('quarentena_valores_financeiros') }} q
+        where q.fonte_familia = 'far_historico' and q.chave_natural = apf
+    )

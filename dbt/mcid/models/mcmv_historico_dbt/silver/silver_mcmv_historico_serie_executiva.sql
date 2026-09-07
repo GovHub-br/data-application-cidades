@@ -98,11 +98,26 @@ with
             'valor_total_do_investimento','mvalor_investimento','vlr_total_operacao','vlr_total_investimento'
         ], 'varchar') }}
             as valor_investimento_raw,
+            -- valor_financiamento = operacao de credito de fato (nome alinhado
+            -- ao vocabulario das fichas atuais: valor_financiamento_fds / valor_far).
+            -- VGV saiu daqui (change vocabulario-e-qualidade-financeira-historica,
+            -- D2): a familia entrada_bb so tem valor_global_de_venda_vgv e caia
+            -- 100% como emprestimo. Agora vai para valor_vgv_raw abaixo.
             {{ coalesce_present(b, [
             'valor_do_emprestimo','mvalor_emprestimo','vlr_emprestimo','vlr_financiamento',
-            'mvalor_financiamento','valor_global_de_venda_vgv'
+            'mvalor_financiamento','total_financiamentos_pf'
         ], 'varchar') }}
-            as valor_emprestimo_raw,
+            as valor_financiamento_raw,
+            {{ coalesce_present(b, ['valor_global_de_venda_vgv'], 'varchar') }}
+            as valor_vgv_raw,
+            -- contrapartidas (poder publico / estado / municipio / entidade) —
+            -- antes descartada. bext.mvalor_contrapartida_poder_publico e 100%
+            -- preenchida (D2). Nome no plural = vocabulario das fichas atuais.
+            {{ coalesce_present(b, [
+            'mvalor_contrapartida_poder_publico','valor_contrapartida_poder_publico',
+            'valor_da_contrapartida_do_poder_publico','vlr_contrapartida'
+        ], 'varchar') }}
+            as valor_contrapartidas_raw,
             {{ coalesce_present(b, ['valor_total_liberado','mvalor_desembolso'], 'varchar') }}
             as valor_liberado_raw,
             {{ coalesce_present(b, [
@@ -158,7 +173,9 @@ with
             uh_em_obras_raw,
             uh_comercializadas_raw,
             valor_investimento_raw,
-            valor_emprestimo_raw,
+            valor_financiamento_raw,
+            valor_vgv_raw,
+            valor_contrapartidas_raw,
             valor_liberado_raw,
             subsidio_fgts_raw,
             subsidio_ogu_raw,
@@ -201,12 +218,18 @@ with
             {{ parse_hist_bigint('uh_em_obras_raw') }} as uh_em_obras,
             {{ parse_hist_bigint('uh_comercializadas_raw') }} as uh_comercializadas,
 
-            {{ parse_hist_double('valor_investimento_raw') }} as valor_investimento,
-            {{ parse_hist_double('valor_emprestimo_raw') }} as valor_emprestimo,
-            {{ parse_hist_double('valor_liberado_raw') }} as valor_liberado,
-            {{ parse_hist_double('subsidio_fgts_raw') }} as subsidio_fgts,
-            {{ parse_hist_double('subsidio_ogu_raw') }} as subsidio_ogu,
-            {{ parse_hist_double('subsidio_total_raw') }} as subsidio_total,
+            -- Valores monetarios em numeric(15,2) (parse_hist_numeric), alinhado
+            -- ao tipo das fichas atuais (parse_hist_numeric / parse_financial_value).
+            -- NULL preservado p/ ausencia (nao 0.00) — ver glossario §. Change:
+            -- vocabulario-e-qualidade-financeira-historica.
+            {{ parse_hist_numeric('valor_investimento_raw') }} as valor_investimento,
+            {{ parse_hist_numeric('valor_financiamento_raw') }} as valor_financiamento,
+            {{ parse_hist_numeric('valor_vgv_raw') }} as valor_vgv,
+            {{ parse_hist_numeric('valor_contrapartidas_raw') }} as valor_contrapartidas,
+            {{ parse_hist_numeric('valor_liberado_raw') }} as valor_liberado,
+            {{ parse_hist_numeric('subsidio_fgts_raw') }} as subsidio_fgts,
+            {{ parse_hist_numeric('subsidio_ogu_raw') }} as subsidio_ogu,
+            {{ parse_hist_numeric('subsidio_total_raw') }} as subsidio_total,
             {{ parse_hist_double('pct_execucao_fisica_raw') }}
             as percentual_execucao_fisica,
 
@@ -233,6 +256,13 @@ with
                 then 'FGTS/Financiado'
             end as linha_ogu_fgts,
 
+            -- grao_familia (change vocabulario-e-qualidade-financeira-historica,
+            -- D3): bext e extrato de contrato PF individual; as demais familias
+            -- sao por empreendimento. Impede o consumidor de somar UH/valor
+            -- entre graos diferentes no gold_serie_mensal.
+            case fonte_familia when 'bext' then 'contrato' else 'empreendimento' end
+            as grao_familia,
+
             -- Fallback de dedup por conteudo de negocio quando chave_natural e
             -- nulo. Substitui hash_linha (que inclui row_number() da bronze e
             -- por isso nunca colide, nem entre linhas identicas) por um hash
@@ -256,7 +286,9 @@ with
                     coalesce(cast(uh_em_obras as varchar), '␀NULL␀'),
                     coalesce(cast(uh_comercializadas as varchar), '␀NULL␀'),
                     coalesce(cast(valor_investimento as varchar), '␀NULL␀'),
-                    coalesce(cast(valor_emprestimo as varchar), '␀NULL␀'),
+                    coalesce(cast(valor_financiamento as varchar), '␀NULL␀'),
+                    coalesce(cast(valor_vgv as varchar), '␀NULL␀'),
+                    coalesce(cast(valor_contrapartidas as varchar), '␀NULL␀'),
                     coalesce(cast(valor_liberado as varchar), '␀NULL␀'),
                     coalesce(cast(subsidio_fgts as varchar), '␀NULL␀'),
                     coalesce(cast(subsidio_ogu as varchar), '␀NULL␀'),
@@ -270,20 +302,46 @@ with
         from tipado
     ),
 
+    -- quarentena (change vocabulario-e-qualidade-financeira-historica, D6):
+    -- registros comprovadamente invalidos (valor negativo persistente, R$/UH
+    -- extremo), varridos e versionados no seed. Anti-join AQUI, depois do
+    -- strip_float_text em `tipado` — chave_natural ja esta limpa, casa com o
+    -- seed. Ver seeds/data_quality/README.md.
+    --
+    -- Para RE-VARRER o seed contra uma silver limpa (sem circularidade):
+    --   dbt build --select silver_mcmv_historico_serie_executiva \
+    --     --vars 'quarentena_bypass: true' --target staging_duckdb
+    -- depois regenerar o CSV e reconstruir sem a var.
+    quarentena as (
+        select distinct
+            cast(fonte_familia as varchar) as fonte_familia,
+            cast(chave_natural as varchar) as chave_natural
+        from {{ ref('quarentena_valores_financeiros') }}
+    ),
+
     util as (
         -- descarta linhas sem grao util: os relatorios agregados antigos de
         -- min_cidades (2011-2013) nao trazem chave nem metrica por empreendimento.
-        select *
-        from classificado
+        select c.*
+        from classificado c
         where
-            dt_referencia is not null
+            c.dt_referencia is not null
             and (
-                chave_natural is not null
-                or uh_contratadas is not null
-                or uh_entregues is not null
-                or valor_investimento is not null
-                or valor_emprestimo is not null
+                c.chave_natural is not null
+                or c.uh_contratadas is not null
+                or c.uh_entregues is not null
+                or c.valor_investimento is not null
+                or c.valor_financiamento is not null
             )
+            {% if not var('quarentena_bypass', false) %}
+            and not exists (
+                select 1
+                from quarentena q
+                where
+                    q.fonte_familia = c.fonte_familia
+                    and q.chave_natural = c.chave_natural
+            )
+            {% endif %}
     ),
 
     dedup as (
@@ -292,7 +350,29 @@ with
             row_number() over (
                 partition by
                     fonte_familia, coalesce(chave_natural, conteudo_hash), dt_referencia
-                order by report_date_parsed desc nulls last, source_file desc
+                order by
+                    report_date_parsed desc nulls last,
+                    source_file desc,
+                    -- desempate deterministico + preferencia por linha SEM valor
+                    -- negativo quando a mesma chave/mes tem as duas versoes (a
+                    -- fonte reenvia o snapshot com sinal corrigido). Change:
+                    -- vocabulario-e-qualidade-financeira-historica (D6/8.3).
+                    (
+                        case
+                            when
+                                coalesce(valor_investimento, 0) < 0
+                                or coalesce(valor_financiamento, 0) < 0
+                                or coalesce(valor_vgv, 0) < 0
+                                or coalesce(valor_contrapartidas, 0) < 0
+                                or coalesce(valor_liberado, 0) < 0
+                                or coalesce(subsidio_fgts, 0) < 0
+                                or coalesce(subsidio_ogu, 0) < 0
+                                or coalesce(subsidio_total, 0) < 0
+                            then 1
+                            else 0
+                        end
+                    ) asc,
+                    hash_linha
             ) as rn
         from util
     ),
@@ -348,7 +428,9 @@ select
     uh_em_obras,
     uh_comercializadas,
     valor_investimento,
-    valor_emprestimo,
+    valor_financiamento,
+    valor_vgv,
+    valor_contrapartidas,
     valor_liberado,
     subsidio_fgts,
     subsidio_ogu,
@@ -362,6 +444,7 @@ select
     source_file,
     hash_linha,
     linha_ogu_fgts,
+    grao_familia,
     situacao_derivada,
     regiao_sigla,
     regiao_nome

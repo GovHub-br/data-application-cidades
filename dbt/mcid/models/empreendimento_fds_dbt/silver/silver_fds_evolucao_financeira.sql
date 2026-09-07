@@ -1,6 +1,9 @@
 {{ config(materialized="table", alias="silver_atual_evolucao_financeira") }}
 
--- Silver: Evolução Financeira FDS — Série temporal de desembolsos por empreendimento
+-- Silver: Evolução Financeira FDS — liberações CONHECIDAS NO SNAPSHOT do
+-- SharePoint, agrupadas pelo mês da liberação. NÃO é a série de desembolsos do
+-- empreendimento (cobre só APF pós-2024; decomposição por componente, não o
+-- total acumulado — feed GEFUS/INT; ver glossario-valores-financeiros.md, D4).
 -- Agrega as liberações da bronze fds_financeiro_mensal por APF e mês.
 -- OBS: No FDS, ic_credito='0' são liberações reais (valores negativos), usar ABS().
 -- JOIN com fds_empreendimento usando raiz de 6 dígitos.
@@ -94,6 +97,19 @@ select
     vr_pago_aporte_mes,
     vr_pago_legalizacao_mes,
     vr_pago_seguranca_mes,
+    -- Residual explícito (change vocabulario-e-qualidade-financeira-historica,
+    -- D5): o feed SharePoint FDS só decompõe ~19% do vr_liberado (80% das
+    -- linhas têm todos os componentes NULL). vr_pago_outros_mes fecha a
+    -- decomposição com o total. greatest(...,0) evita residual negativo por
+    -- arredondamento. Testado por reconcilia_decomposicao.
+    greatest(
+        vr_liberado_mes - (
+            vr_pago_obra_mes + vr_pago_terreno_mes + vr_pago_pts_mes
+            + vr_pago_projeto_mes + vr_pago_incc_mes + vr_pago_aporte_mes
+            + vr_pago_legalizacao_mes + vr_pago_seguranca_mes
+        ),
+        0.0
+    ) as vr_pago_outros_mes,
 
     -- Acumulado e percentual
     vr_acumulado,

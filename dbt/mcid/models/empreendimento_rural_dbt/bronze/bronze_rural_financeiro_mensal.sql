@@ -1,7 +1,12 @@
 {{ config(materialized="table") }}
 
--- Bronze: Financeiro Mensal Rural — liberações financeiras por empreendimento
--- Fonte: mcmv_staging.novo_mcmv_rural_financeiro_mensal (staging/sharepoint)
+-- Bronze: Financeiro Mensal Rural — SNAPSHOT ÚNICO de liberações financeiras
+-- por empreendimento.
+-- Fonte: mcmv_staging.novo_mcmv_rural_financeiro_mensal (staging/sharepoint).
+-- NÃO é série temporal: dt_referencia constante; dt_liberacao desde 2024-07.
+-- Feed de DECOMPOSIÇÃO POR COMPONENTE (vr_desembolso_*), não do desembolso
+-- acumulado total (GEFUS/INT — glossario-valores-financeiros.md, D4). Sem
+-- coluna de total.
 -- Cópia fiel. APF fonte em 6 dígitos → normalize_apf (join na silver pela raiz de 6).
 with
     financeiro_raw as (
