@@ -42,6 +42,45 @@ seeds:
               arguments:
                 values: ["sftp", "snh"]
 
+  # Change: catalogo-dicionario-dados-historicos (D6).
+  - name: campos_obrigatorios
+    description: >
+      Contrato enxuto de obrigatoriedade e completude mínima para as entidades
+      dos 33 modelos históricos em escopo. Lido pelo teste genérico
+      `completude_minima` (modo seed) — ver macro. `modelo` usa o nome do modelo
+      dbt, exceto as 3 silvers por frente
+      (`silver_mcmv_historico_empreendimento_{far,fds,rural}`), que
+      compartilham o contrato comum e são referidas pela chave sintética
+      `contrato_empreendimento_historico`.
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["modelo", "coluna"]
+    columns:
+      - name: modelo
+        data_tests:
+          - not_null
+      - name: coluna
+        data_tests:
+          - not_null
+      - name: obrigatoria
+        description: Campo é obrigatório por regra de negócio (bool).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["true", "false", true, false]
+      - name: min_completude
+        description: Limiar mínimo de completude (0-1). Abaixo dele o teste sinaliza.
+        data_tests:
+          - not_null
+      - name: origem
+        description: Base da obrigatoriedade — regra de negócio ou heurística de não-nulos.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["regra_negocio", "heuristica_nao_nulo"]
+
   - name: colunas_bronze_ignoradas
     description: >
       Registro versionado de colunas do bronze de empreendimento histórico

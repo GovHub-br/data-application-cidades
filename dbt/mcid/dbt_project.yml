@@ -161,15 +161,56 @@ models:
       # entrega saíram de dados_historicos para cá.
       +materialized: table
       +schema: reloginho
+      # Governança / OpenMetadata (change catalogo-dicionario-dados-historicos,
+      # D5): mesmo formato de mcmv_historico_dbt. `product: reloginho` para os 10
+      # nós (inclusive os 2 golds de gargalo — OQ2); tier bronze=3 / silver=2 /
+      # gold=1 (os golds de gargalo são Tier1 como os demais — OQ3).
+      +meta:
+        governance:
+          product: reloginho
+          owner_key: mcid_data_engineering
       bronze:
         +materialized: table
         +schema: reloginho
+        +meta:
+          governance:
+            product: reloginho
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       silver:
         +materialized: table
         +schema: reloginho
+        +meta:
+          governance:
+            product: reloginho
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       gold:
         +materialized: table
         +schema: reloginho
+        +meta:
+          governance:
+            product: reloginho
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     mcmv_silver_dbt:
       # Convenção 2026-09-04: cada frente (inclusive as sem schema de colega)
@@ -353,3 +394,11 @@ seeds:
           valor_col: varchar
           piso: double
           teto: double
+      # Change: catalogo-dicionario-dados-historicos (D6).
+      campos_obrigatorios:
+        +column_types:
+          modelo: varchar
+          coluna: varchar
+          obrigatoria: boolean
+          min_completude: double
+          origem: varchar

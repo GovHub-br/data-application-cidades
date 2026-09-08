@@ -9,6 +9,17 @@ models:
       contratos sem evolução e saldo financeiro a desembolsar. Alimenta alertas
       estratégicos e dashboards da feature #53.
 
+      GRÃO: 1 linha por (frente, apf) — snapshot corrente, não série. Derivada
+      das fichas de produção `gold_far_ficha_empreendimento` /
+      `gold_fds_ficha_empreendimento` e das golds `*_atual_*` FAR/FDS (linhagem
+      cross-pasta). Cobre só FAR e FDS — Rural fica de fora deste gold.
+
+      VOCABULÁRIO (change catalogo-dicionario-dados-historicos): a coluna de
+      frente se chama `frente` (não `frente_mcmv`) e seu domínio é {FAR, FDS}
+      — nome e domínio herdados das fichas de produção; `FDS` é a mesma frente
+      que o resto do eixo histórico chama de `Entidades`. `dt_calculo` é o
+      conceito canônico `dt_gold` (glossario-mcid.md) sob nome herdado.
+
       Fonte de desembolso (change vocabulario-e-qualidade-financeira-historica,
       D4): `valor_liberado_historico` = `valor_desembolsado` da ficha
       (GEFUS/CAIXA), primário. O agregado do `*_financeiro_mensal` (SharePoint)
@@ -28,7 +39,11 @@ models:
           - unique
           - not_null
       - name: frente
-        description: Frente do MCMV. Valores esperados FAR e FDS.
+        description: >
+          Frente do MCMV (conceito canônico `frente_mcmv`, glossario-mcid.md).
+          Nome `frente` e domínio {FAR, FDS} herdados das fichas de produção;
+          `FDS` ≡ `Entidades` no vocabulário do resto do eixo histórico. Rural
+          não entra neste gold.
         data_tests:
           - not_null
           - accepted_values:
@@ -43,10 +58,16 @@ models:
         description: Nome do responsável. Para FAR usa tomador/proponente; para FDS usa entidade organizadora.
       - name: status_prazo
         description: >
-          Classificação de prazo. Em Atraso quando a previsão de conclusão/entrega
-          está vencida e a execução física é menor que 100%.
+          Eixo de classificação de PRAZO (distinto de `situacao_canonica` /
+          situação de obra do resto do eixo — não combinar numa mesma métrica).
+          Domínio: 'Entregue' / 'Em Atraso' (previsão de conclusão/entrega
+          vencida e execução física < 100%) / 'Dentro do Prazo'.
       - name: status_ritmo
-        description: Classificação físico-financeira herdada das golds FAR/FDS.
+        description: >
+          Eixo de classificação de RITMO físico-financeiro, herdado cru das
+          golds de ficha FAR/FDS (`ritmo_fisico_financeiro` /
+          `status_ritmo_obra` da produção). Distinto de `situacao_canonica`
+          (situação de obra) e de `status_prazo`.
       - name: valor_liberado_historico
         description: >
           Desembolso acumulado da ficha (GEFUS/CAIXA) — conceito canônico
@@ -103,20 +124,25 @@ models:
       - name: indicadores_acionados
         description: Lista textual das flags acionadas para auditoria e tooltip no dashboard.
       - name: dt_calculo
-        description: Data em que o modelo foi calculado.
+        description: >
+          Timestamp de materialização do gold — conceito canônico `dt_gold`
+          (glossario-mcid.md). Nome `dt_calculo` mantido para compatibilidade;
+          alias fica fora de escopo (change catalogo-dicionario-dados-historicos, G5).
 
   - name: gold_indicadores_reloginho
     description: >
       Tabela Gold do reloginho MCMV (grupo A): série mensal SNH consolidada por
-      agente. Lê a silver silver_reloginho_snh_apf_mes (ingestão/tipagem/dedup
-      ficam nas camadas bronze e silver — ver
-      docs/entregas/issue-130-refatoracao-medalhao-reloginho.md). Uma linha por
-      (agente_financeiro, dt_referencia) com os acumulados uh_contratadas,
-      uh_entregues e uh_vigentes, o número de APFs distintos (n_apf) e a
-      contagem corrida de meses observados por agente (n_meses_observados).
-      Saída idêntica à versão anterior — a reconciliação com a referência #66
-      continua válida. Alimenta o resumo do reloginho. Requer target
-      staging_duckdb.
+      agente. Lê a silver `silver_historico_snh_apf_mes`
+      (ingestão/tipagem/dedup ficam nas camadas bronze e silver — ver
+      docs/entregas/issue-130-refatoracao-medalhao-reloginho.md e
+      docs/entregas/issue-130-dicionario-indicadores.md). Uma linha por
+      (agente_financeiro, dt_referencia) — série de ESTOQUE (carteira acumulada
+      no mês-snapshot da SNH): NÃO somar `uh_*` entre `dt_referencia`. Colunas:
+      acumulados uh_contratadas, uh_entregues e uh_vigentes, número de APFs
+      distintos (n_apf) e contagem corrida de meses observados por agente
+      (n_meses_observados). Saída idêntica à versão anterior — a reconciliação
+      com a referência #66 continua válida. Alimenta o resumo do reloginho.
+      Requer target staging_duckdb.
     meta:
       tags:
         - gold
@@ -143,17 +169,27 @@ models:
       # verificacao_tipagem: cast(... as bigint) — sum(bigint) daria HUGEINT,
       # sem tipo no Postgres. Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
-        description: Soma de unidades habitacionais contratadas no mês de referência.
+        description: >
+          Soma de UH contratadas no mês-snapshot (estoque — não somar entre
+          meses). Conceito canônico `quantidade_uh` (glossario-mcid.md); nome
+          `uh_contratadas` mantido para compatibilidade com o dashboard do
+          reloginho (D3 da change catalogo-dicionario-dados-historicos).
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
-        description: Soma acumulada de unidades habitacionais entregues no mês de referência.
+        description: >
+          Soma acumulada de UH entregues reportada no snapshot SNH (estoque
+          acumulado — não somar entre meses; para o fluxo mensal ver
+          `gold_indicadores_reloginho_entregas`). Conceito canônico
+          `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
-        description: Soma de unidades habitacionais vigentes no mês de referência.
+        description: >
+          Soma de UH vigentes no mês-snapshot (estoque). Conceito canônico
+          `quantidade_uh_vigentes`; nome mantido para compatibilidade (D3).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf
@@ -168,9 +204,10 @@ models:
   - name: gold_indicadores_reloginho_frente
     description: >
       Tabela Gold do reloginho MCMV (grupo A) com quebra por frente. Mesma
-      regra de indicadores_reloginho, com frente_mcmv (FAR / Entidades /
+      regra de `gold_indicadores_reloginho`, com frente_mcmv (FAR / Entidades /
       Rural) no grão. Uma linha por (agente_financeiro, frente_mcmv,
-      dt_referencia). Somar todas as frentes reproduz indicadores_reloginho.
+      dt_referencia) — série de ESTOQUE, não somar `uh_*` entre meses. Somar
+      todas as frentes de um mês reproduz `gold_indicadores_reloginho`.
       Base da verificação de cobertura histórica por frente
       (assert_reloginho_frente_cobertura_mensal). Requer target staging_duckdb.
     meta:
@@ -200,17 +237,25 @@ models:
               values: ["FAR", "Entidades", "Rural"]
       # verificacao_tipagem: cast(... as bigint). Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
-        description: Soma de unidades habitacionais contratadas no mês, na frente.
+        description: >
+          Soma de UH contratadas no mês-snapshot, na frente (estoque — não somar
+          entre meses). Conceito canônico `quantidade_uh`; nome mantido para
+          compatibilidade (D3).
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
-        description: Soma acumulada de unidades habitacionais entregues no mês, na frente.
+        description: >
+          Soma acumulada de UH entregues no snapshot, na frente (estoque
+          acumulado — não somar entre meses). Conceito canônico
+          `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
-        description: Soma de unidades habitacionais vigentes no mês, na frente.
+        description: >
+          Soma de UH vigentes no mês-snapshot, na frente (estoque). Conceito
+          canônico `quantidade_uh_vigentes`; nome mantido para compatibilidade (D3).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf
@@ -249,7 +294,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_snapshot
-        description: UH entregues acumuladas reportadas no snapshot (indicadores_reloginho).
+        description: UH entregues acumuladas reportadas no snapshot (mesma medida de `gold_indicadores_reloginho.uh_entregues`).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dif_evento_vs_snapshot
@@ -286,15 +331,19 @@ models:
       # verificacao_tipagem: bigint herdado do gold_indicadores_reloginho (cast).
       # Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas_ultimo
-        description: Unidades habitacionais contratadas no último mês observado.
+        description: >
+          UH contratadas no último mês-snapshot observado (conceito canônico
+          `quantidade_uh`; nome mantido para compatibilidade — D3).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_ultimo
-        description: Unidades habitacionais entregues (acumulado) no último mês observado.
+        description: >
+          UH entregues (acumulado) no último mês-snapshot observado (conceito
+          canônico `quantidade_uh_entregues`; nome mantido — D3).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes_ultimo
-        description: Unidades habitacionais vigentes no último mês observado.
+        description: UH vigentes no último mês-snapshot observado (conceito canônico `quantidade_uh_vigentes`; nome mantido — D3).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf_ultimo
@@ -313,7 +362,13 @@ models:
   - name: gold_resumo_gargalo_desempenho_dashboard
     description: >
       Tabela Gold agregada para dashboard de gargalos e desempenho do MCMV.
-      Gera cards e rankings nos níveis nacional, frente, UF, município e responsável.
+      Gera cards e rankings nos níveis nacional, frente, UF, município e
+      responsável (coluna `nivel_agregacao`) — um GROUPING SET por nível.
+      **Não somar entre `nivel_agregacao`**: são recortes sobrepostos do mesmo
+      universo de empreendimentos FAR+FDS de `gold_indicadores_gargalo_desempenho`.
+      Unidades: `total_uh` em UH; `valor_*` e `saldo_*` em R$ nominais;
+      `media_execucao_*` e `percentual_*` em escala 0-100; `atraso_medio_dias`
+      em dias.
     meta:
       tags:
         - gold
@@ -322,34 +377,69 @@ models:
         - gargalo
     columns:
       - name: nivel_agregacao
-        description: Nível da linha agregada. Valores nacional, frente, uf, municipio e responsavel.
+        description: >
+          Nível do GROUPING SET desta linha e, portanto, o grão: 'nacional' (1
+          linha), 'frente' (1 por FAR/FDS), 'uf', 'municipio', 'responsavel'.
+          Não somar entre níveis.
         data_tests:
           - not_null
           - accepted_values:
               values: ["nacional", "frente", "uf", "municipio", "responsavel"]
+      - name: frente
+        description: Frente {FAR, FDS} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `gold_indicadores_gargalo_desempenho.frente`).
+      - name: uf
+        description: Sigla da UF (2 letras) nas linhas de nível 'uf'/'municipio'; NULL nos demais níveis.
+      - name: municipio
+        description: Nome do município nas linhas de nível 'municipio'; NULL nos demais níveis.
+      - name: responsavel_tipo
+        description: Tipo do responsável ('Tomador/Proponente' FAR, 'Entidade Organizadora' FDS) nas linhas de nível 'responsavel'; NULL nos demais.
+      - name: responsavel_id
+        description: Identificador (CNPJ) do responsável nas linhas de nível 'responsavel'; NULL nos demais. Pessoa jurídica — não é dado de pessoa física.
+      - name: responsavel_nome
+        description: Nome do responsável (entidade organizadora / tomador) nas linhas de nível 'responsavel'; NULL nos demais.
       - name: total_empreendimentos
-        description: Quantidade de empreendimentos/APFs no agrupamento.
+        description: Contagem de empreendimentos/APFs no agrupamento (unidade — empreendimentos).
       - name: total_uh
-        description: Total de unidades habitacionais no agrupamento.
+        description: Soma de UH no agrupamento (unidade — UH; conceito canônico `quantidade_uh`).
       - name: valor_contratado
-        description: Soma do valor contratado no agrupamento.
+        description: Soma do valor contratado no agrupamento (R$ nominais; conceito canônico `valor_investimento_total`).
       - name: valor_desembolsado
-        description: Soma do valor desembolsado no agrupamento.
+        description: Soma do valor desembolsado acumulado no agrupamento (R$ nominais; conceito canônico `valor_desembolsado_acumulado`).
       - name: saldo_contratado_a_desembolsar
-        description: Soma do saldo contratado ainda não desembolsado.
+        description: Soma de (valor_contratado − valor_desembolsado) positivo no agrupamento (R$ nominais).
       - name: media_execucao_fisica
-        description: Execução física média do agrupamento.
+        description: Média de `percentual_execucao_fisica` no agrupamento (escala 0-100).
       - name: media_execucao_financeira
-        description: Execução financeira média do agrupamento.
+        description: Média de `percentual_execucao_financeira` no agrupamento (escala 0-100).
       - name: media_score_gargalo
-        description: Score médio de gargalo do agrupamento.
+        description: Média de `score_gargalo` no agrupamento (escala 0-9, ver `gold_indicadores_gargalo_desempenho.score_gargalo`).
       - name: atraso_medio_dias
-        description: Média de dias de atraso entre casos atrasados.
+        description: Média de `dias_atraso` entre os casos com atraso > 0 no agrupamento (dias).
+      - name: media_dias_sem_atualizacao
+        description: Média de `dias_sem_atualizacao` no agrupamento (dias).
+      - name: qtd_obras_atrasadas
+        description: Contagem de empreendimentos com `flag_atraso` no agrupamento.
+      - name: qtd_obras_paralisadas
+        description: Contagem de empreendimentos com `flag_paralisacao` no agrupamento.
+      - name: qtd_sem_atualizacao_recente
+        description: Contagem de empreendimentos com `flag_sem_atualizacao_recente` no agrupamento.
+      - name: qtd_baixa_execucao_fisica
+        description: Contagem de empreendimentos com `flag_baixa_execucao_fisica` no agrupamento.
+      - name: qtd_baixa_execucao_financeira
+        description: Contagem de empreendimentos com `flag_baixa_execucao_financeira` no agrupamento.
+      - name: qtd_gargalo_financeiro
+        description: Contagem de empreendimentos com `flag_gargalo_financeiro` no agrupamento.
+      - name: qtd_contrato_sem_evolucao
+        description: Contagem de empreendimentos com `flag_contrato_sem_evolucao` no agrupamento.
       - name: qtd_entregas_em_risco
-        description: Quantidade de empreendimentos com entrega em risco.
+        description: Contagem de empreendimentos com `flag_entrega_em_risco` no agrupamento.
       - name: qtd_casos_criticos
-        description: Quantidade de empreendimentos com classificação Crítico.
+        description: Contagem de empreendimentos com `classificacao_gargalo = 'Crítico'` no agrupamento.
       - name: percentual_entregas_em_risco
-        description: Percentual de empreendimentos em risco no agrupamento.
+        description: qtd_entregas_em_risco / total_empreendimentos no agrupamento (escala 0-100).
       - name: percentual_casos_criticos
-        description: Percentual de empreendimentos críticos no agrupamento.
+        description: qtd_casos_criticos / total_empreendimentos no agrupamento (escala 0-100).
+      - name: dt_calculo
+        description: >
+          Data de materialização do gold — conceito canônico `dt_gold`
+          (glossario-mcid.md). Nome `dt_calculo` mantido para compatibilidade (G5).

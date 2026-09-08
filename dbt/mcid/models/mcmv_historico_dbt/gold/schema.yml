@@ -28,12 +28,21 @@ models:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). No eixo histórico o domínio é
+          {FAR, Entidades, Rural} — `Entidades` é a mesma frente que as fichas de
+          produção FDS chamam de FDS.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ["FAR", "Entidades", "Rural"]
       - name: dt_contratacao_fonte
+        description: >
+          Origem de `dt_contratacao`: `sftp[:INTxxx]` ou `snh` (herda
+          `dt_contratacao_fonte` da linha "estado" vencedora da silver por
+          frente). `sem_fonte` quando nenhum snapshot resolveu a data.
         data_tests:
           - not_null
       - name: dt_ultima_entrega_fonte
@@ -78,6 +87,9 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_ultima_liberacao_fonte
+        description: >
+          Origem de `dt_ultima_liberacao`: `sftp:INTxxx` (INT040/054/057/065) ou
+          `sem_fonte`. FDS é sempre `sem_fonte` (INT059 não traz a data).
         data_tests:
           - not_null
 
@@ -103,6 +115,10 @@ models:
           - unique
           - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
       - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). Domínio do eixo histórico: {FAR, Entidades, Rural}
+          (`Entidades` ≡ a frente que as fichas de produção FDS chamam de FDS).
         data_tests:
           - not_null
       - name: apf
@@ -132,6 +148,10 @@ models:
               config:
                 severity: warn
       - name: dt_referencia
+        description: >
+          Mês de referência do último snapshot disponível para a fase corrente
+          (1º dia do mês; conceito canônico `dt_referencia`, glossario-mcid.md).
+          O snapshot é "atual" relativo a esta data, não à data de execução.
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
@@ -166,6 +186,12 @@ models:
           UH previstas para entrega (braço SNH), herdada da silver. Change:
           destravar-datas-obra-entrega-silver-historico.
       - name: fonte_tabela
+        description: >
+          Interface/feed de origem do snapshot corrente, valor cru herdado da
+          silver por frente: nome da interface GEFUS
+          (`INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS`, …),
+          `SNH_dados_prioritarios_af_{bb,caixa}` ou `sharepoint:MONIT_MOV_OBRA`.
+          Par de `fonte_serie` (sftp / snh / obra_mensal).
         data_tests:
           - not_null
       - name: valor_contratado_preenchido
@@ -215,29 +241,41 @@ models:
           FAR e Entidades: INT059/FDS não traz a coluna e a entidade do FDS já é
           `responsavel_nome`.
       - name: nu_cnpj_entidade
-        description: CNPJ da entidade organizadora (Rural apenas).
+        description: >
+          CNPJ da **entidade organizadora** do empreendimento (pessoa jurídica —
+          Rural apenas). Não é dado de pessoa física / beneficiário.
       - name: dsc_tipologia
         description: Tipologia construtiva (INT040/054/059).
       - name: tipo_de_unidade_do_empreendimento
+        description: Tipo de unidade habitacional do empreendimento, valor cru da fonte (INT040/054/059).
       - name: regime_construcao
         description: Regime de construção (INT059).
       - name: cod_regime_execucao
+        description: Código do regime de execução da obra, valor cru da fonte (INT040/054). Domínio a decodificar em follow-up.
       - name: modalidade_requalificacao
         description: Modalidade de requalificação (INT059 — FDS).
       - name: latitude
         description: >
-          Latitude decimal, de `latitude_do_imovel` do SNH (parse PT-BR;
-          sentinela `0` → NULL). Os `gps_*_grau/minuto/segundo` do INT059 são
-          verificados como 0% reais e NÃO são fonte.
+          Latitude decimal do EMPREENDIMENTO (imóvel/obra, não de pessoa
+          física), de `latitude_do_imovel` do SNH (parse PT-BR; sentinela `0` →
+          NULL). Os `gps_*_grau/minuto/segundo` do INT059 são verificados como
+          0% reais e NÃO são fonte.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
       - name: longitude
         description: Longitude decimal (mesma fonte/regra da latitude).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      # Endereço do EMPREENDIMENTO habitacional (o imóvel/terreno da obra) —
+      # NÃO é endereço residencial de pessoa física / beneficiário. Publicáveis
+      # no OpenMetadata com description normal (OQ5, design.md); o gold segue
+      # `classification: internal`.
       - name: bairro
+        description: Bairro do empreendimento habitacional (endereço do imóvel/obra, não de pessoa física). Valor cru da fonte (INT059).
       - name: cep
+        description: CEP do empreendimento habitacional (endereço do imóvel/obra, não de pessoa física). Valor cru da fonte (INT059).
       - name: logradouro
+        description: Logradouro do empreendimento habitacional (endereço do imóvel/obra, não de pessoa física). Valor cru da fonte (INT059).
       - name: nu_apf_vinculacao
         description: APF vinculado (INT059 — liga APFs relacionados; só exposto, não altera resolução de fase).
       - name: portaria_selecao
@@ -290,10 +328,19 @@ models:
       # UH agregada = BIGINT via cast(sum(...) as bigint) — sem o cast SUM daria
       # HUGEINT; valor_* = DECIMAL(38,2) (sum de numeric(15,2)).
       - name: dt_referencia
+        description: >
+          Mês-snapshot da carteira agregada (1º dia do mês; conceito canônico
+          `dt_referencia`, glossario-mcid.md). Nas séries de estoque NÃO somar
+          entre `dt_referencia` (dupla contagem do acumulado).
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: fonte_familia
+        description: >
+          Família da série executiva pré-2019 agregada nesta linha
+          (`bases_relatorio_executivo`, `min_cidades`, `entrada_bb`, `bext`).
+          NUNCA somar entre `fonte_familia` de grão diferente (ver
+          `grao_familia`); use `prioridade_familia` para uma série contínua.
         data_tests:
           - not_null
       - name: natureza_serie
@@ -342,6 +389,10 @@ models:
       - name: prioridade_familia
         description: 1 bases_relatorio_executivo, 2 min_cidades, 3 entrada_bb, 4 bext (menor = preferencial).
       - name: nivel_agregacao
+        description: >
+          Nível do GROUPING SET desta linha: 'nacional' (BR), 'regiao'
+          (macrorregião IBGE) ou 'uf'. **Não somar linhas de níveis diferentes**
+          — são recortes sobrepostos do mesmo total.
         data_tests:
           - not_null
           - accepted_values:
@@ -355,14 +406,27 @@ models:
       - name: regiao_nome
         description: Nome da macrorregião IBGE (par de regiao_sigla). Nulo no nível 'nacional'. Adicional ao contrato.
       - name: linha_ogu_fgts
+        description: >
+          Classificação da linha pelo subsídio dominante: 'OGU/Subsidiado',
+          'FGTS/Financiado' ou 'Nao classificada' (família `bext`, que só
+          reporta `subsidio_total` sem split — ver §7 do
+          glossario-valores-financeiros.md). Backtest do piloto #118.
         data_tests:
           - not_null
       - name: uh_contratadas
-        description: Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
+        description: >
+          Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
+          Conceito canônico `quantidade_uh`. Ver `natureza_serie` — nas séries de
+          estoque NÃO somar entre `dt_referencia`.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
-        description: Soma de UH entregues no recorte.
+        description: >
+          Soma de UH entregues no recorte — conceito canônico
+          `quantidade_uh_entregues`, com sufixo implícito de acumulado (mesma
+          medida que `gold_indicadores_reloginho.uh_entregues`, que é o
+          acumulado SNH). Ver `natureza_serie`: nas séries de estoque NÃO somar
+          entre meses.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_concluidas
@@ -414,6 +478,10 @@ models:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). Domínio {FAR, Entidades, Rural} — `Entidades` ≡ a
+          frente FDS das fichas de produção.
         data_tests:
           - not_null
           - accepted_values:
@@ -427,6 +495,11 @@ models:
               arguments:
                 values: ["nao_iniciada", "em_obras", "paralisada", "concluida", "cancelada", "nao_mapeada"]
       - name: nivel_geografico
+        description: >
+          Nível do GROUPING SET desta linha: 'nacional', 'regiao' ou 'uf'.
+          **Não somar entre níveis** (recortes sobrepostos); e as métricas de
+          fluxo (`entradas` / `saidas`) também não somam entre níveis — cada
+          transição ocorre numa única UF.
         data_tests:
           - not_null
           - accepted_values:

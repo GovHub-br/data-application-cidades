@@ -4,10 +4,16 @@ models:
   - name: silver_mcmv_historico_empreendimento_far
     description: >
       Silver — série histórica mensal de empreendimentos MCMV da frente FAR
-      (SFTP INT040/INT054 ∪ SNH modalidade=FAR), contrato semântico comum,
-      tipada, deduplicada por (frente_mcmv, apf, dt_referencia). Precedência SNH
-      na janela sobreposta. Grão: empreendimento × mês. Requer target
-      staging_duckdb.
+      (SFTP INT040/INT054 ∪ SNH modalidade=FAR ∪ braço MONIT_MOV_OBRA), contrato
+      semântico comum, tipada, deduplicada por (frente_mcmv, apf, dt_referencia).
+      Precedência SNH na janela sobreposta. Grão: empreendimento × mês.
+      TETO E CAUDA (change consolidar-schemas-historico-reloginho, C2): as fontes
+      com estoque (SFTP / SNH) vão até 2026-03; o braço obra (MONIT_MOV_OBRA)
+      estende a série até 2026-07 em linhas `fonte_serie = 'obra_mensal'` cujas
+      `quantidade_uh` / `valor_contratado` / `valor_desembolsado` são NULL por
+      construção — agregações de estoque devem filtrar
+      `fonte_serie <> 'obra_mensal'` (ou `dt_referencia <= '2026-03-01'`).
+      Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, far]
     data_tests:
@@ -47,9 +53,18 @@ models:
         data_tests:
           - not_null
       - name: programa
+        description: >
+          Programa habitacional de origem (ex.: 'Minha Casa Minha Vida',
+          'PNHR'). Valor cru preservado da fonte; compõe a chave lógica
+          `id_negocio_historico`.
         data_tests:
           - not_null
       - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). Constante por silver — FAR, Entidades ou Rural.
+          `Entidades` é a mesma frente que as fichas de produção FDS chamam de
+          FDS (nome herdado do feed INT059 / modalidade ENTIDADES).
         data_tests:
           - not_null
           - accepted_values:
@@ -118,14 +133,22 @@ models:
               arguments:
                 values: ["sftp", "snh", "obra_mensal"]
       - name: quantidade_uh
-        description: Unidades habitacionais contratadas no snapshot.
+        description: >
+          Unidades habitacionais contratadas no snapshot (conceito canônico
+          `quantidade_uh`, glossario-mcid.md). NULL nas linhas
+          `fonte_serie = 'obra_mensal'` (meses 2026-04..07, cauda de estoque
+          declaradamente nula — change consolidar-schemas-historico-reloginho,
+          C2): agregações de estoque devem filtrar
+          `fonte_serie <> 'obra_mensal'`.
         data_tests:
-          # Limiar informativo (warn) — sem contrato de obrigatoriedade ainda
-          # (vem do campos_obrigatorios.csv do catalogo-dicionario). Ajustar
-          # quando esse artefato existir. Change: testes-data-quality-dbt.
+          # Limiar do contrato `campos_obrigatorios` (chave
+          # `contrato_empreendimento_historico` — as 3 silvers por frente
+          # compartilham o contrato comum). Change:
+          # catalogo-dicionario-dados-historicos (D6).
           - completude_minima:
               arguments:
-                min_pct: 0.80
+                seed: campos_obrigatorios
+                modelo: contrato_empreendimento_historico
               config:
                 severity: warn
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
@@ -214,11 +237,14 @@ models:
           Pode ser LOCF do último snapshot que reportou (tipicamente o SFTP,
           antes da virada de feed) quando o SNH corrente não traz o valor —
           `valor_contratado_preenchido = true` marca o caso (change
-          dedup-fonte-silver-historico, D3).
+          dedup-fonte-silver-historico, D3). NULL nas linhas
+          `fonte_serie = 'obra_mensal'` (cauda 2026-04..07, C2) — filtrar
+          `fonte_serie <> 'obra_mensal'` em agregações de estoque.
         data_tests:
           - completude_minima:
               arguments:
-                min_pct: 0.70
+                seed: campos_obrigatorios
+                modelo: contrato_empreendimento_historico
               config:
                 severity: warn
           # `warn` (não `error`): há ~26 snapshots isolados com valor_contratado
@@ -234,7 +260,9 @@ models:
           `valor_desembolsado_acumulado`. Pode ser LOCF do último snapshot
           (marcado por `valor_contratado_preenchido`); como o desembolso é
           monotônico, o valor carregado é um piso, nunca um teto (change
-          dedup-fonte-silver-historico, D3).
+          dedup-fonte-silver-historico, D3). NULL nas linhas
+          `fonte_serie = 'obra_mensal'` (cauda 2026-04..07, C2) — filtrar
+          `fonte_serie <> 'obra_mensal'` em agregações de estoque.
         data_tests:
           - valor_nao_negativo:
               config: { severity: warn }
@@ -460,25 +488,31 @@ models:
                 order_by: dt_referencia
               config: { severity: warn }
       - name: quantidade_uh_entregues_ano
+        description: UH entregues acumuladas no ano-calendário (YTD, braço SNH; NULL antes de 2024-06). Ver nota do bloco YTD.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_vigentes_ano
+        description: UH vigentes acumuladas no ano-calendário (YTD, braço SNH; NULL antes de 2024-06). Ver nota do bloco YTD.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_distratadas_ano
+        description: UH distratadas acumuladas no ano-calendário (YTD, braço SNH; NULL antes de 2024-06). Ver nota do bloco YTD.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_contratadas_jan
-        description: Baseline de janeiro do ano de referência (para reconstruir a série YTD).
+        description: Baseline de janeiro do ano de referência para UH contratadas (para reconstruir a série YTD).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_entregues_jan
+        description: Baseline de janeiro do ano de referência para UH entregues (para reconstruir a série YTD).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_vigentes_jan
+        description: Baseline de janeiro do ano de referência para UH vigentes (para reconstruir a série YTD).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_distratadas_jan
+        description: Baseline de janeiro do ano de referência para UH distratadas (para reconstruir a série YTD).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: valor_desembolsado_ano
@@ -518,9 +552,11 @@ models:
       - name: detalhe_paralisacao
         description: "Texto de detalhe de paralisação/retomada. GOTCHA: 0% na fonte hoje."
       - name: dt_previsao_conclusao_obra_retomada
+        description: Data prevista de conclusão da obra após retomada (MONIT_MOV_OBRA, SharePoint; janela 2025-12+).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_conclusao_obra_retomada
+        description: Data efetiva de conclusão da obra após retomada (MONIT_MOV_OBRA, SharePoint; janela 2025-12+).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: qt_uh_concluidas
@@ -528,21 +564,30 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: qt_uh_alienadas
+        description: UH alienadas (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: qt_uh_sem_habitese
+        description: UH sem habite-se (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: qt_uh_construcao_parcial
+        description: UH em construção parcial (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: qt_uh_ociosas_retomadas
+        description: UH ociosas retomadas (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: qt_unidades_habitacionais_invadidas
+        description: UH invadidas (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_legalizacao
+        description: >
+          Data de legalização do empreendimento (MONIT_MOV_OBRA; janela
+          2025-12+). Distinta de `dt_conclusao_obra`, que já pode incorporar a
+          legalização vinda das fontes SFTP.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_entrega
@@ -569,9 +614,15 @@ models:
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
       Silver — série histórica mensal de empreendimentos MCMV da frente
-      FDS/Entidades (SFTP INT059 ∪ SNH modalidade=ENTIDADES). Contrato comum,
-      dedup por (frente_mcmv, apf, dt_referencia), precedência SNH. Grão:
-      empreendimento × mês. Requer target staging_duckdb.
+      FDS/Entidades (SFTP INT059 ∪ SNH modalidade=ENTIDADES ∪ braço
+      MONIT_MOV_OBRA). Contrato comum, dedup por (frente_mcmv, apf,
+      dt_referencia), precedência SNH. Grão: empreendimento × mês.
+      TETO E CAUDA (change consolidar-schemas-historico-reloginho, C2): fontes
+      com estoque até 2026-03; braço obra estende até 2026-07 em linhas
+      `fonte_serie = 'obra_mensal'` com `quantidade_uh` / `valor_contratado` /
+      `valor_desembolsado` NULL por construção — filtrar
+      `fonte_serie <> 'obra_mensal'` em agregações de estoque.
+      Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, fds]
     data_tests:
@@ -595,9 +646,15 @@ models:
   - name: silver_mcmv_historico_empreendimento_rural
     description: >
       Silver — série histórica mensal de empreendimentos MCMV da frente Rural
-      (SFTP INT057/INT065 ∪ SNH modalidade=RURAL). Contrato comum, dedup por
-      (frente_mcmv, apf, dt_referencia), precedência SNH. Grão: empreendimento ×
-      mês. Requer target staging_duckdb.
+      (SFTP INT057/INT065 ∪ SNH modalidade=RURAL ∪ braço MONIT_MOV_OBRA).
+      Contrato comum, dedup por (frente_mcmv, apf, dt_referencia), precedência
+      SNH. Grão: empreendimento × mês.
+      TETO E CAUDA (change consolidar-schemas-historico-reloginho, C2): fontes
+      com estoque até 2026-03; braço obra estende até 2026-07 em linhas
+      `fonte_serie = 'obra_mensal'` com `quantidade_uh` / `valor_contratado` /
+      `valor_desembolsado` NULL por construção — filtrar
+      `fonte_serie <> 'obra_mensal'` em agregações de estoque.
+      Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, rural]
     data_tests:
@@ -721,6 +778,12 @@ models:
             severity: warn
     columns:
       - name: fonte_familia
+        description: >
+          Família de origem do registro na série executiva pré-2019:
+          `bases_relatorio_executivo`, `min_cidades`, `entrada_bb` ou `bext`.
+          Determina o grão (`grao_familia`), a `natureza_serie` e a
+          `prioridade_familia`. NÃO somar UH/valor entre famílias de grão
+          diferente no mesmo (dt_referencia, uf).
         data_tests:
           - not_null
       - name: dt_referencia
@@ -846,7 +909,7 @@ models:
           (min_cidades) / `mvalor_investimento` (bext). Nulo em entrada_bb.
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.70 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -862,7 +925,7 @@ models:
           `valor_far` no FAR). Era `valor_emprestimo`.
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.90 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -891,7 +954,7 @@ models:
           vocabulario-e-qualidade-financeira-historica (D2).
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.40 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -902,7 +965,7 @@ models:
           (bases_relatorio) / `mvalor_desembolso` (bext). ∅ nas outras famílias.
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.40 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -914,7 +977,7 @@ models:
           `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.30 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -924,7 +987,7 @@ models:
           (R$). Ver a nota anti-soma em `subsidio_fgts`.
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.30 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }

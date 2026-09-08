@@ -12,12 +12,15 @@ models:
 
   - name: bronze_reloginho_snh_entregas_evento_bb
     description: >
-      Bronze do reloginho — entregas por EVENTO (fluxo), agente BB, cópia
-      fiel do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`. Uma linha por
-      linha de origem, sem dedup. Neste agente as colunas de origem do evento
-      são `dt_ass_doc / numero_de_unidades_entregues`; os helpers harmonizados `dt_evento` e
-      `qt_uh_entregues_evento` normalizam isso para a silver, que une os dois
-      agentes. Complementa a série mensal SNH (que traz o acumulado).
+      Bronze do reloginho — entregas por EVENTO (fluxo), agente BB. Cópia fiel
+      do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`,
+      **sem regra de negócio** (só projeção mínima + helpers de harmonização).
+      Frente: todas as modalidades MCMV do agente BB (o split por frente é da
+      silver). Uma linha por linha de origem, sem dedup. Neste agente as colunas
+      de origem do evento são `dt_ass_doc / numero_de_unidades_entregues`; os
+      helpers harmonizados `dt_evento` e `qt_uh_entregues_evento` normalizam isso
+      para a silver, que une os dois agentes. Complementa a série mensal SNH (que
+      traz o acumulado).
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
     data_tests:
@@ -33,7 +36,10 @@ models:
       - name: dt_evento
         description: Data da entrega, harmonizada a partir da coluna do agente.
       - name: qt_uh_entregues_evento
-        description: UH entregues no evento, harmonizada a partir da coluna do agente.
+        description: >
+          UH entregues no evento, harmonizada a partir da coluna do agente.
+          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo por
+          evento); nome cru mantido nesta bronze.
       - name: source_file
         description: Caminho do objeto parquet de origem no MinIO staging.
         data_tests:
@@ -49,12 +55,15 @@ models:
 
   - name: bronze_reloginho_snh_entregas_evento_caixa
     description: >
-      Bronze do reloginho — entregas por EVENTO (fluxo), agente CAIXA, cópia
-      fiel do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`. Uma linha por
-      linha de origem, sem dedup. Neste agente as colunas de origem do evento
-      são `dt_entrega / qt_uh_entregues`; os helpers harmonizados `dt_evento` e
-      `qt_uh_entregues_evento` normalizam isso para a silver, que une os dois
-      agentes. Complementa a série mensal SNH (que traz o acumulado).
+      Bronze do reloginho — entregas por EVENTO (fluxo), agente CAIXA. Cópia
+      fiel do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`,
+      **sem regra de negócio** (só projeção mínima + helpers de harmonização).
+      Frente: todas as modalidades MCMV do agente CAIXA (o split por frente é da
+      silver). Uma linha por linha de origem, sem dedup. Neste agente as colunas
+      de origem do evento são `dt_entrega / qt_uh_entregues`; os helpers
+      harmonizados `dt_evento` e `qt_uh_entregues_evento` normalizam isso para a
+      silver, que une os dois agentes. Complementa a série mensal SNH (que traz o
+      acumulado).
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
     data_tests:
@@ -70,7 +79,10 @@ models:
       - name: dt_evento
         description: Data da entrega, harmonizada a partir da coluna do agente.
       - name: qt_uh_entregues_evento
-        description: UH entregues no evento, harmonizada a partir da coluna do agente.
+        description: >
+          UH entregues no evento, harmonizada a partir da coluna do agente.
+          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo por
+          evento); nome cru mantido nesta bronze.
       - name: source_file
         description: Caminho do objeto parquet de origem no MinIO staging.
         data_tests:

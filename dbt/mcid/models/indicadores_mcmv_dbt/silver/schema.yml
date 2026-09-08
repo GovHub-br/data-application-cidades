@@ -47,29 +47,34 @@ models:
       # Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
         description: >
-          Unidades habitacionais contratadas do APF no snapshot do mês. Lê
-          `uh_contratadas` ou `uhs_contratadas` conforme a safra (coalesce_present).
+          UH contratadas do APF no snapshot do mês (estoque — não somar entre
+          meses). Lê `uh_contratadas` ou `uhs_contratadas` conforme a safra
+          (coalesce_present). Conceito canônico `quantidade_uh`
+          (glossario-mcid.md); nome `uh_contratadas` mantido para
+          compatibilidade com o dashboard do reloginho (D3).
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.97 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_historico_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
         description: >
-          Unidades habitacionais entregues (acumulado) do APF no snapshot do mês.
-          Lê `uh_entregues` ou `uhs_entregues` conforme a safra.
+          UH entregues (acumulado) do APF no snapshot do mês. Lê `uh_entregues`
+          ou `uhs_entregues` conforme a safra. Conceito canônico
+          `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.97 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_historico_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
         description: >
-          Unidades habitacionais vigentes do APF no snapshot do mês. Lê
-          `uh_vigentes` ou `uhs_vigentes` conforme a safra.
+          UH vigentes do APF no snapshot do mês. Lê `uh_vigentes` ou
+          `uhs_vigentes` conforme a safra. Conceito canônico
+          `quantidade_uh_vigentes`; nome mantido para compatibilidade (D3).
         data_tests:
           - completude_minima:
-              arguments: { min_pct: 0.97 }
+              arguments: { seed: campos_obrigatorios, modelo: silver_historico_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_distratadas
@@ -152,7 +157,12 @@ models:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: uh_entregues_evento_mes
-        description: UH entregues no mês, por APF (fluxo). `cast(... as bigint)` — sum(bigint) daria HUGEINT.
+        description: >
+          UH entregues no mês do EVENTO, por APF — série de FLUXO (pode somar
+          entre meses, ao contrário dos acumulados de `silver_historico_snh_apf_mes`).
+          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo); nome
+          mantido para compatibilidade (D3). `cast(... as bigint)` — sum(bigint)
+          daria HUGEINT.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_eventos
