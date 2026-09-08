@@ -3,6 +3,29 @@
 Domínios cobertos: `mcmv_historico_dbt` (esta pasta) e as bronzes/silvers do
 reloginho em `models/indicadores_mcmv_dbt/`.
 
+## Convenção de schema (change `consolidar-schemas-historico-reloginho`, D1)
+
+Schema por **domínio × granularidade de frente**, não por camada:
+
+| critério | schema |
+|---|---|
+| histórico cross-frente, **qualquer camada** (bronze, silver, gold) | `dados_historicos` |
+| por frente (`silver_historico_empreendimento` FAR / FDS / Rural) | schema da frente (`empreendimento_far`, `empreendimentos_fds`, `empreendimento_rural`) |
+| domínio reloginho/gargalo, qualquer camada | `reloginho` (autocontido — inclui as 2 bronzes de entrega por evento) |
+| agregado macro nacional (piloto OGU/FGTS) | `conjuntura` |
+
+Os schemas `mcmv_historico` e `serie_historica` **foram extintos**. Os 4 golds
+cross-frente (`gold_snapshot_empreendimento_atual`, `gold_marco_empreendimento`,
+`gold_serie_situacao_mensal`, `gold_serie_mensal`) e a
+`silver_mcmv_historico_serie_executiva` / `silver_mcmv_historico_entrega_apf`
+moram em `dados_historicos`. O invariante D3 (`+database: cidades`) é preservado.
+
+Modelos fundidos na mesma change (deixaram de ser tabela própria):
+`dim_empreendimento_historico` → 14 colunas de `gold_snapshot_empreendimento_atual`;
+`silver_historico_empreendimento_fluxo_ano` → 9 colunas YTD das 3 silvers de
+frente (left join); `silver_mcmv_historico_obra_mensal` → braço de criação de
+linha + left join das 22 colunas de obra nas 3 silvers.
+
 ## As 16 bronzes por família
 
 Desde a change `pipeline-bronze-historica-destino-trocavel` (D5), cada bronze de
@@ -26,23 +49,31 @@ corpos ficam em `macros/historico/corpos_bronze.sql`, e cada arquivo em
 `staging/sharepoint/Novo MCMV - */` (glob recursivo; frente pela substring **no
 nome do arquivo** — os arquivos FDS/RURAL de 202602+ estão misfiled sob
 `Novo MCMV - FAR/`). `_LAYOUT_` / `_SEMANAL_` / `_DIARIO_` de fora. Janela real
-**202512 → 202607** (não há obra mensal antes disso). Ordem de build:
+**202512 → 202607** (não há obra mensal antes disso). Ordem de build: as 3
+bronzes `obra_mensal` antes das 3 silvers de frente.
 
-```
-bronze_mcmv_historico_obra_mensal_far
-bronze_mcmv_historico_obra_mensal_fds     ->  silver_mcmv_historico_obra_mensal
-bronze_mcmv_historico_obra_mensal_rural
-```
+Desde `consolidar-schemas-historico-reloginho` (D2/C2) **não há mais silver
+`silver_mcmv_historico_obra_mensal`**. A família entra nas 3 silvers de frente:
+- um braço mínimo no `union all by name` de `unioned` **cria linha** nos meses
+  só-de-obra (2026-04..07, `fonte_serie = 'obra_mensal'`) — sobe o teto do eixo
+  de 2026-03 para 2026-07;
+- as **22 colunas de obra** entram por `left join` no grão `(frente_mcmv, apf,
+  dt_referencia)` num CTE `enriquecido_obra`
+  (`macros/historico/obra_mensal_arm.sql`: `historico_obra_mensal_rows()` /
+  `_vals()` / `historico_obra_enriquecido()`).
 
-A silver `silver_mcmv_historico_obra_mensal` (grão `frente_mcmv × apf ×
-dt_referencia`, schema `mcmv_historico`) é um **modelo paralelo** — não entra no
-`left join` do contrato comum das silvers por frente nesta change (D4). As 3
-bronzes têm schemas divergentes (FAR: `dt_movimento` / `co_situacao_obra`;
-FDS/RURAL: `dh_movimento` / `co_situacao_operacao`), harmonizados na silver por
-`coalesce_present` com lista de aliases (`macros/historico/obra_mensal_arm.sql`).
+Nos meses só-de-obra `quantidade_uh` / `valor_contratado` / `valor_desembolsado`
+ficam **NULL** (cauda de estoque declaradamente nula, C2 — sem carry-forward).
+Os 3 golds filtram `fonte_serie <> 'obra_mensal'`. Consumidor que agrega estoque
+por mês deve filtrar `fonte_serie <> 'obra_mensal'` ou `dt_referencia <= '2026-03-01'`.
 
-A **união entre famílias vive na silver**, com projeção explícita por braço:
-nenhum modelo usa `union all by name` nem `select * exclude`.
+As 3 bronzes têm schemas divergentes (FAR: `dt_movimento` / `co_situacao_obra`;
+FDS/RURAL: `dh_movimento` / `co_situacao_operacao`), harmonizados por
+`coalesce_present` com lista de aliases.
+
+Os braços SFTP/SNH das silvers de frente ainda usam projeção explícita por braço;
+o `union all by name` do CTE `unioned` só serve para o braço obra completar as
+colunas do contrato com NULL sem repetir a lista inteira.
 
 ## Ordem de build: as bronzes precisam existir no COMPILE da silver
 
@@ -57,11 +88,10 @@ colunas que aquela família realmente tem. Quem depende disso:
 - `silver_mcmv_historico_serie_executiva` → as 4 bronzes da série executiva;
 - `silver_mcmv_historico_empreendimento_far` / `_fds` / `_rural` → as 2 bronzes
   SNH (as colunas divergem entre agentes: `uhs_contratadas`/`uhs_entregues` só
-  existem no BB, `dt_entrega` só na CAIXA) e as bronzes GEFUS (INT040/054/059/065
-  — `qt_unidades_ociosas` / `qtde_uh_inicial` / `cod_pendencia_obra` /
-  `pc_execucao_financeira_obra` são resolvidas por `coalesce_present`);
-- `silver_mcmv_historico_obra_mensal` → as 3 bronzes `obra_mensal` (schemas
-  divergentes por frente).
+  existem no BB, `dt_entrega` só na CAIXA), as bronzes GEFUS
+  (INT040/054/059/065 — `qt_unidades_ociosas` / `qtde_uh_inicial` /
+  `cod_pendencia_obra` / `pc_execucao_financeira_obra` por `coalesce_present`) e
+  as 3 bronzes `obra_mensal` (braço de criação de linha + left join das 22 col).
 
 Consequências práticas:
 

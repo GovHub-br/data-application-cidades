@@ -13,9 +13,10 @@
 #                   mesma execução, com o motor DuckDB FORA do banco.
 # O corpo de cada modelo é idêntico nos três; só o target muda.
 #
-# Materializa o schema `reloginho` inteiro (2 silver + 6 gold do mapa) mais o
-# upstream que ele exige: as 2 bronzes de ENTREGA por agente
-# (bronze_reloginho_snh_entregas_evento_bb/_caixa) em `dados_historicos` e a
+# Materializa o schema `reloginho` inteiro (2 silver + 6 gold do mapa + as 2
+# bronzes de ENTREGA por agente bronze_reloginho_snh_entregas_evento_bb/_caixa,
+# que passaram de `dados_historicos` para `reloginho` na change
+# consolidar-schemas-historico-reloginho) mais o upstream que ele exige: a
 # cadeia medalhão FAR/FDS (`empreendimento_far`, `empreendimentos_fds`,
 # tabelas `*_atual_*`) que os golds de gargalo leem. A série mensal SNH vem das
 # bronzes por agente bronze_mcmv_historico_empreendimento_snh_bb/_caixa

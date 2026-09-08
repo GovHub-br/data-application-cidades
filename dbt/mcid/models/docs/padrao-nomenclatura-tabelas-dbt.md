@@ -50,6 +50,15 @@ O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_
 Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 `dbt_project.yml`.
 
+> **Eixo histórico e reloginho — schema por domínio, não por camada.** A regra
+> "um schema por camada" (seção 3) **não vale** para `mcmv_historico_dbt` e
+> `indicadores_mcmv_dbt`. Desde `consolidar-schemas-historico-reloginho` (D1):
+> `dados_historicos` guarda bronze + silver + gold do histórico **cross-frente**;
+> o que é **por frente** (`silver_historico_empreendimento`) mora no schema da
+> frente; o domínio reloginho/gargalo é autocontido em `reloginho`. Os schemas
+> `mcmv_historico` e `serie_historica` foram **extintos**. Ver
+> `models/mcmv_historico_dbt/README.md` § Convenção de schema.
+
 ---
 
 ## 3. Schemas do banco de dados

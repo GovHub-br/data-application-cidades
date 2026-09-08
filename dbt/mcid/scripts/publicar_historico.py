@@ -88,8 +88,12 @@ SILVERS_GOLDS = [
     ("empreendimentos_fds", "silver_historico_empreendimento", "mcmv_historico"),
     ("empreendimento_far", "silver_historico_empreendimento", "mcmv_historico"),
     ("empreendimento_rural", "silver_historico_empreendimento", "mcmv_historico"),
-    ("serie_historica", "gold_serie_mensal", "mcmv_historico"),
-    ("serie_historica", "gold_snapshot_empreendimento_atual", "mcmv_historico"),
+    # golds cross-frente: serie_historica extinto -> dados_historicos (change
+    # consolidar-schemas-historico-reloginho, D1). Os 4 golds publicados.
+    ("dados_historicos", "gold_serie_mensal", "mcmv_historico"),
+    ("dados_historicos", "gold_snapshot_empreendimento_atual", "mcmv_historico"),
+    ("dados_historicos", "gold_marco_empreendimento", "mcmv_historico"),
+    ("dados_historicos", "gold_serie_situacao_mensal", "mcmv_historico"),
     # a silver da serie executiva e a maior (10,2 M linhas) — por ultimo.
     ("dados_historicos", "silver_mcmv_historico_serie_executiva", "mcmv_historico"),
 ]

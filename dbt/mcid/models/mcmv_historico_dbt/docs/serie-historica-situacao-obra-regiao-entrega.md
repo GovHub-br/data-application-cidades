@@ -14,7 +14,7 @@ MinIO real (`10.0.0.56:9000`, bucket `data-lake-mcid`).
 | `situacao_derivada` + `regiao_sigla` + `regiao_nome` | colunas | `silver_mcmv_historico_serie_executiva` |
 | `situacao_canonica` + `regiao_sigla` + `regiao_nome` | colunas | `silver_historico_snh_apf_mes` (reloginho) |
 | `regiao_sigla` + `regiao_nome` + nível `regiao` | colunas / grouping set | `gold_serie_mensal` |
-| `gold_serie_situacao_mensal` | modelo novo | `serie_historica.gold_serie_situacao_mensal` |
+| `gold_serie_situacao_mensal` | modelo novo | `dados_historicos.gold_serie_situacao_mensal` |
 
 Escopo **só local** — nenhum modelo entra na carga noturna do Cosmos nem é
 promovido a `prod` nesta change.

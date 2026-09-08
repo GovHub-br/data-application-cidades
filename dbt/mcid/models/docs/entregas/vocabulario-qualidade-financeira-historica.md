@@ -96,7 +96,7 @@ com `bext` (contrato) + família de empreendimento na janela de sobreposição
 Nenhum modelo dbt nem arquivo em `superset/` deste repo lê as colunas antigas
 por nome (`gold_serie_mensal` é gold-folha). O BREAKING atinge **consumidores
 externos** (dashboards / notebooks / OpenMetadata que leiam
-`serie_historica.gold_serie_mensal`). A mudança de contrato está registrada no
+`serie_historica.gold_serie_mensal`, hoje `dados_historicos.gold_serie_mensal`). A mudança de contrato está registrada no
 `schema.yml`, no glossário e aqui; a notificação aos donos de dashboard é passo
 de processo fora do dbt. Precedente: a spec `serie-historica-regiao` já mudou o
 contrato deste modelo.

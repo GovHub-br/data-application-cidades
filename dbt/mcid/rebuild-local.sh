@@ -141,7 +141,10 @@ rows = con.execute(
     select schema_name, table_name, estimated_size
     from duckdb_tables()
     where schema_name in (
-        'dados_historicos', 'reloginho', 'serie_historica',
+        -- serie_historica / mcmv_historico extintos (change
+        -- consolidar-schemas-historico-reloginho): golds e silvers do eixo
+        -- cross-frente agora em dados_historicos.
+        'dados_historicos', 'reloginho',
         'empreendimento_far', 'empreendimentos_fds', 'empreendimento_rural'
     )
     order by estimated_size desc, schema_name, table_name

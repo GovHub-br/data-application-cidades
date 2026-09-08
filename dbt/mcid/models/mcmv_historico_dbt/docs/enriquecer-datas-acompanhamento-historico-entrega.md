@@ -66,7 +66,7 @@ janela 2024‑02 → 2026‑07.
 ### D — `gold_marco_empreendimento`
 
 `models/mcmv_historico_dbt/gold/gold_marco_empreendimento.sql` (schema
-`serie_historica`, grão `coalesce(id_empreendimento, apf)` — FDS multi‑fase
+`dados_historicos` (era `serie_historica`), grão `coalesce(id_empreendimento, apf)` — FDS multi‑fase
 colapsa em 1 linha). 7 marcos, cada um com `<marco>_fonte` e `<marco>_dt_snapshot`:
 
 | marco | fonte |
@@ -122,5 +122,5 @@ change A/C. FAR e Rural ficam em ~63‑67 % nessa métrica.
 ## Consumidores externos — pendente (manual)
 
 Varrer exports do Superset e o lineage do OpenMetadata por `dt_entrega` apontando
-para `*.silver_historico_empreendimento` ou `serie_historica.gold_snapshot_empreendimento_atual`
+para `*.silver_historico_empreendimento` ou `dados_historicos.gold_snapshot_empreendimento_atual`
 e repontar para `dt_entrega_uh` (não há mais `dt_entrega` nessas relações).
