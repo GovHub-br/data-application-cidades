@@ -34,14 +34,23 @@
 {% set snh_familias = familias_snh_empreendimento() %}
 with
     consolidado as (
+        -- fonte_serie = 'obra_mensal' EXCLUÍDA (change
+        -- consolidar-schemas-historico-reloginho, D2): as linhas só-de-obra
+        -- (2026-04..07) não carregam estoque/dim e os ~49 APFs exclusivos do
+        -- MONIT_MOV_OBRA não entram no snapshot — a curva/situação de obra fica
+        -- disponível na silver por frente, não aqui. Mantém o snapshot em
+        -- 17.545 linhas com o último estado REAL observado.
         select *
         from {{ ref('silver_mcmv_historico_empreendimento_far') }}
+        where fonte_serie <> 'obra_mensal'
         union all
         select *
         from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
+        where fonte_serie <> 'obra_mensal'
         union all
         select *
         from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
+        where fonte_serie <> 'obra_mensal'
     ),
 
     ultimo as (

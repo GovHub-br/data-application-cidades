@@ -19,6 +19,14 @@
 -- Obs.: INT057 tem a coluna temporal com nome inconsistente entre entregas
 -- (idt_movimento vs dt_movimento) — tratado com coalesce.
 --
+-- OBRA_MENSAL / DESCONTINUIDADE (change consolidar-schemas-historico-reloginho,
+-- D2/C2): a família MONIT_MOV_OBRA cria linha nos meses só-de-obra
+-- (2026-04..07, `fonte_serie = 'obra_mensal'`) e adiciona 22 colunas de obra por
+-- left join no grão. Nesses meses `quantidade_uh` / `valor_contratado` /
+-- `valor_desembolsado` são NULL (cauda de estoque declaradamente nula, sem
+-- carry-forward). Agregações de estoque por mês: filtrar
+-- `fonte_serie <> 'obra_mensal'` ou `dt_referencia <= '2026-03-01'`.
+--
 -- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
 -- atachado em `prod_duckdb`. Ver models/mcmv_historico_dbt/README.md para a
 -- ordem de build exigida por coalesce_present.
@@ -128,17 +136,24 @@ with
 {{ silver_historico_snh_arm(ref(f.modelo), 'Rural', 'PNHR Rural', 'RURAL') }}
     ),
 {% endfor %}
+    -- braço obra_mensal (change consolidar-schemas-historico-reloginho, D2/C2).
+    obra_rural as (
+{{ historico_obra_mensal_rows(ref('bronze_mcmv_historico_obra_mensal_rural'), 'Rural', 'PNHR Rural') }}
+    ),
     unioned as (
         select *
         from rural_bb
-        union all
+        union all by name
         select *
         from rural_caixa
         {% for f in snh_familias %}
-        union all
+        union all by name
         select *
         from snh_rural_{{ f.nome | lower }}
         {% endfor %}
+        union all by name
+        select *
+        from obra_rural
     ),
 
     enriquecido as (
@@ -229,6 +244,10 @@ with
             on lower(trim(coalesce(d.motivo_paralisacao_bruto, d.motivo_paralisacao_bruto_grao)))
                = lower(trim(dmot.valor_bruto))
     ),
+
+    -- 22 colunas de obra_mensal por left join no grão (change
+    -- consolidar-schemas-historico-reloginho, D2).
+{{ historico_obra_enriquecido(ref('bronze_mcmv_historico_obra_mensal_rural'), 'Rural', 'enriquecido_dominio') }}
 
     resolvido as (
         select
@@ -350,7 +369,9 @@ with
         )
     end as dt_primeira_entrega_fonte,
     coalesce(dt_assinatura_projeto, dt_assinatura_projeto_grao) as dt_assinatura_projeto
-from enriquecido_dominio
+    -- 22 colunas de obra_mensal (change consolidar-schemas-historico-reloginho, D2).
+    {{ historico_obra_cols_resolvido() }}
+from enriquecido_obra
 where
     rn = 1
     -- quarentena (change vocabulario-e-qualidade-financeira-historica, D6):

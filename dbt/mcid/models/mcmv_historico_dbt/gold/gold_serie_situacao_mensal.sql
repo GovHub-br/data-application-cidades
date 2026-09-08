@@ -38,6 +38,11 @@
 -- (situacao_derivada) fica FORA nesta fase (Open Question 4); todas as linhas
 -- sao fonte_situacao = 'reportada'.
 --
+-- fonte_serie = 'obra_mensal' EXCLUIDA (change consolidar-schemas-historico-reloginho,
+-- D2): as linhas so-de-obra (2026-04..07) nao tem situacao_canonica (o
+-- co_situacao_obra e codigo cru, dominio a decodificar em follow-up) e gerariam
+-- `saidas` falsas na lag(). O teto desta serie continua 2026-03 ate a decodificacao.
+--
 -- Destino conforme o target (D2): arquivo local em `staging_duckdb`.
 with
 
@@ -56,7 +61,7 @@ with
             coalesce(id_empreendimento, apf) as chave_empreendimento,
             fase_empreendimento
         from {{ ref('silver_mcmv_historico_empreendimento_far') }}
-        where dt_referencia >= date '2019-12-01'
+        where dt_referencia >= date '2019-12-01' and fonte_serie <> 'obra_mensal'
         union all
         select
             frente_mcmv,
@@ -72,7 +77,7 @@ with
             coalesce(id_empreendimento, apf) as chave_empreendimento,
             fase_empreendimento
         from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
-        where dt_referencia >= date '2019-12-01'
+        where dt_referencia >= date '2019-12-01' and fonte_serie <> 'obra_mensal'
         union all
         select
             frente_mcmv,
@@ -88,7 +93,7 @@ with
             coalesce(id_empreendimento, apf) as chave_empreendimento,
             fase_empreendimento
         from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
-        where dt_referencia >= date '2019-12-01'
+        where dt_referencia >= date '2019-12-01' and fonte_serie <> 'obra_mensal'
     ),
 
     -- Colapsa ao grao (frente, chave_empreendimento, mes). A re-dedup SFTP x SNH

@@ -25,6 +25,15 @@
 -- Numéricos em formato brasileiro (13.898.046,25) e dot-decimal são absorvidos
 -- por parse_hist_numeric (valores R$) / parse_hist_double (%) / parse_hist_bigint.
 --
+-- OBRA_MENSAL / DESCONTINUIDADE (change consolidar-schemas-historico-reloginho,
+-- D2/C2): a família MONIT_MOV_OBRA entra de duas formas — cria linha nos meses
+-- só-de-obra (2026-04..07, `fonte_serie = 'obra_mensal'`) e adiciona 22 colunas
+-- de curva/situação de obra por left join no grão. Nesses meses só-de-obra
+-- `quantidade_uh`, `valor_contratado` e `valor_desembolsado` são NULL (cauda de
+-- estoque declaradamente nula, SEM carry-forward) e a série de estoque cai de
+-- ~16.240 para ~2.700 APFs somando as 3 frentes. QUEM AGREGA ESTOQUE POR MÊS
+-- deve filtrar `fonte_serie <> 'obra_mensal'` ou `dt_referencia <= '2026-03-01'`.
+--
 -- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
 -- atachado em `prod_duckdb`. As bronzes precisam existir no compile
 -- (coalesce_present_parsed introspecciona a relação) — ver
@@ -148,17 +157,26 @@ with
 {{ silver_historico_snh_arm(ref(f.modelo), 'FAR', 'FAR', 'FAR') }}
     ),
 {% endfor %}
+    -- braço obra_mensal (change consolidar-schemas-historico-reloginho, D2/C2):
+    -- estende o teto do eixo de 2026-03 para 2026-07. Nos meses só-de-obra o
+    -- estoque/financeiro sai NULL (cauda declaradamente nula, C2).
+    obra_far as (
+{{ historico_obra_mensal_rows(ref('bronze_mcmv_historico_obra_mensal_far'), 'FAR', 'FAR') }}
+    ),
     unioned as (
         select *
         from far_caixa
-        union all
+        union all by name
         select *
         from far_bb
         {% for f in snh_familias %}
-        union all
+        union all by name
         select *
         from snh_far_{{ f.nome | lower }}
         {% endfor %}
+        union all by name
+        select *
+        from obra_far
     ),
 
     -- D6: preserva colunas complementares (presentes só no SFTP) ao longo do grão
@@ -259,6 +277,10 @@ with
             on lower(trim(coalesce(d.motivo_paralisacao_bruto, d.motivo_paralisacao_bruto_grao)))
                = lower(trim(dmot.valor_bruto))
     ),
+
+    -- 22 colunas de obra_mensal por left join no grão (change
+    -- consolidar-schemas-historico-reloginho, D2).
+{{ historico_obra_enriquecido(ref('bronze_mcmv_historico_obra_mensal_far'), 'FAR', 'enriquecido_dominio') }}
 
     resolvido as (
         select
@@ -382,7 +404,10 @@ with
         )
     end as dt_primeira_entrega_fonte,
     coalesce(dt_assinatura_projeto, dt_assinatura_projeto_grao) as dt_assinatura_projeto
-from enriquecido_dominio
+    -- 22 colunas de obra_mensal (change consolidar-schemas-historico-reloginho, D2),
+    -- do left join em enriquecido_obra.
+    {{ historico_obra_cols_resolvido() }}
+from enriquecido_obra
 where
     rn = 1
     -- quarentena de registros financeiros invalidos (change

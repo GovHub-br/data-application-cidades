@@ -52,6 +52,11 @@ with
 
     silver_rows as (
         {% for frente in ['far', 'fds', 'rural'] %}
+        -- fonte_serie = 'obra_mensal' EXCLUÍDA (change
+        -- consolidar-schemas-historico-reloginho, D2): linhas só-de-obra não
+        -- trazem marco novo e não devem virar a linha "estado" corrente do
+        -- empreendimento (perderia dt_contratacao/dt_inicio_obra). Mantém a
+        -- contagem de id_empreendimento.
         select
             frente_mcmv,
             coalesce(id_empreendimento, apf) as chave_empreendimento,
@@ -72,6 +77,7 @@ with
             fonte_serie,
             fonte_tabela
         from {{ ref('silver_mcmv_historico_empreendimento_' ~ frente) }}
+        where fonte_serie <> 'obra_mensal'
         {{ "union all" if not loop.last }}
         {% endfor %}
     ),

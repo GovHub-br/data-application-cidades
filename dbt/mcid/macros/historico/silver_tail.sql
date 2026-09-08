@@ -159,7 +159,13 @@
             dt_ultima_liberacao,
             dt_primeira_entrega,
             dt_primeira_entrega_fonte,
-            dt_assinatura_projeto,
+            dt_assinatura_projeto
+            -- 22 colunas de obra_mensal (change consolidar-schemas-historico-reloginho,
+            -- D2): a linha carregada NÃO propaga obra (carry-forward é só janela
+            -- SNH) — replicam o NULL da última observação SNH. Posição idêntica
+            -- à de resolvido_flag p/ o `union all` de `final`.
+            {{ historico_obra_cols_carregado() }}
+            ,
             'carregado'::text as fonte_valor,
             dt_referencia as dt_snapshot_efetivo
         from carregado_cand
@@ -200,12 +206,15 @@
                 dt_ultima_liberacao, dt_primeira_entrega, dt_primeira_entrega_fonte,
                 dt_assinatura_projeto
             ),
-            coalesce(
+            -- LOCF de valor NÃO vaza para a cauda só-de-obra (C2 / change
+            -- consolidar-schemas-historico-reloginho): nos meses 2026-04..07 o
+            -- braço obra_mensal é a única fonte e estoque/financeiro ficam NULL.
+            case when fonte_serie = 'obra_mensal' then null else coalesce(
                 valor_contratado, last_value(valor_contratado ignore nulls) over w
-            ) as valor_contratado,
-            coalesce(
+            ) end as valor_contratado,
+            case when fonte_serie = 'obra_mensal' then null else coalesce(
                 valor_desembolsado, last_value(valor_desembolsado ignore nulls) over w
-            ) as valor_desembolsado,
+            ) end as valor_desembolsado,
             coalesce(
                 responsavel_id, last_value(responsavel_id ignore nulls) over w
             ) as responsavel_id,
@@ -238,9 +247,11 @@
             coalesce(
                 dt_assinatura_projeto, last_value(dt_assinatura_projeto ignore nulls) over w
             ) as dt_assinatura_projeto,
-            -- marcador por grupo: cobre valor_contratado + valor_desembolsado
+            -- marcador por grupo: cobre valor_contratado + valor_desembolsado.
+            -- Falso nas linhas só-de-obra (não houve preenchimento — valor NULL).
             (
-                valor_contratado is null
+                fonte_serie <> 'obra_mensal'
+                and valor_contratado is null
                 and last_value(valor_contratado ignore nulls) over w is not null
             ) as valor_contratado_preenchido,
             (
@@ -333,13 +344,16 @@ select
     dt_ultima_liberacao,
     dt_primeira_entrega,
     dt_primeira_entrega_fonte,
-    dt_assinatura_projeto,
+    dt_assinatura_projeto
+    -- 22 colunas de obra_mensal (change consolidar-schemas-historico-reloginho,
+    -- D2). Preservadas ao longo do grão; NULL fora da janela obra (2025-12+).
+    {{ historico_obra_cols_final() }}
     -- YTD (acumulado-no-ano) do braço SNH — ex-fluxo_ano (change
     -- consolidar-schemas-historico-reloginho, D3). NULL em ~95% das linhas
     -- (a família só existe de 2024-06+, não retroage). Fluxo mensal derivável:
     -- x_ano - lag(x_ano) over (partition by frente_mcmv, apf, year(dt_referencia)
     --                          order by dt_referencia).
-    fy.quantidade_uh_contratadas_ano,
+    , fy.quantidade_uh_contratadas_ano,
     fy.quantidade_uh_entregues_ano,
     fy.quantidade_uh_vigentes_ano,
     fy.quantidade_uh_distratadas_ano,

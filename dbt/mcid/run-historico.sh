@@ -94,7 +94,8 @@ SILVERS=(
   silver_mcmv_historico_empreendimento_fds
   silver_mcmv_historico_empreendimento_rural
   silver_mcmv_historico_serie_anual_ogu_fgts
-  silver_mcmv_historico_obra_mensal
+  # silver_mcmv_historico_obra_mensal REMOVIDO (change consolidar-schemas-historico-reloginho,
+  # D2): a família obra_mensal virou braço/left-join das 3 silvers de frente.
 )
 SILVER_SERIE=silver_mcmv_historico_serie_executiva
 GOLDS=(

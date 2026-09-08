@@ -104,12 +104,19 @@ models:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: fonte_serie
-        description: Origem da linha mantida na dedup.
+        description: >
+          Origem da linha mantida na dedup. `obra_mensal` (change
+          consolidar-schemas-historico-reloginho, D2): meses 2026-04..07 em que
+          o braço MONIT_MOV_OBRA é a única fonte — nessas linhas `quantidade_uh`,
+          `valor_contratado` e `valor_desembolsado` são NULL por construção
+          (cauda de estoque declaradamente nula, C2). Agregações de estoque por
+          mês devem filtrar `fonte_serie <> 'obra_mensal'` ou
+          `dt_referencia <= '2026-03-01'`.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
-                values: ["sftp", "snh"]
+                values: ["sftp", "snh", "obra_mensal"]
       - name: quantidade_uh
         description: Unidades habitacionais contratadas no snapshot.
         data_tests:
@@ -478,6 +485,86 @@ models:
         description: >
           Desembolso acumulado no ano (R$, YTD SNH). RESSALVA: fill baixo —
           concentrado na CAIXA (BB ~1%). Não usar como total de desembolso.
+      # ── evolução mensal de obra — ex-modelo silver_mcmv_historico_obra_mensal,
+      # incorporado por left join no grão (change
+      # consolidar-schemas-historico-reloginho, D2). Fonte: MONIT_MOV_OBRA
+      # (SharePoint), janela 2025-12+. Preenchidas em ~100% nas linhas de
+      # 2025-12..2026-07 (sobrepostas ou só-de-obra); NULL antes disso.
+      # GOTCHA: `dt_paralisacao`, `detalhe_paralisacao` e `qt_uh_concluidas` são
+      # 0% na fonte hoje — a coluna existe, vazia; o sinal utilizável de
+      # paralisação é `co_situacao_obra` / texto.
+      - name: pc_obra_prevista
+        description: Curva de obra PLANEJADA no mês (%). Sinal central do braço obra.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: pc_obra_realizada
+        description: Curva de obra REALIZADA no mês (%).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: co_situacao_obra
+        description: Código de situação da obra/operação (cru; domínio a decodificar).
+      - name: co_andamento_operacao
+        description: Código de andamento da operação (FDS/Rural; NULL no FAR).
+      - name: dt_alteracao_situacao
+        description: Data da última alteração de situação da obra.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_paralisacao
+        description: "Data de paralisação. GOTCHA: 0% na fonte hoje (coluna existe, vazia)."
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: co_classificacao_paralisado
+        description: Classificação do empreendimento paralisado (cru).
+      - name: detalhe_paralisacao
+        description: "Texto de detalhe de paralisação/retomada. GOTCHA: 0% na fonte hoje."
+      - name: dt_previsao_conclusao_obra_retomada
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_conclusao_obra_retomada
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: qt_uh_concluidas
+        description: "UH concluídas (decomposição de obra). GOTCHA: 0% na fonte hoje."
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_alienadas
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_sem_habitese
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_construcao_parcial
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_ociosas_retomadas
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_unidades_habitacionais_invadidas
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: dt_legalizacao
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_entrega
+        description: >
+          Data de entrega do EMPREENDIMENTO reportada pelo MONIT_MOV_OBRA.
+          Distinta de `dt_entrega_uh` (entrega de UH, das fontes SFTP/SNH).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_acion_seguradora
+        description: Data de acionamento da seguradora (só FAR).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_contrata_construtor_substituto
+        description: Data de contratação de construtor substituto (só FAR).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_repactuacao
+        description: Data de repactuação (só FAR).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: id_obra_snapshot
+        description: Chave técnica do snapshot de obra (md5 de frente|apf|mês). NULL fora da janela obra.
 
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
@@ -581,99 +668,6 @@ models:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_ultimo_snapshot
         description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
-
-  - name: silver_mcmv_historico_obra_mensal
-    description: >
-      Silver — evolução mensal de obra por empreendimento MCMV (curva prevista ×
-      realizada, situação de obra, ciclo de paralisação/retomada, decomposição
-      de UH por estado, datas de marco). Une as 3 bronzes da família obra_mensal
-      (FAR / FDS / Rural — schemas divergentes, projeção explícita por lista de
-      aliases). Grão `(frente_mcmv, apf, dt_referencia)`. Janela real ≈ 2025-12 →
-      2026-07 (FAR sem 2026-06); NÃO há histórico de obra mensal antes de
-      2025-12. Modelo PARALELO — não entra no contrato comum das silvers por
-      frente nesta change (D4 / Open Question 2). Requer target staging_duckdb.
-      Change: enriquecer-quantidades-uh-e-sinais-obra-historico.
-    meta:
-      tags: [silver, mcmv, dados-historicos, obra]
-    data_tests:
-      - unique_combinacao:
-          arguments:
-            colunas: ["frente_mcmv", "apf", "dt_referencia"]
-    columns:
-      - name: id_obra_snapshot
-        description: Chave técnica (obra + frente + apf + mês).
-        data_tests:
-          - not_null
-          - unique
-      - name: frente_mcmv
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ["FAR", "Entidades", "Rural"]
-      - name: apf
-        data_tests:
-          - not_null
-          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
-      - name: dt_referencia
-        description: Mês do snapshot (1º dia).
-        data_tests:
-          - not_null
-          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      - name: pc_obra_prevista
-        description: >
-          Percentual de obra PREVISTO (curva planejada) — o sinal central desta
-          silver, ~100% preenchido na janela.
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
-      - name: pc_obra_realizada
-        description: Percentual de obra REALIZADO no snapshot (~100% preenchido).
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
-      - name: co_situacao_obra
-        description: >
-          Código de situação da obra/operação (FAR `co_situacao_obra`; FDS/Rural
-          `co_situacao_operacao`), texto cru — domínio observado {1,2,3,4,5,11,16},
-          a decodificar em follow-up (Non-Goal 2). ~100% preenchido. O
-          `dentro_do_dominio` (warn) fica reservado para quando houver seed de
-          decodificação.
-      - name: co_andamento_operacao
-        description: Código de andamento (FDS/Rural; NULL no FAR). Hoje só o FDS preenche (`0`).
-      - name: dt_paralisacao
-        description: >
-          Data de paralisação da obra. **0% preenchida na fonte hoje** — a
-          coluna existe vazia. O sinal utilizável de paralisação é
-          `co_situacao_obra` / texto, NÃO esta data.
-      - name: co_classificacao_paralisado
-        description: >
-          Código de classificação de paralisação (`co_classificacao_paralisados`
-          da fonte). Preenchido no FDS (~100%, majoritariamente "não
-          paralisado"); 0% no FAR/Rural.
-      - name: detalhe_paralisacao
-        description: >
-          Texto de detalhe da paralisação/retomada (FDS
-          `detalhe_paralisacao_retomada`; Rural `no_detalhe_paralisacao_retomada`;
-          NULL no FAR). 0% preenchido na janela atual.
-      - name: qt_uh_alienadas
-        description: UH alienadas (`qt_uh_alienada`). Bem preenchido no Rural (~100%); raro no FDS; 0% no FAR.
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: qt_uh_concluidas
-        description: UH concluídas — 0% preenchida neste feed (vem do feed de empreendimento, não do de obra).
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: dt_conclusao_obra
-        description: Data de conclusão de obra reportada pelo feed de obra.
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      - name: dt_entrega
-        description: Data de entrega do empreendimento (`dt_entrega_do_empreendimento`).
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      - name: source_file
-        description: Caminho do parquet de origem.
-        data_tests:
-          - not_null
 
   - name: silver_mcmv_historico_serie_executiva
     description: >
