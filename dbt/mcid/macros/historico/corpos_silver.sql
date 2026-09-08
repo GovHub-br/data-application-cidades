@@ -31,6 +31,43 @@
     coalesce_present[_parsed] introspecciona a relação da bronze -> tolera drift
     de schema do parquet (a coluna some numa geração => compila como NULL).
 #}
+{#
+    Fragmento dos sinais de retomada/paralisação e marcos de data (Blocos A/C da
+    change colunas-orfas-bronze-historico) que os braços SFTP GEFUS acrescentam
+    ao contrato comum das silvers por frente. Emite a lista terminando em vírgula
+    — vem logo APÓS o fragmento historico_uh_sinais_sftp e ANTES de
+    `dt_referencia`, na MESMA posição do bloco equivalente do braço SNH.
+
+    Colunas (mesmo nome/tipo/ordem nos dois braços):
+      - sinal_retomada_bruto   texto cru p/ join ao seed dominio_retomada
+                               (INT040/054 `situacao_retomada`; senão NULL)
+      - motivo_paralisacao_bruto  NULL no SFTP (`cod_motivo_ociosidade` é 0% real)
+      - desc_situacao_contrato   INT040 `desc_situacao_contrato`, cru; senão NULL
+      - dt_ultima_liberacao      INT040/054 `dt_ultima_liberacao_recurso`,
+                                 INT057/065 `dt_ultima_liberacao`
+      - dt_primeira_entrega      INT040/054 `dt_primeira_entrega` (FAR)
+      - dt_assinatura_projeto    INT059 `dt_assinatura_projeto` (FDS)
+
+    coalesce_present[_parsed] introspecciona a bronze -> a coluna ausente numa
+    família compila como NULL do tipo certo (tolera drift + divergência entre
+    frentes).
+#}
+{% macro historico_bloco_ac_sftp(rel) %}
+            nullif(nullif(trim(({{ coalesce_present(rel, ['situacao_retomada']) }})::text), ''), 'NULL')
+            as sinal_retomada_bruto,
+            null::text as motivo_paralisacao_bruto,
+            nullif(nullif(trim(({{ coalesce_present(rel, ['desc_situacao_contrato']) }})::text), ''), 'NULL')
+            as desc_situacao_contrato,
+            {{ coalesce_present_parsed(
+                rel, ['dt_ultima_liberacao_recurso', 'dt_ultima_liberacao'], 'parse_hist_date', 'date'
+            ) }} as dt_ultima_liberacao,
+            {{ coalesce_present_parsed(rel, ['dt_primeira_entrega'], 'parse_hist_date', 'date') }}
+            as dt_primeira_entrega,
+            {{ coalesce_present_parsed(rel, ['dt_assinatura_projeto'], 'parse_hist_date', 'date') }}
+            as dt_assinatura_projeto,
+{% endmacro %}
+
+
 {% macro historico_uh_sinais_sftp(rel, ociosas=false, inicial=false, pendencia=false, pc_reportada=false) %}
             null::bigint as quantidade_uh_distratadas,
             null::bigint as quantidade_uh_vigentes,
@@ -128,6 +165,21 @@
             -- execucao financeira reportada: só INT057 (Rural BB) -- NULL no SNH.
             -- O derivado (desembolsado/contratado) é calculado no select final.
             null::double as percentual_execucao_financeira_reportada,
+            -- Blocos A/C (change colunas-orfas-bronze-historico) -- mesma posição
+            -- que historico_bloco_ac_sftp no braço SFTP.
+            -- sinal_retomada: só o `detalhamento` casando 'A RETOMAR%' (os demais
+            -- valores são rescisão/desimobilização/ocupação, não retomada).
+            case
+                when upper(nullif(trim(({{ coalesce_present(rel, ['detalhamento_da_situacao_do_empreendimento']) }})::text), '')) like 'A RETOMAR%'
+                then nullif(trim(({{ coalesce_present(rel, ['detalhamento_da_situacao_do_empreendimento']) }})::text), '')
+            end as sinal_retomada_bruto,
+            -- motivo_paralisacao: `classificacao_dos_paralisados` (só SNH CAIXA).
+            nullif(trim(({{ coalesce_present(rel, ['classificacao_dos_paralisados']) }})::text), '')
+            as motivo_paralisacao_bruto,
+            null::text as desc_situacao_contrato,
+            null::date as dt_ultima_liberacao,
+            null::date as dt_primeira_entrega,
+            null::date as dt_assinatura_projeto,
             -- grão mensal (change dedup-fonte-silver-historico, D1): o braço SNH
             -- ja grava dt_referencia no dia 1 -> date_trunc e idempotente aqui;
             -- explicito p/ o contrato "cada braco normaliza" e simetria com o SFTP.

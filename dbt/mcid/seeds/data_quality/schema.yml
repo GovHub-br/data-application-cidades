@@ -1,0 +1,67 @@
+version: 2
+
+seeds:
+  # Change: colunas-orfas-bronze-historico.
+  - name: dominio_retomada
+    description: >
+      Mapa canônico do sinal de retomada/a-retomar de empreendimento histórico.
+      valor_bruto vem de situacao_retomada (SFTP INT040/054) e de
+      detalhamento_da_situacao_do_empreendimento casando 'A RETOMAR%' (SNH).
+      Consumido pelas silvers por frente via left join
+      lower(trim(bruto)) = lower(trim(valor_bruto)); testado com
+      dentro_do_dominio (warn) sobre a coluna derivada sinal_retomada.
+    columns:
+      - name: valor_bruto
+        data_tests:
+          - not_null
+          - unique
+      - name: sinal_retomada
+        data_tests:
+          - not_null
+      - name: origem
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["sftp", "snh"]
+
+  - name: dominio_motivo_paralisacao
+    description: >
+      Mapa canônico do motivo de paralisação, de classificacao_dos_paralisados
+      (SNH CAIXA). cod_motivo_ociosidade (INT040/054) é 0% real e não entra.
+    columns:
+      - name: valor_bruto
+        data_tests:
+          - not_null
+          - unique
+      - name: motivo_paralisacao
+        data_tests:
+          - not_null
+      - name: origem
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["sftp", "snh"]
+
+  - name: colunas_bronze_ignoradas
+    description: >
+      Registro versionado de colunas do bronze de empreendimento histórico
+      deliberadamente não consumidas por nenhuma silver. Anti-join do teste
+      bronze_colunas_nao_mapeadas (guardrail-mapeamento-bronze-historico).
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["bronze", "coluna"]
+    columns:
+      - name: bronze
+        description: sufixo curto do bronze (int040/int054/int057/int059/int065/snh_bb/snh_caixa).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["int040", "int054", "int057", "int059", "int065", "snh_bb", "snh_caixa"]
+      - name: coluna
+        data_tests:
+          - not_null
+      - name: justificativa
+        data_tests:
+          - not_null

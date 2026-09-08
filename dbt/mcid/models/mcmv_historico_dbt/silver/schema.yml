@@ -373,6 +373,65 @@ models:
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
+      # --- Blocos A/C (change colunas-orfas-bronze-historico). Sinais de
+      # retomada/paralisação e marcos de data promovidos direto da fonte. NULL
+      # onde a frente não tem a coluna de origem — cobertura ASSIMÉTRICA por
+      # frente (documentada abaixo).
+      - name: sinal_retomada
+        description: >
+          Sinal canônico de retomada/a-retomar da obra, via seed
+          `dominio_retomada`. Bruto: `situacao_retomada` (SFTP INT040/054, único
+          valor `OBRA_RETOMADA_COM_SUPL_APORTE`) ∪ `detalhamento_*` casando
+          'A RETOMAR%' (SNH). NULL quando a fonte não reporta; `nao_mapeada`
+          fora do seed. Cobertura: FAR ~314 APF (SFTP desde 2019-12 + SNH
+          2024-06+); FDS/Rural só SNH 2024-06+ (~0,4% das linhas).
+        data_tests:
+          - dentro_do_dominio:
+              arguments: { seed: dominio_retomada, seed_column: sinal_retomada }
+              config: { severity: warn }
+      - name: motivo_paralisacao
+        description: >
+          Motivo canônico de paralisação, via seed `dominio_motivo_paralisacao`,
+          de `classificacao_dos_paralisados` (SNH CAIXA — `cod_motivo_ociosidade`
+          do INT040 é 0% real). NULL onde a fonte omite (a maioria das linhas);
+          `nao_mapeada` fora do seed. Dado esparso na fonte (< 1%).
+        data_tests:
+          - dentro_do_dominio:
+              arguments: { seed: dominio_motivo_paralisacao, seed_column: motivo_paralisacao }
+              config: { severity: warn }
+      - name: desc_situacao_contrato
+        description: >
+          Status DO CONTRATO, cru (INT040: NORMAL / CANCELADO / DISTRATADA /
+          COM CLAUSULA SUSPENSIVA / CANCELADO POR ERRO DE CADASTRO). Eixo
+          distinto de `situacao_canonica` / `status_operacional` (status de
+          OBRA) — não combinar numa mesma métrica sem ressalva. NULL para o
+          braço SNH e frentes sem a coluna (só FAR SFTP, ~73%).
+      - name: dt_ultima_liberacao
+        description: >
+          Data da última liberação efetiva de recurso ("quando o dinheiro parou
+          de andar"). `dt_ultima_liberacao_recurso` (INT040/054) ∪
+          `dt_ultima_liberacao` (INT057/065). FAR ~72%, Rural ~77%; FDS NULL
+          (INT059 não tem — só `dt_maxima_liberacao`, que é prazo-limite).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_primeira_entrega
+        description: >
+          Data da primeira entrega de UH, direto da fonte (`dt_primeira_entrega`,
+          INT040/054 — FAR ~52%). Independe da espinha SNH-evento (que segue o
+          fallback para FDS/Rural no gold). NULL em FDS/Rural (INT059/057/065
+          não têm a coluna).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_primeira_entrega_fonte
+        description: >
+          Proveniência de `dt_primeira_entrega` (`sftp:INT040` / `sftp:INT054` /
+          `sftp`). NULL quando `dt_primeira_entrega` é NULL.
+      - name: dt_assinatura_projeto
+        description: >
+          Data de assinatura do projeto (marco anterior à contratação),
+          `dt_assinatura_projeto` (INT059 — FDS ~17%). NULL nas demais frentes.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
 
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
@@ -429,6 +488,151 @@ models:
             tolerancia: 5
           config: { severity: warn }
     columns: *contrato_empreendimento
+
+  - name: silver_historico_empreendimento_fluxo_ano
+    description: >
+      Silver — acumulado-no-ano (YTD) de UH e desembolso por empreendimento,
+      SNH-only (BB + CAIXA). Grão: 1 linha por (frente_mcmv, apf, dt_referencia)
+      mensal. Cobertura 2024-06 → último snapshot. As colunas `_ano` acumulam
+      dentro do ano-calendário e reiniciam em janeiro; o fluxo mensal sai no
+      consumidor por `x_ano - lag(x_ano) over (partition by frente_mcmv, apf,
+      year(dt_referencia) order by dt_referencia)`. NÃO alimenta gold de estado
+      (é fluxo). Change: colunas-orfas-bronze-historico (Bloco B). Requer target
+      staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, empreendimento, fluxo]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
+    columns:
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: { values: ["FAR", "Entidades", "Rural"] }
+      - name: apf
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: dt_referencia
+        description: Mês-snapshot (1º do mês). min >= 2024-06-01.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: agente_financeiro
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: { values: ["BB", "CAIXA"] }
+      - name: quantidade_uh_contratadas_ano
+        description: UH contratadas acumuladas no ano-calendário (YTD).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+          # Monotonicidade INTRA-ANO (partição inclui year(dt_referencia) p/
+          # não flagar o reset de janeiro). warn — correções de baseline na
+          # fonte produzem ~0,1% de quedas.
+          - acumulado_nao_regride:
+              arguments:
+                partition_by: "frente_mcmv, apf, year(dt_referencia)"
+                order_by: dt_referencia
+              config: { severity: warn }
+      - name: quantidade_uh_entregues_ano
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_vigentes_ano
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_distratadas_ano
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_contratadas_jan
+        description: Baseline de janeiro do ano de referência (para reconstruir a série YTD).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_entregues_jan
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_vigentes_jan
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_distratadas_jan
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: valor_desembolsado_ano
+        description: >
+          Desembolso acumulado no ano (R$). RESSALVA: fill baixo — ~80% global
+          mas concentrado na CAIXA (BB ~1%). Não usar como total de desembolso.
+      - name: fonte_serie
+        data_tests:
+          - accepted_values:
+              arguments: { values: ["snh"] }
+
+  - name: dim_empreendimento_historico
+    description: >
+      Dimensão de atributos ESTÁVEIS do empreendimento histórico. 1 linha por
+      (frente_mcmv, codigo_empreendimento) — a MESMA chave de
+      gold_snapshot_empreendimento_atual. Reúne atributos que não variam mês a
+      mês e por isso não entram no contrato mensal: entidade organizadora
+      (Rural), tipologia, regime, coordenadas (SNH decimal — os gps_* do INT059
+      são 0% reais), endereço, vinculação de APF, portaria de seleção.
+      Resolvidos do último snapshot de cada fonte por APF. Change:
+      colunas-orfas-bronze-historico. Requer target staging_duckdb.
+    meta:
+      tags: [silver, mcmv, dados-historicos, empreendimento, dim]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "codigo_empreendimento"]
+    columns:
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments: { values: ["FAR", "Entidades", "Rural"] }
+      - name: codigo_empreendimento
+        description: Chave estável do empreendimento (= id_empreendimento no FDS, = apf nas demais).
+        data_tests:
+          - not_null
+      - name: apf
+        description: APF de origem dos atributos (para o FDS multi-APF, o do snapshot mais recente).
+        data_tests:
+          - not_null
+      - name: id_empreendimento
+      - name: no_entidade_organizadora
+        description: >
+          Entidade organizadora (INT057/INT065 — Rural ~86%). NULL em FAR e
+          Entidades (INT059 não tem a coluna; a entidade do FDS é
+          `responsavel_nome` na silver).
+      - name: nu_cnpj_entidade
+      - name: dsc_tipologia
+        description: Tipologia construtiva (INT040/054/059).
+      - name: tipo_de_unidade_do_empreendimento
+      - name: regime_construcao
+        description: Regime de construção (INT059).
+      - name: cod_regime_execucao
+      - name: modalidade_requalificacao
+        description: Modalidade de requalificação (INT059 — FDS).
+      - name: latitude
+        description: >
+          Latitude decimal, de `latitude_do_imovel` do SNH (fill ~45%; sentinela
+          `0` → NULL). Os `gps_*_grau/minuto/segundo` do INT059 são 0% reais.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: longitude
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: bairro
+      - name: cep
+      - name: logradouro
+      - name: nu_apf_vinculacao
+        description: APF vinculado (INT059 — liga APFs relacionados; só exposto, não altera resolução de fase).
+      - name: portaria_selecao
+        description: Portaria de seleção (INT040/054, esparso).
+      - name: dt_dim
+        description: Timestamp de materialização da dimensão.
+        data_tests:
+          - not_null
 
   - name: silver_mcmv_historico_entrega_apf
     description: >

@@ -145,6 +145,15 @@
             cod_pendencia_obra,
             percentual_execucao_financeira,
             percentual_execucao_financeira_fonte,
+            -- Blocos A/C (change colunas-orfas-bronze-historico): a linha
+            -- carregada replica os atributos da última observação SNH conhecida.
+            sinal_retomada,
+            motivo_paralisacao,
+            desc_situacao_contrato,
+            dt_ultima_liberacao,
+            dt_primeira_entrega,
+            dt_primeira_entrega_fonte,
+            dt_assinatura_projeto,
             'carregado'::text as fonte_valor,
             dt_referencia as dt_snapshot_efetivo
         from carregado_cand
@@ -180,7 +189,10 @@
     preenchido as (
         select
             * exclude (
-                valor_contratado, valor_desembolsado, responsavel_id, responsavel_nome
+                valor_contratado, valor_desembolsado, responsavel_id, responsavel_nome,
+                sinal_retomada, motivo_paralisacao, desc_situacao_contrato,
+                dt_ultima_liberacao, dt_primeira_entrega, dt_primeira_entrega_fonte,
+                dt_assinatura_projeto
             ),
             coalesce(
                 valor_contratado, last_value(valor_contratado ignore nulls) over w
@@ -194,6 +206,32 @@
             coalesce(
                 responsavel_nome, last_value(responsavel_nome ignore nulls) over w
             ) as responsavel_nome,
+            -- Blocos A/C (change colunas-orfas-bronze-historico): LOCF do último
+            -- valor conhecido do (frente, apf). São atributos estáveis (marcos,
+            -- status de contrato, sinal de retomada) que só o braço SFTP reporta
+            -- e que sumiriam na virada de feed pós-2024-11 sem isto — a mesma
+            -- razão do LOCF de valor_contratado. `nao_mapeada` não é sobrescrito.
+            coalesce(
+                sinal_retomada, last_value(sinal_retomada ignore nulls) over w
+            ) as sinal_retomada,
+            coalesce(
+                motivo_paralisacao, last_value(motivo_paralisacao ignore nulls) over w
+            ) as motivo_paralisacao,
+            coalesce(
+                desc_situacao_contrato, last_value(desc_situacao_contrato ignore nulls) over w
+            ) as desc_situacao_contrato,
+            coalesce(
+                dt_ultima_liberacao, last_value(dt_ultima_liberacao ignore nulls) over w
+            ) as dt_ultima_liberacao,
+            coalesce(
+                dt_primeira_entrega, last_value(dt_primeira_entrega ignore nulls) over w
+            ) as dt_primeira_entrega,
+            coalesce(
+                dt_primeira_entrega_fonte, last_value(dt_primeira_entrega_fonte ignore nulls) over w
+            ) as dt_primeira_entrega_fonte,
+            coalesce(
+                dt_assinatura_projeto, last_value(dt_assinatura_projeto ignore nulls) over w
+            ) as dt_assinatura_projeto,
             -- marcador por grupo: cobre valor_contratado + valor_desembolsado
             (
                 valor_contratado is null
@@ -273,6 +311,17 @@ select
     -- snapshot que reportou (tipicamente o SFTP, antes da virada de feed).
     valor_contratado_preenchido,
     responsavel_preenchido,
+    -- Blocos A/C (change colunas-orfas-bronze-historico) — sinais de retomada/
+    -- paralisação e marcos de data promovidos direto da fonte. NULL onde a
+    -- frente não tem a coluna de origem (cobertura assimétrica documentada no
+    -- schema.yml).
+    sinal_retomada,
+    motivo_paralisacao,
+    desc_situacao_contrato,
+    dt_ultima_liberacao,
+    dt_primeira_entrega,
+    dt_primeira_entrega_fonte,
+    dt_assinatura_projeto,
     current_timestamp as dt_silver
 from preenchido
 {% endmacro %}

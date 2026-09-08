@@ -64,6 +64,11 @@ with
             dt_entrega_uh,
             dt_entrega_uh_fonte,
             dt_previsao_entrega,
+            -- Bloco C (change colunas-orfas-bronze-historico): marcos direto da
+            -- fonte, hoje no contrato da silver.
+            dt_primeira_entrega,
+            dt_primeira_entrega_fonte,
+            dt_ultima_liberacao,
             fonte_serie,
             fonte_tabela
         from {{ ref('silver_mcmv_historico_empreendimento_' ~ frente) }}
@@ -105,7 +110,16 @@ with
             arg_max(fonte_tabela, dt_conclusao_obra) as _conc_fonte_tabela,
             arg_max(dt_referencia, dt_conclusao_obra) as dt_conclusao_obra_max_snapshot,
             max(dt_previsao_entrega) as dt_previsao_entrega_max,
-            arg_max(dt_referencia, dt_previsao_entrega) as dt_previsao_entrega_max_snapshot
+            arg_max(dt_referencia, dt_previsao_entrega) as dt_previsao_entrega_max_snapshot,
+            -- Bloco C: menor dt_primeira_entrega direta da silver (FAR/INT040) +
+            -- maior dt_ultima_liberacao observada.
+            min(dt_primeira_entrega) as dt_primeira_entrega_silver,
+            arg_min(dt_primeira_entrega_fonte, dt_primeira_entrega) as dt_primeira_entrega_silver_fonte,
+            arg_min(dt_referencia, dt_primeira_entrega) as dt_primeira_entrega_silver_snapshot,
+            max(dt_ultima_liberacao) as dt_ultima_liberacao_max,
+            arg_max(fonte_serie, dt_ultima_liberacao) as _lib_fonte_serie,
+            arg_max(fonte_tabela, dt_ultima_liberacao) as _lib_fonte_tabela,
+            arg_max(dt_referencia, dt_ultima_liberacao) as dt_ultima_liberacao_max_snapshot
         from silver_rows
         group by 1, 2
     ),
@@ -162,13 +176,44 @@ with
             end as dt_conclusao_obra_fonte,
             ms.dt_conclusao_obra_max_snapshot as dt_conclusao_obra_dt_snapshot,
 
-            en.dt_primeira_entrega,
-            case when en.dt_primeira_entrega is not null then 'snh:entrega_evento' end
-                as dt_primeira_entrega_fonte,
+            -- dt_primeira_entrega: menor entre a data direta da silver (FAR/INT040,
+            -- change colunas-orfas-bronze-historico) e a da espinha SNH-evento.
+            least(ms.dt_primeira_entrega_silver, en.dt_primeira_entrega) as dt_primeira_entrega,
             case
-                when en.dt_primeira_entrega is not null
-                then en.dt_ultimo_snapshot_entrega
+                when least(ms.dt_primeira_entrega_silver, en.dt_primeira_entrega) is null
+                then null
+                when ms.dt_primeira_entrega_silver is not null
+                    and (
+                        en.dt_primeira_entrega is null
+                        or ms.dt_primeira_entrega_silver <= en.dt_primeira_entrega
+                    )
+                then ms.dt_primeira_entrega_silver_fonte
+                else 'snh:entrega_evento'
+            end as dt_primeira_entrega_fonte,
+            case
+                when least(ms.dt_primeira_entrega_silver, en.dt_primeira_entrega) is null
+                then null
+                when ms.dt_primeira_entrega_silver is not null
+                    and (
+                        en.dt_primeira_entrega is null
+                        or ms.dt_primeira_entrega_silver <= en.dt_primeira_entrega
+                    )
+                then ms.dt_primeira_entrega_silver_snapshot
+                else en.dt_ultimo_snapshot_entrega
             end as dt_primeira_entrega_dt_snapshot,
+
+            -- dt_ultima_liberacao: marco financeiro (change colunas-orfas-bronze-historico).
+            ms.dt_ultima_liberacao_max as dt_ultima_liberacao,
+            case
+                when ms.dt_ultima_liberacao_max is null then null
+                when ms._lib_fonte_serie = 'sftp'
+                then coalesce(
+                    nullif('sftp:' || regexp_extract(ms._lib_fonte_tabela, '(INT[0-9]+)', 1), 'sftp:'),
+                    'sftp'
+                )
+                else 'snh:dados_prioritarios'
+            end as dt_ultima_liberacao_fonte,
+            ms.dt_ultima_liberacao_max_snapshot as dt_ultima_liberacao_dt_snapshot,
 
             -- dt_ultima_entrega: maior entre o max de dt_entrega_uh (já resolvido
             -- na silver, em qualquer snapshot) e o max da espinha sobre TODOS os
@@ -254,6 +299,10 @@ select
     dt_previsao_entrega,
     coalesce(dt_previsao_entrega_fonte, 'sem_fonte') as dt_previsao_entrega_fonte,
     dt_previsao_entrega_dt_snapshot,
+
+    dt_ultima_liberacao,
+    coalesce(dt_ultima_liberacao_fonte, 'sem_fonte') as dt_ultima_liberacao_fonte,
+    dt_ultima_liberacao_dt_snapshot,
 
     uh_entregues_acumulada,
 

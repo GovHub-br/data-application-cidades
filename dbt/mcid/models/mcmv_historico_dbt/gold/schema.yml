@@ -62,6 +62,24 @@ models:
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
+      # Bloco C (change colunas-orfas-bronze-historico).
+      - name: dt_primeira_entrega
+        description: >
+          Menor entre a data direta da silver (FAR/INT040) e a da espinha
+          SNH-evento. `dt_primeira_entrega_fonte` diz de qual veio
+          (`sftp:INT040` / `sftp:INT054` / `snh:entrega_evento` / `sem_fonte`).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_ultima_liberacao
+        description: >
+          Marco financeiro — maior `dt_ultima_liberacao` observada em qualquer
+          snapshot do empreendimento (INT040/054 `dt_ultima_liberacao_recurso`,
+          INT057/065 `dt_ultima_liberacao`). NULL para FDS (INT059 não tem).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_ultima_liberacao_fonte
+        data_tests:
+          - not_null
 
   - name: gold_snapshot_empreendimento_atual
     description: >
@@ -163,6 +181,30 @@ models:
           último snapshot SFTP (change dedup-fonte-silver-historico, D3).
         data_tests:
           - not_null
+      # Blocos A/C (change colunas-orfas-bronze-historico) — estado atual;
+      # LOCF do último valor conhecido na silver (não some na virada de feed).
+      - name: sinal_retomada
+        description: >
+          Último sinal de retomada/a-retomar conhecido (seed dominio_retomada).
+          NULL se o empreendimento nunca teve. Cobertura FAR-rica, FDS/Rural rasa.
+        data_tests:
+          - dentro_do_dominio:
+              arguments: { seed: dominio_retomada, seed_column: sinal_retomada }
+              config: { severity: warn }
+      - name: motivo_paralisacao
+        description: Último motivo de paralisação conhecido (seed dominio_motivo_paralisacao).
+      - name: desc_situacao_contrato
+        description: >
+          Status DO CONTRATO cru (INT040 — FAR ~81%). Eixo distinto de
+          situacao_canonica (obra) — não combinar sem ressalva.
+      - name: dt_ultima_liberacao
+        description: Data da última liberação de recurso conhecida. FAR ~80% / Rural ~86% / FDS NULL.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_primeira_entrega
+        description: Primeira entrega de UH, direto da fonte (INT040/054 — FAR). NULL em FDS/Rural.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
 
   - name: gold_serie_mensal
     description: >

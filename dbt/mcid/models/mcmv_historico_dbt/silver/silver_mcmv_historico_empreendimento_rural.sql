@@ -61,6 +61,7 @@ with
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
             {{ historico_uh_sinais_sftp(int057, pc_reportada=true) }}
+            {{ historico_bloco_ac_sftp(int057) }}
             -- grão mensal (change dedup-fonte-silver-historico, D1): braço SFTP
             -- GEFUS grava dt_referencia no fim do mês; normaliza ao 1º do mês
             -- ANTES do enriquecido/dedup. Dia exato migra p/ dt_movimento.
@@ -108,6 +109,7 @@ with
             null::date as dt_previsao_entrega,
             null::bigint as qt_uh_previsao_entrega,
             {{ historico_uh_sinais_sftp(int065, inicial=true) }}
+            {{ historico_bloco_ac_sftp(int065) }}
             -- grão mensal (change dedup-fonte-silver-historico, D1) — ver rural_bb.
             date_trunc('month', dt_referencia)::date as dt_referencia,
             {{ parse_hist_date('dt_movimento') }} as dt_movimento,
@@ -154,7 +156,17 @@ with
             max(quantidade_uh_concluidas) over grao as quantidade_uh_concluidas_grao,
             max(
                 case when dt_entrega_uh is not null then fonte_tabela end
-            ) over grao as fonte_entrega_uh_grao
+            ) over grao as fonte_entrega_uh_grao,
+            -- Blocos A/C (change colunas-orfas-bronze-historico).
+            max(sinal_retomada_bruto) over grao as sinal_retomada_bruto_grao,
+            max(motivo_paralisacao_bruto) over grao as motivo_paralisacao_bruto_grao,
+            max(desc_situacao_contrato) over grao as desc_situacao_contrato_grao,
+            max(dt_ultima_liberacao) over grao as dt_ultima_liberacao_grao,
+            max(dt_primeira_entrega) over grao as dt_primeira_entrega_grao,
+            max(dt_assinatura_projeto) over grao as dt_assinatura_projeto_grao,
+            max(
+                case when dt_primeira_entrega is not null then fonte_tabela end
+            ) over grao as fonte_primeira_entrega_grao
         from unioned
         window grao as (partition by frente_mcmv, apf, dt_referencia)
     ),
@@ -191,7 +203,18 @@ with
             esp.dt_ultima_entrega as esp_dt_ultima_entrega,
             esp.uh_entregues_acumulada as esp_uh_entregues,
             dr.regiao_sigla,
-            dr.regiao_nome
+            dr.regiao_nome,
+            -- Bloco A (change colunas-orfas-bronze-historico).
+            case
+                when coalesce(d.sinal_retomada_bruto, d.sinal_retomada_bruto_grao) is null then null
+                when dret.sinal_retomada is not null then dret.sinal_retomada
+                else 'nao_mapeada'
+            end as sinal_retomada,
+            case
+                when coalesce(d.motivo_paralisacao_bruto, d.motivo_paralisacao_bruto_grao) is null then null
+                when dmot.motivo_paralisacao is not null then dmot.motivo_paralisacao
+                else 'nao_mapeada'
+            end as motivo_paralisacao
         from dedup d
         left join {{ ref('dominio_status') }} ds
             on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
@@ -199,6 +222,12 @@ with
             on upper(trim(d.uf)) = upper(trim(dr.uf))
         left join {{ ref('silver_mcmv_historico_entrega_apf') }} esp
             on d.apf = esp.apf
+        left join {{ ref('dominio_retomada') }} dret
+            on lower(trim(coalesce(d.sinal_retomada_bruto, d.sinal_retomada_bruto_grao)))
+               = lower(trim(dret.valor_bruto))
+        left join {{ ref('dominio_motivo_paralisacao') }} dmot
+            on lower(trim(coalesce(d.motivo_paralisacao_bruto, d.motivo_paralisacao_bruto_grao)))
+               = lower(trim(dmot.valor_bruto))
     ),
 
     resolvido as (
@@ -296,7 +325,31 @@ with
         then 'reportada'
         when valor_contratado > 0 and valor_desembolsado is not null
         then 'derivada'
-    end as percentual_execucao_financeira_fonte
+    end as percentual_execucao_financeira_fonte,
+    -- Blocos A/C (change colunas-orfas-bronze-historico) — ao fim do contrato.
+    sinal_retomada,
+    motivo_paralisacao,
+    coalesce(desc_situacao_contrato, desc_situacao_contrato_grao) as desc_situacao_contrato,
+    coalesce(dt_ultima_liberacao, dt_ultima_liberacao_grao) as dt_ultima_liberacao,
+    coalesce(dt_primeira_entrega, dt_primeira_entrega_grao) as dt_primeira_entrega,
+    case
+        when coalesce(dt_primeira_entrega, dt_primeira_entrega_grao) is not null
+        then coalesce(
+            nullif(
+                'sftp:' || regexp_extract(
+                    coalesce(
+                        case when dt_primeira_entrega is not null then fonte_tabela end,
+                        fonte_primeira_entrega_grao
+                    ),
+                    '(INT[0-9]+)',
+                    1
+                ),
+                'sftp:'
+            ),
+            'sftp'
+        )
+    end as dt_primeira_entrega_fonte,
+    coalesce(dt_assinatura_projeto, dt_assinatura_projeto_grao) as dt_assinatura_projeto
 from enriquecido_dominio
 where
     rn = 1

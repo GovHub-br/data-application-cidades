@@ -108,6 +108,14 @@ select
     -- feed) e não de observação SNH. Herdados da silver.
     valor_contratado_preenchido,
     responsavel_preenchido,
+    -- sinais de retomada/paralisação e marcos de data promovidos direto da fonte
+    -- (change colunas-orfas-bronze-historico, Blocos A/C). Estado do último
+    -- snapshot; NULL onde a frente não tem a coluna de origem.
+    sinal_retomada,
+    motivo_paralisacao,
+    desc_situacao_contrato,
+    dt_ultima_liberacao,
+    dt_primeira_entrega,
     dt_silver
 from ultimo
 where rn = 1

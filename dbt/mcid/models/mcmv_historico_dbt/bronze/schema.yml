@@ -308,6 +308,12 @@ models:
       - colunas_esperadas:
           config:
             severity: warn
+      # Guardrail (change colunas-orfas-bronze-historico): lista coluna com
+      # sinal semântico não consumida por nenhuma silver e não em
+      # colunas_bronze_ignoradas. Sempre warn.
+      - bronze_colunas_nao_mapeadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS`.
@@ -345,6 +351,9 @@ models:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
+          config:
+            severity: warn
+      - bronze_colunas_nao_mapeadas:
           config:
             severity: warn
     columns:
@@ -386,6 +395,9 @@ models:
       - colunas_esperadas:
           config:
             severity: warn
+      - bronze_colunas_nao_mapeadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS`.
@@ -423,6 +435,9 @@ models:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
+          config:
+            severity: warn
+      - bronze_colunas_nao_mapeadas:
           config:
             severity: warn
     columns:
@@ -464,6 +479,9 @@ models:
       - colunas_esperadas:
           config:
             severity: warn
+      - bronze_colunas_nao_mapeadas:
+          config:
+            severity: warn
     columns:
       - name: fonte_interface
         description: Constante `INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS`.
@@ -502,6 +520,9 @@ models:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
+          config:
+            severity: warn
+      - bronze_colunas_nao_mapeadas:
           config:
             severity: warn
     columns:
@@ -667,6 +688,9 @@ models:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
+          config:
+            severity: warn
+      - bronze_colunas_nao_mapeadas:
           config:
             severity: warn
     columns:
