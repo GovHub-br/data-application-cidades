@@ -145,19 +145,6 @@ models:
       - name: hash_linha
         description: Hash de conteúdo da linha.
 
-  - name: bronze_far_contratacao
-    description: >
-      Bronze — cópia fiel de mcmv_staging.novo_mcmv_far_contratacao. Fonte
-      praticamente vazia (1 linha no snapshot atual); materializada para
-      completude/linhagem, não consumida pela silver.
-    meta:
-      tags: [bronze, far, empreendimento]
-    columns:
-      - name: apf
-        description: APF normalizado para 8 dígitos.
-      - name: source_file
-        data_tests: [not_null]
-
   - name: bronze_far_dados_prioritarios_caixa
     description: >
       Bronze — cópia fiel dos dados prioritários CAIXA, lida de
@@ -195,6 +182,10 @@ models:
       Bronze — cópia fiel dos dados prioritários BB (frente FAR), espelho de
       bronze_far_dados_prioritarios_caixa para o agente Banco do Brasil.
       Lida de mcmv_staging.dados_prioritarios_recebidos_bb_empreendimentos, filtrada FAR.
+      DÍVIDA DECLARADA (change consolidar-schemas-historico-reloginho, D6): mantida
+      SEM consumidor por carregar sinal preditivo de FAR-BB (o INT054/`_caixa`
+      sozinho não cobre FAR-BB, cujo INT054 tem 11.339 linhas). Se a change de
+      features preditivas não lhe der consumidor, sai. Ver Open Question 2.
     meta:
       tags: [bronze, far, empreendimento]
     columns:
@@ -232,40 +223,14 @@ models:
       - name: source_file
         data_tests: [not_null]
 
-  - name: bronze_far_int040_caixa
-    description: >
-      Bronze — cópia fiel do INT 040 (empreendimentos FAR CAIXA PJ), colunas
-      preservadas como texto. O nu_apf desta interface está num espaço de
-      identificador distinto do APF do cadastro PJ — não casa por normalize_apf;
-      materializada para uso futuro (precisa de de-para de APF para entrar na silver).
-    meta:
-      tags: [bronze, far, empreendimento, agente-caixa]
-    columns:
-      - name: apf
-        description: normalize_apf(nu_apf) — não casa 1:1 com o APF do cadastro (ver descrição do modelo).
-      - name: nu_apf_origem
-        description: nu_apf cru da interface INT040.
-      - name: source_file
-        data_tests: [not_null]
-
-  - name: bronze_far_int054_bb
-    description: >
-      Bronze — cópia fiel do INT 054 (empreendimentos FAR BB PJ), colunas
-      preservadas como texto. Mesmo caveat de identificador do bronze_far_int040_caixa.
-    meta:
-      tags: [bronze, far, empreendimento, agente-bb]
-    columns:
-      - name: apf
-        description: normalize_apf(nu_apf) — não casa 1:1 com o APF do cadastro.
-      - name: nu_apf_origem
-        description: nu_apf cru da interface INT054.
-      - name: source_file
-        data_tests: [not_null]
-
   - name: bronze_far_trabalho_social
     description: >
       Bronze — Trabalho Técnico Social FAR, CAIXA + BB empilhados (union all by
       name) com contrato comum e coluna `agente`. Grão: contrato/recurso (sem APF).
+      DÍVIDA DECLARADA (change consolidar-schemas-historico-reloginho, D6): mantida
+      SEM consumidor por carregar sinal preditivo (`pct_execucao_ts`, `situacao_ts`,
+      `motivo_situacao_ts`) ausente do eixo. Se a change de features preditivas
+      não lhe der consumidor, sai. Ver Open Question 2.
     meta:
       tags: [bronze, far, trabalho-social]
     columns:

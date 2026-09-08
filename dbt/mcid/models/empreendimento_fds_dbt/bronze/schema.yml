@@ -188,48 +188,6 @@ models:
 
   # Entregas (Complementar)
 
-  - name: bronze_fds_entregas
-    description: >
-      Entregas reportadas por empreendimento — CAIXA + BB empilhados
-      (union all by name), multi-programa. O filtro para FDS ocorre na silver.
-    meta:
-      tags:
-        - bronze
-        - entidades
-    columns:
-      - name: agente
-        description: CAIXA ou BB (origem do registro).
-        data_tests:
-          - accepted_values:
-              values: ['CAIXA', 'BB']
-      - name: apf
-        description: APF normalizado para 8 dígitos.
-      - name: qt_uh_entregues
-        description: Quantidade de unidades entregues (BB via numero_de_unidades_entregues).
-      - name: dt_entrega
-        description: Data da entrega efetiva (BB via dt_ass_doc).
-      - name: source_file
-        data_tests: [not_null]
-
-  - name: bronze_fds_dados_prioritarios
-    description: >
-      Dados prioritários CAIXA para a frente FDS (filtro modalidade Entidades,
-      ~863 linhas). Espelho de bronze_far_dados_prioritarios_caixa. A fonte BB
-      não tem linhas de modalidade Entidades — CAIXA-only.
-    meta:
-      tags: [bronze, entidades]
-    columns:
-      - name: apf
-        description: APF (formato CAIXA, 8 dígitos).
-      - name: situacao
-        description: Situação textual do empreendimento.
-      - name: valor_contratado
-        description: Valor total contratado em R$.
-      - name: valor_desembolsado
-        description: Valor total desembolsado acumulado em R$.
-      - name: source_file
-        data_tests: [not_null]
-
   - name: bronze_fds_dados_prioritarios_snh
     description: >
       Snapshot corrente SNH (30/09/2025), modalidade Entidades. NÃO é a série

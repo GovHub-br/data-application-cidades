@@ -1,55 +1,73 @@
 {{ config(materialized="table", alias="silver_historico_base") }}
 
 -- Base silver da frente Rural (materializa como empreendimento_rural.silver_historico_base).
--- Consome a silver normalizada empreendimento_rural_dbt (change
--- migracao-bronze-minio-mcmv, task 5.3) — antes fazia parsing de separador pipe
--- das INT057/INT065 no schema Postgres sftp.
+--
+-- REPONTADA (change consolidar-schemas-historico-reloginho, D7): consome
+-- `dados_historicos.gold_snapshot_empreendimento_atual` filtrado a
+-- `frente_mcmv = 'Rural'` — já é o retrato corrente por APF com LOCF resolvido
+-- (fase mais avançada + dt_referencia mais recente, com forward-fill de
+-- valor/responsável na cauda). Antes lia `empreendimento_rural.silver_rural_empreendimento`
+-- (pilha "atual" aposentada — fork mais pobre da pilha dos colegas em prod, D6).
+--
+-- Ganhos do repontamento:
+--   - `dt_referencia` deixa de ser `null::date` (o snapshot traz o mês real);
+--   - `quantidade_uh_entregues` vem da coluna homônima do eixo (100% fill),
+--     não de `qt_uh_alienadas` (alienada ≠ entregue);
+--   - `linha_mcmv` herda a granularidade do eixo (PNHR Rural BB / CAIXA / Rural);
+--   - `dt_entrega` = `dt_entrega_uh` (split BREAKING da change
+--     enriquecer-datas-acompanhamento-historico);
+--   - cobertura sobe de ~9.474 para ~10.707 APFs.
+--
+-- `dt_previsao_entrega` sai NULL (0% no eixo p/ Rural) — já era 0% no braço
+-- anterior em prod (mcmv_silver.silver_mcmv_rural_base, 9.474 linhas). Perda zero.
+-- `fase_empreendimento` segue NULL (0% no eixo p/ Rural).
 select
     md5(concat_ws('|', 'rural', apf)) as id_silver_frente,
     'Minha Casa Minha Vida'::text as programa,
     'Rural'::text as frente_mcmv,
     'Subsidiada'::text as grupo_linha,
-    'PNHR Rural'::text as linha_mcmv,
+    linha_mcmv::text as linha_mcmv,
     'empreendimento_apf'::text as grao_registro,
     'silver'::text as fonte_camada,
-    'empreendimento_rural'::text as fonte_schema,
-    'silver_rural_empreendimento'::text as fonte_tabela,
-    'raw.novo_mcmv_rural_* + int065/int057 + SNH'::text as fonte_minio_staging,
+    'dados_historicos'::text as fonte_schema,
+    'gold_snapshot_empreendimento_atual'::text as fonte_tabela,
+    'eixo histórico (INT057/INT065 + SNH) via gold_snapshot_empreendimento_atual'::text
+    as fonte_minio_staging,
     apf::text as apf,
     apf::text as contrato,
-    apf::text as codigo_empreendimento,
-    fase_empreendimento::text as fase_empreendimento,
-    empreendimento_nome::text as nome_empreendimento,
-    cod_ibge::text as codigo_ibge_municipio,
+    codigo_empreendimento::text as codigo_empreendimento,
+    null::text as fase_empreendimento,
+    nome_empreendimento::text as nome_empreendimento,
+    codigo_ibge_municipio::text as codigo_ibge_municipio,
     municipio::text as municipio,
     uf::text as uf,
     'Entidade Organizadora'::text as responsavel_tipo,
-    eo_cnpj::text as responsavel_id,
-    eo_nome::text as responsavel_nome,
+    coalesce(nu_cnpj_entidade, responsavel_id)::text as responsavel_id,
+    coalesce(no_entidade_organizadora, responsavel_nome)::text as responsavel_nome,
     agente_financeiro::text as agente_financeiro,
     1::integer as quantidade_empreendimentos,
     1::integer as quantidade_contratos,
     quantidade_uh::integer as quantidade_uh,
-    qt_uh_alienadas::integer as quantidade_uh_entregues,
+    quantidade_uh_entregues::integer as quantidade_uh_entregues,
     valor_contratado::numeric(15, 2) as valor_contratado,
     valor_desembolsado::numeric(15, 2) as valor_desembolsado,
     percentual_execucao_fisica::numeric(10, 2) as percentual_execucao_fisica,
     percentual_execucao_financeira::numeric(10, 2) as percentual_execucao_financeira,
-    situacao_gefus::text as status_operacional,
-    null::date as dt_referencia,
+    status_operacional::text as status_operacional,
+    dt_referencia::date as dt_referencia,
     dt_contratacao::date as dt_contratacao,
     dt_inicio_obra::date as dt_inicio_obra,
     dt_previsao_entrega::date as dt_previsao_entrega,
-    dt_entrega::date as dt_entrega,
+    dt_entrega_uh::date as dt_entrega,
     coalesce(
-        dt_entrega,
+        dt_entrega_uh,
         dt_conclusao_obra,
         dt_previsao_entrega,
         dt_ultima_liberacao,
         dt_contratacao
     )::date as dt_ultima_atualizacao,
-    'Rural vem da silver empreendimento_rural.silver_rural_empreendimento.'::text
+    'Rural vem de dados_historicos.gold_snapshot_empreendimento_atual (frente_mcmv = Rural).'::text
     as observacao_silver,
     current_timestamp as dt_silver
-from {{ ref("silver_rural_empreendimento") }}
-where apf is not null
+from {{ ref("gold_snapshot_empreendimento_atual") }}
+where frente_mcmv = 'Rural' and apf is not null
