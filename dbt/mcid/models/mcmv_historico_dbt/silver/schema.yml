@@ -432,6 +432,52 @@ models:
           `dt_assinatura_projeto` (INT059 — FDS ~17%). NULL nas demais frentes.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # ── acumulado-no-ano (YTD) do braço SNH — ex-modelo
+      # silver_historico_empreendimento_fluxo_ano, incorporado por left join no
+      # grão (frente_mcmv, apf, dt_referencia) (change
+      # consolidar-schemas-historico-reloginho, D3). ESPARSIDADE POR CONSTRUÇÃO:
+      # a família `quantidade_de_uhs_*_do_ano_de_referencia` só existe de
+      # 2024-06 em diante e NÃO retroage — as 9 colunas são NULL em ~95% das
+      # linhas da silver, não por lacuna de pipeline. As colunas `_ano`
+      # acumulam dentro do ano-calendário e reiniciam em janeiro; o fluxo
+      # mensal sai no consumidor por `x_ano - lag(x_ano) over (partition by
+      # frente_mcmv, apf, year(dt_referencia) order by dt_referencia)`. As
+      # colunas `_jan` são a baseline de janeiro.
+      - name: quantidade_uh_contratadas_ano
+        description: UH contratadas acumuladas no ano-calendário (YTD, SNH; NULL antes de 2024-06).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+          - acumulado_nao_regride:
+              arguments:
+                partition_by: "frente_mcmv, apf, year(dt_referencia)"
+                order_by: dt_referencia
+              config: { severity: warn }
+      - name: quantidade_uh_entregues_ano
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_vigentes_ano
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_distratadas_ano
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_contratadas_jan
+        description: Baseline de janeiro do ano de referência (para reconstruir a série YTD).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_entregues_jan
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_vigentes_jan
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_distratadas_jan
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: valor_desembolsado_ano
+        description: >
+          Desembolso acumulado no ano (R$, YTD SNH). RESSALVA: fill baixo —
+          concentrado na CAIXA (BB ~1%). Não usar como total de desembolso.
 
   - name: silver_mcmv_historico_empreendimento_fds
     description: >
@@ -488,85 +534,6 @@ models:
             tolerancia: 5
           config: { severity: warn }
     columns: *contrato_empreendimento
-
-  - name: silver_historico_empreendimento_fluxo_ano
-    description: >
-      Silver — acumulado-no-ano (YTD) de UH e desembolso por empreendimento,
-      SNH-only (BB + CAIXA). Grão: 1 linha por (frente_mcmv, apf, dt_referencia)
-      mensal. Cobertura 2024-06 → último snapshot. As colunas `_ano` acumulam
-      dentro do ano-calendário e reiniciam em janeiro; o fluxo mensal sai no
-      consumidor por `x_ano - lag(x_ano) over (partition by frente_mcmv, apf,
-      year(dt_referencia) order by dt_referencia)`. NÃO alimenta gold de estado
-      (é fluxo). Change: colunas-orfas-bronze-historico (Bloco B). Requer target
-      staging_duckdb.
-    meta:
-      tags: [silver, mcmv, dados-historicos, empreendimento, fluxo]
-    data_tests:
-      - unique_combinacao:
-          arguments:
-            colunas: ["frente_mcmv", "apf", "dt_referencia"]
-    columns:
-      - name: frente_mcmv
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments: { values: ["FAR", "Entidades", "Rural"] }
-      - name: apf
-        data_tests:
-          - not_null
-          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
-      - name: dt_referencia
-        description: Mês-snapshot (1º do mês). min >= 2024-06-01.
-        data_tests:
-          - not_null
-          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      - name: agente_financeiro
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments: { values: ["BB", "CAIXA"] }
-      - name: quantidade_uh_contratadas_ano
-        description: UH contratadas acumuladas no ano-calendário (YTD).
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-          # Monotonicidade INTRA-ANO (partição inclui year(dt_referencia) p/
-          # não flagar o reset de janeiro). warn — correções de baseline na
-          # fonte produzem ~0,1% de quedas.
-          - acumulado_nao_regride:
-              arguments:
-                partition_by: "frente_mcmv, apf, year(dt_referencia)"
-                order_by: dt_referencia
-              config: { severity: warn }
-      - name: quantidade_uh_entregues_ano
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: quantidade_uh_vigentes_ano
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: quantidade_uh_distratadas_ano
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: quantidade_uh_contratadas_jan
-        description: Baseline de janeiro do ano de referência (para reconstruir a série YTD).
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: quantidade_uh_entregues_jan
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: quantidade_uh_vigentes_jan
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: quantidade_uh_distratadas_jan
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
-      - name: valor_desembolsado_ano
-        description: >
-          Desembolso acumulado no ano (R$). RESSALVA: fill baixo — ~80% global
-          mas concentrado na CAIXA (BB ~1%). Não usar como total de desembolso.
-      - name: fonte_serie
-        data_tests:
-          - accepted_values:
-              arguments: { values: ["snh"] }
 
   # dim_empreendimento_historico REMOVIDA (change consolidar-schemas-historico-reloginho,
   # D3): os 14 atributos estáveis passaram a colunas de

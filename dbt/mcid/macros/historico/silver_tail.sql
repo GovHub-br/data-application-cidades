@@ -20,6 +20,12 @@
         percentual_execucao_fisica` (NULL se qualquer lado for NULL; negativo
         preservado).
       - `fonte_valor` / `dt_snapshot_efetivo` nas linhas reais.
+      - as 9 colunas YTD (acumulado-no-ano) do braço SNH, por LEFT JOIN no grão
+        (frente_mcmv, apf, dt_referencia) — ex-modelo
+        silver_historico_empreendimento_fluxo_ano (change
+        consolidar-schemas-historico-reloginho, D3). NULL em ~95% das linhas
+        (a família só existe de 2024-06+ e não retroage). NÃO sofrem LOCF —
+        são valores de snapshot, não estado que precise ser arrastado.
       - `dt_silver`.
 #}
 {% macro historico_silver_tail() %}
@@ -247,18 +253,24 @@
             order by dt_referencia
             rows between unbounded preceding and current row
         )
+    ),
+
+    -- YTD (acumulado-no-ano) do braço SNH — ex-fluxo_ano (D3). 1 linha por
+    -- (frente_mcmv, apf, dt_referencia); left join não multiplica linhas.
+    fluxo_ytd as (
+        {{ historico_fluxo_ano_arm() }}
     )
 
 select
     id_historico_snapshot,
     id_negocio_historico,
     programa,
-    frente_mcmv,
+    p.frente_mcmv,
     grupo_linha,
     linha_mcmv,
     grao_registro,
     agente_financeiro,
-    apf,
+    p.apf,
     codigo_empreendimento,
     nome_empreendimento,
     codigo_ibge_municipio,
@@ -280,7 +292,7 @@ select
     dt_previsao_entrega,
     qt_uh_previsao_entrega,
     dt_entrega_uh_fonte,
-    dt_referencia,
+    p.dt_referencia,
     dt_movimento,
     fonte_serie,
     fonte_tabela,
@@ -322,6 +334,24 @@ select
     dt_primeira_entrega,
     dt_primeira_entrega_fonte,
     dt_assinatura_projeto,
+    -- YTD (acumulado-no-ano) do braço SNH — ex-fluxo_ano (change
+    -- consolidar-schemas-historico-reloginho, D3). NULL em ~95% das linhas
+    -- (a família só existe de 2024-06+, não retroage). Fluxo mensal derivável:
+    -- x_ano - lag(x_ano) over (partition by frente_mcmv, apf, year(dt_referencia)
+    --                          order by dt_referencia).
+    fy.quantidade_uh_contratadas_ano,
+    fy.quantidade_uh_entregues_ano,
+    fy.quantidade_uh_vigentes_ano,
+    fy.quantidade_uh_distratadas_ano,
+    fy.quantidade_uh_contratadas_jan,
+    fy.quantidade_uh_entregues_jan,
+    fy.quantidade_uh_vigentes_jan,
+    fy.quantidade_uh_distratadas_jan,
+    fy.valor_desembolsado_ano,
     current_timestamp as dt_silver
-from preenchido
+from preenchido p
+left join fluxo_ytd fy
+    on p.frente_mcmv = fy.frente_mcmv
+    and p.apf = fy.apf
+    and p.dt_referencia = fy.dt_referencia
 {% endmacro %}
