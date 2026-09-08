@@ -205,6 +205,43 @@ models:
         description: Primeira entrega de UH, direto da fonte (INT040/054 — FAR). NULL em FDS/Rural.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # ── atributos estáveis (ex-dim_empreendimento_historico; change
+      # consolidar-schemas-historico-reloginho, D3). Resolvidos do último
+      # snapshot de cada fonte por atributo, no grão (frente_mcmv,
+      # codigo_empreendimento). Aditivas ao fim do contrato. `dt_dim` não migrou.
+      - name: no_entidade_organizadora
+        description: >
+          Entidade organizadora (INT057/INT065 — **Rural apenas**, ~86%). NULL em
+          FAR e Entidades: INT059/FDS não traz a coluna e a entidade do FDS já é
+          `responsavel_nome`.
+      - name: nu_cnpj_entidade
+        description: CNPJ da entidade organizadora (Rural apenas).
+      - name: dsc_tipologia
+        description: Tipologia construtiva (INT040/054/059).
+      - name: tipo_de_unidade_do_empreendimento
+      - name: regime_construcao
+        description: Regime de construção (INT059).
+      - name: cod_regime_execucao
+      - name: modalidade_requalificacao
+        description: Modalidade de requalificação (INT059 — FDS).
+      - name: latitude
+        description: >
+          Latitude decimal, de `latitude_do_imovel` do SNH (parse PT-BR;
+          sentinela `0` → NULL). Os `gps_*_grau/minuto/segundo` do INT059 são
+          verificados como 0% reais e NÃO são fonte.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: longitude
+        description: Longitude decimal (mesma fonte/regra da latitude).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: bairro
+      - name: cep
+      - name: logradouro
+      - name: nu_apf_vinculacao
+        description: APF vinculado (INT059 — liga APFs relacionados; só exposto, não altera resolução de fase).
+      - name: portaria_selecao
+        description: Portaria de seleção (INT040/054, esparso).
 
   - name: gold_serie_mensal
     description: >

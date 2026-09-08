@@ -1,4 +1,4 @@
-{{ config(materialized="table", schema="mcmv_historico") }}
+{{ config(materialized="table", schema="dados_historicos") }}
 
 -- SILVER — espinha de entregas por APF (change enriquecer-datas-acompanhamento-historico, B).
 --

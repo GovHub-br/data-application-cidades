@@ -30,13 +30,13 @@ models:
       +materialized: incremental
       +schema: metadata
     empreendimento_far_dbt:
-      # Convenção 2026-09-04: schema por frente (bronze único em
-      # dados_historicos; silver/gold compartilham o schema empreendimento_far
-      # já usado pelos colegas — tabelas identificadas pelo prefixo
-      # silver_atual_/gold_atual_). Roda sempre no prod (sem gate de target);
-      # o mecanismo de leitura da staging (script staging_para_bronze.py em vez
-      # de read_minio_staging_parquet_series) é a etapa seguinte, ainda não
-      # implementada.
+      # Convenção 2026-09-08 (consolidar-schemas-historico-reloginho, D1/D6):
+      # o que é POR FRENTE (silver_atual_/gold_atual_) fica no schema da frente
+      # empreendimento_far. As bronzes desta frente que NÃO são alcançadas pelo
+      # fecho transitivo do eixo/gargalo nem carregam sinal preditivo próprio
+      # foram removidas — restam só as load-bearing (ver models/docs). As
+      # bronzes mantidas continuam em dados_historicos (são insumo do medalhão
+      # atual que o gargalo consome). Roda sempre no prod (sem gate de target).
       +materialized: table
       +meta:
         governance:
@@ -89,9 +89,10 @@ models:
             owner: mcid-data-engineering
 
     empreendimento_fds_dbt:
-      # Convenção 2026-09-04 — ver empreendimento_far_dbt. Schema silver/gold
+      # Convenção 2026-09-08 — ver empreendimento_far_dbt. Schema silver/gold
       # compartilhado com os colegas é empreendimentos_fds (plural — mesmo
-      # nome que eles usam em prod).
+      # nome que eles usam em prod). Bronzes fora do critério de fecho
+      # transitivo / sinal preditivo removidas.
       +materialized: table
       +meta:
         governance:
@@ -143,62 +144,26 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
-    empreendimento_rural_dbt:
-      # Convenção 2026-09-04 — ver empreendimento_far_dbt.
-      +materialized: table
-      +meta:
-        governance:
-          product: empreendimento_rural
-          owner_key: mcid_data_engineering
-
-      bronze:
-        +materialized: table
-        +schema: dados_historicos
-        +meta:
-          governance:
-            product: empreendimento_rural
-            owner_key: mcid_data_engineering
-            layer: bronze
-            classification: restricted
-            rag_publication: prohibited
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier3
-            owner: mcid-data-engineering
-
-      silver:
-        +materialized: table
-        +schema: empreendimento_rural
-        +meta:
-          governance:
-            product: empreendimento_rural
-            owner_key: mcid_data_engineering
-            layer: silver
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier2
-            owner: mcid-data-engineering
-
-      # Sem gold própria hoje: os 2 modelos redundantes com o gold já
-      # entregue pelos colegas (gold_rural_ficha_empreendimento,
-      # gold_rural_panorama) foram aposentados na convenção 2026-09-04 —
-      # nenhum consumidor os referenciava (diferente do far/fds, onde 2
-      # golds alimentam o gargalo).
+    # empreendimento_rural_dbt REMOVIDO (change consolidar-schemas-historico-reloginho,
+    # D6/D7): a pilha rural "atual" (7 bronzes + 2 silvers) era fork mais pobre
+    # do que a pilha dos colegas já em prod (empreendimento_rural, 34 tabelas) e
+    # nunca era construída localmente. O rural histórico vem do INT057/INT065 do
+    # eixo (mcmv_historico_dbt), não da frente. O braço rural de
+    # mcmv_silver_dbt foi repontado para o eixo histórico.
 
     indicadores_mcmv_dbt:
       # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
       # porque a D3 o exige como invariante deste eixo).
       +database: cidades
-      # Convenção 2026-09-04: reloginho não é uma frente — é um domínio
-      # analítico próprio (indicadores de velocidade/gargalo). Silver e gold
-      # (reloginho + gargalo) ficam no schema novo "reloginho".
+      # Convenção 2026-09-08 (consolidar-schemas-historico-reloginho, D1/D5):
+      # reloginho é um domínio analítico autocontido — TODAS as camadas
+      # (bronze, silver, gold) no schema "reloginho". As bronzes de eventos de
+      # entrega saíram de dados_historicos para cá.
       +materialized: table
       +schema: reloginho
       bronze:
         +materialized: table
-        +schema: dados_historicos
+        +schema: reloginho
       silver:
         +materialized: table
         +schema: reloginho
@@ -240,13 +205,14 @@ models:
       # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
       # porque a D3 o exige como invariante deste eixo).
       +database: cidades
-      # Convenção 2026-09-04: bronze e o carrier bruto pré-split (ainda sem
-      # frente) ficam em dados_historicos; os 3 silvers já divididos por
-      # frente (far/fds/rural) usam alias para materializar como
-      # silver_historico_empreendimento no schema de cada frente; os golds
-      # (cross-frente) ganham o schema novo "serie_historica"; o piloto
-      # FGTS/OGU (agregado macro anual, não é frente de empreendimento) usa
-      # o schema conjuntura.
+      # Convenção 2026-09-08 (consolidar-schemas-historico-reloginho, D1):
+      # `dados_historicos` é o schema do DOMÍNIO histórico cross-frente, em
+      # TODAS as camadas — bronze, silver (incl. serie_executiva e entrega_apf)
+      # e gold (os 4 cross-frente). O que é POR FRENTE (os 3
+      # silver_historico_empreendimento far/fds/rural) usa alias para
+      # materializar no schema da frente. O piloto FGTS/OGU (agregado macro
+      # anual, não é frente) usa conjuntura. Os schemas mcmv_historico e
+      # serie_historica foram extintos.
       +materialized: table
       +meta:
         governance:
@@ -285,7 +251,7 @@ models:
 
       gold:
         +materialized: table
-        +schema: serie_historica
+        +schema: dados_historicos
         +meta:
           governance:
             product: mcmv_historico
@@ -353,8 +319,12 @@ on-run-start:
 
 seeds:
   mcid:
-    mcmv_historico:
-      +schema: mcmv_historico
+    # Piloto #118 (série anual OGU/FGTS): agregado macro nacional, não é frente.
+    # Consolidado em `conjuntura` junto do consumidor
+    # silver_mcmv_historico_serie_anual_ogu_fgts (change
+    # consolidar-schemas-historico-reloginho, D1). CSV em seeds/conjuntura/.
+    conjuntura:
+      +schema: conjuntura
       +quote_columns: false
     entidades_fds:
       +schema: entidades_fds

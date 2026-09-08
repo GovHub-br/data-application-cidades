@@ -568,71 +568,11 @@ models:
           - accepted_values:
               arguments: { values: ["snh"] }
 
-  - name: dim_empreendimento_historico
-    description: >
-      Dimensão de atributos ESTÁVEIS do empreendimento histórico. 1 linha por
-      (frente_mcmv, codigo_empreendimento) — a MESMA chave de
-      gold_snapshot_empreendimento_atual. Reúne atributos que não variam mês a
-      mês e por isso não entram no contrato mensal: entidade organizadora
-      (Rural), tipologia, regime, coordenadas (SNH decimal — os gps_* do INT059
-      são 0% reais), endereço, vinculação de APF, portaria de seleção.
-      Resolvidos do último snapshot de cada fonte por APF. Change:
-      colunas-orfas-bronze-historico. Requer target staging_duckdb.
-    meta:
-      tags: [silver, mcmv, dados-historicos, empreendimento, dim]
-    data_tests:
-      - unique_combinacao:
-          arguments:
-            colunas: ["frente_mcmv", "codigo_empreendimento"]
-    columns:
-      - name: frente_mcmv
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments: { values: ["FAR", "Entidades", "Rural"] }
-      - name: codigo_empreendimento
-        description: Chave estável do empreendimento (= id_empreendimento no FDS, = apf nas demais).
-        data_tests:
-          - not_null
-      - name: apf
-        description: APF de origem dos atributos (para o FDS multi-APF, o do snapshot mais recente).
-        data_tests:
-          - not_null
-      - name: id_empreendimento
-      - name: no_entidade_organizadora
-        description: >
-          Entidade organizadora (INT057/INT065 — Rural ~86%). NULL em FAR e
-          Entidades (INT059 não tem a coluna; a entidade do FDS é
-          `responsavel_nome` na silver).
-      - name: nu_cnpj_entidade
-      - name: dsc_tipologia
-        description: Tipologia construtiva (INT040/054/059).
-      - name: tipo_de_unidade_do_empreendimento
-      - name: regime_construcao
-        description: Regime de construção (INT059).
-      - name: cod_regime_execucao
-      - name: modalidade_requalificacao
-        description: Modalidade de requalificação (INT059 — FDS).
-      - name: latitude
-        description: >
-          Latitude decimal, de `latitude_do_imovel` do SNH (fill ~45%; sentinela
-          `0` → NULL). Os `gps_*_grau/minuto/segundo` do INT059 são 0% reais.
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
-      - name: longitude
-        data_tests:
-          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
-      - name: bairro
-      - name: cep
-      - name: logradouro
-      - name: nu_apf_vinculacao
-        description: APF vinculado (INT059 — liga APFs relacionados; só exposto, não altera resolução de fase).
-      - name: portaria_selecao
-        description: Portaria de seleção (INT040/054, esparso).
-      - name: dt_dim
-        description: Timestamp de materialização da dimensão.
-        data_tests:
-          - not_null
+  # dim_empreendimento_historico REMOVIDA (change consolidar-schemas-historico-reloginho,
+  # D3): os 14 atributos estáveis passaram a colunas de
+  # gold_snapshot_empreendimento_atual (ver gold/schema.yml). Chave e
+  # cardinalidade eram idênticas (17.545/17.545 no semi join por
+  # frente_mcmv+codigo_empreendimento). `dt_dim` não migrou.
 
   - name: silver_mcmv_historico_entrega_apf
     description: >
