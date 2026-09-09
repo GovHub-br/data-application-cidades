@@ -1,0 +1,419 @@
+version: 2
+
+# Espelho textual do parquet, então o teste que importa é o de layout. A lista `colunas`
+# de cada tabela é o contrato aceito hoje: mudou na origem, atualizar a lista é aceitar.
+
+models:
+
+  - name: bronze_shpt_his_mcidades_consolidado
+    description: >
+      Consolidado GFAR: propostas do Novo MCMV FAR, da protocolização à contratação.
+      Remessa semanal; a tabela guarda o retrato mais recente.
+      
+      Uma linha por movimento de proposta, não por empreendimento: 15.231 linhas
+      para 905 APFs.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - dt_recebimento_gfar
+            - dt_protocolo
+            - hr_protocolo
+            - no_agente_financeiro
+            - no_identificacao_proposta
+            - co_fase
+            - co_etapa
+            - co_status
+            - no_titularidade_imovel
+            - no_nome_empreendimento
+            - no_logradouro_empreendimento
+            - no_bairro
+            - co_cep
+            - no_municipio
+            - no_uf
+            - no_regiao
+            - co_municipio_ibge
+            - co_tipo_edificacao
+            - ic_mapeamento_imovel
+            - nu_qt_uh_empreendimento
+            - co_originacao_empreendimento
+            - co_tipo_de_demanda
+            - co_tipo_de_proponente
+            - ic_terreno_doado
+            - ic_contrapartida_outras
+            - ic_contrapartida_estado_terreno
+            - ic_contrapartida_complementar_estado
+            - ic_contrapartida_municipio_terreno
+            - ic_contrapartida_complementar_municipio
+            - ic_terreno_area_urbana_consolidada
+            - ic_terreno_area_urbana_expansao
+            - ic_energia_eletrica_iluminacao_publica
+            - ic_agua_potavel
+            - ic_rede_esgoto_coleta_lixo
+            - ic_via_pavimentada
+            - ic_drenagem_pluvial
+            - ic_educacao_infantil
+            - ic_ensino_fundamental_ciclo_1
+            - ic_ensino_fundamental_ciclo_2
+            - ic_populacao_maior_100_mil
+            - ic_unidade_protecao_social_cras
+            - ic_unidade_saude_ubs
+            - ic_comercio_servicos_cotidiano
+            - ic_comercio_servicos_eventual
+            - co_situacao_proposta_protocolizada
+            - co_justificativa_nao_enquadramento_af
+            - ic_ratificacao_atendimento_habitacional
+            - ic_portaria_fide
+            - vr_empreendimento_far
+            - vr_contrapartida_outras
+            - vr_contrapartida_estado_infra
+            - vr_contrapartida_estado_terreno
+            - vr_contrapartida_complementar_estado
+            - vr_contrapartida_municipio_infra
+            - vr_contrapartida_municipio_terreno
+            - vr_contrapartida_complementar_municipio
+            - vr_total_contrapartidas
+            - ic_prototipo
+            - ic_ato_formal_mcid
+            - ic_ato_formal_or_publico
+            - ic_certidao_matricula
+            - ic_doc_geo_mapa_terreno
+            - ic_fide
+            - ic_declaracao_ente_publico
+            - ic_declaracao_proponente
+            - ic_portaria_midr
+            - no_descricao_pendencia
+            - dt_recurso
+            - co_qualificacao_terreno
+            - ic_enquadramento_proposta
+            - dt_recebimento_apta_gfar
+            - no_tomador
+            - nu_cnpj_tomador
+            - nu_apf
+            - no_empreendimento_contratacao
+            - no_proponente
+            - nu_cnpj_proponente
+            - nu_qt_uh_empreendimento_contratacao
+            - co_tipo_demanda_emp_contratacao
+            - co_tipo_edificacao_contratacao
+            - co_qualificacao_terreno_contratacao
+            - co_situacao_proposta_contratada
+            - nu_portaria_contratacao
+            - dt_vencimento_portaria_contratacao
+            - no_identificacao_proposta_substituida
+            - nu_operacao_af
+            - ic_dados_alterados_pos_contratacao
+            - ic_atende_parametros_pos_vpe
+            - co_fluxo
+            - dt_movimento
+            - hr_movimento
+            - no_campo_alterado_enquadramento
+            - no_campo_alterado_contratacao
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - ic_previsao_elevador
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_shpt_monit_cad_pj_far_mensal
+    description: >
+      Cadastro PJ do FAR: empreendimento contratado, com construtora, tipologia,
+      composição financeira e coordenadas. Competência mensal.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - dt_movimento
+            - nu_apf
+            - no_identificacao_proposta
+            - no_agente_financeiro
+            - no_empreendimento
+            - dt_apresentacao_orcamento
+            - ic_terreno_doado
+            - no_logradouro_emprrendimento
+            - no_bairro
+            - co_cep
+            - no_municipio
+            - sg_uf
+            - co_municipio_ibge
+            - no_construtora
+            - nu_cnpj_construtora
+            - co_ente_publico_proponente
+            - dt_contratacao
+            - dt_inicio_obra
+            - dt_previsao_conclusao_obra
+            - co_tipo_edificacao
+            - co_tipo_administracao
+            - co_linha_atendimento
+            - co_tipo_demanda
+            - co_tipo_empreendimento
+            - ic_sistema_aquec_solar
+            - ic_energia_alternativa
+            - co_regime_propriedade
+            - nu_qt_uh
+            - ic_previsao_area_comercial
+            - no_gps_datum
+            - nu_gps_latitude_grau
+            - nu_gps_latitude_minuto
+            - nu_gps_latitude_segundo
+            - nu_gps_longitude_grau
+            - nu_gps_longitude_minuto
+            - nu_gps_longitude_segundo
+            - nu_area_terreno
+            - vr_obra_edificacao
+            - vr_terreno
+            - vr_ts
+            - vr_contrapartida_outras
+            - vr_outras_contrapartida_ente_publico
+            - vr_contrapartida_estado_infra
+            - vr_contrapartida_estado_terreno
+            - vr_contrapartida_complementar_estado
+            - vr_contrapartida_municipio_infra
+            - vr_contrapartida_municipio_terreno
+            - vr_contrapartida_complementar_municipio
+            - vr_total_contrapartidas
+            - vr_equipamentos_publicos
+            - vr_emprestimo_far
+            - vr_infraestrutura_incidente
+            - vr_equipamento_uso_comum
+            - vr_legalizacao_empreendimento
+            - vr_seguros_obrigatorios
+            - vr_total_operacao
+            - vr_total_investimento
+            - nu_apf_aporte_suplementacao
+            - co_operacao_aporte_retomada
+            - vr_contratado_aporte_suplementacao
+            - dt_contratacao_aporte_suplementacao
+            - no_construtora_retomada
+            - nu_cnpj_construtora_retomada
+            - vr_contrapartida_retomada
+            - vr_total_em_construcao
+            - ic_substiuicao_construtora
+            - dt_substituicao_construtora
+            - vr_sistema_alternativo_de_energia
+            - vr_sistema_aquecimento_solar
+            - co_tipo_ente_publico_contrapartida
+            - vr_contrapartida_retomada_outras
+            - vr_outras_contrapartida_retomada_ente_publico
+            - vr_contrapartida_retomada_estado_infra
+            - vr_contrapartida_retomada_complemetar_estado
+            - vr_contrapartida_retomada_municipio_infra
+            - vr_contrapartida_retomada_complementar_municipio
+            - vr_total_contrapartidas_retomadas
+            - dt_inicio_obra_retomada
+            - dt_previsao_conclusao_obra_retomada
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_shpt_monit_mov_obra_far_mensal
+    description: >
+      Movimento de obra do FAR: medição física e entregas por empreendimento.
+      Competência mensal.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - dt_movimento
+            - nu_apf
+            - co_situacao_obra
+            - dt_alteracao_situacao
+            - ic_invadido
+            - dt_invasao
+            - pc_obra_prevista
+            - pc_obra_realizada
+            - qt_uh_concluidas
+            - qt_uh_concluidas_adaptadas
+            - dt_previsao_conclusao_obra_retomada
+            - dt_conclusao_obra_retomada
+            - dt_primeira_assinatura_pf
+            - dt_ultima_assinatura_pf
+            - qt_uh_alienada
+            - vr_total_uh_alienadas
+            - nu_qt_uh_a_alienar
+            - vr_total_uh_a_alienar
+            - qt_uh_sem_habitese
+            - vr_total_uh_sem_habitese
+            - dt_paralisacao
+            - co_classificacao_paralisados
+            - co_motivo_cancelamento_distrato
+            - qt_uh_em_construcao_parcial
+            - vr_total_uh_em_construcao
+            - qt_uh_ociosas_retomadas
+            - vr_total_uh_ociosas_retomadas
+            - dt_repactuacao
+            - dt_conclusao_obra
+            - dt_acion_seguradora
+            - dt_contratacao_vigilancia
+            - dt_contrata_construtor_substituto
+            - dt_previsao_entrega_do_empreendimento
+            - dt_entrega_do_empreendimento
+            - dt_legalizacao
+            - qt_unidades_habitacionais_invadidas
+            - no_providencias_adotadas
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_shpt_monit_mov_financ_far_mensal
+    description: >
+      Movimento financeiro do FAR: liberações por empreendimento.
+      É a única fonte do FAR com série histórica de verdade.
+      
+      Uma linha por liberação: 11.596 linhas para 749 APFs.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - id
+            - co_tipo_registro
+            - dt_movimento
+            - nu_apf
+            - dt_remessa
+            - dt_liberacao_recurso
+            - co_tipo_movimento
+            - co_tipo_lib_recurso
+            - vr_movimento
+            - ic_credito
+            - vr_pago_obra_empreendimento
+            - vr_pago_terreno
+            - vr_pago_pts
+            - vr_pago_equipamentos_publicos
+            - vr_pago_aporte_suplementacao
+            - vr_pago_despesas_manutencao
+            - vr_pago_despesas_incc
+            - vr_pago_cartorios_legalizacao
+            - vr_liberado
+            - no_identificador
+            - dt_evento
+            - dh_gravacao
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - vr_pago_itaipu
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa
+    description: >
+      Dados prioritários reportados pela CAIXA, todas as modalidades do PMCMV.
+      O recorte FAR é feito na prata.
+      
+      O union_by_name traz colunas de layouts antigos que não existem na
+      competência atual; elas ficam 100% nulas até a origem voltar a enviá-las.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - data_de_movimento
+            - agente_financeiro
+            - apf
+            - uf
+            - municipio
+            - codigo_ibge_do_municipio
+            - nome_empreendimento
+            - modalidade
+            - situacao_do_empreendimento
+            - detalhamento_da_situacao_do_empreendimento
+            - data_de_contratacao
+            - exec
+            - valor_contratado
+            - valor_aporte_adicional
+            - valor_desembolsado
+            - uh_contratadas
+            - uh_entregues
+            - uh_vigentes
+            - observacoes
+            - quantidade_de_uhs_vigentes_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_entregues_do_ano_de_referencia
+            - situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+            - valor_desembolsado_do_ano_de_referencia
+            - detalhamento_da_situacao_do_empreendimento_em_janeiro_do_ano_de
+            - quantidade_de_uhs_contratadas_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_contratadas_do_ano_de_referencia
+            - quantidade_de_uhs_entregues_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_vigentes_do_ano_de_referencia
+            - quantidade_de_uhs_distratadas
+            - quantidade_de_uhs_distratadas_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_distratadas_do_ano_de_referencia
+            - data_da_previsao_da_entrega
+            - unidades_habitacionais_a_serem_entregues
+            - logradouro_do_imovel
+            - numero_do_imovel
+            - complemento_do_endereco_do_imovel
+            - bairro_do_imovel
+            - cep_do_imovel
+            - latitude_do_imovel
+            - longitude_do_imovel
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - apf_fds_fase_projeto
+            - data_de_contratacao_fds_fase_projeto
+            - valor_contratado_fds_fase_projeto
+            - apf_fds_fase_obra
+            - data_de_contratacao_fds_fase_obra
+            - valor_contratado_fds_fase_obra
+            - apf_fds_fase_desligamento
+            - contratacao_fds_fase_desligamento
+            - valor_contratado_fds_fase_desligamento
+            - data_de_contratacao_fds_fase_desligamento
+            - data_de_termino
+            - cnpj_da_construtora_entidade
+            - razao_social_da_construtora_entidade
+            - classificacao_dos_paralisados
+            - mcmv_ogu_27_qtd_vigentes_janeiro_ano_dt_referencia
+            - mcmv_ogu_28_qtd_entregues_ano_dt_referencia
+            - mcmv_ogu_29_txt_situacao_empreendimento_janeiro_ano_dt_referenc
+            - mcmv_ogu_30_vlr_desembolsado_no_ano_dt_referencia
+            - mcmv_ogu_31_txt_detalha_situacao_empreendimento_janeiro_ano_dt_
+            - dt_previsao_entrega
+            - qt_uh_previsao_entrega
+            - filename
+    columns:
+      - name: apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null

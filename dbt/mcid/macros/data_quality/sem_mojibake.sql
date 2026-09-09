@@ -7,28 +7,28 @@
   aparece direto no dashboard. Daí o teste.
 
   Marcadores:
-    Ã     acentos latinos (Ã£=ã, Ã©=é, Ã³=ó, Ã§=ç ...)
-    Â     símbolos (Âº, Â°, Â§)
-    â€    pontuação tipográfica (aspas curvas, travessão)
+    Ã / Â seguidos de outro caractere NÃO-ASCII que não seja maiúscula acentuada
+          É essa vizinhança que separa corrupção de português correto. Ã e Â são letras
+          legítimas (SÃO, PORTÃO, ASSOCIAÇÃO, CÂMARA, AMANHÃ), e ali vem sempre ASCII
+          depois — outra maiúscula, espaço ou pontuação. No mojibake, o segundo byte da
+          sequência utf-8 reinterpretada cai no bloco latin-1: Ã£=ã, Ã©=é, Ã³=ó, Ã§=ç,
+          Âº, Â°. Por isso a regra exige não-ASCII, e não apenas "não maiúscula".
+    â€     pontuação tipográfica (aspas curvas, travessão)
     U+FFFD  o "�" que errors="replace" deixa onde o byte era realmente inválido
 
   Uso no schema.yml:
 
       columns:
         - name: municipio
-          data_tests:
+          tests:
             - sem_mojibake
 -#}
 {% macro test_sem_mojibake(model, column_name) %}
 
-select {{ column_name }} as valor, count(*) as ocorrencias
-from {{ model }}
-where
-    {{ column_name }} like '%Ã%'
-    or {{ column_name }} like '%Â%'
-    or {{ column_name }} like '%â€%'
-    or {{ column_name }} like '%' || chr(65533) || '%'
-group by {{ column_name }}
-order by ocorrencias desc
+    select {{ column_name }} as valor, count(*) as ocorrencias
+    from {{ model }}
+    where {{ column_name }} ~ ('[ÃÂ][^[:ascii:]À-Þ]|â€|' || chr(65533))
+    group by {{ column_name }}
+    order by ocorrencias desc
 
 {% endmacro %}

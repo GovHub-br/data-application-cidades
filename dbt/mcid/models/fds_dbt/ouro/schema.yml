@@ -1,0 +1,49 @@
+version: 2
+
+# A ouro é o que o Superset lê. Os testes aqui protegem o que o painel afirma: uma linha
+# por empreendimento na ficha, e nenhum APF que exista na ficha mas não na prata.
+
+models:
+
+  - name: ouro_fds_ficha_empreendimento
+    description: >
+      Uma linha por empreendimento FDS, com identificação da entidade organizadora,
+      localização, execução física, financeira e do trabalho social.
+      Alimenta a ficha do Superset.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos — chave do painel.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('prata_fds_empreendimento')
+              field: apf
+      - name: municipio
+        description: Município do empreendimento.
+        tests:
+          - not_null
+          - sem_mojibake
+      - name: uf
+        description: Sigla da UF.
+        tests:
+          - not_null
+      - name: nome_eo
+        description: Razão social da entidade organizadora.
+        tests:
+          - sem_mojibake
+      - name: nome_empreendimento
+        description: Nome do empreendimento.
+        tests:
+          - sem_mojibake
+
+  - name: ouro_fds_panorama_entidade
+    description: >
+      Painel agregado por entidade organizadora, com carteira e execução de cada uma.
+
+  - name: ouro_fds_evolucao_financeira_chart
+    description: >
+      Série APF × mês pronta para o gráfico de evolução financeira.
+    tests:
+      - unique_combinacao:
+          colunas: ["apf", "mes"]

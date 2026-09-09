@@ -1,0 +1,401 @@
+version: 2
+
+# Espelho textual do parquet, então o teste que importa é o de layout. A lista `colunas`
+# de cada tabela é o contrato aceito hoje: mudou na origem, atualizar a lista é aceitar.
+
+models:
+
+  - name: bronze_shpt_monit_cad_pj_fds_mensal
+    description: >
+      Cadastro PJ do FDS: empreendimento contratado pela entidade organizadora, com
+      composição financeira, tipologia, coordenadas e datas. Competência mensal.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - dh_movimento
+            - nu_apf
+            - no_identificacao_proposta
+            - no_agente_financeiro
+            - no_empreendimento
+            - dt_apresentacao_orcamento
+            - ic_terreno_doado
+            - no_logradouro
+            - no_bairro
+            - co_cep
+            - no_municipio
+            - sg_uf
+            - co_municipio_ibge
+            - no_eo
+            - nu_cnpj_eo
+            - dt_assinatura
+            - dt_inicio_obra
+            - dt_previsao_conclusao_obra
+            - co_tipo_edificacao
+            - co_regime_obra
+            - no_construtora
+            - nu_cnpj_construtora
+            - co_modalidade
+            - co_tipo_empreendimento
+            - nu_qt_uh_construcao
+            - nu_qt_uh_projeto
+            - ic_previsao_area_comercial
+            - nu_gps_latitude_grau
+            - nu_gps_latitude_minuto
+            - nu_gps_latitude_segundo
+            - nu_gps_longitude_grau
+            - nu_gps_longitude_minuto
+            - nu_gps_longitude_segundo
+            - nu_area_terreno
+            - co_modalidade_projeto
+            - co_modalidade_obra
+            - vr_terreno
+            - vr_ts
+            - vr_contrapartida_estado_infra
+            - vr_contrapartida_estado_terreno
+            - vr_contrapartida_estado_complementar
+            - vr_contrapartida_municipio_infra
+            - vr_contrapartida_municipio_terreno
+            - vr_contrapartida_municipio_complementar
+            - ic_uniao_imovel
+            - vr_contrapartida_outras
+            - vr_total_contrapartidas
+            - vr_equipamentos_publicos
+            - vr_financiamento_fds
+            - vr_infraestrutura_incidente
+            - vr_equipamento_uso_comum
+            - vr_legalizacao
+            - vr_regularizacao
+            - vr_seguros_obrigatorios
+            - vr_total_operacao
+            - vr_total_investimento
+            - vr_vigilancia_obra
+            - nu_apf_aporte_suplementacao
+            - co_operacao_retomada
+            - vr_contratado_aporte_suplementacao
+            - dt_contratacao_aporte_suplementacao
+            - no_construtora_aporte_retomada
+            - nu_cnpj_construtora_aporte_retomada
+            - vr_contrapartida_retomada
+            - vr_total_em_construcao
+            - vr_total_em_projeto
+            - ic_substituicao_eo
+            - dt_substituicao_eo
+            - no_substituicao_eo
+            - nu_cnpj_substituicao_eo
+            - ic_sistema_aquec_solar
+            - ic_energia_alternativa
+            - vr_sistema_alternativo_de_energia
+            - vr_sistema_aquecimento_solar
+            - vr_contrapartida_retomada_estado_infra
+            - vr_contrapartida_retomada_estado_complementar
+            - vr_contrapartida_retomada_municipio_infra
+            - vr_contrapartida_retomada_municipio_complementar
+            - vr_contrapartida_retomada_outras
+            - vr_total_contrapartida_retomada
+            - dt_inicio_obra_retomada
+            - dt_previsao_conclusao_obra_retomada
+            - ic_mudanca_fase
+            - nu_apf_mudanca_fase
+            - co_nivel_hab_eo
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - nu_gps_datum
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_shpt_monit_mov_obra_fds_mensal
+    description: >
+      Movimento de obra do FDS: medição física e entregas por empreendimento.
+      Competência mensal.
+      
+      A competência atual chega na pasta "Novo MCMV - FAR" do SharePoint, não na
+      do FDS; o padrão não fixa a pasta justamente por isso.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - dh_movimento
+            - nu_apf
+            - co_situacao_operacao
+            - dt_alteracao_situacao
+            - co_andamento_operacao
+            - dt_alteracao_andamento
+            - ic_invadido
+            - dt_invasao
+            - pc_obra_prevista
+            - pc_obra_realizada
+            - qt_uh_concluidas
+            - qt_uh_concluidas_adaptadas
+            - dt_prev_conclusao_obra_retomada
+            - dt_conclusao_obra_retomada
+            - dt_primeira_assinatura_pf
+            - dt_ultima_assinatura_pf
+            - qt_uh_alienada
+            - vr_total_uh_alienadas
+            - qt_uh_a_alienar
+            - vr_total_uh_a_alienar
+            - ic_titularidade_eo
+            - ic_parcelam_gleba
+            - qt_uh_registro_titulos
+            - qt_uh_sem_habitese
+            - vr_total_uh_sem_habitese
+            - dt_paralisacao
+            - co_classificacao_paralisados
+            - co_classificacao_nao_retomada
+            - detalhe_paralisacao_retomada
+            - dt_informacao_paralisacao_retomada
+            - co_motivo_desimobilizacao
+            - co_motivo_distrato_empreendimento
+            - qt_uh_em_construcao_parcial
+            - vr_total_uh_em_construcao
+            - qt_uh_ociosas_retomadas
+            - vr_total_uh_ociosas_retomadas
+            - dt_conclusao_obra
+            - dt_contratacao_vigilancia
+            - vr_vigilancia
+            - dt_legalizacao_reg
+            - dt_prev_entrega_emprend
+            - dt_entrega_do_empreendimento
+            - qt_uh_ocupacao_irregular
+            - no_providencias_adotadas
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_shpt_monit_mov_financ_fds_mensal
+    description: >
+      Movimento financeiro do FDS: liberações por empreendimento.
+      É a fonte com série histórica de verdade do domínio.
+      
+      Uma linha por liberação: 16.887 linhas para 839 APFs.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - id
+            - co_tipo_registro
+            - dt_movimento
+            - nu_apf
+            - dt_remessa
+            - dt_liberacao_recurso
+            - co_tipo_movimento
+            - vr_movimento
+            - ic_credito
+            - vr_pago_obra_empreendimento
+            - vr_pago_terreno
+            - vr_pago_trab_social
+            - vr_pago_projeto
+            - vr_pago_aporte_suplementacao
+            - vr_pago_despesas_incc
+            - vr_pago_cartorios_legalizacao
+            - vr_pago_seguranca
+            - vr_liberado
+            - nu_identificador
+            - pc_evolucao
+            - dt_evento
+            - dh_gravacao
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_shpt_monit_exec_ts_fds_mensal
+    description: >
+      Execução do trabalho social por empreendimento. Competência mensal.
+      
+      Cobre 141 dos 364 empreendimentos — só quem tem trabalho social reportado.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - dh_movimento
+            - nu_apf
+            - co_situacao_trabalho_social
+            - dt_aprovacao_pts
+            - dt_assinatura_convenio
+            - dt_termino_convenio
+            - dt_primeiro_relatorio
+            - dt_ultimo_relatorio
+            - pc_execucao_ts
+            - nu_portaria_ts
+            - dt_publ_portaria_ts
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_sftp_int059_fds_caixa_empreendimentos
+    description: >
+      INT059: empreendimentos FDS reportados pela CAIXA, com situação GEFUS e
+      indicativos de paralisação.
+      
+      O glob casa também as remessas "..._EMPREENDIMENTOS_VALIDACAO_<data>", que
+      são dado de teste e venceriam na ordem alfabética (V vem depois de dígito).
+      Por isso o model passa excluir=["VALIDACAO"] ao macro arquivo_mais_recente.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - origem
+            - dt_movimento
+            - cod_agente_financeiro
+            - cod_municipio_ibge
+            - no_municipio
+            - nu_apf
+            - no_empreeendmento
+            - dt_assinatura
+            - dt_inicio_obra
+            - dt_termino_obra
+            - dt_legalizacao
+            - percentual_obra_realizado
+            - vr_emprestimo_original
+            - vlr_operacao
+            - vr_investimento
+            - vr_liberado
+            - vr_liberado_sisfin
+            - dt_maxima_liberacao
+            - qt_unidade_financiadas
+            - nu_apf_vinculacao
+            - razao_social_proponente
+            - cnpj_proponente
+            - fase_contrato
+            - situacao_gefus
+            - dt_assinatura_projeto
+            - vr_projeto
+            - vr_obra
+            - dsc_tipologia
+            - cod_regime_execucao
+            - terreno_doado
+            - aquecimento_solar
+            - contrapartida_financeira
+            - contrapartida_servicos
+            - nu_apf_nao_obra
+            - quantidade_uh_adaptadas
+            - email_entidade
+            - tipo_terreno
+            - contrapartida_poder_pub_local_terreno_far_fds_1217
+            - contrapartida_poder_pub_local_financ_far_fds_1222
+            - contrapartida_poder_pub_local_financ_far_fds_1219
+            - contrapartida_poder_pub_local_infra_far_fds_1218
+            - contrapartida_poder_pub_local_terreno_far_fds_1220
+            - contrapartida_poder_pub_local_infra_far_fds_1221
+            - valor_aditamento_selecao_complementar
+            - valor_aporte_adicional
+            - situacao_empreendimento
+            - infraestrutura_externa
+            - itens_investimento_terreno
+            - sistema_aquecimento_solar
+            - gps_latitude_grau
+            - gps_latitude_minuto
+            - gps_latitude_segundo
+            - gps_longitude_grau
+            - gps_longitude_minuto
+            - gps_longitude_segundo
+            - gps_hemisferio
+            - gps_local_pto_medio_conf_laudo
+            - gps_datum_preferencia_sad_69
+            - tipo_de_unidade_do_empreendimento
+            - no_localidade
+            - no_logradouro
+            - nu_cep
+            - regime_construcao
+            - sg_uf
+            - valor_aporte_adicional_contratado
+            - dt_ultima_entrega
+            - qt_unidades_concluidas
+            - qt_unidades_entregues
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - iorigem
+            - modalidade_requalificacao
+            - no_regiao
+            - no_selecao_pmcmv_e
+            - de_interface
+            - nu_contrato_emprendimento
+            - de_pendencia_campo
+            - vr_pendencia_1
+            - vr_pendencia_2
+            - de_descricao
+            - co_validacao_mdr
+            - nu_linha
+            - filename
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_entregas
+    description: >
+      Entregas reportadas pela CAIXA, todas as modalidades do PMCMV.
+      O recorte FDS é feito na prata.
+      
+      O APF 50710727 aparece duas vezes no retrato da origem (11.677 linhas para
+      11.676 APFs), então não há teste de unicidade aqui.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - data_de_movimento
+            - agente_financeiro
+            - apf
+            - dt_entrega
+            - qt_uh_entregues
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - check
+            - filename
+    columns:
+      - name: apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
