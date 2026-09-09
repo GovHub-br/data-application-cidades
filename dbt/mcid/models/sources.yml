@@ -12,8 +12,8 @@ sources:
       - name: api_ibge_uf
         description: >
           Referência do IBGE com os 27 estados: sigla, nome e região. Traz cada UF
-          duplicada (54 linhas para 27 siglas), então todo join com ela precisa de
-          `distinct` para não dobrar as somas.
+          duplicada, então todo join com ela precisa de `distinct` para não dobrar
+          as somas.
 
   - name: ibge
     schema: ibge
@@ -192,8 +192,6 @@ sources:
           Snapshot de dados prioritários da CAIXA, todas as modalidades; a
           silver_prioritarios_caixa filtra modalidade='RURAL'. Colunas text.
           Origem: <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA, vigente 202607.
-          O mesmo arquivo alimenta a família empreendimento_far; cada domínio carrega
-          a sua cópia no seu schema, para não criar dependência entre famílias.
       - name: bronze_prioritarios_bb
         description: >
           Snapshot de dados prioritários do Banco do Brasil, todas as modalidades;

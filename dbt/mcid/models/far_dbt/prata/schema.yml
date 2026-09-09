@@ -17,9 +17,8 @@ models:
           - not_null
       - name: apf
         description: >
-          APF normalizado para 8 dígitos. Nulo na maior parte das linhas (14.327 de
-          15.231) porque proposta ainda não contratada não tem APF — por isso não há
-          not_null aqui.
+          APF normalizado para 8 dígitos. Nulo na maior parte das linhas porque
+          proposta ainda não contratada não tem APF — por isso não há not_null aqui.
 
   - name: prata_far_cadastro_pj
     description: >
@@ -81,7 +80,7 @@ models:
           - sem_mojibake
       - name: uf
         description: >
-          Sigla da UF. Fica nula em 72 dos 876 empreendimentos, que não têm localização
+          Sigla da UF. Fica nula nos empreendimentos que não têm localização
           informada em nenhuma das fontes.
 
   - name: prata_far_evolucao_financeira

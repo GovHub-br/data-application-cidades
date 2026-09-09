@@ -74,10 +74,11 @@ empreendimento_rural:
     # <aaaamm>_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv — competência é o PREFIXO.
     # O `_ENTREGAS` no fim é outra tabela: o padrão termina em `AF_CAIXA.parquet`
     # justamente para não casar com ele.
-    # É o MESMO arquivo de origem da família empreendimento_far, e é de propósito:
-    # cada domínio carrega a sua cópia no seu próprio schema, então não existe ordem
-    # obrigatória entre as famílias e nenhuma dropa a tabela da outra. O snapshot cobre
-    # todas as modalidades; a silver_prioritarios_caixa filtra modalidade='RURAL'.
+    # É o MESMO arquivo de origem da bronze do FAR, que hoje é dbt e lê o parquet
+    # direto da staging (bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa). Cada
+    # domínio carrega a sua cópia no seu próprio schema, então nenhum dropa a tabela
+    # do outro. O snapshot cobre todas as modalidades; a silver_prioritarios_caixa
+    # filtra modalidade='RURAL'.
     - padrao: "staging/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet"
       data_regex: "^(\\d{6})_SNH_PMCMV"
       tabela: bronze_prioritarios_caixa

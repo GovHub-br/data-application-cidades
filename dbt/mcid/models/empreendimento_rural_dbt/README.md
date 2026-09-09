@@ -74,9 +74,9 @@ Batendo o olho no banco, `\dt empreendimento_rural.*` sai ordenado por camada.
 | `bronze_trabalho_social_caixa` | export canônico `staging/sharepoint/` (snapshot) |
 | `bronze_trabalho_social_bb` | export canônico `staging/sharepoint/` (snapshot) |
 
-`bronze_prioritarios_caixa` sai do **mesmo arquivo** que a tabela homônima da família
-`empreendimento_far`, e é de propósito: cada domínio carrega a sua cópia no seu schema,
-então não existe ordem obrigatória entre as famílias e nenhuma dropa a tabela da outra.
+`bronze_prioritarios_caixa` sai do **mesmo arquivo** que a bronze do FAR, que hoje é dbt
+e lê o parquet direto da staging. Cada domínio carrega a sua cópia no seu schema, então
+nenhum dropa a tabela do outro.
 
 Os três marcados como *snapshot* são sobrescritos in-place na origem e **não acompanham
 o feed mensal** — a atualidade depende de alguém regerar o export. Os INT065/INT057

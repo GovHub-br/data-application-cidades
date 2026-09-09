@@ -40,7 +40,7 @@ models:
 
   - name: prata_fds_trabalho_social
     description: >
-      Execução do trabalho social por empreendimento. Cobre 141 dos 364 do domínio:
+      Execução do trabalho social por empreendimento. Cobre parte do domínio:
       só quem tem TS reportado aparece aqui.
     columns:
       - name: apf

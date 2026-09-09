@@ -189,7 +189,7 @@ models:
       Movimento financeiro do FDS: liberações por empreendimento.
       É a fonte com série histórica de verdade do domínio.
       
-      Uma linha por liberação: 16.887 linhas para 839 APFs.
+      Uma linha por liberação, várias por APF.
     tests:
       - sem_drift_de_colunas:
           colunas:
@@ -233,7 +233,7 @@ models:
     description: >
       Execução do trabalho social por empreendimento. Competência mensal.
       
-      Cobre 141 dos 364 empreendimentos — só quem tem trabalho social reportado.
+      Cobre parte dos empreendimentos — só quem tem trabalho social reportado.
     tests:
       - sem_drift_de_colunas:
           colunas:
@@ -375,8 +375,8 @@ models:
       Entregas reportadas pela CAIXA, todas as modalidades do PMCMV.
       O recorte FDS é feito na prata.
       
-      O APF 50710727 aparece duas vezes no retrato da origem (11.677 linhas para
-      11.676 APFs), então não há teste de unicidade aqui.
+      O APF 50710727 aparece duas vezes no retrato da origem, então não há teste
+      de unicidade aqui.
     tests:
       - sem_drift_de_colunas:
           colunas:

@@ -10,8 +10,7 @@ models:
       Consolidado GFAR: propostas do Novo MCMV FAR, da protocolização à contratação.
       Remessa semanal; a tabela guarda o retrato mais recente.
       
-      Uma linha por movimento de proposta, não por empreendimento: 15.231 linhas
-      para 905 APFs.
+      Uma linha por movimento de proposta, não por empreendimento.
     tests:
       - sem_drift_de_colunas:
           colunas:
@@ -291,7 +290,7 @@ models:
       Movimento financeiro do FAR: liberações por empreendimento.
       É a única fonte do FAR com série histórica de verdade.
       
-      Uma linha por liberação: 11.596 linhas para 749 APFs.
+      Uma linha por liberação, várias por APF.
     tests:
       - sem_drift_de_colunas:
           colunas:
