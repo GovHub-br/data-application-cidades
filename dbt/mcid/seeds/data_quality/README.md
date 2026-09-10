@@ -5,8 +5,9 @@ Seeds de referência consumidos pelos testes genéricos de
 `vocabulario-e-qualidade-financeira-historica` (seeds financeiros — ver o fim
 deste arquivo).
 
-Todos materializam no catálogo `cidades`, schema `data_quality` (bloco
-`seeds.data_quality` do `dbt_project.yml`).
+Todos materializam no catálogo `cidades`, schema `seeds` (bloco
+`seeds.data_quality` do `dbt_project.yml`; change
+`renomear-camadas-pt-historico-reloginho`, D8).
 
 ## `dominio_frente.csv`
 

@@ -38,10 +38,10 @@ run_common_banner
 cd "$HERE"
 
 # Carrega TODAS as seeds antes de qualquer build. Num arquivo frio (rebuild do
-# zero) as seeds de referencia dos testes de DQ — `data_quality.colunas_esperadas`,
+# zero) as seeds de referencia dos testes de DQ — `seeds.colunas_esperadas`,
 # os dominios canonicos, `quarentena_valores_financeiros` — precisam existir ANTES
 # do primeiro `dbt build --select <modelo>`, senao os testes de schema daquele
-# modelo dao Catalog Error. `dbt seed` (sem --select) carrega as 9; e barato.
+# modelo dao Catalog Error. `dbt seed` (sem --select) carrega todas; e barato.
 seed_all() { run_dbt seed --target "$TARGET"; }
 
 # Bronzes por familia (D5 da change pipeline-bronze-historica-destino-trocavel):

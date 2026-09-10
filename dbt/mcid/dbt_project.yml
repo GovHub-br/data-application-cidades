@@ -352,23 +352,29 @@ on-run-start:
 
 seeds:
   mcid:
+    # Convenção: as seeds
+    # necessárias aos braços histórico (mcmv_historico_dbt) e reloginho/gargalo
+    # (indicadores_mcmv_dbt) materializam num schema único `seeds` — não mais em
+    # `data_quality` nem `conjuntura`. Seeds de outras frentes (entidades_fds)
+    # permanecem onde estão.
     # Piloto #118 (série anual OGU/FGTS): agregado macro nacional, não é frente.
-    # Consolidado em `conjuntura` junto do consumidor
-    # silver_mcmv_historico_serie_anual_ogu_fgts (change
-    # consolidar-schemas-historico-reloginho, D1). CSV em seeds/conjuntura/.
+    # O piloto OGU/FGTS segue desabilitado nesta branch (D4); este seed agora
+    # materializa em `seeds` junto das demais seeds do eixo. CSV em
+    # seeds/conjuntura/.
     conjuntura:
-      +schema: conjuntura
+      +schema: seeds
       +quote_columns: false
     entidades_fds:
       +schema: entidades_fds
       +quote_columns: false
     # Seeds de referência dos testes de qualidade (change
     # testes-data-quality-dbt): domínios canônicos e retrato de colunas por
-    # família. `cidades` explícito porque o eixo histórico exige o catálogo
-    # `cidades` como invariante (D3 pipeline-bronze-historica-destino-trocavel).
+    # família. Materializam em `seeds`.
+    # `cidades` explícito porque
+    # o eixo histórico exige o catálogo `cidades` como invariante.
     data_quality:
       +database: cidades
-      +schema: data_quality
+      +schema: seeds
       +quote_columns: false
       # chave_natural / faixa são texto — várias chaves são só dígitos e a
       # inferência as tornaria BIGINT, quebrando o join com a silver (varchar).

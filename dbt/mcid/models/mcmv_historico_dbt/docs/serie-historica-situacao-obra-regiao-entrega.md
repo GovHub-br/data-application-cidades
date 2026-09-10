@@ -8,8 +8,8 @@ MinIO real (`10.0.0.56:9000`, bucket `data-lake-mcid`).
 
 | artefato | tipo | onde |
 |---|---|---|
-| `seeds/data_quality/dominio_status.csv` | seed (35 linhas) | `data_quality.dominio_status` |
-| `seeds/data_quality/dominio_regiao_uf.csv` | seed (27 linhas) | `data_quality.dominio_regiao_uf` |
+| `seeds/data_quality/dominio_status.csv` | seed (35 linhas) | `seeds.dominio_status` |
+| `seeds/data_quality/dominio_regiao_uf.csv` | seed (27 linhas) | `seeds.dominio_regiao_uf` |
 | `situacao_canonica` + `regiao_sigla` + `regiao_nome` | colunas | `prata_{far,fds,rural}_historico_empreendimento` |
 | `situacao_derivada` + `regiao_sigla` + `regiao_nome` | colunas | `prata_dhist_serie_executiva` |
 | `situacao_canonica` + `regiao_sigla` + `regiao_nome` | colunas | `prata_dhist_snh_apf_mes` (reloginho) |

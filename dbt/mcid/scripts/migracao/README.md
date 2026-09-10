@@ -75,8 +75,46 @@ desfaz os `ALTER`. Se a migração falhar no meio, a transação já reverteu tu
 
 ## Regenerar os `.sql`
 
-Ao editar `mapa_nomenclatura.csv`:
+Ao editar `mapa_nomenclatura.csv` (modelos) ou `mapa_seeds.csv` (seeds):
 
 ```bash
-python3 scripts/migracao/gerar_migracao.py
+python3 scripts/migracao/gerar_migracao.py        # renomear/reverter/verificar_nomenclatura_prod.sql
+python3 scripts/migracao/gerar_migracao_seeds.py  # migrar/reverter/verificar_seeds_prod.sql
 ```
+
+---
+
+## Migração das seeds → schema `seeds`
+
+Complementa o rename dos modelos: as **11 seeds** consumidas pelos braços
+histórico e reloginho/gargalo (10 de `data_quality` + o piloto OGU/FGTS de
+`conjuntura`) deixam os schemas antigos e passam a materializar no schema único
+`seeds`. As seeds **não mudam de nome** — só de schema (`ALTER TABLE … SET
+SCHEMA`, sem RENAME), então a migração é mais simples que a dos modelos.
+
+O mapa é `mapa_seeds.csv` (única fonte de verdade). Os 3 `.sql` são gerados por
+`gerar_migracao_seeds.py`:
+
+| script | o quê | idempotente? |
+|---|---|---|
+| `verificar_seeds_prod.sql` | read-only: inventário de `data_quality`/`conjuntura`/`seeds` + `count(*)` por seed | sim |
+| `migrar_seeds_prod.sql` | forward: `data_quality`/`conjuntura` → `seeds` | não (transação única) |
+| `reverter_seeds_prod.sql` | rollback: `seeds` → `data_quality`/`conjuntura` | não (transação única) |
+
+Mesma estrutura dos scripts de modelo: transação única com preflight (cada
+origem existe, cada destino não existe) e postflight. Pré-requisitos: o schema
+`seeds` já existe em `prod`; o `dbt_project.yml` já aponta as seeds para `seeds`.
+
+```bash
+# 1. estado ANTES
+psql "$DSN" -f scripts/migracao/verificar_seeds_prod.sql | tee /tmp/verif_seeds_antes.txt
+
+# 2. move (transação única; aborta inteiro em qualquer erro)
+psql "$DSN" -v ON_ERROR_STOP=1 -f scripts/migracao/migrar_seeds_prod.sql
+
+# 3. estado DEPOIS — diffar contra o de antes (mesmas contagens, novo schema)
+psql "$DSN" -f scripts/migracao/verificar_seeds_prod.sql | tee /tmp/verif_seeds_depois.txt
+diff /tmp/verif_seeds_antes.txt /tmp/verif_seeds_depois.txt
+```
+
+Rollback: `psql "$DSN" -v ON_ERROR_STOP=1 -f scripts/migracao/reverter_seeds_prod.sql`.
