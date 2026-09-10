@@ -11,18 +11,18 @@ passou a alcançar a série histórica e os golds de série/snapshot. Antes o ei
 histórico contava **APF**, e um empreendimento FDS multi-fase
 (Projeto → Obra → Desligamento, ~19% dos empreendimentos) aparecia 2–3×.
 
-- `silver_mcmv_historico_empreendimento_fds`: novas colunas `id_empreendimento`
+- `prata_fds_historico_empreendimento`: novas colunas `id_empreendimento`
   e `fase_empreendimento` (join na dim por `apf`; fallback
   `md5('empreendimento-fds|' || apf)` para APF fora da dim).
   `codigo_empreendimento` repontado de `nu_apf` para `coalesce(id_empreendimento,
   apf)` (alinha com `silver_mcmv_entidades_base`). `apf`,
   `id_historico_snapshot` e `id_negocio_historico` continuam por APF físico.
-- `silver_mcmv_historico_empreendimento_far` / `_rural`: `id_empreendimento = apf`,
+- `prata_far_historico_empreendimento` / `_rural`: `id_empreendimento = apf`,
   `fase_empreendimento = NULL` (contrato comum; o APF já é o empreendimento).
-- `gold_serie_situacao_mensal`: `n_empreendimentos` e o `lag()` de transições
+- `ouro_dhist_serie_situacao_mensal`: `n_empreendimentos` e o `lag()` de transições
   passam a usar `chave_empreendimento = coalesce(id_empreendimento, apf)`.
   Colapso mensal com precedência de fase Desligamento > Obra > Projeto.
-- `gold_snapshot_empreendimento_atual`: 1 linha por `(frente, codigo_empreendimento)`;
+- `ouro_dhist_snapshot_empreendimento_atual`: 1 linha por `(frente, codigo_empreendimento)`;
   no FDS a fase mais avançada vence, depois `dt_referencia`. FAR/Rural inalterados.
 - `mcmv_silver_empty_contract`: `+ fase_empreendimento` (as `*_base` já tinham).
 - Teste novo `assert_fase_taxonomia_consistente_jan_abr` (vacuous hoje — seed é
@@ -30,7 +30,7 @@ histórico contava **APF**, e um empreendimento FDS multi-fase
 
 ## Cobertura
 
-- `silver_mcmv_historico_empreendimento_fds`: 53.442 linhas · **1.021 APF**
+- `prata_fds_historico_empreendimento`: 53.442 linhas · **1.021 APF**
   distintos · **992 (97,2%)** casam na dim → só ~29 APFs no fallback `md5`.
 - Colapso: **1.021 APF → 917 `id_empreendimento`** (−104, −10,2%). 207 APFs em
   grupos multi-APF.
@@ -41,10 +41,10 @@ histórico contava **APF**, e um empreendimento FDS multi-fase
 
 | Métrica | Antes | Depois |
 |---|---|---|
-| `gold_snapshot_empreendimento_atual` — Entidades | 1.021 | **917** |
-| `gold_snapshot_empreendimento_atual` — FAR | 5.506 | 5.506 |
-| `gold_snapshot_empreendimento_atual` — Rural | 11.129 | 11.129 |
-| `gold_serie_situacao_mensal` Σ`n_empreendimentos` Entidades 2024 (nacional) | 6.557 | **6.073** |
+| `ouro_dhist_snapshot_empreendimento_atual` — Entidades | 1.021 | **917** |
+| `ouro_dhist_snapshot_empreendimento_atual` — FAR | 5.506 | 5.506 |
+| `ouro_dhist_snapshot_empreendimento_atual` — Rural | 11.129 | 11.129 |
+| `ouro_dhist_serie_situacao_mensal` Σ`n_empreendimentos` Entidades 2024 (nacional) | 6.557 | **6.073** |
 | … 2025 | 9.469 | **8.630** |
 | … 2020–2022 | 6.613 | 6.612 |
 

@@ -5,7 +5,7 @@ prod. Change OpenSpec `auditar-grao-serie-executiva-historica`.
 
 ## Problema
 
-`silver_mcmv_historico_serie_executiva` tratava as 4 famílias pré-2019 como
+`prata_dhist_serie_executiva` tratava as 4 famílias pré-2019 como
 snapshot por empreendimento e deduplicava com `row_number() … rn = 1`, mantendo
 **uma linha de movimento arbitrária** por `(chave_natural, dt_referencia)`.
 `bases_relatorio_executivo` e `bext` são, na verdade, **razões de movimento de
@@ -37,12 +37,12 @@ byte-a-byte** da mesma linha de negócio (o extrator a montante emite `"295.0"` 
    mês)`. Os pares `+N`/`−N` genuínos netam (distrato → 0). `linha_ogu_fgts` e
    `situacao_derivada` recalculados sobre os valores agregados.
 
-`natureza_serie` = coluna nova da silver, propagada ao `gold_serie_mensal`
+`natureza_serie` = coluna nova da silver, propagada ao `ouro_dhist_serie_mensal`
 (removido o literal `'estoque'`).
 
 ## Diff de números
 
-### Silver `silver_mcmv_historico_serie_executiva` — totais por família
+### Silver `prata_dhist_serie_executiva` — totais por família
 
 | família | linhas (=) | `Σ uh_contratadas` antes → depois | `Σ uh_comercializadas` antes → depois |
 |---|---|---|---|
@@ -68,7 +68,7 @@ byte-a-byte** da mesma linha de negócio (o extrator a montante emite `"295.0"` 
 
 Negativos de UH nas 4 famílias: `bext` 253 → **0**, demais já 0.
 
-### Gold `gold_serie_mensal`
+### Gold `ouro_dhist_serie_mensal`
 
 Contrato de colunas: **prefixo idêntico**; `natureza_serie` deixa de ser fixo;
 `uh_comercializadas` adicionado como **última coluna**. `uh_em_obras` (já no
@@ -92,7 +92,7 @@ spec.
 
 ## Testes DQ (todos `warn`, não filtram linha)
 
-`silver_mcmv_historico_serie_executiva` — `dbt test`:
+`prata_dhist_serie_executiva` — `dbt test`:
 
 | teste | resultado |
 |---|---|
@@ -104,7 +104,7 @@ spec.
 | `reconcilia_decomposicao` (financeiro, pré-existente) | WARN 1.310 (era ~6,5 k) |
 | `valor_dentro_faixa_uh` (pré-existente) | WARN 632 |
 
-`gold_serie_mensal`: `soma_nao_cruza_familia` WARN 513 (janela de sobreposição
+`ouro_dhist_serie_mensal`: `soma_nao_cruza_familia` WARN 513 (janela de sobreposição
 `min_cidades`×`bases_relatorio_executivo` 2014–2016 — característica do dado, o
 teste é lembrete). `accepted_values` de `natureza_serie` (`estoque`/`fluxo`) e
 `grao_familia` (`contrato`/`empreendimento`): PASS.

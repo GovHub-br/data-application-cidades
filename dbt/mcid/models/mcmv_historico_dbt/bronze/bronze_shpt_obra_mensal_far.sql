@@ -14,7 +14,7 @@
 -- 1 linha / nu_apf / arquivo); colunas preservadas como vieram, sem tipagem;
 -- dt_referencia do sufixo `_YYYYMM`; auditoria source_file, frente_mcmv,
 -- dt_ingest, hash_linha. A dedup por (apf, dt_referencia) e a tipagem/mapa de
--- colunas ficam em silver_mcmv_historico_obra_mensal.
+-- colunas ficam no braço `obra_mensal` das 3 pratas de frente.
 --
 -- Corpo e glob vêm do mapa de famílias (macros/historico/familias.sql). Change:
 -- enriquecer-quantidades-uh-e-sinais-obra-historico (D4).

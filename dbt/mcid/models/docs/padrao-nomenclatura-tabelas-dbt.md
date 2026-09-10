@@ -41,23 +41,26 @@ gold de um mesmo produto de dados. Ele aparece em:
 | `empreendimento_far` | `far` | Empreendimentos MCMV frente FAR |
 | `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
 | `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
-| `indicadores_mcmv` | `reloginho`, `gargalo`, ... | Reloginho (grupo A), gargalo/desempenho (grupo B) |
-| `mcmv_historico` | `mcmv_historico` | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) |
+| `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) — schema por camada `bronze`/`prata`/`ouro` |
+| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `dhist`/`far`/`rural`/`fds` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
 
 O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_far_…`,
-`silver_mcmv_historico_…` — nunca como sufixo.
+`prata_dhist_…` — nunca como sufixo.
 
 Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 `dbt_project.yml`.
 
-> **Eixo histórico e reloginho — schema por domínio, não por camada.** A regra
-> "um schema por camada" (seção 3) **não vale** para `mcmv_historico_dbt` e
-> `indicadores_mcmv_dbt`. Desde `consolidar-schemas-historico-reloginho` (D1):
-> `dados_historicos` guarda bronze + silver + gold do histórico **cross-frente**;
-> o que é **por frente** (`silver_historico_empreendimento`) mora no schema da
-> frente; o domínio reloginho/gargalo é autocontido em `reloginho`. Os schemas
-> `mcmv_historico` e `serie_historica` foram **extintos**. Ver
-> `models/mcmv_historico_dbt/README.md` § Convenção de schema.
+> **Eixo histórico e reloginho — schema por camada em português.** Desde
+> `renomear-camadas-pt-historico-reloginho` (D1), os 33 modelos de
+> `mcmv_historico_dbt` (exceto `piloto/`) e `indicadores_mcmv_dbt` materializam
+> por **camada**: bronze → `bronze`, silver → `prata`, gold → `ouro`. O nome de
+> tabela é `<camada>_<token>_<nome>` — token = **origem de staging** na bronze
+> (`dhist`/`sftp`/`shpt`) e **domínio** na prata/ouro
+> (`dhist`/`far`/`rural`/`fds`/`reloginho`). Reverte a D1 de
+> `consolidar-schemas-historico-reloginho`. Os schemas `dados_historicos`,
+> `reloginho`, de frente, `conjuntura`, `mcmv_historico` e `serie_historica`
+> **não recebem** estes braços. Ver `models/mcmv_historico_dbt/README.md`
+> § Convenção de schema.
 
 ---
 
@@ -102,7 +105,7 @@ obrigatório e vem logo após a camada, `<assunto>` sozinho nunca colide:
 - `silver_empreendimento` ❌ (sem token; colidiria entre FAR, FDS, Rural)
 - `silver_far_empreendimento`, `silver_fds_empreendimento`,
   `silver_rural_empreendimento` ✅
-- `silver_mcmv_historico_empreendimento_far` ✅ (token `mcmv_historico`; a frente
+- `prata_far_historico_empreendimento` ✅ (token `mcmv_historico`; a frente
   `_far` é recorte porque o token do domínio histórico não é a frente)
 
 O nome do arquivo `.sql` **é** o nome da tabela. Não usar `alias`.

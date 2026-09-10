@@ -17,56 +17,7 @@ seeds:
         data_tests:
           - not_null
 
-models:
-  - name: silver_mcmv_historico_serie_anual_ogu_fgts
-    description: >
-      Silver — serie historica ANUAL de UHs contratadas do MCMV separando
-      OGU/Subsidiado e FGTS/Financiado (base piloto da issue #118). Uma linha
-      por ano e linha historica, com snapshot_date, hash_linha, janela de
-      validade e indicador de registro corrente. Roda no Postgres (seed).
-    columns:
-      - name: id_historico_snapshot
-        description: Chave tecnica unica da versao do registro historico.
-        data_tests:
-          - not_null
-          - unique
-      - name: id_negocio_historico
-        description: Chave logica estavel por programa, linha historica e ano.
-        data_tests:
-          - not_null
-      - name: programa
-        data_tests:
-          - not_null
-      - name: linha_historica
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['OGU/Subsidiado', 'FGTS/Financiado']
-      - name: granularidade_temporal
-        data_tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['ano']
-      - name: ano
-        data_tests:
-          - not_null
-      - name: dt_referencia
-        data_tests:
-          - not_null
-      - name: quantidade_uh
-        data_tests:
-          - not_null
-      - name: snapshot_date
-        data_tests:
-          - not_null
-      - name: hash_linha
-        data_tests:
-          - not_null
-      - name: dt_valid_from
-        data_tests:
-          - not_null
-      - name: is_current
-        data_tests:
-          - not_null
+# O modelo `prata_dhist_serie_anual_ogu_fgts` (ex-`silver_mcmv_historico_serie_anual_ogu_fgts`)
+# está DESABILITADO nesta branch (change renomear-camadas-pt-historico-reloginho,
+# D4 — ver o cabeçalho do .sql). O bloco `models:` com suas colunas/testes será
+# restaurado quando o desenvolvimento do piloto for retomado.

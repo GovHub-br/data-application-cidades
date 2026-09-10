@@ -98,7 +98,7 @@ Empréstimo: `vr_emprestimo_far` (INT054), `vr_emprestimo_original` (INT059),
 silvers por frente (as silvers só carregam `valor_contratado` e
 `valor_desembolsado`).
 
-SNH (`bronze_mcmv_historico_empreendimento_snh_bb/_caixa`):
+SNH (`bronze_dhist_empreendimento_snh_bb/_caixa`):
 `valor_contratado`, `valor_desembolsado`, `valor_desembolsado_do_ano_de_referencia`,
 `valor_aporte_adicional`.
 

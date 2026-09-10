@@ -1,7 +1,7 @@
 {{ config(severity='warn') }}
 
 -- Teste singular: reconciliação entre as duas fontes de desembolso do
--- gold_indicadores_gargalo_desempenho, para o conjunto de APF em que AS DUAS
+-- ouro_reloginho_indicadores_gargalo_desempenho, para o conjunto de APF em que AS DUAS
 -- existem:
 --   valor_liberado_historico       — ficha GEFUS/CAIXA (primário, D4)
 --   valor_desembolsado_componentes — agregado do *_financeiro_mensal (SharePoint)
@@ -18,7 +18,7 @@ with base as (
         sum(valor_liberado_historico) as soma_gefus,
         sum(valor_desembolsado_componentes) as soma_sharepoint,
         count(*) as n_apf
-    from {{ ref('gold_indicadores_gargalo_desempenho') }}
+    from {{ ref('ouro_reloginho_indicadores_gargalo_desempenho') }}
     where valor_liberado_historico is not null
         and valor_desembolsado_componentes is not null
         and valor_liberado_historico > 0

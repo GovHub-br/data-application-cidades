@@ -7,11 +7,11 @@ testada local em 2026-09-06 (target `staging_duckdb`, `/mnt/data/duckdb/cidades.
 
 ### B — espinha de entregas por APF
 
-`models/mcmv_historico_dbt/silver/silver_mcmv_historico_entrega_apf.sql` (schema
-`mcmv_historico`, grão `apf`). Lê `bronze_reloginho_snh_entregas_evento_bb` /
+`models/mcmv_historico_dbt/silver/prata_dhist_entrega_apf.sql` (schema
+`mcmv_historico`, grão `apf`). Lê `bronze_dhist_snh_entregas_evento_bb` /
 `_caixa` (a mesma fonte que o reloginho já ingere — o reloginho segue consumindo
 em paralelo), deduplica os eventos por hash de conteúdo **idêntico** ao de
-`silver_historico_snh_entregas_mes` e agrega por APF:
+`prata_dhist_snh_entregas_mes` e agrega por APF:
 
 | coluna | conteúdo |
 |---|---|
@@ -21,7 +21,7 @@ em paralelo), deduplica os eventos por hash de conteúdo **idêntico** ao de
 | `dt_ultimo_snapshot` | maior `dt_referencia` de snapshot em que o APF apareceu |
 
 Resultado do build: **11.741 APFs**, `uh_entregues_acumulada` somada =
-**1.517.820** — reconcilia exatamente com `silver_historico_snh_entregas_mes`
+**1.517.820** — reconcilia exatamente com `prata_dhist_snh_entregas_mes`
 (`assert_entrega_apf_reconcilia_reloginho`, diff = 0). Eventos com `dt_evento`
 nulo: **0** nos dois lotes (taxa de descarte 0 %).
 
@@ -35,7 +35,7 @@ Cobertura do `left join` por `apf` contra as silvers por frente:
 
 ### Split semântico `dt_entrega` → `dt_entrega_uh` + `dt_conclusao_obra` (BREAKING)
 
-Nas 3 silvers por frente e no `gold_snapshot_empreendimento_atual`. A coluna
+Nas 3 silvers por frente e no `ouro_dhist_snapshot_empreendimento_atual`. A coluna
 única `dt_entrega` misturava "entrega de UH" (FAR ← `dt_ultima_entrega`) com
 "conclusão de obra" (Rural ← `dt_efetiva_conclusao`); FDS era 100 % NULL.
 
@@ -63,9 +63,9 @@ O congelamento do feed SFTP em 2024‑11 (INT040/054/057/065 pararam;
 só INT059 segue) deixou de travar o eixo de entrega — a espinha SNH cobre a
 janela 2024‑02 → 2026‑07.
 
-### D — `gold_marco_empreendimento`
+### D — `ouro_dhist_marco_empreendimento`
 
-`models/mcmv_historico_dbt/gold/gold_marco_empreendimento.sql` (schema
+`models/mcmv_historico_dbt/gold/ouro_dhist_marco_empreendimento.sql` (schema
 `dados_historicos` (era `serie_historica`), grão `coalesce(id_empreendimento, apf)` — FDS multi‑fase
 colapsa em 1 linha). 7 marcos, cada um com `<marco>_fonte` e `<marco>_dt_snapshot`:
 
@@ -96,7 +96,7 @@ O modelo **só seleciona** entre valores observados — nunca interpola.
    `destravar-datas-obra-entrega-silver-historico` (A/C) preenche.
 2. Rural `dt_entrega_uh`: só a espinha. INT065 `dt_ultima_entrega` (11 %) fica
    para a A/C.
-3. `gold_marco_empreendimento` e `gold_snapshot_empreendimento_atual` coexistem —
+3. `ouro_dhist_marco_empreendimento` e `ouro_dhist_snapshot_empreendimento_atual` coexistem —
    o snapshot não foi refatorado para ler os marcos.
 4. Colunas de proveniência planas (`<m>_fonte` texto, `<m>_dt_snapshot` date).
 
@@ -122,5 +122,5 @@ change A/C. FAR e Rural ficam em ~63‑67 % nessa métrica.
 ## Consumidores externos — pendente (manual)
 
 Varrer exports do Superset e o lineage do OpenMetadata por `dt_entrega` apontando
-para `*.silver_historico_empreendimento` ou `dados_historicos.gold_snapshot_empreendimento_atual`
+para `prata.prata_{far,fds,rural}_historico_empreendimento` ou `dados_historicos.ouro_dhist_snapshot_empreendimento_atual`
 e repontar para `dt_entrega_uh` (não há mais `dt_entrega` nessas relações).

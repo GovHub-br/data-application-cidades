@@ -21,8 +21,7 @@
         preservado).
       - `fonte_valor` / `dt_snapshot_efetivo` nas linhas reais.
       - as 9 colunas YTD (acumulado-no-ano) do braço SNH, por LEFT JOIN no grão
-        (frente_mcmv, apf, dt_referencia) — ex-modelo
-        silver_historico_empreendimento_fluxo_ano (change
+        (frente_mcmv, apf, dt_referencia) — ex-modelo de fluxo YTD autônomo (change
         consolidar-schemas-historico-reloginho, D3). NULL em ~95% das linhas
         (a família só existe de 2024-06+ e não retroage). NÃO sofrem LOCF —
         são valores de snapshot, não estado que precise ser arrastado.

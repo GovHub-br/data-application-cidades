@@ -25,7 +25,7 @@ reloginho. Esta proposta cobre duas fatias adicionais do dump histórico.
 | `o_recente_YYYYMM_snh_pmcmv_dados_prioritarios_af_caixa_entregas` | `apf`, `dt_entrega`, `qt_uh_entregues` |
 | `_YYYYMM_snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_b` (+ truncados `024_10_…`) | `apf`, `dt_ass_doc`, `numero_de_unidades_entregues` |
 
-### `models/indicadores_mcmv_dbt/bronze/bronze_reloginho_snh_entregas_evento.sql`
+### `models/indicadores_mcmv_dbt/bronze/bronze_dhist_snh_entregas_evento.sql`
 
 ```sql
 {{ config(materialized="table") }}
@@ -80,7 +80,7 @@ from fonte
 ```sql
 -- Agrega o fluxo por (agente, apf, mês de dt_evento), deduplicando eventos
 -- repetidos por hash_linha, e produz a entrega LÍQUIDA do mês por APF.
-with base as (select * from {{ ref('bronze_reloginho_snh_entregas_evento') }}),
+with base as (select * from {{ ref('bronze_dhist_snh_entregas_evento') }}),
 tipado as (
     select
         coalesce(upper(nullif(trim(agente_financeiro::text),'')), agente_arquivo) as agente_financeiro,
@@ -269,7 +269,7 @@ Depois, a silver do reloginho (`silver_reloginho_snh_apf_mes`) ganha um
 ```yaml
     indicadores_mcmv_dbt:
       bronze:
-        # bronze_reloginho_snh_serie_mensal + bronze_reloginho_snh_entregas_evento
+        # bronze_reloginho_snh_serie_mensal + bronze_dhist_snh_entregas_evento
         +enabled: "{{ target.type == 'duckdb' }}"
 
     mcmv_historico_dbt:

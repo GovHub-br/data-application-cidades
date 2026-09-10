@@ -7,7 +7,7 @@ Change OpenSpec `verificar-tipagem-silver-gold-historico`. Referência de tipos:
 
 ### Problema
 
-`silver_historico_snh_apf_mes` lia só `uh_contratadas` / `uh_entregues` /
+`prata_dhist_snh_apf_mes` lia só `uh_contratadas` / `uh_entregues` /
 `uh_vigentes` com `try_cast` na mão. A SNH BB reporta essas contagens em
 `uhs_contratadas` / `uhs_entregues` / `uhs_vigentes` nos snapshots
 **2024-06, 2024-07, 2024-10, 2024-11, 2025-01** (`union_by_name` sobre parquets
@@ -18,7 +18,7 @@ sem `uhs_*`).
 
 CTE `tipado`: as 3 contagens passam a
 `coalesce_present_parsed(ref(f.modelo), ['uh_contratadas','uhs_contratadas'], 'parse_hist_bigint', 'bigint')`
-— mesma macro/assinatura do `silver_historico_snh_arm` das silvers por frente.
+— mesma macro/assinatura do `prata_dhist_snh_arm` das silvers por frente.
 `coalesce_present` (introspecção por família em tempo de compilação) é necessário
 porque a bronze CAIXA não tem `uhs_*`.
 
@@ -26,12 +26,12 @@ porque a bronze CAIXA não tem `uhs_*`.
 
 | Métrica | Antes | Depois |
 |---|--:|--:|
-| `silver_historico_snh_apf_mes` linhas totais | 307.731 | 307.731 |
+| `prata_dhist_snh_apf_mes` linhas totais | 307.731 | 307.731 |
 | `uh_contratadas` não-nulo | 301.291 | 307.731 |
 | BB: linhas | 20.608 | 20.608 |
 | BB: `uh_contratadas` não-nulo | 12.880 | 20.608 |
 
-`gold_indicadores_reloginho`, agente BB (contratadas / entregues / vigentes):
+`ouro_reloginho_indicadores`, agente BB (contratadas / entregues / vigentes):
 
 | mês | antes | depois |
 |---|---|---|
@@ -56,7 +56,7 @@ não valor; as linhas BB desses 5 meses sempre existiram, só tinham UH nula.
 `uh_entregues` / `uh_vigentes` no `silver/schema.yml` — regressão de mapeamento
 de coluna (safra futura renomeia de novo) derruba a cobertura e o teste avisa.
 
-### `silver_historico_snh_entregas_mes` — verificado, sem o problema
+### `prata_dhist_snh_entregas_mes` — verificado, sem o problema
 
 A bronze `bronze_snh_entregas` já harmoniza `qt_uh_entregues` (CAIXA) /
 `numero_de_unidades_entregues` (BB) via `coalesce_present_cols`, expondo
@@ -69,17 +69,17 @@ A bronze `bronze_snh_entregas` já harmoniza `qt_uh_entregues` (CAIXA) /
 
 | modelo | colunas |
 |---|---|
-| `silver_mcmv_historico_serie_executiva` | 5 `uh_*` |
-| `gold_serie_mensal` | 5 `uh_*` |
-| `gold_serie_situacao_mensal` | `uh`, `entradas`, `saidas` |
-| `gold_indicadores_reloginho` / `_frente` | `uh_contratadas/entregues/vigentes` |
-| `gold_indicadores_reloginho_entregas` | `uh_entregues_evento_mes/_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
-| `silver_historico_snh_entregas_mes` | `uh_entregues_evento_mes` |
+| `prata_dhist_serie_executiva` | 5 `uh_*` |
+| `ouro_dhist_serie_mensal` | 5 `uh_*` |
+| `ouro_dhist_serie_situacao_mensal` | `uh`, `entradas`, `saidas` |
+| `ouro_reloginho_indicadores` / `_frente` | `uh_contratadas/entregues/vigentes` |
+| `ouro_reloginho_indicadores_entregas` | `uh_entregues_evento_mes/_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
+| `prata_dhist_snh_entregas_mes` | `uh_entregues_evento_mes` |
 
 Verificado pós-rebuild: `HUGEINT` = 0 em todos; somas nacionais inalteradas
-(`gold_serie_mensal` Σ uh_contratadas nacional = 120.606.220, = silver;
-`gold_indicadores_reloginho` CAIXA 2026-03 = 1.697.630 / 1.391.909 = ref #66).
-`gold_resumo_reloginho_dashboard` herda `bigint` do upstream, sem edição.
+(`ouro_dhist_serie_mensal` Σ uh_contratadas nacional = 120.606.220, = silver;
+`ouro_reloginho_indicadores` CAIXA 2026-03 = 1.697.630 / 1.391.909 = ref #66).
+`ouro_reloginho_resumo_dashboard` herda `bigint` do upstream, sem edição.
 
 ## Itens 2–4 — inventário + `verificacao_tipagem`
 

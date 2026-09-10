@@ -17,13 +17,13 @@
 with
     consolidado as (
         select frente_mcmv, apf, dt_referencia
-        from {{ ref('silver_mcmv_historico_empreendimento_far') }}
+        from {{ ref('prata_far_historico_empreendimento') }}
         union all
         select frente_mcmv, apf, dt_referencia
-        from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
+        from {{ ref('prata_fds_historico_empreendimento') }}
         union all
         select frente_mcmv, apf, dt_referencia
-        from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
+        from {{ ref('prata_rural_historico_empreendimento') }}
     ),
 
     por_mes as (

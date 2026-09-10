@@ -11,7 +11,7 @@ version: 2
 
 models:
 
-  - name: bronze_mcmv_historico_serie_bases_relatorio_executivo
+  - name: bronze_dhist_serie_bases_relatorio_executivo
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
       `bases_relatorio_executivo` (grão empreendimento), cópia fiel do glob
@@ -19,7 +19,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      silver_mcmv_historico_serie_executiva.
+      prata_dhist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -116,7 +116,7 @@ models:
           - unique
 
 
-  - name: bronze_mcmv_historico_serie_min_cidades
+  - name: bronze_dhist_serie_min_cidades
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
       `min_cidades` (grão empreendimento/contrato (BB)), cópia fiel do glob
@@ -124,7 +124,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      silver_mcmv_historico_serie_executiva.
+      prata_dhist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -159,7 +159,7 @@ models:
           - unique
 
 
-  - name: bronze_mcmv_historico_serie_entrada_bb
+  - name: bronze_dhist_serie_entrada_bb
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
       `entrada_bb` (grão empreendimento (BB)), cópia fiel do glob
@@ -167,7 +167,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      silver_mcmv_historico_serie_executiva.
+      prata_dhist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -233,7 +233,7 @@ models:
           - unique
 
 
-  - name: bronze_mcmv_historico_serie_bext
+  - name: bronze_dhist_serie_bext
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
       `bext` (grão contrato PF (CAIXA)), cópia fiel do glob
@@ -241,7 +241,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      silver_mcmv_historico_serie_executiva.
+      prata_dhist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -290,7 +290,7 @@ models:
           - unique
 
 
-  - name: bronze_mcmv_historico_empreendimento_int040
+  - name: bronze_sftp_empreendimento_int040
     description: >
       Bronze — série histórica mensal de empreendimentos MCMV, interface
       INT040 do SFTP/GEFUS (FAR CAIXA), cópia fiel de
@@ -335,7 +335,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_empreendimento_int054
+  - name: bronze_sftp_empreendimento_int054
     description: >
       Bronze — série histórica mensal de empreendimentos MCMV, interface
       INT054 do SFTP/GEFUS (FAR BB), cópia fiel de
@@ -377,7 +377,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_empreendimento_int057
+  - name: bronze_sftp_empreendimento_int057
     description: >
       Bronze — série histórica mensal de empreendimentos MCMV, interface
       INT057 do SFTP/GEFUS (PNHR / Rural BB), cópia fiel de
@@ -419,7 +419,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_empreendimento_int059
+  - name: bronze_sftp_empreendimento_int059
     description: >
       Bronze — série histórica mensal de empreendimentos MCMV, interface
       INT059 do SFTP/GEFUS (FDS / Entidades), cópia fiel de
@@ -461,7 +461,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_empreendimento_int065
+  - name: bronze_sftp_empreendimento_int065
     description: >
       Bronze — série histórica mensal de empreendimentos MCMV, interface
       INT065 do SFTP/GEFUS (PNHR / Rural CAIXA), cópia fiel de
@@ -503,7 +503,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_empreendimento_snh_bb
+  - name: bronze_dhist_empreendimento_snh_bb
     description: >
       Bronze — série mensal SNH "dados prioritários" por empreendimento MCMV
       (2024-06+), agente BB, cópia fiel do glob
@@ -511,7 +511,7 @@ models:
       **sem regra de negócio** (sem tipagem, sem dedup). Frentes: FAR / Entidades
       / Rural (coluna `modalidade`). Exclui os fluxos de entrega por evento
       (%entrega%), que são fonte das bronzes
-      bronze_reloginho_snh_entregas_evento_*. Uma linha por linha de origem
+      bronze_dhist_snh_entregas_evento_*. Uma linha por linha de origem
       (sem dedup), sem tipagem. Preserva agente_arquivo e prioridade_reentrega,
       usados pelo reloginho. Grão: empreendimento × mês.
     meta:
@@ -551,7 +551,7 @@ models:
           - not_null
 
   # --- família obra_mensal (change enriquecer-quantidades-uh-e-sinais-obra-historico, D4)
-  - name: bronze_mcmv_historico_obra_mensal_far
+  - name: bronze_shpt_obra_mensal_far
     description: >
       Bronze — evolução de obra por empreendimento MCMV, frente FAR
       (`MONIT_MOV_OBRA_FAR_MENSAL_YYYYMM`), cópia fiel do glob recursivo
@@ -564,8 +564,8 @@ models:
       `hash_linha`. Janela real 202512 → 202607. Schema DIVERGE de FDS/RURAL
       (`dt_movimento` / `co_situacao_obra`). A harmonização e o dedup ficam no
       braço `obra_mensal` das 3 silvers
-      `silver_mcmv_historico_empreendimento_{far,fds,rural}` (o modelo autônomo
-      `silver_mcmv_historico_obra_mensal` foi dissolvido pela change
+      `prata_{far,fds,rural}_historico_empreendimento` (o modelo autônomo
+      o modelo de obra mensal autônomo foi dissolvido pela change
       consolidar-schemas-historico-reloginho).
     meta:
       tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
@@ -598,7 +598,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_obra_mensal_fds
+  - name: bronze_shpt_obra_mensal_fds
     description: >
       Bronze — evolução de obra por empreendimento MCMV, frente FDS / Entidades
       (`MONIT_MOV_OBRA_FDS_MENSAL_YYYYMM`), cópia fiel. Seleção pelo nome do
@@ -606,7 +606,7 @@ models:
       e mesmo assim entram. Janela real 202512 → 202607. Schema com
       `dh_movimento`, `co_situacao_operacao` + `co_andamento_operacao`,
       `detalhe_paralisacao_retomada`, `dt_legalizacao_reg`. Demais detalhes: ver
-      bronze_mcmv_historico_obra_mensal_far.
+      bronze_shpt_obra_mensal_far.
     meta:
       tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
     data_tests:
@@ -638,13 +638,13 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_obra_mensal_rural
+  - name: bronze_shpt_obra_mensal_rural
     description: >
       Bronze — evolução de obra por empreendimento MCMV, frente Rural / PNHR
       (`MONIT_MOV_OBRA_RURAL_MENSAL_YYYYMM`), cópia fiel. Janela real 202512 →
       202607. Schema como o do FDS (`dh_movimento`, `co_situacao_operacao`), com
       `no_detalhe_paralisacao_retomada` e `dt_previsao_conclusao_obra_retomada`.
-      Demais detalhes: ver bronze_mcmv_historico_obra_mensal_far.
+      Demais detalhes: ver bronze_shpt_obra_mensal_far.
     meta:
       tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
     data_tests:
@@ -676,7 +676,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_mcmv_historico_empreendimento_snh_caixa
+  - name: bronze_dhist_empreendimento_snh_caixa
     description: >
       Bronze — série mensal SNH "dados prioritários" por empreendimento MCMV
       (2024-06+), agente CAIXA, cópia fiel do glob
@@ -686,7 +686,7 @@ models:
       `codigo_ibge_do_municipio` / `cep_do_imovel` / `numero_do_imovel` que o BB
       não tem. Exclui os fluxos de entrega por evento
       (%entrega%), que são fonte das bronzes
-      bronze_reloginho_snh_entregas_evento_*. Uma linha por linha de origem
+      bronze_dhist_snh_entregas_evento_*. Uma linha por linha de origem
       (sem dedup), sem tipagem. Preserva agente_arquivo e prioridade_reentrega,
       usados pelo reloginho. Grão: empreendimento × mês.
     meta:

@@ -7,7 +7,7 @@ Change: `colunas-orfas-bronze-historico`. Entregável das tasks 1.1–1.3 (audit
 `coalesce_present(bronze, [aliases])` é uma **allowlist**: coluna do bronze fora
 da lista de aliases é descartada sem `warn`. Este doc inventaria o que está órfão
 e com sinal de negócio nas 7 bronzes de empreendimento
-(`bronze_mcmv_historico_empreendimento_int040/054/057/059/065` +
+(`bronze_sftp_empreendimento_int040/054/057/059/065` +
 `_snh_bb/_snh_caixa`).
 
 ## 1.1 Inventário — órfãs com sinal semântico
@@ -162,7 +162,7 @@ Fora do seed → `nao_mapeada` (teste `dentro_do_dominio` `warn`).
 - **OQ1 — enum de `sinal_retomada`**: subtipo no próprio enum (acima), não em
   coluna separada. `retomada_*` vs `a_retomar_*` dá o corte binário por prefixo.
 - **OQ2 — `dim` em `silver/` ou `gold/`**: `silver/` (deriva de silvers/bronzes
-  históricas; `silver_mcmv_historico_*` é o padrão de nome do eixo). Alias
+  históricas; `prata_*` / `bronze_*` / `ouro_*` é o padrão de nome do eixo). Alias
   `dim_empreendimento_historico`, schema `mcmv_historico`.
 - **OQ3 — `desc_situacao_contrato`**: cru, sem mapa canônico (voto do design).
 - **OQ4 — precedência de coordenadas**: **moot** — `gps_*` do INT059 é 0% real.
@@ -203,7 +203,7 @@ LOCF na cauda (`silver_tail`, `preenchido` CTE): os 7 campos A/C recebem
 `last_value(... ignore nulls)` do `(frente, apf)` junto de `valor_contratado` —
 senão o `gold_snapshot` (última linha = SNH pós-2024-11) ficava ~0%.
 
-### `silver_historico_empreendimento_fluxo_ano` (Bloco B)
+### Fluxo YTD (ex-modelo `silver_historico_empreendimento_fluxo_ano`, dissolvido) — Bloco B
 
 270.858 linhas · grão `(frente_mcmv, apf, dt_referencia)` único · cobertura
 2024-06 → 2026-03 · FAR 81.578 / Rural 176.709 / Entidades 12.571.
@@ -213,7 +213,7 @@ Fills: `_ano` contratadas/vigentes/distratadas 100%, entregues 95%,
 
 ### `dim_empreendimento_historico`
 
-17.545 linhas = `gold_snapshot_empreendimento_atual` exato (chaves idênticas nos
+17.545 linhas = `ouro_dhist_snapshot_empreendimento_atual` exato (chaves idênticas nos
 2 sentidos). Fills: `no_entidade_organizadora`/`nu_cnpj_entidade` Rural ~86%
 (FAR/Entidades 0% — INT059 não tem a coluna); `latitude`/`longitude` ~45% (SNH
 decimal); `bairro`/`cep`/`logradouro` ~85–91%; `dsc_tipologia` ~29%;
@@ -221,11 +221,11 @@ decimal); `bairro`/`cep`/`logradouro` ~85–91%; `dsc_tipologia` ~29%;
 
 ### Propagação nos golds de estado
 
-- `gold_snapshot_empreendimento_atual` +5 colunas ao fim (`sinal_retomada`,
+- `ouro_dhist_snapshot_empreendimento_atual` +5 colunas ao fim (`sinal_retomada`,
   `motivo_paralisacao`, `desc_situacao_contrato`, `dt_ultima_liberacao`,
   `dt_primeira_entrega`). FAR desc 81% / dul 80%, Rural dul 86%,
   `sinal_retomada` 301 `retomada_*` + ~350 `a_retomar_*`.
-- `gold_marco_empreendimento` +3 (`dt_primeira_entrega` agora
+- `ouro_dhist_marco_empreendimento` +3 (`dt_primeira_entrega` agora
   `least(silver_direto, espinha)` + `_fonte`; novo marco `dt_ultima_liberacao`
   + `_fonte` + `_dt_snapshot`). `dt_primeira_entrega` fill 67% (era via espinha).
 
@@ -255,7 +255,7 @@ corpus = "".join(open(f).read().lower() for f in files)
 toks = set(re.findall(r'[a-z_][a-z0-9_]+', corpus))
 consumed = set()
 for b in bronzes:
-    for (c,) in con.execute(f"select column_name from information_schema.columns where table_name='bronze_mcmv_historico_empreendimento_{b}'").fetchall():
+    for (c,) in con.execute(f"select column_name from information_schema.columns where table_name='bronze_sftp_empreendimento_{b}'").fetchall():
         if pat.search(c.lower()) and c.lower() in toks:
             consumed.add(c.lower())
 print(sorted(consumed))

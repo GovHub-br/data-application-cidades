@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: silver_historico_snh_apf_mes
+  - name: prata_dhist_snh_apf_mes
     description: >
       Silver do reloginho (grupo A): série mensal SNH tipada, com domínio
       normalizado e deduplicada por APF. Grão: uma linha por
@@ -54,7 +54,7 @@ models:
           compatibilidade com o dashboard do reloginho (D3).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_historico_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
@@ -64,7 +64,7 @@ models:
           `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_historico_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
@@ -74,7 +74,7 @@ models:
           `quantidade_uh_vigentes`; nome mantido para compatibilidade (D3).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_historico_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_distratadas
@@ -130,10 +130,10 @@ models:
       - name: regiao_nome
         description: Nome da macrorregião IBGE (par de regiao_sigla).
 
-  - name: silver_historico_snh_entregas_mes
+  - name: prata_dhist_snh_entregas_mes
     description: >
       Silver do reloginho (grupo A) — entregas por evento agregadas ao mês do
-      EVENTO. Lê bronze_reloginho_snh_entregas_evento, deduplica eventos
+      EVENTO. Lê bronze_dhist_snh_entregas_evento, deduplica eventos
       repetidos por hash_linha e soma por (agente_financeiro, apf, mes_evento).
       É o fluxo real de entregas (base do ritmo_recente e do caminho alternativo
       do total de entregas — decisão #5). Requer target staging_duckdb.
@@ -159,7 +159,7 @@ models:
       - name: uh_entregues_evento_mes
         description: >
           UH entregues no mês do EVENTO, por APF — série de FLUXO (pode somar
-          entre meses, ao contrário dos acumulados de `silver_historico_snh_apf_mes`).
+          entre meses, ao contrário dos acumulados de `prata_dhist_snh_apf_mes`).
           Conceito canônico `quantidade_uh_entregues` (recorte de fluxo); nome
           mantido para compatibilidade (D3). `cast(... as bigint)` — sum(bigint)
           daria HUGEINT.

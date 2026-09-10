@@ -23,7 +23,7 @@ with
             sum(uh_entregues_evento_mes) as uh_entregues_evento_mes,
             sum(n_eventos) as n_eventos,
             count(distinct apf) as n_apf_evento
-        from {{ ref("silver_historico_snh_entregas_mes") }}
+        from {{ ref("prata_dhist_snh_entregas_mes") }}
         group by agente_financeiro, mes_evento
     ),
 
@@ -40,7 +40,7 @@ with
 
     snapshot as (
         select agente_financeiro, dt_referencia, uh_entregues as uh_entregues_snapshot
-        from {{ ref("gold_indicadores_reloginho") }}
+        from {{ ref("ouro_reloginho_indicadores") }}
     )
 
 -- cast p/ bigint em todas as colunas de contagem: sum(bigint) -> HUGEINT

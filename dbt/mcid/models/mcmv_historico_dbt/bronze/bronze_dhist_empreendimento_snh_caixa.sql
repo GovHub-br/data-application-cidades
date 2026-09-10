@@ -16,7 +16,7 @@
 -- NAO entram aqui os fluxos de ENTREGA por evento (`*entrega*`) — filtrados
 -- no corpo. O reloginho usa o acumulado `uh_entregues` do proprio snapshot
 -- (decisao D6 da #130); os fluxos de evento sao fonte das bronzes
--- bronze_reloginho_snh_entregas_evento_bb/_caixa.
+-- bronze_dhist_snh_entregas_evento_bb/_caixa.
 --
 -- Preserva os campos derivados que o reloginho usa: agente_arquivo,
 -- prioridade_reentrega, dt_referencia (do NOME DO ARQUIVO), alem de

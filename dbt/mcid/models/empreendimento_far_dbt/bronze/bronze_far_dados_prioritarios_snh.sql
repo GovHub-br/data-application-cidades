@@ -3,7 +3,7 @@
 -- Bronze: Dados Prioritários SNH — snapshot corrente da SNH (frente FAR)
 -- Fonte: mcmv_staging.dados_prioritarios_disponibilizados_snh_empreendimentos
 -- (snapshot único data_de_referencia=30/09/2025; NÃO é a série mensal, essa
--- é bronze_mcmv_historico_empreendimento_snh em staging/dados_historicos).
+-- é bronze_dhist_empreendimento_snh em staging/dados_historicos).
 -- Recorte de frente: modalidade = FAR. Chave:
 -- normalize_apf(codigo_da_operacao_no_agente_financeiro)
 -- (não há coluna `apf` nua nesta fonte).

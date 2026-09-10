@@ -2,7 +2,7 @@
 
 -- Gold agregada para Superset: cards, rankings e mapas de gargalo/desempenho.
 with
-    base as (select * from {{ ref("gold_indicadores_gargalo_desempenho") }}),
+    base as (select * from {{ ref("ouro_reloginho_indicadores_gargalo_desempenho") }}),
 
     agregada as (
         select

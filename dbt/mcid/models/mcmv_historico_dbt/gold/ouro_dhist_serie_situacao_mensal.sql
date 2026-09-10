@@ -60,7 +60,7 @@ with
             fonte_serie,
             coalesce(id_empreendimento, apf) as chave_empreendimento,
             fase_empreendimento
-        from {{ ref('silver_mcmv_historico_empreendimento_far') }}
+        from {{ ref('prata_far_historico_empreendimento') }}
         where dt_referencia >= date '2019-12-01' and fonte_serie <> 'obra_mensal'
         union all
         select
@@ -76,7 +76,7 @@ with
             fonte_serie,
             coalesce(id_empreendimento, apf) as chave_empreendimento,
             fase_empreendimento
-        from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
+        from {{ ref('prata_fds_historico_empreendimento') }}
         where dt_referencia >= date '2019-12-01' and fonte_serie <> 'obra_mensal'
         union all
         select
@@ -92,7 +92,7 @@ with
             fonte_serie,
             coalesce(id_empreendimento, apf) as chave_empreendimento,
             fase_empreendimento
-        from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
+        from {{ ref('prata_rural_historico_empreendimento') }}
         where dt_referencia >= date '2019-12-01' and fonte_serie <> 'obra_mensal'
     ),
 

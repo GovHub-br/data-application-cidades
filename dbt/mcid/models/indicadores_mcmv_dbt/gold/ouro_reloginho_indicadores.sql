@@ -6,7 +6,7 @@
 -- ficam nas camadas bronze/silver (ver models/docs/arquitetura-medalhao-mcid.md
 -- e docs/entregas/issue-130-refatoracao-medalhao-reloginho.md):
 --
--- bronze_mcmv_historico_empreendimento_snh_bb/_caixa -> cópia fiel dos snapshots mensais SNH
+-- bronze_dhist_empreendimento_snh_bb/_caixa -> cópia fiel dos snapshots mensais SNH
 -- silver_reloginho_snh_apf_mes       -> tipado + domínio + dedup por APF
 -- indicadores_reloginho (este)       -> soma mensal por agente
 -- indicadores_reloginho_frente       -> soma mensal por agente x frente
@@ -24,7 +24,7 @@
 -- O corpo é o mesmo nos três — ver models/mcmv_historico_dbt/README.md.
 with
 
-    base as (select * from {{ ref("silver_historico_snh_apf_mes") }}),
+    base as (select * from {{ ref("prata_dhist_snh_apf_mes") }}),
 
     mensal as (
         select

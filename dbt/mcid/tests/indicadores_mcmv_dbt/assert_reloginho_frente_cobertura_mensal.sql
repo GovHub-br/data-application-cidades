@@ -13,7 +13,7 @@ serie as (
         agente_financeiro,
         frente_mcmv,
         dt_referencia
-    from {{ ref("gold_indicadores_reloginho_frente") }}
+    from {{ ref("ouro_reloginho_indicadores_frente") }}
 ),
 
 janela as (

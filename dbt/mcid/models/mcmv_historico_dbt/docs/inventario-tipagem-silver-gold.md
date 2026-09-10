@@ -42,10 +42,10 @@ O escopo histórico tipa na **silver** (bronze é cópia fiel — convenção me
 | Valor monetário agregado no gold | `numeric(38,2)` (`sum` alarga) | `numeric` | aceitável — `sum` de `numeric(15,2)` |
 | Percentual | `double` (`parse_hist_double`, subtração) | `numeric` | **deliberada** — ver §3.3 |
 | Data de negócio | `date` | `date` | nenhuma |
-| Mês truncado no gold (`mes`, `gold_serie_situacao_mensal`) | `date` | `timestamp with time zone` | **deliberada** — `date` é o correto para 1º-do-mês |
+| Mês truncado no gold (`mes`, `ouro_dhist_serie_situacao_mensal`) | `date` | `timestamp with time zone` | **deliberada** — `date` é o correto para 1º-do-mês |
 | Timestamp técnico (`dt_ingest`, `dt_silver`, `dt_gold`) | `timestamp with time zone` | `timestamp with time zone` | nenhuma |
 | Indicador (`marcos_coerentes`) | `boolean` | `boolean` | nenhuma |
-| Ano / mês numérico (`ano`, `mes` em `gold_serie_mensal`) | `bigint` (`year()`/`month()`) | — | tolerada — `bigint` de função de data |
+| Ano / mês numérico (`ano`, `mes` em `ouro_dhist_serie_mensal`) | `bigint` (`year()`/`month()`) | — | tolerada — `bigint` de função de data |
 | `prioridade_familia` | `integer` (literais em `case`) | — | tolerada |
 | Ausência de valor | `NULL` | `0` / `0.0` | **deliberada** — ver §3.4 |
 
@@ -53,7 +53,7 @@ O escopo histórico tipa na **silver** (bronze é cópia fiel — convenção me
 
 ### 3.1 Contagem de UH = `bigint` (prod: `integer`)
 
-`sum()` de UH no `gold_serie_mensal` a nível nacional chega a ~1,5 milhão hoje e
+`sum()` de UH no `ouro_dhist_serie_mensal` a nível nacional chega a ~1,5 milhão hoje e
 a série pré-2018 pode crescer; `bigint` domina `integer` sem custo de
 armazenamento relevante no Postgres e elimina risco de overflow em qualquer
 agregação futura. Macro: `parse_hist_bigint`. Aplicado uniformemente na silver
@@ -92,14 +92,14 @@ Colunas afetadas:
 
 | Modelo | Colunas |
 |---|---|
-| `silver_mcmv_historico_serie_executiva` | `uh_contratadas`, `uh_entregues`, `uh_concluidas`, `uh_em_obras`, `uh_comercializadas` |
-| `gold_serie_mensal` | `uh_contratadas`, `uh_entregues`, `uh_concluidas`, `uh_em_obras`, `uh_comercializadas` |
-| `gold_serie_situacao_mensal` | `uh`, `entradas`, `saidas` |
-| `gold_indicadores_reloginho` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
-| `gold_indicadores_reloginho_frente` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
-| `gold_indicadores_reloginho_entregas` | `uh_entregues_evento_mes`, `uh_entregues_evento_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
-| `gold_resumo_reloginho_dashboard` | `uh_contratadas_ultimo`, `uh_entregues_ultimo`, `uh_vigentes_ultimo` |
-| `silver_historico_snh_entregas_mes` | `uh_entregues_evento_mes` |
+| `prata_dhist_serie_executiva` | `uh_contratadas`, `uh_entregues`, `uh_concluidas`, `uh_em_obras`, `uh_comercializadas` |
+| `ouro_dhist_serie_mensal` | `uh_contratadas`, `uh_entregues`, `uh_concluidas`, `uh_em_obras`, `uh_comercializadas` |
+| `ouro_dhist_serie_situacao_mensal` | `uh`, `entradas`, `saidas` |
+| `ouro_reloginho_indicadores` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
+| `ouro_reloginho_indicadores_frente` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
+| `ouro_reloginho_indicadores_entregas` | `uh_entregues_evento_mes`, `uh_entregues_evento_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
+| `ouro_reloginho_resumo_dashboard` | `uh_contratadas_ultimo`, `uh_entregues_ultimo`, `uh_vigentes_ultimo` |
+| `prata_dhist_snh_entregas_mes` | `uh_entregues_evento_mes` |
 
 Valores reais são pequenos (máx. nacional ~1,5 M) — cabem em `bigint`. Correção:
 `cast(sum(...) as bigint)` (ou `::bigint` no `coalesce`). Feito nesta change —
@@ -122,8 +122,8 @@ Cobertura (build local, modo A):
 | `indicadores_mcmv_dbt` silver | snh_apf_mes, snh_entregas_mes | 12 |
 | `indicadores_mcmv_dbt` gold | indicadores_reloginho (+_frente, +_entregas), resumo_reloginho_dashboard | 21 |
 
-**Fora de escopo:** `gold_indicadores_gargalo_desempenho` /
-`gold_resumo_gargalo_desempenho_dashboard` (lineage do medalhão FAR/FDS dos
+**Fora de escopo:** `ouro_reloginho_indicadores_gargalo_desempenho` /
+`ouro_reloginho_resumo_gargalo_desempenho_dashboard` (lineage do medalhão FAR/FDS dos
 colegas, não da série histórica).
 
 Resultado: **todos os `verificacao_tipagem` PASS** no `dbt test` local

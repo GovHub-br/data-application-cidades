@@ -155,12 +155,13 @@ models:
       # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
       # porque a D3 o exige como invariante deste eixo).
       +database: cidades
-      # Convenção 2026-09-08 (consolidar-schemas-historico-reloginho, D1/D5):
-      # reloginho é um domínio analítico autocontido — TODAS as camadas
-      # (bronze, silver, gold) no schema "reloginho". As bronzes de eventos de
-      # entrega saíram de dados_historicos para cá.
+      # Convenção 2026-09-09 (renomear-camadas-pt-historico-reloginho, D1):
+      # schema por CAMADA do medalhão, em português — bronze → `bronze`,
+      # silver → `prata`, gold → `ouro`. Reverte a D1 de
+      # consolidar-schemas-historico-reloginho (schema por domínio). O reloginho
+      # deixa de ter schema próprio: as bronzes de eventos de entrega vão para
+      # `bronze` (origem `dhist`), as silvers para `prata`, os golds para `ouro`.
       +materialized: table
-      +schema: reloginho
       # Governança / OpenMetadata (change catalogo-dicionario-dados-historicos,
       # D5): mesmo formato de mcmv_historico_dbt. `product: reloginho` para os 10
       # nós (inclusive os 2 golds de gargalo — OQ2); tier bronze=3 / silver=2 /
@@ -171,7 +172,7 @@ models:
           owner_key: mcid_data_engineering
       bronze:
         +materialized: table
-        +schema: reloginho
+        +schema: bronze
         +meta:
           governance:
             product: reloginho
@@ -185,7 +186,7 @@ models:
             owner: mcid-data-engineering
       silver:
         +materialized: table
-        +schema: reloginho
+        +schema: prata
         +meta:
           governance:
             product: reloginho
@@ -199,7 +200,7 @@ models:
             owner: mcid-data-engineering
       gold:
         +materialized: table
-        +schema: reloginho
+        +schema: ouro
         +meta:
           governance:
             product: reloginho
@@ -246,14 +247,16 @@ models:
       # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
       # porque a D3 o exige como invariante deste eixo).
       +database: cidades
-      # Convenção 2026-09-08 (consolidar-schemas-historico-reloginho, D1):
-      # `dados_historicos` é o schema do DOMÍNIO histórico cross-frente, em
-      # TODAS as camadas — bronze, silver (incl. serie_executiva e entrega_apf)
-      # e gold (os 4 cross-frente). O que é POR FRENTE (os 3
-      # silver_historico_empreendimento far/fds/rural) usa alias para
-      # materializar no schema da frente. O piloto FGTS/OGU (agregado macro
-      # anual, não é frente) usa conjuntura. Os schemas mcmv_historico e
-      # serie_historica foram extintos.
+      # Convenção 2026-09-09 (renomear-camadas-pt-historico-reloginho, D1):
+      # schema por CAMADA do medalhão, em português — bronze → `bronze`,
+      # silver → `prata`, gold → `ouro`. Reverte a D1 de
+      # consolidar-schemas-historico-reloginho (schema por domínio × frente).
+      # Nada mais materializa em `dados_historicos`, nos schemas de frente
+      # (`empreendimento_far`/`empreendimentos_fds`/`empreendimento_rural`) nem
+      # em `conjuntura`. As 3 pratas por frente perdem o alias
+      # `silver_historico_empreendimento` e viram `prata_far/fds/rural_historico_empreendimento`.
+      # O piloto FGTS/OGU está desabilitado nesta branch (config(enabled=false)
+      # no próprio arquivo) — sem bloco `piloto:` aqui.
       +materialized: table
       +meta:
         governance:
@@ -262,7 +265,7 @@ models:
 
       bronze:
         +materialized: table
-        +schema: dados_historicos
+        +schema: bronze
         +meta:
           governance:
             product: mcmv_historico
@@ -277,7 +280,7 @@ models:
 
       silver:
         +materialized: table
-        +schema: dados_historicos
+        +schema: prata
         +meta:
           governance:
             product: mcmv_historico
@@ -292,7 +295,7 @@ models:
 
       gold:
         +materialized: table
-        +schema: dados_historicos
+        +schema: ouro
         +meta:
           governance:
             product: mcmv_historico
@@ -305,22 +308,11 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
-      # Piloto #118: série anual OGU/FGTS a partir de seed — agregado macro
-      # nacional, não é frente de empreendimento; materializa em conjuntura.
-      piloto:
-        +materialized: table
-        +schema: conjuntura
-        +meta:
-          governance:
-            product: mcmv_historico
-            owner_key: mcid_data_engineering
-            layer: silver
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier2
-            owner: mcid-data-engineering
+      # Piloto #118 (OGU/FGTS): DESABILITADO nesta branch
+      # (renomear-camadas-pt-historico-reloginho, D4). O modelo foi renomeado
+      # para o nome-alvo `prata_dhist_serie_anual_ogu_fgts` e carrega
+      # `config(enabled=false)` no próprio arquivo — não há bloco `piloto:`
+      # aqui. Retomada do desenvolvimento numa change futura.
 
     entidades_dbt:
       +materialized: table

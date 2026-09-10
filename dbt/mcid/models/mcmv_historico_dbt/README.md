@@ -3,28 +3,38 @@
 Domínios cobertos: `mcmv_historico_dbt` (esta pasta) e as bronzes/silvers do
 reloginho em `models/indicadores_mcmv_dbt/`.
 
-## Convenção de schema (change `consolidar-schemas-historico-reloginho`, D1)
+## Convenção de schema (change `renomear-camadas-pt-historico-reloginho`, D1)
 
-Schema por **domínio × granularidade de frente**, não por camada:
+Schema por **camada do medalhão, em português** — reverte a D1 de
+`consolidar-schemas-historico-reloginho` (schema por domínio × frente):
 
-| critério | schema |
-|---|---|
-| histórico cross-frente, **qualquer camada** (bronze, silver, gold) | `dados_historicos` |
-| por frente (`silver_historico_empreendimento` FAR / FDS / Rural) | schema da frente (`empreendimento_far`, `empreendimentos_fds`, `empreendimento_rural`) |
-| domínio reloginho/gargalo, qualquer camada | `reloginho` (autocontido — inclui as 2 bronzes de entrega por evento) |
-| agregado macro nacional (piloto OGU/FGTS) | `conjuntura` |
+| camada | schema | nome de tabela |
+|---|---|---|
+| bronze | `bronze` | `bronze_<origem>_<nome>` — origem ∈ `dhist` (`staging/dados_historicos/`), `sftp` (`staging/sftp/`), `shpt` (`staging/sharepoint/`) |
+| silver | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `dhist`, `far`, `rural`, `fds`, `reloginho` |
+| gold | `ouro` | `ouro_<domínio>_<nome>` |
 
-Os schemas `mcmv_historico` e `serie_historica` **foram extintos**. Os 4 golds
-cross-frente (`gold_snapshot_empreendimento_atual`, `gold_marco_empreendimento`,
-`gold_serie_situacao_mensal`, `gold_serie_mensal`) e a
-`silver_mcmv_historico_serie_executiva` / `silver_mcmv_historico_entrega_apf`
-moram em `dados_historicos`. O invariante D3 (`+database: cidades`) é preservado.
+Vale para os 33 modelos dos dois braços (`mcmv_historico_dbt` exceto `piloto/` +
+`indicadores_mcmv_dbt`), cross-frente, por frente ou de gargalo. Nada mais
+materializa em `dados_historicos`, `reloginho`, nos schemas de frente
+(`empreendimento_far` etc.) nem em `conjuntura`. Os schemas `mcmv_historico` e
+`serie_historica` seguem extintos. O nome do arquivo `.sql` == nome do modelo ==
+nome da tabela; sem `config(alias=…/schema=…)` por modelo. O invariante D3
+(`+database: cidades`) é preservado, então o FQN é `cidades.<bronze|prata|ouro>.<tabela>`.
 
-Modelos fundidos na mesma change (deixaram de ser tabela própria):
-`dim_empreendimento_historico` → 14 colunas de `gold_snapshot_empreendimento_atual`;
-`silver_historico_empreendimento_fluxo_ano` → 9 colunas YTD das 3 silvers de
-frente (left join); `silver_mcmv_historico_obra_mensal` → braço de criação de
-linha + left join das 22 colunas de obra nas 3 silvers.
+O piloto OGU/FGTS (`prata_dhist_serie_anual_ogu_fgts`) está `enabled=false` nesta
+branch — renomeado ao alvo mas não materializado (D4).
+
+Modelos fundidos por `consolidar-schemas-historico-reloginho` (não são tabela
+própria): `dim_empreendimento_historico` → 14 colunas de
+`ouro_dhist_snapshot_empreendimento_atual`; o modelo de fluxo YTD autônomo → 9
+colunas YTD das 3 pratas de frente (left join); o modelo de obra mensal autônomo
+→ braço de criação de linha + left join das 22 colunas de obra nas 3 pratas.
+
+> **Migração das tabelas já em `prod`** (publicadas na convenção antiga):
+> `scripts/migracao/` — `mapa_nomenclatura.csv` + `renomear_nomenclatura_prod.sql`
+> (manual, fora da aplicação da change). Reconciliação do conector dbt do
+> OpenMetadata pendente: o FQN dos 33 nós muda.
 
 ## As 16 bronzes por família
 
@@ -52,8 +62,8 @@ nome do arquivo** — os arquivos FDS/RURAL de 202602+ estão misfiled sob
 **202512 → 202607** (não há obra mensal antes disso). Ordem de build: as 3
 bronzes `obra_mensal` antes das 3 silvers de frente.
 
-Desde `consolidar-schemas-historico-reloginho` (D2/C2) **não há mais silver
-`silver_mcmv_historico_obra_mensal`**. A família entra nas 3 silvers de frente:
+Desde `consolidar-schemas-historico-reloginho` (D2/C2) **não há mais um modelo
+de obra mensal autônomo**. A família entra nas 3 pratas de frente:
 - um braço mínimo no `union all by name` de `unioned` **cria linha** nos meses
   só-de-obra (2026-04..07, `fonte_serie = 'obra_mensal'`) — sobe o teto do eixo
   de 2026-03 para 2026-07;
@@ -85,8 +95,8 @@ introspeccionam a relação no banco (`adapter.get_columns_in_relation`) **no
 momento em que a silver é compilada**, para montar o `coalesce` só com as
 colunas que aquela família realmente tem. Quem depende disso:
 
-- `silver_mcmv_historico_serie_executiva` → as 4 bronzes da série executiva;
-- `silver_mcmv_historico_empreendimento_far` / `_fds` / `_rural` → as 2 bronzes
+- `prata_dhist_serie_executiva` → as 4 bronzes da série executiva;
+- `prata_far_historico_empreendimento` / `_fds` / `_rural` → as 2 bronzes
   SNH (as colunas divergem entre agentes: `uhs_contratadas`/`uhs_entregues` só
   existem no BB, `dt_entrega` só na CAIXA), as bronzes GEFUS
   (INT040/054/059/065 — `qt_unidades_ociosas` / `qtde_uh_inicial` /

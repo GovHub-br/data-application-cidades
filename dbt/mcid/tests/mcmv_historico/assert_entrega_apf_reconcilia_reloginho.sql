@@ -1,5 +1,5 @@
--- A espinha silver_mcmv_historico_entrega_apf e a silver do reloginho
--- silver_historico_snh_entregas_mes leem os MESMOS bronzes de evento e aplicam
+-- A espinha prata_dhist_entrega_apf e a silver do reloginho
+-- prata_dhist_snh_entregas_mes leem os MESMOS bronzes de evento e aplicam
 -- a MESMA dedup por hash de conteudo. Os totais de UH entregues devem bater.
 -- Falha se a diferenca absoluta passar de 0.
 --
@@ -7,11 +7,11 @@
 with
     espinha as (
         select sum(uh_entregues_acumulada) as uh
-        from {{ ref('silver_mcmv_historico_entrega_apf') }}
+        from {{ ref('prata_dhist_entrega_apf') }}
     ),
     reloginho as (
         select sum(uh_entregues_evento_mes) as uh
-        from {{ ref('silver_historico_snh_entregas_mes') }}
+        from {{ ref('prata_dhist_snh_entregas_mes') }}
     )
 select
     espinha.uh as uh_espinha,

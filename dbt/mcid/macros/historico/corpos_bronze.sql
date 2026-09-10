@@ -138,7 +138,7 @@ from fonte
     frentes tem schemas DIVERGENTES (FAR: dt_movimento/co_situacao_obra; FDS/
     RURAL: dh_movimento/co_situacao_operacao) -- o bronze nao harmoniza, so
     empilha; a projecao explicita por braco fica em
-    silver_mcmv_historico_obra_mensal. Change:
+    o braço `obra_mensal` das 3 pratas de frente. Change:
     enriquecer-quantidades-uh-e-sinais-obra-historico (D4). -#}
 {% macro bronze_obra_mensal(nome_familia) %}
 {%- set f = familia(familias_obra_mensal(), nome_familia) -%}

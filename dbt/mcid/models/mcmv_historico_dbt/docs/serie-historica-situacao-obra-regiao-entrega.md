@@ -10,11 +10,11 @@ MinIO real (`10.0.0.56:9000`, bucket `data-lake-mcid`).
 |---|---|---|
 | `seeds/data_quality/dominio_status.csv` | seed (35 linhas) | `data_quality.dominio_status` |
 | `seeds/data_quality/dominio_regiao_uf.csv` | seed (27 linhas) | `data_quality.dominio_regiao_uf` |
-| `situacao_canonica` + `regiao_sigla` + `regiao_nome` | colunas | `silver_mcmv_historico_empreendimento_{far,fds,rural}` |
-| `situacao_derivada` + `regiao_sigla` + `regiao_nome` | colunas | `silver_mcmv_historico_serie_executiva` |
-| `situacao_canonica` + `regiao_sigla` + `regiao_nome` | colunas | `silver_historico_snh_apf_mes` (reloginho) |
-| `regiao_sigla` + `regiao_nome` + nível `regiao` | colunas / grouping set | `gold_serie_mensal` |
-| `gold_serie_situacao_mensal` | modelo novo | `dados_historicos.gold_serie_situacao_mensal` |
+| `situacao_canonica` + `regiao_sigla` + `regiao_nome` | colunas | `prata_{far,fds,rural}_historico_empreendimento` |
+| `situacao_derivada` + `regiao_sigla` + `regiao_nome` | colunas | `prata_dhist_serie_executiva` |
+| `situacao_canonica` + `regiao_sigla` + `regiao_nome` | colunas | `prata_dhist_snh_apf_mes` (reloginho) |
+| `regiao_sigla` + `regiao_nome` + nível `regiao` | colunas / grouping set | `ouro_dhist_serie_mensal` |
+| `ouro_dhist_serie_situacao_mensal` | modelo novo | `dados_historicos.ouro_dhist_serie_situacao_mensal` |
 
 Escopo **só local** — nenhum modelo entra na carga noturna do Cosmos nem é
 promovido a `prod` nesta change.
@@ -54,12 +54,12 @@ pendência **financeira**). Total de APF FAR em `situacao_canonica='concluida'`:
 `dt_entrega` da silver está nulo em 100 % das linhas `concluida` do snapshot
 (a interface SFTP não popula `dt_ultima_entrega` de forma utilizável). O
 cruzamento com entregas conhecidas fica para a integração com o fluxo de
-entregas do reloginho (`silver_historico_snh_entregas_mes`), fora do escopo
+entregas do reloginho (`prata_dhist_snh_entregas_mes`), fora do escopo
 desta change. Se a classificação de `CONCLUIDA_COM_VLR_A_LIBERAR` como
 `concluida` estiver errada, ela distorce ~53 % do gráfico de fase FAR — daí o
 `classe=pendente` e esta nota.
 
-## `gold_serie_situacao_mensal`
+## `ouro_dhist_serie_situacao_mensal`
 
 - **Grão:** `(mes, frente_mcmv, situacao_canonica, nivel_geografico, uf,
   regiao_sigla)`; `nivel_geografico ∈ {nacional, regiao, uf}` via `grouping
@@ -121,7 +121,7 @@ uf         NE     PI       29  1060       0      1
 Domínio **distinto** — `contratada`, `em_entrega`, `concluida`, `nao_mapeada` —
 derivado **só de quantidade** (regra D2). Nome e propósito distintos de
 `situacao_canonica`; **nunca** combinar as duas séries sem ressalva. Fica só na
-silver nesta fase (não entra em `gold_serie_situacao_mensal` — Open Question 4).
+silver nesta fase (não entra em `ouro_dhist_serie_situacao_mensal` — Open Question 4).
 Distribuição (linhas · chaves distintas): `concluida` 5.053.064 · 219.538 |
 `nao_mapeada` 2.525.271 · 181.370 | `contratada` 2.337.664 · 167.709 |
 `em_entrega` 247.427 · 12.505.
@@ -158,7 +158,7 @@ derivação do mapa_status.csv` deixou de existir. Se
 |---|---|
 | `dbt seed --select data_quality` | PASS=5 (dominio_status INSERT 35, dominio_regiao_uf INSERT 27) |
 | `dbt build` silvers por frente + snapshot | PASS=57, ERROR=0 |
-| `dbt build silver_mcmv_historico_serie_executiva` | PASS=11, ERROR=0 (60 s) |
+| `dbt build prata_dhist_serie_executiva` | PASS=11, ERROR=0 (60 s) |
 | `./run-reloginho.sh reloginho` | PASS=65, WARN=3, ERROR=1 — o ERROR é `assert_reloginho_frente_cobertura_mensal` (falha **pré-existente conhecida**: buraco no dump SNH do MinIO); WARN pré-existentes de sufixo-float na bronze |
 | golds do reloginho byte-idênticos | ✔ md5 do conteúdo ordenado igual antes/depois (`indicadores_reloginho` 37, `_frente` 95, `_entregas` 336) |
 | `dbt build` golds históricos | PASS=22, ERROR=0 |

@@ -21,25 +21,25 @@
     {{ return([
         {
             'nome': 'bases_relatorio_executivo',
-            'modelo': 'bronze_mcmv_historico_serie_bases_relatorio_executivo',
+            'modelo': 'bronze_dhist_serie_bases_relatorio_executivo',
             'glob': 'dados_historicos/*bases_relat*rio_executivo*.parquet',
             'grao': 'empreendimento',
         },
         {
             'nome': 'min_cidades',
-            'modelo': 'bronze_mcmv_historico_serie_min_cidades',
+            'modelo': 'bronze_dhist_serie_min_cidades',
             'glob': 'dados_historicos/*min_cidades*.parquet',
             'grao': 'empreendimento/contrato (BB)',
         },
         {
             'nome': 'entrada_bb',
-            'modelo': 'bronze_mcmv_historico_serie_entrada_bb',
+            'modelo': 'bronze_dhist_serie_entrada_bb',
             'glob': 'dados_historicos/*entrada_bb*.parquet',
             'grao': 'empreendimento (BB)',
         },
         {
             'nome': 'bext',
-            'modelo': 'bronze_mcmv_historico_serie_bext',
+            'modelo': 'bronze_dhist_serie_bext',
             'glob': 'dados_historicos/*bext*.parquet',
             'grao': 'contrato PF (CAIXA)',
         },
@@ -51,35 +51,35 @@
     {{ return([
         {
             'nome': 'INT040',
-            'modelo': 'bronze_mcmv_historico_empreendimento_int040',
+            'modelo': 'bronze_sftp_empreendimento_int040',
             'fonte_interface': 'INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS',
             'glob': 'sftp/fabrica/GEFUS/**/INT040_*.parquet',
             'frente': 'FAR CAIXA',
         },
         {
             'nome': 'INT054',
-            'modelo': 'bronze_mcmv_historico_empreendimento_int054',
+            'modelo': 'bronze_sftp_empreendimento_int054',
             'fonte_interface': 'INT054_MinisterioCidades_FAR_BB_EMPREENDIMENTOS',
             'glob': 'sftp/fabrica/GEFUS/**/INT054_*.parquet',
             'frente': 'FAR BB',
         },
         {
             'nome': 'INT057',
-            'modelo': 'bronze_mcmv_historico_empreendimento_int057',
+            'modelo': 'bronze_sftp_empreendimento_int057',
             'fonte_interface': 'INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS',
             'glob': 'sftp/fabrica/GEFUS/**/INT057_*.parquet',
             'frente': 'PNHR / Rural BB',
         },
         {
             'nome': 'INT059',
-            'modelo': 'bronze_mcmv_historico_empreendimento_int059',
+            'modelo': 'bronze_sftp_empreendimento_int059',
             'fonte_interface': 'INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS',
             'glob': 'sftp/fabrica/GEFUS/**/INT059_*.parquet',
             'frente': 'FDS / Entidades',
         },
         {
             'nome': 'INT065',
-            'modelo': 'bronze_mcmv_historico_empreendimento_int065',
+            'modelo': 'bronze_sftp_empreendimento_int065',
             'fonte_interface': 'INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS',
             'glob': 'sftp/fabrica/GEFUS/**/INT065_*.parquet',
             'frente': 'PNHR / Rural CAIXA',
@@ -94,12 +94,12 @@
     {{ return([
         {
             'nome': 'BB',
-            'modelo': 'bronze_mcmv_historico_empreendimento_snh_bb',
+            'modelo': 'bronze_dhist_empreendimento_snh_bb',
             'glob': 'dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_bb*.parquet',
         },
         {
             'nome': 'CAIXA',
-            'modelo': 'bronze_mcmv_historico_empreendimento_snh_caixa',
+            'modelo': 'bronze_dhist_empreendimento_snh_caixa',
             'glob': 'dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_caixa*.parquet',
         },
     ]) }}
@@ -111,12 +111,12 @@
     {{ return([
         {
             'nome': 'BB',
-            'modelo': 'bronze_reloginho_snh_entregas_evento_bb',
+            'modelo': 'bronze_dhist_snh_entregas_evento_bb',
             'glob': 'dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet',
         },
         {
             'nome': 'CAIXA',
-            'modelo': 'bronze_reloginho_snh_entregas_evento_caixa',
+            'modelo': 'bronze_dhist_snh_entregas_evento_caixa',
             'glob': 'dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet',
         },
     ]) }}
@@ -137,19 +137,19 @@
     {{ return([
         {
             'nome': 'OBRA_FAR',
-            'modelo': 'bronze_mcmv_historico_obra_mensal_far',
+            'modelo': 'bronze_shpt_obra_mensal_far',
             'frente': 'FAR',
             'glob': 'sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet',
         },
         {
             'nome': 'OBRA_FDS',
-            'modelo': 'bronze_mcmv_historico_obra_mensal_fds',
+            'modelo': 'bronze_shpt_obra_mensal_fds',
             'frente': 'Entidades',
             'glob': 'sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet',
         },
         {
             'nome': 'OBRA_RURAL',
-            'modelo': 'bronze_mcmv_historico_obra_mensal_rural',
+            'modelo': 'bronze_shpt_obra_mensal_rural',
             'frente': 'Rural',
             'glob': 'sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet',
         },

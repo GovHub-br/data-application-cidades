@@ -56,7 +56,7 @@ que **só listam** — não filtram, não quarentenam, não alteram a materializ
 | `quantidade_nao_excede_referencia` | `reference`, `fator` (default 1.0) | `column > reference * fator` linha-a-linha (ex.: `quantidade_uh_entregues > quantidade_uh`); só compara valores presentes (NULL nunca dispara) — espelha `desembolso_nao_excede_contratado` |
 
 Ambos `severity: warn` nesta change (sem threshold de erro). Aplicados nas
-silvers históricas por frente (`silver_mcmv_historico_empreendimento_{far,fds,rural}`).
+silvers históricas por frente (`prata_{far,fds,rural}_historico_empreendimento`).
 Contagens esperadas no build local: ~1 k excedências e ~13 k regressões no FAR.
 
 ## Tipagem (`verificacao_tipagem`)

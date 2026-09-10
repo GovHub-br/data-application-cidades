@@ -4,7 +4,7 @@ models:
   - name: gold_far_ficha_empreendimento
     description: >
       Gold — 1 linha por empreendimento (APF) da frente FAR, consumida pelo
-      gargalo (gold_indicadores_gargalo_desempenho). Materializa como
+      gargalo (ouro_reloginho_indicadores_gargalo_desempenho). Materializa como
       empreendimento_far.gold_atual_ficha_empreendimento (convenção
       2026-09-04 — schema por frente, prefixo atual_ para o produto
       current-state que replica o que os colegas já entregam em prod;
@@ -39,7 +39,7 @@ models:
 
   - name: gold_atual_execucao_fisica_financeira_chart
     description: >
-      Gold consumida pelo gargalo (gold_indicadores_gargalo_desempenho).
+      Gold consumida pelo gargalo (ouro_reloginho_indicadores_gargalo_desempenho).
       Materializa como empreendimento_far.gold_atual_execucao_fisica_financeira_chart
       (convenção 2026-09-04, ver nota acima). Faz o join entre a silver de
       evolução financeira e a bronze de obra mensal.

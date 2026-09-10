@@ -17,7 +17,7 @@ entregas: quando cada UH foi entregue, não só o total acumulado no mês do sna
 
 | Modelo | Papel |
 |---|---|
-| `indicadores_mcmv_dbt/bronze/bronze_reloginho_snh_entregas_evento.sql` | Cópia fiel de `o_recente_*_af_caixa_entregas` (CAIXA) + `*_da_entrega_da_unidade_af_bb` (BB). union_by_name; `dt_evento` = coalesce(dt_entrega, dt_ass_doc); `qt_uh_entregues_evento`; `hash_linha`. |
+| `indicadores_mcmv_dbt/bronze/bronze_dhist_snh_entregas_evento.sql` | Cópia fiel de `o_recente_*_af_caixa_entregas` (CAIXA) + `*_da_entrega_da_unidade_af_bb` (BB). union_by_name; `dt_evento` = coalesce(dt_entrega, dt_ass_doc); `qt_uh_entregues_evento`; `hash_linha`. |
 | `indicadores_mcmv_dbt/silver/silver_reloginho_snh_entregas_mes.sql` | Dedup de eventos por `hash_linha`; soma por `(agente, apf, mês do EVENTO)`. Grão = fluxo mensal de entregas por APF. |
 | `indicadores_mcmv_dbt/gold/indicadores_reloginho_entregas.sql` | Fluxo por evento (mês e acumulado) **vs** acumulado do snapshot (`indicadores_reloginho`), lado a lado. `dif_evento_vs_snapshot` deve tender a ~0. |
 
@@ -86,7 +86,7 @@ nome truncado fica sem — coberto por `report_date` na base real).
 
 ```yaml
     indicadores_mcmv_dbt:
-      bronze: { +enabled: "target.type == 'duckdb'" }   # + bronze_reloginho_snh_entregas_evento
+      bronze: { +enabled: "target.type == 'duckdb'" }   # + bronze_dhist_snh_entregas_evento
       silver: { +enabled: "target.type == 'duckdb'" }   # + silver_reloginho_snh_entregas_mes
       gold:
         indicadores_reloginho_entregas: { +enabled: "target.type == 'duckdb'" }
@@ -122,8 +122,8 @@ nome truncado fica sem — coberto por `report_date` na base real).
 cd airflow_lappis/dags/dbt/mcid
 export MINIO_ENDPOINT=... MINIO_ACCESS_KEY=... MINIO_SECRET_KEY=... MINIO_BUCKET=data-lake-mcid
 export DUCKDB_MCID_PATH=/tmp/mcid_staging.duckdb
-dbt run  --target staging_duckdb --select bronze_reloginho_snh_entregas_evento+ bronze_mcmv_serie_executiva_historica+
-dbt test --target staging_duckdb --select bronze_reloginho_snh_entregas_evento+ bronze_mcmv_serie_executiva_historica+
+dbt run  --target staging_duckdb --select bronze_dhist_snh_entregas_evento+ bronze_mcmv_serie_executiva_historica+
+dbt test --target staging_duckdb --select bronze_dhist_snh_entregas_evento+ bronze_mcmv_serie_executiva_historica+
 ```
 
 ## Pendências / próximos passos

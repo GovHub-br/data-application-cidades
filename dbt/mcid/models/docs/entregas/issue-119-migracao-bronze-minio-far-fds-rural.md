@@ -68,11 +68,11 @@ uma tabela de-para de APF (trabalho separado).
 
 A fonte SNH sharepoint (`dados_prioritarios_disponibilizados_snh_empreendimentos`, snapshot
 **corrente** 30/09/2025, 21.458 linhas) é **distinta** de
-`bronze_mcmv_historico_empreendimento_snh` (série **mensal** de `staging/dados_historicos`,
+`bronze_dhist_empreendimento_snh` (série **mensal** de `staging/dados_historicos`,
 1,1 M linhas). Cada frente cria `bronze_<frente>_dados_prioritarios_snh` filtrando o arquivo
 sharepoint por `modalidade`, reusando o mapa `modalidade → frente_mcmv` da entrega
 `separacao-silver-historico-por-frente.md` §2. `silver_far_empreendimento` e
-`silver_mcmv_historico_empreendimento_far` são produtos distintos (estado corrente × série
+`prata_far_historico_empreendimento` são produtos distintos (estado corrente × série
 mensal) e não colidem.
 
 ## 3. Frente Rural (domínio novo)

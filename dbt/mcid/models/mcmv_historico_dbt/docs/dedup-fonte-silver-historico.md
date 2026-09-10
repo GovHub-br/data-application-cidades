@@ -39,7 +39,7 @@ carry-forward para elas → `gold_snapshot` FAR com `responsavel_nome` em 15%.
    `valor_contratado_preenchido` / `responsavel_preenchido` (BOOLEAN, novos no
    contrato comum + `gold_snapshot`). `percentual_execucao_fisica` /
    `status_operacional` / `situacao_canonica` **não** são preenchidos.
-4. **D4** — `gold_serie_situacao_mensal`: removido `case fonte_serie when 'snh'`
+4. **D4** — `ouro_dhist_serie_situacao_mensal`: removido `case fonte_serie when 'snh'`
    do `qualify` do CTE `silvers` (a silver já entrega o grão). Mantido o
    desempate de fase para FDS multi-fase.
 
@@ -74,9 +74,9 @@ no mesmo mês.
 
 | gold | hash (ANTES) | hash (DEPOIS) |
 |---|---|---|
-| `gold_serie_situacao_mensal` | `11da99d94cbe0926900b68c703a26d68` | _(preencher no 5.2 — DEVE bater)_ |
-| `gold_snapshot_empreendimento_atual` | `2b72d494f6079cdc23601ff4f97c4978` | _(muda só onde o LOCF recupera valor/responsável)_ |
-| `gold_marco_empreendimento` | `da10181f180c78e1fef0492e9494e6ba` | _(preencher)_ |
+| `ouro_dhist_serie_situacao_mensal` | `11da99d94cbe0926900b68c703a26d68` | _(preencher no 5.2 — DEVE bater)_ |
+| `ouro_dhist_snapshot_empreendimento_atual` | `2b72d494f6079cdc23601ff4f97c4978` | _(muda só onde o LOCF recupera valor/responsável)_ |
+| `ouro_dhist_marco_empreendimento` | `da10181f180c78e1fef0492e9494e6ba` | _(preencher)_ |
 
 ### Silvers por frente — `count(*)`, fill, duplicatas de grão mensal
 
@@ -86,7 +86,7 @@ no mesmo mês.
 | FDS   |  53 517 | 91.2% | 88.8% | 73.4% | 75    | **8 535** |
 | Rural | 740 801 | 96.1% | 90.7% | 72.1% | 4 356 | **44 566** |
 
-### `gold_snapshot_empreendimento_atual` — fill por frente (ANTES)
+### `ouro_dhist_snapshot_empreendimento_atual` — fill por frente (ANTES)
 
 | frente | `count(*)` | fill valor_contratado | fill valor_desembolsado | fill responsavel_nome |
 |---|---|---|---|---|
@@ -94,7 +94,7 @@ no mesmo mês.
 | FAR       |  5 506 | 73.6% | 60.8% | **15.5%** |
 | Rural     | 11 122 | 87.1% | 63.6% | **3.7%** |
 
-`gold_marco_empreendimento`: Entidades 917 · FAR 5 506 · Rural 11 122.
+`ouro_dhist_marco_empreendimento`: Entidades 917 · FAR 5 506 · Rural 11 122.
 
 ### Amostra 1.3 — APF FAR com SFTP+SNH no mesmo mês (jun–nov/2024)
 
@@ -115,12 +115,12 @@ verde — a quarentena por APF cobre).
 
 | gold | ANTES | DEPOIS | veredito |
 |---|---|---|---|
-| `gold_serie_situacao_mensal` | `11da99d94cbe0926900b68c703a26d68` | `11da99d94cbe0926900b68c703a26d68` | **byte-idêntico ✓** |
-| `gold_snapshot_empreendimento_atual` | `2b72d494…` | muda (LOCF + dia do mês) | ver abaixo |
-| `gold_marco_empreendimento` | `da10181f…` | muda só em `*_dt_snapshot` / `*_fonte` | ver abaixo |
+| `ouro_dhist_serie_situacao_mensal` | `11da99d94cbe0926900b68c703a26d68` | `11da99d94cbe0926900b68c703a26d68` | **byte-idêntico ✓** |
+| `ouro_dhist_snapshot_empreendimento_atual` | `2b72d494…` | muda (LOCF + dia do mês) | ver abaixo |
+| `ouro_dhist_marco_empreendimento` | `da10181f…` | muda só em `*_dt_snapshot` / `*_fonte` | ver abaixo |
 
 **Nota D4 — o `case fonte_serie when 'snh'` FICOU no `qualify` de
-`gold_serie_situacao_mensal`.** Removê-lo (como o texto literal da task 5.1 pedia)
+`ouro_dhist_serie_situacao_mensal`.** Removê-lo (como o texto literal da task 5.1 pedia)
 **quebrou o byte-idêntico**: 453 linhas do FDS mudaram porque, num empreendimento
 FDS multi-fase, o termo escolhe qual **APF-fase** representa o empreendimento no
 mês — o APF cuja observação do mês vem do SNH prevalece sobre o APF que só o SFTP
@@ -146,7 +146,7 @@ pouco (FAR 3 509→6 997) — a coluna, antes NULL nas linhas SNH da janela
 sobreposta, agora é preservada do SFTP no grão mensal e expõe o ruído mensal
 pré-existente do `qt_unidades_concluidas` do GEFUS. Tudo `warn`.
 
-### `gold_snapshot_empreendimento_atual` — fill por frente
+### `ouro_dhist_snapshot_empreendimento_atual` — fill por frente
 
 | frente | `count(*)` | fill valor_contratado | fill responsavel_nome |
 |---|---|---|---|
@@ -159,7 +159,7 @@ Contagem de empreendimentos por frente **inalterada**. Mudou: `responsavel_id/no
 e `id_historico_snapshot` / `dt_referencia` / `dt_snapshot_efetivo` (2 105 —
 último snapshot era SFTP, `dt_referencia` foi de fim-de-mês p/ dia 1).
 
-### `gold_marco_empreendimento`
+### `ouro_dhist_marco_empreendimento`
 
 Row count por frente inalterado. **Nenhum valor de marco (`dt_*`) mudou**;
 `marcos_coerentes` inalterado. Mudaram só as colunas de proveniência:

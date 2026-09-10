@@ -10,6 +10,6 @@
 -- `detalhe_paralisacao_retomada`, `dt_legalizacao_reg`, `dt_prev_entrega_emprend`).
 --
 -- Demais responsabilidades e origem do corpo: ver
--- bronze_mcmv_historico_obra_mensal_far.sql. Change:
+-- bronze_shpt_obra_mensal_far.sql. Change:
 -- enriquecer-quantidades-uh-e-sinais-obra-historico (D4).
 {{ bronze_obra_mensal('OBRA_FDS') }}

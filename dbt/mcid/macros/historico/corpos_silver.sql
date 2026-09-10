@@ -86,7 +86,7 @@
 {% endmacro %}
 
 
-{% macro silver_historico_snh_arm(rel, frente_mcmv, linha_mcmv, modalidade) %}
+{% macro prata_dhist_snh_arm(rel, frente_mcmv, linha_mcmv, modalidade) %}
         select
             'Minha Casa Minha Vida'::text as programa,
             '{{ frente_mcmv }}'::text as frente_mcmv,

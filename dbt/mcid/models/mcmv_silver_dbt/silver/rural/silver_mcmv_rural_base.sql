@@ -3,7 +3,7 @@
 -- Base silver da frente Rural (materializa como empreendimento_rural.silver_historico_base).
 --
 -- REPONTADA (change consolidar-schemas-historico-reloginho, D7): consome
--- `dados_historicos.gold_snapshot_empreendimento_atual` filtrado a
+-- `ouro.ouro_dhist_snapshot_empreendimento_atual` filtrado a
 -- `frente_mcmv = 'Rural'` — já é o retrato corrente por APF com LOCF resolvido
 -- (fase mais avançada + dt_referencia mais recente, com forward-fill de
 -- valor/responsável na cauda). Antes lia `empreendimento_rural.silver_rural_empreendimento`
@@ -28,10 +28,10 @@ select
     'Subsidiada'::text as grupo_linha,
     linha_mcmv::text as linha_mcmv,
     'empreendimento_apf'::text as grao_registro,
-    'silver'::text as fonte_camada,
-    'dados_historicos'::text as fonte_schema,
-    'gold_snapshot_empreendimento_atual'::text as fonte_tabela,
-    'eixo histórico (INT057/INT065 + SNH) via gold_snapshot_empreendimento_atual'::text
+    'ouro'::text as fonte_camada,
+    'ouro'::text as fonte_schema,
+    'ouro_dhist_snapshot_empreendimento_atual'::text as fonte_tabela,
+    'eixo histórico (INT057/INT065 + SNH) via ouro_dhist_snapshot_empreendimento_atual'::text
     as fonte_minio_staging,
     apf::text as apf,
     apf::text as contrato,
@@ -66,8 +66,8 @@ select
         dt_ultima_liberacao,
         dt_contratacao
     )::date as dt_ultima_atualizacao,
-    'Rural vem de dados_historicos.gold_snapshot_empreendimento_atual (frente_mcmv = Rural).'::text
+    'Rural vem de ouro.ouro_dhist_snapshot_empreendimento_atual (frente_mcmv = Rural).'::text
     as observacao_silver,
     current_timestamp as dt_silver
-from {{ ref("gold_snapshot_empreendimento_atual") }}
+from {{ ref("ouro_dhist_snapshot_empreendimento_atual") }}
 where frente_mcmv = 'Rural' and apf is not null

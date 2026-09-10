@@ -18,7 +18,7 @@
 # Uso:
 #   ./publicar-historico.sh --listar                    # ordem de publicação
 #   ./publicar-historico.sh --grupo bronzes --dry-run   # mede sem escrever
-#   ./publicar-historico.sh --tabela dados_historicos.bronze_mcmv_historico_serie_entrada_bb
+#   ./publicar-historico.sh --tabela bronze.bronze_dhist_serie_entrada_bb
 #   ./publicar-historico.sh --grupo bronzes             # as 13 bronzes por família
 #   ./publicar-historico.sh --grupo silvers             # silvers e golds do eixo
 #   ./publicar-historico.sh --grupo tudo

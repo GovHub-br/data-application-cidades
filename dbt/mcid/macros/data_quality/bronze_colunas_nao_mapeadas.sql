@@ -72,7 +72,7 @@
 
   Uso no schema.yml (nível de model, nos 7 bronzes de empreendimento):
 
-      - name: bronze_mcmv_historico_empreendimento_int040
+      - name: bronze_sftp_empreendimento_int040
         data_tests:
           - bronze_colunas_nao_mapeadas:
               config: { severity: warn }
@@ -94,7 +94,7 @@
 
 {#- sufixo curto do bronze: int040 / snh_bb / ... -#}
 {%- set bronze_curto = model.identifier | lower
-        | replace('bronze_mcmv_historico_empreendimento_', '') -%}
+        | replace('bronze_sftp_empreendimento_', '') | replace('bronze_dhist_empreendimento_', '') -%}
 
 {%- set orfas = [] -%}
 {%- if execute -%}

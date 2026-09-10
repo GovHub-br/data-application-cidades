@@ -2,15 +2,15 @@ version: 2
 
 # Entregas por EVENTO da SNH, uma tabela POR AGENTE desde a change
 # pipeline-bronze-historica-destino-trocavel (D5). A série mensal SNH
-# (acumulado) está nas bronzes bronze_mcmv_historico_empreendimento_snh_bb /
+# (acumulado) está nas bronzes bronze_dhist_empreendimento_snh_bb /
 # _snh_caixa, em mcmv_historico_dbt; a view passthrough
 # bronze_reloginho_snh_serie_mensal deixou de existir junto com a bronze única
-# que ela envolvia — silver_historico_snh_apf_mes lê as duas bronzes por agente
+# que ela envolvia — prata_dhist_snh_apf_mes lê as duas bronzes por agente
 # diretamente.
 
 models:
 
-  - name: bronze_reloginho_snh_entregas_evento_bb
+  - name: bronze_dhist_snh_entregas_evento_bb
     description: >
       Bronze do reloginho — entregas por EVENTO (fluxo), agente BB. Cópia fiel
       do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`,
@@ -53,7 +53,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_reloginho_snh_entregas_evento_caixa
+  - name: bronze_dhist_snh_entregas_evento_caixa
     description: >
       Bronze do reloginho — entregas por EVENTO (fluxo), agente CAIXA. Cópia
       fiel do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`,

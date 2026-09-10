@@ -58,18 +58,24 @@ não muda (D3 de `pipeline-bronze-historica-destino-trocavel`), então o
 
 ## 3. Schemas do eixo que o conector deve ingerir
 
+Desde `renomear-camadas-pt-historico-reloginho` (D1): schema por **camada**.
+
 | schema | nós do eixo | observação |
 |---|---|---|
-| `dados_historicos` | 20 (14 bronze + `silver_mcmv_historico_serie_executiva` + `silver_mcmv_historico_entrega_apf` + 4 golds cross-frente) | schema do domínio histórico cross-frente, todas as camadas |
-| `reloginho` | 10 (2 bronze de entrega por evento + 2 silver + 6 gold — reloginho + gargalo) | domínio analítico autocontido |
-| `empreendimento_far` | 1 | alias `silver_historico_empreendimento` (não confundir com `silver_atual_*` dos colegas nem com `silver_historico_base` de `mcmv_silver_dbt`) |
-| `empreendimentos_fds` | 1 | idem |
-| `empreendimento_rural` | 1 | idem |
+| `bronze` | 16 (14 do eixo + 2 de entrega por evento) | `bronze_<origem>_<nome>`, origem ∈ `dhist`/`sftp`/`shpt` |
+| `prata` | 7 (`prata_dhist_serie_executiva`, `prata_dhist_entrega_apf`, `prata_{far,fds,rural}_historico_empreendimento`, `prata_dhist_snh_apf_mes`, `prata_dhist_snh_entregas_mes`) | `prata_<domínio>_<nome>` |
+| `ouro` | 10 (4 golds cross-frente `ouro_dhist_*` + 6 `ouro_reloginho_*` — reloginho + gargalo) | `ouro_<domínio>_<nome>` |
 
-**Critério para distinguir os modelos históricos dos "atuais"** nos 3 schemas de
-frente: o nó do eixo histórico tem **`alias = silver_historico_empreendimento`**.
-Os schemas `mcmv_historico` e `serie_historica` **não existem mais** (extintos
-pela `consolidar-schemas-historico-reloginho`).
+O nome do modelo == nome da tabela == basename do `.sql`; não há `alias`. Os
+schemas `dados_historicos`, `reloginho`, `empreendimento_far`/`_fds`/`_rural`,
+`conjuntura`, `mcmv_historico` e `serie_historica` **não recebem** estes braços.
+
+> **Reconciliação pendente.** O FQN dos 33 nós muda
+> (`cidades.{dados_historicos,reloginho,empreendimento_*}.<antigo>` →
+> `cidades.{bronze,prata,ouro}.<novo>`). Ao publicar em `prod` (modo B) + rodar
+> `scripts/migracao/renomear_nomenclatura_prod.sql`, **reingerir o conector dbt
+> do OpenMetadata**: a ingestão anterior fica órfã. Ver
+> `dbt/mcid/scripts/migracao/README.md` e reconciliar `issue-130-dicionario`.
 
 ## 4. Passo de ingestão do conector — Open Question 1
 
@@ -103,14 +109,14 @@ Após `dbt docs generate` + `dbt test` (manifest/catalog `generated_at`
 - **33/33 nós no `catalog.json`** com tipos de coluna (o de 2026-09-06 tinha o
   layout de schema antigo e faltavam 6 modelos).
 - **Linhagem cross-pasta / cross-schema** presente no `depends_on`:
-  - `gold_indicadores_gargalo_desempenho` → `gold_far_ficha_empreendimento`,
+  - `ouro_reloginho_indicadores_gargalo_desempenho` → `gold_far_ficha_empreendimento`,
     `gold_fds_ficha_empreendimento`, `silver_fds_empreendimento`,
     `silver_far_evolucao_financeira`, `gold_atual_evolucao_financeira_chart`,
     `gold_atual_execucao_fisica_financeira_chart` (todos com `description` de
     camada 0 — nenhuma pendência a registrar);
-  - `silver_historico_snh_apf_mes` → `bronze_mcmv_historico_empreendimento_snh_bb`
+  - `prata_dhist_snh_apf_mes` → `bronze_dhist_empreendimento_snh_bb`
     / `_snh_caixa` (via `ref()` dinâmico) + `dominio_status` + `dominio_regiao_uf`;
-  - `silver_mcmv_historico_entrega_apf` → `reloginho.bronze_reloginho_snh_entregas_evento_bb`
+  - `prata_dhist_entrega_apf` → `reloginho.bronze_dhist_snh_entregas_evento_bb`
     / `_caixa` (aresta **cross-schema** `dados_historicos` → `reloginho`).
 - **`run_results.json`**: `PASS=519 WARN=46 ERROR=1`. O único `fail`,
   `assert_reloginho_frente_cobertura_mensal`, é **esperado** — lacuna da FONTE

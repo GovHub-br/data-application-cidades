@@ -7,12 +7,12 @@ Levantamento da tarefa 1.1 da change `serie-historica-situacao-obra-regiao`.
 
 | silver | linhas | janela | linhas sem `status_operacional` |
 |---|---:|---|---:|
-| `empreendimento_far.silver_historico_empreendimento` | 342.977 | 2019-12 → 2026-03 | 1.140 |
-| `empreendimentos_fds.silver_historico_empreendimento` | 53.442 | 2019-12 → 2026-06 | 0 |
-| `empreendimento_rural.silver_historico_empreendimento` | 736.830 | 2019-12 → 2026-03 | **59.275** (8.470 APF) |
-| `reloginho.silver_historico_snh_apf_mes` | 307.731 | 2024-06 → 2026-03 | 0 |
+| `prata.prata_far_historico_empreendimento` | 342.977 | 2019-12 → 2026-03 | 1.140 |
+| `prata.prata_fds_historico_empreendimento` | 53.442 | 2019-12 → 2026-06 | 0 |
+| `prata.prata_rural_historico_empreendimento` | 736.830 | 2019-12 → 2026-03 | **59.275** (8.470 APF) |
+| `reloginho.prata_dhist_snh_apf_mes` | 307.731 | 2024-06 → 2026-03 | 0 |
 
-`silver_mcmv_historico_serie_executiva` (2012-04 → 2018-08, 10,16 M linhas) **não
+`prata_dhist_serie_executiva` (2012-04 → 2018-08, 10,16 M linhas) **não
 possui** `status_operacional` — ver D2 (`situacao_derivada`).
 
 ## Domínio por frente (contagem de linhas · APF distintos)

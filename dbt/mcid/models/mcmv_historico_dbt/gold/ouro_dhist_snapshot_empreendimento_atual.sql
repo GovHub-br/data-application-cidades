@@ -9,11 +9,9 @@
 -- dt_referencia mais recente. FAR/Rural: fase nula -> so dt_referencia (inalterado).
 -- Consolidado apenas (filtravel por frente_mcmv) — nao ha versao por frente.
 --
--- Uniao direta das 3 silvers por frente (FAR/FDS/Rural) — antes lia do helper
--- silver_mcmv_historico_empreendimento, aposentado na convencao 2026-09-04
--- (cada frente materializa como silver_historico_empreendimento no schema da
--- propria frente; nao ha mais um schema unico onde um union all resolveria
--- sozinho).
+-- Uniao direta das 3 silvers por frente (FAR/FDS/Rural) — antes lia de um helper consolidado, aposentado na convencao 2026-09-04.
+-- Hoje cada frente materializa como prata_<frente>_historico_empreendimento no
+-- schema `prata`.
 --
 -- ATRIBUTOS ESTAVEIS (change consolidar-schemas-historico-reloginho, D3): as 14
 -- colunas que eram a tabela separada dim_empreendimento_historico (chave e
@@ -26,11 +24,11 @@
 --   GOTCHA: no_entidade_organizadora / nu_cnpj_entidade so existem em Rural
 --   (INT057/INT065 ~86%); INT059/FDS nao traz a coluna. Os gps_* do INT059 sao
 --   0% reais — a coordenada decimal vem do latitude_do_imovel/longitude do SNH.
-{% set int040 = ref('bronze_mcmv_historico_empreendimento_int040') %}
-{% set int054 = ref('bronze_mcmv_historico_empreendimento_int054') %}
-{% set int057 = ref('bronze_mcmv_historico_empreendimento_int057') %}
-{% set int059 = ref('bronze_mcmv_historico_empreendimento_int059') %}
-{% set int065 = ref('bronze_mcmv_historico_empreendimento_int065') %}
+{% set int040 = ref('bronze_sftp_empreendimento_int040') %}
+{% set int054 = ref('bronze_sftp_empreendimento_int054') %}
+{% set int057 = ref('bronze_sftp_empreendimento_int057') %}
+{% set int059 = ref('bronze_sftp_empreendimento_int059') %}
+{% set int065 = ref('bronze_sftp_empreendimento_int065') %}
 {% set snh_familias = familias_snh_empreendimento() %}
 with
     consolidado as (
@@ -41,15 +39,15 @@ with
         -- disponível na silver por frente, não aqui. Mantém o snapshot em
         -- 17.545 linhas com o último estado REAL observado.
         select *
-        from {{ ref('silver_mcmv_historico_empreendimento_far') }}
+        from {{ ref('prata_far_historico_empreendimento') }}
         where fonte_serie <> 'obra_mensal'
         union all
         select *
-        from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
+        from {{ ref('prata_fds_historico_empreendimento') }}
         where fonte_serie <> 'obra_mensal'
         union all
         select *
-        from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
+        from {{ ref('prata_rural_historico_empreendimento') }}
         where fonte_serie <> 'obra_mensal'
     ),
 

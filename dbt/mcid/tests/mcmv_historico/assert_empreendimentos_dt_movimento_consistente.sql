@@ -8,18 +8,18 @@
 -- consolidar-schemas-historico-reloginho.
 --
 -- Uniao direta das 3 silvers por frente — o helper consolidado
--- silver_mcmv_historico_empreendimento foi aposentado na convencao
+-- o helper consolidado foi aposentado na convencao
 -- 2026-09-04 (cada frente materializa em schema proprio).
 with
     consolidado as (
         select *
-        from {{ ref('silver_mcmv_historico_empreendimento_far') }}
+        from {{ ref('prata_far_historico_empreendimento') }}
         union all
         select *
-        from {{ ref('silver_mcmv_historico_empreendimento_fds') }}
+        from {{ ref('prata_fds_historico_empreendimento') }}
         union all
         select *
-        from {{ ref('silver_mcmv_historico_empreendimento_rural') }}
+        from {{ ref('prata_rural_historico_empreendimento') }}
     )
 
 select

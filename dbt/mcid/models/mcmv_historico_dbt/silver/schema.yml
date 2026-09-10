@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: silver_mcmv_historico_empreendimento_far
+  - name: prata_far_historico_empreendimento
     description: >
       Silver — série histórica mensal de empreendimentos MCMV da frente FAR
       (SFTP INT040/INT054 ∪ SNH modalidade=FAR ∪ braço MONIT_MOV_OBRA), contrato
@@ -41,7 +41,7 @@ models:
       # verificacao_tipagem (change verificar-tipagem-silver-gold-historico):
       # tipo_esperado nos nomes do DuckDB (modo A). Ref:
       # docs/inventario-tipagem-silver-gold.md. As 3 silvers por frente + o
-      # gold_snapshot_empreendimento_atual compartilham este contrato de tipos.
+      # ouro_dhist_snapshot_empreendimento_atual compartilham este contrato de tipos.
       - name: id_historico_snapshot
         description: Chave técnica única por frente, APF e mês de referência.
         data_tests:
@@ -155,7 +155,7 @@ models:
       - name: quantidade_uh_entregues
         description: >
           Unidades habitacionais entregues (acumulado). coalesce(braço da linha,
-          valor preservado no grão, espinha silver_mcmv_historico_entrega_apf) —
+          valor preservado no grão, espinha prata_dhist_entrega_apf) —
           só preenche NULL, nunca sobrescreve 0. Change:
           enriquecer-datas-acompanhamento-historico. FDS agora tem valor do
           braço INT059 (change destravar-datas-obra-entrega-silver-historico).
@@ -467,8 +467,7 @@ models:
           `dt_assinatura_projeto` (INT059 — FDS ~17%). NULL nas demais frentes.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      # ── acumulado-no-ano (YTD) do braço SNH — ex-modelo
-      # silver_historico_empreendimento_fluxo_ano, incorporado por left join no
+      # ── acumulado-no-ano (YTD) do braço SNH — ex-modelo de fluxo YTD autônomo, incorporado por left join no
       # grão (frente_mcmv, apf, dt_referencia) (change
       # consolidar-schemas-historico-reloginho, D3). ESPARSIDADE POR CONSTRUÇÃO:
       # a família `quantidade_de_uhs_*_do_ano_de_referencia` só existe de
@@ -519,7 +518,7 @@ models:
         description: >
           Desembolso acumulado no ano (R$, YTD SNH). RESSALVA: fill baixo —
           concentrado na CAIXA (BB ~1%). Não usar como total de desembolso.
-      # ── evolução mensal de obra — ex-modelo silver_mcmv_historico_obra_mensal,
+      # ── evolução mensal de obra — ex-modelo de obra mensal autônomo,
       # incorporado por left join no grão (change
       # consolidar-schemas-historico-reloginho, D2). Fonte: MONIT_MOV_OBRA
       # (SharePoint), janela 2025-12+. Preenchidas em ~100% nas linhas de
@@ -611,7 +610,7 @@ models:
       - name: id_obra_snapshot
         description: Chave técnica do snapshot de obra (md5 de frente|apf|mês). NULL fora da janela obra.
 
-  - name: silver_mcmv_historico_empreendimento_fds
+  - name: prata_fds_historico_empreendimento
     description: >
       Silver — série histórica mensal de empreendimentos MCMV da frente
       FDS/Entidades (SFTP INT059 ∪ SNH modalidade=ENTIDADES ∪ braço
@@ -643,7 +642,7 @@ models:
           config: { severity: warn }
     columns: *contrato_empreendimento
 
-  - name: silver_mcmv_historico_empreendimento_rural
+  - name: prata_rural_historico_empreendimento
     description: >
       Silver — série histórica mensal de empreendimentos MCMV da frente Rural
       (SFTP INT057/INT065 ∪ SNH modalidade=RURAL ∪ braço MONIT_MOV_OBRA).
@@ -681,18 +680,18 @@ models:
 
   # dim_empreendimento_historico REMOVIDA (change consolidar-schemas-historico-reloginho,
   # D3): os 14 atributos estáveis passaram a colunas de
-  # gold_snapshot_empreendimento_atual (ver gold/schema.yml). Chave e
+  # ouro_dhist_snapshot_empreendimento_atual (ver gold/schema.yml). Chave e
   # cardinalidade eram idênticas (17.545/17.545 no semi join por
   # frente_mcmv+codigo_empreendimento). `dt_dim` não migrou.
 
-  - name: silver_mcmv_historico_entrega_apf
+  - name: prata_dhist_entrega_apf
     description: >
       Silver — espinha de entregas por APF. Grão: 1 linha por `apf`. Consolida os
-      EVENTOS de entrega de UH da SNH (bronze_reloginho_snh_entregas_evento_bb /
+      EVENTOS de entrega de UH da SNH (bronze_dhist_snh_entregas_evento_bb /
       _caixa, mesma fonte do reloginho) num atributo estável: dt_primeira_entrega,
       dt_ultima_entrega, uh_entregues_acumulada, n_eventos, dt_ultimo_snapshot.
       Dedup por hash de conteúdo (agente, apf, dt_evento, qtd) idêntico ao de
-      silver_historico_snh_entregas_mes — os totais reconciliam. As silvers
+      prata_dhist_snh_entregas_mes — os totais reconciliam. As silvers
       históricas por frente fazem left join por `apf` para resolver
       dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP. Change:
       enriquecer-datas-acompanhamento-historico. Requer target staging_duckdb.
@@ -726,7 +725,7 @@ models:
       - name: dt_ultimo_snapshot
         description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
 
-  - name: silver_mcmv_historico_serie_executiva
+  - name: prata_dhist_serie_executiva
     description: >
       Silver — série executiva histórica no contrato comum. Aplica o mapa de
       colunas (doc issue-130-proposta-bronze-series-historicas.md) via
@@ -909,7 +908,7 @@ models:
           (min_cidades) / `mvalor_investimento` (bext). Nulo em entrada_bb.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -925,7 +924,7 @@ models:
           `valor_far` no FAR). Era `valor_emprestimo`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -954,7 +953,7 @@ models:
           vocabulario-e-qualidade-financeira-historica (D2).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -965,7 +964,7 @@ models:
           (bases_relatorio) / `mvalor_desembolso` (bext). ∅ nas outras famílias.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -977,7 +976,7 @@ models:
           `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -987,7 +986,7 @@ models:
           (R$). Ver a nota anti-soma em `subsidio_fgts`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: silver_mcmv_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }

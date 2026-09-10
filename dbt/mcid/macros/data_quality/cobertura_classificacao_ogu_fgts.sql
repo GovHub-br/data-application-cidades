@@ -3,7 +3,7 @@
   preenchida cai abaixo de `min_pct`.
 
   Cobertura = Σ valor com `linha_ogu_fgts` classificada / Σ valor total, no
-  nível de agregação escolhido (o `gold_serie_mensal` tem GROUPING SETS
+  nível de agregação escolhido (o `ouro_dhist_serie_mensal` tem GROUPING SETS
   nacional/regiao/uf — somar todos triplica; o teste fixa um nível).
 
   "Classificada" = `linha_ogu_fgts` não nulo e diferente do rótulo de ausência

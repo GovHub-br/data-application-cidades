@@ -1,5 +1,17 @@
-{{ config(materialized="table") }}
+{{ config(enabled=false) }}
 
+-- =====================================================================
+-- DESABILITADO NESTA BRANCH — change renomear-camadas-pt-historico-reloginho (D4).
+--
+-- O piloto #118 (série anual OGU/FGTS a partir do seed
+-- issue_118_mcmv_serie_temporal_piloto) foi renomeado para o nome-alvo
+-- `prata_dhist_serie_anual_ogu_fgts` (schema `prata`, domínio `dhist`) mas
+-- NÃO é materializado aqui: `config(enabled=false)` + corpo comentado. O seed
+-- permanece inalterado. O desenvolvimento será retomado numa change futura —
+-- basta `git revert` deste comentário / reativar o `enabled`.
+-- =====================================================================
+
+/*
 with
     fonte as (
         select
@@ -67,3 +79,4 @@ select
     'Piloto issue #118: serie historica anual usada para consultas temporais, backtest do relogio e validacao de reprocessamento.'
     ::text as observacao_historico
 from serie_longa
+*/

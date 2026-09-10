@@ -20,7 +20,7 @@
   Uso no schema.yml (nível de model):
 
       models:
-        - name: bronze_mcmv_historico_serie_entrada_bb
+        - name: bronze_dhist_serie_entrada_bb
           data_tests:
             - colunas_esperadas:
                 config:

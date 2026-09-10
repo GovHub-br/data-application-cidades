@@ -2,7 +2,7 @@
 
 -- SILVER do reloginho MCMV (grupo A) — série mensal SNH tratada e deduplicada.
 --
--- Lê as BRONZES SNH POR AGENTE (bronze_mcmv_historico_empreendimento_snh_bb e
+-- Lê as BRONZES SNH POR AGENTE (bronze_dhist_empreendimento_snh_bb e
 -- _snh_caixa) — desde a change pipeline-bronze-historica-destino-trocavel (D5)
 -- não existe mais bronze unificada, e a união é feita aqui, com projeção
 -- explícita e idêntica por braço. A view intermediária
@@ -14,8 +14,8 @@
 -- 2024-06/07/10/11 e 2025-01, `uh_*` a partir de 2025-03. A CAIXA usa sempre
 -- `uh_*` e não tem `uhs_*` — daí coalesce_present (introspecção por família) e
 -- não um coalesce cru, que quebraria o braço CAIXA. Sem isso ~7,7 k linhas BB
--- (37% do agente) viravam NULL e o gold_indicadores_reloginho do BB lia 0 UH
--- nesses 5 meses. Mesmo tratamento do silver_historico_snh_arm (silver por frente).
+-- (37% do agente) viravam NULL e o ouro_reloginho_indicadores do BB lia 0 UH
+-- nesses 5 meses. Mesmo tratamento do prata_dhist_snh_arm (silver por frente).
 -- * normalização de domínio — agente_financeiro em maiúsculas (BB/CAIXA) e
 -- frente_mcmv canônica a partir de `modalidade` (FAR / Entidades / Rural —
 -- resolve o RURAL vs Rural entre CAIXA e BB, decisão #6 do

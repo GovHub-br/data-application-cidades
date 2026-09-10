@@ -1,4 +1,4 @@
-# `gold_indicadores_gargalo_desempenho` — fonte de desembolso e flags
+# `ouro_reloginho_indicadores_gargalo_desempenho` — fonte de desembolso e flags
 
 Change `vocabulario-e-qualidade-financeira-historica`, tarefa 6.4.
 
@@ -36,7 +36,7 @@ A expectativa do design ("os flags caem bem abaixo dos 93%") **não se
 confirma** — a taxa de 93% é efeito dos **limiares** dos flags
 (`percentual_saldo_a_desembolsar >= 30 and percentual_execucao_fisica < 95`),
 não da fonte de desembolso. Recalibrar esses limiares é **non-goal** desta
-change ("redesenhar `gold_indicadores_gargalo` além da fonte de desembolso").
+change ("redesenhar `ouro_reloginho_indicadores_gargalo_desempenho` além da fonte de desembolso").
 Fica registrado como candidato a change própria.
 
 A mudança entregue continua correta e necessária: elimina o `coalesce` de um

@@ -24,7 +24,7 @@
 #   DUCKDB_MCID_CGROUP_SWAP_MAX  swap liberado pra árvore   (default 0 — força spill em disco, não swap)
 #   DUCKDB_MCID_NO_CGROUP        =1 desliga o teto rígido (roda dbt direto)
 #   DUCKDB_MCID_SERIE_MEM / _SERIE_CGROUP_MAX / _SERIE_CGROUP_SWAP_MAX
-#                               limites SÓ do silver_mcmv_historico_serie_executiva
+#                               limites SÓ do prata_dhist_serie_executiva
 #                               (default 6GB / 11G / 2G — o SUM/GROUP BY sobre
 #                               ~10M linhas não derrama; pico medido ~10,3 GiB)
 #   DBT                          binário dbt                (default: .venv/bin/dbt → dbt no PATH)

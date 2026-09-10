@@ -4,7 +4,7 @@ models:
   - name: gold_fds_ficha_empreendimento
     description: >
       Gold — 1 linha por empreendimento (APF), consumida pelo gargalo
-      (gold_indicadores_gargalo_desempenho). Materializa como
+      (ouro_reloginho_indicadores_gargalo_desempenho). Materializa como
       empreendimentos_fds.gold_atual_ficha_empreendimento (convenção
       2026-09-04 — schema por frente, prefixo atual_ para o produto
       current-state que replica o que os colegas já entregam em prod;
@@ -57,7 +57,7 @@ models:
 
   - name: gold_atual_evolucao_financeira_chart
     description: >
-      Gold consumida pelo gargalo (gold_indicadores_gargalo_desempenho).
+      Gold consumida pelo gargalo (ouro_reloginho_indicadores_gargalo_desempenho).
       Materializa como empreendimentos_fds.gold_atual_evolucao_financeira_chart
       (convenção 2026-09-04, ver nota acima).
       Estrutura de série temporal (1 linha por APF/Mês) pronta para plotar

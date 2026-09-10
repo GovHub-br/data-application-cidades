@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
-# Build local do schema `reloginho` (indicadores_mcmv_dbt) no target
+# Build local do domínio reloginho/gargalo (indicadores_mcmv_dbt) no target
 # staging_duckdb — série SNH mensal + entregas por evento → indicadores de
-# velocidade (reloginho) e de gargalo de desempenho.
+# velocidade (reloginho) e de gargalo de desempenho. Materializa por camada
+# (`bronze`/`prata`/`ouro`), convenção renomear-camadas-pt-historico-reloginho.
 #
 # MODO A (dev) dos três modos da change pipeline-bronze-historica-destino-trocavel:
 #   A — dev         este script (--target staging_duckdb): lê a staging MinIO e
@@ -13,13 +14,14 @@
 #                   mesma execução, com o motor DuckDB FORA do banco.
 # O corpo de cada modelo é idêntico nos três; só o target muda.
 #
-# Materializa o schema `reloginho` inteiro (2 silver + 6 gold do mapa + as 2
-# bronzes de ENTREGA por agente bronze_reloginho_snh_entregas_evento_bb/_caixa,
-# que passaram de `dados_historicos` para `reloginho` na change
-# consolidar-schemas-historico-reloginho) mais o upstream que ele exige: a
-# cadeia medalhão FAR/FDS (`empreendimento_far`, `empreendimentos_fds`,
-# tabelas `*_atual_*`) que os golds de gargalo leem. A série mensal SNH vem das
-# bronzes por agente bronze_mcmv_historico_empreendimento_snh_bb/_caixa
+# Materializa os modelos do domínio reloginho/gargalo (indicadores_mcmv_dbt)
+# inteiros — 2 pratas + 6 ouros do mapa + as 2 bronzes de ENTREGA por agente
+# bronze_dhist_snh_entregas_evento_bb/_caixa. Desde a change
+# renomear-camadas-pt-historico-reloginho (D1) esses modelos materializam por
+# CAMADA (`bronze`/`prata`/`ouro`), não num schema `reloginho`. Puxa também o
+# upstream: a cadeia medalhão FAR/FDS (`empreendimento_far`, `empreendimentos_fds`,
+# tabelas `*_atual_*`) que os ouros de gargalo leem. A série mensal SNH vem das
+# bronzes por agente bronze_dhist_empreendimento_snh_bb/_caixa
 # (mcmv_historico_dbt), reaproveitadas se já estiverem no arquivo.
 #
 # Contenção de memória: ver _run-common.sh — cada `dbt` roda dentro de um teto
@@ -55,15 +57,15 @@ cd "$HERE"
 
 # Indicadores de velocidade (reloginho puro) — sem a cadeia de gargalo.
 RELOGINHO=(
-  +gold_indicadores_reloginho
-  +gold_indicadores_reloginho_frente
-  +gold_indicadores_reloginho_entregas
-  +gold_resumo_reloginho_dashboard
+  +ouro_reloginho_indicadores
+  +ouro_reloginho_indicadores_frente
+  +ouro_reloginho_indicadores_entregas
+  +ouro_reloginho_resumo_dashboard
 )
 # Indicadores de gargalo — puxam o medalhão FAR/FDS (`*_atual_*`).
 GARGALO=(
-  +gold_indicadores_gargalo_desempenho
-  +gold_resumo_gargalo_desempenho_dashboard
+  +ouro_reloginho_indicadores_gargalo_desempenho
+  +ouro_reloginho_resumo_gargalo_desempenho_dashboard
 )
 
 case "${1:-all}" in

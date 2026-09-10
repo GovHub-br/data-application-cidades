@@ -152,7 +152,7 @@ sources:
         description: >
           SNH — snapshot corrente (data_de_referencia 30/09/2025, 21.458 linhas,
           todas as modalidades). NÃO é a série mensal — essa é
-          bronze_mcmv_historico_empreendimento_snh (staging/dados_historicos).
+          bronze_dhist_empreendimento_snh (staging/dados_historicos).
       - name: api_ibge_uf
         description: Referência IBGE — 27 UFs.
       - name: api_ibge_regioes

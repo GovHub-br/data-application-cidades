@@ -20,9 +20,15 @@ Escritas permitidas no `prod` (D7): CREATE SCHEMA IF NOT EXISTS, CREATE TABLE,
 DROP TABLE das tabelas do eixo e insercao. Nenhum ALTER SYSTEM / ALTER ROLE /
 ALTER DATABASE / CREATE EXTENSION.
 
+Convenção de schema (change renomear-camadas-pt-historico-reloginho, D1): as
+tabelas materializam por CAMADA em português — `bronze` / `prata` / `ouro`. Os
+schemas `dados_historicos`, `reloginho` e os de frente não recebem mais estes
+braços. O mapa canônico de renomeação (diretório de migração) é a fonte de verdade do
+old->new das tabelas já publicadas em prod na convenção anterior.
+
 Uso:
     python3 scripts/publicar_historico.py --listar
-    python3 scripts/publicar_historico.py --tabela dados_historicos.bronze_..._entrada_bb
+    python3 scripts/publicar_historico.py --tabela bronze.bronze_dhist_serie_entrada_bb
     python3 scripts/publicar_historico.py --grupo bronzes --dry-run
     python3 scripts/publicar_historico.py --grupo tudo
 """
@@ -43,59 +49,67 @@ import psycopg2
 # --- inventario de tabelas publicaveis -------------------------------------
 # `familia` casa com o mapa de macros/historico/familias.sql quando a tabela e
 # uma bronze de serie; para silver/gold e o nome do dominio.
+#
+# Schema por CAMADA em portugues (change renomear-camadas-pt-historico-reloginho,
+# D1): bronze -> `bronze`, silver -> `prata`, gold -> `ouro`. Nada mais publica
+# em `dados_historicos`, `reloginho` ou nos schemas de frente. Os globs de
+# origem continuam apontando para os prefixos de `staging/` — a origem nao muda.
+# O mapa canonico de renomeacao (diretorio de migracao, mapa_nomenclatura.csv) e
+# a fonte de verdade do old->new das tabelas ja publicadas em prod na convencao
+# anterior.
 
 BRONZES_SERIE = [
     # (schema, tabela, familia, glob de origem)
-    ("dados_historicos", "bronze_mcmv_historico_serie_entrada_bb",
+    ("bronze", "bronze_dhist_serie_entrada_bb",
      "entrada_bb", "dados_historicos/*entrada_bb*.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_empreendimento_snh_bb",
+    ("bronze", "bronze_dhist_empreendimento_snh_bb",
      "snh_bb", "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_bb*.parquet"),
-    ("dados_historicos", "bronze_reloginho_snh_entregas_evento_bb",
+    ("bronze", "bronze_dhist_snh_entregas_evento_bb",
      "entregas_bb", "dados_historicos/*_da_entrega_da_unidade_af_bb.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_empreendimento_int054",
+    ("bronze", "bronze_sftp_empreendimento_int054",
      "INT054", "sftp/fabrica/GEFUS/**/INT054_*.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_empreendimento_int059",
+    ("bronze", "bronze_sftp_empreendimento_int059",
      "INT059", "sftp/fabrica/GEFUS/**/INT059_*.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_empreendimento_int057",
+    ("bronze", "bronze_sftp_empreendimento_int057",
      "INT057", "sftp/fabrica/GEFUS/**/INT057_*.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_empreendimento_int040",
+    ("bronze", "bronze_sftp_empreendimento_int040",
      "INT040", "sftp/fabrica/GEFUS/**/INT040_*.parquet"),
-    ("dados_historicos", "bronze_reloginho_snh_entregas_evento_caixa",
+    ("bronze", "bronze_dhist_snh_entregas_evento_caixa",
      "entregas_caixa", "dados_historicos/*_af_caixa_entregas.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_empreendimento_snh_caixa",
+    ("bronze", "bronze_dhist_empreendimento_snh_caixa",
      "snh_caixa", "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_caixa*.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_empreendimento_int065",
+    ("bronze", "bronze_sftp_empreendimento_int065",
      "INT065", "sftp/fabrica/GEFUS/**/INT065_*.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_serie_bases_relatorio_executivo",
+    ("bronze", "bronze_dhist_serie_bases_relatorio_executivo",
      "bases_relatorio_executivo", "dados_historicos/*bases_relat*rio_executivo*.parquet"),
-    ("dados_historicos", "bronze_mcmv_historico_serie_min_cidades",
+    ("bronze", "bronze_dhist_serie_min_cidades",
      "min_cidades", "dados_historicos/*min_cidades*.parquet"),
     # bext e a maior transacao isolada (5,66 M linhas) — ultima das bronzes (D8).
-    ("dados_historicos", "bronze_mcmv_historico_serie_bext",
+    ("bronze", "bronze_dhist_serie_bext",
      "bext", "dados_historicos/*bext*.parquet"),
 ]
 
 SILVERS_GOLDS = [
-    ("conjuntura", "silver_mcmv_historico_serie_anual_ogu_fgts", "mcmv_historico"),
-    ("reloginho", "silver_historico_snh_entregas_mes", "reloginho"),
-    ("reloginho", "silver_historico_snh_apf_mes", "reloginho"),
-    ("reloginho", "gold_indicadores_reloginho", "reloginho"),
-    ("reloginho", "gold_indicadores_reloginho_frente", "reloginho"),
-    ("reloginho", "gold_indicadores_reloginho_entregas", "reloginho"),
-    ("reloginho", "gold_resumo_reloginho_dashboard", "reloginho"),
-    ("reloginho", "gold_indicadores_gargalo_desempenho", "reloginho"),
-    ("reloginho", "gold_resumo_gargalo_desempenho_dashboard", "reloginho"),
-    ("empreendimentos_fds", "silver_historico_empreendimento", "mcmv_historico"),
-    ("empreendimento_far", "silver_historico_empreendimento", "mcmv_historico"),
-    ("empreendimento_rural", "silver_historico_empreendimento", "mcmv_historico"),
-    # golds cross-frente: serie_historica extinto -> dados_historicos (change
-    # consolidar-schemas-historico-reloginho, D1). Os 4 golds publicados.
-    ("dados_historicos", "gold_serie_mensal", "mcmv_historico"),
-    ("dados_historicos", "gold_snapshot_empreendimento_atual", "mcmv_historico"),
-    ("dados_historicos", "gold_marco_empreendimento", "mcmv_historico"),
-    ("dados_historicos", "gold_serie_situacao_mensal", "mcmv_historico"),
+    # piloto OGU/FGTS desabilitado nesta branch (renomear-camadas-..., D4):
+    # ("prata", "prata_dhist_serie_anual_ogu_fgts", "mcmv_historico"),
+    ("prata", "prata_dhist_snh_entregas_mes", "reloginho"),
+    ("prata", "prata_dhist_snh_apf_mes", "reloginho"),
+    ("ouro", "ouro_reloginho_indicadores", "reloginho"),
+    ("ouro", "ouro_reloginho_indicadores_frente", "reloginho"),
+    ("ouro", "ouro_reloginho_indicadores_entregas", "reloginho"),
+    ("ouro", "ouro_reloginho_resumo_dashboard", "reloginho"),
+    ("ouro", "ouro_reloginho_indicadores_gargalo_desempenho", "reloginho"),
+    ("ouro", "ouro_reloginho_resumo_gargalo_desempenho_dashboard", "reloginho"),
+    ("prata", "prata_fds_historico_empreendimento", "mcmv_historico"),
+    ("prata", "prata_far_historico_empreendimento", "mcmv_historico"),
+    ("prata", "prata_rural_historico_empreendimento", "mcmv_historico"),
+    # golds cross-frente (4).
+    ("ouro", "ouro_dhist_serie_mensal", "mcmv_historico"),
+    ("ouro", "ouro_dhist_snapshot_empreendimento_atual", "mcmv_historico"),
+    ("ouro", "ouro_dhist_marco_empreendimento", "mcmv_historico"),
+    ("ouro", "ouro_dhist_serie_situacao_mensal", "mcmv_historico"),
     # a silver da serie executiva e a maior (10,2 M linhas) — por ultimo.
-    ("dados_historicos", "silver_mcmv_historico_serie_executiva", "mcmv_historico"),
+    ("prata", "prata_dhist_serie_executiva", "mcmv_historico"),
 ]
 
 

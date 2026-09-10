@@ -86,7 +86,7 @@ frente × faixa × coluna-de-valor. Consumido por `valor_dentro_faixa_uh`
   de zero (`valor_liberado`) não entram — a faixa R$/UH não se aplica nos
   primeiros snapshots.
 - **Critério de calibração:** bordas ≈ p2 / p98 da distribuição observada em
-  `dados_historicos.silver_mcmv_historico_serie_executiva` (2026-09-06),
+  `dados_historicos.prata_dhist_serie_executiva` (2026-09-06),
   arredondadas para fora ~2–3× ("começa largo, aperta com dado" — Risks do
   design). As linhas de `FAR` / `Entidades` / `Rural` **não** foram calibradas
   contra dado local (silvers por frente não materializadas neste arquivo) —

@@ -9,12 +9,12 @@
 ## 1. Princípio
 
 **Um conceito financeiro → um nome canônico.** As *silvers por frente*
-(`silver_mcmv_historico_empreendimento_far/fds/rural`) mantêm o nome próximo da
+(`prata_far_historico_empreendimento/fds/rural`) mantêm o nome próximo da
 fonte (`valor_contratado`, `valor_desembolsado`) — renomear em cascata é caro e
 a silver por frente é legitimamente "vocabulário da fonte" — mas o `schema.yml`
 de cada uma **declara a qual conceito canônico a coluna corresponde**. A
-`silver_mcmv_historico_serie_executiva` e os *golds* (`gold_serie_mensal`,
-`gold_snapshot_empreendimento_atual`, `gold_indicadores_gargalo_desempenho`)
+`prata_dhist_serie_executiva` e os *golds* (`ouro_dhist_serie_mensal`,
+`ouro_dhist_snapshot_empreendimento_atual`, `ouro_reloginho_indicadores_gargalo_desempenho`)
 usam o nome canônico.
 
 **Alinhamento com as fichas atuais** (frentes FAR/FDS/Rural já em produção): o
@@ -45,7 +45,7 @@ contagem. A leitura correta é `coalesce(subsidio_fgts + subsidio_ogu, subsidio_
 
 ## 3. Crosswalk — coluna física → conceito, por camada e frente
 
-### Série executiva (`silver_mcmv_historico_serie_executiva`)
+### Série executiva (`prata_dhist_serie_executiva`)
 
 | conceito | `bases_relatorio_executivo` | `min_cidades` | `entrada_bb` | `bext` |
 |---|---|---|---|---|
@@ -62,7 +62,7 @@ contagem. A leitura correta é `coalesce(subsidio_fgts + subsidio_ogu, subsidio_
 
 ### Silvers por frente (SFTP GEFUS/INT ∪ SNH)
 
-| conceito | FAR (`silver_mcmv_historico_empreendimento_far`) | FDS (`_fds`) | Rural (`_rural`) |
+| conceito | FAR (`prata_far_historico_empreendimento`) | FDS (`_fds`) | Rural (`_rural`) |
 |---|---|---|---|
 | `valor_investimento_total` | col. `valor_contratado` ← `vr_investimento` (INT040/054) / `valor_contratado` (SNH) | col. `valor_contratado` ← `vr_investimento` (INT059) / `valor_contratado` (SNH) | col. `valor_contratado` ← `vr_investimento` (INT057) / `vr_investimento_pnhr` (INT065) / `valor_contratado` (SNH) |
 | `valor_desembolsado_acumulado` | col. `valor_desembolsado` ← `vr_liberado` (INT040) / `total_liberado_far` (INT054) / `valor_desembolsado` (SNH) | col. `valor_desembolsado` ← `vr_liberado` (INT059) / `valor_desembolsado` (SNH) | col. `valor_desembolsado` ← `vr_liberado` (INT065/INT057) / `valor_desembolsado` (SNH) |
@@ -71,7 +71,7 @@ contagem. A leitura correta é `coalesce(subsidio_fgts + subsidio_ogu, subsidio_
 
 ### Golds
 
-| conceito | `gold_serie_mensal` | `gold_snapshot_empreendimento_atual` | `gold_indicadores_gargalo_desempenho` (schema `reloginho`) |
+| conceito | `ouro_dhist_serie_mensal` | `ouro_dhist_snapshot_empreendimento_atual` | `ouro_reloginho_indicadores_gargalo_desempenho` (schema `reloginho`) |
 |---|---|---|---|
 | `valor_investimento_total` | `valor_investimento_acumulado` *(era `valor_investimento`)* | `valor_contratado` | `valor_contratado` |
 | `valor_financiamento` | `valor_financiamento_acumulado` *(era `valor_emprestimo`)* | — | — |
@@ -81,7 +81,7 @@ contagem. A leitura correta é `coalesce(subsidio_fgts + subsidio_ogu, subsidio_
 | `subsidio_total` | `subsidio_total` (nova) | — | — |
 | `valor_desembolsado_componente_*` | — | — | `valor_desembolsado_componentes` (agregado SharePoint — **informativo**, cobertura parcial pós-2024) |
 
-**Mapa nome-antigo → nome-novo (`gold_serie_mensal`, BREAKING):**
+**Mapa nome-antigo → nome-novo (`ouro_dhist_serie_mensal`, BREAKING):**
 
 | antes | depois |
 |---|---|
@@ -89,25 +89,25 @@ contagem. A leitura correta é `coalesce(subsidio_fgts + subsidio_ogu, subsidio_
 | `valor_emprestimo` | `valor_financiamento_acumulado` |
 | `valor_liberado` | `valor_desembolsado_acumulado` |
 
-Colunas novas no `gold_serie_mensal`: `natureza_serie`, `grao_familia`,
+Colunas novas no `ouro_dhist_serie_mensal`: `natureza_serie`, `grao_familia`,
 `valor_vgv`, `valor_contrapartidas`, `subsidio_total`.
 
 ## 4. Fonte canônica de desembolso (D4)
 
 - **Acompanhamento histórico** (silvers por frente, `gold_snapshot`,
-  `gold_serie_mensal`): desembolso acumulado autoritativo = feed GEFUS/INT
+  `ouro_dhist_serie_mensal`): desembolso acumulado autoritativo = feed GEFUS/INT
   (`vr_liberado` / `total_liberado_far` das INT040/054/057/059/065) e, pré-2019,
   `valor_total_liberado` de `bases_relatorio_executivo`. Snapshot cumulativo da
   fonte oficial.
 - **Decomposição por componente** = `*_financeiro_mensal` (SharePoint).
   É **detalhe**, não total, e cobre só APF com liberação pós-2024.
-- `gold_indicadores_gargalo_desempenho` **não** faz mais
+- `ouro_reloginho_indicadores_gargalo_desempenho` **não** faz mais
   `coalesce(<sharepoint>, <ficha>)`: a ficha (GEFUS/CAIXA) é primária; o
   agregado SharePoint vira coluna informativa `valor_desembolsado_componentes`.
 
 ## 5. Natureza de série — estoque × fluxo
 
-`gold_serie_mensal` é **série de estoque**: cada linha é a carteira acumulada no
+`ouro_dhist_serie_mensal` é **série de estoque**: cada linha é a carteira acumulada no
 mês-snapshot (coluna `natureza_serie = 'estoque'`). **Não somar entre meses**
 (dupla contagem do acumulado) **nem entre `fonte_familia`** de grão diferente
 (`grao_familia`: `'contrato'` para `bext`, `'empreendimento'` para as demais).
@@ -128,7 +128,7 @@ negócio). **Não** há coluna `_deflacionado` nesta change.
 
 `linha_ogu_fgts` classifica pelo subsídio dominante. A família `bext` reporta só
 `subsidio_total` (sem split FGTS/OGU) → todo o `bext` fica
-`linha_ogu_fgts = 'Nao classificada'` no `gold_serie_mensal`. Cobertura nacional
+`linha_ogu_fgts = 'Nao classificada'` no `ouro_dhist_serie_mensal`. Cobertura nacional
 de `valor_investimento_acumulado` classificado observada em 2026-09-06: **75,6%**
 (`bases_relatorio_executivo` domina o investimento e traz o split; `bext` puxa
 para baixo). O teste `cobertura_classificacao_ogu_fgts(min_pct=0.60)` sinaliza

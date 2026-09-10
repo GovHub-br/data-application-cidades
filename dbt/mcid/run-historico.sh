@@ -47,62 +47,63 @@ seed_all() { run_dbt seed --target "$TARGET"; }
 # Bronzes por familia (D5 da change pipeline-bronze-historica-destino-trocavel):
 # 2 agentes SNH + 5 interfaces GEFUS + 4 familias da serie executiva + 2 agentes
 # de entregas por evento (compartilhados com o reloginho, alimentam a espinha
-# silver_mcmv_historico_entrega_apf). Ordem crescente de volume: as maiores
+# prata_dhist_entrega_apf). Ordem crescente de volume: as maiores
 # (min_cidades, bext) por ultimo. O mapa vive em macros/historico/familias.sql.
 BRONZES=(
-  bronze_mcmv_historico_empreendimento_snh_bb
-  bronze_mcmv_historico_empreendimento_snh_caixa
-  bronze_mcmv_historico_empreendimento_int040
-  bronze_mcmv_historico_empreendimento_int054
-  bronze_mcmv_historico_empreendimento_int057
-  bronze_mcmv_historico_empreendimento_int059
-  bronze_mcmv_historico_empreendimento_int065
-  bronze_mcmv_historico_serie_entrada_bb
-  bronze_mcmv_historico_serie_bases_relatorio_executivo
-  bronze_mcmv_historico_serie_min_cidades
-  bronze_mcmv_historico_serie_bext
+  bronze_dhist_empreendimento_snh_bb
+  bronze_dhist_empreendimento_snh_caixa
+  bronze_sftp_empreendimento_int040
+  bronze_sftp_empreendimento_int054
+  bronze_sftp_empreendimento_int057
+  bronze_sftp_empreendimento_int059
+  bronze_sftp_empreendimento_int065
+  bronze_dhist_serie_entrada_bb
+  bronze_dhist_serie_bases_relatorio_executivo
+  bronze_dhist_serie_min_cidades
+  bronze_dhist_serie_bext
   # entregas por evento (grao APF) — mesma fonte do reloginho; alimentam
-  # silver_mcmv_historico_entrega_apf (change enriquecer-datas-acompanhamento-historico).
-  bronze_reloginho_snh_entregas_evento_bb
-  bronze_reloginho_snh_entregas_evento_caixa
+  # prata_dhist_entrega_apf (change enriquecer-datas-acompanhamento-historico).
+  bronze_dhist_snh_entregas_evento_bb
+  bronze_dhist_snh_entregas_evento_caixa
   # obra mensal (SharePoint) — curva prevista x realizada + situacao de obra
   # (change enriquecer-quantidades-uh-e-sinais-obra-historico). Janela 202512+.
-  bronze_mcmv_historico_obra_mensal_far
-  bronze_mcmv_historico_obra_mensal_fds
-  bronze_mcmv_historico_obra_mensal_rural
+  bronze_shpt_obra_mensal_far
+  bronze_shpt_obra_mensal_fds
+  bronze_shpt_obra_mensal_rural
 )
 # Bronzes que sozinhas ja sao grandes o bastante para valer --threads 1 (limita
 # a paralelizacao interna do DuckDB, que e onde o pico de RAM mora). Sao as 3
 # familias volumosas da serie executiva; `entrada_bb` (18k linhas) fica de fora.
-HEAVY="bronze_mcmv_historico_serie_bases_relatorio_executivo bronze_mcmv_historico_serie_min_cidades bronze_mcmv_historico_serie_bext"
+HEAVY="bronze_dhist_serie_bases_relatorio_executivo bronze_dhist_serie_min_cidades bronze_dhist_serie_bext"
 
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
 # juntos) só depois de todos materializados. EXCETO
-# silver_mcmv_historico_serie_executiva (uniao das 4 familias + janela sobre
+# prata_dhist_serie_executiva (uniao das 4 familias + janela sobre
 # ~10M linhas): sai em invocacao propria com --threads 1.
 # silver_atual_dim_empreendimento (dominio empreendimento_fds_dbt) + suas 2 bronzes
-# entram aqui porque silver_mcmv_historico_empreendimento_fds passou a herdar
+# entram aqui porque prata_fds_historico_empreendimento passou a herdar
 # id_empreendimento / fase_empreendimento dela (change id-empreendimento-eixo-historico).
 # Leem o mesmo source('mcmv_staging', …) -> resolvem no staging_duckdb.
 SILVERS=(
   bronze_fds_cadastro_pj
   bronze_fds_mudanca_fase_eventos
   silver_atual_dim_empreendimento
-  silver_mcmv_historico_entrega_apf
-  silver_mcmv_historico_empreendimento_far
-  silver_mcmv_historico_empreendimento_fds
-  silver_mcmv_historico_empreendimento_rural
-  silver_mcmv_historico_serie_anual_ogu_fgts
-  # silver_mcmv_historico_obra_mensal REMOVIDO (change consolidar-schemas-historico-reloginho,
-  # D2): a família obra_mensal virou braço/left-join das 3 silvers de frente.
+  prata_dhist_entrega_apf
+  prata_far_historico_empreendimento
+  prata_fds_historico_empreendimento
+  prata_rural_historico_empreendimento
+  # piloto OGU/FGTS (prata_dhist_serie_anual_ogu_fgts) está enabled=false nesta
+  # branch (change renomear-camadas-pt-historico-reloginho, D4) — fora do build.
+  # O modelo de obra mensal autônomo foi dissolvido (consolidar-schemas-historico-reloginho,
+  # D2): a família obra_mensal virou braço/left-join das 3 pratas de frente.
 )
-SILVER_SERIE=silver_mcmv_historico_serie_executiva
+SILVER_SERIE=prata_dhist_serie_executiva
 GOLDS=(
-  gold_snapshot_empreendimento_atual
-  gold_marco_empreendimento
-  gold_serie_mensal
-  gold_serie_situacao_mensal
+  ouro_dhist_snapshot_empreendimento_atual
+  ouro_dhist_marco_empreendimento
+  ouro_dhist_serie_mensal
+  ouro_dhist_serie_situacao_mensal
 )
 
 build_one() {
@@ -115,7 +116,7 @@ build_one() {
   run_dbt build --select "$sel" "${extra[@]}" --target "$TARGET"
 }
 
-# silver_mcmv_historico_serie_executiva: união das 4 famílias (~10M linhas) +
+# prata_dhist_serie_executiva: união das 4 famílias (~10M linhas) +
 # a dedup (reenvio_rank → conteudo_rank → SUM ao grão de consumo). O SUM/GROUP BY
 # de milhões de grupos NÃO derrama em disco no DuckDB — o pico é ~10,3 GiB
 # medido, e baixar o soft limit só torna tudo 2× mais lento sem mexer nesse
@@ -148,10 +149,10 @@ case "${1:-all}" in
   serie)
     seed_all
     for m in \
-      bronze_mcmv_historico_serie_entrada_bb \
-      bronze_mcmv_historico_serie_bases_relatorio_executivo \
-      bronze_mcmv_historico_serie_min_cidades \
-      bronze_mcmv_historico_serie_bext; do
+      bronze_dhist_serie_entrada_bb \
+      bronze_dhist_serie_bases_relatorio_executivo \
+      bronze_dhist_serie_min_cidades \
+      bronze_dhist_serie_bext; do
       build_one "$m"
     done
     build_silver_serie

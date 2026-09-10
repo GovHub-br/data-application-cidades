@@ -49,7 +49,7 @@ seeds:
       dos 33 modelos históricos em escopo. Lido pelo teste genérico
       `completude_minima` (modo seed) — ver macro. `modelo` usa o nome do modelo
       dbt, exceto as 3 silvers por frente
-      (`silver_mcmv_historico_empreendimento_{far,fds,rural}`), que
+      (`prata_{far,fds,rural}_historico_empreendimento`), que
       compartilham o contrato comum e são referidas pela chave sintética
       `contrato_empreendimento_historico`.
     data_tests:

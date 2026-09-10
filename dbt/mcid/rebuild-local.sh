@@ -141,11 +141,11 @@ rows = con.execute(
     select schema_name, table_name, estimated_size
     from duckdb_tables()
     where schema_name in (
-        -- serie_historica / mcmv_historico extintos (change
-        -- consolidar-schemas-historico-reloginho): golds e silvers do eixo
-        -- cross-frente agora em dados_historicos.
-        'dados_historicos', 'reloginho',
-        'empreendimento_far', 'empreendimentos_fds', 'empreendimento_rural'
+        -- schema por CAMADA em português (change
+        -- renomear-camadas-pt-historico-reloginho, D1): eixo histórico +
+        -- reloginho/gargalo materializam em bronze / prata / ouro. Os schemas
+        -- dados_historicos / reloginho / de frente não recebem mais estes braços.
+        'bronze', 'prata', 'ouro'
     )
     order by estimated_size desc, schema_name, table_name
     """

@@ -13,7 +13,7 @@
 -- O corpo é o mesmo nos três — ver models/mcmv_historico_dbt/README.md.
 with
 
-    base as (select * from {{ ref("gold_indicadores_reloginho") }}),
+    base as (select * from {{ ref("ouro_reloginho_indicadores") }}),
 
     ultimo_mes as (
         select agente_financeiro, max(dt_referencia) as dt_ultimo_mes

@@ -35,7 +35,7 @@ o FAR já usava.
 - `qt_uh_previsao_entrega` ← `coalesce_present_parsed(['qt_uh_previsao_entrega', 'unidades_habitacionais_a_serem_entregues'])`.
 
 `NULL` no braço SFTP. Resolve a **Open Question 1 do B+D**: o marco
-`dt_previsao_entrega` de `gold_marco_empreendimento` deixa de ser
+`dt_previsao_entrega` de `ouro_dhist_marco_empreendimento` deixa de ser
 `cast(null as date)` fixo e passa a resolver o maior valor observado, com
 `dt_previsao_entrega_fonte = 'snh:dados_prioritarios'`.
 
@@ -69,7 +69,7 @@ FDS `dt_entrega_uh` em nível de APF: **445 / 1021 = 43,6 %** (era ~373 / 36 % s
 com a espinha). `dt_entrega_uh_fonte` no FDS: `sftp:INT059` = 15.402 linhas,
 `snh:entrega_evento` = 13.582.
 
-`gold_marco_empreendimento.dt_previsao_entrega`: 0 → **67 empreendimentos**
+`ouro_dhist_marco_empreendimento.dt_previsao_entrega`: 0 → **67 empreendimentos**
 (fonte `snh:dados_prioritarios`). `marcos_coerentes = false`: 194 / 17.552
 (1,1 %) — inclui as `dt_termino_obra` futuras que a OQ1 decidiu manter como
 reportadas.
@@ -100,14 +100,14 @@ tendem a ser esparsas / mais antigas. É medição, não meta.
 ## Arquivos
 
 - `macros/historico/corpos_silver.sql` — braço SNH: + `dt_previsao_entrega`, `qt_uh_previsao_entrega`
-- `models/mcmv_historico_dbt/silver/silver_mcmv_historico_empreendimento_{fds,far,rural}.sql`
-- `models/mcmv_historico_dbt/gold/gold_snapshot_empreendimento_atual.sql` — + `quantidade_uh_concluidas`, `dt_previsao_entrega`, `qt_uh_previsao_entrega`
-- `models/mcmv_historico_dbt/gold/gold_marco_empreendimento.sql` — marco `dt_previsao_entrega` da silver
+- `models/mcmv_historico_dbt/silver/prata_{fds,far,rural}_historico_empreendimento.sql`
+- `models/mcmv_historico_dbt/gold/ouro_dhist_snapshot_empreendimento_atual.sql` — + `quantidade_uh_concluidas`, `dt_previsao_entrega`, `qt_uh_previsao_entrega`
+- `models/mcmv_historico_dbt/gold/ouro_dhist_marco_empreendimento.sql` — marco `dt_previsao_entrega` da silver
 - `models/mcmv_historico_dbt/{silver,gold}/schema.yml`
 
 ## Testes
 
-`dbt build --select silver_mcmv_historico_entrega_apf+` e as 3 silvers isoladas:
+`dbt build --select prata_dhist_entrega_apf+` e as 3 silvers isoladas:
 **0 ERROR**. `dbt test --select mcmv_historico_dbt`: **175 PASS / 14 WARN / 0
 ERROR** — os 14 WARN são `sem_sufixo_float_texto` em bronzes, pré-existentes e
 alheios a esta change. `accepted_values` de `dt_entrega_uh_fonte` atualizado com

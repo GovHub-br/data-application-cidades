@@ -2,7 +2,7 @@
     Projeção do contrato de obra_mensal a partir de UMA das 3 bronzes da família
     (change enriquecer-quantidades-uh-e-sinais-obra-historico, D4). Desde a
     change consolidar-schemas-historico-reloginho (D2) NÃO alimenta mais um
-    modelo autônomo (silver_mcmv_historico_obra_mensal foi removido) — serve os
+    modelo autônomo (o modelo de obra mensal autônomo foi removido) — serve os
     macros historico_obra_mensal_rows() / _vals() abaixo, que costuram a obra
     às 3 silvers de frente (braço de criação de linha + left join das 22 col).
 
@@ -94,9 +94,9 @@
     ── Fusão obra_mensal → braço do union das silvers de frente ──
     Change: consolidar-schemas-historico-reloginho (D2 / C2).
 
-    O ex-modelo silver_mcmv_historico_obra_mensal deixa de existir; a evolução
+    O modelo de obra mensal autônomo deixa de existir; a evolução
     mensal de obra vira MAIS UM BRAÇO do `union all by name` de cada
-    silver_mcmv_historico_empreendimento_{far,fds,rural}, ao lado dos braços
+    prata_{far,fds,rural}_historico_empreendimento, ao lado dos braços
     INT0XX e SNH. A janela de obra_mensal (2025-12 → 2026-07) ultrapassa a das
     outras fontes: um left join descartaria 4 meses, um braço do union cria a
     linha. Nos meses só-de-obra (2026-04..07) `quantidade_uh`,

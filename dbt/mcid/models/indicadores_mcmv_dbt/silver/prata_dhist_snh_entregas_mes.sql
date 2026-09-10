@@ -2,7 +2,7 @@
 
 -- SILVER do reloginho (grupo A) — entregas por evento agregadas por mes.
 --
--- Le as BRONZES DE ENTREGA POR AGENTE (bronze_reloginho_snh_entregas_evento_bb
+-- Le as BRONZES DE ENTREGA POR AGENTE (bronze_dhist_snh_entregas_evento_bb
 -- e _caixa) e as une aqui, com projecao explicita e identica por braco — desde
 -- a change pipeline-bronze-historica-destino-trocavel (D5) nao existe mais
 -- bronze unificada de entregas. Deduplica eventos repetidos (o mesmo
@@ -14,7 +14,7 @@
 -- dt_referencia do arquivo. Assim a serie e um fluxo real de entregas.
 --
 -- Tipagem/nome de coluna: NAO ha o problema de variante `uh_*`/`uhs_*` que
--- afeta a serie mensal (silver_historico_snh_apf_mes). A bronze
+-- afeta a serie mensal (prata_dhist_snh_apf_mes). A bronze
 -- bronze_snh_entregas ja harmoniza os nomes divergentes por agente
 -- (`qt_uh_entregues` CAIXA / `numero_de_unidades_entregues` BB) via
 -- coalesce_present_cols, expondo `qt_uh_entregues_evento` (bigint) que este

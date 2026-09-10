@@ -22,7 +22,7 @@ Varridas **todas as 53 tabelas de bronze** do `cidades.duckdb` (schemas
 
 **Resultado do escopo:** o `.0` só existe nas bronzes do eixo histórico
 materializadas via DuckDB a partir do dump `dados_historicos/*.parquet` — as 13
-famílias `bronze_mcmv_historico_*` + `bronze_reloginho_snh_entregas_evento_*`.
+famílias `bronze_dhist_*` / `bronze_sftp_*` / `bronze_shpt_*` + `bronze_dhist_snh_entregas_evento_*`.
 As bronzes dos colegas (`bronze_far_*`, `bronze_fds_*`, `bronze_rural_*`,
 schema `bronze`) **não têm nenhum `.0`** — inclusive em `apf`, `cep`,
 `cod_municipio_ibge`, `cnpj_proponente`: aquele pipeline preservou os tipos.
@@ -32,8 +32,8 @@ As interfaces SFTP/GEFUS (`INT040/054/057/059/065`: `nu_apf`,
 ## Método
 
 Consulta ao arquivo local `cidades.duckdb` (modo A, target `staging_duckdb`),
-schema `dados_historicos`, tabelas `bronze_mcmv_historico_*` e
-`bronze_reloginho_snh_entregas_evento_*`:
+schema `dados_historicos`, tabelas `bronze_dhist_*` / `bronze_sftp_*` / `bronze_shpt_*` e
+`bronze_dhist_snh_entregas_evento_*`:
 
 ```sql
 select count(*) filter (
@@ -49,20 +49,20 @@ Colunas de identificador filtradas por nome (`codigo*`, `cod_*`, `cnpj`,
 
 | tabela | coluna | linhas c/ ".0" | preenchidas |
 |---|---|---:|---:|
-| `bronze_mcmv_historico_serie_entrada_bb` | `codigo_empreendimento_bb` | 15.717 | 17.815 |
-| `bronze_mcmv_historico_serie_entrada_bb` | `codigo_do_ibge` | 13.769 | 17.985 |
-| `bronze_mcmv_historico_serie_entrada_bb` | `codigo_do_empreendimento` | 171 | 171 |
-| `bronze_mcmv_historico_serie_entrada_bb` | `numero_da_operacao` | 171 | 171 |
-| `bronze_mcmv_historico_serie_bases_relatorio_executivo` | `codmunicibge` | 9.061 | 282.203 |
-| `bronze_mcmv_historico_serie_bases_relatorio_executivo` | `codapf` | 9.061 | 282.203 |
-| `bronze_mcmv_historico_serie_bases_relatorio_executivo` | `idregistro` | 9.061 | 282.203 |
-| `bronze_mcmv_historico_serie_bases_relatorio_executivo` | `id_mcmv` | 28.974 | 271.761 |
-| `bronze_mcmv_historico_serie_bases_relatorio_executivo` | `cnpj` | 76.472 | 282.175 |
-| `bronze_mcmv_historico_serie_bases_relatorio_executivo` | `inumero_cnpj` | 55.056 | 726.868 |
-| `bronze_mcmv_historico_empreendimento_snh_caixa` | `codigo_ibge_do_municipio` | 58.432 | 287.391 |
-| `bronze_mcmv_historico_empreendimento_snh_caixa` | `cep_do_imovel` | ~5.030 dist. | 236.812 |
-| `bronze_mcmv_historico_empreendimento_snh_caixa` | `numero_do_imovel` | ~808 dist. | 236.812 |
-| `bronze_mcmv_historico_serie_bases_relatorio_executivo` | `ano` | 6 dist. (~40k linhas) | 271.761 |
+| `bronze_dhist_serie_entrada_bb` | `codigo_empreendimento_bb` | 15.717 | 17.815 |
+| `bronze_dhist_serie_entrada_bb` | `codigo_do_ibge` | 13.769 | 17.985 |
+| `bronze_dhist_serie_entrada_bb` | `codigo_do_empreendimento` | 171 | 171 |
+| `bronze_dhist_serie_entrada_bb` | `numero_da_operacao` | 171 | 171 |
+| `bronze_dhist_serie_bases_relatorio_executivo` | `codmunicibge` | 9.061 | 282.203 |
+| `bronze_dhist_serie_bases_relatorio_executivo` | `codapf` | 9.061 | 282.203 |
+| `bronze_dhist_serie_bases_relatorio_executivo` | `idregistro` | 9.061 | 282.203 |
+| `bronze_dhist_serie_bases_relatorio_executivo` | `id_mcmv` | 28.974 | 271.761 |
+| `bronze_dhist_serie_bases_relatorio_executivo` | `cnpj` | 76.472 | 282.175 |
+| `bronze_dhist_serie_bases_relatorio_executivo` | `inumero_cnpj` | 55.056 | 726.868 |
+| `bronze_dhist_empreendimento_snh_caixa` | `codigo_ibge_do_municipio` | 58.432 | 287.391 |
+| `bronze_dhist_empreendimento_snh_caixa` | `cep_do_imovel` | ~5.030 dist. | 236.812 |
+| `bronze_dhist_empreendimento_snh_caixa` | `numero_do_imovel` | ~808 dist. | 236.812 |
+| `bronze_dhist_serie_bases_relatorio_executivo` | `ano` | 6 dist. (~40k linhas) | 271.761 |
 
 Amostras (`entrada_bb`): `codigo_empreendimento_bb` = `['1452531.0', '491473.0', ...]`;
 `codigo_do_ibge` = `['353470.0', '350160.0', ..., '520870', '330455']` (mistura).
@@ -74,16 +74,16 @@ Amostras (`entrada_bb`): `codigo_empreendimento_bb` = `['1452531.0', '491473.0',
   `cod_municipio_ibge` / `co_municipio_ibge`, `cnpj_proponente`,
   `nu_cnpj_entidade`, todos os `cod_*` de domínio — **0 ocorrências**. Esse
   pipeline preservou os tipos.
-- `bronze_mcmv_historico_serie_bext`: `icodigo_empreendimento`,
+- `bronze_dhist_serie_bext`: `icodigo_empreendimento`,
   `icodigo_municipio_ibge_sem_dv` — limpas.
-- `bronze_mcmv_historico_serie_min_cidades`: `cod_contrato`, `cod_municipio`,
+- `bronze_dhist_serie_min_cidades`: `cod_contrato`, `cod_municipio`,
   `cod_empreendimento`, `cnpj_*` — limpas.
-- `bronze_mcmv_historico_serie_bases_relatorio_executivo`: a geração posterior
+- `bronze_dhist_serie_bases_relatorio_executivo`: a geração posterior
   traz `cod_munic_ibge` e `cod_apf` **limpas** (convivem com as antigas
   `codmunicibge`/`codapf` sujas na mesma tabela empilhada).
-- `bronze_mcmv_historico_empreendimento_snh_bb`: `apf`, `codigo_ibge_do_municipio`
+- `bronze_dhist_empreendimento_snh_bb`: `apf`, `codigo_ibge_do_municipio`
   — limpas (só o agente CAIXA tem o problema).
-- `bronze_reloginho_snh_entregas_evento_{bb,caixa}`: `apf` — limpa.
+- `bronze_dhist_snh_entregas_evento_{bb,caixa}`: `apf` — limpa.
 
 ## Encaminhamento
 
@@ -97,12 +97,12 @@ Amostras (`entrada_bb`): `codigo_empreendimento_bb` = `['1452531.0', '491473.0',
 
 | silver | coluna(s) limpa(s) | fonte suja |
 |---|---|---|
-| `silver_mcmv_historico_serie_executiva` | `chave_natural`, `codigo_ibge_municipio` (antes do `regexp_replace(\D)`), `responsavel_id` | `codapf`, `codmunicibge`, `cnpj`, `inumero_cnpj` de `bases_relatorio_executivo`; `codigo_empreendimento_bb`, `codigo_do_ibge` de `entrada_bb` |
-| `silver_mcmv_historico_empreendimento_{far,fds,rural}` (braço SNH, `corpos_silver.sql`) | `codigo_ibge_municipio` | `snh_caixa.codigo_ibge_do_municipio` |
-| `silver_historico_snh_apf_mes` (reloginho) | `codigo_ibge_municipio` | `snh_caixa.codigo_ibge_do_municipio` |
+| `prata_dhist_serie_executiva` | `chave_natural`, `codigo_ibge_municipio` (antes do `regexp_replace(\D)`), `responsavel_id` | `codapf`, `codmunicibge`, `cnpj`, `inumero_cnpj` de `bases_relatorio_executivo`; `codigo_empreendimento_bb`, `codigo_do_ibge` de `entrada_bb` |
+| `prata_{far,fds,rural}_historico_empreendimento` (braço SNH, `corpos_silver.sql`) | `codigo_ibge_municipio` | `snh_caixa.codigo_ibge_do_municipio` |
+| `prata_dhist_snh_apf_mes` (reloginho) | `codigo_ibge_municipio` | `snh_caixa.codigo_ibge_do_municipio` |
 
 Braços SFTP/GEFUS dos silvers de frente (`nu_apf`, `cod_municipio_ibge`,
-`cnpj_proponente`) e `silver_historico_snh_entregas_mes` não precisam de limpeza
+`cnpj_proponente`) e `prata_dhist_snh_entregas_mes` não precisam de limpeza
 (fontes já limpas).
 
 ### Colunas sujas sem consumidor silver (só teste `warn` no bronze)

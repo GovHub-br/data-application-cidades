@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: gold_marco_empreendimento
+  - name: ouro_dhist_marco_empreendimento
     description: >
       Gold — linha do tempo (marcos) por empreendimento (grão
       coalesce(id_empreendimento, apf), alinhado ao gold_snapshot). 7 marcos,
@@ -11,7 +11,7 @@ models:
       (fase mais avançada -> dt_referencia mais recente); dt_conclusao_obra e
       dt_ultima_entrega são o MAIOR valor já resolvido na silver em qualquer
       snapshot (dt_ultima_entrega considera também o max da espinha
-      silver_mcmv_historico_entrega_apf sobre todos os APFs de fase);
+      prata_dhist_entrega_apf sobre todos os APFs de fase);
       dt_primeira_entrega vem da espinha. dt_previsao_entrega = maior data
       prevista observada (braço SNH; fonte 'snh:dados_prioritarios', fill ~2%).
       dt_legalizacao nasce NULL nesta fase. `marcos_coerentes` é
@@ -93,7 +93,7 @@ models:
         data_tests:
           - not_null
 
-  - name: gold_snapshot_empreendimento_atual
+  - name: ouro_dhist_snapshot_empreendimento_atual
     description: >
       Gold — snapshot corrente (estado atual) derivado da silver histórica
       consolidada: uma linha por (frente, codigo_empreendimento) com o último
@@ -281,10 +281,10 @@ models:
       - name: portaria_selecao
         description: Portaria de seleção (INT040/054, esparso).
 
-  - name: gold_serie_mensal
+  - name: ouro_dhist_serie_mensal
     description: >
       Gold — série histórica mensal do MCMV (pré-2024) para análise preditiva.
-      Agrega a silver_mcmv_historico_serie_executiva por (dt_referencia,
+      Agrega a prata_dhist_serie_executiva por (dt_referencia,
       fonte_familia, nivel_agregacao, regiao_sigla, uf, linha_ogu_fgts) via
       GROUPING SETS (nacional + regiao + uf).
 
@@ -424,7 +424,7 @@ models:
         description: >
           Soma de UH entregues no recorte — conceito canônico
           `quantidade_uh_entregues`, com sufixo implícito de acumulado (mesma
-          medida que `gold_indicadores_reloginho.uh_entregues`, que é o
+          medida que `ouro_reloginho_indicadores.uh_entregues`, que é o
           acumulado SNH). Ver `natureza_serie`: nas séries de estoque NÃO somar
           entre meses.
         data_tests:
@@ -449,7 +449,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
-  - name: gold_serie_situacao_mensal
+  - name: ouro_dhist_serie_situacao_mensal
     description: >
       Gold — série histórica mensal de empreendimentos por SITUAÇÃO DE OBRA
       canônica (2019-12 → mês corrente das silvers por frente). Grão:

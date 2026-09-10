@@ -120,7 +120,7 @@ noturna.
 ### 2.1 Contrato comum das silvers por frente — 10 colunas novas
 
 Ao fim do contrato (antes de `dt_silver`), `NULL` onde a fonte do braço não
-reporta. Propagadas em `gold_snapshot_empreendimento_atual` (posições 39-48;
+reporta. Propagadas em `ouro_dhist_snapshot_empreendimento_atual` (posições 39-48;
 prefixo 1-38 inalterado).
 
 | coluna | fonte | tipo | fill (build local) |
@@ -136,9 +136,9 @@ prefixo 1-38 inalterado).
 | `fonte_valor` | `observado` / `carregado` (carry-forward) | text | carregado: FAR 836 · FDS 75 · Rural 4.356 |
 | `dt_snapshot_efetivo` | mês da observação real | date | 100% |
 
-**Reloginho** (`silver_historico_snh_apf_mes`): `quantidade_uh_distratadas`
+**Reloginho** (`prata_dhist_snh_apf_mes`): `quantidade_uh_distratadas`
 adicionada (após `uh_vigentes`). Grão `(agente_financeiro, apf, dt_referencia)`
-intacto. Golds `gold_indicadores_reloginho` / `_frente` / `_entregas` fazem
+intacto. Golds `ouro_reloginho_indicadores` / `_frente` / `_entregas` fazem
 agregação com projeção explícita — **não referenciam a coluna nova**, saída
 inalterada.
 
@@ -151,11 +151,11 @@ Janela SNH por `(frente, apf)`; meses faltantes recebem a última observação a
 
 Serrote eliminado — FAR `sum(quantidade_uh)` nacional: 2025-02
 `1.322.472 → 1.470.066`, 2025-11 `1.346.800 → 1.494.394`. Em
-`gold_serie_situacao_mensal` as linhas carregadas repetem `situacao_canonica`
+`ouro_dhist_serie_situacao_mensal` as linhas carregadas repetem `situacao_canonica`
 → 0 transições falsas → só entram no estoque. **Decisão: não filtrar
 `fonte_valor='observado'`** nesse gold.
 
-### 2.3 Família bronze `obra_mensal` + silver `silver_mcmv_historico_obra_mensal`
+### 2.3 Família bronze `obra_mensal` + o modelo de obra mensal autônomo
 
 - Mapa `familias_obra_mensal()` (3 frentes), corpo `bronze_obra_mensal`, 3
   cascas finas. Glob `sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_<FRENTE>_MENSAL_*.parquet`
@@ -163,7 +163,7 @@ Serrote eliminado — FAR `sum(quantidade_uh)` nacional: 2025-02
 - **Janela real 202512 → 202607** (FAR sem 202606). Não há obra mensal antes de
   202512 — os semanais de 2025-04+ ficaram de fora (OQ1).
 - Bronze: FAR 5.848 / FDS 2.783 / Rural 12.107 linhas.
-- Silver `silver_mcmv_historico_obra_mensal` (schema `mcmv_historico`, grão
+- Modelo de obra mensal autônomo (grão
   `frente_mcmv × apf × dt_referencia`, 20.738 linhas / 2.757 APF, 0 dupes).
   Schemas divergentes das 3 frentes harmonizados por `coalesce_present` com
   lista de aliases (`macros/historico/obra_mensal_arm.sql`).

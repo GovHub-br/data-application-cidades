@@ -21,7 +21,7 @@ glossário):
 2. **Vocabulário** — `valor_emprestimo` → `valor_financiamento` (par de
    `valor_financiamento_fds` / `valor_far`); `valor_contrapartida` →
    `valor_contrapartidas` (plural, par de `valor_contrapartidas`). Vale para a
-   silver e para o `gold_serie_mensal` (`valor_emprestimo_acumulado` →
+   silver e para o `ouro_dhist_serie_mensal` (`valor_emprestimo_acumulado` →
    `valor_financiamento_acumulado`).
 
 A semântica de ausência **diverge de propósito** das fichas: o histórico mantém
@@ -29,7 +29,7 @@ A semântica de ausência **diverge de propósito** das fichas: o histórico man
 está mais correto e a reconciliação de somas confirma que nenhuma agregação
 regride.
 
-## Reconciliação — `silver_mcmv_historico_serie_executiva`
+## Reconciliação — `prata_dhist_serie_executiva`
 
 Baseline: silver materializada em 2026-09-06 antes da change.
 
@@ -73,7 +73,7 @@ Testes novos no `schema.yml` da silver: `completude_minima` (warn) nas 8 colunas
 de valor + `accepted_values` em `grao_familia`. Todos PASS (`dbt build` local,
 2026-09-06).
 
-## `gold_serie_mensal` — BREAKING (Fase 4)
+## `ouro_dhist_serie_mensal` — BREAKING (Fase 4)
 
 | coluna antiga | coluna nova | conceito canônico |
 |---|---|---|
@@ -94,9 +94,9 @@ com `bext` (contrato) + família de empreendimento na janela de sobreposição
 ### Consumidores a avisar (task 5.5)
 
 Nenhum modelo dbt nem arquivo em `superset/` deste repo lê as colunas antigas
-por nome (`gold_serie_mensal` é gold-folha). O BREAKING atinge **consumidores
+por nome (`ouro_dhist_serie_mensal` é gold-folha). O BREAKING atinge **consumidores
 externos** (dashboards / notebooks / OpenMetadata que leiam
-`serie_historica.gold_serie_mensal`, hoje `dados_historicos.gold_serie_mensal`). A mudança de contrato está registrada no
+`serie_historica.ouro_dhist_serie_mensal`, hoje `dados_historicos.ouro_dhist_serie_mensal`). A mudança de contrato está registrada no
 `schema.yml`, no glossário e aqui; a notificação aos donos de dashboard é passo
 de processo fora do dbt. Precedente: a spec `serie-historica-regiao` já mudou o
 contrato deste modelo.
@@ -109,7 +109,7 @@ contrato deste modelo.
 - **6.2** `silver_far/fds/rural_evolucao_financeira` (+ `entidades_dbt`): doc
   deixa de dizer "série temporal de desembolsos" — "liberações conhecidas no
   snapshot, agrupadas pelo mês da liberação, cobertura pós-2024".
-- **6.3** `gold_indicadores_gargalo_desempenho`: `valor_liberado_historico` =
+- **6.3** `ouro_reloginho_indicadores_gargalo_desempenho`: `valor_liberado_historico` =
   `valor_desembolsado` da ficha (sem `coalesce` do agregado SharePoint); nova
   coluna informativa `valor_desembolsado_componentes`.
 - **6.4** Distribuição dos flags **não mudou** (FAR gargalo 763/822, baixa_exec
@@ -192,8 +192,8 @@ contrato deste modelo.
   | `desembolso_nao_excede_contratado` (FAR/Rural `warn`) | WARN 9 / WARN 107 | |
   | `desembolso_nao_excede_contratado` (Rural `error`, ratio>2) | PASS | 7 APF na quarentena |
   | `desembolso_nao_excede_contratado` (FDS) | PASS | 0 APF |
-  | `cobertura_classificacao_ogu_fgts` (gold_serie_mensal, `warn`) | PASS | cobertura 75,6% ≥ 0,60 |
-  | `soma_nao_cruza_familia` (gold_serie_mensal, `warn`) | WARN 513 | janela bext × empreendimento |
+  | `cobertura_classificacao_ogu_fgts` (ouro_dhist_serie_mensal, `warn`) | PASS | cobertura 75,6% ≥ 0,60 |
+  | `soma_nao_cruza_familia` (ouro_dhist_serie_mensal, `warn`) | WARN 513 | janela bext × empreendimento |
   | `completude_minima` (8 col de valor, `warn`) | PASS | |
   | `valor_dentro_faixa_uh` (serie_executiva `valor_investimento`, `warn`) | WARN 667 | seed provisório (Risks) |
   | `valor_nao_negativo` (bronze bext `mvalor_investimento`/`mvalor_subsidio`, `warn`) | WARN 1934 / 950 | cópia fiel |

@@ -10,15 +10,15 @@ nomenclatura (prefixo de camada + token `mcmv_historico` + schemas globais).
 
 | Papel | Antes | Depois | Schema (prod) |
 |---|---|---|---|
-| bronze fiel SFTP (5 interfaces) | — (não existia) | `bronze_mcmv_historico_empreendimento_sftp` | `bronze` |
-| bronze fiel SNH (`historico_recente_*`) | dentro de `bronze_reloginho_snh_serie_mensal` | `bronze_mcmv_historico_empreendimento_snh` | `bronze` |
-| silver série por frente | — (uma tabela só) | `silver_mcmv_historico_empreendimento_far` / `_fds` / `_rural` | `silver` |
+| bronze fiel SFTP (5 interfaces) | — (não existia) | `bronze_sftp_empreendimento` | `bronze` |
+| bronze fiel SNH (`historico_recente_*`) | dentro de `bronze_reloginho_snh_serie_mensal` | `bronze_dhist_empreendimento_snh` | `bronze` |
+| silver série por frente | — (uma tabela só) | `prata_far_historico_empreendimento` / `_fds` / `_rural` | `silver` |
 | silver série consolidada | `historico_mcmv_empreendimentos_snapshot` | `silver_mcmv_historico_empreendimento` | `silver` |
 | gold estado corrente | `snapshot_mcmv_empreendimentos_atual` | `gold_mcmv_snapshot_empreendimento_atual` | `gold` |
-| bronze série executiva (pré-2024) | `bronze_mcmv_serie_executiva_historica` | `bronze_mcmv_historico_serie_executiva` | `bronze` |
-| silver série executiva (pré-2024) | `silver_mcmv_serie_executiva_historica` | `silver_mcmv_historico_serie_executiva` | `silver` |
+| bronze série executiva (pré-2024) | `bronze_mcmv_serie_executiva_historica` | `bronze_dhist_serie_executiva` | `bronze` |
+| silver série executiva (pré-2024) | `silver_mcmv_serie_executiva_historica` | `prata_dhist_serie_executiva` | `silver` |
 | gold série mensal agregada | `gold_mcmv_serie_historica_mensal` | `gold_mcmv_historico_serie_mensal` | `gold` |
-| piloto série anual OGU/FGTS (#118) | `historico_mcmv_serie_temporal_snapshot` | `silver_mcmv_historico_serie_anual_ogu_fgts` | `silver` |
+| piloto série anual OGU/FGTS (#118) | `historico_mcmv_serie_temporal_snapshot` | `prata_dhist_serie_anual_ogu_fgts` | `silver` |
 
 Regra lexical aplicada: série temporal ⇒ contém `historico` no nome; estado
 corrente ⇒ contém `snapshot`. Por isso o piloto (série **anual**) perdeu o
@@ -69,7 +69,7 @@ Negócio: `programa`, `frente_mcmv`, `grupo_linha`, `linha_mcmv`, `grao_registro
 > `enriquecer-datas-acompanhamento-historico` — FAR mapeava de `dt_ultima_entrega`
 > e Rural de `dt_efetiva_conclusao`, conceitos diferentes no mesmo campo.
 > `dt_entrega_uh` é resolvida por `coalesce(braço SFTP, espinha
-> silver_mcmv_historico_entrega_apf)` e `dt_entrega_uh_fonte` diz de onde veio.
+> prata_dhist_entrega_apf)` e `dt_entrega_uh_fonte` diz de onde veio.
 
 Técnicas: `id_historico_snapshot` (`md5(frente|apf|dt_referencia)`, único),
 `id_negocio_historico` (`md5(programa|frente|apf)`, estável entre meses),
@@ -98,13 +98,13 @@ vencedora do SNH não perde esses campos.
 ## 5. Reloginho
 
 `bronze_reloginho_snh_serie_mensal` passou a ser
-`select * from {{ ref('bronze_mcmv_historico_empreendimento_snh') }}`. A bronze
+`select * from {{ ref('bronze_dhist_empreendimento_snh') }}`. A bronze
 compartilhada usa a **mesma** glob, o mesmo filtro `not like '%entrega%'` e a
 mesma expressão de `hash_linha` de antes, além de derivar `agente_arquivo`,
 `prioridade_reentrega`, `dt_referencia`, `dt_ingest`, `source_file`. Contrato de
 saída idêntico → `silver_reloginho_snh_apf_mes` e os golds
 (`indicadores_reloginho*`) não mudam. Os fluxos de entrega por evento continuam
-em `bronze_reloginho_snh_entregas_evento`.
+em `bronze_dhist_snh_entregas_evento`.
 
 ## 6. Consumidores / blast radius
 
@@ -122,11 +122,11 @@ em `bronze_reloginho_snh_entregas_evento`.
 | Passo | Resultado |
 |---|---|
 | `dbt parse --target prod` · `dbt parse` + `compile --target staging_duckdb` | OK, 0 erros (109 models) |
-| `dbt ls --target prod` | bronze/silver/gold de empreendimento e série executiva `disabled`; só o piloto (`silver_mcmv_historico_serie_anual_ogu_fgts`) enabled @ `silver`. conjuntura / far / reloginho **sem mudança de schema** |
+| `dbt ls --target prod` | bronze/silver/gold de empreendimento e série executiva `disabled`; só o piloto (`prata_dhist_serie_anual_ogu_fgts`) enabled @ `silver`. conjuntura / far / reloginho **sem mudança de schema** |
 | `dbt build` bronze SFTP + SNH | **OK** — SNH 28s, SFTP 90s, PASS=7 |
 | `dbt build` silver `_far`/`_fds`/`_rural`/consolidado + gold snapshot + `dbt test` | **OK** — PASS=53, 0 erros |
 | testes: `unique`/`not_null` de `id_historico_snapshot`, `accepted_values` de `frente_mcmv` e `fonte_serie`, `assert_empreendimentos_dt_movimento_consistente` (repontado) | todos PASS |
-| piloto: `dbt seed issue_118` (INSERT 17) + build `silver_mcmv_historico_serie_anual_ogu_fgts` + 18 testes | **OK** |
+| piloto: `dbt seed issue_118` (INSERT 17) + build `prata_dhist_serie_anual_ogu_fgts` + 18 testes | **OK** |
 | reloginho D8 (baseline com glob antigo vs. `ref()` da bronze compartilhada) | `assert_reloginho_reconcilia_66` **PASS** nos dois · `grain_unique` PASS · `cobertura_mensal` FAIL 5 **idêntico** nos dois (2024-08 ausente do dump SNH — pré-existente, **não é regressão**) |
 | `dbt docs generate --target staging_duckdb` | `catalog.json` + `manifest.json` gerados |
 
@@ -161,7 +161,7 @@ o DuckDB para `/mnt/data` (disco com espaço), limita RAM/threads, e builda
 
 ## 7b. Pendências de execução
 
-1. **Série executiva** (`bronze_mcmv_historico_serie_executiva` → silver → gold):
+1. **Série executiva** (`bronze_dhist_serie_executiva` → silver → gold):
    só renome, lógica byte-idêntica, **mas não conclui na máquina de dev** — o
    `union_by_name` das 4 famílias + `row_number() over (partition by source_file)`
    sobre a tabela ultra-larga derrama >40 GB e roda >20 min sem terminar. Defeito

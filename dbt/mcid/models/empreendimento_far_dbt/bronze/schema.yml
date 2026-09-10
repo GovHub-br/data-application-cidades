@@ -204,7 +204,7 @@ models:
     description: >
       Bronze — snapshot corrente SNH (data_de_referencia 30/09/2025), frente FAR.
       Lida de mcmv_staging.dados_prioritarios_disponibilizados_snh_empreendimentos.
-      NÃO é a série mensal (essa é bronze_mcmv_historico_empreendimento_snh).
+      NÃO é a série mensal (essa é bronze_dhist_empreendimento_snh).
       Chave: normalize_apf(codigo_da_operacao_no_agente_financeiro). ~813/822
       casam com silver_far_empreendimento.
     meta:

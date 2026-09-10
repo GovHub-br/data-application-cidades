@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: gold_indicadores_gargalo_desempenho
+  - name: ouro_reloginho_indicadores_gargalo_desempenho
     description: >
       Tabela Gold unificada por empreendimento/APF para identificar gargalos e desempenho
       do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução física,
@@ -129,10 +129,10 @@ models:
           (glossario-mcid.md). Nome `dt_calculo` mantido para compatibilidade;
           alias fica fora de escopo (change catalogo-dicionario-dados-historicos, G5).
 
-  - name: gold_indicadores_reloginho
+  - name: ouro_reloginho_indicadores
     description: >
       Tabela Gold do reloginho MCMV (grupo A): série mensal SNH consolidada por
-      agente. Lê a silver `silver_historico_snh_apf_mes`
+      agente. Lê a silver `prata_dhist_snh_apf_mes`
       (ingestão/tipagem/dedup ficam nas camadas bronze e silver — ver
       docs/entregas/issue-130-refatoracao-medalhao-reloginho.md e
       docs/entregas/issue-130-dicionario-indicadores.md). Uma linha por
@@ -181,7 +181,7 @@ models:
         description: >
           Soma acumulada de UH entregues reportada no snapshot SNH (estoque
           acumulado — não somar entre meses; para o fluxo mensal ver
-          `gold_indicadores_reloginho_entregas`). Conceito canônico
+          `ouro_reloginho_indicadores_entregas`). Conceito canônico
           `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
         data_tests:
           - not_null
@@ -201,13 +201,13 @@ models:
           Contagem corrida de meses observados por agente até a linha atual
           (usada no cálculo do ritmo médio mensal de entregas).
 
-  - name: gold_indicadores_reloginho_frente
+  - name: ouro_reloginho_indicadores_frente
     description: >
       Tabela Gold do reloginho MCMV (grupo A) com quebra por frente. Mesma
-      regra de `gold_indicadores_reloginho`, com frente_mcmv (FAR / Entidades /
+      regra de `ouro_reloginho_indicadores`, com frente_mcmv (FAR / Entidades /
       Rural) no grão. Uma linha por (agente_financeiro, frente_mcmv,
       dt_referencia) — série de ESTOQUE, não somar `uh_*` entre meses. Somar
-      todas as frentes de um mês reproduz `gold_indicadores_reloginho`.
+      todas as frentes de um mês reproduz `ouro_reloginho_indicadores`.
       Base da verificação de cobertura histórica por frente
       (assert_reloginho_frente_cobertura_mensal). Requer target staging_duckdb.
     meta:
@@ -265,7 +265,7 @@ models:
       - name: n_meses_observados
         description: Contagem corrida de meses observados por (agente, frente).
 
-  - name: gold_indicadores_reloginho_entregas
+  - name: ouro_reloginho_indicadores_entregas
     description: >
       Tabela Gold do reloginho (grupo A) — entregas: fluxo por evento vs
       acumulado do snapshot, lado a lado, por (agente_financeiro,
@@ -294,7 +294,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_snapshot
-        description: UH entregues acumuladas reportadas no snapshot (mesma medida de `gold_indicadores_reloginho.uh_entregues`).
+        description: UH entregues acumuladas reportadas no snapshot (mesma medida de `ouro_reloginho_indicadores.uh_entregues`).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dif_evento_vs_snapshot
@@ -302,7 +302,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
-  - name: gold_resumo_reloginho_dashboard
+  - name: ouro_reloginho_resumo_dashboard
     description: >
       Tabela Gold do reloginho para dashboard: uma linha por agente_financeiro
       com o último mês observado da série mensal SNH (uh_contratadas,
@@ -328,7 +328,7 @@ models:
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      # verificacao_tipagem: bigint herdado do gold_indicadores_reloginho (cast).
+      # verificacao_tipagem: bigint herdado do ouro_reloginho_indicadores (cast).
       # Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas_ultimo
         description: >
@@ -359,13 +359,13 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
 
-  - name: gold_resumo_gargalo_desempenho_dashboard
+  - name: ouro_reloginho_resumo_gargalo_desempenho_dashboard
     description: >
       Tabela Gold agregada para dashboard de gargalos e desempenho do MCMV.
       Gera cards e rankings nos níveis nacional, frente, UF, município e
       responsável (coluna `nivel_agregacao`) — um GROUPING SET por nível.
       **Não somar entre `nivel_agregacao`**: são recortes sobrepostos do mesmo
-      universo de empreendimentos FAR+FDS de `gold_indicadores_gargalo_desempenho`.
+      universo de empreendimentos FAR+FDS de `ouro_reloginho_indicadores_gargalo_desempenho`.
       Unidades: `total_uh` em UH; `valor_*` e `saldo_*` em R$ nominais;
       `media_execucao_*` e `percentual_*` em escala 0-100; `atraso_medio_dias`
       em dias.
@@ -386,7 +386,7 @@ models:
           - accepted_values:
               values: ["nacional", "frente", "uf", "municipio", "responsavel"]
       - name: frente
-        description: Frente {FAR, FDS} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `gold_indicadores_gargalo_desempenho.frente`).
+        description: Frente {FAR, FDS} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `ouro_reloginho_indicadores_gargalo_desempenho.frente`).
       - name: uf
         description: Sigla da UF (2 letras) nas linhas de nível 'uf'/'municipio'; NULL nos demais níveis.
       - name: municipio
@@ -412,7 +412,7 @@ models:
       - name: media_execucao_financeira
         description: Média de `percentual_execucao_financeira` no agrupamento (escala 0-100).
       - name: media_score_gargalo
-        description: Média de `score_gargalo` no agrupamento (escala 0-9, ver `gold_indicadores_gargalo_desempenho.score_gargalo`).
+        description: Média de `score_gargalo` no agrupamento (escala 0-9, ver `ouro_reloginho_indicadores_gargalo_desempenho.score_gargalo`).
       - name: atraso_medio_dias
         description: Média de `dias_atraso` entre os casos com atraso > 0 no agrupamento (dias).
       - name: media_dias_sem_atualizacao

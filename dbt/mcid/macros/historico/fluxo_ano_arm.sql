@@ -1,7 +1,6 @@
 {#
     Acumulado-no-ano (YTD) de UH e desembolso por empreendimento, braço SNH.
-    Change: consolidar-schemas-historico-reloginho (D3) — antes era o modelo
-    autônomo silver_historico_empreendimento_fluxo_ano (grão idêntico ao das
+    Change: consolidar-schemas-historico-reloginho (D3) — antes era o modelo de fluxo YTD autônomo (grão idêntico ao das
     silvers de frente: (frente_mcmv, apf, dt_referencia); 99,994% de casamento
     de chave). Agora incorporado por LEFT JOIN no fim de historico_silver_tail().
 
@@ -9,7 +8,7 @@
     2024-06 em diante e NÃO retroage — as 9 colunas ficam NULL em ~95% das
     linhas históricas POR CONSTRUÇÃO DA FONTE, não por lacuna de pipeline.
 
-    Dedup igual à silver_historico_snh_apf_mes: (agente_financeiro, apf,
+    Dedup igual à prata_dhist_snh_apf_mes: (agente_financeiro, apf,
     dt_referencia), desempate por prioridade_reentrega. Um `qualify` final
     garante 1 linha por (frente_mcmv, apf, dt_referencia) — no-op nos dados
     atuais (cada APF tem 1 agente/mês), defensivo contra drift.

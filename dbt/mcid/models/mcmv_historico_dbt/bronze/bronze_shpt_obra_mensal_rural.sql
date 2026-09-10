@@ -10,6 +10,6 @@
 -- `dt_previsao_conclusao_obra_retomada` / `dt_previsao_entrega_do_empreendimento`.
 --
 -- Demais responsabilidades e origem do corpo: ver
--- bronze_mcmv_historico_obra_mensal_far.sql. Change:
+-- bronze_shpt_obra_mensal_far.sql. Change:
 -- enriquecer-quantidades-uh-e-sinais-obra-historico (D4).
 {{ bronze_obra_mensal('OBRA_RURAL') }}
