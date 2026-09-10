@@ -1,0 +1,101 @@
+version: 2
+
+# Espelho textual do parquet, então o teste que importa é o de layout — mesmo critério do
+# far_dbt e do fds_dbt.
+#
+# PENDENTE: as listas `colunas` do `sem_drift_de_colunas` ainda não estão aqui. Elas são o
+# contrato aceito hoje, e declarar coluna que não existe (ou omitir coluna que existe) faz
+# o teste acusar divergência falsa nos dois sentidos. As tabelas do rural nunca rodaram
+# nesta forma, então a lista honesta só sai depois do primeiro `dbt build`. Para gerar:
+#
+#   select table_name,
+#          string_agg('            - ' || column_name, e'\n' order by ordinal_position)
+#   from information_schema.columns
+#   where table_schema = 'bronze' and table_name like 'bronze_%rural%'
+#      or table_schema = 'bronze' and table_name in (
+#            'bronze_sftp_snh_pmcmv_dados_prioritarios_af_bb',
+#            'bronze_sftp_int065_pnhr_caixa_empreendimentos',
+#            'bronze_sftp_int057_pnhr_bb_empreendimentos',
+#            'bronze_sftp_int055_liberacoes_caixa_bb',
+#            'bronze_shpt_dados_prioritarios_snh_empreendimentos',
+#            'bronze_shpt_base_trabalho_social_pnhr_rural_caixa',
+#            'bronze_shpt_base_trabalho_social_pnhr_bb')
+#   group by table_name;
+#
+# `bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa` NÃO é declarado aqui: é o mesmo
+# arquivo do FAR e o model já existe em far_dbt/bronze/. Nome de model é único no projeto,
+# e com os três schemas compartilhados a tabela também é — a prata do rural apenas a
+# referencia e filtra modalidade RURAL.
+
+models:
+
+  - name: bronze_shpt_monit_cad_pj_rural_mensal
+    description: >
+      Cadastro PJ do empreendimento Rural contratado: entidade organizadora, composição do
+      investimento, cisternas e efluentes, prazo de construção. Remessa mensal; a tabela
+      guarda o retrato mais recente. Uma linha por empreendimento.
+
+  - name: bronze_shpt_monit_cadastro_pf_rural_mensal
+    description: >
+      Cadastro dos beneficiários PF do Rural, com perfil socioeconômico — renda, pessoas
+      por família, Bolsa Família, BPC, distrato. Uma linha por CPF, várias por
+      empreendimento. Cobre cerca de 1% da carteira.
+
+  - name: bronze_shpt_monit_mov_obra_rural_mensal
+    description: >
+      Evolução física da obra do Rural, retrato mensal: percentual previsto e realizado,
+      UHs concluídas e alienadas, paralisação, datas de situação e de entrega.
+
+  - name: bronze_shpt_monit_mov_financ_rural_mensal
+    description: >
+      Liberações financeiras do Rural, decompostas por componente (obra, trabalho social,
+      ATEC, cisternas/efluentes, custos indiretos). Traz `ic_credito`, que define o SINAL:
+      '0' é débito — a liberação real, com valor negativo — e '1' é crédito, a devolução.
+
+  - name: bronze_sftp_snh_pmcmv_dados_prioritarios_af_bb
+    description: >
+      Dados prioritários reportados pelo Banco do Brasil, todas as modalidades — a prata
+      filtra RURAL. Mesmo layout do arquivo da CAIXA, mas o BB envia com um mês de atraso,
+      então a competência vigente aqui costuma ser anterior à da CAIXA.
+
+  - name: bronze_sftp_int065_pnhr_caixa_empreendimentos
+    description: >
+      Histórico de empreendimentos PNHR na CAIXA (integração INT065), com composição de
+      investimento e execução física. O feed parou em 2024-11-29: o PNHR é programa
+      encerrado e a série não avança mais.
+
+  - name: bronze_sftp_int057_pnhr_bb_empreendimentos
+    description: >
+      Histórico de empreendimentos PNHR no Banco do Brasil (integração INT057). Não traz
+      `nu_apf`: o APF é derivado do número do contrato do empreendimento. Também parado
+      em 2024-11-29.
+
+  - name: bronze_sftp_int055_liberacoes_caixa_bb
+    description: >
+      Liberações de recurso de CAIXA e BB (integração INT055), de todos os programas — a
+      prata filtra `no_programa like '%PNHR%'`. Não decompõe o valor por componente, então
+      alimenta só o total liberado. Chega zipado do SFTP e é expandido para .TXT na
+      entrada; a extensão de origem não entra na key da staging. Vigente 2025-03-18.
+
+  - name: bronze_shpt_dados_prioritarios_snh_empreendimentos
+    description: >
+      Dados prioritários disponibilizados pela SNH, todas as modalidades — a prata filtra
+      RURAL. É a espinha dorsal do domínio: os outros insumos entram por left join sobre
+      ela.
+
+      ATENÇÃO: é um export avulso, sobrescrito in place na origem, e NÃO acompanha o feed
+      mensal. Não há histórico recuperável — cada regeração apaga a anterior.
+
+  - name: bronze_shpt_base_trabalho_social_pnhr_rural_caixa
+    description: >
+      Acompanhamento do Trabalho Social (PTS) do PNHR pela CAIXA: situação do TS, valor
+      global e desembolsado, percentual de execução.
+
+      Export avulso em vez do feed datado porque o feed (Trabalho Social/
+      MCMV_RURAL_TS_CAIXA_BB_<aaaamm>) vira um parquet por aba, e o sufixo da aba muda de
+      nome todo mês — não há padrão estável para pescar a aba certa.
+
+  - name: bronze_shpt_base_trabalho_social_pnhr_bb
+    description: >
+      Acompanhamento do Trabalho Social (PTS) do PNHR pelo Banco do Brasil. Layout
+      próprio, diferente do da CAIXA. Mesma ressalva de export avulso.

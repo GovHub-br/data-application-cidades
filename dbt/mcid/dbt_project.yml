@@ -23,36 +23,42 @@ models:
     metadata:
       +materialized: incremental
       +schema: metadata
-    # Sem pasta bronze/: a bronze é o schema `bronze` do Postgres, carregado pelo
-    # scripts/staging_para_bronze.py a partir do data lake, e a silver tipa o texto de lá.
-    empreendimento_far_dbt:
+    # Três schemas para o projeto inteiro (bronze, prata, ouro), um por camada, com a
+    # camada no prefixo do nome da tabela. A linha entra no nome a partir da prata
+    # (prata_far_*, ouro_far_*); na bronze o nome é o do arquivo que veio da staging,
+    # que já identifica a origem.
+    # A bronze é dbt: cada model lê o parquet da staging direto por read_parquet
+    # (pg_duckdb) e materializa como tabela text, sem script externo.
+    far_dbt:
       +materialized: table
-      +schema: empreendimento_far
-      silver:
-        +materialized: table
-      gold:
-        +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
 
-    # Um schema só para o domínio, com a camada no prefixo do nome da tabela
-    # (bronze_*, silver_*, gold_*). Batendo o olho no banco a listagem sai ordenada
-    # por camada, e o Superset aponta para um schema único.
-    # A bronze também vive aqui, carregada pelo scripts/staging_para_bronze.py
-    # (família `empreendimento_rural` do bronze_familias.yml) — não é dbt.
-    empreendimento_rural_dbt:
+    # Mesma estrutura do far_dbt: bronze/prata/ouro em três schemas do projeto.
+    fds_dbt:
       +materialized: table
-      +schema: empreendimento_rural
-      silver:
-        +materialized: table
-      gold:
-        +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
 
-    entidades_dbt:
+    # Mesma estrutura do far_dbt e do fds_dbt: bronze/prata/ouro nos três schemas do
+    # projeto. A bronze do rural passou a ser dbt (read_parquet via pg_duckdb) e não é
+    # mais carregada pelo scripts/staging_para_bronze.py.
+    rural_dbt:
       +materialized: table
-      +schema: entidades_fds
-      silver:
-        +materialized: table
-      gold:
-        +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
 
     conjuntura_dbt:
       +materialized: table
@@ -81,3 +87,8 @@ models:
 
 on-run-start:
   - '{{create_udfs()}}'
+
+# Registra em lake._dbt_log o que não passou — inclusive os testes que são
+# `severity: warn` e por isso não derrubam a execução.
+on-run-end:
+  - '{{ registrar_execucao_dbt() }}'

@@ -1,0 +1,104 @@
+version: 2
+
+# A prata tipa o texto da bronze e aplica as regras de negócio do FDS. Os testes aqui
+# guardam o GRÃO de cada tabela: um join que multiplica linha dobra todo somatório do
+# dashboard sem erro nenhum aparecer.
+
+models:
+
+  - name: prata_fds_cadastro_pj
+    description: >
+      Cadastro do empreendimento contratado pela entidade organizadora: composição
+      financeira, tipologia, coordenadas e datas-chave. Uma linha por empreendimento.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_fds_obra_mensal
+    description: >
+      Medição física do empreendimento na competência mais recente.
+      Uma linha por empreendimento — é retrato, não série.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_fds_financeiro_mensal
+    description: >
+      Liberações financeiras do empreendimento. Uma linha por liberação, então o APF
+      repete: é a fonte do FDS com série histórica.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+
+  - name: prata_fds_trabalho_social
+    description: >
+      Execução do trabalho social por empreendimento. Cobre parte do domínio:
+      só quem tem TS reportado aparece aqui.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_fds_int_059_caixa_pj
+    description: >
+      Recorte do INT059 da CAIXA: situação GEFUS e indicativo de paralisação por
+      empreendimento.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_fds_dados_prioritarios_entregas
+    description: >
+      Entregas reportadas pela CAIXA. Sem teste de unicidade: o APF 50710727 vem
+      duplicado no retrato da origem.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+
+  - name: prata_fds_empreendimento
+    description: >
+      Visão unificada do empreendimento FDS: cadastro, obra, INT059, trabalho social e
+      entregas reconciliados numa linha por APF. É a base da ficha.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos — chave do domínio.
+        tests:
+          - not_null
+          - unique
+      - name: municipio
+        description: Município do empreendimento.
+        tests:
+          - sem_mojibake
+
+  - name: prata_fds_evolucao_financeira
+    description: >
+      Série de desembolsos por empreendimento e mês, com acumulado e percentual
+      executado.
+    tests:
+      # O grão é (apf, mes): duas linhas para o mesmo mês dobrariam o acumulado.
+      - unique_combinacao:
+          colunas: ["apf", "mes"]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+      - name: mes
+        description: Primeiro dia do mês da liberação.
+        tests:
+          - not_null
