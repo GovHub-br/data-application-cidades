@@ -161,7 +161,7 @@ Fora do seed → `nao_mapeada` (teste `dentro_do_dominio` `warn`).
 
 - **OQ1 — enum de `sinal_retomada`**: subtipo no próprio enum (acima), não em
   coluna separada. `retomada_*` vs `a_retomar_*` dá o corte binário por prefixo.
-- **OQ2 — `dim` em `silver/` ou `gold/`**: `silver/` (deriva de silvers/bronzes
+- **OQ2 — `dim` em `prata/` ou `ouro/`**: `prata/` (deriva de pratas/bronzes
   históricas; `prata_*` / `bronze_*` / `ouro_*` é o padrão de nome do eixo). Alias
   `dim_empreendimento_historico`, schema `mcmv_historico`.
 - **OQ3 — `desc_situacao_contrato`**: cru, sem mapa canônico (voto do design).
@@ -247,9 +247,9 @@ con = duckdb.connect('/mnt/data/duckdb/cidades.duckdb', read_only=True)
 bronzes = ['int040','int054','int057','int059','int065','snh_bb','snh_caixa']
 pat = re.compile(r'^(uh|qt|qtd|qtde|quantidade)_|^(vr|valor)_|^dt_|situacao|pendencia|retomad|paralis|entidade|aporte')
 files = []
-for d in ['models/mcmv_historico_dbt/silver','models/mcmv_historico_dbt/gold',
-          'models/mcmv_historico_dbt/bronze','models/indicadores_mcmv_dbt/silver',
-          'models/indicadores_mcmv_dbt/gold']:
+for d in ['models/mcmv_historico_dbt/prata','models/mcmv_historico_dbt/ouro',
+          'models/mcmv_historico_dbt/bronze','models/indicadores_mcmv_dbt/prata',
+          'models/indicadores_mcmv_dbt/ouro']:
     files += glob.glob(f'dbt/mcid/target/compiled/mcid/{d}/*.sql')
 corpus = "".join(open(f).read().lower() for f in files)
 toks = set(re.findall(r'[a-z_][a-z0-9_]+', corpus))

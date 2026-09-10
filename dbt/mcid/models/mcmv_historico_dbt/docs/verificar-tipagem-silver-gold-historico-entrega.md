@@ -53,7 +53,7 @@ não valor; as linhas BB desses 5 meses sempre existiram, só tinham UH nula.
 ### Guarda
 
 `completude_minima` (`warn`, `min_pct: 0.97`) em `uh_contratadas` /
-`uh_entregues` / `uh_vigentes` no `silver/schema.yml` — regressão de mapeamento
+`uh_entregues` / `uh_vigentes` no `prata/schema.yml` — regressão de mapeamento
 de coluna (safra futura renomeia de novo) derruba a cobertura e o teste avisa.
 
 ### `prata_dhist_snh_entregas_mes` — verificado, sem o problema

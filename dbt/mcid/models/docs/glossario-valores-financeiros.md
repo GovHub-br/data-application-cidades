@@ -2,18 +2,18 @@
 
 > Change `vocabulario-e-qualidade-financeira-historica`.
 > Complementa `glossario-mcid.md` (semântica geral) com o vocabulário
-> **financeiro** do eixo histórico (série executiva pré-2019 + silvers por
-> frente + golds). Varredura das colunas físicas:
+> **financeiro** do eixo histórico (série executiva pré-2019 + pratas por
+> frente + ouros). Varredura das colunas físicas:
 > `varredura-colunas-financeiras-historico.md`.
 
 ## 1. Princípio
 
-**Um conceito financeiro → um nome canônico.** As *silvers por frente*
+**Um conceito financeiro → um nome canônico.** As *pratas por frente*
 (`prata_far_historico_empreendimento/fds/rural`) mantêm o nome próximo da
 fonte (`valor_contratado`, `valor_desembolsado`) — renomear em cascata é caro e
-a silver por frente é legitimamente "vocabulário da fonte" — mas o `schema.yml`
+a prata por frente é legitimamente "vocabulário da fonte" — mas o `schema.yml`
 de cada uma **declara a qual conceito canônico a coluna corresponde**. A
-`prata_dhist_serie_executiva` e os *golds* (`ouro_dhist_serie_mensal`,
+`prata_dhist_serie_executiva` e os *ouros* (`ouro_dhist_serie_mensal`,
 `ouro_dhist_snapshot_empreendimento_atual`, `ouro_reloginho_indicadores_gargalo_desempenho`)
 usam o nome canônico.
 
@@ -60,7 +60,7 @@ contagem. A leitura correta é `coalesce(subsidio_fgts + subsidio_ogu, subsidio_
 
 `\|` = coalesce entre gerações de schema. `—` = a fonte não tem o conceito.
 
-### Silvers por frente (SFTP GEFUS/INT ∪ SNH)
+### Pratas por frente (SFTP GEFUS/INT ∪ SNH)
 
 | conceito | FAR (`prata_far_historico_empreendimento`) | FDS (`_fds`) | Rural (`_rural`) |
 |---|---|---|---|
@@ -69,7 +69,7 @@ contagem. A leitura correta é `coalesce(subsidio_fgts + subsidio_ogu, subsidio_
 | `valor_financiamento` | `vr_emprestimo_far` (INT054) — **não propagado** | `vr_emprestimo_original` (INT059) — **não propagado** | `vr_emprestimo` / `vr_emprestimo_siapf` (INT065) — **não propagado** |
 | `valor_contrapartidas` | `vr_contrapartida_1` — **não propagado** | `contrapartida_financeira` + `contrapartida_servicos` + `contrapartida_poder_pub_local_*` — **não propagado** | `vr_contrapartida` — **não propagado** |
 
-### Golds
+### Ouros
 
 | conceito | `ouro_dhist_serie_mensal` | `ouro_dhist_snapshot_empreendimento_atual` | `ouro_reloginho_indicadores_gargalo_desempenho` (schema `reloginho`) |
 |---|---|---|---|
@@ -94,7 +94,7 @@ Colunas novas no `ouro_dhist_serie_mensal`: `natureza_serie`, `grao_familia`,
 
 ## 4. Fonte canônica de desembolso (D4)
 
-- **Acompanhamento histórico** (silvers por frente, `gold_snapshot`,
+- **Acompanhamento histórico** (pratas por frente, `gold_snapshot`,
   `ouro_dhist_serie_mensal`): desembolso acumulado autoritativo = feed GEFUS/INT
   (`vr_liberado` / `total_liberado_far` das INT040/054/057/059/065) e, pré-2019,
   `valor_total_liberado` de `bases_relatorio_executivo`. Snapshot cumulativo da
@@ -139,7 +139,7 @@ pendente de negócio.
 
 | # | pergunta | assunção atual (design) |
 |---|---|---|
-| OQ1 | `valor_contratado` nas silvers por frente → renomear para `valor_investimento` ou manter? | **Manter + documentar** — e nas fichas atuais `valor_contratado` também é o investimento total (FAR + contrapartidas), então o nome já é comum aos dois eixos. `serie_executiva` alinhou o resto do vocabulário (`valor_financiamento`, `valor_contrapartidas` — ver §9). |
+| OQ1 | `valor_contratado` nas pratas por frente → renomear para `valor_investimento` ou manter? | **Manter + documentar** — e nas fichas atuais `valor_contratado` também é o investimento total (FAR + contrapartidas), então o nome já é comum aos dois eixos. `serie_executiva` alinhou o resto do vocabulário (`valor_financiamento`, `valor_contrapartidas` — ver §9). |
 | OQ2 | Faixa R$/UH: por frente só, ou por frente × faixa × ano? | **Por frente × faixa** (`faixa_valor_uh.csv`), sem recorte de ano; calibrado na distribuição observada, revisável. |
 | OQ3 | `bext` `linha_ogu_fgts`: derivar de `faixa`/`produto` quando o split não vem, ou assumir `'FGTS/Financiado'` (base extrato CAIXA)? | **Deixar `NULL`** e sinalizar via `cobertura_classificacao_ogu_fgts`; derivação adiada. |
 | OQ4 | Consolidação das 2 pipelines FDS `evolucao_financeira` entra nesta change? | **Não** — adiada para change própria. Fontes/dialetos distintos (`raw` Postgres + `parse_financial_value`→`0.00` vs staging MinIO + `parse_hist_numeric`→`NULL`); `entidades_dbt` é produto de outro time e não roda no `staging_duckdb`. Feito: paridade de coluna (`vr_pago_outros_mes`), headers alinhados, divergência de parser registrada no `schema.yml`. |
@@ -153,9 +153,9 @@ valores financeiros, e o que o eixo histórico adotou por consistência:
 
 | aspecto | fichas atuais (prod) | eixo histórico (esta change) |
 |---|---|---|
-| **tipo** | `numeric(15,2)` em tudo (`parse_hist_numeric` / `parse_financial_value`) | **`numeric(15,2)`** — `parse_hist_numeric` em `serie_executiva` e nas silvers por frente (era `double` via `parse_hist_double`). `sum()` exato no gold; sem erro de ponto flutuante. |
-| **ausência na silver** | `coalesce(valor, 0.00)` — "sem informação" e "R$ 0" viram o mesmo | **`NULL` preservado** — `parse_hist_numeric` devolve `NULL` p/ vazio/`None`/`NaN` (comportamento medalhão correto). Divergência **deliberada**: mais informativa; a reconciliação de somas confirma que nenhuma agregação regride. |
-| **empréstimo/financiamento** | `valor_financiamento_fds` (FDS/Rural silver), `valor_far` (FAR bronze) | `valor_financiamento` — mesmo conceito, sem sufixo de frente (a série executiva mistura FAR/FDS/Rural). |
+| **tipo** | `numeric(15,2)` em tudo (`parse_hist_numeric` / `parse_financial_value`) | **`numeric(15,2)`** — `parse_hist_numeric` em `serie_executiva` e nas pratas por frente (era `double` via `parse_hist_double`). `sum()` exato no ouro; sem erro de ponto flutuante. |
+| **ausência na prata** | `coalesce(valor, 0.00)` — "sem informação" e "R$ 0" viram o mesmo | **`NULL` preservado** — `parse_hist_numeric` devolve `NULL` p/ vazio/`None`/`NaN` (comportamento medalhão correto). Divergência **deliberada**: mais informativa; a reconciliação de somas confirma que nenhuma agregação regride. |
+| **empréstimo/financiamento** | `valor_financiamento_fds` (FDS/Rural prata), `valor_far` (FAR bronze) | `valor_financiamento` — mesmo conceito, sem sufixo de frente (a série executiva mistura FAR/FDS/Rural). |
 | **contrapartida** | `valor_contrapartidas` (plural) | `valor_contrapartidas` (plural) — idêntico. |
 | **desembolso FDS/Rural** | `sum(abs(vr_liberado))` com `ic_credito='0'` (feed SharePoint, negativos = liberação) | feed distinto (INT059/INT065 SFTP), já positivo/acumulado — convenção própria, legítima. |
 | **contrato cross-frente** | `silver_historico_base` carrega só `valor_contratado` + `valor_desembolsado` | os golds históricos carregam mais conceitos; um rollup para aquele contrato mapeia `valor_investimento(_acumulado)`→`valor_contratado`, `valor_desembolsado_acumulado`→`valor_desembolsado`. |

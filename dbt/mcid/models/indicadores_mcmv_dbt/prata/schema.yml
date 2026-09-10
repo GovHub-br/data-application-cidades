@@ -3,13 +3,13 @@ version: 2
 models:
   - name: prata_dhist_snh_apf_mes
     description: >
-      Silver do reloginho: série mensal SNH tipada, com domínio normalizado e
+      Prata do reloginho: série mensal SNH tipada, com domínio normalizado e
       deduplicada por APF. Grão: uma linha por (agente_financeiro, apf,
       dt_referencia), com frente_mcmv canônica (FAR / Entidades / Rural) derivada
       de `modalidade`.
     meta:
       tags:
-        - silver
+        - prata
         - mcmv
         - reloginho
         - dados-historicos
@@ -100,7 +100,7 @@ models:
           concluida / cancelada) por join ao seed dominio_status sobre
           lower(trim(status_operacional)). NULL quando status ausente;
           'nao_mapeada' quando não casa. status_operacional cru preservado.
-          Não consumida pelos golds do reloginho.
+          Não consumida pelos ouros do reloginho.
         data_tests:
           - dentro_do_dominio:
               arguments:
@@ -124,13 +124,13 @@ models:
 
   - name: prata_dhist_snh_entregas_mes
     description: >
-      Silver do reloginho — entregas por evento agregadas ao mês do
+      Prata do reloginho — entregas por evento agregadas ao mês do
       EVENTO. Lê bronze_dhist_snh_entregas_evento, deduplica eventos
       repetidos por hash_linha e soma por (agente_financeiro, apf, mes_evento).
       É o fluxo real de entregas (base do ritmo_recente e do caminho alternativo
       do total de entregas).
     meta:
-      tags: [silver, mcmv, reloginho, dados-historicos, entregas]
+      tags: [prata, mcmv, reloginho, dados-historicos, entregas]
     columns:
       - name: agente_financeiro
         description: Agente financeiro (BB ou CAIXA).

@@ -15,10 +15,10 @@ models:
       de `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`,
       **sem regra de negócio** (só projeção mínima + helpers de harmonização).
       Frente: todas as modalidades MCMV do agente BB (o split por frente é da
-      silver). Uma linha por linha de origem, sem dedup. Neste agente as colunas
+      prata). Uma linha por linha de origem, sem dedup. Neste agente as colunas
       de origem do evento são `dt_ass_doc / numero_de_unidades_entregues`; os
       helpers harmonizados `dt_evento` e `qt_uh_entregues_evento` normalizam isso
-      para a silver, que une os dois agentes. Complementa a série mensal SNH (que
+      para a prata, que une os dois agentes. Complementa a série mensal SNH (que
       traz o acumulado).
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
@@ -48,7 +48,7 @@ models:
       - name: dt_ingest
         description: Timestamp da materialização desta camada.
       - name: hash_linha
-        description: Hash MD5 do evento (dedup na silver).
+        description: Hash MD5 do evento (dedup na prata).
         data_tests:
           - not_null
 
@@ -58,10 +58,10 @@ models:
       fiel de `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`,
       **sem regra de negócio** (só projeção mínima + helpers de harmonização).
       Frente: todas as modalidades MCMV do agente CAIXA (o split por frente é da
-      silver). Uma linha por linha de origem, sem dedup. Neste agente as colunas
+      prata). Uma linha por linha de origem, sem dedup. Neste agente as colunas
       de origem do evento são `dt_entrega / qt_uh_entregues`; os helpers
       harmonizados `dt_evento` e `qt_uh_entregues_evento` normalizam isso para a
-      silver, que une os dois agentes. Complementa a série mensal SNH (que traz o
+      prata, que une os dois agentes. Complementa a série mensal SNH (que traz o
       acumulado).
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
@@ -91,6 +91,6 @@ models:
       - name: dt_ingest
         description: Timestamp da materialização desta camada.
       - name: hash_linha
-        description: Hash MD5 do evento (dedup na silver).
+        description: Hash MD5 do evento (dedup na prata).
         data_tests:
           - not_null

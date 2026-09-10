@@ -7,7 +7,7 @@ testada local em 2026-09-06 (target `staging_duckdb`, `/mnt/data/duckdb/cidades.
 
 ### B — espinha de entregas por APF
 
-`models/mcmv_historico_dbt/silver/prata_dhist_entrega_apf.sql` (schema
+`models/mcmv_historico_dbt/prata/prata_dhist_entrega_apf.sql` (schema
 `mcmv_historico`, grão `apf`). Lê `bronze_dhist_snh_entregas_evento_bb` /
 `_caixa` (a mesma fonte que o reloginho já ingere — o reloginho segue consumindo
 em paralelo), deduplica os eventos por hash de conteúdo **idêntico** ao de
@@ -65,7 +65,7 @@ janela 2024‑02 → 2026‑07.
 
 ### D — `ouro_dhist_marco_empreendimento`
 
-`models/mcmv_historico_dbt/gold/ouro_dhist_marco_empreendimento.sql` (schema
+`models/mcmv_historico_dbt/ouro/ouro_dhist_marco_empreendimento.sql` (schema
 `dados_historicos` (era `serie_historica`), grão `coalesce(id_empreendimento, apf)` — FDS multi‑fase
 colapsa em 1 linha). 7 marcos, cada um com `<marco>_fonte` e `<marco>_dt_snapshot`:
 

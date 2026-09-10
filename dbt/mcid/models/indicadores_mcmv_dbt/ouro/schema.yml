@@ -3,7 +3,7 @@ version: 2
 models:
   - name: ouro_reloginho_indicadores_gargalo_desempenho
     description: >
-      Tabela Gold unificada por empreendimento/APF para identificar gargalos e
+      Tabela Ouro unificada por empreendimento/APF para identificar gargalos e
       desempenho do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução
       física, baixa execução financeira, paralisação, falta de atualização
       recente, contratos sem evolução e saldo financeiro a desembolsar. Alimenta
@@ -11,8 +11,8 @@ models:
 
       GRÃO: 1 linha por (frente, apf) — snapshot corrente, não série. Derivada
       das fichas de produção `gold_far_ficha_empreendimento` /
-      `gold_fds_ficha_empreendimento` e das golds `*_atual_*` FAR/FDS. Cobre só
-      FAR e FDS — Rural fica de fora deste gold.
+      `gold_fds_ficha_empreendimento` e das ouros `*_atual_*` FAR/FDS. Cobre só
+      FAR e FDS — Rural fica de fora deste ouro.
 
       VOCABULÁRIO: a coluna de frente se chama `frente` (não `frente_mcmv`) e seu
       domínio é {FAR, FDS}; `FDS` é a mesma frente que o resto do eixo histórico
@@ -25,7 +25,7 @@ models:
       só APF pós-2024).
     meta:
       tags:
-        - gold
+        - ouro
         - mcmv
         - indicadores
         - gargalo
@@ -40,7 +40,7 @@ models:
         description: >
           Frente do MCMV (conceito canônico `frente_mcmv`, glossario-mcid.md).
           Domínio {FAR, FDS}; `FDS` ≡ `Entidades` no vocabulário do resto do eixo
-          histórico. Rural não entra neste gold.
+          histórico. Rural não entra neste ouro.
         data_tests:
           - not_null
           - accepted_values:
@@ -61,7 +61,7 @@ models:
           vencida e execução física < 100%) / 'Dentro do Prazo'.
       - name: status_ritmo
         description: >
-          Eixo de classificação de RITMO físico-financeiro, valor cru das golds
+          Eixo de classificação de RITMO físico-financeiro, valor cru das ouros
           de ficha FAR/FDS (`ritmo_fisico_financeiro` / `status_ritmo_obra`).
           Distinto de `situacao_canonica` (situação de obra) e de `status_prazo`.
       - name: valor_liberado_historico
@@ -120,14 +120,14 @@ models:
         description: Lista textual das flags acionadas para auditoria e tooltip no dashboard.
       - name: dt_calculo
         description: >
-          Timestamp de materialização do gold — conceito canônico `dt_gold`
+          Timestamp de materialização do ouro — conceito canônico `dt_gold`
           (glossario-mcid.md).
 
   - name: ouro_reloginho_indicadores
     description: >
-      Tabela Gold do reloginho MCMV: série mensal SNH consolidada por agente. Lê
-      a silver `prata_dhist_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
-      camadas bronze e silver). Uma linha por (agente_financeiro, dt_referencia)
+      Tabela Ouro do reloginho MCMV: série mensal SNH consolidada por agente. Lê
+      a prata `prata_dhist_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
+      camadas bronze e prata). Uma linha por (agente_financeiro, dt_referencia)
       — série de ESTOQUE (carteira acumulada no mês-snapshot da SNH): NÃO somar
       `uh_*` entre `dt_referencia`. Colunas: acumulados uh_contratadas,
       uh_entregues e uh_vigentes, número de APFs distintos (n_apf) e contagem
@@ -135,7 +135,7 @@ models:
       resumo do reloginho.
     meta:
       tags:
-        - gold
+        - ouro
         - mcmv
         - indicadores
         - reloginho
@@ -189,7 +189,7 @@ models:
 
   - name: ouro_reloginho_indicadores_frente
     description: >
-      Tabela Gold do reloginho MCMV com quebra por frente. Mesma
+      Tabela Ouro do reloginho MCMV com quebra por frente. Mesma
       regra de `ouro_reloginho_indicadores`, com frente_mcmv (FAR / Entidades /
       Rural) no grão. Uma linha por (agente_financeiro, frente_mcmv,
       dt_referencia) — série de ESTOQUE, não somar `uh_*` entre meses. Somar
@@ -198,7 +198,7 @@ models:
       (assert_reloginho_frente_cobertura_mensal).
     meta:
       tags:
-        - gold
+        - ouro
         - mcmv
         - indicadores
         - reloginho
@@ -251,12 +251,12 @@ models:
 
   - name: ouro_reloginho_indicadores_entregas
     description: >
-      Tabela Gold do reloginho — entregas: fluxo por evento vs
+      Tabela Ouro do reloginho — entregas: fluxo por evento vs
       acumulado do snapshot, lado a lado, por (agente_financeiro,
       dt_referencia). Serve para definir o total oficial de UH entregues e o
       ritmo_recente. `dif_evento_vs_snapshot` deve tender a ~0.
     meta:
-      tags: [gold, mcmv, indicadores, reloginho, dados-historicos, entregas]
+      tags: [ouro, mcmv, indicadores, reloginho, dados-historicos, entregas]
     columns:
       - name: agente_financeiro
         description: Agente financeiro (BB ou CAIXA).
@@ -268,7 +268,7 @@ models:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: uh_entregues_evento_mes
-        description: UH entregues no mês (fluxo, da silver de evento).
+        description: UH entregues no mês (fluxo, da prata de evento).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_evento_acum
@@ -286,13 +286,13 @@ models:
 
   - name: ouro_reloginho_resumo_dashboard
     description: >
-      Tabela Gold do reloginho para dashboard: uma linha por agente_financeiro
+      Tabela Ouro do reloginho para dashboard: uma linha por agente_financeiro
       com o último mês observado da série mensal SNH (uh_contratadas,
       uh_entregues, uh_vigentes), o número de meses observados e o ritmo médio
       mensal de entregas (uh_entregues do último mês / n_meses_observados).
     meta:
       tags:
-        - gold
+        - ouro
         - mcmv
         - indicadores
         - reloginho
@@ -340,7 +340,7 @@ models:
 
   - name: ouro_reloginho_resumo_gargalo_desempenho_dashboard
     description: >
-      Tabela Gold agregada para dashboard de gargalos e desempenho do MCMV.
+      Tabela Ouro agregada para dashboard de gargalos e desempenho do MCMV.
       Gera cards e rankings nos níveis nacional, frente, UF, município e
       responsável (coluna `nivel_agregacao`) — um GROUPING SET por nível.
       **Não somar entre `nivel_agregacao`**: são recortes sobrepostos do mesmo
@@ -350,7 +350,7 @@ models:
       em dias.
     meta:
       tags:
-        - gold
+        - ouro
         - mcmv
         - dashboard
         - gargalo
@@ -420,5 +420,5 @@ models:
         description: qtd_casos_criticos / total_empreendimentos no agrupamento (escala 0-100).
       - name: dt_calculo
         description: >
-          Data de materialização do gold — conceito canônico `dt_gold`
+          Data de materialização do ouro — conceito canônico `dt_gold`
           (glossario-mcid.md).

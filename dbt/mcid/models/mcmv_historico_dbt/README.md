@@ -1,6 +1,6 @@
 # Eixo histórico — ordem de build e modos de execução
 
-Domínios cobertos: `mcmv_historico_dbt` (esta pasta) e as bronzes/silvers do
+Domínios cobertos: `mcmv_historico_dbt` (esta pasta) e as bronzes/pratas do
 reloginho em `models/indicadores_mcmv_dbt/`.
 
 ## Convenção de schema (change `renomear-camadas-pt-historico-reloginho`, D1)
@@ -11,8 +11,8 @@ Schema por **camada do medalhão, em português** — reverte a D1 de
 | camada | schema | nome de tabela |
 |---|---|---|
 | bronze | `bronze` | `bronze_<origem>_<nome>` — origem ∈ `dhist` (`staging/dados_historicos/`), `sftp` (`staging/sftp/`), `shpt` (`staging/sharepoint/`) |
-| silver | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `dhist`, `far`, `rural`, `fds`, `reloginho` |
-| gold | `ouro` | `ouro_<domínio>_<nome>` |
+| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `dhist`, `far`, `rural`, `fds`, `reloginho` |
+| ouro | `ouro` | `ouro_<domínio>_<nome>` |
 
 Vale para os 33 modelos dos dois braços (`mcmv_historico_dbt` exceto `piloto/` +
 `indicadores_mcmv_dbt`), cross-frente, por frente ou de gargalo. Nada mais
@@ -60,7 +60,7 @@ corpos ficam em `macros/historico/corpos_bronze.sql`, e cada arquivo em
 nome do arquivo** — os arquivos FDS/RURAL de 202602+ estão misfiled sob
 `Novo MCMV - FAR/`). `_LAYOUT_` / `_SEMANAL_` / `_DIARIO_` de fora. Janela real
 **202512 → 202607** (não há obra mensal antes disso). Ordem de build: as 3
-bronzes `obra_mensal` antes das 3 silvers de frente.
+bronzes `obra_mensal` antes das 3 pratas de frente.
 
 Desde `consolidar-schemas-historico-reloginho` (D2/C2) **não há mais um modelo
 de obra mensal autônomo**. A família entra nas 3 pratas de frente:
@@ -74,25 +74,25 @@ de obra mensal autônomo**. A família entra nas 3 pratas de frente:
 
 Nos meses só-de-obra `quantidade_uh` / `valor_contratado` / `valor_desembolsado`
 ficam **NULL** (cauda de estoque declaradamente nula, C2 — sem carry-forward).
-Os 3 golds filtram `fonte_serie <> 'obra_mensal'`. Consumidor que agrega estoque
+Os 3 ouros filtram `fonte_serie <> 'obra_mensal'`. Consumidor que agrega estoque
 por mês deve filtrar `fonte_serie <> 'obra_mensal'` ou `dt_referencia <= '2026-03-01'`.
 
 As 3 bronzes têm schemas divergentes (FAR: `dt_movimento` / `co_situacao_obra`;
 FDS/RURAL: `dh_movimento` / `co_situacao_operacao`), harmonizados por
 `coalesce_present` com lista de aliases.
 
-Os braços SFTP/SNH das silvers de frente ainda usam projeção explícita por braço;
+Os braços SFTP/SNH das pratas de frente ainda usam projeção explícita por braço;
 o `union all by name` do CTE `unioned` só serve para o braço obra completar as
 colunas do contrato com NULL sem repetir a lista inteira.
 
-## Ordem de build: as bronzes precisam existir no COMPILE da silver
+## Ordem de build: as bronzes precisam existir no COMPILE da prata
 
 Isto não é só uma dependência de dados — é uma dependência de **compilação**.
 
 `coalesce_present()` e `coalesce_present_parsed()`
 ([`macros/coalesce_present.sql`](../../macros/coalesce_present.sql))
 introspeccionam a relação no banco (`adapter.get_columns_in_relation`) **no
-momento em que a silver é compilada**, para montar o `coalesce` só com as
+momento em que a prata é compilada**, para montar o `coalesce` só com as
 colunas que aquela família realmente tem. Quem depende disso:
 
 - `prata_dhist_serie_executiva` → as 4 bronzes da série executiva;
@@ -106,13 +106,13 @@ colunas que aquela família realmente tem. Quem depende disso:
 Consequências práticas:
 
 - **Um `dbt build` numa única invocação já resolve**: o dbt materializa as
-  bronzes antes de compilar as silvers que as referenciam.
-- **Compilar a silver isoladamente contra um banco vazio não quebra**, mas
+  bronzes antes de compilar as pratas que as referenciam.
+- **Compilar a prata isoladamente contra um banco vazio não quebra**, mas
   produz `null` no lugar de cada `coalesce` — a macro devolve `null` quando a
   relação não existe. O SQL compila; o resultado é que só vale depois do build
   completo. Por isso `dbt compile`/`--empty` no CI não substituem uma execução
   real como verificação.
-- Ao reconstruir **uma família** isoladamente, reconstrua a silver do domínio
+- Ao reconstruir **uma família** isoladamente, reconstrua a prata do domínio
   em seguida.
 
 Os scripts `run-historico.sh` e `run-reloginho.sh` já respeitam essa ordem.
@@ -138,14 +138,14 @@ OpenMetadata ingere (D3).
 
 ## Testes de qualidade
 
-A convenção por camada (bronze detecta / silver contrata / gold reconcilia) e o
+A convenção por camada (bronze detecta / prata contrata / ouro reconcilia) e o
 catálogo de testes genéricos estão em
 [`models/docs/convencao-testes-qualidade.md`](../docs/convencao-testes-qualidade.md)
 (change `testes-data-quality-dbt`).
 
 **`verificacao_tipagem`** (change `verificar-tipagem-silver-gold-historico`)
 confere o `data_type` das colunas-chave (id, UH, valor R$, data, percentual)
-das silvers e golds contra o tipo canônico documentado em
+das pratas e ouros contra o tipo canônico documentado em
 [`docs/inventario-tipagem-silver-gold.md`](docs/inventario-tipagem-silver-gold.md).
 Os `tipo_esperado` usam os nomes do DuckDB, então o teste **roda no modo A**
 (`cidades.duckdb` local); numa ida a Postgres os nomes de `data_type` mudam e os

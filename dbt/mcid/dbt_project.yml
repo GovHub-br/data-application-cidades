@@ -153,28 +153,28 @@ models:
             domain: MCid.Habitacao
             tier: Tier.Tier3
             owner: mcid-data-engineering
-      silver:
+      prata:
         +materialized: table
         +schema: prata
         +meta:
           governance:
             product: reloginho
             owner_key: mcid_data_engineering
-            layer: silver
+            layer: prata
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
             owner: mcid-data-engineering
-      gold:
+      ouro:
         +materialized: table
         +schema: ouro
         +meta:
           governance:
             product: reloginho
             owner_key: mcid_data_engineering
-            layer: gold
+            layer: ouro
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -235,14 +235,14 @@ models:
             tier: Tier.Tier3
             owner: mcid-data-engineering
 
-      silver:
+      prata:
         +materialized: table
         +schema: prata
         +meta:
           governance:
             product: mcmv_historico
             owner_key: mcid_data_engineering
-            layer: silver
+            layer: prata
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -250,14 +250,14 @@ models:
             tier: Tier.Tier2
             owner: mcid-data-engineering
 
-      gold:
+      ouro:
         +materialized: table
         +schema: ouro
         +meta:
           governance:
             product: mcmv_historico
             owner_key: mcid_data_engineering
-            layer: gold
+            layer: ouro
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:

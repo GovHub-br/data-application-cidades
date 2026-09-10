@@ -3,7 +3,7 @@ version: 2
 # As bronzes de série histórica são uma TABELA POR FAMÍLIA: 4 da série executiva + 5
 # interfaces GEFUS + 2 agentes SNH neste domínio, mais 2 agentes de entregas em
 # indicadores_mcmv_dbt/bronze. O mapa que as define está em
-# macros/historico/familias.sql; a união entre famílias vive na silver.
+# macros/historico/familias.sql; a união entre famílias vive na prata.
 #
 # As quatro colunas de auditoria (source_file, dt_referencia, dt_ingest,
 # hash_linha) existem em todas, com a mesma semântica de antes da separação.
@@ -30,14 +30,14 @@ models:
             severity: warn
     columns:
       - name: fonte_familia
-        description: Constante `bases_relatorio_executivo` — discriminador da família na silver.
+        description: Constante `bases_relatorio_executivo` — discriminador da família na prata.
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ["bases_relatorio_executivo"]
       # valor_nao_negativo em `warn` no bronze (cópia fiel); gate `error` na
-      # silver pós-quarentena.
+      # prata pós-quarentena.
       - name: valor_total_do_investimento
         description: Investimento total (texto). ~1,3 mil linhas < 0 na fonte (erro de sinal).
         data_tests:
@@ -50,7 +50,7 @@ models:
               config: { severity: warn }
       # Colunas de código com sufixo ".0" numa das gerações de schema desta
       # família (a geração posterior traz `cod_munic_ibge` / `cod_apf` limpos).
-      # Teste em `warn` — defeito de origem, não regressão. Limpeza na silver.
+      # Teste em `warn` — defeito de origem, não regressão. Limpeza na prata.
       # Ver docs/varredura-sufixo-float-texto.md.
       - name: codmunicibge
         description: Código IBGE do município (geração antiga; identificador textual).
@@ -91,7 +91,7 @@ models:
       - name: ano
         description: >
           Ano (4 dígitos como texto). Chega com sufixo ".0" numa geração.
-          Não é propagado a silver (a série usa `dt_referencia`) — teste em
+          Não é propagado a prata (a série usa `dt_referencia`) — teste em
           `warn` para rastrear.
         data_tests:
           - sem_sufixo_float_texto:
@@ -134,7 +134,7 @@ models:
             severity: warn
     columns:
       - name: fonte_familia
-        description: Constante `min_cidades` — discriminador da família na silver.
+        description: Constante `min_cidades` — discriminador da família na prata.
         data_tests:
           - not_null
           - accepted_values:
@@ -177,7 +177,7 @@ models:
             severity: warn
     columns:
       - name: fonte_familia
-        description: Constante `entrada_bb` — discriminador da família na silver.
+        description: Constante `entrada_bb` — discriminador da família na prata.
         data_tests:
           - not_null
           - accepted_values:
@@ -186,7 +186,7 @@ models:
       # Colunas de código herdadas da fonte como TEXTO com sufixo ".0"
       # (int -> float -> str a montante). Teste em `warn`: é defeito de origem
       # conhecido, não regressão — o bronze é cópia fiel e não corrige. A
-      # limpeza (e o gate `error`) ficam na silver, via `strip_float_text`.
+      # limpeza (e o gate `error`) ficam na prata, via `strip_float_text`.
       # Ver docs/varredura-sufixo-float-texto.md.
       - name: codigo_empreendimento_bb
         description: Código do empreendimento no BB (identificador textual).
@@ -251,7 +251,7 @@ models:
             severity: warn
     columns:
       - name: fonte_familia
-        description: Constante `bext` — discriminador da família na silver.
+        description: Constante `bext` — discriminador da família na prata.
         data_tests:
           - not_null
           - accepted_values:
@@ -259,7 +259,7 @@ models:
                 values: ["bext"]
       # valor_nao_negativo em `warn` no bronze — o bronze é cópia fiel; o
       # negativo fica visível com a contagem e o build conclui. O gate `error`
-      # é na silver, pós-quarentena.
+      # é na prata, pós-quarentena.
       - name: mvalor_investimento
         description: Investimento total (texto, formato de origem). ~24,6 mil linhas < 0 (erro de sinal na fonte).
         data_tests:
@@ -295,7 +295,7 @@ models:
       origem (sem dedup), colunas da fonte preservadas, sem tipagem;
       dt_referencia derivada do nome do arquivo. Reentregas (sufixo !=
       _YYYYMMDD) e arquivos de VALIDAÇÃO ficam de fora. Grão: empreendimento ×
-      mês. A separação por frente é da silver.
+      mês. A separação por frente é da prata.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
@@ -306,7 +306,7 @@ models:
           config:
             severity: warn
       # Guardrail: lista coluna com
-      # sinal semântico não consumida por nenhuma silver e não em
+      # sinal semântico não consumida por nenhuma prata e não em
       # colunas_bronze_ignoradas. Sempre warn.
       - bronze_colunas_nao_mapeadas:
           config:
@@ -340,7 +340,7 @@ models:
       origem (sem dedup), colunas da fonte preservadas, sem tipagem;
       dt_referencia derivada do nome do arquivo. Reentregas (sufixo !=
       _YYYYMMDD) e arquivos de VALIDAÇÃO ficam de fora. Grão: empreendimento ×
-      mês. A separação por frente é da silver.
+      mês. A separação por frente é da prata.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
@@ -382,7 +382,7 @@ models:
       origem (sem dedup), colunas da fonte preservadas, sem tipagem;
       dt_referencia derivada do nome do arquivo. Reentregas (sufixo !=
       _YYYYMMDD) e arquivos de VALIDAÇÃO ficam de fora. Grão: empreendimento ×
-      mês. A separação por frente é da silver.
+      mês. A separação por frente é da prata.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
@@ -424,7 +424,7 @@ models:
       origem (sem dedup), colunas da fonte preservadas, sem tipagem;
       dt_referencia derivada do nome do arquivo. Reentregas (sufixo !=
       _YYYYMMDD) e arquivos de VALIDAÇÃO ficam de fora. Grão: empreendimento ×
-      mês. A separação por frente é da silver.
+      mês. A separação por frente é da prata.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
@@ -466,7 +466,7 @@ models:
       origem (sem dedup), colunas da fonte preservadas, sem tipagem;
       dt_referencia derivada do nome do arquivo. Reentregas (sufixo !=
       _YYYYMMDD) e arquivos de VALIDAÇÃO ficam de fora. Grão: empreendimento ×
-      mês. A separação por frente é da silver.
+      mês. A separação por frente é da prata.
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
@@ -560,7 +560,7 @@ models:
       `_YYYYMM`; auditoria `frente_mcmv`, `source_file`, `dt_ingest`,
       `hash_linha`. Janela real 202512 → 202607. Schema DIVERGE de FDS/RURAL
       (`dt_movimento` / `co_situacao_obra`). A harmonização e o dedup ficam no
-      braço `obra_mensal` das 3 silvers
+      braço `obra_mensal` das 3 pratas
       `prata_{far,fds,rural}_historico_empreendimento`.
     meta:
       tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
@@ -570,7 +570,7 @@ models:
             severity: warn
     columns:
       - name: frente_mcmv
-        description: Constante `FAR` — discriminador da frente na silver.
+        description: Constante `FAR` — discriminador da frente na prata.
         data_tests:
           - not_null
           - accepted_values:
@@ -610,7 +610,7 @@ models:
             severity: warn
     columns:
       - name: frente_mcmv
-        description: Constante `Entidades` — discriminador da frente na silver.
+        description: Constante `Entidades` — discriminador da frente na prata.
         data_tests:
           - not_null
           - accepted_values:
@@ -648,7 +648,7 @@ models:
             severity: warn
     columns:
       - name: frente_mcmv
-        description: Constante `Rural` — discriminador da frente na silver.
+        description: Constante `Rural` — discriminador da frente na prata.
         data_tests:
           - not_null
           - accepted_values:
@@ -707,7 +707,7 @@ models:
         description: >
           Código IBGE do município (identificador textual). ~20% dos valores
           preenchidos chegam com sufixo ".0" da fonte CAIXA (o agente BB não
-          tem a coluna). Teste em `warn`; limpeza na silver.
+          tem a coluna). Teste em `warn`; limpeza na prata.
           Ver docs/varredura-sufixo-float-texto.md.
         data_tests:
           - sem_sufixo_float_texto:
@@ -716,7 +716,7 @@ models:
       - name: cep_do_imovel
         description: >
           CEP do imóvel (identificador textual, 8 dígitos). Chega com sufixo
-          ".0" da fonte CAIXA. Não é propagado a nenhuma silver hoje — teste em
+          ".0" da fonte CAIXA. Não é propagado a nenhuma prata hoje — teste em
           `warn` para rastrear. Ver docs/varredura-sufixo-float-texto.md.
         data_tests:
           - sem_sufixo_float_texto:
@@ -725,7 +725,7 @@ models:
       - name: numero_do_imovel
         description: >
           Número do imóvel no logradouro (inteiro-texto). Chega com sufixo
-          ".0". Não propagado a silver — teste em `warn`.
+          ".0". Não propagado a prata — teste em `warn`.
         data_tests:
           - sem_sufixo_float_texto:
               config:

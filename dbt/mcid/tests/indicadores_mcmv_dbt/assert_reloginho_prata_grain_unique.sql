@@ -1,4 +1,4 @@
--- Teste singular: o grão da silver_reloginho_snh_apf_mes deve ser
+-- Teste singular: o grão da prata_dhist_snh_apf_mes deve ser
 -- (agente_financeiro, apf, dt_referencia). Retorna linhas apenas se a
 -- deduplicação por APF tiver falhado (duplicidade 2x da origem não neutralizada).
 

@@ -3,7 +3,7 @@ version: 2
 models:
   - name: prata_far_historico_empreendimento
     description: >
-      Silver — série histórica mensal de empreendimentos MCMV da frente FAR
+      Prata — série histórica mensal de empreendimentos MCMV da frente FAR
       (SFTP INT040/INT054 ∪ SNH modalidade=FAR ∪ braço MONIT_MOV_OBRA), contrato
       semântico comum, tipada, deduplicada por (frente_mcmv, apf, dt_referencia).
       Precedência SNH na janela sobreposta. Grão: empreendimento × mês.
@@ -14,7 +14,7 @@ models:
       construção — agregações de estoque devem filtrar
       `fonte_serie <> 'obra_mensal'` (ou `dt_referencia <= '2026-03-01'`).
     meta:
-      tags: [silver, mcmv, dados-historicos, empreendimento, far]
+      tags: [prata, mcmv, dados-historicos, empreendimento, far]
     data_tests:
       # Grão físico mensal: 1 linha por
       # (frente_mcmv, apf, dt_referencia) com dt_referencia já normalizado ao 1º
@@ -37,7 +37,7 @@ models:
           config: { severity: warn }
     columns: &contrato_empreendimento
       # verificacao_tipagem: tipo_esperado nos nomes do DuckDB. Ref:
-      # docs/inventario-tipagem-silver-gold.md. As 3 silvers por frente + o
+      # docs/inventario-tipagem-silver-gold.md. As 3 pratas por frente + o
       # ouro_dhist_snapshot_empreendimento_atual compartilham este contrato de tipos.
       - name: id_historico_snapshot
         description: Chave técnica única por frente, APF e mês de referência.
@@ -59,7 +59,7 @@ models:
       - name: frente_mcmv
         description: >
           Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
-          glossario-mcid.md). Constante por silver — FAR, Entidades ou Rural.
+          glossario-mcid.md). Constante por prata — FAR, Entidades ou Rural.
           `Entidades` é a mesma frente que as fichas de produção FDS chamam de
           FDS.
         data_tests:
@@ -135,7 +135,7 @@ models:
           `fonte_serie <> 'obra_mensal'`.
         data_tests:
           # Limiar do contrato `campos_obrigatorios` (chave
-          # `contrato_empreendimento_historico` — as 3 silvers por frente
+          # `contrato_empreendimento_historico` — as 3 pratas por frente
           # compartilham o contrato comum).
           - completude_minima:
               arguments:
@@ -434,7 +434,7 @@ models:
         description: >
           Data da primeira entrega de UH, direto da fonte (`dt_primeira_entrega`,
           INT040/054 — FAR ~52%). Independe da espinha SNH-evento (que segue o
-          fallback para FDS/Rural no gold). NULL em FDS/Rural (INT059/057/065
+          fallback para FDS/Rural no ouro). NULL em FDS/Rural (INT059/057/065
           não têm a coluna).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
@@ -452,7 +452,7 @@ models:
       # dt_referencia). ESPARSIDADE POR CONSTRUÇÃO:
       # a família `quantidade_de_uhs_*_do_ano_de_referencia` só existe de
       # 2024-06 em diante e NÃO retroage — as 9 colunas são NULL em ~95% das
-      # linhas da silver, não por lacuna de pipeline. As colunas `_ano`
+      # linhas da prata, não por lacuna de pipeline. As colunas `_ano`
       # acumulam dentro do ano-calendário e reiniciam em janeiro; o fluxo
       # mensal sai no consumidor por `x_ano - lag(x_ano) over (partition by
       # frente_mcmv, apf, year(dt_referencia) order by dt_referencia)`. As
@@ -590,7 +590,7 @@ models:
 
   - name: prata_fds_historico_empreendimento
     description: >
-      Silver — série histórica mensal de empreendimentos MCMV da frente
+      Prata — série histórica mensal de empreendimentos MCMV da frente
       FDS/Entidades (SFTP INT059 ∪ SNH modalidade=ENTIDADES ∪ braço
       MONIT_MOV_OBRA). Contrato comum, dedup por (frente_mcmv, apf,
       dt_referencia), precedência SNH. Grão: empreendimento × mês.
@@ -600,7 +600,7 @@ models:
       `valor_desembolsado` NULL por construção — filtrar
       `fonte_serie <> 'obra_mensal'` em agregações de estoque.
     meta:
-      tags: [silver, mcmv, dados-historicos, empreendimento, fds]
+      tags: [prata, mcmv, dados-historicos, empreendimento, fds]
     data_tests:
       # Grão físico mensal.
       - unique_combinacao:
@@ -620,7 +620,7 @@ models:
 
   - name: prata_rural_historico_empreendimento
     description: >
-      Silver — série histórica mensal de empreendimentos MCMV da frente Rural
+      Prata — série histórica mensal de empreendimentos MCMV da frente Rural
       (SFTP INT057/INT065 ∪ SNH modalidade=RURAL ∪ braço MONIT_MOV_OBRA).
       Contrato comum, dedup por (frente_mcmv, apf, dt_referencia), precedência
       SNH. Grão: empreendimento × mês.
@@ -630,7 +630,7 @@ models:
       `valor_desembolsado` NULL por construção — filtrar
       `fonte_serie <> 'obra_mensal'` em agregações de estoque.
     meta:
-      tags: [silver, mcmv, dados-historicos, empreendimento, rural]
+      tags: [prata, mcmv, dados-historicos, empreendimento, rural]
     data_tests:
       # Grão físico mensal.
       - unique_combinacao:
@@ -653,20 +653,20 @@ models:
     columns: *contrato_empreendimento
 
   # Os atributos estáveis do empreendimento ficam em colunas de
-  # ouro_dhist_snapshot_empreendimento_atual (ver gold/schema.yml).
+  # ouro_dhist_snapshot_empreendimento_atual (ver ouro/schema.yml).
 
   - name: prata_dhist_entrega_apf
     description: >
-      Silver — espinha de entregas por APF. Grão: 1 linha por `apf`. Consolida os
+      Prata — espinha de entregas por APF. Grão: 1 linha por `apf`. Consolida os
       EVENTOS de entrega de UH da SNH (bronze_dhist_snh_entregas_evento_bb /
       _caixa, mesma fonte do reloginho) num atributo estável: dt_primeira_entrega,
       dt_ultima_entrega, uh_entregues_acumulada, n_eventos, dt_ultimo_snapshot.
       Dedup por hash de conteúdo (agente, apf, dt_evento, qtd) idêntico ao de
-      prata_dhist_snh_entregas_mes — os totais reconciliam. As silvers
+      prata_dhist_snh_entregas_mes — os totais reconciliam. As pratas
       históricas por frente fazem left join por `apf` para resolver
       dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP.
     meta:
-      tags: [silver, mcmv, dados-historicos, entrega, espinha]
+      tags: [prata, mcmv, dados-historicos, entrega, espinha]
     columns:
       - name: apf
         description: APF do empreendimento (chave da linha).
@@ -697,7 +697,7 @@ models:
 
   - name: prata_dhist_serie_executiva
     description: >
-      Silver — série executiva histórica no contrato comum. Aplica o mapa de
+      Prata — série executiva histórica no contrato comum. Aplica o mapa de
       colunas via coalesce_present() e tipa os campos (UH inteiras, valores em
       R$, percentuais e datas); ausência preservada como NULL, não 0.
       Grão: 1 linha por (fonte_familia, chave_natural, dt_referencia) — o
@@ -709,7 +709,7 @@ models:
       Ver o doc de auditoria
       docs/auditar-grao-serie-executiva-bases-relat-exec.md.
     meta:
-      tags: [silver, mcmv, dados-historicos, serie-executiva, preditivo]
+      tags: [prata, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
       # Reconciliação da decomposição do investimento. A identidade
       # `investimento = empréstimo + contrapartida + subsídio_total`:
@@ -845,7 +845,7 @@ models:
         description: >
           Natureza da série por família: 'estoque' — carteira restatada
           mês a mês (bases_relatorio_executivo, min_cidades, bext); 'fluxo' —
-          entrada de novos empreendimentos na carteira BB (entrada_bb). O gold
+          entrada de novos empreendimentos na carteira BB (entrada_bb). O ouro
           propaga esta classificação. NÃO somar séries de estoque entre meses.
         data_tests:
           - not_null
@@ -955,7 +955,7 @@ models:
           Situação derivada SÓ de quantidade (esta fonte não tem
           status_operacional): contratada / em_entrega / concluida /
           nao_mapeada. Domínio e propósito DISTINTOS de situacao_canonica das
-          silvers por frente — nunca combinar as duas séries sem ressalva.
+          pratas por frente — nunca combinar as duas séries sem ressalva.
         data_tests:
           - accepted_values:
               arguments:

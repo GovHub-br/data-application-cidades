@@ -100,10 +100,10 @@ tendem a ser esparsas / mais antigas. É medição, não meta.
 ## Arquivos
 
 - `macros/historico/corpos_silver.sql` — braço SNH: + `dt_previsao_entrega`, `qt_uh_previsao_entrega`
-- `models/mcmv_historico_dbt/silver/prata_{fds,far,rural}_historico_empreendimento.sql`
-- `models/mcmv_historico_dbt/gold/ouro_dhist_snapshot_empreendimento_atual.sql` — + `quantidade_uh_concluidas`, `dt_previsao_entrega`, `qt_uh_previsao_entrega`
-- `models/mcmv_historico_dbt/gold/ouro_dhist_marco_empreendimento.sql` — marco `dt_previsao_entrega` da silver
-- `models/mcmv_historico_dbt/{silver,gold}/schema.yml`
+- `models/mcmv_historico_dbt/prata/prata_{fds,far,rural}_historico_empreendimento.sql`
+- `models/mcmv_historico_dbt/ouro/ouro_dhist_snapshot_empreendimento_atual.sql` — + `quantidade_uh_concluidas`, `dt_previsao_entrega`, `qt_uh_previsao_entrega`
+- `models/mcmv_historico_dbt/ouro/ouro_dhist_marco_empreendimento.sql` — marco `dt_previsao_entrega` da prata
+- `models/mcmv_historico_dbt/{prata,ouro}/schema.yml`
 
 ## Testes
 

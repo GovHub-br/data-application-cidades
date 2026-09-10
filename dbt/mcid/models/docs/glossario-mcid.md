@@ -1,4 +1,4 @@
-# Glossário MCID para Silver e Marts
+# Glossário MCID para Prata e Marts
 
 Este glossário é a referência semântica inicial para padronizar modelos dbt da
 frente Cidades. Ele deve ser usado nos `schema.yml`, nomes físicos e marts de
@@ -9,9 +9,9 @@ dashboard.
 - `raw`: arquivo bruto no MinIO/Object Storage, preservado como recebido da fonte.
 - `staging`: arquivo estruturado no MinIO, geralmente Parquet, pronto para leitura por DuckDB/dbt.
 - `bronze`: cópia fiel ou projeção mínima da staging para o ambiente analítico. Não deve aplicar regra de negócio.
-- `silver`: primeira camada tratada. Deve tipar, normalizar nomes, chaves, datas, valores e campos técnicos. Para o MCMV, deve ser gerada somente a partir do MinIO `staging/` via DuckDB.
+- `prata`: primeira camada tratada. Deve tipar, normalizar nomes, chaves, datas, valores e campos técnicos. Para o MCMV, deve ser gerada somente a partir do MinIO `staging/` via DuckDB.
 - `mart_dashboard`: modelo final exclusivamente consumido por dashboard. Deve ter grão e métricas documentados.
-- `gold`: camada analítica final. Pode conter marts de dashboard, indicadores oficiais e agregações publicáveis.
+- `ouro`: camada analítica final. Pode conter marts de dashboard, indicadores oficiais e agregações publicáveis.
 
 ## Termos Canônicos
 
@@ -34,8 +34,8 @@ dashboard.
 | Status Operacional | `status_operacional` | `text` | Situação operacional consolidada para leitura de dashboard. |
 | Data de Referência | `dt_referencia` | `date` | Data de posição da informação. |
 | Data de Ingestão | `dt_ingest` | `timestamp` | Data/hora de ingestão no pipeline. |
-| Data Silver | `dt_silver` | `timestamp` | Data/hora de materialização na camada silver. |
-| Data Gold | `dt_gold` | `timestamp` | Data/hora de materialização na camada gold/mart. |
+| Data Silver | `dt_silver` | `timestamp` | Data/hora de materialização na camada prata. |
+| Data Gold | `dt_gold` | `timestamp` | Data/hora de materialização na camada ouro/mart. |
 
 ## Regras Gerais
 
