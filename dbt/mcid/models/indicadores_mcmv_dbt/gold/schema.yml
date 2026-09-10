@@ -132,7 +132,7 @@ models:
       `uh_*` entre `dt_referencia`. Colunas: acumulados uh_contratadas,
       uh_entregues e uh_vigentes, número de APFs distintos (n_apf) e contagem
       corrida de meses observados por agente (n_meses_observados). Alimenta o
-      resumo do reloginho. Requer target staging_duckdb.
+      resumo do reloginho.
     meta:
       tags:
         - gold
@@ -195,7 +195,7 @@ models:
       dt_referencia) — série de ESTOQUE, não somar `uh_*` entre meses. Somar
       todas as frentes de um mês reproduz `ouro_reloginho_indicadores`.
       Base da verificação de cobertura histórica por frente
-      (assert_reloginho_frente_cobertura_mensal). Requer target staging_duckdb.
+      (assert_reloginho_frente_cobertura_mensal).
     meta:
       tags:
         - gold
@@ -255,7 +255,6 @@ models:
       acumulado do snapshot, lado a lado, por (agente_financeiro,
       dt_referencia). Serve para definir o total oficial de UH entregues e o
       ritmo_recente. `dif_evento_vs_snapshot` deve tender a ~0.
-      Requer target staging_duckdb.
     meta:
       tags: [gold, mcmv, indicadores, reloginho, dados-historicos, entregas]
     columns:
@@ -291,7 +290,6 @@ models:
       com o último mês observado da série mensal SNH (uh_contratadas,
       uh_entregues, uh_vigentes), o número de meses observados e o ritmo médio
       mensal de entregas (uh_entregues do último mês / n_meses_observados).
-      Requer target staging_duckdb.
     meta:
       tags:
         - gold

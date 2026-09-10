@@ -13,7 +13,7 @@ models:
   - name: bronze_dhist_serie_bases_relatorio_executivo
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
-      `bases_relatorio_executivo` (grão empreendimento), cópia fiel do glob
+      `bases_relatorio_executivo` (grão empreendimento), cópia fiel de
       `staging/dados_historicos/*bases_relat*rio_executivo*.parquet`. Uma linha por linha de
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
@@ -117,7 +117,7 @@ models:
   - name: bronze_dhist_serie_min_cidades
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
-      `min_cidades` (grão empreendimento/contrato (BB)), cópia fiel do glob
+      `min_cidades` (grão empreendimento/contrato (BB)), cópia fiel de
       `staging/dados_historicos/*min_cidades*.parquet`. Uma linha por linha de
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
@@ -160,7 +160,7 @@ models:
   - name: bronze_dhist_serie_entrada_bb
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
-      `entrada_bb` (grão empreendimento (BB)), cópia fiel do glob
+      `entrada_bb` (grão empreendimento (BB)), cópia fiel de
       `staging/dados_historicos/*entrada_bb*.parquet`. Uma linha por linha de
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
@@ -234,7 +234,7 @@ models:
   - name: bronze_dhist_serie_bext
     description: >
       Bronze — série executiva histórica do MCMV (~2010-2018), família
-      `bext` (grão contrato PF (CAIXA)), cópia fiel do glob
+      `bext` (grão contrato PF (CAIXA)), cópia fiel de
       `staging/dados_historicos/*bext*.parquet`. Uma linha por linha de
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
@@ -503,7 +503,7 @@ models:
   - name: bronze_dhist_empreendimento_snh_bb
     description: >
       Bronze — série mensal SNH "dados prioritários" por empreendimento MCMV
-      (2024-06+), agente BB, cópia fiel do glob
+      (2024-06+), agente BB, cópia fiel de
       `staging/dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_bb*.parquet`,
       **sem regra de negócio** (sem tipagem, sem dedup). Frentes: FAR / Entidades
       / Rural (coluna `modalidade`). Exclui os fluxos de entrega por evento

@@ -13,7 +13,6 @@ models:
       `quantidade_uh` / `valor_contratado` / `valor_desembolsado` são NULL por
       construção — agregações de estoque devem filtrar
       `fonte_serie <> 'obra_mensal'` (ou `dt_referencia <= '2026-03-01'`).
-      Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, far]
     data_tests:
@@ -600,7 +599,6 @@ models:
       `fonte_serie = 'obra_mensal'` com `quantidade_uh` / `valor_contratado` /
       `valor_desembolsado` NULL por construção — filtrar
       `fonte_serie <> 'obra_mensal'` em agregações de estoque.
-      Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, fds]
     data_tests:
@@ -631,7 +629,6 @@ models:
       `fonte_serie = 'obra_mensal'` com `quantidade_uh` / `valor_contratado` /
       `valor_desembolsado` NULL por construção — filtrar
       `fonte_serie <> 'obra_mensal'` em agregações de estoque.
-      Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, dados-historicos, empreendimento, rural]
     data_tests:
@@ -667,7 +664,7 @@ models:
       Dedup por hash de conteúdo (agente, apf, dt_evento, qtd) idêntico ao de
       prata_dhist_snh_entregas_mes — os totais reconciliam. As silvers
       históricas por frente fazem left join por `apf` para resolver
-      dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP. Requer target staging_duckdb.
+      dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP.
     meta:
       tags: [silver, mcmv, dados-historicos, entrega, espinha]
     columns:
@@ -710,8 +707,7 @@ models:
       byte-a-byte. linha_ogu_fgts / situacao_derivada recalculados sobre os
       valores agregados. natureza_serie por família (estoque / fluxo).
       Ver o doc de auditoria
-      docs/auditar-grao-serie-executiva-bases-relat-exec.md. Requer target
-      staging_duckdb.
+      docs/auditar-grao-serie-executiva-bases-relat-exec.md.
     meta:
       tags: [silver, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:

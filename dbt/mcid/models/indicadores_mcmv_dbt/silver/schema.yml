@@ -6,7 +6,7 @@ models:
       Silver do reloginho: série mensal SNH tipada, com domínio normalizado e
       deduplicada por APF. Grão: uma linha por (agente_financeiro, apf,
       dt_referencia), com frente_mcmv canônica (FAR / Entidades / Rural) derivada
-      de `modalidade`. Requer target staging_duckdb.
+      de `modalidade`.
     meta:
       tags:
         - silver
@@ -128,7 +128,7 @@ models:
       EVENTO. Lê bronze_dhist_snh_entregas_evento, deduplica eventos
       repetidos por hash_linha e soma por (agente_financeiro, apf, mes_evento).
       É o fluxo real de entregas (base do ritmo_recente e do caminho alternativo
-      do total de entregas). Requer target staging_duckdb.
+      do total de entregas).
     meta:
       tags: [silver, mcmv, reloginho, dados-historicos, entregas]
     columns:

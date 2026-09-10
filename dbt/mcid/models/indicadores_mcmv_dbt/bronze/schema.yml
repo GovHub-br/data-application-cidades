@@ -12,7 +12,7 @@ models:
   - name: bronze_dhist_snh_entregas_evento_bb
     description: >
       Bronze do reloginho — entregas por EVENTO (fluxo), agente BB. Cópia fiel
-      do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`,
+      de `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`,
       **sem regra de negócio** (só projeção mínima + helpers de harmonização).
       Frente: todas as modalidades MCMV do agente BB (o split por frente é da
       silver). Uma linha por linha de origem, sem dedup. Neste agente as colunas
@@ -55,7 +55,7 @@ models:
   - name: bronze_dhist_snh_entregas_evento_caixa
     description: >
       Bronze do reloginho — entregas por EVENTO (fluxo), agente CAIXA. Cópia
-      fiel do glob `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`,
+      fiel de `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`,
       **sem regra de negócio** (só projeção mínima + helpers de harmonização).
       Frente: todas as modalidades MCMV do agente CAIXA (o split por frente é da
       silver). Uma linha por linha de origem, sem dedup. Neste agente as colunas
