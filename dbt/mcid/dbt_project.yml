@@ -48,18 +48,17 @@ models:
       ouro:
         +schema: ouro
 
-    # Um schema só para o domínio, com a camada no prefixo do nome da tabela
-    # (bronze_*, silver_*, gold_*). Batendo o olho no banco a listagem sai ordenada
-    # por camada, e o Superset aponta para um schema único.
-    # A bronze também vive aqui, carregada pelo scripts/staging_para_bronze.py
-    # (família `empreendimento_rural` do bronze_familias.yml) — não é dbt.
-    empreendimento_rural_dbt:
+    # Mesma estrutura do far_dbt e do fds_dbt: bronze/prata/ouro nos três schemas do
+    # projeto. A bronze do rural passou a ser dbt (read_parquet via pg_duckdb) e não é
+    # mais carregada pelo scripts/staging_para_bronze.py.
+    rural_dbt:
       +materialized: table
-      +schema: empreendimento_rural
-      silver:
-        +materialized: table
-      gold:
-        +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
 
     conjuntura_dbt:
       +materialized: table

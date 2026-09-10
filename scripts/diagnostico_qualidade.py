@@ -42,80 +42,82 @@ MOJIBAKE = ["Ã", "Â", "â€", "�"]
 DOMINIOS: Dict[str, dict] = {
     "rural": {
         "bronze": [
-            "bronze_cadastro_pj",
-            "bronze_cadastro_pf",
-            "bronze_obra_mensal",
-            "bronze_financeiro_mensal",
-            "bronze_prioritarios_snh",
-            "bronze_prioritarios_caixa",
-            "bronze_prioritarios_bb",
-            "bronze_pnhr_caixa",
-            "bronze_pnhr_bb",
-            "bronze_pnhr_liberacoes",
-            "bronze_trabalho_social_caixa",
-            "bronze_trabalho_social_bb",
+            "bronze_shpt_monit_cad_pj_rural_mensal",
+            "bronze_shpt_monit_cadastro_pf_rural_mensal",
+            "bronze_shpt_monit_mov_obra_rural_mensal",
+            "bronze_shpt_monit_mov_financ_rural_mensal",
+            "bronze_shpt_dados_prioritarios_disponibilizados_snh_empreendimentos",
+            "bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa",
+            "bronze_sftp_snh_pmcmv_dados_prioritarios_af_bb",
+            "bronze_sftp_int065_pnhr_caixa_empreendimentos",
+            "bronze_sftp_int057_pnhr_bb_empreendimentos",
+            "bronze_sftp_int055_liberacoes_caixa_bb",
+            "bronze_shpt_base_trabalho_social_pnhr_rural_caixa",
+            "bronze_shpt_base_trabalho_social_pnhr_bb",
         ],
         # Um schema só para o domínio; a camada está no prefixo do nome da tabela.
-        "schema_bronze": "empreendimento_rural",
-        "schema_silver": "empreendimento_rural",
-        "schema_gold": "empreendimento_rural",
+        # Padrão do projeto: três schemas por camada, compartilhados entre as
+        # linhas (far, fds, rural). A linha está no nome da tabela.
+        "schema_bronze": "bronze",
+        "schema_silver": "prata",
+        "schema_gold": "ouro",
         # Todos os models de cada camada. Separado das chaves de propósito: nem todo
-        # model tem chave natural declarável (silver_financeiro_mensal são várias
+        # model tem chave natural declarável (prata_rural_financeiro_mensal são várias
         # liberações por APF), mas todos entram no perfil de nulos e de mojibake.
         "models_silver": [
-            "silver_empreendimento", "silver_prioritarios_snh", "silver_prioritarios_caixa",
-            "silver_prioritarios_bb", "silver_cadastro_pj", "silver_cadastro_pf",
-            "silver_pnhr_caixa", "silver_pnhr_bb", "silver_pnhr_liberacoes",
-            "silver_trabalho_social_caixa", "silver_trabalho_social_bb",
-            "silver_obra_mensal", "silver_financeiro_mensal",
+            "prata_rural_empreendimento", "prata_rural_prioritarios_snh", "prata_rural_prioritarios_caixa",
+            "prata_rural_prioritarios_bb", "prata_rural_cadastro_pj", "prata_rural_cadastro_pf",
+            "prata_rural_pnhr_caixa", "prata_rural_pnhr_bb", "prata_rural_pnhr_liberacoes",
+            "prata_rural_trabalho_social_caixa", "prata_rural_trabalho_social_bb",
+            "prata_rural_obra_mensal", "prata_rural_financeiro_mensal",
         ],
         "models_gold": [
-            "gold_ficha_empreendimento", "gold_resumo_gerencial",
-            "gold_panorama_estadual", "gold_mapa_nacional",
-            "gold_evolucao_financeira", "gold_execucao_fisica_financeira",
-            "gold_ficha_trabalho_social", "gold_perfil_beneficiarios",
-            "gold_infraestrutura_agua_saneamento",
+            "ouro_rural_ficha_empreendimento", "ouro_rural_resumo_gerencial",
+            "ouro_rural_panorama_estadual", "ouro_rural_mapa_nacional",
+            "ouro_rural_evolucao_financeira", "ouro_rural_execucao_fisica_financeira",
+            "ouro_rural_ficha_trabalho_social", "ouro_rural_perfil_beneficiarios",
+            "ouro_rural_infraestrutura_agua_saneamento",
         ],
         # model -> chave natural esperada, por camada (o schema vem de qual bloco)
         "chaves_silver": {
-            "silver_empreendimento": ["apf"],
-            "silver_prioritarios_snh": ["apf"],
-            "silver_prioritarios_caixa": ["apf"],
-            "silver_prioritarios_bb": ["apf"],
-            "silver_cadastro_pj": ["apf"],
-            "silver_pnhr_caixa": ["apf"],
-            "silver_pnhr_bb": ["apf"],
-            "silver_trabalho_social_caixa": ["apf"],
-            "silver_trabalho_social_bb": ["apf"],
-            "silver_obra_mensal": ["apf"],
+            "prata_rural_empreendimento": ["apf"],
+            "prata_rural_prioritarios_snh": ["apf"],
+            "prata_rural_prioritarios_caixa": ["apf"],
+            "prata_rural_prioritarios_bb": ["apf"],
+            "prata_rural_cadastro_pj": ["apf"],
+            "prata_rural_pnhr_caixa": ["apf"],
+            "prata_rural_pnhr_bb": ["apf"],
+            "prata_rural_trabalho_social_caixa": ["apf"],
+            "prata_rural_trabalho_social_bb": ["apf"],
+            "prata_rural_obra_mensal": ["apf"],
         },
         "chaves_gold": {
-            "gold_ficha_empreendimento": ["apf"],
-            "gold_evolucao_financeira": ["apf", "mes"],
-            "gold_ficha_trabalho_social": ["apf", "agente_financeiro"],
-            "gold_perfil_beneficiarios": ["apf"],
-            "gold_infraestrutura_agua_saneamento": ["apf"],
+            "ouro_rural_ficha_empreendimento": ["apf"],
+            "ouro_rural_evolucao_financeira": ["apf", "mes"],
+            "ouro_rural_ficha_trabalho_social": ["apf", "agente_financeiro"],
+            "ouro_rural_perfil_beneficiarios": ["apf"],
+            "ouro_rural_infraestrutura_agua_saneamento": ["apf"],
         },
         # campos de corte: os valores reais importam porque viram condição de join
         "cortes": [
-            ("silver_prioritarios_snh", "agente_financeiro"),
-            ("silver_prioritarios_snh", "modalidade"),
-            ("silver_prioritarios_snh", "situacao"),
-            ("silver_empreendimento", "agente_financeiro"),
-            ("gold_ficha_empreendimento", "programa"),
-            ("gold_ficha_empreendimento", "status_execucao_simplificado"),
-            ("gold_ficha_empreendimento", "status_prazo"),
+            ("prata_rural_prioritarios_snh", "agente_financeiro"),
+            ("prata_rural_prioritarios_snh", "modalidade"),
+            ("prata_rural_prioritarios_snh", "situacao"),
+            ("prata_rural_empreendimento", "agente_financeiro"),
+            ("ouro_rural_ficha_empreendimento", "programa"),
+            ("ouro_rural_ficha_empreendimento", "status_execucao_simplificado"),
+            ("ouro_rural_ficha_empreendimento", "status_prazo"),
         ],
         # cobertura: (esquerda, direita, coluna de junção) — quantos da esquerda acham par
         "joins": [
-            ("silver_prioritarios_snh", "silver_prioritarios_caixa", "apf"),
-            ("silver_prioritarios_snh", "silver_prioritarios_bb", "apf"),
-            ("silver_prioritarios_snh", "silver_cadastro_pj", "apf"),
-            ("silver_prioritarios_snh", "silver_pnhr_caixa", "apf"),
-            ("silver_prioritarios_snh", "silver_pnhr_bb", "apf"),
-            ("silver_empreendimento", "silver_cadastro_pf", "apf"),
-            ("silver_empreendimento", "silver_trabalho_social_caixa", "apf"),
-            ("silver_empreendimento", "silver_obra_mensal", "apf"),
+            ("prata_rural_prioritarios_snh", "prata_rural_prioritarios_caixa", "apf"),
+            ("prata_rural_prioritarios_snh", "prata_rural_prioritarios_bb", "apf"),
+            ("prata_rural_prioritarios_snh", "prata_rural_cadastro_pj", "apf"),
+            ("prata_rural_prioritarios_snh", "prata_rural_pnhr_caixa", "apf"),
+            ("prata_rural_prioritarios_snh", "prata_rural_pnhr_bb", "apf"),
+            ("prata_rural_empreendimento", "prata_rural_cadastro_pf", "apf"),
+            ("prata_rural_empreendimento", "prata_rural_trabalho_social_caixa", "apf"),
+            ("prata_rural_empreendimento", "prata_rural_obra_mensal", "apf"),
         ],
     }
 }
@@ -281,34 +283,36 @@ def secao_joins(cur, schema: str, joins: List[Tuple[str, str, str]]) -> List[str
 # ---------------------------------------------------------------------------------------
 # Mede quantos empreendimentos têm fontes que discordam da mesma grandeza, de quanto, e
 # qual fonte acabou valendo na consolidação.
+# Mede quantos empreendimentos têm fontes que discordam da mesma grandeza, de quanto, e
+# qual fonte acabou valendo na consolidação.
 
 # medida -> [(tabela, coluna de valor, coluna de data, rótulo)]
 FONTES_POR_MEDIDA: Dict[str, List[Tuple[str, str, str, str]]] = {
     "percentual_execucao_fisica": [
-        ("silver_prioritarios_snh", "percentual_execucao_fisica", "dt_referencia", "snh"),
-        ("silver_prioritarios_caixa", "percentual_execucao_fisica", "dt_movimento", "caixa"),
-        ("silver_prioritarios_bb", "percentual_execucao_fisica", "dt_movimento", "bb"),
-        ("silver_obra_mensal", "percentual_obra_realizada", "dt_movimento", "obra_mensal"),
+        ("prata_rural_prioritarios_snh", "percentual_execucao_fisica", "dt_referencia", "snh"),
+        ("prata_rural_prioritarios_caixa", "percentual_execucao_fisica", "dt_movimento", "caixa"),
+        ("prata_rural_prioritarios_bb", "percentual_execucao_fisica", "dt_movimento", "bb"),
+        ("prata_rural_obra_mensal", "percentual_obra_realizada", "dt_movimento", "obra_mensal"),
     ],
     "valor_desembolsado": [
-        ("silver_prioritarios_snh", "valor_desembolsado", "dt_referencia", "snh"),
-        ("silver_prioritarios_caixa", "valor_desembolsado", "dt_movimento", "caixa"),
-        ("silver_prioritarios_bb", "valor_desembolsado", "dt_movimento", "bb"),
+        ("prata_rural_prioritarios_snh", "valor_desembolsado", "dt_referencia", "snh"),
+        ("prata_rural_prioritarios_caixa", "valor_desembolsado", "dt_movimento", "caixa"),
+        ("prata_rural_prioritarios_bb", "valor_desembolsado", "dt_movimento", "bb"),
     ],
 }
 
-# medida -> coluna de procedência correspondente na silver_empreendimento
+# medida -> coluna de procedência correspondente na prata_rural_empreendimento
 COLUNA_FONTE: Dict[str, str] = {
     "percentual_execucao_fisica": "fonte_execucao_fisica",
     "valor_desembolsado": "fonte_valor_desembolsado",
 }
 
-# Colunas de procedência expostas pela silver_empreendimento.
+# Colunas de procedência expostas pela prata_rural_empreendimento.
 PROCEDENCIA = [
-    ("silver_empreendimento", "fonte_execucao_fisica"),
-    ("silver_empreendimento", "fonte_valor_desembolsado"),
-    ("silver_empreendimento", "fonte_valor_contratado"),
-    ("silver_empreendimento", "fonte_situacao"),
+    ("prata_rural_empreendimento", "fonte_execucao_fisica"),
+    ("prata_rural_empreendimento", "fonte_valor_desembolsado"),
+    ("prata_rural_empreendimento", "fonte_valor_contratado"),
+    ("prata_rural_empreendimento", "fonte_situacao"),
 ]
 
 
@@ -358,7 +362,7 @@ def secao_divergencia(cur, schema: str, tolerancia: float) -> List[str]:
         col_fonte = COLUNA_FONTE[medida]
         try:
             cur.execute(
-                f'select {col_fonte}, count(*) from "{schema}"."silver_empreendimento" '
+                f'select {col_fonte}, count(*) from "{schema}"."prata_rural_empreendimento" '
                 f"where {col_fonte} is not null group by 1 order by 2 desc limit 3"
             )
             vencedor = ", ".join(f"{r[0]} ({r[1]})" for r in cur.fetchall()) or "—"
@@ -382,8 +386,8 @@ def secao_divergencia(cur, schema: str, tolerancia: float) -> List[str]:
 def secao_atualidade(cur, schema: str) -> List[str]:
     """Idade das medições consolidadas: um número velho publicado sem aviso é um número falso."""
     out = []
-    if n_linhas(cur, schema, "silver_empreendimento") < 0:
-        return ["`silver_empreendimento` não materializada."]
+    if n_linhas(cur, schema, "prata_rural_empreendimento") < 0:
+        return ["`prata_rural_empreendimento` não materializada."]
     try:
         cur.execute(
             f"""
@@ -394,7 +398,7 @@ def secao_atualidade(cur, schema: str) -> List[str]:
                 max(dt_referencia_consolidada),
                 count(*) filter (where current_date - dt_referencia_consolidada > 180),
                 count(*) filter (where current_date - dt_referencia_consolidada > 365)
-            from "{schema}"."silver_empreendimento"
+            from "{schema}"."prata_rural_empreendimento"
             """
         )
         total, com_data, mais_antiga, mais_nova, m6, m12 = cur.fetchone()
