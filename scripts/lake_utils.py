@@ -26,11 +26,8 @@ csv.field_size_limit(2**31 - 1)
 
 # Detecção de encoding / dialeto
 
-# cp1252 NÃO define estes 5 bytes — decodificar com ele estoura UnicodeDecodeError.
-# Aparecem de fato no lake: há arquivos com mojibake da origem (ex.:
-# b'PARTICIPA\x9d\xd1ES' onde deveria estar 'PARTICIPAÇÕES'), provavelmente de conversão
-# errada num sistema legado. Nenhum encoding decodifica isso "certo"; o que importa é não
-# quebrar nem perder o byte.
+# bytes que o cp1252 não define: decodificar com ele estoura UnicodeDecodeError. Ocorrem
+# em arquivos que já vêm com mojibake da origem, onde só importa não perder o byte.
 _CP1252_INDEFINIDOS = frozenset({0x81, 0x8D, 0x8F, 0x90, 0x9D})
 
 
@@ -38,22 +35,19 @@ def detectar_encoding(sample: bytes) -> str:
     """Detecta o encoding de um arquivo de dados pt-BR: utf-8, cp1252 ou latin-1.
 
     O `charset_normalizer` puro confunde cp1252 com cp1250/latin2 nesses dados (0xE3 vira
-    'ă' em vez de 'ã'), então a decisão aqui é feita à mão:
+    'ă' em vez de 'ã'), então a decisão é feita à mão, nesta ordem:
 
-      - Sample com sequências multibyte utf-8 válidas -> utf-8 (tolera truncamento do
-        sample).
-      - Sample com algum byte indefinido em cp1252 -> latin-1, que mapeia os 256 bytes e
-        nunca estoura (esses arquivos já vêm com mojibake; latin-1 preserva o byte em vez
-        de falhar).
-      - Caso contrário -> cp1252 (correto p/ o intervalo 0x80-0x9F em exports Windows
-        pt-BR: aspas curvas, travessão etc., que latin-1 leria como controles C1).
+      - só ASCII -> cp1252, palpite seguro p/ export Windows pt-BR
+      - decodifica como utf-8 -> utf-8 (tolera truncamento no fim do sample)
+      - tem byte indefinido em cp1252 -> latin-1, que mapeia os 256 bytes e nunca estoura
+      - resto -> cp1252, correto p/ 0x80-0x9F (aspas curvas, travessão)
 
-    ATENÇÃO: a decisão é feita sobre o SAMPLE. Um byte indefinido pode aparecer só depois
-    dele — por isso quem decodifica o arquivo inteiro deve usar `encoding_fallback()` ao
-    pegar UnicodeDecodeError, em vez de confiar cegamente neste retorno.
+    A ordem importa: os bytes indefinidos no cp1252 também são continuação utf-8 válida
+    ('Á' é C3 81), então testá-los antes do utf-8 leria todo acento como latin-1.
+
+    A decisão vale para o SAMPLE. Quem decodifica o arquivo inteiro deve tratar
+    UnicodeDecodeError com `encoding_fallback()` em vez de confiar neste retorno.
     """
-    if any(byte in _CP1252_INDEFINIDOS for byte in sample):
-        return "latin-1"
     if all(byte < 0x80 for byte in sample):
         return "cp1252"
     try:
@@ -63,7 +57,36 @@ def detectar_encoding(sample: bytes) -> str:
         # erro só nos últimos bytes = provável char utf-8 cortado no fim do sample
         if e.start >= len(sample) - 3:
             return "utf-8"
-        return "cp1252"
+    # utf-8 "sujo": um punhado de bytes inválidos não desfaz um arquivo utf-8 no resto.
+    # Contar sequências multibyte válidas contra bytes inválidos separa os dois casos —
+    # um cp1252 de verdade tem o oposto, porque cada acento isolado é sequência inválida.
+    validas, invalidas = _contar_sequencias_utf8(sample)
+    if validas > invalidas:
+        return "utf-8"
+    if any(byte in _CP1252_INDEFINIDOS for byte in sample):
+        return "latin-1"
+    return "cp1252"
+
+
+def _contar_sequencias_utf8(sample: bytes) -> Tuple[int, int]:
+    """(sequências multibyte utf-8 válidas, bytes que não formam sequência válida)."""
+    validas = invalidas = 0
+    i, n = 0, len(sample)
+    while i < n:
+        b = sample[i]
+        if b < 0x80:
+            i += 1
+            continue
+        largura = 2 if b >> 5 == 0b110 else 3 if b >> 4 == 0b1110 else 4 if b >> 3 == 0b11110 else 0
+        if largura and i + largura <= n and all(
+            sample[i + k] >> 6 == 0b10 for k in range(1, largura)
+        ):
+            validas += 1
+            i += largura
+        else:
+            invalidas += 1
+            i += 1
+    return validas, invalidas
 
 
 def encoding_fallback(encoding: str) -> Optional[str]:
@@ -108,9 +131,43 @@ def detectar_dialeto(
     return melhor_delim, lineterm, fully_quoted
 
 
+# Reparo de mojibake
+# Marcadores do round-trip utf-8 -> latin-1/cp1252: "Ã" cobre os acentos latinos
+# (Ã£=ã, Ã©=é, Ã³=ó...), "Â" os símbolos (Âº, Â°) e "â€" a pontuação tipográfica.
+_MARCAS_MOJIBAKE = ("Ã", "Â", "â€")
+
+
+def corrigir_mojibake_texto(texto: str) -> str:
+    """Desfaz o round-trip utf-8 -> latin-1 quando ele é reversível sem perda.
+
+    Um arquivo utf-8 lido como latin-1 vira mojibake: os bytes C3 A3 ("ã") são exibidos
+    como "Ã£". A transformação é byte a byte e não perde informação, então re-encodar em
+    latin-1 e decodificar em utf-8 recupera o original exatamente.
+
+    Conservadora de propósito — só mexe quando as três condições valem:
+      1. o texto contém um marcador de mojibake (senão não há o que corrigir);
+      2. ele é representável em latin-1 (senão não veio desse round-trip);
+      3. os bytes resultantes são utf-8 válido (senão a "correção" seria um chute).
+
+    Texto já correto passa incólume: "José" não tem marcador e volta igual.
+    """
+    if not texto or not any(m in texto for m in _MARCAS_MOJIBAKE):
+        return texto
+    try:
+        return texto.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # não veio de um round-trip latin-1/utf-8 limpo: melhor não adivinhar
+        return texto
+
+
 # Normalização de nome de coluna
 def norm_header(texto: str) -> str:
-    """Normaliza um nome de coluna para snake_case ASCII."""
+    """Normaliza um nome de coluna para snake_case ASCII.
+
+    Repara mojibake antes de tirar o acento: sem isso, "municÃ­pio" perderia o "Ã­" e
+    viraria "municapio" em vez de "municipio".
+    """
+    texto = corrigir_mojibake_texto(texto)
     s = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
     s = s.lower().strip().strip('"').strip("﻿").strip()
     s = re.sub(r"[^a-z0-9]+", "_", s).strip("_")
@@ -140,16 +197,9 @@ def normalizar_colunas(header: List[str]) -> Tuple[List[str], dict]:
     return finais, mapa
 
 
-# Bases Access (.mdb) — leitura via mdbtools
-#
-# ATENÇÃO: mdbtools é READ-ONLY (mdb-export/tables/schema/count/json...). Não existe
-# mdb-import: não há como reescrever um .mdb. Escrever Access no Linux só via Java
-# (Jackcess/UCanAccess). Quem precisar MODIFICAR um .mdb tem que falhar explicitamente
-# em vez de fingir que gravou.
-#
-# mdb-export já entrega CSV em UTF-8 (converte do encoding interno do JET), com vírgula
-# como separador e campos de texto entre aspas — por isso o caminho .mdb não precisa de
-# detectar_encoding/detectar_dialeto.
+# Bases Access (.mdb) — leitura via mdbtools, que é READ-ONLY: não há mdb-import, e quem
+# precisar modificar um .mdb tem que falhar explicitamente. O mdb-export entrega CSV em
+# UTF-8, então este caminho dispensa detectar_encoding/detectar_dialeto.
 MDB_EXT = {".mdb", ".accdb"}
 MDB_DELIM = ","
 MDB_ENCODING = "utf-8"

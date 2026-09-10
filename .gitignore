@@ -66,3 +66,6 @@ scripts/sftp_listing.txt
 scripts/*.log
 scripts/preview_arquivos.txt
 scripts/auditoria_*.parquet
+
+# Relatorio do scripts/diagnostico_qualidade.py (regeravel)
+diagnostico_*.md

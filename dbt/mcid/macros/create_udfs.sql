@@ -9,5 +9,7 @@ create schema if not exists {{ target.schema }};
     ;
     {{ create_f_normalize_apf() }}
     ;
+    {{ create_f_corrigir_mojibake() }}
+    ;
 
 {% endmacro %}

@@ -23,21 +23,33 @@ models:
     metadata:
       +materialized: incremental
       +schema: metadata
-    empreendimento_far_dbt:
-      +materialized: table
-      +schema: empreendimento_far
-      silver:
-        +materialized: table
-      gold:
-        +materialized: table
 
-    entidades_dbt:
+    far_dbt:
       +materialized: table
-      +schema: entidades_fds
-      silver:
-        +materialized: table
-      gold:
-        +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
+
+    fds_dbt:
+      +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
+
+    rural_dbt:
+      +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
 
     conjuntura_dbt:
       +materialized: table
@@ -66,3 +78,8 @@ models:
 
 on-run-start:
   - '{{create_udfs()}}'
+
+# Registra em lake._dbt_log o que não passou — inclusive os testes que são
+# `severity: warn` e por isso não derrubam a execução.
+on-run-end:
+  - '{{ registrar_execucao_dbt() }}'
