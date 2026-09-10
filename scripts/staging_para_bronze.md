@@ -18,17 +18,17 @@ Uma **família** é um recorte de negócio: um nome, um schema de destino e a li
 parquets que viram tabela. Cada objeto tem `tabela` mais **uma** das duas formas de origem:
 
 ```yaml
-empreendimento_far:
-  schema: bronze
+empreendimento_rural:
+  schema: empreendimento_rural
   objetos:
     # (a) key exata — dado que é um arquivo só, sem versões
-    - staging_key: staging/sharepoint/novo_mcmv_far_consolidado.parquet
-      tabela: novo_mcmv_far_consolidado
+    - staging_key: staging/sharepoint/base_trabalho_social_pnhr_bb.parquet
+      tabela: bronze_trabalho_social_bb
 
     # (b) padrão — dado que chega periodicamente; vence a DATA mais recente
-    - padrao: "staging/*MONIT_CAD_PJ_FAR_MENSAL_*.parquet"
-      data_regex: "MONIT_CAD_PJ_FAR_MENSAL_(\\d{6})"
-      tabela: novo_mcmv_far_cad_pj_mensal
+    - padrao: "staging/*MONIT_CAD_PJ_RURAL_MENSAL_*.parquet"
+      data_regex: "MONIT_CAD_PJ_RURAL_MENSAL_(\\d{6})"
+      tabela: bronze_cad_pj_mensal
 ```
 
 Adicionar dado novo à bronze = adicionar uma entrada no YAML. Nada no `.py` muda.
@@ -58,9 +58,9 @@ descartado por esta escolha.
 
 ```bash
 python scripts/staging_para_bronze.py --listar                        # famílias declaradas
-python scripts/staging_para_bronze.py --familia empreendimento_far    # dry-run (default)
-python scripts/staging_para_bronze.py --familia empreendimento_far --apply
-python scripts/staging_para_bronze.py --familia empreendimento_far --apply --force
+python scripts/staging_para_bronze.py --familia empreendimento_rural    # dry-run (default)
+python scripts/staging_para_bronze.py --familia empreendimento_rural --apply
+python scripts/staging_para_bronze.py --familia empreendimento_rural --apply --force
 ```
 
 | flag | efeito |
@@ -78,10 +78,10 @@ Quem lê o parquet é o **pg_duckdb**, dentro do Postgres — o dado não passa 
 Python. O script só decide o que carregar e dispara:
 
 ```sql
-DROP TABLE IF EXISTS bronze."novo_mcmv_far_consolidado";
-CREATE TABLE bronze."novo_mcmv_far_consolidado" AS
+DROP TABLE IF EXISTS empreendimento_rural."bronze_cadastro_pj";
+CREATE TABLE empreendimento_rural."bronze_cadastro_pj" AS
 SELECT CAST(r['co_tipo_registro'] AS VARCHAR) AS "co_tipo_registro", ...
-FROM read_parquet('s3://data-lake-mcid/staging/sharepoint/novo_mcmv_far_consolidado.parquet') AS r;
+FROM read_parquet('s3://data-lake-mcid/staging/sharepoint/monit_cad_pj_rural_mensal_202606.parquet') AS r;
 ```
 
 Dois detalhes que não são óbvios:

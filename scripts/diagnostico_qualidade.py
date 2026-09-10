@@ -283,6 +283,8 @@ def secao_joins(cur, schema: str, joins: List[Tuple[str, str, str]]) -> List[str
 # ---------------------------------------------------------------------------------------
 # Mede quantos empreendimentos têm fontes que discordam da mesma grandeza, de quanto, e
 # qual fonte acabou valendo na consolidação.
+# Mede quantos empreendimentos têm fontes que discordam da mesma grandeza, de quanto, e
+# qual fonte acabou valendo na consolidação.
 
 # medida -> [(tabela, coluna de valor, coluna de data, rótulo)]
 FONTES_POR_MEDIDA: Dict[str, List[Tuple[str, str, str, str]]] = {

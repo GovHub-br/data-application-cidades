@@ -5,14 +5,8 @@
 -- A execução física do Rural NÃO é uma série: a bronze é full refresh do arquivo mensal
 -- mais recente, então existe UMA medição por empreendimento, com data de referência. Ela
 -- sai repetida em todos os meses, para ser desenhada como linha de referência sobre a
--- série financeira — a única das duas que tem história.
+-- série financeira — que é a única das duas que tem história de verdade.
 --
--- A física sai da coluna consolidada da prata_rural_empreendimento, a mesma que alimenta a
--- ficha, para as duas telas não discordarem.
---
--- Ausência de dado é NULL, nunca 0,0%: não há série financeira para ~89% da carteira, e
--- afirmar zero ali contradiz a ficha. Empreendimento sem liberação registrada aparece com
--- uma linha só, no mês da medição física, com o financeiro nulo.
 
 with
     -- Série financeira: esta sim é temporal, uma linha por APF × mês de liberação.
