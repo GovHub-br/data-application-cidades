@@ -73,15 +73,12 @@ PG_DBNAME = os.environ["DB_DW_DBNAME_MCID"]
 SCHEMA = os.environ.get("LAKE_SCHEMA", "lake")
 LOG_TABLE = "_ingest_minio_log"
 
-# Download SFTP em JANELAS via readv: memoria limitada ao tamanho da janela, sem OOM em
-# arquivos de dezenas de GB. NAO usar prefetch(max_concurrent_requests) do paramiko: em
-# rapida o throttle esvazia _prefetch_extents cedo, marca _prefetch_done antes da hora e
-# TRAVA. readv emite as reqs da janela de uma vez -> throughput sem o bug.
+# Download em janelas via readv: memoria limitada ao tamanho da janela, sem OOM em
+# arquivos de dezenas de GB. Nao usar o prefetch do paramiko, que trava sob throttle.
 _DOWNLOAD_WINDOW = int(os.environ.get("LAKE_SFTP_WINDOW_MB", "16")) * 1024 * 1024
 
 EXTENSOES_SUPORTADAS = {".csv", ".txt", ".xlsx", ".xls", ".zip", ".mdb"}
-# Extensões cujos nomes se repetem entre zips (ex.: MCidades_AO_1.mdb em todo
-# MC2026*.zip). A data só existe no nome do zip, então ela vai para o destino.
+# extensões cujos nomes se repetem entre zips: o stem do zip (que tem a data) vai no nome
 EXTENSOES_PREFIXAR_ORIGEM = {".mdb"}
 MAX_PROFUNDIDADE = 10
 PASTAS_IGNORAR: set[str] = set()  # "CadUnico" liberado pela infra
@@ -95,10 +92,9 @@ PASTAS_MONITORADAS = [
 # Erro de conexão (queda de socket): delegado ao cliente SFTP.
 _is_conn_error = ClienteSftp.is_conn_error
 
-# Artefatos locais (arquivo de log, preview_arquivos.txt) — úteis rodando standalone, mas
-# o diretório do script pode não ser gravável (ex.: bind-mount no Airflow). Controlado por
-# LAKE_LOCAL_ARTIFACTS (default "1"): o container do Airflow define "0" para desligá-los.
-# O log em stderr fica sempre ativo (o Airflow o captura na UI).
+# Artefatos locais (log em arquivo, preview_arquivos.txt): úteis standalone, mas o
+# diretório do script pode não ser gravável. O container do Airflow define
+# LAKE_LOCAL_ARTIFACTS=0.
 _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
     "0",
     "false",
@@ -122,16 +118,11 @@ if _LOCAL_ARTIFACTS:
     ):
         _h.setFormatter(_formatter)
         logging.root.addHandler(_h)
-# Sob o Airflow (_LOCAL_ARTIFACTS=0) NÃO adicionamos handlers ao root: o logger propaga
-# para os handlers do Airflow (a saída vai para a UI). Um StreamHandler(sys.stderr) aqui
-# criaria loop infinito — o Airflow redireciona stderr de volta ao logging e cada linha se
-# multiplica.
+# Sob o Airflow o logger só propaga: um StreamHandler(sys.stderr) aqui multiplicaria cada
+# linha, porque o Airflow redireciona stderr de volta ao logging.
 
-# A animação do spinner só faz sentido num terminal, onde o `\r` sobrescreve a linha. Sob
-# o Airflow (stdout não-TTY, capturado linha-a-linha) cada frame vira uma linha de log —
-# flood. Fora de um TTY o spinner vira no-op e emite só uma linha ao iniciar o download; a
-# conclusão já é logada pelos chamadores. `sys.stdout.isatty()` também cobre standalone
-# com saída redirecionada para arquivo.
+# O spinner só anima em terminal, onde o `\r` sobrescreve a linha. Fora de um TTY cada
+# frame viraria uma linha de log, então ele emite só uma linha ao iniciar o download.
 _ANIMAR = sys.stdout.isatty()
 
 
@@ -258,12 +249,9 @@ def _criar_schema_e_log(conn_str: str) -> None:
 def _obter_ja_inseridos(conn_str: str) -> set:
     """sftp_paths que já foram ingeridos com sucesso ALGUMA VEZ (skip padrão).
 
-    Filtra por `file_hash IS NOT NULL` — e não por `status = 'success'` — de
-    propósito: todo caminho de ingestão bem-sucedida grava o hash, falhas gravam
-    NULL, e o verificar_minio.py rebaixa o status p/ 'error' sem tocar no hash.
-    Assim um arquivo já ingerido continua sendo pulado mesmo que o objeto tenha
-    sido deletado do MinIO ou o status tenha virado 'error'
-    (deleção "gruda"). Falhas reais de ingestão (hash NULL) seguem sendo re-tentadas.
+    Filtra por `file_hash IS NOT NULL`, não por `status`: só a ingestão bem-sucedida
+    grava hash, então o arquivo segue pulado mesmo que o objeto seja deletado do MinIO
+    (a deleção "gruda"). Falhas reais, com hash NULL, são re-tentadas.
     """
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
@@ -279,11 +267,8 @@ def _obter_ja_inseridos(conn_str: str) -> set:
 def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
     """sftp_paths já ingeridos cujo objeto AINDA está no MinIO.
 
-    Skip do modo --reingest-deleted.
-
-    Só pula o que continua presente no lake; arquivos já ingeridos mas cujo objeto
-    foi removido ficam de fora do skip → podem ser reingeridos. `presentes` é o
-    conjunto de minio_keys de raw/.
+    Skip do modo --reingest-deleted: só pula o que continua no lake, então o que foi
+    removido pode ser reingerido. `presentes` é o conjunto de minio_keys de raw/.
     """
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
@@ -523,11 +508,9 @@ def _label(nome: str, tamanho: int, idx: int, total: int) -> str:
     return f"[{idx}/{total}] {nome} ({format_size(tamanho)})"
 
 
-# Upload multipart PARALELO: varios streams enchem melhor o link (ex.: MinIO atras de VPN,
-# onde 1 stream fica preso na latencia ~1 MB/s). s3transfer paraleliza mesmo com stream
-# nao-seekable de zip (le as partes em ordem -> hash correto; sobe ate max_concurrency em
-# paralelo). Memoria ~ max_in_memory_chunks(10) x chunk. 32 MB x 10.000 = teto ~320 GB.
-# Ajustavel por env sem redeploy (concurrency=1 volta ao serial).
+# Upload multipart paralelo: varios streams enchem melhor o link (com o MinIO atras de
+# VPN, 1 stream fica preso na latencia). Funciona ate com stream nao-seekable de zip.
+# Memoria ~ max_in_memory_chunks(10) x chunk; concurrency=1 volta ao serial.
 _UPLOAD_CONCURRENCY = int(os.environ.get("LAKE_UPLOAD_CONCURRENCY", "10"))
 _UPLOAD_CHUNK_MB = int(os.environ.get("LAKE_UPLOAD_CHUNK_MB", "32"))
 _SFTP_TRANSFER = TransferConfig(
@@ -790,9 +773,8 @@ def _zip_pulavel_sem_download(
     return None
 
 
-# noqa na linha do def: o fluxo de zip (multivolume, extratores alternativos, nomes
-# repetidos entre zips) é uma cadeia de casos de erro do lake real; quebrá-la em
-# funções menores esconderia a ordem em que os fallbacks se aplicam.
+# noqa: quebrar o fluxo de zip (multivolume, extratores alternativos, nomes repetidos)
+# em funções menores esconderia a ordem em que os fallbacks se aplicam.
 def processar_zip(  # noqa: C901
     sftp: paramiko.SFTPClient,
     minio: ClienteMinio,
@@ -1191,12 +1173,8 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run()).
     Não há dry-run: a ingestão é idempotente pelo controle lake._ingest_minio_log.
 
-    reingest_deleted=False (padrão): um arquivo já ingerido alguma vez NÃO é
-    reingerido, mesmo
-    que o objeto tenha sido removido do MinIO (a deleção "gruda").
-    reingest_deleted=True: reingere só os arquivos já ingeridos cujo objeto foi
-    removido do
-    MinIO; os que ainda existem no lake continuam sendo pulados (não duplica).
+    reingest_deleted=False (padrão): arquivo já ingerido nunca reingere, mesmo que o
+    objeto tenha sumido do MinIO. True: reingere só esses, sem duplicar os presentes.
     """
     pastas_filtro = _resolver_pastas(pastas)
 
@@ -1228,9 +1206,8 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
         # sumiram.
         presentes = {key for key, _ in minio.listar_objetos("raw/")}
         ja_inseridos = _obter_ja_inseridos_presentes(conn_str, presentes)
-        # nome de destino livre p/ os deletados -> reingeridos com o nome original (sem
-        # sufixo). Comparado como caminho completo (pasta/nome), não só o basename —
-        # mesmo formato usado por gerar_nome_unico() no restante do fluxo.
+        # nome livre p/ os deletados: reingerem com o nome original, sem sufixo. Compara
+        # o caminho completo, como o gerar_nome_unico() faz no resto do fluxo.
         nomes_usados = {key[len("raw/") :] for key in presentes}
         # fast-path por mtime desligado: queremos reingerir os ZIPs deletados
         zip_completos: dict = {}

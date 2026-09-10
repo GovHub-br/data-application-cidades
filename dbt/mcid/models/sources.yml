@@ -7,32 +7,6 @@ sources:
       Schema de dados brutos do banco cidades.
       Contém os dados ingeridos das fontes GFAR, CAIXA e SNH para o programa MCMV.
     tables:
-      # Fontes FAR
-      - name: novo_mcmv_far_consolidado
-        description: >
-          Tabela consolidada do GFAR com todas as propostas FAR do Novo MCMV.
-          Contém 15.091 registros (13.216 propostas únicas), incluindo propostas
-          não contratadas, contratadas e distratadas. Todas as colunas são text.
-      - name: novo_mcmv_far_cad_pj_mensal
-        description: >
-          Cadastro detalhado de pessoa jurídica (empreendimento) com 82 colunas.
-          Contém 822 empreendimentos contratados com dados de composição financeira,
-          coordenadas GPS, tipologia, construtora e datas-chave. Snapshot mensal.
-      - name: novo_mcmv_far_obra_mensal
-        description: >
-          Dados de evolução física da obra com 40 colunas. Contém 822 registros
-          (1 por empreendimento). Inclui percentual previsto/realizado, situação
-          da obra, UHs concluídas e datas de paralisação/retomada.
-      - name: novo_mcmv_far_financeiro_mensal
-        description: >
-          Dados de liberações financeiras com série temporal. Contém 6.069 registros
-          para 638 APFs (média de 9,5 liberações por empreendimento). Detalha
-          valores pagos por componente (obra, terreno, PTS, INCC).
-      - name: dados_prioritarios_recebidos_caixa_empreendimentos
-        description: >
-          Dados prioritários recebidos da CAIXA com snapshot consolidado.
-          Contém 4.443 empreendimentos FAR com situação, percentual de execução,
-          valores contratados/desembolsados, UHs e coordenadas geográficas.
       - name: api_ibge_uf
         description: >
           Tabela de referência do IBGE com os 27 estados brasileiros.
@@ -202,3 +176,39 @@ sources:
     tables:
       - name: bnz_cbic_lancamentos_vendas
         description: Lançamentos e vendas de imóveis por região (CBIC), carga manual.
+
+
+  - name: conjuntura_bronze
+    schema: conjuntura_bronze
+    description: >
+      Schema bronze do projeto conjuntura. Contém dados brutos tipados
+      provenientes de diversas fontes do setor imobiliário e de construção civil.
+    tables:
+      - name: bronze_fgv_icst
+        description: Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE.
+      - name: bronze_imob_infomoney
+        description: Índice IMOB da Infomoney com dados diários de fechamento.
+      - name: bronze_abramat_indice
+        description: Índice ABRAMAT de custos da construção civil.
+      - name: bronze_fgts_financiamentos_habitacionais
+        description: Financiamentos habitacionais do FGTS por faixa e modalidade.
+      - name: bronze_abecip_sbpe_financiamentos_habitacionais
+        description: Financiamentos habitacionais SBPE da ABECIP.
+      - name: bronze_abecip_novos_financiamentos_imobiliarios
+        description: Novos financiamentos imobiliários por agente financeiro (ABECIP).
+      - name: bronze_bacen_financiamentos_imobiliarios
+        description: Financiamentos imobiliários PF e PJ do Banco Central.
+      - name: bronze_ibge_pib_construcao_civil
+        description: PIB da construção civil do IBGE.
+      - name: bronze_ibge_sinapi
+        description: Índice SINAPI do IBGE.
+      - name: bronze_fgv_incc_m
+        description: Índice Nacional de Custo da Construção (INCC-M) da FGV.
+      - name: bronze_cbic_lancamentos_vendas
+        description: Lançamentos e vendas do setor imobiliário da CBIC.
+      - name: bronze_balancos_empresas
+        description: Balanços trimestrais de empresas do setor imobiliário.
+      - name: bronze_ticket_medio_empresas
+        description: Ticket médio de lançamentos por empresa.
+      - name: bronze_mcid_orcamento_por_acao
+        description: Orçamento do MCID por ação governamental.

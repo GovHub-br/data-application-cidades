@@ -1,0 +1,102 @@
+version: 2
+
+# A prata tipa o texto da bronze e aplica as regras de negócio do FAR. Os testes aqui
+# guardam o GRÃO de cada tabela: um join que multiplica linha dobra todo somatório do
+# dashboard sem erro nenhum aparecer.
+
+models:
+
+  - name: prata_far_consolidado
+    description: >
+      Propostas do GFAR tipadas, do protocolo à contratação. Uma linha por MOVIMENTO de
+      proposta, não por empreendimento.
+    columns:
+      - name: id_proposta
+        description: Identificador da proposta no GFAR.
+        tests:
+          - not_null
+      - name: apf
+        description: >
+          APF normalizado para 8 dígitos. Nulo na maior parte das linhas porque
+          proposta ainda não contratada não tem APF — por isso não há not_null aqui.
+
+  - name: prata_far_cadastro_pj
+    description: >
+      Cadastro do empreendimento contratado: construtora, tipologia, composição
+      financeira, coordenadas e datas-chave. Uma linha por empreendimento.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+      - name: construtora_cnpj
+        description: CNPJ da construtora, apenas dígitos.
+
+  - name: prata_far_obra_mensal
+    description: >
+      Medição física do empreendimento na competência mais recente.
+      Uma linha por empreendimento — é retrato, não série.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_far_financeiro_mensal
+    description: >
+      Liberações financeiras do empreendimento. Uma linha por liberação, então o APF
+      repete: é a única fonte do FAR com série histórica.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+
+  - name: prata_far_dados_prioritarios_caixa
+    description: >
+      Recorte FAR do snapshot da CAIXA. Uma linha por empreendimento.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_far_empreendimento
+    description: >
+      Visão unificada do empreendimento FAR: cadastro, consolidado, obra e CAIXA
+      reconciliados numa linha por APF. É a base da ficha.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos — chave do domínio.
+        tests:
+          - not_null
+          - unique
+      - name: municipio
+        description: Município do empreendimento.
+        tests:
+          - sem_mojibake
+      - name: uf
+        description: >
+          Sigla da UF. Fica nula nos empreendimentos que não têm localização
+          informada em nenhuma das fontes.
+
+  - name: prata_far_evolucao_financeira
+    description: >
+      Série de desembolsos por empreendimento e mês, com acumulado e percentual
+      executado.
+    tests:
+      # O grão é (apf, mes): duas linhas para o mesmo mês dobrariam o acumulado.
+      - unique_combinacao:
+          colunas: ["apf", "mes"]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+      - name: mes
+        description: Primeiro dia do mês da liberação.
+        tests:
+          - not_null

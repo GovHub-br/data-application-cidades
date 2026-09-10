@@ -1,0 +1,56 @@
+version: 2
+
+# A ouro é o que o Superset lê. Os testes aqui protegem o que o painel afirma: uma linha
+# por empreendimento na ficha, e nenhum APF que exista na ficha mas não na prata.
+
+models:
+
+  - name: ouro_far_ficha_empreendimento
+    description: >
+      Uma linha por empreendimento FAR, com identificação, localização, execução física
+      e financeira. Alimenta a ficha do Superset.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos — chave do painel.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('prata_far_empreendimento')
+              field: apf
+      - name: municipio
+        description: Município do empreendimento.
+        tests:
+          - sem_mojibake
+      - name: nome_empreendimento
+        description: Nome do empreendimento.
+        tests:
+          - sem_mojibake
+
+  - name: ouro_far_resumo_gerencial
+    description: >
+      KPIs agregados por situação, tipologia e status de execução.
+    columns:
+      - name: categoria
+        description: Dimensão da agregação.
+
+  - name: ouro_far_panorama_estadual
+    description: >
+      Painel agregado por UF, com quebra por situação e tipologia.
+
+  - name: ouro_far_mapa_nacional
+    description: >
+      Agregação geográfica por UF para o mapa do Superset. Uma linha por UF.
+
+  - name: ouro_far_evolucao_financeira_chart
+    description: >
+      Série APF × mês pronta para o gráfico de evolução financeira.
+    tests:
+      - unique_combinacao:
+          colunas: ["apf", "mes"]
+
+  - name: ouro_far_execucao_fisica_financeira_chart
+    description: >
+      As duas curvas na mesma série mensal. A execução física do FAR é retrato único,
+      repetido ao longo dos meses para virar linha de referência sobre a série
+      financeira, que é a única das duas com história.

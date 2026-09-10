@@ -37,57 +37,26 @@ models:
           owner_key: mcid_data_engineering
           classification: restricted
           rag_publication: prohibited
-    empreendimento_far_dbt:
-      +materialized: table
-      +schema: empreendimento_far
-      +meta:
-        governance:
-          product: empreendimento_far
-          owner_key: mcid_data_engineering
-      bronze:
-        +materialized: table
-        +meta:
-          governance:
-            product: empreendimento_far
-            owner_key: mcid_data_engineering
-            layer: bronze
-            classification: restricted
-            rag_publication: prohibited
-          #: lido pelo conector dbt do OpenMetadata
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier3
-            owner: mcid-data-engineering
-      silver:
-        +materialized: table
-        +meta:
-          governance:
-            product: empreendimento_far
-            owner_key: mcid_data_engineering
-            layer: silver
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier2
-            owner: mcid-data-engineering
-      gold:
-        +materialized: table
-        +meta:
-          governance:
-            product: empreendimento_far
-            owner_key: mcid_data_engineering
-            layer: gold
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier1
-            owner: mcid-data-engineering
 
-    entidades_dbt:
+    far_dbt:
+      +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
+
+    fds_dbt:
+      +materialized: table
+      bronze:
+        +schema: bronze
+      prata:
+        +schema: prata
+      ouro:
+        +schema: ouro
+
+    rural_dbt:
       +materialized: table
       +schema: entidades_fds
       +meta:
@@ -203,3 +172,8 @@ models:
 
 on-run-start:
   - '{{create_udfs()}}'
+
+# Registra em lake._dbt_log o que não passou — inclusive os testes que são
+# `severity: warn` e por isso não derrubam a execução.
+on-run-end:
+  - '{{ registrar_execucao_dbt() }}'

@@ -37,6 +37,19 @@ construída agora. É o que torna seguro carregar o lake em etapas (`--only-ext 
 aparece como `skipped_duplicado` e não é convertido — quem o converte é a execução do formato
 vencedor.
 
+### Pastas ignoradas
+
+`PASTAS_IGNORADAS` (topo do script) lista pastas de primeiro nível de `raw/` que nunca viram
+parquet, mesmo com `--pattern`/`--only-ext` vazios. Hoje só `dados_historicos/`: já tem
+tratamento próprio de um membro da equipe para ciência de dados, e gerar parquet full-text por
+cima duplicaria o trabalho e criaria uma segunda versão divergente do mesmo dado. A pasta
+continua sendo mascarada normalmente pelo `mascarar_minio.py` — a exclusão é só da conversão
+para staging/.
+
+O filtro roda antes do descarte de gêmeos: se um objeto da pasta ignorada entrasse na lista,
+ele poderia vencer o gêmeo de outra pasta pelo mesmo *stem* e o dado bom sairia como
+`skipped_duplicado` sem nunca virar parquet.
+
 ### Gêmeos: um objeto por nome no lake inteiro
 
 O mesmo dado aparece no lake em mais de um formato (`202601_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB`
