@@ -38,7 +38,7 @@ models:
     columns: &contrato_empreendimento
       # verificacao_tipagem: tipo_esperado nos nomes do DuckDB. Ref:
       # docs/inventario-tipagem-silver-gold.md. As 3 pratas por frente + o
-      # ouro_dhist_snapshot_empreendimento_atual compartilham este contrato de tipos.
+      # ouro_historico_snapshot_empreendimento_atual compartilham este contrato de tipos.
       - name: id_historico_snapshot
         description: Chave técnica única por frente, APF e mês de referência.
         data_tests:
@@ -147,7 +147,7 @@ models:
       - name: quantidade_uh_entregues
         description: >
           Unidades habitacionais entregues (acumulado). coalesce(braço da linha,
-          valor preservado no grão, espinha prata_dhist_entrega_apf) —
+          valor preservado no grão, espinha prata_historico_entrega_apf) —
           só preenche NULL, nunca sobrescreve 0. No FDS o valor vem do braço
           INT059.
         data_tests:
@@ -653,16 +653,16 @@ models:
     columns: *contrato_empreendimento
 
   # Os atributos estáveis do empreendimento ficam em colunas de
-  # ouro_dhist_snapshot_empreendimento_atual (ver ouro/schema.yml).
+  # ouro_historico_snapshot_empreendimento_atual (ver ouro/schema.yml).
 
-  - name: prata_dhist_entrega_apf
+  - name: prata_historico_entrega_apf
     description: >
       Prata — espinha de entregas por APF. Grão: 1 linha por `apf`. Consolida os
       EVENTOS de entrega de UH da SNH (bronze_dhist_snh_entregas_evento_bb /
       _caixa, mesma fonte do reloginho) num atributo estável: dt_primeira_entrega,
       dt_ultima_entrega, uh_entregues_acumulada, n_eventos, dt_ultimo_snapshot.
       Dedup por hash de conteúdo (agente, apf, dt_evento, qtd) idêntico ao de
-      prata_dhist_snh_entregas_mes — os totais reconciliam. As pratas
+      prata_historico_snh_entregas_mes — os totais reconciliam. As pratas
       históricas por frente fazem left join por `apf` para resolver
       dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP.
     meta:
@@ -695,7 +695,7 @@ models:
       - name: dt_ultimo_snapshot
         description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
 
-  - name: prata_dhist_serie_executiva
+  - name: prata_historico_serie_executiva
     description: >
       Prata — série executiva histórica no contrato comum. Aplica o mapa de
       colunas via coalesce_present() e tipa os campos (UH inteiras, valores em
@@ -863,7 +863,7 @@ models:
           (min_cidades) / `mvalor_investimento` (bext). Nulo em entrada_bb.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -876,7 +876,7 @@ models:
           atuais (`valor_financiamento_fds` no FDS/Rural, `valor_far` no FAR).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -901,7 +901,7 @@ models:
           (bases_relatorio) / `vlr_contrapartida` (min_cidades, raro).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -912,7 +912,7 @@ models:
           (bases_relatorio) / `mvalor_desembolso` (bext). ∅ nas outras famílias.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -924,7 +924,7 @@ models:
           `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -934,7 +934,7 @@ models:
           (R$). Ver a nota anti-soma em `subsidio_fgts`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }

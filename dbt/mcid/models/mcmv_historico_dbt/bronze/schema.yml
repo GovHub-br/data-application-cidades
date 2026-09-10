@@ -18,7 +18,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_dhist_serie_executiva.
+      prata_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -122,7 +122,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_dhist_serie_executiva.
+      prata_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -165,7 +165,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_dhist_serie_executiva.
+      prata_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -239,7 +239,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_dhist_serie_executiva.
+      prata_historico_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:

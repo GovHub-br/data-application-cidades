@@ -126,7 +126,7 @@ models:
   - name: ouro_reloginho_indicadores
     description: >
       Tabela Ouro do reloginho MCMV: série mensal SNH consolidada por agente. Lê
-      a prata `prata_dhist_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
+      a prata `prata_historico_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
       camadas bronze e prata). Uma linha por (agente_financeiro, dt_referencia)
       — série de ESTOQUE (carteira acumulada no mês-snapshot da SNH): NÃO somar
       `uh_*` entre `dt_referencia`. Colunas: acumulados uh_contratadas,

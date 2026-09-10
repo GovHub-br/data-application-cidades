@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: prata_dhist_snh_apf_mes
+  - name: prata_historico_snh_apf_mes
     description: >
       Prata do reloginho: série mensal SNH tipada, com domínio normalizado e
       deduplicada por APF. Grão: uma linha por (agente_financeiro, apf,
@@ -50,7 +50,7 @@ models:
           (glossario-mcid.md).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
@@ -60,7 +60,7 @@ models:
           `quantidade_uh_entregues`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
@@ -70,7 +70,7 @@ models:
           `quantidade_uh_vigentes`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_distratadas
@@ -122,7 +122,7 @@ models:
       - name: regiao_nome
         description: Nome da macrorregião IBGE (par de regiao_sigla).
 
-  - name: prata_dhist_snh_entregas_mes
+  - name: prata_historico_snh_entregas_mes
     description: >
       Prata do reloginho — entregas por evento agregadas ao mês do
       EVENTO. Lê bronze_dhist_snh_entregas_evento, deduplica eventos
@@ -151,7 +151,7 @@ models:
       - name: uh_entregues_evento_mes
         description: >
           UH entregues no mês do EVENTO, por APF — série de FLUXO (pode somar
-          entre meses, ao contrário dos acumulados de `prata_dhist_snh_apf_mes`).
+          entre meses, ao contrário dos acumulados de `prata_historico_snh_apf_mes`).
           Conceito canônico `quantidade_uh_entregues` (recorte de fluxo).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }

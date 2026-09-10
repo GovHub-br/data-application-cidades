@@ -8,7 +8,7 @@
     2024-06 em diante e NÃO retroage — as 9 colunas ficam NULL em ~95% das
     linhas históricas POR CONSTRUÇÃO DA FONTE, não por lacuna de pipeline.
 
-    Dedup igual à prata_dhist_snh_apf_mes: (agente_financeiro, apf,
+    Dedup igual à prata_historico_snh_apf_mes: (agente_financeiro, apf,
     dt_referencia), desempate por prioridade_reentrega. Um `qualify` final
     garante 1 linha por (frente_mcmv, apf, dt_referencia) — no-op nos dados
     atuais (cada APF tem 1 agente/mês), defensivo contra drift.

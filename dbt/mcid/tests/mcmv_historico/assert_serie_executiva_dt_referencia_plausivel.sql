@@ -7,7 +7,7 @@ select
     fonte_familia,
     dt_referencia,
     count(*) as n_linhas
-from {{ ref("prata_dhist_serie_executiva") }}
+from {{ ref("prata_historico_serie_executiva") }}
 where dt_referencia < date '2009-01-01'
    or dt_referencia >= date '2020-01-01'
 group by fonte_familia, dt_referencia

@@ -92,8 +92,8 @@ BRONZES_SERIE = [
 SILVERS_GOLDS = [
     # piloto OGU/FGTS desabilitado nesta branch (renomear-camadas-..., D4):
     # ("prata", "prata_dhist_serie_anual_ogu_fgts", "mcmv_historico"),
-    ("prata", "prata_dhist_snh_entregas_mes", "reloginho"),
-    ("prata", "prata_dhist_snh_apf_mes", "reloginho"),
+    ("prata", "prata_historico_snh_entregas_mes", "reloginho"),
+    ("prata", "prata_historico_snh_apf_mes", "reloginho"),
     ("ouro", "ouro_reloginho_indicadores", "reloginho"),
     ("ouro", "ouro_reloginho_indicadores_frente", "reloginho"),
     ("ouro", "ouro_reloginho_indicadores_entregas", "reloginho"),
@@ -104,12 +104,12 @@ SILVERS_GOLDS = [
     ("prata", "prata_far_historico_empreendimento", "mcmv_historico"),
     ("prata", "prata_rural_historico_empreendimento", "mcmv_historico"),
     # golds cross-frente (4).
-    ("ouro", "ouro_dhist_serie_mensal", "mcmv_historico"),
-    ("ouro", "ouro_dhist_snapshot_empreendimento_atual", "mcmv_historico"),
-    ("ouro", "ouro_dhist_marco_empreendimento", "mcmv_historico"),
-    ("ouro", "ouro_dhist_serie_situacao_mensal", "mcmv_historico"),
+    ("ouro", "ouro_historico_serie_mensal", "mcmv_historico"),
+    ("ouro", "ouro_historico_snapshot_empreendimento_atual", "mcmv_historico"),
+    ("ouro", "ouro_historico_marco_empreendimento", "mcmv_historico"),
+    ("ouro", "ouro_historico_serie_situacao_mensal", "mcmv_historico"),
     # a silver da serie executiva e a maior (10,2 M linhas) — por ultimo.
-    ("prata", "prata_dhist_serie_executiva", "mcmv_historico"),
+    ("prata", "prata_historico_serie_executiva", "mcmv_historico"),
 ]
 
 

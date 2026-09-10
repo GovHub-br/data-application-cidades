@@ -34,7 +34,7 @@ models:
     description: >
       Base padronizada da frente Rural/PNHR. Repontada (change
       consolidar-schemas-historico-reloginho, D7) para
-      `ouro.ouro_dhist_snapshot_empreendimento_atual` filtrado a
+      `ouro.ouro_historico_snapshot_empreendimento_atual` filtrado a
       `frente_mcmv = 'Rural'` — a pilha "atual" `empreendimento_rural_dbt` foi
       removida. `dt_previsao_entrega` sai 0% (idêntico ao braço anterior em
       prod — perda zero); `fase_empreendimento` NULL.

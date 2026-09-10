@@ -23,7 +23,7 @@ with
             sum(uh_entregues_evento_mes) as uh_entregues_evento_mes,
             sum(n_eventos) as n_eventos,
             count(distinct apf) as n_apf_evento
-        from {{ ref("prata_dhist_snh_entregas_mes") }}
+        from {{ ref("prata_historico_snh_entregas_mes") }}
         group by agente_financeiro, mes_evento
     ),
 

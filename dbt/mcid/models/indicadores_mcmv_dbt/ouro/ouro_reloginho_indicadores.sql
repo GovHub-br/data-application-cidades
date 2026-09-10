@@ -24,7 +24,7 @@
 -- O corpo é o mesmo nos três — ver models/mcmv_historico_dbt/README.md.
 with
 
-    base as (select * from {{ ref("prata_dhist_snh_apf_mes") }}),
+    base as (select * from {{ ref("prata_historico_snh_apf_mes") }}),
 
     mensal as (
         select

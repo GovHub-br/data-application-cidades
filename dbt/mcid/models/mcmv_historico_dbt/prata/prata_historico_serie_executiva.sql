@@ -263,14 +263,14 @@ with
             -- bext E min_cidades sao extrato de contrato PF individual (1 linha
             -- por contrato/mes, ~2-5 UH/linha); bases_relatorio_executivo e
             -- entrada_bb sao por empreendimento. Impede o consumidor de somar
-            -- UH/valor entre graos diferentes no ouro_dhist_serie_mensal.
+            -- UH/valor entre graos diferentes no ouro_historico_serie_mensal.
             case
                 when fonte_familia in ('bext', 'min_cidades') then 'contrato'
                 else 'empreendimento'
             end as grao_familia,
 
             -- natureza_serie por familia (D4, auditoria task 1.2/1.7): antes
-            -- hard-coded 'estoque' no ouro_dhist_serie_mensal. bases_relatorio_executivo
+            -- hard-coded 'estoque' no ouro_historico_serie_mensal. bases_relatorio_executivo
             -- / min_cidades / bext sao ESTOQUE (carteira restatada mes a mes;
             -- valor por contrato constante entre meses); entrada_bb e FLUXO
             -- (entrada de novos empreendimentos na carteira BB).
@@ -325,7 +325,7 @@ with
     -- seed. Ver seeds/data_quality/README.md.
     --
     -- Para RE-VARRER o seed contra uma silver limpa (sem circularidade):
-    --   dbt build --select prata_dhist_serie_executiva \
+    --   dbt build --select prata_historico_serie_executiva \
     --     --vars 'quarentena_bypass: true' --target staging_duckdb
     -- depois regenerar o CSV e reconstruir sem a var.
     quarentena as (
@@ -434,7 +434,7 @@ with
 
             -- cast p/ bigint: sum(bigint) devolve HUGEINT (int128) no DuckDB,
             -- sem tipo equivalente no Postgres (modo C). O grão pré-2019 tem
-            -- max ~12 k UH/linha; o total nacional agregado no ouro_dhist_serie_mensal
+            -- max ~12 k UH/linha; o total nacional agregado no ouro_historico_serie_mensal
             -- ~1,5 M — cabe em bigint com folga.
             -- Change: verificar-tipagem-silver-gold-historico.
             cast(sum(uh_contratadas) as bigint) as uh_contratadas,

@@ -1,8 +1,8 @@
 {#-
   Teste genérico: sinaliza `(dt_referencia, uf)` com mais de uma `fonte_familia`
-  de GRÃO DIFERENTE no `ouro_dhist_serie_mensal`.
+  de GRÃO DIFERENTE no `ouro_historico_serie_mensal`.
 
-  `ouro_dhist_serie_mensal` põe todas as famílias lado a lado; `bases_relatorio_executivo`
+  `ouro_historico_serie_mensal` põe todas as famílias lado a lado; `bases_relatorio_executivo`
   e `min_cidades` (grão empreendimento) sobrepõem `bext` (grão contrato) em
   2014–2018. Somar valor/UH entre elas no mesmo mês é dupla contagem de grãos
   distintos. Um mart consumidor precisa filtrar por `prioridade_familia`.

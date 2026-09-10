@@ -4,7 +4,7 @@ version: 2
 # (acumulado) está nas bronzes bronze_dhist_empreendimento_snh_bb /
 # _snh_caixa, em mcmv_historico_dbt; a view passthrough
 # bronze_reloginho_snh_serie_mensal deixou de existir junto com a bronze única
-# que ela envolvia — prata_dhist_snh_apf_mes lê as duas bronzes por agente
+# que ela envolvia — prata_historico_snh_apf_mes lê as duas bronzes por agente
 # diretamente.
 
 models:

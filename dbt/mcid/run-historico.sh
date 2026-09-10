@@ -47,7 +47,7 @@ seed_all() { run_dbt seed --target "$TARGET"; }
 # Bronzes por familia (D5 da change pipeline-bronze-historica-destino-trocavel):
 # 2 agentes SNH + 5 interfaces GEFUS + 4 familias da serie executiva + 2 agentes
 # de entregas por evento (compartilhados com o reloginho, alimentam a espinha
-# prata_dhist_entrega_apf). Ordem crescente de volume: as maiores
+# prata_historico_entrega_apf). Ordem crescente de volume: as maiores
 # (min_cidades, bext) por ultimo. O mapa vive em macros/historico/familias.sql.
 BRONZES=(
   bronze_dhist_empreendimento_snh_bb
@@ -62,7 +62,7 @@ BRONZES=(
   bronze_dhist_serie_min_cidades
   bronze_dhist_serie_bext
   # entregas por evento (grao APF) — mesma fonte do reloginho; alimentam
-  # prata_dhist_entrega_apf (change enriquecer-datas-acompanhamento-historico).
+  # prata_historico_entrega_apf (change enriquecer-datas-acompanhamento-historico).
   bronze_dhist_snh_entregas_evento_bb
   bronze_dhist_snh_entregas_evento_caixa
   # obra mensal (SharePoint) — curva prevista x realizada + situacao de obra
@@ -79,7 +79,7 @@ HEAVY="bronze_dhist_serie_bases_relatorio_executivo bronze_dhist_serie_min_cidad
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
 # juntos) só depois de todos materializados. EXCETO
-# prata_dhist_serie_executiva (uniao das 4 familias + janela sobre
+# prata_historico_serie_executiva (uniao das 4 familias + janela sobre
 # ~10M linhas): sai em invocacao propria com --threads 1.
 # silver_atual_dim_empreendimento (dominio empreendimento_fds_dbt) + suas 2 bronzes
 # entram aqui porque prata_fds_historico_empreendimento passou a herdar
@@ -89,7 +89,7 @@ SILVERS=(
   bronze_fds_cadastro_pj
   bronze_fds_mudanca_fase_eventos
   silver_atual_dim_empreendimento
-  prata_dhist_entrega_apf
+  prata_historico_entrega_apf
   prata_far_historico_empreendimento
   prata_fds_historico_empreendimento
   prata_rural_historico_empreendimento
@@ -98,12 +98,12 @@ SILVERS=(
   # O modelo de obra mensal autônomo foi dissolvido (consolidar-schemas-historico-reloginho,
   # D2): a família obra_mensal virou braço/left-join das 3 pratas de frente.
 )
-SILVER_SERIE=prata_dhist_serie_executiva
+SILVER_SERIE=prata_historico_serie_executiva
 GOLDS=(
-  ouro_dhist_snapshot_empreendimento_atual
-  ouro_dhist_marco_empreendimento
-  ouro_dhist_serie_mensal
-  ouro_dhist_serie_situacao_mensal
+  ouro_historico_snapshot_empreendimento_atual
+  ouro_historico_marco_empreendimento
+  ouro_historico_serie_mensal
+  ouro_historico_serie_situacao_mensal
 )
 
 build_one() {
@@ -116,7 +116,7 @@ build_one() {
   run_dbt build --select "$sel" "${extra[@]}" --target "$TARGET"
 }
 
-# prata_dhist_serie_executiva: união das 4 famílias (~10M linhas) +
+# prata_historico_serie_executiva: união das 4 famílias (~10M linhas) +
 # a dedup (reenvio_rank → conteudo_rank → SUM ao grão de consumo). O SUM/GROUP BY
 # de milhões de grupos NÃO derrama em disco no DuckDB — o pico é ~10,3 GiB
 # medido, e baixar o soft limit só torna tudo 2× mais lento sem mexer nesse

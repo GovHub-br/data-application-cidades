@@ -16,12 +16,12 @@
 --
 -- Dedup: o mesmo evento reaparece em snapshots mensais seguintes. Deduplica por
 -- hash de conteúdo de negócio (agente, apf, dt_evento, qtd) — IDÊNTICO ao de
--- prata_dhist_snh_entregas_mes do reloginho, para os totais reconciliarem
+-- prata_historico_snh_entregas_mes do reloginho, para os totais reconciliarem
 -- (ver tests/mcmv_historico/assert_entrega_apf_reconcilia_reloginho.sql).
 --
 -- Datas: `dt_evento` já vem como DATE do bronze (parse em corpos_bronze.sql).
 -- Eventos com `dt_evento` nulo ficam de fora (hoje são 0 nos dois lotes) — o
--- mesmo recorte de prata_dhist_snh_entregas_mes, para reconciliar.
+-- mesmo recorte de prata_historico_snh_entregas_mes, para reconciliar.
 --
 -- Destino conforme o target (D2): arquivo local em `staging_duckdb`, Postgres
 -- atachado em `prod_duckdb`.

@@ -4,7 +4,7 @@
 -- enriquecer-datas-acompanhamento-historico, D).
 --
 -- Grão: 1 linha por empreendimento — coalesce(id_empreendimento, apf), alinhado
--- ao grão de ouro_dhist_snapshot_empreendimento_atual (FDS multi-fase colapsa em 1;
+-- ao grão de ouro_historico_snapshot_empreendimento_atual (FDS multi-fase colapsa em 1;
 -- FAR/Rural chave = apf).
 --
 -- 7 marcos, todos `date`, cada um com proveniência:
@@ -26,7 +26,7 @@
 --           pode ter sido reportada e depois sumir do feed; queremos a última
 --           conhecida). dt_ultima_entrega considera ainda o max da espinha sobre
 --           TODOS os APFs de fase. Fonte = a do snapshot que trouxe o max.
---   dt_primeira_entrega  -> espinha prata_dhist_entrega_apf (evento SNH).
+--   dt_primeira_entrega  -> espinha prata_historico_entrega_apf (evento SNH).
 --   dt_legalizacao       -> sem fonte nesta fase (NULL / 'sem_fonte').
 --   dt_previsao_entrega  -> MAIOR data prevista observada em qualquer snapshot do
 --        empreendimento (change destravar-datas-obra-entrega-silver-historico:
@@ -146,7 +146,7 @@ with
             sum(e.uh_entregues_acumulada)::bigint as uh_entregues_acumulada,
             max(e.dt_ultimo_snapshot) as dt_ultimo_snapshot_entrega
         from apfs a
-        join {{ ref('prata_dhist_entrega_apf') }} e on a.apf = e.apf
+        join {{ ref('prata_historico_entrega_apf') }} e on a.apf = e.apf
         group by 1, 2
     ),
 

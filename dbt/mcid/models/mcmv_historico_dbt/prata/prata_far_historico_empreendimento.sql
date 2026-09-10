@@ -268,7 +268,7 @@ with
             on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
         left join {{ ref('dominio_regiao_uf') }} dr
             on upper(trim(d.uf)) = upper(trim(dr.uf))
-        left join {{ ref('prata_dhist_entrega_apf') }} esp
+        left join {{ ref('prata_historico_entrega_apf') }} esp
             on d.apf = esp.apf
         left join {{ ref('dominio_retomada') }} dret
             on lower(trim(coalesce(d.sinal_retomada_bruto, d.sinal_retomada_bruto_grao)))

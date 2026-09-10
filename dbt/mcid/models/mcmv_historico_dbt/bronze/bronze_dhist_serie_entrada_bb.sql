@@ -7,7 +7,7 @@
 -- (D5 da change pipeline-bronze-historica-destino-trocavel): cada familia
 -- vira uma tabela ESTREITA (so as colunas da propria origem), em vez de uma
 -- tabela de 252 colunas esparsas. A uniao das 4 familias, com projecao
--- explicita por braco, vive em prata_dhist_serie_executiva.
+-- explicita por braco, vive em prata_historico_serie_executiva.
 --
 -- Glob na staging: staging/dados_historicos/*entrada_bb*.parquet
 -- Cada familia tem 2-3 geracoes de schema; a harmonizacao (mapa de colunas)
