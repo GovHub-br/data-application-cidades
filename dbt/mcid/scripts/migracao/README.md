@@ -86,8 +86,8 @@ python3 scripts/migracao/gerar_migracao_seeds.py  # migrar/reverter/verificar_se
 
 ## Migração das seeds → schema `seeds`
 
-Complementa o rename dos modelos: as **11 seeds** consumidas pelos braços
-histórico e reloginho/gargalo (10 de `data_quality` + o piloto OGU/FGTS de
+Complementa o rename dos modelos: as **10 seeds** consumidas pelos braços
+histórico e reloginho/gargalo (9 de `data_quality` + o piloto OGU/FGTS de
 `conjuntura`) deixam os schemas antigos e passam a materializar no schema único
 `seeds`. As seeds **não mudam de nome** — só de schema (`ALTER TABLE … SET
 SCHEMA`, sem RENAME), então a migração é mais simples que a dos modelos.

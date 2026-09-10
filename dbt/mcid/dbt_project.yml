@@ -19,24 +19,11 @@ clean-targets:
 
 models:
   mcid:
-    # D3 (pipeline-bronze-historica-destino-trocavel): `cidades` constante nos
-    # tres modos. O catalogo local se chama `cidades` (arquivo cidades.duckdb) e
-    # no modo C o Postgres e atachado com alias `cidades` — assim o FQN do no no
-    # manifest.json e `cidades.<schema>.<tabela>` em qualquer execucao, casando
-    # com a tabela real que o OpenMetadata ingere. Substitui o ternario que
-    # apontava para o catalogo `mcid_staging` fora do Postgres.
     +database: cidades
     metadata:
       +materialized: incremental
       +schema: metadata
     empreendimento_far_dbt:
-      # Convenção 2026-09-08 (consolidar-schemas-historico-reloginho, D1/D6):
-      # o que é POR FRENTE (silver_atual_/gold_atual_) fica no schema da frente
-      # empreendimento_far. As bronzes desta frente que NÃO são alcançadas pelo
-      # fecho transitivo do eixo/gargalo nem carregam sinal preditivo próprio
-      # foram removidas — restam só as load-bearing (ver models/docs). As
-      # bronzes mantidas continuam em dados_historicos (são insumo do medalhão
-      # atual que o gargalo consome). Roda sempre no prod (sem gate de target).
       +materialized: table
       +meta:
         governance:
@@ -89,10 +76,7 @@ models:
             owner: mcid-data-engineering
 
     empreendimento_fds_dbt:
-      # Convenção 2026-09-08 — ver empreendimento_far_dbt. Schema silver/gold
-      # compartilhado com os colegas é empreendimentos_fds (plural — mesmo
-      # nome que eles usam em prod). Bronzes fora do critério de fecho
-      # transitivo / sinal preditivo removidas.
+
       +materialized: table
       +meta:
         governance:
@@ -144,28 +128,13 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
-    # empreendimento_rural_dbt REMOVIDO (change consolidar-schemas-historico-reloginho,
-    # D6/D7): a pilha rural "atual" (7 bronzes + 2 silvers) era fork mais pobre
-    # do que a pilha dos colegas já em prod (empreendimento_rural, 34 tabelas) e
-    # nunca era construída localmente. O rural histórico vem do INT057/INT065 do
-    # eixo (mcmv_historico_dbt), não da frente. O braço rural de
-    # mcmv_silver_dbt foi repontado para o eixo histórico.
 
     indicadores_mcmv_dbt:
-      # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
-      # porque a D3 o exige como invariante deste eixo).
+
       +database: cidades
-      # Convenção 2026-09-09 (renomear-camadas-pt-historico-reloginho, D1):
-      # schema por CAMADA do medalhão, em português — bronze → `bronze`,
-      # silver → `prata`, gold → `ouro`. Reverte a D1 de
-      # consolidar-schemas-historico-reloginho (schema por domínio). O reloginho
-      # deixa de ter schema próprio: as bronzes de eventos de entrega vão para
-      # `bronze` (origem `dhist`), as silvers para `prata`, os golds para `ouro`.
+
       +materialized: table
-      # Governança / OpenMetadata (change catalogo-dicionario-dados-historicos,
-      # D5): mesmo formato de mcmv_historico_dbt. `product: reloginho` para os 10
-      # nós (inclusive os 2 golds de gargalo — OQ2); tier bronze=3 / silver=2 /
-      # gold=1 (os golds de gargalo são Tier1 como os demais — OQ3).
+
       +meta:
         governance:
           product: reloginho
@@ -213,48 +182,36 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
-    mcmv_silver_dbt:
-      # Convenção 2026-09-04: cada frente (inclusive as sem schema de colega)
-      # ganha schema próprio; tabela silver_historico_base em cada uma (via
-      # alias, já que o nome do arquivo segue frente-qualificado por exigência
-      # de unicidade do dbt). "core" (union de todas as frentes) foi aposentado
-      # — quem precisar do consolidado une os schemas na hora.
-      +materialized: table
-      silver:
-        +materialized: table
-        far:
-          +schema: empreendimento_far
-        rural:
-          +schema: empreendimento_rural
-        entidades:
-          +schema: empreendimentos_fds
-        conjuntura:
-          +schema: conjuntura
-        classe_media:
-          +schema: classe_media
-        reforma:
-          +schema: reforma
-        cidades:
-          +schema: cidades
-        sub50:
-          +schema: sub50
-        pro_moradia:
-          +schema: pro_moradia
-        minha_casa_minha_vida:
-          +schema: minha_casa_minha_vida
+    # mcmv_silver_dbt:
+
+    #   +materialized: table
+    #   silver:
+    #     +materialized: table
+    #     far:
+    #       +schema: empreendimento_far
+    #     rural:
+    #       +schema: empreendimento_rural
+    #     entidades:
+    #       +schema: empreendimentos_fds
+    #     conjuntura:
+    #       +schema: conjuntura
+    #     classe_media:
+    #       +schema: classe_media
+    #     reforma:
+    #       +schema: reforma
+    #     cidades:
+    #       +schema: cidades
+    #     sub50:
+    #       +schema: sub50
+    #     pro_moradia:
+    #       +schema: pro_moradia
+    #     minha_casa_minha_vida:
+    #       +schema: minha_casa_minha_vida
 
     mcmv_historico_dbt:
-      # Eixo histórico: `cidades` explícito (herdado da raiz, repetido aqui
-      # porque a D3 o exige como invariante deste eixo).
+
       +database: cidades
-      # Convenção 2026-09-09 (renomear-camadas-pt-historico-reloginho, D1):
-      # schema por CAMADA do medalhão, em português — bronze → `bronze`,
-      # silver → `prata`, gold → `ouro`. Reverte a D1 de
-      # consolidar-schemas-historico-reloginho (schema por domínio × frente).
-      # Nada mais materializa em `dados_historicos`, nos schemas de frente
-      # (`empreendimento_far`/`empreendimentos_fds`/`empreendimento_rural`) nem
-      # em `conjuntura`. As 3 pratas por frente perdem o alias
-      # `silver_historico_empreendimento` e viram `prata_far/fds/rural_historico_empreendimento`.
+
       # O piloto FGTS/OGU está desabilitado nesta branch (config(enabled=false)
       # no próprio arquivo) — sem bloco `piloto:` aqui.
       +materialized: table
@@ -308,8 +265,8 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
-      # Piloto #118 (OGU/FGTS): DESABILITADO nesta branch
-      # (renomear-camadas-pt-historico-reloginho, D4). O modelo foi renomeado
+      # Piloto (OGU/FGTS): DESABILITADO nesta branch.
+      # O modelo foi renomeado
       # para o nome-alvo `prata_dhist_serie_anual_ogu_fgts` e carrega
       # `config(enabled=false)` no próprio arquivo — não há bloco `piloto:`
       # aqui. Retomada do desenvolvimento numa change futura.
@@ -357,8 +314,8 @@ seeds:
     # (indicadores_mcmv_dbt) materializam num schema único `seeds` — não mais em
     # `data_quality` nem `conjuntura`. Seeds de outras frentes (entidades_fds)
     # permanecem onde estão.
-    # Piloto #118 (série anual OGU/FGTS): agregado macro nacional, não é frente.
-    # O piloto OGU/FGTS segue desabilitado nesta branch (D4); este seed agora
+    # Piloto (série anual OGU/FGTS): agregado macro nacional, não é frente.
+    # O piloto OGU/FGTS segue desabilitado nesta branch; este seed agora
     # materializa em `seeds` junto das demais seeds do eixo. CSV em
     # seeds/conjuntura/.
     conjuntura:
@@ -367,8 +324,8 @@ seeds:
     entidades_fds:
       +schema: entidades_fds
       +quote_columns: false
-    # Seeds de referência dos testes de qualidade (change
-    # testes-data-quality-dbt): domínios canônicos e retrato de colunas por
+    # Seeds de referência dos testes de qualidade:
+    # domínios canônicos e retrato de colunas por
     # família. Materializam em `seeds`.
     # `cidades` explícito porque
     # o eixo histórico exige o catálogo `cidades` como invariante.
@@ -378,7 +335,6 @@ seeds:
       +quote_columns: false
       # chave_natural / faixa são texto — várias chaves são só dígitos e a
       # inferência as tornaria BIGINT, quebrando o join com a silver (varchar).
-      # Change: vocabulario-e-qualidade-financeira-historica.
       quarentena_valores_financeiros:
         +column_types:
           fonte_familia: varchar
@@ -392,7 +348,6 @@ seeds:
           valor_col: varchar
           piso: double
           teto: double
-      # Change: catalogo-dicionario-dados-historicos (D6).
       campos_obrigatorios:
         +column_types:
           modelo: varchar
