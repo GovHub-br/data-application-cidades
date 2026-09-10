@@ -13,23 +13,21 @@ models:
   columns:
   - name: apf
     description: APF (Autorização de Projeto de Financiamento) do empreendimento.
-    data_tests:
+    tests:
     - not_null
     - unique
     - relationships:
-        arguments:
-          to: ref('prata_rural_empreendimento')
-          field: apf
+        to: ref('prata_rural_empreendimento')
+        field: apf
   - name: programa
     description: 'Regra de negócio: NOVO MCMV RURAL quando ic_novo_mcmv, senão PNHR (HISTÓRICO).
 
       '
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - NOVO MCMV RURAL
-          - PNHR (HISTÓRICO)
+        values:
+        - NOVO MCMV RURAL
+        - PNHR (HISTÓRICO)
         config:
           severity: warn
   - name: pessoas_atendidas
@@ -49,14 +47,13 @@ models:
       Concluído, Status Desconhecido).
 
       '
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - Concluído
-          - Não Iniciado
-          - Em Andamento
-          - Sem Informação
+        values:
+        - Concluído
+        - Não Iniciado
+        - Em Andamento
+        - Sem Informação
         config:
           severity: warn
   - name: status_prazo
@@ -64,14 +61,13 @@ models:
       quando não foi entregue e a data venceu.
 
       '
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - Entregue
-          - Em Atraso
-          - Dentro do Prazo
-          - Sem Previsão
+        values:
+        - Entregue
+        - Em Atraso
+        - Dentro do Prazo
+        - Sem Previsão
         config:
           severity: warn
   - name: percentual_execucao_financeira
@@ -81,27 +77,25 @@ models:
       de 5% (Ritmo Equilibrado, Desembolso Adiantado ou Atrasado).
 
       '
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - Desembolso Adiantado
-          - Desembolso Atrasado
-          - Ritmo Equilibrado
-          - Sem Informação
+        values:
+        - Desembolso Adiantado
+        - Desembolso Atrasado
+        - Ritmo Equilibrado
+        - Sem Informação
         config:
           severity: warn
   - name: tipologia
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - Novo MCMV Rural
-          - PNHR (Rural)
+        values:
+        - Novo MCMV Rural
+        - PNHR (Rural)
         config:
           severity: warn
   - name: nome_empreendimento
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
@@ -109,7 +103,7 @@ models:
         config:
           severity: warn
   - name: municipio
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
@@ -117,37 +111,37 @@ models:
         config:
           severity: warn
   - name: uf
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: quantidade_uh
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: valor_contratado
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: valor_desembolsado
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: percentual_execucao_fisica
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: nome_entidade_organizadora
-    data_tests:
+    tests:
     - sem_mojibake:
         config:
           severity: warn
   - name: nome_construtora
-    data_tests:
+    tests:
     - sem_mojibake:
         config:
           severity: warn
@@ -191,10 +185,9 @@ models:
       Marca desembolso acima de contratado + aportes. Acontece de verdade (suplementação),
       mas é também a assinatura de erro de sinal ou liberação duplicada na origem. Marcado
       em vez de limitado: um `least(pct, 100)` esconderia justamente o caso a olhar.
-    data_tests:
+    tests:
       - accepted_values:
-          arguments:
-            values: [Dentro do Contratado, Desembolso Acima do Contratado, Sem Informação]
+          values: [Dentro do Contratado, Desembolso Acima do Contratado, Sem Informação]
           config:
             severity: warn
 
@@ -210,14 +203,14 @@ models:
   columns:
   - name: total_empreendimentos
     description: Contagem de APFs no grupo.
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: media_valor_por_uh
     description: Média do valor por UH dos empreendimentos do grupo.
   - name: total_uhs
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
@@ -239,31 +232,29 @@ models:
       ou execucao_fisica.
 
       '
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - header
-          - agente_financeiro
-          - programa
-          - situacao
-          - execucao_fisica
+        values:
+        - header
+        - agente_financeiro
+        - programa
+        - situacao
+        - execucao_fisica
         config:
           severity: warn
   - name: ordem
     description: Ordem de exibição dentro da seção (0 quando não se aplica).
   - name: estado
-    data_tests:
+    tests:
     - sem_mojibake:
         config:
           severity: warn
-  data_tests:
+  tests:
   - unique_combinacao:
-      arguments:
-        colunas:
-        - uf
-        - secao
-        - dimensao
+      colunas:
+      - uf
+      - secao
+      - dimensao
 - name: ouro_rural_mapa_nacional
   description: 'Visão Gold geográfica para o mapa coroplético e os gráficos por região. Traz duas visões
     no mesmo formato, distinguidas pela coluna `nivel`: por UF (com código ISO 3166-2) e por região. Enriquecida
@@ -276,37 +267,35 @@ models:
   columns:
   - name: nivel
     description: uf ou regiao — indica a granularidade da linha.
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - uf
-          - regiao
+        values:
+        - uf
+        - regiao
         config:
           severity: warn
   - name: iso_3166_2
     description: Código ISO 3166-2 (BR-XX), nulo nas linhas de região.
   - name: total_empreendimentos
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: total_uhs
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: estado_nome
-    data_tests:
+    tests:
     - sem_mojibake:
         config:
           severity: warn
-  data_tests:
+  tests:
   - unique_combinacao:
-      arguments:
-        colunas:
-        - uf
-        - nivel
+      colunas:
+      - uf
+      - nivel
 - name: ouro_rural_evolucao_financeira
   description: 'Série temporal Gold de liberações por APF × mês, com acumulado progressivo e percentual
     executado sobre o valor contratado. Une o financeiro mensal do Novo MCMV Rural (decomposto por componente)
@@ -320,41 +309,39 @@ models:
   columns:
   - name: apf
     description: APF do empreendimento (8 dígitos, normalizado).
-    data_tests:
+    tests:
     - not_null
     - relationships:
-        arguments:
-          to: ref('prata_rural_empreendimento')
-          field: apf
+        to: ref('prata_rural_empreendimento')
+        field: apf
   - name: mes
     description: Primeiro dia do mês da(s) liberação(ões), truncado.
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: vr_acumulado
     description: Soma progressiva do valor liberado por APF ao longo dos meses.
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: pct_executado_financeiro
     description: vr_acumulado sobre valor_contratado, em %.
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: vr_liberado_mes
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
-  data_tests:
+  tests:
   - unique_combinacao:
-      arguments:
-        colunas:
-        - apf
-        - mes
+      colunas:
+      - apf
+      - mes
 - name: ouro_rural_execucao_fisica_financeira
   description: 'Série temporal Gold comparando execução física e financeira por APF × mês, pronta para
     o gráfico de linhas. Faz full outer join entre as duas séries e preenche os buracos com o último valor
@@ -367,28 +354,26 @@ models:
   columns:
   - name: apf
     description: APF do empreendimento.
-    data_tests:
+    tests:
     - not_null
     - relationships:
-        arguments:
-          to: ref('prata_rural_empreendimento')
-          field: apf
+        to: ref('prata_rural_empreendimento')
+        field: apf
   - name: apf_municipio_empreendimento
     description: Rótulo concatenado com APF, município, UF e nome do empreendimento.
   - name: mes
     description: Mês de referência no formato YYYY-MM-DD.
-    data_tests:
+    tests:
     - not_null
   - name: pct_obra_realizada
     description: Percentual de execução física acumulada.
   - name: pct_executado_financeiro
     description: Percentual de execução financeira acumulada.
-  data_tests:
+  tests:
   - unique_combinacao:
-      arguments:
-        colunas:
-        - apf
-        - mes
+      colunas:
+      - apf
+      - mes
 - name: ouro_rural_ficha_trabalho_social
   description: 'Modelo Gold de acompanhamento do Plano de Trabalho Social (PTS). Empilha as bases de trabalho
     social da CAIXA e do BB e cruza com a ficha do empreendimento, permitindo comparar o ritmo do trabalho
@@ -401,12 +386,11 @@ models:
   columns:
   - name: apf
     description: APF do empreendimento.
-    data_tests:
+    tests:
     - not_null
     - relationships:
-        arguments:
-          to: ref('prata_rural_empreendimento')
-          field: apf
+        to: ref('prata_rural_empreendimento')
+        field: apf
   - name: situacao_trabalho_social
     description: Situação do PTS em maiúsculo; NÃO INFORMADO quando ausente.
   - name: ritmo_social_fisico
@@ -414,51 +398,48 @@ models:
       social, com tolerância de 10%.
 
       '
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - Trabalho Social Atrasado
-          - Trabalho Social Adiantado
-          - Ritmo Alinhado
-          - Sem Informação
+        values:
+        - Trabalho Social Atrasado
+        - Trabalho Social Adiantado
+        - Ritmo Alinhado
+        - Sem Informação
         config:
           severity: warn
   - name: agente_financeiro
-    data_tests:
+    tests:
     - accepted_values:
-        arguments:
-          values:
-          - CAIXA
-          - BB
+        values:
+        - CAIXA
+        - BB
         config:
           severity: warn
   - name: valor_global_ts
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: percentual_execucao_ts
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
   - name: nome_empreendimento
-    data_tests:
+    tests:
     - sem_mojibake:
         config:
           severity: warn
   - name: municipio
-    data_tests:
+    tests:
     - sem_mojibake:
         config:
           severity: warn
-  data_tests:
+  tests:
   - unique_combinacao:
-      arguments:
-        colunas:
-        - apf
-        - agente_financeiro
+      colunas:
+      - apf
+      - agente_financeiro
 - name: ouro_rural_perfil_beneficiarios
   description: 'Modelo Gold com o perfil socioeconômico agregado dos beneficiários por empreendimento:
     total de beneficiários, média de pessoas por família e proporção de mulheres, Bolsa Família e BPC.
@@ -472,18 +453,17 @@ models:
   columns:
   - name: apf
     description: APF do empreendimento.
-    data_tests:
+    tests:
     - not_null
     - relationships:
-        arguments:
-          to: ref('prata_rural_empreendimento')
-          field: apf
+        to: ref('prata_rural_empreendimento')
+        field: apf
   - name: percentual_mulheres
     description: Proporção de beneficiárias mulheres sobre o total cadastrado, em %.
   - name: renda_familiar_media
     description: Média da renda familiar declarada em R$.
   - name: total_beneficiarios_cadastrados
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
@@ -499,15 +479,14 @@ models:
   columns:
   - name: apf
     description: APF do empreendimento.
-    data_tests:
+    tests:
     - not_null
     - relationships:
-        arguments:
-          to: ref('prata_rural_empreendimento')
-          field: apf
+        to: ref('prata_rural_empreendimento')
+        field: apf
   - name: valor_investimento_saneamento_total
     description: Soma do investimento em cisternas e efluentes em R$.
-    data_tests:
+    tests:
     - not_null:
         config:
           severity: warn
