@@ -1,0 +1,560 @@
+version: 2
+
+# Espelho textual do parquet, então o teste que importa é o de layout. A lista `colunas`
+# de cada tabela é o contrato aceito hoje: mudou na origem, atualizar a lista é aceitar.
+#
+# `bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa` NÃO é declarado aqui: é o mesmo
+# arquivo do FAR e o model já existe em far_dbt/bronze/. Nome de model é único no projeto,
+# e com os três schemas compartilhados a tabela também é — a prata do rural apenas a
+# referencia e filtra modalidade RURAL.
+
+models:
+
+  - name: bronze_shpt_monit_cad_pj_rural_mensal
+    description: >
+      Cadastro PJ do empreendimento Rural contratado: entidade organizadora, composição do
+      investimento, cisternas e efluentes, prazo de construção. Remessa mensal; a tabela
+      guarda o retrato mais recente. Uma linha por empreendimento.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - no_nome_eo
+            - co_cnpj_eo
+            - dt_contratacao
+            - co_agente_finan
+            - nu_contrato_empreend
+            - nu_apf_com_dv
+            - no_empreendimento
+            - nu_ibge_empreend
+            - no_municipio
+            - sg_uf
+            - nu_modalidade
+            - qt_uh_selecionadas
+            - qt_uh_contratadas
+            - qt_uh_concluidas
+            - vr_investimento_total
+            - vr_obra
+            - vr_atec
+            - vr_ts
+            - vr_custo_indireto
+            - qt_cisterna
+            - vr_cisterna
+            - qt_efluente
+            - vr_efluente
+            - vr_contrapartida
+            - vr_emprestimo
+            - vr_liberado
+            - pz_construcao
+            - pc_obra_realizada
+            - ic_conforme_doc
+            - ic_vist_in_loco_realiz
+            - co_situacao_obra
+            - ic_af_comunicou_go
+            - ic_1a_notificacao_eo
+            - ic_2a_notificacao_eo
+            - dt_retomada
+            - nu_contrato_novo_empr
+            - ic_eo_substituida
+            - no_nome_novo_eo
+            - co_cnpj_novo_eo
+            - ic_tem_aporte
+            - vr_aporte
+            - ic_tem_suplementacao
+            - vr_suplementacao
+            - vr_contrapartida_3os
+            - dt_ult_liberacao
+            - ic_vistoria_final
+            - dt_conclusao
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_shpt_monit_cadastro_pf_rural_mensal
+    description: >
+      Cadastro dos beneficiários PF do Rural, com perfil socioeconômico — renda, pessoas
+      por família, Bolsa Família, BPC, distrato. Uma linha por CPF, várias por
+      empreendimento. Cobre cerca de 1% da carteira.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - nu_registro
+            - nu_contrato_empreendimento
+            - nu_apf_com_dv
+            - no_empreendimento
+            - no_eo_empreendimento
+            - co_cnpj_eo
+            - nu_contrato_nidividual
+            - dt_contratacao
+            - no_end_beneficiario
+            - nu_municipio_ibge
+            - no_municipio
+            - sg_uf
+            - co_linha_atend
+            - no_beneficiario
+            - nu_cpf_beneficiario
+            - co_sexo_benef
+            - dt_nascimento
+            - nu_estado_civil
+            - qt_pessoas_familia
+            - no_tipo_beneficiario
+            - co_sit_funcidaria
+            - ic_benef_bpc
+            - ic_benef_bf
+            - vr_renda_familiar
+            - vr_imovel
+            - vr_subsidio_uh
+            - vr_contrapartida_uh
+            - vr_caucao
+            - dt_recolhimento_caucao
+            - ic_distrato
+            - dt_distrato
+            - vr_distrato
+            - co_motivo_distrato
+            - dt_efetiva_conclusao
+            - qt_cisterna
+            - qt_efluentes
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_shpt_monit_mov_obra_rural_mensal
+    description: >
+      Evolução física da obra do Rural, retrato mensal: percentual previsto e realizado,
+      UHs concluídas e alienadas, paralisação, datas de situação e de entrega.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - co_tipo_registro
+            - dh_movimento
+            - nu_apf
+            - co_situacao_operacao
+            - dt_alteracao_situacao
+            - co_andamento_operacao
+            - dt_alteracao_andamento
+            - ic_invadido
+            - dt_invasao
+            - pc_obra_prevista
+            - pc_obra_realizada
+            - qt_uh_concluidas
+            - qt_uh_concluidas_adaptadas
+            - dt_previsao_conclusao_obra_retomada
+            - dt_conclusao_obra_retomada
+            - dt_primeira_assinatura_pf
+            - dt_ultima_assinatura_pf
+            - qt_uh_alienada
+            - vr_total_uh_alienadas
+            - nu_qt_uh_a_alienar
+            - vr_total_uh_a_alienar
+            - ic_titularidade
+            - nu_registro_parcelamento
+            - qt_uh_registro_titulos
+            - qt_uh_sem_habitese
+            - vr_total_uh_sem_habitese
+            - dt_paralisacao
+            - co_classificacao_paralisados
+            - co_classificacao_nao_retomada
+            - no_detalhe_paralisacao_retomada
+            - dt_informacao_paralisacao_retomada
+            - co_motivo_desimobilizacao
+            - co_motivo_distrato_empreendimento
+            - qt_uh_em_construcao_parcial
+            - vr_total_uh_em_construcao
+            - qt_uh_ociosas_retomadas
+            - vr_total_uh_ociosas_retomadas
+            - dt_conclusao_obra
+            - dt_contratacao_vigilancia
+            - vr_vigilancia
+            - dt_legalizacao_reg
+            - dt_previsao_entrega_do_empreendimento
+            - dt_entrega_do_empreendimento
+            - qt_uh_ocupacao_irregular
+            - no_providencias_adotadas
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_shpt_monit_mov_financ_rural_mensal
+    description: >
+      Liberações financeiras do Rural, decompostas por componente (obra, trabalho social,
+      ATEC, cisternas/efluentes, custos indiretos). Traz `ic_credito`, que define o SINAL:
+      '0' é débito — a liberação real, com valor negativo — e '1' é crédito, a devolução.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - id
+            - co_tipo_registro
+            - dt_movimento
+            - nu_apf
+            - dt_remessa
+            - dt_liberacao_recurso
+            - vr_movimento
+            - ic_credito
+            - vr_desembolso_obra
+            - vr_desembolso_ts
+            - vr_desembolso_atec
+            - vr_desembolso_cisternas_efluentes
+            - vr_desembolso_custos_indiretos
+            - nu_identificador
+            - pc_evolucao
+            - dh_gravacao
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_snh_pmcmv_dados_prioritarios_af_bb
+    description: >
+      Dados prioritários reportados pelo Banco do Brasil, todas as modalidades — a prata
+      filtra RURAL. Mesmo layout do arquivo da CAIXA, mas o BB envia com um mês de atraso,
+      então a competência vigente aqui costuma ser anterior à da CAIXA.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - data_de_movimento
+            - agente_financeiro
+            - apf
+            - uf
+            - municipio
+            - codigo_ibge_do_municipio
+            - nome_empreendimento
+            - modalidade
+            - situacao_do_empreendimento
+            - detalhamento_da_situacao_do_empreendimento
+            - data_de_contratacao
+            - exec
+            - valor_contratado
+            - valor_aporte_adicional
+            - valor_desembolsado
+            - uh_contratadas
+            - uh_entregues
+            - uh_vigentes
+            - observacoes
+            - quantidade_de_uhs_vigentes_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_entregues_do_ano_de_referencia
+            - situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+            - valor_desembolsado_do_ano_de_referencia
+            - detalhamento_da_situacao_do_empreendimento_em_janeiro_do_ano_de
+            - quantidade_de_uhs_contratadas_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_contratadas_do_ano_de_referencia
+            - quantidade_de_uhs_entregues_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_vigentes_do_ano_de_referencia
+            - quantidade_de_uhs_distratadas
+            - quantidade_de_uhs_distratadas_em_janeiro_do_ano_de_referencia
+            - quantidade_de_uhs_distratadas_do_ano_de_referencia
+            - data_da_previsao_da_entrega
+            - unidades_habitacionais_a_serem_entregues
+            - logradouro_do_imovel
+            - numero_do_imovel
+            - complemento_do_endereco_do_imovel
+            - bairro_do_imovel
+            - cep_do_imovel
+            - latitude_do_imovel
+            - longitude_do_imovel
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - unnamed_40
+            - unnamed_41
+            - apf_fds_fase_projeto
+            - data_de_contratacao_fds_fase_projeto
+            - uhs_contratadas
+            - uhs_entregues
+            - uhs_vigentes
+            - nao_se_aplica
+            - obra_nao_iniciada
+            - filename
+
+  - name: bronze_sftp_int065_pnhr_caixa_empreendimentos
+    description: >
+      Histórico de empreendimentos PNHR na CAIXA (integração INT065), com composição de
+      investimento e execução física. O feed parou em 2024-11-29: o PNHR é programa
+      encerrado e a série não avança mais.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - dt_movimento
+            - nu_contrato_emprendimento
+            - nu_apf
+            - co_agente_financeiro
+            - dt_contrato
+            - cod_municipio_ibge
+            - sg_uf
+            - no_municipio_imovel
+            - no_entidade_organizadora
+            - nu_cnpj_entidade
+            - no_empreendimento
+            - pz_construcao
+            - vr_liberado
+            - dt_ultima_liberacao
+            - dt_efetiva_conclusao
+            - vr_emprestimo_siapf
+            - qtde_uh_inicial
+            - qtde_unidades
+            - vr_investimento_pnhr
+            - vr_edificacao
+            - vr_atec
+            - vr_ts
+            - vr_custo_originacao
+            - vr_taxa_administracao
+            - vr_diferencial_juros
+            - vr_taxa_risco_credito
+            - vr_emprestimo
+            - vr_subsidio_fgts
+            - vr_contrapartida
+            - vr_cisterna
+            - vr_efluentes
+            - vr_atec_ts_cisterna
+            - vr_tx_adm_cisterna
+            - dsc_situacao_obra
+            - pc_obra_realizado
+            - origem
+            - dt_ultima_entrega
+            - qt_unidades_concluidas
+            - qt_unidades_entregues
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - co_natureza
+            - co_grupo_renda
+            - co_municipio_ibge
+            - no_municipio
+            - vr_operacao
+            - no_situacao_obra
+            - idt_movimento
+            - filename
+
+  - name: bronze_sftp_int057_pnhr_bb_empreendimentos
+    description: >
+      Histórico de empreendimentos PNHR no Banco do Brasil (integração INT057). Não traz
+      `nu_apf`: o APF é derivado do número do contrato do empreendimento. Também parado
+      em 2024-11-29.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - dt_movimento
+            - co_agente_financeiro
+            - nu_contrato_empreendimento
+            - dt_contrato
+            - co_natureza
+            - natureza_contrato
+            - vr_investimento
+            - vr_atec
+            - vr_ts
+            - vr_custo_originacao
+            - vr_taxa_administracao
+            - vr_diif_juros
+            - vr_taxa_risco_credito
+            - vr_contrapartida
+            - vr_cisterna
+            - vr_efluentes
+            - vr_atec_ts_cisterna
+            - vr_tx_adm_cisterna
+            - ic_cisterna
+            - sg_uf
+            - no_entidade_organizadora
+            - nu_cnpj_entidade
+            - pz_obra
+            - pc_execucao_fisica_obra
+            - pc_execucao_financeira_obra
+            - pc_execucao_financeira_atec
+            - pc_execucao_financeira_ts
+            - co_situacao_obra
+            - no_situacao_obra
+            - dt_efetiva_conclusao
+            - dt_ultima_liberacao
+            - qt_unidades
+            - origem
+            - qt_unidades_concluidas
+            - qt_unidades_entregues
+            - co_municipio_ibge
+            - no_municipio
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - vr_edificacao
+            - vr_liberado
+            - no_empreendimento
+            - co_grupo_renda
+            - vr_operacao
+            - vr_diferencial_juros
+            - idt_movimento
+            - de_interface
+            - nu_apf
+            - nu_contrato_emprendimento
+            - de_pendencia_campo
+            - vr_pendencia_1
+            - vr_pendencia_2
+            - de_descricao
+            - co_validacao_mdr
+            - nu_linha
+            - filename
+
+  - name: bronze_sftp_int055_liberacoes_caixa_bb
+    description: >
+      Liberações de recurso de CAIXA e BB (integração INT055), de todos os programas — a
+      prata filtra `no_programa like '%PNHR%'`. Não decompõe o valor por componente, então
+      alimenta só o total liberado. Chega zipado do SFTP e é expandido para .TXT na
+      entrada; a extensão de origem não entra na key da staging. Vigente 2025-03-18.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - no_programa
+            - nu_apf
+            - data_liberacao
+            - no_tipo_liberacao
+            - vr_valor
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_shpt_dados_prioritarios_snh_empreendimentos
+    description: >
+      Dados prioritários disponibilizados pela SNH, todas as modalidades — a prata filtra
+      RURAL. É a espinha dorsal do domínio: os outros insumos entram por left join sobre
+      ela.
+
+      ATENÇÃO: é um export avulso, sobrescrito in place na origem, e NÃO acompanha o feed
+      mensal. Não há histórico recuperável — cada regeração apaga a anterior.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - data_de_referencia
+            - codigo_ibge_do_municipio
+            - sigla_da_uf
+            - nome_da_uf
+            - nome_da_regiao
+            - municipio
+            - identificador_da_operacao_na_snh
+            - codigo_da_operacao_no_agente_financeiro
+            - nome_do_agente_financeiro
+            - nome_da_construtora_entidade
+            - nome_da_construtora_entidade_2_cnpj_da_construtora_entidade
+            - nome_do_empreendimento
+            - modalidade
+            - situacao_do_empreendimento
+            - mudou_de_fase
+            - apf_da_fase_obra
+            - detalhamento_da_situacao_do_empreendimento
+            - situacao_da_empreendimento_agrupada
+            - situacao_da_empreendimento_agrupada_janeiro_2023
+            - situacao_do_empreendimento_janeiro_2023
+            - situacao_do_empreendimento_janeiro_2024
+            - detalhamento_da_situacao_do_empreendimento_janeiro_2024
+            - detalhamento_da_situacao_do_empreendimento_janeiro_2023
+            - data_da_contratacao
+            - novo_mcmv_sim_nao
+            - percentual_da_obra
+            - valor_contratado_original
+            - valor_do_aporte_adicional
+            - valor_contratado_total
+            - valor_desembolsado_total
+            - valor_desembolsado_em_2025
+            - unidades_contratadas
+            - unidades_entregues
+            - unidades_entregues_em_2023
+            - unidades_entregues_em_2024
+            - unidades_entregues_em_2025
+            - unidades_distratadas
+            - unidades_vigentes
+            - operacao_vigente_sim_nao
+            - unidades_vigentes_janeiro_2023
+            - operacao_vigente_janeiro_2023_sim_nao
+            - unidades_vigentes_janeiro_2024
+            - data_do_termino
+            - data_de_previsao_de_termino
+            - unidades_habitacionais_a_serem_entregues
+            - logradouro
+            - numero_do_imovel
+            - complemento_do_logradouro
+            - bairro
+            - cep
+            - latitude
+            - longitude
+            - arquivo_de_origem
+            - criado_em
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_shpt_base_trabalho_social_pnhr_rural_caixa
+    description: >
+      Acompanhamento do Trabalho Social (PTS) do PNHR pela CAIXA: situação do TS, valor
+      global e desembolsado, percentual de execução.
+
+      Export avulso em vez do feed datado porque o feed (Trabalho Social/
+      MCMV_RURAL_TS_CAIXA_BB_<aaaamm>) vira um parquet por aba, e o sufixo da aba muda de
+      nome todo mês — não há padrão estável para pescar a aba certa.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - recurso
+            - contrato
+            - municipio
+            - uf
+            - nome_empreendimento
+            - uh
+            - tipologia
+            - fase_mcmv
+            - data_da_contratacao
+            - vr_global_ts
+            - vr_desembolsado
+            - vr_a_desembolsar_nao_concluidos
+            - vr_nao_desembolsado_concluidos
+            - percentual_execucao_ts
+            - percentual_obra
+            - portaria_adotada
+            - instrumento_de_planejamento
+            - natureza_execucao
+            - dt_entrega
+            - situacao_ts
+            - motivo_situacao_ts_atrasado_paralisado
+            - dt_ultimo_avt
+            - dt_avf
+            - arquivo_de_origem
+            - criado_em
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_shpt_base_trabalho_social_pnhr_bb
+    description: >
+      Acompanhamento do Trabalho Social (PTS) do PNHR pelo Banco do Brasil. Layout
+      próprio, diferente do da CAIXA. Mesma ressalva de export avulso.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - recurso
+            - contrato_registro_ao
+            - municipio
+            - uf
+            - nome_empreendimento
+            - uh
+            - tipologia
+            - fase_mcmv
+            - data_contratacao_empreendimento
+            - vr_total_ts
+            - vr_desembolsado_ts
+            - vr_a_desembolsar_ts
+            - percentual_execucao_ts
+            - percentual_obra
+            - portaria_ts_utilizada
+            - instrumento_de_planejamento
+            - data_primeiro_relatorio
+            - data_ultimo_relatorio
+            - data_da_assinatura_do_primeiro_contrato_de_pessoa_fisica
+            - forma_natureza_de_execucao_direta_indireta_mista_pelo_af
+            - situacao_ts
+            - motivo_situacao_ts_atrasado_paralisado
+            - arquivo_de_origem
+            - criado_em
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
