@@ -15,13 +15,12 @@ models:
       dt_primeira_entrega vem da espinha. dt_previsao_entrega = maior data
       prevista observada (braço SNH; fonte 'snh:dados_prioritarios', fill ~2%).
       dt_legalizacao nasce NULL nesta fase. `marcos_coerentes` é
-      diagnóstico. Changes: enriquecer-datas-acompanhamento-historico +
-      destravar-datas-obra-entrega-silver-historico. Requer target staging_duckdb.
+      diagnóstico. Requer target staging_duckdb.
     meta:
       tags: [gold, mcmv, dados-historicos, empreendimento, marco, linha-do-tempo]
     columns:
-      # verificacao_tipagem (change verificar-tipagem-silver-gold-historico) —
-      # tipo_esperado nos nomes do DuckDB. Ref: docs/inventario-tipagem-silver-gold.md.
+      # verificacao_tipagem — tipo_esperado nos nomes do DuckDB.
+      # Ref: docs/inventario-tipagem-silver-gold.md.
       - name: id_empreendimento
         description: Chave do empreendimento (= id_empreendimento no FDS, = apf em FAR/Rural).
         data_tests:
@@ -55,13 +54,12 @@ models:
         description: >
           Maior data prevista de entrega observada em qualquer snapshot do
           empreendimento (braço SNH). NULL quando nenhum snapshot reportou.
-          Change: destravar-datas-obra-entrega-silver-historico.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_previsao_entrega_fonte
         description: >
           `snh:dados_prioritarios` quando há data prevista; `sem_fonte` caso
-          contrário. Change: destravar-datas-obra-entrega-silver-historico.
+          contrário.
         data_tests:
           - accepted_values:
               arguments:
@@ -71,7 +69,6 @@ models:
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
-      # Bloco C (change colunas-orfas-bronze-historico).
       - name: dt_primeira_entrega
         description: >
           Menor entre a data direta da silver (FAR/INT040) e a da espinha
@@ -101,15 +98,13 @@ models:
       os 2-3 APFs de fase para 1 linha pela chave estável codigo_empreendimento
       (= id_empreendimento), prevalecendo a fase mais avançada
       (Desligamento > Obra > Projeto). FAR/Rural inalterados (chave = apf).
-      Consolidado apenas — filtrável por frente_mcmv. Change:
-      id-empreendimento-eixo-historico.
+      Consolidado apenas — filtrável por frente_mcmv.
     meta:
       tags: [gold, mcmv, dados-historicos, empreendimento, snapshot]
     columns:
       # verificacao_tipagem — herda o contrato de tipos das silvers por frente.
-      # Change: verificar-tipagem-silver-gold-historico.
       - name: id_historico_snapshot
-        description: Identificador herdado da versão corrente do empreendimento (por APF).
+        description: Identificador único do empreendimento na versão corrente (por APF).
         data_tests:
           - not_null
           - unique
@@ -158,21 +153,18 @@ models:
       - name: quantidade_uh_concluidas
         description: >
           UH com obra concluída (estágio anterior a "entregue"), herdada da
-          silver. Só o braço SFTP reporta. Change:
-          destravar-datas-obra-entrega-silver-historico.
+          silver. Só o braço SFTP reporta.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dt_entrega_uh
         description: >
-          Data de entrega de UH (substitui a antiga `dt_entrega`, BREAKING).
-          Herdada da silver por frente. Change: enriquecer-datas-acompanhamento-historico.
+          Data de entrega de UH. Herdada da silver por frente.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_conclusao_obra
         description: >
           Data de conclusão física da obra / legalização. Herdada da silver —
-          FDS/FAR do braço SFTP, Rural de dt_efetiva_conclusao. Change:
-          destravar-datas-obra-entrega-silver-historico.
+          FDS/FAR do braço SFTP, Rural de dt_efetiva_conclusao.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: dt_entrega_uh_fonte
@@ -180,11 +172,9 @@ models:
       - name: dt_previsao_entrega
         description: >
           Data prevista de entrega (braço SNH), herdada da silver. Fill ~2%.
-          Change: destravar-datas-obra-entrega-silver-historico.
       - name: qt_uh_previsao_entrega
         description: >
-          UH previstas para entrega (braço SNH), herdada da silver. Change:
-          destravar-datas-obra-entrega-silver-historico.
+          UH previstas para entrega (braço SNH), herdada da silver.
       - name: fonte_tabela
         description: >
           Interface/feed de origem do snapshot corrente, valor cru herdado da
@@ -197,17 +187,16 @@ models:
       - name: valor_contratado_preenchido
         description: >
           Herdado da silver — true quando valor_contratado/valor_desembolsado do
-          último snapshot vieram de LOCF, não de observação SNH (change
-          dedup-fonte-silver-historico, D3).
+          último snapshot vieram de LOCF, não de observação SNH.
         data_tests:
           - not_null
       - name: responsavel_preenchido
         description: >
           Herdado da silver — true quando responsavel_id/nome vieram de LOCF do
-          último snapshot SFTP (change dedup-fonte-silver-historico, D3).
+          último snapshot SFTP.
         data_tests:
           - not_null
-      # Blocos A/C (change colunas-orfas-bronze-historico) — estado atual;
+      # Sinais de retomada/paralisação e marcos de data — estado atual;
       # LOCF do último valor conhecido na silver (não some na virada de feed).
       - name: sinal_retomada
         description: >
@@ -231,10 +220,8 @@ models:
         description: Primeira entrega de UH, direto da fonte (INT040/054 — FAR). NULL em FDS/Rural.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      # ── atributos estáveis (ex-dim_empreendimento_historico; change
-      # consolidar-schemas-historico-reloginho, D3). Resolvidos do último
-      # snapshot de cada fonte por atributo, no grão (frente_mcmv,
-      # codigo_empreendimento). Aditivas ao fim do contrato. `dt_dim` não migrou.
+      # ── atributos estáveis. Resolvidos do último snapshot de cada fonte por
+      # atributo, no grão (frente_mcmv, codigo_empreendimento).
       - name: no_entidade_organizadora
         description: >
           Entidade organizadora (INT057/INT065 — **Rural apenas**, ~86%). NULL em
@@ -268,7 +255,7 @@ models:
           - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
       # Endereço do EMPREENDIMENTO habitacional (o imóvel/terreno da obra) —
       # NÃO é endereço residencial de pessoa física / beneficiário. Publicáveis
-      # no OpenMetadata com description normal (OQ5, design.md); o gold segue
+      # no OpenMetadata com description normal; o gold segue
       # `classification: internal`.
       - name: bairro
         description: Bairro do empreendimento habitacional (endereço do imóvel/obra, não de pessoa física). Valor cru da fonte (INT059).
@@ -294,24 +281,14 @@ models:
       somar entre meses; NUNCA somar entre fonte_familia de grão diferente
       (grao_familia: 'contrato' p/ bext e min_cidades). bases_relatório_executivo
       e min_cidades se sobrepõem 2014-2016 — usar prioridade_familia para uma
-      série contínua. uh_comercializadas / uh_em_obras ao fim do contrato
-      (change auditar-grao-serie-executiva-historica).
+      série contínua.
 
       VALORES NOMINAIS (R$ da data do fato, 2012-2018) — comparação plurianual
       exige deflator externo (glossario-valores-financeiros.md).
-
-      BREAKING (change vocabulario-e-qualidade-financeira-historica) — mapa
-      nome-antigo → nome-novo:
-        valor_investimento → valor_investimento_acumulado
-        valor_emprestimo   → valor_financiamento_acumulado
-        valor_liberado     → valor_desembolsado_acumulado
-      Colunas novas: natureza_serie, grao_familia, valor_vgv,
-      valor_contrapartidas, subsidio_total. Valores monetários em numeric(15,2)
-      na silver (parse_hist_numeric). Requer target staging_duckdb.
+      Requer target staging_duckdb.
     meta:
       tags: [gold, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
-      # Change: vocabulario-e-qualidade-financeira-historica (D7).
       # Cobertura nacional observada 2026-09-06: 75,6% (bext só tem
       # subsidio_total, sem split FGTS/OGU -> fica 'Nao classificada'). Piso em
       # 0,60 para pegar regressão sem ruído. Ver §7 do glossário.
@@ -324,9 +301,6 @@ models:
           config:
             severity: warn
     columns:
-      # verificacao_tipagem (change verificar-tipagem-silver-gold-historico):
-      # UH agregada = BIGINT via cast(sum(...) as bigint) — sem o cast SUM daria
-      # HUGEINT; valor_* = DECIMAL(38,2) (sum de numeric(15,2)).
       - name: dt_referencia
         description: >
           Mês-snapshot da carteira agregada (1º dia do mês; conceito canônico
@@ -345,7 +319,7 @@ models:
           - not_null
       - name: natureza_serie
         description: >
-          Propagada da silver (change auditar-grao-serie-executiva-historica):
+          Propagada da silver:
           'estoque' — carteira acumulada no mês-snapshot, não somar entre meses
           (bases_relatorio_executivo, min_cidades, bext); 'fluxo' — entrada de
           novos empreendimentos no mês (entrada_bb).
@@ -365,27 +339,27 @@ models:
       - name: valor_investimento_acumulado
         description: >
           Conceito canônico `valor_investimento_total`, acumulado (estoque).
-          Era `valor_investimento` (BREAKING). R$ nominais.
+          R$ nominais.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(38,2)" } }
       - name: valor_financiamento_acumulado
         description: >
           Conceito canônico `valor_financiamento` (operação de crédito, sem
-          VGV), acumulado. Era `valor_emprestimo` (BREAKING — renome + sufixo).
+          VGV), acumulado.
       - name: valor_desembolsado_acumulado
         description: >
           Conceito canônico `valor_desembolsado_acumulado` — recurso federal
-          liberado acumulado. Era `valor_liberado` (BREAKING). Cobre só
-          bases_relatorio_executivo e bext (∅ nas outras famílias).
+          liberado acumulado. Cobre só bases_relatorio_executivo e bext (∅ nas
+          outras famílias).
       - name: valor_vgv
-        description: Conceito canônico `valor_vgv` — valor global de venda. Só entrada_bb reporta. Coluna nova.
+        description: Conceito canônico `valor_vgv` — valor global de venda. Só entrada_bb reporta.
       - name: valor_contrapartidas
-        description: Conceito canônico `valor_contrapartidas` — aporte do poder público / entidade. Coluna nova (era `valor_contrapartida` na 1ª versão da change).
+        description: Conceito canônico `valor_contrapartidas` — aporte do poder público / entidade.
       - name: subsidio_total
         description: >
           Conceito canônico `subsidio_total` — subsídio sem split (só bext).
           **Não somar** `subsidio_fgts + subsidio_ogu + subsidio_total`: usar
-          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`. Coluna nova.
+          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
       - name: prioridade_familia
         description: 1 bases_relatorio_executivo, 2 min_cidades, 3 entrada_bb, 4 bext (menor = preferencial).
       - name: nivel_agregacao
@@ -410,7 +384,7 @@ models:
           Classificação da linha pelo subsídio dominante: 'OGU/Subsidiado',
           'FGTS/Financiado' ou 'Nao classificada' (família `bext`, que só
           reporta `subsidio_total` sem split — ver §7 do
-          glossario-valores-financeiros.md). Backtest do piloto #118.
+          glossario-valores-financeiros.md).
         data_tests:
           - not_null
       - name: uh_contratadas
@@ -443,9 +417,8 @@ models:
         description: >
           Soma de UH vendidas/reservadas ao beneficiário no recorte (só
           bases_relatorio_executivo e min_cidades reportam; antecede a entrega
-          física, não aninhada com uh_entregues). Coluna nova ao fim do contrato
-          (change auditar-grao-serie-executiva-historica). Ver natureza_serie —
-          nas séries de estoque NÃO somar entre meses.
+          física, não aninhada com uh_entregues).
+          Ver natureza_serie — nas séries de estoque NÃO somar entre meses.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
@@ -460,18 +433,14 @@ models:
       um multi-fase conta 1), uh — e de FLUXO — entradas / saidas da situação no
       mês, por lag(situacao_canonica) particionado por
       (frente_mcmv, chave_empreendimento). **NÃO somar entradas / saidas entre
-      nivel_geografico** (cada transição acontece numa única UF). Change:
-      id-empreendimento-eixo-historico (antes contava APF distintos — a contagem
-      FDS caiu ~10%; FAR/Rural inalterados).
+      nivel_geografico** (cada transição acontece numa única UF). A contagem usa
+      empreendimentos distintos (no FDS um multi-fase conta 1).
       `fonte_serie` é a predominante do mês por frente — usar para anotar o pico
       de paralisação de 2024 (virada SFTP→SNH), que o gold NÃO suaviza. Requer
       target staging_duckdb.
     meta:
-      tags: [gold, mcmv, dados-historicos, empreendimento, situacao-obra, "issue-59"]
+      tags: [gold, mcmv, dados-historicos, empreendimento, situacao-obra]
     columns:
-      # verificacao_tipagem (change verificar-tipagem-silver-gold-historico):
-      # `mes` = DATE (date_trunc::date); uh/entradas/saidas = BIGINT via
-      # cast(sum(...) as bigint).
       - name: mes
         description: Primeiro dia do mês de referência.
         data_tests:

@@ -1,7 +1,6 @@
 version: 2
 
-# Entregas por EVENTO da SNH, uma tabela POR AGENTE desde a change
-# pipeline-bronze-historica-destino-trocavel (D5). A série mensal SNH
+# Entregas por EVENTO da SNH, uma tabela POR AGENTE. A série mensal SNH
 # (acumulado) está nas bronzes bronze_dhist_empreendimento_snh_bb /
 # _snh_caixa, em mcmv_historico_dbt; a view passthrough
 # bronze_reloginho_snh_serie_mensal deixou de existir junto com a bronze única
@@ -24,7 +23,7 @@ models:
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt).
+      # Vigilância de drift de schema.
       - colunas_esperadas:
           config:
             severity: warn
@@ -39,7 +38,7 @@ models:
         description: >
           UH entregues no evento, harmonizada a partir da coluna do agente.
           Conceito canônico `quantidade_uh_entregues` (recorte de fluxo por
-          evento); nome cru mantido nesta bronze.
+          evento).
       - name: source_file
         description: Caminho do objeto parquet de origem no MinIO staging.
         data_tests:
@@ -67,7 +66,7 @@ models:
     meta:
       tags: [bronze, mcmv, reloginho, dados-historicos, entregas]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt).
+      # Vigilância de drift de schema.
       - colunas_esperadas:
           config:
             severity: warn
@@ -82,7 +81,7 @@ models:
         description: >
           UH entregues no evento, harmonizada a partir da coluna do agente.
           Conceito canônico `quantidade_uh_entregues` (recorte de fluxo por
-          evento); nome cru mantido nesta bronze.
+          evento).
       - name: source_file
         description: Caminho do objeto parquet de origem no MinIO staging.
         data_tests:

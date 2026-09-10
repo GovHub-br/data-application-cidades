@@ -3,28 +3,26 @@ version: 2
 models:
   - name: ouro_reloginho_indicadores_gargalo_desempenho
     description: >
-      Tabela Gold unificada por empreendimento/APF para identificar gargalos e desempenho
-      do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução física,
-      baixa execução financeira, paralisação, falta de atualização recente,
-      contratos sem evolução e saldo financeiro a desembolsar. Alimenta alertas
-      estratégicos e dashboards da feature #53.
+      Tabela Gold unificada por empreendimento/APF para identificar gargalos e
+      desempenho do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução
+      física, baixa execução financeira, paralisação, falta de atualização
+      recente, contratos sem evolução e saldo financeiro a desembolsar. Alimenta
+      alertas estratégicos e dashboards.
 
       GRÃO: 1 linha por (frente, apf) — snapshot corrente, não série. Derivada
       das fichas de produção `gold_far_ficha_empreendimento` /
-      `gold_fds_ficha_empreendimento` e das golds `*_atual_*` FAR/FDS (linhagem
-      cross-pasta). Cobre só FAR e FDS — Rural fica de fora deste gold.
+      `gold_fds_ficha_empreendimento` e das golds `*_atual_*` FAR/FDS. Cobre só
+      FAR e FDS — Rural fica de fora deste gold.
 
-      VOCABULÁRIO (change catalogo-dicionario-dados-historicos): a coluna de
-      frente se chama `frente` (não `frente_mcmv`) e seu domínio é {FAR, FDS}
-      — nome e domínio herdados das fichas de produção; `FDS` é a mesma frente
-      que o resto do eixo histórico chama de `Entidades`. `dt_calculo` é o
-      conceito canônico `dt_gold` (glossario-mcid.md) sob nome herdado.
+      VOCABULÁRIO: a coluna de frente se chama `frente` (não `frente_mcmv`) e seu
+      domínio é {FAR, FDS}; `FDS` é a mesma frente que o resto do eixo histórico
+      chama de `Entidades`. `dt_calculo` é o conceito canônico `dt_gold`
+      (glossario-mcid.md).
 
-      Fonte de desembolso (change vocabulario-e-qualidade-financeira-historica,
-      D4): `valor_liberado_historico` = `valor_desembolsado` da ficha
-      (GEFUS/CAIXA), primário. O agregado do `*_financeiro_mensal` (SharePoint)
-      deixou de ser coalesce'd por cima e virou a coluna informativa
-      `valor_desembolsado_componentes` (cobertura parcial, só APF pós-2024).
+      Fonte de desembolso: `valor_liberado_historico` = `valor_desembolsado` da
+      ficha (GEFUS/CAIXA). O agregado do `*_financeiro_mensal` (SharePoint) fica
+      na coluna informativa `valor_desembolsado_componentes` (cobertura parcial,
+      só APF pós-2024).
     meta:
       tags:
         - gold
@@ -41,9 +39,8 @@ models:
       - name: frente
         description: >
           Frente do MCMV (conceito canônico `frente_mcmv`, glossario-mcid.md).
-          Nome `frente` e domínio {FAR, FDS} herdados das fichas de produção;
-          `FDS` ≡ `Entidades` no vocabulário do resto do eixo histórico. Rural
-          não entra neste gold.
+          Domínio {FAR, FDS}; `FDS` ≡ `Entidades` no vocabulário do resto do eixo
+          histórico. Rural não entra neste gold.
         data_tests:
           - not_null
           - accepted_values:
@@ -64,15 +61,13 @@ models:
           vencida e execução física < 100%) / 'Dentro do Prazo'.
       - name: status_ritmo
         description: >
-          Eixo de classificação de RITMO físico-financeiro, herdado cru das
-          golds de ficha FAR/FDS (`ritmo_fisico_financeiro` /
-          `status_ritmo_obra` da produção). Distinto de `situacao_canonica`
-          (situação de obra) e de `status_prazo`.
+          Eixo de classificação de RITMO físico-financeiro, valor cru das golds
+          de ficha FAR/FDS (`ritmo_fisico_financeiro` / `status_ritmo_obra`).
+          Distinto de `situacao_canonica` (situação de obra) e de `status_prazo`.
       - name: valor_liberado_historico
         description: >
           Desembolso acumulado da ficha (GEFUS/CAIXA) — conceito canônico
-          `valor_desembolsado_acumulado`. = `valor_desembolsado` (D4). Antes era
-          `coalesce(<agregado SharePoint>, ficha)`.
+          `valor_desembolsado_acumulado`. = `valor_desembolsado`.
       - name: valor_desembolsado_componentes
         description: >
           Soma das liberações conhecidas no snapshot do `*_financeiro_mensal`
@@ -126,23 +121,18 @@ models:
       - name: dt_calculo
         description: >
           Timestamp de materialização do gold — conceito canônico `dt_gold`
-          (glossario-mcid.md). Nome `dt_calculo` mantido para compatibilidade;
-          alias fica fora de escopo (change catalogo-dicionario-dados-historicos, G5).
+          (glossario-mcid.md).
 
   - name: ouro_reloginho_indicadores
     description: >
-      Tabela Gold do reloginho MCMV (grupo A): série mensal SNH consolidada por
-      agente. Lê a silver `prata_dhist_snh_apf_mes`
-      (ingestão/tipagem/dedup ficam nas camadas bronze e silver — ver
-      docs/entregas/issue-130-refatoracao-medalhao-reloginho.md e
-      docs/entregas/issue-130-dicionario-indicadores.md). Uma linha por
-      (agente_financeiro, dt_referencia) — série de ESTOQUE (carteira acumulada
-      no mês-snapshot da SNH): NÃO somar `uh_*` entre `dt_referencia`. Colunas:
-      acumulados uh_contratadas, uh_entregues e uh_vigentes, número de APFs
-      distintos (n_apf) e contagem corrida de meses observados por agente
-      (n_meses_observados). Saída idêntica à versão anterior — a reconciliação
-      com a referência #66 continua válida. Alimenta o resumo do reloginho.
-      Requer target staging_duckdb.
+      Tabela Gold do reloginho MCMV: série mensal SNH consolidada por agente. Lê
+      a silver `prata_dhist_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
+      camadas bronze e silver). Uma linha por (agente_financeiro, dt_referencia)
+      — série de ESTOQUE (carteira acumulada no mês-snapshot da SNH): NÃO somar
+      `uh_*` entre `dt_referencia`. Colunas: acumulados uh_contratadas,
+      uh_entregues e uh_vigentes, número de APFs distintos (n_apf) e contagem
+      corrida de meses observados por agente (n_meses_observados). Alimenta o
+      resumo do reloginho. Requer target staging_duckdb.
     meta:
       tags:
         - gold
@@ -166,14 +156,10 @@ models:
           - not_null
           - accepted_values:
               values: ["BB", "CAIXA"]
-      # verificacao_tipagem: cast(... as bigint) — sum(bigint) daria HUGEINT,
-      # sem tipo no Postgres. Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
         description: >
           Soma de UH contratadas no mês-snapshot (estoque — não somar entre
-          meses). Conceito canônico `quantidade_uh` (glossario-mcid.md); nome
-          `uh_contratadas` mantido para compatibilidade com o dashboard do
-          reloginho (D3 da change catalogo-dicionario-dados-historicos).
+          meses). Conceito canônico `quantidade_uh` (glossario-mcid.md).
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
@@ -182,14 +168,14 @@ models:
           Soma acumulada de UH entregues reportada no snapshot SNH (estoque
           acumulado — não somar entre meses; para o fluxo mensal ver
           `ouro_reloginho_indicadores_entregas`). Conceito canônico
-          `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
+          `quantidade_uh_entregues`.
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
         description: >
           Soma de UH vigentes no mês-snapshot (estoque). Conceito canônico
-          `quantidade_uh_vigentes`; nome mantido para compatibilidade (D3).
+          `quantidade_uh_vigentes`.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf
@@ -203,7 +189,7 @@ models:
 
   - name: ouro_reloginho_indicadores_frente
     description: >
-      Tabela Gold do reloginho MCMV (grupo A) com quebra por frente. Mesma
+      Tabela Gold do reloginho MCMV com quebra por frente. Mesma
       regra de `ouro_reloginho_indicadores`, com frente_mcmv (FAR / Entidades /
       Rural) no grão. Uma linha por (agente_financeiro, frente_mcmv,
       dt_referencia) — série de ESTOQUE, não somar `uh_*` entre meses. Somar
@@ -235,12 +221,10 @@ models:
           - not_null
           - accepted_values:
               values: ["FAR", "Entidades", "Rural"]
-      # verificacao_tipagem: cast(... as bigint). Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
         description: >
           Soma de UH contratadas no mês-snapshot, na frente (estoque — não somar
-          entre meses). Conceito canônico `quantidade_uh`; nome mantido para
-          compatibilidade (D3).
+          entre meses). Conceito canônico `quantidade_uh`.
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
@@ -248,14 +232,14 @@ models:
         description: >
           Soma acumulada de UH entregues no snapshot, na frente (estoque
           acumulado — não somar entre meses). Conceito canônico
-          `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
+          `quantidade_uh_entregues`.
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
         description: >
           Soma de UH vigentes no mês-snapshot, na frente (estoque). Conceito
-          canônico `quantidade_uh_vigentes`; nome mantido para compatibilidade (D3).
+          canônico `quantidade_uh_vigentes`.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf
@@ -267,10 +251,10 @@ models:
 
   - name: ouro_reloginho_indicadores_entregas
     description: >
-      Tabela Gold do reloginho (grupo A) — entregas: fluxo por evento vs
+      Tabela Gold do reloginho — entregas: fluxo por evento vs
       acumulado do snapshot, lado a lado, por (agente_financeiro,
-      dt_referencia). Serve à decisão #5 da #130 (qual é o total oficial de UH
-      entregues) e ao ritmo_recente. `dif_evento_vs_snapshot` deve tender a ~0.
+      dt_referencia). Serve para definir o total oficial de UH entregues e o
+      ritmo_recente. `dif_evento_vs_snapshot` deve tender a ~0.
       Requer target staging_duckdb.
     meta:
       tags: [gold, mcmv, indicadores, reloginho, dados-historicos, entregas]
@@ -284,7 +268,6 @@ models:
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      # verificacao_tipagem: cast(... as bigint). Change: verificar-tipagem-silver-gold-historico.
       - name: uh_entregues_evento_mes
         description: UH entregues no mês (fluxo, da silver de evento).
         data_tests:
@@ -328,22 +311,20 @@ models:
         data_tests:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
-      # verificacao_tipagem: bigint herdado do ouro_reloginho_indicadores (cast).
-      # Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas_ultimo
         description: >
           UH contratadas no último mês-snapshot observado (conceito canônico
-          `quantidade_uh`; nome mantido para compatibilidade — D3).
+          `quantidade_uh`).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_ultimo
         description: >
           UH entregues (acumulado) no último mês-snapshot observado (conceito
-          canônico `quantidade_uh_entregues`; nome mantido — D3).
+          canônico `quantidade_uh_entregues`).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes_ultimo
-        description: UH vigentes no último mês-snapshot observado (conceito canônico `quantidade_uh_vigentes`; nome mantido — D3).
+        description: UH vigentes no último mês-snapshot observado (conceito canônico `quantidade_uh_vigentes`).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_apf_ultimo
@@ -442,4 +423,4 @@ models:
       - name: dt_calculo
         description: >
           Data de materialização do gold — conceito canônico `dt_gold`
-          (glossario-mcid.md). Nome `dt_calculo` mantido para compatibilidade (G5).
+          (glossario-mcid.md).

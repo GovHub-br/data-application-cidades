@@ -3,8 +3,8 @@ version: 2
 seeds:
   - name: issue_118_mcmv_serie_temporal_piloto
     description: >
-      Seed de evidencia da issue #118 com serie anual de UHs contratadas,
-      separando OGU/subsidiado e FGTS/financiado.
+      Seed com série anual de UHs contratadas, separando OGU/subsidiado e
+      FGTS/financiado.
     columns:
       - name: ano
         data_tests:
@@ -17,7 +17,6 @@ seeds:
         data_tests:
           - not_null
 
-# O modelo `prata_dhist_serie_anual_ogu_fgts` (ex-`silver_mcmv_historico_serie_anual_ogu_fgts`)
-# está DESABILITADO nesta branch (change renomear-camadas-pt-historico-reloginho,
-# D4 — ver o cabeçalho do .sql). O bloco `models:` com suas colunas/testes será
-# restaurado quando o desenvolvimento do piloto for retomado.
+# O modelo `prata_dhist_serie_anual_ogu_fgts`
+# está DESABILITADO nesta branch (ver o cabeçalho do .sql). O bloco `models:` com
+# suas colunas/testes será restaurado quando o desenvolvimento do piloto for retomado.

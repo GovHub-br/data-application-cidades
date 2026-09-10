@@ -1,7 +1,6 @@
 version: 2
 
-# As bronzes de série histórica são uma TABELA POR FAMÍLIA desde a change
-# pipeline-bronze-historica-destino-trocavel (D5): 4 da série executiva + 5
+# As bronzes de série histórica são uma TABELA POR FAMÍLIA: 4 da série executiva + 5
 # interfaces GEFUS + 2 agentes SNH neste domínio, mais 2 agentes de entregas em
 # indicadores_mcmv_dbt/bronze. O mapa que as define está em
 # macros/historico/familias.sql; a união entre famílias vive na silver.
@@ -23,7 +22,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -38,8 +37,7 @@ models:
               arguments:
                 values: ["bases_relatorio_executivo"]
       # valor_nao_negativo em `warn` no bronze (cópia fiel); gate `error` na
-      # silver pós-quarentena. Change:
-      # vocabulario-e-qualidade-financeira-historica (D6/8.3).
+      # silver pós-quarentena.
       - name: valor_total_do_investimento
         description: Investimento total (texto). ~1,3 mil linhas < 0 na fonte (erro de sinal).
         data_tests:
@@ -128,7 +126,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -171,7 +169,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -189,7 +187,7 @@ models:
       # (int -> float -> str a montante). Teste em `warn`: é defeito de origem
       # conhecido, não regressão — o bronze é cópia fiel e não corrige. A
       # limpeza (e o gate `error`) ficam na silver, via `strip_float_text`.
-      # Ver change testes-data-quality-dbt e docs/varredura-sufixo-float-texto.md.
+      # Ver docs/varredura-sufixo-float-texto.md.
       - name: codigo_empreendimento_bb
         description: Código do empreendimento no BB (identificador textual).
         data_tests:
@@ -245,7 +243,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -261,8 +259,7 @@ models:
                 values: ["bext"]
       # valor_nao_negativo em `warn` no bronze — o bronze é cópia fiel; o
       # negativo fica visível com a contagem e o build conclui. O gate `error`
-      # é na silver, pós-quarentena. Change:
-      # vocabulario-e-qualidade-financeira-historica (D6/8.3).
+      # é na silver, pós-quarentena.
       - name: mvalor_investimento
         description: Investimento total (texto, formato de origem). ~24,6 mil linhas < 0 (erro de sinal na fonte).
         data_tests:
@@ -302,13 +299,13 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
           config:
             severity: warn
-      # Guardrail (change colunas-orfas-bronze-historico): lista coluna com
+      # Guardrail: lista coluna com
       # sinal semântico não consumida por nenhuma silver e não em
       # colunas_bronze_ignoradas. Sempre warn.
       - bronze_colunas_nao_mapeadas:
@@ -347,7 +344,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -389,7 +386,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -431,7 +428,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -473,7 +470,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, sftp]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -517,7 +514,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, snh, reloginho]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:
@@ -550,7 +547,7 @@ models:
         data_tests:
           - not_null
 
-  # --- família obra_mensal (change enriquecer-quantidades-uh-e-sinais-obra-historico, D4)
+  # --- família obra_mensal
   - name: bronze_shpt_obra_mensal_far
     description: >
       Bronze — evolução de obra por empreendimento MCMV, frente FAR
@@ -564,9 +561,7 @@ models:
       `hash_linha`. Janela real 202512 → 202607. Schema DIVERGE de FDS/RURAL
       (`dt_movimento` / `co_situacao_obra`). A harmonização e o dedup ficam no
       braço `obra_mensal` das 3 silvers
-      `prata_{far,fds,rural}_historico_empreendimento` (o modelo autônomo
-      o modelo de obra mensal autônomo foi dissolvido pela change
-      consolidar-schemas-historico-reloginho).
+      `prata_{far,fds,rural}_historico_empreendimento`.
     meta:
       tags: [bronze, mcmv, dados-historicos, obra, sharepoint]
     data_tests:
@@ -692,7 +687,7 @@ models:
     meta:
       tags: [bronze, mcmv, dados-historicos, empreendimento, snh, reloginho]
     data_tests:
-      # Vigilância de drift de schema (change testes-data-quality-dbt):
+      # Vigilância de drift de schema:
       # avisa se o conjunto de colunas divergir de
       # seeds/data_quality/colunas_esperadas.csv. Nível warn.
       - colunas_esperadas:

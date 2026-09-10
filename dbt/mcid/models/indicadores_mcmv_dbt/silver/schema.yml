@@ -3,12 +3,10 @@ version: 2
 models:
   - name: prata_dhist_snh_apf_mes
     description: >
-      Silver do reloginho (grupo A): série mensal SNH tipada, com domínio
-      normalizado e deduplicada por APF. Grão: uma linha por
-      (agente_financeiro, apf, dt_referencia), com frente_mcmv canônica
-      (FAR / Entidades / Rural) derivada de `modalidade`. A chave de dedup é
-      a mesma validada na reconciliação contra a referência #66. Requer
-      target staging_duckdb.
+      Silver do reloginho: série mensal SNH tipada, com domínio normalizado e
+      deduplicada por APF. Grão: uma linha por (agente_financeiro, apf,
+      dt_referencia), com frente_mcmv canônica (FAR / Entidades / Rural) derivada
+      de `modalidade`. Requer target staging_duckdb.
     meta:
       tags:
         - silver
@@ -44,14 +42,12 @@ models:
       # resolve as duas via coalesce_present. Se uma safra futura renomear de
       # novo e o modelo não acompanhar, a cobertura cai (cada safra ~0,4% das
       # linhas) e o teste avisa. Cobertura observada pós-correção ~99,8%.
-      # Change: verificar-tipagem-silver-gold-historico.
       - name: uh_contratadas
         description: >
           UH contratadas do APF no snapshot do mês (estoque — não somar entre
           meses). Lê `uh_contratadas` ou `uhs_contratadas` conforme a safra
           (coalesce_present). Conceito canônico `quantidade_uh`
-          (glossario-mcid.md); nome `uh_contratadas` mantido para
-          compatibilidade com o dashboard do reloginho (D3).
+          (glossario-mcid.md).
         data_tests:
           - completude_minima:
               arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
@@ -61,7 +57,7 @@ models:
         description: >
           UH entregues (acumulado) do APF no snapshot do mês. Lê `uh_entregues`
           ou `uhs_entregues` conforme a safra. Conceito canônico
-          `quantidade_uh_entregues`; nome mantido para compatibilidade (D3).
+          `quantidade_uh_entregues`.
         data_tests:
           - completude_minima:
               arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
@@ -71,7 +67,7 @@ models:
         description: >
           UH vigentes do APF no snapshot do mês. Lê `uh_vigentes` ou
           `uhs_vigentes` conforme a safra. Conceito canônico
-          `quantidade_uh_vigentes`; nome mantido para compatibilidade (D3).
+          `quantidade_uh_vigentes`.
         data_tests:
           - completude_minima:
               arguments: { seed: campos_obrigatorios, modelo: prata_dhist_snh_apf_mes }
@@ -81,10 +77,7 @@ models:
         description: >
           UH distratadas (acumulado) do APF no snapshot do mês, de
           `quantidade_de_uhs_distratadas` da SNH (ambos os agentes). `0` é
-          informação, distinto de NULL. Change:
-          enriquecer-quantidades-uh-e-sinais-obra-historico. Grão
-          (agente_financeiro, apf, dt_referencia) e saída dos golds do reloginho
-          inalterados.
+          informação, distinto de NULL.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uf
@@ -107,8 +100,7 @@ models:
           concluida / cancelada) por join ao seed dominio_status sobre
           lower(trim(status_operacional)). NULL quando status ausente;
           'nao_mapeada' quando não casa. status_operacional cru preservado.
-          Não consumida pelos golds do reloginho. Change:
-          serie-historica-situacao-obra-regiao.
+          Não consumida pelos golds do reloginho.
         data_tests:
           - dentro_do_dominio:
               arguments:
@@ -132,11 +124,11 @@ models:
 
   - name: prata_dhist_snh_entregas_mes
     description: >
-      Silver do reloginho (grupo A) — entregas por evento agregadas ao mês do
+      Silver do reloginho — entregas por evento agregadas ao mês do
       EVENTO. Lê bronze_dhist_snh_entregas_evento, deduplica eventos
       repetidos por hash_linha e soma por (agente_financeiro, apf, mes_evento).
       É o fluxo real de entregas (base do ritmo_recente e do caminho alternativo
-      do total de entregas — decisão #5). Requer target staging_duckdb.
+      do total de entregas). Requer target staging_duckdb.
     meta:
       tags: [silver, mcmv, reloginho, dados-historicos, entregas]
     columns:
@@ -160,9 +152,7 @@ models:
         description: >
           UH entregues no mês do EVENTO, por APF — série de FLUXO (pode somar
           entre meses, ao contrário dos acumulados de `prata_dhist_snh_apf_mes`).
-          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo); nome
-          mantido para compatibilidade (D3). `cast(... as bigint)` — sum(bigint)
-          daria HUGEINT.
+          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: n_eventos
