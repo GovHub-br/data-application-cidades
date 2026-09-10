@@ -23,12 +23,7 @@ models:
     metadata:
       +materialized: incremental
       +schema: metadata
-    # Três schemas para o projeto inteiro (bronze, prata, ouro), um por camada, com a
-    # camada no prefixo do nome da tabela. A linha entra no nome a partir da prata
-    # (prata_far_*, ouro_far_*); na bronze o nome é o do arquivo que veio da staging,
-    # que já identifica a origem.
-    # A bronze é dbt: cada model lê o parquet da staging direto por read_parquet
-    # (pg_duckdb) e materializa como tabela text, sem script externo.
+
     far_dbt:
       +materialized: table
       bronze:
@@ -38,7 +33,6 @@ models:
       ouro:
         +schema: ouro
 
-    # Mesma estrutura do far_dbt: bronze/prata/ouro em três schemas do projeto.
     fds_dbt:
       +materialized: table
       bronze:
@@ -48,9 +42,6 @@ models:
       ouro:
         +schema: ouro
 
-    # Mesma estrutura do far_dbt e do fds_dbt: bronze/prata/ouro nos três schemas do
-    # projeto. A bronze do rural passou a ser dbt (read_parquet via pg_duckdb) e não é
-    # mais carregada pelo scripts/staging_para_bronze.py.
     rural_dbt:
       +materialized: table
       bronze:
