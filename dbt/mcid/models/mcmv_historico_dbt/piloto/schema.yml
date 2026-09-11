@@ -1,0 +1,22 @@
+version: 2
+
+seeds:
+  - name: issue_118_mcmv_serie_temporal_piloto
+    description: >
+      Seed com série anual de UHs contratadas, separando OGU/subsidiado e
+      FGTS/financiado.
+    columns:
+      - name: ano
+        data_tests:
+          - not_null
+          - unique
+      - name: snapshot_date
+        data_tests:
+          - not_null
+      - name: source_file
+        data_tests:
+          - not_null
+
+# O modelo `prata_dhist_serie_anual_ogu_fgts`
+# está DESABILITADO nesta branch (ver o cabeçalho do .sql). O bloco `models:` com
+# suas colunas/testes será restaurado quando o desenvolvimento do piloto for retomado.
