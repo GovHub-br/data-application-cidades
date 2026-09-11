@@ -26,6 +26,9 @@ pyarrow = "*"
 boto3 = "*"
 duckdb = "^1.5.5"
 great-expectations = ">=1.21,<2.0"
+# Parser SQL da linhagem de colunas (scripts/governance/linhagem_colunas.py).
+# Preso ao major: a API de `sqlglot.lineage` muda entre versões maiores.
+sqlglot = "^30.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"

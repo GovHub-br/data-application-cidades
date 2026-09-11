@@ -896,27 +896,63 @@ def test_tabela_relacionada_carrega_o_que_a_interface_precisa() -> None:
 
 
 def test_conjuntura_declara_prefixos_para_nao_catalogar_tabela_alheia() -> None:
-    """O schema `conjuntura` é compartilhado com tabelas de outra origem.
+    """Os schemas do conjuntura abrigam tabela que não é do produto.
 
-    Depois da unificação num schema só, as `silver_fgts_*` — ~10 M de linhas
-    que nenhum modelo deste repositório produz — passaram a conviver com a
-    nossa saída do dbt. A catalogação percorre TODAS as tabelas do schema; sem
-    a trava de prefixo ela marcaria aquelas como produto Conjuntura.
+    `bronze`, `prata` e `ouro` são compartilhados com far, fds e rural, e o
+    schema `conjuntura` ainda guarda as `silver_fgts_*` — ~10 M de linhas que
+    nenhum modelo deste repositório produz. A catalogação percorre TODAS as
+    tabelas de cada schema; sem a trava de prefixo ela marcaria as alheias
+    como produto Conjuntura.
+
+    Na prata e na ouro o domínio vem logo depois da camada, então um prefixo
+    basta para cada. Na bronze o nome carrega a ORIGEM e não o domínio, então
+    cada origem do conjuntura precisa estar declarada uma a uma — é a única
+    camada onde esquecer uma origem nova passa despercebido.
     """
     produtos = {p["name"]: p for p in comum.carregar("dominios.yml")["produtos"]}
     conjuntura = produtos["conjuntura"]
-    assert conjuntura["schemas"] == ["conjuntura"], "o produto deve viver num schema só"
-    assert set(conjuntura["prefixos_de_tabela"]) == {"bnz_", "slv_", "gld_", "snap_"}
+    assert conjuntura["schemas"] == ["bronze", "prata", "ouro", "conjuntura"]
+
+    prefixos = set(conjuntura["prefixos_de_tabela"])
+    assert {"prata_conjuntura_", "ouro_conjuntura_", "snap_"} <= prefixos
+
+    # Toda origem da bronze do conjuntura tem de estar declarada.
+    raiz = RAIZ / "dbt" / "mcid" / "models" / "conjuntura_dbt" / "bronze"
+    sem_prefixo = [
+        p.stem
+        for p in raiz.rglob("*.sql")
+        if not any(p.stem.startswith(x) for x in prefixos)
+    ]
+    assert not sem_prefixo, f"origem da bronze sem prefixo declarado: {sem_prefixo}"
+
+
+#: Prefixo esperado por pasta de camada. Da prata em diante o nome traz o
+#: domínio logo depois da camada; na bronze ele traz a origem, então só a
+#: camada é fixa.
+PREFIXO_POR_CAMADA = {
+    "bronze": "bronze_",
+    "prata": "prata_conjuntura_",
+    "ouro": "ouro_conjuntura_",
+}
 
 
 def test_modelos_do_conjuntura_seguem_a_convencao_de_prefixo() -> None:
-    """Um modelo fora da convenção sairia do catálogo sem ninguém perceber."""
+    """Um modelo fora da convenção sairia do catálogo sem ninguém perceber.
+
+    A camada vem da PASTA, não do schema: `bronze`, `prata` e `ouro` são
+    compartilhados com far, fds e rural, então o nome é o que separa os
+    produtos dentro de cada um.
+    """
     raiz = RAIZ / "dbt" / "mcid" / "models" / "conjuntura_dbt"
-    fora = [
-        p.stem
-        for p in raiz.rglob("*.sql")
-        if not p.stem.startswith(("bnz_", "slv_", "gld_"))
-    ]
+    fora = []
+    for caminho in raiz.rglob("*.sql"):
+        camada = caminho.relative_to(raiz).parts[0]
+        esperado = PREFIXO_POR_CAMADA.get(camada)
+        if esperado is None:
+            # `qualidade/` materializa na ouro e segue o prefixo dela.
+            esperado = PREFIXO_POR_CAMADA["ouro"]
+        if not caminho.stem.startswith(esperado):
+            fora.append(f"{caminho.stem} (esperado {esperado}*)")
     assert not fora, f"modelos fora da convenção: {fora}"
 
 
