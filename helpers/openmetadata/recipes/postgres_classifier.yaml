@@ -22,9 +22,10 @@ source:
       schemaFilterPattern:
         includes:
           - "^conjuntura$"
-          - "^empreendimento_far$"
-          - "^entidades_fds$"
           - "^metadata$"
+          - "^bronze$"
+          - "^prata$"
+          - "^ouro$"
       # Deve permanecer identica a allowlist de postgres_metadata.yaml.
 
 processor:

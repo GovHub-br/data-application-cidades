@@ -38,33 +38,74 @@ models:
           classification: restricted
           rag_publication: prohibited
 
+    # FAR, FDS e Rural são três produtos que dividem os MESMOS schemas físicos
+    # (`bronze`, `prata` e `ouro`), com o produto identificado pelo prefixo do
+    # nome da tabela. Por isso `product` é declarado por CAMADA de cada projeto,
+    # e não pelo schema: a catalogação lê o produto de cada TABELA no catálogo
+    # semântico, que sai daqui. Sem o `meta.governance` abaixo, o
+    # `exportar_catalogo_openmetadata.py` descarta o model — foi o que deixou
+    # FAR, FDS e Rural fora do catálogo do OpenMetadata.
+    #
+    # A chave de cada camada tem de ser o NOME REAL DA PASTA (`prata`, `ouro`).
+    # Um bloco `silver:`/`gold:` aqui não casa com pasta nenhuma e o dbt o
+    # ignora em silêncio.
     far_dbt:
       +materialized: table
+      +meta:
+        governance:
+          product: empreendimento_far
+          owner_key: mcid_data_engineering
       bronze:
         +schema: bronze
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       prata:
         +schema: prata
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       ouro:
         +schema: ouro
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     fds_dbt:
       +materialized: table
-      bronze:
-        +schema: bronze
-      prata:
-        +schema: prata
-      ouro:
-        +schema: ouro
-
-    rural_dbt:
-      +materialized: table
-      +schema: entidades_fds
       +meta:
         governance:
           product: entidades_fds
           owner_key: mcid_data_engineering
       bronze:
-        +materialized: table
+        +schema: bronze
         +meta:
           governance:
             product: entidades_fds
@@ -77,8 +118,8 @@ models:
             domain: MCid.Habitacao
             tier: Tier.Tier3
             owner: mcid-data-engineering
-      silver:
-        +materialized: table
+      prata:
+        +schema: prata
         +meta:
           governance:
             product: entidades_fds
@@ -91,11 +132,64 @@ models:
             domain: MCid.Habitacao
             tier: Tier.Tier2
             owner: mcid-data-engineering
-      gold:
-        +materialized: table
+      ouro:
+        +schema: ouro
         +meta:
           governance:
             product: entidades_fds
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+    # Irmão do `fds_dbt` na estrutura, mas produto de dados PRÓPRIO: o Rural é
+    # outro programa (Novo MCMV Rural / PNHR) que o MCMV-Entidades. Herdar
+    # `product: entidades_fds` rotularia toda tabela do PNHR como Entidades FDS
+    # no catálogo.
+    rural_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: empreendimento_rural
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          #: lido pelo conector dbt do OpenMetadata
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: empreendimento_rural
             owner_key: mcid_data_engineering
             layer: gold
             classification: internal

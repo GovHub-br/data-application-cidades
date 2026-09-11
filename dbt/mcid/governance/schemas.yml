@@ -21,23 +21,49 @@ schemas:
       nome: `bnz_` para a ingestão fiel, `slv_` para o dado conformado e `gld_`
       para o consumo. As tabelas `bnz_manual_*` são cargas manuais sem DAG.
 
-  - name: empreendimento_far
-    display_name: Empreendimento FAR
-    product: empreendimento_far
-    layer: mixed
+  # `bronze`, `prata` e `ouro` substituíram `empreendimento_far` e
+  # `entidades_fds` como schema físico: os models de FAR, FDS e Rural passaram
+  # a materializar por CAMADA, nos três schemas abaixo, e não mais um schema
+  # por produto. Por isso estas três entradas não têm `product`: cada schema
+  # abriga tabela de TRÊS produtos, distinguidas pelo prefixo do nome. Declarar
+  # um produto aqui afirmaria que as tabelas dos outros dois pertencem a ele —
+  # o produto é por tabela e sai do `meta.governance.product` de cada model,
+  # via catálogo semântico.
+  #
+  # A camada, por outro lado, agora é do SCHEMA: cada um guarda uma só. É o
+  # oposto do `conjuntura`, que continua `mixed` com a camada no prefixo.
+  - name: bronze
+    display_name: Bronze
+    layer: bronze
     owner_key: mcid_data_engineering
-    classification: internal
-    rag_publication: determined_per_model
-    description: Schema do produto Empreendimento FAR, com ativos operacionais e analíticos do Fundo de Arrendamento Residencial.
+    classification: restricted
+    rag_publication: prohibited
+    description: >-
+      Camada bronze dos produtos de empreendimentos (FAR, FDS e Rural):
+      espelho fiel do que chega da origem, publicado no catálogo para que a
+      linhagem alcance o início do caminho, não para consumo.
 
-  - name: entidades_fds
-    display_name: Entidades FDS
-    product: entidades_fds
-    layer: mixed
+  - name: prata
+    display_name: Prata
+    layer: silver
     owner_key: mcid_data_engineering
     classification: internal
-    rag_publication: determined_per_model
-    description: Schema do produto Entidades FDS, com ativos operacionais e analíticos do Fundo de Desenvolvimento Social.
+    rag_publication: eligible_after_security_validation
+    description: >-
+      Camada prata dos produtos de empreendimentos (FAR, FDS e Rural), com o
+      dado tipado e conformado a partir da bronze e as regras de negócio de
+      cada programa aplicadas.
+
+  - name: ouro
+    display_name: Ouro
+    layer: gold
+    owner_key: mcid_data_engineering
+    classification: internal
+    rag_publication: eligible_after_security_validation
+    description: >-
+      Camada ouro dos produtos de empreendimentos (FAR, FDS e Rural), com os
+      ativos de consumo que alimentam ficha de empreendimento, panorama
+      estadual, mapa nacional e resumo gerencial.
 
   - name: metadata
     display_name: Metadados técnicos

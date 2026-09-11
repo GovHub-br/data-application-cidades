@@ -29,9 +29,10 @@ source:
       schemaFilterPattern:
         includes:
           - "^conjuntura$"
-          - "^empreendimento_far$"
-          - "^entidades_fds$"
           - "^metadata$"
+          - "^bronze$"
+          - "^prata$"
+          - "^ouro$"
 
 sink:
   type: metadata-rest

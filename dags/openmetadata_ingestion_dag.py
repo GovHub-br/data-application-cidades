@@ -27,6 +27,7 @@ from openmetadata.config import (
     OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH,
     RECIPE_PIPELINE,
     SEGREDOS_INGESTAO,
+    SINCRONIZAR_RELACOES_SEMANTICAS,
 )
 
 #: Cache do virtualenv, compartilhado pelas tasks para não reinstalar 255
@@ -34,13 +35,21 @@ from openmetadata.config import (
 VENV_CACHE = "/tmp/airflow_venvs"
 
 
-def _encadear(glossario: Any, tarefas: dict, relacoes: Any, governanca: Any) -> None:
+def _encadear(
+    glossario: Any, tarefas: dict, relacoes: Any | None, governanca: Any
+) -> None:
     """Liga as tasks na ordem em que uma depende da outra.
 
     Glossário antes das recipes, porque os FQNs que os `schema.yml` do dbt
     referenciam precisam existir para a ingestão resolvê-los. E a governança
     SEMPRE por último: o conector dbt apaga a certificação das tabelas, e esta
     é a task que a devolve.
+
+    `relacoes` vem `None` quando `OM_SYNC_RELACOES_SEMANTICAS` está desligada,
+    e aí a corrente segue direto para a governança. A task de relações fica no
+    meio do caminho, então mantê-la ligada com o catálogo defasado significava
+    perder a reaplicação de governança junto — ver a nota da flag no
+    `config.py`.
     """
     anterior = glossario
     for task_id in RECIPE_PIPELINE:
@@ -50,7 +59,7 @@ def _encadear(glossario: Any, tarefas: dict, relacoes: Any, governanca: Any) -> 
             continue
         anterior >> tarefas[task_id]
         anterior = tarefas[task_id]
-        if task_id == "dbt_metadata":
+        if task_id == "dbt_metadata" and relacoes is not None:
             anterior >> relacoes
             anterior = relacoes
     anterior >> governanca
@@ -165,7 +174,14 @@ def openmetadata_ingestion_dag() -> None:
         )
         logging.info("Relações semânticas do MCID sincronizadas: %s", resumo)
 
-    @task(task_id="reaplicar_governanca")
+    # `all_done`: esta task roda mesmo que algo antes dela falhe, e isso é
+    # deliberado. Ela é a única que devolve a certificação que o conector dbt
+    # apaga, então deixá-la presa a `all_success` faz uma falha em qualquer
+    # task anterior — inclusive uma sem relação com o catálogo — terminar a
+    # execução com as tabelas sem certificação e ninguém para devolvê-la. O
+    # script é idempotente e só aplica o que está declarado no repo, então
+    # rodá-lo a mais não custa nada; não rodá-lo custa o catálogo.
+    @task(task_id="reaplicar_governanca", trigger_rule="all_done")
     def reaplicar_governanca() -> None:
         """Reaplica a governança DEPOIS do conector. É obrigatório.
 
@@ -201,8 +217,15 @@ def openmetadata_ingestion_dag() -> None:
     # referenciam em `meta.openmetadata.glossary` precisam existir para que a
     # ingestão dbt consiga resolvê-los.
     glossario = sync_mcid_glossary(glossary_definition_path=OPENMETADATA_GLOSSARY_PATH)
-    relacoes = sync_mcid_semantic_relationships(
-        catalog_path=OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH
+    # A task só é INSTANCIADA quando a flag está ligada: instanciá-la e não
+    # encadeá-la deixaria uma task órfã na DAG, que o Airflow executa sem
+    # dependência nenhuma — o oposto de desligar.
+    relacoes = (
+        sync_mcid_semantic_relationships(
+            catalog_path=OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH
+        )
+        if SINCRONIZAR_RELACOES_SEMANTICAS
+        else None
     )
 
     tarefas = {
