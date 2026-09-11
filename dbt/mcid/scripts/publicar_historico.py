@@ -87,6 +87,15 @@ BRONZES_SERIE = [
     # bext e a maior transacao isolada (5,66 M linhas) — ultima das bronzes (D8).
     ("bronze", "bronze_dhist_serie_bext",
      "bext", "dados_historicos/*bext*.parquet"),
+    # obra mensal (SharePoint) — curva prevista x realizada + situacao de obra
+    # (change enriquecer-quantidades-uh-e-sinais-obra-historico). Adicionadas
+    # ao inventario 2026-09-11 (nunca publicadas ate entao).
+    ("bronze", "bronze_shpt_obra_mensal_far",
+     "OBRA_FAR", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet"),
+    ("bronze", "bronze_shpt_obra_mensal_fds",
+     "OBRA_FDS", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet"),
+    ("bronze", "bronze_shpt_obra_mensal_rural",
+     "OBRA_RURAL", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet"),
 ]
 
 SILVERS_GOLDS = [
@@ -103,6 +112,12 @@ SILVERS_GOLDS = [
     ("prata", "prata_fds_historico_empreendimento", "mcmv_historico"),
     ("prata", "prata_far_historico_empreendimento", "mcmv_historico"),
     ("prata", "prata_rural_historico_empreendimento", "mcmv_historico"),
+    # espinha de entrega por APF (change enriquecer-datas-acompanhamento-historico)
+    # e a dim de identidade FDS (change id-empreendimento-eixo-historico, movida
+    # 2026-09-11 pra dentro do escopo). Adicionadas ao inventario 2026-09-11
+    # (nunca publicadas ate entao).
+    ("prata", "prata_historico_entrega_apf", "mcmv_historico"),
+    ("prata", "prata_fds_historico_dim_empreendimento", "mcmv_historico"),
     # golds cross-frente (4).
     ("ouro", "ouro_historico_serie_mensal", "mcmv_historico"),
     ("ouro", "ouro_historico_snapshot_empreendimento_atual", "mcmv_historico"),

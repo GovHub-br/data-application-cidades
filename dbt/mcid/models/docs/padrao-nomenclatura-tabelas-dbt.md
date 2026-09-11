@@ -53,14 +53,19 @@ ouro de um mesmo produto de dados. Ele aparece em:
 | Domínio (`product`) | Token no nome de tabela | Conteúdo |
 |---|---|---|
 | `conjuntura` | `conjuntura` | Séries macro do mercado imobiliário e construção civil |
-| `empreendimento_far` | `far` | Empreendimentos MCMV frente FAR |
-| `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
-| `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
-| `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) |
-| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `dhist`/`far`/`rural`/`fds` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) |
+| `empreendimento_far` | `far` | Empreendimentos MCMV frente FAR (uma **frente**) |
+| `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) (uma **frente**) |
+| `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) (uma **frente**) |
+| `reloginho` (`indicadores_mcmv_dbt`) | `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) — domínio, **não** é frente |
+| `mcmv_historico` (`mcmv_historico_dbt`) | ver seção 4.1 — sem token fixo de domínio; usa o token da **frente** (`far`/`fds`/`rural`) ou nenhum, conforme a regra `historico` | Séries históricas multi-mês (pré-2024, backtest, análise preditiva), cross-frente por natureza |
 
-O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_far_…`,
-`prata_dhist_…` — nunca como sufixo.
+`far`, `fds`, `rural` e `reloginho` são os quatro tokens de **domínio** aceitos em
+`prata_`/`ouro_` (ver seção 4.1 — `conjuntura` também é domínio, mas com regras
+próprias, sem o conceito de frente/histórico). O token de bronze é **fonte de
+staging**, não domínio — ver seção 4.
+
+O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_shpt_…`,
+`prata_far_…` — nunca como sufixo.
 
 Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 `dbt_project.yml`.
@@ -88,39 +93,92 @@ Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 
 ## 4. Nomes de tabela (modelo dbt)
 
-Formato:
+Formato geral:
 
 ```
-<camada>_<token-dominio>_<assunto>[_<recorte>]
+<camada>_<token>_<assunto>[_<recorte>]
 ```
 
 - `<camada>` ∈ `bronze` | `prata` | `ouro` | `quality`.
-- `<token-dominio>` — token da seção 2 (`far`, `fds`, `rural`, `conjuntura`,
-  `reloginho`, `mcmv_historico`, ...), **logo após a camada**.
 - `<assunto>` — substantivo do que a tabela representa (`consolidado`,
   `empreendimento`, `evolucao_financeira`, `serie_mensal`).
-- `<recorte>` — desambiguação adicional: agregação, consumidor ou (no caso do
-  domínio `mcmv_historico`, cujo token não é a frente) a própria frente
-  (`_uf`, `_mensal`, `_chart`, `_dashboard`, `_far`, `_fds`, `_rural`).
+- `<recorte>` — desambiguação adicional: agregação ou consumidor (`_uf`,
+  `_mensal`, `_chart`, `_dashboard`).
 
-**O nome precisa ser único no schema da camada.** Como o token de domínio é
-obrigatório e vem logo após a camada, `<assunto>` sozinho nunca colide:
+O que entra em `<token>` **difere por camada** — bronze usa a **fonte de
+staging**; prata/ouro usam o **domínio**. Ver 4.1.
 
-- `prata_empreendimento` ❌ (sem token; colidiria entre FAR, FDS, Rural)
-- `prata_far_empreendimento`, `prata_fds_empreendimento`,
-  `prata_rural_empreendimento` ✅
-- `prata_far_historico_empreendimento` ✅ (token `mcmv_historico`; a frente
-  `_far` é recorte porque o token do domínio histórico não é a frente)
+**Bronze — token de fonte.** Reflete a pasta de staging de origem, não o
+domínio de negócio:
+
+| Token | Pasta de staging | Exemplo local |
+|---|---|---|
+| `dhist` | `staging/dados_historicos/` | `bronze_dhist_serie_bases_relatorio_executivo` |
+| `sftp` | `staging/sftp/` | `bronze_sftp_empreendimento_int040` |
+| `shpt` | `staging/sharepoint/` | (domínio dos colegas — ver nota) |
+
+O domínio dos colegas (`empreendimento_far_dbt`/`empreendimento_fds_dbt`/
+`empreendimento_rural_dbt`) já publica em prod com um padrão de bronze mais
+específico, `bronze_<fonte>_monit_<assunto>_<frente>_mensal` (ex.:
+`bronze_shpt_monit_cad_pj_far_mensal`), além de nomes ad-hoc por tabela
+(`bronze_shpt_his_mcidades_consolidado`,
+`bronze_shpt_dados_prioritarios_snh_empreendimentos`). Isso é convenção deles,
+fora deste documento — **antes de nomear ou renomear um bronze que espelha
+staging/sharepoint desse domínio, confira o nome real em prod**
+(`information_schema.tables`, schema `bronze`) em vez de aplicar
+`bronze_shpt_<nometabela>` por dedução; nem toda tabela de lá tem
+equivalente publicado ainda.
 
 O nome do arquivo `.sql` **é** o nome da tabela. Não usar `alias`.
+
+### 4.1 Prata e Ouro: domínio + histórico
+
+`<token>` em prata/ouro é sempre um **domínio** (seção 2): `far`, `fds`,
+`rural`, `reloginho` ou `conjuntura`. Três formatos, escolhidos pela natureza
+do dado — não pela pasta onde o arquivo mora:
+
+| Situação | Formato | Exemplo |
+|---|---|---|
+| Estado atual (current-state), de uma frente/domínio | `<camada>_<dominio>_<assunto>` | `prata_fds_empreendimento`, `ouro_far_ficha_empreendimento`, `ouro_reloginho_indicadores` |
+| Série histórica multi-mês, mas de **uma única frente** (`far`/`fds`/`rural`) | `<camada>_<dominio>_historico_<assunto>` | `prata_far_historico_empreendimento`, `prata_fds_historico_empreendimento`, `prata_fds_historico_dim_empreendimento` |
+| Série histórica multi-mês **cross-frente** (une FAR+FDS+Rural, ou não é específica de nenhuma frente) | `<camada>_historico_<assunto>` — **sem** token de domínio | `prata_historico_entrega_apf`, `prata_historico_serie_executiva`, `ouro_historico_serie_mensal`, `ouro_historico_marco_empreendimento` |
+
+Regras de decisão:
+- `reloginho` é domínio, não frente — nunca leva o infixo `historico` só por ser
+  série mensal; usa sempre a 1ª linha (`prata_reloginho_…`/`ouro_reloginho_…`),
+  **exceto** quando a tabela é genuinamente consumida cross-domínio (por
+  `mcmv_historico_dbt` além do próprio reloginho) — aí vira a 3ª linha
+  (`prata_historico_snh_entregas_mes`, consumida por
+  `prata_historico_entrega_apf`). Antes de aplicar essa exceção, confirme o
+  consumo real com `grep` — não deduza pela pasta.
+- Um token que não é `far`/`fds`/`rural`/`reloginho`/`conjuntura` (ex.: `dhist`,
+  que é fonte de bronze, não domínio) **nunca** aparece em nome de prata/ouro —
+  se a tabela é cross-frente, o formato certo não leva token nenhum, é
+  `<camada>_historico_<assunto>` direto.
+- `mcmv_historico_dbt` (o domínio/pasta) não tem token próprio em prata/ouro —
+  ele *é* o cross-frente da 3ª linha, ou empresta o token da frente na 2ª.
+
+**O nome precisa ser único no schema da camada.** Como o formato certo (seção
+4.1) já desambigua por domínio ou por `historico`, `<assunto>` sozinho nunca
+colide:
+
+- `prata_empreendimento` ❌ (sem domínio nem `historico`; colidiria entre FAR,
+  FDS, Rural)
+- `prata_far_empreendimento`, `prata_fds_empreendimento`,
+  `prata_rural_empreendimento` ✅ (current-state, uma frente cada)
+- `prata_far_historico_empreendimento` ✅ (série histórica, frente `far`)
+- `prata_dhist_serie_anual_ogu_fgts` ❌ (`dhist` não é domínio válido em
+  prata; é cross-frente ⇒ deveria ser `prata_historico_serie_anual_ogu_fgts`)
 
 ### Exemplos por camada
 
 | Camada | Bom | Evitar |
 |---|---|---|
-| Bronze | `bronze_far_consolidado`, `bronze_reloginho_snh_serie_mensal` | `consolidado`, `bronze_consolidado_far`, `far_raw`, `stg_far` |
-| Prata | `prata_far_empreendimento`, `prata_reloginho_snh_apf_mes` | `empreendimento`, `prata_empreendimento_far`, `empreendimento_tratado`, `silver_far_empreendimento` |
-| Ouro | `ouro_far_evolucao_financeira`, `ouro_far_ficha_empreendimento`, `ouro_mcmv_historico_serie_mensal` | `evolucao_financeira_chart` sem prefixo, `ouro_ficha_empreendimento_far`, `mart_ficha`, `gold_far_ficha_empreendimento` |
+| Bronze | `bronze_sftp_empreendimento_int040`, `bronze_dhist_serie_bases_relatorio_executivo` | `consolidado`, `bronze_consolidado_far`, `far_raw`, `stg_far` |
+| Prata (current-state) | `prata_far_empreendimento`, `prata_reloginho_snh_apf_mes` | `empreendimento`, `prata_empreendimento_far`, `silver_far_empreendimento` |
+| Prata (histórico, 1 frente) | `prata_far_historico_empreendimento`, `prata_fds_historico_dim_empreendimento` | `prata_dhist_far_empreendimento`, `prata_historico_far_empreendimento` (ordem trocada) |
+| Prata (histórico, cross-frente) | `prata_historico_entrega_apf`, `prata_historico_serie_executiva` | `prata_dhist_entrega_apf`, `prata_mcmv_historico_entrega_apf` |
+| Ouro | `ouro_far_evolucao_financeira`, `ouro_far_ficha_empreendimento`, `ouro_historico_serie_mensal` | `evolucao_financeira_chart` sem prefixo, `ouro_ficha_empreendimento_far`, `mart_ficha`, `gold_far_ficha_empreendimento` |
 | Qualidade | `quality_reloginho_reconciliacao_66`, `quality_far_completude` | `assert_*` como modelo (isso é teste, fica em `tests/`) |
 
 ### Regras de coluna
@@ -286,6 +344,15 @@ lugar de achatamento, tipagem, domínio e dedup.
 | `empreendimento_far_dbt` / `empreendimento_fds_dbt` (schema único por domínio: `empreendimento_far` / `empreendimentos_fds`, prefixo `silver_`/`gold_`, muitas vezes com `alias` pro nome físico) | Schema por domínio, inglês; ambos os schemas legados estão **vazios em prod** — e o domínio inteiro é **mantido pelos colegas**, só copiado nesta branch pra teste de compilação (não é escopo deste projeto) | **Parcial** (2026-09-11): os modelos referenciados por `mcmv_historico_dbt`/`indicadores_mcmv_dbt` já foram repontados individualmente (`config(schema="prata"/"ouro")`, sem `alias`, arquivo renomeado `prata_*`/`ouro_*`) — ver `prata_fds_empreendimento`, `prata_far_evolucao_financeira`, `ouro_far_ficha_empreendimento`, `ouro_far_execucao_fisica_financeira_chart`, `ouro_fds_ficha_empreendimento`, `ouro_fds_evolucao_financeira_chart`. **Todos batem coluna a coluna, exatos, com as tabelas já publicadas em prod** — não são pipelines divergentes, só nomenclatura desatualizada localmente; **regra**: modelo copiado destes domínios reflete prod tal como está, não enriquece. `prata_fds_empreendimento` tinha `id_empreendimento`/`fase_empreendimento` e 12 colunas SNH adicionadas localmente (fora do padrão) — removidas 2026-09-11; a identidade de empreendimento que `mcmv_historico_dbt` precisa agora mora em `prata_fds_historico_dim_empreendimento` (`mcmv_historico_dbt/prata/`, dentro do escopo). Os modelos NÃO consumidos por fora do domínio (ex.: `gold_far_mapa_nacional`, `gold_far_panorama_estadual`, `gold_far_resumo_gerencial`, `gold_fds_panorama_entidade`, os bronzes, `silver_far_empreendimento`, `silver_fds_evolucao_financeira`) **ainda não foram migrados** — não mexer neles a menos que passem a ser consumidos por `mcmv_historico_dbt`/`indicadores_mcmv_dbt`. `seeds/entidades_fds/` (schema do seed `seed_apf_fase_fds`) segue como resíduo menor |
 | `indicadores_mcmv_dbt/{bronze,prata,ouro}` (schema `mcmv_indicadores`) | Schema por domínio | **Feito** (`renomear-camadas-pt-historico-reloginho`): repontado pra `bronze`/`prata`/`ouro`, nomes já prefixados em português |
 | `mcmv_historico_dbt/{bronze,prata,ouro}` (schema `mcmv_historico`) | Schema por domínio | **Feito** (`renomear-camadas-pt-historico-reloginho`): repontado pra `bronze`/`prata`/`ouro`, nomes já prefixados em português. `seeds/mcmv_historico/` (schema do seed do piloto) segue como resíduo menor |
+| `models/mcmv_historico_dbt/piloto/prata_dhist_serie_anual_ogu_fgts.sql` (`config(enabled=false)`) | Viola a regra 4.1: `dhist` usado como se fosse domínio em nome de prata | **Pendente**: renomear pra `prata_historico_serie_anual_ogu_fgts` (cross-frente, sem token). Achado 2026-09-11 verificando os 25 modelos prata/ouro do escopo contra prod — como está `enabled=false`, não há tabela em prod pra colidir |
+
+**Nomenclatura ok, ainda não publicadas em prod** (não é desvio de padrão —
+checado 2026-09-11 nos 25 modelos prata/ouro do escopo, cruzando com o
+`information_schema` de prod): `bronze_shpt_obra_mensal_far`/`_fds`/`_rural` e
+`prata_historico_entrega_apf` (`mcmv_historico_dbt`) — vieram de changes depois
+do último `publicar-historico.sh` (2026-09-08); e `prata_fds_historico_dim_empreendimento`,
+criada/realocada em 2026-09-11 (ver linha `empreendimento_far_dbt`/`empreendimento_fds_dbt`
+acima). Publicar quando fizer sentido — nome já está certo.
 
 **Regra de renome físico** (issue #119): nunca renomear tabela — ou schema —
 consumida por dashboard sem uma view/alias de compatibilidade no nome antigo, e
@@ -302,8 +369,10 @@ rename, então a view de compatibilidade não se aplicou.
 
 - [ ] Domínio existe na seção 2 (senão, registrar + criar bloco no `dbt_project.yml`).
 - [ ] Pasta: `models/<dominio>_dbt/<camada>/` (camada em português: `bronze/`, `prata/`, `ouro/`).
-- [ ] Arquivo `<camada>_<token-dominio>_<assunto>[_<recorte>].sql` — sem `alias`.
-- [ ] Nome único dentro do schema da camada (token de domínio logo após a camada).
+- [ ] Arquivo `<camada>_<token>_<assunto>[_<recorte>].sql` — sem `alias`. Bronze:
+      token de fonte (seção 4). Prata/ouro: token de domínio + regra
+      `historico` da seção 4.1.
+- [ ] Nome único dentro do schema da camada.
 - [ ] `{{ config(materialized="table") }}` (ou herdado).
 - [ ] `+schema` da camada = `bronze` / `prata` / `ouro`.
 - [ ] Bronze: cópia fiel, sem tipagem, sem dedup; `source_file`, `dt_ingest`, `hash_linha`, `dt_referencia`.

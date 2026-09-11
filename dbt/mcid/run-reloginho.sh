@@ -18,11 +18,18 @@
 # inteiros — 2 pratas + 6 ouros do mapa + as 2 bronzes de ENTREGA por agente
 # bronze_dhist_snh_entregas_evento_bb/_caixa. Desde a change
 # renomear-camadas-pt-historico-reloginho (D1) esses modelos materializam por
-# CAMADA (`bronze`/`prata`/`ouro`), não num schema `reloginho`. Puxa também o
-# upstream: a cadeia medalhão FAR/FDS (`empreendimento_far`, `empreendimentos_fds`,
-# tabelas `*_atual_*`) que os ouros de gargalo leem. A série mensal SNH vem das
-# bronzes por agente bronze_dhist_empreendimento_snh_bb/_caixa
-# (mcmv_historico_dbt), reaproveitadas se já estiverem no arquivo.
+# CAMADA (`bronze`/`prata`/`ouro`), não num schema `reloginho`. Os `+` abaixo
+# puxam também o upstream: a cadeia medalhão FAR/FDS (domínio dos colegas,
+# empreendimento_far_dbt/empreendimento_fds_dbt — copiado nesta branch só pra
+# teste de compilação, sem enriquecimento local) que os ouros de gargalo leem —
+# prata_far_evolucao_financeira, prata_fds_empreendimento,
+# ouro_far_ficha_empreendimento, ouro_far_execucao_fisica_financeira_chart,
+# ouro_fds_ficha_empreendimento, ouro_fds_evolucao_financeira_chart e seus
+# bronzes/silvers, todos já repontados 2026-09-11 pra schema global
+# bronze/prata/ouro (nomes batem coluna a coluna com prod, sem alias
+# `*_atual_*`). A série mensal SNH vem das bronzes por agente
+# bronze_dhist_empreendimento_snh_bb/_caixa (mcmv_historico_dbt), reaproveitadas
+# se já estiverem no arquivo.
 #
 # Contenção de memória: ver _run-common.sh — cada `dbt` roda dentro de um teto
 # RÍGIDO de RAM (cgroup). Os modelos do reloginho são estreitos (~300k linhas),

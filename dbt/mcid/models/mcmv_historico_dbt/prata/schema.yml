@@ -12,7 +12,7 @@ models:
       Único consumo: prata_fds_historico_empreendimento (join por apf). As
       colunas fase_corrigida / dt_correcao / origem_correcao são evidência da
       correção retroativa GEFUS (seed_correcao_fase_projeto) — NÃO sobrescrevem
-      fase_empreendimento (change id-empreendimento-eixo-historico, D4).
+      fase_empreendimento.
       Grão: 1 linha por (id_empreendimento, apf). Movido 2026-09-11 de
       empreendimento_fds_dbt/silver/ pro escopo deste projeto.
     meta:
