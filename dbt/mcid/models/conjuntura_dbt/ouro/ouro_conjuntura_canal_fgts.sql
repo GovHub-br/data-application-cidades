@@ -2,7 +2,7 @@
 
 -- Ouro do conjuntura: Canal FGTS — Pró-Cotista, por faixa de renda
 -- (UH e R$ milhões). Página 5. Dado MANUAL (boletim.xlsx /
--- conjuntura.bnz_manual_dados_mensais).
+-- bronze.bronze_manual_dados_mensais).
 
 select
     periodo,

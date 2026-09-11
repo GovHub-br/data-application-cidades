@@ -43,7 +43,7 @@ s as (
         sum(cbic_lancamentos_mcmv)  over j      as lm12,
         sum(cbic_vendas_total)      over j      as vt12,
         sum(cbic_vendas_mcmv)       over j      as vm12
-    from {{ source('conjuntura', 'bnz_cbic_lancamentos_vendas') }}
+    from {{ source('conjuntura_manual', 'bronze_cbic_lancamentos_vendas') }}
     window j as (order by ano * 4 + trimestre range between 3 preceding and current row)
 )
 

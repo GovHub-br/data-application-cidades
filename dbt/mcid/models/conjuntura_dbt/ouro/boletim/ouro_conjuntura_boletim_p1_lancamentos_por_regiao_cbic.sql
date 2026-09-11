@@ -30,7 +30,7 @@ with edicoes as (
 
 cbic as (
     select ano * 4 + trimestre as k, *
-    from {{ source('conjuntura', 'bnz_cbic_lancamentos_vendas') }}
+    from {{ source('conjuntura_manual', 'bronze_cbic_lancamentos_vendas') }}
 )
 
 select

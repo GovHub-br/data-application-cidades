@@ -84,8 +84,8 @@ produtos:
       - bronze_infomoney_
       - bronze_novo_caged
       - bronze_siafi_
-      - bnz_manual_
-      - bnz_cbic_
+      - bronze_manual_
+      - bronze_cbic_
       - snap_
     schemas:
       - bronze

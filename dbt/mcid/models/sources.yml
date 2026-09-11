@@ -167,12 +167,34 @@ sources:
           Contém depósitos, retiradas, captação líquida, rendimento e saldo.
           Tipagem aplicada: text→date, text→numeric.
 
-  - name: conjuntura
-    schema: conjuntura
+  - name: conjuntura_manual
+    schema: bronze
     description: >
-      Tabelas do bronze do conjuntura carregadas fora do dbt. Depois da
-      aposentadoria do schema legado, resta a CBIC, que não tem DAG de ingestão
-      e chega por carga manual.
+      Bronze do conjuntura que não vem do lake. São cargas manuais: chegam pela
+      planilha oficial do boletim (boletim.xlsx), revisadas à mão, sem DAG de
+      ingestão. O dbt as lê mas não as produz — o conteúdo é versionado em
+      `scripts/database/`, e o endereço atual foi fixado pelo 0010.
     tables:
-      - name: bnz_cbic_lancamentos_vendas
+      - name: bronze_manual_dados_mensais
+        description: >
+          Série mensal da planilha do boletim: CAGED, PNAD rendimento, índices
+          de preços, crédito Bacen, SBPE por banco, financiamento PF MCMV por
+          faixa e valor médio FGTS.
+      - name: bronze_manual_dados_trimestrais
+        description: >
+          Série trimestral da planilha do boletim: PIB %, CBIC, balanço das
+          empresas, ocupados PNAD, INCC trimestral, ticket médio e
+          financiamentos habitacionais.
+      - name: bronze_manual_empresas_balanco_lancamentos_vendas
+        description: >
+          Balanços das construtoras MRV, Cury, Tenda, Direcional, Pacaembu e
+          Plano & Plano. Já chega tipado.
+      - name: bronze_manual_fgts_valor_medio_imoveis
+        description: >
+          FGTS — valor médio dos imóveis em R$ e variações, total e Faixa 1.
+      - name: bronze_manual_sbpe_financiamentos_aquisicao_bancos
+        description: >
+          SBPE — financiamentos de construção e aquisição por banco, com a
+          captação líquida da poupança.
+      - name: bronze_cbic_lancamentos_vendas
         description: Lançamentos e vendas de imóveis por região (CBIC), carga manual.

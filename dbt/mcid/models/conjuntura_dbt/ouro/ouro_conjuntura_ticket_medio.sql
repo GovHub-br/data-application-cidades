@@ -7,11 +7,11 @@
 -- Lado INCC agora é AUTOMATIZADO (FGV-IBRE, via ouro_conjuntura_incc_m) —
 -- pega o índice do último mês de cada trimestre, igual o boletim já fazia
 -- na planilha manual (conferido: o valor antigo em
--- conjuntura.bnz_manual_dados_trimestrais.precos_incc_tri batia com o índice
+-- bronze.bronze_manual_dados_trimestrais.precos_incc_tri batia com o índice
 -- de fechamento do trimestre, não com uma versão rebasada).
 --
 -- Lado "ticket médio de lançamentos" por construtora continua MANUAL
--- (prata_conjuntura_manual_trimestrais / conjuntura.bnz_manual_dados_trimestrais)
+-- (prata_conjuntura_manual_trimestrais / bronze.bronze_manual_dados_trimestrais)
 -- — precisaria do VGV (valor geral de lançamentos) de cada construtora por
 -- trimestre pra calcular sozinho (ticket médio = VGV / unidades), e hoje só
 -- temos as unidades no nosso balanço das empresas, não o VGV. Ainda não é

@@ -3,9 +3,9 @@
 -- Ouro do conjuntura: Lançamentos e Vendas por construtora, com as
 -- variações % que o boletim mostra (trim. anterior, mesmo trim. ano
 -- anterior, acumulado mesmo período ano anterior). Página 2. Dado MANUAL
--- (boletim.xlsx / conjuntura.bnz_manual_dados_trimestrais) — as variações por
+-- (boletim.xlsx / bronze.bronze_manual_dados_trimestrais) — as variações por
 -- empresa já vêm calculadas na planilha oficial; substituiu a fonte antiga
--- (conjuntura.bnz_manual_empresas_balanco_lancamentos_vendas), que só tinha os
+-- (bronze.bronze_manual_empresas_balanco_lancamentos_vendas), que só tinha os
 -- valores absolutos, sem as variações que o boletim de fato destaca.
 
 with base as (

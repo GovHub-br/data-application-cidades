@@ -7,4 +7,4 @@
 -- Empresas: MRV, Cury, Tenda, Direcional, Pacaembu, Plano & Plano.
 
 select *
-from conjuntura.bnz_manual_empresas_balanco_lancamentos_vendas
+from {{ source('conjuntura_manual', 'bronze_manual_empresas_balanco_lancamentos_vendas') }}

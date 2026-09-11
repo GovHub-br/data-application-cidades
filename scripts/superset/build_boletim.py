@@ -187,11 +187,11 @@ def pagina_01() -> list[Quadro]:
             colunas=["regiao", "TOTAL", "MCMV", "% MCMV"],
             sql=f"""
     with {EDICOES},
-    d as (select periodo, periodo from conjuntura.bnz_manual_dados_trimestrais)
+    d as (select periodo, periodo from bronze.bronze_manual_dados_trimestrais)
     select e.edicao, x.regiao, x.total as "TOTAL", x.mcmv as "MCMV",
            round((x.mcmv / nullif(x.total, 0) * 100)::numeric, 0) as "% MCMV", x.ordem
     from edicoes e
-    join conjuntura.bnz_manual_dados_trimestrais d on d.periodo = e.edicao
+    join bronze.bronze_manual_dados_trimestrais d on d.periodo = e.edicao
     cross join lateral (
         select 'NORTE' as regiao, 1 as ordem, {num('d.cbic_lancamentos_total_n')} total, {num('d.cbic_lancamentos_mcmv_n')} mcmv
         union all select 'NORDESTE', 2, {num('d.cbic_lancamentos_total_ne')}, {num('d.cbic_lancamentos_mcmv_ne')}
@@ -211,7 +211,7 @@ def pagina_01() -> list[Quadro]:
     select e.edicao, x.regiao, x.total as "TOTAL", x.mcmv as "MCMV",
            round((x.mcmv / nullif(x.total, 0) * 100)::numeric, 0) as "% MCMV", x.ordem
     from edicoes e
-    join conjuntura.bnz_manual_dados_trimestrais d on d.periodo = e.edicao
+    join bronze.bronze_manual_dados_trimestrais d on d.periodo = e.edicao
     cross join lateral (
         select 'NORTE' as regiao, 1 as ordem, {num('d.cbic_vendas_total_n')} total, {num('d.cbic_vendas_mcmv_n')} mcmv
         union all select 'NORDESTE', 2, {num('d.cbic_vendas_total_ne')}, {num('d.cbic_vendas_mcmv_ne')}
@@ -244,7 +244,7 @@ def pagina_01() -> list[Quadro]:
                {num('cbic_lancamentos_mcmv_acumulado_12_meses')} lm12,
                {num('cbic_vendas_total_acumulado_12_meses')} vt12,
                {num('cbic_vendas_mcmv_acumulado_12_meses')} vm12
-        from conjuntura.bnz_manual_dados_trimestrais
+        from bronze.bronze_manual_dados_trimestrais
         where periodo ~ '^[1-4]T[0-9]{{4}}$'
     )
     select e.edicao, x.rotulo as periodo,
@@ -952,7 +952,7 @@ def pagina_07() -> list[Quadro]:
         select (ano::int * 12 + mes::int) as m,
                indice_abramat_var_mes a, indice_abramat_var_mes_vs_mes_ano_ant b,
                indice_abramat_var_acum_ano c
-        from conjuntura.bnz_manual_dados_mensais
+        from bronze.bronze_manual_dados_mensais
     ),
     icst as (
         select (right(periodo, 4)::int * 12 + left(periodo, 2)::int) as m,

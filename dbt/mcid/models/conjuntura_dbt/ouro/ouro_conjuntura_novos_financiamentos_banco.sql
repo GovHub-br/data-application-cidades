@@ -2,7 +2,7 @@
 
 -- Ouro do conjuntura: Novos Financiamentos Imobiliários por banco
 -- (SBPE — Caixa, Bradesco, Itaú, Santander, BB), acumulado no ano.
--- Página 3, seção 6. Dado MANUAL (boletim.xlsx / conjuntura.bnz_manual_dados_mensais).
+-- Página 3, seção 6. Dado MANUAL (boletim.xlsx / bronze.bronze_manual_dados_mensais).
 
 select
     periodo,

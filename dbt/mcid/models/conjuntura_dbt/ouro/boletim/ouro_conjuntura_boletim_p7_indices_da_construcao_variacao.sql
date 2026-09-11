@@ -42,7 +42,7 @@ edicoes as (
         select (ano::int * 12 + mes::int) as m,
                indice_abramat_var_mes a, indice_abramat_var_mes_vs_mes_ano_ant b,
                indice_abramat_var_acum_ano c
-        from conjuntura.bnz_manual_dados_mensais
+        from {{ source('conjuntura_manual', 'bronze_manual_dados_mensais') }}
     ),
     icst as (
         select (right(periodo, 4)::int * 12 + left(periodo, 2)::int) as m,

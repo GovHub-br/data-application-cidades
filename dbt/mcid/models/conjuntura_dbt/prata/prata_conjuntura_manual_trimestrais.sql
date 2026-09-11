@@ -2,7 +2,7 @@
 
 -- Prata do conjuntura: TODOS os dados manuais TRIMESTRAIS do boletim,
 -- da planilha oficial (boletim.xlsx, aba "Dados Trimestrais"), carregada em
--- conjuntura.bnz_manual_dados_trimestrais. Cobre PIB %, CBIC, balanço das empresas,
+-- bronze.bronze_manual_dados_trimestrais. Cobre PIB %, CBIC, balanço das empresas,
 -- ocupados PNAD, INCC trimestral, ticket médio e financiamentos habitacionais.
 -- A camada ouro seleciona as séries por seção do boletim.
 
@@ -16,8 +16,8 @@
 -- 2026-08-30: as 19 linhas casam com '^[1-4]T[0-9]{4}$'.
 select
     {{ dimensao_temporal_do_periodo('periodo') }},
-    {{ colunas_exceto('manual_conjuntura', 'dados_trimestrais',
+    {{ colunas_exceto('bronze', 'bronze_manual_dados_trimestrais',
                       ['unnamed_115', 'unnamed_116',
                        'ano', 'trimestre', 'periodo']) }}
-from conjuntura.bnz_manual_dados_trimestrais
+from {{ source('conjuntura_manual', 'bronze_manual_dados_trimestrais') }}
 where periodo is not null

@@ -9,7 +9,7 @@
 -- prata_conjuntura_geavo_fgts_pj.sql, validado exato contra os 3 boletins
 -- publicados que o Lucas tem) — substitui a planilha manual (CEAG). Lado
 -- SBPE Construção continua MANUAL (boletim.xlsx /
--- conjuntura.bnz_manual_dados_trimestrais) — pendente da mesma base
+-- bronze.bronze_manual_dados_trimestrais) — pendente da mesma base
 -- automatizada do ABECIP do SBPE Const (aguardando o colega rodar a
 -- fonte de novo com dado mais recente).
 

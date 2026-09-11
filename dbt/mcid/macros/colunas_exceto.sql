@@ -6,9 +6,9 @@
     na mão (e a manter essa lista sincronizada para sempre).
 
     Uso:
-        select {{ colunas_exceto('manual_conjuntura', 'dados_trimestrais',
+        select {{ colunas_exceto('bronze', 'bronze_manual_dados_trimestrais',
                                  ['unnamed_115', 'unnamed_116']) }}
-        from conjuntura.bnz_manual_dados_trimestrais
+        from {{ source('conjuntura_manual', 'bronze_manual_dados_trimestrais') }}
 #}
 {% macro colunas_exceto(schema_dado, tabela, excluir=[]) %}
     {%- if execute -%}

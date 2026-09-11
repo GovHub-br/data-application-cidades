@@ -43,17 +43,17 @@ schemas:
       logo depois da camada.
 
   - name: conjuntura
-    display_name: Conjuntura (cargas manuais e histórico)
+    display_name: Conjuntura (histórico das edições)
     product: conjuntura
     layer: mixed
     owner_key: mcid_data_engineering
     classification: internal
     rag_publication: determined_per_model
     description: >-
-      Guarda o que não é produzido por modelo: as cargas manuais `bnz_manual_*`
-      e `bnz_cbic_*`, que chegam por planilha e não têm DAG, e os snapshots
-      `snap_boletim_*`, que congelam cada edição publicada do boletim. Os
-      modelos do produto Conjuntura ficam em `bronze`, `prata` e `ouro`.
+      Guarda os snapshots `snap_boletim_*`, que congelam cada edição publicada
+      do boletim, e o seed `boletim_gabarito`, usado na conferência contra o
+      boletim impresso. Os modelos do produto Conjuntura ficam em `bronze`,
+      `prata` e `ouro`; as cargas manuais foram para `bronze` no 0010.
 
   # Schemas dos dbts aposentados. A declaração fica porque os produtos
   # `empreendimento_far` e `entidades_fds` ainda os citam em `dominios.yml`:

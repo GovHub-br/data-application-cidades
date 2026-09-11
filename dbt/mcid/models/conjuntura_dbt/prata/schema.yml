@@ -1178,7 +1178,7 @@ models:
 
   # ========================================================================
   # FONTE MANUAL COMPLETA — planilha oficial do boletim (boletim.xlsx)
-  # Carregada em conjuntura.bnz_manual_dados_trimestrais / dados_mensais.
+  # Carregada em bronze.bronze_manual_dados_trimestrais / _dados_mensais.
   # São tabelas largas (todas as variáveis do dicionário); a ouro seleciona
   # as séries por seção. Substituem os manuais soltos anteriores.
   # ========================================================================
