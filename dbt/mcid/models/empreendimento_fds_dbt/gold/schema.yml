@@ -1,19 +1,19 @@
 version: 2
 
 models:
-  - name: gold_fds_ficha_empreendimento
+  - name: ouro_fds_ficha_empreendimento
     description: >
-      Gold — 1 linha por empreendimento (APF), consumida pelo gargalo
+      Ouro — 1 linha por empreendimento (APF), consumida pelo gargalo
       (ouro_reloginho_indicadores_gargalo_desempenho). Materializa como
-      empreendimentos_fds.gold_atual_ficha_empreendimento (convenção
-      2026-09-04 — schema por frente, prefixo atual_ para o produto
-      current-state que replica o que os colegas já entregam em prod;
-      mantida só pela dependência do gargalo).
+      ouro.ouro_fds_ficha_empreendimento — repontado 2026-09-11 pro schema
+      global `ouro` (bronze/prata/ouro), que é o que o prod real usa em todos
+      os domínios; o schema `empreendimentos_fds`/alias `gold_atual_*` da
+      convenção 2026-09-04 estão vazios em prod.
       Utilizada nos KPIs: Mapa de Atuação, Semáforo de Alertas, Divergência
       Físico-Financeira e Distribuição por Tipo.
     meta:
       tags:
-        - gold
+        - ouro
         - entidades
         - superset
     columns:
@@ -55,17 +55,17 @@ models:
       - name: status_entrega
         description: Regra de negócio (Totalmente Entregue, Entrega Parcial, Não Entregue) calculada sobre a taxa de alienação.
 
-  - name: gold_atual_evolucao_financeira_chart
+  - name: ouro_fds_evolucao_financeira_chart
     description: >
-      Gold consumida pelo gargalo (ouro_reloginho_indicadores_gargalo_desempenho).
-      Materializa como empreendimentos_fds.gold_atual_evolucao_financeira_chart
-      (convenção 2026-09-04, ver nota acima).
+      Ouro consumida pelo gargalo (ouro_reloginho_indicadores_gargalo_desempenho).
+      Materializa como ouro.ouro_fds_evolucao_financeira_chart (repontado
+      2026-09-11 pro schema global `ouro`, ver nota acima).
       Estrutura de série temporal (1 linha por APF/Mês) pronta para plotar
       no Superset gráficos de linha (Acumulado) e barra (Desembolso mensal).
       Herda o cnpj_eo para permitir filtro direto por entidade.
     meta:
       tags:
-        - gold
+        - ouro
         - entidades
         - superset
     columns:

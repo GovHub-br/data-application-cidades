@@ -82,9 +82,9 @@ models:
           Percentual do recurso liberado sobre o valor total.
           Cálculo: (valor_desembolsado / valor_contratado) * 100.
 
-  - name: silver_far_evolucao_financeira
+  - name: prata_far_evolucao_financeira
     description: >
-      Silver — liberações CONHECIDAS NO SNAPSHOT do SharePoint
+      Prata — liberações CONHECIDAS NO SNAPSHOT do SharePoint
       (bronze_far_financeiro_mensal), agrupadas pelo mês da liberação
       (`dt_liberacao`). NÃO é a série de desembolsos do empreendimento: cobre
       só APF com liberação pós-2024 e é decomposição por componente, não o
@@ -94,7 +94,7 @@ models:
       meses de liberações do snapshot).
     meta:
       tags:
-        - silver
+        - prata
     data_tests:
       # FAR: Σ(componentes) = vr_liberado sem residual (change
       # vocabulario-e-qualidade-financeira-historica, D5/D7).

@@ -1,4 +1,15 @@
-{{ config(materialized="table", alias="silver_atual_empreendimento") }}
+{{ config(materialized="table", schema="prata") }}
+
+-- Materializa em `prata` (nao `silver`) e sem alias -- prod real ja usa
+-- schemas globais bronze/prata/ouro em todos os dominios. Espelho EXATO das
+-- 62 colunas da `prata_fds_empreendimento` ja publicada la (mesma ordem,
+-- mesmas fontes mcmv_staging) -- este e um dominio mantido pelos colegas,
+-- copiado nesta branch so pra teste de compilacao; nao enriquecer aqui. O
+-- id_empreendimento/fase_empreendimento e as colunas SNH que estavam aqui
+-- foram removidos 2026-09-11: quem precisa de identidade estavel de
+-- empreendimento e a mcmv_historico_dbt (prata_fds_historico_dim_empreendimento,
+-- dentro do escopo deste projeto), nao este modelo. Ver
+-- padrao-nomenclatura-tabelas-dbt.md e memoria de sessao 2026-09-11.
 
 -- Silver: Empreendimento FDS — Visão unificada
 -- Reúne dados cadastrais, EO, status físico-financeiro e TS de cada APF.
@@ -37,16 +48,10 @@ with
         from {{ ref("bronze_fds_financeiro_mensal") }}
         where ic_credito = '0' and vr_liberado is not null
         group by right(apf, 6)
-    ),
-
-    -- SNH: snapshot corrente (30/09/2025), modalidade Entidades. Enriquecimento
-    -- aditivo — 1:1 por APF, ~247/335 casam. Não substitui coluna existente (D6).
-    snh as (select * from {{ ref("bronze_fds_dados_prioritarios_snh") }})
+    )
 
 select
     c.apf,
-    dim.id_empreendimento,
-    dim.fase_empreendimento,
 
     -- Entidade Organizadora
     c.eo_nome,
@@ -207,26 +212,10 @@ select
     case when c.gps_lat_grau != 0 then c.gps_lat_segundo end as gps_lat_segundo,
     nullif(c.gps_long_grau, 0) as gps_long_grau,
     case when c.gps_long_grau != 0 then c.gps_long_minuto end as gps_long_minuto,
-    case when c.gps_long_grau != 0 then c.gps_long_segundo end as gps_long_segundo,
-
-    -- Enriquecimento SNH (snapshot 30/09/2025) — colunas novas, aditivas
-    (sn.apf is not null) as tem_dados_snh,
-    sn.situacao as snh_situacao,
-    sn.situacao_agrupada as snh_situacao_agrupada,
-    sn.apf_fase_obra as snh_apf_fase_obra,
-    sn.pct_execucao as snh_percentual_obra,
-    sn.valor_contratado_total as snh_valor_contratado_total,
-    sn.valor_desembolsado as snh_valor_desembolsado,
-    sn.uh_contratadas as snh_uh_contratadas,
-    sn.uh_entregues as snh_uh_entregues,
-    sn.uh_vigentes as snh_uh_vigentes,
-    sn.dt_termino as snh_dt_termino,
-    sn.dt_previsao_termino as snh_dt_previsao_termino
+    case when c.gps_long_grau != 0 then c.gps_long_segundo end as gps_long_segundo
 
 from cadastro c
-left join {{ ref("silver_atual_dim_empreendimento") }} dim on c.apf = dim.apf
 left join obra o on c.apf = o.apf
 left join int059 i on c.apf = i.apf
 left join trabalho_social ts on c.apf = ts.apf
 left join desembolso_acumulado d on left(c.apf, 6) = d.apf_raiz
-left join snh sn on c.apf = sn.apf

@@ -186,27 +186,6 @@ models:
       - name: qt_uh_financiadas
         description: Quantidade de UHs financiadas.
 
-  # Entregas (Complementar)
-
-  - name: bronze_fds_dados_prioritarios_snh
-    description: >
-      Snapshot corrente SNH (30/09/2025), modalidade Entidades. NÃO é a série
-      mensal. Chave: normalize_apf(codigo_da_operacao_no_agente_financeiro).
-      ~247/335 casam com silver_fds_empreendimento.
-    meta:
-      tags: [bronze, entidades, snh]
-    columns:
-      - name: apf
-        description: APF normalizado (de codigo_da_operacao_no_agente_financeiro).
-      - name: situacao
-        description: Situação do empreendimento reportada pela SNH.
-      - name: valor_contratado_total
-        description: Valor contratado total (original + aporte) em R$.
-      - name: uh_entregues
-        description: Unidades habitacionais entregues (acumulado).
-      - name: source_file
-        data_tests: [not_null]
-
   # Eventos de Mudanca de Fase
 
   - name: bronze_fds_mudanca_fase_eventos

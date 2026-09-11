@@ -1,4 +1,10 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", schema="ouro") }}
+
+-- Materializa em `ouro` (nao `gold`, o schema padrao da pasta/dominio
+-- empreendimentos_fds) porque o prod real ja convergiu pra schemas globais
+-- bronze/prata/ouro em todos os dominios -- `gold`/`empreendimentos_fds`
+-- estao vazios em prod. Ver models/mcmv_historico_dbt/docs/padrao-nomenclatura-tabelas-dbt.md
+-- (desatualizado nesse ponto) e memoria de sessao 2026-09-11.
 
 -- Gold: Gráfico de Evolução Financeiro-Física FDS
 -- Objetivo: Alimentar o Superset com a série temporal de desembolsos.
@@ -10,7 +16,7 @@ with
 
     ficha as (
         select apf, apf_municipio_empreendimento, percentual_execucao_fisica
-        from {{ ref("gold_fds_ficha_empreendimento") }}
+        from {{ ref("ouro_fds_ficha_empreendimento") }}
     )
 
 select

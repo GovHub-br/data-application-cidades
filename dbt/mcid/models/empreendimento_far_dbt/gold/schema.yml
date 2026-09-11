@@ -1,19 +1,20 @@
 version: 2
 
 models:
-  - name: gold_far_ficha_empreendimento
+  - name: ouro_far_ficha_empreendimento
     description: >
-      Gold — 1 linha por empreendimento (APF) da frente FAR, consumida pelo
+      Ouro — 1 linha por empreendimento (APF) da frente FAR, consumida pelo
       gargalo (ouro_reloginho_indicadores_gargalo_desempenho). Materializa como
-      empreendimento_far.gold_atual_ficha_empreendimento (convenção
-      2026-09-04 — schema por frente, prefixo atual_ para o produto
-      current-state que replica o que os colegas já entregam em prod;
-      mantida só pela dependência do gargalo). Consome a silver
-      (silver_atual_empreendimento) e injeta regras de negócio finais como
-      cálculo de status, prazos e ritmo financeiro.
+      ouro.ouro_far_ficha_empreendimento — repontado 2026-09-11 pro schema
+      global `ouro` (bronze/prata/ouro), que é o que o prod real usa em todos
+      os domínios; o schema `empreendimento_far`/alias `gold_atual_*` da
+      convenção 2026-09-04 estão vazios em prod. Consome a silver
+      (`silver_far_empreendimento`, alias `silver_atual_empreendimento`) e
+      injeta regras de negócio finais como cálculo de status, prazos e ritmo
+      financeiro.
     meta:
       tags:
-        - gold
+        - ouro
     columns:
       - name: apf
         description: APF (Autorização de Projeto de Financiamento) do empreendimento.
@@ -37,15 +38,15 @@ models:
           Regra de negócio: Compara o % de execução física com o % de desembolso financeiro.
           Aplica uma tolerância de 5% para classificar como "Ritmo Equilibrado", "Desembolso Adiantado" ou "Desembolso Atrasado".
 
-  - name: gold_atual_execucao_fisica_financeira_chart
+  - name: ouro_far_execucao_fisica_financeira_chart
     description: >
-      Gold consumida pelo gargalo (ouro_reloginho_indicadores_gargalo_desempenho).
-      Materializa como empreendimento_far.gold_atual_execucao_fisica_financeira_chart
-      (convenção 2026-09-04, ver nota acima). Faz o join entre a silver de
-      evolução financeira e a bronze de obra mensal.
+      Ouro consumida pelo gargalo (ouro_reloginho_indicadores_gargalo_desempenho).
+      Materializa como ouro.ouro_far_execucao_fisica_financeira_chart
+      (repontado 2026-09-11 pro schema global `ouro`, ver nota acima). Faz o
+      join entre a prata de evolução financeira e a bronze de obra mensal.
     meta:
       tags:
-        - gold
+        - ouro
     columns:
       - name: apf
         description: APF (Autorização de Projeto de Financiamento) do empreendimento.

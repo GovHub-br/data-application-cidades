@@ -17,13 +17,13 @@ with
             apf,
             max(mes::date) as dt_ultima_liberacao,
             sum(vr_liberado_mes) as valor_liberado_historico
-        from {{ ref("silver_far_evolucao_financeira") }}
+        from {{ ref("prata_far_evolucao_financeira") }}
         group by apf
     ),
 
     far_ultima_fisica as (
         select apf, max(try_cast(mes as date)) as dt_ultima_medicao_fisica
-        from {{ ref("gold_atual_execucao_fisica_financeira_chart") }}
+        from {{ ref("ouro_far_execucao_fisica_financeira_chart") }}
         group by apf
     ),
 
@@ -32,7 +32,7 @@ with
             apf,
             max(try_cast(mes as date)) as dt_ultima_liberacao,
             sum(valor_liberado_mensal) as valor_liberado_historico
-        from {{ ref("gold_atual_evolucao_financeira_chart") }}
+        from {{ ref("ouro_fds_evolucao_financeira_chart") }}
         group by apf
     ),
 
@@ -94,7 +94,7 @@ with
                 ),
                 '1900-01-01'::date
             ) as dt_ultima_atualizacao
-        from {{ ref("gold_far_ficha_empreendimento") }} f
+        from {{ ref("ouro_far_ficha_empreendimento") }} f
         left join far_ultima_financeira ff on f.apf = ff.apf
         left join far_ultima_fisica fu on f.apf = fu.apf
     ),
@@ -162,8 +162,8 @@ with
                 ),
                 '1900-01-01'::date
             ) as dt_ultima_atualizacao
-        from {{ ref("gold_fds_ficha_empreendimento") }} f
-        left join {{ ref("silver_fds_empreendimento") }} e on f.apf = e.apf
+        from {{ ref("ouro_fds_ficha_empreendimento") }} f
+        left join {{ ref("prata_fds_empreendimento") }} e on f.apf = e.apf
         left join fds_ultima_financeira fu on f.apf = fu.apf
     ),
 

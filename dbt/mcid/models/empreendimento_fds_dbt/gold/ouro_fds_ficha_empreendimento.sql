@@ -1,6 +1,12 @@
-{{ config(materialized="table", alias="gold_atual_ficha_empreendimento") }}
+{{ config(materialized="table", schema="ouro") }}
 
-with silver as (select * from {{ ref("silver_fds_empreendimento") }})
+-- Materializa em `ouro` (nao `gold`) e sem alias (nao mais
+-- `gold_atual_ficha_empreendimento`, que colidia de nome com a versao FAR
+-- deste mesmo alias) -- prod real ja usa schemas globais bronze/prata/ouro em
+-- todos os dominios. Ver padrao-nomenclatura-tabelas-dbt.md (desatualizado
+-- nesse ponto) e memoria de sessao 2026-09-11.
+
+with silver as (select * from {{ ref("prata_fds_empreendimento") }})
 
 select
     -- Identificadores

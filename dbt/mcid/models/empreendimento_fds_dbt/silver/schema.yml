@@ -1,16 +1,19 @@
 version: 2
 
 models:
-  - name: silver_fds_empreendimento
+  - name: prata_fds_empreendimento
     description: >
-      Tabela Silver (Visão Unificada) de Empreendimentos FDS do Novo MCMV Entidades.
-      Consolida as 6 bronzes: fds_cadastro_pj, fds_obra_mensal, fds_int_059_caixa_pj,
-      fds_trabalho_social, fds_financeiro_mensal e fds_dados_prioritarios_entregas.
-      Gera uma visão por APF pronta para alimentar os dashboards de Ficha,
-      Panorama Estadual, Panorama por Entidade e Alertas.
+      Tabela Prata (Visão Unificada) de Empreendimentos FDS do Novo MCMV Entidades.
+      Consolida 5 bronzes: fds_cadastro_pj, fds_obra_mensal, fds_int_059_caixa_pj,
+      fds_trabalho_social e fds_financeiro_mensal. Gera uma visão por APF pronta
+      para alimentar os dashboards de Ficha, Panorama Estadual, Panorama por
+      Entidade e Alertas. Espelho exato das 62 colunas já publicadas em
+      `prata.prata_fds_empreendimento` em prod (dbt/mcid/models/docs/padrao-nomenclatura-tabelas-dbt.md
+      §8) — domínio mantido pelos colegas, copiado nesta branch só para teste
+      de compilação; não enriquecer aqui.
     meta:
       tags:
-        - silver
+        - prata
         - entidades
     columns:
       - name: apf
@@ -18,12 +21,6 @@ models:
         data_tests:
           - unique
           - not_null
-      - name: id_empreendimento
-        description: >
-          Chave lógica estável do empreendimento (hash do APF-âncora da Fase
-          Projeto). Liga APFs de fases distintas do mesmo empreendimento.
-      - name: fase_empreendimento
-        description: "Fase do empreendimento: Projeto, Obra ou Desligamento."
 
       # Entidade Organizadora
       - name: eo_nome
@@ -233,62 +230,3 @@ models:
         description: Município do empreendimento.
       - name: uf
         description: UF do empreendimento.
-
-  - name: silver_atual_dim_empreendimento
-    description: >
-      Dimensão de empreendimento FDS que resolve a identidade estável
-      (id_empreendimento) a partir do APF-âncora (Fase Projeto), ligando APFs de
-      fases distintas (Projeto/Obra/Desligamento). Fontes: seed curado
-      (seed_apf_fase_fds), INT059 (nu_apf_nao_obra) e eventos de mudança de fase.
-      As colunas fase_corrigida / dt_correcao / origem_correcao são evidência da
-      correção retroativa GEFUS (seed_correcao_fase_projeto) — NÃO sobrescrevem
-      fase_empreendimento (change id-empreendimento-eixo-historico, D4).
-      Grao: 1 linha por (id_empreendimento, apf).
-    meta:
-      tags:
-        - silver
-        - entidades
-        - dim_empreendimento
-    columns:
-      - name: id_empreendimento
-        description: Chave lógica estável do empreendimento (hash do APF-âncora).
-        data_tests:
-          - not_null
-      - name: apf
-        description: APF (chave física) normalizado para 8 dígitos.
-        data_tests:
-          - not_null
-          - unique
-      - name: fase_empreendimento
-        description: "Fase do empreendimento: Projeto, Obra ou Desligamento."
-        data_tests:
-          - accepted_values:
-              values: ["Projeto", "Obra", "Desligamento"]
-      - name: apf_ancora
-        description: "True quando este APF é a âncora (Fase Projeto/fallback)."
-      - name: nome_empreendimento_canonico
-        description: Nome canônico do empreendimento (da seed curada, quando disponível).
-      - name: origem_mapeamento
-        description: "Origem do mapeamento: ABR26 (seed), evento ou fallback."
-      - name: fase_corrigida
-        description: >
-          Fase resultante da correção retroativa GEFUS CORRECAO_FASE_PROJETO
-          (seed_correcao_fase_projeto), quando o APF consta lá. NULL caso
-          contrário. Evidência — não sobrescreve fase_empreendimento.
-        data_tests:
-          - accepted_values:
-              values: ["Projeto", "Obra", "Desligamento"]
-              config:
-                severity: warn
-      - name: dt_correcao
-        description: Data do movimento de correção de fase (2026-04-30 no extrato atual).
-      - name: origem_correcao
-        description: "Arquivo de origem da correção (CORREÇÃO_FASE_PROJETO.xlsx)."
-      - name: dt_valid_from
-        description: Início da validade (herdado do contrato #118).
-      - name: dt_valid_to
-        description: "Fim da validade (v1: null)."
-      - name: is_current
-        description: "Indicador de registro corrente (v1: true)."
-      - name: hash_linha
-        description: Hash da linha para detecção de mudanças.

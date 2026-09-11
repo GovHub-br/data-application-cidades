@@ -28,7 +28,7 @@ Formato canônico `<camada>_<token-dominio>_<assunto>[_<recorte>]`, token logo a
 | `entidades_dbt` (pasta/domínio) | `empreendimento_fds_dbt` (`product: empreendimento_fds`) |
 | `entidades_dbt/bronze/fds_int_059_caixa_pj` | `bronze_fds_int059_caixa` |
 | `.../silver/fds_empreendimento` | `silver_fds_empreendimento` |
-| `.../silver/dim_empreendimento` | `silver_fds_dim_empreendimento` |
+| `.../silver/dim_empreendimento` | `prata_fds_dim_empreendimento` |
 | `.../gold/fds_ficha_empreendimento` | `gold_fds_ficha_empreendimento` |
 | `.../gold/fds_panorama_entidade` | `gold_fds_panorama_entidade` |
 | — (frente nova) | domínio `empreendimento_rural_dbt` (bronze/silver/gold) |

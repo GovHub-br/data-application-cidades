@@ -1,9 +1,19 @@
 {{ config(materialized="table") }}
 
--- Silver: Dimensao de empreendimento FDS (Entidades)
--- Resolve a identidade estavel do empreendimento (id_empreendimento) a partir do
+-- Movido 2026-09-11 de empreendimento_fds_dbt/silver/ (silver_atual_dim_empreendimento,
+-- depois prata_fds_dim_empreendimento) pra dentro do escopo deste projeto:
+-- empreendimento_fds_dbt e mantido pelos colegas e so foi copiado nesta
+-- branch pra teste de compilacao (deve refletir prod tal como esta, sem
+-- enriquecimento aqui); quem precisa de id_empreendimento/fase_empreendimento
+-- e so a prata_fds_historico_empreendimento (mcmv_historico_dbt), entao o
+-- modelo que resolve essa identidade mora aqui agora. +schema herdado do
+-- bloco `mcmv_historico_dbt.prata` do dbt_project.yml (= `prata`).
+--
+-- Dimensao de identidade do empreendimento FDS (Entidades), atual (nao
+-- historica): resolve a identidade estavel (id_empreendimento) a partir do
 -- APF-ancora (Fase Projeto), ligando APFs de fases distintas (Projeto/Obra/
--- Desligamento) do mesmo empreendimento.
+-- Desligamento) do mesmo empreendimento. Fontes: bronzes do dominio
+-- empreendimento_fds_dbt (leitura, sem modificar nada la).
 --
 -- Fontes (em ordem de precedencia, seed curado vence):
 -- 1. seed_apf_fase_fds (xlsx RELACAO_APF_FASES_FDS, curado) - mapeamento completo

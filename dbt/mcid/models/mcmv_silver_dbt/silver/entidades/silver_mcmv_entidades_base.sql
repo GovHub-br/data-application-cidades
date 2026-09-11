@@ -57,7 +57,7 @@ select
     'Entidades/FDS agrupado por id_empreendimento. Regra max validada empiricamente para UH (duplicadas) e financeiro (valor_contratado/valor_desembolsado sao totais unicos por empreendimento, nao particionados entre fases).'
     ::text as observacao_silver,
     current_timestamp as dt_silver
-from {{ ref("silver_fds_empreendimento") }}
+from {{ ref("prata_fds_empreendimento") }}
 where apf is not null
 group by coalesce(id_empreendimento, apf)
 #}

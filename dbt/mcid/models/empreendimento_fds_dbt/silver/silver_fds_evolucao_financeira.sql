@@ -11,7 +11,7 @@
 with
     financeiro as (select * from {{ ref("bronze_fds_financeiro_mensal") }}),
 
-    empreendimento as (select * from {{ ref("silver_fds_empreendimento") }}),
+    empreendimento as (select * from {{ ref("prata_fds_empreendimento") }}),
 
     -- Agregação mensal: soma todas as liberações reais do mês por APF
     -- Filtra apenas ic_credito='0' (liberações reais) e aplica ABS()

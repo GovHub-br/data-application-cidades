@@ -1,4 +1,10 @@
-{{ config(materialized="table", alias="silver_atual_evolucao_financeira") }}
+{{ config(materialized="table", schema="prata") }}
+
+-- Materializa em `prata` (nao `silver`) e sem alias -- prod real ja usa
+-- schemas globais bronze/prata/ouro em todos os dominios; esta tabela bate
+-- coluna a coluna com a `prata_far_evolucao_financeira` ja publicada la. Ver
+-- padrao-nomenclatura-tabelas-dbt.md (desatualizado nesse ponto) e memoria de
+-- sessao 2026-09-11.
 
 -- Silver: Evolução Financeira — liberações CONHECIDAS NO SNAPSHOT do SharePoint,
 -- agrupadas pelo mês da liberação (dt_liberacao). NÃO é a série de desembolsos

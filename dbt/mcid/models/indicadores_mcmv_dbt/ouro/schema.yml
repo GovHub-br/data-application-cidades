@@ -10,8 +10,8 @@ models:
       alertas estratégicos e dashboards.
 
       GRÃO: 1 linha por (frente, apf) — snapshot corrente, não série. Derivada
-      das fichas de produção `gold_far_ficha_empreendimento` /
-      `gold_fds_ficha_empreendimento` e das ouros `*_atual_*` FAR/FDS. Cobre só
+      das fichas de produção `ouro_far_ficha_empreendimento` /
+      `ouro_fds_ficha_empreendimento` e das ouros `*_atual_*` FAR/FDS. Cobre só
       FAR e FDS — Rural fica de fora deste ouro.
 
       VOCABULÁRIO: a coluna de frente se chama `frente` (não `frente_mcmv`) e seu

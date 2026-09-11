@@ -7,17 +7,32 @@ ADR de arquitetura (issue #117), o ADR prevalece.
 > Aplica-se a **todo modelo novo**. Modelos existentes fora do padrão migram de
 > forma controlada — ver seção 8.
 
+> **Atualização 2026-09-11**: o prefixo/schema global de camada é **português**
+> (`bronze`/`prata`/`ouro`), não `bronze`/`silver`/`gold`. A versão anterior
+> deste documento (e a `migracao-bronze-minio-mcmv`, issue #119, que a
+> originou) planejava schemas globais em inglês — mas o prod real já
+> convergiu para `bronze`/`prata`/`ouro` em **todos** os domínios (far, fds,
+> rural, histórico, reloginho): os schemas `silver`/`gold` têm **zero**
+> tabelas em prod, assim como os schemas por-domínio legados
+> (`empreendimento_far`, `empreendimentos_fds`, `dados_historicos`,
+> `mcmv_historico`, `reloginho`, `entidades_fds`). Verificado por consulta
+> direta a `information_schema.tables`/`.columns` em prod (contagem por
+> schema: `bronze` 72, `ouro` 103, `prata` 70, `seeds` 14 — nada em
+> `silver`/`gold`/schemas por-domínio). Este documento foi reescrito para
+> refletir essa realidade; onde a seção 8 antiga dizia "Feito" com schema
+> inglês, o de-fato hoje é português.
+
 ---
 
 ## 1. Princípios
 
 1. **Um schema por camada, global.** Existem exatamente três schemas de dados:
-   `bronze`, `silver` e `gold`. Toda tabela é gravada no schema da sua camada,
+   `bronze`, `prata` e `ouro`. Toda tabela é gravada no schema da sua camada,
    **independente do domínio**.
 2. **O domínio vive no nome da tabela e na pasta**, nunca no schema.
-3. **Toda tabela é prefixada pela camada** (`bronze_`, `silver_`, `gold_`).
+3. **Toda tabela é prefixada pela camada** (`bronze_`, `prata_`, `ouro_`).
 4. **A pasta do modelo reflete camada e domínio**
-   (`models/<dominio>_dbt/<camada>/`).
+   (`models/<dominio>_dbt/<camada>/`, pastas em português: `bronze/`, `prata/`, `ouro/`).
 5. **`snake_case`** em tudo: pasta, arquivo, schema, coluna, alias de CTE.
 6. **Materialização `table`** em todas as camadas (decisão do time em
    2026-08-29: `materialized_view` derrubava o banco — não reverter).
@@ -28,8 +43,8 @@ ADR de arquitetura (issue #117), o ADR prevalece.
 
 ## 2. Domínios
 
-O *domínio* é a área de negócio, não a fonte. Um domínio agrupa bronze + silver +
-gold de um mesmo produto de dados. Ele aparece em:
+O *domínio* é a área de negócio, não a fonte. Um domínio agrupa bronze + prata +
+ouro de um mesmo produto de dados. Ele aparece em:
 
 - **pasta**: `models/<dominio>_dbt/`;
 - **nome da tabela**: como token de desambiguação (seção 4);
@@ -41,26 +56,14 @@ gold de um mesmo produto de dados. Ele aparece em:
 | `empreendimento_far` | `far` | Empreendimentos MCMV frente FAR |
 | `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
 | `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
-| `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) — schema por camada `bronze`/`prata`/`ouro` |
-| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `dhist`/`far`/`rural`/`fds` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
+| `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) |
+| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `dhist`/`far`/`rural`/`fds` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) |
 
 O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_far_…`,
 `prata_dhist_…` — nunca como sufixo.
 
 Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 `dbt_project.yml`.
-
-> **Eixo histórico e reloginho — schema por camada em português.** Desde
-> `renomear-camadas-pt-historico-reloginho` (D1), os 33 modelos de
-> `mcmv_historico_dbt` (exceto `piloto/`) e `indicadores_mcmv_dbt` materializam
-> por **camada**: bronze → `bronze`, silver → `prata`, gold → `ouro`. O nome de
-> tabela é `<camada>_<token>_<nome>` — token = **origem de staging** na bronze
-> (`dhist`/`sftp`/`shpt`) e **domínio** na prata/ouro
-> (`dhist`/`far`/`rural`/`fds`/`reloginho`). Reverte a D1 de
-> `consolidar-schemas-historico-reloginho`. Os schemas `dados_historicos`,
-> `reloginho`, de frente, `conjuntura`, `mcmv_historico` e `serie_historica`
-> **não recebem** estes braços. Ver `models/mcmv_historico_dbt/README.md`
-> § Convenção de schema.
 
 ---
 
@@ -69,13 +72,14 @@ Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 | Camada | Schema | Observação |
 |---|---|---|
 | Bronze | `bronze` | Cópia fiel da staging. Toda tabela `bronze_*`, de qualquer domínio |
-| Silver | `silver` | Camada tratada. Toda tabela `silver_*`, de qualquer domínio |
-| Gold | `gold` | Marts e indicadores. Toda tabela `gold_*`, de qualquer domínio |
-| Qualidade | `gold` | Tabelas de resultado de checagem (`quality_*`) — no schema `gold`, marcadas `classification: restricted` e `rag_publication: prohibited` |
+| Prata | `prata` | Camada tratada. Toda tabela `prata_*`, de qualquer domínio |
+| Ouro | `ouro` | Marts e indicadores. Toda tabela `ouro_*`, de qualquer domínio |
+| Qualidade | `ouro` | Tabelas de resultado de checagem (`quality_*`) — no schema `ouro`, marcadas `classification: restricted` e `rag_publication: prohibited` |
 
-- **Não** existe schema por domínio (`conjuntura_bronze`, `empreendimento_far`
-  etc. são legado — seção 8).
-- **Não** existe schema `mart` / `_continuo`. Gold é `gold`.
+- **Não** existe schema por domínio (`conjuntura_bronze`, `empreendimento_far`,
+  `empreendimentos_fds`, `dados_historicos`, `mcmv_historico`, `reloginho`,
+  `entidades_fds` etc. são legado, vazios em prod — seção 8).
+- **Não** existe schema `mart` / `_continuo`. Ouro é `ouro`.
 - Como os três schemas são compartilhados por todos os domínios, **o nome da
   tabela precisa ser único dentro do schema** — daí o token de domínio na
   seção 4.
@@ -90,7 +94,7 @@ Formato:
 <camada>_<token-dominio>_<assunto>[_<recorte>]
 ```
 
-- `<camada>` ∈ `bronze` | `silver` | `gold` | `quality`.
+- `<camada>` ∈ `bronze` | `prata` | `ouro` | `quality`.
 - `<token-dominio>` — token da seção 2 (`far`, `fds`, `rural`, `conjuntura`,
   `reloginho`, `mcmv_historico`, ...), **logo após a camada**.
 - `<assunto>` — substantivo do que a tabela representa (`consolidado`,
@@ -102,9 +106,9 @@ Formato:
 **O nome precisa ser único no schema da camada.** Como o token de domínio é
 obrigatório e vem logo após a camada, `<assunto>` sozinho nunca colide:
 
-- `silver_empreendimento` ❌ (sem token; colidiria entre FAR, FDS, Rural)
-- `silver_far_empreendimento`, `silver_fds_empreendimento`,
-  `silver_rural_empreendimento` ✅
+- `prata_empreendimento` ❌ (sem token; colidiria entre FAR, FDS, Rural)
+- `prata_far_empreendimento`, `prata_fds_empreendimento`,
+  `prata_rural_empreendimento` ✅
 - `prata_far_historico_empreendimento` ✅ (token `mcmv_historico`; a frente
   `_far` é recorte porque o token do domínio histórico não é a frente)
 
@@ -115,8 +119,8 @@ O nome do arquivo `.sql` **é** o nome da tabela. Não usar `alias`.
 | Camada | Bom | Evitar |
 |---|---|---|
 | Bronze | `bronze_far_consolidado`, `bronze_reloginho_snh_serie_mensal` | `consolidado`, `bronze_consolidado_far`, `far_raw`, `stg_far` |
-| Silver | `silver_far_empreendimento`, `silver_reloginho_snh_apf_mes` | `empreendimento`, `silver_empreendimento_far`, `empreendimento_tratado` |
-| Gold | `gold_far_evolucao_financeira`, `gold_far_ficha_empreendimento`, `gold_mcmv_historico_serie_mensal` | `evolucao_financeira_chart` sem prefixo, `gold_ficha_empreendimento_far`, `mart_ficha` |
+| Prata | `prata_far_empreendimento`, `prata_reloginho_snh_apf_mes` | `empreendimento`, `prata_empreendimento_far`, `empreendimento_tratado`, `silver_far_empreendimento` |
+| Ouro | `ouro_far_evolucao_financeira`, `ouro_far_ficha_empreendimento`, `ouro_mcmv_historico_serie_mensal` | `evolucao_financeira_chart` sem prefixo, `ouro_ficha_empreendimento_far`, `mart_ficha`, `gold_far_ficha_empreendimento` |
 | Qualidade | `quality_reloginho_reconciliacao_66`, `quality_far_completude` | `assert_*` como modelo (isso é teste, fica em `tests/`) |
 
 ### Regras de coluna
@@ -131,7 +135,7 @@ O nome do arquivo `.sql` **é** o nome da tabela. Não usar `alias`.
 ## 5. Configuração no `dbt_project.yml`
 
 Cada domínio é um bloco sob `models: mcid:`. A camada define **sempre** o mesmo
-schema global (`bronze`/`silver`/`gold`), a materialização e a governança; os
+schema global (`bronze`/`prata`/`ouro`), a materialização e a governança; os
 modelos herdam. O que muda entre domínios é só `governance.product`.
 
 ```yaml
@@ -157,14 +161,14 @@ modelos herdam. O que muda entre domínios é só `governance.product`.
             tier: Tier.Tier3
             owner: mcid-data-engineering
 
-      silver:
+      prata:
         +materialized: table
-        +schema: silver
+        +schema: prata
         +meta:
           governance:
             product: empreendimento_rural
             owner_key: mcid_data_engineering
-            layer: silver
+            layer: prata
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -172,14 +176,14 @@ modelos herdam. O que muda entre domínios é só `governance.product`.
             tier: Tier.Tier2
             owner: mcid-data-engineering
 
-      gold:
+      ouro:
         +materialized: table
-        +schema: gold
+        +schema: ouro
         +meta:
           governance:
             product: empreendimento_rural
             owner_key: mcid_data_engineering
-            layer: gold
+            layer: ouro
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -189,7 +193,7 @@ modelos herdam. O que muda entre domínios é só `governance.product`.
 
       qualidade:
         +materialized: table
-        +schema: gold
+        +schema: ouro
         +meta:
           governance:
             product: empreendimento_rural
@@ -199,19 +203,25 @@ modelos herdam. O que muda entre domínios é só `governance.product`.
             rag_publication: prohibited
 ```
 
-> `+schema` é literal (`bronze`/`silver`/`gold`) porque o projeto usa o
-> `generate_schema_name_for_env` padrão: no target `prod` o schema custom é usado
-> como está; em targets de dev vira `<target>_bronze` etc.
+> `+schema` é literal (`bronze`/`prata`/`ouro`) porque o projeto usa o
+> `generate_schema_name_for_env` padrão (ver `macros/get_custom_schema.sql`):
+> no target `prod` o schema custom é usado como está; no target `staging_duckdb`
+> também é honrado literalmente (necessário pra ler o MinIO); nos demais
+> targets de dev vira `<target>_bronze` etc.
+>
+> Um modelo isolado que ainda não teve o domínio inteiro migrado pode
+> sobrepor só o próprio `+schema` via `config(schema="prata")` no `.sql`,
+> sem mexer no bloco da pasta no `dbt_project.yml` — ver seção 8.
 
 ### Valores fixos de `+meta` por camada
 
-| Chave | bronze | silver | gold | qualidade |
+| Chave | bronze | prata | ouro | qualidade |
 |---|---|---|---|---|
-| `+schema` | `bronze` | `silver` | `gold` | `gold` |
-| `governance.layer` | `bronze` | `silver` | `gold` | `quality` |
+| `+schema` | `bronze` | `prata` | `ouro` | `ouro` |
+| `governance.layer` | `bronze` | `prata` | `ouro` | `quality` |
 | `governance.classification` | `restricted` | `internal` | `internal` | `restricted` |
 | `governance.rag_publication` | `prohibited` | `eligible_after_security_validation` | `eligible_after_security_validation` | `prohibited` |
-| `openmetadata.tier` | `Tier.Tier3` | `Tier.Tier2` | `Tier.Tier1` | *(herda gold)* |
+| `openmetadata.tier` | `Tier.Tier3` | `Tier.Tier2` | `Tier.Tier1` | *(herda ouro)* |
 | `openmetadata.domain` | `MCid.Habitacao` | `MCid.Habitacao` | `MCid.Habitacao` | `MCid.Habitacao` |
 | `openmetadata.owner` / `governance.owner_key` | `mcid-data-engineering` / `mcid_data_engineering` | idem | idem | idem |
 
@@ -234,18 +244,22 @@ O `+database` já é resolvido no topo (`mcid:`):
 
 Alinhado com `arquitetura-medalhao-mcid.md` §5 e o piloto #118.
 
-| Campo | Bronze | Silver | Gold | Função |
+| Campo | Bronze | Prata | Ouro | Função |
 |---|:--:|:--:|:--:|---|
 | `source_file` | ✅ | ✅ | — | Arquivo de origem na staging |
 | `dt_ingest` | ✅ | ✅ | — | Momento da carga na bronze |
 | `hash_linha` | ✅ | ✅ | — | Hash do conteúdo (dedup / detecção de mudança) |
 | `dt_referencia` | ✅ | ✅ | ✅ | Período do snapshot — derivado do **nome do arquivo** |
-| `dt_silver` | — | ✅ | — | `current_timestamp` da transformação silver |
-| `dt_gold` | — | — | ✅ | `current_timestamp` da materialização gold |
+| `dt_silver` / `dt_prata` | — | ✅ | — | `current_timestamp` da transformação prata |
+| `dt_gold` / `dt_ouro` | — | — | ✅ | `current_timestamp` da materialização ouro |
 | `id_negocio_historico` | — | ✅ | opcional | Chave lógica estável (programa + linha + período) |
 | `is_current` / `dt_valid_from` / `dt_valid_to` | — | opcional | — | SCD2, só onde há versionamento explícito |
 
-Bronze **não deduplica** e **não tipa** (tudo `text`/genérico). Silver é o único
+> Nomes de coluna técnica existentes (`dt_silver`, `dt_gold`) não precisam ser
+> retroativamente renomeados só por causa da mudança de schema — são coluna,
+> não schema/tabela; ver seção 8 sobre o que migra e o que não.
+
+Bronze **não deduplica** e **não tipa** (tudo `text`/genérico). Prata é o único
 lugar de achatamento, tipagem, domínio e dedup.
 
 ---
@@ -258,9 +272,9 @@ lugar de achatamento, tipagem, domínio e dedup.
   seleção: `dbt build --select tag:bronze`).
 - Testes mínimos:
   - bronze: `row_count_match` contra a fonte (quando houver tabela equivalente).
-  - silver: `not_null` + `unique` na chave de grão; `accepted_values` em domínios.
-  - gold: teste de reconciliação / totalização quando houver referência oficial.
-- Métrica derivada em gold ⇒ fórmula documentada no `description` da coluna.
+  - prata: `not_null` + `unique` na chave de grão; `accepted_values` em domínios.
+  - ouro: teste de reconciliação / totalização quando houver referência oficial.
+- Métrica derivada em ouro ⇒ fórmula documentada no `description` da coluna.
 
 ---
 
@@ -268,43 +282,51 @@ lugar de achatamento, tipagem, domínio e dedup.
 
 | Modelo / bloco | Desvio | Ação |
 |---|---|---|
-| `conjuntura_dbt` (schemas `conjuntura_bronze`/`_silver`/`_gold`) | Schema por domínio | Repontar `+schema` para `bronze`/`silver`/`gold`; tabelas já têm prefixo de camada. View de compat nos nomes de schema antigos enquanto o Superset migra |
-| ~~`empreendimento_far_dbt` (schema único `empreendimento_far`)~~ | Schema por domínio; silver/gold sem prefixo | **Feito** (`migracao-bronze-minio-mcmv`): schemas globais `bronze`/`silver`/`gold`; renomeado `<camada>_far_<assunto>` (token após a camada); fonte `raw` → `mcmv_staging` (MinIO/DuckDB, `+enabled: duckdb`) |
-| ~~`entidades_dbt` (schema `entidades_fds`, prefixo `fds_`)~~ | Schema por domínio; domínio deveria ser `empreendimento_fds` | **Feito** (`migracao-bronze-minio-mcmv`): domínio → `empreendimento_fds_dbt` (`product: empreendimento_fds`); schemas globais; `<camada>_fds_<assunto>`. `seeds/entidades_fds/` (schema do seed `seed_apf_fase_fds`) segue como resíduo menor |
-| `indicadores_mcmv_dbt/{bronze,silver,gold}` (schema `mcmv_indicadores`) | Schema por domínio | Repontar para `bronze`/`silver`/`gold`; nomes já prefixados |
-| ~~`mcmv_historico_dbt/{piloto,empreendimentos,serie_executiva}`~~ | Sem prefixo de camada; schema `mcmv_historico` | **Feito** (`separacao-silver-historico-por-frente`): modelos classificados em `bronze/silver/gold/`, renomeados com prefixo + token `mcmv_historico`, schemas globais via `get_custom_schema` também no DuckDB. `seeds/mcmv_historico/` (schema do seed do piloto) segue como resíduo menor |
+| `conjuntura_dbt` (schemas `conjuntura_bronze`/`_silver`/`_gold`) | Schema por domínio, inglês | Repontar `+schema` para `bronze`/`prata`/`ouro`; tabelas já têm prefixo de camada (precisa também renomear `silver_*`/`gold_*` → `prata_*`/`ouro_*`) |
+| `empreendimento_far_dbt` / `empreendimento_fds_dbt` (schema único por domínio: `empreendimento_far` / `empreendimentos_fds`, prefixo `silver_`/`gold_`, muitas vezes com `alias` pro nome físico) | Schema por domínio, inglês; ambos os schemas legados estão **vazios em prod** — e o domínio inteiro é **mantido pelos colegas**, só copiado nesta branch pra teste de compilação (não é escopo deste projeto) | **Parcial** (2026-09-11): os modelos referenciados por `mcmv_historico_dbt`/`indicadores_mcmv_dbt` já foram repontados individualmente (`config(schema="prata"/"ouro")`, sem `alias`, arquivo renomeado `prata_*`/`ouro_*`) — ver `prata_fds_empreendimento`, `prata_far_evolucao_financeira`, `ouro_far_ficha_empreendimento`, `ouro_far_execucao_fisica_financeira_chart`, `ouro_fds_ficha_empreendimento`, `ouro_fds_evolucao_financeira_chart`. **Todos batem coluna a coluna, exatos, com as tabelas já publicadas em prod** — não são pipelines divergentes, só nomenclatura desatualizada localmente; **regra**: modelo copiado destes domínios reflete prod tal como está, não enriquece. `prata_fds_empreendimento` tinha `id_empreendimento`/`fase_empreendimento` e 12 colunas SNH adicionadas localmente (fora do padrão) — removidas 2026-09-11; a identidade de empreendimento que `mcmv_historico_dbt` precisa agora mora em `prata_fds_historico_dim_empreendimento` (`mcmv_historico_dbt/prata/`, dentro do escopo). Os modelos NÃO consumidos por fora do domínio (ex.: `gold_far_mapa_nacional`, `gold_far_panorama_estadual`, `gold_far_resumo_gerencial`, `gold_fds_panorama_entidade`, os bronzes, `silver_far_empreendimento`, `silver_fds_evolucao_financeira`) **ainda não foram migrados** — não mexer neles a menos que passem a ser consumidos por `mcmv_historico_dbt`/`indicadores_mcmv_dbt`. `seeds/entidades_fds/` (schema do seed `seed_apf_fase_fds`) segue como resíduo menor |
+| `indicadores_mcmv_dbt/{bronze,prata,ouro}` (schema `mcmv_indicadores`) | Schema por domínio | **Feito** (`renomear-camadas-pt-historico-reloginho`): repontado pra `bronze`/`prata`/`ouro`, nomes já prefixados em português |
+| `mcmv_historico_dbt/{bronze,prata,ouro}` (schema `mcmv_historico`) | Schema por domínio | **Feito** (`renomear-camadas-pt-historico-reloginho`): repontado pra `bronze`/`prata`/`ouro`, nomes já prefixados em português. `seeds/mcmv_historico/` (schema do seed do piloto) segue como resíduo menor |
 
 **Regra de renome físico** (issue #119): nunca renomear tabela — ou schema —
 consumida por dashboard sem uma view/alias de compatibilidade no nome antigo, e
 sem validar no Superset: row count antes/depois, campos de cards/filtros/mapas,
-data máxima de referência, cards sem erro.
+data máxima de referência, cards sem erro. Os 8 modelos migrados em
+2026-09-11 (linha acima) nunca tiveram linha materializada em prod sob o nome
+antigo (schemas `empreendimento_far`/`empreendimentos_fds`/`silver`/`gold`
+vazios) — checado por consulta direta a `information_schema` antes do
+rename, então a view de compatibilidade não se aplicou.
 
 ---
 
 ## 9. Checklist para tabela nova
 
 - [ ] Domínio existe na seção 2 (senão, registrar + criar bloco no `dbt_project.yml`).
-- [ ] Pasta: `models/<dominio>_dbt/<camada>/`.
+- [ ] Pasta: `models/<dominio>_dbt/<camada>/` (camada em português: `bronze/`, `prata/`, `ouro/`).
 - [ ] Arquivo `<camada>_<token-dominio>_<assunto>[_<recorte>].sql` — sem `alias`.
 - [ ] Nome único dentro do schema da camada (token de domínio logo após a camada).
 - [ ] `{{ config(materialized="table") }}` (ou herdado).
-- [ ] `+schema` da camada = `bronze` / `silver` / `gold`.
+- [ ] `+schema` da camada = `bronze` / `prata` / `ouro`.
 - [ ] Bronze: cópia fiel, sem tipagem, sem dedup; `source_file`, `dt_ingest`, `hash_linha`, `dt_referencia`.
-- [ ] Silver: tipagem + domínio + dedup; grão declarado; `dt_silver`.
-- [ ] Gold: regra de negócio; grão declarado; `dt_gold`.
+- [ ] Prata: tipagem + domínio + dedup; grão declarado; `dt_silver`/`dt_prata`.
+- [ ] Ouro: regra de negócio; grão declarado; `dt_gold`/`dt_ouro`.
 - [ ] Entrada no `schema.yml` com `description` (grão), `meta.tags`, testes mínimos.
 - [ ] Leitura de `staging/` ⇒ `+enabled: target.type == 'duckdb'`.
 - [ ] Credenciais MinIO **fora do commit** — usar `.env` / `profiles.yml` local.
+- [ ] Antes de assumir que um nome/schema está vazio ou livre em prod: **checar
+      prod de verdade** (`information_schema.tables`/`.columns`, somente
+      leitura) — não confiar só na documentação ou no `dbt_project.yml` local,
+      que podem estar desatualizados (foi exatamente esse o caso desta seção
+      até 2026-09-11).
 
 ---
 
 ## 10. Validação
 
 ```bash
-cd airflow_lappis/dags/dbt/mcid
+cd dbt/mcid
 dbt parse
-dbt build --select <dominio>_dbt.bronze <dominio>_dbt.silver --target staging_duckdb
-dbt build --select tag:gold --target prod
+dbt build --select <dominio>_dbt.bronze <dominio>_dbt.prata --target staging_duckdb
+dbt build --select tag:ouro --target prod
 dbt docs generate
 ```
 

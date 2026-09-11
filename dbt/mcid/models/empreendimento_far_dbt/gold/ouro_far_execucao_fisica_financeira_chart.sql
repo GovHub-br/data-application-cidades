@@ -1,4 +1,10 @@
-{{ config(materialized="table") }}
+{{ config(materialized="table", schema="ouro") }}
+
+-- Materializa em `ouro` (nao `gold`, o schema padrao da pasta/domain
+-- empreendimento_far) porque o prod real ja convergiu pra schemas globais
+-- bronze/prata/ouro em todos os dominios -- `gold`/`empreendimento_far` estao
+-- vazios em prod. Ver models/mcmv_historico_dbt/docs/padrao-nomenclatura-tabelas-dbt.md
+-- (desatualizado nesse ponto) e memoria de sessao 2026-09-11.
 
 with
     financeira as (
@@ -6,7 +12,7 @@ with
             apf,
             mes,
             pct_executado_financeiro
-        from {{ ref("silver_far_evolucao_financeira") }}
+        from {{ ref("prata_far_evolucao_financeira") }}
     ),
 
     fisica as (
