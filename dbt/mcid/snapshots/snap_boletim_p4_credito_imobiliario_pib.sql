@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Crédito Imobiliário / PIB"
-from {{ ref('gld_boletim_p4_credito_imobiliario_pib') }}
+from {{ ref('ouro_conjuntura_boletim_p4_credito_imobiliario_pib') }}
 
 {% endsnapshot %}

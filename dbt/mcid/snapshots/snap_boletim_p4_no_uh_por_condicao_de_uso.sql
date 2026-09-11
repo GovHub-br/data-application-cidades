@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("fonte"::text, '') as chave,
     edicao,
     "fonte", "Trim. ano anterior — UH Usadas", "Trim. ano anterior — UH Novas", "Trim. selecionado — UH Usadas", "Trim. selecionado — UH Novas", "Trim. selecionado — UH Total"
-from {{ ref('gld_boletim_p4_no_uh_por_condicao_de_uso') }}
+from {{ ref('ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso') }}
 
 {% endsnapshot %}

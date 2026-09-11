@@ -10,30 +10,30 @@
 -- que a fonte não traz dado novo há tempo demais e alguém precisa olhar.
 
 with fontes as (
-    select 'gld_sinapi'        as model, 'mensal'     as frequencia,
-           max(data_referencia)          as mais_recente from {{ ref('gld_sinapi') }}
+    select 'ouro_conjuntura_sinapi'        as model, 'mensal'     as frequencia,
+           max(data_referencia)          as mais_recente from {{ ref('ouro_conjuntura_sinapi') }}
     union all
-    select 'gld_incc_m', 'mensal', max(mes) from {{ ref('gld_incc_m') }}
+    select 'ouro_conjuntura_incc_m', 'mensal', max(mes) from {{ ref('ouro_conjuntura_incc_m') }}
     union all
-    select 'gld_fipezap', 'mensal', max(data_referencia) from {{ ref('gld_fipezap') }}
+    select 'ouro_conjuntura_fipezap', 'mensal', max(data_referencia) from {{ ref('ouro_conjuntura_fipezap') }}
     union all
-    select 'gld_icst', 'mensal', max(data_referencia) from {{ ref('gld_icst') }}
+    select 'ouro_conjuntura_icst', 'mensal', max(data_referencia) from {{ ref('ouro_conjuntura_icst') }}
     union all
-    select 'gld_indice_imob', 'mensal', max(data_referencia) from {{ ref('gld_indice_imob') }}
+    select 'ouro_conjuntura_indice_imob', 'mensal', max(data_referencia) from {{ ref('ouro_conjuntura_indice_imob') }}
     union all
-    select 'gld_saldo_poupanca', 'mensal', max(data_referencia) from {{ ref('gld_saldo_poupanca') }}
+    select 'ouro_conjuntura_saldo_poupanca', 'mensal', max(data_referencia) from {{ ref('ouro_conjuntura_saldo_poupanca') }}
     union all
-    select 'gld_credito_pib', 'mensal', max(data) from {{ ref('gld_credito_pib') }}
+    select 'ouro_conjuntura_credito_pib', 'mensal', max(data) from {{ ref('ouro_conjuntura_credito_pib') }}
     union all
-    select 'gld_empregos_caged', 'mensal', max(make_date(ano, mes, 1)) from {{ ref('gld_empregos_caged') }}
+    select 'ouro_conjuntura_empregos_caged', 'mensal', max(make_date(ano, mes, 1)) from {{ ref('ouro_conjuntura_empregos_caged') }}
     union all
-    select 'gld_producao_fisica', 'mensal', max(data_referencia) from {{ ref('gld_producao_fisica') }}
+    select 'ouro_conjuntura_producao_fisica', 'mensal', max(data_referencia) from {{ ref('ouro_conjuntura_producao_fisica') }}
     union all
-    select 'gld_financiamentos_habitacionais', 'trimestral',
-           max(make_date(ano, trimestre * 3, 1)) from {{ ref('gld_financiamentos_habitacionais') }}
+    select 'ouro_conjuntura_financiamentos_habitacionais', 'trimestral',
+           max(make_date(ano, trimestre * 3, 1)) from {{ ref('ouro_conjuntura_financiamentos_habitacionais') }}
     union all
-    select 'gld_pib_construcao_civil', 'trimestral', max(data_referencia)
-      from {{ ref('gld_pib_construcao_civil') }}
+    select 'ouro_conjuntura_pib_construcao_civil', 'trimestral', max(data_referencia)
+      from {{ ref('ouro_conjuntura_pib_construcao_civil') }}
 ),
 
 limites as (

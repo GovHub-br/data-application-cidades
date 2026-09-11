@@ -51,8 +51,8 @@ from dotenv import load_dotenv
 # de `SUPERSET_URL` antes de publicar coisa alguma.
 load_dotenv(pathlib.Path(__file__).resolve().parents[2] / ".env")
 
-MART = "conjuntura"
-SILVER = "conjuntura"
+MART = "ouro"
+SILVER = "prata"
 
 #: primeira edição oferecida no filtro. Antes disso, as séries mensais
 #: (CAGED e produção física começam em 2024-01) não têm 12 meses de retaguarda.
@@ -148,7 +148,7 @@ def pagina_01() -> list[Quadro]:
                var_trim_trim_anterior      as v1,
                var_acumulada_ano           as v2,
                var_acumulada_4_trimestres  as v3
-        from {MART}.gld_pib_construcao_civil_pct
+        from {MART}.ouro_conjuntura_pib_construcao_civil_pct
     ),
     m as (
         select e.edicao, e.k,
@@ -285,7 +285,7 @@ def pagina_02() -> list[Quadro]:
                lancamentos::numeric as v,
                {num('var_lancamentos_tri_anterior')}            as var_tri,
                {num('var_lancamentos_mesmo_tri_ano_anterior')}  as var_ano
-        from {MART}.gld_balancos_empresas
+        from {MART}.ouro_conjuntura_balancos_empresas
     )
     select e.edicao, s.empresa,
            round(s.var_tri * 100, 0) as "vs. trim. anterior",
@@ -319,7 +319,7 @@ def pagina_02() -> list[Quadro]:
                vendas::numeric as v,
                {num('var_vendas_tri_anterior')}            as var_tri,
                {num('var_vendas_mesmo_tri_ano_anterior')}  as var_ano
-        from {MART}.gld_balancos_empresas
+        from {MART}.ouro_conjuntura_balancos_empresas
     )
     select e.edicao, s.empresa,
            round(s.var_tri * 100, 0) as "vs. trim. anterior",
@@ -351,7 +351,7 @@ def pagina_02() -> list[Quadro]:
     soma as (
         select (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
                sum(lancamentos::numeric) as lv, sum(vendas::numeric) as vv
-        from {MART}.gld_balancos_empresas group by 1
+        from {MART}.ouro_conjuntura_balancos_empresas group by 1
     ),
     tot as (
         select (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
@@ -359,7 +359,7 @@ def pagina_02() -> list[Quadro]:
                {num('var_lancamentos_totais_mesmo_tri_ano_anterior')} as la,
                {num('var_vendas_totais_tri_anterior')}                as vt,
                {num('var_vendas_totais_mesmo_tri_ano_anterior')}      as va
-        from {MART}.gld_balancos_empresas_totais
+        from {MART}.ouro_conjuntura_balancos_empresas_totais
     )
     select e.edicao, 'Total lançamentos' as indicador,
            round(t.lt * 100, 0) as "vs. trim. anterior",
@@ -400,7 +400,7 @@ def pagina_02() -> list[Quadro]:
         select (extract(year from data)::int * 12 + extract(month from data)::int) as m,
                concessoes_pf_rs_mi pf, taxa_juros_pf_aa tpf, inadimplencia_pf_pct ipf,
                concessoes_pj_rs_mi pj, taxa_juros_pj_aa tpj, inadimplencia_pj_pct ipj
-        from {MART}.gld_financiamentos_imobiliarios_pf_pj
+        from {MART}.ouro_conjuntura_financiamentos_imobiliarios_pf_pj
     ),
     ref as (select edicao, k, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, x.rotulo as periodo,
@@ -439,7 +439,7 @@ def pagina_02() -> list[Quadro]:
                financ_hab_fgts_pj pj, financ_hab_sbpe_constr sb,
                financ_hab_fgts_pj_acumulado_12_meses pj12,
                financ_hab_sbpe_constr_acumulado_12_meses sb12
-        from {MART}.gld_financiamentos_habitacionais
+        from {MART}.ouro_conjuntura_financiamentos_habitacionais
     )
     select e.edicao, x.rotulo as periodo, x.pj as "FGTS-PJ", x.sb as "SBPE Const.", x.ordem
     from edicoes e
@@ -468,7 +468,7 @@ def pagina_03() -> list[Quadro]:
     mes as (
         select (extract(year from data_referencia)::int * 12 + extract(month from data_referencia)::int) as m,
                total_construcao_saldo saldo, total_construcao_estoque estoque
-        from {MART}.gld_empregos_caged
+        from {MART}.ouro_conjuntura_empregos_caged
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, x.rotulo as periodo,
@@ -501,8 +501,8 @@ def pagina_03() -> list[Quadro]:
                (left(o.periodo, 4)::int * 12 + right(o.periodo, 2)::int) as m,
                o.periodo_nome, o.ocupados_construcao_mil oc, o.ocupados_total_mil ot,
                r.rendimento_construcao_rs rc, r.rendimento_total_rs rt
-        from {MART}.gld_pnad_ocupados o
-        join {MART}.gld_pnad_rendimento r on r.periodo = o.periodo
+        from {MART}.ouro_conjuntura_pnad_ocupados o
+        join {MART}.ouro_conjuntura_pnad_rendimento r on r.periodo = o.periodo
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, b.periodo_nome as periodo,
@@ -531,7 +531,7 @@ def pagina_03() -> list[Quadro]:
         select (left(periodo, 4)::int * 12 + right(periodo, 2)::int) as m,
                pim_pf_var_mes pm, pim_pf_var_acum_ano pa, pim_pf_var_12_meses pd,
                pmc_var_mes vm, pmc_var_acum_ano va, pmc_var_12_meses vd
-        from {MART}.gld_producao_fisica
+        from {MART}.ouro_conjuntura_producao_fisica
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, 'Variação percentual mensal' as indicador,
@@ -580,7 +580,7 @@ def pagina_03() -> list[Quadro]:
                coalesce(x.ordem, 7) as ordem,
                g.uh_acumulado_ano as uh, g.volume_acumulado_ano_milhoes as volume
         from ref r
-        join {MART}.gld_financiamentos_instituicao g
+        join {MART}.ouro_conjuntura_financiamentos_instituicao g
           on g.ano = r.ano_ed and g.mes = r.mes_ed
         left join rotulos x on x.origem = g.instituicao
     ),
@@ -619,7 +619,7 @@ def pagina_04() -> list[Quadro]:
     mes as (
         select (extract(year from data)::int * 12 + extract(month from data)::int) as m,
                to_char(data, 'MM/YY') as rotulo, credito_imobiliario_pib_pct pct
-        from {MART}.gld_credito_pib
+        from {MART}.ouro_conjuntura_credito_pib
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, x.rotulo as periodo,
@@ -647,7 +647,7 @@ def pagina_04() -> list[Quadro]:
                fgts_pf_uh_usados fu, fgts_pf_uh_novos fn,
                abecip_sbpe_fin_uh_aq_usados su, abecip_sbpe_fin_uh_aq_novos sn,
                abecip_sbpe_fin_uh_aq_total st
-        from {MART}.gld_uh_condicao_uso
+        from {MART}.ouro_conjuntura_uh_condicao_uso
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, 'FGTS - PF' as fonte,
@@ -688,7 +688,7 @@ def pagina_05() -> list[Quadro]:
 with {EDICOES},
 mes as (
     select (ano * 12 + mes) as m, unidades_construcao u, valor_construcao_milhoes v
-    from {SILVER}.slv_abecip_financiamentos
+    from {SILVER}.prata_conjuntura_abecip_financiamentos
 ),
 ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
 select r.edicao, 'Unidades' as indicador,
@@ -720,7 +720,7 @@ from ref r
     mes as (
         select (extract(year from data_referencia)::int * 12 + extract(month from data_referencia)::int) as m,
                captacao_liquida_valor v
-        from {MART}.gld_saldo_poupanca
+        from {MART}.ouro_conjuntura_saldo_poupanca
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, x.rotulo as periodo,
@@ -755,7 +755,7 @@ from ref r
                financiamento_pf_uh_faixa_3 u3, financiamento_pf_valor_faixa_3 v3,
                financiamento_pf_uh_classe_media uc, financiamento_pf_valor_classe_media vc,
                financiamento_pf_uh_total ut, financiamento_pf_valor_total vt
-        from {MART}.gld_financiamento_pf_faixa
+        from {MART}.ouro_conjuntura_financiamento_pf_faixa
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes),
     f as (
@@ -828,14 +828,14 @@ def pagina_06() -> list[Quadro]:
             nota="Fonte: SIAFI. Valores em milhões de reais.",
             ordenar="edicao",
             #: DIFERENTE dos outros quadros: o OGU não tem série por edição.
-            #: `gld_ogu` guarda uma extração pontual, e o model do
+            #: `ouro_conjuntura_ogu` guarda uma extração pontual, e o model do
             #: dbt faz cross join com as edições justamente para o filtro não
             #: mentir — o retrato é o mesmo em qualquer trimestre escolhido, e
             #: a coluna `Extração` diz de quando ele é.
             sql=f"""
     select "edicao", "Ação", "Projeto / Atividade", "Dotação atual", "Empenho",
            "Pagamento", "RAP inscrito", "Pag. RAP", "Pag. total", "Extração"
-    from {MART}.gld_boletim_p6_ogu
+    from {MART}.ouro_conjuntura_boletim_p6_ogu
 """,
         ),
         Quadro(
@@ -848,12 +848,12 @@ def pagina_06() -> list[Quadro]:
     sin as (
         select (left(periodo, 4)::int * 12 + right(periodo, 2)::int) as m,
                custo_medio_m2 ix, var_mes vm, var_acum_ano va, var_12_meses vd
-        from {MART}.gld_sinapi
+        from {MART}.ouro_conjuntura_sinapi
     ),
     inc as (
         select (extract(year from mes)::int * 12 + extract(month from mes)::int) as m,
                indice ix, var_mes vm, var_fonte_no_ano va, var_fonte_12_meses vd
-        from {MART}.gld_incc_m
+        from {MART}.ouro_conjuntura_incc_m
     ),
     ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
     select r.edicao, 'Número índice / Custo (R$/m²)' as indicador,
@@ -901,7 +901,7 @@ def pagina_06() -> list[Quadro]:
                ticket_medio_lancamentos_mrv_var_tri_ant mt, ticket_medio_lancamentos_mrv_var_acum_4t2020 ma,
                ticket_medio_lancamentos_direcional_var_tri_ant dt, ticket_medio_lancamentos_direcional_var_acum_4t2020 da,
                ticket_medio_lancamentos_tenda_var_tri_ant tt, ticket_medio_lancamentos_tenda_var_acum_4t2020 ta
-        from {MART}.gld_ticket_medio
+        from {MART}.ouro_conjuntura_ticket_medio
     )
     select e.edicao, s.periodo,
            round(s.it::numeric * 100, 1) as "INCC trimestral",
@@ -940,13 +940,13 @@ def pagina_07() -> list[Quadro]:
     imob as (
         select (left(periodo, 4)::int * 12 + right(periodo, 2)::int) as m,
                indice_imob_var_mes a, indice_imob_var_mes_vs_mes_ano_ant b, indice_imob_var_acum_ano c
-        from {MART}.gld_indice_imob
+        from {MART}.ouro_conjuntura_indice_imob
     ),
     fipe as (
         select (left(periodo, 4)::int * 12 + right(periodo, 2)::int) as m,
                indice_fipezap_locacao_var_mes a, indice_fipezap_locacao_var_mes_vs_mes_ano_ant b,
                indice_fipezap_locacao_acum_ano c
-        from {MART}.gld_fipezap
+        from {MART}.ouro_conjuntura_fipezap
     ),
     abramat as (
         select (ano::int * 12 + mes::int) as m,
@@ -958,7 +958,7 @@ def pagina_07() -> list[Quadro]:
         select (right(periodo, 4)::int * 12 + left(periodo, 2)::int) as m,
                indice_icst_var_mes_com_ajuste a, indice_icst_var_mes_vs_mes_ano_ant_com_ajuste b,
                icst_com_ajuste_sazonal ix
-        from {MART}.gld_icst
+        from {MART}.ouro_conjuntura_icst
     )
     select r.edicao, 'Mês de ref. vs. mês anterior' as indicador,
            round((select a from imob where m = r.m0)::numeric * 100, 1) as "Índice IMOB",
@@ -1041,7 +1041,7 @@ def sql_do_quadro(q: Quadro) -> str:
     return f"select {colunas}\nfrom (\n{q.sql}\n) q\norder by edicao, {q.ordenar}"
 
 
-SCHEMA = "conjuntura"
+SCHEMA = "ouro"
 DATABASE_NAME = "Cidades"
 SLUG = "boletim-conjuntura"
 TITULO = "Boletim de Conjuntura — Trimestral"
@@ -1151,6 +1151,23 @@ class Superset:
 # um quadro -> dataset virtual + chart
 
 
+#: Quadros cujo nome derivado do título passa dos 63 bytes que o Postgres
+#: aceita como identificador. O prefixo de camada da arquitetura nova
+#: (`ouro_conjuntura_boletim_p<N>_`) é 12 bytes mais longo que o antigo, e nestes
+#: oito o slug do título não cabe mais. O nome curto é escrito à mão; nos
+#: outros treze o derivado continua servindo.
+RENOMEADOS = {
+    "gld_boletim_p1_pib_construcao_civil_em_de_crescimento": "ouro_conjuntura_boletim_p1_pib_construcao_crescimento",
+    "gld_boletim_p2_totais_das_empresas_levantadas_variacao": "ouro_conjuntura_boletim_p2_totais_empresas_variacao",
+    "gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_": "ouro_conjuntura_boletim_p3_financiamentos_por_banco",
+    "gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re": "ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento",
+    "gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia": "ouro_conjuntura_boletim_p3_producao_e_vendas_variacao",
+    "gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida": "ouro_conjuntura_boletim_p5_poupanca_captacao_liquida",
+    "gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri": "ouro_conjuntura_boletim_p5_sbpe_construcao_no_tri",
+    "gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc": "ouro_conjuntura_boletim_p6_ticket_medio_vs_incc",
+}
+
+
 def nome_dataset(q: Quadro) -> str:
     """Tabela FÍSICA do quadro, materializada pelo dbt em `gold/boletim/`.
 
@@ -1161,7 +1178,8 @@ def nome_dataset(q: Quadro) -> str:
     """
     base = unicodedata.normalize("NFKD", q.titulo).encode("ascii", "ignore").decode()
     base = re.sub(r"[^a-z0-9]+", "_", base.lower()).strip("_")[:44]
-    return f"gld_boletim_p{q.pagina}_{base}"
+    derivado = f"gld_boletim_p{q.pagina}_{base}"
+    return RENOMEADOS.get(derivado, f"ouro_conjuntura_boletim_p{q.pagina}_{base}")
 
 
 def garantir_quadro(api: Superset, q: Quadro, cache: dict) -> int | None:

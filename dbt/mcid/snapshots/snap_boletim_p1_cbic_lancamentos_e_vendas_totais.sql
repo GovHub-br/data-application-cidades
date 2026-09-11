@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Lançamentos TOTAL", "Lançamentos MCMV", "Lançamentos DEMAIS", "Vendas TOTAL", "Vendas MCMV", "Vendas DEMAIS"
-from {{ ref('gld_boletim_p1_cbic_lancamentos_e_vendas_totais') }}
+from {{ ref('ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais') }}
 
 {% endsnapshot %}

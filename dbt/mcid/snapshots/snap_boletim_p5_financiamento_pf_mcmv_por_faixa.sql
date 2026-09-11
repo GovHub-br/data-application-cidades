@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("faixa"::text, '') as chave,
     edicao,
     "faixa", "Trim. ano anterior — Nº UH", "Trim. ano anterior — FIN (Bi R$)", "Trim. selecionado — Nº UH", "Trim. selecionado — FIN (Bi R$)"
-from {{ ref('gld_boletim_p5_financiamento_pf_mcmv_por_faixa') }}
+from {{ ref('ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa') }}
 
 {% endsnapshot %}

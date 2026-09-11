@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "PROD mesmo mês ano ant.", "PROD mês anterior", "PROD mês de referência", "VENDAS mesmo mês ano ant.", "VENDAS mês anterior", "VENDAS mês de referência"
-from {{ ref('gld_boletim_p3_producao_industrial_e_volume_de_vendas_varia') }}
+from {{ ref('ouro_conjuntura_boletim_p3_producao_e_vendas_variacao') }}
 
 {% endsnapshot %}

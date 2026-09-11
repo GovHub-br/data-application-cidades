@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Cap. Líq. (Bi)"
-from {{ ref('gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida') }}
+from {{ ref('ouro_conjuntura_boletim_p5_poupanca_captacao_liquida') }}
 
 {% endsnapshot %}

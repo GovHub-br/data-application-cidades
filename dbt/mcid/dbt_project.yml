@@ -65,20 +65,17 @@ models:
       ouro:
         +schema: ouro
 
+    # `layer` continua dizendo silver/gold enquanto as pastas dizem prata/ouro:
+    # é por esse rótulo que dbt/mcid/governance/dominios.yml indexa certificação,
+    # permissão de uso e etiqueta. Renomeá-lo é mexer na camada de governança.
     conjuntura_dbt:
       +materialized: table
-      +schema: conjuntura
       +meta:
         governance:
           product: conjuntura
           owner_key: mcid_data_engineering
-      # Bronze: espelho textual do parquet de staging. A Bronze é espelho do
-      # raw, e a Silver é o único lugar de achatamento e tipagem.
-      #
-      # MATERIALIZAÇÃO É `table`, NÃO `materialized_view`: as MVs estavam
-      # derrubando o banco (decisão do time em 2026-08-29). Não reverter.
       bronze:
-        +materialized: table
+        +schema: bronze
         +meta:
           governance:
             product: conjuntura
@@ -91,8 +88,8 @@ models:
             domain: MCid.Habitacao
             tier: Tier.Tier3
             owner: mcid-data-engineering
-      silver:
-        +materialized: table
+      prata:
+        +schema: prata
         +meta:
           governance:
             product: conjuntura
@@ -105,8 +102,8 @@ models:
             domain: MCid.Habitacao
             tier: Tier.Tier2
             owner: mcid-data-engineering
-      gold:
-        +materialized: table
+      ouro:
+        +schema: ouro
         +meta:
           governance:
             product: conjuntura
@@ -119,8 +116,11 @@ models:
             domain: MCid.Habitacao
             tier: Tier.Tier1
             owner: mcid-data-engineering
+      # Medições sobre o próprio acervo, não sobre o fenômeno habitacional.
+      # Materializam na ouro porque o Superset as lê, mas `layer: quality` as
+      # separa na governança — não são entrega do produto.
       qualidade:
-        +materialized: table
+        +schema: ouro
         +meta:
           governance:
             product: conjuntura

@@ -7,128 +7,699 @@ version: 2
 # linha, em que unidade e de que período. Não registram por onde o dado passou
 # nem se a origem é consultada por interface ou por arquivo: isso é assunto do
 # time de desenvolvimento e não é metadado de consumo do catálogo.
+#
+# Espelho textual do parquet, então o teste que importa é o de layout. A lista
+# `colunas` de cada tabela é o contrato aceito hoje: mudou na origem, atualizar
+# a lista é aceitar.
 
 models:
-  - name: bnz_abecip_financiamentos
+  - name: bronze_abecip_financiamentos
     description: >
       Financiamento imobiliário com recursos da poupança, separado entre
       destinação à construção e à aquisição, em unidades e em milhões de
       reais, por mês.
-  - name: bnz_abecip_instituicoes
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - data_referencia
+            - unidades_construcao
+            - unidades_aquisicao
+            - unidades_total
+            - valor_construcao_milhoes
+            - valor_aquisicao_milhoes
+            - valor_total_milhoes
+            - dt_ingest
+            - fonte
+  - name: bronze_abecip_instituicoes
     description: >
       Financiamento imobiliário com recursos da poupança aberto por
       instituição financeira, em unidades e em milhões de reais acumulados no
       ano.
-  - name: bnz_abecip_poupanca_sbpe
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - competencia_referencia
+            - document_id
+            - execution_id
+            - source_object_key
+            - entidade
+            - exportado_em
+            - periodo_rotulo
+            - tipo_periodo
+            - modalidade
+            - instituicao_financeira
+            - volume_mensal_milhoes
+            - unidades_mensais
+            - volume_acumulado_ano_milhoes
+            - unidades_acumuladas_ano
+  - name: bronze_abecip_poupanca_sbpe
     description: >
       Movimento das cadernetas de poupança do sistema habitacional, com
       depósitos, retiradas, captação líquida e saldo, por mês.
-  - name: bnz_bacen_credito_pib
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - data_referencia
+            - deposito
+            - retirada
+            - captacao_liquida_valor
+            - captacao_liquida_pct
+            - rendimento
+            - saldo
+            - dt_ingest
+            - fonte
+  - name: bronze_bacen_credito_pib
     description: >
       Saldo da carteira de crédito imobiliário expresso como percentual do
       Produto Interno Bruto, por mês.
-  - name: bnz_bacen_financiamentos_imobiliarios
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - info
+            - data
+            - valor
+            - dt_ingest
+  - name: bronze_bacen_financiamentos_imobiliarios
     description: >
       Crédito imobiliário concedido a pessoa física e jurídica, com volume,
       taxa de juros média e inadimplência da carteira, por mês.
-  - name: bnz_fgv_icst
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - tipo
+            - data
+            - valor
+            - dt_ingest
+  - name: bronze_fgv_icst
     description: >
       Índice de confiança do empresariado da construção, nas séries com e sem
       ajuste sazonal, por mês.
-  - name: bnz_fgv_incc_m
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - mes
+            - icst_com_ajuste_sazonal
+            - icst_sem_ajuste_sazonal
+            - dt_ingest
+  - name: bronze_fgv_incc_m
     description: >
       Índice de custo da construção habitacional, com número índice e
       variações percentuais, por mês.
-  - name: bnz_fipezap_locacao
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - mes
+            - indice
+            - var_mes
+            - var_ano
+            - var_12_meses
+            - dt_ingest
+  - name: bronze_fipezap_locacao
     description: >
       Índice de preços de locação residencial anunciados, com número índice e
       variações percentuais, por mês.
-  - name: bnz_geavo_cca_analitico
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - data_referencia
+            - imoveis_residenciais_locacao_numero_indice_total
+            - imoveis_residenciais_locacao_var_mensal_total
+            - imoveis_residenciais_locacao_var_ano_total
+            - dt_ingest
+            - fonte
+  - name: bronze_geavo_cca_analitico
     description: >
       Contratos de financiamento habitacional a pessoa física originados de
       carteira de crédito associativo, em detalhe por contrato.
-  - name: bnz_geavo_cci_analitico
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - vlrdofinanciamento
+            - vlrdodescontofgts
+            - vlrdodescontoogu
+            - vlrdoequilibriofgts
+            - vlrdoequilibrioogu
+            - vlrdegarantiadoimovel
+            - txjrsinicial
+            - area_codigo
+            - linha_codigo
+            - agentefinanceiro_codigo
+            - municipio_codigo
+            - uor_codigo
+            - faixaderenda_codigo
+            - datadacontratacao
+            - vlrdarenda
+            - vlrdecompra
+            - areaimovel
+            - vlrcontrapartidaparceria
+            - dtterminoobra
+            - data_entrega_para_pf
+            - vlrredutor
+            - tx_passivo
+            - datadaremessa
+            - operacao
+            - numerodocontrato
+            - sistemacodigo
+            - dt_nascimento
+            - im_cep
+            - anomescontratacao
+            - genero
+            - linhadecredito
+            - tipo
+            - cod_programa
+            - nome_programa
+            - sub_programa
+            - modalidade_codigo
+            - modalidade
+            - regiao_desconto
+            - prazo
+            - cotista
+            - fatorsocial
+            - classificacaoimovel
+            - regiaoimovel
+            - caracteristica
+            - pmcmv
+            - compatibilidade_faixa_novo_mcmv
+            - pf_pj
+            - _source_file
+            - _ingested_at
+            - _source_hash
+  - name: bronze_geavo_cci_analitico
     description: >
       Contratos de financiamento habitacional a pessoa física originados de
       cédula de crédito imobiliário, em detalhe por contrato.
-  - name: bnz_geavo_fgts_pf
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - vlrdofinanciamento
+            - vlrdodescontofgts
+            - vlrdodescontoogu
+            - vlrdoequilibriofgts
+            - vlrdoequilibrioogu
+            - vlrdegarantiadoimovel
+            - txjrsinicial
+            - area_codigo
+            - linha_codigo
+            - agentefinanceiro_codigo
+            - municipio_codigo
+            - uor_codigo
+            - faixaderenda_codigo
+            - datadacontratacao
+            - vlrdarenda
+            - vlrdecompra
+            - areaimovel
+            - vlrcontrapartidaparceria
+            - dtterminoobra
+            - data_entrega_para_pf
+            - tx_passivo
+            - numerodocontrato
+            - sistemacodigo
+            - datadaremessa
+            - dt_nascimento
+            - im_cep
+            - anomescontratacao
+            - genero
+            - linhadecredito
+            - tipo
+            - cod_programa
+            - nome_programa
+            - sub_programa
+            - modalidade_codigo
+            - modalidade
+            - regiao_desconto
+            - prazo
+            - cotista
+            - fatorsocial
+            - classificacaoimovel
+            - regiaoimovel
+            - caracteristica
+            - pmcmv
+            - compatibilidade_faixa_novo_mcmv
+            - _source_file
+            - _ingested_at
+            - _source_hash
+  - name: bronze_geavo_fgts_pf
     description: >
       Financiamento habitacional a pessoa física com recursos do fundo de
       garantia, por faixa de renda e condição de uso do imóvel.
-  - name: bnz_geavo_fgts_pj
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - dt_assinatura
+            - faixa
+            - tp_orcamento
+            - tpimovel
+            - vlr_emprestimo
+  - name: bronze_geavo_fgts_pj
     description: >
       Financiamento à produção habitacional com recursos do fundo de garantia,
       em unidades habitacionais contratadas.
-  - name: bnz_gefus_fundo_social
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - origem
+            - dt_movimento
+            - nu_apf
+            - no_empreendimento
+            - cod_agente_financeiro
+            - cod_municipio_ibge
+            - dt_assinatura
+            - ano_orc
+            - vi
+            - ve
+            - percentual_obra_realizado
+            - qt_unidades_financiadas
+            - qt_unidades_concluidas
+            - qt_unidades_entregues
+            - dt_inicio_obra
+            - dt_termino_obra
+            - situacao_obra
+            - situacao_contrato
+            - cgc
+            - rz_social
+            - no_logradouro
+            - cep_logradouro
+            - latitude
+            - longitude
+            - _source_file
+            - _ingested_at
+            - _source_hash
+  - name: bronze_gefus_fundo_social
     description: >
       Financiamento habitacional custeado pelo fundo social, em unidades
       habitacionais e valor, por condição de uso do imóvel.
-  - name: bnz_ibge_paic_obras
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - dt_referencia
+            - dt_remessa
+            - nu_contrato_repasse
+            - nu_contrato_passivo
+            - nu_contrato
+            - no_mutuario
+            - dt_nascimento_mutuario
+            - sg_sexo
+            - nu_cpf_cnpj_mutuario
+            - nu_pis
+            - vr_renda_familiar_comprovada
+            - pc_renda_informal
+            - ed_bairro_imovel_garantia
+            - sg_uf_imovel
+            - no_municipio_imovel
+            - ed_cep_imovel_garantia
+            - linha_apf
+            - modalidade
+            - dt_evento
+            - ano_orcamento
+            - vr_avaliacao_terreno
+            - vr_evento
+            - vr_desconto_resolucao_460
+            - vr_recurso_proprio
+            - vr_fgts_utilizado
+            - tipo_desemblso
+            - pc_taxa_juros_nominal_inicial
+            - nu_tipo_garantia
+            - vr_garantia
+            - situacao_garantia
+            - pz_financiamento
+            - no_sistema_amortizacao
+            - vr_prestacao_inicial
+            - vr_pagamento_amortizacao
+            - vr_pagamento_juros
+            - nu_unidade_operacional
+            - nu_codigo_atu
+            - nu_produto
+            - tipo_imovel
+            - faixa_renda
+            - ic_cotista
+            - nu_legislacao
+            - vr_investimento
+            - co_municipio_ibge
+            - co_classificacao_imovel
+            - nu_area_imovel
+            - _source_file
+            - _ingested_at
+            - _source_hash
+  - name: bronze_ibge_paic_obras
     description: >
       Valor anual das obras e serviços executados pelas empresas de
       construção, por tipo de obra.
-  - name: bnz_ibge_paic_pessoal_salarial
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_paic_pessoal_salarial
     description: >
       Pessoal ocupado e massa salarial anual das empresas de construção.
-  - name: bnz_ibge_paic_resultados
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_paic_resultados
     description: >
       Resultados econômicos anuais das empresas de construção, com receita,
       custos e valor adicionado.
-  - name: bnz_ibge_pib_consolidado_trimestral
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pib_consolidado_trimestral
     description: >
       Produto Interno Bruto consolidado do país em série trimestral.
-  - name: bnz_ibge_pib_construcao_civil
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pib_construcao_civil
     description: >
       Produto Interno Bruto da construção civil brasileira em série
       trimestral, com valor e taxas de variação.
-  - name: bnz_ibge_pib_corrente
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pib_corrente
     description: >
       Produto Interno Bruto a preços correntes, em milhões de reais, por
       trimestre.
-  - name: bnz_ibge_pim_pf_brasil
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pim_pf_brasil
     description: >
       Produção física dos insumos típicos da construção civil, em variações
       percentuais mensais.
-  - name: bnz_ibge_pmc_construcao
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pmc_construcao
     description: >
       Volume de vendas no varejo de material de construção, em variações
       percentuais mensais.
-  - name: bnz_ibge_pnad_construcao_ocupados
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pnad_construcao_ocupados
     description: >
       População ocupada na construção civil e no conjunto da economia, em
       milhares de pessoas, por trimestre móvel.
-  - name: bnz_ibge_pnad_construcao_rendimento
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pnad_construcao_rendimento
     description: >
       Rendimento médio real de quem trabalha na construção civil e do conjunto
       dos ocupados, por trimestre móvel.
-  - name: bnz_ibge_pnadc_populacao_decis_renda
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pnadc_populacao_decis_renda
     description: >
       Distribuição da população brasileira por décimo de renda, por trimestre
       móvel.
-  - name: bnz_ibge_pnadc_rendimento_domiciliar
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_pnadc_rendimento_domiciliar
     description: >
       Rendimento domiciliar real por trimestre móvel.
-  - name: bnz_ibge_sinapi
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_ibge_sinapi
     description: >
       Custo de referência da construção habitacional por metro quadrado,
       incluindo material e mão de obra, por mês.
-  - name: bnz_infomoney_imob
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao
+            - categoria_id
+            - categoria
+            - unidade
+            - periodo
+            - valor
+            - dt_ingest
+            - data_referencia
+  - name: bronze_infomoney_imob
     description: >
       Índice de ações das empresas do setor imobiliário listadas na bolsa
       brasileira, por mês.
-  - name: bnz_novo_caged
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - symbol
+            - data_pregao
+            - open
+            - high
+            - low
+            - close
+            - volume
+            - dt_ingest
+  - name: bronze_novo_caged
     description: >
       Movimentação de emprego formal na construção de edifícios, com
       admissões, desligamentos, saldo e estoque de postos, por mês.
-  - name: bnz_novo_caged_servicos_especializados
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - ano
+            - mes
+            - admitidos
+            - desligados
+            - saldo
+            - estoque
+            - variacao
+            - dt_ingest
+  - name: bronze_novo_caged_servicos_especializados
     description: >
       Movimentação de emprego formal em serviços especializados para
       construção, com saldo e estoque de postos, por mês.
-  - name: bnz_novo_caged_total
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - ano
+            - mes
+            - admitidos
+            - desligados
+            - saldo
+            - estoque
+            - variacao
+            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+  - name: bronze_novo_caged_total
     description: >
       Movimentação de emprego formal no conjunto da construção civil, com
       saldo e estoque de postos, por mês.
-  - name: bnz_siafi_dotacao_execucao
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - ano
+            - mes
+            - admitidos
+            - desligados
+            - saldo
+            - estoque
+            - variacao
+            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+  - name: bronze_siafi_dotacao_execucao
     description: >
       Execução orçamentária federal em habitação, com dotação, empenho,
       pagamento e restos a pagar por ação de governo.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - unidade_orcamentaria_codigo
+            - unidade_orcamentaria_nome
+            - acao_governo_codigo
+            - acao_governo_nome
+            - programa_governo_codigo
+            - programa_governo_nome
+            - plano_orcamentario_codigo
+            - plano_orcamentario_funcao
+            - plano_orcamentario_subfuncao
+            - plano_orcamentario_programa
+            - plano_orcamentario_acao
+            - plano_orcamentario_medida
+            - plano_orcamentario_descricao
+            - elemento_despesa_codigo
+            - elemento_despesa_nome
+            - orgao_uge_codigo
+            - orgao_uge_nome
+            - uge_matriz_filial
+            - ug_executora_codigo
+            - ug_executora_nome
+            - fixacao_despesa_loa
+            - dotacao_inicial
+            - dotacao_atualizada
+            - credito_disponivel
+            - despesas_empenhadas
+            - despesas_empenhadas_a_liquidar
+            - despesas_liquidadas_a_pagar
+            - despesas_pagas
+            - restos_a_pagar_inscritos
+            - restos_a_pagar_pagos
+            - _source_file
+            - _ingested_at
+            - _source_hash

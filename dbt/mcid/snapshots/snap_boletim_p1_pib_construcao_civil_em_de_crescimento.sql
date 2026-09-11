@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "4 trim. antes", "3 trim. antes", "2 trim. antes", "trim. anterior", "trimestre selecionado"
-from {{ ref('gld_boletim_p1_pib_construcao_civil_em_de_crescimento') }}
+from {{ ref('ouro_conjuntura_boletim_p1_pib_construcao_crescimento') }}
 
 {% endsnapshot %}

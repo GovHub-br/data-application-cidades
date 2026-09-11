@@ -61,18 +61,36 @@ produtos:
     display_name: Conjuntura Habitacional
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
-    # O schema `conjuntura` é compartilhado: além do nosso produto, ele abriga
-    # tabelas de outra origem (as `silver_fgts_*`, ~10 M de linhas, que nenhum
-    # modelo deste repositório produz ou lê). Sem esta trava, a catalogação
-    # marcaria essas tabelas como produto Conjuntura, o que seria falso.
-    # Só entram no catálogo as que seguem a convenção de camada por prefixo ou
-    # que estejam no catálogo semântico do dbt.
+    # `bronze`, `prata` e `ouro` são COMPARTILHADOS com far, fds e rural, e o
+    # schema `conjuntura` ainda abriga tabelas de outra origem (as
+    # `silver_fgts_*`, ~10 M de linhas, que nenhum modelo deste repositório
+    # produz ou lê). Sem esta trava, a catalogação marcaria tudo isso como
+    # produto Conjuntura, o que seria falso.
+    #
+    # Na prata e na ouro o domínio vem logo depois da camada, então o prefixo
+    # basta. Na bronze o nome carrega a ORIGEM e não o domínio, então as
+    # origens do conjuntura são declaradas uma a uma — far/fds/rural usam
+    # `bronze_shpt_` e `bronze_sftp_`, e por isso não colidem.
     prefixos_de_tabela:
-      - bnz_
-      - slv_
-      - gld_
+      - prata_conjuntura_
+      - ouro_conjuntura_
+      - bronze_abecip_
+      - bronze_bacen_
+      - bronze_fgv_
+      - bronze_fipezap_
+      - bronze_geavo_
+      - bronze_gefus_
+      - bronze_ibge_
+      - bronze_infomoney_
+      - bronze_novo_caged
+      - bronze_siafi_
+      - bnz_manual_
+      - bnz_cbic_
       - snap_
     schemas:
+      - bronze
+      - prata
+      - ouro
       - conjuntura
     description: >
       Indicadores de acompanhamento do setor habitacional brasileiro: produto

@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("regiao"::text, '') as chave,
     edicao,
     "regiao", "TOTAL", "MCMV", "% MCMV"
-from {{ ref('gld_boletim_p1_vendas_por_regiao_cbic') }}
+from {{ ref('ouro_conjuntura_boletim_p1_vendas_por_regiao_cbic') }}
 
 {% endsnapshot %}

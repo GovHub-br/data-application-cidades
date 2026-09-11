@@ -25,7 +25,7 @@ Uso:
         --schema conjuntura --contrato
 
     poetry run python scripts/governance/inventariar_colunas.py \\
-        --schema conjuntura --tabela gld_icst
+        --schema ouro --tabela ouro_conjuntura_icst
 """
 
 from __future__ import annotations

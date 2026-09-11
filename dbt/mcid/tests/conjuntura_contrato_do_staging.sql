@@ -22,7 +22,7 @@
         {% if piso %}
             {% do linhas.append(
                 "select '" ~ no.name ~ "'::text as fonte, count(*)::bigint as linhas, "
-                ~ piso ~ "::bigint as minimo from conjuntura.bnz_" ~ no.name
+                ~ piso ~ "::bigint as minimo from bronze.bronze_" ~ no.name
             ) %}
         {% endif %}
     {% endfor %}

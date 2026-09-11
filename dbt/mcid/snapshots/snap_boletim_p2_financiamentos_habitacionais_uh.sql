@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "FGTS-PJ", "SBPE Const."
-from {{ ref('gld_boletim_p2_financiamentos_habitacionais_uh') }}
+from {{ ref('ouro_conjuntura_boletim_p2_financiamentos_habitacionais_uh') }}
 
 {% endsnapshot %}

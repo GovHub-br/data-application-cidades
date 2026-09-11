@@ -25,10 +25,16 @@
     check_cols='all',
 ) }}
 
+-- Os apelidos preservam os nomes que as versões já gravadas usam: o histórico do
+-- snapshot é a razão de ele existir, e coluna com nome novo partiria a série em
+-- duas. `fonte` não é selecionada porque o quadro não a publica.
 select
     edicao || '|' || coalesce("banco"::text, '') as chave,
     edicao,
-    "banco", "UH acum. ano", "R$ bi acum. ano", "% UH", "fonte"
-from {{ ref('gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_') }}
+    "banco",
+    "UH" as "UH acum. ano",
+    "VALOR (R$ bi)" as "R$ bi acum. ano",
+    "% UH"
+from {{ ref('ouro_conjuntura_boletim_p3_financiamentos_por_banco') }}
 
 {% endsnapshot %}

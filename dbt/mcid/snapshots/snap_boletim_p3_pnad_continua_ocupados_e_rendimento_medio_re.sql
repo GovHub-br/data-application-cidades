@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Ocupados Construção (mil)", "Ocupados Total (mil)", "Rendimento Construção (R$)", "Rendimento Total (R$)"
-from {{ ref('gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re') }}
+from {{ ref('ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento') }}
 
 {% endsnapshot %}
