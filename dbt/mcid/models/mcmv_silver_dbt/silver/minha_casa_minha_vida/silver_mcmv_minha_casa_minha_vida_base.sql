@@ -1,3 +1,14 @@
+{{ config(enabled=false) }}
+{# ============================================================================
+   DESATIVADO — domínio mcmv_silver_dbt (legado).
+   Colisão de `alias="silver_historico_base"` entre as 10 frentes: com o bloco
+   `mcmv_silver_dbt` do dbt_project.yml comentado, todas resolvem para o schema
+   default e colidem no parse ("two resources with identical database
+   representation"). Código original preservado abaixo, inerte.
+   Reativar: remova o `config(enabled=false)` acima, descomente o bloco abaixo
+   e restaure o bloco `mcmv_silver_dbt` no dbt_project.yml.
+   ============================================================================ #}
+{#
 {{ config(materialized="table", alias="silver_historico_base") }}
 
 -- Uniao direta das frentes (exceto Conjuntura, que nao e uma frente de
@@ -27,3 +38,4 @@ from {{ ref("silver_mcmv_pro_moradia_base") }}
 union all
 select *
 from {{ ref("silver_mcmv_sub50_base") }}
+#}

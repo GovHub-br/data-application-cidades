@@ -9,18 +9,6 @@ Todos materializam no catálogo `cidades`, schema `seeds` (bloco
 `seeds.data_quality` do `dbt_project.yml`; change
 `renomear-camadas-pt-historico-reloginho`, D8).
 
-## `dominio_frente.csv`
-
-Domínio canônico de `frente_mcmv` (FAR / Entidades / Rural + sentinela).
-Consumido por `dentro_do_dominio`:
-
-```yaml
-- name: frente_mcmv
-  data_tests:
-    - dentro_do_dominio:
-        arguments: { seed: dominio_frente, seed_column: valor_canonico }
-```
-
 ## `colunas_esperadas.csv` (Fase 3)
 
 `familia, coluna, desde` — o conjunto de colunas aceito por família do eixo

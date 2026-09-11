@@ -1,8 +1,7 @@
 # seeds/entidades_fds/
 
 Seeds de referência curados da frente Entidades/FDS. Materializam no catálogo
-`cidades`, schema `entidades_fds` (bloco `seeds.entidades_fds` do
-`dbt_project.yml`).
+`cidades`, schema `seeds` (bloco `seeds.entidades_fds` do `dbt_project.yml`).
 
 ## `seed_apf_fase_fds.csv`
 

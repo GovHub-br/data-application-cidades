@@ -1,3 +1,14 @@
+{{ config(enabled=false) }}
+{# ============================================================================
+   DESATIVADO — domínio mcmv_silver_dbt (legado).
+   Colisão de `alias="silver_historico_base"` entre as 10 frentes: com o bloco
+   `mcmv_silver_dbt` do dbt_project.yml comentado, todas resolvem para o schema
+   default e colidem no parse ("two resources with identical database
+   representation"). Código original preservado abaixo, inerte.
+   Reativar: remova o `config(enabled=false)` acima, descomente o bloco abaixo
+   e restaure o bloco `mcmv_silver_dbt` no dbt_project.yml.
+   ============================================================================ #}
+{#
 {{ config(materialized="table", alias="silver_historico_base") }}
 
 -- Base silver da frente Rural (materializa como empreendimento_rural.silver_historico_base).
@@ -71,3 +82,4 @@ select
     current_timestamp as dt_silver
 from {{ ref("ouro_historico_snapshot_empreendimento_atual") }}
 where frente_mcmv = 'Rural' and apf is not null
+#}
