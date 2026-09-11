@@ -80,6 +80,24 @@ INGERIR_SUPERSET = _flag("OM_INGEST_SUPERSET", default=False)
 INGERIR_PROFILER = _flag("OM_INGEST_PROFILER", default=False)
 INGERIR_CLASSIFIER = _flag("OM_INGEST_CLASSIFIER", default=False)
 
+#: As relações semânticas ficam DESLIGADAS por padrão porque o catálogo
+#: `semantic_relationships/mcid.yaml` é um snapshot de 2026-07-23 e não
+#: descreve mais o projeto: declara `table_count: 74` mas lista 63 tabelas — o
+#: que já reprova na validação do próprio `load_semantic_catalog` —, e as 63
+#: usam os nomes e schemas de antes da renomeação (`conjuntura.silver_*`,
+#: `conjuntura_gold.*`, `empreendimento_far.*`), nenhum dos quais existe hoje.
+#:
+#: Não é detalhe de configuração: a task fica ANTES da reaplicação de
+#: governança no encadeamento, e falhando ela levava embora a task que devolve
+#: a certificação que o conector dbt apaga.
+#:
+#: Para religar, regenere o YAML para o escopo atual (185 models, schemas
+#: `conjuntura`/`bronze`/`prata`/`ouro`, mais o produto Rural, que nem existia
+#: no snapshot) e ligue `OM_SYNC_RELACOES_SEMANTICAS=true`.
+SINCRONIZAR_RELACOES_SEMANTICAS = _flag(
+    "OM_SYNC_RELACOES_SEMANTICAS", default=False
+)
+
 
 #: `.get` com padrão de propósito: `os.environ[...]` levanta no PARSE da DAG, e
 #: uma variável ausente derrubaria o arquivo inteiro em vez de a task falhar.

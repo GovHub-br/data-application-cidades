@@ -605,15 +605,58 @@ def mesclar_etiquetas(
 def camadas_por_modelo() -> dict[str, str]:
     """Camada real de cada modelo, lida do catálogo semântico.
 
-    A camada do SCHEMA não serve para etiquetar tabela: `empreendimento_far` e
-    `entidades_fds` guardam bronze, silver e gold no mesmo schema, declarado
-    como `mixed`. Usar a camada do schema daria Tier1 e `Uso.Consumivel` às
-    bronzes desses dois produtos — exatamente o contrário do que a camada diz.
+    A camada do SCHEMA não serve para etiquetar tabela: o `conjuntura` guarda
+    bronze, silver e gold no mesmo schema, declarado como `mixed`. Usar a
+    camada do schema daria Tier1 e `Uso.Consumivel` às bronzes dele —
+    exatamente o contrário do que a camada diz.
     """
     if not CATALOGO.exists():
         return {}
     catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
     return {m["name"]: m["layer"] for m in catalogo.get("models", []) if m.get("layer")}
+
+
+def produtos_por_modelo() -> dict[str, str]:
+    """Produto de cada modelo, lido do catálogo semântico.
+
+    O schema deixou de identificar produto: `bronze`, `prata` e `ouro` guardam
+    tabela de FAR, FDS e Rural ao mesmo tempo. Como a catalogação percorre um
+    produto por vez e o `dataProducts` do patch SUBSTITUI a lista, sem esta
+    resolução por tabela o último produto do laço levava as tabelas dos outros
+    dois: as do FAR sairiam rotuladas como Rural, em silêncio e com 200 na
+    resposta.
+
+    O nome do prefixo não resolve isso — as bronze dos três produtos começam
+    todas por `bronze_shpt_`/`bronze_sftp_`, e o que separa PNHR de FAR está no
+    meio do nome. Aqui a fonte é o `meta.governance.product` declarado no
+    `dbt_project.yml` de cada camada, que é o mesmo que gera o catálogo.
+    """
+    if not CATALOGO.exists():
+        return {}
+    catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    return {
+        m["name"]: m["product"] for m in catalogo.get("models", []) if m.get("product")
+    }
+
+
+def produtos_por_schema(dominios: dict) -> dict[str, list[str]]:
+    """Que produtos dividem cada schema físico.
+
+    Deixou de ser um para um quando FAR, FDS e Rural passaram a materializar
+    por camada em `bronze`, `prata` e `ouro`. Só o `conjuntura` e o `metadata`
+    continuam com um produto cada.
+    """
+    mapa: dict[str, list[str]] = {}
+    for produto in dominios.get("produtos") or []:
+        for schema in produto.get("schemas") or []:
+            mapa.setdefault(schema, []).append(produto["name"])
+    return mapa
+
+
+def etiquetas_dos_produtos(dominios: dict, produtos: list[str]) -> list[str]:
+    """FQN da etiqueta de cada produto informado, na ordem declarada."""
+    por_produto = (dominios.get("etiquetas_automaticas") or {}).get("por_produto") or {}
+    return [por_produto[p] for p in produtos if por_produto.get(p)]
 
 
 def etiquetas_do_produto(dominios: dict, produto: str) -> list[dict]:
@@ -751,6 +794,7 @@ def catalogar_schemas(
     """Dono, domínio e etiqueta de camada nos schemas."""
     print("Catalogação dos schemas")
     declarados = {s["name"]: s for s in carregar("schemas.yml")["schemas"]}
+    compartilhado = produtos_por_schema(dominios)
     for produto in dominios["produtos"]:
         dominio = om.existe("domains", produto["domain"])
         for nome in produto["schemas"]:
@@ -773,10 +817,23 @@ def catalogar_schemas(
                 desejado["owners"] = dono
             if dominio:
                 desejado["domains"] = [referencia(dominio, "domain")]
+            # `bronze`, `prata` e `ouro` são de TRÊS produtos. A mescla remove
+            # etiqueta nossa que não esteja na lista desejada, então pedir só a
+            # do produto da vez faria cada iteração apagar a etiqueta que a
+            # anterior pendurou — o schema terminaria marcado com um produto
+            # só, o último do laço. A lista desejada é a mesma nas três
+            # iterações: a união dos produtos que dividem o schema.
+            marcas = etiquetas_da_camada(
+                dominios, produto["name"], decl.get("layer", "gold")
+            )
+            marcas += [
+                etiqueta(fqn_produto)
+                for fqn_produto in etiquetas_dos_produtos(
+                    dominios, compartilhado.get(nome, [])
+                )
+            ]
             desejado["tags"] = mesclar_etiquetas(
-                atual.get("tags") or [],
-                etiquetas_da_camada(dominios, produto["name"], decl.get("layer", "gold")),
-                nosso_glossario,
+                atual.get("tags") or [], marcas, nosso_glossario
             )
             om.patch(
                 "databaseSchemas",
@@ -810,6 +867,7 @@ def catalogar_tabelas(
     print("Catalogação das tabelas e colunas")
     declarados = {s["name"]: s for s in carregar("schemas.yml")["schemas"]}
     camadas = camadas_por_modelo()
+    produtos_dos_modelos = produtos_por_modelo()
     por_modelo = termos_por_modelo(termos)
     por_coluna = termos_por_coluna(termos)
     nosso_glossario = vocabulario_declarado(termos)
@@ -861,6 +919,27 @@ def catalogar_tabelas(
                     + (" …" if len(alheias) > 6 else "")
                 )
                 tabelas = [t for t in tabelas if t["name"] not in set(alheias)]
+
+            # Tabela que o catálogo semântico declara de OUTRO produto sai
+            # daqui: o schema é compartilhado e o `dataProducts` do patch
+            # substitui a lista, então sem esta linha o último produto do laço
+            # levaria as tabelas dos dois anteriores. Tabela sem produto
+            # declarado continua seguindo a trava de prefixo acima, para não
+            # reduzir a cobertura de quem ainda não está no catálogo.
+            de_outro_produto = [
+                t["name"]
+                for t in tabelas
+                if produtos_dos_modelos.get(t["name"], produto["name"])
+                != produto["name"]
+            ]
+            if de_outro_produto:
+                print(
+                    f"  {schema}: {len(de_outro_produto)} tabelas são de outro "
+                    "produto neste schema compartilhado; catalogadas no laço dele"
+                )
+                tabelas = [
+                    t for t in tabelas if t["name"] not in set(de_outro_produto)
+                ]
 
             print(f"  {schema}: {len(tabelas)} tabelas")
 

@@ -78,7 +78,12 @@ def test_toda_etiqueta_aplicada_esta_declarada() -> None:
         for t in c["etiquetas"]
     }
     nativas = set(DOMINIOS["classificacoes_nativas"])
-    for produto in ("conjuntura", "empreendimento_far", "entidades_fds"):
+    for produto in (
+        "conjuntura",
+        "empreendimento_far",
+        "entidades_fds",
+        "empreendimento_rural",
+    ):
         for camada in ("bronze", "silver", "gold", "mixed"):
             for fqn in fqns(gov.etiquetas_da_camada(DOMINIOS, produto, camada)):
                 assert fqn in declaradas or fqn.split(".")[0] in nativas, fqn
@@ -913,3 +918,100 @@ def test_modelos_do_conjuntura_seguem_a_convencao_de_prefixo() -> None:
         if not p.stem.startswith(("bnz_", "slv_", "gld_"))
     ]
     assert not fora, f"modelos fora da convenção: {fora}"
+
+
+# ── schema compartilhado por mais de um produto ─────────────────────────────
+#: `metadata` aparece como `product` no `dbt_project.yml` e em `schemas.yml`,
+#: mas de propósito NÃO é um Data Product: o schema guarda metadado técnico do
+#: pipeline e nenhum produto o reivindica. Ver `DOCUMENTATION_COVERAGE.md`.
+PRODUTOS_SEM_DATA_PRODUCT = {"metadata"}
+
+
+def test_todo_produto_do_dbt_esta_declarado_em_dominios() -> None:
+    """Produto com nome errado no `dbt_project.yml` some sem erro.
+
+    A catalogação percorre os produtos de `dominios.yml` e o conector lê o
+    `meta.governance.product` do model. Um typo num dos dois lados não quebra
+    nada: o model simplesmente nunca é reivindicado por produto nenhum.
+    """
+    import yaml
+
+    projeto = yaml.safe_load(
+        (RAIZ / "dbt" / "mcid" / "dbt_project.yml").read_text(encoding="utf-8")
+    )
+    declarados = {p["name"] for p in DOMINIOS["produtos"]}
+
+    usados: set[str] = set()
+
+    def visitar(no: object) -> None:
+        if not isinstance(no, dict):
+            return
+        meta = no.get("+meta") if isinstance(no.get("+meta"), dict) else {}
+        produto = ((meta or {}).get("governance") or {}).get("product")
+        if produto:
+            usados.add(produto)
+        for filho in no.values():
+            visitar(filho)
+
+    visitar(projeto.get("models"))
+    assert usados, "nenhum produto declarado no dbt_project.yml"
+    assert usados - declarados - PRODUTOS_SEM_DATA_PRODUCT == set()
+
+
+def test_schema_de_mais_de_um_produto_nao_declara_produto() -> None:
+    """`bronze`, `prata` e `ouro` guardam tabela de FAR, FDS e Rural.
+
+    Declarar `product` neles em `schemas.yml` afirmaria que as tabelas dos
+    outros dois produtos pertencem ao declarado. O produto é por TABELA, e sai
+    do `meta.governance.product` do model via catálogo semântico.
+    """
+    por_schema = gov.produtos_por_schema(DOMINIOS)
+    declarados = {s["name"]: s for s in comum.carregar("schemas.yml")["schemas"]}
+    compartilhados = {n for n, ps in por_schema.items() if len(ps) > 1}
+    assert compartilhados == {"bronze", "prata", "ouro"}, compartilhados
+    for nome in compartilhados:
+        assert "product" not in declarados[nome], nome
+
+
+def test_schema_de_produto_tem_entrada_em_schemas_yml() -> None:
+    """Schema sem entrada vira falha no sync, não descrição inventada."""
+    declarados = {s["name"] for s in comum.carregar("schemas.yml")["schemas"]}
+    for produto in DOMINIOS["produtos"]:
+        for nome in produto["schemas"]:
+            assert nome in declarados, f"{produto['name']} usa schema '{nome}'"
+
+
+def test_prefixo_de_tabela_nao_colide_entre_produtos() -> None:
+    """Dois produtos que dividem schema não podem casar a mesma tabela.
+
+    A trava de prefixo é o que sobra para a tabela que ainda não está no
+    catálogo semântico. Se o prefixo de um produto casasse a tabela do outro,
+    ela seria atribuída pela ordem do laço — que é exatamente o erro que a
+    resolução por tabela veio corrigir.
+    """
+    por_schema = gov.produtos_por_schema(DOMINIOS)
+    prefixos = {
+        p["name"]: tuple(p.get("prefixos_de_tabela") or []) for p in DOMINIOS["produtos"]
+    }
+    for nome, produtos in por_schema.items():
+        for produto in produtos:
+            for outro in produtos:
+                if produto == outro:
+                    continue
+                colisoes = [
+                    a
+                    for a in prefixos[produto]
+                    for b in prefixos[outro]
+                    if a.startswith(b) or b.startswith(a)
+                ]
+                assert not colisoes, f"{nome}: {produto} x {outro} -> {colisoes}"
+
+
+def test_produto_por_modelo_sai_do_catalogo_semantico() -> None:
+    """É a fonte que separa FAR, FDS e Rural dentro do mesmo schema."""
+    produtos = gov.produtos_por_modelo()
+    if not produtos:
+        return  # o catálogo semântico não foi gerado neste ambiente
+    declarados = {p["name"] for p in DOMINIOS["produtos"]}
+    desconhecidos = set(produtos.values()) - declarados - PRODUTOS_SEM_DATA_PRODUCT
+    assert not desconhecidos, desconhecidos

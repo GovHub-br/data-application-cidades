@@ -98,6 +98,18 @@ produtos:
       habitacional, custos de construção e índices de mercado, em séries
       mensais e trimestrais.
 
+  # FAR, FDS e Rural dividem `bronze`, `prata` e `ouro`. O `schemas` abaixo diz
+  # onde PROCURAR as tabelas do produto, não que o schema seja dele: a
+  # catalogação resolve o produto de cada tabela pelo catálogo semântico
+  # (`meta.governance.product` do model). Sem isso, o laço por produto
+  # sobrescreveria o Data Product das tabelas dos outros dois.
+  #
+  # `prefixos_de_tabela` lista só o que identifica o produto sem ambiguidade —
+  # por isso prata e ouro entram, e bronze não: as bronze dos três começam
+  # todas por `bronze_shpt_`/`bronze_sftp_`, e o que separa PNHR de FAR está no
+  # meio do nome. A bronze é catalogada pelo produto declarado no catálogo
+  # semântico; a que não estiver lá é reportada como fora da convenção, em vez
+  # de ser atribuída no chute.
   - name: empreendimento_far
     termos:
       - MCID.FundosEFontes.FAR
@@ -107,7 +119,12 @@ produtos:
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
     schemas:
-      - empreendimento_far
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_far_
+      - ouro_far_
     description: >
       Empreendimentos habitacionais contratados com recursos do Fundo de
       Arrendamento Residencial, com execução física, execução financeira,
@@ -122,11 +139,41 @@ produtos:
     domain: MCid.Habitacao
     owner_key: mcid_data_engineering
     schemas:
-      - entidades_fds
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_fds_
+      - ouro_fds_
     description: >
       Empreendimentos habitacionais conduzidos por entidades organizadoras com
       recursos do Fundo de Desenvolvimento Social, com cadastro das entidades,
       contratação e acompanhamento de obra.
+
+  # Produto próprio, e não um recorte do `entidades_fds`: o Rural é outro
+  # programa (Novo MCMV Rural / PNHR), com beneficiário pessoa física, dois
+  # agentes financeiros (CAIXA e Banco do Brasil) e acompanhamento de cisterna,
+  # efluente e trabalho social que os outros dois produtos não têm.
+  - name: empreendimento_rural
+    termos:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+      - MCID.ExecucaoDeEmpreendimentos
+      - MCID.Atores.AgenteFinanceiro
+    display_name: Empreendimento Rural
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_rural_
+      - ouro_rural_
+    description: >
+      Empreendimentos habitacionais rurais do Novo MCMV Rural e do Programa
+      Nacional de Habitação Rural, com cadastro de entidade organizadora e de
+      beneficiário, execução física, liberação financeira por componente,
+      trabalho social e infraestrutura de água e saneamento.
 
 #: Certificação por camada. Gold é o que se publica e se consome; Silver
 #: sustenta a Gold mas não é destino final; Bronze não é apresentada.
@@ -150,6 +197,7 @@ etiquetas_automaticas:
     conjuntura: dbtTags.conjuntura
     empreendimento_far: dbtTags.empreendimento_far
     entidades_fds: dbtTags.entidades_fds
+    empreendimento_rural: dbtTags.empreendimento_rural
   por_camada:
     bronze: dbtTags.bronze
     silver: dbtTags.silver
@@ -250,6 +298,9 @@ classificacoes:
       - name: entidades_fds
         display_name: Entidades FDS
         description: Ativo do produto de dados Entidades FDS.
+      - name: empreendimento_rural
+        display_name: Empreendimento Rural
+        description: Ativo do produto de dados Empreendimento Rural.
       - name: bronze
         display_name: Bronze
         description: Ativo da camada que preserva a representação recebida da origem.

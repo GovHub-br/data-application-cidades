@@ -167,34 +167,44 @@ sources:
           Contém depósitos, retiradas, captação líquida, rendimento e saldo.
           Tipagem aplicada: text→date, text→numeric.
 
+  # Estas seis tabelas não são produzidas por model: chegam pela planilha
+  # oficial do boletim, revisadas à mão, e seu conteúdo é versionado em
+  # `scripts/database/`. A migração 0010 fixou o endereço atual, em `bronze`.
+  # A procedência fica aqui, em comentário, e não nas descrições: o catálogo
+  # descreve o dado, não como ele foi produzido.
   - name: conjuntura_manual
     schema: bronze
-    description: >
-      Bronze do conjuntura que não vem do lake. São cargas manuais: chegam pela
-      planilha oficial do boletim (boletim.xlsx), revisadas à mão, sem DAG de
-      ingestão. O dbt as lê mas não as produz — o conteúdo é versionado em
-      `scripts/database/`, e o endereço atual foi fixado pelo 0010.
+    description: >-
+      Séries do boletim de conjuntura habitacional que não vêm das bases
+      administrativas: indicadores de mercado, balanços de construtoras e
+      agregados de financiamento consolidados pela equipe.
     tables:
       - name: bronze_manual_dados_mensais
-        description: >
-          Série mensal da planilha do boletim: CAGED, PNAD rendimento, índices
-          de preços, crédito Bacen, SBPE por banco, financiamento PF MCMV por
-          faixa e valor médio FGTS.
+        description: >-
+          Série mensal de indicadores do boletim: saldo de emprego na
+          construção, rendimento da PNAD, índices de preços, estoques e
+          concessões de crédito, SBPE por banco, financiamento a pessoa física
+          do MCMV por faixa e valor médio do imóvel financiado pelo FGTS.
       - name: bronze_manual_dados_trimestrais
-        description: >
-          Série trimestral da planilha do boletim: PIB %, CBIC, balanço das
-          empresas, ocupados PNAD, INCC trimestral, ticket médio e
-          financiamentos habitacionais.
+        description: >-
+          Série trimestral de indicadores do boletim: variação do PIB, lançamentos
+          e vendas da CBIC, balanço das construtoras, ocupados da PNAD, INCC,
+          ticket médio e financiamentos habitacionais.
       - name: bronze_manual_empresas_balanco_lancamentos_vendas
-        description: >
-          Balanços das construtoras MRV, Cury, Tenda, Direcional, Pacaembu e
-          Plano & Plano. Já chega tipado.
+        description: >-
+          Lançamentos e vendas trimestrais das construtoras de capital aberto
+          MRV, Cury, Tenda, Direcional, Pacaembu e Plano & Plano, em unidades e
+          em valor geral de vendas.
       - name: bronze_manual_fgts_valor_medio_imoveis
-        description: >
-          FGTS — valor médio dos imóveis em R$ e variações, total e Faixa 1.
+        description: >-
+          Valor médio dos imóveis financiados com recursos do FGTS, em reais,
+          com as variações no mês e em doze meses, no total e na Faixa 1.
       - name: bronze_manual_sbpe_financiamentos_aquisicao_bancos
-        description: >
-          SBPE — financiamentos de construção e aquisição por banco, com a
-          captação líquida da poupança.
+        description: >-
+          Financiamentos do SBPE para construção e aquisição, desagregados por
+          banco, em unidades habitacionais e em valor, com a captação líquida
+          da caderneta de poupança.
       - name: bronze_cbic_lancamentos_vendas
-        description: Lançamentos e vendas de imóveis por região (CBIC), carga manual.
+        description: >-
+          Lançamentos e vendas de imóveis residenciais por região, em unidades,
+          conforme a Câmara Brasileira da Indústria da Construção.
