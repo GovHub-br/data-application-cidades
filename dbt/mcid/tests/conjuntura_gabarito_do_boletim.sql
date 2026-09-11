@@ -20,7 +20,7 @@ with esperado as (
 
 obtido as (
     select modelo, edicao, linha, coluna, valor
-    from {{ ref('gld_boletim_valores') }}
+    from {{ ref('ouro_conjuntura_boletim_valores') }}
 ),
 
 comparado as (
@@ -48,6 +48,6 @@ comparado as (
 
 -- Falha só em coordenada inválida. Divergência de valor NÃO falha: as fontes
 -- revisam o passado, e um teste vermelho o tempo todo vira ruído que se
--- aprende a ignorar. As divergências ficam visíveis em `gld_boletim_valores`
+-- aprende a ignorar. As divergências ficam visíveis em `ouro_conjuntura_boletim_valores`
 -- contra o seed, e o que o boletim viu na época está nos snapshots.
 select * from comparado where veredito = 'COORDENADA_INVALIDA'

@@ -6,15 +6,48 @@ version: 1
 # ou exemplos de dados. A sincronização para OpenMetadata usa este arquivo
 # como fonte de descrição de schema.
 schemas:
+  - name: bronze
+    display_name: Bronze
+    product: compartilhado
+    layer: bronze
+    owner_key: mcid_data_engineering
+    classification: restricted
+    rag_publication: prohibited
+    description: >-
+      Espelho textual das origens, compartilhado pelos produtos do ministério.
+      Cada tabela reproduz um arquivo recebido sem recorte nem tipagem, e o
+      domínio a que pertence é dado pelo modelo que a produz, não pelo schema.
+
+  - name: prata
+    display_name: Prata
+    product: compartilhado
+    layer: silver
+    owner_key: mcid_data_engineering
+    classification: internal
+    rag_publication: eligible_after_security_validation
+    description: >-
+      Dado tipado e conformado às regras de negócio, compartilhado pelos
+      produtos do ministério. O nome de cada tabela carrega o domínio a que
+      pertence, logo depois da camada.
+
+  - name: ouro
+    display_name: Ouro
+    product: compartilhado
+    layer: gold
+    owner_key: mcid_data_engineering
+    classification: internal
+    rag_publication: eligible_after_security_validation
+    description: >-
+      Camada de consumo, compartilhada pelos produtos do ministério: é o que os
+      painéis leem. O nome de cada tabela carrega o domínio a que pertence,
+      logo depois da camada.
+
   - name: conjuntura
-    display_name: Conjuntura
+    display_name: Conjuntura (cargas manuais e histórico)
     product: conjuntura
     layer: mixed
     owner_key: mcid_data_engineering
     classification: internal
-    # Schema único: a camada de cada tabela vem do prefixo do nome e do
-    # `meta.governance.layer` do modelo, não do schema. Por isso `mixed` e
-    # `determined_per_model`, como no empreendimento_far.
     rag_publication: determined_per_model
     description: >-
       Schema do produto Conjuntura, com as camadas distinguidas pelo prefixo do

@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "Trim. ano anterior", "Trim. selecionado", "Variação %"
-from {{ ref('gld_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri') }}
+from {{ ref('ouro_conjuntura_boletim_p5_sbpe_construcao_no_tri') }}
 
 {% endsnapshot %}

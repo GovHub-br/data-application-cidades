@@ -21,37 +21,37 @@ from urllib.parse import quote_plus
 import requests
 from dotenv import load_dotenv
 
-GOLD_SCHEMA = "conjuntura"
+GOLD_SCHEMA = "ouro"
 DATABASE_NAME = "Cidades"
 
 GOLDS = [
-    "gld_balancos_empresas",
-    "gld_balancos_empresas_totais",
-    "gld_canal_fgts",
-    "gld_credito_pib",
-    "gld_empregos_caged",
-    "gld_fgts_valor_medio",
-    "gld_financiamento_pf_faixa",
-    "gld_financiamentos_habitacionais",
-    "gld_financiamentos_imobiliarios_pf_pj",
-    "gld_financiamentos_instituicao",
-    "gld_fipezap",
-    "gld_funding",
-    "gld_icst",
-    "gld_incc_m",
-    "gld_indice_imob",
-    "gld_novos_financiamentos_banco",
-    "gld_ogu",
-    "gld_pib_construcao_civil",
-    "gld_pib_construcao_civil_pct",
-    "gld_pnad_ocupados",
-    "gld_pnad_rendimento",
-    "gld_producao_fisica",
-    "gld_saldo_poupanca",
-    "gld_sinapi",
-    "gld_ticket_medio",
-    "gld_uh_condicao_uso",
-    "gld_fundo_social",
+    "ouro_conjuntura_balancos_empresas",
+    "ouro_conjuntura_balancos_empresas_totais",
+    "ouro_conjuntura_canal_fgts",
+    "ouro_conjuntura_credito_pib",
+    "ouro_conjuntura_empregos_caged",
+    "ouro_conjuntura_fgts_valor_medio",
+    "ouro_conjuntura_financiamento_pf_faixa",
+    "ouro_conjuntura_financiamentos_habitacionais",
+    "ouro_conjuntura_financiamentos_imobiliarios_pf_pj",
+    "ouro_conjuntura_financiamentos_instituicao",
+    "ouro_conjuntura_fipezap",
+    "ouro_conjuntura_funding",
+    "ouro_conjuntura_icst",
+    "ouro_conjuntura_incc_m",
+    "ouro_conjuntura_indice_imob",
+    "ouro_conjuntura_novos_financiamentos_banco",
+    "ouro_conjuntura_ogu",
+    "ouro_conjuntura_pib_construcao_civil",
+    "ouro_conjuntura_pib_construcao_civil_pct",
+    "ouro_conjuntura_pnad_ocupados",
+    "ouro_conjuntura_pnad_rendimento",
+    "ouro_conjuntura_producao_fisica",
+    "ouro_conjuntura_saldo_poupanca",
+    "ouro_conjuntura_sinapi",
+    "ouro_conjuntura_ticket_medio",
+    "ouro_conjuntura_uh_condicao_uso",
+    "ouro_conjuntura_fundo_social",
 ]
 
 #: Estrutura do Boletim de Conjuntura, página a página. A ordem aqui é a ordem
@@ -64,64 +64,64 @@ PAGINAS_BOLETIM: list[tuple[str, list[str]]] = [
     (
         "Pág. 1 — PIB da Construção Civil",
         [
-            "gld_pib_construcao_civil_pct",
-            "gld_pib_construcao_civil",
+            "ouro_conjuntura_pib_construcao_civil_pct",
+            "ouro_conjuntura_pib_construcao_civil",
         ],
     ),
     (
         "Pág. 2 — Balanço das Empresas · Financiamentos Imobiliários",
         [
-            "gld_balancos_empresas",
-            "gld_balancos_empresas_totais",
-            "gld_financiamentos_imobiliarios_pf_pj",
-            "gld_financiamentos_habitacionais",
+            "ouro_conjuntura_balancos_empresas",
+            "ouro_conjuntura_balancos_empresas_totais",
+            "ouro_conjuntura_financiamentos_imobiliarios_pf_pj",
+            "ouro_conjuntura_financiamentos_habitacionais",
         ],
     ),
     (
         "Pág. 3 — Empregos · PNAD · Produção Física · Novos Financiamentos",
         [
-            "gld_empregos_caged",
-            "gld_pnad_ocupados",
-            "gld_pnad_rendimento",
-            "gld_producao_fisica",
-            "gld_novos_financiamentos_banco",
+            "ouro_conjuntura_empregos_caged",
+            "ouro_conjuntura_pnad_ocupados",
+            "ouro_conjuntura_pnad_rendimento",
+            "ouro_conjuntura_producao_fisica",
+            "ouro_conjuntura_novos_financiamentos_banco",
             # Sucessor de `novos_financiamentos_banco`: mesmo indicador do
             # boletim, fonte nova. Convivem até a aposentadoria do antigo.
-            "gld_financiamentos_instituicao",
+            "ouro_conjuntura_financiamentos_instituicao",
         ],
     ),
     (
         "Pág. 4 — Crédito/PIB · Faixa de Renda · Condição de Uso · Funding",
         [
-            "gld_credito_pib",
-            "gld_financiamento_pf_faixa",
-            "gld_uh_condicao_uso",
-            "gld_funding",
+            "ouro_conjuntura_credito_pib",
+            "ouro_conjuntura_financiamento_pf_faixa",
+            "ouro_conjuntura_uh_condicao_uso",
+            "ouro_conjuntura_funding",
         ],
     ),
     (
         "Pág. 5 — Canal FGTS · Poupança",
         [
-            "gld_canal_fgts",
-            "gld_saldo_poupanca",
+            "ouro_conjuntura_canal_fgts",
+            "ouro_conjuntura_saldo_poupanca",
         ],
     ),
     (
         "Pág. 6 — OGU · Preços",
         [
-            "gld_ogu",
-            "gld_sinapi",
-            "gld_incc_m",
-            "gld_ticket_medio",
-            "gld_fgts_valor_medio",
+            "ouro_conjuntura_ogu",
+            "ouro_conjuntura_sinapi",
+            "ouro_conjuntura_incc_m",
+            "ouro_conjuntura_ticket_medio",
+            "ouro_conjuntura_fgts_valor_medio",
         ],
     ),
     (
         "Pág. 7 — Índices da Construção",
         [
-            "gld_indice_imob",
-            "gld_fipezap",
-            "gld_icst",
+            "ouro_conjuntura_indice_imob",
+            "ouro_conjuntura_fipezap",
+            "ouro_conjuntura_icst",
         ],
     ),
     (
@@ -130,15 +130,15 @@ PAGINAS_BOLETIM: list[tuple[str, list[str]]] = [
         # conferência lado a lado perder o sentido.
         "Complementos (fora do boletim impresso)",
         [
-            "gld_fundo_social",
+            "ouro_conjuntura_fundo_social",
         ],
     ),
 ]
 
 TEMPORAL_COLUMN = {
-    "gld_credito_pib": "data",
-    "gld_financiamentos_imobiliarios_pf_pj": "data",
-    "gld_incc_m": "mes",
+    "ouro_conjuntura_credito_pib": "data",
+    "ouro_conjuntura_financiamentos_imobiliarios_pf_pj": "data",
+    "ouro_conjuntura_incc_m": "mes",
 }
 
 
@@ -512,7 +512,7 @@ def dashboard_position_por_pagina(chart_por_gold: dict[str, int]) -> str:
 
 
 def nome_do_chart(gold: str) -> str:
-    return f"Conjuntura | {gold.removeprefix('gld_').replace('_', ' ').title()}"
+    return f"Conjuntura | {gold.removeprefix('ouro_conjuntura_').replace('_', ' ').title()}"
 
 
 def get_or_create_dashboards(api: Superset, chart_ids: list[int]) -> None:

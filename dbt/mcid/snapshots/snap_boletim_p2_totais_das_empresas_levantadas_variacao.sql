@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "vs. trim. anterior", "vs. mesmo trim. ano ant.", "12m atual / 12m anterior", "12m anterior / 12m retrasado"
-from {{ ref('gld_boletim_p2_totais_das_empresas_levantadas_variacao') }}
+from {{ ref('ouro_conjuntura_boletim_p2_totais_empresas_variacao') }}
 
 {% endsnapshot %}

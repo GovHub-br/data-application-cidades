@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("indicador"::text, '') as chave,
     edicao,
     "indicador", "Índice IMOB", "Índice ABRAMAT", "Índice FipeZap", "Índice ICST"
-from {{ ref('gld_boletim_p7_indices_da_construcao_variacao') }}
+from {{ ref('ouro_conjuntura_boletim_p7_indices_da_construcao_variacao') }}
 
 {% endsnapshot %}

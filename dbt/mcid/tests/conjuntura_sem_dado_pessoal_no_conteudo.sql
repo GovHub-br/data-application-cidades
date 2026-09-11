@@ -7,16 +7,29 @@
 -- pessoal chegue à camada de consumo nem à documentação — **sem depender de
 -- a anonimização a montante ter funcionado**.
 --
--- Só varre silver e gold: a bronze espelha a origem e pode legitimamente
--- conter esses dados. Os volumes aqui são pequenos (~12 mil linhas no
--- total), então a varredura completa é barata.
+-- Só varre prata e ouro: a bronze espelha a origem e pode legitimamente
+-- conter esses dados. Os volumes aqui são pequenos, então a varredura
+-- completa é barata.
+--
+-- O recorte vem do grafo do dbt, não do schema: `prata` e `ouro` são
+-- compartilhados com far, fds e rural, e o schema sozinho varreria os quatro
+-- domínios mais o que outros times gravam ali — foi assim que esta varredura
+-- chegou a levar 5min46 (2026-09).
 
 {% set alvos = [] %}
-{% if execute %}
+{% set relacoes = relacoes_do_produto(
+    'conjuntura_dbt',
+    camadas=['prata', 'ouro'],
+) %}
+{% if execute and relacoes %}
+    {% set pares = [] %}
+    {% for r in relacoes %}
+        {% do pares.append("('" ~ r["schema"] ~ "','" ~ r["tabela"] ~ "')") %}
+    {% endfor %}
     {% set colunas = run_query(
         "select table_schema, table_name, column_name
          from information_schema.columns
-         where table_schema in ('conjuntura','conjuntura')
+         where (table_schema, table_name) in (" ~ pares | join(",") ~ ")
            and data_type in ('text','character varying','character')
          order by 1,2,3") %}
     {% for linha in colunas.rows %}

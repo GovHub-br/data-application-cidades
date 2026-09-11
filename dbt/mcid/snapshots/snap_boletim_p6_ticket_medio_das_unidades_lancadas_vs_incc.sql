@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "INCC trimestral", "MRV trimestral", "Direcional trimestral", "Tenda trimestral", "INCC acum. 4T20", "MRV acum. 4T20", "Direcional acum. 4T20", "Tenda acum. 4T20"
-from {{ ref('gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc') }}
+from {{ ref('ouro_conjuntura_boletim_p6_ticket_medio_vs_incc') }}
 
 {% endsnapshot %}

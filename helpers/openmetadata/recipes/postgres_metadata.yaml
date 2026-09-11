@@ -28,6 +28,9 @@ source:
       # descrevendo os schemas legados por semanas.
       schemaFilterPattern:
         includes:
+          - "^bronze$"
+          - "^prata$"
+          - "^ouro$"
           - "^conjuntura$"
           - "^metadata$"
           - "^bronze$"

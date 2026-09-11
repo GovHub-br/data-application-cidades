@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "Criação Líquida (Saldo)", "Total de Postos (Estoque)"
-from {{ ref('gld_boletim_p3_empregos_construcao_caged') }}
+from {{ ref('ouro_conjuntura_boletim_p3_empregos_construcao_caged') }}
 
 {% endsnapshot %}

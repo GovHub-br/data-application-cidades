@@ -156,29 +156,29 @@ def celula(coluna: str, valor: Any, extras: str = "") -> str:
 #:   `linhas`  compara a linha alvo com uma linha base, coluna a coluna
 #:   `colunas` compara duas colunas dentro da MESMA linha
 PILULAS: dict[str, dict[str, list[tuple[str, str, str]]]] = {
-    "gld_boletim_p2_financiamentos_imobiliarios_bacen": {
+    "ouro_conjuntura_boletim_p2_financiamentos_imobiliarios_bacen": {
         "linhas": [
             ("Mês de referência", "Mês anterior", "mês ant."),
             ("Mês de referência", "Mesmo mês do ano anterior", "ano ant."),
         ]
     },
-    "gld_boletim_p2_financiamentos_habitacionais_uh": {
+    "ouro_conjuntura_boletim_p2_financiamentos_habitacionais_uh": {
         "linhas": [
             ("Trimestre selecionado", "Trimestre anterior", "tri. ant."),
             ("Trimestre selecionado", "Mesmo trim. do ano anterior", "ano ant."),
         ]
     },
-    "gld_boletim_p3_empregos_construcao_caged": {
+    "ouro_conjuntura_boletim_p3_empregos_construcao_caged": {
         "linhas": [
             ("Mês de referência", "Mês anterior", "mês ant."),
             ("Mês de referência", "Mesmo mês do ano anterior", "ano ant."),
             ("Acumulado no trimestre", "Acum. no trim. do ano anterior", "ano ant."),
         ]
     },
-    "gld_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re": {
+    "ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento": {
         "linhas": [("jan-fev-mar 2026", "out-nov-dez 2025", "trim. ant.")]
     },
-    "gld_boletim_p4_no_uh_por_condicao_de_uso": {
+    "ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso": {
         "colunas": [
             (
                 "Trim. selecionado — UH Usadas",
@@ -192,7 +192,7 @@ PILULAS: dict[str, dict[str, list[tuple[str, str, str]]]] = {
             ),
         ]
     },
-    "gld_boletim_p5_financiamento_pf_mcmv_por_faixa": {
+    "ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa": {
         "colunas": [
             ("Trim. selecionado — Nº UH", "Trim. ano anterior — Nº UH", "ano ant."),
             (
@@ -511,17 +511,17 @@ def montar(
     # A leitura é ancorada no QUADRO que ela comenta, não na seção: uma seção
     # pode ter vários quadros, e o texto se refere a um deles.
     leitura_do_quadro = {
-        "gld_boletim_p1_pib_construcao_civil_em_de_crescimento": "pib",
-        "gld_boletim_p1_cbic_lancamentos_e_vendas_totais": "lancamentos_e_vendas",
-        "gld_boletim_p3_novos_financiamentos_imobiliarios_por_banco_": "credito",
-        "gld_boletim_p4_credito_imobiliario_pib": "credito_pib",
-        "gld_boletim_p4_no_uh_por_condicao_de_uso": "condicao_de_uso",
-        "gld_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida": (
+        "ouro_conjuntura_boletim_p1_pib_construcao_crescimento": "pib",
+        "ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais": "lancamentos_e_vendas",
+        "ouro_conjuntura_boletim_p3_financiamentos_por_banco": "credito",
+        "ouro_conjuntura_boletim_p4_credito_imobiliario_pib": "credito_pib",
+        "ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso": "condicao_de_uso",
+        "ouro_conjuntura_boletim_p5_poupanca_captacao_liquida": (
             "poupanca_e_financiamento"
         ),
-        "gld_boletim_p5_financiamento_pf_mcmv_por_faixa": "financiamento_pf_mcmv",
-        "gld_boletim_p6_sinapi_brasil_e_incc_m": "precos",
-        "gld_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc": "ticket_medio",
+        "ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa": "financiamento_pf_mcmv",
+        "ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m": "precos",
+        "ouro_conjuntura_boletim_p6_ticket_medio_vs_incc": "ticket_medio",
     }
 
     # `secao_atual` vive FORA do laço de página: no PPTX a seção "6. Crédito"
@@ -554,13 +554,13 @@ def montar(
                     )
             partes.append('<div class="grade">')
             linhas = dados.get(q["tabela"], [])
-            if q["tabela"] == "gld_boletim_p4_credito_imobiliario_pib":
+            if q["tabela"] == "ouro_conjuntura_boletim_p4_credito_imobiliario_pib":
                 partes.append(grafico_credito(linhas))
             else:
                 partes.append(tabela_html(q, linhas))
-            if q["tabela"] == "gld_boletim_p1_cbic_lancamentos_e_vendas_totais":
+            if q["tabela"] == "ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais":
                 partes.append(cartoes_dos_totais(linhas))
-            elif q["tabela"] == "gld_boletim_p2_totais_das_empresas_levantadas_variacao":
+            elif q["tabela"] == "ouro_conjuntura_boletim_p2_totais_empresas_variacao":
                 partes.append(cartoes_das_empresas(linhas))
             # A leitura entra DENTRO da grade, como no impresso: ao lado do
             # quadro quando ele é estreito, abaixo quando é largo. Fora da

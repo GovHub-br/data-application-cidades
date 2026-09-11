@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("periodo"::text, '') as chave,
     edicao,
     "periodo", "PF Concessões (R$ mi)", "PF Taxa de Juros (%a.a)", "PF Inadimplência (%)", "PJ Concessões (R$ mi)", "PJ Taxa de Juros (%a.a)", "PJ Inadimplência (%)"
-from {{ ref('gld_boletim_p2_financiamentos_imobiliarios_bacen') }}
+from {{ ref('ouro_conjuntura_boletim_p2_financiamentos_imobiliarios_bacen') }}
 
 {% endsnapshot %}

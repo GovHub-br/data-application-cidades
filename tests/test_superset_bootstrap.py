@@ -63,10 +63,10 @@ class ApiFalsa:
 def test_chart_orfao_e_reapontado_em_vez_de_ficar_quebrado() -> None:
     """O chart existe com o nome certo, mas o dataset mudou de lugar."""
     modulo = _bootstrap()
-    titulo = modulo.nome_do_chart("gld_sinapi")
+    titulo = modulo.nome_do_chart("ouro_conjuntura_sinapi")
     api = ApiFalsa([{"slice_name": titulo, "id": 42, "datasource_id": 111}])
 
-    ids = modulo.get_or_create_charts(api, {"gld_sinapi": 222})
+    ids = modulo.get_or_create_charts(api, {"ouro_conjuntura_sinapi": 222})
 
     assert ids == [42], "o chart existente deve ser reaproveitado, não recriado"
     assert not api.criados, "reapontar não pode criar chart duplicado"
@@ -80,10 +80,10 @@ def test_chart_orfao_e_reapontado_em_vez_de_ficar_quebrado() -> None:
 def test_chart_ja_correto_nao_e_tocado() -> None:
     """Sem divergência não há escrita — o script tem de ser idempotente."""
     modulo = _bootstrap()
-    titulo = modulo.nome_do_chart("gld_sinapi")
+    titulo = modulo.nome_do_chart("ouro_conjuntura_sinapi")
     api = ApiFalsa([{"slice_name": titulo, "id": 42, "datasource_id": 222}])
 
-    ids = modulo.get_or_create_charts(api, {"gld_sinapi": 222})
+    ids = modulo.get_or_create_charts(api, {"ouro_conjuntura_sinapi": 222})
 
     assert ids == [42]
     assert not api.criados and not api.atualizados
@@ -93,7 +93,7 @@ def test_chart_ausente_e_criado() -> None:
     modulo = _bootstrap()
     api = ApiFalsa([])
 
-    ids = modulo.get_or_create_charts(api, {"gld_sinapi": 222})
+    ids = modulo.get_or_create_charts(api, {"ouro_conjuntura_sinapi": 222})
 
     assert len(ids) == 1 and not api.atualizados
     assert api.criados[0]["datasource_id"] == 222

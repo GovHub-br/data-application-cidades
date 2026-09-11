@@ -29,6 +29,6 @@ select
     edicao || '|' || coalesce("empresa"::text, '') as chave,
     edicao,
     "empresa", "vs. trim. anterior", "vs. mesmo trim. ano ant.", "12m atual / 12m anterior", "12m anterior / 12m retrasado"
-from {{ ref('gld_boletim_p2_vendas_por_construtora_variacao') }}
+from {{ ref('ouro_conjuntura_boletim_p2_vendas_por_construtora_variacao') }}
 
 {% endsnapshot %}

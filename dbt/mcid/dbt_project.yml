@@ -19,9 +19,6 @@ clean-targets:
 
 seeds:
   mcid:
-    # O gabarito do boletim é insumo de teste, mas mora junto do produto: com o
-    # schema unificado, tudo do conjuntura vive em `conjuntura`. Sem isto o seed
-    # cai no schema do profile e o teste do gabarito quebra procurando por ele.
     boletim_gabarito:
       +schema: conjuntura
 
@@ -38,17 +35,6 @@ models:
           classification: restricted
           rag_publication: prohibited
 
-    # FAR, FDS e Rural são três produtos que dividem os MESMOS schemas físicos
-    # (`bronze`, `prata` e `ouro`), com o produto identificado pelo prefixo do
-    # nome da tabela. Por isso `product` é declarado por CAMADA de cada projeto,
-    # e não pelo schema: a catalogação lê o produto de cada TABELA no catálogo
-    # semântico, que sai daqui. Sem o `meta.governance` abaixo, o
-    # `exportar_catalogo_openmetadata.py` descarta o model — foi o que deixou
-    # FAR, FDS e Rural fora do catálogo do OpenMetadata.
-    #
-    # A chave de cada camada tem de ser o NOME REAL DA PASTA (`prata`, `ouro`).
-    # Um bloco `silver:`/`gold:` aqui não casa com pasta nenhuma e o dbt o
-    # ignora em silêncio.
     far_dbt:
       +materialized: table
       +meta:
@@ -64,7 +50,6 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
-          #: lido pelo conector dbt do OpenMetadata
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier3
@@ -78,7 +63,6 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
@@ -92,7 +76,6 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier1
@@ -113,7 +96,7 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
-          #: lido pelo conector dbt do OpenMetadata
+
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier3
@@ -127,7 +110,6 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
@@ -141,16 +123,11 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
-    # Irmão do `fds_dbt` na estrutura, mas produto de dados PRÓPRIO: o Rural é
-    # outro programa (Novo MCMV Rural / PNHR) que o MCMV-Entidades. Herdar
-    # `product: entidades_fds` rotularia toda tabela do PNHR como Entidades FDS
-    # no catálogo.
     rural_dbt:
       +materialized: table
       +meta:
@@ -166,7 +143,7 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
-          #: lido pelo conector dbt do OpenMetadata
+          
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier3
@@ -180,7 +157,7 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
+          
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
@@ -194,7 +171,7 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
+          
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier1
@@ -202,60 +179,51 @@ models:
 
     conjuntura_dbt:
       +materialized: table
-      +schema: conjuntura
       +meta:
         governance:
           product: conjuntura
           owner_key: mcid_data_engineering
-      # Bronze: espelho textual do parquet de staging. A Bronze é espelho do
-      # raw, e a Silver é o único lugar de achatamento e tipagem.
-      #
-      # MATERIALIZAÇÃO É `table`, NÃO `materialized_view`: as MVs estavam
-      # derrubando o banco (decisão do time em 2026-08-29). Não reverter.
       bronze:
-        +materialized: table
+        +schema: bronze
         +meta:
           governance:
             product: conjuntura
             owner_key: mcid_data_engineering
             layer: bronze
             classification: restricted
-            rag_publication: prohibited
-          #: lido pelo conector dbt do OpenMetadata
+            rag_publication: prohibited          
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier3
             owner: mcid-data-engineering
-      silver:
-        +materialized: table
+      prata:
+        +schema: prata
         +meta:
           governance:
             product: conjuntura
             owner_key: mcid_data_engineering
             layer: silver
             classification: internal
-            rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
+            rag_publication: eligible_after_security_validation          
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
             owner: mcid-data-engineering
-      gold:
-        +materialized: table
+      ouro:
+        +schema: ouro
         +meta:
           governance:
             product: conjuntura
             owner_key: mcid_data_engineering
             layer: gold
             classification: internal
-            rag_publication: eligible_after_security_validation
-          #: lido pelo conector dbt do OpenMetadata
+            rag_publication: eligible_after_security_validation          
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier1
             owner: mcid-data-engineering
       qualidade:
-        +materialized: table
+        +schema: ouro
         +meta:
           governance:
             product: conjuntura
@@ -267,7 +235,5 @@ models:
 on-run-start:
   - '{{create_udfs()}}'
 
-# Registra em lake._dbt_log o que não passou — inclusive os testes que são
-# `severity: warn` e por isso não derrubam a execução.
 on-run-end:
   - '{{ registrar_execucao_dbt() }}'
