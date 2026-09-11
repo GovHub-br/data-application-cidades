@@ -1,0 +1,11 @@
+# Script consumido DENTRO de container Linux nao pode vir com CRLF: o
+# shebang virou `#!/bin/bash\r`, o entrypoint do Postgres nao conseguiu
+# executar o init.sh e os bancos `airflow`, `superset` e `data_warehouse`
+# nunca foram criados — o Airflow subiu com
+# `FATAL: database "airflow" does not exist`. Em checkout no Windows o git
+# converte por padrao; esta regra protege os arquivos que rodam no Linux.
+*.sh text eol=lf
+
+# Mesmo motivo: sao lidos por ferramenta dentro de container.
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
