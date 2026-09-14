@@ -1,16 +1,9 @@
-{{ config(materialized="table") }}
+{{ config(materialized='table') }}
 
-with
-    bacen_financiamentos_imobiliarios_bronze as (
-        select
-            cast(tipo as text) as tipo,
-            cast(data as text) as data,
-            to_date(data || '01', 'DD/MM/YYYY') as data_referencia,
-            cast(valor as numeric) as valor,
-            cast(dt_ingest as timestamp) as dt_ingest
+-- Bronze do conjuntura: financiamentos imobiliários (BACEN).
+-- Espelho fiel do parquet de staging, sem transformação. O caminho do
+-- arquivo é declarado em `sources.yml` e resolvido pelo macro `fonte_lake()`,
+-- que também registra a dependência na linhagem. Achatamento e tipagem ficam
+-- na prata.
 
-        from {{ source("bacen", "financiamentos_imobiliarios") }}
-    )
-
-select *
-from bacen_financiamentos_imobiliarios_bronze
+select * from {{ fonte_lake('bacen_financiamentos_imobiliarios', 'lake_staging') }}

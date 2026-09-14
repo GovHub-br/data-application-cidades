@@ -1,0 +1,9 @@
+prioridade,dominio,camada,modelos,acao,relevancia_dashboard
+P0,empreendimento_far,silver,"empreendimento; evolucao_financeira","Adicionar testes obrigatorios, alinhar descricoes ao glossario e planejar alias padronizado sem quebrar Superset",Alta
+P0,empreendimento_far,mart_dashboard,"ficha_empreendimento; resumo_gerencial; mapa_nacional; panorama_estadual; evolucao_financeira_chart; execucao_fisica_financeira_chart","Marcar consumidor dashboard, documentar grao/filtros e validar cards atuais",Alta
+P0,entidades_fds,silver,"fds_empreendimento; fds_evolucao_financeira","Manter testes de APF, alinhar nomes equivalentes ao glossario e documentar lacunas de codigos",Alta
+P0,entidades_fds,mart_dashboard,"fds_ficha_empreendimento; fds_panorama_entidade; fds_evolucao_financeira_chart","Marcar consumidor dashboard, documentar grao/filtros e validar Superset",Alta
+P1,indicadores_mcmv,gold,"indicadores_gargalo_desempenho; resumo_gargalo_desempenho_dashboard","Depender da silver padronizada e explicitar formulas/flags",Media
+P1,conjuntura,silver,"19 modelos silver_conjuntura","Adicionar testes para datas/chaves e harmonizar campos tecnicos dt_ingest/dt_silver",Media
+P1,conjuntura,mart_dashboard,"20 modelos gold_conjuntura","Identificar quais sao consumidos por dashboard antes de renomear",Media
+P2,mcid,transversal,"todos","Criar aliases/views de compatibilidade antes de qualquer renome fisico",Alta

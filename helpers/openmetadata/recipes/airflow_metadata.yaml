@@ -1,0 +1,33 @@
+source:
+  type: airflow
+  serviceName: airflow
+  serviceConnection:
+    config:
+      type: Airflow
+      hostPort: ${AIRFLOW_HOST_PORT}
+      numberOfStatus: 20
+      connection:
+        type: Postgres
+        username: ${AIRFLOW_DB_USERNAME}
+        authType:
+          password: ${AIRFLOW_DB_PASSWORD}
+        hostPort: ${AIRFLOW_DB_HOST_PORT}
+        database: ${AIRFLOW_DB_DATABASE}
+        sslMode: disable
+
+  sourceConfig:
+    config:
+      type: PipelineMetadata
+
+sink:
+  type: metadata-rest
+  config:
+    bulk_sink_batch_size: 10
+
+workflowConfig:
+  loggerLevel: INFO
+  openMetadataServerConfig:
+    hostPort: ${OM_HOST}
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: ${INGESTION_TOKEN}

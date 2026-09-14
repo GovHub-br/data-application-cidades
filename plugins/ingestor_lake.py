@@ -49,11 +49,10 @@ def registros_para_staging_parquet(
     registros: list[dict[str, Any]],
     typers: "dict[str, Callable[[pd.Series[Any]], pd.Series[Any]]] | None" = None,
 ) -> None:
-    """Etapa 02 para fontes API-JSON com `registros` já normalizados pelo cliente.
+    """Etapa 02 para fontes API-JSON, persistida integralmente como texto.
 
-    Monta o DataFrame a partir dos registros (herdando a tipagem que o cliente já
-    aplicou) e escreve o parquet tipado na staging. `typers` aplica casts por
-    coluna quando a inferência não basta (ex.: data/valor do BACEN).
+    A staging e a bronze não fazem tipagem analítica. ``typers`` permanece na
+    assinatura para compatibilidade com DAGs antigas, mas é ignorado.
     """
     if not registros:
         logging.warning(f"[ingestor_lake] Sem registros p/ parquet: {fonte}.{dado}")
@@ -61,15 +60,8 @@ def registros_para_staging_parquet(
 
     df = pd.DataFrame(registros)
     if typers:
-        for col, fn in typers.items():
-            if col in df.columns:
-                df[col] = fn(df[col])
-
-    # Blindagem p/ o pyarrow: colunas object com tipos mistos (ex.: '...' + float)
-    # quebram o to_parquet. Vira string nullable — os casts finos ficam nos typers.
-    for col in df.columns:
-        if df[col].dtype == object:
-            df[col] = df[col].astype("string")
+        logging.warning("[ingestor_lake] typers ignorados: staging e bronze são textuais")
+    df = _todas_colunas_texto(df)
 
     buffer = io.BytesIO()
     df.to_parquet(buffer, engine="pyarrow", index=False)
@@ -142,6 +134,7 @@ class IngestorLake(ABC):
         )
 
     def _salvar_parquet(self, df: pd.DataFrame) -> None:
+        df = _todas_colunas_texto(df)
         buffer = io.BytesIO()
         df.to_parquet(buffer, engine="pyarrow", index=False)
         upload_staging_parquet(self.fonte, self.dado, buffer.getvalue())
@@ -149,6 +142,23 @@ class IngestorLake(ABC):
             f"[ingestor_lake] staging/{self.fonte}/{self.dado}.parquet "
             f"({len(df)} linhas, {len(df.columns)} colunas)"
         )
+
+
+def _todas_colunas_texto(df: pd.DataFrame) -> pd.DataFrame:
+    """Evita inferência de tipos no parquet; JSON aninhado vira texto JSON."""
+
+    def serializar(valor: Any) -> str | None:
+        if valor is None:
+            return None
+        if isinstance(valor, (dict, list)):
+            return json.dumps(valor, ensure_ascii=False, default=str)
+        if pd.isna(valor):
+            return None
+        if hasattr(valor, "isoformat"):
+            return valor.isoformat()
+        return str(valor)
+
+    return df.apply(lambda coluna: coluna.map(serializar).astype("string"))
 
 
 class IngestorBalancoEmpresas(IngestorLake):

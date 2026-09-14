@@ -1,0 +1,19 @@
+valor_bruto,motivo_paralisacao,origem
+A ENTREGAR,a_entregar,snh
+EM ANDAMENTO,em_andamento,snh
+A RETOMAR,a_retomar,snh
+A RETOMAR - AO/MCI/ASSINATURA,a_retomar_ao_mci_assinatura,snh
+A RETOMAR - APORTE ENTE PÚBLICO,a_retomar_aporte_ente_publico,snh
+A RETOMAR - APORTE SUPLEMENTAR,a_retomar_aporte_suplementar,snh
+A RETOMAR - EM ANÁLISE,a_retomar_em_analise,snh
+A RETOMAR - EM CONSTRUÇÃO DA PROPOSTA,a_retomar_em_construcao_proposta,snh
+A RETOMAR - SOLUÇÃO LOCAL,a_retomar_solucao_local,snh
+DESIMOBILIZAÇÃO ASSINADA,desimobilizacao_assinada,snh
+DESIMOBILIZAÇÃO PARA VENDA AUTORIZADA,desimobilizacao_venda_autorizada,snh
+INDICATIVO DESIMOBILIZAÇÃO,indicativo_desimobilizacao,snh
+EXTRAPOLA TETO,extrapola_teto,snh
+"OCUPADO, EM LEGALIZAÇÃO",ocupado_em_legalizacao,snh
+OCUPAÇÃO IRREGULAR,ocupacao_irregular,snh
+REDUÇÃO DE META,reducao_de_meta,snh
+RESCISÃO OPERAÇÃO,rescisao_operacao,snh
+SUPLEMENTAÇÃO DE OBRA NÃO INCIDENTE,suplementacao_obra_nao_incidente,snh

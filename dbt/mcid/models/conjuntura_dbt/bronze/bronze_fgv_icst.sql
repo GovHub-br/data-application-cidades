@@ -1,20 +1,9 @@
-{{ config(materialized="table") }}
+{{ config(materialized='table') }}
 
-with
-    fgv_icst_bronze as (
-        select
-            cast(mes as text) as mes,
-            to_date('01/' || mes, 'DD/MM/YYYY') as data_referencia,
-            cast(
-                replace(icst_com_ajuste_sazonal, ',', '.') as numeric
-            ) as icst_com_ajuste_sazonal,
-            cast(
-                replace(icst_sem_ajuste_sazonal, ',', '.') as numeric
-            ) as icst_sem_ajuste_sazonal,
-            cast(dt_ingest as timestamp) as dt_ingest
+-- Bronze do conjuntura: ICST (FGV).
+-- Espelho fiel do parquet de staging, sem transformação. O caminho do
+-- arquivo é declarado em `sources.yml` e resolvido pelo macro `fonte_lake()`,
+-- que também registra a dependência na linhagem. Achatamento e tipagem ficam
+-- na prata.
 
-        from {{ source("fgv", "icst") }}
-    )
-
-select *
-from fgv_icst_bronze
+select * from {{ fonte_lake('fgv_icst', 'lake_staging') }}

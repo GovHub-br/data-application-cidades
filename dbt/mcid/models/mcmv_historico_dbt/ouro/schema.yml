@@ -1,0 +1,498 @@
+version: 2
+
+models:
+  - name: ouro_historico_marco_empreendimento
+    description: >
+      Ouro — linha do tempo (marcos) por empreendimento (grão
+      coalesce(id_empreendimento, apf), alinhado ao gold_snapshot). 7 marcos,
+      cada um com `<marco>_fonte` e `<marco>_dt_snapshot`. Só seleciona entre
+      valores observados — nunca interpola.
+      Ordem: dt_contratacao / dt_inicio_obra vêm da linha "estado" vencedora
+      (fase mais avançada -> dt_referencia mais recente); dt_conclusao_obra e
+      dt_ultima_entrega são o MAIOR valor já resolvido na prata em qualquer
+      snapshot (dt_ultima_entrega considera também o max da espinha
+      prata_historico_entrega_apf sobre todos os APFs de fase);
+      dt_primeira_entrega vem da espinha. dt_previsao_entrega = maior data
+      prevista observada (braço SNH; fonte 'snh:dados_prioritarios', fill ~2%).
+      dt_legalizacao nasce NULL nesta fase. `marcos_coerentes` é
+      diagnóstico. Requer target staging_duckdb.
+    meta:
+      tags: [ouro, mcmv, dados-historicos, empreendimento, marco, linha-do-tempo]
+    columns:
+      # verificacao_tipagem — tipo_esperado nos nomes do DuckDB.
+      # Ref: docs/inventario-tipagem-silver-gold.md.
+      - name: id_empreendimento
+        description: Chave do empreendimento (= id_empreendimento no FDS, = apf em FAR/Rural).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). No eixo histórico o domínio é
+          {FAR, Entidades, Rural} — `Entidades` é a mesma frente que as fichas de
+          produção FDS chamam de FDS.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural"]
+      - name: dt_contratacao_fonte
+        description: >
+          Origem de `dt_contratacao`: `sftp[:INTxxx]` ou `snh` (herda
+          `dt_contratacao_fonte` da linha "estado" vencedora da prata por
+          frente). `sem_fonte` quando nenhum snapshot resolveu a data.
+        data_tests:
+          - not_null
+      - name: dt_ultima_entrega_fonte
+        description: >
+          Origem de dt_ultima_entrega: `sftp[:INTxxx]`, `snh:entrega_evento` ou
+          `sem_fonte`.           Herda dt_entrega_uh_fonte da prata.
+        data_tests:
+          - not_null
+      - name: dt_previsao_entrega
+        description: >
+          Maior data prevista de entrega observada em qualquer snapshot do
+          empreendimento (braço SNH). NULL quando nenhum snapshot reportou.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_previsao_entrega_fonte
+        description: >
+          `snh:dados_prioritarios` quando há data prevista; `sem_fonte` caso
+          contrário.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["snh:dados_prioritarios", "sem_fonte"]
+      - name: marcos_coerentes
+        description: Cadeia de datas coerente ignorando nulos. Diagnóstico — o modelo não corrige.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
+      - name: dt_primeira_entrega
+        description: >
+          Menor entre a data direta da prata (FAR/INT040) e a da espinha
+          SNH-evento. `dt_primeira_entrega_fonte` diz de qual veio
+          (`sftp:INT040` / `sftp:INT054` / `snh:entrega_evento` / `sem_fonte`).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_ultima_liberacao
+        description: >
+          Marco financeiro — maior `dt_ultima_liberacao` observada em qualquer
+          snapshot do empreendimento (INT040/054 `dt_ultima_liberacao_recurso`,
+          INT057/065 `dt_ultima_liberacao`). NULL para FDS (INT059 não tem).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_ultima_liberacao_fonte
+        description: >
+          Origem de `dt_ultima_liberacao`: `sftp:INTxxx` (INT040/054/057/065) ou
+          `sem_fonte`. FDS é sempre `sem_fonte` (INT059 não traz a data).
+        data_tests:
+          - not_null
+
+  - name: ouro_historico_snapshot_empreendimento_atual
+    description: >
+      Ouro — snapshot corrente (estado atual) derivado da prata histórica
+      consolidada: uma linha por (frente, codigo_empreendimento) com o último
+      mês de referência disponível. No FDS, um empreendimento multi-fase colapsa
+      os 2-3 APFs de fase para 1 linha pela chave estável codigo_empreendimento
+      (= id_empreendimento), prevalecendo a fase mais avançada
+      (Desligamento > Obra > Projeto). FAR/Rural inalterados (chave = apf).
+      Consolidado apenas — filtrável por frente_mcmv.
+    meta:
+      tags: [ouro, mcmv, dados-historicos, empreendimento, snapshot]
+    columns:
+      # verificacao_tipagem — herda o contrato de tipos das pratas por frente.
+      - name: id_historico_snapshot
+        description: Identificador único do empreendimento na versão corrente (por APF).
+        data_tests:
+          - not_null
+          - unique
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). Domínio do eixo histórico: {FAR, Entidades, Rural}
+          (`Entidades` ≡ a frente que as fichas de produção FDS chamam de FDS).
+        data_tests:
+          - not_null
+      - name: apf
+        description: APF da fase escolhida como corrente (física).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: codigo_empreendimento
+        description: >
+          Chave estável do empreendimento. FDS: id_empreendimento (hash do
+          APF-âncora); FAR/Rural: = apf. Grão do snapshot.
+        data_tests:
+          - not_null
+          - unique:
+              config:
+                where: "frente_mcmv = 'Entidades'"
+      - name: id_empreendimento
+        description: Identidade lógica estável (= codigo_empreendimento). FAR/Rural = apf.
+      - name: fase_empreendimento
+        description: >
+          Fase administrativa do APF corrente no FDS (Projeto/Obra/Desligamento);
+          NULL para FAR/Rural e APF fora da dim.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Projeto", "Obra", "Desligamento"]
+              config:
+                severity: warn
+      - name: dt_referencia
+        description: >
+          Mês de referência do último snapshot disponível para a fase corrente
+          (1º dia do mês; conceito canônico `dt_referencia`, glossario-mcid.md).
+          O snapshot é "atual" relativo a esta data, não à data de execução.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: quantidade_uh_concluidas
+        description: >
+          UH com obra concluída (estágio anterior a "entregue"), herdada da
+          prata. Só o braço SFTP reporta.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: dt_entrega_uh
+        description: >
+          Data de entrega de UH. Herdada da prata por frente.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_conclusao_obra
+        description: >
+          Data de conclusão física da obra / legalização. Herdada da prata —
+          FDS/FAR do braço SFTP, Rural de dt_efetiva_conclusao.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_entrega_uh_fonte
+        description: Origem de `dt_entrega_uh` (`sftp:INTxxx` / `snh:entrega_evento`).
+      - name: dt_previsao_entrega
+        description: >
+          Data prevista de entrega (braço SNH), herdada da prata. Fill ~2%.
+      - name: qt_uh_previsao_entrega
+        description: >
+          UH previstas para entrega (braço SNH), herdada da prata.
+      - name: fonte_tabela
+        description: >
+          Interface/feed de origem do snapshot corrente, valor cru herdado da
+          prata por frente: nome da interface GEFUS
+          (`INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS`, …),
+          `SNH_dados_prioritarios_af_{bb,caixa}` ou `sharepoint:MONIT_MOV_OBRA`.
+          Par de `fonte_serie` (sftp / snh / obra_mensal).
+        data_tests:
+          - not_null
+      - name: valor_contratado_preenchido
+        description: >
+          Herdado da prata — true quando valor_contratado/valor_desembolsado do
+          último snapshot vieram de LOCF, não de observação SNH.
+        data_tests:
+          - not_null
+      - name: responsavel_preenchido
+        description: >
+          Herdado da prata — true quando responsavel_id/nome vieram de LOCF do
+          último snapshot SFTP.
+        data_tests:
+          - not_null
+      # Sinais de retomada/paralisação e marcos de data — estado atual;
+      # LOCF do último valor conhecido na prata (não some na virada de feed).
+      - name: sinal_retomada
+        description: >
+          Último sinal de retomada/a-retomar conhecido (seed dominio_retomada).
+          NULL se o empreendimento nunca teve. Cobertura FAR-rica, FDS/Rural rasa.
+        data_tests:
+          - dentro_do_dominio:
+              arguments: { seed: dominio_retomada, seed_column: sinal_retomada }
+              config: { severity: warn }
+      - name: motivo_paralisacao
+        description: Último motivo de paralisação conhecido (seed dominio_motivo_paralisacao).
+      - name: desc_situacao_contrato
+        description: >
+          Status DO CONTRATO cru (INT040 — FAR ~81%). Eixo distinto de
+          situacao_canonica (obra) — não combinar sem ressalva.
+      - name: dt_ultima_liberacao
+        description: Data da última liberação de recurso conhecida. FAR ~80% / Rural ~86% / FDS NULL.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_primeira_entrega
+        description: Primeira entrega de UH, direto da fonte (INT040/054 — FAR). NULL em FDS/Rural.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # ── atributos estáveis. Resolvidos do último snapshot de cada fonte por
+      # atributo, no grão (frente_mcmv, codigo_empreendimento).
+      - name: no_entidade_organizadora
+        description: >
+          Entidade organizadora (INT057/INT065 — **Rural apenas**, ~86%). NULL em
+          FAR e Entidades: INT059/FDS não traz a coluna e a entidade do FDS já é
+          `responsavel_nome`.
+      - name: nu_cnpj_entidade
+        description: >
+          CNPJ da **entidade organizadora** do empreendimento (pessoa jurídica —
+          Rural apenas). Não é dado de pessoa física / beneficiário.
+      - name: dsc_tipologia
+        description: Tipologia construtiva (INT040/054/059).
+      - name: tipo_de_unidade_do_empreendimento
+        description: Tipo de unidade habitacional do empreendimento, valor cru da fonte (INT040/054/059).
+      - name: regime_construcao
+        description: Regime de construção (INT059).
+      - name: cod_regime_execucao
+        description: Código do regime de execução da obra, valor cru da fonte (INT040/054). Domínio a decodificar em follow-up.
+      - name: modalidade_requalificacao
+        description: Modalidade de requalificação (INT059 — FDS).
+      - name: latitude
+        description: >
+          Latitude decimal do EMPREENDIMENTO (imóvel/obra, não de pessoa
+          física), de `latitude_do_imovel` do SNH (parse PT-BR; sentinela `0` →
+          NULL). Os `gps_*_grau/minuto/segundo` do INT059 são verificados como
+          0% reais e NÃO são fonte.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: longitude
+        description: Longitude decimal (mesma fonte/regra da latitude).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      # Endereço do EMPREENDIMENTO habitacional (o imóvel/terreno da obra) —
+      # NÃO é endereço residencial de pessoa física / beneficiário. Publicáveis
+      #       no OpenMetadata com description normal; o ouro segue
+      # `classification: internal`.
+      - name: bairro
+        description: Bairro do empreendimento habitacional (endereço do imóvel/obra, não de pessoa física). Valor cru da fonte (INT059).
+      - name: cep
+        description: CEP do empreendimento habitacional (endereço do imóvel/obra, não de pessoa física). Valor cru da fonte (INT059).
+      - name: logradouro
+        description: Logradouro do empreendimento habitacional (endereço do imóvel/obra, não de pessoa física). Valor cru da fonte (INT059).
+      - name: nu_apf_vinculacao
+        description: APF vinculado (INT059 — liga APFs relacionados; só exposto, não altera resolução de fase).
+      - name: portaria_selecao
+        description: Portaria de seleção (INT040/054, esparso).
+
+  - name: ouro_historico_serie_mensal
+    description: >
+      Ouro — série histórica mensal do MCMV (pré-2024) para análise preditiva.
+      Agrega a prata_historico_serie_executiva por (dt_referencia,
+      fonte_familia, nivel_agregacao, regiao_sigla, uf, linha_ogu_fgts) via
+      GROUPING SETS (nacional + regiao + uf).
+
+      natureza_serie PROPAGADA da prata: 'estoque' (carteira ACUMULADA no
+      mês-snapshot — bases_relatório_executivo / min_cidades / bext) ou 'fluxo'
+      (entrada de novos empreendimentos — entrada_bb). Nas séries de estoque NÃO
+      somar entre meses; NUNCA somar entre fonte_familia de grão diferente
+      (grao_familia: 'contrato' p/ bext e min_cidades). bases_relatório_executivo
+      e min_cidades se sobrepõem 2014-2016 — usar prioridade_familia para uma
+      série contínua.
+
+      VALORES NOMINAIS (R$ da data do fato, 2012-2018) — comparação plurianual
+      exige deflator externo (glossario-valores-financeiros.md).
+      Requer target staging_duckdb.
+    meta:
+      tags: [ouro, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Cobertura nacional observada 2026-09-06: 75,6% (bext só tem
+      # subsidio_total, sem split FGTS/OGU -> fica 'Nao classificada'). Piso em
+      # 0,60 para pegar regressão sem ruído. Ver §7 do glossário.
+      - cobertura_classificacao_ogu_fgts:
+          arguments:
+            min_pct: 0.60
+          config:
+            severity: warn
+      - soma_nao_cruza_familia:
+          config:
+            severity: warn
+    columns:
+      - name: dt_referencia
+        description: >
+          Mês-snapshot da carteira agregada (1º dia do mês; conceito canônico
+          `dt_referencia`, glossario-mcid.md). Nas séries de estoque NÃO somar
+          entre `dt_referencia` (dupla contagem do acumulado).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: fonte_familia
+        description: >
+          Família da série executiva pré-2019 agregada nesta linha
+          (`bases_relatorio_executivo`, `min_cidades`, `entrada_bb`, `bext`).
+          NUNCA somar entre `fonte_familia` de grão diferente (ver
+          `grao_familia`); use `prioridade_familia` para uma série contínua.
+        data_tests:
+          - not_null
+      - name: natureza_serie
+        description: >
+          Propagada da prata:
+          'estoque' — carteira acumulada no mês-snapshot, não somar entre meses
+          (bases_relatorio_executivo, min_cidades, bext); 'fluxo' — entrada de
+          novos empreendimentos no mês (entrada_bb).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["estoque", "fluxo"]
+      - name: grao_familia
+        description: >
+          Grão da fonte_familia: 'contrato' (bext, min_cidades) ou
+          'empreendimento' (bases_relatorio_executivo, entrada_bb). Não somar
+          UH/valor entre grãos diferentes no mesmo (dt_referencia, uf).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["contrato", "empreendimento"]
+      - name: valor_investimento_acumulado
+        description: >
+          Conceito canônico `valor_investimento_total`, acumulado (estoque).
+          R$ nominais.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(38,2)" } }
+      - name: valor_financiamento_acumulado
+        description: >
+          Conceito canônico `valor_financiamento` (operação de crédito, sem
+          VGV), acumulado.
+      - name: valor_desembolsado_acumulado
+        description: >
+          Conceito canônico `valor_desembolsado_acumulado` — recurso federal
+          liberado acumulado. Cobre só bases_relatorio_executivo e bext (∅ nas
+          outras famílias).
+      - name: valor_vgv
+        description: Conceito canônico `valor_vgv` — valor global de venda. Só entrada_bb reporta.
+      - name: valor_contrapartidas
+        description: Conceito canônico `valor_contrapartidas` — aporte do poder público / entidade.
+      - name: subsidio_total
+        description: >
+          Conceito canônico `subsidio_total` — subsídio sem split (só bext).
+          **Não somar** `subsidio_fgts + subsidio_ogu + subsidio_total`: usar
+          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
+      - name: prioridade_familia
+        description: 1 bases_relatorio_executivo, 2 min_cidades, 3 entrada_bb, 4 bext (menor = preferencial).
+      - name: nivel_agregacao
+        description: >
+          Nível do GROUPING SET desta linha: 'nacional' (BR), 'regiao'
+          (macrorregião IBGE) ou 'uf'. **Não somar linhas de níveis diferentes**
+          — são recortes sobrepostos do mesmo total.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["nacional", "regiao", "uf"]
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) da prata. Chave no nível
+          'regiao'; enriquece as linhas de nível 'uf'; 'BR' no nível 'nacional';
+          'ND' onde a prata não tem uf. Adicional ao contrato.
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla). Nulo no nível 'nacional'. Adicional ao contrato.
+      - name: linha_ogu_fgts
+        description: >
+          Classificação da linha pelo subsídio dominante: 'OGU/Subsidiado',
+          'FGTS/Financiado' ou 'Nao classificada' (família `bext`, que só
+          reporta `subsidio_total` sem split — ver §7 do
+          glossario-valores-financeiros.md).
+        data_tests:
+          - not_null
+      - name: uh_contratadas
+        description: >
+          Soma de UH contratadas no recorte (dentro da mesma fonte_familia).
+          Conceito canônico `quantidade_uh`. Ver `natureza_serie` — nas séries de
+          estoque NÃO somar entre `dt_referencia`.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues
+        description: >
+          Soma de UH entregues no recorte — conceito canônico
+          `quantidade_uh_entregues`, com sufixo implícito de acumulado (mesma
+          medida que `ouro_reloginho_indicadores.uh_entregues`, que é o
+          acumulado SNH). Ver `natureza_serie`: nas séries de estoque NÃO somar
+          entre meses.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_concluidas
+        description: Soma de UH com obra concluída no recorte.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_em_obras
+        description: >
+          Soma de UH em obras no recorte. Ver natureza_serie — nas séries de
+          estoque NÃO somar entre meses.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_comercializadas
+        description: >
+          Soma de UH vendidas/reservadas ao beneficiário no recorte (só
+          bases_relatorio_executivo e min_cidades reportam; antecede a entrega
+          física, não aninhada com uh_entregues).
+          Ver natureza_serie — nas séries de estoque NÃO somar entre meses.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+
+  - name: ouro_historico_serie_situacao_mensal
+    description: >
+      Ouro — série histórica mensal de empreendimentos por SITUAÇÃO DE OBRA
+      canônica (2019-12 → mês corrente das pratas por frente). Grão:
+      (mes, frente_mcmv, situacao_canonica, nivel_geografico, uf, regiao_sigla),
+      com nivel_geografico ∈ {nacional, regiao, uf} via GROUPING SETS. Métricas
+      de ESTOQUE — n_empreendimentos (empreendimentos distintos na situação no
+      mês, por chave_empreendimento = coalesce(id_empreendimento, apf); no FDS
+      um multi-fase conta 1), uh — e de FLUXO — entradas / saidas da situação no
+      mês, por lag(situacao_canonica) particionado por
+      (frente_mcmv, chave_empreendimento). **NÃO somar entradas / saidas entre
+      nivel_geografico** (cada transição acontece numa única UF). A contagem usa
+      empreendimentos distintos (no FDS um multi-fase conta 1).
+      `fonte_serie` é a predominante do mês por frente — usar para anotar o pico
+      de paralisação de 2024 (virada SFTP→SNH), que o ouro NÃO suaviza. Requer
+      target staging_duckdb.
+    meta:
+      tags: [ouro, mcmv, dados-historicos, empreendimento, situacao-obra]
+    columns:
+      - name: mes
+        description: Primeiro dia do mês de referência.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). Domínio {FAR, Entidades, Rural} — `Entidades` ≡ a
+          frente FDS das fichas de produção.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural"]
+      - name: situacao_canonica
+        description: Situação de obra canônica (pode ser 'nao_mapeada';           nunca NULL — linhas sem situação são excluídas do ouro).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["nao_iniciada", "em_obras", "paralisada", "concluida", "cancelada", "nao_mapeada"]
+      - name: nivel_geografico
+        description: >
+          Nível do GROUPING SET desta linha: 'nacional', 'regiao' ou 'uf'.
+          **Não somar entre níveis** (recortes sobrepostos); e as métricas de
+          fluxo (`entradas` / `saidas`) também não somam entre níveis — cada
+          transição ocorre numa única UF.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["nacional", "regiao", "uf"]
+      - name: uf
+        description: UF no nível 'uf' ('ND' quando a prata não tem uf); 'BR' nos demais níveis.
+      - name: regiao_sigla
+        description: Macrorregião IBGE — chave no nível 'regiao', enriquece o nível 'uf', 'BR' no nacional.
+      - name: n_empreendimentos
+        description: Empreendimentos distintos (chave_empreendimento) na situação naquele mês/recorte (estoque).
+      - name: uh
+        description: Soma de quantidade_uh na situação naquele mês/recorte (estoque).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: entradas
+        description: Empreendimentos que ENTRARAM na situação no mês (mudança vinda de outra situação). Não somar entre nivel_geografico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: saidas
+        description: Empreendimentos que SAÍRAM da situação no mês. Não somar entre nivel_geografico.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: fonte_situacao
+        description: Origem da situação — 'reportada' (sempre, nesta fase; 'derivada' reservado para a série pré-2019).
+      - name: fonte_serie
+        description: fonte_serie predominante do mês por frente ('sftp' até 2024-11, 'snh' depois) — para anotar a descontinuidade de série.

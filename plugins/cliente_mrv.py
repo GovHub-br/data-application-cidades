@@ -110,10 +110,38 @@ class ClienteMRV:
             logging.error(f"[cliente_mrv.py] Falha ao baixar planilha: {e}")
             return None
 
-        logging.info("[cliente_mrv.py] Lendo aba 'Dados Oper. MRV&Co | Oper.Data'...")
         try:
             arquivo_em_memoria = io.BytesIO(response.content)
-            nome_aba = "Dados Oper. MRV&Co | Oper.Data"
+
+            # A MRV muda o nome exato da aba entre divulgações (em 2T26 virou
+            # "Dados Oper. MRV&Co | Oper.D", antes era "... | Oper.Data"), então
+            # o nome fixo quebra em silêncio a cada renomeação.
+            #
+            # Mas prefixo solto é pior: na planilha da ABECIP existem as abas
+            # 'SBPE' E 'SBPE_Mensal', e casar por prefixo pegava a errada,
+            # devolvendo zero registro sem erro. Regra: nome conhecido
+            # primeiro, prefixo só como plano B, e falha alta se ambíguo.
+            abas = pd.ExcelFile(arquivo_em_memoria).sheet_names
+            conhecidas = [
+                "Dados Oper. MRV&Co | Oper.Data",
+                "Dados Oper. MRV&Co | Oper.D",
+            ]
+            nome_aba = next((a for a in conhecidas if a in abas), None)
+            if nome_aba is None:
+                candidatas = [a for a in abas if a.lower().startswith("dados oper")]
+                if len(candidatas) != 1:
+                    raise ValueError(
+                        f"aba de dados operacionais indefinida: o prefixo casou com "
+                        f"{len(candidatas)} abas ({candidatas}). Abas disponíveis: {abas}"
+                    )
+                nome_aba = candidatas[0]
+                logging.warning(
+                    "[cliente_mrv.py] Aba renomeada na origem; usando %r por prefixo. "
+                    "Vale acrescentar a `conhecidas`.",
+                    nome_aba,
+                )
+            logging.info(f"[cliente_mrv.py] Lendo aba {nome_aba!r}...")
+            arquivo_em_memoria.seek(0)
 
             # Limpa o binário da requisição
             del response

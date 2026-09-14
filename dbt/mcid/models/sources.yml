@@ -2,9 +2,17 @@ version: 2
 
 sources:
   - name: raw
-    schema: __dados_brutos
+    # O schema `__dados_brutos` deixou de existir: as tabelas de referencia
+    # passaram para `seeds` (cidades.seeds.api_ibge_uf). Das 9 tabelas
+    # declaradas aqui, a UNICA lida por algum modelo hoje e a `api_ibge_uf`
+    # (5 ouros de far e rural). As 6 tabelas `novo_mcmv_fds_*` /
+    # `dados_prioritarios_*` / `int_059` sao resquicio da arquitetura antiga --
+    # a bronze do FDS le parquet da staging direto. Elas ficam declaradas mas
+    # nao sao consultadas: se estiverem em outro schema, nada quebra. Vale
+    # remove-las numa limpeza.
+    schema: seeds
     description: >
-      Schema de dados brutos do banco cidades.
+      Tabelas de referencia do banco cidades, no schema `seeds`.
       Contém os dados ingeridos das fontes GFAR, CAIXA e SNH para o programa MCMV.
     tables:
       - name: api_ibge_uf
@@ -78,13 +86,26 @@ sources:
           Agregado 6391, variável 5932. Tipagem aplicada: text→int, text→numeric.
       - name: ibge_pim_pf_brasil
         description: >
-          Pesquisa Industrial Mensal - Produção Física (PIM-PF), Brasil.
-          Agregado 8888, variáveis 12606, 12607, 11601-11604, classificação 544[129314].
+          Pesquisa Industrial Mensal - Produção Física (PIM-PF), insumos típicos
+          da construção civil.
+          Agregado exigido pelos modelos: 8886 ("Produção física industrial dos
+          insumos típicos da construção civil"), variáveis 11601-11604, sem
+          classificação — é tabela dedicada.
+          ⚠️ A Variable `IBGE_CONFIGURACOES` ainda pede o agregado 8888 ("por
+          seções e atividades industriais", classificação 544[129314]), que é a
+          indústria brasileira inteira, não a construção. Enquanto não for
+          corrigida, esta tabela carrega a série errada.
           Tipagem aplicada: text→int, text→numeric.
       - name: ibge_pmc_construcao
         description: >
           Pesquisa Mensal de Comércio (PMC), material de construção.
-          Agregado 8880, variáveis 7169, 7170, 11708-11711, classificação 11046 (receita nominal e volume).
+          Agregado exigido pelos modelos: 8757 ("receita nominal e volume de
+          vendas de materiais de construção"), variáveis 11708-11711,
+          classificação 11046, categoria 56732 (índice de volume de vendas).
+          ⚠️ A Variable `IBGE_CONFIGURACOES` ainda pede o agregado 8880, de
+          varejo geral, cujas categorias são 56733/56734. Por isso a 56732 não
+          existe na silver e o `gld_producao_fisica` deixa as colunas
+          da PMC nulas — preencher com 56734 daria número plausível e falso.
           Tipagem aplicada: text→int, text→numeric.
 
   - name: fgv
@@ -154,37 +175,44 @@ sources:
           Contém depósitos, retiradas, captação líquida, rendimento e saldo.
           Tipagem aplicada: text→date, text→numeric.
 
-  - name: conjuntura_bronze
-    schema: conjuntura_bronze
-    description: >
-      Schema bronze do projeto conjuntura. Contém dados brutos tipados
-      provenientes de diversas fontes do setor imobiliário e de construção civil.
+  # Estas seis tabelas não são produzidas por model: chegam pela planilha
+  # oficial do boletim, revisadas à mão, e seu conteúdo é versionado em
+  # `scripts/database/`. A migração 0010 fixou o endereço atual, em `bronze`.
+  # A procedência fica aqui, em comentário, e não nas descrições: o catálogo
+  # descreve o dado, não como ele foi produzido.
+  - name: conjuntura_manual
+    schema: bronze
+    description: >-
+      Séries do boletim de conjuntura habitacional que não vêm das bases
+      administrativas: indicadores de mercado, balanços de construtoras e
+      agregados de financiamento consolidados pela equipe.
     tables:
-      - name: bronze_fgv_icst
-        description: Índice de Confiança do Setor de Construção (ICST) da FGV-IBRE.
-      - name: bronze_imob_infomoney
-        description: Índice IMOB da Infomoney com dados diários de fechamento.
-      - name: bronze_abramat_indice
-        description: Índice ABRAMAT de custos da construção civil.
-      - name: bronze_fgts_financiamentos_habitacionais
-        description: Financiamentos habitacionais do FGTS por faixa e modalidade.
-      - name: bronze_abecip_sbpe_financiamentos_habitacionais
-        description: Financiamentos habitacionais SBPE da ABECIP.
-      - name: bronze_abecip_novos_financiamentos_imobiliarios
-        description: Novos financiamentos imobiliários por agente financeiro (ABECIP).
-      - name: bronze_bacen_financiamentos_imobiliarios
-        description: Financiamentos imobiliários PF e PJ do Banco Central.
-      - name: bronze_ibge_pib_construcao_civil
-        description: PIB da construção civil do IBGE.
-      - name: bronze_ibge_sinapi
-        description: Índice SINAPI do IBGE.
-      - name: bronze_fgv_incc_m
-        description: Índice Nacional de Custo da Construção (INCC-M) da FGV.
+      - name: bronze_manual_dados_mensais
+        description: >-
+          Série mensal de indicadores do boletim: saldo de emprego na
+          construção, rendimento da PNAD, índices de preços, estoques e
+          concessões de crédito, SBPE por banco, financiamento a pessoa física
+          do MCMV por faixa e valor médio do imóvel financiado pelo FGTS.
+      - name: bronze_manual_dados_trimestrais
+        description: >-
+          Série trimestral de indicadores do boletim: variação do PIB, lançamentos
+          e vendas da CBIC, balanço das construtoras, ocupados da PNAD, INCC,
+          ticket médio e financiamentos habitacionais.
+      - name: bronze_manual_empresas_balanco_lancamentos_vendas
+        description: >-
+          Lançamentos e vendas trimestrais das construtoras de capital aberto
+          MRV, Cury, Tenda, Direcional, Pacaembu e Plano & Plano, em unidades e
+          em valor geral de vendas.
+      - name: bronze_manual_fgts_valor_medio_imoveis
+        description: >-
+          Valor médio dos imóveis financiados com recursos do FGTS, em reais,
+          com as variações no mês e em doze meses, no total e na Faixa 1.
+      - name: bronze_manual_sbpe_financiamentos_aquisicao_bancos
+        description: >-
+          Financiamentos do SBPE para construção e aquisição, desagregados por
+          banco, em unidades habitacionais e em valor, com a captação líquida
+          da caderneta de poupança.
       - name: bronze_cbic_lancamentos_vendas
-        description: Lançamentos e vendas do setor imobiliário da CBIC.
-      - name: bronze_balancos_empresas
-        description: Balanços trimestrais de empresas do setor imobiliário.
-      - name: bronze_ticket_medio_empresas
-        description: Ticket médio de lançamentos por empresa.
-      - name: bronze_mcid_orcamento_por_acao
-        description: Orçamento do MCID por ação governamental.
+        description: >-
+          Lançamentos e vendas de imóveis residenciais por região, em unidades,
+          conforme a Câmara Brasileira da Indústria da Construção.

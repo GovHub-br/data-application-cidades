@@ -1,0 +1,74 @@
+version: 1
+
+# Registro semântico dos schemas físicos. É a ÚNICA fonte de descrição e de
+# nome de exibição de schema no catálogo: o sincronizador falha se um schema
+# aparecer no catálogo sem entrada aqui, em vez de inventar uma descrição.
+# Não contém caminhos, SQL, contagens ou exemplos de dados.
+schemas:
+  # `bronze`, `prata` e `ouro` substituíram `empreendimento_far` e
+  # `entidades_fds` como schema físico: os models passaram a materializar por
+  # CAMADA, nos três schemas abaixo, e não mais um schema por produto. Por isso
+  # estas três entradas não têm `product`: cada schema abriga tabela de QUATRO
+  # produtos — FAR, FDS, Rural e Conjuntura. Declarar um produto aqui afirmaria
+  # que as tabelas dos outros três pertencem a ele; o produto é por tabela e
+  # sai do `meta.governance.product` de cada model, via catálogo semântico.
+  #
+  # A camada, por outro lado, agora é do SCHEMA: cada um guarda uma só. É o
+  # oposto do `conjuntura`, que continua `mixed`.
+  - name: bronze
+    display_name: Bronze
+    layer: bronze
+    owner_key: mcid_data_engineering
+    classification: restricted
+    rag_publication: prohibited
+    description: >-
+      Espelho fiel do que chega da origem, compartilhado pelos produtos do
+      ministério. Cada tabela reproduz um arquivo recebido sem recorte nem
+      tipagem, publicada no catálogo para que a linhagem alcance o início do
+      caminho, não para consumo. O nome carrega a origem, não o domínio.
+
+  - name: prata
+    display_name: Prata
+    layer: silver
+    owner_key: mcid_data_engineering
+    classification: internal
+    rag_publication: eligible_after_security_validation
+    description: >-
+      Dado tipado e conformado a partir da bronze, com as regras de negócio de
+      cada programa aplicadas, compartilhado pelos produtos do ministério. O
+      nome de cada tabela carrega o domínio a que pertence, logo depois da
+      camada.
+
+  - name: ouro
+    display_name: Ouro
+    layer: gold
+    owner_key: mcid_data_engineering
+    classification: internal
+    rag_publication: eligible_after_security_validation
+    description: >-
+      Camada de consumo, compartilhada pelos produtos do ministério: é o que os
+      painéis leem — ficha de empreendimento, panorama estadual, mapa nacional,
+      resumo gerencial e o boletim de conjuntura. O nome de cada tabela carrega
+      o domínio a que pertence, logo depois da camada.
+
+  - name: conjuntura
+    display_name: Conjuntura (histórico das edições)
+    product: conjuntura
+    layer: mixed
+    owner_key: mcid_data_engineering
+    classification: internal
+    rag_publication: determined_per_model
+    description: >-
+      Guarda os snapshots `snap_boletim_*`, que congelam cada edição publicada
+      do boletim, e o seed `boletim_gabarito`, usado na conferência contra o
+      boletim impresso. Os modelos do produto Conjuntura ficam em `bronze`,
+      `prata` e `ouro`; as cargas manuais foram para `bronze` no 0010.
+
+  - name: metadata
+    display_name: Metadados técnicos
+    product: metadata
+    layer: technical
+    owner_key: mcid_data_engineering
+    classification: restricted
+    rag_publication: prohibited
+    description: Metadados técnicos e operacionais do pipeline de dados.

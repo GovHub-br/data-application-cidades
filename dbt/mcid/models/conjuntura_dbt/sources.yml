@@ -1,0 +1,214 @@
+version: 2
+
+sources:
+  - name: lake_staging
+    description: >
+      Fontes estruturadas do lake utilizadas pelo produto Conjuntura. Cada
+      tabela representa uma origem institucional submetida ao contrato de
+      ingestão, rastreabilidade e qualidade do produto.
+    # `meta.dag` diz qual DAG de ingestão produz o arquivo. É DECLARAÇÃO, não
+    # inferência: 12 das 31 puderam ser resolvidas lendo a chamada
+    # `registros_para_staging_parquet(fonte, dado)` no código, mas as outras 19
+    # não são conhecíveis pelo repo —
+    #
+    #   - as 5 de `sftp/` chegam por transferência do agente operador; não há
+    #     DAG que as escreva, e o campo fica ausente de propósito;
+    #   - as do IBGE saem de `ibge_ingest_dag`, atribuída POR ELIMINAÇÃO: só
+    #     duas DAGs escrevem em `staging/ibge/`, e a outra
+    #     (`pnad_construcao_sidra_ingest_dag`) produz `pnad_construcao_ocupados`
+    #     e `pnad_construcao_rendimento`, que não correspondem a nenhuma source
+    #     declarada. Para confirmar item a item, olhar a Airflow Variable
+    #     `IBGE_CONFIGURACOES`, que é de onde a DAG lê a lista de datasets.
+    #
+    # Quem souber a resposta acrescenta a linha; o catálogo passa a mostrar a
+    # DAG de origem do dado sem que ninguém precise ler código.
+    schema: staging
+    meta:
+      bucket: data-lake-mcid
+      camada: staging
+      governance:
+        product: conjuntura
+        owner_key: mcid_data_engineering
+        classification: restricted
+        rag_publication: prohibited
+    tables:
+      - name: abecip_financiamentos
+        description: "Financiamentos SBPE por modalidade (Construção/Aquisição), mensal desde 2002. XLSX público da ABECIP."
+        meta:
+          caminho: staging/abecip/financiamentos_modalidade.parquet
+          dag: abecip_financiamentos_ingest_dag
+          linhas_minimas: 147   # metade do observado em 2026-08-29 (294)
+      - name: abecip_instituicoes
+        description: "Financiamentos SBPE por instituição financeira e modalidade. Extração do relatório mensal — UMA competência por arquivo, não série."
+        meta:
+          caminho: staging/abecip/financiamentos_por_instituicao.parquet
+          linhas_minimas: 16   # metade do observado em 2026-08-29 (33)
+      - name: abecip_poupanca_sbpe
+        description: "Depósitos, retiradas, captação líquida, rendimento e saldo da poupança SBPE."
+        meta:
+          caminho: staging/abecip/poupanca_sbpe_mensal.parquet
+          dag: abecip_poupanca_trimestral_ingest_dag
+          linhas_minimas: 267   # metade do observado em 2026-08-29 (535)
+      - name: bacen_credito_pib
+        description: "Razão crédito imobiliário / PIB (BACEN Olinda, painel Mercado Imobiliário)."
+        meta:
+          caminho: staging/bacen/credito_imobiliario_pib.parquet
+          dag: credito_pib_ingest_dag
+          linhas_minimas: 73   # metade do observado em 2026-08-29 (146)
+      - name: bacen_financiamentos_imobiliarios
+        description: "Concessões, taxas de juros e inadimplência PF/PJ (BACEN SGS). Uma linha, séries aninhadas em JSON por coluna."
+        meta:
+          caminho: staging/bacen/financiamentos_imobiliarios.parquet
+          dag: bacen_sgs_ingest_dag
+          linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
+      - name: fgv_icst
+        description: "Índice de Confiança da Construção (FGV), com e sem ajuste sazonal."
+        meta:
+          caminho: staging/fgv/icst.parquet
+          dag: icst_ingest_dag
+          linhas_minimas: 96   # metade do observado em 2026-08-29 (193)
+      - name: fgv_incc_m
+        description: "INCC-M: número índice e variações. Usa `...` como marcador de ausente."
+        meta:
+          caminho: staging/fgv/incc_m.parquet
+          dag: incc_m_ingest_dag
+          linhas_minimas: 191   # metade do observado em 2026-08-29 (383)
+      - name: fipezap_locacao
+        description: "Índice FipeZap de locação residencial: número índice e variações."
+        meta:
+          caminho: staging/fipe/indice_locacao.parquet
+          dag: fipezap_trimestral_ingest_dag
+          linhas_minimas: 111   # metade do observado em 2026-08-29 (223)
+      - name: gefus_fundo_social
+        description: "Registros operacionais do Fundo Social destinados à agregação de indicadores habitacionais."
+        meta:
+          caminho: staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_2026_08_21.parquet
+          linhas_minimas: 68745   # metade do observado em 2026-08-29 (137.491)
+      - name: geavo_cci_analitico
+        description: "Carta de Crédito Individual (CCI) — contratos PF do Canal FGTS/GEAVO. Fonte do 'Financiamento PF MCMV' por faixa do boletim, junto com o CCA."
+        meta:
+          caminho: staging/sftp/caixa.geavo/GEAVO/MC20260821__MCidades_CCI_CCA_2026__cci_analitico.parquet
+          linhas_minimas: 1
+      - name: geavo_cca_analitico
+        description: "Carta de Crédito Associativo (CCA) — contratos PF do Canal FGTS/GEAVO. Complementa o CCI no 'Financiamento PF MCMV' por faixa."
+        meta:
+          caminho: staging/sftp/caixa.geavo/GEAVO/MC20260821__MCidades_CCI_CCA_2026__cca_analitico.parquet
+          linhas_minimas: 1
+      - name: geavo_fgts_pf
+        description: "Base analítica de contratos FGTS pessoa física (GEAVO/Caixa). ~10,8 M linhas."
+        meta:
+          caminho: staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_20260707.parquet
+          linhas_minimas: 5409461   # metade do observado em 2026-08-29 (10818923)
+      - name: geavo_fgts_pj
+        description: "Base de contratos FGTS pessoa jurídica — Apoio à Produção (GEAVO/Caixa)."
+        meta:
+          caminho: staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_20260707.parquet
+          linhas_minimas: 9936   # metade do observado em 2026-08-29 (19873)
+      - name: ibge_paic_obras
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/paic_obras.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
+      - name: ibge_paic_pessoal_salarial
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/paic_pessoal_salarial.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
+      - name: ibge_paic_resultados
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/paic_resultados.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
+      - name: ibge_pib_consolidado_trimestral
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/pib_consolidado_trimestral_bruto.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
+      - name: ibge_pib_construcao_civil
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/pib_construcao.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
+      - name: ibge_pib_corrente
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/pib_corrente_milhoes_brl.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
+      - name: ibge_pim_pf_brasil
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/ibge_pim_pf_brasil.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
+      - name: ibge_pmc_construcao
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/ibge_pmc_construcao.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
+      - name: ibge_pnad_construcao_ocupados
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/pnad_trabalho_construcao.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
+      - name: ibge_pnad_construcao_rendimento
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/pnad_rendimento_construcao.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
+      - name: ibge_pnadc_populacao_decis_renda
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/pnadc_populacao_decis_renda.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
+      - name: ibge_pnadc_rendimento_domiciliar
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/pnadc_rendimento_domiciliar_real.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
+      - name: ibge_sinapi
+        description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
+        meta:
+          caminho: staging/ibge/sinapi.parquet
+          dag: ibge_ingest_dag
+          linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
+      - name: infomoney_imob
+        description: "Cotações diárias do índice IMOB da B3 (via Alpha Vantage)."
+        meta:
+          caminho: staging/infomoney/acoes_imob.parquet
+          dag: imob_ingest_dag
+          linhas_minimas: 336   # metade do observado em 2026-08-29 (673)
+      - name: novo_caged
+        description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
+        meta:
+          caminho: staging/novo_caged/saldo_estoque_construcao_edificios.parquet
+          dag: saldo_estoque_construcao_edificios_ingest_dag
+          linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+      - name: novo_caged_servicos_especializados
+        description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
+        meta:
+          caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao.parquet
+          dag: saldo_estoque_servicos_especializados_construcao_ingest_dag
+          linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+      - name: novo_caged_total
+        description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
+        meta:
+          caminho: staging/novo_caged/saldo_estoque_total_construcao.parquet
+          dag: saldo_estoque_total_construcao_ingest_dag
+          linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+      - name: siafi_dotacao_execucao
+        description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."
+        meta:
+          caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid.parquet
+          dag: dotacao_execucao_outras_fontes_mcid_ingest_dag
+          linhas_minimas: 281   # metade do observado em 2026-08-29 (562)

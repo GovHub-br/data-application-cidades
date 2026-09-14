@@ -1,0 +1,10 @@
+base,frente,granularidade,frequencia_captura,retencao,reprocessamento,prioridade
+raw/dados_historicos,MCMV geral,arquivo/snapshot,mensal ou conforme chegada,indeterminada,por snapshot_date e source_file,P0
+novo_mcmv_far_*,FAR,APF/data movimento,mensal e semanal,indeterminada,por APF + dt_referencia + hash_linha,P0
+novo_mcmv_fds_*,Entidades/FDS,APF/data movimento,mensal e semanal,indeterminada,por APF + dt_referencia + hash_linha,P0
+novo_mcmv_rural_*,Rural/PNHR,APF/data movimento,mensal e semanal,indeterminada,por APF + dt_referencia + hash_linha,P1
+novo_mcmv_fnhis_sub_50_*,SUB50/FNHIS,proposta/data consulta,por carga recebida,indeterminada,por proposta + snapshot_date + hash_linha,P1
+PMCMV_FAIXA3_MCID_*,Classe Media/Faixa 3,contrato/data referencia,mensal,indeterminada,por contrato + dt_referencia + hash_linha,P1
+PMCMV_REFORMAS_MCID_*,Reforma Casa Brasil,contrato/data referencia,mensal,indeterminada,por contrato + dt_referencia + hash_linha,P1
+dados_abertos_mcmv_ogu_empreendimentos,Serie historica OGU,ano/anual,por atualizacao oficial,indeterminada,por ano + linha + snapshot_date,P0
+dados_abertos_mcmv_fgts_sintetico,Serie historica FGTS,ano/anual,por atualizacao oficial,indeterminada,por ano + linha + snapshot_date,P0

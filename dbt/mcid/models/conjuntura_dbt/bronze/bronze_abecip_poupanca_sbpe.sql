@@ -1,13 +1,9 @@
-{{ config(materialized="table") }}
+{{ config(materialized='table') }}
 
-select
-    cast(data_referencia as date) as data_referencia,
-    cast(deposito as numeric) as deposito,
-    cast(retirada as numeric) as retirada,
-    cast(captacao_liquida_valor as numeric) as captacao_liquida_valor,
-    cast(captacao_liquida_pct as numeric) as captacao_liquida_pct,
-    cast(rendimento as numeric) as rendimento,
-    cast(saldo as numeric) as saldo,
-    cast(fonte as varchar) as fonte,
-    cast(dt_ingest as timestamp) as dt_ingest
-from {{ source("abecip", "poupanca_sbpe_mensal") }}
+-- Bronze do conjuntura: poupança SBPE (ABECIP).
+-- Espelho fiel do parquet de staging, sem transformação. O caminho do
+-- arquivo é declarado em `sources.yml` e resolvido pelo macro `fonte_lake()`,
+-- que também registra a dependência na linhagem. Achatamento e tipagem ficam
+-- na prata.
+
+select * from {{ fonte_lake('abecip_poupanca_sbpe', 'lake_staging') }}

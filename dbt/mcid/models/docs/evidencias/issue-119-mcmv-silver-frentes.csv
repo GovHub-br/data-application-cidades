@@ -1,0 +1,11 @@
+frente,tabela_dbt,schema_dbeaver,status_fonte,fonte_principal,observacao
+Minha Casa Minha Vida,silver_mcmv_minha_casa_minha_vida_base,mcmv_silver,implementada,union das frentes operacionais,Recorte geral sem Conjuntura para dashboards do programa.
+FAR,silver_mcmv_far_base,mcmv_silver,implementada,empreendimento_far.empreendimento,Usa silver existente e padroniza APF/empreendimento/UH/valor/status.
+Entidades,silver_mcmv_entidades_base,mcmv_silver,implementada,entidades_fds.fds_empreendimento,Usa silver existente FDS/Entidades e padroniza EO como responsavel.
+Rural,silver_mcmv_rural_base,mcmv_silver,implementada,sftp.int057 + sftp.int065,Trata registros rurais com separador pipe vindos de BB e CAIXA.
+Classe Media,silver_mcmv_classe_media_base,mcmv_silver,implementada,sftp.pmcmv_faixa3_mcid_2026_06_26,Dados GEAVO/FGTS Faixa 3 sem expor CPF/nome do mutuario.
+MCMV Cidades,silver_mcmv_cidades_base,mcmv_silver,implementada,sftp.pmcmv_cidades_mcid_2026_03_01,Grão contrato/ente publico; sem APF na fonte atual.
+Reforma Casa Brasil,silver_mcmv_reforma_base,mcmv_silver,implementada,sftp.pmcmv_reformas_mcid_2026_06_26,Dados GEAVO/FGTS da frente Reforma.
+Conjuntura,silver_mcmv_conjuntura_base,mcmv_silver,implementada,conjuntura_silver.silver_fgts_financiamentos_habitacionais,Indicador macro mensal para calibrar metas e alertas.
+Pro-Moradia,silver_mcmv_pro_moradia_base,mcmv_silver,lacuna,nao localizada no sftp,Modelo vazio preserva contrato comum ate carga entrar no staging.
+SUB50,silver_mcmv_sub50_base,mcmv_silver,implementada_condicional,__dados_brutos.novo_mcmv_fnhis_sub_50_*,Fonte localizada no inventario MinIO; modelo dbt materializa propostas apresentadas/selecionadas quando tabelas existirem em __dados_brutos.

@@ -1,32 +1,9 @@
-{{ config(materialized="table") }}
+{{ config(materialized='table') }}
 
-with
-    ibge_pib_construcao_civil_bronze as (
-        select
-            cast(variavel_id as integer) as variavel_id,
-            cast(variavel_nome as text) as variavel_nome,
+-- Bronze do conjuntura: PIB construção civil (IBGE).
+-- Espelho fiel do parquet de staging, sem transformação. O caminho do
+-- arquivo é declarado em `sources.yml` e resolvido pelo macro `fonte_lake()`,
+-- que também registra a dependência na linhagem. Achatamento e tipagem ficam
+-- na prata.
 
-            cast(localidade_id as integer) as localidade_id,
-            upper(trim(cast(localidade_nome as text))) as localidade_nome,
-
-            cast(classificacao_id as integer) as classificacao_id,
-            upper(trim(cast(classificacao_nome as text))) as classificacao,
-
-            cast(categoria_id as integer) as categoria_id,
-            upper(trim(cast(categoria_nome as text))) as categoria,
-
-            cast(unidade as text) as unidade,
-            cast(periodo as text) as periodo,
-            to_date(periodo || '01', 'YYYYMMDD') as data_referencia,
-            cast(
-                nullif(
-                    nullif(replace(replace(trim(valor), '.', ''), ',', '.'), ''), '-'
-                ) as numeric
-            ) as valor,
-            cast(dt_ingest as timestamp) as dt_ingest
-
-        from {{ source("ibge", "pib_construcao") }}
-    )
-
-select *
-from ibge_pib_construcao_civil_bronze
+select * from {{ fonte_lake('ibge_pib_construcao_civil', 'lake_staging') }}
