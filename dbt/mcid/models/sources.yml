@@ -2,9 +2,17 @@ version: 2
 
 sources:
   - name: raw
-    schema: __dados_brutos
+    # O schema `__dados_brutos` deixou de existir: as tabelas de referencia
+    # passaram para `seeds` (cidades.seeds.api_ibge_uf). Das 9 tabelas
+    # declaradas aqui, a UNICA lida por algum modelo hoje e a `api_ibge_uf`
+    # (5 ouros de far e rural). As 6 tabelas `novo_mcmv_fds_*` /
+    # `dados_prioritarios_*` / `int_059` sao resquicio da arquitetura antiga --
+    # a bronze do FDS le parquet da staging direto. Elas ficam declaradas mas
+    # nao sao consultadas: se estiverem em outro schema, nada quebra. Vale
+    # remove-las numa limpeza.
+    schema: seeds
     description: >
-      Schema de dados brutos do banco cidades.
+      Tabelas de referencia do banco cidades, no schema `seeds`.
       Contém os dados ingeridos das fontes GFAR, CAIXA e SNH para o programa MCMV.
     tables:
       - name: api_ibge_uf

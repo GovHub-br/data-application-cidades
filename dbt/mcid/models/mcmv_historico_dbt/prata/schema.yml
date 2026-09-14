@@ -80,7 +80,7 @@ models:
       - name: id_empreendimento
         description: >
           Identidade lógica estável do empreendimento. FDS: da dim
-          silver_atual_dim_empreendimento, fallback
+          prata_fds_dim_empreendimento, fallback
           md5('empreendimento-fds|' || apf) quando o APF não está na dim.
           FAR/Rural: = apf.
         data_tests:

@@ -204,7 +204,7 @@ with
 
     -- id_empreendimento + fase_empreendimento (change id-empreendimento-eixo-historico,
     -- D1): a identidade estavel do empreendimento FDS vem da dim do #130
-    -- (silver_atual_dim_empreendimento), que liga os APFs de fase Projeto/Obra/
+    -- (prata_fds_dim_empreendimento), que liga os APFs de fase Projeto/Obra/
     -- Desligamento de um mesmo empreendimento. APF historico ausente da dim
     -- (~3% da serie, pre-cadastro atual) cai no fallback md5 -- a MESMA formula do
     -- braco de fallback da propria dim, entao um APF single-fase resolve igual
@@ -217,7 +217,7 @@ with
             ) as id_empreendimento,
             dim.fase_empreendimento
         from enriquecido_dominio e
-        left join {{ ref('silver_atual_dim_empreendimento') }} dim on e.apf = dim.apf
+        left join {{ ref('prata_fds_dim_empreendimento') }} dim on e.apf = dim.apf
     ),
 
     -- 22 colunas de obra_mensal por left join no grão (change

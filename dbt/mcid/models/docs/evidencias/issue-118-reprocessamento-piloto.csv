@@ -1,0 +1,6 @@
+cenario,validacao,criterio_sucesso
+Reprocessar mesmo snapshot,hash_linha permanece igual,Sem duplicar id_historico_snapshot.
+Reprocessar snapshot corrigido,hash_linha muda para a chave logica afetada,Nova versao criada e versao anterior encerrada.
+Consultar registro corrente,is_current=true,Uma unica versao corrente por id_negocio_historico.
+Auditar origem,source_file e source_path preenchidos,Registro rastreavel ate artefato MinIO/staging.
+Validar janela temporal,dt_valid_to maior que dt_valid_from ou nulo,Nenhuma janela invalida.

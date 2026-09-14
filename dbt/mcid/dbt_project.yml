@@ -22,6 +22,49 @@ seeds:
     boletim_gabarito:
       +schema: conjuntura
 
+    # Seeds do eixo histórico (mcmv_historico_dbt). Convenção: todas
+    # materializam num schema único `seeds`, no catálogo `cidades`.
+    conjuntura:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+
+    # Seeds curadas de identidade FDS, consumidas pela dim de empreendimento
+    # (prata_fds_dim_empreendimento).
+    entidades_fds:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+
+    # Seeds de referência dos testes de qualidade: domínios canônicos e
+    # retrato de colunas por família.
+    data_quality:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+      # chave_natural / faixa são texto — várias chaves são só dígitos e a
+      # inferência as tornaria BIGINT, quebrando o join com a prata (varchar).
+      quarentena_valores_financeiros:
+        +column_types:
+          fonte_familia: varchar
+          chave_natural: varchar
+          motivo: varchar
+          evidencia: varchar
+      faixa_valor_uh:
+        +column_types:
+          frente: varchar
+          faixa: varchar
+          valor_col: varchar
+          piso: double
+          teto: double
+      campos_obrigatorios:
+        +column_types:
+          modelo: varchar
+          coluna: varchar
+          obrigatoria: boolean
+          min_completude: double
+          origem: varchar
+
 models:
   mcid:
     +database: cidades
@@ -232,8 +275,62 @@ models:
             classification: restricted
             rag_publication: prohibited
 
+    mcmv_historico_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: mcmv_historico
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+      # Piloto (OGU/FGTS): DESABILITADO. O modelo
+      # `prata_dhist_serie_anual_ogu_fgts` carrega `config(enabled=false)` no
+      # próprio arquivo — por isso não há bloco `piloto:` aqui.
+
+# Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
+# CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`
+# / `timestamptz`. Nenhum dos dois existe no DuckDB, entao ficam atras do guard
+# de target.type -- o eixo historico roda nos targets duckdb
+# (staging_duckdb / prod_duckdb) e quebrava no hook, nao no modelo.
 on-run-start:
-  - '{{create_udfs()}}'
+  - "{% if target.type == 'postgres' %}{{ create_udfs() }}{% endif %}"
 
 on-run-end:
-  - '{{ registrar_execucao_dbt() }}'
+  - "{% if target.type == 'postgres' %}{{ registrar_execucao_dbt() }}{% endif %}"

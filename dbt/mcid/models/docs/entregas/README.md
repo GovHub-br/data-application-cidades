@@ -1,0 +1,32 @@
+# Entregas das Issues de Arquitetura e Silver
+
+Esta pasta consolida textos prontos para anexar ou colar nas issues GitHub.
+
+## Arquivos
+
+- `issue-119-entrega.md`: entrega da padronizacao das tabelas silver por frente MCMV e base semantica para marts de dashboard.
+- `issue-118-entrega-final.md`: estrategia final de historico, padrao de versionamento, base piloto dbt e testes de reprocessamento.
+- `issue-117-status-adr-pendente.md`: status da arquitetura de producao; registra que o ADR ainda precisa ser formalizado.
+- `issue-66-entrega-indicadores-historicos-relogio-alertas.md`: entrega dos indicadores historicos, fontes do relogio de metas e base de alertas.
+- `issue-119-ajuste-frentes-faltantes.md`: evidencia do ajuste das frentes faltantes na silver, com SUB50/FNHIS conectado e Pro-Moradia ainda sem fonte confirmada.
+- `issue-119-correcao-arquitetura-duckdb-staging.md`: correcao de arquitetura para garantir que silvers sejam geradas somente a partir do MinIO `staging/` via DuckDB.
+- `issue-119-migracao-bronze-minio-far-fds-rural.md`: migracao dos dominios de empreendimento (FAR, Entidades/FDS, Rural) para a arquitetura medalhao — bronze fiel da staging MinIO via `source mcmv_staging` (substitui `raw`/`__dados_brutos`, removido), nomenclatura Opcao A (`<camada>_<token>_<assunto>`), macros de portabilidade DuckDB, cobertura ampliada por agente (int040/int054/BB/SNH), frente Rural nova ponta a ponta, e reconciliacao. FAR/FDS/Rural/gargalo saem da carga noturna ate o ADR #117.
+- `issue-130-dicionario-indicadores.md`: dicionario dos indicadores do reloginho (grupo A), gargalo/desempenho (grupo B) e frentes financiadas + FNHIS (grupo C) com os 14 campos solicitados na issue #130, incluindo fontes, regras, granularidades, cobertura historica reconciliada (GEFUS x SNH) e pendencias (meta oficial, serie historica e validacao de negocio).
+- `issue-130-matriz-indicador-fonte-campo-regra.csv`: matriz indicador x fonte x tabela x campos x regra para os grupos A (reloginho), C (frentes financiadas + FNHIS) e B (gargalo) da issue #130.
+- `issue-130-checklist-validacao-negocio.md`: checklist de validacao de negocio (Fase 5) com 19 decisoes em 4 blocos (metas, regras do reloginho, limiares do gargalo e outras decisoes) para levar a area responsavel.
+- `issue-130-decisoes-pendentes-validacao.csv`: planilha das 19 decisoes pendentes de validacao, com valor atual de referencia, resposta esperada e indicadores bloqueados, para registro das respostas da area.
+- `issue-130-estrategia-apf-fases.md`: estrategia de identidade de empreendimento na silver (APF variavel por fase) revisada pelo @oracle; define `id_empreendimento` (hash do APF-ancora), `dim_empreendimento`, fontes de mapeamento e testes dbt.
+- `issue-130-validacao-tecnica-fases-2-4.md`: validacao tecnica das fases 2-4 (cobertura historica, regras de calculo e calculos em amostra com acesso ao banco `cidades`); registra a duplicacao 2x por APF, a serie mensal 2024-06+ e a comparacao com a referencia #66.
+- `issue-130-resumo-final.md`: resumo final consolidado da issue #130 (artefatos, validacoes empiricas, implementacao APF/fases, decisoes pendentes e pendencias para fechar).
+- `issue-130-pendencias-encoding-canonicalizacao-sftp-minio.md`: registro das pendencias de encoding (mojibake) e canonicalizacao (`gefus_*`/`_canonicas.csv`) das bases SFTP no MinIO; decisao de usar MinIO como fonte e reaproveitar o pipeline local de tratamento.
+- `issue-130-d1-reconciliacao-novo-mcmv-far.md`: analise da sobreposicao SFTP x Novo MCMV (D1, opcao B — FAR disjunto, FDS sobreposto) e mapeamento de colunas do `novo_mcmv_far` (cad_pj + obra_mensal) para o contrato comum do modelo.
+- `issue-130-implementacao-modelos-historicos-empreendimentos.md`: documentacao da implementacao dos modelos historicos de empreendimentos (historico mensal FAR/FDS/Rural + snapshot corrente derivado), fontes, decisoes, validacao e pendencias.
+- `issue-130-aderencia-arquitetura-medalhao-reloginho.md`: analise de aderencia dos indicadores do reloginho (grupo A) a arquitetura medalhao; conclui que o Gold le a staging direto sem camadas Bronze/Silver, que a agregacao historica multi-mes exigida na Bronze ocorre dentro do Gold, e lista desvios, pontos aderentes e recomendacoes de refatoracao.
+- `issue-130-refatoracao-medalhao-reloginho.md`: entrega da quebra do reloginho (grupo A) em bronze (`bronze_reloginho_snh_serie_mensal`) -> silver (`silver_reloginho_snh_apf_mes`) -> gold (`indicadores_reloginho` + nova `indicadores_reloginho_frente`), decisoes, validacao dbt e verificacao de cobertura historica mensal das frentes FAR, Entidades e Rural na serie SNH (com matriz de inventario de arquivos e teste `assert_reloginho_frente_cobertura_mensal`).
+- `issue-130-proposta-bronze-series-historicas.md`: rascunho inicial (SUPERSEDED) das camadas bronze Tier 1/Tier 2 a partir de `staging/dados_historicos`.
+- `issue-130-entrega-series-historicas-tier1-tier2.md`: entrega das series historicas — Tier 1 entregas por evento SNH (`bronze_dhist_snh_entregas_evento` -> `silver_reloginho_snh_entregas_mes` -> `indicadores_reloginho_entregas`, desbloqueia a decisao #5 e o `ritmo_recente`) e Tier 2 serie executiva historica pre-2024 (`bronze_mcmv_serie_executiva_historica` -> `silver_mcmv_serie_executiva_historica` -> `gold_mcmv_serie_historica_mensal`, 4 familias unificadas com mapa de colunas, split OGU/FGTS, base da analise preditiva). Inclui macros novas (`parse_hist_*`, `hist_dt_referencia`, `coalesce_present`) e validacao local end-to-end com DuckDB.
+
+## Observacao de Commit
+
+No momento da geracao destes documentos, as mudancas ainda estavam locais na branch
+`feat/tratamento-dados-historicos`. Nao incluir `local.env` nem `.dbt-venv/` no commit.
