@@ -176,6 +176,29 @@ produtos:
       beneficiário, execução física, liberação financeira por componente,
       trabalho social e infraestrutura de água e saneamento.
 
+  # `product: mcmv_historico` já era usado em `dbt_project.yml` sem entrada
+  # aqui — `test_todo_produto_do_dbt_esta_declarado_em_dominios` acusa.
+  # Sem `prefixos_de_tabela` de propósito: a bronze mistura `bronze_dhist_`,
+  # `bronze_sftp_` e `bronze_shpt_`, e a prata reaproveita os prefixos dos
+  # outros produtos (`prata_far_historico_`, `prata_fds_historico_`,
+  # `prata_rural_historico_`) — declarar qualquer um deles aqui colidiria com
+  # `empreendimento_far`/`entidades_fds`/`empreendimento_rural` em
+  # `test_prefixo_de_tabela_nao_colide_entre_produtos`. A atribuição por
+  # tabela fica pendente de decisão de quem introduziu o produto.
+  - name: mcmv_historico
+    display_name: Histórico MCMV
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    description: >
+      Série histórica por empreendimento do MCMV (FAR, FDS e Rural), a partir
+      de arquivos SNH e SFTP anteriores à ingestão corrente, para reconstituir
+      o acompanhamento físico-financeiro fora da janela coberta pelos outros
+      produtos.
+
 #: Certificação por camada. Gold é o que se publica e se consome; Silver
 #: sustenta a Gold mas não é destino final; Bronze não é apresentada.
 #: A certificação segue a camada, não o modelo, para não virar avaliação

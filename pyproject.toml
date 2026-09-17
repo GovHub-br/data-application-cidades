@@ -26,6 +26,10 @@ astronomer-cosmos = "*"
 pyarrow = "*"
 boto3 = "*"
 duckdb = "^1.5.5"
+# 17 scripts em scripts/ importam dotenv (segredo só via .env/env var, nunca
+# hardcoded); estava em requirements.txt mas nunca declarado aqui, e o CI
+# instala via Poetry — poetry.lock não tinha o pacote.
+python-dotenv = "1.2.2"
 great-expectations = ">=1.21,<2.0"
 # Parser SQL da linhagem de colunas (scripts/governance/linhagem_colunas.py).
 # Preso ao major: a API de `sqlglot.lineage` muda entre versões maiores.
