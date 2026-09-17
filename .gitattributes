@@ -9,3 +9,4 @@
 # Mesmo motivo: sao lidos por ferramenta dentro de container.
 Dockerfile text eol=lf
 *.dockerfile text eol=lf
+* text=auto eol=lf
