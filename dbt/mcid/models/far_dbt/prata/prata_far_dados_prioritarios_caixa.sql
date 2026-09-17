@@ -44,7 +44,7 @@ with
                 then null
                 when data_de_contratacao ~ '^\d{4}-\d{2}-\d{2}'
                 then data_de_contratacao::date
-                else {{ target.schema }}.parse_date_br(data_de_contratacao)
+                else {{ var('schema_udfs') }}.parse_date_br(data_de_contratacao)
             end as dt_contratacao,
             case
                 when
@@ -53,14 +53,14 @@ with
                 then null
                 when data_da_previsao_da_entrega ~ '^\d{4}-\d{2}-\d{2}'
                 then data_da_previsao_da_entrega::date
-                else {{ target.schema }}.parse_date_br(data_da_previsao_da_entrega)
+                else {{ var('schema_udfs') }}.parse_date_br(data_da_previsao_da_entrega)
             end as dt_previsao_entrega,
             case
                 when data_de_movimento is null or trim(data_de_movimento) = ''
                 then null
                 when data_de_movimento ~ '^\d{4}-\d{2}-\d{2}'
                 then data_de_movimento::date
-                else {{ target.schema }}.parse_date_br(data_de_movimento)
+                else {{ var('schema_udfs') }}.parse_date_br(data_de_movimento)
             end as dt_movimento,
 
             -- Endereço

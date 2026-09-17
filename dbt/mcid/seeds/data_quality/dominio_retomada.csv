@@ -1,0 +1,9 @@
+valor_bruto,sinal_retomada,origem
+OBRA_RETOMADA_COM_SUPL_APORTE,retomada_aporte_suplementar,sftp
+A RETOMAR,a_retomar,snh
+A RETOMAR - APORTE SUPLEMENTAR,a_retomar_aporte_suplementar,snh
+A RETOMAR - AO/MCI/ASSINATURA,a_retomar_ao_mci_assinatura,snh
+A RETOMAR - SOLUÇÃO LOCAL,a_retomar_solucao_local,snh
+A RETOMAR - APORTE ENTE PÚBLICO,a_retomar_aporte_ente_publico,snh
+A RETOMAR - EM ANÁLISE,a_retomar_em_analise,snh
+A RETOMAR - EM CONSTRUÇÃO DA PROPOSTA,a_retomar_em_construcao_proposta,snh

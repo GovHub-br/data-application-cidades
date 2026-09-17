@@ -1,25 +1,9 @@
-{{ config(materialized="table") }}
+{{ config(materialized='table') }}
 
-with
-    fgv_incc_m_bronze as (
-        select
-            cast(mes as timestamp) as mes,
-            cast(mes as date) as data_referencia,
+-- Bronze do conjuntura: INCC-M (FGV).
+-- Espelho fiel do parquet de staging, sem transformação. O caminho do
+-- arquivo é declarado em `sources.yml` e resolvido pelo macro `fonte_lake()`,
+-- que também registra a dependência na linhagem. Achatamento e tipagem ficam
+-- na prata.
 
-            cast(nullif(replace(indice, ',', '.'), '...') as numeric) as indice,
-
-            cast(nullif(replace(var_ano, ',', '.'), '...') as numeric) as var_ano,
-
-            cast(nullif(replace(var_mes, ',', '.'), '...') as numeric) as var_mes,
-
-            cast(
-                nullif(replace(var_12_meses, ',', '.'), '...') as numeric
-            ) as var_12_meses,
-
-            cast(dt_ingest as timestamp) as dt_ingest
-
-        from {{ source("fgv", "incc_m") }}
-    )
-
-select *
-from fgv_incc_m_bronze
+select * from {{ fonte_lake('fgv_incc_m', 'lake_staging') }}

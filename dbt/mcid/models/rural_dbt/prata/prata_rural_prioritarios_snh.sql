@@ -8,41 +8,41 @@ with
     snh_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(codigo_da_operacao_no_agente_financeiro) as apf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(identificador_da_operacao_na_snh)), '') as id_operacao_snh,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(codigo_da_operacao_no_agente_financeiro)), '') as cod_operacao_agente,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_do_agente_financeiro)), '') as agente_financeiro,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_do_empreendimento)), '') as empreendimento_nome,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(modalidade)), '') as modalidade,
+            {{ var('schema_udfs') }}.normalize_apf(codigo_da_operacao_no_agente_financeiro) as apf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(identificador_da_operacao_na_snh)), '') as id_operacao_snh,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(codigo_da_operacao_no_agente_financeiro)), '') as cod_operacao_agente,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nome_do_agente_financeiro)), '') as agente_financeiro,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nome_do_empreendimento)), '') as empreendimento_nome,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(modalidade)), '') as modalidade,
 
             -- Construtora / Entidade
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_da_construtora_entidade)), '') as construtora_nome,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nome_da_construtora_entidade)), '') as construtora_nome,
             nullif(regexp_replace(trim(nome_da_construtora_entidade_2_cnpj_da_construtora_entidade), '[^0-9]', '', 'g'), '') as construtora_cnpj,
 
             -- Localização
-            nullif(trim({{ target.schema }}.corrigir_mojibake(municipio)), '') as municipio,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(sigla_da_uf)), '') as uf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_da_uf)), '') as estado_nome,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_da_regiao)), '') as regiao,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(codigo_ibge_do_municipio)), '') as cod_ibge,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(municipio)), '') as municipio,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(sigla_da_uf)), '') as uf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nome_da_uf)), '') as estado_nome,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nome_da_regiao)), '') as regiao,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(codigo_ibge_do_municipio)), '') as cod_ibge,
 
             -- Endereço
-            nullif(trim({{ target.schema }}.corrigir_mojibake(logradouro)), '') as logradouro,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(numero_do_imovel)), '') as numero_imovel,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(complemento_do_logradouro)), '') as complemento_logradouro,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(bairro)), '') as bairro,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(cep)), '') as cep,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(logradouro)), '') as logradouro,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(numero_do_imovel)), '') as numero_imovel,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(complemento_do_logradouro)), '') as complemento_logradouro,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(bairro)), '') as bairro,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(cep)), '') as cep,
 
             -- Coordenadas
             {{ parse_numeric('latitude', 'numeric(12, 8)') }} as latitude,
             {{ parse_numeric('longitude', 'numeric(12, 8)') }} as longitude,
 
             -- Situação e Fase
-            nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_do_empreendimento)), '') as situacao,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(detalhamento_da_situacao_do_empreendimento)), '') as situacao_detalhamento,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_da_empreendimento_agrupada)), '') as situacao_agrupada,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(situacao_do_empreendimento)), '') as situacao,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(detalhamento_da_situacao_do_empreendimento)), '') as situacao_detalhamento,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(situacao_da_empreendimento_agrupada)), '') as situacao_agrupada,
             case when trim(mudou_de_fase) = 'Sim' then true else false end as mudou_de_fase,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(apf_da_fase_obra)), '') as apf_fase_obra,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(apf_da_fase_obra)), '') as apf_fase_obra,
             case when trim(novo_mcmv_sim_nao) = 'Sim' then true else false end as ic_novo_mcmv,
 
             -- Execução Física (%)
@@ -65,27 +65,27 @@ with
             case
                 when data_da_contratacao is null or trim(data_da_contratacao) = '' then null
                 when data_da_contratacao ~ '^\d{4}-\d{2}-\d{2}' then data_da_contratacao::date
-                else {{ target.schema }}.parse_date_br(data_da_contratacao)
+                else {{ var('schema_udfs') }}.parse_date_br(data_da_contratacao)
             end as dt_contratacao,
             case
                 when data_de_previsao_de_termino is null or trim(data_de_previsao_de_termino) = '' then null
                 when data_de_previsao_de_termino ~ '^\d{4}-\d{2}-\d{2}' then data_de_previsao_de_termino::date
-                else {{ target.schema }}.parse_date_br(data_de_previsao_de_termino)
+                else {{ var('schema_udfs') }}.parse_date_br(data_de_previsao_de_termino)
             end as dt_previsao_entrega,
             case
                 when data_do_termino is null or trim(data_do_termino) = '' then null
                 when data_do_termino ~ '^\d{4}-\d{2}-\d{2}' then data_do_termino::date
-                else {{ target.schema }}.parse_date_br(data_do_termino)
+                else {{ var('schema_udfs') }}.parse_date_br(data_do_termino)
             end as dt_termino,
             case
                 when data_de_referencia is null or trim(data_de_referencia) = '' then null
                 when data_de_referencia ~ '^\d{4}-\d{2}-\d{2}' then data_de_referencia::date
-                else {{ target.schema }}.parse_date_br(data_de_referencia)
+                else {{ var('schema_udfs') }}.parse_date_br(data_de_referencia)
             end as dt_referencia,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ ref("bronze_shpt_dados_prioritarios_snh_empreendimentos") }}
         where trim(upper(modalidade)) = 'RURAL'

@@ -1,0 +1,36 @@
+valor_bruto,situacao_canonica,classe
+nao_iniciada,nao_iniciada,valido
+nao iniciada,nao_iniciada,valido
+nao_iniciada_clausula_suspensiva,nao_iniciada,valido
+fase projeto,nao_iniciada,valido
+obra nao iniciada,nao_iniciada,valido
+obra não iniciada,nao_iniciada,valido
+em andamento,em_obras,valido
+normal,em_obras,valido
+atrasada,em_obras,valido
+atrasada_lib_acima_90,em_obras,valido
+adiantada,em_obras,valido
+em atenção,em_obras,valido
+obra retomada,em_obras,valido
+obra_retomada_com_supl_aporte,em_obras,valido
+obra em andamento - sem medicao no mes,em_obras,valido
+risco de paralisação,em_obras,pendente
+em andamento/concluído e entregue,em_obras,pendente
+paralisada,paralisada,valido
+paralisado,paralisada,valido
+paralisado_solicitando_vlr_adicional,paralisada,valido
+concluida,concluida,valido
+concluído e entregue,concluida,valido
+concluído e entregue sem pendências,concluida,valido
+concluida_com_vlr_a_liberar,concluida,pendente
+obra_fisica_concluida,concluida,valido
+obra fisica concluida,concluida,valido
+obra fisica concluida com legalizacao pendente - habitacao,concluida,valido
+legalizacao,concluida,valido
+cancelada/distratada,cancelada,valido
+cancelado,cancelada,valido
+distratado/cancelado,cancelada,valido
+distratado,cancelada,valido
+desimobilizado,cancelada,valido
+a_distratar,cancelada,pendente
+vendido_rj,cancelada,pendente

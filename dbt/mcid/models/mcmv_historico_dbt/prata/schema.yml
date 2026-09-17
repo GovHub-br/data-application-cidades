@@ -1,0 +1,976 @@
+version: 2
+
+models:
+  - name: prata_far_historico_empreendimento
+    description: >
+      Prata — série histórica mensal de empreendimentos MCMV da frente FAR
+      (SFTP INT040/INT054 ∪ SNH modalidade=FAR ∪ braço MONIT_MOV_OBRA), contrato
+      semântico comum, tipada, deduplicada por (frente_mcmv, apf, dt_referencia).
+      Precedência SNH na janela sobreposta. Grão: empreendimento × mês.
+      TETO E CAUDA: as fontes
+      com estoque (SFTP / SNH) vão até 2026-03; o braço obra (MONIT_MOV_OBRA)
+      estende a série até 2026-07 em linhas `fonte_serie = 'obra_mensal'` cujas
+      `quantidade_uh` / `valor_contratado` / `valor_desembolsado` são NULL por
+      construção — agregações de estoque devem filtrar
+      `fonte_serie <> 'obra_mensal'` (ou `dt_referencia <= '2026-03-01'`).
+    meta:
+      tags: [prata, mcmv, dados-historicos, empreendimento, far]
+    data_tests:
+      # Grão físico mensal: 1 linha por
+      # (frente_mcmv, apf, dt_referencia) com dt_referencia já normalizado ao 1º
+      # do mês. Antes da normalização quebraria na janela de sobreposição SFTP×SNH.
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
+      - desembolso_nao_excede_contratado:
+          arguments: { tolerancia: 0.01 }
+          config: { severity: warn }
+      # Reconciliação vigentes ≈ contratadas − distratadas (spec
+      # quantidades-uh-historico). Fecha só em ~10-18% das linhas SNH (timing /
+      # split de coluna vigentes×uhs_vigentes) — daí `warn` e tolerância folgada.
+      # Linhas sem nenhuma das duas parcelas (todo o braço SFTP) não entram.
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: quantidade_uh
+            parcela_columns: [quantidade_uh_vigentes, quantidade_uh_distratadas]
+            tolerancia: 5
+          config: { severity: warn }
+    columns: &contrato_empreendimento
+      # verificacao_tipagem: tipo_esperado nos nomes do DuckDB. Ref:
+      # docs/inventario-tipagem-silver-gold.md. As 3 pratas por frente + o
+      # ouro_historico_snapshot_empreendimento_atual compartilham este contrato de tipos.
+      - name: id_historico_snapshot
+        description: Chave técnica única por frente, APF e mês de referência.
+        data_tests:
+          - not_null
+          - unique
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: id_negocio_historico
+        description: Chave lógica estável (programa + frente + APF), constante entre meses.
+        data_tests:
+          - not_null
+      - name: programa
+        description: >
+          Programa habitacional de origem (ex.: 'Minha Casa Minha Vida',
+          'PNHR'). Valor cru preservado da fonte; compõe a chave lógica
+          `id_negocio_historico`.
+        data_tests:
+          - not_null
+      - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). Constante por prata — FAR, Entidades ou Rural.
+          `Entidades` é a mesma frente que as fichas de produção FDS chamam de
+          FDS.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural"]
+      - name: apf
+        description: APF / contrato do empreendimento (chave física da linha).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: codigo_empreendimento
+        description: >
+          Chave estável de empreendimento. FDS: id_empreendimento (hash do
+          APF-âncora / Fase Projeto — liga APFs de fase distintas do mesmo
+          empreendimento). FAR/Rural: = apf.
+      - name: id_empreendimento
+        description: >
+          Identidade lógica estável do empreendimento. FDS: da dim
+          prata_fds_dim_empreendimento, fallback
+          md5('empreendimento-fds|' || apf) quando o APF não está na dim.
+          FAR/Rural: = apf.
+        data_tests:
+          - not_null
+      - name: fase_empreendimento
+        description: >
+          Fase administrativa do APF no FDS (Projeto / Obra / Desligamento).
+          NULL para APF fora da dim e para FAR/Rural (não têm fase de APF).
+          NÃO confundir com situacao_canonica (estado físico da obra).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Projeto", "Obra", "Desligamento"]
+              config:
+                severity: warn
+      - name: codigo_ibge_municipio
+        description: >
+          Código IBGE do município, sem sufixo ".0" (limpo por
+          strip_float_text no braço SNH). Ver
+          docs/varredura-sufixo-float-texto.md.
+        data_tests:
+          - sem_sufixo_float_texto
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: dt_referencia
+        description: >
+          Mês de referência do snapshot, SEMPRE o 1º dia do mês. O braço SFTP GEFUS grava a data no
+          fim do mês na origem e a SNH no dia 1; ambos são normalizados por
+          `date_trunc('month', ·)` na projeção de cada braço, antes da dedup. O
+          dia exato do corte do snapshot fica em `dt_movimento`.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: fonte_serie
+        description: >
+          Origem da linha mantida na dedup. `obra_mensal`: meses 2026-04..07 em que
+          o braço MONIT_MOV_OBRA é a única fonte — nessas linhas `quantidade_uh`,
+          `valor_contratado` e `valor_desembolsado` são NULL por construção
+          (cauda de estoque declaradamente nula). Agregações de estoque por
+          mês devem filtrar `fonte_serie <> 'obra_mensal'` ou
+          `dt_referencia <= '2026-03-01'`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["sftp", "snh", "obra_mensal"]
+      - name: quantidade_uh
+        description: >
+          Unidades habitacionais contratadas no snapshot (conceito canônico
+          `quantidade_uh`, glossario-mcid.md). NULL nas linhas
+          `fonte_serie = 'obra_mensal'` (meses 2026-04..07, cauda de estoque
+          declaradamente nula): agregações de estoque devem filtrar
+          `fonte_serie <> 'obra_mensal'`.
+        data_tests:
+          # Limiar do contrato `campos_obrigatorios` (chave
+          # `contrato_empreendimento_historico` — as 3 pratas por frente
+          # compartilham o contrato comum).
+          - completude_minima:
+              arguments:
+                seed: campos_obrigatorios
+                modelo: contrato_empreendimento_historico
+              config:
+                severity: warn
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_entregues
+        description: >
+          Unidades habitacionais entregues (acumulado). coalesce(braço da linha,
+          valor preservado no grão, espinha prata_historico_entrega_apf) —
+          só preenche NULL, nunca sobrescreve 0. No FDS o valor vem do braço
+          INT059.
+        data_tests:
+          # Monotonicidade do acumulado + coerência vs. contratadas — só listam
+          # (warn), não filtram.
+          - acumulado_nao_regride:
+              arguments: { partition_by: apf, order_by: dt_referencia }
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: quantidade_uh, fator: 1.0 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_concluidas
+        description: >
+          Unidades habitacionais com obra concluída (estágio anterior a
+          "entregue"). Só o braço SFTP reporta — INT059 (FDS), INT040/INT054
+          (FAR), INT057/INT065 (Rural); coalesce(braço da linha, valor
+          preservado no grão). NULL no braço SNH.
+        data_tests:
+          - acumulado_nao_regride:
+              arguments: { partition_by: apf, order_by: dt_referencia }
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: quantidade_uh, fator: 1.0 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: dt_entrega_uh
+        description: >
+          Data de entrega de unidades habitacionais (última).
+          coalesce(dt_ultima_entrega do braço SFTP →
+          mesmo valor preservado no grão → espinha SNH por evento). FDS: braço
+          INT059 ∪ espinha; FAR: INT040/INT054 ∪ espinha; Rural: INT065 (~11%) ∪
+          espinha (INT057 não tem a coluna).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_conclusao_obra
+        description: >
+          Data de conclusão física da obra / legalização. FDS/FAR:
+          coalesce(dt_termino_obra, dt_legalizacao) do SFTP; Rural:
+          dt_efetiva_conclusao. Braço SNH: NULL — `data_do_termino` do snapshot
+          SNH é 0% preenchido para FAR/FDS/Rural.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_previsao_entrega
+        description: >
+          Data prevista de entrega, reportada pelo braço SNH
+          (`data_da_previsao_da_entrega`, ISO). NULL no braço SFTP. Fill baixo
+          (~2% dos APFs — só o SNH reporta).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: qt_uh_previsao_entrega
+        description: >
+          Unidades habitacionais previstas para entrega, braço SNH —
+          coalesce(qt_uh_previsao_entrega, unidades_habitacionais_a_serem_entregues).
+          NULL no braço SFTP.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: dt_entrega_uh_fonte
+        description: >
+          Origem de `dt_entrega_uh`: `sftp:INTxxx` (feed mensal GEFUS —
+          INT059/INT040/INT054/INT065), `snh:entrega_evento` (espinha) ou NULL
+          quando `dt_entrega_uh` é NULL.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["sftp", "sftp:INT040", "sftp:INT054", "sftp:INT057", "sftp:INT059", "sftp:INT065", "snh:entrega_evento"]
+              config:
+                severity: warn
+      - name: valor_contratado
+        description: >
+          Valor contratado (R$) — conceito canônico `valor_investimento_total`
+          (glossario-valores-financeiros.md). Parse de formato brasileiro.
+          Pode ser LOCF do último snapshot que reportou (tipicamente o SFTP,
+          antes da virada de feed) quando o SNH corrente não traz o valor —
+          `valor_contratado_preenchido = true` marca o caso. NULL nas linhas
+          `fonte_serie = 'obra_mensal'` (cauda 2026-04..07) — filtrar
+          `fonte_serie <> 'obra_mensal'` em agregações de estoque.
+        data_tests:
+          - completude_minima:
+              arguments:
+                seed: campos_obrigatorios
+                modelo: contrato_empreendimento_historico
+              config:
+                severity: warn
+          # `warn` (não `error`): há ~26 snapshots isolados com valor_contratado
+          # negativo no FAR — erro de snapshot pontual, não da chave inteira; a
+          # quarentena por chave removeria meses válidos.
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(15,2)" } }
+      - name: valor_desembolsado
+        description: >
+          Valor desembolsado/liberado (R$) — conceito canônico
+          `valor_desembolsado_acumulado`. Pode ser LOCF do último snapshot
+          (marcado por `valor_contratado_preenchido`); como o desembolso é
+          monotônico, o valor carregado é um piso, nunca um teto. NULL nas linhas
+          `fonte_serie = 'obra_mensal'` (cauda 2026-04..07) — filtrar
+          `fonte_serie <> 'obra_mensal'` em agregações de estoque.
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - acumulado_nao_regride:
+              arguments: { partition_by: apf, order_by: dt_referencia }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(15,2)" } }
+      - name: percentual_execucao_fisica
+        description: Percentual de execução física da obra.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: status_operacional
+        description: Situação da obra/operação no snapshot (valor cru preservado).
+      - name: dt_movimento
+        description: Data de movimento da fonte (auxiliar; coalesce entre fontes).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: situacao_canonica
+        description: >
+          Situação de obra canônica (nao_iniciada / em_obras / paralisada /
+          concluida / cancelada), por join ao seed dominio_status sobre
+          lower(trim(status_operacional)). NULL quando status ausente;
+          'nao_mapeada' quando não casa no seed.
+        data_tests:
+          - dentro_do_dominio:
+              arguments:
+                seed: dominio_status
+                seed_column: situacao_canonica
+              config:
+                severity: warn
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) por join ao seed
+          dominio_regiao_uf sobre uf. Nula quando a linha não tem uf (ex.: braço
+          SFTP INT059 do FDS).
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dominio_regiao_uf')
+                field: regiao_sigla
+              config:
+                severity: warn
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla).
+      # --- quantidades de UH e sinais de obra + execução financeira + carry-forward.
+      # Colunas esparsas por design (uma fonte/braço traz o conceito, os outros não) —
+      # SEM not_null.
+      - name: quantidade_uh_distratadas
+        description: >
+          UH distratadas (acumulado). Só o braço SNH reporta
+          (`quantidade_de_uhs_distratadas`); NULL nos braços SFTP. `0` (zero
+          distratos) é informação, distinto de NULL (fonte omissa). Valores > 0
+          são raros (~centenas de linhas).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_vigentes
+        description: >
+          UH vigentes reportadas pela SNH (`uh_vigentes` ∪ `uhs_vigentes` por
+          agente). NULL nos braços SFTP. Reconcilia com `quantidade_uh −
+          quantidade_uh_distratadas` só em ~10-18% das linhas (timing / split de
+          coluna) — daí o teste de reconciliação ser `warn`.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_ociosas
+        description: >
+          UH entregues e desocupadas. Braços SFTP INT040/INT054
+          (`qt_unidades_ociosas`; sentinela `-1` → NULL). NULL em
+          INT059/INT057/INT065 e no braço SNH.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_inicial
+        description: >
+          UH no escopo inicial do empreendimento. Braço SFTP INT065
+          (`qtde_uh_inicial`) — diverge de `quantidade_uh` em ~7% dos APF-mês
+          (corte de escopo, sinal de distress). NULL nos demais braços.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: cod_pendencia_obra
+        description: >
+          Código de pendência de obra, texto cru (INT040/INT054;
+          majoritariamente `SIM`/`NAO` em ~1,7 k linhas do INT040). NULL nos
+          demais braços. `cod_pendencia_entrega` ficou fora de escopo (vazia na
+          fonte — levantamento 2026-09-06). Domínio a decodificar em follow-up.
+      - name: percentual_execucao_financeira
+        description: >
+          % de execução financeira. `reportada` de `pc_execucao_financeira_obra`
+          (INT057 / Rural BB) quando disponível; senão `derivada` como
+          `valor_desembolsado / valor_contratado * 100` quando ambos existem e
+          `valor_contratado > 0`; senão NULL.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: percentual_execucao_financeira_fonte
+        description: Origem de `percentual_execucao_financeira`.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["reportada", "derivada"]
+              config:
+                severity: warn
+      - name: gap_fisico_financeiro_pp
+        description: >
+          `percentual_execucao_financeira − percentual_execucao_fisica` em pontos
+          percentuais. NULL se qualquer operando for NULL. Negativo (financeiro à
+          frente do físico) NÃO é truncado — é o sinal de risco.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: fonte_valor
+        description: >
+          `observado` (snapshot real) ou `carregado` (carry-forward do snapshot
+          SNH intermitente — repete a última observação por até
+          `var('carry_forward_max_meses', 3)` meses; NÃO interpola). Filtrar
+          `fonte_valor = 'observado'` para ver só o fato.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["observado", "carregado"]
+      - name: dt_snapshot_efetivo
+        description: >
+          Mês da observação real que originou a linha: = `dt_referencia` nas
+          linhas `observado`; mês da última observação nas linhas `carregado`.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # --- marcadores de LOCF de coluna.
+      # Distinto de fonte_valor='carregado' (linha inteira replicada nos meses sem
+      # snapshot): aqui a linha É uma observação SNH real, só o valor/responsável
+      # foi forward-filled do último snapshot que reportou.
+      - name: valor_contratado_preenchido
+        description: >
+          true quando `valor_contratado` e/ou `valor_desembolsado` da linha
+          vieram de LOCF (última observação não-nula do mesmo (frente, apf)),
+          não do snapshot corrente. O % financeiro derivado NÃO é recalculado
+          pós-LOCF — permanece NULL quando o insumo estava ausente.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
+      - name: responsavel_preenchido
+        description: >
+          true quando `responsavel_id` / `responsavel_nome` da linha vieram de
+          LOCF (o braço SNH nunca traz responsável; herdado do último snapshot
+          SFTP do mesmo APF).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BOOLEAN } }
+      # --- Sinais de retomada/paralisação e marcos de data promovidos direto da
+      # fonte. NULL
+      # onde a frente não tem a coluna de origem — cobertura ASSIMÉTRICA por
+      # frente (documentada abaixo).
+      - name: sinal_retomada
+        description: >
+          Sinal canônico de retomada/a-retomar da obra, via seed
+          `dominio_retomada`. Bruto: `situacao_retomada` (SFTP INT040/054, único
+          valor `OBRA_RETOMADA_COM_SUPL_APORTE`) ∪ `detalhamento_*` casando
+          'A RETOMAR%' (SNH). NULL quando a fonte não reporta; `nao_mapeada`
+          fora do seed. Cobertura: FAR ~314 APF (SFTP desde 2019-12 + SNH
+          2024-06+); FDS/Rural só SNH 2024-06+ (~0,4% das linhas).
+        data_tests:
+          - dentro_do_dominio:
+              arguments: { seed: dominio_retomada, seed_column: sinal_retomada }
+              config: { severity: warn }
+      - name: motivo_paralisacao
+        description: >
+          Motivo canônico de paralisação, via seed `dominio_motivo_paralisacao`,
+          de `classificacao_dos_paralisados` (SNH CAIXA — `cod_motivo_ociosidade`
+          do INT040 é 0% real). NULL onde a fonte omite (a maioria das linhas);
+          `nao_mapeada` fora do seed. Dado esparso na fonte (< 1%).
+        data_tests:
+          - dentro_do_dominio:
+              arguments: { seed: dominio_motivo_paralisacao, seed_column: motivo_paralisacao }
+              config: { severity: warn }
+      - name: desc_situacao_contrato
+        description: >
+          Status DO CONTRATO, cru (INT040: NORMAL / CANCELADO / DISTRATADA /
+          COM CLAUSULA SUSPENSIVA / CANCELADO POR ERRO DE CADASTRO). Eixo
+          distinto de `situacao_canonica` / `status_operacional` (status de
+          OBRA) — não combinar numa mesma métrica sem ressalva. NULL para o
+          braço SNH e frentes sem a coluna (só FAR SFTP, ~73%).
+      - name: dt_ultima_liberacao
+        description: >
+          Data da última liberação efetiva de recurso ("quando o dinheiro parou
+          de andar"). `dt_ultima_liberacao_recurso` (INT040/054) ∪
+          `dt_ultima_liberacao` (INT057/065). FAR ~72%, Rural ~77%; FDS NULL
+          (INT059 não tem — só `dt_maxima_liberacao`, que é prazo-limite).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_primeira_entrega
+        description: >
+          Data da primeira entrega de UH, direto da fonte (`dt_primeira_entrega`,
+          INT040/054 — FAR ~52%). Independe da espinha SNH-evento (que segue o
+          fallback para FDS/Rural no ouro). NULL em FDS/Rural (INT059/057/065
+          não têm a coluna).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_primeira_entrega_fonte
+        description: >
+          Proveniência de `dt_primeira_entrega` (`sftp:INT040` / `sftp:INT054` /
+          `sftp`). NULL quando `dt_primeira_entrega` é NULL.
+      - name: dt_assinatura_projeto
+        description: >
+          Data de assinatura do projeto (marco anterior à contratação),
+          `dt_assinatura_projeto` (INT059 — FDS ~17%). NULL nas demais frentes.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # ── acumulado-no-ano (YTD) do braço SNH, no grão (frente_mcmv, apf,
+      # dt_referencia). ESPARSIDADE POR CONSTRUÇÃO:
+      # a família `quantidade_de_uhs_*_do_ano_de_referencia` só existe de
+      # 2024-06 em diante e NÃO retroage — as 9 colunas são NULL em ~95% das
+      # linhas da prata, não por lacuna de pipeline. As colunas `_ano`
+      # acumulam dentro do ano-calendário e reiniciam em janeiro; o fluxo
+      # mensal sai no consumidor por `x_ano - lag(x_ano) over (partition by
+      # frente_mcmv, apf, year(dt_referencia) order by dt_referencia)`. As
+      # colunas `_jan` são a baseline de janeiro.
+      - name: quantidade_uh_contratadas_ano
+        description: UH contratadas acumuladas no ano-calendário (YTD, SNH; NULL antes de 2024-06).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+          - acumulado_nao_regride:
+              arguments:
+                partition_by: "frente_mcmv, apf, year(dt_referencia)"
+                order_by: dt_referencia
+              config: { severity: warn }
+      - name: quantidade_uh_entregues_ano
+        description: UH entregues acumuladas no ano-calendário (YTD, braço SNH; NULL antes de 2024-06). Ver nota do bloco YTD.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_vigentes_ano
+        description: UH vigentes acumuladas no ano-calendário (YTD, braço SNH; NULL antes de 2024-06). Ver nota do bloco YTD.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_distratadas_ano
+        description: UH distratadas acumuladas no ano-calendário (YTD, braço SNH; NULL antes de 2024-06). Ver nota do bloco YTD.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_contratadas_jan
+        description: Baseline de janeiro do ano de referência para UH contratadas (para reconstruir a série YTD).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_entregues_jan
+        description: Baseline de janeiro do ano de referência para UH entregues (para reconstruir a série YTD).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_vigentes_jan
+        description: Baseline de janeiro do ano de referência para UH vigentes (para reconstruir a série YTD).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_distratadas_jan
+        description: Baseline de janeiro do ano de referência para UH distratadas (para reconstruir a série YTD).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: valor_desembolsado_ano
+        description: >
+          Desembolso acumulado no ano (R$, YTD SNH). RESSALVA: fill baixo —
+          concentrado na CAIXA (BB ~1%). Não usar como total de desembolso.
+      # ── evolução mensal de obra, no grão da linha. Fonte: MONIT_MOV_OBRA
+      # (SharePoint), janela 2025-12+. Preenchidas em ~100% nas linhas de
+      # 2025-12..2026-07 (sobrepostas ou só-de-obra); NULL antes disso.
+      # GOTCHA: `dt_paralisacao`, `detalhe_paralisacao` e `qt_uh_concluidas` são
+      # 0% na fonte hoje — a coluna existe, vazia; o sinal utilizável de
+      # paralisação é `co_situacao_obra` / texto.
+      - name: pc_obra_prevista
+        description: Curva de obra PLANEJADA no mês (%). Sinal central do braço obra.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: pc_obra_realizada
+        description: Curva de obra REALIZADA no mês (%).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: co_situacao_obra
+        description: Código de situação da obra/operação (cru; domínio a decodificar).
+      - name: co_andamento_operacao
+        description: Código de andamento da operação (FDS/Rural; NULL no FAR).
+      - name: dt_alteracao_situacao
+        description: Data da última alteração de situação da obra.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_paralisacao
+        description: "Data de paralisação. GOTCHA: 0% na fonte hoje (coluna existe, vazia)."
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: co_classificacao_paralisado
+        description: Classificação do empreendimento paralisado (cru).
+      - name: detalhe_paralisacao
+        description: "Texto de detalhe de paralisação/retomada. GOTCHA: 0% na fonte hoje."
+      - name: dt_previsao_conclusao_obra_retomada
+        description: Data prevista de conclusão da obra após retomada (MONIT_MOV_OBRA, SharePoint; janela 2025-12+).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_conclusao_obra_retomada
+        description: Data efetiva de conclusão da obra após retomada (MONIT_MOV_OBRA, SharePoint; janela 2025-12+).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: qt_uh_concluidas
+        description: "UH concluídas (decomposição de obra). GOTCHA: 0% na fonte hoje."
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_alienadas
+        description: UH alienadas (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_sem_habitese
+        description: UH sem habite-se (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_construcao_parcial
+        description: UH em construção parcial (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_uh_ociosas_retomadas
+        description: UH ociosas retomadas (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: qt_unidades_habitacionais_invadidas
+        description: UH invadidas (decomposição de obra, MONIT_MOV_OBRA; janela 2025-12+).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: dt_legalizacao
+        description: >
+          Data de legalização do empreendimento (MONIT_MOV_OBRA; janela
+          2025-12+). Distinta de `dt_conclusao_obra`, que já pode incorporar a
+          legalização vinda das fontes SFTP.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_entrega
+        description: >
+          Data de entrega do EMPREENDIMENTO reportada pelo MONIT_MOV_OBRA.
+          Distinta de `dt_entrega_uh` (entrega de UH, das fontes SFTP/SNH).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_acion_seguradora
+        description: Data de acionamento da seguradora (só FAR).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_contrata_construtor_substituto
+        description: Data de contratação de construtor substituto (só FAR).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_repactuacao
+        description: Data de repactuação (só FAR).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: id_obra_snapshot
+        description: Chave técnica do snapshot de obra (md5 de frente|apf|mês). NULL fora da janela obra.
+
+  - name: prata_fds_historico_empreendimento
+    description: >
+      Prata — série histórica mensal de empreendimentos MCMV da frente
+      FDS/Entidades (SFTP INT059 ∪ SNH modalidade=ENTIDADES ∪ braço
+      MONIT_MOV_OBRA). Contrato comum, dedup por (frente_mcmv, apf,
+      dt_referencia), precedência SNH. Grão: empreendimento × mês.
+      TETO E CAUDA: fontes
+      com estoque até 2026-03; braço obra estende até 2026-07 em linhas
+      `fonte_serie = 'obra_mensal'` com `quantidade_uh` / `valor_contratado` /
+      `valor_desembolsado` NULL por construção — filtrar
+      `fonte_serie <> 'obra_mensal'` em agregações de estoque.
+    meta:
+      tags: [prata, mcmv, dados-historicos, empreendimento, fds]
+    data_tests:
+      # Grão físico mensal.
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
+      # FDS permanece limpo hoje (0 APF).
+      - desembolso_nao_excede_contratado:
+          arguments: { tolerancia: 0.01 }
+          config: { severity: warn }
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: quantidade_uh
+            parcela_columns: [quantidade_uh_vigentes, quantidade_uh_distratadas]
+            tolerancia: 5
+          config: { severity: warn }
+    columns: *contrato_empreendimento
+
+  - name: prata_rural_historico_empreendimento
+    description: >
+      Prata — série histórica mensal de empreendimentos MCMV da frente Rural
+      (SFTP INT057/INT065 ∪ SNH modalidade=RURAL ∪ braço MONIT_MOV_OBRA).
+      Contrato comum, dedup por (frente_mcmv, apf, dt_referencia), precedência
+      SNH. Grão: empreendimento × mês.
+      TETO E CAUDA: fontes
+      com estoque até 2026-03; braço obra estende até 2026-07 em linhas
+      `fonte_serie = 'obra_mensal'` com `quantidade_uh` / `valor_contratado` /
+      `valor_desembolsado` NULL por construção — filtrar
+      `fonte_serie <> 'obra_mensal'` em agregações de estoque.
+    meta:
+      tags: [prata, mcmv, dados-historicos, empreendimento, rural]
+    data_tests:
+      # Grão físico mensal.
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "apf", "dt_referencia"]
+      # Rural tem APF com desembolso muito acima do contratado (até 9×): `error`
+      # para razão > 2, `warn` para o resto.
+      - desembolso_nao_excede_contratado:
+          arguments: { tolerancia: 0.01 }
+          config: { severity: warn }
+      - desembolso_nao_excede_contratado:
+          arguments: { ratio_minimo: 2.0 }
+          config: { severity: error }
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: quantidade_uh
+            parcela_columns: [quantidade_uh_vigentes, quantidade_uh_distratadas]
+            tolerancia: 5
+          config: { severity: warn }
+    columns: *contrato_empreendimento
+
+  # Os atributos estáveis do empreendimento ficam em colunas de
+  # ouro_historico_snapshot_empreendimento_atual (ver ouro/schema.yml).
+
+  - name: prata_historico_entrega_apf
+    description: >
+      Prata — espinha de entregas por APF. Grão: 1 linha por `apf`. Consolida os
+      EVENTOS de entrega de UH da SNH (bronze_dhist_snh_entregas_evento_bb /
+      _caixa, mesma fonte do reloginho) num atributo estável: dt_primeira_entrega,
+      dt_ultima_entrega, uh_entregues_acumulada, n_eventos, dt_ultimo_snapshot.
+      Dedup por hash de conteúdo (agente, apf, dt_evento, qtd) idêntico ao de
+      prata_historico_snh_entregas_mes — os totais reconciliam. As pratas
+      históricas por frente fazem left join por `apf` para resolver
+      dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP.
+    meta:
+      tags: [prata, mcmv, dados-historicos, entrega, espinha]
+    columns:
+      - name: apf
+        description: APF do empreendimento (chave da linha).
+        data_tests:
+          - not_null
+          - unique
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: agente_financeiro
+        description: Agente do evento mais recente (BB / CAIXA).
+      - name: dt_primeira_entrega
+        description: Menor dt_evento de entrega do APF (evento deduplicado).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: dt_ultima_entrega
+        description: Maior dt_evento de entrega do APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: uh_entregues_acumulada
+        description: Soma das UH entregues em todos os eventos deduplicados do APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_eventos
+        description: Contagem de eventos de entrega deduplicados do APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: dt_ultimo_snapshot
+        description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
+
+  - name: prata_historico_serie_executiva
+    description: >
+      Prata — série executiva histórica no contrato comum. Aplica o mapa de
+      colunas via coalesce_present() e tipa os campos (UH inteiras, valores em
+      R$, percentuais e datas); ausência preservada como NULL, não 0.
+      Grão: 1 linha por (fonte_familia, chave_natural, dt_referencia) — o
+      EMPREENDIMENTO (bases_relatorio_executivo, entrada_bb) ou o CONTRATO PF
+      (bext, min_cidades) inteiro no mês, agregado (SUM) das linhas de movimento
+      da fonte após dedup de reenvio (`_v2` > base) e dedup de reingestão
+      byte-a-byte. linha_ogu_fgts / situacao_derivada recalculados sobre os
+      valores agregados. natureza_serie por família (estoque / fluxo).
+      Ver o doc de auditoria
+      docs/auditar-grao-serie-executiva-bases-relat-exec.md.
+    meta:
+      tags: [prata, mcmv, dados-historicos, serie-executiva, preditivo]
+    data_tests:
+      # Reconciliação da decomposição do investimento. A identidade
+      # `investimento = empréstimo + contrapartida + subsídio_total`:
+      #   - bases_relatorio_executivo: fecha EXATO (diferença R$ 0);
+      #   - bext: gap sistemático ~R$ 16-25 k/linha (investimento inclui taxas
+      #     não decompostas nas 3 parcelas);
+      #   - min_cidades: gap ~R$ 26-51 k/linha.
+      # Tolerância R$ 100 k: passa o gap sistemático, pega os desvios grosseiros
+      # (~6,5 k linhas, sobretudo min_cidades > R$ 1 M). `warn`.
+      - reconcilia_decomposicao:
+          arguments:
+            total_column: valor_investimento
+            parcela_columns: [valor_financiamento, valor_contrapartidas, subsidio_total]
+            tolerancia: 100000.00
+          config:
+            severity: warn
+      # Plausibilidade R$/UH por família × faixa contra o seed faixa_valor_uh.
+      # `frente` do seed = fonte_familia aqui. `warn`. Só `valor_investimento` (estoque
+      # estável); `valor_liberado` é acumulado a partir de zero e a faixa R$/UH
+      # não se aplica bem nos primeiros snapshots.
+      - valor_dentro_faixa_uh:
+          arguments:
+            valor_column: valor_investimento
+            uh_column: uh_contratadas
+            seed: faixa_valor_uh
+            seed_key_columns: { fonte_familia: frente, faixa: faixa }
+          config:
+            severity: warn
+    columns:
+      - name: fonte_familia
+        description: >
+          Família de origem do registro na série executiva pré-2019:
+          `bases_relatorio_executivo`, `min_cidades`, `entrada_bb` ou `bext`.
+          Determina o grão (`grao_familia`), a `natureza_serie` e a
+          `prioridade_familia`. NÃO somar UH/valor entre famílias de grão
+          diferente no mesmo (dt_referencia, uf).
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # Identificadores já limpos por strip_float_text — gate `error`: uma
+      # falha aqui significa regressão da limpeza (o bronze correspondente
+      # segue em `warn`). Ver docs/varredura-sufixo-float-texto.md.
+      - name: chave_natural
+        description: Chave natural do registro (código de empreendimento/contrato), sem sufixo ".0".
+        data_tests:
+          - sem_sufixo_float_texto
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: codigo_ibge_municipio
+        description: Código IBGE do município (só dígitos), sem sufixo ".0".
+        data_tests:
+          - sem_sufixo_float_texto
+      - name: responsavel_id
+        description: CNPJ do responsável, sem sufixo ".0".
+        data_tests:
+          - sem_sufixo_float_texto
+      - name: uf
+        description: UF (maiúsculas). Pode ser nulo em min_cidades/bext antigos (sem UF na origem).
+      - name: linha_ogu_fgts
+        description: >
+          OGU/Subsidiado quando o subsídio OGU domina; FGTS/Financiado quando o
+          FGTS domina; nulo quando não há subsídio informado.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["OGU/Subsidiado", "FGTS/Financiado"]
+      # UH do EMPREENDIMENTO / CONTRATO agregado (soma das linhas de movimento
+      # dedupadas). valor_nao_negativo em `warn` (não `error` como nos campos
+      # financeiros): resíduos negativos de movimento não passam pela quarentena
+      # e não invalidam a linha.
+      # quantidade_nao_excede_referencia (`warn`) trava o aninhamento em
+      # uh_contratadas (uh_comercializadas NÃO é aninhada com uh_entregues —
+      # ver o doc de auditoria).
+      - name: uh_contratadas
+        description: UH contratadas do empreendimento/contrato no mês (soma das linhas de movimento).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues
+        description: UH entregues (acumulado no snapshot).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_concluidas
+        description: UH com obra concluída (acumulado no snapshot).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_em_obras
+        description: UH em obras no snapshot (medida paralela, não aninhada com entregues/concluídas).
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_comercializadas
+        description: >
+          UH vendidas/reservadas ao beneficiário (antecede a entrega física —
+          pode exceder uh_entregues; NÃO aninhada com ela). Só
+          bases_relatorio_executivo e min_cidades reportam.
+        data_tests:
+          - valor_nao_negativo:
+              config: { severity: warn }
+          - quantidade_nao_excede_referencia:
+              arguments: { reference: uh_contratadas, fator: 1.0 }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: grao_familia
+        description: >
+          Grão da família: 'contrato' (bext e min_cidades — extrato de contrato
+          PF individual) ou 'empreendimento' (bases_relatorio_executivo,
+          entrada_bb). O consumidor NÃO deve somar
+          UH/valor entre grãos diferentes.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["contrato", "empreendimento"]
+      - name: natureza_serie
+        description: >
+          Natureza da série por família: 'estoque' — carteira restatada
+          mês a mês (bases_relatorio_executivo, min_cidades, bext); 'fluxo' —
+          entrada de novos empreendimentos na carteira BB (entrada_bb). O ouro
+          propaga esta classificação. NÃO somar séries de estoque entre meses.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["estoque", "fluxo"]
+      # --- Colunas de valor financeiro (glossario-valores-financeiros.md).
+      # completude_minima em `warn`: ausência PARCIAL é esperada (uma família /
+      # geração de schema não traz o conceito).
+      - name: valor_investimento
+        description: >
+          Conceito canônico `valor_investimento_total` — custo total
+          (repasse/financiamento + contrapartida + subsídio), em R$ nominais.
+          De `valor_total_do_investimento` (bases_relatorio) / `vlr_total_operacao`
+          (min_cidades) / `mvalor_investimento` (bext). Nulo em entrada_bb.
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+          - verificacao_tipagem: { arguments: { tipo_esperado: "DECIMAL(38,2)" } }
+      - name: valor_financiamento
+        description: >
+          Conceito canônico `valor_financiamento` — operação de crédito
+          (empréstimo / financiamento à produção), **sem VGV** (o VGV vai em
+          `valor_vgv`). R$ nominais. Nome alinhado ao vocabulário das fichas
+          atuais (`valor_financiamento_fds` no FDS/Rural, `valor_far` no FAR).
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: valor_vgv
+        description: >
+          Conceito canônico `valor_vgv` — valor global de venda das UH. Só a
+          família entrada_bb reporta (`valor_global_de_venda_vgv`); nulo nas
+          demais.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.0 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: valor_contrapartidas
+        description: >
+          Conceito canônico `valor_contrapartidas` — aporte de estado /
+          município / entidade. R$ nominais. Nome no plural, alinhado ao
+          vocabulário das fichas atuais. De
+          `mvalor_contrapartida_poder_publico` (bext, ~100%) /
+          `valor_contrapartida_poder_publico` ∪ `valor_da_contrapartida_do_poder_publico`
+          (bases_relatorio) / `vlr_contrapartida` (min_cidades, raro).
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: valor_liberado
+        description: >
+          Conceito canônico `valor_desembolsado_acumulado` — recurso federal
+          liberado, acumulado até o snapshot (estoque). De `valor_total_liberado`
+          (bases_relatorio) / `mvalor_desembolso` (bext). ∅ nas outras famílias.
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: subsidio_fgts
+        description: >
+          Conceito canônico `subsidio_fgts` — subsídio/complemento fonte FGTS
+          (R$). **Não somar `subsidio_fgts + subsidio_ogu + subsidio_total`** —
+          é dupla contagem; a leitura correta é
+          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: subsidio_ogu
+        description: >
+          Conceito canônico `subsidio_ogu` — subsídio/complemento fonte OGU
+          (R$). Ver a nota anti-soma em `subsidio_fgts`.
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: subsidio_total
+        description: >
+          Conceito canônico `subsidio_total` — subsídio sem split por fonte. Só
+          a família bext reporta assim (`mvalor_subsidio`). **Não somar** com
+          `subsidio_fgts`/`subsidio_ogu` (convenções concorrentes): usar
+          `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
+        data_tests:
+          - completude_minima:
+              arguments: { min_pct: 0.0 }
+              config: { severity: warn }
+          - valor_nao_negativo:
+              config: { severity: error }
+      - name: situacao_derivada
+        description: >
+          Situação derivada SÓ de quantidade (esta fonte não tem
+          status_operacional): contratada / em_entrega / concluida /
+          nao_mapeada. Domínio e propósito DISTINTOS de situacao_canonica das
+          pratas por frente — nunca combinar as duas séries sem ressalva.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["contratada", "em_entrega", "concluida", "nao_mapeada"]
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) por join ao seed
+          dominio_regiao_uf sobre uf. Nula quando o registro não tem uf
+          (min_cidades e bext antigos).
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dominio_regiao_uf')
+                field: regiao_sigla
+              config:
+                severity: warn
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla).

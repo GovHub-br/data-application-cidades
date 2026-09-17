@@ -1,0 +1,19 @@
+termo_glossario,campo_preferencial,aliases_encontrados,tipo_sugerido,regra
+APF,apf,"nu_apf, apf_arquivo_jan26",text,Normalizar e preservar zeros quando existirem
+Contrato,contrato,"nu_contrato, nu_contrato_repasse, contrato",text,Usar quando a fonte nao possuir APF
+Empreendimento,nome_empreendimento,"empreendimento_nome, no_empreendimento, apf_no",text,Nome legivel usado em filtros de dashboard
+Frente MCMV,frente_mcmv,"modalidade, linha_apf",text,Usar valores controlados por glossario
+Municipio,municipio,"no_municipio, no_municipio_imovel",text,Padronizar caixa e remover espacos excedentes
+UF,uf,"sg_uf, sg_uf_imovel, municipio_sg",text,Dois caracteres
+Codigo IBGE Municipio,codigo_ibge_municipio,"cod_ibge, cod_municipio_ibge, codigo_ibge_do_municipio, co_municipio_ibge, nu_ibge",text,Preservar zeros a esquerda
+Unidade Habitacional,quantidade_uh,"qt_uh, uh_contratadas, unidades_qt, uh",integer,Quantidade de UHs no grao da fonte
+UHs Entregues,quantidade_uh_entregues,"qt_uh_alienadas, qt_unidades_entregues, numero_de_unidades_entregues",integer,Usar somente quando representar entrega efetiva
+Valor Contratado,valor_contratado,"vr_total_investimento, valor_contratado, vr_investimento, valor",numeric(15,2),Documentar se representa investimento total ou operacao
+Valor Desembolsado,valor_desembolsado,"vr_liberado, valor_desembolsado, vr_evento",numeric(15,2),Documentar acumulado ou evento
+Execucao Fisica,percentual_execucao_fisica,"pct_obra_realizada, percentual_obra_realizado, construcao_pc",numeric(10,2),Escala padrao 0-100
+Execucao Financeira,percentual_execucao_financeira,"pct_executado_financeiro, percentual_execucao_financeira",numeric(10,2),Escala padrao 0-100
+Status Operacional,status_operacional,"situacao_empreendimento, situacao_gefus, status_execucao",text,Status consolidado para consumo analitico
+Data Referencia,dt_referencia,"data_de_movimento, dt_movimento, dt_referencia",date,Data de posicao da informacao
+Data Ingestao,dt_ingest,"dt_ingest",timestamp,Data tecnica de ingestao
+Data Silver,dt_silver,"dt_silver",timestamp,Data tecnica de materializacao silver
+Data Gold,dt_gold,"dt_gold",timestamp,Data tecnica de materializacao gold/mart

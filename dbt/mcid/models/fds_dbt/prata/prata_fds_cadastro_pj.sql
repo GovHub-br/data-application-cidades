@@ -7,7 +7,7 @@ with
     cad_pj_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             nullif(trim(no_identificacao_proposta), '') as id_proposta,
             nullif(trim(no_agente_financeiro), '') as agente_financeiro,
             nullif(trim(no_empreendimento), '') as empreendimento_nome,
@@ -21,7 +21,7 @@ with
             case
                 when trim(ic_substituicao_eo) = 'S' then true else false
             end as ic_substituicao_eo,
-            {{ target.schema }}.parse_date_br(dt_substituicao_eo) as dt_substituicao_eo,
+            {{ var('schema_udfs') }}.parse_date_br(dt_substituicao_eo) as dt_substituicao_eo,
             nullif(trim(no_substituicao_eo), '') as eo_substituta_nome,
             nullif(
                 regexp_replace(trim(nu_cnpj_substituicao_eo), '[^0-9]', '', 'g'), ''
@@ -103,7 +103,7 @@ with
             {{ parse_int("co_operacao_retomada") }} as co_operacao_retomada,
             {{ parse_financial_value("vr_contratado_aporte_suplementacao") }}
             as vr_aporte_suplementacao,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_contratacao_aporte_suplementacao
             ) as dt_aporte_suplementacao,
             {{ parse_financial_value("vr_total_em_construcao") }}
@@ -111,21 +111,21 @@ with
             {{ parse_financial_value("vr_total_em_projeto") }} as vr_total_em_projeto,
 
             -- Datas-chave
-            {{ target.schema }}.parse_date_br(dt_assinatura) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(dt_assinatura) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_previsao_conclusao_obra
             ) as dt_previsao_conclusao,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_apresentacao_orcamento
             ) as dt_apresentacao_orcamento,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_inicio_obra_retomada
             ) as dt_inicio_obra_retomada,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_previsao_conclusao_obra_retomada
             ) as dt_previsao_conclusao_retomada,
-            {{ target.schema }}.parse_date_br(dh_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dh_movimento) as dt_movimento,
 
             -- Indicadores
             case

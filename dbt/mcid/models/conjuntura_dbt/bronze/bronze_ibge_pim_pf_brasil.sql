@@ -1,22 +1,9 @@
--- models/conjuntura_bronze/bronze_ibge_pim_pf_brasil.sql
-{{ config(materialized="table") }}
+{{ config(materialized='table') }}
 
-with
-    ibge_pim_pf_brasil_bronze as (
-        select
-            cast(variavel_id as integer) as variavel_id,
-            cast(variavel_nome as text) as variavel_nome,
-            upper(trim(cast(localidade_nome as text))) as localidade_nome,
-            cast(classificacao_id as integer) as classificacao_id,
-            upper(trim(cast(classificacao_nome as text))) as classificacao_nome,
-            cast(categoria_id as integer) as categoria_id,
-            upper(trim(cast(categoria_nome as text))) as categoria_nome,
-            cast(unidade as text) as unidade,
-            cast(periodo as text) as periodo,
-            to_date(periodo || '01', 'YYYYMMDD') as data_referencia,
-            cast(nullif(trim(valor), '-') as numeric) as valor,
-            cast(dt_ingest as timestamp) as dt_ingest
-        from {{ source("ibge", "ibge_pim_pf_brasil") }}
-    )
-select *
-from ibge_pim_pf_brasil_bronze
+-- Bronze do conjuntura: PIM-PF Brasil (IBGE).
+-- Espelho fiel do parquet de staging, sem transformação. O caminho do
+-- arquivo é declarado em `sources.yml` e resolvido pelo macro `fonte_lake()`,
+-- que também registra a dependência na linhagem. Achatamento e tipagem ficam
+-- na prata.
+
+select * from {{ fonte_lake('ibge_pim_pf_brasil', 'lake_staging') }}

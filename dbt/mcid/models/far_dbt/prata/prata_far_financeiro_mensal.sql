@@ -7,7 +7,7 @@ with
     financeiro_raw as (
         select
             -- Identificação (APF no financeiro é 6 dígitos, normalizar para 8)
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
 
             -- Tipo de movimento (1=liberação obra, 5=INCC/ajuste, etc.)
             {{ parse_int("co_tipo_movimento") }} as co_tipo_movimento,
@@ -35,9 +35,9 @@ with
             as vr_pago_legalizacao,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
-            {{ target.schema }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao,
-            {{ target.schema }}.parse_date_br(dt_remessa) as dt_remessa,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_remessa) as dt_remessa,
 
             -- Identificador do registro
             nullif(trim(no_identificador), '') as identificador,

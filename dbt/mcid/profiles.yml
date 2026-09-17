@@ -8,4 +8,100 @@ mcid:
       password: "{{ env_var('DB_DW_PASSWORD_MCID') }}"
       port: "{{ env_var('DB_DW_PORT_MCID', '5432') | int }}"
       dbname: "{{ env_var('DB_DW_DBNAME_MCID', 'cidades') }}"
-      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'conjuntura') }}"
+      # Schema de fallback: só recebe recurso que esqueceu o `+schema`. Fica
+      # vazio em operação normal, e é isso que o teste
+      # `sem_recurso_no_schema_de_fallback` verifica. Nunca apontar para schema
+      # real — foi assim que models extraviados se esconderam em `conjuntura`.
+      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'dbt_default') }}"
+
+    # Modo A (dev) — le a staging MinIO, materializa no arquivo local.
+    # O catalogo local se chama `cidades` (D3 da change
+    # pipeline-bronze-historica-destino-trocavel): o OpenMetadata monta o FQN
+    # da tabela a partir de database/schema/name do no no manifest.json, entao
+    # o catalogo precisa ter o mesmo nome do banco Postgres para que o FQN
+    # `cidades.<schema>.<tabela>` valha em qualquer modo. O dbt-duckdb exige
+    # que `database` case com o basename de `path` — dai o arquivo se chamar
+    # cidades.duckdb.
+    staging_duckdb:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_MCID_PATH', '/tmp/cidades.duckdb') }}"
+      database: cidades
+      schema: mcmv_indicadores
+      threads: "{{ env_var('DUCKDB_MCID_THREADS', '4') | int }}"
+      extensions:
+        - httpfs
+      # Guardas de recurso. As bronzes históricas fazem union_by_name de
+      # muitos parquets; a materialização default do DuckDB
+      # (preserve_insertion_order=true) buffra o resultado inteiro em RAM
+      # antes de gravar e derrama dezenas de GB no temp_directory. A ordem
+      # não importa aqui: bronzes são empilhamento append-only e a dedup na
+      # silver é por chave explícita; o gold faz seu próprio ORDER BY.
+      # Todos overridáveis por env var — default = comportamento anterior + spill em disco controlado.
+      #
+      # Ficam em config_options (aplicado uma vez no duckdb.connect), NÃO em
+      # settings: o dbt-duckdb reaplica settings a cada cursor novo, e o DuckDB
+      # rejeita reconfigurar temp_directory depois que ele já foi usado
+      # ("Cannot switch temporary directory after the current one has been
+      # used") — o que quebrava a fase de testes logo após um modelo pesado
+      # derramar em disco.
+      config_options:
+        preserve_insertion_order: false
+        memory_limit: "{{ env_var('DUCKDB_MCID_MEMORY_LIMIT', '10GB') }}"
+        temp_directory: "{{ env_var('DUCKDB_MCID_TEMP_DIR', '/tmp/duckdb_mcid_tmp') }}"
+        max_temp_directory_size: "{{ env_var('DUCKDB_MCID_MAX_TEMP', '60GB') }}"
+      settings:
+        # O DuckDB espera host:porta SEM esquema -- ele mesmo prefixa http://
+        # (s3_use_ssl=false). Se MINIO_ENDPOINT vier como "http://host:9000",
+        # o resultado vira "http://http://host:9000" e a resolucao de nome falha.
+        # O replace abaixo aceita a variavel com ou sem esquema.
+        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
+        s3_access_key_id: "{{ env_var('MINIO_ACCESS_KEY') }}"
+        s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
+        s3_url_style: path
+        s3_use_ssl: false
+
+    # Modo C (direto) — le a staging MinIO e materializa NO POSTGRES, com o
+    # motor DuckDB rodando neste processo (nunca via pg_duckdb dentro do
+    # banco): o Postgres so recebe DDL e insercao em streaming pelo
+    # postgres_scanner. Ver D1/D2/D3 da change
+    # pipeline-bronze-historica-destino-trocavel.
+    #
+    # Dois catalogos: o arquivo local vira `mcid_local` (scratch/spill do
+    # DuckDB) e o Postgres e atachado como `cidades` — dois catalogos nao
+    # podem dividir nome na mesma sessao, e e o alias do attach que precisa
+    # ser `cidades` para o `+database: cidades` dos modelos resolver no banco.
+    #
+    # Mesmas env vars do target `prod`; nenhuma configuracao de servidor,
+    # role ou extensao do Postgres e tocada.
+    prod_duckdb:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_MCID_LOCAL_PATH', '/tmp/mcid_local.duckdb') }}"
+      # `database` TEM de casar com o basename do `path` (o dbt-duckdb valida).
+      # Aqui e o arquivo local de scratch/spill: mcid_local.duckdb -> mcid_local.
+      # O catalogo `cidades` vem do `attach` abaixo, apontando pro Postgres --
+      # e um nome nao pode servir aos dois na mesma sessao.
+      database: mcid_local
+      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'dbt_default') }}"
+      threads: "{{ env_var('DUCKDB_MCID_THREADS', '4') | int }}"
+      extensions:
+        - httpfs
+        - postgres
+      attach:
+        - path: "dbname={{ env_var('DB_DW_DBNAME_MCID', 'cidades') }} host={{ env_var('DB_DW_HOST_MCID') }} port={{ env_var('DB_DW_PORT_MCID', '5432') }} user={{ env_var('DB_DW_USER_MCID') }} password={{ env_var('DB_DW_PASSWORD_MCID') }}"
+          type: postgres
+          alias: cidades
+      config_options:
+        preserve_insertion_order: false
+        memory_limit: "{{ env_var('DUCKDB_MCID_MEMORY_LIMIT', '10GB') }}"
+        temp_directory: "{{ env_var('DUCKDB_MCID_TEMP_DIR', '/tmp/duckdb_mcid_tmp') }}"
+        max_temp_directory_size: "{{ env_var('DUCKDB_MCID_MAX_TEMP', '60GB') }}"
+      settings:
+        # O DuckDB espera host:porta SEM esquema -- ele mesmo prefixa http://
+        # (s3_use_ssl=false). Se MINIO_ENDPOINT vier como "http://host:9000",
+        # o resultado vira "http://http://host:9000" e a resolucao de nome falha.
+        # O replace abaixo aceita a variavel com ou sem esquema.
+        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
+        s3_access_key_id: "{{ env_var('MINIO_ACCESS_KEY') }}"
+        s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
+        s3_url_style: path
+        s3_use_ssl: false

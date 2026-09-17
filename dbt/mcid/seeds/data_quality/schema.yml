@@ -1,0 +1,106 @@
+version: 2
+
+seeds:
+  # Change: colunas-orfas-bronze-historico.
+  - name: dominio_retomada
+    description: >
+      Mapa canônico do sinal de retomada/a-retomar de empreendimento histórico.
+      valor_bruto vem de situacao_retomada (SFTP INT040/054) e de
+      detalhamento_da_situacao_do_empreendimento casando 'A RETOMAR%' (SNH).
+      Consumido pelas silvers por frente via left join
+      lower(trim(bruto)) = lower(trim(valor_bruto)); testado com
+      dentro_do_dominio (warn) sobre a coluna derivada sinal_retomada.
+    columns:
+      - name: valor_bruto
+        data_tests:
+          - not_null
+          - unique
+      - name: sinal_retomada
+        data_tests:
+          - not_null
+      - name: origem
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["sftp", "snh"]
+
+  - name: dominio_motivo_paralisacao
+    description: >
+      Mapa canônico do motivo de paralisação, de classificacao_dos_paralisados
+      (SNH CAIXA). cod_motivo_ociosidade (INT040/054) é 0% real e não entra.
+    columns:
+      - name: valor_bruto
+        data_tests:
+          - not_null
+          - unique
+      - name: motivo_paralisacao
+        data_tests:
+          - not_null
+      - name: origem
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["sftp", "snh"]
+
+  # Change: catalogo-dicionario-dados-historicos (D6).
+  - name: campos_obrigatorios
+    description: >
+      Contrato enxuto de obrigatoriedade e completude mínima para as entidades
+      dos 33 modelos históricos em escopo. Lido pelo teste genérico
+      `completude_minima` (modo seed) — ver macro. `modelo` usa o nome do modelo
+      dbt, exceto as 3 silvers por frente
+      (`prata_{far,fds,rural}_historico_empreendimento`), que
+      compartilham o contrato comum e são referidas pela chave sintética
+      `contrato_empreendimento_historico`.
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["modelo", "coluna"]
+    columns:
+      - name: modelo
+        data_tests:
+          - not_null
+      - name: coluna
+        data_tests:
+          - not_null
+      - name: obrigatoria
+        description: Campo é obrigatório por regra de negócio (bool).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["true", "false", true, false]
+      - name: min_completude
+        description: Limiar mínimo de completude (0-1). Abaixo dele o teste sinaliza.
+        data_tests:
+          - not_null
+      - name: origem
+        description: Base da obrigatoriedade — regra de negócio ou heurística de não-nulos.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["regra_negocio", "heuristica_nao_nulo"]
+
+  - name: colunas_bronze_ignoradas
+    description: >
+      Registro versionado de colunas do bronze de empreendimento histórico
+      deliberadamente não consumidas por nenhuma silver. Anti-join do teste
+      bronze_colunas_nao_mapeadas (guardrail-mapeamento-bronze-historico).
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["bronze", "coluna"]
+    columns:
+      - name: bronze
+        description: sufixo curto do bronze (int040/int054/int057/int059/int065/snh_bb/snh_caixa).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["int040", "int054", "int057", "int059", "int065", "snh_bb", "snh_caixa"]
+      - name: coluna
+        data_tests:
+          - not_null
+      - name: justificativa
+        data_tests:
+          - not_null

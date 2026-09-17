@@ -6,11 +6,9 @@
 with
     fichas as (select * from {{ ref("ouro_far_ficha_empreendimento") }}),
 
-    -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
-    -- dobraria as somas
     ibge_uf as (
-        select distinct sigla, nome as estado_nome, regiao_sigla, regiao_nome
-        from {{ source("raw", "api_ibge_uf") }}
+        select sigla, nome as estado_nome, regiao_sigla, regiao_nome
+        from {{ ref('api_ibge_uf') }}
     ),
 
     agg_uf as (

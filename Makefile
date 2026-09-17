@@ -87,5 +87,95 @@ docs-serve: docs-build
 docs-clean:
 	rm -rf $(DOCS_DIR)/site
 
+# Nunca publique `dbt docs generate` diretamente: manifest/catalog completos
+# incluem bronze e SQL compilado. Este alvo usa diretório temporário privado e
+# publica exclusivamente o catálogo de metadados permitido.
+conjuntura-docs:
+	poetry run dbt deps --project-dir dbt/mcid
+	poetry run python scripts/conjuntura/gerar_docs_seguros.py
+
+conjuntura-docs-pdf: conjuntura-docs
+	soffice --headless --convert-to pdf --outdir build build/pipeline.html
+
+# Catálogo de fontes: um bloco por quadro do boletim, com o endereço da
+# origem clicável. O PDF sai pelo Chrome, e não pelo soffice, porque só ele
+# preserva a anotação de link — no soffice a URL vira texto morto.
+conjuntura-catalogo:
+	poetry run python scripts/conjuntura/gerar_catalogo_fontes.py \
+		--saida build/catalogo-fontes.html
+	printf '<!doctype html><html lang="pt-BR" data-theme="light"><head><meta charset="utf-8">' > build/catalogo-fontes-impressao.html
+	cat build/catalogo-fontes.html >> build/catalogo-fontes-impressao.html
+	printf '</html>' >> build/catalogo-fontes-impressao.html
+	google-chrome-stable --headless --disable-gpu --no-sandbox \
+		--print-to-pdf=build/Catalogo-Fontes-Conjuntura-Habitacional.pdf \
+		--no-pdf-header-footer file://$$PWD/build/catalogo-fontes-impressao.html
+
+# Audita somente descrições YAML e não acessa tabelas ou arquivos de dados.
+# Use `GOVERNANCE_STRICT=--strict make governance-audit` ao transformar os
+# achados em gate de CI.
+governance-audit:
+	poetry run python scripts/governance/auditar_metadados.py $(GOVERNANCE_STRICT)
+
+# Executa no GX os contratos Silver declarados no YAML do dbt. O relatório é
+# sanitizado e não contém linhas nem valores inesperados.
+gx-silver:
+	poetry run python scripts/governance/validar_silver_gx.py $(GX_STRICT)
+
+governance-load-strategies:
+	poetry run python scripts/governance/auditar_estrategias_carga.py $(GOVERNANCE_STRICT)
+
+# Gera docs dbt em diretório temporário privado e persiste somente a projeção
+# semântica filtrada de Silver/Gold.
+openmetadata-catalog:
+	poetry run python scripts/governance/gerar_catalogo_openmetadata_seguro.py
+
+# Estrutura: schema, tabela, coluna e linhagem. Cria o payload seguro para
+# OpenMetadata. Acrescente `--confirmar` em OPENMETADATA_ARGS somente após
+# preencher URL e token no .env (o modelo está em infra/env/.env.example).
+openmetadata-sync: openmetadata-catalog
+	poetry run python scripts/governance/sincronizar_openmetadata.py $(OPENMETADATA_ARGS)
+
+# Governança: domínio, produto de dados, proprietário, classificação, etiqueta,
+# tier, certificação, permissão de uso e glossário. Sem URL/token no ambiente
+# roda offline e só imprime o que está declarado.
+openmetadata-governanca:
+	poetry run python scripts/governance/sincronizar_governanca.py $(OPENMETADATA_ARGS)
+
+# A ordem importa: não se pendura domínio, produto nem etiqueta em tabela que
+# ainda não existe no catálogo. Estrutura primeiro, governança depois. E
+# reescrever as colunas substitui o array inteiro, levando junto a etiqueta de
+# glossário que a governança pendura nelas — por isso nunca o contrário.
+openmetadata: openmetadata-sync openmetadata-governanca openmetadata-lake
+
+# Data lake e orquestração: MinIO como serviço de armazenamento, cada parquet
+# como container, e a linhagem DAG -> parquet -> Bronze. Roda por último: liga
+# containers a tabelas que precisam existir antes.
+openmetadata-lake:
+	poetry run python scripts/governance/sincronizar_lake.py $(OPENMETADATA_ARGS)
+
+# Confere o que está NA INSTÂNCIA contra o que o repo declara. O
+# `governance-audit` audita se a documentação foi escrita; este audita se ela
+# chegou. A distância entre as duas já foi de 85 tabelas.
+# Use `OPENMETADATA_AUDIT=--strict` para transformar em gate de CI.
+governance-audit-om:
+	poetry run python scripts/governance/auditar_openmetadata.py $(OPENMETADATA_AUDIT)
+
+# A conferência contra os boletins publicados virou teste do dbt: roda no
+# mesmo `dbt build` que já roda, em vez de script com conexão própria.
+conjuntura-validar-boletins:
+	cd dbt/mcid && poetry run dbt seed --select boletim_gabarito \
+		&& poetry run dbt test --select conjuntura_gabarito_do_boletim
+
+# Congela as edições do boletim (as fontes revisam o passado).
+# É `dbt snapshot`, não script: o snapshot guarda o HISTÓRICO das revisões,
+# não um retrato, e é o que responde "por que o boletim publicou X e hoje é Y".
+conjuntura-congelar:
+	cd dbt/mcid && poetry run dbt snapshot
+
 .PHONY: setup format lint lint-ci test compose-config up down logs-airflow \
-	docs-setup docs-collect docs-build docs-serve docs-clean
+	docs-setup docs-collect docs-build docs-serve docs-clean conjuntura-docs \
+	conjuntura-docs-pdf conjuntura-catalogo conjuntura-validar-boletins \
+	conjuntura-congelar \
+	governance-audit gx-silver governance-load-strategies openmetadata-catalog \
+	openmetadata-sync openmetadata-governanca openmetadata-lake openmetadata \
+	governance-audit-om

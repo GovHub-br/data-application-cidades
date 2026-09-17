@@ -27,6 +27,7 @@ class ClienteNovoCaged(ClienteBase):
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
         )
+
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
             "X-PowerBI-ResourceKey": "5b95b481-bfbc-4287-935e-ce2b20015ab6",
@@ -36,11 +37,82 @@ class ClienteNovoCaged(ClienteBase):
         super().__init__(base_url=base_url, headers=headers)
         logging.info("[ClienteNovoCaged] Cliente iniciado com sucesso.")
 
-    def obter_dados_mensais(self, ano: int, mes: str) -> Optional[Dict[str, Any]]:
+    def obter_dados_mensais(
+        self, ano: int, mes: str, cnae_divisao: Optional[str] = "Construção de Edifícios"
+    ) -> Optional[Dict[str, Any]]:
         """
-        Busca os dados de Construção de Edifícios para um mês/ano específico.
+        Busca os dados de empregos na construção para um mês/ano específico.
+
+        `cnae_divisao` filtra por "CNAE 2.0 Divisão" (ex: "Construção de
+        Edifícios", "Serviços Especializados para Construção", "Obras de
+        Infraestrutura"). Passar `None` remove esse filtro e retorna o total
+        da construção (todas as divisões, "Grande Grupamento" = Construção).
         """
         path = "/querydata?synchronous=true"
+
+        where = [
+            {
+                "Condition": {
+                    "In": {
+                        "Expressions": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": "e"}},
+                                    "Property": "Grande Grupamento",
+                                }
+                            }
+                        ],
+                        "Values": [[{"Literal": {"Value": "'Construção'"}}]],
+                    }
+                }
+            },
+        ]
+        if cnae_divisao:
+            where.append(
+                {
+                    "Condition": {
+                        "In": {
+                            "Expressions": [
+                                {
+                                    "Column": {
+                                        "Expression": {"SourceRef": {"Source": "e"}},
+                                        "Property": "CNAE 2.0 Divisão",
+                                    }
+                                }
+                            ],
+                            "Values": [[{"Literal": {"Value": f"'{cnae_divisao}'"}}]],
+                        }
+                    }
+                }
+            )
+        where.append(
+            {
+                "Condition": {
+                    "In": {
+                        "Expressions": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": "l"}},
+                                    "Property": "Ano",
+                                }
+                            },
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Source": "l"}},
+                                    "Property": "Mês",
+                                }
+                            },
+                        ],
+                        "Values": [
+                            [
+                                {"Literal": {"Value": f"{ano}L"}},
+                                {"Literal": {"Value": f"'{mes.lower()}'"}},
+                            ]
+                        ],
+                    }
+                }
+            }
+        )
 
         payload = {
             "version": "1.0.0",
@@ -61,7 +133,7 @@ class ClienteNovoCaged(ClienteBase):
                                             {"Name": "m", "Entity": "Medidas", "Type": 0},
                                             {
                                                 "Name": "l",
-                                                "Entity": "LocalDateTable_9b82530a-b08e-43fc-8e3a-39c225627f7d",  # noqa: E501
+                                                "Entity": "LocalDateTable_9b82530a-b08e-43fc-8e3a-39c225627f7d",
                                                 "Type": 0,
                                             },
                                         ],
@@ -112,104 +184,7 @@ class ClienteNovoCaged(ClienteBase):
                                                 "Name": "Variacao",
                                             },
                                         ],
-                                        "Where": [
-                                            {
-                                                "Condition": {
-                                                    "In": {
-                                                        "Expressions": [
-                                                            {
-                                                                "Column": {
-                                                                    "Expression": {
-                                                                        "SourceRef": {
-                                                                            "Source": "e"
-                                                                        }
-                                                                    },
-                                                                    "Property": "Grande Grupamento",  # noqa: E501
-                                                                }
-                                                            }
-                                                        ],
-                                                        "Values": [
-                                                            [
-                                                                {
-                                                                    "Literal": {
-                                                                        "Value": "'Construção'"  # noqa: E501
-                                                                    }
-                                                                }
-                                                            ]
-                                                        ],
-                                                    }
-                                                }
-                                            },
-                                            {
-                                                "Condition": {
-                                                    "In": {
-                                                        "Expressions": [
-                                                            {
-                                                                "Column": {
-                                                                    "Expression": {
-                                                                        "SourceRef": {
-                                                                            "Source": "e"
-                                                                        }
-                                                                    },
-                                                                    "Property": "CNAE 2.0 Divisão",  # noqa: E501
-                                                                }
-                                                            }
-                                                        ],
-                                                        "Values": [
-                                                            [
-                                                                {
-                                                                    "Literal": {
-                                                                        "Value": "'Construção de Edifícios'"  # noqa: E501
-                                                                    }
-                                                                }
-                                                            ]
-                                                        ],
-                                                    }
-                                                }
-                                            },
-                                            {
-                                                "Condition": {
-                                                    "In": {
-                                                        "Expressions": [
-                                                            {
-                                                                "Column": {
-                                                                    "Expression": {
-                                                                        "SourceRef": {
-                                                                            "Source": "l"
-                                                                        }
-                                                                    },
-                                                                    "Property": "Ano",
-                                                                }
-                                                            },
-                                                            {
-                                                                "Column": {
-                                                                    "Expression": {
-                                                                        "SourceRef": {
-                                                                            "Source": "l"
-                                                                        }
-                                                                    },
-                                                                    "Property": "Mês",
-                                                                }
-                                                            },
-                                                        ],
-                                                        "Values": [
-                                                            [
-                                                                {
-                                                                    "Literal": {
-                                                                        "Value": f"{ano}L"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "Literal": {
-                                                                        "Value": f"'{mes.lower()}'"  # noqa: E501
-                                                                    }
-                                                                },
-                                                            ]
-                                                        ],
-                                                    }
-                                                }
-                                            },
-                                        ],
+                                        "Where": where,
                                     },
                                     "Binding": {
                                         "Primary": {
@@ -260,17 +235,20 @@ class ClienteNovoCaged(ClienteBase):
             }
         except (KeyError, IndexError, TypeError) as e:
             logging.error(
-                f"[ClienteNovoCaged] Erro ao fazer o parse da resposta "
-                f"para {mes}/{ano}: {e}"
+                f"[ClienteNovoCaged] Erro ao fazer o parse da resposta para {mes}/{ano}: {e}"
             )
             return None
 
     def obter_historico(
-        self, anos: Optional[List[int]] = None, meses: Optional[List[str]] = None
+        self,
+        anos: Optional[List[int]] = None,
+        meses: Optional[List[str]] = None,
+        cnae_divisao: Optional[str] = "Construção de Edifícios",
     ) -> List[Dict[str, Any]]:
         """
-        Busca os dados de Construção de Edifícios para uma lista de anos e meses.
+        Busca os dados de empregos na construção para uma lista de anos e meses.
         Se não fornecidos, busca do histórico padrão (2024 até o ano/mês atual).
+        `cnae_divisao`: ver `obter_dados_mensais` (None = total da construção).
         Retorna uma lista de dicionários pronta para inserção no banco de dados.
         """
         if not anos:
@@ -305,7 +283,7 @@ class ClienteNovoCaged(ClienteBase):
                     break
 
                 logging.info(f"[ClienteNovoCaged] Processando {mes}/{ano}...")
-                dados = self.obter_dados_mensais(ano, mes)
+                dados = self.obter_dados_mensais(ano, mes, cnae_divisao=cnae_divisao)
 
                 if dados:
                     historico_caged.append(dados)

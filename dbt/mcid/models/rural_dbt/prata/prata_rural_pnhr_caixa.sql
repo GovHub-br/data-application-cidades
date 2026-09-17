@@ -8,19 +8,19 @@ with
     int_caixa_raw as (
         select
             -- Identificadores
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_emprendimento)), '') as nu_contrato_empreend,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(co_agente_financeiro)), '') as agente_financeiro_codigo,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_emprendimento)), '') as nu_contrato_empreend,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_agente_financeiro)), '') as agente_financeiro_codigo,
 
             -- Entidade Organizadora (EO)
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_entidade_organizadora)), '') as eo_nome,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_entidade_organizadora)), '') as eo_nome,
             nullif(regexp_replace(trim(nu_cnpj_entidade), '[^0-9]', '', 'g'), '') as eo_cnpj,
 
             -- Localização
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_municipio)), '') as municipio,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(sg_uf)), '') as uf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(co_municipio_ibge)), '') as cod_ibge,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_municipio)), '') as municipio,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(sg_uf)), '') as uf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_municipio_ibge)), '') as cod_ibge,
 
             -- Quantidades
             {{ parse_int('qtde_uh_inicial') }} as qtde_uh_inicial,
@@ -48,34 +48,34 @@ with
             -- Prazos e Execução
             {{ parse_int('pz_construcao') }} as prazo_construcao,
             {{ parse_numeric('pc_obra_realizado', 'numeric(6, 2)') }} as percentual_execucao_fisica,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_situacao_obra)), '') as situacao_obra,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_situacao_obra)), '') as situacao_obra,
 
             -- Datas
             case
                 when dt_contrato is null or trim(dt_contrato) = '' then null
                 when dt_contrato ~ '^\d{4}-\d{2}-\d{2}' then dt_contrato::date
-                else {{ target.schema }}.parse_date_br(dt_contrato)
+                else {{ var('schema_udfs') }}.parse_date_br(dt_contrato)
             end as dt_contrato,
             case
                 when dt_ultima_liberacao is null or trim(dt_ultima_liberacao) = '' then null
                 when dt_ultima_liberacao ~ '^\d{4}-\d{2}-\d{2}' then dt_ultima_liberacao::date
-                else {{ target.schema }}.parse_date_br(dt_ultima_liberacao)
+                else {{ var('schema_udfs') }}.parse_date_br(dt_ultima_liberacao)
             end as dt_ultima_liberacao,
             case
                 when dt_efetiva_conclusao is null or trim(dt_efetiva_conclusao) = '' then null
                 when dt_efetiva_conclusao ~ '^\d{4}-\d{2}-\d{2}' then dt_efetiva_conclusao::date
-                else {{ target.schema }}.parse_date_br(dt_efetiva_conclusao)
+                else {{ var('schema_udfs') }}.parse_date_br(dt_efetiva_conclusao)
             end as dt_conclusao_obra,
             case
                 when dt_movimento is null or trim(dt_movimento) = '' then null
                 when dt_movimento ~ '^\d{4}-\d{2}-\d{2}' then dt_movimento::date
-                else {{ target.schema }}.parse_date_br(dt_movimento)
+                else {{ var('schema_udfs') }}.parse_date_br(dt_movimento)
             end as dt_movimento,
 
             -- Linhagem da bronze do lake
-            nullif(trim({{ target.schema }}.corrigir_mojibake(origem)), '') as origem,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(origem)), '') as origem,
             _source_file as arquivo_de_origem,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ ref("bronze_sftp_int065_pnhr_caixa_empreendimentos") }}
     )

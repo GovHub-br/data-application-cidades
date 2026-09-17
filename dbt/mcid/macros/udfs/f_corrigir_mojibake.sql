@@ -12,7 +12,7 @@
 -- É no-op sobre texto limpo.
 {% macro create_f_corrigir_mojibake() %}
 
-    create or replace function {{ target.schema }}.corrigir_mojibake(in_text text)
+    create or replace function {{ var('schema_udfs') }}.corrigir_mojibake(in_text text)
     returns text
     as $$
     declare

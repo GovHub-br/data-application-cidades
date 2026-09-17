@@ -10,7 +10,7 @@ with
     int059_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             nullif(trim(no_empreeendmento), '') as empreendimento_nome,
 
             -- Seleção MCMV (campo-chave para filtrar Novo vs Legado)
@@ -71,13 +71,13 @@ with
             nullif(trim(infraestrutura_externa), '') as infraestrutura_externa,
 
             -- Datas-chave
-            {{ target.schema }}.parse_date_br(dt_assinatura) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
-            {{ target.schema }}.parse_date_br(dt_termino_obra) as dt_termino_obra,
-            {{ target.schema }}.parse_date_br(dt_legalizacao) as dt_legalizacao,
-            {{ target.schema }}.parse_date_br(dt_maxima_liberacao) as dt_maxima_liberacao,
-            {{ target.schema }}.parse_date_br(dt_ultima_entrega) as dt_ultima_entrega,
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_assinatura) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
+            {{ var('schema_udfs') }}.parse_date_br(dt_termino_obra) as dt_termino_obra,
+            {{ var('schema_udfs') }}.parse_date_br(dt_legalizacao) as dt_legalizacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_maxima_liberacao) as dt_maxima_liberacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_ultima_entrega) as dt_ultima_entrega,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
 
             -- Coordenadas GPS
             {{ parse_numeric("gps_latitude_grau") }} as gps_lat_grau,

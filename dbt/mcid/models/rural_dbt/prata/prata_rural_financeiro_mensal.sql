@@ -8,14 +8,14 @@ with
     financeiro_mensal_raw as (
         select
             -- Identificadores
-            nullif(trim({{ target.schema }}.corrigir_mojibake(id)), '') as id,
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(id)), '') as id,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             {{ parse_int('co_tipo_registro') }} as co_tipo_registro,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_identificador)), '') as nu_identificador,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_identificador)), '') as nu_identificador,
 
             -- Execução e Crédito
             {{ parse_numeric('pc_evolucao', 'numeric(6,2)') }} as percentual_evolucao,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(ic_credito)), '') as ic_credito,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(ic_credito)), '') as ic_credito,
 
             -- Valores
             {{ parse_financial_value('vr_movimento') }} as vr_movimento,
@@ -26,14 +26,14 @@ with
             {{ parse_financial_value('vr_desembolso_custos_indiretos') }} as vr_desembolso_custos_indiretos,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
-            {{ target.schema }}.parse_date_br(dt_remessa) as dt_remessa,
-            {{ target.schema }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao_recurso,
-            {{ target.schema }}.parse_date_br(dh_gravacao) as dh_gravacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_remessa) as dt_remessa,
+            {{ var('schema_udfs') }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao_recurso,
+            {{ var('schema_udfs') }}.parse_date_br(dh_gravacao) as dh_gravacao,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ ref("bronze_shpt_monit_mov_financ_rural_mensal") }}
     )

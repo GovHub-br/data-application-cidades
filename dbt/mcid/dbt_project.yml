@@ -17,69 +17,329 @@ clean-targets:
   - "dbt_packages"
   - "logs"
 
+# Schema das UDFs (`corrigir_mojibake`, `parse_date_br`, `normalize_apf`).
+# Fixo aqui, e não em `target.schema`: aquele vem de DB_DW_SCHEMA_MCID e pode
+# diferir entre máquinas, o que espalharia as funções por schemas diferentes.
+vars:
+  schema_udfs: metadata
+
+seeds:
+  mcid:
+    # Todo seed vai para `seeds`: não são ativos de consumo e ficariam fora de
+    # convenção em `ouro`, onde todo nome começa por camada e domínio. No nível
+    # do projeto, e não por seed, porque sem isto um seed novo cairia no schema
+    # de fallback — ver `tests/sem_recurso_no_schema_de_fallback.sql`.
+    +schema: seeds
+
+    # Seeds do eixo histórico (mcmv_historico_dbt). Convenção: todas
+    # materializam num schema único `seeds`, no catálogo `cidades`.
+    conjuntura:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+
+    # Seeds curadas de identidade FDS, consumidas pela dim de empreendimento
+    # (prata_fds_dim_empreendimento).
+    entidades_fds:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+
+    # Seeds de referência dos testes de qualidade: domínios canônicos e
+    # retrato de colunas por família.
+    data_quality:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+      # chave_natural / faixa são texto — várias chaves são só dígitos e a
+      # inferência as tornaria BIGINT, quebrando o join com a prata (varchar).
+      quarentena_valores_financeiros:
+        +column_types:
+          fonte_familia: varchar
+          chave_natural: varchar
+          motivo: varchar
+          evidencia: varchar
+      faixa_valor_uh:
+        +column_types:
+          frente: varchar
+          faixa: varchar
+          valor_col: varchar
+          piso: double
+          teto: double
+      campos_obrigatorios:
+        +column_types:
+          modelo: varchar
+          coluna: varchar
+          obrigatoria: boolean
+          min_completude: double
+          origem: varchar
+
 models:
   mcid:
     +database: cidades
     metadata:
       +materialized: incremental
       +schema: metadata
+      +meta:
+        governance:
+          product: metadata
+          owner_key: mcid_data_engineering
+          classification: restricted
+          rag_publication: prohibited
 
     far_dbt:
       +materialized: table
+      +meta:
+        governance:
+          product: empreendimento_far
+          owner_key: mcid_data_engineering
       bronze:
         +schema: bronze
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       prata:
         +schema: prata
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       ouro:
         +schema: ouro
+        +meta:
+          governance:
+            product: empreendimento_far
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     fds_dbt:
       +materialized: table
+      +meta:
+        governance:
+          product: entidades_fds
+          owner_key: mcid_data_engineering
       bronze:
         +schema: bronze
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       prata:
         +schema: prata
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       ouro:
         +schema: ouro
+        +meta:
+          governance:
+            product: entidades_fds
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     rural_dbt:
       +materialized: table
+      +meta:
+        governance:
+          product: empreendimento_rural
+          owner_key: mcid_data_engineering
       bronze:
         +schema: bronze
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
       prata:
         +schema: prata
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
       ouro:
         +schema: ouro
+        +meta:
+          governance:
+            product: empreendimento_rural
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
     conjuntura_dbt:
       +materialized: table
-      +schema: conjuntura
+      +meta:
+        governance:
+          product: conjuntura
+          owner_key: mcid_data_engineering
       bronze:
-        +materialized: table
-        +schema: conjuntura_bronze
-      silver:
-        +materialized: table
-        +schema: conjuntura_silver
-      gold:
-        +materialized: table
-        +schema: conjuntura_gold
-    
-    conjuntura_continuo_dbt:
+        +schema: bronze
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited          
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation          
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation          
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+      qualidade:
+        +schema: ouro
+        +meta:
+          governance:
+            product: conjuntura
+            owner_key: mcid_data_engineering
+            layer: quality
+            classification: restricted
+            rag_publication: prohibited
+
+    mcmv_historico_dbt:
       +materialized: table
-      +schema: conjuntura_continuo
-      # Sem camada bronze: o parquet de staging já sai tipado (Etapa 02) e a
-      # silver lê direto via pg_duckdb (read_parquet).
-      silver:
-        +materialized: table
-        +schema: conjuntura_continuo_silver
-      gold:
-        +materialized: table
-        +schema: conjuntura_continuo_mart
+      +meta:
+        governance:
+          product: mcmv_historico
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+      # Piloto (OGU/FGTS): DESABILITADO. O modelo
+      # `prata_dhist_serie_anual_ogu_fgts` carrega `config(enabled=false)` no
+      # próprio arquivo — por isso não há bloco `piloto:` aqui.
 
+# Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
+# CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`
+# / `timestamptz`. Nenhum dos dois existe no DuckDB, entao ficam atras do guard
+# de target.type -- o eixo historico roda nos targets duckdb
+# (staging_duckdb / prod_duckdb) e quebrava no hook, nao no modelo.
 on-run-start:
-  - '{{create_udfs()}}'
+  - "{% if target.type == 'postgres' %}{{ create_udfs() }}{% endif %}"
 
-# Registra em lake._dbt_log o que não passou — inclusive os testes que são
-# `severity: warn` e por isso não derrubam a execução.
 on-run-end:
-  - '{{ registrar_execucao_dbt() }}'
+  - "{% if target.type == 'postgres' %}{{ registrar_execucao_dbt() }}{% endif %}"

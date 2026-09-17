@@ -1,0 +1,55 @@
+frente,faixa,valor_col,piso,teto
+bext,faixa 1,valor_investimento,3000,250000
+bext,1,valor_investimento,3000,250000
+bext,faixa 2,valor_investimento,20000,600000
+bext,2,valor_investimento,20000,600000
+bext,faixa 3,valor_investimento,20000,800000
+bext,3,valor_investimento,20000,800000
+bases_relatorio_executivo,faixa 1,valor_investimento,3000,300000
+bases_relatorio_executivo,1,valor_investimento,3000,300000
+bases_relatorio_executivo,faixa 2,valor_investimento,20000,700000
+bases_relatorio_executivo,2,valor_investimento,20000,700000
+bases_relatorio_executivo,faixa 3,valor_investimento,20000,900000
+bases_relatorio_executivo,3,valor_investimento,20000,900000
+min_cidades,faixa 1,valor_investimento,10000,250000
+min_cidades,1,valor_investimento,10000,250000
+min_cidades,faixa 2,valor_investimento,20000,400000
+min_cidades,2,valor_investimento,20000,400000
+min_cidades,faixa 3,valor_investimento,20000,500000
+min_cidades,3,valor_investimento,20000,500000
+FAR,faixa 1,valor_contratado,10000,900000
+FAR,faixa 1,valor_desembolsado,500,900000
+FAR,faixa 2,valor_contratado,10000,900000
+FAR,faixa 2,valor_desembolsado,500,900000
+FAR,faixa 3,valor_contratado,10000,900000
+FAR,faixa 3,valor_desembolsado,500,900000
+FAR,1,valor_contratado,10000,900000
+FAR,1,valor_desembolsado,500,900000
+FAR,2,valor_contratado,10000,900000
+FAR,2,valor_desembolsado,500,900000
+FAR,3,valor_contratado,10000,900000
+FAR,3,valor_desembolsado,500,900000
+Entidades,faixa 1,valor_contratado,10000,900000
+Entidades,faixa 1,valor_desembolsado,500,900000
+Entidades,faixa 2,valor_contratado,10000,900000
+Entidades,faixa 2,valor_desembolsado,500,900000
+Entidades,faixa 3,valor_contratado,10000,900000
+Entidades,faixa 3,valor_desembolsado,500,900000
+Entidades,1,valor_contratado,10000,900000
+Entidades,1,valor_desembolsado,500,900000
+Entidades,2,valor_contratado,10000,900000
+Entidades,2,valor_desembolsado,500,900000
+Entidades,3,valor_contratado,10000,900000
+Entidades,3,valor_desembolsado,500,900000
+Rural,faixa 1,valor_contratado,10000,900000
+Rural,faixa 1,valor_desembolsado,500,900000
+Rural,faixa 2,valor_contratado,10000,900000
+Rural,faixa 2,valor_desembolsado,500,900000
+Rural,faixa 3,valor_contratado,10000,900000
+Rural,faixa 3,valor_desembolsado,500,900000
+Rural,1,valor_contratado,10000,900000
+Rural,1,valor_desembolsado,500,900000
+Rural,2,valor_contratado,10000,900000
+Rural,2,valor_desembolsado,500,900000
+Rural,3,valor_contratado,10000,900000
+Rural,3,valor_desembolsado,500,900000

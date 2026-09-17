@@ -1,0 +1,385 @@
+# Inventário das fontes do Boletim de Conjuntura, um bloco por quadro.
+#
+# Extraído do PDF que circulava solto e versionado aqui: o catálogo é
+# documento de trabalho da equipe, muda a cada automação concluída, e
+# ninguém sabia regerá-lo. `link` é a URL clicável; `link_texto` guarda a
+# procedência quando ela não é endereço navegável (bucket, OCR interno).
+
+version: 1
+posicao: '2026-08-28'
+validado_contra:
+- 3T2025
+- 4T2025
+- 1T2026
+paginas:
+- numero: 1
+  titulo: PIB da Construção Civil · Lançamentos e Vendas
+  blocos:
+  - numero: 1
+    titulo: PIB da Construção Civil
+    automatizado: true
+    frequencia: Trimestral
+    fonte: IBGE — Sistema de Contas Nacionais Trimestrais (SIDRA)
+    tipo: API
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: 'Variação do PIB da construção civil em três formas: trimestre/trimestre imediatamente
+      anterior, acumulada no ano e acumulada nos últimos 4 trimestres.'
+    link: https://apisidra.ibge.gov.br/values
+    link_texto: null
+  - numero: 2
+    titulo: Lançamentos e Vendas por Região (CBIC)
+    automatizado: false
+    frequencia: Trimestral
+    fonte: CBIC — Câmara Brasileira da Indústria da Construção
+    tipo: Relatório PDF (sem acesso programático)
+    insercao: Manual, em lote, via script SQL versionado
+    situacao: Sem acesso à base — automação não autorizada
+    dado_coletado: Lançamentos e vendas por região (Norte, Nordeste, Centro-Oeste, Sudeste, Sul), com
+      recorte MCMV e total.
+    link: null
+    link_texto: null
+  - numero: 3
+    titulo: Balanços das Construtoras
+    automatizado: true
+    notas:
+    - 'Escopo: a coleta de unidades está automatizada para as seis empresas. O OCR não extrai VGV — esse
+      dado só é automatizado para a MRV e aparece no Bloco 22 (Ticket Médio).'
+    frequencia: Trimestral
+    fonte: Balanços trimestrais das empresas (releases de RI)
+    tipo: Extração por OCR de PDF · planilha XLSX (MRV)
+    insercao: Automação (pipeline de OCR + Airflow)
+    situacao: Concluída para 6 empresas — Cury, Direcional, Pacaembu, Plano&Plano, Tenda e MRV
+    dado_coletado: Unidades lançadas e vendidas por empresa e por trimestre, com os comparativos do boletim
+      (trimestre anterior e mesmo trimestre do ano anterior). A MRV traz também VGV e ticket médio.
+    link: null
+    link_texto: OCR interno · apicatalog.mziq.com (MRV)
+- numero: 2
+  titulo: Financiamentos Imobiliários e Habitacionais
+  blocos:
+  - numero: 4
+    titulo: Financiamentos Imobiliários PF/PJ
+    automatizado: true
+    frequencia: Mensal
+    fonte: BACEN — Sistema Gerenciador de Séries Temporais (SGS)
+    tipo: API
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: Concessões (R$ bilhões), taxas de juros (% a.a.) e inadimplência (%), separados por
+      pessoa física e pessoa jurídica.
+    link: https://api.bcb.gov.br/dados/serie
+    link_texto: null
+  - numero: 5
+    titulo: Financiamentos Habitacionais (UH) — FGTS-PJ
+    automatizado: true
+    notas:
+    - 'Ressalva: o nome do arquivo carrega a data do dump e muda a cada mês, e hoje está fixo no código.
+      Enquanto não houver uma rotina que copie sempre o arquivo mais recente para um caminho estável,
+      é preciso atualizar o caminho manualmente a cada nova carga.'
+    frequencia: Mensal (arquivo) · agregado trimestral
+    fonte: Caixa Econômica Federal — sistema GEAVO
+    tipo: Arquivo Parquet via SFTP
+    insercao: Automação (SFTP) — caminho do arquivo ainda atualizado à mão
+    situacao: Concluída após automação, com ressalva operacional
+    dado_coletado: Contagem de unidades habitacionais financiadas no trimestre pelo FGTS — Apoio à Produção,
+      e acumulado em 12 meses.
+    link: null
+    link_texto: s3://data-lake-mcid/staging/sftp/caixa.geavo/GEAVO/
+  - numero: 6
+    titulo: Financiamentos Habitacionais (UH) — SBPE Construção
+    automatizado: false
+    frequencia: Trimestral
+    fonte: ABECIP
+    tipo: Planilha
+    insercao: Manual
+    situacao: Não automatizado — aguardando base do ABECIP
+    dado_coletado: Unidades habitacionais financiadas pelo SBPE na modalidade construção, trimestral e
+      acumulado em 12 meses.
+    link: https://www.abecip.org.br/credito-imobiliario/indicadores
+    link_texto: null
+- numero: 3
+  titulo: Empregos · PNAD · Produção Física
+  blocos:
+  - numero: 7
+    titulo: Empregos na Construção
+    automatizado: true
+    frequencia: Mensal
+    fonte: Ministério do Trabalho e Emprego — Novo CAGED
+    tipo: API (painel Power BI público)
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: Admitidos, desligados, saldo e estoque de empregos formais, no total da construção
+      e nos recortes de edifícios e serviços especializados.
+    link: https://wabi-brazil-south-api.analysis.windows.net/public/reports
+    link_texto: null
+  - numero: 8
+    titulo: PNAD Contínua — Ocupados
+    automatizado: true
+    frequencia: Trimestral
+    fonte: IBGE — PNAD Contínua (SIDRA)
+    tipo: API
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: Pessoas ocupadas na construção e no total da economia, em mil pessoas.
+    link: https://apisidra.ibge.gov.br/values
+    link_texto: null
+  - numero: 9
+    titulo: PNAD Contínua — Rendimento
+    automatizado: true
+    frequencia: Trimestral
+    fonte: IBGE — PNAD Contínua (SIDRA)
+    tipo: API
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: 'Rendimento médio real habitual na construção e no total, em reais. Atenção: o IBGE
+      reajusta a base da série a cada divulgação, então valores de trimestres anteriores mudam entre edições.
+      É revisão da fonte, não erro de coleta.'
+    link: https://apisidra.ibge.gov.br/values
+    link_texto: null
+  - numero: 10
+    titulo: Produção Física e Volume de Vendas
+    automatizado: true
+    frequencia: Mensal
+    fonte: IBGE — PIM-PF e PMC (SIDRA)
+    tipo: API
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: Produção física de insumos da construção e volume de vendas do varejo de material de
+      construção, séries dessazonalizadas.
+    link: https://apisidra.ibge.gov.br/values
+    link_texto: null
+  - numero: 11
+    titulo: Novos Financiamentos SBPE por Banco
+    automatizado: false
+    frequencia: Mensal · acumulado no ano
+    fonte: ABECIP
+    tipo: Planilha
+    insercao: Manual
+    situacao: Não automatizado — série mais desatualizada do conjunto
+    dado_coletado: 'Unidades e valores financiados por banco (Caixa, Bradesco, Itaú, Santander, Banco
+      do Brasil), acumulado no ano e participação percentual. Pendência: o último dado disponível é de
+      setembro de 2025 — quase um ano de defasagem. É a aba mais atrasada da planilha e a que mais urge
+      atualizar.'
+    link: https://www.abecip.org.br/credito-imobiliario/indicadores
+    link_texto: null
+- numero: 4
+  titulo: Crédito, Faixas de Renda e Funding
+  blocos:
+  - numero: 12
+    titulo: Crédito Imobiliário sobre PIB
+    automatizado: true
+    frequencia: Mensal
+    fonte: BACEN — Painel Mercado Imobiliário (Olinda)
+    tipo: API
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: Razão entre o saldo de crédito imobiliário e o PIB, em percentual.
+    link: https://olinda.bcb.gov.br/olinda/servico/MercadoImobiliario/versao/v1/odata
+    link_texto: null
+  - numero: 13
+    titulo: Financiamento PF por Faixa de Renda (FGTS)
+    automatizado: true
+    notas:
+    - 'Ressalva: os recortes “Faixa 3 com/sem Fundo Social” e “Fora MCMV”, que a planilha antiga trazia,
+      não são reproduzidos — a base nova não os distingue de forma confiável.'
+    frequencia: Mensal
+    fonte: Caixa Econômica Federal — sistema GEAVO
+    tipo: Arquivo Parquet via SFTP
+    insercao: Automação (SFTP) — caminho do arquivo ainda atualizado à mão
+    situacao: Concluída após automação, com ressalva de escopo
+    dado_coletado: Unidades e valor financiado por faixa do MCMV (Faixa 1, 2, 3 e Classe Média) e por
+      condição do imóvel (novo ou usado).
+    link: null
+    link_texto: s3://data-lake-mcid/staging/sftp/caixa.geavo/GEAVO/
+  - numero: 14
+    titulo: Unidades por Condição de Uso
+    automatizado: false
+    frequencia: Mensal
+    fonte: Caixa — sistema GEAVO (lado FGTS) · ABECIP (lado SBPE)
+    tipo: Arquivo Parquet · planilha
+    insercao: Automação (FGTS) · manual (SBPE)
+    situacao: Parcial — lado FGTS automatizado; lado SBPE ainda manual
+    dado_coletado: Unidades habitacionais financiadas para imóveis novos e usados, em quantidade e valor.
+    link: null
+    link_texto: s3://data-lake-mcid/staging/sftp/caixa.geavo/GEAVO/
+  - numero: 15
+    titulo: Estrutura de Funding
+    automatizado: false
+    frequencia: Mensal
+    fonte: Consolidação interna do boletim
+    tipo: Planilha
+    insercao: Manual
+    situacao: Não automatizado — sem fonte equivalente identificada
+    dado_coletado: Estoques de SBPE, FGTS, LCI, LCA, CRI, CRA e LIG, em R$ bilhões.
+    link: null
+    link_texto: null
+- numero: 5
+  titulo: Canal FGTS e Poupança
+  blocos:
+  - numero: 16
+    titulo: Canal FGTS — Pró-Cotista
+    automatizado: false
+    frequencia: Mensal
+    fonte: Consolidação interna do boletim
+    tipo: Planilha
+    insercao: Manual
+    situacao: Não automatizado — último dado de novembro de 2025
+    dado_coletado: Unidades e valores do Pró-Cotista por faixa de renda.
+    link: null
+    link_texto: null
+  - numero: 17
+    titulo: Poupança SBPE
+    automatizado: true
+    frequencia: Mensal
+    fonte: ABECIP — Caderneta de Poupança
+    tipo: Página web (extração estruturada)
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: Depósitos, retiradas, captação líquida, rendimento e saldo da poupança SBPE.
+    link: https://www.abecip.org.br/credito-imobiliario/indicadores/caderneta-de-poupanca
+    link_texto: null
+- numero: 6
+  titulo: Orçamento e Preços
+  blocos:
+  - numero: 18
+    titulo: Execução Orçamentária (OGU)
+    automatizado: true
+    frequencia: Mensal
+    fonte: SIAFI / Tesouro Gerencial
+    tipo: Relatório extraído por credencial
+    insercao: Automação via Airflow (requer credencial)
+    situacao: Concluída após automação, com divergências conhecidas
+    dado_coletado: 'Dotação, empenho, pagamento e restos a pagar do MCID nas sete ações do boletim (00AF,
+      00CY, 00CX, 00TI, 00CW, 0E64 e 00XF). Divergências esperadas: a dotação fica abaixo do boletim porque
+      a ação 00XF é crédito reembolsável e não tem dotação no SIAFI. A ação 00TI difere por comparar posição
+      corrente contra posição congelada na data da publicação.'
+    link: https://servicos-siafi.tesouro.gov.br/siafi
+    link_texto: null
+  - numero: 19
+    titulo: Desembolsos de Obras (FAR, Rural, FDS)
+    automatizado: false
+    frequencia: Anual · acumulado
+    fonte: Caixa Econômica Federal
+    tipo: Não identificado
+    insercao: Manual
+    situacao: Sem fonte direta identificada
+    dado_coletado: 'Desembolsos de obras por programa (FAR, Rural, FDS), em R$ milhões. Derivar do OGU
+      foi avaliado e descartado: os recortes não correspondem e o número resultante seria enganoso.'
+    link: null
+    link_texto: null
+  - numero: 20
+    titulo: SINAPI
+    automatizado: true
+    frequencia: Mensal
+    fonte: IBGE — SINAPI (SIDRA)
+    tipo: API
+    insercao: Automação via Airflow
+    situacao: Concluída após automação — confere exatamente com o boletim
+    dado_coletado: Custo médio por m² (material e mão de obra) e suas variações no mês, no acumulado do
+      ano e em 12 meses.
+    link: https://apisidra.ibge.gov.br/values
+    link_texto: null
+  - numero: 21
+    titulo: INCC-M
+    automatizado: true
+    frequencia: Mensal
+    fonte: FGV — IBRE (série histórica espelhada pelo Sinduscon-PR)
+    tipo: Página web (extração estruturada)
+    insercao: Automação via Airflow
+    situacao: Concluída após automação
+    dado_coletado: Número índice do INCC-M e variações no mês, no ano e em 12 meses.
+    link: https://sindusconpr.com.br/economia/indices-economicos/incc-m-fgv/
+    link_texto: null
+  - numero: 22
+    titulo: Ticket Médio das Construtoras
+    automatizado: false
+    notas:
+    - 'Ressalva: a base de 2020 da Cury foi reconstruída por cálculo e não aparece em nenhum boletim publicado
+      — é o único valor da tabela sem confirmação em fonte externa.'
+    frequencia: Trimestral
+    fonte: Balanços trimestrais das empresas · FGV (INCC como comparativo)
+    tipo: Planilha XLSX (MRV) · leitura manual dos releases (demais)
+    insercao: Automação (MRV e INCC) · manual (Direcional, Tenda, Cury)
+    situacao: Parcial — MRV e INCC automatizados; demais empresas ainda manuais
+    dado_coletado: Ticket médio das unidades lançadas por empresa e variação acumulada desde o 4º trimestre
+      de 2020, comparada ao INCC.
+    link: https://apicatalog.mziq.com/filemanager/company/
+    link_texto: https://apicatalog.mziq.com/filemanager/company/ (MRV)
+  - numero: 23
+    titulo: Valor Médio dos Imóveis Financiados (FGTS)
+    automatizado: false
+    frequencia: Mensal
+    fonte: Consolidação interna do boletim
+    tipo: Planilha
+    insercao: Manual
+    situacao: Não automatizado — valores conferem com o boletim
+    dado_coletado: Valor médio dos imóveis financiados via FGTS, geral e na Faixa 1, com variações mensal,
+      anual e em 12 meses.
+    link: null
+    link_texto: null
+- numero: 7
+  titulo: Índices da Construção
+  blocos:
+  - numero: 24
+    titulo: Índice IMOB
+    automatizado: true
+    frequencia: Diária (agregada para mensal)
+    fonte: B3 — índice IMOB, via Alpha Vantage
+    tipo: API (requer chave)
+    insercao: Automação via Airflow
+    situacao: Automatizada em agosto de 2026 — antes era manual
+    dado_coletado: Fechamento do último pregão de cada mês e variações no mês, contra o mesmo mês do ano
+      anterior e acumulada no ano.
+    link: https://www.alphavantage.co/query
+    link_texto: null
+  - numero: 25
+    titulo: Índice FipeZap de Locação
+    automatizado: true
+    frequencia: Mensal
+    fonte: FIPE — Índice FipeZap
+    tipo: Arquivo XLSX
+    insercao: Automação via Airflow
+    situacao: Automatizada em agosto de 2026 — antes era manual
+    dado_coletado: 'Número índice de locação residencial e variações no mês, em 12 meses e acumulada no
+      ano. Atenção: a FIPE revisa a série retroativamente. Os últimos meses podem diferir do que foi publicado
+      em boletins anteriores — os dois números estão certos, em safras diferentes.'
+    link: https://downloads.fipe.org.br/indices/fipezap/fipezap-serieshistoricas.xlsx
+    link_texto: null
+  - numero: 26
+    titulo: Índice ICST
+    automatizado: true
+    frequencia: Mensal
+    fonte: FGV — Índice de Confiança da Construção
+    tipo: Portal com login
+    insercao: Automação via Airflow (requer credencial)
+    situacao: Concluída após automação
+    dado_coletado: Índice de confiança da construção, séries com e sem ajuste sazonal.
+    link: null
+    link_texto: Portal FGV Dados (acesso autenticado)
+  - numero: 27
+    titulo: Índice ABRAMAT
+    automatizado: false
+    frequencia: Mensal
+    fonte: ABRAMAT — Associação Brasileira da Indústria de Materiais de Construção
+    tipo: Release mensal em PDF
+    insercao: Manual
+    situacao: Automação avaliada e descartada
+    dado_coletado: 'Variação do faturamento deflacionado da indústria de materiais de construção, no mês,
+      contra o mesmo mês do ano anterior e acumulada no ano. Por que foi descartada: os números existem
+      no texto do PDF, mas em redação livre que muda a cada mês. Em quatro edições analisadas, a variação
+      mensal aparecia em todas, a anual em três — uma delas escrita por extenso, sem número — e o acumulado
+      do ano em apenas duas. Um release ainda trazia uma projeção que uma extração automática confundiria
+      com dado realizado. O risco de gravar número errado em silêncio supera o ganho. Notas gerais Critério
+      de validação. Nenhum indicador é dado por concluído sem comparação com os boletins publicados de
+      3T2025, 4T2025 e 1T2026 — inclusive quando o número é calculado internamente, e não apenas quando
+      vem pronto de uma fonte nova. Fontes que revisam o passado. FIPE, IBGE (PNAD), CBIC e as construtoras
+      reveem números de períodos já publicados. Isso significa que um painel recalculado hoje pode não
+      reproduzir o que saiu no boletim da época. Preservar a safra de cada edição é uma pendência de arquitetura
+      em aberto. O que ainda não é automatizado. Dez blocos dependem de inserção manual, por três motivos
+      distintos: não há fonte acessível (Blocos 02, 19 e 27), a fonte existe mas a extração não é confiável
+      o suficiente (Bloco 27), ou a base automatizada equivalente ainda não está disponível (Blocos 06,
+      11 e 14). Entre os manuais, quatro séries estão defasadas: Novos Financiamentos por Banco (setembro
+      de 2025), Financiamento PF por Faixa e Canal FGTS Pró-Cotista (novembro de 2025) e Unidades por
+      Condição de Uso (setembro de 2025).'
+    link: https://abramat.org.br/indicadores-publicos/
+    link_texto: null

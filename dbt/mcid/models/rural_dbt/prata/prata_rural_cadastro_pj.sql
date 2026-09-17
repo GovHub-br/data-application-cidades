@@ -8,19 +8,19 @@ with
     cad_pj_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(nu_apf_com_dv) as apf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_contrato_empreend)), '') as nu_contrato_empreend,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(co_agente_finan)), '') as agente_financeiro_codigo,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv) as apf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_empreend)), '') as nu_contrato_empreend,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_agente_finan)), '') as agente_financeiro_codigo,
 
             -- Entidade Organizadora (EO)
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_nome_eo)), '') as eo_nome,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_nome_eo)), '') as eo_nome,
             nullif(regexp_replace(trim(co_cnpj_eo), '[^0-9]', '', 'g'), '') as eo_cnpj,
 
             -- Localização
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_municipio)), '') as municipio,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(sg_uf)), '') as uf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nu_ibge_empreend)), '') as cod_ibge,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_municipio)), '') as municipio,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(sg_uf)), '') as uf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_ibge_empreend)), '') as cod_ibge,
 
             -- Tipologia e Quantidades
             {{ parse_int('nu_modalidade') }} as modalidade_codigo,
@@ -56,14 +56,14 @@ with
             {{ parse_int('co_situacao_obra') }} as co_situacao_obra,
 
             -- Datas-chave
-            {{ target.schema }}.parse_date_br(dt_contratacao) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(dt_retomada) as dt_retomada,
-            {{ target.schema }}.parse_date_br(dt_ult_liberacao) as dt_ultima_liberacao,
-            {{ target.schema }}.parse_date_br(dt_conclusao) as dt_conclusao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_contratacao) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_retomada) as dt_retomada,
+            {{ var('schema_udfs') }}.parse_date_br(dt_ult_liberacao) as dt_ultima_liberacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_conclusao) as dt_conclusao,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ ref("bronze_shpt_monit_cad_pj_rural_mensal") }}
     )
