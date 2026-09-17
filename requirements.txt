@@ -1,4 +1,4 @@
-collate-sqllineage==1.6.0
+collate-sqllineage==2.1.7
 sqlparse==0.5
 astronomer-cosmos==1.9.0
 dbt-postgres==1.7.13
