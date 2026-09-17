@@ -3,7 +3,7 @@
     -- na chamada da macro no Cosmos
     select pg_advisory_xact_lock(123456789)
     ;
-create schema if not exists {{ target.schema }};
+create schema if not exists {{ var('schema_udfs') }};
 
     {{ create_f_parse_date_br() }}
     ;

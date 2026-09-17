@@ -10,7 +10,7 @@ with
     entregas_raw as (
         select
             -- Identificação (APF da CAIXA, formato pode variar)
-            {{ target.schema }}.normalize_apf(apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(apf) as apf,
 
             -- Agente financeiro
             nullif(trim(agente_financeiro), '') as agente_financeiro,
@@ -19,8 +19,8 @@ with
             {{ parse_int("qt_uh_entregues") }} as qt_uh_entregues,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(dt_entrega) as dt_entrega,
-            {{ target.schema }}.parse_date_br(data_de_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_entrega) as dt_entrega,
+            {{ var('schema_udfs') }}.parse_date_br(data_de_movimento) as dt_movimento,
 
             -- Metadados
             _source_file as arquivo_de_origem,

@@ -6,7 +6,7 @@
 -- Esta função normaliza todos para o formato de 8 dígitos sem traço.
 {% macro create_f_normalize_apf() %}
 
-    create or replace function {{ target.schema }}.normalize_apf(in_text text)
+    create or replace function {{ var('schema_udfs') }}.normalize_apf(in_text text)
     returns text
     as
         $$

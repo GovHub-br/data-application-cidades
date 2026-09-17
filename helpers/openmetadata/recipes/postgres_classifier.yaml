@@ -21,7 +21,6 @@ source:
       sampleDataCount: 50
       schemaFilterPattern:
         includes:
-          - "^conjuntura$"
           - "^metadata$"
           - "^bronze$"
           - "^prata$"

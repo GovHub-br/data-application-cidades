@@ -8,7 +8,7 @@ with
     obra_mensal_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
 
             -- Situação e Andamento
             {{ parse_int('co_situacao_operacao') }} as co_situacao_operacao,
@@ -41,27 +41,27 @@ with
             -- Paralisados e Motivos
             {{ parse_int('co_classificacao_paralisados') }} as co_classificacao_paralisados,
             {{ parse_int('co_classificacao_nao_retomada') }} as co_classificacao_nao_retomada,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(no_detalhe_paralisacao_retomada)), '') as detalhe_paralisacao_retomada,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_detalhe_paralisacao_retomada)), '') as detalhe_paralisacao_retomada,
             {{ parse_int('co_motivo_desimobilizacao') }} as co_motivo_desimobilizacao,
             {{ parse_int('co_motivo_distrato_empreendimento') }} as co_motivo_distrato,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(dh_movimento) as dt_movimento,
-            {{ target.schema }}.parse_date_br(dt_alteracao_situacao) as dt_alteracao_situacao,
-            {{ target.schema }}.parse_date_br(dt_alteracao_andamento) as dt_alteracao_andamento,
-            {{ target.schema }}.parse_date_br(dt_invasao) as dt_invasao,
-            {{ target.schema }}.parse_date_br(dt_previsao_conclusao_obra_retomada) as dt_previsao_conclusao_obra_retomada,
-            {{ target.schema }}.parse_date_br(dt_conclusao_obra_retomada) as dt_conclusao_obra_retomada,
-            {{ target.schema }}.parse_date_br(dt_primeira_assinatura_pf) as dt_primeira_assinatura_pf,
-            {{ target.schema }}.parse_date_br(dt_ultima_assinatura_pf) as dt_ultima_assinatura_pf,
-            {{ target.schema }}.parse_date_br(dt_paralisacao) as dt_paralisacao,
-            {{ target.schema }}.parse_date_br(dt_conclusao_obra) as dt_conclusao_obra,
-            {{ target.schema }}.parse_date_br(dt_previsao_entrega_do_empreendimento) as dt_previsao_entrega,
-            {{ target.schema }}.parse_date_br(dt_entrega_do_empreendimento) as dt_entrega_empreendimento,
+            {{ var('schema_udfs') }}.parse_date_br(dh_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_alteracao_situacao) as dt_alteracao_situacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_alteracao_andamento) as dt_alteracao_andamento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_invasao) as dt_invasao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_previsao_conclusao_obra_retomada) as dt_previsao_conclusao_obra_retomada,
+            {{ var('schema_udfs') }}.parse_date_br(dt_conclusao_obra_retomada) as dt_conclusao_obra_retomada,
+            {{ var('schema_udfs') }}.parse_date_br(dt_primeira_assinatura_pf) as dt_primeira_assinatura_pf,
+            {{ var('schema_udfs') }}.parse_date_br(dt_ultima_assinatura_pf) as dt_ultima_assinatura_pf,
+            {{ var('schema_udfs') }}.parse_date_br(dt_paralisacao) as dt_paralisacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_conclusao_obra) as dt_conclusao_obra,
+            {{ var('schema_udfs') }}.parse_date_br(dt_previsao_entrega_do_empreendimento) as dt_previsao_entrega,
+            {{ var('schema_udfs') }}.parse_date_br(dt_entrega_do_empreendimento) as dt_entrega_empreendimento,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ ref("bronze_shpt_monit_mov_obra_rural_mensal") }}
     )

@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p5_financiamento_pf_mcmv_por_faixa %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',

@@ -7,7 +7,7 @@ with
     cad_pj_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             nullif(trim(no_identificacao_proposta), '') as id_proposta,
             nullif(trim(no_agente_financeiro), '') as agente_financeiro,
             nullif(trim(no_empreendimento), '') as empreendimento_nome,
@@ -61,15 +61,15 @@ with
             as vr_seguro_obrigatorio,
 
             -- Datas-chave
-            {{ target.schema }}.parse_date_br(dt_contratacao) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(dt_contratacao) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_previsao_conclusao_obra
             ) as dt_previsao_conclusao,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_apresentacao_orcamento
             ) as dt_apresentacao_orcamento,
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
 
             -- Indicadores
             case

@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p4_credito_imobiliario_pib %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',

@@ -10,11 +10,9 @@ with
     ),
 
     -- Tabela de referência IBGE para traduzir sigla UF → nome completo do estado.
-    -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
-    -- dobraria as linhas de cada seção
     ibge_uf as (
-        select distinct sigla, upper(nome) as estado
-        from {{ source("raw", "api_ibge_uf") }}
+        select sigla, upper(nome) as estado
+        from {{ ref('api_ibge_uf') }}
     ),
 
     -- Seção 1: Header — Grandes números por UF

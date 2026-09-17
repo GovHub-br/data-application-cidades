@@ -8,19 +8,19 @@ with
     ts_bb_raw as (
         select
             -- Identificadores
-            {{ target.schema }}.normalize_apf(contrato_registro_ao) as apf,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(contrato_registro_ao)), '') as contrato,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(recurso)), '') as recurso,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(nome_empreendimento)), '') as empreendimento_nome,
+            {{ var('schema_udfs') }}.normalize_apf(contrato_registro_ao) as apf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(contrato_registro_ao)), '') as contrato,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(recurso)), '') as recurso,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nome_empreendimento)), '') as empreendimento_nome,
 
             -- Localização
-            nullif(trim({{ target.schema }}.corrigir_mojibake(municipio)), '') as municipio,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(uf)), '') as uf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(municipio)), '') as municipio,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(uf)), '') as uf,
 
             -- Quantidades e Tipologia
             {{ parse_int('uh') }} as qt_uh,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(tipologia)), '') as tipologia,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(fase_mcmv)), '') as fase_mcmv,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(tipologia)), '') as tipologia,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(fase_mcmv)), '') as fase_mcmv,
 
             -- Valores
             {{ parse_financial_value('vr_total_ts') }} as vr_global_ts,
@@ -30,23 +30,23 @@ with
             -- Execução e Status
             {{ parse_numeric('percentual_execucao_ts', 'numeric(6, 2)') }} as percentual_execucao_ts,
             {{ parse_numeric('percentual_obra', 'numeric(6, 2)') }} as percentual_obra,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_ts)), '') as situacao_ts,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(motivo_situacao_ts_atrasado_paralisado)), '') as motivo_situacao_ts,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(situacao_ts)), '') as situacao_ts,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(motivo_situacao_ts_atrasado_paralisado)), '') as motivo_situacao_ts,
 
             -- Outros Metadados
-            nullif(trim({{ target.schema }}.corrigir_mojibake(portaria_ts_utilizada)), '') as portaria_adotada,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(instrumento_de_planejamento)), '') as instrumento_planejamento,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(forma_natureza_de_execucao_direta_indireta_mista_pelo_af)), '') as natureza_execucao,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(portaria_ts_utilizada)), '') as portaria_adotada,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(instrumento_de_planejamento)), '') as instrumento_planejamento,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(forma_natureza_de_execucao_direta_indireta_mista_pelo_af)), '') as natureza_execucao,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(data_contratacao_empreendimento) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(data_primeiro_relatorio) as dt_primeiro_relatorio,
-            {{ target.schema }}.parse_date_br(data_ultimo_relatorio) as dt_ultimo_relatorio,
-            {{ target.schema }}.parse_date_br(data_da_assinatura_do_primeiro_contrato_de_pessoa_fisica) as dt_entrega,
+            {{ var('schema_udfs') }}.parse_date_br(data_contratacao_empreendimento) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(data_primeiro_relatorio) as dt_primeiro_relatorio,
+            {{ var('schema_udfs') }}.parse_date_br(data_ultimo_relatorio) as dt_ultimo_relatorio,
+            {{ var('schema_udfs') }}.parse_date_br(data_da_assinatura_do_primeiro_contrato_de_pessoa_fisica) as dt_entrega,
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ target.schema }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
 
         from {{ ref("bronze_shpt_base_trabalho_social_pnhr_bb") }}
     )

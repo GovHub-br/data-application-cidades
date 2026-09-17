@@ -17,10 +17,19 @@ clean-targets:
   - "dbt_packages"
   - "logs"
 
+# Schema das UDFs (`corrigir_mojibake`, `parse_date_br`, `normalize_apf`).
+# Fixo aqui, e não em `target.schema`: aquele vem de DB_DW_SCHEMA_MCID e pode
+# diferir entre máquinas, o que espalharia as funções por schemas diferentes.
+vars:
+  schema_udfs: metadata
+
 seeds:
   mcid:
-    boletim_gabarito:
-      +schema: conjuntura
+    # Todo seed vai para `seeds`: não são ativos de consumo e ficariam fora de
+    # convenção em `ouro`, onde todo nome começa por camada e domínio. No nível
+    # do projeto, e não por seed, porque sem isto um seed novo cairia no schema
+    # de fallback — ver `tests/sem_recurso_no_schema_de_fallback.sql`.
+    +schema: seeds
 
     # Seeds do eixo histórico (mcmv_historico_dbt). Convenção: todas
     # materializam num schema único `seeds`, no catálogo `cidades`.

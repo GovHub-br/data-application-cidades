@@ -825,7 +825,7 @@ def test_dag_de_origem_sobe_pela_linhagem() -> None:
 
 
 def test_model_sem_ancestral_no_lake_fica_sem_dag() -> None:
-    """Ausência é resposta. FAR e FDS leem de `__dados_brutos`, não do lake."""
+    """Ausência é resposta: nem todo model nasce de um arquivo do lake."""
     import sincronizar_lake as lake
 
     mapa = lake.dags_por_modelo(lake.carregar_arquivos())
@@ -898,11 +898,12 @@ def test_tabela_relacionada_carrega_o_que_a_interface_precisa() -> None:
 def test_conjuntura_declara_prefixos_para_nao_catalogar_tabela_alheia() -> None:
     """Os schemas do conjuntura abrigam tabela que não é do produto.
 
-    `bronze`, `prata` e `ouro` são compartilhados com far, fds e rural, e o
-    schema `conjuntura` ainda guarda as `silver_fgts_*` — ~10 M de linhas que
-    nenhum modelo deste repositório produz. A catalogação percorre TODAS as
-    tabelas de cada schema; sem a trava de prefixo ela marcaria as alheias
-    como produto Conjuntura.
+    `bronze`, `prata` e `ouro` são compartilhados com far, fds e rural. A
+    catalogação percorre TODAS as tabelas de cada schema; sem a trava de
+    prefixo ela marcaria as tabelas deles como produto Conjuntura.
+
+    O schema `conjuntura` não entra na lista: nada do produto mora mais lá,
+    só as `silver_fgts_*`, que nenhum modelo deste repositório produz.
 
     Na prata e na ouro o domínio vem logo depois da camada, então um prefixo
     basta para cada. Na bronze o nome carrega a ORIGEM e não o domínio, então
@@ -911,7 +912,7 @@ def test_conjuntura_declara_prefixos_para_nao_catalogar_tabela_alheia() -> None:
     """
     produtos = {p["name"]: p for p in comum.carregar("dominios.yml")["produtos"]}
     conjuntura = produtos["conjuntura"]
-    assert conjuntura["schemas"] == ["bronze", "prata", "ouro", "conjuntura"]
+    assert conjuntura["schemas"] == ["bronze", "prata", "ouro"]
 
     prefixos = set(conjuntura["prefixos_de_tabela"])
     assert {"prata_conjuntura_", "ouro_conjuntura_", "snap_"} <= prefixos

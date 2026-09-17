@@ -8,7 +8,12 @@ mcid:
       password: "{{ env_var('DB_DW_PASSWORD_MCID') }}"
       port: "{{ env_var('DB_DW_PORT_MCID', '5432') | int }}"
       dbname: "{{ env_var('DB_DW_DBNAME_MCID', 'cidades') }}"
-      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'conjuntura') }}"
+      # Schema de fallback: só recebe recurso que esqueceu o `+schema`. Fica
+      # vazio em operação normal, e é isso que o teste
+      # `sem_recurso_no_schema_de_fallback` verifica. Nunca apontar para schema
+      # real — foi assim que models extraviados se esconderam em `conjuntura`.
+      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'dbt_default') }}"
+
     # Modo A (dev) — le a staging MinIO, materializa no arquivo local.
     # O catalogo local se chama `cidades` (D3 da change
     # pipeline-bronze-historica-destino-trocavel): o OpenMetadata monta o FQN
@@ -76,7 +81,7 @@ mcid:
       # O catalogo `cidades` vem do `attach` abaixo, apontando pro Postgres --
       # e um nome nao pode servir aos dois na mesma sessao.
       database: mcid_local
-      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'conjuntura') }}"
+      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'dbt_default') }}"
       threads: "{{ env_var('DUCKDB_MCID_THREADS', '4') | int }}"
       extensions:
         - httpfs

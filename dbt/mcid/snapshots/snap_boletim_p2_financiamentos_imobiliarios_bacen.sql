@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p2_financiamentos_imobiliarios_bacen %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',

@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',

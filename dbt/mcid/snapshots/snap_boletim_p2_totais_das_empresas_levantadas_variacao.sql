@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p2_totais_das_empresas_levantadas_variacao %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',

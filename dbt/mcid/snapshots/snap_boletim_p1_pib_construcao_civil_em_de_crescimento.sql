@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p1_pib_construcao_civil_em_de_crescimento %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',

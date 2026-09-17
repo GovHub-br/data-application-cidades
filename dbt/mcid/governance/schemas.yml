@@ -13,8 +13,8 @@ schemas:
   # que as tabelas dos outros três pertencem a ele; o produto é por tabela e
   # sai do `meta.governance.product` de cada model, via catálogo semântico.
   #
-  # A camada, por outro lado, agora é do SCHEMA: cada um guarda uma só. É o
-  # oposto do `conjuntura`, que continua `mixed`.
+  # A camada, por outro lado, é do SCHEMA: cada um guarda uma só. Foi o que
+  # permitiu aposentar os schemas por produto, o `conjuntura` inclusive.
   - name: bronze
     display_name: Bronze
     layer: bronze
@@ -50,19 +50,6 @@ schemas:
       painéis leem — ficha de empreendimento, panorama estadual, mapa nacional,
       resumo gerencial e o boletim de conjuntura. O nome de cada tabela carrega
       o domínio a que pertence, logo depois da camada.
-
-  - name: conjuntura
-    display_name: Conjuntura (histórico das edições)
-    product: conjuntura
-    layer: mixed
-    owner_key: mcid_data_engineering
-    classification: internal
-    rag_publication: determined_per_model
-    description: >-
-      Guarda os snapshots `snap_boletim_*`, que congelam cada edição publicada
-      do boletim, e o seed `boletim_gabarito`, usado na conferência contra o
-      boletim impresso. Os modelos do produto Conjuntura ficam em `bronze`,
-      `prata` e `ouro`; as cargas manuais foram para `bronze` no 0010.
 
   - name: metadata
     display_name: Metadados técnicos

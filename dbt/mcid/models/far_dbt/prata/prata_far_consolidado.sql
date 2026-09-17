@@ -8,7 +8,7 @@ with
         select
             -- Identificação da proposta
             trim(no_identificacao_proposta) as id_proposta,
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             nullif(trim(nu_operacao_af), '') as nu_operacao_af,
 
             -- Portaria e situação
@@ -98,10 +98,10 @@ with
             end as ic_terreno_doado,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(dt_protocolo) as dt_protocolo,
-            {{ target.schema }}.parse_date_br(dt_recebimento_gfar) as dt_recebimento_gfar,
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(dt_protocolo) as dt_protocolo,
+            {{ var('schema_udfs') }}.parse_date_br(dt_recebimento_gfar) as dt_recebimento_gfar,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_vencimento_portaria_contratacao
             ) as dt_vencimento_portaria,
 

@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p6_sinapi_brasil_e_incc_m %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',

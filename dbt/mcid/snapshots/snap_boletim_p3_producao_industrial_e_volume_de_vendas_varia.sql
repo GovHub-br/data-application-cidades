@@ -19,7 +19,7 @@
 
 {% snapshot snap_boletim_p3_producao_industrial_e_volume_de_vendas_varia %}
 {{ config(
-    target_schema='conjuntura',
+    target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
