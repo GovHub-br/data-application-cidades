@@ -33,6 +33,10 @@ htmlcov/
 # Environment variables
 .env
 .env.local
+local.env
+
+# Local development environments
+.dbt-venv/
 
 # Build directories
 build/
