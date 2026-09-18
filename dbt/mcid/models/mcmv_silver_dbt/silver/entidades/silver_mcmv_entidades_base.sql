@@ -1,0 +1,63 @@
+{{ config(enabled=false) }}
+{# ============================================================================
+   DESATIVADO — domínio mcmv_silver_dbt (legado).
+   Colisão de `alias="silver_historico_base"` entre as 10 frentes: com o bloco
+   `mcmv_silver_dbt` do dbt_project.yml comentado, todas resolvem para o schema
+   default e colidem no parse ("two resources with identical database
+   representation"). Código original preservado abaixo, inerte.
+   Reativar: remova o `config(enabled=false)` acima, descomente o bloco abaixo
+   e restaure o bloco `mcmv_silver_dbt` no dbt_project.yml.
+   ============================================================================ #}
+{#
+{{ config(materialized="table", alias="silver_historico_base") }}
+
+select
+    md5(
+        concat_ws('|', 'entidades', coalesce(id_empreendimento, apf))
+    ) as id_silver_frente,
+    'Minha Casa Minha Vida'::text as programa,
+    'Entidades'::text as frente_mcmv,
+    'Subsidiada'::text as grupo_linha,
+    'FDS / Entidades'::text as linha_mcmv,
+    'empreendimento'::text as grao_registro,
+    'silver'::text as fonte_camada,
+    'entidades_fds'::text as fonte_schema,
+    'fds_empreendimento'::text as fonte_tabela,
+    'raw.novo_mcmv_fds_* + int_059_caixa_pj'::text as fonte_minio_staging,
+    max(apf)::text as apf,
+    max(apf)::text as contrato,
+    coalesce(id_empreendimento, apf)::text as codigo_empreendimento,
+    max(fase_empreendimento)::text as fase_empreendimento,
+    max(empreendimento_nome)::text as nome_empreendimento,
+    max(cod_ibge)::text as codigo_ibge_municipio,
+    max(municipio)::text as municipio,
+    max(uf)::text as uf,
+    'Entidade Organizadora'::text as responsavel_tipo,
+    max(eo_cnpj)::text as responsavel_id,
+    max(eo_nome)::text as responsavel_nome,
+    max(agente_financeiro)::text as agente_financeiro,
+    count(distinct coalesce(id_empreendimento, apf))::integer
+    as quantidade_empreendimentos,
+    count(distinct apf)::integer as quantidade_contratos,
+    max(quantidade_uh)::integer as quantidade_uh,
+    max(qt_uh_alienadas)::integer as quantidade_uh_entregues,
+    max(valor_contratado)::numeric(15, 2) as valor_contratado,
+    max(valor_desembolsado)::numeric(15, 2) as valor_desembolsado,
+    max(percentual_execucao_fisica)::numeric(10, 2) as percentual_execucao_fisica,
+    max(percentual_execucao_financeira)::numeric(10, 2) as percentual_execucao_financeira,
+    max(coalesce(situacao_gefus, fase_contrato))::text as status_operacional,
+    null::date as dt_referencia,
+    min(dt_contratacao)::date as dt_contratacao,
+    min(dt_inicio_obra)::date as dt_inicio_obra,
+    max(dt_previsao_entrega)::date as dt_previsao_entrega,
+    max(dt_entrega)::date as dt_entrega,
+    max(
+        coalesce(dt_ultima_liberacao, dt_entrega, dt_previsao_entrega, dt_contratacao)
+    )::date as dt_ultima_atualizacao,
+    'Entidades/FDS agrupado por id_empreendimento. Regra max validada empiricamente para UH (duplicadas) e financeiro (valor_contratado/valor_desembolsado sao totais unicos por empreendimento, nao particionados entre fases).'
+    ::text as observacao_silver,
+    current_timestamp as dt_silver
+from {{ ref("prata_fds_empreendimento") }}
+where apf is not null
+group by coalesce(id_empreendimento, apf)
+#}

@@ -1,0 +1,144 @@
+version: 2
+
+# Documentação dos modelos silver do conjuntura contínuo, organizada pelas
+# páginas/seções do Boletim de Conjuntura do Setor Habitacional (ref.: 4T2025).
+
+# Legenda:
+#   [OK]         pronto e materializado
+#   [A-FAZER]    automatizável — falta implementar (portar DAG / novo endpoint / recorte IBGE)
+#   [MANUAL]     inserir na mão (tabela Postgres, como o empresas)
+#   [DERIVADO]   calcular a partir de dados que já temos (no gold)
+#   [SEM FONTE]  não teremos o dado (sem acesso / descartado)
+models:
+  # PÁGINA 1 — 1. PIB DA CONSTRUÇÃO CIVIL  +  2. LANÇAMENTOS E VENDAS
+  - name: silver_continuo_ibge_pib_construcao_civil
+    description: >
+      [OK] PIB da construção civil (IBGE, API) — série trimestral. O quadro de
+      "% de Crescimento" do boletim está na tabela manual (ver abaixo).
+  - name: silver_continuo_pib_construcao_civil_pct
+    description: >
+      [OK] PIB da construção civil em % de crescimento (trim/trim, acum. ano,
+      acum. 4 tri). Página 1. [MANUAL] manual_conjuntura.ibge_pib_construcao_civil.
+      Obs.: coluna trim/trim difere do boletim (revisão dessazonalizada); as
+      acumuladas batem exato.
+  - name: silver_continuo_ibge_pib_consolidado_trimestral
+    description: "[OK] PIB consolidado trimestral bruto (IBGE). Apoio à seção 1."
+  - name: silver_continuo_ibge_pib_corrente
+    description: "[OK] PIB corrente em R$ milhões (IBGE). Apoio à seção 1."
+  # [SEM FONTE] 2. Lançamentos e Vendas (CBIC) — por região e totais Total/MCMV/
+  #             Demais. NÃO temos acesso a esse dado.
+
+  # PÁGINA 2 — 2. BALANÇO DAS EMPRESAS  +  3. FINANCIAMENTOS IMOBILIÁRIOS
+  - name: silver_continuo_empresas_balanco_lancamentos_vendas
+    description: >
+      [OK] Balanço das construtoras — lançamentos e vendas (MRV, Cury, Tenda,
+      Direcional, Pacaembu, Plano & Plano). [MANUAL]
+      manual_conjuntura.empresas_balanco_lancamentos_vendas.
+  - name: silver_continuo_bacen_financiamentos_imobiliarios
+    description: >
+      [OK] Financiamentos imobiliários PF/PJ (BACEN SGS): concessões, taxas de
+      juros e inadimplência. Seção 3.
+  # [MANUAL] Financiamentos Habitacionais (UH): FGTS-PJ e SBPE Const — inserir
+  #          na mão (trimestre + 12 meses).
+
+  # PÁGINA 3 (DADOS MENSAIS) — 4. EMPREGOS · RENDIMENTO/PNAD ·
+  #                            5. PRODUÇÃO FÍSICA E VENDAS · 6. CRÉDITO
+  - name: silver_continuo_ibge_pmc_construcao
+    description: "[OK] PMC — volume de vendas da construção (IBGE). Seção 5."
+  - name: silver_continuo_ibge_pim_pf_brasil
+    description: "[OK] PIM-PF — produção física industrial (IBGE). Seção 5."
+  # PNAD-C construção via SIDRA (o /dados do IBGE v3 está 500 nos agregados 6323/6391)
+  - name: silver_continuo_ibge_pnad_construcao_ocupados
+    description: >
+      [OK] PNAD-C ocupados na construção x total (mil pessoas). Seção 4. Fonte:
+      IBGE via SIDRA (t6323 v4090 c888: 47946=Total, 47949=Construção). Bate
+      EXATO com o boletim (out-nov-dez/25: const 7.468, total 102.998).
+  - name: silver_continuo_ibge_pnad_construcao_rendimento
+    description: >
+      [OK] PNAD-C rendimento médio real construção x total (R$). Seção 4. Fonte:
+      SIDRA (t6391 v5932). Obs.: série REAL (deflacionada) — o IBGE re-baseia a
+      cada trimestre, então valores históricos diferem de boletins passados.
+  - name: silver_continuo_ibge_pnadc_rendimento_domiciliar
+    description: "[APOIO] PNAD-C rendimento DOMICILIAR real — outro recorte, não é o do boletim."
+  - name: silver_continuo_ibge_pnadc_populacao_decis_renda
+    description: "[APOIO] PNAD-C população por decil de renda — outro recorte."
+  - name: silver_continuo_novo_caged
+    description: >
+      [OK] Empregos na construção de edifícios (Novo CAGED, API PowerBI). Seção 4:
+      criação líquida (saldo) e total de postos (estoque). Obs.: recorte
+      "edifícios" — o boletim usa o total da construção (avaliar ampliar).
+  # [MANUAL] 6. Novos Financiamentos Imobiliários por banco (CEF/Itaú/Bradesco/
+  #          Santander/BB/demais) — inserir na mão (ABECIP informativo).
+
+  # PÁGINA 4 — CRÉDITO/PIB (BACEN) · FGTS/FS-PF POR RENDA · UH POR CONDIÇÃO ·
+  #            ESTRUTURA DE FUNDING
+  - name: silver_continuo_bacen_credito_pib
+    description: >
+      [OK] Crédito Imobiliário / PIB (%) — série mensal. Fonte: BCB Olinda
+      MercadoImobiliario (indicador indices_imobiliario_pib_br). Página 4.
+  # [MANUAL] FGTS/FS-PF por Renda Familiar (UH usadas x novas).
+  # [MANUAL] N° UH por condição de uso: FGTS-PF e SBPE Aquisição.
+  # [MANUAL] Estrutura de Funding (SBPE/FGTS/LCI/FII/CRI/LIG).
+
+  # PÁGINA 5 — PRATICAMENTE TODA MANUAL (MCMV FIN · SBPE · CANAL FGTS · FAIXAS)
+  - name: silver_continuo_abecip_poupanca_sbpe
+    description: >
+      [OK] Poupança SBPE (ABECIP) — Saldo da Caderneta (captação líquida).
+  - name: silver_continuo_sbpe_financiamentos_aquisicao
+    description: >
+      [OK] SBPE — financiamentos (construção/aquisição), por banco e captação
+      líquida da poupança. Páginas 4 e 5. [MANUAL]
+      manual_conjuntura.sbpe_financiamentos_aquisicao_bancos. Validado vs boletim:
+      SBPE Const 2025 = 132.859 UH / R$ 37,99 bi; poupança 12m/25 = -63,0 bi.
+  # [MANUAL] Falta na pág. 5: MCMV FIN PF + SBPE AQ; MCMV FIN PF CCI/CCA/ProCot;
+  #          FGTS PF Apoio Produção; FIN PF Total; Financiamento PF por faixa.
+
+  # PÁGINA 6 — 6. OGU  +  7. PREÇOS
+  - name: silver_continuo_siafi_dotacao_execucao
+    description: >
+      [OK] OGU — dotação/empenho/pagamento por projeto/atividade (SIAFI/Tesouro
+      Gerencial). Falta o gold consolidar o RESULTADO no formato do boletim.
+  - name: silver_continuo_ibge_sinapi
+    description: "[OK] SINAPI — custo material+mão de obra/m² (IBGE). Seção 7 (Preços)."
+  - name: silver_continuo_fgv_incc_m
+    description: "[OK] INCC-M — número índice e variações (FGV). Seção 7 (Preços)."
+  # [SEM FONTE] 6. Desembolsos de Obras CEF (FAR/Rural/FDS) — sem fonte direta;
+  #             talvez abstrair do próprio OGU (alta chance de dar errado).
+  # [SEM FONTE] 7. FGTS — Valor Médio dos Imóveis — não teremos.
+  # [DERIVADO/MANUAL] 7. Variação do ticket médio vs INCC — calcular a partir dos
+  #             balanços das empresas + INCC-M, ou inserir manualmente depois.
+
+  # PÁGINA 7 — 8. ÍNDICES DA CONSTRUÇÃO
+  - name: silver_continuo_infomoney_imob
+    description: "[OK] Índice IMOB (Infomoney/Alpha Vantage). Seção 8."
+  - name: silver_continuo_fipezap_locacao
+    description: "[OK] Índice FipeZap de locação (FIPE). Seção 8."
+  - name: silver_continuo_fgv_icst
+    description: "[OK] Índice ICST — confiança na construção (FGV-IBRE). Seção 8."
+  # [SEM FONTE] 8. Índice ABRAMAT — dados inconsistentes, NÃO vamos tentar;
+  #             talvez inserir manualmente depois.
+
+  # APOIO / NÃO APARECE DIRETO NO BOLETIM 4T25 (base estrutural anual IBGE)
+  - name: silver_continuo_ibge_paic_resultados
+    description: "[OK] PAIC resultados (IBGE, anual estrutural). Apoio, não plotado direto."
+  - name: silver_continuo_ibge_paic_pessoal_salarial
+    description: "[OK] PAIC pessoal e salários (IBGE, anual). Apoio."
+  - name: silver_continuo_ibge_paic_obras
+    description: "[OK] PAIC obras (IBGE, anual). Apoio."
+
+  # ========================================================================
+  # FONTE MANUAL COMPLETA — planilha oficial do boletim (boletim.xlsx)
+  # Carregada em manual_conjuntura.dados_trimestrais / dados_mensais.
+  # São tabelas largas (todas as variáveis do dicionário); o gold seleciona
+  # as séries por seção. Substituem os manuais soltos anteriores.
+  # ========================================================================
+  - name: silver_continuo_manual_trimestrais
+    description: >
+      [OK] Todos os dados manuais TRIMESTRAIS do boletim (aba Dados Trimestrais):
+      PIB %, CBIC (não usar — sem acesso), balanço empresas, ocupados PNAD, INCC
+      trimestral, ticket médio, financiamentos habitacionais FGTS-PJ/SBPE const.
+  - name: silver_continuo_manual_mensais
+    description: >
+      [OK] Todos os dados manuais MENSAIS do boletim (aba Dados Mensais): CAGED,
+      PNAD rendimento, índices de preços, crédito Bacen (estoques/concessões),
+      SBPE por banco, financiamento PF MCMV por faixa, valor médio FGTS.

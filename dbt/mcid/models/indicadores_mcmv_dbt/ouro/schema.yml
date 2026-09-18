@@ -1,0 +1,424 @@
+version: 2
+
+models:
+  - name: ouro_reloginho_indicadores_gargalo_desempenho
+    description: >
+      Tabela Ouro unificada por empreendimento/APF para identificar gargalos e
+      desempenho do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução
+      física, baixa execução financeira, paralisação, falta de atualização
+      recente, contratos sem evolução e saldo financeiro a desembolsar. Alimenta
+      alertas estratégicos e dashboards.
+
+      GRÃO: 1 linha por (frente, apf) — snapshot corrente, não série. Derivada
+      das fichas de produção `ouro_far_ficha_empreendimento` /
+      `ouro_fds_ficha_empreendimento` e das ouros `*_atual_*` FAR/FDS. Cobre só
+      FAR e FDS — Rural fica de fora deste ouro.
+
+      VOCABULÁRIO: a coluna de frente se chama `frente` (não `frente_mcmv`) e seu
+      domínio é {FAR, FDS}; `FDS` é a mesma frente que o resto do eixo histórico
+      chama de `Entidades`. `dt_calculo` é o conceito canônico `dt_gold`
+      (glossario-mcid.md).
+
+      Fonte de desembolso: `valor_liberado_historico` = `valor_desembolsado` da
+      ficha (GEFUS/CAIXA). O agregado do `*_financeiro_mensal` (SharePoint) fica
+      na coluna informativa `valor_desembolsado_componentes` (cobertura parcial,
+      só APF pós-2024).
+    meta:
+      tags:
+        - ouro
+        - mcmv
+        - indicadores
+        - gargalo
+        - dashboard
+    columns:
+      - name: id_indicador
+        description: Chave técnica única no formato frente:apf.
+        data_tests:
+          - unique
+          - not_null
+      - name: frente
+        description: >
+          Frente do MCMV (conceito canônico `frente_mcmv`, glossario-mcid.md).
+          Domínio {FAR, FDS}; `FDS` ≡ `Entidades` no vocabulário do resto do eixo
+          histórico. Rural não entra neste ouro.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["FAR", "FDS"]
+      - name: apf
+        description: Identificador APF do empreendimento.
+        data_tests:
+          - not_null
+      - name: responsavel_tipo
+        description: Tipo do responsável usado para agrupamento de gargalos.
+      - name: responsavel_nome
+        description: Nome do responsável. Para FAR usa tomador/proponente; para FDS usa entidade organizadora.
+      - name: status_prazo
+        description: >
+          Eixo de classificação de PRAZO (distinto de `situacao_canonica` /
+          situação de obra do resto do eixo — não combinar numa mesma métrica).
+          Domínio: 'Entregue' / 'Em Atraso' (previsão de conclusão/entrega
+          vencida e execução física < 100%) / 'Dentro do Prazo'.
+      - name: status_ritmo
+        description: >
+          Eixo de classificação de RITMO físico-financeiro, valor cru das ouros
+          de ficha FAR/FDS (`ritmo_fisico_financeiro` / `status_ritmo_obra`).
+          Distinto de `situacao_canonica` (situação de obra) e de `status_prazo`.
+      - name: valor_liberado_historico
+        description: >
+          Desembolso acumulado da ficha (GEFUS/CAIXA) — conceito canônico
+          `valor_desembolsado_acumulado`. = `valor_desembolsado`.
+      - name: valor_desembolsado_componentes
+        description: >
+          Soma das liberações conhecidas no snapshot do `*_financeiro_mensal`
+          (SharePoint). **Informativo** — cobertura parcial (só APF com
+          liberação pós-2024); NÃO é o desembolso total. Pode ser NULL.
+      - name: saldo_contratado_a_desembolsar
+        description: Diferença positiva entre valor contratado e valor desembolsado acumulado.
+      - name: percentual_saldo_a_desembolsar
+        description: Percentual do contrato ainda não desembolsado.
+      - name: gap_fisico_financeiro_pp
+        description: Diferença em pontos percentuais entre execução financeira e execução física.
+      - name: dias_sem_atualizacao
+        description: Dias desde a última liberação/medição física disponível para a APF.
+      - name: dias_atraso
+        description: Dias corridos de atraso quando a previsão está vencida e a obra não está concluída.
+      - name: dias_paralisacao
+        description: Dias desde a paralisação quando a frente possui data de paralisação.
+      - name: flag_atraso
+        description: True quando status_prazo indica atraso ou dias_atraso é maior que zero.
+      - name: flag_paralisacao
+        description: True quando há data/situação textual de paralisação.
+      - name: flag_sem_atualizacao_recente
+        description: True para obra não concluída sem atualização há mais de 90 dias ou sem data de atualização.
+      - name: flag_baixa_execucao_fisica
+        description: >
+          True quando a execução física está pelo menos 10 p.p. abaixo do previsto,
+          a previsão está vencida sem conclusão, ou a obra contratada há mais de
+          365 dias ainda está abaixo de 30%.
+      - name: flag_baixa_execucao_financeira
+        description: >
+          True quando a execução financeira está mais de 10 p.p. abaixo da física,
+          ou contrato com mais de 365 dias tem execução financeira abaixo de 30%.
+      - name: flag_gargalo_financeiro
+        description: True quando pelo menos 30% do contrato ainda não foi desembolsado e a obra está abaixo de 95% físico.
+      - name: flag_contrato_sem_evolucao
+        description: True quando contrato com mais de 180 dias não tem execução física nem financeira.
+      - name: flag_entrega_em_risco
+        description: True quando empreendimento não concluído tem atraso, paralisação, baixa execução ou falta de atualização.
+      - name: score_gargalo
+        description: >
+          Score ponderado: atraso 2, paralisação 2, sem atualização 1,
+          baixa execução física 1, baixa execução financeira 1, gargalo financeiro 1,
+          contrato sem evolução 1.
+      - name: classificacao_gargalo
+        description: Baixo (0), Médio (1-2), Alto (3-4), Crítico (>=5).
+        data_tests:
+          - accepted_values:
+              values: ["Baixo", "Médio", "Alto", "Crítico"]
+      - name: indicadores_acionados
+        description: Lista textual das flags acionadas para auditoria e tooltip no dashboard.
+      - name: dt_calculo
+        description: >
+          Timestamp de materialização do ouro — conceito canônico `dt_gold`
+          (glossario-mcid.md).
+
+  - name: ouro_reloginho_indicadores
+    description: >
+      Tabela Ouro do reloginho MCMV: série mensal SNH consolidada por agente. Lê
+      a prata `prata_historico_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
+      camadas bronze e prata). Uma linha por (agente_financeiro, dt_referencia)
+      — série de ESTOQUE (carteira acumulada no mês-snapshot da SNH): NÃO somar
+      `uh_*` entre `dt_referencia`. Colunas: acumulados uh_contratadas,
+      uh_entregues e uh_vigentes, número de APFs distintos (n_apf) e contagem
+      corrida de meses observados por agente (n_meses_observados). Alimenta o
+      resumo do reloginho.
+    meta:
+      tags:
+        - ouro
+        - mcmv
+        - indicadores
+        - reloginho
+        - dados-historicos
+    columns:
+      - name: dt_referencia
+        description: >
+          Data de referência (primeiro dia do mês) derivada do nome do arquivo
+          histórico (YYYMM, ex. 2026-03-01 para historico_recente_202603_...).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: agente_financeiro
+        description: >
+          Agente financeiro da série SNH (normalizado em maiúsculas). Valores
+          esperados: BB (Banco do Brasil) e CAIXA.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+      - name: uh_contratadas
+        description: >
+          Soma de UH contratadas no mês-snapshot (estoque — não somar entre
+          meses). Conceito canônico `quantidade_uh` (glossario-mcid.md).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues
+        description: >
+          Soma acumulada de UH entregues reportada no snapshot SNH (estoque
+          acumulado — não somar entre meses; para o fluxo mensal ver
+          `ouro_reloginho_indicadores_entregas`). Conceito canônico
+          `quantidade_uh_entregues`.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_vigentes
+        description: >
+          Soma de UH vigentes no mês-snapshot (estoque). Conceito canônico
+          `quantidade_uh_vigentes`.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_apf
+        description: Número de APFs distintos considerados no mês de referência após a dedup.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_meses_observados
+        description: >
+          Contagem corrida de meses observados por agente até a linha atual
+          (usada no cálculo do ritmo médio mensal de entregas).
+
+  - name: ouro_reloginho_indicadores_frente
+    description: >
+      Tabela Ouro do reloginho MCMV com quebra por frente. Mesma
+      regra de `ouro_reloginho_indicadores`, com frente_mcmv (FAR / Entidades /
+      Rural) no grão. Uma linha por (agente_financeiro, frente_mcmv,
+      dt_referencia) — série de ESTOQUE, não somar `uh_*` entre meses. Somar
+      todas as frentes de um mês reproduz `ouro_reloginho_indicadores`.
+      Base da verificação de cobertura histórica por frente
+      (assert_reloginho_frente_cobertura_mensal).
+    meta:
+      tags:
+        - ouro
+        - mcmv
+        - indicadores
+        - reloginho
+        - dados-historicos
+    columns:
+      - name: dt_referencia
+        description: Data de referência (primeiro dia do mês).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: agente_financeiro
+        description: Agente financeiro (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+      - name: frente_mcmv
+        description: Frente do MCMV. Valores esperados FAR, Entidades e Rural.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["FAR", "Entidades", "Rural"]
+      - name: uh_contratadas
+        description: >
+          Soma de UH contratadas no mês-snapshot, na frente (estoque — não somar
+          entre meses). Conceito canônico `quantidade_uh`.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues
+        description: >
+          Soma acumulada de UH entregues no snapshot, na frente (estoque
+          acumulado — não somar entre meses). Conceito canônico
+          `quantidade_uh_entregues`.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_vigentes
+        description: >
+          Soma de UH vigentes no mês-snapshot, na frente (estoque). Conceito
+          canônico `quantidade_uh_vigentes`.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_apf
+        description: Número de APFs distintos no mês, na frente, após a dedup.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_meses_observados
+        description: Contagem corrida de meses observados por (agente, frente).
+
+  - name: ouro_reloginho_indicadores_entregas
+    description: >
+      Tabela Ouro do reloginho — entregas: fluxo por evento vs
+      acumulado do snapshot, lado a lado, por (agente_financeiro,
+      dt_referencia). Serve para definir o total oficial de UH entregues e o
+      ritmo_recente. `dif_evento_vs_snapshot` deve tender a ~0.
+    meta:
+      tags: [ouro, mcmv, indicadores, reloginho, dados-historicos, entregas]
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro (BB ou CAIXA).
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Primeiro dia do mês de referência.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: uh_entregues_evento_mes
+        description: UH entregues no mês (fluxo, da prata de evento).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues_evento_acum
+        description: Soma corrida do fluxo de entregas até o mês.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues_snapshot
+        description: UH entregues acumuladas reportadas no snapshot (mesma medida de `ouro_reloginho_indicadores.uh_entregues`).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: dif_evento_vs_snapshot
+        description: uh_entregues_evento_acum menos uh_entregues_snapshot.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+
+  - name: ouro_reloginho_resumo_dashboard
+    description: >
+      Tabela Ouro do reloginho para dashboard: uma linha por agente_financeiro
+      com o último mês observado da série mensal SNH (uh_contratadas,
+      uh_entregues, uh_vigentes), o número de meses observados e o ritmo médio
+      mensal de entregas (uh_entregues do último mês / n_meses_observados).
+    meta:
+      tags:
+        - ouro
+        - mcmv
+        - indicadores
+        - reloginho
+        - dashboard
+        - dados-historicos
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro da série SNH (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - unique
+      - name: dt_ultimo_mes
+        description: Último dt_referencia observado para o agente.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: uh_contratadas_ultimo
+        description: >
+          UH contratadas no último mês-snapshot observado (conceito canônico
+          `quantidade_uh`).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues_ultimo
+        description: >
+          UH entregues (acumulado) no último mês-snapshot observado (conceito
+          canônico `quantidade_uh_entregues`).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_vigentes_ultimo
+        description: UH vigentes no último mês-snapshot observado (conceito canônico `quantidade_uh_vigentes`).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_apf_ultimo
+        description: Número de APFs distintos no último mês observado.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_meses_observados
+        description: Total de meses observados na série do agente.
+      - name: ritmo_medio_mensal
+        description: >
+          Ritmo médio mensal de entregas = uh_entregues do último mês dividido
+          pelo número de meses observados.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+
+  - name: ouro_reloginho_resumo_gargalo_desempenho_dashboard
+    description: >
+      Tabela Ouro agregada para dashboard de gargalos e desempenho do MCMV.
+      Gera cards e rankings nos níveis nacional, frente, UF, município e
+      responsável (coluna `nivel_agregacao`) — um GROUPING SET por nível.
+      **Não somar entre `nivel_agregacao`**: são recortes sobrepostos do mesmo
+      universo de empreendimentos FAR+FDS de `ouro_reloginho_indicadores_gargalo_desempenho`.
+      Unidades: `total_uh` em UH; `valor_*` e `saldo_*` em R$ nominais;
+      `media_execucao_*` e `percentual_*` em escala 0-100; `atraso_medio_dias`
+      em dias.
+    meta:
+      tags:
+        - ouro
+        - mcmv
+        - dashboard
+        - gargalo
+    columns:
+      - name: nivel_agregacao
+        description: >
+          Nível do GROUPING SET desta linha e, portanto, o grão: 'nacional' (1
+          linha), 'frente' (1 por FAR/FDS), 'uf', 'municipio', 'responsavel'.
+          Não somar entre níveis.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["nacional", "frente", "uf", "municipio", "responsavel"]
+      - name: frente
+        description: Frente {FAR, FDS} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `ouro_reloginho_indicadores_gargalo_desempenho.frente`).
+      - name: uf
+        description: Sigla da UF (2 letras) nas linhas de nível 'uf'/'municipio'; NULL nos demais níveis.
+      - name: municipio
+        description: Nome do município nas linhas de nível 'municipio'; NULL nos demais níveis.
+      - name: responsavel_tipo
+        description: Tipo do responsável ('Tomador/Proponente' FAR, 'Entidade Organizadora' FDS) nas linhas de nível 'responsavel'; NULL nos demais.
+      - name: responsavel_id
+        description: Identificador (CNPJ) do responsável nas linhas de nível 'responsavel'; NULL nos demais. Pessoa jurídica — não é dado de pessoa física.
+      - name: responsavel_nome
+        description: Nome do responsável (entidade organizadora / tomador) nas linhas de nível 'responsavel'; NULL nos demais.
+      - name: total_empreendimentos
+        description: Contagem de empreendimentos/APFs no agrupamento (unidade — empreendimentos).
+      - name: total_uh
+        description: Soma de UH no agrupamento (unidade — UH; conceito canônico `quantidade_uh`).
+      - name: valor_contratado
+        description: Soma do valor contratado no agrupamento (R$ nominais; conceito canônico `valor_investimento_total`).
+      - name: valor_desembolsado
+        description: Soma do valor desembolsado acumulado no agrupamento (R$ nominais; conceito canônico `valor_desembolsado_acumulado`).
+      - name: saldo_contratado_a_desembolsar
+        description: Soma de (valor_contratado − valor_desembolsado) positivo no agrupamento (R$ nominais).
+      - name: media_execucao_fisica
+        description: Média de `percentual_execucao_fisica` no agrupamento (escala 0-100).
+      - name: media_execucao_financeira
+        description: Média de `percentual_execucao_financeira` no agrupamento (escala 0-100).
+      - name: media_score_gargalo
+        description: Média de `score_gargalo` no agrupamento (escala 0-9, ver `ouro_reloginho_indicadores_gargalo_desempenho.score_gargalo`).
+      - name: atraso_medio_dias
+        description: Média de `dias_atraso` entre os casos com atraso > 0 no agrupamento (dias).
+      - name: media_dias_sem_atualizacao
+        description: Média de `dias_sem_atualizacao` no agrupamento (dias).
+      - name: qtd_obras_atrasadas
+        description: Contagem de empreendimentos com `flag_atraso` no agrupamento.
+      - name: qtd_obras_paralisadas
+        description: Contagem de empreendimentos com `flag_paralisacao` no agrupamento.
+      - name: qtd_sem_atualizacao_recente
+        description: Contagem de empreendimentos com `flag_sem_atualizacao_recente` no agrupamento.
+      - name: qtd_baixa_execucao_fisica
+        description: Contagem de empreendimentos com `flag_baixa_execucao_fisica` no agrupamento.
+      - name: qtd_baixa_execucao_financeira
+        description: Contagem de empreendimentos com `flag_baixa_execucao_financeira` no agrupamento.
+      - name: qtd_gargalo_financeiro
+        description: Contagem de empreendimentos com `flag_gargalo_financeiro` no agrupamento.
+      - name: qtd_contrato_sem_evolucao
+        description: Contagem de empreendimentos com `flag_contrato_sem_evolucao` no agrupamento.
+      - name: qtd_entregas_em_risco
+        description: Contagem de empreendimentos com `flag_entrega_em_risco` no agrupamento.
+      - name: qtd_casos_criticos
+        description: Contagem de empreendimentos com `classificacao_gargalo = 'Crítico'` no agrupamento.
+      - name: percentual_entregas_em_risco
+        description: qtd_entregas_em_risco / total_empreendimentos no agrupamento (escala 0-100).
+      - name: percentual_casos_criticos
+        description: qtd_casos_criticos / total_empreendimentos no agrupamento (escala 0-100).
+      - name: dt_calculo
+        description: >
+          Data de materialização do ouro — conceito canônico `dt_gold`
+          (glossario-mcid.md).

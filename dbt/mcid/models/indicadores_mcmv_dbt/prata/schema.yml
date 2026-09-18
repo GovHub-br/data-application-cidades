@@ -1,0 +1,161 @@
+version: 2
+
+models:
+  - name: prata_historico_snh_apf_mes
+    description: >
+      Prata do reloginho: série mensal SNH tipada, com domínio normalizado e
+      deduplicada por APF. Grão: uma linha por (agente_financeiro, apf,
+      dt_referencia), com frente_mcmv canônica (FAR / Entidades / Rural) derivada
+      de `modalidade`.
+    meta:
+      tags:
+        - prata
+        - mcmv
+        - reloginho
+        - dados-historicos
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro normalizado em maiúsculas (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+      - name: frente_mcmv
+        description: >
+          Frente do MCMV canônica a partir de `modalidade`. Valores esperados
+          FAR, Entidades e Rural. Nulo quando a origem não informa modalidade.
+        data_tests:
+          - accepted_values:
+              values: ["FAR", "Entidades", "Rural"]
+      - name: apf
+        description: Autorização Para Financiamento — chave do empreendimento.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: dt_referencia
+        description: Primeiro dia do mês de referência (derivado do nome do arquivo).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      # completude_minima (warn) — guarda contra regressão de mapeamento de
+      # coluna. A SNH BB troca o nome (`uh_*` <-> `uhs_*`) por safra; o modelo
+      # resolve as duas via coalesce_present. Se uma safra futura renomear de
+      # novo e o modelo não acompanhar, a cobertura cai (cada safra ~0,4% das
+      # linhas) e o teste avisa. Cobertura observada pós-correção ~99,8%.
+      - name: uh_contratadas
+        description: >
+          UH contratadas do APF no snapshot do mês (estoque — não somar entre
+          meses). Lê `uh_contratadas` ou `uhs_contratadas` conforme a safra
+          (coalesce_present). Conceito canônico `quantidade_uh`
+          (glossario-mcid.md).
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_entregues
+        description: >
+          UH entregues (acumulado) do APF no snapshot do mês. Lê `uh_entregues`
+          ou `uhs_entregues` conforme a safra. Conceito canônico
+          `quantidade_uh_entregues`.
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uh_vigentes
+        description: >
+          UH vigentes do APF no snapshot do mês. Lê `uh_vigentes` ou
+          `uhs_vigentes` conforme a safra. Conceito canônico
+          `quantidade_uh_vigentes`.
+        data_tests:
+          - completude_minima:
+              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
+              config: { severity: warn }
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: quantidade_uh_distratadas
+        description: >
+          UH distratadas (acumulado) do APF no snapshot do mês, de
+          `quantidade_de_uhs_distratadas` da SNH (ambos os agentes). `0` é
+          informação, distinto de NULL.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: uf
+        description: UF do empreendimento (maiúsculas).
+      - name: codigo_ibge_municipio
+        description: >
+          Código IBGE do município, sem sufixo ".0" (limpo por strip_float_text
+          — a fonte SNH CAIXA entrega ~20% com ".0"). Ver
+          docs/varredura-sufixo-float-texto.md.
+        data_tests:
+          - sem_sufixo_float_texto
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: hash_linha
+        description: Hash MD5 herdado da bronze.
+        data_tests:
+          - not_null
+      - name: situacao_canonica
+        description: >
+          Situação de obra canônica (nao_iniciada / em_obras / paralisada /
+          concluida / cancelada) por join ao seed dominio_status sobre
+          lower(trim(status_operacional)). NULL quando status ausente;
+          'nao_mapeada' quando não casa. status_operacional cru preservado.
+          Não consumida pelos ouros do reloginho.
+        data_tests:
+          - dentro_do_dominio:
+              arguments:
+                seed: dominio_status
+                seed_column: situacao_canonica
+              config:
+                severity: warn
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S) por join ao seed
+          dominio_regiao_uf sobre uf. Nula quando a linha não tem uf.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dominio_regiao_uf')
+                field: regiao_sigla
+              config:
+                severity: warn
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla).
+
+  - name: prata_historico_snh_entregas_mes
+    description: >
+      Prata do reloginho — entregas por evento agregadas ao mês do
+      EVENTO. Lê bronze_dhist_snh_entregas_evento, deduplica eventos
+      repetidos por hash_linha e soma por (agente_financeiro, apf, mes_evento).
+      É o fluxo real de entregas (base do ritmo_recente e do caminho alternativo
+      do total de entregas).
+    meta:
+      tags: [prata, mcmv, reloginho, dados-historicos, entregas]
+    columns:
+      - name: agente_financeiro
+        description: Agente financeiro (BB ou CAIXA).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["BB", "CAIXA"]
+      - name: apf
+        description: APF do empreendimento.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: VARCHAR } }
+      - name: mes_evento
+        description: Primeiro dia do mês em que a UH foi entregue.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: uh_entregues_evento_mes
+        description: >
+          UH entregues no mês do EVENTO, por APF — série de FLUXO (pode somar
+          entre meses, ao contrário dos acumulados de `prata_historico_snh_apf_mes`).
+          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+      - name: n_eventos
+        description: Número de eventos de entrega deduplicados no mês/APF.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
