@@ -13,5 +13,5 @@ select
     dt_ingest,
     hash_linha,
     dt_referencia
-from {{ ref("bronze_fds_cadastro_pj") }}
+from {{ ref("prata_fds_cadastro_pj") }}
 where ic_mudanca_fase = true

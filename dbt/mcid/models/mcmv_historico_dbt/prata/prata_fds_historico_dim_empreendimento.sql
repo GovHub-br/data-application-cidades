@@ -85,7 +85,7 @@ with
             c.apf as apf_ancora,
             c.empreendimento_nome as nome_empreendimento,
             'fallback'::text as origem
-        from {{ ref("bronze_fds_cadastro_pj") }} c
+        from {{ ref("prata_fds_cadastro_pj") }} c
         where c.apf not in (select apf from uniao)
     ),
 

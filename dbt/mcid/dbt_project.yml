@@ -23,60 +23,22 @@ models:
     metadata:
       +materialized: incremental
       +schema: metadata
-    empreendimento_far_dbt:
-      +materialized: table
-      +meta:
-        governance:
-          product: empreendimento_far
-          owner_key: mcid_data_engineering
-
-      bronze:
-        +materialized: table
-        +schema: dados_historicos
-        +meta:
-          governance:
-            product: empreendimento_far
-            owner_key: mcid_data_engineering
-            layer: bronze
-            classification: restricted
-            rag_publication: prohibited
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier3
-            owner: mcid-data-engineering
-
-      silver:
-        +materialized: table
-        +schema: empreendimento_far
-        +meta:
-          governance:
-            product: empreendimento_far
-            owner_key: mcid_data_engineering
-            layer: silver
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier2
-            owner: mcid-data-engineering
-
-      gold:
-        +materialized: table
-        +schema: empreendimento_far
-        +meta:
-          governance:
-            product: empreendimento_far
-            owner_key: mcid_data_engineering
-            layer: gold
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier1
-            owner: mcid-data-engineering
+    # empreendimento_far_dbt removido (2026-09-18, change
+    # alinhar-far-fds-prod-para-merge-main): todo modelo desse pacote era
+    # duplicata, por nome, de um modelo já publicado em `origin/main` sob
+    # `far_dbt` (mesma convenção de nomes prod prata_far_*/ouro_far_*) — manter
+    # os dois quebraria o `dbt parse` após o merge ("two resources with
+    # identical database representation"). `indicadores_mcmv_dbt`/
+    # `mcmv_historico_dbt` continuam consumindo esses nomes por `ref()`; após
+    # `git merge main` eles resolvem para os modelos de `far_dbt`.
 
     empreendimento_fds_dbt:
-
+      # Só sobrou `bronze_fds_mudanca_fase_eventos` (2026-09-18, mesma change
+      # acima): os demais modelos deste pacote eram duplicatas, por nome, dos
+      # já publicados em `origin/main` sob `fds_dbt` — apagados aqui.
+      # `bronze_fds_mudanca_fase_eventos` não tem equivalente em prod nem na
+      # main; é lógica original desta branch (consumida por
+      # `mcmv_historico_dbt/prata/prata_fds_historico_dim_empreendimento`).
       +materialized: table
       +meta:
         governance:
@@ -97,37 +59,6 @@ models:
             domain: MCid.Habitacao
             tier: Tier.Tier3
             owner: mcid-data-engineering
-
-      silver:
-        +materialized: table
-        +schema: empreendimentos_fds
-        +meta:
-          governance:
-            product: empreendimento_fds
-            owner_key: mcid_data_engineering
-            layer: silver
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier2
-            owner: mcid-data-engineering
-
-      gold:
-        +materialized: table
-        +schema: empreendimentos_fds
-        +meta:
-          governance:
-            product: empreendimento_fds
-            owner_key: mcid_data_engineering
-            layer: gold
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier1
-            owner: mcid-data-engineering
-
 
     indicadores_mcmv_dbt:
 
