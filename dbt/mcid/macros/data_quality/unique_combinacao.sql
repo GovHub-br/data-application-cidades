@@ -1,10 +1,6 @@
 {#-
   Teste genérico: falha se a COMBINAÇÃO de colunas não for única.
 
-  PROCEDÊNCIA: portado sem alteração da branch `feat/arquitetura-bronze`
-  (commit 590fe2e). Mantido idêntico para não divergir da origem; mudanças
-  de comportamento devem ser feitas lá e re-portadas aqui.
-
   O `unique` nativo do dbt só olha uma coluna. Grão composto — "uma linha por APF por
   mês", "uma linha por APF por agente financeiro" — precisa deste. Equivale ao
   dbt_utils.unique_combination_of_columns, escrito aqui porque o projeto não usa

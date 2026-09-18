@@ -1,0 +1,59 @@
+{% extends "base.html.j2" %}
+
+{% block conteudo %}
+<div class="hero">
+  <div class="container">
+    <h1>Tudo o que foi entregue</h1>
+    <p>
+      O histórico completo das entregas do {{ escopo.rotulo }}, do trimestre mais
+      recente ao primeiro. Cada item traz a descrição escrita pelo autor no pull
+      request, quando existe, e o link para a evidência.
+    </p>
+    <span class="hero__periodo">{{ m.total_entregas }} entregas · {{ periodo }}</span>
+  </div>
+</div>
+
+<section class="container">
+  <p class="aviso">
+    <strong>Onde começa esta história.</strong> O repositório é um fork de
+    <code>data-application-gov-hub</code>, criado em {{ data_fork }}, e herdou o
+    histórico da plataforma base. O pipeline do {{ escopo.rotulo }}, porém,
+    nasceu depois do fork: não há um único commit no projeto dbt
+    <code>mcid</code> anterior a essa data. Por isso todas as entregas abaixo são
+    pull requests deste repositório, com a descrição escrita pelo autor. O que
+    veio de antes foram fontes de ingestão já existentes na plataforma — IBGE e
+    BACEN entre elas — reaproveitadas pelo domínio de Conjuntura.
+  </p>
+</section>
+
+{% for grupo in entregas_por_trimestre %}
+  <section class="container">
+    <h2>{{ grupo.rotulo }}</h2>
+    <ol class="linha-tempo">
+      {% for entrega in grupo.entregas %}
+        <li class="entrega{% if entrega.corpo %} entrega--rica{% endif %}">
+          <div class="entrega__meta">
+            <time>{{ entrega.data | data }}</time>
+            {% if entrega.url %}
+              <a href="{{ entrega.url }}">{{ entrega.referencia }}</a>
+            {% else %}
+              <span class="entrega__ref">{{ entrega.referencia }}</span>
+            {% endif %}
+            {% for dominio in entrega.dominios %}
+              <a class="chip chip--link" href="{{ rel }}dominios/{{ dominio.slug }}/index.html"
+                >{{ dominio.rotulo }}</a
+              >
+            {% endfor %}
+          </div>
+          <h3>{{ entrega.titulo }}</h3>
+          <div class="entrega__autor">{{ entrega.autor }} · {{ entrega.tipo }}</div>
+
+          {% if entrega.corpo %}
+            <div class="prosa prosa--entrega">{{ entrega.corpo | markdown }}</div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endfor %}
+{% endblock %}

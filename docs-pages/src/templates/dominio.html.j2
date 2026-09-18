@@ -1,0 +1,198 @@
+{% extends "base.html.j2" %}
+
+{% block conteudo %}
+<div class="hero hero--dominio">
+  <div class="container">
+    <h1>{{ d.rotulo }}</h1>
+    <p>{{ d.subtitulo }}</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="numeros numeros--hero">
+    <div class="numero">
+      <div class="numero__valor">{{ d.total }}</div>
+      <div class="numero__rotulo">Modelos dbt</div>
+    </div>
+    <div class="numero numero--acento">
+      <div class="numero__valor">{{ d.camadas.get("gold", 0) }}</div>
+      <div class="numero__rotulo">Tabelas de uso</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ d.testes }}</div>
+      <div class="numero__rotulo">Testes</div>
+    </div>
+    <div class="numero">
+      <div class="numero__valor">{{ d.entregas | length }}</div>
+      <div class="numero__rotulo">Entregas</div>
+    </div>
+  </div>
+</div>
+
+<section class="container">
+  <div class="colunas">
+    <div>
+      <h2>Contexto</h2>
+      <div class="prosa">{{ d.contexto | markdown }}</div>
+
+      {% if d.get("citacao") %}
+        <blockquote class="citacao">
+          <div class="prosa">{{ d.citacao.texto | markdown }}</div>
+          <cite>{{ d.citacao.autoria }}</cite>
+        </blockquote>
+      {% endif %}
+
+      <h2>O que a plataforma faz</h2>
+      <div class="prosa">{{ d.o_que_faz | markdown }}</div>
+    </div>
+    <aside class="lateral">
+      <h3>Perguntas que responde</h3>
+      <ul class="lista-perguntas">
+        {% for pergunta in d.perguntas %}
+          <li>{{ pergunta }}</li>
+        {% endfor %}
+      </ul>
+
+      <h3>Fontes</h3>
+      <p>
+        {% for sistema in d.sistemas %}
+          <span class="chip">{{ sistema }}</span>
+        {% endfor %}
+      </p>
+
+      {% if d.dags %}
+        <h3>Ingestão</h3>
+        <ul class="lista-dags">
+          {% for dag in d.dags %}
+            <li><code>{{ dag.dag_id }}</code></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </aside>
+  </div>
+</section>
+
+{% if d.gold %}
+  <section class="container">
+    <h2>O que sai para uso</h2>
+    <p class="secao__intro">
+      As tabelas gold são o ponto de contato entre o pipeline e quem consome:
+      painel, relatório ou análise. Cada uma traz o diagrama do fluxo que a
+      constrói, gerado a partir das dependências declaradas no próprio SQL.
+    </p>
+    <ul class="legenda">
+      <li><span class="legenda__cor legenda__cor--fonte"></span> Fonte de origem</li>
+      <li><span class="legenda__cor legenda__cor--bronze"></span> Bronze</li>
+      <li><span class="legenda__cor legenda__cor--silver"></span> Silver</li>
+      <li><span class="legenda__cor legenda__cor--gold"></span> Gold</li>
+      <li><span class="legenda__cor legenda__cor--alvo"></span> A tabela em questão</li>
+    </ul>
+    {% for modelo in d.gold %}
+      <div class="gold">
+        <div class="gold__cabecalho">
+          <span class="badge badge--gold">gold</span>
+          <h3>{{ modelo.nome }}</h3>
+        </div>
+        <p class="gold__descricao">
+          {% if modelo.descricao %}
+            {{ modelo.descricao }}
+          {% else %}
+            Sem descrição declarada no <code>schema.yml</code>.
+          {% endif %}
+        </p>
+
+        <details class="fluxo">
+          <summary>Como esta tabela é construída</summary>
+          {% if modelo.diagrama_svg %}
+            <div class="fluxo__diagrama">{{ modelo.diagrama_svg }}</div>
+          {% else %}
+            <p class="secao__intro">
+              Diagrama ainda não renderizado. O texto abaixo é a definição do
+              fluxo, em Mermaid.
+            </p>
+          {% endif %}
+          <details class="fluxo__fonte">
+            <summary>Ver a definição em Mermaid</summary>
+            <pre><code>{{ modelo.diagrama }}</code></pre>
+          </details>
+        </details>
+      </div>
+    {% endfor %}
+  </section>
+{% endif %}
+
+<section class="container">
+  <h2>O que foi feito</h2>
+  <p class="secao__intro">
+    {{ d.entregas | length }} entregas tocaram este domínio, das quais
+    {{ d.entregas_documentadas }} vêm com descrição própria do autor. O texto
+    abaixo é o do pull request, não uma reescrita.
+  </p>
+
+  <ol class="linha-tempo">
+    {% for entrega in d.entregas %}
+      <li class="entrega{% if entrega.corpo %} entrega--rica{% endif %}">
+        <div class="entrega__meta">
+          <time>{{ entrega.data | data }}</time>
+          {% if entrega.url %}
+            <a href="{{ entrega.url }}">{{ entrega.referencia }}</a>
+          {% else %}
+            <span class="entrega__ref">{{ entrega.referencia }}</span>
+          {% endif %}
+          <span class="entrega__origem entrega__origem--{{ entrega.origem }}">
+            {{ "pull request" if entrega.origem == "pr" else "merge de branch" }}
+          </span>
+        </div>
+        <h3>{{ entrega.titulo }}</h3>
+        <div class="entrega__autor">{{ entrega.autor }} · {{ entrega.tipo }}</div>
+
+        {% if entrega.corpo %}
+          <div class="prosa prosa--entrega">{{ entrega.corpo | markdown }}</div>
+        {% endif %}
+
+        {% if entrega.arquivos %}
+          <div class="entrega__arquivos">
+            {% for arquivo in entrega.arquivos %}
+              <code>{{ arquivo }}</code>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section class="container">
+  <h2>Modelos</h2>
+  <p class="secao__intro">
+    O caminho completo do dado neste domínio, camada a camada.
+  </p>
+  <div class="tabela-wrap">
+    <table class="tabela-modelos">
+      <thead>
+        <tr>
+          <th>Camada</th>
+          <th>Modelo</th>
+          <th>Descrição</th>
+          <th>Depende de</th>
+          <th>Testes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for modelo in d.modelos %}
+          <tr>
+            <td><span class="badge badge--{{ modelo.camada }}">{{ modelo.camada }}</span></td>
+            <td><code>{{ modelo.nome }}</code></td>
+            <td>{{ modelo.descricao }}</td>
+            <td class="celula-refs">
+              {% for ref in modelo.refs %}<code>{{ ref }}</code>{% endfor %}
+              {% for fonte in modelo.sources %}<span class="chip chip--fonte">{{ fonte }}</span>{% endfor %}
+            </td>
+            <td>{{ modelo.testes }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

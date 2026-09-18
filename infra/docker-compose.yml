@@ -19,7 +19,9 @@ x-airflow-common: &airflow-common
     - ../templates:${AIRFLOW_HOME}/templates/
     - ../dbt:${AIRFLOW_HOME}/dbt/
     - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
-    # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag)
+    # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag).
+    # Também usado pela DAG do OpenMetadata, que roda `scripts/governance/` no
+    # fim para reaplicar o que o conector apaga — ver a nota lá.
     - ../scripts:${AIRFLOW_HOME}/scripts/
     # Temporários dos scripts (arquivos de GBs): NÃO usar /tmp (tmpfs em RAM)
     - lake_tmp:/opt/airflow/lake_tmp
@@ -37,6 +39,8 @@ x-airflow-environment: &airflow-common-env
   AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
   AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
   AIRFLOW__CORE__TEST_CONNECTION: Enabled
+  AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT: '300'
+  AIRFLOW__CORE__DAG_FILE_PROCESSOR_TIMEOUT: '300'
   AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
   AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
   AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'

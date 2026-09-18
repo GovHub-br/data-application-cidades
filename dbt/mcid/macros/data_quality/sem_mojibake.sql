@@ -1,38 +1,34 @@
 {#-
   Teste genérico: falha se a coluna contiver mojibake.
 
-  PROCEDÊNCIA: portado sem alteração da branch `feat/arquitetura-bronze`
-  (commit 590fe2e). Mantido idêntico para não divergir da origem; mudanças
-  de comportamento devem ser feitas lá e re-portadas aqui.
-
   Mojibake é o resultado de ler bytes utf-8 como latin-1/cp1252: "São" vira "SÃ£o",
   "código" vira "cÃ³digo". Quando o cabeçalho do arquivo é ASCII, os NOMES das colunas
   saem limpos e só os VALORES ficam corrompidos, então nada quebra: o dado errado
   aparece direto no dashboard. Daí o teste.
 
   Marcadores:
-    Ã     acentos latinos (Ã£=ã, Ã©=é, Ã³=ó, Ã§=ç ...)
-    Â     símbolos (Âº, Â°, Â§)
-    â€    pontuação tipográfica (aspas curvas, travessão)
+    Ã / Â seguidos de outro caractere NÃO-ASCII que não seja maiúscula acentuada
+          É essa vizinhança que separa corrupção de português correto. Ã e Â são letras
+          legítimas (SÃO, PORTÃO, ASSOCIAÇÃO, CÂMARA, AMANHÃ), e ali vem sempre ASCII
+          depois — outra maiúscula, espaço ou pontuação. No mojibake, o segundo byte da
+          sequência utf-8 reinterpretada cai no bloco latin-1: Ã£=ã, Ã©=é, Ã³=ó, Ã§=ç,
+          Âº, Â°. Por isso a regra exige não-ASCII, e não apenas "não maiúscula".
+    â€     pontuação tipográfica (aspas curvas, travessão)
     U+FFFD  o "�" que errors="replace" deixa onde o byte era realmente inválido
 
   Uso no schema.yml:
 
       columns:
         - name: municipio
-          data_tests:
+          tests:
             - sem_mojibake
 -#}
 {% macro test_sem_mojibake(model, column_name) %}
 
-select {{ column_name }} as valor, count(*) as ocorrencias
-from {{ model }}
-where
-    {{ column_name }} like '%Ã%'
-    or {{ column_name }} like '%Â%'
-    or {{ column_name }} like '%â€%'
-    or {{ column_name }} like '%' || chr(65533) || '%'
-group by {{ column_name }}
-order by ocorrencias desc
+    select {{ column_name }} as valor, count(*) as ocorrencias
+    from {{ model }}
+    where {{ column_name }} ~ ('[ÃÂ][^[:ascii:]À-Þ]|â€|' || chr(65533))
+    group by {{ column_name }}
+    order by ocorrencias desc
 
 {% endmacro %}

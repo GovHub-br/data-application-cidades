@@ -81,16 +81,15 @@ HEAVY="bronze_dhist_serie_bases_relatorio_executivo bronze_dhist_serie_min_cidad
 # juntos) só depois de todos materializados. EXCETO
 # prata_historico_serie_executiva (uniao das 4 familias + janela sobre
 # ~10M linhas): sai em invocacao propria com --threads 1.
-# prata_fds_historico_dim_empreendimento (agora dentro de mcmv_historico_dbt/prata/,
-# movida 2026-09-11 de empreendimento_fds_dbt/silver/) + suas 2 bronzes de
-# LEITURA (dominio empreendimento_fds_dbt, mantido pelos colegas) entram aqui
-# porque prata_fds_historico_empreendimento passou a herdar
-# id_empreendimento / fase_empreendimento dela (change id-empreendimento-eixo-historico).
-# Leem o mesmo source('mcmv_staging', …) -> resolvem no staging_duckdb.
+# prata_fds_dim_empreendimento (dominio fds_dbt) entra aqui porque
+# prata_fds_historico_empreendimento passou a herdar id_empreendimento /
+# fase_empreendimento dela (change id-empreendimento-eixo-historico).
+# O `+` a esquerda arrasta o upstream dela na arquitetura nova
+# (bronze_shpt_monit_cad_pj_fds_mensal -> prata_fds_cadastro_pj), que substituiu
+# as bronzes bronze_fds_cadastro_pj / bronze_fds_mudanca_fase_eventos do desenho
+# antigo.
 SILVERS=(
-  bronze_fds_cadastro_pj
-  bronze_fds_mudanca_fase_eventos
-  prata_fds_historico_dim_empreendimento
+  +prata_fds_dim_empreendimento
   prata_historico_entrega_apf
   prata_far_historico_empreendimento
   prata_fds_historico_empreendimento

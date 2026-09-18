@@ -1,0 +1,46 @@
+{{ config(materialized="table") }}
+
+-- Prata: Trabalho Social Mensal — acompanhamento do TTS (Entidades)
+-- Fonte: bronze.bronze_shpt_monit_exec_ts_fds_mensal
+-- Saída: dados de trabalho social tipados
+with
+    ts_raw as (
+        select
+            -- Identificação
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
+
+            -- Situação do trabalho social
+            {{ parse_int("co_situacao_trabalho_social") }} as co_situacao_trabalho_social,
+
+            -- Datas do ciclo de TS
+            {{ var('schema_udfs') }}.parse_date_br(dt_aprovacao_pts) as dt_aprovacao_pts,
+            {{ var('schema_udfs') }}.parse_date_br(
+                dt_assinatura_convenio
+            ) as dt_assinatura_convenio,
+            {{ var('schema_udfs') }}.parse_date_br(dt_termino_convenio) as dt_termino_convenio,
+            {{ var('schema_udfs') }}.parse_date_br(
+                dt_primeiro_relatorio
+            ) as dt_primeiro_relatorio,
+            {{ var('schema_udfs') }}.parse_date_br(dt_ultimo_relatorio) as dt_ultimo_relatorio,
+
+            -- Percentual de execução do TS
+            {{ parse_numeric("pc_execucao_ts", "numeric(6, 2)") }} as pct_execucao_ts,
+
+            -- Portaria
+            nullif(trim(nu_portaria_ts), '') as nu_portaria_ts,
+            {{ var('schema_udfs') }}.parse_date_br(
+                dt_publ_portaria_ts
+            ) as dt_publicacao_portaria,
+
+            -- Referência temporal
+            {{ var('schema_udfs') }}.parse_date_br(dh_movimento) as dt_movimento,
+
+            -- Metadados
+            _source_file as arquivo_de_origem,
+            nullif(trim(_ingested_at), '')::timestamp as criado_em
+
+        from {{ ref("bronze_shpt_monit_exec_ts_fds_mensal") }}
+    )
+
+select *
+from ts_raw

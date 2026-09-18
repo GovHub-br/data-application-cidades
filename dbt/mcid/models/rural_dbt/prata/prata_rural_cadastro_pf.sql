@@ -1,0 +1,71 @@
+{{ config(materialized="table") }}
+
+-- Silver: Cadastro PF Rural (Beneficiários)
+-- Fonte: bronze.bronze_shpt_monit_cadastro_pf_rural_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Saída: dados socioeconômicos dos beneficiários do programa Rural limpos e tipados
+
+with
+    cad_pf_raw as (
+        select
+            -- Identificadores
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_registro)), '') as nu_registro,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv) as apf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_empreendimento)), '') as nu_contrato_empreendimento,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_nidividual)), '') as nu_contrato_individual,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
+
+            -- Entidade Organizadora (EO)
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_eo_empreendimento)), '') as eo_nome,
+            nullif(regexp_replace(trim(co_cnpj_eo), '[^0-9]', '', 'g'), '') as eo_cnpj,
+
+            -- Localização
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_end_beneficiario)), '') as endereco_beneficiario,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_municipio)), '') as municipio,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(sg_uf)), '') as uf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_municipio_ibge)), '') as cod_ibge,
+
+            -- Dados do Beneficiário
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_beneficiario)), '') as beneficiario_nome,
+            nullif(regexp_replace(trim(nu_cpf_beneficiario), '[^0-9]', '', 'g'), '') as beneficiario_cpf,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_sexo_benef)), '') as beneficiario_sexo,
+            {{ parse_int('nu_estado_civil') }} as estado_civil_codigo,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_tipo_beneficiario)), '') as tipo_beneficiario,
+            {{ parse_int('co_sit_funcidaria') }} as situacao_funcionaria_codigo,
+
+            -- Demografia e Indicadores Sociais
+            {{ parse_int('qt_pessoas_familia') }} as qt_pessoas_familia,
+            case when trim(ic_benef_bpc) = 'S' then true else false end as ic_benef_bpc,
+            case when trim(ic_benef_bf) = 'S' then true else false end as ic_benef_bolsa_familia,
+
+            -- Valores
+            {{ parse_financial_value('vr_renda_familiar') }} as vr_renda_familiar,
+            {{ parse_financial_value('vr_imovel') }} as vr_imovel,
+            {{ parse_financial_value('vr_subsidio_uh') }} as vr_subsidio_uh,
+            {{ parse_financial_value('vr_contrapartida_uh') }} as vr_contrapartida_uh,
+            {{ parse_financial_value('vr_caucao') }} as vr_caucao,
+            {{ parse_financial_value('vr_distrato') }} as vr_distrato,
+
+            -- Saneamento Rural
+            {{ parse_int('qt_cisterna') }} as qt_cisterna,
+            {{ parse_int('qt_efluentes') }} as qt_efluente,
+
+            -- Distrato
+            case when trim(ic_distrato) = 'S' then true else false end as ic_distrato,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_motivo_distrato)), '') as co_motivo_distrato,
+
+            -- Datas
+            {{ var('schema_udfs') }}.parse_date_br(dt_contratacao) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_nascimento) as dt_nascimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_recolhimento_caucao) as dt_recolhimento_caucao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_distrato) as dt_distrato,
+            {{ var('schema_udfs') }}.parse_date_br(dt_efetiva_conclusao) as dt_efetiva_conclusao,
+
+            -- Linhagem da bronze do lake
+            _source_file as arquivo_de_origem,
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+
+        from {{ ref("bronze_shpt_monit_cadastro_pf_rural_mensal") }}
+    )
+
+select *
+from cad_pf_raw

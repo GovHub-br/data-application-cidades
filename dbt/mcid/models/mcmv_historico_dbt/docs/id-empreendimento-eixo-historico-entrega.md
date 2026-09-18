@@ -6,7 +6,7 @@ Change OpenSpec: `id-empreendimento-eixo-historico`. Build/teste local em
 ## O que mudou
 
 A identidade estável de empreendimento FDS (`id_empreendimento`, da
-`prata_fds_historico_dim_empreendimento` do #130 — hash do APF-âncora / Fase Projeto)
+`prata_fds_dim_empreendimento` do #130 — hash do APF-âncora / Fase Projeto)
 passou a alcançar a série histórica e os golds de série/snapshot. Antes o eixo
 histórico contava **APF**, e um empreendimento FDS multi-fase
 (Projeto → Obra → Desligamento, ~19% dos empreendimentos) aparecia 2–3×.
@@ -68,7 +68,7 @@ mais avançada em cada mês.
 
 Seed curado `seeds/entidades_fds/seed_correcao_fase_projeto.csv` (176 APFs
 Entidades reclassificados de "EM ANDAMENTO" → "FASE PROJETO" em 2026-04-30, do
-xlsx GEFUS). `prata_fds_historico_dim_empreendimento` faz `left join` sobre `apf` e
+xlsx GEFUS). `prata_fds_dim_empreendimento` faz `left join` sobre `apf` e
 expõe `fase_corrigida` / `dt_correcao` / `origem_correcao` **ao lado** da
 `fase_empreendimento` — não sobrescreve (D4). 176/1.093 linhas com correção;
 **1 APF** em que os dois discordam (`fase_empreendimento = Obra`,

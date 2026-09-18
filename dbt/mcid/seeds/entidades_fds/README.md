@@ -10,7 +10,7 @@ mapeamento curado APF → fase (Projeto / Obra / Desligamento) e APF-âncora do
 empreendimento, do xlsx GEFUS `RELAÇÃO_APF_FASES_FDS`. 1.093 linhas · 888
 `id_empreendimento`. `arquivo_origem ∈ {JAN26, ABR26}` (hoje 100% `ABR26`).
 Fonte de verdade da identidade de empreendimento FDS (change #130). Consumido
-por `prata_fds_historico_dim_empreendimento`.
+por `prata_fds_dim_empreendimento`.
 
 ## `seed_correcao_fase_projeto.csv`
 
@@ -20,7 +20,7 @@ arquivo_origem` — correção retroativa de fase do xlsx GEFUS
 para "FASE PROJETO" em 2026-04-30). Change de origem:
 `id-empreendimento-eixo-historico` (D4).
 
-**Evidência, não sobrescrita:** `prata_fds_historico_dim_empreendimento` faz `left
+**Evidência, não sobrescrita:** `prata_fds_dim_empreendimento` faz `left
 join` sobre `apf` e expõe `fase_corrigida` / `dt_correcao` / `origem_correcao`
 ao lado da `fase_empreendimento` resolvida pelo seed — **não** a substitui.
 Hoje há 1 APF em que os dois discordam (`fase_empreendimento = Obra`,

@@ -1,8 +1,8 @@
 version: 2
 
 # As bronzes de série histórica são uma TABELA POR FAMÍLIA: 4 da série executiva + 5
-# interfaces GEFUS + 2 agentes SNH neste domínio, mais 2 agentes de entregas em
-# indicadores_mcmv_dbt/bronze. O mapa que as define está em
+# interfaces GEFUS + 2 agentes SNH + 2 agentes de entregas por evento. O mapa
+# que as define está em
 # macros/historico/familias.sql; a união entre famílias vive na prata.
 #
 # As quatro colunas de auditoria (source_file, dt_referencia, dt_ingest,
@@ -744,5 +744,87 @@ models:
         description: Timestamp da materialização desta camada.
       - name: hash_linha
         description: Hash MD5 do conteúdo-chave da linha (auditoria / detecção de mudança).
+        data_tests:
+          - not_null
+
+  - name: bronze_dhist_snh_entregas_evento_bb
+    description: >
+      Bronze — entregas por EVENTO (fluxo), agente BB. Cópia fiel de
+      `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet`,
+      sem regra de negócio (só projeção mínima + helpers de harmonização).
+      Frente: todas as modalidades MCMV do agente BB (o split por frente é da
+      prata). Uma linha por linha de origem, sem dedup. Neste agente as colunas
+      de origem do evento são `dt_ass_doc` / `numero_de_unidades_entregues`; os
+      helpers `dt_evento` e `qt_uh_entregues_evento` normalizam isso para a
+      prata, que une os dois agentes. Complementa a série mensal SNH
+      (bronze_dhist_empreendimento_snh_*), que traz o acumulado.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, entregas]
+    data_tests:
+      - colunas_esperadas:
+          config:
+            severity: warn
+    columns:
+      - name: apf
+        description: APF do empreendimento (texto, cru).
+      - name: agente_arquivo
+        description: Constante `BB` — derivado do nome do arquivo.
+      - name: dt_evento
+        description: Data da entrega, harmonizada a partir da coluna do agente.
+      - name: qt_uh_entregues_evento
+        description: >
+          UH entregues no evento, harmonizada a partir da coluna do agente.
+          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo por evento).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do arquivo (snapshot) — não é a data do evento.
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Hash MD5 do evento (dedup na prata).
+        data_tests:
+          - not_null
+
+  - name: bronze_dhist_snh_entregas_evento_caixa
+    description: >
+      Bronze — entregas por EVENTO (fluxo), agente CAIXA. Cópia fiel de
+      `staging/dados_historicos/*snh_pmcmv_dados_prioritarios_af_caixa_entregas.parquet`,
+      sem regra de negócio (só projeção mínima + helpers de harmonização).
+      Frente: todas as modalidades MCMV do agente CAIXA (o split por frente é da
+      prata). Uma linha por linha de origem, sem dedup. Neste agente as colunas
+      de origem do evento são `dt_entrega` / `qt_uh_entregues`; os helpers
+      `dt_evento` e `qt_uh_entregues_evento` normalizam isso para a prata, que
+      une os dois agentes. Complementa a série mensal SNH
+      (bronze_dhist_empreendimento_snh_*), que traz o acumulado.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, entregas]
+    data_tests:
+      - colunas_esperadas:
+          config:
+            severity: warn
+    columns:
+      - name: apf
+        description: APF do empreendimento (texto, cru).
+      - name: agente_arquivo
+        description: Constante `CAIXA` — derivado do nome do arquivo.
+      - name: dt_evento
+        description: Data da entrega, harmonizada a partir da coluna do agente.
+      - name: qt_uh_entregues_evento
+        description: >
+          UH entregues no evento, harmonizada a partir da coluna do agente.
+          Conceito canônico `quantidade_uh_entregues` (recorte de fluxo por evento).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do arquivo (snapshot) — não é a data do evento.
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Hash MD5 do evento (dedup na prata).
         data_tests:
           - not_null

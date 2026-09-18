@@ -8,8 +8,12 @@ mcid:
       password: "{{ env_var('DB_DW_PASSWORD_MCID') }}"
       port: "{{ env_var('DB_DW_PORT_MCID', '5432') | int }}"
       dbname: "{{ env_var('DB_DW_DBNAME_MCID', 'cidades') }}"
-      # schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'empreendimento_far') }}"
-      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'conjuntura') }}"
+      # Schema de fallback: só recebe recurso que esqueceu o `+schema`. Fica
+      # vazio em operação normal, e é isso que o teste
+      # `sem_recurso_no_schema_de_fallback` verifica. Nunca apontar para schema
+      # real — foi assim que models extraviados se esconderam em `conjuntura`.
+      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'dbt_default') }}"
+
     # Modo A (dev) — le a staging MinIO, materializa no arquivo local.
     # O catalogo local se chama `cidades` (D3 da change
     # pipeline-bronze-historica-destino-trocavel): o OpenMetadata monta o FQN
@@ -46,7 +50,11 @@ mcid:
         temp_directory: "{{ env_var('DUCKDB_MCID_TEMP_DIR', '/tmp/duckdb_mcid_tmp') }}"
         max_temp_directory_size: "{{ env_var('DUCKDB_MCID_MAX_TEMP', '60GB') }}"
       settings:
-        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') }}"
+        # O DuckDB espera host:porta SEM esquema -- ele mesmo prefixa http://
+        # (s3_use_ssl=false). Se MINIO_ENDPOINT vier como "http://host:9000",
+        # o resultado vira "http://http://host:9000" e a resolucao de nome falha.
+        # O replace abaixo aceita a variavel com ou sem esquema.
+        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
         s3_access_key_id: "{{ env_var('MINIO_ACCESS_KEY') }}"
         s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
         s3_url_style: path
@@ -68,8 +76,12 @@ mcid:
     prod_duckdb:
       type: duckdb
       path: "{{ env_var('DUCKDB_MCID_LOCAL_PATH', '/tmp/mcid_local.duckdb') }}"
-      database: cidades
-      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'conjuntura') }}"
+      # `database` TEM de casar com o basename do `path` (o dbt-duckdb valida).
+      # Aqui e o arquivo local de scratch/spill: mcid_local.duckdb -> mcid_local.
+      # O catalogo `cidades` vem do `attach` abaixo, apontando pro Postgres --
+      # e um nome nao pode servir aos dois na mesma sessao.
+      database: mcid_local
+      schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'dbt_default') }}"
       threads: "{{ env_var('DUCKDB_MCID_THREADS', '4') | int }}"
       extensions:
         - httpfs
@@ -84,7 +96,11 @@ mcid:
         temp_directory: "{{ env_var('DUCKDB_MCID_TEMP_DIR', '/tmp/duckdb_mcid_tmp') }}"
         max_temp_directory_size: "{{ env_var('DUCKDB_MCID_MAX_TEMP', '60GB') }}"
       settings:
-        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') }}"
+        # O DuckDB espera host:porta SEM esquema -- ele mesmo prefixa http://
+        # (s3_use_ssl=false). Se MINIO_ENDPOINT vier como "http://host:9000",
+        # o resultado vira "http://http://host:9000" e a resolucao de nome falha.
+        # O replace abaixo aceita a variavel com ou sem esquema.
+        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
         s3_access_key_id: "{{ env_var('MINIO_ACCESS_KEY') }}"
         s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
         s3_url_style: path

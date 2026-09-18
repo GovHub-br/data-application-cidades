@@ -1,0 +1,1205 @@
+/*
+ * tema.css — identidade visual GovHub aplicada ao site de documentacao.
+ *
+ * A fonte Inter e usada quando disponivel no sistema; nao ha @import de CDN
+ * porque o site publicado nao depende de rede externa. Para fixar a Inter em
+ * qualquer maquina, versionar o .woff2 em assets/fontes/ e declarar @font-face.
+ */
+
+:root {
+  /* Marca */
+  --primary-purple: #7a34f3;
+  --secondary-purple: #8b5cf6;
+  --purple-400: #9249ca;
+  --purple-600: #7c3aad;
+  --purple-700: #5b21b6;
+  --accent-orange: #f97316;
+
+  /* Texto */
+  --text-strong: #202020;
+  --text-body: #2d3748;
+  --text-muted: #666666;
+  --text-white: #ffffff;
+
+  /* Fundos */
+  --bg-white: #ffffff;
+  --bg-light: #f7f7f7;
+  --bg-subtle: #f8f9fa;
+  --borda: #e5e7eb;
+
+  /* Semanticas */
+  --color-success: #10b981;
+  --camada-bronze: #b45309;
+  --camada-silver: #64748b;
+  --camada-gold: #7a34f3;
+
+  --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: "SFMono-Regular", ui-monospace, "JetBrains Mono", Menlo, monospace;
+
+  --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 8px 30px rgba(0, 0, 0, 0.15);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --transition-normal: all 0.2s ease;
+  --largura-max: 1120px;
+
+  /* Escala de espaçamento. Ajustar aqui muda o respiro do site inteiro. */
+  --esp-1: 0.5rem;
+  --esp-2: 0.85rem;
+  --esp-3: 1.25rem;
+  --esp-4: 1.75rem;
+  --esp-5: 2.5rem;
+  --esp-6: 4rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  color: var(--text-body);
+  background: var(--bg-light);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--purple-700);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text-strong);
+  line-height: 1.3;
+  margin: 0 0 var(--esp-2);
+}
+
+h2 {
+  font-size: 1.6rem;
+  color: var(--purple-700);
+}
+
+/* Um h2 que aparece depois de conteúdo precisa de folga acima dele. */
+* + h2 {
+  margin-top: var(--esp-5);
+}
+
+* + h3 {
+  margin-top: var(--esp-4);
+}
+
+h3 {
+  font-size: 1.15rem;
+}
+
+.colunas h3 {
+  font-size: 1.05rem;
+  color: var(--purple-700);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.container {
+  max-width: var(--largura-max);
+  margin: 0 auto;
+  padding: 0 var(--esp-4);
+}
+
+/* ---------- Navegacao ---------- */
+
+.topo {
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--borda);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.topo__interno {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  min-height: 64px;
+  flex-wrap: wrap;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+}
+
+.marca:hover {
+  text-decoration: none;
+}
+
+.marca__ponto {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+}
+
+.marca__escopo {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--primary-purple);
+  line-height: 1.2;
+}
+
+.abas {
+  display: flex;
+  align-items: stretch;
+  gap: 0.3rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.abas__legenda {
+  align-self: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  padding-right: 0.6rem;
+  margin-right: 0.2rem;
+  border-right: 1px solid var(--borda);
+}
+
+.aba {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  color: var(--text-body);
+  transition: var(--transition-normal);
+}
+
+.aba__rotulo {
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.aba__publico {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+
+.aba:hover {
+  background: var(--bg-subtle);
+  border-color: var(--borda);
+  text-decoration: none;
+}
+
+.aba:hover .aba__rotulo {
+  color: var(--purple-700);
+}
+
+.aba[aria-current="page"] {
+  background: var(--primary-purple);
+  border-color: var(--primary-purple);
+  color: var(--text-white);
+}
+
+.aba[aria-current="page"] .aba__publico {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@media (max-width: 720px) {
+  .abas__legenda {
+    display: none;
+  }
+
+  .aba {
+    padding: 0.4rem 0.65rem;
+  }
+
+  .aba__publico {
+    display: none;
+  }
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+  color: var(--text-white);
+  padding: var(--esp-6) 0 3.25rem;
+}
+
+.hero h1 {
+  color: var(--text-white);
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  max-width: 22ch;
+}
+
+.hero p {
+  font-size: 1.1rem;
+  max-width: 62ch;
+  opacity: 0.94;
+  margin: var(--esp-2) 0 0;
+  line-height: 1.6;
+}
+
+.hero__periodo {
+  display: inline-block;
+  margin-top: var(--esp-4);
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* ---------- Numeros ---------- */
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--esp-3);
+  margin: var(--esp-4) 0 0;
+}
+
+/* Só quando os números vêm logo abaixo do hero: aí eles sobem sobre ele de
+   propósito. No meio da página essa margem negativa cobriria o texto acima. */
+.numeros--hero {
+  margin-top: -2rem;
+}
+
+.numeros--hero + * {
+  margin-top: var(--esp-4);
+}
+
+.numero {
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--esp-3) 1.35rem;
+  border-top: 3px solid var(--primary-purple);
+}
+
+.numero--acento {
+  border-top-color: var(--accent-orange);
+}
+
+.numero__valor {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-strong);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.numero__rotulo {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin-top: 0.35rem;
+}
+
+/* ---------- Secoes e cards ---------- */
+
+section {
+  padding: var(--esp-5) 0;
+}
+
+/* Evita somar os dois paddings entre seções vizinhas, sem colar o título da
+   seguinte no fim da anterior. */
+section + section {
+  padding-top: var(--esp-4);
+}
+
+.secao__intro {
+  color: var(--text-muted);
+  max-width: 70ch;
+  margin: 0 0 var(--esp-4);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: var(--esp-3);
+}
+
+/* Conjuntos de quatro itens: duas colunas largas em vez de 3+1, que deixa um
+   card órfão e estreito na segunda linha. */
+.cards--2col {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+}
+
+.cards--dominios {
+  margin-top: var(--esp-5);
+}
+
+.card {
+  display: block;
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: var(--esp-4);
+  color: var(--text-body);
+  transition: var(--transition-normal);
+}
+
+.card:hover {
+  text-decoration: none;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--secondary-purple);
+}
+
+.card h3 {
+  color: var(--purple-700);
+  margin-bottom: var(--esp-2);
+  margin-top: 0;
+  line-height: 1.35;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.card .prosa p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.card .prosa p:last-child {
+  margin-bottom: 0;
+}
+
+.card__tag {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-purple);
+  margin-bottom: var(--esp-2);
+}
+
+/* ---------- Tabelas ---------- */
+
+.tabela-wrap {
+  overflow-x: auto;
+  background: var(--bg-white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--borda);
+  margin-bottom: var(--esp-3);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92rem;
+}
+
+thead th {
+  background: var(--primary-purple);
+  color: var(--text-white);
+  text-align: left;
+  padding: var(--esp-2) var(--esp-3);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: var(--esp-2) var(--esp-3);
+  border-top: 1px solid var(--borda);
+  vertical-align: top;
+}
+
+/* Sem isso a descrição fica espremida e a linha cresce em altura. */
+.tabela-modelos td:nth-child(3) {
+  min-width: 380px;
+}
+
+tbody tr:nth-child(even) {
+  background: var(--bg-subtle);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--bg-subtle);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+/* ---------- Badges de camada ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-white);
+  background: var(--text-muted);
+}
+
+.badge--bronze {
+  background: var(--camada-bronze);
+}
+.badge--silver {
+  background: var(--camada-silver);
+}
+.badge--gold {
+  background: var(--camada-gold);
+}
+
+/* ---------- Layout de duas colunas ---------- */
+
+.colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  gap: var(--esp-6);
+  align-items: start;
+}
+
+.lateral {
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: var(--esp-4);
+  position: sticky;
+  /* Fica abaixo do cabeçalho fixo (64px) sem encostar nele. */
+  top: 80px;
+}
+
+.lateral h3 {
+  color: var(--purple-700);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1.2rem;
+}
+
+.lateral h3:first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 820px) {
+  .colunas {
+    grid-template-columns: 1fr;
+  }
+
+  .lateral {
+    position: static;
+  }
+}
+
+/* ---------- Prosa ---------- */
+
+.prosa {
+  max-width: 68ch;
+}
+
+.prosa p {
+  margin: 0 0 var(--esp-3);
+  line-height: 1.7;
+}
+
+.prosa ul,
+.prosa ol {
+  margin: 0 0 var(--esp-3);
+  padding-left: 1.4rem;
+}
+
+.prosa li {
+  margin-bottom: var(--esp-1);
+  line-height: 1.65;
+}
+
+.prosa h2,
+.prosa h3,
+.prosa h4 {
+  font-size: 1rem;
+  color: var(--purple-700);
+  margin: var(--esp-4) 0 var(--esp-2);
+}
+
+.prosa--entrega {
+  background: var(--bg-subtle);
+  border-left: 3px solid var(--secondary-purple);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: var(--esp-3) var(--esp-4) var(--esp-1);
+  margin-top: var(--esp-3);
+  font-size: 0.94rem;
+}
+
+.lista-perguntas {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+.lista-perguntas li {
+  padding: var(--esp-2) 0 var(--esp-2) 1.5rem;
+  border-bottom: 1px solid var(--borda);
+  position: relative;
+  font-size: 0.94rem;
+}
+
+.lista-perguntas li::before {
+  content: "?";
+  position: absolute;
+  left: 0;
+  color: var(--primary-purple);
+  font-weight: 800;
+}
+
+.lista-perguntas li:last-child {
+  border-bottom: none;
+}
+
+.lista-dags {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  font-size: 0.86rem;
+}
+
+.lista-dags li {
+  margin-bottom: var(--esp-1);
+  word-break: break-all;
+}
+
+/* ---------- Chips ---------- */
+
+.chip {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  margin: 0 0.25rem 0.35rem 0;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--borda);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.chip--link {
+  border-color: var(--secondary-purple);
+  color: var(--purple-700);
+}
+
+.chip--link:hover {
+  background: var(--primary-purple);
+  color: var(--text-white);
+  text-decoration: none;
+}
+
+.chip--fonte {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+/* ---------- Linha do tempo de entregas ---------- */
+
+.linha-tempo {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--esp-4);
+  border-left: 2px solid var(--borda);
+}
+
+.entrega {
+  position: relative;
+  padding: 0 0 var(--esp-5) var(--esp-1);
+}
+
+.entrega::before {
+  content: "";
+  position: absolute;
+  /* Centro do marcador sobre a linha: recua o padding da lista e metade da
+     própria largura (10px + 2px de borda de cada lado = 14px). */
+  left: calc(-1 * var(--esp-4) - 6px);
+  top: 0.55rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--borda);
+  border: 2px solid var(--bg-light);
+}
+
+.entrega--rica::before {
+  background: var(--primary-purple);
+}
+
+.entrega__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.entrega__meta time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.entrega h3 {
+  margin: var(--esp-1) 0 0.15rem;
+  font-size: 1.05rem;
+  color: var(--text-strong);
+}
+
+.entrega__autor {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.entrega__ref {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.entrega__origem {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--borda);
+}
+
+.entrega__origem--pr {
+  color: var(--purple-700);
+  border-color: var(--secondary-purple);
+}
+
+.entrega__arquivos {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+}
+
+/* ---------- Frentes (blocos de domínio na visão de gestão) ---------- */
+
+.frente {
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: var(--esp-4);
+  margin-bottom: var(--esp-3);
+}
+
+/* Título e números empilhados: alinhados às pontas opostas, os números
+   ficavam soltos no canto e desconectados do domínio que descrevem. */
+.frente__cabecalho {
+  margin-bottom: var(--esp-3);
+  padding-bottom: var(--esp-2);
+  border-bottom: 1px solid var(--borda);
+}
+
+.frente__cabecalho h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.frente__numeros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-1) var(--esp-3);
+  margin: var(--esp-1) 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Separador só entre itens: antes do primeiro ele fica solto. */
+.frente__numeros span + span::before {
+  content: "· ";
+  color: var(--secondary-purple);
+}
+
+/* Texto dentro do bloco herda a medida de leitura, não a largura do card. */
+.frente .prosa,
+.frente .lista-perguntas {
+  max-width: 76ch;
+}
+
+.frente__link {
+  display: inline-block;
+  margin-top: 0.9rem;
+  font-weight: 600;
+}
+
+/* ---------- Legenda das camadas do diagrama ---------- */
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-3);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--esp-4);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.legenda li {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-1);
+}
+
+.legenda__cor {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Espelham os classDef de tooling/mermaid.py. */
+.legenda__cor--fonte {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+.legenda__cor--bronze {
+  background: #fef3e2;
+  border: 1px solid #b45309;
+}
+.legenda__cor--silver {
+  background: #f1f5f9;
+  border: 1px solid #64748b;
+}
+.legenda__cor--gold {
+  background: #f3ebff;
+  border: 1px solid #7a34f3;
+}
+.legenda__cor--alvo {
+  background: #7a34f3;
+  border: 1px solid #5b21b6;
+}
+
+/* ---------- Tabela gold e seu fluxo ---------- */
+
+.gold {
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: var(--esp-4);
+  margin-bottom: var(--esp-3);
+}
+
+.gold__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  flex-wrap: wrap;
+}
+
+.gold__cabecalho h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  word-break: break-word;
+}
+
+.gold__descricao {
+  margin: var(--esp-2) 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.fluxo {
+  margin-top: var(--esp-3);
+  border-top: 1px solid var(--borda);
+  padding-top: var(--esp-2);
+}
+
+.fluxo > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--purple-700);
+  list-style-position: outside;
+}
+
+.fluxo > summary:hover {
+  color: var(--primary-purple);
+}
+
+.fluxo__diagrama {
+  margin: var(--esp-3) 0;
+  padding: var(--esp-3);
+  background: var(--bg-subtle);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.fluxo__diagrama svg {
+  display: block;
+  /* Sem teto de largura: encolher para caber deixava os rótulos ilegíveis.
+     Quem rola é o container. */
+  max-width: none;
+  height: auto;
+}
+
+.fluxo__fonte {
+  margin-top: var(--esp-2);
+}
+
+.fluxo__fonte > summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.fluxo__fonte pre {
+  margin: var(--esp-2) 0 0;
+  padding: var(--esp-3);
+  background: var(--text-strong);
+  color: #e5e7eb;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.fluxo__fonte pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+@media print {
+  .fluxo[open] .fluxo__fonte {
+    display: none;
+  }
+}
+
+/* ---------- Indicação de fonte ---------- */
+
+.fonte {
+  font-size: 0.78rem;
+  margin-top: var(--esp-3);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  margin-bottom: var(--esp-5);
+  padding-left: var(--esp-2);
+  border-left: 3px solid var(--borda);
+}
+
+/* Como última linha de um card ou do aside, a folga de baixo sobra. */
+.card .fonte,
+.lateral .fonte {
+  margin-bottom: 0;
+}
+
+/* O último bloco de fonte de uma coluna não precisa empurrar o rodapé. */
+.colunas > div > .fonte:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Citação ---------- */
+
+.citacao {
+  margin: var(--esp-4) 0;
+  padding: var(--esp-4);
+  background: var(--bg-white);
+  border-left: 4px solid var(--accent-orange);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  box-shadow: var(--shadow-md);
+}
+
+.citacao .prosa p {
+  margin: 0;
+  font-size: 1.02rem;
+  font-style: italic;
+  color: var(--text-strong);
+}
+
+.citacao cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Nota do hero ---------- */
+
+.hero__nota {
+  margin-top: 1.5rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  max-width: 70ch;
+}
+
+.hero__nota p {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* ---------- Cobertura das linhas ---------- */
+
+.linha--descoberta {
+  color: var(--text-muted);
+}
+
+.pendente {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.lista-perguntas--destaque {
+  max-width: 80ch;
+}
+
+.lista-perguntas--destaque li {
+  font-size: 1rem;
+  padding-top: var(--esp-3);
+  padding-bottom: var(--esp-3);
+  line-height: 1.6;
+}
+
+/* ---------- Trilha de navegação ---------- */
+
+.trilha {
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.86rem;
+}
+
+.trilha .container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.trilha__voltar {
+  font-weight: 600;
+  color: var(--purple-700);
+}
+
+.trilha__separador {
+  color: var(--borda);
+}
+
+.trilha__atual {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+@media print {
+  .trilha {
+    display: none;
+  }
+}
+
+.hero--dominio h1 {
+  margin-bottom: 0.2rem;
+}
+
+.card--dominio .card__camadas {
+  margin-top: 0.8rem;
+}
+
+.card--modelo h3 {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.celula-dominios {
+  min-width: 190px;
+}
+
+.celula-dominios .chip {
+  margin-bottom: 0.2rem;
+}
+
+.celula-refs {
+  min-width: 240px;
+}
+
+.celula-refs code,
+.celula-refs .chip {
+  display: inline-block;
+  margin: 0 0.2rem 0.25rem 0;
+  font-size: 0.78rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Filtro de tabela ---------- */
+
+.filtro {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filtro input {
+  flex: 1 1 260px;
+  max-width: 340px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: var(--bg-white);
+}
+
+.filtro input:focus {
+  outline: 2px solid var(--secondary-purple);
+  outline-offset: 1px;
+  border-color: var(--secondary-purple);
+}
+
+.filtro__contador {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+@media print {
+  .filtro {
+    display: none;
+  }
+}
+
+/* ---------- Grafico ---------- */
+
+.grafico {
+  background: var(--bg-white);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.grafico svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ---------- Rodape ---------- */
+
+.rodape {
+  background: var(--text-strong);
+  color: rgba(255, 255, 255, 0.75);
+  padding: var(--esp-5) 0;
+  margin-top: var(--esp-5);
+  font-size: 0.9rem;
+  margin-top: 2rem;
+}
+
+.rodape a {
+  color: var(--text-white);
+}
+
+.rodape__gerado {
+  opacity: 0.6;
+  font-size: 0.82rem;
+  margin-top: 0.4rem;
+}
+
+.aviso {
+  background: #fff7ed;
+  border-left: 4px solid var(--accent-orange);
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+/* ---------- Impressao ---------- */
+
+@media print {
+  .topo,
+  .rodape {
+    display: none;
+  }
+
+  body {
+    background: var(--bg-white);
+  }
+
+  .hero {
+    background: none;
+    color: var(--text-strong);
+    padding: 0 0 1rem;
+  }
+
+  .hero h1 {
+    color: var(--purple-700);
+  }
+
+  .numero,
+  .card,
+  .tabela-wrap {
+    box-shadow: none;
+    border: 1px solid var(--borda);
+    break-inside: avoid;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .abas {
+    margin-left: 0;
+    width: 100%;
+  }
+}

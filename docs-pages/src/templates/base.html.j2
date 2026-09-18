@@ -1,0 +1,40 @@
+{#
+  base.html.j2 — esqueleto de todas as paginas.
+
+  `rel` e o prefixo relativo da pagina corrente ("" na raiz, "../" um nivel
+  abaixo). Nenhuma URL absoluta e escrita nos templates: assim o mesmo HTML
+  funciona em localhost:8000/ e no subpath do GitHub Pages.
+#}
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ titulo }} · Gov Hub BR — Cidades</title>
+    <meta name="description" content="{{ descricao }}" />
+    <link rel="stylesheet" href="{{ rel }}assets/tema.css" />
+  </head>
+  <body>
+    {% include "_partials/nav.html.j2" %}
+
+    {# `rel` vazio significa que esta e a capa: nao ha para onde voltar. #}
+    {% if rel %}
+      <div class="trilha">
+        <div class="container">
+          <a class="trilha__voltar" href="{{ rel }}index.html">
+            <span aria-hidden="true">←</span> Início
+          </a>
+          <span class="trilha__separador" aria-hidden="true">/</span>
+          <span class="trilha__atual">{{ titulo }}</span>
+        </div>
+      </div>
+    {% endif %}
+
+    <main>
+      {% block conteudo %}{% endblock %}
+    </main>
+
+    {% include "_partials/rodape.html.j2" %}
+    <script src="{{ rel }}assets/app.js" defer></script>
+  </body>
+</html>
