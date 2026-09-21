@@ -127,23 +127,29 @@ jobs:
       id-token: write
     steps:
       - name: Check VPN secrets
+        id: vpn
         env:
           CLIENT_OVPN: ${{ secrets.CLIENT_OVPN }}
         run: |
           if [ -z "$CLIENT_OVPN" ]; then
-            echo "VPN não configurada — pulando."
-            exit 0
+            echo "VPN não configurada — docs não serão publicadas."
+            echo "configurada=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configurada=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/checkout@v4
+        if: steps.vpn.outputs.configurada == 'true'
 
       - name: Instalar deps (DBT + VPN)
+        if: steps.vpn.outputs.configurada == 'true'
         run: |
           sudo apt-get update
           sudo apt-get -y install openvpn iputils-ping
-          pip install dbt-core dbt-postgres
+          pip install 'dbt-postgres==1.7.13'
 
       - name: Conectar VPN
+        if: steps.vpn.outputs.configurada == 'true'
         env:
           CLIENT_OVPN: ${{ secrets.CLIENT_OVPN }}
           VPN_P12: ${{ secrets.VPN_P12 }}
@@ -181,6 +187,7 @@ jobs:
           done
 
       - name: Gerar DBT docs
+        if: steps.vpn.outputs.configurada == 'true'
         env:
           DB_DW_HOST_MCID: ${{ secrets.DB_DW_HOST }}
           DB_DW_DBNAME_MCID: ${{ secrets.DB_DW_DBNAME }}
@@ -193,11 +200,13 @@ jobs:
             --public-dir "${{ env.DBT_PROJECT_DIR }}/public"
 
       - name: Finalizar VPN
-        if: always()
+        if: always() && steps.vpn.outputs.configurada == 'true'
         run: sudo pkill openvpn || true
 
       - uses: actions/upload-pages-artifact@v3
+        if: steps.vpn.outputs.configurada == 'true'
         with:
           path: ${{ env.DBT_PROJECT_DIR }}/public
 
       - uses: actions/deploy-pages@v4
+        if: steps.vpn.outputs.configurada == 'true'
