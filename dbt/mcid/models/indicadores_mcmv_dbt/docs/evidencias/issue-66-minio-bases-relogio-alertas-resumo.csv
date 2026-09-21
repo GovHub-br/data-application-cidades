@@ -1,0 +1,7 @@
+arquivo,linhas,qtd_apf,coluna_quantidade,movimentos,uh_total
+raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv,11654,11653,QT_UH_ENTREGUES,30/06/2026,1395669
+raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB.csv,5961,167,Número de Unidades Entregues,30/06/2026,122929
+raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv,15023,15023,UH Contratadas,2026-06-30,1706861
+raw/202606_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt,1288,1288,UH Contratadas,30/06/2026,167762
+raw/dados_prioritarios_recebidos_caixa_empreendimentos.csv,14923,14923,uh_contratadas,2026-01-31,1689610
+raw/dados_prioritarios_recebidos_bb_empreendimentos.csv,1288,1288,uh_contratadas,30/01/2026,167762

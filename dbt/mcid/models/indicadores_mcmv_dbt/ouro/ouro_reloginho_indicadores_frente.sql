@@ -1,0 +1,51 @@
+{{ config(materialized="table") }}
+
+-- GOLD do reloginho MCMV (grupo A): série mensal SNH quebrada por FRENTE.
+--
+-- Mesma regra da indicadores_reloginho, com frente_mcmv (FAR / Entidades /
+-- Rural, derivada de `modalidade` na silver) no grão. Serve para:
+-- * o reloginho por frente no dashboard;
+-- * a verificação de cobertura histórica por frente
+-- (test assert_reloginho_frente_cobertura_mensal + doc
+-- issue-130-refatoracao-medalhao-reloginho.md).
+--
+-- Grão: uma linha por (agente_financeiro, frente_mcmv, dt_referencia).
+-- Somar todas as frentes reproduz a indicadores_reloginho.
+--
+-- Destino conforme o target: `staging_duckdb` materializa no arquivo DuckDB
+-- local (modo A, dev), `prod_duckdb` no Postgres atachado (modo C); a
+-- publicação a partir do arquivo local é o modo B (./publicar-historico.sh).
+-- O corpo é o mesmo nos três — ver models/mcmv_historico_dbt/README.md.
+with
+
+    base as (select * from {{ ref("prata_historico_snh_apf_mes") }}),
+
+    mensal as (
+        select
+            agente_financeiro,
+            frente_mcmv,
+            dt_referencia,
+            -- cast p/ bigint: sum(bigint) -> HUGEINT no DuckDB, sem tipo no
+            -- Postgres. Change: verificar-tipagem-silver-gold-historico.
+            cast(coalesce(sum(uh_contratadas), 0) as bigint) as uh_contratadas,
+            cast(coalesce(sum(uh_entregues), 0) as bigint) as uh_entregues,
+            cast(coalesce(sum(uh_vigentes), 0) as bigint) as uh_vigentes,
+            count(distinct apf) as n_apf
+        from base
+        where frente_mcmv is not null
+        group by agente_financeiro, frente_mcmv, dt_referencia
+    )
+
+select
+    dt_referencia,
+    agente_financeiro,
+    frente_mcmv,
+    uh_contratadas,
+    uh_entregues,
+    uh_vigentes,
+    n_apf,
+    count(*) over (
+        partition by agente_financeiro, frente_mcmv order by dt_referencia
+    ) as n_meses_observados
+from mensal
+order by agente_financeiro, frente_mcmv, dt_referencia

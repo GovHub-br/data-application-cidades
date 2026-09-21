@@ -87,6 +87,152 @@ models:
           classification: restricted
           rag_publication: prohibited
 
+    # empreendimento_far_dbt e empreendimento_fds_dbt removidos (2026-09-18,
+    # change alinhar-far-fds-prod-para-merge-main): todo modelo desses pacotes
+    # era duplicata, por nome, de um modelo já publicado em `origin/main` sob
+    # `far_dbt`/`fds_dbt` (mesma convenção de nomes prod prata_far_*/ouro_far_*/
+    # prata_fds_*/ouro_fds_*) — manter os dois quebraria o `dbt parse` após o
+    # merge ("two resources with identical database representation"). O único
+    # modelo órfão de `empreendimento_fds_dbt` (`bronze_fds_mudanca_fase_eventos`,
+    # sem equivalente em prod/main) também foi apagado: sua única consumidora
+    # (`prata_fds_historico_dim_empreendimento`) foi descontinuada em favor do
+    # sucessor já publicado em `fds_dbt` (`prata_fds_dim_empreendimento`) — ver
+    # `prata_fds_historico_empreendimento.sql`. `indicadores_mcmv_dbt`/
+    # `mcmv_historico_dbt` continuam consumindo os nomes far/fds por `ref()`;
+    # após o merge eles resolvem para os modelos de `far_dbt`/`fds_dbt`.
+
+    indicadores_mcmv_dbt:
+
+      +database: cidades
+
+      +materialized: table
+
+      +meta:
+        governance:
+          product: reloginho
+          owner_key: mcid_data_engineering
+      # bronze removido (2026-09-18, mesma change): os 2 modelos que aqui
+      # existiam (bronze_dhist_snh_entregas_evento_bb/caixa) eram duplicatas
+      # por nome dos mesmos modelos já publicados em `mcmv_historico_dbt/bronze`
+      # (trazidos de `origin/main`) — apagados aqui.
+      prata:
+        +materialized: table
+        +schema: prata
+        +meta:
+          governance:
+            product: reloginho
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +materialized: table
+        +schema: ouro
+        +meta:
+          governance:
+            product: reloginho
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+    # mcmv_silver_dbt:
+
+    #   +materialized: table
+    #   silver:
+    #     +materialized: table
+    #     far:
+    #       +schema: empreendimento_far
+    #     rural:
+    #       +schema: empreendimento_rural
+    #     entidades:
+    #       +schema: empreendimentos_fds
+    #     conjuntura:
+    #       +schema: conjuntura
+    #     classe_media:
+    #       +schema: classe_media
+    #     reforma:
+    #       +schema: reforma
+    #     cidades:
+    #       +schema: cidades
+    #     sub50:
+    #       +schema: sub50
+    #     pro_moradia:
+    #       +schema: pro_moradia
+    #     minha_casa_minha_vida:
+    #       +schema: minha_casa_minha_vida
+
+    mcmv_historico_dbt:
+
+      +database: cidades
+
+      # O piloto FGTS/OGU está desabilitado nesta branch (config(enabled=false)
+      # no próprio arquivo) — sem bloco `piloto:` aqui.
+      +materialized: table
+      +meta:
+        governance:
+          product: mcmv_historico
+          owner_key: mcid_data_engineering
+
+      bronze:
+        +materialized: table
+        +schema: bronze
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+
+      prata:
+        +materialized: table
+        +schema: prata
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+
+      ouro:
+        +materialized: table
+        +schema: ouro
+        +meta:
+          governance:
+            product: mcmv_historico
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+      # Piloto (OGU/FGTS): DESABILITADO nesta branch.
+      # O modelo foi renomeado
+      # para o nome-alvo `prata_dhist_serie_anual_ogu_fgts` e carrega
+      # `config(enabled=false)` no próprio arquivo — não há bloco `piloto:`
+      # aqui. Retomada do desenvolvimento numa change futura.
+
     far_dbt:
       +materialized: table
       +meta:
@@ -195,7 +341,7 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
-          
+
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier3
@@ -209,7 +355,7 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
-          
+
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
@@ -223,7 +369,7 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
-          
+
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier1
@@ -243,7 +389,7 @@ models:
             owner_key: mcid_data_engineering
             layer: bronze
             classification: restricted
-            rag_publication: prohibited          
+            rag_publication: prohibited
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier3
@@ -256,7 +402,7 @@ models:
             owner_key: mcid_data_engineering
             layer: silver
             classification: internal
-            rag_publication: eligible_after_security_validation          
+            rag_publication: eligible_after_security_validation
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
@@ -269,7 +415,7 @@ models:
             owner_key: mcid_data_engineering
             layer: gold
             classification: internal
-            rag_publication: eligible_after_security_validation          
+            rag_publication: eligible_after_security_validation
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier1
@@ -284,54 +430,6 @@ models:
             classification: restricted
             rag_publication: prohibited
 
-    mcmv_historico_dbt:
-      +materialized: table
-      +meta:
-        governance:
-          product: mcmv_historico
-          owner_key: mcid_data_engineering
-      bronze:
-        +schema: bronze
-        +meta:
-          governance:
-            product: mcmv_historico
-            owner_key: mcid_data_engineering
-            layer: bronze
-            classification: restricted
-            rag_publication: prohibited
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier3
-            owner: mcid-data-engineering
-      prata:
-        +schema: prata
-        +meta:
-          governance:
-            product: mcmv_historico
-            owner_key: mcid_data_engineering
-            layer: silver
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier2
-            owner: mcid-data-engineering
-      ouro:
-        +schema: ouro
-        +meta:
-          governance:
-            product: mcmv_historico
-            owner_key: mcid_data_engineering
-            layer: gold
-            classification: internal
-            rag_publication: eligible_after_security_validation
-          openmetadata:
-            domain: MCid.Habitacao
-            tier: Tier.Tier1
-            owner: mcid-data-engineering
-      # Piloto (OGU/FGTS): DESABILITADO. O modelo
-      # `prata_dhist_serie_anual_ogu_fgts` carrega `config(enabled=false)` no
-      # próprio arquivo — por isso não há bloco `piloto:` aqui.
 
 # Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
 # CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`

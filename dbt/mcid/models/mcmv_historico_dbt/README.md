@@ -11,7 +11,7 @@ Schema por **camada do medalhão, em português** — reverte a D1 de
 | camada | schema | nome de tabela |
 |---|---|---|
 | bronze | `bronze` | `bronze_<origem>_<nome>` — origem ∈ `dhist` (`staging/dados_historicos/`), `sftp` (`staging/sftp/`), `shpt` (`staging/sharepoint/`) |
-| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `dhist`, `far`, `rural`, `fds`, `reloginho` |
+| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `historico`, `far`, `rural`, `fds`, `reloginho` |
 | ouro | `ouro` | `ouro_<domínio>_<nome>` |
 
 Vale para os 33 modelos dos dois braços (`mcmv_historico_dbt` exceto `piloto/` +

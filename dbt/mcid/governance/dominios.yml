@@ -199,6 +199,26 @@ produtos:
       o acompanhamento físico-financeiro fora da janela coberta pelos outros
       produtos.
 
+  # Só `ouro_reloginho_` entra como prefixo. Os dois modelos da prata se chamam
+  # `prata_historico_snh_*` e dividiriam o prefixo `prata_historico_` com
+  # `prata_historico_entrega_apf`/`prata_historico_serie_executiva`, que são do
+  # `mcmv_historico` — declará-lo faria este produto reivindicar tabelas do
+  # outro. Na prata a atribuição fica pelo catálogo semântico
+  # (`meta.governance.product` do model), que é a via autoritativa.
+  - name: reloginho
+    display_name: Reloginho MCMV
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - ouro_reloginho_
+    description: >
+      Indicadores mensais de acompanhamento do MCMV consolidados por agente
+      financeiro e por frente, a partir da série SNH: contratação, execução,
+      entregas e gargalos de desempenho.
+
 #: Certificação por camada. Gold é o que se publica e se consome; Silver
 #: sustenta a Gold mas não é destino final; Bronze não é apresentada.
 #: A certificação segue a camada, não o modelo, para não virar avaliação
