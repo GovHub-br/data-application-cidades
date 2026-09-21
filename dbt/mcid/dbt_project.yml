@@ -122,7 +122,7 @@ models:
           governance:
             product: reloginho
             owner_key: mcid_data_engineering
-            layer: prata
+            layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -136,7 +136,7 @@ models:
           governance:
             product: reloginho
             owner_key: mcid_data_engineering
-            layer: ouro
+            layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -204,7 +204,7 @@ models:
           governance:
             product: mcmv_historico
             owner_key: mcid_data_engineering
-            layer: prata
+            layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -219,7 +219,7 @@ models:
           governance:
             product: mcmv_historico
             owner_key: mcid_data_engineering
-            layer: ouro
+            layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
@@ -430,17 +430,6 @@ models:
             classification: restricted
             rag_publication: prohibited
 
-    conjuntura_continuo_dbt:
-      +materialized: table
-      +schema: conjuntura_continuo
-      # Sem camada bronze: o parquet de staging já sai tipado (Etapa 02) e a
-      # silver lê direto via pg_duckdb (read_parquet).
-      silver:
-        +materialized: table
-        +schema: conjuntura_continuo_silver
-      gold:
-        +materialized: table
-        +schema: conjuntura_continuo_mart
 
 # Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
 # CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`
