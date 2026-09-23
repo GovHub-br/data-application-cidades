@@ -333,6 +333,56 @@ models:
       # `prata_dhist_serie_anual_ogu_fgts` carrega `config(enabled=false)` no
       # próprio arquivo — por isso não há bloco `piloto:` aqui.
 
+    reforma_casa_brasil_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: reforma_casa_brasil
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: reforma_casa_brasil
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            contains_personal_data: true
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: reforma_casa_brasil
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: restricted
+            contains_pseudonymized_data: true
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: reforma_casa_brasil
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            aggregation_only: true
+            small_cell_threshold: 10
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
 # Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
 # CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`
 # / `timestamptz`. Nenhum dos dois existe no DuckDB, entao ficam atras do guard

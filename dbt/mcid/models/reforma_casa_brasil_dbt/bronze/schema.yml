@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: bronze_sftp_pmcmv_reformas_mcid
+    description: >
+      Fotografia mais recente dos contratos do Reforma Casa Brasil recebida do
+      SFTP/GEFUS. Grão esperado: contrato. Todos os campos permanecem texto.
+    meta:
+      tags: [bronze, reforma-casa-brasil, sftp, fgts, dado-pseudonimizado]
+    columns:
+      - name: nu_contrato
+        description: Número do contrato na fonte.
+        data_tests: [not_null]
+      - name: nu_cpf_cnpj_mutuario
+        description: Token HMAC do CPF/CNPJ do mutuário; nunca contém o documento original.
+      - name: nu_pis
+        description: Token HMAC do NIS/PIS do mutuário.
+      - name: filename
+        description: Objeto Parquet da staging selecionado como snapshot mais recente.
+        data_tests: [not_null]
+
+  - name: bronze_sftp_arq_pessoa_pbf
+    description: >
+      Pessoas do CadÚnico em 12/12/2025. CPF e NIS pseudonimizados com HMAC
+      determinístico; identificadores diretos redigidos. Acesso restrito.
+    meta:
+      tags: [bronze, reforma-casa-brasil, cadunico, dado-pessoal, restrito]
+    columns:
+      - name: co_familiar_fam
+        description: Chave da família no corte do CadÚnico.
+        data_tests: [not_null]
+      - name: nu_cpf_pessoa
+        description: Token HMAC do CPF.
+      - name: nu_nis_pessoa
+        description: Token HMAC do NIS.
+      - name: co_raca_cor_pessoa
+        description: Código categórico preservado para análise de equidade em ambiente restrito.
+
+  - name: bronze_sftp_arq_familia_pbf
+    description: >
+      Famílias e características domiciliares do CadÚnico em 12/12/2025.
+      Endereços e identificadores diretos chegam redigidos. Acesso restrito.
+    meta:
+      tags: [bronze, reforma-casa-brasil, cadunico, domicilio, restrito]
+    columns:
+      - name: co_familiar_fam
+        description: Chave da família no corte do CadÚnico.
+        data_tests: [not_null, unique]
+      - name: cd_ibge_cadastro
+        description: Código IBGE do município de cadastramento.
