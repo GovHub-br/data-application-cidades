@@ -23,7 +23,9 @@ import hashlib
 import json
 import logging
 import os
+import shutil
 import tempfile
+import time
 from typing import Any, Callable, Iterator, List, Optional, Tuple
 
 import boto3
@@ -254,14 +256,49 @@ class ClienteMinio:
     def baixar_para_tempfile(
         self, key: str, suffix: str = "", tmpdir: Optional[str] = None
     ) -> str:
-        """Baixa o objeto para um tempfile em disco (evita OOM em arquivos grandes)."""
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=tmpdir)
-        try:
-            self.s3.download_fileobj(self.bucket, key, tmp)
-            tmp.flush()
-        finally:
-            tmp.close()
-        return tmp.name
+        """Baixa para disco com retomada por ``Range`` em caso de queda de conexão.
+
+        O nome determinístico mantém o parcial entre tentativas e execuções. Isso é
+        importante para os arquivos grandes do CadÚnico, para os quais reiniciar um
+        download de dezenas de GB após uma oscilação da VPN é proibitivo.
+        """
+        pasta = tmpdir or tempfile.gettempdir()
+        os.makedirs(pasta, exist_ok=True)
+        identificador = hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
+        path = os.path.join(pasta, f"minio-download-{identificador}{suffix}.part")
+        tamanho_remoto = int(
+            self.s3.head_object(Bucket=self.bucket, Key=key)["ContentLength"]
+        )
+
+        if os.path.exists(path) and os.path.getsize(path) > tamanho_remoto:
+            os.unlink(path)
+
+        falhas = 0
+        while True:
+            inicio = os.path.getsize(path) if os.path.exists(path) else 0
+            if inicio == tamanho_remoto:
+                return path
+            try:
+                resposta = self.s3.get_object(
+                    Bucket=self.bucket, Key=key, Range=f"bytes={inicio}-"
+                )
+                with open(path, "ab") as destino:
+                    shutil.copyfileobj(resposta["Body"], destino, 8 * 1024 * 1024)
+                    destino.flush()
+                    os.fsync(destino.fileno())
+                falhas = 0
+            except Exception as exc:
+                falhas += 1
+                logging.warning(
+                    "Download interrompido em %d/%d bytes (%s); retomando (%d/20)",
+                    inicio,
+                    tamanho_remoto,
+                    exc,
+                    falhas,
+                )
+                if falhas >= 20:
+                    raise
+                time.sleep(min(5 * falhas, 60))
 
     # Escrita
     def upload_arquivo(
