@@ -156,6 +156,34 @@
     ]) }}
 {% endmacro %}
 
+{#- Frentes novas do GEFUS (change frentes-restantes-mcmv-historico), 3
+    familias. Mesma pasta das interfaces INT0xx, mas o nome do arquivo usa
+    `_YYYY_MM_DD.parquet` (com underscore), nao `_YYYYMMDD.parquet` -- por
+    isso nao reaproveitam bronze_gefus/familias_gefus() e tem corpo proprio
+    (bronze_frente_gefus_semanal em corpos_bronze.sql). -#}
+{% macro familias_frentes_gefus() %}
+    {{ return([
+        {
+            'nome': 'PMCMV_FAIXA3_MCID',
+            'modelo': 'bronze_sftp_classe_media_faixa3',
+            'glob': 'sftp/fabrica/GEFUS/**/PMCMV_FAIXA3_MCID_*.parquet',
+            'frente': 'Classe Média',
+        },
+        {
+            'nome': 'PMCMV_CIDADES_MCID',
+            'modelo': 'bronze_sftp_mcmv_cidades',
+            'glob': 'sftp/fabrica/GEFUS/**/PMCMV_CIDADES_MCID_*.parquet',
+            'frente': 'MCMV Cidades',
+        },
+        {
+            'nome': 'PMCMV_REFORMAS_MCID',
+            'modelo': 'bronze_sftp_reforma_casa_brasil',
+            'glob': 'sftp/fabrica/GEFUS/**/PMCMV_REFORMAS_MCID_*.parquet',
+            'frente': 'Reforma Casa Brasil',
+        },
+    ]) }}
+{% endmacro %}
+
 {#- Busca uma familia pelo nome dentro de um dos mapas acima. -#}
 {% macro familia(mapa, nome) %}
     {%- for f in mapa -%}

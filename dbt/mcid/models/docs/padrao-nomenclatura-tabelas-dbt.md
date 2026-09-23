@@ -42,7 +42,7 @@ gold de um mesmo produto de dados. Ele aparece em:
 | `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
 | `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
 | `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) — schema por camada `bronze`/`prata`/`ouro` |
-| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `dhist`/`far`/`rural`/`fds` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
+| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `historico`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/`reforma_casa_brasil`/`sub50` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
 
 O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_far_…`,
 `prata_dhist_…` — nunca como sufixo.
@@ -51,16 +51,28 @@ Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 `dbt_project.yml`.
 
 > **Eixo histórico e reloginho — schema por camada em português.** Desde
-> `renomear-camadas-pt-historico-reloginho` (D1), os 33 modelos de
+> `renomear-camadas-pt-historico-reloginho` (D1), os modelos de
 > `mcmv_historico_dbt` (exceto `piloto/`) e `indicadores_mcmv_dbt` materializam
 > por **camada**: bronze → `bronze`, silver → `prata`, gold → `ouro`. O nome de
 > tabela é `<camada>_<token>_<nome>` — token = **origem de staging** na bronze
 > (`dhist`/`sftp`/`shpt`) e **domínio** na prata/ouro
-> (`dhist`/`far`/`rural`/`fds`/`reloginho`). Reverte a D1 de
+> (`historico`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/
+> `reforma_casa_brasil`/`sub50`/`reloginho`). Reverte a D1 de
 > `consolidar-schemas-historico-reloginho`. Os schemas `dados_historicos`,
 > `reloginho`, de frente, `conjuntura`, `mcmv_historico` e `serie_historica`
 > **não recebem** estes braços. Ver `models/mcmv_historico_dbt/README.md`
 > § Convenção de schema.
+>
+> **Correção (`frentes-restantes-mcmv-historico`, D5): `dhist` não é o token de
+> domínio cross-frente da prata/ouro.** A versão anterior deste parágrafo
+> documentava `dhist` também para esse caso, divergindo do que já estava
+> implementado: os modelos cross-frente usam `historico`
+> (`prata_historico_entrega_apf`, `prata_historico_serie_executiva`,
+> `ouro_historico_marco_empreendimento`, `ouro_historico_serie_mensal`,
+> `ouro_historico_serie_situacao_mensal`,
+> `ouro_historico_snapshot_empreendimento_atual`). `dhist` continua existindo
+> **somente** como token de origem na bronze (`staging/dados_historicos/`) —
+> nunca mudou nos fatos, só na documentação desta seção.
 
 ---
 

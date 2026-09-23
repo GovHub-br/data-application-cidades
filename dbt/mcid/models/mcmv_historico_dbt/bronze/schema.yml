@@ -828,3 +828,304 @@ models:
         description: Hash MD5 do evento (dedup na prata).
         data_tests:
           - not_null
+
+  # --- frentes novas (change frentes-restantes-mcmv-historico) ---
+
+  - name: bronze_sftp_classe_media_faixa3
+    description: >
+      Bronze — série histórica semanal de contratos MCMV Classe Média (Faixa
+      3), família `PMCMV_FAIXA3_MCID` de
+      `staging/sftp/fabrica/GEFUS/**/PMCMV_FAIXA3_MCID_*.parquet`, cópia fiel.
+      Uma linha por linha de origem (sem dedup), sem tipagem; grão contrato
+      PF/FGTS. Contém PII de mutuário (nu_cpf_cnpj_mutuario, no_mutuario,
+      dt_nascimento_mutuario) — retida só para linhagem; a prata
+      (prata_classe_media_historico_contrato) não expõe essas 3 colunas.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, classe-media, sftp, pii]
+    columns:
+      - name: nu_contrato
+        description: Número do contrato (chave de negócio, cru).
+      - name: dt_referencia_origem_txt
+        description: >
+          Coluna `dt_referencia` original da fonte (texto DD/MM/YYYY, por
+          linha) — renomeada para não colidir com a auditoria `dt_referencia`
+          (derivada do nome do arquivo, mais confiável — mesma razão das
+          interfaces INT0xx).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Semana do snapshot (derivada do sufixo `_YYYY_MM_DD` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_sftp_mcmv_cidades
+    description: >
+      Bronze — série histórica mensal de contratos MCMV Cidades, família
+      `PMCMV_CIDADES_MCID` de
+      `staging/sftp/fabrica/GEFUS/**/PMCMV_CIDADES_MCID_*.parquet`, cópia
+      fiel. Snapshots mensais, grão agregado por ente público. Fonte
+      complementar de bronze_shpt_mcmv_cidades_emendas — as 2 não são
+      reconciliadas (D2).
+    meta:
+      tags: [bronze, mcmv, dados-historicos, mcmv-cidades, sftp]
+    columns:
+      - name: dt_referencia_origem_txt
+        description: >
+          Coluna `dt_referencia` original da fonte — renomeada para não
+          colidir com a auditoria `dt_referencia` (nome do arquivo).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês do snapshot (derivado do sufixo `_YYYY_MM_DD` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_sftp_reforma_casa_brasil
+    description: >
+      Bronze — série histórica semanal de contratos Reforma Casa Brasil,
+      família `PMCMV_REFORMAS_MCID` de
+      `staging/sftp/fabrica/GEFUS/**/PMCMV_REFORMAS_MCID_*.parquet`, cópia
+      fiel. Grão contrato PF/FGTS, mesmo desenho de PMCMV_FAIXA3_MCID. Contém
+      PII de mutuário — retida só para linhagem; a prata
+      (prata_reforma_casa_brasil_historico_contrato) não expõe essas 3
+      colunas.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, reforma-casa-brasil, sftp, pii]
+    columns:
+      - name: nu_contrato
+        description: Número do contrato (chave de negócio, cru).
+      - name: dt_referencia_origem_txt
+        description: >
+          Coluna `dt_referencia` original da fonte — renomeada para não
+          colidir com a auditoria `dt_referencia` (nome do arquivo).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Semana do snapshot (derivada do sufixo `_YYYY_MM_DD` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_shpt_mcmv_cidades_emendas
+    description: >
+      Bronze — consolidado transacional de contratos MCMV Cidades (emendas),
+      `staging/sharepoint/novo_mcmv_cidades_emendas.parquet`, cópia fiel.
+      Arquivo único (sem histórico de versões — snapshot corrente
+      sobrescrito). 3.877 linhas × 61 colunas. Fonte complementar de
+      bronze_sftp_mcmv_cidades (D2).
+    meta:
+      tags: [bronze, mcmv, dados-historicos, mcmv-cidades, sharepoint]
+    columns:
+      - name: numero_do_contrato
+        description: Número do contrato (chave de negócio, cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (hash do arquivo + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_shpt_reforma_casa_brasil_contratacao
+    description: >
+      Bronze — consolidado transacional de contratos Reforma Casa Brasil,
+      `staging/sharepoint/reforma_casa_brasil_contratacao.parquet`, cópia
+      fiel. Arquivo único, 51.512 linhas, schema quase idêntico ao glob
+      semanal GEFUS — mesma PII de mutuário, retida só para linhagem. Entra
+      em escopo como bronze (task 1.1/5.3), mas NÃO é unida à prata desta
+      mudança (a prata de Reforma Casa Brasil usa só a fonte GEFUS semanal;
+      reconciliação fica como follow-up, mesmo espírito do D2).
+    meta:
+      tags: [bronze, mcmv, dados-historicos, reforma-casa-brasil, sharepoint, pii]
+    columns:
+      - name: nu_contrato
+        description: Número do contrato (chave de negócio, cru).
+      - name: dt_referencia_origem_txt
+        description: >
+          Coluna `dt_referencia` original da fonte — renomeada para não
+          colidir com a auditoria `dt_referencia`.
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (hash do arquivo + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_shpt_fgts_contratos
+    description: >
+      Bronze — contratos do Canal FGTS (todas as linhas, não só Pró-Moradia),
+      `staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet`, cópia
+      fiel, SEM filtro por `cod_linha` (D1). 154.698 linhas. É a prata de
+      Pró-Moradia (prata_pro_moradia_historico_contrato) que aplica
+      `where cod_linha = '26'`.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, pro-moradia, sharepoint, fgts]
+    columns:
+      - name: cod_contrato
+        description: Código do contrato no Canal FGTS (chave de negócio, cru).
+      - name: cod_linha
+        description: >
+          Código da linha de crédito FGTS — `'26'` = Pró-Moradia (resolvido
+          via bronze_shpt_fgts_dom_linha); demais valores pertencem a outras
+          linhas do Canal FGTS, fora de escopo desta mudança.
+      - name: dte_assinatura
+        description: >
+          Data de assinatura (texto, formato `MM/DD/YY HH:MM:SS` — americano,
+          não BR). Parse dedicado na prata (`strptime` explícito).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (hash do arquivo + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_shpt_fgts_empreendimentos
+    description: >
+      Bronze — empreendimentos do Canal FGTS,
+      `staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet`,
+      cópia fiel. 73.231 linhas. Usada pela prata de Pró-Moradia para
+      enriquecer contratos via `cod_empreendimento` (left join).
+    meta:
+      tags: [bronze, mcmv, dados-historicos, pro-moradia, sharepoint, fgts]
+    columns:
+      - name: cod_empreendimento
+        description: Código do empreendimento no Canal FGTS (chave de negócio, cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (hash do arquivo + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_shpt_fgts_dom_linha
+    description: >
+      Bronze — tabela de domínio de linhas de crédito do Canal FGTS,
+      `staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet`, cópia fiel
+      (pequena, 20 linhas). Resolve `cod_linha` para texto — usada pela prata
+      de Pró-Moradia, não exclusiva dela.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, pro-moradia, sharepoint, fgts]
+    columns:
+      - name: codigo
+        description: Código da linha de crédito (chave de negócio, cru).
+      - name: linha
+        description: >
+          Descrição da linha (ex.: `'HAB / PRO-MORADIA'` para código `'26'`).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (hash do arquivo + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_shpt_sub50_propostas_apresentadas
+    description: >
+      Bronze — propostas FNHIS/SUB50 apresentadas,
+      `staging/sharepoint/novo_mcmv_fnhis_sub_50_propostas_apresentadas.parquet`,
+      cópia fiel. 7.121 linhas. Materializa isoladamente da bronze de
+      propostas selecionadas.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, sub50, sharepoint]
+    columns:
+      - name: numero_da_proposta
+        description: Número da proposta (chave de negócio, cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (hash do arquivo + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_shpt_sub50_propostas_selecionadas
+    description: >
+      Bronze — propostas FNHIS/SUB50 selecionadas,
+      `staging/sharepoint/novo_mcmv_fnhis_sub_50_propostas_selecionadas.parquet`,
+      cópia fiel. 1.207 linhas. Materializa isoladamente da bronze de
+      propostas apresentadas.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, sub50, sharepoint]
+    columns:
+      - name: num_proposta
+        description: Número da proposta (chave de negócio, cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (hash do arquivo + ordinal).
+        data_tests:
+          - not_null

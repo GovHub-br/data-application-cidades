@@ -129,6 +129,101 @@ from fonte
 {% endmacro %}
 
 
+{#- Frentes novas do GEFUS (change frentes-restantes-mcmv-historico): Classe
+    Média, MCMV Cidades, Reforma Casa Brasil. Snapshots `_YYYY_MM_DD.parquet`
+    sob a mesma pasta GEFUS das interfaces INT0xx. O schema cru dessas 3
+    familias JA TRAZ uma coluna `dt_referencia` (texto DD/MM/YYYY, por linha)
+    -- colide de nome com a coluna de auditoria do dominio. Preservada como
+    `dt_referencia_origem_txt` (valor intacto, so desambiguada); a auditoria
+    `dt_referencia` e SEMPRE a data do NOME DO ARQUIVO, mesma razao de
+    confiabilidade das interfaces INT0xx (issue-130). Usa
+    `staging_glob_columns` (introspeccao em tempo de compilacao) em vez de
+    `select * exclude`, pela mesma convencao dos demais corpos deste arquivo. -#}
+{% macro bronze_frente_gefus_semanal(nome_familia) %}
+{%- set f = familia(familias_frentes_gefus(), nome_familia) -%}
+{%- set cols = staging_glob_columns(f.glob) -%}
+{%- set outras = cols | reject('in', ['dt_referencia', 'filename']) | list -%}
+with
+
+    fonte as (
+        select
+            {% for c in outras -%}
+            {{ c }},
+            {% endfor -%}
+            {%- if 'dt_referencia' in cols -%}
+            dt_referencia as dt_referencia_origem_txt,
+            {%- endif %}
+            '{{ f.frente }}' as frente_mcmv,
+            filename as source_file,
+            -- extrai a PRIMEIRA data YYYY_MM_DD do nome, não ancorada ao fim:
+            -- reentregas trazem sufixo extra depois da data (ex.
+            -- `..._2026_03_27_0000.parquet`), que uma âncora `\.parquet$`
+            -- deixaria sem casar (regexp_extract vazio -> strptime falhava).
+            try_strptime(regexp_extract(filename, '(\d{4}_\d{2}_\d{2})', 1), '%Y_%m_%d')
+            ::date as dt_referencia
+        from {{ read_minio_staging_parquet_series(f.glob) }}
+    )
+
+select
+    *,
+    current_timestamp as dt_ingest,
+    md5(
+        concat_ws(
+            '|', source_file, cast(row_number() over (partition by source_file) as varchar)
+        )
+    ) as hash_linha
+from fonte
+{% endmacro %}
+
+
+{#- Fonte fiel FLAT do sharepoint (change frentes-restantes-mcmv-historico):
+    arquivo unico consolidado, sem snapshot datado no nome (novo_mcmv_cidades_
+    emendas, reforma_casa_brasil_contratacao, contratos/empreendimentos/
+    dominio do Canal FGTS, propostas SUB50 apresentadas/selecionadas).
+    dt_referencia = data de ingestao do arquivo (`_ingested_at`, coluna que a
+    ingestao upstream ja grava em toda tabela do sharepoint) -- nao ha
+    snapshot semanal/mensal para derivar do nome. Quando a fonte ja traz uma
+    coluna `dt_referencia` propria (caso de reforma_casa_brasil_contratacao),
+    ela e preservada como `dt_referencia_origem_txt`, mesma convencao do
+    corpo acima. -#}
+{% macro bronze_flat_shpt(object_path) %}
+{%- set cols = [] -%}
+{%- if execute -%}
+    {%- set res = run_query(
+        'describe select * from ' ~ read_minio_staging_parquet(object_path)
+    ) -%}
+    {%- if res is not none -%}
+        {%- for r in res.rows -%}{%- do cols.append(r[0] | lower) -%}{%- endfor -%}
+    {%- endif -%}
+{%- endif -%}
+{%- set outras = cols | reject('equalto', 'dt_referencia') | list -%}
+with
+
+    fonte as (
+        select
+            {% for c in outras -%}
+            {{ c }},
+            {% endfor -%}
+            {%- if 'dt_referencia' in cols -%}
+            dt_referencia as dt_referencia_origem_txt,
+            {%- endif %}
+            '{{ object_path }}' as source_file,
+            try_cast(_ingested_at as timestamptz)::date as dt_referencia
+        from {{ read_minio_staging_parquet(object_path) }}
+    )
+
+select
+    *,
+    current_timestamp as dt_ingest,
+    md5(
+        concat_ws(
+            '|', coalesce(cast(_source_hash as varchar), ''), cast(row_number() over () as varchar)
+        )
+    ) as hash_linha
+from fonte
+{% endmacro %}
+
+
 {#- Evolucao de obra por empreendimento (MONIT_MOV_OBRA): 1 frente = 1 glob.
     Copia fiel dos snapshots `_MENSAL_YYYYMM` (glob recursivo sob
     `sharepoint/Novo MCMV - */`, selecao pela frente NO NOME DO ARQUIVO).

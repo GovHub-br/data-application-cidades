@@ -11,11 +11,14 @@ Schema por **camada do medalhão, em português** — reverte a D1 de
 | camada | schema | nome de tabela |
 |---|---|---|
 | bronze | `bronze` | `bronze_<origem>_<nome>` — origem ∈ `dhist` (`staging/dados_historicos/`), `sftp` (`staging/sftp/`), `shpt` (`staging/sharepoint/`) |
-| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `historico`, `far`, `rural`, `fds`, `reloginho` |
+| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `historico`, `far`, `rural`, `fds`, `classe_media`, `mcmv_cidades`, `pro_moradia`, `reforma_casa_brasil`, `sub50`, `reloginho` |
 | ouro | `ouro` | `ouro_<domínio>_<nome>` |
 
-Vale para os 33 modelos dos dois braços (`mcmv_historico_dbt` exceto `piloto/` +
-`indicadores_mcmv_dbt`), cross-frente, por frente ou de gargalo. Nada mais
+Vale para os 48 modelos dos dois braços (`mcmv_historico_dbt` exceto `piloto/` +
+`indicadores_mcmv_dbt`), cross-frente, por frente ou de gargalo — 33 originais
+da `renomear-camadas-pt-historico-reloginho` + 15 das 5 frentes novas
+(`frentes-restantes-mcmv-historico`: 10 bronzes + 5 pratas — ver § "As 5
+frentes novas" abaixo). Nada mais
 materializa em `dados_historicos`, `reloginho`, nos schemas de frente
 (`empreendimento_far` etc.) nem em `conjuntura`. Os schemas `mcmv_historico` e
 `serie_historica` seguem extintos. O nome do arquivo `.sql` == nome do modelo ==
@@ -34,7 +37,7 @@ colunas YTD das 3 pratas de frente (left join); o modelo de obra mensal autônom
 > **Migração das tabelas já em `prod`** (publicadas na convenção antiga):
 > `scripts/migracao/` — `mapa_nomenclatura.csv` + `renomear_nomenclatura_prod.sql`
 > (manual, fora da aplicação da change). Reconciliação do conector dbt do
-> OpenMetadata pendente: o FQN dos 33 nós muda.
+> OpenMetadata pendente: o FQN dos nós muda.
 
 ## As 16 bronzes por família
 
@@ -84,6 +87,51 @@ FDS/RURAL: `dh_movimento` / `co_situacao_operacao`), harmonizados por
 Os braços SFTP/SNH das pratas de frente ainda usam projeção explícita por braço;
 o `union all by name` do CTE `unioned` só serve para o braço obra completar as
 colunas do contrato com NULL sem repetir a lista inteira.
+
+## As 5 frentes novas (change `frentes-restantes-mcmv-historico`)
+
+Bronze + prata para Classe Média, MCMV Cidades, Pró-Moradia, Reforma Casa
+Brasil e FNHIS/SUB50 — mesmo padrão bronze fiel → prata tipada já validado em
+FAR/FDS/Rural, mas **sem gold nem integração com o reloginho** (fora de
+escopo desta change). Não entram no mapa `macros/historico/familias.sql`
+salvo as 3 famílias GEFUS semanais/mensais (`familias_frentes_gefus()`,
+corpo `bronze_frente_gefus_semanal`); as bronzes flat de arquivo único
+(sharepoint, sem data no nome) usam o corpo `bronze_flat_shpt`.
+
+| frente | bronze(s) | prata | grão |
+|---|---|---|---|
+| Classe Média | `bronze_sftp_classe_media_faixa3` | `prata_classe_media_historico_contrato` | contrato PF/FGTS × semana |
+| MCMV Cidades | `bronze_sftp_mcmv_cidades` + `bronze_shpt_mcmv_cidades_emendas` (não reconciliadas, D2) | `prata_mcmv_cidades_historico_contrato` (`union all` + dedup por fonte, `fonte_bronze` discrimina) | ente público × mês / contrato |
+| Pró-Moradia | `bronze_shpt_fgts_contratos` (Canal FGTS fiel, sem filtro) + `bronze_shpt_fgts_empreendimentos` + `bronze_shpt_fgts_dom_linha` | `prata_pro_moradia_historico_contrato` (filtra `cod_linha='26'` — D1) | contrato |
+| Reforma Casa Brasil | `bronze_sftp_reforma_casa_brasil` + `bronze_shpt_reforma_casa_brasil_contratacao` (fiel, não unida à prata) | `prata_reforma_casa_brasil_historico_contrato` | contrato PF/FGTS × semana |
+| FNHIS/SUB50 | `bronze_shpt_sub50_propostas_apresentadas` + `_selecionadas` | `prata_sub50_historico_proposta` (`union all`, `status_proposta` discrimina) | proposta |
+
+PII de mutuário (Classe Média / Reforma Casa Brasil): `nu_cpf_cnpj_mutuario`,
+`no_mutuario`, `dt_nascimento_mutuario` existem na bronze (linhagem) mas NÃO
+são projetadas pela prata — `macros/historico/pii_mutuario.sql` +teste
+`pii_mutuario_ausente`. As bronzes semanais GEFUS (Classe Média/Cidades/
+Reforma) já trazem uma coluna `dt_referencia` própria (texto, por linha) que
+colidiria com a auditoria — preservada como `dt_referencia_origem_txt`; a
+auditoria `dt_referencia` é sempre derivada do nome do arquivo (ou de
+`_ingested_at` nas bronzes flat, que não têm data no nome).
+
+`bronze_sftp_classe_media_faixa3` e `bronze_sftp_reforma_casa_brasil` (e as
+pratas correspondentes) somam milhões de linhas cruas e entram no `HEAVY` de
+`run-historico.sh` (`--threads 1`, mesma razão das bronzes pesadas da série
+executiva).
+
+**Reentregas duplicam contagens se a prata não dedupar.** As 3 bronzes GEFUS
+semanais/mensais (Classe Média, MCMV Cidades, Reforma Casa Brasil) têm
+snapshots reenviados sob nome de arquivo diferente para o mesmo mês (ex.
+`PMCMV_CIDADES_MCID_2026_02_06.parquet` + `..._2026_02_06_0000.parquet`) — a
+bronze (cópia fiel) preserva as 2 cópias, então toda prata que une essas
+bronzes precisa dedupar por (nu_contrato, dt_referencia) [+ `fonte_bronze`
+quando há mais de uma fonte, como em MCMV Cidades] antes de somar
+`valor_contratado`/UH, senão a reentrega dobra a contagem financeira daquele
+mês. As 3 pratas de Classe Média/Reforma/MCMV Cidades já fazem isso
+(`row_number() over (partition by ...) = 1`, tie-break por `source_file`
+desc); achado ao auditar duplicação a pedido do usuário depois do apply
+inicial da change.
 
 ## Ordem de build: as bronzes precisam existir no COMPILE da prata
 

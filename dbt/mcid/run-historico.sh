@@ -70,11 +70,28 @@ BRONZES=(
   bronze_shpt_obra_mensal_far
   bronze_shpt_obra_mensal_fds
   bronze_shpt_obra_mensal_rural
+  # 5 frentes novas (change frentes-restantes-mcmv-historico): Classe Média,
+  # MCMV Cidades (2 fontes), Pro-Moradia (via Canal FGTS), Reforma Casa
+  # Brasil, FNHIS/SUB50. Classe Média e Reforma sao snapshots semanais
+  # empilhados (3,5M / 2,9M linhas cruas) -- entram no HEAVY abaixo.
+  bronze_sftp_classe_media_faixa3
+  bronze_sftp_mcmv_cidades
+  bronze_shpt_mcmv_cidades_emendas
+  bronze_shpt_fgts_contratos
+  bronze_shpt_fgts_empreendimentos
+  bronze_shpt_fgts_dom_linha
+  bronze_sftp_reforma_casa_brasil
+  bronze_shpt_reforma_casa_brasil_contratacao
+  bronze_shpt_sub50_propostas_apresentadas
+  bronze_shpt_sub50_propostas_selecionadas
 )
 # Bronzes que sozinhas ja sao grandes o bastante para valer --threads 1 (limita
 # a paralelizacao interna do DuckDB, que e onde o pico de RAM mora). Sao as 3
-# familias volumosas da serie executiva; `entrada_bb` (18k linhas) fica de fora.
-HEAVY="bronze_dhist_serie_bases_relatorio_executivo bronze_dhist_serie_min_cidades bronze_dhist_serie_bext"
+# familias volumosas da serie executiva (`entrada_bb`, 18k linhas, fica de
+# fora) mais as 2 bronzes semanais de Classe Media/Reforma Casa Brasil (change
+# frentes-restantes-mcmv-historico — 3,5M/2,9M linhas cruas, mesmo padrao de
+# OOM observado nas pratas correspondentes rodando em paralelo).
+HEAVY="bronze_dhist_serie_bases_relatorio_executivo bronze_dhist_serie_min_cidades bronze_dhist_serie_bext bronze_sftp_classe_media_faixa3 bronze_sftp_reforma_casa_brasil"
 
 # Silvers e golds são baratos — construídos numa só invocação para o dbt
 # ordenar as dependências e rodar os testes cross-frente (que leem far+fds+rural
@@ -98,8 +115,26 @@ SILVERS=(
   # branch (change renomear-camadas-pt-historico-reloginho, D4) — fora do build.
   # O modelo de obra mensal autônomo foi dissolvido (consolidar-schemas-historico-reloginho,
   # D2): a família obra_mensal virou braço/left-join das 3 pratas de frente.
+  # 3 das 5 pratas novas (change frentes-restantes-mcmv-historico) são baratas
+  # (milhares de linhas) e entram no batch — prata_classe_media_ /
+  # prata_reforma_casa_brasil_historico_contrato ficam de fora (dedup por
+  # window function sobre milhões de linhas; rodam sequenciais via
+  # build_silver_pesada, mesma razão de prata_historico_serie_executiva).
+  prata_mcmv_cidades_historico_contrato
+  prata_pro_moradia_historico_contrato
+  prata_sub50_historico_proposta
 )
 SILVER_SERIE=prata_historico_serie_executiva
+# Pratas de Classe Média/Reforma Casa Brasil: dedup por window function sobre
+# 3,5M/2,9M linhas cruas — o mesmo padrão de OOM das bronzes HEAVY quando
+# concorrem por RAM com outro modelo pesado (change
+# frentes-restantes-mcmv-historico). --threads 1 via build_one/HEAVY basta
+# (memória default do cgroup já é suficiente quando não concorrem).
+SILVERS_PESADAS=(
+  prata_classe_media_historico_contrato
+  prata_reforma_casa_brasil_historico_contrato
+)
+HEAVY="$HEAVY prata_classe_media_historico_contrato prata_reforma_casa_brasil_historico_contrato"
 GOLDS=(
   ouro_historico_snapshot_empreendimento_atual
   ouro_historico_marco_empreendimento
@@ -114,6 +149,21 @@ build_one() {
   echo "=================================================================="
   echo "dbt build --select $sel ${extra[*]}"
   echo "=================================================================="
+  # As 2 pratas pesadas (dedup por window function sobre 3,5M/2,9M linhas
+  # cruas) estouram o teto default (3.7GiB observado em rebuild real,
+  # change frentes-restantes-mcmv-historico) mesmo com --threads 1 — mesma
+  # folga extra de build_silver_serie, só que mais modesta. Variáveis
+  # DEDICADAS (não DUCKDB_MCID_MEMORY_LIMIT/_CGROUP_MAX): essas já vêm
+  # exportadas com o default 4GB/6G pelo _run-common.sh, então reusar o
+  # próprio nome como fallback nunca cairia no valor maior.
+  case "$sel" in
+    prata_classe_media_historico_contrato | prata_reforma_casa_brasil_historico_contrato)
+      DUCKDB_MCID_MEMORY_LIMIT="${DUCKDB_MCID_PESADAS_MEM:-6GB}" \
+      DUCKDB_MCID_CGROUP_MAX="${DUCKDB_MCID_PESADAS_CGROUP_MAX:-8G}" \
+        run_dbt build --select "$sel" "${extra[@]}" --target "$TARGET"
+      return
+      ;;
+  esac
   run_dbt build --select "$sel" "${extra[@]}" --target "$TARGET"
 }
 
@@ -146,6 +196,7 @@ case "${1:-all}" in
     seed_all
     run_dbt build --select "${SILVERS[@]}" --target "$TARGET"
     build_silver_serie
+    for m in "${SILVERS_PESADAS[@]}"; do build_one "$m"; done
     ;;
   serie)
     seed_all
@@ -165,6 +216,7 @@ case "${1:-all}" in
     for m in "${BRONZES[@]}"; do build_one "$m"; done
     run_dbt build --select "${SILVERS[@]}" --target "$TARGET"
     build_silver_serie
+    for m in "${SILVERS_PESADAS[@]}"; do build_one "$m"; done
     run_dbt build --select "${GOLDS[@]}" --target "$TARGET"
     if [ -z "${DUCKDB_MCID_SKIP_TESTS:-}" ]; then
       echo "=================================================================="

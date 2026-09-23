@@ -974,3 +974,177 @@ models:
                 severity: warn
       - name: regiao_nome
         description: Nome da macrorregião IBGE (par de regiao_sigla).
+
+  # --- frentes novas (change frentes-restantes-mcmv-historico) ---
+
+  - name: prata_classe_media_historico_contrato
+    description: >
+      Prata — contratos MCMV Classe Média (Faixa 3), tipada e deduplicada por
+      (nu_contrato, dt_referencia) a partir de bronze_sftp_classe_media_faixa3.
+      Grão: contrato PF/FGTS × semana de snapshot.
+    meta:
+      tags: [prata, mcmv, dados-historicos, classe-media]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["nu_contrato", "dt_referencia"]
+      - pii_mutuario_ausente
+    columns:
+      - name: frente_mcmv
+        description: Constante `Classe Média`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Classe Média"]
+      - name: nu_contrato
+        description: Número do contrato — chave de negócio.
+        data_tests:
+          - not_null
+      - name: valor_contratado
+        description: Valor do investimento contratado (numeric(15,2)).
+      - name: dt_referencia
+        description: Semana do snapshot (derivada do nome do arquivo na bronze).
+        data_tests:
+          - not_null
+
+  - name: prata_reforma_casa_brasil_historico_contrato
+    description: >
+      Prata — contratos Reforma Casa Brasil, tipada e deduplicada por
+      (nu_contrato, dt_referencia) a partir de bronze_sftp_reforma_casa_brasil.
+      Mesmo desenho de prata_classe_media_historico_contrato (D3). Grão:
+      contrato PF/FGTS × semana de snapshot.
+    meta:
+      tags: [prata, mcmv, dados-historicos, reforma-casa-brasil]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["nu_contrato", "dt_referencia"]
+      - pii_mutuario_ausente
+    columns:
+      - name: frente_mcmv
+        description: Constante `Reforma Casa Brasil`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Reforma Casa Brasil"]
+      - name: nu_contrato
+        description: Número do contrato — chave de negócio.
+        data_tests:
+          - not_null
+      - name: valor_contratado
+        description: Valor do investimento contratado (numeric(15,2)).
+      - name: dt_referencia
+        description: Semana do snapshot (derivada do nome do arquivo na bronze).
+        data_tests:
+          - not_null
+
+  - name: prata_mcmv_cidades_historico_contrato
+    description: >
+      Prata — contratos MCMV Cidades, união (D2) de bronze_sftp_mcmv_cidades
+      (GEFUS, grão agregado por ente público) e
+      bronze_shpt_mcmv_cidades_emendas (SharePoint, grão transacional por
+      contrato). As 2 fontes NÃO são reconciliadas linha a linha —
+      `fonte_bronze` identifica a origem de cada linha. Deduplicada por
+      (fonte_bronze, nu_contrato, dt_referencia) — a bronze GEFUS tem
+      reentregas do mesmo mês sob nomes de arquivo diferentes (achado ao
+      auditar duplicação de contagens financeiras: 192 linhas de 2026-02-06
+      dobravam o valor_contratado somado daquele mês antes do fix).
+    meta:
+      tags: [prata, mcmv, dados-historicos, mcmv-cidades]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["fonte_bronze", "nu_contrato", "dt_referencia"]
+    columns:
+      - name: frente_mcmv
+        description: Constante `MCMV Cidades`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["MCMV Cidades"]
+      - name: fonte_bronze
+        description: Origem da linha — identifica de qual das 2 bronzes ela vem.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["pmcmv_cidades_gefus", "cidades_emendas_sharepoint"]
+      - name: nu_contrato
+        description: Número do contrato — chave de negócio, cru (não é comparável entre as 2 fontes).
+      - name: valor_contratado
+        description: Valor contratado (numeric(15,2)) — `valor` (GEFUS) ou `vlr_do_financiamento_bruto` (emendas).
+
+  - name: prata_pro_moradia_historico_contrato
+    description: >
+      Prata — contratos Pró-Moradia, recorte por `cod_linha = '26'` dentro de
+      bronze_shpt_fgts_contratos (D1 — a única frente das 5 sem arquivo
+      dedicado), enriquecida com bronze_shpt_fgts_empreendimentos
+      (cod_empreendimento) e bronze_shpt_fgts_dom_linha (texto da linha).
+
+      Cobertura temporal: concentração 1995-2009 e retomada 2023+, com hiato
+      2009-2023 — característica CONHECIDA da fonte (poucos contratos Pró-
+      Moradia nesse intervalo no Canal FGTS), não indício de bug do
+      pipeline. Por isso NÃO há teste de cobertura mínima de linhas por ano
+      para esta frente (task 11.2 da change frentes-restantes-mcmv-historico).
+    meta:
+      tags: [prata, mcmv, dados-historicos, pro-moradia]
+    columns:
+      - name: frente_mcmv
+        description: Constante `Pró-Moradia`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Pró-Moradia"]
+      - name: codigo_contrato
+        description: Código do contrato no Canal FGTS — chave de negócio.
+        data_tests:
+          - not_null
+          - unique
+      - name: nome_empreendimento
+        description: >
+          Nome do empreendimento, via left join com
+          bronze_shpt_fgts_empreendimentos por `cod_empreendimento`. Nulo
+          quando o contrato não casa (empreendimento não cadastrado nessa
+          base).
+      - name: ano_orcamento
+        description: >
+          Ano orçamentário do contrato (`dte_orcamento_ano`, cru). Concentra
+          1995-2009 e 2023+ — hiato 2009-2023 é limitação de fonte, não bug
+          (ver descrição do model).
+
+  - name: prata_sub50_historico_proposta
+    description: >
+      Prata — propostas FNHIS/SUB50, união de bronze_shpt_sub50_propostas_apresentadas
+      e bronze_shpt_sub50_propostas_selecionadas, discriminadas por
+      `status_proposta`. Contrato de colunas segue
+      docs/entregas/issue-119-ajuste-frentes-faltantes.md.
+    meta:
+      tags: [prata, mcmv, dados-historicos, sub50]
+    columns:
+      - name: frente_mcmv
+        description: Constante `FNHIS/SUB50`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FNHIS/SUB50"]
+      - name: status_proposta
+        description: Distingue a origem da linha — proposta apresentada ou selecionada.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["apresentada", "selecionada"]
+      - name: contrato
+        description: Número da proposta (apresentada) ou proposta selecionada — chave de negócio.
+        data_tests:
+          - not_null
+      - name: dt_silver
+        description: >
+          Timestamp da materialização desta camada — nome mantido conforme o
+          contrato de colunas documentado na issue #119 (demais modelos do
+          domínio usam `dt_ingest`).
