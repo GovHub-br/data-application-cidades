@@ -83,6 +83,8 @@ def test_toda_etiqueta_aplicada_esta_declarada() -> None:
         "empreendimento_far",
         "entidades_fds",
         "empreendimento_rural",
+        "pro_moradia",
+        "fnhis_sub50",
     ):
         for camada in ("bronze", "silver", "gold", "mixed"):
             for fqn in fqns(gov.etiquetas_da_camada(DOMINIOS, produto, camada)):

@@ -1,0 +1,170 @@
+version: 2
+
+models:
+  - name: ouro_pro_moradia_ficha_contrato
+    description: >
+      Ficha do contrato do Pró-Moradia: uma linha por contrato, com tipo de intervenção,
+      tomador, localização, valores, execução física (última medição mensal, ou a posição do
+      cadastro), execução financeira (soma das liberações), status de execução, ritmo físico ×
+      financeiro e paralisação. É a tabela de consumo do produto.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: contrato
+        description: Contrato no formato `cod_contrato-dv`.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_pro_moradia_contrato')
+                field: contrato
+      - name: programa
+        description: Sempre "Pró-Moradia".
+      - name: tipo_intervencao
+        description: Frente da carta-consulta — Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+      - name: tomador_nome
+        description: Ente público tomador do financiamento.
+      - name: tomador_esfera
+        description: Estado/DF, Município ou Companhia ou autarquia.
+      - name: regiao
+        description: Região geográfica da UF do contrato.
+      - name: municipio_uf
+        description: Localização no formato "Município/UF".
+      - name: contrato_municipio_empreendimento
+        description: Rótulo "contrato - Município/UF - empreendimento", usado como dimensão de filtro no Superset.
+      - name: ic_contrato_vigente
+        description: Falso para contrato distratado, cancelado ou extinto.
+      - name: quantidade_uh
+        description: Unidades habitacionais financiadas (zero em urbanização).
+      - name: valor_contratado
+        description: Valor financiado pelo FGTS, em R$.
+      - name: valor_investimento
+        description: Investimento total (financiamento + contrapartida), em R$.
+      - name: valor_investimento_por_uh
+        description: Investimento sobre UH financiadas, quando há UH.
+      - name: percentual_execucao_fisica
+        description: Percentual físico realizado — última medição mensal não futura; sem ela, a posição do cadastro do empreendimento.
+      - name: fonte_percentual_fisico
+        description: De onde veio o percentual físico (execucao_obra_mensal ou posicao_empreendimento).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["execucao_obra_mensal", "posicao_empreendimento"]
+      - name: status_execucao_simplificado
+        description: >
+          Regra de negócio: Cancelado ou distratado, Concluído, Paralisado, Não Iniciado, Em
+          Andamento ou Sem Informação — nessa ordem de precedência, a partir da situação do
+          contrato, da situação da obra, da lista de paralisadas e do percentual físico.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Cancelado ou distratado", "Concluído", "Paralisado", "Não Iniciado", "Em Andamento", "Sem Informação"]
+      - name: vr_desembolsado
+        description: >
+          Soma das liberações do FGTS ao contrato, em R$. A série do canal começa em 2000, então
+          para contrato anterior é um piso (ver ic_serie_financeira_incompleta).
+      - name: percentual_execucao_financeira
+        description: Desembolsado sobre contratado, em %.
+      - name: ic_serie_financeira_incompleta
+        description: Verdadeiro para contrato assinado antes de 2000, cujas liberações anteriores não estão no arquivo.
+      - name: ritmo_fisico_financeiro
+        description: >
+          Regra de negócio: compara o % físico com o % financeiro, com tolerância de 5 pontos —
+          Ritmo Equilibrado, Desembolso Adiantado ou Desembolso Atrasado.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Ritmo Equilibrado", "Desembolso Adiantado", "Desembolso Atrasado", "Sem Informação"]
+      - name: ic_paralisada
+        description: Verdadeiro quando o contrato está na lista de obras paralisadas do setor público.
+
+  - name: ouro_pro_moradia_evolucao_financeira
+    description: >
+      Série mensal de liberações do FGTS por contrato do Pró-Moradia, com o valor do mês, os
+      estornos, o acumulado e o percentual acumulado sobre o contratado. Uma linha por contrato
+      e mês.
+    meta:
+      tags:
+        - gold
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["contrato", "mes"]
+    columns:
+      - name: contrato
+        description: Contrato no formato `cod_contrato-dv`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('ouro_pro_moradia_ficha_contrato')
+                field: contrato
+      - name: mes
+        description: Mês da liberação.
+      - name: vr_liberado_mes
+        description: Valor líquido liberado no mês, em R$.
+      - name: vr_estornado_mes
+        description: Estornos do mês, em R$ (negativo).
+      - name: vr_acumulado
+        description: Acumulado das liberações do contrato até o mês, em R$.
+      - name: percentual_acumulado_contratado
+        description: Acumulado sobre o valor contratado, em %.
+
+  - name: ouro_pro_moradia_panorama_estadual
+    description: >
+      Grandes números do Pró-Moradia por UF: contratos por status, tomadores, municípios, UH,
+      população, valores contratado, de investimento e desembolsado. Valores e metas somam só
+      contratos vigentes. Uma linha por UF.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: uf
+        description: Sigla da UF.
+        data_tests:
+          - not_null
+          - unique
+      - name: qt_contratos
+        description: Todos os contratos da UF, inclusive cancelados e distratados.
+      - name: qt_contratos_vigentes
+        description: Contratos que não foram distratados, cancelados ou extintos.
+      - name: total_valor_contratado
+        description: Valor contratado dos contratos vigentes, em R$.
+      - name: total_vr_desembolsado
+        description: Desembolsado (soma das liberações) dos contratos vigentes, em R$.
+      - name: percentual_execucao_financeira
+        description: Desembolsado sobre contratado dos vigentes, em %.
+
+  - name: ouro_pro_moradia_orcamento_execucao
+    description: >
+      Orçamento do FGTS para o Pró-Moradia × contratação, por ano de orçamento e região: o que
+      foi reservado (original, final, alocado) e o que foi contratado com orçamento daquele ano.
+      Anos sem prestação de contas no lake aparecem só com o lado contratado. Uma linha por ano
+      e região.
+    meta:
+      tags:
+        - gold
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["ano_orcamento", "regiao"]
+    columns:
+      - name: ano_orcamento
+        description: Ano do orçamento.
+        data_tests:
+          - not_null
+      - name: regiao
+        description: Região geográfica.
+        data_tests:
+          - not_null
+      - name: orcamento_final
+        description: Orçamento final do FGTS para o programa na região, em R$.
+      - name: valor_contratado
+        description: Valor contratado com orçamento do ano, na região, em R$ (todos os contratos).
+      - name: percentual_orcamento_contratado
+        description: Contratado sobre orçamento final, em %.
+      - name: ic_tem_orcamento
+        description: Verdadeiro quando há prestação de contas do ano no lake.

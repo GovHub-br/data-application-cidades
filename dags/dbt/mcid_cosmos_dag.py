@@ -2,7 +2,8 @@
 
 Um DAG, DOIS task groups — porque o projeto tem dois dialetos de SQL:
 
-- far_dbt / fds_dbt / rural_dbt / conjuntura_dbt / metadata e as seeds são SQL de
+- far_dbt / fds_dbt / rural_dbt / pro_moradia_dbt / fnhis_dbt / conjuntura_dbt /
+  metadata e as seeds são SQL de
   Postgres. Usam as UDFs `normalize_apf` / `parse_date_br` / `f_corrigir_mojibake`,
   criadas pelo `create_udfs()` com CREATE FUNCTION no on-run-start.
 - mcmv_historico_dbt é SQL NATIVO do DuckDB: `try_cast(x as tipo)`,

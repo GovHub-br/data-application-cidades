@@ -175,6 +175,58 @@ produtos:
       beneficiário, execução física, liberação financeira por componente,
       trabalho social e infraestrutura de água e saneamento.
 
+  # Pró-Moradia não é linha do MCMV: é programa do FGTS para o setor público, com tomador
+  # estado, DF, município ou companhia de habitação — por isso fica sob `ProgramasHabitacionais`
+  # e não sob `MCMV` no glossário. A bronze do Canal FGTS traz todos os programas do fundo;
+  # quem separa o Pró-Moradia é a prata (linha `26`), e é por isso que só prata e ouro entram
+  # nos prefixos.
+  - name: pro_moradia
+    termos:
+      - MCID.ProgramasHabitacionais.ProMoradia
+      - MCID.FundosEFontes.FGTS
+      - MCID.Atores.EntePublico
+      - MCID.Atores.Tomador
+    display_name: Pró-Moradia
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_pro_moradia_
+      - ouro_pro_moradia_
+    description: >
+      Financiamentos do FGTS ao setor público pelo Pró-Moradia — urbanização de assentamentos
+      precários, produção habitacional e desenvolvimento institucional —, com tomador, execução
+      física, liberação financeira mensal, paralisação e o orçamento reservado pelo fundo.
+
+  # FNHIS Sub-50 é linha do Novo MCMV (municípios com menos de 50 mil habitantes), com recurso do
+  # FNHIS/OGU repassado por termo de compromisso. Cobre as três etapas: seleção de propostas,
+  # instrumento no TransfereGov e acompanhamento da obra pela SNH, mais a regularidade do
+  # município no SNHIS.
+  - name: fnhis_sub50
+    termos:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVFNHISSub50
+      - MCID.FundosEFontes.FNHIS
+      - MCID.Atores.EntePublico
+      - MCID.Atores.Proponente
+    display_name: FNHIS Sub-50
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_fnhis_
+      - ouro_fnhis_
+    description: >
+      Provisão habitacional do Novo MCMV em municípios com menos de 50 mil habitantes, com
+      recurso do Fundo Nacional de Habitação de Interesse Social: propostas apresentadas e
+      selecionadas, termos de compromisso, execução acompanhada pela SNH e regularidade dos
+      entes no SNHIS.
+
 #: Certificação por camada. Gold é o que se publica e se consome; Silver
 #: sustenta a Gold mas não é destino final; Bronze não é apresentada.
 #: A certificação segue a camada, não o modelo, para não virar avaliação
@@ -198,6 +250,8 @@ etiquetas_automaticas:
     empreendimento_far: dbtTags.empreendimento_far
     entidades_fds: dbtTags.entidades_fds
     empreendimento_rural: dbtTags.empreendimento_rural
+    pro_moradia: dbtTags.pro_moradia
+    fnhis_sub50: dbtTags.fnhis_sub50
   por_camada:
     bronze: dbtTags.bronze
     silver: dbtTags.silver
@@ -301,6 +355,12 @@ classificacoes:
       - name: empreendimento_rural
         display_name: Empreendimento Rural
         description: Ativo do produto de dados Empreendimento Rural.
+      - name: pro_moradia
+        display_name: Pró-Moradia
+        description: Ativo do produto de dados Pró-Moradia.
+      - name: fnhis_sub50
+        display_name: FNHIS Sub-50
+        description: Ativo do produto de dados FNHIS Sub-50.
       - name: bronze
         display_name: Bronze
         description: Ativo da camada que preserva a representação recebida da origem.

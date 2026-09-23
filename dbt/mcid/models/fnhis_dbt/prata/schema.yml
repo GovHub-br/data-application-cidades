@@ -1,0 +1,185 @@
+version: 2
+
+models:
+  - name: prata_fnhis_propostas
+    description: >
+      Todas as propostas apresentadas por estados e municípios ao Novo MCMV FNHIS Sub-50
+      (portaria MCID nº 673/2024), com as UH propostas e o resultado da seleção. Uma linha por
+      proposta. É a primeira etapa do ciclo: quem pediu, e quem foi selecionado.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: numero_proposta
+        description: Número da proposta na seleção (ex. 56000005929/2024). Chave que liga ao termo de compromisso.
+        data_tests:
+          - not_null
+          - unique
+      - name: cod_ibge
+        description: Código IBGE do município beneficiado (7 dígitos).
+        data_tests:
+          - not_null
+      - name: cod_ibge_6
+        description: IBGE sem o dígito verificador (6 dígitos) — o formato do SNH, usado para cruzar com o contrato.
+      - name: municipio
+        description: Município beneficiado.
+      - name: uf
+        description: UF do município beneficiado.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: proponente_esfera
+        description: Município ou Estado/DF, conforme a administração pública proponente.
+      - name: quantidade_uh
+        description: Unidades habitacionais propostas.
+      - name: situacao_proposta
+        description: Resultado da seleção como veio da origem (nove situações).
+      - name: resultado_selecao
+        description: >
+          Regra de negócio: agrupa a situação em Selecionada, Não enquadrada, Cota insuficiente da
+          UF, Município já contemplado ou Outra.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Selecionada", "Não enquadrada", "Cota insuficiente da UF", "Município já contemplado", "Outra"]
+              config:
+                severity: warn
+      - name: ic_selecionada
+        description: Verdadeiro quando a proposta foi selecionada (inclusive as de risco).
+      - name: ic_proposta_de_risco
+        description: Verdadeiro para as propostas do grupo de áreas de risco.
+      - name: justificativa_nao_enquadramento
+        description: Motivo do não enquadramento, quando houver.
+
+  - name: prata_fnhis_termo_compromisso
+    description: >
+      Termos de compromisso do Novo MCMV FNHIS Sub-50 no TransfereGov: uma linha por proposta
+      selecionada, com a situação da contratação e do instrumento e os valores de repasse,
+      contrapartida e empenho. Retrato mais recente do painel mensal.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: numero_proposta_transferegov
+        description: Número da proposta no TransfereGov (ex. 32847/2024).
+        data_tests:
+          - not_null
+          - unique
+      - name: numero_proposta
+        description: Número da proposta na seleção, extraído de `no_reservado_pac`. Liga à prata_fnhis_propostas.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('prata_fnhis_propostas')
+                field: numero_proposta
+      - name: codigo_programa
+        description: Código do programa no TransfereGov.
+      - name: situacao_contratacao
+        description: Situação da contratação (Normal, Cláusula Suspensiva, Liminar Judicial).
+      - name: situacao_instrumento
+        description: Situação do instrumento (Em execução, Convênio Anulado, Convênio Rescindido, Prestação de Contas...).
+      - name: ic_instrumento_ativo
+        description: Falso quando o termo foi anulado, rescindido ou não chegou a ter instrumento.
+      - name: valor_repasse
+        description: Valor de repasse do FNHIS, em R$.
+      - name: valor_contrapartida
+        description: Contrapartida do ente, em R$.
+      - name: valor_investimento
+        description: Repasse + contrapartida, em R$.
+      - name: valor_empenhado_acumulado
+        description: Valor empenhado acumulado, em R$.
+      - name: uf
+        description: UF do proponente.
+      - name: municipio
+        description: Município do proponente.
+      - name: proponente_nome
+        description: Ente proponente.
+      - name: proponente_cnpj
+        description: CNPJ do ente proponente (apenas dígitos). É ente público, não pessoa.
+      - name: dt_assinatura
+        description: Data de assinatura do termo.
+      - name: dt_consulta
+        description: Data de extração do painel no TransfereGov.
+
+  - name: prata_fnhis_prioritarios_snh
+    description: >
+      Dados prioritários disponibilizados pela SNH filtrados para `modalidade = 'FNHIS'`: os
+      contratos do Sub-50 acompanhados como empreendimento, com situação da obra, UH e valores.
+      Uma linha por operação na SNH.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: id_operacao_snh
+        description: Identificador da operação na SNH.
+        data_tests:
+          - not_null
+          - unique
+      - name: cod_operacao_agente
+        description: Código da operação na CAIXA (7 dígitos). Não é APF.
+      - name: modalidade
+        description: Modalidade; o model filtra FNHIS.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["FNHIS"]
+      - name: cod_ibge_6
+        description: IBGE do município sem o dígito verificador (6 dígitos), como a SNH grava.
+      - name: situacao
+        description: Situação do empreendimento informada pela SNH.
+        data_tests:
+          - sem_mojibake:
+              config:
+                severity: warn
+      - name: percentual_execucao_fisica
+        description: Percentual de execução da obra.
+      - name: valor_contratado
+        description: Valor contratado total, em R$.
+      - name: valor_desembolsado
+        description: Valor desembolsado total, em R$.
+      - name: dt_contratacao
+        description: Data da contratação.
+
+  - name: prata_fnhis_regularidade_entes
+    description: >
+      Regularidade de estados, DF e municípios no Sistema Nacional de Habitação de Interesse
+      Social (SNHIS) — condição para receber recurso do FNHIS. Cinco exigências (lei do fundo
+      local, lei do conselho gestor, termo de adesão, plano habitacional e relatório de gestão)
+      e a situação-síntese do ente. Uma linha por ente.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: cod_ibge
+        description: Código IBGE do ente (7 dígitos; estados usam o código da UF seguido de zeros).
+        data_tests:
+          - not_null
+          - unique
+      - name: ente_esfera
+        description: Estado/DF ou Município.
+      - name: ente_nome
+        description: Nome do ente.
+      - name: populacao
+        description: População do ente.
+      - name: situacao_lei_fundo
+        description: Lei de criação do Fundo Local de Habitação de Interesse Social (FLHIS) — Regular ou Pendente.
+      - name: situacao_lei_conselho
+        description: Lei do conselho gestor do FLHIS — Regular ou Pendente.
+      - name: situacao_termo_adesao
+        description: Termo de adesão ao SNHIS — Regular ou Pendente.
+      - name: situacao_plano_habitacional
+        description: Plano Local de Habitação de Interesse Social — Regular ou Pendente.
+      - name: situacao_relatorio_gestao
+        description: Situação do relatório de gestão do fundo.
+      - name: situacao_ente
+        description: Situação-síntese do ente no SNHIS.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Regular", "Pendente"]
+              config:
+                severity: warn
+      - name: ic_ente_regular
+        description: Verdadeiro quando a situação do ente é Regular.
