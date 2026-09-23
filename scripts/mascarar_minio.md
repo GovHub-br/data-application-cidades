@@ -35,6 +35,11 @@ schema `sftp` do Postgres.
 - **Não é mascarado**: CNPJ/CGC (é PJ), `razao_social_*`, `nome_empreendimento`,
   `email_entidade`, município/UF (geografia grossa), e colunas de papel que não são nome
   (`CO_SEXO_BENEFICIARIO`, `VR_PARCELA_MENSAL_BENEFICIARIO`, flags como `TITULAR-COM-PDC`).
+- **Códigos analíticos sensíveis preservados**: `CO_RACA_COR_PESSOA` e
+  `CO_DEFICIENCIA_MEMB` permanecem somente nas camadas restritas, associados a CPF/NIS
+  pseudonimizados. São necessários para análises de equidade e acessibilidade; a camada
+  ouro deve publicar apenas agregados e suprimir grupos pequenos. Nomes/textos livres de
+  raça, etnia ou deficiência continuam redigidos.
 - **Valores vazios continuam vazios** (não viram token nem `***`).
 
 ---
