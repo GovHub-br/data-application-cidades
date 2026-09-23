@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
 from airflow.operators.python import get_current_context
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from schedule_loader import get_dynamic_schedule
 
 
@@ -97,7 +98,16 @@ def minio_transform_dag() -> None:
 
     # A ordem é obrigatória, não uma preferência: a staging lê raw/ como está, então
     # converter antes de mascarar publicaria PII em parquet.
-    mascarar_pii() >> raw_para_staging()
+    mascaramento = mascarar_pii()
+    staging = raw_para_staging()
+    executar_dbt = TriggerDagRunOperator(
+        task_id="executar_dbt_apos_staging",
+        trigger_dag_id="mcid_cosmos_dag",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    )
+
+    mascaramento >> staging >> executar_dbt
 
 
 dag_instance = minio_transform_dag()

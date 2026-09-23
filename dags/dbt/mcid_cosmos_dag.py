@@ -5,7 +5,7 @@ Um DAG, DOIS task groups — porque o projeto tem dois dialetos de SQL:
 - far_dbt / fds_dbt / rural_dbt / conjuntura_dbt / metadata e as seeds são SQL de
   Postgres. Usam as UDFs `normalize_apf` / `parse_date_br` / `f_corrigir_mojibake`,
   criadas pelo `create_udfs()` com CREATE FUNCTION no on-run-start.
-- mcmv_historico_dbt é SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
+- mcmv_historico_dbt e reforma_casa_brasil_dbt são SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
   `union_by_name = true`, `describe select * from read_parquet(...)`. O parser do
   Postgres rejeita tudo isso — não é um bug do modelo, é outro motor.
 
@@ -38,6 +38,7 @@ import os
 from datetime import datetime
 
 from airflow import DAG
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
 
@@ -52,7 +53,12 @@ PROFILES_YML = f"{PROJECT_DIR}/profiles.yml"
 # O eixo histórico: os modelos e os testes singulares que dependem deles.
 # A mesma lista serve para EXCLUIR do grupo Postgres e SELECIONAR no grupo DuckDB,
 # então os dois grupos nunca se sobrepõem nem deixam nó órfão.
-SELETOR_HISTORICO = ["path:models/mcmv_historico_dbt", "path:tests/mcmv_historico"]
+SELETOR_DUCKDB = [
+    "path:models/mcmv_historico_dbt",
+    "path:models/reforma_casa_brasil_dbt",
+    "path:tests/mcmv_historico",
+    "path:tests/reforma_casa_brasil",
+]
 
 # O DuckDB nao aceita duas conexoes de ESCRITA no mesmo arquivo. O Cosmos roda uma
 # invocacao de dbt por task, cada uma abrindo sua propria conexao em
@@ -101,7 +107,7 @@ with DAG(
         project_config=project_config,
         profile_config=profile_postgres,
         execution_config=execution_config,
-        render_config=RenderConfig(exclude=SELETOR_HISTORICO),
+        render_config=RenderConfig(exclude=SELETOR_DUCKDB),
     )
 
     eixo_historico = DbtTaskGroup(
@@ -109,8 +115,15 @@ with DAG(
         project_config=project_config,
         profile_config=profile_duckdb,
         execution_config=execution_config,
-        render_config=RenderConfig(select=SELETOR_HISTORICO),
+        render_config=RenderConfig(select=SELETOR_DUCKDB),
         operator_args={"pool": POOL_DUCKDB},
     )
 
-    dominios_postgres >> eixo_historico
+    publicar_linhagem_openmetadata = TriggerDagRunOperator(
+        task_id="publicar_linhagem_openmetadata",
+        trigger_dag_id="openmetadata_ingestion_dag",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    )
+
+    dominios_postgres >> eixo_historico >> publicar_linhagem_openmetadata
