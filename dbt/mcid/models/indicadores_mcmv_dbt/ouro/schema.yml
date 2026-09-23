@@ -30,6 +30,16 @@ models:
         - indicadores
         - gargalo
         - dashboard
+    data_tests:
+      # Grão declarado (change integrar-frentes-novas-reloginho, D6) —
+      # redundante com o `unique` de coluna já declarado abaixo em
+      # id_indicador. NÃO RODA EM MODO A LOCAL: este modelo depende de
+      # far_dbt/fds_dbt (lêem de prod), não da staging MinIO histórica
+      # materializada em cidades.duckdb — o teste só é exercitado num alvo
+      # que materialize esta tabela (prod/CI), não no dev loop local.
+      - unique_combinacao:
+          arguments:
+            colunas: ["id_indicador"]
     columns:
       - name: id_indicador
         description: Chave técnica única no formato frente:apf.
@@ -140,6 +150,13 @@ models:
         - indicadores
         - reloginho
         - dados-historicos
+    data_tests:
+      # Grão declarado (change integrar-frentes-novas-reloginho, D6) —
+      # confirmado 0 duplicatas com dado real (local) na exploração desta
+      # change.
+      - unique_combinacao:
+          arguments:
+            colunas: ["agente_financeiro", "dt_referencia"]
     columns:
       - name: dt_referencia
         description: >
@@ -203,6 +220,13 @@ models:
         - indicadores
         - reloginho
         - dados-historicos
+    data_tests:
+      # Grão declarado (change integrar-frentes-novas-reloginho, D6) —
+      # confirmado 0 duplicatas com dado real (local) na exploração desta
+      # change.
+      - unique_combinacao:
+          arguments:
+            colunas: ["agente_financeiro", "frente_mcmv", "dt_referencia"]
     columns:
       - name: dt_referencia
         description: Data de referência (primeiro dia do mês).
@@ -257,6 +281,13 @@ models:
       ritmo_recente. `dif_evento_vs_snapshot` deve tender a ~0.
     meta:
       tags: [ouro, mcmv, indicadores, reloginho, dados-historicos, entregas]
+    data_tests:
+      # Grão declarado (change integrar-frentes-novas-reloginho, D6) —
+      # confirmado 0 duplicatas com dado real (local) na exploração desta
+      # change.
+      - unique_combinacao:
+          arguments:
+            colunas: ["agente_financeiro", "dt_referencia"]
     columns:
       - name: agente_financeiro
         description: Agente financeiro (BB ou CAIXA).
@@ -298,6 +329,14 @@ models:
         - reloginho
         - dashboard
         - dados-historicos
+    data_tests:
+      # Grão declarado (change integrar-frentes-novas-reloginho, D6) —
+      # redundante com o `unique` de coluna já declarado abaixo em
+      # agente_financeiro, mas alinhado à convenção de declarar o grão como
+      # unique_combinacao em todo o domínio reloginho.
+      - unique_combinacao:
+          arguments:
+            colunas: ["agente_financeiro"]
     columns:
       - name: agente_financeiro
         description: Agente financeiro da série SNH (BB ou CAIXA).

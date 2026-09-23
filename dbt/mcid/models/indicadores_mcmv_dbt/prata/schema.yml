@@ -13,6 +13,14 @@ models:
         - mcmv
         - reloginho
         - dados-historicos
+    data_tests:
+      # Grão declarado (change integrar-frentes-novas-reloginho, D6) — a
+      # dedup por row_number() já garante isso por construção; o teste trava
+      # a garantia contra regressão futura. Confirmado 0 duplicatas com dado
+      # real (local) na exploração desta change.
+      - unique_combinacao:
+          arguments:
+            colunas: ["agente_financeiro", "apf", "dt_referencia"]
     columns:
       - name: agente_financeiro
         description: Agente financeiro normalizado em maiúsculas (BB ou CAIXA).
@@ -131,6 +139,13 @@ models:
       do total de entregas).
     meta:
       tags: [prata, mcmv, reloginho, dados-historicos, entregas]
+    data_tests:
+      # Grão declarado (change integrar-frentes-novas-reloginho, D6) —
+      # confirmado 0 duplicatas com dado real (local) na exploração desta
+      # change.
+      - unique_combinacao:
+          arguments:
+            colunas: ["agente_financeiro", "apf", "mes_evento"]
     columns:
       - name: agente_financeiro
         description: Agente financeiro (BB ou CAIXA).
@@ -159,3 +174,51 @@ models:
         description: Número de eventos de entrega deduplicados no mês/APF.
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+
+  - name: prata_reloginho_frentes_novas_resumo_mes
+    description: >
+      Prata do reloginho — resumo mensal cross-frente (contratos + valor) de
+      Classe Média, Reforma Casa Brasil, MCMV Cidades e Pró-Moradia, a partir
+      das pratas de contrato já existentes em `mcmv_historico_dbt`. Grão:
+      uma linha por (frente_mcmv, mes_referencia), onde `mes_referencia`
+      deriva de `dt_contratacao` (data do evento) — NUNCA de `dt_referencia`
+      (data do snapshot de coleta, em que o mesmo contrato se repete em
+      dezenas de linhas; ver comentário no `.sql` e design.md D2 da change
+      integrar-frentes-novas-reloginho). FNHIS/SUB50 fica de fora (D4): sem
+      `dt_contratacao` confiável e sem histórico semanal acumulado para
+      compor série mensal real. Contratos sem `dt_contratacao` (nenhum
+      encontrado nas 4 fontes nesta change — 100% de preenchimento
+      verificado) não entrariam na série. Sem gold/ouro para estas frentes
+      nesta change — integração a dashboard fica para change futura.
+    meta:
+      tags: [prata, mcmv, reloginho, dados-historicos, frentes-novas]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "mes_referencia"]
+    columns:
+      - name: frente_mcmv
+        description: Frente do MCMV consolidada nesta linha.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values:
+                ["Classe Média", "Reforma Casa Brasil", "MCMV Cidades", "Pró-Moradia"]
+      - name: mes_referencia
+        description: >
+          Primeiro dia do mês de `dt_contratacao` (data do evento) dos
+          contratos agregados nesta linha.
+        data_tests:
+          - not_null
+      - name: n_contratos
+        description: >
+          Contagem de contratos distintos da frente no mês, após dedup por
+          chave de negócio (1 linha por contrato, última observação por
+          `dt_referencia`).
+      - name: valor_contratado
+        description: >
+          Soma do `valor_contratado` da última observação de cada contrato
+          da frente no mês. Um contrato com valor revisado ao longo do tempo
+          entra pelo valor mais recente, não pelo valor original (mesma
+          semântica de "estado mais recente" usada nos snapshots de
+          `mcmv_historico_dbt`).

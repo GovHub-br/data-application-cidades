@@ -1084,6 +1084,11 @@ models:
       `staging/sharepoint/novo_mcmv_fnhis_sub_50_propostas_apresentadas.parquet`,
       cópia fiel. 7.121 linhas. Materializa isoladamente da bronze de
       propostas selecionadas.
+
+      ATENÇÃO — `dt_referencia` é a data de ingestão de um snapshot único,
+      não a data do evento (`dt_contratacao`, ausente nesta bronze). Não usar
+      `dt_referencia` para agregação temporal — ver nota completa em
+      `prata_sub50_historico_proposta`.
     meta:
       tags: [bronze, mcmv, dados-historicos, sub50, sharepoint]
     columns:
@@ -1094,7 +1099,10 @@ models:
         data_tests:
           - not_null
       - name: dt_referencia
-        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        description: >
+          Data de ingestão do arquivo (`_ingested_at`) — não há snapshot
+          datado, e não corresponde a `dt_contratacao`. Não usar para
+          agregação temporal.
         data_tests:
           - not_null
       - name: dt_ingest
@@ -1110,6 +1118,10 @@ models:
       `staging/sharepoint/novo_mcmv_fnhis_sub_50_propostas_selecionadas.parquet`,
       cópia fiel. 1.207 linhas. Materializa isoladamente da bronze de
       propostas apresentadas.
+
+      ATENÇÃO — `dt_referencia` é a data de ingestão de um snapshot único,
+      não a data do evento. Não usar `dt_referencia` para agregação
+      temporal — ver nota completa em `prata_sub50_historico_proposta`.
     meta:
       tags: [bronze, mcmv, dados-historicos, sub50, sharepoint]
     columns:
@@ -1120,7 +1132,10 @@ models:
         data_tests:
           - not_null
       - name: dt_referencia
-        description: Data de ingestão do arquivo (`_ingested_at`) — não há snapshot datado.
+        description: >
+          Data de ingestão do arquivo (`_ingested_at`) — não há snapshot
+          datado, e não corresponde a `dt_contratacao`. Não usar para
+          agregação temporal.
         data_tests:
           - not_null
       - name: dt_ingest

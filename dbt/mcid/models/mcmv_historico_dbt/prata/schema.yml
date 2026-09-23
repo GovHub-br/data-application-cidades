@@ -1122,6 +1122,17 @@ models:
       e bronze_shpt_sub50_propostas_selecionadas, discriminadas por
       `status_proposta`. Contrato de colunas segue
       docs/entregas/issue-119-ajuste-frentes-faltantes.md.
+
+      ATENÇÃO — `dt_referencia` vs. `dt_contratacao`: hoje o dataset cobre um
+      único snapshot (`dt_referencia` não varia ao longo de uma série
+      histórica real). `dt_contratacao` é `NULL` para toda linha com
+      `status_proposta = 'apresentada'` (maioria das linhas). Qualquer
+      agregação temporal futura (ex. resumo mensal) deve usar
+      `dt_contratacao`/`dt_ultima_atualizacao`, nunca `dt_referencia` — o
+      mesmo erro de contagem já encontrado e corrigido em Classe Média,
+      Reforma Casa Brasil e MCMV Cidades (ver capability
+      `resumo-mensal-frentes-novas-mcmv`), só que na direção oposta
+      (sub-contagem mascarada de série, não multiplicação).
     meta:
       tags: [prata, mcmv, dados-historicos, sub50]
     columns:
@@ -1143,6 +1154,15 @@ models:
         description: Número da proposta (apresentada) ou proposta selecionada — chave de negócio.
         data_tests:
           - not_null
+      - name: dt_referencia
+        description: >
+          Data do snapshot único atual (ingestão do arquivo de origem), não a
+          data do evento — distinta de `dt_contratacao`. Não usar para
+          agregação temporal (ver nota na descrição do modelo).
+      - name: dt_contratacao
+        description: >
+          Data de assinatura do contrato. `NULL` para `status_proposta =
+          'apresentada'` (proposta ainda não contratada).
       - name: dt_silver
         description: >
           Timestamp da materialização desta camada — nome mantido conforme o
