@@ -220,6 +220,104 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
+    # Pró-Moradia: programa do FGTS para o SETOR PÚBLICO (estados, DF, municípios e suas
+    # companhias de habitação). Não é linha do MCMV. A fonte é o Canal FGTS, que traz todos
+    # os programas do fundo: a prata recorta o Pró-Moradia pela linha `26`.
+    pro_moradia_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: pro_moradia
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: pro_moradia
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: pro_moradia
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: pro_moradia
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+    # FNHIS Sub-50: linha do Novo MCMV para municípios com menos de 50 mil habitantes, com
+    # recurso do FNHIS/OGU repassado por termo de compromisso. Três fontes: a seleção de
+    # propostas, o painel do TransfereGov e o acompanhamento da SNH (a mesma bronze do Rural).
+    fnhis_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: fnhis_sub50
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: fnhis_sub50
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: fnhis_sub50
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: fnhis_sub50
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
     conjuntura_dbt:
       +materialized: table
       +meta:

@@ -41,6 +41,8 @@ gold de um mesmo produto de dados. Ele aparece em:
 | `empreendimento_far` | `far` | Empreendimentos MCMV frente FAR |
 | `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
 | `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
+| `pro_moradia` (`pro_moradia_dbt`) | `pro_moradia` | Pró-Moradia: financiamento do FGTS ao setor público (bronze: `shpt_fgts_canal`, compartilhada com os demais programas do FGTS) |
+| `fnhis_sub50` (`fnhis_dbt`) | `fnhis` | Novo MCMV FNHIS Sub-50: seleção, termo de compromisso, acompanhamento SNH e regularidade SNHIS |
 | `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) — schema por camada `bronze`/`prata`/`ouro` |
 | `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `dhist`/`far`/`rural`/`fds` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
 

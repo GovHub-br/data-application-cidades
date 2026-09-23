@@ -1,0 +1,280 @@
+version: 2
+
+models:
+  - name: prata_pro_moradia_contrato
+    description: >
+      Contratos do Pró-Moradia — o programa do FGTS que financia estados, Distrito Federal e
+      municípios (e suas companhias de habitação) para urbanização de assentamentos precários,
+      produção de moradia e desenvolvimento institucional. Recorte da tabela de contratos do
+      Canal FGTS pela linha `26` (HAB / PRO-MORADIA), com o cadastro do empreendimento, a
+      última posição de obra e as tabelas de domínio traduzidas. Uma linha por contrato.
+    meta:
+      tags:
+        - silver
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "cod_contrato_dv"]
+    columns:
+      - name: cod_contrato
+        description: Código do contrato no FGTS (7 dígitos, sem o dígito verificador). Único no canal.
+        data_tests:
+          - not_null
+          - unique
+      - name: cod_contrato_dv
+        description: Dígito verificador do contrato.
+      - name: contrato
+        description: Contrato no formato de exibição, `cod_contrato-dv`.
+        data_tests:
+          - not_null
+          - unique
+      - name: cod_empreendimento
+        description: Código do empreendimento no FGTS. No Pró-Moradia cada empreendimento tem um contrato.
+        data_tests:
+          - not_null
+      - name: linha_codigo
+        description: Linha de financiamento do FGTS. Sempre `26` (HAB / PRO-MORADIA) — é o filtro do model.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["26"]
+      - name: modalidade_codigo
+        description: Código da modalidade de operação do FGTS (tipo de intervenção financiada).
+      - name: modalidade
+        description: Nome da modalidade, traduzido pela tabela de domínio do canal.
+      - name: tipo_intervencao
+        description: >
+          Regra de negócio: agrupa as modalidades nas frentes da carta-consulta do Pró-Moradia —
+          Urbanização, Provisão habitacional (inclui lote urbanizado), Desenvolvimento
+          institucional — e Situação de emergência. Modalidade fora do mapa sai como "Não
+          classificada".
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Urbanização", "Provisão habitacional", "Desenvolvimento institucional", "Situação de emergência", "Não classificada"]
+              config:
+                severity: warn
+      - name: empreendimento_nome
+        description: Nome do empreendimento no cadastro do FGTS.
+      - name: projeto
+        description: Descrição do projeto informada no cadastro do empreendimento.
+      - name: objeto
+        description: Objeto do financiamento informado no cadastro do empreendimento.
+      - name: tomador_codigo
+        description: Código do tomador (ente público que contrai o financiamento) no FGTS, 5 dígitos.
+        data_tests:
+          - not_null
+      - name: tomador_nome
+        description: Nome do tomador — estado, município, Distrito Federal ou companhia de habitação.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: tomador_cnpj
+        description: CNPJ do tomador (apenas dígitos). É ente público, não pessoa.
+      - name: tomador_esfera
+        description: "Regra de negócio: esfera do tomador pelo nome — Estado/DF, Município ou Companhia ou autarquia."
+      - name: agente_financeiro_codigo
+        description: Código do agente financeiro. 53000 é a CAIXA (674 dos 686 contratos em 2026-09).
+      - name: agente_financeiro
+        description: Nome do agente financeiro, pela tabela de entidades do canal.
+      - name: uor
+        description: Unidade operacional da CAIXA (superintendência regional) que acompanha o contrato.
+      - name: uf
+        description: UF do contrato.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: municipio
+        description: Município do empreendimento, traduzido do código CAIXA pela tabela de domínio.
+      - name: cod_ibge
+        description: Código IBGE do município (7 dígitos). Nulo em 8 contratos cujo município não está na tabela de domínio.
+      - name: situacao_contrato_codigo
+        description: Código da situação do contrato no FGTS.
+      - name: situacao_contrato
+        description: Situação do contrato (em situação normal, distratado, cancelado, cláusula suspensiva...).
+      - name: ic_contrato_vigente
+        description: >
+          Regra de negócio: falso quando o contrato foi distratado, cancelado ou extinto (códigos
+          01, 02, 03, 04, 10 e 21). Cláusula suspensiva e liminar continuam vigentes.
+      - name: dt_assinatura
+        description: Data de assinatura do contrato. A origem usa MM/DD/AA; convertida aqui.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: ano_orcamento
+        description: Ano do orçamento do FGTS ao qual o contrato foi imputado.
+      - name: valor_contratado
+        description: Valor financiado pelo FGTS, em R$.
+      - name: valor_investimento
+        description: Valor total do investimento (financiamento + contrapartida do tomador), em R$.
+      - name: valor_contrapartida
+        description: Contrapartida do tomador = investimento − contratado, em R$.
+      - name: quantidade_uh_financiadas
+        description: Unidades habitacionais financiadas. Zero é legítimo em urbanização, que não produz unidade.
+      - name: populacao_beneficiada
+        description: População beneficiada declarada no cadastro do empreendimento.
+      - name: empregos_gerados
+        description: Empregos gerados estimados no cadastro do empreendimento.
+      - name: ic_pac
+        description: Indicador de contrato do PAC.
+      - name: identificador_selecao
+        description: Identificador externo — em geral a seleção de origem (ex. "PAC - 3A SELECAO") ou o processo.
+      - name: percentual_obra_posicao
+        description: Último percentual de obra executado segundo a posição do empreendimento (cadastro).
+      - name: dt_posicao
+        description: Mês de referência da posição do empreendimento.
+      - name: dt_inicio_obra
+        description: Data de início da obra.
+      - name: dt_termino_obra
+        description: Data de término da obra.
+      - name: dt_inauguracao
+        description: Data de inauguração.
+      - name: remessa_canal_fgts
+        description: Remessa do Canal FGTS de onde veio o contrato (MCaaaammdd.zip).
+      - name: dt_remessa
+        description: Data da remessa do Canal FGTS.
+
+  - name: prata_pro_moradia_desembolso_mensal
+    description: >
+      Liberações mensais do FGTS para os contratos do Pró-Moradia, desde 2000. Uma linha por
+      contrato e competência; lançamentos repetidos no mesmo mês são somados. Estornos entram
+      com sinal negativo e são destacados em `vr_estornado`.
+    meta:
+      tags:
+        - silver
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "dt_competencia"]
+    columns:
+      - name: cod_contrato
+        description: Código do contrato (7 dígitos).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('prata_pro_moradia_contrato')
+                field: cod_contrato
+      - name: contrato
+        description: Contrato no formato `cod_contrato-dv`.
+      - name: dt_competencia
+        description: Primeiro dia do mês da liberação.
+        data_tests:
+          - not_null
+      - name: vr_liberado
+        description: Valor líquido liberado no mês, em R$ (liberações menos estornos).
+      - name: vr_estornado
+        description: Parte negativa do mês (estornos), em R$. Zero quando não houve estorno.
+      - name: qt_lancamentos
+        description: Quantidade de lançamentos da origem somados no mês.
+
+  - name: prata_pro_moradia_execucao_obra
+    description: >
+      Avaliação mensal de obra dos contratos do Pró-Moradia: percentual previsto e realizado
+      acumulado, situação da obra, última vistoria e providências. Inclui os meses futuros do
+      cronograma, marcados em `ic_avaliacao_futura`. Uma linha por contrato e mês de avaliação.
+    meta:
+      tags:
+        - silver
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "dt_avaliacao"]
+    columns:
+      - name: cod_contrato
+        description: Código do contrato (7 dígitos).
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('prata_pro_moradia_contrato')
+                field: cod_contrato
+      - name: dt_avaliacao
+        description: Mês da avaliação (primeiro dia).
+        data_tests:
+          - not_null
+      - name: percentual_obra_previsto
+        description: Percentual acumulado previsto no cronograma para o mês.
+      - name: percentual_obra_realizado
+        description: Percentual acumulado realizado, medido no mês.
+      - name: situacao_obra_codigo
+        description: Código da situação da obra no FGTS.
+      - name: situacao_obra
+        description: Situação da obra (adiantada, normal, atrasada, paralisada, concluída...).
+      - name: dt_ultima_vistoria
+        description: Data da última vistoria de obra.
+      - name: providencias
+        description: Providências registradas pelo acompanhamento.
+      - name: ic_avaliacao_futura
+        description: Verdadeiro para mês posterior ao corrente — linha do cronograma, ainda sem medição.
+
+  - name: prata_pro_moradia_paralisacao
+    description: >
+      Contratos do Pró-Moradia com obra paralisada acompanhados pela CAIXA junto ao tomador, com
+      dias sem evolução, motivo, entrave e plano de ação. Uma linha por contrato.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: cod_contrato
+        description: Código do contrato (7 dígitos).
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_pro_moradia_contrato')
+                field: cod_contrato
+      - name: dias_sem_evolucao
+        description: Dias desde a última evolução física.
+      - name: faixa_paralisacao
+        description: Faixa de tempo de paralisação (ex. "091 - 180 dias", "Entre 1 e 2 anos").
+      - name: motivo_paralisacao
+        description: Último motivo de paralisação informado.
+      - name: entrave
+        description: Último entrave registrado.
+      - name: situacao_atual
+        description: Situação atual descrita pelo acompanhamento.
+      - name: ic_plano_acao_aprovado
+        description: Indicador de plano de ação aprovado pelo agente financeiro.
+      - name: dt_ultimo_boletim_medicao
+        description: Data do último boletim de medição.
+      - name: dt_previsao_conclusao
+        description: Previsão de conclusão do objeto.
+
+  - name: prata_pro_moradia_orcamento
+    description: >
+      Orçamento do FGTS reservado para o Pró-Moradia, por ano de dotação e região: original,
+      final (após remanejamentos) e alocado. Vem da prestação de contas anual do fundo. Uma
+      linha por ano e região.
+    meta:
+      tags:
+        - silver
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["ano_orcamento", "regiao"]
+    columns:
+      - name: ano_orcamento
+        description: Ano da dotação orçamentária.
+        data_tests:
+          - not_null
+      - name: regiao
+        description: Região geográfica da distribuição do orçamento.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"]
+              config:
+                severity: warn
+      - name: orcamento_original
+        description: Orçamento original aprovado, em R$.
+      - name: orcamento_final
+        description: Orçamento final após remanejamentos, em R$.
+      - name: orcamento_alocado
+        description: Orçamento efetivamente alocado, em R$.
+      - name: arquivo_de_origem
+        description: Arquivo da prestação de contas de onde veio a linha.

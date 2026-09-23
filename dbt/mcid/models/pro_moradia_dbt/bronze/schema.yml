@@ -1,0 +1,301 @@
+version: 2
+
+# Espelho textual do parquet do Canal FGTS, então o teste que importa é o de layout: a lista
+# `colunas` de cada tabela é o contrato aceito hoje (conferido em 2026-09 sobre a remessa
+# MC20260220). Mudou na origem, atualizar a lista é aceitar.
+#
+# As tabelas do canal trazem TODOS os programas do FGTS. Só o Pró-Moradia as consome hoje, e
+# por isso moram aqui; a prata é que recorta o programa (linha `26`). Um próximo produto do
+# FGTS (Apoio à Produção, Pró-Transporte...) deve referenciá-las, não duplicá-las.
+#
+# `bronze_shpt_fgts_canal_tdom_municipios` não tem teste de layout: a lista de colunas dela não
+# entrou na exploração de 2026-09 (só as quatro primeiras). Fica para a próxima remessa.
+
+models:
+  - name: bronze_shpt_fgts_canal_contratos
+    description: >
+      Contratos do FGTS (canal AO_1), de TODOS os programas do fundo — a prata filtra o
+      Pró-Moradia pela linha `26`. Um contrato por linha, com linha, modalidade, tomador, agente
+      financeiro, valores e ano do orçamento.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - cod_empreendimento
+              - cod_contrato
+              - cod_contrato_dv
+              - vlr_contratado
+              - vlr_investimento
+              - dte_assinatura
+              - dte_orcamento_ano
+              - cod_area
+              - cod_linha
+              - cod_modalidade
+              - cod_tomador
+              - cod_af
+              - cod_uor
+              - cod_situacao_contrato
+              - cod_clasificacao
+              - cod_pac
+              - cod_operacao_agente_financeiro
+              - cod_operacao_agente_financeiro_dv
+              - txt_rsgov
+              - cod_objetivo
+              - cod_ident_externo
+              - txt_eixo
+              - uf
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_empreendimentos
+    description: >
+      Cadastro de empreendimentos do FGTS (canal AO_1): nome, projeto/objeto, município (código
+      CAIXA) e metas de UH, população beneficiada e empregos. Todos os programas.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - cod_empreendimento
+              - txt_nome_empreendimento
+              - txt_localidade
+              - txt_logradouro
+              - cod_municipio
+              - txt_projeto
+              - qtd_unidades_financiadas
+              - txt_objeto
+              - qtd_populacao_beneficiada
+              - qtd_empregos_gerados
+              - qtd_unidades_financiadas_cca
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_empreendimentos_posicoes
+    description: >
+      Última posição de obra por empreendimento do FGTS (canal AO_1): percentual executado e datas
+      de início, término e inauguração. Todos os programas.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - cod_empreendimento
+              - dte_ano_mes
+              - prc_obra_executada_ult
+              - dt_inicio
+              - dt_termino
+              - dt_inauguracao
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_desembolsos
+    description: >
+      Liberações mensais de recurso do FGTS por contrato (canal AO_2), desde 2000. Todos os
+      programas; valores negativos são estornos.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - cod_contrato
+              - cod_contrato_dv
+              - dte_ano
+              - dte_mes_ref
+              - vlr_liberado
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_execucoes_obras
+    description: >
+      Acompanhamento mensal de obra por contrato do FGTS (canal AO_2): percentual previsto e
+      realizado acumulado, situação da obra e providências. Todos os programas.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - cod_contrato
+              - dte_ano_mes_avaliacao
+              - prc_prev_acum_mes
+              - prc_real_acum_mes
+              - cod_situacao_obra
+              - cod_execucao_obra
+              - txt_providencias
+              - dte_ultima_vistoria
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_paralisadas_setor_publico
+    description: >
+      Operações do FGTS com o setor público cuja obra está paralisada (canal AO_2): dias sem
+      evolução, faixa e motivo da paralisação, plano de ação.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - cod_contrato
+              - cod_contrato_dv
+              - cod_operacao_agente_financeiro
+              - cod_operacao_agente_financeiro_dv
+              - dias_sem_evolucao
+              - faixa_paralisacao
+              - ultimo_motivo_paralisacao
+              - ultima_descricao_motivo_paralisacao_preenchida
+              - situacao_atual
+              - dt_ultimo_bm
+              - ultimo_motivo_excecao
+              - plano_acao_aprovado_af
+              - termo_aditivo_assinado_tomador
+              - data_base
+              - dt_previsao_conclusao_objeto
+              - ultimo_entrave_preenchido
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_tdom_linha
+    description: >
+      Tabela de domínio das linhas de financiamento do FGTS. É ela que identifica o Pró-Moradia:
+      código `26` = `HAB / PRO-MORADIA`.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - codigo
+              - linha
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_tdom_modalidade
+    description: >
+      Tabela de domínio das modalidades de operação do FGTS (tipo de intervenção: urbanização,
+      produção de conjunto, cesta de materiais...).
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - codigo
+              - modalidade
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_tdom_situacao_contrato
+    description: >
+      Tabela de domínio das situações de contrato do FGTS (normal, distratado, cancelado, cláusula
+      suspensiva...).
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - codigo
+              - situacao_do_contrato
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_tdom_situacao_obra
+    description: >
+      Tabela de domínio das situações de obra do FGTS (adiantada, normal, atrasada, paralisada,
+      concluída...).
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - codigo
+              - situacao_da_obra
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_tdom_entidades
+    description: >
+      Tabela de domínio das entidades do FGTS: tomadores (estados, municípios, companhias de
+      habitação) e agentes financeiros, com CNPJ.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - codigo
+              - entidade
+              - cgc
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_tdom_uor
+    description: >
+      Tabela de domínio das unidades operacionais (superintendências regionais da CAIXA) que
+      acompanham os contratos.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - codigo
+              - uor
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_orcamento_final
+    description: >
+      Orçamento do FGTS por programa e região (prestação de contas anual ao
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - ano_dotacao
+              - programa
+              - agrupamento
+              - orcamento_original
+              - orcamento_final
+              - orcamento_alocado
+              - arquivo_de_origem
+              - criado_em
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fgts_canal_tdom_municipios
+    description: >
+      Tabela de domínio dos municípios do FGTS: traduz o código de município da CAIXA (4
+      dígitos) para o código IBGE (7 dígitos). Colunas: codigo, municipio, uf, ibge_codigo.

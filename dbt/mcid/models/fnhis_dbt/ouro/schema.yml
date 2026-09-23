@@ -1,0 +1,111 @@
+version: 2
+
+models:
+  - name: ouro_fnhis_ficha_termo_compromisso
+    description: >
+      Ficha do termo de compromisso do FNHIS Sub-50: uma linha por termo, juntando a seleção
+      (UH, IBGE), o instrumento no TransfereGov (repasse, empenho, situação), a regularidade do
+      município no SNHIS e a execução acompanhada pela SNH, vinculada por município + valor
+      (+ data) somente quando o vínculo é 1:1.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: numero_proposta_transferegov
+        description: Número da proposta no TransfereGov.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_fnhis_termo_compromisso')
+                field: numero_proposta_transferegov
+      - name: programa
+        description: Sempre "Novo MCMV FNHIS Sub-50".
+      - name: regiao
+        description: Região geográfica da UF.
+      - name: quantidade_uh
+        description: UH da proposta selecionada.
+      - name: pessoas_atendidas
+        description: Estimativa = UH × 3,3 moradores por domicílio, truncada.
+      - name: valor_repasse_por_uh
+        description: Repasse sobre UH.
+      - name: percentual_empenhado
+        description: Empenhado acumulado sobre o repasse, em %.
+      - name: ic_ente_regular
+        description: Situação do município no SNHIS no retrato mais recente (nulo se o município não está no SNHIS).
+      - name: ic_contrato_snh_identificado
+        description: Verdadeiro quando o termo foi vinculado 1:1 a um contrato acompanhado pela SNH.
+      - name: criterio_vinculo_snh
+        description: Como o vínculo foi feito — município + valor + data, ou município + valor.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["município + valor + data", "município + valor"]
+      - name: id_operacao_snh
+        description: Operação da SNH vinculada.
+        data_tests:
+          - unique
+      - name: status_execucao_simplificado
+        description: >
+          Regra de negócio: Sem instrumento ativo, Sem acompanhamento SNH, Concluído, Não Iniciado,
+          Paralisado ou Em Andamento.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Sem instrumento ativo", "Sem acompanhamento SNH", "Concluído", "Não Iniciado", "Paralisado", "Em Andamento"]
+
+  - name: ouro_fnhis_funil_propostas
+    description: >
+      Funil do FNHIS Sub-50 por UF: propostas apresentadas, não enquadradas, recusadas por cota,
+      selecionadas, termos assinados e ativos, contratos acompanhados pela SNH, obras iniciadas
+      e UH entregues. Cada etapa vem da sua própria fonte. Uma linha por UF.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: uf
+        description: Sigla da UF.
+        data_tests:
+          - not_null
+          - unique
+      - name: qt_propostas_apresentadas
+        description: Propostas apresentadas na seleção.
+      - name: qt_selecionadas
+        description: Propostas selecionadas.
+      - name: percentual_selecao
+        description: Selecionadas sobre apresentadas, em %.
+      - name: qt_termos_ativos
+        description: Termos de compromisso com instrumento ativo no TransfereGov.
+      - name: qt_contratos_snh
+        description: Contratos acompanhados pela SNH.
+      - name: uh_entregues_snh
+        description: UH entregues segundo a SNH.
+
+  - name: ouro_fnhis_regularidade_municipios
+    description: >
+      Regularidade dos entes no SNHIS cruzada com a participação no FNHIS Sub-50: se o ente
+      apresentou proposta, se foi selecionado, se tem termo ativo, e o critério populacional do
+      Sub-50 (menos de 50 mil habitantes). Uma linha por ente.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: cod_ibge
+        description: Código IBGE do ente (7 dígitos).
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_fnhis_regularidade_entes')
+                field: cod_ibge
+      - name: ic_elegivel_sub50_por_populacao
+        description: Verdadeiro quando a população é menor que 50 mil habitantes — o recorte do Sub-50.
+      - name: ic_ente_regular
+        description: Situação Regular no SNHIS.
+      - name: ic_apresentou_proposta
+        description: Verdadeiro quando o ente apresentou ao menos uma proposta.
+      - name: qt_termos_ativos
+        description: Termos de compromisso ativos do ente.

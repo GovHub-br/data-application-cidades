@@ -1,0 +1,99 @@
+version: 2
+
+# Espelho textual do parquet. A lista `colunas` de cada tabela é o contrato aceito em 2026-09;
+# mudou na origem, atualizar a lista é aceitar.
+#
+# `bronze_shpt_dados_prioritarios_snh_empreendimentos` NÃO é declarado aqui: é o mesmo arquivo
+# do Rural e o model já existe em rural_dbt/bronze/. A prata do FNHIS apenas o referencia e
+# filtra `modalidade = 'FNHIS'`.
+
+models:
+  - name: bronze_shpt_fnhis_sub50_termos_compromisso
+    description: >
+      Termos de compromisso do Novo MCMV FNHIS Sub-50 no TransfereGov: uma linha por proposta
+      selecionada, com situação da contratação e do instrumento, valores de repasse, contrapartida
+      e empenho. Retrato mensal; a tabela guarda o mais recente. O painel muda de layout entre
+      remessas (há meses em que chegam colunas de anexo de e-mail, `odata_*`); como a bronze lê o
+      glob com union_by_name, elas aparecem aqui vazias e o teste de layout avisa.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - data_consulta
+              - codigo_programa
+              - no_proposta
+              - sit_contratacao
+              - situacao_proposta
+              - modalidade
+              - vl_repasse_proposta
+              - vl_empenhado_pre_convenio
+              - valor_de_repasse
+              - valor_de_contrapartida
+              - valor_empenhado_acumulado
+              - objeto
+              - uf
+              - municipio
+              - regiao
+              - nome_proponente
+              - situacao_instrumento
+              - data_assinatura
+              - cnpj
+              - no_reservado_pac
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_fnhis_sub50_propostas
+    description: >
+      Todas as propostas apresentadas ao Novo MCMV FNHIS Sub-50, com o resultado da seleção
+      (selecionada, não enquadrada, cota insuficiente da UF...), a justificativa de não
+      enquadramento e as UH propostas.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - municipio
+              - proponente
+              - total_de_uh
+              - numero_da_proposta
+              - situacao_da_proposta
+              - justificativa_nao_enquadramento
+              - cod_ibge_munic_beneficiado
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+
+  - name: bronze_shpt_snhis_regularidade_entes
+    description: >
+      Regularidade de estados e municípios no SNHIS: lei do fundo local de habitação (FLHIS), lei
+      do conselho gestor, termo de adesão, plano habitacional e relatório de gestão. Condição para
+      o ente receber recurso do FNHIS. Retrato semanal; a tabela guarda o mais recente.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - dt_referencia
+              - coibge
+              - cnpj
+              - municipio
+              - uf
+              - populacao
+              - reg_metrop
+              - dt_lei_flhis_analise_cefus
+              - situacao_lei_flhis
+              - dt_lei_cgflhis_analise_cefus
+              - situacao_lei_cgflhis
+              - dt_termo_adesao_analise_cefus
+              - situacao_termo_adesao
+              - dt_plano_habit_analise_cefus
+              - situacao_plano_habit
+              - ano_rel_gestao
+              - dt_rel_gestao_analise_cefus
+              - situacao_rel_gestao
+              - situacao_municipio
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
