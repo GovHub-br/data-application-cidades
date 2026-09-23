@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: prata_reforma_casa_brasil_contrato
+    description: >
+      Contratos do snapshot corrente do Reforma Casa Brasil, tipados e
+      deduplicados. Grão: um registro por contrato.
+    meta:
+      tags: [prata, reforma-casa-brasil, contrato, restrito]
+    columns:
+      - name: id_contrato
+        description: Chave técnica derivada do número do contrato.
+        data_tests: [not_null, unique]
+      - name: nu_contrato
+        data_tests: [not_null, unique]
+      - name: cpf_hmac
+        description: Token HMAC usado apenas para integração em ambiente restrito.
+      - name: nis_hmac
+        description: Token HMAC usado apenas para integração em ambiente restrito.
+      - name: valor_financiado
+        data_tests:
+          - valor_nao_negativo
+
+  - name: prata_reforma_casa_brasil_pessoa
+    description: >
+      Ponte pseudonimizada Pessoa CadÚnico → família. Não contém nomes,
+      documentos originais, endereços ou data de nascimento.
+    meta:
+      tags: [prata, reforma-casa-brasil, cadunico, pessoa, restrito]
+    columns:
+      - name: id_pessoa
+        data_tests: [not_null]
+      - name: codigo_familiar
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('prata_reforma_casa_brasil_familia')
+                field: codigo_familiar
+              config: {severity: warn}
+
+  - name: prata_reforma_casa_brasil_familia
+    description: >
+      Características familiares e domiciliares tipadas. O indicador de
+      inadequação é proxy operacional e não substitui metodologia oficial.
+    meta:
+      tags: [prata, reforma-casa-brasil, cadunico, familia, restrito]
+    columns:
+      - name: codigo_familiar
+        data_tests: [not_null, unique]
+      - name: indicador_inadequacao_observavel
+        data_tests: [not_null]
+
+  - name: prata_reforma_casa_brasil_acesso
+    description: >
+      Integração contrato → pessoa → família por CPF HMAC e, como fallback,
+      NIS HMAC. Grão preservado: um registro por contrato.
+    meta:
+      tags: [prata, reforma-casa-brasil, integrado, acesso, restrito]
+    columns:
+      - name: id_contrato
+        data_tests: [not_null, unique]
+      - name: metodo_vinculo_cadunico
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [cpf_hmac, nis_hmac, sem_correspondencia]
+      - name: indicador_encontrado_cadunico
+        data_tests: [not_null]
