@@ -1,0 +1,397 @@
+version: 2
+
+# Espelho textual do pacote semanal do Canal FGTS. A lista `colunas` é o contrato de
+# layout aceito hoje: mudou na origem, atualizar a lista é aceitar a mudança.
+#
+# `filename` entra na lista porque a bronze lê com `filename => true` — é a coluna que
+# diz de qual remessa a linha veio, e sem ela o retrato perde a procedência.
+
+models:
+
+  - name: bronze_sftp_canalfgts_empreendimentos
+    description: >
+      Empreendimentos do Canal FGTS — nome, localidade e unidades financiadas. Uma linha por empreendimento.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - cod_empreendimento
+            - txt_nome_empreendimento
+            - txt_localidade
+            - txt_logradouro
+            - cod_municipio
+            - txt_projeto
+            - qtd_unidades_financiadas
+            - txt_objeto
+            - qtd_populacao_beneficiada
+            - qtd_empregos_gerados
+            - qtd_unidades_financiadas_cca
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: cod_empreendimento
+        description: >
+          Código CAIXA do empreendimento, 7 dígitos, SEM dígito verificador.
+          Não confundir com o APF: o APF é do CONTRATO, e se monta em
+          `tab_contratos_fgts` concatenando `cod_contrato` com `cod_contrato_dv`.
+          Empreendimento e contrato coincidem em menos da metade das linhas.
+
+  - name: bronze_sftp_canalfgts_contratos
+    description: >
+      Contratos FGTS do empreendimento — valor contratado, investimento, linha, modalidade e tomador. Uma linha por contrato.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - cod_empreendimento
+            - cod_contrato
+            - cod_contrato_dv
+            - vlr_contratado
+            - vlr_investimento
+            - dte_assinatura
+            - dte_orcamento_ano
+            - cod_area
+            - cod_linha
+            - cod_modalidade
+            - cod_tomador
+            - cod_af
+            - cod_uor
+            - cod_situacao_contrato
+            - cod_clasificacao
+            - cod_pac
+            - cod_operacao_agente_financeiro
+            - cod_operacao_agente_financeiro_dv
+            - txt_rsgov
+            - cod_objetivo
+            - cod_ident_externo
+            - txt_eixo
+            - uf
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: cod_contrato
+        description: >
+          Código do contrato, 7 dígitos, SEM dígito verificador. Liga a obra, o
+          desembolso e, via `operacao` do lado PF, a contrapartida.
+          Concatenado com `cod_contrato_dv` forma o APF de 9 dígitos usado no
+          `Base_PJ_FGTS` e no FAR.
+
+  - name: bronze_sftp_canalfgts_empreendimentos_posicoes
+    description: >
+      Última posição do empreendimento — percentual de obra, início, término e inauguração.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - cod_empreendimento
+            - dte_ano_mes
+            - prc_obra_executada_ult
+            - dtinicio
+            - dttermino
+            - dtinauguracao
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_empreendimentos_construtor
+    description: >
+      Construtor/tomador por empreendimento e competência, com os códigos de execução de obra.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - cod_empreendimento
+            - dv_empreendimento
+            - cod_entidade
+            - entidade
+            - cgc
+            - operacaocodigo
+            - dte_ano_mes_avaliacao
+            - txt_providencias
+            - cod_exec_obra_1
+            - cod_exec_obra_2
+            - cod_exec_obra_3
+            - cod_exec_obra_4
+            - cod_exec_obra_5
+            - cod_exec_obra_6
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_empreendimentos_gps
+    description: >
+      Coordenadas do empreendimento em chave-valor: uma linha por componente de GPS (grau, minuto, segundo, hemisfério, datum).
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - empreendimento_codigo
+            - tipodacaracteristica
+            - texto
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_execucoes_obras
+    description: >
+      Execução de obra por contrato e competência — previsto e realizado acumulados. Série, e não retrato.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - prc_prev_acum_mes
+            - prc_real_acum_mes
+            - txt_providencias
+            - dte_ultima_vistoria
+            - cod_contrato
+            - dte_ano_mes_avaliacao
+            - cod_situacao_obra
+            - cod_execucao_obra
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: cod_contrato
+        description: >
+          Contrato medido na competência.
+
+  - name: bronze_sftp_canalfgts_desembolsos
+    description: >
+      Desembolsos do FGTS por contrato, ano e mês de referência.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - vlr_liberado
+            - cod_contrato
+            - cod_contrato_dv
+            - dte_ano
+            - dte_mes_ref
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_operacoes_paralisadas
+    description: >
+      Operações paralisadas do setor público — dias sem evolução, motivo e entrave, em texto livre.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - dias_sem_evolucao
+            - faixa_paralisacao
+            - ultimo_motivo_paralisacao
+            - ultima_descricao_motivo_paralisacao_preenchida
+            - situacao_atual
+            - ultimo_motivo_excecao
+            - ultimo_entrave_preenchido
+            - cod_contrato
+            - cod_contrato_dv
+            - cod_operacao_agente_financeiro
+            - cod_operacao_agente_financeiro_dv
+            - dt_ultimo_bm
+            - plano_acao_aprovado_af
+            - termo_aditivo_assinado_tomador
+            - data_base
+            - dt_previsao_conclusao_objeto
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_mcmv_cidades_emendas
+    description: >
+      MCMV Cidades: contratos PF vinculados a emenda parlamentar, com o valor da contrapartida de parceria.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - tomadorcodigo
+            - tomadornome
+            - pmcmv
+            - pf
+            - cotista
+            - modalidadecodigo
+            - modalidade
+            - tipoimovel
+            - linha
+            - programa
+            - subprograma
+            - anodoorcamento
+            - operacao
+            - numerodocontrato
+            - datadacontratacao
+            - prazoemmeses
+            - txjrsinicial
+            - vlrdofinanciamentobruto
+            - vlrdofinanciamentoliquido
+            - vlrdorecursodofgts
+            - vlrdegarantiadoimovel
+            - vlrdecompra
+            - vlrdarenda
+            - vlrdodesconto
+            - txadministracao
+            - difdejuros
+            - vlrdescontocomplemento
+            - vlrdescontoequilibrio
+            - vlrdodescontoogu
+            - txadministracaoogu
+            - difdejurosogu
+            - vlrdescontocomplementoogu
+            - vlrdescontoequilibrioogu
+            - vlrcapitalproprio
+            - regiaonome
+            - ufsigla
+            - ufnome
+            - municipiocodigo
+            - municipionome
+            - anomesdoorcamento
+            - numerooperacao
+            - numerooperacaodv
+            - genero
+            - cep
+            - faixarenda
+            - sistemacodigo
+            - tab
+            - areaimovel
+            - classificacaoimovel
+            - txpassivo
+            - programacodigo
+            - linhadecredito
+            - vlrcontrapartidaparceria
+            - caracteristica
+            - faixaprograma
+            - emenda
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+    columns:
+      - name: operacao
+        description: >
+          Operação PJ a que o contrato PF está amarrado. É a ponte para
+          `cod_contrato` do lado PJ. Nem toda operação citada aqui existe no retrato
+          de contratos da mesma remessa.
+
+  - name: bronze_sftp_canalfgts_linha
+    description: >
+      Domínio: linha de crédito. `33` é o Apoio à Produção, que sustenta a linha financiada.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - codigo
+            - linha
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_modalidade
+    description: >
+      Domínio: modalidade da operação.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - codigo
+            - modalidade
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_situacao_obra
+    description: >
+      Domínio: situação da obra. `3` é ATRASADA e `4` é PARALISADA.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - codigo
+            - situacaodaobra
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_situacao_contrato
+    description: >
+      Domínio: situação do contrato. `00` é situação normal.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - codigo
+            - situacaodocontrato
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_justificativa_obra
+    description: >
+      Domínio: justificativa de obra — o vocabulário de MOTIVO de atraso e paralisação.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - justificativacodigo
+            - justificativa
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_municipios
+    description: >
+      Domínio: municípios, com o código CAIXA e o código IBGE lado a lado.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - codigo
+            - municipio
+            - uf
+            - ibge_codigo
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_entidades
+    description: >
+      Domínio: entidades (tomador e construtor), com CNPJ.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - codigo
+            - entidade
+            - cgc
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_area
+    description: >
+      Domínio: área da operação. `2` é OPERACOES DE HABITACAO.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - codigo
+            - area
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+
+  - name: bronze_sftp_canalfgts_operacoes_pj_pf
+    description: >
+      Domínio: classificação PJ/PF por linha e objetivo — é o que separa os dois fluxos que o cartaz pediu para separar.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - cod_linha
+            - cod_objetivo
+            - descricao
+            - tipo
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - filename
+

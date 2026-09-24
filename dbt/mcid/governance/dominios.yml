@@ -176,6 +176,39 @@ produtos:
       beneficiário, execução física, liberação financeira por componente,
       trabalho social e infraestrutura de água e saneamento.
 
+  # MCMV-Financiada e MCMV Cidades num produto só, e não em dois.
+  #
+  # Cidades não é linha de crédito à parte: todo contrato do arquivo de emendas é
+  # "Apoio à Produção - PF", PMCMV ou Parcerias — é aporte complementar montado sobre
+  # a financiada. Separar em dois produtos exigiria os prefixos `prata_financiado_` e
+  # `prata_financiado_cidades_`, que colidem entre si em
+  # `test_prefixo_de_tabela_nao_colide_entre_produtos` (um é prefixo do outro).
+  # Dentro de UM produto o par convive, e o recorte Cidades fica no nome da tabela.
+  #
+  # Sem `termos`: o eixo de glossário desta linha ainda não existe na instância, e
+  # FQN inventado devolve 404 e derruba o patch inteiro do produto.
+  #
+  # Na bronze o nome carrega a ORIGEM, não o domínio, então aqui só entram os
+  # prefixos de prata e ouro. As bronze deste produto usam `bronze_sftp_`, como
+  # far/fds/rural — `bronze_geavo_` é reservado ao Conjuntura, embora os arquivos
+  # venham do mesmo canal.
+  - name: financiado_mcmv
+    display_name: MCMV Financiada e Cidades
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_financiado_
+      - ouro_financiado_
+    description: >
+      Linha financiada do MCMV (Apoio à Produção, Carta de Crédito Individual e
+      Associativo) e a camada MCMV Cidades de aporte complementar: empreendimento,
+      contrato PJ e PF, execução física de obra, desembolso, paralisação, emenda
+      parlamentar e contrapartida de parceria.
+
   # `product: mcmv_historico` já era usado em `dbt_project.yml` sem entrada
   # aqui — `test_todo_produto_do_dbt_esta_declarado_em_dominios` acusa.
   # Sem `prefixos_de_tabela` de propósito: a bronze mistura `bronze_dhist_`,

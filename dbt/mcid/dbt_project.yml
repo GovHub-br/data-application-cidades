@@ -375,6 +375,39 @@ models:
             tier: Tier.Tier1
             owner: mcid-data-engineering
 
+    financiado_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: financiado_mcmv
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: financiado_mcmv
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: financiado_mcmv
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+
     conjuntura_dbt:
       +materialized: table
       +meta:

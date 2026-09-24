@@ -1,0 +1,221 @@
+version: 2
+
+# A prata tipa o texto da bronze e aplica as regras da linha financiada. Os testes aqui
+# guardam o GRÃO: as chaves deste domínio são duas e é fácil trocá-las de lugar —
+# `cod_contrato` é o contrato PJ e `numero_contrato` é o contrato PF do mutuário.
+
+models:
+
+  - name: prata_financiado_empreendimento
+    description: >
+      Empreendimento do Canal FGTS com município resolvido para código IBGE.
+      Uma linha por empreendimento.
+    columns:
+      - name: cod_empreendimento
+        description: >
+          Código CAIXA do empreendimento, 7 dígitos. NÃO é o APF do FAR: os dois
+          universos não têm interseção.
+        tests:
+          - not_null
+          - unique
+      - name: cod_ibge
+        description: >
+          Código IBGE do município. Nulo quando o código CAIXA não está no domínio.
+
+  - name: prata_financiado_contrato_pj
+    description: >
+      Contrato PJ do Canal FGTS com linha, modalidade, área e situação resolvidas.
+      Uma linha por contrato. Cobre TODAS as linhas do pacote, não só o Apoio à
+      Produção — `ic_apoio_producao` faz o recorte da financiada sem esconder o
+      denominador.
+    columns:
+      - name: cod_contrato
+        description: Código do contrato PJ, sem dígito verificador.
+        tests:
+          - not_null
+          - unique
+      - name: nu_apf
+        description: >
+          APF de 9 dígitos, montado a partir de `cod_contrato` + `cod_contrato_dv`.
+          É a MESMA identidade que o `Base_PJ_FGTS` traz em `nu_apf` e que o FAR usa:
+          esta origem só a guarda partida em duas colunas.
+        tests:
+          - unique
+      - name: apf
+        description: >
+          APF na forma canônica de 8 dígitos do projeto, para casar com
+          `prata_far_*` e com as demais frentes do MCMV.
+      - name: cod_empreendimento
+        description: >
+          Empreendimento do contrato. Todo contrato tem o seu, e NÃO é o APF:
+          empreendimento e contrato são códigos distintos na maior parte das linhas.
+        tests:
+          - not_null
+      - name: cod_operacao
+        description: >
+          Operação do agente financeiro. É por este número que o contrato PF cita o
+          contrato PJ.
+      - name: tipo_operacao
+        description: >
+          OBJETIVO ORÇAMENTÁRIO da operação, não a natureza jurídica do tomador.
+          Nenhum contrato desta tabela é firmado com pessoa física: o lado "PF" é o
+          agregado do financiamento aos adquirentes, sob um tomador sintético
+          ("ADQUIRENTE FINAL PESSOA FISICA..."). O contrato do mutuário individual
+          está em `prata_financiado_contrato_pf`, vindo do CCI/CCA.
+          Nulo fora do Apoio à Produção, onde a origem não classifica.
+      - name: ic_contrato_ancora
+        description: >
+          Contrato cujo código é o próprio código do empreendimento. É o recorte em
+          que "um APF = um empreendimento" vale, e é o único que o `Base_PJ_FGTS`
+          acompanha.
+
+          Fora dele o mesmo empreendimento carrega também as operações PF dos
+          mutuários, cada uma com APF próprio. Agregar por `cod_empreendimento` sem
+          este filtro soma o lado PJ com o lado PF e infla o total.
+
+          Preferir este indicador a `tipo_operacao` = 'PJ' para reproduzir o recorte
+          acompanhado: a classificação PJ/PF da origem chega perto, mas há âncora
+          classificado como PF.
+
+  - name: prata_financiado_obra_mensal
+    description: >
+      Execução física por contrato e competência. É SÉRIE, e mistura medição
+      realizada com cronograma futuro — `ic_medido` separa as duas.
+    columns:
+      - name: cod_contrato
+        description: Contrato medido.
+        tests:
+          - not_null
+      - name: ic_medido
+        description: >
+          Verdadeiro quando a linha é medição real. Falso quando é cronograma
+          previsto, caso em que o realizado vem zerado por natureza e NÃO indica
+          atraso.
+        tests:
+          - not_null
+      - name: dt_competencia
+        description: >
+          Primeiro dia da competência. Nulo quando a origem traz competência
+          ilegível (`000000`, `002111`) — ver `ic_competencia_invalida`.
+
+  - name: prata_financiado_obra_posicao
+    description: >
+      Última posição MEDIDA de cada contrato, com o diagnóstico de prazo. Uma linha
+      por contrato. Responde "quais projetos estão fora do prazo".
+
+      Ler junto com `meses_desde_medicao`: a maior parte da carteira tem medição
+      antiga, e sem essa coluna o retrato do passado passa por retrato de hoje.
+    columns:
+      - name: cod_contrato
+        description: Contrato.
+        tests:
+          - not_null
+          - unique
+      - name: ic_atrasada
+        description: Situação de obra `3` (ATRASADA), declarada pela CAIXA.
+      - name: ic_desvio_acima_10pp
+        description: >
+          Atraso medido: previsto menos realizado acima de 10 pontos percentuais.
+          Falso para obra concluída; nulo quando falta previsto ou realizado.
+      - name: meses_desde_medicao
+        description: >
+          Meses entre a última medição e a remessa. Quanto maior, menos o
+          diagnóstico fala do presente.
+      - name: cod_empreendimento
+        description: >
+          Nulo para cerca de um décimo dos contratos: a série de obra traz contratos
+          que já não constam do cadastro de contratos da mesma remessa, e parte deles
+          tem medição recente. São obras reais sem cadastro, não lixo, e por isso
+          entram na tabela em vez de serem descartadas pelo join.
+
+  - name: prata_financiado_empreendimento_posicao
+    description: >
+      Posição do empreendimento: percentual executado e datas de início, término e
+      inauguração. Uma linha por empreendimento.
+    columns:
+      - name: cod_empreendimento
+        description: Empreendimento.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_financiado_desembolso_mensal
+    description: >
+      Desembolsos do FGTS por contrato e competência de referência. Série.
+    columns:
+      - name: cod_contrato
+        description: Contrato desembolsado.
+        tests:
+          - not_null
+
+  - name: prata_financiado_paralisacao
+    description: >
+      Operações paralisadas do setor público, com motivo e entrave em texto livre.
+      Uma linha por contrato. É a única fonte do pacote que traz o PORQUÊ escrito
+      por gente.
+    columns:
+      - name: cod_contrato
+        description: Contrato paralisado.
+        tests:
+          - not_null
+          - unique
+
+  - name: prata_financiado_contrato_pf
+    description: >
+      Contratos PF do Canal FGTS, CCI e CCA na mesma tabela. Uma linha por contrato
+      PF. Lê as bronze do produto Conjuntura em vez de duplicar o espelho.
+    columns:
+      - name: numero_contrato
+        description: Contrato PF do mutuário, 12 dígitos.
+        tests:
+          - not_null
+      - name: cod_operacao
+        description: >
+          Contrato PJ do empreendimento. Preenchido só no CCA: o CCI não traz a
+          coluna, e por isso contrato de CCI não é amarrável ao lado PJ por aqui.
+      - name: ic_parceria
+        description: >
+          `caracteristica` = `003`. É a marca de parceria, e é onde a contrapartida
+          financeira efetivamente aparece.
+
+  - name: prata_financiado_cidades_emenda
+    description: >
+      MCMV Cidades: contratos PF vinculados a emenda parlamentar, com o valor da
+      contrapartida de parceria. Uma linha por contrato PF.
+
+      Não é linha de crédito à parte: toda linha do arquivo é "Apoio à Produção - PF",
+      PMCMV ou Parcerias. É aporte complementar montado sobre a linha financiada.
+    columns:
+      - name: numero_contrato
+        description: Contrato PF.
+        tests:
+          - not_null
+      - name: vr_capital_proprio
+        description: >
+          Recurso próprio do MUTUÁRIO — não é contrapartida de ente federado.
+          Somar os dois diria que a prefeitura pôs o que a família pôs.
+
+  - name: prata_financiado_contrapartida_por_contrato_pj
+    description: >
+      Contrapartida e emenda consolidadas no contrato PJ. Uma linha por contrato com
+      ao menos um contrato PF vinculado.
+
+      Responde o VALOR da contrapartida por contrato PJ. NÃO responde a natureza:
+      a origem da financiada não registra terreno doado nem infraestrutura, e essas
+      formas não movimentam dinheiro na operação — entram como zero. As colunas
+      `ic_terreno_doado` e `vr_contrapartida_*` existem nulas de propósito, para que
+      a lacuna apareça em vez de ser lida como ausência de contribuição.
+    columns:
+      - name: cod_contrato
+        description: Contrato PJ.
+        tests:
+          - not_null
+          - unique
+      - name: vr_contrapartida_total
+        description: >
+          Soma da contrapartida que passou por dinheiro na operação (emenda + CCI/CCA).
+          É PISO, não total: terreno e infraestrutura não estão aqui.
+      - name: ic_terreno_doado
+        description: >
+          LACUNA DECLARADA. Sempre nula: a origem da linha financiada não tem o
+          equivalente ao `ic_terreno_doado` que o FAR traz no consolidado do GFAR.
