@@ -42,7 +42,7 @@ gold de um mesmo produto de dados. Ele aparece em:
 | `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
 | `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
 | `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) — schema por camada `bronze`/`prata`/`ouro` |
-| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `historico`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/`reforma_casa_brasil`/`sub50` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
+| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `historico`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/`reforma_casa_brasil`/`fnhis` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
 
 O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_far_…`,
 `prata_dhist_…` — nunca como sufixo.
@@ -57,7 +57,7 @@ Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 > tabela é `<camada>_<token>_<nome>` — token = **origem de staging** na bronze
 > (`dhist`/`sftp`/`shpt`) e **domínio** na prata/ouro
 > (`historico`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/
-> `reforma_casa_brasil`/`sub50`/`reloginho`). Reverte a D1 de
+> `reforma_casa_brasil`/`fnhis`/`reloginho`). Reverte a D1 de
 > `consolidar-schemas-historico-reloginho`. Os schemas `dados_historicos`,
 > `reloginho`, de frente, `conjuntura`, `mcmv_historico` e `serie_historica`
 > **não recebem** estes braços. Ver `models/mcmv_historico_dbt/README.md`

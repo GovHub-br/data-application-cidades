@@ -11,7 +11,7 @@ Schema por **camada do medalhão, em português** — reverte a D1 de
 | camada | schema | nome de tabela |
 |---|---|---|
 | bronze | `bronze` | `bronze_<origem>_<nome>` — origem ∈ `dhist` (`staging/dados_historicos/`), `sftp` (`staging/sftp/`), `shpt` (`staging/sharepoint/`) |
-| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `historico`, `far`, `rural`, `fds`, `classe_media`, `mcmv_cidades`, `pro_moradia`, `reforma_casa_brasil`, `sub50`, `reloginho` |
+| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `historico`, `far`, `rural`, `fds`, `classe_media`, `mcmv_cidades`, `pro_moradia`, `reforma_casa_brasil`, `fnhis`, `reloginho` |
 | ouro | `ouro` | `ouro_<domínio>_<nome>` |
 
 Vale para os 48 modelos dos dois braços (`mcmv_historico_dbt` exceto `piloto/` +
@@ -104,7 +104,7 @@ corpo `bronze_frente_gefus_semanal`); as bronzes flat de arquivo único
 | MCMV Cidades | `bronze_sftp_mcmv_cidades` + `bronze_shpt_mcmv_cidades_emendas` (não reconciliadas, D2) | `prata_mcmv_cidades_historico_contrato` (`union all` + dedup por fonte, `fonte_bronze` discrimina) | ente público × mês / contrato |
 | Pró-Moradia | `bronze_shpt_fgts_contratos` (Canal FGTS fiel, sem filtro) + `bronze_shpt_fgts_empreendimentos` + `bronze_shpt_fgts_dom_linha` | `prata_pro_moradia_historico_contrato` (filtra `cod_linha='26'` — D1) | contrato |
 | Reforma Casa Brasil | `bronze_sftp_reforma_casa_brasil` + `bronze_shpt_reforma_casa_brasil_contratacao` (fiel, não unida à prata) | `prata_reforma_casa_brasil_historico_contrato` | contrato PF/FGTS × semana |
-| FNHIS/SUB50 | `bronze_shpt_sub50_propostas_apresentadas` + `_selecionadas` | `prata_sub50_historico_proposta` (`union all`, `status_proposta` discrimina) | proposta |
+| FNHIS/SUB50 | `bronze_shpt_fnhis_propostas_apresentadas` + `_selecionadas` | `prata_fnhis_historico_proposta` (`union all`, `status_proposta` discrimina) | proposta |
 
 PII de mutuário (Classe Média / Reforma Casa Brasil): `nu_cpf_cnpj_mutuario`,
 `no_mutuario`, `dt_nascimento_mutuario` existem na bronze (linhagem) mas NÃO

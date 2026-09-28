@@ -1078,7 +1078,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_shpt_sub50_propostas_apresentadas
+  - name: bronze_shpt_fnhis_propostas_apresentadas
     description: >
       Bronze — propostas FNHIS/SUB50 apresentadas,
       `staging/sharepoint/novo_mcmv_fnhis_sub_50_propostas_apresentadas.parquet`,
@@ -1088,9 +1088,9 @@ models:
       ATENÇÃO — `dt_referencia` é a data de ingestão de um snapshot único,
       não a data do evento (`dt_contratacao`, ausente nesta bronze). Não usar
       `dt_referencia` para agregação temporal — ver nota completa em
-      `prata_sub50_historico_proposta`.
+      `prata_fnhis_historico_proposta`.
     meta:
-      tags: [bronze, mcmv, dados-historicos, sub50, sharepoint]
+      tags: [bronze, mcmv, dados-historicos, fnhis, sharepoint]
     columns:
       - name: numero_da_proposta
         description: Número da proposta (chave de negócio, cru).
@@ -1112,7 +1112,7 @@ models:
         data_tests:
           - not_null
 
-  - name: bronze_shpt_sub50_propostas_selecionadas
+  - name: bronze_shpt_fnhis_propostas_selecionadas
     description: >
       Bronze — propostas FNHIS/SUB50 selecionadas,
       `staging/sharepoint/novo_mcmv_fnhis_sub_50_propostas_selecionadas.parquet`,
@@ -1121,9 +1121,9 @@ models:
 
       ATENÇÃO — `dt_referencia` é a data de ingestão de um snapshot único,
       não a data do evento. Não usar `dt_referencia` para agregação
-      temporal — ver nota completa em `prata_sub50_historico_proposta`.
+      temporal — ver nota completa em `prata_fnhis_historico_proposta`.
     meta:
-      tags: [bronze, mcmv, dados-historicos, sub50, sharepoint]
+      tags: [bronze, mcmv, dados-historicos, fnhis, sharepoint]
     columns:
       - name: num_proposta
         description: Número da proposta (chave de negócio, cru).

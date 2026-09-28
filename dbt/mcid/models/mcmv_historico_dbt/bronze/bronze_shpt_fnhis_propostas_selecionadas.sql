@@ -4,8 +4,8 @@
 -- `staging/sharepoint/novo_mcmv_fnhis_sub_50_propostas_selecionadas.parquet`,
 -- cópia fiel. 1.207 linhas.
 --
--- Materializa isoladamente de bronze_shpt_sub50_propostas_apresentadas — a
--- prata (prata_sub50_historico_proposta) une as duas com `status_proposta`
+-- Materializa isoladamente de bronze_shpt_fnhis_propostas_apresentadas — a
+-- prata (prata_fnhis_historico_proposta) une as duas com `status_proposta`
 -- discriminando apresentada/selecionada.
 --
 -- dt_referencia = data de ingestão do arquivo (`_ingested_at`). Contrato de

@@ -82,8 +82,8 @@ BRONZES=(
   bronze_shpt_fgts_dom_linha
   bronze_sftp_reforma_casa_brasil
   bronze_shpt_reforma_casa_brasil_contratacao
-  bronze_shpt_sub50_propostas_apresentadas
-  bronze_shpt_sub50_propostas_selecionadas
+  bronze_shpt_fnhis_propostas_apresentadas
+  bronze_shpt_fnhis_propostas_selecionadas
 )
 # Bronzes que sozinhas ja sao grandes o bastante para valer --threads 1 (limita
 # a paralelizacao interna do DuckDB, que e onde o pico de RAM mora). Sao as 3
@@ -122,7 +122,7 @@ SILVERS=(
   # build_silver_pesada, mesma razão de prata_historico_serie_executiva).
   prata_mcmv_cidades_historico_contrato
   prata_pro_moradia_historico_contrato
-  prata_sub50_historico_proposta
+  prata_fnhis_historico_proposta
 )
 SILVER_SERIE=prata_historico_serie_executiva
 # Pratas de Classe Média/Reforma Casa Brasil: dedup por window function sobre

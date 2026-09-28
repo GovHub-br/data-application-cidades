@@ -1116,10 +1116,10 @@ models:
           1995-2009 e 2023+ — hiato 2009-2023 é limitação de fonte, não bug
           (ver descrição do model).
 
-  - name: prata_sub50_historico_proposta
+  - name: prata_fnhis_historico_proposta
     description: >
-      Prata — propostas FNHIS/SUB50, união de bronze_shpt_sub50_propostas_apresentadas
-      e bronze_shpt_sub50_propostas_selecionadas, discriminadas por
+      Prata — propostas FNHIS/SUB50, união de bronze_shpt_fnhis_propostas_apresentadas
+      e bronze_shpt_fnhis_propostas_selecionadas, discriminadas por
       `status_proposta`. Contrato de colunas segue
       docs/entregas/issue-119-ajuste-frentes-faltantes.md.
 
@@ -1134,7 +1134,7 @@ models:
       `resumo-mensal-frentes-novas-mcmv`), só que na direção oposta
       (sub-contagem mascarada de série, não multiplicação).
     meta:
-      tags: [prata, mcmv, dados-historicos, sub50]
+      tags: [prata, mcmv, dados-historicos, fnhis]
     columns:
       - name: frente_mcmv
         description: Constante `FNHIS/SUB50`.

@@ -7,8 +7,8 @@
 -- mcmv_silver_dbt/silver/sub50/silver_mcmv_sub50_base.sql, portado para
 -- DuckDB puro — parse_hist_numeric/parse_hist_bigint/parse_date_br no lugar
 -- das UDFs Postgres `parse_financial_value`/`parse_int`/`parse_date_br`).
-{% set apresentadas = ref('bronze_shpt_sub50_propostas_apresentadas') %}
-{% set selecionadas = ref('bronze_shpt_sub50_propostas_selecionadas') %}
+{% set apresentadas = ref('bronze_shpt_fnhis_propostas_apresentadas') %}
+{% set selecionadas = ref('bronze_shpt_fnhis_propostas_selecionadas') %}
 
 with
 

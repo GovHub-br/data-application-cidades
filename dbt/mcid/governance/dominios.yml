@@ -184,7 +184,7 @@ produtos:
   # `prata_fds_historico_`, `prata_rural_historico_`) e colidiriam se
   # declarados aqui — continuam de fora, atribuídas pelo catálogo semântico.
   # Os 5 tokens das frentes novas (classe_media, mcmv_cidades, pro_moradia,
-  # reforma_casa_brasil, sub50) não têm produto dedicado nem colidem com
+  # reforma_casa_brasil, fnhis) não têm produto dedicado nem colidem com
   # `empreendimento_far`/`entidades_fds`/`empreendimento_rural`, por isso
   # entram aqui.
   - name: mcmv_historico
@@ -200,7 +200,7 @@ produtos:
       - prata_mcmv_cidades_
       - prata_pro_moradia_
       - prata_reforma_casa_brasil_
-      - prata_sub50_
+      - prata_fnhis_
     description: >
       Série histórica por empreendimento do MCMV (FAR, FDS, Rural, Classe
       Média, MCMV Cidades, Pró-Moradia, Reforma Casa Brasil e FNHIS/SUB50), a
