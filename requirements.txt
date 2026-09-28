@@ -1,12 +1,41 @@
-collate-sqllineage==1.6.0
-sqlparse==0.5
-astronomer-cosmos==1.9.0
-dbt-postgres==1.7.13
-dbt-duckdb~=1.7.0
-imap-tools==1.10.0
-zeep==4.3.1
+# Dependencias que entram na imagem do Airflow (infra/docker/airflow/Dockerfile).
+#
+# O pyproject.toml (ambiente dos testes e do CI) tem que pinar exatamente as
+# mesmas versoes para todo pacote que os dois declaram -- o
+# tests/test_dependencias_sincronizadas.py reprova o CI se divergirem. Um bump
+# entra nos dois arquivos no mesmo PR.
+#
+# Os pacotes que ja vem na imagem apache/airflow:2.8.1-python3.11 estao pinados
+# na versao que a imagem traz, so para o pyproject ter contra o que comparar:
+# o pip nao reinstala nada deles.
+
+# Vem da imagem base.
+apache-airflow==2.8.1
+apache-airflow-providers-postgres==5.10.0
+flask==2.2.5
+flask-session==0.5.0
+numpy==1.24.4
+pandas==2.1.4
+pyarrow==14.0.2
+requests==2.31.0
+sqlalchemy==1.4.51
+
+# Instalados por cima da base.
 apache-airflow-providers-microsoft-mssql==3.7.2
-openpyxl>=3.1.0
-paramiko>=3.4.0
+astronomer-cosmos==1.9.0
+dbt-core==1.7.13
+dbt-postgres==1.7.13
+dbt-duckdb==1.7.5
+duckdb==1.5.6
+imap-tools==1.15.0
+zeep==4.3.3
+openpyxl==3.1.5
 python-dotenv==1.2.2
-boto3>=1.34.0
+# paramiko 4 removeu paramiko.DSSKey, que o provider ssh/sftp da imagem base
+# referencia na importacao -- com ele, airflow.providers.ssh nem importa.
+paramiko>=3.4.0,<4
+# boto3 e aiobotocore andam juntos: cada aiobotocore aceita uma faixa estreita
+# de botocore. O da imagem base (2.9.0) so aceita botocore<1.33.14, e o boto3
+# novo que o cliente_minio usa deixava o `pip check` quebrado.
+boto3==1.43.75
+aiobotocore==3.9.1

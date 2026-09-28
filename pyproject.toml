@@ -8,24 +8,28 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.11"
+# Versoes iguais as do requirements.txt, que e o que roda na imagem do Airflow.
+# tests/test_dependencias_sincronizadas.py reprova divergencia. So
+# great-expectations e sqlglot ficam fora: rodam em scripts/governance/, nao
+# na imagem.
 apache-airflow = "2.8.1"
-apache-airflow-providers-postgres = "5.14.0"
+apache-airflow-providers-postgres = "5.10.0"
 apache-airflow-providers-microsoft-mssql = "3.7.2"
 flask-session = "0.5.0"
-numpy = "1.26.4"
-flask = "*"
-dbt-core = "*"
-dbt-postgres = "*"
-dbt-duckdb = "~1.7.0"
-pandas = "*"
-requests = "*"
-sqlalchemy = "*"
-zeep = "*"
-imap-tools = "*"
-astronomer-cosmos = "*"
-pyarrow = "*"
-boto3 = "*"
-duckdb = "^1.5.5"
+numpy = "1.24.4"
+flask = "2.2.5"
+dbt-core = "1.7.13"
+dbt-postgres = "1.7.13"
+dbt-duckdb = "1.7.5"
+pandas = "2.1.4"
+requests = "2.31.0"
+sqlalchemy = "1.4.51"
+zeep = "4.3.3"
+imap-tools = "1.15.0"
+astronomer-cosmos = "1.9.0"
+pyarrow = "14.0.2"
+boto3 = "1.43.75"
+duckdb = "1.5.6"
 # 17 scripts em scripts/ importam dotenv (segredo só via .env/env var, nunca
 # hardcoded); estava em requirements.txt mas nunca declarado aqui, e o CI
 # instala via Poetry — poetry.lock não tinha o pacote.

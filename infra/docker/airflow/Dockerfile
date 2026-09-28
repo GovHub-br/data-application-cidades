@@ -41,4 +41,10 @@ WORKDIR ${AIRFLOW_HOME}
 # Para rodar o airflow só precisamos instalar as dependências visto que o código
 # sempre será sincronizado via git sync ou via volumes localmente
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# As duas checagens depois do install fazem o build reprovar em vez de gerar uma
+# imagem quebrada: o pip rebaixava o Airflow em silêncio quando a imagem base
+# mudava de versão (AIRFLOW_VERSION vem da imagem oficial), e só avisava, sem
+# falhar, quando deixava pacotes da base incompatíveis.
+RUN pip install --no-cache-dir -r requirements.txt \
+  && python -c "import airflow, os, sys; esperado = os.environ['AIRFLOW_VERSION']; print(f'Airflow {airflow.__version__} (base {esperado})'); sys.exit(airflow.__version__ != esperado)" \
+  && pip check
