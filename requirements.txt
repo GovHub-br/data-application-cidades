@@ -17,7 +17,6 @@ flask-session==0.5.0
 numpy==1.24.4
 pandas==2.1.4
 pyarrow==14.0.2
-requests==2.31.0
 sqlalchemy==1.4.51
 
 # Instalados por cima da base.
@@ -39,3 +38,9 @@ paramiko>=3.4.0,<4
 # novo que o cliente_minio usa deixava o `pip check` quebrado.
 boto3==1.43.75
 aiobotocore==3.9.1
+# A base traz requests 2.31.0, com CVEs corrigidos na serie 2.32 (verify=False
+# preso a sessao, vazamento de credencial do .netrc). Do 2.32 em diante, o
+# docker 7.0.0 da base quebra ("Not supported URL scheme http+docker") -- o
+# provider docker so volta a funcionar com o docker 7.1.0, que corrige isso.
+requests==2.33.0
+docker==7.1.0
