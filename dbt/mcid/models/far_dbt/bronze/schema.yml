@@ -231,7 +231,7 @@ models:
       Competência mensal.
     tests:
       - sem_drift_de_colunas:
-          colunas:
+          colunas: &colunas_monit_mov_obra_far
             - co_tipo_registro
             - dt_movimento
             - nu_apf
@@ -340,7 +340,7 @@ models:
       competência atual; elas ficam 100% nulas até a origem voltar a enviá-las.
     tests:
       - sem_drift_de_colunas:
-          colunas:
+          colunas: &colunas_prioritarios_af_caixa
             - data_de_movimento
             - agente_financeiro
             - apf
@@ -414,5 +414,39 @@ models:
           - unique
       - name: filename
         description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  # As séries leem o mesmo padrão de arquivo das bronzes acima (todas as competências em
+  # vez da última), então o contrato de layout é o mesmo: reaproveita a lista.
+
+  - name: bronze_shpt_monit_mov_obra_far_serie
+    description: >
+      Movimento mensal de obra do FAR com todas as competências empilhadas. Cada
+      arquivo é o retrato do mês, uma linha por APF, então a série de execução
+      física só existe empilhando.
+    tests:
+      - sem_drift_de_colunas:
+          colunas: *colunas_monit_mov_obra_far
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+      - name: filename
+        description: Arquivo da staging de origem da linha; dá a competência.
+        tests:
+          - not_null
+
+  - name: bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_serie
+    description: >
+      Dados prioritários da CAIXA com todas as competências empilhadas, todas as
+      modalidades. Exclui as remessas HISTORICO_RECENTE_*.
+    tests:
+      - sem_drift_de_colunas:
+          colunas: *colunas_prioritarios_af_caixa
+    columns:
+      - name: filename
+        description: Arquivo da staging de origem da linha; dá a competência.
         tests:
           - not_null
