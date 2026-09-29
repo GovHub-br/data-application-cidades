@@ -30,6 +30,17 @@ mcid:
       threads: "{{ env_var('DUCKDB_MCID_THREADS', '4') | int }}"
       extensions:
         - httpfs
+      # Porta pro DuckDB as 3 UDFs (normalize_apf/parse_date_br/
+      # corrigir_mojibake) que em Postgres nascem do hook create_udfs()
+      # (dbt_project.yml on-run-start, gated a target.type == 'postgres') —
+      # sem isto, todo modelo far_dbt/fds_dbt/rural_dbt que chama
+      # metadata.normalize_apf/... quebra com Catalog Error neste target.
+      # Ver plugins/udfs_duckdb.py. module_paths é relativo ao cwd de onde o
+      # dbt é invocado — sempre dbt/mcid/ nos run-*.sh deste repo.
+      plugins:
+        - module: udfs_duckdb
+      module_paths:
+        - plugins
       # Guardas de recurso. As bronzes históricas fazem union_by_name de
       # muitos parquets; a materialização default do DuckDB
       # (preserve_insertion_order=true) buffra o resultado inteiro em RAM
@@ -114,6 +125,11 @@ mcid:
       extensions:
         - httpfs
         - postgres
+      # Ver comentário no target staging_duckdb (mesmo motivo/mesmo plugin).
+      plugins:
+        - module: udfs_duckdb
+      module_paths:
+        - plugins
       attach:
         - path: "dbname={{ env_var('DB_DW_DBNAME_MCID', 'cidades') }} host={{ env_var('DB_DW_HOST_MCID') }} port={{ env_var('DB_DW_PORT_MCID', '5432') }} user={{ env_var('DB_DW_USER_MCID') }} password={{ env_var('DB_DW_PASSWORD_MCID') }}"
           type: postgres

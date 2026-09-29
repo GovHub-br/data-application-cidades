@@ -18,11 +18,11 @@ select
     m.eo_cnpj as cnpj_eo,
     upper(m.eo_nome) as nome_eo,
     f.apf_municipio_empreendimento,
-    to_char(m.mes, 'YYYY-MM-DD') as mes,
+    {{ to_char_date('m.mes', 'YYYY-MM-DD', '%Y-%m-%d') }} as mes,
 
     -- Agrupamentos temporais para o Superset
-    to_char(date_trunc('year', m.mes), 'YYYY-MM-DD') as ano,
-    to_char(date_trunc('quarter', m.mes), 'YYYY-MM-DD') as trimestre,
+    {{ to_char_date("date_trunc('year', m.mes)", 'YYYY-MM-DD', '%Y-%m-%d') }} as ano,
+    {{ to_char_date("date_trunc('quarter', m.mes)", 'YYYY-MM-DD', '%Y-%m-%d') }} as trimestre,
 
     -- Valores liberados no período
     m.vr_liberado_mes as valor_liberado_mensal,

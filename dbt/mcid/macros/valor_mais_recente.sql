@@ -52,12 +52,25 @@
     {%- endif -%}
     (
         select {{ devolve }}
+        {%- if target.type == 'duckdb' %}
+        -- DuckDB: unnest(arr1, arr2, ...) como tabela não zippa arrays
+        -- posicionalmente (Postgres zippa); múltiplos unnest() no SELECT
+        -- list, sim — mesmo resultado, sintaxe diferente.
+        from (
+            select
+                unnest(array[{{ valores | join(", ") }}]::{{ tipo }}[]) as valor,
+                unnest(array[{{ datas | join(", ") }}]::date[]) as dt,
+                unnest(array[{{ fontes | join(", ") }}]::text[]) as fonte,
+                unnest(array[{{ ordens | join(", ") }}]::int[]) as ord
+        ) as c
+        {%- else %}
         from unnest(
             array[{{ valores | join(", ") }}]::{{ tipo }}[],
             array[{{ datas | join(", ") }}]::date[],
             array[{{ fontes | join(", ") }}]::text[],
             array[{{ ordens | join(", ") }}]::int[]
         ) as c(valor, dt, fonte, ord)
+        {%- endif %}
         where c.valor is not null
         order by c.dt desc nulls last, c.ord
         limit 1

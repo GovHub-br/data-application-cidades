@@ -27,7 +27,7 @@ with
     base as (
         select
             coalesce(f.apf, o.apf) as apf,
-            to_char(coalesce(f.mes, o.mes_fisica), 'YYYY-MM-DD') as mes,
+            {{ to_char_date('coalesce(f.mes, o.mes_fisica)', 'YYYY-MM-DD', '%Y-%m-%d') }} as mes,
             o.pct_obra_realizada,
             f.pct_executado_financeiro
         from financeira f

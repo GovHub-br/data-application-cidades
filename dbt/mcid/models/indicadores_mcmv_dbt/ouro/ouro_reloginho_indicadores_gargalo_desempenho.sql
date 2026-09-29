@@ -167,12 +167,68 @@ with
         left join fds_ultima_financeira fu on f.apf = fu.apf
     ),
 
+    rural as (
+        select
+            'Rural'::text as frente,
+            r.apf,
+            r.nome_empreendimento,
+            r.municipio,
+            r.uf,
+            r.municipio_uf,
+            r.agente_financeiro,
+            'Entidade Organizadora'::text as responsavel_tipo,
+            r.entidade_organizadora_cnpj as responsavel_id,
+            r.nome_entidade_organizadora as responsavel_nome,
+            r.situacao_empreendimento as situacao_operacional,
+            r.status_prazo,
+            r.status_execucao_simplificado as status_execucao,
+            r.ritmo_fisico_financeiro as status_ritmo,
+            r.quantidade_uh,
+            r.valor_contratado,
+            r.valor_desembolsado,
+            -- D4: ficha é o desembolso acumulado autoritativo (mesma semântica de FAR/FDS).
+            r.valor_desembolsado as valor_liberado_historico,
+            -- série de liberações já calculada na própria ficha — informativo.
+            r.vr_acumulado_liberacoes as valor_desembolsado_componentes,
+            greatest(
+                coalesce(r.valor_contratado, 0) - coalesce(r.valor_desembolsado, 0), 0
+            ) as saldo_contratado_a_desembolsar,
+            r.percentual_execucao_fisica,
+            null::numeric as percentual_obra_prevista,
+            r.percentual_execucao_financeira,
+            round(
+                coalesce(r.percentual_execucao_financeira, 0)
+                - coalesce(r.percentual_execucao_fisica, 0),
+                2
+            ) as gap_fisico_financeiro_pp,
+            r.dt_contratacao,
+            null::date as dt_inicio_obra,
+            r.dt_previsao_entrega as dt_previsao_conclusao,
+            r.dt_conclusao_obra,
+            null::date as dt_entrega,
+            null::date as dt_paralisacao,
+            r.dt_referencia_valor_desembolsado as dt_ultima_liberacao,
+            r.dt_referencia_execucao_fisica as dt_ultima_medicao_fisica,
+            nullif(
+                greatest(
+                    coalesce(r.dt_referencia_consolidada, '1900-01-01'::date),
+                    coalesce(r.dt_conclusao_obra, '1900-01-01'::date),
+                    coalesce(r.dt_contratacao, '1900-01-01'::date)
+                ),
+                '1900-01-01'::date
+            ) as dt_ultima_atualizacao
+        from {{ ref("ouro_rural_ficha_empreendimento") }} r
+    ),
+
     unificada as (
         select *
         from far
         union all
         select *
         from fds
+        union all
+        select *
+        from rural
     ),
 
     metricas as (
@@ -208,15 +264,14 @@ with
     flags as (
         select
             *,
-            (coalesce(status_prazo, '') = 'Em Atraso' or dias_atraso > 0) as flag_atraso,
+            (dias_atraso > 0) as flag_atraso,
             (
                 dt_paralisacao is not null
                 or coalesce(situacao_operacional, '') ilike '%PARALIS%'
                 or coalesce(status_execucao, '') ilike '%Paralis%'
             ) as flag_paralisacao,
             (
-                coalesce(status_execucao, '') not in ('Concluído', 'Concluída')
-                and coalesce(status_prazo, '') <> 'Entregue'
+                coalesce(percentual_execucao_fisica, 0) < 100
                 and (
                     dt_ultima_atualizacao is null
                     or current_date - dt_ultima_atualizacao > 90

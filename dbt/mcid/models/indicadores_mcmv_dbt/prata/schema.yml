@@ -183,8 +183,7 @@ models:
       uma linha por (frente_mcmv, mes_referencia), onde `mes_referencia`
       deriva de `dt_contratacao` (data do evento) — NUNCA de `dt_referencia`
       (data do snapshot de coleta, em que o mesmo contrato se repete em
-      dezenas de linhas; ver comentário no `.sql` e design.md D2 da change
-      integrar-frentes-novas-reloginho). FNHIS/SUB50 fica de fora (D4): sem
+      dezenas de linhas,. FNHIS/SUB50 fica de fora: sem
       `dt_contratacao` confiável e sem histórico semanal acumulado para
       compor série mensal real. Contratos sem `dt_contratacao` (nenhum
       encontrado nas 4 fontes nesta change — 100% de preenchimento

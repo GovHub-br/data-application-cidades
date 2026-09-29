@@ -4,20 +4,20 @@ models:
   - name: ouro_reloginho_indicadores_gargalo_desempenho
     description: >
       Tabela Ouro unificada por empreendimento/APF para identificar gargalos e
-      desempenho do MCMV nas frentes FAR e FDS. Consolida atrasos, baixa execução
-      física, baixa execução financeira, paralisação, falta de atualização
-      recente, contratos sem evolução e saldo financeiro a desembolsar. Alimenta
-      alertas estratégicos e dashboards.
+      desempenho do MCMV nas frentes FAR, FDS e Rural. Consolida atrasos, baixa
+      execução física, baixa execução financeira, paralisação, falta de
+      atualização recente, contratos sem evolução e saldo financeiro a
+      desembolsar. Alimenta alertas estratégicos e dashboards.
 
       GRÃO: 1 linha por (frente, apf) — snapshot corrente, não série. Derivada
       das fichas de produção `ouro_far_ficha_empreendimento` /
-      `ouro_fds_ficha_empreendimento` e das ouros `*_atual_*` FAR/FDS. Cobre só
-      FAR e FDS — Rural fica de fora deste ouro.
+      `ouro_fds_ficha_empreendimento` / `ouro_rural_ficha_empreendimento` e das
+      ouros `*_atual_*` FAR/FDS.
 
       VOCABULÁRIO: a coluna de frente se chama `frente` (não `frente_mcmv`) e seu
-      domínio é {FAR, FDS}; `FDS` é a mesma frente que o resto do eixo histórico
-      chama de `Entidades`. `dt_calculo` é o conceito canônico `dt_gold`
-      (glossario-mcid.md).
+      domínio é {FAR, FDS, Rural}; `FDS` é a mesma frente que o resto do eixo
+      histórico chama de `Entidades`. `dt_calculo` é o conceito canônico
+      `dt_gold` (glossario-mcid.md).
 
       Fonte de desembolso: `valor_liberado_historico` = `valor_desembolsado` da
       ficha (GEFUS/CAIXA). O agregado do `*_financeiro_mensal` (SharePoint) fica
@@ -49,12 +49,12 @@ models:
       - name: frente
         description: >
           Frente do MCMV (conceito canônico `frente_mcmv`, glossario-mcid.md).
-          Domínio {FAR, FDS}; `FDS` ≡ `Entidades` no vocabulário do resto do eixo
-          histórico. Rural não entra neste ouro.
+          Domínio {FAR, FDS, Rural}; `FDS` ≡ `Entidades` no vocabulário do resto
+          do eixo histórico.
         data_tests:
           - not_null
           - accepted_values:
-              values: ["FAR", "FDS"]
+              values: ["FAR", "FDS", "Rural"]
       - name: apf
         description: Identificador APF do empreendimento.
         data_tests:
@@ -62,7 +62,9 @@ models:
       - name: responsavel_tipo
         description: Tipo do responsável usado para agrupamento de gargalos.
       - name: responsavel_nome
-        description: Nome do responsável. Para FAR usa tomador/proponente; para FDS usa entidade organizadora.
+        description: >
+          Nome do responsável. Para FAR usa tomador/proponente; para FDS e
+          Rural usa entidade organizadora.
       - name: status_prazo
         description: >
           Eixo de classificação de PRAZO (distinto de `situacao_canonica` /
@@ -87,25 +89,41 @@ models:
         description: Diferença positiva entre valor contratado e valor desembolsado acumulado.
       - name: percentual_saldo_a_desembolsar
         description: Percentual do contrato ainda não desembolsado.
+      - name: percentual_obra_prevista
+        description: >
+          Percentual de execução física previsto pela curva de obra. Sempre
+          `null` para FAR e Rural — nenhuma das duas fichas tem curva prevista;
+          só FDS preenche esta coluna.
       - name: gap_fisico_financeiro_pp
         description: Diferença em pontos percentuais entre execução financeira e execução física.
       - name: dias_sem_atualizacao
         description: Dias desde a última liberação/medição física disponível para a APF.
       - name: dias_atraso
         description: Dias corridos de atraso quando a previsão está vencida e a obra não está concluída.
+      - name: dt_paralisacao
+        description: >
+          Data de paralisação, quando a fonte a informa como campo estruturado.
+          Sempre `null` para FAR e Rural (nenhuma das duas fichas tem esse
+          campo — `flag_paralisacao` roda só por texto para as duas); só FDS
+          preenche esta coluna.
       - name: dias_paralisacao
         description: Dias desde a paralisação quando a frente possui data de paralisação.
       - name: flag_atraso
-        description: True quando status_prazo indica atraso ou dias_atraso é maior que zero.
+        description: True quando dias_atraso é maior que zero (previsão de conclusão vencida e execução física < 100%).
       - name: flag_paralisacao
         description: True quando há data/situação textual de paralisação.
       - name: flag_sem_atualizacao_recente
-        description: True para obra não concluída sem atualização há mais de 90 dias ou sem data de atualização.
+        description: >
+          True quando a execução física está abaixo de 100% e não há
+          atualização (liberação/medição/entrega/conclusão/contratação) há mais
+          de 90 dias, ou não há nenhuma data de atualização.
       - name: flag_baixa_execucao_fisica
         description: >
           True quando a execução física está pelo menos 10 p.p. abaixo do previsto,
           a previsão está vencida sem conclusão, ou a obra contratada há mais de
-          365 dias ainda está abaixo de 30%.
+          365 dias ainda está abaixo de 30%. Para Rural (e FAR),
+          `percentual_obra_prevista` é sempre `null`, então a cláusula de "10
+          p.p. abaixo do previsto" nunca aciona — só as outras duas.
       - name: flag_baixa_execucao_financeira
         description: >
           True quando a execução financeira está mais de 10 p.p. abaixo da física,
@@ -383,7 +401,7 @@ models:
       Gera cards e rankings nos níveis nacional, frente, UF, município e
       responsável (coluna `nivel_agregacao`) — um GROUPING SET por nível.
       **Não somar entre `nivel_agregacao`**: são recortes sobrepostos do mesmo
-      universo de empreendimentos FAR+FDS de `ouro_reloginho_indicadores_gargalo_desempenho`.
+      universo de empreendimentos FAR+FDS+Rural de `ouro_reloginho_indicadores_gargalo_desempenho`.
       Unidades: `total_uh` em UH; `valor_*` e `saldo_*` em R$ nominais;
       `media_execucao_*` e `percentual_*` em escala 0-100; `atraso_medio_dias`
       em dias.
@@ -404,7 +422,7 @@ models:
           - accepted_values:
               values: ["nacional", "frente", "uf", "municipio", "responsavel"]
       - name: frente
-        description: Frente {FAR, FDS} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `ouro_reloginho_indicadores_gargalo_desempenho.frente`).
+        description: Frente {FAR, FDS, Rural} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `ouro_reloginho_indicadores_gargalo_desempenho.frente`).
       - name: uf
         description: Sigla da UF (2 letras) nas linhas de nível 'uf'/'municipio'; NULL nos demais níveis.
       - name: municipio

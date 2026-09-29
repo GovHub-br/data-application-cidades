@@ -359,11 +359,11 @@ Contexto comum do grupo B:
 | Campo | Valor |
 |---|---|
 | Nome | flag_atraso |
-| Definicao | True quando o status de prazo indica atraso ou `dias_atraso` e maior que zero. |
+| Definicao | True quando `dias_atraso` e maior que zero. |
 | Objetivo | Identificar obras atrasadas por empreendimento/APF para alertas e ranking. |
-| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS). |
-| Tabelas e campos utilizados | `flag_atraso`, `status_prazo`, `dias_atraso`, `percentual_execucao_fisica`, `dt_referencia`. |
-| Regra de calculo | True quando a previsao de conclusao/entrega esta vencida e a execucao fisica e menor que 100%; ou quando `status_prazo` indica atraso / `dias_atraso` maior que zero. |
+| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS/Rural). |
+| Tabelas e campos utilizados | `flag_atraso`, `dias_atraso`, `percentual_execucao_fisica`, `dt_referencia`. |
+| Regra de calculo | True quando a previsao de conclusao/entrega esta vencida e a execucao fisica e menor que 100% (`dias_atraso > 0`). Campos categoricos (`status_prazo`, `status_execucao`, `situacao_empreendimento`) nao entram na regra — so o numerico. |
 | Granularidade temporal | Pontual por `dt_calculo`. |
 | Granularidade territorial | Empreendimento/APF; agregacao por nacional, frente, UF, municipio, responsavel. |
 | Filtros aplicaveis | `frente`, `uf`, `municipio`, `responsavel_nome`, `classificacao_gargalo`, `indicadores_acionados`. |
@@ -381,9 +381,9 @@ Contexto comum do grupo B:
 | Nome | flag_paralisacao |
 | Definicao | True quando ha data ou situacao textual de paralisacao. |
 | Objetivo | Identificar obras paralisadas por empreendimento/APF. |
-| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS). |
-| Tabelas e campos utilizados | `flag_paralisacao`, `dias_paralisacao`, `status_operacional`. |
-| Regra de calculo | True quando ha data de paralisacao ou situacao textual contendo paralisacao. |
+| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS/Rural). |
+| Tabelas e campos utilizados | `flag_paralisacao`, `dias_paralisacao`, `dt_paralisacao`, `situacao_operacional`, `status_execucao`. |
+| Regra de calculo | True quando ha `dt_paralisacao` preenchida, ou `situacao_operacional` contem o texto "PARALIS", ou `status_execucao` contem o texto "Paralis" (3 fontes, nenhuma exclusiva). |
 | Granularidade temporal | Pontual por `dt_calculo`. |
 | Granularidade territorial | Empreendimento/APF; agregacao por nacional, frente, UF, municipio, responsavel. |
 | Filtros aplicaveis | `frente`, `uf`, `municipio`, `responsavel_nome`, `classificacao_gargalo`, `indicadores_acionados`. |
@@ -399,11 +399,11 @@ Contexto comum do grupo B:
 | Campo | Valor |
 |---|---|
 | Nome | flag_sem_atualizacao_recente |
-| Definicao | True para obra nao concluida sem atualizacao ha mais de 90 dias ou sem data de atualizacao. |
+| Definicao | True quando a execucao fisica esta abaixo de 100% e nao ha atualizacao ha mais de 90 dias ou sem data de atualizacao. |
 | Objetivo | Alertar sobre obras sem movimento/medicao recente. |
-| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS). |
-| Tabelas e campos utilizados | `flag_sem_atualizacao_recente`, `dias_sem_atualizacao`. |
-| Regra de calculo | True para obra nao concluida sem liberacao/medicao ha mais de 90 dias ou sem data de atualizacao. |
+| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS/Rural). |
+| Tabelas e campos utilizados | `flag_sem_atualizacao_recente`, `dias_sem_atualizacao`, `percentual_execucao_fisica`. |
+| Regra de calculo | True quando `percentual_execucao_fisica` e menor que 100% (ou nulo) e nao ha liberacao/medicao/entrega/conclusao/contratacao ha mais de 90 dias, ou nao ha nenhuma data de atualizacao. Campos categoricos (`status_execucao`, `status_prazo`) nao entram mais na regra — mesmo criterio de "obra concluida" usado por `flag_entrega_em_risco`. |
 | Granularidade temporal | Pontual por `dt_calculo`. |
 | Granularidade territorial | Empreendimento/APF; agregacao por nacional, frente, UF, municipio, responsavel. |
 | Filtros aplicaveis | `frente`, `uf`, `municipio`, `responsavel_nome`, `classificacao_gargalo`, `indicadores_acionados`. |
@@ -499,11 +499,11 @@ Contexto comum do grupo B:
 | Campo | Valor |
 |---|---|
 | Nome | flag_entrega_em_risco |
-| Definicao | True quando o empreendimento nao concluido tem atraso, paralisacao, baixa execucao ou falta de atualizacao. |
+| Definicao | True quando o empreendimento nao concluido tem atraso, paralisacao, baixa execucao (fisica ou financeira) ou falta de atualizacao. |
 | Objetivo | Sinalizar entregas em risco para priorizacao e mapa de risco. |
-| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS). |
-| Tabelas e campos utilizados | `flag_entrega_em_risco`, `indicadores_acionados`, `flag_atraso`, `flag_paralisacao`, `flag_baixa_execucao_fisica`, `flag_sem_atualizacao_recente`. |
-| Regra de calculo | True quando empreendimento nao concluido apresenta atraso, paralisacao, baixa execucao ou falta de atualizacao. |
+| Fonte | Gold `reloginho.ouro_reloginho_indicadores_gargalo_desempenho` (origem golds FAR/FDS/Rural). |
+| Tabelas e campos utilizados | `flag_entrega_em_risco`, `indicadores_acionados`, `flag_atraso`, `flag_paralisacao`, `flag_baixa_execucao_fisica`, `flag_baixa_execucao_financeira`, `flag_sem_atualizacao_recente`. |
+| Regra de calculo | True quando empreendimento nao concluido (`percentual_execucao_fisica` < 100%) apresenta atraso, paralisacao, baixa execucao fisica, baixa execucao financeira ou falta de atualizacao. |
 | Granularidade temporal | Pontual por `dt_calculo`. |
 | Granularidade territorial | Empreendimento/APF; agregacao por nacional, frente, UF, municipio, responsavel. |
 | Filtros aplicaveis | `frente`, `uf`, `municipio`, `responsavel_nome`, `classificacao_gargalo`, `indicadores_acionados`. |

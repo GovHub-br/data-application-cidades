@@ -51,7 +51,7 @@ financeiro/desembolso. A nota técnica está em
 | Indicador | Regra |
 |---|---|
 | Obra atrasada | Previsão de conclusão/entrega vencida e execução física menor que 100%. |
-| Obra paralisada | Data de paralisação ou situação textual contendo paralisação. |
+| Obra paralisada | Data de paralisação, ou situação operacional/execução textual contendo paralisação (3 fontes: `dt_paralisacao`, `situacao_operacional`, `status_execucao`). |
 | Sem atualização recente | Obra não concluída sem liberação/medição há mais de 90 dias ou sem data de atualização. |
 | Baixa execução física | Execução física 10 p.p. abaixo do previsto, previsão vencida sem conclusão, ou contrato com mais de 365 dias abaixo de 30% físico. |
 | Baixa execução financeira | Execução financeira 10 p.p. abaixo da física, ou contrato com mais de 365 dias abaixo de 30% financeiro. |
