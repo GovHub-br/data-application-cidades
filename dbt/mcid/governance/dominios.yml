@@ -217,6 +217,27 @@ produtos:
       por tokens HMAC de CPF/NIS; a camada Ouro publica somente agregados com
       supressão de células pequenas.
 
+  - name: linha_financiada
+    display_name: Linha Financiada
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - bronze_sharepoint_fgts_
+      - bronze_sharepoint_novo_mcmv_cidades_
+      - bronze_sharepoint_orcamento_resultado_fundo_social
+      - bronze_sharepoint_tpc_orcamento_final
+      - prata_linha_financiada_
+      - ouro_linha_financiada_
+    description: >
+      Produto unificado de contratação, empreendimentos, orçamento e
+      contrapartidas da Linha Financiada, incluindo os recortes Classe Média,
+      MCMV Cidades, Pró-Moradia, FGTS e Fundo Social. Mantém as lacunas de
+      cobertura explícitas e publica saídas próprias para BI e predição.
+
 #: Certificação por camada. Gold é o que se publica e se consome; Silver
 #: sustenta a Gold mas não é destino final; Bronze não é apresentada.
 #: A certificação segue a camada, não o modelo, para não virar avaliação
@@ -241,6 +262,7 @@ etiquetas_automaticas:
     entidades_fds: dbtTags.entidades_fds
     empreendimento_rural: dbtTags.empreendimento_rural
     reforma_casa_brasil: dbtTags.reforma_casa_brasil
+    linha_financiada: dbtTags.linha_financiada
   por_camada:
     bronze: dbtTags.bronze
     silver: dbtTags.silver

@@ -5,7 +5,7 @@ Um DAG, DOIS task groups — porque o projeto tem dois dialetos de SQL:
 - far_dbt / fds_dbt / rural_dbt / conjuntura_dbt / metadata e as seeds são SQL de
   Postgres. Usam as UDFs `normalize_apf` / `parse_date_br` / `f_corrigir_mojibake`,
   criadas pelo `create_udfs()` com CREATE FUNCTION no on-run-start.
-- mcmv_historico_dbt e reforma_casa_brasil_dbt são SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
+- mcmv_historico_dbt, reforma_casa_brasil_dbt e linha_financiada_dbt são SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
   `union_by_name = true`, `describe select * from read_parquet(...)`. O parser do
   Postgres rejeita tudo isso — não é um bug do modelo, é outro motor.
 
@@ -56,8 +56,10 @@ PROFILES_YML = f"{PROJECT_DIR}/profiles.yml"
 SELETOR_DUCKDB = [
     "path:models/mcmv_historico_dbt",
     "path:models/reforma_casa_brasil_dbt",
+    "path:models/linha_financiada_dbt",
     "path:tests/mcmv_historico",
     "path:tests/reforma_casa_brasil",
+    "path:tests/linha_financiada",
 ]
 
 # O DuckDB nao aceita duas conexoes de ESCRITA no mesmo arquivo. O Cosmos roda uma
