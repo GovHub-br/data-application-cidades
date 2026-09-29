@@ -1078,6 +1078,143 @@ models:
         data_tests:
           - not_null
 
+  - name: bronze_sftp_pro_moradia_desembolsos
+    description: >
+      Bronze — série histórica semanal de desembolsos do FGTS por contrato
+      Pró-Moradia, família `tab_desembolsos_fgts` de
+      `staging/sftp/caixa.geavo/GEAVO/MC<aaaammdd>__MCidades_AO_2__tab_desembolsos_fgts.parquet`,
+      cópia fiel. LEDGER CUMULATIVO: cada snapshot semanal reexporta o
+      histórico completo até aquela data (o mais antigo dos 38 snapshots já
+      traz `dte_ano` de 1997 a 2025) — não é um delta. Sem filtro nem dedup;
+      a prata (prata_pro_moradia_historico_desembolso_mensal) restringe ao
+      universo Pró-Moradia e deduplica por competência.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, pro-moradia, sftp, fgts]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "dte_ano", "dte_mes_ref", "source_file"]
+    columns:
+      - name: cod_contrato
+        description: Código do contrato no Canal FGTS (chave de negócio, cru).
+        data_tests:
+          - not_null
+      - name: dte_ano
+        description: Ano da competência do desembolso (texto, cru).
+      - name: dte_mes_ref
+        description: Mês da competência do desembolso (texto, cru).
+      - name: vlr_liberado
+        description: Valor liberado na competência (texto, formato BR — tipagem na prata).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Semana do snapshot (derivada do prefixo `MC<aaaammdd>__` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_sftp_pro_moradia_execucoes_obra
+    description: >
+      Bronze — série histórica semanal de execução física de obra por
+      contrato Pró-Moradia, família `tab_execucoes_obras` de
+      `staging/sftp/caixa.geavo/GEAVO/MC<aaaammdd>__MCidades_AO_2__tab_execucoes_obras.parquet`,
+      cópia fiel. Mesmo padrão de ledger cumulativo de
+      bronze_sftp_pro_moradia_desembolsos — grão contrato × competência de
+      avaliação × snapshot semanal, sem filtro nem dedup; a prata
+      (prata_pro_moradia_historico_execucao_obra) restringe ao universo
+      Pró-Moradia e deduplica por competência.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, pro-moradia, sftp, fgts]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "dte_ano_mes_avaliacao", "source_file"]
+    columns:
+      - name: cod_contrato
+        description: Código do contrato no Canal FGTS (chave de negócio, cru).
+        data_tests:
+          - not_null
+      - name: dte_ano_mes_avaliacao
+        description: Competência de avaliação da execução de obra (texto, cru).
+      - name: prc_prev_acum_mes
+        description: Percentual previsto acumulado até o mês (texto — tipagem na prata).
+      - name: prc_real_acum_mes
+        description: Percentual realizado acumulado até o mês (texto — tipagem na prata).
+      - name: cod_situacao_obra
+        description: >
+          Código da situação da obra — sem tabela de domínio trazida nesta
+          change (open question do design.md, decisão adiada).
+      - name: cod_execucao_obra
+        description: Código da execução da obra (cru).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Semana do snapshot (derivada do prefixo `MC<aaaammdd>__` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
+  - name: bronze_sftp_pro_moradia_paralisacoes
+    description: >
+      Bronze — série histórica semanal de operações paralisadas do setor
+      público, família `operacoes_paralisadas_fgts_setorpublico` de
+      `staging/sftp/caixa.geavo/GEAVO/MC<aaaammdd>__MCidades_AO_2__operacoes_paralisadas_fgts_setorpublico.parquet`,
+      cópia fiel. Diferente das outras 2 famílias GEAVO, é um RETRATO do
+      momento (sem coluna de competência) — só as operações paralisadas
+      ATIVAS naquele snapshot (124 linhas no snapshot mais recente). Sem
+      filtro nem dedup; a prata (prata_pro_moradia_historico_paralisacao)
+      restringe ao universo Pró-Moradia e preserva uma linha por (contrato,
+      semana de observação) — NÃO deduplica para o estado mais recente.
+    meta:
+      tags: [bronze, mcmv, dados-historicos, pro-moradia, sftp, fgts]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "source_file"]
+    columns:
+      - name: cod_contrato
+        description: Código do contrato no Canal FGTS (chave de negócio, cru).
+        data_tests:
+          - not_null
+      - name: dias_sem_evolucao
+        description: Dias sem evolução da obra até a data-base do snapshot (texto, cru).
+      - name: faixa_paralisacao
+        description: Faixa de tempo de paralisação (texto livre da fonte, cru).
+      - name: ultimo_motivo_paralisacao
+        description: Último motivo de paralisação registrado (texto livre da fonte, cru).
+      - name: situacao_atual
+        description: Situação atual da operação (texto, cru).
+      - name: data_base
+        description: Data-base do retrato (texto, cru — distinta de `dt_referencia`, que é do nome do arquivo).
+      - name: source_file
+        description: Caminho do objeto parquet de origem no MinIO staging.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Semana do snapshot (derivada do prefixo `MC<aaaammdd>__` do nome do arquivo).
+        data_tests:
+          - not_null
+      - name: dt_ingest
+        description: Timestamp da materialização desta camada.
+      - name: hash_linha
+        description: Surrogate de linha (source_file + ordinal).
+        data_tests:
+          - not_null
+
   - name: bronze_shpt_fnhis_propostas_apresentadas
     description: >
       Bronze — propostas FNHIS/SUB50 apresentadas,

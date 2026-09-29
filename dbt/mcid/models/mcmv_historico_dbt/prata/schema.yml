@@ -1116,6 +1116,143 @@ models:
           1995-2009 e 2023+ — hiato 2009-2023 é limitação de fonte, não bug
           (ver descrição do model).
 
+  - name: prata_pro_moradia_historico_desembolso_mensal
+    description: >
+      Prata — desembolso mensal do FGTS por contrato Pró-Moradia, LEDGER
+      CUMULATIVO deduplicado por competência a partir de
+      bronze_sftp_pro_moradia_desembolsos (38 snapshots semanais GEAVO).
+      `inner join` com prata_pro_moradia_historico_contrato restringe ao
+      universo Pró-Moradia. Diferente de prata_pro_moradia_historico_paralisacao
+      (retrato semanal, sem dedup — cada semana de observação é uma linha),
+      esta prata mantém só o valor mais recentemente conhecido de cada
+      competência: `vlr_liberado` é somado dentro de cada snapshot antes do
+      dedup entre snapshots (achado de implementação — a fonte tem múltiplas
+      transações na mesma competência mesmo dentro de um único snapshot, ver
+      design.md D2 amendment). Grão: contrato × competência (ano/mês).
+    meta:
+      tags: [prata, mcmv, dados-historicos, pro-moradia, fgts]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "dte_ano", "dte_mes_ref"]
+    columns:
+      - name: frente_mcmv
+        description: Constante `Pró-Moradia`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Pró-Moradia"]
+      - name: cod_contrato
+        description: Código do contrato no Canal FGTS — chave de negócio.
+        data_tests:
+          - not_null
+      - name: dte_ano
+        description: Ano da competência do desembolso.
+        data_tests:
+          - not_null
+      - name: dte_mes_ref
+        description: Mês da competência do desembolso.
+        data_tests:
+          - not_null
+      - name: valor_liberado
+        description: >
+          Valor liberado na competência (numeric(15,2)) — soma de todas as
+          transações da competência dentro do snapshot mais recente que a
+          contém.
+      - name: dt_referencia
+        description: Semana do snapshot cuja revisão da competência prevaleceu no dedup.
+        data_tests:
+          - not_null
+
+  - name: prata_pro_moradia_historico_execucao_obra
+    description: >
+      Prata — execução física de obra por contrato Pró-Moradia, LEDGER
+      CUMULATIVO deduplicado por competência de avaliação a partir de
+      bronze_sftp_pro_moradia_execucoes_obra (38 snapshots semanais GEAVO).
+      Mesmo tratamento de prata_pro_moradia_historico_desembolso_mensal
+      (dedup por competência, mantendo o `dt_referencia` mais recente) —
+      diferente do retrato semanal sem dedup de
+      prata_pro_moradia_historico_paralisacao. `prc_prev_acum_mes`/
+      `prc_real_acum_mes` expostos como vêm da fonte, sem normalizar. Grão:
+      contrato × competência de avaliação.
+    meta:
+      tags: [prata, mcmv, dados-historicos, pro-moradia, fgts]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "dte_ano_mes_avaliacao"]
+    columns:
+      - name: frente_mcmv
+        description: Constante `Pró-Moradia`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Pró-Moradia"]
+      - name: cod_contrato
+        description: Código do contrato no Canal FGTS — chave de negócio.
+        data_tests:
+          - not_null
+      - name: dte_ano_mes_avaliacao
+        description: Competência de avaliação da execução de obra.
+        data_tests:
+          - not_null
+      - name: percentual_previsto_acumulado_mes
+        description: Percentual previsto acumulado até o mês, como vem da fonte.
+      - name: percentual_realizado_acumulado_mes
+        description: Percentual realizado acumulado até o mês, como vem da fonte.
+      - name: dt_referencia
+        description: Semana do snapshot cuja revisão da competência prevaleceu no dedup.
+        data_tests:
+          - not_null
+
+  - name: prata_pro_moradia_historico_paralisacao
+    description: >
+      Prata — paralisação de contratos Pró-Moradia ao longo do tempo, RETRATO
+      SEMANAL sem dedup a partir de bronze_sftp_pro_moradia_paralisacoes (38
+      snapshots GEAVO). Diferente das 2 pratas de ledger cumulativo acima
+      (desembolso/execução, que deduplicam para o valor mais recente por
+      competência), esta prata preserva uma linha por (cod_contrato,
+      dt_referencia) — cada semana em que o contrato apareceu na lista de
+      paralisados é uma observação distinta; a ausência numa semana seguinte
+      significa que o contrato não estava paralisado, não que o dado falta.
+      Grão: contrato × semana de observação. Um `row_number()` colapsa
+      duplicatas EXATAS (todas as colunas idênticas) que a fonte ocasionalmente
+      traz num único snapshot — achado do build completo (2026-06-19, 18
+      contratos com 2 linhas idênticas cada) — sem afetar a semântica de "sem
+      dedup por competência" acima, já que não há 2 observações diferentes
+      sendo colapsadas em 1, só a mesma linha repetida na origem.
+    meta:
+      tags: [prata, mcmv, dados-historicos, pro-moradia, fgts]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["cod_contrato", "dt_referencia"]
+    columns:
+      - name: frente_mcmv
+        description: Constante `Pró-Moradia`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Pró-Moradia"]
+      - name: cod_contrato
+        description: Código do contrato no Canal FGTS — chave de negócio.
+        data_tests:
+          - not_null
+      - name: faixa_paralisacao
+        description: Faixa de tempo de paralisação, como vem da fonte (texto livre).
+      - name: ultimo_motivo_paralisacao
+        description: Último motivo de paralisação registrado, como vem da fonte (texto livre).
+      - name: dt_referencia
+        description: >
+          Semana do snapshot em que o contrato apareceu na lista de
+          paralisados — dimensão temporal da série (a fonte não tem coluna
+          de competência própria).
+        data_tests:
+          - not_null
+
   - name: prata_fnhis_historico_proposta
     description: >
       Prata — propostas FNHIS/SUB50, união de bronze_shpt_fnhis_propostas_apresentadas

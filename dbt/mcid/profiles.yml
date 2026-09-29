@@ -59,6 +59,34 @@ mcid:
         s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
         s3_url_style: path
         s3_use_ssl: false
+        # Retry de HTTP contra o MinIO (achado da change
+        # enriquecer-pro-moradia-execucao-desembolso-historico): as bronzes
+        # GEAVO (38 snapshots cada) falhavam de forma intermitente com
+        # "Transferred a partial file"/"Timeout was reached"/403 esporádico
+        # sem retry algum configurado -- arquivo e conexao variavam a cada
+        # tentativa, sinal de instabilidade transiente de rede, nao de um
+        # arquivo especifico corrompido. Valores DELIBERADAMENTE modestos
+        # (não os 10 retries / 300s de timeout testados primeiro): aquela
+        # combinação deixou UMA conexão problemática travar o build inteiro
+        # por 4h10min antes de finalmente desistir -- pior que sem retry
+        # nenhum. Prefira poucas tentativas rápidas + reinvocar o `dbt build`
+        # do zero (idempotente) a poucas tentativas MUITO longas. Sem custo
+        # para leituras que dão certo de primeira (só entra em jogo quando
+        # uma requisição falha).
+        http_retries: "{{ env_var('DUCKDB_MCID_HTTP_RETRIES', '5') | int }}"
+        http_retry_wait_ms: "{{ env_var('DUCKDB_MCID_HTTP_RETRY_WAIT_MS', '1000') | int }}"
+        http_retry_backoff: "{{ env_var('DUCKDB_MCID_HTTP_RETRY_BACKOFF', '2') | int }}"
+        # Default do DuckDB é 30s; 60s dá alguma folga para os globs grandes
+        # deste domínio sob esta rede sem deixar UMA tentativa travar por
+        # minutos (ver comentário acima sobre o custo de valores agressivos).
+        http_timeout: "{{ env_var('DUCKDB_MCID_HTTP_TIMEOUT_SECONDS', '60') | int }}"
+        # MINIO_ENDPOINT é acessado por VPN (10.0.0.x) — suspeita de que o
+        # túnel derruba conexões ociosas sem avisar, deixando uma conexão
+        # keep-alive "morta" no pool que só falha ao ser reutilizada bem
+        # depois. Desligar keep-alive força uma conexão nova por requisição —
+        # mais caro por requisição, mas evita reusar socket morto num glob de
+        # dezenas de arquivos.
+        http_keep_alive: "{{ env_var('DUCKDB_MCID_HTTP_KEEP_ALIVE', 'false') }}"
 
     # Modo C (direto) — le a staging MinIO e materializa NO POSTGRES, com o
     # motor DuckDB rodando neste processo (nunca via pg_duckdb dentro do
@@ -105,3 +133,19 @@ mcid:
         s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
         s3_url_style: path
         s3_use_ssl: false
+        # Ver comentário no target staging_duckdb (mesmo achado/mesma razão).
+        http_retries: "{{ env_var('DUCKDB_MCID_HTTP_RETRIES', '5') | int }}"
+        http_retry_wait_ms: "{{ env_var('DUCKDB_MCID_HTTP_RETRY_WAIT_MS', '1000') | int }}"
+        http_retry_backoff: "{{ env_var('DUCKDB_MCID_HTTP_RETRY_BACKOFF', '2') | int }}"
+        # Default do DuckDB é 30s -- curto demais para os globs grandes deste
+        # domínio sob esta rede (achado da mesma change: só subir os retries
+        # não bastou, uma requisição de arquivo maior ainda estourava os 30s
+        # antes de completar, repetidas vezes, até esgotar as tentativas).
+        http_timeout: "{{ env_var('DUCKDB_MCID_HTTP_TIMEOUT_SECONDS', '60') | int }}"
+        # MINIO_ENDPOINT é acessado por VPN (10.0.0.x) — suspeita de que o
+        # túnel derruba conexões ociosas sem avisar, deixando uma conexão
+        # keep-alive "morta" no pool que só falha ao ser reutilizada bem
+        # depois. Desligar keep-alive força uma conexão nova por requisição —
+        # mais caro por requisição, mas evita reusar socket morto num glob de
+        # dezenas de arquivos.
+        http_keep_alive: "{{ env_var('DUCKDB_MCID_HTTP_KEEP_ALIVE', 'false') }}"

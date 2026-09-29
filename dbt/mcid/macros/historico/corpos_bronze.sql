@@ -176,6 +176,42 @@ from fonte
 {% endmacro %}
 
 
+{#- Frentes GEAVO de Pro-Moradia (Canal FGTS via CAIXA/GEAVO), change
+    enriquecer-pro-moradia-execucao-desembolso-historico: 1 tabela = 1 glob.
+    Nome do arquivo tem a data do snapshot no PREFIXO (`MC<aaaammdd>__...`),
+    diferente das demais familias deste arquivo (D1 do design.md) -- por isso
+    corpo proprio, nao reaproveita bronze_frente_gefus_semanal (cujas
+    convencoes, como a coluna `dt_referencia` propria da fonte renomeada para
+    `dt_referencia_origem_txt`, nao se sabe se valem aqui sem confirmar).
+    As 3 fontes ja trazem `_source_file`/`_ingested_at`/`_source_hash`
+    proprios da ingestao upstream (nomes com underscore -- sem colisao com a
+    auditoria do dominio) e nao tem coluna `dt_referencia` propria, entao
+    nenhuma projecao explicita e necessaria: `select *` basta. -#}
+{% macro bronze_geavo_semanal(nome_familia) %}
+{%- set f = familia(familias_geavo_pro_moradia(), nome_familia) -%}
+with
+
+    fonte as (
+        select
+            *,
+            filename as source_file,
+            strptime(regexp_extract(filename, 'MC(\d{8})__', 1), '%Y%m%d')::date
+            as dt_referencia
+        from {{ read_minio_staging_parquet_series(f.glob) }}
+    )
+
+select
+    *,
+    current_timestamp as dt_ingest,
+    md5(
+        concat_ws(
+            '|', source_file, cast(row_number() over (partition by source_file) as varchar)
+        )
+    ) as hash_linha
+from fonte
+{% endmacro %}
+
+
 {#- Fonte fiel FLAT do sharepoint (change frentes-restantes-mcmv-historico):
     arquivo unico consolidado, sem snapshot datado no nome (novo_mcmv_cidades_
     emendas, reforma_casa_brasil_contratacao, contratos/empreendimentos/

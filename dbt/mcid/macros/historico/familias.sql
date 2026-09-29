@@ -184,6 +184,36 @@
     ]) }}
 {% endmacro %}
 
+{#- Frentes GEAVO de Pró-Moradia (Canal FGTS via CAIXA/GEAVO), 3 familias.
+    Pasta `sftp/caixa.geavo/GEAVO/` (staging), pacote semanal
+    `MC<aaaammdd>__MCidades_AO_<n>__<tabela>.parquet` -- a data do snapshot
+    fica no PREFIXO do nome do arquivo, diferente das demais familias deste
+    mapa (`_YYYY_MM_DD`/`_YYYYMMDD` sufixo) -- corpo proprio
+    (bronze_geavo_semanal em corpos_bronze.sql), D1 da change
+    enriquecer-pro-moradia-execucao-desembolso-historico. -#}
+{% macro familias_geavo_pro_moradia() %}
+    {{ return([
+        {
+            'nome': 'tab_desembolsos_fgts',
+            'modelo': 'bronze_sftp_pro_moradia_desembolsos',
+            'glob': 'sftp/caixa.geavo/GEAVO/MC*__MCidades_AO_2__tab_desembolsos_fgts.parquet',
+            'frente': 'Pró-Moradia',
+        },
+        {
+            'nome': 'tab_execucoes_obras',
+            'modelo': 'bronze_sftp_pro_moradia_execucoes_obra',
+            'glob': 'sftp/caixa.geavo/GEAVO/MC*__MCidades_AO_2__tab_execucoes_obras.parquet',
+            'frente': 'Pró-Moradia',
+        },
+        {
+            'nome': 'operacoes_paralisadas_fgts_setorpublico',
+            'modelo': 'bronze_sftp_pro_moradia_paralisacoes',
+            'glob': 'sftp/caixa.geavo/GEAVO/MC*__MCidades_AO_2__operacoes_paralisadas_fgts_setorpublico.parquet',
+            'frente': 'Pró-Moradia',
+        },
+    ]) }}
+{% endmacro %}
+
 {#- Busca uma familia pelo nome dentro de um dos mapas acima. -#}
 {% macro familia(mapa, nome) %}
     {%- for f in mapa -%}
