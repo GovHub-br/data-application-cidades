@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: bronze_sharepoint_novo_mcmv_cidades_emendas
+    description: Espelho da relação de contratos e aportes do MCMV Cidades.
+    columns:
+      - name: numero_do_contrato
+        data_tests: [not_null]
+
+  - name: bronze_sharepoint_fgts_canal_tab_ao_1_contratos_fgts
+    description: Espelho dos contratos do canal FGTS.
+    columns:
+      - name: cod_contrato
+        data_tests: [not_null]
+      - name: cod_linha
+        data_tests: [not_null]
+
+  - name: bronze_sharepoint_fgts_canal_tdom_ao_1_linha
+    description: Domínio oficial das linhas FGTS, incluindo Pró-Moradia no código 26.
+    columns:
+      - name: codigo
+        data_tests: [not_null, unique]
+
+  - name: bronze_sharepoint_fgts_canal_tab_ao_1_tab_empreendimentos
+    description: Cadastro dos empreendimentos do canal FGTS.
+    columns:
+      - name: cod_empreendimento
+        data_tests: [not_null]
+
+  - name: bronze_sharepoint_fgts_canal_tab_ao_1_tab_empreendimentos_posicoes
+    description: Posições físicas e datas de execução dos empreendimentos FGTS.
+
+  - name: bronze_sharepoint_tpc_orcamento_final
+    description: Série anual de orçamento FGTS entre 2021 e 2024.
+
+  - name: bronze_sharepoint_orcamento_resultado_fundo_social
+    description: Posição de orçamento e execução da ação 00XF do Fundo Social.
