@@ -187,8 +187,10 @@ models:
       `dt_contratacao` confiável e sem histórico semanal acumulado para
       compor série mensal real. Contratos sem `dt_contratacao` (nenhum
       encontrado nas 4 fontes nesta change — 100% de preenchimento
-      verificado) não entrariam na série. Sem gold/ouro para estas frentes
-      nesta change — integração a dashboard fica para change futura.
+      verificado) não entrariam na série. Consumida pelos ouros da change
+      criar-ouro-reloginho-frentes-novas (`ouro_reloginho_indicadores_frentes_novas`
+      e derivados) — grão, colunas e testes desta prata permanecem
+      inalterados por essa change.
     meta:
       tags: [prata, mcmv, reloginho, dados-historicos, frentes-novas]
     data_tests:
@@ -221,3 +223,85 @@ models:
           entra pelo valor mais recente, não pelo valor original (mesma
           semântica de "estado mais recente" usada nos snapshots de
           `mcmv_historico_dbt`).
+
+  - name: prata_reloginho_frentes_novas_resumo_mes_uf
+    description: >
+      Prata do reloginho — mesmo resumo mensal cross-frente de
+      `prata_reloginho_frentes_novas_resumo_mes` (Classe Média, Reforma Casa
+      Brasil, MCMV Cidades, Pró-Moradia; mesma dedup por chave de negócio),
+      com `uf` adicionada ao grão (change criar-ouro-reloginho-frentes-novas,
+      design.md D1). Grão: uma linha por (frente_mcmv, mes_referencia, uf).
+      Alimenta `ouro_reloginho_indicadores_frentes_novas_regiao`.
+    meta:
+      tags: [prata, mcmv, reloginho, dados-historicos, frentes-novas]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "mes_referencia", "uf"]
+    columns:
+      - name: frente_mcmv
+        description: Frente do MCMV consolidada nesta linha.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values:
+                ["Classe Média", "Reforma Casa Brasil", "MCMV Cidades", "Pró-Moradia"]
+      - name: mes_referencia
+        description: >
+          Primeiro dia do mês de `dt_contratacao` (data do evento) dos
+          contratos agregados nesta linha.
+        data_tests:
+          - not_null
+      - name: uf
+        description: UF do imóvel/empreendimento do contrato (maiúsculas).
+      - name: n_contratos
+        description: >
+          Contagem de contratos distintos da frente no mês/UF, após dedup por
+          chave de negócio (1 linha por contrato, última observação por
+          `dt_referencia`).
+      - name: valor_contratado
+        description: >
+          Soma do `valor_contratado` da última observação de cada contrato
+          da frente no mês/UF (mesma semântica de "estado mais recente" de
+          `prata_reloginho_frentes_novas_resumo_mes`).
+
+  - name: prata_reloginho_classe_media_reforma_resumo_faixa_renda_mes
+    description: >
+      Prata do reloginho — resumo mensal por faixa de renda, restrita a
+      Classe Média e Reforma Casa Brasil: únicas 2 das 4 frentes novas com
+      `faixa_renda` no contrato de origem (change
+      criar-ouro-reloginho-frentes-novas, design.md D1). Mesma dedup por
+      `nu_contrato` das demais pratas cross-frente. Grão: uma linha por
+      (frente_mcmv, mes_referencia, faixa_renda). MCMV Cidades e Pró-Moradia
+      NÃO aparecem aqui (ausência da coluna na fonte, não filtro de dados).
+    meta:
+      tags: [prata, mcmv, reloginho, dados-historicos, frentes-novas]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "mes_referencia", "faixa_renda"]
+    columns:
+      - name: frente_mcmv
+        description: Frente do MCMV consolidada nesta linha.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["Classe Média", "Reforma Casa Brasil"]
+      - name: mes_referencia
+        description: >
+          Primeiro dia do mês de `dt_contratacao` (data do evento) dos
+          contratos agregados nesta linha.
+        data_tests:
+          - not_null
+      - name: faixa_renda
+        description: Faixa de renda familiar declarada no contrato, valor cru da fonte.
+      - name: n_contratos
+        description: >
+          Contagem de contratos distintos da frente no mês/faixa de renda,
+          após dedup por chave de negócio (1 linha por contrato, última
+          observação por `dt_referencia`).
+      - name: valor_contratado
+        description: >
+          Soma do `valor_contratado` da última observação de cada contrato
+          da frente no mês/faixa de renda (mesma semântica de "estado mais
+          recente" de `prata_reloginho_frentes_novas_resumo_mes`).

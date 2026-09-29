@@ -395,6 +395,196 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
 
+  - name: ouro_reloginho_indicadores_frentes_novas
+    description: >
+      Tabela Ouro do reloginho com a série mensal por frente para Classe
+      Média, Reforma Casa Brasil, MCMV Cidades e Pró-Moradia (change
+      criar-ouro-reloginho-frentes-novas, design.md D2). Lê
+      `prata_reloginho_frentes_novas_resumo_mes` (inalterada). Uma linha por
+      (frente_mcmv, mes_referencia).
+
+      FLUXO vs. ACUMULADO (D2): diferente de `ouro_reloginho_indicadores*`
+      (FAR/Entidades/Rural), cuja fonte SNH já é ESTOQUE por snapshot,
+      `n_contratos`/`valor_contratado` aqui são FLUXO — contratos cuja
+      `dt_contratacao` cai naquele mês. `n_contratos_acumulado`/
+      `valor_contratado_acumulado` são a soma corrida calculada neste modelo
+      (`sum(...) over (partition by frente_mcmv order by mes_referencia)`),
+      não um estoque já pronto na fonte. NÃO comparar diretamente com os
+      indicadores de estoque das frentes antigas.
+    meta:
+      tags: [ouro, mcmv, indicadores, reloginho, dados-historicos, frentes-novas]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "mes_referencia"]
+    columns:
+      - name: frente_mcmv
+        description: Frente do MCMV consolidada nesta linha.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values:
+                ["Classe Média", "Reforma Casa Brasil", "MCMV Cidades", "Pró-Moradia"]
+      - name: mes_referencia
+        description: Primeiro dia do mês de `dt_contratacao` dos contratos agregados nesta linha.
+        data_tests:
+          - not_null
+      - name: n_contratos
+        description: >
+          Contratos da frente cuja `dt_contratacao` cai neste mês (FLUXO —
+          não é acumulado; ver `n_contratos_acumulado` para a soma corrida).
+      - name: valor_contratado
+        description: >
+          Soma de `valor_contratado` dos contratos do mês (FLUXO — não é
+          acumulado; ver `valor_contratado_acumulado`).
+      - name: n_contratos_acumulado
+        description: >
+          Soma corrida de `n_contratos` por frente, ordenada por
+          mes_referencia — desempenha, para estas frentes de fluxo, o papel
+          que o estoque nativo (`uh_entregues`) desempenha para FAR/Entidades/
+          Rural.
+      - name: valor_contratado_acumulado
+        description: Soma corrida de `valor_contratado` por frente, ordenada por mes_referencia.
+      - name: n_meses_observados
+        description: Contagem corrida de meses observados por frente até a linha atual.
+
+  - name: ouro_reloginho_resumo_dashboard_frentes_novas
+    description: >
+      Tabela Ouro do reloginho para dashboard: uma linha por frente_mcmv
+      (Classe Média, Reforma Casa Brasil, MCMV Cidades, Pró-Moradia) com o
+      último mês observado de `ouro_reloginho_indicadores_frentes_novas` e o
+      ritmo médio mensal de contratação (change
+      criar-ouro-reloginho-frentes-novas, design.md D2).
+
+      ritmo_medio_mensal_* = acumulado corrido do último mês / n_meses_observados
+      — mesma fórmula de `ouro_reloginho_resumo_dashboard`, aplicada ao
+      acumulado calculado (fonte de fluxo), não a um estoque nativo. Não
+      comparar diretamente com `ritmo_medio_mensal` das frentes antigas.
+    meta:
+      tags: [ouro, mcmv, indicadores, reloginho, dashboard, dados-historicos, frentes-novas]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv"]
+    columns:
+      - name: frente_mcmv
+        description: Frente do MCMV.
+        data_tests:
+          - not_null
+          - unique
+      - name: mes_referencia_ultimo
+        description: Último mes_referencia observado para a frente.
+        data_tests:
+          - not_null
+      - name: n_contratos_acumulado
+        description: Contratos acumulados da frente até o último mês observado.
+      - name: valor_contratado_acumulado
+        description: Valor contratado acumulado da frente até o último mês observado.
+      - name: n_meses_observados
+        description: Total de meses observados na série da frente.
+      - name: ritmo_medio_mensal_contratos
+        description: n_contratos_acumulado do último mês dividido pelo número de meses observados.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+      - name: ritmo_medio_mensal_valor
+        description: valor_contratado_acumulado do último mês dividido pelo número de meses observados.
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
+
+  - name: ouro_reloginho_indicadores_frentes_novas_regiao
+    description: >
+      Tabela Ouro do reloginho — quebra nacional/região/UF da série mensal
+      cross-frente de Classe Média, Reforma Casa Brasil, MCMV Cidades e
+      Pró-Moradia (change criar-ouro-reloginho-frentes-novas, design.md D3).
+      Lê `prata_reloginho_frentes_novas_resumo_mes_uf` (dedup por chave de
+      negócio já feita na prata) e agrega via GROUPING SETS em 3 níveis,
+      mesmo padrão de `ouro_historico_serie_mensal_frentes_novas`
+      (mcmv_historico_dbt). **Não somar entre `nivel_agregacao`** — são
+      recortes sobrepostos do mesmo total. Nível 'nacional' bate exatamente
+      com `ouro_reloginho_indicadores_frentes_novas` (mesma fonte, mesma
+      dedup).
+    meta:
+      tags: [ouro, mcmv, indicadores, reloginho, dados-historicos, frentes-novas]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "mes_referencia", "nivel_agregacao", "uf"]
+    columns:
+      - name: frente_mcmv
+        description: Frente do MCMV.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values:
+                ["Classe Média", "Reforma Casa Brasil", "MCMV Cidades", "Pró-Moradia"]
+      - name: mes_referencia
+        description: Primeiro dia do mês de `dt_contratacao` dos contratos agregados nesta linha.
+        data_tests:
+          - not_null
+      - name: nivel_agregacao
+        description: >
+          Nível do GROUPING SET desta linha: 'nacional' (BR), 'regiao'
+          (macrorregião IBGE) ou 'uf'. Não somar linhas de níveis diferentes.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["nacional", "regiao", "uf"]
+      - name: uf
+        description: >
+          Chave geográfica do NÍVEL desta linha: UF real no nível 'uf', sigla
+          de macrorregião no nível 'regiao' (redundante com `regiao_sigla`,
+          necessário para a tupla ser única), 'BR' no nível 'nacional'. Usar
+          sempre junto de `nivel_agregacao`.
+        data_tests:
+          - not_null
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S), via seed
+          `dominio_regiao_uf`. `null` quando a UF de origem não casa com o
+          seed (linha não é descartada, só fica sem região).
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla). Nulo no nível 'nacional'.
+      - name: n_contratos
+        description: Soma de `n_contratos` (já deduplicados por chave de negócio na prata) do recorte.
+        data_tests:
+          - not_null
+      - name: valor_contratado
+        description: Soma de `valor_contratado` do recorte (R$ nominais).
+
+  - name: ouro_reloginho_classe_media_reforma_indicadores_faixa_renda
+    description: >
+      Tabela Ouro do reloginho — composição mensal por faixa de renda,
+      restrita a Classe Média e Reforma Casa Brasil (únicas 2 das 4 frentes
+      novas com `faixa_renda` no contrato), a partir de
+      `prata_reloginho_classe_media_reforma_resumo_faixa_renda_mes` (change
+      criar-ouro-reloginho-frentes-novas, design.md D4). Passagem
+      direta/enriquecida, SEM acumulado — dimensão de filtro para o
+      dashboard (composição por faixa), não série de ritmo. MCMV Cidades e
+      Pró-Moradia NÃO aparecem aqui (ausência da coluna na fonte).
+    meta:
+      tags: [ouro, mcmv, indicadores, reloginho, dados-historicos, frentes-novas]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["frente_mcmv", "mes_referencia", "faixa_renda"]
+    columns:
+      - name: frente_mcmv
+        description: Frente do MCMV.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["Classe Média", "Reforma Casa Brasil"]
+      - name: mes_referencia
+        description: Primeiro dia do mês de `dt_contratacao` dos contratos agregados nesta linha.
+        data_tests:
+          - not_null
+      - name: faixa_renda
+        description: Faixa de renda familiar declarada no contrato, valor cru da fonte.
+      - name: n_contratos
+        description: Contagem de contratos distintos da frente no mês/faixa de renda (fluxo do mês, sem acumulado).
+      - name: valor_contratado
+        description: Soma de `valor_contratado` da frente no mês/faixa de renda (fluxo do mês, sem acumulado).
+
   - name: ouro_reloginho_resumo_gargalo_desempenho_dashboard
     description: >
       Tabela Ouro agregada para dashboard de gargalos e desempenho do MCMV.
