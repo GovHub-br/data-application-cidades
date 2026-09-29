@@ -496,3 +496,201 @@ models:
         description: Origem da situação — 'reportada' (sempre, nesta fase; 'derivada' reservado para a série pré-2019).
       - name: fonte_serie
         description: fonte_serie predominante do mês por frente ('sftp' até 2024-11, 'snh' depois) — para anotar a descontinuidade de série.
+
+  - name: ouro_historico_serie_mensal_frentes_novas
+    description: >
+      Ouro — série mensal cross-frente de Classe Média, Reforma Casa Brasil,
+      MCMV Cidades e Pró-Moradia, agregando por mês de `dt_contratacao` com
+      quebra nacional/região/UF via GROUPING SETS (mesmo padrão de
+      `ouro_historico_serie_mensal`). Cada frente é deduplicada por chave de
+      negócio (mantendo a observação de `dt_referencia` mais recente) ANTES
+      de agrupar por mês — mesma disciplina de
+      `prata_reloginho_frentes_novas_resumo_mes` (indicadores_mcmv_dbt); sem
+      essa dedup, Classe Média infla ~24,8× e Reforma ~19,9× (o mesmo
+      contrato aparece em dezenas de snapshots semanais). FNHIS NÃO aparece
+      nesta tabela (fonte sem série real — ver
+      docs/lacuna-serie-historica-fnhis.md). MCMV Cidades entra com janela
+      temporal CURTA (6 snapshots, jan-ago/2026, na implementação desta
+      change) — característica atual da fonte, sem teste de cobertura mínima
+      de meses. `quantidade_uh` só é preenchido para Pró-Moradia (única das
+      4 frentes com UH no contrato) — `null` nas demais por ausência na
+      fonte, não erro de cálculo. Requer target staging_duckdb.
+    meta:
+      tags: [ouro, mcmv, dados-historicos, frentes-novas, serie-mensal]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: [frente_mcmv, mes_referencia, nivel_agregacao, uf]
+    columns:
+      - name: frente_mcmv
+        description: >
+          Frente / linha estratégica do MCMV (conceito canônico `frente_mcmv`,
+          glossario-mcid.md). Domínio desta tabela: {Classe Média, Reforma
+          Casa Brasil, MCMV Cidades, Pró-Moradia}.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  ["Classe Média", "Reforma Casa Brasil", "MCMV Cidades", "Pró-Moradia"]
+      - name: mes_referencia
+        description: >
+          Mês de `dt_contratacao` do contrato (evento, não snapshot). 1º dia
+          do mês. Contratos sem `dt_contratacao` não entram na série.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: nivel_agregacao
+        description: >
+          Nível do GROUPING SET desta linha: 'nacional' (BR), 'regiao'
+          (macrorregião IBGE) ou 'uf'. **Não somar linhas de níveis
+          diferentes** — são recortes sobrepostos do mesmo total.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["nacional", "regiao", "uf"]
+      - name: uf
+        description: >
+          Chave geográfica do NÍVEL desta linha: UF real no nível 'uf', sigla
+          de macrorregião IBGE no nível 'regiao' (redundante com
+          `regiao_sigla`, necessário para a tupla (frente_mcmv,
+          mes_referencia, nivel_agregacao, uf) ser única — sem isso as N
+          linhas de região do mesmo mês colidiriam), 'BR' no nível
+          'nacional'. Usar sempre junto de `nivel_agregacao` (uma sigla como
+          'SE' é tanto UF/Sergipe quanto região/Sudeste).
+        data_tests:
+          - not_null
+      - name: regiao_sigla
+        description: >
+          Macrorregião IBGE (N / NE / CO / SE / S), via seed
+          `dominio_regiao_uf`. Chave no nível 'regiao'; enriquece o nível
+          'uf'; 'BR' no nível 'nacional'. `null` quando a UF de origem não
+          casa com o seed (linha não é descartada, só fica sem região).
+      - name: regiao_nome
+        description: Nome da macrorregião IBGE (par de regiao_sigla). Nulo no nível 'nacional'.
+      - name: n_contratos
+        description: >
+          Contagem de contratos distintos (já deduplicados por chave de
+          negócio) no recorte.
+        data_tests:
+          - not_null
+      - name: valor_contratado
+        description: Soma de `valor_contratado` dos contratos do recorte (R$ nominais).
+      - name: quantidade_uh
+        description: >
+          Soma de `quantidade_uh` — só Pró-Moradia tem essa coluna no
+          contrato de origem. `null` para Classe Média / Reforma Casa Brasil
+          / MCMV Cidades (ausência na fonte, não erro de cálculo).
+        data_tests:
+          - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
+
+  - name: ouro_historico_pro_moradia_evolucao_financeira
+    description: >
+      Ouro — série mensal de desembolso acumulado por contrato Pró-Moradia
+      (change criar-ouro-serie-historica-frentes-novas, design.md D4). Grão:
+      (codigo_contrato, mes). A partir de
+      `prata_pro_moradia_historico_desembolso_mensal` (já deduplicada por
+      competência), calcula `valor_acumulado` como soma corrida de
+      `valor_liberado_mes` por contrato ordenada por mês, e
+      `percentual_acumulado_contratado` como a razão sobre
+      `valor_contratado` (de `prata_pro_moradia_historico_contrato`), com
+      `nullif` no denominador. Equivalente histórico, construído só da nossa
+      prata, ao que os colegas expõem como estado atual. Requer target
+      staging_duckdb.
+    meta:
+      tags: [ouro, mcmv, dados-historicos, pro-moradia, financeiro]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: [codigo_contrato, mes]
+    columns:
+      - name: frente_mcmv
+        description: Constante `Pró-Moradia`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Pró-Moradia"]
+      - name: codigo_contrato
+        description: Código do contrato no Canal FGTS — chave de negócio.
+        data_tests:
+          - not_null
+      - name: mes
+        description: >
+          Competência do desembolso (`dte_ano`/`dte_mes_ref` da prata,
+          convertidos para date, 1º dia do mês).
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: uf
+        description: UF do contrato, via join com prata_pro_moradia_historico_contrato.
+      - name: municipio
+        description: Município do contrato, via join com prata_pro_moradia_historico_contrato.
+      - name: nome_empreendimento
+        description: Nome do empreendimento, via join com prata_pro_moradia_historico_contrato.
+      - name: valor_contratado
+        description: Valor total contratado (denominador de percentual_acumulado_contratado).
+      - name: valor_liberado_mes
+        description: Valor liberado NAQUELE mês (não acumulado).
+      - name: valor_acumulado
+        description: >
+          Soma corrida de `valor_liberado_mes` até o mês da linha (inclusive)
+          — NUNCA o total geral do contrato repetido em todas as linhas.
+      - name: percentual_acumulado_contratado
+        description: >
+          `valor_acumulado / valor_contratado`. `null` quando
+          `valor_contratado` é nulo ou zero (sem erro de divisão por zero).
+
+  - name: ouro_historico_pro_moradia_paralisacao
+    description: >
+      Ouro — histórico semanal de paralisação por contrato Pró-Moradia
+      (change criar-ouro-serie-historica-frentes-novas, design.md D5). Grão:
+      (codigo_contrato, dt_referencia). Enriquecimento direto de
+      `prata_pro_moradia_historico_paralisacao` com contexto de contrato (uf,
+      municipio, nome_empreendimento) — sem agregar nem deduplicar por
+      competência: cada semana de observação permanece uma linha distinta.
+      Ausência de linha NÃO é marcada como "paralisação resolvida" — um
+      contrato que deixa de aparecer na prata de origem a partir de um
+      dt_referencia simplesmente não tem mais linha aqui dali em diante.
+      Diferencial explícito frente aos colegas, que só expõem o retrato mais
+      recente. Requer target staging_duckdb.
+    meta:
+      tags: [ouro, mcmv, dados-historicos, pro-moradia, paralisacao]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: [codigo_contrato, dt_referencia]
+    columns:
+      - name: frente_mcmv
+        description: Constante `Pró-Moradia`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Pró-Moradia"]
+      - name: codigo_contrato
+        description: Código do contrato no Canal FGTS — chave de negócio.
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Semana do snapshot em que o contrato foi observado paralisado.
+        data_tests:
+          - not_null
+          - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
+      - name: uf
+        description: UF do contrato, via join com prata_pro_moradia_historico_contrato.
+      - name: municipio
+        description: Município do contrato, via join com prata_pro_moradia_historico_contrato.
+      - name: nome_empreendimento
+        description: Nome do empreendimento, via join com prata_pro_moradia_historico_contrato.
+      - name: dias_sem_evolucao
+        description: Dias sem evolução reportados na fonte (valor cru).
+      - name: faixa_paralisacao
+        description: Faixa de tempo de paralisação, valor cru da fonte.
+      - name: ultimo_motivo_paralisacao
+        description: Último motivo de paralisação reportado, valor cru da fonte.
+      - name: situacao_atual
+        description: Situação atual do contrato na fonte de paralisação (valor cru).
+      - name: data_base
+        description: Data-base do relatório de paralisação, valor cru da fonte (texto).
