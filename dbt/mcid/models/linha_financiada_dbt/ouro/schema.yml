@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: ouro_linha_financiada_base_pf_fundo_social
+    description: >
+      Consolidação mensal automatizada da Base PF/FGTS e do Fundo Social,
+      preservando a fonte para evitar mistura ou dupla contagem.
+    columns:
+      - name: competencia
+        data_tests: [not_null]
+      - name: fonte
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['FGTS - Base PF', 'Fundo Social']}
+
+  - name: ouro_linha_financiada_base_agregada
+    description: >
+      Base contratual uniforme para consumo analítico e substituição da
+      consolidação manual em Excel, sem identificadores pessoais diretos.
+    columns:
+      - name: id_contrato_linha_financiada
+        data_tests: [not_null, unique]
+
+  - name: ouro_linha_financiada_resumo_mensal
+    description: Contratação mensal de FGTS e Fundo Social para BI e análise temporal.
+    columns:
+      - name: competencia_contratacao
+        data_tests: [not_null]
+      - name: quantidade_contratos
+        data_tests: [not_null]
+
+  - name: ouro_linha_financiada_relatorio_semanal
+    description: Agregação semanal de contratação, financiamento, descontos e contrapartidas conhecidas.
+
+  - name: ouro_linha_financiada_mapa_execucao
+    description: Agregação territorial para mapa com filtros de faixa, programa, modalidade e tipo de imóvel.
+
+  - name: ouro_linha_financiada_empreendimentos
+    description: Painel de empreendimentos com execução física, unidades, valores e marcadores de modalidade.
+
+  - name: ouro_linha_financiada_contrapartidas
+    description: >
+      Indicadores de valor e cobertura das contrapartidas conhecidas. A
+      ausência da base completa do agente financeiro é preservada como lacuna.
+
+  - name: ouro_linha_financiada_execucao_orcamentaria
+    description: Orçamento FGTS e execução do Fundo Social com indicador explícito de cobertura.
+
+  - name: ouro_linha_financiada_features_preditivas
+    description: >
+      Série com defasagens e médias móveis para treino e validação temporal de
+      modelos preditivos. Não apresenta previsão antes de validação do modelo.
+
+  - name: ouro_linha_financiada_cobertura_perguntas
+    description: Matriz executiva que informa quais perguntas são respondidas, parciais ou possuem lacuna.
+    data_tests:
+      - unique_combinacao:
+          arguments: {colunas: [pergunta_produto]}
