@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_bacen_imobiliario import ClienteBacenImobiliario
@@ -13,7 +13,7 @@ import pandas as pd
 
 @dag(
     dag_id="bacen_credito_pib_ingest_dag",
-    schedule_interval=get_dynamic_schedule(
+    schedule=get_dynamic_schedule(
         "bacen_credito_pib_ingest_dag", default="@monthly"
     ),
     start_date=datetime(2025, 1, 1),

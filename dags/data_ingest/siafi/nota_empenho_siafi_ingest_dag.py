@@ -1,8 +1,8 @@
 import logging
 import yaml
-from airflow.decorators import dag, task
-from airflow.models import Variable
-from airflow.models.param import Param
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
+from airflow.sdk import Param
 from datetime import datetime, timedelta
 from typing import Dict, Any
 from schedule_loader import get_dynamic_schedule
@@ -12,7 +12,7 @@ from postgres_helpers import get_postgres_conn
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("nota_empenho_siafi_ingest_dag"),
+    schedule=get_dynamic_schedule("nota_empenho_siafi_ingest_dag"),
     start_date=datetime(2023, 3, 17),
     catchup=False,
     default_args={
@@ -41,12 +41,12 @@ def nota_empenho_siafi_ingest_dag() -> None:
     def fetch_and_store_notas_empenho(**context: Dict[str, Any]) -> None:
         logging.info("Iniciando fetch_and_store_notas_empenho")
 
-        orgao_alvo = Variable.get("airflow_orgao", default_var=None)
+        orgao_alvo = Variable.get("airflow_orgao", default=None)
         if not orgao_alvo:
             logging.error("Variável airflow_orgao não definida!")
             raise ValueError("airflow_orgao não definida")
 
-        orgaos_config_str = Variable.get("airflow_variables", default_var="{}")
+        orgaos_config_str = Variable.get("airflow_variables", default="{}")
         orgaos_config = yaml.safe_load(orgaos_config_str)
 
         ugs_emitentes = orgaos_config.get(orgao_alvo, {}).get("codigos_ug", [])

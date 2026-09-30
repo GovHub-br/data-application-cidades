@@ -2,9 +2,9 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from airflow.decorators import dag, task
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.sdk import dag, task
+from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 from cosmos import (
     DbtTaskGroup,
     ExecutionConfig,
@@ -57,7 +57,7 @@ INGESTORES_MANUAIS = [
 
 @dag(
     dag_id="conjuntura_dag",
-    schedule_interval=get_dynamic_schedule("conjuntura_dag", default="0 8 * * 1"),
+    schedule=get_dynamic_schedule("conjuntura_dag", default="0 8 * * 1"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={

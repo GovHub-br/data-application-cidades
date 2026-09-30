@@ -5,42 +5,41 @@
 # tests/test_dependencias_sincronizadas.py reprova o CI se divergirem. Um bump
 # entra nos dois arquivos no mesmo PR.
 #
-# Os pacotes que ja vem na imagem apache/airflow:2.8.1-python3.11 estao pinados
+# Os pacotes que ja vem na imagem apache/airflow:3.3.2-python3.11 estao pinados
 # na versao que a imagem traz, so para o pyproject ter contra o que comparar:
-# o pip nao reinstala nada deles.
+# o pip nao reinstala nada deles. A imagem segue as constraints oficiais do
+# Airflow (constraints-3.3.2/constraints-3.11.txt); os pacotes instalados por
+# cima que tambem aparecem la usam a versao de la.
 
 # Vem da imagem base.
-apache-airflow==2.8.1
-apache-airflow-providers-postgres==5.10.0
-flask==2.2.5
-flask-session==0.5.0
-numpy==1.24.4
-pandas==2.1.4
-pyarrow==14.0.2
-sqlalchemy==1.4.51
+apache-airflow==3.3.2
+apache-airflow-providers-postgres==7.0.2
+# PythonOperator, TriggerDagRunOperator, EmptyOperator e @task.virtualenv
+# sairam do core no Airflow 3 e moram neste provider.
+apache-airflow-providers-standard==1.19.0
+numpy==2.4.6
+pandas==3.0.5
+pyarrow==25.0.1
+sqlalchemy==2.0.52
+python-dotenv==1.2.3
+requests==2.34.2
+boto3==1.43.75
 
 # Instalados por cima da base.
-apache-airflow-providers-microsoft-mssql==3.7.2
-astronomer-cosmos==1.9.0
-dbt-core==1.7.13
-dbt-postgres==1.7.13
-dbt-duckdb==1.7.5
+apache-airflow-providers-microsoft-mssql==4.7.1
+pymssql==2.4.1
+openpyxl==3.1.5
+zeep==4.3.3
+# Fora das constraints do Airflow.
+astronomer-cosmos==1.15.1
+# dbt 1.7 nao convive com a base do Airflow 3: fixa sqlparse<0.5 e urllib3 1.x,
+# e a base traz sqlparse 0.6 (common-sql) e urllib3 2.
+dbt-core==1.12.5
+dbt-postgres==1.11.0
+dbt-duckdb==1.11.0
 duckdb==1.5.6
 imap-tools==1.15.0
-zeep==4.3.3
-openpyxl==3.1.5
-python-dotenv==1.2.2
-# paramiko 4 removeu paramiko.DSSKey, que o provider ssh/sftp da imagem base
-# referencia na importacao -- com ele, airflow.providers.ssh nem importa.
-paramiko>=3.4.0,<4
-# boto3 e aiobotocore andam juntos: cada aiobotocore aceita uma faixa estreita
-# de botocore. O da imagem base (2.9.0) so aceita botocore<1.33.14, e o boto3
-# novo que o cliente_minio usa deixava o `pip check` quebrado.
-boto3==1.43.75
-aiobotocore==3.9.1
-# A base traz requests 2.31.0, com CVEs corrigidos na serie 2.32 (verify=False
-# preso a sessao, vazamento de credencial do .netrc). Do 2.32 em diante, o
-# docker 7.0.0 da base quebra ("Not supported URL scheme http+docker") -- o
-# provider docker so volta a funcionar com o docker 7.1.0, que corrige isso.
-requests==2.33.0
-docker==7.1.0
+# Vem com o metricflow do dbt-core 1.12; pinado na versao das constraints.
+sqlglot==30.18.0
+# pathspec e more-itertools ficam abaixo das constraints (1.0.4 e 10.8.0):
+# dbt-common/dbt-core pedem pathspec<1.1 e o metricflow, more-itertools<11.

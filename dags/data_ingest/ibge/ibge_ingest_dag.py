@@ -1,8 +1,8 @@
 import io
 import logging
 from typing import Any
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 from datetime import datetime, timedelta
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
@@ -12,11 +12,11 @@ from cliente_minio import upload_raw_json, download_raw_json, upload_staging_par
 import pandas as pd
 import psycopg2
 
-CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default_var=[])
+CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default=[])
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("ibge_ingest_dag"),
+    schedule=get_dynamic_schedule("ibge_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={

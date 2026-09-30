@@ -7,8 +7,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict
 
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 
 from postgres_helpers import get_postgres_conn
 from cliente_postgres import ClientPostgresDB
@@ -27,7 +27,7 @@ GITHUB_BRANCH = "main"
 
 @dag(
     dag_id="dashboard_servidores_json",
-    schedule_interval="0 6 * * *",  # Executa diariamente às 6h
+    schedule="0 6 * * *",  # Executa diariamente às 6h
     start_date=datetime(2025, 11, 16),
     catchup=False,
     default_args={

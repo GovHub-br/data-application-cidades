@@ -1,9 +1,9 @@
 from typing import Dict, Any, List
 import pandas as pd
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.models import Variable
-from airflow.models.param import Param
+from airflow.sdk import DAG
+from airflow.providers.standard.operators.python import PythonOperator
+from airflow.sdk import Variable
+from airflow.sdk import Param
 from datetime import datetime, timedelta
 import logging
 import json
@@ -70,7 +70,7 @@ with DAG(
     dag_id="email_tesouro_teds_notas_empenhadas_ingest_dag",
     default_args=default_args,
     description="Processa anexos dos empenhos vindo do email, formata e insere no db",
-    schedule_interval=get_dynamic_schedule("empenhos_tesouro_parlamentares_ingest_dag"),
+    schedule=get_dynamic_schedule("empenhos_tesouro_parlamentares_ingest_dag"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     params={

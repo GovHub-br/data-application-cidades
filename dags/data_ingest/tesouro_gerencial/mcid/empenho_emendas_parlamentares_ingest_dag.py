@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import pandas as pd
-from airflow import DAG
+from airflow.sdk import DAG
 from airflow.exceptions import AirflowSkipException
-from airflow.models import Variable
-from airflow.operators.python import PythonOperator
+from airflow.sdk import Variable
+from airflow.providers.standard.operators.python import PythonOperator
 from cliente_email import fetch_and_process_email
 from cliente_postgres import ClientPostgresDB
 from postgres_helpers import get_postgres_conn
@@ -61,7 +61,7 @@ with DAG(
     dag_id="empenho_emendas_parlamentares_ingest_dag",
     default_args=default_args,
     description="Processa e ingere dados de empenho de emendas parlamentares do MCID",
-    schedule_interval=get_dynamic_schedule("empenho_emendas_parlamentares_ingest_dag"),
+    schedule=get_dynamic_schedule("empenho_emendas_parlamentares_ingest_dag"),
     start_date=datetime(2026, 3, 25),
     catchup=False,
     tags=["email", "empenhos", "tesouro", "emendas"],
@@ -143,13 +143,11 @@ with DAG(
     process_emails_task = PythonOperator(
         task_id="process_emails",
         python_callable=process_email_data,
-        provide_context=True,
     )
 
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
-        provide_context=True,
     )
 
     process_emails_task >> insert_to_db_task

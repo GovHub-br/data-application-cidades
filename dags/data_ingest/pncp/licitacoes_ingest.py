@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime, timedelta
 
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 import yaml
 
 from postgres_helpers import get_postgres_conn
@@ -11,7 +11,7 @@ from cliente_pncp import ClientePNCP
 
 
 @dag(
-    schedule_interval="@daily",
+    schedule="@daily",
     start_date=datetime(2024, 12, 4),
     catchup=False,
     default_args={
@@ -30,12 +30,12 @@ def pncp_publicacoes_dag() -> None:
     @task
     def fetch_and_store_pncp_publicacoes() -> None:
 
-        orgao_alvo = Variable.get("airflow_orgao", default_var=None)
+        orgao_alvo = Variable.get("airflow_orgao", default=None)
         if not orgao_alvo:
             logging.error("Variável airflow_orgao não definida!")
             raise ValueError("airflow_orgao não definida")
 
-        orgaos_config_str = Variable.get("airflow_variables", default_var="{}")
+        orgaos_config_str = Variable.get("airflow_variables", default="{}")
         orgaos_config = yaml.safe_load(orgaos_config_str)
 
         orgao_cfg = orgaos_config.get(orgao_alvo, {})

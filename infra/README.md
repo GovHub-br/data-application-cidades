@@ -28,6 +28,16 @@ O `name: data-application-cidades` no compose fixa o nome do projeto. Sem ele o
 Compose usaria o nome do diretorio (`infra`) e criaria containers e volumes
 separados dos que ja existem.
 
+## Airflow 3
+
+O login da UI e da API e `airflow` / `airflow` (SimpleAuthManager, senha em
+`infra/airflow/simple_auth_manager_passwords.json`). O healthcheck fica em
+`/api/v2/monitor/health`.
+
+Quem ja tinha o ambiente em Airflow 2.8.1: o primeiro `make up` migra o banco
+de metadados do volume `postgres-db` para o schema do 3.x, e essa migracao nao
+volta. Para ter um ambiente limpo, `make down` e apague o volume antes.
+
 ## Layout
 
 ```text

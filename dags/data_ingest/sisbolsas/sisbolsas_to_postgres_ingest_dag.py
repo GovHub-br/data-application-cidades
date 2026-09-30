@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, TypedDict, cast
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 from cliente_postgres import ClientPostgresDB
 from cliente_sqlserver import ClientSQLServerDB
 from postgres_helpers import get_postgres_conn
@@ -25,14 +25,14 @@ def _load_tables_from_variable() -> List[SQLServerTableConfig]:
         List[SQLServerTableConfig],
         Variable.get(
             TABLES_TO_SYNC_VARIABLE,
-            default_var=[],
+            default=[],
             deserialize_json=True,
         ),
     )
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("sisbolsas_to_postgres_ingest_dag"),
+    schedule=get_dynamic_schedule("sisbolsas_to_postgres_ingest_dag"),
     start_date=datetime(2024, 1, 1),
     catchup=False,
     max_active_runs=1,

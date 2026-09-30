@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional
 
 import cliente_email  # importar o módulo, não só a função
 import pandas as pd
-from airflow import DAG
+from airflow.sdk import DAG
 from airflow.exceptions import AirflowSkipException
-from airflow.models import Variable
-from airflow.operators.python import PythonOperator
+from airflow.sdk import Variable
+from airflow.providers.standard.operators.python import PythonOperator
 from cliente_email import fetch_and_process_email
 from cliente_postgres import ClientPostgresDB
 from postgres_helpers import get_postgres_conn
@@ -108,7 +108,7 @@ with DAG(
     dag_id="orcamento_mcid_por_acao_ingest_dag",
     default_args=default_args,
     description="Processa e ingere dados de orcamento por acao do MCID do Tesouro",
-    schedule_interval=get_dynamic_schedule("orcamento_mcid_por_acao_ingest_dag"),
+    schedule=get_dynamic_schedule("orcamento_mcid_por_acao_ingest_dag"),
     start_date=datetime(2026, 3, 23),
     catchup=False,
     tags=["email", "orcamento", "tesouro", "mcid"],
@@ -181,13 +181,11 @@ with DAG(
     process_emails_task = PythonOperator(
         task_id="process_emails",
         python_callable=process_email_data,
-        provide_context=True,
     )
 
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
-        provide_context=True,
     )
 
     process_emails_task >> insert_to_db_task

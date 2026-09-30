@@ -146,7 +146,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install openvpn iputils-ping
-          pip install 'dbt-postgres==1.7.13'
+          pip install 'dbt-postgres==1.11.0' 'dbt-core==1.12.5'
 
       - name: Conectar VPN
         if: steps.vpn.outputs.configurada == 'true'
