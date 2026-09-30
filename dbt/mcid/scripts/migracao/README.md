@@ -118,3 +118,103 @@ diff /tmp/verif_seeds_antes.txt /tmp/verif_seeds_depois.txt
 ```
 
 Rollback: `psql "$DSN" -v ON_ERROR_STOP=1 -f scripts/migracao/reverter_seeds_prod.sql`.
+
+---
+
+## Migração da abreviação de tokens — `historico`→`hist`, `reloginho`→`relog`
+
+Segunda migração, independente da anterior: change `renomear-hist-relog-prata-
+ouro`. Renomeia, **dentro do mesmo schema** (`prata`→`prata`, `ouro`→`ouro`,
+sem `SET SCHEMA`), as **34 tabelas** já publicadas em `prod` cujo nome contém
+`historico` ou `reloginho`, para o nome-alvo com `hist`/`relog` — e, na prata
+específica de frente do eixo histórico, inverte a ordem do token (`hist` passa
+a vir antes da frente: `prata_far_historico_empreendimento` →
+`prata_hist_far_empreendimento`). É renomeação de metadado — instantânea, não
+copia dados. `prata_hist_pro_moradia_execucao_obra` fica de fora do mapa: nunca
+foi publicada em nenhuma base (limite de RAM local), só recebe o rename de
+código.
+
+> **Execução MANUAL**, mesma ressalva da migração acima — nenhum script deste
+> diretório é chamado por automação.
+
+O mapa canônico old→new é `mapa_hist_relog.csv` (única fonte de verdade; também
+alimentou a reescrita de `EXCLUIDOS` em `publicar_historico.py` e de
+`prefixos_de_tabela` em `governance/dominios.yml`). Os 3 `.sql` são **gerados**
+a partir dele por `gerar_migracao_hist_relog.py` (irmão dedicado de
+`gerar_migracao.py`, sem o passo `SET SCHEMA` — aqui `old_schema == new_schema`
+sempre) e commitados; o operador usa só `psql`.
+
+| script | o quê | idempotente? |
+|---|---|---|
+| `verificar_hist_relog_prod.sql` | read-only: inventário dos schemas `prata`/`ouro` + `count(*)` por tabela, nomes antigos e novos | sim |
+| `renomear_hist_relog_prod.sql` | forward: `historico`/`reloginho` → `hist`/`relog` (mesmo schema) | não (transação única) |
+| `reverter_hist_relog_prod.sql` | rollback: o inverso exato | não (transação única) |
+
+Mesma estrutura de segurança da migração de schema: transação única
+(`BEGIN`/`COMMIT`) com `ON_ERROR_STOP`, preflight (`RAISE EXCEPTION` se alguma
+origem não existe ou algum destino já existe) e postflight (cada destino
+existe, cada origem sumiu).
+
+### Pré-requisitos
+
+1. `publicar_historico.py`, `governance/dominios.yml` e o código dbt (modelos,
+   `schema.yml`, `ref()`, testes singulares) **já reescritos** para os nomes
+   novos (feito nesta change) — para que cargas futuras publiquem direto no
+   lugar certo.
+2. As 34 tabelas do mapa **estão** em `prod` com os nomes antigos. Rodar
+   `verificar` confirma.
+3. Janela combinada — usuário já confirmou que os 35 nomes em escopo são
+   seguros para renomear (sem dependência bloqueante conhecida em
+   Superset/OpenMetadata/notebooks).
+
+### Ordem
+
+```bash
+export DSN="host=$DB_DW_HOST_MCID port=${DB_DW_PORT_MCID:-5432} \
+dbname=${DB_DW_DBNAME_MCID:-cidades} user=$DB_DW_USER_MCID password=$DB_DW_PASSWORD_MCID"
+
+# 1. estado ANTES
+psql "$DSN" -f scripts/migracao/verificar_hist_relog_prod.sql | tee /tmp/verif_hist_relog_antes.txt
+
+# 2. rename (transação única; aborta inteiro em qualquer erro)
+psql "$DSN" -v ON_ERROR_STOP=1 -f scripts/migracao/renomear_hist_relog_prod.sql
+
+# 3. estado DEPOIS — diffar contra o de antes (mesmas contagens, novos nomes)
+psql "$DSN" -f scripts/migracao/verificar_hist_relog_prod.sql | tee /tmp/verif_hist_relog_depois.txt
+diff /tmp/verif_hist_relog_antes.txt /tmp/verif_hist_relog_depois.txt
+
+# 4. reingestão do conector dbt do OpenMetadata (FQN dos 34 nós mudou)
+```
+
+### Rollback
+
+```bash
+psql "$DSN" -v ON_ERROR_STOP=1 -f scripts/migracao/reverter_hist_relog_prod.sql
+psql "$DSN" -f scripts/migracao/verificar_hist_relog_prod.sql
+```
+
+As tabelas antigas **nunca são dropadas** por estes scripts — o `reverter` só
+desfaz os `ALTER`. Se a migração falhar no meio, a transação já reverteu tudo.
+
+### Regenerar os `.sql`
+
+Ao editar `mapa_hist_relog.csv`:
+
+```bash
+python3 scripts/migracao/gerar_migracao_hist_relog.py
+```
+
+### Migração local (`cidades.duckdb`)
+
+Este mapa (Postgres) não cobre o arquivo local — o rename no `cidades.duckdb`
+roda por um script separado em sintaxe DuckDB (`ALTER TABLE ... RENAME TO`
+direto, sem `to_regclass`/blocos `do $$`), cobrindo o mesmo mapa **mais** dois
+passos específicos do local, fora do CSV genérico:
+
+- rename da pendência órfã `prata_sub50_historico_proposta` →
+  `prata_hist_fnhis_proposta` (migração `renomear-sub50-para-fnhis-historico`
+  nunca replicada no local);
+- `DROP TABLE` das 2 bronzes órfãs `bronze_shpt_sub50_propostas_apresentadas` /
+  `_selecionadas` (já substituídas por `bronze_shpt_fnhis_propostas_*`).
+
+Ver `rename_hist_relog_local.py` (mesmo diretório).

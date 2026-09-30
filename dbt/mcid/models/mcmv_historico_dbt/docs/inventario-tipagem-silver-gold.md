@@ -95,10 +95,10 @@ Colunas afetadas:
 | `prata_dhist_serie_executiva` | `uh_contratadas`, `uh_entregues`, `uh_concluidas`, `uh_em_obras`, `uh_comercializadas` |
 | `ouro_dhist_serie_mensal` | `uh_contratadas`, `uh_entregues`, `uh_concluidas`, `uh_em_obras`, `uh_comercializadas` |
 | `ouro_dhist_serie_situacao_mensal` | `uh`, `entradas`, `saidas` |
-| `ouro_reloginho_indicadores` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
-| `ouro_reloginho_indicadores_frente` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
-| `ouro_reloginho_indicadores_entregas` | `uh_entregues_evento_mes`, `uh_entregues_evento_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
-| `ouro_reloginho_resumo_dashboard` | `uh_contratadas_ultimo`, `uh_entregues_ultimo`, `uh_vigentes_ultimo` |
+| `ouro_relog_indicadores` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
+| `ouro_relog_indicadores_frente` | `uh_contratadas`, `uh_entregues`, `uh_vigentes` |
+| `ouro_relog_indicadores_entregas` | `uh_entregues_evento_mes`, `uh_entregues_evento_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
+| `ouro_relog_resumo_dashboard` | `uh_contratadas_ultimo`, `uh_entregues_ultimo`, `uh_vigentes_ultimo` |
 | `prata_dhist_snh_entregas_mes` | `uh_entregues_evento_mes` |
 
 Valores reais são pequenos (máx. nacional ~1,5 M) — cabem em `bigint`. Correção:
@@ -122,8 +122,8 @@ Cobertura (build local, modo A):
 | `indicadores_mcmv_dbt` silver | snh_apf_mes, snh_entregas_mes | 12 |
 | `indicadores_mcmv_dbt` gold | indicadores_reloginho (+_frente, +_entregas), resumo_reloginho_dashboard | 21 |
 
-**Fora de escopo:** `ouro_reloginho_indicadores_gargalo_desempenho` /
-`ouro_reloginho_resumo_gargalo_desempenho_dashboard` (lineage do medalhão FAR/FDS dos
+**Fora de escopo:** `ouro_relog_indicadores_gargalo_desempenho` /
+`ouro_relog_resumo_gargalo_desempenho_dashboard` (lineage do medalhão FAR/FDS dos
 colegas, não da série histórica).
 
 Resultado: **todos os `verificacao_tipagem` PASS** no `dbt test` local

@@ -5,7 +5,7 @@
 -- cópia fiel. 7.121 linhas.
 --
 -- Materializa isoladamente de bronze_shpt_fnhis_propostas_selecionadas — a
--- prata (prata_fnhis_historico_proposta) une as duas com `status_proposta`
+-- prata (prata_hist_fnhis_proposta) une as duas com `status_proposta`
 -- discriminando apresentada/selecionada.
 --
 -- dt_referencia = data de ingestão do arquivo (`_ingested_at`). Contrato de

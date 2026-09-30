@@ -71,7 +71,7 @@ EXCLUIDOS = {
     # "nao conseguiram buildar devido a limite de ram"). Nada dentro dos dois
     # projetos do eixo depende delas (conferido via grep de ref()).
     "bronze_sftp_pro_moradia_execucoes_obra",
-    "prata_pro_moradia_historico_execucao_obra",
+    "prata_hist_pro_moradia_execucao_obra",
 }
 
 

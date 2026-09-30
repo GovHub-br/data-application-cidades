@@ -5,6 +5,6 @@ select
     agente_financeiro,
     dt_referencia,
     count(*) as n_linhas
-from {{ ref("ouro_reloginho_indicadores") }}
+from {{ ref("ouro_relog_indicadores") }}
 group by agente_financeiro, dt_referencia
 having count(*) > 1

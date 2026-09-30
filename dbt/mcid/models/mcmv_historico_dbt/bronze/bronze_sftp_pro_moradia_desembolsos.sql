@@ -10,7 +10,7 @@
 -- snapshots já traz `dte_ano` de 1997 a 2025). Grão da fonte: contrato ×
 -- competência (`cod_contrato`, `dte_ano`, `dte_mes_ref`) × snapshot semanal
 -- — sem filtro nem dedup aqui (convenção do domínio); a prata
--- (prata_pro_moradia_historico_desembolso_mensal) restringe ao universo
+-- (prata_hist_pro_moradia_desembolso_mensal) restringe ao universo
 -- Pró-Moradia e deduplica por competência.
 --
 -- Corpo e glob vêm do mapa de famílias (macros/historico/familias.sql).

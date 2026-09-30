@@ -138,7 +138,7 @@ prefixo 1-38 inalterado).
 
 **Reloginho** (`prata_dhist_snh_apf_mes`): `quantidade_uh_distratadas`
 adicionada (após `uh_vigentes`). Grão `(agente_financeiro, apf, dt_referencia)`
-intacto. Golds `ouro_reloginho_indicadores` / `_frente` / `_entregas` fazem
+intacto. Golds `ouro_relog_indicadores` / `_frente` / `_entregas` fazem
 agregação com projeção explícita — **não referenciam a coluna nova**, saída
 inalterada.
 

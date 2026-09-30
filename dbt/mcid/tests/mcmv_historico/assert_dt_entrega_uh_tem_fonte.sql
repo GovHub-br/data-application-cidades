@@ -6,13 +6,13 @@
 with
     consolidado as (
         select frente_mcmv, apf, dt_referencia, dt_entrega_uh, dt_entrega_uh_fonte
-        from {{ ref('prata_far_historico_empreendimento') }}
+        from {{ ref('prata_hist_far_empreendimento') }}
         union all
         select frente_mcmv, apf, dt_referencia, dt_entrega_uh, dt_entrega_uh_fonte
-        from {{ ref('prata_fds_historico_empreendimento') }}
+        from {{ ref('prata_hist_fds_empreendimento') }}
         union all
         select frente_mcmv, apf, dt_referencia, dt_entrega_uh, dt_entrega_uh_fonte
-        from {{ ref('prata_rural_historico_empreendimento') }}
+        from {{ ref('prata_hist_rural_empreendimento') }}
     )
 select *
 from consolidado

@@ -109,7 +109,7 @@ models:
       (Projeto → Obra → Desligamento) de um mesmo empreendimento a um
       id_empreendimento derivado do APF-âncora. Sucessora de
       silver_atual_dim_empreendimento (change #130); consumida pelo eixo
-      histórico (prata_fds_historico_empreendimento). Grão: uma linha por
+      histórico (prata_hist_fds_empreendimento). Grão: uma linha por
       (id_empreendimento, apf) — o APF é único, o id_empreendimento repete.
     columns:
       - name: id_empreendimento

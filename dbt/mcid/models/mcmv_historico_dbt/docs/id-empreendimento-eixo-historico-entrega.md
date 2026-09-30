@@ -11,13 +11,13 @@ passou a alcançar a série histórica e os golds de série/snapshot. Antes o ei
 histórico contava **APF**, e um empreendimento FDS multi-fase
 (Projeto → Obra → Desligamento, ~19% dos empreendimentos) aparecia 2–3×.
 
-- `prata_fds_historico_empreendimento`: novas colunas `id_empreendimento`
+- `prata_hist_fds_empreendimento`: novas colunas `id_empreendimento`
   e `fase_empreendimento` (join na dim por `apf`; fallback
   `md5('empreendimento-fds|' || apf)` para APF fora da dim).
   `codigo_empreendimento` repontado de `nu_apf` para `coalesce(id_empreendimento,
   apf)` (alinha com `silver_mcmv_entidades_base`). `apf`,
   `id_historico_snapshot` e `id_negocio_historico` continuam por APF físico.
-- `prata_far_historico_empreendimento` / `_rural`: `id_empreendimento = apf`,
+- `prata_hist_far_empreendimento` / `_rural`: `id_empreendimento = apf`,
   `fase_empreendimento = NULL` (contrato comum; o APF já é o empreendimento).
 - `ouro_dhist_serie_situacao_mensal`: `n_empreendimentos` e o `lag()` de transições
   passam a usar `chave_empreendimento = coalesce(id_empreendimento, apf)`.
@@ -30,7 +30,7 @@ histórico contava **APF**, e um empreendimento FDS multi-fase
 
 ## Cobertura
 
-- `prata_fds_historico_empreendimento`: 53.442 linhas · **1.021 APF**
+- `prata_hist_fds_empreendimento`: 53.442 linhas · **1.021 APF**
   distintos · **992 (97,2%)** casam na dim → só ~29 APFs no fallback `md5`.
 - Colapso: **1.021 APF → 917 `id_empreendimento`** (−104, −10,2%). 207 APFs em
   grupos multi-APF.

@@ -31,7 +31,7 @@ porque a bronze CAIXA não tem `uhs_*`.
 | BB: linhas | 20.608 | 20.608 |
 | BB: `uh_contratadas` não-nulo | 12.880 | 20.608 |
 
-`ouro_reloginho_indicadores`, agente BB (contratadas / entregues / vigentes):
+`ouro_relog_indicadores`, agente BB (contratadas / entregues / vigentes):
 
 | mês | antes | depois |
 |---|---|---|
@@ -72,14 +72,14 @@ A bronze `bronze_snh_entregas` já harmoniza `qt_uh_entregues` (CAIXA) /
 | `prata_dhist_serie_executiva` | 5 `uh_*` |
 | `ouro_dhist_serie_mensal` | 5 `uh_*` |
 | `ouro_dhist_serie_situacao_mensal` | `uh`, `entradas`, `saidas` |
-| `ouro_reloginho_indicadores` / `_frente` | `uh_contratadas/entregues/vigentes` |
-| `ouro_reloginho_indicadores_entregas` | `uh_entregues_evento_mes/_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
+| `ouro_relog_indicadores` / `_frente` | `uh_contratadas/entregues/vigentes` |
+| `ouro_relog_indicadores_entregas` | `uh_entregues_evento_mes/_acum`, `n_eventos`, `uh_entregues_snapshot`, `dif_evento_vs_snapshot` |
 | `prata_dhist_snh_entregas_mes` | `uh_entregues_evento_mes` |
 
 Verificado pós-rebuild: `HUGEINT` = 0 em todos; somas nacionais inalteradas
 (`ouro_dhist_serie_mensal` Σ uh_contratadas nacional = 120.606.220, = silver;
-`ouro_reloginho_indicadores` CAIXA 2026-03 = 1.697.630 / 1.391.909 = ref #66).
-`ouro_reloginho_resumo_dashboard` herda `bigint` do upstream, sem edição.
+`ouro_relog_indicadores` CAIXA 2026-03 = 1.697.630 / 1.391.909 = ref #66).
+`ouro_relog_resumo_dashboard` herda `bigint` do upstream, sem edição.
 
 ## Itens 2–4 — inventário + `verificacao_tipagem`
 

@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: prata_historico_snh_apf_mes
+  - name: prata_hist_snh_apf_mes
     description: >
       Prata do reloginho: série mensal SNH tipada, com domínio normalizado e
       deduplicada por APF. Grão: uma linha por (agente_financeiro, apf,
@@ -58,7 +58,7 @@ models:
           (glossario-mcid.md).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues
@@ -68,7 +68,7 @@ models:
           `quantidade_uh_entregues`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_vigentes
@@ -78,7 +78,7 @@ models:
           `quantidade_uh_vigentes`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_snh_apf_mes }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_snh_apf_mes }
               config: { severity: warn }
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: quantidade_uh_distratadas
@@ -130,7 +130,7 @@ models:
       - name: regiao_nome
         description: Nome da macrorregião IBGE (par de regiao_sigla).
 
-  - name: prata_historico_snh_entregas_mes
+  - name: prata_hist_snh_entregas_mes
     description: >
       Prata do reloginho — entregas por evento agregadas ao mês do
       EVENTO. Lê bronze_dhist_snh_entregas_evento, deduplica eventos
@@ -166,7 +166,7 @@ models:
       - name: uh_entregues_evento_mes
         description: >
           UH entregues no mês do EVENTO, por APF — série de FLUXO (pode somar
-          entre meses, ao contrário dos acumulados de `prata_historico_snh_apf_mes`).
+          entre meses, ao contrário dos acumulados de `prata_hist_snh_apf_mes`).
           Conceito canônico `quantidade_uh_entregues` (recorte de fluxo).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
@@ -175,7 +175,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
-  - name: prata_reloginho_frentes_novas_resumo_mes
+  - name: prata_relog_frentes_novas_resumo_mes
     description: >
       Prata do reloginho — resumo mensal cross-frente (contratos + valor) de
       Classe Média, Reforma Casa Brasil, MCMV Cidades e Pró-Moradia, a partir
@@ -188,7 +188,7 @@ models:
       compor série mensal real. Contratos sem `dt_contratacao` (nenhum
       encontrado nas 4 fontes nesta change — 100% de preenchimento
       verificado) não entrariam na série. Consumida pelos ouros da change
-      criar-ouro-reloginho-frentes-novas (`ouro_reloginho_indicadores_frentes_novas`
+      criar-ouro-reloginho-frentes-novas (`ouro_relog_indicadores_frentes_novas`
       e derivados) — grão, colunas e testes desta prata permanecem
       inalterados por essa change.
     meta:
@@ -224,14 +224,14 @@ models:
           semântica de "estado mais recente" usada nos snapshots de
           `mcmv_historico_dbt`).
 
-  - name: prata_reloginho_frentes_novas_resumo_mes_uf
+  - name: prata_relog_frentes_novas_resumo_mes_uf
     description: >
       Prata do reloginho — mesmo resumo mensal cross-frente de
-      `prata_reloginho_frentes_novas_resumo_mes` (Classe Média, Reforma Casa
+      `prata_relog_frentes_novas_resumo_mes` (Classe Média, Reforma Casa
       Brasil, MCMV Cidades, Pró-Moradia; mesma dedup por chave de negócio),
       com `uf` adicionada ao grão (change criar-ouro-reloginho-frentes-novas,
       design.md D1). Grão: uma linha por (frente_mcmv, mes_referencia, uf).
-      Alimenta `ouro_reloginho_indicadores_frentes_novas_regiao`.
+      Alimenta `ouro_relog_indicadores_frentes_novas_regiao`.
     meta:
       tags: [prata, mcmv, reloginho, dados-historicos, frentes-novas]
     data_tests:
@@ -263,9 +263,9 @@ models:
         description: >
           Soma do `valor_contratado` da última observação de cada contrato
           da frente no mês/UF (mesma semântica de "estado mais recente" de
-          `prata_reloginho_frentes_novas_resumo_mes`).
+          `prata_relog_frentes_novas_resumo_mes`).
 
-  - name: prata_reloginho_classe_media_reforma_resumo_faixa_renda_mes
+  - name: prata_relog_classe_media_reforma_resumo_faixa_renda_mes
     description: >
       Prata do reloginho — resumo mensal por faixa de renda, restrita a
       Classe Média e Reforma Casa Brasil: únicas 2 das 4 frentes novas com
@@ -304,4 +304,4 @@ models:
         description: >
           Soma do `valor_contratado` da última observação de cada contrato
           da frente no mês/faixa de renda (mesma semântica de "estado mais
-          recente" de `prata_reloginho_frentes_novas_resumo_mes`).
+          recente" de `prata_relog_frentes_novas_resumo_mes`).

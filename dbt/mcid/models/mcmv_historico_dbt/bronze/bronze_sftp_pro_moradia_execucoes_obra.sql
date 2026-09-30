@@ -8,7 +8,7 @@
 -- Mesmo padrão de ledger cumulativo de bronze_sftp_pro_moradia_desembolsos:
 -- grão contrato × competência de avaliação (`cod_contrato`,
 -- `dte_ano_mes_avaliacao`) × snapshot semanal, sem filtro nem dedup aqui — a
--- prata (prata_pro_moradia_historico_execucao_obra) restringe ao universo
+-- prata (prata_hist_pro_moradia_execucao_obra) restringe ao universo
 -- Pró-Moradia e deduplica por competência.
 --
 -- ACHADO na implementação (task 6.1): esta família, sozinha, materializa

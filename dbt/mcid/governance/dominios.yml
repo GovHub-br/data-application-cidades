@@ -179,10 +179,14 @@ produtos:
   # `product: mcmv_historico` já era usado em `dbt_project.yml` sem entrada
   # aqui — `test_todo_produto_do_dbt_esta_declarado_em_dominios` acusa.
   # `prefixos_de_tabela` resolvido só PARCIALMENTE (change
-  # `frentes-restantes-mcmv-historico`, D6): as pratas de FAR/FDS/Rural
-  # reaproveitam os prefixos dos produtos dedicados (`prata_far_historico_`,
-  # `prata_fds_historico_`, `prata_rural_historico_`) e colidiriam se
-  # declarados aqui — continuam de fora, atribuídas pelo catálogo semântico.
+  # `frentes-restantes-mcmv-historico`, D6; tokens abreviados pela change
+  # `renomear-hist-relog-prata-ouro`): as pratas de FAR/FDS/Rural
+  # (`prata_hist_far_`, `prata_hist_fds_`, `prata_hist_rural_`) não colidem
+  # mais com os prefixos dos produtos dedicados (`prata_far_`, `prata_fds_`,
+  # `prata_rural_`) — o token `hist` agora vem antes da frente — mas
+  # colidiriam com o prefixo `prata_hist_` comum ao produto `reloginho`
+  # (`prata_hist_snh_*`) se declaradas aqui; continuam de fora, atribuídas
+  # pelo catálogo semântico.
   # Os 5 tokens das frentes novas (classe_media, mcmv_cidades, pro_moradia,
   # reforma_casa_brasil, fnhis) não têm produto dedicado nem colidem com
   # `empreendimento_far`/`entidades_fds`/`empreendimento_rural`, por isso
@@ -196,11 +200,11 @@ produtos:
       - prata
       - ouro
     prefixos_de_tabela:
-      - prata_classe_media_
-      - prata_mcmv_cidades_
-      - prata_pro_moradia_
-      - prata_reforma_casa_brasil_
-      - prata_fnhis_
+      - prata_hist_classe_media_
+      - prata_hist_mcmv_cidades_
+      - prata_hist_pro_moradia_
+      - prata_hist_reforma_casa_brasil_
+      - prata_hist_fnhis_
     description: >
       Série histórica por empreendimento do MCMV (FAR, FDS, Rural, Classe
       Média, MCMV Cidades, Pró-Moradia, Reforma Casa Brasil e FNHIS/SUB50), a
@@ -208,11 +212,12 @@ produtos:
       reconstituir o acompanhamento físico-financeiro fora da janela coberta
       pelos outros produtos.
 
-  # Só `ouro_reloginho_` entra como prefixo. Os dois modelos da prata se chamam
-  # `prata_historico_snh_*` e dividiriam o prefixo `prata_historico_` com
-  # `prata_historico_entrega_apf`/`prata_historico_serie_executiva`, que são do
-  # `mcmv_historico` — declará-lo faria este produto reivindicar tabelas do
-  # outro. Na prata a atribuição fica pelo catálogo semântico
+  # Só `ouro_relog_` entra como prefixo. Os dois modelos da prata se chamam
+  # `prata_hist_snh_*` e dividiriam o prefixo `prata_hist_` com
+  # `prata_hist_entrega_apf`/`prata_hist_serie_executiva` e as pratas de
+  # frente (`prata_hist_far_`, `prata_hist_fds_`, `prata_hist_rural_`, ...),
+  # que são do `mcmv_historico` — declará-lo faria este produto reivindicar
+  # tabelas do outro. Na prata a atribuição fica pelo catálogo semântico
   # (`meta.governance.product` do model), que é a via autoritativa.
   - name: reloginho
     display_name: Reloginho MCMV
@@ -222,7 +227,7 @@ produtos:
       - prata
       - ouro
     prefixos_de_tabela:
-      - ouro_reloginho_
+      - ouro_relog_
     description: >
       Indicadores mensais de acompanhamento do MCMV consolidados por agente
       financeiro e por frente, a partir da série SNH: contratação, execução,

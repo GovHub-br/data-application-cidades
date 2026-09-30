@@ -18,7 +18,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_historico_serie_executiva.
+      prata_hist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -122,7 +122,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_historico_serie_executiva.
+      prata_hist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -165,7 +165,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_historico_serie_executiva.
+      prata_hist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -239,7 +239,7 @@ models:
       origem; só as colunas da própria família (tabela estreita) mais
       auditoria. A família tem 2-3 gerações de schema — a harmonização e a
       união com as outras três ficam em
-      prata_historico_serie_executiva.
+      prata_hist_serie_executiva.
     meta:
       tags: [bronze, mcmv, dados-historicos, serie-executiva, preditivo]
     data_tests:
@@ -839,7 +839,7 @@ models:
       Uma linha por linha de origem (sem dedup), sem tipagem; grão contrato
       PF/FGTS. Contém PII de mutuário (nu_cpf_cnpj_mutuario, no_mutuario,
       dt_nascimento_mutuario) — retida só para linhagem; a prata
-      (prata_classe_media_historico_contrato) não expõe essas 3 colunas.
+      (prata_hist_classe_media_contrato) não expõe essas 3 colunas.
     meta:
       tags: [bronze, mcmv, dados-historicos, classe-media, sftp, pii]
     columns:
@@ -903,7 +903,7 @@ models:
       `staging/sftp/fabrica/GEFUS/**/PMCMV_REFORMAS_MCID_*.parquet`, cópia
       fiel. Grão contrato PF/FGTS, mesmo desenho de PMCMV_FAIXA3_MCID. Contém
       PII de mutuário — retida só para linhagem; a prata
-      (prata_reforma_casa_brasil_historico_contrato) não expõe essas 3
+      (prata_hist_reforma_casa_brasil_contrato) não expõe essas 3
       colunas.
     meta:
       tags: [bronze, mcmv, dados-historicos, reforma-casa-brasil, sftp, pii]
@@ -994,7 +994,7 @@ models:
       Bronze — contratos do Canal FGTS (todas as linhas, não só Pró-Moradia),
       `staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet`, cópia
       fiel, SEM filtro por `cod_linha` (D1). 154.698 linhas. É a prata de
-      Pró-Moradia (prata_pro_moradia_historico_contrato) que aplica
+      Pró-Moradia (prata_hist_pro_moradia_contrato) que aplica
       `where cod_linha = '26'`.
     meta:
       tags: [bronze, mcmv, dados-historicos, pro-moradia, sharepoint, fgts]
@@ -1086,7 +1086,7 @@ models:
       cópia fiel. LEDGER CUMULATIVO: cada snapshot semanal reexporta o
       histórico completo até aquela data (o mais antigo dos 38 snapshots já
       traz `dte_ano` de 1997 a 2025) — não é um delta. Sem filtro nem dedup;
-      a prata (prata_pro_moradia_historico_desembolso_mensal) restringe ao
+      a prata (prata_hist_pro_moradia_desembolso_mensal) restringe ao
       universo Pró-Moradia e deduplica por competência.
     meta:
       tags: [bronze, mcmv, dados-historicos, pro-moradia, sftp, fgts]
@@ -1128,7 +1128,7 @@ models:
       cópia fiel. Mesmo padrão de ledger cumulativo de
       bronze_sftp_pro_moradia_desembolsos — grão contrato × competência de
       avaliação × snapshot semanal, sem filtro nem dedup; a prata
-      (prata_pro_moradia_historico_execucao_obra) restringe ao universo
+      (prata_hist_pro_moradia_execucao_obra) restringe ao universo
       Pró-Moradia e deduplica por competência.
     meta:
       tags: [bronze, mcmv, dados-historicos, pro-moradia, sftp, fgts]
@@ -1176,7 +1176,7 @@ models:
       cópia fiel. Diferente das outras 2 famílias GEAVO, é um RETRATO do
       momento (sem coluna de competência) — só as operações paralisadas
       ATIVAS naquele snapshot (124 linhas no snapshot mais recente). Sem
-      filtro nem dedup; a prata (prata_pro_moradia_historico_paralisacao)
+      filtro nem dedup; a prata (prata_hist_pro_moradia_paralisacao)
       restringe ao universo Pró-Moradia e preserva uma linha por (contrato,
       semana de observação) — NÃO deduplica para o estado mais recente.
     meta:
@@ -1225,7 +1225,7 @@ models:
       ATENÇÃO — `dt_referencia` é a data de ingestão de um snapshot único,
       não a data do evento (`dt_contratacao`, ausente nesta bronze). Não usar
       `dt_referencia` para agregação temporal — ver nota completa em
-      `prata_fnhis_historico_proposta`.
+      `prata_hist_fnhis_proposta`.
     meta:
       tags: [bronze, mcmv, dados-historicos, fnhis, sharepoint]
     columns:
@@ -1258,7 +1258,7 @@ models:
 
       ATENÇÃO — `dt_referencia` é a data de ingestão de um snapshot único,
       não a data do evento. Não usar `dt_referencia` para agregação
-      temporal — ver nota completa em `prata_fnhis_historico_proposta`.
+      temporal — ver nota completa em `prata_hist_fnhis_proposta`.
     meta:
       tags: [bronze, mcmv, dados-historicos, fnhis, sharepoint]
     columns:

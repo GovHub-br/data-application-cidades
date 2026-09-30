@@ -9,7 +9,7 @@
   Uso no schema.yml (nível de model):
 
       models:
-        - name: prata_classe_media_historico_contrato
+        - name: prata_hist_classe_media_contrato
           data_tests:
             - pii_mutuario_ausente
 -#}

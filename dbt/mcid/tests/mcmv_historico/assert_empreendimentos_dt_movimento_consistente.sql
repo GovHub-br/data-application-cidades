@@ -13,13 +13,13 @@
 with
     consolidado as (
         select *
-        from {{ ref('prata_far_historico_empreendimento') }}
+        from {{ ref('prata_hist_far_empreendimento') }}
         union all
         select *
-        from {{ ref('prata_fds_historico_empreendimento') }}
+        from {{ ref('prata_hist_fds_empreendimento') }}
         union all
         select *
-        from {{ ref('prata_rural_historico_empreendimento') }}
+        from {{ ref('prata_hist_rural_empreendimento') }}
     )
 
 select

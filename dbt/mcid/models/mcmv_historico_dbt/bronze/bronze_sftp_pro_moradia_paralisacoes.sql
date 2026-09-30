@@ -8,7 +8,7 @@
 -- Diferente das outras 2 famílias GEAVO, esta é um RETRATO do momento (sem
 -- coluna de competência) — só as operações paralisadas ATIVAS naquele
 -- snapshot (124 linhas no snapshot mais recente). Sem filtro nem dedup
--- aqui; a prata (prata_pro_moradia_historico_paralisacao) restringe ao
+-- aqui; a prata (prata_hist_pro_moradia_paralisacao) restringe ao
 -- universo Pró-Moradia e preserva uma linha por (contrato, semana de
 -- observação) — não deduplica para o estado mais recente (D3 do design.md),
 -- justamente para transformar este retrato em série histórica de verdade.

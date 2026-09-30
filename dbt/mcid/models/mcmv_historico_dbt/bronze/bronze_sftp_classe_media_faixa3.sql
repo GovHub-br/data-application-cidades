@@ -6,7 +6,7 @@
 -- Glob na staging: staging/sftp/fabrica/GEFUS/**/PMCMV_FAIXA3_MCID_*.parquet
 -- (snapshots semanais 2025-07+, grão contrato PF/FGTS). Sem dedup nem filtro;
 -- colunas cruas preservadas como vieram, sem tipagem (a tipagem/dedup/
--- mascaramento de PII ficam na prata prata_classe_media_historico_contrato).
+-- mascaramento de PII ficam na prata prata_hist_classe_media_contrato).
 --
 -- Contém PII de mutuário (nu_cpf_cnpj_mutuario, no_mutuario,
 -- dt_nascimento_mutuario) — retida aqui só para linhagem/auditoria; a prata

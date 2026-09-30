@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: ouro_historico_marco_empreendimento
+  - name: ouro_hist_marco_empreendimento
     description: >
       Ouro — linha do tempo (marcos) por empreendimento (grão
       coalesce(id_empreendimento, apf), alinhado ao gold_snapshot). 7 marcos,
@@ -11,7 +11,7 @@ models:
       (fase mais avançada -> dt_referencia mais recente); dt_conclusao_obra e
       dt_ultima_entrega são o MAIOR valor já resolvido na prata em qualquer
       snapshot (dt_ultima_entrega considera também o max da espinha
-      prata_historico_entrega_apf sobre todos os APFs de fase);
+      prata_hist_entrega_apf sobre todos os APFs de fase);
       dt_primeira_entrega vem da espinha. dt_previsao_entrega = maior data
       prevista observada (braço SNH; fonte 'snh:dados_prioritarios', fill ~2%).
       dt_legalizacao nasce NULL nesta fase. `marcos_coerentes` é
@@ -90,7 +90,7 @@ models:
         data_tests:
           - not_null
 
-  - name: ouro_historico_snapshot_empreendimento_atual
+  - name: ouro_hist_snapshot_empreendimento_atual
     description: >
       Ouro — snapshot corrente (estado atual) derivado da prata histórica
       consolidada: uma linha por (frente, codigo_empreendimento) com o último
@@ -268,10 +268,10 @@ models:
       - name: portaria_selecao
         description: Portaria de seleção (INT040/054, esparso).
 
-  - name: ouro_historico_serie_mensal
+  - name: ouro_hist_serie_mensal
     description: >
       Ouro — série histórica mensal do MCMV (pré-2024) para análise preditiva.
-      Agrega a prata_historico_serie_executiva por (dt_referencia,
+      Agrega a prata_hist_serie_executiva por (dt_referencia,
       fonte_familia, nivel_agregacao, regiao_sigla, uf, linha_ogu_fgts) via
       GROUPING SETS (nacional + regiao + uf).
 
@@ -398,7 +398,7 @@ models:
         description: >
           Soma de UH entregues no recorte — conceito canônico
           `quantidade_uh_entregues`, com sufixo implícito de acumulado (mesma
-          medida que `ouro_reloginho_indicadores.uh_entregues`, que é o
+          medida que `ouro_relog_indicadores.uh_entregues`, que é o
           acumulado SNH). Ver `natureza_serie`: nas séries de estoque NÃO somar
           entre meses.
         data_tests:
@@ -422,7 +422,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
-  - name: ouro_historico_serie_situacao_mensal
+  - name: ouro_hist_serie_situacao_mensal
     description: >
       Ouro — série histórica mensal de empreendimentos por SITUAÇÃO DE OBRA
       canônica (2019-12 → mês corrente das pratas por frente). Grão:
@@ -497,15 +497,15 @@ models:
       - name: fonte_serie
         description: fonte_serie predominante do mês por frente ('sftp' até 2024-11, 'snh' depois) — para anotar a descontinuidade de série.
 
-  - name: ouro_historico_serie_mensal_frentes_novas
+  - name: ouro_hist_serie_mensal_frentes_novas
     description: >
       Ouro — série mensal cross-frente de Classe Média, Reforma Casa Brasil,
       MCMV Cidades e Pró-Moradia, agregando por mês de `dt_contratacao` com
       quebra nacional/região/UF via GROUPING SETS (mesmo padrão de
-      `ouro_historico_serie_mensal`). Cada frente é deduplicada por chave de
+      `ouro_hist_serie_mensal`). Cada frente é deduplicada por chave de
       negócio (mantendo a observação de `dt_referencia` mais recente) ANTES
       de agrupar por mês — mesma disciplina de
-      `prata_reloginho_frentes_novas_resumo_mes` (indicadores_mcmv_dbt); sem
+      `prata_relog_frentes_novas_resumo_mes` (indicadores_mcmv_dbt); sem
       essa dedup, Classe Média infla ~24,8× e Reforma ~19,9× (o mesmo
       contrato aparece em dezenas de snapshots semanais). FNHIS NÃO aparece
       nesta tabela (fonte sem série real — ver
@@ -585,16 +585,16 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
-  - name: ouro_historico_pro_moradia_evolucao_financeira
+  - name: ouro_hist_pro_moradia_evolucao_financeira
     description: >
       Ouro — série mensal de desembolso acumulado por contrato Pró-Moradia
       (change criar-ouro-serie-historica-frentes-novas, design.md D4). Grão:
       (codigo_contrato, mes). A partir de
-      `prata_pro_moradia_historico_desembolso_mensal` (já deduplicada por
+      `prata_hist_pro_moradia_desembolso_mensal` (já deduplicada por
       competência), calcula `valor_acumulado` como soma corrida de
       `valor_liberado_mes` por contrato ordenada por mês, e
       `percentual_acumulado_contratado` como a razão sobre
-      `valor_contratado` (de `prata_pro_moradia_historico_contrato`), com
+      `valor_contratado` (de `prata_hist_pro_moradia_contrato`), com
       `nullif` no denominador. Equivalente histórico, construído só da nossa
       prata, ao que os colegas expõem como estado atual. Requer target
       staging_duckdb.
@@ -624,11 +624,11 @@ models:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: uf
-        description: UF do contrato, via join com prata_pro_moradia_historico_contrato.
+        description: UF do contrato, via join com prata_hist_pro_moradia_contrato.
       - name: municipio
-        description: Município do contrato, via join com prata_pro_moradia_historico_contrato.
+        description: Município do contrato, via join com prata_hist_pro_moradia_contrato.
       - name: nome_empreendimento
-        description: Nome do empreendimento, via join com prata_pro_moradia_historico_contrato.
+        description: Nome do empreendimento, via join com prata_hist_pro_moradia_contrato.
       - name: valor_contratado
         description: Valor total contratado (denominador de percentual_acumulado_contratado).
       - name: valor_liberado_mes
@@ -642,12 +642,12 @@ models:
           `valor_acumulado / valor_contratado`. `null` quando
           `valor_contratado` é nulo ou zero (sem erro de divisão por zero).
 
-  - name: ouro_historico_pro_moradia_paralisacao
+  - name: ouro_hist_pro_moradia_paralisacao
     description: >
       Ouro — histórico semanal de paralisação por contrato Pró-Moradia
       (change criar-ouro-serie-historica-frentes-novas, design.md D5). Grão:
       (codigo_contrato, dt_referencia). Enriquecimento direto de
-      `prata_pro_moradia_historico_paralisacao` com contexto de contrato (uf,
+      `prata_hist_pro_moradia_paralisacao` com contexto de contrato (uf,
       municipio, nome_empreendimento) — sem agregar nem deduplicar por
       competência: cada semana de observação permanece uma linha distinta.
       Ausência de linha NÃO é marcada como "paralisação resolvida" — um
@@ -679,11 +679,11 @@ models:
           - not_null
           - verificacao_tipagem: { arguments: { tipo_esperado: DATE } }
       - name: uf
-        description: UF do contrato, via join com prata_pro_moradia_historico_contrato.
+        description: UF do contrato, via join com prata_hist_pro_moradia_contrato.
       - name: municipio
-        description: Município do contrato, via join com prata_pro_moradia_historico_contrato.
+        description: Município do contrato, via join com prata_hist_pro_moradia_contrato.
       - name: nome_empreendimento
-        description: Nome do empreendimento, via join com prata_pro_moradia_historico_contrato.
+        description: Nome do empreendimento, via join com prata_hist_pro_moradia_contrato.
       - name: dias_sem_evolucao
         description: Dias sem evolução reportados na fonte (valor cru).
       - name: faixa_paralisacao

@@ -97,7 +97,7 @@ models:
     # sem equivalente em prod/main) também foi apagado: sua única consumidora
     # (`prata_fds_historico_dim_empreendimento`) foi descontinuada em favor do
     # sucessor já publicado em `fds_dbt` (`prata_fds_dim_empreendimento`) — ver
-    # `prata_fds_historico_empreendimento.sql`. `indicadores_mcmv_dbt`/
+    # `prata_hist_fds_empreendimento.sql`. `indicadores_mcmv_dbt`/
     # `mcmv_historico_dbt` continuam consumindo os nomes far/fds por `ref()`;
     # após o merge eles resolvem para os modelos de `far_dbt`/`fds_dbt`.
 

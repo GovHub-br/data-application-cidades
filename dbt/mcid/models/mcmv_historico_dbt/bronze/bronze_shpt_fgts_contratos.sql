@@ -8,7 +8,7 @@
 -- PRODUCAO DE HABITACOES", parente de MCMV Cidades) — por isso a bronze NÃO
 -- filtra por `cod_linha` nem por qualquer outra coluna (D1 da change
 -- frentes-restantes-mcmv-historico): é a prata de Pró-Moradia
--- (prata_pro_moradia_historico_contrato) que aplica `where cod_linha = '26'`.
+-- (prata_hist_pro_moradia_contrato) que aplica `where cod_linha = '26'`.
 --
 -- dt_referencia = data de ingestão do arquivo (`_ingested_at`); não há
 -- snapshot datado no nome. `dte_assinatura` vem em formato MM/DD/YY (não

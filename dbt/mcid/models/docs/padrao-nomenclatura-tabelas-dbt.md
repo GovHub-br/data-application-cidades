@@ -41,8 +41,8 @@ gold de um mesmo produto de dados. Ele aparece em:
 | `empreendimento_far` | `far` | Empreendimentos MCMV frente FAR |
 | `empreendimento_fds` | `fds` | Empreendimentos MCMV frente Entidades (FDS) |
 | `empreendimento_rural` | `rural` | Empreendimentos MCMV frente Rural (PNHR) |
-| `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `reloginho` | Reloginho (grupo A), gargalo/desempenho (grupo B) — schema por camada `bronze`/`prata`/`ouro` |
-| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `historico`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/`reforma_casa_brasil`/`fnhis` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
+| `reloginho` (`indicadores_mcmv_dbt`) | bronze: `dhist`; prata/ouro: `relog` | Reloginho (grupo A), gargalo/desempenho (grupo B) — schema por camada `bronze`/`prata`/`ouro` |
+| `mcmv_historico` (`mcmv_historico_dbt`) | bronze: `dhist`/`sftp`/`shpt` (origem); prata/ouro: `hist`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/`reforma_casa_brasil`/`fnhis` (domínio) | Séries históricas multi-mês (pré-2024, backtest, análise preditiva) — schema por camada `bronze`/`prata`/`ouro` |
 
 O token vem **imediatamente após** o prefixo de camada (seção 4) — `bronze_far_…`,
 `prata_dhist_…` — nunca como sufixo.
@@ -56,8 +56,8 @@ Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 > por **camada**: bronze → `bronze`, silver → `prata`, gold → `ouro`. O nome de
 > tabela é `<camada>_<token>_<nome>` — token = **origem de staging** na bronze
 > (`dhist`/`sftp`/`shpt`) e **domínio** na prata/ouro
-> (`historico`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/
-> `reforma_casa_brasil`/`fnhis`/`reloginho`). Reverte a D1 de
+> (`hist`/`far`/`rural`/`fds`/`classe_media`/`mcmv_cidades`/`pro_moradia`/
+> `reforma_casa_brasil`/`fnhis`/`relog`). Reverte a D1 de
 > `consolidar-schemas-historico-reloginho`. Os schemas `dados_historicos`,
 > `reloginho`, de frente, `conjuntura`, `mcmv_historico` e `serie_historica`
 > **não recebem** estes braços. Ver `models/mcmv_historico_dbt/README.md`
@@ -66,13 +66,24 @@ Novo domínio ⇒ registrar nesta tabela **e** criar o bloco correspondente no
 > **Correção (`frentes-restantes-mcmv-historico`, D5): `dhist` não é o token de
 > domínio cross-frente da prata/ouro.** A versão anterior deste parágrafo
 > documentava `dhist` também para esse caso, divergindo do que já estava
-> implementado: os modelos cross-frente usam `historico`
-> (`prata_historico_entrega_apf`, `prata_historico_serie_executiva`,
-> `ouro_historico_marco_empreendimento`, `ouro_historico_serie_mensal`,
-> `ouro_historico_serie_situacao_mensal`,
-> `ouro_historico_snapshot_empreendimento_atual`). `dhist` continua existindo
+> implementado: os modelos cross-frente usam `hist`
+> (`prata_hist_entrega_apf`, `prata_hist_serie_executiva`,
+> `ouro_hist_marco_empreendimento`, `ouro_hist_serie_mensal`,
+> `ouro_hist_serie_situacao_mensal`,
+> `ouro_hist_snapshot_empreendimento_atual`). `dhist` continua existindo
 > **somente** como token de origem na bronze (`staging/dados_historicos/`) —
 > nunca mudou nos fatos, só na documentação desta seção.
+>
+> **Abreviação de tokens e ordem na prata (`renomear-hist-relog-prata-ouro`).**
+> Os tokens `historico`/`reloginho` acima viraram `hist`/`relog` — mais curtos,
+> mesmo lugar relativo à camada. E, só na **prata** do eixo histórico
+> específica de frente, o token `hist` passa a vir **antes** da frente (não
+> depois): `prata_hist_<frente>_<nome>` — nunca `prata_<frente>_hist_<nome>`
+> (ex.: `prata_far_historico_empreendimento` → `prata_hist_far_empreendimento`).
+> Isso alinha a prata com a ouro, que já usava essa ordem
+> (`ouro_hist_<frente>_<nome>`), e com a regra geral da seção 4 de que o token
+> de domínio vem imediatamente após o prefixo de camada. Ver spec
+> `nomenclatura-camadas-pt-historico-reloginho` para o mapa completo.
 
 ---
 
@@ -117,8 +128,9 @@ obrigatório e vem logo após a camada, `<assunto>` sozinho nunca colide:
 - `silver_empreendimento` ❌ (sem token; colidiria entre FAR, FDS, Rural)
 - `silver_far_empreendimento`, `silver_fds_empreendimento`,
   `silver_rural_empreendimento` ✅
-- `prata_far_historico_empreendimento` ✅ (token `mcmv_historico`; a frente
-  `_far` é recorte porque o token do domínio histórico não é a frente)
+- `prata_hist_far_empreendimento` ✅ (token `hist` do domínio `mcmv_historico`,
+  logo após a camada; `far` é recorte de frente — na prata do eixo histórico
+  o recorte de frente vem logo após o token `hist`, não no fim do nome)
 
 O nome do arquivo `.sql` **é** o nome da tabela. Não usar `alias`.
 

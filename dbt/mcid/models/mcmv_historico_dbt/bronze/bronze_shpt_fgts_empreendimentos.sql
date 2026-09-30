@@ -4,7 +4,7 @@
 -- `staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet`, cópia
 -- fiel. 73.231 linhas.
 --
--- Usada pela prata de Pró-Moradia (prata_pro_moradia_historico_contrato) para
+-- Usada pela prata de Pró-Moradia (prata_hist_pro_moradia_contrato) para
 -- enriquecer contratos via `cod_empreendimento` (left join) — fonte
 -- compartilhada em potencial por outras linhas do Canal FGTS, sem filtro.
 --

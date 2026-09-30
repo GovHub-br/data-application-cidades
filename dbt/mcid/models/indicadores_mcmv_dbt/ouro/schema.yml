@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: ouro_reloginho_indicadores_gargalo_desempenho
+  - name: ouro_relog_indicadores_gargalo_desempenho
     description: >
       Tabela Ouro unificada por empreendimento/APF para identificar gargalos e
       desempenho do MCMV nas frentes FAR, FDS e Rural. Consolida atrasos, baixa
@@ -151,10 +151,10 @@ models:
           Timestamp de materialização do ouro — conceito canônico `dt_gold`
           (glossario-mcid.md).
 
-  - name: ouro_reloginho_indicadores
+  - name: ouro_relog_indicadores
     description: >
       Tabela Ouro do reloginho MCMV: série mensal SNH consolidada por agente. Lê
-      a prata `prata_historico_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
+      a prata `prata_hist_snh_apf_mes` (ingestão, tipagem e dedup ficam nas
       camadas bronze e prata). Uma linha por (agente_financeiro, dt_referencia)
       — série de ESTOQUE (carteira acumulada no mês-snapshot da SNH): NÃO somar
       `uh_*` entre `dt_referencia`. Colunas: acumulados uh_contratadas,
@@ -202,7 +202,7 @@ models:
         description: >
           Soma acumulada de UH entregues reportada no snapshot SNH (estoque
           acumulado — não somar entre meses; para o fluxo mensal ver
-          `ouro_reloginho_indicadores_entregas`). Conceito canônico
+          `ouro_relog_indicadores_entregas`). Conceito canônico
           `quantidade_uh_entregues`.
         data_tests:
           - not_null
@@ -222,13 +222,13 @@ models:
           Contagem corrida de meses observados por agente até a linha atual
           (usada no cálculo do ritmo médio mensal de entregas).
 
-  - name: ouro_reloginho_indicadores_frente
+  - name: ouro_relog_indicadores_frente
     description: >
       Tabela Ouro do reloginho MCMV com quebra por frente. Mesma
-      regra de `ouro_reloginho_indicadores`, com frente_mcmv (FAR / Entidades /
+      regra de `ouro_relog_indicadores`, com frente_mcmv (FAR / Entidades /
       Rural) no grão. Uma linha por (agente_financeiro, frente_mcmv,
       dt_referencia) — série de ESTOQUE, não somar `uh_*` entre meses. Somar
-      todas as frentes de um mês reproduz `ouro_reloginho_indicadores`.
+      todas as frentes de um mês reproduz `ouro_relog_indicadores`.
       Base da verificação de cobertura histórica por frente
       (assert_reloginho_frente_cobertura_mensal).
     meta:
@@ -291,7 +291,7 @@ models:
       - name: n_meses_observados
         description: Contagem corrida de meses observados por (agente, frente).
 
-  - name: ouro_reloginho_indicadores_entregas
+  - name: ouro_relog_indicadores_entregas
     description: >
       Tabela Ouro do reloginho — entregas: fluxo por evento vs
       acumulado do snapshot, lado a lado, por (agente_financeiro,
@@ -325,7 +325,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: uh_entregues_snapshot
-        description: UH entregues acumuladas reportadas no snapshot (mesma medida de `ouro_reloginho_indicadores.uh_entregues`).
+        description: UH entregues acumuladas reportadas no snapshot (mesma medida de `ouro_relog_indicadores.uh_entregues`).
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
       - name: dif_evento_vs_snapshot
@@ -333,7 +333,7 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: BIGINT } }
 
-  - name: ouro_reloginho_resumo_dashboard
+  - name: ouro_relog_resumo_dashboard
     description: >
       Tabela Ouro do reloginho para dashboard: uma linha por agente_financeiro
       com o último mês observado da série mensal SNH (uh_contratadas,
@@ -395,15 +395,15 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
 
-  - name: ouro_reloginho_indicadores_frentes_novas
+  - name: ouro_relog_indicadores_frentes_novas
     description: >
       Tabela Ouro do reloginho com a série mensal por frente para Classe
       Média, Reforma Casa Brasil, MCMV Cidades e Pró-Moradia (change
       criar-ouro-reloginho-frentes-novas, design.md D2). Lê
-      `prata_reloginho_frentes_novas_resumo_mes` (inalterada). Uma linha por
+      `prata_relog_frentes_novas_resumo_mes` (inalterada). Uma linha por
       (frente_mcmv, mes_referencia).
 
-      FLUXO vs. ACUMULADO (D2): diferente de `ouro_reloginho_indicadores*`
+      FLUXO vs. ACUMULADO (D2): diferente de `ouro_relog_indicadores*`
       (FAR/Entidades/Rural), cuja fonte SNH já é ESTOQUE por snapshot,
       `n_contratos`/`valor_contratado` aqui são FLUXO — contratos cuja
       `dt_contratacao` cai naquele mês. `n_contratos_acumulado`/
@@ -448,16 +448,16 @@ models:
       - name: n_meses_observados
         description: Contagem corrida de meses observados por frente até a linha atual.
 
-  - name: ouro_reloginho_resumo_dashboard_frentes_novas
+  - name: ouro_relog_resumo_dashboard_frentes_novas
     description: >
       Tabela Ouro do reloginho para dashboard: uma linha por frente_mcmv
       (Classe Média, Reforma Casa Brasil, MCMV Cidades, Pró-Moradia) com o
-      último mês observado de `ouro_reloginho_indicadores_frentes_novas` e o
+      último mês observado de `ouro_relog_indicadores_frentes_novas` e o
       ritmo médio mensal de contratação (change
       criar-ouro-reloginho-frentes-novas, design.md D2).
 
       ritmo_medio_mensal_* = acumulado corrido do último mês / n_meses_observados
-      — mesma fórmula de `ouro_reloginho_resumo_dashboard`, aplicada ao
+      — mesma fórmula de `ouro_relog_resumo_dashboard`, aplicada ao
       acumulado calculado (fonte de fluxo), não a um estoque nativo. Não
       comparar diretamente com `ritmo_medio_mensal` das frentes antigas.
     meta:
@@ -491,17 +491,17 @@ models:
         data_tests:
           - verificacao_tipagem: { arguments: { tipo_esperado: DOUBLE } }
 
-  - name: ouro_reloginho_indicadores_frentes_novas_regiao
+  - name: ouro_relog_indicadores_frentes_novas_regiao
     description: >
       Tabela Ouro do reloginho — quebra nacional/região/UF da série mensal
       cross-frente de Classe Média, Reforma Casa Brasil, MCMV Cidades e
       Pró-Moradia (change criar-ouro-reloginho-frentes-novas, design.md D3).
-      Lê `prata_reloginho_frentes_novas_resumo_mes_uf` (dedup por chave de
+      Lê `prata_relog_frentes_novas_resumo_mes_uf` (dedup por chave de
       negócio já feita na prata) e agrega via GROUPING SETS em 3 níveis,
-      mesmo padrão de `ouro_historico_serie_mensal_frentes_novas`
+      mesmo padrão de `ouro_hist_serie_mensal_frentes_novas`
       (mcmv_historico_dbt). **Não somar entre `nivel_agregacao`** — são
       recortes sobrepostos do mesmo total. Nível 'nacional' bate exatamente
-      com `ouro_reloginho_indicadores_frentes_novas` (mesma fonte, mesma
+      com `ouro_relog_indicadores_frentes_novas` (mesma fonte, mesma
       dedup).
     meta:
       tags: [ouro, mcmv, indicadores, reloginho, dados-historicos, frentes-novas]
@@ -551,12 +551,12 @@ models:
       - name: valor_contratado
         description: Soma de `valor_contratado` do recorte (R$ nominais).
 
-  - name: ouro_reloginho_classe_media_reforma_indicadores_faixa_renda
+  - name: ouro_relog_classe_media_reforma_indicadores_faixa_renda
     description: >
       Tabela Ouro do reloginho — composição mensal por faixa de renda,
       restrita a Classe Média e Reforma Casa Brasil (únicas 2 das 4 frentes
       novas com `faixa_renda` no contrato), a partir de
-      `prata_reloginho_classe_media_reforma_resumo_faixa_renda_mes` (change
+      `prata_relog_classe_media_reforma_resumo_faixa_renda_mes` (change
       criar-ouro-reloginho-frentes-novas, design.md D4). Passagem
       direta/enriquecida, SEM acumulado — dimensão de filtro para o
       dashboard (composição por faixa), não série de ritmo. MCMV Cidades e
@@ -585,13 +585,13 @@ models:
       - name: valor_contratado
         description: Soma de `valor_contratado` da frente no mês/faixa de renda (fluxo do mês, sem acumulado).
 
-  - name: ouro_reloginho_resumo_gargalo_desempenho_dashboard
+  - name: ouro_relog_resumo_gargalo_desempenho_dashboard
     description: >
       Tabela Ouro agregada para dashboard de gargalos e desempenho do MCMV.
       Gera cards e rankings nos níveis nacional, frente, UF, município e
       responsável (coluna `nivel_agregacao`) — um GROUPING SET por nível.
       **Não somar entre `nivel_agregacao`**: são recortes sobrepostos do mesmo
-      universo de empreendimentos FAR+FDS+Rural de `ouro_reloginho_indicadores_gargalo_desempenho`.
+      universo de empreendimentos FAR+FDS+Rural de `ouro_relog_indicadores_gargalo_desempenho`.
       Unidades: `total_uh` em UH; `valor_*` e `saldo_*` em R$ nominais;
       `media_execucao_*` e `percentual_*` em escala 0-100; `atraso_medio_dias`
       em dias.
@@ -612,7 +612,7 @@ models:
           - accepted_values:
               values: ["nacional", "frente", "uf", "municipio", "responsavel"]
       - name: frente
-        description: Frente {FAR, FDS, Rural} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `ouro_reloginho_indicadores_gargalo_desempenho.frente`).
+        description: Frente {FAR, FDS, Rural} nas linhas de nível 'frente'/'uf'/'municipio'/'responsavel'; NULL no nível 'nacional' (ver `ouro_relog_indicadores_gargalo_desempenho.frente`).
       - name: uf
         description: Sigla da UF (2 letras) nas linhas de nível 'uf'/'municipio'; NULL nos demais níveis.
       - name: municipio
@@ -638,7 +638,7 @@ models:
       - name: media_execucao_financeira
         description: Média de `percentual_execucao_financeira` no agrupamento (escala 0-100).
       - name: media_score_gargalo
-        description: Média de `score_gargalo` no agrupamento (escala 0-9, ver `ouro_reloginho_indicadores_gargalo_desempenho.score_gargalo`).
+        description: Média de `score_gargalo` no agrupamento (escala 0-9, ver `ouro_relog_indicadores_gargalo_desempenho.score_gargalo`).
       - name: atraso_medio_dias
         description: Média de `dias_atraso` entre os casos com atraso > 0 no agrupamento (dias).
       - name: media_dias_sem_atualizacao

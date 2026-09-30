@@ -4,7 +4,7 @@ Documento de exploração (não é entrega de código): explica por que a frente
 FNHIS não entra na rodada de tabelas ouro históricas das frentes novas
 (Classe Média, Reforma Casa Brasil, MCMV Cidades, Pró-Moradia), apesar de já
 ter bronze+prata (`bronze_shpt_fnhis_propostas_apresentadas`/`_selecionadas`,
-`prata_fnhis_historico_proposta`) desde a change `renomear-sub50-para-fnhis-historico`.
+`prata_hist_fnhis_proposta`) desde a change `renomear-sub50-para-fnhis-historico`.
 
 Consultado direto no MinIO (`s3://data-lake-mcid/`, DuckDB, credenciais
 `.env`, somente leitura) em 2026-09-29.
@@ -77,7 +77,7 @@ outras 4 frentes, onde a série cresce a cada semana automaticamente.
 
 ## Recomendação
 
-Manter `prata_fnhis_historico_proposta` como está (proposta única, sem
+Manter `prata_hist_fnhis_proposta` como está (proposta única, sem
 série) e não construir tabela ouro para FNHIS nesta rodada. Revisitar quando:
 (a) uma nova extração de `selecionadas`/`apresentadas` aparecer no staging —
 mesmo um segundo ponto no tempo já permitiria uma métrica de variação, ainda

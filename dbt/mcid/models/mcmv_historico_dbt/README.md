@@ -11,8 +11,14 @@ Schema por **camada do medalhão, em português** — reverte a D1 de
 | camada | schema | nome de tabela |
 |---|---|---|
 | bronze | `bronze` | `bronze_<origem>_<nome>` — origem ∈ `dhist` (`staging/dados_historicos/`), `sftp` (`staging/sftp/`), `shpt` (`staging/sharepoint/`) |
-| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `historico`, `far`, `rural`, `fds`, `classe_media`, `mcmv_cidades`, `pro_moradia`, `reforma_casa_brasil`, `fnhis`, `reloginho` |
+| prata | `prata` | `prata_<domínio>_<nome>` — domínio ∈ `hist`, `far`, `rural`, `fds`, `classe_media`, `mcmv_cidades`, `pro_moradia`, `reforma_casa_brasil`, `fnhis`, `relog` |
 | ouro | `ouro` | `ouro_<domínio>_<nome>` |
+
+Na **prata** de frente do eixo histórico, o token `hist` vem **antes** da
+frente: `prata_hist_<frente>_<nome>` (ex.: `prata_hist_far_empreendimento`),
+nunca `prata_<frente>_hist_<nome>` — alinhado com a ouro, que já usa essa
+ordem (`ouro_hist_<frente>_<nome>`). Tokens abreviados pela change
+`renomear-hist-relog-prata-ouro` (`historico`→`hist`, `reloginho`→`relog`).
 
 Vale para os 48 modelos dos dois braços (`mcmv_historico_dbt` exceto `piloto/` +
 `indicadores_mcmv_dbt`), cross-frente, por frente ou de gargalo — 33 originais
@@ -100,11 +106,11 @@ corpo `bronze_frente_gefus_semanal`); as bronzes flat de arquivo único
 
 | frente | bronze(s) | prata | grão |
 |---|---|---|---|
-| Classe Média | `bronze_sftp_classe_media_faixa3` | `prata_classe_media_historico_contrato` | contrato PF/FGTS × semana |
-| MCMV Cidades | `bronze_sftp_mcmv_cidades` + `bronze_shpt_mcmv_cidades_emendas` (não reconciliadas, D2) | `prata_mcmv_cidades_historico_contrato` (`union all` + dedup por fonte, `fonte_bronze` discrimina) | ente público × mês / contrato |
-| Pró-Moradia | `bronze_shpt_fgts_contratos` (Canal FGTS fiel, sem filtro) + `bronze_shpt_fgts_empreendimentos` + `bronze_shpt_fgts_dom_linha` | `prata_pro_moradia_historico_contrato` (filtra `cod_linha='26'` — D1) | contrato |
-| Reforma Casa Brasil | `bronze_sftp_reforma_casa_brasil` + `bronze_shpt_reforma_casa_brasil_contratacao` (fiel, não unida à prata) | `prata_reforma_casa_brasil_historico_contrato` | contrato PF/FGTS × semana |
-| FNHIS/SUB50 | `bronze_shpt_fnhis_propostas_apresentadas` + `_selecionadas` | `prata_fnhis_historico_proposta` (`union all`, `status_proposta` discrimina) | proposta |
+| Classe Média | `bronze_sftp_classe_media_faixa3` | `prata_hist_classe_media_contrato` | contrato PF/FGTS × semana |
+| MCMV Cidades | `bronze_sftp_mcmv_cidades` + `bronze_shpt_mcmv_cidades_emendas` (não reconciliadas, D2) | `prata_hist_mcmv_cidades_contrato` (`union all` + dedup por fonte, `fonte_bronze` discrimina) | ente público × mês / contrato |
+| Pró-Moradia | `bronze_shpt_fgts_contratos` (Canal FGTS fiel, sem filtro) + `bronze_shpt_fgts_empreendimentos` + `bronze_shpt_fgts_dom_linha` | `prata_hist_pro_moradia_contrato` (filtra `cod_linha='26'` — D1) | contrato |
+| Reforma Casa Brasil | `bronze_sftp_reforma_casa_brasil` + `bronze_shpt_reforma_casa_brasil_contratacao` (fiel, não unida à prata) | `prata_hist_reforma_casa_brasil_contrato` | contrato PF/FGTS × semana |
+| FNHIS/SUB50 | `bronze_shpt_fnhis_propostas_apresentadas` + `_selecionadas` | `prata_hist_fnhis_proposta` (`union all`, `status_proposta` discrimina) | proposta |
 
 PII de mutuário (Classe Média / Reforma Casa Brasil): `nu_cpf_cnpj_mutuario`,
 `no_mutuario`, `dt_nascimento_mutuario` existem na bronze (linhagem) mas NÃO
@@ -143,8 +149,8 @@ introspeccionam a relação no banco (`adapter.get_columns_in_relation`) **no
 momento em que a prata é compilada**, para montar o `coalesce` só com as
 colunas que aquela família realmente tem. Quem depende disso:
 
-- `prata_dhist_serie_executiva` → as 4 bronzes da série executiva;
-- `prata_far_historico_empreendimento` / `_fds` / `_rural` → as 2 bronzes
+- `prata_hist_serie_executiva` → as 4 bronzes da série executiva;
+- `prata_hist_far_empreendimento` / `_fds` / `_rural` → as 2 bronzes
   SNH (as colunas divergem entre agentes: `uhs_contratadas`/`uhs_entregues` só
   existem no BB, `dt_entrega` só na CAIXA), as bronzes GEFUS
   (INT040/054/059/065 — `qt_unidades_ociosas` / `qtde_uh_inicial` /

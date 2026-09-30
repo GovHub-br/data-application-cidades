@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: prata_far_historico_empreendimento
+  - name: prata_hist_far_empreendimento
     description: >
       Prata — série histórica mensal de empreendimentos MCMV da frente FAR
       (SFTP INT040/INT054 ∪ SNH modalidade=FAR ∪ braço MONIT_MOV_OBRA), contrato
@@ -38,7 +38,7 @@ models:
     columns: &contrato_empreendimento
       # verificacao_tipagem: tipo_esperado nos nomes do DuckDB. Ref:
       # docs/inventario-tipagem-silver-gold.md. As 3 pratas por frente + o
-      # ouro_historico_snapshot_empreendimento_atual compartilham este contrato de tipos.
+      # ouro_hist_snapshot_empreendimento_atual compartilham este contrato de tipos.
       - name: id_historico_snapshot
         description: Chave técnica única por frente, APF e mês de referência.
         data_tests:
@@ -147,7 +147,7 @@ models:
       - name: quantidade_uh_entregues
         description: >
           Unidades habitacionais entregues (acumulado). coalesce(braço da linha,
-          valor preservado no grão, espinha prata_historico_entrega_apf) —
+          valor preservado no grão, espinha prata_hist_entrega_apf) —
           só preenche NULL, nunca sobrescreve 0. No FDS o valor vem do braço
           INT059.
         data_tests:
@@ -588,7 +588,7 @@ models:
       - name: id_obra_snapshot
         description: Chave técnica do snapshot de obra (md5 de frente|apf|mês). NULL fora da janela obra.
 
-  - name: prata_fds_historico_empreendimento
+  - name: prata_hist_fds_empreendimento
     description: >
       Prata — série histórica mensal de empreendimentos MCMV da frente
       FDS/Entidades (SFTP INT059 ∪ SNH modalidade=ENTIDADES ∪ braço
@@ -618,7 +618,7 @@ models:
           config: { severity: warn }
     columns: *contrato_empreendimento
 
-  - name: prata_rural_historico_empreendimento
+  - name: prata_hist_rural_empreendimento
     description: >
       Prata — série histórica mensal de empreendimentos MCMV da frente Rural
       (SFTP INT057/INT065 ∪ SNH modalidade=RURAL ∪ braço MONIT_MOV_OBRA).
@@ -653,16 +653,16 @@ models:
     columns: *contrato_empreendimento
 
   # Os atributos estáveis do empreendimento ficam em colunas de
-  # ouro_historico_snapshot_empreendimento_atual (ver ouro/schema.yml).
+  # ouro_hist_snapshot_empreendimento_atual (ver ouro/schema.yml).
 
-  - name: prata_historico_entrega_apf
+  - name: prata_hist_entrega_apf
     description: >
       Prata — espinha de entregas por APF. Grão: 1 linha por `apf`. Consolida os
       EVENTOS de entrega de UH da SNH (bronze_dhist_snh_entregas_evento_bb /
       _caixa, mesma fonte do reloginho) num atributo estável: dt_primeira_entrega,
       dt_ultima_entrega, uh_entregues_acumulada, n_eventos, dt_ultimo_snapshot.
       Dedup por hash de conteúdo (agente, apf, dt_evento, qtd) idêntico ao de
-      prata_historico_snh_entregas_mes — os totais reconciliam. As pratas
+      prata_hist_snh_entregas_mes — os totais reconciliam. As pratas
       históricas por frente fazem left join por `apf` para resolver
       dt_entrega_uh / quantidade_uh_entregues nas lacunas do SFTP.
     meta:
@@ -695,7 +695,7 @@ models:
       - name: dt_ultimo_snapshot
         description: Maior dt_referencia de snapshot em que o APF apareceu nos streams de evento.
 
-  - name: prata_historico_serie_executiva
+  - name: prata_hist_serie_executiva
     description: >
       Prata — série executiva histórica no contrato comum. Aplica o mapa de
       colunas via coalesce_present() e tipa os campos (UH inteiras, valores em
@@ -863,7 +863,7 @@ models:
           (min_cidades) / `mvalor_investimento` (bext). Nulo em entrada_bb.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -876,7 +876,7 @@ models:
           atuais (`valor_financiamento_fds` no FDS/Rural, `valor_far` no FAR).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -901,7 +901,7 @@ models:
           (bases_relatorio) / `vlr_contrapartida` (min_cidades, raro).
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -912,7 +912,7 @@ models:
           (bases_relatorio) / `mvalor_desembolso` (bext). ∅ nas outras famílias.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -924,7 +924,7 @@ models:
           `coalesce(subsidio_fgts + subsidio_ogu, subsidio_total)`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -934,7 +934,7 @@ models:
           (R$). Ver a nota anti-soma em `subsidio_fgts`.
         data_tests:
           - completude_minima:
-              arguments: { seed: campos_obrigatorios, modelo: prata_historico_serie_executiva }
+              arguments: { seed: campos_obrigatorios, modelo: prata_hist_serie_executiva }
               config: { severity: warn }
           - valor_nao_negativo:
               config: { severity: error }
@@ -977,7 +977,7 @@ models:
 
   # --- frentes novas (change frentes-restantes-mcmv-historico) ---
 
-  - name: prata_classe_media_historico_contrato
+  - name: prata_hist_classe_media_contrato
     description: >
       Prata — contratos MCMV Classe Média (Faixa 3), tipada e deduplicada por
       (nu_contrato, dt_referencia) a partir de bronze_sftp_classe_media_faixa3.
@@ -1008,11 +1008,11 @@ models:
         data_tests:
           - not_null
 
-  - name: prata_reforma_casa_brasil_historico_contrato
+  - name: prata_hist_reforma_casa_brasil_contrato
     description: >
       Prata — contratos Reforma Casa Brasil, tipada e deduplicada por
       (nu_contrato, dt_referencia) a partir de bronze_sftp_reforma_casa_brasil.
-      Mesmo desenho de prata_classe_media_historico_contrato (D3). Grão:
+      Mesmo desenho de prata_hist_classe_media_contrato (D3). Grão:
       contrato PF/FGTS × semana de snapshot.
     meta:
       tags: [prata, mcmv, dados-historicos, reforma-casa-brasil]
@@ -1040,7 +1040,7 @@ models:
         data_tests:
           - not_null
 
-  - name: prata_mcmv_cidades_historico_contrato
+  - name: prata_hist_mcmv_cidades_contrato
     description: >
       Prata — contratos MCMV Cidades, união (D2) de bronze_sftp_mcmv_cidades
       (GEFUS, grão agregado por ente público) e
@@ -1077,7 +1077,7 @@ models:
       - name: valor_contratado
         description: Valor contratado (numeric(15,2)) — `valor` (GEFUS) ou `vlr_do_financiamento_bruto` (emendas).
 
-  - name: prata_pro_moradia_historico_contrato
+  - name: prata_hist_pro_moradia_contrato
     description: >
       Prata — contratos Pró-Moradia, recorte por `cod_linha = '26'` dentro de
       bronze_shpt_fgts_contratos (D1 — a única frente das 5 sem arquivo
@@ -1116,13 +1116,13 @@ models:
           1995-2009 e 2023+ — hiato 2009-2023 é limitação de fonte, não bug
           (ver descrição do model).
 
-  - name: prata_pro_moradia_historico_desembolso_mensal
+  - name: prata_hist_pro_moradia_desembolso_mensal
     description: >
       Prata — desembolso mensal do FGTS por contrato Pró-Moradia, LEDGER
       CUMULATIVO deduplicado por competência a partir de
       bronze_sftp_pro_moradia_desembolsos (38 snapshots semanais GEAVO).
-      `inner join` com prata_pro_moradia_historico_contrato restringe ao
-      universo Pró-Moradia. Diferente de prata_pro_moradia_historico_paralisacao
+      `inner join` com prata_hist_pro_moradia_contrato restringe ao
+      universo Pró-Moradia. Diferente de prata_hist_pro_moradia_paralisacao
       (retrato semanal, sem dedup — cada semana de observação é uma linha),
       esta prata mantém só o valor mais recentemente conhecido de cada
       competência: `vlr_liberado` é somado dentro de cada snapshot antes do
@@ -1165,15 +1165,15 @@ models:
         data_tests:
           - not_null
 
-  - name: prata_pro_moradia_historico_execucao_obra
+  - name: prata_hist_pro_moradia_execucao_obra
     description: >
       Prata — execução física de obra por contrato Pró-Moradia, LEDGER
       CUMULATIVO deduplicado por competência de avaliação a partir de
       bronze_sftp_pro_moradia_execucoes_obra (38 snapshots semanais GEAVO).
-      Mesmo tratamento de prata_pro_moradia_historico_desembolso_mensal
+      Mesmo tratamento de prata_hist_pro_moradia_desembolso_mensal
       (dedup por competência, mantendo o `dt_referencia` mais recente) —
       diferente do retrato semanal sem dedup de
-      prata_pro_moradia_historico_paralisacao. `prc_prev_acum_mes`/
+      prata_hist_pro_moradia_paralisacao. `prc_prev_acum_mes`/
       `prc_real_acum_mes` expostos como vêm da fonte, sem normalizar. Grão:
       contrato × competência de avaliação.
     meta:
@@ -1207,7 +1207,7 @@ models:
         data_tests:
           - not_null
 
-  - name: prata_pro_moradia_historico_paralisacao
+  - name: prata_hist_pro_moradia_paralisacao
     description: >
       Prata — paralisação de contratos Pró-Moradia ao longo do tempo, RETRATO
       SEMANAL sem dedup a partir de bronze_sftp_pro_moradia_paralisacoes (38
@@ -1253,7 +1253,7 @@ models:
         data_tests:
           - not_null
 
-  - name: prata_fnhis_historico_proposta
+  - name: prata_hist_fnhis_proposta
     description: >
       Prata — propostas FNHIS/SUB50, união de bronze_shpt_fnhis_propostas_apresentadas
       e bronze_shpt_fnhis_propostas_selecionadas, discriminadas por
