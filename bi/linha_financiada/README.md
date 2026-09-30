@@ -10,7 +10,7 @@ Artefatos comuns ao dashboard do Superset e ao relatório do Power BI.
 4. **Contrapartidas** — valores conhecidos, contratos beneficiados e cobertura da fonte.
 5. **Orçamento e predição** — orçamento oneroso, descontos, execução e série de features.
 
-## Filtros compartilhados
+## Filtros previstos
 
 - período;
 - fonte de recurso;
@@ -20,6 +20,9 @@ Artefatos comuns ao dashboard do Superset e ao relatório do Power BI.
 - faixa, programa, modalidade e tipo de imóvel;
 - agente financeiro;
 - situação do empreendimento.
+
+Os filtros nativos compartilhados serão configurados após a primeira
+publicação, quando os datasets estiverem validados no Superset.
 
 ## Superset
 

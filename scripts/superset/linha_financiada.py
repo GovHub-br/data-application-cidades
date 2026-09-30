@@ -73,7 +73,7 @@ CHARTS = [
         "params": {
             "query_mode": "raw",
             "all_columns": [],
-            "order_by_cols": ["[\"semana_contratacao\", false]"],
+            "order_by_cols": ["[\"semana_referencia\", false]"],
             "row_limit": 1000,
         },
     },
@@ -121,7 +121,7 @@ CHARTS = [
         "viz_type": "table",
         "params": {
             "query_mode": "aggregate",
-            "groupby": ["fonte_recurso", "tipo_contrapartida", "situacao_cobertura"],
+            "groupby": ["fonte_recurso", "tipo_contrapartida", "ic_valor_informado"],
             "metrics": ["sum__quantidade_contratos", "sum__valor_contrapartida"],
             "row_limit": 1000,
         },
@@ -230,8 +230,33 @@ def dashboard(api: Superset, ids_chart: dict[str, int]) -> None:
     atual = api.dashboard_id(DASHBOARD_SLUG)
     if atual:
         api.update("dashboard", atual, payload)
+        dashboard_id = atual
     else:
-        api.create("dashboard", payload)
+        dashboard_id = api.create("dashboard", payload)["id"]
+
+    # O position_json sozinho não dá permissão nem associa o chart ao painel.
+    # A associação explícita evita layout que parece pronto, mas abre sem charts.
+    if api.dry_run:
+        return
+    for chart_id in ids_chart.values():
+        resposta = api.session.get(
+            f"{api.base_url}/api/v1/chart/{chart_id}", timeout=30
+        )
+        resposta.raise_for_status()
+        chart = resposta.json().get("result", {})
+        atuais = {item["id"] for item in (chart.get("dashboards") or [])}
+        if dashboard_id not in atuais:
+            api.update("chart", chart_id, {"dashboards": sorted(atuais | {dashboard_id})})
+
+    ligados = api.session.get(
+        f"{api.base_url}/api/v1/dashboard/{DASHBOARD_SLUG}/charts", timeout=30
+    )
+    ligados.raise_for_status()
+    quantidade = len(ligados.json().get("result", []))
+    if quantidade != len(ids_chart):
+        raise RuntimeError(
+            f"Dashboard recebeu {quantidade} charts; esperados {len(ids_chart)}."
+        )
 
 
 def main() -> None:

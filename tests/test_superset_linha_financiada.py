@@ -30,5 +30,14 @@ def test_dashboard_tem_mapa_e_cobertura_das_perguntas() -> None:
     assert por_chave["cobertura"]["dataset"].endswith("cobertura_perguntas")
 
 
+def test_campos_dos_charts_conferem_com_as_golds() -> None:
+    m = modulo()
+    por_chave = {c["key"]: c for c in m.CHARTS}
+    assert por_chave["semanal"]["params"]["order_by_cols"] == [
+        '["semana_referencia", false]'
+    ]
+    assert "ic_valor_informado" in por_chave["contrapartidas"]["params"]["groupby"]
+
+
 def test_slug_do_dashboard_e_estavel() -> None:
     assert modulo().DASHBOARD_SLUG == "linha-financiada"
