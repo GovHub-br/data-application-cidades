@@ -13,7 +13,7 @@ with pf_fgts as (
         count(*) as quantidade_contratos,
         sum(valor_financiamento) as valor_financiamento
     from {{ ref('prata_linha_financiada_pf_fgts') }}
-    group by all
+    group by 1, 2, 3, 4, 5
 ),
 
 fundo_social as (
@@ -27,9 +27,9 @@ fundo_social as (
         sum(valor_financiamento) as valor_financiamento
     from {{ ref('prata_linha_financiada_contrato') }}
     where ic_fundo_social
-    group by all
+    group by 1, 2, 3, 4, 5
 )
 
 select *, current_timestamp as dt_gold from pf_fgts
-union all by name
+union all
 select *, current_timestamp as dt_gold from fundo_social

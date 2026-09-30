@@ -5,9 +5,9 @@ with contratos as (
         codigo_empreendimento,
         count(*) as quantidade_contratos,
         sum(coalesce(valor_financiamento, 0)) as valor_financiamento,
-        max(ic_pro_moradia) as ic_pro_moradia,
-        max(ic_mcmv_cidades) as ic_mcmv_cidades,
-        max(ic_classe_media) as ic_classe_media
+        bool_or(ic_pro_moradia) as ic_pro_moradia,
+        bool_or(ic_mcmv_cidades) as ic_mcmv_cidades,
+        bool_or(ic_classe_media) as ic_classe_media
     from {{ ref('ouro_linha_financiada_base_agregada') }}
     where codigo_empreendimento is not null
     group by 1

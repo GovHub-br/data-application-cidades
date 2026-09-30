@@ -404,6 +404,10 @@ models:
             owner: mcid-data-engineering
       prata:
         +schema: prata
+        # Materializa dentro do motor DuckDB instalado no PostgreSQL para
+        # evitar spill local e cópia de dados pelo cliente.
+        +pre-hook:
+          - "{% if target.type == 'postgres' %}SET LOCAL duckdb.force_execution = true{% endif %}"
         +meta:
           governance:
             product: linha_financiada
@@ -417,6 +421,8 @@ models:
             owner: mcid-data-engineering
       ouro:
         +schema: ouro
+        +pre-hook:
+          - "{% if target.type == 'postgres' %}SET LOCAL duckdb.force_execution = true{% endif %}"
         +meta:
           governance:
             product: linha_financiada
