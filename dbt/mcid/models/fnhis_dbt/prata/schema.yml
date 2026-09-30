@@ -51,6 +51,12 @@ models:
         description: Verdadeiro para as propostas do grupo de áreas de risco.
       - name: justificativa_nao_enquadramento
         description: Motivo do não enquadramento, quando houver.
+      - name: arquivo_de_origem
+        description: Arquivo da staging de onde veio a linha (`_source_file` da bronze).
+      - name: criado_em
+        description: >
+          Momento em que a linha foi ingerida no lake (`_ingested_at` da bronze). É carimbo de
+          ingestão, não data de negócio.
 
   - name: prata_fnhis_termo_compromisso
     description: >
@@ -78,22 +84,36 @@ models:
         description: Código do programa no TransfereGov.
       - name: situacao_contratacao
         description: Situação da contratação (Normal, Cláusula Suspensiva, Liminar Judicial).
+      - name: situacao_proposta
+        description: >
+          Situação da proposta no TransfereGov — o estágio dela dentro do sistema de transferência,
+          diferente do `resultado_selecao` da prata_fnhis_propostas, que é o resultado da seleção
+          do MCID.
       - name: situacao_instrumento
         description: Situação do instrumento (Em execução, Convênio Anulado, Convênio Rescindido, Prestação de Contas...).
-      - name: ic_instrumento_ativo
-        description: Falso quando o termo foi anulado, rescindido ou não chegou a ter instrumento.
+      - name: modalidade_instrumento
+        description: Modalidade do instrumento de transferência no TransfereGov (convênio, contrato de repasse, termo).
+      - name: valor_repasse_proposta
+        description: >
+          Valor de repasse como constava na PROPOSTA, em R$. Fica ao lado de `valor_repasse`
+          (o do instrumento firmado) justamente para tornar visível a diferença entre pedido e
+          pactuado.
       - name: valor_repasse
         description: Valor de repasse do FNHIS, em R$.
       - name: valor_contrapartida
         description: Contrapartida do ente, em R$.
-      - name: valor_investimento
-        description: Repasse + contrapartida, em R$.
+      - name: valor_empenhado_pre_convenio
+        description: Valor empenhado antes da celebração do convênio (pré-convênio), em R$.
       - name: valor_empenhado_acumulado
         description: Valor empenhado acumulado, em R$.
+      - name: objeto
+        description: Objeto do termo de compromisso, como descrito no painel do TransfereGov.
       - name: uf
         description: UF do proponente.
       - name: municipio
         description: Município do proponente.
+      - name: regiao
+        description: Região geográfica do proponente, como vem do painel.
       - name: proponente_nome
         description: Ente proponente.
       - name: proponente_cnpj
@@ -102,6 +122,16 @@ models:
         description: Data de assinatura do termo.
       - name: dt_consulta
         description: Data de extração do painel no TransfereGov.
+      - name: arquivo_de_origem
+        description: Arquivo do painel mensal de onde veio a linha (o `filename` do parquet vencedor).
+      - name: criado_em
+        description: >
+          Momento em que a linha foi ingerida no lake (`_ingested_at` da bronze). É carimbo de
+          ingestão, não data de negócio.
+      - name: ic_instrumento_ativo
+        description: Falso quando o termo foi anulado, rescindido ou não chegou a ter instrumento.
+      - name: valor_investimento
+        description: Repasse + contrapartida, em R$.
 
   - name: prata_fnhis_prioritarios_snh
     description: >
@@ -119,12 +149,26 @@ models:
           - unique
       - name: cod_operacao_agente
         description: Código da operação na CAIXA (7 dígitos). Não é APF.
+      - name: agente_financeiro
+        description: Agente financeiro da operação — no Sub-50 é a CAIXA na totalidade das operações.
+      - name: empreendimento_nome
+        description: Nome do empreendimento como a SNH o registra.
       - name: modalidade
         description: Modalidade; o model filtra FNHIS.
         data_tests:
           - accepted_values:
               arguments:
                 values: ["FNHIS"]
+      - name: ic_novo_mcmv
+        description: Verdadeiro quando a operação é do Novo MCMV.
+      - name: municipio
+        description: Município do empreendimento, em caixa alta.
+      - name: uf
+        description: Sigla da UF do empreendimento.
+      - name: estado_nome
+        description: Nome por extenso da UF do empreendimento.
+      - name: regiao
+        description: Região geográfica do empreendimento. O `#N/D` da origem vira nulo.
       - name: cod_ibge_6
         description: IBGE do município sem o dígito verificador (6 dígitos), como a SNH grava.
       - name: situacao
@@ -133,14 +177,44 @@ models:
           - sem_mojibake:
               config:
                 severity: warn
+      - name: situacao_agrupada
+        description: Agrupamento da situação do empreendimento já entregue pela própria SNH.
+      - name: ic_operacao_vigente
+        description: Verdadeiro quando a SNH marca a operação como vigente.
       - name: percentual_execucao_fisica
         description: Percentual de execução da obra.
+      - name: uh_contratadas
+        description: Unidades habitacionais contratadas.
+      - name: uh_entregues
+        description: Unidades habitacionais já entregues.
+      - name: uh_vigentes
+        description: Unidades habitacionais vigentes (contratadas menos as distratadas).
+      - name: uh_distratadas
+        description: Unidades habitacionais distratadas.
+      - name: uh_a_entregar
+        description: Unidades habitacionais ainda a entregar, conforme a SNH.
+      - name: valor_contratado_original
+        description: Valor contratado na assinatura, antes de aporte adicional, em R$.
+      - name: valor_aporte_adicional
+        description: Aporte adicional concedido depois da contratação, em R$.
       - name: valor_contratado
         description: Valor contratado total, em R$.
       - name: valor_desembolsado
         description: Valor desembolsado total, em R$.
       - name: dt_contratacao
         description: Data da contratação.
+      - name: dt_previsao_termino
+        description: Data prevista para o término da obra.
+      - name: dt_termino
+        description: Data efetiva do término da obra, quando já concluída.
+      - name: dt_referencia
+        description: Data de referência do extrato da SNH — a que mês a foto se refere.
+      - name: arquivo_de_origem
+        description: Arquivo da staging de onde veio a linha (`_source_file` da bronze).
+      - name: criado_em
+        description: >
+          Momento em que a linha foi ingerida no lake (`_ingested_at` da bronze). É carimbo de
+          ingestão, não data de negócio.
 
   - name: prata_fnhis_regularidade_entes
     description: >
@@ -157,20 +231,38 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: cod_ibge_6
+        description: IBGE do ente sem o dígito verificador (6 dígitos), para cruzar com as bases da SNH.
       - name: ente_esfera
         description: Estado/DF ou Município.
       - name: ente_nome
         description: Nome do ente.
+      - name: uf
+        description: UF do ente.
+      - name: ente_cnpj
+        description: CNPJ do ente (apenas dígitos). É ente público, não pessoa.
       - name: populacao
         description: População do ente.
+      - name: ic_regiao_metropolitana
+        description: Verdadeiro quando o ente integra região metropolitana, conforme a extração da CAIXA.
       - name: situacao_lei_fundo
         description: Lei de criação do Fundo Local de Habitação de Interesse Social (FLHIS) — Regular ou Pendente.
+      - name: dt_lei_fundo
+        description: Data da análise da lei do FLHIS pela CEFUS.
       - name: situacao_lei_conselho
         description: Lei do conselho gestor do FLHIS — Regular ou Pendente.
+      - name: dt_lei_conselho
+        description: Data da análise da lei do conselho gestor pela CEFUS.
       - name: situacao_termo_adesao
         description: Termo de adesão ao SNHIS — Regular ou Pendente.
+      - name: dt_termo_adesao
+        description: Data da análise do termo de adesão pela CEFUS.
       - name: situacao_plano_habitacional
         description: Plano Local de Habitação de Interesse Social — Regular ou Pendente.
+      - name: dt_plano_habitacional
+        description: Data da análise do plano habitacional pela CEFUS.
+      - name: ano_relatorio_gestao
+        description: Ano do relatório de gestão do fundo a que a situação se refere.
       - name: situacao_relatorio_gestao
         description: Situação do relatório de gestão do fundo.
       - name: situacao_ente
@@ -183,3 +275,11 @@ models:
                 severity: warn
       - name: ic_ente_regular
         description: Verdadeiro quando a situação do ente é Regular.
+      - name: dt_referencia
+        description: Data de referência da extração semanal — a que semana a foto se refere.
+      - name: arquivo_de_origem
+        description: Arquivo da staging de onde veio a linha (`_source_file` da bronze).
+      - name: criado_em
+        description: >
+          Momento em que a linha foi ingerida no lake (`_ingested_at` da bronze). É carimbo de
+          ingestão, não data de negócio.

@@ -20,20 +20,74 @@ models:
               arguments:
                 to: ref('prata_fnhis_termo_compromisso')
                 field: numero_proposta_transferegov
+      - name: numero_proposta
+        description: Número da proposta na seleção do MCID — a chave que liga o termo à proposta.
+      - name: codigo_programa
+        description: Código do programa no TransfereGov.
       - name: programa
         description: Sempre "Novo MCMV FNHIS Sub-50".
+      - name: uf
+        description: UF do proponente.
       - name: regiao
         description: Região geográfica da UF.
+      - name: municipio
+        description: Município do proponente.
+      - name: cod_ibge
+        description: >
+          Código IBGE do município beneficiado (7 dígitos), vindo da proposta. Nulo quando o termo
+          não casou com nenhuma proposta da seleção.
+      - name: municipio_uf
+        description: Localização no formato "Município/UF".
+      - name: termo_municipio
+        description: Rótulo "proposta TransfereGov - Município/UF", usado como dimensão de filtro no Superset.
+      - name: proponente_nome
+        description: Ente proponente.
+      - name: proponente_esfera
+        description: Município ou Estado/DF, conforme a administração pública proponente.
+      - name: objeto
+        description: Objeto do termo de compromisso, como descrito no painel do TransfereGov.
+      - name: situacao_selecao
+        description: >
+          Situação da proposta na SELEÇÃO do MCID (portaria nº 673/2024) — não confundir com
+          `situacao_proposta`, que é o estágio dela dentro do TransfereGov.
+      - name: ic_proposta_de_risco
+        description: Verdadeiro para as propostas do grupo de áreas de risco.
       - name: quantidade_uh
         description: UH da proposta selecionada.
       - name: pessoas_atendidas
         description: Estimativa = UH × 3,3 moradores por domicílio, truncada.
+      - name: situacao_contratacao
+        description: Situação da contratação (Normal, Cláusula Suspensiva, Liminar Judicial).
+      - name: situacao_proposta
+        description: Situação da proposta no TransfereGov — o estágio dela dentro do sistema de transferência.
+      - name: situacao_instrumento
+        description: Situação do instrumento (Em execução, Convênio Anulado, Convênio Rescindido, Prestação de Contas...).
+      - name: ic_instrumento_ativo
+        description: Falso quando o termo foi anulado, rescindido ou não chegou a ter instrumento.
+      - name: dt_assinatura
+        description: Data de assinatura do termo.
+      - name: valor_repasse
+        description: Valor de repasse do FNHIS, em R$.
+      - name: valor_contrapartida
+        description: Contrapartida do ente, em R$.
+      - name: valor_investimento
+        description: Repasse + contrapartida, em R$.
       - name: valor_repasse_por_uh
         description: Repasse sobre UH.
+      - name: valor_empenhado_acumulado
+        description: Valor empenhado acumulado, em R$.
       - name: percentual_empenhado
         description: Empenhado acumulado sobre o repasse, em %.
       - name: ic_ente_regular
         description: Situação do município no SNHIS no retrato mais recente (nulo se o município não está no SNHIS).
+      - name: situacao_ente
+        description: Situação-síntese do município no SNHIS (Regular ou Pendente).
+      - name: situacao_plano_habitacional
+        description: Situação do Plano Local de Habitação de Interesse Social do município.
+      - name: situacao_lei_fundo
+        description: Situação da lei de criação do Fundo Local de Habitação de Interesse Social (FLHIS).
+      - name: situacao_lei_conselho
+        description: Situação da lei do conselho gestor do FLHIS.
       - name: ic_contrato_snh_identificado
         description: Verdadeiro quando o termo foi vinculado 1:1 a um contrato acompanhado pela SNH.
       - name: criterio_vinculo_snh
@@ -46,6 +100,22 @@ models:
         description: Operação da SNH vinculada.
         data_tests:
           - unique
+      - name: cod_operacao_agente
+        description: Código da operação na CAIXA (7 dígitos), do contrato vinculado na SNH. Não é APF.
+      - name: agente_financeiro
+        description: Agente financeiro do contrato vinculado — no Sub-50 é a CAIXA na totalidade das operações.
+      - name: situacao_obra_snh
+        description: Situação do empreendimento informada pela SNH, do contrato vinculado.
+      - name: percentual_execucao_fisica
+        description: Percentual de execução da obra, do contrato vinculado na SNH.
+      - name: uh_entregues
+        description: Unidades habitacionais já entregues, do contrato vinculado na SNH.
+      - name: valor_desembolsado
+        description: Valor desembolsado no contrato vinculado, em R$. É desembolso da SNH, não o empenho do TransfereGov.
+      - name: dt_previsao_termino
+        description: Data prevista para o término da obra, do contrato vinculado na SNH.
+      - name: dt_termino
+        description: Data efetiva do término da obra, quando já concluída.
       - name: status_execucao_simplificado
         description: >
           Regra de negócio: Sem instrumento ativo, Sem acompanhamento SNH, Concluído, Não Iniciado,
@@ -55,6 +125,10 @@ models:
           - accepted_values:
               arguments:
                 values: ["Sem instrumento ativo", "Sem acompanhamento SNH", "Concluído", "Não Iniciado", "Paralisado", "Em Andamento"]
+      - name: dt_consulta
+        description: Data de extração do painel no TransfereGov — a idade do lado instrumento desta ficha.
+      - name: dt_referencia_snh
+        description: Data de referência do extrato da SNH — a idade do lado execução desta ficha.
 
   - name: ouro_fnhis_funil_propostas
     description: >
@@ -70,18 +144,44 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: regiao
+        description: Região geográfica da UF.
       - name: qt_propostas_apresentadas
         description: Propostas apresentadas na seleção.
+      - name: uh_apresentadas
+        description: Unidades habitacionais somadas em todas as propostas apresentadas.
+      - name: qt_nao_enquadradas
+        description: Propostas recusadas por não enquadramento nas regras da seleção.
+      - name: qt_cota_insuficiente
+        description: Propostas não selecionadas porque a cota da UF se esgotou.
+      - name: qt_municipio_ja_contemplado
+        description: Propostas não selecionadas porque o município já havia sido contemplado.
       - name: qt_selecionadas
         description: Propostas selecionadas.
+      - name: uh_selecionadas
+        description: Unidades habitacionais das propostas selecionadas.
       - name: percentual_selecao
         description: Selecionadas sobre apresentadas, em %.
+      - name: qt_termos
+        description: Termos de compromisso registrados no TransfereGov, ativos ou não.
       - name: qt_termos_ativos
         description: Termos de compromisso com instrumento ativo no TransfereGov.
+      - name: qt_termos_anulados_rescindidos
+        description: Termos cujo convênio foi anulado ou rescindido.
+      - name: valor_repasse_termos_ativos
+        description: Repasse somado dos termos ativos, em R$.
+      - name: valor_empenhado
+        description: Empenho acumulado somado dos termos ativos, em R$.
       - name: qt_contratos_snh
         description: Contratos acompanhados pela SNH.
+      - name: uh_contratadas_snh
+        description: Unidades habitacionais contratadas segundo a SNH.
+      - name: qt_obras_iniciadas
+        description: Contratos da SNH com percentual de execução física maior que zero.
       - name: uh_entregues_snh
         description: UH entregues segundo a SNH.
+      - name: valor_desembolsado_snh
+        description: Valor desembolsado somado dos contratos da SNH, em R$.
 
   - name: ouro_fnhis_regularidade_municipios
     description: >
@@ -101,11 +201,45 @@ models:
               arguments:
                 to: ref('prata_fnhis_regularidade_entes')
                 field: cod_ibge
+      - name: ente_nome
+        description: Nome do ente.
+      - name: ente_esfera
+        description: Estado/DF ou Município.
+      - name: uf
+        description: UF do ente.
+      - name: regiao
+        description: Região geográfica da UF do ente.
+      - name: populacao
+        description: População do ente.
       - name: ic_elegivel_sub50_por_populacao
         description: Verdadeiro quando a população é menor que 50 mil habitantes — o recorte do Sub-50.
+      - name: ic_regiao_metropolitana
+        description: Verdadeiro quando o ente integra região metropolitana, conforme a extração da CAIXA.
+      - name: situacao_ente
+        description: Situação-síntese do ente no SNHIS (Regular ou Pendente).
       - name: ic_ente_regular
         description: Situação Regular no SNHIS.
+      - name: situacao_lei_fundo
+        description: Lei de criação do Fundo Local de Habitação de Interesse Social (FLHIS) — Regular ou Pendente.
+      - name: situacao_lei_conselho
+        description: Lei do conselho gestor do FLHIS — Regular ou Pendente.
+      - name: situacao_termo_adesao
+        description: Termo de adesão ao SNHIS — Regular ou Pendente.
+      - name: situacao_plano_habitacional
+        description: Plano Local de Habitação de Interesse Social — Regular ou Pendente.
+      - name: situacao_relatorio_gestao
+        description: Situação do relatório de gestão do fundo.
       - name: ic_apresentou_proposta
         description: Verdadeiro quando o ente apresentou ao menos uma proposta.
+      - name: qt_propostas
+        description: Propostas apresentadas pelo ente na seleção.
+      - name: qt_selecionadas
+        description: Propostas do ente que foram selecionadas.
+      - name: uh_selecionadas
+        description: Unidades habitacionais das propostas selecionadas do ente.
       - name: qt_termos_ativos
         description: Termos de compromisso ativos do ente.
+      - name: valor_repasse
+        description: Repasse somado dos termos ativos do ente, em R$.
+      - name: dt_referencia
+        description: Data de referência da extração semanal do SNHIS — a que semana a foto se refere.

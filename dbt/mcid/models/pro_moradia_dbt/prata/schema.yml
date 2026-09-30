@@ -32,12 +32,21 @@ models:
         description: Código do empreendimento no FGTS. No Pró-Moradia cada empreendimento tem um contrato.
         data_tests:
           - not_null
+      - name: cod_operacao_agente_financeiro
+        description: >
+          Número da operação no agente financeiro — o mesmo contrato como a CAIXA o identifica
+          nos sistemas dela, sem o dígito verificador. É a chave de conversa com o agente; o
+          contrato do FGTS continua sendo `cod_contrato`.
       - name: linha_codigo
         description: Linha de financiamento do FGTS. Sempre `26` (HAB / PRO-MORADIA) — é o filtro do model.
         data_tests:
           - accepted_values:
               arguments:
                 values: ["26"]
+      - name: linha
+        description: >
+          Nome da linha de financiamento, traduzido pela tabela de domínio do canal. Como o model
+          filtra a linha `26`, é sempre `HAB / PRO-MORADIA`.
       - name: modalidade_codigo
         description: Código da modalidade de operação do FGTS (tipo de intervenção financiada).
       - name: modalidade
@@ -78,6 +87,8 @@ models:
         description: Código do agente financeiro. 53000 é a CAIXA (674 dos 686 contratos em 2026-09).
       - name: agente_financeiro
         description: Nome do agente financeiro, pela tabela de entidades do canal.
+      - name: uor_codigo
+        description: Código da unidade operacional da CAIXA que acompanha o contrato, como vem no canal.
       - name: uor
         description: Unidade operacional da CAIXA (superintendência regional) que acompanha o contrato.
       - name: uf
@@ -136,6 +147,10 @@ models:
         description: Remessa do Canal FGTS de onde veio o contrato (MCaaaammdd.zip).
       - name: dt_remessa
         description: Data da remessa do Canal FGTS.
+      - name: criado_em
+        description: >
+          Momento em que a linha foi ingerida no lake (`_ingested_at` da bronze). É carimbo de
+          ingestão, não data de negócio — não confundir com `dt_remessa`.
 
   - name: prata_pro_moradia_desembolso_mensal
     description: >
@@ -158,6 +173,8 @@ models:
               arguments:
                 to: ref('prata_pro_moradia_contrato')
                 field: cod_contrato
+      - name: cod_contrato_dv
+        description: Dígito verificador do contrato.
       - name: contrato
         description: Contrato no formato `cod_contrato-dv`.
       - name: dt_competencia
@@ -204,6 +221,10 @@ models:
         description: Código da situação da obra no FGTS.
       - name: situacao_obra
         description: Situação da obra (adiantada, normal, atrasada, paralisada, concluída...).
+      - name: execucao_obra_codigo
+        description: >
+          Código de execução de obra como vem do canal (`cod_execucao_obra`). Fica sem tradução:
+          o Canal FGTS não publica tabela de domínio para ele, diferente da situação de obra.
       - name: dt_ultima_vistoria
         description: Data da última vistoria de obra.
       - name: providencias
@@ -228,6 +249,8 @@ models:
               arguments:
                 to: ref('prata_pro_moradia_contrato')
                 field: cod_contrato
+      - name: cod_contrato_dv
+        description: Dígito verificador do contrato.
       - name: dias_sem_evolucao
         description: Dias desde a última evolução física.
       - name: faixa_paralisacao
