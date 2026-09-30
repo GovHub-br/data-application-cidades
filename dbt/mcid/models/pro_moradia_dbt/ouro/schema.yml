@@ -20,28 +20,72 @@ models:
               arguments:
                 to: ref('prata_pro_moradia_contrato')
                 field: contrato
+      - name: cod_contrato
+        description: Código do contrato no FGTS (7 dígitos, sem o dígito verificador).
+      - name: cod_contrato_dv
+        description: Dígito verificador do contrato.
+      - name: cod_empreendimento
+        description: Código do empreendimento no FGTS. No Pró-Moradia cada empreendimento tem um contrato.
       - name: programa
         description: Sempre "Pró-Moradia".
       - name: tipo_intervencao
         description: Frente da carta-consulta — Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+      - name: modalidade_codigo
+        description: Código da modalidade de operação do FGTS (tipo de intervenção financiada).
+      - name: modalidade
+        description: Nome da modalidade, traduzido pela tabela de domínio do canal.
+      - name: empreendimento_nome
+        description: Nome do empreendimento no cadastro do FGTS, em caixa alta.
+      - name: objeto
+        description: Objeto do financiamento informado no cadastro do empreendimento.
+      - name: tomador_codigo
+        description: Código do tomador (ente público que contrai o financiamento) no FGTS, 5 dígitos.
       - name: tomador_nome
         description: Ente público tomador do financiamento.
       - name: tomador_esfera
         description: Estado/DF, Município ou Companhia ou autarquia.
+      - name: agente_financeiro
+        description: Nome do agente financeiro do contrato — na prática a CAIXA na quase totalidade.
+      - name: uor
+        description: Unidade operacional da CAIXA (superintendência regional) que acompanha o contrato.
+      - name: uf
+        description: UF do contrato.
       - name: regiao
         description: Região geográfica da UF do contrato.
+      - name: municipio
+        description: Município do empreendimento, traduzido do código CAIXA pela tabela de domínio.
+      - name: cod_ibge
+        description: Código IBGE do município (7 dígitos). Nulo quando o município não está na tabela de domínio do canal.
       - name: municipio_uf
         description: Localização no formato "Município/UF".
       - name: contrato_municipio_empreendimento
         description: Rótulo "contrato - Município/UF - empreendimento", usado como dimensão de filtro no Superset.
+      - name: situacao_contrato_codigo
+        description: Código da situação do contrato no FGTS.
+      - name: situacao_contrato
+        description: Situação do contrato (em situação normal, distratado, cancelado, cláusula suspensiva...).
       - name: ic_contrato_vigente
         description: Falso para contrato distratado, cancelado ou extinto.
+      - name: ano_orcamento
+        description: Ano do orçamento do FGTS ao qual o contrato foi imputado.
+      - name: dt_assinatura
+        description: Data de assinatura do contrato.
+      - name: ic_pac
+        description: Indicador de contrato do PAC.
+      - name: identificador_selecao
+        description: Identificador externo — em geral a seleção de origem (ex. "PAC - 3A SELECAO") ou o processo.
       - name: quantidade_uh
         description: Unidades habitacionais financiadas (zero em urbanização).
+      - name: populacao_beneficiada
+        description: População beneficiada declarada no cadastro do empreendimento.
+      - name: empregos_gerados
+        description: Empregos gerados estimados no cadastro do empreendimento.
       - name: valor_contratado
         description: Valor financiado pelo FGTS, em R$.
       - name: valor_investimento
         description: Investimento total (financiamento + contrapartida), em R$.
+      - name: valor_contrapartida
+        description: Contrapartida do tomador = investimento − contratado, em R$.
       - name: valor_investimento_por_uh
         description: Investimento sobre UH financiadas, quando há UH.
       - name: percentual_execucao_fisica
@@ -52,6 +96,25 @@ models:
           - accepted_values:
               arguments:
                 values: ["execucao_obra_mensal", "posicao_empreendimento"]
+      - name: percentual_obra_previsto
+        description: >
+          Percentual acumulado previsto no cronograma para o mês da última medição. Ao lado do
+          realizado, é o que mostra atraso físico.
+      - name: situacao_obra_codigo
+        description: >
+          Código da situação da obra na última avaliação mensal medida. Mistura dígito e letra na
+          origem (ex. `4`/`H` paralisada, `6`/`8`/`E` concluída) — é ele que alimenta a regra de
+          `status_execucao_simplificado`.
+      - name: situacao_obra
+        description: Situação da obra na última avaliação medida (adiantada, normal, atrasada, paralisada, concluída...).
+      - name: dt_ultima_avaliacao
+        description: Mês da última avaliação de obra já medida — exclui os meses futuros do cronograma.
+      - name: dt_ultima_vistoria
+        description: Data da última vistoria de obra registrada nessa avaliação.
+      - name: dt_inicio_obra
+        description: Data de início da obra, da posição do cadastro do empreendimento.
+      - name: dt_termino_obra
+        description: Data de término da obra, da posição do cadastro do empreendimento.
       - name: status_execucao_simplificado
         description: >
           Regra de negócio: Cancelado ou distratado, Concluído, Paralisado, Não Iniciado, Em
@@ -68,6 +131,12 @@ models:
           para contrato anterior é um piso (ver ic_serie_financeira_incompleta).
       - name: percentual_execucao_financeira
         description: Desembolsado sobre contratado, em %.
+      - name: dt_primeiro_desembolso
+        description: Competência da primeira liberação do contrato na série do canal (não necessariamente a primeira da vida do contrato).
+      - name: dt_ultimo_desembolso
+        description: Competência da liberação mais recente do contrato.
+      - name: qt_meses_com_desembolso
+        description: Quantidade de competências com liberação na série. Zero quando o contrato não tem liberação no arquivo.
       - name: ic_serie_financeira_incompleta
         description: Verdadeiro para contrato assinado antes de 2000, cujas liberações anteriores não estão no arquivo.
       - name: ritmo_fisico_financeiro
@@ -80,6 +149,18 @@ models:
                 values: ["Ritmo Equilibrado", "Desembolso Adiantado", "Desembolso Atrasado", "Sem Informação"]
       - name: ic_paralisada
         description: Verdadeiro quando o contrato está na lista de obras paralisadas do setor público.
+      - name: dias_sem_evolucao
+        description: Dias desde a última evolução física, para o contrato que está na lista de paralisadas.
+      - name: faixa_paralisacao
+        description: Faixa de tempo de paralisação (ex. "091 - 180 dias", "Entre 1 e 2 anos").
+      - name: motivo_paralisacao
+        description: Último motivo de paralisação informado pelo acompanhamento da CAIXA.
+      - name: dt_previsao_conclusao
+        description: Previsão de conclusão do objeto registrada no acompanhamento da paralisação.
+      - name: remessa_canal_fgts
+        description: Remessa do Canal FGTS de onde veio o contrato (MCaaaammdd.zip).
+      - name: dt_remessa
+        description: Data da remessa do Canal FGTS.
 
   - name: ouro_pro_moradia_evolucao_financeira
     description: >
@@ -104,6 +185,14 @@ models:
                 field: contrato
       - name: mes
         description: Mês da liberação.
+      - name: uf
+        description: UF do contrato, trazida da ficha para permitir o corte territorial da série.
+      - name: regiao
+        description: Região geográfica da UF do contrato.
+      - name: tipo_intervencao
+        description: Frente da carta-consulta do contrato — Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+      - name: qt_lancamentos
+        description: Quantidade de lançamentos da origem somados no mês.
       - name: vr_liberado_mes
         description: Valor líquido liberado no mês, em R$.
       - name: vr_estornado_mes
@@ -112,6 +201,10 @@ models:
         description: Acumulado das liberações do contrato até o mês, em R$.
       - name: percentual_acumulado_contratado
         description: Acumulado sobre o valor contratado, em %.
+      - name: ic_serie_financeira_incompleta
+        description: >
+          Verdadeiro para contrato assinado antes de 2000: o acumulado da série é um piso, porque
+          as liberações anteriores não estão no arquivo do canal.
 
   - name: ouro_pro_moradia_panorama_estadual
     description: >
@@ -127,12 +220,44 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: regiao
+        description: Região geográfica da UF.
       - name: qt_contratos
         description: Todos os contratos da UF, inclusive cancelados e distratados.
       - name: qt_contratos_vigentes
         description: Contratos que não foram distratados, cancelados ou extintos.
+      - name: qt_cancelados_distratados
+        description: Contratos com status de execução "Cancelado ou distratado".
+      - name: qt_concluidos
+        description: Contratos com status de execução "Concluído".
+      - name: qt_em_andamento
+        description: Contratos com status de execução "Em Andamento".
+      - name: qt_paralisados
+        description: Contratos com status de execução "Paralisado".
+      - name: qt_nao_iniciados
+        description: Contratos com status de execução "Não Iniciado".
+      - name: qt_sem_informacao
+        description: >
+          Contratos sem percentual físico nem situação de obra que permitam classificar o status.
+          É a medida de lacuna do acompanhamento na UF.
+      - name: qt_urbanizacao
+        description: Contratos vigentes cuja frente é Urbanização.
+      - name: qt_provisao_habitacional
+        description: Contratos vigentes cuja frente é Provisão habitacional.
+      - name: qt_tomadores
+        description: Tomadores distintos com contrato vigente na UF (por código do tomador).
+      - name: qt_municipios
+        description: >
+          Municípios distintos com contrato vigente na UF, contados por código IBGE — contrato
+          cujo município não foi traduzido não entra.
+      - name: total_uh
+        description: Unidades habitacionais financiadas pelos contratos vigentes. Urbanização contribui com zero.
+      - name: total_populacao_beneficiada
+        description: População beneficiada declarada, somada sobre os contratos vigentes.
       - name: total_valor_contratado
         description: Valor contratado dos contratos vigentes, em R$.
+      - name: total_valor_investimento
+        description: Investimento total (financiamento + contrapartida) dos contratos vigentes, em R$.
       - name: total_vr_desembolsado
         description: Desembolsado (soma das liberações) dos contratos vigentes, em R$.
       - name: percentual_execucao_financeira
@@ -160,10 +285,22 @@ models:
         description: Região geográfica.
         data_tests:
           - not_null
+      - name: orcamento_original
+        description: Orçamento original aprovado para o programa na região, em R$. Nulo em ano sem prestação de contas no lake.
       - name: orcamento_final
         description: Orçamento final do FGTS para o programa na região, em R$.
+      - name: orcamento_alocado
+        description: Orçamento efetivamente alocado, em R$. Nulo em ano sem prestação de contas no lake.
+      - name: qt_contratos
+        description: Contratos assinados com orçamento do ano na região, inclusive cancelados e distratados. Zero quando o ano só tem o lado do orçamento.
+      - name: qt_contratos_vigentes
+        description: Desses, os que não foram distratados, cancelados ou extintos.
       - name: valor_contratado
         description: Valor contratado com orçamento do ano, na região, em R$ (todos os contratos).
+      - name: valor_contratado_vigente
+        description: Valor contratado apenas dos contratos vigentes, em R$ — a carteira que restou daquele ano.
+      - name: quantidade_uh
+        description: Unidades habitacionais dos contratos vigentes do ano na região. Urbanização contribui com zero.
       - name: percentual_orcamento_contratado
         description: Contratado sobre orçamento final, em %.
       - name: ic_tem_orcamento
