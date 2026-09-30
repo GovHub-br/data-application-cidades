@@ -47,85 +47,32 @@ import duckdb
 import psycopg2
 
 # --- inventario de tabelas publicaveis -------------------------------------
-# `familia` casa com o mapa de macros/historico/familias.sql quando a tabela e
-# uma bronze de serie; para silver/gold e o nome do dominio.
+# Deriva do MANIFESTO do dbt (target/manifest.json), nao de lista hardcoded:
+# um hardcode por tabela ficava obsoleto a cada change nova (ficou faltando
+# ~30 das 62 tabelas atuais das frentes novas ate esta reescrita). A fonte de
+# verdade do QUE existe passa a ser sempre o projeto dbt em si.
 #
-# Schema por CAMADA em portugues (change renomear-camadas-pt-historico-reloginho,
-# D1): bronze -> `bronze`, silver -> `prata`, gold -> `ouro`. Nada mais publica
-# em `dados_historicos`, `reloginho` ou nos schemas de frente. Os globs de
-# origem continuam apontando para os prefixos de `staging/` — a origem nao muda.
-# O mapa canonico de renomeacao (diretorio de migracao, mapa_nomenclatura.csv) e
-# a fonte de verdade do old->new das tabelas ja publicadas em prod na convencao
-# anterior.
+# Escopo: todo `resource_type: model` cujo `original_file_path` comeca por um
+# dos dois projetos do eixo (mcmv_historico_dbt / indicadores_mcmv_dbt),
+# exceto os models em EXCLUIDOS (hoje: as 2 tabelas do Pro-Moradia que
+# estouram a RAM desta maquina no build local — ver run-historico.sh). Nenhum
+# model de outro projeto (ex.: a cadeia FAR/FDS/Rural "dos colegas", so
+# copiada aqui pra teste de compilacao) entra, mesmo que materialize nos
+# mesmos schemas bronze/prata/ouro.
+#
+# `grupo` particiona por CAMADA (schema): "bronzes" = schema bronze,
+# "silvers" = prata+ouro, "tudo" = tudo. Dentro de cada grupo, ordena por
+# volume (n_linhas) crescente — mesma convencao do script anterior (falha
+# rapido nas pequenas antes de gastar tempo nas grandes).
+PROJETOS_EIXO = ("models/mcmv_historico_dbt/", "models/indicadores_mcmv_dbt/")
 
-BRONZES_SERIE = [
-    # (schema, tabela, familia, glob de origem)
-    ("bronze", "bronze_dhist_serie_entrada_bb",
-     "entrada_bb", "dados_historicos/*entrada_bb*.parquet"),
-    ("bronze", "bronze_dhist_empreendimento_snh_bb",
-     "snh_bb", "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_bb*.parquet"),
-    ("bronze", "bronze_dhist_snh_entregas_evento_bb",
-     "entregas_bb", "dados_historicos/*_da_entrega_da_unidade_af_bb.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int054",
-     "INT054", "sftp/fabrica/GEFUS/**/INT054_*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int059",
-     "INT059", "sftp/fabrica/GEFUS/**/INT059_*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int057",
-     "INT057", "sftp/fabrica/GEFUS/**/INT057_*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int040",
-     "INT040", "sftp/fabrica/GEFUS/**/INT040_*.parquet"),
-    ("bronze", "bronze_dhist_snh_entregas_evento_caixa",
-     "entregas_caixa", "dados_historicos/*_af_caixa_entregas.parquet"),
-    ("bronze", "bronze_dhist_empreendimento_snh_caixa",
-     "snh_caixa", "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_caixa*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int065",
-     "INT065", "sftp/fabrica/GEFUS/**/INT065_*.parquet"),
-    ("bronze", "bronze_dhist_serie_bases_relatorio_executivo",
-     "bases_relatorio_executivo", "dados_historicos/*bases_relat*rio_executivo*.parquet"),
-    ("bronze", "bronze_dhist_serie_min_cidades",
-     "min_cidades", "dados_historicos/*min_cidades*.parquet"),
-    # bext e a maior transacao isolada (5,66 M linhas) — ultima das bronzes (D8).
-    ("bronze", "bronze_dhist_serie_bext",
-     "bext", "dados_historicos/*bext*.parquet"),
-    # obra mensal (SharePoint) — curva prevista x realizada + situacao de obra
-    # (change enriquecer-quantidades-uh-e-sinais-obra-historico). Adicionadas
-    # ao inventario 2026-09-11 (nunca publicadas ate entao).
-    ("bronze", "bronze_shpt_obra_mensal_far",
-     "OBRA_FAR", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet"),
-    ("bronze", "bronze_shpt_obra_mensal_fds",
-     "OBRA_FDS", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet"),
-    ("bronze", "bronze_shpt_obra_mensal_rural",
-     "OBRA_RURAL", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet"),
-]
-
-SILVERS_GOLDS = [
-    # piloto OGU/FGTS desabilitado nesta branch (renomear-camadas-..., D4):
-    # ("prata", "prata_dhist_serie_anual_ogu_fgts", "mcmv_historico"),
-    ("prata", "prata_historico_snh_entregas_mes", "reloginho"),
-    ("prata", "prata_historico_snh_apf_mes", "reloginho"),
-    ("ouro", "ouro_reloginho_indicadores", "reloginho"),
-    ("ouro", "ouro_reloginho_indicadores_frente", "reloginho"),
-    ("ouro", "ouro_reloginho_indicadores_entregas", "reloginho"),
-    ("ouro", "ouro_reloginho_resumo_dashboard", "reloginho"),
-    ("ouro", "ouro_reloginho_indicadores_gargalo_desempenho", "reloginho"),
-    ("ouro", "ouro_reloginho_resumo_gargalo_desempenho_dashboard", "reloginho"),
-    ("prata", "prata_fds_historico_empreendimento", "mcmv_historico"),
-    ("prata", "prata_far_historico_empreendimento", "mcmv_historico"),
-    ("prata", "prata_rural_historico_empreendimento", "mcmv_historico"),
-    # espinha de entrega por APF (change enriquecer-datas-acompanhamento-historico)
-    # e a dim de identidade FDS (change id-empreendimento-eixo-historico, movida
-    # 2026-09-11 pra dentro do escopo). Adicionadas ao inventario 2026-09-11
-    # (nunca publicadas ate entao).
-    ("prata", "prata_historico_entrega_apf", "mcmv_historico"),
-    ("prata", "prata_fds_historico_dim_empreendimento", "mcmv_historico"),
-    # golds cross-frente (4).
-    ("ouro", "ouro_historico_serie_mensal", "mcmv_historico"),
-    ("ouro", "ouro_historico_snapshot_empreendimento_atual", "mcmv_historico"),
-    ("ouro", "ouro_historico_marco_empreendimento", "mcmv_historico"),
-    ("ouro", "ouro_historico_serie_situacao_mensal", "mcmv_historico"),
-    # a silver da serie executiva e a maior (10,2 M linhas) — por ultimo.
-    ("prata", "prata_historico_serie_executiva", "mcmv_historico"),
-]
+EXCLUIDOS = {
+    # nao buildam localmente nesta maquina por limite de RAM (ver git log:
+    # "nao conseguiram buildar devido a limite de ram"). Nada dentro dos dois
+    # projetos do eixo depende delas (conferido via grep de ref()).
+    "bronze_sftp_pro_moradia_execucoes_obra",
+    "prata_pro_moradia_historico_execucao_obra",
+}
 
 
 @dataclass
@@ -134,16 +81,92 @@ class Alvo:
     tabela: str
     familia: str
     staging_key: str
+    n_linhas: int = 0
 
     @property
     def fqn(self) -> str:
         return f"{self.schema}.{self.tabela}"
 
 
-def inventario(grupo: str) -> list[Alvo]:
-    bronzes = [Alvo(s, t, f, g) for s, t, f, g in BRONZES_SERIE]
-    outras = [Alvo(s, t, f, f"local:{s}.{t}") for s, t, f in SILVERS_GOLDS]
-    return {"bronzes": bronzes, "silvers": outras, "tudo": bronzes + outras}[grupo]
+def _manifest_path() -> str:
+    aqui = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(aqui, "..", "target", "manifest.json")
+
+
+def _modelos_do_eixo() -> list[dict]:
+    """Le target/manifest.json e devolve os models dos 2 projetos do eixo,
+    ja sem os EXCLUIDOS. Exige um `dbt build`/`dbt test`/`dbt compile` recente
+    (o manifesto e o retrato do projeto na ULTIMA invocacao do dbt)."""
+    caminho = _manifest_path()
+    if not os.path.exists(caminho):
+        sys.exit(f"manifest.json nao encontrado em {caminho} — rode um dbt "
+                  "build/test/compile antes de publicar")
+    with open(caminho, encoding="utf-8") as fh:
+        manifest = json.load(fh)
+
+    modelos = []
+    for node in manifest["nodes"].values():
+        if node.get("resource_type") != "model":
+            continue
+        caminho_modelo = node.get("original_file_path", "").replace("\\", "/")
+        if not caminho_modelo.startswith(PROJETOS_EIXO):
+            continue
+        if node["config"].get("enabled") is False:
+            continue
+        tabela = node["alias"]
+        if tabela in EXCLUIDOS:
+            continue
+        projeto = caminho_modelo.split("/", 2)[1]  # mcmv_historico_dbt | indicadores_mcmv_dbt
+        familia = "reloginho" if projeto == "indicadores_mcmv_dbt" else "historico"
+        modelos.append({
+            "schema": node["schema"],
+            "tabela": tabela,
+            "familia": familia,
+        })
+    return modelos
+
+
+def inventario(grupo: str, con) -> list[Alvo]:
+    """Monta o inventario a partir do manifesto + contagem de linhas no
+    arquivo DuckDB local (`con`), ordenado por volume crescente."""
+    modelos = _modelos_do_eixo()
+    schemas_do_grupo = {
+        "bronzes": {"bronze"},
+        "silvers": {"prata", "ouro"},
+        "tudo": {"bronze", "prata", "ouro"},
+    }[grupo]
+
+    alvos = []
+    ausentes = []
+    for m in modelos:
+        if m["schema"] not in schemas_do_grupo:
+            continue
+        existe = con.execute(
+            "select count(*) from information_schema.tables "
+            "where table_schema = ? and table_name = ?",
+            [m["schema"], m["tabela"]],
+        ).fetchone()[0]
+        if not existe:
+            ausentes.append(f'{m["schema"]}.{m["tabela"]}')
+            continue
+        n_linhas = con.execute(
+            f'select count(*) from "{m["schema"]}"."{m["tabela"]}"'
+        ).fetchone()[0]
+        alvos.append(Alvo(
+            schema=m["schema"], tabela=m["tabela"], familia=m["familia"],
+            staging_key=f'manifest:{m["schema"]}.{m["tabela"]}',
+            n_linhas=n_linhas,
+        ))
+
+    if ausentes:
+        sys.exit(
+            "modelo(s) do eixo presentes no manifesto mas NAO materializados "
+            f"no arquivo local — rode ./run-historico.sh / ./run-reloginho.sh "
+            f"antes de publicar: {sorted(ausentes)}"
+        )
+
+    alvos.sort(key=lambda a: a.n_linhas)
+    return alvos
 
 
 LOG_DDL = """
@@ -397,18 +420,27 @@ def main() -> int:
                          "source_hash (confiavel so para as bronzes)")
     args = ap.parse_args()
 
-    alvos = inventario(args.grupo)
+    # Read-write no arquivo local NAO porque queremos escrever nele — nada aqui
+    # escreve — mas porque o DuckDB propaga o modo da conexao para os catalogos
+    # ATTACHados: com read_only=True o `pg` tambem nasce read-only e o CREATE
+    # TABLE do destino falha. A protecao do arquivo local fica por construcao:
+    # toda escrita desta rotina e qualificada com o prefixo `pg.`. O inventario
+    # tambem precisa desta conexao (conta linhas pra ordenar por volume).
+    con = duckdb.connect(args.duckdb)
+
+    alvos = inventario(args.grupo, con)
     if args.tabela:
         querido = set(args.tabela)
-        todos = {a.fqn: a for a in inventario("tudo")}
+        todos = {a.fqn: a for a in inventario("tudo", con)}
         faltando = querido - set(todos)
         if faltando:
             sys.exit(f"tabela fora do inventario: {sorted(faltando)}")
-        alvos = [a for a in inventario("tudo") if a.fqn in querido]
+        alvos = [a for a in inventario("tudo", con) if a.fqn in querido]
 
     if args.listar:
         for i, a in enumerate(alvos, 1):
-            print(f"{i:2}. {a.fqn:70} familia={a.familia}")
+            print(f"{i:2}. {a.fqn:70} familia={a.familia:12} "
+                  f"n_linhas={a.n_linhas:,}")
         return 0
 
     execution_id = str(uuid.uuid4())
@@ -416,12 +448,6 @@ def main() -> int:
     print(f"origem local: {args.duckdb}")
     print(f"destino     : {env('DB_DW_HOST_MCID')}/{env('DB_DW_DBNAME_MCID', 'cidades')}")
 
-    # Read-write no arquivo local NAO porque queremos escrever nele — nada aqui
-    # escreve — mas porque o DuckDB propaga o modo da conexao para os catalogos
-    # ATTACHados: com read_only=True o `pg` tambem nasce read-only e o CREATE
-    # TABLE do destino falha. A protecao do arquivo local fica por construcao:
-    # toda escrita desta rotina e qualificada com o prefixo `pg.`.
-    con = duckdb.connect(args.duckdb)
     con.execute("install postgres; load postgres")
     con.execute(f"attach '{pg_dsn()}' as pg (type postgres)")
 
