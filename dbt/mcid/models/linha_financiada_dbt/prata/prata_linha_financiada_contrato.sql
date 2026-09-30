@@ -4,7 +4,7 @@
 -- Cidades são indicadores sobre a Linha Financiada, não linhas excludentes.
 
 with cidades as (
-    select * exclude (rn)
+    select *
     from (
         select
             trim(numero_do_contrato::text) as contrato,
@@ -13,7 +13,7 @@ with cidades as (
             trim(municipio_nome::text) as municipio,
             trim(uf_sigla::text) as uf,
             trim(faixa_programa::text) as faixa_programa,
-            try_cast(data_da_contratacao::text as date) as data_contratacao,
+            {{ linha_financiada_data_iso('data_da_contratacao') }} as data_contratacao,
             trim(tomador_codigo::text) as agente_financeiro,
             trim(programa::text) as programa,
             trim(modalidade::text) as modalidade,
@@ -75,9 +75,25 @@ cci_cca as (
         trim(genero::text) as genero,
         trim(pmcmv::text) as indicador_mcmv_origem
     from (
-        select 'CCI'::text as carteira, * from {{ ref('bronze_geavo_cci_analitico') }}
-        union all by name
-        select 'CCA'::text as carteira, * from {{ ref('bronze_geavo_cca_analitico') }}
+        select
+            'CCI'::text as carteira,
+            numerodocontrato, anomescontratacao, municipio_codigo,
+            agentefinanceiro_codigo, compatibilidade_faixa_novo_mcmv,
+            nome_programa, modalidade, classificacaoimovel, caracteristica,
+            vlrdofinanciamento, vlrdodescontofgts, vlrdodescontoogu,
+            vlrdegarantiadoimovel, vlrdecompra, vlrcontrapartidaparceria,
+            vlrdarenda, txjrsinicial, prazo, datadaremessa, tipo, genero, pmcmv
+        from {{ ref('bronze_geavo_cci_analitico') }}
+        union all
+        select
+            'CCA'::text as carteira,
+            numerodocontrato, anomescontratacao, municipio_codigo,
+            agentefinanceiro_codigo, compatibilidade_faixa_novo_mcmv,
+            nome_programa, modalidade, classificacaoimovel, caracteristica,
+            vlrdofinanciamento, vlrdodescontofgts, vlrdodescontoogu,
+            vlrdegarantiadoimovel, vlrdecompra, vlrcontrapartidaparceria,
+            vlrdarenda, txjrsinicial, prazo, datadaremessa, tipo, genero, pmcmv
+        from {{ ref('bronze_geavo_cca_analitico') }}
     ) u
     where nullif(trim(numerodocontrato::text), '') is not null
 ),
@@ -145,7 +161,9 @@ fundo_social as (
         false as ic_pro_moradia,
         false as ic_fgts,
         true as ic_fundo_social,
-        strptime(f.dt_evento::text, '%d/%m/%Y')::date as data_contratacao,
+        {{ linha_financiada_data_formato(
+            'f.dt_evento', '%d/%m/%Y', 'DD/MM/YYYY', '^[0-9]{2}/[0-9]{2}/[0-9]{4}$'
+        ) }} as data_contratacao,
         trim(f.co_municipio_ibge::text) as codigo_municipio,
         trim(f.no_municipio_imovel::text) as municipio,
         trim(f.sg_uf_imovel::text) as uf,
@@ -188,7 +206,10 @@ pro_moradia as (
         true as ic_pro_moradia,
         true as ic_fgts,
         false as ic_fundo_social,
-        strptime(c.dte_assinatura::text, '%m/%d/%y %H:%M:%S')::date as data_contratacao,
+        {{ linha_financiada_data_formato(
+            'c.dte_assinatura', '%m/%d/%y %H:%M:%S', 'MM/DD/YY HH24:MI:SS',
+            '^[0-9]{2}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$'
+        ) }} as data_contratacao,
         null::text as codigo_municipio,
         null::text as municipio,
         trim(c.uf::text) as uf,
@@ -266,9 +287,9 @@ cidades_exclusivo as (
 )
 
 select * from fgts
-union all by name
+union all
 select * from fundo_social
-union all by name
+union all
 select * from pro_moradia
-union all by name
+union all
 select * from cidades_exclusivo

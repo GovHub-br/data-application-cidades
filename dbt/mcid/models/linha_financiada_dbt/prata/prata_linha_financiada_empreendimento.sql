@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 with posicao as (
-    select * exclude (rn)
+    select *
     from (
         select
             trim(cod_empreendimento::text) as codigo_empreendimento,
@@ -58,8 +58,8 @@ pj as (
         trim(dt_inicio_obra::text) as data_inicio_raw,
         trim(dt_termino_obra::text) as data_termino_raw,
         null::text as data_inauguracao_raw,
-        try_cast(nullif(replace(latitude::text, ',', '.'), '') as numeric) as latitude,
-        try_cast(nullif(replace(longitude::text, ',', '.'), '') as numeric) as longitude,
+        {{ linha_financiada_numero('latitude') }} as latitude,
+        {{ linha_financiada_numero('longitude') }} as longitude,
         'GEAVO_PJ'::text as fonte
     from {{ ref('bronze_geavo_fgts_pj') }}
     where nullif(trim(nu_apf::text), '') is not null
@@ -70,6 +70,6 @@ select
     current_timestamp as dt_silver
 from (
     select * from ao1
-    union all by name
+    union all
     select * from pj
 ) u

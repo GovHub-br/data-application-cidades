@@ -44,6 +44,6 @@ select
     current_timestamp as dt_silver
 from (
     select * from fgts
-    union all by name
+    union all
     select * from fundo_social
 ) u
