@@ -1,6 +1,6 @@
 import logging
 from schedule_loader import get_dynamic_schedule
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from datetime import datetime, timedelta
 from postgres_helpers import get_postgres_conn
 from cliente_transferegov_emendas import ClienteTransfereGov
@@ -8,7 +8,7 @@ from cliente_postgres import ClientPostgresDB
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("relatorio_gestao_novo_especial_dag"),
+    schedule=get_dynamic_schedule("relatorio_gestao_novo_especial_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={

@@ -1,7 +1,7 @@
 """Catálogo de recipes do OpenMetadata, caminhos e liga/desliga.
 
 Base: a implementação que já existia em `origin/refactor/openmetadata`
-(2026-08-18), que é Airflow 2 como o resto deste repositório. Refino: a forma
+(2026-08-18), escrita para o Airflow 2. Refino: a forma
 do `data-application-minc`, que portou esta mesma integração daqui e a evoluiu
 — flags de liga/desliga por recipe e resolução de segredo no runtime da task,
 em vez de Jinja no replacement.
@@ -22,12 +22,13 @@ OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH = (
 #: O projeto dbt do MCID. A recipe de dbt consome os artefatos que saem dele.
 DBT_MCID_DIR = f"{AIRFLOW_REPO_BASE}/dbt/mcid"
 
-#: O pacote roda num VIRTUALENV ISOLADO, e isso não é preferência: o
-#: `openmetadata-ingestion` exige `sqlalchemy>=2.0` e o `apache-airflow 2.8.1`
-#: exige `<2.0`. Não existe versão do pacote que conviva com o Airflow 2 no
-#: mesmo ambiente — testadas 1.10, 1.11, 1.12 e 1.13, todas incompatíveis.
-#: O `data-application-minc` consegue assar na imagem porque está em Airflow
-#: 3.2.2, que já usa SQLAlchemy 2.
+#: O pacote roda num VIRTUALENV ISOLADO. No Airflow 2.8.1 era obrigatório
+#: (`openmetadata-ingestion` exige `sqlalchemy>=2.0` e o Airflow 2 exigia
+#: `<2.0`). No Airflow 3 esse conflito acabou, mas instalar o pacote por cima da
+#: base com `pip install` rebaixa pacotes dela (boto3, botocore,
+#: opentelemetry-sdk) e o `pip check` do Dockerfile reprova. O
+#: `data-application-minc` assa na imagem com um lock resolvido contra a base
+#: (`compile-lock.sh`); até adotarmos o mesmo, o virtualenv segue isolando.
 #:
 #: Isolado, o pacote resolve limpo em 255 pacotes. A versão acompanha a LINHA
 #: do servidor (hoje 1.13.3): cliente e servidor de linhas diferentes divergem

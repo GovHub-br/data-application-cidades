@@ -1,4 +1,4 @@
-FROM apache/airflow:2.8.1-python3.11
+FROM apache/airflow:3.3.2-python3.11
 
 USER root
 RUN apt-get update \
@@ -37,6 +37,11 @@ RUN apt-get update \
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
+
+# Senhas do SimpleAuthManager, o login padrao do Airflow 3 (o FAB e o
+# `airflow users create` sairam do core). Sem o arquivo, o standalone sorteia
+# uma senha nova a cada container recriado.
+COPY --chown=airflow:0 infra/airflow/simple_auth_manager_passwords.json ./simple_auth_manager_passwords.json
 
 # Para rodar o airflow só precisamos instalar as dependências visto que o código
 # sempre será sincronizado via git sync ou via volumes localmente

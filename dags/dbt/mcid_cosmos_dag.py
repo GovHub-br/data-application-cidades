@@ -23,7 +23,7 @@ não existem no DuckDB. As seeds também são carregadas no primeiro grupo e lid
 pelo segundo através do catálogo atachado.
 
 Pré-requisitos no ambiente do Airflow (além do dbt-postgres):
-- `dbt-duckdb` instalado, na linha 1.7 (o dbt-postgres 1.7.13 fixa dbt-core 1.7.13);
+- `dbt-duckdb` instalado, compatível com o dbt-core (hoje 1.11, com dbt-core 1.12);
 - variáveis do MinIO — MINIO_ENDPOINT (host:porta, SEM http://), MINIO_ACCESS_KEY,
   MINIO_SECRET_KEY — visíveis para o worker;
 - um pool chamado `duckdb_historico` com UM slot:
@@ -37,7 +37,7 @@ Pré-requisitos no ambiente do Airflow (além do dbt-postgres):
 import os
 from datetime import datetime
 
-from airflow import DAG
+from airflow.sdk import DAG
 from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
 
@@ -89,7 +89,7 @@ profile_duckdb = ProfileConfig(
 
 with DAG(
     dag_id="mcid_cosmos_dag",
-    schedule_interval="0 1 * * *",
+    schedule="0 1 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={"retries": 2},

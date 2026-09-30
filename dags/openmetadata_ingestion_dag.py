@@ -17,7 +17,7 @@ coluna.
 from datetime import datetime, timedelta
 from typing import Any
 
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from schedule_loader import get_dynamic_schedule
 
 from openmetadata.config import (
@@ -66,7 +66,7 @@ def _encadear(
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("openmetadata_ingestion_dag"),
+    schedule=get_dynamic_schedule("openmetadata_ingestion_dag"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
@@ -85,8 +85,8 @@ def openmetadata_ingestion_dag() -> None:
     @task.virtualenv(
         task_id="run_openmetadata_recipe_base",
         requirements=OPENMETADATA_REQUIREMENTS,
-        # isolamento é o PONTO, não detalhe: o pacote exige SQLAlchemy 2
-        # e o Airflow 2.8.1 exige 1.4. Não há versão que conviva.
+        # isolado da imagem de propósito: o pacote rebaixa dependências da
+        # base do Airflow. Ver OPENMETADATA_REQUIREMENTS.
         system_site_packages=False,
         expect_airflow=False,
         venv_cache_path=VENV_CACHE,
@@ -127,8 +127,8 @@ def openmetadata_ingestion_dag() -> None:
     @task.virtualenv(
         task_id="sync_mcid_glossary",
         requirements=OPENMETADATA_REQUIREMENTS,
-        # isolamento é o PONTO, não detalhe: o pacote exige SQLAlchemy 2
-        # e o Airflow 2.8.1 exige 1.4. Não há versão que conviva.
+        # isolado da imagem de propósito: o pacote rebaixa dependências da
+        # base do Airflow. Ver OPENMETADATA_REQUIREMENTS.
         system_site_packages=False,
         expect_airflow=False,
         venv_cache_path=VENV_CACHE,
@@ -152,8 +152,8 @@ def openmetadata_ingestion_dag() -> None:
     @task.virtualenv(
         task_id="sync_mcid_semantic_relationships",
         requirements=OPENMETADATA_REQUIREMENTS,
-        # isolamento é o PONTO, não detalhe: o pacote exige SQLAlchemy 2
-        # e o Airflow 2.8.1 exige 1.4. Não há versão que conviva.
+        # isolado da imagem de propósito: o pacote rebaixa dependências da
+        # base do Airflow. Ver OPENMETADATA_REQUIREMENTS.
         system_site_packages=False,
         expect_airflow=False,
         venv_cache_path=VENV_CACHE,
