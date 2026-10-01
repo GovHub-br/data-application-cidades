@@ -45,6 +45,8 @@ METRICAS = {
     "ouro_linha_financiada_resumo_mensal": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
         ("sum__valor_financiamento", "SUM(valor_financiamento)"),
+        ("sum__quantidade_empreendimentos", "SUM(quantidade_empreendimentos)"),
+        ("sum__valor_desconto_ogu", "SUM(valor_desconto_ogu)"),
     ],
     "ouro_linha_financiada_mapa_execucao": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
@@ -52,6 +54,8 @@ METRICAS = {
     ],
     "ouro_linha_financiada_empreendimentos": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__quantidade_unidades", "SUM(quantidade_unidades)"),
+        ("sum__quantidade_unidades_entregues", "SUM(quantidade_unidades_entregues)"),
     ],
     "ouro_linha_financiada_contrapartidas": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
@@ -61,9 +65,41 @@ METRICAS = {
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
         ("sum__media_movel_contratos_3m", "SUM(media_movel_contratos_3m)"),
     ],
+    "ouro_linha_financiada_execucao_orcamentaria": [
+        ("sum__orcamento_atualizado", "SUM(orcamento_atualizado)"),
+        ("sum__pagamentos_totais", "SUM(pagamentos_totais)"),
+    ],
 }
 
 CHARTS = [
+    {
+        "key": "kpi_contratos",
+        "title": "Contratos na carteira",
+        "dataset": "ouro_linha_financiada_resumo_mensal",
+        "viz_type": "big_number_total",
+        "params": {"metric": "sum__quantidade_contratos", "subheader": "FGTS e Fundo Social"},
+    },
+    {
+        "key": "kpi_valor",
+        "title": "Valor financiado",
+        "dataset": "ouro_linha_financiada_resumo_mensal",
+        "viz_type": "big_number_total",
+        "params": {"metric": "sum__valor_financiamento", "y_axis_format": ".2s"},
+    },
+    {
+        "key": "fonte_pizza",
+        "title": "Contratos por fonte de recurso",
+        "dataset": "ouro_linha_financiada_resumo_mensal",
+        "viz_type": "pie",
+        "params": {"groupby": ["fonte_recurso"], "metric": "sum__quantidade_contratos", "donut": True, "row_limit": 50},
+    },
+    {
+        "key": "segmento_pizza",
+        "title": "Contratos por linha",
+        "dataset": "ouro_linha_financiada_resumo_mensal",
+        "viz_type": "pie",
+        "params": {"groupby": ["segmento_linha_financiada"], "metric": "sum__quantidade_contratos", "donut": True, "row_limit": 50},
+    },
     {
         "key": "contratos_mes",
         "title": "Contratos por mês e fonte",
@@ -113,12 +149,26 @@ CHARTS = [
         "viz_type": "deck_scatter",
         "params": {
             "spatial": {"type": "latlong", "latCol": "latitude", "lonCol": "longitude"},
-            "size": "sum__quantidade_contratos",
+            "size": "sum__quantidade_unidades",
             "point_radius_fixed": {"type": "fix", "value": 5000},
             "row_limit": 50000,
             "mapbox_style": "mapbox://styles/mapbox/light-v9",
             "viewport": {"latitude": -14.2, "longitude": -51.9, "zoom": 3.4},
         },
+    },
+    {
+        "key": "uf_barra",
+        "title": "Contratação por UF",
+        "dataset": "ouro_linha_financiada_mapa_execucao",
+        "viz_type": "dist_bar",
+        "params": {"groupby": ["uf"], "metrics": ["sum__quantidade_contratos"], "row_limit": 27, "order_desc": True},
+    },
+    {
+        "key": "situacao_empreendimento",
+        "title": "Situação dos empreendimentos",
+        "dataset": "ouro_linha_financiada_empreendimentos",
+        "viz_type": "pie",
+        "params": {"groupby": ["situacao_execucao"], "metric": "sum__quantidade_unidades", "donut": True, "row_limit": 20},
     },
     {
         "key": "municipios",
@@ -131,6 +181,13 @@ CHARTS = [
             "metrics": ["sum__quantidade_contratos", "sum__valor_financiamento"],
             "row_limit": 10000,
         },
+    },
+    {
+        "key": "contrapartida_pizza",
+        "title": "Cobertura de contrapartidas por tipo",
+        "dataset": "ouro_linha_financiada_contrapartidas",
+        "viz_type": "pie",
+        "params": {"groupby": ["tipo_contrapartida"], "metric": "sum__quantidade_contratos", "donut": True, "row_limit": 30},
     },
     {
         "key": "empreendimentos",
@@ -146,6 +203,13 @@ CHARTS = [
             ],
             "row_limit": 5000,
         },
+    },
+    {
+        "key": "orcamento_barra",
+        "title": "Orçamento atualizado e pagamentos",
+        "dataset": "ouro_linha_financiada_execucao_orcamentaria",
+        "viz_type": "dist_bar",
+        "params": {"groupby": ["ano", "fonte_recurso"], "metrics": ["sum__orcamento_atualizado", "sum__pagamentos_totais"], "row_limit": 100},
     },
     {
         "key": "contrapartidas",
@@ -275,27 +339,64 @@ def charts(api: Superset, ids_dataset: dict[str, int]) -> dict[str, int]:
     return resultado
 
 
+PAGINAS = [
+    ("Visão geral", [["kpi_contratos", "kpi_valor", "fonte_pizza", "segmento_pizza"], ["contratos_mes"], ["valor_mes"], ["semanal"]]),
+    ("Mapa e território", [["mapa"], ["uf_barra", "municipios"]]),
+    ("Empreendimentos", [["situacao_empreendimento"], ["empreendimentos"]]),
+    ("Contrapartidas e orçamento", [["contrapartida_pizza", "contrapartidas"], ["orcamento_barra"], ["orcamento"]]),
+    ("Predição e cobertura", [["previsao"], ["cobertura"]]),
+]
+
+
 def layout(ids_chart: dict[str, int]) -> str:
+    """Organiza o painel em abas e linhas responsivas, sem iframe ou código UI."""
+    tabs_id = "TABS-LINHA-FINANCIADA"
     estrutura = {
-        "ROOT_ID": {"id": "ROOT_ID", "type": "ROOT", "children": ["GRID_ID"], "parents": [], "meta": {}},
-        "GRID_ID": {"id": "GRID_ID", "type": "GRID", "children": [], "parents": ["ROOT_ID"], "meta": {}},
+        "ROOT_ID": {"id": "ROOT_ID", "type": "ROOT", "children": [tabs_id], "parents": [], "meta": {}},
+        tabs_id: {"id": tabs_id, "type": "TABS", "children": [], "parents": ["ROOT_ID"], "meta": {}},
     }
-    for indice, definicao in enumerate(CHARTS):
-        chart_id = ids_chart[definicao["key"]]
-        row_id, node_id = f"ROW-{indice:02d}", f"CHART-{chart_id}"
-        estrutura["GRID_ID"]["children"].append(row_id)
-        estrutura[row_id] = {"id": row_id, "type": "ROW", "children": [node_id], "parents": ["ROOT_ID", "GRID_ID"], "meta": {"background": "BACKGROUND_TRANSPARENT"}}
-        estrutura[node_id] = {"id": node_id, "type": "CHART", "children": [], "parents": ["ROOT_ID", "GRID_ID", row_id], "meta": {"chartId": chart_id, "width": 12, "height": 50, "index": f"{indice:03d}"}}
+    for pagina, (titulo, linhas) in enumerate(PAGINAS):
+        tab_id = f"TAB-LF-{pagina:02d}"
+        estrutura[tabs_id]["children"].append(tab_id)
+        estrutura[tab_id] = {"id": tab_id, "type": "TAB", "children": [], "parents": ["ROOT_ID", tabs_id], "meta": {"text": titulo, "defaultText": titulo, "placeholder": titulo}}
+        for indice, chaves in enumerate(linhas):
+            row_id = f"ROW-LF-{pagina:02d}-{indice:02d}"
+            estrutura[tab_id]["children"].append(row_id)
+            estrutura[row_id] = {"id": row_id, "type": "ROW", "children": [], "parents": ["ROOT_ID", tabs_id, tab_id], "meta": {"background": "BACKGROUND_TRANSPARENT"}}
+            largura = max(1, 12 // len(chaves))
+            for posicao, chave in enumerate(chaves):
+                chart_id = ids_chart[chave]
+                node_id = f"CHART-{chart_id}"
+                estrutura[row_id]["children"].append(node_id)
+                estrutura[node_id] = {"id": node_id, "type": "CHART", "children": [], "parents": ["ROOT_ID", tabs_id, tab_id, row_id], "meta": {"chartId": chart_id, "width": largura, "height": 34 if len(chaves) > 1 else 55, "index": f"{pagina:02d}{indice:02d}{posicao:02d}"}}
     return json.dumps(estrutura)
 
 
-def dashboard(api: Superset, ids_chart: dict[str, int]) -> None:
+def filtros_nativos(ids_dataset: dict[str, int]) -> list[dict]:
+    """Filtros compartilhados somente onde a coluna existe em cada Gold."""
+    definicoes = [
+        ("Período de contratação", "filter_time", "competencia_contratacao", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_features_preditivas"]),
+        ("Fonte de recurso", "filter_select", "fonte_recurso", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_contrapartidas", "ouro_linha_financiada_execucao_orcamentaria", "ouro_linha_financiada_features_preditivas"]),
+        ("Linha financiada", "filter_select", "segmento_linha_financiada", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_contrapartidas", "ouro_linha_financiada_features_preditivas"]),
+        ("UF", "filter_select", "uf", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_empreendimentos"]),
+        ("Município", "filter_select", "municipio", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_empreendimentos"]),
+        ("Faixa", "filter_select", "faixa_codigo", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao"]),
+        ("Modalidade", "filter_select", "modalidade", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao"]),
+        ("Tipo de imóvel", "filter_select", "tipo_imovel", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao"]),
+    ]
+    filtros = []
+    for indice, (nome, tipo, coluna, tabelas) in enumerate(definicoes, start=1):
+        filtros.append({"id": f"NATIVE_FILTER-LF-{indice:02d}", "name": nome, "filterType": tipo, "type": "NATIVE_FILTER", "targets": [{"datasetId": ids_dataset[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {}, "controlValues": {"multiSelect": tipo == "filter_select", "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
+    return filtros
+
+
+def dashboard(api: Superset, ids_chart: dict[str, int], ids_dataset: dict[str, int]) -> None:
     payload = {
         "dashboard_title": DASHBOARD_TITLE,
         "slug": DASHBOARD_SLUG,
         "published": True,
         "position_json": layout(ids_chart),
-        "json_metadata": json.dumps({"timed_refresh_immune_slices": [], "refresh_frequency": 0}),
+        "json_metadata": json.dumps({"timed_refresh_immune_slices": [], "refresh_frequency": 0, "native_filter_configuration": filtros_nativos(ids_dataset)}),
     }
     atual = api.dashboard_id(DASHBOARD_SLUG)
     if atual:
@@ -343,7 +444,7 @@ def main() -> None:
     )
     ids_dataset = datasets(api, get_or_create_database(api))
     ids_chart = charts(api, ids_dataset)
-    dashboard(api, ids_chart)
+    dashboard(api, ids_chart, ids_dataset)
     print(f"Concluído: {len(ids_dataset)} datasets, {len(ids_chart)} charts e 1 dashboard.")
 
 
