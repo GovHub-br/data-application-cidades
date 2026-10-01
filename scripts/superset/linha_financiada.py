@@ -113,20 +113,6 @@ CHARTS = [
         },
     },
     {
-        "key": "mapa",
-        "title": "Mapa de empreendimentos",
-        "dataset": "ouro_linha_financiada_empreendimentos",
-        "viz_type": "deck_scatter",
-        "params": {
-            "spatial": {"type": "latlong", "latCol": "latitude", "lonCol": "longitude"},
-            "size": "sum__quantidade_contratos",
-            "point_radius_fixed": {"type": "fix", "value": 5000},
-            "row_limit": 50000,
-            "mapbox_style": "mapbox://styles/mapbox/light-v9",
-            "viewport": {"latitude": -14.2, "longitude": -51.9, "zoom": 3.4},
-        },
-    },
-    {
         "key": "municipios",
         "title": "Execução por município",
         "dataset": "ouro_linha_financiada_mapa_execucao",
