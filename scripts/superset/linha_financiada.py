@@ -61,6 +61,10 @@ METRICAS = {
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
         ("sum__media_movel_contratos_3m", "SUM(media_movel_contratos_3m)"),
     ],
+    "ouro_linha_financiada_execucao_orcamentaria": [
+        ("sum__orcamento_atualizado", "SUM(orcamento_atualizado)"),
+        ("sum__pagamentos_totais", "SUM(pagamentos_totais)"),
+    ],
 }
 
 CHARTS = [
@@ -197,6 +201,32 @@ CHARTS = [
             "all_columns": ["pergunta_produto", "situacao_resposta", "justificativa"],
             "row_limit": 100,
         },
+    },
+]
+
+# Versão de validação: só usa tipos já disponíveis nesta instância (table,
+# ECharts temporal e mapa DeckGL). O dashboard simples permanece inalterado.
+CHARTS_COMPLETO = CHARTS + [
+    {
+        "key": "ranking_uf",
+        "title": "Ranking de contratação por UF",
+        "dataset": "ouro_linha_financiada_mapa_execucao",
+        "viz_type": "table",
+        "params": {"query_mode": "aggregate", "groupby": ["uf"], "metrics": ["sum__quantidade_contratos", "sum__valor_financiamento"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 27},
+    },
+    {
+        "key": "contrapartidas_por_linha",
+        "title": "Contrapartidas por linha e fonte",
+        "dataset": "ouro_linha_financiada_contrapartidas",
+        "viz_type": "table",
+        "params": {"query_mode": "aggregate", "groupby": ["segmento_linha_financiada", "fonte_recurso", "tipo_contrapartida", "ic_valor_informado"], "metrics": ["sum__quantidade_contratos", "sum__valor_contrapartida"], "row_limit": 1000},
+    },
+    {
+        "key": "orcamento_resumo",
+        "title": "Orçamento e pagamentos por fonte",
+        "dataset": "ouro_linha_financiada_execucao_orcamentaria",
+        "viz_type": "table",
+        "params": {"query_mode": "aggregate", "groupby": ["ano", "fonte_recurso"], "metrics": ["sum__orcamento_atualizado", "sum__pagamentos_totais"], "row_limit": 100},
     },
 ]
 
@@ -341,9 +371,33 @@ def dashboard(api: Superset, ids_chart: dict[str, int]) -> None:
         )
 
 
+def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
+    """Publica a prévia completa em abas, mantendo o painel simples intacto."""
+    global DASHBOARD_TITLE, DASHBOARD_SLUG
+    DASHBOARD_TITLE = "Linha Financiada — Painel Completo (validação)"
+    DASHBOARD_SLUG = "linha-financiada-completo"
+    dashboard(api, ids_chart)
+    por_tabela = {
+        item["table_name"]: item["id"] for item in api.list("dataset")
+        if item.get("schema") == SCHEMA
+    }
+    alvos = {
+        "Fonte de recurso": ("fonte_recurso", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_contrapartidas", "ouro_linha_financiada_execucao_orcamentaria", "ouro_linha_financiada_features_preditivas"]),
+        "Linha financiada": ("segmento_linha_financiada", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_contrapartidas", "ouro_linha_financiada_features_preditivas"]),
+        "UF": ("uf", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_empreendimentos"]),
+        "Faixa": ("faixa_codigo", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao"]),
+    }
+    filtros = []
+    for indice, (nome, (coluna, tabelas)) in enumerate(alvos.items(), 1):
+        filtros.append({"id": f"NATIVE_FILTER-COMP-{indice}", "name": nome, "filterType": "filter_select", "type": "NATIVE_FILTER", "targets": [{"datasetId": por_tabela[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {"extraFormData": {}, "filterState": {"label": "Todos", "value": []}}, "controlValues": {"multiSelect": True, "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
+    api.update("dashboard", api.dashboard_id(DASHBOARD_SLUG), {"json_metadata": json.dumps({"native_filter_configuration": filtros, "show_native_filters": True})})
+
+
 def main() -> None:
+    global CHARTS
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--completo", action="store_true")
     args = parser.parse_args()
     load_dotenv("local.env", override=False)
     load_dotenv(".env", override=False)
@@ -353,9 +407,14 @@ def main() -> None:
         env("SUPERSET_PASSWORD"),
         args.dry_run,
     )
+    if args.completo:
+        CHARTS = CHARTS_COMPLETO
     ids_dataset = datasets(api, get_or_create_database(api))
     ids_chart = charts(api, ids_dataset)
-    dashboard(api, ids_chart)
+    if args.completo:
+        dashboard_completo(api, ids_chart)
+    else:
+        dashboard(api, ids_chart)
     print(f"Concluído: {len(ids_dataset)} datasets, {len(ids_chart)} charts e 1 dashboard.")
 
 
