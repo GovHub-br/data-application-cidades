@@ -355,6 +355,10 @@ models:
             owner: mcid-data-engineering
       prata:
         +schema: prata
+        # Execução no DuckDB instalado no PostgreSQL: não transfere os
+        # parquets nem as tabelas grandes para a máquina que disparou o dbt.
+        +pre-hook:
+          - "{% if target.type == 'postgres' %}SET LOCAL duckdb.force_execution = true{% endif %}"
         +meta:
           governance:
             product: reforma_casa_brasil
@@ -369,6 +373,8 @@ models:
             owner: mcid-data-engineering
       ouro:
         +schema: ouro
+        +pre-hook:
+          - "{% if target.type == 'postgres' %}SET LOCAL duckdb.force_execution = true{% endif %}"
         +meta:
           governance:
             product: reforma_casa_brasil
