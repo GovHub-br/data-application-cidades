@@ -36,6 +36,7 @@ DATASETS = [
     "ouro_linha_financiada_features_preditivas",
     "ouro_linha_financiada_base_pf_fundo_social",
     "ouro_linha_financiada_cobertura_perguntas",
+    "ouro_linha_financiada_mapa_uf",
 ]
 
 # O Superset não cria métricas agregadas automaticamente ao registrar uma
@@ -65,6 +66,7 @@ METRICAS = {
         ("sum__orcamento_atualizado", "SUM(orcamento_atualizado)"),
         ("sum__pagamentos_totais", "SUM(pagamentos_totais)"),
     ],
+    "ouro_linha_financiada_mapa_uf": [("sum__quantidade_contratos", "SUM(quantidade_contratos)")],
 }
 
 CHARTS = [
@@ -207,6 +209,9 @@ CHARTS = [
 # Versão de validação: só usa tipos já disponíveis nesta instância (table,
 # ECharts temporal e mapa DeckGL). O dashboard simples permanece inalterado.
 CHARTS_COMPLETO = CHARTS + [
+    {"key": "mapa_brasil", "title": "Mapa do Brasil por UF", "dataset": "ouro_linha_financiada_mapa_uf", "viz_type": "country_map", "params": {"select_country": "brazil", "entity": "iso_3166_2", "metric": "sum__quantidade_contratos", "linear_color_scheme": "dark_blue"}},
+    {"key": "pizza_linha", "title": "Distribuição por linha", "dataset": "ouro_linha_financiada_resumo_mensal", "viz_type": "pie", "params": {"groupby": ["segmento_linha_financiada"], "metric": "sum__quantidade_contratos", "donut": True, "row_limit": 30}},
+    {"key": "pizza_fonte", "title": "Distribuição por fonte", "dataset": "ouro_linha_financiada_resumo_mensal", "viz_type": "pie", "params": {"groupby": ["fonte_recurso"], "metric": "sum__quantidade_contratos", "donut": True, "row_limit": 30}},
     {
         "key": "ranking_uf",
         "title": "Ranking de contratação por UF",
@@ -378,8 +383,8 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
     DASHBOARD_SLUG = "linha-financiada-completo"
     dashboard(api, ids_chart)
     abas = [
-        ("Nacional", [["contratos_mes"], ["valor_mes"], ["semanal"], ["previsao"]]),
-        ("Estados e municípios", [["mapa"], ["ranking_uf", "municipios"]]),
+        ("Nacional", [["pizza_linha", "pizza_fonte"], ["contratos_mes"], ["valor_mes"], ["semanal"], ["previsao"]]),
+        ("Estados e municípios", [["mapa_brasil"], ["ranking_uf", "municipios"]]),
         ("Por linha", [["contrapartidas", "contrapartidas_por_linha"], ["orcamento", "orcamento_resumo"], ["cobertura"]]),
         ("Empreendimentos", [["empreendimentos"]]),
     ]
