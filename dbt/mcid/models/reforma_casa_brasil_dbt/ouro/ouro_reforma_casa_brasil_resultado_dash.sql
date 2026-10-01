@@ -14,7 +14,19 @@ with rotulada as (
             when '5' then 'Indígena'
             else 'Não informada'
         end as raca_cor,
-        * exclude (uf, municipio, codigo_ibge, faixa_renda)
+        indicador_encontrado_cadunico,
+        indicador_inadequacao_observavel,
+        pessoas_por_dormitorio,
+        codigo_agua_canalizada,
+        codigo_banheiro,
+        codigo_escoamento_sanitario,
+        renda_total_familiar,
+        despesas_basicas_declaradas,
+        valor_prestacao_inicial,
+        valor_financiado,
+        valor_recurso_proprio,
+        valor_fgts_utilizado,
+        dt_referencia
     from {{ ref('prata_reforma_casa_brasil_acesso') }}
 )
 
@@ -28,7 +40,7 @@ select
     count(*) filter (where indicador_inadequacao_observavel)
         as quantidade_com_inadequacao_observavel_na_linha_de_base,
     round(
-        count(*) filter (where indicador_inadequacao_observavel)::double
+        count(*) filter (where indicador_inadequacao_observavel)::numeric
         / nullif(count(*) filter (where indicador_encontrado_cadunico), 0),
         4
     ) as proporcao_inadequacao_observavel_na_linha_de_base,
@@ -37,7 +49,23 @@ select
     count(*) filter (where codigo_banheiro = '2') as quantidade_sem_banheiro,
     count(*) filter (where codigo_escoamento_sanitario in ('3', '4', '5', '6'))
         as quantidade_escoamento_precario,
+    count(*) filter (
+        where renda_total_familiar is not null or despesas_basicas_declaradas is not null
+    ) as quantidade_com_linha_de_base_financeira,
+    avg(renda_total_familiar) as renda_total_familiar_media,
+    avg(despesas_basicas_declaradas) as despesas_basicas_declaradas_media,
+    avg(valor_prestacao_inicial) as prestacao_inicial_media,
+    avg(
+        case
+            when renda_total_familiar > 0
+            then valor_prestacao_inicial / renda_total_familiar
+        end
+    ) as comprometimento_renda_inicial_medio,
+    avg(valor_financiado) as valor_financiado_medio,
+    avg(valor_recurso_proprio) as recurso_proprio_medio,
+    avg(valor_fgts_utilizado) as fgts_utilizado_medio,
     false as resultado_pos_obra_disponivel,
+    false as impacto_financeiro_pos_obra_disponivel,
     'Linha de base CadÚnico; não mede causalmente o efeito posterior da reforma.'
         as ressalva_resultado,
     max(dt_referencia) as dt_referencia,
