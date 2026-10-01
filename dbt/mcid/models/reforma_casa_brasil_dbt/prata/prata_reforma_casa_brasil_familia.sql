@@ -4,22 +4,23 @@ with base as (
     select
         nullif(trim(co_familiar_fam::varchar), '') as codigo_familiar,
         regexp_replace(nullif(trim(cd_ibge_cadastro::varchar), ''), '\\.0$', '') as codigo_ibge_cadastro,
-        coalesce(
-            {{ parse_hist_date('dt_cadastro_fam') }},
-            try_strptime(nullif(trim(dt_cadastro_fam::varchar), ''), '%d/%m/%Y')::date
-        ) as dt_cadastro,
-        coalesce(
-            {{ parse_hist_date('dt_atualizacao_fam') }},
-            try_strptime(nullif(trim(dt_atualizacao_fam::varchar), ''), '%d/%m/%Y')::date
-        ) as dt_atualizacao,
+        {{ reforma_casa_brasil_data('dt_cadastro_fam') }} as dt_cadastro,
+        {{ reforma_casa_brasil_data('dt_atualizacao_fam') }} as dt_atualizacao,
         nullif(trim(co_est_cadastral_fam::varchar), '') as situacao_cadastral_familia,
         nullif(trim(marc_pbf::varchar), '') as marcador_pbf,
-        {{ parse_hist_numeric('vl_renda_media_fam') }} as renda_media_familiar,
-        {{ parse_hist_numeric('vl_renda_total_fam') }} as renda_total_familiar,
-        {{ parse_hist_bigint('qt_membro_familia') }} as quantidade_membros,
-        {{ parse_hist_bigint('qt_pessoas_domic_fam') }} as quantidade_pessoas_domicilio,
-        {{ parse_hist_bigint('qt_comodos_domic_fam') }} as quantidade_comodos,
-        {{ parse_hist_bigint('qt_comodos_dormitorio_fam') }} as quantidade_dormitorios,
+        {{ reforma_casa_brasil_numero('vl_renda_media_fam') }} as renda_media_familiar,
+        {{ reforma_casa_brasil_numero('vl_renda_total_fam') }} as renda_total_familiar,
+        {{ reforma_casa_brasil_numero('vl_desp_energia_fam') }} as despesa_energia_familiar,
+        {{ reforma_casa_brasil_numero('vl_desp_agua_esgoto_fam') }} as despesa_agua_esgoto_familiar,
+        {{ reforma_casa_brasil_numero('vl_desp_gas_fam') }} as despesa_gas_familiar,
+        {{ reforma_casa_brasil_numero('vl_desp_alimentacao_fam') }} as despesa_alimentacao_familiar,
+        {{ reforma_casa_brasil_numero('vl_desp_transpor_fam') }} as despesa_transporte_familiar,
+        {{ reforma_casa_brasil_numero('vl_desp_aluguel_fam') }} as despesa_aluguel_familiar,
+        {{ reforma_casa_brasil_numero('vl_desp_medicamentos_fam') }} as despesa_medicamentos_familiar,
+        {{ reforma_casa_brasil_bigint('qt_membro_familia') }} as quantidade_membros,
+        {{ reforma_casa_brasil_bigint('qt_pessoas_domic_fam') }} as quantidade_pessoas_domicilio,
+        {{ reforma_casa_brasil_bigint('qt_comodos_domic_fam') }} as quantidade_comodos,
+        {{ reforma_casa_brasil_bigint('qt_comodos_dormitorio_fam') }} as quantidade_dormitorios,
         nullif(trim(co_local_domic_fam::varchar), '') as codigo_local_domicilio,
         nullif(trim(co_especie_domic_fam::varchar), '') as codigo_especie_domicilio,
         nullif(trim(co_material_piso_fam::varchar), '') as codigo_material_piso,
@@ -42,8 +43,26 @@ with base as (
 select
     *,
     case
+        when
+            despesa_energia_familiar is not null
+            or despesa_agua_esgoto_familiar is not null
+            or despesa_gas_familiar is not null
+            or despesa_alimentacao_familiar is not null
+            or despesa_transporte_familiar is not null
+            or despesa_aluguel_familiar is not null
+            or despesa_medicamentos_familiar is not null
+        then
+            coalesce(despesa_energia_familiar, 0)
+            + coalesce(despesa_agua_esgoto_familiar, 0)
+            + coalesce(despesa_gas_familiar, 0)
+            + coalesce(despesa_alimentacao_familiar, 0)
+            + coalesce(despesa_transporte_familiar, 0)
+            + coalesce(despesa_aluguel_familiar, 0)
+            + coalesce(despesa_medicamentos_familiar, 0)
+    end as despesas_basicas_declaradas,
+    case
         when quantidade_dormitorios > 0
-        then quantidade_pessoas_domicilio::double / quantidade_dormitorios
+        then quantidade_pessoas_domicilio::double precision / quantidade_dormitorios
     end as pessoas_por_dormitorio,
     -- Proxy operacional; não substitui o conceito oficial de inadequação habitacional.
     (
@@ -53,7 +72,7 @@ select
         or codigo_escoamento_sanitario in ('3', '4', '5', '6')
         or (
             quantidade_dormitorios > 0
-            and quantidade_pessoas_domicilio::double / quantidade_dormitorios > 3
+            and quantidade_pessoas_domicilio::double precision / quantidade_dormitorios > 3
         )
     ) as indicador_inadequacao_observavel,
     current_timestamp as dt_prata

@@ -21,6 +21,27 @@ models:
         data_tests:
           - valor_nao_negativo
 
+  - name: prata_reforma_casa_brasil_contrato_historico
+    description: >
+      Série administrativa de contratos por data de referência e snapshot.
+      Permite acompanhar posição da carteira e valores contratuais, mas não
+      representa execução orçamentária, desembolso ou medição física de obra.
+    meta:
+      tags: [prata, reforma-casa-brasil, contrato, historico, restrito]
+    columns:
+      - name: id_contrato
+        description: Chave técnica pseudonimizada do contrato.
+        data_tests: [not_null]
+      - name: dt_referencia
+        description: Data da fotografia administrativa, preservada para séries temporais.
+        data_tests: [not_null]
+      - name: arquivo_snapshot
+        description: Arquivo de staging que originou a fotografia do contrato.
+        data_tests: [not_null]
+    data_tests:
+      - unique_combinacao:
+          arguments: {colunas: [id_contrato, dt_referencia, arquivo_snapshot]}
+
   - name: prata_reforma_casa_brasil_pessoa
     description: >
       Ponte pseudonimizada Pessoa CadÚnico → família. Não contém nomes,
@@ -42,7 +63,8 @@ models:
   - name: prata_reforma_casa_brasil_familia
     description: >
       Características familiares e domiciliares tipadas. O indicador de
-      inadequação é proxy operacional e não substitui metodologia oficial.
+      inadequação é proxy operacional e não substitui metodologia oficial. As
+      despesas declaradas formam somente uma linha de base financeira.
     meta:
       tags: [prata, reforma-casa-brasil, cadunico, familia, restrito]
     columns:
@@ -50,6 +72,10 @@ models:
         data_tests: [not_null, unique]
       - name: indicador_inadequacao_observavel
         data_tests: [not_null]
+      - name: despesas_basicas_declaradas
+        description: >
+          Soma das despesas declaradas disponíveis; não representa gasto pós-reforma
+          nem é usada como indicador de impacto financeiro realizado.
 
   - name: prata_reforma_casa_brasil_acesso
     description: >
