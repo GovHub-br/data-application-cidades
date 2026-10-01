@@ -38,6 +38,31 @@ DATASETS = [
     "ouro_linha_financiada_cobertura_perguntas",
 ]
 
+# O Superset não cria métricas agregadas automaticamente ao registrar uma
+# tabela. Declaramos as métricas pelo mesmo nome usado pelos gráficos, para que
+# o dashboard seja reproduzível em qualquer instância.
+METRICAS = {
+    "ouro_linha_financiada_resumo_mensal": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__valor_financiamento", "SUM(valor_financiamento)"),
+    ],
+    "ouro_linha_financiada_mapa_execucao": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__valor_financiamento", "SUM(valor_financiamento)"),
+    ],
+    "ouro_linha_financiada_empreendimentos": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+    ],
+    "ouro_linha_financiada_contrapartidas": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__valor_contrapartida", "SUM(valor_contrapartida)"),
+    ],
+    "ouro_linha_financiada_features_preditivas": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__media_movel_contratos_3m", "SUM(media_movel_contratos_3m)"),
+    ],
+}
+
 CHARTS = [
     {
         "key": "contratos_mes",
@@ -72,7 +97,11 @@ CHARTS = [
         "viz_type": "table",
         "params": {
             "query_mode": "raw",
-            "all_columns": [],
+            "all_columns": [
+                "semana_referencia", "fonte_recurso", "segmento_linha_financiada",
+                "faixa_codigo", "modalidade", "tipo_imovel", "quantidade_contratos",
+                "valor_financiamento", "valor_descontos", "valor_contrapartida_informada",
+            ],
             "order_by_cols": ["[\"semana_referencia\", false]"],
             "row_limit": 1000,
         },
@@ -84,7 +113,7 @@ CHARTS = [
         "viz_type": "deck_scatter",
         "params": {
             "spatial": {"type": "latlong", "latCol": "latitude", "lonCol": "longitude"},
-            "size": "quantidade_contratos",
+            "size": "sum__quantidade_contratos",
             "point_radius_fixed": {"type": "fix", "value": 5000},
             "row_limit": 50000,
             "mapbox_style": "mapbox://styles/mapbox/light-v9",
@@ -110,7 +139,11 @@ CHARTS = [
         "viz_type": "table",
         "params": {
             "query_mode": "raw",
-            "all_columns": [],
+            "all_columns": [
+                "codigo_empreendimento", "nome_empreendimento", "uf", "municipio",
+                "quantidade_unidades", "quantidade_unidades_concluidas",
+                "quantidade_unidades_entregues", "percentual_obra", "competencia_posicao",
+            ],
             "row_limit": 5000,
         },
     },
@@ -133,7 +166,11 @@ CHARTS = [
         "viz_type": "table",
         "params": {
             "query_mode": "raw",
-            "all_columns": [],
+            "all_columns": [
+                "ano", "fonte_recurso", "programa", "agrupamento", "unidade_gestora",
+                "orcamento_atualizado", "despesas_empenhadas", "despesas_pagas",
+                "restos_a_pagar_pagos", "pagamentos_totais", "percentual_execucao_financeira",
+            ],
             "row_limit": 5000,
         },
     },
@@ -155,7 +192,11 @@ CHARTS = [
         "title": "Cobertura das perguntas da oficina",
         "dataset": "ouro_linha_financiada_cobertura_perguntas",
         "viz_type": "table",
-        "params": {"query_mode": "raw", "all_columns": [], "row_limit": 100},
+        "params": {
+            "query_mode": "raw",
+            "all_columns": ["pergunta_produto", "situacao_resposta", "justificativa"],
+            "row_limit": 100,
+        },
     },
 ]
 
@@ -174,6 +215,34 @@ def datasets(api: Superset, database_id: int) -> dict[str, int]:
             )
             existentes[chave] = criado["id"]
         resultado[nome] = existentes[chave]
+    for nome, metricas in METRICAS.items():
+        detalhe = api.session.get(
+            f"{api.base_url}/api/v1/dataset/{resultado[nome]}", timeout=30
+        )
+        detalhe.raise_for_status()
+        atuais = detalhe.json()["result"].get("metrics", [])
+        esperadas = {nome_metrica for nome_metrica, _ in metricas}
+        if {item["metric_name"] for item in atuais} == esperadas:
+            continue
+        # A API substitui a coleção de métricas no PUT. Antes de enviá-la,
+        # removemos as métricas atuais pelo endpoint documentado, pois a API
+        # recusa nomes duplicados na mesma atualização.
+        if not api.dry_run:
+            for metrica in atuais:
+                resposta = api.session.delete(
+                    f"{api.base_url}/api/v1/dataset/{resultado[nome]}/metric/{metrica['id']}",
+                    timeout=30,
+                )
+                resposta.raise_for_status()
+        payloads = []
+        for nome_metrica, expressao in metricas:
+            payloads.append({
+                "metric_name": nome_metrica,
+                "verbose_name": nome_metrica.replace("sum__", "Soma de ").replace("_", " "),
+                "expression": expressao,
+                "metric_type": "sum",
+            })
+        api.update("dataset", resultado[nome], {"metrics": payloads})
     return resultado
 
 
@@ -200,8 +269,9 @@ def charts(api: Superset, ids_dataset: dict[str, int]) -> dict[str, int]:
             resultado[definicao["key"]] = api.create("chart", payload)["id"]
         else:
             resultado[definicao["key"]] = atual["id"]
-            if atual.get("datasource_id") != dataset_id:
-                api.update("chart", atual["id"], payload)
+            # Atualiza também os parâmetros: o dashboard deve corrigir charts
+            # existentes quando a definição evoluir, não apenas reapontá-los.
+            api.update("chart", atual["id"], payload)
     return resultado
 
 
