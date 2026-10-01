@@ -377,6 +377,30 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
     DASHBOARD_TITLE = "Linha Financiada — Painel Completo (validação)"
     DASHBOARD_SLUG = "linha-financiada-completo"
     dashboard(api, ids_chart)
+    abas = [
+        ("Nacional", [["contratos_mes"], ["valor_mes"], ["semanal"], ["previsao"]]),
+        ("Estados e municípios", [["mapa"], ["ranking_uf", "municipios"]]),
+        ("Por linha", [["contrapartidas", "contrapartidas_por_linha"], ["orcamento", "orcamento_resumo"], ["cobertura"]]),
+        ("Empreendimentos", [["empreendimentos"]]),
+    ]
+    tabs_id = "TABS-LINHA-FINANCIADA-COMPLETO"
+    estrutura = {
+        "ROOT_ID": {"id": "ROOT_ID", "type": "ROOT", "children": [tabs_id], "parents": [], "meta": {}},
+        tabs_id: {"id": tabs_id, "type": "TABS", "children": [], "parents": ["ROOT_ID"], "meta": {}},
+    }
+    for pagina, (titulo, linhas) in enumerate(abas):
+        tab = f"TAB-LF-COMP-{pagina:02d}"
+        estrutura[tabs_id]["children"].append(tab)
+        estrutura[tab] = {"id": tab, "type": "TAB", "children": [], "parents": ["ROOT_ID", tabs_id], "meta": {"text": titulo, "defaultText": titulo, "placeholder": titulo}}
+        for linha, chaves in enumerate(linhas):
+            row = f"ROW-LF-COMP-{pagina:02d}-{linha:02d}"
+            estrutura[tab]["children"].append(row)
+            estrutura[row] = {"id": row, "type": "ROW", "children": [], "parents": ["ROOT_ID", tabs_id, tab], "meta": {"background": "BACKGROUND_TRANSPARENT"}}
+            largura = 12 // len(chaves)
+            for posicao, chave in enumerate(chaves):
+                node = f"CHART-{ids_chart[chave]}"
+                estrutura[row]["children"].append(node)
+                estrutura[node] = {"id": node, "type": "CHART", "children": [], "parents": ["ROOT_ID", tabs_id, tab, row], "meta": {"chartId": ids_chart[chave], "width": largura, "height": 44 if len(chaves) == 1 else 36, "index": f"{pagina:02d}{linha:02d}{posicao:02d}"}}
     por_tabela = {
         item["table_name"]: item["id"] for item in api.list("dataset")
         if item.get("schema") == SCHEMA
@@ -390,7 +414,7 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
     filtros = []
     for indice, (nome, (coluna, tabelas)) in enumerate(alvos.items(), 1):
         filtros.append({"id": f"NATIVE_FILTER-COMP-{indice}", "name": nome, "filterType": "filter_select", "type": "NATIVE_FILTER", "targets": [{"datasetId": por_tabela[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {"extraFormData": {}, "filterState": {"label": "Todos", "value": []}}, "controlValues": {"multiSelect": True, "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
-    api.update("dashboard", api.dashboard_id(DASHBOARD_SLUG), {"json_metadata": json.dumps({"native_filter_configuration": filtros, "show_native_filters": True})})
+    api.update("dashboard", api.dashboard_id(DASHBOARD_SLUG), {"position_json": json.dumps(estrutura), "json_metadata": json.dumps({"native_filter_configuration": filtros, "show_native_filters": True})})
 
 
 def main() -> None:
