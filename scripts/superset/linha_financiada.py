@@ -160,8 +160,10 @@ CHARTS = [
         "key": "uf_barra",
         "title": "Contratação por UF",
         "dataset": "ouro_linha_financiada_mapa_execucao",
-        "viz_type": "dist_bar",
-        "params": {"groupby": ["uf"], "metrics": ["sum__quantidade_contratos"], "row_limit": 27, "order_desc": True},
+        # `dist_bar` não está instalado nesta instância. A tabela agregada é
+        # compatível e preserva o ranking territorial sem falha de plugin.
+        "viz_type": "table",
+        "params": {"query_mode": "aggregate", "groupby": ["uf"], "metrics": ["sum__quantidade_contratos", "sum__valor_financiamento"], "row_limit": 27, "order_by_cols": ['["sum__quantidade_contratos", false]']},
     },
     {
         "key": "situacao_empreendimento",
@@ -208,8 +210,8 @@ CHARTS = [
         "key": "orcamento_barra",
         "title": "Orçamento atualizado e pagamentos",
         "dataset": "ouro_linha_financiada_execucao_orcamentaria",
-        "viz_type": "dist_bar",
-        "params": {"groupby": ["ano", "fonte_recurso"], "metrics": ["sum__orcamento_atualizado", "sum__pagamentos_totais"], "row_limit": 100},
+        "viz_type": "table",
+        "params": {"query_mode": "aggregate", "groupby": ["ano", "fonte_recurso"], "metrics": ["sum__orcamento_atualizado", "sum__pagamentos_totais"], "row_limit": 100},
     },
     {
         "key": "contrapartidas",
@@ -386,7 +388,12 @@ def filtros_nativos(ids_dataset: dict[str, int]) -> list[dict]:
     ]
     filtros = []
     for indice, (nome, tipo, coluna, tabelas) in enumerate(definicoes, start=1):
-        filtros.append({"id": f"NATIVE_FILTER-LF-{indice:02d}", "name": nome, "filterType": tipo, "type": "NATIVE_FILTER", "targets": [{"datasetId": ids_dataset[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {}, "controlValues": {"multiSelect": tipo == "filter_select", "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
+        mascara = (
+            {"extraFormData": {"time_range": "No filter"}, "filterState": {"value": "No filter"}}
+            if tipo == "filter_time"
+            else {"extraFormData": {}, "filterState": {"label": "Todos", "value": []}}
+        )
+        filtros.append({"id": f"NATIVE_FILTER-LF-{indice:02d}", "name": nome, "filterType": tipo, "type": "NATIVE_FILTER", "targets": [{"datasetId": ids_dataset[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": mascara, "controlValues": {"multiSelect": tipo == "filter_select", "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
     return filtros
 
 
@@ -396,7 +403,7 @@ def dashboard(api: Superset, ids_chart: dict[str, int], ids_dataset: dict[str, i
         "slug": DASHBOARD_SLUG,
         "published": True,
         "position_json": layout(ids_chart),
-        "json_metadata": json.dumps({"timed_refresh_immune_slices": [], "refresh_frequency": 0, "native_filter_configuration": filtros_nativos(ids_dataset)}),
+        "json_metadata": json.dumps({"timed_refresh_immune_slices": [], "refresh_frequency": 0, "native_filter_configuration": filtros_nativos(ids_dataset), "show_native_filters": True}),
     }
     atual = api.dashboard_id(DASHBOARD_SLUG)
     if atual:
