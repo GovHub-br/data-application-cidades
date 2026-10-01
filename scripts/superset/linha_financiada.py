@@ -413,7 +413,9 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
     }
     filtros = []
     for indice, (nome, (coluna, tabelas)) in enumerate(alvos.items(), 1):
-        filtros.append({"id": f"NATIVE_FILTER-COMP-{indice}", "name": nome, "filterType": "filter_select", "type": "NATIVE_FILTER", "targets": [{"datasetId": por_tabela[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {"extraFormData": {}, "filterState": {"label": "Todos", "value": []}}, "controlValues": {"multiSelect": True, "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
+        # Sem valor inicial: nesta versão do Superset `value: []` significa
+        # conjunto vazio, e não "todos". O filtro deve abrir sem restringir.
+        filtros.append({"id": f"NATIVE_FILTER-COMP-{indice}", "name": nome, "filterType": "filter_select", "type": "NATIVE_FILTER", "targets": [{"datasetId": por_tabela[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {}, "controlValues": {"multiSelect": True, "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
     api.update("dashboard", api.dashboard_id(DASHBOARD_SLUG), {"position_json": json.dumps(estrutura), "json_metadata": json.dumps({"native_filter_configuration": filtros, "show_native_filters": True})})
 
 
