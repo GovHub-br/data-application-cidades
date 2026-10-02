@@ -39,6 +39,15 @@ METRICAS = {
     ],
 }
 
+CHARTS = [
+    {"key": "contratos_uf", "title": "Contratos por UF", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["uf"], "metrics": ["sum__quantidade_contratos", "sum__valor_financiado_total"], "row_limit": 30}},
+    {"key": "financiamento_faixa", "title": "Financiamento por faixa", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "pie", "params": {"groupby": ["faixa_renda"], "metric": "sum__valor_financiado_total", "donut": True, "row_limit": 30}},
+    {"key": "implementacao", "title": "Implementação por município", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "raw", "all_columns": ["uf", "municipio", "faixa_renda", "modalidade", "quantidade_contratos", "valor_financiado_total", "quantidade_com_atraso", "proporcao_com_atraso"], "row_limit": 5000}},
+    {"key": "monitoramento", "title": "Carteira por competência", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_line", "params": {"x_axis": "dt_referencia", "metrics": ["sum__quantidade_contratos", "sum__quantidade_primeira_ocorrencia_serie"], "groupby": ["uf"], "time_grain_sqla": "P1M", "row_limit": 10000}},
+    {"key": "recursos", "title": "Recursos contratados por competência", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "dt_referencia", "metrics": ["sum__valor_financiado_total"], "groupby": ["modalidade"], "time_grain_sqla": "P1M", "row_limit": 10000}},
+    {"key": "cobertura", "title": "Cobertura das perguntas", "dataset": "ouro_reforma_casa_brasil_cobertura_perguntas_dash", "viz_type": "table", "params": {"query_mode": "raw", "all_columns": ["bloco", "pergunta", "situacao_dado", "resposta_disponivel", "fonte_necessaria", "limitacao"], "row_limit": 100}},
+]
+
 
 def datasets(api: Superset, database_id: int) -> dict[str, int]:
     existentes = {(x.get("schema"), x.get("table_name")): x["id"] for x in api.list("dataset")}
