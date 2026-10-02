@@ -57,7 +57,8 @@ with
         where trim(modalidade) = 'FAR' and nullif(trim(apf), '') is not null
     ),
 
-    -- Há APF repetido dentro do mesmo arquivo; fica o de maior desembolso
+    -- Há APF repetido dentro do mesmo arquivo; fica o de maior desembolso. O resto
+    -- da ordenação só desempata, para o resultado não variar entre execuções
     deduplicado as (
         select
             *,
@@ -66,7 +67,10 @@ with
                 order by
                     arquivo_de_origem desc,
                     valor_desembolsado desc nulls last,
-                    pct_execucao desc nulls last
+                    pct_execucao desc nulls last,
+                    valor_contratado desc nulls last,
+                    empreendimento_nome,
+                    municipio
             ) as rn
         from caixa
     )

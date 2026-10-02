@@ -16,8 +16,9 @@ models:
           - not_null
           - unique
           - relationships:
-              to: ref('prata_far_empreendimento')
-              field: apf
+              arguments:
+                to: ref('prata_far_empreendimento')
+                field: apf
       - name: municipio
         description: Município do empreendimento.
         tests:
@@ -47,7 +48,8 @@ models:
       Série APF × mês pronta para o gráfico de evolução financeira.
     tests:
       - unique_combinacao:
-          colunas: ["apf", "mes"]
+          arguments:
+            colunas: ["apf", "mes"]
 
   - name: ouro_far_execucao_fisica_financeira_chart
     description: >
@@ -61,7 +63,8 @@ models:
       colunas da CAIXA para conciliação. Alimenta o dashboard e o modelo preditivo.
     tests:
       - unique_combinacao:
-          colunas: ["apf", "mes"]
+          arguments:
+            colunas: ["apf", "mes"]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -79,10 +82,12 @@ models:
       APFs distratados ou cancelados na situação mais recente da CAIXA.
     tests:
       - unique_combinacao:
-          colunas: ["mes", "nivel", "uf"]
+          arguments:
+            colunas: ["mes", "nivel", "uf"]
     columns:
       - name: nivel
         description: "`nacional` ou `uf`."
         tests:
           - accepted_values:
-              values: ["nacional", "uf"]
+              arguments:
+                values: ["nacional", "uf"]

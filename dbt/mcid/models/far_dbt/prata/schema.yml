@@ -90,7 +90,8 @@ models:
     tests:
       # O grão é (apf, mes): duas linhas para o mesmo mês dobrariam o acumulado.
       - unique_combinacao:
-          colunas: ["apf", "mes"]
+          arguments:
+            colunas: ["apf", "mes"]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -107,7 +108,8 @@ models:
       competência sai do nome do arquivo. Não há competência 2026-06 na origem.
     tests:
       - unique_combinacao:
-          colunas: ["apf", "competencia"]
+          arguments:
+            colunas: ["apf", "competencia"]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -122,8 +124,9 @@ models:
           Código da situação da obra; o rótulo está no seed far_situacao_obra.
         tests:
           - relationships:
-              to: ref('far_situacao_obra')
-              field: co_situacao_obra
+              arguments:
+                to: ref('far_situacao_obra')
+                field: co_situacao_obra
               config:
                 severity: warn
 
@@ -133,7 +136,8 @@ models:
       por mês. É série contínua desde 2024-06 e cobre os meses sem MONIT.
     tests:
       - unique_combinacao:
-          colunas: ["apf", "competencia"]
+          arguments:
+            colunas: ["apf", "competencia"]
     columns:
       - name: apf
         description: APF de 8 dígitos, como a CAIXA envia.
@@ -152,7 +156,8 @@ models:
       em `fonte_fisica`.
     tests:
       - unique_combinacao:
-          colunas: ["apf", "mes"]
+          arguments:
+            colunas: ["apf", "mes"]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -174,7 +179,8 @@ models:
           observados, em linha reta) ou `carregado` (depois do último observado).
         tests:
           - accepted_values:
-              values: ["monit", "interpolado", "carregado"]
+              arguments:
+                values: ["monit", "interpolado", "carregado"]
       - name: fonte_fisica
         description: >
           De onde veio o percentual realizado: `monit`, `caixa` (mês sem MONIT) ou
@@ -183,7 +189,8 @@ models:
           (antes disso manda 0 para todos).
         tests:
           - accepted_values:
-              values: ["monit", "caixa", "carregado"]
+              arguments:
+                values: ["monit", "caixa", "carregado"]
       - name: situacao_obra
         description: >
           Rótulo de `co_situacao_obra`, pelo dicionário do LAYOUT do MONIT (seed
@@ -192,8 +199,9 @@ models:
         description: Soma das liberações do APF até o mês.
         tests:
           - acumulado_nao_regride:
-              partition_by: apf
-              order_by: mes
+              arguments:
+                partition_by: apf
+                order_by: mes
               config:
                 severity: warn
       - name: pct_financeiro
