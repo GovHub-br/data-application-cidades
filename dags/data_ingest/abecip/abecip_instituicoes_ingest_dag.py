@@ -25,7 +25,7 @@ import re
 from datetime import datetime, timedelta
 
 import pandas as pd
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from cliente_minio import get_s3_client, upload_staging_parquet
 from schedule_loader import get_dynamic_schedule
 
@@ -54,7 +54,7 @@ def _competencias(cliente) -> dict[str, str]:
 
 @dag(
     dag_id="abecip_instituicoes_ingest_dag",
-    schedule_interval=get_dynamic_schedule(
+    schedule=get_dynamic_schedule(
         "abecip_instituicoes_ingest_dag", default="0 7 * * *"
     ),
     start_date=datetime(2025, 1, 1),

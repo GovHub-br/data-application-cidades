@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional, List
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.models import Variable
+from airflow.sdk import DAG
+from airflow.providers.standard.operators.python import PythonOperator
+from airflow.sdk import Variable
 from datetime import datetime, timedelta
 import logging
 import json
@@ -66,7 +66,7 @@ with DAG(
         "DAG processa anexos da visão orçamentária total IPEA "
         "vindo do email, formata e insere no db"
     ),
-    schedule_interval=get_dynamic_schedule("visao_orcamentaria_ingest"),
+    schedule=get_dynamic_schedule("visao_orcamentaria_ingest"),
     start_date=datetime(2023, 12, 1),
     catchup=False,
     tags=["email", "visao_orcamentaria", "tesouro"],
@@ -272,8 +272,10 @@ with DAG(
             df = pd.read_csv(io.StringIO(csv_data))
 
             # Garantir que todos os valores sejam strings para evitar problemas de tipo
+            # fillna antes do astype: no pandas 3 o astype(str) preserva o nulo
+            # em vez de gravar "nan", e o replace abaixo nao o pegaria.
             for col in df.columns:
-                df[col] = df[col].astype(str)
+                df[col] = df[col].fillna("").astype(str)
                 df[col] = df[col].replace(["nan", "NaN", "None"], "")
 
             data = df.to_dict(orient="records")
@@ -311,13 +313,11 @@ with DAG(
     process_emails_task = PythonOperator(
         task_id="process_emails",
         python_callable=process_email_data,
-        provide_context=True,
     )
 
     insert_and_clean_task = PythonOperator(
         task_id="insert_and_clean",
         python_callable=insert_and_clean_data,
-        provide_context=True,
     )
 
     # Fluxo da DAG
