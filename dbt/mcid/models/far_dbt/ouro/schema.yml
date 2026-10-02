@@ -16,8 +16,9 @@ models:
           - not_null
           - unique
           - relationships:
-              to: ref('prata_far_empreendimento')
-              field: apf
+              arguments:
+                to: ref('prata_far_empreendimento')
+                field: apf
       - name: municipio
         description: Município do empreendimento.
         tests:
@@ -47,10 +48,46 @@ models:
       Série APF × mês pronta para o gráfico de evolução financeira.
     tests:
       - unique_combinacao:
-          colunas: ["apf", "mes"]
+          arguments:
+            colunas: ["apf", "mes"]
 
   - name: ouro_far_execucao_fisica_financeira_chart
     description: >
       As duas curvas na mesma série mensal. A execução física do FAR é retrato único,
       repetido ao longo dos meses para virar linha de referência sobre a série
       financeira, que é a única das duas com história.
+
+  - name: ouro_far_serie_mensal_apf
+    description: >
+      Série mensal por APF com execução física e financeira, ritmo entre as duas e
+      colunas da CAIXA para conciliação. Alimenta o dashboard e o modelo preditivo.
+    tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["apf", "mes"]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+      - name: ic_cadastro_monit
+        description: >
+          Falso para os APFs que têm liberação no livro-razão mas não estão no
+          cadastro MONIT: entram pela conciliação dos valores, sem % financeiro.
+
+  - name: ouro_far_curva_s
+    description: >
+      Curva S do FAR: percentuais físico (previsto e realizado) e financeiro por mês,
+      ponderados pelo valor FAR, no nível nacional (`uf` = 'BR') e por UF. Exclui os
+      APFs distratados ou cancelados na situação mais recente da CAIXA.
+    tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["mes", "nivel", "uf"]
+    columns:
+      - name: nivel
+        description: "`nacional` ou `uf`."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["nacional", "uf"]
