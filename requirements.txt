@@ -27,7 +27,7 @@ boto3==1.43.75
 
 # Instalados por cima da base.
 apache-airflow-providers-microsoft-mssql==4.7.1
-pymssql==2.4.1
+pymssql==2.4.2
 openpyxl==3.1.5
 zeep==4.3.3
 # Fora das constraints do Airflow.
