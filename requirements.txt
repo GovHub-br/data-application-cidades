@@ -40,6 +40,6 @@ dbt-duckdb==1.11.0
 duckdb==1.5.6
 imap-tools==1.15.0
 # Vem com o metricflow do dbt-core 1.12; pinado na versao das constraints.
-sqlglot==30.18.0
+sqlglot==30.21.0
 # pathspec e more-itertools ficam abaixo das constraints (1.0.4 e 10.8.0):
 # dbt-common/dbt-core pedem pathspec<1.1 e o metricflow, more-itertools<11.
