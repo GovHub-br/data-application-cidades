@@ -221,6 +221,27 @@ CHARTS_COMPLETO = CHARTS + [
     },
 ]
 
+# Recortes fixos para as abas de negócio. Cada gráfico recebe o filtro na
+# própria consulta, evitando que o usuário tenha de aplicar manualmente a
+# linha toda vez que abre o painel.
+for sufixo, rotulo in [
+    ("cidades", "MCMV Cidades"),
+    ("classe_media", "Classe Média"),
+    ("pro_moradia", "Pró-Moradia"),
+]:
+    for chave_base in ("contratos_mes", "valor_mes", "semanal"):
+        base = next(item for item in CHARTS if item["key"] == chave_base)
+        params = dict(base["params"])
+        params["adhoc_filters"] = [{
+            "expressionType": "SIMPLE", "subject": "segmento_linha_financiada",
+            "operator": "==", "comparator": rotulo,
+        }]
+        CHARTS_COMPLETO.append({
+            "key": f"{chave_base}_{sufixo}",
+            "title": f"{base['title']} — {rotulo}",
+            "dataset": base["dataset"], "viz_type": base["viz_type"], "params": params,
+        })
+
 
 def datasets(api: Superset, database_id: int) -> dict[str, int]:
     existentes = {
@@ -369,10 +390,13 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
     DASHBOARD_SLUG = "linha-financiada-completo"
     dashboard(api, ids_chart)
     abas = [
-        ("Nacional", [["pizza_linha", "pizza_fonte"], ["contratos_mes"], ["valor_mes"], ["semanal"], ["previsao"]]),
-        ("Estados e municípios", [["mapa_brasil"], ["ranking_uf", "municipios"]]),
-        ("Por linha", [["contrapartidas", "contrapartidas_por_linha"], ["orcamento", "orcamento_resumo"], ["cobertura"]]),
+        ("Total", [["pizza_linha", "pizza_fonte"], ["contratos_mes"], ["valor_mes"], ["semanal"], ["previsao"]]),
+        ("MCMV Cidades", [["contratos_mes_cidades"], ["valor_mes_cidades"], ["semanal_cidades"]]),
+        ("Classe Média", [["contratos_mes_classe_media"], ["valor_mes_classe_media"], ["semanal_classe_media"]]),
+        ("Pró-Moradia", [["contratos_mes_pro_moradia"], ["valor_mes_pro_moradia"], ["semanal_pro_moradia"]]),
         ("Empreendimentos", [["empreendimentos"]]),
+        ("Estados", [["mapa_brasil"], ["ranking_uf", "municipios"]]),
+        ("Transversal", [["contrapartidas", "contrapartidas_por_linha"], ["orcamento", "orcamento_resumo"], ["cobertura"]]),
     ]
     tabs_id = "TABS-LINHA-FINANCIADA-COMPLETO"
     estrutura = {
