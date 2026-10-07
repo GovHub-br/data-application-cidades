@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_siape import ClienteSiape
@@ -9,7 +9,7 @@ from cliente_postgres import ClientPostgresDB
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("dados_pa_siape_ingest_dag"),
+    schedule=get_dynamic_schedule("dados_pa_siape_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={

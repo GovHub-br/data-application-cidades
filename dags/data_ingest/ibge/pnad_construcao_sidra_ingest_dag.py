@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
 from cliente_ibge_sidra import ClienteIbgeSidra
@@ -23,7 +23,7 @@ CONFIGS = [
 
 @dag(
     dag_id="ibge_pnad_construcao_sidra_ingest_dag",
-    schedule_interval=get_dynamic_schedule(
+    schedule=get_dynamic_schedule(
         "ibge_pnad_construcao_sidra_ingest_dag", default="@monthly"
     ),
     start_date=datetime(2025, 1, 1),

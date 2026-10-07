@@ -8,28 +8,31 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.11"
-apache-airflow = "2.8.1"
-apache-airflow-providers-postgres = "5.14.0"
-apache-airflow-providers-microsoft-mssql = "3.7.2"
-flask-session = "0.5.0"
-numpy = "1.26.4"
-flask = "*"
-dbt-core = "*"
-dbt-postgres = "*"
-dbt-duckdb = "~1.7.0"
-pandas = "*"
-requests = "*"
-sqlalchemy = "*"
-zeep = "*"
-imap-tools = "*"
-astronomer-cosmos = "*"
-pyarrow = "*"
-boto3 = "*"
-duckdb = "^1.5.5"
+# Versoes iguais as do requirements.txt, que e o que roda na imagem do Airflow.
+# tests/test_dependencias_sincronizadas.py reprova divergencia. So
+# great-expectations e sqlglot ficam fora: rodam em scripts/governance/, nao
+# na imagem.
+apache-airflow = "3.3.2"
+apache-airflow-providers-postgres = "7.0.2"
+apache-airflow-providers-microsoft-mssql = "4.7.1"
+apache-airflow-providers-standard = "1.19.0"
+numpy = "2.4.6"
+dbt-core = "1.12.5"
+dbt-postgres = "1.11.0"
+dbt-duckdb = "1.11.0"
+pandas = "3.0.5"
+requests = "2.34.2"
+sqlalchemy = "2.0.52"
+zeep = "4.3.3"
+imap-tools = "1.15.0"
+astronomer-cosmos = "1.15.1"
+pyarrow = "25.0.1"
+boto3 = "1.43.75"
+duckdb = "1.5.6"
 # 17 scripts em scripts/ importam dotenv (segredo só via .env/env var, nunca
 # hardcoded); estava em requirements.txt mas nunca declarado aqui, e o CI
 # instala via Poetry — poetry.lock não tinha o pacote.
-python-dotenv = "1.2.2"
+python-dotenv = "1.2.3"
 great-expectations = ">=1.21,<2.0"
 # Parser SQL da linhagem de colunas (scripts/governance/linhagem_colunas.py).
 # Preso ao major: a API de `sqlglot.lineage` muda entre versões maiores.
@@ -141,7 +144,7 @@ follow_untyped_imports = true
 disable_error_code = ["arg-type", "attr-defined"]
 
 # O `openmetadata-ingestion` NÃO está instalado no ambiente principal, e isso é
-# deliberado: ele exige SQLAlchemy 2 e o Airflow 2.8.1 exige 1.4. Ele vive só no
+# deliberado: ele rebaixa dependências da imagem base do Airflow. Ele vive só no
 # virtualenv isolado das tasks. Aqui o mypy só precisa parar de procurá-lo.
 [[tool.mypy.overrides]]
 module = ["metadata.*", "airflow.*"]

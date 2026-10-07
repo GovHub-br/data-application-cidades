@@ -1,0 +1,26 @@
+valor_bruto,valor_canonico,classe
+paralisada,paralisada,valido
+parada,paralisada,valido
+paralisado,paralisada,valido
+paralisadas,paralisada,valido
+obras paralisadas,paralisada,valido
+em obras,em_obras,valido
+em_obras,em_obras,valido
+em andamento,em_obras,valido
+andamento,em_obras,valido
+obra em andamento,em_obras,valido
+obras em andamento,em_obras,valido
+concluida,concluida,valido
+concluido,concluida,valido
+concluída,concluida,valido
+concluído,concluida,valido
+entregue,concluida,valido
+entregue com ressalvas,concluida,valido
+finalizada,concluida,valido
+obra finalizada,concluida,valido
+contratada,contratada,valido
+contratado,contratada,valido
+obra contratada,contratada,valido
+desconhecido,,pendente
+nao informado,,pendente
+sem informacao,,pendente

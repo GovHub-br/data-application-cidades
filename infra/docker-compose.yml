@@ -18,11 +18,10 @@ x-airflow-common: &airflow-common
     - ../helpers:${AIRFLOW_HOME}/helpers/
     - ../templates:${AIRFLOW_HOME}/templates/
     - ../dbt:${AIRFLOW_HOME}/dbt/
-    # a DAG do OpenMetadata roda `scripts/governance/` no fim, para
-    # reaplicar o que o conector apaga — ver a nota lá
-    - ../scripts:${AIRFLOW_HOME}/scripts/
     - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
-    # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag)
+    # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag).
+    # Também usado pela DAG do OpenMetadata, que roda `scripts/governance/` no
+    # fim para reaplicar o que o conector apaga — ver a nota lá.
     - ../scripts:${AIRFLOW_HOME}/scripts/
     # Temporários dos scripts (arquivos de GBs): NÃO usar /tmp (tmpfs em RAM)
     - lake_tmp:/opt/airflow/lake_tmp
@@ -35,22 +34,30 @@ x-airflow-common: &airflow-common
 # Common environment variables for Airflow
 x-airflow-environment: &airflow-common-env
   AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
-  AIRFLOW__CORE__ENABLE_XCOM_PICKLING: 'true'
   AIRFLOW__CORE__EXECUTOR: LocalExecutor
   AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
   AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
   AIRFLOW__CORE__TEST_CONNECTION: Enabled
   AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT: '300'
-  AIRFLOW__CORE__DAG_FILE_PROCESSOR_TIMEOUT: '300'
-  AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
+  # No Airflow 3 a opcao saiu de [core] para [dag_processor]. E o teto do
+  # dagbag_import_timeout, por isso fica acima dele.
+  AIRFLOW__DAG_PROCESSOR__DAG_FILE_PROCESSOR_TIMEOUT: '360'
+  # Login do Airflow 3 (SimpleAuthManager). A senha vem do arquivo copiado na
+  # imagem, ver infra/airflow/simple_auth_manager_passwords.json.
+  AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: airflow:admin
+  AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: ${AIRFLOW_HOME}/simple_auth_manager_passwords.json
   AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
   AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
   AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
-  AIRFLOW__WEBSERVER__DEFAULT_UI_TIMEZONE: 'America/Sao_Paulo'
-  AIRFLOW__WEBSERVER__INSTANCE_NAME: "Ipea - Local Dev!"
-  AIRFLOW__WEBSERVER__NAVBAR_COLOR: '#98DFFF'
-  AIRFLOW__WEBSERVER__RELOAD_ON_PLUGIN_CHANGE: 'true'
-  AIRFLOW__WEBSERVER__SECRET_KEY: '42'
+  # A secao [webserver] nao existe no Airflow 3: o nome da instancia e a
+  # secret_key foram para [api].
+  AIRFLOW__API__INSTANCE_NAME: "Ipea - Local Dev!"
+  AIRFLOW__API__SECRET_KEY: ${AIRFLOW__API__SECRET_KEY:-local-dev-airflow-secret-key}
+  # Sem isso, cada subprocesso do `airflow standalone` (scheduler, api-server,
+  # dag-processor, triggerer) sorteia o proprio jwt_secret -- o token que o
+  # scheduler assina para uma task nao bate com a chave que o api-server usa,
+  # e toda task falha com "Invalid auth token: Signature verification failed".
+  AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-local-dev-airflow-jwt-secret}
   PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts:$PYTHONPATH"
   # Temporários dos scripts do data lake — sobrescreve os caminhos de host do .env
   LAKE_TMPDIR: /opt/airflow/lake_tmp
@@ -59,9 +66,6 @@ x-airflow-environment: &airflow-common-env
   # scripts/ não é gravável pelo usuário do container. Logs vão p/ stderr (UI).
   LAKE_LOCAL_ARTIFACTS: "0"
   _AIRFLOW_DB_MIGRATE: 'true'
-  _AIRFLOW_WWW_USER_CREATE: 'true'
-  _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-  _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
   AIRFLOW__CORE__PLUGINS_FOLDER: ${AIRFLOW_HOME}/plugins
   AIRFLOW__CORE__DAGS_FOLDER: ${AIRFLOW_HOME}/dags
   AIRFLOW_REPO_BASE: ${AIRFLOW_HOME}
@@ -91,12 +95,12 @@ services:
     <<: *airflow-common
     # Usamos o comando de standalone aqui para não rodar múltiplos containers
     # do airflow localmente e assim melhorar a velocidade inicialização
-    # doc do standalone: https://airflow.apache.org/docs/apache-airflow/2.8.1/start.html
+    # doc do standalone: https://airflow.apache.org/docs/apache-airflow/3.3.2/start.html
     command: standalone
     ports:
       - "8080:8080"
     healthcheck:
-      test: [ "CMD", "curl", "--fail", "http://localhost:8080/health" ]
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health" ]
       interval: 10s
       timeout: 60s
       start_period: 60s

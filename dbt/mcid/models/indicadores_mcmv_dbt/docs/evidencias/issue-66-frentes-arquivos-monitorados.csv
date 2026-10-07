@@ -1,0 +1,4 @@
+programa,frente,arquivo,snapshot,linhas,contratos,colunas,campo_contrato,campo_faixa,campo_data,campo_uf,campo_municipio
+Reforma Casa Brasil,Reforma Casa Brasil - base consolidada,raw/reforma_casa_brasil_contratacao.csv,consolidado referencia,51512,51512,56,nu_contrato,faixa_renda,dt_evento,sg_uf_imovel,no_municipio_imovel
+Reforma Casa Brasil,Reforma Casa Brasil - snapshot SFTP,raw/PMCMV_REFORMAS_MCID_2026_07_31.csv,2026-07-31,126407,126407,58,NU_CONTRATO,FAIXA_RENDA,DT_EVENTO,SG_UF_IMOVEL,NO_MUNICIPIO_IMOVEL
+MCMV Financiado,Faixa 3 / FGTS,raw/PMCMV_FAIXA3_MCID_2026_07_31.csv,2026-07-31,133150,133150,54,NU_CONTRATO,FAIXA_RENDA,DT_EVENTO,SG_UF_IMOVEL,NO_MUNICIPIO_IMOVEL

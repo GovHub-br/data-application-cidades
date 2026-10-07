@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 from cliente_fgv import ClienteFGVDados
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_bytes, upload_fallback_json
@@ -11,7 +11,7 @@ from schedule_loader import get_dynamic_schedule
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("icst_ingest_dag"),
+    schedule=get_dynamic_schedule("icst_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={

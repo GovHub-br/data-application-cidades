@@ -59,3 +59,17 @@ seeds:
         description: >
           Diferença absoluta aceita entre o valor impresso e o valor
           apurado.
+
+  - name: far_situacao_obra
+    description: >
+      Rótulo de `co_situacao_obra` do MONIT de obra do FAR ("tabela Posição da
+      obra/Empreendimento"), transcrito do arquivo MONIT_MOV_OBRA_FAR_LAYOUT que
+      acompanha as remessas. Atualizar se o LAYOUT mudar o domínio.
+    columns:
+      - name: co_situacao_obra
+        description: Código como vem no MONIT_MOV_OBRA_FAR.
+        tests:
+          - unique
+          - not_null
+      - name: situacao_obra
+        description: Rótulo da situação.

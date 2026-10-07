@@ -1,0 +1,5 @@
+frente_primaria,sharepoint_tem_frente,minio_bucket_tem_frente,minio_staging_tem_frente,datasets
+cidades,False,False,False,106
+far,True,True,False,8
+rural,True,True,False,7
+entidades,True,True,False,3

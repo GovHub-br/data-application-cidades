@@ -1,5 +1,6 @@
 # Python virtual environments
 .venv/
+.review-venv/
 venv/
 ENV/
 
@@ -25,12 +26,17 @@ htmlcov/
 # IDE specific files
 .idea/
 .vscode/
+.opencode/
 *.swp
 *.swo
 
 # Environment variables
 .env
 .env.local
+local.env
+
+# Local development environments
+.dbt-venv/
 
 # Build directories
 build/
@@ -52,7 +58,10 @@ logs/
 .DS_Store
 Thumbs.db
 
-# VPN 
+# OpenSpec
+openspec/
+
+# VPN
 /connect.sh
 *.ovpn
 *.p12
