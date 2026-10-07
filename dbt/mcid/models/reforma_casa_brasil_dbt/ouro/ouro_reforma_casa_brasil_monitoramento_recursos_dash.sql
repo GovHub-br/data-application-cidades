@@ -63,7 +63,6 @@ agregado as (
         b.codigo_ibge,
         b.faixa_renda,
         b.modalidade
-    having count(*) >= 10
 )
 
 select
