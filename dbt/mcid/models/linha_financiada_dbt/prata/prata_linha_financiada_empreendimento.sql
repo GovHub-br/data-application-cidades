@@ -36,6 +36,11 @@ ao1 as (
         p.data_inauguracao_raw,
         null::numeric as latitude,
         null::numeric as longitude,
+        null::numeric as valor_investimento_pj,
+        null::numeric as valor_contratado_pj,
+        null::text as situacao_contrato_pj,
+        null::text as entidade_pj,
+        null::text as cnpj_entidade_pj,
         'FGTS_AO1'::text as fonte
     from {{ ref('bronze_sharepoint_fgts_canal_tab_ao_1_tab_empreendimentos') }} e
     left join posicao p
@@ -60,6 +65,11 @@ pj as (
         null::text as data_inauguracao_raw,
         {{ linha_financiada_numero('latitude') }} as latitude,
         {{ linha_financiada_numero('longitude') }} as longitude,
+        {{ linha_financiada_numero('vi') }} as valor_investimento_pj,
+        {{ linha_financiada_numero('ve') }} as valor_contratado_pj,
+        trim(situacao_contrato::text) as situacao_contrato_pj,
+        trim(rz_social::text) as entidade_pj,
+        trim(cgc::text) as cnpj_entidade_pj,
         'GEAVO_PJ'::text as fonte
     from {{ ref('bronze_geavo_fgts_pj') }}
     where nullif(trim(nu_apf::text), '') is not null

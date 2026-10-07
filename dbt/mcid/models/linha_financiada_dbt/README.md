@@ -4,6 +4,16 @@ Produto único que integra Financiada geral, Classe Média, MCMV Cidades e
 Pró-Moradia. Os recortes não são excludentes: um contrato pode ser Classe
 Média e receber aporte do MCMV Cidades.
 
+## Regra para apoio à produção PJ
+
+Registros PJ representam apoio à produção e não são contabilizados como
+contratação do MCMV. A contratação é medida no contrato PF. Um indicador de
+empreendimento/entrega só pode ser publicado quando a chave de operação PF
+estiver comprovadamente vinculada ao APF PJ; a data de término da obra é
+referência prospectiva de entrega, nunca data de contratação. Na carga atual,
+`Operação` PF e `nu_apf` PJ não conciliam diretamente; por isso os dados PJ
+permanecem fora dos totais publicados até o recebimento do de-para validado.
+
 ## Perguntas atendidas
 
 - contratação mensal por FGTS e Fundo Social;

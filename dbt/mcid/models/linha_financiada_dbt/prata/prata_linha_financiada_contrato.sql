@@ -45,7 +45,9 @@ cci_cca as (
     select
         carteira,
         trim(numerodocontrato::text) as contrato,
-        null::text as codigo_empreendimento,
+        -- A operação da carteira CCA é o código do empreendimento no canal
+        -- AO1. CCI não disponibiliza essa chave nesta remessa.
+        nullif(trim(operacao::text), '') as codigo_empreendimento,
         trim(anomescontratacao::text) as ano_mes,
         case
             when length(trim(anomescontratacao::text)) = 6
@@ -77,7 +79,7 @@ cci_cca as (
     from (
         select
             'CCI'::text as carteira,
-            numerodocontrato, anomescontratacao, municipio_codigo,
+            numerodocontrato, null::text as operacao, anomescontratacao, municipio_codigo,
             agentefinanceiro_codigo, compatibilidade_faixa_novo_mcmv,
             nome_programa, modalidade, classificacaoimovel, caracteristica,
             vlrdofinanciamento, vlrdodescontofgts, vlrdodescontoogu,
@@ -87,7 +89,7 @@ cci_cca as (
         union all
         select
             'CCA'::text as carteira,
-            numerodocontrato, anomescontratacao, municipio_codigo,
+            numerodocontrato, operacao, anomescontratacao, municipio_codigo,
             agentefinanceiro_codigo, compatibilidade_faixa_novo_mcmv,
             nome_programa, modalidade, classificacaoimovel, caracteristica,
             vlrdofinanciamento, vlrdodescontofgts, vlrdodescontoogu,
