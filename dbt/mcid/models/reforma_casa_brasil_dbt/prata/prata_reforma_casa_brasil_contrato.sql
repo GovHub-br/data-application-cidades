@@ -18,7 +18,13 @@ with tipada as (
         nullif(trim(linha_apf::varchar), '') as linha_apf,
         nullif(trim(modalidade::varchar), '') as modalidade,
         nullif(trim(faixa_renda::varchar), '') as faixa_renda,
-        nullif(trim(tipo_imovel::varchar), '') as tipo_imovel,
+        -- A remessa do RCB traz somente o código "5" e não acompanha o
+        -- dicionário de domínio. Preservamos o valor sem atribuir uma
+        -- tipologia imobiliária que a fonte não comprovou.
+        case nullif(trim(tipo_imovel::varchar), '')
+            when '5' then 'Código 5 — dicionário não recebido'
+            else nullif(trim(tipo_imovel::varchar), '')
+        end as tipo_imovel,
         nullif(trim(tipo_desembolso::varchar), '') as tipo_desembolso,
         nullif(trim(nu_tipo_garantia::varchar), '') as tipo_garantia,
         nullif(trim(situacao_garantia::varchar), '') as situacao_garantia,
