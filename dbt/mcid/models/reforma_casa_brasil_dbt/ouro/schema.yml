@@ -1,6 +1,20 @@
 version: 2
 
 models:
+  - name: ouro_reforma_casa_brasil_ficha_reforma_dash
+    description: >
+      Ficha administrativa por contrato/reforma, sem CPF, NIS, nome ou endereço.
+      Tipo físico de reforma, medição e entrega não estão disponíveis na fonte atual.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, ficha, contrato]
+    columns:
+      - name: id_contrato
+        data_tests: [not_null, unique]
+      - name: identificador_reforma
+        description: Número administrativo do contrato para seleção no painel interno.
+      - name: ressalva_reforma
+        data_tests: [not_null]
+
   - name: ouro_reforma_casa_brasil_acesso_dash
     description: >
       Indicadores agregados de acesso ao Reforma Casa Brasil por território,
@@ -58,6 +72,18 @@ models:
           - accepted_values:
               arguments: {values: [false]}
       - name: ressalva_monitoramento
+        data_tests: [not_null]
+
+  - name: ouro_reforma_casa_brasil_mapa_uf
+    description: >
+      Agregado territorial por UF para mapa nacional, contratos, municípios
+      alcançados e valores administrativos da carteira de Reforma Casa Brasil.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, territorio, mapa]
+    columns:
+      - name: iso_3166_2
+        description: Código UF no padrão utilizado pelo mapa do Brasil no Superset.
+      - name: quantidade_contratos
         data_tests: [not_null]
 
   - name: ouro_reforma_casa_brasil_cobertura_perguntas_dash
