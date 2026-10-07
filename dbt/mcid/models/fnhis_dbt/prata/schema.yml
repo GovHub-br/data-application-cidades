@@ -283,3 +283,44 @@ models:
         description: >
           Momento em que a linha foi ingerida no lake (`_ingested_at` da bronze). É carimbo de
           ingestão, não data de negócio.
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: prata_fnhis_termo_compromisso_mensal
+    description: Termo de compromisso do FNHIS Sub-50 em cada retrato mensal do painel do TransfereGov,
+      com situação da contratação e do instrumento, valores de repasse, contrapartida e empenho e a situação
+      no retrato anterior — base da trajetória do instrumento. O retrato de mar/2025 não traz situação do
+      instrumento.
+    meta:
+      tags:
+      - silver
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - numero_proposta_transferegov
+          - dt_retrato
+    columns:
+    - name: numero_proposta_transferegov
+      description: Número da proposta no TransfereGov (identifica o termo).
+    - name: numero_proposta
+      description: Número da proposta na seleção do MCID (primeira parte de no_reservado_pac).
+    - name: dt_retrato
+      description: Data do retrato do painel (do nome do arquivo).
+    - name: situacao_contratacao
+      description: Situação da contratação (Normal, Cláusula Suspensiva, Liminar Judicial).
+    - name: situacao_proposta
+      description: Estágio da proposta dentro do TransfereGov.
+    - name: situacao_instrumento
+      description: Situação do instrumento (Em execução, Convênio Anulado, Prestação de Contas...).
+    - name: valor_repasse
+      description: Valor de repasse (R$).
+    - name: valor_contrapartida
+      description: Valor de contrapartida (R$).
+    - name: valor_empenhado_acumulado
+      description: Valor empenhado acumulado no retrato (R$).
+    - name: uf
+      description: UF do proponente.
+    - name: arquivo_de_origem
+      description: Nome do arquivo da staging de onde veio a linha (linhagem).
+    - name: situacao_instrumento_retrato_anterior
+      description: Situação do instrumento no retrato anterior do mesmo termo.

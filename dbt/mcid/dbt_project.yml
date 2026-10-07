@@ -29,6 +29,19 @@ seeds:
       +schema: seeds
       +quote_columns: false
 
+    # Seeds das perguntas do MCID (Rural, FNHIS Sub-50, Pró-Moradia): domínio dos códigos
+    # do layout de obra do Rural e a matriz de cobertura pergunta × dado.
+    perguntas_mcid:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+      dominio_rural_obra:
+        +column_types:
+          campo: varchar
+          codigo: integer
+          descricao: varchar
+          estagio: varchar
+
     # Seeds curadas de identidade FDS, consumidas pela dim de empreendimento
     # (prata_fds_dim_empreendimento).
     entidades_fds:

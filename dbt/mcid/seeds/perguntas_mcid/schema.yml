@@ -1,0 +1,22 @@
+version: 2
+
+seeds:
+  - name: dominio_rural_obra
+    description: >
+      Domínio dos códigos do layout MONIT_MOV_OBRA_RURAL (CAIXA): situação da operação, andamento,
+      motivo de paralisação, motivo de não retomada e motivo de distrato, com a descrição oficial
+      e um estágio simplificado para painel. O código 16 aparece no arquivo e não está no layout.
+    columns:
+      - name: campo
+        description: Campo do layout a que o código pertence.
+      - name: codigo
+        description: Código numérico, sem zeros à esquerda.
+      - name: descricao
+        description: Descrição do layout.
+      - name: estagio
+        description: Agrupamento usado nas ouros do Rural.
+  - name: cobertura_perguntas_mcid
+    description: >
+      Matriz curada pergunta × dado das perguntas levantadas com o MCID para Rural, FNHIS Sub-50 e
+      Pró-Moradia: situação (respondível, parcial, lacuna de fonte), ouro que responde, fonte que
+      falta e limitação.
