@@ -8,7 +8,7 @@ from schedule_loader import get_dynamic_schedule
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("minio_transform_dag"),
+    schedule=get_dynamic_schedule("minio_transform_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     max_active_runs=1,

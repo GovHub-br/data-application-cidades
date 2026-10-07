@@ -1,6 +1,6 @@
 import logging
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 from datetime import datetime, timedelta
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
@@ -12,7 +12,7 @@ import pandas as pd
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("bacen_sgs_ingest_dag"),
+    schedule=get_dynamic_schedule("bacen_sgs_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={
@@ -46,7 +46,7 @@ def bacen_sgs_ingest_dag() -> None:
         # Deslocado para dentro da task para evitar parse frequente pelo
         # Top-Level do Scheduler.
         BACEN_SERIES_RAW = Variable.get(
-            "BACEN_SERIES", deserialize_json=True, default_var={}
+            "BACEN_SERIES", deserialize_json=True, default={}
         )
         if isinstance(BACEN_SERIES_RAW, list):
             BACEN_SERIES_RAW = BACEN_SERIES_RAW[0] if len(BACEN_SERIES_RAW) > 0 else {}

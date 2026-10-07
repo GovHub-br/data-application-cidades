@@ -1,5 +1,5 @@
 import logging
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from datetime import datetime
 from postgres_helpers import get_postgres_conn
 from cliente_transferegov_emendas import ClienteTransfereGov
@@ -7,7 +7,7 @@ from cliente_postgres import ClientPostgresDB
 
 
 @dag(
-    schedule_interval="@daily",
+    schedule="@daily",
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={

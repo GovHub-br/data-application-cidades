@@ -631,12 +631,12 @@ def test_recipes_apontam_para_os_servicos_certos() -> None:
 
 
 def test_ingestao_roda_em_virtualenv_isolado() -> None:
-    """Não é preferência: é a única forma no Airflow 2.
+    """Instalado por cima da base com `pip`, o pacote rebaixa dependências dela.
 
-    `openmetadata-ingestion` exige SQLAlchemy >=2.0 e `apache-airflow 2.8.1`
-    exige <2.0. Testadas 1.10, 1.11, 1.12 e 1.13 — nenhuma convive no mesmo
-    ambiente. Assar na imagem (como faz o data-application-minc, que está em
-    Airflow 3) quebraria o build.
+    No Airflow 2.8.1 o isolamento era obrigatório (SQLAlchemy 2 contra 1.4).
+    No Airflow 3 isso acabou, mas assar na imagem, como faz o
+    data-application-minc, exige um lock resolvido contra a base. Sem ele, o
+    `pip check` do Dockerfile reprova o build.
     """
     dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
     assert "task.virtualenv" in dag

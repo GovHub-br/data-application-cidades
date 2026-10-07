@@ -1,0 +1,3 @@
+arquivo,linhas,qtd_apf,coluna_quantidade,coluna_data,uh_entregues_total,agentes
+raw/dados_prioritarios_recebidos_caixa_entregas.csv,11540,11539,qt_uh_entregues,dt_entrega,1386992,CAIXA
+raw/dados_prioritarios_recebidos_bb_entregas.csv,5942,166,numero_de_unidades_entregues,dt_ass_doc,122880,BB

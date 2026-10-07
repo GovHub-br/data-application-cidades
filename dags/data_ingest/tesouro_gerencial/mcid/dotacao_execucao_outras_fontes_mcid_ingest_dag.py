@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional
 
 import cliente_email
 import pandas as pd
-from airflow import DAG
+from airflow.sdk import DAG
 from airflow.exceptions import AirflowSkipException
-from airflow.models import Variable
-from airflow.operators.python import PythonOperator
+from airflow.sdk import Variable
+from airflow.providers.standard.operators.python import PythonOperator
 from cliente_email import fetch_and_process_email
 from cliente_postgres import ClientPostgresDB
 from cliente_minio import upload_raw_bytes, upload_fallback_json
@@ -100,7 +100,7 @@ with DAG(
     dag_id="dotacao_execucao_outras_fontes_mcid_ingest_dag",
     default_args=default_args,
     description="Processa e ingere dados de execução de outras fontes de MCID",
-    schedule_interval=get_dynamic_schedule("dotacao_execucao_outras_fontes_mcid"),
+    schedule=get_dynamic_schedule("dotacao_execucao_outras_fontes_mcid"),
     catchup=False,
     start_date=datetime(2026, 3, 27),
     tags=["email", "mcid", "tesouro", "dotacao", "execucao"],
@@ -188,13 +188,11 @@ with DAG(
     process_emails_task = PythonOperator(
         task_id="process_emails",
         python_callable=process_email_data,
-        provide_context=True,
     )
 
     insert_to_db_task = PythonOperator(
         task_id="insert_to_db",
         python_callable=insert_data_to_db,
-        provide_context=True,
     )
 
     process_emails_task >> insert_to_db_task

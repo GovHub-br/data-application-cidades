@@ -1,4 +1,4 @@
-FROM apache/airflow:2.8.1-python3.11
+FROM apache/airflow:3.3.2-python3.11
 
 USER root
 RUN apt-get update \
@@ -38,7 +38,18 @@ RUN apt-get update \
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
 
+# Senhas do SimpleAuthManager, o login padrao do Airflow 3 (o FAB e o
+# `airflow users create` sairam do core). Sem o arquivo, o standalone sorteia
+# uma senha nova a cada container recriado.
+COPY --chown=airflow:0 infra/airflow/simple_auth_manager_passwords.json ./simple_auth_manager_passwords.json
+
 # Para rodar o airflow só precisamos instalar as dependências visto que o código
 # sempre será sincronizado via git sync ou via volumes localmente
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# As duas checagens depois do install fazem o build reprovar em vez de gerar uma
+# imagem quebrada: o pip rebaixava o Airflow em silêncio quando a imagem base
+# mudava de versão (AIRFLOW_VERSION vem da imagem oficial), e só avisava, sem
+# falhar, quando deixava pacotes da base incompatíveis.
+RUN pip install --no-cache-dir -r requirements.txt \
+  && python -c "import airflow, os, sys; esperado = os.environ['AIRFLOW_VERSION']; print(f'Airflow {airflow.__version__} (base {esperado})'); sys.exit(airflow.__version__ != esperado)" \
+  && pip check

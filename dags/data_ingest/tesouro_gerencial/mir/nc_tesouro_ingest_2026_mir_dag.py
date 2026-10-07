@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.models import Variable
+from airflow.sdk import DAG
+from airflow.providers.standard.operators.python import PythonOperator
+from airflow.sdk import Variable
 from datetime import datetime, timedelta
 import logging
 import json
@@ -61,7 +61,7 @@ SKIPROWS = 3
 with DAG(
     dag_id="email_notas_credito_ingest_mir_pos_2026",
     default_args=default_args,
-    schedule_interval=get_dynamic_schedule("email_notas_credito_ingest_mir_post_2026"),
+    schedule=get_dynamic_schedule("email_notas_credito_ingest_mir_post_2026"),
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["MIR", "email", "notas_credito"],

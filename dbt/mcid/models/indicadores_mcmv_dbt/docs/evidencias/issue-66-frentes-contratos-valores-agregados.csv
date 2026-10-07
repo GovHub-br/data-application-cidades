@@ -1,0 +1,11 @@
+programa,frente,arquivo,snapshot,ano_evento,faixa_renda,linhas,contratos,vr_evento,vr_investimento,vr_garantia,vr_recurso_proprio,vr_fgts_utilizado,vr_desconto_resolucao_460
+Reforma Casa Brasil,Reforma Casa Brasil - base consolidada,raw/reforma_casa_brasil_contratacao.csv,consolidado referencia,2025,001,28295,28295,380455001.88,422606364.35,422606364.35,42248083.63,0.0,0.0
+Reforma Casa Brasil,Reforma Casa Brasil - base consolidada,raw/reforma_casa_brasil_contratacao.csv,consolidado referencia,2025,002,8352,8352,150978371.01,167705929.89,167705929.89,16516022.27,0.0,0.0
+Reforma Casa Brasil,Reforma Casa Brasil - base consolidada,raw/reforma_casa_brasil_contratacao.csv,consolidado referencia,2026,001,10108,10108,169880946.43,169947486.43,169947486.43,16824179.95,0.0,0.0
+Reforma Casa Brasil,Reforma Casa Brasil - base consolidada,raw/reforma_casa_brasil_contratacao.csv,consolidado referencia,2026,002,4757,4757,97166278.95,97256278.95,97256278.95,9599372.6,0.0,0.0
+Reforma Casa Brasil,Reforma Casa Brasil - snapshot SFTP,raw/PMCMV_REFORMAS_MCID_2026_07_31.csv,2026-07-31,2025,001,28292,28292,422542273.35,422561273.35,422561273.35,42256160.9,0.0,0.0
+Reforma Casa Brasil,Reforma Casa Brasil - snapshot SFTP,raw/PMCMV_REFORMAS_MCID_2026_07_31.csv,2026-07-31,2025,002,8228,8228,165159579.07,165222140.39,165222140.39,16522222.27,0.0,0.0
+Reforma Casa Brasil,Reforma Casa Brasil - snapshot SFTP,raw/PMCMV_REFORMAS_MCID_2026_07_31.csv,2026-07-31,2026,001,76452,76452,2198383434.95,2198773478.92,2198773478.92,219521047.6,0.0,0.0
+Reforma Casa Brasil,Reforma Casa Brasil - snapshot SFTP,raw/PMCMV_REFORMAS_MCID_2026_07_31.csv,2026-07-31,2026,002,13435,13435,272774956.42,273192602.68,273192602.68,27067024.53,0.0,0.0
+MCMV Financiado,Faixa 3 / FGTS,raw/PMCMV_FAIXA3_MCID_2026_07_31.csv,2026-07-31,2025,003,44001,44001,8820830031.31,12329300821.21,12309783101.88,2287792044.59,398502808.39,100000.0
+MCMV Financiado,Faixa 3 / FGTS,raw/PMCMV_FAIXA3_MCID_2026_07_31.csv,2026-07-31,2026,003,89149,89149,19104481757.64,26518070873.16,26472620055.21,4715823984.9,828641253.69,240000.0

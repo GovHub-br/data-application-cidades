@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Revisao de Tratamento de Dados MCMV</title>
+  <script>
+    window.__REVIEW_DATA__ = window.__REVIEW_DATA__ || {};
+  </script>
+  <!-- Optional hydration. The static body must remain print-ready without network. -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@twind/core@1.1.3/umd/index.global.js"></script>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #172033; font: 12px/1.45 Arial, Helvetica, sans-serif; background: #eef3f7; }
+    .page { width: 210mm; min-height: 297mm; margin: 0 auto 18px; background: white; page-break-after: always; overflow: hidden; }
+    .cover { min-height: 297mm; padding: 34mm 22mm; color: white; background: linear-gradient(135deg, #14532d, #2563eb); }
+    .eyebrow { text-transform: uppercase; letter-spacing: .12em; opacity: .86; }
+    h1 { font-size: 34px; line-height: 1.08; margin: 16px 0; }
+    h2 { color: #14532d; font-size: 19px; margin: 0 0 12px; }
+    .content { padding: 16mm 18mm; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { border: 1px solid #dbe3ee; border-radius: 10px; padding: 12px; background: #f8fafc; }
+    .metric strong { display: block; color: #14532d; font-size: 24px; }
+    table { border-collapse: collapse; width: 100%; font-size: 10px; margin: 10px 0 16px; }
+    th, td { border: 1px solid #dbe3ee; padding: 6px; vertical-align: top; }
+    th { background: #eaf3ee; color: #143822; text-align: left; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px; font-size: 9px; }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <section class="page cover">
+      <div class="eyebrow">Ministerio das Cidades | Minha Casa Minha Vida</div>
+      <h1>Revisao de Tratamento de Dados Historicos MCMV</h1>
+      <p>Relatorio tecnico com evidencias pandas, checks de qualidade e recomendacoes para uso preditivo.</p>
+    </section>
+  </div>
+  <script>
+    (function () {
+      if (!window.React || !window.ReactDOM) return;
+      const data = window.__REVIEW_DATA__ || {};
+      const e = React.createElement;
+      function App() {
+        return e("section", { className: "page cover" },
+          e("div", { className: "eyebrow" }, data.eyebrow || "Ministerio das Cidades | Minha Casa Minha Vida"),
+          e("h1", null, data.title || "Revisao de Tratamento de Dados Historicos MCMV"),
+          e("p", null, data.subtitle || "Relatorio tecnico com evidencias pandas e checks de qualidade.")
+        );
+      }
+      ReactDOM.createRoot(document.getElementById("root")).render(e(App));
+    })();
+  </script>
+</body>
+</html>
