@@ -1,0 +1,46 @@
+campo,codigo,descricao,estagio
+co_situacao_operacao,1,Construção não começada,Não iniciada
+co_situacao_operacao,2,Obra iniciada e em andamento,Em obra
+co_situacao_operacao,3,Obra em andamento que ultrapassou o prazo,Em obra - atrasada
+co_situacao_operacao,4,Obra paralisada,Paralisada
+co_situacao_operacao,5,Finalizada a fase de construção,Concluída
+co_situacao_operacao,6,Imóvel habitado por terceiros,Ocupada irregularmente
+co_situacao_operacao,7,Obra física concluída - fase de legalização,Concluída
+co_situacao_operacao,8,Cancelado/Distrato,Cancelada
+co_situacao_operacao,9,Obra concluída não entregue,Concluída
+co_situacao_operacao,10,Obra concluída entregue sem pendência,Entregue
+co_situacao_operacao,11,Obra em andamento dentro do prazo,Em obra - no prazo
+co_situacao_operacao,12,Outras situações,Outra
+co_situacao_operacao,16,Código fora do layout (16),Não documentado
+co_andamento_operacao,1,Obra não iniciada,Não iniciada
+co_andamento_operacao,2,Normal,Normal
+co_andamento_operacao,3,Atrasada,Atrasada
+co_andamento_operacao,4,Paralisada,Paralisada
+co_andamento_operacao,5,Em retomada de obra,Em retomada
+co_andamento_operacao,6,Em tratamento excepcionalizado,Tratamento excepcional
+co_andamento_operacao,7,Descontinuada,Descontinuada
+co_andamento_operacao,8,Finalizada,Finalizada
+co_classificacao_paralisados,1,Técnico,Técnico
+co_classificacao_paralisados,2,Abandonada pela construtora,Construtora
+co_classificacao_paralisados,3,Orçamentário ou financeiro,Financeiro
+co_classificacao_paralisados,4,Órgãos de controle,Controle
+co_classificacao_paralisados,5,Judicial,Judicial
+co_classificacao_paralisados,6,Processo de titularidade ou desapropriação,Titularidade
+co_classificacao_paralisados,7,Ambiental,Ambiental
+co_classificacao_paralisados,8,Ocupação irregular,Ocupação
+co_classificacao_paralisados,9,Desequilíbrio financeiro do empreendimento,Financeiro
+co_classificacao_paralisados,10,Entraves causados pelo ente público local,Ente público
+co_classificacao_paralisados,11,Ocupação beneficiário,Ocupação
+co_classificacao_paralisados,12,Abandonado pela EO,Entidade organizadora
+co_classificacao_nao_retomada,1,Defasagem orçamentária,Financeiro
+co_classificacao_nao_retomada,2,Acúmulo de dívidas pela EO,Entidade organizadora
+co_classificacao_nao_retomada,3,Restrição orçamentária MCMV-E,Financeiro
+co_classificacao_nao_retomada,4,Dificuldade técnica ou operacional da EO,Entidade organizadora
+co_classificacao_nao_retomada,5,Entrave administrativo local - município,Ente público
+co_classificacao_nao_retomada,6,Entrave administrativo local - concessionária,Concessionária
+co_classificacao_nao_retomada,7,Outros,Outro
+co_motivo_distrato_empreendimento,1,Judicial,Judicial
+co_motivo_distrato_empreendimento,2,Técnico,Técnico
+co_motivo_distrato_empreendimento,3,Orçamentário ou financeiro,Financeiro
+co_motivo_distrato_empreendimento,4,Ambiental,Ambiental
+co_motivo_distrato_empreendimento,5,Entraves causados pelo ente público local,Ente público
