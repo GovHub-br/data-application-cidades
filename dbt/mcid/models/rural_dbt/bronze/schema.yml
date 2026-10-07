@@ -558,3 +558,47 @@ models:
             - _ingested_at
             - _source_hash
             - filename
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: bronze_sftp_gehis_andamento_obra
+    description: 'Andamento de obra informado mensalmente pela CAIXA (GEHIS): uma linha por APF em cada
+      remessa CAIXA_AF_GEHIS_ANDAMENTO_OBRA_M, de jul/2021 em diante, com a situação da obra (Normal, Em
+      atenção, Risco de paralisação, Paralisado, Retomada...) e as datas previstas de conclusão e inauguração.
+      Guarda a série inteira, não só o último arquivo. Mistura APFs do Rural, do FAR e do Entidades.'
+    meta:
+      tags:
+      - bronze
+    data_tests:
+    - sem_drift_de_colunas:
+        arguments:
+          colunas:
+          - anomes
+          - nu_apf
+          - dt_prevista_conclusao
+          - dt_prevista_inauguracao
+          - situacao_obra
+          - _source_file
+          - _ingested_at
+          - _source_hash
+          - filename
+  - name: bronze_sftp_portaria_162_2018_rural
+    description: 'Anexo Rural da Portaria MCidades nº 162, de 27/02/2018: uma linha por empreendimento do
+      PNHR selecionado naquele ciclo, com região, UF, município, CNPJ da entidade organizadora, código do
+      empreendimento e quantidade de UH. É a única lista nominal de selecionados do Rural no lake.'
+    meta:
+      tags:
+      - bronze
+    data_tests:
+    - sem_drift_de_colunas:
+        arguments:
+          colunas:
+          - regiao
+          - uf
+          - municipio
+          - cnpj_entidade
+          - codigo_do_empreendimento
+          - qtde_de_uh
+          - _source_file
+          - _ingested_at
+          - _source_hash
+          - filename

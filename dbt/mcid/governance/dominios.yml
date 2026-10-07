@@ -221,6 +221,9 @@ produtos:
     prefixos_de_tabela:
       - prata_fnhis_
       - ouro_fnhis_
+      # matriz pergunta × dado das três linhas (Rural, FNHIS Sub-50, Pró-Moradia); mora em
+      # fnhis_dbt/ouro e fica com este produto por ser onde a oficina com o MCID começou.
+      - ouro_mcid_cobertura_perguntas
     description: >
       Provisão habitacional do Novo MCMV em municípios com menos de 50 mil habitantes, com
       recurso do Fundo Nacional de Habitação de Interesse Social: propostas apresentadas e

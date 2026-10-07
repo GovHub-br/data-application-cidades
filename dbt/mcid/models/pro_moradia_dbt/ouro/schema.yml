@@ -305,3 +305,293 @@ models:
         description: Contratado sobre orçamento final, em %.
       - name: ic_tem_orcamento
         description: Verdadeiro quando há prestação de contas do ano no lake.
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: ouro_pro_moradia_contrato_selecao
+    description: 'Cada contrato do Pró-Moradia ligado ao ato que o originou, a partir do identificador de
+      seleção do Canal FGTS: tipo do ato (seleção PAC, processo administrativo, ofício, portaria, voto),
+      ato normalizado, número da seleção PAC e ano. Não há carta-consulta nem proposta no Canal FGTS.'
+    meta:
+      tags:
+      - gold
+    columns:
+    - name: cod_contrato
+      description: Código do contrato no Canal FGTS (sem dígito).
+      data_tests:
+      - not_null
+      - unique
+    - name: contrato
+      description: Contrato com dígito, para exibição.
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: tomador_cnpj
+      description: CNPJ do tomador, só dígitos.
+    - name: uf
+      description: Sigla da UF.
+    - name: municipio
+      description: Município do empreendimento.
+    - name: tipo_intervencao
+      description: Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+    - name: ano_orcamento
+      description: Ano do orçamento do FGTS.
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: situacao_contrato
+      description: Situação do contrato no Canal FGTS.
+    - name: ic_contrato_vigente
+      description: Contrato não liquidado, cancelado ou distratado.
+    - name: valor_contratado
+      description: Valor contratado (R$).
+    - name: quantidade_uh_financiadas
+      description: UH financiadas.
+    - name: populacao_beneficiada
+      description: População beneficiada declarada.
+    - name: ic_pac
+      description: Contrato do PAC.
+    - name: identificador_selecao
+      description: Identificador de seleção do Canal FGTS (cod_ident_externo).
+    - name: tipo_ato
+      description: Tipo do ato inferido do identificador.
+    - name: ato_normalizado
+      description: Identificador normalizado para agrupar variantes do mesmo ato.
+    - name: numero_selecao_pac
+      description: Número da seleção PAC (1ª a 5ª), quando houver.
+    - name: ano_ato
+      description: Ano do ato extraído do identificador.
+  - name: ouro_pro_moradia_tomador
+    description: 'Histórico e capacidade de execução de cada tomador do Pró-Moradia desde 1995: contratos
+      por status de execução e tipo de intervenção, UH financiadas, população, valores, período de atuação,
+      seleções e quantas vezes contratou com contrato anterior pendente. Não há dado de habilitação do tomador.'
+    meta:
+      tags:
+      - gold
+    columns:
+    - name: tomador_codigo
+      description: Código do tomador no Canal FGTS.
+      data_tests:
+      - not_null
+      - unique
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: tomador_cnpj
+      description: CNPJ do tomador, só dígitos.
+    - name: uf
+      description: UF do tomador (a de maior ordem alfabética quando há mais de uma).
+    - name: qt_contratos
+      description: Contratos do tomador.
+    - name: qt_vigentes
+      description: Contratos vigentes.
+    - name: qt_concluidos
+      description: Contratos com obra concluída.
+    - name: qt_em_andamento
+      description: Contratos em andamento.
+    - name: qt_paralisados
+      description: Contratos paralisados.
+    - name: qt_nao_iniciados
+      description: Contratos com obra não iniciada.
+    - name: qt_cancelados_distratados
+      description: Contratos cancelados ou distratados.
+    - name: qt_sem_informacao
+      description: Contratos sem informação de execução.
+    - name: qt_urbanizacao
+      description: Contratos de urbanização.
+    - name: qt_provisao
+      description: Contratos de provisão habitacional.
+    - name: uh_financiadas
+      description: UH financiadas somadas.
+    - name: uh_contratos_concluidos
+      description: UH dos contratos concluídos.
+    - name: populacao_beneficiada
+      description: População beneficiada somada.
+    - name: valor_contratado
+      description: Valor contratado somado (R$).
+    - name: valor_desembolsado
+      description: Valor desembolsado somado (R$; piso para contratos anteriores a 2000).
+    - name: percentual_medio_obra_abertos
+      description: Média do percentual físico dos contratos em andamento ou paralisados.
+    - name: dt_primeiro_contrato
+      description: Primeira assinatura.
+    - name: dt_ultimo_contrato
+      description: Assinatura mais recente.
+    - name: qt_anos_orcamento
+      description: Anos de orçamento distintos.
+    - name: selecoes
+      description: Identificadores de seleção dos contratos.
+    - name: qt_abertos
+      description: Contratos em andamento, paralisados ou não iniciados.
+    - name: percentual_contratos_concluidos
+      description: Concluídos sobre (contratos − cancelados), em %.
+    - name: qt_contratos_com_pendencia_anterior
+      description: Contratos assinados com outro contrato anterior pendente.
+    - name: max_anteriores_pendentes
+      description: Maior número de anteriores pendentes na assinatura de um contrato.
+    - name: situacao_execucao_tomador
+      description: Com obra paralisada, Em execução, Concluiu tudo o que contratou ou Sem informação suficiente.
+  - name: ouro_pro_moradia_tomador_recontratacao
+    description: Para cada contrato do Pró-Moradia, quantos contratos anteriores do mesmo tomador ainda
+      tinham obra não terminada na data da assinatura, o valor envolvido e se algum hoje está paralisado.
+      A data de assinatura substitui a data da carta-consulta, que não existe no Canal FGTS.
+    meta:
+      tags:
+      - gold
+    columns:
+    - name: cod_contrato
+      description: Código do contrato no Canal FGTS (sem dígito).
+      data_tests:
+      - not_null
+      - unique
+    - name: contrato
+      description: Contrato com dígito, para exibição.
+    - name: tomador_codigo
+      description: Código do tomador no Canal FGTS.
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: tomador_cnpj
+      description: CNPJ do tomador, só dígitos.
+    - name: uf
+      description: Sigla da UF.
+    - name: municipio
+      description: Município do empreendimento.
+    - name: tipo_intervencao
+      description: Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+    - name: identificador_selecao
+      description: Identificador de seleção do Canal FGTS (cod_ident_externo).
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: ano_assinatura
+      description: Ano da assinatura.
+    - name: valor_contratado
+      description: Valor contratado (R$).
+    - name: status_execucao_simplificado
+      description: Status de execução do contrato (ficha).
+    - name: qt_anteriores
+      description: Contratos do mesmo tomador assinados antes.
+    - name: qt_anteriores_pendentes
+      description: Anteriores não cancelados com obra não terminada na data da assinatura.
+    - name: valor_anteriores_pendentes
+      description: Valor contratado dos anteriores pendentes (R$).
+    - name: qt_anteriores_hoje_paralisados
+      description: Anteriores hoje paralisados.
+    - name: qt_anteriores_sem_data_termino
+      description: Anteriores concluídos ou sem informação e sem data de término — incerteza.
+    - name: ic_contratou_com_pendencia
+      description: Verdadeiro quando havia anterior pendente.
+    - name: situacao_recontratacao
+      description: Primeiro contrato do tomador, Anteriores concluídos ou Contratou com anterior pendente.
+  - name: ouro_pro_moradia_obra_andamento
+    description: 'Estágio atual da obra de cada contrato do Pró-Moradia, com percentual previsto e realizado,
+      ritmo físico-financeiro, paralisação e a trajetória das medições mensais do Canal FGTS: quantas medições,
+      avanço nos últimos 12 meses, desde quando o percentual não sobe e quantas mudanças de situação.'
+    meta:
+      tags:
+      - gold
+    columns:
+    - name: cod_contrato
+      description: Código do contrato no Canal FGTS (sem dígito).
+      data_tests:
+      - not_null
+      - unique
+    - name: contrato
+      description: Contrato com dígito, para exibição.
+    - name: contrato_municipio_empreendimento
+      description: Rótulo contrato - município/UF - empreendimento, para filtro.
+    - name: tomador_codigo
+      description: Código do tomador no Canal FGTS.
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: uf
+      description: Sigla da UF.
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: municipio
+      description: Município do empreendimento.
+    - name: tipo_intervencao
+      description: Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: valor_contratado
+      description: Valor contratado (R$).
+    - name: vr_desembolsado
+      description: Desembolsado acumulado (R$; piso antes de 2000).
+    - name: quantidade_uh
+      description: UH financiadas.
+    - name: estagio_obra
+      description: 'Status de execução: Concluído, Em Andamento, Paralisado, Não Iniciado, Cancelado ou
+        distratado, Sem Informação.'
+    - name: situacao_obra
+      description: Situação da obra na última medição.
+    - name: percentual_execucao_fisica
+      description: Percentual físico atual.
+    - name: percentual_obra_previsto
+      description: Percentual previsto no cronograma.
+    - name: desvio_cronograma_pp
+      description: Físico menos previsto, em pontos.
+    - name: percentual_execucao_financeira
+      description: Percentual financeiro (desembolsado / contratado).
+    - name: ritmo_fisico_financeiro
+      description: Desembolso adiantado, atrasado ou equilibrado.
+    - name: dt_inicio_obra
+      description: Início da obra.
+    - name: dt_termino_obra
+      description: Término da obra (previsto ou realizado, conforme a posição).
+    - name: ic_paralisada
+      description: Contrato na lista de paralisadas da CAIXA.
+    - name: dias_sem_evolucao
+      description: Dias sem evolução (lista de paralisadas).
+    - name: motivo_paralisacao
+      description: Motivo de paralisação informado.
+    - name: qt_medicoes
+      description: Medições mensais já realizadas.
+    - name: dt_primeira_medicao
+      description: Primeira medição.
+    - name: dt_ultima_medicao
+      description: Última medição.
+    - name: dt_ultimo_avanco
+      description: Última medição em que o percentual subiu.
+    - name: meses_sem_avanco
+      description: Meses entre o último avanço e a última medição.
+    - name: avanco_pp_12_meses
+      description: Avanço do percentual realizado nos últimos 12 meses da série, em pontos.
+    - name: qt_mudancas_situacao
+      description: Mudanças de situação da obra entre medições.
+    - name: ic_obra_em_aberto
+      description: Verdadeiro para obra em andamento, paralisada ou não iniciada.
+  - name: ouro_pro_moradia_obra_situacao_mensal
+    description: Quantos contratos do Pró-Moradia estavam em cada situação de obra, mês a mês, por UF, com
+      valor contratado, percentual médio realizado e quantos entraram na situação no mês, a partir das medições
+      mensais do Canal FGTS (sem o cronograma futuro).
+    meta:
+      tags:
+      - gold
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - mes
+          - uf
+          - situacao_obra
+    columns:
+    - name: mes
+      description: Mês da medição.
+    - name: uf
+      description: UF do contrato (ND quando ausente).
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: situacao_obra
+      description: Situação da obra no mês.
+    - name: qt_contratos
+      description: Contratos na situação.
+    - name: valor_contratado
+      description: Valor contratado somado (R$).
+    - name: percentual_medio_realizado
+      description: Média do percentual realizado.
+    - name: qt_entraram_no_mes
+      description: Contratos que mudaram para a situação no mês.

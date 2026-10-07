@@ -490,3 +490,295 @@ models:
     - not_null:
         config:
           severity: warn
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+- name: ouro_rural_entidade_organizadora
+  description: 'Histórico e capacidade de execução de cada entidade organizadora do Rural, de 2009 em
+    diante: operações por status, UH contratadas, entregues e distratadas, valores, período de atuação,
+    quantas vezes recontratou com operação anterior pendente e se foi selecionada na Portaria 162/2018.
+    Não há histórico de habilitação na origem.'
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: eo_cnpj
+    description: CNPJ da entidade organizadora, só dígitos.
+    data_tests:
+    - not_null
+    - unique
+  - name: eo_nome
+    description: Nome mais recente da entidade organizadora.
+  - name: fonte_eo
+    description: Fontes de onde veio a EO nas operações dela (separadas por ponto e vírgula).
+  - name: qt_operacoes
+    description: Operações contratadas pela EO.
+  - name: qt_operacoes_novo_mcmv
+    description: Operações do Novo MCMV.
+  - name: qt_concluidas
+    description: Operações concluídas.
+  - name: qt_em_obra
+    description: Operações em obra.
+  - name: qt_paralisadas
+    description: Operações paralisadas.
+  - name: qt_nao_iniciadas
+    description: Operações com obra não iniciada.
+  - name: qt_distratadas
+    description: Operações distratadas ou canceladas.
+  - name: uh_contratadas
+    description: UH contratadas somadas.
+  - name: uh_entregues
+    description: UH entregues somadas.
+  - name: uh_distratadas
+    description: UH distratadas somadas.
+  - name: percentual_medio_obra_abertas
+    description: Média do percentual de obra das operações em obra ou paralisadas.
+  - name: valor_contratado
+    description: Valor contratado somado (R$).
+  - name: valor_desembolsado
+    description: Valor desembolsado somado (R$).
+  - name: dt_primeira_contratacao
+    description: Data da primeira contratação da EO.
+  - name: dt_ultima_contratacao
+    description: Data da contratação mais recente.
+  - name: qt_anos_com_contratacao
+    description: Quantos anos distintos a EO teve contratação.
+  - name: qt_ufs
+    description: Quantas UFs a EO atua.
+  - name: ufs
+    description: UFs onde a EO tem operação.
+  - name: percentual_uh_entregues
+    description: UH entregues sobre (contratadas − distratadas), em %.
+  - name: qt_abertas
+    description: Operações em obra, paralisadas ou não iniciadas.
+  - name: qt_contratos_com_pendencia_anterior
+    description: Contratos assinados enquanto outra operação anterior da EO estava pendente.
+  - name: max_anteriores_pendentes
+    description: Maior número de operações anteriores pendentes no momento de um novo contrato.
+  - name: qt_selecionados_portaria_162
+    description: Empreendimentos da EO selecionados na Portaria 162/2018.
+  - name: uh_selecionadas_portaria_162
+    description: UH selecionadas para a EO na Portaria 162/2018.
+  - name: situacao_execucao_eo
+    description: Com obra paralisada, Em execução, Entregou tudo o que contratou ou Concluída com entrega
+      parcial.
+- name: ouro_rural_entidade_recontratacao
+  description: Para cada operação do Rural com entidade organizadora, quantas operações anteriores da
+    mesma EO ainda não tinham obra concluída na data da contratação, quantas UH estavam pendentes e se
+    alguma delas hoje está paralisada. A data de contratação substitui a data de inscrição no ciclo, que
+    não existe no dado.
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF da operação (8 dígitos, normalizada por normalize_apf) — chave do empreendimento
+      no Rural.
+    data_tests:
+    - not_null
+    - unique
+  - name: eo_cnpj
+    description: CNPJ da entidade organizadora, só dígitos.
+  - name: eo_nome
+    description: Nome da entidade organizadora.
+  - name: fonte_eo
+    description: 'De onde veio a EO: cadastro de EO (Cad PJ/INT065/INT057), AF CAIXA construtora/entidade
+      (a confirmar) ou sem EO.'
+  - name: ic_novo_mcmv
+    description: Verdadeiro para operação do Novo MCMV (2023 em diante); falso para o PNHR antigo.
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+  - name: municipio
+    description: Nome do município.
+  - name: uf
+    description: Sigla da UF.
+  - name: dt_contratacao
+    description: Data de contratação da operação.
+  - name: ano_contratacao
+    description: Ano da contratação.
+  - name: quantidade_uh_contratadas
+    description: UH contratadas na operação.
+  - name: status_operacao
+    description: 'Status simplificado: Concluída, Em obra, Paralisada, Não iniciada ou Distratada.'
+  - name: qt_anteriores
+    description: Operações da mesma EO contratadas antes desta.
+  - name: qt_anteriores_pendentes
+    description: Anteriores não distratadas e sem obra concluída na data desta contratação.
+  - name: uh_anteriores_pendentes
+    description: UH ainda não entregues nas anteriores pendentes.
+  - name: qt_anteriores_hoje_paralisadas
+    description: Anteriores que hoje estão paralisadas.
+  - name: qt_anteriores_sem_data_conclusao
+    description: Anteriores hoje concluídas sem data de conclusão — incerteza da medida.
+  - name: dt_anterior_pendente_mais_antiga
+    description: Contratação mais antiga entre as anteriores pendentes.
+  - name: ic_contratou_com_pendencia
+    description: Verdadeiro quando havia pelo menos uma anterior pendente.
+  - name: situacao_recontratacao
+    description: Primeira operação da EO, Anteriores concluídas, Contratou com anterior pendente (hoje
+      paralisada ou não).
+- name: ouro_rural_selecao_portaria_162
+  description: 'Destino de cada empreendimento selecionado pela Portaria MCidades nº 162/2018: se virou
+    contrato, em quanto tempo, com qual EO, quantas UH foram contratadas e entregues e em que situação
+    está hoje. Único ciclo do Rural com lista nominal de selecionados; não há propostas apresentadas nem
+    motivo de não seleção.'
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: Código do empreendimento selecionado normalizado como APF.
+  - name: codigo_empreendimento
+    description: Código do empreendimento como na portaria.
+  - name: ato_selecao
+    description: Ato de seleção (Portaria MCidades nº 162/2018).
+  - name: dt_portaria
+    description: Data da portaria.
+  - name: uf
+    description: Sigla da UF.
+  - name: regiao
+    description: Região geográfica da UF.
+  - name: municipio
+    description: Nome do município.
+  - name: eo_cnpj_selecionada
+    description: CNPJ da EO na seleção.
+  - name: quantidade_uh_selecionadas
+    description: UH selecionadas.
+  - name: ic_contratado
+    description: Verdadeiro quando a APF aparece em contrato (visão consolidada ou INT065).
+  - name: fonte_contrato
+    description: Onde o contrato foi encontrado.
+  - name: dt_contratacao
+    description: Data de contratação.
+  - name: dias_selecao_ate_contrato
+    description: Dias entre a portaria e a contratação.
+  - name: eo_cnpj_contrato
+    description: CNPJ da EO no contrato.
+  - name: eo_nome_contrato
+    description: Nome da EO no contrato.
+  - name: ic_mesma_eo
+    description: Verdadeiro quando a EO do contrato é a mesma da seleção.
+  - name: uh_contratadas
+    description: UH contratadas.
+  - name: uh_entregues
+    description: UH entregues.
+  - name: status_operacao
+    description: Status simplificado; Não contratado (sem vínculo) quando a APF não foi encontrada.
+  - name: situacao_origem
+    description: Situação como veio da fonte do contrato.
+- name: ouro_rural_obra_andamento
+  description: Estágio atual de cada obra do Novo Rural, com a entidade organizadora, o percentual previsto
+    e realizado, motivos de paralisação, a situação GEHIS da CAIXA e a trajetória desde o primeiro retrato
+    da série (estágio inicial, avanço, mudanças de estágio, meses paralisada).
+  meta:
+    tags:
+    - gold
+  columns:
+  - name: apf
+    description: APF da operação (8 dígitos, normalizada por normalize_apf) — chave do empreendimento
+      no Rural.
+    data_tests:
+    - not_null
+    - unique
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+  - name: municipio
+    description: Nome do município.
+  - name: uf
+    description: Sigla da UF.
+  - name: regiao
+    description: Região geográfica da UF.
+  - name: eo_cnpj
+    description: CNPJ da entidade organizadora, só dígitos.
+  - name: eo_nome
+    description: Nome da entidade organizadora.
+  - name: fonte_eo
+    description: 'De onde veio a EO: cadastro de EO (Cad PJ/INT065/INT057), AF CAIXA construtora/entidade
+      (a confirmar) ou sem EO.'
+  - name: dt_contratacao
+    description: Data de contratação da operação.
+  - name: quantidade_uh_contratadas
+    description: UH contratadas na operação.
+  - name: valor_contratado
+    description: Valor contratado (R$).
+  - name: valor_desembolsado
+    description: Valor desembolsado acumulado (R$).
+  - name: dt_referencia_atual
+    description: Mês do retrato mais recente da obra.
+  - name: estagio_obra
+    description: Estágio atual simplificado (seed dominio_rural_obra).
+  - name: situacao_operacao
+    description: Situação atual da operação (descrição do layout).
+  - name: andamento_operacao
+    description: Andamento atual da obra (descrição do layout).
+  - name: percentual_obra_prevista
+    description: Percentual previsto no cronograma no mês atual.
+  - name: percentual_obra_realizada
+    description: Percentual realizado acumulado no mês atual.
+  - name: desvio_cronograma_pp
+    description: Realizado menos previsto, em pontos percentuais.
+  - name: dt_paralisacao
+    description: Data de paralisação, quando houver.
+  - name: motivo_paralisacao
+    description: Motivo da paralisação/atraso.
+  - name: motivo_nao_retomada
+    description: Motivo de não retomada.
+  - name: motivo_distrato
+    description: Motivo do distrato.
+  - name: detalhe_paralisacao
+    description: Detalhamento em texto livre da CAIXA.
+  - name: dt_previsao_entrega
+    description: Previsão de entrega ao beneficiário.
+  - name: qt_meses_na_serie
+    description: Meses com retrato da APF na série.
+  - name: dt_primeiro_retrato
+    description: Primeiro mês da APF na série.
+  - name: estagio_primeiro_retrato
+    description: Estágio no primeiro retrato.
+  - name: avanco_obra_pp_na_serie
+    description: Avanço do percentual realizado entre o primeiro e o último retrato, em pontos.
+  - name: qt_mudancas_estagio
+    description: Quantas vezes o estágio mudou de um mês para o outro.
+  - name: dt_desde_estagio_atual
+    description: Desde quando a obra está no estágio atual.
+  - name: qt_meses_paralisada
+    description: Meses em que a obra apareceu como paralisada.
+  - name: situacao_gehis
+    description: Situação GEHIS mais recente da CAIXA para a APF.
+  - name: dt_referencia_gehis
+    description: Mês da situação GEHIS.
+  - name: dt_prevista_conclusao_gehis
+    description: Previsão de conclusão segundo a GEHIS.
+  - name: ic_obra_em_aberto
+    description: Verdadeiro para obra não iniciada, em obra ou paralisada.
+- name: ouro_rural_obra_situacao_mensal
+  description: 'Quantas obras do Rural estavam em cada situação, mês a mês, e quantas entraram nela no
+    mês, por UF, em duas fontes separadas: o estágio da obra mensal do Novo Rural (dez/2025 em diante)
+    e o andamento GEHIS da CAIXA (jul/2021 em diante, só APFs do Rural).'
+  meta:
+    tags:
+    - gold
+  data_tests:
+  - chave_composta_unica:
+      arguments:
+        colunas:
+        - fonte
+        - dt_referencia
+        - uf
+        - situacao
+  columns:
+  - name: fonte
+    description: Obra mensal Novo Rural (estágio) ou GEHIS CAIXA (andamento).
+  - name: dt_referencia
+    description: Mês de referência do retrato (primeiro dia do mês).
+  - name: uf
+    description: Sigla da UF (ND quando a APF não está na visão do Rural).
+  - name: regiao
+    description: Região geográfica da UF.
+  - name: situacao
+    description: Estágio (obra mensal) ou situação GEHIS no mês.
+  - name: qt_obras
+    description: Obras na situação no mês.
+  - name: uh_contratadas
+    description: UH contratadas dessas obras.
+  - name: qt_entraram_no_mes
+    description: Obras que estavam em outra situação no mês anterior.

@@ -445,3 +445,179 @@ models:
       Data da medição mais recente que entrou nesta linha, qualquer que seja o campo. É a
       idade do empreendimento na visão consolidada — serve para o dashboard avisar quando
       um número é velho, em vez de apresentá-lo com a mesma autoridade de um de ontem.
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+- name: prata_rural_obra_mensal_serie
+  description: 'Situação da obra do Novo Rural mês a mês (série desde dez/2025): uma linha por APF e mês
+    de referência, com situação e andamento decodificados pelo layout da CAIXA, percentual previsto e
+    realizado, motivos de paralisação, não retomada e distrato, e o estágio do mês anterior para medir
+    mudanças.'
+  meta:
+    tags:
+    - silver
+  data_tests:
+  - chave_composta_unica:
+      arguments:
+        colunas:
+        - apf
+        - dt_referencia
+  columns:
+  - name: apf
+    description: APF da operação (8 dígitos, normalizada por normalize_apf) — chave do empreendimento
+      no Rural.
+  - name: dt_referencia
+    description: Mês de referência do retrato (primeiro dia do mês).
+  - name: co_situacao_operacao
+    description: Código da situação da operação no layout MONIT_MOV_OBRA_RURAL (1 a 12; 16 aparece e não
+      está no layout).
+  - name: situacao_operacao
+    description: Descrição oficial do código de situação (seed dominio_rural_obra).
+  - name: estagio_obra
+    description: 'Estágio simplificado: Não iniciada, Em obra - no prazo, Em obra - atrasada, Paralisada,
+      Concluída, Entregue...'
+  - name: co_andamento_operacao
+    description: Código do andamento da obra (1 a 8) no layout.
+  - name: andamento_operacao
+    description: 'Descrição do andamento: Não iniciada, Normal, Atrasada, Paralisada, Em retomada...'
+  - name: percentual_obra_prevista
+    description: Percentual de obra previsto no cronograma para o mês.
+  - name: percentual_obra_realizada
+    description: Percentual de obra acumulado realizado no mês.
+  - name: desvio_cronograma_pp
+    description: Realizado menos previsto, em pontos percentuais (negativo = atraso).
+  - name: dt_alteracao_situacao
+    description: Data da última alteração da situação informada pela CAIXA.
+  - name: dt_paralisacao
+    description: Data de paralisação do empreendimento, quando houver.
+  - name: co_classificacao_paralisados
+    description: Código do motivo de paralisação/atraso (zero vira nulo).
+  - name: motivo_paralisacao
+    description: Descrição do motivo de paralisação/atraso (técnico, orçamentário, abandono pela EO...).
+  - name: co_classificacao_nao_retomada
+    description: Código do motivo de não retomada de obra paralisada.
+  - name: motivo_nao_retomada
+    description: Descrição do motivo de não retomada (defasagem orçamentária, dívidas da EO...).
+  - name: co_motivo_distrato
+    description: Código do motivo de distrato do empreendimento.
+  - name: motivo_distrato
+    description: Descrição do motivo de distrato.
+  - name: detalhe_paralisacao
+    description: Texto livre da CAIXA detalhando paralisação ou não retomada.
+  - name: dt_previsao_entrega
+    description: Data prevista de entrega do empreendimento ao beneficiário.
+  - name: estagio_mes_anterior
+    description: Estágio da mesma APF no mês anterior da série (nulo no primeiro retrato).
+  - name: arquivo_de_origem
+    description: Nome do arquivo da staging de onde veio a linha (linhagem).
+- name: prata_rural_gehis_andamento_obra
+  description: Andamento de obra da CAIXA (GEHIS) por APF e mês, de jul/2021 em diante, com a situação
+    da obra (Normal, Em atenção, Risco de paralisação, Paralisado, Obra retomada...) e as datas previstas,
+    marcando se a APF pertence ao Rural. Quando chega mais de um arquivo no mês, vale o último.
+  meta:
+    tags:
+    - silver
+  data_tests:
+  - chave_composta_unica:
+      arguments:
+        colunas:
+        - apf
+        - dt_referencia
+  columns:
+  - name: apf
+    description: APF da operação (8 dígitos, normalizada).
+  - name: dt_referencia
+    description: Mês de referência do retrato (primeiro dia do mês).
+  - name: frente_mcmv
+    description: Rural quando a APF está na visão consolidada do Rural; Outra frente (FAR, Entidades)
+      caso contrário.
+  - name: situacao_obra
+    description: Situação da obra segundo a GEHIS/CAIXA, em maiúsculas.
+  - name: dt_prevista_conclusao
+    description: Data prevista de conclusão da obra informada pela CAIXA.
+  - name: dt_prevista_inauguracao
+    description: Data prevista de inauguração informada pela CAIXA.
+  - name: arquivo_de_origem
+    description: Nome do arquivo da staging de onde veio a linha (linhagem).
+- name: prata_rural_selecao_portaria_162
+  description: Empreendimentos do Rural selecionados pela Portaria MCidades nº 162/2018, com a entidade
+    organizadora selecionada, a localização e as UH. O código do empreendimento é normalizado como APF
+    para casar com os contratos do PNHR e da SNH.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: Código do empreendimento normalizado como APF (8 dígitos).
+  - name: codigo_empreendimento
+    description: Código do empreendimento como veio na portaria.
+  - name: entidade_organizadora_cnpj
+    description: CNPJ da entidade organizadora selecionada, só dígitos.
+  - name: uf
+    description: Sigla da UF.
+  - name: municipio
+    description: Nome do município.
+  - name: regiao
+    description: Região geográfica da UF.
+  - name: quantidade_uh_selecionadas
+    description: UH selecionadas para o empreendimento.
+  - name: dt_portaria
+    description: Data da portaria de seleção (27/02/2018).
+  - name: ato_selecao
+    description: 'Ato de seleção: Portaria MCidades nº 162/2018.'
+  - name: arquivo_de_origem
+    description: Nome do arquivo da staging de onde veio a linha (linhagem).
+- name: prata_rural_operacao_eo
+  description: Operação do Rural (PNHR e Novo Rural) com a entidade organizadora resolvida e o status
+    simplificado. A EO vem do cadastro de EO (Cad PJ, INT065, INT057); onde falta, do CNPJ construtora/entidade
+    do arquivo AF CAIXA, ainda a confirmar com a CAIXA. Uma linha por APF.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF da operação (8 dígitos, normalizada por normalize_apf) — chave do empreendimento
+      no Rural.
+    data_tests:
+    - not_null
+    - unique
+  - name: agente_financeiro
+    description: Agente financeiro da operação (CAIXA ou BB).
+  - name: ic_novo_mcmv
+    description: Verdadeiro para operação do Novo MCMV (2023 em diante); falso para o PNHR antigo.
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+  - name: municipio
+    description: Nome do município.
+  - name: uf
+    description: Sigla da UF.
+  - name: regiao
+    description: Região geográfica da UF.
+  - name: cod_ibge
+    description: Código IBGE do município (como na visão consolidada do Rural).
+  - name: eo_cnpj
+    description: CNPJ da entidade organizadora, só dígitos.
+  - name: eo_nome
+    description: Nome da entidade organizadora.
+  - name: fonte_eo
+    description: 'De onde veio a EO: cadastro de EO (Cad PJ/INT065/INT057), AF CAIXA construtora/entidade
+      (a confirmar) ou sem EO.'
+  - name: situacao_empreendimento
+    description: Situação do empreendimento como na visão consolidada do Rural.
+  - name: status_operacao
+    description: 'Status simplificado: Concluída, Em obra, Paralisada, Não iniciada ou Distratada.'
+  - name: dt_contratacao
+    description: Data de contratação da operação.
+  - name: dt_conclusao_obra
+    description: Data de conclusão da obra, quando informada.
+  - name: quantidade_uh_contratadas
+    description: UH contratadas na operação.
+  - name: quantidade_uh_entregues
+    description: UH entregues.
+  - name: quantidade_uh_distratadas
+    description: UH distratadas.
+  - name: percentual_execucao_fisica
+    description: Percentual de execução física mais recente.
+  - name: valor_contratado
+    description: Valor contratado (R$).
+  - name: valor_desembolsado
+    description: Valor desembolsado acumulado (R$).

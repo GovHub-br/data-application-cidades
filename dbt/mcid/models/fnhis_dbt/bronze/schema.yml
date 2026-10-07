@@ -97,3 +97,30 @@ models:
               - _ingested_at
               - _source_hash
               - filename
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: bronze_shpt_fnhis_sub50_termos_compromisso_serie
+    description: 'Termos de compromisso do Novo MCMV FNHIS Sub-50 no TransfereGov em TODOS os retratos mensais
+      do painel (mar/2025 em diante): uma linha por termo em cada retrato, só com as colunas de negócio
+      (proposta, situação da contratação e do instrumento, repasse, contrapartida, empenho, datas, UF e
+      município), em texto.'
+    meta:
+      tags:
+      - bronze
+    data_tests:
+    - sem_drift_de_colunas:
+        arguments:
+          colunas:
+          - filename
+          - no_proposta
+          - no_reservado_pac
+          - situacao_proposta
+          - sit_contratacao
+          - situacao_instrumento
+          - valor_de_repasse
+          - valor_de_contrapartida
+          - valor_empenhado_acumulado
+          - data_assinatura
+          - data_consulta
+          - uf
+          - municipio

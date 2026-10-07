@@ -243,3 +243,271 @@ models:
         description: Repasse somado dos termos ativos do ente, em R$.
       - name: dt_referencia
         description: Data de referência da extração semanal do SNHIS — a que semana a foto se refere.
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: ouro_fnhis_motivos_nao_enquadramento
+    description: 'Por que cada proposta do FNHIS Sub-50 ficou de fora: para as não enquadradas, o motivo
+      da justificativa categorizado por regra (titularidade, retificadora, limite de UH, risco, nº de propostas,
+      população, documentação, outros), uma linha por motivo; para as enquadradas não selecionadas, o motivo
+      da seleção.'
+    meta:
+      tags:
+      - gold
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - numero_proposta
+          - motivo
+    columns:
+    - name: numero_proposta
+      description: Número da proposta na seleção.
+    - name: uf
+      description: UF do município beneficiado.
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: municipio
+      description: Município beneficiado.
+    - name: cod_ibge
+      description: Código IBGE do município (7 dígitos).
+    - name: proponente_esfera
+      description: Município ou Estado/DF.
+    - name: quantidade_uh
+      description: UH propostas.
+    - name: resultado_selecao
+      description: Resultado da seleção agrupado.
+    - name: etapa_em_que_saiu
+      description: Enquadramento ou Seleção.
+    - name: motivo
+      description: Motivo categorizado.
+    - name: ordem_motivo
+      description: Ordem de exibição do motivo.
+    - name: qt_motivos_da_proposta
+      description: Quantos motivos a proposta tem.
+    - name: justificativa_nao_enquadramento
+      description: Justificativa original em texto livre.
+  - name: ouro_fnhis_proposta_tramite
+    description: Etapa atual de cada proposta apresentada ao FNHIS Sub-50 — fora no enquadramento, fora
+      na seleção, selecionada sem termo, termo anulado, termo em execução, obra na SNH, prestação de contas
+      — com o termo do TransfereGov, a execução na SNH e a trajetória do instrumento entre os retratos mensais.
+      O trâmite interno do MCID (SEI + planilha) não chega ao banco.
+    meta:
+      tags:
+      - gold
+    columns:
+    - name: numero_proposta
+      description: Número da proposta na seleção.
+      data_tests:
+      - not_null
+      - unique
+    - name: uf
+      description: UF do município beneficiado.
+    - name: municipio
+      description: Município beneficiado.
+    - name: cod_ibge
+      description: Código IBGE do município (7 dígitos).
+    - name: proponente_esfera
+      description: Município ou Estado/DF.
+    - name: quantidade_uh
+      description: UH propostas.
+    - name: resultado_selecao
+      description: Resultado da seleção agrupado.
+    - name: ic_proposta_de_risco
+      description: Verdadeiro para proposta do grupo de áreas de risco.
+    - name: numero_proposta_transferegov
+      description: Número do termo no TransfereGov (nulo se não virou termo).
+    - name: situacao_contratacao
+      description: Situação da contratação no TransfereGov.
+    - name: situacao_instrumento
+      description: Situação atual do instrumento.
+    - name: ic_instrumento_ativo
+      description: Termo não anulado nem rescindido.
+    - name: dt_assinatura
+      description: Data de assinatura do termo.
+    - name: valor_repasse
+      description: Valor de repasse (R$).
+    - name: valor_empenhado_acumulado
+      description: Empenho acumulado no retrato mais recente (R$).
+    - name: ic_contrato_snh_identificado
+      description: Verdadeiro quando o termo foi vinculado a uma operação da SNH.
+    - name: id_operacao_snh
+      description: Identificador da operação na SNH.
+    - name: situacao_obra_snh
+      description: Situação da obra na SNH.
+    - name: percentual_execucao_fisica
+      description: Percentual de execução física na SNH.
+    - name: uh_entregues
+      description: UH entregues na SNH.
+    - name: valor_desembolsado
+      description: Valor desembolsado na SNH (R$).
+    - name: ic_ente_regular
+      description: Ente regular no SNHIS.
+    - name: qt_retratos
+      description: Retratos mensais em que o termo aparece.
+    - name: dt_primeiro_retrato
+      description: Primeiro retrato com o termo.
+    - name: situacao_instrumento_inicial
+      description: Primeira situação de instrumento registrada.
+    - name: situacao_instrumento_anterior
+      description: Situação anterior à mudança mais recente.
+    - name: dt_ultima_mudanca_situacao
+      description: Retrato em que a situação mudou pela última vez.
+    - name: qt_situacoes_instrumento
+      description: Quantas situações distintas o instrumento teve.
+    - name: variacao_empenho_na_serie
+      description: Empenho atual menos o empenho no primeiro retrato (R$).
+    - name: etapa_ordem
+      description: Ordem da etapa no fluxo (1 a 7).
+    - name: etapa_atual
+      description: Etapa atual da proposta.
+  - name: ouro_fnhis_ente_historico
+    description: 'Histórico de cada município que propôs ao FNHIS Sub-50: regularidade atual no SNHIS (a
+      habilitação do ente), resultado das propostas e termos no Sub-50, e experiência anterior com obra
+      habitacional do MCMV no município (concluídas, em andamento, paralisadas, UH entregues), incluindo
+      se tinha obra aberta quando concorreu.'
+    meta:
+      tags:
+      - gold
+    columns:
+    - name: cod_ibge
+      description: Código IBGE do município beneficiado (7 dígitos).
+      data_tests:
+      - not_null
+      - unique
+    - name: municipio
+      description: Município beneficiado.
+    - name: uf
+      description: Sigla da UF.
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: proponente_esfera
+      description: Esferas que propuseram para o município (Município e/ou Estado/DF).
+    - name: populacao
+      description: População do município no SNHIS.
+    - name: situacao_ente
+      description: Situação geral do ente no SNHIS.
+    - name: ic_ente_regular
+      description: Verdadeiro quando o ente está regular no SNHIS.
+    - name: situacao_lei_fundo
+      description: Situação da lei do fundo local de HIS.
+    - name: situacao_lei_conselho
+      description: Situação da lei do conselho gestor.
+    - name: situacao_termo_adesao
+      description: Situação do termo de adesão ao SNHIS.
+    - name: situacao_plano_habitacional
+      description: Situação do plano habitacional.
+    - name: situacao_relatorio_gestao
+      description: Situação do relatório de gestão.
+    - name: dt_referencia_snhis
+      description: Data do retrato SNHIS.
+    - name: qt_propostas
+      description: Propostas apresentadas para o município.
+    - name: qt_nao_enquadradas
+      description: Propostas não enquadradas.
+    - name: qt_cota_insuficiente
+      description: Propostas fora por cota insuficiente da UF.
+    - name: qt_ja_contemplado
+      description: Propostas fora por município já contemplado.
+    - name: qt_selecionadas
+      description: Propostas selecionadas.
+    - name: uh_propostas
+      description: UH propostas.
+    - name: uh_selecionadas
+      description: UH selecionadas.
+    - name: qt_termos_ativos
+      description: Termos em execução, em obra ou em prestação de contas.
+    - name: qt_termos_anulados_rescindidos
+      description: Termos anulados ou rescindidos.
+    - name: valor_empenhado
+      description: Empenho acumulado dos termos (R$).
+    - name: qt_operacoes_his_antes
+      description: Operações MCMV (outras modalidades) no município contratadas antes da seleção.
+    - name: modalidades_his
+      description: Modalidades dessas operações.
+    - name: qt_his_concluidas
+      description: Dessas, concluídas hoje.
+    - name: qt_his_em_andamento_hoje
+      description: Dessas, em andamento ou não iniciadas hoje.
+    - name: qt_his_paralisadas_hoje
+      description: Dessas, paralisadas hoje.
+    - name: qt_his_distratadas
+      description: Dessas, distratadas.
+    - name: uh_his_contratadas
+      description: UH contratadas nessas operações.
+    - name: uh_his_entregues
+      description: UH entregues nessas operações.
+    - name: percentual_his_entregue
+      description: UH entregues sobre (contratadas − distratadas), em %.
+    - name: dt_ultima_contratacao_his
+      description: Contratação mais recente antes da seleção.
+    - name: ic_tinha_obra_aberta_ao_concorrer
+      description: Verdadeiro quando há operação contratada antes da seleção e hoje em andamento ou paralisada.
+    - name: ic_tem_obra_paralisada
+      description: Verdadeiro quando há operação anterior hoje paralisada.
+    - name: dt_corte_selecao
+      description: Data de corte da seleção usada (var fnhis_data_selecao, padrão 2024-02-20).
+  - name: ouro_fnhis_termo_situacao_mensal
+    description: Quantos termos de compromisso do FNHIS Sub-50 estavam em cada situação do instrumento em
+      cada retrato mensal do TransfereGov, por UF, com repasse, empenho acumulado e quantos entraram na
+      situação naquele retrato.
+    meta:
+      tags:
+      - gold
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - dt_retrato
+          - uf
+          - situacao_instrumento
+    columns:
+    - name: dt_retrato
+      description: Data do retrato do painel.
+    - name: uf
+      description: UF do proponente (ND quando ausente).
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: situacao_instrumento
+      description: Situação do instrumento no retrato.
+    - name: qt_termos
+      description: Termos na situação.
+    - name: valor_repasse
+      description: Repasse somado (R$).
+    - name: valor_empenhado_acumulado
+      description: Empenho acumulado somado (R$).
+    - name: qt_entraram_no_retrato
+      description: Termos que estavam em outra situação no retrato anterior.
+  - name: ouro_mcid_cobertura_perguntas
+    description: 'Matriz pergunta × dado das perguntas levantadas com o MCID para Rural, FNHIS Sub-50 e
+      Pró-Moradia (da oficina e réplicas das perguntas do Rural): o que cada uma consegue responder hoje,
+      em qual ouro, a fonte que falta e a limitação.'
+    meta:
+      tags:
+      - gold
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - programa
+          - ordem
+    columns:
+    - name: programa
+      description: Rural, FNHIS/Sub-50 ou Pró-Moradia.
+    - name: ordem
+      description: Ordem da pergunta no programa.
+    - name: origem_pergunta
+      description: Oficina MCID ou Réplica do Rural.
+    - name: pergunta
+      description: Texto da pergunta.
+    - name: situacao_dado
+      description: respondivel, parcial ou lacuna_de_fonte.
+    - name: situacao_dado_rotulo
+      description: Rótulo para painel.
+    - name: resposta_disponivel
+      description: O que os dados atuais respondem.
+    - name: modelo_ouro
+      description: Ouro que responde (nulo se lacuna).
+    - name: fonte_necessaria
+      description: Fonte que falta para responder por completo.
+    - name: limitacao
+      description: Limitação da resposta atual.
