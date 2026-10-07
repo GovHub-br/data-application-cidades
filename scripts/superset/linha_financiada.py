@@ -37,6 +37,8 @@ DATASETS = [
     "ouro_linha_financiada_base_pf_fundo_social",
     "ouro_linha_financiada_cobertura_perguntas",
     "ouro_linha_financiada_mapa_uf",
+    "ouro_linha_financiada_projecao_anual",
+    "ouro_linha_financiada_ranking_territorial",
 ]
 
 # O Superset não cria métricas agregadas automaticamente ao registrar uma
@@ -45,14 +47,23 @@ DATASETS = [
 METRICAS = {
     "ouro_linha_financiada_resumo_mensal": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__quantidade_empreendimentos", "SUM(quantidade_empreendimentos)"),
         ("sum__valor_financiamento", "SUM(valor_financiamento)"),
+        ("sum__valor_descontos", "SUM(valor_desconto_fgts + valor_desconto_ogu)"),
     ],
     "ouro_linha_financiada_mapa_execucao": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
         ("sum__valor_financiamento", "SUM(valor_financiamento)"),
     ],
     "ouro_linha_financiada_empreendimentos": [
+        ("count__empreendimentos", "COUNT(DISTINCT codigo_empreendimento)"),
+        ("sum__quantidade_empreendimentos", "SUM(quantidade_unidades)"),
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__valor_investimento_pj", "SUM(valor_investimento_pj)"),
+        ("sum__valor_contratado_pj", "SUM(valor_contratado_pj)"),
+        ("sum__valor_financiamento", "SUM(valor_financiamento)"),
+        ("sum__valor_descontos", "SUM(valor_descontos)"),
+        ("avg__percentual_obra", "AVG(percentual_obra)"),
     ],
     "ouro_linha_financiada_contrapartidas": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
@@ -67,6 +78,14 @@ METRICAS = {
         ("sum__pagamentos_totais", "SUM(pagamentos_totais)"),
     ],
     "ouro_linha_financiada_mapa_uf": [("sum__quantidade_contratos", "SUM(quantidade_contratos)")],
+    "ouro_linha_financiada_projecao_anual": [
+        ("sum__quantidade_contratos_projetada_ano", "SUM(quantidade_contratos_projetada_ano)"),
+        ("sum__valor_financiamento_projetado_ano", "SUM(valor_financiamento_projetado_ano)"),
+    ],
+    "ouro_linha_financiada_ranking_territorial": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__valor_financiamento", "SUM(valor_financiamento)"),
+    ],
 }
 
 CHARTS = [
@@ -219,27 +238,151 @@ CHARTS_COMPLETO = CHARTS + [
         "viz_type": "table",
         "params": {"query_mode": "aggregate", "groupby": ["ano", "fonte_recurso"], "metrics": ["sum__orcamento_atualizado", "sum__pagamentos_totais"], "row_limit": 100},
     },
+    {
+        "key": "projecao_anual",
+        "title": "Projeção anual de contratação e financiamento",
+        "dataset": "ouro_linha_financiada_projecao_anual",
+        "viz_type": "table",
+        "params": {
+            "query_mode": "raw",
+            "all_columns": [
+                "competencia_referencia", "fonte_recurso", "segmento_linha_financiada",
+                "quantidade_contratos_realizada_ano", "quantidade_contratos_projetada_ano",
+                "valor_financiamento_realizado_ano", "valor_financiamento_projetado_ano",
+                "metodo_projecao",
+            ],
+            "order_by_cols": ['["fonte_recurso", true]'],
+            "row_limit": 100,
+        },
+    },
+    {
+        "key": "ranking_territorial",
+        "title": "Ranking territorial de municípios e UFs",
+        "dataset": "ouro_linha_financiada_ranking_territorial",
+        "viz_type": "table",
+        "params": {
+            "query_mode": "raw",
+            "all_columns": [
+                "ranking_municipio_contratos", "uf", "municipio", "fonte_recurso",
+                "segmento_linha_financiada", "quantidade_contratos",
+                "quantidade_empreendimentos", "valor_financiamento", "valor_descontos",
+            ],
+            "order_by_cols": ['["ranking_municipio_contratos", true]'],
+            "row_limit": 100,
+        },
+    },
+    {
+        "key": "empreendimento_unidades",
+        "title": "Registros AO1/PJ (não são empreendimentos físicos)",
+        "dataset": "ouro_linha_financiada_empreendimentos",
+        "viz_type": "big_number_total",
+        "params": {"metric": "count__empreendimentos", "subheader": "códigos administrativos; requer qualificação"},
+    },
+    {
+        "key": "empreendimento_desligamentos",
+        "title": "Empreendimento — Contratos PF vinculados",
+        "dataset": "ouro_linha_financiada_empreendimentos",
+        "viz_type": "big_number_total",
+        "params": {"metric": "sum__quantidade_contratos", "subheader": "contratos PF vinculados"},
+    },
+    {
+        "key": "empreendimento_investimento",
+        "title": "Empreendimento — Valor de investimento PJ",
+        "dataset": "ouro_linha_financiada_empreendimentos",
+        "viz_type": "big_number_total",
+        "params": {"metric": "sum__valor_investimento_pj", "subheader": "valor de investimento"},
+    },
+    {
+        "key": "empreendimento_execucao",
+        "title": "Empreendimento — Execução física",
+        "dataset": "ouro_linha_financiada_empreendimentos",
+        "viz_type": "big_number_total",
+        "params": {"metric": "avg__percentual_obra", "subheader": "% de obra executada"},
+    },
+    {
+        "key": "empreendimento_situacao",
+        "title": "Empreendimento — Situação de execução",
+        "dataset": "ouro_linha_financiada_empreendimentos",
+        "viz_type": "pie",
+        "params": {"groupby": ["situacao_execucao"], "metric": "count__empreendimentos", "donut": True, "row_limit": 20},
+    },
+    {
+        "key": "ficha_empreendimento",
+        "title": "Ficha detalhada do empreendimento",
+        "dataset": "ouro_linha_financiada_empreendimentos",
+        "viz_type": "table",
+        "params": {
+            "query_mode": "raw",
+            "all_columns": [
+                "codigo_empreendimento", "nome_empreendimento", "uf_painel", "municipio_painel",
+                "situacao_contrato_pj", "situacao_execucao", "competencia_posicao",
+                "quantidade_unidades", "quantidade_contratos", "percentual_unidades_com_pf",
+                "valor_investimento_pj", "valor_contratado_pj", "valor_financiamento", "valor_descontos",
+                "percentual_obra", "entidade_pj", "data_inicio_raw", "data_termino_raw",
+            ],
+            "row_limit": 100,
+        },
+    },
+]
+
+# Painel novo: reproduz a leitura orientada a perguntas do painel
+# ``mcid-perguntas``. Os números de apoio à produção PJ não são usados como
+# contratação MCMV; a ficha usa exclusivamente o vínculo operação CCA/PF ↔ AO1.
+CHARTS_PERGUNTAS = CHARTS_COMPLETO + [
+    {"key": "q_kpi_contratos", "title": "Visão geral — contratos", "dataset": "ouro_linha_financiada_resumo_mensal", "viz_type": "big_number_total", "params": {"metric": "sum__quantidade_contratos", "subheader": "contratações PF e Fundo Social"}},
+    {"key": "q_kpi_financiamento", "title": "Visão geral — valor financiado", "dataset": "ouro_linha_financiada_resumo_mensal", "viz_type": "big_number_total", "params": {"metric": "sum__valor_financiamento", "subheader": "valor contratado"}},
+    {"key": "q_kpi_descontos", "title": "Visão geral — descontos", "dataset": "ouro_linha_financiada_resumo_mensal", "viz_type": "big_number_total", "params": {"metric": "sum__valor_descontos", "subheader": "FGTS e OGU identificados"}},
+    {"key": "q_empreendimento_uh", "title": "Ficha — unidades financiadas", "dataset": "ouro_linha_financiada_empreendimentos", "viz_type": "big_number_total", "params": {"metric": "sum__quantidade_empreendimentos", "subheader": "unidades do empreendimento AO1"}},
+    {"key": "q_empreendimento_pf", "title": "Ficha — contratos PF vinculados", "dataset": "ouro_linha_financiada_empreendimentos", "viz_type": "big_number_total", "params": {"metric": "sum__quantidade_contratos", "subheader": "vínculo por operação CCA ↔ código AO1"}},
+    {"key": "q_empreendimento_financiamento", "title": "Ficha — valor financiado PF", "dataset": "ouro_linha_financiada_empreendimentos", "viz_type": "big_number_total", "params": {"metric": "sum__valor_financiamento", "subheader": "contratos PF vinculados"}},
+    {"key": "q_empreendimento_execucao", "title": "Ficha — execução física", "dataset": "ouro_linha_financiada_empreendimentos", "viz_type": "big_number_total", "params": {"metric": "avg__percentual_obra", "subheader": "% informado na última posição"}},
 ]
 
 # Recortes fixos para as abas de negócio. Cada gráfico recebe o filtro na
 # própria consulta, evitando que o usuário tenha de aplicar manualmente a
 # linha toda vez que abre o painel.
-for sufixo, rotulo in [
-    ("cidades", "MCMV Cidades"),
-    ("classe_media", "Classe Média"),
-    ("pro_moradia", "Pró-Moradia"),
+for sufixo, rotulo, coluna_frente in [
+    ("cidades", "MCMV Cidades", "ic_mcmv_cidades"),
+    ("classe_media", "Classe Média", "ic_classe_media"),
+    ("pro_moradia", "Pró-Moradia", "ic_pro_moradia"),
 ]:
     for chave_base in ("contratos_mes", "valor_mes", "semanal"):
         base = next(item for item in CHARTS if item["key"] == chave_base)
         params = dict(base["params"])
         params["adhoc_filters"] = [{
-            "expressionType": "SIMPLE", "subject": "segmento_linha_financiada",
-            "operator": "==", "comparator": rotulo,
+            "clause": "WHERE", "expressionType": "SIMPLE", "subject": coluna_frente,
+            "operator": "==", "comparator": True,
         }]
         CHARTS_COMPLETO.append({
             "key": f"{chave_base}_{sufixo}",
             "title": f"{base['title']} — {rotulo}",
             "dataset": base["dataset"], "viz_type": base["viz_type"], "params": params,
+        })
+
+# Indicadores de cada frente de negócio, no mesmo padrão de leitura rápida do
+# painel FAR. São gráficos próprios, com recorte fixo, para que as abas sejam
+# úteis mesmo sem nenhum filtro selecionado.
+for sufixo, rotulo, coluna_frente in [
+    ("cidades", "MCMV Cidades", "ic_mcmv_cidades"),
+    ("classe_media", "Classe Média", "ic_classe_media"),
+    ("pro_moradia", "Pró-Moradia", "ic_pro_moradia"),
+]:
+    filtro_frente = [{
+        "clause": "WHERE", "expressionType": "SIMPLE", "subject": coluna_frente,
+        "operator": "==", "comparator": True,
+    }]
+    for indicador, titulo, metrica, subtitulo in [
+        ("contratos", "Contratos", "sum__quantidade_contratos", "contratações"),
+        ("empreendimentos", "Empreendimentos", "sum__quantidade_empreendimentos", "empreendimentos vinculados"),
+        ("financiamento", "Valor financiado", "sum__valor_financiamento", "financiamento contratado"),
+        ("descontos", "Descontos", "sum__valor_descontos", "descontos identificados"),
+    ]:
+        CHARTS_COMPLETO.append({
+            "key": f"frente_{indicador}_{sufixo}",
+            "title": f"{titulo} — {rotulo}",
+            "dataset": "ouro_linha_financiada_resumo_mensal",
+            "viz_type": "big_number_total",
+            "params": {"metric": metrica, "subheader": subtitulo, "adhoc_filters": filtro_frente},
         })
 
 
@@ -257,6 +400,20 @@ def datasets(api: Superset, database_id: int) -> dict[str, int]:
             )
             existentes[chave] = criado["id"]
         resultado[nome] = existentes[chave]
+
+        # dbt pode recriar a tabela com novas colunas; sem refresh o Superset
+        # continua validando charts contra o esquema antigo e os quebra.
+        if not api.dry_run:
+            atualizado = api.session.put(
+                f"{api.base_url}/api/v1/dataset/{resultado[nome]}/refresh",
+                timeout=30,
+            )
+            if atualizado.status_code == 405:
+                atualizado = api.session.post(
+                    f"{api.base_url}/api/v1/dataset/{resultado[nome]}/refresh",
+                    timeout=30,
+                )
+            atualizado.raise_for_status()
     for nome, metricas in METRICAS.items():
         detalhe = api.session.get(
             f"{api.base_url}/api/v1/dataset/{resultado[nome]}", timeout=30
@@ -391,11 +548,14 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
     dashboard(api, ids_chart)
     abas = [
         ("Total", [["pizza_linha", "pizza_fonte"], ["contratos_mes"], ["valor_mes"], ["semanal"], ["previsao"]]),
-        ("MCMV Cidades", [["contratos_mes_cidades"], ["valor_mes_cidades"], ["semanal_cidades"]]),
-        ("Classe Média", [["contratos_mes_classe_media"], ["valor_mes_classe_media"], ["semanal_classe_media"]]),
-        ("Pró-Moradia", [["contratos_mes_pro_moradia"], ["valor_mes_pro_moradia"], ["semanal_pro_moradia"]]),
-        ("Empreendimentos", [["empreendimentos"]]),
-        ("Estados", [["mapa_brasil"], ["ranking_uf", "municipios"]]),
+        ("MCMV Cidades", [["frente_contratos_cidades", "frente_empreendimentos_cidades", "frente_financiamento_cidades", "frente_descontos_cidades"], ["contratos_mes_cidades"], ["valor_mes_cidades"], ["semanal_cidades"]]),
+        ("Classe Média", [["frente_contratos_classe_media", "frente_empreendimentos_classe_media", "frente_financiamento_classe_media", "frente_descontos_classe_media"], ["contratos_mes_classe_media"], ["valor_mes_classe_media"], ["semanal_classe_media"]]),
+        ("Pró-Moradia", [["frente_contratos_pro_moradia", "frente_empreendimentos_pro_moradia", "frente_financiamento_pro_moradia", "frente_descontos_pro_moradia"], ["contratos_mes_pro_moradia"], ["valor_mes_pro_moradia"], ["semanal_pro_moradia"]]),
+        # PJ é apoio à produção, não contratação MCMV. A chave PF (Operação)
+        # ainda não concilia com APF PJ nesta carga; por isso não expomos a
+        # ficha PJ como empreendimento/entrega até haver vínculo verificável.
+        ("Estados", [["mapa_brasil"], ["ranking_uf", "municipios"], ["ranking_territorial"]]),
+        ("Projeção", [["previsao"], ["projecao_anual"]]),
         ("Transversal", [["contrapartidas", "contrapartidas_por_linha"], ["orcamento", "orcamento_resumo"], ["cobertura"]]),
     ]
     tabs_id = "TABS-LINHA-FINANCIADA-COMPLETO"
@@ -420,18 +580,138 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
         item["table_name"]: item["id"] for item in api.list("dataset")
         if item.get("schema") == SCHEMA
     }
-    alvos = {
-        "Fonte de recurso": ("fonte_recurso", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_contrapartidas", "ouro_linha_financiada_execucao_orcamentaria", "ouro_linha_financiada_features_preditivas"]),
-        "Linha financiada": ("segmento_linha_financiada", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_contrapartidas", "ouro_linha_financiada_features_preditivas"]),
-        "UF": ("uf", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_empreendimentos"]),
-        "Faixa": ("faixa_codigo", ["ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_mapa_execucao"]),
-    }
-    filtros = []
-    for indice, (nome, (coluna, tabelas)) in enumerate(alvos.items(), 1):
-        # Sem valor inicial: nesta versão do Superset `value: []` significa
-        # conjunto vazio, e não "todos". O filtro deve abrir sem restringir.
-        filtros.append({"id": f"NATIVE_FILTER-COMP-{indice}", "name": nome, "filterType": "filter_select", "type": "NATIVE_FILTER", "targets": [{"datasetId": por_tabela[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {}, "controlValues": {"multiSelect": True, "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False}, "scope": {"rootPath": ["ROOT_ID"], "excluded": []}, "cascadeParentIds": []})
+    def seletor(indice: int, nome: str, coluna: str, tabelas: list[str], aba: int) -> dict:
+        # Cada seletor fica no escopo da própria aba, como no painel FAR.
+        return {
+            "id": f"NATIVE_FILTER-COMP-{indice}", "name": nome,
+            "filterType": "filter_select", "type": "NATIVE_FILTER",
+            "targets": [{"datasetId": por_tabela[t], "column": {"name": coluna}} for t in tabelas],
+            "defaultDataMask": {},
+            "controlValues": {"multiSelect": True, "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True, "inverseSelection": False},
+            "required": False,
+            "scope": {"rootPath": ["ROOT_ID", tabs_id, f"TAB-LF-COMP-{aba:02d}"], "excluded": []},
+            "cascadeParentIds": [],
+        }
+
+    def periodo(indice: int, aba: int, alvos_tempo: list[tuple[str, str]]) -> dict:
+        return {
+            "id": f"NATIVE_FILTER-COMP-{indice}", "name": "Período",
+            "filterType": "filter_time", "type": "NATIVE_FILTER",
+            "targets": [{"datasetId": por_tabela[tabela], "column": {"name": coluna}} for tabela, coluna in alvos_tempo],
+            "defaultDataMask": {"extraFormData": {"time_range": "No filter"}, "filterState": {"value": "No filter"}},
+            "controlValues": {"enableEmptyFilter": True, "defaultToFirstItem": False},
+            "required": False,
+            "scope": {"rootPath": ["ROOT_ID", tabs_id, f"TAB-LF-COMP-{aba:02d}"], "excluded": []},
+            "cascadeParentIds": [],
+        }
+
+    resumo = "ouro_linha_financiada_resumo_mensal"
+    semanal = "ouro_linha_financiada_relatorio_semanal"
+    features = "ouro_linha_financiada_features_preditivas"
+    mapa = "ouro_linha_financiada_mapa_execucao"
+    ranking = "ouro_linha_financiada_ranking_territorial"
+    filtros = [
+        seletor(1, "Fonte de recurso", "fonte_recurso", [resumo, semanal, features], 0),
+        seletor(2, "Linha financiada", "segmento_linha_financiada", [resumo, semanal, features], 0),
+        seletor(3, "Faixa", "faixa_codigo", [resumo, semanal], 0),
+        periodo(4, 0, [(resumo, "competencia_contratacao"), (semanal, "semana_referencia"), (features, "competencia_contratacao")]),
+        seletor(5, "Faixa", "faixa_codigo", [resumo, semanal], 1),
+        periodo(6, 1, [(resumo, "competencia_contratacao"), (semanal, "semana_referencia")]),
+        seletor(7, "Faixa", "faixa_codigo", [resumo, semanal], 2),
+        periodo(8, 2, [(resumo, "competencia_contratacao"), (semanal, "semana_referencia")]),
+        seletor(9, "Faixa", "faixa_codigo", [resumo, semanal], 3),
+        periodo(10, 3, [(resumo, "competencia_contratacao"), (semanal, "semana_referencia")]),
+        seletor(11, "UF", "uf", [mapa, ranking], 4),
+        seletor(12, "Fonte de recurso", "fonte_recurso", [mapa, ranking], 4),
+        seletor(13, "Linha financiada", "segmento_linha_financiada", [mapa, ranking], 4),
+        seletor(14, "Fonte de recurso", "fonte_recurso", [features, "ouro_linha_financiada_projecao_anual"], 5),
+        seletor(15, "Linha financiada", "segmento_linha_financiada", [features, "ouro_linha_financiada_projecao_anual"], 5),
+        periodo(16, 5, [(features, "competencia_contratacao"), ("ouro_linha_financiada_projecao_anual", "competencia_referencia")]),
+    ]
     api.update("dashboard", api.dashboard_id(DASHBOARD_SLUG), {"position_json": json.dumps(estrutura), "json_metadata": json.dumps({"native_filter_configuration": filtros, "show_native_filters": True})})
+
+
+def dashboard_perguntas(api: Superset, ids: dict[str, int]) -> None:
+    """Painel no padrão pergunta + explicação à esquerda + gráfico à direita."""
+    slug, titulo, tabs = "perguntas-linha-financiada", "Perguntas: Linha Financiada", "TABS-PERGUNTAS-LF"
+    estrutura = {"ROOT_ID": {"id": "ROOT_ID", "type": "ROOT", "children": [tabs], "parents": [], "meta": {}}, tabs: {"id": tabs, "type": "TABS", "children": [], "parents": ["ROOT_ID"], "meta": {}}}
+    paginas = [
+        ("Comece aqui", [("charts", ["q_kpi_contratos", "q_kpi_financiamento", "q_kpi_descontos"]), ("heading", "## O que esta base integrada permite acompanhar"), ("pair", """### Como ler
+
+Integra contratações PF do **FGTS**, operações do **Fundo Social** e recortes de **MCMV Cidades**, **Classe Média** e **Pró-Moradia**.
+
+Valores são contratações e descontos informados. **Apoio à produção PJ não é contratação MCMV**; só compõe a ficha quando houver vínculo verificável com a operação PF.""", "pizza_linha")]),
+        ("Previsão e contratação", [("heading", "## 1. É possível fazer análise preditiva da contratação mensal e da execução orçamentária?"), ("pair", """### Como ler
+
+A série mensal reúne contratos e média móvel de três meses, preparada para modelagem preditiva. Ela permite estimar patamares futuros, mas não substitui modelo treinado.
+
+Filtre fonte, linha e período nesta aba para comparar FGTS e Fundo Social.""", "previsao"), ("pair", """### Orçamento oneroso e descontos
+
+Orçamento, empenho, pagamentos e restos a pagar são apresentados quando constam na fonte. Descontos FGTS/OGU dos contratos não são automaticamente pagamento orçamentário.""", "orcamento")]),
+        ("Contrapartidas", [("heading", "## 2. Quais contrapartidas foram aportadas e quais contratos foram beneficiados?"), ("pair", """### Como ler
+
+Mostra a cobertura do campo de contrapartida e separa valor informado de ausência de informação.
+
+Ainda não existe base consolidada de contrapartidas além dos campos recebidos. Ente aportante, instrumento e contrato beneficiado dependem de estruturação com o agente financeiro.""", "contrapartidas_por_linha")]),
+        ("Base integrada e semanal", [("heading", "## 3. Como garantir dados atualizados, unificados e disponibilizados de forma uniforme?"), ("pair", """### Como ler
+
+O relatório semanal consolida fonte, linha, faixa, modalidade, tipo de imóvel, contratos, financiamento, descontos e contrapartida informada em uma estrutura comum.
+
+As rotinas preservam origem e referência temporal para atualização automatizada e consumo em BI.""", "semanal"), ("pair", """### Contratação por mês
+
+Cada ponto representa contratos por competência. Não some apoio à produção PJ como se fosse contratação de famílias.""", "contratos_mes")]),
+        ("Estados e municípios", [("heading", "## 4. Onde estão as contratações? Mapa do Brasil e leitura territorial"), ("pair", """### Como ler
+
+O mapa agrega contratos por UF. Use os filtros desta aba para recortar por UF, linha e fonte. Municípios sem localidade na fonte permanecem fora da territorialização.""", "mapa_brasil"), ("pair", """### Ranking territorial
+
+Ordena municípios por contratações e mostra valor financiado, descontos e empreendimentos vinculados quando houver chave disponível.""", "ranking_territorial")]),
+        ("Empreendimentos", [("heading", "## 5. Ficha do empreendimento — selecione um empreendimento para consultar suas características"), ("charts", ["q_empreendimento_uh", "q_empreendimento_pf", "q_empreendimento_financiamento", "q_empreendimento_execucao"]), ("pair", """### Como ler a ficha
+
+Selecione o **empreendimento** e, se necessário, UF ou município. A ficha segue a lógica do relatório PJ: identificação, unidades, contratos PF vinculados, situação e posição de obra.
+
+O vínculo usa **Operação CCA = código AO1**. Datas de término são previsão/posição de obra, não prova de entrega.""", "ficha_empreendimento"), ("pair", """### Situação da execução
+
+Usa a última posição de obra disponível no canal AO1. Ausência de posição não significa obra parada; apenas ausência de status físico na carga.""", "empreendimento_situacao")]),
+    ]
+    for pagina, (nome, blocos) in enumerate(paginas):
+        tab = f"TAB-PERGUNTAS-LF-{pagina}"
+        estrutura[tabs]["children"].append(tab)
+        estrutura[tab] = {"id": tab, "type": "TAB", "children": [], "parents": ["ROOT_ID", tabs], "meta": {"text": nome, "defaultText": nome, "placeholder": nome}}
+        for linha, bloco in enumerate(blocos):
+            row = f"ROW-PERGUNTAS-LF-{pagina}-{linha}"
+            estrutura[tab]["children"].append(row)
+            estrutura[row] = {"id": row, "type": "ROW", "children": [], "parents": ["ROOT_ID", tabs, tab], "meta": {"background": "BACKGROUND_TRANSPARENT"}}
+            tipo, conteudo, *resto = bloco
+            if tipo == "heading":
+                node = f"MARKDOWN-PERGUNTAS-LF-{pagina}-{linha}"
+                estrutura[row]["children"].append(node)
+                estrutura[node] = {"id": node, "type": "MARKDOWN", "children": [], "parents": ["ROOT_ID", tabs, tab, row], "meta": {"width": 12, "height": 10, "code": conteudo}}
+            elif tipo == "charts":
+                for posicao, chave in enumerate(conteudo):
+                    node = f"CHART-PERGUNTAS-LF-{ids[chave]}-{pagina}-{linha}"
+                    estrutura[row]["children"].append(node)
+                    estrutura[node] = {"id": node, "type": "CHART", "children": [], "parents": ["ROOT_ID", tabs, tab, row], "meta": {"chartId": ids[chave], "width": 12 // len(conteudo), "height": 28, "index": f"{pagina}{linha}{posicao}"}}
+            else:
+                markdown, chart = f"MARKDOWN-PERGUNTAS-LF-{pagina}-{linha}", f"CHART-PERGUNTAS-LF-{ids[resto[0]]}-{pagina}-{linha}"
+                estrutura[row]["children"].extend([markdown, chart])
+                estrutura[markdown] = {"id": markdown, "type": "MARKDOWN", "children": [], "parents": ["ROOT_ID", tabs, tab, row], "meta": {"width": 4, "height": 50, "code": conteudo}}
+                estrutura[chart] = {"id": chart, "type": "CHART", "children": [], "parents": ["ROOT_ID", tabs, tab, row], "meta": {"chartId": ids[resto[0]], "width": 8, "height": 50, "index": f"{pagina}{linha}1"}}
+    por_tabela = {item["table_name"]: item["id"] for item in api.list("dataset") if item.get("schema") == SCHEMA}
+    def filtro(indice, nome, coluna, tabelas, aba):
+        return {"id": f"NATIVE-FILTRO-LF-{indice}", "name": nome, "filterType": "filter_select", "type": "NATIVE_FILTER", "targets": [{"datasetId": por_tabela[t], "column": {"name": coluna}} for t in tabelas], "defaultDataMask": {"extraFormData": {}, "filterState": {"value": []}, "ownState": {}}, "controlValues": {"multiSelect": True, "enableEmptyFilter": True, "defaultToFirstItem": False, "searchAllOptions": True}, "required": False, "scope": {"rootPath": ["ROOT_ID", tabs, f"TAB-PERGUNTAS-LF-{aba}"], "excluded": []}, "cascadeParentIds": []}
+    def periodo(indice, aba, alvos):
+        return {"id": f"NATIVE-TEMPO-LF-{indice}", "name": "Período", "filterType": "filter_time", "type": "NATIVE_FILTER", "targets": [{"datasetId": por_tabela[t], "column": {"name": c}} for t, c in alvos], "defaultDataMask": {"extraFormData": {"time_range": "No filter"}, "filterState": {"value": "No filter"}}, "controlValues": {"enableEmptyFilter": True}, "required": False, "scope": {"rootPath": ["ROOT_ID", tabs, f"TAB-PERGUNTAS-LF-{aba}"], "excluded": []}, "cascadeParentIds": []}
+    resumo, semanal, features = "ouro_linha_financiada_resumo_mensal", "ouro_linha_financiada_relatorio_semanal", "ouro_linha_financiada_features_preditivas"
+    filtros = [filtro(1, "Fonte de recurso", "fonte_recurso", [features, "ouro_linha_financiada_execucao_orcamentaria"], 1), filtro(2, "Linha financiada", "segmento_linha_financiada", [features], 1), periodo(3, 1, [(features, "competencia_contratacao")]), filtro(4, "Fonte de recurso", "fonte_recurso", ["ouro_linha_financiada_contrapartidas"], 2), filtro(5, "Linha financiada", "segmento_linha_financiada", ["ouro_linha_financiada_contrapartidas"], 2), filtro(6, "Fonte de recurso", "fonte_recurso", [resumo, semanal], 3), filtro(7, "Linha financiada", "segmento_linha_financiada", [resumo, semanal], 3), periodo(8, 3, [(resumo, "competencia_contratacao"), (semanal, "semana_referencia")]), filtro(9, "UF", "uf", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_ranking_territorial"], 4), filtro(10, "Fonte de recurso", "fonte_recurso", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_ranking_territorial"], 4), filtro(11, "Linha financiada", "segmento_linha_financiada", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_ranking_territorial"], 4), filtro(12, "Empreendimento", "nome_empreendimento", ["ouro_linha_financiada_empreendimentos"], 5), filtro(13, "UF", "uf_painel", ["ouro_linha_financiada_empreendimentos"], 5), filtro(14, "Município", "municipio_painel", ["ouro_linha_financiada_empreendimentos"], 5)]
+    payload = {"dashboard_title": titulo, "slug": slug, "published": True, "position_json": json.dumps(estrutura), "json_metadata": json.dumps({"refresh_frequency": 0, "show_native_filters": True, "native_filter_configuration": filtros})}
+    dashboard_id = api.dashboard_id(slug)
+    if dashboard_id: api.update("dashboard", dashboard_id, payload)
+    else: dashboard_id = api.create("dashboard", payload)["id"]
+    if not api.dry_run:
+        for chart_id in ids.values():
+            atual = api.session.get(f"{api.base_url}/api/v1/chart/{chart_id}", timeout=30).json()["result"]
+            destinos = {item["id"] for item in atual.get("dashboards", [])}
+            if dashboard_id not in destinos: api.update("chart", chart_id, {"dashboards": sorted(destinos | {dashboard_id})})
 
 
 def main() -> None:
@@ -439,6 +719,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--completo", action="store_true")
+    parser.add_argument("--perguntas", action="store_true")
     args = parser.parse_args()
     load_dotenv("local.env", override=False)
     load_dotenv(".env", override=False)
@@ -448,11 +729,15 @@ def main() -> None:
         env("SUPERSET_PASSWORD"),
         args.dry_run,
     )
-    if args.completo:
+    if args.perguntas:
+        CHARTS = CHARTS_PERGUNTAS
+    elif args.completo:
         CHARTS = CHARTS_COMPLETO
     ids_dataset = datasets(api, get_or_create_database(api))
     ids_chart = charts(api, ids_dataset)
-    if args.completo:
+    if args.perguntas:
+        dashboard_perguntas(api, ids_chart)
+    elif args.completo:
         dashboard_completo(api, ids_chart)
     else:
         dashboard(api, ids_chart)
