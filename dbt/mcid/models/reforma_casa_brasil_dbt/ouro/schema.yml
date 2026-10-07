@@ -1,0 +1,107 @@
+version: 2
+
+models:
+  - name: ouro_reforma_casa_brasil_ficha_reforma_dash
+    description: >
+      Ficha administrativa por contrato/reforma, sem CPF, NIS, nome ou endereço.
+      Tipo físico de reforma, medição e entrega não estão disponíveis na fonte atual.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, ficha, contrato]
+    columns:
+      - name: id_contrato
+        data_tests: [not_null, unique]
+      - name: identificador_reforma
+        description: Número administrativo do contrato para seleção no painel interno.
+      - name: ressalva_reforma
+        data_tests: [not_null]
+
+  - name: ouro_reforma_casa_brasil_acesso_dash
+    description: >
+      Indicadores agregados de acesso ao Reforma Casa Brasil por território,
+      faixa, raça/cor, sexo e composição domiciliar. Células com menos de dez
+      contratos são suprimidas.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, acesso, agregado]
+    columns:
+      - name: quantidade_contratos
+        data_tests: [not_null]
+      - name: proporcao_encontrada_cadunico
+        description: Cobertura do vínculo pseudonimizado com o CadÚnico.
+
+  - name: ouro_reforma_casa_brasil_implementacao_dash
+    description: >
+      Indicadores administrativos de financiamento e adimplência. Percepções de
+      burocracia, documentação e qualidade dependem da pesquisa.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, implementacao, agregado]
+    columns:
+      - name: quantidade_contratos
+        data_tests: [not_null]
+
+  - name: ouro_reforma_casa_brasil_resultado_dash
+    description: >
+      Linha de base de inadequação domiciliar e situação financeira declarada
+      no CadÚnico. Não mede efeito pós-obra nem atribui causalidade ao programa.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, resultado, agregado]
+    columns:
+      - name: resultado_pos_obra_disponivel
+        description: Sempre falso até a entrada de pesquisa ou medição pós-obra.
+        data_tests:
+          - accepted_values:
+              arguments: {values: [false]}
+      - name: impacto_financeiro_pos_obra_disponivel
+        description: Sempre falso até a entrada de acompanhamento financeiro posterior à reforma.
+        data_tests:
+          - accepted_values:
+              arguments: {values: [false]}
+
+  - name: ouro_reforma_casa_brasil_monitoramento_recursos_dash
+    description: >
+      Série agregada de posição da carteira e valores contratuais por snapshot,
+      território, faixa e modalidade. Não interpreta esses valores como execução
+      orçamentária, pagamento ou medição física de obra.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, monitoramento, recursos, agregado]
+    columns:
+      - name: quantidade_contratos
+        data_tests: [not_null]
+      - name: execucao_orcamentaria_ou_fisica_disponivel
+        description: Sempre falso enquanto não houver fonte de execução ou medição.
+        data_tests:
+          - accepted_values:
+              arguments: {values: [false]}
+      - name: ressalva_monitoramento
+        data_tests: [not_null]
+
+  - name: ouro_reforma_casa_brasil_mapa_uf
+    description: >
+      Agregado territorial por UF para mapa nacional, contratos, municípios
+      alcançados e valores administrativos da carteira de Reforma Casa Brasil.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, territorio, mapa]
+    columns:
+      - name: iso_3166_2
+        description: Código UF no padrão utilizado pelo mapa do Brasil no Superset.
+      - name: quantidade_contratos
+        data_tests: [not_null]
+
+  - name: ouro_reforma_casa_brasil_cobertura_perguntas_dash
+    description: >
+      Matriz de cobertura que distingue resposta administrativa, proxy de linha
+      de base e lacuna de fonte para as perguntas de caracterização, acesso,
+      resultados e monitoramento do programa.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, cobertura]
+    columns:
+      - name: situacao_dado
+        description: Classificação transparente da evidência disponível ou da lacuna de fonte.
+      - name: resposta_disponivel
+        description: O que pode ser exibido no dashboard sem extrapolar a fonte.
+      - name: fonte_necessaria
+        description: Fonte administrativa, pesquisa ou medição necessária para responder integralmente à pergunta.
+      - name: limitacao
+        description: Restrição que deve acompanhar a leitura do indicador.
+    data_tests:
+      - unique_combinacao:
+          arguments: {colunas: [bloco, pergunta]}

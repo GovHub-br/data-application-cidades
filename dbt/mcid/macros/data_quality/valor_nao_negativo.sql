@@ -34,7 +34,12 @@ select
     {{ column_name }} as valor,
     count(*) as ocorrencias
 from {{ model }}
-where try_cast({{ column_name }} as double) < 0
+where
+    {% if target.type == 'postgres' %}
+        {{ parse_financial_value('cast(' ~ column_name ~ ' as text)') }} < 0
+    {% else %}
+        try_cast({{ column_name }} as double) < 0
+    {% endif %}
 group by {{ column_name }}
 order by valor
 

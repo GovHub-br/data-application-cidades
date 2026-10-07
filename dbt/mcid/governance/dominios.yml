@@ -199,6 +199,23 @@ produtos:
       o acompanhamento físico-financeiro fora da janela coberta pelos outros
       produtos.
 
+  - name: reforma_casa_brasil
+    display_name: Reforma Casa Brasil
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_reforma_casa_brasil_
+      - ouro_reforma_casa_brasil_
+    description: >
+      Produto de dados para caracterização do acesso, acompanhamento da
+      implementação e linha de base de resultados do Reforma Casa Brasil. Une
+      contratos pseudonimizados do SFTP/GEFUS a pessoas e famílias do CadÚnico
+      por tokens HMAC de CPF/NIS; a camada Ouro publica somente agregados com
+      supressão de células pequenas.
   # Só `ouro_reloginho_` entra como prefixo. Os dois modelos da prata se chamam
   # `prata_historico_snh_*` e dividiriam o prefixo `prata_historico_` com
   # `prata_historico_entrega_apf`/`prata_historico_serie_executiva`, que são do
@@ -242,6 +259,7 @@ etiquetas_automaticas:
     empreendimento_far: dbtTags.empreendimento_far
     entidades_fds: dbtTags.entidades_fds
     empreendimento_rural: dbtTags.empreendimento_rural
+    reforma_casa_brasil: dbtTags.reforma_casa_brasil
   por_camada:
     bronze: dbtTags.bronze
     silver: dbtTags.silver
@@ -407,4 +425,3 @@ propriedades_customizadas:
       Granularidade de junção e vizinhança da tabela, para responder com o que
       ela pode ser cruzada. Auxílio de descoberta: não cria chave estrangeira
       nem aresta de linhagem.
-
