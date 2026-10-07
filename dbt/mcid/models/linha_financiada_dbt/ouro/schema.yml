@@ -51,6 +51,24 @@ models:
       Série com defasagens e médias móveis para treino e validação temporal de
       modelos preditivos. Não apresenta previsão antes de validação do modelo.
 
+  - name: ouro_linha_financiada_projecao_anual
+    description: >
+      Projeção anual determinística para monitoramento, baseada na média dos
+      dois últimos meses fechados disponíveis. Não representa modelo de IA.
+    columns:
+      - name: competencia_referencia
+        data_tests: [not_null]
+      - name: metodo_projecao
+        data_tests: [not_null]
+
+  - name: ouro_linha_financiada_ranking_territorial
+    description: >
+      Ranking territorial por município e UF, com contratação, financiamento,
+      descontos e contrapartida informada para o painel de execução.
+    columns:
+      - name: uf
+        data_tests: [not_null]
+
   - name: ouro_linha_financiada_cobertura_perguntas
     description: Matriz executiva que informa quais perguntas são respondidas, parciais ou possuem lacuna.
     data_tests:
