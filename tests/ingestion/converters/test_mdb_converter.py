@@ -72,3 +72,15 @@ def test_missing_mdbtools_is_a_clear_error(
 
     with pytest.raises(ConversionError, match="mdbtools"):
         _convert(path)
+
+
+def test_table_names_with_accents_are_exported(
+    fake_mdbtools: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Achado no arquivo real (Posição_CCI_CCA): sem locale UTF-8, o mdb-export
+    # recusa o nome. O conversor não pode depender do locale do container.
+    monkeypatch.delenv("LC_ALL", raising=False)
+    monkeypatch.setenv("LANG", "C")
+    path = fake_mdb(tmp_path / "base.mdb", {"Posição_CCI_CCA": "a\n1\n"})
+
+    assert _convert(path) == {"base__Posi__o_CCI_CCA.parquet": [{"a": "1"}]}

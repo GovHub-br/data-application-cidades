@@ -2,6 +2,7 @@
 
 import csv
 import io
+import os
 import re
 import shutil
 import subprocess
@@ -15,6 +16,14 @@ from ingestion.converters.base_converter import FileConverter, Source
 from ingestion.converters.converter_errors import ConversionError
 from ingestion.converters.converter_registry import ConverterFactory
 from ingestion.converters.models.csv_converter import BLOCK_BYTES
+
+# O mdbtools lê argumentos pelo locale: nome de tabela com acento (Posição_CCI_CCA,
+# no arquivo real da CAIXA) é recusado fora de UTF-8. C.UTF-8 existe em todo Debian.
+_UTF8_LOCALE = {"LC_ALL": "C.UTF-8", "LANG": "C.UTF-8"}
+
+
+def _env() -> dict[str, str]:
+    return {**os.environ, **_UTF8_LOCALE}
 
 
 @ConverterFactory.register("mdb", extensions=(".mdb", ".accdb"))
@@ -36,7 +45,7 @@ class MdbConverter(FileConverter):
         if shutil.which("mdb-tables") is None or shutil.which("mdb-export") is None:
             raise ConversionError(f"{path.name}: mdbtools não instalado (mdb-tables)")
         result = subprocess.run(
-            ["mdb-tables", "-1", str(path)], capture_output=True, text=True
+            ["mdb-tables", "-1", str(path)], capture_output=True, text=True, env=_env()
         )
         if result.returncode != 0:
             raise ConversionError(
@@ -53,6 +62,7 @@ class MdbConverter(FileConverter):
             ["mdb-export", str(path), table],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            env=_env(),
         )
         assert process.stdout is not None
         first_line = process.stdout.readline().decode("utf-8")

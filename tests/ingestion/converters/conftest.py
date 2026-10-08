@@ -68,7 +68,10 @@ import json, sys
 print("\\n".join(json.load(open(sys.argv[-1]))))
 """,
     "mdb-export": """
-import json, sys
+import json, os, sys
+# Como o real: nome de tabela não ASCII só passa com locale UTF-8.
+if not sys.argv[-1].isascii() and "UTF-8" not in os.environ.get("LC_ALL", ""):
+    sys.exit("argument parsing failed: Invalid byte sequence in conversion input")
 tables = json.load(open(sys.argv[-2]))
 if sys.argv[-1] not in tables:
     sys.exit(f"tabela inexistente: {sys.argv[-1]}")
