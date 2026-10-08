@@ -286,3 +286,29 @@ def format_size(size_bytes: float) -> str:
             return f"{value:.1f} {unit}"
         value /= 1024
     return f"{value:.1f} TB"
+
+
+# Partições do pipeline novo de ingestão (plugins/ingestion)
+#
+# O pipeline novo grava raw/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/ e fecha cada
+# partição com um _SUCCESS. Ele mesmo converte para a staging, no mesmo caminho que o
+# raw_para_staging usaria; e a raw dele é imutável (o _SUCCESS guarda o sha256 de cada
+# arquivo), então o mascaramento in-place também não pode tocá-la.
+MARCADOR_PIPELINE_NOVO = "_SUCCESS"
+
+
+def separar_pipeline_novo(
+    objetos: List[Tuple[str, int]],
+) -> Tuple[List[Tuple[str, int]], List[Tuple[str, int]]]:
+    """(mantidos, pulados): pula todo objeto de pasta que tenha o _SUCCESS do pipeline
+    novo. Precisa da listagem inteira, porque o marcador pode vir depois dos arquivos."""
+    pastas = {
+        key.rsplit("/", 1)[0]
+        for key, _ in objetos
+        if key.rsplit("/", 1)[-1] == MARCADOR_PIPELINE_NOVO
+    }
+    mantidos: List[Tuple[str, int]] = []
+    pulados: List[Tuple[str, int]] = []
+    for key, size in objetos:
+        (pulados if key.rsplit("/", 1)[0] in pastas else mantidos).append((key, size))
+    return mantidos, pulados

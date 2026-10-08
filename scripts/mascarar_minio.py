@@ -52,6 +52,7 @@ from dotenv import load_dotenv
 from psycopg2.extras import Json
 
 from lake_utils import (
+    separar_pipeline_novo,
     MDB_EXT,
     detectar_dialeto,
     detectar_encoding,
@@ -1226,7 +1227,18 @@ def run(  # noqa: C901
     contagem: Dict[str, int] = {}
     processados = 0
 
-    for key, size in minio.listar_objetos(prefix):
+    # A raw do pipeline novo (plugins/ingestion) é imutável: o _SUCCESS de cada
+    # partição guarda o sha256 dos arquivos. A listagem é materializada porque o
+    # marcador pode vir depois dos arquivos da pasta.
+    objetos, do_pipeline_novo = separar_pipeline_novo(list(minio.listar_objetos(prefix)))
+    if do_pipeline_novo:
+        contagem["skipped_pipeline_novo"] = len(do_pipeline_novo)
+        log.info(
+            "%d objeto(s) de partições do pipeline novo ignorado(s) (têm _SUCCESS).",
+            len(do_pipeline_novo),
+        )
+
+    for key, size in objetos:
         # marcador de pasta (0 byte, key terminando em "/"): não é arquivo
         if key.endswith("/"):
             continue
