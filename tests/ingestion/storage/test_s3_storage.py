@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from ingestion.storage import S3StorageBackend, StorageFactory
-from tests.ingestion.storage.conftest import TEST_BUCKET
+from tests.ingestion.conftest import TEST_BUCKET
 
 
 def test_default_connection_is_minio_lake() -> None:
