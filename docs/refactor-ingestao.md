@@ -30,7 +30,7 @@ toda tipagem e regra de negócio no dbt.
 | `raw/landing.py` (`RawLanding`) + `layout.py` | Portar. Respeitar a organização por domínio que já existe no MinIO. |
 | `converters/` (base + csv, txt, json, xlsx, mdb, parquet) | Portar inteiro. Substitui a conversão raw -> staging atual. |
 | `loaders/base_loader.py` + `load_types.py` (`LoadMode`, `LoadResult`) + `loader_registry.py` | Portar o template e os modos. |
-| `IcebergLoader`, `DeltaLoader`, `HudiLoader` | NÃO portar agora. Ficam para a migração ao lakehouse (Iceberg) que está em discussão; a Factory já deixa o caminho aberto. |
+| `IcebergLoader`, `DeltaLoader`, `HudiLoader` | Iceberg entra na Fase 9 (fase final, catálogo Polaris). Delta e Hudi ficam para depois; a Factory já deixa o caminho aberto. |
 | (não existe na PoC) | Criar `PostgresCopyLoader` e `PgDuckdbLoader` (seção 4). |
 | `pipeline/steps.py` | Portar (`extract_to_raw`, `convert_to_staging`, `load_to_bronze`). |
 | Singleton nas classes base | NÃO portar para extractors, converters e loaders. Só clientes de conexão podem ter cache. |
@@ -272,7 +272,27 @@ agora texto, deleções agora propagadas); `dbt build` verde.
 gera `_drift.json` (dataset `warn`), sem publicar staging quebrada; uma mudança artificial de
 distribuição na prata dispara o teste de drift de dado no `dbt build`.
 
-### Fase 9 — Documentação
+### Fase 9 — Suporte a Iceberg (Polaris)
+
+Última fase de implementação: o pipeline já funciona sem Iceberg, e esta fase acrescenta o formato
+de tabela como mais uma estratégia de carga. Delta e Hudi continuam fora.
+
+- [ ] Apache Polaris como catálogo (API REST do Iceberg, metadados no Postgres via JDBC), como
+  serviço no compose/infra.
+- [ ] `CatalogBackend` portado da PoC, sem singleton: `iceberg_rest` (Polaris, OAuth2 client
+  credentials) e `iceberg_sql` (pyiceberg `SqlCatalog`, para testes offline com sqlite e disco).
+- [ ] `TableBackend` Iceberg portado da PoC: append, overwrite, upsert, evolução de schema e time
+  travel.
+- [ ] `IcebergLoader` registrado no `LoaderFactory`, no lugar do `Transformer` da PoC: lê a staging
+  por record batch e escreve numa transação (`overwrite` atômico, `merge` por `keys` com chave
+  duplicada = erro, `append`). Colunas `string`; coluna nova na fonte vira `add_column`.
+- [ ] Dependência `pyiceberg==0.12.0` (constraints do Airflow 3.3.2).
+
+**Critério de aceite:** contrato do `Loader` verde para o `IcebergLoader` contra o `iceberg_sql`
+offline e contra o Polaris (integração); carga de 2 milhões de linhas sem crescimento de memória
+proporcional. Migrar o bronze/dbt para ler as tabelas Iceberg continua fora de escopo.
+
+### Fase 10 — Documentação
 
 - [ ] README da ingestão: como adicionar fonte, formato e destino (um módulo + `register`, nada mais).
 - [ ] Diagrama atualizado (Extração / Conversão / Carga).
@@ -281,7 +301,7 @@ distribuição na prata dispara o teste de drift de dado no `dbt build`.
 ## 8. Fora de escopo deste refactor
 
 - Atualizar a versão do Airflow (PR separado).
-- Migração para lakehouse com Iceberg/Trino (os loaders da PoC entram quando ela for decidida).
+- Migrar o bronze/dbt para ler tabelas Iceberg, e Trino (o suporte a Iceberg em si é a Fase 9).
 - Catálogo/OpenMetadata.
 
 ## 9. Decisões em aberto (perguntar ao Lucas, não assumir)

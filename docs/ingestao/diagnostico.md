@@ -17,7 +17,8 @@ Este documento é a entrega da Fase 0 do guia [`docs/refactor-ingestao.md`](../r
 | Normalização de nomes | Na prata do dbt. A staging mantém o cabeçalho original. O converter só trata cabeçalho vazio (`column_<n>`), repetido (`<nome>_2`) e BOM. |
 | Colunas técnicas (9.2) | `dt_ingest` + `_source_file`. `_source_file` vem do `filename => true` do `read_parquet`. `dt_ingest` é derivado dos segmentos `<AAAA-MM-DD>/<HHMMSS>` do caminho, na prata (proposta, a validar no piloto). |
 | Layout por data | `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/<arquivo original>`, e a staging espelha (`…/part-<n>.parquet`). Data e hora = `run_after` da run no fuso America/Sao_Paulo (o dia da ingestão), nunca o `run_id`. Execuções no mesmo dia ficam em subpastas de horário; vale sempre a **última ingestão**. |
-| Drift | Nova fase final de implementação (Fase 8 do guia): drift estrutural raw → staging no converter e drift de dado bronze → prata no dbt. Documentação passa a ser a Fase 9. |
+| Drift | Fase 8 do guia: drift estrutural raw → staging no converter e drift de dado bronze → prata no dbt. |
+| Iceberg | Fase 9 do guia, a última de implementação: primeiro tudo funciona sem Iceberg. Catálogo-alvo Apache Polaris (REST do Iceberg, metadados no Postgres via JDBC). Documentação passa a ser a Fase 10. |
 | Lakehouse | Toda adaptação deve deixar o caminho aberto para Iceberg, Delta e Hudi (seção 11). |
 | Schedule | DAG migrada usa cron literal no decorator e deixa de usar o `get_dynamic_schedule`, que faz `Variable.get` no parse e viola a regra 7. |
 | Providers | Cada extrator é um adaptador fino sobre um **hook** do provider (`HttpHook`, `S3Hook`, `SFTPHook`, `ImapHook`). Operators de transferência estão vetados (ver seção 7). As credenciais viram Airflow Connections (`AIRFLOW_CONN_*`). |
@@ -260,4 +261,5 @@ Restrição de desenho para todas as fases. A migração em si continua fora de 
 - **Staging:** Parquet texto, particionado por `<AAAA-MM-DD>/<HHMMSS>`, é a entrada natural desses loaders. A partição por data vira a partição da tabela.
 - **Drift:** o retrato `_schema.json` da 8.1 vira a entrada da política de *schema evolution* dos formatos de tabela. Iceberg e Delta evoluem schema nativamente; o retrato decide se a evolução é aceita.
 - **Storage:** a interface `StorageBackend` não amarra ao MinIO nem ao `S3Hook`. Um catálogo ou storage de lakehouse entra como outra implementação.
+- **Iceberg (Fase 9):** `CatalogBackend` `iceberg_rest` (Polaris) e `iceberg_sql` (SqlCatalog, testes offline), `TableBackend` Iceberg e `IcebergLoader` portados da PoC sem singleton. O `IcebergLoader` escreve por record batch numa transação, em vez da `pa.Table` inteira do `Transformer` da PoC.
 - **dbt:** o LoadMode como materialização dbt é portável (`table`/`incremental` existem em dbt-trino e dbt-spark), mas o `fonte_lake`/`read_parquet` é específico do pg_duckdb. Na migração ao lakehouse, o bronze passa a ler a tabela Iceberg/Delta/Hudi, não o Parquet.
