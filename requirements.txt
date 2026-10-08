@@ -19,6 +19,8 @@ apache-airflow-providers-postgres==7.0.2
 apache-airflow-providers-standard==1.19.0
 # S3Hook do storage da ingestão (plugins/ingestion), sobre o MinIO.
 apache-airflow-providers-amazon==9.36.0
+# HttpHook dos extratores da ingestão (plugins/ingestion).
+apache-airflow-providers-http==6.1.0
 numpy==2.4.6
 pandas==3.0.5
 pyarrow==25.0.1
@@ -29,6 +31,8 @@ boto3==1.43.75
 
 # Instalados por cima da base.
 apache-airflow-providers-microsoft-mssql==4.7.1
+# ImapHook do extrator de anexos de e-mail da ingestão (plugins/ingestion).
+apache-airflow-providers-imap==3.12.1
 pymssql==2.4.1
 openpyxl==3.1.5
 zeep==4.3.3
