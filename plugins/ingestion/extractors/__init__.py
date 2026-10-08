@@ -19,3 +19,6 @@ __all__ = [
     "SourceNotFoundError",
     "write_stream",
 ]
+
+# Registra as estratégias no ExtractorFactory (import pelo efeito do decorator).
+from ingestion.extractors.models import api_extractor  # noqa: E402, F401
