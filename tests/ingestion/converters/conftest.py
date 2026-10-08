@@ -44,10 +44,25 @@ def _json_case(tmp_path: Path) -> ContractCase:
     return ContractCase(path, ConverterConfig(), rows=2, outputs=["ipca.parquet"])
 
 
+def _xlsx_case(tmp_path: Path) -> ContractCase:
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    workbook.remove(workbook.worksheets[0])
+    sheet = workbook.create_sheet("INCC-M")
+    sheet.append(["Mês", "Índice", "Variação"])
+    sheet.append(["jan/26", 1234.5, 0.42])
+    sheet.append(["fev/26", 1240, None])
+    path = tmp_path / "incc_m.xlsx"
+    workbook.save(path)
+    return ContractCase(path, ConverterConfig(), rows=2, outputs=["incc_m.parquet"])
+
+
 CASES: dict[str, Callable[[Path], ContractCase]] = {
     "csv": _csv_case,
     "txt": _txt_case,
     "json": _json_case,
+    "xlsx": _xlsx_case,
 }
 
 

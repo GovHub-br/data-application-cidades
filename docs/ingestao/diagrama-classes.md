@@ -321,12 +321,23 @@ classDiagram
     class ijson {
         <<external>>
     }
+    class XlsxConverter {
+        #_read(path) Iterator~Source~
+        -_sheet_names(path, available) list~str~
+        -_width(sheet) int
+        -_rows(sheet, width, skip_header) Iterator~list~
+    }
+    class openpyxl {
+        <<external>>
+    }
 
     FileConverter <|-- CsvConverter
     CsvConverter <|-- TxtConverter
     CsvConverter ..> open_csv : blocos de 1 MiB, tudo string
     FileConverter <|-- JsonConverter
     JsonConverter ..> ijson : duas passadas em streaming
+    FileConverter <|-- XlsxConverter
+    XlsxConverter ..> openpyxl : read_only, data_only
 
     FileConverter o-- ConverterConfig
     ConverterFactory ..> FileConverter : cria por formato ou extensão
@@ -347,7 +358,8 @@ classDiagram
 - **Formatos registrados:**
   - `csv` (`.csv`, delimitador padrão `,`);
   - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação;
-  - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON.
+  - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON;
+  - `xlsx` (`.xlsx`, `.xlsm`): uma saída por aba, `header_row`, valor calculado da fórmula, célula vira texto por regra fixa.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
@@ -356,7 +368,7 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 3 | Conversores xlsx, mdb, parquet e zip; `convert_partition`, `publish_latest` |
+| 3 | Conversores mdb, parquet e zip; `convert_partition`, `publish_latest` |
 | 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |
