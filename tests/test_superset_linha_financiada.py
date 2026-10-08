@@ -26,7 +26,10 @@ def test_todas_as_gold_dos_charts_estao_declaradas() -> None:
 def test_dashboard_tem_mapa_e_cobertura_das_perguntas() -> None:
     m = modulo()
     por_chave = {c["key"]: c for c in m.CHARTS}
-    assert por_chave["mapa"]["viz_type"] == "deck_scatter"
+    # O mapa de pontos dependia de latitude/longitude incompletas e foi
+    # substituído pelo mapa nacional por UF, que não inventa coordenadas.
+    completos = {c["key"]: c for c in m.CHARTS_COMPLETO}
+    assert completos["mapa_brasil"]["viz_type"] == "country_map"
     assert por_chave["cobertura"]["dataset"].endswith("cobertura_perguntas")
 
 

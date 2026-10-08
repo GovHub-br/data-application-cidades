@@ -199,6 +199,19 @@ produtos:
       o acompanhamento físico-financeiro fora da janela coberta pelos outros
       produtos.
 
+  - name: reloginho
+    display_name: Reloginho MCMV
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    description: >
+      Indicadores temporais de contratação, entrega e acompanhamento físico
+      do MCMV. O produto é declarado separadamente para que os modelos dbt
+      com governance.product=reloginho sejam catalogados no OpenMetadata.
+
   - name: reforma_casa_brasil
     display_name: Reforma Casa Brasil
     domain: MCid.Habitacao
