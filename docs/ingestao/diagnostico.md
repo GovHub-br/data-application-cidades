@@ -183,7 +183,7 @@ tests/ingestion/
   - os providers `http`, `amazon`, `sftp` (já na imagem oficial, faltam no venv dos testes);
   - `imap`;
   - eventualmente `ijson`.
-- **Postgres:** o DW é **Postgres 15 com pg_duckdb 1.2.0** (confirmado pelo Lucas em 2026-10-08), então o `MERGE` nativo está disponível para o `PostgresCopyLoader` da Fase 7. A imagem local do compose é `postgres:17-alpine`, sem pg_duckdb.
+- **Postgres:** o banco de **homologação** é **Postgres 15 com pg_duckdb 1.2.0** (confirmado pelo Lucas em 2026-10-08), então o `MERGE` nativo está disponível para o `PostgresCopyLoader` da Fase 7. A versão de produção fica a confirmar antes da Fase 7. A imagem local do compose é `postgres:17-alpine`, sem pg_duckdb.
 - **Testes:** 8 arquivos em `tests/`, que fazem `sys.path.insert` à mão, sem `conftest` nem marcador `integration`.
 - **CI:** `pytest tests` sem serviços, mais `lint-ci` só de SQL (`|| true`).
 - **Lint local:** `make lint` roda black, ruff (E/F/W/C90, 90 colunas) e mypy estrito.
@@ -207,7 +207,13 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 
 ## 8. Desvios do guia
 
-- **§4 Loader para Postgres:** `PgDuckdbLoader` e `_ensure_table` em Python não existem. O papel deles é do dbt (`fonte_lake`). A Fase 4 vira a convenção de LoadMode no dbt e o `PostgresCopyLoader` (Fase 7).
+- **§4 Loader para Postgres:** `PgDuckdbLoader` e `_ensure_table` em Python não existem. O papel deles é do dbt. O `LoadMode` mora no `fonte_lake`, declarado por fonte no `sources.yml` (`meta.load_mode` e `meta.keys`):
+  - `overwrite` lê `latest/`;
+  - `append` lê todas as ingestões;
+  - `merge` lê todas e fica com a mais recente por arquivo + chave.
+  - Os três são **tabela recalculada** (`materialized='table'`, troca atômica), não incremental (decisão do Lucas).
+  - As regras de validação são as mesmas de `ingestion.loaders.validate_load` e valem na compilação.
+  - O `PostgresCopyLoader` fica para a Fase 7.
 - **§3.3 / §4 Normalização:** acontece na prata, não no loader.
 - **Fase 2:** sem `PostgresExtractor`, SOAP nem SQL Server, porque nenhuma fonte do cidades usa.
 - **Converter extra:** `powerbi_dsr`, a confirmar.
@@ -221,7 +227,7 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 | Raw imutável × mascaramento in-place | Fase 6 (SFTP) | — |
 | Bronzes do SFTP dependem dos nomes normalizados pelo `raw_para_staging` | Fase 6 (SFTP) | Mover a normalização para a prata dessas bronzes. |
 | Prod sem MinIO quebra o bronze via `read_parquet` (9.1) | Fase 7 | — |
-| ~~Versão do Postgres do DW e do pg_duckdb~~ | — | Resolvido: Postgres 15, pg_duckdb 1.2.0. |
+| ~~Versão do Postgres de homologação e do pg_duckdb~~ | — | Resolvido: Postgres 15, pg_duckdb 1.2.0. Produção a confirmar antes da Fase 7. |
 
 ## 10. Ordem de migração
 

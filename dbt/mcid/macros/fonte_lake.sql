@@ -13,6 +13,23 @@
 
     Uso no model bronze:
         select * from {{ fonte_lake('ibge_sinapi') }}
+
+    Fonte migrada para a ingestão nova (plugins/ingestion) declara o modo de
+    carga; `meta.caminho` passa a ser a raiz do dataset na staging:
+
+        meta:
+          caminho: staging/bacen/sgs
+          load_mode: overwrite        # overwrite | merge | append
+          keys: [data]                # só no merge
+
+    - overwrite: só a última ingestão completa (`latest/`); deleções na fonte se
+      propagam.
+    - append: todas as ingestões (`2*/*/`), empilhadas.
+    - merge: todas as ingestões; por arquivo + chave, vale a mais recente.
+      Deleções não se propagam.
+    Sem `load_mode`, `caminho` é o arquivo (ou glob) a ler, como sempre foi.
+    A variável `lake_root` troca a raiz (padrão s3://<lake_bucket>); os testes do
+    macro a apontam para um diretório local (tests/ingestion/dbt).
 #}
 {% macro fonte_lake(
     nome_tabela,

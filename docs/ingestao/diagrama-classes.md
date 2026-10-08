@@ -462,6 +462,7 @@ classDiagram
   - `merge`: por chave, vale a ingestão mais recente, e deleções não se propagam;
   - `append`: empilha todas as ingestões.
 - **Regras** (iguais no `fonte_lake` do dbt): `merge` exige chaves, sem repetição; `overwrite` e `append` não aceitam chaves.
+- **Onde o modo é aplicado:** no bronze, pelo macro `fonte_lake` (`dbt/mcid/macros/fonte_lake.sql`), a partir de `meta.load_mode` e `meta.keys` da fonte no `sources.yml`. Ele não é classe Python, então fica fora do diagrama.
 
 ## Próximas classes
 
