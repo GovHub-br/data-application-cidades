@@ -13,15 +13,23 @@ from ingestion.converters.columns import fix_header
 from ingestion.converters.config_converter import ConverterConfig
 from ingestion.converters.converter_errors import ConversionError
 from ingestion.converters.converter_registry import ConverterFactory
+from ingestion.converters.partition import (
+    ConversionResult,
+    StagedFile,
+    convert_partition,
+)
 
 __all__ = [
     "ConversionError",
+    "ConversionResult",
     "ConvertedFile",
     "ConverterConfig",
     "ConverterFactory",
     "FileConverter",
     "Source",
+    "StagedFile",
     "batches_from_rows",
+    "convert_partition",
     "fix_header",
 ]
 

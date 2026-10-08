@@ -48,7 +48,7 @@ classDiagram
     Extractor ..> landing : RawFile (uma parte por vez)
     landing ..> StorageBackend : put_file / _SUCCESS
     landing ..> layout : prefixo da partição
-    FileConverter ..> StorageBackend : raw → staging (Fase 3)
+    FileConverter ..> StorageBackend : raw → staging → latest/
 ```
 
 ## `layout`: caminhos do lake
@@ -104,7 +104,8 @@ classDiagram
     class landing {
         <<module>>
         +SUCCESS_MARKER = "_SUCCESS"
-        +land(storage, parts: Iterable~Part~, prefix) LandingResult
+        +land(storage, parts: Iterable~Part~, prefix, details) LandingResult
+        +publish_latest(storage, partition_prefix, latest_prefix) list~str~
     }
     class Part {
         <<interface>>
@@ -139,7 +140,10 @@ classDiagram
 
 - **Registro:** `local` e `s3` se registram na `StorageFactory` com `@StorageFactory.register`.
 - **Sem singleton:** cada `create` devolve uma instância nova.
-- **`land`:** sobe uma parte por vez, apaga a cópia local e grava `_SUCCESS` com o manifesto por último.
+- **`land`:** sobe uma parte por vez, apaga a cópia local e grava `_SUCCESS` com o manifesto por último. `details` acrescenta campos ao manifesto de cada parte.
+- **`publish_latest`:**
+  - espelha uma partição com `_SUCCESS` em `latest/`, que é o que o bronze lê;
+  - ordem: copia os novos, remove os que sobraram e copia o `_SUCCESS` por último.
 
 ## `extractors`: fonte → disco, no formato original
 
@@ -247,7 +251,7 @@ classDiagram
   - 404 vira `SourceNotFoundError`, outro 4xx vira `ExtractionError`;
   - URL absoluta usa a sessão do hook.
 
-## `converters`: raw → Parquet só texto (Fase 3, em construção)
+## `converters`: raw → Parquet só texto
 
 ```mermaid
 classDiagram
@@ -300,6 +304,32 @@ classDiagram
         +fix_header(names) list~str~
     }
     class ConversionError
+    class partition {
+        <<module>>
+        +convert_partition(storage, raw_prefix, staging_prefix, latest_prefix, config, work_dir) ConversionResult
+    }
+    class StagedFile {
+        <<dataclass>>
+        +name: str
+        +path: Path
+        +size: int
+        +sha256: str
+        +source: str
+        +rows: int
+        +columns: tuple~str~
+    }
+    class ConversionResult {
+        <<dataclass>>
+        +staging_prefix: str
+        +latest_prefix: str
+        +keys: tuple~str~
+    }
+    class Part {
+        <<interface>>
+    }
+    class landing {
+        <<module>>
+    }
     class ParquetWriter {
         <<external>>
     }
@@ -363,6 +393,11 @@ classDiagram
     FileConverter <|-- ParquetConverter
     FileConverter <|-- ZipConverter
     ZipConverter ..> ConverterFactory : delega cada membro
+    partition ..> ConverterFactory : um arquivo da raw por vez
+    partition ..> StagedFile : produz
+    partition ..> ConversionResult
+    Part <|.. StagedFile
+    partition ..> landing : land + publish_latest
 
     FileConverter o-- ConverterConfig
     ConverterFactory ..> FileConverter : cria por formato ou extensão
@@ -389,6 +424,11 @@ classDiagram
   - `parquet` (`.parquet`): mantém o schema original (`Source.schema`), a exceção ao "tudo string";
   - `zip` (`.zip`): um membro por vez, delegado ao conversor da extensão (`<zip>__<membro>`).
 - **Nome repetido:** dois Parquet com o mesmo nome vindos de um mesmo arquivo são `ConversionError`.
+- **`convert_partition`:**
+  - exige o `_SUCCESS` da raw;
+  - converte um arquivo da raw por vez e sobe os Parquet pelo `land`, que recusa nome repetido entre arquivos (`a.csv` e `a.json`);
+  - grava o `_SUCCESS` da staging com origem, linhas e colunas de cada Parquet;
+  - só então publica o `latest/`. Uma falha deixa o `latest/` como estava.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
@@ -397,7 +437,6 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 3 | `convert_partition`, `publish_latest` |
 | 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |

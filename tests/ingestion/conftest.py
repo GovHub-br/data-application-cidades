@@ -48,6 +48,20 @@ def s3_backend(fake_aws: None) -> S3StorageBackend:
     return backend
 
 
+@pytest.fixture(
+    params=["local", "s3", pytest.param("minio", marks=pytest.mark.integration)]
+)
+def lake_storage(request: pytest.FixtureRequest, tmp_path: Path) -> StorageBackend:
+    """O mesmo teste contra o storage local, o S3 simulado e o MinIO real."""
+    if request.param == "local":
+        from ingestion.storage import StorageFactory
+
+        return StorageFactory.create("local", root=tmp_path / "lake")
+    name = "s3_backend" if request.param == "s3" else "minio_backend"
+    backend: StorageBackend = request.getfixturevalue(name)
+    return backend
+
+
 @pytest.fixture
 def minio_backend() -> Iterator[StorageBackend]:
     """MinIO real, num bucket de teste, isolado num prefixo descartável.

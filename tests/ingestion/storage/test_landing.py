@@ -12,15 +12,9 @@ from ingestion.storage import SUCCESS_MARKER, StorageBackend, StorageFactory, la
 PREFIX = "raw/ibge/sinapi/2026-10-08/060000/"
 
 
-@pytest.fixture(
-    params=["local", "s3", pytest.param("minio", marks=pytest.mark.integration)]
-)
-def storage(request: pytest.FixtureRequest, tmp_path: Path) -> StorageBackend:
-    if request.param == "local":
-        return StorageFactory.create("local", root=tmp_path / "lake")
-    name = "s3_backend" if request.param == "s3" else "minio_backend"
-    backend: StorageBackend = request.getfixturevalue(name)
-    return backend
+@pytest.fixture
+def storage(lake_storage: StorageBackend) -> StorageBackend:
+    return lake_storage
 
 
 def _parts(tmp_path: Path, contents: dict[str, bytes]) -> Iterator[RawFile]:
@@ -143,3 +137,24 @@ def test_repeated_or_reserved_names_are_rejected(
 def test_prefix_must_be_a_partition_directory(storage: StorageBackend) -> None:
     with pytest.raises(ValueError):
         land(storage, iter(()), PREFIX.rstrip("/"))
+
+
+def test_details_are_merged_into_the_manifest(
+    storage: StorageBackend, tmp_path: Path
+) -> None:
+    parts = list(_parts(tmp_path, {"a.parquet": b"PAR1"}))
+    land(
+        storage, iter(parts), PREFIX, details=lambda part: {"rows": 3, "source": "a.csv"}
+    )
+
+    marker = tmp_path / "m.json"
+    storage.get_file(PREFIX + SUCCESS_MARKER, marker)
+
+    [entry] = json.loads(marker.read_text())["files"]
+    assert entry == {
+        "name": "a.parquet",
+        "size": 4,
+        "sha256": parts[0].sha256,
+        "rows": 3,
+        "source": "a.csv",
+    }
