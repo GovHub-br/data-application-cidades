@@ -199,19 +199,23 @@ def openmetadata_ingestion_dag() -> None:
         import subprocess
 
         caminho = f"{os.environ['AIRFLOW_REPO_BASE']}/scripts/governance"
-        resultado = subprocess.run(
-            ["python", f"{caminho}/sincronizar_governanca.py", "--confirmar"],
-            capture_output=True,
-            text=True,
-            check=False,
-            cwd=caminho,
-        )
-        logging.info("Governança reaplicada:\n%s", resultado.stdout[-4000:])
-        if resultado.returncode != 0:
-            raise RuntimeError(
-                "Falha ao reaplicar a governança. O catálogo pode ter ficado "
-                f"sem certificação:\n{resultado.stderr[-2000:]}"
+        for script, descricao in (
+            ("sincronizar_governanca.py", "governança das tabelas"),
+            ("sincronizar_lake.py", "lake e linhagem staging → Bronze"),
+        ):
+            resultado = subprocess.run(
+                ["python", f"{caminho}/{script}", "--confirmar"],
+                capture_output=True,
+                text=True,
+                check=False,
+                cwd=caminho,
             )
+            logging.info("%s:\n%s", descricao, resultado.stdout[-4000:])
+            if resultado.returncode != 0:
+                raise RuntimeError(
+                    f"Falha ao sincronizar {descricao}:\n"
+                    f"{resultado.stderr[-2000:]}"
+                )
 
     # O glossário vem ANTES das recipes: os FQNs que os `schema.yml` do dbt
     # referenciam em `meta.openmetadata.glossary` precisam existir para que a

@@ -18,7 +18,7 @@
 --
 -- O que precisa acontecer para regularizar:
 --   1. confirmar a capacidade de disco do servidor do banco;
---   2. trocar por `select * from {{ fonte_lake('geavo_fgts_pf', 'lake_staging') }}`;
+--   2. trocar a projeção abaixo por um espelho integral da fonte do lake;
 --   3. reconstruir e conferir o impacto.
 -- Se o custo for inaceitável, a decisão precisa ser registrada como exceção
 -- deliberada de arquitetura — não ficar como está, implícita.

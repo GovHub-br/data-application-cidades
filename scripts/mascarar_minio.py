@@ -126,9 +126,15 @@ P_NASC = re.compile(r"nascimento|dt_?nasc|data_?nasc|dat_nasc")
 # Atributo sensível (LGPD art. 5º II). Instituição não tem raça nem deficiência, então a
 # coluna também serve de prova de que o arquivo trata de pessoa física.
 P_SENSIVEL = re.compile(r"cor_raca|(^|_)raca(_|$)|etnia|deficiencia|(^|_)pcd(_|$)")
+# Códigos categóricos necessários para análise de equidade e acessibilidade. Eles não
+# identificam alguém sozinhos e permanecem apenas nas camadas restritas, ligados a
+# CPF/NIS já pseudonimizados. Nomes/textos livres continuam redigidos.
+P_SENSIVEL_ANALITICO = re.compile(r"^co_raca_cor_pessoa$|^co_deficiencia_memb$")
 
 # Papéis que sempre denotam pessoa física. Mascarados incondicionalmente.
-P_NOME_PESSOA = re.compile(r"comprador|conjuge|dependente|completo")
+P_NOME_PESSOA = re.compile(
+    r"comprador|conjuge|dependente|completo|(^|_)no_pessoa$|apelido_pessoa"
+)
 # Papéis que tanto podem ser pessoa quanto instituição: no FAR o "proponente" é a
 # prefeitura. Só viram PII com indicador forte no arquivo.
 P_NOME_AMBIGUO = re.compile(r"titular|proponente|responsavel|mutuario|beneficiario")
@@ -417,12 +423,16 @@ def classificar(  # noqa: C901
     has_pf = any(c in _PF_INDICATOR_CATS for c in cats.values())
 
     targets: List[dict] = []
-    for idx, original, _ in normed:
+    for idx, original, norm in normed:
         cat = cats[idx]
         if cat is None:
             continue
         if cat in ("cpf", "nis"):
             action = "hmac"
+        elif cat == "sensivel" and P_SENSIVEL_ANALITICO.search(norm):
+            # Preserva só códigos analíticos categóricos. O arquivo continua sendo
+            # reconhecido como PF e os identificadores diretos seguem protegidos.
+            continue
         elif cat in ("nascimento", "nome", "sensivel"):
             action = "redact"
         elif cat == "nome_ambiguo":

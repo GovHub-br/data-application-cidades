@@ -1,0 +1,39 @@
+Quantidade de Contratos = SUM('ResumoMensal'[quantidade_contratos])
+
+Valor Financiado = SUM('ResumoMensal'[valor_financiamento])
+
+Valor de Descontos =
+    SUM('ResumoMensal'[valor_desconto_fgts])
+    + SUM('ResumoMensal'[valor_desconto_ogu])
+
+Valor de Contrapartidas = SUM('ResumoMensal'[valor_contrapartida_informada])
+
+Ticket Médio = DIVIDE([Valor Financiado], [Quantidade de Contratos])
+
+Contratos com Contrapartida =
+    CALCULATE(
+        SUM('Contrapartidas'[quantidade_contratos]),
+        'Contrapartidas'[situacao_cobertura] = "Valor informado"
+    )
+
+Cobertura de Contrapartidas (%) =
+    DIVIDE(
+        [Contratos com Contrapartida],
+        SUM('Contrapartidas'[quantidade_contratos])
+    )
+
+Pagamentos Totais = SUM('ExecucaoOrcamentaria'[pagamentos_totais])
+
+Orçamento Atualizado = SUM('ExecucaoOrcamentaria'[orcamento_atualizado])
+
+Execução Financeira (%) = DIVIDE([Pagamentos Totais], [Orçamento Atualizado])
+
+Variação Mensal de Contratos (%) =
+    VAR Atual = [Quantidade de Contratos]
+    VAR Anterior = CALCULATE([Quantidade de Contratos], DATEADD('Calendario'[Data], -1, MONTH))
+    RETURN DIVIDE(Atual - Anterior, Anterior)
+
+Variação Anual de Contratos (%) =
+    VAR Atual = [Quantidade de Contratos]
+    VAR Anterior = CALCULATE([Quantidade de Contratos], DATEADD('Calendario'[Data], -1, YEAR))
+    RETURN DIVIDE(Atual - Anterior, Anterior)

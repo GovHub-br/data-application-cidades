@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: lake_staging_reforma_casa_brasil
+    description: >
+      Parquets protegidos utilizados pelo produto Reforma Casa Brasil. Os
+      arquivos são gerados pela minio_transform_dag somente depois do
+      mascaramento da camada raw.
+    schema: staging
+    meta:
+      bucket: data-lake-mcid
+      camada: staging
+      governance:
+        product: reforma_casa_brasil
+        owner_key: mcid_data_engineering
+        classification: restricted
+        rag_publication: prohibited
+    tables:
+      - name: reforma_contratos
+        description: >
+          Snapshots completos de contratos do Reforma Casa Brasil recebidos
+          pelo SFTP/GEFUS. A Bronze seleciona somente o arquivo mais recente.
+        meta:
+          caminho: staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
+          dag: minio_transform_dag
+      - name: cadunico_pessoa
+        description: >
+          Corte de pessoas do CadÚnico de 12/12/2025, com CPF/NIS em HMAC e
+          identificadores diretos redigidos antes da staging.
+        meta:
+          caminho: staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_12122025_SB8.parquet
+          dag: minio_transform_dag
+      - name: cadunico_familia
+        description: >
+          Corte de famílias do CadÚnico de 12/12/2025, com endereço e dados do
+          entrevistador protegidos antes da staging.
+        meta:
+          caminho: staging/sharepoint/Cadastro Único/ARQ_FAMILIA_PBF_12122025_SB8.parquet
+          dag: minio_transform_dag
