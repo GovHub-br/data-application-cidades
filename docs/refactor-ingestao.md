@@ -7,8 +7,8 @@ Reorganizar a ingestão em três etapas com responsabilidades separadas, seguind
 onde o bronze vive no Postgres:
 
 ```
-fonte --Extractor--> raw/<domínio>/<dataset>/<run>/        formato original, intocado (MinIO)
-      --FileConverter--> staging/<domínio>/<dataset>/<run>/   Parquet (MinIO)
+fonte --Extractor--> raw/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/       formato original, intocado (MinIO)
+      --FileConverter--> staging/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/  Parquet (MinIO)
       --Loader--> bronze (Postgres)                         -> dbt: prata -> ouro
 ```
 
@@ -61,7 +61,10 @@ toda tipagem e regra de negócio no dbt.
    (XCom pequeno), nunca dados. Nada de achatar JSON, renomear ou filtrar dentro da DAG.
 7. **Config da DAG sem consulta ao banco no parse.** Use `os.environ.get()` para o que é lido no
    topo do arquivo; `Variable.get()` só dentro de task.
-8. **`run_id` sanitizado** nos caminhos (o Airflow gera `:` e `+`), via `layout.safe_segment`.
+8. **Partição por data de ingestão.** O caminho usa a data e a hora da execução (`run_after` da
+   run, no fuso America/Sao_Paulo), em `<AAAA-MM-DD>/<HHMMSS>/`, nunca o `run_id` (que tem `:` e
+   `+`). Duas execuções no mesmo dia ficam em subpastas de horário, e vale sempre a última
+   ingestão. Segmentos vindos de fora passam por `layout.safe_segment`.
 
 ## 4. Loader para Postgres (o que é novo em relação à PoC)
 
@@ -80,7 +83,7 @@ BEGIN;
 TRUNCATE bronze.<tabela>;
 INSERT INTO bronze.<tabela> (<colunas>)
 SELECT <colunas normalizadas + colunas técnicas>
-FROM read_parquet('s3://<bucket>/staging/<domínio>/<dataset>/<run>/*.parquet');
+FROM read_parquet('s3://<bucket>/staging/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/*.parquet');
 COMMIT;
 ```
 
@@ -179,7 +182,7 @@ Recomendação: opção 2 como ponte até o MinIO de prod existir. **Decisão do
   `ExtractorFactory.register(...)`, sem singleton.
 - [ ] Teste de contrato primeiro, depois cada estratégia: `api` (com paginação opcional),
   `postgres` (COPY), `object_storage`, e as fontes específicas levantadas na Fase 0.
-- [ ] `RawLanding`: sobe para `raw/<domínio>/<dataset>/<run>/` e apaga a cópia local.
+- [ ] `RawLanding`: sobe para `raw/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/` e apaga a cópia local.
 
 **Critério de aceite:** extrair uma tabela de 2 milhões de linhas sem crescimento de memória
 proporcional (medir RSS no teste de integração); raw idêntica byte a byte ao que a fonte entregou.
@@ -236,7 +239,40 @@ agora texto, deleções agora propagadas); `dbt build` verde.
 
 **Critério de aceite:** uma execução completa em homologação com o mesmo resultado de dev.
 
-### Fase 8 — Documentação
+### Fase 8 — Detecção de drift
+
+Última fase de implementação. Duas frentes, uma em cada fronteira do pipeline.
+
+**8.1 Drift estrutural raw -> staging (Python, no converter).**
+
+- [ ] O `FileConverter.convert()` ganha um passo fixo depois de escrever o Parquet: grava o retrato
+  `_schema.json` da partição (colunas na ordem, número de linhas, formato, encoding e delimitador
+  detectados, abas do xlsx, tabelas do mdb, chaves do json) e o compara com o retrato da ingestão
+  anterior do mesmo dataset.
+- [ ] `SchemaDriftReport`: coluna nova, coluna sumida, ordem alterada, cabeçalho vazio ou repetido
+  novo, variação de linhas fora da faixa, mudança de formato, encoding ou aba.
+- [ ] Política por dataset no `DatasetSpec` (`on_schema_drift`: `warn` ou `fail`). Com `fail`, a
+  partição não é publicada na staging, e o bronze continua com a última ingestão boa.
+- [ ] Relatório em `staging/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/_drift.json` e no log da task.
+- [ ] Teste de contrato: todo `FileConverter` gera o retrato, e o comparador acusa cada tipo de drift.
+
+**8.2 Drift de dado bronze -> prata (dbt).**
+
+- [ ] Generalizar o que já existe no conjuntura para todos os bronzes migrados:
+  `sem_drift_de_colunas` (contrato de colunas), `conjuntura_contrato_do_staging` (piso de
+  linhas) e os retratos `ouro_conjuntura_qualidade_schema` / `_schema_drift`.
+- [ ] Retrato de perfil por coluna da prata a cada execução (taxa de nulos, distintos, mínimo,
+  máximo e média dos numéricos, faixa de datas), materializado como incremental.
+- [ ] Modelo de drift de dado comparando o retrato atual com o anterior, mais testes genéricos com
+  limiar por modelo (variação de volume, de taxa de nulos, categoria nova fora do domínio, frescor),
+  `warn` por padrão e `error` onde a quebra tiver de ser dura.
+- [ ] Resultados gravados em `lake._dbt_log` pelo `on-run-end` que já existe.
+
+**Critério de aceite:** um arquivo da raw com coluna removida falha a conversão (dataset `fail`) ou
+gera `_drift.json` (dataset `warn`), sem publicar staging quebrada; uma mudança artificial de
+distribuição na prata dispara o teste de drift de dado no `dbt build`.
+
+### Fase 9 — Documentação
 
 - [ ] README da ingestão: como adicionar fonte, formato e destino (um módulo + `register`, nada mais).
 - [ ] Diagrama atualizado (Extração / Conversão / Carga).

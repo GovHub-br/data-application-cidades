@@ -15,7 +15,10 @@ Este documento é a entrega da Fase 0 do guia [`docs/refactor-ingestao.md`](../r
 | Carga do bronze | **Inegociável:** o bronze continua `select * from read_parquet(...)`, executado pelo dbt (`fonte_lake` nos `bronze_*`). A linhagem no OpenMetadata (`scripts/governance/sincronizar_lake.py`) depende disso. |
 | LoadMode | Vive no dbt: `overwrite` = `table`, `merge` = `incremental` com `unique_key`, `append` = `incremental`. A família Loader em Python fica só com o `PostgresCopyLoader`, para prod sem MinIO (Fase 7). |
 | Normalização de nomes | Na prata do dbt. A staging mantém o cabeçalho original. O converter só trata cabeçalho vazio (`column_<n>`), repetido (`<nome>_2`) e BOM. |
-| Colunas técnicas (9.2) | `dt_ingest` + `_source_file`. `_source_file` vem do `filename => true` do `read_parquet`. `dt_ingest` é derivado do segmento `<run>` do caminho, na prata (proposta, a validar no piloto). |
+| Colunas técnicas (9.2) | `dt_ingest` + `_source_file`. `_source_file` vem do `filename => true` do `read_parquet`. `dt_ingest` é derivado dos segmentos `<AAAA-MM-DD>/<HHMMSS>` do caminho, na prata (proposta, a validar no piloto). |
+| Layout por data | `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/<arquivo original>`, e a staging espelha (`…/part-<n>.parquet`). Data e hora = `run_after` da run no fuso America/Sao_Paulo (o dia da ingestão), nunca o `run_id`. Execuções no mesmo dia ficam em subpastas de horário; vale sempre a **última ingestão**. |
+| Drift | Nova fase final de implementação (Fase 8 do guia): drift estrutural raw → staging no converter e drift de dado bronze → prata no dbt. Documentação passa a ser a Fase 9. |
+| Lakehouse | Toda adaptação deve deixar o caminho aberto para Iceberg, Delta e Hudi (seção 11). |
 | Schedule | DAG migrada usa cron literal no decorator e deixa de usar o `get_dynamic_schedule`, que faz `Variable.get` no parse e viola a regra 7. |
 | Providers | Cada extrator é um adaptador fino sobre um **hook** do provider (`HttpHook`, `S3Hook`, `SFTPHook`, `ImapHook`). Operators de transferência estão vetados (ver seção 7). As credenciais viram Airflow Connections (`AIRFLOW_CONN_*`). |
 | Storage | `StorageBackend` próprio (local + s3), com o s3 sobre `S3Hook`, sem `ObjectStoragePath`/`s3fs`. |
@@ -111,7 +114,7 @@ Itens "a confirmar" se resolvem no PR de migração de cada DAG, com a justifica
 | `cliente_email` | `EmailAttachmentExtractor` (`email`) | Sobre `ImapHook.download_mail_attachments` (disco). |
 | leitura de `raw/abecip/<AAAA-MM>/` em `abecip_instituicoes` | `ObjectStorageExtractor` (`object_storage`) | Sobre `S3Hook`, copia os objetos de um prefixo. |
 | `cliente_sftp` + `scripts/sftp_para_minio.py` | `SftpExtractor` (`sftp`) | Sobre `SFTPHook`, mantém o incremental `lake._ingest_minio_log` e os zips. |
-| `upload_raw_bytes`/`upload_raw_json` (`cliente_minio`) | `RawLanding` (`raw/landing.py`) | Sobe cada parte para `raw/<domain>/<dataset>/<run>/` e apaga a cópia local. |
+| `upload_raw_bytes`/`upload_raw_json` (`cliente_minio`) | `RawLanding` (`raw/landing.py`) | Sobe cada parte para `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/` e apaga a cópia local. |
 | `ClienteMinio` (boto3) | `S3StorageBackend` sobre `S3Hook` | O `ClienteMinio` continua só para os scripts legados do lake. |
 | `ingestor_lake` (`IngestorLake`, `registros_para_staging_parquet`) | `FileConverter` + modelos | Template Method `convert()`: baixa → `_read()` em batches → `ParquetWriter` → sobe. |
 | `scripts/raw_para_staging.py` (CSV/TXT/XLSX/MDB) | `CsvConverter`, `TxtConverter`, `XlsxConverter`, `MdbConverter` | Reaproveita `lake_utils` (`detectar_encoding`, `mdb_*`). A normalização de nomes **sai** do converter e vai para a prata. |
@@ -129,7 +132,7 @@ Os `cliente_*` do cidades são removidos na Fase 6, quando nenhuma DAG os usar. 
 
 ```
 plugins/ingestion/
-├── layout.py                  # raw_prefix / staging_prefix(domain, dataset, run), safe_segment
+├── layout.py                  # raw_prefix / staging_prefix(domain, dataset, ingested_at), safe_segment
 ├── dataset.py                 # DatasetSpec (domain, dataset, extractor, converter, load_mode, keys)
 ├── storage/                   # base_storage, storage_registry, models/{local_storage, s3_storage}
 ├── extractors/                # base_extractor (Extractor, RawFile), config_extractor,
@@ -150,9 +153,11 @@ tests/ingestion/
 ```
 
 - **Caminhos no lake:**
-  - `raw/<domain>/<dataset>/<run>/<arquivo original>`;
-  - `staging/<domain>/<dataset>/<run>/part-<n>.parquet`.
+  - `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/<arquivo original>`;
+  - `staging/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/part-<n>.parquet`.
+  - Exemplo: `raw/ibge/sinapi/2026-10-08/060000/sinapi.json`.
   - O `<domain>` reaproveita o segmento atual (`fgv`, `bacen`, `ibge`…).
+  - A ordem lexicográfica de `<AAAA-MM-DD>/<HHMMSS>` é a ordem cronológica, então "última ingestão" é o maior caminho.
 - **Disco local:** o `work_dir` fica sob `LAKE_TMPDIR`.
 
 ### 5.2 Modelo de DAG migrada
@@ -210,8 +215,8 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 
 | Conflito | Decidir antes da | Proposta |
 |---|---|---|
-| Layout `<run>` × `meta.caminho` fixo do `fonte_lake` | Fase 3 | `meta.caminho` com glob `…/<dataset>/*/*.parquet`. Retenção de 1 run na staging para `overwrite`; todas as runs para `merge`/`append`, com dedup pela run mais recente no incremental. A raw guarda todas as runs. |
-| `minio_transform_dag` varre a `raw/` inteira e converteria os novos prefixos | Fase 5 (piloto) | Excluir `raw/<domain>/<dataset>/<run>/` da varredura até o SFTP migrar. |
+| Layout por data × `meta.caminho` fixo do `fonte_lake` | Fase 3 | `meta.caminho` com glob `…/<dataset>/*/*/*.parquet`. Para `overwrite`, a staging retém só a última ingestão, e o `select *` continua puro. Para `merge`/`append`, retém todas, e o incremental deduplica a chave pela ingestão mais recente (maior `filename`). A raw guarda todas as ingestões. |
+| `minio_transform_dag` varre a `raw/` inteira e converteria os novos prefixos | Fase 5 (piloto) | Excluir os prefixos dos datasets migrados da varredura até o SFTP migrar. |
 | Raw imutável × mascaramento in-place | Fase 6 (SFTP) | — |
 | Bronzes do SFTP dependem dos nomes normalizados pelo `raw_para_staging` | Fase 6 (SFTP) | Mover a normalização para a prata dessas bronzes. |
 | Prod sem MinIO quebra o bronze via `read_parquet` (9.1) | Fase 7 | — |
@@ -230,3 +235,29 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 | 7 | `tesouro_gerencial/mcid` ×3 | E-mail (provider `imap`). |
 | 8 | `abecip_instituicoes` | `object_storage`. |
 | 9 | `sftp` + `minio_transform` | Depende dos conflitos de mascaramento e normalização. |
+
+## 11. Etapa final: detecção de drift (Fase 8 do guia)
+
+O detalhamento das tarefas e o critério de aceite estão na Fase 8 do guia.
+
+- **8.1 Raw → staging (Python).** O `FileConverter` grava o retrato `_schema.json` de cada partição e o compara com o da ingestão anterior. Detecta coluna nova ou sumida, ordem, cabeçalho, volume, formato, encoding e aba. A política por dataset fica no `DatasetSpec` (`on_schema_drift`: `warn`/`fail`). Com `fail`, a partição não é publicada e o bronze segue com a última ingestão boa.
+  - O Template Method do converter já nasce na Fase 3 com o passo reservado, para a Fase 8 não precisar reabrir o contrato.
+- **8.2 Bronze → prata (dbt).** Parte do que já existe e generaliza para todos os bronzes migrados:
+  - `sem_drift_de_colunas`;
+  - `conjuntura_contrato_do_staging` (piso de linhas);
+  - retratos `ouro_conjuntura_qualidade_schema` e `_schema_drift`.
+  - **O que é novo:** retrato de perfil por coluna da prata e um modelo de drift de dado (volume, nulos, categorias, faixas, frescor), com testes genéricos de limiar, `warn` por padrão.
+- **Decisões que ficam para o início da Fase 8:**
+  - padrão de `on_schema_drift` (proposta: coluna sumida = `fail`, coluna nova = `warn`);
+  - limiares por modelo;
+  - se vale adotar um pacote dbt (elementary, dbt_expectations). Hoje o projeto não tem `packages.yml`.
+
+## 12. Compatibilidade com o lakehouse (Iceberg, Delta, Hudi)
+
+Restrição de desenho para todas as fases. A migração em si continua fora de escopo (seção 8 do guia).
+
+- **Carga:** `LoadMode`, `LoadResult` e o `LoaderFactory` existem em Python, mesmo com o bronze no dbt hoje. Um `IcebergLoader`, `DeltaLoader` ou `HudiLoader` entra como estratégia registrada, sem mexer em extratores, conversores nem DAGs.
+- **Staging:** Parquet texto, particionado por `<AAAA-MM-DD>/<HHMMSS>`, é a entrada natural desses loaders. A partição por data vira a partição da tabela.
+- **Drift:** o retrato `_schema.json` da 8.1 vira a entrada da política de *schema evolution* dos formatos de tabela. Iceberg e Delta evoluem schema nativamente; o retrato decide se a evolução é aceita.
+- **Storage:** a interface `StorageBackend` não amarra ao MinIO nem ao `S3Hook`. Um catálogo ou storage de lakehouse entra como outra implementação.
+- **dbt:** o LoadMode como materialização dbt é portável (`table`/`incremental` existem em dbt-trino e dbt-spark), mas o `fonte_lake`/`read_parquet` é específico do pg_duckdb. Na migração ao lakehouse, o bronze passa a ler a tabela Iceberg/Delta/Hudi, não o Parquet.
