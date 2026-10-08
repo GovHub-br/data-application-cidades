@@ -64,10 +64,12 @@ def lake_storage(request: pytest.FixtureRequest, tmp_path: Path) -> StorageBacke
 
 @pytest.fixture
 def minio_backend() -> Iterator[StorageBackend]:
-    """MinIO real, num bucket de teste, isolado num prefixo descartável.
+    """MinIO real, isolado numa pasta descartável sob `INGESTION_TEST_PREFIX`.
 
-    Pulado sem `INGESTION_TEST_BUCKET` ou se o endpoint da Connection não responder.
-    Nunca usa o bucket do lake: o job de outro time varre o `data-lake-mcid`.
+    `INGESTION_TEST_BUCKET` escolhe o bucket (pode ser o do lake); tudo vai para
+    `<prefixo>/<uuid>/` (padrão `tests/`), fora de `raw/` e `staging/`, que é o que
+    o job de outro time varre, e é apagado no fim. Pulado sem o bucket ou se o
+    endpoint da Connection não responder.
     """
     bucket = os.environ.get("INGESTION_TEST_BUCKET")
     if not bucket:
@@ -80,7 +82,12 @@ def minio_backend() -> Iterator[StorageBackend]:
     if not endpoint or not reachable(url.hostname, url.port or 80):
         pytest.skip(f"MinIO não responde em {endpoint!r}")
 
-    backend = _PrefixedStorage(inner, f"_tests/{uuid.uuid4().hex}/")
+    test_prefix = os.environ.get("INGESTION_TEST_PREFIX", "tests/").strip("/")
+    if not test_prefix or test_prefix.split("/")[0] in {"raw", "staging"}:
+        pytest.fail(
+            f"INGESTION_TEST_PREFIX não pode ser vazio, raw/ ou staging/: {test_prefix!r}"
+        )
+    backend = _PrefixedStorage(inner, f"{test_prefix}/{uuid.uuid4().hex}/")
     yield backend
     for key in inner.list(backend.prefix):
         inner.delete(key)
