@@ -29,3 +29,4 @@ __all__ = [
 from ingestion.converters.models import csv_converter  # noqa: E402, F401
 from ingestion.converters.models import json_converter  # noqa: E402, F401
 from ingestion.converters.models import xlsx_converter  # noqa: E402, F401
+from ingestion.converters.models import mdb_converter  # noqa: E402, F401

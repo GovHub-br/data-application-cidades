@@ -330,6 +330,17 @@ classDiagram
     class openpyxl {
         <<external>>
     }
+    class MdbConverter {
+        #_read(path) Iterator~Source~
+        -_tables(path) list~str~
+        -_table(path, table) Source
+        -_batches(path, table, process, width) Iterator~RecordBatch~
+    }
+    class mdbtools {
+        <<external>>
+        mdb-tables
+        mdb-export
+    }
 
     FileConverter <|-- CsvConverter
     CsvConverter <|-- TxtConverter
@@ -338,6 +349,9 @@ classDiagram
     JsonConverter ..> ijson : duas passadas em streaming
     FileConverter <|-- XlsxConverter
     XlsxConverter ..> openpyxl : read_only, data_only
+    FileConverter <|-- MdbConverter
+    MdbConverter ..> mdbtools : pipe, sem arquivo intermediário
+    MdbConverter ..> open_csv
 
     FileConverter o-- ConverterConfig
     ConverterFactory ..> FileConverter : cria por formato ou extensão
@@ -359,7 +373,8 @@ classDiagram
   - `csv` (`.csv`, delimitador padrão `,`);
   - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação;
   - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON;
-  - `xlsx` (`.xlsx`, `.xlsm`): uma saída por aba, `header_row`, valor calculado da fórmula, célula vira texto por regra fixa.
+  - `xlsx` (`.xlsx`, `.xlsm`): uma saída por aba, `header_row`, valor calculado da fórmula, célula vira texto por regra fixa;
+  - `mdb` (`.mdb`, `.accdb`): uma saída por tabela (`<arquivo>__<tabela>`), `mdb-export` lido por pipe.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
@@ -368,7 +383,7 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 3 | Conversores mdb, parquet e zip; `convert_partition`, `publish_latest` |
+| 3 | Conversores parquet e zip; `convert_partition`, `publish_latest` |
 | 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |
