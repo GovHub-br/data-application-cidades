@@ -75,3 +75,21 @@ def write_stream(chunks: Iterable[bytes], path: Path, name: str | None = None) -
         size=size,
         sha256=digest.hexdigest(),
     )
+
+
+def describe_file(
+    path: Path, name: str | None = None, chunk_bytes: int = 1 << 20
+) -> RawFile:
+    """RawFile de um arquivo já gravado por terceiros (um hook), lido em blocos."""
+    digest = hashlib.sha256()
+    size = 0
+    with path.open("rb") as source:
+        while chunk := source.read(chunk_bytes):
+            digest.update(chunk)
+            size += len(chunk)
+    return RawFile(
+        name=safe_segment(name or path.name),
+        path=path,
+        size=size,
+        sha256=digest.hexdigest(),
+    )

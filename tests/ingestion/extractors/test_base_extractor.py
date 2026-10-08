@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from ingestion.extractors import RawFile, write_stream
+from ingestion.extractors import RawFile, describe_file, write_stream
 
 
 def test_write_stream_keeps_bytes_and_reports_size_and_sha256(tmp_path: Path) -> None:
@@ -49,3 +49,14 @@ def test_raw_file_is_immutable(tmp_path: Path) -> None:
     with pytest.raises(dataclasses.FrozenInstanceError):
         raw.size = 0  # type: ignore[misc]
     assert isinstance(raw, RawFile)
+
+
+def test_describe_file_hashes_an_existing_file_in_chunks(tmp_path: Path) -> None:
+    data = bytes(range(256)) * 1000
+    path = tmp_path / "anexo do dia.zip"
+    path.write_bytes(data)
+
+    raw = describe_file(path, chunk_bytes=1000)
+
+    assert (raw.name, raw.size, raw.path) == ("anexo_do_dia.zip", len(data), path)
+    assert raw.sha256 == hashlib.sha256(data).hexdigest()

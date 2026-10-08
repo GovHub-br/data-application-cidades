@@ -17,7 +17,7 @@ from ingestion.extractors import ExtractorFactory, SourceNotFoundError
 from ingestion.layout import safe_segment
 from tests.ingestion.extractors.conftest import ContractCase
 
-IMPLEMENTATIONS = ["api", "http_file"]
+IMPLEMENTATIONS = ["api", "http_file", "email"]
 
 pytestmark = pytest.mark.parametrize("contract_case", IMPLEMENTATIONS, indirect=True)
 

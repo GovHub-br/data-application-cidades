@@ -5,7 +5,10 @@ ele por `AIRFLOW_CONN_HTTP_TEST`. Cada estratégia registra em CASES como montar
 extrator de sucesso, o que ele deve gravar, e um extrator cuja fonte não existe.
 """
 
+import io
+import re
 import threading
+import zipfile
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -14,7 +17,13 @@ from typing import Any
 
 import pytest
 
-from ingestion.extractors import Extractor, ExtractorConfig, ExtractorFactory, HttpRequest
+from ingestion.extractors import (
+    Extractor,
+    ExtractorConfig,
+    ExtractorFactory,
+    HttpRequest,
+    MailQuery,
+)
 
 WHEN = datetime(2026, 10, 8, 9, 0, tzinfo=timezone.utc)
 
@@ -161,9 +170,84 @@ def _http_file_case(request: pytest.FixtureRequest) -> ContractCase:
     )
 
 
+class FakeImapHook:
+    """ImapHook falso: guarda os anexos "da caixa" e registra como foi chamado."""
+
+    attachments: dict[str, bytes] = {}
+    calls: list[dict[str, Any]] = []
+
+    def __init__(self, imap_conn_id: str) -> None:
+        self.imap_conn_id = imap_conn_id
+
+    def __enter__(self) -> "FakeImapHook":
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        pass
+
+    def download_mail_attachments(
+        self, name: str, local_output_directory: str, **kwargs: Any
+    ) -> None:
+        FakeImapHook.calls.append({"conn_id": self.imap_conn_id, "name": name, **kwargs})
+        for filename, payload in self.attachments.items():
+            if re.match(name, filename):
+                with open(f"{local_output_directory}/{filename}", "wb") as target:
+                    target.write(payload)
+
+
+def zip_of(members: dict[str, bytes]) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for name, data in members.items():
+            archive.writestr(name, data)
+    return buffer.getvalue()
+
+
+@pytest.fixture
+def fake_imap(monkeypatch: pytest.MonkeyPatch) -> type[FakeImapHook]:
+    from ingestion.extractors.models import email_extractor
+
+    monkeypatch.setattr(FakeImapHook, "attachments", {})
+    monkeypatch.setattr(FakeImapHook, "calls", [])
+    monkeypatch.setattr(
+        email_extractor.EmailAttachmentExtractor, "hook_class", FakeImapHook
+    )
+    return FakeImapHook
+
+
+def _email_case(request: pytest.FixtureRequest) -> ContractCase:
+    hook: type[FakeImapHook] = request.getfixturevalue("fake_imap")
+    tsv = "cabeçalho\tvalor\n1\t2\n".encode("utf-16")
+    report = zip_of({"dotacao.csv": tsv})
+    hook.attachments = {"dotacao_execucao.zip": report}
+
+    def build(subject: str) -> Extractor:
+        config = ExtractorConfig(
+            source="email",
+            conn_id="imap_test",
+            mail=MailQuery(
+                sender="tesouro@exemplo.gov.br",
+                subject=subject,
+                attachment_pattern=r".*\.zip$",
+            ),
+        )
+        return ExtractorFactory.create(config, ingestion_time=WHEN)
+
+    def build_missing() -> Extractor:
+        hook.attachments = {}
+        return build("assunto_sem_email")
+
+    return ContractCase(
+        build=lambda: build("dotacao_execucao_outras_fontes_mcid"),
+        expected={"dotacao_execucao.zip": report},
+        build_missing=build_missing,
+    )
+
+
 CASES: dict[str, Callable[[pytest.FixtureRequest], ContractCase]] = {
     "api": _api_case,
     "http_file": _http_file_case,
+    "email": _email_case,
 }
 
 
