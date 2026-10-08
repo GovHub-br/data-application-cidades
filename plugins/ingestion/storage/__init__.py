@@ -4,6 +4,7 @@ Toda operação trabalha com arquivo em disco, nunca com o dataset em memória.
 """
 
 from ingestion.storage.base_storage import StorageBackend
+from ingestion.storage.config_storage import storage_from_env
 from ingestion.storage.models.local_storage import LocalStorageBackend
 from ingestion.storage.models.s3_storage import S3StorageBackend
 from ingestion.storage.storage_errors import ObjectNotFoundError, StorageError
@@ -16,4 +17,5 @@ __all__ = [
     "StorageBackend",
     "StorageError",
     "StorageFactory",
+    "storage_from_env",
 ]
