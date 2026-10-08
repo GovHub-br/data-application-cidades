@@ -48,20 +48,26 @@ def convert_partition(
     raw por vez: baixa, converte, sobe cada Parquet pelo `land` (que apaga a cópia
     local e recusa nome repetido entre arquivos) e apaga o arquivo baixado antes do
     próximo. O `_SUCCESS` da staging lista cada Parquet com a origem, as linhas e as
-    colunas; só depois dele o `latest/` é trocado. Qualquer falha deixa a partição
-    da staging sem marcador e o `latest/` como estava.
+    colunas; só depois dele o `latest/` é trocado. Qualquer falha apaga o que já
+    tinha subido para a partição (o glob do merge/append leria Parquet sem
+    `_SUCCESS`) e deixa o `latest/` como estava.
     """
     if not storage.exists(raw_prefix + SUCCESS_MARKER):
         raise ConversionError(f"ingestão incompleta (sem {SUCCESS_MARKER}): {raw_prefix}")
     raw_keys = [
         key for key in storage.list(raw_prefix) if key != raw_prefix + SUCCESS_MARKER
     ]
-    landed = land(
-        storage,
-        _staged_files(storage, raw_keys, config, work_dir),
-        staging_prefix,
-        details=_details,
-    )
+    try:
+        landed = land(
+            storage,
+            _staged_files(storage, raw_keys, config, work_dir),
+            staging_prefix,
+            details=_details,
+        )
+    except BaseException:
+        for key in storage.list(staging_prefix):
+            storage.delete(key)
+        raise
     publish_latest(storage, staging_prefix, latest_prefix)
     return ConversionResult(
         staging_prefix=staging_prefix, latest_prefix=latest_prefix, keys=landed.keys

@@ -115,3 +115,18 @@ def test_two_raw_files_with_the_same_output_name_are_an_error(
     with pytest.raises(ValueError, match="repetido"):
         _convert(lake_storage, tmp_path)
     assert not lake_storage.exists(STAGING + SUCCESS_MARKER)
+
+
+def test_failure_removes_the_partial_staging_partition(
+    lake_storage: StorageBackend, tmp_path: Path
+) -> None:
+    # ipca converte e sobe antes de quebrado.json falhar; o glob do merge/append
+    # (2*/*/*.parquet) leria esse Parquet sem _SUCCESS se ele ficasse.
+    _land_raw(
+        lake_storage, tmp_path, {"ipca.json": b'[{"v":"1"}]', "quebrado.json": b"[{"}
+    )
+
+    with pytest.raises(ConversionError):
+        _convert(lake_storage, tmp_path)
+
+    assert lake_storage.list(STAGING) == []

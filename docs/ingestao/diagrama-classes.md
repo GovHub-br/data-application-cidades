@@ -428,7 +428,7 @@ classDiagram
   - exige o `_SUCCESS` da raw;
   - converte um arquivo da raw por vez e sobe os Parquet pelo `land`, que recusa nome repetido entre arquivos (`a.csv` e `a.json`);
   - grava o `_SUCCESS` da staging com origem, linhas e colunas de cada Parquet;
-  - só então publica o `latest/`. Uma falha deixa o `latest/` como estava.
+  - só então publica o `latest/`. Uma falha apaga o que já tinha subido para a partição (o glob do merge/append não lê Parquet órfão) e deixa o `latest/` como estava.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
