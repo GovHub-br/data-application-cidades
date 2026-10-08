@@ -157,6 +157,9 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+markers = [
+    "integration: depende de serviço externo (MinIO, Postgres); pulado quando ele não responde",
+]
 
 [tool.sqlfmt]
 line_length = 90
