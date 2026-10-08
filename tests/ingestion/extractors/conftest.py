@@ -141,8 +141,29 @@ def _api_case(request: pytest.FixtureRequest) -> ContractCase:
     )
 
 
+def _http_file_case(request: pytest.FixtureRequest) -> ContractCase:
+    server: FakeHttpServer = request.getfixturevalue("http_server")
+    planilha = b"PK\x03\x04" + bytes(range(256)) * 64  # cabeçalho de zip/xlsx, binário
+    server.routes["/arquivos/incc.xlsx"] = Route(body=planilha)
+
+    def build(endpoint: str) -> Extractor:
+        config = ExtractorConfig(
+            source="http_file",
+            conn_id="http_test",
+            requests=(HttpRequest(name="incc_m", endpoint=endpoint),),
+        )
+        return ExtractorFactory.create(config, ingestion_time=WHEN)
+
+    return ContractCase(
+        build=lambda: build("/arquivos/incc.xlsx"),
+        expected={"incc.xlsx": planilha},
+        build_missing=lambda: build("/arquivos/nao-existe.xlsx"),
+    )
+
+
 CASES: dict[str, Callable[[pytest.FixtureRequest], ContractCase]] = {
     "api": _api_case,
+    "http_file": _http_file_case,
 }
 
 

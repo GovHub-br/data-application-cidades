@@ -6,6 +6,7 @@ a tradução de status em erro de extração e a gravação do corpo em stream.
 
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 from airflow.providers.http.hooks.http import HttpHook
@@ -58,6 +59,9 @@ def fetch(hooks: HttpHooks, request: HttpRequest) -> requests.Response:
     muda a resposta); 5xx que persiste, ExtractionError com o último status.
     """
     hook = hooks.for_method(request.method)
+    endpoint = (
+        request.resolve(hooks.for_method("GET")) if request.resolve else request.endpoint
+    )
     kwargs: dict[str, Any] = {}
     if request.json is not None:
         kwargs["json"] = request.json
@@ -67,17 +71,31 @@ def fetch(hooks: HttpHooks, request: HttpRequest) -> requests.Response:
         params = None
 
     def attempt() -> requests.Response:
-        response: requests.Response = hook.run(
-            request.endpoint,
-            data=params,
-            headers=dict(request.headers) or None,
-            extra_options={
-                "stream": True,
-                "check_response": False,
-                "timeout": TIMEOUT_SECONDS,
-            },
-            **kwargs,
-        )
+        response: requests.Response
+        if urlparse(endpoint).scheme:
+            # URL completa: o hook colaria a base na frente. Usa a sessão que ele
+            # configurou (autenticação, cabeçalhos, adapter), com as mesmas regras.
+            session = hook.get_conn(dict(request.headers) or None)
+            response = session.request(
+                hook.method,
+                endpoint,
+                params=params or kwargs.get("params"),
+                json=kwargs.get("json"),
+                stream=True,
+                timeout=TIMEOUT_SECONDS,
+            )
+        else:
+            response = hook.run(
+                endpoint,
+                data=params,
+                headers=dict(request.headers) or None,
+                extra_options={
+                    "stream": True,
+                    "check_response": False,
+                    "timeout": TIMEOUT_SECONDS,
+                },
+                **kwargs,
+            )
         if response.status_code >= 500:
             response.close()
             raise _ServerError(response.status_code)
@@ -89,7 +107,7 @@ def fetch(hooks: HttpHooks, request: HttpRequest) -> requests.Response:
         retry=retry_if_exception_type((_ServerError, requests.ConnectionError)),
         reraise=True,
     )
-    where = f"{request.method} {request.endpoint}"
+    where = f"{request.method} {endpoint}"
     try:
         response = retrying(attempt)
     except _ServerError as exc:

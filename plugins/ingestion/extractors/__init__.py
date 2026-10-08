@@ -22,3 +22,4 @@ __all__ = [
 
 # Registra as estratégias no ExtractorFactory (import pelo efeito do decorator).
 from ingestion.extractors.models import api_extractor  # noqa: E402, F401
+from ingestion.extractors.models import http_file_extractor  # noqa: E402, F401
