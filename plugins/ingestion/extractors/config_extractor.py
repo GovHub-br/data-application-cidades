@@ -29,12 +29,18 @@ class HttpRequest:
 
 @dataclass(frozen=True)
 class MailQuery:
-    """E-mail da ingestão do dia: remetente, assunto e quais anexos guardar."""
+    """E-mail da ingestão do dia: assunto, remetente e quais anexos guardar.
 
-    sender: str
+    `credentials_variable` nomeia uma Variable JSON (`imap_server`, `email`,
+    `password`, `sender_email`) com a credencial do IMAP, lida só dentro da task; o
+    remetente sai dela quando `sender` não é dado.
+    """
+
     subject: str
+    sender: str | None = None
     attachment_pattern: str = r".*"
     folder: str = "INBOX"
+    credentials_variable: str | None = None
 
 
 @dataclass(frozen=True)

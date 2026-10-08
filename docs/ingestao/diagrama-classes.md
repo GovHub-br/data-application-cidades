@@ -197,10 +197,11 @@ classDiagram
     }
     class MailQuery {
         <<dataclass>>
-        +sender: str
         +subject: str
+        +sender: str | None
         +attachment_pattern: str
         +folder: str = "INBOX"
+        +credentials_variable: str | None
     }
     class RawFile {
         <<dataclass>>
@@ -257,6 +258,7 @@ classDiagram
 ```
 
 - **Estratégias registradas:** `api`, `http_file` e `email`.
+- **`email` com credencial em Variable:** com `credentials_variable`, a Connection do IMAP (e o remetente) é montada em runtime a partir da Variable JSON (`imap_server`, `email`, `password`, `sender_email`), sem Connection cadastrada.
 - **`http_common`:**
   - retry com backoff só em 5xx e falha de rede;
   - 404 vira `SourceNotFoundError`, outro 4xx vira `ExtractionError`;

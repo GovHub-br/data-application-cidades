@@ -95,3 +95,53 @@ def test_leftovers_in_work_dir_are_not_taken_as_todays_attachments(
     fake_imap.attachments = {}
     with pytest.raises(SourceNotFoundError):
         _extract(tmp_path, datetime(2026, 10, 9, 12, tzinfo=timezone.utc))
+
+
+CREDENTIALS = {
+    "imap_server": "imap.exemplo.gov.br",
+    "email": "ingestao@exemplo.gov.br",
+    "password": "segredo",
+    "sender_email": "tesouro@exemplo.gov.br",
+}
+
+
+def test_credentials_and_sender_can_come_from_a_variable(
+    fake_imap: type[FakeImapHook], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from ingestion.extractors.models import email_extractor
+
+    read: list[str] = []
+
+    def fake_variable(name: str) -> dict[str, str]:
+        read.append(name)
+        return CREDENTIALS
+
+    monkeypatch.setattr(email_extractor, "read_json_variable", fake_variable)
+    fake_imap.attachments = {"r.zip": b"PK"}
+    query = MailQuery(
+        subject="dotacao_execucao_outras_fontes_mcid",
+        attachment_pattern=r".*\.zip$",
+        credentials_variable="email_credentials",
+    )
+
+    _extract(tmp_path, datetime(2026, 10, 8, 12, tzinfo=timezone.utc), query)
+
+    [call] = fake_imap.calls
+    connection = call["connection"]
+    assert read == ["email_credentials"]
+    assert (connection.conn_type, connection.host) == ("imap", "imap.exemplo.gov.br")
+    assert (connection.login, connection.password) == (
+        "ingestao@exemplo.gov.br",
+        "segredo",
+    )
+    assert 'FROM "tesouro@exemplo.gov.br"' in call["mail_filter"]
+
+
+def test_sender_is_required_somewhere(fake_imap: type[FakeImapHook]) -> None:
+    with pytest.raises(ValueError, match="sender"):
+        ExtractorFactory.create(
+            ExtractorConfig(
+                source="email", conn_id="imap_tesouro", mail=MailQuery(subject="x")
+            ),
+            ingestion_time=datetime(2026, 10, 8, 12, tzinfo=timezone.utc),
+        )

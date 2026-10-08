@@ -178,8 +178,14 @@ class FakeImapHook:
 
     def __init__(self, imap_conn_id: str) -> None:
         self.imap_conn_id = imap_conn_id
+        self.connection: Any = None
+
+    def get_connection(self, conn_id: str) -> Any:
+        return f"<Connection {conn_id} do Airflow>"
 
     def __enter__(self) -> "FakeImapHook":
+        # Como o ImapHook real: resolve a Connection ao conectar.
+        self.connection = self.get_connection(self.imap_conn_id)
         return self
 
     def __exit__(self, *exc: Any) -> None:
@@ -188,7 +194,14 @@ class FakeImapHook:
     def download_mail_attachments(
         self, name: str, local_output_directory: str, **kwargs: Any
     ) -> None:
-        FakeImapHook.calls.append({"conn_id": self.imap_conn_id, "name": name, **kwargs})
+        FakeImapHook.calls.append(
+            {
+                "conn_id": self.imap_conn_id,
+                "connection": self.connection,
+                "name": name,
+                **kwargs,
+            }
+        )
         for filename, payload in self.attachments.items():
             if re.match(name, filename):
                 with open(f"{local_output_directory}/{filename}", "wb") as target:
