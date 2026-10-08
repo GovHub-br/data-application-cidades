@@ -21,6 +21,7 @@ if str(PLUGINS_DIR) not in sys.path:
     sys.path.insert(0, str(PLUGINS_DIR))
 
 from ingestion.storage import (  # noqa: E402  (precisa do sys.path acima)
+    PrefixedStorage,
     S3StorageBackend,
     StorageBackend,
 )
@@ -88,7 +89,7 @@ def minio_backend() -> Iterator[StorageBackend]:
         pytest.fail(
             f"INGESTION_TEST_PREFIX não pode ser vazio, raw/ ou staging/: {test_prefix!r}"
         )
-    backend = _PrefixedStorage(inner, f"{test_prefix}/{uuid.uuid4().hex}/")
+    backend = PrefixedStorage(inner, f"{test_prefix}/{uuid.uuid4().hex}/")
     yield backend
     if os.environ.get("INGESTION_TEST_KEEP") == "1":
         return
@@ -102,29 +103,3 @@ def reachable(host: str | None, port: int) -> bool:
             return True
     except OSError:
         return False
-
-
-class _PrefixedStorage(StorageBackend):
-    """Vê só o que está sob `prefix` do backend real, como se fosse a raiz."""
-
-    def __init__(self, inner: StorageBackend, prefix: str) -> None:
-        self.inner = inner
-        self.prefix = prefix
-
-    def put_file(self, key: str, local_path: Path) -> None:
-        self.inner.put_file(self.prefix + key, local_path)
-
-    def get_file(self, key: str, local_path: Path) -> None:
-        self.inner.get_file(self.prefix + key, local_path)
-
-    def list(self, prefix: str) -> list[str]:
-        return [key[len(self.prefix) :] for key in self.inner.list(self.prefix + prefix)]
-
-    def delete(self, key: str) -> None:
-        self.inner.delete(self.prefix + key)
-
-    def copy(self, src_key: str, dst_key: str) -> None:
-        self.inner.copy(self.prefix + src_key, self.prefix + dst_key)
-
-    def exists(self, key: str) -> bool:
-        return self.inner.exists(self.prefix + key)

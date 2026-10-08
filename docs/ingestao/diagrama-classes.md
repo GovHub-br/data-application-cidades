@@ -93,6 +93,10 @@ classDiagram
         +page_size: int | None
         +hook: S3Hook
     }
+    class PrefixedStorage {
+        +inner: StorageBackend
+        +prefix: str
+    }
     class StorageFactory {
         -_registry: dict~str, type~
         +register(name)$ decorator
@@ -130,6 +134,8 @@ classDiagram
     StorageBackend <|-- LocalStorageBackend
     StorageBackend <|-- S3StorageBackend
     S3StorageBackend o-- S3Hook
+    StorageBackend <|-- PrefixedStorage
+    PrefixedStorage o-- StorageBackend : embrulha
     StorageFactory ..> StorageBackend : cria
     config_storage ..> StorageFactory
     landing ..> StorageBackend
@@ -141,6 +147,10 @@ classDiagram
 
 - **Registro:** `local` e `s3` se registram na `StorageFactory` com `@StorageFactory.register`.
 - **Sem singleton:** cada `create` devolve uma instância nova.
+- **`PrefixedStorage`:**
+  - embrulha um backend e enxerga só uma pasta dele;
+  - `storage_from_env` o aplica quando há `INGESTION_STORAGE_PREFIX` (ex.: `tests/`, para rodar o pipeline real fora de `raw/` e `staging/`);
+  - recusa `raw/` e `staging/` como prefixo.
 - **`land`:** sobe uma parte por vez, apaga a cópia local e grava `_SUCCESS` com o manifesto por último. `details` acrescenta campos ao manifesto de cada parte.
 - **`publish_latest`:**
   - espelha uma partição com `_SUCCESS` em `latest/`, que é o que o bronze lê;

@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from ingestion.storage import LocalStorageBackend, S3StorageBackend, storage_from_env
+from ingestion.storage import (
+    LocalStorageBackend,
+    PrefixedStorage,
+    S3StorageBackend,
+    storage_from_env,
+)
 
 
 def test_defaults_to_minio_bucket_through_minio_lake_connection() -> None:
@@ -47,3 +52,33 @@ def test_local_without_root_is_an_error() -> None:
 def test_unknown_backend_lists_registered_ones() -> None:
     with pytest.raises(ValueError, match="local, s3"):
         storage_from_env({"INGESTION_STORAGE_BACKEND": "ftp"})
+
+
+def test_prefix_wraps_the_backend(tmp_path: Path) -> None:
+    backend = storage_from_env(
+        {
+            "INGESTION_STORAGE_BACKEND": "local",
+            "INGESTION_LOCAL_ROOT": str(tmp_path),
+            "INGESTION_STORAGE_PREFIX": "tests",
+        }
+    )
+
+    assert isinstance(backend, PrefixedStorage)
+    assert backend.prefix == "tests/"
+    source = tmp_path / "f.txt"
+    source.write_text("x")
+    backend.put_file("raw/a/b.txt", source)
+    assert (tmp_path / "tests" / "raw" / "a" / "b.txt").exists()
+    assert backend.list("raw/") == ["raw/a/b.txt"]
+
+
+@pytest.mark.parametrize("prefix", ["raw/", "staging", "staging/algo/"])
+def test_prefix_cannot_be_the_real_lake_layers(tmp_path: Path, prefix: str) -> None:
+    with pytest.raises(ValueError, match="prefixo"):
+        storage_from_env(
+            {
+                "INGESTION_STORAGE_BACKEND": "local",
+                "INGESTION_LOCAL_ROOT": str(tmp_path),
+                "INGESTION_STORAGE_PREFIX": prefix,
+            }
+        )

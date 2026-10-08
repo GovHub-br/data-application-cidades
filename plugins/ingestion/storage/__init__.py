@@ -12,6 +12,7 @@ from ingestion.storage.landing import (
     publish_latest,
 )
 from ingestion.storage.models.local_storage import LocalStorageBackend
+from ingestion.storage.models.prefixed_storage import PrefixedStorage
 from ingestion.storage.models.s3_storage import S3StorageBackend
 from ingestion.storage.storage_errors import ObjectNotFoundError, StorageError
 from ingestion.storage.storage_registry import StorageFactory
@@ -21,6 +22,7 @@ __all__ = [
     "LandingResult",
     "LocalStorageBackend",
     "ObjectNotFoundError",
+    "PrefixedStorage",
     "S3StorageBackend",
     "StorageBackend",
     "StorageError",
