@@ -302,6 +302,22 @@ classDiagram
     class ParquetWriter {
         <<external>>
     }
+    class CsvConverter {
+        +default_delimiter: str | None = ","
+        #_read(path) Iterator~Source~
+        -_width(path, delimiter) int
+        -_open(path, delimiter, width) CSVStreamingReader
+    }
+    class TxtConverter {
+        +default_delimiter = None
+    }
+    class open_csv {
+        <<external>>
+    }
+
+    FileConverter <|-- CsvConverter
+    CsvConverter <|-- TxtConverter
+    CsvConverter ..> open_csv : blocos de 1 MiB, tudo string
 
     FileConverter o-- ConverterConfig
     ConverterFactory ..> FileConverter : cria por formato ou extensão
@@ -319,6 +335,9 @@ classDiagram
   - escreve o Parquet lote a lote;
   - confere as linhas gravadas;
   - chama `_after_write`, gancho reservado para o drift (Fase 8).
+- **Formatos registrados:**
+  - `csv` (`.csv`, delimitador padrão `,`);
+  - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
@@ -327,7 +346,7 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 3 | Conversores csv, txt, json, xlsx, mdb, parquet e zip; `convert_partition`, `publish_latest` |
+| 3 | Conversores json, xlsx, mdb, parquet e zip; `convert_partition`, `publish_latest` |
 | 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |

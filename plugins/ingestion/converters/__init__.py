@@ -24,3 +24,6 @@ __all__ = [
     "batches_from_rows",
     "fix_header",
 ]
+
+# Registra os formatos no ConverterFactory (import pelo efeito do decorator).
+from ingestion.converters.models import csv_converter  # noqa: E402, F401
