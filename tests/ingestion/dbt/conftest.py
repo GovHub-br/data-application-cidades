@@ -8,6 +8,7 @@ variável `lake_root` aponta o macro para um diretório local no lugar do MinIO.
 import json
 import shutil
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,11 @@ import duckdb
 import pytest
 import yaml
 from dbt.cli.main import dbtRunner, dbtRunnerResult
+
+from ingestion.converters import ConverterConfig, convert_partition
+from ingestion.extractors import write_stream
+from ingestion.layout import ingestion_partition, raw_prefix, staging_prefix
+from ingestion.storage import StorageFactory, land
 
 REPO = Path(__file__).resolve().parents[3]
 FONTE_LAKE = REPO / "dbt" / "mcid" / "macros" / "fonte_lake.sql"
@@ -63,6 +69,26 @@ class DbtProject:
         result = self.dbt("compile", "--select", model)
         assert result.success, result.exception
         return next(self.path.rglob(f"compiled/**/{model}.sql")).read_text()
+
+    def ingest(
+        self, domain: str, dataset: str, when: datetime, files: dict[str, bytes]
+    ) -> None:
+        """Uma ingestão de verdade: land na raw, conversão, publicação do latest/."""
+        storage = StorageFactory.create("local", root=self.lake)
+        partition = ingestion_partition(when)
+        raw = raw_prefix(domain, dataset, partition)
+        work = self.path.parent / "work"
+        land(
+            storage, (write_stream([d], work / "raw" / n) for n, d in files.items()), raw
+        )
+        convert_partition(
+            storage,
+            raw_prefix=raw,
+            staging_prefix=staging_prefix(domain, dataset, partition),
+            latest_prefix=f"staging/{domain}/{dataset}/latest/",
+            config=ConverterConfig(),
+            work_dir=work,
+        )
 
     def query(self, sql: str) -> list[tuple[Any, ...]]:
         # Mesma configuração da conexão que o dbt-duckdb mantém aberta no processo.

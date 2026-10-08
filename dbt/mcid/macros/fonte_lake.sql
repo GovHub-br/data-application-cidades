@@ -32,23 +32,40 @@
         ele vem vazio, então o lookup precisa ficar atrás do guard `execute`,
         senão todo model quebra na análise com "não tem meta.caminho". -#}
     {%- if execute -%}
-        {%- set caminho = namespace(valor=none) -%}
+        {%- set fonte = namespace(meta=none) -%}
         {%- for no in graph.sources.values() -%}
             {%- if no.source_name == nome_fonte and no.name == nome_tabela -%}
-                {%- set caminho.valor = no.meta.get('caminho') -%}
+                {%- set fonte.meta = no.meta -%}
             {%- endif -%}
         {%- endfor -%}
+        {%- set meta = fonte.meta or {} -%}
+        {%- set caminho = meta.get('caminho') -%}
 
-        {%- if not caminho.valor -%}
+        {%- if not caminho -%}
             {{ exceptions.raise_compiler_error(
                 "fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
         {%- endif -%}
 
+        {%- set load_mode = meta.get('load_mode') -%}
+        {%- if load_mode is none -%}
+        {#- fonte legada: caminho é o arquivo (ou glob) a ler -#}
         read_parquet(
-            '{{ root }}/{{ caminho.valor }}'
+            '{{ root }}/{{ caminho }}'
             {%- if filename %}, filename => true{% endif -%}
             {%- if union_by_name %}, union_by_name => true{% endif -%}
         )
+        {%- elif load_mode == 'overwrite' -%}
+        {#- só a última ingestão completa, que a conversão publica em latest/ -#}
+        read_parquet(
+            '{{ root }}/{{ caminho }}/latest/*.parquet',
+            filename => true,
+            union_by_name => true
+        )
+        {%- else -%}
+            {{ exceptions.raise_compiler_error(
+                "fonte_lake: '" ~ nome_tabela ~ "' tem load_mode desconhecido: '"
+                ~ load_mode ~ "' (válidos: overwrite, merge, append)") }}
+        {%- endif -%}
     {%- else -%}
         {#- placeholder só para o parse; nunca chega a ser executado -#}
         read_parquet('s3://{{ bucket }}/__parse__')
