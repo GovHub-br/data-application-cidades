@@ -314,10 +314,19 @@ classDiagram
     class open_csv {
         <<external>>
     }
+    class JsonConverter {
+        #_read(path) Iterator~Source~
+        -_records(path) Iterator~dict~
+    }
+    class ijson {
+        <<external>>
+    }
 
     FileConverter <|-- CsvConverter
     CsvConverter <|-- TxtConverter
     CsvConverter ..> open_csv : blocos de 1 MiB, tudo string
+    FileConverter <|-- JsonConverter
+    JsonConverter ..> ijson : duas passadas em streaming
 
     FileConverter o-- ConverterConfig
     ConverterFactory ..> FileConverter : cria por formato ou extensão
@@ -337,7 +346,8 @@ classDiagram
   - chama `_after_write`, gancho reservado para o drift (Fase 8).
 - **Formatos registrados:**
   - `csv` (`.csv`, delimitador padrão `,`);
-  - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação.
+  - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação;
+  - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
@@ -346,7 +356,7 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 3 | Conversores json, xlsx, mdb, parquet e zip; `convert_partition`, `publish_latest` |
+| 3 | Conversores xlsx, mdb, parquet e zip; `convert_partition`, `publish_latest` |
 | 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |

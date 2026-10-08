@@ -36,9 +36,18 @@ def _txt_case(tmp_path: Path) -> ContractCase:
     return ContractCase(path, config, rows=1, outputs=["base_pf.parquet"])
 
 
+def _json_case(tmp_path: Path) -> ContractCase:
+    path = tmp_path / "ipca.json"
+    path.write_text(
+        '[{"data":"01/07/2026","valor":"0.26"},{"data":"01/08/2026","valor":"-0.32"}]'
+    )
+    return ContractCase(path, ConverterConfig(), rows=2, outputs=["ipca.parquet"])
+
+
 CASES: dict[str, Callable[[Path], ContractCase]] = {
     "csv": _csv_case,
     "txt": _txt_case,
+    "json": _json_case,
 }
 
 

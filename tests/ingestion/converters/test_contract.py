@@ -17,7 +17,7 @@ import pytest
 from ingestion.converters import ConverterFactory
 from tests.ingestion.converters.conftest import ContractCase
 
-IMPLEMENTATIONS = ["csv", "txt"]
+IMPLEMENTATIONS = ["csv", "txt", "json"]
 
 pytestmark = pytest.mark.parametrize("contract_case", IMPLEMENTATIONS, indirect=True)
 
