@@ -25,6 +25,8 @@
     {%- set _ = source(nome_fonte, nome_tabela) -%}
 
     {%- set bucket = var('lake_bucket', 'data-lake-mcid') -%}
+    {#- raiz do lake: o MinIO por padrão; um diretório local nos testes do macro -#}
+    {%- set root = var('lake_root', 's3://' ~ bucket) -%}
 
     {#- `graph` só está populado na fase de execução; no primeiro passe (parse)
         ele vem vazio, então o lookup precisa ficar atrás do guard `execute`,
@@ -43,7 +45,7 @@
         {%- endif -%}
 
         read_parquet(
-            's3://{{ bucket }}/{{ caminho.valor }}'
+            '{{ root }}/{{ caminho.valor }}'
             {%- if filename %}, filename => true{% endif -%}
             {%- if union_by_name %}, union_by_name => true{% endif -%}
         )
