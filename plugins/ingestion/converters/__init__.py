@@ -27,6 +27,7 @@ __all__ = [
 
 # Registra os formatos no ConverterFactory (import pelo efeito do decorator).
 from ingestion.converters.models import csv_converter  # noqa: E402, F401
+from ingestion.converters.models import txt_converter  # noqa: E402, F401
 from ingestion.converters.models import json_converter  # noqa: E402, F401
 from ingestion.converters.models import xlsx_converter  # noqa: E402, F401
 from ingestion.converters.models import mdb_converter  # noqa: E402, F401

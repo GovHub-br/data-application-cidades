@@ -1,4 +1,4 @@
-"""Casos de borda do texto delimitado (guia §3.3), em csv e txt."""
+"""Casos de borda do texto delimitado (guia §3.3) no conversor de csv."""
 
 from pathlib import Path
 from typing import Any
@@ -94,15 +94,6 @@ def test_ragged_row_is_a_conversion_error(tmp_path: Path) -> None:
 def test_empty_file_is_a_conversion_error(tmp_path: Path) -> None:
     with pytest.raises(ConversionError, match="vazio"):
         _rows(tmp_path, b"")
-
-
-def test_txt_requires_an_explicit_delimiter(tmp_path: Path) -> None:
-    with pytest.raises(ConversionError, match="delimitador"):
-        _rows(tmp_path, b"a|b\n1|2\n", name="f.txt")
-
-
-def test_tsv_defaults_to_tab(tmp_path: Path) -> None:
-    assert _rows(tmp_path, b"a\tb\n1\t2\n", name="f.tsv") == [{"a": "1", "b": "2"}]
 
 
 def test_large_file_converts_with_bounded_arrow_memory(tmp_path: Path) -> None:

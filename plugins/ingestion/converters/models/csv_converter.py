@@ -1,4 +1,4 @@
-"""Texto delimitado (csv, txt, tsv), lido em blocos pelo pyarrow."""
+"""CSV, lido em blocos pelo pyarrow; base do texto delimitado (o txt herda)."""
 
 from collections.abc import Iterator
 from pathlib import Path
@@ -92,18 +92,3 @@ class CsvConverter(FileConverter):
                 return
             except pa.ArrowInvalid as exc:
                 raise ConversionError(str(exc)) from exc
-
-
-@ConverterFactory.register("txt", extensions=(".txt", ".tsv"))
-class TxtConverter(CsvConverter):
-    """Igual ao csv, mas sem delimitador padrão: em .txt ele varia (|, ;, tab).
-
-    `.tsv` assume tabulação.
-    """
-
-    default_delimiter = None
-
-    def _delimiter(self, path: Path) -> str:
-        if self.config.delimiter is None and path.suffix.lower() == ".tsv":
-            return "\t"
-        return super()._delimiter(path)
