@@ -68,8 +68,9 @@ def minio_backend() -> Iterator[StorageBackend]:
 
     `INGESTION_TEST_BUCKET` escolhe o bucket (pode ser o do lake); tudo vai para
     `<prefixo>/<uuid>/` (padrão `tests/`), fora de `raw/` e `staging/`, que é o que
-    o job de outro time varre, e é apagado no fim. Pulado sem o bucket ou se o
-    endpoint da Connection não responder.
+    o job de outro time varre, e é apagado no fim, salvo com `INGESTION_TEST_KEEP=1`
+    (para inspecionar no console do MinIO). Pulado sem o bucket ou se o endpoint da
+    Connection não responder.
     """
     bucket = os.environ.get("INGESTION_TEST_BUCKET")
     if not bucket:
@@ -89,6 +90,8 @@ def minio_backend() -> Iterator[StorageBackend]:
         )
     backend = _PrefixedStorage(inner, f"{test_prefix}/{uuid.uuid4().hex}/")
     yield backend
+    if os.environ.get("INGESTION_TEST_KEEP") == "1":
+        return
     for key in inner.list(backend.prefix):
         inner.delete(key)
 
