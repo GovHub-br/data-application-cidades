@@ -442,6 +442,39 @@ classDiagram
   - só então publica o `latest/`. Uma falha apaga o que já tinha subido para a partição (o glob do merge/append não lê Parquet órfão) e deixa o `latest/` como estava.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
+## `dataset`: o que a DAG declara
+
+```mermaid
+classDiagram
+    class DatasetSpec {
+        <<dataclass>>
+        +domain: str
+        +dataset: str
+        +extractor: ExtractorConfig | Callable
+        +converter: ConverterConfig
+        +load_mode: LoadMode = overwrite
+        +keys: tuple~str~
+        +extractor_config() ExtractorConfig
+    }
+    class ExtractorConfig {
+        <<dataclass>>
+    }
+    class ConverterConfig {
+        <<dataclass>>
+    }
+    class LoadMode {
+        <<enumeration>>
+    }
+
+    DatasetSpec o-- ExtractorConfig
+    DatasetSpec o-- ConverterConfig
+    DatasetSpec o-- LoadMode
+```
+
+- **`DatasetSpec`:** fica no topo de cada DAG, só com literais.
+- **Extrator preguiçoso:** `extractor` pode ser uma função que monta a configuração dentro da task (lendo uma Variable, como a lista de séries do BACEN). Nada é consultado no parse.
+- **Validação:** `domain` e `dataset` viram pastas e precisam ser segmentos seguros; `load_mode` e `keys` passam por `validate_load`.
+
 ## `loaders`: modos de carga
 
 ```mermaid
@@ -480,7 +513,7 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 5 | `DatasetSpec`, `pipeline.steps` |
+| 5 | `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |
 | 8 | Retrato e relatório de drift |
 | 9 | `CatalogBackend`, `TableBackend`, `IcebergLoader` |
