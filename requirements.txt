@@ -17,6 +17,8 @@ apache-airflow-providers-postgres==7.0.2
 # PythonOperator, TriggerDagRunOperator, EmptyOperator e @task.virtualenv
 # sairam do core no Airflow 3 e moram neste provider.
 apache-airflow-providers-standard==1.19.0
+# S3Hook do storage da ingestão (plugins/ingestion), sobre o MinIO.
+apache-airflow-providers-amazon==9.36.0
 numpy==2.4.6
 pandas==3.0.5
 pyarrow==25.0.1

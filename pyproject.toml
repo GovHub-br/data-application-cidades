@@ -16,6 +16,8 @@ apache-airflow = "3.3.2"
 apache-airflow-providers-postgres = "7.0.2"
 apache-airflow-providers-microsoft-mssql = "4.7.1"
 apache-airflow-providers-standard = "1.19.0"
+# S3Hook do storage da ingestão (plugins/ingestion), sobre o MinIO.
+apache-airflow-providers-amazon = "9.36.0"
 numpy = "2.4.6"
 dbt-core = "1.12.5"
 dbt-postgres = "1.11.0"
@@ -39,6 +41,8 @@ great-expectations = ">=1.21,<2.0"
 sqlglot = "^30.0"
 
 [tool.poetry.group.dev.dependencies]
+# S3 em memória para o contrato do storage da ingestão rodar offline no CI.
+moto = { version = "*", extras = ["s3"] }
 black = "*"
 ruff = "*"
 pytest = "*"
