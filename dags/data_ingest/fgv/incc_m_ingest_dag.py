@@ -1,80 +1,73 @@
-import logging
-from airflow.sdk import dag, task
+"""INCC-M (FGV), série histórica publicada pela Sinduscon-PR.
+
+Fonte: xlsx público num link estável da Sinduscon, que redireciona para o arquivo
+da edição corrente. A planilha traz a série inteira desde 1994 a cada edição.
+
+LoadMode: overwrite. A fonte reentrega a série completa, então a última ingestão é
+a verdade: revisões entram, e uma linha que a FGV tirar some do bronze. O bronze é
+`bronze_fgv_incc_m` (dbt, `select * from read_parquet` sobre o `latest/`).
+
+Estrutura do arquivo: título na linha 1, cabeçalho em duas linhas (2 e 3), dados a
+partir da 4, rodapé "Fonte: FGV" no fim. A staging lê o cabeçalho da linha 3
+(`header_row=3`) e guarda tudo como texto; renomear e descartar o rodapé é da prata.
+"""
+
 from datetime import datetime, timedelta
-from schedule_loader import get_dynamic_schedule
-from postgres_helpers import get_postgres_conn
-from cliente_fgv import ClienteSinduscon
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
+from typing import Any
+
+from airflow.sdk import dag, task
+
+from ingestion.converters import ConverterConfig
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
+
+DATASET = DatasetSpec(
+    domain="fgv",
+    dataset="incc_m",
+    extractor=ExtractorConfig(
+        source="http_file",
+        conn_id="http_sinduscon",
+        requests=(
+            HttpRequest(
+                name="incc_m",
+                endpoint="/economia/indices-economicos/incc-m-fgv/"
+                "9547-serie-historica-incc-m-fgv/",
+                # Sem User-Agent de navegador o servidor recusa a requisição.
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+            ),
+        ),
+    ),
+    converter=ConverterConfig(header_row=3),
+    load_mode=LoadMode.OVERWRITE,
+)
 
 
 @dag(
-    schedule=get_dynamic_schedule("incc_m_ingest_dag"),
+    dag_id="incc_m_ingest_dag",
+    # Provisório: o cron real vem da Variable dynamic_schedules na validação da Fase 5.
+    schedule="0 6 * * *",
     start_date=datetime(2023, 1, 1),
     catchup=False,
+    max_active_runs=1,
     default_args={
         "owner": "Gustavo",
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["fgv", "incc_m", "construcao", "custos"],
+    tags=["fgv", "incc_m", "construcao", "custos", "conjuntura", "ingestion"],
 )
 def incc_m_ingest_dag() -> None:
-    """DAG para ingestão de dados do INCC-M da FGV no PostgreSQL."""
+    @task
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def fetch_and_store_incc() -> None:
-        """
-        Baixa o arquivo do INCC, trata os dados via Pandas e faz upsert do Postgres.
-        """
-        logging.info("Iniciando processamento do INCC-M")
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefix)
 
-        api = ClienteSinduscon()
-        postgres_conn_str = get_postgres_conn()
-        db = ClientPostgresDB(postgres_conn_str)
-        tabela = "incc_m"
-
-        registros = api.fetch_and_transform_incc()
-
-        if registros:
-            logging.info(f"Inserindo {len(registros)} registros em fgv.{tabela}")
-
-            # Postgres: upsert por mes -> preserva histórico (trimestral).
-            db.insert_data(
-                data=registros,
-                table_name=tabela,
-                conflict_fields=["mes"],
-                primary_key=["mes"],
-                schema="fgv",
-            )
-
-            # Raw nativo (XLSX) + fallback json + parquet tipado (full-refresh).
-            # A série histórica traz '...' nas variações antigas -> to_numeric
-            # coage p/ NaN e evita coluna object mista no parquet.
-            raw_xlsx = getattr(api, "ultimo_conteudo_xlsx", None)
-            if raw_xlsx:
-                upload_raw_bytes("fgv", tabela, raw_xlsx, ext="xlsx")
-            upload_fallback_json("fgv", tabela, registros)
-            registros_para_staging_parquet(
-                "fgv",
-                tabela,
-                registros,
-                typers={
-                    "mes": lambda s: pd.to_datetime(s, errors="coerce"),
-                    "indice": lambda s: pd.to_numeric(s, errors="coerce"),
-                    "var_mes": lambda s: pd.to_numeric(s, errors="coerce"),
-                    "var_ano": lambda s: pd.to_numeric(s, errors="coerce"),
-                    "var_12_meses": lambda s: pd.to_numeric(s, errors="coerce"),
-                },
-            )
-
-            logging.info(f"Ingestão de {tabela} concluída com sucesso.")
-        else:
-            logging.warning("Nenhum registro extraído para INCC-M da FGV.")
-
-    fetch_and_store_incc()
+    convert_to_staging(extract_to_raw())
 
 
 dag_instance = incc_m_ingest_dag()
