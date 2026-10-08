@@ -140,3 +140,9 @@ def test_config_defaults() -> None:
 
     assert (config.encoding, config.skip_rows, config.header_row) == ("utf-8", 0, 1)
     assert config.format is None and config.delimiter is None
+
+
+def test_two_outputs_with_the_same_name_are_an_error(dummy: str, tmp_path: Path) -> None:
+    # "aba 1" e "aba_1" viram o mesmo nome seguro; um Parquet apagaria o outro.
+    with pytest.raises(ConversionError, match="repetido"):
+        _convert(tmp_path, "aba 1;a;1\naba_1;b;2")

@@ -1,7 +1,9 @@
 """Amostras de cada formato, que alimentam o contrato dos conversores."""
 
+import io
 import json
 import sys
+import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -110,12 +112,49 @@ def _mdb_case(tmp_path: Path, request: pytest.FixtureRequest) -> ContractCase:
     )
 
 
+def _parquet_case(tmp_path: Path, request: pytest.FixtureRequest) -> ContractCase:
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    path = tmp_path / "historico.parquet"
+    pq.write_table(pa.table({"ano": [2025, 2026], "valor": [1.5, None]}), path)
+    return ContractCase(
+        path, ConverterConfig(), rows=2, text_source=False, outputs=["historico.parquet"]
+    )
+
+
+def zip_of(members: dict[str, bytes]) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, data in members.items():
+            archive.writestr(name, data)
+    return buffer.getvalue()
+
+
+def _zip_case(tmp_path: Path, request: pytest.FixtureRequest) -> ContractCase:
+    path = tmp_path / "dotacao_execucao.zip"
+    path.write_bytes(
+        zip_of({"dotacao.csv": b"a,b\n1,2\n3,4\n", "leia-me.csv": b"x\ny\n"})
+    )
+    return ContractCase(
+        path,
+        ConverterConfig(),
+        rows=3,
+        outputs=[
+            "dotacao_execucao__dotacao.parquet",
+            "dotacao_execucao__leia-me.parquet",
+        ],
+    )
+
+
 CASES: dict[str, Callable[[Path, pytest.FixtureRequest], ContractCase]] = {
     "csv": _csv_case,
     "txt": _txt_case,
     "json": _json_case,
     "xlsx": _xlsx_case,
     "mdb": _mdb_case,
+    "parquet": _parquet_case,
+    "zip": _zip_case,
 }
 
 

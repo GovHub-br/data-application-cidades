@@ -282,6 +282,7 @@ classDiagram
         +suffix: str | None
         +header: Sequence~str~
         +batches: Iterable~RecordBatch~
+        +schema: Schema | None
     }
     class ConvertedFile {
         <<dataclass>>
@@ -341,6 +342,13 @@ classDiagram
         mdb-tables
         mdb-export
     }
+    class ParquetConverter {
+        #_read(path) Iterator~Source~
+    }
+    class ZipConverter {
+        #_read(path) Iterator~Source~
+        -_members(archive) Iterator~ZipInfo~
+    }
 
     FileConverter <|-- CsvConverter
     CsvConverter <|-- TxtConverter
@@ -352,6 +360,9 @@ classDiagram
     FileConverter <|-- MdbConverter
     MdbConverter ..> mdbtools : pipe, sem arquivo intermediário
     MdbConverter ..> open_csv
+    FileConverter <|-- ParquetConverter
+    FileConverter <|-- ZipConverter
+    ZipConverter ..> ConverterFactory : delega cada membro
 
     FileConverter o-- ConverterConfig
     ConverterFactory ..> FileConverter : cria por formato ou extensão
@@ -374,7 +385,10 @@ classDiagram
   - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação;
   - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON;
   - `xlsx` (`.xlsx`, `.xlsm`): uma saída por aba, `header_row`, valor calculado da fórmula, célula vira texto por regra fixa;
-  - `mdb` (`.mdb`, `.accdb`): uma saída por tabela (`<arquivo>__<tabela>`), `mdb-export` lido por pipe.
+  - `mdb` (`.mdb`, `.accdb`): uma saída por tabela (`<arquivo>__<tabela>`), `mdb-export` lido por pipe;
+  - `parquet` (`.parquet`): mantém o schema original (`Source.schema`), a exceção ao "tudo string";
+  - `zip` (`.zip`): um membro por vez, delegado ao conversor da extensão (`<zip>__<membro>`).
+- **Nome repetido:** dois Parquet com o mesmo nome vindos de um mesmo arquivo são `ConversionError`.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
@@ -383,7 +397,7 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 3 | Conversores parquet e zip; `convert_partition`, `publish_latest` |
+| 3 | `convert_partition`, `publish_latest` |
 | 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |

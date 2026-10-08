@@ -19,12 +19,15 @@ class Source:
     """Uma tabela dentro do arquivo (o arquivo, uma aba, uma tabela do mdb).
 
     `batches` traz as linhas em lotes, com as colunas na ordem do cabeçalho; os
-    nomes das colunas dos lotes são ignorados.
+    nomes das colunas dos lotes são ignorados. `schema` só vem preenchido quando a
+    fonte já é tipada (parquet): aí o template mantém os tipos em vez de forçar
+    string.
     """
 
     suffix: str | None
     header: Sequence[str | None]
     batches: Iterable[pa.RecordBatch]
+    schema: pa.Schema | None = None
 
 
 @dataclass(frozen=True)
@@ -49,10 +52,14 @@ class FileConverter(ABC):
         self.memory_pool = memory_pool
 
     def convert(self, path: Path, out_dir: Path) -> Iterator[ConvertedFile]:
+        names: set[str] = set()
         for source in self._read(path):
             name = safe_segment(path.stem)
             if source.suffix:
                 name += f"__{safe_segment(source.suffix)}"
+            if name in names:
+                raise ConversionError(f"{path.name}: nome de saída repetido ({name})")
+            names.add(name)
             converted = self._write(source, out_dir / f"{name}.parquet")
             self._after_write(converted)
             yield converted
@@ -66,7 +73,9 @@ class FileConverter(ABC):
 
     def _write(self, source: Source, target: Path) -> ConvertedFile:
         header = fix_header(source.header)
-        schema = pa.schema([pa.field(name, pa.string()) for name in header])
+        schema = source.schema or pa.schema(
+            [pa.field(name, pa.string()) for name in header]
+        )
         target.parent.mkdir(parents=True, exist_ok=True)
         rows = 0
         with pq.ParquetWriter(target, schema) as writer:
@@ -76,7 +85,9 @@ class FileConverter(ABC):
                         f"{target.name}: lote com {batch.num_columns} colunas, "
                         f"cabeçalho com {len(header)}"
                     )
-                columns = [column.cast(pa.string()) for column in batch.columns]
+                columns = batch.columns
+                if source.schema is None:
+                    columns = [column.cast(pa.string()) for column in columns]
                 writer.write_batch(pa.RecordBatch.from_arrays(columns, schema=schema))
                 rows += batch.num_rows
         written = pq.ParquetFile(target).metadata.num_rows
