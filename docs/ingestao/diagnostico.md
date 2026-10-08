@@ -40,9 +40,9 @@ Cada DAG chama um `cliente_*` que busca o dado e o transforma em pandas (`fetch_
 O `bronze_*` do dbt lê esse parquet via `fonte_lake` → `read_parquet`. Quem orquestra é o `conjuntura_dag`: dispara as ingestões por `TriggerDagRunOperator` e depois roda o `conjuntura_dbt` pelo Cosmos.
 
 **Achado: perda de histórico nas extrações parciais.**
-- O `bacen_sgs_ingest_dag` extrai `ultimos=13`. Como a staging é full-refresh, o `bronze_bacen_financiamentos_imobiliarios` só tem os últimos 13 pontos, e o histórico fica preso em `bacen.financiamentos_imobiliarios`, que o dbt não lê.
+- ~~O `bacen_sgs_ingest_dag` extrai só 13 pontos~~ **(corrigido em 2026-10-08, testando contra a API real):** o SGS **ignora** `ultimos` passado como parâmetro de query, que é como o `cliente_bacen` chama, e devolve a série inteira (IPCA, série 433: 560 pontos, desde 01/1980). Para séries mensais, a DAG atual já traz o histórico completo, e o bronze não perde nada. O formato que de fato limita é o de caminho, `/dados/ultimos/N`. Séries **diárias** recusam a chamada sem janela (HTTP 406: exigem `dataInicial`, no máximo 10 anos) e só aceitam o formato de caminho.
 - O `infomoney_imob` contorna o problema relendo `infomoney.acoes_imob` do Postgres para regravar a staging. Usa o Postgres como acumulador.
-- A mesma situação vale para `ibge` (`-20`), `ibge_pnad_construcao_sidra` (`last 12`) e, possivelmente, MRV (só o trimestre mais recente).
+- A perda vale para `ibge` (`-20`) e `ibge_pnad_construcao_sidra` (`last 12`), cuja janela está no caminho e é respeitada pela API, e possivelmente para o MRV (só o trimestre mais recente). Infomoney (`compact`, os últimos 100 pregões, pela documentação da Alpha Vantage) ainda não foi conferido contra a API.
 - **Esse é o caso do `merge`:** `incremental` com `unique_key` no dbt sobre todas as runs da staging. O Postgres de domínio deixa de ser necessário como acumulador.
 
 ### 1.2 Tesouro Gerencial MCid (3 DAGs)
@@ -95,7 +95,7 @@ As DAGs de fora ficam como estão (nem migradas nem apagadas). Removê-las é ou
 | `abecip_financiamentos_ingest_dag` | ABECIP, HTTP (link por scraping) | xlsx | completa | `data_referencia` | `overwrite` |
 | `abecip_instituicoes_ingest_dag` | MinIO (`raw/abecip/<AAAA-MM>/`) | json | todas as competências | — | `overwrite` |
 | `mrv` lançamentos / vendas | MRV RI, API mziq → link | xlsx | trimestre mais recente (a confirmar) | `periodo` | `merge (periodo)` a confirmar |
-| `bacen_sgs_ingest_dag` | BACEN SGS, API | json | parcial (`ultimos=13`) | `tipo, data` | `merge (tipo, data)` |
+| `bacen_sgs_ingest_dag` | BACEN SGS, API | json | completa nas séries mensais (o `ultimos` em query é ignorado); diária exige janela | `tipo, data` | `overwrite` (série inteira); `merge (tipo, data)` só se alguma série diária entrar com janela |
 | `bacen_credito_pib_ingest_dag` | BACEN, API | json | completa (a confirmar) | `data` | `overwrite` a confirmar |
 | `ibge_ingest_dag` | IBGE agregados v3, API (config na Variable `IBGE_CONFIGURACOES`) | json aninhado | parcial (`-20`) | — | `merge` (chave a definir por agregado) |
 | `ibge_pnad_construcao_sidra_ingest_dag` | SIDRA, API | json | parcial (`last 12`) | `periodo, categoria_id` | `merge (periodo, categoria_id)` |
@@ -230,7 +230,7 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 | 1 | **`fgv/incc_m` (piloto proposto)** | Um xlsx público, sem credencial, `overwrite`, com `bronze_fgv_incc_m` dependente. **Diferença esperada:** os nomes passam a ser o cabeçalho do xlsx, então a prata do INCC precisa renomear. |
 | 2 | `fgv/icst` | Mesmo extrator, mais login e TLS legado. |
 | 3 | `fipe`, `mrv` ×2, `abecip_poupanca`, `abecip_financiamentos` | `http_file` com `url_resolver`. |
-| 4 | `bacen_sgs`, `credito_pib`, `infomoney` | Primeiro `merge`. Corrige a perda de histórico. |
+| 4 | `bacen_sgs`, `credito_pib`, `infomoney` | API JSON. O `bacen_sgs` é `overwrite` (série inteira); o primeiro `merge` real é o `infomoney`, se o `compact` se confirmar. |
 | 5 | `ibge`, `ibge_sidra` | JSON aninhado; tira o `Variable.get` do parse. |
 | 6 | `novo_caged` ×3 | PowerBI DSR. |
 | 7 | `tesouro_gerencial/mcid` ×3 | E-mail (provider `imap`). |
