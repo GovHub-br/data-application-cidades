@@ -3,3 +3,7 @@
 O bronze do Postgres é carregado pelo dbt (`fonte_lake`). Os loaders daqui cobrem o
 que o dbt não alcança: Postgres sem MinIO e, na Fase 9, tabelas Iceberg.
 """
+
+from ingestion.loaders.load_types import LoadMode, LoadResult, validate_load
+
+__all__ = ["LoadMode", "LoadResult", "validate_load"]

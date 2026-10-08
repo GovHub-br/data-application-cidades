@@ -11,6 +11,7 @@ Documentação técnica viva do pacote `plugins/ingestion`. Os diagramas estão 
 | `<<abstract>>` | `<<abstract>>` | Classe abstrata (ABC); métodos abstratos terminam em `*` |
 | `<<interface>>` | `<<interface>>` | Protocolo estrutural (`typing.Protocol`) |
 | `<<dataclass>>` | `<<dataclass>>` | `@dataclass(frozen=True)`, objeto de valor imutável |
+| `<<enumeration>>` | `<<enumeration>>` | `Enum` (aqui, `StrEnum`) |
 | `<<module>>` | `<<module>>` | Funções de módulo, sem classe |
 | `<<external>>` | `<<external>>` | Classe de biblioteca (providers do Airflow, pyarrow…) |
 | Herança | `A <\|-- B` | B herda de A |
@@ -431,13 +432,43 @@ classDiagram
   - só então publica o `latest/`. Uma falha apaga o que já tinha subido para a partição (o glob do merge/append não lê Parquet órfão) e deixa o `latest/` como estava.
 - **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
+## `loaders`: modos de carga
+
+```mermaid
+classDiagram
+    class LoadMode {
+        <<enumeration>>
+        OVERWRITE = "overwrite"
+        MERGE = "merge"
+        APPEND = "append"
+    }
+    class LoadResult {
+        <<dataclass>>
+        +mode: LoadMode
+        +table: str
+        +rows: int
+    }
+    class load_types {
+        <<module>>
+        +validate_load(mode, keys) tuple~str~
+    }
+
+    LoadResult o-- LoadMode
+    load_types ..> LoadMode
+```
+
+- **Modos:**
+  - `overwrite`: a última ingestão substitui tudo, e deleções na fonte se propagam;
+  - `merge`: por chave, vale a ingestão mais recente, e deleções não se propagam;
+  - `append`: empilha todas as ingestões.
+- **Regras** (iguais no `fonte_lake` do dbt): `merge` exige chaves, sem repetição; `overwrite` e `append` não aceitam chaves.
+
 ## Próximas classes
 
 Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |
 | 8 | Retrato e relatório de drift |
