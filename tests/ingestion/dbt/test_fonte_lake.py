@@ -87,7 +87,9 @@ def test_unknown_load_mode_fails_at_compile_time(dbt_project: DbtProject) -> Non
     )
 
 
-def test_append_stacks_every_ingestion_and_ignores_latest(dbt_project: DbtProject) -> None:
+def test_append_stacks_every_ingestion_and_ignores_latest(
+    dbt_project: DbtProject,
+) -> None:
     _bacen(dbt_project, load_mode="append")
 
     assert _rows(dbt_project) == [
@@ -97,3 +99,48 @@ def test_append_stacks_every_ingestion_and_ignores_latest(dbt_project: DbtProjec
         ("060000", "ipca", "01/09/2026", "0.48"),
         ("060000", "selic", "01/08/2026", "13.75"),
     ]
+
+
+def test_merge_keeps_the_latest_row_per_key_within_each_file(
+    dbt_project: DbtProject,
+) -> None:
+    _bacen(dbt_project, load_mode="merge", keys=["data"])
+
+    # Agosto revisado vence; julho e a Selic, ausentes da 2ª ingestão, ficam
+    # (deleção não se propaga); setembro entra. A Selic de agosto não colide com
+    # o IPCA de agosto: a dedup é por arquivo + chave.
+    assert [row[1:] for row in _rows(dbt_project)] == [
+        ("ipca", "01/07/2026", "0.26"),
+        ("ipca", "01/08/2026", "-0.30"),
+        ("ipca", "01/09/2026", "0.48"),
+        ("selic", "01/08/2026", "13.75"),
+    ]
+
+
+def test_merge_quotes_keys_that_keep_the_source_header(dbt_project: DbtProject) -> None:
+    dbt_project.source(
+        "fgv_incc_m", caminho="staging/fgv/incc_m", load_mode="merge", keys=["Mês ref"]
+    )
+    dbt_project.model("bronze_fgv_incc_m", "select * from {{ fonte_lake('fgv_incc_m') }}")
+    dbt_project.ingest(
+        "fgv", "incc_m", FIRST, {"incc.json": b'[{"M\\u00eas ref":"jan","v":"1"}]'}
+    )
+    dbt_project.ingest(
+        "fgv", "incc_m", SECOND, {"incc.json": b'[{"M\\u00eas ref":"jan","v":"2"}]'}
+    )
+
+    dbt_project.build()
+
+    assert dbt_project.query('select "Mês ref", v from bronze_fgv_incc_m') == [
+        ("jan", "2")
+    ]
+
+
+def test_merge_without_keys_fails_at_compile_time(dbt_project: DbtProject) -> None:
+    assert "merge exige keys" in _compile_error(dbt_project, load_mode="merge")
+
+
+def test_keys_outside_merge_fail_at_compile_time(dbt_project: DbtProject) -> None:
+    assert "keys só no merge" in _compile_error(
+        dbt_project, load_mode="overwrite", keys=["data"]
+    )

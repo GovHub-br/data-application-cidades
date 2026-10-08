@@ -47,6 +47,18 @@
         {%- endif -%}
 
         {%- set load_mode = meta.get('load_mode') -%}
+        {%- set keys = meta.get('keys') or [] -%}
+        {%- if keys is string -%}{%- set keys = [keys] -%}{%- endif -%}
+        {#- as mesmas regras de ingestion.loaders.validate_load -#}
+        {%- if load_mode == 'merge' and not keys -%}
+            {{ exceptions.raise_compiler_error(
+                "fonte_lake: '" ~ nome_tabela ~ "': merge exige keys em meta.keys") }}
+        {%- elif load_mode in ('overwrite', 'append') and keys -%}
+            {{ exceptions.raise_compiler_error(
+                "fonte_lake: '" ~ nome_tabela ~ "': keys só no merge (load_mode: "
+                ~ load_mode ~ ")") }}
+        {%- endif -%}
+
         {%- if load_mode is none -%}
         {#- fonte legada: caminho é o arquivo (ou glob) a ler -#}
         read_parquet(
@@ -69,6 +81,40 @@
             filename => true,
             union_by_name => true
         )
+        {%- elif load_mode == 'merge' -%}
+        {#- todas as ingestões; por arquivo + chave, vale a linha da ingestão mais
+            recente (maior filename, porque AAAA-MM-DD/HHMMSS ordena como data).
+            O arquivo entra na partição: séries em arquivos distintos (ipca, selic)
+            não colidem na mesma chave. Chave sem ingestão nova fica com o último
+            valor: deleção na fonte não se propaga. As chaves vão entre aspas porque
+            a staging guarda o cabeçalho original. No pg_duckdb, a janela precisa
+            rodar dentro de duckdb.query (fora dela as colunas são r['coluna']). -#}
+        {%- set particao = ["regexp_extract(filename, '[^/]+$')"] -%}
+        {%- for key in keys -%}
+            {%- do particao.append('"' ~ key | replace('"', '""') ~ '"') -%}
+        {%- endfor -%}
+        {%- set consulta -%}
+            select * exclude (_fonte_lake_linha)
+            from (
+                select
+                    *,
+                    row_number() over (
+                        partition by {{ particao | join(', ') }}
+                        order by filename desc
+                    ) as _fonte_lake_linha
+                from read_parquet(
+                    '{{ root }}/{{ caminho }}/2*/*/*.parquet',
+                    filename => true,
+                    union_by_name => true
+                )
+            )
+            where _fonte_lake_linha = 1
+        {%- endset -%}
+        {%- if target.type == 'postgres' -%}
+        duckdb.query($fonte_lake${{ consulta }}$fonte_lake$)
+        {%- else -%}
+        ({{ consulta }})
+        {%- endif -%}
         {%- else -%}
             {{ exceptions.raise_compiler_error(
                 "fonte_lake: '" ~ nome_tabela ~ "' tem load_mode desconhecido: '"
