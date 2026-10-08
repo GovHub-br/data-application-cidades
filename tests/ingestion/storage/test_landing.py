@@ -7,8 +7,7 @@ from pathlib import Path
 import pytest
 
 from ingestion.extractors import RawFile, write_stream
-from ingestion.raw import SUCCESS_MARKER, RawLanding
-from ingestion.storage import StorageBackend, StorageFactory
+from ingestion.storage import SUCCESS_MARKER, StorageBackend, StorageFactory, land
 
 PREFIX = "raw/ibge/sinapi/2026-10-08/060000/"
 
@@ -32,8 +31,8 @@ def _parts(tmp_path: Path, contents: dict[str, bytes]) -> Iterator[RawFile]:
 def test_lands_every_part_under_the_prefix_and_marks_success(
     storage: StorageBackend, tmp_path: Path
 ) -> None:
-    result = RawLanding(storage).land(
-        _parts(tmp_path, {"a.json": b"[1]", "b.json": b"[2, 3]"}), PREFIX
+    result = land(
+        storage, _parts(tmp_path, {"a.json": b"[1]", "b.json": b"[2, 3]"}), PREFIX
     )
 
     assert result.keys == (PREFIX + "a.json", PREFIX + "b.json")
@@ -52,7 +51,7 @@ def test_success_marker_is_a_manifest_of_the_parts(
     storage: StorageBackend, tmp_path: Path
 ) -> None:
     parts = list(_parts(tmp_path, {"a.json": b"[1]"}))
-    RawLanding(storage).land(iter(parts), PREFIX)
+    land(storage, iter(parts), PREFIX)
 
     marker = tmp_path / "marker.json"
     storage.get_file(PREFIX + SUCCESS_MARKER, marker)
@@ -74,7 +73,7 @@ def test_each_local_part_is_deleted_before_the_next_is_extracted(
             produced.append(raw.path)
             yield raw
 
-    RawLanding(storage).land(parts(), PREFIX)
+    land(storage, parts(), PREFIX)
 
     assert all(not path.exists() for path in produced)
 
@@ -100,7 +99,7 @@ def test_marker_is_uploaded_last(tmp_path: Path) -> None:
         def exists(self, key: str) -> bool:
             return local.exists(key)
 
-    RawLanding(Spy()).land(_parts(tmp_path, {"a": b"1", "b": b"2"}), PREFIX)
+    land(Spy(), _parts(tmp_path, {"a": b"1", "b": b"2"}), PREFIX)
 
     assert uploads == [PREFIX + "a", PREFIX + "b", PREFIX + "_SUCCESS"]
 
@@ -113,13 +112,13 @@ def test_failure_mid_extraction_leaves_no_success_marker(
         raise RuntimeError("a fonte caiu no meio")
 
     with pytest.raises(RuntimeError):
-        RawLanding(storage).land(parts(), PREFIX)
+        land(storage, parts(), PREFIX)
 
     assert not storage.exists(PREFIX + SUCCESS_MARKER)
 
 
 def test_no_parts_means_no_marker(storage: StorageBackend) -> None:
-    result = RawLanding(storage).land(iter(()), PREFIX)
+    result = land(storage, iter(()), PREFIX)
 
     assert result.keys == ()
     assert storage.list(PREFIX) == []
@@ -134,10 +133,10 @@ def test_repeated_or_reserved_names_are_rejected(
             yield write_stream([b"1"], tmp_path / "work" / str(n) / name)
 
     with pytest.raises(ValueError):
-        RawLanding(storage).land(parts(), PREFIX)
+        land(storage, parts(), PREFIX)
     assert not storage.exists(PREFIX + SUCCESS_MARKER)
 
 
 def test_prefix_must_be_a_partition_directory(storage: StorageBackend) -> None:
     with pytest.raises(ValueError):
-        RawLanding(storage).land(iter(()), PREFIX.rstrip("/"))
+        land(storage, iter(()), PREFIX.rstrip("/"))

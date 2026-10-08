@@ -27,7 +27,7 @@ toda tipagem e regra de negócio no dbt.
 | Componente da PoC | Ação no cidades |
 |---|---|
 | `extractors/` (`Extractor`, `ExtractorConfig`, `RawFile`, `ExtractorFactory`, `api`, `postgres`, `object_storage`) | Portar o contrato. Criar estratégias para as fontes reais que faltarem (descobrir na Fase 0). |
-| `raw/landing.py` (`RawLanding`) + `layout.py` | Portar. Respeitar a organização por domínio que já existe no MinIO. |
+| `raw/landing.py` (`RawLanding`) + `layout.py` | Portar. O pouso virou a função `storage.land` (helper do storage, sem pacote próprio). Respeitar a organização por domínio que já existe no MinIO. |
 | `converters/` (base + csv, txt, json, xlsx, mdb, parquet) | Portar inteiro. Substitui a conversão raw -> staging atual. |
 | `loaders/base_loader.py` + `load_types.py` (`LoadMode`, `LoadResult`) + `loader_registry.py` | Portar o template e os modos. |
 | `IcebergLoader`, `DeltaLoader`, `HudiLoader` | Iceberg entra na Fase 9 (fase final, catálogo Polaris). Delta e Hudi ficam para depois; a Factory já deixa o caminho aberto. |
@@ -182,7 +182,7 @@ Recomendação: opção 2 como ponte até o MinIO de prod existir. **Decisão do
   `ExtractorFactory.register(...)`, sem singleton.
 - [ ] Teste de contrato primeiro, depois cada estratégia: `api` (com paginação opcional),
   `postgres` (COPY), `object_storage`, e as fontes específicas levantadas na Fase 0.
-- [ ] `RawLanding`: sobe para `raw/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/` e apaga a cópia local.
+- [ ] `storage.land`: sobe para `raw/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/` e apaga a cópia local.
 
 **Critério de aceite:** extrair uma tabela de 2 milhões de linhas sem crescimento de memória
 proporcional (medir RSS no teste de integração); raw idêntica byte a byte ao que a fonte entregou.

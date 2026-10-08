@@ -115,7 +115,7 @@ Itens "a confirmar" se resolvem no PR de migração de cada DAG, com a justifica
 | `cliente_email` | `EmailAttachmentExtractor` (`email`) | Sobre `ImapHook.download_mail_attachments` (disco). |
 | leitura de `raw/abecip/<AAAA-MM>/` em `abecip_instituicoes` | `ObjectStorageExtractor` (`object_storage`) | Sobre `S3Hook`, copia os objetos de um prefixo. |
 | `cliente_sftp` + `scripts/sftp_para_minio.py` | `SftpExtractor` (`sftp`) | Sobre `SFTPHook`, mantém o incremental `lake._ingest_minio_log` e os zips. |
-| `upload_raw_bytes`/`upload_raw_json` (`cliente_minio`) | `RawLanding` (`raw/landing.py`) | Sobe cada parte para `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/` e apaga a cópia local. |
+| `upload_raw_bytes`/`upload_raw_json` (`cliente_minio`) | `land` (`storage/landing.py`) | Sobe cada parte para `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/` e apaga a cópia local. |
 | `ClienteMinio` (boto3) | `S3StorageBackend` sobre `S3Hook` | O `ClienteMinio` continua só para os scripts legados do lake. |
 | `ingestor_lake` (`IngestorLake`, `registros_para_staging_parquet`) | `FileConverter` + modelos | Template Method `convert()`: baixa → `_read()` em batches → `ParquetWriter` → sobe. |
 | `scripts/raw_para_staging.py` (CSV/TXT/XLSX/MDB) | `CsvConverter`, `TxtConverter`, `XlsxConverter`, `MdbConverter` | Reaproveita `lake_utils` (`detectar_encoding`, `mdb_*`). A normalização de nomes **sai** do converter e vai para a prata. |
@@ -135,11 +135,11 @@ Os `cliente_*` do cidades são removidos na Fase 6, quando nenhuma DAG os usar. 
 plugins/ingestion/
 ├── layout.py                  # raw_prefix / staging_prefix(domain, dataset, ingested_at), safe_segment
 ├── dataset.py                 # DatasetSpec (domain, dataset, extractor, converter, load_mode, keys)
-├── storage/                   # base_storage, storage_registry, models/{local_storage, s3_storage}
+├── storage/                   # base_storage, storage_registry, landing (pouso + _SUCCESS),
+│                              # models/{local_storage, s3_storage}
 ├── extractors/                # base_extractor (Extractor, RawFile), config_extractor,
 │                              # extractor_registry, extractor_errors,
 │                              # models/{api, http_file, email, object_storage, sftp}
-├── raw/landing.py             # RawLanding
 ├── converters/                # base_converter (FileConverter), config_converter,
 │                              # converter_registry, converter_errors,
 │                              # models/{csv, txt, json, xlsx, mdb, parquet, powerbi_dsr}

@@ -7,7 +7,7 @@ import pytest
 
 from tests.ingestion.conftest import PLUGINS_DIR
 
-SUBPACKAGES = ["storage", "extractors", "raw", "converters", "loaders", "pipeline"]
+SUBPACKAGES = ["storage", "extractors", "converters", "loaders", "pipeline"]
 
 
 @pytest.mark.parametrize("name", ["ingestion", *(f"ingestion.{s}" for s in SUBPACKAGES)])

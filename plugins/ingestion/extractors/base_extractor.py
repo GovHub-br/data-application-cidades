@@ -29,7 +29,7 @@ class Extractor(ABC):
     """Strategy de extração: copia o dado de uma fonte para disco, como veio.
 
     `extract` é um gerador: grava uma parte, cede o RawFile e só grava a próxima
-    quando quem consome (a RawLanding) já subiu e apagou a anterior. Assim nem a
+    quando quem consome (`storage.land`) já subiu e apagou a anterior. Assim nem a
     memória nem o disco do worker dependem do tamanho da fonte.
 
     `ingestion_time` é o instante da ingestão (com fuso): o dia do e-mail, o fim de
