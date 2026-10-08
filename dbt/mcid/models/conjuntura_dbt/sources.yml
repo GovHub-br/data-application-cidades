@@ -56,9 +56,10 @@ sources:
           dag: credito_pib_ingest_dag
           linhas_minimas: 73   # metade do observado em 2026-08-29 (146)
       - name: bacen_financiamentos_imobiliarios
-        description: "Concessões, taxas de juros e inadimplência PF/PJ (BACEN SGS). Uma linha, séries aninhadas em JSON por coluna."
+        description: "Séries do SGS do BACEN (BACEN_SERIES): um parquet por série (<tipo>.parquet), colunas data e valor em texto."
         meta:
-          caminho: staging/bacen/financiamentos_imobiliarios.parquet
+          caminho: staging/bacen/financiamentos_imobiliarios
+          load_mode: overwrite
           dag: bacen_sgs_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: fgv_icst
@@ -68,9 +69,10 @@ sources:
           dag: icst_ingest_dag
           linhas_minimas: 96   # metade do observado em 2026-08-29 (193)
       - name: fgv_incc_m
-        description: "INCC-M: número índice e variações. Usa `...` como marcador de ausente."
+        description: "INCC-M: série histórica da Sinduscon, cabeçalho original (column_1 = mês, column_2 = índice, No mês/No ano/12 meses = variações). Usa `...` como marcador de ausente e traz o rodapé 'Fonte'."
         meta:
-          caminho: staging/fgv/incc_m.parquet
+          caminho: staging/fgv/incc_m
+          load_mode: overwrite
           dag: incc_m_ingest_dag
           linhas_minimas: 191   # metade do observado em 2026-08-29 (383)
       - name: fipezap_locacao
