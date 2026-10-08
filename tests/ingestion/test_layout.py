@@ -84,3 +84,9 @@ def test_prefix_sanitizes_domain_and_dataset() -> None:
 def test_prefix_rejects_malformed_partition(partition: str) -> None:
     with pytest.raises(ValueError):
         layout.raw_prefix("ibge", "sinapi", partition)
+
+
+def test_latest_prefix_is_the_published_folder_of_the_dataset() -> None:
+    assert layout.latest_prefix("siafi tesouro", "dotação") == (
+        "staging/siafi_tesouro/dota__o/latest/"
+    )

@@ -63,6 +63,7 @@ classDiagram
         +ingestion_partition(run_after: datetime) str
         +raw_prefix(domain, dataset, partition) str
         +staging_prefix(domain, dataset, partition) str
+        +latest_prefix(domain, dataset) str
     }
 ```
 
@@ -477,6 +478,47 @@ classDiagram
 - **Extrator preguiçoso:** `extractor` pode ser uma função que monta a configuração dentro da task (lendo uma Variable, como a lista de séries do BACEN). Nada é consultado no parse.
 - **Validação:** `domain` e `dataset` viram pastas e precisam ser segmentos seguros; `load_mode` e `keys` passam por `validate_load`.
 
+## `pipeline`: os passos das DAGs
+
+```mermaid
+classDiagram
+    class steps {
+        <<module>>
+        +extract_to_raw(spec, ingestion_time) str
+        +convert_to_staging(spec, raw_prefix) str
+    }
+    class DatasetSpec {
+        <<dataclass>>
+    }
+    class ExtractorFactory
+    class landing {
+        <<module>>
+    }
+    class partition {
+        <<module>>
+    }
+    class config_storage {
+        <<module>>
+    }
+    class AirflowSkipException {
+        <<external>>
+    }
+
+    steps ..> DatasetSpec
+    steps ..> ExtractorFactory : extract
+    steps ..> landing : land na raw
+    steps ..> partition : convert_partition
+    steps ..> config_storage : storage_from_env
+    steps ..> AirflowSkipException : fonte ausente
+```
+
+- **Contrato entre tasks:** cada passo recebe e devolve só o prefixo de uma partição, um XCom pequeno.
+  - `extract_to_raw` devolve `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/`;
+  - `convert_to_staging` devolve `staging/<domain>/<dataset>/latest/`.
+- **Resolução em runtime:** storage, Connection e Variable (o extrator preguiçoso do `DatasetSpec`) só são resolvidos dentro dos passos.
+- **Skip:** fonte sem o dado vira `AirflowSkipException`, não falha.
+- **Diretório de trabalho:** `LAKE_TMPDIR`.
+
 ## `loaders`: modos de carga
 
 ```mermaid
@@ -515,7 +557,6 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 5 | `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |
 | 8 | Retrato e relatório de drift |
 | 9 | `CatalogBackend`, `TableBackend`, `IcebergLoader` |

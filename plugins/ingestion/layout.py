@@ -45,6 +45,11 @@ def staging_prefix(domain: str, dataset: str, partition: str) -> str:
     return _prefix("staging", domain, dataset, partition)
 
 
+def latest_prefix(domain: str, dataset: str) -> str:
+    """Última ingestão completa publicada: `staging/<domain>/<dataset>/latest/`."""
+    return f"staging/{safe_segment(domain)}/{safe_segment(dataset)}/latest/"
+
+
 def _prefix(layer: str, domain: str, dataset: str, partition: str) -> str:
     if not _PARTITION.fullmatch(partition):
         raise ValueError(f"partição fora do formato AAAA-MM-DD/HHMMSS: {partition!r}")

@@ -1,16 +1,19 @@
 """Contrato dos passos do pipeline.
 
-Extract_to_raw e convert_to_staging recebem e devolvem só caminhos.
-
-Cada implementação registrada entra em IMPLEMENTATIONS e herda estes testes.
-Vazio até a Fase 5: o pytest reporta como skipped.
+As tasks só trocam caminhos (XCom pequeno): cada passo recebe e devolve string com o
+prefixo de uma partição, nunca dado. Os testes de comportamento estão em
+test_steps.py.
 """
 
-import pytest
+import inspect
 
-IMPLEMENTATIONS: list[str] = []
+from ingestion.pipeline import steps
 
 
-@pytest.mark.parametrize("name", IMPLEMENTATIONS)
-def test_contract(name: str) -> None:
-    raise NotImplementedError(name)
+def test_steps_exchange_only_prefixes() -> None:
+    extract = inspect.signature(steps.extract_to_raw)
+    convert = inspect.signature(steps.convert_to_staging)
+
+    assert extract.return_annotation in (str, "str")
+    assert list(convert.parameters)[1] == "raw_prefix"
+    assert convert.return_annotation in (str, "str")
