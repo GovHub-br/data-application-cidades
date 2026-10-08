@@ -96,6 +96,9 @@ def test_marker_is_uploaded_last(tmp_path: Path) -> None:
         def delete(self, key: str) -> None:
             local.delete(key)
 
+        def copy(self, src_key: str, dst_key: str) -> None:
+            local.copy(src_key, dst_key)
+
         def exists(self, key: str) -> bool:
             return local.exists(key)
 

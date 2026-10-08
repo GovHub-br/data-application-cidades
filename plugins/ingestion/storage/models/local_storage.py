@@ -40,6 +40,12 @@ class LocalStorageBackend(StorageBackend):
     def delete(self, key: str) -> None:
         self._existing(key).unlink()
 
+    def copy(self, src_key: str, dst_key: str) -> None:
+        source = self._existing(src_key)
+        target = self._resolve(dst_key)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+
     def exists(self, key: str) -> bool:
         return self._resolve(key).is_file()
 

@@ -65,5 +65,16 @@ class S3StorageBackend(StorageBackend):
             raise ObjectNotFoundError(key)
         self.hook.delete_objects(bucket=self.bucket, keys=key)
 
+    def copy(self, src_key: str, dst_key: str) -> None:
+        # CopyObject roda no servidor (até 5 GiB por objeto, folgado para Parquet).
+        if not self.exists(src_key):
+            raise ObjectNotFoundError(src_key)
+        self.hook.copy_object(
+            source_bucket_key=src_key,
+            dest_bucket_key=dst_key,
+            source_bucket_name=self.bucket,
+            dest_bucket_name=self.bucket,
+        )
+
     def exists(self, key: str) -> bool:
         return bool(self.hook.check_for_key(key, bucket_name=self.bucket))

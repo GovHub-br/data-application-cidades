@@ -99,5 +99,8 @@ class _PrefixedStorage(StorageBackend):
     def delete(self, key: str) -> None:
         self.inner.delete(self.prefix + key)
 
+    def copy(self, src_key: str, dst_key: str) -> None:
+        self.inner.copy(self.prefix + src_key, self.prefix + dst_key)
+
     def exists(self, key: str) -> bool:
         return self.inner.exists(self.prefix + key)

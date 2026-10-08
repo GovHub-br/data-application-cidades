@@ -33,5 +33,13 @@ class StorageBackend(ABC):
         """Apaga `key`. Levanta `ObjectNotFoundError` se o objeto não existir."""
 
     @abstractmethod
+    def copy(self, src_key: str, dst_key: str) -> None:
+        """Copia `src_key` para `dst_key` dentro do storage, sem passar pelo worker.
+
+        Substitui o destino se ele existir. Levanta `ObjectNotFoundError` se a origem
+        não existir.
+        """
+
+    @abstractmethod
     def exists(self, key: str) -> bool:
         """Se existe um objeto exatamente em `key`."""

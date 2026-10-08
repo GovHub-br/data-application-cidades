@@ -99,3 +99,32 @@ def test_list_uses_string_prefix_semantics(
 
 def test_list_of_missing_prefix_is_empty(backend: StorageBackend) -> None:
     assert backend.list("raw/nada/") == []
+
+
+def test_copy_duplicates_the_object_and_keeps_the_source(
+    backend: StorageBackend, tmp_path: Path
+) -> None:
+    backend.put_file("staging/a/2026-10-08/060000/x.parquet", _file(tmp_path, "x", b"v1"))
+
+    backend.copy("staging/a/2026-10-08/060000/x.parquet", "staging/a/latest/x.parquet")
+
+    target = tmp_path / "copia"
+    backend.get_file("staging/a/latest/x.parquet", target)
+    assert target.read_bytes() == b"v1"
+    assert backend.exists("staging/a/2026-10-08/060000/x.parquet")
+
+
+def test_copy_overwrites_the_destination(backend: StorageBackend, tmp_path: Path) -> None:
+    backend.put_file("novo", _file(tmp_path, "novo", b"novo"))
+    backend.put_file("destino", _file(tmp_path, "velho", b"velho"))
+
+    backend.copy("novo", "destino")
+
+    target = tmp_path / "out"
+    backend.get_file("destino", target)
+    assert target.read_bytes() == b"novo"
+
+
+def test_copy_of_missing_object_raises(backend: StorageBackend) -> None:
+    with pytest.raises(ObjectNotFoundError):
+        backend.copy("nao/existe", "destino")
