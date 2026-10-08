@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from ingestion.extractors import ExtractorConfig, ExtractorFactory, MailQuery
+from ingestion.extractors import (
+    ExtractorConfig,
+    ExtractorFactory,
+    MailQuery,
+    SourceNotFoundError,
+)
 from tests.ingestion.extractors.conftest import FakeImapHook
 
 QUERY = MailQuery(
@@ -25,6 +30,7 @@ def test_searches_the_ingestion_day_in_brasilia_with_english_month(
     fake_imap: type[FakeImapHook], tmp_path: Path
 ) -> None:
     # 02h30 UTC do dia 9 ainda é dia 8 em Brasília; o IMAP só entende mês em inglês.
+    # SINCE d BEFORE d+1 é o ON d da RFC 3501, com suporte mais amplo nos servidores.
     fake_imap.attachments = {"r.zip": b"PK"}
 
     _extract(tmp_path, datetime(2026, 10, 9, 2, 30, tzinfo=timezone.utc))
@@ -32,7 +38,7 @@ def test_searches_the_ingestion_day_in_brasilia_with_english_month(
     [call] = fake_imap.calls
     assert call["conn_id"] == "imap_tesouro"
     assert call["mail_filter"] == (
-        '(ON 08-Oct-2026 FROM "tesouro@exemplo.gov.br" '
+        '(SINCE 08-Oct-2026 BEFORE 09-Oct-2026 FROM "tesouro@exemplo.gov.br" '
         'SUBJECT "dotacao_execucao_outras_fontes_mcid")'
     )
     assert call["mail_folder"] == "INBOX"
@@ -66,3 +72,26 @@ def test_config_without_mail_query_is_rejected() -> None:
             ExtractorConfig(source="email", conn_id="imap_tesouro"),
             ingestion_time=datetime(2026, 10, 8, 12, tzinfo=timezone.utc),
         )
+
+
+def test_day_window_crosses_month_and_year(
+    fake_imap: type[FakeImapHook], tmp_path: Path
+) -> None:
+    fake_imap.attachments = {"r.zip": b"PK"}
+
+    _extract(tmp_path, datetime(2026, 12, 31, 15, tzinfo=timezone.utc))
+
+    assert fake_imap.calls[0]["mail_filter"].startswith(
+        "(SINCE 31-Dec-2026 BEFORE 01-Jan-2027 "
+    )
+
+
+def test_leftovers_in_work_dir_are_not_taken_as_todays_attachments(
+    fake_imap: type[FakeImapHook], tmp_path: Path
+) -> None:
+    fake_imap.attachments = {"relatorio.zip": b"PK"}
+    _extract(tmp_path, datetime(2026, 10, 8, 12, tzinfo=timezone.utc))
+
+    fake_imap.attachments = {}
+    with pytest.raises(SourceNotFoundError):
+        _extract(tmp_path, datetime(2026, 10, 9, 12, tzinfo=timezone.utc))

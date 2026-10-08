@@ -13,11 +13,14 @@ from ingestion.storage import StorageBackend, StorageFactory
 PREFIX = "raw/ibge/sinapi/2026-10-08/060000/"
 
 
-@pytest.fixture(params=["local", "s3"])
+@pytest.fixture(
+    params=["local", "s3", pytest.param("minio", marks=pytest.mark.integration)]
+)
 def storage(request: pytest.FixtureRequest, tmp_path: Path) -> StorageBackend:
     if request.param == "local":
         return StorageFactory.create("local", root=tmp_path / "lake")
-    backend: StorageBackend = request.getfixturevalue("s3_backend")
+    name = "s3_backend" if request.param == "s3" else "minio_backend"
+    backend: StorageBackend = request.getfixturevalue(name)
     return backend
 
 
