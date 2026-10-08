@@ -251,13 +251,75 @@ classDiagram
 
 ```mermaid
 classDiagram
+    class FileConverter {
+        <<abstract>>
+        +config: ConverterConfig
+        +memory_pool: MemoryPool | None
+        +convert(path, out_dir) Iterator~ConvertedFile~
+        #_read(path) Iterator~Source~*
+        #_after_write(converted)
+        -_write(source, target) ConvertedFile
+    }
+    class ConverterFactory {
+        -_registry: dict~str, type~
+        -_extensions: dict~str, str~
+        +register(name, extensions)$ decorator
+        +for_file(path, config)$ FileConverter
+    }
+    class ConverterConfig {
+        <<dataclass>>
+        +format: str | None
+        +encoding: str = "utf-8"
+        +delimiter: str | None
+        +skip_rows: int = 0
+        +sheet: str | None
+        +header_row: int = 1
+        +record_path: str = "item"
+        +include: str | None
+    }
+    class Source {
+        <<dataclass>>
+        +suffix: str | None
+        +header: Sequence~str~
+        +batches: Iterable~RecordBatch~
+    }
+    class ConvertedFile {
+        <<dataclass>>
+        +name: str
+        +path: Path
+        +rows: int
+        +columns: tuple~str~
+    }
+    class base_converter {
+        <<module>>
+        +batches_from_rows(rows, width, batch_rows) Iterator~RecordBatch~
+    }
     class columns {
         <<module>>
         +fix_header(names) list~str~
     }
+    class ConversionError
+    class ParquetWriter {
+        <<external>>
+    }
+
+    FileConverter o-- ConverterConfig
+    ConverterFactory ..> FileConverter : cria por formato ou extensão
+    FileConverter ..> Source : _read produz
+    FileConverter ..> ConvertedFile : convert produz
+    FileConverter ..> columns : fix_header
+    FileConverter ..> ParquetWriter : lote a lote
+    FileConverter ..> ConversionError : levanta
 ```
 
-- **`fix_header`:** nome vazio vira `column_<n>`, repetido ganha `_2`, `_3`…; nada além disso (renome é da prata).
+- **Template Method:** `convert` é fixo. Cada formato implementa só `_read`, que devolve as tabelas do arquivo com o cabeçalho e as linhas em lotes de texto.
+- **Fixo para todo formato:**
+  - conserta o cabeçalho;
+  - força `string` em todas as colunas;
+  - escreve o Parquet lote a lote;
+  - confere as linhas gravadas;
+  - chama `_after_write`, gancho reservado para o drift (Fase 8).
+- **Nome de saída:** o do arquivo da raw, com aba, tabela ou membro como sufixo (`relatorio__dotacao.parquet`).
 
 ## Próximas classes
 
@@ -265,7 +327,7 @@ Entram neste arquivo conforme forem implementadas:
 
 | Fase | Classes |
 |---|---|
-| 3 | `ConverterConfig`, `FileConverter` e os conversores csv, txt, json, xlsx, mdb, parquet e zip; `ConverterFactory`, `convert_partition`, `publish_latest` |
+| 3 | Conversores csv, txt, json, xlsx, mdb, parquet e zip; `convert_partition`, `publish_latest` |
 | 4 | `LoadMode`, `LoadResult` |
 | 5 | `DatasetSpec`, `pipeline.steps` |
 | 7 | `Loader`, `PostgresCopyLoader` |
