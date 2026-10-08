@@ -54,3 +54,33 @@ def test_ingestion_partition_rejects_naive_datetime() -> None:
     # Sem fuso não dá para saber o dia em Brasília; adivinhar trocaria a pasta do dia.
     with pytest.raises(ValueError):
         layout.ingestion_partition(datetime(2026, 10, 8, 12, 0))
+
+
+def test_raw_prefix_is_domain_dataset_date_time() -> None:
+    assert (
+        layout.raw_prefix("ibge", "sinapi", "2026-10-08/060000")
+        == "raw/ibge/sinapi/2026-10-08/060000/"
+    )
+
+
+def test_staging_prefix_mirrors_raw() -> None:
+    assert (
+        layout.staging_prefix("ibge", "sinapi", "2026-10-08/060000")
+        == "staging/ibge/sinapi/2026-10-08/060000/"
+    )
+
+
+def test_prefix_sanitizes_domain_and_dataset() -> None:
+    assert (
+        layout.raw_prefix("siafi tesouro", "dotação", "2026-10-08/060000")
+        == "raw/siafi_tesouro/dota__o/2026-10-08/060000/"
+    )
+
+
+@pytest.mark.parametrize(
+    "partition",
+    ["2026-10-08", "2026-10-08/0600", "08-10-2026/060000", "2026-10-08/060000/x", ""],
+)
+def test_prefix_rejects_malformed_partition(partition: str) -> None:
+    with pytest.raises(ValueError):
+        layout.raw_prefix("ibge", "sinapi", partition)
