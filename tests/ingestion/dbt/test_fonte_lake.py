@@ -85,3 +85,15 @@ def test_unknown_load_mode_fails_at_compile_time(dbt_project: DbtProject) -> Non
     assert "load_mode desconhecido: 'upsert'" in _compile_error(
         dbt_project, load_mode="upsert"
     )
+
+
+def test_append_stacks_every_ingestion_and_ignores_latest(dbt_project: DbtProject) -> None:
+    _bacen(dbt_project, load_mode="append")
+
+    assert _rows(dbt_project) == [
+        ("060000", "ipca", "01/07/2026", "0.26"),
+        ("060000", "ipca", "01/08/2026", "-0.30"),
+        ("060000", "ipca", "01/08/2026", "-0.32"),
+        ("060000", "ipca", "01/09/2026", "0.48"),
+        ("060000", "selic", "01/08/2026", "13.75"),
+    ]

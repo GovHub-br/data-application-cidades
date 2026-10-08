@@ -61,6 +61,14 @@
             filename => true,
             union_by_name => true
         )
+        {%- elif load_mode == 'append' -%}
+        {#- todas as ingestões empilhadas; 2*/*/ casa AAAA-MM-DD/HHMMSS e deixa o
+            latest/ de fora (senão a última ingestão entraria duas vezes) -#}
+        read_parquet(
+            '{{ root }}/{{ caminho }}/2*/*/*.parquet',
+            filename => true,
+            union_by_name => true
+        )
         {%- else -%}
             {{ exceptions.raise_compiler_error(
                 "fonte_lake: '" ~ nome_tabela ~ "' tem load_mode desconhecido: '"
