@@ -21,6 +21,9 @@ apache-airflow-providers-amazon = "9.36.0"
 # HttpHook e ImapHook dos extratores da ingestão (plugins/ingestion).
 apache-airflow-providers-http = "6.1.0"
 apache-airflow-providers-imap = "3.12.1"
+# Conversores da ingestão: xlsx (openpyxl) e json em streaming (ijson).
+openpyxl = "3.1.5"
+ijson = "3.4.0.post0"
 numpy = "2.4.6"
 dbt-core = "1.12.5"
 dbt-postgres = "1.11.0"
