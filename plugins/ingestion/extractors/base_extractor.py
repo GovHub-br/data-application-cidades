@@ -1,10 +1,13 @@
 """Contrato da extração: o dado da fonte vira arquivo em disco, no formato original."""
 
 import hashlib
-from collections.abc import Iterable
+from abc import ABC, abstractmethod
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
+from ingestion.extractors.config_extractor import ExtractorConfig
 from ingestion.layout import safe_segment
 
 
@@ -20,6 +23,33 @@ class RawFile:
     path: Path
     size: int
     sha256: str
+
+
+class Extractor(ABC):
+    """Strategy de extração: copia o dado de uma fonte para disco, como veio.
+
+    `extract` é um gerador: grava uma parte, cede o RawFile e só grava a próxima
+    quando quem consome (a RawLanding) já subiu e apagou a anterior. Assim nem a
+    memória nem o disco do worker dependem do tamanho da fonte.
+
+    `ingestion_time` é o instante da ingestão (com fuso): o dia do e-mail, o fim de
+    uma janela de datas. Sem singleton: cada execução tem a sua instância.
+    """
+
+    def __init__(self, config: ExtractorConfig, ingestion_time: datetime) -> None:
+        self.config = config
+        self.ingestion_time = ingestion_time
+
+    @classmethod
+    def from_config(
+        cls, config: ExtractorConfig, ingestion_time: datetime
+    ) -> "Extractor":
+        """Constrói a estratégia; sobrescreva para validar os campos que ela usa."""
+        return cls(config, ingestion_time)
+
+    @abstractmethod
+    def extract(self, work_dir: Path) -> Iterator[RawFile]:
+        """Grava as partes da fonte sob `work_dir`, uma por vez."""
 
 
 def write_stream(chunks: Iterable[bytes], path: Path, name: str | None = None) -> RawFile:
