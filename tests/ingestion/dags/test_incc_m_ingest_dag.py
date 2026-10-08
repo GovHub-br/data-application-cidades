@@ -23,6 +23,7 @@ def test_dag_identity_and_wiring(module: Any) -> None:
 
     assert dag.dag_id == "incc_m_ingest_dag"
     assert dag.catchup is False and dag.max_active_runs == 1
+    assert dag.schedule == "0 6 * * *"
     assert {"fgv", "incc_m", "conjuntura", "ingestion"} <= set(dag.tags)
     assert set(dag.task_dict) == {"extract_to_raw", "convert_to_staging"}
     assert dag.task_dict["convert_to_staging"].upstream_task_ids == {"extract_to_raw"}

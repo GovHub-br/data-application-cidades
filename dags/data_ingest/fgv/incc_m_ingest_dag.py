@@ -46,7 +46,8 @@ DATASET = DatasetSpec(
 
 @dag(
     dag_id="incc_m_ingest_dag",
-    # Provisório: o cron real vem da Variable dynamic_schedules na validação da Fase 5.
+    # Diário às 06:00: a fonte é mensal, mas sem data fixa de publicação; rodar todo
+    # dia deixa o latest/ fresco. A conjuntura_dag também dispara esta DAG na segunda.
     schedule="0 6 * * *",
     start_date=datetime(2023, 1, 1),
     catchup=False,
