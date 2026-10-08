@@ -183,7 +183,7 @@ tests/ingestion/
   - os providers `http`, `amazon`, `sftp` (já na imagem oficial, faltam no venv dos testes);
   - `imap`;
   - eventualmente `ijson`.
-- **Postgres:** o DW é **Postgres 15 com pg_duckdb 1.0** (confirmado pelo Lucas em 2026-10-08), então o `MERGE` nativo está disponível para o `PostgresCopyLoader` da Fase 7. A imagem local do compose é `postgres:17-alpine`, sem pg_duckdb.
+- **Postgres:** o DW é **Postgres 15 com pg_duckdb 1.2.0** (confirmado pelo Lucas em 2026-10-08), então o `MERGE` nativo está disponível para o `PostgresCopyLoader` da Fase 7. A imagem local do compose é `postgres:17-alpine`, sem pg_duckdb.
 - **Testes:** 8 arquivos em `tests/`, que fazem `sys.path.insert` à mão, sem `conftest` nem marcador `integration`.
 - **CI:** `pytest tests` sem serviços, mais `lint-ci` só de SQL (`|| true`).
 - **Lint local:** `make lint` roda black, ruff (E/F/W/C90, 90 colunas) e mypy estrito.
@@ -221,7 +221,7 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 | Raw imutável × mascaramento in-place | Fase 6 (SFTP) | — |
 | Bronzes do SFTP dependem dos nomes normalizados pelo `raw_para_staging` | Fase 6 (SFTP) | Mover a normalização para a prata dessas bronzes. |
 | Prod sem MinIO quebra o bronze via `read_parquet` (9.1) | Fase 7 | — |
-| ~~Versão do Postgres do DW e do pg_duckdb~~ | — | Resolvido: Postgres 15, pg_duckdb 1.0. |
+| ~~Versão do Postgres do DW e do pg_duckdb~~ | — | Resolvido: Postgres 15, pg_duckdb 1.2.0. |
 
 ## 10. Ordem de migração
 
