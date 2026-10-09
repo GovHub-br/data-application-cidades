@@ -61,6 +61,20 @@ class FgvDadosQuery:
 
 
 @dataclass(frozen=True)
+class ObjectQuery:
+    """Objetos que outro processo já gravou no bucket do lake.
+
+    `pattern` casa a chave inteira (a partir de `prefix`); `rename`, quando dado,
+    é o nome do arquivo na raw, com os grupos do `pattern` (`\\1.json`). Sem
+    `rename`, vale o último segmento da chave.
+    """
+
+    prefix: str
+    pattern: str
+    rename: str | None = None
+
+
+@dataclass(frozen=True)
 class ExtractorConfig:
     """O que extrair e de onde. `source` escolhe a estratégia no ExtractorFactory.
 
@@ -68,6 +82,7 @@ class ExtractorConfig:
     - `adapter`: HTTPAdapter montado na sessão, para fontes com TLS fora do padrão.
     - `mail`: busca da estratégia `email`.
     - `fgvdados`: série da estratégia `fgvdados`.
+    - `objects`: objetos da estratégia `object_storage`.
 
     As estratégias HTTP precisam de `conn_id` (a Connection da fonte, quando há
     credencial) ou de `base_url` (fonte pública: a Connection é montada em memória,
@@ -81,3 +96,4 @@ class ExtractorConfig:
     adapter: Any = None
     mail: MailQuery | None = None
     fgvdados: FgvDadosQuery | None = None
+    objects: ObjectQuery | None = None

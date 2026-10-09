@@ -8,7 +8,9 @@ from ingestion.storage.models.prefixed_storage import PrefixedStorage
 from ingestion.storage.storage_registry import StorageFactory
 
 
-def storage_from_env(env: Mapping[str, str] | None = None) -> StorageBackend:
+def storage_from_env(
+    env: Mapping[str, str] | None = None, *, with_prefix: bool = True
+) -> StorageBackend:
     """Monta o storage do lake a partir das variáveis de ambiente.
 
     - `INGESTION_STORAGE_BACKEND`: `s3` (padrão) ou `local`.
@@ -20,10 +22,13 @@ def storage_from_env(env: Mapping[str, str] | None = None) -> StorageBackend:
 
     O bucket não tem valor padrão de propósito: no MinIO compartilhado, errar de
     bucket grava no lake de outro time.
+
+    `with_prefix=False` ignora o prefixo: para LER o que outro processo gravou no
+    bucket (a fonte da estratégia `object_storage`), que não muda com o teste.
     """
     env = os.environ if env is None else env
     backend = _backend(env)
-    prefix = env.get("INGESTION_STORAGE_PREFIX")
+    prefix = env.get("INGESTION_STORAGE_PREFIX") if with_prefix else None
     return PrefixedStorage(backend, prefix) if prefix else backend
 
 
