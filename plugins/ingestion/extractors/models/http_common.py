@@ -27,12 +27,32 @@ TIMEOUT_SECONDS = 120
 CHUNK_BYTES = 1024 * 1024
 
 
-class _ServerError(Exception):
-    """5xx: a fonte pode se recuperar, então vale tentar de novo."""
+class _Retryable(Exception):
+    """Resposta da qual a fonte pode se recuperar: vale tentar de novo."""
+
+
+class _ServerError(_Retryable):
+    """5xx."""
 
     def __init__(self, status: int) -> None:
         super().__init__(f"HTTP {status}")
-        self.status = status
+
+
+class _NotJson(_Retryable):
+    """2xx com corpo que não é JSON numa API JSON: página de erro servida como
+    sucesso (o SGS do BACEN faz isso de forma intermitente).
+    """
+
+    def __init__(self, content_type: str) -> None:
+        super().__init__(f"resposta não é JSON ({content_type})")
+
+
+def _declares_non_json(response: requests.Response) -> str | None:
+    """O Content-Type, se a resposta declarar um que não é JSON; senão None."""
+    content_type = response.headers.get("Content-Type", "")
+    if content_type and "json" not in content_type.lower():
+        return content_type
+    return None
 
 
 class HttpHooks:
@@ -52,11 +72,15 @@ class HttpHooks:
         return self._hooks[method]
 
 
-def fetch(hooks: HttpHooks, request: HttpRequest) -> requests.Response:
+def fetch(
+    hooks: HttpHooks, request: HttpRequest, *, expect_json: bool = False
+) -> requests.Response:
     """Abre a resposta em stream, com retry em 5xx e falha de rede.
 
     404 vira SourceNotFoundError; outro 4xx, ExtractionError sem retry (repetir não
-    muda a resposta); 5xx que persiste, ExtractionError com o último status.
+    muda a resposta); 5xx que persiste, ExtractionError com o último status. Com
+    `expect_json`, um 2xx que declara Content-Type não JSON também é repetido e, se
+    persistir, vira ExtractionError: a raw nunca guarda uma página de erro como dado.
     """
     hook = hooks.for_method(request.method)
     endpoint = (
@@ -96,24 +120,20 @@ def fetch(hooks: HttpHooks, request: HttpRequest) -> requests.Response:
                 },
                 **kwargs,
             )
-        if response.status_code >= 500:
-            response.close()
-            raise _ServerError(response.status_code)
+        _raise_if_retryable(response, expect_json)
         return response
 
     retrying = Retrying(
         stop=stop_after_attempt(RETRY_ATTEMPTS),
         wait=wait_exponential(multiplier=RETRY_WAIT_SECONDS, max=30),
-        retry=retry_if_exception_type((_ServerError, requests.ConnectionError)),
+        retry=retry_if_exception_type((_Retryable, requests.ConnectionError)),
         reraise=True,
     )
     where = f"{request.method} {endpoint}"
     try:
         response = retrying(attempt)
-    except _ServerError as exc:
-        raise ExtractionError(
-            f"{where}: HTTP {exc.status} após {RETRY_ATTEMPTS} tentativas"
-        ) from exc
+    except _Retryable as exc:
+        raise ExtractionError(f"{where}: {exc} após {RETRY_ATTEMPTS} tentativas") from exc
     except requests.RequestException as exc:
         raise ExtractionError(f"{where}: {exc}") from exc
 
@@ -124,6 +144,17 @@ def fetch(hooks: HttpHooks, request: HttpRequest) -> requests.Response:
         response.close()
         raise ExtractionError(f"{where}: HTTP {response.status_code}")
     return response
+
+
+def _raise_if_retryable(response: requests.Response, expect_json: bool) -> None:
+    if response.status_code >= 500:
+        response.close()
+        raise _ServerError(response.status_code)
+    if expect_json and response.status_code < 300:
+        content_type = _declares_non_json(response)
+        if content_type:
+            response.close()
+            raise _NotJson(content_type)
 
 
 def save(response: requests.Response, path: Path, name: str) -> RawFile:

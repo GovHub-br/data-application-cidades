@@ -64,6 +64,27 @@ def test_server_error_that_persists_becomes_extraction_error(
         _extract(tmp_path, HttpRequest(name="f", endpoint="/fora"))
 
 
+def test_html_instead_of_json_is_retried(
+    http_server: FakeHttpServer, tmp_path: Path
+) -> None:
+    # O SGS do BACEN às vezes responde 200 com a página "Requisição inválida!".
+    route = http_server.routes["/sgs"] = Route(
+        body=b"[]", headers={"Content-Type": "application/json"}, html_first=2
+    )
+
+    assert _extract(tmp_path, HttpRequest(name="s", endpoint="/sgs")) == [b"[]"]
+    assert route.calls == 3
+
+
+def test_html_that_persists_becomes_extraction_error(
+    http_server: FakeHttpServer, tmp_path: Path
+) -> None:
+    http_server.routes["/sgs"] = Route(html_first=99)
+
+    with pytest.raises(ExtractionError, match="não é JSON.*text/html"):
+        _extract(tmp_path, HttpRequest(name="s", endpoint="/sgs"))
+
+
 def test_client_error_is_not_retried(http_server: FakeHttpServer, tmp_path: Path) -> None:
     route = http_server.routes["/proibido"] = Route(status=403)
 

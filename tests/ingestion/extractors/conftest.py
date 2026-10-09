@@ -35,12 +35,15 @@ class Route:
     """Resposta de uma rota: status, corpo (bytes ou gerador) e cabeçalhos.
 
     `fail_first` responde 503 nas primeiras N chamadas, para testar o retry.
+    `html_first` responde 200 com uma página HTML nas primeiras N chamadas, como o
+    SGS do BACEN faz quando recusa a requisição.
     """
 
     body: Body = b""
     status: int = 200
     headers: dict[str, str] = field(default_factory=dict)
     fail_first: int = 0
+    html_first: int = 0
     calls: int = 0
     requests: list[dict[str, Any]] = field(default_factory=list)
 
@@ -80,6 +83,14 @@ class FakeHttpServer:
         if route.calls <= route.fail_first:
             handler.send_response(503)
             handler.end_headers()
+            return
+        if route.calls <= route.fail_first + route.html_first:
+            page = b"<html><title>Requisicao invalida!</title></html>"
+            handler.send_response(200)
+            handler.send_header("Content-Type", "text/html; charset=utf-8")
+            handler.send_header("Content-Length", str(len(page)))
+            handler.end_headers()
+            handler.wfile.write(page)
             return
         handler.send_response(route.status)
         for name, value in route.headers.items():
