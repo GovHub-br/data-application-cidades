@@ -29,10 +29,12 @@ variam) e linha com campos a mais ou a menos descartada e contada; xlsx aba a
 aba. A staging guarda o cabeçalho original, e o macro `normalizar_colunas`
 entrega às pratas os nomes de sempre.
 
-LoadMode: append em todas. Cada arquivo é uma entrega (um retrato do mês, uma
-remessa de liberações); a bronze que quer só o último usa `arquivo_mais_recente`.
-`overwrite` não serve aqui: com a extração incremental, a última ingestão traz só
-o que chegou de novo (na primeira, o histórico inteiro).
+LoadMode: overwrite em todas. Cada entrega é um retrato completo (a base inteira
+do mês, ou a série inteira mais os novos: as contagens se repetem de uma entrega
+para a outra), então a nova substitui a anterior. A extração incremental grava
+uma ingestão por entrega, na ordem de chegada na fonte; o latest/ fica com a
+mais recente e aponta a anterior como antecessora, que continua na partição
+dela. Na primeira carga, o histórico entra como uma sequência de ingestões.
 """
 
 from datetime import datetime, timedelta
@@ -196,7 +198,7 @@ def _spec(dataset: str, nome: str, pacotes: bool, root: str = GEFUS) -> DatasetS
             ),
         ),
         converter=CONVERSAO,
-        load_mode=LoadMode.APPEND,
+        load_mode=LoadMode.OVERWRITE,
         incremental=True,
         prepare=(
             Unpack(members=membros, require_match=not pacotes),

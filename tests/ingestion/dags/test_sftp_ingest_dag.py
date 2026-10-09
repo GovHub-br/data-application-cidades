@@ -106,7 +106,7 @@ def test_dag_identity_and_one_task_group_per_family(module: Any) -> None:
         assert convert.upstream_task_ids == {f"{spec.dataset}.extract_to_raw"}
 
 
-def test_every_family_is_incremental_append_masked_and_auto_dialect(
+def test_every_family_is_incremental_overwrite_masked_and_auto_dialect(
     module: Any,
 ) -> None:
     for spec in module.DATASETS:
@@ -114,7 +114,8 @@ def test_every_family_is_incremental_append_masked_and_auto_dialect(
         assert spec.domain == "sftp"
         assert config.source == "sftp" and config.conn_id == "sftp_mcid"
         assert spec.incremental is True
-        assert spec.load_mode is LoadMode.APPEND
+        # retrato completo: o latest/ fica com a entrega mais recente
+        assert spec.load_mode is LoadMode.OVERWRITE
         unpack, mask = spec.prepare
         assert isinstance(unpack, Unpack) and isinstance(mask, MaskPii)
         assert spec.converter.encoding == "auto"
