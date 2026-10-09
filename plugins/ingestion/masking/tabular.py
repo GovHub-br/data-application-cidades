@@ -55,9 +55,17 @@ def mascarar_tabular(
                 return targets, has_pf, 0, 0
 
         idx_action = [(t["idx"], t["action"]) for t in targets]
+        largura = None if targets_fixos is not None else len(header)
         for row in reader:
             total += 1
             row_alterada = False
+            if largura is not None and len(row) != largura:
+                # Campos a mais ou a menos: a posição das colunas não vale (o CEP
+                # cairia numa coluna sem máscara). Tudo que não é vazio é redigido.
+                row = [keys.redact(c) if c and c.strip() else c for c in row]
+                alterados += 1
+                writer.writerow(row)
+                continue
             for idx, action in idx_action:
                 if idx < len(row) and row[idx] is not None and row[idx].strip() != "":
                     row[idx] = (

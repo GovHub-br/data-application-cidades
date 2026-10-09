@@ -98,3 +98,19 @@ def test_without_secret_masking_refuses_to_run(
 
     with pytest.raises(ValueError, match="MASKING_HMAC_SECRET"):
         _mask("pf.csv", tmp_path)
+
+
+def test_row_with_more_fields_than_the_header_is_fully_redacted(tmp_path: Path) -> None:
+    # Na INT039 de 2026-04-30, 2 linhas têm 40 campos num layout de 37: a posição
+    # das colunas não vale, e o CEP caía numa coluna que não é mascarada.
+    source = tmp_path / "INT039_TESTE.TXT"
+    source.write_bytes(
+        b"NU_CPF|NO_MUTUARIO|CO_CEP|NO_MUNICIPIO\n"
+        b"12345678901|JOAO|37550000|POUSO ALEGRE\n"
+        b"98765432100|MARIA|extra|37550001|POUSO ALEGRE\n"
+    )
+    [part] = MaskPii().apply(describe_file(source), tmp_path / "work")
+
+    good, shifted = part.path.read_bytes().decode("latin-1").splitlines()[1:]
+    assert good.split("|")[1:3] == ["***", "***"]
+    assert shifted == "***|***|***|***|***"
