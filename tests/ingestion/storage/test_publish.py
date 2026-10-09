@@ -16,6 +16,9 @@ STAGING = "staging/bacen/sgs/"
 OLD = STAGING + "2026-10-01/060000/"
 NEW = STAGING + "2026-10-08/060000/"
 LATEST = STAGING + "latest/"
+# O latest/ guarda a cópia com a partição de origem: o caminho que o bronze lê traz
+# a data da ingestão (`dt_ingest` na prata).
+LATEST_NEW = LATEST + "2026-10-08/060000/"
 
 
 def _put(storage: StorageBackend, tmp_path: Path, key: str, data: bytes) -> None:
@@ -57,13 +60,13 @@ def test_latest_mirrors_the_new_partition_and_drops_what_left(
 
     keys = publish_latest(lake_storage, NEW, LATEST)
 
-    assert keys == [LATEST + "ipca.parquet", LATEST + "selic.parquet"]
+    assert keys == [LATEST_NEW + "ipca.parquet", LATEST_NEW + "selic.parquet"]
     assert lake_storage.list(LATEST) == [
+        LATEST_NEW + "ipca.parquet",
+        LATEST_NEW + "selic.parquet",
         LATEST + SUCCESS_MARKER,
-        LATEST + "ipca.parquet",
-        LATEST + "selic.parquet",
     ]
-    assert _read(lake_storage, tmp_path, LATEST + "ipca.parquet") == b"novo"
+    assert _read(lake_storage, tmp_path, LATEST_NEW + "ipca.parquet") == b"novo"
     assert _read(lake_storage, tmp_path, LATEST + SUCCESS_MARKER) == b'{"files": []}'
     assert lake_storage.exists(OLD + "serie_extinta.parquet")
 
@@ -101,7 +104,7 @@ def test_marker_is_copied_last_and_stale_files_removed_after_copies(
     publish_latest(Spy(), NEW, LATEST)
 
     assert calls == [
-        f"copy {LATEST}a.parquet",
+        f"copy {LATEST_NEW}a.parquet",
         f"delete {LATEST}antigo.parquet",
         f"copy {LATEST}{SUCCESS_MARKER}",
     ]

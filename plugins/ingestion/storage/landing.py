@@ -93,11 +93,16 @@ def publish_latest(
 ) -> list[str]:
     """Espelha uma partição completa em `latest_prefix`, que é o que o bronze lê.
 
-    Só publica partição com `_SUCCESS`. Copia os arquivos novos no servidor
-    (sobrescrevendo os de mesmo nome), depois remove do `latest/` o que não veio
-    nesta ingestão, e copia o `_SUCCESS` por último: o `latest/` nunca fica vazio,
-    e um leitor no meio da troca pode ver arquivos novos e antigos misturados, o que
-    não acontece no fluxo atual (o dbt roda depois da ingestão).
+    Os arquivos vão para `latest/<AAAA-MM-DD>/<HHMMSS>/`, com a partição de origem
+    no caminho: o `filename` que o bronze lê traz a data da ingestão, como nos
+    modos que leem as partições direto (o `dt_ingest` da prata sai dele).
+
+    Só publica partição com `_SUCCESS`. Copia os arquivos novos no servidor,
+    depois remove do `latest/` o que não veio nesta ingestão (inclusive a cópia da
+    partição anterior), e copia o `_SUCCESS` por último, na raiz do `latest/`. O
+    `latest/` nunca fica vazio; um leitor no meio da troca pode ver arquivos novos e
+    antigos misturados, o que não acontece no fluxo atual (o dbt roda depois da
+    ingestão).
     """
     if not storage.exists(partition_prefix + SUCCESS_MARKER):
         raise StorageError(
@@ -108,11 +113,13 @@ def publish_latest(
         for key in storage.list(partition_prefix)
         if key != partition_prefix + SUCCESS_MARKER
     ]
-    for name in names:
-        storage.copy(partition_prefix + name, latest_prefix + name)
-    published = set(names) | {SUCCESS_MARKER}
+    partition = "/".join(partition_prefix.rstrip("/").split("/")[-2:]) + "/"
+    published = [latest_prefix + partition + name for name in names]
+    for name, key in zip(names, published):
+        storage.copy(partition_prefix + name, key)
+    keep = set(published) | {latest_prefix + SUCCESS_MARKER}
     for key in storage.list(latest_prefix):
-        if key[len(latest_prefix) :] not in published:
+        if key not in keep:
             storage.delete(key)
     storage.copy(partition_prefix + SUCCESS_MARKER, latest_prefix + SUCCESS_MARKER)
-    return [latest_prefix + name for name in names]
+    return published

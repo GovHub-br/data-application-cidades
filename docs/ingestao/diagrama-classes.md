@@ -154,7 +154,8 @@ classDiagram
   - recusa `raw/` e `staging/` como prefixo.
 - **`land`:** sobe uma parte por vez, apaga a cópia local e grava `_SUCCESS` com o manifesto por último. `details` acrescenta campos ao manifesto de cada parte.
 - **`publish_latest`:**
-  - espelha uma partição com `_SUCCESS` em `latest/`, que é o que o bronze lê;
+  - espelha uma partição com `_SUCCESS` em `latest/<AAAA-MM-DD>/<HHMMSS>/`, que é o que o bronze lê (a partição no caminho dá o `dt_ingest`);
+  - o `_SUCCESS` fica na raiz do `latest/`;
   - ordem: copia os novos, remove os que sobraram e copia o `_SUCCESS` por último.
 
 ## `extractors`: fonte → disco, no formato original

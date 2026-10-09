@@ -15,7 +15,7 @@ Este documento é a entrega da Fase 0 do guia [`docs/refactor-ingestao.md`](../r
 | Carga do bronze | **Inegociável:** o bronze continua `select * from read_parquet(...)`, executado pelo dbt (`fonte_lake` nos `bronze_*`). A linhagem no OpenMetadata (`scripts/governance/sincronizar_lake.py`) depende disso. |
 | LoadMode | Vive no dbt: `overwrite` = `table`, `merge` = `incremental` com `unique_key`, `append` = `incremental`. A família Loader em Python fica só com o `PostgresCopyLoader`, para prod sem MinIO (Fase 7). |
 | Normalização de nomes | Na prata do dbt. A staging mantém o cabeçalho original. O converter só trata cabeçalho vazio (`column_<n>`), repetido (`<nome>_2`) e BOM. |
-| Colunas técnicas (9.2) | `dt_ingest` + `_source_file`. `_source_file` vem do `filename => true` do `read_parquet`. `dt_ingest` é derivado dos segmentos `<AAAA-MM-DD>/<HHMMSS>` do caminho, na prata (proposta, a validar no piloto). |
+| Colunas técnicas (9.2) | `dt_ingest` + `_source_file`. `_source_file` vem do `filename => true` do `read_parquet`. `dt_ingest` é derivado dos segmentos `<AAAA-MM-DD>/<HHMMSS>` do caminho, na prata, pelo macro `lake_dt_ingest()`. Validado no piloto da Dotação: para o `overwrite` ter a data no caminho, o `latest/` guarda a cópia em `latest/<AAAA-MM-DD>/<HHMMSS>/` (decisão do Lucas, 09/10/2026). |
 | Layout por data | `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/<arquivo original>`, e a staging espelha (`…/part-<n>.parquet`). Data e hora = `run_after` da run no fuso America/Sao_Paulo (o dia da ingestão), nunca o `run_id`. Execuções no mesmo dia ficam em subpastas de horário; vale sempre a **última ingestão**. |
 | Drift | Fase 8 do guia: drift estrutural raw → staging no converter e drift de dado bronze → prata no dbt. |
 | Iceberg | Fase 9 do guia, a última de implementação: primeiro tudo funciona sem Iceberg. Catálogo-alvo Apache Polaris (REST do Iceberg, metadados no Postgres via JDBC). Documentação passa a ser a Fase 10. |
@@ -208,7 +208,7 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 ## 8. Desvios do guia
 
 - **§4 Loader para Postgres:** `PgDuckdbLoader` e `_ensure_table` em Python não existem. O papel deles é do dbt. O `LoadMode` mora no `fonte_lake`, declarado por fonte no `sources.yml` (`meta.load_mode` e `meta.keys`):
-  - `overwrite` lê `latest/`;
+  - `overwrite` lê `latest/*/*/` (a cópia da última ingestão, com a partição de origem no caminho);
   - `append` lê todas as ingestões;
   - `merge` lê todas e fica com a mais recente por arquivo + chave.
   - Os três são **tabela recalculada** (`materialized='table'`, troca atômica), não incremental (decisão do Lucas).

@@ -61,7 +61,8 @@ def test_extract_then_convert_returns_only_prefixes(
     assert storage.exists(
         "staging/bacen/financiamentos_imobiliarios/2026-10-08/060005/ipca.parquet"
     )
-    assert pq.read_table(lake / latest / "ipca.parquet").to_pylist() == [
+    published = lake / latest / "2026-10-08" / "060005" / "ipca.parquet"
+    assert pq.read_table(published).to_pylist() == [
         {"data": "01/08/2026", "valor": "-0.32"}
     ]
     assert not any(p.is_file() for p in (tmp_path / "tmp").rglob("*"))

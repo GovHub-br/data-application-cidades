@@ -14,6 +14,7 @@ from ingestion.extractors import write_stream
 RAW = "raw/bacen/sgs/2026-10-08/060000/"
 STAGING = "staging/bacen/sgs/2026-10-08/060000/"
 LATEST = "staging/bacen/sgs/latest/"
+LATEST_FILES = LATEST + "2026-10-08/060000/"
 
 
 def _land_raw(storage: StorageBackend, tmp_path: Path, files: dict[str, bytes]) -> None:
@@ -64,12 +65,12 @@ def test_converts_every_raw_file_writes_manifest_and_publishes(
     assert entries["selic.parquet"]["rows"] == 2
     assert entries["selic.parquet"]["columns"] == ["data", "valor"]
     assert lake_storage.list(LATEST) == [
+        LATEST_FILES + "ipca.parquet",
+        LATEST_FILES + "selic.parquet",
         LATEST + SUCCESS_MARKER,
-        LATEST + "ipca.parquet",
-        LATEST + "selic.parquet",
     ]
     local = tmp_path / "selic.parquet"
-    lake_storage.get_file(LATEST + "selic.parquet", local)
+    lake_storage.get_file(LATEST_FILES + "selic.parquet", local)
     assert pq.read_table(local).num_rows == 2
     assert not any(path.is_file() for path in (tmp_path / "work").rglob("*"))
 
@@ -101,7 +102,7 @@ def test_failure_keeps_the_previous_latest(
         _convert(lake_storage, tmp_path)
 
     local = tmp_path / "latest.parquet"
-    lake_storage.get_file(LATEST + "ipca.parquet", local)
+    lake_storage.get_file(LATEST_FILES + "ipca.parquet", local)
     assert pq.read_table(local).to_pylist() == [{"v": "1"}]
 
 

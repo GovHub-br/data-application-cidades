@@ -22,12 +22,14 @@
           load_mode: overwrite        # overwrite | merge | append
           keys: [data]                # só no merge
 
-    - overwrite: só a última ingestão completa (`latest/`); deleções na fonte se
-      propagam.
+    - overwrite: só a última ingestão completa (`latest/AAAA-MM-DD/HHMMSS/`);
+      deleções na fonte se propagam.
     - append: todas as ingestões (`2*/*/`), empilhadas.
     - merge: todas as ingestões; por arquivo + chave, vale a mais recente.
       Deleções não se propagam.
     Sem `load_mode`, `caminho` é o arquivo (ou glob) a ler, como sempre foi.
+    Nos três modos o `filename` traz a partição da ingestão; `lake_dt_ingest()`
+    a converte no `dt_ingest` da prata.
     A variável `lake_root` troca a raiz (padrão s3://<lake_bucket>); os testes do
     macro a apontam para um diretório local (tests/ingestion/dbt).
 #}
@@ -84,9 +86,10 @@
             {%- if union_by_name %}, union_by_name => true{% endif -%}
         )
         {%- elif load_mode == 'overwrite' -%}
-        {#- só a última ingestão completa, que a conversão publica em latest/ -#}
+        {#- só a última ingestão completa, que a conversão publica em
+            latest/<AAAA-MM-DD>/<HHMMSS>/ (a partição de origem vai no caminho) -#}
         read_parquet(
-            '{{ root }}/{{ caminho }}/latest/*.parquet',
+            '{{ root }}/{{ caminho }}/latest/*/*/*.parquet',
             filename => true,
             union_by_name => true
         )

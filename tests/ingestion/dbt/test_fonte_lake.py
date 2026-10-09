@@ -71,14 +71,36 @@ def test_overwrite_reads_only_the_last_ingestion(dbt_project: DbtProject) -> Non
     _bacen(dbt_project, load_mode="overwrite")
 
     assert _rows(dbt_project) == [
-        ("latest", "ipca", "01/08/2026", "-0.30"),
-        ("latest", "ipca", "01/09/2026", "0.48"),
+        ("060000", "ipca", "01/08/2026", "-0.30"),
+        ("060000", "ipca", "01/09/2026", "0.48"),
+    ]
+    filenames = dbt_project.query("select distinct filename from bronze_bacen_sgs")
+    assert [Path(f).parts[-4:-1] for (f,) in filenames] == [
+        ("latest", "2026-10-08", "060000")
     ]
     assert dbt_project.types("bronze_bacen_sgs") == {
         "data": "VARCHAR",
         "valor": "VARCHAR",
         "filename": "VARCHAR",
     }
+
+
+def test_lake_dt_ingest_is_the_partition_in_the_filename(
+    dbt_project: DbtProject,
+) -> None:
+    _bacen(dbt_project, load_mode="overwrite")
+    dbt_project.model(
+        "prata_bacen_sgs",
+        "select distinct {{ lake_dt_ingest() }} as dt_ingest "
+        "from {{ ref('bronze_bacen_sgs') }}",
+    )
+
+    dbt_project.build("prata_bacen_sgs")
+
+    # 09:00 UTC da 2ª ingestão = partição 2026-10-08/060000 (horário de Brasília).
+    assert dbt_project.query("select dt_ingest from prata_bacen_sgs") == [
+        (datetime(2026, 10, 8, 6, 0),)
+    ]
 
 
 def test_unknown_load_mode_fails_at_compile_time(dbt_project: DbtProject) -> None:

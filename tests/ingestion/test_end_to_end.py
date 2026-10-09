@@ -79,7 +79,7 @@ def test_bacen_series_reach_the_bronze_select_as_text_with_their_origin(
     )
 
     _ingest_bacen(storage, bacen_server, FIRST, tmp_path / "work")
-    bronze = _bronze(storage, "staging/bacen/sgs/latest/*.parquet")
+    bronze = _bronze(storage, "staging/bacen/sgs/latest/*/*/*.parquet")
 
     assert bronze.columns == ["data", "valor", "filename"]
     assert bronze.types[:2] == ["VARCHAR", "VARCHAR"]
@@ -110,10 +110,11 @@ def test_latest_shows_only_the_last_ingestion_and_dated_glob_shows_all(
     )
     _ingest_bacen(storage, bacen_server, SECOND, tmp_path / "work")
 
-    overwrite = _bronze(storage, "staging/bacen/sgs/latest/ipca.parquet")
+    overwrite = _bronze(storage, "staging/bacen/sgs/latest/*/*/ipca.parquet")
+    published = f"{storage.root}/staging/bacen/sgs/latest/{ingestion_partition(SECOND)}"
     assert overwrite.fetchall() == [
-        ("01/08/2026", "-0.30", f"{storage.root}/staging/bacen/sgs/latest/ipca.parquet"),
-        ("01/09/2026", "0.48", f"{storage.root}/staging/bacen/sgs/latest/ipca.parquet"),
+        ("01/08/2026", "-0.30", f"{published}/ipca.parquet"),
+        ("01/09/2026", "0.48", f"{published}/ipca.parquet"),
     ]
     history = _bronze(storage, "staging/bacen/sgs/2*/*/ipca.parquet")
     assert len(history.fetchall()) == 3
@@ -142,7 +143,7 @@ def test_tesouro_zip_with_utf16_tsv_reaches_the_bronze_select(tmp_path: Path) ->
         work_dir=tmp_path / "work",
     )
     bronze = _bronze(
-        storage, "staging/siafi-tesouro-gerencial/dotacao_execucao/latest/*.parquet"
+        storage, "staging/siafi-tesouro-gerencial/dotacao_execucao/latest/*/*/*.parquet"
     )
 
     assert bronze.columns[:2] == ["Unidade", "Dotação Atualizada"]

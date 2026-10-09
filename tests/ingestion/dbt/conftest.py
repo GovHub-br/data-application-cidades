@@ -1,8 +1,9 @@
 """Projeto dbt temporário para testar o `fonte_lake` real, sem o DW.
 
-Cada teste monta um projeto mínimo com uma cópia do `fonte_lake.sql` do
-repositório, fontes e modelos próprios, e roda o dbt-duckdb em processo. A
-variável `lake_root` aponta o macro para um diretório local no lugar do MinIO.
+Cada teste monta um projeto mínimo com cópias dos macros do lake do repositório
+(`fonte_lake`, `lake_dt_ingest`), fontes e modelos próprios, e roda o dbt-duckdb
+em processo. A variável `lake_root` aponta o macro para um diretório local no
+lugar do MinIO.
 """
 
 import json
@@ -23,7 +24,10 @@ from ingestion.layout import ingestion_partition, raw_prefix, staging_prefix
 from ingestion.storage import StorageFactory, land
 
 REPO = Path(__file__).resolve().parents[3]
-FONTE_LAKE = REPO / "dbt" / "mcid" / "macros" / "fonte_lake.sql"
+MACROS = [
+    REPO / "dbt" / "mcid" / "macros" / name
+    for name in ("fonte_lake.sql", "lake_dt_ingest.sql")
+]
 
 
 @dataclass
@@ -108,7 +112,8 @@ def dbt_project(tmp_path: Path) -> DbtProject:
     project = tmp_path / "projeto"
     (project / "models").mkdir(parents=True)
     (project / "macros").mkdir()
-    shutil.copy(FONTE_LAKE, project / "macros" / "fonte_lake.sql")
+    for macro in MACROS:
+        shutil.copy(macro, project / "macros" / macro.name)
     (project / "dbt_project.yml").write_text(
         yaml.safe_dump(
             {
