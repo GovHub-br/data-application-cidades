@@ -13,7 +13,6 @@ from cosmos import (
     RenderConfig,
 )
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
-from schedule_loader import get_dynamic_schedule
 from ingestor_lake import IngestorBalancoEmpresas
 
 dbt_log_path = "/tmp/dbt_logs"  # NOSONAR
@@ -57,7 +56,8 @@ INGESTORES_MANUAIS = [
 
 @dag(
     dag_id="conjuntura_dag",
-    schedule=get_dynamic_schedule("conjuntura_dag", default="0 8 * * 1"),
+    # Segunda às 08:00: a geral roda uma vez por semana, obrigatoriamente.
+    schedule="0 8 * * 1",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
