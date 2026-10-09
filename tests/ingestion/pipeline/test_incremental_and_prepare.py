@@ -160,3 +160,29 @@ def test_a_source_that_the_prepare_drops_is_not_downloaded_again(lake: Path) -> 
     sources = json.loads((lake / prefix / SUCCESS_MARKER).read_text())["sources"]
     assert sources == ["a.zip:1", "b.csv:1"]
     assert SEEN_BY_EXTRACTOR[1] == frozenset({"a.zip:1", "b.csv:1"})
+
+
+class _Unwrap:
+    """Preparo de teste: `pacote_*` vira o arquivo que ele embrulha (b.csv)."""
+
+    def apply(self, part: RawFile, work_dir: Path) -> Iterator[RawFile]:
+        if not part.name.startswith("pacote_"):
+            yield part
+            return
+        new = write_stream(
+            [part.path.read_bytes()], work_dir / "inner" / "b.csv", "b.csv"
+        )
+        part.path.unlink()
+        yield dataclasses.replace(new, source_id=part.source_id)
+
+
+def test_the_same_name_twice_after_the_prepare_keeps_the_first(lake: Path) -> None:
+    # A entrega solta vem antes do pacote que também a traz.
+    SOURCE.update({"b.csv": b"solta", "pacote_x": b"do pacote"})
+
+    prefix = steps.extract_to_raw(_spec(prepare=(_Unwrap(),)), WHEN)
+
+    assert (lake / prefix / "b.csv").read_bytes() == b"solta"
+    marker = json.loads((lake / prefix / SUCCESS_MARKER).read_text())
+    assert marker["duplicates"] == [{"name": "b.csv", "source_id": "pacote_x:9"}]
+    assert marker["sources"] == ["b.csv:5", "pacote_x:9"]

@@ -63,11 +63,18 @@ class SftpExtractor(Extractor):
         hook = SFTPHook(ssh_conn_id=self.config.conn_id)
         client = hook.get_conn()
         try:
-            files = _select(list(_walk(client, query.root, "", query.recursive)), query)
+            listing = list(_walk(client, query.root, "", query.recursive))
+            files = _select(listing, query)
             if not files:
                 raise ExtractionError(
                     f"nenhum arquivo casa {query.pattern!r} em {query.root}"
                 )
+            if query.bundles:
+                loose = {f.name for f in files}
+                bundles = dataclasses.replace(
+                    query, pattern=query.bundles, prefer_extensions=()
+                )
+                files += [f for f in _select(listing, bundles) if f.name not in loose]
             work_dir.mkdir(parents=True, exist_ok=True)
             for remote in files:
                 if remote.source_id in self.already_landed:

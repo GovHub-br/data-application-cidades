@@ -6,6 +6,7 @@ nunca no parse da DAG. A carga no bronze é do dbt (`fonte_lake`).
 """
 
 import json
+import logging
 import os
 import tempfile
 from collections.abc import Iterable, Iterator
@@ -36,7 +37,9 @@ def extract_to_raw(spec: DatasetSpec, ingestion_time: datetime) -> str:
     partições anteriores; cada arquivo passa pelos `spec.prepare` antes do pouso.
     O manifesto guarda em `sources` toda origem que o extrator entregou, inclusive
     a que os preparos descartaram inteira (o pacote sem a família procurada), para
-    que ela não volte na próxima extração.
+    que ela não volte na próxima extração. Preparos podem tirar o mesmo nome de
+    origens diferentes (a entrega solta e o pacote que também a traz): fica o
+    primeiro, e os outros vão para `duplicates` no manifesto.
     """
     prefix = raw_prefix(spec.domain, spec.dataset, ingestion_partition(ingestion_time))
     storage = storage_from_env()
@@ -46,17 +49,23 @@ def extract_to_raw(spec: DatasetSpec, ingestion_time: datetime) -> str:
     if spec.incremental:
         extractor.already_landed = _landed_source_ids(storage, spec)
     sources: set[str] = set()
+    duplicates: list[dict[str, object]] = []
     with tempfile.TemporaryDirectory(prefix="extract-", dir=_work_root()) as work:
         parts: Iterable[RawFile] = _track(extractor.extract(Path(work)), sources)
         for step in spec.prepare:
             parts = _apply(step, parts, Path(work))
+        if spec.prepare:
+            parts = _distinct(parts, duplicates)
         try:
             landed = land(
                 storage,
                 parts,
                 prefix,
                 details=_details,
-                summary=lambda: {"sources": sorted(sources)},
+                summary=lambda: {
+                    "sources": sorted(sources),
+                    **({"duplicates": duplicates} if duplicates else {}),
+                },
             )
         except SourceNotFoundError as exc:
             raise AirflowSkipException(str(exc)) from exc
@@ -69,6 +78,22 @@ def _track(parts: Iterable[RawFile], sources: set[str]) -> Iterator[RawFile]:
     for part in parts:
         if part.source_id:
             sources.add(part.source_id)
+        yield part
+
+
+def _distinct(
+    parts: Iterable[RawFile], duplicates: list[dict[str, object]]
+) -> Iterator[RawFile]:
+    names: set[str] = set()
+    for part in parts:
+        if part.name in names:
+            logging.warning(
+                "%s repetido (origem %s): fica o primeiro", part.name, part.source_id
+            )
+            duplicates.append({"name": part.name, "source_id": part.source_id})
+            part.path.unlink(missing_ok=True)
+            continue
+        names.add(part.name)
         yield part
 
 

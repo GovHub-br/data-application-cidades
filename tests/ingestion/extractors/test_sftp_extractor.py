@@ -175,6 +175,30 @@ def test_the_same_delivery_in_other_folders_and_wrappers_lands_once(
     ]
 
 
+def test_bundles_come_after_the_loose_deliveries(server: _Client, tmp_path: Path) -> None:
+    # Pacote mensal com várias famílias: entra também, mas depois das entregas
+    # soltas, para que a solta fique com o nome quando as duas trazem o mesmo.
+    for name in ("GEFUS/ANTERIORES/202312_CAIXA.zip", "GEFUS/ANTERIORES/202311.zip"):
+        (server.root / "fabrica" / name).write_bytes(b"zip")
+
+    parts = _extract(
+        tmp_path,
+        RemoteFiles(
+            root="/fabrica/GEFUS",
+            pattern=r"INT055_",
+            bundles=r"(^|/)\d{6}(_CAIXA)?\.zip$",
+            prefer_extensions=(".txt", ".zip"),
+        ),
+    )
+
+    assert [p.name for p in parts] == [
+        "INT055_LIBERACOES_20260701.txt",
+        "INT055_LIBERACOES_20260801.txt",
+        "202311.zip",
+        "202312_CAIXA.zip",
+    ]
+
+
 def test_exclude_and_non_recursive(server: _Client, tmp_path: Path) -> None:
     parts = _extract(
         tmp_path,
