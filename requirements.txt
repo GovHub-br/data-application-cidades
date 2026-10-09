@@ -33,6 +33,8 @@ boto3==1.43.75
 apache-airflow-providers-microsoft-mssql==4.7.1
 # ImapHook do extrator de anexos de e-mail da ingestão (plugins/ingestion).
 apache-airflow-providers-imap==3.12.1
+# SFTPHook do extrator do SFTP do MCid (plugins/ingestion).
+apache-airflow-providers-sftp==6.1.0
 pymssql==2.4.1
 openpyxl==3.1.5
 # JSON em streaming do conversor de json da ingestão (plugins/ingestion).

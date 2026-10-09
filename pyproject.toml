@@ -21,6 +21,8 @@ apache-airflow-providers-amazon = "9.36.0"
 # HttpHook e ImapHook dos extratores da ingestão (plugins/ingestion).
 apache-airflow-providers-http = "6.1.0"
 apache-airflow-providers-imap = "3.12.1"
+# SFTPHook do extrator do SFTP do MCid (plugins/ingestion).
+apache-airflow-providers-sftp = "6.1.0"
 # Conversores da ingestão: xlsx (openpyxl) e json em streaming (ijson).
 openpyxl = "3.1.5"
 ijson = "3.4.0.post0"

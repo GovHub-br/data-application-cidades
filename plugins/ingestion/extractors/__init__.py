@@ -14,6 +14,7 @@ from ingestion.extractors.config_extractor import (
     HttpRequest,
     MailQuery,
     ObjectQuery,
+    RemoteFiles,
 )
 from ingestion.extractors.extractor_errors import ExtractionError, SourceNotFoundError
 from ingestion.extractors.extractor_registry import ExtractorFactory
@@ -26,6 +27,7 @@ __all__ = [
     "HttpRequest",
     "MailQuery",
     "ObjectQuery",
+    "RemoteFiles",
     "RawFile",
     "SourceNotFoundError",
     "describe_file",
@@ -37,4 +39,5 @@ from ingestion.extractors.models import api_extractor  # noqa: E402, F401
 from ingestion.extractors.models import http_file_extractor  # noqa: E402, F401
 from ingestion.extractors.models import email_extractor  # noqa: E402, F401
 from ingestion.extractors.models import object_storage_extractor  # noqa: E402, F401
+from ingestion.extractors.models import sftp_extractor  # noqa: E402, F401
 from ingestion.extractors.session import session_extractor  # noqa: E402, F401

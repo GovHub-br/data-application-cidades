@@ -59,6 +59,24 @@ class ObjectQuery:
 
 
 @dataclass(frozen=True)
+class RemoteFiles:
+    """Arquivos de uma pasta remota (SFTP), escolhidos por padrão.
+
+    - `pattern`: regex buscada no caminho relativo a `root` (`INT055_.*\\.txt$`);
+    - `exclude`: regexes que tiram arquivos (temporários `~$`, por exemplo);
+    - `recursive`: desce nas subpastas;
+    - `prefer_extensions`: quando a mesma entrega (mesma pasta e nome sem extensão)
+      vem em vários formatos, fica só a primeira extensão da lista que existir.
+    """
+
+    root: str
+    pattern: str
+    exclude: tuple[str, ...] = ()
+    recursive: bool = True
+    prefer_extensions: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class ExtractorConfig:
     """O que extrair e de onde. `source` escolhe a estratégia no ExtractorFactory.
 
@@ -66,6 +84,7 @@ class ExtractorConfig:
     - `adapter`: HTTPAdapter montado na sessão, para fontes com TLS fora do padrão.
     - `mail`: busca da estratégia `email`.
     - `objects`: objetos da estratégia `object_storage`.
+    - `remote`: arquivos da estratégia `sftp`.
     - `session`: fluxo da estratégia `http_session`
       (`ingestion.extractors.session.HttpSession`).
 
@@ -81,4 +100,5 @@ class ExtractorConfig:
     adapter: Any = None
     mail: MailQuery | None = None
     objects: ObjectQuery | None = None
+    remote: RemoteFiles | None = None
     session: Any = None
