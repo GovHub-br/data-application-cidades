@@ -6,11 +6,13 @@ descoberta falha alto: link que some da página é mudança de layout da fonte.
 """
 
 from collections.abc import Callable, Mapping
+from datetime import datetime
 from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import urljoin
 
 from ingestion.extractors.extractor_errors import ExtractionError
+from ingestion.layout import TIMEZONE
 
 TIMEOUT_SECONDS = 60
 
@@ -32,6 +34,52 @@ def link_in_page(
             if contains in href:
                 return urljoin(str(response.url), href)
         raise ExtractionError(f"nenhum link com {contains!r} em {page}")
+
+    return resolve
+
+
+def mziq_latest_file(
+    company_id: str,
+    category: str,
+    headers: Mapping[str, str] | None = None,
+    years_back: int = 3,
+) -> Callable[[Any], str]:
+    """Permalink do arquivo mais recente de uma categoria no catálogo da MZ (mziq).
+
+    Sites de RI hospedados na MZ (a MRV, por exemplo) listam os documentos por ano
+    numa API POST. Vale o ano mais recente que tiver documento da categoria e, nele,
+    o maior trimestre (`file_quarter`). A busca volta `years_back` anos a partir
+    do ano corrente em Brasília.
+    """
+    path = f"/filemanager/company/{company_id}/filter/categories/year/meta"
+
+    def resolve(hook: Any) -> str:
+        session = hook.get_conn(dict(headers or {}) or None)
+        this_year = datetime.now(TIMEZONE).year
+        for year in range(this_year, this_year - years_back, -1):
+            response = session.post(
+                hook.base_url + path,
+                json={
+                    "year": str(year),
+                    "categories": [category],
+                    "language": "pt_BR",
+                    "published": True,
+                },
+                timeout=TIMEOUT_SECONDS,
+            )
+            if response.status_code >= 400:
+                raise ExtractionError(f"POST {path}: HTTP {response.status_code}")
+            documents = [
+                document
+                for document in response.json().get("data", {}).get("document_metas", [])
+                if document.get("internal_name") == category and document.get("permalink")
+            ]
+            if documents:
+                latest = max(documents, key=lambda d: d.get("file_quarter") or 0)
+                return str(latest["permalink"])
+        raise ExtractionError(
+            f"nenhum documento {category!r} na MZ nos últimos {years_back} anos"
+        )
 
     return resolve
 
