@@ -18,6 +18,9 @@ class ConverterConfig:
       1-based).
     - `record_path`: json, prefixo do ijson onde estão os registros (`item` para uma
       lista no topo).
+    - `key_column`: json, quando o que está em `record_path` é um objeto cujas
+      chaves são dado (a data de cada pregão, por exemplo): cada chave vira uma
+      linha, com a chave nessa coluna.
     - `include`: regex de aba, tabela (mdb) ou membro (zip) a converter.
     """
 
@@ -28,4 +31,5 @@ class ConverterConfig:
     sheet: str | None = None
     header_row: int = 1
     record_path: str = "item"
+    key_column: str | None = None
     include: str | None = None

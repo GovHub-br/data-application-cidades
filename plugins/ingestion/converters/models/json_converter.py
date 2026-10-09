@@ -28,6 +28,10 @@ class JsonConverter(FileConverter):
     `true`/`false` em minúsculas, nulo como nulo, objeto ou lista aninhada como
     texto JSON (desempacotar é da prata; ali dentro o número passa por float).
     Registro que não é objeto vai para a coluna `value`.
+
+    Com `config.key_column`, o item em `record_path` é um objeto cujas chaves são
+    dado (`{"2026-10-08": {...}, ...}`): cada chave vira uma linha, com a chave
+    nessa coluna e os campos do valor ao lado.
     """
 
     def _read(self, path: Path) -> Iterator[Source]:
@@ -51,12 +55,24 @@ class JsonConverter(FileConverter):
     def _records(self, path: Path) -> Iterator[dict[str, Any]]:
         with path.open("rb") as source:
             try:
-                for record in ijson.items(
-                    source, self.config.record_path, use_float=False
-                ):
-                    yield record if isinstance(record, dict) else {SCALAR_COLUMN: record}
+                for item in ijson.items(source, self.config.record_path, use_float=False):
+                    for record in self._explode(item):
+                        yield (
+                            record
+                            if isinstance(record, dict)
+                            else {SCALAR_COLUMN: record}
+                        )
             except ijson.JSONError as exc:
                 raise ConversionError(f"{path.name}: json inválido ({exc})") from exc
+
+    def _explode(self, item: Any) -> Iterator[Any]:
+        key_column = self.config.key_column
+        if key_column is None or not isinstance(item, dict):
+            yield item
+            return
+        for key, value in item.items():
+            fields = value if isinstance(value, dict) else {SCALAR_COLUMN: value}
+            yield {key_column: key, **fields}
 
 
 def _text(value: Any) -> str | None:

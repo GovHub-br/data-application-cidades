@@ -57,6 +57,38 @@ def test_record_path_reaches_nested_lists(tmp_path: Path) -> None:
     ]
 
 
+def test_key_column_turns_the_keys_of_an_object_into_rows(tmp_path: Path) -> None:
+    # Alpha Vantage: a data do pregão é chave, não campo.
+    text = (
+        '{"Meta Data": {"2. Symbol": "IMOB"}, "Time Series (Daily)": {'
+        '"2026-10-08": {"1. open": "1.10", "5. volume": "7"},'
+        '"2026-10-07": {"1. open": "1.05", "5. volume": "9"}}}'
+    )
+
+    rows = _rows(
+        tmp_path, text, record_path="Time Series (Daily)", key_column="data_pregao"
+    )
+
+    assert rows == [
+        {"data_pregao": "2026-10-08", "1. open": "1.10", "5. volume": "7"},
+        {"data_pregao": "2026-10-07", "1. open": "1.05", "5. volume": "9"},
+    ]
+
+
+def test_key_column_with_scalar_values_uses_the_value_column(tmp_path: Path) -> None:
+    rows = _rows(
+        tmp_path,
+        '{"serie": {"202401": "1.2", "202402": "..."}}',
+        record_path="serie",
+        key_column="periodo",
+    )
+
+    assert rows == [
+        {"periodo": "202401", "value": "1.2"},
+        {"periodo": "202402", "value": "..."},
+    ]
+
+
 def test_records_that_are_not_objects_go_to_a_value_column(tmp_path: Path) -> None:
     assert _rows(tmp_path, '["a", 2, null]') == [
         {"value": "a"},
