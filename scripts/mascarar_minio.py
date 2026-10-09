@@ -28,23 +28,17 @@ Roda em DRY-RUN por padrão, gravando a prévia em masked_dryrun/; --apply sobre
 
 import argparse
 import csv
-import hashlib
-import hmac
 import io
 import json
 import logging
 import os
-import re
-import shutil
 import sys
 import tempfile
 import time
 import uuid
-import xml.etree.ElementTree as ET
-import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import IO, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import psycopg2
@@ -61,7 +55,6 @@ from lake_utils import (
     mdb_disponivel,
     mdb_header,
     mdb_tabelas,
-    norm_header,
 )
 
 # plugins/ (ClienteMinio) está na PYTHONPATH dentro do container Airflow; rodando
@@ -107,73 +100,24 @@ SUPPORTED_EXCEL = {".xlsx"}
 SUPPORTED_MDB = MDB_EXT  # .mdb/.accdb — só LEITURA (ver _analisar_mdb)
 UNSUPPORTED = {".xls", ".zip"}
 
+
 # csv pode ter campos grandes (linhas longas de bases bancárias)
 csv.field_size_limit(2**31 - 1)
 
-# Padrões de detecção de colunas sensíveis (do mapeamento do schema sftp)
-P_CPF = re.compile(r"cpf")
-# NIS/PIS/PASEP/NIT são o mesmo número de identificação do trabalhador (identificador de
-# PF)
-P_NIS = re.compile(r"(^|_)nis(_|$)|nu_nis|num_nis|(^|_)pis(_|$)|pasep|(^|_)nit(_|$)")
-P_CEP = re.compile(r"cep")
-P_ENDER = re.compile(
-    r"endereco|logradouro|(^|_)rua(_|$)|bairro|complemento|"
-    r"num_?casa|numero_?casa|(^|_)quadra(_|$)|(^|_)lote(_|$)"
+# Regras de classificação, tokens e reescrita de CSV/TXT/XLSX: em
+# plugins/ingestion/masking (o mesmo código do preparo MaskPii da ingestão nova).
+from ingestion.masking import (  # noqa: E402
+    MaskingKeys,
+    classificar,
+    mascarar_tabular,
+    mascarar_xlsx,
+    verificar_roundtrip_tabular,
+    xlsx_tem_alvo,
 )
-# não-endereços que casariam por acidente: "objetivo_complemento" (rótulo de programa),
-# "ic_benef_sit_rua" (flag indicadora de situação de rua)
-P_ENDER_EXC = re.compile(r"objetivo|sit_rua|(^|_)ic(_|$)")
-P_NASC = re.compile(r"nascimento|dt_?nasc|data_?nasc|dat_nasc")
-# Atributo sensível (LGPD art. 5º II). Instituição não tem raça nem deficiência, então a
-# coluna também serve de prova de que o arquivo trata de pessoa física.
-P_SENSIVEL = re.compile(r"cor_raca|(^|_)raca(_|$)|etnia|deficiencia|(^|_)pcd(_|$)")
-# Códigos categóricos necessários para análise de equidade e acessibilidade. Eles não
-# identificam alguém sozinhos e permanecem apenas nas camadas restritas, ligados a
-# CPF/NIS já pseudonimizados. Nomes/textos livres continuam redigidos.
-P_SENSIVEL_ANALITICO = re.compile(r"^co_raca_cor_pessoa$|^co_deficiencia_memb$")
+from ingestion.masking import targets_por_posicao as _targets_por_mapa  # noqa: E402
+from ingestion.masking.rules import _PF_INDICATOR_FORTE  # noqa: E402,F401
 
-# Papéis que sempre denotam pessoa física. Mascarados incondicionalmente.
-P_NOME_PESSOA = re.compile(
-    r"comprador|conjuge|dependente|completo|(^|_)no_pessoa$|apelido_pessoa"
-)
-# Papéis que tanto podem ser pessoa quanto instituição: no FAR o "proponente" é a
-# prefeitura. Só viram PII com indicador forte no arquivo.
-P_NOME_AMBIGUO = re.compile(r"titular|proponente|responsavel|mutuario|beneficiario")
-
-P_NOME_EXC = re.compile(
-    r"empreendimento|municipio|(^|_)uf(_|$)|agente|banco|entidade|orgao|"
-    r"logradouro|bairro|arquivo|razao|social|programa|modalidade|situacao|"
-    r"fantasia|projeto|obra|construtora|incorporadora|"
-    # instituição explícita: ente público não é pessoa
-    r"ente_publico|(^|_)publico(_|$)|prefeitura|estado|uniao|governo|"
-    # "titularidade" é o REGIME do imóvel (próprio/cedido), não o nome de alguém
-    r"titularidade|"
-    # metadado: em catálogo de dados "nome" descreve uma COLUNA, não uma pessoa
-    r"coluna|campo|atributo|conjunto|(^|_)tabela|dicionario|metadado|"
-    # colunas com papel (mutuario/beneficiario/titular...) mas que não são NOME:
-    # identificadores PJ, códigos, valores, flags e datas
-    r"cnpj|cpf|sexo|(^|_)tipo(_|$)|(^|_)vr(_|$)|valor|prest|parcela|"
-    r"(^|_)qt(_|$)|(^|_)ic(_|$)|(^|_)dt(_|$)|(^|_)mulher(_|$)|pdc|pcd|objetivo"
-)
-# Prefixo de código: o conteúdo é um identificador, não texto de nome
-# (`co_ente_publico_proponente` guarda '1'). Vale só para a categoria "nome".
-P_CODIGO = re.compile(r"^(co|cod|nu|num|qtd?|id)_")
-
-# Indicadores de que o arquivo contém pessoa física. FORTE é estrutural (não existe CPF de
-# prefeitura); FRACO é inferido por palavra-chave, e é onde moram os falsos positivos.
-# Só o FORTE destrava CEP/endereço e os papéis ambíguos — como o mascaramento reescreve o
-# raw/ no lugar, um falso positivo apaga dado público em definitivo.
-_PF_INDICATOR_FORTE = {"cpf", "nis", "nascimento", "sensivel"}
-_PF_INDICATOR_FRACO = {"nome"}
-_PF_INDICATOR_CATS = _PF_INDICATOR_FORTE | _PF_INDICATOR_FRACO
-
-# Categorias decididas por um único padrão, na ordem de precedência.
-_CATEGORIAS_DIRETAS = [
-    (P_CPF, "cpf"),
-    (P_NIS, "nis"),
-    (P_NASC, "nascimento"),
-    (P_SENSIVEL, "sensivel"),
-]
+KEYS = MaskingKeys(secret=HMAC_SECRET, token_len=TOKEN_LEN, redaction=REDACTION)
 
 # Arquivos SEM cabeçalho, onde o matching por nome não teria o que casar: a posição das
 # colunas é declarada à mão, por key exata, depois de conferir o conteúdo. Estar aqui
@@ -183,17 +127,6 @@ COLUNAS_POR_POSICAO: Dict[str, Dict[int, str]] = {
         2: "cpf",
         3: "nis",
     },
-}
-
-# Ação por categoria, igual à que `classificar()` aplica no caminho por nome de coluna.
-_ACAO_POR_CATEGORIA = {
-    "cpf": "hmac",
-    "nis": "hmac",
-    "nascimento": "redact",
-    "nome": "redact",
-    "sensivel": "redact",
-    "cep": "redact",
-    "endereco": "redact",
 }
 
 
@@ -218,24 +151,38 @@ def _avisar_mascaramento_sem_prova(key: str, rec: dict) -> None:
 def targets_por_posicao(key: str) -> Optional[List[dict]]:
     """Alvos declarados para uma key sem cabeçalho. None se a key não está no mapa."""
     mapa = COLUNAS_POR_POSICAO.get(key)
-    if not mapa:
-        return None
-    targets = []
-    for idx, categoria in sorted(mapa.items()):
-        acao = _ACAO_POR_CATEGORIA.get(categoria)
-        if acao is None:
-            raise ValueError(
-                f"COLUNAS_POR_POSICAO[{key!r}]: categoria desconhecida {categoria!r}"
-            )
-        targets.append(
-            {
-                "idx": idx,
-                "column": f"(posição {idx})",
-                "category": categoria,
-                "action": acao,
-            }
-        )
-    return targets
+    return _targets_por_mapa(mapa) if mapa else None
+
+
+def _mascarar_tabular(
+    src_path: str,
+    dst_path: str,
+    delim: str,
+    lineterm: str,
+    fully_quoted: bool,
+    real_encoding: str,
+    targets_fixos: Optional[List[dict]] = None,
+) -> Tuple[List[dict], bool, int, int]:
+    return mascarar_tabular(
+        src_path,
+        dst_path,
+        delim,
+        lineterm,
+        fully_quoted,
+        real_encoding,
+        targets_fixos,
+        KEYS,
+    )
+
+
+_verificar_roundtrip_tabular = verificar_roundtrip_tabular
+_xlsx_tem_alvo = xlsx_tem_alvo
+
+
+def _mascarar_xlsx(
+    src_path: str, dst_path: str
+) -> Tuple[List[dict], bool, int, int, bool]:
+    return mascarar_xlsx(src_path, dst_path, KEYS)
 
 
 # Artefatos locais (arquivo de log, cópia local da auditoria) — úteis rodando standalone,
@@ -280,8 +227,7 @@ def _criar_control_table(conn_str: str) -> None:
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
             cur.execute(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA};")
-            cur.execute(
-                f"""
+            cur.execute(f"""
                 CREATE TABLE IF NOT EXISTS {SCHEMA}.{CONTROL_TABLE} (
                     id                  SERIAL PRIMARY KEY,
                     execution_id        TEXT,
@@ -297,14 +243,11 @@ def _criar_control_table(conn_str: str) -> None:
                     created_at          TIMESTAMPTZ DEFAULT NOW(),
                     UNIQUE (minio_key, source_hash)
                 );
-            """
-            )
-            cur.execute(
-                f"""
+            """)
+            cur.execute(f"""
                 CREATE INDEX IF NOT EXISTS idx_masking_log_status
                 ON {SCHEMA}.{CONTROL_TABLE} (status);
-            """
-            )
+            """)
             conn.commit()
     log.info("Tabela de controle %s.%s garantida.", SCHEMA, CONTROL_TABLE)
 
@@ -312,12 +255,10 @@ def _criar_control_table(conn_str: str) -> None:
 def _carregar_masked_hashes(conn_str: str) -> set:
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                f"""
+            cur.execute(f"""
                 SELECT masked_hash FROM {SCHEMA}.{CONTROL_TABLE}
                 WHERE status = 'masked' AND masked_hash IS NOT NULL
-            """
-            )
+            """)
             return {row[0] for row in cur.fetchall()}
 
 
@@ -355,591 +296,6 @@ def _registrar_control(conn_str: str, row: dict) -> None:
                 ),
             )
             conn.commit()
-
-
-# Mascaramento de valores
-def _hmac_token(valor: str) -> str:
-    if valor is None or valor.strip() == "":
-        return valor
-    dig = hmac.new(HMAC_SECRET, valor.strip().encode("utf-8"), hashlib.sha256).hexdigest()
-    return dig[:TOKEN_LEN]
-
-
-def _redigir(valor: str) -> str:
-    if valor is None or valor.strip() == "":
-        return valor
-    return REDACTION
-
-
-# Detecção de header / colunas sensíveis
-def _categoria(norm: str) -> Optional[str]:
-    """Categoria base da coluna (sem aplicar a regra condicional de CEP/endereço).
-
-    A ordem importa: identificador estrutural (CPF/NIS/nascimento/sensível) vence papel,
-    e papel vence CEP/endereço.
-    """
-    for padrao, categoria in _CATEGORIAS_DIRETAS:
-        if padrao.search(norm):
-            return categoria
-    if not P_NOME_EXC.search(norm) and not P_CODIGO.search(norm):
-        if P_NOME_PESSOA.search(norm):
-            return "nome"
-        if P_NOME_AMBIGUO.search(norm):
-            return "nome_ambiguo"
-    if norm == "nome":
-        return "nome_bare"
-    if P_CEP.search(norm):
-        return "cep"
-    if P_ENDER.search(norm) and not P_ENDER_EXC.search(norm):
-        return "endereco"
-    return None
-
-
-def classificar(  # noqa: C901
-    header: List[str], real_encoding: Optional[str]
-) -> Tuple[List[dict], bool]:
-    """
-    Retorna (targets, has_pf_indicator).
-    targets: [{idx, column, category, action}] já com a regra condicional aplicada.
-
-    `real_encoding` vale só para header lido como latin-1 sobre bytes de outro encoding
-    (CSV/TXT), que é re-decodificado antes do matching. Passe None quando o header já é
-    Unicode correto (xlsx, mdb): o round-trip por latin-1 destrói os acentos e
-    'Beneficiário' deixa de casar com "beneficiario".
-    """
-    normed: List[Tuple[int, str, str]] = []  # (idx, original_header, norm)
-    for idx, cell in enumerate(header):
-        texto = cell
-        if real_encoding is not None:
-            try:
-                texto = cell.encode("latin-1", "surrogateescape").decode(
-                    real_encoding, "replace"
-                )
-            except Exception:  # noqa: BLE001
-                texto = cell
-        normed.append((idx, cell, norm_header(texto)))
-
-    cats = {idx: _categoria(n) for idx, _, n in normed}
-    has_pf_forte = any(c in _PF_INDICATOR_FORTE for c in cats.values())
-    has_pf = any(c in _PF_INDICATOR_CATS for c in cats.values())
-
-    targets: List[dict] = []
-    for idx, original, norm in normed:
-        cat = cats[idx]
-        if cat is None:
-            continue
-        if cat in ("cpf", "nis"):
-            action = "hmac"
-        elif cat == "sensivel" and P_SENSIVEL_ANALITICO.search(norm):
-            # Preserva só códigos analíticos categóricos. O arquivo continua sendo
-            # reconhecido como PF e os identificadores diretos seguem protegidos.
-            continue
-        elif cat in ("nascimento", "nome", "sensivel"):
-            action = "redact"
-        elif cat == "nome_ambiguo":
-            # papel que pode ser instituição: só mascara com prova de PF no arquivo
-            if not has_pf_forte:
-                continue
-            cat, action = "nome", "redact"
-        elif cat == "nome_bare":
-            if not has_pf:
-                continue
-            cat, action = "nome", "redact"
-        elif cat in ("cep", "endereco"):
-            # basta o indicador fraco: lista de mutuários sem CPF ainda é endereço
-            # residencial. Os papéis que davam falso positivo hoje são "nome_ambiguo".
-            if not has_pf:  # PJ/empreendimento/obra pública -> preserva
-                continue
-            action = "redact"
-        else:
-            continue
-        targets.append(
-            {"idx": idx, "column": original, "category": cat, "action": action}
-        )
-    return targets, has_pf
-
-
-# Processamento CSV/TXT (streaming, byte-preserving via latin-1)
-def _mascarar_tabular(
-    src_path: str,
-    dst_path: str,
-    delim: str,
-    lineterm: str,
-    fully_quoted: bool,
-    real_encoding: str,
-    targets_fixos: Optional[List[dict]] = None,
-) -> Tuple[List[dict], bool, int, int]:
-    """Retorna (targets, has_pf, registros_total, registros_alterados).
-
-    `targets_fixos` (de `targets_por_posicao`) troca a descoberta por nome de coluna por
-    posições declaradas — e implica arquivo SEM cabeçalho: nenhuma linha é consumida antes
-    do laço, então a linha 0 é mascarada como dado, que é o ponto todo do override.
-    """
-    quoting = csv.QUOTE_ALL if fully_quoted else csv.QUOTE_MINIMAL
-    total = alterados = 0
-    targets: List[dict] = []
-    has_pf = False
-
-    with (
-        open(src_path, "r", encoding="latin-1", newline="") as fin,
-        open(dst_path, "w", encoding="latin-1", newline="") as fout,
-    ):
-        reader = csv.reader(fin, delimiter=delim, quotechar='"')
-        writer = csv.writer(
-            fout, delimiter=delim, quotechar='"', quoting=quoting, lineterminator=lineterm
-        )
-
-        if targets_fixos is not None:
-            targets = list(targets_fixos)
-            has_pf = any(t["category"] in _PF_INDICATOR_CATS for t in targets)
-        else:
-            try:
-                header = next(reader)
-            except StopIteration:
-                return targets, has_pf, 0, 0
-
-            targets, has_pf = classificar(header, real_encoding)
-            writer.writerow(header)
-            if not targets:
-                # sem colunas sensíveis: nada a fazer (o chamador trata como skip_no_pii)
-                return targets, has_pf, 0, 0
-
-        idx_action = [(t["idx"], t["action"]) for t in targets]
-        for row in reader:
-            total += 1
-            row_alterada = False
-            for idx, action in idx_action:
-                if idx < len(row) and row[idx] is not None and row[idx].strip() != "":
-                    row[idx] = (
-                        _hmac_token(row[idx]) if action == "hmac" else _redigir(row[idx])
-                    )
-                    row_alterada = True
-            if row_alterada:
-                alterados += 1
-            writer.writerow(row)
-
-    return targets, has_pf, total, alterados
-
-
-def _verificar_roundtrip_tabular(
-    src_path: str,
-    dst_path: str,
-    delim: str,
-    total_esperado: int,
-    sem_header: bool = False,
-) -> None:
-    """Garante que nº de linhas/colunas do header foi preservado.
-
-    `sem_header`: a primeira linha é dado, então entra na contagem — senão a checagem
-    acusaria uma linha a menos e derrubaria o arquivo por engano.
-    """
-
-    def _header_e_linhas(path: str) -> Tuple[int, int]:
-        with open(path, "r", encoding="latin-1", newline="") as f:
-            reader = csv.reader(f, delimiter=delim, quotechar='"')
-            primeira = next(reader, [])
-            n = sum(1 for _ in reader)
-        return len(primeira), n + (1 if sem_header and primeira else 0)
-
-    ncols_src, _ = _header_e_linhas(src_path)
-    ncols_dst, n_dst = _header_e_linhas(dst_path)
-    if ncols_src != ncols_dst:
-        raise ValueError(
-            f"round-trip: colunas do header divergem ({ncols_src} != {ncols_dst})"
-        )
-    if n_dst != total_esperado:
-        raise ValueError(
-            f"round-trip: nº de linhas divergem ({n_dst} != {total_esperado})"
-        )
-
-
-# Processamento XLSX
-def _xlsx_tem_alvo(src_path: str) -> Tuple[bool, bool]:
-    """Pré-scan barato dos headers em modo read_only (streaming, sem carregar o DOM).
-
-    load_workbook completo materializa TODAS as células como objetos na RAM (~0,5-1 KB
-    por célula); fazer isso só para descobrir que o arquivo não tem PII é desperdício —
-    e a maioria dos xlsx do lake não tem. Retorna (tem_alvo, has_pf).
-    """
-    import openpyxl
-
-    wb = openpyxl.load_workbook(src_path, read_only=True)
-    try:
-        tem_alvo = False
-        has_pf_any = False
-        for ws in wb.worksheets:
-            first = next(ws.iter_rows(values_only=True), None)
-            if first is None:
-                continue
-            header = [str(c) if c is not None else "" for c in first]
-            # None: openpyxl entrega str Unicode; re-decodificar destruiria acentos.
-            targets, has_pf = classificar(header, None)
-            has_pf_any = has_pf_any or has_pf
-            if targets:
-                tem_alvo = True
-        return tem_alvo, has_pf_any
-    finally:
-        wb.close()
-
-
-# --- Reescrita do xlsx em streaming -----------------------------------------------
-#
-# Um xlsx é um zip de XMLs. Em vez de carregar o workbook (o openpyxl materializa toda
-# célula como objeto e estoura a memória da task em planilhas grandes), copiamos cada
-# entrada do zip byte a byte e transformamos linha a linha só as planilhas com alvo.
-# Efeito colateral bom: o que não é tocado sai idêntico, inclusive modelo PowerPivot,
-# calcChain e o valor em cache das fórmulas.
-
-_XL_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-# atenção: este é o namespace do atributo `r:id` em workbook.xml, diferente do
-# `package/2006` que nomeia os elementos dentro do .rels
-_REL_ID_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-_Q = f"{{{_XL_NS}}}"
-_RE_COL = re.compile(r"([A-Z]+)")
-# sem isto cada <row> reescrita sai com prefixo ns0: e uma declaração de namespace própria
-ET.register_namespace("", _XL_NS)
-
-
-def _col_de_ref(ref: str) -> int:
-    """Índice 0-based da coluna a partir da referência da célula ('AB12' -> 27)."""
-    m = _RE_COL.match(ref or "")
-    if not m:
-        return -1
-    n = 0
-    for ch in m.group(1):
-        n = n * 26 + (ord(ch) - 64)
-    return n - 1
-
-
-def _sheets_do_zip(zin: zipfile.ZipFile) -> List[Tuple[str, str]]:
-    """[(nome da aba, caminho do xml no zip)], na ordem do workbook.
-
-    A ordem de `xl/worksheets/sheetN.xml` NÃO corresponde à ordem das abas, e o nome do
-    arquivo não tem relação com o nome da aba — a ligação é workbook.xml -> rels.
-    """
-    rels: Dict[str, str] = {}
-    with zin.open("xl/_rels/workbook.xml.rels") as f:
-        for el in ET.parse(f).getroot():
-            destino = el.get("Target", "")
-            if destino.startswith("/"):
-                destino = destino[1:]
-            elif not destino.startswith("xl/"):
-                destino = "xl/" + destino
-            rels[el.get("Id", "")] = destino.replace("/./", "/")
-
-    saida: List[Tuple[str, str]] = []
-    with zin.open("xl/workbook.xml") as f:
-        raiz = ET.parse(f).getroot()
-        for sheet in raiz.iter(f"{_Q}sheet"):
-            rid = sheet.get(f"{{{_REL_ID_NS}}}id", "")
-            if rid in rels:
-                saida.append((sheet.get("name", ""), rels[rid]))
-    return saida
-
-
-def _ler_shared_strings(zin: zipfile.ZipFile) -> List[str]:
-    if "xl/sharedStrings.xml" not in zin.namelist():
-        return []
-    valores: List[str] = []
-    with zin.open("xl/sharedStrings.xml") as f:
-        for _, el in ET.iterparse(f, events=("end",)):
-            if el.tag == f"{_Q}si":
-                valores.append("".join(t.text or "" for t in el.iter(f"{_Q}t")))
-                el.clear()
-    return valores
-
-
-def _header_da_sheet(zin: zipfile.ZipFile, caminho: str, compart: List[str]) -> List[str]:
-    """Primeira linha da planilha, respeitando buracos (célula ausente = coluna vazia)."""
-    with zin.open(caminho) as f:
-        for _, el in ET.iterparse(f, events=("end",)):
-            if el.tag != f"{_Q}row":
-                continue
-            celulas: Dict[int, str] = {}
-            for c in el.findall(f"{_Q}c"):
-                v = c.find(f"{_Q}v")
-                if v is None or v.text is None:
-                    inline = c.find(f"{_Q}is")
-                    texto = (
-                        "".join(t.text or "" for t in inline.iter(f"{_Q}t"))
-                        if inline is not None
-                        else ""
-                    )
-                else:
-                    texto = compart[int(v.text)] if c.get("t") == "s" else (v.text or "")
-                celulas[_col_de_ref(c.get("r", ""))] = texto
-            el.clear()
-            if not celulas:
-                return []
-            return [celulas.get(i, "") for i in range(max(celulas) + 1)]
-    return []
-
-
-def _indices_compartilhados(zin: zipfile.ZipFile, sheets: List[Tuple[str, set]]) -> set:
-    """Índices de sharedStrings que podem ser apagados com segurança.
-
-    A mesma string pode ser referenciada por várias células: apagar uma usada fora de
-    coluna-alvo destrói dado legítimo, e manter uma usada só por célula-alvo vaza o valor
-    original, que continua no sharedStrings.xml depois de a célula virar `***`. Por isso a
-    varredura cobre todas as planilhas, inclusive as sem alvo.
-    """
-    de_alvo: set = set()
-    de_fora: set = set()
-    for caminho, alvos in sheets:
-        with zin.open(caminho) as f:
-            for _, el in ET.iterparse(f, events=("end",)):
-                if el.tag != f"{_Q}row":
-                    continue
-                for c in el.findall(f"{_Q}c"):
-                    if c.get("t") != "s":
-                        continue
-                    v = c.find(f"{_Q}v")
-                    if v is None or v.text is None:
-                        continue
-                    destino = de_alvo if _col_de_ref(c.get("r", "")) in alvos else de_fora
-                    destino.add(int(v.text))
-                el.clear()
-    return de_alvo - de_fora
-
-
-def _reescrever_shared_strings(fin: IO[bytes], fout: IO[bytes], apagar: set) -> None:
-    fout.write(b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>')
-    fout.write(f'<sst xmlns="{_XL_NS}">'.encode())
-    i = 0
-    for _, el in ET.iterparse(fin, events=("end",)):
-        if el.tag != f"{_Q}si":
-            continue
-        if i in apagar:
-            fout.write(f"<si><t>{REDACTION}</t></si>".encode())
-        else:
-            fout.write(ET.tostring(el, encoding="utf-8"))
-        i += 1
-        el.clear()
-    fout.write(b"</sst>")
-
-
-def _transformar_row(
-    bruto: bytes, acoes: Dict[int, str], compart: List[str]
-) -> Tuple[bytes, bool]:
-    """Recebe UMA <row> como bytes, devolve (bytes reescritos, alterou?).
-
-    A row vem sem declaração de namespace (ela mora no default do <worksheet>), então é
-    embrulhada antes do parse e desembrulhada depois.
-    """
-    raiz = ET.fromstring(b'<w xmlns="' + _XL_NS.encode() + b'">' + bruto + b"</w>")
-    row = raiz[0]
-    mudou = _mascarar_linha(row, acoes, compart)
-    return ET.tostring(row, encoding="utf-8"), mudou
-
-
-class _RecorteSheet:
-    """Máquina de estados do recorte de <sheetData> no XML da planilha.
-
-    Três estados: PRÓLOGO (antes de <sheetData>), DADOS (entre as <row>) e EPÍLOGO (depois
-    de </sheetData>). Prólogo e epílogo são copiados byte a byte; nos dados, cada <row> é
-    isolada, transformada e devolvida. A margem de 64 bytes que fica retida no buffer
-    garante que uma marcação partida entre dois blocos de leitura não passe despercebida.
-    """
-
-    MARGEM = 64
-    FIM_ROW = b"</row>"
-    FIM_DADOS = b"</sheetData>"
-
-    def __init__(
-        self, fout: IO[bytes], acoes: Dict[int, str], compart: List[str]
-    ) -> None:
-        self.fout = fout
-        self.acoes = acoes
-        self.compart = compart
-        self.buf = b""
-        self.total = 0
-        self.alterados = 0
-        self.primeira = True
-        self.em_dados = False
-        self.terminou = False
-
-    def alimentar(self, bloco: bytes) -> None:
-        self.buf += bloco
-        while self._passo():
-            pass
-
-    def finalizar(self) -> None:
-        while self._passo():
-            pass
-        self.fout.write(self.buf)
-        self.buf = b""
-
-    def _reter(self) -> bool:
-        """Escoa o buffer deixando a margem de segurança. Sempre encerra a rodada."""
-        if len(self.buf) > self.MARGEM:
-            self.fout.write(self.buf[: -self.MARGEM])
-            self.buf = self.buf[-self.MARGEM :]
-        return False
-
-    def _passo(self) -> bool:
-        if self.terminou:
-            self.fout.write(self.buf)
-            self.buf = b""
-            return False
-        if not self.em_dados:
-            return self._passo_prologo()
-        return self._passo_dados()
-
-    def _passo_prologo(self) -> bool:
-        i = self.buf.find(b"<sheetData")
-        if i < 0:
-            return self._reter()
-        j = self.buf.find(b">", i)
-        if j < 0:
-            return False
-        self.fout.write(self.buf[: j + 1])
-        # <sheetData/> = planilha sem linhas: já é epílogo
-        self.em_dados = self.buf[j - 1 : j] != b"/"
-        self.terminou = not self.em_dados
-        self.buf = self.buf[j + 1 :]
-        return True
-
-    def _passo_dados(self) -> bool:
-        i = self.buf.find(b"<row")
-        f = self.buf.find(self.FIM_DADOS)
-        if i < 0 or (0 <= f < i):
-            if f < 0:
-                return self._reter()
-            self.fout.write(self.buf[: f + len(self.FIM_DADOS)])
-            self.buf = self.buf[f + len(self.FIM_DADOS) :]
-            self.terminou = True
-            return True
-
-        fim_tag = self.buf.find(b">", i)
-        j = self.buf.find(self.FIM_ROW, i)
-        if fim_tag < 0 or (j < 0 and self.buf[fim_tag - 1 : fim_tag] != b"/"):
-            # <row> incompleta: escoa só o que vem antes dela e espera o resto. Cortar
-            # pela margem comeria bytes da linha maior que o bloco de leitura.
-            if i > 0:
-                self.fout.write(self.buf[:i])
-                self.buf = self.buf[i:]
-            return False
-        if self.buf[fim_tag - 1 : fim_tag] == b"/":  # <row .../> vazia
-            self.fout.write(self.buf[: fim_tag + 1])
-            self.buf = self.buf[fim_tag + 1 :]
-            return True
-
-        self.fout.write(self.buf[:i])
-        bruto = self.buf[i : j + len(self.FIM_ROW)]
-        self.buf = self.buf[j + len(self.FIM_ROW) :]
-        if self.primeira:  # cabeçalho: nunca mascarado
-            self.primeira = False
-            self.fout.write(bruto)
-            return True
-        self.total += 1
-        saida, mudou = _transformar_row(bruto, self.acoes, self.compart)
-        self.alterados += 1 if mudou else 0
-        self.fout.write(saida)
-        return True
-
-
-def _reescrever_sheet(
-    fin: IO[bytes], fout: IO[bytes], acoes: Dict[int, str], compart: List[str]
-) -> Tuple[int, int]:
-    """Copia a planilha trocando as células-alvo. Retorna (linhas, linhas alteradas).
-
-    Recorte byte a byte: tudo fora de <sheetData> é copiado sem passar por parser e só as
-    <row> são materializadas, uma por vez — a memória fica proporcional à maior linha.
-    Reconstruir o XML pelo ElementTree seria mais simples, mas descarta silenciosamente os
-    irmãos de <sheetData> e a planilha sai sem formatação nenhuma.
-
-    O valor mascarado vai como `inlineStr`, sem inserir entradas em sharedStrings.xml.
-    """
-    rec = _RecorteSheet(fout, acoes, compart)
-    while True:
-        bloco = fin.read(1 << 20)
-        if not bloco:
-            rec.finalizar()
-            break
-        rec.alimentar(bloco)
-    return rec.total, rec.alterados
-
-
-def _mascarar_linha(row: ET.Element, acoes: Dict[int, str], compart: List[str]) -> bool:
-    """Substitui in-place as células-alvo de uma <row>. Retorna se algo mudou."""
-    mudou = False
-    for c in row.findall(f"{_Q}c"):
-        acao = acoes.get(_col_de_ref(c.get("r", "")))
-        if acao is None:
-            continue
-        formula = c.find(f"{_Q}f")
-        v = c.find(f"{_Q}v")
-        atual = ""
-        if v is not None and v.text is not None:
-            atual = compart[int(v.text)] if c.get("t") == "s" else v.text
-        elif formula is None:
-            inline = c.find(f"{_Q}is")
-            if inline is None:
-                continue
-            atual = "".join(t.text or "" for t in inline.iter(f"{_Q}t"))
-        # Célula de fórmula em coluna-alvo: a fórmula é removida junto com o valor em
-        # cache. Preservá-la deixaria o Excel recalcular a PII no próximo open.
-        if formula is None and not str(atual).strip():
-            continue
-        for filho in list(c):
-            c.remove(filho)
-        c.set("t", "inlineStr")
-        alvo = ET.SubElement(ET.SubElement(c, f"{_Q}is"), f"{_Q}t")
-        alvo.text = _hmac_token(str(atual)) if acao == "hmac" else _redigir(str(atual))
-        mudou = True
-    return mudou
-
-
-def _mascarar_xlsx(
-    src_path: str, dst_path: str
-) -> Tuple[List[dict], bool, int, int, bool]:
-    """Retorna (targets, has_pf, registros_total, registros_alterados, has_formulas).
-
-    Reescrita em streaming (ver bloco acima): a memória é proporcional à maior linha, não
-    ao arquivo. `has_formulas` hoje é sempre False — fórmulas fora de coluna-alvo saem
-    byte-idênticas, e o campo só continua existindo pelo contrato com a auditoria.
-    """
-    all_targets: List[dict] = []
-    has_pf_any = False
-    total = alterados = 0
-
-    with zipfile.ZipFile(src_path) as zin:
-        compart = _ler_shared_strings(zin)
-        por_sheet: Dict[str, Dict[int, str]] = {}
-        for nome_aba, caminho in _sheets_do_zip(zin):
-            header = _header_da_sheet(zin, caminho, compart)
-            if not header:
-                continue
-            targets, has_pf = classificar(header, None)  # o XML já entrega str
-            has_pf_any = has_pf_any or has_pf
-            if targets:
-                all_targets.extend({**t, "sheet": nome_aba} for t in targets)
-                por_sheet[caminho] = {t["idx"]: t["action"] for t in targets}
-
-        if not all_targets:
-            shutil.copyfile(src_path, dst_path)
-            return all_targets, has_pf_any, 0, 0, False
-
-        todas = [(c, set(por_sheet.get(c, {}))) for _, c in _sheets_do_zip(zin)]
-        apagar = _indices_compartilhados(zin, todas)
-
-        with zipfile.ZipFile(dst_path, "w", zipfile.ZIP_DEFLATED) as zout:
-            for info in zin.infolist():
-                if info.filename in por_sheet:
-                    with zin.open(info) as fin, zout.open(info.filename, "w") as fout:
-                        n, a = _reescrever_sheet(
-                            fin, fout, por_sheet[info.filename], compart
-                        )
-                        total += n
-                        alterados += a
-                elif info.filename == "xl/sharedStrings.xml" and apagar:
-                    with zin.open(info) as fin, zout.open(info.filename, "w") as fout:
-                        _reescrever_shared_strings(fin, fout, apagar)
-                else:
-                    with zin.open(info) as fin, zout.open(info, "w") as fout:
-                        shutil.copyfileobj(fin, fout, 1 << 18)
-
-    return all_targets, has_pf_any, total, alterados, False
 
 
 # Análise de .mdb (Access) — LEITURA APENAS

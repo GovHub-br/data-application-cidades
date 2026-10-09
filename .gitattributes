@@ -10,3 +10,6 @@
 Dockerfile text eol=lf
 *.dockerfile text eol=lf
 * text=auto eol=lf
+
+# Fixtures do mascaramento: o teste compara bytes (inclusive CRLF e latin-1).
+tests/ingestion/prepare/fixtures/** -text

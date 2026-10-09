@@ -4,6 +4,7 @@ Cada preparo recebe um arquivo extraído, já em disco, e cede os que o substitu
 descompactar, mascarar PII... Um arquivo por vez, apagando o de entrada.
 """
 
+from ingestion.prepare.mask import MaskPii
 from ingestion.prepare.unpack import Unpack
 
-__all__ = ["Unpack"]
+__all__ = ["MaskPii", "Unpack"]
