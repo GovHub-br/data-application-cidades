@@ -2,7 +2,7 @@
 
 -- Bronze: Consolidado GFAR — propostas, seleção e contratação do Novo MCMV FAR.
 -- Fonte: SHPT — sharepoint/Novo MCMV - FAR/
-{% set padrao = "s3://data-lake-mcid/staging/**/*HIS_MCIDADES_CONSOLIDADO_*.parquet" %}
+{% set padrao = "s3://data-lake-mcid/staging/sharepoint/**/*HIS_MCIDADES_CONSOLIDADO_*.parquet" %}
 
 select *
 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as r
