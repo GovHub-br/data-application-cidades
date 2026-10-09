@@ -1,75 +1,69 @@
-import logging
+"""ICST (FGV-IBRE): Índice de Confiança da Construção, com e sem ajuste sazonal.
+
+Fonte: portal FGVDados, sem API. O CSV da série histórica só sai depois do login
+no OutSystems e de navegar no FGVDados (ASP.NET); a estratégia `fgvdados` faz o
+caminho numa sessão só. As credenciais vêm das Variables `dados_fgv_email` e
+`dados_fgv_password`, lidas só dentro da task.
+
+LoadMode: overwrite. O CSV traz a série inteira desde 07/2010 a cada download,
+então a última ingestão é a verdade e revisões da FGV entram.
+
+Estrutura do arquivo: latin-1, `;`, cabeçalho na linha 1 com o nome longo de
+cada série e o código da FGV entre parênteses; valores com vírgula decimal.
+Renomear e tipar é da prata (`prata_conjuntura_fgv_icst`).
+"""
+
 from datetime import datetime, timedelta
+from typing import Any
+
 from airflow.sdk import dag, task
-from airflow.sdk import Variable
-from cliente_fgv import ClienteFGVDados
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
-from postgres_helpers import get_postgres_conn
-from schedule_loader import get_dynamic_schedule
+
+from ingestion.converters import ConverterConfig
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, FgvDadosQuery
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
+
+DATASET = DatasetSpec(
+    domain="fgv",
+    dataset="icst",
+    extractor=ExtractorConfig(
+        source="fgvdados",
+        fgvdados=FgvDadosQuery(
+            series="ICST",
+            email_variable="dados_fgv_email",
+            password_variable="dados_fgv_password",
+        ),
+    ),
+    converter=ConverterConfig(encoding="latin-1", delimiter=";"),
+    load_mode=LoadMode.OVERWRITE,
+)
 
 
 @dag(
-    schedule=get_dynamic_schedule("icst_ingest_dag"),
+    dag_id="icst_ingest_dag",
+    # Diário às 06:00: a FGV publica uma vez por mês, sem data fixa.
+    schedule="0 6 * * *",
     start_date=datetime(2023, 1, 1),
     catchup=False,
+    max_active_runs=1,
     default_args={
         "owner": "Gustavo",
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["fgv", "icst", "construcao", "confianca"],
+    tags=["fgv", "icst", "construcao", "confianca", "conjuntura", "ingestion"],
 )
 def icst_ingest_dag() -> None:
-    """
-    DAG para ingestão de dados históricos do ICST da FGV no PostgreSQL.
-    """
+    @task
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def fetch_and_store_icst() -> None:
-        """
-        Baixa o CSV do ICST autenticado e faz upsert no Postgres.
-        """
-        logging.info("Iniciando processamento do ICST Histórico")
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefix)
 
-        # Busca as credenciais de forma segura usando Variables do Airflow
-        email_fgv = Variable.get("dados_fgv_email")
-        senha_fgv = Variable.get("dados_fgv_password")
-
-        api = ClienteFGVDados(email=email_fgv, password=senha_fgv)
-        postgres_conn_str = get_postgres_conn()
-        db = ClientPostgresDB(postgres_conn_str)
-        tabela = "icst"
-
-        registros = api.fetch_icst_historico()
-
-        if registros:
-            logging.info(f"Inserindo {len(registros)} registros em fgv.{tabela}")
-
-            # Postgres: upsert por mes -> preserva histórico (trimestral).
-            db.insert_data(
-                data=registros,
-                table_name=tabela,
-                conflict_fields=["mes"],
-                primary_key=["mes"],
-                schema="fgv",
-            )
-
-            # Raw nativo (CSV) + fallback json + parquet tipado (full-refresh).
-            raw_csv = getattr(api, "ultimo_conteudo_csv", None)
-            if raw_csv:
-                upload_raw_bytes(
-                    "fgv", tabela, raw_csv, ext="csv", content_type="text/csv"
-                )
-            upload_fallback_json("fgv", tabela, registros)
-            registros_para_staging_parquet("fgv", tabela, registros)
-
-            logging.info(f"Ingestão da {tabela} concluída com sucesso.")
-        else:
-            logging.warning("Nenhum registro extraído para ICST Histórico da FGV.")
-
-    fetch_and_store_icst()
+    convert_to_staging(extract_to_raw())
 
 
 dag_instance = icst_ingest_dag()

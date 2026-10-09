@@ -65,7 +65,8 @@ sources:
       - name: fgv_icst
         description: "Índice de Confiança da Construção (FGV), com e sem ajuste sazonal."
         meta:
-          caminho: staging/fgv/icst.parquet
+          caminho: staging/fgv/icst
+          load_mode: overwrite   # o CSV traz a série inteira a cada download
           dag: icst_ingest_dag
           linhas_minimas: 96   # metade do observado em 2026-08-29 (193)
       - name: fgv_incc_m
