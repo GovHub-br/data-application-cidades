@@ -62,7 +62,7 @@ def test_one_request_per_series_named_after_the_type(module: Any, value: Any) ->
     config = module.DATASET.extractor_config()
 
     assert FakeVariable.reads == ["BACEN_SERIES"]
-    assert (config.source, config.conn_id) == ("api", "http_bacen")
+    assert (config.source, config.base_url) == ("api", "https://api.bcb.gov.br")
     assert [(r.name, r.endpoint, dict(r.params)) for r in config.requests] == [
         ("selic_meta", "/dados/serie/bcdata.sgs.432/dados", {"formato": "json"}),
         ("ipca", "/dados/serie/bcdata.sgs.433/dados", {"formato": "json"}),

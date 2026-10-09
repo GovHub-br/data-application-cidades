@@ -39,7 +39,7 @@ def test_dataset_spec(module: Any) -> None:
         LoadMode.OVERWRITE,
     )
     assert spec.extractor_config().source == "http_file"
-    assert spec.extractor_config().conn_id == "http_sinduscon"
+    assert spec.extractor_config().base_url == "https://sindusconpr.com.br"
     assert request.endpoint.endswith("/9547-serie-historica-incc-m-fgv/")
     assert "Mozilla" in request.headers["User-Agent"]
     assert spec.converter.header_row == 3

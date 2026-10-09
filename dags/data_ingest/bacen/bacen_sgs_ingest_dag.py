@@ -32,7 +32,7 @@ def bacen_series() -> ExtractorConfig:
         raise ValueError("a Variable BACEN_SERIES está vazia ou não existe")
     return ExtractorConfig(
         source="api",
-        conn_id="http_bacen",
+        base_url="https://api.bcb.gov.br",
         requests=tuple(
             HttpRequest(
                 name=tipo,

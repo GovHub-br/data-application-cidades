@@ -33,7 +33,7 @@ DATASET = DatasetSpec(
     dataset="poupanca_sbpe_mensal",
     extractor=ExtractorConfig(
         source="http_file",
-        conn_id="http_abecip",
+        base_url="https://www.abecip.org.br",
         requests=(
             HttpRequest(
                 name="poupanca",

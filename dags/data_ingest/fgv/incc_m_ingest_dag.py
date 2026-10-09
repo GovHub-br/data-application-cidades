@@ -28,7 +28,7 @@ DATASET = DatasetSpec(
     dataset="incc_m",
     extractor=ExtractorConfig(
         source="http_file",
-        conn_id="http_sinduscon",
+        base_url="https://sindusconpr.com.br",
         requests=(
             HttpRequest(
                 name="incc_m",

@@ -29,7 +29,7 @@ DATASET = DatasetSpec(
     dataset="credito_imobiliario_pib",
     extractor=ExtractorConfig(
         source="api",
-        conn_id="http_bacen_olinda",
+        base_url="https://olinda.bcb.gov.br",
         requests=(
             HttpRequest(
                 name="credito_imobiliario_pib",

@@ -34,7 +34,7 @@ DATASET = DatasetSpec(
     dataset="financiamentos_modalidade",
     extractor=ExtractorConfig(
         source="http_file",
-        conn_id="http_abecip",
+        base_url="https://www.abecip.org.br",
         requests=(
             HttpRequest(
                 name="financiamentos",

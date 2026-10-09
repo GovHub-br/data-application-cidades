@@ -31,7 +31,7 @@ DATASET = DatasetSpec(
     dataset="indice_locacao",
     extractor=ExtractorConfig(
         source="http_file",
-        conn_id="http_fipe",
+        base_url="https://downloads.fipe.org.br",
         requests=(
             HttpRequest(
                 name="fipezap",

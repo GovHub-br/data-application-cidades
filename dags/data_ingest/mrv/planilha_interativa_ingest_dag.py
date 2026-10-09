@@ -41,7 +41,7 @@ DATASET = DatasetSpec(
     dataset="planilha_interativa",
     extractor=ExtractorConfig(
         source="http_file",
-        conn_id="http_mrv",
+        base_url="https://apicatalog.mziq.com",
         requests=(
             HttpRequest(
                 name="planilha_interativa",

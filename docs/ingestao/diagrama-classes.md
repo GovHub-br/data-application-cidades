@@ -174,6 +174,7 @@ classDiagram
     class EmailAttachmentExtractor {
         +hook_class = ImapHook
     }
+    class FgvDadosExtractor
     class ExtractorFactory {
         -_registry: dict~str, type~
         +register(name)$ decorator
@@ -182,10 +183,25 @@ classDiagram
     class ExtractorConfig {
         <<dataclass>>
         +source: str
-        +conn_id: str
+        +conn_id: str = ""
+        +base_url: str | None
         +requests: tuple~HttpRequest~
         +adapter: HTTPAdapter | None
         +mail: MailQuery | None
+        +fgvdados: FgvDadosQuery | None
+    }
+    class FgvDadosQuery {
+        <<dataclass>>
+        +series: str
+        +email_variable: str
+        +password_variable: str
+        +auth_url: str
+        +legacy_url: str
+    }
+    class resolvers {
+        <<module>>
+        +link_in_page(page, contains, headers) Callable
+        +mziq_latest_file(company_id, category, headers) Callable
     }
     class HttpRequest {
         <<dataclass>>
@@ -220,12 +236,15 @@ classDiagram
     class http_common {
         <<module>>
         +RETRY_ATTEMPTS = 3
-        +fetch(hooks, request) Response
+        +fetch(hooks, request, expect_json) Response
         +save(response, path, name) RawFile
+        +require_source(config)
     }
     class HttpHooks {
         +conn_id: str
         +adapter: HTTPAdapter | None
+        +base_url: str | None
+        +from_config(config)$ HttpHooks
         +for_method(method) HttpHook
     }
     class ExtractionError
@@ -243,9 +262,12 @@ classDiagram
     Extractor <|-- ApiExtractor
     Extractor <|-- HttpFileExtractor
     Extractor <|-- EmailAttachmentExtractor
+    Extractor <|-- FgvDadosExtractor
     Extractor o-- ExtractorConfig
     ExtractorConfig *-- HttpRequest
     ExtractorConfig *-- MailQuery
+    ExtractorConfig *-- FgvDadosQuery
+    HttpRequest ..> resolvers : resolve
     ExtractorFactory ..> Extractor : cria por config.source
     Extractor ..> RawFile : produz
     Part <|.. RawFile
@@ -259,7 +281,18 @@ classDiagram
     ExtractionError <|-- SourceNotFoundError
 ```
 
-- **Estratégias registradas:** `api`, `http_file` e `email`.
+- **Estratégias registradas:** `api`, `http_file`, `email` e `fgvdados`.
+- **Fonte pública × fonte com segredo:** fonte HTTP pública declara `base_url` na
+  DAG, e o `HttpHooks` monta a Connection em memória; `conn_id` fica para fonte
+  com credencial. Nada de Connection por fonte no `.env`.
+- **`api` só aceita JSON:** 2xx com `Content-Type` não JSON (a página de erro que
+  o SGS do BACEN devolve com 200) entra no retry e, se persistir, falha.
+- **`fgvdados`:** login OutSystems + navegação ASP.NET numa `requests.Session`
+  própria (o HttpHook abre sessão nova a cada chamada); credenciais de duas
+  Variables, lidas na task.
+- **`resolvers`:** o `resolve` de uma `HttpRequest` para link que muda a cada
+  edição: `link_in_page` (primeiro `<a href>` com o padrão) e `mziq_latest_file`
+  (catálogo de RI da MZ).
 - **`email` com credencial em Variable:** com `credentials_variable`, a Connection do IMAP (e o remetente) é montada em runtime a partir da Variable JSON (`imap_server`, `email`, `password`, `sender_email`), sem Connection cadastrada.
 - **`http_common`:**
   - retry com backoff só em 5xx e falha de rede;
@@ -294,6 +327,7 @@ classDiagram
         +sheet: str | None
         +header_row: int = 1
         +record_path: str = "item"
+        +key_column: str | None
         +include: str | None
     }
     class Source {

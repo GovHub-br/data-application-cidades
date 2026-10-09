@@ -39,7 +39,7 @@ def test_dataset_spec_resolves_the_link_in_the_page(module: Any) -> None:
         "financiamentos_modalidade",
         LoadMode.OVERWRITE,
     )
-    assert (config.source, config.conn_id) == ("http_file", "http_abecip")
+    assert (config.source, config.base_url) == ("http_file", "https://www.abecip.org.br")
     assert request.endpoint == "/credito-imobiliario/indicadores/financiamento"
     assert request.resolve is not None
     # O bronze em overwrite lê todo Parquet do latest/: uma aba só.

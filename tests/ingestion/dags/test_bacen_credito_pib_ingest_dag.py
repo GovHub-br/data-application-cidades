@@ -38,7 +38,7 @@ def test_dataset_spec_filters_with_the_space_encoded(module: Any) -> None:
         "credito_imobiliario_pib",
         LoadMode.OVERWRITE,
     )
-    assert (config.source, config.conn_id) == ("api", "http_bacen_olinda")
+    assert (config.source, config.base_url) == ("api", "https://olinda.bcb.gov.br")
     # O OData do Olinda recusa o espaço como "+" (HTTP 400): vai no endpoint.
     assert "$filter=Info%20eq%20'indices_imobiliario_pib_br'" in request.endpoint
     assert not request.params

@@ -38,7 +38,10 @@ def test_dataset_spec_resolves_the_latest_quarter_in_the_catalog(module: Any) ->
         "planilha_interativa",
         LoadMode.OVERWRITE,
     )
-    assert (config.source, config.conn_id) == ("http_file", "http_mrv")
+    assert (config.source, config.base_url) == (
+        "http_file",
+        "https://apicatalog.mziq.com",
+    )
     assert request.resolve is not None
     # A aba muda de sufixo entre edições ("Oper.Data", "Oper.D").
     assert spec.converter.include == r"^Dados Oper\."

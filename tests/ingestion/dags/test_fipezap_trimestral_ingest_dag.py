@@ -38,7 +38,10 @@ def test_dataset_spec_reads_only_the_index_sheet(module: Any) -> None:
         "indice_locacao",
         LoadMode.OVERWRITE,
     )
-    assert (config.source, config.conn_id) == ("http_file", "http_fipe")
+    assert (config.source, config.base_url) == (
+        "http_file",
+        "https://downloads.fipe.org.br",
+    )
     assert request.endpoint == "/indices/fipezap/fipezap-serieshistoricas.xlsx"
     # O bronze em overwrite lê todo Parquet do latest/: uma aba só.
     assert (spec.converter.sheet, spec.converter.header_row) == ("Índice FipeZAP", 4)
