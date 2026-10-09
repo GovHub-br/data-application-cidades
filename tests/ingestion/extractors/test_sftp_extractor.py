@@ -142,6 +142,39 @@ def test_one_delivery_per_stem_by_extension_precedence(
     assert [p.name for p in parts] == ["202607_SNH_AF_BB.xlsx", "202608_SNH_AF_BB.csv"]
 
 
+def test_the_same_delivery_in_other_folders_and_wrappers_lands_once(
+    server: _Client, tmp_path: Path
+) -> None:
+    # Como no raw_para_staging: a identidade é o nome sem pasta e sem as extensões
+    # da lista, encadeadas (X.TXT, X.TXT.zip e X.zip são a mesma entrega).
+    files = {
+        "GEFUS/INT059_FDS_20231031.TXT": 1_700_000_000,
+        "GEFUS/ANTERIORES/INT059_FDS_20231031.TXT.zip": 1_700_000_100,
+        "GEFUS/ANTERIORES/INT059_FDS_20231031.zip": 1_700_000_100,
+        "GEFUS/ANTERIORES/INT059_FDS_20231130.zip": 1_700_000_000,
+        "GEFUS/ANTERIORES/INT059_FDS_20231130.TXT.zip": 1_700_000_100,
+    }
+    for name, mtime in files.items():
+        path = server.root / "fabrica" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"x")
+        os.utime(path, (mtime, mtime))
+
+    parts = _extract(
+        tmp_path,
+        RemoteFiles(
+            root="/fabrica/GEFUS",
+            pattern=r"INT059_",
+            prefer_extensions=(".csv", ".txt", ".xlsx", ".zip"),
+        ),
+    )
+
+    assert [p.name for p in parts] == [
+        "INT059_FDS_20231130.TXT.zip",  # empate na extensão: a mais nova
+        "INT059_FDS_20231031.TXT",
+    ]
+
+
 def test_exclude_and_non_recursive(server: _Client, tmp_path: Path) -> None:
     parts = _extract(
         tmp_path,

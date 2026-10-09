@@ -5,7 +5,7 @@ import logging
 import posixpath
 import re
 import stat
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -122,16 +122,33 @@ def _select(files: list[_Remote], query: RemoteFiles) -> list[_Remote]:
 
 
 def _one_per_stem(files: list[_Remote], preference: tuple[str, ...]) -> list[_Remote]:
+    """Uma entrega por identidade: o nome sem pasta e sem as extensões da lista.
+
+    As extensões saem encadeadas (`X.TXT.zip` -> `X`), então `X.TXT`, `X.TXT.zip` e
+    `X.zip`, em qualquer pasta, são a mesma entrega. Vence a extensão de fora mais
+    à frente na lista; no empate, a mais nova.
+    """
     rank = {ext.lower(): i for i, ext in enumerate(preference)}
+
+    def order(remote: _Remote) -> tuple[int, int, int]:
+        outer = posixpath.splitext(remote.name)[1].lower()
+        return (rank.get(outer, len(rank)), -remote.mtime, -remote.size)
+
     best: dict[str, _Remote] = {}
-    for remote in files:
-        stem, ext = posixpath.splitext(remote.relative)
-        current = best.get(stem)
-        if current is None or rank.get(ext.lower(), len(rank)) < rank.get(
-            posixpath.splitext(current.relative)[1].lower(), len(rank)
-        ):
-            best[stem] = remote
+    for remote in sorted(files, key=lambda f: f.relative):
+        identity = _identity(remote.name, rank)
+        current = best.get(identity)
+        if current is None or order(remote) < order(current):
+            best[identity] = remote
     return list(best.values())
+
+
+def _identity(name: str, extensions: Mapping[str, int]) -> str:
+    stem, ext = posixpath.splitext(name)
+    while ext.lower() in extensions:
+        name = stem
+        stem, ext = posixpath.splitext(name)
+    return name
 
 
 def _download(client: Any, remote: _Remote) -> Iterator[bytes]:

@@ -65,8 +65,9 @@ class RemoteFiles:
     - `pattern`: regex buscada no caminho relativo a `root` (`INT055_.*\\.txt$`);
     - `exclude`: regexes que tiram arquivos (temporários `~$`, por exemplo);
     - `recursive`: desce nas subpastas;
-    - `prefer_extensions`: quando a mesma entrega (mesma pasta e nome sem extensão)
-      vem em vários formatos, fica só a primeira extensão da lista que existir.
+    - `prefer_extensions`: quando a mesma entrega (o nome sem pasta e sem as
+      extensões da lista, encadeadas: `X.TXT`, `X.TXT.zip`, `X.zip`) vem em vários
+      formatos ou pastas, fica a primeira extensão da lista que existir.
     """
 
     root: str
