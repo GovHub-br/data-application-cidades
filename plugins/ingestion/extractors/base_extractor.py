@@ -2,8 +2,8 @@
 
 import hashlib
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
+from collections.abc import Iterable, Iterator, Mapping
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -17,12 +17,18 @@ class RawFile:
 
     `name` é o nome do arquivo dentro da partição da raw; `sha256` e `size` são do
     que a fonte entregou, calculados na gravação, sem reler o arquivo.
+
+    `source_id` identifica o arquivo na fonte (caminho, tamanho, data) para a
+    extração incremental; `details` é o que um preparo quer registrar no manifesto
+    (a auditoria do mascaramento, por exemplo). Os dois vão para o `_SUCCESS`.
     """
 
     name: str
     path: Path
     size: int
     sha256: str
+    source_id: str | None = None
+    details: Mapping[str, object] = field(default_factory=dict)
 
 
 class Extractor(ABC):
@@ -35,6 +41,10 @@ class Extractor(ABC):
     `ingestion_time` é o instante da ingestão (com fuso): o dia do e-mail, o fim de
     uma janela de datas. Sem singleton: cada execução tem a sua instância.
     """
+
+    #: `source_id`s que já pousaram em ingestões anteriores (`DatasetSpec.incremental`);
+    #: as estratégias incrementais pulam esses arquivos.
+    already_landed: frozenset[str] = frozenset()
 
     def __init__(self, config: ExtractorConfig, ingestion_time: datetime) -> None:
         self.config = config
