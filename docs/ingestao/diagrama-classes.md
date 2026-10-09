@@ -175,6 +175,7 @@ classDiagram
         +hook_class = ImapHook
     }
     class FgvDadosExtractor
+    class ObjectStorageExtractor
     class ExtractorFactory {
         -_registry: dict~str, type~
         +register(name)$ decorator
@@ -189,6 +190,13 @@ classDiagram
         +adapter: HTTPAdapter | None
         +mail: MailQuery | None
         +fgvdados: FgvDadosQuery | None
+        +objects: ObjectQuery | None
+    }
+    class ObjectQuery {
+        <<dataclass>>
+        +prefix: str
+        +pattern: str
+        +rename: str | None
     }
     class FgvDadosQuery {
         <<dataclass>>
@@ -263,6 +271,9 @@ classDiagram
     Extractor <|-- HttpFileExtractor
     Extractor <|-- EmailAttachmentExtractor
     Extractor <|-- FgvDadosExtractor
+    Extractor <|-- ObjectStorageExtractor
+    ExtractorConfig *-- ObjectQuery
+    ObjectStorageExtractor ..> base_extractor
     Extractor o-- ExtractorConfig
     ExtractorConfig *-- HttpRequest
     ExtractorConfig *-- MailQuery
@@ -281,7 +292,8 @@ classDiagram
     ExtractionError <|-- SourceNotFoundError
 ```
 
-- **Estratégias registradas:** `api`, `http_file`, `email` e `fgvdados`.
+- **Estratégias registradas:** `api`, `http_file`, `email`, `fgvdados` e `object_storage`.
+- **`object_storage`:** copia para a raw os objetos que outro processo gravou no bucket (`ObjectQuery`: prefixo, padrão da chave, nome na raw). Lê o bucket sem o prefixo de teste (`storage_from_env(with_prefix=False)`): a fonte não muda com `INGESTION_STORAGE_PREFIX`.
 - **Fonte pública × fonte com segredo:** fonte HTTP pública declara `base_url` na
   DAG, e o `HttpHooks` monta a Connection em memória; `conn_id` fica para fonte
   com credencial. Nada de Connection por fonte no `.env`.
@@ -429,6 +441,13 @@ classDiagram
         #_read(path) Iterator~Source~
         -_members(archive) Iterator~ZipInfo~
     }
+    class IbgeV3Converter {
+        +COLUMNS
+        #_read(path) Iterator~Source~
+    }
+    class PowerBiDsrConverter {
+        #_read(path) Iterator~Source~
+    }
 
     FileConverter <|-- CsvConverter
     CsvConverter <|-- TxtConverter
@@ -443,6 +462,10 @@ classDiagram
     FileConverter <|-- ParquetConverter
     FileConverter <|-- ZipConverter
     ZipConverter ..> ConverterFactory : delega cada membro
+    FileConverter <|-- IbgeV3Converter
+    IbgeV3Converter ..> ijson : uma variável por vez
+    FileConverter <|-- PowerBiDsrConverter
+    PowerBiDsrConverter ..> ijson : um resultado por vez
     partition ..> ConverterFactory : um arquivo da raw por vez
     partition ..> StagedFile : produz
     partition ..> ConversionResult
@@ -468,11 +491,13 @@ classDiagram
 - **Formatos registrados:**
   - `csv` (`.csv`, delimitador padrão `,`);
   - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação;
-  - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON;
+  - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON; com `key_column`, as chaves de um objeto viram linhas (a data do pregão do Alpha Vantage);
   - `xlsx` (`.xlsx`, `.xlsm`): uma saída por aba, `header_row`, valor calculado da fórmula, célula vira texto por regra fixa;
   - `mdb` (`.mdb`, `.accdb`): uma saída por tabela (`<arquivo>__<tabela>`), `mdb-export` lido por pipe;
   - `parquet` (`.parquet`): mantém o schema original (`Source.schema`), a exceção ao "tudo string";
-  - `zip` (`.zip`): um membro por vez, delegado ao conversor da extensão (`<zip>__<membro>`).
+  - `zip` (`.zip`): um membro por vez, delegado ao conversor da extensão (`<zip>__<membro>`);
+  - `ibge_v3` (só por `format`): a resposta da API de agregados do IBGE, uma linha por (variável, localidade, classificação, categoria, período), o mesmo achatamento do antigo `ClienteIBGE`;
+  - `powerbi_dsr` (só por `format`): o DSR do `querydata` do Power BI público, com as máscaras `Ø` (nulo) e `R` (repete a linha anterior) e os nomes do `descriptor`.
 - **Nome repetido:** dois Parquet com o mesmo nome vindos de um mesmo arquivo são `ConversionError`.
 - **`convert_partition`:**
   - exige o `_SUCCESS` da raw;
