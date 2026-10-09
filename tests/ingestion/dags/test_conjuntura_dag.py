@@ -42,10 +42,28 @@ def _triggered() -> list[str]:
     raise AssertionError("INGEST_DAG_IDS não encontrado")
 
 
+def _defined_dag_ids() -> set[str]:
+    """dag_id literal no @dag, ou string do módulo que monta DAGs num laço.
+
+    Um arquivo pode montar várias DAGs a partir de uma tabela (o Novo CAGED): aí o
+    dag_id é variável no @dag e aparece como string no próprio módulo.
+    """
+    defined: set[str] = set()
+    for path in DAGS.rglob("*.py"):
+        tree = _module(path)
+        calls = _dag_calls(tree)
+        defined.update(dag_id for dag_id, _ in calls)
+        if calls:
+            defined.update(
+                node.value
+                for node in ast.walk(tree)
+                if isinstance(node, ast.Constant) and isinstance(node.value, str)
+            )
+    return defined
+
+
 def test_every_triggered_dag_exists_in_the_repository() -> None:
-    defined = {
-        dag_id for path in DAGS.rglob("*.py") for dag_id, _ in _dag_calls(_module(path))
-    }
+    defined = _defined_dag_ids()
 
     missing = [dag_id for dag_id in _triggered() if dag_id not in defined]
 

@@ -740,14 +740,12 @@ models:
     tests:
       - sem_drift_de_colunas:
           colunas:
-            - ano
-            - mes
-            - admitidos
-            - desligados
-            - saldo
-            - estoque
-            - variacao
-            - dt_ingest
+            - Admitidos
+            - Desligados
+            - Saldo
+            - Estoque
+            - Variacao
+            - filename
   - name: bronze_novo_caged_servicos_especializados
     description: >
       Movimentação de emprego formal em serviços especializados para
@@ -755,17 +753,12 @@ models:
     tests:
       - sem_drift_de_colunas:
           colunas:
-            - ano
-            - mes
-            - admitidos
-            - desligados
-            - saldo
-            - estoque
-            - variacao
-            - dt_ingest
-            - _source_file
-            - _ingested_at
-            - _source_hash
+            - Admitidos
+            - Desligados
+            - Saldo
+            - Estoque
+            - Variacao
+            - filename
   - name: bronze_novo_caged_total
     description: >
       Movimentação de emprego formal no conjunto da construção civil, com
@@ -773,17 +766,12 @@ models:
     tests:
       - sem_drift_de_colunas:
           colunas:
-            - ano
-            - mes
-            - admitidos
-            - desligados
-            - saldo
-            - estoque
-            - variacao
-            - dt_ingest
-            - _source_file
-            - _ingested_at
-            - _source_hash
+            - Admitidos
+            - Desligados
+            - Saldo
+            - Estoque
+            - Variacao
+            - filename
   - name: bronze_siafi_dotacao_execucao
     description: >
       Execução orçamentária federal em habitação, com dotação, empenho,

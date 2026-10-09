@@ -249,19 +249,22 @@ sources:
       - name: novo_caged
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_construcao_edificios.parquet
+          caminho: staging/novo_caged/saldo_estoque_construcao_edificios
+          load_mode: overwrite   # cada execução consulta todos os meses desde 2024
           dag: saldo_estoque_construcao_edificios_ingest_dag
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: novo_caged_servicos_especializados
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao.parquet
+          caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao
+          load_mode: overwrite   # cada execução consulta todos os meses desde 2024
           dag: saldo_estoque_servicos_especializados_construcao_ingest_dag
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: novo_caged_total
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_total_construcao.parquet
+          caminho: staging/novo_caged/saldo_estoque_total_construcao
+          load_mode: overwrite   # cada execução consulta todos os meses desde 2024
           dag: saldo_estoque_total_construcao_ingest_dag
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: siafi_dotacao_execucao
