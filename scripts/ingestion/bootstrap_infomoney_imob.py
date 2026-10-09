@@ -58,11 +58,19 @@ COLUMNS = {
 
 
 def last_ingestion(table: pa.Table) -> datetime:
-    """Último `dt_ingest` da staging antiga, no fuso de Brasília."""
-    latest = max(
-        datetime.fromisoformat(value) for value in table.column("dt_ingest").to_pylist()
-    )
-    return latest if latest.tzinfo else latest.replace(tzinfo=TIMEZONE)
+    """Último `dt_ingest` da staging antiga, no fuso de Brasília.
+
+    A coluna mistura valores com fuso (vindos do Postgres) e sem; sem fuso é
+    horário de Brasília.
+    """
+    return max(_brasilia(value) for value in table.column("dt_ingest").to_pylist())
+
+
+def _brasilia(value: str) -> datetime:
+    moment = datetime.fromisoformat(value)
+    if moment.tzinfo is None:
+        return moment.replace(tzinfo=TIMEZONE)
+    return moment.astimezone(TIMEZONE)
 
 
 def bootstrap(

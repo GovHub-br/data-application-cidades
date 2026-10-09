@@ -83,3 +83,16 @@ def test_partition_time_is_brasilia() -> None:
     when = bootstrap.last_ingestion(OLD)
 
     assert when == datetime(2026, 9, 1, 14, 44, 15, 326096, tzinfo=TIMEZONE)
+
+
+def test_mixed_dt_ingest_formats_are_compared_in_brasilia() -> None:
+    # A staging antiga mistura dt_ingest com fuso (gravado pelo Postgres) e sem.
+    table = OLD.set_column(
+        OLD.column_names.index("dt_ingest"),
+        "dt_ingest",
+        pa.array(["2026-05-07 23:28:38.782237-03", "2026-09-01T14:44:15.326096"]),
+    )
+
+    assert bootstrap.last_ingestion(table) == datetime(
+        2026, 9, 1, 14, 44, 15, 326096, tzinfo=TIMEZONE
+    )
