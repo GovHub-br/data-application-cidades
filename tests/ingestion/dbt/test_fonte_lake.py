@@ -166,3 +166,70 @@ def test_keys_outside_merge_fail_at_compile_time(dbt_project: DbtProject) -> Non
     assert "keys só no merge" in _compile_error(
         dbt_project, load_mode="overwrite", keys=["data"]
     )
+
+
+def test_glob_of_an_append_source_lets_the_bronze_keep_the_latest_delivery(
+    dbt_project: DbtProject,
+) -> None:
+    # Fonte de retratos (SFTP): cada ingestão traz uma entrega nova; a bronze quer
+    # só a mais recente pelo nome, entre todas as partições, sem o latest/.
+    dbt_project.source("sftp_retrato", caminho="staging/sftp/retrato", load_mode="append")
+    dbt_project.model(
+        "bronze_retrato",
+        "select * from {{ fonte_lake('sftp_retrato') }} as r "
+        "where cast(r['filename'] as varchar) = "
+        "{{ arquivo_mais_recente(fonte_lake_glob('sftp_retrato'), "
+        "excluir=['VALIDACAO']) }}",
+    )
+    dbt_project.ingest("sftp", "retrato", FIRST, {"X_20260731.csv": b"a\n1\n"})
+    dbt_project.ingest(
+        "sftp",
+        "retrato",
+        SECOND,
+        {"X_20260831.csv": b"a\n2\n", "X_VALIDACAO_20260901.csv": b"a\n9\n"},
+    )
+    dbt_project.build()
+
+    assert dbt_project.query("select a from bronze_retrato") == [("2",)]
+
+
+def test_glob_of_each_load_mode(dbt_project: DbtProject) -> None:
+    for name, meta in {
+        "legada": {"caminho": "staging/x/arquivo.parquet"},
+        "ultima": {"caminho": "staging/x/ultima", "load_mode": "overwrite"},
+        "todas": {"caminho": "staging/x/todas", "load_mode": "append"},
+    }.items():
+        dbt_project.source(name, **meta)
+        dbt_project.model(
+            f"glob_{name}", f"select '{{{{ fonte_lake_glob('{name}') }}}}' as g"
+        )
+
+    globs = {
+        name: dbt_project.compiled(f"glob_{name}").split("'")[1]
+        for name in ("legada", "ultima", "todas")
+    }
+
+    assert globs == {
+        "legada": "s3://data-lake-mcid/staging/x/arquivo.parquet",
+        "ultima": "s3://data-lake-mcid/staging/x/ultima/latest/*/*/*.parquet",
+        "todas": "s3://data-lake-mcid/staging/x/todas/2*/*/*.parquet",
+    }
+
+
+def test_the_same_delivery_landed_twice_keeps_the_newest_ingestion(
+    dbt_project: DbtProject,
+) -> None:
+    # Reenvio com o mesmo nome (outro tamanho na fonte): as duas partições têm
+    # X_20260831; vale a ingestão mais nova.
+    dbt_project.source("sftp_retrato", caminho="staging/sftp/retrato", load_mode="append")
+    dbt_project.model(
+        "bronze_retrato",
+        "select * from {{ fonte_lake('sftp_retrato') }} as r "
+        "where cast(r['filename'] as varchar) = "
+        "{{ arquivo_mais_recente(fonte_lake_glob('sftp_retrato')) }}",
+    )
+    dbt_project.ingest("sftp", "retrato", FIRST, {"X_20260831.csv": b"a\n1\n"})
+    dbt_project.ingest("sftp", "retrato", SECOND, {"X_20260831.csv": b"a\n2\n"})
+    dbt_project.build()
+
+    assert dbt_project.query("select a from bronze_retrato") == [("2",)]

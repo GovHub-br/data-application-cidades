@@ -16,6 +16,9 @@
         tem prefixo fixo e data de largura fixa, ordem alfabética decrescente = mais
         recente primeiro.
 
+        No empate de nome (a mesma entrega pousada em duas ingestões, num lake
+        particionado por data), vence o caminho maior: a ingestão mais nova.
+
         `excluir` tira da disputa os nomes que contêm um dos termos. É necessário quando
         a origem manda variante do mesmo dado sob nome parecido: o INT059 tem remessas
         `..._EMPREENDIMENTOS_VALIDACAO_<data>` que, em ordem alfabética, vencem a remessa
@@ -36,7 +39,7 @@
         where
             true
             {%- for termo in excluir %} and arquivo not like '%{{ termo }}%' {%- endfor %}
-        order by split_part(arquivo, '/', -1) desc
+        order by split_part(arquivo, '/', -1) desc, arquivo desc
         limit 1
     )
 {%- endmacro %}
