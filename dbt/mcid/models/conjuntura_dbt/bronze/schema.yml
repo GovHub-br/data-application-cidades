@@ -644,6 +644,48 @@ models:
             - valor
             - dt_ingest
             - data_referencia
+  - name: bronze_ibge_sidra_pnad_construcao_ocupados
+    description: >
+      Pessoas ocupadas no total das atividades e na construção, segundo a PNAD
+      Contínua, por trimestre móvel. Primeira linha é o cabeçalho da SIDRA.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - NC
+            - NN
+            - MC
+            - MN
+            - V
+            - D1C
+            - D1N
+            - D2C
+            - D2N
+            - D3C
+            - D3N
+            - D4C
+            - D4N
+            - filename
+  - name: bronze_ibge_sidra_pnad_construcao_rendimento
+    description: >
+      Rendimento médio real habitual no total das atividades e na construção, segundo a PNAD
+      Contínua, por trimestre móvel. Primeira linha é o cabeçalho da SIDRA.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - NC
+            - NN
+            - MC
+            - MN
+            - V
+            - D1C
+            - D1N
+            - D2C
+            - D2N
+            - D3C
+            - D3N
+            - D4C
+            - D4N
+            - filename
   - name: bronze_ibge_sinapi
     description: >
       Custo de referência da construção habitacional por metro quadrado,

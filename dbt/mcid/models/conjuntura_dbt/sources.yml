@@ -13,12 +13,10 @@ sources:
     #
     #   - as 5 de `sftp/` chegam por transferência do agente operador; não há
     #     DAG que as escreva, e o campo fica ausente de propósito;
-    #   - as do IBGE saem de `ibge_ingest_dag`, atribuída POR ELIMINAÇÃO: só
-    #     duas DAGs escrevem em `staging/ibge/`, e a outra
-    #     (`pnad_construcao_sidra_ingest_dag`) produz `pnad_construcao_ocupados`
-    #     e `pnad_construcao_rendimento`, que não correspondem a nenhuma source
-    #     declarada. Para confirmar item a item, olhar a Airflow Variable
-    #     `IBGE_CONFIGURACOES`, que é de onde a DAG lê a lista de datasets.
+    #   - as do IBGE saem de `ibge_ingest_dag` (API v3); a
+    #     `ibge_pnad_construcao_sidra_ingest_dag` grava `pnad_construcao_ocupados`
+    #     e `pnad_construcao_rendimento` (`ibge_sidra_*`), reserva da v3 para o
+    #     PNAD, sem leitor além do bronze.
     #
     # Quem souber a resposta acrescenta a linha; o catálogo passa a mostrar a
     # DAG de origem do dado sem que ninguém precise ler código.
@@ -183,6 +181,20 @@ sources:
           caminho: staging/ibge/pnadc_rendimento_domiciliar_real.parquet
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
+      - name: ibge_sidra_pnad_construcao_ocupados
+        description: "PNAD Contínua, pessoas ocupadas: total e construção, por trimestre móvel (SIDRA, tabela 6323). Reserva da API v3."
+        meta:
+          caminho: staging/ibge/pnad_construcao_ocupados
+          load_mode: merge   # a SIDRA devolve só os últimos 12 trimestres
+          keys: [D3C, D4C]
+          dag: ibge_pnad_construcao_sidra_ingest_dag
+      - name: ibge_sidra_pnad_construcao_rendimento
+        description: "PNAD Contínua, rendimento médio real: total e construção, por trimestre móvel (SIDRA, tabela 6391). Reserva da API v3."
+        meta:
+          caminho: staging/ibge/pnad_construcao_rendimento
+          load_mode: merge   # a SIDRA devolve só os últimos 12 trimestres
+          keys: [D3C, D4C]
+          dag: ibge_pnad_construcao_sidra_ingest_dag
       - name: ibge_sinapi
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:

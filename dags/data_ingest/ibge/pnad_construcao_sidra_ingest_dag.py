@@ -1,84 +1,91 @@
-import logging
+"""PNAD Contínua, construção: ocupados e rendimento médio real (IBGE, SIDRA).
+
+Fonte: API de valores da SIDRA (`apisidra.ibge.gov.br/values`), tabelas 6323
+(ocupados, variável 4090) e 6391 (rendimento, variável 5932), Brasil, por
+grupamento de atividade (classificação 888: 47946 = Total, 47949 =
+Construção), últimos 12 trimestres móveis. A resposta é uma lista JSON plana
+cujo primeiro registro é o cabeçalho (`D3C` = "Trimestre Móvel (Código)"); a
+staging guarda tudo e o cabeçalho sai na prata.
+
+Reserva da API v3: o dbt lê o PNAD de `ibge_ingest_dag` (agregados 6323/6391
+na v3); esta DAG fica para o caso de a v3 voltar a falhar para essas tabelas.
+
+LoadMode: merge (`D3C`, `D4C`: trimestre e categoria). A SIDRA devolve só a
+janela pedida, então o histórico se acumula pelas ingestões.
+"""
+
 from datetime import datetime, timedelta
+from typing import Any
 
-from airflow.sdk import dag, task
-from schedule_loader import get_dynamic_schedule
-from postgres_helpers import get_postgres_conn
-from cliente_ibge_sidra import ClienteIbgeSidra
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
+from airflow.sdk import TaskGroup, dag, task
 
-# PNAD-C por grupamento de atividade (classificação 888):
-#   categorias 47946 = Total, 47949 = Construção.
-CLASSIFICACAO = 888
-CATEGORIAS = [47946, 47949]
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
 
-CONFIGS = [
-    {"tabela": "pnad_construcao_ocupados", "agregado": 6323, "variavel": 4090},
-    {"tabela": "pnad_construcao_rendimento", "agregado": 6391, "variavel": 5932},
-]
+# Classificação 888 (grupamento de atividade): 47946 = Total, 47949 = Construção.
+CLASSIFICACAO = "c888/47946,47949"
+TABELAS = {
+    "pnad_construcao_ocupados": (6323, 4090),
+    "pnad_construcao_rendimento": (6391, 5932),
+}
+
+DATASETS = tuple(
+    DatasetSpec(
+        domain="ibge",
+        dataset=dataset,
+        extractor=ExtractorConfig(
+            source="api",
+            base_url="https://apisidra.ibge.gov.br",
+            requests=(
+                HttpRequest(
+                    name=dataset,
+                    endpoint=(
+                        f"/values/t/{tabela}/n1/all/v/{variavel}/p/last%2012/"
+                        f"{CLASSIFICACAO}"
+                    ),
+                    headers={"User-Agent": "Mozilla/5.0"},
+                ),
+            ),
+        ),
+        load_mode=LoadMode.MERGE,
+        keys=("D3C", "D4C"),
+    )
+    for dataset, (tabela, variavel) in TABELAS.items()
+)
+
+
+def _pipeline(spec: DatasetSpec) -> None:
+    @task(task_id="extract_to_raw")
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(spec, context["dag_run"].run_after)
+
+    @task(task_id="convert_to_staging")
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(spec, raw_prefix)
+
+    convert_to_staging(extract_to_raw())
 
 
 @dag(
     dag_id="ibge_pnad_construcao_sidra_ingest_dag",
-    schedule=get_dynamic_schedule(
-        "ibge_pnad_construcao_sidra_ingest_dag", default="@monthly"
-    ),
+    # Diário às 06:00: a PNAD-C sai por trimestre móvel, uma vez por mês.
+    schedule="0 6 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
+    max_active_runs=1,
     default_args={
         "owner": "Lucas Bottino",
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["ibge", "pnad", "construcao", "sidra", "conjuntura"],
+    tags=["ibge", "pnad", "construcao", "sidra", "conjuntura", "ingestion"],
 )
 def ibge_pnad_construcao_sidra_ingest_dag() -> None:
-    """PNAD-C construção (ocupados + rendimento médio real) via SIDRA — pág. 3.
-
-    Usa a API SIDRA porque o endpoint /dados do IBGE v3 está retornando HTTP 500
-    para os agregados 6323/6391. Categorias 47946 (Total) e 47949 (Construção).
-    """
-
-    @task
-    def fetch_and_store(config: dict) -> None:
-        tabela = config["tabela"]
-        api = ClienteIbgeSidra()
-        db = ClientPostgresDB(get_postgres_conn())
-
-        registros = api.obter(
-            config["agregado"],
-            config["variavel"],
-            CLASSIFICACAO,
-            CATEGORIAS,
-            periodos="last 12",
-        )
-        if not registros:
-            logging.warning(f"Nenhum dado SIDRA para ibge.{tabela}")
-            return
-
-        # Postgres: upsert por (periodo, categoria_id) -> preserva histórico.
-        db.insert_data(
-            registros,
-            tabela,
-            conflict_fields=["periodo", "categoria_id"],
-            primary_key=["periodo", "categoria_id"],
-            schema="ibge",
-        )
-
-        # Lake (full-refresh): raw = json da API SIDRA; parquet tipado.
-        upload_raw_json("ibge", tabela, registros)
-        registros_para_staging_parquet(
-            "ibge",
-            tabela,
-            registros,
-            typers={"valor": lambda s: pd.to_numeric(s, errors="coerce")},
-        )
-        logging.info(f"SIDRA {tabela}: {len(registros)} registros ingeridos.")
-
-    fetch_and_store.expand(config=CONFIGS)
+    for spec in DATASETS:
+        with TaskGroup(group_id=spec.dataset):
+            _pipeline(spec)
 
 
 dag_instance = ibge_pnad_construcao_sidra_ingest_dag()
