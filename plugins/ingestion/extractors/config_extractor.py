@@ -44,16 +44,36 @@ class MailQuery:
 
 
 @dataclass(frozen=True)
+class FgvDadosQuery:
+    """Série do portal FGVDados (IBRE), baixada em CSV depois do login.
+
+    As credenciais vêm de duas Variables (`email_variable`, `password_variable`),
+    lidas só dentro da task. `auth_url` e `legacy_url` são os dois sistemas do
+    portal (o login OutSystems e o FGVDados em ASP.NET); mudam só nos testes.
+    """
+
+    series: str
+    email_variable: str
+    password_variable: str
+    auth_url: str = "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
+    legacy_url: str = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/"
+
+
+@dataclass(frozen=True)
 class ExtractorConfig:
     """O que extrair e de onde. `source` escolhe a estratégia no ExtractorFactory.
 
     - `requests`: chamadas das estratégias HTTP (`api`, `http_file`).
     - `adapter`: HTTPAdapter montado na sessão, para fontes com TLS fora do padrão.
     - `mail`: busca da estratégia `email`.
+    - `fgvdados`: série da estratégia `fgvdados`.
+
+    `conn_id` é a Connection da fonte, para as estratégias que usam uma (as HTTP).
     """
 
     source: str
-    conn_id: str
+    conn_id: str = ""
     requests: tuple[HttpRequest, ...] = ()
     adapter: Any = None
     mail: MailQuery | None = None
+    fgvdados: FgvDadosQuery | None = None

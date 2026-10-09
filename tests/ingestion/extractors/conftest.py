@@ -36,7 +36,8 @@ class Route:
 
     `fail_first` responde 503 nas primeiras N chamadas, para testar o retry.
     `html_first` responde 200 com uma página HTML nas primeiras N chamadas, como o
-    SGS do BACEN faz quando recusa a requisição.
+    SGS do BACEN faz quando recusa a requisição. `on_post` responde os POST do mesmo
+    caminho (páginas ASP.NET respondem GET e POST no mesmo endereço).
     """
 
     body: Body = b""
@@ -44,6 +45,7 @@ class Route:
     headers: dict[str, str] = field(default_factory=dict)
     fail_first: int = 0
     html_first: int = 0
+    on_post: "Route | None" = None
     calls: int = 0
     requests: list[dict[str, Any]] = field(default_factory=list)
 
@@ -78,8 +80,17 @@ class FakeHttpServer:
             handler.send_response(404)
             handler.end_headers()
             return
+        if handler.command == "POST" and route.on_post is not None:
+            route = route.on_post
         route.calls += 1
-        route.requests.append({"method": handler.command, "query": query, "body": body})
+        route.requests.append(
+            {
+                "method": handler.command,
+                "query": query,
+                "body": body,
+                "headers": dict(handler.headers),
+            }
+        )
         if route.calls <= route.fail_first:
             handler.send_response(503)
             handler.end_headers()
