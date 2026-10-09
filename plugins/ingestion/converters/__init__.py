@@ -10,7 +10,7 @@ from ingestion.converters.base_converter import (
     batches_from_rows,
 )
 from ingestion.converters.columns import fix_header
-from ingestion.converters.config_converter import ConverterConfig
+from ingestion.converters.config_converter import ConverterConfig, Field
 from ingestion.converters.converter_errors import ConversionError
 from ingestion.converters.converter_registry import ConverterFactory
 from ingestion.converters.partition import (
@@ -24,6 +24,7 @@ __all__ = [
     "ConversionResult",
     "ConvertedFile",
     "ConverterConfig",
+    "Field",
     "ConverterFactory",
     "FileConverter",
     "Source",
@@ -41,5 +42,4 @@ from ingestion.converters.models import xlsx_converter  # noqa: E402, F401
 from ingestion.converters.models import mdb_converter  # noqa: E402, F401
 from ingestion.converters.models import parquet_converter  # noqa: E402, F401
 from ingestion.converters.models import zip_converter  # noqa: E402, F401
-from ingestion.converters.models import ibge_v3_converter  # noqa: E402, F401
 from ingestion.converters.models import powerbi_dsr_converter  # noqa: E402, F401

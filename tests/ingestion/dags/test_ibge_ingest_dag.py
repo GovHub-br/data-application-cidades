@@ -61,7 +61,8 @@ def test_dataset_with_classification(module: Any) -> None:
         "localidades": "N1[1]",
         "classificacao": "11255[90694]",
     }
-    assert spec.converter.format == "ibge_v3"
+    assert spec.converter.nested == ("resultados", "series")
+    assert spec.converter.explode_keys == "serie"
     # Janela parcial (-20 períodos): o histórico se acumula pelo merge.
     assert spec.load_mode is LoadMode.MERGE
     assert spec.keys == (

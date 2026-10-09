@@ -1,4 +1,4 @@
-"""IBGE v3 (agregados): o JSON aninhado vira uma linha por valor da série."""
+"""IBGE v3 (agregados): o formato declarado na DAG sobre o JsonConverter."""
 
 import json
 from pathlib import Path
@@ -8,7 +8,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from ingestion.converters import ConversionError, ConverterConfig, ConverterFactory
+from ingestion.converters import ConversionError, ConverterFactory
+from tests.ingestion.dags.conftest import load_dag_module
+
+IBGE_V3 = load_dag_module("data_ingest/ibge/ibge_ingest_dag.py").IBGE_V3
 
 PAYLOAD = [
     {
@@ -55,7 +58,7 @@ PAYLOAD = [
 def _rows(tmp_path: Path, payload: Any) -> list[dict[str, Any]]:
     path = tmp_path / "pib_construcao.json"
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    converter = ConverterFactory.for_file(path, ConverterConfig(format="ibge_v3"))
+    converter = ConverterFactory.for_file(path, IBGE_V3)
     [converted] = converter.convert(path, tmp_path / "out")
     table = pq.read_table(converted.path)
     assert all(field.type == pa.string() for field in table.schema)
@@ -128,5 +131,5 @@ def test_two_classifications_are_joined_like_the_old_flattening(
 
 
 def test_empty_response_is_a_conversion_error(tmp_path: Path) -> None:
-    with pytest.raises(ConversionError, match="nenhum valor"):
+    with pytest.raises(ConversionError, match="nenhum registro"):
         _rows(tmp_path, [])

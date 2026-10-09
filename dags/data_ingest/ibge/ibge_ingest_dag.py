@@ -14,8 +14,13 @@ classificação, categoria, período). Cada chamada traz só a janela pedida (`-
 `-30`…), então o histórico se acumula pelas ingestões, e revisões do IBGE
 dentro da janela substituem o valor anterior.
 
-Conversão: `ibge_v3` (uma linha por valor da série, em texto). A tipagem que a
-DAG antiga fazia em pandas é da prata (macro `ibge_v3_tipado`).
+Conversão: o `JsonConverter` com o formato da resposta declarado aqui (`IBGE_V3`):
+cada variável tem `resultados` (uma combinação de categorias) e, neles, uma `serie`
+por localidade com o PERÍODO COMO CHAVE. Uma linha por (variável, localidade,
+classificação, categoria, período), em texto; sem classificação, ids `"0"` e nomes
+vazios; com várias, ids juntados por `|` e nomes por ` | ` (o achatamento que o
+macro `ibge_v3_tipado` e as chaves do merge supõem). A tipagem que a DAG antiga
+fazia em pandas é da prata (macro `ibge_v3_tipado`).
 """
 
 from datetime import datetime, timedelta
@@ -23,7 +28,7 @@ from typing import Any
 
 from airflow.sdk import TaskGroup, dag, task
 
-from ingestion.converters import ConverterConfig
+from ingestion.converters import ConverterConfig, Field
 from ingestion.dataset import DatasetSpec
 from ingestion.extractors import ExtractorConfig, HttpRequest
 from ingestion.loaders import LoadMode
@@ -53,6 +58,28 @@ AGREGADOS: tuple[tuple[str, int, str, str, str | None], ...] = (
     ),
 )
 KEYS = ("variavel_id", "localidade_id", "classificacao_id", "categoria_id", "periodo")
+CLASSIFICACOES = "resultados.classificacoes[*]"
+IBGE_V3 = ConverterConfig(
+    nested=("resultados", "series"),
+    explode_keys="serie",
+    columns={
+        "variavel_id": Field("item.id"),
+        "variavel_nome": Field("item.variavel"),
+        "localidade_id": Field("series.localidade.id"),
+        "localidade_nome": Field("series.localidade.nome"),
+        "classificacao_id": Field(f"{CLASSIFICACOES}.id", join="|", default="0"),
+        "classificacao_nome": Field(f"{CLASSIFICACOES}.nome", join=" | ", default=""),
+        "categoria_id": Field(
+            f"{CLASSIFICACOES}.categoria{{keys}}", join="|", default="0"
+        ),
+        "categoria_nome": Field(
+            f"{CLASSIFICACOES}.categoria{{values}}", join=" | ", default=""
+        ),
+        "unidade": Field("item.unidade"),
+        "periodo": Field("key"),
+        "valor": Field("value"),
+    },
+)
 
 
 def _spec(
@@ -78,7 +105,7 @@ def _spec(
                 ),
             ),
         ),
-        converter=ConverterConfig(format="ibge_v3"),
+        converter=IBGE_V3,
         load_mode=LoadMode.MERGE,
         keys=KEYS,
     )

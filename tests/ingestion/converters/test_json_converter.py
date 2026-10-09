@@ -9,7 +9,12 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from ingestion.converters import ConversionError, ConverterConfig, ConverterFactory
+from ingestion.converters import (
+    ConversionError,
+    ConverterConfig,
+    ConverterFactory,
+    Field,
+)
 
 
 def _rows(tmp_path: Path, text: str, **config: Any) -> list[dict[str, Any]]:
@@ -129,3 +134,107 @@ def test_memory_does_not_grow_with_the_number_of_records(tmp_path: Path) -> None
     large = _peak_converting(tmp_path, 120_000)
 
     assert large < small * 1.5, f"{small / 2**20:.1f} MiB -> {large / 2**20:.1f} MiB"
+
+
+NESTED = {
+    "itens": [
+        {
+            "id": 1,
+            "nome": "A",
+            "grupos": [
+                {
+                    "tags": [{"id": "t1", "rotulo": {"10": "dez"}}],
+                    "pontos": [
+                        {"local": {"id": "BR"}, "serie": {"2024": "1.5", "2025": "..."}}
+                    ],
+                },
+                {
+                    "tags": [],
+                    "pontos": [{"local": {"id": "SP"}, "serie": {"2025": "7"}}],
+                },
+            ],
+        }
+    ]
+}
+
+
+def test_nested_lists_and_exploded_keys_with_declared_columns(tmp_path: Path) -> None:
+    rows = _rows(
+        tmp_path,
+        json.dumps(NESTED),
+        record_path="itens.item",
+        nested=("grupos", "pontos"),
+        explode_keys="serie",
+        columns={
+            "id": Field("item.id"),
+            "local": Field("pontos.local.id"),
+            "tag": Field("grupos.tags[*].id", join="|", default="0"),
+            "rotulo_id": Field("grupos.tags[*].rotulo{keys}", join="|", default="0"),
+            "rotulo": Field("grupos.tags[*].rotulo{values}", join=" | ", default=""),
+            "ano": Field("key"),
+            "valor": Field("value"),
+        },
+    )
+
+    assert rows == [
+        {
+            "id": "1",
+            "local": "BR",
+            "tag": "t1",
+            "rotulo_id": "10",
+            "rotulo": "dez",
+            "ano": "2024",
+            "valor": "1.5",
+        },
+        {
+            "id": "1",
+            "local": "BR",
+            "tag": "t1",
+            "rotulo_id": "10",
+            "rotulo": "dez",
+            "ano": "2025",
+            "valor": "...",
+        },
+        {
+            "id": "1",
+            "local": "SP",
+            "tag": "0",
+            "rotulo_id": "0",
+            "rotulo": "",
+            "ano": "2025",
+            "valor": "7",
+        },
+    ]
+
+
+def test_field_with_many_values_and_no_join_is_an_error(tmp_path: Path) -> None:
+    text = '[{"xs": [{"v": 1}, {"v": 2}]}]'
+
+    with pytest.raises(ConversionError, match="join"):
+        _rows(tmp_path, text, columns={"v": Field("item.xs[*].v")})
+
+
+def test_field_missing_uses_the_default_or_null(tmp_path: Path) -> None:
+    rows = _rows(
+        tmp_path,
+        '[{"a": 1}]',
+        columns={
+            "a": Field("item.a"),
+            "b": Field("item.b"),
+            "c": Field("item.c", default="x"),
+        },
+    )
+
+    assert rows == [{"a": "1", "b": None, "c": "x"}]
+
+
+def test_nested_without_columns_flattens_the_last_level(tmp_path: Path) -> None:
+    rows = _rows(
+        tmp_path,
+        json.dumps(NESTED),
+        record_path="itens.item",
+        nested=("grupos", "pontos"),
+    )
+
+    assert rows[0] == {"local": '{"id": "BR"}', "serie": '{"2024": "1.5", "2025": "..."}'}
+    assert len(rows) == 2
