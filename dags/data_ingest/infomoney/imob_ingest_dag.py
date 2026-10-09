@@ -78,12 +78,12 @@ DATASET = DatasetSpec(
 )
 def infomoney_imob_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> str:
+    def extract_to_raw(**context: Any) -> list[str]:
         return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def convert_to_staging(raw_prefix: str) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefix)
+    def convert_to_staging(raw_prefixes: list[str]) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefixes)
 
     convert_to_staging(extract_to_raw())
 

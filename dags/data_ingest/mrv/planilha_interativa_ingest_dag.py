@@ -3,8 +3,8 @@
 Fonte: o site de RI da MRV hospeda os documentos no catálogo da MZ (mziq). A
 planilha do trimestre mais recente é achada na listagem JSON do catálogo
 (`latest_in_json_listing`: categoria da Planilha Interativa, maior trimestre, no
-ano corrente ou, sem documento ainda, nos dois anteriores) e baixada do CDN com o nome que a MZ dá
-(`mrve3_base_de_dados_operacionais_e_financeiros.xlsx`).
+ano corrente ou, sem documento ainda, nos dois anteriores) e baixada do CDN com o
+nome que a MZ dá (`mrve3_base_de_dados_operacionais_e_financeiros.xlsx`).
 
 Substitui as antigas `lancamentos_ingest_dag` e `vendas_ingest_dag`, que baixavam
 a mesma planilha e recortavam blocos diferentes da mesma aba. Nenhum modelo do dbt
@@ -39,6 +39,7 @@ HEADERS = {
     "Origin": "https://ri.mrv.com.br",
     "Referer": "https://ri.mrv.com.br/",
 }
+
 
 def catalogo() -> ExtractorConfig:
     """A planilha mais recente do catálogo; os anos tentados dependem da data."""
@@ -99,12 +100,12 @@ DATASET = DatasetSpec(
 )
 def mrv_planilha_interativa_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> str:
+    def extract_to_raw(**context: Any) -> list[str]:
         return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def convert_to_staging(raw_prefix: str) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefix)
+    def convert_to_staging(raw_prefixes: list[str]) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefixes)
 
     convert_to_staging(extract_to_raw())
 

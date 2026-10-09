@@ -58,12 +58,12 @@ DATASETS = tuple(
 
 def _pipeline(spec: DatasetSpec) -> None:
     @task(task_id="extract_to_raw")
-    def extract_to_raw(**context: Any) -> str:
+    def extract_to_raw(**context: Any) -> list[str]:
         return steps.extract_to_raw(spec, context["dag_run"].run_after)
 
     @task(task_id="convert_to_staging")
-    def convert_to_staging(raw_prefix: str) -> str:
-        return steps.convert_to_staging(spec, raw_prefix)
+    def convert_to_staging(raw_prefixes: list[str]) -> str:
+        return steps.convert_to_staging(spec, raw_prefixes)
 
     convert_to_staging(extract_to_raw())
 

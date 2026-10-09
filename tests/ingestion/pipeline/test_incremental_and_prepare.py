@@ -92,9 +92,46 @@ def _spec(**kwargs: object) -> DatasetSpec:
 def test_source_id_goes_to_the_manifest(lake: Path) -> None:
     SOURCE["a.csv"] = b"x"
 
-    prefix = steps.extract_to_raw(_spec(), WHEN)
+    [prefix] = steps.extract_to_raw(_spec(), WHEN)
 
     assert _manifest(lake, prefix)[0]["source_id"] == "a.csv:1"
+
+
+def test_without_incremental_the_run_is_one_ingestion(lake: Path) -> None:
+    SOURCE.update({"a.csv": b"x", "b.csv": b"y"})
+
+    [prefix] = steps.extract_to_raw(_spec(), WHEN)
+
+    storage = StorageFactory.create("local", root=lake)
+    assert storage.list(prefix) == [
+        prefix + SUCCESS_MARKER,
+        prefix + "a.csv",
+        prefix + "b.csv",
+    ]
+
+
+def test_incremental_lands_each_delivery_as_its_own_ingestion_in_order(
+    lake: Path,
+) -> None:
+    # Primeira carga com o histórico: uma ingestão por entrega, na ordem em que o
+    # extrator as entrega (a de chegada na fonte), cada uma com o seu _SUCCESS.
+    SOURCE.update({"a.csv": b"x", "b.csv": b"y", "c.csv": b"z"})
+
+    prefixes = steps.extract_to_raw(_spec(incremental=True), WHEN)
+
+    storage = StorageFactory.create("local", root=lake)
+    assert [storage.list(p) for p in prefixes] == [
+        [p + SUCCESS_MARKER, p + name]
+        for p, name in zip(prefixes, ["a.csv", "b.csv", "c.csv"])
+    ]
+    assert prefixes == sorted(prefixes) and len(set(prefixes)) == 3
+    assert [
+        json.loads((lake / p / SUCCESS_MARKER).read_text())["sources"] for p in prefixes
+    ] == [
+        ["a.csv:1"],
+        ["b.csv:1"],
+        ["c.csv:1"],
+    ]
 
 
 def test_incremental_run_lands_only_what_is_new(lake: Path) -> None:
@@ -103,12 +140,12 @@ def test_incremental_run_lands_only_what_is_new(lake: Path) -> None:
     first = steps.extract_to_raw(spec, WHEN)
     SOURCE["c.csv"] = b"z"
 
-    second = steps.extract_to_raw(spec, WHEN + timedelta(days=1))
+    [second] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))
 
     assert SEEN_BY_EXTRACTOR == [frozenset(), frozenset({"a.csv:1", "b.csv:1"})]
     storage = StorageFactory.create("local", root=lake)
     assert storage.list(second) == [second + SUCCESS_MARKER, second + "c.csv"]
-    assert first != second
+    assert second > max(first)
     with pytest.raises(AirflowSkipException):
         steps.extract_to_raw(spec, WHEN + timedelta(days=2))
 
@@ -125,7 +162,7 @@ def test_without_incremental_everything_lands_again(lake: Path) -> None:
 def test_prepare_steps_run_in_order_before_landing(lake: Path, tmp_path: Path) -> None:
     SOURCE["a.csv"] = b"abc"
 
-    prefix = steps.extract_to_raw(_spec(prepare=(_Split(), _Upper())), WHEN)
+    [prefix] = steps.extract_to_raw(_spec(prepare=(_Split(), _Upper())), WHEN)
 
     storage = StorageFactory.create("local", root=lake)
     assert storage.list(prefix) == [
@@ -150,9 +187,11 @@ class _OnlyB:
 
 
 def test_a_source_that_the_prepare_drops_is_not_downloaded_again(lake: Path) -> None:
+    # O pacote sem a família não pousa nada: ele fica registrado na ingestão
+    # seguinte, para não ser baixado de novo.
     spec = _spec(incremental=True, prepare=(_OnlyB(),))
     SOURCE.update({"a.zip": b"x", "b.csv": b"y"})
-    prefix = steps.extract_to_raw(spec, WHEN)
+    [prefix] = steps.extract_to_raw(spec, WHEN)
     SOURCE["b2.csv"] = b"z"
 
     steps.extract_to_raw(spec, WHEN + timedelta(days=1))
@@ -176,13 +215,42 @@ class _Unwrap:
         yield dataclasses.replace(new, source_id=part.source_id)
 
 
-def test_the_same_name_twice_after_the_prepare_keeps_the_first(lake: Path) -> None:
-    # A entrega solta vem antes do pacote que também a traz.
+def test_the_same_name_twice_in_one_ingestion_keeps_the_first(lake: Path) -> None:
     SOURCE.update({"b.csv": b"solta", "pacote_x": b"do pacote"})
 
-    prefix = steps.extract_to_raw(_spec(prepare=(_Unwrap(),)), WHEN)
+    [prefix] = steps.extract_to_raw(_spec(prepare=(_Unwrap(),)), WHEN)
 
     assert (lake / prefix / "b.csv").read_bytes() == b"solta"
     marker = json.loads((lake / prefix / SUCCESS_MARKER).read_text())
     assert marker["duplicates"] == [{"name": "b.csv", "source_id": "pacote_x:9"}]
     assert marker["sources"] == ["b.csv:5", "pacote_x:9"]
+
+
+def test_the_same_name_in_two_deliveries_is_two_ingestions(lake: Path) -> None:
+    # Incremental: a entrega solta e o pacote que também a traz são entregas
+    # diferentes; a mais nova é a ingestão mais nova.
+    SOURCE.update({"b.csv": b"solta", "pacote_x": b"do pacote"})
+
+    first, second = steps.extract_to_raw(
+        _spec(incremental=True, prepare=(_Unwrap(),)), WHEN
+    )
+
+    assert (lake / first / "b.csv").read_bytes() == b"solta"
+    assert (lake / second / "b.csv").read_bytes() == b"do pacote"
+
+
+def test_converting_several_ingestions_leaves_the_last_in_latest(lake: Path) -> None:
+    SOURCE.update({"a.csv": b"v\n1\n", "b.csv": b"v\n2\n"})
+    spec = _spec(incremental=True)
+    first, second = steps.extract_to_raw(spec, WHEN)
+
+    latest = steps.convert_to_staging(spec, [first, second])
+
+    storage = StorageFactory.create("local", root=lake)
+    assert [k.rsplit("/", 1)[-1] for k in storage.list(latest)] == [
+        "b.parquet",
+        SUCCESS_MARKER,
+    ]
+    marker = json.loads((lake / latest / SUCCESS_MARKER).read_text())
+    staged = [p.replace("raw/", "staging/", 1) for p in (first, second)]
+    assert (marker["particao"], marker["antecessor"]) == (staged[1], staged[0])

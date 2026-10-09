@@ -51,8 +51,8 @@ def test_extract_then_convert_returns_only_prefixes(
     server.routes["/ipca"] = Route(body=b'[{"data":"01/08/2026","valor":"-0.32"}]')
     spec = _spec("/ipca")
 
-    raw = steps.extract_to_raw(spec, WHEN)
-    latest = steps.convert_to_staging(spec, raw)
+    [raw] = steps.extract_to_raw(spec, WHEN)
+    latest = steps.convert_to_staging(spec, [raw])
 
     assert raw == "raw/bacen/financiamentos_imobiliarios/2026-10-08/060005/"
     assert latest == "staging/bacen/financiamentos_imobiliarios/latest/"

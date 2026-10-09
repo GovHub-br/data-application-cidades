@@ -210,12 +210,12 @@ def _build(dag_id: str, spec: DatasetSpec) -> Any:
     )
     def novo_caged() -> None:
         @task
-        def extract_to_raw(**context: Any) -> str:
+        def extract_to_raw(**context: Any) -> list[str]:
             return steps.extract_to_raw(spec, context["dag_run"].run_after)
 
         @task
-        def convert_to_staging(raw_prefix: str) -> str:
-            return steps.convert_to_staging(spec, raw_prefix)
+        def convert_to_staging(raw_prefixes: list[str]) -> str:
+            return steps.convert_to_staging(spec, raw_prefixes)
 
         convert_to_staging(extract_to_raw())
 

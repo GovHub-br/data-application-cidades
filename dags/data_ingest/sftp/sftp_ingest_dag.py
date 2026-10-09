@@ -25,8 +25,9 @@ em CPF/NIS com `MASKING_HMAC_SECRET`, redação de nome, endereço, CEP e
 nascimento). A raw nunca guarda PII e não é reescrita depois.
 
 Conversão: texto com encoding e delimitador detectados por arquivo (as entregas
-variam) e linha com campos a mais ou a menos descartada e contada; xlsx aba a aba; a staging guarda o cabeçalho original, e o macro
-`normalizar_colunas` entrega às pratas os nomes de sempre.
+variam) e linha com campos a mais ou a menos descartada e contada; xlsx aba a
+aba. A staging guarda o cabeçalho original, e o macro `normalizar_colunas`
+entrega às pratas os nomes de sempre.
 
 LoadMode: append em todas. Cada arquivo é uma entrega (um retrato do mês, uma
 remessa de liberações); a bronze que quer só o último usa `arquivo_mais_recente`.
@@ -212,12 +213,12 @@ DATASETS = tuple(_spec(*familia) for familia in FAMILIAS) + tuple(
 
 def _pipeline(spec: DatasetSpec) -> None:
     @task(task_id="extract_to_raw")
-    def extract_to_raw(**context: Any) -> str:
+    def extract_to_raw(**context: Any) -> list[str]:
         return steps.extract_to_raw(spec, context["dag_run"].run_after)
 
     @task(task_id="convert_to_staging")
-    def convert_to_staging(raw_prefix: str) -> str:
-        return steps.convert_to_staging(spec, raw_prefix)
+    def convert_to_staging(raw_prefixes: list[str]) -> str:
+        return steps.convert_to_staging(spec, raw_prefixes)
 
     convert_to_staging(extract_to_raw())
 
