@@ -771,6 +771,47 @@ models:
             - Estoque
             - Variacao
             - filename
+  - name: bronze_siafi_notas_empenho_emendas_parlamentares
+    description: >
+      Notas de empenho de emendas parlamentares do Ministério das Cidades, com
+      autor da emenda, município e valores empenhados, liquidados e pagos.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - "Emissão - Mês"
+            - "Emissão - Dia"
+            - "Programa Governo"
+            - column_4
+            - "Ação Governo"
+            - column_6
+            - "Autor Emendas Orçamento"
+            - column_8
+            - "UF PT"
+            - column_10
+            - "Município PT"
+            - "NE CCor"
+            - "NE - Núm. Processo"
+            - "NE - Informação Complementar"
+            - "NE CCor - Descrição"
+            - "Doc - Observação"
+            - "Grupo Despesa"
+            - column_18
+            - "Natureza Despesa"
+            - column_20
+            - "Modalidade Aplicação"
+            - column_22
+            - "NE CCor - Favorecido"
+            - column_24
+            - "NE CCor - Ano Emissão"
+            - PTRES
+            - "Item Informação"
+            - column_28
+            - "29"
+            - "31"
+            - "34"
+            - "50"
+            - "52"
+            - filename
   - name: bronze_siafi_dotacao_execucao
     description: >
       Execução orçamentária federal em habitação, com dotação, empenho,

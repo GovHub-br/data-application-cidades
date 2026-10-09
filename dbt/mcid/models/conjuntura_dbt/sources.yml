@@ -269,6 +269,12 @@ sources:
           load_mode: overwrite   # cada execução consulta todos os meses desde 2024
           dag: saldo_estoque_total_construcao_ingest_dag
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+      - name: siafi_notas_empenho_emendas_parlamentares
+        description: "Notas de empenho de emendas parlamentares do MCid (SIAFI/Tesouro Gerencial), relatório do ano de lançamento."
+        meta:
+          caminho: staging/siafi-tesouro-gerencial/notas_empenho_emendas_parlamentares_mcid
+          load_mode: overwrite   # cada e-mail traz o ano de lançamento inteiro
+          dag: empenho_emendas_parlamentares_ingest_dag
       - name: siafi_dotacao_execucao
         description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."
         meta:
