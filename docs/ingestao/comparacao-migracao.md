@@ -137,3 +137,25 @@ Parquet do `latest/`. As colunas de locação viram `Total_5`, `Total_6` e `Tota
   (`tests/conjuntura_fipezap_colunas_coerentes.sql`). Exercitado em DuckDB:
   passa com as colunas certas; falha com índice e variação trocados (222 de 222
   meses fora) e com o índice de venda no lugar do de locação (180 de 223).
+
+### ABECIP poupança e financiamentos (`abecip/poupanca_sbpe_mensal`, `abecip/financiamentos_modalidade`)
+
+O link da edição é achado na página da ABECIP (`link_in_page`); a staging converte
+só a aba usada (`SBPE_Mensal` e `BD_Unidades`, cabeçalho na linha 5).
+
+| | Antigo (01/09/2026) | Novo (09/10/2026, conversão local das planilhas reais) |
+|---|---|---|
+| Poupança | 535 meses (1982-01 a 2026-07) | 536 (1982-01 a 2026-08) |
+| Financiamentos | 296 meses (2002-01 a 2026-08) | 296 (2002-01 a 2026-08) |
+
+- Valores idênticos em todas as linhas comuns; a única linha a mais é 08/2026 da
+  poupança (edição de agosto).
+- A prata da poupança passou a expor `rendimento`, que a staging antiga tinha e a
+  prata descartava; ele entra na identidade do saldo.
+- **As conferências do `ClienteAbecip` viraram testes do dbt:**
+  `conjuntura_abecip_poupanca_identidades` (captação = depósito − retirada;
+  evolução do saldo) e `conjuntura_abecip_financiamentos_totais` (Total =
+  Construção + Aquisição). Exercitados em DuckDB: passam com as colunas certas e
+  falham com colunas trocadas (100% das linhas fora).
+- Nota de método: na emulação em DuckDB, `::numeric` vira `DECIMAL(18,3)` e corta
+  casas; a comparação usa `double`. No Postgres a prata usa `numeric` sem limite.
