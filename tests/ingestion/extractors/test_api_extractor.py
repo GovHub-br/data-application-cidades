@@ -98,3 +98,28 @@ def test_config_without_requests_is_rejected() -> None:
         ExtractorFactory.create(
             ExtractorConfig(source="api", conn_id="http_test"), ingestion_time=WHEN
         )
+
+
+def test_public_source_uses_base_url_without_a_connection(
+    http_server: FakeHttpServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Fonte pública: a URL base fica na DAG, nada no .env nem no Airflow.
+    monkeypatch.delenv("AIRFLOW_CONN_HTTP_TEST")
+    route = http_server.routes["/dados"] = Route(body=b"[]")
+    config = ExtractorConfig(
+        source="api",
+        base_url=f"http://127.0.0.1:{http_server.port}",
+        requests=(HttpRequest(name="d", endpoint="/dados", params={"a": 1}),),
+    )
+    extractor = ExtractorFactory.create(config, ingestion_time=WHEN)
+
+    assert [part.path.read_bytes() for part in extractor.extract(tmp_path)] == [b"[]"]
+    assert route.requests[0]["query"] == "a=1"
+
+
+@pytest.mark.parametrize("source", ["api", "http_file"])
+def test_http_source_needs_a_connection_or_a_base_url(source: str) -> None:
+    config = ExtractorConfig(source=source, requests=(HttpRequest("d", "/d"),))
+
+    with pytest.raises(ValueError, match="conn_id ou base_url"):
+        ExtractorFactory.create(config, ingestion_time=WHEN)

@@ -1,7 +1,8 @@
 """Configuração dos extratores: só literais, declarados no topo da DAG.
 
-Nenhum segredo entra aqui, só o nome da Connection (`conn_id`), resolvida pelo hook
-dentro da task. Cada estratégia lê os campos de que precisa.
+Nenhum segredo entra aqui: fonte com credencial nomeia a Connection (`conn_id`),
+resolvida pelo hook dentro da task; fonte pública declara só a URL base
+(`base_url`). Cada estratégia lê os campos de que precisa.
 """
 
 from collections.abc import Callable, Mapping
@@ -68,11 +69,14 @@ class ExtractorConfig:
     - `mail`: busca da estratégia `email`.
     - `fgvdados`: série da estratégia `fgvdados`.
 
-    `conn_id` é a Connection da fonte, para as estratégias que usam uma (as HTTP).
+    As estratégias HTTP precisam de `conn_id` (a Connection da fonte, quando há
+    credencial) ou de `base_url` (fonte pública: a Connection é montada em memória,
+    sem nada no `.env` nem no Airflow).
     """
 
     source: str
     conn_id: str = ""
+    base_url: str | None = None
     requests: tuple[HttpRequest, ...] = ()
     adapter: Any = None
     mail: MailQuery | None = None

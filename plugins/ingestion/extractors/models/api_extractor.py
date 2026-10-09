@@ -7,7 +7,12 @@ from pathlib import Path
 from ingestion.extractors.base_extractor import Extractor, RawFile
 from ingestion.extractors.config_extractor import ExtractorConfig
 from ingestion.extractors.extractor_registry import ExtractorFactory
-from ingestion.extractors.models.http_common import HttpHooks, fetch, save
+from ingestion.extractors.models.http_common import (
+    HttpHooks,
+    fetch,
+    require_source,
+    save,
+)
 
 
 @ExtractorFactory.register("api")
@@ -28,10 +33,11 @@ class ApiExtractor(Extractor):
             raise ValueError(
                 "a estratégia api precisa de ao menos uma chamada em requests"
             )
+        require_source(config)
         return cls(config, ingestion_time)
 
     def extract(self, work_dir: Path) -> Iterator[RawFile]:
-        hooks = HttpHooks(self.config.conn_id, self.config.adapter)
+        hooks = HttpHooks.from_config(self.config)
         for request in self.config.requests:
             response = fetch(hooks, request, expect_json=True)
             yield save(

@@ -11,7 +11,12 @@ import requests
 from ingestion.extractors.base_extractor import Extractor, RawFile
 from ingestion.extractors.config_extractor import ExtractorConfig, HttpRequest
 from ingestion.extractors.extractor_registry import ExtractorFactory
-from ingestion.extractors.models.http_common import HttpHooks, fetch, save
+from ingestion.extractors.models.http_common import (
+    HttpHooks,
+    fetch,
+    require_source,
+    save,
+)
 
 
 @ExtractorFactory.register("http_file")
@@ -28,10 +33,11 @@ class HttpFileExtractor(Extractor):
     def from_config(cls, config: ExtractorConfig, ingestion_time: datetime) -> Extractor:
         if not config.requests:
             raise ValueError("a estratégia http_file precisa de ao menos um arquivo")
+        require_source(config)
         return cls(config, ingestion_time)
 
     def extract(self, work_dir: Path) -> Iterator[RawFile]:
-        hooks = HttpHooks(self.config.conn_id, self.config.adapter)
+        hooks = HttpHooks.from_config(self.config)
         for request in self.config.requests:
             response = fetch(hooks, request)
             name = _file_name(response, request)

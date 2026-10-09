@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import requests
 from airflow.providers.http.hooks.http import HttpHook
+from airflow.sdk import Connection
 from tenacity import (
     Retrying,
     retry_if_exception_type,
@@ -18,7 +19,7 @@ from tenacity import (
 )
 
 from ingestion.extractors.base_extractor import RawFile, write_stream
-from ingestion.extractors.config_extractor import HttpRequest
+from ingestion.extractors.config_extractor import ExtractorConfig, HttpRequest
 from ingestion.extractors.extractor_errors import ExtractionError, SourceNotFoundError
 
 RETRY_ATTEMPTS = 3
@@ -55,21 +56,47 @@ def _declares_non_json(response: requests.Response) -> str | None:
     return None
 
 
-class HttpHooks:
-    """Um HttpHook por método HTTP, todos na mesma Connection (o hook fixa o método)."""
+PUBLIC_CONN_ID = "http_publica"
 
-    def __init__(self, conn_id: str, adapter: Any = None) -> None:
-        self.conn_id = conn_id
+
+class HttpHooks:
+    """Um HttpHook por método HTTP, todos na mesma Connection (o hook fixa o método).
+
+    Com `base_url` (fonte pública), a Connection é montada em memória a partir da
+    URL, sem consulta ao Airflow.
+    """
+
+    def __init__(
+        self, conn_id: str, adapter: Any = None, base_url: str | None = None
+    ) -> None:
+        self.conn_id = conn_id or PUBLIC_CONN_ID
         self.adapter = adapter
+        self.base_url = base_url
         self._hooks: dict[str, HttpHook] = {}
+
+    @classmethod
+    def from_config(cls, config: ExtractorConfig) -> "HttpHooks":
+        return cls(config.conn_id, config.adapter, config.base_url)
 
     def for_method(self, method: str) -> HttpHook:
         method = method.upper()
         if method not in self._hooks:
-            self._hooks[method] = HttpHook(
+            hook = HttpHook(
                 method=method, http_conn_id=self.conn_id, adapter=self.adapter
             )
+            if self.base_url:
+                public = Connection(
+                    conn_id=self.conn_id, conn_type="http", host=self.base_url
+                )
+                hook.get_connection = lambda _conn_id: public  # type: ignore[method-assign]
+            self._hooks[method] = hook
         return self._hooks[method]
+
+
+def require_source(config: ExtractorConfig) -> None:
+    """Estratégia HTTP sem Connection nem URL base não tem para onde ir."""
+    if not config.conn_id and not config.base_url:
+        raise ValueError(f"a estratégia {config.source} precisa de conn_id ou base_url")
 
 
 def fetch(
