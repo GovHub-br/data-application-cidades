@@ -44,8 +44,10 @@ DATASET = DatasetSpec(
 
 @dag(
     dag_id="dotacao_execucao_outras_fontes_mcid_ingest_dag",
-    # Provisório: o cron real vem da Variable dynamic_schedules na validação da Fase 5.
-    schedule="0 6 * * *",
+    # 09:00: o relatório chega de terça a sábado entre 04h e 08h (medido em set-out de
+    # 2026). Sem e-mail no dia, a task é pulada; cada relatório traz o exercício
+    # inteiro, então um dia perdido não perde dado.
+    schedule="0 9 * * *",
     start_date=datetime(2026, 3, 27),
     catchup=False,
     max_active_runs=1,

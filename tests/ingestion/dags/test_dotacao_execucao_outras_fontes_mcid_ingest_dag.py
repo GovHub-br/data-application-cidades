@@ -27,6 +27,7 @@ def test_dag_identity_and_wiring(module: Any) -> None:
     dag = module.dag_instance
 
     assert dag.dag_id == "dotacao_execucao_outras_fontes_mcid_ingest_dag"
+    assert dag.schedule == "0 9 * * *"
     assert {"email", "mcid", "tesouro", "conjuntura", "ingestion"} <= set(dag.tags)
     assert dag.task_dict["convert_to_staging"].upstream_task_ids == {"extract_to_raw"}
 
