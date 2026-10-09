@@ -211,6 +211,7 @@ sources:
       - name: siafi_dotacao_execucao
         description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."
         meta:
-          caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid.parquet
+          caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid
+          load_mode: overwrite   # cada e-mail traz o exercício inteiro
           dag: dotacao_execucao_outras_fontes_mcid_ingest_dag
           linhas_minimas: 281   # metade do observado em 2026-08-29 (562)
