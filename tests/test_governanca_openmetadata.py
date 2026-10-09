@@ -796,7 +796,7 @@ def test_dag_de_origem_declarada_onde_existe_dag() -> None:
         for t in com_caminho
         if not (t.get("meta") or {}).get("dag")
     ]
-    assert len(com_caminho) == 36
+    assert len(com_caminho) == 37
     # só as 5 do SFTP podem ficar sem
     for caminho_sem in sem_dag:
         assert "sftp/" in caminho_sem, caminho_sem

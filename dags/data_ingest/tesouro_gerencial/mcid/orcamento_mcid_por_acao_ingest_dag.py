@@ -1,191 +1,73 @@
-import io
-import json
-import logging
+"""Orçamento do MCid por ação (Tesouro Gerencial): dotação, empenho e pagamento.
+
+Fonte: e-mail do Tesouro Gerencial (SERPRO) com o relatório em anexo, um ZIP com
+um TSV em UTF-16. A credencial do IMAP vem da Variable `email_credentials`, lida
+só dentro da task. O ZIP vai para a raw como chegou.
+
+O relatório chegou só duas vezes no último ano (23/03 e 27/03/2026, às 11:32 e
+09:03); sem e-mail no dia, a task é pulada (skip). Se voltar a chegar, entra.
+
+LoadMode: overwrite. Cada e-mail traz o relatório inteiro do exercício.
+
+Estrutura do TSV (conferida no anexo de 27/03/2026): 5 linhas de preâmbulo
+(título e filtros), cabeçalho na linha 6 (pares código/nome, o segundo sem
+título) e duas linhas de subcabeçalho das colunas de valor antes dos dados. A
+DAG antiga pulava 10 linhas, o que nesse arquivo descartaria o cabeçalho e as
+primeiras linhas de dado. Ainda não há prata (nenhum modelo lê este relatório).
+"""
+
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import cliente_email  # importar o módulo, não só a função
-import pandas as pd
-from airflow.sdk import DAG
-from airflow.exceptions import AirflowSkipException
-from airflow.sdk import Variable
-from airflow.providers.standard.operators.python import PythonOperator
-from cliente_email import fetch_and_process_email
-from cliente_postgres import ClientPostgresDB
-from postgres_helpers import get_postgres_conn
-from schedule_loader import get_dynamic_schedule
+from airflow.sdk import dag, task
 
-default_args = {
-    "owner": "Lucas",
-    "depends_on_past": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
+from ingestion.converters import ConverterConfig
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, MailQuery
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
 
-COLUMN_MAPPING = {
-    0: "acao_governo_codigo",
-    1: "acao_governo_nome",
-    2: "programa_governo_codigo",
-    3: "programa_governo_nome",
-    4: "ne_ccor",
-    5: "ne_ccor_favorecido_codigo",
-    6: "ne_ccor_favorecido_nome",
-    7: "favorecido_cep",
-    8: "favorecido_municipio_codigo",
-    9: "favorecido_municipio_nome",
-    10: "favorecido_regiao",
-    11: "favorecido_ug_uf_codigo",
-    12: "favorecido_ug_uf_nome",
-    13: "fonte_recursos_detalhada",
-    14: "fonte_recursos_detalhada_descricao",
-    15: "pt",
-    16: "ptres",
-    17: "plano_orcamentario_ug_executora_codigo",
-    18: "plano_orcamentario_cod1",
-    19: "plano_orcamentario_cod2",
-    20: "plano_orcamentario_programa",
-    21: "plano_orcamentario_acao_orcamentaria",
-    22: "plano_orcamentario_medida",
-    23: "plano_orcamentario_descricao",
-    24: "ug_executora_codigo",
-    25: "ug_executora_nome",
-    26: "ug_responsavel_codigo",
-    27: "ug_responsavel_nome",
-    28: "pl_codigo",
-    29: "pl_nome",
-    30: "natureza_despesa_codigo",
-    31: "natureza_despesa_nome",
-    32: "dotacao_inicial",
-    33: "dotacao_atualizada",
-    34: "despesas_empenhadas",
-    35: "despesas_empenhadas_a_liquidar",
-    36: "despesas_liquidadas_a_pagar",
-    37: "despesas_pagas",
-}
-
-EMAIL_SUBJECT = "orcamento_mcid_por_acao"
-SKIPROWS = 10
+DATASET = DatasetSpec(
+    domain="siafi-tesouro-gerencial",
+    dataset="orcamento_mcid_por_acao",
+    extractor=ExtractorConfig(
+        source="email",
+        conn_id="imap_tesouro",
+        mail=MailQuery(
+            subject="orcamento_mcid_por_acao",
+            attachment_pattern=r".*\.zip$",
+            credentials_variable="email_credentials",
+        ),
+    ),
+    converter=ConverterConfig(encoding="utf-16", delimiter="\t", skip_rows=5),
+    load_mode=LoadMode.OVERWRITE,
+)
 
 
-# A formatação do CSV estava como utf-16.
-# Função criada para consumo sem erro de formatação
-def _patched_format_csv(
-    csv_data: str | bytes,
-    column_mapping: Optional[Dict[int, str]],
-    skiprows: int,
-) -> pd.DataFrame:
-    """Substitui o format_csv do cliente_email com suporte a UTF-16 e TSV."""
-    # Decodifica UTF-16 se ainda vier como bytes
-    if isinstance(csv_data, bytes):
-        csv_data = csv_data.decode("utf-16")
-
-    if column_mapping:
-        df = pd.read_csv(
-            io.StringIO(csv_data),
-            skiprows=skiprows,
-            header=None,
-            sep="\t",
-            engine="python",
-            on_bad_lines="skip",
-        )
-        column_names: List[str] = [
-            column_mapping.get(i, f"col_{i}") for i in range(len(df.columns))
-        ]
-        df.columns = pd.Index(column_names)
-    else:
-        df = pd.read_csv(
-            io.StringIO(csv_data),
-            skiprows=skiprows,
-            header=0,
-            sep="\t",
-            engine="python",
-            on_bad_lines="skip",
-        )
-    return df
-
-
-with DAG(
+@dag(
     dag_id="orcamento_mcid_por_acao_ingest_dag",
-    default_args=default_args,
-    description="Processa e ingere dados de orcamento por acao do MCID do Tesouro",
-    schedule=get_dynamic_schedule("orcamento_mcid_por_acao_ingest_dag"),
-    start_date=datetime(2026, 3, 23),
+    # 12:00: os dois e-mails conhecidos chegaram às 09:03 e às 11:32.
+    schedule="0 12 * * *",
+    start_date=datetime(2026, 3, 25),
     catchup=False,
-    tags=["email", "orcamento", "tesouro", "mcid"],
-) as dag:
+    max_active_runs=1,
+    default_args={
+        "owner": "Lucas",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["email", "orcamento", "tesouro", "mcid", "ingestion"],
+)
+def orcamento_mcid_por_acao_ingest_dag() -> None:
+    @task
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
-    def process_email_data(**context: Dict[str, Any]) -> Optional[Any]:
-        creds = json.loads(Variable.get("email_credentials"))
+    @task
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefix)
 
-        EMAIL = creds["email"]
-        PASSWORD = creds["password"]
-        IMAP_SERVER = creds["imap_server"]
-        SENDER_EMAIL = creds["sender_email"]
+    convert_to_staging(extract_to_raw())
 
-        # Monkey-patch: substitui format_csv do cliente_email pela versão corrigida
-        cliente_email.format_csv = _patched_format_csv
 
-        try:
-            logging.info("Iniciando o processamento dos emails")
-            csv_data = fetch_and_process_email(
-                IMAP_SERVER,
-                EMAIL,
-                PASSWORD,
-                SENDER_EMAIL,
-                EMAIL_SUBJECT,
-                COLUMN_MAPPING,
-                skiprows=SKIPROWS,
-            )
-            if not csv_data:
-                logging.warning("Nenhum e-mail encontrado com o assunto esperado.")
-                raise AirflowSkipException("Nenhum e-mail encontrado. Task ignorada.")
-
-            logging.info(
-                "CSV processado com sucesso. Registros encontrados: %s", len(csv_data)
-            )
-            return csv_data
-        except Exception as e:
-            logging.error("Erro no processamento dos emails: %s", str(e))
-            raise
-
-    def insert_data_to_db(**context: Dict[str, Any]) -> None:
-        try:
-            task_instance: Any = context["ti"]
-            csv_data: Any = task_instance.xcom_pull(task_ids="process_emails")
-
-            if not csv_data:
-                logging.warning("Nenhum dado para inserir no banco.")
-                raise AirflowSkipException(
-                    "Nenhum dado foi encontrado para inserção no BD"
-                )
-
-            df = pd.read_csv(io.StringIO(csv_data))
-            data = df.to_dict(orient="records")
-
-            for record in data:
-                record["dt_ingest"] = datetime.now().isoformat()
-
-            postgres_conn_str = get_postgres_conn()
-            db = ClientPostgresDB(postgres_conn_str)
-
-            db.insert_data(
-                data,
-                "orcamento_mcid_por_acao",
-                schema="siafi",
-            )
-            logging.info("Dados inseridos com sucesso no banco de dados.")
-        except Exception as e:
-            logging.error("Erro ao inserir dados no banco: %s", str(e))
-            raise
-
-    process_emails_task = PythonOperator(
-        task_id="process_emails",
-        python_callable=process_email_data,
-    )
-
-    insert_to_db_task = PythonOperator(
-        task_id="insert_to_db",
-        python_callable=insert_data_to_db,
-    )
-
-    process_emails_task >> insert_to_db_task
+dag_instance = orcamento_mcid_por_acao_ingest_dag()

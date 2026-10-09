@@ -813,6 +813,52 @@ models:
             - "50"
             - "52"
             - filename
+  - name: bronze_siafi_orcamento_mcid_por_acao
+    description: >
+      Orçamento do Ministério das Cidades por ação de governo, com dotação,
+      empenho e pagamento por favorecido.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - "Ação Governo"
+            - column_2
+            - "Programa Governo"
+            - column_4
+            - "NE CCor"
+            - "NE CCor - Favorecido"
+            - column_7
+            - "Favorecido - CEP"
+            - "Favorecido - Município"
+            - column_10
+            - "Favorecido - Região"
+            - "Favorecido - UG UF"
+            - column_13
+            - "Fonte Recursos Detalhada"
+            - column_15
+            - PT
+            - PTRES
+            - "Plano Orçamentário"
+            - column_19
+            - column_20
+            - column_21
+            - column_22
+            - column_23
+            - column_24
+            - "UG Executora"
+            - column_26
+            - "UG Responsável"
+            - column_28
+            - PI
+            - column_30
+            - "Métrica"
+            - column_32
+            - "Saldo - R$ (Item Informação)"
+            - "Saldo - R$ (Item Informação)_2"
+            - "Saldo - R$ (Item Informação)_3"
+            - "Saldo - R$ (Item Informação)_4"
+            - "Saldo - R$ (Item Informação)_5"
+            - "Saldo - R$ (Item Informação)_6"
+            - filename
   - name: bronze_siafi_dotacao_execucao
     description: >
       Execução orçamentária federal em habitação, com dotação, empenho,

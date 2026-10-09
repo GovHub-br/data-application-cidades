@@ -277,6 +277,12 @@ sources:
           caminho: staging/siafi-tesouro-gerencial/notas_empenho_emendas_parlamentares_mcid
           load_mode: overwrite   # cada e-mail traz o ano de lançamento inteiro
           dag: empenho_emendas_parlamentares_ingest_dag
+      - name: siafi_orcamento_mcid_por_acao
+        description: "Orçamento do MCid por ação (SIAFI/Tesouro Gerencial): dotação, empenho e pagamento por favorecido."
+        meta:
+          caminho: staging/siafi-tesouro-gerencial/orcamento_mcid_por_acao
+          load_mode: overwrite   # cada e-mail traz o exercício inteiro
+          dag: orcamento_mcid_por_acao_ingest_dag
       - name: siafi_dotacao_execucao
         description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."
         meta:
