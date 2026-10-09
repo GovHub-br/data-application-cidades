@@ -1,7 +1,7 @@
 """Template da conversão: um arquivo da raw vira Parquet só com texto."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,13 +21,15 @@ class Source:
     `batches` traz as linhas em lotes, com as colunas na ordem do cabeçalho; os
     nomes das colunas dos lotes são ignorados. `schema` só vem preenchido quando a
     fonte já é tipada (parquet): aí o template mantém os tipos em vez de forçar
-    string.
+    string. `skipped_rows` diz, depois dos lotes, quantas linhas o leitor
+    descartou.
     """
 
     suffix: str | None
     header: Sequence[str | None]
     batches: Iterable[pa.RecordBatch]
     schema: pa.Schema | None = None
+    skipped_rows: Callable[[], int] = lambda: 0
 
 
 @dataclass(frozen=True)
@@ -36,6 +38,7 @@ class ConvertedFile:
     path: Path
     rows: int
     columns: tuple[str, ...]
+    skipped_rows: int = 0
 
 
 class FileConverter(ABC):
@@ -96,7 +99,11 @@ class FileConverter(ABC):
                 f"{target.name}: {rows} linhas lidas, {written} gravadas"
             )
         return ConvertedFile(
-            name=target.name, path=target, rows=rows, columns=tuple(header)
+            name=target.name,
+            path=target,
+            rows=rows,
+            columns=tuple(header),
+            skipped_rows=source.skipped_rows(),
         )
 
 

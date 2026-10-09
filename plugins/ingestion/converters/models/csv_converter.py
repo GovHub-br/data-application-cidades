@@ -3,10 +3,10 @@
 import codecs
 import io
 import logging
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 import pyarrow as pa
 import pyarrow.csv as pacsv
@@ -53,7 +53,8 @@ class CsvConverter(FileConverter):
     def _read(self, path: Path) -> Iterator[Source]:
         dialect = self._dialect(path)
         width = self._width(path, dialect)
-        reader, stream = self._open(path, dialect, width)
+        skipped: list[str] = []
+        reader, stream = self._open(path, dialect, width, skipped)
         try:
             first = reader.read_next_batch()
         except StopIteration:
@@ -64,7 +65,8 @@ class CsvConverter(FileConverter):
         yield Source(
             suffix=None,
             header=names,
-            batches=self._rest(path, first.slice(1), reader, stream),
+            batches=self._rest(path, first.slice(1), reader, stream, skipped),
+            skipped_rows=lambda: len(skipped),
         )
 
     def _dialect(self, path: Path) -> _Dialect:
@@ -105,7 +107,7 @@ class CsvConverter(FileConverter):
 
     def _width(self, path: Path, dialect: _Dialect) -> int:
         try:
-            probe, stream = self._open(path, dialect, width=None)
+            probe, stream = self._open(path, dialect, width=None, skipped=[])
         except pa.ArrowInvalid as exc:
             if "Empty CSV file" in str(exc):
                 raise ConversionError(f"{path.name}: arquivo vazio") from exc
@@ -114,7 +116,7 @@ class CsvConverter(FileConverter):
         return len(probe.schema)
 
     def _open(
-        self, path: Path, dialect: _Dialect, width: int | None
+        self, path: Path, dialect: _Dialect, width: int | None, skipped: list[str]
     ) -> tuple[pacsv.CSVStreamingReader, BinaryIO]:
         types = {f"f{i}": pa.string() for i in range(width)} if width else None
         stream: BinaryIO
@@ -124,7 +126,9 @@ class CsvConverter(FileConverter):
         else:
             stream, encoding = path.open("rb"), dialect.encoding
         try:
-            reader = self._reader(stream, encoding, dialect.delimiter, types)
+            reader = self._reader(
+                stream, encoding, dialect.delimiter, types, self._handler(skipped)
+            )
         except BaseException:
             stream.close()
             raise
@@ -136,6 +140,7 @@ class CsvConverter(FileConverter):
         encoding: str,
         delimiter: str,
         types: dict[str, pa.DataType] | None,
+        invalid_row_handler: Callable[[Any], str] | None,
     ) -> pacsv.CSVStreamingReader:
         return pacsv.open_csv(
             stream,
@@ -146,7 +151,9 @@ class CsvConverter(FileConverter):
                 block_size=BLOCK_BYTES,
             ),
             parse_options=pacsv.ParseOptions(
-                delimiter=delimiter, newlines_in_values=True
+                delimiter=delimiter,
+                newlines_in_values=True,
+                invalid_row_handler=invalid_row_handler,
             ),
             convert_options=pacsv.ConvertOptions(
                 column_types=types,
@@ -156,12 +163,26 @@ class CsvConverter(FileConverter):
             memory_pool=self.memory_pool,
         )
 
+    def _handler(self, skipped: list[str]) -> Callable[[Any], str] | None:
+        """Com `bad_rows="skip"`, a linha quebrada sai e fica anotada em `skipped`."""
+        if self.config.bad_rows == "error":
+            return None
+        if self.config.bad_rows != "skip":
+            raise ConversionError(f"bad_rows desconhecido: {self.config.bad_rows!r}")
+
+        def skip(row: Any) -> str:
+            skipped.append(row.text or "")
+            return "skip"
+
+        return skip
+
     @staticmethod
     def _rest(
         path: Path,
         first: pa.RecordBatch,
         reader: pacsv.CSVStreamingReader,
         stream: BinaryIO,
+        skipped: list[str],
     ) -> Iterator[pa.RecordBatch]:
         try:
             if first.num_rows:
@@ -175,6 +196,14 @@ class CsvConverter(FileConverter):
                     raise ConversionError(str(exc)) from exc
         finally:
             stream.close()
+        if skipped:
+            log.warning(
+                "%s: %d linha(s) com número de campos diferente do cabeçalho "
+                "descartada(s); a primeira: %.200s",
+                path.name,
+                len(skipped),
+                skipped[0],
+            )
         raw = getattr(stream, "raw", None)
         if isinstance(raw, _Utf8Reader) and raw.replaced:
             log.warning(

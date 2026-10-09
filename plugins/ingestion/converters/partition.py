@@ -25,6 +25,7 @@ class StagedFile:
     source: str
     rows: int
     columns: tuple[str, ...]
+    skipped_rows: int = 0
 
 
 @dataclass(frozen=True)
@@ -102,9 +103,17 @@ def _staged(converted: ConvertedFile, source: str) -> StagedFile:
         source=source,
         rows=converted.rows,
         columns=converted.columns,
+        skipped_rows=converted.skipped_rows,
     )
 
 
 def _details(part: Part) -> Mapping[str, object]:
     assert isinstance(part, StagedFile)
-    return {"source": part.source, "rows": part.rows, "columns": list(part.columns)}
+    details: dict[str, object] = {
+        "source": part.source,
+        "rows": part.rows,
+        "columns": list(part.columns),
+    }
+    if part.skipped_rows:
+        details["skipped_rows"] = part.skipped_rows
+    return details

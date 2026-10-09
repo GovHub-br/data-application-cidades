@@ -91,6 +91,22 @@ def test_ragged_row_is_a_conversion_error(tmp_path: Path) -> None:
         _rows(tmp_path, b"a,b\n1,2,3\n")
 
 
+def test_bad_rows_skip_drops_ragged_rows_and_counts_them(tmp_path: Path) -> None:
+    # Como o raw_para_staging (on_bad_lines="skip"): a INT039 manda 2 linhas com
+    # 40 campos num arquivo de 37, e o resto do arquivo não pode se perder.
+    path = tmp_path / "f.csv"
+    path.write_bytes(b"a,b\n1,2,3\n4,5\n6\n7,8\n")
+    converter = ConverterFactory.for_file(path, ConverterConfig(bad_rows="skip"))
+
+    [converted] = converter.convert(path, tmp_path / "out")
+
+    assert pq.read_table(converted.path).to_pylist() == [
+        {"a": "4", "b": "5"},
+        {"a": "7", "b": "8"},
+    ]
+    assert converted.skipped_rows == 2
+
+
 def test_empty_file_is_a_conversion_error(tmp_path: Path) -> None:
     with pytest.raises(ConversionError, match="vazio"):
         _rows(tmp_path, b"")

@@ -131,3 +131,16 @@ def test_failure_removes_the_partial_staging_partition(
         _convert(lake_storage, tmp_path)
 
     assert lake_storage.list(STAGING) == []
+
+
+def test_skipped_rows_go_to_the_manifest(
+    lake_storage: StorageBackend, tmp_path: Path
+) -> None:
+    _land_raw(lake_storage, tmp_path, {"int039.csv": b"a,b\n1,2\n3,4,5\n"})
+
+    _convert(lake_storage, tmp_path, bad_rows="skip")
+
+    manifest = tmp_path / "m.json"
+    lake_storage.get_file(STAGING + SUCCESS_MARKER, manifest)
+    [entry] = json.loads(manifest.read_text())["files"]
+    assert (entry["rows"], entry["skipped_rows"]) == (1, 1)

@@ -51,6 +51,11 @@ class ConverterConfig:
       colunas de saída (`Field`). Sem `columns`, as colunas são as chaves do
       último nível.
     - `include`: regex de aba, tabela (mdb) ou membro (zip) a converter.
+    - `bad_rows`: texto delimitado, linha com número de campos diferente do
+      cabeçalho. `"error"` para a conversão; `"skip"` descarta a linha e conta
+      (`skipped_rows` no manifesto da staging), como o `on_bad_lines="skip"` do
+      pandas, para fontes que mandam umas poucas linhas quebradas em arquivos
+      de milhões.
     """
 
     format: str | None = None
@@ -65,3 +70,4 @@ class ConverterConfig:
     explode_keys: str | None = None
     columns: Mapping[str, Field] | None = None
     include: str | None = None
+    bad_rows: str = "error"
