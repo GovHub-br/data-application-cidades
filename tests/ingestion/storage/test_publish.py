@@ -1,5 +1,6 @@
 """Publicação da última ingestão completa em `latest/`, que é o que o bronze lê."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -67,8 +68,35 @@ def test_latest_mirrors_the_new_partition_and_drops_what_left(
         LATEST + SUCCESS_MARKER,
     ]
     assert _read(lake_storage, tmp_path, LATEST_NEW + "ipca.parquet") == b"novo"
-    assert _read(lake_storage, tmp_path, LATEST + SUCCESS_MARKER) == b'{"files": []}'
+    assert json.loads(_read(lake_storage, tmp_path, LATEST + SUCCESS_MARKER)) == {
+        "files": [],
+        "particao": NEW,
+        "antecessor": OLD,
+    }
     assert lake_storage.exists(OLD + "serie_extinta.parquet")
+
+
+def test_latest_manifest_points_to_the_partition_it_replaced(
+    lake_storage: StorageBackend, tmp_path: Path
+) -> None:
+    # A entrega anterior continua na partição dela (o antepassado); o manifesto do
+    # latest/ diz qual é. Republicar a mesma partição não perde a antecessora.
+    for partition in (OLD, NEW):
+        _put(lake_storage, tmp_path, partition + "x.parquet", b"x")
+        _put(lake_storage, tmp_path, partition + SUCCESS_MARKER, b'{"files": []}')
+
+    def manifest() -> dict[str, object]:
+        data: dict[str, object] = json.loads(
+            _read(lake_storage, tmp_path, LATEST + SUCCESS_MARKER)
+        )
+        return data
+
+    publish_latest(lake_storage, OLD, LATEST)
+    assert (manifest()["particao"], manifest()["antecessor"]) == (OLD, None)
+    publish_latest(lake_storage, NEW, LATEST)
+    assert (manifest()["particao"], manifest()["antecessor"]) == (NEW, OLD)
+    publish_latest(lake_storage, NEW, LATEST)
+    assert (manifest()["particao"], manifest()["antecessor"]) == (NEW, OLD)
 
 
 def test_marker_is_copied_last_and_stale_files_removed_after_copies(
@@ -79,6 +107,7 @@ def test_marker_is_copied_last_and_stale_files_removed_after_copies(
 
     class Spy(StorageBackend):
         def put_file(self, key: str, local_path: Path) -> None:
+            calls.append(f"put {key}")
             local.put_file(key, local_path)
 
         def get_file(self, key: str, local_path: Path) -> None:
@@ -98,13 +127,14 @@ def test_marker_is_copied_last_and_stale_files_removed_after_copies(
         def exists(self, key: str) -> bool:
             return local.exists(key)
 
-    for key in [LATEST + "antigo.parquet", NEW + "a.parquet", NEW + SUCCESS_MARKER]:
+    for key in [LATEST + "antigo.parquet", NEW + "a.parquet"]:
         _put(local, tmp_path, key, b"x")
+    _put(local, tmp_path, NEW + SUCCESS_MARKER, b"{}")
 
     publish_latest(Spy(), NEW, LATEST)
 
     assert calls == [
         f"copy {LATEST_NEW}a.parquet",
         f"delete {LATEST}antigo.parquet",
-        f"copy {LATEST}{SUCCESS_MARKER}",
+        f"put {LATEST}{SUCCESS_MARKER}",
     ]

@@ -104,7 +104,9 @@ def publish_latest(
 
     Só publica partição com `_SUCCESS`. Copia os arquivos novos no servidor,
     depois remove do `latest/` o que não veio nesta ingestão (inclusive a cópia da
-    partição anterior), e copia o `_SUCCESS` por último, na raiz do `latest/`. O
+    partição anterior), e grava o `_SUCCESS` por último, na raiz do `latest/`: o
+    manifesto da partição mais `particao` (a publicada) e `antecessor` (a que ela
+    substituiu, que continua inteira no lugar dela; nula na primeira publicação). O
     `latest/` nunca fica vazio; um leitor no meio da troca pode ver arquivos novos e
     antigos misturados, o que não acontece no fluxo atual (o dbt roda depois da
     ingestão).
@@ -119,6 +121,7 @@ def publish_latest(
         if key != partition_prefix + SUCCESS_MARKER
     ]
     partition = "/".join(partition_prefix.rstrip("/").split("/")[-2:]) + "/"
+    antecessor = _antecessor(storage, partition_prefix, latest_prefix)
     published = [latest_prefix + partition + name for name in names]
     for name, key in zip(names, published):
         storage.copy(partition_prefix + name, key)
@@ -126,5 +129,34 @@ def publish_latest(
     for key in storage.list(latest_prefix):
         if key not in keep:
             storage.delete(key)
-    storage.copy(partition_prefix + SUCCESS_MARKER, latest_prefix + SUCCESS_MARKER)
+    with tempfile.TemporaryDirectory() as tmp:
+        marker = Path(tmp) / SUCCESS_MARKER
+        storage.get_file(partition_prefix + SUCCESS_MARKER, marker)
+        manifest = json.loads(marker.read_text() or "{}")
+        manifest.update(particao=partition_prefix, antecessor=antecessor)
+        marker.write_text(json.dumps(manifest, ensure_ascii=False))
+        storage.put_file(latest_prefix + SUCCESS_MARKER, marker)
     return published
+
+
+def _antecessor(
+    storage: StorageBackend, partition_prefix: str, latest_prefix: str
+) -> str | None:
+    """A partição que o `latest/` publicava antes desta (a própria, se é a mesma)."""
+    base = latest_prefix[: -len("latest/")]
+    current = {
+        "/".join(key[len(latest_prefix) :].split("/")[:2]) + "/"
+        for key in storage.list(latest_prefix)
+        if key != latest_prefix + SUCCESS_MARKER
+    }
+    previous = sorted(base + p for p in current)
+    if previous and previous[-1] != partition_prefix:
+        return previous[-1]
+    if not storage.exists(latest_prefix + SUCCESS_MARKER):
+        return None
+    # republicação da mesma partição: a antecessora continua a de antes
+    with tempfile.TemporaryDirectory() as tmp:
+        marker = Path(tmp) / SUCCESS_MARKER
+        storage.get_file(latest_prefix + SUCCESS_MARKER, marker)
+        value = json.loads(marker.read_text() or "{}").get("antecessor")
+    return str(value) if value else None
