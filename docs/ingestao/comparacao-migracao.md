@@ -120,6 +120,46 @@ nas 30 colunas (texto contra texto, antes do `parse_valor_siafi`).
 
 ## Fase 6
 
+Em 09/10/2026 as DAGs migradas rodaram no Airflow local contra as fontes reais
+(`tests/`), já com `base_url` no lugar de Connection por fonte. Todas terminaram
+com sucesso, e o volume de cada `latest/` bate com as conversões locais abaixo.
+
+| Dataset | Linhas na staging | Arquivo publicado |
+|---|---|---|
+| `fgv/icst` | 195 | `icst.parquet` |
+| `fipe/indice_locacao` | 230 | `fipezap-serieshistoricas.parquet` |
+| `abecip/poupanca_sbpe_mensal` | 604 | `cp-historico-agosto20261.parquet` |
+| `abecip/financiamentos_modalidade` | 307 | `unidades-site81.parquet` |
+| `mrv/planilha_interativa` | 377 | `mrve3_base_de_dados_operacionais_e_financeiros.parquet` |
+| `bacen/credito_imobiliario_pib` | 148 | `credito_imobiliario_pib.parquet` |
+
+### ICST (`fgv/icst`)
+
+Primeira execução real da estratégia `fgvdados` (login OutSystems + FGVDados).
+CSV latin-1 com o cabeçalho da FGV (nome longo de cada série + código).
+
+| | Antigo (01/09/2026) | Novo (09/10/2026) |
+|---|---|---|
+| Meses | 194 (2010-07 a 2026-08) | 195 (2010-07 a 2026-09) |
+
+Valores idênticos em todos os meses comuns; entra 09/2026.
+
+### Crédito imobiliário / PIB (`bacen/credito_imobiliario_pib`)
+
+A mesma API do Olinda que o `ClienteBacenImobiliario` já usava na `main`
+(`bacen_credito_pib_ingest_dag`, disparada pela `conjuntura_dag`). Filtro no
+endpoint com `%20` (o Olinda recusa o espaço como `+`).
+
+| | Antigo (01/09/2026) | Novo (09/10/2026) |
+|---|---|---|
+| Pontos | 146 (2014-04 a 2026-05) | 148 (2014-04 a 2026-07) |
+
+### MRV (`mrv/planilha_interativa`)
+
+Uma DAG no lugar das duas antigas (mesma planilha). Só até o bronze: nenhum ouro
+lê a MRV. 377 linhas × 105 colunas (uma por trimestre) na aba de dados
+operacionais.
+
 ### FipeZap (`fipe/indice_locacao`)
 
 A raw guarda a planilha inteira (59 abas); a staging converte só a aba
