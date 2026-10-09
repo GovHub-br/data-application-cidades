@@ -174,7 +174,7 @@ classDiagram
     class EmailAttachmentExtractor {
         +hook_class = ImapHook
     }
-    class FgvDadosExtractor
+    class HttpSessionExtractor
     class ObjectStorageExtractor
     class ExtractorFactory {
         -_registry: dict~str, type~
@@ -189,7 +189,7 @@ classDiagram
         +requests: tuple~HttpRequest~
         +adapter: HTTPAdapter | None
         +mail: MailQuery | None
-        +fgvdados: FgvDadosQuery | None
+        +session: HttpSession | None
         +objects: ObjectQuery | None
     }
     class ObjectQuery {
@@ -198,18 +198,49 @@ classDiagram
         +pattern: str
         +rename: str | None
     }
-    class FgvDadosQuery {
+    class HttpSession {
         <<dataclass>>
-        +series: str
-        +email_variable: str
-        +password_variable: str
-        +auth_url: str
-        +legacy_url: str
+        +steps: Sequence~Step~
+        +variables: Mapping~str, str~
+        +mounts: Mapping~str, HTTPAdapter~
+    }
+    class Step {
+        <<interface>>
+        +execute(run) RawFile | None
+    }
+    class Request {
+        <<dataclass>>
+        +name, method, url
+        +params, data, json, headers
+        +capture: Mapping~str, Capture~
+        +expect: tuple~Check~
+        +drop_empty: tuple~str~
+        +check_status: bool
+    }
+    class Download {
+        +filename: str
+        +content_types: tuple~str~
+    }
+    class SetHeaders
+    class DropHeaders
+    class Capture {
+        <<interface>>
+        Regex, JsonField, Cookie, Header
+        +default, required
+        +extract(response, session)
+    }
+    class Check {
+        <<interface>>
+        Contains, JsonEquals
+        +holds(response) bool
+    }
+    class LegacyTlsAdapter {
+        +seclevel: int = 1
     }
     class resolvers {
         <<module>>
         +link_in_page(page, contains, headers) Callable
-        +mziq_latest_file(company_id, category, headers) Callable
+        +latest_in_json_listing(endpoint, method, json, params, items, where, order_by, pick, attempts) Callable
     }
     class HttpRequest {
         <<dataclass>>
@@ -270,14 +301,23 @@ classDiagram
     Extractor <|-- ApiExtractor
     Extractor <|-- HttpFileExtractor
     Extractor <|-- EmailAttachmentExtractor
-    Extractor <|-- FgvDadosExtractor
+    Extractor <|-- HttpSessionExtractor
+    HttpSessionExtractor o-- HttpSession
+    HttpSession *-- Step
+    Step <|.. Request
+    Request <|-- Download
+    Step <|.. SetHeaders
+    Step <|.. DropHeaders
+    Request o-- Capture
+    Request o-- Check
+    HttpSession o-- LegacyTlsAdapter : mounts
     Extractor <|-- ObjectStorageExtractor
     ExtractorConfig *-- ObjectQuery
     ObjectStorageExtractor ..> base_extractor
     Extractor o-- ExtractorConfig
     ExtractorConfig *-- HttpRequest
     ExtractorConfig *-- MailQuery
-    ExtractorConfig *-- FgvDadosQuery
+    ExtractorConfig *-- HttpSession
     HttpRequest ..> resolvers : resolve
     ExtractorFactory ..> Extractor : cria por config.source
     Extractor ..> RawFile : produz
@@ -292,7 +332,7 @@ classDiagram
     ExtractionError <|-- SourceNotFoundError
 ```
 
-- **Estratégias registradas:** `api`, `http_file`, `email`, `fgvdados` e `object_storage`.
+- **Estratégias registradas:** `api`, `http_file`, `email`, `http_session` e `object_storage`. Nenhuma tem nome de fonte: o que é de cada fonte é configuração na DAG.
 - **`object_storage`:** copia para a raw os objetos que outro processo gravou no bucket (`ObjectQuery`: prefixo, padrão da chave, nome na raw). Lê o bucket sem o prefixo de teste (`storage_from_env(with_prefix=False)`): a fonte não muda com `INGESTION_STORAGE_PREFIX`.
 - **Fonte pública × fonte com segredo:** fonte HTTP pública declara `base_url` na
   DAG, e o `HttpHooks` monta a Connection em memória; `conn_id` fica para fonte
@@ -300,12 +340,16 @@ classDiagram
 - **`api` não guarda página de erro:** 2xx que declara HTML/XML (a página que o
   SGS do BACEN devolve com 200) entra no retry e, se persistir, falha. JSON
   servido como `text/plain` (Power BI público) passa.
-- **`fgvdados`:** login OutSystems + navegação ASP.NET numa `requests.Session`
-  própria (o HttpHook abre sessão nova a cada chamada); credenciais de duas
-  Variables, lidas na task.
+- **`http_session`:** fluxo numa `requests.Session` própria (o HttpHook abre
+  sessão nova a cada chamada), declarado como passos na DAG, como um navegador:
+  `Request` (com capturas e conferências), `Download`, `SetHeaders` e
+  `DropHeaders`. Capturas `Regex`, `JsonField`, `Cookie` e `Header`, com
+  `default` ou `required=False` (mantém o valor anterior); valores e Variables
+  entram por `{nome}`. Ex.: o login OutSystems e a navegação ASP.NET do ICST.
 - **`resolvers`:** o `resolve` de uma `HttpRequest` para link que muda a cada
-  edição: `link_in_page` (primeiro `<a href>` com o padrão) e `mziq_latest_file`
-  (catálogo de RI da MZ).
+  edição: `link_in_page` (primeiro `<a href>` com o padrão) e
+  `latest_in_json_listing` (item mais recente numa listagem JSON, com filtro,
+  ordenação e tentativas; ex.: o catálogo de RI da MZ, para a MRV).
 - **`email` com credencial em Variable:** com `credentials_variable`, a Connection do IMAP (e o remetente) é montada em runtime a partir da Variable JSON (`imap_server`, `email`, `password`, `sender_email`), sem Connection cadastrada.
 - **`http_common`:**
   - retry com backoff só em 5xx e falha de rede;
@@ -441,10 +485,6 @@ classDiagram
         #_read(path) Iterator~Source~
         -_members(archive) Iterator~ZipInfo~
     }
-    class IbgeV3Converter {
-        +COLUMNS
-        #_read(path) Iterator~Source~
-    }
     class PowerBiDsrConverter {
         #_read(path) Iterator~Source~
     }
@@ -462,8 +502,6 @@ classDiagram
     FileConverter <|-- ParquetConverter
     FileConverter <|-- ZipConverter
     ZipConverter ..> ConverterFactory : delega cada membro
-    FileConverter <|-- IbgeV3Converter
-    IbgeV3Converter ..> ijson : uma variável por vez
     FileConverter <|-- PowerBiDsrConverter
     PowerBiDsrConverter ..> ijson : um resultado por vez
     partition ..> ConverterFactory : um arquivo da raw por vez
@@ -491,12 +529,11 @@ classDiagram
 - **Formatos registrados:**
   - `csv` (`.csv`, delimitador padrão `,`);
   - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação;
-  - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON; com `key_column`, as chaves de um objeto viram linhas (a data do pregão do Alpha Vantage);
+  - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON; com `key_column`, as chaves de um objeto viram linhas (a data do pregão do Alpha Vantage); com `nested`, `explode_keys` e `columns` (`Field`, caminho com `[*]`, `{keys}`, `{values}` e `join`), JSON aninhado no estilo do `pandas.json_normalize` (ex.: o formato da API de agregados do IBGE, declarado na DAG);
   - `xlsx` (`.xlsx`, `.xlsm`): uma saída por aba, `header_row`, valor calculado da fórmula, célula vira texto por regra fixa;
   - `mdb` (`.mdb`, `.accdb`): uma saída por tabela (`<arquivo>__<tabela>`), `mdb-export` lido por pipe;
   - `parquet` (`.parquet`): mantém o schema original (`Source.schema`), a exceção ao "tudo string";
   - `zip` (`.zip`): um membro por vez, delegado ao conversor da extensão (`<zip>__<membro>`);
-  - `ibge_v3` (só por `format`): a resposta da API de agregados do IBGE, uma linha por (variável, localidade, classificação, categoria, período), o mesmo achatamento do antigo `ClienteIBGE`;
   - `powerbi_dsr` (só por `format`): o DSR do `querydata` do Power BI público, com as máscaras `Ø` (nulo) e `R` (repete a linha anterior) e os nomes do `descriptor`.
 - **Nome repetido:** dois Parquet com o mesmo nome vindos de um mesmo arquivo são `ConversionError`.
 - **`convert_partition`:**

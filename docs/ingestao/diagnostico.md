@@ -111,7 +111,7 @@ Itens "a confirmar" se resolvem no PR de migração de cada DAG, com a justifica
 | Código atual | Classe nova | Observação |
 |---|---|---|
 | `cliente_bacen`, `cliente_bacen_imobiliario`, `cliente_ibge`, `cliente_ibge_sidra`, `cliente_infomoney`, `cliente_novo_caged` | `ApiExtractor` (`api`) | Sobre `HttpHook`: fonte pública declara `base_url` na DAG (Connection em memória, decisão do Lucas em 09/10/2026); Connection só onde há segredo. Retry tenacity, `stream`. Método e body (POST do PowerBI), paginação plugável, uma parte JSON por chamada. |
-| `cliente_fgv` (INCC, ICST), `cliente_fipe`, `cliente_abecip`, `cliente_mrv` | `HttpFileExtractor` (`http_file`) | Sobre `HttpHook` com `stream`. URL fixa ou `url_resolver` (scraping ABECIP, API mziq MRV). Hook de sessão para o login OutSystems e o TLS legado da FGV. |
+| `cliente_fgv` (INCC, ICST), `cliente_fipe`, `cliente_abecip`, `cliente_mrv` | `HttpFileExtractor` (`http_file`) | Sobre `HttpHook` com `stream`. URL fixa ou resolvedor genérico (`link_in_page` para a ABECIP, `latest_in_json_listing` para o catálogo da MZ/MRV). O login OutSystems e o TLS legado do ICST são um fluxo `http_session` declarado na DAG (passos genéricos, `LegacyTlsAdapter`). |
 | `cliente_email` | `EmailAttachmentExtractor` (`email`) | Sobre `ImapHook.download_mail_attachments` (disco). |
 | leitura de `raw/abecip/<AAAA-MM>/` em `abecip_instituicoes` | `ObjectStorageExtractor` (`object_storage`) | Sobre `S3Hook`, copia os objetos de um prefixo. |
 | `cliente_sftp` + `scripts/sftp_para_minio.py` | `SftpExtractor` (`sftp`) | Sobre `SFTPHook`, mantém o incremental `lake._ingest_minio_log` e os zips. |

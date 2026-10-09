@@ -135,7 +135,7 @@ com sucesso, e o volume de cada `latest/` bate com as conversões locais abaixo.
 
 ### ICST (`fgv/icst`)
 
-Primeira execução real da estratégia `fgvdados` (login OutSystems + FGVDados).
+Primeira execução real do login OutSystems + FGVDados (hoje um fluxo `http_session` declarado na DAG).
 CSV latin-1 com o cabeçalho da FGV (nome longo de cada série + código).
 
 | | Antigo (01/09/2026) | Novo (09/10/2026) |
@@ -236,7 +236,7 @@ localidade, classificação, categoria, período, valor):
 - A staging nova tem duas ingestões do dia (a das 06:00, criada pelo scheduler ao
   despausar, e a manual); o `merge` deduplica. Como conjunto, os valores são
   idênticos aos da staging antiga.
-- O `IbgeV3Converter` foi conferido linha a linha contra o
+- O conversor (hoje o `JsonConverter` com o formato declarado na DAG) foi conferido linha a linha contra o
   `ClienteIBGE.transformar_resposta` numa resposta real (80 de 80 iguais), e o
   macro reproduz as colunas e os tipos do parquet antigo.
 - No SINAPI, o 202403 saiu da janela da API; com o `merge`, ele continua no bronze
@@ -294,3 +294,13 @@ gravado pelo outro time, como `<AAAA-MM>.json`.
 
 Idêntico. A conferência da task `conferir` (≥ 2 competências, ≥ 10 linhas por
 competência) virou o teste `conjuntura_abecip_instituicoes_historico`.
+
+## Generalização (09/10/2026)
+
+As peças com nome de fonte saíram: a estratégia `fgvdados` virou a genérica
+`http_session` (fluxo do ICST declarado na DAG), o `mziq_latest_file` virou
+`latest_in_json_listing` (catálogo da MZ como configuração na DAG da MRV) e o
+`IbgeV3Converter` virou configuração do `JsonConverter` (`nested`,
+`explode_keys`, `columns`). Rodadas de novo no Airflow, as partições de ICST, MRV
+e dos 14 agregados do IBGE são idênticas às das peças dedicadas (mesmas linhas,
+mesmas colunas, nenhuma diferença).
