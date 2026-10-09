@@ -27,6 +27,15 @@ def test_null_is_not_the_same_as_empty_string(tmp_path: Path) -> None:
     assert _rows(tmp_path, b'a,b,c\n,"",x\n') == [{"a": None, "b": "", "c": "x"}]
 
 
+def test_null_like_text_stays_as_it_came(tmp_path: Path) -> None:
+    # A staging é texto fiel: NULL, NA, N/A e nan da fonte são valores (a INT064
+    # manda N/A no estado civil, o SNH manda NULL); só o campo vazio é nulo.
+    assert _rows(tmp_path, b"a,b,c,d\nNULL,NA,N/A,\nnan,null,#N/A,x\n") == [
+        {"a": "NULL", "b": "NA", "c": "N/A", "d": None},
+        {"a": "nan", "b": "null", "c": "#N/A", "d": "x"},
+    ]
+
+
 def test_bom_is_not_part_of_the_first_column_name(tmp_path: Path) -> None:
     assert _rows(tmp_path, "﻿mes,valor\n1,2\n".encode("utf-8")) == [
         {"mes": "1", "valor": "2"}

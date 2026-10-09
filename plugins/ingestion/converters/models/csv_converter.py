@@ -157,6 +157,8 @@ class CsvConverter(FileConverter):
             ),
             convert_options=pacsv.ConvertOptions(
                 column_types=types,
+                # só o campo vazio é nulo; NULL, NA, N/A da fonte são texto
+                null_values=[""],
                 strings_can_be_null=True,
                 quoted_strings_can_be_null=False,
             ),
