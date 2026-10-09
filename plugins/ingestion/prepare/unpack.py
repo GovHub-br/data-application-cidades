@@ -27,7 +27,8 @@ class Unpack:
       não estar);
     - gzip: o único membro, com o nome do cabeçalho do gzip (ou o nome do arquivo
       sem `.gz`/`.zip`);
-    - outro formato: passa como está.
+    - outro formato, inclusive documento Office (xlsx é um zip com
+      `[Content_Types].xml`): passa como está.
 
     `prefix_with_archive` antepõe o nome do arquivo compactado (`<zip>__<membro>`),
     para membros de nome repetido entre entregas (o mesmo `.mdb` em todo zip). O
@@ -41,7 +42,7 @@ class Unpack:
     def apply(self, part: RawFile, work_dir: Path) -> Iterator[RawFile]:
         with part.path.open("rb") as head:
             magic = head.read(4)
-        if magic.startswith(ZIP_MAGIC):
+        if magic.startswith(ZIP_MAGIC) and not _is_office(part.path):
             yield from self._zip(part, work_dir)
         elif magic.startswith(GZIP_MAGIC):
             yield from self._gzip(part, work_dir)
@@ -101,3 +102,12 @@ def _gzip_name(path: Path) -> str | None:
         while (byte := raw.read(1)) not in (b"", b"\x00"):
             name += byte
     return posixpath.basename(name.decode("latin-1")) or None
+
+
+def _is_office(path: Path) -> bool:
+    """Documento OOXML (xlsx, docx): é zip, mas é o arquivo, não um pacote."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            return "[Content_Types].xml" in archive.namelist()
+    except zipfile.BadZipFile:
+        return False

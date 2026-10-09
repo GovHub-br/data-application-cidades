@@ -111,3 +111,18 @@ def test_bundle_without_the_family_yields_nothing_when_not_required(
 
     assert out == []
     assert not archive.exists()
+
+
+def test_office_documents_are_zips_but_pass_through(tmp_path: Path) -> None:
+    # xlsx é um zip (OOXML); abri-lo como pacote quebrava PMCMV_CIDADES_MCID.
+    from openpyxl import Workbook
+
+    sheet = tmp_path / "PMCMV_CIDADES_MCID_2026_10_01.xlsx"
+    workbook = Workbook()
+    workbook.create_sheet("dados").append(["apf", "valor"])
+    workbook.save(sheet)
+    body = sheet.read_bytes()
+
+    out = _apply(Unpack(members=r"(?i)\.(csv|txt|xlsx)$"), sheet, tmp_path)
+
+    assert [(name, data) for name, data, _ in out] == [(sheet.name, body)]
