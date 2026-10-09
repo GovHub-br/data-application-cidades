@@ -29,6 +29,22 @@ from ingestion.storage import (  # noqa: E402  (precisa do sys.path acima)
 TEST_BUCKET = "test-lake"
 
 
+@pytest.fixture(autouse=True)
+def _storage_env_from_test_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A escolha do storage vem só do teste, nunca do `.env` do desenvolvedor.
+
+    O dbt-core chama `load_dotenv()` ao ser importado (os testes de dbt o importam),
+    e um `INGESTION_STORAGE_PREFIX=tests/` local mandaria o pipeline gravar fora de
+    onde o teste lê.
+    """
+    for name in (
+        "INGESTION_STORAGE_BACKEND",
+        "INGESTION_STORAGE_PREFIX",
+        "INGESTION_LOCAL_ROOT",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def fake_aws(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """S3 em memória (moto): o S3Hook sem Connection cai nas credenciais do ambiente."""
