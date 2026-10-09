@@ -22,7 +22,9 @@ class Unpack:
     """Descompacta pelo conteúdo, não pela extensão (há `.zip` que é gzip).
 
     - zip: cada membro que casa com `members` (regex no nome) vira um arquivo, um
-      por vez, em fluxo; nenhum membro casando é erro;
+      por vez, em fluxo; nenhum membro casando é erro, salvo com
+      `require_match=False` (pacote com várias famílias, em que a procurada pode
+      não estar);
     - gzip: o único membro, com o nome do cabeçalho do gzip (ou o nome do arquivo
       sem `.gz`/`.zip`);
     - outro formato: passa como está.
@@ -34,6 +36,7 @@ class Unpack:
 
     members: str = r".*"
     prefix_with_archive: bool = False
+    require_match: bool = True
 
     def apply(self, part: RawFile, work_dir: Path) -> Iterator[RawFile]:
         with part.path.open("rb") as head:
@@ -60,7 +63,7 @@ class Unpack:
                     yield self._member(
                         part, name, iter(lambda: member.read(CHUNK_BYTES), b""), work_dir
                     )
-        if not found:
+        if not found and self.require_match:
             raise ValueError(f"{part.name}: nenhum membro casa {self.members!r}")
 
     def _gzip(self, part: RawFile, work_dir: Path) -> Iterator[RawFile]:

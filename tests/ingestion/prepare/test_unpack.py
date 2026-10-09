@@ -96,3 +96,18 @@ def test_zip_without_matching_member_is_an_error(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="nenhum membro"):
         _apply(Unpack(members=r"\.txt$"), archive, tmp_path)
+
+
+def test_bundle_without_the_family_yields_nothing_when_not_required(
+    tmp_path: Path,
+) -> None:
+    # Pacote mensal (202312_CAIXA.zip) com as interfaces de um agente só: quem
+    # procura outra interface nele não acha nada, e isso não é erro.
+    archive = tmp_path / "202312_CAIXA.zip"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("INT039_20231228.TXT", "a;b\n")
+
+    out = _apply(Unpack(members=r"^INT021_", require_match=False), archive, tmp_path)
+
+    assert out == []
+    assert not archive.exists()
