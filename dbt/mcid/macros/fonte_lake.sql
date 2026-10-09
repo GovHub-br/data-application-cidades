@@ -51,8 +51,19 @@
         ele vem vazio, então o lookup precisa ficar atrás do guard `execute`,
         senão todo model quebra na análise com "não tem meta.caminho". -#}
     {%- if execute -%}
-        {%- set meta = _fonte_lake_meta(nome_tabela, nome_fonte) -%}
+        {%- set fonte = namespace(meta=none) -%}
+        {%- for no in graph.sources.values() -%}
+            {%- if no.source_name == nome_fonte and no.name == nome_tabela -%}
+                {%- set fonte.meta = no.meta -%}
+            {%- endif -%}
+        {%- endfor -%}
+        {%- set meta = fonte.meta or {} -%}
         {%- set caminho = meta.get('caminho') -%}
+
+        {%- if not caminho -%}
+            {{ exceptions.raise_compiler_error(
+                "fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
+        {%- endif -%}
 
         {%- set load_mode = meta.get('load_mode') -%}
         {%- set keys = meta.get('keys') or [] -%}
@@ -133,54 +144,4 @@
         {#- placeholder só para o parse; nunca chega a ser executado -#}
         read_parquet('s3://{{ bucket }}/__parse__')
     {%- endif -%}
-{% endmacro %}
-
-
-{#- O `meta` da fonte em sources.yml; sem `meta.caminho` é erro de compilação. -#}
-{% macro _fonte_lake_meta(nome_tabela, nome_fonte) %}
-    {%- set fonte = namespace(meta=none) -%}
-    {%- for no in graph.sources.values() -%}
-        {%- if no.source_name == nome_fonte and no.name == nome_tabela -%}
-            {%- set fonte.meta = no.meta -%}
-        {%- endif -%}
-    {%- endfor -%}
-    {%- set meta = fonte.meta or {} -%}
-    {%- if not meta.get('caminho') -%}
-        {{ exceptions.raise_compiler_error(
-            "fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
-    {%- endif -%}
-    {{ return(meta) }}
-{% endmacro %}
-
-
-{#
-    O glob que o `fonte_lake` lê: o caminho (fonte legada), o `latest/`
-    (overwrite) ou as partições (append). Serve ao `arquivo_mais_recente`, para a
-    bronze de uma fonte de retratos (cada ingestão traz entregas novas, e a
-    bronze quer só a última pelo nome):
-
-        select *
-        from {{ fonte_lake('int055_liberacoes_caixa_bb', 'lake_staging_sftp') }} as r
-        where cast(r['filename'] as varchar) = {{ arquivo_mais_recente(
-            fonte_lake_glob('int055_liberacoes_caixa_bb', 'lake_staging_sftp'),
-            excluir=['VALIDACAO']) }}
-
-    `merge` não tem um glob que represente o que se lê (a seleção é por chave).
-#}
-{% macro fonte_lake_glob(nome_tabela, nome_fonte='lake_staging') %}
-    {%- set bucket = var('lake_bucket', 'data-lake-mcid') -%}
-    {%- set root = var('lake_root', 's3://' ~ bucket) -%}
-    {%- if not execute -%}{{ return('s3://' ~ bucket ~ '/__parse__') }}{%- endif -%}
-    {%- set meta = _fonte_lake_meta(nome_tabela, nome_fonte) -%}
-    {%- set load_mode = meta.get('load_mode') -%}
-    {%- if load_mode is none -%}
-        {{ return(root ~ '/' ~ meta.caminho) }}
-    {%- elif load_mode == 'overwrite' -%}
-        {{ return(root ~ '/' ~ meta.caminho ~ '/latest/*/*/*.parquet') }}
-    {%- elif load_mode == 'append' -%}
-        {{ return(root ~ '/' ~ meta.caminho ~ '/2*/*/*.parquet') }}
-    {%- endif -%}
-    {{ exceptions.raise_compiler_error(
-        "fonte_lake_glob: '" ~ nome_tabela ~ "' (load_mode " ~ load_mode
-        ~ ") não tem um glob único") }}
 {% endmacro %}
