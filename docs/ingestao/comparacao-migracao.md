@@ -304,3 +304,43 @@ As peças com nome de fonte saíram: a estratégia `fgvdados` virou a genérica
 `explode_keys`, `columns`). Rodadas de novo no Airflow, as partições de ICST, MRV
 e dos 14 agregados do IBGE são idênticas às das peças dedicadas (mesmas linhas,
 mesmas colunas, nenhuma diferença).
+
+## Fase 6b: SFTP (09/10/2026)
+
+A `sftp_ingest_dag` nova (35 famílias, acesso fábrica) rodou no Airflow local
+contra o SFTP real, gravando só em `tests/`. O SFTP entrega cerca de 0,5 MB/s, então
+a validação foi por amostra: a entrega mais antiga e a mais recente de cada
+família (só a mais recente nas grandes: INT039, INT064 e PF FGTS), mais os pacotes
+mensais de 2023 no INT040 e no INT059. O CadÚnico (20 GB compactados) ficou fora;
+o mascaramento dele é o mesmo código provado byte a byte contra o script antigo.
+
+**Uma ingestão por entrega.** A família `snh_dados_prioritarios_af_caixa_entregas`
+rodou inteira: 26 entregas viraram 26 ingestões, em ordem de chegada; o `latest/`
+ficou só com `202608_..._ENTREGAS.parquet`, e o manifesto dele aponta a ingestão
+anterior (202607) como antecessora.
+
+**Comparação com a staging antiga**, arquivo a arquivo, nos 44 arquivos da
+amostra que têm par na staging antiga (nomes normalizados como o
+`normalizar_colunas`, conteúdo com `EXCEPT ALL` nos dois sentidos):
+
+| Resultado | Arquivos |
+|---|---|
+| Linhas iguais em todos | 44 |
+| Idênticos | 12 |
+| Idênticos, tirando campo vazio (nulo na nova, `''` na antiga) | +26 |
+| Texto `NULL`/`N/A` da fonte virava nulo na nova (corrigido: só vazio é nulo) | SNH AF_CAIXA 202406, INT064 |
+| Cabeçalho vazio ou repetido: `column_4`/`n_2` na nova, `unnamed_3`/`n_1` na antiga | `base_andamento_obra`, alienação 202112 |
+| `tem_membro_com_pcd` mascarado na nova, em claro na antiga | alienação 202202 |
+| Bytes `0x80`/`0x9D` decodificados diferente (cp1252 com `replace` × latin-1) | INT068 de 2020 |
+
+Achados da validação, corrigidos na ingestão:
+
+- **INT039 de 2026-04-30:** 2 linhas com 40 campos num layout de 37. Elas saem na
+  conversão (`bad_rows="skip"`, contadas no manifesto), e o mascaramento passou a
+  redigir a linha desalinhada inteira: antes, o CEP caía numa coluna sem máscara e
+  pousava em claro na raw. A staging antiga tem o mesmo defeito nessas linhas.
+- **`.xlsx` aberto como zip** (`PMCMV_CIDADES_MCID`, `MCMV_CIDADES_EMENDAS`): o
+  `Unpack` passou a deixar documento Office passar.
+
+Ficam como estão (decisão do Lucas): campo vazio continua nulo, e os nomes de
+cabeçalho vazio ou repetido continuam `column_<n>` e `<nome>_2`.

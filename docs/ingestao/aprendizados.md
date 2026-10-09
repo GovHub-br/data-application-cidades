@@ -25,7 +25,7 @@ raw/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/  + _SUCCESS (manifesto)   ← im
 staging/<domínio>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/*.parquet  + latest/   ← só texto, cabeçalho original
                                                                     │ dbt: select * from {{ fonte_lake(...) }}
                                                                     ▼
-bronze (overwrite | append | merge) → prata → ouro
+bronze (overwrite: latest/ | merge | append) → prata → ouro
 ```
 
 - A DAG não tem lógica. Ela declara um `DatasetSpec` (de onde, como converter,
@@ -61,7 +61,9 @@ Antes de escrever cliente HTTP, SFTP ou S3, procurar o hook do provider oficial.
 
 - **Uma fase por vez, com plano aprovado e parada no fim.** Decisão de produto
   (modo de carga, o que vira dataset, o que sai) é de quem é dono do dado:
-  pergunta, não suposição.
+  pergunta, não suposição. Na dúvida sobre o escopo, confirmar antes: uma
+  resposta que parece liberar algo não revoga um pedido explícito anterior (o
+  dbt foi mexido numa etapa que era só de ingestão e teve de ser revertido).
 - **TDD, um commit por ciclo verde.** Toda DAG mudada tem teste. A checagem roda
   sem atalho: black nos arquivos tocados, ruff, mypy e pytest, parando no primeiro
   erro. `| tail` engole código de saída; ver o `exit` de verdade.
@@ -109,21 +111,32 @@ Antes de escrever cliente HTTP, SFTP ou S3, procurar o hook do provider oficial.
   staging guarda o cabeçalho original e o dbt (`normalizar_colunas`) entrega à
   prata os nomes de antes. A paridade do macro com a função Python é testada
   caractere a caractere.
+- Só o campo vazio é nulo: o padrão do pyarrow transformava `NULL`, `NA` e `N/A`
+  da fonte em nulo (o `N/A` do estado civil da INT064, o `NULL` do SNH).
 - Encoding e delimitador detectados por arquivo (`"auto"`) quando a fonte varia;
   byte inválido fora da amostra vira U+FFFD, não derruba a conversão.
 - No DuckDB, `::numeric` é `DECIMAL(18,3)`: comparar como `double`.
 
 ## 5. Modo de carga: a decisão que mais pesa
 
-| Como a fonte entrega | Modo | Exemplo |
-|---|---|---|
-| Série inteira a cada execução | `overwrite` | INCC, FipeZap, ABECIP |
-| Janela parcial que se acumula, com revisões | `merge` + `keys` | IBGE v3, Infomoney |
-| Uma entrega nova por arquivo (retratos, remessas) | `append` | SFTP inteiro |
+O modo segue a forma como cada entrega chega, e a escolha é de quem conhece o
+dado:
 
-- Extração incremental e `overwrite` não combinam: a última ingestão traz só o
-  que chegou de novo (e a primeira, o histórico inteiro). Fonte de retratos é
-  `append`, e a bronze que quer só o último filtra com `arquivo_mais_recente`.
+| Como cada entrega chega | Modo | Exemplo |
+|---|---|---|
+| Série inteira, ou retrato completo (a base toda do mês) | `overwrite` | INCC, FipeZap, ABECIP, SFTP inteiro |
+| Só os novos, ou uma janela parcial com revisões | `merge` + `keys` | IBGE v3, Infomoney |
+| Cada execução acrescenta, sem chave para substituir | `append` | — |
+
+- A lógica de "qual é o último arquivo" mora na ingestão, não no dbt: a bronze
+  lê o `latest/`, e o `latest/` tem só a ingestão mais recente.
+- A data da ingestão define o mais recente. Com extração incremental, cada
+  entrega nova vira uma ingestão própria, na ordem de chegada na fonte; na
+  primeira carga o histórico entra como uma sequência de ingestões, e a última é
+  a entrega mais recente. (Sem isso, a primeira carga poria o histórico inteiro
+  num `latest/` em `overwrite`.)
+- Ao publicar, a ingestão anterior sai do `latest/` e continua inteira na partição
+  dela; o manifesto do `latest/` registra `particao` e `antecessor`.
 - O `latest/` guarda a partição na pasta (`latest/<data>/<hora>/`) para o
   `filename` da bronze continuar trazendo a data da ingestão (`lake_dt_ingest`).
 

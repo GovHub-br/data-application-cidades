@@ -110,7 +110,7 @@ classDiagram
     class landing {
         <<module>>
         +SUCCESS_MARKER = "_SUCCESS"
-        +land(storage, parts: Iterable~Part~, prefix, details) LandingResult
+        +land(storage, parts: Iterable~Part~, prefix, details, summary) LandingResult
         +publish_latest(storage, partition_prefix, latest_prefix) list~str~
     }
     class Part {
@@ -152,11 +152,12 @@ classDiagram
   - embrulha um backend e enxerga só uma pasta dele;
   - `storage_from_env` o aplica quando há `INGESTION_STORAGE_PREFIX` (ex.: `tests/`, para rodar o pipeline real fora de `raw/` e `staging/`);
   - recusa `raw/` e `staging/` como prefixo.
-- **`land`:** sobe uma parte por vez, apaga a cópia local e grava `_SUCCESS` com o manifesto por último. `details` acrescenta campos ao manifesto de cada parte.
+- **`land`:** sobe uma parte por vez, apaga a cópia local e grava `_SUCCESS` com o manifesto por último. `details` acrescenta campos ao manifesto de cada parte; `summary`, calculado depois da última, ao topo do manifesto (`sources`, `duplicates`).
 - **`publish_latest`:**
   - espelha uma partição com `_SUCCESS` em `latest/<AAAA-MM-DD>/<HHMMSS>/`, que é o que o bronze lê (a partição no caminho dá o `dt_ingest`);
-  - o `_SUCCESS` fica na raiz do `latest/`;
-  - ordem: copia os novos, remove os que sobraram e copia o `_SUCCESS` por último.
+  - a partição anterior sai do `latest/` e continua inteira no lugar dela (o antepassado);
+  - o `_SUCCESS` fica na raiz do `latest/`: o manifesto da partição mais `particao` e `antecessor` (a partição que ela substituiu; republicar a mesma mantém a antecessora);
+  - ordem: copia os novos, remove os que sobraram e grava o `_SUCCESS` por último.
 
 ## `extractors`: fonte → disco, no formato original
 
@@ -167,6 +168,7 @@ classDiagram
         +config: ExtractorConfig
         +ingestion_time: datetime
         +from_config(config, ingestion_time)$ Extractor
+        +already_landed: frozenset~str~
         +extract(work_dir: Path) Iterator~RawFile~*
     }
     class ApiExtractor
@@ -176,6 +178,7 @@ classDiagram
     }
     class HttpSessionExtractor
     class ObjectStorageExtractor
+    class SftpExtractor
     class ExtractorFactory {
         -_registry: dict~str, type~
         +register(name)$ decorator
@@ -191,6 +194,16 @@ classDiagram
         +mail: MailQuery | None
         +session: HttpSession | None
         +objects: ObjectQuery | None
+        +remote: RemoteFiles | None
+    }
+    class RemoteFiles {
+        <<dataclass>>
+        +root: str
+        +pattern: str
+        +exclude: tuple~str~
+        +recursive: bool = True
+        +prefer_extensions: tuple~str~
+        +bundles: str | None
     }
     class ObjectQuery {
         <<dataclass>>
@@ -266,6 +279,8 @@ classDiagram
         +path: Path
         +size: int
         +sha256: str
+        +source_id: str | None
+        +details: Mapping
     }
     class base_extractor {
         <<module>>
@@ -294,6 +309,9 @@ classDiagram
     class ImapHook {
         <<external>>
     }
+    class SFTPHook {
+        <<external>>
+    }
     class Part {
         <<interface>>
     }
@@ -312,7 +330,11 @@ classDiagram
     Request o-- Check
     HttpSession o-- LegacyTlsAdapter : mounts
     Extractor <|-- ObjectStorageExtractor
+    Extractor <|-- SftpExtractor
     ExtractorConfig *-- ObjectQuery
+    ExtractorConfig *-- RemoteFiles
+    SftpExtractor ..> SFTPHook
+    SftpExtractor ..> base_extractor
     ObjectStorageExtractor ..> base_extractor
     Extractor o-- ExtractorConfig
     ExtractorConfig *-- HttpRequest
@@ -332,7 +354,9 @@ classDiagram
     ExtractionError <|-- SourceNotFoundError
 ```
 
-- **Estratégias registradas:** `api`, `http_file`, `email`, `http_session` e `object_storage`. Nenhuma tem nome de fonte: o que é de cada fonte é configuração na DAG.
+- **Estratégias registradas:** `api`, `http_file`, `email`, `http_session`, `object_storage` e `sftp`. Nenhuma tem nome de fonte: o que é de cada fonte é configuração na DAG.
+- **`sftp`:** sobre o `SFTPHook`, lista a árvore (`RemoteFiles`: raiz, padrão no caminho relativo, exclusões) e baixa em janelas (`readv`). A mesma entrega em outra pasta ou embrulho (`X.TXT`, `X.TXT.zip`, `X.zip`) pousa uma vez, pela precedência de `prefer_extensions`; `bundles` são pacotes com várias famílias. Os arquivos saem na ordem de chegada na fonte (data de modificação). `source_id` = nome, tamanho e data na fonte.
+- **Extração incremental:** com `DatasetSpec.incremental`, o extrator recebe em `already_landed` os `source_id`s que os manifestos da raw já registram e pula o que já pousou.
 - **`object_storage`:** copia para a raw os objetos que outro processo gravou no bucket (`ObjectQuery`: prefixo, padrão da chave, nome na raw). Lê o bucket sem o prefixo de teste (`storage_from_env(with_prefix=False)`): a fonte não muda com `INGESTION_STORAGE_PREFIX`.
 - **Fonte pública × fonte com segredo:** fonte HTTP pública declara `base_url` na
   DAG, e o `HttpHooks` monta a Connection em memória; `conn_id` fica para fonte
@@ -386,6 +410,7 @@ classDiagram
         +record_path: str = "item"
         +key_column: str | None
         +include: str | None
+        +bad_rows: str = "error"
     }
     class Source {
         <<dataclass>>
@@ -393,6 +418,7 @@ classDiagram
         +header: Sequence~str~
         +batches: Iterable~RecordBatch~
         +schema: Schema | None
+        +skipped_rows: Callable
     }
     class ConvertedFile {
         <<dataclass>>
@@ -400,6 +426,7 @@ classDiagram
         +path: Path
         +rows: int
         +columns: tuple~str~
+        +skipped_rows: int
     }
     class base_converter {
         <<module>>
@@ -423,6 +450,7 @@ classDiagram
         +source: str
         +rows: int
         +columns: tuple~str~
+        +skipped_rows: int
     }
     class ConversionResult {
         <<dataclass>>
@@ -527,8 +555,8 @@ classDiagram
   - confere as linhas gravadas;
   - chama `_after_write`, gancho reservado para o drift (Fase 8).
 - **Formatos registrados:**
-  - `csv` (`.csv`, delimitador padrão `,`);
-  - `txt` (`.txt`, `.tsv`): delimitador obrigatório, e o `.tsv` assume tabulação;
+  - `csv` (`.csv`, delimitador padrão `,`); só o campo vazio é nulo (`NULL`, `NA`, `N/A` da fonte ficam como texto); `encoding="auto"` e `delimiter="auto"` detectam o dialeto numa amostra de 64 KB (`ingestion.text`) e decodificam com `errors="replace"`; `bad_rows="skip"` descarta e conta a linha com campos a mais ou a menos (`skipped_rows` no manifesto);
+  - `txt` (`.txt`, `.tsv`): delimitador obrigatório (ou `"auto"`), e o `.tsv` assume tabulação;
   - `json` (`.json`): registros em `record_path`, colunas = união das chaves, aninhado vira texto JSON; com `key_column`, as chaves de um objeto viram linhas (a data do pregão do Alpha Vantage); com `nested`, `explode_keys` e `columns` (`Field`, caminho com `[*]`, `{keys}`, `{values}` e `join`), JSON aninhado no estilo do `pandas.json_normalize` (ex.: o formato da API de agregados do IBGE, declarado na DAG);
   - `xlsx` (`.xlsx`, `.xlsm`): uma saída por aba, `header_row`, valor calculado da fórmula, célula vira texto por regra fixa;
   - `mdb` (`.mdb`, `.accdb`): uma saída por tabela (`<arquivo>__<tabela>`), `mdb-export` lido por pipe;
@@ -555,7 +583,13 @@ classDiagram
         +converter: ConverterConfig
         +load_mode: LoadMode = overwrite
         +keys: tuple~str~
+        +incremental: bool = False
+        +prepare: Sequence~Prepare~
         +extractor_config() ExtractorConfig
+    }
+    class Prepare {
+        <<interface>>
+        +apply(part: RawFile, work_dir) Iterator~RawFile~
     }
     class ExtractorConfig {
         <<dataclass>>
@@ -570,11 +604,60 @@ classDiagram
     DatasetSpec o-- ExtractorConfig
     DatasetSpec o-- ConverterConfig
     DatasetSpec o-- LoadMode
+    DatasetSpec o-- Prepare
 ```
 
 - **`DatasetSpec`:** fica no topo de cada DAG, só com literais.
 - **Extrator preguiçoso:** `extractor` pode ser uma função que monta a configuração dentro da task (lendo uma Variable, como a lista de séries do BACEN). Nada é consultado no parse.
 - **Validação:** `domain` e `dataset` viram pastas e precisam ser segmentos seguros; `load_mode` e `keys` passam por `validate_load`.
+- **`incremental`:** só baixa o que os manifestos da raw não registram, e cada entrega nova vira uma ingestão própria.
+- **`prepare`:** transformações de arquivo antes do pouso, em ordem e em disco (ver `prepare`).
+
+## `prepare`: antes do pouso na raw
+
+```mermaid
+classDiagram
+    class Prepare {
+        <<interface>>
+        +apply(part: RawFile, work_dir) Iterator~RawFile~
+    }
+    class Unpack {
+        <<dataclass>>
+        +members: str = ".*"
+        +prefix_with_archive: bool = False
+        +require_match: bool = True
+    }
+    class MaskPii {
+        <<dataclass>>
+        +positions: Mapping~str, Mapping~int, str~~
+        +secret_env: str = "MASKING_HMAC_SECRET"
+    }
+    class masking {
+        <<module>>
+        +MaskingKeys(secret, token_len, redaction)
+        +classificar(header, encoding)
+        +mascarar_tabular(...)
+        +mascarar_xlsx(src, dst, keys)
+    }
+    class text {
+        <<module>>
+        +detectar_encoding(sample) str
+        +detectar_dialeto(sample, encoding)
+        +normalizar_colunas(header)
+    }
+    class RawFile {
+        <<dataclass>>
+    }
+
+    Prepare <|.. Unpack
+    Prepare <|.. MaskPii
+    MaskPii ..> masking
+    MaskPii ..> text
+    Prepare ..> RawFile : RawFile para RawFile
+```
+
+- **`Unpack`:** zip e gzip pelo conteúdo (bytes mágicos), não pela extensão: há `.zip` que é gzip, e o `.xlsx` (zip com `[Content_Types].xml`) passa como está. Do zip saem os membros que casam `members`, um por vez; `require_match=False` aceita pacote sem a família procurada. Os membros herdam o `source_id` da entrega.
+- **`MaskPii`:** a regra do antigo `mascarar_minio` (saída idêntica byte a byte): classificação pelo cabeçalho, HMAC-SHA256 em CPF e NIS, redação de nome, endereço, CEP e nascimento; CSV/TXT reescritos em latin-1 e XLSX por XML em fluxo; `positions` para arquivo sem cabeçalho. Linha com número de campos diferente do cabeçalho é redigida inteira (a posição das colunas não vale). A auditoria vai para o manifesto (`details.masking`). A raw nunca guarda PII e não é reescrita depois.
 
 ## `pipeline`: os passos das DAGs
 
@@ -582,8 +665,8 @@ classDiagram
 classDiagram
     class steps {
         <<module>>
-        +extract_to_raw(spec, ingestion_time) str
-        +convert_to_staging(spec, raw_prefix) str
+        +extract_to_raw(spec, ingestion_time) list~str~
+        +convert_to_staging(spec, raw_prefixes) str
     }
     class DatasetSpec {
         <<dataclass>>
@@ -610,9 +693,10 @@ classDiagram
     steps ..> AirflowSkipException : fonte ausente
 ```
 
-- **Contrato entre tasks:** cada passo recebe e devolve só o prefixo de uma partição, um XCom pequeno.
-  - `extract_to_raw` devolve `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/`;
-  - `convert_to_staging` devolve `staging/<domain>/<dataset>/latest/`.
+- **Contrato entre tasks:** os passos trocam só prefixos de partição, um XCom pequeno.
+  - `extract_to_raw` devolve as partições gravadas, `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/`, em ordem: uma por execução, ou, com `incremental`, uma por entrega nova (na ordem de chegada na fonte, com a data do pouso);
+  - `convert_to_staging` converte cada uma em ordem, publica o `latest/` a cada partição (ele termina com a última, apontando a anterior como antecessora) e devolve `staging/<domain>/<dataset>/latest/`.
+- **Manifesto da raw:** `sources` registra as origens consumidas, inclusive a que os preparos descartaram inteira (na ingestão seguinte), para a extração incremental não baixá-la de novo; `duplicates`, o mesmo nome repetido numa ingestão (fica o primeiro).
 - **Resolução em runtime:** storage, Connection e Variable (o extrator preguiçoso do `DatasetSpec`) só são resolvidos dentro dos passos.
 - **Skip:** fonte sem o dado vira `AirflowSkipException`, não falha.
 - **Diretório de trabalho:** `LAKE_TMPDIR`.

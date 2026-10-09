@@ -57,6 +57,15 @@ Anexo de e-mail via IMAP (`cliente_email`): TSV com encoding detectado por `char
   - `raw_para_staging.py` converte para Parquet texto em streaming, normaliza nomes, descarta colunas de padding, descarta gêmeos e acrescenta `_source_file`, `_ingested_at` e `_source_hash`.
 - As bronzes de far, fds, rural e reforma leem por `read_parquet(glob, filename => true, union_by_name => true)`.
 
+**Depois da Fase 6b:** a `sftp_ingest_dag` grava um dataset por família de
+arquivo (`raw/sftp/<dataset>/…`, acesso fábrica), com extração incremental pelo
+manifesto da raw, `Unpack` e `MaskPii` antes do pouso, e `overwrite`: cada entrega
+nova é uma ingestão, e o `latest/` fica com a mais recente. O `sftp_para_minio`,
+o `cliente_sftp` e os scripts avulsos saíram. O `minio_transform_dag` continua
+só para o que o pipeline antigo grava (SharePoint, por inserção manual), e já
+pula as partições com `_SUCCESS`. As bronzes ainda leem a staging antiga: a troca
+é a etapa do dbt.
+
 ### 1.4 Outros
 
 - **`abecip_instituicoes_ingest_dag`:** lê `raw/abecip/<AAAA-MM>/` (gravada por outro time) e reescreve a staging. Na prática já é um conversor.
@@ -102,7 +111,7 @@ As DAGs de fora ficam como estão (nem migradas nem apagadas). Removê-las é ou
 | `infomoney_imob` | Alpha Vantage, API com `apikey` | json | parcial (`compact`) | `symbol, data_pregao` | `merge (symbol, data_pregao)` |
 | `novo_caged` ×3 | PowerBI público, POST `querydata` | json DSR | completa (`obter_historico`) | `ano, mes` | `overwrite` |
 | Tesouro MCid ×3 | IMAP, anexo | tsv, encoding variável | snapshot do relatório (a confirmar) | variável | `overwrite` a confirmar |
-| `sftp_ingest_dag` | SFTP MCid | csv/txt/xlsx/mdb/zip | incremental por arquivo | — | por dataset (bronzes já existentes) |
+| `sftp_ingest_dag` | SFTP MCid (fábrica) | csv/txt/xlsx/zip/gzip | incremental, uma ingestão por entrega | — | `overwrite` (retrato completo por entrega) |
 
 Itens "a confirmar" se resolvem no PR de migração de cada DAG, com a justificativa na docstring.
 
@@ -114,7 +123,7 @@ Itens "a confirmar" se resolvem no PR de migração de cada DAG, com a justifica
 | `cliente_fgv` (INCC, ICST), `cliente_fipe`, `cliente_abecip`, `cliente_mrv` | `HttpFileExtractor` (`http_file`) | Sobre `HttpHook` com `stream`. URL fixa ou resolvedor genérico (`link_in_page` para a ABECIP, `latest_in_json_listing` para o catálogo da MZ/MRV). O login OutSystems e o TLS legado do ICST são um fluxo `http_session` declarado na DAG (passos genéricos, `LegacyTlsAdapter`). |
 | `cliente_email` | `EmailAttachmentExtractor` (`email`) | Sobre `ImapHook.download_mail_attachments` (disco). |
 | leitura de `raw/abecip/<AAAA-MM>/` em `abecip_instituicoes` | `ObjectStorageExtractor` (`object_storage`) | Sobre `S3Hook`, copia os objetos de um prefixo. |
-| `cliente_sftp` + `scripts/sftp_para_minio.py` | `SftpExtractor` (`sftp`) | Sobre `SFTPHook`, mantém o incremental `lake._ingest_minio_log` e os zips. |
+| `cliente_sftp` + `scripts/sftp_para_minio.py` | `SftpExtractor` (`sftp`) + `Unpack` + `MaskPii` | Sobre `SFTPHook`; o incremental sai do `lake._ingest_minio_log` para o manifesto da raw (`source_id`, `sources`). |
 | `upload_raw_bytes`/`upload_raw_json` (`cliente_minio`) | `land` (`storage/landing.py`) | Sobe cada parte para `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/` e apaga a cópia local. |
 | `ClienteMinio` (boto3) | `S3StorageBackend` sobre `S3Hook` | O `ClienteMinio` continua só para os scripts legados do lake. |
 | `ingestor_lake` (`IngestorLake`, `registros_para_staging_parquet`) | `FileConverter` + modelos | Template Method `convert()`: baixa → `_read()` em batches → `ParquetWriter` → sobe. |
@@ -224,8 +233,9 @@ Código lido na imagem `apache/airflow:3.2.2-python3.11`, mesma família da 3.3.
 |---|---|---|
 | Layout por data × `meta.caminho` fixo do `fonte_lake` | Fase 3 | `meta.caminho` com glob `…/<dataset>/*/*/*.parquet`. Para `overwrite`, a staging retém só a última ingestão, e o `select *` continua puro. Para `merge`/`append`, retém todas, e o incremental deduplica a chave pela ingestão mais recente (maior `filename`). A raw guarda todas as ingestões. |
 | `minio_transform_dag` varre a `raw/` inteira e converteria os novos prefixos | Fase 5 (piloto) | Excluir os prefixos dos datasets migrados da varredura até o SFTP migrar. |
-| Raw imutável × mascaramento in-place | Fase 6 (SFTP) | — |
-| Bronzes do SFTP dependem dos nomes normalizados pelo `raw_para_staging` | Fase 6 (SFTP) | Mover a normalização para a prata dessas bronzes. |
+| ~~Raw imutável × mascaramento in-place~~ | — | Resolvido na 6b: `MaskPii` no worker, antes do pouso. |
+| Bronzes do SFTP dependem dos nomes normalizados pelo `raw_para_staging` | Etapa do dbt | Macro `normalizar_colunas` na prata (decisão da 6b); a troca das bronzes fica para a etapa do dbt. |
+| Última entrega de uma fonte de retratos | — | Resolvido na 6b: lógica da ingestão (uma ingestão por entrega, `latest/` com a mais recente e a antecessora no manifesto), não do dbt. |
 | Prod sem MinIO quebra o bronze via `read_parquet` (9.1) | Fase 7 | — |
 | ~~Versão do Postgres de homologação e do pg_duckdb~~ | — | Resolvido: Postgres 15, pg_duckdb 1.2.0. Produção a confirmar antes da Fase 7. |
 
