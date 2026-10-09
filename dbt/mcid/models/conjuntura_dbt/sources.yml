@@ -237,7 +237,9 @@ sources:
       - name: infomoney_imob
         description: "Cotações diárias do índice IMOB da B3 (via Alpha Vantage)."
         meta:
-          caminho: staging/infomoney/acoes_imob.parquet
+          caminho: staging/infomoney/acoes_imob
+          load_mode: merge   # a API devolve só os últimos ~100 pregões
+          keys: [data_pregao]
           dag: imob_ingest_dag
           linhas_minimas: 336   # metade do observado em 2026-08-29 (673)
       - name: mrv_planilha_interativa

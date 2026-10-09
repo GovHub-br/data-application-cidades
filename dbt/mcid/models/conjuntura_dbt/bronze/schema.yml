@@ -725,14 +725,13 @@ models:
     tests:
       - sem_drift_de_colunas:
           colunas:
-            - symbol
             - data_pregao
-            - open
-            - high
-            - low
-            - close
-            - volume
-            - dt_ingest
+            - "1. open"
+            - "2. high"
+            - "3. low"
+            - "4. close"
+            - "5. volume"
+            - filename
   - name: bronze_novo_caged
     description: >
       Movimentação de emprego formal na construção de edifícios, com

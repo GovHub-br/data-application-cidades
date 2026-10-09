@@ -1,113 +1,91 @@
-import logging
+"""Índice IMOB (ações do setor imobiliário na B3), cotação diária.
+
+Fonte: API do Alpha Vantage (`TIME_SERIES_DAILY`, `outputsize=compact`). O
+símbolo e a chave vêm da Variable `api_key_alphavantage` (`acao`, `api_key`),
+lida só dentro da task. A resposta traz a data do pregão como CHAVE de objeto
+(`{"Time Series (Daily)": {"2026-10-08": {...}}}`); a conversão explode as
+chaves em linhas (`key_column`).
+
+LoadMode: merge por `data_pregao` (por símbolo: um arquivo por símbolo). A API
+devolve só os últimos ~100 pregões, então o histórico se acumula pelas
+ingestões. Antes, ele se acumulava no Postgres (`infomoney.acoes_imob`); o
+histórico anterior à primeira ingestão nova entra por uma partição inicial,
+gravada uma vez pelo script `scripts/ingestion/bootstrap_infomoney_imob.py`.
+
+Limite de chamadas atingido: a API responde 200 com uma mensagem no lugar da
+série; a conversão não acha `Time Series (Daily)` e falha, sem publicar nada.
+"""
+
 from datetime import datetime, timedelta
-from airflow.sdk import dag, task
-from airflow.sdk import Variable
+from typing import Any
 
-from postgres_helpers import get_postgres_conn
-from cliente_postgres import ClientPostgresDB
-from cliente_infomoney import ClienteInfomoney
-from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
+from airflow.sdk import Variable, dag, task
 
-# Configurações padrão
-DEFAULT_ARGS = {
-    "owner": "Milena Rocha",
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
+from ingestion.converters import ConverterConfig
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
+
+
+def alpha_vantage() -> ExtractorConfig:
+    """Uma chamada por símbolo da Variable; chamada só dentro da task."""
+    config = Variable.get("api_key_alphavantage", deserialize_json=True)
+    symbol = config["acao"]
+    return ExtractorConfig(
+        source="api",
+        base_url="https://www.alphavantage.co",
+        requests=(
+            HttpRequest(
+                name=symbol,
+                endpoint="/query",
+                params={
+                    "function": "TIME_SERIES_DAILY",
+                    "symbol": symbol,
+                    "outputsize": "compact",
+                    "apikey": config["api_key"],
+                },
+            ),
+        ),
+    )
+
+
+DATASET = DatasetSpec(
+    domain="infomoney",
+    dataset="acoes_imob",
+    extractor=alpha_vantage,
+    converter=ConverterConfig(
+        record_path="Time Series (Daily)", key_column="data_pregao"
+    ),
+    load_mode=LoadMode.MERGE,
+    keys=("data_pregao",),
+)
 
 
 @dag(
     dag_id="infomoney_imob",
-    schedule="@daily",
+    # Diário às 06:00: cotação do pregão anterior.
+    schedule="0 6 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    default_args=DEFAULT_ARGS,
-    tags=["cidades", "infomoney", "imob", "cotações", "conjuntura"],
+    max_active_runs=1,
+    default_args={
+        "owner": "Milena Rocha",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["cidades", "infomoney", "imob", "cotações", "conjuntura", "ingestion"],
 )
 def infomoney_imob_dag() -> None:
-    """
-    DAG para extração de séries temporais do índice IMOB.SA
-    via Alpha Vantage e carga no Postgres (schema infomoney).
-    """
+    @task
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def fetch_and_load_imob() -> None:
-        logging.info("Iniciando extração Infomoney (IMOB.SA)...")
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefix)
 
-        config = Variable.get("api_key_alphavantage", deserialize_json=True)
-        API_KEY = config.get("api_key")
-        SYMBOL = config.get("acao")
-
-        api = ClienteInfomoney(api_key=API_KEY)
-        db = ClientPostgresDB(get_postgres_conn())
-
-        dados_imob_raw = api.get_daily_series(SYMBOL)
-
-        if not dados_imob_raw:
-            logging.warning(f"Nenhum dado retornado para o símbolo {SYMBOL}.")
-            return
-
-        dt_ingest = datetime.now().isoformat()
-
-        dados_imob = []
-
-        for data_pregao, valores in dados_imob_raw.items():
-            if data_pregao >= "2024-01-01":
-                registro = {
-                    "symbol": SYMBOL,
-                    "data_pregao": data_pregao,
-                    "open": float(valores["1. open"]),
-                    "high": float(valores["2. high"]),
-                    "low": float(valores["3. low"]),
-                    "close": float(valores["4. close"]),
-                    "volume": int(valores["5. volume"]),
-                    "dt_ingest": dt_ingest,
-                }
-
-                dados_imob.append(registro)
-
-        # Postgres: upsert por (symbol, data_pregao) -> preserva histórico.
-        db.insert_data(
-            dados_imob,
-            table_name="acoes_imob",
-            schema="infomoney",
-            conflict_fields=["symbol", "data_pregao"],
-            primary_key=["symbol", "data_pregao"],
-        )
-
-        # Lake (full-refresh): raw = payload cru da API (json) do dia; parquet
-        # = histórico COMPLETO acumulado no Postgres (upsert), não só o lote
-        # "compact" do dia (a API só devolve ~100 pregões por vez) -- senão o
-        # parquet nunca cresce além disso e quebra qualquer gold que precise
-        # de mais de ~5 meses de histórico (ex.: variação vs mesmo mês do ano
-        # anterior). Parquet e bronze permanecem textuais; a silver normaliza
-        # os formatos pt-BR e US antes de qualquer cálculo.
-        upload_raw_json("infomoney", "acoes_imob", dados_imob_raw)
-
-        colunas = [
-            "symbol",
-            "data_pregao",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "dt_ingest",
-        ]
-        linhas = db.execute_query(
-            f"SELECT {', '.join(colunas)} FROM infomoney.acoes_imob ORDER BY data_pregao"
-        )
-        dados_imob_completo = []
-        for linha in linhas:
-            registro = dict(zip(colunas, linha))
-            dados_imob_completo.append(registro)
-
-        registros_para_staging_parquet("infomoney", "acoes_imob", dados_imob_completo)
-
-        logging.info("Carga finalizada com sucesso no schema infomoney.")
-
-    fetch_and_load_imob()
+    convert_to_staging(extract_to_raw())
 
 
-infomoney_imob_dag()
+dag_instance = infomoney_imob_dag()
