@@ -54,7 +54,8 @@ sources:
       - name: bacen_credito_pib
         description: "Razão crédito imobiliário / PIB (BACEN Olinda, painel Mercado Imobiliário)."
         meta:
-          caminho: staging/bacen/credito_imobiliario_pib.parquet
+          caminho: staging/bacen/credito_imobiliario_pib
+          load_mode: overwrite   # a consulta devolve a série inteira
           dag: credito_pib_ingest_dag
           linhas_minimas: 73   # metade do observado em 2026-08-29 (146)
       - name: bacen_financiamentos_imobiliarios

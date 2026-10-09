@@ -84,10 +84,10 @@ models:
     tests:
       - sem_drift_de_colunas:
           colunas:
-            - info
-            - data
-            - valor
-            - dt_ingest
+            - Data
+            - Info
+            - Valor
+            - filename
   - name: bronze_bacen_financiamentos_imobiliarios
     description: >
       Crédito imobiliário concedido a pessoa física e jurídica, com volume,

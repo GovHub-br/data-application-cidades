@@ -1,70 +1,74 @@
-import logging
+"""Crédito imobiliário / PIB (%), mensal (BACEN, Olinda MercadoImobiliario).
+
+Fonte: API OData do Olinda, recurso `mercadoimobiliario`, filtrado pelo indicador
+`indices_imobiliario_pib_br`. O indicador não está no SGS. A resposta é JSON
+(`{"value": [{"Data", "Info", "Valor"}]}`), gravada como veio.
+
+O filtro vai no próprio endpoint, já com `%20`: passado como parâmetro, o espaço
+vira `+` e o Olinda responde HTTP 400.
+
+LoadMode: overwrite. A consulta devolve a série inteira (desde 2014-04), então a
+última ingestão é a verdade.
+"""
+
 from datetime import datetime, timedelta
+from typing import Any
 
 from airflow.sdk import dag, task
-from schedule_loader import get_dynamic_schedule
-from postgres_helpers import get_postgres_conn
-from cliente_bacen_imobiliario import ClienteBacenImobiliario
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
+
+from ingestion.converters import ConverterConfig
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
+
+RESOURCE = "/olinda/servico/MercadoImobiliario/versao/v1/odata/mercadoimobiliario"
+
+DATASET = DatasetSpec(
+    domain="bacen",
+    dataset="credito_imobiliario_pib",
+    extractor=ExtractorConfig(
+        source="api",
+        conn_id="http_bacen_olinda",
+        requests=(
+            HttpRequest(
+                name="credito_imobiliario_pib",
+                endpoint=(
+                    f"{RESOURCE}?$filter=Info%20eq%20'indices_imobiliario_pib_br'"
+                    "&$orderby=Data&$format=json"
+                ),
+            ),
+        ),
+    ),
+    converter=ConverterConfig(record_path="value.item"),
+    load_mode=LoadMode.OVERWRITE,
+)
 
 
 @dag(
     dag_id="bacen_credito_pib_ingest_dag",
-    schedule=get_dynamic_schedule(
-        "bacen_credito_pib_ingest_dag", default="@monthly"
-    ),
+    # Diário às 06:00: o BACEN publica uma vez por mês, sem data fixa.
+    schedule="0 6 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
+    max_active_runs=1,
     default_args={
         "owner": "Lucas Bottino",
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["bacen", "imobiliario", "credito_pib", "conjuntura"],
+    tags=["bacen", "imobiliario", "credito_pib", "conjuntura", "ingestion"],
 )
 def bacen_credito_pib_ingest_dag() -> None:
-    """Ingestão do Crédito Imobiliário / PIB (BCB Olinda MercadoImobiliario).
-
-    Página 4 do boletim. Série mensal em % do PIB.
-    """
+    @task
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def fetch_and_store() -> None:
-        api = ClienteBacenImobiliario()
-        db = ClientPostgresDB(get_postgres_conn())
-        tabela = "credito_imobiliario_pib"
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefix)
 
-        registros = api.obter_credito_pib()
-        if not registros:
-            logging.warning("Nenhum dado retornado (crédito/PIB BCB).")
-            return
-
-        # Postgres: upsert por data -> preserva histórico (trimestral).
-        db.insert_data(
-            registros,
-            tabela,
-            conflict_fields=["data"],
-            primary_key=["data"],
-            schema="bacen",
-        )
-
-        # Lake (full-refresh): raw = json da API; parquet tipado.
-        upload_raw_json("bacen", tabela, registros)
-        registros_para_staging_parquet(
-            "bacen",
-            tabela,
-            registros,
-            typers={
-                "data": lambda s: pd.to_datetime(s, errors="coerce"),
-                "valor": lambda s: pd.to_numeric(s, errors="coerce"),
-            },
-        )
-        logging.info(f"Crédito/PIB: {len(registros)} pontos ingeridos.")
-
-    fetch_and_store()
+    convert_to_staging(extract_to_raw())
 
 
 dag_instance = bacen_credito_pib_ingest_dag()
