@@ -68,10 +68,12 @@ class RemoteFiles:
     - `prefer_extensions`: quando a mesma entrega (o nome sem pasta e sem as
       extensões da lista, encadeadas: `X.TXT`, `X.TXT.zip`, `X.zip`) vem em vários
       formatos ou pastas, fica a primeira extensão da lista que existir.
-    - `bundles`: regex de pacotes (um zip com várias famílias) que entram também,
-      depois das entregas soltas: quando os dois trazem o mesmo arquivo, a solta
-      pousa primeiro e fica com o nome. O `Unpack(members=...,
-      require_match=False)` tira do pacote só a família do dataset.
+    - `bundles`: regex de pacotes (um zip com várias famílias) que entram também.
+      O `Unpack(members=..., require_match=False)` tira do pacote só a família do
+      dataset.
+
+    Os arquivos saem na ordem de chegada na fonte (data de modificação), pacotes
+    entre eles: na extração incremental, cada um vira uma ingestão, nessa ordem.
     """
 
     root: str

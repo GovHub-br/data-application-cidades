@@ -75,6 +75,9 @@ class SftpExtractor(Extractor):
                     query, pattern=query.bundles, prefer_extensions=()
                 )
                 files += [f for f in _select(listing, bundles) if f.name not in loose]
+            # ordem de chegada na fonte: a extração incremental grava uma
+            # ingestão por entrega, nesta ordem
+            files.sort(key=lambda f: (f.mtime, f.relative))
             work_dir.mkdir(parents=True, exist_ok=True)
             for remote in files:
                 if remote.source_id in self.already_landed:

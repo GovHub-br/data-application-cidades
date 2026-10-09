@@ -110,11 +110,12 @@ def test_matches_the_pattern_recursively_and_identifies_by_name_size_date(
         RemoteFiles(root="/fabrica/GEFUS", pattern=r"INT055_LIBERACOES_\d{8}\.txt$"),
     )
 
+    # ordem de chegada: a de 20260801 tem mtime de 2023 no fixture
     assert [(p.name, p.path.read_bytes()) for p in parts] == [
-        ("INT055_LIBERACOES_20260701.txt", b"b" * 5),
         ("INT055_LIBERACOES_20260801.txt", b"a" * 10),
+        ("INT055_LIBERACOES_20260701.txt", b"b" * 5),
     ]
-    assert parts[1].source_id == "INT055_LIBERACOES_20260801.txt:10:1700000000"
+    assert parts[0].source_id == "INT055_LIBERACOES_20260801.txt:10:1700000000"
 
 
 def test_already_landed_files_are_skipped(server: _Client, tmp_path: Path) -> None:
@@ -169,17 +170,25 @@ def test_the_same_delivery_in_other_folders_and_wrappers_lands_once(
         ),
     )
 
-    assert [p.name for p in parts] == [
-        "INT059_FDS_20231130.TXT.zip",  # empate na extensão: a mais nova
+    assert sorted(p.name for p in parts) == [
         "INT059_FDS_20231031.TXT",
+        "INT059_FDS_20231130.TXT.zip",  # empate na extensão: a mais nova
     ]
 
 
-def test_bundles_come_after_the_loose_deliveries(server: _Client, tmp_path: Path) -> None:
-    # Pacote mensal com várias famílias: entra também, mas depois das entregas
-    # soltas, para que a solta fique com o nome quando as duas trazem o mesmo.
-    for name in ("GEFUS/ANTERIORES/202312_CAIXA.zip", "GEFUS/ANTERIORES/202311.zip"):
-        (server.root / "fabrica" / name).write_bytes(b"zip")
+def test_files_come_in_arrival_order_with_the_bundles_among_them(
+    server: _Client, tmp_path: Path
+) -> None:
+    # A extração incremental grava uma ingestão por entrega, na ordem em que o
+    # extrator as entrega: a de chegada na fonte (data de modificação). Os pacotes
+    # mensais entram pela data deles, entre as entregas soltas.
+    for name, mtime in {
+        "GEFUS/ANTERIORES/202311.zip": 1_699_000_000,
+        "GEFUS/ANTERIORES/202312_CAIXA.zip": 1_704_000_000,
+    }.items():
+        path = server.root / "fabrica" / name
+        path.write_bytes(b"zip")
+        os.utime(path, (mtime, mtime))
 
     parts = _extract(
         tmp_path,
@@ -192,10 +201,10 @@ def test_bundles_come_after_the_loose_deliveries(server: _Client, tmp_path: Path
     )
 
     assert [p.name for p in parts] == [
-        "INT055_LIBERACOES_20260701.txt",
-        "INT055_LIBERACOES_20260801.txt",
         "202311.zip",
+        "INT055_LIBERACOES_20260801.txt",  # mtime 2023-11-14 no fixture
         "202312_CAIXA.zip",
+        "INT055_LIBERACOES_20260701.txt",
     ]
 
 
@@ -210,7 +219,7 @@ def test_exclude_and_non_recursive(server: _Client, tmp_path: Path) -> None:
         ),
     )
 
-    assert [p.name for p in parts] == [
+    assert sorted(p.name for p in parts) == [
         "202607_SNH_AF_BB.xlsx",
         "202608_SNH_AF_BB.xlsx",
         "INT055_LIBERACOES_20260801.txt",
