@@ -1,8 +1,9 @@
 """MRV: Planilha Interativa da Central de Resultados (dados operacionais).
 
 Fonte: o site de RI da MRV hospeda os documentos no catálogo da MZ (mziq). A
-planilha do trimestre mais recente é achada na API do catálogo
-(`mziq_latest_file`) e baixada do CDN com o nome que a MZ dá
+planilha do trimestre mais recente é achada na listagem JSON do catálogo
+(`latest_in_json_listing`: categoria da Planilha Interativa, maior trimestre, no
+ano corrente ou, sem documento ainda, nos dois anteriores) e baixada do CDN com o nome que a MZ dá
 (`mrve3_base_de_dados_operacionais_e_financeiros.xlsx`).
 
 Substitui as antigas `lancamentos_ingest_dag` e `vendas_ingest_dag`, que baixavam
@@ -25,36 +26,58 @@ from airflow.sdk import dag, task
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
 from ingestion.extractors import ExtractorConfig, HttpRequest
-from ingestion.extractors.resolvers import mziq_latest_file
+from ingestion.extractors.resolvers import latest_in_json_listing
+from ingestion.layout import TIMEZONE
 from ingestion.loaders import LoadMode
 from ingestion.pipeline import steps
 
 MRV_COMPANY_ID = "4b56353d-d5d9-435f-bf63-dcbf0a6c25d5"
+CATALOGO = f"/filemanager/company/{MRV_COMPANY_ID}/filter/categories/year/meta"
+CATEGORIA = "central_de_resultados_planilha_interativa"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     "Origin": "https://ri.mrv.com.br",
     "Referer": "https://ri.mrv.com.br/",
 }
 
-DATASET = DatasetSpec(
-    domain="mrv",
-    dataset="planilha_interativa",
-    extractor=ExtractorConfig(
+def catalogo() -> ExtractorConfig:
+    """A planilha mais recente do catálogo; os anos tentados dependem da data."""
+    this_year = datetime.now(TIMEZONE).year
+    return ExtractorConfig(
         source="http_file",
         base_url="https://apicatalog.mziq.com",
         requests=(
             HttpRequest(
                 name="planilha_interativa",
-                endpoint=f"/filemanager/company/{MRV_COMPANY_ID}",
+                endpoint=CATALOGO,
                 headers=HEADERS,
-                resolve=mziq_latest_file(
-                    MRV_COMPANY_ID,
-                    "central_de_resultados_planilha_interativa",
+                resolve=latest_in_json_listing(
+                    CATALOGO,
+                    method="POST",
+                    json={
+                        "categories": [CATEGORIA],
+                        "language": "pt_BR",
+                        "published": True,
+                    },
                     headers=HEADERS,
+                    items="data.document_metas",
+                    where={"internal_name": CATEGORIA},
+                    order_by="file_quarter",
+                    pick="permalink",
+                    attempts=tuple(
+                        {"year": str(year)}
+                        for year in range(this_year, this_year - 3, -1)
+                    ),
                 ),
             ),
         ),
-    ),
+    )
+
+
+DATASET = DatasetSpec(
+    domain="mrv",
+    dataset="planilha_interativa",
+    extractor=catalogo,
     converter=ConverterConfig(include=r"^Dados Oper\.", header_row=2),
     load_mode=LoadMode.OVERWRITE,
 )

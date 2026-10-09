@@ -1,9 +1,11 @@
 """DAG da MRV no pipeline novo: a Planilha Interativa do RI, via catálogo da MZ."""
 
+from datetime import datetime
 from typing import Any
 
 import pytest
 
+from ingestion.layout import TIMEZONE
 from ingestion.loaders import LoadMode
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
@@ -61,3 +63,41 @@ def test_tasks_only_call_the_pipeline_steps(
         ("extract_to_raw", module.DATASET, RUN_AFTER),
         ("convert_to_staging", module.DATASET, "raw/x/"),
     ]
+
+
+def test_catalog_query_tries_this_year_and_the_two_before(module: Any) -> None:
+    [request] = module.DATASET.extractor_config().requests
+    calls: list[dict[str, Any]] = []
+    year = datetime.now(TIMEZONE).year
+
+    class Response:
+        status_code = 200
+
+        def __init__(self, body: dict[str, Any]) -> None:
+            self.body = body
+
+        def json(self) -> dict[str, Any]:
+            documents = (
+                [{"internal_name": module.CATEGORIA, "file_quarter": 2, "permalink": "p2"}]
+                if self.body["year"] == str(year - 1)
+                else []
+            )
+            return {"data": {"document_metas": documents}}
+
+    class Session:
+        def request(self, method: str, url: str, **kwargs: Any) -> Response:
+            calls.append({"method": method, "url": url, **kwargs})
+            return Response(kwargs["json"])
+
+    class Hook:
+        base_url = "https://apicatalog.mziq.com"
+
+        def get_conn(self, headers: Any = None) -> Session:
+            return Session()
+
+    assert request.resolve is not None
+    assert request.resolve(Hook()) == "p2"
+    assert [c["json"]["year"] for c in calls] == [str(year), str(year - 1)]
+    assert calls[0]["method"] == "POST"
+    assert calls[0]["url"].endswith("/filter/categories/year/meta")
+    assert calls[0]["json"]["categories"] == [module.CATEGORIA]

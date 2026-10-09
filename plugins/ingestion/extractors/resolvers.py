@@ -5,14 +5,12 @@ Connection (com autenticação e cabeçalhos dela) e devolve a URL a baixar. A
 descoberta falha alto: link que some da página é mudança de layout da fonte.
 """
 
-from collections.abc import Callable, Mapping
-from datetime import datetime
+from collections.abc import Callable, Mapping, Sequence
 from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import urljoin
 
 from ingestion.extractors.extractor_errors import ExtractionError
-from ingestion.layout import TIMEZONE
 
 TIMEOUT_SECONDS = 60
 
@@ -38,50 +36,74 @@ def link_in_page(
     return resolve
 
 
-def mziq_latest_file(
-    company_id: str,
-    category: str,
+def latest_in_json_listing(
+    endpoint: str,
+    *,
+    method: str = "GET",
+    params: Mapping[str, Any] | None = None,
+    json: Mapping[str, Any] | None = None,
     headers: Mapping[str, str] | None = None,
-    years_back: int = 3,
+    items: str,
+    where: Mapping[str, Any] | None = None,
+    order_by: str | None = None,
+    pick: str,
+    attempts: Sequence[Mapping[str, Any]] = ({},),
 ) -> Callable[[Any], str]:
-    """Permalink do arquivo mais recente de uma categoria no catálogo da MZ (mziq).
+    """A URL do item mais recente numa listagem JSON (catálogo, API de documentos).
 
-    Sites de RI hospedados na MZ (a MRV, por exemplo) listam os documentos por ano
-    numa API POST. Vale o ano mais recente que tiver documento da categoria e, nele,
-    o maior trimestre (`file_quarter`). A busca volta `years_back` anos a partir
-    do ano corrente em Brasília.
+    Chama `endpoint` (relativo à Connection ou URL completa) e, na resposta:
+
+    - `items`: caminho por pontos até a lista (`"data.document_metas"`);
+    - `where`: só os itens com esses valores de campo;
+    - `order_by`: o item com o maior valor nesse campo (sem ele, o primeiro);
+    - `pick`: o campo com a URL.
+
+    `attempts` são valores tentados em ordem até achar um item (os anos de um
+    catálogo, por exemplo); cada tentativa entra no `json`, quando há corpo, ou nos
+    `params`. Sem item em nenhuma tentativa, a descoberta falha.
     """
-    path = f"/filemanager/company/{company_id}/filter/categories/year/meta"
 
     def resolve(hook: Any) -> str:
         session = hook.get_conn(dict(headers or {}) or None)
-        this_year = datetime.now(TIMEZONE).year
-        for year in range(this_year, this_year - years_back, -1):
-            response = session.post(
-                hook.base_url + path,
-                json={
-                    "year": str(year),
-                    "categories": [category],
-                    "language": "pt_BR",
-                    "published": True,
-                },
+        url = endpoint if "://" in endpoint else hook.base_url + endpoint
+        for attempt in attempts:
+            body = {**json, **attempt} if json is not None else None
+            query = {**(params or {}), **attempt} if json is None else dict(params or {})
+            response = session.request(
+                method.upper(),
+                url,
+                params=query or None,
+                json=body,
                 timeout=TIMEOUT_SECONDS,
             )
             if response.status_code >= 400:
-                raise ExtractionError(f"POST {path}: HTTP {response.status_code}")
-            documents = [
-                document
-                for document in response.json().get("data", {}).get("document_metas", [])
-                if document.get("internal_name") == category and document.get("permalink")
+                raise ExtractionError(f"{method} {endpoint}: HTTP {response.status_code}")
+            found = [
+                item
+                for item in _path(response.json(), items) or []
+                if isinstance(item, dict)
+                and all(item.get(k) == v for k, v in (where or {}).items())
+                and item.get(pick)
             ]
-            if documents:
-                latest = max(documents, key=lambda d: d.get("file_quarter") or 0)
-                return str(latest["permalink"])
+            if found:
+                chosen = (
+                    max(found, key=lambda item: item.get(order_by) or 0)
+                    if order_by
+                    else found[0]
+                )
+                return str(chosen[pick])
         raise ExtractionError(
-            f"nenhum documento {category!r} na MZ nos últimos {years_back} anos"
+            f"nenhum item em {items!r} de {endpoint} com {dict(where or {})} "
+            f"em {len(attempts)} tentativa(s)"
         )
 
     return resolve
+
+
+def _path(document: Any, path: str) -> Any:
+    for key in path.split("."):
+        document = document.get(key) if isinstance(document, dict) else None
+    return document
 
 
 def _links(document: str) -> list[str]:

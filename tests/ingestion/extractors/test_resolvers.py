@@ -1,8 +1,8 @@
 """Resolvedores de URL: o link da edição corrente, achado na fonte."""
 
 import json
-from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -12,8 +12,7 @@ from ingestion.extractors import (
     ExtractorFactory,
     HttpRequest,
 )
-from ingestion.extractors.resolvers import link_in_page, mziq_latest_file
-from ingestion.layout import TIMEZONE
+from ingestion.extractors.resolvers import latest_in_json_listing, link_in_page
 from tests.ingestion.extractors.conftest import WHEN, FakeHttpServer, Route
 
 PAGE = b"""<html><body>
@@ -71,58 +70,79 @@ def test_page_that_fails_is_an_extraction_error(
         _download(http_server, tmp_path, "cp-historico")
 
 
-MZIQ = "/filemanager/company/c1/filter/categories/year/meta"
+LISTING = "/catalogo"
 
 
-def _mziq(server: FakeHttpServer, tmp_path: Path) -> list[str]:
+def _latest(server: FakeHttpServer, tmp_path: Path, resolve: Any) -> list[str]:
     config = ExtractorConfig(
         source="http_file",
         conn_id="http_test",
-        requests=(
-            HttpRequest(
-                name="planilha",
-                endpoint=MZIQ,
-                resolve=mziq_latest_file("c1", "planilha_interativa"),
-            ),
-        ),
+        requests=(HttpRequest(name="arquivo", endpoint=LISTING, resolve=resolve),),
     )
     extractor = ExtractorFactory.create(config, ingestion_time=WHEN)
     return [part.path.read_text() for part in extractor.extract(tmp_path)]
 
 
-def test_mziq_downloads_the_latest_quarter_of_the_most_recent_year(
+def _documents(base: str) -> bytes:
+    documents = [
+        {"tipo": "planilha", "trimestre": q, "link": f"{base}/files/{q}t"}
+        for q in (2, 3)
+    ] + [{"tipo": "outra", "trimestre": 4, "link": f"{base}/x"}]
+    return json.dumps({"data": {"docs": documents}}).encode()
+
+
+def test_post_listing_picks_the_highest_matching_item(
     http_server: FakeHttpServer, tmp_path: Path
 ) -> None:
     base = f"http://127.0.0.1:{http_server.port}"
-    documents = [
-        {"internal_name": "planilha_interativa", "file_quarter": q, "permalink": link}
-        for q, link in ((2, f"{base}/files/2t"), (3, f"{base}/files/3t"))
-    ] + [{"internal_name": "outra", "file_quarter": 4, "permalink": f"{base}/x"}]
-    api = http_server.routes[MZIQ] = Route(
-        on_post=Route(body=json.dumps({"data": {"document_metas": documents}}).encode())
+    api = http_server.routes[LISTING] = Route(on_post=Route(body=_documents(base)))
+    http_server.routes["/files/3t"] = Route(body=b"terceiro trimestre")
+    resolve = latest_in_json_listing(
+        LISTING,
+        method="POST",
+        json={"categorias": ["planilha"], "publicado": True},
+        items="data.docs",
+        where={"tipo": "planilha"},
+        order_by="trimestre",
+        pick="link",
+        attempts=({"ano": "2026"},),
     )
-    http_server.routes["/files/3t"] = Route(body=b"planilha 3T")
 
-    assert _mziq(http_server, tmp_path) == ["planilha 3T"]
+    assert _latest(http_server, tmp_path, resolve) == ["terceiro trimestre"]
     assert api.on_post is not None
-    payload = json.loads(api.on_post.requests[0]["body"])
-    assert payload["categories"] == ["planilha_interativa"]
-    assert payload["published"] is True
+    assert json.loads(api.on_post.requests[0]["body"]) == {
+        "categorias": ["planilha"],
+        "publicado": True,
+        "ano": "2026",
+    }
 
 
-def test_mziq_without_documents_in_three_years_is_an_extraction_error(
+def test_attempts_are_tried_in_order_until_an_item_matches(
     http_server: FakeHttpServer, tmp_path: Path
 ) -> None:
-    api = http_server.routes[MZIQ] = Route(
-        on_post=Route(body=b'{"data": {"document_metas": []}}')
+    api = http_server.routes[LISTING] = Route(body=b'{"data": {"docs": []}}')
+    resolve = latest_in_json_listing(
+        LISTING,
+        params={"lingua": "pt"},
+        items="data.docs",
+        pick="link",
+        attempts=({"ano": "2026"}, {"ano": "2025"}),
     )
 
-    with pytest.raises(ExtractionError, match="planilha_interativa"):
-        _mziq(http_server, tmp_path)
-    assert api.on_post is not None
-    year = datetime.now(TIMEZONE).year
-    assert [json.loads(r["body"])["year"] for r in api.on_post.requests] == [
-        str(year),
-        str(year - 1),
-        str(year - 2),
+    with pytest.raises(ExtractionError, match="data.docs"):
+        _latest(http_server, tmp_path, resolve)
+    assert [r["query"] for r in api.requests] == [
+        "lingua=pt&ano=2026",
+        "lingua=pt&ano=2025",
     ]
+
+
+def test_without_order_by_the_first_matching_item_wins(
+    http_server: FakeHttpServer, tmp_path: Path
+) -> None:
+    base = f"http://127.0.0.1:{http_server.port}"
+    http_server.routes[LISTING] = Route(body=_documents(base))
+    http_server.routes["/files/2t"] = Route(body=b"segundo trimestre")
+    resolve = latest_in_json_listing(LISTING, items="data.docs", pick="link")
+
+    assert _latest(http_server, tmp_path, resolve) == ["segundo trimestre"]
