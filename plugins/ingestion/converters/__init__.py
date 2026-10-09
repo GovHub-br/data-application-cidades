@@ -41,3 +41,4 @@ from ingestion.converters.models import xlsx_converter  # noqa: E402, F401
 from ingestion.converters.models import mdb_converter  # noqa: E402, F401
 from ingestion.converters.models import parquet_converter  # noqa: E402, F401
 from ingestion.converters.models import zip_converter  # noqa: E402, F401
+from ingestion.converters.models import ibge_v3_converter  # noqa: E402, F401
