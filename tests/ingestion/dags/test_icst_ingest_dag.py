@@ -28,7 +28,7 @@ def test_dag_identity_and_wiring(module: Any) -> None:
     assert dag.task_dict["convert_to_staging"].upstream_task_ids == {"extract_to_raw"}
 
 
-def test_dataset_spec_logs_in_with_the_variables(module: Any) -> None:
+def test_dataset_spec_runs_the_declared_session_flow(module: Any) -> None:
     spec = module.DATASET
     config = spec.extractor_config()
 
@@ -37,13 +37,12 @@ def test_dataset_spec_logs_in_with_the_variables(module: Any) -> None:
         "icst",
         LoadMode.OVERWRITE,
     )
-    assert config.source == "fgvdados"
-    assert config.fgvdados is not None
-    assert (
-        config.fgvdados.series,
-        config.fgvdados.email_variable,
-        config.fgvdados.password_variable,
-    ) == ("ICST", "dados_fgv_email", "dados_fgv_password")
+    assert config.source == "http_session"
+    assert config.session.variables == {
+        "email": "dados_fgv_email",
+        "senha": "dados_fgv_password",
+    }
+    assert config.session.steps[-1].filename == "icst.csv"
     assert (spec.converter.encoding, spec.converter.delimiter) == ("latin-1", ";")
 
 

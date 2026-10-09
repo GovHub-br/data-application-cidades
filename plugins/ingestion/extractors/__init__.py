@@ -11,7 +11,6 @@ from ingestion.extractors.base_extractor import (
 )
 from ingestion.extractors.config_extractor import (
     ExtractorConfig,
-    FgvDadosQuery,
     HttpRequest,
     MailQuery,
     ObjectQuery,
@@ -24,7 +23,6 @@ __all__ = [
     "Extractor",
     "ExtractorConfig",
     "ExtractorFactory",
-    "FgvDadosQuery",
     "HttpRequest",
     "MailQuery",
     "ObjectQuery",
@@ -38,5 +36,5 @@ __all__ = [
 from ingestion.extractors.models import api_extractor  # noqa: E402, F401
 from ingestion.extractors.models import http_file_extractor  # noqa: E402, F401
 from ingestion.extractors.models import email_extractor  # noqa: E402, F401
-from ingestion.extractors.models import fgvdados_extractor  # noqa: E402, F401
 from ingestion.extractors.models import object_storage_extractor  # noqa: E402, F401
+from ingestion.extractors.session import session_extractor  # noqa: E402, F401

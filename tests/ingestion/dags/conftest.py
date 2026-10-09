@@ -8,6 +8,9 @@ from typing import Any
 
 import pytest
 
+# Servidor HTTP falso dos extratores, para os testes de fluxo das DAGs.
+from tests.ingestion.extractors.conftest import http_server  # noqa: F401
+
 DAGS_DIR = Path(__file__).resolve().parents[3] / "dags"
 RUN_AFTER = datetime(2026, 10, 8, 9, 0, tzinfo=timezone.utc)
 

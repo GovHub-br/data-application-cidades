@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 
 import requests
 from airflow.providers.http.hooks.http import HttpHook
+from requests.adapters import HTTPAdapter
+from urllib3.util.ssl_ import create_urllib3_context
 from airflow.sdk import Connection
 from tenacity import (
     Retrying,
@@ -60,6 +62,21 @@ def _declares_non_json(response: requests.Response) -> str | None:
 
 
 PUBLIC_CONN_ID = "http_publica"
+
+
+class LegacyTlsAdapter(HTTPAdapter):
+    """Baixa o nível de segurança do OpenSSL para servidores com TLS legado (IIS
+    antigo, por exemplo). Monte só no host que precisa (`HttpSession.mounts`)."""
+
+    def __init__(self, seclevel: int = 1, **kwargs: Any) -> None:
+        self.seclevel = seclevel
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, *args: Any, **kwargs: Any) -> None:
+        context = create_urllib3_context()
+        context.set_ciphers(f"DEFAULT@SECLEVEL={self.seclevel}")
+        kwargs["ssl_context"] = context
+        super().init_poolmanager(*args, **kwargs)
 
 
 class HttpHooks:

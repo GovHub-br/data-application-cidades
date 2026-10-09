@@ -1,4 +1,5 @@
-"""Estratégia `fgvdados`: login OutSystems + navegação ASP.NET até o CSV da série."""
+"""Fluxo do ICST declarado na DAG, executado pelo `http_session` contra um portal
+falso que reproduz as etapas do OutSystems e do FGVDados (ASP.NET)."""
 
 import json
 from pathlib import Path
@@ -6,13 +7,9 @@ from urllib.parse import parse_qs
 
 import pytest
 
-from ingestion.extractors import (
-    ExtractionError,
-    ExtractorConfig,
-    ExtractorFactory,
-    FgvDadosQuery,
-)
-from ingestion.extractors.models import fgvdados_extractor
+from ingestion.extractors import ExtractionError, ExtractorConfig, ExtractorFactory
+from ingestion.extractors.session import session_extractor
+from tests.ingestion.dags.conftest import load_dag_module
 from tests.ingestion.extractors.conftest import WHEN, FakeHttpServer, Route
 
 AUTH = "/ProdutosDigitais/"
@@ -75,17 +72,11 @@ def _extract(
     server: FakeHttpServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> list[bytes]:
     variables = {"dados_fgv_email": "eu@exemplo.org", "dados_fgv_password": "segredo"}
-    monkeypatch.setattr(fgvdados_extractor, "read_variable", variables.__getitem__)
+    monkeypatch.setattr(session_extractor, "read_variable", variables.__getitem__)
     base = f"http://127.0.0.1:{server.port}"
+    module = load_dag_module("data_ingest/fgv/icst_ingest_dag.py")
     config = ExtractorConfig(
-        source="fgvdados",
-        fgvdados=FgvDadosQuery(
-            series="ICST",
-            email_variable="dados_fgv_email",
-            password_variable="dados_fgv_password",
-            auth_url=base + AUTH,
-            legacy_url=base + LEGACY,
-        ),
+        source="http_session", session=module.fluxo(base + AUTH, base + LEGACY)
     )
     extractor = ExtractorFactory.create(config, ingestion_time=WHEN)
     parts = list(extractor.extract(tmp_path))
@@ -123,7 +114,7 @@ def test_rejected_login_is_an_extraction_error(
 ) -> None:
     _portal(http_server, login_ok=False)
 
-    with pytest.raises(ExtractionError, match="login"):
+    with pytest.raises(ExtractionError, match="login.*FLG_Sucesso"):
         _extract(http_server, tmp_path, monkeypatch)
 
 
@@ -135,7 +126,7 @@ def test_page_instead_of_csv_is_an_extraction_error(
         download=Route(body=b"<html>erro</html>", headers={"Content-Type": "text/html"}),
     )
 
-    with pytest.raises(ExtractionError, match="CSV.*text/html"):
+    with pytest.raises(ExtractionError, match="csv.*text/html"):
         _extract(http_server, tmp_path, monkeypatch)
 
 
@@ -145,10 +136,26 @@ def test_series_missing_from_the_search_is_an_extraction_error(
     routes = _portal(http_server)
     routes[LEGACY + "Default.aspx"].on_post = Route(body=b"1|nada|")
 
-    with pytest.raises(ExtractionError, match="ICST"):
+    with pytest.raises(ExtractionError, match="busca.*ICST"):
         _extract(http_server, tmp_path, monkeypatch)
 
 
-def test_config_without_query_is_rejected() -> None:
-    with pytest.raises(ValueError, match="fgvdados"):
-        ExtractorFactory.create(ExtractorConfig(source="fgvdados"), ingestion_time=WHEN)
+def test_unknown_portal_versions_fall_back_to_the_last_known_deploy(
+    http_server: FakeHttpServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    routes = _portal(http_server)
+    del http_server.routes[AUTH + "moduleservices/moduleversioninfo"]
+    http_server.routes[AUTH + "scripts/ProdutosDigitais.Blocks.BL01_Login.mvc.js"] = (
+        Route(body=b"sem chamadas")
+    )
+    # sem as versões descobertas, o fluxo usa os caminhos padrão do login
+    http_server.routes[AUTH + SCREEN + "DataActionCheckUsarCloudFlare"] = routes[
+        AUTH + SCREEN + "DataActionCheckUsarCloudFlare"
+    ]
+
+    assert _extract(http_server, tmp_path, monkeypatch) == [CSV]
+    login = routes[AUTH + SCREEN + "DataActionGetDadosLogin"].requests[0]
+    assert json.loads(login["body"])["versionInfo"] == {
+        "moduleVersion": "vuthrRMgPWqGaqAin6KHTA",
+        "apiVersion": "kEIaQNU5n93i9Q026f_dlQ",
+    }

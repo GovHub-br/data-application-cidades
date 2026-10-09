@@ -78,7 +78,13 @@ def test_catalog_query_tries_this_year_and_the_two_before(module: Any) -> None:
 
         def json(self) -> dict[str, Any]:
             documents = (
-                [{"internal_name": module.CATEGORIA, "file_quarter": 2, "permalink": "p2"}]
+                [
+                    {
+                        "internal_name": module.CATEGORIA,
+                        "file_quarter": 2,
+                        "permalink": "p2",
+                    }
+                ]
                 if self.body["year"] == str(year - 1)
                 else []
             )

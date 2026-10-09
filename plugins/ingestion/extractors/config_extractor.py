@@ -45,22 +45,6 @@ class MailQuery:
 
 
 @dataclass(frozen=True)
-class FgvDadosQuery:
-    """Série do portal FGVDados (IBRE), baixada em CSV depois do login.
-
-    As credenciais vêm de duas Variables (`email_variable`, `password_variable`),
-    lidas só dentro da task. `auth_url` e `legacy_url` são os dois sistemas do
-    portal (o login OutSystems e o FGVDados em ASP.NET); mudam só nos testes.
-    """
-
-    series: str
-    email_variable: str
-    password_variable: str
-    auth_url: str = "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
-    legacy_url: str = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/"
-
-
-@dataclass(frozen=True)
 class ObjectQuery:
     """Objetos que outro processo já gravou no bucket do lake.
 
@@ -81,8 +65,9 @@ class ExtractorConfig:
     - `requests`: chamadas das estratégias HTTP (`api`, `http_file`).
     - `adapter`: HTTPAdapter montado na sessão, para fontes com TLS fora do padrão.
     - `mail`: busca da estratégia `email`.
-    - `fgvdados`: série da estratégia `fgvdados`.
     - `objects`: objetos da estratégia `object_storage`.
+    - `session`: fluxo da estratégia `http_session`
+      (`ingestion.extractors.session.HttpSession`).
 
     As estratégias HTTP precisam de `conn_id` (a Connection da fonte, quando há
     credencial) ou de `base_url` (fonte pública: a Connection é montada em memória,
@@ -95,5 +80,5 @@ class ExtractorConfig:
     requests: tuple[HttpRequest, ...] = ()
     adapter: Any = None
     mail: MailQuery | None = None
-    fgvdados: FgvDadosQuery | None = None
     objects: ObjectQuery | None = None
+    session: Any = None
