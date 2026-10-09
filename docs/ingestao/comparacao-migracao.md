@@ -275,3 +275,22 @@ datada do último `dt_ingest` da staging antiga (2026-09-01 14:44:15, Brasília)
   com `parse_financial_value`.
 - Em produção, o script roda uma vez, antes da primeira execução da DAG nova:
   `python scripts/ingestion/bootstrap_infomoney_imob.py --executar`.
+
+### Tesouro: empenhos de emendas parlamentares (`siafi-tesouro-gerencial/notas_empenho_emendas_parlamentares_mcid`)
+
+ZIP do e-mail do dia (24 e-mails de 28/08 a 08/10/2026, mesmos dias e horários
+da dotação). CSV UTF-16, `,`, 9 linhas de preâmbulo. Rodado com o e-mail real:
+47 linhas (45 notas + 2 de subcabeçalho), 33 colunas. Antes ia só para o
+Postgres (`siafi.*`); agora vai até o bronze.
+
+### ABECIP por instituição (`abecip/financiamentos_por_instituicao`)
+
+`object_storage` copia `raw/abecip/<AAAA-MM>/financiamentos_por_instituicao.json`,
+gravado pelo outro time, como `<AAAA-MM>.json`.
+
+| | Antigo | Novo (09/10/2026) |
+|---|---|---|
+| Linhas / competências | 323 / 10 (2025-10 a 2026-07) | 323 / 10 (2025-10 a 2026-07) |
+
+Idêntico. A conferência da task `conferir` (≥ 2 competências, ≥ 10 linhas por
+competência) virou o teste `conjuntura_abecip_instituicoes_historico`.
