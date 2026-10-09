@@ -26,7 +26,7 @@ from ingestion.storage import StorageFactory, land
 REPO = Path(__file__).resolve().parents[3]
 MACROS = [
     REPO / "dbt" / "mcid" / "macros" / name
-    for name in ("fonte_lake.sql", "lake_dt_ingest.sql")
+    for name in ("fonte_lake.sql", "lake_dt_ingest.sql", "normalizar_colunas.sql")
 ]
 
 
