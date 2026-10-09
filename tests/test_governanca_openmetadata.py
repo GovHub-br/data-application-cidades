@@ -776,9 +776,10 @@ def test_scripts_estao_montados_no_container() -> None:
 def test_dag_de_origem_declarada_onde_existe_dag() -> None:
     """`meta.dag` só é declarada quando há DAG. Ausência é resposta, não falta.
 
-    As 5 do SFTP chegam por transferência do agente operador e
-    `financiamentos_por_instituicao` é extração manual — nenhuma tem DAG que a
-    escreva. Preencher seria publicar linhagem falsa.
+    As 5 do SFTP chegam por transferência do agente operador: nenhuma tem DAG
+    que a escreva. Preencher seria publicar linhagem falsa. (A ABECIP por
+    instituição tem: outro time grava o raw e `abecip_instituicoes_ingest_dag`
+    escreve a staging.)
     """
     import yaml
 
@@ -796,10 +797,10 @@ def test_dag_de_origem_declarada_onde_existe_dag() -> None:
         if not (t.get("meta") or {}).get("dag")
     ]
     assert len(com_caminho) == 36
-    # só as 5 do SFTP e a extração manual da ABECIP podem ficar sem
+    # só as 5 do SFTP podem ficar sem
     for caminho_sem in sem_dag:
-        assert "sftp/" in caminho_sem or "por_instituicao" in caminho_sem, caminho_sem
-    assert len(sem_dag) == 6
+        assert "sftp/" in caminho_sem, caminho_sem
+    assert len(sem_dag) == 5
 
 
 # ── DAG de origem propagada (mcidDagDeOrigem) ───────────────────────────────

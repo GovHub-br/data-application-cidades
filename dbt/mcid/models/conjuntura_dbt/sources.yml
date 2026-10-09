@@ -38,9 +38,11 @@ sources:
           dag: abecip_financiamentos_ingest_dag
           linhas_minimas: 147   # metade do observado em 2026-08-29 (294)
       - name: abecip_instituicoes
-        description: "Financiamentos SBPE por instituição financeira e modalidade. Extração do relatório mensal — UMA competência por arquivo, não série."
+        description: "Financiamentos SBPE por instituição financeira e modalidade, uma competência por arquivo (relatório mensal da ABECIP, extraído por outro time)."
         meta:
-          caminho: staging/abecip/financiamentos_por_instituicao.parquet
+          caminho: staging/abecip/financiamentos_por_instituicao
+          load_mode: overwrite   # todas as competências a cada execução
+          dag: abecip_instituicoes_ingest_dag
           linhas_minimas: 16   # metade do observado em 2026-08-29 (33)
       - name: abecip_poupanca_sbpe
         description: "Depósitos, retiradas, captação líquida, rendimento e saldo da poupança SBPE."

@@ -51,6 +51,7 @@ models:
             - unidades_mensais
             - volume_acumulado_ano_milhoes
             - unidades_acumuladas_ano
+            - filename
   - name: bronze_abecip_poupanca_sbpe
     description: >
       Movimento das cadernetas de poupança do sistema habitacional, com

@@ -16,8 +16,12 @@
 -- (`prata_conjuntura_abecip_financiamentos`), que é uma extração
 -- independente da mesma ABECIP.
 
+-- Ingestão nova (plugins/ingestion, 10/2026): uma competência por arquivo na
+-- staging (`<AAAA-MM>.parquet`); a competência sai do nome do arquivo, porque o
+-- campo interno já veio divergente do diretório de origem.
+
 select
-    competencia_referencia                        as competencia,
+    regexp_replace(filename, '^.*/([0-9]{4}-[0-9]{2})\.parquet$', '\1') as competencia,
     to_date(periodo_rotulo, 'YYYY-MM')            as data_referencia,
     left(periodo_rotulo, 4)::int                  as ano,
     right(periodo_rotulo, 2)::int                 as mes,
