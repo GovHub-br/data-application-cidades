@@ -25,4 +25,4 @@ select
     categoria,
     valor,
     dt_ingest
-from {{ ref('bronze_ibge_pib_consolidado_trimestral') }}
+from ({{ ibge_v3_tipado(ref('bronze_ibge_pib_consolidado_trimestral')) }}) as bronze

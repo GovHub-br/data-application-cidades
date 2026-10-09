@@ -112,73 +112,97 @@ sources:
       - name: ibge_paic_obras
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/paic_obras.parquet
+          caminho: staging/ibge/paic_obras
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
       - name: ibge_paic_pessoal_salarial
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/paic_pessoal_salarial.parquet
+          caminho: staging/ibge/paic_pessoal_salarial
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: ibge_paic_resultados
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/paic_resultados.parquet
+          caminho: staging/ibge/paic_resultados
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
       - name: ibge_pib_consolidado_trimestral
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pib_consolidado_trimestral_bruto.parquet
+          caminho: staging/ibge/pib_consolidado_trimestral_bruto
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pib_construcao_civil
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pib_construcao.parquet
+          caminho: staging/ibge/pib_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: ibge_pib_corrente
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pib_corrente_milhoes_brl.parquet
+          caminho: staging/ibge/pib_corrente_milhoes_brl
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pim_pf_brasil
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/ibge_pim_pf_brasil.parquet
+          caminho: staging/ibge/ibge_pim_pf_brasil
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
       - name: ibge_pmc_construcao
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/ibge_pmc_construcao.parquet
+          caminho: staging/ibge/ibge_pmc_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
       - name: ibge_pnad_construcao_ocupados
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnad_trabalho_construcao.parquet
+          caminho: staging/ibge/pnad_trabalho_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
       - name: ibge_pnad_construcao_rendimento
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnad_rendimento_construcao.parquet
+          caminho: staging/ibge/pnad_rendimento_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
       - name: ibge_pnadc_populacao_decis_renda
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnadc_populacao_decis_renda.parquet
+          caminho: staging/ibge/pnadc_populacao_decis_renda
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pnadc_rendimento_domiciliar
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnadc_rendimento_domiciliar_real.parquet
+          caminho: staging/ibge/pnadc_rendimento_domiciliar_real
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_sidra_pnad_construcao_ocupados
@@ -195,10 +219,19 @@ sources:
           load_mode: merge   # a SIDRA devolve só os últimos 12 trimestres
           keys: [D3C, D4C]
           dag: ibge_pnad_construcao_sidra_ingest_dag
+      - name: ibge_pnadc_habitacao_condicao
+        description: "PNAD Contínua: domicílios por condição de ocupação (agregado 6821)."
+        meta:
+          caminho: staging/ibge/pnadc_habitacao_condicao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
+          dag: ibge_ingest_dag
       - name: ibge_sinapi
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/sinapi.parquet
+          caminho: staging/ibge/sinapi
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: infomoney_imob

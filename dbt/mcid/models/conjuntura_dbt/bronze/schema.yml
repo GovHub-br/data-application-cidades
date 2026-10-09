@@ -419,14 +419,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_paic_pessoal_salarial
     description: >
       Pessoal ocupado e massa salarial anual das empresas de construção.
@@ -438,14 +437,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_paic_resultados
     description: >
       Resultados econômicos anuais das empresas de construção, com receita,
@@ -458,14 +456,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pib_consolidado_trimestral
     description: >
       Produto Interno Bruto consolidado do país em série trimestral.
@@ -477,14 +474,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pib_construcao_civil
     description: >
       Produto Interno Bruto da construção civil brasileira em série
@@ -497,14 +493,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pib_corrente
     description: >
       Produto Interno Bruto a preços correntes, em milhões de reais, por
@@ -517,14 +512,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pim_pf_brasil
     description: >
       Produção física dos insumos típicos da construção civil, em variações
@@ -537,14 +531,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pmc_construcao
     description: >
       Volume de vendas no varejo de material de construção, em variações
@@ -557,14 +550,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pnad_construcao_ocupados
     description: >
       População ocupada na construção civil e no conjunto da economia, em
@@ -577,14 +569,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pnad_construcao_rendimento
     description: >
       Rendimento médio real de quem trabalha na construção civil e do conjunto
@@ -597,14 +588,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pnadc_populacao_decis_renda
     description: >
       Distribuição da população brasileira por décimo de renda, por trimestre
@@ -617,14 +607,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_pnadc_rendimento_domiciliar
     description: >
       Rendimento domiciliar real por trimestre móvel.
@@ -636,14 +625,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_ibge_sidra_pnad_construcao_ocupados
     description: >
       Pessoas ocupadas no total das atividades e na construção, segundo a PNAD
@@ -686,6 +674,24 @@ models:
             - D4C
             - D4N
             - filename
+  - name: bronze_ibge_pnadc_habitacao_condicao
+    description: >
+      Domicílios por condição de ocupação, segundo a PNAD Contínua, por ano.
+    tests:
+      - sem_drift_de_colunas:
+          colunas:
+            - variavel_id
+            - variavel_nome
+            - localidade_id
+            - localidade_nome
+            - classificacao_id
+            - classificacao_nome
+            - categoria_id
+            - categoria_nome
+            - unidade
+            - periodo
+            - valor
+            - filename
   - name: bronze_ibge_sinapi
     description: >
       Custo de referência da construção habitacional por metro quadrado,
@@ -698,14 +704,13 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - filename
   - name: bronze_mrv_planilha_interativa
     description: >
       Dados operacionais divulgados pela MRV aos investidores (lançamentos,

@@ -25,4 +25,4 @@ select
     categoria,
     valor,
     dt_ingest
-from {{ ref('bronze_ibge_pnadc_populacao_decis_renda') }}
+from ({{ ibge_v3_tipado(ref('bronze_ibge_pnadc_populacao_decis_renda')) }}) as bronze

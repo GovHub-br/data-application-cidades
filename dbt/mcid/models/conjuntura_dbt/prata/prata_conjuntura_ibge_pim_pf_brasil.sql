@@ -25,4 +25,4 @@ select
     categoria,
     valor,
     dt_ingest
-from {{ ref('bronze_ibge_pim_pf_brasil') }}
+from ({{ ibge_v3_tipado(ref('bronze_ibge_pim_pf_brasil')) }}) as bronze
