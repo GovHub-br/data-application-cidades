@@ -1,104 +1,78 @@
-import logging
+"""Financiamentos SBPE por modalidade (ABECIP): unidades e valores, construção e
+aquisição, mensal desde 2002.
+
+Fonte: planilha de unidades financiadas no site da ABECIP. O nome do arquivo muda
+a cada edição (`unidades-site<n>.xlsx`), então o link é achado na página de
+indicadores (`link_in_page`) antes do download. É a fonte do indicador
+"Financiamentos Habitacionais (UH) — SBPE Const." do boletim.
+
+LoadMode: overwrite. Cada edição traz a série inteira, revisões incluídas.
+
+Estrutura: a raw guarda a planilha inteira; a staging converte só a aba
+`BD_Unidades`, com o cabeçalho da linha 5 (`Construção | Aquisição | Total` duas
+vezes: unidades, depois valores). A prata escolhe as colunas e um teste do dbt
+confere Total = Construção + Aquisição.
+"""
+
 from datetime import datetime, timedelta
+from typing import Any
 
 from airflow.sdk import dag, task
-from airflow.exceptions import (
-    AirflowException,
-    AirflowFailException,
-    AirflowSkipException,
+
+from ingestion.converters import ConverterConfig
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors.resolvers import link_in_page
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
+
+PAGE = "/credito-imobiliario/indicadores/financiamento"
+USER_AGENT = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+DATASET = DatasetSpec(
+    domain="abecip",
+    dataset="financiamentos_modalidade",
+    extractor=ExtractorConfig(
+        source="http_file",
+        conn_id="http_abecip",
+        requests=(
+            HttpRequest(
+                name="financiamentos",
+                endpoint=PAGE,
+                headers=USER_AGENT,
+                resolve=link_in_page(PAGE, "unidades", headers=USER_AGENT),
+            ),
+        ),
+    ),
+    converter=ConverterConfig(sheet="BD_Unidades", header_row=5),
+    load_mode=LoadMode.OVERWRITE,
 )
-
-from cliente_abecip import ClienteAbecip
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
-from postgres_helpers import get_postgres_conn
-from schedule_loader import get_dynamic_schedule
-
-logger = logging.getLogger(__name__)
-
-default_args = {
-    "owner": "Lucas Bottino",
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
 
 
 @dag(
     dag_id="abecip_financiamentos_ingest_dag",
-    schedule=get_dynamic_schedule("abecip_financiamentos"),
+    # Diário às 06:00: a ABECIP publica uma vez por mês, sem data fixa.
+    schedule="0 6 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    default_args=default_args,
-    tags=["abecip", "financiamentos", "sbpe", "conjuntura"],
+    max_active_runs=1,
+    default_args={
+        "owner": "Lucas Bottino",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["abecip", "financiamentos", "sbpe", "conjuntura", "ingestion"],
 )
 def abecip_financiamentos_ingest_dag() -> None:
-    """Ingestão da série mensal de financiamentos SBPE por modalidade (ABECIP).
-
-    Origem do indicador "Financiamentos Habitacionais (UH) — SBPE Const." do
-    boletim de conjuntura, que até então era preenchido à mão.
-
-    A ABECIP republica a série inteira a cada divulgação (e revisa meses
-    anteriores), então a carga é sempre da série completa, com upsert por
-    `data_referencia` — não incremental.
-    """
+    @task
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def fetch_and_store() -> None:
-        logger.info("[abecip_financiamentos] Iniciando ingestão")
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefix)
 
-        try:
-            cliente = ClienteAbecip()
-            df = cliente.fetch_and_transform_financiamentos()
-
-            if df is None:
-                raise AirflowFailException(
-                    "[abecip_financiamentos] ClienteAbecip falhou ao baixar ou "
-                    "processar o XLSX de financiamentos."
-                )
-
-            if df.empty:
-                raise AirflowSkipException(
-                    "[abecip_financiamentos] DataFrame vazio — XLSX pode estar "
-                    "indisponível ou sem dados."
-                )
-
-            registros = df.to_dict(orient="records")
-
-            db = ClientPostgresDB(get_postgres_conn())
-            logger.info(
-                "[abecip_financiamentos] Inserindo %d registros em "
-                "abecip.financiamentos_modalidade",
-                len(registros),
-            )
-
-            # Upsert por data_referencia: a ABECIP revisa meses já publicados.
-            db.insert_data(
-                registros,
-                table_name="financiamentos_modalidade",
-                schema="abecip",
-                conflict_fields=["data_referencia"],
-                primary_key=["data_referencia"],
-            )
-
-            # Lake: raw nativo (xlsx) + fallback json + parquet tipado.
-            bruto = getattr(cliente, "ultimo_conteudo_xlsx_financiamentos", None)
-            if bruto:
-                upload_raw_bytes("abecip", "financiamentos_modalidade", bruto, ext="xlsx")
-            upload_fallback_json("abecip", "financiamentos_modalidade", registros)
-            registros_para_staging_parquet(
-                "abecip", "financiamentos_modalidade", registros
-            )
-
-            logger.info("[abecip_financiamentos] Ingestão concluída com sucesso")
-
-        except (AirflowFailException, AirflowSkipException):
-            raise
-        except Exception as e:
-            logger.error("[abecip_financiamentos] Erro inesperado: %s", e)
-            raise AirflowException(f"[abecip_financiamentos] Erro inesperado: {e}") from e
-
-    fetch_and_store()
+    convert_to_staging(extract_to_raw())
 
 
 dag_instance = abecip_financiamentos_ingest_dag()

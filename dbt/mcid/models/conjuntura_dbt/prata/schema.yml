@@ -622,9 +622,15 @@ models:
       - name: captacao_liquida_pct
         description: >
           Captação líquida do mês expressa como percentual do saldo.
+      - name: rendimento
+        description: >
+          Rendimento creditado nas cadernetas no mês, em milhões de reais.
       - name: saldo
         description: >
           Saldo total das cadernetas ao fim do mês, em milhões de reais.
+      - name: dt_ingest
+        description: >
+          Data e hora da ingestão que trouxe a edição da planilha.
   - name: prata_conjuntura_sbpe_financiamentos_aquisicao
     description: >
       Uma linha por mês com o financiamento imobiliário e a captação de

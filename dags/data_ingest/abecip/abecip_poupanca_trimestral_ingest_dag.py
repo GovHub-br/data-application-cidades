@@ -1,104 +1,77 @@
-import logging
+"""Poupança SBPE mensal (ABECIP): depósitos, retiradas, captação, rendimento, saldo.
+
+Fonte: planilha histórica da caderneta de poupança no site da ABECIP. O nome do
+arquivo muda a cada edição (`cp-historico-<mês><ano>.xlsx`), então o link é
+achado na página de indicadores (`link_in_page`) antes do download.
+
+LoadMode: overwrite. Cada edição traz a série inteira desde 1982 e a ABECIP revisa
+meses já publicados, então a última ingestão é a verdade.
+
+Estrutura: a raw guarda a planilha inteira; a staging converte só a aba
+`SBPE_Mensal` (o bronze em overwrite lê todo Parquet do `latest/`), com o
+cabeçalho da linha 5. Totais anuais, meses futuros e rodapé ficam na staging e
+saem na prata, onde um teste do dbt confere as identidades contábeis.
+"""
+
 from datetime import datetime, timedelta
+from typing import Any
 
 from airflow.sdk import dag, task
-from airflow.exceptions import (
-    AirflowException,
-    AirflowFailException,
-    AirflowSkipException,
+
+from ingestion.converters import ConverterConfig
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors.resolvers import link_in_page
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
+
+PAGE = "/credito-imobiliario/indicadores/caderneta-de-poupanca"
+USER_AGENT = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+DATASET = DatasetSpec(
+    domain="abecip",
+    dataset="poupanca_sbpe_mensal",
+    extractor=ExtractorConfig(
+        source="http_file",
+        conn_id="http_abecip",
+        requests=(
+            HttpRequest(
+                name="poupanca",
+                endpoint=PAGE,
+                headers=USER_AGENT,
+                resolve=link_in_page(PAGE, "cp-historico", headers=USER_AGENT),
+            ),
+        ),
+    ),
+    converter=ConverterConfig(sheet="SBPE_Mensal", header_row=5),
+    load_mode=LoadMode.OVERWRITE,
 )
-
-from cliente_abecip import ClienteAbecip
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_bytes, upload_fallback_json
-from ingestor_lake import registros_para_staging_parquet
-from postgres_helpers import get_postgres_conn
-from schedule_loader import get_dynamic_schedule
-
-logger = logging.getLogger(__name__)
-
-default_args = {
-    "owner": "Lucas Bottino",
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
 
 
 @dag(
     dag_id="abecip_poupanca_trimestral_ingest_dag",
-    schedule=get_dynamic_schedule("abecip_poupanca_trimestral"),
+    # Diário às 06:00: a ABECIP publica uma vez por mês, sem data fixa.
+    schedule="0 6 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    default_args=default_args,
-    tags=["abecip", "poupanca"],
+    max_active_runs=1,
+    default_args={
+        "owner": "Lucas Bottino",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["abecip", "poupanca", "conjuntura", "ingestion"],
 )
 def abecip_poupanca_trimestral_ingest_dag() -> None:
-    """
-    DAG de ingestão incremental trimestral da Caderneta de Poupança ABECIP.
-    A cada execução baixa o XLSX completo e faz upsert de toda a série —
-    garantindo que revisões retroativas sejam capturadas automaticamente.
-    """
+    @task
+    def extract_to_raw(**context: Any) -> str:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def fetch_and_store() -> None:
-        logger.info("[abecip_poupanca_trimestral_dag] Iniciando ingestão trimestral")
+    def convert_to_staging(raw_prefix: str) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefix)
 
-        try:
-            cliente = ClienteAbecip()
-            df = cliente.fetch_and_transform_poupanca()
-
-            if df is None:
-                raise AirflowFailException(
-                    "[abecip_poupanca_trimestral_dag] ClienteAbecip falhou "
-                    "ao baixar ou processar o XLSX de poupança."
-                )
-
-            if df.empty:
-                raise AirflowSkipException(
-                    "[abecip_poupanca_trimestral_dag] DataFrame retornado "
-                    "está vazio — XLSX pode estar indisponível."
-                )
-
-            registros = df.to_dict(orient="records")
-            for r in registros:
-                r["fonte"] = "ABECIP"
-
-            postgres_conn_str = get_postgres_conn()
-            db = ClientPostgresDB(postgres_conn_str)
-
-            logger.info(
-                "[abecip_poupanca_trimestral_dag] Inserindo %d registros "
-                "em abecip.poupanca_sbpe_mensal",
-                len(registros),
-            )
-
-            # Postgres: upsert por data_referencia -> preserva histórico (trimestral).
-            db.insert_data(
-                registros,
-                table_name="poupanca_sbpe_mensal",
-                schema="abecip",
-                conflict_fields=["data_referencia"],
-                primary_key=["data_referencia"],
-            )
-
-            # Raw nativo (XLSX) + fallback json + parquet tipado (full-refresh).
-            raw_xlsx = getattr(cliente, "ultimo_conteudo_xlsx", None)
-            if raw_xlsx:
-                upload_raw_bytes("abecip", "poupanca_sbpe_mensal", raw_xlsx, ext="xlsx")
-            upload_fallback_json("abecip", "poupanca_sbpe_mensal", registros)
-            registros_para_staging_parquet("abecip", "poupanca_sbpe_mensal", registros)
-
-            logger.info("[abecip_poupanca_trimestral_dag] Ingestão trimestral concluída")
-
-        except (AirflowFailException, AirflowSkipException):
-            raise
-        except Exception as e:
-            logger.error("[abecip_poupanca_trimestral_dag] Erro inesperado: %s", e)
-            raise AirflowException(
-                f"[abecip_poupanca_trimestral_dag] Erro inesperado: {e}"
-            ) from e
-
-    fetch_and_store()
+    convert_to_staging(extract_to_raw())
 
 
 dag_instance = abecip_poupanca_trimestral_ingest_dag()

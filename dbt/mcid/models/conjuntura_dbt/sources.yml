@@ -35,7 +35,8 @@ sources:
       - name: abecip_financiamentos
         description: "Financiamentos SBPE por modalidade (Construção/Aquisição), mensal desde 2002. XLSX público da ABECIP."
         meta:
-          caminho: staging/abecip/financiamentos_modalidade.parquet
+          caminho: staging/abecip/financiamentos_modalidade
+          load_mode: overwrite   # cada edição traz a série inteira
           dag: abecip_financiamentos_ingest_dag
           linhas_minimas: 147   # metade do observado em 2026-08-29 (294)
       - name: abecip_instituicoes
@@ -46,7 +47,8 @@ sources:
       - name: abecip_poupanca_sbpe
         description: "Depósitos, retiradas, captação líquida, rendimento e saldo da poupança SBPE."
         meta:
-          caminho: staging/abecip/poupanca_sbpe_mensal.parquet
+          caminho: staging/abecip/poupanca_sbpe_mensal
+          load_mode: overwrite   # cada edição traz a série inteira
           dag: abecip_poupanca_trimestral_ingest_dag
           linhas_minimas: 267   # metade do observado em 2026-08-29 (535)
       - name: bacen_credito_pib
