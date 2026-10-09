@@ -34,7 +34,9 @@ class ConverterConfig:
 
     - `format`: força o conversor; sem ele, vale a extensão do arquivo.
     - `encoding`, `delimiter`, `skip_rows`: texto delimitado (csv, txt). `skip_rows`
-      pula linhas de preâmbulo antes do cabeçalho.
+      pula linhas de preâmbulo antes do cabeçalho. `"auto"` em `encoding` ou
+      `delimiter` detecta pela amostra do arquivo (fontes que mandam cada entrega
+      num dialeto, como os arquivos do SFTP).
     - `sheet`, `header_row`: xlsx (`sheet=None` lê todas as abas; `header_row` é
       1-based).
     - `record_path`: json, prefixo do ijson onde estão os registros (`item` para uma
