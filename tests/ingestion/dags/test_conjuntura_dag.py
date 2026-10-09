@@ -38,7 +38,7 @@ def _triggered() -> list[str]:
         if isinstance(node, ast.Assign) and any(
             isinstance(t, ast.Name) and t.id == "INGEST_DAG_IDS" for t in node.targets
         ):
-            return [ast.literal_eval(e) for e in node.value.elts]  # type: ignore[attr-defined]
+            return [ast.literal_eval(e) for e in node.value.elts]
     raise AssertionError("INGEST_DAG_IDS não encontrado")
 
 
