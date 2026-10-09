@@ -1,4 +1,4 @@
-# Comparação dos pilotos: bronze antigo × novo (Fase 5)
+# Comparação da migração: bronze antigo × novo (Fases 5 e 6)
 
 Cada DAG piloto rodou no Airflow local (3.3.2, `make up`) contra a fonte real,
 gravando só em `tests/` do MinIO de dev (`INGESTION_STORAGE_PREFIX=tests/`). A comparação é feita com DuckDB sobre o
@@ -117,3 +117,23 @@ cabeçalho da linha 12.
 
 **Valores:** ignorando o zero à esquerda dos códigos, as 562 linhas são idênticas
 nas 30 colunas (texto contra texto, antes do `parse_valor_siafi`).
+
+## Fase 6
+
+### FipeZap (`fipe/indice_locacao`)
+
+A raw guarda a planilha inteira (59 abas); a staging converte só a aba
+`Índice FipeZAP` (`sheet`, `header_row=4`), porque o bronze em `overwrite` lê todo
+Parquet do `latest/`. As colunas de locação viram `Total_5`, `Total_6` e `Total_7`.
+
+| | Antigo (01/09/2026) | Novo (09/10/2026, conversão local da planilha real) |
+|---|---|---|
+| Meses | 224 (2008-01 a 2026-08) | 225 (2008-01 a 2026-09) |
+
+- O histórico é idêntico (mesmo texto de origem, `70.8668233584297` etc.).
+- 08/2026 estava vazio no antigo e agora tem valor; 09/2026 entra vazio, como a
+  FIPE publica o mês em apuração.
+- **A conferência de coerência do `ClienteFipeZap` virou teste do dbt**
+  (`tests/conjuntura_fipezap_colunas_coerentes.sql`). Exercitado em DuckDB:
+  passa com as colunas certas; falha com índice e variação trocados (222 de 222
+  meses fora) e com o índice de venda no lugar do de locação (180 de 223).

@@ -79,7 +79,8 @@ sources:
       - name: fipezap_locacao
         description: "Índice FipeZap de locação residencial: número índice e variações."
         meta:
-          caminho: staging/fipe/indice_locacao.parquet
+          caminho: staging/fipe/indice_locacao
+          load_mode: overwrite   # a FIPE revisa a série a cada divulgação
           dag: fipezap_trimestral_ingest_dag
           linhas_minimas: 111   # metade do observado em 2026-08-29 (223)
       - name: gefus_fundo_social
