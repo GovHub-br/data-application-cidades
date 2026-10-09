@@ -119,6 +119,7 @@ def test_every_family_is_incremental_append_masked_and_auto_dialect(
         assert isinstance(unpack, Unpack) and isinstance(mask, MaskPii)
         assert spec.converter.encoding == "auto"
         assert spec.converter.delimiter == "auto"
+        assert spec.converter.bad_rows == "skip"
 
 
 def test_every_file_of_the_tree_falls_in_one_family_or_is_a_declared_avulso(

@@ -25,7 +25,7 @@ em CPF/NIS com `MASKING_HMAC_SECRET`, redação de nome, endereço, CEP e
 nascimento). A raw nunca guarda PII e não é reescrita depois.
 
 Conversão: texto com encoding e delimitador detectados por arquivo (as entregas
-variam), xlsx aba a aba; a staging guarda o cabeçalho original, e o macro
+variam) e linha com campos a mais ou a menos descartada e contada; xlsx aba a aba; a staging guarda o cabeçalho original, e o macro
 `normalizar_colunas` entrega às pratas os nomes de sempre.
 
 LoadMode: append em todas. Cada arquivo é uma entrega (um retrato do mês, uma
@@ -171,7 +171,10 @@ POSICOES_PII = {
     r"^CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_M202112\.TXT$": {2: "cpf", 3: "nis"},
 }
 
-CONVERSAO = ConverterConfig(encoding="auto", delimiter="auto")
+# As interfaces mandam umas poucas linhas quebradas em arquivos de milhões (a
+# INT039 de 2026-04-30: 2 linhas com 40 campos num layout de 37): elas saem e a
+# contagem vai para o manifesto da staging, como no raw_para_staging.
+CONVERSAO = ConverterConfig(encoding="auto", delimiter="auto", bad_rows="skip")
 
 
 def _spec(dataset: str, nome: str, pacotes: bool, root: str = GEFUS) -> DatasetSpec:
