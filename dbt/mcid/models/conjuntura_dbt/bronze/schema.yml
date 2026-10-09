@@ -664,6 +664,13 @@ models:
             - valor
             - dt_ingest
             - data_referencia
+  - name: bronze_mrv_planilha_interativa
+    description: >
+      Dados operacionais divulgados pela MRV aos investidores (lançamentos,
+      vendas e demais indicadores), uma linha por indicador e uma coluna por
+      trimestre.
+    # Sem sem_drift_de_colunas: as colunas são os trimestres divulgados, e cada
+    # edição traz um novo; o contrato acusaria drift todo trimestre.
   - name: bronze_infomoney_imob
     description: >
       Índice de ações das empresas do setor imobiliário listadas na bolsa
