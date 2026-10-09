@@ -1,0 +1,295 @@
+- name: Install and configure RustFS on Debian 12
+  hosts: rustfs
+  become: true
+  become_method: su
+
+  vars:
+    rustfs_version: "1.0.1"
+    rc_version: "0.1.36"
+    rustfs_user: rustfs
+    rustfs_group: rustfs
+    rustfs_install_dir: /opt/rustfs
+    cache_valid_time: 86400
+
+  tasks:
+    - name: Validar credenciais do admin do RustFS
+      ansible.builtin.assert:
+        that:
+          - rustfs_access_key | length >= 3
+          - rustfs_secret_key | length >= 8
+        fail_msg: >-
+          rustfs_access_key / rustfs_secret_key inválidos.
+          Confira group_vars/rustfs.yaml.
+      run_once: true
+
+    - name: Update apt packages
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: "{{ cache_valid_time }}"
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - ufw
+          - unzip
+          - vim
+        state: present
+
+    # ------------------------------------------------------------------
+    # Usuário, diretórios e binários
+    # ------------------------------------------------------------------
+
+    - name: Create RustFS group
+      ansible.builtin.group:
+        name: "{{ rustfs_group }}"
+        system: true
+        state: present
+
+    - name: Create RustFS system user
+      ansible.builtin.user:
+        name: "{{ rustfs_user }}"
+        group: "{{ rustfs_group }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+        state: present
+
+    - name: Create RustFS data directory
+      ansible.builtin.file:
+        path: "{{ rustfs_data_dir }}"
+        state: directory
+        owner: "{{ rustfs_user }}"
+        group: "{{ rustfs_group }}"
+        mode: '0750'
+
+    - name: Create RustFS install directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - "{{ rustfs_install_dir }}/{{ rustfs_version }}"
+        - "{{ rustfs_install_dir }}/rc-{{ rc_version }}"
+
+    # Cada versão fica na própria pasta; trocar de versão é só mudar o symlink.
+    - name: Download and extract RustFS server binary
+      ansible.builtin.unarchive:
+        src: "https://github.com/rustfs/rustfs/releases/download/{{ rustfs_version }}/rustfs-linux-x86_64-musl-v{{ rustfs_version }}.zip"
+        dest: "{{ rustfs_install_dir }}/{{ rustfs_version }}"
+        remote_src: true
+        include:
+          - rustfs
+        owner: root
+        group: root
+        mode: '0755'
+        creates: "{{ rustfs_install_dir }}/{{ rustfs_version }}/rustfs"
+
+    - name: Link RustFS server binary
+      ansible.builtin.file:
+        src: "{{ rustfs_install_dir }}/{{ rustfs_version }}/rustfs"
+        dest: /usr/local/bin/rustfs
+        state: link
+        force: true
+      notify: Restart rustfs
+
+    - name: Download and extract RustFS client (rc)
+      ansible.builtin.unarchive:
+        src: "https://github.com/rustfs/cli/releases/download/v{{ rc_version }}/rustfs-cli-linux-amd64-v{{ rc_version }}.tar.gz"
+        dest: "{{ rustfs_install_dir }}/rc-{{ rc_version }}"
+        remote_src: true
+        include:
+          - rc
+        owner: root
+        group: root
+        mode: '0755'
+        creates: "{{ rustfs_install_dir }}/rc-{{ rc_version }}/rc"
+
+    - name: Link RustFS client (rc)
+      ansible.builtin.file:
+        src: "{{ rustfs_install_dir }}/rc-{{ rc_version }}/rc"
+        dest: /usr/local/bin/rc
+        state: link
+        force: true
+
+    # ------------------------------------------------------------------
+    # Configuração e serviço
+    # ------------------------------------------------------------------
+
+    - name: Configure /etc/default/rustfs
+      ansible.builtin.copy:
+        dest: /etc/default/rustfs
+        owner: root
+        group: "{{ rustfs_group }}"
+        mode: '0640'
+        content: |
+          # Gerenciado pelo Ansible (infra/playbooks/rustfs/install-rustfs.yaml)
+          RUSTFS_ACCESS_KEY="{{ rustfs_access_key }}"
+          RUSTFS_SECRET_KEY="{{ rustfs_secret_key }}"
+          RUSTFS_VOLUMES="{{ rustfs_data_dir }}"
+          RUSTFS_ADDRESS=":{{ rustfs_api_port }}"
+          RUSTFS_CONSOLE_ENABLE=true
+          RUSTFS_CONSOLE_ADDRESS=":{{ rustfs_console_port }}"
+      no_log: true
+      notify: Restart rustfs
+
+    # Baseada em deploy/build/rustfs.service do repositório do RustFS.
+    - name: Create rustfs systemd unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/rustfs.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=RustFS Object Storage Server
+          Documentation=https://docs.rustfs.com
+          Wants=network-online.target
+          After=network-online.target
+          AssertFileIsExecutable=/usr/local/bin/rustfs
+
+          [Service]
+          Type=notify
+          NotifyAccess=main
+          User={{ rustfs_user }}
+          Group={{ rustfs_group }}
+          EnvironmentFile=/etc/default/rustfs
+          ExecStartPre=/bin/bash -c "if [ -z \"${RUSTFS_VOLUMES}\" ]; then echo 'RUSTFS_VOLUMES nao definido em /etc/default/rustfs'; exit 1; fi"
+          ExecStart=/usr/local/bin/rustfs server
+          StateDirectory=rustfs
+          WorkingDirectory=/var/lib/rustfs
+          LogsDirectory=rustfs
+          Restart=always
+          RestartSec=10s
+          LimitNOFILE=1048576
+          LimitNPROC=32768
+          TasksMax=infinity
+          TimeoutStartSec=120s
+          TimeoutStopSec=45s
+          NoNewPrivileges=true
+          ProtectSystem=full
+          ProtectHome=true
+          PrivateTmp=true
+          PrivateDevices=true
+          ProtectKernelTunables=true
+          ProtectKernelModules=true
+          ProtectControlGroups=true
+          ReadWritePaths={{ rustfs_data_dir }}
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - Reload systemd
+        - Restart rustfs
+
+    - name: Flush handlers before starting the service
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable and start rustfs
+      ansible.builtin.systemd:
+        name: rustfs
+        state: started
+        enabled: true
+        daemon_reload: true
+      when: not ansible_check_mode
+
+    # ------------------------------------------------------------------
+    # Firewall: só as redes autorizadas falam com o RustFS
+    # ------------------------------------------------------------------
+
+    - name: Allow SSH through firewall
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw allow ssh
+      register: ufw_ssh
+      changed_when: "'Skipping' not in ufw_ssh.stdout"
+
+    - name: Set UFW default policy to deny incoming
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw default deny incoming
+      register: ufw_default
+      changed_when: "'updated' in ufw_default.stdout"
+
+    - name: Enable UFW
+      ansible.builtin.shell:
+        cmd: echo "y" | /usr/sbin/ufw enable
+      register: ufw_enable
+      changed_when: "'active' in ufw_enable.stdout"
+
+    - name: Allow RustFS API port for the authorized networks
+      ansible.builtin.command:
+        cmd: "/usr/sbin/ufw allow from {{ item }} to any port {{ rustfs_api_port }} proto tcp"
+      loop: "{{ rustfs_allowed_networks }}"
+      register: ufw_api
+      changed_when: "'Skipping' not in ufw_api.stdout"
+
+    - name: Allow RustFS Console port for the authorized networks
+      ansible.builtin.command:
+        cmd: "/usr/sbin/ufw allow from {{ item }} to any port {{ rustfs_console_port }} proto tcp"
+      loop: "{{ rustfs_allowed_networks }}"
+      register: ufw_console
+      changed_when: "'Skipping' not in ufw_console.stdout"
+
+    - name: Reload UFW
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw reload
+      changed_when: false
+
+    # ------------------------------------------------------------------
+    # Pós-instalação: health check e alias do rc
+    # ------------------------------------------------------------------
+
+    - name: Wait for RustFS API to be up
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ rustfs_api_port }}"
+        timeout: 60
+      when: not ansible_check_mode
+
+    - name: Check RustFS readiness endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ rustfs_api_port }}/health/ready"
+        status_code: 200
+      register: rustfs_ready
+      until: rustfs_ready.status == 200
+      retries: 12
+      delay: 5
+      when: not ansible_check_mode
+
+    - name: Configure rc alias for this server
+      ansible.builtin.command:
+        cmd: >-
+          /usr/local/bin/rc alias set rustfs
+          http://127.0.0.1:{{ rustfs_api_port }}
+          {{ rustfs_access_key }} {{ rustfs_secret_key }}
+      no_log: true
+      changed_when: false
+
+    - name: Mostrar as credenciais do admin
+      ansible.builtin.debug:
+        msg:
+          - "================ RUSTFS PRONTO ================"
+          - "Console web:  http://{{ ansible_host }}:{{ rustfs_console_port }}"
+          - "API S3:       http://{{ ansible_host }}:{{ rustfs_api_port }}"
+          - ""
+          - "Access key (admin): {{ rustfs_access_key }}"
+          - "Secret key (admin): {{ rustfs_secret_key }}"
+          - ""
+          - "Guardada em: {{ rustfs_credentials_dir }}/rustfs_secret_key"
+          - ""
+          - "Buckets, policies e usuarios: criar pelo console web ou pelo rc."
+          - "Passo a passo em policies/README.md"
+          - "==============================================="
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart rustfs
+      ansible.builtin.systemd:
+        name: rustfs
+        state: restarted
+      when: not ansible_check_mode
