@@ -2,9 +2,9 @@
 
 -- Prata do conjuntura: PAIC obras (IBGE/SIDRA).
 --
--- Passthrough tipado. O achatamento do payload do SIDRA acontece **uma vez,
--- na ingestão** (`ClienteIBGE.transformar_resposta`), que itera variável →
--- resultados → séries → períodos. O padrão é uniforme para qualquer agregado,
+-- Passthrough tipado. O achatamento do payload acontece **uma vez, na
+-- ingestão** (conversor `ibge_v3`, plugins/ingestion), que itera variável →
+-- resultados → séries → períodos; a tipagem é o macro `ibge_v3_tipado`. O padrão é uniforme para qualquer agregado,
 -- então refazer isso em SQL aqui seria duplicar trabalho — foi o que o macro
 -- `achatar_sidra` fazia, e por isso ele saiu (2026-08-30).
 

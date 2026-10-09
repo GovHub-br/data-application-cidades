@@ -119,7 +119,7 @@ Itens "a confirmar" se resolvem no PR de migração de cada DAG, com a justifica
 | `ClienteMinio` (boto3) | `S3StorageBackend` sobre `S3Hook` | O `ClienteMinio` continua só para os scripts legados do lake. |
 | `ingestor_lake` (`IngestorLake`, `registros_para_staging_parquet`) | `FileConverter` + modelos | Template Method `convert()`: baixa → `_read()` em batches → `ParquetWriter` → sobe. |
 | `scripts/raw_para_staging.py` (CSV/TXT/XLSX/MDB) | `CsvConverter`, `TxtConverter`, `XlsxConverter`, `MdbConverter` | Reaproveita `lake_utils` (`detectar_encoding`, `mdb_*`). A normalização de nomes **sai** do converter e vai para a prata. |
-| decodificação DSR em `cliente_novo_caged` | `PowerBiDsrConverter` (proposta) | O DSR é formato estrutural (como o mdb), impraticável de desempacotar em SQL. A confirmar. |
+| decodificação DSR em `cliente_novo_caged` | `PowerBiDsrConverter` (implementado na Fase 6: máscaras `Ø`/`R`) | O DSR é formato estrutural (como o mdb), impraticável de desempacotar em SQL. A confirmar. |
 | `fetch_and_transform_*`, `transformar_resposta`, renomes, `dt_ingest` nos clientes | Prata do dbt | Tipagem e renome só no dbt. |
 | `ClientPostgresDB.insert_data` / `create_table_if_not_exists` / `alter_table` | Removido do caminho do cidades | O bronze é do dbt. `PostgresCopyLoader` (sobre `PostgresHook.copy_expert`) só na Fase 7. |
 | `ClientPostgresDB` (consultas) | Mantido | Dashboards e DAGs do IPEA. |
