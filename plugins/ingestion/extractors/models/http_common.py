@@ -88,7 +88,7 @@ class HttpHooks:
                 public = Connection(
                     conn_id=self.conn_id, conn_type="http", host=self.base_url
                 )
-                hook.get_connection = lambda _conn_id: public  # type: ignore[method-assign]
+                hook.get_connection = lambda _conn_id: public  # type: ignore[method-assign,assignment]
             self._hooks[method] = hook
         return self._hooks[method]
 
