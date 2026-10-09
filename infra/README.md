@@ -48,5 +48,13 @@ infra/
 │   ├── superset/         # imagem do Superset com drivers do PostgreSQL
 │   └── postgres/         # scripts de init do Postgres
 ├── env/                  # exemplos de variaveis de ambiente
+├── playbooks/
+│   └── rustfs/           # playbook Ansible que instala o RustFS (S3) numa VM
 └── docker-compose.yml
 ```
+
+## RustFS
+
+`infra/playbooks/rustfs/` instala o RustFS, um storage de objetos compativel com
+S3, numa VM Debian 12 via Ansible. Nao faz parte do Compose local. Como rodar e
+como criar buckets e usuarios: `infra/playbooks/rustfs/README.md`.

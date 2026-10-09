@@ -1,0 +1,7 @@
+rustfs:
+  hosts:
+    rustfs0:
+      ansible_user: root
+      ansible_host: <IP_DA_VM>
+      # Evita o warning de descoberta automatica do interpretador Python.
+      ansible_python_interpreter: /usr/bin/python3
