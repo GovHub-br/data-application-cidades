@@ -137,3 +137,26 @@ def test_prepare_steps_run_in_order_before_landing(lake: Path, tmp_path: Path) -
     manifest = _manifest(lake, prefix)
     assert {(m["source_id"], m["upper"]) for m in manifest} == {("a.csv:3", True)}
     assert not any(p.is_file() for p in (tmp_path / "tmp").rglob("*"))
+
+
+class _OnlyB:
+    """Preparo de teste: descarta tudo que não é b (o pacote sem a família)."""
+
+    def apply(self, part: RawFile, work_dir: Path) -> Iterator[RawFile]:
+        if part.name.startswith("b"):
+            yield part
+        else:
+            part.path.unlink()
+
+
+def test_a_source_that_the_prepare_drops_is_not_downloaded_again(lake: Path) -> None:
+    spec = _spec(incremental=True, prepare=(_OnlyB(),))
+    SOURCE.update({"a.zip": b"x", "b.csv": b"y"})
+    prefix = steps.extract_to_raw(spec, WHEN)
+    SOURCE["b2.csv"] = b"z"
+
+    steps.extract_to_raw(spec, WHEN + timedelta(days=1))
+
+    sources = json.loads((lake / prefix / SUCCESS_MARKER).read_text())["sources"]
+    assert sources == ["a.zip:1", "b.csv:1"]
+    assert SEEN_BY_EXTRACTOR[1] == frozenset({"a.zip:1", "b.csv:1"})

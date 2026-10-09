@@ -34,6 +34,9 @@ def extract_to_raw(spec: DatasetSpec, ingestion_time: datetime) -> str:
 
     Com `spec.incremental`, o extrator recebe os `source_id`s dos manifestos das
     partições anteriores; cada arquivo passa pelos `spec.prepare` antes do pouso.
+    O manifesto guarda em `sources` toda origem que o extrator entregou, inclusive
+    a que os preparos descartaram inteira (o pacote sem a família procurada), para
+    que ela não volte na próxima extração.
     """
     prefix = raw_prefix(spec.domain, spec.dataset, ingestion_partition(ingestion_time))
     storage = storage_from_env()
@@ -42,17 +45,31 @@ def extract_to_raw(spec: DatasetSpec, ingestion_time: datetime) -> str:
     )
     if spec.incremental:
         extractor.already_landed = _landed_source_ids(storage, spec)
+    sources: set[str] = set()
     with tempfile.TemporaryDirectory(prefix="extract-", dir=_work_root()) as work:
-        parts: Iterable[RawFile] = extractor.extract(Path(work))
+        parts: Iterable[RawFile] = _track(extractor.extract(Path(work)), sources)
         for step in spec.prepare:
             parts = _apply(step, parts, Path(work))
         try:
-            landed = land(storage, parts, prefix, details=_details)
+            landed = land(
+                storage,
+                parts,
+                prefix,
+                details=_details,
+                summary=lambda: {"sources": sorted(sources)},
+            )
         except SourceNotFoundError as exc:
             raise AirflowSkipException(str(exc)) from exc
     if not landed.keys:
         raise AirflowSkipException(f"a fonte não entregou nenhum arquivo: {prefix}")
     return prefix
+
+
+def _track(parts: Iterable[RawFile], sources: set[str]) -> Iterator[RawFile]:
+    for part in parts:
+        if part.source_id:
+            sources.add(part.source_id)
+        yield part
 
 
 def _apply(step: Prepare, parts: Iterable[RawFile], work_dir: Path) -> Iterator[RawFile]:
@@ -79,7 +96,9 @@ def _landed_source_ids(storage: StorageBackend, spec: DatasetSpec) -> frozenset[
                 continue
             local = Path(work) / "m.json"
             storage.get_file(key, local)
-            for entry in json.loads(local.read_text()).get("files", []):
+            manifest = json.loads(local.read_text())
+            seen.update(str(source) for source in manifest.get("sources", []))
+            for entry in manifest.get("files", []):
                 if entry.get("source_id"):
                     seen.add(str(entry["source_id"]))
     return frozenset(seen)

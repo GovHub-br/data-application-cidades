@@ -42,14 +42,16 @@ def land(
     parts: Iterable[Part],
     prefix: str,
     details: Callable[[Part], Mapping[str, object]] | None = None,
+    summary: Callable[[], Mapping[str, object]] | None = None,
 ) -> LandingResult:
     """Sobe cada parte para `prefix + name` e apaga a cópia local antes da próxima.
 
     Consome o gerador do extrator, então nem a memória nem o disco do worker guardam
     mais de uma parte. Só depois da última grava `_SUCCESS`, um manifesto com nome,
-    tamanho e sha256 de cada arquivo (mais o que `details` devolver para a parte):
-    uma falha no meio deixa a partição sem marcador, e ela não vira "a última
-    ingestão". Sem partes, não grava nada.
+    tamanho e sha256 de cada arquivo (mais o que `details` devolver para a parte),
+    e no topo o que `summary` devolver depois da última parte: uma falha no meio
+    deixa a partição sem marcador, e ela não vira "a última ingestão". Sem partes,
+    não grava nada.
     """
     if not prefix.endswith("/"):
         raise ValueError(f"o prefixo da partição deve terminar em '/': {prefix!r}")
@@ -75,16 +77,19 @@ def land(
             entry.update(details(part))
         manifest.append(entry)
     if keys:
-        _mark_success(storage, prefix, manifest)
+        _mark_success(storage, prefix, manifest, summary() if summary else {})
     return LandingResult(prefix=prefix, keys=tuple(keys), total_bytes=total_bytes)
 
 
 def _mark_success(
-    storage: StorageBackend, prefix: str, manifest: list[dict[str, object]]
+    storage: StorageBackend,
+    prefix: str,
+    manifest: list[dict[str, object]],
+    summary: Mapping[str, object],
 ) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         marker = Path(tmp) / SUCCESS_MARKER
-        marker.write_text(json.dumps({"files": manifest}, ensure_ascii=False))
+        marker.write_text(json.dumps({**summary, "files": manifest}, ensure_ascii=False))
         storage.put_file(prefix + SUCCESS_MARKER, marker)
 
 
