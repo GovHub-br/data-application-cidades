@@ -199,3 +199,57 @@ só a aba usada (`SBPE_Mensal` e `BD_Unidades`, cabeçalho na linha 5).
   falham com colunas trocadas (100% das linhas fora).
 - Nota de método: na emulação em DuckDB, `::numeric` vira `DECIMAL(18,3)` e corta
   casas; a comparação usa `double`. No Postgres a prata usa `numeric` sem limite.
+
+### Novo CAGED (`novo_caged/saldo_estoque_*`, 3 recortes)
+
+Uma consulta POST por mês ao `querydata` do painel público do Power BI, de 2024-01
+ao mês corrente; DSR decodificado pelo `powerbi_dsr` (máscaras `Ø` e `R`). Rodado
+no Airflow em 09/10/2026.
+
+| Recorte | Antigo (01/09/2026) | Novo (09/10/2026) |
+|---|---|---|
+| Construção de edifícios | 31 meses (2024-01 a 2026-07) | 32 (2024-01 a 2026-08) |
+| Serviços especializados | 30 meses (2024-01 a 2026-06) | 32 (2024-01 a 2026-08) |
+| Total da construção | 30 meses (2024-01 a 2026-06) | 32 (2024-01 a 2026-08) |
+
+- **Meses ainda não publicados** (09 e 10/2026) vêm do Power BI só com o estoque
+  (`"C": [795153], "Ø": 23`). Lendo `C` por posição, como o plano previa, esse
+  valor cairia em "admitidos"; decodificado, as medidas ficam nulas e a prata
+  descarta o mês, como a ingestão antiga fazia.
+- **Os meses já publicados mudaram de valor** (01/2024: 90.851 → 90.850
+  admitidos). Conferido: o cliente antigo, consultado hoje, devolve os mesmos
+  valores da staging nova; é revisão do MTE no painel, que o `overwrite` traz.
+- O Power BI responde JSON com `Content-Type: text/plain`; a conferência de
+  página de erro do `api` passou a olhar só HTML/XML.
+
+### IBGE v3 (`ibge/*`, 14 agregados)
+
+Os 14 agregados da antiga Variable `IBGE_CONFIGURACOES` viraram lista na DAG.
+Comparado com o macro `ibge_v3_tipado` aplicado à staging nova (variável,
+localidade, classificação, categoria, período, valor):
+
+| Agregado | Antigo | Novo (2 ingestões) | Diferenças |
+|---|---|---|---|
+| pib_construcao, pib_consolidado, pib_corrente, paic ×3, pnad ×2, pnadc ×3, pim_pf, pmc | — | o dobro do antigo | nenhuma |
+| sinapi | 120 (202403-202608) | 240 (202404-202609) | a janela de 30 meses andou um mês |
+
+- A staging nova tem duas ingestões do dia (a das 06:00, criada pelo scheduler ao
+  despausar, e a manual); o `merge` deduplica. Como conjunto, os valores são
+  idênticos aos da staging antiga.
+- O `IbgeV3Converter` foi conferido linha a linha contra o
+  `ClienteIBGE.transformar_resposta` numa resposta real (80 de 80 iguais), e o
+  macro reproduz as colunas e os tipos do parquet antigo.
+- No SINAPI, o 202403 saiu da janela da API; com o `merge`, ele continua no bronze
+  pelas ingestões anteriores.
+
+### PNAD-C via SIDRA (`ibge/pnad_construcao_*`, reserva da v3)
+
+| | Antigo (01/09/2026) | Novo (09/10/2026) |
+|---|---|---|
+| Ocupados | 24 (202508-202607) | 24 (202509-202608) |
+| Rendimento | 24 (202508-202607) | 24 (202509-202608) |
+
+- Ocupados: idênticos, com a janela um mês adiante.
+- Rendimento: valores de meses já publicados mudaram (202603 Total: 3.690 →
+  3.689). Conferido: a SIDRA e a v3 consultadas hoje dão os mesmos 24 valores; a
+  staging antiga é de uma divulgação anterior.
