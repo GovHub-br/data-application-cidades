@@ -253,3 +253,25 @@ localidade, classificação, categoria, período, valor):
 - Rendimento: valores de meses já publicados mudaram (202603 Total: 3.690 →
   3.689). Conferido: a SIDRA e a v3 consultadas hoje dão os mesmos 24 valores; a
   staging antiga é de uma divulgação anterior.
+
+### Infomoney / IMOB (`infomoney/acoes_imob`)
+
+Alpha Vantage `TIME_SERIES_DAILY` (`compact`, ~100 pregões), símbolo e chave da
+Variable `api_key_alphavantage`; `key_column` explode a data do pregão em linha.
+`merge` por `data_pregao`. O histórico que a DAG antiga acumulava no Postgres
+entrou pela partição inicial (`scripts/ingestion/bootstrap_infomoney_imob.py`),
+datada do último `dt_ingest` da staging antiga (2026-09-01 14:44:15, Brasília).
+
+| | Antigo (01/09/2026) | Novo (merge, 09/10/2026) |
+|---|---|---|
+| Pregões | 682 (2022-12-30 a 2026-08-31) | 708 (2022-12-30 a 2026-10-08) |
+
+- 608 pregões vêm da partição inicial e 100 da API (2026-05-19 a 2026-10-08); onde
+  os dois se sobrepõem, vale a API (partição mais recente).
+- Nenhum pregão antigo ficou de fora, e os fechamentos dos pregões comuns são
+  idênticos.
+- A staging antiga mistura formatos (`1293.78`, `964,38`, `1.069,84`) e `dt_ingest`
+  com e sem fuso; a partição inicial preserva o texto, e a prata continua tipando
+  com `parse_financial_value`.
+- Em produção, o script roda uma vez, antes da primeira execução da DAG nova:
+  `python scripts/ingestion/bootstrap_infomoney_imob.py --executar`.
