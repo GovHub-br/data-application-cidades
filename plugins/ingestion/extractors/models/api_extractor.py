@@ -20,8 +20,8 @@ class ApiExtractor(Extractor):
     """Faz cada chamada de `config.requests` e grava o corpo em `<name>.json`.
 
     O corpo não passa por `json()`: a raw guarda o texto que a API mandou, e
-    achatar ou tipar é trabalho do dbt. Uma resposta que declara Content-Type não
-    JSON é repetida e, se persistir, falha a extração (ver `fetch`).
+    achatar ou tipar é trabalho do dbt. Uma resposta que declara página (HTML/XML)
+    é repetida e, se persistir, falha a extração (ver `fetch`).
 
     Nenhuma fonte do cidades pagina hoje; quando uma paginar, a paginação entra aqui
     como mais um campo da configuração.

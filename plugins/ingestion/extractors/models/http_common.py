@@ -40,8 +40,8 @@ class _ServerError(_Retryable):
 
 
 class _NotJson(_Retryable):
-    """2xx com corpo que não é JSON numa API JSON: página de erro servida como
-    sucesso (o SGS do BACEN faz isso de forma intermitente).
+    """2xx com página HTML/XML numa API JSON: página de erro servida como sucesso
+    (o SGS do BACEN faz isso de forma intermitente).
     """
 
     def __init__(self, content_type: str) -> None:
@@ -49,9 +49,12 @@ class _NotJson(_Retryable):
 
 
 def _declares_non_json(response: requests.Response) -> str | None:
-    """O Content-Type, se a resposta declarar um que não é JSON; senão None."""
+    """O Content-Type, se a resposta declarar uma página (HTML/XML); senão None.
+
+    Só página conta: há API que serve JSON como `text/plain` (o Power BI público).
+    """
     content_type = response.headers.get("Content-Type", "")
-    if content_type and "json" not in content_type.lower():
+    if any(kind in content_type.lower() for kind in ("html", "xml")):
         return content_type
     return None
 
@@ -106,7 +109,7 @@ def fetch(
 
     404 vira SourceNotFoundError; outro 4xx, ExtractionError sem retry (repetir não
     muda a resposta); 5xx que persiste, ExtractionError com o último status. Com
-    `expect_json`, um 2xx que declara Content-Type não JSON também é repetido e, se
+    `expect_json`, um 2xx que declara página (HTML/XML) também é repetido e, se
     persistir, vira ExtractionError: a raw nunca guarda uma página de erro como dado.
     """
     hook = hooks.for_method(request.method)

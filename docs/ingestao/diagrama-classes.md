@@ -285,8 +285,9 @@ classDiagram
 - **Fonte pública × fonte com segredo:** fonte HTTP pública declara `base_url` na
   DAG, e o `HttpHooks` monta a Connection em memória; `conn_id` fica para fonte
   com credencial. Nada de Connection por fonte no `.env`.
-- **`api` só aceita JSON:** 2xx com `Content-Type` não JSON (a página de erro que
-  o SGS do BACEN devolve com 200) entra no retry e, se persistir, falha.
+- **`api` não guarda página de erro:** 2xx que declara HTML/XML (a página que o
+  SGS do BACEN devolve com 200) entra no retry e, se persistir, falha. JSON
+  servido como `text/plain` (Power BI público) passa.
 - **`fgvdados`:** login OutSystems + navegação ASP.NET numa `requests.Session`
   própria (o HttpHook abre sessão nova a cada chamada); credenciais de duas
   Variables, lidas na task.

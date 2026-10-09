@@ -123,3 +123,17 @@ def test_http_source_needs_a_connection_or_a_base_url(source: str) -> None:
 
     with pytest.raises(ValueError, match="conn_id ou base_url"):
         ExtractorFactory.create(config, ingestion_time=WHEN)
+
+
+def test_json_served_as_text_plain_is_accepted(
+    http_server: FakeHttpServer, tmp_path: Path
+) -> None:
+    # O Power BI público responde JSON com Content-Type text/plain.
+    route = http_server.routes["/querydata"] = Route(
+        body=b'{"results": []}', headers={"Content-Type": "text/plain; charset=utf-8"}
+    )
+
+    assert _extract(tmp_path, HttpRequest(name="q", endpoint="/querydata")) == [
+        b'{"results": []}'
+    ]
+    assert route.calls == 1
