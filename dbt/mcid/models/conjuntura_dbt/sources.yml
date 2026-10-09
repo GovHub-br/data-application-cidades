@@ -194,6 +194,12 @@ sources:
           caminho: staging/infomoney/acoes_imob.parquet
           dag: imob_ingest_dag
           linhas_minimas: 336   # metade do observado em 2026-08-29 (673)
+      - name: mrv_planilha_interativa
+        description: "Planilha Interativa do RI da MRV: dados operacionais (lançamentos, vendas…) por trimestre."
+        meta:
+          caminho: staging/mrv/planilha_interativa
+          load_mode: overwrite   # cada edição traz todos os trimestres em colunas
+          dag: mrv_planilha_interativa_ingest_dag
       - name: novo_caged
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
