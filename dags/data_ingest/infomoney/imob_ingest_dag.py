@@ -2,7 +2,7 @@
 
 Fonte: API do Alpha Vantage (`TIME_SERIES_DAILY`, `outputsize=compact`). O
 símbolo e a chave vêm da Variable `api_key_alphavantage` (`acao`, `api_key`),
-lida só dentro da task. A resposta traz a data do pregão como CHAVE de objeto
+lida dentro da task de extração. A resposta traz a data do pregão como CHAVE de objeto
 (`{"Time Series (Daily)": {"2026-10-08": {...}}}`); a conversão explode as
 chaves em linhas (`key_column`).
 
@@ -16,44 +16,40 @@ Limite de chamadas atingido: a API responde 200 com uma mensagem no lugar da
 série; a conversão não acha `Time Series (Daily)` e falha, sem publicar nada.
 """
 
+from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import Variable, dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import HttpRequest, api
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
 
-def alpha_vantage(_: object = None) -> ExtractorConfig:
-    """Uma chamada por símbolo da Variable; chamada só dentro da task."""
-    config = Variable.get("api_key_alphavantage", deserialize_json=True)
-    symbol = config["acao"]
-    return ExtractorConfig(
-        source="api",
-        base_url="https://www.alphavantage.co",
-        requests=(
-            HttpRequest(
-                name=symbol,
-                endpoint="/query",
-                params={
-                    "function": "TIME_SERIES_DAILY",
-                    "symbol": symbol,
-                    "outputsize": "compact",
-                    "apikey": config["api_key"],
-                },
-            ),
-        ),
-    )
+def cotacao_diaria(alpha: Mapping[str, str]) -> list[HttpRequest]:
+    """A série diária do símbolo da Variable (`acao`), com a chave dela (`api_key`)."""
+    return [
+        HttpRequest(
+            name=alpha["acao"],
+            endpoint="/query",
+            params={
+                "function": "TIME_SERIES_DAILY",
+                "symbol": alpha["acao"],
+                "outputsize": "compact",
+                "apikey": alpha["api_key"],
+            },
+        )
+    ]
 
 
-DATASET = DatasetSpec(
+ACOES_IMOB = DatasetSpec(
     domain="infomoney",
     dataset="acoes_imob",
-    extractor=alpha_vantage,
+    extractor=api(base_url="https://www.alphavantage.co", requests=cotacao_diaria),
     converter=ConverterConfig(
         record_path="Time Series (Daily)", key_column="data_pregao"
     ),
@@ -78,12 +74,16 @@ DATASET = DatasetSpec(
 )
 def infomoney_imob_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        alpha = Variable.get("api_key_alphavantage", deserialize_json=True)
+        try:
+            return steps.extract_to_raw(ACOES_IMOB, context["dag_run"].run_after, [alpha])
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(ACOES_IMOB, raw)
 
     convert_to_staging(extract_to_raw())
 
