@@ -44,9 +44,13 @@ def http_session(*, flow: Any) -> ExtractorConfig | ExtractorFromEntry:
     return _build("http_session", session=flow)
 
 
-def email(*, mail: Any) -> ExtractorConfig | ExtractorFromEntry:
-    """Anexos do e-mail do dia (`EmailAttachmentExtractor`, sobre o `ImapHook`)."""
-    return _build("email", mail=mail)
+def email(*, mail: Any, conn_id: str = "") -> ExtractorConfig | ExtractorFromEntry:
+    """Anexos do e-mail do dia (`EmailAttachmentExtractor`, sobre o `ImapHook`).
+
+    `conn_id` é a Connection do IMAP; com `mail.credentials_variable`, ela é montada
+    em tempo de execução a partir da Variable.
+    """
+    return _build("email", mail=mail, conn_id=conn_id)
 
 
 def object_storage(*, objects: Any) -> ExtractorConfig | ExtractorFromEntry:

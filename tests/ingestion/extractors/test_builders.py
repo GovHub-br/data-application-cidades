@@ -25,7 +25,9 @@ def test_literal_arguments_give_the_extractor_config_itself() -> None:
         source="http_file", conn_id="fonte", requests=REQUEST
     )
     mail = MailQuery(subject="Relatório")
-    assert email(mail=mail) == ExtractorConfig(source="email", mail=mail)
+    assert email(mail=mail, conn_id="imap") == ExtractorConfig(
+        source="email", mail=mail, conn_id="imap"
+    )
     objects = ObjectQuery(prefix="raw/abecip/", pattern=".*")
     assert object_storage(objects=objects) == ExtractorConfig(
         source="object_storage", objects=objects
