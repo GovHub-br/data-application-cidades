@@ -11,7 +11,7 @@ import pytest
 from ingestion.converters import ConversionError, ConverterFactory
 from tests.ingestion.dags.conftest import load_dag_module
 
-IBGE_V3 = load_dag_module("data_ingest/ibge/ibge_ingest_dag.py").IBGE_V3
+IBGE_V3 = load_dag_module("data_ingest/ibge/ibge_ingest_dag.py").AGREGADO.converter
 
 PAYLOAD = [
     {

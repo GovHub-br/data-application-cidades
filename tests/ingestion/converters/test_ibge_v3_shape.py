@@ -17,11 +17,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def test_dag_shape_reproduces_the_flattening_the_pratas_expect(tmp_path: Path) -> None:
-    [spec] = [
-        s
-        for s in load_dag_module("data_ingest/ibge/ibge_ingest_dag.py").DATASETS
-        if s.dataset == "pib_construcao"
-    ]
+    spec = load_dag_module("data_ingest/ibge/ibge_ingest_dag.py").AGREGADO
     source = FIXTURES / "ibge_v3_pib_construcao.json"
     expected = json.loads((FIXTURES / "ibge_v3_pib_construcao.expected.json").read_text())
 

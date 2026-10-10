@@ -1,69 +1,62 @@
-"""DAG do IBGE (API v3) no pipeline novo: a lista de agregados vive no código."""
+"""DAG do IBGE (API v3 de agregados): a lista vem da Variable IBGE_AGREGADOS."""
 
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.loaders import LoadMode
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
     load_dag_module,
+    nothing_new,
     record_steps,
     run_task,
 )
 
-TABELAS = {
-    "pib_construcao",
-    "sinapi",
-    "pib_consolidado_trimestral_bruto",
-    "pib_corrente_milhoes_brl",
-    "paic_resultados",
-    "paic_pessoal_salarial",
-    "paic_obras",
-    "pnad_trabalho_construcao",
-    "pnad_rendimento_construcao",
-    "pnadc_populacao_decis_renda",
-    "pnadc_rendimento_domiciliar_real",
-    "pnadc_habitacao_condicao",
-    "ibge_pim_pf_brasil",
-    "ibge_pmc_construcao",
-}
+REPO = Path(__file__).resolve().parents[3]
+AGREGADOS = json.loads((REPO / "infra/airflow/variables/IBGE_AGREGADOS.json").read_text())
+# As chamadas que a DAG fazia antes da Variable nova (mesmo endpoint, mesmos params).
+CHAMADAS = json.loads(
+    (Path(__file__).parent / "fixtures/ibge_chamadas_v3.json").read_text()
+)
+
+
+class FakeVariable:
+    reads: list[str] = []
+
+    @classmethod
+    def get(cls, key: str, **kwargs: Any) -> Any:
+        cls.reads.append(key)
+        return AGREGADOS
 
 
 @pytest.fixture
-def module() -> Any:
-    return load_dag_module("data_ingest/ibge/ibge_ingest_dag.py")
+def module(monkeypatch: pytest.MonkeyPatch) -> Any:
+    loaded = load_dag_module("data_ingest/ibge/ibge_ingest_dag.py")
+    monkeypatch.setattr(FakeVariable, "reads", [])
+    monkeypatch.setattr(loaded, "Variable", FakeVariable)
+    return loaded
 
 
-def test_dag_identity_and_one_task_group_per_dataset(module: Any) -> None:
+def test_two_declared_tasks(module: Any) -> None:
     dag = module.dag_instance
 
     assert dag.dag_id == "ibge_ingest_dag"
     assert dag.schedule == "0 6 * * *"
-    assert dag.catchup is False and dag.max_active_runs == 1
+    assert dag.default_args["owner"] == "Mateus"
     assert {"ibge", "conjuntura", "ingestion"} <= set(dag.tags)
-    assert {spec.dataset for spec in module.DATASETS} == TABELAS
-    for dataset in TABELAS:
-        convert = dag.task_dict[f"{dataset}.convert_to_staging"]
-        assert convert.upstream_task_ids == {f"{dataset}.extract_to_raw"}
+    assert set(dag.task_dict) == {"extract_to_raw", "convert_to_staging"}
+    assert dag.task_dict["convert_to_staging"].upstream_task_ids == {"extract_to_raw"}
 
 
-def test_dataset_with_classification(module: Any) -> None:
-    spec = {s.dataset: s for s in module.DATASETS}["pib_construcao"]
-    config = spec.extractor_config()
-    [request] = config.requests
+def test_the_dataset_spec_merges_by_the_flattened_keys(module: Any) -> None:
+    spec = module.AGREGADO
 
-    assert config.base_url == "https://servicodados.ibge.gov.br"
-    assert request.endpoint == (
-        "/api/v3/agregados/5932/periodos/-20/variaveis/6564|6563|6562|6561"
-    )
-    assert dict(request.params) == {
-        "localidades": "N1[1]",
-        "classificacao": "11255[90694]",
-    }
-    assert spec.converter.nested == ("resultados", "series")
-    assert spec.converter.explode_keys == "serie"
-    # Janela parcial (-20 períodos): o histórico se acumula pelo merge.
+    assert FakeVariable.reads == []  # nada lido no parse
+    assert spec.domain == "ibge"
     assert spec.load_mode is LoadMode.MERGE
     assert spec.keys == (
         "variavel_id",
@@ -72,34 +65,69 @@ def test_dataset_with_classification(module: Any) -> None:
         "categoria_id",
         "periodo",
     )
+    assert spec.converter.nested == ("resultados", "series")
+    assert spec.converter.explode_keys == "serie"
 
 
-def test_dataset_without_classification_and_with_two_categories(module: Any) -> None:
-    specs = {s.dataset: s for s in module.DATASETS}
-    [sinapi] = specs["sinapi"].extractor_config().requests
-    [pnad] = specs["pnad_trabalho_construcao"].extractor_config().requests
+def test_each_entry_is_the_same_v3_call_as_before(module: Any) -> None:
+    assert [e["dataset"] for e in AGREGADOS] == list(CHAMADAS)
+    for entrada in AGREGADOS:
+        spec = module.AGREGADO.resolve(entrada)
+        config = spec.extractor_config()
+        [request] = config.requests
 
-    assert dict(sinapi.params) == {"localidades": "N1[1]"}
-    assert sinapi.endpoint.endswith("/2296/periodos/-30/variaveis/48|1196|1197|1198")
-    # A API separa variáveis por "|" e categorias por ",".
-    assert dict(pnad.params)["classificacao"] == "888[47946,47949]"
+        assert spec.dataset == entrada["dataset"]
+        assert (config.source, config.base_url) == (
+            "api",
+            "https://servicodados.ibge.gov.br",
+        )
+        assert {"endpoint": request.endpoint, "params": dict(request.params)} == (
+            CHAMADAS[entrada["dataset"]]
+        )
 
 
-def test_tasks_only_call_the_pipeline_steps(
+@pytest.mark.parametrize(
+    ("entrada", "erro"),
+    [
+        (
+            {
+                "dataset": "x",
+                "agregado": 1,
+                "variaveis": [1],
+                "periodos": 5,
+                "classificacao": {"1": "all", "2": "all"},
+            },
+            "uma classificação",
+        ),
+        ({"dataset": "x", "agregado": 1, "periodos": 5}, "variaveis"),
+        (
+            {"dataset": "x", "agregado": 1, "variaveis": [1], "periodos": 5, "a": 1},
+            "desconhecido",
+        ),
+    ],
+)
+def test_a_wrong_entry_is_an_error(module: Any, entrada: Any, erro: str) -> None:
+    with pytest.raises(ValueError, match=erro):
+        module.agregado(entrada)
+
+
+def test_tasks_read_the_variable_and_only_call_the_pipeline_steps(
     module: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     calls = record_steps(module, monkeypatch)
     dag = module.dag_instance
 
-    for spec in module.DATASETS:
-        raw = run_task(dag, f"{spec.dataset}.extract_to_raw")
-        run_task(dag, f"{spec.dataset}.convert_to_staging", raw)
+    run_task(dag, "convert_to_staging", run_task(dag, "extract_to_raw"))
 
+    assert FakeVariable.reads == ["IBGE_AGREGADOS", "IBGE_AGREGADOS"]
     assert calls == [
-        call
-        for spec in module.DATASETS
-        for call in (
-            ("extract_to_raw", spec, RUN_AFTER),
-            ("convert_to_staging", spec, "raw/x/"),
-        )
+        ("extract_to_raw", module.AGREGADO, RUN_AFTER, AGREGADOS),
+        ("convert_to_staging", module.AGREGADO, "raw/x/", AGREGADOS),
     ]
+
+
+def test_nothing_new_is_a_skip(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    nothing_new(module, monkeypatch)
+
+    with pytest.raises(AirflowSkipException):
+        run_task(module.dag_instance, "extract_to_raw")

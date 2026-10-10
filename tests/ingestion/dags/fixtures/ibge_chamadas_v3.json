@@ -1,0 +1,94 @@
+{
+  "pib_construcao": {
+    "endpoint": "/api/v3/agregados/5932/periodos/-20/variaveis/6564|6563|6562|6561",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "11255[90694]"
+    }
+  },
+  "sinapi": {
+    "endpoint": "/api/v3/agregados/2296/periodos/-30/variaveis/48|1196|1197|1198",
+    "params": {
+      "localidades": "N1[1]"
+    }
+  },
+  "pib_consolidado_trimestral_bruto": {
+    "endpoint": "/api/v3/agregados/2072/periodos/-20/variaveis/933",
+    "params": {
+      "localidades": "N1[1]"
+    }
+  },
+  "pib_corrente_milhoes_brl": {
+    "endpoint": "/api/v3/agregados/1846/periodos/-20/variaveis/585",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "11255[all]"
+    }
+  },
+  "paic_resultados": {
+    "endpoint": "/api/v3/agregados/585/periodos/-10/variaveis/632|1908|1924",
+    "params": {
+      "localidades": "N1[1]"
+    }
+  },
+  "paic_pessoal_salarial": {
+    "endpoint": "/api/v3/agregados/586/periodos/-10/variaveis/631|1816|673|1780",
+    "params": {
+      "localidades": "N1[1]"
+    }
+  },
+  "paic_obras": {
+    "endpoint": "/api/v3/agregados/591/periodos/-10/variaveis/1930|1931|1932",
+    "params": {
+      "localidades": "N1[1]"
+    }
+  },
+  "pnad_trabalho_construcao": {
+    "endpoint": "/api/v3/agregados/6323/periodos/-12/variaveis/4090",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "888[47946,47949]"
+    }
+  },
+  "pnad_rendimento_construcao": {
+    "endpoint": "/api/v3/agregados/6391/periodos/-12/variaveis/5932",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "888[47946,47949]"
+    }
+  },
+  "pnadc_populacao_decis_renda": {
+    "endpoint": "/api/v3/agregados/7521/periodos/-5/variaveis/606",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "1019[all]"
+    }
+  },
+  "pnadc_rendimento_domiciliar_real": {
+    "endpoint": "/api/v3/agregados/7531/periodos/-5/variaveis/10824",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "1019[all]"
+    }
+  },
+  "pnadc_habitacao_condicao": {
+    "endpoint": "/api/v3/agregados/6821/periodos/-5/variaveis/162|10114",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "63[4343,1055,2519,1058]"
+    }
+  },
+  "ibge_pim_pf_brasil": {
+    "endpoint": "/api/v3/agregados/8886/periodos/-30/variaveis/12606|11602|11603|11604",
+    "params": {
+      "localidades": "N1[1]"
+    }
+  },
+  "ibge_pmc_construcao": {
+    "endpoint": "/api/v3/agregados/8757/periodos/-30/variaveis/7169|7170|11708|11709|11710|11711",
+    "params": {
+      "localidades": "N1[1]",
+      "classificacao": "11046[56732]"
+    }
+  }
+}
