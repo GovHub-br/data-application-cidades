@@ -29,10 +29,11 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig
+from ingestion.extractors import http_session
 from ingestion.extractors.models.http_common import LegacyTlsAdapter
 from ingestion.extractors.session import (
     Contains,
@@ -47,7 +48,7 @@ from ingestion.extractors.session import (
     SetHeaders,
 )
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
 AUTH = "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
 LEGACY = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/"
@@ -374,10 +375,10 @@ def fluxo(auth: str = AUTH, legacy: str = LEGACY) -> HttpSession:
     )
 
 
-DATASET = DatasetSpec(
+ICST = DatasetSpec(
     domain="fgv",
     dataset="icst",
-    extractor=ExtractorConfig(source="http_session", session=fluxo()),
+    extractor=http_session(flow=fluxo()),
     converter=ConverterConfig(encoding="latin-1", delimiter=";"),
     load_mode=LoadMode.OVERWRITE,
 )
@@ -399,12 +400,15 @@ DATASET = DatasetSpec(
 )
 def icst_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(ICST, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(ICST, raw)
 
     convert_to_staging(extract_to_raw())
 
