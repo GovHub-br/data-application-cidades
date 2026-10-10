@@ -194,11 +194,16 @@ def convert_to_staging(spec: DatasetSpec, raw_prefixes: str | Sequence[str]) -> 
     """Converte as partições da raw para a staging, em ordem, e devolve o `latest/`.
 
     Cada partição convertida é publicada no `latest/`: ao fim, ele tem a última, e
-    o manifesto dele aponta a anterior como antecessora.
+    o manifesto dele aponta a anterior como antecessora. Com `spec.incremental`,
+    também converte, em ordem, as ingestões que ficaram na raw sem staging (a
+    execução caiu entre o pouso e a conversão, e a extração seguinte não as baixa
+    de novo).
     """
     prefixes = [raw_prefixes] if isinstance(raw_prefixes, str) else list(raw_prefixes)
     latest = latest_prefix(spec.domain, spec.dataset)
     storage = storage_from_env()
+    if spec.incremental:
+        prefixes = sorted(set(prefixes) | set(_without_staging(storage, spec)))
     for prefix in prefixes:
         partition = _partition(spec, prefix)
         with tempfile.TemporaryDirectory(prefix="convert-", dir=_work_root()) as work:
@@ -211,6 +216,20 @@ def convert_to_staging(spec: DatasetSpec, raw_prefixes: str | Sequence[str]) -> 
                 work_dir=Path(work),
             )
     return latest
+
+
+def _without_staging(storage: StorageBackend, spec: DatasetSpec) -> list[str]:
+    """Partições completas da raw cuja staging não tem `_SUCCESS`."""
+    base = f"raw/{spec.domain}/{spec.dataset}/"
+    pending = []
+    for key in storage.list(base):
+        if not key.endswith("/" + SUCCESS_MARKER):
+            continue
+        prefix = key[: -len(SUCCESS_MARKER)]
+        staged = staging_prefix(spec.domain, spec.dataset, _partition(spec, prefix))
+        if not storage.exists(staged + SUCCESS_MARKER):
+            pending.append(prefix)
+    return pending
 
 
 def _partition(spec: DatasetSpec, prefix: str) -> str:

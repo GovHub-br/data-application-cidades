@@ -696,6 +696,7 @@ classDiagram
 - **Contrato entre tasks:** os passos trocam só prefixos de partição, um XCom pequeno.
   - `extract_to_raw` devolve as partições gravadas, `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/`, em ordem: uma por execução, ou, com `incremental`, uma por entrega nova (na ordem de chegada na fonte, com a data do pouso);
   - `convert_to_staging` converte cada uma em ordem, publica o `latest/` a cada partição (ele termina com a última, apontando a anterior como antecessora) e devolve `staging/<domain>/<dataset>/latest/`.
+  - com `incremental`, `convert_to_staging` também converte, em ordem, as ingestões que ficaram na raw sem staging (a execução caiu entre o pouso e a conversão).
 - **Manifesto da raw:** `sources` registra as origens consumidas, inclusive a que os preparos descartaram inteira (na ingestão seguinte), para a extração incremental não baixá-la de novo; `duplicates`, o mesmo nome repetido numa ingestão (fica o primeiro).
 - **Resolução em runtime:** storage, Connection e Variable (o extrator preguiçoso do `DatasetSpec`) só são resolvidos dentro dos passos.
 - **Skip:** fonte sem o dado vira `AirflowSkipException`, não falha.

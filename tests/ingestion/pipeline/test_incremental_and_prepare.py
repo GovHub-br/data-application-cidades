@@ -254,3 +254,27 @@ def test_converting_several_ingestions_leaves_the_last_in_latest(lake: Path) -> 
     marker = json.loads((lake / latest / SUCCESS_MARKER).read_text())
     staged = [p.replace("raw/", "staging/", 1) for p in (first, second)]
     assert (marker["particao"], marker["antecessor"]) == (staged[1], staged[0])
+
+
+def test_ingestions_left_without_staging_are_converted_on_the_next_run(
+    lake: Path,
+) -> None:
+    # A execução caiu depois de pousar a ingestão de b e antes de convertê-la; a
+    # próxima extração não a baixa de novo, então a conversão a recupera, em ordem.
+    spec = _spec(incremental=True)
+    SOURCE.update({"a.csv": b"v\n1\n", "b.csv": b"v\n2\n"})
+    first, orphan = steps.extract_to_raw(spec, WHEN)
+    steps.convert_to_staging(spec, [first])
+    SOURCE["c.csv"] = b"v\n3\n"
+    [third] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))
+
+    latest = steps.convert_to_staging(spec, [third])
+
+    storage = StorageFactory.create("local", root=lake)
+    staged = orphan.replace("raw/", "staging/", 1)
+    assert storage.exists(staged + SUCCESS_MARKER)
+    marker = json.loads((lake / latest / SUCCESS_MARKER).read_text())
+    assert (marker["particao"], marker["antecessor"]) == (
+        third.replace("raw/", "staging/", 1),
+        staged,
+    )
