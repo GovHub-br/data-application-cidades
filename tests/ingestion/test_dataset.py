@@ -6,7 +6,7 @@ import pytest
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import ExtractorConfig, HttpRequest, api
 from ingestion.loaders import LoadMode
 
 API = ExtractorConfig(
@@ -38,17 +38,65 @@ def test_domain_and_dataset_must_already_be_safe_path_segments(name: str) -> Non
 
 
 def test_lazy_extractor_runs_only_when_resolved() -> None:
-    calls: list[str] = []
+    calls: list[object] = []
 
-    def from_variable() -> ExtractorConfig:
-        calls.append("Variable.get")  # na DAG real, lê a Variable dentro da task
+    def from_task(entrada: object) -> ExtractorConfig:
+        calls.append(entrada)  # na DAG real, a task passa o que leu da Variable
         return API
 
-    spec = DatasetSpec(domain="bacen", dataset="sgs", extractor=from_variable)
+    spec = DatasetSpec(domain="bacen", dataset="sgs", extractor=from_task)
 
     assert calls == []  # parse da DAG: nada lido
-    assert spec.extractor_config() is API
-    assert calls == ["Variable.get"]
+    assert spec.resolve().extractor is API
+    assert calls == [{}]
+
+
+def test_a_template_resolves_one_spec_per_entry() -> None:
+    # Com Variable, os campos que dependem da entrada são funções do perfil.
+    template = DatasetSpec(
+        domain="ibge",
+        dataset=lambda entrada: entrada["dataset"],
+        extractor=api(
+            base_url="https://servicodados.ibge.gov.br",
+            requests=lambda entrada: (
+                HttpRequest(
+                    name=entrada["dataset"], endpoint=f"/agregados/{entrada['agregado']}"
+                ),
+            ),
+        ),
+        load_mode="merge",
+        keys=("periodo",),
+    )
+
+    spec = template.resolve({"dataset": "sinapi", "agregado": 2296})
+
+    assert spec.dataset == "sinapi"
+    assert spec.extractor == ExtractorConfig(
+        source="api",
+        base_url="https://servicodados.ibge.gov.br",
+        requests=(HttpRequest(name="sinapi", endpoint="/agregados/2296"),),
+    )
+    assert (spec.load_mode, spec.keys) == (LoadMode.MERGE, ("periodo",))
+
+
+def test_a_template_needs_an_entry_and_a_safe_name() -> None:
+    template = DatasetSpec(domain="ibge", dataset=lambda e: e["dataset"], extractor=API)
+
+    with pytest.raises(ValueError, match="entrada"):
+        template.resolve()
+    with pytest.raises(ValueError, match="segmento"):
+        template.resolve({"dataset": "pib/construcao"})
+
+
+def test_prepare_can_depend_on_the_entry() -> None:
+    template = DatasetSpec(
+        domain="sftp",
+        dataset=lambda e: e["dataset"],
+        extractor=API,
+        prepare=lambda e: (e["dataset"],),
+    )
+
+    assert template.resolve({"dataset": "int040"}).prepare == ("int040",)
 
 
 def test_literal_extractor_is_returned_as_is() -> None:

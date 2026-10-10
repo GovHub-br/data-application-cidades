@@ -23,7 +23,7 @@ from ingestion.loaders import LoadMode
 from ingestion.pipeline import steps
 
 
-def bacen_series() -> ExtractorConfig:
+def bacen_series(_: object = None) -> ExtractorConfig:
     """Uma chamada por série de BACEN_SERIES; chamada só dentro da task."""
     series = Variable.get("BACEN_SERIES", deserialize_json=True, default={})
     if isinstance(series, list):  # a Variable também aceita [{tipo: código}]

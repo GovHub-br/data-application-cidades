@@ -41,7 +41,7 @@ HEADERS = {
 }
 
 
-def catalogo() -> ExtractorConfig:
+def catalogo(_: object = None) -> ExtractorConfig:
     """A planilha mais recente do catálogo; os anos tentados dependem da data."""
     this_year = datetime.now(TIMEZONE).year
     return ExtractorConfig(

@@ -7,17 +7,18 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
-from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.dataset import DatasetSpec
 from ingestion.extractors import (
+    HttpRequest,
     Extractor,
     ExtractorConfig,
     ExtractorFactory,
     RawFile,
     write_stream,
+    SourceNotFoundError,
 )
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 from ingestion.storage import SUCCESS_MARKER, StorageFactory
 
 WHEN = datetime(2026, 10, 8, 9, 0, tzinfo=timezone.utc)
@@ -92,7 +93,7 @@ def _spec(**kwargs: object) -> DatasetSpec:
 def test_source_id_goes_to_the_manifest(lake: Path) -> None:
     SOURCE["a.csv"] = b"x"
 
-    [prefix] = steps.extract_to_raw(_spec(), WHEN)
+    [prefix] = steps.extract_to_raw(_spec(), WHEN)["teste"]
 
     assert _manifest(lake, prefix)[0]["source_id"] == "a.csv:1"
 
@@ -100,7 +101,7 @@ def test_source_id_goes_to_the_manifest(lake: Path) -> None:
 def test_without_incremental_the_run_is_one_ingestion(lake: Path) -> None:
     SOURCE.update({"a.csv": b"x", "b.csv": b"y"})
 
-    [prefix] = steps.extract_to_raw(_spec(), WHEN)
+    [prefix] = steps.extract_to_raw(_spec(), WHEN)["teste"]
 
     storage = StorageFactory.create("local", root=lake)
     assert storage.list(prefix) == [
@@ -117,7 +118,7 @@ def test_incremental_lands_each_delivery_as_its_own_ingestion_in_order(
     # extrator as entrega (a de chegada na fonte), cada uma com o seu _SUCCESS.
     SOURCE.update({"a.csv": b"x", "b.csv": b"y", "c.csv": b"z"})
 
-    prefixes = steps.extract_to_raw(_spec(incremental=True), WHEN)
+    prefixes = steps.extract_to_raw(_spec(incremental=True), WHEN)["teste"]
 
     storage = StorageFactory.create("local", root=lake)
     assert [storage.list(p) for p in prefixes] == [
@@ -137,16 +138,16 @@ def test_incremental_lands_each_delivery_as_its_own_ingestion_in_order(
 def test_incremental_run_lands_only_what_is_new(lake: Path) -> None:
     spec = _spec(incremental=True)
     SOURCE.update({"a.csv": b"x", "b.csv": b"y"})
-    first = steps.extract_to_raw(spec, WHEN)
+    first = steps.extract_to_raw(spec, WHEN)["teste"]
     SOURCE["c.csv"] = b"z"
 
-    [second] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))
+    [second] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))["teste"]
 
     assert SEEN_BY_EXTRACTOR == [frozenset(), frozenset({"a.csv:1", "b.csv:1"})]
     storage = StorageFactory.create("local", root=lake)
     assert storage.list(second) == [second + SUCCESS_MARKER, second + "c.csv"]
     assert second > max(first)
-    with pytest.raises(AirflowSkipException):
+    with pytest.raises(NothingNew):
         steps.extract_to_raw(spec, WHEN + timedelta(days=2))
 
 
@@ -162,7 +163,7 @@ def test_without_incremental_everything_lands_again(lake: Path) -> None:
 def test_prepare_steps_run_in_order_before_landing(lake: Path, tmp_path: Path) -> None:
     SOURCE["a.csv"] = b"abc"
 
-    [prefix] = steps.extract_to_raw(_spec(prepare=(_Split(), _Upper())), WHEN)
+    [prefix] = steps.extract_to_raw(_spec(prepare=(_Split(), _Upper())), WHEN)["teste"]
 
     storage = StorageFactory.create("local", root=lake)
     assert storage.list(prefix) == [
@@ -191,7 +192,7 @@ def test_a_source_that_the_prepare_drops_is_not_downloaded_again(lake: Path) -> 
     # seguinte, para não ser baixado de novo.
     spec = _spec(incremental=True, prepare=(_OnlyB(),))
     SOURCE.update({"a.zip": b"x", "b.csv": b"y"})
-    [prefix] = steps.extract_to_raw(spec, WHEN)
+    [prefix] = steps.extract_to_raw(spec, WHEN)["teste"]
     SOURCE["b2.csv"] = b"z"
 
     steps.extract_to_raw(spec, WHEN + timedelta(days=1))
@@ -218,7 +219,7 @@ class _Unwrap:
 def test_the_same_name_twice_in_one_ingestion_keeps_the_first(lake: Path) -> None:
     SOURCE.update({"b.csv": b"solta", "pacote_x": b"do pacote"})
 
-    [prefix] = steps.extract_to_raw(_spec(prepare=(_Unwrap(),)), WHEN)
+    [prefix] = steps.extract_to_raw(_spec(prepare=(_Unwrap(),)), WHEN)["teste"]
 
     assert (lake / prefix / "b.csv").read_bytes() == b"solta"
     marker = json.loads((lake / prefix / SUCCESS_MARKER).read_text())
@@ -233,7 +234,7 @@ def test_the_same_name_in_two_deliveries_is_two_ingestions(lake: Path) -> None:
 
     first, second = steps.extract_to_raw(
         _spec(incremental=True, prepare=(_Unwrap(),)), WHEN
-    )
+    )["teste"]
 
     assert (lake / first / "b.csv").read_bytes() == b"solta"
     assert (lake / second / "b.csv").read_bytes() == b"do pacote"
@@ -242,9 +243,9 @@ def test_the_same_name_in_two_deliveries_is_two_ingestions(lake: Path) -> None:
 def test_converting_several_ingestions_leaves_the_last_in_latest(lake: Path) -> None:
     SOURCE.update({"a.csv": b"v\n1\n", "b.csv": b"v\n2\n"})
     spec = _spec(incremental=True)
-    first, second = steps.extract_to_raw(spec, WHEN)
+    first, second = steps.extract_to_raw(spec, WHEN)["teste"]
 
-    latest = steps.convert_to_staging(spec, [first, second])
+    latest = steps.convert_to_staging(spec, {"teste": [first, second]})["teste"]
 
     storage = StorageFactory.create("local", root=lake)
     assert [k.rsplit("/", 1)[-1] for k in storage.list(latest)] == [
@@ -263,12 +264,12 @@ def test_ingestions_left_without_staging_are_converted_on_the_next_run(
     # próxima extração não a baixa de novo, então a conversão a recupera, em ordem.
     spec = _spec(incremental=True)
     SOURCE.update({"a.csv": b"v\n1\n", "b.csv": b"v\n2\n"})
-    first, orphan = steps.extract_to_raw(spec, WHEN)
-    steps.convert_to_staging(spec, [first])
+    first, orphan = steps.extract_to_raw(spec, WHEN)["teste"]
+    steps.convert_to_staging(spec, {"teste": [first]})
     SOURCE["c.csv"] = b"v\n3\n"
-    [third] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))
+    [third] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))["teste"]
 
-    latest = steps.convert_to_staging(spec, [third])
+    latest = steps.convert_to_staging(spec, {"teste": [third]})["teste"]
 
     storage = StorageFactory.create("local", root=lake)
     staged = orphan.replace("raw/", "staging/", 1)
@@ -278,3 +279,95 @@ def test_ingestions_left_without_staging_are_converted_on_the_next_run(
         third.replace("raw/", "staging/", 1),
         staged,
     )
+
+
+# Várias entradas: a lista da Variable da DAG, um dataset por entrada.
+FILES: dict[str, dict[str, bytes]] = {}
+EXTRACTED: list[str] = []
+
+
+@ExtractorFactory.register("teste_entradas")
+class _PerDataset(Extractor):
+    """Fonte de teste: os arquivos de FILES[<request>]; "erro" quebra, "ausente" é 404."""
+
+    def extract(self, work_dir: Path) -> Iterator[RawFile]:
+        [request] = self.config.requests
+        EXTRACTED.append(request.name)
+        if request.name == "erro":
+            raise RuntimeError("HTTP 500")
+        if request.name == "ausente":
+            raise SourceNotFoundError("404")
+        for name, body in FILES.get(request.name, {}).items():
+            yield write_stream([body], work_dir / name, name)
+
+
+def _por_entrada(**kwargs: object) -> DatasetSpec:
+    return DatasetSpec(
+        domain="ibge",
+        dataset=lambda entrada: entrada["dataset"],
+        extractor=lambda entrada: ExtractorConfig(
+            source="teste_entradas",
+            requests=(HttpRequest(name=entrada["dataset"], endpoint="/"),),
+        ),
+        **kwargs,
+    )
+
+
+@pytest.fixture
+def entradas(lake: Path) -> Iterator[None]:
+    FILES.clear()
+    EXTRACTED.clear()
+    yield
+
+
+def test_one_dataset_per_entry_in_order(lake: Path, entradas: None) -> None:
+    FILES.update({"sinapi": {"s.json": b"[]"}, "paic": {"p.json": b"[]"}})
+
+    landed = steps.extract_to_raw(
+        _por_entrada(), WHEN, [{"dataset": "sinapi"}, {"dataset": "paic"}]
+    )
+
+    assert list(landed) == ["sinapi", "paic"]
+    assert [p.split("/")[2] for [p] in landed.values()] == ["sinapi", "paic"]
+
+
+def test_the_first_error_stops_the_run(lake: Path, entradas: None) -> None:
+    FILES["paic"] = {"p.json": b"[]"}
+
+    with pytest.raises(RuntimeError, match="500"):
+        steps.extract_to_raw(
+            _por_entrada(), WHEN, [{"dataset": "erro"}, {"dataset": "paic"}]
+        )
+    assert EXTRACTED == ["erro"]
+
+
+def test_a_dataset_without_data_is_not_an_error(lake: Path, entradas: None) -> None:
+    FILES["paic"] = {"p.json": b"[]"}
+
+    landed = steps.extract_to_raw(
+        _por_entrada(), WHEN, [{"dataset": "ausente"}, {"dataset": "paic"}]
+    )
+
+    assert list(landed) == ["paic"]
+
+
+def test_nothing_new_in_any_dataset(lake: Path, entradas: None) -> None:
+    with pytest.raises(NothingNew):
+        steps.extract_to_raw(_por_entrada(), WHEN, [{"dataset": "ausente"}])
+
+
+def test_convert_only_the_datasets_that_landed(lake: Path, entradas: None) -> None:
+    FILES["paic"] = {"p.json": b'[{"a": "1"}]'}
+    lista = [{"dataset": "ausente"}, {"dataset": "paic"}]
+    landed = steps.extract_to_raw(_por_entrada(), WHEN, lista)
+
+    published = steps.convert_to_staging(_por_entrada(), landed, lista)
+
+    assert published == {"paic": "staging/ibge/paic/latest/"}
+
+
+def test_the_list_must_have_unique_and_some_datasets(lake: Path, entradas: None) -> None:
+    with pytest.raises(ValueError, match="repetido"):
+        steps.extract_to_raw(_por_entrada(), WHEN, [{"dataset": "a"}, {"dataset": "a"}])
+    with pytest.raises(ValueError, match="vazia"):
+        steps.extract_to_raw(_por_entrada(), WHEN, [])

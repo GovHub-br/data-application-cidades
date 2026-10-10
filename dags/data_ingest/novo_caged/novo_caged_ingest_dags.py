@@ -162,7 +162,7 @@ def _months() -> list[tuple[int, int]]:
 
 
 def _extractor(cnae_divisao: str | None) -> Callable[[], ExtractorConfig]:
-    def config() -> ExtractorConfig:
+    def config(_: object = None) -> ExtractorConfig:
         return ExtractorConfig(
             source="api",
             base_url="https://wabi-brazil-south-api.analysis.windows.net",

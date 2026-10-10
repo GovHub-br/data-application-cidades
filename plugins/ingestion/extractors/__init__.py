@@ -9,6 +9,15 @@ from ingestion.extractors.base_extractor import (
     describe_file,
     write_stream,
 )
+from ingestion.extractors.builders import (
+    Entry,
+    api,
+    email,
+    http_file,
+    http_session,
+    object_storage,
+    sftp,
+)
 from ingestion.extractors.config_extractor import (
     ExtractorConfig,
     HttpRequest,
@@ -20,6 +29,7 @@ from ingestion.extractors.extractor_errors import ExtractionError, SourceNotFoun
 from ingestion.extractors.extractor_registry import ExtractorFactory
 
 __all__ = [
+    "Entry",
     "ExtractionError",
     "Extractor",
     "ExtractorConfig",
@@ -30,7 +40,13 @@ __all__ = [
     "RemoteFiles",
     "RawFile",
     "SourceNotFoundError",
+    "api",
     "describe_file",
+    "email",
+    "http_file",
+    "http_session",
+    "object_storage",
+    "sftp",
     "write_stream",
 ]
 

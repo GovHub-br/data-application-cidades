@@ -6,11 +6,10 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
-from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.dataset import DatasetSpec
 from ingestion.extractors import ExtractorConfig, HttpRequest
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 from ingestion.storage import SUCCESS_MARKER, StorageFactory
 from tests.ingestion.extractors.conftest import FakeHttpServer, Route
 
@@ -51,8 +50,11 @@ def test_extract_then_convert_returns_only_prefixes(
     server.routes["/ipca"] = Route(body=b'[{"data":"01/08/2026","valor":"-0.32"}]')
     spec = _spec("/ipca")
 
-    [raw] = steps.extract_to_raw(spec, WHEN)
-    latest = steps.convert_to_staging(spec, [raw])
+    landed = steps.extract_to_raw(spec, WHEN)
+    published = steps.convert_to_staging(spec, landed)
+
+    [raw] = landed["financiamentos_imobiliarios"]
+    latest = published["financiamentos_imobiliarios"]
 
     assert raw == "raw/bacen/financiamentos_imobiliarios/2026-10-08/060005/"
     assert latest == "staging/bacen/financiamentos_imobiliarios/latest/"
@@ -61,8 +63,8 @@ def test_extract_then_convert_returns_only_prefixes(
     assert storage.exists(
         "staging/bacen/financiamentos_imobiliarios/2026-10-08/060005/ipca.parquet"
     )
-    published = lake / latest / "2026-10-08" / "060005" / "ipca.parquet"
-    assert pq.read_table(published).to_pylist() == [
+    parquet = lake / latest / "2026-10-08" / "060005" / "ipca.parquet"
+    assert pq.read_table(parquet).to_pylist() == [
         {"data": "01/08/2026", "valor": "-0.32"}
     ]
     assert not any(p.is_file() for p in (tmp_path / "tmp").rglob("*"))
@@ -74,7 +76,7 @@ def test_extractor_function_is_resolved_inside_the_step(
     server.routes["/selic"] = Route(body=b"[]")
     resolved: list[bool] = []
 
-    def from_variable() -> ExtractorConfig:
+    def from_variable(entrada: object) -> ExtractorConfig:
         resolved.append(True)
         return _spec("/selic").extractor_config()
 
@@ -88,12 +90,16 @@ def test_extractor_function_is_resolved_inside_the_step(
     assert resolved == [True]
 
 
-def test_missing_source_skips_the_task(lake: Path, server: FakeHttpServer) -> None:
-    with pytest.raises(AirflowSkipException):
+def test_missing_source_is_nothing_new(lake: Path, server: FakeHttpServer) -> None:
+    # A DAG traduz o NothingNew em skip; os passos não conhecem o Airflow.
+    with pytest.raises(NothingNew):
         steps.extract_to_raw(_spec("/nao-existe"), WHEN)
     assert StorageFactory.create("local", root=lake).list("raw/") == []
 
 
 def test_convert_refuses_a_prefix_of_another_dataset(lake: Path) -> None:
     with pytest.raises(ValueError, match="não é uma partição"):
-        steps.convert_to_staging(_spec("/x"), "raw/fgv/incc_m/2026-10-08/060005/")
+        steps.convert_to_staging(
+            _spec("/x"),
+            {"financiamentos_imobiliarios": ["raw/fgv/incc_m/2026-10-08/060005/"]},
+        )

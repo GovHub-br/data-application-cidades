@@ -28,7 +28,7 @@ from ingestion.loaders import LoadMode
 from ingestion.pipeline import steps
 
 
-def alpha_vantage() -> ExtractorConfig:
+def alpha_vantage(_: object = None) -> ExtractorConfig:
     """Uma chamada por símbolo da Variable; chamada só dentro da task."""
     config = Variable.get("api_key_alphavantage", deserialize_json=True)
     symbol = config["acao"]
