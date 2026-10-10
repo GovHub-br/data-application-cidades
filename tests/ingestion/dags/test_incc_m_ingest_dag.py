@@ -1,13 +1,17 @@
-"""DAG do INCC-M no pipeline novo: só liga os passos, toda a configuração é literal."""
+"""DAG do INCC-M: o DatasetSpec declarado e as duas tasks, que só chamam os passos."""
 
 from typing import Any
 
 import pytest
+from airflow.sdk.exceptions import AirflowSkipException
 
+from ingestion.converters import ConverterConfig
 from ingestion.loaders import LoadMode
+from ingestion.sources import fgv
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
     load_dag_module,
+    nothing_new,
     record_steps,
     run_task,
 )
@@ -18,31 +22,27 @@ def module() -> Any:
     return load_dag_module("data_ingest/fgv/incc_m_ingest_dag.py")
 
 
-def test_dag_identity_and_wiring(module: Any) -> None:
+def test_two_declared_tasks(module: Any) -> None:
     dag = module.dag_instance
 
     assert dag.dag_id == "incc_m_ingest_dag"
-    assert dag.catchup is False and dag.max_active_runs == 1
     assert dag.schedule == "0 6 * * *"
+    assert dag.catchup is False and dag.max_active_runs == 1
+    assert dag.default_args["owner"] == "Gustavo"
     assert {"fgv", "incc_m", "conjuntura", "ingestion"} <= set(dag.tags)
     assert set(dag.task_dict) == {"extract_to_raw", "convert_to_staging"}
     assert dag.task_dict["convert_to_staging"].upstream_task_ids == {"extract_to_raw"}
 
 
-def test_dataset_spec(module: Any) -> None:
-    spec = module.DATASET
-    [request] = spec.extractor_config().requests
+def test_the_dataset_spec_is_declared_in_the_dag(module: Any) -> None:
+    spec = module.INCC_M
 
-    assert (spec.domain, spec.dataset, spec.load_mode) == (
-        "fgv",
-        "incc_m",
-        LoadMode.OVERWRITE,
-    )
+    assert (spec.domain, spec.dataset) == ("fgv", "incc_m")
     assert spec.extractor_config().source == "http_file"
-    assert spec.extractor_config().base_url == "https://sindusconpr.com.br"
-    assert request.endpoint.endswith("/9547-serie-historica-incc-m-fgv/")
-    assert "Mozilla" in request.headers["User-Agent"]
-    assert spec.converter.header_row == 3
+    assert spec.extractor_config().base_url == fgv.SINDUSCON_PR
+    assert spec.extractor_config().requests == (fgv.INCC_M,)
+    assert spec.converter == ConverterConfig(header_row=3)
+    assert spec.load_mode is LoadMode.OVERWRITE
 
 
 def test_tasks_only_call_the_pipeline_steps(
@@ -56,6 +56,13 @@ def test_tasks_only_call_the_pipeline_steps(
 
     assert (raw, latest) == ("raw/x/", "staging/x/latest/")
     assert calls == [
-        ("extract_to_raw", module.DATASET, RUN_AFTER),
-        ("convert_to_staging", module.DATASET, "raw/x/"),
+        ("extract_to_raw", module.INCC_M, RUN_AFTER),
+        ("convert_to_staging", module.INCC_M, "raw/x/"),
     ]
+
+
+def test_nothing_new_is_a_skip(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    nothing_new(module, monkeypatch)
+
+    with pytest.raises(AirflowSkipException):
+        run_task(module.dag_instance, "extract_to_raw")

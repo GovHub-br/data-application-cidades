@@ -4,40 +4,32 @@ Fonte: xlsx público num link estável da Sinduscon, que redireciona para o arqu
 da edição corrente. A planilha traz a série inteira desde 1994 a cada edição.
 
 LoadMode: overwrite. A fonte reentrega a série completa, então a última ingestão é
-a verdade: revisões entram, e uma linha que a FGV tirar some do bronze. O bronze é
-`bronze_fgv_incc_m` (dbt, `select * from read_parquet` sobre o `latest/`).
+a verdade: revisões entram, e uma linha que a FGV tirar some do bronze.
 
 Estrutura do arquivo: título na linha 1, cabeçalho em duas linhas (2 e 3), dados a
-partir da 4, rodapé "Fonte: FGV" no fim. A staging lê o cabeçalho da linha 3
-(`header_row=3`) e guarda tudo como texto; renomear e descartar o rodapé é da prata.
+partir da 4, rodapé "Fonte: FGV" no fim. A staging lê o cabeçalho da linha 3 e
+guarda tudo como texto; renomear e descartar o rodapé é da prata.
 """
 
 from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import http_file
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
+from ingestion.sources import fgv
 
-DATASET = DatasetSpec(
+INCC_M = DatasetSpec(
     domain="fgv",
     dataset="incc_m",
-    extractor=ExtractorConfig(
-        source="http_file",
-        base_url="https://sindusconpr.com.br",
-        requests=(
-            HttpRequest(
-                name="incc_m",
-                endpoint="/economia/indices-economicos/incc-m-fgv/"
-                "9547-serie-historica-incc-m-fgv/",
-                # Sem User-Agent de navegador o servidor recusa a requisição.
-                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
-            ),
-        ),
+    extractor=http_file(
+        base_url=fgv.SINDUSCON_PR, 
+        requests=(fgv.INCC_M,)
     ),
     converter=ConverterConfig(header_row=3),
     load_mode=LoadMode.OVERWRITE,
@@ -52,21 +44,20 @@ DATASET = DatasetSpec(
     start_date=datetime(2023, 1, 1),
     catchup=False,
     max_active_runs=1,
-    default_args={
-        "owner": "Gustavo",
-        "retries": 1,
-        "retry_delay": timedelta(minutes=5),
-    },
+    default_args={"owner": "Gustavo", "retries": 1, "retry_delay": timedelta(minutes=5)},
     tags=["fgv", "incc_m", "construcao", "custos", "conjuntura", "ingestion"],
 )
 def incc_m_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(INCC_M, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(INCC_M, raw)
 
     convert_to_staging(extract_to_raw())
 
