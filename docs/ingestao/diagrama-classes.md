@@ -632,11 +632,21 @@ classDiagram
         +positions: Mapping~str, Mapping~int, str~~
         +secret_env: str = "MASKING_HMAC_SECRET"
     }
-    class masking {
+    class mask_keys {
         <<module>>
         +MaskingKeys(secret, token_len, redaction)
+    }
+    class mask_rules {
+        <<module>>
         +classificar(header, encoding)
+        +targets_por_posicao(mapa)
+    }
+    class mask_tabular {
+        <<module>>
         +mascarar_tabular(...)
+    }
+    class mask_xlsx {
+        <<module>>
         +mascarar_xlsx(src, dst, keys)
     }
     class text {
@@ -651,12 +661,16 @@ classDiagram
 
     Prepare <|.. Unpack
     Prepare <|.. MaskPii
-    MaskPii ..> masking
+    MaskPii ..> mask_rules
+    MaskPii ..> mask_keys
+    MaskPii ..> mask_tabular
+    MaskPii ..> mask_xlsx
     MaskPii ..> text
     Prepare ..> RawFile : RawFile para RawFile
 ```
 
 - **`Unpack`:** zip e gzip pelo conteúdo (bytes mágicos), não pela extensão: há `.zip` que é gzip, e o `.xlsx` (zip com `[Content_Types].xml`) passa como está. Do zip saem os membros que casam `members`, um por vez; `require_match=False` aceita pacote sem a família procurada. Os membros herdam o `source_id` da entrega.
+- **Tudo numa pasta (`prepare/`):** `unpack.py`, `mask.py` (o passo `MaskPii`) e as peças do mascaramento (`mask_keys`, `mask_rules`, `mask_tabular`, `mask_xlsx`), que o `scripts/mascarar_minio.py` do SharePoint também usa.
 - **`MaskPii`:** a regra do antigo `mascarar_minio` (saída idêntica byte a byte): classificação pelo cabeçalho, HMAC-SHA256 em CPF e NIS, redação de nome, endereço, CEP e nascimento; CSV/TXT reescritos em latin-1 e XLSX por XML em fluxo; `positions` para arquivo sem cabeçalho. Linha com número de campos diferente do cabeçalho é redigida inteira (a posição das colunas não vale). A auditoria vai para o manifesto (`details.masking`). A raw nunca guarda PII e não é reescrita depois.
 
 ## `pipeline`: os passos das DAGs

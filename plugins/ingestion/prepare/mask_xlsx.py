@@ -6,8 +6,8 @@ import xml.etree.ElementTree as ET
 import zipfile
 from typing import IO, Dict, List, Optional, Tuple
 
-from ingestion.masking.keys import MaskingKeys
-from ingestion.masking.rules import classificar
+from ingestion.prepare.mask_keys import MaskingKeys
+from ingestion.prepare.mask_rules import classificar
 
 
 # Processamento XLSX

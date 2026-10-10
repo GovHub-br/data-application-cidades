@@ -105,8 +105,8 @@ UNSUPPORTED = {".xls", ".zip"}
 csv.field_size_limit(2**31 - 1)
 
 # Regras de classificação, tokens e reescrita de CSV/TXT/XLSX: em
-# plugins/ingestion/masking (o mesmo código do preparo MaskPii da ingestão nova).
-from ingestion.masking import (  # noqa: E402
+# plugins/ingestion/prepare (o mesmo código do preparo MaskPii da ingestão nova).
+from ingestion.prepare import (  # noqa: E402
     MaskingKeys,
     classificar,
     mascarar_tabular,
@@ -114,8 +114,8 @@ from ingestion.masking import (  # noqa: E402
     verificar_roundtrip_tabular,
     xlsx_tem_alvo,
 )
-from ingestion.masking import targets_por_posicao as _targets_por_mapa  # noqa: E402
-from ingestion.masking.rules import _PF_INDICATOR_FORTE  # noqa: E402,F401
+from ingestion.prepare import targets_por_posicao as _targets_por_mapa  # noqa: E402
+from ingestion.prepare.mask_rules import _PF_INDICATOR_FORTE  # noqa: E402,F401
 
 KEYS = MaskingKeys(secret=HMAC_SECRET, token_len=TOKEN_LEN, redaction=REDACTION)
 

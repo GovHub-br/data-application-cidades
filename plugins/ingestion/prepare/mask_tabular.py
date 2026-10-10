@@ -3,8 +3,8 @@
 import csv
 from typing import List, Optional, Tuple
 
-from ingestion.masking.keys import MaskingKeys
-from ingestion.masking.rules import _PF_INDICATOR_CATS, classificar
+from ingestion.prepare.mask_keys import MaskingKeys
+from ingestion.prepare.mask_rules import _PF_INDICATOR_CATS, classificar
 
 
 # Processamento CSV/TXT (streaming, byte-preserving via latin-1)

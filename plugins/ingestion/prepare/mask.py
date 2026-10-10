@@ -9,14 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from ingestion.extractors import RawFile, describe_file
-from ingestion.masking import (
-    MaskingKeys,
-    mascarar_tabular,
-    mascarar_xlsx,
-    targets_por_posicao,
-    verificar_roundtrip_tabular,
-    xlsx_tem_alvo,
-)
+from ingestion.prepare.mask_keys import MaskingKeys
+from ingestion.prepare.mask_rules import targets_por_posicao
+from ingestion.prepare.mask_tabular import mascarar_tabular, verificar_roundtrip_tabular
+from ingestion.prepare.mask_xlsx import mascarar_xlsx, xlsx_tem_alvo
 from ingestion.text import detectar_dialeto, detectar_encoding
 
 SAMPLE_BYTES = 65536
@@ -30,7 +26,7 @@ class MaskPii:
     """Mascara as colunas de PII do arquivo e cede a versão mascarada no lugar dele.
 
     Mesmas regras e mesmos tokens do `scripts/mascarar_minio.py` (o código é o mesmo,
-    em `ingestion.masking`): o dado novo continua juntando com o já mascarado. O
+    em `ingestion.prepare.mask_*`): o dado novo continua juntando com o já mascarado. O
     lake nunca guarda o original.
 
     - CSV/TXT: encoding e dialeto detectados pela amostra; reescrita em fluxo,
