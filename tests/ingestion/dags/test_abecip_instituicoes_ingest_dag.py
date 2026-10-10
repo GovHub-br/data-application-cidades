@@ -4,11 +4,13 @@ import re
 from typing import Any
 
 import pytest
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.loaders import LoadMode
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
     load_dag_module,
+    nothing_new,
     record_steps,
     run_task,
 )
@@ -30,7 +32,7 @@ def test_dag_identity_and_wiring(module: Any) -> None:
 
 
 def test_dataset_spec_copies_every_competencia(module: Any) -> None:
-    spec = module.DATASET
+    spec = module.INSTITUICOES
     config = spec.extractor_config()
     query = config.objects
 
@@ -56,6 +58,13 @@ def test_tasks_only_call_the_pipeline_steps(
     run_task(dag, "convert_to_staging", raw)
 
     assert calls == [
-        ("extract_to_raw", module.DATASET, RUN_AFTER),
-        ("convert_to_staging", module.DATASET, "raw/x/"),
+        ("extract_to_raw", module.INSTITUICOES, RUN_AFTER),
+        ("convert_to_staging", module.INSTITUICOES, "raw/x/"),
     ]
+
+
+def test_nothing_new_is_a_skip(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    nothing_new(module, monkeypatch)
+
+    with pytest.raises(AirflowSkipException):
+        run_task(module.dag_instance, "extract_to_raw")

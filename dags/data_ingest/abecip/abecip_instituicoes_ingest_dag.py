@@ -19,17 +19,17 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, ObjectQuery
+from ingestion.extractors import ObjectQuery, object_storage
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
-DATASET = DatasetSpec(
+INSTITUICOES = DatasetSpec(
     domain="abecip",
     dataset="financiamentos_por_instituicao",
-    extractor=ExtractorConfig(
-        source="object_storage",
+    extractor=object_storage(
         objects=ObjectQuery(
             prefix="raw/abecip/",
             pattern=r"raw/abecip/(\d{4}-\d{2})/financiamentos_por_instituicao\.json",
@@ -56,12 +56,15 @@ DATASET = DatasetSpec(
 )
 def abecip_instituicoes_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(INSTITUICOES, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(INSTITUICOES, raw)
 
     convert_to_staging(extract_to_raw())
 

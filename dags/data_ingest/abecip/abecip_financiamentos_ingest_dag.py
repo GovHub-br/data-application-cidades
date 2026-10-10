@@ -18,22 +18,22 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import HttpRequest, http_file
 from ingestion.extractors.resolvers import link_in_page
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
 PAGE = "/credito-imobiliario/indicadores/financiamento"
 USER_AGENT = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
-DATASET = DatasetSpec(
+FINANCIAMENTOS_SBPE = DatasetSpec(
     domain="abecip",
     dataset="financiamentos_modalidade",
-    extractor=ExtractorConfig(
-        source="http_file",
+    extractor=http_file(
         base_url="https://www.abecip.org.br",
         requests=(
             HttpRequest(
@@ -65,12 +65,15 @@ DATASET = DatasetSpec(
 )
 def abecip_financiamentos_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(FINANCIAMENTOS_SBPE, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(FINANCIAMENTOS_SBPE, raw)
 
     convert_to_staging(extract_to_raw())
 
