@@ -1,6 +1,9 @@
 """O que é próprio do backend S3 (MinIO), além do contrato."""
 
+import json
 from pathlib import Path
+
+import pytest
 
 from ingestion.storage import S3StorageBackend, StorageFactory
 from tests.ingestion.conftest import TEST_BUCKET
@@ -30,3 +33,22 @@ def test_list_walks_every_page(fake_aws: None, tmp_path: Path) -> None:
         backend.put_file(key, source)
 
     assert backend.list("raw/ibge/sinapi/") == keys
+
+
+def test_transfers_use_few_connections_by_default() -> None:
+    # O MinIO recusou a PF FGTS (~3 GB) com 10 conexões ("reduce your request
+    # rate"); o cliente_minio antigo usava partes de 8 MB e 2 conexões.
+    config = S3StorageBackend(bucket="data-lake-mcid", conn_id=None).hook.transfer_config
+
+    assert (config.multipart_chunksize, config.max_concurrency) == (8 * 1024 * 1024, 2)
+
+
+def test_the_connection_can_change_the_transfer(monkeypatch: pytest.MonkeyPatch) -> None:
+    extra = {"service_config": {"s3": {"transfer_config_args": {"max_concurrency": 8}}}}
+    monkeypatch.setenv(
+        "AIRFLOW_CONN_MINIO_TESTE", json.dumps({"conn_type": "aws", "extra": extra})
+    )
+
+    config = S3StorageBackend(bucket="b", conn_id="minio_teste").hook.transfer_config
+
+    assert (config.multipart_chunksize, config.max_concurrency) == (8 * 1024 * 1024, 8)

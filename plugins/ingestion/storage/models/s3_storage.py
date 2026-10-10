@@ -11,6 +11,13 @@ from ingestion.storage.storage_registry import StorageFactory
 
 _NOT_FOUND = {"404", "NoSuchKey", "NotFound"}
 
+# Transferência multipart como a do cliente_minio antigo: partes de 8 MB e 2
+# conexões. Com o padrão do boto3 (10 conexões) o MinIO recusou arquivos de alguns
+# GB ("reduce your request rate"). A Connection sobrescreve pelo extra
+# {"service_config": {"s3": {"transfer_config_args": {...}}}}. Upload que falha no
+# meio é abortado pelo próprio s3transfer (não deixa multipart pendurado).
+TRANSFER = {"multipart_chunksize": 8 * 1024 * 1024, "max_concurrency": 2}
+
 
 @StorageFactory.register("s3")
 class S3StorageBackend(StorageBackend):
@@ -35,7 +42,9 @@ class S3StorageBackend(StorageBackend):
     @property
     def hook(self) -> S3Hook:
         if self._hook is None:
-            self._hook = S3Hook(aws_conn_id=self.conn_id)
+            self._hook = S3Hook(
+                aws_conn_id=self.conn_id, transfer_config_args=dict(TRANSFER)
+            )
         return self._hook
 
     def put_file(self, key: str, local_path: Path) -> None:
@@ -47,7 +56,9 @@ class S3StorageBackend(StorageBackend):
     def get_file(self, key: str, local_path: Path) -> None:
         local_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            self.hook.get_conn().download_file(self.bucket, key, str(local_path))
+            self.hook.get_conn().download_file(
+                self.bucket, key, str(local_path), Config=self.hook.transfer_config
+            )
         except ClientError as exc:
             if exc.response.get("Error", {}).get("Code") in _NOT_FOUND:
                 raise ObjectNotFoundError(key) from exc
