@@ -19,11 +19,13 @@
 -- `order by data desc` do ouro ordenaria alfabeticamente, e 01/12/2025
 -- passaria a valer mais que 01/07/2026.
 
+-- Cada série do SGS é um parquet <tipo>.parquet na staging; o tipo sai do nome
+-- do arquivo que o read_parquet registra em `filename`.
 with sgs as (
     select
-        to_date(data, 'DD/MM/YYYY')             as data,
-        tipo                                    as tipo,
-        nullif(btrim(valor), '')::numeric       as valor
+        to_date(data, 'DD/MM/YYYY')                                 as data,
+        regexp_replace(filename, '^.*/([^/]+)\.parquet$', '\1')     as tipo,
+        nullif(btrim(valor), '')::numeric                           as valor
     from {{ ref('bronze_bacen_financiamentos_imobiliarios') }}
 ),
 

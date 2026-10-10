@@ -1,116 +1,82 @@
-import logging
-from airflow.sdk import dag, task
-from airflow.sdk import Variable
+"""Séries do SGS do BACEN (financiamento imobiliário e correlatas).
+
+Fonte: API do SGS, uma chamada por série, com a série inteira
+(`/dados/serie/bcdata.sgs.<código>/dados?formato=json`). As séries vêm da Variable
+`BACEN_SERIES` ({tipo: código}), lida só dentro da task. Cada série vira um arquivo
+`<tipo>.json` na raw e `<tipo>.parquet` na staging; a prata tira o tipo do
+`filename`.
+
+LoadMode: overwrite. O SGS devolve a série completa (o `ultimos=N` como parâmetro
+de query é ignorado pela API), então a última ingestão é a verdade e revisões do
+BACEN entram. Série diária exige janela (`dataInicial`) e responde 406 sem ela: a
+extração falha com o endpoint na mensagem.
+"""
+
 from datetime import datetime, timedelta
-from schedule_loader import get_dynamic_schedule
-from postgres_helpers import get_postgres_conn
-from cliente_bacen import ClienteBacen
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_json
-from ingestor_lake import registros_para_staging_parquet
-import pandas as pd
+from typing import Any
+
+from airflow.sdk import Variable, dag, task
+
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import steps
+
+
+def bacen_series() -> ExtractorConfig:
+    """Uma chamada por série de BACEN_SERIES; chamada só dentro da task."""
+    series = Variable.get("BACEN_SERIES", deserialize_json=True, default={})
+    if isinstance(series, list):  # a Variable também aceita [{tipo: código}]
+        series = series[0] if series else {}
+    if not series:
+        raise ValueError("a Variable BACEN_SERIES está vazia ou não existe")
+    return ExtractorConfig(
+        source="api",
+        base_url="https://api.bcb.gov.br",
+        requests=tuple(
+            HttpRequest(
+                name=tipo,
+                endpoint=f"/dados/serie/bcdata.sgs.{codigo}/dados",
+                params={"formato": "json"},
+            )
+            for tipo, codigo in series.items()
+        ),
+    )
+
+
+DATASET = DatasetSpec(
+    domain="bacen",
+    dataset="financiamentos_imobiliarios",
+    extractor=bacen_series,
+    load_mode=LoadMode.OVERWRITE,
+)
 
 
 @dag(
-    schedule=get_dynamic_schedule("bacen_sgs_ingest_dag"),
+    dag_id="bacen_sgs_ingest_dag",
+    # Diário às 06:00: a fonte é mensal, mas sem data fixa de publicação; rodar todo
+    # dia deixa o latest/ fresco. A conjuntura_dag também dispara esta DAG na segunda.
+    schedule="0 6 * * *",
     start_date=datetime(2023, 1, 1),
     catchup=False,
+    max_active_runs=1,
     default_args={
         "owner": "Mateus",
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    tags=["bacen", "sgs", "financiamento_imobiliario"],
+    tags=["bacen", "sgs", "financiamento_imobiliario", "conjuntura", "ingestion"],
 )
 def bacen_sgs_ingest_dag() -> None:
-    """DAG para ingestão de séries temporais do SGS/BACEN no PostgreSQL.
-
-    Itera sequencialmente sobre cada série configurada em BACEN_SERIES
-    (Airflow Variable), fazendo uma requisição por vez e inserindo na tabela
-    única `bacen.financiamentos_imobiliarios`. A coluna `tipo` diferencia cada
-    série e compõe a chave primária junto com `data`.
-    """
+    @task
+    def extract_to_raw(**context: Any) -> list[str]:
+        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
 
     @task
-    def fetch_and_store_all_series() -> None:
-        """Busca e armazena todas as séries SGS do BACEN sequencialmente.
+    def convert_to_staging(raw_prefixes: list[str]) -> str:
+        return steps.convert_to_staging(DATASET, raw_prefixes)
 
-        O loop serial evita race condition no CREATE TABLE IF NOT EXISTS,
-        que ocorreria com múltiplas tasks paralelas escrevendo na mesma tabela.
-        """
-        api = ClienteBacen()
-        postgres_conn_str = get_postgres_conn()
-        db = ClientPostgresDB(postgres_conn_str)
-
-        # Lê o JSON do Airflow Variable e monta a lista de configs.
-        # Deslocado para dentro da task para evitar parse frequente pelo
-        # Top-Level do Scheduler.
-        BACEN_SERIES_RAW = Variable.get(
-            "BACEN_SERIES", deserialize_json=True, default={}
-        )
-        if isinstance(BACEN_SERIES_RAW, list):
-            BACEN_SERIES_RAW = BACEN_SERIES_RAW[0] if len(BACEN_SERIES_RAW) > 0 else {}
-        CONFIGURACOES = [{"tipo": k, "codigo": v} for k, v in BACEN_SERIES_RAW.items()]
-
-        todas_series: list[dict] = []
-        raw_por_serie: dict = {}
-
-        for config in CONFIGURACOES:
-            tipo = config["tipo"]
-            codigo = config["codigo"]
-
-            logging.info(f"Iniciando ingestão: tipo={tipo}, codigo={codigo}")
-
-            dados = api.get_serie(codigo=codigo, ultimos=13)
-
-            if not dados:
-                logging.warning(f"Nenhum dado retornado da API BACEN para tipo={tipo}")
-                continue
-
-            # Raw nativo (API -> json): guarda o payload cru por série.
-            raw_por_serie[tipo] = dados
-
-            registros = [
-                {
-                    "tipo": tipo,
-                    "data": registro["data"],
-                    "valor": registro["valor"],
-                    "dt_ingest": datetime.now().isoformat(),
-                }
-                for registro in dados
-            ]
-
-            logging.info(
-                f"Inserindo {len(registros)} registros em "
-                f"bacen.financiamentos_imobiliarios (tipo={tipo})"
-            )
-
-            # Postgres: upsert por (tipo, data) -> preserva histórico (trimestral).
-            db.insert_data(
-                registros,
-                "financiamentos_imobiliarios",
-                conflict_fields=["tipo", "data"],
-                primary_key=["tipo", "data"],
-                schema="bacen",
-            )
-
-            todas_series.extend(registros)
-            logging.info(f"Ingestão de tipo={tipo} concluída com sucesso.")
-
-        # Lake (full-refresh): raw = payload cru da API (json); parquet tipado.
-        if todas_series:
-            upload_raw_json("bacen", "financiamentos_imobiliarios", raw_por_serie)
-            registros_para_staging_parquet(
-                "bacen",
-                "financiamentos_imobiliarios",
-                todas_series,
-                typers={
-                    "data": lambda s: pd.to_datetime(s, dayfirst=True, errors="coerce"),
-                    "valor": lambda s: pd.to_numeric(s, errors="coerce"),
-                },
-            )
-
-    fetch_and_store_all_series()
+    convert_to_staging(extract_to_raw())
 
 
 dag_instance = bacen_sgs_ingest_dag()

@@ -1,0 +1,45 @@
+"""Conversão (Template Method + Factory).
+
+Arquivo da raw -> Parquet só com texto na staging.
+"""
+
+from ingestion.converters.base_converter import (
+    ConvertedFile,
+    FileConverter,
+    Source,
+    batches_from_rows,
+)
+from ingestion.converters.columns import fix_header
+from ingestion.converters.config_converter import ConverterConfig, Field
+from ingestion.converters.converter_errors import ConversionError
+from ingestion.converters.converter_registry import ConverterFactory
+from ingestion.converters.partition import (
+    ConversionResult,
+    StagedFile,
+    convert_partition,
+)
+
+__all__ = [
+    "ConversionError",
+    "ConversionResult",
+    "ConvertedFile",
+    "ConverterConfig",
+    "Field",
+    "ConverterFactory",
+    "FileConverter",
+    "Source",
+    "StagedFile",
+    "batches_from_rows",
+    "convert_partition",
+    "fix_header",
+]
+
+# Registra os formatos no ConverterFactory (import pelo efeito do decorator).
+from ingestion.converters.models import csv_converter  # noqa: E402, F401
+from ingestion.converters.models import txt_converter  # noqa: E402, F401
+from ingestion.converters.models import json_converter  # noqa: E402, F401
+from ingestion.converters.models import xlsx_converter  # noqa: E402, F401
+from ingestion.converters.models import mdb_converter  # noqa: E402, F401
+from ingestion.converters.models import parquet_converter  # noqa: E402, F401
+from ingestion.converters.models import zip_converter  # noqa: E402, F401
+from ingestion.converters.models import powerbi_dsr_converter  # noqa: E402, F401

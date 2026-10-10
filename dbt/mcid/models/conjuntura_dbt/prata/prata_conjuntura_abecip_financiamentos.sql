@@ -11,16 +11,25 @@
 -- 4T2025 = 47.766, 1T2026 = 47.609 — e o acumulado de 12 meses até mar/2026
 -- (161.338) também. O `unidades_total` confere com a extração independente
 -- do colega em `staging/abecip/financiamentos_sbpe_mensal.parquet`.
+--
+-- Ingestão nova (plugins/ingestion, 10/2026): a staging guarda a aba
+-- `BD_Unidades` como veio, com o cabeçalho da linha 5. O período não tem nome
+-- (`column_1`) e as modalidades se repetem para unidades e valores
+-- (`Construção`, `Aquisição `, `Total`, depois `Construção_2`…; o espaço em
+-- `Aquisição ` é da planilha). Meses futuros vêm vazios e ficam de fora. O teste
+-- `conjuntura_abecip_financiamentos_totais` confere Total = Construção + Aquisição.
 
 select
-    data_referencia::date                       as data_referencia,
-    extract(year from data_referencia::date)::int  as ano,
-    extract(month from data_referencia::date)::int as mes,
-    unidades_construcao::numeric                as unidades_construcao,
-    unidades_aquisicao::numeric                 as unidades_aquisicao,
-    unidades_total::numeric                     as unidades_total,
-    valor_construcao_milhoes::numeric           as valor_construcao_milhoes,
-    valor_aquisicao_milhoes::numeric            as valor_aquisicao_milhoes,
-    valor_total_milhoes::numeric                as valor_total_milhoes,
-    dt_ingest
+    cast(column_1 as timestamp)::date                       as data_referencia,
+    extract(year from cast(column_1 as timestamp))::int     as ano,
+    extract(month from cast(column_1 as timestamp))::int    as mes,
+    "Construção"::numeric                                   as unidades_construcao,
+    "Aquisição "::numeric                                   as unidades_aquisicao,
+    "Total"::numeric                                        as unidades_total,
+    "Construção_2"::numeric                                 as valor_construcao_milhoes,
+    "Aquisição _2"::numeric                                 as valor_aquisicao_milhoes,
+    "Total_2"::numeric                                      as valor_total_milhoes,
+    {{ lake_dt_ingest() }}                                  as dt_ingest
 from {{ ref('bronze_abecip_financiamentos') }}
+where column_1 like '____-__-__%'
+  and "Total" is not null

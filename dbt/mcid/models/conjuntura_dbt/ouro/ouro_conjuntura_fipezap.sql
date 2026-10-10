@@ -4,7 +4,7 @@
 -- variações mensais. Página 7 (seção 8).
 --
 -- AUTOMATIZADO em 2026-08-27 (era 100% manual). Dois bugs corrigidos na
--- ingestão pra chegar aqui (ver comentário em cliente_fipe.py):
+-- ingestão pra chegar aqui (o cliente antigo, hoje DAG fipezap_trimestral):
 --   1. O "número índice" (nível absoluto do índice) nunca foi extraído do
 --      xlsx da FIPE — só var_mensal e var_ano. A coluna existe na mesma
 --      aba (col 22, "Número-Índice"), 5 colunas antes da var_mensal já
@@ -22,7 +22,7 @@
 -- ATENÇÃO (achado ao validar, não é bug): var_mes/var_ano de fev-abr/2026
 -- batem exato com o manual em ago/2025-jan/2026 e mai/2026, mas destoam
 -- ~0,2-0,6 p.p. em fev-abr/2026 -- a série do FipeZap sofre revisão
--- retroativa (documentado em cliente_fipe.py), e o manual foi digitado
+-- retroativa (ver a docstring da fipezap_trimestral_ingest_dag), e o manual foi digitado
 -- de um boletim com uma vintage mais antiga do índice pra esses 3 meses.
 -- O automatizado aqui reflete a vintage mais recente (mais correta) --
 -- é esperado ele não bater 100% com boletim antigo pros últimos 1-2

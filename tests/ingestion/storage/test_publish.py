@@ -1,0 +1,140 @@
+"""Publicação da última ingestão completa em `latest/`, que é o que o bronze lê."""
+
+import json
+from pathlib import Path
+
+import pytest
+
+from ingestion.storage import (
+    SUCCESS_MARKER,
+    StorageBackend,
+    StorageError,
+    StorageFactory,
+    publish_latest,
+)
+
+STAGING = "staging/bacen/sgs/"
+OLD = STAGING + "2026-10-01/060000/"
+NEW = STAGING + "2026-10-08/060000/"
+LATEST = STAGING + "latest/"
+# O latest/ guarda a cópia com a partição de origem: o caminho que o bronze lê traz
+# a data da ingestão (`dt_ingest` na prata).
+LATEST_NEW = LATEST + "2026-10-08/060000/"
+
+
+def _put(storage: StorageBackend, tmp_path: Path, key: str, data: bytes) -> None:
+    local = tmp_path / "src" / key
+    local.parent.mkdir(parents=True, exist_ok=True)
+    local.write_bytes(data)
+    storage.put_file(key, local)
+
+
+def _read(storage: StorageBackend, tmp_path: Path, key: str) -> bytes:
+    local = tmp_path / "read" / key
+    storage.get_file(key, local)
+    return local.read_bytes()
+
+
+def test_partition_without_success_is_not_published(
+    lake_storage: StorageBackend, tmp_path: Path
+) -> None:
+    _put(lake_storage, tmp_path, NEW + "ipca.parquet", b"novo")
+
+    with pytest.raises(StorageError, match="_SUCCESS"):
+        publish_latest(lake_storage, NEW, LATEST)
+    assert lake_storage.list(LATEST) == []
+
+
+def test_latest_mirrors_the_new_partition_and_drops_what_left(
+    lake_storage: StorageBackend, tmp_path: Path
+) -> None:
+    for key, data in {
+        OLD + "ipca.parquet": b"velho",
+        OLD + "serie_extinta.parquet": b"velho",
+        OLD + SUCCESS_MARKER: b"{}",
+        NEW + "ipca.parquet": b"novo",
+        NEW + "selic.parquet": b"novo",
+        NEW + SUCCESS_MARKER: b'{"files": []}',
+    }.items():
+        _put(lake_storage, tmp_path, key, data)
+    publish_latest(lake_storage, OLD, LATEST)
+
+    keys = publish_latest(lake_storage, NEW, LATEST)
+
+    assert keys == [LATEST_NEW + "ipca.parquet", LATEST_NEW + "selic.parquet"]
+    assert lake_storage.list(LATEST) == [
+        LATEST_NEW + "ipca.parquet",
+        LATEST_NEW + "selic.parquet",
+        LATEST + SUCCESS_MARKER,
+    ]
+    assert _read(lake_storage, tmp_path, LATEST_NEW + "ipca.parquet") == b"novo"
+    assert json.loads(_read(lake_storage, tmp_path, LATEST + SUCCESS_MARKER)) == {
+        "files": [],
+        "particao": NEW,
+        "antecessor": OLD,
+    }
+    assert lake_storage.exists(OLD + "serie_extinta.parquet")
+
+
+def test_latest_manifest_points_to_the_partition_it_replaced(
+    lake_storage: StorageBackend, tmp_path: Path
+) -> None:
+    # A entrega anterior continua na partição dela (o antepassado); o manifesto do
+    # latest/ diz qual é. Republicar a mesma partição não perde a antecessora.
+    for partition in (OLD, NEW):
+        _put(lake_storage, tmp_path, partition + "x.parquet", b"x")
+        _put(lake_storage, tmp_path, partition + SUCCESS_MARKER, b'{"files": []}')
+
+    def manifest() -> dict[str, object]:
+        data: dict[str, object] = json.loads(
+            _read(lake_storage, tmp_path, LATEST + SUCCESS_MARKER)
+        )
+        return data
+
+    publish_latest(lake_storage, OLD, LATEST)
+    assert (manifest()["particao"], manifest()["antecessor"]) == (OLD, None)
+    publish_latest(lake_storage, NEW, LATEST)
+    assert (manifest()["particao"], manifest()["antecessor"]) == (NEW, OLD)
+    publish_latest(lake_storage, NEW, LATEST)
+    assert (manifest()["particao"], manifest()["antecessor"]) == (NEW, OLD)
+
+
+def test_marker_is_copied_last_and_stale_files_removed_after_copies(
+    tmp_path: Path,
+) -> None:
+    calls: list[str] = []
+    local = StorageFactory.create("local", root=tmp_path / "lake")
+
+    class Spy(StorageBackend):
+        def put_file(self, key: str, local_path: Path) -> None:
+            calls.append(f"put {key}")
+            local.put_file(key, local_path)
+
+        def get_file(self, key: str, local_path: Path) -> None:
+            local.get_file(key, local_path)
+
+        def list(self, prefix: str) -> list[str]:
+            return local.list(prefix)
+
+        def delete(self, key: str) -> None:
+            calls.append(f"delete {key}")
+            local.delete(key)
+
+        def copy(self, src_key: str, dst_key: str) -> None:
+            calls.append(f"copy {dst_key}")
+            local.copy(src_key, dst_key)
+
+        def exists(self, key: str) -> bool:
+            return local.exists(key)
+
+    for key in [LATEST + "antigo.parquet", NEW + "a.parquet"]:
+        _put(local, tmp_path, key, b"x")
+    _put(local, tmp_path, NEW + SUCCESS_MARKER, b"{}")
+
+    publish_latest(Spy(), NEW, LATEST)
+
+    assert calls == [
+        f"copy {LATEST_NEW}a.parquet",
+        f"delete {LATEST}antigo.parquet",
+        f"put {LATEST}{SUCCESS_MARKER}",
+    ]

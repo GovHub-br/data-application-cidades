@@ -2,8 +2,8 @@
 
 -- Prata do conjuntura: PNAD Contínua — rendimento médio real (IBGE/SIDRA).
 --
--- Passthrough tipado — o achatamento acontece na ingestão
--- (`ClienteIBGE.transformar_resposta`).
+-- Passthrough tipado — o achatamento acontece na ingestão (conversor
+-- `ibge_v3`, plugins/ingestion) e a tipagem no macro `ibge_v3_tipado`.
 --
 -- Categorias: 47946 = Total, 47949 = Construção (classificação 888).
 --
@@ -30,4 +30,4 @@ select
     categoria,
     valor,
     dt_ingest
-from {{ ref('bronze_ibge_pnad_construcao_rendimento') }}
+from ({{ ibge_v3_tipado(ref('bronze_ibge_pnad_construcao_rendimento')) }}) as bronze

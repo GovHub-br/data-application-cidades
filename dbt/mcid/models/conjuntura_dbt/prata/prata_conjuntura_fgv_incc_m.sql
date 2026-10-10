@@ -9,10 +9,18 @@
 -- sem tratar, o cast quebra com
 -- 'Could not convert string "..." to DECIMAL'.
 
+--
+-- A staging guarda o cabeçalho da planilha como veio (linha 3 do xlsx): mês e
+-- índice ficam sem nome (column_1, column_2) e as variações são `No mês`,
+-- `No ano` e `12 meses`. O mês chega como texto ISO da célula de data. A última
+-- linha da planilha é o rodapé "Fonte: FGV", descartado aqui.
+
 select
-    mes::date                                          as mes,
-    nullif(nullif(indice::text, ''), '...')::numeric        as indice,
-    nullif(nullif(var_mes::text, ''), '...')::numeric       as var_mes,
-    nullif(nullif(var_ano::text, ''), '...')::numeric       as var_ano,
-    nullif(nullif(var_12_meses::text, ''), '...')::numeric  as var_12_meses
+    column_1::date                                          as mes,
+    nullif(nullif(column_2, ''), '...')::numeric            as indice,
+    nullif(nullif("No mês", ''), '...')::numeric            as var_mes,
+    nullif(nullif("No ano", ''), '...')::numeric            as var_ano,
+    nullif(nullif("12 meses", ''), '...')::numeric          as var_12_meses
 from {{ ref('bronze_fgv_incc_m') }}
+where column_1 is not null
+  and column_1 not ilike 'fonte%'

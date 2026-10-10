@@ -16,6 +16,16 @@ apache-airflow = "3.3.2"
 apache-airflow-providers-postgres = "7.0.2"
 apache-airflow-providers-microsoft-mssql = "4.7.1"
 apache-airflow-providers-standard = "1.19.0"
+# S3Hook do storage da ingestão (plugins/ingestion), sobre o MinIO.
+apache-airflow-providers-amazon = "9.36.0"
+# HttpHook e ImapHook dos extratores da ingestão (plugins/ingestion).
+apache-airflow-providers-http = "6.1.0"
+apache-airflow-providers-imap = "3.12.1"
+# SFTPHook do extrator do SFTP do MCid (plugins/ingestion).
+apache-airflow-providers-sftp = "6.1.0"
+# Conversores da ingestão: xlsx (openpyxl) e json em streaming (ijson).
+openpyxl = "3.1.5"
+ijson = "3.4.0.post0"
 numpy = "2.4.6"
 dbt-core = "1.12.5"
 dbt-postgres = "1.11.0"
@@ -39,6 +49,8 @@ great-expectations = ">=1.21,<2.0"
 sqlglot = "^30.0"
 
 [tool.poetry.group.dev.dependencies]
+# S3 em memória para o contrato do storage da ingestão rodar offline no CI.
+moto = { version = "*", extras = ["s3"] }
 black = "*"
 ruff = "*"
 pytest = "*"
@@ -153,6 +165,9 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+markers = [
+    "integration: depende de serviço externo (MinIO, Postgres); pulado quando ele não responde",
+]
 
 [tool.sqlfmt]
 line_length = 90

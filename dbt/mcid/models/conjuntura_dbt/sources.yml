@@ -13,12 +13,10 @@ sources:
     #
     #   - as 5 de `sftp/` chegam por transferência do agente operador; não há
     #     DAG que as escreva, e o campo fica ausente de propósito;
-    #   - as do IBGE saem de `ibge_ingest_dag`, atribuída POR ELIMINAÇÃO: só
-    #     duas DAGs escrevem em `staging/ibge/`, e a outra
-    #     (`pnad_construcao_sidra_ingest_dag`) produz `pnad_construcao_ocupados`
-    #     e `pnad_construcao_rendimento`, que não correspondem a nenhuma source
-    #     declarada. Para confirmar item a item, olhar a Airflow Variable
-    #     `IBGE_CONFIGURACOES`, que é de onde a DAG lê a lista de datasets.
+    #   - as do IBGE saem de `ibge_ingest_dag` (API v3); a
+    #     `ibge_pnad_construcao_sidra_ingest_dag` grava `pnad_construcao_ocupados`
+    #     e `pnad_construcao_rendimento` (`ibge_sidra_*`), reserva da v3 para o
+    #     PNAD, sem leitor além do bronze.
     #
     # Quem souber a resposta acrescenta a linha; o catálogo passa a mostrar a
     # DAG de origem do dado sem que ninguém precise ler código.
@@ -35,48 +33,57 @@ sources:
       - name: abecip_financiamentos
         description: "Financiamentos SBPE por modalidade (Construção/Aquisição), mensal desde 2002. XLSX público da ABECIP."
         meta:
-          caminho: staging/abecip/financiamentos_modalidade.parquet
+          caminho: staging/abecip/financiamentos_modalidade
+          load_mode: overwrite   # cada edição traz a série inteira
           dag: abecip_financiamentos_ingest_dag
           linhas_minimas: 147   # metade do observado em 2026-08-29 (294)
       - name: abecip_instituicoes
-        description: "Financiamentos SBPE por instituição financeira e modalidade. Extração do relatório mensal — UMA competência por arquivo, não série."
+        description: "Financiamentos SBPE por instituição financeira e modalidade, uma competência por arquivo (relatório mensal da ABECIP, extraído por outro time)."
         meta:
-          caminho: staging/abecip/financiamentos_por_instituicao.parquet
+          caminho: staging/abecip/financiamentos_por_instituicao
+          load_mode: overwrite   # todas as competências a cada execução
+          dag: abecip_instituicoes_ingest_dag
           linhas_minimas: 16   # metade do observado em 2026-08-29 (33)
       - name: abecip_poupanca_sbpe
         description: "Depósitos, retiradas, captação líquida, rendimento e saldo da poupança SBPE."
         meta:
-          caminho: staging/abecip/poupanca_sbpe_mensal.parquet
+          caminho: staging/abecip/poupanca_sbpe_mensal
+          load_mode: overwrite   # cada edição traz a série inteira
           dag: abecip_poupanca_trimestral_ingest_dag
           linhas_minimas: 267   # metade do observado em 2026-08-29 (535)
       - name: bacen_credito_pib
         description: "Razão crédito imobiliário / PIB (BACEN Olinda, painel Mercado Imobiliário)."
         meta:
-          caminho: staging/bacen/credito_imobiliario_pib.parquet
+          caminho: staging/bacen/credito_imobiliario_pib
+          load_mode: overwrite   # a consulta devolve a série inteira
           dag: credito_pib_ingest_dag
           linhas_minimas: 73   # metade do observado em 2026-08-29 (146)
       - name: bacen_financiamentos_imobiliarios
-        description: "Concessões, taxas de juros e inadimplência PF/PJ (BACEN SGS). Uma linha, séries aninhadas em JSON por coluna."
+        description: "Séries do SGS do BACEN (BACEN_SERIES): um parquet por série (<tipo>.parquet), colunas data e valor em texto."
         meta:
-          caminho: staging/bacen/financiamentos_imobiliarios.parquet
+          caminho: staging/bacen/financiamentos_imobiliarios
+          load_mode: overwrite
           dag: bacen_sgs_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: fgv_icst
         description: "Índice de Confiança da Construção (FGV), com e sem ajuste sazonal."
         meta:
-          caminho: staging/fgv/icst.parquet
+          caminho: staging/fgv/icst
+          load_mode: overwrite   # o CSV traz a série inteira a cada download
           dag: icst_ingest_dag
           linhas_minimas: 96   # metade do observado em 2026-08-29 (193)
       - name: fgv_incc_m
-        description: "INCC-M: número índice e variações. Usa `...` como marcador de ausente."
+        description: "INCC-M: série histórica da Sinduscon, cabeçalho original (column_1 = mês, column_2 = índice, No mês/No ano/12 meses = variações). Usa `...` como marcador de ausente e traz o rodapé 'Fonte'."
         meta:
-          caminho: staging/fgv/incc_m.parquet
+          caminho: staging/fgv/incc_m
+          load_mode: overwrite
           dag: incc_m_ingest_dag
           linhas_minimas: 191   # metade do observado em 2026-08-29 (383)
       - name: fipezap_locacao
         description: "Índice FipeZap de locação residencial: número índice e variações."
         meta:
-          caminho: staging/fipe/indice_locacao.parquet
+          caminho: staging/fipe/indice_locacao
+          load_mode: overwrite   # a FIPE revisa a série a cada divulgação
           dag: fipezap_trimestral_ingest_dag
           linhas_minimas: 111   # metade do observado em 2026-08-29 (223)
       - name: gefus_fundo_social
@@ -107,108 +114,179 @@ sources:
       - name: ibge_paic_obras
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/paic_obras.parquet
+          caminho: staging/ibge/paic_obras
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
       - name: ibge_paic_pessoal_salarial
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/paic_pessoal_salarial.parquet
+          caminho: staging/ibge/paic_pessoal_salarial
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: ibge_paic_resultados
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/paic_resultados.parquet
+          caminho: staging/ibge/paic_resultados
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (3)
       - name: ibge_pib_consolidado_trimestral
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pib_consolidado_trimestral_bruto.parquet
+          caminho: staging/ibge/pib_consolidado_trimestral_bruto
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pib_construcao_civil
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pib_construcao.parquet
+          caminho: staging/ibge/pib_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: ibge_pib_corrente
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pib_corrente_milhoes_brl.parquet
+          caminho: staging/ibge/pib_corrente_milhoes_brl
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pim_pf_brasil
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/ibge_pim_pf_brasil.parquet
+          caminho: staging/ibge/ibge_pim_pf_brasil
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
       - name: ibge_pmc_construcao
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/ibge_pmc_construcao.parquet
+          caminho: staging/ibge/ibge_pmc_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 3   # metade do observado em 2026-08-29 (6)
       - name: ibge_pnad_construcao_ocupados
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnad_trabalho_construcao.parquet
+          caminho: staging/ibge/pnad_trabalho_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
       - name: ibge_pnad_construcao_rendimento
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnad_rendimento_construcao.parquet
+          caminho: staging/ibge/pnad_rendimento_construcao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 12   # metade do observado em 2026-08-29 (24)
       - name: ibge_pnadc_populacao_decis_renda
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnadc_populacao_decis_renda.parquet
+          caminho: staging/ibge/pnadc_populacao_decis_renda
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: ibge_pnadc_rendimento_domiciliar
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/pnadc_rendimento_domiciliar_real.parquet
+          caminho: staging/ibge/pnadc_rendimento_domiciliar_real
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
+      - name: ibge_sidra_pnad_construcao_ocupados
+        description: "PNAD Contínua, pessoas ocupadas: total e construção, por trimestre móvel (SIDRA, tabela 6323). Reserva da API v3."
+        meta:
+          caminho: staging/ibge/pnad_construcao_ocupados
+          load_mode: merge   # a SIDRA devolve só os últimos 12 trimestres
+          keys: [D3C, D4C]
+          dag: ibge_pnad_construcao_sidra_ingest_dag
+      - name: ibge_sidra_pnad_construcao_rendimento
+        description: "PNAD Contínua, rendimento médio real: total e construção, por trimestre móvel (SIDRA, tabela 6391). Reserva da API v3."
+        meta:
+          caminho: staging/ibge/pnad_construcao_rendimento
+          load_mode: merge   # a SIDRA devolve só os últimos 12 trimestres
+          keys: [D3C, D4C]
+          dag: ibge_pnad_construcao_sidra_ingest_dag
+      - name: ibge_pnadc_habitacao_condicao
+        description: "PNAD Contínua: domicílios por condição de ocupação (agregado 6821)."
+        meta:
+          caminho: staging/ibge/pnadc_habitacao_condicao
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
+          dag: ibge_ingest_dag
       - name: ibge_sinapi
         description: "Payload da API SIDRA do IBGE, aninhado: uma linha por variável, série inteira dentro de `resultados`."
         meta:
-          caminho: staging/ibge/sinapi.parquet
+          caminho: staging/ibge/sinapi
+          load_mode: merge   # janela parcial: o histórico se acumula
+          keys: [variavel_id, localidade_id, classificacao_id, categoria_id, periodo]
           dag: ibge_ingest_dag
           linhas_minimas: 2   # metade do observado em 2026-08-29 (4)
       - name: infomoney_imob
         description: "Cotações diárias do índice IMOB da B3 (via Alpha Vantage)."
         meta:
-          caminho: staging/infomoney/acoes_imob.parquet
+          caminho: staging/infomoney/acoes_imob
+          load_mode: merge   # a API devolve só os últimos ~100 pregões
+          keys: [data_pregao]
           dag: imob_ingest_dag
           linhas_minimas: 336   # metade do observado em 2026-08-29 (673)
+      - name: mrv_planilha_interativa
+        description: "Planilha Interativa do RI da MRV: dados operacionais (lançamentos, vendas…) por trimestre."
+        meta:
+          caminho: staging/mrv/planilha_interativa
+          load_mode: overwrite   # cada edição traz todos os trimestres em colunas
+          dag: mrv_planilha_interativa_ingest_dag
       - name: novo_caged
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_construcao_edificios.parquet
+          caminho: staging/novo_caged/saldo_estoque_construcao_edificios
+          load_mode: overwrite   # cada execução consulta todos os meses desde 2024
           dag: saldo_estoque_construcao_edificios_ingest_dag
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: novo_caged_servicos_especializados
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao.parquet
+          caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao
+          load_mode: overwrite   # cada execução consulta todos os meses desde 2024
           dag: saldo_estoque_servicos_especializados_construcao_ingest_dag
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: novo_caged_total
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_total_construcao.parquet
+          caminho: staging/novo_caged/saldo_estoque_total_construcao
+          load_mode: overwrite   # cada execução consulta todos os meses desde 2024
           dag: saldo_estoque_total_construcao_ingest_dag
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+      - name: siafi_notas_empenho_emendas_parlamentares
+        description: "Notas de empenho de emendas parlamentares do MCid (SIAFI/Tesouro Gerencial), relatório do ano de lançamento."
+        meta:
+          caminho: staging/siafi-tesouro-gerencial/notas_empenho_emendas_parlamentares_mcid
+          load_mode: overwrite   # cada e-mail traz o ano de lançamento inteiro
+          dag: empenho_emendas_parlamentares_ingest_dag
+      - name: siafi_orcamento_mcid_por_acao
+        description: "Orçamento do MCid por ação (SIAFI/Tesouro Gerencial): dotação, empenho e pagamento por favorecido."
+        meta:
+          caminho: staging/siafi-tesouro-gerencial/orcamento_mcid_por_acao
+          load_mode: overwrite   # cada e-mail traz o exercício inteiro
+          dag: orcamento_mcid_por_acao_ingest_dag
       - name: siafi_dotacao_execucao
         description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."
         meta:
-          caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid.parquet
+          caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid
+          load_mode: overwrite   # cada e-mail traz o exercício inteiro
           dag: dotacao_execucao_outras_fontes_mcid_ingest_dag
           linhas_minimas: 281   # metade do observado em 2026-08-29 (562)
