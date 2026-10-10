@@ -1,0 +1,154 @@
+[
+  {
+    "dataset": "snh_dados_prioritarios_af_bb",
+    "nome": "\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB(_vs\\d+(_correcao)?)?"
+  },
+  {
+    "dataset": "snh_dados_prioritarios_af_caixa",
+    "nome": "\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA"
+  },
+  {
+    "dataset": "snh_dados_prioritarios_af_caixa_entregas",
+    "nome": "\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS"
+  },
+  {
+    "dataset": "snh_dados_prioritarios_da_entrega_da_unidade_af_bb",
+    "nome": "\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB"
+  },
+  {
+    "dataset": "dados_prioritarios_contratacoes_semanal",
+    "nome": "Dados_Prioritarios_Contratacoes_MCMV_FAR_FDS_RURAL_Semanal_[^/.]*"
+  },
+  {
+    "dataset": "int021_far_bb_pf",
+    "nome": "INT021_MinisterioCidades_FAR_BB_PF_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int039_far_caixa_pf",
+    "nome": "INT039_MinisterioCidades_FAR_CAIXA_PF_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int040_far_caixa_empreendimentos",
+    "nome": "INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int042_fds_caixa_pf",
+    "nome": "INT042_MinisterioCidades_FDS_CAIXA_PF_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int054_far_bb_empreendimentos",
+    "nome": "INT054_MinisterioCidades_FAR_BB_EMPREENDIMENTOS_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int055_liberacoes_caixa_bb",
+    "nome": "INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_[^/.]*"
+  },
+  {
+    "dataset": "int057_pnhr_bb_empreendimentos",
+    "nome": "INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int058_pnhr_bb_pf",
+    "nome": "INT058_MinisterioCidades_PNHR_BB_PF_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int059_fds_caixa_empreendimentos",
+    "nome": "INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int064_pnhr_caixa_pf",
+    "nome": "INT064_MinisterioCidades_PNHR_CAIXA_PF_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int065_pnhr_caixa_empreendimentos",
+    "nome": "INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_[^/.]*",
+    "pacotes_2023": true
+  },
+  {
+    "dataset": "int068_solicitacao_liberacao_obra",
+    "nome": "INT068_MDR_Solicitacao_Liberacao_Obra_[^/.]*"
+  },
+  {
+    "dataset": "bb_af_diemp_andamento_obra",
+    "nome": "BB_AF_DIEMP_ANDAMENTO_OBRA_[^/.]*"
+  },
+  {
+    "dataset": "caixa_af_gehis_andamento_obra",
+    "nome": "(CAIXA_AF_GEHIS_ANDAMENTO_OBRA_[^/.]*|\\d{6}_ANDAMENTO_OBRA_AF_CAIXA[^/.]*)"
+  },
+  {
+    "dataset": "base_andamento_obra",
+    "nome": "BASE_ANDAMENTO_OBRA_[^/.]*"
+  },
+  {
+    "dataset": "caixa_af_gehis_alienacao_imovel",
+    "nome": "CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_[^/.]*"
+  },
+  {
+    "dataset": "caixa_af_gehis_operacao_desenquadrada",
+    "nome": "CAIXA_AF_GEHIS_OPERACAO_DESENQUADRADA_[^/.]*"
+  },
+  {
+    "dataset": "calculo_atuarial_produto",
+    "nome": "CALCULO_ATUARIAL_PRODUTO_[^/.]*"
+  },
+  {
+    "dataset": "pmcmv_reformas_mcid",
+    "nome": "PMCMV_REFORMAS_MCID_[^/.]*"
+  },
+  {
+    "dataset": "pmcmv_faixa3_mcid",
+    "nome": "PMCMV_FAIXA3_MCID_[^/.]*"
+  },
+  {
+    "dataset": "pmcmv_cidades_mcid",
+    "nome": "PMCMV_CIDADES_MCID_[^/.]*"
+  },
+  {
+    "dataset": "fundo_social",
+    "nome": "FUNDO_SOCIAL_[^/.]*"
+  },
+  {
+    "dataset": "mont_cont_pf_far",
+    "nome": "MONT_CONT_PF_FAR_[^/.]*"
+  },
+  {
+    "dataset": "mcmv_cidades_emendas",
+    "nome": "MCMV_CIDADES_EMENDAS_[^/.]*"
+  },
+  {
+    "dataset": "geavo_base_pf_fgts",
+    "nome": "Base_PF_FGTS_[^/.]*"
+  },
+  {
+    "dataset": "geavo_base_pj_fgts",
+    "nome": "Base_PJ_FGTS_[^/.]*"
+  },
+  {
+    "dataset": "cadunico_pessoa_pbf",
+    "nome": "ARQ_PESSOA_PBF_[^/.]*"
+  },
+  {
+    "dataset": "cadunico_familia_pbf",
+    "nome": "ARQ_FAMILIA_PBF_[^/.]*"
+  },
+  {
+    "dataset": "analise_snh_tab_validacao_pf",
+    "nome": "(\\d{6}_)?tab_validacao_arquivos_pf",
+    "pasta": "Analise_SNH"
+  },
+  {
+    "dataset": "analise_snh_tab_validacao_pj",
+    "nome": "(\\d{6}_)?tab_validacao_arquivos_pj",
+    "pasta": "Analise_SNH"
+  }
+]

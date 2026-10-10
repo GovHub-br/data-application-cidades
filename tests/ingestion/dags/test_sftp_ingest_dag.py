@@ -1,17 +1,20 @@
-"""DAG do SFTP no pipeline novo: as famílias contra a árvore real da conta fábrica.
+"""DAG do SFTP: as famílias da Variable SFTP_FAMILIAS contra a árvore real da fábrica.
 
-A fixture é a listagem do SFTP (caminho, tamanho, data) em 2026-10-09. Os testes
-passam a seleção de cada dataset sobre ela: todo arquivo cai em uma família só,
-ou é um avulso declarado aqui.
+As famílias são o valor canônico da Variable (`infra/airflow/variables/
+SFTP_FAMILIAS.json`); a árvore é a listagem do SFTP (caminho, tamanho, data) em
+2026-10-09. Os testes passam a seleção de cada família sobre ela: todo arquivo cai
+em uma família só, ou é um avulso declarado aqui.
 """
 
 import dataclasses
+import json
 import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 import pytest
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.extractors import RemoteFiles
 from ingestion.extractors.models import sftp_extractor
@@ -20,11 +23,18 @@ from ingestion.prepare import MaskPii, Unpack
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
     load_dag_module,
+    nothing_new,
     record_steps,
     run_task,
 )
 
 ARVORE = Path(__file__).parent / "fixtures" / "sftp_fabrica_arvore.tsv"
+REPO = Path(__file__).resolve().parents[3]
+FAMILIAS = json.loads((REPO / "infra/airflow/variables/SFTP_FAMILIAS.json").read_text())
+# A configuração de cada família antes da Variable (tupla na DAG).
+ANTES = json.loads(
+    (Path(__file__).parent / "fixtures/sftp_familias_antes.json").read_text()
+)
 
 # O que nenhuma família pega, e por quê.
 AVULSOS = (
@@ -39,9 +49,27 @@ AVULSOS = (
 )
 
 
+class FakeVariable:
+    reads: list[str] = []
+
+    @classmethod
+    def get(cls, key: str, **kwargs: Any) -> Any:
+        cls.reads.append(key)
+        return FAMILIAS
+
+
 @pytest.fixture
-def module() -> Any:
-    return load_dag_module("data_ingest/sftp/sftp_ingest_dag.py")
+def module(monkeypatch: pytest.MonkeyPatch) -> Any:
+    loaded = load_dag_module("data_ingest/sftp/sftp_ingest_dag.py")
+    monkeypatch.setattr(FakeVariable, "reads", [])
+    monkeypatch.setattr(loaded, "Variable", FakeVariable)
+    return loaded
+
+
+@pytest.fixture
+def specs(module: Any) -> dict[str, Any]:
+    """Uma família resolvida por entrada da Variable."""
+    return {f["dataset"]: module.FAMILIA.resolve(f) for f in FAMILIAS}
 
 
 def _arvore() -> list[tuple[str, int, int]]:
@@ -89,27 +117,49 @@ def _identity(name: str) -> str:
 
 
 @pytest.fixture
-def selections(module: Any) -> dict[str, tuple[list[Any], list[Any]]]:
-    return {spec.dataset: _selection(spec) for spec in module.DATASETS}
+def selections(specs: dict[str, Any]) -> dict[str, tuple[list[Any], list[Any]]]:
+    return {dataset: _selection(spec) for dataset, spec in specs.items()}
 
 
-def test_dag_identity_and_one_task_group_per_family(module: Any) -> None:
+def test_two_declared_tasks(module: Any) -> None:
     dag = module.dag_instance
 
     assert dag.dag_id == "sftp_ingest_dag"
     assert dag.schedule == "0 1 * * *"
     assert dag.catchup is False and dag.max_active_runs == 1
-    assert dag.max_active_tasks == 4
+    assert dag.default_args["owner"] == "Gustavo"
     assert {"sftp", "ingestion"} <= set(dag.tags)
-    for spec in module.DATASETS:
-        convert = dag.task_dict[f"{spec.dataset}.convert_to_staging"]
-        assert convert.upstream_task_ids == {f"{spec.dataset}.extract_to_raw"}
+    assert set(dag.task_dict) == {"extract_to_raw", "convert_to_staging"}
+    assert dag.task_dict["convert_to_staging"].upstream_task_ids == {"extract_to_raw"}
+
+
+def test_each_family_downloads_and_prepares_as_before(specs: dict[str, Any]) -> None:
+    assert list(specs) == list(ANTES)
+    for dataset, spec in specs.items():
+        remote = spec.extractor_config().remote
+        unpack, _ = spec.prepare
+        assert {
+            "root": remote.root,
+            "pattern": remote.pattern,
+            "bundles": remote.bundles,
+            "exclude": list(remote.exclude),
+            "prefer": list(remote.prefer_extensions),
+            "members": unpack.members,
+            "require_match": unpack.require_match,
+        } == ANTES[dataset], dataset
+
+
+def test_a_wrong_family_is_an_error(module: Any) -> None:
+    with pytest.raises(ValueError, match="inválida"):
+        module.arquivos({"dataset": "x", "nome": "X", "pasta": "GEAVO"})
+    with pytest.raises(ValueError, match="inválida"):
+        module.arquivos({"dataset": "x"})
 
 
 def test_every_family_is_incremental_overwrite_masked_and_auto_dialect(
-    module: Any,
+    specs: dict[str, Any],
 ) -> None:
-    for spec in module.DATASETS:
+    for spec in specs.values():
         config = spec.extractor_config()
         assert spec.domain == "sftp"
         assert config.source == "sftp" and config.conn_id == "sftp_mcid"
@@ -179,10 +229,9 @@ def test_one_delivery_per_identity_with_the_old_precedence(
 
 
 def test_int_families_take_the_2023_bundles_and_only_their_members(
-    module: Any, selections: dict[str, tuple[list[Any], list[Any]]]
+    specs: dict[str, Any], selections: dict[str, tuple[list[Any], list[Any]]]
 ) -> None:
     pacotes = {"202310.zip", "202311.zip", "202312_CAIXA.zip"}
-    specs = {spec.dataset: spec for spec in module.DATASETS}
 
     for dataset, (_, bundles) in selections.items():
         if dataset.startswith("int") and dataset != "int055_liberacoes_caixa_bb":
@@ -221,8 +270,10 @@ def test_cadunico_and_analise_snh(
     assert pf and all("tab_validacao_arquivos_pf" in r.name for r in pf)
 
 
-def test_positional_pii_only_for_the_headerless_alienation_file(module: Any) -> None:
-    masks = [spec.prepare[1] for spec in module.DATASETS]
+def test_positional_pii_only_for_the_headerless_alienation_file(
+    specs: dict[str, Any],
+) -> None:
+    masks = [spec.prepare[1] for spec in specs.values()]
     mask = masks[0]
 
     assert all(m == mask for m in masks)
@@ -231,21 +282,23 @@ def test_positional_pii_only_for_the_headerless_alienation_file(module: Any) -> 
     }
 
 
-def test_tasks_only_call_the_pipeline_steps(
+def test_tasks_read_the_variable_and_only_call_the_pipeline_steps(
     module: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     calls = record_steps(module, monkeypatch)
     dag = module.dag_instance
 
-    for spec in module.DATASETS:
-        raw = run_task(dag, f"{spec.dataset}.extract_to_raw")
-        run_task(dag, f"{spec.dataset}.convert_to_staging", raw)
+    run_task(dag, "convert_to_staging", run_task(dag, "extract_to_raw"))
 
+    assert FakeVariable.reads == ["SFTP_FAMILIAS", "SFTP_FAMILIAS"]
     assert calls == [
-        call
-        for spec in module.DATASETS
-        for call in (
-            ("extract_to_raw", spec, RUN_AFTER),
-            ("convert_to_staging", spec, "raw/x/"),
-        )
+        ("extract_to_raw", module.FAMILIA, RUN_AFTER, FAMILIAS),
+        ("convert_to_staging", module.FAMILIA, "raw/x/", FAMILIAS),
     ]
+
+
+def test_nothing_new_is_a_skip(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    nothing_new(module, monkeypatch)
+
+    with pytest.raises(AirflowSkipException):
+        run_task(module.dag_instance, "extract_to_raw")
