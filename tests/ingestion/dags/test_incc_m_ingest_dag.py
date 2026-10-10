@@ -7,7 +7,6 @@ from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.loaders import LoadMode
-from ingestion.sources import fgv
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
     load_dag_module,
@@ -38,9 +37,11 @@ def test_the_dataset_spec_is_declared_in_the_dag(module: Any) -> None:
     spec = module.INCC_M
 
     assert (spec.domain, spec.dataset) == ("fgv", "incc_m")
-    assert spec.extractor_config().source == "http_file"
-    assert spec.extractor_config().base_url == fgv.SINDUSCON_PR
-    assert spec.extractor_config().requests == (fgv.INCC_M,)
+    config = spec.extractor_config()
+    [request] = config.requests
+    assert (config.source, config.base_url) == ("http_file", "https://sindusconpr.com.br")
+    assert request.endpoint.endswith("/9547-serie-historica-incc-m-fgv/")
+    assert "Mozilla" in request.headers["User-Agent"]
     assert spec.converter == ConverterConfig(header_row=3)
     assert spec.load_mode is LoadMode.OVERWRITE
 

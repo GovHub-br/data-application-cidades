@@ -19,17 +19,27 @@ from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import http_file
+from ingestion.extractors import HttpRequest, http_file
 from ingestion.loaders import LoadMode
 from ingestion.pipeline import NothingNew, steps
-from ingestion.sources import fgv
 
 INCC_M = DatasetSpec(
     domain="fgv",
     dataset="incc_m",
     extractor=http_file(
-        base_url=fgv.SINDUSCON_PR, 
-        requests=(fgv.INCC_M,)
+        base_url="https://sindusconpr.com.br",
+        requests=(
+            HttpRequest(
+                name="incc_m",
+                # link estável: redireciona para o xlsx da edição corrente
+                endpoint=(
+                    "/economia/indices-economicos/incc-m-fgv/"
+                    "9547-serie-historica-incc-m-fgv/"
+                ),
+                # sem User-Agent de navegador o servidor recusa a requisição
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+            ),
+        ),
     ),
     converter=ConverterConfig(header_row=3),
     load_mode=LoadMode.OVERWRITE,
