@@ -30,17 +30,31 @@ class Prepare(Protocol):
         """As partes que substituem `part`."""
 
 
+class IngestLog(Protocol):
+    """Controle da extração incremental: o que da fonte já pousou na raw.
+
+    A DAG declara onde ele vive (a tabela `lake._ingest_minio_log`, no SFTP); a
+    conexão só é aberta quando a task chama os métodos.
+    """
+
+    def landed(self) -> frozenset[str]:
+        """Os `source_id`s que já pousaram e não devem ser extraídos de novo."""
+
+    def record(self, part: RawFile, key: str) -> None:
+        """Registra que `part` pousou em `key` (chamado depois do upload)."""
+
+
 @dataclass(frozen=True)
 class DatasetSpec:
     """Um dataset do lake: de onde vem, como converter e como carregar no bronze.
 
-    `domain` e `dataset` viram pastas (`raw/<domain>/<dataset>/...`) e precisam ser
-    segmentos seguros. `load_mode`/`keys` seguem `validate_load`; o mesmo modo vai no
-    `meta.load_mode` da fonte no dbt, que é quem carrega o bronze.
+    `domain` é a pasta da fonte (`raw/<domain>/`, `staging/<domain>/`) e precisa ser
+    um segmento seguro; `dataset` nomeia o dataset no XCom e nos logs. Os arquivos
+    pousam com o nome que o extrator dá.
 
-    `incremental`: a extração recebe os `source_id`s que já pousaram (lidos dos
-    manifestos da raw) e só traz o que é novo. `prepare`: transformações aplicadas a
-    cada arquivo extraído antes do pouso (descompactar, mascarar PII...), em ordem.
+    `incremental`: o controle do que já pousou; a extração recebe os `source_id`s
+    dele e só traz o que é novo. `prepare`: transformações aplicadas a cada arquivo
+    extraído antes do pouso (descompactar, mascarar PII...), em ordem.
 
     Numa DAG com vários datasets (uma lista numa Variable), `dataset`, `extractor` e
     `prepare` podem ser funções da entrada (a mecânica da fonte, no perfil):
@@ -53,7 +67,7 @@ class DatasetSpec:
     converter: ConverterConfig = field(default_factory=ConverterConfig)
     load_mode: LoadMode | str = LoadMode.OVERWRITE
     keys: Sequence[str] = ()
-    incremental: bool = False
+    incremental: IngestLog | None = None
     prepare: Sequence[Prepare] | Callable[[Entry], Sequence[Prepare]] = ()
 
     def __post_init__(self) -> None:

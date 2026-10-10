@@ -121,7 +121,7 @@ def ibge_ingest_dag() -> None:
             raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, list[str]]:
         agregados = Variable.get("IBGE_AGREGADOS", deserialize_json=True)
         return steps.convert_to_staging(AGREGADO, raw, agregados)
 

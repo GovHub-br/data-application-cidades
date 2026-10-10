@@ -121,7 +121,6 @@ FAMILIA = DatasetSpec(
     # contagem vai para o manifesto da staging, como no raw_para_staging.
     converter=ConverterConfig(encoding="auto", delimiter="auto", bad_rows="skip"),
     load_mode=LoadMode.OVERWRITE,
-    incremental=True,
 )
 
 
@@ -146,7 +145,7 @@ def sftp_ingest_dag() -> None:
             raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, list[str]]:
         familias = Variable.get("SFTP_FAMILIAS", deserialize_json=True)
         return steps.convert_to_staging(FAMILIA, raw, familias)
 

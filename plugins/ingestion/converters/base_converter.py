@@ -1,5 +1,6 @@
 """Template da conversão: um arquivo da raw vira Parquet só com texto."""
 
+import dataclasses
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
@@ -39,6 +40,8 @@ class ConvertedFile:
     rows: int
     columns: tuple[str, ...]
     skipped_rows: int = 0
+    #: a aba ou tabela, quando o arquivo gera mais de um Parquet (o `__<sufixo>`)
+    suffix: str | None = None
 
 
 class FileConverter(ABC):
@@ -57,13 +60,14 @@ class FileConverter(ABC):
     def convert(self, path: Path, out_dir: Path) -> Iterator[ConvertedFile]:
         names: set[str] = set()
         for source in self._read(path):
-            name = safe_segment(path.stem)
-            if source.suffix:
-                name += f"__{safe_segment(source.suffix)}"
+            suffix = safe_segment(source.suffix) if source.suffix else None
+            name = safe_segment(path.stem) + (f"__{suffix}" if suffix else "")
             if name in names:
                 raise ConversionError(f"{path.name}: nome de saída repetido ({name})")
             names.add(name)
-            converted = self._write(source, out_dir / f"{name}.parquet")
+            converted = dataclasses.replace(
+                self._write(source, out_dir / f"{name}.parquet"), suffix=suffix
+            )
             self._after_write(converted)
             yield converted
 

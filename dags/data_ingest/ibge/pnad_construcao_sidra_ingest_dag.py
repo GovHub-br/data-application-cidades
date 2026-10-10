@@ -94,7 +94,7 @@ def ibge_pnad_construcao_sidra_ingest_dag() -> None:
             raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, list[str]]:
         tabelas = Variable.get("SIDRA_TABELAS", deserialize_json=True)
         return steps.convert_to_staging(TABELA, raw, tabelas)
 

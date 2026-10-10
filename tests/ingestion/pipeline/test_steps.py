@@ -1,4 +1,4 @@
-"""Passos do pipeline: o que as tasks das DAGs chamam, com só caminhos entre elas."""
+"""Passos do pipeline: o que as tasks das DAGs chamam, com só chaves entre elas."""
 
 from collections.abc import Iterator
 from datetime import datetime, timezone
@@ -7,13 +7,15 @@ from pathlib import Path
 import pyarrow.parquet as pq
 import pytest
 
+from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
 from ingestion.extractors import ExtractorConfig, HttpRequest
 from ingestion.pipeline import NothingNew, steps
-from ingestion.storage import SUCCESS_MARKER, StorageFactory
+from ingestion.storage import StorageFactory
+from tests.ingestion.converters.conftest import xlsx_of
 from tests.ingestion.extractors.conftest import FakeHttpServer, Route
 
-WHEN = datetime(2026, 10, 8, 9, 0, 5, tzinfo=timezone.utc)  # 06:00:05 em Brasília
+WHEN = datetime(2026, 10, 8, 9, 0, 5, tzinfo=timezone.utc)
 
 
 @pytest.fixture
@@ -32,7 +34,7 @@ def server(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeHttpServer]:
         yield fake
 
 
-def _spec(*paths: str) -> DatasetSpec:
+def _spec(*paths: str, converter: ConverterConfig | None = None) -> DatasetSpec:
     return DatasetSpec(
         domain="bacen",
         dataset="financiamentos_imobiliarios",
@@ -41,33 +43,46 @@ def _spec(*paths: str) -> DatasetSpec:
             conn_id="http_test",
             requests=tuple(HttpRequest(name=p.strip("/"), endpoint=p) for p in paths),
         ),
+        converter=converter or ConverterConfig(),
     )
 
 
-def test_extract_then_convert_returns_only_prefixes(
+def test_extract_then_convert_returns_only_keys(
     lake: Path, server: FakeHttpServer, tmp_path: Path
 ) -> None:
     server.routes["/ipca"] = Route(body=b'[{"data":"01/08/2026","valor":"-0.32"}]')
     spec = _spec("/ipca")
 
     landed = steps.extract_to_raw(spec, WHEN)
-    published = steps.convert_to_staging(spec, landed)
+    staged = steps.convert_to_staging(spec, landed)
 
-    [raw] = landed["financiamentos_imobiliarios"]
-    latest = published["financiamentos_imobiliarios"]
-
-    assert raw == "raw/bacen/financiamentos_imobiliarios/2026-10-08/060005/"
-    assert latest == "staging/bacen/financiamentos_imobiliarios/latest/"
+    assert landed == {"financiamentos_imobiliarios": ["raw/bacen/ipca.json"]}
+    assert staged == {"financiamentos_imobiliarios": ["staging/bacen/ipca.parquet"]}
     storage = StorageFactory.create("local", root=lake)
-    assert storage.list(raw) == [raw + SUCCESS_MARKER, raw + "ipca.json"]
-    assert storage.exists(
-        "staging/bacen/financiamentos_imobiliarios/2026-10-08/060005/ipca.parquet"
-    )
-    parquet = lake / latest / "2026-10-08" / "060005" / "ipca.parquet"
-    assert pq.read_table(parquet).to_pylist() == [
+    assert storage.list("") == ["raw/bacen/ipca.json", "staging/bacen/ipca.parquet"]
+    assert pq.read_table(lake / "staging/bacen/ipca.parquet").to_pylist() == [
         {"data": "01/08/2026", "valor": "-0.32"}
     ]
     assert not any(p.is_file() for p in (tmp_path / "tmp").rglob("*"))
+
+
+def test_a_workbook_gives_one_parquet_per_sheet(lake: Path, tmp_path: Path) -> None:
+    workbook = tmp_path / "planilha.xlsx"
+    workbook.write_bytes(xlsx_of({"BD Unidades": [["a"], ["1"]], "SBPE": [["b"], ["2"]]}))
+    StorageFactory.create("local", root=lake).put_file(
+        "raw/bacen/planilha.xlsx", workbook
+    )
+
+    staged = steps.convert_to_staging(
+        _spec("/x"), {"financiamentos_imobiliarios": ["raw/bacen/planilha.xlsx"]}
+    )
+
+    assert staged == {
+        "financiamentos_imobiliarios": [
+            "staging/bacen/planilha__BD_Unidades.parquet",
+            "staging/bacen/planilha__SBPE.parquet",
+        ]
+    }
 
 
 def test_extractor_function_is_resolved_inside_the_step(
@@ -97,9 +112,8 @@ def test_missing_source_is_nothing_new(lake: Path, server: FakeHttpServer) -> No
     assert StorageFactory.create("local", root=lake).list("raw/") == []
 
 
-def test_convert_refuses_a_prefix_of_another_dataset(lake: Path) -> None:
-    with pytest.raises(ValueError, match="não é uma partição"):
+def test_convert_refuses_a_key_of_another_domain(lake: Path) -> None:
+    with pytest.raises(ValueError, match="não é da raw de bacen"):
         steps.convert_to_staging(
-            _spec("/x"),
-            {"financiamentos_imobiliarios": ["raw/fgv/incc_m/2026-10-08/060005/"]},
+            _spec("/x"), {"financiamentos_imobiliarios": ["raw/fgv/incc_m.xlsx"]}
         )

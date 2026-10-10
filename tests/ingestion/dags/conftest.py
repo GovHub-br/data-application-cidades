@@ -39,7 +39,7 @@ def record_steps(
 ) -> list[tuple[Any, ...]]:
     """Troca os passos do pipeline por gravadores; devolve a lista de chamadas.
 
-    Os retornos são opacos ("raw/x/", "staging/x/latest/"): o teste confere que a
+    Os retornos são opacos ("raw/x/", "staging/x/"): o teste confere que a
     task os repassa. A lista da Variable entra na chamada quando a DAG a passa.
     """
     calls: list[tuple[Any, ...]] = []
@@ -50,7 +50,7 @@ def record_steps(
 
     def convert_to_staging(spec: Any, raw: Any, entries: Any = None) -> str:
         calls.append(("convert_to_staging", spec, raw, *_given(entries)))
-        return "staging/x/latest/"
+        return "staging/x/"
 
     monkeypatch.setattr(module.steps, "extract_to_raw", extract_to_raw)
     monkeypatch.setattr(module.steps, "convert_to_staging", convert_to_staging)

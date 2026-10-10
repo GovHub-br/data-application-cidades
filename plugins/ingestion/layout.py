@@ -1,14 +1,17 @@
-"""Layout do lake: como domínio, dataset e data de ingestão viram caminho."""
+"""Layout do lake, o da main: a raw e a staging espelham o caminho da fonte.
 
+raw/<domain>/<caminho na fonte>             (sobrescrito a cada ingestão)
+staging/<domain>/<caminho sem extensão>[__<aba>].parquet
+"""
+
+import posixpath
 import re
-from datetime import datetime
 from zoneinfo import ZoneInfo
 
-#: A pasta do dia é o dia em Brasília: é nele que alguém procura "a ingestão de hoje".
+#: O dia da ingestão é o dia em Brasília (o e-mail "do dia", o mês corrente).
 TIMEZONE = ZoneInfo("America/Sao_Paulo")
 
 _UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
-_PARTITION = re.compile(r"\d{4}-\d{2}-\d{2}/\d{6}")
 
 
 def safe_segment(value: str) -> str:
@@ -23,34 +26,25 @@ def safe_segment(value: str) -> str:
     return segment
 
 
-def ingestion_partition(run_after: datetime) -> str:
-    """Partição `AAAA-MM-DD/HHMMSS` da ingestão, no horário de Brasília.
+def raw_key(domain: str, name: str) -> str:
+    """`raw/<domain>/<name>`: `name` é o caminho do arquivo como na fonte.
 
-    Recebe o `run_after` da run do Airflow. A data separa as ingestões por dia; a
-    hora separa duas execuções no mesmo dia, e a ordem alfabética das partições é
-    a cronológica, então a última ingestão é a maior.
+    O caminho é mantido como veio (espaço e acento inclusive, como na main); só é
+    recusado o que sairia da pasta do domínio ou criaria segmento vazio.
     """
-    if run_after.tzinfo is None or run_after.utcoffset() is None:
-        raise ValueError(f"run_after sem fuso horário: {run_after!r}")
-    return run_after.astimezone(TIMEZONE).strftime("%Y-%m-%d/%H%M%S")
+    segments = name.split("/")
+    if any(segment in {"", ".", ".."} for segment in segments):
+        raise ValueError(f"caminho inválido na raw de {domain}: {name!r}")
+    return f"raw/{safe_segment(domain)}/{name}"
 
 
-def raw_prefix(domain: str, dataset: str, partition: str) -> str:
-    """Prefixo da raw: `raw/<domain>/<dataset>/<AAAA-MM-DD>/<HHMMSS>/`."""
-    return _prefix("raw", domain, dataset, partition)
+def staging_key(raw_key: str, suffix: str | None = None) -> str:
+    """O Parquet de um arquivo da raw: mesmo caminho, sem a extensão de origem.
 
-
-def staging_prefix(domain: str, dataset: str, partition: str) -> str:
-    """Prefixo da staging, espelho da raw: `staging/<domain>/<dataset>/<partição>/`."""
-    return _prefix("staging", domain, dataset, partition)
-
-
-def latest_prefix(domain: str, dataset: str) -> str:
-    """Última ingestão completa publicada: `staging/<domain>/<dataset>/latest/`."""
-    return f"staging/{safe_segment(domain)}/{safe_segment(dataset)}/latest/"
-
-
-def _prefix(layer: str, domain: str, dataset: str, partition: str) -> str:
-    if not _PARTITION.fullmatch(partition):
-        raise ValueError(f"partição fora do formato AAAA-MM-DD/HHMMSS: {partition!r}")
-    return f"{layer}/{safe_segment(domain)}/{safe_segment(dataset)}/{partition}/"
+    `foo.csv` e `foo.txt` são o mesmo dado e viram um `foo.parquet`. `suffix` é a
+    aba ou a tabela, quando o arquivo gera mais de um (`foo__aba.parquet`).
+    """
+    if not raw_key.startswith("raw/"):
+        raise ValueError(f"não é uma chave da raw: {raw_key!r}")
+    stem = posixpath.splitext(raw_key[len("raw/") :])[0]
+    return f"staging/{stem}{f'__{suffix}' if suffix else ''}.parquet"

@@ -55,7 +55,7 @@ def test_tasks_only_call_the_pipeline_steps(
     raw = run_task(dag, "extract_to_raw")
     latest = run_task(dag, "convert_to_staging", raw)
 
-    assert (raw, latest) == ("raw/x/", "staging/x/latest/")
+    assert (raw, latest) == ("raw/x/", "staging/x/")
     assert calls == [
         ("extract_to_raw", module.INCC_M, RUN_AFTER),
         ("convert_to_staging", module.INCC_M, "raw/x/"),

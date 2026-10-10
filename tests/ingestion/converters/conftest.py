@@ -134,6 +134,21 @@ def zip_of(members: dict[str, bytes]) -> bytes:
     return buffer.getvalue()
 
 
+def xlsx_of(sheets: dict[str, list[list[object]]]) -> bytes:
+    """Uma pasta de trabalho com as abas dadas, linha a linha, em bytes."""
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    workbook.remove(workbook.worksheets[0])
+    for title, rows in sheets.items():
+        sheet = workbook.create_sheet(title)
+        for row in rows:
+            sheet.append(row)
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()
+
+
 def _zip_case(tmp_path: Path, request: pytest.FixtureRequest) -> ContractCase:
     path = tmp_path / "dotacao_execucao.zip"
     path.write_bytes(

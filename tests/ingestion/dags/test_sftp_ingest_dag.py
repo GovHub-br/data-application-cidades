@@ -163,7 +163,6 @@ def test_every_family_is_incremental_overwrite_masked_and_auto_dialect(
         config = spec.extractor_config()
         assert spec.domain == "sftp"
         assert config.source == "sftp" and config.conn_id == "sftp_mcid"
-        assert spec.incremental is True
         # retrato completo: o latest/ fica com a entrega mais recente
         assert spec.load_mode is LoadMode.OVERWRITE
         unpack, mask = spec.prepare

@@ -1,7 +1,7 @@
-"""Extração incremental (o que já pousou não volta) e preparos antes do pouso."""
+"""Extração incremental (o que já pousou não volta), preparos antes do pouso e
+várias entradas numa DAG."""
 
 import dataclasses
-import json
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -19,7 +19,6 @@ from ingestion.extractors import (
     SourceNotFoundError,
 )
 from ingestion.pipeline import NothingNew, steps
-from ingestion.storage import SUCCESS_MARKER, StorageFactory
 
 WHEN = datetime(2026, 10, 8, 9, 0, tzinfo=timezone.utc)
 SOURCE: dict[str, bytes] = {}
@@ -74,214 +73,119 @@ def lake(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return root
 
 
-def _manifest(lake: Path, prefix: str) -> list[dict[str, object]]:
-    files: list[dict[str, object]] = json.loads(
-        (lake / prefix / SUCCESS_MARKER).read_text()
-    )["files"]
-    return files
+class _MemoryLog:
+    """Controle de teste: guarda em memória o que pousou, como a tabela do Postgres."""
+
+    def __init__(self) -> None:
+        self.rows: list[tuple[str | None, str]] = []
+
+    def landed(self) -> frozenset[str]:
+        return frozenset(source for source, _key in self.rows if source)
+
+    def record(self, part: RawFile, key: str) -> None:
+        self.rows.append((part.source_id, key))
 
 
 def _spec(**kwargs: object) -> DatasetSpec:
     return DatasetSpec(
-        domain="sftp",
+        domain="teste",
         dataset="teste",
         extractor=ExtractorConfig(source="teste_incremental"),
         **kwargs,
     )
 
 
-def test_source_id_goes_to_the_manifest(lake: Path) -> None:
-    SOURCE["a.csv"] = b"x"
+def test_incremental_run_lands_only_what_is_new_and_records_it(lake: Path) -> None:
+    log = _MemoryLog()
+    SOURCE.update({"a.csv": b"1", "b.csv": b"22"})
+    assert steps.extract_to_raw(_spec(incremental=log), WHEN) == {
+        "teste": ["raw/teste/a.csv", "raw/teste/b.csv"]
+    }
+    SOURCE["c.csv"] = b"333"
 
-    [prefix] = steps.extract_to_raw(_spec(), WHEN)["teste"]
+    landed = steps.extract_to_raw(_spec(incremental=log), WHEN + timedelta(days=1))
 
-    assert _manifest(lake, prefix)[0]["source_id"] == "a.csv:1"
-
-
-def test_without_incremental_the_run_is_one_ingestion(lake: Path) -> None:
-    SOURCE.update({"a.csv": b"x", "b.csv": b"y"})
-
-    [prefix] = steps.extract_to_raw(_spec(), WHEN)["teste"]
-
-    storage = StorageFactory.create("local", root=lake)
-    assert storage.list(prefix) == [
-        prefix + SUCCESS_MARKER,
-        prefix + "a.csv",
-        prefix + "b.csv",
+    assert landed == {"teste": ["raw/teste/c.csv"]}
+    assert SEEN_BY_EXTRACTOR[1] == frozenset({"a.csv:1", "b.csv:2"})
+    assert log.rows == [
+        ("a.csv:1", "raw/teste/a.csv"),
+        ("b.csv:2", "raw/teste/b.csv"),
+        ("c.csv:3", "raw/teste/c.csv"),
     ]
 
 
-def test_incremental_lands_each_delivery_as_its_own_ingestion_in_order(
-    lake: Path,
-) -> None:
-    # Primeira carga com o histórico: uma ingestão por entrega, na ordem em que o
-    # extrator as entrega (a de chegada na fonte), cada uma com o seu _SUCCESS.
-    SOURCE.update({"a.csv": b"x", "b.csv": b"y", "c.csv": b"z"})
+def test_incremental_run_with_nothing_new_is_nothing_new(lake: Path) -> None:
+    log = _MemoryLog()
+    SOURCE["a.csv"] = b"1"
+    steps.extract_to_raw(_spec(incremental=log), WHEN)
 
-    prefixes = steps.extract_to_raw(_spec(incremental=True), WHEN)["teste"]
-
-    storage = StorageFactory.create("local", root=lake)
-    assert [storage.list(p) for p in prefixes] == [
-        [p + SUCCESS_MARKER, p + name]
-        for p, name in zip(prefixes, ["a.csv", "b.csv", "c.csv"])
-    ]
-    assert prefixes == sorted(prefixes) and len(set(prefixes)) == 3
-    assert [
-        json.loads((lake / p / SUCCESS_MARKER).read_text())["sources"] for p in prefixes
-    ] == [
-        ["a.csv:1"],
-        ["b.csv:1"],
-        ["c.csv:1"],
-    ]
-
-
-def test_incremental_run_lands_only_what_is_new(lake: Path) -> None:
-    spec = _spec(incremental=True)
-    SOURCE.update({"a.csv": b"x", "b.csv": b"y"})
-    first = steps.extract_to_raw(spec, WHEN)["teste"]
-    SOURCE["c.csv"] = b"z"
-
-    [second] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))["teste"]
-
-    assert SEEN_BY_EXTRACTOR == [frozenset(), frozenset({"a.csv:1", "b.csv:1"})]
-    storage = StorageFactory.create("local", root=lake)
-    assert storage.list(second) == [second + SUCCESS_MARKER, second + "c.csv"]
-    assert second > max(first)
     with pytest.raises(NothingNew):
-        steps.extract_to_raw(spec, WHEN + timedelta(days=2))
+        steps.extract_to_raw(_spec(incremental=log), WHEN + timedelta(days=1))
 
 
-def test_without_incremental_everything_lands_again(lake: Path) -> None:
-    SOURCE["a.csv"] = b"x"
+def test_a_failed_upload_is_not_recorded(
+    lake: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # O registro vem depois do upload: o que não subiu volta na próxima execução.
+    log = _MemoryLog()
+    SOURCE.update({"a.csv": b"1", "b.csv": b"2"})
+    from ingestion.storage import LocalStorageBackend
+
+    real = LocalStorageBackend.put_file
+
+    def flaky(self: LocalStorageBackend, key: str, local_path: Path) -> None:
+        if key.endswith("b.csv"):
+            raise OSError("MinIO caiu")
+        real(self, key, local_path)
+
+    monkeypatch.setattr(LocalStorageBackend, "put_file", flaky)
+
+    with pytest.raises(OSError):
+        steps.extract_to_raw(_spec(incremental=log), WHEN)
+    assert log.rows == [("a.csv:1", "raw/teste/a.csv")]
+
+
+def test_without_incremental_everything_lands_again_over_the_old(lake: Path) -> None:
+    SOURCE["a.csv"] = b"1"
     steps.extract_to_raw(_spec(), WHEN)
+    SOURCE["a.csv"] = b"2"
 
     steps.extract_to_raw(_spec(), WHEN + timedelta(days=1))
 
     assert SEEN_BY_EXTRACTOR == [frozenset(), frozenset()]
+    assert (lake / "raw/teste/a.csv").read_bytes() == b"2"
 
 
 def test_prepare_steps_run_in_order_before_landing(lake: Path, tmp_path: Path) -> None:
     SOURCE["a.csv"] = b"abc"
 
-    [prefix] = steps.extract_to_raw(_spec(prepare=(_Split(), _Upper())), WHEN)["teste"]
-
-    storage = StorageFactory.create("local", root=lake)
-    assert storage.list(prefix) == [
-        prefix + SUCCESS_MARKER,
-        prefix + "up_1_a.csv",
-        prefix + "up_2_a.csv",
+    [first, second] = steps.extract_to_raw(_spec(prepare=(_Split(), _Upper())), WHEN)[
+        "teste"
     ]
-    assert (lake / prefix / "up_1_a.csv").read_bytes() == b"ABC"
-    manifest = _manifest(lake, prefix)
-    assert {(m["source_id"], m["upper"]) for m in manifest} == {("a.csv:3", True)}
+
+    assert (first, second) == ("raw/teste/up_1_a.csv", "raw/teste/up_2_a.csv")
+    assert (lake / first).read_bytes() == b"ABC"
     assert not any(p.is_file() for p in (tmp_path / "tmp").rglob("*"))
 
 
-class _OnlyB:
-    """Preparo de teste: descarta tudo que não é b (o pacote sem a família)."""
+def test_the_same_name_twice_in_one_ingestion_is_an_error(lake: Path) -> None:
+    SOURCE.update({"a.csv": b"1"})
+
+    with pytest.raises(ValueError, match="repetido"):
+        steps.extract_to_raw(_spec(prepare=(_Split(), _SameName())), WHEN)
+
+
+class _SameName:
+    """Preparo de teste: todo arquivo vira `x.csv`."""
 
     def apply(self, part: RawFile, work_dir: Path) -> Iterator[RawFile]:
-        if part.name.startswith("b"):
-            yield part
-        else:
-            part.path.unlink()
-
-
-def test_a_source_that_the_prepare_drops_is_not_downloaded_again(lake: Path) -> None:
-    # O pacote sem a família não pousa nada: ele fica registrado na ingestão
-    # seguinte, para não ser baixado de novo.
-    spec = _spec(incremental=True, prepare=(_OnlyB(),))
-    SOURCE.update({"a.zip": b"x", "b.csv": b"y"})
-    [prefix] = steps.extract_to_raw(spec, WHEN)["teste"]
-    SOURCE["b2.csv"] = b"z"
-
-    steps.extract_to_raw(spec, WHEN + timedelta(days=1))
-
-    sources = json.loads((lake / prefix / SUCCESS_MARKER).read_text())["sources"]
-    assert sources == ["a.zip:1", "b.csv:1"]
-    assert SEEN_BY_EXTRACTOR[1] == frozenset({"a.zip:1", "b.csv:1"})
-
-
-class _Unwrap:
-    """Preparo de teste: `pacote_*` vira o arquivo que ele embrulha (b.csv)."""
-
-    def apply(self, part: RawFile, work_dir: Path) -> Iterator[RawFile]:
-        if not part.name.startswith("pacote_"):
-            yield part
-            return
         new = write_stream(
-            [part.path.read_bytes()], work_dir / "inner" / "b.csv", "b.csv"
+            [part.path.read_bytes()], work_dir / "same" / part.name / "x.csv", "x.csv"
         )
         part.path.unlink()
-        yield dataclasses.replace(new, source_id=part.source_id)
+        yield new
 
 
-def test_the_same_name_twice_in_one_ingestion_keeps_the_first(lake: Path) -> None:
-    SOURCE.update({"b.csv": b"solta", "pacote_x": b"do pacote"})
-
-    [prefix] = steps.extract_to_raw(_spec(prepare=(_Unwrap(),)), WHEN)["teste"]
-
-    assert (lake / prefix / "b.csv").read_bytes() == b"solta"
-    marker = json.loads((lake / prefix / SUCCESS_MARKER).read_text())
-    assert marker["duplicates"] == [{"name": "b.csv", "source_id": "pacote_x:9"}]
-    assert marker["sources"] == ["b.csv:5", "pacote_x:9"]
-
-
-def test_the_same_name_in_two_deliveries_is_two_ingestions(lake: Path) -> None:
-    # Incremental: a entrega solta e o pacote que também a traz são entregas
-    # diferentes; a mais nova é a ingestão mais nova.
-    SOURCE.update({"b.csv": b"solta", "pacote_x": b"do pacote"})
-
-    first, second = steps.extract_to_raw(
-        _spec(incremental=True, prepare=(_Unwrap(),)), WHEN
-    )["teste"]
-
-    assert (lake / first / "b.csv").read_bytes() == b"solta"
-    assert (lake / second / "b.csv").read_bytes() == b"do pacote"
-
-
-def test_converting_several_ingestions_leaves_the_last_in_latest(lake: Path) -> None:
-    SOURCE.update({"a.csv": b"v\n1\n", "b.csv": b"v\n2\n"})
-    spec = _spec(incremental=True)
-    first, second = steps.extract_to_raw(spec, WHEN)["teste"]
-
-    latest = steps.convert_to_staging(spec, {"teste": [first, second]})["teste"]
-
-    storage = StorageFactory.create("local", root=lake)
-    assert [k.rsplit("/", 1)[-1] for k in storage.list(latest)] == [
-        "b.parquet",
-        SUCCESS_MARKER,
-    ]
-    marker = json.loads((lake / latest / SUCCESS_MARKER).read_text())
-    staged = [p.replace("raw/", "staging/", 1) for p in (first, second)]
-    assert (marker["particao"], marker["antecessor"]) == (staged[1], staged[0])
-
-
-def test_ingestions_left_without_staging_are_converted_on_the_next_run(
-    lake: Path,
-) -> None:
-    # A execução caiu depois de pousar a ingestão de b e antes de convertê-la; a
-    # próxima extração não a baixa de novo, então a conversão a recupera, em ordem.
-    spec = _spec(incremental=True)
-    SOURCE.update({"a.csv": b"v\n1\n", "b.csv": b"v\n2\n"})
-    first, orphan = steps.extract_to_raw(spec, WHEN)["teste"]
-    steps.convert_to_staging(spec, {"teste": [first]})
-    SOURCE["c.csv"] = b"v\n3\n"
-    [third] = steps.extract_to_raw(spec, WHEN + timedelta(days=1))["teste"]
-
-    latest = steps.convert_to_staging(spec, {"teste": [third]})["teste"]
-
-    storage = StorageFactory.create("local", root=lake)
-    staged = orphan.replace("raw/", "staging/", 1)
-    assert storage.exists(staged + SUCCESS_MARKER)
-    marker = json.loads((lake / latest / SUCCESS_MARKER).read_text())
-    assert (marker["particao"], marker["antecessor"]) == (
-        third.replace("raw/", "staging/", 1),
-        staged,
-    )
-
-
-# Várias entradas: a lista da Variable da DAG, um dataset por entrada.
 FILES: dict[str, dict[str, bytes]] = {}
 EXTRACTED: list[str] = []
 
@@ -327,8 +231,7 @@ def test_one_dataset_per_entry_in_order(lake: Path, entradas: None) -> None:
         _por_entrada(), WHEN, [{"dataset": "sinapi"}, {"dataset": "paic"}]
     )
 
-    assert list(landed) == ["sinapi", "paic"]
-    assert [p.split("/")[2] for [p] in landed.values()] == ["sinapi", "paic"]
+    assert landed == {"sinapi": ["raw/ibge/s.json"], "paic": ["raw/ibge/p.json"]}
 
 
 def test_the_first_error_stops_the_run(lake: Path, entradas: None) -> None:
@@ -361,9 +264,9 @@ def test_convert_only_the_datasets_that_landed(lake: Path, entradas: None) -> No
     lista = [{"dataset": "ausente"}, {"dataset": "paic"}]
     landed = steps.extract_to_raw(_por_entrada(), WHEN, lista)
 
-    published = steps.convert_to_staging(_por_entrada(), landed, lista)
+    staged = steps.convert_to_staging(_por_entrada(), landed, lista)
 
-    assert published == {"paic": "staging/ibge/paic/latest/"}
+    assert staged == {"paic": ["staging/ibge/p.parquet"]}
 
 
 def test_the_list_must_have_unique_and_some_datasets(lake: Path, entradas: None) -> None:

@@ -1,6 +1,4 @@
-"""Layout do lake: segmentos seguros, partição por data de ingestão e prefixos."""
-
-from datetime import datetime, timedelta, timezone
+"""Layout do lake, o da main: a raw e a staging espelham o caminho da fonte."""
 
 import pytest
 
@@ -31,62 +29,58 @@ def test_safe_segment_rejects_empty_and_relative_segments(value: str) -> None:
 
 
 @pytest.mark.parametrize(
-    ("run_after", "expected"),
+    ("domain", "name", "expected"),
     [
-        # Meio do dia: 15h UTC são 12h em Brasília.
-        (datetime(2026, 10, 8, 15, 0, 5, tzinfo=timezone.utc), "2026-10-08/120005"),
-        # Virada: em UTC já é dia 9, em Brasília ainda é dia 8.
-        (datetime(2026, 10, 9, 2, 30, tzinfo=timezone.utc), "2026-10-08/233000"),
-        # Já em outro fuso: converte do mesmo jeito.
+        ("fgv", "incc_m.xlsx", "raw/fgv/incc_m.xlsx"),
         (
-            datetime(2026, 10, 8, 9, 0, tzinfo=timezone(timedelta(hours=-3))),
-            "2026-10-08/090000",
+            "sftp",
+            "fabrica/GEFUS/ANTERIORES/X 2023.TXT",
+            "raw/sftp/fabrica/GEFUS/ANTERIORES/X 2023.TXT",
+        ),
+        (
+            "abecip",
+            "fallback_json/poupanca.json",
+            "raw/abecip/fallback_json/poupanca.json",
         ),
     ],
 )
-def test_ingestion_partition_uses_brasilia_date_and_time(
-    run_after: datetime, expected: str
+def test_raw_key_is_domain_and_the_path_of_the_source(
+    domain: str, name: str, expected: str
 ) -> None:
-    assert layout.ingestion_partition(run_after) == expected
-
-
-def test_ingestion_partition_rejects_naive_datetime() -> None:
-    # Sem fuso não dá para saber o dia em Brasília; adivinhar trocaria a pasta do dia.
-    with pytest.raises(ValueError):
-        layout.ingestion_partition(datetime(2026, 10, 8, 12, 0))
-
-
-def test_raw_prefix_is_domain_dataset_date_time() -> None:
-    assert (
-        layout.raw_prefix("ibge", "sinapi", "2026-10-08/060000")
-        == "raw/ibge/sinapi/2026-10-08/060000/"
-    )
-
-
-def test_staging_prefix_mirrors_raw() -> None:
-    assert (
-        layout.staging_prefix("ibge", "sinapi", "2026-10-08/060000")
-        == "staging/ibge/sinapi/2026-10-08/060000/"
-    )
-
-
-def test_prefix_sanitizes_domain_and_dataset() -> None:
-    assert (
-        layout.raw_prefix("siafi tesouro", "dotação", "2026-10-08/060000")
-        == "raw/siafi_tesouro/dota__o/2026-10-08/060000/"
-    )
+    assert layout.raw_key(domain, name) == expected
 
 
 @pytest.mark.parametrize(
-    "partition",
-    ["2026-10-08", "2026-10-08/0600", "08-10-2026/060000", "2026-10-08/060000/x", ""],
+    "name", ["", "/abs.csv", "a//b.csv", "../fora.csv", "a/./b.csv", "pasta/"]
 )
-def test_prefix_rejects_malformed_partition(partition: str) -> None:
+def test_raw_key_rejects_paths_that_escape_or_are_empty(name: str) -> None:
     with pytest.raises(ValueError):
-        layout.raw_prefix("ibge", "sinapi", partition)
+        layout.raw_key("sftp", name)
 
 
-def test_latest_prefix_is_the_published_folder_of_the_dataset() -> None:
-    assert layout.latest_prefix("siafi tesouro", "dotação") == (
-        "staging/siafi_tesouro/dota__o/latest/"
-    )
+@pytest.mark.parametrize(
+    ("raw_key", "suffix", "expected"),
+    [
+        ("raw/fgv/incc_m.xlsx", None, "staging/fgv/incc_m.parquet"),
+        (
+            "raw/sftp/fabrica/GEFUS/X.TXT",
+            None,
+            "staging/sftp/fabrica/GEFUS/X.parquet",
+        ),
+        (
+            "raw/abecip/financiamentos_modalidade.xlsx",
+            "bd_unidades",
+            "staging/abecip/financiamentos_modalidade__bd_unidades.parquet",
+        ),
+        ("raw/sftp/fabrica/a.b.c.csv", None, "staging/sftp/fabrica/a.b.c.parquet"),
+    ],
+)
+def test_staging_key_mirrors_the_raw_without_the_extension(
+    raw_key: str, suffix: str | None, expected: str
+) -> None:
+    assert layout.staging_key(raw_key, suffix) == expected
+
+
+def test_staging_key_refuses_a_key_outside_the_raw() -> None:
+    with pytest.raises(ValueError):
+        layout.staging_key("staging/fgv/incc_m.parquet")

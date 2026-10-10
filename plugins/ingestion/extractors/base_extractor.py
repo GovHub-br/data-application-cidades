@@ -15,12 +15,12 @@ from ingestion.layout import safe_segment
 class RawFile:
     """Uma parte extraída, já em disco, pronta para pousar na raw.
 
-    `name` é o nome do arquivo dentro da partição da raw; `sha256` e `size` são do
+    `name` é o caminho do arquivo dentro de `raw/<domain>/`; `sha256` e `size` são do
     que a fonte entregou, calculados na gravação, sem reler o arquivo.
 
     `source_id` identifica o arquivo na fonte (caminho, tamanho, data) para a
-    extração incremental; `details` é o que um preparo quer registrar no manifesto
-    (a auditoria do mascaramento, por exemplo). Os dois vão para o `_SUCCESS`.
+    extração incremental; `details` é o que um preparo quer registrar (a auditoria
+    do mascaramento, por exemplo).
     """
 
     name: str
@@ -35,7 +35,7 @@ class Extractor(ABC):
     """Strategy de extração: copia o dado de uma fonte para disco, como veio.
 
     `extract` é um gerador: grava uma parte, cede o RawFile e só grava a próxima
-    quando quem consome (`storage.land`) já subiu e apagou a anterior. Assim nem a
+    quando quem consome (`steps.extract_to_raw`) já subiu e apagou a anterior. Assim nem a
     memória nem o disco do worker dependem do tamanho da fonte.
 
     `ingestion_time` é o instante da ingestão (com fuso): o dia do e-mail, o fim de
