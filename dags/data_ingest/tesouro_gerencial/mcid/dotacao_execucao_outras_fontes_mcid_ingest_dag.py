@@ -16,18 +16,18 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, MailQuery
+from ingestion.extractors import MailQuery, email
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
-DATASET = DatasetSpec(
+DOTACAO_EXECUCAO = DatasetSpec(
     domain="siafi-tesouro-gerencial",
     dataset="dotacao_execucao_outras_fontes_mcid",
-    extractor=ExtractorConfig(
-        source="email",
+    extractor=email(
         conn_id="imap_tesouro",
         mail=MailQuery(
             subject="dotacao_execucao_outras_fontes_mcid",
@@ -60,12 +60,15 @@ DATASET = DatasetSpec(
 )
 def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(DOTACAO_EXECUCAO, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(DOTACAO_EXECUCAO, raw)
 
     convert_to_staging(extract_to_raw())
 
