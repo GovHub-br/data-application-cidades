@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Protocol
 
 from ingestion.converters.config_converter import ConverterConfig
+from ingestion.converters.table import Table
 from ingestion.extractors.base_extractor import RawFile
 from ingestion.extractors.builders import Entry
 from ingestion.extractors.config_extractor import ExtractorConfig
@@ -52,6 +53,10 @@ class DatasetSpec:
     um segmento seguro; `dataset` nomeia o dataset no XCom e nos logs. Os arquivos
     pousam com o nome que o extrator dá.
 
+    `converter`: como ler o arquivo da raw (`ConverterConfig`), ou a função da DAG
+    que o transforma na tabela da staging (`Table`), como a main fazia nas fontes
+    de API e planilha.
+
     `incremental`: o controle do que já pousou; a extração recebe os `source_id`s
     dele e só traz o que é novo. `prepare`: transformações aplicadas a cada arquivo
     extraído antes do pouso (descompactar, mascarar PII...), em ordem.
@@ -64,7 +69,7 @@ class DatasetSpec:
     domain: str
     dataset: str | Callable[[Entry], str]
     extractor: ExtractorSource
-    converter: ConverterConfig = field(default_factory=ConverterConfig)
+    converter: ConverterConfig | Table = field(default_factory=ConverterConfig)
     load_mode: LoadMode | str = LoadMode.OVERWRITE
     keys: Sequence[str] = ()
     incremental: IngestLog | None = None

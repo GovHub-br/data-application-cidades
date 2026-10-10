@@ -119,3 +119,49 @@ def reachable(host: str | None, port: int) -> bool:
             return True
     except OSError:
         return False
+
+
+class ReadOnlyStorage(StorageBackend):
+    """Embrulho que só lê: o lake da main nunca é escrito pelos testes."""
+
+    def __init__(self, inner: StorageBackend) -> None:
+        self.inner = inner
+
+    def get_file(self, key: str, local_path: Path) -> None:
+        self.inner.get_file(key, local_path)
+
+    def list(self, prefix: str) -> list[str]:
+        return self.inner.list(prefix)
+
+    def exists(self, key: str) -> bool:
+        return self.inner.exists(key)
+
+    def put_file(self, key: str, local_path: Path) -> None:
+        raise PermissionError(f"lake da main é só leitura: put {key}")
+
+    def delete(self, key: str) -> None:
+        raise PermissionError(f"lake da main é só leitura: delete {key}")
+
+    def copy(self, src_key: str, dst_key: str) -> None:
+        raise PermissionError(f"lake da main é só leitura: copy {dst_key}")
+
+
+@pytest.fixture
+def main_lake() -> StorageBackend:
+    """O lake que a main grava hoje (`raw/`, `staging/`), só leitura.
+
+    É o alvo dos testes de equivalência: a raw da main, convertida pela DAG nova,
+    tem de dar a staging da main. `INGESTION_MAIN_BUCKET` escolhe o bucket; pulado
+    sem ele ou se o MinIO não responder.
+    """
+    bucket = os.environ.get("INGESTION_MAIN_BUCKET")
+    if not bucket:
+        pytest.skip("INGESTION_MAIN_BUCKET não definida")
+    inner = S3StorageBackend(
+        bucket=bucket, conn_id=os.environ.get("INGESTION_STORAGE_CONN_ID", "minio_lake")
+    )
+    endpoint = inner.hook.conn_config.endpoint_url
+    url = urlparse(endpoint or "")
+    if not endpoint or not reachable(url.hostname, url.port or 80):
+        pytest.skip(f"MinIO não responde em {endpoint!r}")
+    return ReadOnlyStorage(inner)

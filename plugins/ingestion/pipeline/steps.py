@@ -10,12 +10,13 @@ as Variables e traduz o `NothingNew` em skip.
 
 import logging
 import os
+import posixpath
 import tempfile
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 
-from ingestion.converters import ConverterFactory
+from ingestion.converters import ConverterFactory, Table, convert_table
 from ingestion.dataset import DatasetSpec, IngestLog, Prepare
 from ingestion.extractors import Entry, ExtractorFactory, RawFile, SourceNotFoundError
 from ingestion.layout import raw_key, staging_key
@@ -123,17 +124,35 @@ def _record(log: IngestLog | None, part: RawFile, key: str) -> None:
 def _convert(storage: StorageBackend, spec: DatasetSpec, source: str) -> list[str]:
     if not source.startswith(f"raw/{spec.domain}/"):
         raise ValueError(f"{source!r} não é da raw de {spec.domain}")
-    keys: list[str] = []
     with tempfile.TemporaryDirectory(prefix="convert-", dir=_work_root()) as work:
         local = Path(work) / "raw" / source.rsplit("/", 1)[-1]
         storage.get_file(source, local)
+        if isinstance(spec.converter, Table):
+            return _convert_table(storage, spec.converter, source, local, Path(work))
+        keys: list[str] = []
         converter = ConverterFactory.for_file(local, spec.converter)
         for converted in converter.convert(local, Path(work) / "staging"):
             key = staging_key(source, converted.suffix)
             storage.put_file(key, converted.path)
             converted.path.unlink()
             keys.append(key)
-    return keys
+        return keys
+
+
+def _convert_table(
+    storage: StorageBackend, table: Table, source: str, local: Path, work: Path
+) -> list[str]:
+    """A tabela da função da DAG na staging; o fallback, ao lado do arquivo na raw."""
+    target = staging_key(source)
+    current = None
+    if table.accumulate and storage.exists(target):
+        current = work / "current.parquet"
+        storage.get_file(target, current)
+    parquet, *fallback = convert_table(table, local, work / "staging", current=current)
+    storage.put_file(target, parquet)
+    for path in fallback:
+        storage.put_file(f"{posixpath.dirname(source)}/fallback_json/{path.name}", path)
+    return [target]
 
 
 def _apply(step: Prepare, parts: Iterable[RawFile], work_dir: Path) -> Iterator[RawFile]:

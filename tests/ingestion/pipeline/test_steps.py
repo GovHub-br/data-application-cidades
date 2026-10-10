@@ -1,13 +1,15 @@
 """Passos do pipeline: o que as tasks das DAGs chamam, com só chaves entre elas."""
 
+import json
 from collections.abc import Iterator
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pandas as pd
 import pyarrow.parquet as pq
 import pytest
 
-from ingestion.converters import ConverterConfig
+from ingestion.converters import ConverterConfig, Table
 from ingestion.dataset import DatasetSpec
 from ingestion.extractors import ExtractorConfig, HttpRequest
 from ingestion.pipeline import NothingNew, steps
@@ -34,7 +36,7 @@ def server(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeHttpServer]:
         yield fake
 
 
-def _spec(*paths: str, converter: ConverterConfig | None = None) -> DatasetSpec:
+def _spec(*paths: str, converter: ConverterConfig | Table | None = None) -> DatasetSpec:
     return DatasetSpec(
         domain="bacen",
         dataset="financiamentos_imobiliarios",
@@ -117,3 +119,48 @@ def test_convert_refuses_a_key_of_another_domain(lake: Path) -> None:
         steps.convert_to_staging(
             _spec("/x"), {"financiamentos_imobiliarios": ["raw/fgv/incc_m.xlsx"]}
         )
+
+
+def _incc(raw: Path) -> pd.DataFrame:
+    frame = pd.read_json(raw)
+    return frame.assign(dt_ingest="2026-10-10T03:00:00")
+
+
+def test_a_table_function_gives_the_staging_and_the_fallback(
+    lake: Path, server: FakeHttpServer
+) -> None:
+    server.routes["/incc_m"] = Route(body=b'[{"mes":"jan/26","indice":1234.5}]')
+    spec = _spec("/incc_m", converter=Table(_incc, fallback_json=True))
+
+    staged = steps.convert_to_staging(spec, steps.extract_to_raw(spec, WHEN))
+
+    assert staged == {"financiamentos_imobiliarios": ["staging/bacen/incc_m.parquet"]}
+    assert pq.read_table(lake / "staging/bacen/incc_m.parquet").to_pylist() == [
+        {"mes": "jan/26", "indice": "1234.5", "dt_ingest": "2026-10-10T03:00:00"}
+    ]
+    assert json.loads((lake / "raw/bacen/fallback_json/incc_m.json").read_text()) == [
+        {"mes": "jan/26", "indice": 1234.5, "dt_ingest": "2026-10-10T03:00:00"}
+    ]
+
+
+def test_an_accumulating_table_gets_the_staging_it_wrote_before(
+    lake: Path, server: FakeHttpServer
+) -> None:
+    def accumulate(raw: Path, current: pd.DataFrame | None) -> pd.DataFrame:
+        new = pd.DataFrame(json.loads(raw.read_text()))
+        if current is None:
+            return new
+        merged = pd.concat([current, new]).drop_duplicates("dia", keep="last")
+        return merged.reset_index(drop=True)
+
+    route = server.routes["/imob"] = Route(body=b'[{"dia":"1","v":"a"}]')
+    spec = _spec("/imob", converter=Table(accumulate, accumulate=True))
+    steps.convert_to_staging(spec, steps.extract_to_raw(spec, WHEN))
+    route.body = b'[{"dia":"1","v":"b"},{"dia":"2","v":"c"}]'
+
+    steps.convert_to_staging(spec, steps.extract_to_raw(spec, WHEN))
+
+    assert pq.read_table(lake / "staging/bacen/imob.parquet").to_pylist() == [
+        {"dia": "1", "v": "b"},
+        {"dia": "2", "v": "c"},
+    ]

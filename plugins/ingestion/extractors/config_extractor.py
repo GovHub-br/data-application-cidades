@@ -14,6 +14,9 @@ from typing import Any
 class HttpRequest:
     """Uma chamada HTTP; `name` dá nome ao arquivo na raw.
 
+    `filename` fixa o nome do arquivo na raw (`incc_m.xlsx`, como na main); sem
+    ele, o `http_file` usa o nome que a fonte dá.
+
     `endpoint` é relativo à Connection ou uma URL completa. `resolve`, quando
     presente, descobre a URL em tempo de execução (o link da edição que muda de nome)
     e recebe o HttpHook GET da Connection, já com autenticação.
@@ -26,6 +29,7 @@ class HttpRequest:
     json: Any = None
     headers: Mapping[str, str] = field(default_factory=dict)
     resolve: Callable[[Any], str] | None = None
+    filename: str | None = None
 
 
 @dataclass(frozen=True)

@@ -1,18 +1,20 @@
 """DAG do INCC-M: o DatasetSpec declarado e as duas tasks, que só chamam os passos."""
 
+from pathlib import Path
 from typing import Any
 
 import pytest
 from airflow.sdk.exceptions import AirflowSkipException
 
-from ingestion.converters import ConverterConfig
-from ingestion.loaders import LoadMode
+from ingestion.converters import Table
+from ingestion.storage import StorageBackend
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
     load_dag_module,
     nothing_new,
     record_steps,
     run_task,
+    same_as_main,
 )
 
 
@@ -42,8 +44,8 @@ def test_the_dataset_spec_is_declared_in_the_dag(module: Any) -> None:
     assert (config.source, config.base_url) == ("http_file", "https://sindusconpr.com.br")
     assert request.endpoint.endswith("/9547-serie-historica-incc-m-fgv/")
     assert "Mozilla" in request.headers["User-Agent"]
-    assert spec.converter == ConverterConfig(header_row=3)
-    assert spec.load_mode is LoadMode.OVERWRITE
+    assert request.filename == "incc_m.xlsx"
+    assert spec.converter == Table(module.incc_m, fallback_json=True)
 
 
 def test_tasks_only_call_the_pipeline_steps(
@@ -67,3 +69,17 @@ def test_nothing_new_is_a_skip(module: Any, monkeypatch: pytest.MonkeyPatch) -> 
 
     with pytest.raises(AirflowSkipException):
         run_task(module.dag_instance, "extract_to_raw")
+
+
+@pytest.mark.integration
+def test_the_staging_is_the_same_as_the_main(
+    module: Any,
+    main_lake: StorageBackend,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    keys = same_as_main(
+        module.INCC_M, "raw/fgv/incc_m.xlsx", main_lake, tmp_path, monkeypatch
+    )
+
+    assert keys == ["staging/fgv/incc_m.parquet"]

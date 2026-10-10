@@ -23,10 +23,10 @@ from ingestion.extractors.models.http_common import (
 class HttpFileExtractor(Extractor):
     """Baixa cada arquivo de `config.requests` em stream, com o nome que a fonte deu.
 
-    O nome vem do `Content-Disposition`; sem ele, do último segmento da URL final
-    (depois de redirecionamentos); sem os dois, do `name` da chamada. Links que
-    mudam a cada edição entram por `HttpRequest.resolve`; TLS fora do padrão, por
-    `config.adapter`.
+    O nome é o `filename` da chamada; sem ele, o do `Content-Disposition`; sem
+    ele, o último segmento da URL final (depois de redirecionamentos); sem nada
+    disso, o `name` da chamada. Links que mudam a cada edição entram por
+    `HttpRequest.resolve`; TLS fora do padrão, por `config.adapter`.
     """
 
     @classmethod
@@ -40,7 +40,7 @@ class HttpFileExtractor(Extractor):
         hooks = HttpHooks.from_config(self.config)
         for request in self.config.requests:
             response = fetch(hooks, request)
-            name = _file_name(response, request)
+            name = request.filename or _file_name(response, request)
             yield save(response, work_dir / request.name / name, name)
 
 

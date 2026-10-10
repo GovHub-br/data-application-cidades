@@ -55,6 +55,23 @@ def test_name_falls_back_to_request_name_without_file_in_url(
     assert part.name == "incc_m"
 
 
+def test_filename_fixes_the_name_in_the_raw(
+    http_server: FakeHttpServer, tmp_path: Path
+) -> None:
+    # A raw da main tem `<dado>.<ext>`, qualquer que seja o nome da edição.
+    http_server.routes["/download"] = Route(
+        body=b"x",
+        headers={"Content-Disposition": 'attachment; filename="INCC 2026-09.xlsx"'},
+    )
+
+    part = _download(
+        tmp_path,
+        HttpRequest(name="incc_m", endpoint="/download", filename="incc_m.xlsx"),
+    )
+
+    assert part.name == "incc_m.xlsx"
+
+
 def test_resolver_discovers_the_link_including_absolute_urls(
     http_server: FakeHttpServer, tmp_path: Path
 ) -> None:

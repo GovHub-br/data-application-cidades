@@ -13,6 +13,7 @@ from ingestion.converters.columns import fix_header
 from ingestion.converters.config_converter import ConverterConfig, Field
 from ingestion.converters.converter_errors import ConversionError
 from ingestion.converters.converter_registry import ConverterFactory
+from ingestion.converters.table import Table, TableFunction, convert_table
 
 __all__ = [
     "ConversionError",
@@ -22,7 +23,10 @@ __all__ = [
     "ConverterFactory",
     "FileConverter",
     "Source",
+    "Table",
+    "TableFunction",
     "batches_from_rows",
+    "convert_table",
     "fix_header",
 ]
 
