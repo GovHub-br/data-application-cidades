@@ -74,11 +74,12 @@ class DatasetSpec:
                 "este DatasetSpec depende de uma entrada (a lista da Variable da DAG)"
             )
         dataset = self.dataset(entry) if callable(self.dataset) else self.dataset
-        extractor = (
-            self.extractor
-            if isinstance(self.extractor, ExtractorConfig)
-            else self.extractor(entry)
-        )
+        extractor = self.extractor
+        if not isinstance(extractor, ExtractorConfig):
+            # só montado quando a extração pede (`extractor_config`): a conversão
+            # resolve o spec sem precisar do extrator nem da Variable
+            build, bound = extractor, entry
+            extractor = lambda _entry: build(bound)  # noqa: E731
         prepare = self.prepare(entry) if callable(self.prepare) else self.prepare
         return dataclasses.replace(
             self, dataset=dataset, extractor=extractor, prepare=tuple(prepare)

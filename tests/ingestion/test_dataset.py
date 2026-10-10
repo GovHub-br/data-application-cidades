@@ -1,6 +1,8 @@
 """DatasetSpec: a configuração literal de um dataset, declarada no topo da DAG."""
 
 import dataclasses
+from collections.abc import Mapping
+from typing import Any
 
 import pytest
 
@@ -47,7 +49,7 @@ def test_lazy_extractor_runs_only_when_resolved() -> None:
     spec = DatasetSpec(domain="bacen", dataset="sgs", extractor=from_task)
 
     assert calls == []  # parse da DAG: nada lido
-    assert spec.resolve().extractor is API
+    assert spec.resolve().extractor_config() is API
     assert calls == [{}]
 
 
@@ -71,7 +73,7 @@ def test_a_template_resolves_one_spec_per_entry() -> None:
     spec = template.resolve({"dataset": "sinapi", "agregado": 2296})
 
     assert spec.dataset == "sinapi"
-    assert spec.extractor == ExtractorConfig(
+    assert spec.extractor_config() == ExtractorConfig(
         source="api",
         base_url="https://servicodados.ibge.gov.br",
         requests=(HttpRequest(name="sinapi", endpoint="/agregados/2296"),),
@@ -111,3 +113,20 @@ def test_spec_is_frozen() -> None:
 
     with pytest.raises(dataclasses.FrozenInstanceError):
         spec.domain = "outro"  # type: ignore[misc]
+
+
+def test_the_extractor_of_a_resolved_spec_is_only_built_when_asked() -> None:
+    # A conversão resolve o spec mas não precisa do extrator (nem da Variable).
+    calls: list[object] = []
+
+    def series(entrada: Mapping[str, Any]) -> ExtractorConfig:
+        calls.append(entrada)
+        return API
+
+    spec = DatasetSpec(domain="bacen", dataset="sgs", extractor=series).resolve(
+        {"ipca": 433}
+    )
+
+    assert calls == []
+    assert spec.extractor_config() is API
+    assert calls == [{"ipca": 433}]
