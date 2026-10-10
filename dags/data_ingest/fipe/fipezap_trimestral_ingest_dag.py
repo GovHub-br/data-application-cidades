@@ -19,18 +19,18 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import HttpRequest, http_file
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
-DATASET = DatasetSpec(
+FIPEZAP_LOCACAO = DatasetSpec(
     domain="fipe",
     dataset="indice_locacao",
-    extractor=ExtractorConfig(
-        source="http_file",
+    extractor=http_file(
         base_url="https://downloads.fipe.org.br",
         requests=(
             HttpRequest(
@@ -61,12 +61,15 @@ DATASET = DatasetSpec(
 )
 def fipezap_trimestral_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(FIPEZAP_LOCACAO, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(FIPEZAP_LOCACAO, raw)
 
     convert_to_staging(extract_to_raw())
 
