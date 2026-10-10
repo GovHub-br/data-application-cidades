@@ -18,18 +18,20 @@ expressão (`^Dados Oper.`), porque o sufixo muda entre edições; o cabeçalho 
 os trimestres (`3T26 / 3Q26`…) está na linha 2.
 """
 
+from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import HttpRequest, http_file
 from ingestion.extractors.resolvers import latest_in_json_listing
 from ingestion.layout import TIMEZONE
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
 MRV_COMPANY_ID = "4b56353d-d5d9-435f-bf63-dcbf0a6c25d5"
 CATALOGO = f"/filemanager/company/{MRV_COMPANY_ID}/filter/categories/year/meta"
@@ -41,44 +43,44 @@ HEADERS = {
 }
 
 
-def catalogo(_: object = None) -> ExtractorConfig:
-    """A planilha mais recente do catálogo; os anos tentados dependem da data."""
+def planilha_mais_recente(_: Mapping[str, Any]) -> list[HttpRequest]:
+    """A planilha do maior trimestre no catálogo; os anos tentados dependem da data.
+
+    Chamada só na execução da task (o ano corrente e os dois anteriores).
+    """
     this_year = datetime.now(TIMEZONE).year
-    return ExtractorConfig(
-        source="http_file",
-        base_url="https://apicatalog.mziq.com",
-        requests=(
-            HttpRequest(
-                name="planilha_interativa",
-                endpoint=CATALOGO,
+    return [
+        HttpRequest(
+            name="planilha_interativa",
+            endpoint=CATALOGO,
+            headers=HEADERS,
+            resolve=latest_in_json_listing(
+                CATALOGO,
+                method="POST",
+                json={
+                    "categories": [CATEGORIA],
+                    "language": "pt_BR",
+                    "published": True,
+                },
                 headers=HEADERS,
-                resolve=latest_in_json_listing(
-                    CATALOGO,
-                    method="POST",
-                    json={
-                        "categories": [CATEGORIA],
-                        "language": "pt_BR",
-                        "published": True,
-                    },
-                    headers=HEADERS,
-                    items="data.document_metas",
-                    where={"internal_name": CATEGORIA},
-                    order_by="file_quarter",
-                    pick="permalink",
-                    attempts=tuple(
-                        {"year": str(year)}
-                        for year in range(this_year, this_year - 3, -1)
-                    ),
+                items="data.document_metas",
+                where={"internal_name": CATEGORIA},
+                order_by="file_quarter",
+                pick="permalink",
+                attempts=tuple(
+                    {"year": str(year)} for year in range(this_year, this_year - 3, -1)
                 ),
             ),
-        ),
-    )
+        )
+    ]
 
 
-DATASET = DatasetSpec(
+PLANILHA_INTERATIVA = DatasetSpec(
     domain="mrv",
     dataset="planilha_interativa",
-    extractor=catalogo,
+    extractor=http_file(
+        base_url="https://apicatalog.mziq.com", requests=planilha_mais_recente
+    ),
     converter=ConverterConfig(include=r"^Dados Oper\.", header_row=2),
     load_mode=LoadMode.OVERWRITE,
 )
@@ -100,12 +102,15 @@ DATASET = DatasetSpec(
 )
 def mrv_planilha_interativa_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(PLANILHA_INTERATIVA, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(PLANILHA_INTERATIVA, raw)
 
     convert_to_staging(extract_to_raw())
 

@@ -4,12 +4,14 @@ from datetime import datetime
 from typing import Any
 
 import pytest
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.layout import TIMEZONE
 from ingestion.loaders import LoadMode
 from tests.ingestion.dags.conftest import (
     RUN_AFTER,
     load_dag_module,
+    nothing_new,
     record_steps,
     run_task,
 )
@@ -31,7 +33,7 @@ def test_dag_identity_and_wiring(module: Any) -> None:
 
 
 def test_dataset_spec_resolves_the_latest_quarter_in_the_catalog(module: Any) -> None:
-    spec = module.DATASET
+    spec = module.PLANILHA_INTERATIVA
     config = spec.extractor_config()
     [request] = config.requests
 
@@ -60,13 +62,13 @@ def test_tasks_only_call_the_pipeline_steps(
     run_task(dag, "convert_to_staging", raw)
 
     assert calls == [
-        ("extract_to_raw", module.DATASET, RUN_AFTER),
-        ("convert_to_staging", module.DATASET, "raw/x/"),
+        ("extract_to_raw", module.PLANILHA_INTERATIVA, RUN_AFTER),
+        ("convert_to_staging", module.PLANILHA_INTERATIVA, "raw/x/"),
     ]
 
 
 def test_catalog_query_tries_this_year_and_the_two_before(module: Any) -> None:
-    [request] = module.DATASET.extractor_config().requests
+    [request] = module.PLANILHA_INTERATIVA.extractor_config().requests
     calls: list[dict[str, Any]] = []
     year = datetime.now(TIMEZONE).year
 
@@ -107,3 +109,10 @@ def test_catalog_query_tries_this_year_and_the_two_before(module: Any) -> None:
     assert calls[0]["method"] == "POST"
     assert calls[0]["url"].endswith("/filter/categories/year/meta")
     assert calls[0]["json"]["categories"] == [module.CATEGORIA]
+
+
+def test_nothing_new_is_a_skip(module: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    nothing_new(module, monkeypatch)
+
+    with pytest.raises(AirflowSkipException):
+        run_task(module.dag_instance, "extract_to_raw")
