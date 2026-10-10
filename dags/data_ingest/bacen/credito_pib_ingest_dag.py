@@ -15,20 +15,20 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import HttpRequest, api
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
 RESOURCE = "/olinda/servico/MercadoImobiliario/versao/v1/odata/mercadoimobiliario"
 
-DATASET = DatasetSpec(
+CREDITO_PIB = DatasetSpec(
     domain="bacen",
     dataset="credito_imobiliario_pib",
-    extractor=ExtractorConfig(
-        source="api",
+    extractor=api(
         base_url="https://olinda.bcb.gov.br",
         requests=(
             HttpRequest(
@@ -61,12 +61,15 @@ DATASET = DatasetSpec(
 )
 def bacen_credito_pib_ingest_dag() -> None:
     @task
-    def extract_to_raw(**context: Any) -> list[str]:
-        return steps.extract_to_raw(DATASET, context["dag_run"].run_after)
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(CREDITO_PIB, context["dag_run"].run_after)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def convert_to_staging(raw_prefixes: list[str]) -> str:
-        return steps.convert_to_staging(DATASET, raw_prefixes)
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(CREDITO_PIB, raw)
 
     convert_to_staging(extract_to_raw())
 
