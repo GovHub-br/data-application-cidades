@@ -6,8 +6,8 @@ filtrada pelo grande grupamento Construção e, em dois recortes, pela divisão
 CNAE 2.0. A resposta vem em DSR (compactada), gravada como veio; o conversor
 `powerbi_dsr` a decodifica.
 
-Três DAGs, um recorte cada, com os `dag_id`s que a `conjuntura_dag` dispara:
-construção de edifícios, serviços especializados e o total da construção.
+Uma DAG, um dataset por recorte (`RECORTES`): construção de edifícios, serviços
+especializados e o total da construção.
 
 LoadMode: overwrite. Cada execução consulta todos os meses desde 2024-01 até o
 mês corrente, então a última ingestão é a verdade. Mês ainda não publicado vem
@@ -15,18 +15,19 @@ com as medidas nulas e sai na prata. Os meses são montados dentro da task (o m�
 corrente muda), nunca no parse.
 """
 
-from collections.abc import Callable
+from collections.abc import Mapping
 from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowSkipException
 
 from ingestion.converters import ConverterConfig
 from ingestion.dataset import DatasetSpec
-from ingestion.extractors import ExtractorConfig, HttpRequest
+from ingestion.extractors import HttpRequest, api
 from ingestion.layout import TIMEZONE
 from ingestion.loaders import LoadMode
-from ingestion.pipeline import steps
+from ingestion.pipeline import NothingNew, steps
 
 FIRST_YEAR = 2024
 MESES = (
@@ -59,18 +60,18 @@ MEDIDAS = (
     ("Estoque Mensal", "Estoque"),
     ("Vr. Relativa", "Variacao"),
 )
-# dag_id → (dataset na staging, divisão CNAE 2.0; None = total da construção)
-RECORTES = {
-    "novo_caged_construcao_edificios": (
-        "saldo_estoque_construcao_edificios",
-        "Construção de Edifícios",
-    ),
-    "novo_caged_servicos_especializados_construcao": (
-        "saldo_estoque_servicos_especializados_construcao",
-        "Serviços Especializados para Construção",
-    ),
-    "novo_caged_total_construcao": ("saldo_estoque_total_construcao", None),
-}
+# Um dataset por recorte; sem `cnae_divisao`, o total da construção.
+RECORTES = [
+    {
+        "dataset": "saldo_estoque_construcao_edificios",
+        "cnae_divisao": "Construção de Edifícios",
+    },
+    {
+        "dataset": "saldo_estoque_servicos_especializados_construcao",
+        "cnae_divisao": "Serviços Especializados para Construção",
+    },
+    {"dataset": "saldo_estoque_total_construcao"},
+]
 
 
 def _in(source: str, prop: str, *values: str) -> dict[str, Any]:
@@ -151,75 +152,66 @@ def consulta(ano: int, mes: str, cnae_divisao: str | None) -> dict[str, Any]:
     }
 
 
-def _months() -> list[tuple[int, int]]:
+def consultas_mensais(recorte: Mapping[str, str]) -> list[HttpRequest]:
+    """Um POST ao `querydata` por mês, de 2024-01 ao mês corrente (na execução)."""
     now = datetime.now(TIMEZONE)
+    meses = [
+        (ano, mes)
+        for ano in range(FIRST_YEAR, now.year + 1)
+        for mes in range(1, 13)
+        if (ano, mes) <= (now.year, now.month)
+    ]
     return [
-        (year, month)
-        for year in range(FIRST_YEAR, now.year + 1)
-        for month in range(1, 13)
-        if (year, month) <= (now.year, now.month)
+        HttpRequest(
+            name=f"{ano}-{mes:02d}",
+            endpoint="/public/reports/querydata?synchronous=true",
+            method="POST",
+            json=consulta(ano, MESES[mes - 1], recorte.get("cnae_divisao")),
+            headers=HEADERS,
+        )
+        for ano, mes in meses
     ]
 
 
-def _extractor(cnae_divisao: str | None) -> Callable[[], ExtractorConfig]:
-    def config(_: object = None) -> ExtractorConfig:
-        return ExtractorConfig(
-            source="api",
-            base_url="https://wabi-brazil-south-api.analysis.windows.net",
-            requests=tuple(
-                HttpRequest(
-                    name=f"{year}-{month:02d}",
-                    endpoint="/public/reports/querydata?synchronous=true",
-                    method="POST",
-                    json=consulta(year, MESES[month - 1], cnae_divisao),
-                    headers=HEADERS,
-                )
-                for year, month in _months()
-            ),
-        )
-
-    return config
+RECORTE = DatasetSpec(
+    domain="novo_caged",
+    dataset=lambda recorte: recorte["dataset"],
+    extractor=api(
+        base_url="https://wabi-brazil-south-api.analysis.windows.net",
+        requests=consultas_mensais,
+    ),
+    converter=ConverterConfig(format="powerbi_dsr"),
+    load_mode=LoadMode.OVERWRITE,
+)
 
 
-DATASETS = {
-    dag_id: DatasetSpec(
-        domain="novo_caged",
-        dataset=dataset,
-        extractor=_extractor(cnae_divisao),
-        converter=ConverterConfig(format="powerbi_dsr"),
-        load_mode=LoadMode.OVERWRITE,
-    )
-    for dag_id, (dataset, cnae_divisao) in RECORTES.items()
-}
+@dag(
+    dag_id="novo_caged_ingest_dag",
+    # Diário às 06:00: o MTE divulga uma vez por mês, sem data fixa.
+    schedule="0 6 * * *",
+    start_date=datetime(2025, 1, 1),
+    catchup=False,
+    max_active_runs=1,
+    default_args={
+        "owner": "Milena Rocha",
+        "retries": 1,
+        "retry_delay": timedelta(minutes=5),
+    },
+    tags=["cidades", "novo_caged", "construcao", "conjuntura", "ingestion"],
+)
+def novo_caged_ingest_dag() -> None:
+    @task
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        try:
+            return steps.extract_to_raw(RECORTE, context["dag_run"].run_after, RECORTES)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
+
+    @task
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, str]:
+        return steps.convert_to_staging(RECORTE, raw, RECORTES)
+
+    convert_to_staging(extract_to_raw())
 
 
-def _build(dag_id: str, spec: DatasetSpec) -> Any:
-    @dag(
-        dag_id=dag_id,
-        # Diário às 06:00: o MTE divulga uma vez por mês, sem data fixa.
-        schedule="0 6 * * *",
-        start_date=datetime(2025, 1, 1),
-        catchup=False,
-        max_active_runs=1,
-        default_args={
-            "owner": "Milena Rocha",
-            "retries": 1,
-            "retry_delay": timedelta(minutes=5),
-        },
-        tags=["cidades", "novo_caged", "construcao", "conjuntura", "ingestion"],
-    )
-    def novo_caged() -> None:
-        @task
-        def extract_to_raw(**context: Any) -> list[str]:
-            return steps.extract_to_raw(spec, context["dag_run"].run_after)
-
-        @task
-        def convert_to_staging(raw_prefixes: list[str]) -> str:
-            return steps.convert_to_staging(spec, raw_prefixes)
-
-        convert_to_staging(extract_to_raw())
-
-    return novo_caged()
-
-
-DAGS = {dag_id: _build(dag_id, spec) for dag_id, spec in DATASETS.items()}
+dag_instance = novo_caged_ingest_dag()
