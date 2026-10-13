@@ -212,11 +212,16 @@
       register: ufw_default
       changed_when: "'updated' in ufw_default.stdout"
 
+    - name: Check UFW status
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw status
+      register: ufw_status
+      changed_when: false
+
     - name: Enable UFW
       ansible.builtin.shell:
         cmd: echo "y" | /usr/sbin/ufw enable
-      register: ufw_enable
-      changed_when: "'active' in ufw_enable.stdout"
+      when: "'Status: active' not in ufw_status.stdout"
 
     - name: Allow RustFS API port for the authorized networks
       ansible.builtin.command:

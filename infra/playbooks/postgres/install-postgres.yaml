@@ -1,0 +1,419 @@
+- name: Install PostgreSQL + pg_duckdb on Debian 12
+  hosts: postgres
+  become: true
+  become_method: su
+
+  vars:
+    cache_valid_time: 86400
+    pg_bin_dir: "/usr/lib/postgresql/{{ postgres_version }}/bin"
+    pg_conf_dir: "/etc/postgresql/{{ postgres_version }}/main"
+    pg_duckdb_src_dir: "/usr/local/src/pg_duckdb-{{ pg_duckdb_version }}"
+    # Compilar o DuckDB pede ~2 GB de RAM por job; com -j de todos os núcleos
+    # numa VM pequena o build morre por OOM.
+    pg_duckdb_build_jobs: "{{ [[ansible_processor_vcpus, ansible_memtotal_mb // 2048] | min, 1] | max }}"
+    lake_s3_server: lake_s3
+
+  tasks:
+    - name: Validar a configuração
+      ansible.builtin.assert:
+        that:
+          - lake_s3_endpoint is not search('<')
+          - lake_s3_endpoint is not search('://')
+          - lake_s3_secret_key | length >= 8
+        fail_msg: >-
+          Falta configurar o acesso ao lake. Confira em group_vars/postgres.yaml
+          o lake_s3_endpoint (host:porta, sem http://) e se o arquivo
+          ~/.clusterlab/credentials/rustfs0/{{ lake_s3_access_key }}_secret_key
+          existe (README.md, "Como rodar").
+      run_once: true
+
+    # ------------------------------------------------------------------
+    # PostgreSQL do PGDG (o mesmo repositório do homolog)
+    # ------------------------------------------------------------------
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - acl
+          - ca-certificates
+          - curl
+          - git
+          - gnupg
+          - python3-psycopg2
+          - ufw
+          - vim
+        state: present
+        update_cache: true
+        cache_valid_time: "{{ cache_valid_time }}"
+
+    - name: Create apt keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download PGDG signing key
+      ansible.builtin.get_url:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        dest: /etc/apt/keyrings/pgdg.asc
+        mode: '0644'
+
+    - name: Add PGDG apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/pgdg.sources
+        mode: '0644'
+        content: |
+          Types: deb
+          URIs: https://apt.postgresql.org/pub/repos/apt
+          Suites: {{ ansible_distribution_release }}-pgdg
+          Components: main
+          Signed-By: /etc/apt/keyrings/pgdg.asc
+
+    - name: Install PostgreSQL {{ postgres_version }}
+      ansible.builtin.apt:
+        name:
+          - "postgresql-{{ postgres_version }}"
+          - "postgresql-server-dev-{{ postgres_version }}"
+        state: present
+        update_cache: true
+
+    # ------------------------------------------------------------------
+    # pg_duckdb: compilado do fonte (não há pacote apt)
+    # ------------------------------------------------------------------
+
+    # Lista do Dockerfile oficial do pg_duckdb, que também é Debian 12.
+    - name: Install pg_duckdb build dependencies
+      ansible.builtin.apt:
+        name:
+          - bison
+          - build-essential
+          - cmake
+          - flex
+          - libc++-dev
+          - libc++abi-dev
+          - libcurl4-openssl-dev
+          - libglib2.0-dev
+          - liblz4-dev
+          - libreadline-dev
+          - libssl-dev
+          - libstdc++-12-dev
+          - libtinfo5
+          - libxml2-dev
+          - libxml2-utils
+          - libxslt-dev
+          - ninja-build
+          - pkg-config
+          - xsltproc
+          - zlib1g-dev
+        state: present
+
+    # O DuckDB vem como submódulo: o clone baixa ~1-2 GB.
+    - name: Clone pg_duckdb {{ pg_duckdb_version }}
+      ansible.builtin.git:
+        repo: https://github.com/duckdb/pg_duckdb.git
+        dest: "{{ pg_duckdb_src_dir }}"
+        version: "{{ pg_duckdb_version }}"
+        recursive: true
+        update: false
+
+    # A primeira vez leva de 30 a 60 minutos: compila o DuckDB inteiro.
+    # Cada versão fica na própria pasta, então rodar de novo não recompila.
+    - name: Build pg_duckdb (slow on first run)
+      ansible.builtin.command:
+        cmd: "make -j{{ pg_duckdb_build_jobs }} PG_CONFIG={{ pg_bin_dir }}/pg_config"
+        chdir: "{{ pg_duckdb_src_dir }}"
+        creates: "{{ pg_duckdb_src_dir }}/pg_duckdb.so"
+      async: 7200
+      poll: 30
+
+    - name: Install pg_duckdb into PostgreSQL
+      ansible.builtin.shell:
+        cmd: "make install PG_CONFIG={{ pg_bin_dir }}/pg_config && touch .instalado"
+        chdir: "{{ pg_duckdb_src_dir }}"
+        creates: "{{ pg_duckdb_src_dir }}/.instalado"
+      notify: Restart postgresql
+
+    # ------------------------------------------------------------------
+    # Configuração do servidor
+    # ------------------------------------------------------------------
+
+    # O pg_ctlcluster do Debian sobe o servidor com o ambiente vazio, exceto o
+    # que está neste arquivo. Sem HOME, o DuckDB não instala extensões
+    # ("Can't find the home directory") e o primeiro read_parquet falha.
+    - name: Give the server a HOME (needed by DuckDB)
+      ansible.builtin.lineinfile:
+        path: "{{ pg_conf_dir }}/environment"
+        regexp: '^HOME\s*='
+        line: "HOME = '/var/lib/postgresql'"
+      notify: Restart postgresql
+
+    # O postgresql.conf do Debian inclui conf.d/ no fim, então isto prevalece.
+    - name: Configure PostgreSQL (conf.d)
+      ansible.builtin.copy:
+        dest: "{{ pg_conf_dir }}/conf.d/90-cidades.conf"
+        owner: postgres
+        group: postgres
+        mode: '0644'
+        content: |
+          # Gerenciado pelo Ansible (infra/playbooks/postgres/install-postgres.yaml)
+          listen_addresses = '*'
+          port = {{ postgres_port }}
+          password_encryption = scram-sha-256
+
+          shared_preload_libraries = 'pg_duckdb'
+          duckdb.postgres_role = '{{ pg_duckdb_role }}'
+          duckdb.max_memory = {{ pg_duckdb_max_memory_mb }}
+          duckdb.max_temp_directory_size = '{{ pg_duckdb_max_temp_directory_size }}'
+      notify: Restart postgresql
+
+    - name: Allow the authorized networks in pg_hba.conf
+      ansible.builtin.blockinfile:
+        path: "{{ pg_conf_dir }}/pg_hba.conf"
+        marker: "# {mark} ANSIBLE - redes autorizadas"
+        block: |
+          {% for network in postgres_allowed_networks %}
+          host    all    all    {{ network }}    scram-sha-256
+          {% endfor %}
+      notify: Reload postgresql
+
+    - name: Flush handlers before touching the database
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable and start postgresql
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+        enabled: true
+
+    # ------------------------------------------------------------------
+    # Usuários e bancos
+    # ------------------------------------------------------------------
+
+    - name: Create the DuckDB role (who may run DuckDB)
+      community.postgresql.postgresql_user:
+        name: "{{ pg_duckdb_role }}"
+        role_attr_flags: NOLOGIN
+      become_user: postgres
+
+    - name: Create login users
+      community.postgresql.postgresql_user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+      loop:
+        - { name: "{{ postgres_dw_user }}", password: "{{ postgres_dw_password }}" }
+        - { name: "{{ postgres_airflow_user }}", password: "{{ postgres_airflow_password }}" }
+        - { name: "{{ postgres_readonly_user }}", password: "{{ postgres_readonly_password }}" }
+      loop_control:
+        label: "{{ item.name }}"
+      no_log: true
+      become_user: postgres
+
+    - name: Grant the DuckDB role
+      community.postgresql.postgresql_membership:
+        groups: "{{ pg_duckdb_role }}"
+        target_roles: "{{ pg_duckdb_users }}"
+      become_user: postgres
+
+    - name: Create databases
+      community.postgresql.postgresql_db:
+        name: "{{ item.name }}"
+        owner: "{{ item.owner }}"
+        encoding: UTF-8
+        template: template0
+      loop:
+        - { name: "{{ postgres_dw_database }}", owner: "{{ postgres_dw_user }}" }
+        - { name: "{{ postgres_airflow_database }}", owner: "{{ postgres_airflow_user }}" }
+      become_user: postgres
+
+    - name: Revoke CONNECT from PUBLIC
+      community.postgresql.postgresql_privs:
+        db: postgres
+        type: database
+        objs: "{{ item }}"
+        privs: CONNECT
+        roles: PUBLIC
+        state: absent
+      loop:
+        - "{{ postgres_dw_database }}"
+        - "{{ postgres_airflow_database }}"
+      become_user: postgres
+
+    - name: Let the read-only user connect to the data warehouse
+      community.postgresql.postgresql_privs:
+        db: postgres
+        type: database
+        objs: "{{ postgres_dw_database }}"
+        privs: CONNECT
+        roles: "{{ postgres_readonly_user }}"
+      become_user: postgres
+
+    # Os schemas e tabelas são criados depois, pelo dbt, como o usuário do DW.
+    # Os default privileges valem para o que ele criar daqui em diante.
+    - name: Read-only user sees what the data warehouse user creates
+      community.postgresql.postgresql_query:
+        db: "{{ postgres_dw_database }}"
+        query: |
+          ALTER DEFAULT PRIVILEGES FOR ROLE {{ postgres_dw_user }} GRANT USAGE ON SCHEMAS TO {{ postgres_readonly_user }};
+          ALTER DEFAULT PRIVILEGES FOR ROLE {{ postgres_dw_user }} GRANT SELECT ON TABLES TO {{ postgres_readonly_user }};
+      changed_when: false
+      become_user: postgres
+
+    # ------------------------------------------------------------------
+    # pg_duckdb no data warehouse + secret do lake
+    # ------------------------------------------------------------------
+
+    - name: Create/update the pg_duckdb extension
+      community.postgresql.postgresql_ext:
+        name: pg_duckdb
+        db: "{{ postgres_dw_database }}"
+        version: latest
+      become_user: postgres
+
+    # Deixa o httpfs (leitura de s3://) baixado: sem isso, a primeira consulta
+    # ao lake depende de a VM conseguir falar com extensions.duckdb.org.
+    - name: Install DuckDB httpfs extension
+      community.postgresql.postgresql_query:
+        db: "{{ postgres_dw_database }}"
+        query: SELECT duckdb.install_extension('httpfs')
+      changed_when: false
+      become_user: postgres
+
+    # O secret do lake é um SERVER (endpoint, estilo de URL) + um USER MAPPING
+    # por usuário (access/secret key) no FDW "duckdb". Não usamos o
+    # duckdb.create_simple_secret(): ele cria um SERVER novo a cada chamada
+    # (simple_s3_secret, _1, _2...), que é o que aconteceu no homolog.
+    - name: Read the current lake secret
+      community.postgresql.postgresql_query:
+        db: "{{ postgres_dw_database }}"
+        query: |
+          SELECT
+            (SELECT string_agg(o, ',' ORDER BY o) FROM unnest(s.srvoptions) o) AS server,
+            (SELECT string_agg(m.usename || ':' || (SELECT string_agg(x, ',' ORDER BY x) FROM unnest(m.umoptions) x), ';' ORDER BY m.usename)
+               FROM pg_user_mappings m WHERE m.srvid = s.oid) AS mappings
+          FROM pg_foreign_server s
+          WHERE s.srvname = %(server)s
+        named_args:
+          server: "{{ lake_s3_server }}"
+      register: lake_secret_atual
+      changed_when: false
+      no_log: true
+      become_user: postgres
+
+    - name: Compare with the desired lake secret
+      ansible.builtin.set_fact:
+        lake_secret_desatualizado: "{{ (lake_secret_atual.query_result | first | default({})) != lake_secret_desejado }}"
+      vars:
+        lake_secret_desejado:
+          server: "{{ ['endpoint=' ~ lake_s3_endpoint, 'region=us-east-1', 'url_style=path', 'use_ssl=false'] | sort | join(',') }}"
+          mappings: >-
+            {%- set out = [] -%}
+            {%- for user in pg_duckdb_users | sort -%}
+            {%- set _ = out.append(user ~ ':' ~ (['key_id=' ~ lake_s3_access_key, 'secret=' ~ lake_s3_secret_key] | sort | join(','))) -%}
+            {%- endfor -%}
+            {{ out | join(';') }}
+      no_log: true
+
+    - name: Recreate the lake secret
+      community.postgresql.postgresql_query:
+        db: "{{ postgres_dw_database }}"
+        query: |
+          DROP SERVER IF EXISTS {{ lake_s3_server }} CASCADE;
+          CREATE SERVER {{ lake_s3_server }} TYPE 's3' FOREIGN DATA WRAPPER duckdb
+            OPTIONS (endpoint %(endpoint)s, region 'us-east-1', url_style 'path', use_ssl 'false');
+          {% for user in pg_duckdb_users %}
+          CREATE USER MAPPING FOR {{ user }} SERVER {{ lake_s3_server }}
+            OPTIONS (key_id %(key_id)s, secret %(secret)s);
+          {% endfor %}
+        named_args:
+          endpoint: "{{ lake_s3_endpoint }}"
+          key_id: "{{ lake_s3_access_key }}"
+          secret: "{{ lake_s3_secret_key }}"
+      when: lake_secret_desatualizado | bool
+      no_log: true
+      become_user: postgres
+
+    # ------------------------------------------------------------------
+    # Firewall: só as redes autorizadas falam com o Postgres
+    # ------------------------------------------------------------------
+
+    - name: Allow SSH through firewall
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw allow ssh
+      register: ufw_ssh
+      changed_when: "'Skipping' not in ufw_ssh.stdout"
+
+    - name: Set UFW default policy to deny incoming
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw default deny incoming
+      register: ufw_default
+      changed_when: "'updated' in ufw_default.stdout"
+
+    - name: Check UFW status
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw status
+      register: ufw_status
+      changed_when: false
+
+    - name: Enable UFW
+      ansible.builtin.shell:
+        cmd: echo "y" | /usr/sbin/ufw enable
+      when: "'Status: active' not in ufw_status.stdout"
+
+    - name: Allow PostgreSQL port for the authorized networks
+      ansible.builtin.command:
+        cmd: "/usr/sbin/ufw allow from {{ item }} to any port {{ postgres_port }} proto tcp"
+      loop: "{{ postgres_allowed_networks }}"
+      register: ufw_pg
+      changed_when: "'Skipping' not in ufw_pg.stdout"
+
+    - name: Reload UFW
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw reload
+      changed_when: false
+
+    # ------------------------------------------------------------------
+    # Pós-instalação: o pg_duckdb lê o lake como o usuário do DW?
+    # ------------------------------------------------------------------
+
+    # Roda como o usuário do DW, e não como postgres: o secret é por usuário.
+    # Um glob na raiz do bucket basta para provar endpoint + credenciais.
+    - name: Check that pg_duckdb reads the lake
+      community.postgresql.postgresql_query:
+        login_host: 127.0.0.1
+        login_port: "{{ postgres_port }}"
+        login_user: "{{ postgres_dw_user }}"
+        login_password: "{{ postgres_dw_password }}"
+        db: "{{ postgres_dw_database }}"
+        query: "SELECT count(*) AS objetos FROM duckdb.query($$ SELECT * FROM glob('s3://{{ lake_bucket }}/*') $$)"
+      register: lake_check
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Mostrar as credenciais
+      ansible.builtin.debug:
+        msg:
+          - "=============== POSTGRES PRONTO ==============="
+          - "Host: {{ ansible_host }}:{{ postgres_port }}"
+          - ""
+          - "Data warehouse: {{ postgres_dw_database }} / {{ postgres_dw_user }} / {{ postgres_dw_password }}"
+          - "Airflow:        {{ postgres_airflow_database }} / {{ postgres_airflow_user }} / {{ postgres_airflow_password }}"
+          - "Leitura:        {{ postgres_dw_database }} / {{ postgres_readonly_user }} / {{ postgres_readonly_password }}"
+          - ""
+          - "Guardadas em: {{ postgres_credentials_dir }}/"
+          - ""
+          - "Lake: s3://{{ lake_bucket }} via {{ lake_s3_endpoint }}"
+          - "Teste: SELECT * FROM read_parquet('s3://{{ lake_bucket }}/<caminho>.parquet') LIMIT 10;"
+          - "==============================================="
+
+  handlers:
+    - name: Restart postgresql
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted
+      when: not ansible_check_mode
+
+    - name: Reload postgresql
+      ansible.builtin.systemd:
+        name: postgresql
+        state: reloaded
+      when: not ansible_check_mode

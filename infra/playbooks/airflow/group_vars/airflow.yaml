@@ -1,0 +1,46 @@
+# Onde as senhas deste host são geradas e guardadas: na SUA máquina e FORA do
+# repo. As do Postgres e do RustFS são lidas das pastas dos outros playbooks.
+airflow_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/{{ inventory_hostname }}"
+postgres_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/postgres0"
+rustfs_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/rustfs0"
+
+# --- Código -----------------------------------------------------------------
+# O repositório é público: clona sem token. Para atualizar as DAGs, troque a
+# ref (branch, tag ou commit) e rode o playbook de novo.
+airflow_repo_url: https://github.com/GovHub-br/data-application-cidades.git
+airflow_repo_version: main
+
+# --- Airflow ----------------------------------------------------------------
+airflow_port: 8080
+airflow_instance_name: "MCid - Cidades"
+airflow_admin_user: airflow
+airflow_admin_password: "{{ lookup('password', airflow_credentials_dir ~ '/airflow_admin_password chars=ascii_letters,digits length=24') }}"
+
+# Chaves internas. Ficam fixas depois da primeira execução: trocar a fernet
+# key torna ilegíveis as Connections já gravadas no banco.
+airflow_fernet_seed: "{{ lookup('password', airflow_credentials_dir ~ '/fernet_seed chars=ascii_letters,digits length=32') }}"
+airflow_api_secret_key: "{{ lookup('password', airflow_credentials_dir ~ '/api_secret_key chars=ascii_letters,digits length=48') }}"
+airflow_jwt_secret: "{{ lookup('password', airflow_credentials_dir ~ '/jwt_secret chars=ascii_letters,digits length=48') }}"
+
+# --- Postgres (VM do playbook postgres) -------------------------------------
+postgres_host: "<IP_DO_POSTGRES>"
+postgres_port: 5432
+airflow_db_name: airflow
+airflow_db_user: airflow
+airflow_db_password: "{{ lookup('file', postgres_credentials_dir ~ '/' ~ airflow_db_user ~ '_password', errors='ignore') | default('', true) | trim }}"
+dw_db_name: cidades
+dw_db_user: cidades
+dw_db_password: "{{ lookup('file', postgres_credentials_dir ~ '/' ~ dw_db_user ~ '_password', errors='ignore') | default('', true) | trim }}"
+
+# --- Lake (VM do playbook rustfs) -------------------------------------------
+# Os nomes MINIO_* são os que o código já lê; só o endereço muda.
+lake_s3_endpoint: "<IP_DO_RUSTFS>:9000"
+lake_bucket: data-lake-mcid
+lake_s3_access_key: app-cidades
+lake_s3_secret_key: "{{ lookup('file', rustfs_credentials_dir ~ '/' ~ lake_s3_access_key ~ '_secret_key', errors='ignore') | default('', true) | trim }}"
+
+# --- Redes autorizadas a abrir a UI/API -------------------------------------
+airflow_allowed_networks:
+  - 10.0.0.0/24
+  - 172.16.1.0/24
+  - 192.168.2.0/24

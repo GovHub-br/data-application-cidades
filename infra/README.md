@@ -48,13 +48,30 @@ infra/
 │   ├── superset/         # imagem do Superset com drivers do PostgreSQL
 │   └── postgres/         # scripts de init do Postgres
 ├── env/                  # exemplos de variaveis de ambiente
-├── playbooks/
-│   └── rustfs/           # playbook Ansible que instala o RustFS (S3) numa VM
+├── playbooks/            # Ansible: uma VM por ferramenta (producao)
+│   ├── rustfs/           # RustFS, o object storage S3 do lake
+│   ├── postgres/         # PostgreSQL + pg_duckdb (data warehouse)
+│   └── airflow/          # Airflow via Docker Compose
 └── docker-compose.yml
 ```
 
-## RustFS
+## Playbooks (producao)
 
-`infra/playbooks/rustfs/` instala o RustFS, um storage de objetos compativel com
-S3, numa VM Debian 12 via Ansible. Nao faz parte do Compose local. Como rodar e
-como criar buckets e usuarios: `infra/playbooks/rustfs/README.md`.
+`infra/playbooks/` sobe a infra de producao em tres VMs Debian 12, uma por
+ferramenta, via Ansible. Nao faz parte do Compose local. Rode na ordem abaixo,
+sempre da mesma maquina: cada playbook le as senhas que o anterior gravou em
+`~/.clusterlab/credentials/`.
+
+1. `rustfs/`: instala o RustFS.
+2. No RustFS, crie o bucket `data-lake-mcid` e o usuario `app-cidades` (ver
+   `postgres/README.md`, "Como rodar").
+3. `postgres/`: instala o Postgres + pg_duckdb e liga o pg_duckdb ao lake.
+4. `airflow/`: instala o Airflow apontando para os dois.
+
+| Pasta | O que instala |
+| --- | --- |
+| `rustfs/` | RustFS, storage de objetos compativel com S3 (o data lake) |
+| `postgres/` | PostgreSQL 15 + pg_duckdb, ja com o secret S3 do lake (`read_parquet('s3://...')`) |
+| `airflow/` | Airflow 3 com Docker Compose, imagem de `infra/docker/airflow/Dockerfile` |
+
+Cada pasta e autocontida (inventario, `group_vars/` e README proprios).
