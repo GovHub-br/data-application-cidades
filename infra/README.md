@@ -52,6 +52,7 @@ infra/
 │   ├── rustfs/           # RustFS, o object storage S3 do lake
 │   ├── postgres/         # PostgreSQL + pg_duckdb (data warehouse)
 │   └── airflow/          # Airflow via Docker Compose
+├── k8s/                  # a mesma infra em Kubernetes (Helm + CloudNativePG)
 └── docker-compose.yml
 ```
 
@@ -75,3 +76,11 @@ sempre da mesma maquina: cada playbook le as senhas que o anterior gravou em
 | `airflow/` | Airflow 3 com Docker Compose, imagem de `infra/docker/airflow/Dockerfile` |
 
 Cada pasta e autocontida (inventario, `group_vars/` e README proprios).
+
+## Kubernetes (producao, alternativa as VMs)
+
+`infra/k8s/` sobe a mesma infra num cluster Kubernetes, no namespace `cidades`:
+RustFS pelo chart oficial, Postgres + pg_duckdb pelo operator CloudNativePG
+(com imagem propria, `infra/k8s/postgres/Dockerfile`) e Airflow pelo chart
+oficial. Os Secrets saem de `infra/k8s/criar-secrets.sh`. Passo a passo em
+`infra/k8s/README.md`.
