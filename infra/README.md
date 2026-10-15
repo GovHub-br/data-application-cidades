@@ -51,6 +51,7 @@ infra/
 ├── playbooks/            # Ansible: uma VM por ferramenta (producao)
 │   ├── rustfs/           # RustFS, o object storage S3 do lake
 │   ├── postgres/         # PostgreSQL + pg_duckdb (data warehouse)
+│   ├── openmetadata/     # OpenMetadata (catalogo de dados)
 │   └── airflow/          # Airflow via Docker Compose
 ├── k8s/                  # a mesma infra em Kubernetes (Helm + CloudNativePG)
 └── docker-compose.yml
@@ -67,12 +68,15 @@ sempre da mesma maquina: cada playbook le as senhas que o anterior gravou em
 2. No RustFS, crie o bucket `data-lake-mcid` e o usuario `app-cidades` (ver
    `postgres/README.md`, "Como rodar").
 3. `postgres/`: instala o Postgres + pg_duckdb e liga o pg_duckdb ao lake.
-4. `airflow/`: instala o Airflow apontando para os dois.
+4. `openmetadata/`: instala o catalogo, com o banco na VM do Postgres.
+5. `airflow/`: instala o Airflow apontando para o Postgres, o lake e o
+   OpenMetadata (este ultimo e opcional).
 
 | Pasta | O que instala |
 | --- | --- |
 | `rustfs/` | RustFS, storage de objetos compativel com S3 (o data lake) |
 | `postgres/` | PostgreSQL 15 + pg_duckdb, ja com o secret S3 do lake (`read_parquet('s3://...')`) |
+| `openmetadata/` | OpenMetadata 1.13.3 + Elasticsearch, com Docker Compose; a ingestao roda no Airflow |
 | `airflow/` | Airflow 3 com Docker Compose, imagem de `infra/docker/airflow/Dockerfile` |
 
 Cada pasta e autocontida (inventario, `group_vars/` e README proprios).

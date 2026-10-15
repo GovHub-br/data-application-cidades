@@ -202,6 +202,7 @@
       loop:
         - { name: "{{ postgres_dw_user }}", password: "{{ postgres_dw_password }}" }
         - { name: "{{ postgres_airflow_user }}", password: "{{ postgres_airflow_password }}" }
+        - { name: "{{ postgres_openmetadata_user }}", password: "{{ postgres_openmetadata_password }}" }
         - { name: "{{ postgres_readonly_user }}", password: "{{ postgres_readonly_password }}" }
       loop_control:
         label: "{{ item.name }}"
@@ -223,6 +224,7 @@
       loop:
         - { name: "{{ postgres_dw_database }}", owner: "{{ postgres_dw_user }}" }
         - { name: "{{ postgres_airflow_database }}", owner: "{{ postgres_airflow_user }}" }
+        - { name: "{{ postgres_openmetadata_database }}", owner: "{{ postgres_openmetadata_user }}" }
       become_user: postgres
 
     - name: Revoke CONNECT from PUBLIC
@@ -236,6 +238,7 @@
       loop:
         - "{{ postgres_dw_database }}"
         - "{{ postgres_airflow_database }}"
+        - "{{ postgres_openmetadata_database }}"
       become_user: postgres
 
     - name: Let the read-only user connect to the data warehouse
@@ -397,6 +400,7 @@
           - ""
           - "Data warehouse: {{ postgres_dw_database }} / {{ postgres_dw_user }} / {{ postgres_dw_password }}"
           - "Airflow:        {{ postgres_airflow_database }} / {{ postgres_airflow_user }} / {{ postgres_airflow_password }}"
+          - "OpenMetadata:   {{ postgres_openmetadata_database }} / {{ postgres_openmetadata_user }} / {{ postgres_openmetadata_password }}"
           - "Leitura:        {{ postgres_dw_database }} / {{ postgres_readonly_user }} / {{ postgres_readonly_password }}"
           - ""
           - "Guardadas em: {{ postgres_credentials_dir }}/"

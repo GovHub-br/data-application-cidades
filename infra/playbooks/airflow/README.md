@@ -58,6 +58,7 @@ fontes, todas **fora do repositório**:
 | `~/.clusterlab/credentials/airflow0/` | geradas na 1ª execução: senha do login, fernet key, secret da API e do JWT |
 | `~/.clusterlab/credentials/postgres0/` | senhas do banco `airflow` e do data warehouse `cidades` |
 | `~/.clusterlab/credentials/rustfs0/app-cidades_secret_key` | secret do usuário do lake |
+| `~/.clusterlab/credentials/openmetadata0/ingestion_bot_token` | token do OpenMetadata (só com `openmetadata_url` preenchido) |
 
 A connection `postgres_default`, que as DAGs usam para escrever no data
 warehouse, também vem daí: é a variável `AIRFLOW_CONN_POSTGRES_DEFAULT`. Ela
@@ -74,15 +75,18 @@ SFTP_PORT=
 SFTP_USER=
 SFTP_PASSWORD=
 MASKING_HMAC_SECRET=
-OPENMETADATA_URL=
-OPENMETADATA_JWT_TOKEN=
-OPENMETADATA_DATABASE_SERVICE=
-OPENMETADATA_DATABASE_NAME=
 EOF
 chmod 600 ~/.clusterlab/credentials/airflow0/extra.env
 ```
 
 A lista completa e o que cada uma faz estão em `infra/env/.env.example`.
+
+**OpenMetadata.** As variáveis `OPENMETADATA_*` não vão no `extra.env`: com
+`openmetadata_url` preenchido no `group_vars` (`http://<IP_DO_OPENMETADATA>:8585`,
+sem `/api`), o playbook as escreve sozinho, com o token do ingestion-bot que o
+playbook do OpenMetadata gravou em
+`~/.clusterlab/credentials/openmetadata0/ingestion_bot_token`. Rode o do
+OpenMetadata antes deste.
 
 **Não perca a fernet key** (`fernet_seed`). Ela cifra as Connections gravadas no
 banco. Se ela mudar, as Connections viram lixo e precisam ser recadastradas.

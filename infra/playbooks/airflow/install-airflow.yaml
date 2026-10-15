@@ -22,11 +22,15 @@
           - airflow_db_password | length >= 8
           - dw_db_password | length >= 8
           - lake_s3_secret_key | length >= 8
+          - (openmetadata_url | length == 0) or (openmetadata_url is not search('<') and openmetadata_url is not search('/api') and openmetadata_jwt_token | length > 20)
         fail_msg: >-
           Configuração incompleta. Confira postgres_host e lake_s3_endpoint em
           group_vars/airflow.yaml, e se o playbook do Postgres já rodou daqui
           (ele grava as senhas em {{ postgres_credentials_dir }}/) e se existe
           {{ rustfs_credentials_dir }}/{{ lake_s3_access_key }}_secret_key.
+          Com openmetadata_url preenchido (sem /api), o playbook do
+          OpenMetadata precisa ter rodado daqui antes (ele grava
+          {{ openmetadata_credentials_dir }}/ingestion_bot_token).
       run_once: true
 
     # ------------------------------------------------------------------

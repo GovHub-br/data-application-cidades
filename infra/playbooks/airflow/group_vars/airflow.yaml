@@ -39,6 +39,14 @@ lake_bucket: data-lake-mcid
 lake_s3_access_key: app-cidades
 lake_s3_secret_key: "{{ lookup('file', rustfs_credentials_dir ~ '/' ~ lake_s3_access_key ~ '_secret_key', errors='ignore') | default('', true) | trim }}"
 
+# --- OpenMetadata (VM do playbook openmetadata) -----------------------------
+# Opcional. Vazio, o Airflow sobe sem catálogo e a openmetadata_ingestion_dag
+# fica sem destino. Endereço SEM /api: os scripts de governança acrescentam
+# /api/v1 sozinhos.
+openmetadata_url: ""   # ex.: http://<IP_DO_OPENMETADATA>:8585
+openmetadata_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/openmetadata0"
+openmetadata_jwt_token: "{{ lookup('file', openmetadata_credentials_dir ~ '/ingestion_bot_token', errors='ignore') | default('', true) | trim }}"
+
 # --- Redes autorizadas a abrir a UI/API -------------------------------------
 airflow_allowed_networks:
   - 10.0.0.0/24

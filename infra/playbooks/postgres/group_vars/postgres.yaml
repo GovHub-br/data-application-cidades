@@ -21,6 +21,11 @@ postgres_airflow_database: airflow
 postgres_airflow_user: airflow
 postgres_airflow_password: "{{ lookup('password', postgres_credentials_dir ~ '/' ~ postgres_airflow_user ~ '_password chars=ascii_letters,digits length=32') }}"
 
+# Banco do OpenMetadata (a VM do OpenMetadata não tem Postgres próprio).
+postgres_openmetadata_database: openmetadata
+postgres_openmetadata_user: openmetadata
+postgres_openmetadata_password: "{{ lookup('password', postgres_credentials_dir ~ '/' ~ postgres_openmetadata_user ~ '_password chars=ascii_letters,digits length=32') }}"
+
 # Somente leitura no data warehouse (Superset, analistas).
 postgres_readonly_user: usuario_leitura
 postgres_readonly_password: "{{ lookup('password', postgres_credentials_dir ~ '/' ~ postgres_readonly_user ~ '_password chars=ascii_letters,digits length=32') }}"

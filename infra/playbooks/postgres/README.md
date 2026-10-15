@@ -37,7 +37,7 @@ infra/playbooks/postgres/
    recompila.
 3. Configura `conf.d/90-cidades.conf` (`shared_preload_libraries`, `duckdb.*`,
    `listen_addresses`) e libera as redes autorizadas no `pg_hba.conf`.
-4. Cria os usuários e os bancos (tabela abaixo).
+4. Cria os usuários e os bancos (tabela abaixo), inclusive o do OpenMetadata.
 5. Cria a extensão `pg_duckdb` no banco `cidades`, baixa o `httpfs` do DuckDB e grava
    o secret S3 do lake.
 6. Fecha o firewall (ufw) e confere, como o usuário `cidades`, se o pg_duckdb lista o
@@ -96,6 +96,7 @@ Se o build cair por falta de memória, reduza os jobs:
 | --- | --- | --- |
 | `cidades` | `cidades` (dono) | data warehouse: o dbt e as DAGs escrevem aqui; usa o pg_duckdb |
 | `airflow` | `airflow` (dono) | banco de metadados do Airflow |
+| `openmetadata` | `openmetadata` (dono) | banco do catálogo OpenMetadata |
 | `usuario_leitura` | `cidades` (leitura) | Superset e analistas |
 | `duckdb_users` | — | sem login; quem é membro executa DuckDB (`duckdb.postgres_role`) |
 
@@ -105,11 +106,12 @@ na sua máquina:
 ```
 ~/.clusterlab/credentials/postgres0/cidades_password
 ~/.clusterlab/credentials/postgres0/airflow_password
+~/.clusterlab/credentials/postgres0/openmetadata_password
 ~/.clusterlab/credentials/postgres0/usuario_leitura_password
 ```
 
-O playbook do Airflow lê as duas primeiras daí. Por isso, rode o do Postgres
-antes, da mesma máquina.
+Os playbooks do Airflow e do OpenMetadata leem as senhas deles daí. Por isso,
+rode o do Postgres antes, da mesma máquina.
 
 O `usuario_leitura` enxerga o que o `cidades` criar **depois** do playbook. É
 assim por causa dos `ALTER DEFAULT PRIVILEGES`: o dbt cria os schemas como
