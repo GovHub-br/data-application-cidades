@@ -85,6 +85,6 @@ Cada pasta e autocontida (inventario, `group_vars/` e README proprios).
 
 `infra/k8s/` sobe a mesma infra num cluster Kubernetes, no namespace `cidades`:
 RustFS pelo chart oficial, Postgres + pg_duckdb pelo operator CloudNativePG
-(com imagem propria, `infra/k8s/postgres/Dockerfile`) e Airflow pelo chart
-oficial. Os Secrets saem de `infra/k8s/criar-secrets.sh`. Passo a passo em
+(com imagem propria, `infra/k8s/postgres/Dockerfile`), OpenMetadata e Airflow
+pelos charts oficiais. Os Secrets saem de `infra/k8s/criar-secrets.sh`. Passo a passo em
 `infra/k8s/README.md`.
