@@ -1,7 +1,7 @@
 # PostgreSQL 15 + pg_duckdb no CloudNativePG.
 #
 # Antes de aplicar: o operator CNPG instalado e os Secrets do README
-# (cidades-pg-dw, cidades-pg-airflow, cidades-pg-leitura).
+# (cidades-pg-dw, cidades-pg-airflow, cidades-pg-leitura, cidades-pg-openmetadata).
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -62,6 +62,11 @@ spec:
         ensure: present
         passwordSecret:
           name: cidades-pg-leitura
+      - name: openmetadata
+        login: true
+        ensure: present
+        passwordSecret:
+          name: cidades-pg-openmetadata
 
   storage:
     size: 50Gi
@@ -83,5 +88,17 @@ metadata:
 spec:
   name: airflow
   owner: airflow
+  cluster:
+    name: cidades-pg
+---
+# Banco do catálogo OpenMetadata (infra/k8s/openmetadata), no mesmo cluster.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: cidades-pg-openmetadata
+  namespace: cidades
+spec:
+  name: openmetadata
+  owner: openmetadata
   cluster:
     name: cidades-pg

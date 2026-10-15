@@ -57,10 +57,15 @@ env:
   - name: LAKE_LOCAL_ARTIFACTS
     value: "0"
 
-# DW, lake, postgres_default e o que for de cada DAG (SFTP, OpenMetadata...).
+# DW, lake, postgres_default e o que for de cada DAG (SFTP, mascaramento...).
+# O segundo é o do catálogo, gravado pelo Job openmetadata/bootstrap.yaml; é
+# opcional para o Airflow subir mesmo sem o OpenMetadata instalado.
 extraEnvFrom: |
   - secretRef:
       name: cidades-airflow-env
+  - secretRef:
+      name: openmetadata-airflow-env
+      optional: true
 
 config:
   core:

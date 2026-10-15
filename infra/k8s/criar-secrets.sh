@@ -8,6 +8,7 @@
 # Uso:
 #   infra/k8s/criar-secrets.sh rustfs                 # antes do helm do RustFS
 #   infra/k8s/criar-secrets.sh postgres <secret-app>  # antes do cluster.yaml
+#   infra/k8s/criar-secrets.sh openmetadata           # antes do helm do OpenMetadata
 #   infra/k8s/criar-secrets.sh airflow [extra.env]    # antes do helm do Airflow
 #
 # <secret-app> é o arquivo com a secret do usuário app-cidades do RustFS.
@@ -53,9 +54,30 @@ case "${1:-}" in
     basic_auth cidades-pg-dw cidades
     basic_auth cidades-pg-airflow airflow
     basic_auth cidades-pg-leitura usuario_leitura
+    basic_auth cidades-pg-openmetadata openmetadata
     generico cidades-lake \
       endpoint="$LAKE_ENDPOINT" bucket="$LAKE_BUCKET" \
       access_key="$LAKE_ACCESS_KEY" secret_key="$(tr -d '\n' < "$app_secret_file")"
+    ;;
+
+  openmetadata)
+    # Fernet do OpenMetadata: 32 bytes em base64. NÃO troque depois.
+    generico openmetadata-fernet fernet-key="$(openssl rand -base64 32)"
+    # A política de senha exige maiúscula, minúscula, número e especial.
+    generico openmetadata-admin password="$(openssl rand -hex 12)Aa1!"
+    # Chaves que assinam os tokens; as da imagem são iguais em toda instalação.
+    if existe openmetadata-jwt-keys; then
+      echo "ok: openmetadata-jwt-keys já existe"
+    else
+      chaves="$(mktemp -d)"
+      trap 'rm -rf "$chaves"' EXIT
+      openssl genrsa -out "$chaves/private_key.pem" 2048 2>/dev/null
+      openssl pkcs8 -topk8 -inform PEM -outform DER -in "$chaves/private_key.pem" -out "$chaves/private_key.der" -nocrypt
+      openssl rsa -in "$chaves/private_key.pem" -pubout -outform DER -out "$chaves/public_key.der" 2>/dev/null
+      kubectl -n "$NS" create secret generic openmetadata-jwt-keys \
+        --from-file="$chaves/private_key.der" --from-file="$chaves/public_key.der" >/dev/null
+      echo "criado: openmetadata-jwt-keys"
+    fi
     ;;
 
   airflow)
@@ -94,7 +116,7 @@ EOF
     ;;
 
   *)
-    sed -n '2,15p' "$0"
+    sed -n '2,16p' "$0"
     exit 1
     ;;
 esac

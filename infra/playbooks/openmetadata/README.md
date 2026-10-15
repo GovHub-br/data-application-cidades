@@ -19,6 +19,14 @@ Airflow, como já roda hoje. A versão do servidor acompanha a linha do cliente
 fixado em `helpers/openmetadata/config.py` (`openmetadata-ingestion==1.13.3.x`):
 cliente e servidor de linhas diferentes divergem no schema das entidades.
 
+> **Pendência no código das DAGs.** As recipes de conector
+> (`helpers/openmetadata/recipes/`) usam `${OM_HOST}` literalmente e só funcionam
+> com a URL terminada em `/api`; `scripts/governance/governanca_comum.py` monta
+> `{url}/api/v1` e só funciona sem. O `OPENMETADATA_URL` segue a convenção do
+> projeto (sem `/api`), e até o código normalizar o `OM_HOST` as tarefas de
+> conector da `openmetadata_ingestion_dag` falham com
+> `'Response' object is not subscriptable`.
+
 Este playbook é autocontido: tem o próprio `inventory.yaml` e o próprio
 `group_vars/`. Rode sempre de dentro desta pasta. A ordem entre os playbooks
 está em [`infra/README.md`](../../README.md#playbooks-producao).
