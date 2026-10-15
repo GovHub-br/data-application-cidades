@@ -1,0 +1,136 @@
+# Gerenciado pelo Ansible (infra/playbooks/airflow/install-airflow.yaml).
+#
+# Diferenças em relação ao infra/docker-compose.yml (ambiente local):
+# - um container por componente do Airflow 3, em vez do `standalone`;
+# - sem Postgres, Superset e Jupyter: o banco fica na VM do Postgres;
+# - network_mode: host. Porta publicada pelo Docker passa por fora do ufw;
+#   na rede do host, é o ufw que decide quem chega na {{ airflow_port }}.
+name: cidades-airflow
+
+x-airflow-common: &airflow-common
+  image: {{ airflow_image }}
+  user: "50000:0"
+  network_mode: host
+  env_file:
+    - {{ airflow_dir }}/airflow.env
+  environment: &airflow-common-env
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__TEST_CONNECTION: Enabled
+    AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT: '300'
+    AIRFLOW__DAG_PROCESSOR__DAG_FILE_PROCESSOR_TIMEOUT: '360'
+    # Com os componentes separados, quem executa a task (o scheduler, no
+    # LocalExecutor) fala com o api-server por esta URL.
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://localhost:{{ airflow_port }}/execution/'
+    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: '{{ airflow_admin_user }}:admin'
+    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/simple_auth_manager_passwords.json
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    AIRFLOW__API__INSTANCE_NAME: '{{ airflow_instance_name }}'
+    AIRFLOW__API__PORT: '{{ airflow_port }}'
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
+    AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+    AIRFLOW__CORE__PLUGINS_FOLDER: /opt/airflow/plugins
+    AIRFLOW_REPO_BASE: /opt/airflow
+    PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts"
+    LAKE_TMPDIR: /opt/airflow/lake_tmp
+    MASKING_TMPDIR: /opt/airflow/lake_tmp
+    LAKE_LOCAL_ARTIFACTS: "0"
+  volumes:
+    - {{ airflow_repo_dir }}/infra/airflow/airflow.cfg:/opt/airflow/airflow.cfg:ro
+    # Sem :ro: o SimpleAuthManager abre o arquivo em modo de escrita (a+).
+    - {{ airflow_dir }}/simple_auth_manager_passwords.json:/opt/airflow/simple_auth_manager_passwords.json
+    - {{ airflow_repo_dir }}/dags:/opt/airflow/dags:ro
+    - {{ airflow_repo_dir }}/plugins:/opt/airflow/plugins:ro
+    - {{ airflow_repo_dir }}/helpers:/opt/airflow/helpers:ro
+    - {{ airflow_repo_dir }}/templates:/opt/airflow/templates:ro
+    - {{ airflow_repo_dir }}/dbt:/opt/airflow/dbt:ro
+    - {{ airflow_repo_dir }}/dbt/mcid/profiles.yml:/opt/airflow/.dbt/profiles.yml:ro
+    - {{ airflow_repo_dir }}/scripts:/opt/airflow/scripts:ro
+    # O api-server lê os logs das tasks que o scheduler escreveu.
+    - airflow_logs:/opt/airflow/logs
+    # Temporários dos scripts do lake (arquivos de GBs): NÃO usar /tmp.
+    - lake_tmp:/opt/airflow/lake_tmp
+  restart: always
+
+services:
+  # Ajusta o dono do volume lake_tmp para o usuário do Airflow (ver o compose local).
+  lake-tmp-init:
+    image: {{ airflow_image }}
+    user: "0:0"
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - "mkdir -p /opt/airflow/lake_tmp && chown -R 50000:0 /opt/airflow/lake_tmp && chmod -R 775 /opt/airflow/lake_tmp"
+    volumes:
+      - lake_tmp:/opt/airflow/lake_tmp
+    restart: "no"
+
+  # Migra o banco de metadados e sai. Os outros só sobem depois dele.
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+    restart: "no"
+    depends_on:
+      lake-tmp-init:
+        condition: service_completed_successfully
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:{{ airflow_port }}/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 30s
+      start_period: 60s
+      retries: 5
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 30s
+      start_period: 60s
+      retries: 5
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  airflow_logs:
+  lake_tmp:

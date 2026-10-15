@@ -1,0 +1,18 @@
+# Onde a senha do admin é gerada e guardada: na SUA máquina e FORA do repo,
+# para nunca ser commitada por acidente.
+rustfs_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/{{ inventory_hostname }}"
+
+# --- Usuário admin (o "root" do RustFS) -------------------------------------
+rustfs_access_key: rustfs-admin
+rustfs_secret_key: "{{ lookup('password', rustfs_credentials_dir ~ '/rustfs_secret_key chars=ascii_letters,digits length=32') }}"
+
+# --- Servidor ---------------------------------------------------------------
+rustfs_data_dir: /mnt/rustfs/data
+rustfs_api_port: 9000
+rustfs_console_port: 9001
+
+# --- Redes autorizadas (o "allow hosts") ------------------------------------
+rustfs_allowed_networks:
+  - 10.0.0.0/24
+  - 172.16.1.0/24
+  - 192.168.2.0/24

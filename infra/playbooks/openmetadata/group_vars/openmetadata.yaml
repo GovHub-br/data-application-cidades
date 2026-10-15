@@ -1,0 +1,40 @@
+# Onde as senhas deste host são geradas e guardadas: na SUA máquina e FORA do
+# repo. A senha do banco é lida da pasta do playbook do Postgres.
+openmetadata_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/{{ inventory_hostname }}"
+postgres_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/postgres0"
+
+# --- Versões ----------------------------------------------------------------
+# A linha do servidor acompanha o cliente que as DAGs usam
+# (helpers/openmetadata/config.py: openmetadata-ingestion==1.13.3.x).
+openmetadata_version: "1.13.3"
+# O Elasticsearch do docker-compose oficial do OpenMetadata 1.13.3.
+elasticsearch_version: "9.3.0"
+
+# --- Servidor ---------------------------------------------------------------
+openmetadata_port: 8585
+openmetadata_heap: 2G
+elasticsearch_heap: 1g
+# Opções extras do Elasticsearch, no formato chave=valor. Vazio em produção.
+elasticsearch_extra_env: []
+
+# Login de administrador (autenticação básica do OpenMetadata). A senha é
+# gerada na primeira execução e trocada no lugar da padrão (admin).
+openmetadata_admin_email: admin@open-metadata.org
+openmetadata_admin_password_file: "{{ openmetadata_credentials_dir }}/admin_password"
+
+# Cifra os segredos que o OpenMetadata guarda no banco. NÃO troque depois.
+openmetadata_fernet_seed: "{{ lookup('password', openmetadata_credentials_dir ~ '/fernet_seed chars=ascii_letters,digits length=32') }}"
+
+# --- Banco (VM do playbook postgres) ----------------------------------------
+postgres_host: "<IP_DO_POSTGRES>"
+postgres_port: 5432
+openmetadata_db_name: openmetadata
+openmetadata_db_user: openmetadata
+openmetadata_db_password: "{{ lookup('file', postgres_credentials_dir ~ '/' ~ openmetadata_db_user ~ '_password', errors='ignore') | default('', true) | trim }}"
+
+# --- Redes autorizadas a abrir a UI/API -------------------------------------
+# Inclua a VM do Airflow: é ela que roda a ingestão.
+openmetadata_allowed_networks:
+  - 10.0.0.0/24
+  - 172.16.1.0/24
+  - 192.168.2.0/24
