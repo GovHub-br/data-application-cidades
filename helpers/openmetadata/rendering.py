@@ -13,6 +13,23 @@ from pathlib import Path
 MARCADOR_NAO_SUBSTITUIDO = re.compile(r"\$\{([A-Z0-9_]+)\}")
 
 
+def sdk_host_port(host_port: str) -> str:
+    """Endereco que o SDK espera no `hostPort` da recipe: a URL da API (`.../api`).
+
+    `OPENMETADATA_URL` vem sem o `/api`, porque `scripts/governance/` acrescenta
+    `/api/v1` sozinho. Repassada crua, o SDK chama `<url>/v1/...`, recebe a
+    pagina HTML da UI e falha com "'Response' object is not subscriptable".
+    """
+    host = str(host_port).strip().rstrip("/")
+    if not host:
+        raise ValueError("OM_HOST nao pode ser vazio.")
+    if host.endswith("/api/v1"):
+        return host[: -len("/v1")]
+    if host.endswith("/api"):
+        return host
+    return f"{host}/api"
+
+
 def render_recipe(
     source_recipe_path: str,
     recipe_replacements: dict,

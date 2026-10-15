@@ -118,14 +118,6 @@ kubectl -n cidades get secret openmetadata-admin -o jsonpath='{.data.password}' 
 kubectl -n cidades port-forward svc/openmetadata 8585:8585   # admin@open-metadata.org
 ```
 
-> **Pendência no código das DAGs.** As recipes de conector
-> (`helpers/openmetadata/recipes/`) usam `${OM_HOST}` literalmente e só funcionam
-> com a URL terminada em `/api`; `scripts/governance/governanca_comum.py` monta
-> `{url}/api/v1` e só funciona sem. O `OPENMETADATA_URL` segue a convenção do
-> projeto (sem `/api`), e até o código normalizar o `OM_HOST` as tarefas de
-> conector da `openmetadata_ingestion_dag` falham com
-> `'Response' object is not subscriptable`.
-
 O Elasticsearch para de alocar índices com o disco do PVC acima de 90%; mantenha
 folga no `storage` de `elasticsearch.yaml`.
 
