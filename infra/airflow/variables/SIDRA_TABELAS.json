@@ -1,0 +1,26 @@
+[
+  {
+    "dataset": "pnad_construcao_ocupados",
+    "tabela": 6323,
+    "variavel": 4090,
+    "periodos": 12,
+    "classificacao": {
+      "888": [
+        47946,
+        47949
+      ]
+    }
+  },
+  {
+    "dataset": "pnad_construcao_rendimento",
+    "tabela": 6391,
+    "variavel": 5932,
+    "periodos": 12,
+    "classificacao": {
+      "888": [
+        47946,
+        47949
+      ]
+    }
+  }
+]

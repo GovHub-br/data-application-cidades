@@ -29,23 +29,12 @@ escopo:
     - data_ingest/ibge
     - data_ingest/infomoney
     - data_ingest/mrv
+    - data_ingest/sftp
     - data_ingest/tesouro_gerencial/mcid
     - dbt/mcid
-  # Ingestões que não são DAG: rodam como script sobre o SFTP do agente operador
-  # e alimentam o schema `raw`, de onde saem FAR e Entidades.
-  ingestoes_script:
-    - rotulo: SFTP da Caixa Econômica Federal
-      arquivos:
-        - scripts/sftp_ingest.py
-        - scripts/sftp_snapshot.py
-        - scripts/sftp_minio_diff.py
-        - scripts/sftp_rename_tables.py
-      descricao: |
-        Espinha dorsal do fluxo de dados do MCMV subsidiado. O acesso direto ao
-        SFTP foi conquistado em 2026 — antes disso a equipe trabalhava sobre um
-        dump estático do banco do Ministério. Os scripts fazem a carga, o
-        snapshot que detecta o que mudou entre períodos e a conferência contra o
-        MinIO.
+  # Ingestões que não são DAG. O SFTP da CAIXA virou a `sftp_ingest_dag`
+  # (grupo data_ingest/sftp, acima) no refactor da ingestão.
+  ingestoes_script: []
 
 # Contexto do programa que a plataforma acompanha. Alimenta a capa e a vitrine.
 #

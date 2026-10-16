@@ -1,0 +1,667 @@
+{
+  "snh_dados_prioritarios_af_bb": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB(_vs\\d+(_correcao)?)?\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "snh_dados_prioritarios_af_caixa": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "snh_dados_prioritarios_af_caixa_entregas": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "snh_dados_prioritarios_da_entrega_da_unidade_af_bb": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)\\d{4}_?\\d{2}_SNH_PMCMV_DADOS_PRIORITARIOS_DA_ENTREGA_DA_UNIDADE_AF_BB\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "dados_prioritarios_contratacoes_semanal": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)Dados_Prioritarios_Contratacoes_MCMV_FAR_FDS_RURAL_Semanal_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "int021_far_bb_pf": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT021_MinisterioCidades_FAR_BB_PF_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT021_MinisterioCidades_FAR_BB_PF_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int039_far_caixa_pf": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT039_MinisterioCidades_FAR_CAIXA_PF_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT039_MinisterioCidades_FAR_CAIXA_PF_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int040_far_caixa_empreendimentos": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int042_fds_caixa_pf": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT042_MinisterioCidades_FDS_CAIXA_PF_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT042_MinisterioCidades_FDS_CAIXA_PF_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int054_far_bb_empreendimentos": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT054_MinisterioCidades_FAR_BB_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT054_MinisterioCidades_FAR_BB_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int055_liberacoes_caixa_bb": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "int057_pnhr_bb_empreendimentos": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int058_pnhr_bb_pf": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT058_MinisterioCidades_PNHR_BB_PF_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT058_MinisterioCidades_PNHR_BB_PF_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int059_fds_caixa_empreendimentos": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int064_pnhr_caixa_pf": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT064_MinisterioCidades_PNHR_CAIXA_PF_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT064_MinisterioCidades_PNHR_CAIXA_PF_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int065_pnhr_caixa_empreendimentos": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": "^ANTERIORES/\\d{6}(_CAIXA)?\\.zip$",
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)^INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_[^/.]*\\.(csv|txt|xlsx)$",
+    "require_match": false
+  },
+  "int068_solicitacao_liberacao_obra": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)INT068_MDR_Solicitacao_Liberacao_Obra_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "bb_af_diemp_andamento_obra": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)BB_AF_DIEMP_ANDAMENTO_OBRA_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "caixa_af_gehis_andamento_obra": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)(CAIXA_AF_GEHIS_ANDAMENTO_OBRA_[^/.]*|\\d{6}_ANDAMENTO_OBRA_AF_CAIXA[^/.]*)\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "base_andamento_obra": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)BASE_ANDAMENTO_OBRA_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "caixa_af_gehis_alienacao_imovel": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "caixa_af_gehis_operacao_desenquadrada": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)CAIXA_AF_GEHIS_OPERACAO_DESENQUADRADA_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "calculo_atuarial_produto": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)CALCULO_ATUARIAL_PRODUTO_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "pmcmv_reformas_mcid": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)PMCMV_REFORMAS_MCID_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "pmcmv_faixa3_mcid": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)PMCMV_FAIXA3_MCID_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "pmcmv_cidades_mcid": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)PMCMV_CIDADES_MCID_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "fundo_social": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)FUNDO_SOCIAL_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "mont_cont_pf_far": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)MONT_CONT_PF_FAR_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "mcmv_cidades_emendas": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)MCMV_CIDADES_EMENDAS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "geavo_base_pf_fgts": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)Base_PF_FGTS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "geavo_base_pj_fgts": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)Base_PJ_FGTS_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "cadunico_pessoa_pbf": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)ARQ_PESSOA_PBF_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "cadunico_familia_pbf": {
+    "root": "/home/fabrica/GEFUS",
+    "pattern": "(?i)(^|/)ARQ_FAMILIA_PBF_[^/.]*\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "analise_snh_tab_validacao_pf": {
+    "root": "/home/fabrica/Analise_SNH",
+    "pattern": "(?i)(^|/)(\\d{6}_)?tab_validacao_arquivos_pf\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  },
+  "analise_snh_tab_validacao_pj": {
+    "root": "/home/fabrica/Analise_SNH",
+    "pattern": "(?i)(^|/)(\\d{6}_)?tab_validacao_arquivos_pj\\.(csv|txt|xlsx|zip|gz)(\\.(zip|gz))?$",
+    "bundles": null,
+    "exclude": [
+      "(?i)substitu",
+      "(^|/)~\\$",
+      "\\.filepart$"
+    ],
+    "prefer": [
+      ".csv",
+      ".txt",
+      ".xlsx",
+      ".zip",
+      ".gz"
+    ],
+    "members": "(?i)\\.(csv|txt|xlsx)$",
+    "require_match": true
+  }
+}

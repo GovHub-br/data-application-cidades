@@ -53,6 +53,7 @@ from lake_utils import (
     mdb_tabelas,
     normalizar_colunas,
     norm_header,
+    separar_pipeline_novo,
 )
 
 # plugins/ (ClienteMinio) está na PYTHONPATH dentro do container Airflow; rodando
@@ -1075,6 +1076,16 @@ def run(  # noqa: C901
         if rel.split("/", 1)[0] in PASTAS_IGNORADAS:
             continue
         todos.append((key, size))
+
+    # As partições do pipeline novo (plugins/ingestion) têm conversão própria, no
+    # mesmo caminho da staging: convertê-las aqui sobrescreveria o resultado dele.
+    todos, do_pipeline_novo = separar_pipeline_novo(todos)
+    if do_pipeline_novo:
+        contagem["skipped_pipeline_novo"] = len(do_pipeline_novo)
+        log.info(
+            "%d objeto(s) de partições do pipeline novo ignorado(s) (têm _SUCCESS).",
+            len(do_pipeline_novo),
+        )
 
     vencedores, gemeos = _descartar_gemeos(todos)
 

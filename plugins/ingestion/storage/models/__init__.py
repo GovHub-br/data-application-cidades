@@ -1,0 +1,1 @@
+"""Implementações registradas no StorageFactory."""
