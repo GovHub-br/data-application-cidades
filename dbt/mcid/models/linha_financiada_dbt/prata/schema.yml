@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: prata_linha_financiada_pf_fgts
+    description: >
+      Recorte analítico da Base PF/FGTS sem identificadores pessoais. Permanece
+      separado de CCI/CCA para impedir dupla contagem entre recortes distintos.
+    columns:
+      - name: data_contratacao
+        data_tests: [not_null]
+
+  - name: prata_linha_financiada_contrato
+    description: >
+      Contratos unificados da Linha Financiada. Classe Média, MCMV Cidades e
+      Pró-Moradia são indicadores sobrepostos, não categorias excludentes.
+      Não expõe CPF, nome, endereço ou data de nascimento.
+    data_tests:
+      - unique_combinacao:
+          arguments: {colunas: [id_contrato_linha_financiada]}
+    columns:
+      - name: id_contrato_linha_financiada
+        data_tests: [not_null, unique]
+      - name: contrato
+        data_tests: [not_null]
+      - name: fonte_recurso
+        data_tests:
+          - accepted_values:
+              arguments: {values: [FGTS, Fundo Social]}
+      - name: ic_classe_media
+        data_tests: [not_null]
+      - name: ic_mcmv_cidades
+        data_tests: [not_null]
+      - name: ic_pro_moradia
+        data_tests: [not_null]
+
+  - name: prata_linha_financiada_contrapartida
+    description: >
+      Cobertura auditável de contrapartidas. Publica valores explicitamente
+      recebidos e marca os contratos sem informação; não infere aportes.
+    columns:
+      - name: id_contrato_linha_financiada
+        data_tests: [not_null, unique]
+      - name: ic_valor_informado
+        data_tests: [not_null]
+
+  - name: prata_linha_financiada_empreendimento
+    description: Cadastro e última posição conhecida dos empreendimentos FGTS.
+    columns:
+      - name: id_empreendimento_linha_financiada
+        data_tests: [not_null]
+
+  - name: prata_linha_financiada_execucao_orcamentaria
+    description: >
+      Orçamento anual do FGTS e posição de execução do Fundo Social. A coluna
+      periodicidade impede interpretar o orçamento anual como série mensal.
+    columns:
+      - name: id_execucao_orcamentaria
+        data_tests: [not_null, unique]
+      - name: fonte_recurso
+        data_tests:
+          - accepted_values:
+              arguments: {values: [FGTS, Fundo Social]}

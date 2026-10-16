@@ -33,6 +33,7 @@ with rotulada as (
         quantidade_dormitorios,
         pessoas_por_dormitorio,
         dt_referencia
+        * exclude (uf, municipio, codigo_ibge, faixa_renda)
     from {{ ref('prata_reforma_casa_brasil_acesso') }}
 )
 
@@ -48,6 +49,7 @@ select
     count(*) filter (where indicador_encontrado_cadunico) as quantidade_encontrada_cadunico,
     round(
         count(*) filter (where indicador_encontrado_cadunico)::numeric / count(*), 4
+        count(*) filter (where indicador_encontrado_cadunico)::double / count(*), 4
     ) as proporcao_encontrada_cadunico,
     sum(valor_financiado) as valor_financiado_total,
     avg(valor_financiado) as valor_financiado_medio,

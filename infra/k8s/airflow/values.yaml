@@ -1,0 +1,135 @@
+# Airflow no Kubernetes: chart oficial (https://airflow.apache.org), versão
+# 1.22.0, com a imagem do projeto (infra/docker/airflow/Dockerfile).
+#
+#   helm upgrade --install airflow apache-airflow/airflow --version 1.22.0 \
+#     -n cidades -f infra/k8s/airflow/values.yaml
+#
+# Os Secrets referenciados aqui são criados à mão (ver README); nenhuma senha
+# fica neste arquivo.
+
+defaultAirflowRepository: ghcr.io/govhub-br/cidades-airflow
+defaultAirflowTag: "main"
+# A do Dockerfile; o chart 1.22.0 traz 3.2.2 por padrão.
+airflowVersion: "3.3.2"
+
+# Como nas VMs: as tasks rodam dentro do pod do scheduler.
+executor: LocalExecutor
+
+# Banco de metadados: database "airflow" do cluster CNPG (infra/k8s/postgres).
+postgresql:
+  enabled: false
+pgbouncer:
+  enabled: false
+redis:
+  enabled: false
+statsd:
+  enabled: false
+data:
+  metadataSecretName: airflow-metadata
+fernetKeySecretName: airflow-fernet-key
+apiSecretKeySecretName: airflow-api-secret-key
+jwtSecretName: airflow-jwt-secret
+
+# O código vem do repositório inteiro: o git-sync clona em
+# /opt/airflow/dags/repo, e as DAGs importam plugins/, helpers/, scripts/ e
+# dbt/ de lá (AIRFLOW_REPO_BASE).
+dags:
+  gitSync:
+    enabled: true
+    repo: https://github.com/GovHub-br/data-application-cidades.git
+    branch: main
+    ref: main
+    depth: 1
+    subPath: dags
+    period: 60s
+
+env:
+  - name: AIRFLOW_REPO_BASE
+    value: /opt/airflow/dags/repo
+  - name: PYTHONPATH
+    value: /opt/airflow/dags/repo/dags:/opt/airflow/dags/repo/plugins:/opt/airflow/dags/repo/helpers:/opt/airflow/dags/repo/scripts
+  - name: DBT_PROFILES_DIR
+    value: /opt/airflow/dags/repo/dbt/mcid
+  - name: LAKE_TMPDIR
+    value: /tmp/lake
+  - name: MASKING_TMPDIR
+    value: /tmp/lake
+  - name: LAKE_LOCAL_ARTIFACTS
+    value: "0"
+
+# DW, lake, postgres_default e o que for de cada DAG (SFTP, mascaramento...).
+# O segundo é o do catálogo, gravado pelo Job openmetadata/bootstrap.yaml; é
+# opcional para o Airflow subir mesmo sem o OpenMetadata instalado.
+extraEnvFrom: |
+  - secretRef:
+      name: cidades-airflow-env
+  - secretRef:
+      name: openmetadata-airflow-env
+      optional: true
+
+config:
+  core:
+    # O mesmo login das VMs e do ambiente local. O padrão do chart é o FAB.
+    auth_manager: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
+    simple_auth_manager_users: "airflow:admin"
+    simple_auth_manager_passwords_file: /opt/airflow/auth/passwords.json
+    default_timezone: America/Sao_Paulo
+    load_examples: "False"
+    test_connection: Enabled
+    dagbag_import_timeout: 300
+    plugins_folder: /opt/airflow/dags/repo/plugins
+  dag_processor:
+    dag_file_processor_timeout: 360
+  api:
+    instance_name: "MCid - Cidades"
+  email:
+    default_email_on_retry: "False"
+    default_email_on_failure: "False"
+
+# O createUserJob é do FAB; com o SimpleAuthManager não se aplica.
+createUserJob:
+  enabled: false
+
+apiServer:
+  # O SimpleAuthManager abre o arquivo de senhas para escrita, então ele não
+  # pode ser o Secret montado direto (somente leitura): um init container
+  # copia a senha para um emptyDir.
+  extraInitContainers:
+    - name: auth-passwords
+      image: busybox:1.37
+      command:
+        - sh
+        - -c
+        - |
+          printf '{"airflow": "%s"}' "$SENHA" > /opt/airflow/auth/passwords.json
+      env:
+        - name: SENHA
+          valueFrom:
+            secretKeyRef:
+              name: airflow-admin
+              key: password
+      volumeMounts:
+        - name: auth
+          mountPath: /opt/airflow/auth
+  extraVolumes:
+    - name: auth
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: auth
+      mountPath: /opt/airflow/auth
+
+scheduler:
+  resources:
+    requests:
+      cpu: "1"
+      memory: 4Gi
+    limits:
+      # O dbt em modo DuckDB (DUCKDB_MCID_MEMORY_LIMIT) chega a 10 GB.
+      memory: 14Gi
+
+# Sem volume de logs: um PVC compartilhado entre os pods exigiria
+# ReadWriteMany. Com o LocalExecutor, o api-server busca os logs no próprio
+# scheduler (porta 8793); eles se perdem se o pod do scheduler for recriado.
+logs:
+  persistence:
+    enabled: false

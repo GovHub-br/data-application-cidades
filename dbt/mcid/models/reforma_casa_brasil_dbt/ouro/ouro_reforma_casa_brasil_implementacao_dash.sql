@@ -7,6 +7,9 @@ select
     coalesce(faixa_renda, 'Não informada') as faixa_renda,
     coalesce(modalidade, 'Não informada') as modalidade,
     coalesce(tipo_imovel, 'Não informado') as tipo_imovel,
+    coalesce(codigo_ibge, codigo_ibge_cadastro, 'Não informado') as codigo_ibge,
+    coalesce(faixa_renda, 'Não informada') as faixa_renda,
+    coalesce(modalidade, 'Não informada') as modalidade,
     coalesce(tipo_desembolso, 'Não informado') as tipo_desembolso,
     coalesce(sistema_amortizacao, 'Não informado') as sistema_amortizacao,
     count(*) as quantidade_contratos,
@@ -29,3 +32,10 @@ select
     current_timestamp as dt_ouro
 from {{ ref('prata_reforma_casa_brasil_contrato') }}
 group by 1, 2, 3, 4, 5, 6, 7, 8
+        count(*) filter (where coalesce(dias_atraso, 0) > 0)::double / count(*), 4
+    ) as proporcao_com_atraso,
+    max(dt_referencia) as dt_referencia,
+    current_timestamp as dt_ouro
+from {{ ref('prata_reforma_casa_brasil_acesso') }}
+group by 1, 2, 3, 4, 5, 6, 7
+having count(*) >= 10

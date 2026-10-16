@@ -20,6 +20,10 @@ models:
       Indicadores agregados de acesso ao Reforma Casa Brasil por território,
       faixa, raça/cor, sexo e composição domiciliar. Células com menos de dez
       contratos são suprimidas.
+  - name: ouro_reforma_casa_brasil_acesso_dash
+    description: >
+      Indicadores agregados de acesso ao Reforma Casa Brasil por território,
+      faixa, raça/cor e sexo. Células com menos de dez contratos são suprimidas.
     meta:
       tags: [ouro, reforma-casa-brasil, dashboard, acesso, agregado]
     columns:
@@ -42,6 +46,8 @@ models:
     description: >
       Linha de base de inadequação domiciliar e situação financeira declarada
       no CadÚnico. Não mede efeito pós-obra nem atribui causalidade ao programa.
+      Linha de base de inadequação domiciliar observável no CadÚnico. Não mede
+      efeito pós-obra nem atribui causalidade ao programa.
     meta:
       tags: [ouro, reforma-casa-brasil, dashboard, resultado, agregado]
     columns:
@@ -102,6 +108,11 @@ models:
         description: Fonte administrativa, pesquisa ou medição necessária para responder integralmente à pergunta.
       - name: limitacao
         description: Restrição que deve acompanhar a leitura do indicador.
+
+  - name: ouro_reforma_casa_brasil_cobertura_perguntas_dash
+    description: Matriz de cobertura que separa resposta administrativa, proxy e lacuna de pesquisa.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, cobertura]
     data_tests:
       - unique_combinacao:
           arguments: {colunas: [bloco, pergunta]}

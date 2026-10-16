@@ -65,6 +65,7 @@ models:
       Características familiares e domiciliares tipadas. O indicador de
       inadequação é proxy operacional e não substitui metodologia oficial. As
       despesas declaradas formam somente uma linha de base financeira.
+      inadequação é proxy operacional e não substitui metodologia oficial.
     meta:
       tags: [prata, reforma-casa-brasil, cadunico, familia, restrito]
     columns:

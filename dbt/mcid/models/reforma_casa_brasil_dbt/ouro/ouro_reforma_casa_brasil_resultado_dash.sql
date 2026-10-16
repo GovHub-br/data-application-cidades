@@ -27,6 +27,7 @@ with rotulada as (
         valor_recurso_proprio,
         valor_fgts_utilizado,
         dt_referencia
+        * exclude (uf, municipio, codigo_ibge, faixa_renda)
     from {{ ref('prata_reforma_casa_brasil_acesso') }}
 )
 
@@ -41,6 +42,7 @@ select
         as quantidade_com_inadequacao_observavel_na_linha_de_base,
     round(
         count(*) filter (where indicador_inadequacao_observavel)::numeric
+        count(*) filter (where indicador_inadequacao_observavel)::double
         / nullif(count(*) filter (where indicador_encontrado_cadunico), 0),
         4
     ) as proporcao_inadequacao_observavel_na_linha_de_base,
@@ -66,6 +68,7 @@ select
     avg(valor_fgts_utilizado) as fgts_utilizado_medio,
     false as resultado_pos_obra_disponivel,
     false as impacto_financeiro_pos_obra_disponivel,
+    false as resultado_pos_obra_disponivel,
     'Linha de base CadÚnico; não mede causalmente o efeito posterior da reforma.'
         as ressalva_resultado,
     max(dt_referencia) as dt_referencia,

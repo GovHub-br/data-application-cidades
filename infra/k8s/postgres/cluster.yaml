@@ -1,0 +1,104 @@
+# PostgreSQL 15 + pg_duckdb no CloudNativePG.
+#
+# Antes de aplicar: o operator CNPG instalado e os Secrets do README
+# (cidades-pg-dw, cidades-pg-airflow, cidades-pg-leitura, cidades-pg-openmetadata).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cidades-pg
+  namespace: cidades
+spec:
+  instances: 1
+  # Imagem construída a partir de infra/k8s/postgres/Dockerfile.
+  imageName: ghcr.io/govhub-br/cidades-postgres:15-pgduckdb-ee38d3b
+
+  # O secret do lake (SERVER do FDW duckdb) só pode ser criado por
+  # superusuário; o Job lake-secret.yaml usa o cidades-pg-superuser.
+  enableSuperuserAccess: true
+
+  # O DuckDB precisa de HOME para instalar extensões (httpfs).
+  env:
+    - name: HOME
+      value: /var/lib/postgresql/data
+
+  postgresql:
+    shared_preload_libraries:
+      - pg_duckdb
+    parameters:
+      # Só membros deste role executam DuckDB (read_parquet etc.).
+      duckdb.postgres_role: duckdb_users
+      # Memória do DuckDB por conexão, em MB.
+      duckdb.max_memory: "4096"
+      duckdb.max_temp_directory_size: 50GB
+
+  bootstrap:
+    initdb:
+      database: cidades
+      owner: cidades
+      secret:
+        name: cidades-pg-dw
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS pg_duckdb
+
+  managed:
+    roles:
+      - name: duckdb_users
+        login: false
+        ensure: present
+      - name: cidades
+        login: true
+        ensure: present
+        inRoles:
+          - duckdb_users
+        passwordSecret:
+          name: cidades-pg-dw
+      - name: airflow
+        login: true
+        ensure: present
+        passwordSecret:
+          name: cidades-pg-airflow
+      - name: usuario_leitura
+        login: true
+        ensure: present
+        passwordSecret:
+          name: cidades-pg-leitura
+      - name: openmetadata
+        login: true
+        ensure: present
+        passwordSecret:
+          name: cidades-pg-openmetadata
+
+  storage:
+    size: 50Gi
+    # storageClass: longhorn
+
+  resources:
+    requests:
+      memory: 8Gi
+      cpu: "2"
+    limits:
+      memory: 16Gi
+---
+# Banco de metadados do Airflow, no mesmo cluster.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: cidades-pg-airflow
+  namespace: cidades
+spec:
+  name: airflow
+  owner: airflow
+  cluster:
+    name: cidades-pg
+---
+# Banco do catálogo OpenMetadata (infra/k8s/openmetadata), no mesmo cluster.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: cidades-pg-openmetadata
+  namespace: cidades
+spec:
+  name: openmetadata
+  owner: openmetadata
+  cluster:
+    name: cidades-pg

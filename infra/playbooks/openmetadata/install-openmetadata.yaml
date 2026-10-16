@@ -1,0 +1,355 @@
+- name: Install OpenMetadata (Docker Compose) on Debian 12
+  hosts: openmetadata
+  become: true
+  become_method: su
+
+  vars:
+    cache_valid_time: 86400
+    openmetadata_dir: /opt/cidades-openmetadata
+    openmetadata_image: "docker.getcollate.io/openmetadata/server:{{ openmetadata_version }}"
+    openmetadata_api: "http://127.0.0.1:{{ openmetadata_port }}/api/v1"
+    openmetadata_admin_password: "{{ lookup('file', openmetadata_admin_password_file, errors='ignore') | default('', true) | trim }}"
+
+  tasks:
+    - name: Validar a configuração
+      ansible.builtin.assert:
+        that:
+          - postgres_host is not search('<')
+          - openmetadata_db_password | length >= 8
+        fail_msg: >-
+          Configuração incompleta. Confira postgres_host em
+          group_vars/openmetadata.yaml e se o playbook do Postgres já rodou
+          daqui (ele grava a senha do banco em
+          {{ postgres_credentials_dir }}/{{ openmetadata_db_user }}_password).
+      run_once: true
+
+    # A política de senha do OpenMetadata exige maiúscula, minúscula, número e
+    # caractere especial; o sufixo garante as quatro classes.
+    - name: Gerar a senha do admin (na sua máquina, fora do repo)
+      ansible.builtin.shell:
+        cmd: |
+          umask 077
+          mkdir -p "{{ openmetadata_credentials_dir }}"
+          printf '%sAa1!' "$(openssl rand -hex 12)" > "{{ openmetadata_admin_password_file }}"
+        creates: "{{ openmetadata_admin_password_file }}"
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    # ------------------------------------------------------------------
+    # Docker (repositório oficial)
+    # ------------------------------------------------------------------
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - openssl
+          - ufw
+          - vim
+        state: present
+        update_cache: true
+        cache_valid_time: "{{ cache_valid_time }}"
+
+    - name: Create apt keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Docker signing key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Add Docker apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        mode: '0644'
+        content: |
+          Types: deb
+          URIs: https://download.docker.com/linux/debian
+          Suites: {{ ansible_distribution_release }}
+          Components: stable
+          Signed-By: /etc/apt/keyrings/docker.asc
+
+    - name: Install Docker Engine and Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Enable and start docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    # O Elasticsearch não sobe com vm.max_map_count abaixo de 262144. Só sobe
+    # o valor; se a VM já tiver mais, não mexe.
+    - name: Read vm.max_map_count
+      ansible.builtin.command:
+        cmd: sysctl -n vm.max_map_count
+      register: max_map_count
+      changed_when: false
+
+    - name: Raise vm.max_map_count for Elasticsearch
+      ansible.builtin.shell:
+        cmd: |
+          echo 'vm.max_map_count = 262144' > /etc/sysctl.d/99-elasticsearch.conf
+          sysctl -w vm.max_map_count=262144
+      when: max_map_count.stdout | int < 262144
+
+    # ------------------------------------------------------------------
+    # Chaves, configuração e containers
+    # ------------------------------------------------------------------
+
+    - name: Create OpenMetadata directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - "{{ openmetadata_dir }}"
+        - "{{ openmetadata_dir }}/keys"
+
+    # Assinam os tokens do admin e do ingestion-bot. Trocar estas chaves
+    # invalida todos os tokens já emitidos.
+    - name: Generate the JWT signing keys
+      ansible.builtin.shell:
+        cmd: |
+          set -e
+          umask 077
+          openssl genrsa -out private_key.pem 2048
+          openssl pkcs8 -topk8 -inform PEM -outform DER -in private_key.pem -out private_key.der -nocrypt
+          openssl rsa -in private_key.pem -pubout -outform DER -out public_key.der
+          rm private_key.pem
+        chdir: "{{ openmetadata_dir }}/keys"
+        creates: "{{ openmetadata_dir }}/keys/private_key.der"
+
+    - name: Pull the OpenMetadata server image
+      ansible.builtin.command:
+        cmd: "docker pull -q {{ openmetadata_image }}"
+      changed_when: false
+
+    - name: Read the uid of the container user
+      ansible.builtin.command:
+        cmd: "docker run --rm --entrypoint id {{ openmetadata_image }} -u"
+      register: om_uid
+      changed_when: false
+
+    - name: Let the container user read the keys
+      ansible.builtin.file:
+        path: "{{ openmetadata_dir }}/keys/{{ item }}"
+        owner: "{{ om_uid.stdout | trim }}"
+        group: root
+        mode: '0400'
+      loop:
+        - private_key.der
+        - public_key.der
+
+    - name: Write openmetadata.env
+      ansible.builtin.template:
+        src: openmetadata.env.j2
+        dest: "{{ openmetadata_dir }}/openmetadata.env"
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
+
+    - name: Write docker-compose.yaml
+      ansible.builtin.template:
+        src: docker-compose.yaml.j2
+        dest: "{{ openmetadata_dir }}/docker-compose.yaml"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Start Elasticsearch
+      ansible.builtin.command:
+        cmd: docker compose up -d --wait elasticsearch
+        chdir: "{{ openmetadata_dir }}"
+      register: es_up
+      changed_when: es_up.stderr is search('Recreated|Started|Created')
+      async: 1200
+      poll: 15
+
+    # Cria as tabelas na primeira vez e as atualiza quando a versão muda. O
+    # marcador por versão evita rodar de novo a cada execução.
+    - name: Run the OpenMetadata database migration
+      ansible.builtin.shell:
+        cmd: "docker compose run --rm execute-migrate-all && touch .migrado-{{ openmetadata_version }}"
+        chdir: "{{ openmetadata_dir }}"
+        creates: "{{ openmetadata_dir }}/.migrado-{{ openmetadata_version }}"
+      async: 1800
+      poll: 15
+
+    # O compose recria sozinho o container cujo env ou imagem mudou.
+    - name: Start the OpenMetadata server
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: "{{ openmetadata_dir }}"
+      register: compose_up
+      changed_when: compose_up.stderr is search('Recreated|Started|Created')
+
+    # ------------------------------------------------------------------
+    # Firewall: só as redes autorizadas abrem a UI/API
+    # ------------------------------------------------------------------
+
+    - name: Allow SSH through firewall
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw allow ssh
+      register: ufw_ssh
+      changed_when: "'Skipping' not in ufw_ssh.stdout"
+
+    - name: Set UFW default policy to deny incoming
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw default deny incoming
+      register: ufw_default
+      changed_when: "'updated' in ufw_default.stdout"
+
+    - name: Check UFW status
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw status
+      register: ufw_status
+      changed_when: false
+
+    - name: Enable UFW
+      ansible.builtin.shell:
+        cmd: echo "y" | /usr/sbin/ufw enable
+      when: "'Status: active' not in ufw_status.stdout"
+
+    - name: Allow OpenMetadata port for the authorized networks
+      ansible.builtin.command:
+        cmd: "/usr/sbin/ufw allow from {{ item }} to any port {{ openmetadata_port }} proto tcp"
+      loop: "{{ openmetadata_allowed_networks }}"
+      register: ufw_om
+      changed_when: "'Skipping' not in ufw_om.stdout"
+
+    - name: Reload UFW
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw reload
+      changed_when: false
+
+    # ------------------------------------------------------------------
+    # Pós-instalação: senha do admin e token do ingestion-bot
+    # ------------------------------------------------------------------
+
+    - name: Wait for the OpenMetadata API
+      ansible.builtin.uri:
+        url: "{{ openmetadata_api }}/system/version"
+        status_code: 200
+      register: om_version
+      until: om_version.status == 200
+      retries: 60
+      delay: 10
+      when: not ansible_check_mode
+
+    # O login da API recebe a senha em base64.
+    - name: Log in with the generated admin password
+      ansible.builtin.uri:
+        url: "{{ openmetadata_api }}/users/login"
+        method: POST
+        body_format: json
+        body:
+          email: "{{ openmetadata_admin_email }}"
+          password: "{{ openmetadata_admin_password | b64encode }}"
+        status_code: [200, 401]
+      register: om_login
+      no_log: true
+
+    # Primeira execução: o admin ainda está com a senha padrão do
+    # OpenMetadata ("admin"). Troca pela gerada.
+    - name: Replace the default admin password
+      when: om_login.status == 401
+      no_log: true
+      block:
+        - name: Log in with the default admin password
+          ansible.builtin.uri:
+            url: "{{ openmetadata_api }}/users/login"
+            method: POST
+            body_format: json
+            body:
+              email: "{{ openmetadata_admin_email }}"
+              password: "{{ 'admin' | b64encode }}"
+          register: om_login_default
+
+        - name: Change the admin password
+          ansible.builtin.uri:
+            url: "{{ openmetadata_api }}/users/changePassword"
+            method: PUT
+            headers:
+              Authorization: "Bearer {{ om_login_default.json.accessToken }}"
+            body_format: json
+            body:
+              username: admin
+              oldPassword: admin
+              newPassword: "{{ openmetadata_admin_password }}"
+              confirmPassword: "{{ openmetadata_admin_password }}"
+              requestType: SELF
+          changed_when: true
+
+        - name: Log in again with the new password
+          ansible.builtin.uri:
+            url: "{{ openmetadata_api }}/users/login"
+            method: POST
+            body_format: json
+            body:
+              email: "{{ openmetadata_admin_email }}"
+              password: "{{ openmetadata_admin_password | b64encode }}"
+          register: om_login_nova
+
+    # Nome separado de propósito: uma task pulada sobrescreve a variável que
+    # registra, e na segunda execução o bloco acima é pulado.
+    - name: Keep the admin access token
+      ansible.builtin.set_fact:
+        om_admin_token: "{{ om_login_nova.json.accessToken if om_login.status == 401 else om_login.json.accessToken }}"
+      no_log: true
+
+    - name: Find the ingestion-bot user
+      ansible.builtin.uri:
+        url: "{{ openmetadata_api }}/bots/name/ingestion-bot?fields=botUser"
+        headers:
+          Authorization: "Bearer {{ om_admin_token }}"
+      register: om_bot
+      no_log: true
+
+    - name: Read the ingestion-bot token
+      ansible.builtin.uri:
+        url: "{{ openmetadata_api }}/users/auth-mechanism/{{ om_bot.json.botUser.id }}"
+        headers:
+          Authorization: "Bearer {{ om_admin_token }}"
+      register: om_bot_auth
+      no_log: true
+
+    # O playbook do Airflow lê o token daqui (OPENMETADATA_JWT_TOKEN).
+    - name: Save the ingestion-bot token (na sua máquina, fora do repo)
+      ansible.builtin.copy:
+        dest: "{{ openmetadata_credentials_dir }}/ingestion_bot_token"
+        content: "{{ om_bot_auth.json.config.JWTToken }}"
+        mode: '0600'
+      delegate_to: localhost
+      become: false
+      no_log: true
+
+    - name: Mostrar o acesso
+      ansible.builtin.debug:
+        msg:
+          - "============== OPENMETADATA PRONTO ============="
+          - "UI/API: http://{{ ansible_host }}:{{ openmetadata_port }}  (versão {{ om_version.json.version | default(openmetadata_version) }})"
+          - "Login:  {{ openmetadata_admin_email }} / {{ openmetadata_admin_password }}"
+          - ""
+          - "Senha do admin:       {{ openmetadata_admin_password_file }}"
+          - "Token do ingestion-bot: {{ openmetadata_credentials_dir }}/ingestion_bot_token"
+          - ""
+          - "Próximo passo: playbook do Airflow com openmetadata_url preenchido."
+          - "================================================"

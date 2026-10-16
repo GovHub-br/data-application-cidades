@@ -1,0 +1,246 @@
+- name: Install Airflow (Docker Compose) on Debian 12
+  hosts: airflow
+  become: true
+  become_method: su
+
+  vars:
+    cache_valid_time: 86400
+    airflow_dir: /opt/cidades-airflow
+    airflow_repo_dir: "{{ airflow_dir }}/repo"
+    airflow_image: cidades-airflow:latest
+    # SFTP, OpenMetadata, mascaramento...: variáveis que não são de infra.
+    # Ficam num arquivo na SUA máquina, fora do repo (ver README).
+    airflow_extra_env: "{{ lookup('file', airflow_credentials_dir ~ '/extra.env', errors='ignore') | default('', true) | trim }}"
+
+  tasks:
+    - name: Validar a configuração
+      ansible.builtin.assert:
+        that:
+          - postgres_host is not search('<')
+          - lake_s3_endpoint is not search('<')
+          - lake_s3_endpoint is not search('://')
+          - airflow_db_password | length >= 8
+          - dw_db_password | length >= 8
+          - lake_s3_secret_key | length >= 8
+          - (openmetadata_url | length == 0) or (openmetadata_url is not search('<') and openmetadata_url is not search('/api') and openmetadata_jwt_token | length > 20)
+        fail_msg: >-
+          Configuração incompleta. Confira postgres_host e lake_s3_endpoint em
+          group_vars/airflow.yaml, e se o playbook do Postgres já rodou daqui
+          (ele grava as senhas em {{ postgres_credentials_dir }}/) e se existe
+          {{ rustfs_credentials_dir }}/{{ lake_s3_access_key }}_secret_key.
+          Com openmetadata_url preenchido (sem /api), o playbook do
+          OpenMetadata precisa ter rodado daqui antes (ele grava
+          {{ openmetadata_credentials_dir }}/ingestion_bot_token).
+      run_once: true
+
+    # ------------------------------------------------------------------
+    # Docker (repositório oficial)
+    # ------------------------------------------------------------------
+
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - git
+          - ufw
+          - vim
+        state: present
+        update_cache: true
+        cache_valid_time: "{{ cache_valid_time }}"
+
+    - name: Create apt keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Docker signing key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Add Docker apt repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        mode: '0644'
+        content: |
+          Types: deb
+          URIs: https://download.docker.com/linux/debian
+          Suites: {{ ansible_distribution_release }}
+          Components: stable
+          Signed-By: /etc/apt/keyrings/docker.asc
+
+    - name: Install Docker Engine and Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Enable and start docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    # ------------------------------------------------------------------
+    # Código e imagem
+    # ------------------------------------------------------------------
+
+    - name: Create Airflow directory
+      ansible.builtin.file:
+        path: "{{ airflow_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    # As DAGs são montadas direto deste clone: atualizar o código é trocar
+    # airflow_repo_version e rodar de novo.
+    - name: Clone/update the cidades repository ({{ airflow_repo_version }})
+      ansible.builtin.git:
+        repo: "{{ airflow_repo_url }}"
+        dest: "{{ airflow_repo_dir }}"
+        version: "{{ airflow_repo_version }}"
+        force: true
+
+    - name: Read current image id
+      ansible.builtin.command:
+        cmd: "docker image inspect --format '{{ '{{' }}.Id{{ '}}' }}' {{ airflow_image }}"
+      register: imagem_antes
+      changed_when: false
+      failed_when: false
+
+    # A mesma imagem do ambiente local (infra/docker/airflow/Dockerfile). Com
+    # cache, só reconstrói se o Dockerfile ou o requirements.txt mudaram.
+    - name: Build Airflow image
+      ansible.builtin.command:
+        cmd: "docker build -q -t {{ airflow_image }} -f infra/docker/airflow/Dockerfile ."
+        chdir: "{{ airflow_repo_dir }}"
+      register: imagem_depois
+      changed_when: imagem_depois.stdout | trim != imagem_antes.stdout | trim
+      async: 3600
+      poll: 15
+
+    # ------------------------------------------------------------------
+    # Configuração
+    # ------------------------------------------------------------------
+
+    - name: Write airflow.env
+      ansible.builtin.template:
+        src: airflow.env.j2
+        dest: "{{ airflow_dir }}/airflow.env"
+        owner: root
+        group: root
+        mode: '0600'
+      no_log: true
+
+    # Substitui o arquivo da imagem, que tem airflow/airflow.
+    - name: Write SimpleAuthManager passwords
+      ansible.builtin.copy:
+        dest: "{{ airflow_dir }}/simple_auth_manager_passwords.json"
+        content: "{{ {airflow_admin_user: airflow_admin_password} | to_json }}"
+        owner: '50000'
+        group: '0'
+        mode: '0600'
+      no_log: true
+      notify: Recreate Airflow API server
+
+    - name: Write docker-compose.yaml
+      ansible.builtin.template:
+        src: docker-compose.yaml.j2
+        dest: "{{ airflow_dir }}/docker-compose.yaml"
+        owner: root
+        group: root
+        mode: '0644'
+
+    # O compose recria sozinho o container cujo env/compose mudou.
+    - name: Start Airflow
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: "{{ airflow_dir }}"
+      register: compose_up
+      changed_when: compose_up.stderr is search('Recreated|Started|Created')
+
+    - name: Flush handlers before the health check
+      ansible.builtin.meta: flush_handlers
+
+    # ------------------------------------------------------------------
+    # Firewall: só as redes autorizadas abrem a UI/API
+    # ------------------------------------------------------------------
+
+    - name: Allow SSH through firewall
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw allow ssh
+      register: ufw_ssh
+      changed_when: "'Skipping' not in ufw_ssh.stdout"
+
+    - name: Set UFW default policy to deny incoming
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw default deny incoming
+      register: ufw_default
+      changed_when: "'updated' in ufw_default.stdout"
+
+    - name: Check UFW status
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw status
+      register: ufw_status
+      changed_when: false
+
+    - name: Enable UFW
+      ansible.builtin.shell:
+        cmd: echo "y" | /usr/sbin/ufw enable
+      when: "'Status: active' not in ufw_status.stdout"
+
+    - name: Allow Airflow port for the authorized networks
+      ansible.builtin.command:
+        cmd: "/usr/sbin/ufw allow from {{ item }} to any port {{ airflow_port }} proto tcp"
+      loop: "{{ airflow_allowed_networks }}"
+      register: ufw_airflow
+      changed_when: "'Skipping' not in ufw_airflow.stdout"
+
+    - name: Reload UFW
+      ansible.builtin.command:
+        cmd: /usr/sbin/ufw reload
+      changed_when: false
+
+    # ------------------------------------------------------------------
+    # Pós-instalação
+    # ------------------------------------------------------------------
+
+    - name: Wait for the Airflow API
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ airflow_port }}/api/v2/monitor/health"
+        status_code: 200
+      register: airflow_health
+      until: airflow_health.status == 200
+      retries: 30
+      delay: 10
+      when: not ansible_check_mode
+
+    - name: Mostrar as credenciais
+      ansible.builtin.debug:
+        msg:
+          - "================ AIRFLOW PRONTO ==============="
+          - "UI/API: http://{{ ansible_host }}:{{ airflow_port }}"
+          - "Login:  {{ airflow_admin_user }} / {{ airflow_admin_password }}"
+          - ""
+          - "Guardada em: {{ airflow_credentials_dir }}/airflow_admin_password"
+          - "Código: {{ airflow_repo_url }} @ {{ airflow_repo_version }}"
+          - ""
+          - "Falta: importar as Variables (README.md, \"Comandos úteis\")."
+          - "==============================================="
+
+  handlers:
+    # O arquivo de senhas é bind-mount de arquivo: o container só vê a
+    # versão nova se for recriado.
+    - name: Recreate Airflow API server
+      ansible.builtin.command:
+        cmd: docker compose up -d --force-recreate airflow-apiserver
+        chdir: "{{ airflow_dir }}"

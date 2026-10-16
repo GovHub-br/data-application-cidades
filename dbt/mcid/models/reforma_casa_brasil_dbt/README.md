@@ -21,6 +21,7 @@ lacuna, e não como resultado igual a zero.
 | Fonte | Objeto lógico | Grão | Atualização |
 |---|---|---|---|
 | SFTP/GEFUS | `PMCMV_REFORMAS_MCID_*` | contrato no snapshot | snapshot completo; Bronze corrente usa o mais recente e a histórica preserva a série |
+| SFTP/GEFUS | `PMCMV_REFORMAS_MCID_*` | contrato no snapshot | snapshot completo; seleciona o mais recente |
 | SFTP/GEFUS/CadÚnico | `ARQ_PESSOA_PBF_12122025_SB8` | pessoa | corte completo |
 | SharePoint/CadÚnico | `ARQ_FAMILIA_PBF_12122025_SB8` | família | corte completo |
 
@@ -38,6 +39,11 @@ para ligar contrato → pessoa → família. A Ouro nunca publica esses tokens.
 - **Ouro:** agregados para acesso, implementação, linha de base de resultado e
   monitoramento temporal de valores contratuais; células com menos de dez contratos
   são suprimidas.
+- **Bronze:** cópia tipada como texto dos Parquets de staging e metadados de origem.
+- **Prata:** contratos tipados e deduplicados, ponte pseudonimizada de pessoas,
+  características domiciliares e integração no grão de contrato.
+- **Ouro:** agregados para acesso, implementação e linha de base de resultado; células
+  com menos de dez contratos são suprimidas.
 
 O indicador de inadequação observável é uma proxy operacional da linha de base do
 CadÚnico. Ele não substitui a metodologia oficial de inadequação habitacional e não

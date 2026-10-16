@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from openmetadata.dbt_artifacts import prepare_dbt_artifacts
-from openmetadata.rendering import render_recipe
+from openmetadata.rendering import render_recipe, sdk_host_port
 from openmetadata.workflows import execute_metadata, validate_command
 
 
@@ -27,6 +27,8 @@ def run_openmetadata_recipe(
         workdir = Path(tmp_dirs.enter_context(TemporaryDirectory(prefix="om_recipe_")))
 
         final_replacements = dict(replacements)
+        if final_replacements.get("OM_HOST"):
+            final_replacements["OM_HOST"] = sdk_host_port(final_replacements["OM_HOST"])
         if dbt_project_dir:
             final_replacements["DBT_TARGET_DIR"] = prepare_dbt_artifacts(
                 dbt_project_dir,
