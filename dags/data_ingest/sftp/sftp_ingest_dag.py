@@ -25,10 +25,15 @@ def sftp_ingest_dag() -> None:
     Idempotente/incremental pela tabela de controle lake._ingest_minio_log: execuções
     agendadas só baixam arquivos novos. O I/O usa os clientes de plugins/
     (ClienteSftp/ClienteMinio).
+
+    Depois da ingestão, cada arquivo pousado é comparado com a entrega anterior da
+    mesma série (drift estrutural, `scripts/sftp_drift.py`): colunas, volume e
+    linhas novas/removidas/alteradas, sem ler as colunas de PII. O relatório vai
+    para drift/sftp/ e o drift só gera aviso.
     """
 
     @task
-    def ingestao_sftp_para_minio() -> None:
+    def ingestao_sftp_para_minio() -> list[str]:
         """Baixa os arquivos novos do SFTP e sobe para raw/ no MinIO.
 
         Por padrão não reingere arquivos já ingeridos (mesmo deletados). Para reingerir os
@@ -38,15 +43,23 @@ def sftp_ingest_dag() -> None:
 
         params = get_current_context()["params"]
         reingest_deleted = bool(params.get("reingest_deleted", False))
-        sucesso, erro = run_ingest(reingest_deleted=reingest_deleted)
+        sucesso, erro, pousadas = run_ingest(reingest_deleted=reingest_deleted)
         logging.info(
             "[sftp_ingest_dag] SFTP->raw (reingest_deleted=%s): %d ok, %d erro(s)",
             reingest_deleted,
             sucesso,
             erro,
         )
+        return pousadas
 
-    ingestao_sftp_para_minio()
+    @task
+    def detectar_drift(pousadas: list[str]) -> list[str]:
+        """Compara cada arquivo pousado com a entrega anterior da série."""
+        from sftp_drift import detectar
+
+        return detectar(pousadas)
+
+    detectar_drift(ingestao_sftp_para_minio())
 
 
 dag_instance = sftp_ingest_dag()
