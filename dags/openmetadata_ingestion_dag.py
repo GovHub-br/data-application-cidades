@@ -140,6 +140,10 @@ def openmetadata_ingestion_dag() -> None:
 
         sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
 
+        # Tasks ``virtualenv`` são serializadas para outro processo: globais
+        # importados no arquivo da DAG não acompanham a função. Importe aqui
+        # para que os nomes dos segredos existam também no subprocesso.
+        from openmetadata.config import SEGREDOS_INGESTAO
         from openmetadata.glossary import sync_glossary
 
         resumo = sync_glossary(
@@ -165,6 +169,8 @@ def openmetadata_ingestion_dag() -> None:
 
         sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
 
+        # Ver observação equivalente em ``sync_mcid_glossary`` acima.
+        from openmetadata.config import SEGREDOS_INGESTAO
         from openmetadata.semantic_relationships import sync_semantic_relationships
 
         resumo = sync_semantic_relationships(
