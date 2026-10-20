@@ -269,7 +269,7 @@ CHARTS = [
            [metrica("Valor contratado (R$)", "SUM(valor_contratado)")], formato="$,.0f", eixo_titulo="Ano de contratação", y_titulo="R$"),
     tabela("g_ficha", "Panorama das contratações por empreendimento", EMPREENDIMENTO,
            [coluna("APF", "apf"), coluna("Empreendimento", "nome_empreendimento"), coluna("Município", "municipio || '/' || uf"),
-            coluna("Portaria", "portaria_contratacao"), coluna("Demanda", "tipo_demanda"), coluna("Edificação", "tipo_edificacao"),
+            coluna("Portaria", "portaria"), coluna("Demanda", "tipo_demanda"), coluna("Edificação", "tipo_edificacao"),
             coluna("UH", "qt_uh"), coluna("Valor contratado (R$)", "valor_contratado"), coluna("R$/UH", "valor_por_uh"),
             coluna("Desembolsado (R$)", "valor_desembolsado"), coluna("% físico", "percentual_execucao_fisica"),
             coluna("Situação", "situacao_obra"), coluna("Contrapartidas (R$)", "vr_total_contrapartidas"),

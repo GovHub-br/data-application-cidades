@@ -73,3 +73,35 @@ seeds:
           - not_null
       - name: situacao_obra
         description: Rótulo da situação.
+
+  - name: far_portaria_apf
+    description: >
+      Portaria normativa de cada empreendimento FAR, da planilha HASH-APF-Portaria
+      mantida pela equipe do FAR (SharePoint do MCID). Substitui o número da portaria
+      de contratação do consolidado HIS, que é o ato que publica cada resultado e não
+      diz sob qual regra o empreendimento foi selecionado. Atualizar quando o FAR
+      mandar nova versão; APF fora da planilha aparece como "Não informada".
+    config:
+      column_types:
+        co_hash: text
+        apf: text
+        portaria: text
+    columns:
+      - name: co_hash
+        description: Identificador da proposta no GFAR (no_identificacao_proposta do consolidado).
+        tests:
+          - unique
+          - not_null
+      - name: apf
+        description: >
+          APF com dígito verificador, 8 dígitos. O 63191303 aparece com duas propostas,
+          ambas na mesma portaria.
+        tests:
+          - not_null
+      - name: portaria
+        description: >
+          Portaria como escrita na planilha. A "(Art. 14) Portaria MCID nº 488" virou
+          "Portaria MCID nº 488, de 2025 (Art. 14, prorrogadas da 727/2023)": são as
+          propostas da 727 com prazo prorrogado que passaram à regra da 488 (art. 14).
+        tests:
+          - not_null

@@ -116,7 +116,9 @@ models:
       - name: id_proposta
         description: Identificador da proposta no GFAR.
       - name: portaria_contratacao
-        description: Portaria de contratação declarada no consolidado.
+        description: >
+          Número do ato de contratação declarado no consolidado. Não é a portaria
+          normativa, que vem da planilha do FAR (seed far_portaria_apf).
       - name: originacao
         description: Empreendimento novo ou requalificado.
       - name: tipo_demanda

@@ -53,6 +53,7 @@ with
             e.agente_financeiro,
             e.dt_contratacao,
             extract(year from e.dt_contratacao)::int as ano_contratacao,
+            e.portaria_selecao as portaria,
             n.portaria_contratacao,
             n.originacao,
             n.tipo_demanda,

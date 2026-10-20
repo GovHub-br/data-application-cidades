@@ -5,8 +5,9 @@ Modelos e painel criados para responder às perguntas da oficina com o MCID sobr
 Painel no Superset: `/superset/dashboard/perguntas-far/`. A matriz pergunta × dado está
 em `ouro_far_cobertura_perguntas` (seed `perguntas_far/cobertura_perguntas_far`).
 
-O painel FAR existente (`ouro_far_ficha_empreendimento` e afins) não foi alterado; o novo
-painel só lê `ouro_far_serie_mensal_apf`.
+O novo painel só lê `ouro_far_serie_mensal_apf` do painel FAR existente. A portaria dos
+dois painéis é a mesma: a normativa, pela planilha HASH-APF-Portaria do FAR (seed
+`far_portaria_apf`).
 
 ## Como rodar e publicar (com VPN)
 

@@ -24,13 +24,17 @@ with
 
     obra as (select * from {{ ref("prata_far_obra_mensal") }}),
 
-    caixa as (select * from {{ ref("prata_far_dados_prioritarios_caixa") }})
+    caixa as (select * from {{ ref("prata_far_dados_prioritarios_caixa") }}),
+
+    -- Portaria normativa pela planilha do FAR; o número de portaria do consolidado
+    -- é o ato de contratação, não a regra de seleção
+    portaria as (select distinct apf, portaria from {{ ref("far_portaria_apf") }})
 
 select
     c.apf,
 
     -- 1. Dados do Empreendimento
-    coalesce(cons.portaria_contratacao, 'Não informada') as portaria_selecao,
+    coalesce(pt.portaria, 'Não informada') as portaria_selecao,
     cons.proponente_cnpj,
     cons.proponente_nome,
     cons.tomador_cnpj,
@@ -86,3 +90,4 @@ from cadastro c
 left join consolidado cons on c.id_proposta = cons.id_proposta
 left join obra o on c.apf = o.apf
 left join caixa cx on c.apf = cx.apf
+left join portaria pt on c.apf = pt.apf

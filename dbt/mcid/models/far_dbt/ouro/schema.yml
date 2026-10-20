@@ -37,11 +37,24 @@ models:
 
   - name: ouro_far_panorama_estadual
     description: >
-      Painel agregado por UF, com quebra por situação e tipologia.
+      Painel agregado por UF e portaria, com quebra por situação e tipologia.
+    columns:
+      - name: portaria
+        description: >
+          Portaria normativa (seed far_portaria_apf) ou 'Todas as portarias', que
+          repete o total da UF. Quem lê a tabela filtra uma portaria por vez.
+        tests:
+          - not_null
 
   - name: ouro_far_mapa_nacional
     description: >
-      Agregação geográfica por UF para o mapa do Superset. Uma linha por UF.
+      Agregação geográfica por UF e portaria para o mapa do Superset. Uma linha por
+      UF e portaria, incluindo 'Todas as portarias'.
+    columns:
+      - name: portaria
+        description: Portaria normativa ou 'Todas as portarias'. Filtrar uma por vez.
+        tests:
+          - not_null
 
   - name: ouro_far_evolucao_financeira_chart
     description: >
@@ -78,12 +91,13 @@ models:
   - name: ouro_far_curva_s
     description: >
       Curva S do FAR: percentuais físico (previsto e realizado) e financeiro por mês,
-      ponderados pelo valor FAR, no nível nacional (`uf` = 'BR') e por UF. Exclui os
-      APFs distratados ou cancelados na situação mais recente da CAIXA.
+      ponderados pelo valor FAR, no nível nacional (`uf` = 'BR') e por UF, para cada
+      portaria e para 'Todas as portarias'. Exclui os APFs distratados ou cancelados
+      na situação mais recente da CAIXA.
     tests:
       - unique_combinacao:
           arguments:
-            colunas: ["mes", "nivel", "uf"]
+            colunas: ["mes", "nivel", "uf", "portaria"]
     columns:
       - name: nivel
         description: "`nacional` ou `uf`."

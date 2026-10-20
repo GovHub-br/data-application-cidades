@@ -7,6 +7,7 @@
 -- DISTRATADO/CANCELADO (ficaria em 0% para sempre, puxando a curva para baixo).
 -- A carteira cresce com as contratações, então cada mês mede os APFs já existentes.
 -- APF sem valor FAR (fora do cadastro MONIT) soma nos valores, mas não nos percentuais.
+-- Cada APF entra na sua portaria (planilha do FAR) e em 'Todas as portarias'.
 with
     serie as (select * from {{ ref("prata_far_serie_mensal") }}),
 
@@ -16,10 +17,16 @@ with
         order by apf, competencia desc
     ),
 
+    portaria_apf as (select distinct apf, portaria from {{ ref("far_portaria_apf") }}),
+
     carteira as (
-        select s.*
+        select s.*, p.portaria
         from serie s
         left join situacao_atual a on a.apf = s.apf
+        left join portaria_apf pa on pa.apf = s.apf
+        cross join lateral (
+            values (coalesce(pa.portaria, 'Não informada')), ('Todas as portarias')
+        ) p(portaria)
         where coalesce(a.situacao, '') != 'DISTRATADO/CANCELADO'
     ),
 
@@ -28,6 +35,7 @@ with
             mes,
             case when grouping(uf) = 1 then 'nacional' else 'uf' end as nivel,
             case when grouping(uf) = 1 then 'BR' else uf end as uf,
+            portaria,
 
             count(*) as qt_empreendimentos,
             count(pct_obra_realizada) as qt_com_fisico,
@@ -55,7 +63,7 @@ with
             sum(vr_desembolsado_caixa) as vr_desembolsado_caixa
 
         from carteira
-        group by grouping sets ((mes), (mes, uf))
+        group by grouping sets ((mes, portaria), (mes, uf, portaria))
     )
 
 select
@@ -64,6 +72,7 @@ select
     to_char(mes, 'MM/YYYY') as mes_label_br,
     nivel,
     uf,
+    portaria,
     qt_empreendimentos,
     qt_com_fisico,
     qt_com_previsto,

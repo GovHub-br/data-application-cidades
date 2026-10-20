@@ -87,6 +87,8 @@ models:
                 field: apf
       - name: apf_municipio_empreendimento
         description: APF - Município/UF - Nome, para o filtro do painel.
+      - name: portaria
+        description: Portaria normativa pela planilha do FAR (seed far_portaria_apf), ou Não informada.
       - name: alerta_execucao
         description: >
           Concluída, Cancelada ou distratada, Paralisada (informada), Atrasada (informada),
