@@ -1,0 +1,255 @@
+version: 2
+
+# Contratos das famílias do FAR usados no painel de perguntas. Espelho textual do parquet:
+# a lista `colunas` é o contrato de layout aceito hoje.
+
+models:
+
+  - name: bronze_sftp_mont_cont_pf_far
+    description: >
+      Contratos das famílias do Novo MCMV FAR (MONT_CONT_PF_FAR, layout 015): perfil do
+      beneficiário, instrumento, situação, inadimplência, sinistros e retomada. Retrato
+      completo por remessa; a tabela guarda o mais recente. CPF/NIS em HMAC, nome e
+      nascimento redigidos.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - co_tipo_registro
+              - dh_movimento
+              - nu_apf
+              - nu_uh
+              - co_municipio_ibge
+              - no_logradouro
+              - co_cep
+              - sg_uf
+              - no_municipio
+              - no_beneficiario
+              - no_genero
+              - dt_nascimento
+              - no_estado_civil
+              - nu_cpf_beneficiario
+              - nu_nis
+              - no_benef_coob
+              - no_est_civil_coob
+              - nu_cpf_benef_coob
+              - co_gen_benef_coob
+              - dt_nasc_coob
+              - ic_benef_idoso
+              - ic_benef_coob_idoso
+              - ic_memb_fam_idoso
+              - ic_benef_sit_rua
+              - ic_benef_pcd
+              - ic_benef_coob_pcd
+              - ic_memb_fam_pcd
+              - pc_renda_benef_principal
+              - pc_renda_benef_coob
+              - vr_renda_tit_cont
+              - vr_renda_coob
+              - vr_renda_comprovada
+              - qt_memb_familia
+              - mulher_titular
+              - dt_lista_enquadramento
+              - co_tipo_demanda
+              - co_tipo_instrum_contratual
+              - co_situacao_contrato
+              - nu_contrato
+              - dt_assinatura_contrato
+              - dt_registro_contrato
+              - nu_registro_contrato
+              - vr_emolum_contrato
+              - ic_contrato_inadimp
+              - dt_liquidacao
+              - ic_divida_prescrita
+              - ic_acao_judicial
+              - dt_prescricao_contrato
+              - vr_divida_prescrita
+              - dt_vigencia_contrato
+              - pz_decorrido
+              - pz_reman_financ
+              - pz_amortiz_financ
+              - vr_amortiz_recurso_fgts
+              - vr_total_amortizado
+              - ic_sinistro_mip
+              - dt_sinisro_mip
+              - ic_liquidacao_mip
+              - vr_sinistro_mip
+              - ic_sinistro_dfi
+              - co_sinistro_dfi
+              - dt_sinisro_dfi
+              - qt_sinistro_dfi
+              - ic_liquidacao_dfi
+              - vr_sinistro_dfi
+              - ic_quit_antecipada
+              - vr_garantia
+              - vr_imovel
+              - vr_financiamento
+              - pc_taxa
+              - vr_subsidio_far
+              - vr_prestacao_com_subvencao
+              - vr_prestacao_liquida_subvencao
+              - vr_prestacao_vencida_sem_subvencao
+              - qt_total_prestacao_paga
+              - qt_prestacoes_atrasadas
+              - qt_dias_atraso
+              - vr_prestacao
+              - vr_prestacao_paga
+              - vr_subsidio_mensal_far
+              - vr_quitacao_subsidio
+              - vr_juros_moratorios
+              - vr_prestacao_atrasada
+              - vr_prestacao_atrasada_juros
+              - vr_atual_saldo_devedor
+              - vr_juros_prest_atrasada
+              - dt_reajuste_prestacao
+              - dt_primeira_prestacao
+              - dt_primeira_prest_atraso
+              - dt_ultima_prestacao
+              - dt_ultima_prest_paga
+              - ic_convenio_prest_pag_integral
+              - ic_convenio_prest_pag_parcial
+              - ic_convenio_prest_inadimplencia
+              - vr_convenio_integral
+              - vr_convenio_parcial
+              - vr_convenio_inad
+              - pc_correcao_saldo_devedor
+              - vr_prestacoes_vencidas
+              - vr_prestacoes_a_vencer
+              - vr_saldo_devedor_sem_subvencao
+              - vr_saldo_devedor_com_subvencao
+              - vr_liquidado_adjudicacao
+              - ic_imovel_retomado
+              - dt_retomada_imovel
+              - vr_imovel_retomado
+              - vr_despesas_adjudicacao
+              - vr_resultado_adjudicacao
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+    columns:
+      - name: nu_contrato
+        description: Contrato da família com o agente financeiro.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_sftp_int039_far_caixa_pf
+    description: >
+      Carteira de contratos PF do FAR na CAIXA (INT039), de 2009 em diante. Retrato
+      completo por remessa; a tabela guarda o mais recente. CPF em HMAC, nome, endereço
+      e nascimento redigidos.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - dt_movimento
+              - nu_apf
+              - nu_contrato
+              - no_mutuario
+              - nu_cpf_cgc_mutuario
+              - dt_assinatura
+              - co_produto_siico
+              - vr_encargo_total_atraso
+              - qt_dias_atraso
+              - pz_amortizacao
+              - pz_decorrido
+              - pz_remanescente
+              - sg_tipo_logradouro_imovel
+              - no_logradouro_imovel
+              - nu_imovel
+              - no_complemento_imovel
+              - no_bairro_imovel
+              - no_municipio_imovel
+              - sg_uf_imovel
+              - co_cep_imovel
+              - vr_renda_familiar_comprovada
+              - vr_garantia_inicial
+              - vr_subsidio_na_concesssao
+              - dt_nascimento
+              - co_sexo
+              - qt_coobrigados
+              - de_estado_civil
+              - dsc_tipo_contrato
+              - dt_termino_contrato
+              - dsc_situacao_ctr
+              - sem_registro
+              - qt_prestacoes_atraso
+              - vr_saldo_devedor_atual
+              - vr_prestacao
+              - co_municipio_ibge_completo
+              - origem
+              - co_agente_financeiro
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+    columns:
+      - name: nu_contrato
+        description: Contrato da família com a CAIXA.
+        tests:
+          - not_null
+          - unique
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null
+
+  - name: bronze_sftp_int021_far_bb_pf
+    description: >
+      Carteira de contratos PF do FAR no Banco do Brasil (INT021). Retrato completo por
+      remessa; a tabela guarda o mais recente. CPF em HMAC, nome, endereço e nascimento
+      redigidos.
+    tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - dt_movimento
+              - nu_apf
+              - nu_contrato
+              - no_mutuario
+              - nu_cpf_cgc_mutuario
+              - dt_assinatura
+              - co_produto_siico
+              - vr_encargo_total_atraso
+              - qt_dias_atraso
+              - pz_amortizacao
+              - nu_prestacao
+              - pz_remanescente
+              - sg_tipo_logradouro_imovel
+              - no_logradouro_imovel
+              - nu_imovel
+              - no_complemento_imovel
+              - no_bairro_imovel
+              - no_municipio_imovel
+              - sg_uf_imovel
+              - co_cep_imovel
+              - vr_renda_familiar_comprovada
+              - vr_garantia_inicial
+              - vr_subsidio_na_concesssao
+              - dt_nascimento
+              - co_sexo
+              - qt_coobrigados
+              - de_estado_civil
+              - dsc_tipo_contrato
+              - dt_termino_contrato
+              - dsc_situacao_ctr
+              - sem_registro
+              - nu_empreendimento
+              - vr_parcela_mensal_beneficiario
+              - cod_municipio_ibge
+              - origem
+              - co_agente_financeiro
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
+    columns:
+      - name: filename
+        description: Arquivo da staging que venceu esta carga.
+        tests:
+          - not_null

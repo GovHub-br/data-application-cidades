@@ -1,0 +1,46 @@
+{{ config(materialized="table") }}
+
+-- Ouro: um contrato de família beneficiária do FAR por linha, Novo MCMV e legado.
+-- Base do perfil do beneficiário, da contratação, da situação das unidades e da
+-- inadimplência no painel de perguntas. Sem identificador pessoal.
+select
+    geracao,
+    agente_financeiro,
+    apf,
+    nu_contrato,
+    dt_assinatura,
+    ano_assinatura,
+    uf,
+    cod_ibge,
+    municipio,
+    municipio || '/' || uf as municipio_uf,
+    sexo_responsavel,
+    estado_civil,
+    ic_coobrigado,
+    ic_mulher_responsavel,
+    ic_responsavel_idoso,
+    ic_familia_com_idoso,
+    ic_responsavel_pcd,
+    ic_familia_com_pcd,
+    ic_situacao_rua,
+    qt_membros_familia,
+    renda_familiar,
+    faixa_renda,
+    modalidade,
+    tipo_instrumento,
+    situacao_contrato,
+    ic_ativo,
+    dias_atraso,
+    prestacoes_atraso,
+    valor_em_atraso,
+    ic_inadimplente,
+    ic_retomado,
+    ic_acao_judicial,
+    ic_sinistro_mip,
+    ic_sinistro_dfi,
+    valor_imovel,
+    valor_subsidio,
+    valor_prestacao,
+    ic_sem_registro,
+    dt_retrato
+from {{ ref("prata_far_contrato_pf") }}

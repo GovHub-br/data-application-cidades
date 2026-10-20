@@ -1,0 +1,59 @@
+version: 2
+
+seeds:
+  - name: dominio_far_perguntas
+    description: >
+      Rótulos dos códigos usados no painel de perguntas do FAR, transcritos dos
+      arquivos de layout que acompanham as remessas: MONT_CONT_PF_FAR_LAYOUT
+      (contrato da família), MONIT_CAD_PJ_FAR_LAYOUT (empreendimento) e
+      MONIT_MOV_OBRA_FAR_LAYOUT (obra). Atualizar se um layout mudar o domínio.
+      tipo_demanda, originacao e qualificacao_terreno vêm do catálogo de metadados do
+      HIS_MCIDADES_CONSOLIDADO (SharePoint do MCID): o layout do MONIT_CAD_PJ troca
+      003/004 e não traz 006, mas os dados seguem o catálogo — o 004 cai nas cheias do
+      RS, AC e PE e o 006 anda junto com o fluxo Agravamento do consolidado.
+      O catálogo do MONIT_CAD_PJ (ainda em revisão) repete o domínio do layout; o do
+      HIS_MCIDADES_CONSOLIDADO tem revisão concluída.
+    config:
+      column_types:
+        campo: text
+        codigo: text
+        rotulo: text
+    columns:
+      - name: campo
+        description: Nome lógico do domínio (ex. situacao_contrato, tipo_demanda).
+        tests:
+          - not_null
+      - name: codigo
+        description: Código como vem na remessa, com zeros à esquerda.
+        tests:
+          - not_null
+      - name: rotulo
+        description: Descrição do código no layout.
+
+  - name: cobertura_perguntas_far
+    description: >
+      Matriz pergunta × dado do painel de perguntas do FAR: o que cada pergunta da
+      oficina com o MCID consegue responder hoje, em qual ouro, o que falta e qual a
+      limitação.
+    config:
+      column_types:
+        bloco: text
+        ordem: integer
+        origem_pergunta: text
+        pergunta: text
+        situacao_dado: text
+        resposta_disponivel: text
+        modelo_ouro: text
+        fonte_necessaria: text
+        limitacao: text
+    columns:
+      - name: pergunta
+        description: Pergunta como registrada na oficina.
+        tests:
+          - not_null
+      - name: situacao_dado
+        description: respondivel, parcial ou lacuna_de_fonte.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["respondivel", "parcial", "lacuna_de_fonte"]

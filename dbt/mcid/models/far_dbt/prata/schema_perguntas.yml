@@ -1,0 +1,223 @@
+version: 2
+
+models:
+
+  - name: prata_far_contrato_pf
+    description: >
+      Um contrato de família beneficiária do FAR por linha, juntando o Novo MCMV
+      (MONT_CONT_PF_FAR) e a carteira legada (INT039 CAIXA e INT021 BB) num layout
+      comum. Não carrega CPF, NIS, nome nem endereço. Campos que só uma das carteiras
+      informa ficam nulos na outra.
+    columns:
+      - name: geracao
+        description: Novo MCMV ou Legado (2009–2023).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Novo MCMV", "Legado (2009–2023)"]
+      - name: agente_financeiro
+        description: CAIXA ou Banco do Brasil.
+      - name: apf
+        description: APF do empreendimento. No Novo MCMV casa com o APF do cadastro FAR.
+      - name: nu_contrato
+        description: Contrato da família com o agente financeiro.
+        tests:
+          - not_null
+      - name: dt_assinatura
+        description: Data de assinatura do contrato.
+      - name: uf
+        description: UF do imóvel.
+      - name: cod_ibge
+        description: Código IBGE do município do imóvel (7 dígitos).
+      - name: municipio
+        description: Município do imóvel, em maiúsculas.
+      - name: sexo_responsavel
+        description: >
+          Feminino, Masculino ou Não informado. No legado CAIXA vem como código
+          (1 masculino, 2 feminino). O BB não informa.
+      - name: estado_civil
+        description: Estado civil do titular na assinatura.
+      - name: ic_coobrigado
+        description: Contrato tem coobrigado. Nulo no BB.
+      - name: ic_mulher_responsavel
+        description: Mulher titular do contrato (só Novo MCMV).
+      - name: ic_responsavel_idoso
+        description: Titular idoso (só Novo MCMV).
+      - name: ic_familia_com_idoso
+        description: Há idoso na família (só Novo MCMV; hoje vazio na origem).
+      - name: ic_responsavel_pcd
+        description: Titular PCD (só Novo MCMV; hoje vazio na origem).
+      - name: ic_familia_com_pcd
+        description: Há PCD na família (só Novo MCMV; hoje vazio na origem).
+      - name: ic_situacao_rua
+        description: Titular vindo de situação de rua (só Novo MCMV; hoje vazio na origem).
+      - name: qt_membros_familia
+        description: Pessoas na família (só Novo MCMV; hoje vazio na origem).
+      - name: renda_familiar
+        description: Renda familiar comprovada, em R$. Nula no BB.
+      - name: modalidade
+        description: >
+          No Novo MCMV, o tipo de demanda do empreendimento (cadastro PJ). No legado, o
+          tipo de contrato informado pelo agente.
+      - name: tipo_instrumento
+        description: Doação ou alienação fiduciária (só Novo MCMV).
+      - name: situacao_contrato
+        description: Ativo, liquidado, liquidado por sinistro/MIP/DFI, distratado, cancelado ou sub-rogado.
+      - name: ic_ativo
+        description: Contrato ativo, isto é, ainda com prestação a pagar.
+      - name: dias_atraso
+        description: Dias de atraso da prestação mais antiga em aberto.
+      - name: prestacoes_atraso
+        description: Prestações em atraso.
+      - name: valor_em_atraso
+        description: Valor em atraso, em R$.
+      - name: ic_inadimplente
+        description: >
+          Contrato ativo com prestação vencida há mais de 90 dias. No Novo MCMV vem do
+          IC_CONTRATO_INADIMP; no legado é calculado com a mesma regra.
+      - name: ic_retomado
+        description: Imóvel retomado por desvio de finalidade (só Novo MCMV).
+      - name: ic_acao_judicial
+        description: Contrato com ação judicial (só Novo MCMV).
+      - name: ic_sinistro_mip
+        description: Contrato com sinistro de MIP (só Novo MCMV).
+      - name: ic_sinistro_dfi
+        description: Contrato com sinistro de DFI (só Novo MCMV).
+      - name: valor_imovel
+        description: Valor do imóvel (Novo MCMV) ou garantia inicial (legado), em R$.
+      - name: valor_subsidio
+        description: Subsídio FAR (Novo MCMV) ou subsídio na concessão (legado), em R$.
+      - name: valor_prestacao
+        description: Valor da prestação mensal, em R$.
+      - name: ic_sem_registro
+        description: Contrato ainda sem registro em cartório.
+      - name: dt_retrato
+        description: Data de referência da remessa.
+      - name: arquivo_de_origem
+        description: Arquivo da staging de onde veio a linha.
+      - name: ano_assinatura
+        description: Ano de assinatura do contrato.
+      - name: faixa_renda
+        description: Faixa da renda familiar comprovada, em valores nominais.
+
+  - name: prata_far_empreendimento_natureza
+    description: >
+      Natureza, destino e pactuação de cada empreendimento FAR contratado, um por APF.
+      Junta o cadastro PJ (MONIT_CAD_PJ_FAR) ao retrato mais recente da proposta no
+      consolidado HIS (por id da proposta). Códigos rotulados pelo seed
+      dominio_far_perguntas.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+          - unique
+      - name: id_proposta
+        description: Identificador da proposta no GFAR.
+      - name: portaria_contratacao
+        description: Portaria de contratação declarada no consolidado.
+      - name: originacao
+        description: Empreendimento novo ou requalificado.
+      - name: tipo_demanda
+        description: Tipo de demanda no cadastro PJ (monitoramento).
+      - name: demanda_enquadramento
+        description: Tipo de demanda declarado no enquadramento da proposta.
+      - name: demanda_contratacao
+        description: Tipo de demanda declarado na contratação.
+      - name: ic_demanda_mudou
+        description: Enquadramento, contratação e monitoramento não declaram a mesma demanda. Nulo sem proposta no consolidado.
+      - name: tipo_edificacao
+        description: Apartamento, casa, casa sobreposta ou misto.
+      - name: tipo_empreendimento
+        description: Condomínio ou loteamento.
+      - name: regime_propriedade
+        description: Condominial ou unidades isoladas.
+      - name: linha_atendimento
+        description: Linha de atendimento do FAR.
+      - name: tipo_administracao
+        description: Administração direta ou indireta.
+      - name: ente_proponente
+        description: Município ou estado.
+      - name: ente_contrapartida
+        description: Ente que oferta as contrapartidas (hoje vazio na origem).
+      - name: operacao_aporte
+        description: Aporte, suplementação ou nenhum (hoje vazio na origem).
+      - name: qualificacao_terreno
+        description: >
+          Qualificação do terreno, mínima ou superior: a da contratação, ou a do
+          enquadramento quando a da contratação vem vazia.
+      - name: ic_previsao_elevador
+        description: Empreendimento prevê elevador.
+      - name: ic_alterado_pos_contratacao
+        description: Dados da proposta alterados depois da contratação.
+      - name: campos_alterados_contratacao
+        description: Campos alterados depois da contratação.
+      - name: ic_terreno_doado
+        description: Terreno doado pelo ente público.
+      - name: ic_area_comercial
+        description: Prevê área comercial.
+      - name: ic_substituicao_construtora
+        description: Houve substituição da construtora.
+      - name: ic_area_urbana_consolidada
+        description: Terreno em área urbana consolidada.
+      - name: ic_entorno_energia
+        description: Entorno com energia elétrica e iluminação pública (declarado).
+      - name: ic_entorno_agua
+        description: Entorno com água potável (declarado).
+      - name: ic_entorno_esgoto_lixo
+        description: Entorno com esgoto e coleta de lixo (declarado).
+      - name: ic_entorno_pavimentacao
+        description: Entorno com via pavimentada (declarado).
+      - name: ic_entorno_drenagem
+        description: Entorno com drenagem pluvial (declarado).
+      - name: ic_entorno_educacao_infantil
+        description: Educação infantil no entorno (declarado).
+      - name: ic_entorno_fundamental_1
+        description: Ensino fundamental, ciclo 1, no entorno (declarado).
+      - name: ic_entorno_fundamental_2
+        description: Ensino fundamental, ciclo 2, no entorno (declarado).
+      - name: ic_entorno_ubs
+        description: UBS no entorno (declarado).
+      - name: ic_entorno_cras
+        description: CRAS no entorno (declarado).
+      - name: ic_entorno_comercio
+        description: Comércio e serviços cotidianos no entorno (declarado).
+      - name: area_terreno_m2
+        description: Área do terreno, em m².
+      - name: vr_terreno
+        description: Valor do terreno, em R$.
+      - name: vr_far
+        description: Valor do empréstimo FAR, em R$.
+      - name: vr_total_investimento
+        description: Investimento total, em R$.
+      - name: vr_cp_municipio_terreno
+        description: Contrapartida do município em terreno, em R$.
+      - name: vr_cp_municipio_infra
+        description: Contrapartida do município em infraestrutura, em R$.
+      - name: vr_cp_municipio_complementar
+        description: Contrapartida complementar do município, em R$.
+      - name: vr_cp_estado_terreno
+        description: Contrapartida do estado em terreno, em R$.
+      - name: vr_cp_estado_infra
+        description: Contrapartida do estado em infraestrutura, em R$.
+      - name: vr_cp_estado_complementar
+        description: Contrapartida complementar do estado, em R$.
+      - name: vr_cp_outras
+        description: Outras contrapartidas, em R$.
+      - name: vr_cp_outras_ente_publico
+        description: Outras contrapartidas do ente público, em R$.
+      - name: vr_total_contrapartidas
+        description: Total de contrapartidas pactuadas, em R$.
+      - name: vr_total_contrapartidas_retomada
+        description: Contrapartidas pactuadas na retomada, em R$ (hoje zerado na origem).
+      - name: vr_equipamentos_publicos
+        description: Equipamentos públicos pactuados, em R$ (hoje zerado na origem).
+      - name: vr_equipamento_uso_comum
+        description: Equipamentos de uso comum, em R$.
+      - name: vr_infraestrutura_incidente
+        description: Infraestrutura incidente, em R$.
+      - name: vr_aporte_suplementacao
+        description: Valor contratado de aporte ou suplementação, em R$.
+      - name: dt_aporte_suplementacao
+        description: Data de contratação do aporte ou suplementação.

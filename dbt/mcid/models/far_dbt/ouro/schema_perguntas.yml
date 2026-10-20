@@ -1,0 +1,138 @@
+version: 2
+
+# Ouros do painel "Perguntas: FAR". Os testes protegem o grão que cada gráfico assume.
+
+models:
+
+  - name: ouro_far_beneficiario_contrato
+    description: >
+      Um contrato de família beneficiária do FAR por linha, Novo MCMV e legado (INT039
+      CAIXA, INT021 BB). Base do perfil do beneficiário, da contratação, da situação das
+      unidades e da inadimplência. Sem identificador pessoal; descrição das colunas em
+      prata_far_contrato_pf.
+    columns:
+      - name: geracao
+        description: Novo MCMV ou Legado (2009–2023).
+        tests:
+          - not_null
+      - name: nu_contrato
+        description: Contrato da família com o agente financeiro.
+        tests:
+          - not_null
+      - name: municipio_uf
+        description: Município/UF do imóvel, para filtro e ranking.
+      - name: situacao_contrato
+        description: Situação do contrato.
+        tests:
+          - not_null
+      - name: ic_inadimplente
+        description: Contrato ativo com prestação vencida há mais de 90 dias.
+
+  - name: ouro_far_beneficiario_municipio
+    description: >
+      Contratos das famílias do FAR por município e geração: volume, carteira ativa,
+      inadimplência, liquidações, distratos, retomadas, titular mulher e renda média.
+      Taxas recalculadas no grão; a de inadimplência é sobre os contratos ativos.
+    columns:
+      - name: geracao
+        description: Novo MCMV ou Legado (2009–2023).
+        tests:
+          - not_null
+      - name: cod_ibge
+        description: Código IBGE do município.
+        tests:
+          - not_null
+      - name: municipio_uf
+        description: Município/UF.
+      - name: qt_contratos
+        description: Contratos das famílias.
+      - name: qt_ativos
+        description: Contratos ativos.
+      - name: qt_inadimplentes
+        description: Contratos ativos com mais de 90 dias de atraso.
+      - name: pct_inadimplencia
+        description: Inadimplentes ÷ ativos × 100.
+      - name: qt_liquidados
+        description: Contratos liquidados, por qualquer motivo.
+      - name: qt_distratados
+        description: Contratos distratados.
+      - name: qt_cancelados
+        description: Contratos cancelados.
+      - name: qt_retomados
+        description: Imóveis retomados (só Novo MCMV).
+      - name: pct_responsavel_mulher
+        description: Contratos com titular do sexo feminino ÷ contratos × 100.
+      - name: renda_media
+        description: Renda familiar média dos contratos com renda maior que zero, em R$.
+      - name: pct_sem_renda
+        description: Contratos com renda comprovada zero ÷ contratos com renda informada × 100.
+      - name: valor_em_atraso
+        description: Valor em atraso dos contratos inadimplentes, em R$.
+
+  - name: ouro_far_empreendimento_perguntas
+    description: >
+      Um empreendimento FAR contratado por linha: natureza e destino, panorama da
+      contratação, execução com sinal de atraso ou paralisação, estoque retomado e
+      invadido e contratos das famílias já assinados. O sinal de paralisação marca obra
+      iniciada, não concluída e com o percentual físico parado há 3 meses ou mais.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos — chave do painel.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_far_empreendimento')
+                field: apf
+      - name: apf_municipio_empreendimento
+        description: APF - Município/UF - Nome, para o filtro do painel.
+      - name: alerta_execucao
+        description: >
+          Concluída, Cancelada ou distratada, Paralisada (informada), Atrasada (informada),
+          Sinal de paralisação: 3+ meses sem avanço, Ritmo abaixo do previsto (desvio
+          físico de 10 p.p. ou mais), Não iniciada ou Em ritmo — nesta ordem de prioridade.
+        tests:
+          - not_null
+      - name: meses_sem_avanco
+        description: Meses entre a última medição e o último avanço do percentual físico.
+      - name: avanco_3_meses
+        description: Pontos percentuais de avanço físico nos últimos 3 meses.
+      - name: desvio_fisico
+        description: Realizado − previsto na última medição, em p.p.
+      - name: situacao_obra
+        description: Situação informada no MONIT de obra.
+      - name: qt_contratos_familias
+        description: Contratos de famílias do Novo MCMV já assinados no empreendimento.
+      - name: qt_contratos_familias_inadimplentes
+        description: Contratos de famílias inadimplentes no empreendimento.
+
+  - name: ouro_far_contrapartida
+    description: >
+      Contrapartidas pactuadas pelos entes em cada empreendimento FAR: uma linha por
+      APF × ente × tipo (terreno, infraestrutura, complementar, outras), só com valor
+      informado. A origem traz o pactuado, não o executado.
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+      - name: ente
+        description: Município, Estado, Ente público (outras) ou Outros.
+      - name: tipo
+        description: Terreno, Infraestrutura, Complementar ou Outras.
+      - name: valor
+        description: Valor pactuado, em R$.
+
+  - name: ouro_far_cobertura_perguntas
+    description: >
+      Matriz pergunta × dado do painel de perguntas do FAR (seed cobertura_perguntas_far):
+      o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta e
+      qual a limitação.
+    columns:
+      - name: pergunta
+        description: Pergunta como registrada na oficina.
+        tests:
+          - not_null
+      - name: situacao_dado_rotulo
+        description: Respondível, Parcial ou Lacuna de fonte.

@@ -2,7 +2,8 @@
 
 -- Ouro: Ficha do Empreendimento — uma linha por APF para o dashboard
 -- Aplica as regras de negócio finais (status, prazo, ritmo) sobre a silver.
-with base_silver as (select * from {{ ref("prata_far_empreendimento") }})
+with base_silver as (select * from {{ ref("prata_far_empreendimento") }}),
+    dominio as (select campo, codigo, rotulo from {{ ref("dominio_far_perguntas") }})
 
 select
     -- Identificadores
@@ -32,34 +33,9 @@ select
         apf, ' - ', municipio, '/', uf, ' - ', upper(empreendimento_nome)
     ) as apf_municipio_empreendimento,
 
-    -- Originação e Demanda
-    case
-        co_originacao
-        when 1
-        then 'SELEÇÃO'
-        when 2
-        then 'CALAMIDADE/EMERGÊNCIA'
-        else 'OUTRO (' || coalesce(co_originacao::text, 'N/A') || ')'
-    end as metodo,
-
-    case
-        co_tipo_demanda
-        when 1
-        then 'CADASTRO HABITACIONAL'
-        when 2
-        then 'MOVIMENTOS SOCIAIS'
-        when 3
-        then 'CALAMIDADE'
-        when 4
-        then 'OBRA PÚBLICA'
-        when 5
-        then 'REASSENTAMENTO'
-        when 6
-        then 'DOAÇÃO/CESSÃO DE TERRENO'
-        when 7
-        then 'OUTROS'
-        else 'NÃO IDENTIFICADO (' || coalesce(co_tipo_demanda::text, 'N/A') || ')'
-    end as demanda,
+    -- Originação e Demanda: domínio do catálogo do HIS_MCIDADES_CONSOLIDADO (seed dominio_far_perguntas).
+    upper(coalesce(og.rotulo, 'Outro (' || coalesce(co_originacao::text, 'N/A') || ')')) as metodo,
+    upper(coalesce(td.rotulo, 'Não identificado (' || coalesce(co_tipo_demanda::text, 'N/A') || ')')) as demanda,
 
     -- Status do Projeto
     situacao_empreendimento,
@@ -108,3 +84,5 @@ select
     end as ritmo_fisico_financeiro
 
 from base_silver
+left join dominio og on og.campo = 'originacao' and og.codigo = lpad(base_silver.co_originacao::text, 3, '0')
+left join dominio td on td.campo = 'tipo_demanda' and td.codigo = lpad(base_silver.co_tipo_demanda::text, 3, '0')
