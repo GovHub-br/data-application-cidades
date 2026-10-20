@@ -1,0 +1,1 @@
+"""Estratégias registradas no ExtractorFactory."""

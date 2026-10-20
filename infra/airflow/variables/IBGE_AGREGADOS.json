@@ -1,0 +1,175 @@
+[
+  {
+    "dataset": "pib_construcao",
+    "agregado": 5932,
+    "variaveis": [
+      6564,
+      6563,
+      6562,
+      6561
+    ],
+    "periodos": 20,
+    "classificacao": {
+      "11255": [
+        90694
+      ]
+    }
+  },
+  {
+    "dataset": "sinapi",
+    "agregado": 2296,
+    "variaveis": [
+      48,
+      1196,
+      1197,
+      1198
+    ],
+    "periodos": 30
+  },
+  {
+    "dataset": "pib_consolidado_trimestral_bruto",
+    "agregado": 2072,
+    "variaveis": [
+      933
+    ],
+    "periodos": 20
+  },
+  {
+    "dataset": "pib_corrente_milhoes_brl",
+    "agregado": 1846,
+    "variaveis": [
+      585
+    ],
+    "periodos": 20,
+    "classificacao": {
+      "11255": "all"
+    }
+  },
+  {
+    "dataset": "paic_resultados",
+    "agregado": 585,
+    "variaveis": [
+      632,
+      1908,
+      1924
+    ],
+    "periodos": 10
+  },
+  {
+    "dataset": "paic_pessoal_salarial",
+    "agregado": 586,
+    "variaveis": [
+      631,
+      1816,
+      673,
+      1780
+    ],
+    "periodos": 10
+  },
+  {
+    "dataset": "paic_obras",
+    "agregado": 591,
+    "variaveis": [
+      1930,
+      1931,
+      1932
+    ],
+    "periodos": 10
+  },
+  {
+    "dataset": "pnad_trabalho_construcao",
+    "agregado": 6323,
+    "variaveis": [
+      4090
+    ],
+    "periodos": 12,
+    "classificacao": {
+      "888": [
+        47946,
+        47949
+      ]
+    }
+  },
+  {
+    "dataset": "pnad_rendimento_construcao",
+    "agregado": 6391,
+    "variaveis": [
+      5932
+    ],
+    "periodos": 12,
+    "classificacao": {
+      "888": [
+        47946,
+        47949
+      ]
+    }
+  },
+  {
+    "dataset": "pnadc_populacao_decis_renda",
+    "agregado": 7521,
+    "variaveis": [
+      606
+    ],
+    "periodos": 5,
+    "classificacao": {
+      "1019": "all"
+    }
+  },
+  {
+    "dataset": "pnadc_rendimento_domiciliar_real",
+    "agregado": 7531,
+    "variaveis": [
+      10824
+    ],
+    "periodos": 5,
+    "classificacao": {
+      "1019": "all"
+    }
+  },
+  {
+    "dataset": "pnadc_habitacao_condicao",
+    "agregado": 6821,
+    "variaveis": [
+      162,
+      10114
+    ],
+    "periodos": 5,
+    "classificacao": {
+      "63": [
+        4343,
+        1055,
+        2519,
+        1058
+      ]
+    }
+  },
+  {
+    "dataset": "ibge_pim_pf_brasil",
+    "agregado": 8886,
+    "variaveis": [
+      12606,
+      11602,
+      11603,
+      11604
+    ],
+    "periodos": 30
+  },
+  {
+    "dataset": "ibge_pmc_construcao",
+    "agregado": 8757,
+    "variaveis": [
+      7169,
+      7170,
+      11708,
+      11709,
+      11710,
+      11711
+    ],
+    "periodos": 30,
+    "classificacao": {
+      "11046": [
+        56732
+      ]
+    }
+  }
+]

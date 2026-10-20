@@ -1,187 +1,131 @@
-import io
-import logging
-from typing import Any
-from airflow.sdk import dag, task
-from airflow.sdk import Variable
-from datetime import datetime, timedelta
-from schedule_loader import get_dynamic_schedule
-from postgres_helpers import get_postgres_conn
-from cliente_ibge import ClienteIBGE
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_json, download_raw_json, upload_staging_parquet
-import pandas as pd
-import psycopg2
+"""IBGE, API v3 de agregados: PIB, SINAPI, PAIC, PNAD-C, PIM-PF e PMC.
 
-CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default=[])
+Fonte: `servicodados.ibge.gov.br/api/v3/agregados/<agregado>/periodos/<janela>/
+variaveis/<v1|v2...>`, Brasil (`N1[1]`). Um dataset por agregado da Variable
+`IBGE_AGREGADOS` (valor canônico em `infra/airflow/variables/IBGE_AGREGADOS.json`),
+lida dentro das tasks:
+
+    {"dataset": "pib_construcao", "agregado": 5932,
+     "variaveis": [6564, 6563, 6562, 6561], "periodos": 20,
+     "classificacao": {"11255": [90694]}}
+
+`periodos` são os últimos N; `classificacao` é opcional, com uma classificação só
+(a API recusa duas na mesma chamada, com HTTP 500) e `"all"` para todas as
+categorias.
+
+LoadMode: merge pelas chaves do achatamento. Cada chamada traz só a janela pedida,
+então o histórico se acumula pelas ingestões, e revisões do IBGE dentro da janela
+substituem o valor anterior.
+
+Conversão: uma linha por (variável, localidade, classificação, categoria,
+período), em texto. A resposta da v3 tem, em cada variável, `resultados` (uma
+combinação de categorias) e neles uma `serie` por localidade, com o PERÍODO COMO
+CHAVE. Sem classificação, ids `"0"` e nomes vazios. A tipagem é da prata (macro
+`ibge_v3_tipado`).
+"""
+
+from collections.abc import Mapping
+from datetime import datetime, timedelta
+from typing import Any
+
+from airflow.sdk import Variable, dag, task
+from airflow.sdk.exceptions import AirflowSkipException
+
+from ingestion.converters import ConverterConfig, Field
+from ingestion.dataset import DatasetSpec
+from ingestion.extractors import HttpRequest, api
+from ingestion.loaders import LoadMode
+from ingestion.pipeline import NothingNew, steps
+
+CAMPOS = {"dataset", "agregado", "variaveis", "periodos", "classificacao"}
+
+
+def agregado(entrada: Mapping[str, Any]) -> list[HttpRequest]:
+    """A chamada da API v3 de um agregado da Variable IBGE_AGREGADOS."""
+    desconhecidos = set(entrada) - CAMPOS
+    faltando = CAMPOS - {"classificacao"} - set(entrada)
+    if desconhecidos or faltando:
+        raise ValueError(
+            f"entrada de IBGE_AGREGADOS: campo desconhecido {sorted(desconhecidos)}, "
+            f"faltando {sorted(faltando)}"
+        )
+    params = {"localidades": "N1[1]"}
+    if "classificacao" in entrada:
+        if len(entrada["classificacao"]) != 1:
+            raise ValueError("a API v3 aceita uma classificação por chamada")
+        [(classificacao, categorias)] = entrada["classificacao"].items()
+        lista = "all" if categorias == "all" else ",".join(map(str, categorias))
+        params["classificacao"] = f"{classificacao}[{lista}]"
+    variaveis = "|".join(map(str, entrada["variaveis"]))
+    return [
+        HttpRequest(
+            name=entrada["dataset"],
+            endpoint=(
+                f"/api/v3/agregados/{entrada['agregado']}"
+                f"/periodos/-{entrada['periodos']}/variaveis/{variaveis}"
+            ),
+            params=params,
+        )
+    ]
+
+
+CLASSIFICACOES = "resultados.classificacoes[*]"
+
+AGREGADO = DatasetSpec(
+    domain="ibge",
+    dataset=lambda entrada: entrada["dataset"],
+    extractor=api(base_url="https://servicodados.ibge.gov.br", requests=agregado),
+    converter=ConverterConfig(
+        nested=("resultados", "series"),
+        explode_keys="serie",
+        columns={
+            "variavel_id": Field("item.id"),
+            "variavel_nome": Field("item.variavel"),
+            "localidade_id": Field("series.localidade.id"),
+            "localidade_nome": Field("series.localidade.nome"),
+            "classificacao_id": Field(f"{CLASSIFICACOES}.id", join="|", default="0"),
+            "classificacao_nome": Field(f"{CLASSIFICACOES}.nome", join=" | ", default=""),
+            "categoria_id": Field(
+                f"{CLASSIFICACOES}.categoria{{keys}}", join="|", default="0"
+            ),
+            "categoria_nome": Field(
+                f"{CLASSIFICACOES}.categoria{{values}}", join=" | ", default=""
+            ),
+            "unidade": Field("item.unidade"),
+            "periodo": Field("key"),
+            "valor": Field("value"),
+        },
+    ),
+    load_mode=LoadMode.MERGE,
+    keys=("variavel_id", "localidade_id", "classificacao_id", "categoria_id", "periodo"),
+)
 
 
 @dag(
-    schedule=get_dynamic_schedule("ibge_ingest_dag"),
+    dag_id="ibge_ingest_dag",
+    # Diário às 06:00: cada pesquisa tem o seu calendário; a janela cobre revisões.
+    schedule="0 6 * * *",
     start_date=datetime(2023, 1, 1),
     catchup=False,
-    default_args={
-        "owner": "Mateus",
-        "retries": 1,
-        "retry_delay": timedelta(minutes=5),
-    },
-    tags=["ibge", "pib_construcao", "sinapi"],
+    max_active_runs=1,
+    default_args={"owner": "Mateus", "retries": 1, "retry_delay": timedelta(minutes=5)},
+    tags=["ibge", "pib_construcao", "sinapi", "conjuntura", "ingestion"],
 )
-def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simples
-    """DAG para ingestão de dados do IBGE no PostgreSQL.
-
-    Usa dynamic task mapping para criar uma task paralela
-    para cada configuração de agregado definida em CONFIGURACOES.
-    """
+def ibge_ingest_dag() -> None:
+    @task
+    def extract_to_raw(**context: Any) -> dict[str, list[str]]:
+        agregados = Variable.get("IBGE_AGREGADOS", deserialize_json=True)
+        try:
+            return steps.extract_to_raw(AGREGADO, context["dag_run"].run_after, agregados)
+        except NothingNew as exc:
+            raise AirflowSkipException(str(exc)) from exc
 
     @task
-    def setup_schema() -> None:
-        """
-        Cria o schema do IBGE antes do processamento paralelo.
-        Tratando o UniqueViolation em alta concorrência do Airflow.
-        """
-        postgres_conn_str = get_postgres_conn()
-        schema = "ibge"
-        try:
-            with psycopg2.connect(postgres_conn_str) as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema};")
-                conn.commit()
-            logging.info(f"Schema '{schema}' garantido com sucesso.")
-        except psycopg2.errors.UniqueViolation:
-            logging.warning(
-                f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado)."
-            )
+    def convert_to_staging(raw: dict[str, list[str]]) -> dict[str, list[str]]:
+        agregados = Variable.get("IBGE_AGREGADOS", deserialize_json=True)
+        return steps.convert_to_staging(AGREGADO, raw, agregados)
 
-    @task
-    def fetch_and_store_mapped(config: dict) -> None:
-        logging.info(f"Iniciando ingestão: {config['tabela']}")
-
-        agregado = config["agregado"]
-        variaveis = config["variaveis"]
-        tabela = config["tabela"]
-        periodos = config.get("periodos", "-20")
-        classificacao_id = config.get("classificacao_id")
-        categoria = config.get("categoria")
-
-        api = ClienteIBGE()
-        postgres_conn_str = get_postgres_conn()
-        db = ClientPostgresDB(postgres_conn_str)
-
-        dados_api = api.get_dados_agregados(
-            agregado=agregado,
-            variaveis=variaveis,
-            periodos=periodos,
-            classificacao_id=classificacao_id,
-            categoria=categoria,
-        )
-
-        if not dados_api:
-            logging.warning(f"Nenhum dado retornado da API IBGE para tabela {tabela}")
-            return
-
-        # 1.1 Extração p/ MinIO (raw, full-refresh): payload cru da API.
-        upload_raw_json("ibge", tabela, dados_api)
-
-        registros = ClienteIBGE.transformar_resposta(dados_api)
-
-        if registros:
-            logging.info(f"Inserindo {len(registros)} registros em ibge.{tabela}")
-            db.insert_data(
-                registros,
-                tabela,
-                conflict_fields=[
-                    "variavel_id",
-                    "localidade_id",
-                    "periodo",
-                    "classificacao_id",
-                    "categoria_id",
-                ],
-                primary_key=[
-                    "variavel_id",
-                    "localidade_id",
-                    "periodo",
-                    "classificacao_id",
-                    "categoria_id",
-                ],
-                schema="ibge",
-            )
-            logging.info(f"Ingestão de {tabela} concluída")
-        else:
-            logging.warning(f"Nenhum registro extraído dos dados da API para {tabela}")
-
-    @task(trigger_rule="all_done")
-    def gera_parquet_tipado(config: dict) -> None:
-        """1.2 Transformação → parquet TIPADO na staging do MinIO.
-
-        Lê o raw json do MinIO, aplica os casts (a mesma tipagem que a camada
-        bronze fazia em SQL) e sobe o parquet já tipado. A silver depois só faz
-        `select * from read_parquet('s3://...')` via pg_duckdb — por isso o
-        parquet precisa sair daqui com os tipos finais.
-
-        O schema de saída do IBGE é uniforme para qualquer agregado (sempre as
-        mesmas colunas de transformar_resposta), então esta tipagem serve para
-        todas as tabelas do IBGE.
-
-        trigger_rule=all_done + o guard abaixo garantem que uma tabela cujo
-        fetch falhou (ex.: HTTP 500 do IBGE) NÃO bloqueie o parquet das demais:
-        cada config é independente — a que não tem raw é apenas pulada.
-        """
-        tabela = config["tabela"]
-
-        try:
-            dados_api = download_raw_json("ibge", tabela)
-        except Exception as exc:  # noqa: BLE001 - raw ausente = fetch falhou
-            logging.warning(
-                f"Sem raw para ibge.{tabela} (fetch pode ter falhado): {exc}. "
-                f"Pulando geração de parquet."
-            )
-            return
-
-        registros = ClienteIBGE.transformar_resposta(dados_api)
-        if not registros:
-            logging.warning(f"Sem registros para gerar parquet: ibge.{tabela}")
-            return
-
-        df = pd.DataFrame(registros)
-
-        # ids -> inteiros nuláveis
-        for col in ["variavel_id", "localidade_id", "classificacao_id", "categoria_id"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
-
-        # nomes -> texto normalizado (upper/trim), como na bronze
-        for col in ["localidade_nome", "classificacao_nome", "categoria_nome"]:
-            df[col] = df[col].astype("string").str.strip().str.upper()
-        df = df.rename(
-            columns={"classificacao_nome": "classificacao", "categoria_nome": "categoria"}
-        )
-
-        df["variavel_nome"] = df["variavel_nome"].astype("string")
-        df["unidade"] = df["unidade"].astype("string")
-        df["periodo"] = df["periodo"].astype("string")
-        periodos = df["periodo"].astype(str).tolist()
-        df["data_referencia"] = pd.to_datetime(
-            [f"{p}01" for p in periodos], format="%Y%m%d", errors="coerce"
-        )
-
-        # valor: a API v3 do IBGE usa PONTO como decimal ("1891.63"), sem
-        # separador de milhar. Portanto só coage — NÃO remover o ponto (isso
-        # corrompia o decimal, ex.: 1891.63 -> 189163). "..."/"-"/"" viram nulo.
-        nulos: dict[str, Any] = {"": None, "-": None, "...": None}
-        valor = df["valor"].astype("string").str.strip().replace(nulos)
-        df["valor"] = pd.to_numeric(valor, errors="coerce")
-        df["dt_ingest"] = pd.to_datetime(df["dt_ingest"], errors="coerce")
-
-        buffer = io.BytesIO()
-        df.to_parquet(buffer, engine="pyarrow", index=False)
-        upload_staging_parquet("ibge", tabela, buffer.getvalue())
-        logging.info(
-            f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)"
-        )
-
-    setup = setup_schema()
-    fetch = fetch_and_store_mapped.expand(config=CONFIGURACOES)
-    parquet = gera_parquet_tipado.expand(config=CONFIGURACOES)
-    setup >> fetch >> parquet
+    convert_to_staging(extract_to_raw())
 
 
 dag_instance = ibge_ingest_dag()

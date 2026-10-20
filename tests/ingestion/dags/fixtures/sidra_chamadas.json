@@ -1,0 +1,22 @@
+{
+  "pnad_construcao_ocupados": {
+    "endpoint": "/values/t/6323/n1/all/v/4090/p/last%2012/c888/47946,47949",
+    "headers": {
+      "User-Agent": "Mozilla/5.0"
+    },
+    "keys": [
+      "D3C",
+      "D4C"
+    ]
+  },
+  "pnad_construcao_rendimento": {
+    "endpoint": "/values/t/6391/n1/all/v/5932/p/last%2012/c888/47946,47949",
+    "headers": {
+      "User-Agent": "Mozilla/5.0"
+    },
+    "keys": [
+      "D3C",
+      "D4C"
+    ]
+  }
+}

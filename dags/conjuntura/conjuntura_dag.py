@@ -13,7 +13,6 @@ from cosmos import (
     RenderConfig,
 )
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
-from schedule_loader import get_dynamic_schedule
 from ingestor_lake import IngestorBalancoEmpresas
 
 dbt_log_path = "/tmp/dbt_logs"  # NOSONAR
@@ -32,9 +31,7 @@ profile_config = ProfileConfig(
 INGEST_DAG_IDS = [
     "ibge_ingest_dag",  # PIB, SINAPI, PIM-PF, PMC
     "ibge_pnad_construcao_sidra_ingest_dag",  # PNAD-C ocupados+rendimento (pág. 3)
-    "novo_caged_construcao_edificios",  # empregos: saldo + estoque (pág. 3)
-    "novo_caged_total_construcao",  # empregos: total da construção (pág. 3)
-    "novo_caged_servicos_especializados_construcao",  # empregos (pág. 3)
+    "novo_caged_ingest_dag",  # empregos: saldo e estoque, 3 recortes (pág. 3)
     # MRV lançamentos/vendas: fora da lista — as construtoras entram via
     # o dado manual `empresas` (balanços), que já engloba a MRV.
     "bacen_sgs_ingest_dag",
@@ -57,7 +54,8 @@ INGESTORES_MANUAIS = [
 
 @dag(
     dag_id="conjuntura_dag",
-    schedule=get_dynamic_schedule("conjuntura_dag", default="0 8 * * 1"),
+    # Segunda às 08:00: a geral roda uma vez por semana, obrigatoriamente.
+    schedule="0 8 * * 1",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
