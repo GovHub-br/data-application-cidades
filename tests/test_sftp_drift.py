@@ -179,7 +179,13 @@ def test_linha_removida_e_chave_duplicada(drift: ModuleType, tmp_path: Path) -> 
 
     assert tabela["conteudo"]["chaves_duplicadas"] == {"anterior": 0, "atual": 1}
     assert tabela["conteudo"]["registros_removidos"] == 2
-    assert tipos == ["linhas_alteradas", "linhas_removidas", "volume_caiu"]
+    # com duas linhas iguais em contrato e município, essas colunas ficaram constantes
+    assert tipos == [
+        "colunas_ficaram_constantes",
+        "linhas_alteradas",
+        "linhas_removidas",
+        "volume_caiu",
+    ]
 
 
 def test_run_devolve_a_chave_pousada(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -222,3 +228,111 @@ def test_xlsx_compara_aba_a_aba(drift: ModuleType, tmp_path: Path) -> None:
         "abas_adicionadas",
         "abas_removidas",
     ]
+
+
+def test_mdb_compara_tabela_a_tabela(
+    drift: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # o mdbtools exporta cada tabela para CSV em UTF-8 com vírgula
+    tabelas = {
+        "novo.mdb": {"Obras": "APF,QT_UH\n1,10\n2,25\n", "Nova": "A\n1\n"},
+        "velho.mdb": {"Obras": "APF,QT_UH\n1,10\n2,20\n"},
+    }
+    monkeypatch.setattr(drift, "mdb_disponivel", lambda: True)
+    monkeypatch.setattr(drift, "mdb_tabelas", lambda p: list(tabelas[Path(p).name]))
+    monkeypatch.setattr(
+        drift,
+        "mdb_export_para_csv",
+        lambda p, t, dst: Path(dst).write_text(tabelas[Path(p).name][t]),
+    )
+    for nome in tabelas:
+        (tmp_path / nome).write_bytes(b"mdb")
+
+    relatorio = drift.comparar_arquivos(
+        str(tmp_path / "novo.mdb"), str(tmp_path / "velho.mdb"), ".mdb", ".mdb", ("apf",)
+    )
+
+    assert relatorio["abas"]["adicionadas"] == ["Nova"]
+    assert relatorio["tabelas"]["Obras"]["conteudo"]["registros_alterados"] == 1
+    assert relatorio["drift"] == ["linhas_alteradas", "abas_adicionadas"]
+
+
+def test_serie_ignora_extensoes_encadeadas_e_sufixo_de_colisao(drift: ModuleType) -> None:
+    zipado = "raw/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_09012026_SB8.TXT.zip"
+    colisao = "raw/sftp/fabrica/GEFUS/ANTERIORES/INT040_X_20231228_0000.TXT"
+
+    assert (
+        drift.serie(zipado)[0]
+        == drift.serie("raw/sftp/ARQ_PESSOA_PBF_12122025_SB8.TXT")[0]
+    )
+    assert drift.serie(colisao) == ("INT040_X_DATA", (2023, 12, 28))
+    # ano sozinho não é sufixo de colisão (nem data)
+    assert drift.serie("raw/sftp/RELACAO_JANEIRO_E_ABRIL_2026.xlsx")[0] == (
+        "RELACAO_JANEIRO_E_ABRIL_2026"
+    )
+
+
+def test_zip_fechado_compara_o_membro(drift: ModuleType, tmp_path: Path) -> None:
+    import zipfile
+
+    with zipfile.ZipFile(tmp_path / "novo.zip", "w") as zf:
+        zf.writestr("ARQ.TXT", BASE + "4;40;SALVADOR\n")
+    (tmp_path / "velho.TXT").write_text(BASE, encoding="utf-8")
+
+    relatorio = drift.comparar_arquivos(
+        str(tmp_path / "novo.zip"), str(tmp_path / "velho.TXT"), ".zip", ".txt"
+    )
+
+    assert relatorio["drift"] == []
+    assert relatorio["tabelas"][""]["conteudo"]["linhas_novas"] == 1
+
+
+def test_carimbo_da_entrega_sai_da_comparacao(drift: ModuleType, tmp_path: Path) -> None:
+    # dt_movimento tem um valor só no arquivo e muda a cada entrega
+    velho = "CO_CONTRATO;VR_OBRA;DT_MOVIMENTO\n1;10;31/07/2026\n2;20;31/07/2026\n"
+    novo = "CO_CONTRATO;VR_OBRA;DT_MOVIMENTO\n1;10;31/08/2026\n2;25;31/08/2026\n"
+
+    tabela, tipos = _comparar(drift, tmp_path, novo, velho, chave=("co_contrato",))
+
+    assert tabela["colunas"]["carimbo_da_entrega"] == ["dt_movimento"]
+    assert tabela["conteudo"]["registros_iguais"] == 1
+    assert tabela["conteudo"]["registros_alterados"] == 1
+    assert tipos == ["linhas_alteradas"]
+
+
+def test_coluna_que_esvaziou(drift: ModuleType, tmp_path: Path) -> None:
+    novo = BASE.replace(";RECIFE", ";").replace(";NATAL", ";").replace(";BELEM", ";")
+
+    tabela, tipos = _comparar(drift, tmp_path, novo)
+
+    assert tabela["colunas"]["esvaziadas"] == ["no_municipio"]
+    assert "colunas_esvaziadas" in tipos
+
+
+def test_formato_que_mudou_nao_e_carimbo(drift: ModuleType, tmp_path: Path) -> None:
+    velho = "CO_CONTRATO;VR_FGTS;VR_OBRA\n1;0,00;10,50\n2;0,00;20,00\n"
+    novo = "CO_CONTRATO;VR_FGTS;VR_OBRA\n1;0;10.5\n2;0;20\n"
+
+    tabela, tipos = _comparar(drift, tmp_path, novo, velho)
+
+    assert tabela["colunas"]["formato_mudou"]["vr_fgts"] == {
+        "anterior": "9,9",
+        "atual": "9",
+    }
+    assert tabela["colunas"]["carimbo_da_entrega"] == []
+    assert "formato_das_colunas" in tipos
+    mais = {
+        m["coluna"]: m["linhas_com_valor_novo"]
+        for m in tabela["conteudo"]["colunas_que_mais_mudaram"]
+    }
+    assert mais == {"vr_fgts": 2, "vr_obra": 2}
+
+
+def test_coluna_que_ficou_constante(drift: ModuleType, tmp_path: Path) -> None:
+    novo = "CO_CONTRATO;VR_OBRA;NO_MUNICIPIO\n1;0;RECIFE\n2;0;NATAL\n3;0;BELEM\n"
+
+    tabela, tipos = _comparar(drift, tmp_path, novo)
+
+    assert tabela["colunas"]["ficaram_constantes"] == ["vr_obra"]
+    assert tabela["colunas"]["esvaziadas"] == []
+    assert "colunas_ficaram_constantes" in tipos
