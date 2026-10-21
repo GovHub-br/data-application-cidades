@@ -4,6 +4,10 @@
 O auditor examina apenas metadados versionados; nunca abre tabelas, parquets
 ou resultados de execução. Por padrão ele é informativo. Com ``--strict``,
 falha se houver descrição ausente ou padrão impróprio para publicação.
+
+Com ``--ouro`` audita só a camada de consumo, e com o contrato inteiro: além
+da descrição do model e de cada coluna declarada, o `meta.documentacao`
+(grão, chave, fonte, periodicidade e consumo — ver ``documentacao_dbt.py``).
 """
 
 from __future__ import annotations
@@ -14,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
+
+import documentacao_dbt
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODELS = ROOT / "dbt" / "mcid" / "models"
@@ -159,6 +165,56 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
     )
 
 
+def auditar_ouro(root: Path) -> dict[str, list[str]]:
+    """Problemas de cada model da ouro; model sem problema fica de fora.
+
+    A ouro é o que o painel e o catálogo mostram a quem não conhece o dado, e
+    por isso é a única camada em que o contrato é exigido por inteiro.
+    """
+    achados: dict[str, list[str]] = {}
+    for path in sorted(root.rglob("*.yml")):
+        if "ouro" not in path.relative_to(root).parts:
+            continue
+        for model in load_yaml(path).get("models", []) or []:
+            nome = str(model.get("name", "<sem_nome>"))
+            problemas: list[str] = []
+            texto = description(model.get("description"))
+            if not efetiva(texto):
+                problemas.append("descricao_ausente")
+            problemas += [f.rule for f in check_text(path, nome, "", texto)]
+
+            colunas = model.get("columns", []) or []
+            for coluna in colunas:
+                nome_coluna = str(coluna.get("name", "<sem_nome>"))
+                texto_coluna = description(coluna.get("description"))
+                if not efetiva(texto_coluna):
+                    problemas.append(f"coluna_{nome_coluna}_sem_descricao")
+                problemas += [
+                    f"coluna_{nome_coluna}_{f.rule}"
+                    for f in check_text(path, nome, nome_coluna, texto_coluna)
+                ]
+
+            documentacao = documentacao_dbt.da_configuracao(model)
+            problemas += documentacao_dbt.problemas(
+                documentacao, {str(c.get("name")) for c in colunas}
+            )
+            for valor in documentacao_dbt.textos(documentacao or {}):
+                problemas += [
+                    f"documentacao_{f.rule}" for f in check_text(path, nome, "", valor)
+                ]
+            if problemas:
+                achados[nome] = problemas
+    return achados
+
+
+def relatar_ouro(root: Path, strict: bool) -> int:
+    achados = auditar_ouro(root)
+    for nome, problemas in sorted(achados.items()):
+        print(f"{nome}: {', '.join(problemas)}")
+    print(f"Models da ouro com pendência: {len(achados)}")
+    return 1 if strict and achados else 0
+
+
 def check_text(path: Path, resource: str, field: str, text: str) -> list[Finding]:
     return [
         Finding(path, resource, field, rule)
@@ -173,7 +229,13 @@ def main() -> int:
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--resumo", action="store_true", help="só os totais")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument(
+        "--ouro", action="store_true", help="só a ouro, com o contrato completo"
+    )
     args = parser.parse_args()
+
+    if args.ouro:
+        return relatar_ouro(args.models_root, args.strict)
 
     findings, (res_ok, res_tot), (col_ok, col_tot) = audit(args.models_root)
     for extra in DEFAULT_EXTRAS:
