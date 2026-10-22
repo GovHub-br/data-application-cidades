@@ -186,4 +186,7 @@ def test_corpo_do_pr_cita_a_sugestao_sem_mencionar_ninguem() -> None:
     )
     assert "> Avise @​time-dados.\n> Segunda linha." in texto
     assert "https://om.exemplo/table/Cidades.cidades.ouro.ouro_a" in texto
+    tasks = "https://om.exemplo/table/Cidades.cidades.ouro.ouro_a/activity_feed/tasks"
+    assert f"([Task 7]({tasks}))" in texto
+    assert f"[abrir a aba de Tasks do ativo]({tasks})" in texto
     assert "coluna `apf`" in texto

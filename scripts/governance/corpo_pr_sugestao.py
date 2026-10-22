@@ -21,20 +21,40 @@ def citar(texto: str) -> str:
     )
 
 
+def links(carga: dict, om_host: str) -> tuple[str, str]:
+    """Links do ativo e da aba de Tasks dele no catalogo.
+
+    A interface do OpenMetadata 1.13 nao tem endereco para uma Task isolada:
+    ela mesma aponta para a aba de Tasks do ativo, onde a Task aparece listada.
+    """
+    if not om_host:
+        return "", ""
+    tipo = carga.get("tipo") or "table"
+    ativo = f"{om_host.rstrip('/')}/{tipo}/{quote(carga['fqn'], safe='.')}"
+    return ativo, f"{ativo}/activity_feed/tasks"
+
+
 def corpo(carga: dict, arquivo: str, om_host: str) -> str:
     alvo = f"`{carga['fqn']}`"
     if carga.get("coluna"):
         alvo += f", coluna `{carga['coluna']}`"
-    link = (
-        f"{om_host.rstrip('/')}/table/{quote(carga['fqn'], safe='.')}" if om_host else ""
-    )
+    ativo, tasks = links(carga, om_host)
+    task = f"Task {carga['task_id']}"
+    if tasks:
+        task = f"[{task}]({tasks})"
     autor = str(carga.get("autor") or "desconhecido").replace("@", SEM_MENCAO)
     linhas = [
-        f"Sugestão de descrição feita no OpenMetadata por **{autor}** "
-        f"(Task {carga['task_id']}).",
+        f"Sugestão de descrição feita no OpenMetadata por **{autor}** ({task}).",
         "",
-        f"**Ativo:** {alvo}" + (f" — [abrir no catálogo]({link})" if link else ""),
+        f"**Ativo:** {alvo}" + (f" — [abrir no catálogo]({ativo})" if ativo else ""),
         f"**Arquivo:** `{arquivo}`",
+    ]
+    if tasks:
+        linhas.append(
+            f"**Task no OpenMetadata:** [abrir a aba de Tasks do ativo]({tasks}) "
+            f"(a Task {carga['task_id']} aparece listada ali)"
+        )
+    linhas += [
         "",
         "**Texto sugerido:**",
         "",
