@@ -1,76 +1,811 @@
 version: 2
 
+# A Linha Financiada reúne o financiamento habitacional com recursos do FGTS (carta de
+# crédito individual e associativa, apoio à produção, Pró-Moradia, classe média) e do
+# Fundo Social, inclusive os contratos que recebem aporte do MCMV Cidades. Cada fonte
+# chega com seus próprios códigos: colunas como `faixa_codigo` e `tipo_imovel` seguem o
+# vocabulário de cada uma, e a fonte da linha está sempre identificada.
+
 models:
   - name: ouro_linha_financiada_base_pf_fundo_social
     description: >
-      Consolidação mensal automatizada da Base PF/FGTS e do Fundo Social,
-      preservando a fonte para evitar mistura ou dupla contagem.
+      Contratação mensal de financiamento habitacional a pessoa física com recursos do
+      FGTS e do Fundo Social, lado a lado e com a fonte de cada linha preservada, para
+      que os dois nunca se somem por engano.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por mês, fonte, faixa, tipo de orçamento e tipo de imóvel.
+          chave: [competencia, fonte, faixa_codigo, tipo_orcamento, tipo_imovel]
+          fonte: >-
+            FGTS, base de contratos de pessoa física; Fundo Social, contratos do MCMV
+            Faixa 3.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada
     columns:
       - name: competencia
+        description: Mês da contratação (primeiro dia do mês).
         data_tests: [not_null]
       - name: fonte
+        description: Origem do recurso da linha, FGTS (base de pessoa física) ou Fundo Social.
         data_tests:
           - accepted_values:
               arguments: {values: ['FGTS - Base PF', 'Fundo Social']}
+      - name: faixa_codigo
+        description: >-
+          Faixa do programa como a fonte a codifica; FGTS e Fundo Social usam códigos
+          diferentes.
+      - name: tipo_orcamento
+        description: >-
+          Linha orçamentária do FGTS que financiou o contrato (carta de crédito
+          individual ou associativa, apoio à produção, Pró-Cotista e outras). No Fundo
+          Social vale o próprio nome do fundo.
+      - name: tipo_imovel
+        description: >-
+          Imóvel novo ou usado; no Fundo Social vem como código numérico da fonte.
+      - name: quantidade_contratos
+        description: Contratos assinados no grupo.
+      - name: valor_financiamento
+        description: Soma do valor financiado, em reais.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_base_agregada
     description: >
-      Base contratual uniforme para consumo analítico e substituição da
-      consolidação manual em Excel, sem identificadores pessoais diretos.
+      Um registro por contrato de financiamento habitacional com recursos do FGTS ou do
+      Fundo Social, num formato único para todas as fontes, com valores de
+      financiamento, descontos, garantia e contrapartida. Não traz CPF, nome nem
+      endereço. É a base de todas as demais tabelas da Linha Financiada.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por contrato.
+          chave: [id_contrato_linha_financiada]
+          fonte: >-
+            FGTS (contratos de carta de crédito individual e associativa e de
+            Pró-Moradia), Fundo Social (MCMV Faixa 3) e Ministério das Cidades (aportes
+            do MCMV Cidades).
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada
     columns:
       - name: id_contrato_linha_financiada
+        description: >-
+          Identificador do contrato nesta base, derivado da origem e do número do
+          contrato; não se repete entre fontes.
         data_tests: [not_null, unique]
+      - name: contrato
+        description: Número do contrato na fonte de origem.
+      - name: codigo_empreendimento
+        description: >-
+          Código do empreendimento ao qual o contrato se vincula, quando a fonte
+          informa; liga com `ouro_linha_financiada_empreendimentos`.
+      - name: carteira
+        description: >-
+          Carteira de origem do contrato (CCA, CCI, Fundo Social, MCMV Cidades,
+          operações do FGTS).
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: segmento_linha_financiada
+        description: >-
+          Segmento de análise do contrato: financiada geral, classe média, Fundo
+          Social, MCMV Cidades ou Pró-Moradia.
+      - name: ic_classe_media
+        description: Verdadeiro para contratos da linha classe média.
+      - name: ic_mcmv_cidades
+        description: Verdadeiro para contratos com aporte do MCMV Cidades.
+      - name: ic_pro_moradia
+        description: Verdadeiro para operações do Pró-Moradia.
+      - name: ic_fgts
+        description: Verdadeiro quando o recurso é do FGTS.
+      - name: ic_fundo_social
+        description: Verdadeiro quando o recurso é do Fundo Social.
+      - name: data_contratacao
+        description: Data de assinatura do contrato.
+      - name: codigo_municipio
+        description: Código do município do imóvel, como a fonte informa.
+      - name: municipio
+        description: Município do imóvel, quando a fonte informa o nome.
+      - name: uf
+        description: Sigla da UF do imóvel, quando a fonte informa.
+      - name: agente_financeiro
+        description: Código do agente financeiro do contrato na fonte.
+      - name: faixa_codigo
+        description: Faixa do programa como a fonte a codifica.
+      - name: programa
+        description: >-
+          Programa ou linha do contrato (apoio à produção, carta de crédito individual,
+          classe média, MCMV Faixa 3 Fundo Social, Pró-Moradia).
+      - name: modalidade
+        description: >-
+          Modalidade da operação (aquisição de imóvel novo ou usado, construção,
+          aquisição de terreno e construção); algumas fontes trazem só o código.
+      - name: tipo_imovel
+        description: >-
+          Imóvel novo ou usado, como texto; no Fundo Social vem como código numérico
+          da fonte.
+      - name: classificacao_imovel
+        description: Classificação do imóvel como a fonte a codifica.
+      - name: caracteristica_imovel
+        description: Característica do imóvel como a fonte a codifica.
+      - name: valor_financiamento
+        description: Valor financiado no contrato, em reais.
+      - name: valor_desconto_fgts
+        description: Desconto (subsídio) concedido com recursos do FGTS, em reais.
+      - name: valor_desconto_ogu
+        description: Desconto concedido com recursos do Orçamento Geral da União, em reais.
+      - name: valor_garantia
+        description: Valor do imóvel dado em garantia, em reais.
+      - name: valor_compra
+        description: Valor de compra e venda do imóvel, em reais.
+      - name: valor_contrapartida_informada
+        description: >-
+          Contrapartida de parceiro (aporte do MCMV Cidades ou de outra parceria)
+          informada para o contrato, em reais. Vazio ou zero quando a fonte não
+          informa; não significa que não houve contrapartida.
+      - name: valor_aporte_cidades
+        description: Aporte do MCMV Cidades no contrato, em reais.
+      - name: renda_familiar
+        description: Renda familiar mensal declarada no contrato, em reais.
+      - name: taxa_juros_inicial
+        description: Taxa de juros anual no início do contrato, em percentual.
+      - name: prazo_meses
+        description: Prazo do financiamento, em meses.
+      - name: genero
+        description: Sexo do titular do contrato, como a fonte informa.
+      - name: data_remessa_raw
+        description: Data da remessa do registro pela fonte, no texto original.
+      - name: fonte_classificacao
+        description: >-
+          Base de onde veio o contrato e que define o vocabulário dos códigos da linha
+          (CCI/CCA, Fundo Social, MCMV Cidades ou Pró-Moradia).
+      - name: dt_silver
+        description: Momento em que o registro foi processado.
+      - name: ano_contratacao
+        description: Ano da assinatura do contrato.
+      - name: mes_contratacao
+        description: Mês da assinatura do contrato, de 1 a 12.
+      - name: competencia_contratacao
+        description: Mês da assinatura do contrato (primeiro dia do mês).
+      - name: valor_total_recursos_identificados
+        description: >-
+          Soma de financiamento, descontos do FGTS e da União e contrapartida
+          informada, em reais.
+      - name: ic_contrapartida_identificada
+        description: Verdadeiro quando há contrapartida informada diferente de zero.
+      - name: cobertura_contrapartida
+        description: >-
+          Se a contrapartida do contrato é conhecida ou se está fora da cobertura das
+          fontes atuais.
 
   - name: ouro_linha_financiada_resumo_mensal
-    description: Contratação mensal de FGTS e Fundo Social para BI e análise temporal.
+    description: >
+      Contratação mensal da Linha Financiada (FGTS e Fundo Social) por segmento,
+      carteira, faixa, modalidade e tipo de imóvel, com valores financiados, descontos,
+      contrapartida, juros e prazo médios. É a série do painel e a base da projeção e
+      dos atributos para modelos preditivos.
+    config:
+      meta:
+        documentacao:
+          grao: >-
+            Uma linha por mês e combinação de fonte, segmento, carteira, faixa,
+            modalidade, tipo de imóvel e marcadores de linha.
+          chave:
+            - competencia_contratacao
+            - fonte_recurso
+            - segmento_linha_financiada
+            - carteira
+            - faixa_codigo
+            - modalidade
+            - tipo_imovel
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (MCMV Cidades), contratos de
+            financiamento habitacional.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada
     columns:
       - name: competencia_contratacao
+        description: Mês da contratação (primeiro dia do mês).
         data_tests: [not_null]
+      - name: ano_contratacao
+        description: Ano da contratação.
+      - name: mes_contratacao
+        description: Mês da contratação, de 1 a 12.
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: segmento_linha_financiada
+        description: Segmento de análise (financiada geral, classe média, Fundo Social, MCMV Cidades, Pró-Moradia).
+      - name: carteira
+        description: Carteira de origem dos contratos.
+      - name: faixa_codigo
+        description: Faixa do programa como a fonte a codifica.
+      - name: modalidade
+        description: Modalidade da operação.
+      - name: tipo_imovel
+        description: Imóvel novo ou usado, no vocabulário de cada fonte.
+      - name: ic_classe_media
+        description: Verdadeiro para a linha classe média.
+      - name: ic_mcmv_cidades
+        description: Verdadeiro para contratos com aporte do MCMV Cidades.
+      - name: ic_pro_moradia
+        description: Verdadeiro para operações do Pró-Moradia.
       - name: quantidade_contratos
+        description: Contratos assinados no grupo.
         data_tests: [not_null]
+      - name: quantidade_empreendimentos
+        description: Empreendimentos distintos com contrato no grupo.
+      - name: valor_financiamento
+        description: Soma do valor financiado, em reais.
+      - name: valor_desconto_fgts
+        description: Soma dos descontos com recursos do FGTS, em reais.
+      - name: valor_desconto_ogu
+        description: Soma dos descontos com recursos da União, em reais.
+      - name: valor_contrapartida_informada
+        description: Soma das contrapartidas informadas, em reais; só cobre o que as fontes trazem.
+      - name: valor_total_recursos_identificados
+        description: Soma de financiamento, descontos e contrapartida, em reais.
+      - name: taxa_juros_media
+        description: Média simples da taxa de juros inicial, em percentual ao ano.
+      - name: prazo_medio_meses
+        description: Média simples do prazo dos contratos, em meses.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_relatorio_semanal
-    description: Agregação semanal de contratação, financiamento, descontos e contrapartidas conhecidas.
+    description: >
+      Contratação semanal da Linha Financiada, com valor financiado, descontos e
+      contrapartida informada, nos mesmos recortes do resumo mensal. Responde ao
+      relatório semanal de FGTS e Fundo Social.
+    config:
+      meta:
+        documentacao:
+          grao: >-
+            Uma linha por semana e combinação de fonte, segmento, carteira, faixa,
+            modalidade, tipo de imóvel e marcadores de linha.
+          chave:
+            - semana_referencia
+            - fonte_recurso
+            - segmento_linha_financiada
+            - carteira
+            - faixa_codigo
+            - modalidade
+            - tipo_imovel
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (MCMV Cidades), contratos de
+            financiamento habitacional.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (relatório semanal)
+    columns:
+      - name: semana_referencia
+        description: Segunda-feira da semana da contratação.
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: segmento_linha_financiada
+        description: Segmento de análise da Linha Financiada.
+      - name: carteira
+        description: Carteira de origem dos contratos.
+      - name: faixa_codigo
+        description: Faixa do programa como a fonte a codifica.
+      - name: modalidade
+        description: Modalidade da operação.
+      - name: tipo_imovel
+        description: Imóvel novo ou usado, no vocabulário de cada fonte.
+      - name: ic_classe_media
+        description: Verdadeiro para a linha classe média.
+      - name: ic_mcmv_cidades
+        description: Verdadeiro para contratos com aporte do MCMV Cidades.
+      - name: ic_pro_moradia
+        description: Verdadeiro para operações do Pró-Moradia.
+      - name: quantidade_contratos
+        description: Contratos assinados na semana.
+      - name: valor_financiamento
+        description: Soma do valor financiado, em reais.
+      - name: valor_descontos
+        description: Soma dos descontos do FGTS e da União, em reais.
+      - name: valor_contrapartida_informada
+        description: Soma das contrapartidas informadas, em reais.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_mapa_execucao
-    description: Agregação territorial para mapa com filtros de faixa, programa, modalidade e tipo de imóvel.
+    description: >
+      Contratação da Linha Financiada por município, com os filtros do mapa interativo
+      (faixa, programa, modalidade e tipo de imóvel), primeira e última contratação de
+      cada recorte.
+    config:
+      meta:
+        documentacao:
+          grao: >-
+            Uma linha por município e combinação de fonte, segmento, faixa, programa,
+            modalidade, tipo de imóvel e marcadores de linha.
+          chave:
+            - codigo_municipio
+            - fonte_recurso
+            - segmento_linha_financiada
+            - faixa_codigo
+            - programa
+            - modalidade
+            - tipo_imovel
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (MCMV Cidades), contratos de
+            financiamento habitacional.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (mapa de execução)
+    columns:
+      - name: codigo_municipio
+        description: Código do município do imóvel, como a fonte informa.
+      - name: municipio
+        description: Nome do município, quando a fonte informa.
+      - name: uf
+        description: Sigla da UF, quando a fonte informa.
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: segmento_linha_financiada
+        description: Segmento de análise da Linha Financiada.
+      - name: faixa_codigo
+        description: Faixa do programa como a fonte a codifica.
+      - name: programa
+        description: Programa ou linha dos contratos.
+      - name: modalidade
+        description: Modalidade da operação.
+      - name: tipo_imovel
+        description: Imóvel novo ou usado, no vocabulário de cada fonte.
+      - name: ic_classe_media
+        description: Verdadeiro para a linha classe média.
+      - name: ic_mcmv_cidades
+        description: Verdadeiro para contratos com aporte do MCMV Cidades.
+      - name: ic_pro_moradia
+        description: Verdadeiro para operações do Pró-Moradia.
+      - name: quantidade_contratos
+        description: Contratos assinados no recorte.
+      - name: quantidade_empreendimentos
+        description: Empreendimentos distintos com contrato no recorte.
+      - name: valor_financiamento
+        description: Soma do valor financiado, em reais.
+      - name: valor_descontos
+        description: Soma dos descontos do FGTS e da União, em reais.
+      - name: valor_contrapartida_informada
+        description: Soma das contrapartidas informadas, em reais.
+      - name: primeira_contratacao
+        description: Data do primeiro contrato do recorte.
+      - name: ultima_contratacao
+        description: Data do contrato mais recente do recorte.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
+
+  - name: ouro_linha_financiada_mapa_uf
+    description: >
+      Totais da Linha Financiada por UF para o mapa do Brasil no Superset, identificados
+      pelo código ISO do estado, que dispensa coordenadas (ausentes nos registros de
+      empreendimento).
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por UF.
+          chave: [uf]
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (MCMV Cidades), contratos de
+            financiamento habitacional.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (mapa por UF)
+    columns:
+      - name: iso_3166_2
+        description: Código ISO 3166-2 do estado, que o mapa do Superset usa para desenhar a UF.
+      - name: uf
+        description: Sigla da UF.
+      - name: quantidade_contratos
+        description: Contratos assinados na UF.
+      - name: valor_financiamento
+        description: Soma do valor financiado na UF, em reais.
+      - name: quantidade_empreendimentos
+        description: >-
+          Soma dos empreendimentos dos recortes municipais; um empreendimento presente
+          em mais de um recorte conta mais de uma vez.
+      - name: dt_ouro
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_empreendimentos
-    description: Painel de empreendimentos com execução física, unidades, valores e marcadores de modalidade.
+    description: >
+      Ficha de cada empreendimento vinculado à Linha Financiada: cadastro, posição da
+      obra, unidades previstas, concluídas e entregues, contratos de pessoa física
+      vinculados e os marcadores de Pró-Moradia, MCMV Cidades e classe média. A
+      referência do empreendimento é o cadastro do FGTS; o cadastro de pessoa jurídica
+      só complementa os valores e a situação do contrato de produção.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por empreendimento.
+          chave: [codigo_empreendimento]
+          fonte: >-
+            FGTS, cadastro de empreendimentos e contratos de pessoa jurídica, e os
+            contratos de pessoa física da Linha Financiada.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (empreendimentos)
+    columns:
+      - name: id_empreendimento_linha_financiada
+        description: Identificador do empreendimento nesta base, derivado da origem e do código.
+      - name: codigo_empreendimento
+        description: Código do empreendimento no cadastro de origem.
+      - name: nome_empreendimento
+        description: Nome do empreendimento.
+      - name: codigo_municipio
+        description: Código do município do empreendimento, como a fonte informa.
+      - name: municipio
+        description: >-
+          Nome do município pelo cadastro do empreendimento; hoje a fonte não o
+          preenche, e o painel usa `municipio_painel`.
+      - name: uf
+        description: >-
+          UF pelo cadastro do empreendimento; hoje a fonte não a preenche, e o painel
+          usa `uf_painel`.
+      - name: localidade
+        description: Endereço ou localidade do empreendimento, como texto livre da fonte.
+      - name: objeto
+        description: Objeto do contrato do empreendimento, como texto livre da fonte.
+      - name: quantidade_unidades
+        description: Unidades habitacionais previstas no empreendimento.
+      - name: quantidade_unidades_concluidas
+        description: Unidades com obra concluída, quando informado.
+      - name: quantidade_unidades_entregues
+        description: Unidades entregues, quando informado.
+      - name: percentual_obra
+        description: Percentual de execução da obra na posição mais recente.
+      - name: competencia_posicao
+        description: Mês de referência da posição de obra, como a fonte informa.
+      - name: data_inicio_raw
+        description: Data de início da obra, no texto original da fonte.
+      - name: data_termino_raw
+        description: Data de término prevista ou realizada, no texto original da fonte.
+      - name: data_inauguracao_raw
+        description: Data de inauguração, no texto original da fonte.
+      - name: latitude
+        description: Latitude do empreendimento; hoje a fonte não a informa.
+      - name: longitude
+        description: Longitude do empreendimento; hoje a fonte não a informa.
+      - name: valor_investimento_pj
+        description: Investimento total do empreendimento segundo o contrato de pessoa jurídica, em reais.
+      - name: valor_contratado_pj
+        description: Valor contratado com a pessoa jurídica, em reais.
+      - name: situacao_contrato_pj
+        description: Situação do contrato de pessoa jurídica (ativo, liquidado, distratado).
+      - name: entidade_pj
+        description: Nome da empresa ou entidade do contrato de pessoa jurídica.
+      - name: cnpj_entidade_pj
+        description: CNPJ da empresa ou entidade do contrato de pessoa jurídica.
+      - name: fonte
+        description: Cadastro de onde veio o registro do empreendimento (FGTS ou pessoa jurídica).
+      - name: dt_silver
+        description: Momento em que o registro foi processado.
+      - name: municipio_painel
+        description: >-
+          Município exibido no painel: o do cadastro do empreendimento ou, na falta
+          dele, o dos contratos vinculados.
+      - name: uf_painel
+        description: UF exibida no painel, pela mesma regra de `municipio_painel`.
+      - name: quantidade_contratos
+        description: Contratos de pessoa física vinculados ao empreendimento.
+      - name: valor_financiamento
+        description: Soma do financiamento desses contratos, em reais.
+      - name: valor_descontos
+        description: Soma dos descontos do FGTS e da União desses contratos, em reais.
+      - name: percentual_unidades_com_pf
+        description: >-
+          Contratos de pessoa física sobre as unidades previstas, em percentual. Vazio
+          quando o empreendimento não informa unidades.
+      - name: ic_pro_moradia
+        description: Verdadeiro quando algum contrato vinculado é do Pró-Moradia.
+      - name: ic_mcmv_cidades
+        description: Verdadeiro quando algum contrato vinculado tem aporte do MCMV Cidades.
+      - name: ic_classe_media
+        description: Verdadeiro quando algum contrato vinculado é da linha classe média.
+      - name: situacao_execucao
+        description: >-
+          Andamento da obra pelo percentual: concluído, em execução, não iniciado, ou
+          sem posição de obra.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_contrapartidas
     description: >
-      Indicadores de valor e cobertura das contrapartidas conhecidas. A
-      ausência da base completa do agente financeiro é preservada como lacuna.
+      O que se sabe das contrapartidas da Linha Financiada: por segmento e fonte,
+      quantos contratos têm contrapartida informada, quanto somam e qual parcela da
+      carteira está coberta. Não existe base completa de contrapartidas do agente
+      financeiro; a lacuna fica explícita em vez de virar zero.
+    config:
+      meta:
+        documentacao:
+          grao: >-
+            Uma linha por segmento, fonte do recurso, tipo de contrapartida, fonte da
+            informação e presença de valor.
+          chave:
+            - segmento_linha_financiada
+            - fonte_recurso
+            - tipo_contrapartida
+            - fonte_informacao
+            - ic_valor_informado
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (aportes do MCMV Cidades).
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (contrapartidas)
+    columns:
+      - name: segmento_linha_financiada
+        description: Segmento de análise da Linha Financiada.
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: tipo_contrapartida
+        description: >-
+          Natureza da contrapartida (aporte do MCMV Cidades, contrapartida de parceria
+          informada pelo agente financeiro, ou não informada).
+      - name: fonte_informacao
+        description: Base de onde veio a informação de contrapartida.
+      - name: ic_valor_informado
+        description: Verdadeiro quando o grupo tem valor de contrapartida informado.
+      - name: quantidade_contratos
+        description: Contratos do grupo.
+      - name: valor_contrapartida
+        description: Soma das contrapartidas informadas, em reais.
+      - name: percentual_cobertura_global
+        description: >-
+          Contratos do grupo com contrapartida informada sobre todos os contratos da
+          tabela, em percentual.
+      - name: ressalva_cobertura
+        description: Aviso sobre o limite da informação de contrapartida do grupo.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_execucao_orcamentaria
-    description: Orçamento FGTS e execução do Fundo Social com indicador explícito de cobertura.
+    description: >
+      Orçamento do FGTS por ano, programa e agrupamento, e a posição de execução do
+      Fundo Social, com o saldo estimado e um aviso de cobertura em cada linha: a
+      prestação de contas do FGTS é anual e não traz execução financeira mensal.
+    config:
+      meta:
+        documentacao:
+          grao: >-
+            Uma linha por fonte, ano, programa, agrupamento e unidade gestora.
+          chave: [id_execucao_orcamentaria]
+          fonte: >-
+            FGTS, prestação de contas anual; Fundo Social, posição de execução
+            orçamentária.
+          periodicidade: anual
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (execução orçamentária)
+    columns:
+      - name: id_execucao_orcamentaria
+        description: Identificador da linha, derivado de fonte, ano, programa, agrupamento e unidade gestora.
+      - name: ano
+        description: Ano do orçamento.
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: programa
+        description: Programa orçamentário.
+      - name: agrupamento
+        description: Agrupamento orçamentário dentro do programa, como a fonte o codifica.
+      - name: unidade_gestora
+        description: Código da unidade gestora, quando a fonte informa (só no Fundo Social).
+      - name: orcamento_original
+        description: Orçamento aprovado no início do exercício, em reais.
+      - name: orcamento_atualizado
+        description: Orçamento após as alterações do exercício, em reais.
+      - name: orcamento_alocado
+        description: Orçamento efetivamente alocado, em reais.
+      - name: despesas_empenhadas
+        description: Despesas empenhadas, em reais; as fontes atuais não informam.
+      - name: despesas_pagas
+        description: Despesas pagas, em reais; as fontes atuais não informam.
+      - name: restos_a_pagar_pagos
+        description: Restos a pagar de exercícios anteriores pagos no ano, em reais.
+      - name: periodicidade
+        description: Periodicidade da informação (anual, ou posição na data da fonte).
+      - name: arquivo_origem
+        description: Nome da prestação de contas de onde veio a linha.
+      - name: pagamentos_totais
+        description: Despesas pagas mais restos a pagar pagos, em reais.
+      - name: percentual_execucao_financeira
+        description: Pagamentos sobre orçamento, em percentual, quando calculável.
+      - name: dt_silver
+        description: Momento em que o registro foi processado.
+      - name: saldo_orcamentario_estimado
+        description: Orçamento atualizado menos pagamentos totais, em reais.
+      - name: cobertura_execucao
+        description: >-
+          Se a linha tem execução financeira, só orçamento anual, ou cobertura
+          insuficiente.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_features_preditivas
     description: >
-      Série com defasagens e médias móveis para treino e validação temporal de
-      modelos preditivos. Não apresenta previsão antes de validação do modelo.
+      Série mensal de contratação por fonte e segmento, com defasagens de um e doze
+      meses, médias móveis dos três meses anteriores e marcadores de sazonalidade,
+      para treinar e validar modelos preditivos. Não contém previsão: a previsão só é
+      publicada depois de um modelo validado.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por mês, fonte do recurso e segmento.
+          chave: [competencia_contratacao, fonte_recurso, segmento_linha_financiada]
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (MCMV Cidades), contratos de
+            financiamento habitacional.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (análise preditiva)
+    columns:
+      - name: competencia_contratacao
+        description: Mês da contratação (primeiro dia do mês).
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: segmento_linha_financiada
+        description: Segmento de análise da Linha Financiada.
+      - name: quantidade_contratos
+        description: Contratos assinados no mês.
+      - name: valor_financiamento
+        description: Valor financiado no mês, em reais.
+      - name: valor_descontos
+        description: Descontos do FGTS e da União no mês, em reais.
+      - name: contratos_mes_anterior
+        description: Contratos do mês anterior, na mesma fonte e segmento.
+      - name: contratos_ano_anterior
+        description: Contratos do mesmo mês do ano anterior.
+      - name: valor_mes_anterior
+        description: Valor financiado no mês anterior, em reais.
+      - name: valor_ano_anterior
+        description: Valor financiado no mesmo mês do ano anterior, em reais.
+      - name: media_movel_contratos_3m
+        description: Média de contratos dos três meses anteriores, sem o mês corrente.
+      - name: media_movel_valor_3m
+        description: Média do valor financiado nos três meses anteriores, em reais.
+      - name: mes_sazonal
+        description: Mês do ano, de 1 a 12, para capturar sazonalidade.
+      - name: trimestre_sazonal
+        description: Trimestre do ano, de 1 a 4.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_projecao_anual
     description: >
-      Projeção anual determinística para monitoramento, baseada na média dos
-      dois últimos meses fechados disponíveis. Não representa modelo de IA.
+      Projeção do fechamento do ano por fonte e segmento: o realizado até o último mês
+      fechado mais os meses restantes estimados pela média dos dois meses anteriores.
+      É uma regra fixa e reproduzível para acompanhamento, não um modelo preditivo.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por fonte do recurso e segmento, no último mês disponível.
+          chave: [fonte_recurso, segmento_linha_financiada]
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (MCMV Cidades), contratos de
+            financiamento habitacional.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (projeção anual)
     columns:
       - name: competencia_referencia
+        description: Último mês fechado considerado na projeção.
         data_tests: [not_null]
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: segmento_linha_financiada
+        description: Segmento de análise da Linha Financiada.
+      - name: ano_referencia
+        description: Ano projetado.
+      - name: meses_realizados
+        description: Meses do ano já fechados.
+      - name: meses_a_projetar
+        description: Meses que faltam para fechar o ano.
+      - name: quantidade_contratos_realizada_ano
+        description: Contratos assinados no ano até o mês de referência.
+      - name: valor_financiamento_realizado_ano
+        description: Valor financiado no ano até o mês de referência, em reais.
+      - name: valor_descontos_realizado_ano
+        description: Descontos concedidos no ano até o mês de referência, em reais.
+      - name: media_2m_contratos
+        description: Média de contratos dos dois meses anteriores ao de referência.
+      - name: media_2m_financiamento
+        description: Média do valor financiado nos dois meses anteriores, em reais.
+      - name: media_2m_descontos
+        description: Média dos descontos nos dois meses anteriores, em reais.
+      - name: quantidade_contratos_projetada_restante
+        description: Contratos estimados para os meses que faltam.
+      - name: valor_financiamento_projetado_restante
+        description: Valor financiado estimado para os meses que faltam, em reais.
+      - name: valor_descontos_projetado_restante
+        description: Descontos estimados para os meses que faltam, em reais.
+      - name: quantidade_contratos_projetada_ano
+        description: Contratos projetados para o ano inteiro.
+      - name: valor_financiamento_projetado_ano
+        description: Valor financiado projetado para o ano inteiro, em reais.
+      - name: valor_descontos_projetado_ano
+        description: Descontos projetados para o ano inteiro, em reais.
       - name: metodo_projecao
+        description: Descrição da regra de projeção usada.
         data_tests: [not_null]
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_ranking_territorial
     description: >
-      Ranking territorial por município e UF, com contratação, financiamento,
-      descontos e contrapartida informada para o painel de execução.
+      Ranking de municípios e UFs por contratos e por valor financiado, dentro de cada
+      fonte e segmento, com os totais da UF repetidos em cada município para o painel
+      filtrar sem somar duas vezes.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por município, fonte do recurso e segmento.
+          chave: [uf, id_municipio, fonte_recurso, segmento_linha_financiada]
+          fonte: >-
+            FGTS, Fundo Social e Ministério das Cidades (MCMV Cidades), contratos de
+            financiamento habitacional.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (ranking territorial)
     columns:
       - name: uf
+        description: Sigla da UF, ou "Não informado".
         data_tests: [not_null]
+      - name: id_municipio
+        description: Código do município, ou o nome quando não há código.
+      - name: municipio
+        description: Nome do município, ou "Não informado".
+      - name: fonte_recurso
+        description: Origem do recurso, FGTS ou Fundo Social.
+      - name: segmento_linha_financiada
+        description: Segmento de análise da Linha Financiada.
+      - name: quantidade_contratos
+        description: Contratos assinados no município.
+      - name: quantidade_empreendimentos
+        description: Empreendimentos distintos com contrato no município.
+      - name: valor_financiamento
+        description: Valor financiado no município, em reais.
+      - name: valor_descontos
+        description: Descontos do FGTS e da União no município, em reais.
+      - name: valor_contrapartida_informada
+        description: Contrapartidas informadas no município, em reais.
+      - name: ranking_municipio_contratos
+        description: Posição do município por número de contratos (1 é o maior).
+      - name: ranking_municipio_financiamento
+        description: Posição do município por valor financiado.
+      - name: quantidade_contratos_uf
+        description: Contratos da UF inteira, repetido em cada município.
+      - name: valor_financiamento_uf
+        description: Valor financiado da UF inteira, em reais, repetido em cada município.
+      - name: valor_descontos_uf
+        description: Descontos da UF inteira, em reais, repetido em cada município.
+      - name: ranking_uf_contratos
+        description: Posição da UF por número de contratos.
+      - name: ranking_uf_financiamento
+        description: Posição da UF por valor financiado.
+      - name: dt_gold
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_linha_financiada_cobertura_perguntas
-    description: Matriz executiva que informa quais perguntas são respondidas, parciais ou possuem lacuna.
+    description: >
+      Quais perguntas do produto Linha Financiada os dados respondem por inteiro, em
+      parte ou ainda não, com a justificativa de cada uma. É uma tabela de referência
+      do painel, mantida junto com o produto.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por pergunta do produto.
+          chave: [pergunta_produto]
+          fonte: Ministério das Cidades, escopo do produto Linha Financiada.
+          periodicidade: eventual
+          consumo:
+            - Superset, painel Perguntas da Linha Financiada (cobertura)
     data_tests:
       - unique_combinacao:
           arguments: {colunas: [pergunta_produto]}
+    columns:
+      - name: pergunta_produto
+        description: Pergunta que o produto se propõe a responder.
+      - name: situacao_resposta
+        description: Se os dados respondem a pergunta por inteiro ou em parte.
+      - name: justificativa
+        description: O que sustenta a resposta e o que ainda falta.
