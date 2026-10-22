@@ -39,6 +39,9 @@ great-expectations = ">=1.21,<2.0"
 sqlglot = "^30.0"
 
 [tool.poetry.group.dev.dependencies]
+# edita o YAML do dbt a partir de sugestão do OpenMetadata
+# (scripts/governance/aplicar_sugestao.py); o workflow instala por conta própria
+ruamel-yaml = ">=0.18,<0.20"
 black = "*"
 ruff = "*"
 pytest = "*"

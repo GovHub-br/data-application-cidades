@@ -1,0 +1,97 @@
+name: Sugestão do OpenMetadata
+
+# Disparado pelo receptor do repositório de governança declarativa quando
+# alguém sugere uma descrição no OpenMetadata. Edita o YAML do dbt e abre o PR;
+# a revisão do time decide. Ao fechar o PR, `om-sugestao-fechar.yml` fecha a
+# Task no catálogo.
+#
+# O texto da sugestão vem de um usuário do catálogo: nunca é interpolado em
+# `run:`, só passa por variável de ambiente e arquivo.
+
+on:
+  repository_dispatch:
+    types: [om-sugestao-descricao]
+
+concurrency:
+  group: om-sugestao-${{ github.event.client_payload.task_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  abrir-pr:
+    runs-on: ubuntu-latest
+    steps:
+      # PR aberto com o token do App, e não com o GITHUB_TOKEN: PR criado pelo
+      # GITHUB_TOKEN não dispara o CI, e a sugestão entraria sem os testes.
+      - uses: actions/create-github-app-token@v1
+        id: app
+        with:
+          app-id: ${{ vars.OM_SUGESTOES_APP_ID }}
+          private-key: ${{ secrets.OM_SUGESTOES_APP_KEY }}
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app.outputs.token }}
+
+      - name: Ler a sugestão
+        id: carga
+        env:
+          CARGA: ${{ toJson(github.event.client_payload) }}
+        run: |
+          printf '%s' "$CARGA" > "$RUNNER_TEMP/carga.json"
+          task_id=$(jq -r '.task_id' "$RUNNER_TEMP/carga.json")
+          if ! [[ "$task_id" =~ ^[0-9]+$ ]]; then
+            echo "task_id inválido" >&2
+            exit 1
+          fi
+          echo "branch=om-sugestao/$task_id" >> "$GITHUB_OUTPUT"
+          echo "task_id=$task_id" >> "$GITHUB_OUTPUT"
+
+      # o OpenMetadata reenvia o evento se o receptor falhar: a branch é a
+      # chave de idempotência
+      - name: Já existe PR para esta Task?
+        id: existe
+        env:
+          BRANCH: ${{ steps.carga.outputs.branch }}
+        run: |
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            echo "sim=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.existe.outputs.sim != 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Aplicar no YAML
+        if: steps.existe.outputs.sim != 'true'
+        id: aplicar
+        env:
+          OM_HOST: ${{ vars.OM_HOST }}
+        run: |
+          pip install --quiet 'pyyaml>=6,<7' 'ruamel.yaml>=0.18,<0.20'
+          arquivo=$(python scripts/governance/aplicar_sugestao.py --carga "$RUNNER_TEMP/carga.json")
+          echo "arquivo=$arquivo" >> "$GITHUB_OUTPUT"
+          python scripts/governance/corpo_pr_sugestao.py \
+            --carga "$RUNNER_TEMP/carga.json" --arquivo "$arquivo" \
+            --om-host "$OM_HOST" > "$RUNNER_TEMP/corpo.md"
+
+      - name: Abrir o PR
+        if: steps.existe.outputs.sim != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          BRANCH: ${{ steps.carga.outputs.branch }}
+          ARQUIVO: ${{ steps.aplicar.outputs.arquivo }}
+          TASK_ID: ${{ steps.carga.outputs.task_id }}
+        run: |
+          git config user.name "om-sugestoes[bot]"
+          git config user.email "om-sugestoes[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -- "$ARQUIVO"
+          git commit -m "docs(dbt): sugestão de descrição do OpenMetadata (Task $TASK_ID)"
+          git push origin "$BRANCH"
+          gh pr create --base main --head "$BRANCH" \
+            --title "docs(dbt): sugestão de descrição do OpenMetadata (Task $TASK_ID)" \
+            --body-file "$RUNNER_TEMP/corpo.md"
