@@ -7,11 +7,28 @@ models:
 
   - name: ouro_far_ficha_empreendimento
     description: >
-      Uma linha por empreendimento FAR, com identificação, localização, execução física
-      e financeira. Alimenta a ficha do Superset.
+      Ficha de cada empreendimento do Novo MCMV contratado com recursos do Fundo de
+      Arrendamento Residencial (FAR): quem propõe e quem executa, onde fica, quantas
+      moradias entrega, quanto foi contratado e desembolsado, e em que pé estão a obra
+      e o prazo. É a base de todos os painéis do FAR: as demais tabelas da ouro agregam
+      a partir dela.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por empreendimento (APF).
+          chave: [apf]
+          fonte: >-
+            Ministério das Cidades, monitoramento do FAR (cadastro, acompanhamento de
+            obra e liberações financeiras), e CAIXA, como agente financeiro.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (ficha do empreendimento)
+            - Reloginho, indicadores de gargalo e desempenho
     columns:
       - name: apf
-        description: APF normalizado para 8 dígitos — chave do painel.
+        description: >-
+          Autorização de Projeto de Financiamento, com 8 dígitos. Identifica o
+          empreendimento em todas as tabelas do FAR.
         tests:
           - not_null
           - unique
@@ -19,75 +36,511 @@ models:
               arguments:
                 to: ref('prata_far_empreendimento')
                 field: apf
+      - name: portaria_selecao
+        description: >-
+          Portaria do Ministério das Cidades que selecionou o empreendimento, ou
+          "Não informada" quando o cadastro não traz a seleção.
+      - name: nome_empreendimento
+        description: Nome do empreendimento, em maiúsculas.
+        tests:
+          - sem_mojibake
+      - name: proponente_cnpj
+        description: >-
+          CNPJ da empresa que propôs o empreendimento. Vazio quando o cadastro não
+          identifica o proponente.
+      - name: nome_proponente
+        description: Razão social da empresa proponente, em maiúsculas.
+      - name: tomador_cnpj
+        description: >-
+          CNPJ de quem tomou o financiamento e responde pela execução da obra. Vazio
+          quando o cadastro não o identifica.
+      - name: nome_tomador
+        description: Razão social do tomador, em maiúsculas.
+      - name: agente_financeiro
+        description: Instituição financeira que opera o contrato.
+      - name: quantidade_uh
+        description: Unidades habitacionais (moradias) previstas no empreendimento.
+      - name: pessoas_atendidas
+        description: Estimativa de pessoas beneficiadas pelas unidades do empreendimento.
+      - name: tipologia
+        description: Tipo de construção das moradias (casa térrea, sobrado, apartamento ou misto).
       - name: municipio
         description: Município do empreendimento.
         tests:
           - sem_mojibake
-      - name: nome_empreendimento
-        description: Nome do empreendimento.
-        tests:
-          - sem_mojibake
+      - name: uf
+        description: Sigla da UF do empreendimento.
+      - name: municipio_uf
+        description: Município e UF juntos, no formato usado nos filtros do painel.
+      - name: apf_municipio_empreendimento
+        description: >-
+          APF, município/UF e nome do empreendimento numa só coluna; é o campo de busca
+          da ficha no painel.
+      - name: metodo
+        description: >-
+          Como o empreendimento foi originado, segundo o cadastro. Quando o código de
+          origem não é reconhecido, o rótulo diz isso e mostra o código recebido.
+      - name: demanda
+        description: >-
+          Origem da demanda atendida pelas moradias (cadastro habitacional, calamidade,
+          obra pública, entre outras). Código não reconhecido é rotulado como não
+          identificado.
+      - name: situacao_empreendimento
+        description: >-
+          Situação do empreendimento informada pela CAIXA (em andamento, paralisado,
+          concluído e entregue, distratado ou cancelado).
+      - name: status_execucao_simplificado
+        description: >-
+          Leitura simplificada da obra a partir do percentual de execução física: não
+          iniciado (0%), concluído (100%) ou em andamento.
+      - name: valor_contratado
+        description: Valor contratado do empreendimento, em reais.
+      - name: valor_aporte_adicional
+        description: Aporte adicional ao valor contratado, em reais.
+      - name: valor_por_uh
+        description: Valor contratado dividido pela quantidade de unidades, em reais por moradia.
+      - name: dt_contratacao
+        description: Data de assinatura do contrato.
+      - name: percentual_execucao_fisica
+        description: Percentual da obra executado na medição mais recente, de 0 a 100.
+      - name: dt_previsao_entrega
+        description: Data prevista para a entrega das moradias, quando informada.
+      - name: dt_conclusao_obra
+        description: Data em que a obra foi concluída, quando informada.
+      - name: dt_entrega
+        description: Data em que as moradias foram entregues às famílias, quando informada.
+      - name: status_prazo
+        description: >-
+          Situação do prazo: entregue, em atraso (não entregue e com a previsão de
+          entrega já vencida) ou dentro do prazo.
+      - name: valor_desembolsado
+        description: Total já desembolsado para o empreendimento, em reais.
+      - name: percentual_execucao_financeira
+        description: >-
+          Percentual do valor contratado que já foi desembolsado, de 0 a 100.
+      - name: ritmo_fisico_financeiro
+        description: >-
+          Compara desembolso e obra: adiantado quando o financeiro passa o físico em mais
+          de 5 pontos percentuais, atrasado quando fica mais de 5 pontos abaixo, e
+          equilibrado no meio.
 
   - name: ouro_far_resumo_gerencial
     description: >
-      KPIs agregados por situação, tipologia e status de execução.
+      Números gerais da carteira do FAR por situação, tipologia, andamento da obra e
+      prazo: quantos empreendimentos, moradias e pessoas, quanto foi contratado e
+      desembolsado. Alimenta os gráficos de pizza e de barra do painel gerencial.
+    config:
+      meta:
+        documentacao:
+          grao: >-
+            Uma linha por combinação de situação, tipologia, andamento da obra e
+            situação do prazo.
+          chave:
+            - situacao_empreendimento
+            - tipologia
+            - status_execucao_simplificado
+            - status_prazo
+          fonte: >-
+            Ministério das Cidades, monitoramento do FAR, e CAIXA, como agente
+            financeiro.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (resumo gerencial)
     columns:
-      - name: categoria
-        description: Dimensão da agregação.
+      - name: situacao_empreendimento
+        description: Situação do empreendimento informada pela CAIXA.
+      - name: tipologia
+        description: Tipo de construção das moradias.
+      - name: status_execucao_simplificado
+        description: Andamento da obra (não iniciado, em andamento ou concluído).
+      - name: status_prazo
+        description: Situação do prazo de entrega (entregue, em atraso ou dentro do prazo).
+      - name: total_empreendimentos
+        description: Quantidade de empreendimentos no grupo.
+      - name: total_uhs
+        description: Soma das unidades habitacionais dos empreendimentos do grupo.
+      - name: total_pessoas_atendidas
+        description: Soma das pessoas atendidas estimadas no grupo.
+      - name: somatorio_valor_contratado
+        description: Soma do valor contratado no grupo, em reais.
+      - name: somatorio_valor_desembolsado
+        description: Soma do valor já desembolsado no grupo, em reais.
+      - name: media_execucao_fisica
+        description: Média simples do percentual de execução física dos empreendimentos do grupo.
+      - name: media_valor_por_uh
+        description: Média simples do valor contratado por moradia no grupo, em reais.
 
   - name: ouro_far_panorama_estadual
     description: >
-      Painel agregado por UF, com quebra por situação e tipologia.
+      Panorama do FAR por UF, montado em seções empilhadas: cada valor de `secao` é um
+      bloco do painel estadual (grandes números, método, portaria, demanda, situação
+      da obra e faixas de execução física), e o painel filtra a seção que vai mostrar.
+      A seção de situação traz sempre as mesmas categorias em toda UF, mesmo zeradas,
+      para a tabela do painel manter a mesma altura.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por UF, seção do painel e categoria da seção.
+          chave: [uf, secao, dimensao]
+          fonte: >-
+            Ministério das Cidades, monitoramento do FAR, e CAIXA, como agente
+            financeiro; nome dos estados pelo IBGE.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (panorama estadual)
+    columns:
+      - name: uf
+        description: Sigla da UF.
+      - name: estado
+        description: Nome do estado, em maiúsculas.
+      - name: secao
+        description: >-
+          Bloco do painel a que a linha pertence: grandes números (header), método,
+          portaria, demanda, situação ou faixa de execução física.
+      - name: dimensao
+        description: >-
+          Categoria da linha dentro da seção (o método, a portaria, a demanda, a
+          situação ou a faixa de execução). Nos grandes números vale "resumo".
+      - name: ordem
+        description: Posição da categoria na exibição; usada nas seções que têm ordem fixa.
+      - name: qtd_empreendimentos
+        description: >-
+          Empreendimentos da categoria. Na seção de grandes números esta coluna traz a
+          quantidade de municípios com empreendimento; o total de empreendimentos da UF
+          está em `total_empreendimentos_uf`.
+      - name: qtd_uhs
+        description: Unidades habitacionais da categoria.
+      - name: valor_1
+        description: Só nos grandes números; valor contratado total da UF, em reais.
+      - name: valor_2
+        description: Só nos grandes números; valor desembolsado total da UF, em reais.
+      - name: valor_3
+        description: Só nos grandes números; aporte adicional total da UF, em reais.
+      - name: valor_4
+        description: Só nos grandes números; valor contratado médio por moradia na UF, em reais.
+      - name: total_empreendimentos_uf
+        description: Só nos grandes números; quantidade de empreendimentos da UF.
 
   - name: ouro_far_mapa_nacional
     description: >
-      Agregação geográfica por UF para o mapa do Superset. Uma linha por UF.
+      Totais do FAR por estado e por macrorregião, prontos para o mapa do Brasil no
+      Superset. As duas visões estão empilhadas e se distinguem por `nivel`; no nível de
+      região, `uf` e `estado_nome` trazem a sigla e o nome da região.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por UF e uma por macrorregião.
+          chave: [nivel, uf]
+          fonte: >-
+            Ministério das Cidades, monitoramento do FAR, e CAIXA, como agente
+            financeiro; estados e regiões pelo IBGE.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (mapa nacional)
+    columns:
+      - name: uf
+        description: Sigla da UF; no nível de região, a sigla da região.
+      - name: estado_nome
+        description: Nome do estado; no nível de região, o nome da região.
+      - name: iso_3166_2
+        description: >-
+          Código ISO 3166-2 do estado, que o mapa do Superset usa para desenhar a UF.
+          Vazio no nível de região.
+      - name: regiao_sigla
+        description: Sigla da macrorregião do IBGE.
+      - name: regiao_nome
+        description: Nome da macrorregião do IBGE.
+      - name: nivel
+        description: Recorte da linha, por UF ou por região.
+      - name: total_municipios
+        description: Municípios com empreendimento FAR.
+      - name: total_empreendimentos
+        description: Quantidade de empreendimentos.
+      - name: total_uhs
+        description: Unidades habitacionais contratadas.
+      - name: total_valor_contratado
+        description: Valor contratado, em reais.
+      - name: total_valor_desembolsado
+        description: Valor já desembolsado, em reais.
+      - name: media_execucao_fisica
+        description: >-
+          Média simples da execução física dos empreendimentos, em percentual. No nível
+          de região, é a média das médias dos estados.
 
   - name: ouro_far_evolucao_financeira_chart
     description: >
-      Série APF × mês pronta para o gráfico de evolução financeira.
-    tests:
-      - unique_combinacao:
-          arguments:
-            colunas: ["apf", "mes"]
-
-  - name: ouro_far_execucao_fisica_financeira_chart
-    description: >
-      As duas curvas na mesma série mensal. A execução física do FAR é retrato único,
-      repetido ao longo dos meses para virar linha de referência sobre a série
-      financeira, que é a única das duas com história.
-
-  - name: ouro_far_serie_mensal_apf
-    description: >
-      Série mensal por APF com execução física e financeira, ritmo entre as duas e
-      colunas da CAIXA para conciliação. Alimenta o dashboard e o modelo preditivo.
+      Liberações financeiras de cada empreendimento mês a mês, com o acumulado e o
+      percentual do valor contratado já executado. Alimenta o gráfico de evolução
+      financeira da ficha. Só há linha nos meses com liberação.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por empreendimento e mês com liberação.
+          chave: [apf, mes]
+          fonte: >-
+            Ministério das Cidades, liberações financeiras do FAR; nome dos estados
+            pelo IBGE.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (evolução financeira)
     tests:
       - unique_combinacao:
           arguments:
             colunas: ["apf", "mes"]
     columns:
       - name: apf
-        description: APF normalizado para 8 dígitos.
+        description: Autorização de Projeto de Financiamento do empreendimento.
+      - name: nome_empreendimento
+        description: Nome do empreendimento, em maiúsculas.
+      - name: apf_municipio_empreendimento
+        description: APF, município/UF e nome juntos; campo de busca do painel.
+      - name: municipio
+        description: Município do empreendimento.
+      - name: uf
+        description: Sigla da UF.
+      - name: estado
+        description: Nome do estado, em maiúsculas.
+      - name: mes
+        description: Mês das liberações (primeiro dia do mês).
+      - name: mes_label
+        description: Mês no formato ano-mês, para ordenar no eixo do gráfico.
+      - name: mes_label_br
+        description: Mês no formato mês/ano, para exibir.
+      - name: qt_liberacoes
+        description: Quantidade de liberações no mês.
+      - name: vr_liberado_mes
+        description: Total liberado no mês, em reais.
+      - name: vr_pago_obra_mes
+        description: Parte do liberado no mês destinada à obra, em reais.
+      - name: vr_pago_terreno_mes
+        description: Parte do liberado no mês destinada ao terreno, em reais.
+      - name: vr_pago_pts_mes
+        description: Parte do liberado no mês destinada ao trabalho social (PTS), em reais.
+      - name: vr_pago_incc_mes
+        description: >-
+          Parte do liberado no mês que corresponde à correção pelo INCC, em reais.
+      - name: vr_acumulado
+        description: Total liberado desde o início até o mês, em reais.
+      - name: valor_contratado
+        description: Valor contratado do empreendimento, em reais.
+      - name: pct_executado_financeiro
+        description: >-
+          Acumulado liberado sobre o valor contratado, em percentual. Pode passar de
+          100 porque a correção pelo INCC é paga acima do contratado.
+
+  - name: ouro_far_execucao_fisica_financeira_chart
+    description: >
+      As curvas de execução física e financeira de cada empreendimento na mesma série
+      mensal, para o gráfico que compara as duas. Mês sem medição repete o último valor
+      conhecido de cada curva, para a linha não cair a zero entre duas medições.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por empreendimento e mês com medição física ou financeira.
+          chave: [apf, mes]
+          fonte: >-
+            Ministério das Cidades, acompanhamento de obra e liberações financeiras do
+            FAR.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (execução física e financeira)
+            - Reloginho, indicadores de gargalo e desempenho
+    columns:
+      - name: apf
+        description: Autorização de Projeto de Financiamento do empreendimento.
+      - name: apf_municipio_empreendimento
+        description: APF, município/UF e nome juntos; campo de busca do painel.
+      - name: mes
+        description: Mês da série, como texto no formato ano-mês-dia.
+      - name: pct_obra_realizada
+        description: >-
+          Execução física acumulada até o mês, em percentual; repete a última medição
+          quando o mês não tem uma.
+      - name: pct_executado_financeiro
+        description: >-
+          Execução financeira acumulada até o mês, em percentual do valor contratado;
+          repete o último valor quando o mês não tem liberação.
+
+  - name: ouro_far_serie_mensal_apf
+    description: >
+      Série mês a mês de cada empreendimento do Novo MCMV FAR, do primeiro sinal
+      (contratação, liberação ou medição) até o mês mais recente, inclusive meses sem
+      movimento. Reúne a execução física (realizada e prevista), a financeira, o ritmo
+      entre as duas e os números que a CAIXA informou no mesmo mês, para conciliação.
+      Alimenta o painel e o modelo preditivo de execução. Contratos do FAR anteriores a
+      2024 ficam de fora.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por empreendimento e mês.
+          chave: [apf, mes]
+          fonte: >-
+            Ministério das Cidades, monitoramento do FAR (cadastro, acompanhamento de
+            obra e liberações financeiras), e CAIXA, dados prioritários do Novo MCMV.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (série mensal)
+            - Modelo preditivo de execução do FAR
+    tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["apf", "mes"]
+    columns:
+      - name: apf
+        description: Autorização de Projeto de Financiamento, com 8 dígitos.
         tests:
           - not_null
+      - name: nome_empreendimento
+        description: >-
+          Nome do empreendimento; para quem não está na ficha, o nome informado pela
+          CAIXA.
+      - name: apf_municipio_empreendimento
+        description: APF, município/UF e nome juntos; campo de busca do painel.
+      - name: municipio
+        description: Município do empreendimento.
+      - name: uf
+        description: Sigla da UF.
       - name: ic_cadastro_monit
         description: >
           Falso para os APFs que têm liberação no livro-razão mas não estão no
           cadastro MONIT: entram pela conciliação dos valores, sem % financeiro.
+      - name: mes
+        description: Mês de referência (primeiro dia do mês).
+      - name: mes_label
+        description: Mês no formato ano-mês.
+      - name: mes_label_br
+        description: Mês no formato mês/ano.
+      - name: pct_obra_realizada
+        description: >-
+          Execução física acumulada, em percentual. Vem do monitoramento do Ministério;
+          sem ele no mês, da CAIXA; sem nenhum, repete o último valor. Vazio antes da
+          primeira medição.
+      - name: pct_obra_prevista
+        description: >-
+          Execução física prevista para o mês, em percentual. Só o monitoramento do
+          Ministério informa; mês sem informação entre dois conhecidos é interpolado, e
+          depois do último repete o último valor.
+      - name: desvio_fisico
+        description: >-
+          Realizado menos previsto, em pontos percentuais; negativo indica obra atrasada
+          em relação ao cronograma.
+      - name: fonte_fisica
+        description: >-
+          De onde veio o percentual realizado no mês: monitoramento do Ministério,
+          CAIXA, ou valor repetido do mês anterior.
+      - name: fonte_prevista
+        description: >-
+          De onde veio o percentual previsto no mês: informado pelo monitoramento,
+          interpolado entre dois meses informados, ou repetido do último informado.
+      - name: co_situacao_obra
+        description: >-
+          Código da situação da obra no monitoramento do Ministério; repete o último
+          valor nos meses sem informação.
+      - name: situacao_obra
+        description: Situação da obra por extenso, correspondente a `co_situacao_obra`.
+      - name: qt_liberacoes
+        description: Quantidade de liberações financeiras no mês.
+      - name: vr_liberado_mes
+        description: Total liberado no mês, em reais.
+      - name: vr_pago_obra_mes
+        description: Parte do liberado no mês destinada à obra, em reais.
+      - name: vr_pago_incc_mes
+        description: Parte do liberado no mês que corresponde à correção pelo INCC, em reais.
+      - name: vr_liberado_acum
+        description: Total liberado desde o início até o mês, em reais.
+      - name: vr_pago_incc_acum
+        description: >-
+          Correção pelo INCC acumulada até o mês, em reais; permite descontá-la do
+          percentual financeiro.
+      - name: vr_emprestimo_far
+        description: Valor do financiamento com recursos do FAR, em reais.
+      - name: pct_financeiro
+        description: >-
+          Liberado acumulado sobre o valor FAR, em percentual. Pode passar de 100 por
+          causa do INCC. Vazio para quem não está no cadastro do monitoramento.
+      - name: ritmo_fisico_financeiro
+        description: >-
+          Compara financeiro e obra no mês, com margem de 5 pontos percentuais
+          (adiantado, atrasado ou equilibrado). Vazio quando falta um dos dois.
+      - name: situacao_caixa
+        description: Situação do empreendimento informada pela CAIXA no mês.
+      - name: pct_execucao_caixa
+        description: Execução física informada pela CAIXA no mês, em percentual.
+      - name: valor_contratado_caixa
+        description: Valor contratado segundo a CAIXA, em reais.
+      - name: vr_desembolsado_caixa
+        description: Valor desembolsado segundo a CAIXA até o mês, em reais.
+      - name: pct_financeiro_caixa
+        description: Desembolsado sobre contratado segundo a CAIXA, em percentual.
+      - name: dif_pct_fisico_caixa
+        description: >-
+          Diferença entre a execução física do monitoramento do Ministério e a da CAIXA
+          no mês, em pontos percentuais.
+      - name: dif_desembolso_caixa
+        description: >-
+          Diferença entre o liberado acumulado e o desembolsado informado pela CAIXA,
+          em reais.
 
   - name: ouro_far_curva_s
     description: >
       Curva S do FAR: percentuais físico (previsto e realizado) e financeiro por mês,
       ponderados pelo valor FAR, no nível nacional (`uf` = 'BR') e por UF. Exclui os
-      APFs distratados ou cancelados na situação mais recente da CAIXA.
+      APFs distratados ou cancelados na situação mais recente da CAIXA. A carteira
+      cresce com as contratações, então cada mês considera os empreendimentos que já
+      existiam; quem não tem valor FAR entra nos valores, mas não nos percentuais.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por mês e recorte (nacional ou UF).
+          chave: [mes, nivel, uf]
+          fonte: >-
+            Ministério das Cidades, monitoramento do FAR, e CAIXA, dados prioritários
+            do Novo MCMV.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel FAR (curva S)
     tests:
       - unique_combinacao:
           arguments:
             colunas: ["mes", "nivel", "uf"]
     columns:
+      - name: mes
+        description: Mês de referência (primeiro dia do mês).
+      - name: mes_label
+        description: Mês no formato ano-mês.
+      - name: mes_label_br
+        description: Mês no formato mês/ano.
       - name: nivel
         description: "`nacional` ou `uf`."
         tests:
           - accepted_values:
               arguments:
                 values: ["nacional", "uf"]
+      - name: uf
+        description: Sigla da UF; no nível nacional, BR.
+      - name: qt_empreendimentos
+        description: Empreendimentos da carteira no mês.
+      - name: qt_com_fisico
+        description: Empreendimentos com execução física conhecida no mês.
+      - name: qt_com_previsto
+        description: Empreendimentos com execução prevista conhecida no mês.
+      - name: vr_emprestimo_far
+        description: Soma do valor FAR dos empreendimentos da carteira, em reais.
+      - name: pct_obra_realizada
+        description: >-
+          Execução física realizada, em percentual, ponderada pelo valor FAR entre os
+          empreendimentos com o dado.
+      - name: pct_obra_prevista
+        description: >-
+          Execução física prevista, em percentual, ponderada pelo valor FAR entre os
+          empreendimentos com o dado.
+      - name: vr_liberado_mes
+        description: Total liberado no mês, em reais.
+      - name: vr_liberado_acum
+        description: Total liberado até o mês, em reais.
+      - name: pct_financeiro
+        description: >-
+          Liberado acumulado sobre o valor FAR, em percentual, só entre quem tem valor
+          FAR.
+      - name: vr_desembolsado_caixa
+        description: Desembolsado acumulado segundo a CAIXA, em reais, para conciliação.
