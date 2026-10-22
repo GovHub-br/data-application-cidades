@@ -1,15 +1,25 @@
 version: 2
 models:
 - name: ouro_rural_ficha_empreendimento
-  description: 'Tabela Gold que alimenta a "Ficha do Empreendimento" no dashboard do MCMV Rural. Consome
-    a prata_rural_empreendimento e injeta as regras de negócio finais: programa (Novo MCMV Rural vs.
-    PNHR histórico), status de execução, status de prazo, valor por UH e ritmo físico-financeiro. Uma
-    linha por empreendimento (APF).
-
-    '
-  meta:
-    tags:
-    - gold
+  description: >
+    Ficha de cada empreendimento habitacional rural: do Novo MCMV Rural e do Programa Nacional de Habitação
+    Rural (PNHR), que o antecedeu. Traz a entidade organizadora e a construtora, onde fica, quantas moradias
+    foram contratadas e entregues, valores, execução física e financeira, prazo, e de que fonte e data
+    veio cada número, para o painel mostrar a procedência e a idade de cada informação. É a base das demais
+    tabelas do Rural.
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por empreendimento (APF).
+        chave: [apf]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (ficha do empreendimento)
   columns:
   - name: apf
     description: APF (Autorização de Projeto de Financiamento) do empreendimento.
@@ -87,6 +97,8 @@ models:
         config:
           severity: warn
   - name: tipologia
+    description: >-
+      Programa do empreendimento como tipologia do painel (Novo MCMV Rural ou PNHR).
     tests:
     - accepted_values:
         values:
@@ -95,6 +107,7 @@ models:
         config:
           severity: warn
   - name: nome_empreendimento
+    description: Nome do empreendimento, em maiúsculas.
     tests:
     - not_null:
         config:
@@ -103,6 +116,7 @@ models:
         config:
           severity: warn
   - name: municipio
+    description: Município do empreendimento.
     tests:
     - not_null:
         config:
@@ -111,36 +125,43 @@ models:
         config:
           severity: warn
   - name: uf
+    description: Sigla da UF.
     tests:
     - not_null:
         config:
           severity: warn
   - name: quantidade_uh
+    description: Unidades habitacionais (moradias) contratadas.
     tests:
     - not_null:
         config:
           severity: warn
   - name: valor_contratado
+    description: Valor contratado, em reais.
     tests:
     - not_null:
         config:
           severity: warn
   - name: valor_desembolsado
+    description: Total já desembolsado, em reais (posição informada pela fonte).
     tests:
     - not_null:
         config:
           severity: warn
   - name: percentual_execucao_fisica
+    description: Execução física na medição mais recente, em percentual.
     tests:
     - not_null:
         config:
           severity: warn
   - name: nome_entidade_organizadora
+    description: Razão social da entidade organizadora, em maiúsculas.
     tests:
     - sem_mojibake:
         config:
           severity: warn
   - name: nome_construtora
+    description: Razão social da construtora, em maiúsculas.
     tests:
     - sem_mojibake:
         config:
@@ -186,20 +207,58 @@ models:
       mas é também a assinatura de erro de sinal ou liberação duplicada na origem. Marcado
       em vez de limitado: um `least(pct, 100)` esconderia justamente o caso a olhar.
     tests:
-      - accepted_values:
-          values: [Dentro do Contratado, Desembolso Acima do Contratado, Sem Informação]
-          config:
-            severity: warn
+    - accepted_values:
+        values: [Dentro do Contratado, Desembolso Acima do Contratado, Sem Informação]
+        config:
+          severity: warn
 
+  - name: agente_financeiro
+    description: Agente financeiro que opera o contrato (CAIXA ou Banco do Brasil).
+  - name: entidade_organizadora_cnpj
+    description: CNPJ da entidade organizadora.
+  - name: construtora_cnpj
+    description: CNPJ da construtora.
+  - name: quantidade_uh_entregues
+    description: Moradias já entregues às famílias.
+  - name: quantidade_uh_vigentes
+    description: Moradias com contrato vigente.
+  - name: latitude
+    description: Latitude do empreendimento, quando informada.
+  - name: longitude
+    description: Longitude do empreendimento, quando informada.
+  - name: situacao_empreendimento
+    description: Situação do empreendimento como a fonte informa.
+  - name: valor_aporte_adicional
+    description: Aporte adicional ao valor contratado, em reais.
+  - name: valor_por_uh
+    description: Valor contratado dividido pelas moradias contratadas, em reais.
+  - name: dt_contratacao
+    description: Data de assinatura do contrato.
+  - name: dt_previsao_entrega
+    description: Data prevista para a entrega das moradias.
+  - name: dt_conclusao_obra
+    description: Data de conclusão da obra, quando informada.
 - name: ouro_rural_resumo_gerencial
   description: 'Visão agregada Gold com os KPIs gerenciais (empreendimentos, UHs, UHs entregues, pessoas
     atendidas, valores e médias) agrupados por agente financeiro, programa, situação, tipologia e status.
     Alimenta os gráficos de pizza e barra do painel gerencial.
 
     '
-  meta:
-    tags:
-    - gold
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por combinação de agente financeiro, programa, situação, tipologia, 
+          andamento da obra e situação do prazo.
+        chave: [agente_financeiro, programa, situacao_empreendimento, tipologia, 
+            status_execucao_simplificado, status_prazo]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (resumo gerencial)
   columns:
   - name: total_empreendimentos
     description: Contagem de APFs no grupo.
@@ -210,10 +269,38 @@ models:
   - name: media_valor_por_uh
     description: Média do valor por UH dos empreendimentos do grupo.
   - name: total_uhs
+    description: Soma das moradias contratadas no grupo.
     tests:
     - not_null:
         config:
           severity: warn
+  - name: agente_financeiro
+    description: Agente financeiro (CAIXA ou Banco do Brasil).
+  - name: programa
+    description: Novo MCMV Rural ou PNHR (histórico).
+  - name: situacao_empreendimento
+    description: Situação do empreendimento como a fonte informa.
+  - name: tipologia
+    description: Tipologia do painel (Novo MCMV Rural ou PNHR).
+  - name: status_execucao_simplificado
+    description: >-
+      Andamento da obra (não iniciado, em andamento, concluído ou sem informação).
+  - name: status_prazo
+    description: >-
+      Situação do prazo (entregue, em atraso, dentro do prazo ou sem previsão).
+  - name: total_uhs_entregues
+    description: Soma das moradias entregues no grupo.
+  - name: total_pessoas_atendidas
+    description: Soma da estimativa de pessoas atendidas no grupo.
+  - name: somatorio_valor_contratado
+    description: Soma do valor contratado, em reais.
+  - name: somatorio_valor_desembolsado
+    description: Soma do valor desembolsado, em reais.
+  - name: somatorio_valor_aporte
+    description: Soma dos aportes adicionais, em reais.
+  - name: media_execucao_fisica
+    description: >-
+      Média simples da execução física dos empreendimentos do grupo, em percentual.
 - name: ouro_rural_panorama_estadual
   description: 'Visão Gold por UF em formato longo (uma seção por linha) para o dashboard "Panorama Estadual":
     header com os grandes números e distribuições por agente financeiro, programa, situação e faixa de
@@ -221,9 +308,19 @@ models:
     determinado status aparece com zero em vez de faltar.
 
     '
-  meta:
-    tags:
-    - gold
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por UF, seção do painel e categoria da seção.
+        chave: [uf, secao, dimensao]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (panorama estadual)
   columns:
   - name: uf
     description: Sigla da UF.
@@ -245,10 +342,30 @@ models:
   - name: ordem
     description: Ordem de exibição dentro da seção (0 quando não se aplica).
   - name: estado
+    description: Nome do estado, em maiúsculas.
     tests:
     - sem_mojibake:
         config:
           severity: warn
+  - name: dimensao
+    description: Categoria da linha dentro da seção; nos grandes números vale "resumo".
+  - name: qtd_empreendimentos
+    description: >-
+      Empreendimentos da categoria. Na seção de grandes números traz a quantidade de municípios; o total
+      de empreendimentos está em `total_empreendimentos_uf`.
+  - name: qtd_uhs
+    description: Moradias da categoria.
+  - name: valor_1
+    description: Só nos grandes números; valor contratado total da UF, em reais.
+  - name: valor_2
+    description: Só nos grandes números; valor desembolsado total da UF, em reais.
+  - name: valor_3
+    description: Só nos grandes números; aporte adicional total da UF, em reais.
+  - name: valor_4
+    description: >-
+      Só nos grandes números; valor contratado médio por moradia na UF, em reais.
+  - name: total_empreendimentos_uf
+    description: Só nos grandes números; quantidade de empreendimentos da UF.
   tests:
   - unique_combinacao:
       colunas:
@@ -261,9 +378,19 @@ models:
     com a referência IBGE.
 
     '
-  meta:
-    tags:
-    - gold
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por UF e uma por macrorregião.
+        chave: [uf, nivel]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (mapa nacional)
   columns:
   - name: nivel
     description: uf ou regiao — indica a granularidade da linha.
@@ -277,20 +404,43 @@ models:
   - name: iso_3166_2
     description: Código ISO 3166-2 (BR-XX), nulo nas linhas de região.
   - name: total_empreendimentos
+    description: Quantidade de empreendimentos.
     tests:
     - not_null:
         config:
           severity: warn
   - name: total_uhs
+    description: Moradias contratadas.
     tests:
     - not_null:
         config:
           severity: warn
   - name: estado_nome
+    description: Nome do estado; no nível de região, o nome da região.
     tests:
     - sem_mojibake:
         config:
           severity: warn
+  - name: uf
+    description: Sigla da UF; no nível de região, a sigla da região.
+  - name: regiao_sigla
+    description: Sigla da macrorregião do IBGE.
+  - name: regiao_nome
+    description: Nome da macrorregião do IBGE.
+  - name: total_municipios
+    description: Municípios com empreendimento rural.
+  - name: total_valor_contratado
+    description: Valor contratado, em reais.
+  - name: total_valor_desembolsado
+    description: Valor desembolsado, em reais.
+  - name: media_execucao_fisica
+    description: >-
+      Média simples da execução física, em percentual, entre quem tem medição.
+  - name: media_execucao_fisica_ponderada_uh
+    description: >-
+      Execução física média ponderada pelas moradias de cada empreendimento, em percentual.
+  - name: empreendimentos_com_medicao_fisica
+    description: Empreendimentos com execução física informada.
   tests:
   - unique_combinacao:
       colunas:
@@ -303,9 +453,19 @@ models:
     componente, então essas linhas entram só no total liberado.
 
     '
-  meta:
-    tags:
-    - gold
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por empreendimento e mês com liberação.
+        chave: [apf, mes]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (evolução financeira)
   columns:
   - name: apf
     description: APF do empreendimento (8 dígitos, normalizado).
@@ -333,24 +493,58 @@ models:
         config:
           severity: warn
   - name: vr_liberado_mes
+    description: Total liberado no mês, em reais; estornos entram com sinal negativo.
     tests:
     - not_null:
         config:
           severity: warn
+  - name: qt_liberacoes
+    description: Quantidade de liberações no mês.
+  - name: vr_pago_obra_mes
+    description: >-
+      Parte do liberado destinada à obra, em reais; vazia no histórico do PNHR.
+  - name: vr_pago_ts_mes
+    description: >-
+      Parte do liberado destinada ao trabalho social, em reais; vazia no PNHR.
+  - name: vr_pago_atec_mes
+    description: >-
+      Parte do liberado destinada à assistência técnica, em reais; vazia no PNHR.
+  - name: vr_pago_cisternas_efluentes_mes
+    description: >-
+      Parte do liberado destinada a cisternas e efluentes, em reais; vazia no PNHR.
+  - name: vr_pago_custos_indiretos_mes
+    description: >-
+      Parte do liberado destinada a custos indiretos, em reais; vazia no PNHR.
+  - name: valor_contratado
+    description: Valor contratado do empreendimento, em reais.
+  - name: municipio
+    description: Município do empreendimento.
+  - name: uf
+    description: Sigla da UF.
   tests:
   - unique_combinacao:
       colunas:
       - apf
       - mes
 - name: ouro_rural_execucao_fisica_financeira
-  description: 'Série temporal Gold comparando execução física e financeira por APF × mês, pronta para
-    o gráfico de linhas. Faz full outer join entre as duas séries e preenche os buracos com o último valor
-    conhecido (last observation carried forward), para que a linha não caia a zero em mês sem movimento.
-
-    '
-  meta:
-    tags:
-    - gold
+  description: >
+    Execução física e financeira de cada empreendimento na mesma série mensal, para o gráfico que compara
+    as duas. O Rural não tem série mensal da obra: a execução física é a medição mais recente, repetida
+    em todos os meses da série financeira. Empreendimento sem liberação registrada aparece numa só linha,
+    no mês da medição física.
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por empreendimento e mês da série financeira.
+        chave: [apf, mes]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (execução física e financeira)
   columns:
   - name: apf
     description: APF do empreendimento.
@@ -366,9 +560,20 @@ models:
     tests:
     - not_null
   - name: pct_obra_realizada
-    description: Percentual de execução física acumulada.
+    description: Execução física na medição mais recente, em percentual, repetida em todos os meses.
   - name: pct_executado_financeiro
-    description: Percentual de execução financeira acumulada.
+    description: Liberado acumulado até o mês sobre o valor contratado, em percentual.
+  - name: vr_acumulado
+    description: Total liberado até o mês, em reais.
+  - name: pct_financeiro_estoque
+    description: >-
+      Desembolsado informado pela fonte sobre o valor contratado, em percentual.
+  - name: fonte_execucao_fisica
+    description: Fonte da medição física exibida.
+  - name: dt_referencia_execucao_fisica
+    description: Data da medição física exibida.
+  - name: tem_serie_financeira
+    description: Verdadeiro quando o empreendimento tem liberações mensais registradas.
   tests:
   - unique_combinacao:
       colunas:
@@ -380,9 +585,19 @@ models:
     social com o da obra. Uma linha por APF × agente financeiro.
 
     '
-  meta:
-    tags:
-    - gold
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por empreendimento e agente financeiro com trabalho social registrado.
+        chave: [apf, agente_financeiro]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (trabalho social)
   columns:
   - name: apf
     description: APF do empreendimento.
@@ -408,6 +623,7 @@ models:
         config:
           severity: warn
   - name: agente_financeiro
+    description: Agente financeiro que informou o trabalho social (CAIXA ou BB).
     tests:
     - accepted_values:
         values:
@@ -416,25 +632,39 @@ models:
         config:
           severity: warn
   - name: valor_global_ts
+    description: Valor total previsto para o trabalho social, em reais.
     tests:
     - not_null:
         config:
           severity: warn
   - name: percentual_execucao_ts
+    description: Execução do trabalho social, em percentual.
     tests:
     - not_null:
         config:
           severity: warn
   - name: nome_empreendimento
+    description: Nome do empreendimento, em maiúsculas.
     tests:
     - sem_mojibake:
         config:
           severity: warn
   - name: municipio
+    description: Município do empreendimento.
     tests:
     - sem_mojibake:
         config:
           severity: warn
+  - name: uf
+    description: Sigla da UF.
+  - name: programa
+    description: Novo MCMV Rural ou PNHR (histórico).
+  - name: quantidade_uh
+    description: Moradias contratadas.
+  - name: valor_desembolsado_ts
+    description: Valor já desembolsado para o trabalho social, em reais.
+  - name: percentual_obra_ts_reportado
+    description: Execução da obra informada junto com o trabalho social, em percentual.
   tests:
   - unique_combinacao:
       colunas:
@@ -447,9 +677,19 @@ models:
     join).
 
     '
-  meta:
-    tags:
-    - gold
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por empreendimento com beneficiário cadastrado.
+        chave: [apf]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (perfil dos beneficiários)
   columns:
   - name: apf
     description: APF do empreendimento.
@@ -463,19 +703,55 @@ models:
   - name: renda_familiar_media
     description: Média da renda familiar declarada em R$.
   - name: total_beneficiarios_cadastrados
+    description: Beneficiários cadastrados no empreendimento.
     tests:
     - not_null:
         config:
           severity: warn
+  - name: nome_empreendimento
+    description: Nome do empreendimento, em maiúsculas.
+  - name: municipio
+    description: Município do empreendimento.
+  - name: uf
+    description: Sigla da UF.
+  - name: programa
+    description: Novo MCMV Rural ou PNHR (histórico).
+  - name: quantidade_uh
+    description: Moradias contratadas.
+  - name: media_pessoas_familia
+    description: Média de pessoas por família beneficiária.
+  - name: total_mulheres
+    description: Beneficiárias mulheres.
+  - name: total_beneficiarios_bolsa_familia
+    description: Beneficiários que recebem Bolsa Família.
+  - name: percentual_bolsa_familia
+    description: Beneficiários com Bolsa Família sobre o total, em percentual.
+  - name: total_beneficiarios_bpc
+    description: Beneficiários que recebem o Benefício de Prestação Continuada (BPC).
+  - name: percentual_bpc
+    description: Beneficiários com BPC sobre o total, em percentual.
+  - name: tem_cadastro_pf
+    description: >-
+      Verdadeiro quando há beneficiário cadastrado; sempre verdadeiro nesta tabela.
 - name: ouro_rural_infraestrutura_agua_saneamento
   description: 'Modelo Gold do escopo rural específico de cisternas e efluentes: quantidade e investimento
     por empreendimento. Quantidades vêm do cadastro PJ e, na ausência dele, da soma do cadastro PF; valores
     vêm do cadastro PJ e, na ausência, do histórico PNHR do agente correspondente.
 
     '
-  meta:
-    tags:
-    - gold
+  config:
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: Uma linha por empreendimento.
+        chave: [apf]
+        fonte: >-
+          Ministério das Cidades, monitoramento do MCMV Rural, e agentes financeiros (CAIXA e Banco do
+          Brasil), inclusive o histórico do PNHR.
+        periodicidade: mensal
+        consumo:
+        - Superset, painel RURAL (água e saneamento)
   columns:
   - name: apf
     description: APF do empreendimento.
@@ -490,3 +766,26 @@ models:
     - not_null:
         config:
           severity: warn
+  - name: nome_empreendimento
+    description: Nome do empreendimento, em maiúsculas.
+  - name: municipio
+    description: Município do empreendimento.
+  - name: uf
+    description: Sigla da UF.
+  - name: programa
+    description: Novo MCMV Rural ou PNHR (histórico).
+  - name: agente_financeiro
+    description: Agente financeiro (CAIXA ou Banco do Brasil).
+  - name: quantidade_uh
+    description: Moradias contratadas.
+  - name: qt_cisternas
+    description: Cisternas previstas no empreendimento.
+  - name: qt_efluentes
+    description: Soluções de tratamento de efluentes previstas.
+  - name: valor_investimento_cisternas
+    description: Investimento em cisternas, em reais.
+  - name: valor_investimento_efluentes
+    description: Investimento em tratamento de efluentes, em reais.
+  - name: tem_informacao_saneamento
+    description: >-
+      Verdadeiro quando há quantidade de cisternas ou de efluentes informada.
