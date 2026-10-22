@@ -27,6 +27,10 @@ models:
         description: Nome do empreendimento.
         tests:
           - sem_mojibake
+      - name: municipio_uf
+        description: >-
+          Município e UF do empreendimento no formato Município/UF, usado nos filtros do
+          painel.
 
   - name: ouro_far_resumo_gerencial
     description: >
