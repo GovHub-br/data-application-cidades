@@ -172,6 +172,7 @@ def auditar_ouro(root: Path) -> dict[str, list[str]]:
     por isso é a única camada em que o contrato é exigido por inteiro.
     """
     achados: dict[str, list[str]] = {}
+    declarados: set[str] = set()
     for path in sorted(root.rglob("*.yml")):
         if "ouro" not in path.relative_to(root).parts:
             continue
@@ -204,6 +205,13 @@ def auditar_ouro(root: Path) -> dict[str, list[str]]:
                 ]
             if problemas:
                 achados[nome] = problemas
+            declarados.add(nome)
+
+    # Model da ouro sem nenhuma entrada em YAML não aparece no laço acima e
+    # passaria pela catraca sem documentação alguma.
+    for sql in sorted(root.rglob("*.sql")):
+        if "ouro" in sql.relative_to(root).parts and sql.stem not in declarados:
+            achados[sql.stem] = ["sem_entrada_yaml"]
     return achados
 
 

@@ -7,18 +7,66 @@ models:
 
   - name: ouro_fds_ficha_empreendimento
     description: >
-      Uma linha por empreendimento FDS, com identificação da entidade organizadora,
-      localização, execução física, financeira e do trabalho social.
-      Alimenta a ficha do Superset.
+      Ficha de cada empreendimento do Novo MCMV Entidades, financiado pelo Fundo de
+      Desenvolvimento Social (FDS) e conduzido por uma entidade organizadora sem fins
+      lucrativos. Traz a entidade, a localização, o regime e a modalidade da obra, os
+      valores, a execução física e financeira, as entregas e o trabalho social. É a base
+      do painel Entidades.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por empreendimento (APF).
+          chave: [apf]
+          fonte: >-
+            Ministério das Cidades, monitoramento do FDS (cadastro, acompanhamento de
+            obra e trabalho social), e CAIXA, como agente financeiro.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Entidades (ficha do empreendimento)
     columns:
       - name: apf
-        description: APF normalizado para 8 dígitos — chave do painel.
+        description: >-
+          Autorização de Projeto de Financiamento, com 8 dígitos. Identifica o
+          empreendimento em todas as tabelas do FDS.
         tests:
           - not_null
           - unique
           - relationships:
               to: ref('prata_fds_empreendimento')
               field: apf
+      - name: nome_empreendimento
+        description: Nome do empreendimento, em maiúsculas.
+        tests:
+          - sem_mojibake
+      - name: cnpj_eo
+        description: CNPJ da entidade organizadora, com 14 dígitos e sem pontuação.
+      - name: cnpj_eo_formatado
+        description: CNPJ da entidade organizadora com a pontuação usual.
+      - name: nome_eo
+        description: Razão social da entidade organizadora.
+        tests:
+          - sem_mojibake
+      - name: agente_financeiro
+        description: Instituição financeira que opera o contrato.
+      - name: quantidade_uh
+        description: Unidades habitacionais (moradias) do empreendimento.
+      - name: pessoas_atendidas
+        description: >-
+          Estimativa de pessoas beneficiadas, à razão de 3,3 pessoas por moradia.
+      - name: tipologia
+        description: Tipo de construção das moradias (casa, apartamento ou misto).
+      - name: co_regime_obra
+        description: Código do regime de execução da obra, por extenso em `regime_obra`.
+      - name: regime_obra
+        description: >-
+          Como a obra é executada: por empreitada global, contratada pela entidade, ou
+          por autogestão, conduzida pela própria entidade e pelas famílias.
+      - name: co_modalidade
+        description: Código da modalidade do contrato, por extenso em `modalidade`.
+      - name: modalidade
+        description: >-
+          O que o contrato financia: aquisição de terreno e projeto, elaboração de
+          projeto, produção de unidades novas ou requalificação de imóvel.
       - name: municipio
         description: Município do empreendimento.
         tests:
@@ -28,22 +76,198 @@ models:
         description: Sigla da UF.
         tests:
           - not_null
-      - name: nome_eo
-        description: Razão social da entidade organizadora.
-        tests:
-          - sem_mojibake
-      - name: nome_empreendimento
-        description: Nome do empreendimento.
-        tests:
-          - sem_mojibake
+      - name: municipio_uf
+        description: Município e UF juntos, no formato usado nos filtros do painel.
+      - name: iso_3166_2
+        description: Código ISO 3166-2 do estado, usado pelo mapa do Superset.
+      - name: regiao_nome
+        description: Macrorregião do IBGE a que pertence a UF.
+      - name: gps_lat_grau
+        description: Graus da latitude do empreendimento.
+      - name: gps_lat_minuto
+        description: Minutos da latitude do empreendimento.
+      - name: gps_lat_segundo
+        description: Segundos da latitude do empreendimento.
+      - name: gps_long_grau
+        description: Graus da longitude do empreendimento.
+      - name: gps_long_minuto
+        description: Minutos da longitude do empreendimento.
+      - name: gps_long_segundo
+        description: Segundos da longitude do empreendimento.
+      - name: apf_municipio_empreendimento
+        description: >-
+          APF, município/UF e nome do empreendimento numa só coluna; é o campo de busca
+          da ficha no painel.
+      - name: situacao_gefus
+        description: >-
+          Situação da obra no acompanhamento do contrato, como vem da fonte (normal,
+          paralisada, não iniciada por cláusula suspensiva, concluída).
+      - name: semaforo_alerta
+        description: >-
+          Alerta do painel: paralisada, cláusula suspensiva, não iniciada (0% de obra),
+          concluída (100%) ou em andamento.
+      - name: indicativo_paralisacao
+        description: Sim quando há data de paralisação registrada para a obra.
+      - name: valor_contratado
+        description: Valor total do contrato, em reais.
+      - name: valor_financiamento_fds
+        description: Parte do contrato financiada com recursos do FDS, em reais.
+      - name: valor_contrapartidas
+        description: Contrapartidas de estados, municípios ou da entidade, em reais.
+      - name: valor_por_uh
+        description: Valor contratado dividido pela quantidade de moradias, em reais.
+      - name: dt_contratacao
+        description: Data de assinatura do contrato.
+      - name: valor_desembolsado
+        description: Total já desembolsado, somando as liberações efetivas, em reais.
+      - name: percentual_execucao_financeira
+        description: Percentual do valor contratado já desembolsado, de 0 a 100.
+      - name: percentual_obra_prevista
+        description: Execução física prevista pelo cronograma, em percentual.
+      - name: percentual_execucao_fisica
+        description: Execução física medida, em percentual.
+      - name: dt_inicio_obra
+        description: Data de início da obra.
+      - name: dt_previsao_conclusao
+        description: >-
+          Data prevista para concluir a obra. A data de 1900 indica previsão não
+          informada.
+      - name: dt_conclusao_obra
+        description: Data de conclusão da obra, quando informada.
+      - name: divergencia_fisico_financeira
+        description: >-
+          Execução financeira menos execução física, em pontos percentuais; positivo
+          indica desembolso à frente da obra.
+      - name: status_ritmo_obra
+        description: >-
+          Leitura da divergência com margem de 5 pontos percentuais: desembolso
+          adiantado, atrasado ou ritmo equilibrado.
+      - name: qt_uh_alienadas
+        description: Moradias já alienadas, isto é, transferidas às famílias.
+      - name: pct_entrega
+        description: Percentual das moradias já entregues.
+      - name: dt_entrega
+        description: Data de entrega das moradias, quando informada.
+      - name: status_entrega
+        description: Totalmente entregue, entrega parcial ou não entregue.
+      - name: pct_execucao_ts
+        description: >-
+          Execução do trabalho social com as famílias, em percentual. Vazio quando não
+          há registro de trabalho social.
 
   - name: ouro_fds_panorama_entidade
     description: >
-      Painel agregado por entidade organizadora, com carteira e execução de cada uma.
+      Carteira e desempenho de cada entidade organizadora do FDS: quantos
+      empreendimentos e moradias conduz, quanto contratou e recebeu, quanto entregou e
+      onde atua. Traz também um índice de risco que soma 1 ponto por obra abaixo do
+      previsto, 2 por obra paralisada e 1 por obra com desembolso mais de 5 pontos
+      atrás da execução física; até 3 pontos é risco médio, acima disso alto.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por entidade organizadora.
+          chave: [cnpj_eo]
+          fonte: >-
+            Ministério das Cidades, monitoramento do FDS, e CAIXA, como agente
+            financeiro.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Entidades (panorama das entidades)
+    columns:
+      - name: cnpj_eo
+        description: CNPJ da entidade organizadora, com 14 dígitos.
+      - name: nome_eo
+        description: Razão social da entidade organizadora, em maiúsculas.
+      - name: total_empreendimentos
+        description: Empreendimentos conduzidos pela entidade.
+      - name: total_uhs_contratadas
+        description: Moradias contratadas pela entidade.
+      - name: total_uhs_entregues
+        description: Moradias já alienadas às famílias.
+      - name: total_pessoas_atendidas
+        description: Estimativa de pessoas beneficiadas pelas moradias da entidade.
+      - name: valor_total_contratado
+        description: Soma do valor contratado, em reais.
+      - name: valor_total_desembolsado
+        description: Soma do valor desembolsado, em reais.
+      - name: media_execucao_fisica
+        description: >-
+          Execução física média, em percentual, ponderada pelo valor contratado de cada
+          empreendimento.
+      - name: media_execucao_financeira
+        description: Desembolsado sobre contratado da carteira inteira, em percentual.
+      - name: taxa_entrega_geral
+        description: Moradias entregues sobre moradias contratadas, em percentual.
+      - name: qtd_obras_atrasadas
+        description: Obras com execução física abaixo da prevista.
+      - name: qtd_obras_paralisadas
+        description: Obras com data de paralisação registrada.
+      - name: qtd_obras_divergencia_financeira
+        description: Obras com desembolso mais de 5 pontos percentuais atrás da execução física.
+      - name: qtd_estados_atuacao
+        description: UFs em que a entidade tem empreendimento.
+      - name: qtd_municipios_atuacao
+        description: Municípios em que a entidade tem empreendimento.
+      - name: score_risco
+        description: >-
+          Índice de risco: obras atrasadas e com desembolso atrasado valem 1 ponto
+          cada, obras paralisadas valem 2.
+      - name: classificacao_risco
+        description: Faixa do índice de risco (baixo sem pontos, médio até 3, alto acima).
 
   - name: ouro_fds_evolucao_financeira_chart
     description: >
-      Série APF × mês pronta para o gráfico de evolução financeira.
+      Liberações financeiras de cada empreendimento do FDS mês a mês, com o acumulado e
+      os percentuais de execução, para o gráfico de evolução financeira. O FDS não tem
+      série mensal da obra: a execução física é a medição mais recente, repetida em
+      todos os meses como referência.
+    config:
+      meta:
+        documentacao:
+          grao: Uma linha por empreendimento e mês com liberação.
+          chave: [apf, mes]
+          fonte: Ministério das Cidades e CAIXA, liberações financeiras do FDS.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Entidades (evolução financeira)
     tests:
       - unique_combinacao:
           colunas: ["apf", "mes"]
+    columns:
+      - name: apf
+        description: Autorização de Projeto de Financiamento do empreendimento.
+      - name: cnpj_eo
+        description: CNPJ da entidade organizadora.
+      - name: nome_eo
+        description: Razão social da entidade organizadora, em maiúsculas.
+      - name: apf_municipio_empreendimento
+        description: APF, município/UF e nome juntos; campo de busca do painel.
+      - name: mes
+        description: Mês das liberações, como texto no formato ano-mês-dia.
+      - name: ano
+        description: Primeiro dia do ano do mês, para agrupar por ano no gráfico.
+      - name: trimestre
+        description: Primeiro dia do trimestre do mês, para agrupar por trimestre.
+      - name: valor_liberado_mensal
+        description: Total liberado no mês, em reais.
+      - name: valor_obra_mensal
+        description: Parte do liberado no mês destinada à obra, em reais.
+      - name: valor_terreno_mensal
+        description: Parte do liberado no mês destinada ao terreno, em reais.
+      - name: valor_ts_mensal
+        description: Parte do liberado no mês destinada ao trabalho social, em reais.
+      - name: valor_projeto_mensal
+        description: Parte do liberado no mês destinada ao projeto, em reais.
+      - name: valor_incc_mensal
+        description: Parte do liberado no mês que corresponde à correção pelo INCC, em reais.
+      - name: valor_desembolsado_acumulado
+        description: Total liberado desde o início até o mês, em reais.
+      - name: percentual_execucao_financeira
+        description: Acumulado liberado sobre o valor contratado, em percentual.
+      - name: percentual_execucao_fisica
+        description: >-
+          Execução física mais recente do empreendimento, repetida em todos os meses.
+      - name: municipio
+        description: Município do empreendimento.
+      - name: uf
+        description: Sigla da UF.

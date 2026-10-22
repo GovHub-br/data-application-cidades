@@ -149,3 +149,12 @@ def test_sync_le_as_propriedades_do_catalogo(tmp_path, monkeypatch) -> None:
     assert gov.documentacao_por_modelo() == {
         "ouro_far_ficha": documentacao_dbt.propriedades(DOCUMENTACAO)
     }
+
+
+def test_model_da_ouro_sem_entrada_no_yaml_e_pendencia(tmp_path) -> None:
+    ouro = tmp_path / "produto" / "ouro"
+    ouro.mkdir(parents=True)
+    (ouro / "ouro_produto_x.sql").write_text("select 1", encoding="utf-8")
+    (ouro / "schema.yml").write_text("version: 2\nmodels: []\n", encoding="utf-8")
+
+    assert auditoria.auditar_ouro(tmp_path) == {"ouro_produto_x": ["sem_entrada_yaml"]}
