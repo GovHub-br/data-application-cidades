@@ -11,7 +11,10 @@ models:
       e financeira. Alimenta a ficha do Superset.
     columns:
       - name: apf
-        description: APF normalizado para 8 dígitos — chave do painel.
+        description: >-
+          Autorização de Projeto de Financiamento (APF), com 8 dígitos: identifica o
+          empreendimento em todas as tabelas do FAR e é a chave de busca da ficha no
+          painel.
         tests:
           - not_null
           - unique
