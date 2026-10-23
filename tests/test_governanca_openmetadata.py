@@ -1052,3 +1052,49 @@ def test_produto_por_modelo_sai_do_catalogo_semantico() -> None:
     declarados = {p["name"] for p in DOMINIOS["produtos"]}
     desconhecidos = set(produtos.values()) - declarados - PRODUTOS_SEM_DATA_PRODUCT
     assert not desconhecidos, desconhecidos
+
+
+# ── ativos sem domínio ──────────────────────────────────────────────────────
+class _OMDeTeste:
+    """Só o que `dominio_do_servico_nas_orfas` usa do cliente."""
+
+    offline = False
+
+    def __init__(self, ativos: dict[str, list[dict]]) -> None:
+        self.ativos = ativos
+        self.patches: list[tuple[str, str, list[dict]]] = []
+
+    def existe(self, rota: str, fqn: str, campos: str | None = None) -> dict:
+        return {"id": "d-mcid", "name": fqn, "fullyQualifiedName": fqn}
+
+    def listar(self, rota: str, parametros: dict) -> list[dict]:
+        return self.ativos.get(rota, [])
+
+    def patch(self, rota: str, ident: str, operacoes: list[dict], _rotulo: str) -> None:
+        self.patches.append((rota, ident, operacoes))
+
+
+def test_ativo_sem_dominio_recebe_o_do_servico_e_o_resto_fica() -> None:
+    habitacao = [
+        {"id": "d-hab", "type": "domain", "fullyQualifiedName": "MCid.Habitacao"}
+    ]
+    om = _OMDeTeste(
+        {
+            "databaseSchemas": [
+                {"id": "s1", "fullyQualifiedName": "cidades.metadata", "domains": []},
+                {"id": "s2", "fullyQualifiedName": "cidades.ouro", "domains": habitacao},
+            ],
+            "tables": [
+                {"id": "t1", "fullyQualifiedName": "cidades.metadata.models"},
+                {"id": "t2", "fullyQualifiedName": "ouro.x", "domains": habitacao},
+            ],
+        }
+    )
+    gov.dominio_do_servico_nas_orfas(om, "Cidades", "cidades")
+
+    assert [(rota, ident) for rota, ident, _ in om.patches] == [
+        ("databaseSchemas", "s1"),
+        ("tables", "t1"),
+    ]
+    dominio = om.patches[0][2][0]["value"][0]
+    assert (dominio["id"], dominio["fullyQualifiedName"]) == ("d-mcid", "MCid")
