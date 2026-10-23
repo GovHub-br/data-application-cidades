@@ -13,7 +13,7 @@ python = "~3.11"
 # great-expectations e sqlglot ficam fora: rodam em scripts/governance/, nao
 # na imagem.
 apache-airflow = "3.3.2"
-apache-airflow-providers-postgres = "7.0.2"
+apache-airflow-providers-postgres = "7.1.0"
 apache-airflow-providers-microsoft-mssql = "4.7.1"
 apache-airflow-providers-standard = "1.19.0"
 numpy = "2.4.6"
