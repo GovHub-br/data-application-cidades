@@ -599,8 +599,9 @@ def processar_arquivo_simples(
     ja_inseridos: set,
     idx: int = 0,
     total: int = 0,
+    pousadas: Optional[list] = None,
 ) -> str:
-    """Retorna 'skipped', 'success' ou 'error'."""
+    """Retorna 'skipped', 'success' ou 'error'. A chave pousada vai para `pousadas`."""
     nome_arquivo = caminho_sftp.rsplit("/", 1)[-1]
 
     if caminho_sftp in ja_inseridos:
@@ -619,6 +620,8 @@ def processar_arquivo_simples(
         minio_key = subir_para_minio(minio, tmp_path, nome_destino)
         spinner.parar(ok=True)
         log.info("✓ [%d/%d] %s → raw/%s", idx, total, nome_arquivo, nome_destino)
+        if pousadas is not None:
+            pousadas.append(minio_key)
         _registrar_ingest(
             conn_str,
             caminho_sftp,
@@ -787,8 +790,10 @@ def processar_zip(  # noqa: C901
     zip_completos: dict,
     idx: int = 0,
     total: int = 0,
+    pousadas: Optional[list] = None,
 ) -> Tuple[int, int]:
-    """Retorna (qtd_sucesso, qtd_erro)."""
+    """Retorna (qtd_sucesso, qtd_erro). As chaves pousadas vão para `pousadas`."""
+    pousadas = pousadas if pousadas is not None else []
     sucesso = erro = 0
     nome_zip = caminho_zip.rsplit("/", 1)[-1]
     pasta = _pasta_destino(caminho_zip)
@@ -864,6 +869,7 @@ def processar_zip(  # noqa: C901
                         progress_cb=_progresso_upload(nome_interno, info.file_size),
                     )
                     log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
+                    pousadas.append(minio_key)
                     _registrar_ingest(
                         conn_str,
                         caminho_log,
@@ -1012,6 +1018,7 @@ def processar_zip(  # noqa: C901
                         file_hash = _compute_hash(str(arq_path))
                         minio_key = subir_para_minio(minio, str(arq_path), nome_destino)
                         log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
+                        pousadas.append(minio_key)
                         _registrar_ingest(
                             conn_str,
                             caminho_log,
@@ -1063,6 +1070,7 @@ def processar_zip(  # noqa: C901
             file_hash = _compute_hash(tmp_zip)
             minio_key = subir_para_minio(minio, tmp_zip, nome_destino)
             log.info("✓ [%d/%d] %s → raw/%s (bruto)", idx, total, nome_zip, nome_destino)
+            pousadas.append(minio_key)
             _registrar_ingest(
                 conn_str,
                 caminho_zip,
@@ -1106,6 +1114,7 @@ def _processar_entry(
     zip_completos: dict,
     idx: int,
     total: int,
+    pousadas: Optional[list] = None,
 ) -> Tuple[int, int]:
     """Despacha para simples ou zip. Retorna (sucesso, erro)."""
     ext = _extensao(caminho.rsplit("/", 1)[-1])
@@ -1122,6 +1131,7 @@ def _processar_entry(
             zip_completos,
             idx,
             total,
+            pousadas,
         )
     resultado = processar_arquivo_simples(
         sftp,
@@ -1134,6 +1144,7 @@ def _processar_entry(
         ja_inseridos,
         idx,
         total,
+        pousadas,
     )
     return (
         (1, 0) if resultado == "success" else (0, 1) if resultado == "error" else (0, 0)
@@ -1167,8 +1178,11 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     pastas: Optional[list] = None,
     preview: bool = False,
     reingest_deleted: bool = False,
-) -> Tuple[int, int]:
-    """Ingere os arquivos do SFTP para raw/ no MinIO. Retorna (sucesso, erro).
+) -> Tuple[int, int, list]:
+    """Ingere os arquivos do SFTP para raw/ no MinIO.
+
+    Retorna (sucesso, erro, chaves pousadas em raw/ nesta execução); as chaves vão
+    para a detecção de drift (`sftp_drift.py`).
 
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run()).
     Não há dry-run: a ingestão é idempotente pelo controle lake._ingest_minio_log.
@@ -1192,7 +1206,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
             _exibir_preview(sftp_cli, pastas_filtro)
         finally:
             sftp_cli.fechar()
-        return 0, 0
+        return 0, 0, []
 
     conn_str = _conn_str()
     _criar_schema_e_log(conn_str)
@@ -1234,6 +1248,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     sftp = sftp_cli.conectar()
 
     total_sucesso = total_erro = 0
+    pousadas: list = []
 
     try:
         _exibir_preview(sftp_cli, pastas_filtro)
@@ -1263,6 +1278,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
                     zip_completos,
                     idx,
                     total,
+                    pousadas,
                 )
                 total_sucesso += s
                 total_erro += e
@@ -1298,6 +1314,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
                         zip_completos,
                         idx,
                         total,
+                        pousadas,
                     )
                     total_sucesso += s
                     total_erro += err
@@ -1326,7 +1343,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     )
     if error_lines:
         log.warning("%d linha(s) ERROR no log → %s", error_lines, _LOG_FILE)
-    return total_sucesso, total_erro
+    return total_sucesso, total_erro, pousadas
 
 
 def main() -> None:
