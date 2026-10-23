@@ -208,5 +208,5 @@ jobs:
         with:
           path: ${{ env.DBT_PROJECT_DIR }}/public
 
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
         if: steps.vpn.outputs.configurada == 'true'
