@@ -1,45 +1,224 @@
 version: 2
 
+# Os painéis do Reforma Casa Brasil cruzam o contrato com o CadÚnico por CPF ou NIS
+# pseudonimizados; nenhuma tabela da ouro traz identificador de pessoa. As agregações
+# por território e perfil suprimem células com menos de dez contratos, para que
+# ninguém seja reidentificado pelo cruzamento de recortes.
+
 models:
   - name: ouro_reforma_casa_brasil_acesso_dash
     description: >
-      Indicadores agregados de acesso ao Reforma Casa Brasil por território,
-      faixa, raça/cor e sexo. Células com menos de dez contratos são suprimidas.
-    meta:
-      tags: [ouro, reforma-casa-brasil, dashboard, acesso, agregado]
+      Quem acessa o Reforma Casa Brasil: contratos por território, faixa de renda,
+      raça/cor e sexo, com valor financiado, renda média e a parcela dos contratos que
+      foi possível vincular ao CadÚnico. Células com menos de dez contratos são
+      suprimidas.
+    config:
+      meta:
+        tags: [ouro, reforma-casa-brasil, dashboard, acesso, agregado]
+        documentacao:
+          grao: >-
+            Uma linha por município, faixa de renda, raça/cor e sexo, com ao menos dez
+            contratos.
+          chave: [codigo_ibge, faixa_renda, raca_cor, sexo]
+          fonte: >-
+            Contratos do Reforma Casa Brasil e Cadastro Único (CadÚnico), vinculados por
+            CPF ou NIS pseudonimizados.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Reforma Casa Brasil (acesso)
     columns:
+      - name: uf
+        description: Sigla da UF do contrato, ou "Não informado".
+      - name: municipio
+        description: Município do contrato, ou "Não informado".
+      - name: codigo_ibge
+        description: >-
+          Código IBGE do município, do contrato ou, na falta dele, do cadastro da
+          família.
+      - name: faixa_renda
+        description: Faixa de renda do contrato, como a fonte a codifica.
+      - name: raca_cor
+        description: Raça/cor declarada no CadÚnico, ou "Não informada".
+      - name: sexo
+        description: Sexo pelo CadÚnico ou, na falta dele, pelo contrato.
       - name: quantidade_contratos
+        description: Contratos no recorte.
         data_tests: [not_null]
+      - name: quantidade_familias_cadunico
+        description: Famílias distintas do CadÚnico vinculadas aos contratos do recorte.
+      - name: quantidade_encontrada_cadunico
+        description: Contratos cujo titular foi encontrado no CadÚnico.
       - name: proporcao_encontrada_cadunico
         description: Cobertura do vínculo pseudonimizado com o CadÚnico.
+      - name: valor_financiado_total
+        description: Soma do valor financiado, em reais.
+      - name: valor_financiado_medio
+        description: Valor financiado médio por contrato, em reais.
+      - name: renda_familiar_media
+        description: Renda familiar comprovada média, em reais por mês.
+      - name: dt_referencia
+        description: Data de referência mais recente dos contratos do recorte.
+      - name: dt_ouro
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_reforma_casa_brasil_implementacao_dash
     description: >
-      Indicadores administrativos de financiamento e adimplência. Percepções de
-      burocracia, documentação e qualidade dependem da pesquisa.
-    meta:
-      tags: [ouro, reforma-casa-brasil, dashboard, implementacao, agregado]
+      Como o financiamento do Reforma Casa Brasil está sendo operado: contratos por
+      território, faixa de renda, modalidade e forma de desembolso, com valor
+      financiado, recurso próprio, FGTS, prestação, juros, prazo e atraso. Percepções
+      de burocracia, documentação e qualidade dependem de pesquisa e não estão aqui.
+      Células com menos de dez contratos são suprimidas.
+    config:
+      meta:
+        tags: [ouro, reforma-casa-brasil, dashboard, implementacao, agregado]
+        documentacao:
+          grao: >-
+            Uma linha por município, faixa de renda, modalidade, tipo de desembolso e
+            sistema de amortização, com ao menos dez contratos.
+          chave:
+            - codigo_ibge
+            - faixa_renda
+            - modalidade
+            - tipo_desembolso
+            - sistema_amortizacao
+          fonte: Contratos do Reforma Casa Brasil (FGTS).
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Reforma Casa Brasil (implementação)
     columns:
+      - name: uf
+        description: Sigla da UF do contrato, ou "Não informado".
+      - name: municipio
+        description: Município do contrato, ou "Não informado".
+      - name: codigo_ibge
+        description: Código IBGE do município, do contrato ou do cadastro da família.
+      - name: faixa_renda
+        description: Faixa de renda do contrato, como a fonte a codifica.
+      - name: modalidade
+        description: Modalidade do contrato, como a fonte a codifica.
+      - name: tipo_desembolso
+        description: Forma de desembolso do financiamento, como a fonte a codifica.
+      - name: sistema_amortizacao
+        description: Sistema de amortização do financiamento.
       - name: quantidade_contratos
+        description: Contratos no recorte.
         data_tests: [not_null]
+      - name: valor_financiado_total
+        description: Soma do valor financiado, em reais.
+      - name: valor_financiado_medio
+        description: Valor financiado médio por contrato, em reais.
+      - name: recurso_proprio_medio
+        description: Recurso próprio médio aportado pela família, em reais.
+      - name: fgts_utilizado_medio
+        description: Saldo de FGTS médio utilizado no contrato, em reais.
+      - name: prestacao_inicial_media
+        description: Prestação inicial média, em reais.
+      - name: taxa_juros_media
+        description: Taxa de juros nominal média, em percentual ao ano.
+      - name: prazo_medio_meses
+        description: Prazo médio do financiamento, em meses.
+      - name: quantidade_com_atraso
+        description: Contratos com algum dia de atraso na posição mais recente.
+      - name: proporcao_com_atraso
+        description: Contratos com atraso sobre o total do recurso, de 0 a 1.
+      - name: dt_referencia
+        description: Data de referência mais recente dos contratos do recorte.
+      - name: dt_ouro
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_reforma_casa_brasil_resultado_dash
     description: >
-      Linha de base de inadequação domiciliar observável no CadÚnico. Não mede
-      efeito pós-obra nem atribui causalidade ao programa.
-    meta:
-      tags: [ouro, reforma-casa-brasil, dashboard, resultado, agregado]
+      Linha de base das condições de moradia de quem contratou o Reforma Casa Brasil,
+      observadas no CadÚnico antes da reforma: falta de água canalizada ou banheiro,
+      esgotamento precário, material inadequado e adensamento. É um indicador
+      operacional, não o conceito oficial de inadequação habitacional, e não mede o
+      efeito da reforma: não há ainda pesquisa ou medição depois da obra. Células com
+      menos de dez contratos são suprimidas.
+    config:
+      meta:
+        tags: [ouro, reforma-casa-brasil, dashboard, resultado, agregado]
+        documentacao:
+          grao: >-
+            Uma linha por município, faixa de renda e raça/cor, com ao menos dez
+            contratos.
+          chave: [codigo_ibge, faixa_renda, raca_cor]
+          fonte: >-
+            Contratos do Reforma Casa Brasil e Cadastro Único (CadÚnico), dados da
+            família e do domicílio.
+          periodicidade: mensal
+          consumo:
+            - Superset, painel Reforma Casa Brasil (resultado)
     columns:
+      - name: uf
+        description: Sigla da UF do contrato, ou "Não informado".
+      - name: municipio
+        description: Município do contrato, ou "Não informado".
+      - name: codigo_ibge
+        description: Código IBGE do município, do contrato ou do cadastro da família.
+      - name: faixa_renda
+        description: Faixa de renda do contrato, como a fonte a codifica.
+      - name: raca_cor
+        description: Raça/cor declarada no CadÚnico, ou "Não informada".
+      - name: quantidade_contratos
+        description: Contratos no recorte.
+      - name: quantidade_com_inadequacao_observavel_na_linha_de_base
+        description: >-
+          Contratos cuja família tinha, no CadÚnico, ao menos uma condição de
+          inadequação observável: sem água canalizada, sem banheiro, esgotamento
+          precário, material do domicílio inadequado ou mais de três pessoas por
+          dormitório.
+      - name: proporcao_inadequacao_observavel_na_linha_de_base
+        description: >-
+          Contratos com inadequação observável sobre os contratos vinculados ao
+          CadÚnico, de 0 a 1.
+      - name: media_pessoas_por_dormitorio
+        description: Média de moradores por dormitório nos domicílios do recorte.
+      - name: quantidade_sem_agua_canalizada
+        description: Contratos de famílias sem água canalizada no domicílio.
+      - name: quantidade_sem_banheiro
+        description: Contratos de famílias sem banheiro no domicílio.
+      - name: quantidade_escoamento_precario
+        description: >-
+          Contratos de famílias com esgotamento por fossa rudimentar, vala, rio, lago ou
+          outra forma precária.
       - name: resultado_pos_obra_disponivel
         description: Sempre falso até a entrada de pesquisa ou medição pós-obra.
         data_tests:
           - accepted_values:
               arguments: {values: [false]}
+      - name: ressalva_resultado
+        description: Aviso de que o indicador é linha de base e não mede efeito da reforma.
+      - name: dt_referencia
+        description: Data de referência mais recente dos contratos do recorte.
+      - name: dt_ouro
+        description: Momento em que a tabela foi gerada.
 
   - name: ouro_reforma_casa_brasil_cobertura_perguntas_dash
-    description: Matriz de cobertura que separa resposta administrativa, proxy e lacuna de pesquisa.
-    meta:
-      tags: [ouro, reforma-casa-brasil, dashboard, cobertura]
+    description: >
+      Quais perguntas sobre o Reforma Casa Brasil os dados respondem, quais têm só um
+      indicador aproximado e quais dependem de pesquisa, com a fonte que faltaria para
+      cada uma. Evita que o painel mostre ausência de dado como resultado zero.
+    config:
+      meta:
+        tags: [ouro, reforma-casa-brasil, dashboard, cobertura]
+        documentacao:
+          grao: Uma linha por bloco e pergunta.
+          chave: [bloco, pergunta]
+          fonte: Ministério das Cidades, escopo de avaliação do Reforma Casa Brasil.
+          periodicidade: eventual
+          consumo:
+            - Superset, painel Reforma Casa Brasil (cobertura)
     data_tests:
       - unique_combinacao:
           arguments: {colunas: [bloco, pergunta]}
+    columns:
+      - name: bloco
+        description: Eixo da avaliação (acesso, implementação ou resultado).
+      - name: pergunta
+        description: Pergunta de avaliação do programa.
+      - name: situacao_dado
+        description: >-
+          Se os dados respondem, se há só um indicador aproximado, ou se a pergunta
+          requer pesquisa, medição ou acompanhamento ao longo do tempo.
+      - name: fonte_necessaria
+        description: Fonte que responde ou responderia a pergunta.
