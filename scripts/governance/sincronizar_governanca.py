@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import json
 
+import documentacao_dbt
 from governanca_comum import (
     RAIZ,
     ClienteOM,
@@ -602,6 +603,30 @@ def mesclar_etiquetas(
     return resultado
 
 
+def documentacao_por_modelo() -> dict[str, dict[str, str]]:
+    """Propriedades customizadas de cada modelo, do `meta.documentacao`."""
+    if not CATALOGO.exists():
+        return {}
+    catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    return {
+        m["name"]: documentacao_dbt.propriedades(m["documentacao"])
+        for m in catalogo.get("models", [])
+        if m.get("documentacao")
+    }
+
+
+def extensao_da_documentacao(tabela: dict, documentacao: dict[str, dict]) -> dict:
+    """`extension` desejada, ou nada se o modelo não declara documentação.
+
+    Mescla com o que já existe: as relações semânticas também moram em
+    `extension` e são escritas por outra etapa.
+    """
+    propriedades = documentacao.get(tabela["name"])
+    if not propriedades:
+        return {}
+    return {"extension": {**(tabela.get("extension") or {}), **propriedades}}
+
+
 def camadas_por_modelo() -> dict[str, str]:
     """Camada real de cada modelo, lida do catálogo semântico.
 
@@ -868,6 +893,7 @@ def catalogar_tabelas(
     declarados = {s["name"]: s for s in carregar("schemas.yml")["schemas"]}
     camadas = camadas_por_modelo()
     produtos_dos_modelos = produtos_por_modelo()
+    documentacao = documentacao_por_modelo()
     por_modelo = termos_por_modelo(termos)
     por_coluna = termos_por_coluna(termos)
     nosso_glossario = vocabulario_declarado(termos)
@@ -892,7 +918,10 @@ def catalogar_tabelas(
                 {
                     "databaseSchema": fqn_schema,
                     "limit": 1000,
-                    "fields": "tags,domains,owners,columns,certification,dataProducts",
+                    "fields": (
+                        "tags,domains,owners,columns,certification,dataProducts,"
+                        "extension"
+                    ),
                 },
             )
             if om.offline:
@@ -969,6 +998,7 @@ def catalogar_tabelas(
                 desejado["tags"] = mesclar_etiquetas(
                     tab.get("tags") or [], marcas, nosso_glossario
                 )
+                desejado.update(extensao_da_documentacao(tab, documentacao))
                 om.patch(
                     "tables", tab["id"], operacoes_de_diferenca(tab, desejado), rotulo
                 )
