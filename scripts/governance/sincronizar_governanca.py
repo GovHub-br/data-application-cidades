@@ -1008,6 +1008,38 @@ def catalogar_tabelas(
                 catalogar_colunas(om, tab, por_coluna, nosso_glossario, rotulo)
 
 
+def dominio_do_servico_nas_orfas(om: ClienteOM, servico: str, banco: str) -> None:
+    """Schema e tabela que nenhum produto catalogou recebem o domínio do serviço.
+
+    A restrição de acesso por domínio usa `hasDomain()`, que deixa passar
+    ativo SEM domínio: uma tabela órfã do nosso banco ficaria visível para o
+    perfil restrito de qualquer outro domínio da instância. É o caso do schema
+    `metadata`, que não pertence a produto nenhum. Esta etapa roda depois da
+    catalogação, então só alcança o que ela não cobriu, e não troca domínio de
+    quem já tem um.
+    """
+    dominio_fqn = (carregar("servicos.yml").get("servico") or {}).get("domain")
+    dominio = om.existe("domains", dominio_fqn) if dominio_fqn else None
+    if not dominio:
+        return
+    print(f"Ativos sem domínio recebem {dominio_fqn}")
+    desejado = {"domains": [referencia(dominio, "domain")]}
+    for rota in ("databaseSchemas", "tables"):
+        # o banco tem poucas centenas de tabelas; `limit` cobre sem paginar
+        ativos = om.listar(
+            rota, {"database": f"{servico}.{banco}", "fields": "domains", "limit": 1000}
+        )
+        orfaos = [a for a in ativos if not a.get("domains")]
+        for ativo in orfaos:
+            om.patch(
+                rota,
+                ativo["id"],
+                operacoes_de_diferenca(ativo, desejado),
+                ativo["fullyQualifiedName"],
+            )
+        print(f"  {rota}: {len(orfaos)} sem domínio")
+
+
 def catalogar_colunas(
     om: ClienteOM,
     tabela: dict,
@@ -1066,6 +1098,7 @@ def main() -> int:
         om, donos, dominios, nosso_glossario, config["servico"], config["banco"]
     )
     catalogar_tabelas(om, donos, dominios, termos, config["servico"], config["banco"])
+    dominio_do_servico_nas_orfas(om, config["servico"], config["banco"])
     sincronizar_relacoes_semanticas(om, config["servico"], config["banco"])
 
     return om.resumo()
