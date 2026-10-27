@@ -19,6 +19,21 @@ models:
         description: Objeto Parquet da staging selecionado como snapshot mais recente.
         data_tests: [not_null]
 
+  - name: bronze_sftp_pmcmv_reformas_mcid_historico
+    description: >
+      Série completa de snapshots protegidos de contratos recebidos pelo
+      SFTP/GEFUS. Preserva a competência de cada fotografia para monitoramento
+      temporal da carteira; não é fonte de execução orçamentária ou física.
+    meta:
+      tags: [bronze, reforma-casa-brasil, sftp, fgts, historico, dado-pseudonimizado]
+    columns:
+      - name: nu_contrato
+        description: Número do contrato na fonte; usado somente em ambiente restrito.
+        data_tests: [not_null]
+      - name: filename
+        description: Arquivo Parquet de staging que identifica a fotografia da carteira.
+        data_tests: [not_null]
+
   - name: bronze_sftp_arq_pessoa_pbf
     description: >
       Pessoas do CadÚnico em 12/12/2025. CPF e NIS pseudonimizados com HMAC
