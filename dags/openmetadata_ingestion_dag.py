@@ -23,16 +23,11 @@ from schedule_loader import get_dynamic_schedule
 from openmetadata.config import (
     ALL_RECIPES,
     OPENMETADATA_GLOSSARY_PATH,
-    OPENMETADATA_REQUIREMENTS,
     OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH,
     RECIPE_PIPELINE,
     SEGREDOS_INGESTAO,
     SINCRONIZAR_RELACOES_SEMANTICAS,
 )
-
-#: Cache do virtualenv, compartilhado pelas tasks para não reinstalar 255
-#: pacotes a cada uma.
-VENV_CACHE = "/tmp/airflow_venvs"
 
 
 def _encadear(
@@ -82,15 +77,11 @@ def _encadear(
 def openmetadata_ingestion_dag() -> None:
     """Executa as recipes do OpenMetadata para o escopo do MCID."""
 
-    @task.virtualenv(
-        task_id="run_openmetadata_recipe_base",
-        requirements=OPENMETADATA_REQUIREMENTS,
-        # isolado da imagem de propósito: o pacote rebaixa dependências da
-        # base do Airflow. Ver OPENMETADATA_REQUIREMENTS.
-        system_site_packages=False,
-        expect_airflow=False,
-        venv_cache_path=VENV_CACHE,
-    )
+    # O openmetadata-ingestion está na imagem (requirements.lock.txt), não num
+    # virtualenv: o conector do Airflow lê o banco de metadados pelo ORM do
+    # próprio Airflow, e aqui ele usa o da task, o mesmo que escreveu o banco.
+    # No venv, com o 3.2.2 do extra `airflow`, ele falhava no homolog.
+    @task(task_id="run_openmetadata_recipe_base")
     def run_openmetadata_recipe(
         recipe_path: str,
         command: str,
@@ -99,9 +90,6 @@ def openmetadata_ingestion_dag() -> None:
         dbt_project_dir: str = "",
     ) -> None:
         import os
-        import sys
-
-        sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
 
         from openmetadata.runner import (
             run_openmetadata_recipe as executar_recipe,
@@ -124,26 +112,11 @@ def openmetadata_ingestion_dag() -> None:
             dbt_project_dir=dbt_project_dir,
         )
 
-    @task.virtualenv(
-        task_id="sync_mcid_glossary",
-        requirements=OPENMETADATA_REQUIREMENTS,
-        # isolado da imagem de propósito: o pacote rebaixa dependências da
-        # base do Airflow. Ver OPENMETADATA_REQUIREMENTS.
-        system_site_packages=False,
-        expect_airflow=False,
-        venv_cache_path=VENV_CACHE,
-    )
+    @task(task_id="sync_mcid_glossary")
     def sync_mcid_glossary(glossary_definition_path: str) -> None:
         import logging
         import os
-        import sys
 
-        sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
-
-        # Tasks ``virtualenv`` são serializadas para outro processo: globais
-        # importados no arquivo da DAG não acompanham a função. Importe aqui
-        # para que os nomes dos segredos existam também no subprocesso.
-        from openmetadata.config import SEGREDOS_INGESTAO
         from openmetadata.glossary import sync_glossary
 
         resumo = sync_glossary(
@@ -153,24 +126,11 @@ def openmetadata_ingestion_dag() -> None:
         )
         logging.info("Glossário MCID sincronizado: %s", resumo)
 
-    @task.virtualenv(
-        task_id="sync_mcid_semantic_relationships",
-        requirements=OPENMETADATA_REQUIREMENTS,
-        # isolado da imagem de propósito: o pacote rebaixa dependências da
-        # base do Airflow. Ver OPENMETADATA_REQUIREMENTS.
-        system_site_packages=False,
-        expect_airflow=False,
-        venv_cache_path=VENV_CACHE,
-    )
+    @task(task_id="sync_mcid_semantic_relationships")
     def sync_mcid_semantic_relationships(catalog_path: str) -> None:
         import logging
         import os
-        import sys
 
-        sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
-
-        # Ver observação equivalente em ``sync_mcid_glossary`` acima.
-        from openmetadata.config import SEGREDOS_INGESTAO
         from openmetadata.semantic_relationships import sync_semantic_relationships
 
         resumo = sync_semantic_relationships(
@@ -197,8 +157,8 @@ def openmetadata_ingestion_dag() -> None:
         de uma vez, em silêncio. Domínio, produto e etiqueta sobreviveram;
         certificação não.
 
-        Roda no ambiente do Airflow, não no virtualenv: o script usa só
-        `requests` e `yaml`, e precisa do `scripts/` montado no container.
+        O script usa só `requests` e `yaml`, e precisa do `scripts/` montado
+        no container.
         """
         import logging
         import os
@@ -218,9 +178,12 @@ def openmetadata_ingestion_dag() -> None:
             )
             logging.info("%s:\n%s", descricao, resultado.stdout[-4000:])
             if resultado.returncode != 0:
+                # O script relata as falhas no fim do STDOUT; o stderr só tem
+                # algo quando ele quebra. Sem o stdout, a exceção não dizia o
+                # que falhou.
                 raise RuntimeError(
                     f"Falha ao sincronizar {descricao}:\n"
-                    f"{resultado.stderr[-2000:]}"
+                    f"{resultado.stdout[-1500:]}\n{resultado.stderr[-2000:]}"
                 )
 
     # O glossário vem ANTES das recipes: os FQNs que os `schema.yml` do dbt
