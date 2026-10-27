@@ -82,8 +82,14 @@ Por isso, para `.mdb` o script **apenas verifica** se há coluna sensível em al
 | **Alguma coluna sensível** | **`error`** — falha explícita, nada é gravado |
 
 A falha é deliberada: sem poder reescrever o arquivo, marcar como `masked` seria mentira e
-deixaria PII no lake em silêncio. Se acontecer, trate à parte (converter e descartar o `.mdb`,
-ou usar Jackcess via Java).
+deixaria PII no lake em silêncio. O `.mdb` continua com PII no `raw/`; quem protege as
+camadas seguintes é o `raw_para_staging.py`, que passa o CSV exportado de cada tabela por
+`mascarar_csv()` (mesmas regras, mesmo HMAC) antes de gravar o parquet. Para tirar a PII do
+`raw/` também, é preciso converter e descartar o `.mdb`, ou reescrevê-lo via Java (Jackcess).
+
+**Correção (out/2026):** a amostra abaixo não pegou o `CCI_CCA`. As tabelas `cci_analitico` e
+`cca_analitico` têm `DT_Nascimento` e `IM_CEP` de pessoa física, e chegaram sem máscara à
+staging e ao banco até o `raw_para_staging.py` passar a mascarar o `.mdb`.
 
 **Por que não têm PII** (verificado em amostra das 4 famílias): `MCidades_AO_1/2/3` (96 arqs),
 `CCI_CCA` (30), `AF` (1) e `CCI_CCA_ATUAL` (1) são dados de empreendimento/obra e analítico
