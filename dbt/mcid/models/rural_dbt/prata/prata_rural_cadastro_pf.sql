@@ -26,7 +26,9 @@ with
 
             -- Dados do Beneficiário
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_beneficiario)), '') as beneficiario_nome,
-            nullif(regexp_replace(trim(nu_cpf_beneficiario), '[^0-9]', '', 'g'), '') as beneficiario_cpf,
+            -- Já chega pseudonimizado (token HMAC da ingestão, hex). Tirar o que não é
+            -- dígito destruía o token e deixava sequências com cara de CPF.
+            nullif(lower(trim(nu_cpf_beneficiario)), '') as beneficiario_cpf,
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_sexo_benef)), '') as beneficiario_sexo,
             {{ parse_int('nu_estado_civil') }} as estado_civil_codigo,
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_tipo_beneficiario)), '') as tipo_beneficiario,
