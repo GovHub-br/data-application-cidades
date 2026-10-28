@@ -8,7 +8,7 @@ consultado em SQL direto do Postgres:
 SELECT * FROM read_parquet('s3://data-lake-mcid/staging/<fonte>/<arquivo>.parquet');
 ```
 
-É a mesma montagem do homolog (`10.0.0.50`): PostgreSQL 15 do PGDG e pg_duckdb
+É a mesma montagem do homolog (`10.0.0.50`): PostgreSQL 18 do PGDG e pg_duckdb
 1.2.0 compilado do fonte. É por esse caminho que o dbt materializa a prata e o
 ouro (`SET LOCAL duckdb.force_execution = true` no `dbt_project.yml`).
 
@@ -188,7 +188,7 @@ WHERE r['uf'] = 'DF';
 
 | Variável | Valor | O quê |
 | --- | --- | --- |
-| `postgres_version` | `15` | a do homolog; o pg_duckdb suporta de 14 a 18 |
+| `postgres_version` | `18` | a do homolog; o pg_duckdb suporta de 14 a 18 |
 | `pg_duckdb_version` | `ee38d3b` (main de 2026-07-17) | instala a extensão `1.2.0`, a mesma do homolog |
 
 O último release com tag do pg_duckdb é o `v1.1.1`, de dez/2025. O homolog roda
@@ -201,8 +201,8 @@ nova, reinicia o Postgres e roda `ALTER EXTENSION pg_duckdb UPDATE`.
 ## Comandos úteis
 
 ```bash
-ansible postgres -i inventory.yaml -b -m command -a "systemctl status postgresql@15-main"
-ansible postgres -i inventory.yaml -b -m command -a "tail -n 50 /var/log/postgresql/postgresql-15-main.log"
+ansible postgres -i inventory.yaml -b -m command -a "systemctl status postgresql@18-main"
+ansible postgres -i inventory.yaml -b -m command -a "tail -n 50 /var/log/postgresql/postgresql-18-main.log"
 
 # na VM
 sudo -u postgres psql -d cidades -c "SELECT srvname, srvoptions FROM pg_foreign_server;"

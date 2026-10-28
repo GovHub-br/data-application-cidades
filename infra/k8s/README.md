@@ -7,8 +7,8 @@ Airflow. Tudo fica no namespace `cidades`.
 | Pasta | O que é | Como sobe |
 | --- | --- | --- |
 | `rustfs/` | RustFS 1.0.1, standalone | chart oficial `rustfs/rustfs` 1.0.1 |
-| `postgres/` | PostgreSQL 15 + pg_duckdb 1.2.0 | operator CloudNativePG + imagem própria (`Dockerfile`) |
-| `openmetadata/` | OpenMetadata 1.13.3 + Elasticsearch 9.3.0 | chart oficial `open-metadata/openmetadata` 1.13.3 + `elasticsearch.yaml` + Job `bootstrap.yaml` |
+| `postgres/` | PostgreSQL 18 + pg_duckdb 1.2.0 | operator CloudNativePG + imagem própria (`Dockerfile`) |
+| `openmetadata/` | OpenMetadata 2.0.7 + Elasticsearch 9.3.0 | chart oficial `open-metadata/openmetadata` 2.0.7 + `elasticsearch.yaml` + Job `bootstrap.yaml` |
 | `airflow/` | Airflow 3.3.2, LocalExecutor | chart oficial `apache-airflow/airflow` 1.22.0 + imagem de `infra/docker/airflow/` |
 | `criar-secrets.sh` | todos os Secrets (senhas geradas no cluster) | `./criar-secrets.sh rustfs\|postgres\|openmetadata\|airflow` |
 
@@ -26,10 +26,10 @@ nada.
 
 ```bash
 # Postgres + pg_duckdb: compila o DuckDB, leva de 20 a 60 min
-docker build -t ghcr.io/govhub-br/cidades-postgres:15-pgduckdb-ee38d3b infra/k8s/postgres
+docker build -t ghcr.io/govhub-br/cidades-postgres:18-pgduckdb-ee38d3b infra/k8s/postgres
 # Airflow: a mesma imagem do ambiente local
 docker build -t ghcr.io/govhub-br/cidades-airflow:main -f infra/docker/airflow/Dockerfile .
-docker push ghcr.io/govhub-br/cidades-postgres:15-pgduckdb-ee38d3b
+docker push ghcr.io/govhub-br/cidades-postgres:18-pgduckdb-ee38d3b
 docker push ghcr.io/govhub-br/cidades-airflow:main
 ```
 
@@ -97,7 +97,7 @@ como o pg_duckdb lê o lake (`read_parquet`, secret por usuário) são os mesmos
 infra/k8s/criar-secrets.sh openmetadata
 kubectl apply -f infra/k8s/openmetadata/elasticsearch.yaml
 kubectl -n cidades rollout status statefulset/elasticsearch --timeout=10m
-helm upgrade --install openmetadata open-metadata/openmetadata --version 1.13.3 \
+helm upgrade --install openmetadata open-metadata/openmetadata --version 2.0.7 \
   -n cidades -f infra/k8s/openmetadata/values.yaml --wait --timeout 20m
 kubectl apply -f infra/k8s/openmetadata/bootstrap.yaml
 kubectl -n cidades wait job/openmetadata-bootstrap --for=condition=Complete --timeout=10m
