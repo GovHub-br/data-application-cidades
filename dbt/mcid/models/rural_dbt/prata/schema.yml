@@ -43,7 +43,10 @@ models:
   - name: apf
     description: APF normalizado para 8 dígitos do empreendimento do beneficiário.
   - name: beneficiario_cpf
-    description: CPF do beneficiário (apenas dígitos).
+    description: >-
+      CPF do beneficiário pseudonimizado: token HMAC de 16 caracteres gerado na
+      ingestão (`scripts/mascarar_minio.py`). O mesmo CPF dá o mesmo token em
+      qualquer base, então serve para contar e cruzar pessoas, nunca para exibir.
   - name: beneficiario_sexo
     description: 'Sexo declarado: F ou M.'
   - name: ic_benef_bolsa_familia

@@ -254,8 +254,10 @@ _formatter = logging.Formatter(
     "%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
 )
 log = logging.getLogger(__name__)
-if _LOCAL_ARTIFACTS:
+if _LOCAL_ARTIFACTS and not logging.root.handlers:
     # Standalone: o script gerencia os próprios handlers (stderr + arquivo de log).
+    # Importado por outro script que já configurou o log (o raw_para_staging usa
+    # `mascarar_csv`), não instala outro par: cada linha sairia duplicada.
     logging.root.setLevel(logging.INFO)
     for _h in (
         logging.StreamHandler(sys.stderr),
@@ -550,6 +552,38 @@ def _verificar_roundtrip_tabular(
         raise ValueError(
             f"round-trip: nº de linhas divergem ({n_dst} != {total_esperado})"
         )
+
+
+def mascarar_csv(
+    src_path: str, dst_path: str, delim: str, real_encoding: str
+) -> Tuple[List[dict], int, int]:
+    """Mascara um CSV LOCAL com as mesmas regras e o mesmo HMAC do raw/.
+
+    Para quem converte um formato que este script não consegue reescrever no lugar: o
+    .mdb fica com PII no raw/ (o mdbtools é read-only), então o raw_para_staging mascara
+    o CSV que o `mdb-export` gera, antes de virar parquet. Mesmo segredo, mesmo token:
+    o CPF continua cruzando com as bases mascaradas aqui.
+
+    `dst_path` sai sempre completo, mascarado ou cópia do original. Retorna (targets,
+    registros_total, registros_alterados).
+    """
+    with open(src_path, "r", encoding="latin-1", newline="") as f:
+        header = next(csv.reader(f, delimiter=delim, quotechar='"'), [])
+    targets, _ = classificar(header, real_encoding)
+    if not targets:
+        shutil.copyfile(src_path, dst_path)
+        return targets, 0, 0
+    if not HMAC_SECRET and any(t["action"] == "hmac" for t in targets):
+        # Sem segredo o token vira um hash previsível do CPF: melhor parar.
+        raise RuntimeError(
+            "MASKING_HMAC_SECRET não definida — necessária para pseudonimizar "
+            f"{[t['column'] for t in targets if t['action'] == 'hmac']}."
+        )
+    targets, _, total, alterados = _mascarar_tabular(
+        src_path, dst_path, delim, "\n", False, real_encoding
+    )
+    _verificar_roundtrip_tabular(src_path, dst_path, delim, total)
+    return targets, total, alterados
 
 
 # Processamento XLSX

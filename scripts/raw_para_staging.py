@@ -840,6 +840,25 @@ def processar_objeto(  # noqa: C901
                         rec["status"] = "skipped_no_header"
                         recs.append(rec)
                         continue
+                    # O .mdb é o único formato que chega à staging com PII: o
+                    # mascarar_minio não reescreve Access no raw/ (mdbtools é
+                    # read-only), só acusa. Mascara aqui o CSV exportado, com as
+                    # mesmas regras e o mesmo HMAC, antes de virar parquet.
+                    from mascarar_minio import mascarar_csv
+
+                    csv_mascarado = csv_tmp + ".mascarado"
+                    alvos, _, alterados = mascarar_csv(
+                        csv_tmp, csv_mascarado, MDB_DELIM, MDB_ENCODING
+                    )
+                    os.replace(csv_mascarado, csv_tmp)
+                    if alvos:
+                        log.info(
+                            "%s / %s: PII mascarada em %d linhas (%s)",
+                            key,
+                            tabela,
+                            alterados,
+                            ", ".join(f"{a['column']}:{a['action']}" for a in alvos),
+                        )
                     n_linhas, n_colunas, n_bad, column_map, enc_usado = (
                         _converter_tabular(
                             csv_tmp,
@@ -879,7 +898,7 @@ def processar_objeto(  # noqa: C901
                     rec["error_message"] = f"tabela '{tabela}': {e}"[:500]
                     log.error("✗ %s [%s]: %s", key, tabela, e)
                 finally:
-                    for p in (csv_tmp, dst):
+                    for p in (csv_tmp, csv_tmp + ".mascarado", dst):
                         if os.path.exists(p):
                             os.unlink(p)
                 recs.append(rec)
