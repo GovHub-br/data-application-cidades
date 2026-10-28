@@ -5,9 +5,9 @@ postgres_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/p
 
 # --- Versões ----------------------------------------------------------------
 # A linha do servidor acompanha o cliente que as DAGs usam
-# (helpers/openmetadata/config.py: openmetadata-ingestion==1.13.3.x).
-openmetadata_version: "1.13.3"
-# O Elasticsearch do docker-compose oficial do OpenMetadata 1.13.3.
+# (helpers/openmetadata/config.py: openmetadata-ingestion==2.0.7.x).
+openmetadata_version: "2.0.7"
+# O Elasticsearch do docker-compose oficial do OpenMetadata 2.0.7.
 elasticsearch_version: "9.3.0"
 
 # --- Servidor ---------------------------------------------------------------
