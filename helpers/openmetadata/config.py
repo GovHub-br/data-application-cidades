@@ -22,23 +22,14 @@ OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH = (
 #: O projeto dbt do MCID. A recipe de dbt consome os artefatos que saem dele.
 DBT_MCID_DIR = f"{AIRFLOW_REPO_BASE}/dbt/mcid"
 
-#: O pacote roda num VIRTUALENV ISOLADO. No Airflow 2.8.1 era obrigatório
-#: (`openmetadata-ingestion` exige `sqlalchemy>=2.0` e o Airflow 2 exigia
-#: `<2.0`). No Airflow 3 esse conflito acabou, mas instalar o pacote por cima da
-#: base com `pip install` rebaixa pacotes dela (boto3, botocore,
-#: opentelemetry-sdk) e o `pip check` do Dockerfile reprova. O
-#: `data-application-minc` assa na imagem com um lock resolvido contra a base
-#: (`compile-lock.sh`); até adotarmos o mesmo, o virtualenv segue isolando.
-#:
-#: Isolado, o pacote resolve limpo em 255 pacotes. A versão acompanha a LINHA
-#: do servidor (hoje 1.13.3): cliente e servidor de linhas diferentes divergem
-#: no schema das entidades.
-OPENMETADATA_REQUIREMENTS = [
-    "openmetadata-ingestion[dbt,postgres,superset,airflow,pii-processor]==1.13.3.2",
-    "asyncpg",
-    "PyYAML>=6.0",
-    "psycopg2-binary",
-]
+#: O `openmetadata-ingestion` está na IMAGEM do Airflow, pelo lock
+#: (`infra/docker/airflow/compile-lock.sh`), e não num virtualenv. O venv
+#: existia porque instalar o pacote solto por cima da base rebaixava pacotes
+#: dela; o lock resolve tudo de uma vez, como no `data-application-minc`. No
+#: venv, com o Airflow 3.2.2 que o extra `airflow` instalava, a recipe
+#: `airflow_metadata` falhava no homolog ao inicializar o ORM; na imagem, o
+#: conector roda no mesmo Airflow da task. Ver o README desta pasta.
+#: A versão do pacote acompanha a LINHA do servidor (ver `requirements.txt`).
 
 
 @dataclass(frozen=True)
@@ -118,13 +109,9 @@ COMMON_REPLACEMENTS = {
     "AIRFLOW_DB_DATABASE": os.environ.get("AIRFLOW_DB_DATABASE", "airflow"),
 }
 
-#: Segredos lidos do AMBIENTE dentro da task. Não são Variable do Airflow
-#: porque a task roda num virtualenv sem o pacote `airflow` instalado
-#: (`expect_airflow=False`): lá dentro não há `Variable` para consultar. O
-#: ambiente, esse sim, é herdado.
-#:
-#: Os nomes são os mesmos que `scripts/governance/` já lê do `.env`, que o
-#: compose monta via `env_file`. Uma fonte só evita o token divergir entre dois
+#: Segredos lidos do AMBIENTE dentro da task, não de Variable do Airflow. Os
+#: nomes são os mesmos que `scripts/governance/` já lê do `.env`, que o compose
+#: monta via `env_file`. Uma fonte só evita o token divergir entre dois
 #: lugares — problema que já corrigimos uma vez com o proprietário.
 SEGREDOS_BASE = {"OM_HOST": "OPENMETADATA_URL"}
 SEGREDOS_INGESTAO = {**SEGREDOS_BASE, "INGESTION_TOKEN": "OPENMETADATA_JWT_TOKEN"}
@@ -208,11 +195,16 @@ ALL_RECIPES = tuple(recipe for recipe in _RECIPES_DEFINIDAS if recipe.enabled)
 #: `dbt_metadata` só ANEXA descrição, tier, domínio e linhagem a tabela que já
 #: existe — ele não cria nada. Profiler e classifier só têm o que medir depois
 #: das duas. Inverter faz o dbt anexar a nada e não dá erro nenhum.
+#:
+#: `airflow_metadata` vai por ÚLTIMO porque nenhuma outra depende dele, e a
+#: corrente é sequencial: na frente, uma falha dele marcava `postgres_metadata`
+#: e `dbt_metadata` como `upstream_failed`, e o catálogo do banco parava de
+#: atualizar por causa de um conector secundário.
 RECIPE_PIPELINE = (
-    "airflow_metadata",
     "postgres_metadata",
     "dbt_metadata",
     "postgres_profiler",
     "postgres_classifier",
     "superset_metadata",
+    "airflow_metadata",
 )

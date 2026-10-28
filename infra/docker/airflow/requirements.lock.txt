@@ -1,0 +1,2910 @@
+# GERADO POR infra/docker/airflow/compile-lock.sh -- NAO EDITE A MAO.
+#
+# Resolvido contra apache/airflow:3.3.2-python3.11.
+# Para mudar uma dependencia, edite requirements.txt e rode o script.
+#
+a2wsgi==1.10.10
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+adal==1.2.7
+    # via
+    #   -r /w/lock.in
+    #   msrestazure
+adbc-driver-manager==1.12.0
+    # via
+    #   -r /w/lock.in
+    #   adbc-driver-postgresql
+    #   adbc-driver-sqlite
+adbc-driver-postgresql==1.12.0
+    # via -r /w/lock.in
+adbc-driver-sqlite==1.12.0
+    # via -r /w/lock.in
+adlfs==2026.8.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+aenum==3.1.17
+    # via astronomer-cosmos
+agate==1.9.1
+    # via
+    #   dbt-adapters
+    #   dbt-common
+    #   dbt-core
+    #   dbt-postgres
+aiobotocore==3.1.3
+    # via -r /w/lock.in
+aiofiles==24.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-cncf-kubernetes
+    #   apache-airflow-providers-sftp
+    #   gcloud-aio-storage
+aiohappyeyeballs==2.7.1
+    # via
+    #   -r /w/lock.in
+    #   aiohttp
+aiohttp==3.14.3
+    # via
+    #   -r /w/lock.in
+    #   aiobotocore
+    #   aiohttp-cors
+    #   apache-airflow-providers-http
+    #   apache-airflow-providers-microsoft-azure
+    #   apache-airflow-providers-slack
+    #   azure-core
+    #   gcloud-aio-auth
+    #   gcsfs
+    #   kubernetes-asyncio
+    #   litellm
+    #   microsoft-kiota-authentication-azure
+    #   ray
+aiohttp-cors==0.8.1
+    # via
+    #   -r /w/lock.in
+    #   ray
+aioitertools==0.13.0
+    # via
+    #   -r /w/lock.in
+    #   aiobotocore
+aiomysql==0.3.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-mysql
+aiosignal==1.4.0
+    # via
+    #   -r /w/lock.in
+    #   aiohttp
+aiosmtplib==5.1.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-smtp
+aiosqlite==0.22.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+alembic==1.20.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   sqlalchemy-spanner
+amqp==5.3.1
+    # via
+    #   -r /w/lock.in
+    #   kombu
+annotated-doc==0.0.5
+    # via
+    #   -r /w/lock.in
+    #   fastapi
+    #   typer
+annotated-types==0.8.0
+    # via
+    #   -r /w/lock.in
+    #   pydantic
+antlr4-python3-runtime==4.9.2
+    # via openmetadata-ingestion
+anyio==4.15.1
+    # via
+    #   -r /w/lock.in
+    #   elasticsearch
+    #   google-genai
+    #   httpx
+    #   httpx2
+    #   openai
+    #   starlette
+    #   watchfiles
+apache-airflow==3.3.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+    #   apache-airflow-providers-celery
+    #   apache-airflow-providers-cncf-kubernetes
+    #   apache-airflow-providers-common-compat
+    #   apache-airflow-providers-common-io
+    #   apache-airflow-providers-common-messaging
+    #   apache-airflow-providers-common-sql
+    #   apache-airflow-providers-docker
+    #   apache-airflow-providers-elasticsearch
+    #   apache-airflow-providers-fab
+    #   apache-airflow-providers-ftp
+    #   apache-airflow-providers-git
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-grpc
+    #   apache-airflow-providers-hashicorp
+    #   apache-airflow-providers-http
+    #   apache-airflow-providers-microsoft-azure
+    #   apache-airflow-providers-microsoft-mssql
+    #   apache-airflow-providers-mysql
+    #   apache-airflow-providers-odbc
+    #   apache-airflow-providers-openlineage
+    #   apache-airflow-providers-opensearch
+    #   apache-airflow-providers-postgres
+    #   apache-airflow-providers-redis
+    #   apache-airflow-providers-sendgrid
+    #   apache-airflow-providers-sftp
+    #   apache-airflow-providers-slack
+    #   apache-airflow-providers-smtp
+    #   apache-airflow-providers-snowflake
+    #   apache-airflow-providers-ssh
+    #   apache-airflow-providers-standard
+    #   astronomer-cosmos
+apache-airflow-core==3.3.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow
+    #   apache-airflow-task-sdk
+apache-airflow-providers-amazon==9.36.0
+    # via -r /w/lock.in
+apache-airflow-providers-celery==3.24.0
+    # via -r /w/lock.in
+apache-airflow-providers-cncf-kubernetes==10.22.0
+    # via -r /w/lock.in
+apache-airflow-providers-common-compat==1.19.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-amazon
+    #   apache-airflow-providers-celery
+    #   apache-airflow-providers-cncf-kubernetes
+    #   apache-airflow-providers-common-io
+    #   apache-airflow-providers-common-sql
+    #   apache-airflow-providers-docker
+    #   apache-airflow-providers-elasticsearch
+    #   apache-airflow-providers-fab
+    #   apache-airflow-providers-ftp
+    #   apache-airflow-providers-git
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-grpc
+    #   apache-airflow-providers-hashicorp
+    #   apache-airflow-providers-http
+    #   apache-airflow-providers-microsoft-azure
+    #   apache-airflow-providers-microsoft-mssql
+    #   apache-airflow-providers-mysql
+    #   apache-airflow-providers-odbc
+    #   apache-airflow-providers-openlineage
+    #   apache-airflow-providers-opensearch
+    #   apache-airflow-providers-postgres
+    #   apache-airflow-providers-redis
+    #   apache-airflow-providers-sendgrid
+    #   apache-airflow-providers-sftp
+    #   apache-airflow-providers-slack
+    #   apache-airflow-providers-smtp
+    #   apache-airflow-providers-snowflake
+    #   apache-airflow-providers-ssh
+    #   apache-airflow-providers-standard
+apache-airflow-providers-common-io==1.9.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+apache-airflow-providers-common-messaging==2.1.0
+    # via -r /w/lock.in
+apache-airflow-providers-common-sql==2.1.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-amazon
+    #   apache-airflow-providers-elasticsearch
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-microsoft-mssql
+    #   apache-airflow-providers-mysql
+    #   apache-airflow-providers-odbc
+    #   apache-airflow-providers-openlineage
+    #   apache-airflow-providers-postgres
+    #   apache-airflow-providers-slack
+    #   apache-airflow-providers-snowflake
+apache-airflow-providers-docker==4.5.9
+    # via -r /w/lock.in
+apache-airflow-providers-elasticsearch==6.9.1
+    # via -r /w/lock.in
+apache-airflow-providers-fab==3.9.0
+    # via -r /w/lock.in
+apache-airflow-providers-ftp==3.15.2
+    # via -r /w/lock.in
+apache-airflow-providers-git==0.5.0
+    # via -r /w/lock.in
+apache-airflow-providers-google==22.5.0
+    # via -r /w/lock.in
+apache-airflow-providers-grpc==3.9.5
+    # via -r /w/lock.in
+apache-airflow-providers-hashicorp==4.8.1
+    # via -r /w/lock.in
+apache-airflow-providers-http==6.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+apache-airflow-providers-microsoft-azure==15.1.0
+    # via -r /w/lock.in
+apache-airflow-providers-microsoft-mssql==4.7.1
+    # via -r /w/lock.in
+apache-airflow-providers-mysql==6.6.2
+    # via -r /w/lock.in
+apache-airflow-providers-odbc==4.13.0
+    # via -r /w/lock.in
+apache-airflow-providers-openlineage==2.20.1
+    # via -r /w/lock.in
+apache-airflow-providers-opensearch==1.12.1
+    # via -r /w/lock.in
+apache-airflow-providers-postgres==7.0.2
+    # via -r /w/lock.in
+apache-airflow-providers-redis==4.6.0
+    # via -r /w/lock.in
+apache-airflow-providers-sendgrid==4.2.4
+    # via -r /w/lock.in
+apache-airflow-providers-sftp==6.0.1
+    # via -r /w/lock.in
+apache-airflow-providers-slack==9.10.2
+    # via -r /w/lock.in
+apache-airflow-providers-smtp==3.0.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+apache-airflow-providers-snowflake==6.17.0
+    # via -r /w/lock.in
+apache-airflow-providers-ssh==6.0.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-sftp
+apache-airflow-providers-standard==1.19.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+apache-airflow-task-sdk==1.3.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow
+    #   apache-airflow-core
+apispec==6.10.0
+    # via
+    #   -r /w/lock.in
+    #   flask-appbuilder
+argcomplete==3.7.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+arrow==1.4.0
+    # via
+    #   -r /w/lock.in
+    #   isoduration
+asgiref==3.12.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-amazon
+    #   apache-airflow-providers-cncf-kubernetes
+    #   apache-airflow-providers-common-compat
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-http
+    #   apache-airflow-providers-slack
+    #   apache-airflow-providers-snowflake
+    #   apache-airflow-task-sdk
+asn1crypto==1.5.1
+    # via
+    #   -r /w/lock.in
+    #   scramp
+    #   snowflake-connector-python
+astronomer-cosmos==1.15.1
+    # via -r /w/lock.in
+async-timeout==5.0.1
+    # via redis
+asyncpg==0.31.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-postgres
+asyncssh==2.24.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-sftp
+    #   apache-airflow-providers-ssh
+attrs==26.1.0
+    # via
+    #   -r /w/lock.in
+    #   aiohttp
+    #   apache-airflow-core
+    #   apache-airflow-providers-openlineage
+    #   apache-airflow-task-sdk
+    #   astronomer-cosmos
+    #   cattrs
+    #   collate-data-diff
+    #   jsonschema
+    #   looker-sdk
+    #   openlineage-integration-common
+    #   openlineage-python
+    #   outcome
+    #   referencing
+    #   svcs
+    #   zeep
+authlib==1.8.0
+    # via
+    #   -r /w/lock.in
+    #   msgraphfs
+azure-ai-projects==2.4.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-batch==15.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-common==1.1.28
+    # via
+    #   -r /w/lock.in
+    #   azure-mgmt-containerinstance
+    #   azure-mgmt-datalake-store
+    #   azure-synapse-artifacts
+    #   azure-synapse-spark
+azure-core==1.41.0
+    # via
+    #   -r /w/lock.in
+    #   adlfs
+    #   azure-ai-projects
+    #   azure-batch
+    #   azure-cosmos
+    #   azure-identity
+    #   azure-keyvault-secrets
+    #   azure-kusto-data
+    #   azure-mgmt-core
+    #   azure-servicebus
+    #   azure-storage-blob
+    #   azure-storage-file-datalake
+    #   azure-storage-file-share
+    #   azure-synapse-spark
+    #   microsoft-kiota-authentication-azure
+    #   msrest
+azure-cosmos==4.17.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-datalake-store==0.0.53
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-identity==1.25.3
+    # via
+    #   -r /w/lock.in
+    #   adlfs
+    #   apache-airflow-providers-microsoft-azure
+    #   azure-ai-projects
+    #   azure-kusto-data
+    #   openmetadata-ingestion
+azure-keyvault-secrets==4.11.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+    #   openmetadata-ingestion
+azure-kusto-data==6.0.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-compute==38.3.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-containerinstance==10.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-containerregistry==15.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-core==1.6.0
+    # via
+    #   -r /w/lock.in
+    #   azure-mgmt-compute
+    #   azure-mgmt-containerinstance
+    #   azure-mgmt-containerregistry
+    #   azure-mgmt-cosmosdb
+    #   azure-mgmt-datafactory
+    #   azure-mgmt-resource
+    #   azure-mgmt-storage
+    #   azure-synapse-artifacts
+azure-mgmt-cosmosdb==10.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-datafactory==10.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-datalake-nspkg==3.0.1
+    # via
+    #   -r /w/lock.in
+    #   azure-mgmt-datalake-store
+azure-mgmt-datalake-store==0.5.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-nspkg==3.0.2
+    # via
+    #   -r /w/lock.in
+    #   azure-mgmt-datalake-nspkg
+azure-mgmt-resource==26.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-mgmt-storage==25.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-nspkg==3.0.2
+    # via
+    #   -r /w/lock.in
+    #   azure-mgmt-nspkg
+azure-servicebus==7.14.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-storage-blob==12.30.1
+    # via
+    #   -r /w/lock.in
+    #   adlfs
+    #   apache-airflow-providers-microsoft-azure
+    #   azure-ai-projects
+    #   azure-storage-file-datalake
+    #   openmetadata-ingestion
+azure-storage-file-datalake==12.25.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-storage-file-share==12.26.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-synapse-artifacts==0.22.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+azure-synapse-spark==0.7.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+babel==2.18.0
+    # via
+    #   -r /w/lock.in
+    #   agate
+    #   apache-airflow-task-sdk
+    #   flask-babel
+backports-tarfile==1.2.0
+    # via jaraco-context
+bcrypt==5.0.0
+    # via
+    #   -r /w/lock.in
+    #   paramiko
+beautifulsoup4==4.15.0
+    # via
+    #   -r /w/lock.in
+    #   redshift-connector
+billiard==4.2.4
+    # via
+    #   -r /w/lock.in
+    #   celery
+blinker==1.9.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask
+boto3==1.41.5
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+    #   openmetadata-ingestion
+    #   pyathena
+    #   redshift-connector
+    #   sagemaker-studio
+    #   snowflake-connector-python
+    #   watchtower
+botocore==1.41.6
+    # via
+    #   -r /w/lock.in
+    #   aiobotocore
+    #   apache-airflow-providers-amazon
+    #   boto3
+    #   pyathena
+    #   redshift-connector
+    #   s3transfer
+    #   sagemaker-studio
+    #   snowflake-connector-python
+cached-property==1.5.2
+    # via openmetadata-ingestion
+cachelib==0.17.0
+    # via
+    #   -r /w/lock.in
+    #   flask-session
+cachetools==7.1.8
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-fab
+    #   openmetadata-ingestion
+cadwyn==7.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+cattrs==26.2.0
+    # via
+    #   -r /w/lock.in
+    #   looker-sdk
+celery==5.6.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-celery
+    #   flower
+certifi==2026.7.22
+    # via
+    #   -r /w/lock.in
+    #   elastic-transport
+    #   google-cloud-aiplatform
+    #   httpcore
+    #   httpx
+    #   kubernetes
+    #   kubernetes-asyncio
+    #   msrest
+    #   opensearch-py
+    #   requests
+    #   snowflake-connector-python
+cffi==2.1.1
+    # via
+    #   -r /w/lock.in
+    #   azure-datalake-store
+    #   cryptography
+    #   pynacl
+chardet==4.0.0
+    # via
+    #   -r /w/lock.in
+    #   collate-sqlfluff
+    #   diff-cover
+    #   gcloud-aio-auth
+    #   openmetadata-ingestion
+charset-normalizer==3.5.1
+    # via
+    #   -r /w/lock.in
+    #   requests
+    #   snowflake-connector-python
+click==8.3.3
+    # via
+    #   -r /w/lock.in
+    #   celery
+    #   click-didyoumean
+    #   click-plugins
+    #   click-repl
+    #   collate-data-diff
+    #   collate-sqlfluff
+    #   dbt-core
+    #   flask
+    #   flask-appbuilder
+    #   litellm
+    #   ray
+    #   rich-toolkit
+    #   uvicorn
+click-didyoumean==0.3.1
+    # via
+    #   -r /w/lock.in
+    #   celery
+click-plugins==1.1.1.2
+    # via
+    #   -r /w/lock.in
+    #   celery
+click-repl==0.3.0
+    # via
+    #   -r /w/lock.in
+    #   celery
+cloudpickle==3.1.1
+    # via
+    #   -r /w/lock.in
+    #   joblib
+    #   snowflake-snowpark-python
+collate-data-diff==0.11.18
+    # via openmetadata-ingestion
+collate-dbt-artifacts-parser==0.1.4
+    # via openmetadata-ingestion
+collate-sqlfluff==3.5.3
+    # via collate-sqllineage
+collate-sqllineage==2.1.8
+    # via openmetadata-ingestion
+colorama==0.4.6
+    # via
+    #   -r /w/lock.in
+    #   collate-sqlfluff
+    #   dbt-common
+    #   flask-appbuilder
+colorful==0.5.8
+    # via
+    #   -r /w/lock.in
+    #   ray
+colorlog==6.12.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+cron-descriptor==2.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+croniter==6.2.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+cryptography==50.0.1
+    # via
+    #   -r /w/lock.in
+    #   adal
+    #   apache-airflow-core
+    #   apache-airflow-providers-cncf-kubernetes
+    #   asyncssh
+    #   authlib
+    #   azure-identity
+    #   azure-storage-blob
+    #   azure-storage-file-share
+    #   gcloud-aio-auth
+    #   google-auth
+    #   joserfc
+    #   msal
+    #   openmetadata-ingestion
+    #   paramiko
+    #   pyjwt
+    #   pyopenssl
+    #   secretstorage
+    #   sendgrid
+    #   snowflake-connector-python
+daff==1.4.2
+    # via dbt-core
+db-dtypes==1.7.1
+    # via
+    #   -r /w/lock.in
+    #   pandas-gbq
+dbt-adapters==1.24.5
+    # via
+    #   dbt-core
+    #   dbt-duckdb
+    #   dbt-postgres
+dbt-common==1.39.0
+    # via
+    #   dbt-adapters
+    #   dbt-core
+    #   dbt-duckdb
+    #   dbt-postgres
+dbt-core==1.12.5
+    # via
+    #   -r /w/lock.in
+    #   collate-data-diff
+    #   dbt-duckdb
+    #   dbt-postgres
+dbt-core-experimental-parser==2.0.8
+    # via dbt-core
+dbt-duckdb==1.11.0
+    # via -r /w/lock.in
+dbt-extractor==0.6.0
+    # via
+    #   dbt-core
+    #   openmetadata-ingestion
+dbt-postgres==1.11.0
+    # via -r /w/lock.in
+dbt-protos==1.0.615
+    # via
+    #   dbt-adapters
+    #   dbt-common
+    #   dbt-core
+decorator==5.3.1
+    # via
+    #   -r /w/lock.in
+    #   gcsfs
+deepdiff==8.6.2
+    # via
+    #   collate-data-diff
+    #   dbt-common
+deprecated==1.3.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   limits
+deprecation==2.1.0
+    # via astronomer-cosmos
+diff-cover==11.0.0
+    # via collate-sqlfluff
+dill==0.4.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-google
+distlib==0.4.3
+    # via
+    #   -r /w/lock.in
+    #   virtualenv
+distro==1.9.0
+    # via
+    #   -r /w/lock.in
+    #   google-genai
+    #   openai
+dnspython==2.8.0
+    # via
+    #   -r /w/lock.in
+    #   email-validator
+    #   eventlet
+docker==7.2.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-docker
+docstring-parser==0.18.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-aiplatform
+dsnparse==0.1.15
+    # via collate-data-diff
+duckdb==1.5.6
+    # via
+    #   -r /w/lock.in
+    #   dbt-duckdb
+durationpy==0.11
+    # via
+    #   -r /w/lock.in
+    #   kubernetes
+elastic-transport==9.4.2
+    # via
+    #   -r /w/lock.in
+    #   elasticsearch
+elasticsearch==9.5.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-elasticsearch
+email-validator==2.3.0
+    # via
+    #   -r /w/lock.in
+    #   fastapi
+    #   flask-appbuilder
+    #   openmetadata-ingestion
+et-xmlfile==2.0.0
+    # via openpyxl
+eventlet==0.41.2
+    # via -r /w/lock.in
+events==0.5
+    # via
+    #   -r /w/lock.in
+    #   opensearch-py
+fastapi==0.136.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   cadwyn
+fastapi-cli==0.0.32
+    # via
+    #   -r /w/lock.in
+    #   fastapi
+fastuuid==0.14.0
+    # via
+    #   -r /w/lock.in
+    #   litellm
+filelock==3.32.6
+    # via
+    #   -r /w/lock.in
+    #   huggingface-hub
+    #   python-discovery
+    #   ray
+    #   snowflake-connector-python
+    #   virtualenv
+flask==3.1.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+    #   flask-babel
+    #   flask-jwt-extended
+    #   flask-limiter
+    #   flask-login
+    #   flask-session
+    #   flask-sqlalchemy
+    #   flask-wtf
+flask-appbuilder==5.2.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+flask-babel==4.0.0
+    # via
+    #   -r /w/lock.in
+    #   flask-appbuilder
+flask-jwt-extended==4.7.4
+    # via
+    #   -r /w/lock.in
+    #   flask-appbuilder
+flask-limiter==4.1.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+flask-login==0.6.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+flask-session==0.8.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+flask-sqlalchemy==3.1.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+flask-wtf==1.3.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+flower==2.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-celery
+frozenlist==1.8.0
+    # via
+    #   -r /w/lock.in
+    #   aiohttp
+    #   aiosignal
+fsspec==2026.7.0
+    # via
+    #   -r /w/lock.in
+    #   adlfs
+    #   apache-airflow-task-sdk
+    #   gcsfs
+    #   huggingface-hub
+    #   msgraphfs
+    #   pyathena
+    #   universal-pathlib
+gcloud-aio-auth==5.5.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   gcloud-aio-bigquery
+    #   gcloud-aio-storage
+gcloud-aio-bigquery==7.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+gcloud-aio-storage==9.6.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+gcsfs==2026.8.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+geoalchemy2==0.20.0
+    # via openmetadata-ingestion
+gevent==26.8.0
+    # via -r /w/lock.in
+gitdb==4.0.12
+    # via
+    #   -r /w/lock.in
+    #   gitpython
+gitpython==3.1.62
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-git
+google-ads==32.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-analytics-admin==0.30.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-api-core==2.36.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   google-ads
+    #   google-analytics-admin
+    #   google-api-python-client
+    #   google-cloud-aiplatform
+    #   google-cloud-alloydb
+    #   google-cloud-appengine-logging
+    #   google-cloud-automl
+    #   google-cloud-batch
+    #   google-cloud-bigquery
+    #   google-cloud-bigquery-datatransfer
+    #   google-cloud-bigquery-storage
+    #   google-cloud-bigtable
+    #   google-cloud-build
+    #   google-cloud-compute
+    #   google-cloud-container
+    #   google-cloud-core
+    #   google-cloud-datacatalog
+    #   google-cloud-dataflow-client
+    #   google-cloud-dataform
+    #   google-cloud-dataplex
+    #   google-cloud-dataproc
+    #   google-cloud-dataproc-metastore
+    #   google-cloud-dlp
+    #   google-cloud-kms
+    #   google-cloud-language
+    #   google-cloud-logging
+    #   google-cloud-managedkafka
+    #   google-cloud-memcache
+    #   google-cloud-monitoring
+    #   google-cloud-orchestration-airflow
+    #   google-cloud-os-login
+    #   google-cloud-pubsub
+    #   google-cloud-redis
+    #   google-cloud-resource-manager
+    #   google-cloud-run
+    #   google-cloud-secret-manager
+    #   google-cloud-spanner
+    #   google-cloud-speech
+    #   google-cloud-storage
+    #   google-cloud-storage-control
+    #   google-cloud-storage-transfer
+    #   google-cloud-tasks
+    #   google-cloud-texttospeech
+    #   google-cloud-translate
+    #   google-cloud-videointelligence
+    #   google-cloud-vision
+    #   google-cloud-workflows
+    #   opencensus
+    #   pandas-gbq
+    #   sqlalchemy-bigquery
+google-api-python-client==2.200.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-auth==2.58.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-grpc
+    #   gcsfs
+    #   google-analytics-admin
+    #   google-api-core
+    #   google-api-python-client
+    #   google-auth-httplib2
+    #   google-auth-oauthlib
+    #   google-cloud-aiplatform
+    #   google-cloud-alloydb
+    #   google-cloud-appengine-logging
+    #   google-cloud-automl
+    #   google-cloud-batch
+    #   google-cloud-bigquery
+    #   google-cloud-bigquery-datatransfer
+    #   google-cloud-bigquery-storage
+    #   google-cloud-bigtable
+    #   google-cloud-build
+    #   google-cloud-compute
+    #   google-cloud-container
+    #   google-cloud-core
+    #   google-cloud-datacatalog
+    #   google-cloud-dataflow-client
+    #   google-cloud-dataform
+    #   google-cloud-dataplex
+    #   google-cloud-dataproc
+    #   google-cloud-dataproc-metastore
+    #   google-cloud-dlp
+    #   google-cloud-kms
+    #   google-cloud-language
+    #   google-cloud-logging
+    #   google-cloud-managedkafka
+    #   google-cloud-memcache
+    #   google-cloud-monitoring
+    #   google-cloud-orchestration-airflow
+    #   google-cloud-os-login
+    #   google-cloud-pubsub
+    #   google-cloud-redis
+    #   google-cloud-resource-manager
+    #   google-cloud-run
+    #   google-cloud-secret-manager
+    #   google-cloud-spanner
+    #   google-cloud-speech
+    #   google-cloud-storage
+    #   google-cloud-storage-control
+    #   google-cloud-storage-transfer
+    #   google-cloud-tasks
+    #   google-cloud-texttospeech
+    #   google-cloud-translate
+    #   google-cloud-videointelligence
+    #   google-cloud-vision
+    #   google-cloud-workflows
+    #   google-genai
+    #   pandas-gbq
+    #   pydata-google-auth
+    #   sqlalchemy-bigquery
+google-auth-httplib2==0.4.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-grpc
+    #   google-api-python-client
+google-auth-oauthlib==1.4.1
+    # via
+    #   -r /w/lock.in
+    #   gcsfs
+    #   google-ads
+    #   pandas-gbq
+    #   pydata-google-auth
+google-cloud==0.34.0
+    # via openmetadata-ingestion
+google-cloud-aiplatform==2.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-alloydb==0.11.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-appengine-logging==1.10.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-logging
+google-cloud-audit-log==0.6.2
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-logging
+google-cloud-automl==2.20.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-batch==0.22.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-bigquery==3.45.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   google-cloud-aiplatform
+    #   pandas-gbq
+    #   sqlalchemy-bigquery
+google-cloud-bigquery-datatransfer==3.23.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-bigquery-storage==2.41.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-bigtable==2.44.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-build==3.39.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-compute==1.52.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-container==2.66.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-core==2.7.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-bigquery
+    #   google-cloud-bigtable
+    #   google-cloud-logging
+    #   google-cloud-spanner
+    #   google-cloud-storage
+    #   google-cloud-translate
+google-cloud-datacatalog==3.31.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-dataflow-client==0.14.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-dataform==0.11.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-dataplex==2.20.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-dataproc==5.30.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-dataproc-metastore==1.23.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-dlp==3.39.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-kms==3.16.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-language==2.21.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-logging==3.16.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-managedkafka==0.4.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-memcache==1.16.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-monitoring==2.31.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   google-cloud-bigtable
+    #   google-cloud-spanner
+google-cloud-orchestration-airflow==1.22.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-os-login==2.22.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-pubsub==2.40.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-redis==2.22.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-resource-manager==1.18.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-aiplatform
+google-cloud-run==0.16.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-secret-manager==2.24.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   openmetadata-ingestion
+google-cloud-spanner==3.71.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   sqlalchemy-spanner
+google-cloud-speech==2.40.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-storage==3.14.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   gcsfs
+    #   google-cloud-aiplatform
+    #   openmetadata-ingestion
+google-cloud-storage-control==1.15.0
+    # via
+    #   -r /w/lock.in
+    #   gcsfs
+google-cloud-storage-transfer==1.21.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-tasks==2.24.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-texttospeech==2.37.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-translate==3.27.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-videointelligence==2.20.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-vision==3.15.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-cloud-workflows==1.23.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+google-crc32c==1.8.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-bigtable
+    #   google-cloud-storage
+    #   google-resumable-media
+    #   openmetadata-ingestion
+google-genai==2.8.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   google-cloud-aiplatform
+google-resumable-media==2.10.2
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-bigquery
+    #   google-cloud-storage
+googleapis-common-protos==1.75.3
+    # via
+    #   -r /w/lock.in
+    #   google-ads
+    #   google-api-core
+    #   google-cloud-audit-log
+    #   grpc-google-iam-v1
+    #   grpcio-status
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+graphviz==0.21
+    # via -r /w/lock.in
+greenback==1.3.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-task-sdk
+greenlet==3.5.5
+    # via
+    #   -r /w/lock.in
+    #   eventlet
+    #   gevent
+    #   greenback
+    #   sqlalchemy
+grpc-google-iam-v1==0.14.5
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-alloydb
+    #   google-cloud-bigtable
+    #   google-cloud-build
+    #   google-cloud-datacatalog
+    #   google-cloud-dataform
+    #   google-cloud-dataplex
+    #   google-cloud-dataproc
+    #   google-cloud-dataproc-metastore
+    #   google-cloud-kms
+    #   google-cloud-logging
+    #   google-cloud-pubsub
+    #   google-cloud-resource-manager
+    #   google-cloud-run
+    #   google-cloud-secret-manager
+    #   google-cloud-spanner
+    #   google-cloud-storage-control
+    #   google-cloud-tasks
+    #   google-cloud-translate
+grpc-interceptor==0.15.4
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-spanner
+grpcio==1.83.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-grpc
+    #   google-ads
+    #   google-analytics-admin
+    #   google-api-core
+    #   google-cloud-alloydb
+    #   google-cloud-appengine-logging
+    #   google-cloud-automl
+    #   google-cloud-batch
+    #   google-cloud-bigquery-datatransfer
+    #   google-cloud-bigquery-storage
+    #   google-cloud-bigtable
+    #   google-cloud-build
+    #   google-cloud-compute
+    #   google-cloud-container
+    #   google-cloud-datacatalog
+    #   google-cloud-dataflow-client
+    #   google-cloud-dataform
+    #   google-cloud-dataplex
+    #   google-cloud-dataproc
+    #   google-cloud-dataproc-metastore
+    #   google-cloud-dlp
+    #   google-cloud-kms
+    #   google-cloud-language
+    #   google-cloud-logging
+    #   google-cloud-managedkafka
+    #   google-cloud-memcache
+    #   google-cloud-monitoring
+    #   google-cloud-orchestration-airflow
+    #   google-cloud-os-login
+    #   google-cloud-pubsub
+    #   google-cloud-redis
+    #   google-cloud-resource-manager
+    #   google-cloud-run
+    #   google-cloud-spanner
+    #   google-cloud-speech
+    #   google-cloud-storage-control
+    #   google-cloud-storage-transfer
+    #   google-cloud-tasks
+    #   google-cloud-texttospeech
+    #   google-cloud-translate
+    #   google-cloud-videointelligence
+    #   google-cloud-vision
+    #   google-cloud-workflows
+    #   googleapis-common-protos
+    #   grpc-google-iam-v1
+    #   grpc-interceptor
+    #   grpcio-gcp
+    #   grpcio-status
+    #   opensearch-protobufs
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   ray
+grpcio-gcp==0.2.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+grpcio-status==1.83.1
+    # via
+    #   -r /w/lock.in
+    #   google-ads
+    #   google-api-core
+    #   google-cloud-pubsub
+h11==0.16.0
+    # via
+    #   -r /w/lock.in
+    #   httpcore
+    #   httpcore2
+    #   uvicorn
+h2==4.4.1
+    # via
+    #   -r /w/lock.in
+    #   httpx
+hf-xet==1.6.0
+    # via
+    #   -r /w/lock.in
+    #   huggingface-hub
+hpack==4.2.0
+    # via
+    #   -r /w/lock.in
+    #   h2
+httpcore==1.0.9
+    # via
+    #   -r /w/lock.in
+    #   httpx
+httpcore2==2.12.0
+    # via
+    #   -r /w/lock.in
+    #   httpx2
+httplib2==0.32.0
+    # via
+    #   -r /w/lock.in
+    #   google-api-python-client
+    #   google-auth-httplib2
+httptools==0.8.0
+    # via
+    #   -r /w/lock.in
+    #   uvicorn
+httpx==0.28.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   fastapi
+    #   google-genai
+    #   huggingface-hub
+    #   litellm
+    #   microsoft-kiota-http
+    #   msgraph-core
+    #   msgraphfs
+    #   openai
+    #   openmetadata-ingestion
+httpx2==2.12.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   openlineage-python
+huggingface-hub==1.16.1
+    # via
+    #   -r /w/lock.in
+    #   tokenizers
+humanize==4.16.0
+    # via
+    #   -r /w/lock.in
+    #   flower
+hvac==2.4.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-hashicorp
+hyperframe==6.1.0
+    # via
+    #   -r /w/lock.in
+    #   h2
+idna==3.19
+    # via
+    #   -r /w/lock.in
+    #   anyio
+    #   email-validator
+    #   httpx
+    #   httpx2
+    #   openmetadata-ingestion
+    #   requests
+    #   snowflake-connector-python
+    #   yarl
+ijson==3.4.0.post0
+    # via
+    #   -r /w/lock.in
+    #   azure-kusto-data
+imap-tools==1.15.0
+    # via -r /w/lock.in
+immutabledict==4.3.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+importlib-metadata==8.9.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   keyring
+    #   litellm
+    #   metricflow
+    #   openmetadata-ingestion
+importlib-resources==7.1.0
+    # via
+    #   -r /w/lock.in
+    #   adbc-driver-postgresql
+    #   adbc-driver-sqlite
+inflection==0.5.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+iniconfig==2.3.1
+    # via pytest
+invoke==3.0.3
+    # via
+    #   -r /w/lock.in
+    #   paramiko
+isodate==0.7.2
+    # via
+    #   -r /w/lock.in
+    #   agate
+    #   azure-ai-projects
+    #   azure-batch
+    #   azure-keyvault-secrets
+    #   azure-mgmt-compute
+    #   azure-mgmt-containerinstance
+    #   azure-mgmt-containerregistry
+    #   azure-mgmt-cosmosdb
+    #   azure-mgmt-datafactory
+    #   azure-mgmt-resource
+    #   azure-mgmt-storage
+    #   azure-servicebus
+    #   azure-storage-blob
+    #   azure-storage-file-datalake
+    #   azure-storage-file-share
+    #   azure-synapse-artifacts
+    #   dbt-common
+    #   msrest
+    #   zeep
+isoduration==20.11.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+itsdangerous==2.2.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   flask
+    #   flask-wtf
+jaraco-classes==3.4.0
+    # via keyring
+jaraco-context==6.1.2
+    # via
+    #   keyring
+    #   openmetadata-ingestion
+jaraco-functools==4.1.0
+    # via
+    #   keyring
+    #   openmetadata-ingestion
+jeepney==0.9.0
+    # via
+    #   keyring
+    #   secretstorage
+jinja2==3.1.6
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   astronomer-cosmos
+    #   cadwyn
+    #   collate-sqlfluff
+    #   dbt-common
+    #   dbt-core
+    #   diff-cover
+    #   fastapi
+    #   flask
+    #   flask-babel
+    #   litellm
+    #   metricflow
+    #   openmetadata-ingestion
+jiter==0.17.0
+    # via
+    #   -r /w/lock.in
+    #   openai
+jmespath==1.1.0
+    # via
+    #   -r /w/lock.in
+    #   aiobotocore
+    #   apache-airflow-providers-amazon
+    #   apache-airflow-providers-fab
+    #   boto3
+    #   botocore
+joblib==1.6.0
+    # via
+    #   -r /w/lock.in
+    #   scikit-learn
+joserfc==1.7.5
+    # via
+    #   -r /w/lock.in
+    #   authlib
+jsonpatch==1.38
+    # via openmetadata-ingestion
+jsonpath-ng==1.8.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+jsonpointer==3.6
+    # via jsonpatch
+jsonschema==4.26.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   dbt-common
+    #   dbt-core
+    #   flask-appbuilder
+    #   google-cloud-aiplatform
+    #   litellm
+    #   metricflow
+    #   ray
+jsonschema-specifications==2025.9.1
+    # via
+    #   -r /w/lock.in
+    #   jsonschema
+keyring==25.7.0
+    # via collate-data-diff
+kombu==5.6.2
+    # via
+    #   -r /w/lock.in
+    #   celery
+kubernetes==35.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-cncf-kubernetes
+    #   openmetadata-ingestion
+kubernetes-asyncio==36.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-cncf-kubernetes
+lazy-object-proxy==1.12.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+leather==0.4.1
+    # via agate
+libcst==1.9.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+limits==5.8.0
+    # via
+    #   -r /w/lock.in
+    #   flask-limiter
+linkify-it-py==2.2.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+litellm==1.85.7
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-aiplatform
+lockfile==0.12.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   python-daemon
+looker-sdk==26.12.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+lxml==6.1.3
+    # via
+    #   -r /w/lock.in
+    #   openmetadata-ingestion
+    #   redshift-connector
+    #   zeep
+mako==1.4.1
+    # via
+    #   -r /w/lock.in
+    #   alembic
+    #   openmetadata-ingestion
+markdown-it-py==4.2.0
+    # via
+    #   -r /w/lock.in
+    #   rich
+markupsafe==3.0.3
+    # via
+    #   -r /w/lock.in
+    #   flask
+    #   jinja2
+    #   mako
+    #   werkzeug
+    #   wtforms
+marshmallow==4.3.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+    #   marshmallow-sqlalchemy
+marshmallow-sqlalchemy==1.5.0
+    # via
+    #   -r /w/lock.in
+    #   flask-appbuilder
+mashumaro==3.10
+    # via
+    #   collate-data-diff
+    #   dbt-adapters
+    #   dbt-common
+    #   dbt-core
+mdurl==0.1.2
+    # via
+    #   -r /w/lock.in
+    #   markdown-it-py
+memory-profiler==0.61.0
+    # via openmetadata-ingestion
+methodtools==0.4.7
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-common-sql
+    #   apache-airflow-providers-microsoft-mssql
+    #   apache-airflow-task-sdk
+metricflow==0.213.0
+    # via dbt-core
+microsoft-kiota-abstractions==1.12.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+    #   microsoft-kiota-authentication-azure
+    #   microsoft-kiota-http
+    #   microsoft-kiota-serialization-json
+    #   microsoft-kiota-serialization-text
+    #   msgraph-core
+microsoft-kiota-authentication-azure==1.12.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+    #   msgraph-core
+microsoft-kiota-http==1.12.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+    #   msgraph-core
+microsoft-kiota-serialization-json==1.12.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+microsoft-kiota-serialization-text==1.12.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+mistune==3.4.0
+    # via openmetadata-ingestion
+mmh3==5.3.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-spanner
+more-itertools==10.8.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-common-sql
+    #   jaraco-classes
+    #   jaraco-functools
+    #   metricflow
+msal==1.38.0
+    # via
+    #   -r /w/lock.in
+    #   azure-datalake-store
+    #   azure-identity
+    #   azure-kusto-data
+    #   msal-extensions
+msal-extensions==1.3.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+    #   azure-identity
+msgpack==1.2.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   astronomer-cosmos
+    #   mashumaro
+    #   ray
+msgraph-core==1.5.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+msgraphfs==0.5
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-azure
+msgspec==0.21.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   flask-session
+msrest==0.7.1
+    # via
+    #   -r /w/lock.in
+    #   azure-synapse-spark
+    #   msrestazure
+msrestazure==0.6.4.post1
+    # via
+    #   -r /w/lock.in
+    #   azure-mgmt-datalake-store
+multidict==6.8.0
+    # via
+    #   -r /w/lock.in
+    #   aiobotocore
+    #   aiohttp
+    #   yarl
+mypy-extensions==1.1.0
+    # via
+    #   openmetadata-ingestion
+    #   typing-inspect
+mysql-connector-python==26.7.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-mysql
+mysqlclient==2.2.8
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-mysql
+narwhals==2.26.0
+    # via
+    #   -r /w/lock.in
+    #   scikit-learn
+natsort==8.4.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+networkx==3.6.1
+    # via
+    #   collate-sqllineage
+    #   dbt-core
+numpy==2.4.6
+    # via
+    #   -r /w/lock.in
+    #   db-dtypes
+    #   pandas
+    #   pandas-gbq
+    #   scikit-learn
+    #   scipy
+    #   shapely
+oauthlib==3.3.1
+    # via
+    #   -r /w/lock.in
+    #   requests-oauthlib
+openai==2.54.0
+    # via
+    #   -r /w/lock.in
+    #   azure-ai-projects
+    #   litellm
+opencensus==0.11.4
+    # via
+    #   -r /w/lock.in
+    #   ray
+opencensus-context==0.1.3
+    # via
+    #   -r /w/lock.in
+    #   opencensus
+openlineage-integration-common==1.53.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-openlineage
+    #   astronomer-cosmos
+openlineage-python==1.53.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-openlineage
+    #   openlineage-integration-common
+openlineage-sql==1.53.0
+    # via
+    #   -r /w/lock.in
+    #   openlineage-integration-common
+openmetadata-ingestion==1.13.3.2
+    # via -r /w/lock.in
+openpyxl==3.1.5
+    # via -r /w/lock.in
+opensearch-protobufs==1.2.0
+    # via
+    #   -r /w/lock.in
+    #   opensearch-py
+opensearch-py==3.2.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-opensearch
+opentelemetry-api==1.44.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   dbt-common
+    #   dbt-core
+    #   google-api-core
+    #   google-cloud-bigtable
+    #   google-cloud-logging
+    #   google-cloud-pubsub
+    #   google-cloud-spanner
+    #   microsoft-kiota-abstractions
+    #   microsoft-kiota-authentication-azure
+    #   microsoft-kiota-http
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-exporter-prometheus
+    #   opentelemetry-resourcedetector-gcp
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-otlp==1.44.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+opentelemetry-exporter-otlp-proto-common==1.44.0
+    # via
+    #   -r /w/lock.in
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-grpc==1.44.0
+    # via
+    #   -r /w/lock.in
+    #   opentelemetry-exporter-otlp
+opentelemetry-exporter-otlp-proto-http==1.44.0
+    # via
+    #   -r /w/lock.in
+    #   opentelemetry-exporter-otlp
+opentelemetry-exporter-prometheus==0.65b0
+    # via
+    #   -r /w/lock.in
+    #   ray
+opentelemetry-proto==1.44.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   ray
+opentelemetry-resourcedetector-gcp==1.14.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-spanner
+opentelemetry-sdk==1.44.0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-bigtable
+    #   google-cloud-pubsub
+    #   google-cloud-spanner
+    #   microsoft-kiota-abstractions
+    #   microsoft-kiota-authentication-azure
+    #   microsoft-kiota-http
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-exporter-prometheus
+    #   opentelemetry-resourcedetector-gcp
+    #   ray
+opentelemetry-semantic-conventions==0.65b0
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-spanner
+    #   opentelemetry-sdk
+ordered-set==4.1.0
+    # via
+    #   -r /w/lock.in
+    #   flask-limiter
+orderly-set==5.5.0
+    # via deepdiff
+outcome==1.3.0.post0
+    # via
+    #   -r /w/lock.in
+    #   greenback
+packaging==26.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   apispec
+    #   astronomer-cosmos
+    #   db-dtypes
+    #   dbt-core
+    #   deprecation
+    #   geoalchemy2
+    #   google-cloud-aiplatform
+    #   google-cloud-bigquery
+    #   huggingface-hub
+    #   kombu
+    #   limits
+    #   openlineage-python
+    #   openmetadata-ingestion
+    #   pandas-gbq
+    #   pytest
+    #   ray
+    #   redshift-connector
+    #   sagemaker-studio
+    #   snowflake-connector-python
+    #   sqlalchemy-bigquery
+    #   wheel
+pandas==3.0.5
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-snowflake
+    #   db-dtypes
+    #   google-cloud-aiplatform
+    #   pandas-gbq
+pandas-gbq==0.35.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+paramiko==5.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-sftp
+    #   apache-airflow-providers-ssh
+parsedatetime==2.6
+    # via agate
+pathlib-abc==0.5.2
+    # via
+    #   -r /w/lock.in
+    #   universal-pathlib
+pathspec==1.0.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   collate-sqlfluff
+    #   dbt-common
+    #   dbt-core
+pendulum==3.2.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+platformdirs==4.11.8
+    # via
+    #   -r /w/lock.in
+    #   collate-sqlfluff
+    #   snowflake-connector-python
+    #   virtualenv
+    #   zeep
+pluggy==1.6.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   diff-cover
+    #   pytest
+prison==0.2.1
+    # via
+    #   -r /w/lock.in
+    #   flask-appbuilder
+prometheus-client==0.26.0
+    # via
+    #   -r /w/lock.in
+    #   flower
+    #   opentelemetry-exporter-prometheus
+    #   ray
+prompt-toolkit==3.0.53
+    # via
+    #   -r /w/lock.in
+    #   click-repl
+propcache==0.5.2
+    # via
+    #   -r /w/lock.in
+    #   aiohttp
+    #   yarl
+proto-plus==1.28.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   google-ads
+    #   google-analytics-admin
+    #   google-api-core
+    #   google-cloud-aiplatform
+    #   google-cloud-alloydb
+    #   google-cloud-appengine-logging
+    #   google-cloud-automl
+    #   google-cloud-batch
+    #   google-cloud-bigquery-datatransfer
+    #   google-cloud-bigquery-storage
+    #   google-cloud-bigtable
+    #   google-cloud-build
+    #   google-cloud-compute
+    #   google-cloud-container
+    #   google-cloud-datacatalog
+    #   google-cloud-dataflow-client
+    #   google-cloud-dataform
+    #   google-cloud-dataplex
+    #   google-cloud-dataproc
+    #   google-cloud-dataproc-metastore
+    #   google-cloud-dlp
+    #   google-cloud-kms
+    #   google-cloud-language
+    #   google-cloud-logging
+    #   google-cloud-managedkafka
+    #   google-cloud-memcache
+    #   google-cloud-monitoring
+    #   google-cloud-orchestration-airflow
+    #   google-cloud-os-login
+    #   google-cloud-pubsub
+    #   google-cloud-redis
+    #   google-cloud-resource-manager
+    #   google-cloud-run
+    #   google-cloud-secret-manager
+    #   google-cloud-spanner
+    #   google-cloud-speech
+    #   google-cloud-storage-control
+    #   google-cloud-storage-transfer
+    #   google-cloud-tasks
+    #   google-cloud-texttospeech
+    #   google-cloud-translate
+    #   google-cloud-videointelligence
+    #   google-cloud-vision
+    #   google-cloud-workflows
+protobuf==6.33.6
+    # via
+    #   -r /w/lock.in
+    #   dbt-adapters
+    #   dbt-common
+    #   dbt-core
+    #   dbt-protos
+    #   google-ads
+    #   google-analytics-admin
+    #   google-api-core
+    #   google-cloud-aiplatform
+    #   google-cloud-alloydb
+    #   google-cloud-appengine-logging
+    #   google-cloud-audit-log
+    #   google-cloud-automl
+    #   google-cloud-batch
+    #   google-cloud-bigquery-datatransfer
+    #   google-cloud-bigquery-storage
+    #   google-cloud-bigtable
+    #   google-cloud-build
+    #   google-cloud-compute
+    #   google-cloud-container
+    #   google-cloud-datacatalog
+    #   google-cloud-dataflow-client
+    #   google-cloud-dataform
+    #   google-cloud-dataplex
+    #   google-cloud-dataproc
+    #   google-cloud-dataproc-metastore
+    #   google-cloud-dlp
+    #   google-cloud-kms
+    #   google-cloud-language
+    #   google-cloud-logging
+    #   google-cloud-managedkafka
+    #   google-cloud-memcache
+    #   google-cloud-monitoring
+    #   google-cloud-orchestration-airflow
+    #   google-cloud-os-login
+    #   google-cloud-pubsub
+    #   google-cloud-redis
+    #   google-cloud-resource-manager
+    #   google-cloud-run
+    #   google-cloud-secret-manager
+    #   google-cloud-spanner
+    #   google-cloud-speech
+    #   google-cloud-storage-control
+    #   google-cloud-storage-transfer
+    #   google-cloud-tasks
+    #   google-cloud-texttospeech
+    #   google-cloud-translate
+    #   google-cloud-videointelligence
+    #   google-cloud-vision
+    #   google-cloud-workflows
+    #   googleapis-common-protos
+    #   grpc-google-iam-v1
+    #   grpcio-status
+    #   opensearch-protobufs
+    #   opentelemetry-proto
+    #   proto-plus
+    #   ray
+    #   snowflake-snowpark-python
+psutil==7.2.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   memory-profiler
+    #   pandas-gbq
+    #   sagemaker-studio
+psycopg==3.3.5
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-postgres
+psycopg-binary==3.3.5
+    # via
+    #   -r /w/lock.in
+    #   psycopg
+psycopg2-binary==2.9.13
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-postgres
+    #   dbt-postgres
+    #   openmetadata-ingestion
+py-spy==0.4.2
+    # via
+    #   -r /w/lock.in
+    #   ray
+pyarrow==25.0.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+    #   apache-airflow-providers-snowflake
+    #   db-dtypes
+    #   pandas-gbq
+pyasn1==0.6.4
+    # via
+    #   -r /w/lock.in
+    #   pyasn1-modules
+    #   python-ldap
+    #   rsa
+pyasn1-modules==0.4.2
+    # via
+    #   -r /w/lock.in
+    #   gcloud-aio-storage
+    #   google-auth
+    #   python-ldap
+pyathena==3.36.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+pycparser==3.0
+    # via
+    #   -r /w/lock.in
+    #   cffi
+pydantic==2.11.10
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-http
+    #   apache-airflow-task-sdk
+    #   cadwyn
+    #   collate-data-diff
+    #   collate-dbt-artifacts-parser
+    #   dbt-core
+    #   fastapi
+    #   google-cloud-aiplatform
+    #   google-genai
+    #   litellm
+    #   metricflow
+    #   openai
+    #   openmetadata-ingestion
+    #   pydantic-extra-types
+    #   pydantic-settings
+    #   ray
+pydantic-core==2.33.2
+    # via
+    #   -r /w/lock.in
+    #   pydantic
+pydantic-extra-types==2.11.1
+    # via
+    #   -r /w/lock.in
+    #   fastapi
+pydantic-settings==2.15.0
+    # via
+    #   -r /w/lock.in
+    #   fastapi
+    #   openmetadata-ingestion
+pydata-google-auth==1.9.1
+    # via
+    #   -r /w/lock.in
+    #   pandas-gbq
+pygments==2.21.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   diff-cover
+    #   pytest
+    #   rich
+pygtrie==2.6.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+pyjwt==2.14.0
+    # via
+    #   -r /w/lock.in
+    #   adal
+    #   apache-airflow-core
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+    #   flask-jwt-extended
+    #   gcloud-aio-auth
+    #   msal
+    #   openmetadata-ingestion
+    #   snowflake-connector-python
+pymssql==2.4.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-microsoft-mssql
+pymysql==1.1.3
+    # via
+    #   -r /w/lock.in
+    #   aiomysql
+    #   apache-airflow-providers-mysql
+    #   openmetadata-ingestion
+pynacl==1.6.2
+    # via
+    #   -r /w/lock.in
+    #   paramiko
+pyodbc==5.3.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-odbc
+pyopenssl==26.4.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-snowflake
+    #   snowflake-connector-python
+pyparsing==3.3.2
+    # via
+    #   -r /w/lock.in
+    #   httplib2
+pytest==9.1.1
+    # via collate-sqlfluff
+python-daemon==3.1.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+python-dateutil==2.9.0.post0
+    # via
+    #   -r /w/lock.in
+    #   adal
+    #   aiobotocore
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   arrow
+    #   azure-kusto-data
+    #   botocore
+    #   celery
+    #   croniter
+    #   dbt-common
+    #   elasticsearch
+    #   flask-appbuilder
+    #   google-cloud-bigquery
+    #   kubernetes
+    #   kubernetes-asyncio
+    #   metricflow
+    #   openlineage-python
+    #   openmetadata-ingestion
+    #   opensearch-py
+    #   pandas
+    #   pendulum
+    #   pyathena
+    #   sagemaker-studio
+    #   snowflake-snowpark-python
+python-discovery==1.6.0
+    # via
+    #   -r /w/lock.in
+    #   virtualenv
+python-dotenv==1.2.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-docker
+    #   dbt-core
+    #   litellm
+    #   openmetadata-ingestion
+    #   pydantic-settings
+    #   uvicorn
+python-http-client==3.3.7
+    # via
+    #   -r /w/lock.in
+    #   sendgrid
+python-ldap==3.4.7
+    # via -r /w/lock.in
+python-multipart==0.0.32
+    # via
+    #   -r /w/lock.in
+    #   fastapi
+python-slugify==9.0.0
+    # via
+    #   -r /w/lock.in
+    #   agate
+    #   apache-airflow-core
+    #   apache-airflow-providers-google
+pytimeparse==1.1.10
+    # via agate
+pytz==2026.3.post1
+    # via
+    #   -r /w/lock.in
+    #   dbt-adapters
+    #   dbt-core
+    #   flask-babel
+    #   flower
+    #   redshift-connector
+    #   snowflake-connector-python
+pyyaml==6.0.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apispec
+    #   collate-sqlfluff
+    #   dbt-core
+    #   google-ads
+    #   google-cloud-aiplatform
+    #   huggingface-hub
+    #   kubernetes
+    #   kubernetes-asyncio
+    #   libcst
+    #   metricflow
+    #   openlineage-integration-common
+    #   openlineage-python
+    #   openmetadata-ingestion
+    #   ray
+    #   snowflake-snowpark-python
+    #   uvicorn
+rapidfuzz==3.14.6
+    # via metricflow
+ray==2.58.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+redis==6.4.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-redis
+    #   kombu
+redshift-connector==2.1.7
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+referencing==0.37.0
+    # via
+    #   -r /w/lock.in
+    #   jsonschema
+    #   jsonschema-specifications
+    #   metricflow
+regex==2026.9.10
+    # via
+    #   -r /w/lock.in
+    #   collate-sqlfluff
+    #   tiktoken
+requests==2.34.2
+    # via
+    #   -r /w/lock.in
+    #   adal
+    #   apache-airflow-core
+    #   apache-airflow-providers-http
+    #   azure-core
+    #   azure-datalake-store
+    #   azure-kusto-data
+    #   dbt-common
+    #   dbt-core
+    #   docker
+    #   gcsfs
+    #   google-api-core
+    #   google-auth
+    #   google-cloud-bigquery
+    #   google-cloud-storage
+    #   google-genai
+    #   hvac
+    #   kubernetes
+    #   looker-sdk
+    #   msal
+    #   msrest
+    #   openlineage-python
+    #   openmetadata-ingestion
+    #   opensearch-py
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-resourcedetector-gcp
+    #   ray
+    #   redshift-connector
+    #   requests-aws4auth
+    #   requests-file
+    #   requests-oauthlib
+    #   requests-toolbelt
+    #   sagemaker-studio
+    #   snowflake-connector-python
+    #   snowplow-tracker
+    #   tiktoken
+    #   zeep
+requests-aws4auth==1.4.0
+    # via openmetadata-ingestion
+requests-file==3.0.1
+    # via zeep
+requests-oauthlib==2.0.0
+    # via
+    #   -r /w/lock.in
+    #   google-auth-oauthlib
+    #   kubernetes
+    #   msrest
+requests-toolbelt==1.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-http
+    #   zeep
+rich==15.0.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   collate-data-diff
+    #   rich-argparse
+    #   rich-toolkit
+    #   typer
+rich-argparse==1.8.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+rich-toolkit==0.20.5
+    # via
+    #   -r /w/lock.in
+    #   fastapi-cli
+rpds-py==2026.6.3
+    # via
+    #   -r /w/lock.in
+    #   jsonschema
+    #   referencing
+rsa==4.9.1
+    # via
+    #   -r /w/lock.in
+    #   gcloud-aio-storage
+ruamel-yaml==0.19.1
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-aiplatform
+s3transfer==0.15.0
+    # via
+    #   -r /w/lock.in
+    #   boto3
+sagemaker-studio==1.0.27
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+scikit-learn==1.9.1
+    # via
+    #   -r /w/lock.in
+    #   google-cloud-aiplatform
+scipy==1.17.1
+    # via
+    #   -r /w/lock.in
+    #   scikit-learn
+scramp==1.4.17
+    # via
+    #   -r /w/lock.in
+    #   redshift-connector
+secretstorage==3.5.0
+    # via keyring
+sendgrid==6.12.5
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-sendgrid
+setproctitle==1.3.7
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+setuptools==84.0.0
+    # via
+    #   apache-airflow-providers-snowflake
+    #   openmetadata-ingestion
+    #   pandas-gbq
+    #   pydata-google-auth
+    #   redshift-connector
+    #   sagemaker-studio
+    #   snowflake-snowpark-python
+shapely==2.2.0
+    # via openmetadata-ingestion
+shellingham==1.5.4
+    # via
+    #   -r /w/lock.in
+    #   typer
+six==1.17.0
+    # via
+    #   -r /w/lock.in
+    #   kubernetes
+    #   kubernetes-asyncio
+    #   msrestazure
+    #   opencensus
+    #   prison
+    #   python-dateutil
+    #   wirerope
+slack-sdk==3.44.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-slack
+smart-open==8.0.1
+    # via
+    #   -r /w/lock.in
+    #   ray
+smmap==5.0.3
+    # via
+    #   -r /w/lock.in
+    #   gitdb
+sniffio==1.3.1
+    # via
+    #   -r /w/lock.in
+    #   elastic-transport
+    #   elasticsearch
+    #   google-genai
+    #   greenback
+    #   openai
+snowflake-connector-python==4.7.3
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-snowflake
+    #   snowflake-snowpark-python
+    #   snowflake-sqlalchemy
+snowflake-snowpark-python==1.55.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-snowflake
+snowflake-sqlalchemy==1.11.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-snowflake
+snowplow-tracker==1.1.0
+    # via dbt-core
+sortedcontainers==2.4.0
+    # via
+    #   -r /w/lock.in
+    #   snowflake-connector-python
+soupsieve==2.9.2
+    # via
+    #   -r /w/lock.in
+    #   beautifulsoup4
+sqlalchemy==2.0.52
+    # via
+    #   -r /w/lock.in
+    #   alembic
+    #   apache-airflow-core
+    #   flask-appbuilder
+    #   flask-sqlalchemy
+    #   geoalchemy2
+    #   marshmallow-sqlalchemy
+    #   openmetadata-ingestion
+    #   snowflake-sqlalchemy
+    #   sqlalchemy-bigquery
+    #   sqlalchemy-spanner
+    #   sqlalchemy-utils
+sqlalchemy-bigquery==1.17.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+sqlalchemy-spanner==1.20.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+sqlalchemy-utils==0.42.1
+    # via
+    #   -r /w/lock.in
+    #   flask-appbuilder
+sqlglot==29.0.1
+    # via
+    #   -r /w/lock.in
+    #   collate-sqllineage
+    #   metricflow
+sqlparse==0.6.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-common-sql
+    #   collate-sqllineage
+    #   dbt-core
+    #   google-cloud-spanner
+starlette==1.6.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   cadwyn
+    #   fastapi
+statsd==4.0.1
+    # via -r /w/lock.in
+std-uritemplate==2.0.12
+    # via
+    #   -r /w/lock.in
+    #   microsoft-kiota-abstractions
+structlog==26.1.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+svcs==26.2.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+tabulate==0.9.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   collate-data-diff
+    #   metricflow
+    #   openmetadata-ingestion
+tblib==3.2.2
+    # via collate-sqlfluff
+tenacity==9.1.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   apache-airflow-providers-google
+    #   apache-airflow-task-sdk
+    #   gcloud-aio-auth
+    #   google-genai
+    #   openmetadata-ingestion
+    #   pyathena
+termcolor==3.3.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+text-unidecode==1.3
+    # via
+    #   -r /w/lock.in
+    #   python-slugify
+threadpoolctl==3.6.0
+    # via
+    #   -r /w/lock.in
+    #   scikit-learn
+tiktoken==0.14.0
+    # via
+    #   -r /w/lock.in
+    #   litellm
+tokenizers==0.23.2
+    # via
+    #   -r /w/lock.in
+    #   litellm
+toml==0.10.2
+    # via collate-data-diff
+tomlkit==0.15.1
+    # via
+    #   -r /w/lock.in
+    #   snowflake-connector-python
+tornado==6.5.8
+    # via
+    #   -r /w/lock.in
+    #   flower
+tqdm==4.70.1
+    # via
+    #   -r /w/lock.in
+    #   collate-sqlfluff
+    #   google-cloud-aiplatform
+    #   huggingface-hub
+    #   openai
+truststore==0.10.4
+    # via
+    #   -r /w/lock.in
+    #   httpcore2
+    #   httpx2
+typer==0.27.2
+    # via
+    #   -r /w/lock.in
+    #   fastapi-cli
+    #   huggingface-hub
+types-protobuf==7.35.1.20260906
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-google
+typing-extensions==4.16.0
+    # via
+    #   -r /w/lock.in
+    #   adbc-driver-manager
+    #   aiohttp
+    #   aiosignal
+    #   alembic
+    #   anyio
+    #   apache-airflow-core
+    #   apache-airflow-task-sdk
+    #   asyncssh
+    #   azure-ai-projects
+    #   azure-batch
+    #   azure-core
+    #   azure-cosmos
+    #   azure-identity
+    #   azure-keyvault-secrets
+    #   azure-mgmt-compute
+    #   azure-mgmt-containerregistry
+    #   azure-mgmt-cosmosdb
+    #   azure-mgmt-datafactory
+    #   azure-mgmt-resource
+    #   azure-mgmt-storage
+    #   azure-servicebus
+    #   azure-storage-blob
+    #   azure-storage-file-datalake
+    #   azure-storage-file-share
+    #   azure-synapse-artifacts
+    #   beautifulsoup4
+    #   cadwyn
+    #   cattrs
+    #   collate-data-diff
+    #   cron-descriptor
+    #   dbt-adapters
+    #   dbt-common
+    #   dbt-core
+    #   elasticsearch
+    #   fastapi
+    #   flask-limiter
+    #   google-cloud-aiplatform
+    #   google-genai
+    #   grpcio
+    #   httpx2
+    #   huggingface-hub
+    #   limits
+    #   looker-sdk
+    #   mashumaro
+    #   metricflow
+    #   openai
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+    #   psycopg
+    #   pydantic
+    #   pydantic-core
+    #   pydantic-extra-types
+    #   pyopenssl
+    #   referencing
+    #   rich-toolkit
+    #   snowflake-connector-python
+    #   snowflake-snowpark-python
+    #   snowplow-tracker
+    #   sqlalchemy
+    #   starlette
+    #   svcs
+    #   typing-inspect
+    #   typing-inspection
+typing-inspect==0.9.0
+    # via openmetadata-ingestion
+typing-inspection==0.4.4
+    # via
+    #   -r /w/lock.in
+    #   cadwyn
+    #   fastapi
+    #   pydantic
+    #   pydantic-settings
+tzdata==2026.4
+    # via
+    #   -r /w/lock.in
+    #   arrow
+    #   kombu
+    #   pendulum
+tzlocal==5.4.4
+    # via
+    #   -r /w/lock.in
+    #   celery
+    #   snowflake-snowpark-python
+universal-pathlib==0.3.10
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+uritemplate==4.2.0
+    # via
+    #   -r /w/lock.in
+    #   google-api-python-client
+urllib3==2.7.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-cncf-kubernetes
+    #   botocore
+    #   collate-data-diff
+    #   docker
+    #   elastic-transport
+    #   kubernetes
+    #   kubernetes-asyncio
+    #   opensearch-py
+    #   requests
+    #   sagemaker-studio
+uuid6==2025.0.1
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+uvicorn==0.52.4
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-core
+    #   fastapi
+    #   fastapi-cli
+uvloop==0.22.1
+    # via
+    #   -r /w/lock.in
+    #   uvicorn
+vine==5.1.0
+    # via
+    #   -r /w/lock.in
+    #   amqp
+    #   celery
+    #   kombu
+virtualenv==21.7.9
+    # via
+    #   -r /w/lock.in
+    #   astronomer-cosmos
+    #   ray
+watchfiles==1.2.0
+    # via
+    #   -r /w/lock.in
+    #   uvicorn
+watchtower==3.4.0
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-amazon
+wcwidth==0.8.3
+    # via
+    #   -r /w/lock.in
+    #   prompt-toolkit
+websocket-client==1.9.0
+    # via
+    #   -r /w/lock.in
+    #   kubernetes
+websockets==16.1.1
+    # via
+    #   -r /w/lock.in
+    #   google-genai
+    #   uvicorn
+werkzeug==3.1.8
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask
+    #   flask-appbuilder
+    #   flask-jwt-extended
+    #   flask-login
+    #   sendgrid
+wheel==0.48.0
+    # via snowflake-snowpark-python
+wirerope==1.0.0
+    # via
+    #   -r /w/lock.in
+    #   methodtools
+wrapt==2.4.1
+    # via
+    #   -r /w/lock.in
+    #   aiobotocore
+    #   deprecated
+    #   smart-open
+wtforms==3.2.2
+    # via
+    #   -r /w/lock.in
+    #   apache-airflow-providers-fab
+    #   flask-appbuilder
+    #   flask-wtf
+yarl==1.24.5
+    # via
+    #   -r /w/lock.in
+    #   aiohttp
+zeep==4.3.3
+    # via -r /w/lock.in
+zipp==4.1.0
+    # via
+    #   -r /w/lock.in
+    #   importlib-metadata
+zope-event==6.2
+    # via
+    #   -r /w/lock.in
+    #   gevent
+zope-interface==8.6
+    # via
+    #   -r /w/lock.in
+    #   gevent
