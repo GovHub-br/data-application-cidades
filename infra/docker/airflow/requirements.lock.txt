@@ -133,7 +133,6 @@ apache-airflow==3.3.2
     #   apache-airflow-providers-hashicorp
     #   apache-airflow-providers-http
     #   apache-airflow-providers-microsoft-azure
-    #   apache-airflow-providers-microsoft-mssql
     #   apache-airflow-providers-mysql
     #   apache-airflow-providers-odbc
     #   apache-airflow-providers-openlineage
@@ -178,7 +177,6 @@ apache-airflow-providers-common-compat==1.19.0
     #   apache-airflow-providers-hashicorp
     #   apache-airflow-providers-http
     #   apache-airflow-providers-microsoft-azure
-    #   apache-airflow-providers-microsoft-mssql
     #   apache-airflow-providers-mysql
     #   apache-airflow-providers-odbc
     #   apache-airflow-providers-openlineage
@@ -205,7 +203,6 @@ apache-airflow-providers-common-sql==2.1.1
     #   apache-airflow-providers-amazon
     #   apache-airflow-providers-elasticsearch
     #   apache-airflow-providers-google
-    #   apache-airflow-providers-microsoft-mssql
     #   apache-airflow-providers-mysql
     #   apache-airflow-providers-odbc
     #   apache-airflow-providers-openlineage
@@ -233,8 +230,6 @@ apache-airflow-providers-http==6.1.0
     #   -r /w/lock.in
     #   apache-airflow-providers-amazon
 apache-airflow-providers-microsoft-azure==15.1.0
-    # via -r /w/lock.in
-apache-airflow-providers-microsoft-mssql==4.7.1
     # via -r /w/lock.in
 apache-airflow-providers-mysql==6.6.2
     # via -r /w/lock.in
@@ -332,7 +327,6 @@ attrs==26.1.0
     #   outcome
     #   referencing
     #   svcs
-    #   zeep
 authlib==1.8.0
     # via
     #   -r /w/lock.in
@@ -1498,7 +1492,6 @@ isodate==0.7.2
     #   azure-synapse-artifacts
     #   dbt-common
     #   msrest
-    #   zeep
 isoduration==20.11.0
     # via
     #   -r /w/lock.in
@@ -1636,7 +1629,6 @@ lxml==6.1.3
     #   -r /w/lock.in
     #   openmetadata-ingestion
     #   redshift-connector
-    #   zeep
 mako==1.4.1
     # via
     #   -r /w/lock.in
@@ -1682,7 +1674,6 @@ methodtools==0.4.7
     #   -r /w/lock.in
     #   apache-airflow-core
     #   apache-airflow-providers-common-sql
-    #   apache-airflow-providers-microsoft-mssql
     #   apache-airflow-task-sdk
 metricflow==0.213.0
     # via dbt-core
@@ -2001,7 +1992,6 @@ platformdirs==4.11.8
     #   collate-sqlfluff
     #   snowflake-connector-python
     #   virtualenv
-    #   zeep
 pluggy==1.6.0
     # via
     #   -r /w/lock.in
@@ -2250,10 +2240,6 @@ pyjwt==2.14.0
     #   msal
     #   openmetadata-ingestion
     #   snowflake-connector-python
-pymssql==2.4.1
-    # via
-    #   -r /w/lock.in
-    #   apache-airflow-providers-microsoft-mssql
 pymysql==1.1.3
     # via
     #   -r /w/lock.in
@@ -2427,18 +2413,14 @@ requests==2.34.2
     #   ray
     #   redshift-connector
     #   requests-aws4auth
-    #   requests-file
     #   requests-oauthlib
     #   requests-toolbelt
     #   sagemaker-studio
     #   snowflake-connector-python
     #   snowplow-tracker
     #   tiktoken
-    #   zeep
 requests-aws4auth==1.4.0
     # via openmetadata-ingestion
-requests-file==3.0.1
-    # via zeep
 requests-oauthlib==2.0.0
     # via
     #   -r /w/lock.in
@@ -2449,7 +2431,6 @@ requests-toolbelt==1.0.0
     # via
     #   -r /w/lock.in
     #   apache-airflow-providers-http
-    #   zeep
 rich==15.0.0
     # via
     #   -r /w/lock.in
@@ -2894,8 +2875,6 @@ yarl==1.24.5
     # via
     #   -r /w/lock.in
     #   aiohttp
-zeep==4.3.3
-    # via -r /w/lock.in
 zipp==4.1.0
     # via
     #   -r /w/lock.in
