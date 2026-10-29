@@ -130,7 +130,6 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 |---|---|---|
 | Quais regras do #206 valem no modelo novo | Modelagem da F2 | F2 |
 | DAGs quase idênticas: fábrica ou não | Modelagem da F2 | F2 |
-| `uv.lock` × constraints da imagem base do Airflow | ADR-0014, na #246 | F4 |
 | `data-science/`: repositório, LFS ou lake | Issue da B15 | — |
 
 ## 8. Registro de decisões
@@ -146,3 +145,4 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 | 29/10/2026 | O drift estrutural vira a task `verify_structural_data_drift`, entre `extract` e `transform`; o semântico segue nos testes da bronze, rodados pelo Cosmos como tasks da DAG geral. Todo alerta de drift é e-mail (ADR-0006, ADR-0004). |
 | 29/10/2026 | Sem schema `comum`: cada secretaria carrega as fontes que usa no próprio schema, e o compartilhamento fica com o ministério quando outra secretaria chegar (ADR-0007, 0010, 0011). Só a nomenclatura do medalhão fica em português; todo nome técnico de rastreio vai para inglês: `_carga`/`carga=` viram `_load_id`/`load_id=`, e os status, `quarantined`, `uncataloged` e `additive_drift` (ADR-0007). |
 | 29/10/2026 | O drift semântico é obrigatoriamente dbt (ADR-0006). Catálogo de colunas no contrato, com `term` e `aliases`, usado no drift estrutural, na prata (`coalesce_aliases`) e no OpenMetadata (ADR-0006, 0003, 0012). Qualidade com o dbt-expectations e o Elementary, que substitui o `registrar_execucao_dbt` (ADR-0006, 0008, 0014). |
+| 29/10/2026 | Questões em aberto dos ADRs resolvidas: responsável por fonte e siglas ficam com o ministério, com regra para o meio-tempo (0006, 0010); a política de acesso do ministério prevalece (0011); o `uv.lock` segue as constraints oficiais do Airflow (0014). |

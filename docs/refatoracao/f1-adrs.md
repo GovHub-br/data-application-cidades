@@ -29,11 +29,7 @@ Os ADRs ficam em `docs/adr/`, na branch `feat/adrs-arquiteturais` (PR #264). Ele
 
 ## Questões em aberto nos ADRs
 
-- **0006:** os responsáveis por fonte (dependem do ministério).
-- **0008:** o limite de 15 minutos.
-- **0010:** as siglas das secretarias.
-- **0011:** as políticas do ministério.
-- **0014:** como o `uv.lock` respeita as constraints da imagem base.
+Nenhuma. As questões que restavam foram resolvidas nos próprios ADRs: o responsável por fonte e as siglas das secretarias ficam com o ministério, com regra para o meio-tempo (0006 e 0010); a política de acesso do ministério prevalece se existir (0011); o limite de 15 minutos é proposta inicial (0008); o `uv.lock` segue as constraints oficiais do Airflow (0014).
 
 ## Critério de aceite
 

@@ -106,4 +106,4 @@ Detalhe em `docs/adr/`.
 - Fechar o PR #206 e apagar a branch `refactor/ingestao-raw-staging-bronze`.
 - Os 66 alertas do dependabot na `main` (3 críticos): incluir na F4 (#246) ou abrir uma issue própria.
 - O ADR do TCC (`0001-arquitetura-mlops-prevencao-paralisacao.md`) existe só como arquivo local, fora do git, numa das máquinas. Ele colide com o número 0001 e vai precisar de um número livre quando entrar.
-- As questões em aberto dos ADRs, listadas em [f1-adrs.md](f1-adrs.md).
+- A lista oficial de siglas das secretarias e o responsável por fonte, que o ministério vai indicar (ADR-0010 e ADR-0006).
