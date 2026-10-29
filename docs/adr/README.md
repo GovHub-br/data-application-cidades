@@ -31,6 +31,8 @@ anteriores. Para entender a arquitetura, leia na ordem.
 | [0010](0010-divisao-do-warehouse-por-secretaria.md) | Divisão do warehouse por secretaria | Proposto |
 | [0011](0011-controle-de-acesso.md) | Controle de acesso | Proposto |
 | [0012](0012-catalogo-linhagem-e-dados-pessoais.md) | Catálogo, linhagem e dados pessoais | Proposto |
+| [0013](0013-orquestracao-no-airflow.md) | Orquestração no Airflow | Proposto |
+| [0014](0014-dependencias-imagem-e-ci.md) | Dependências, imagem e CI | Proposto |
 
 ## Ciclo de vida
 
@@ -57,6 +59,7 @@ o substitui.
 
 - **Status:** Proposto
 - **Data:** AAAA-MM-DD
+- **Revisão:** AAAA-MM-DD (o que mudou), só enquanto o ADR está Proposto
 - **Relacionados:** issues, ADRs, documentos
 
 ## Contexto
