@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (layout trocado: o lake espelha a fonte, com a pasta `carga=` antes do arquivo)
+- **Revisão:** 2026-10-29 (layout trocado: o lake espelha a fonte, com a pasta `carga=` antes do arquivo; entrada manual em `raw/manual/`; carga na coluna `_carga`; migração da raw antiga sem PII)
 - **Relacionados:**
   - ADR-0001 (arquitetura), ADR-0002 (R0 e R1), ADR-0004 (ingestão e conversão),
     ADR-0006 (contrato da fonte), ADR-0009 (histórico)
@@ -51,7 +51,7 @@ mais de uma secretaria.
 
 | Prefixo | Conteúdo | Quem escreve |
 |---|---|---|
-| `raw/` | Cada recebimento, como chegou, com a PII mascarada (ADR-0002 R0) | Task `extract` das DAGs de fonte |
+| `raw/` | Cada recebimento, como chegou, com a PII mascarada (ADR-0002 R0) | Task `extract` das DAGs de fonte; `scripts/enviar_manual.py`, em `raw/manual/` |
 | `staging/` | O mesmo conteúdo em Parquet, na mesma árvore | Task `transform` e DAG de manutenção |
 | `audit/` | Auditoria do mascaramento e da conversão, um Parquet por execução | As mesmas tasks |
 | `dryrun/` | Prévias de execuções de teste, descartáveis | Execuções com `dry_run` |
@@ -68,6 +68,10 @@ staging/<canal>/<caminho no servidor>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo original
 Fontes de API:
 raw/<fonte>/<dado>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo>
 staging/<fonte>/<dado>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo sem extensão>.parquet
+
+Entrada manual (ADR-0002 R7):
+raw/manual/<base>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo>
+staging/manual/<base>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo sem extensão>.parquet
 ```
 
 Exemplos:
@@ -83,12 +87,18 @@ raw/fgv/incc_m/carga=20261029T030000Z/incc_m.xlsx
   DAG define `<fonte>/<dado>`. Os arquivos do SharePoint, inseridos à mão, seguem o
   mesmo layout.
 - **`carga=`** é o momento do recebimento, em UTC, no formato de partição Hive. É o
-  que dá o rastreio de quando cada arquivo chegou. O `read_parquet` com
-  `hive_partitioning` expõe a coluna `carga` para a bronze sem nenhum código. Duas
+  que dá o rastreio de quando cada arquivo chegou. A conversão copia esse valor
+  para a coluna `_carga` (ADR-0002 R2), que chega à bronze pelo `select *`. Duas
   cargas nunca colidem, então nada é sobrescrito.
+- **A ordem das cargas é a da `_carga`.** No formato `AAAAMMDDTHHMMSSZ`, a ordem
+  do texto é a ordem do tempo. O `_ingested_at` registra a conversão e muda
+  quando a staging é regenerada (§6), então não ordena cargas.
 - **O nome original do arquivo é preservado.** Em arquivos de terceiros, o nome
   carrega data e versão, e é o que se usa para derivar o período de referência
   (ADR-0009).
+- **A entrada manual** (ADR-0002 R7) só chega pelo `scripts/enviar_manual.py`,
+  que monta a pasta `carga=`, confere o hash (§3) e registra o envio. Ninguém
+  grava à mão em `raw/manual/`.
 
 ### 3. Recebimento repetido não gera carga nova
 
@@ -197,6 +207,7 @@ duplicar bases que servem a mais de um domínio.
 - Os 7 `meta.caminho` com arquivo datado passam a usar glob.
 - A lógica de "gêmeos" de `raw_para_staging.py` fica só para o legado, na DAG de
   manutenção.
+- O `scripts/enviar_manual.py` é o único caminho de escrita em `raw/manual/`.
 
 ## Plano de migração
 
@@ -205,9 +216,22 @@ duplicar bases que servem a mais de um domínio.
 2. Mudar o `sftp_para_minio.py` para gravar dentro de `carga=`, junto com o
    mascaramento antes de pousar (ADR-0002).
 3. Objetos já existentes: um script único copia cada objeto para
-   `<mesmo caminho>/carga=<data da última modificação>/<arquivo>`. O original fica
-   até a conferência e depois é removido pelo usuário de manutenção. A staging é
-   regenerada a partir da raw nova.
+   `<mesmo caminho>/carga=<data>/<arquivo>`, com duas condições:
+   - **Só copia objeto sem PII.** Um arquivo tabular (`.csv`, `.txt`, `.xlsx`)
+     precisa ter como último registro em `lake._masking_log` `masked`,
+     `skipped_no_pii` ou `skipped_already`, e passar pela varredura dos
+     detectores de `mascarar_minio.py` em modo só leitura. Os `.mdb`/`.accdb`,
+     que o mascaramento lê mas não reescreve, não são copiados. Os JSON das
+     APIs, que o mascaramento não lê, são copiados, porque trazem agregados
+     públicos. Objeto que não passa é removido pelo usuário de manutenção e,
+     se ainda for necessário, extraído de novo pelo caminho novo, com a máscara
+     antes de pousar.
+   - **A data é a do recebimento.** Vem do `finished_at` em
+     `lake._ingest_minio_log`. A última modificação do objeto só vale na falta
+     dele, porque, nos objetos mascarados no lugar, ela é a data da máscara.
+
+   O original fica até a conferência e depois é removido pelo usuário de
+   manutenção. A staging é regenerada a partir da raw nova.
 4. Trocar os `meta.caminho` datados por glob.
 5. Ligar o versionamento do bucket e passar a criar o usuário `app-cidades` e a
    política dele pelo playbook do RustFS (`infra/playbooks/rustfs/`). Hoje o usuário

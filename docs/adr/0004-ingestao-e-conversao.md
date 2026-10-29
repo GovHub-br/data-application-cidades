@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas)
+- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`)
 - **Relacionados:**
   - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas: R0 a R2),
     ADR-0005 (layout do lake), ADR-0013 (orquestração)
@@ -28,6 +28,9 @@ diferentes:
   por hash (`lake._staging_log`). No fim, dispara a DAG do dbt. Como varre a `raw/`
   inteira, ela também converte a raw das APIs e regrava, só em texto, a staging que
   as DAGs de API tinham gravado no mesmo caminho (issue #248).
+- **Dados manuais:** scripts SQL de `scripts/database/` inserem direto no schema
+  `bronze`, e o `IngestorBalancoEmpresas`, chamado pela `conjuntura_dag`, gera
+  parquet tipado de um arquivo já posto na raw.
 
 Há ainda dois pontos que nenhum ADR tratava:
 
@@ -116,6 +119,17 @@ bronze.
 As tabelas de controle do schema `lake` (`_ingest_minio_log`, `_staging_log`,
 `_masking_log`) continuam: são controle da ingestão, não dado da fonte.
 
+### Entrada manual
+
+A entrada manual (ADR-0002 R7) não tem fonte externa: o arquivo chega à raw pelo
+`scripts/enviar_manual.py`, já na pasta `carga=` (ADR-0005). A DAG
+`manual_ingest_dag` mantém o mesmo par de tasks:
+
+- a `extract` não extrai nada. Ela lista em `raw/manual/` os objetos sem registro
+  em `lake._staging_log` e devolve as chaves. Sem objeto novo, termina `skipped`.
+  A listagem cobre só esse prefixo, que é pequeno, e não a raw inteira;
+- a `transform` é a comum, com o drift estrutural contra o contrato da base.
+
 ### DAG de manutenção do lake
 
 A `raw_para_staging_dag`, disparada à mão ou em horário próprio, percorre a `raw/` e
@@ -198,6 +212,8 @@ lake.
   `amazon` e `postgres`; o `imap` precisa entrar para a DAG do Tesouro.
 - O `ClientPostgresDB.insert_data` deixa de ser usado pelas DAGs de fonte, e as
   sources Postgres sem uso de `models/sources.yml` saem.
+- Os scripts de `scripts/database/` e o `IngestorBalancoEmpresas` dão lugar à
+  `manual_ingest_dag` (ADR-0002 R7).
 
 ## Plano de migração
 
@@ -227,6 +243,7 @@ lake.
 - Nenhuma DAG de fonte grava em `staging/` a não ser pela task `transform`.
 - Nenhuma DAG de fonte importa `ClientPostgresDB`, chama `insert_data` ou usa um
   operator de transferência.
+- Nenhum script ou DAG insere dado direto numa tabela de bronze.
 - Os schemas das APIs não recebem escrita depois da migração (`pg_stat_user_tables`).
 
 ## Questões em aberto

@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (contagens conferidas com o código)
+- **Revisão:** 2026-10-29 (contagens conferidas com o código; coluna `_carga`; DAG da entrada manual)
 - **Relacionados:**
   - ADR-0002 (camadas), ADR-0004 (tasks), ADR-0005 (chaves do lake), ADR-0010
   (divisão por secretaria)
@@ -96,7 +96,8 @@ qualquer `select *`.
 | Coluna | Onde nasce | Significado |
 |---|---|---|
 | `_source_file` | Staging | Objeto de origem na raw |
-| `_ingested_at` | Staging | Momento da conversão da carga |
+| `_carga` | Staging | Momento do recebimento, da pasta `carga=` (ADR-0005); ordena as cargas |
+| `_ingested_at` | Staging | Momento da conversão da carga; muda quando a staging é regenerada |
 | `_source_hash` | Staging | Hash do objeto de origem |
 | `_built_at` | Prata e ouro | Momento em que o modelo foi materializado |
 
@@ -111,6 +112,7 @@ modelo chama a macro hoje, a troca não quebra nada.
 | Bucket | `data-lake-<órgão>` | `data-lake-mcid` |
 | Chave do lake | ADR-0005 | `raw/fgv/incc_m/carga=20261019T030000Z/incc_m.xlsx` |
 | DAG de fonte | `<fonte>_<dado>_ingest_dag` | `fgv_incc_m_ingest_dag` |
+| DAG da entrada manual | `manual_ingest_dag` (ADR-0004) | — |
 | DAG de manutenção | `raw_para_staging_dag` | — |
 | DAG do dbt | `mcid_cosmos_dag` | — |
 | Tasks da DAG de fonte | `extract`, `transform` (ADR-0004) | — |

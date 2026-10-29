@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003)
+- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003; incremental da bronze pela `_carga`)
 - **Relacionados:**
   - ADR-0002 (prata com todos os períodos), ADR-0003 (targets), ADR-0005 (partição
   por carga), ADR-0006 (tipo de carga e portões)
@@ -53,7 +53,7 @@ custa demais (critério abaixo). A estratégia depende da camada e do tipo de ca
 
 | Camada | Estratégia incremental | Por que é seguro |
 |---|---|---|
-| Bronze | Insere só as cargas novas (partição `carga`, ADR-0005) | A raw é imutável: uma carga antiga nunca muda |
+| Bronze | Insere só as cargas novas (pela `_carga`, ADR-0005) | A raw é imutável: uma carga antiga nunca muda |
 | Prata, fonte de carga completa | Apaga e reinsere os períodos de referência que as cargas novas tocaram | Cada carga traz a base inteira; a dedup técnica escolhe a carga mais recente do período (ADR-0009) |
 | Prata, fonte incremental | Insere ou atualiza pela chave de negócio | Cada carga traz só o que é novo ou mudou |
 | Ouro | `table` sempre, a não ser que a medição mostre o contrário | Agrega e é pequena |

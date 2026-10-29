@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; dados manuais)
+- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_carga`)
 - **Relacionados:**
   - ADR-0001, ADR-0003, ADR-0005
   - Deck *GovHub — Arquitetura Medalhão de Referência*, seção 4
@@ -29,6 +29,11 @@ dado pessoal fica legível no lake. E a conversão para a staging não confere s
 objeto foi mascarado: uma falha no mascaramento não interrompe a DAG, e o objeto é
 convertido do mesmo jeito (issue #249).
 
+Os dados que a equipe consolida à mão (as séries do boletim de conjuntura) seguem
+um terceiro caminho: scripts SQL em `scripts/database/` inserem e corrigem as
+linhas direto no schema `bronze`, sem raw nem staging. Uma correção por `UPDATE`
+não deixa rastro da versão anterior.
+
 Estado do projeto `mcid`, conferido em 2026-10-29:
 
 | Verificação | Resultado |
@@ -39,7 +44,7 @@ Estado do projeto `mcid`, conferido em 2026-10-29:
 | Caminhos de conversão que gravam `_source_file` e `_ingested_at` no Parquet | 1 de 2: `scripts/raw_para_staging.py` grava; `registros_para_staging_parquet` (15 chamadas, uma por DAG de API) não grava |
 | Fontes de API cuja raw é sobrescrita a cada execução (chave fixa `raw/<fonte>/<dado>.<ext>` em `cliente_minio.raw_key`) | Todas as que usam `upload_raw_json` ou `upload_raw_bytes` (16 chamadas, em 16 DAGs) |
 | Objetos que pousam na raw com dado pessoal e só depois são mascarados | Todo objeto novo em `raw/` |
-| Pratas que leem o lake ou uma `source()` direto, sem passar pela bronze | 5 de 84, todas com `source('conjuntura_manual')` (dados manuais, ver Questões em aberto) |
+| Pratas que leem o lake ou uma `source()` direto, sem passar pela bronze | 5 de 84, todas com `source('conjuntura_manual')` (dados manuais, ver R7) |
 | Ouros que leem bronze ou lake direto | 5 de 97: `ouro_historico_snapshot_empreendimento_atual` (bronzes INT040 a INT065) e quatro do boletim que leem `source('conjuntura_manual')` |
 | Pratas e ouros que chamam `add_metadata_timestamps` | 0 de 181 |
 | Conversões que escrevem por cima da staging das APIs | `scripts/raw_para_staging.py` varre a `raw/` inteira (só ignora `dados_historicos`) e regrava `staging/<fonte>/<dado>.parquet`, o mesmo caminho que as DAGs de API escrevem, só em texto (issue #248) |
@@ -93,6 +98,9 @@ Isso vale para todo ambiente que a equipe GovHub acessa. O valor original existe
 na fonte. Se o ministério quiser guardar o original no ambiente dele, a decisão é
 dele e fica no ADR-0011.
 
+A única entrada da raw que não passa por esse mascaramento é a entrada manual
+(R7), que só aceita dado sem PII.
+
 **R1. A raw é imutável.** Cada recebimento, já mascarado, é gravado em caminho
 próprio, na pasta `carga=` do ADR-0005, e nunca é sobrescrito. É a origem de
 qualquer reprocessamento.
@@ -106,7 +114,8 @@ fonte logo depois da task que grava a raw (ADR-0004). Ela:
 - normaliza mecanicamente o nome das colunas para snake_case ASCII, sem duplicatas,
   e guarda o cabeçalho original nos metadados do Parquet;
 - acrescenta as colunas de linhagem `_source_file` (objeto de origem na raw),
-  `_ingested_at` (momento da conversão) e `_source_hash` (hash do objeto de origem).
+  `_carga` (a pasta `carga=` do objeto, ADR-0005), `_ingested_at` (momento da
+  conversão) e `_source_hash` (hash do objeto de origem).
 
 Só é convertido o arquivo que passou pelo drift estrutural (ADR-0006). A staging não
 tipa, não filtra, não deduplica e não altera valores. A interpretação começa na
@@ -118,7 +127,10 @@ prata.
 - o caminho fica declarado em `sources.yml`, para que a linhagem comece na fonte e
   não na bronze;
 - nomes padronizados e colunas de linhagem já chegam da staging (R2);
-- mantém **todas** as cargas presentes na staging.
+- mantém **todas** as cargas presentes na staging;
+- a ordem entre as cargas é dada pela `_carga`, o momento do recebimento. O
+  `_ingested_at` registra a conversão e muda quando a staging é regenerada
+  (ADR-0005), então não serve para dizer qual carga é a mais recente.
 
 **R4. A prata é a bronze tratada, e obrigatoriamente genérica.** A prata não é
 moldada para um indicador. Ela deixa cada fonte limpa e padronizada para que
@@ -133,7 +145,7 @@ Cada modelo de prata:
   semânticos às colunas, normaliza domínios e formatos (por exemplo, o formato do
   APF com `normalize_apf`) e limpa o texto (espaços, nulos, mojibake);
 - remove duplicatas **técnicas**: a mesma linha repetida, ou o mesmo período
-  reenviado pela fonte;
+  reenviado pela fonte, quando fica a carga mais recente pela `_carga`;
 - pode unir fontes que descrevem a mesma entidade no mesmo grão (por exemplo, FAR
   CAIXA com FAR BB), com uma coluna que identifica a origem;
 - chama `add_metadata_timestamps`;
@@ -165,6 +177,24 @@ tem, o campo entra na prata primeiro, de forma genérica.
 
 **R6. O consumo só lê a ouro.** Painéis, planilhas, boletins e exportações leem
 somente tabelas da ouro.
+
+**R7. A entrada manual é uma fonte como as outras.** Os dados que a equipe
+consolida à mão entram pela raw e seguem o mesmo caminho até a ouro, com as
+mesmas regras:
+
+- o arquivo é CSV ou XLSX, um por base, com o layout declarado no contrato da
+  fonte (ADR-0006). Script SQL não é forma de entrada, e nada é inserido ou
+  corrigido direto no banco;
+- o envio é pelo `scripts/enviar_manual.py`, que grava em
+  `raw/manual/<base>/carga=.../` (ADR-0005). A DAG `manual_ingest_dag` converte o
+  que chegou (ADR-0004);
+- a carga é completa: cada envio traz a série inteira da base. Uma correção é um
+  envio novo, e a prata fica com a carga mais recente de cada período (R4,
+  ADR-0009). A versão anterior continua na raw;
+- só entra dado sem PII. É a única entrada da raw que não passa pela máscara do
+  R0, e o teste de dado sensível em todos os domínios (ADR-0012) é a segunda
+  linha de defesa. Os arquivos do SharePoint não são entrada manual neste
+  sentido: podem trazer dado pessoal e seguem o caminho das fontes de arquivo.
 
 ### Divergências intencionais em relação ao deck
 
@@ -212,6 +242,16 @@ mesma fonte divergiriam sem ninguém perceber.
 tipagem e os testes da prata. É o caminho mais curto para dois painéis mostrarem
 números diferentes.
 
+**Manter a inserção manual direto na bronze (prática atual).** Dispensa arquivo
+e conversão, mas é a única fonte que pula a raw e a staging. Cinco pratas e
+quatro ouros precisam ler `source()`, e cada correção por `UPDATE` apaga a versão
+anterior sem deixar rastro.
+
+**Arquivo da entrada manual versionado no repositório, lido por uma DAG.** A
+correção passaria por revisão em PR, mas o repositório é público, e atualizar um
+número exigiria um PR. Com a pasta `raw/manual/`, a entrada fica no lake, como a
+de qualquer fonte, e a raw guarda cada versão.
+
 ## Trade-offs
 
 | Ganha | Paga |
@@ -255,6 +295,11 @@ números diferentes.
   registrado no contrato da fonte, e a materialização da prata segue essa
   classificação (ADR-0008). Isso também atende ao requisito 8 da issue #130
   (identificar quais bases são carga completa e quais são incrementais).
+- A entrada manual (R7) substitui os scripts de `scripts/database/` e o
+  `IngestorBalancoEmpresas`, que a `conjuntura_dag` usa hoje para gerar parquet
+  tipado de um arquivo manual. As cinco pratas e as quatro ouros que leem
+  `source('conjuntura_manual')` passam a ler a bronze e a prata das bases
+  manuais.
 
 ## Plano de migração
 
@@ -273,6 +318,17 @@ Depois as camadas, por domínio, um PR por domínio, nesta ordem:
 Os três domínios que ainda rodam em DuckDB (`linha_financiada`,
 `reforma_casa_brasil` e `mcmv_historico`) mudam de dialeto e de contrato no mesmo
 PR, e por isso seguem a ordem do ADR-0003, antes dos demais.
+
+No domínio `conjuntura` entra também a entrada manual (R7):
+
+1. Criar o `scripts/enviar_manual.py`, a `manual_ingest_dag` e o contrato de cada
+   base manual.
+2. Exportar cada tabela `bronze_manual_*` atual como a primeira carga da sua
+   base.
+3. Trocar o `source('conjuntura_manual')` das pratas e ouros pela bronze e pela
+   prata das bases manuais, e conferir os números da ouro antes e depois.
+4. Aposentar os scripts de `scripts/database/` e o `IngestorBalancoEmpresas`, e
+   tirar a source `conjuntura_manual` do `sources.yml`.
 
 Em cada domínio:
 
@@ -302,7 +358,8 @@ As regras R3 a R5 viram um teste dbt sobre o grafo, executado no CI:
 
 - modelo em `*/bronze/` que não seja só `select * from {{ fonte_lake(...) }}` →
   falha;
-- tabela de bronze sem as colunas `_source_file` e `_ingested_at` → falha (é o sinal
+- tabela de bronze sem as colunas `_source_file`, `_carga` e `_ingested_at` →
+  falha (é o sinal
   de que a staging não passou pela conversão comum);
 - modelo em `*/prata/` com dependência que não seja bronze ou prata → falha;
 - modelo em `*/ouro/` com dependência que não seja prata ou ouro → falha;
@@ -321,11 +378,6 @@ que só pode diminuir.
 
 ## Questões em aberto
 
-A questão do volume da prata com todos os períodos ficou respondida pelo drift
-estrutural, que identifica o tipo de carga de cada fonte (ver Consequências).
-
-1. **Dados manuais.** Os dados do boletim inseridos à mão (`bronze_manual_*`,
-   carregados por `scripts/database/` direto no schema `bronze`) não passam pela raw
-   nem pela staging. Cinco pratas e quatro ouros leem essas tabelas por `source()`.
-   Falta decidir se elas ficam como exceção registrada, com teste próprio, ou se a
-   inserção manual passa a gravar um arquivo na raw, como qualquer fonte.
+Nenhuma. O volume da prata com todos os períodos ficou respondido pelo drift
+estrutural, que identifica o tipo de carga de cada fonte (ver Consequências), e
+os dados manuais, pela R7.
