@@ -59,11 +59,11 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 | B8 | [Imagem única da CI para VM e k8s](b08-imagem-unica.md) | a abrir | | |
 | B9 | [GitHub Pages e dependabot](b09-pages-dependabot.md) | a abrir | | |
 | B10 | [`tests/` com `conftest.py`](b10-conftest.md) | a abrir | | |
-| B11 | Código morto da ingestão | a abrir | | |
-| B12 | Um escritor de staging | a abrir | | |
-| B13 | Orquestração dos DAGs | a abrir | | |
-| B14 | Infra sem duplicação | a abrir | | |
-| B15 | Higiene do repositório | a abrir | | |
+| B11 | [Código morto da ingestão](b11-codigo-morto-ingestao.md) | a abrir | | |
+| B12 | [Um escritor de staging](b12-escritor-unico-staging.md) | a abrir | | |
+| B13 | [Orquestração dos DAGs](b13-orquestracao.md) | a abrir | | |
+| B14 | [Infra sem duplicação](b14-infra-duplicada.md) | a abrir | | |
+| B15 | [Higiene do repositório](b15-higiene-repositorio.md) | a abrir | | |
 
 ## 5. As cinco frentes previstas
 
@@ -113,46 +113,13 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 
 ### P2: limpeza e estrutura
 
-**B11. Código morto da ingestão**
-
-- os métodos de `ClientPostgresDB` para compras_gov, transfere_gov, pessoas e siorg, sobras do #237 (`plugins/cliente_postgres.py:183-569`);
-- funções sem uso em `cliente_email` e `cliente_minio`;
-- `IngestorLake.subir_raw`;
-- `scripts/sftp_ingest.py` e `scripts/sftp_rename_tables.py`;
-- os `typers=` mortos, que geram warning em todo run;
-- os `__pycache__` de refactors antigos em `plugins/`.
-
-**B12. Um escritor de staging**
-
-- **Problema:** hoje são três, com regras diferentes:
-  - `registros_para_staging_parquet` grava só texto e ignora `typers`;
-  - `gera_parquet_tipado` é o do IBGE;
-  - o pandas do `abecip_instituicoes`.
-- **Depende de:** B1 e do ADR do contrato.
-
-**B13. Orquestração**
-
-- **Slots presos:** o `conjuntura_dag` segura 13 slots em polling; `deferrable=True` resolve.
-- **Disparo em dobro:** o `mcid_cosmos_dag` não tem `max_active_runs` e é disparado pelo cron e pelo `minio_transform_dag`.
-- **Lista incompleta:** abecip_financiamentos e abecip_instituicoes estão fora de `INGEST_DAG_IDS`.
-- **Variables sem controle:** `dynamic_schedules`, `IBGE_CONFIGURACOES` e `BACEN_SERIES` não estão no repositório nem são validadas. Uma vírgula a mais no JSON derruba o DAG no parse.
-
-**B14. Infra sem duplicação**
-
-- **Envs copiadas:** as envs do Airflow estão repetidas no compose, na VM e no k8s. O k8s ainda diverge em `LAKE_TMPDIR=/tmp`.
-- **Playbooks sem roles:** a instalação do Docker, o bloco UFW e as `allowed_networks` estão copiados quatro vezes.
-- **`infra/env/.env.example`:** traz MinIO e bucket do IPEA e um `AIRFLOW_IMAGE_NAME` sem uso, e não tem `MASKING_HMAC_SECRET`.
-- **Texto desatualizado:** `infra/README.md` diz "três VMs", mas são quatro.
-
-**B15. Higiene do repositório**
-
-- `README.md` genérico do IPEA, com GitLab e targets de make que não existem;
-- três `.user.yml` do dbt versionados;
-- `superset/__init__.py` vazio, fazendo sombra ao módulo `superset`;
-- `Plano-Trabalho.md` parado;
-- `docs-pages/src/_data/airflow.json` com 74 DAGs, quando só 9 existem;
-- `scripts/snapshots/*.json` versionados, com nomes de arquivo do CadÚnico;
-- `data-science/`: 74% do repositório (32 MB de CSV, PDF e zip), mas está no escopo (base do TCC). Decidir se fica, vira LFS ou vai para o lake.
+| ID | Item |
+|---|---|
+| B11 | [Código morto da ingestão](b11-codigo-morto-ingestao.md) |
+| B12 | [Um escritor de staging](b12-escritor-unico-staging.md) |
+| B13 | [Orquestração dos DAGs](b13-orquestracao.md) |
+| B14 | [Infra sem duplicação](b14-infra-duplicada.md) |
+| B15 | [Higiene do repositório](b15-higiene-repositorio.md) |
 
 ## 7. Decisões em aberto
 
