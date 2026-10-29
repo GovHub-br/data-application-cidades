@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (contagens conferidas com o código; coluna `_carga`; DAG da entrada manual)
+- **Revisão:** 2026-10-29 (contagens conferidas com o código; coluna `_load_id`; DAG da entrada manual; sem schema `comum`; nomes de rastreio em inglês)
 - **Relacionados:**
   - ADR-0002 (camadas), ADR-0004 (tasks), ADR-0005 (chaves do lake), ADR-0010
   (divisão por secretaria)
@@ -33,6 +33,17 @@ da staging (ADR-0002 R2) já usam prefixo `_` (`_source_file`, `_ingested_at`,
 
 ## Decisão
 
+### Idioma
+
+- **As camadas do medalhão ficam em português:** bronze, prata e ouro, nos
+  prefixos, nas pastas e nos documentos.
+- **Os nomes técnicos de rastreio ficam em inglês:** colunas técnicas, pasta de
+  carga no lake, status das tabelas de controle (`lake._*_log`) e tasks do
+  Airflow. É a convenção da documentação e das ferramentas de mercado, e é o que
+  já existe no código (`_source_file`, `_ingested_at`, `masked`, `converted`,
+  `extract`, `transform`).
+- As colunas de negócio seguem os glossários do projeto, em português.
+
 ### Camadas
 
 As camadas se chamam **bronze, prata e ouro**, no prefixo das tabelas e dos
@@ -44,14 +55,13 @@ nome novo.
 | Schema | Conteúdo | Exemplo |
 |---|---|---|
 | `<sigla da secretaria>` | Bronze, prata e ouro dos dados da secretaria | `snh.ouro_far_resumo_gerencial` |
-| `comum` | Bronze e prata de fontes usadas por mais de uma secretaria | `comum.prata_conjuntura_sinapi` |
 | `seeds`, `metadata`, `lake` | Auxiliares técnicos | — |
 
 - A sigla é a da secretaria, em minúsculas (`snh`, `dph`).
-- **Uma fonte vai para `comum` só quando a segunda secretaria passar a usá-la.**
-  Até lá, fica no schema da secretaria que a usa. Hoje praticamente tudo é da SNH.
-- **`comum` não tem ouro.** Todo produto tem uma secretaria dona, e a ouro fica no
-  schema dela, lendo a prata de `comum` quando precisar.
+- **Não há schema compartilhado.** Cada secretaria tem bronze, prata e ouro no
+  próprio schema. Uma fonte usada por mais de uma secretaria é carregada no schema
+  de cada uma, e o dado se repete. Hoje só a SNH usa o warehouse, então não há
+  repetição; como compartilhar fica para quando outra secretaria chegar (ADR-0010).
 - O schema de fallback (`dbt_default`) fica sempre vazio, como já garante o teste
   `sem_recurso_no_schema_de_fallback`.
 - Como as três camadas e vários domínios dividem o mesmo schema, o nome da tabela
@@ -96,7 +106,7 @@ qualquer `select *`.
 | Coluna | Onde nasce | Significado |
 |---|---|---|
 | `_source_file` | Staging | Objeto de origem na raw |
-| `_carga` | Staging | Momento do recebimento, da pasta `carga=` (ADR-0005); ordena as cargas |
+| `_load_id` | Staging | Identifica a carga: o momento do recebimento, da pasta `load_id=` (ADR-0005); ordena as cargas |
 | `_ingested_at` | Staging | Momento da conversão da carga; muda quando a staging é regenerada |
 | `_source_hash` | Staging | Hash do objeto de origem |
 | `_built_at` | Prata e ouro | Momento em que o modelo foi materializado |
@@ -110,7 +120,8 @@ modelo chama a macro hoje, a troca não quebra nada.
 | Elemento | Padrão | Exemplo |
 |---|---|---|
 | Bucket | `data-lake-<órgão>` | `data-lake-mcid` |
-| Chave do lake | ADR-0005 | `raw/fgv/incc_m/carga=20261019T030000Z/incc_m.xlsx` |
+| Pasta da carga | `load_id=<AAAAMMDDTHHMMSSZ>` (ADR-0005) | `load_id=20261019T030000Z` |
+| Chave do lake | ADR-0005 | `raw/fgv/incc_m/load_id=20261019T030000Z/incc_m.xlsx` |
 | DAG de fonte | `<fonte>_<dado>_ingest_dag` | `fgv_incc_m_ingest_dag` |
 | DAG da entrada manual | `manual_ingest_dag` (ADR-0004) | — |
 | DAG de manutenção | `raw_para_staging_dag` | — |
@@ -127,8 +138,15 @@ camada continua visível no prefixo de cada tabela.
 mas o projeto já está em português nos 267 modelos. Voltar para o inglês seria
 renomear tudo sem ganho.
 
-**`comum` com ouro.** Criaria produtos sem secretaria dona, que ninguém responde
-quando o número estiver errado.
+**Schema `comum` para fontes de mais de uma secretaria (versão anterior deste
+ADR).** Evitaria repetir bronze e prata, mas criaria uma área sem secretaria dona
+e uma migração a cada fonte que passasse a ser compartilhada. Com uma secretaria
+só, não se paga.
+
+**Nomes de rastreio em português (`_carga`, `_arquivo_origem`).** Acompanharia o
+idioma das camadas, mas foge da convenção da documentação e das ferramentas de
+mercado, e obrigaria renomear o que já existe em inglês na staging e nas tabelas
+de controle.
 
 **Manter `dt_silver`/`dt_gold`.** Os nomes contradizem as camadas.
 
@@ -179,8 +197,7 @@ pode servir a mais de um domínio (ADR-0005). O domínio aparece da prata em dia
 - Testes sobre o grafo, no CI:
   - todo modelo em `*/bronze/`, `*/prata/` e `*/ouro/` tem o prefixo da sua camada
     (hoje 100% passa; o teste impede regressão);
-  - todo modelo materializa no schema de uma secretaria ou em `comum`;
-  - nenhum `ouro_` materializa em `comum`.
+  - todo modelo materializa no schema de uma secretaria.
 - Nenhum modelo novo tem `silver` ou `gold` no nome.
 - Toda prata e ouro tem `_ingested_at` e `_built_at`.
 

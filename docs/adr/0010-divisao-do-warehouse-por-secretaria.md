@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (onde o `+database` aparece hoje)
+- **Revisão:** 2026-10-29 (onde o `+database` aparece hoje; sem schema `comum`)
 - **Relacionados:**
   - ADR-0001 (arquitetura), ADR-0007 (nomenclatura), ADR-0011 (controle de acesso)
   - Deck *GovHub — Arquitetura Medalhão de Referência* seções 8 a 11
@@ -29,14 +29,14 @@ acomodar outras secretarias. O deck apresenta duas propostas:
 | Schema | Conteúdo |
 |---|---|
 | `<sigla da secretaria>` (`snh`, `dph`) | Bronze, prata e ouro dos dados da secretaria |
-| `comum` | Bronze e prata de fontes usadas por mais de uma secretaria |
 
 - A camada fica no prefixo da tabela e do arquivo de modelo (`bronze_`, `prata_`,
   `ouro_`), como define o ADR-0007.
-- Uma fonte vai para `comum` só quando a segunda secretaria passar a usá-la. Até
-  lá, fica no schema da secretaria que a usa.
-- `comum` não tem ouro. Todo produto tem uma secretaria dona, e a ouro fica no
-  schema dela.
+- Não há schema compartilhado. Uma fonte usada por mais de uma secretaria é
+  carregada no schema de cada uma, com bronze e prata próprias, e o dado se
+  repete. Hoje só a SNH usa o warehouse. Como compartilhar fontes entre
+  secretarias fica com o ministério, quando a segunda secretaria chegar.
+- Todo produto tem uma secretaria dona, e a ouro fica no schema dela.
 - Não há schema `playground`. A exploração acontece sobre as pratas, com o papel de
   leitura de análise de cada secretaria (ADR-0011). A prata genérica do ADR-0002 já
   é o material de exploração.
@@ -64,8 +64,12 @@ sinais:
 
 **Bronze e prata comuns, só a ouro por secretaria.** Fica mais perto da proposta 1
 do deck e evita duplicar fonte. Mas põe numa área sem dono as bases que só uma
-secretaria usa, e o acesso à prata deixa de seguir a secretaria. O schema `comum`
-resolve a fonte compartilhada sem isso.
+secretaria usa, e o acesso à prata deixa de seguir a secretaria.
+
+**Schema `comum` para fontes de mais de uma secretaria (versão anterior deste
+ADR).** Evitaria repetir bronze e prata, mas criaria uma área sem secretaria dona
+e uma migração a cada fonte que passasse a ser compartilhada. Com uma secretaria
+só, não se paga.
 
 **Schema por camada, como hoje.** Não separa secretarias.
 
@@ -78,7 +82,7 @@ Está no ADR-0001 como evolução futura.
 |---|---|
 | O schema diz de quem é o dado, e o acesso segue a secretaria | O schema sozinho não separa bronze de ouro; isso fica no prefixo e nos grants (ADR-0011) |
 | Um banco, sem motor federado nem Ranger | Isolamento de processamento entre secretarias não existe |
-| Fonte compartilhada sem duplicação, em `comum` | Mover uma fonte para `comum` quando a segunda secretaria chega é uma migração |
+| Cada secretaria é dona de tudo que está no seu schema, inclusive bronze e prata | Uma fonte usada por duas secretarias é carregada duas vezes |
 | Toda ouro tem dono | Um produto que serve duas secretarias precisa ter uma dona |
 
 ## Consequências
@@ -87,19 +91,21 @@ Está no ADR-0001 como evolução futura.
 - Os grants passam a combinar secretaria e camada (ADR-0011).
 - O Superset e o OpenMetadata passam a ver as tabelas em `snh` em vez de `bronze`,
   `prata` e `ouro`.
+- No dbt, o nome do modelo é único no projeto. A cópia de uma fonte no schema de
+  outra secretaria vai precisar de outro nome de arquivo, com `alias` para o nome
+  da tabela. Isso se resolve quando a segunda secretaria chegar.
 
 ## Plano de migração
 
 1. Trocar `+database: cidades` por variável.
 2. Mover as tabelas para `snh`, pelo plano do ADR-0007.
-3. Quando uma segunda secretaria entrar: criar o schema dela, os papéis do
-   ADR-0011 e, para cada fonte que ela compartilhar com a SNH, mover a bronze e a
-   prata para `comum`.
+3. Quando uma segunda secretaria entrar: criar o schema dela e os papéis do
+   ADR-0011. A forma de compartilhar as fontes que ela usar em comum com a SNH
+   fica com o ministério.
 
 ## Validação operacional
 
-- Todo modelo materializa no schema de uma secretaria ou em `comum`.
-- Nenhuma ouro materializa em `comum`.
+- Todo modelo materializa no schema de uma secretaria.
 - Nenhum modelo tem nome de banco escrito no SQL ou no `dbt_project.yml`.
 
 ## Questões em aberto

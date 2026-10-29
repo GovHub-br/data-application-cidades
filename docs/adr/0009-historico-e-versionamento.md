@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (a carga mais recente é dada pela `_carga`, não pelo `_ingested_at`)
+- **Revisão:** 2026-10-29 (a carga mais recente é dada pela `_load_id`, não pelo `_ingested_at`; nomes de rastreio em inglês, ADR-0007)
 - **Relacionados:**
   - ADR-0002 (prata com todos os períodos, ouro escolhe o vigente), ADR-0005 (uma
   chave por carga), ADR-0006 (`padrao_arquivo`), ADR-0007 (colunas técnicas),
@@ -37,7 +37,7 @@ pergunta passa a ser o que ainda precisa de versionamento explícito.
 | Tempo | Coluna | Pergunta que responde | De onde vem |
 |---|---|---|---|
 | Período de referência | `dt_referencia` | A que mês ou data o dado se refere | Do próprio dado ou do nome do arquivo (abaixo); tipado na prata |
-| Carga | `_carga` | Quando o dado chegou | Da pasta `carga=` da chave do lake (ADR-0005), copiada pela conversão |
+| Carga | `_load_id` | Quando o dado chegou | Da pasta `load_id=` da chave do lake (ADR-0005), copiada pela conversão |
 | Materialização | `_built_at` | Quando a tabela foi construída | Do dbt (ADR-0007) |
 
 Uma análise temporal usa o período de referência. A carga serve para auditoria e
@@ -62,7 +62,7 @@ A prata guarda uma linha por `(chave, dt_referencia)`.
 - **Fonte de carga completa:** cada período é o retrato que a fonte mandou para
   ele.
 - **Reenvio do mesmo período:** a prata fica com a carga mais recente daquele
-  período pela `_carga` (deduplicação técnica, ADR-0002 R4). As versões anteriores continuam na
+  período pela `_load_id` (deduplicação técnica, ADR-0002 R4). As versões anteriores continuam na
   bronze e na raw, para auditoria.
 - **`_row_hash`** (hash das colunas de negócio) é coluna técnica opcional na
   prata, para comparar um período com o anterior sem comparar coluna por coluna.
@@ -126,7 +126,7 @@ então o snapshot seria uma segunda cópia menos completa.
 ## Validação operacional
 
 - Toda prata tem `dt_referencia` preenchido e única por `(chave, dt_referencia)`.
-- Nenhum modelo filtra ou agrega por `_ingested_at` ou `_carga` para análise
+- Nenhum modelo filtra ou agrega por `_ingested_at` ou `_load_id` para análise
   temporal (revisão de PR).
 - Reconstruir um período antigo a partir da raw devolve os mesmos números da ouro
   daquele período.

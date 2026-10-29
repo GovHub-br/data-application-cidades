@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_carga`)
+- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_load_id`; nomes de rastreio em inglês, ADR-0007)
 - **Relacionados:**
   - ADR-0001, ADR-0003, ADR-0005
   - Deck *GovHub — Arquitetura Medalhão de Referência*, seção 4
@@ -102,7 +102,7 @@ A única entrada da raw que não passa por esse mascaramento é a entrada manual
 (R7), que só aceita dado sem PII.
 
 **R1. A raw é imutável.** Cada recebimento, já mascarado, é gravado em caminho
-próprio, na pasta `carga=` do ADR-0005, e nunca é sobrescrito. É a origem de
+próprio, na pasta `load_id=` do ADR-0005, e nunca é sobrescrito. É a origem de
 qualquer reprocessamento.
 
 **R2. A staging muda a forma, não o conteúdo.** A conversão é a mesma para todas
@@ -114,7 +114,7 @@ fonte depois da task que grava a raw e da `verify_structural_data_drift` (ADR-00
 - normaliza mecanicamente o nome das colunas para snake_case ASCII, sem duplicatas,
   e guarda o cabeçalho original nos metadados do Parquet;
 - acrescenta as colunas de linhagem `_source_file` (objeto de origem na raw),
-  `_carga` (a pasta `carga=` do objeto, ADR-0005), `_ingested_at` (momento da
+  `_load_id` (a pasta `load_id=` do objeto, ADR-0005), `_ingested_at` (momento da
   conversão) e `_source_hash` (hash do objeto de origem).
 
 Só é convertido o arquivo que passou pelo drift estrutural (ADR-0006). A staging não
@@ -128,7 +128,7 @@ prata.
   não na bronze;
 - nomes padronizados e colunas de linhagem já chegam da staging (R2);
 - mantém **todas** as cargas presentes na staging;
-- a ordem entre as cargas é dada pela `_carga`, o momento do recebimento. O
+- a ordem entre as cargas é dada pela `_load_id`, o momento do recebimento. O
   `_ingested_at` registra a conversão e muda quando a staging é regenerada
   (ADR-0005), então não serve para dizer qual carga é a mais recente.
 
@@ -145,7 +145,7 @@ Cada modelo de prata:
   semânticos às colunas, normaliza domínios e formatos (por exemplo, o formato do
   APF com `normalize_apf`) e limpa o texto (espaços, nulos, mojibake);
 - remove duplicatas **técnicas**: a mesma linha repetida, ou o mesmo período
-  reenviado pela fonte, quando fica a carga mais recente pela `_carga`;
+  reenviado pela fonte, quando fica a carga mais recente pela `_load_id`;
 - pode unir fontes que descrevem a mesma entidade no mesmo grão (por exemplo, FAR
   CAIXA com FAR BB), com uma coluna que identifica a origem;
 - chama `add_metadata_timestamps`;
@@ -186,7 +186,7 @@ mesmas regras:
   fonte (ADR-0006). Script SQL não é forma de entrada, e nada é inserido ou
   corrigido direto no banco;
 - o envio é pelo `scripts/enviar_manual.py`, que grava em
-  `raw/manual/<base>/carga=.../` (ADR-0005). A DAG `manual_ingest_dag` converte o
+  `raw/manual/<base>/load_id=.../` (ADR-0005). A DAG `manual_ingest_dag` converte o
   que chegou (ADR-0004);
 - a carga é completa: cada envio traz a série inteira da base. Uma correção é um
   envio novo, e a prata fica com a carga mais recente de cada período (R4,
@@ -358,7 +358,7 @@ As regras R3 a R5 viram um teste dbt sobre o grafo, executado no CI:
 
 - modelo em `*/bronze/` que não seja só `select * from {{ fonte_lake(...) }}` →
   falha;
-- tabela de bronze sem as colunas `_source_file`, `_carga` e `_ingested_at` →
+- tabela de bronze sem as colunas `_source_file`, `_load_id` e `_ingested_at` →
   falha (é o sinal
   de que a staging não passou pela conversão comum);
 - modelo em `*/prata/` com dependência que não seja bronze ou prata → falha;

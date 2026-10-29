@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (layout trocado: o lake espelha a fonte, com a pasta `carga=` antes do arquivo; entrada manual em `raw/manual/`; carga na coluna `_carga`; migração da raw antiga sem PII)
+- **Revisão:** 2026-10-29 (layout trocado: o lake espelha a fonte, com a pasta `load_id=` antes do arquivo; entrada manual em `raw/manual/`; carga na coluna `_load_id`; migração da raw antiga sem PII; nomes de rastreio em inglês, ADR-0007)
 - **Relacionados:**
   - ADR-0001 (arquitetura), ADR-0002 (R0 e R1), ADR-0004 (ingestão e conversão),
     ADR-0006 (contrato da fonte), ADR-0009 (histórico)
@@ -38,7 +38,7 @@ e `Base_PF_FGTS_20260707.parquet`). Quando a fonte manda o arquivo seguinte, o
 modelo continua lendo o antigo.
 
 A versão de 19/10 deste ADR reorganizava os arquivos de terceiros por base lógica
-(`raw/<fonte>/<dado>/carga=.../`). Em 29/10 a decisão foi outra: o lake espelha a
+(`raw/<fonte>/<dado>/load_id=.../`). Em 29/10 a decisão foi outra: o lake espelha a
 fonte, e a data da ingestão entra no caminho, para rastreio.
 
 ## Decisão
@@ -62,42 +62,42 @@ Nada fica fora desses quatro prefixos.
 
 ```text
 Arquivos de terceiros (SFTP, SharePoint):
-raw/<canal>/<caminho no servidor>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo original>
-staging/<canal>/<caminho no servidor>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo original sem extensão>.parquet
+raw/<canal>/<caminho no servidor>/load_id=<AAAAMMDDTHHMMSSZ>/<arquivo original>
+staging/<canal>/<caminho no servidor>/load_id=<AAAAMMDDTHHMMSSZ>/<arquivo original sem extensão>.parquet
 
 Fontes de API:
-raw/<fonte>/<dado>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo>
-staging/<fonte>/<dado>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo sem extensão>.parquet
+raw/<fonte>/<dado>/load_id=<AAAAMMDDTHHMMSSZ>/<arquivo>
+staging/<fonte>/<dado>/load_id=<AAAAMMDDTHHMMSSZ>/<arquivo sem extensão>.parquet
 
 Entrada manual (ADR-0002 R7):
-raw/manual/<base>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo>
-staging/manual/<base>/carga=<AAAAMMDDTHHMMSSZ>/<arquivo sem extensão>.parquet
+raw/manual/<base>/load_id=<AAAAMMDDTHHMMSSZ>/<arquivo>
+staging/manual/<base>/load_id=<AAAAMMDDTHHMMSSZ>/<arquivo sem extensão>.parquet
 ```
 
 Exemplos:
 
 ```text
-raw/sftp/fabrica/GEFUS/carga=20261029T030000Z/PMCMV_FAIXA3_MCID_2026_08_21.TXT
-staging/sftp/fabrica/GEFUS/carga=20261029T030000Z/PMCMV_FAIXA3_MCID_2026_08_21.parquet
-raw/fgv/incc_m/carga=20261029T030000Z/incc_m.xlsx
+raw/sftp/fabrica/GEFUS/load_id=20261029T030000Z/PMCMV_FAIXA3_MCID_2026_08_21.TXT
+staging/sftp/fabrica/GEFUS/load_id=20261029T030000Z/PMCMV_FAIXA3_MCID_2026_08_21.parquet
+raw/fgv/incc_m/load_id=20261029T030000Z/incc_m.xlsx
 ```
 
 - **O caminho é o da fonte.** Quem conhece o servidor acha o arquivo no lake pelo
   mesmo caminho, e nenhuma regra decide onde gravar. Fonte de API não tem caminho; a
   DAG define `<fonte>/<dado>`. Os arquivos do SharePoint, inseridos à mão, seguem o
   mesmo layout.
-- **`carga=`** é o momento do recebimento, em UTC, no formato de partição Hive. É o
+- **`load_id=`** é o momento do recebimento, em UTC, no formato de partição Hive. É o
   que dá o rastreio de quando cada arquivo chegou. A conversão copia esse valor
-  para a coluna `_carga` (ADR-0002 R2), que chega à bronze pelo `select *`. Duas
+  para a coluna `_load_id` (ADR-0002 R2), que chega à bronze pelo `select *`. Duas
   cargas nunca colidem, então nada é sobrescrito.
-- **A ordem das cargas é a da `_carga`.** No formato `AAAAMMDDTHHMMSSZ`, a ordem
+- **A ordem das cargas é a da `_load_id`.** No formato `AAAAMMDDTHHMMSSZ`, a ordem
   do texto é a ordem do tempo. O `_ingested_at` registra a conversão e muda
   quando a staging é regenerada (§6), então não ordena cargas.
 - **O nome original do arquivo é preservado.** Em arquivos de terceiros, o nome
   carrega data e versão, e é o que se usa para derivar o período de referência
   (ADR-0009).
 - **A entrada manual** (ADR-0002 R7) só chega pelo `scripts/enviar_manual.py`,
-  que monta a pasta `carga=`, confere o hash (§3) e registra o envio. Ninguém
+  que monta a pasta `load_id=`, confere o hash (§3) e registra o envio. Ninguém
   grava à mão em `raw/manual/`.
 
 ### 3. Recebimento repetido não gera carga nova
@@ -118,7 +118,7 @@ deixam de existir para dados novos.
 O caminho espelhado não diz qual base lógica o arquivo é. Isso vem do
 `padrao_arquivo` do contrato da fonte (ADR-0006), que casa com o caminho e o nome do
 arquivo. Arquivo que não casa com nenhum padrão fica onde chegou, com status
-`nao_catalogado` no `lake._staging_log`, gera alerta e não é convertido até alguém
+`uncataloged` no `lake._staging_log`, gera alerta e não é convertido até alguém
 catalogar a base.
 
 ### 5. A raw não aceita sobrescrita nem remoção
@@ -152,7 +152,7 @@ contrato, a DAG de manutenção converte o arquivo.
 ### 9. Caminhos em `sources.yml` sem data fixa
 
 O `meta.caminho` de cada fonte aponta para todas as cargas da base, com glob sobre a
-pasta `carga=` e o padrão do nome (`staging/sftp/fabrica/GEFUS/**/PMCMV_FAIXA3_MCID_*.parquet`),
+pasta `load_id=` e o padrão do nome (`staging/sftp/fabrica/GEFUS/**/PMCMV_FAIXA3_MCID_*.parquet`),
 nunca para um arquivo datado. Escolher a carga vigente é regra da ouro (ADR-0002 R5).
 
 ### Exceção: `dados_historicos`
@@ -163,7 +163,7 @@ exceção, até ser trazida para este layout.
 
 ## Alternativas consideradas
 
-**Reorganizar por base lógica (`raw/<fonte>/<dado>/carga=.../`), como na versão de
+**Reorganizar por base lógica (`raw/<fonte>/<dado>/load_id=.../`), como na versão de
 19/10 deste ADR.** Agrupa cada base numa pasta, mas obriga a catalogar o arquivo antes
 de gravar, e quem procura o arquivo do servidor não o acha pelo mesmo caminho.
 
@@ -172,7 +172,7 @@ idêntico ao do servidor, mas um reenvio com o mesmo nome sobrescreve o anterior
 versões antigas ficariam só no versionamento do bucket, invisíveis para a bronze, o
 que contraria a R1.
 
-**Data numa pasta acima do caminho (`raw/carga=.../sftp/...`).** Também evita a
+**Data numa pasta acima do caminho (`raw/load_id=.../sftp/...`).** Também evita a
 colisão, mas quebra o espelho e impede o glob por base.
 
 **Chave fixa com versionamento do bucket como histórico (prática atual das APIs).**
@@ -203,7 +203,7 @@ duplicar bases que servem a mais de um domínio.
 - `cliente_minio.raw_key` e `staging_key` passam a receber a carga, e
   `upload_fallback_json` deixa de existir.
 - `sftp_para_minio.py` continua espelhando o caminho do servidor e passa a gravar
-  dentro de `carga=<AAAAMMDDTHHMMSSZ>/`, com o controle por hash que já existe.
+  dentro de `load_id=<AAAAMMDDTHHMMSSZ>/`, com o controle por hash que já existe.
 - Os 7 `meta.caminho` com arquivo datado passam a usar glob.
 - A lógica de "gêmeos" de `raw_para_staging.py` fica só para o legado, na DAG de
   manutenção.
@@ -213,10 +213,10 @@ duplicar bases que servem a mais de um domínio.
 
 1. Mudar `raw_key`/`staging_key` e as DAGs de API, uma a uma, junto com a migração
    para `extract` → `transform` (ADR-0004).
-2. Mudar o `sftp_para_minio.py` para gravar dentro de `carga=`, junto com o
+2. Mudar o `sftp_para_minio.py` para gravar dentro de `load_id=`, junto com o
    mascaramento antes de pousar (ADR-0002).
 3. Objetos já existentes: um script único copia cada objeto para
-   `<mesmo caminho>/carga=<data>/<arquivo>`, com duas condições:
+   `<mesmo caminho>/load_id=<data>/<arquivo>`, com duas condições:
    - **Só copia objeto sem PII.** Um arquivo tabular (`.csv`, `.txt`, `.xlsx`)
      precisa ter como último registro em `lake._masking_log` `masked`,
      `skipped_no_pii` ou `skipped_already`, e passar pela varredura dos
@@ -240,7 +240,7 @@ duplicar bases que servem a mais de um domínio.
 ## Validação operacional
 
 - A DAG de manutenção, em conferência, não encontra objeto fora dos quatro prefixos
-  nem objeto de `raw/` sem uma pasta `carga=` logo acima do arquivo.
+  nem objeto de `raw/` sem uma pasta `load_id=` logo acima do arquivo.
 - Nenhum hash tem mais de uma carga em `lake._ingest_minio_log`.
 - O usuário `app-cidades` recebe erro ao tentar apagar em `raw/`.
 - Nenhum `meta.caminho` em `sources.yml` aponta para arquivo com data no nome.

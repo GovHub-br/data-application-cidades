@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verify_structural_data_drift`)
+- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verify_structural_data_drift`; nomes de rastreio em inglês, ADR-0007)
 - **Relacionados:**
   - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas: R0 a R2),
     ADR-0005 (layout do lake), ADR-0013 (orquestração)
@@ -138,7 +138,7 @@ As tabelas de controle do schema `lake` (`_ingest_minio_log`, `_staging_log`,
 ### Entrada manual
 
 A entrada manual (ADR-0002 R7) não tem fonte externa: o arquivo chega à raw pelo
-`scripts/enviar_manual.py`, já na pasta `carga=` (ADR-0005). A DAG
+`scripts/enviar_manual.py`, já na pasta `load_id=` (ADR-0005). A DAG
 `manual_ingest_dag` mantém as mesmas tasks:
 
 - a `extract` não extrai nada. Ela lista em `raw/manual/` os objetos sem registro

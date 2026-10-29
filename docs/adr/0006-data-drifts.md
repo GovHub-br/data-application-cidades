@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail)
+- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; nomes de rastreio em inglês, ADR-0007)
 - **Relacionados:**
   - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (tasks `verify_structural_data_drift` e `transform`),
   ADR-0005 (quarentena)
@@ -77,12 +77,12 @@ são lidos na carga completa, para contar as linhas.
 | Situação | Reação |
 |---|---|
 | Igual ao contrato | Converte |
-| Coluna nova | Converte, registra `drift_aditivo` e alerta |
-| Coluna do contrato ausente | Não converte: `quarentena`, alerta |
-| Coluna renomeada | Não converte: `quarentena`, alerta com a sugestão de renomeação |
-| Arquivo sem cabeçalho, ou encoding e separador não detectados | Não converte: `quarentena` |
-| Fonte ou arquivo sem contrato | Não converte: `nao_catalogado`, alerta |
-| Carga completa com linhas fora de `variacao_maxima_linhas` em relação à carga anterior | Não converte: `quarentena` (arquivo truncado, ou a fonte passou a mandar só o incremental) |
+| Coluna nova | Converte, registra `additive_drift` e alerta |
+| Coluna do contrato ausente | Não converte: `quarantined`, alerta |
+| Coluna renomeada | Não converte: `quarantined`, alerta com a sugestão de renomeação |
+| Arquivo sem cabeçalho, ou encoding e separador não detectados | Não converte: `quarantined` |
+| Fonte ou arquivo sem contrato | Não converte: `uncataloged`, alerta |
+| Carga completa com linhas fora de `variacao_maxima_linhas` em relação à carga anterior | Não converte: `quarantined` (arquivo truncado, ou a fonte passou a mandar só o incremental) |
 
 - Uma coluna "renomeada" aparece como uma ausente mais uma nova. A `verify_structural_data_drift`
   compara os nomes por similaridade e sugere a renomeação no alerta. A decisão é
@@ -90,7 +90,7 @@ são lidos na carga completa, para contar as linhas.
 - A `verify_structural_data_drift` confere todas as chaves recebidas, registra o status de
   cada uma em `lake._staging_log` e passa adiante só as aprovadas: iguais ao
   contrato ou com coluna nova.
-- Se algum arquivo foi barrado (`quarentena` ou `nao_catalogado`), ela manda o
+- Se algum arquivo foi barrado (`quarantined` ou `uncataloged`), ela manda o
   e-mail (§5) e termina em falha. A `transform` roda mesmo assim e converte só
   as aprovadas. O problema aparece em vermelho no Airflow sem bloquear os outros
   arquivos da mesma carga.
@@ -140,9 +140,9 @@ Todo alerta de drift é um e-mail.
 
 | O que | Onde fica registrado | Quem manda o e-mail |
 |---|---|---|
-| Drift estrutural: arquivo em `quarentena` ou `nao_catalogado`, coluna nova | `lake._staging_log` | A `verify_structural_data_drift`, um e-mail por execução, com os arquivos, o motivo e a sugestão de renomeação, se houver |
+| Drift estrutural: arquivo em `quarantined` ou `uncataloged`, coluna nova | `lake._staging_log` | A `verify_structural_data_drift`, um e-mail por execução, com os arquivos, o motivo e a sugestão de renomeação, se houver |
 | Drift semântico: teste `error` da bronze que falha | `lake._dbt_log` (`registrar_execucao_dbt`) | O `on_failure_callback` da DAG geral, quando a task do teste falha |
-| Avisos: testes `warn` da bronze e anomalias da ouro (§4) | `lake._dbt_log` | A task `alertar_avisos`, no fim da DAG geral: lê os avisos da execução e manda um e-mail só, se houver algum |
+| Avisos: testes `warn` da bronze e anomalias da ouro (§4) | `lake._dbt_log` | A task `notify_dbt_warnings`, no fim da DAG geral: lê os avisos da execução e manda um e-mail só, se houver algum |
 
 - O e-mail sai pelo provider SMTP do Airflow, que já está na imagem. Servidor e
   credencial ficam numa Connection (ADR-0013).
@@ -201,7 +201,7 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 - Três macros novas: `formato_valido`, `volume_da_carga` e `sem_perda_na_tipagem`.
 - `plugins/lake_tasks.py` ganha a task `verify_structural_data_drift`, e a DAG de fonte passa
   a ter três tasks (ADR-0004).
-- A DAG geral ganha o `on_failure_callback` com e-mail e a task `alertar_avisos`.
+- A DAG geral ganha o `on_failure_callback` com e-mail e a task `notify_dbt_warnings`.
 - O `sem_drift_de_colunas` e o `colunas_esperadas` ficam como rede de segurança na
   bronze (`warn`), porque o portão estrutural passa a estar antes da staging.
 - `convencao-testes-qualidade.md` ganha a distinção entre defeito da origem
@@ -213,7 +213,7 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
    mais estáveis) e criar as três macros.
 2. Implementar a task `verify_structural_data_drift`, com o e-mail, e encadeá-la nas DAGs de
    fonte (ADR-0004). Na DAG geral, ligar o `on_failure_callback` e a task
-   `alertar_avisos`.
+   `notify_dbt_warnings`.
 3. Estender os contratos às fontes do SFTP e do SharePoint, com
    `padrao_arquivo`, domínio a domínio, na ordem do plano do ADR-0002.
 4. Calibrar `variacao_maxima_linhas` e as tolerâncias com o histórico já presente
@@ -226,8 +226,8 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 - Toda bronze tem `formato_valido` e `volume_da_carga`; toda prata tem
   `sem_perda_na_tipagem`.
 - Toda DAG de fonte encadeia `extract` → `verify_structural_data_drift` → `transform`.
-- Nenhum objeto da staging foi gerado a partir de arquivo com status `quarentena`
-  ou `nao_catalogado` em `lake._staging_log`.
+- Nenhum objeto da staging foi gerado a partir de arquivo com status `quarantined`
+  ou `uncataloged` em `lake._staging_log`.
 
 ## Questões em aberto
 
