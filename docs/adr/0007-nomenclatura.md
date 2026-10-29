@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (contagens conferidas com o código; coluna `_load_id`; DAG da entrada manual; sem schema `comum`; nomes de rastreio em inglês)
+- **Revisão:** 2026-10-29 (contagens conferidas com o código; coluna `_load_id`; DAG da entrada manual; sem schema `comum`; nomes de rastreio em inglês; schema `elementary`)
 - **Relacionados:**
   - ADR-0002 (camadas), ADR-0004 (tasks), ADR-0005 (chaves do lake), ADR-0010
   (divisão por secretaria)
@@ -55,7 +55,7 @@ nome novo.
 | Schema | Conteúdo | Exemplo |
 |---|---|---|
 | `<sigla da secretaria>` | Bronze, prata e ouro dos dados da secretaria | `snh.ouro_far_resumo_gerencial` |
-| `seeds`, `metadata`, `lake` | Auxiliares técnicos | — |
+| `seeds`, `metadata`, `lake`, `elementary` | Auxiliares técnicos; `elementary` guarda as tabelas do pacote Elementary (ADR-0006) | — |
 
 - A sigla é a da secretaria, em minúsculas (`snh`, `dph`).
 - **Não há schema compartilhado.** Cada secretaria tem bronze, prata e ouro no

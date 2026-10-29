@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (usuário do RustFS criado à mão; segredos em Connection, ADR-0013; sem schema `comum`)
+- **Revisão:** 2026-10-29 (usuário do RustFS criado à mão; segredos em Connection, ADR-0013; sem schema `comum`; schema `elementary`)
 - **Relacionados:**
   - ADR-0013 (segredos em Connection)
   - ADR-0002 (R0 e a chave do HMAC; R6, consumo só pela ouro), ADR-0005 (raw sem
@@ -42,7 +42,7 @@ desenvolvimento, sem papéis.
 | `leitura_ouro_<sigla>` | Tabelas `ouro_` do schema da secretaria | Superset, planilhas, boletins |
 | `leitura_analise_<sigla>` | Tabelas `prata_` e `ouro_` do schema da secretaria | Analistas e ciência de dados da secretaria |
 
-- Tabelas `bronze_` e os schemas técnicos (`lake`, `metadata`) ficam só com o
+- Tabelas `bronze_` e os schemas técnicos (`lake`, `metadata`, `elementary`) ficam só com o
   `cidades`.
 - Usuário de login recebe papel, nunca permissão direta. O usuário do Superset é
   membro dos papéis `leitura_ouro_<sigla>` das secretarias que ele atende.

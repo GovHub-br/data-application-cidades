@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (onde o `+database` aparece hoje; sem schema `comum`)
+- **Revisão:** 2026-10-29 (onde o `+database` aparece hoje; sem schema `comum`; medição pelo Elementary)
 - **Relacionados:**
   - ADR-0001 (arquitetura), ADR-0007 (nomenclatura), ADR-0011 (controle de acesso)
   - Deck *GovHub — Arquitetura Medalhão de Referência* seções 8 a 11
@@ -58,7 +58,7 @@ Hoje há uma secretaria; o custo não se paga. Volta à mesa se aparecer um dest
 sinais:
 
 - consultas de uma secretaria passam a degradar as de outra, medido em
-  `lake._dbt_log` e no Postgres;
+  nas tabelas do Elementary (ADR-0008) e no Postgres;
 - o ministério passa a exigir mascaramento por coluna ou por linha no consumo, que
   pede o Ranger, e o Ranger pede o Trino.
 

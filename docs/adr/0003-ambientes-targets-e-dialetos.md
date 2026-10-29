@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (decisão trocada: um dialeto e um target por ambiente, no lugar de dois dialetos em homologação; a homologação também é o ambiente de desenvolvimento; limites só no playbook, scripts shell saem)
+- **Revisão:** 2026-10-29 (decisão trocada: um dialeto e um target por ambiente, no lugar de dois dialetos em homologação; a homologação também é o ambiente de desenvolvimento; limites só no playbook, scripts shell saem; `coalesce_aliases` no lugar do `coalesce_present`)
 - **Relacionados:**
   - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas),
     ADR-0008 (materialização e execução), ADR-0012 (catálogo)
@@ -73,10 +73,13 @@ E o target chamado `prod` aponta para o banco que está de pé na infra, que é 
 - Nenhum modelo usa função que só existe no DuckDB (`try_cast`, `describe`,
   `union_by_name` fora da `fonte_lake`). A tipagem usa `case` com expressão regular e
   `cast`, ou as macros do projeto (`parse_*`).
-- Nada roda contra o banco na compilação (`run_query`, `describe`): o SQL compilado
-  não depende do estado do banco. Coluna que existe só em parte das cargas é tratada
-  na prata com `coalesce` explícito sobre as colunas declaradas no contrato da fonte
-  (ADR-0006).
+- Nada roda contra o banco na compilação (`run_query`, `describe`,
+  `adapter.get_columns_in_relation`): o SQL compilado não depende do estado do
+  banco. Coluna que existe só em parte das cargas, ou que mudou de nome, é tratada
+  na prata pela macro `coalesce_aliases(<fonte>, <coluna>)`, que monta o `coalesce`
+  do nome da coluna com os `aliases` declarados no contrato da fonte (ADR-0006).
+  Ela substitui o `coalesce_present`, que consulta o banco na compilação para saber
+  quais colunas existem.
 
 ### Um target por ambiente
 
@@ -153,6 +156,8 @@ existir.
 - A DAG geral passa a ter um `DbtTaskGroup` só, sem seletor, e o `docs generate` da
   DAG do OpenMetadata roda sem seletor (ADR-0012).
 - O `try_cast` de `indicadores_mcmv_dbt` sai junto com a migração.
+- O `coalesce_present` e as listas de nomes escritas nas macros de
+  `macros/historico/` saem. Os nomes vão para os `aliases` do contrato.
 - Os guardas de memória deixam o `profiles.yml` e os scripts shell; ficam só os
   parâmetros do pg_duckdb, no playbook (ADR-0008).
 
@@ -174,7 +179,8 @@ existir.
 ## Validação operacional
 
 - `dbt build --target homolog` roda o projeto inteiro numa execução só.
-- Nenhum modelo usa `try_cast`, `describe` ou `run_query` (teste no CI; a
+- Nenhum modelo usa `try_cast`, `describe`, `run_query`, `coalesce_present` ou
+  `adapter.get_columns_in_relation` (teste no CI; a
   `fonte_lake` é a única exceção, pelo `union_by_name`).
 - O `docs generate` sem seletor passa, e todos os domínios aparecem no catálogo com
   os tipos das colunas.

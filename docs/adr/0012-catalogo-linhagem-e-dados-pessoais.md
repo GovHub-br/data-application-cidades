@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (nome das macros; eixo histórico fora do catálogo desde o PR #241)
+- **Revisão:** 2026-10-29 (nome das macros; eixo histórico fora do catálogo desde o PR #241; catálogo de colunas)
 - **Relacionados:**
   - ADR-0002 (R0, pseudonimização), ADR-0006 (contrato da fonte), ADR-0007 (sufixo
   `_token`), ADR-0010 (schema por secretaria)
@@ -86,7 +86,22 @@ registra cada objeto convertido.
 
 O glossário de negócio (`glossario-mcid.md`, `glossario-valores-financeiros.md`)
 continua no repositório como texto de referência e é publicado como glossário no
-OpenMetadata. Os termos são ligados às colunas pela tag do termo, declarada no dbt.
+OpenMetadata. Os termos são ligados às colunas das fontes pelo `term` do contrato
+(§6) e às colunas das pratas e ouros pela tag do termo, declarada no dbt.
+
+### 6. Catálogo de colunas
+
+O catálogo de colunas do ADR-0006 (`term` e `aliases` de cada coluna do contrato)
+tem duas formas de consulta:
+
+- **No OpenMetadata,** o `term` é publicado como termo do glossário ligado à
+  coluna. A página do termo mostra todas as colunas, de todas as fontes e camadas,
+  que significam aquilo, e a linhagem liga a coluna da fonte às dos modelos. É a
+  forma navegável do grafo, sem serviço novo.
+- **No banco,** o modelo `metadata.column_catalog` é montado do grafo do dbt a
+  cada execução, com uma linha por fonte, coluna, `term` e alias. Ele pode ser
+  cruzado com o `lake._staging_log`, por exemplo para listar as renomeações
+  conhecidas (`known_rename`) de cada fonte ao longo do tempo.
 
 ## Alternativas consideradas
 
@@ -113,6 +128,7 @@ uma coluna renomeada, passaria. Por isso a detecção por conteúdo continua.
 
 - O teste `conjuntura_sem_dado_sensivel` vira um teste para todos os domínios, com
   a exceção do sufixo `_token` na regra por nome.
+- Nasce o modelo `metadata.column_catalog`.
 - A troca de schemas do ADR-0007 muda o endereço das tabelas no catálogo
   (`cidades.snh.<tabela>`). A ingestão seguinte recria as entradas, e as antigas
   saem.
@@ -125,6 +141,8 @@ uma coluna renomeada, passaria. Por isso a detecção por conteúdo continua.
 3. Criar a tag `PII.Pseudonimizado` no OpenMetadata e marcar as colunas `_token`
    conforme forem surgindo.
 4. Publicar o glossário no OpenMetadata.
+5. Publicar o `term` das colunas do contrato como termo do glossário e criar o
+   `metadata.column_catalog`.
 
 ## Validação operacional
 
@@ -133,6 +151,7 @@ uma coluna renomeada, passaria. Por isso a detecção por conteúdo continua.
 - O teste de dado sensível roda em todos os domínios e passa.
 - Todos os domínios aparecem no catálogo com os tipos das colunas.
 - Toda coluna `_token` tem a tag `PII.Pseudonimizado` no catálogo.
+- Todo `term` declarado no contrato existe no glossário publicado.
 
 ## Questões em aberto
 

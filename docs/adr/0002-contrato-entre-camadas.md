@@ -365,8 +365,7 @@ As regras R3 a R5 viram um teste dbt sobre o grafo, executado no CI:
 - modelo em `*/ouro/` com dependência que não seja prata ou ouro → falha;
 - modelo de prata ou ouro sem as colunas de `add_metadata_timestamps` → falha;
 - modelo de ouro sem teste de unicidade no grão declarado → falha. O teste é o
-  `unique_combinacao`, que já existe em `macros/data_quality/` (o projeto não usa
-  pacotes dbt).
+  `unique_combinacao`, que já existe em `macros/data_quality/`.
 
 "Prata genérica" não se verifica só por teste. Na revisão de PR, toda prata nova
 responde a uma pergunta: ela serviria a um indicador que ainda não existe? Se a

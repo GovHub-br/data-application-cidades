@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003; incremental da bronze pela `_load_id`; limites só no playbook; nomes de rastreio em inglês, ADR-0007)
+- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003; incremental da bronze pela `_load_id`; limites só no playbook; nomes de rastreio em inglês, ADR-0007; medição pelo Elementary)
 - **Relacionados:**
   - ADR-0002 (prata com todos os períodos), ADR-0003 (targets), ADR-0005 (partição
   por carga), ADR-0006 (tipo de carga e portões)
@@ -70,10 +70,10 @@ de medição.
 
 ### 5. Medir antes de decidir
 
-O `registrar_execucao_dbt` passa a gravar **todos** os modelos em `lake._dbt_log`,
-não só as falhas, com tempo de execução e linhas afetadas, que o dbt já expõe em
-`results`. É a base para o critério acima e para ajustar, por PR no playbook, os
-limites do pg_duckdb (ADR-0003).
+As tabelas do Elementary (ADR-0006) registram **todas** as execuções de modelo,
+não só as falhas, com o tempo de execução. É a base para o critério acima e para ajustar, por PR no playbook, os
+limites do pg_duckdb (ADR-0003). O `registrar_execucao_dbt` e o `lake._dbt_log`
+saem.
 
 ### 6. Reconstrução completa periódica
 
@@ -115,7 +115,8 @@ recarga completa de Parquet, não de modelos `table` em geral.
 
 ## Consequências
 
-- `registrar_execucao_dbt` muda para gravar todos os resultados.
+- O `registrar_execucao_dbt` e o `lake._dbt_log` saem; a medição vem das tabelas do
+  Elementary (ADR-0006).
 - Modelos incrementais precisam de chave de partição e de período bem definidos, o
   que depende do contrato da fonte (ADR-0006) e do período de referência (ADR-0009).
 - A DAG geral ganha uma execução semanal com `--full-refresh` para os modelos
@@ -123,7 +124,7 @@ recarga completa de Parquet, não de modelos `table` em geral.
 
 ## Plano de migração
 
-1. Mudar o `registrar_execucao_dbt` e acompanhar um mês em homologação.
+1. Ligar o Elementary (ADR-0006) e acompanhar um mês em homologação.
 2. Listar os modelos acima do critério.
 3. Antes do primeiro incremental no Postgres, testar a estratégia de apagar e
    reinserir na bronze, que lê o lake pelo pg_duckdb. O pg_duckdb executa leituras;
@@ -133,7 +134,8 @@ recarga completa de Parquet, não de modelos `table` em geral.
 
 ## Validação operacional
 
-- Todo modelo aparece em `lake._dbt_log` a cada execução, com tempo e linhas.
+- Todo modelo aparece nas tabelas do Elementary a cada execução, com o tempo de
+  execução.
 - Todo modelo incremental tem execução com `--full-refresh` nos últimos 7 dias.
 - Nenhum modelo está materializado como `materialized_view`.
 

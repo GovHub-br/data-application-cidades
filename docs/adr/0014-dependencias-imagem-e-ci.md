@@ -2,8 +2,10 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-29
+- **Revisão:** 2026-10-29 (pacotes dbt)
 - **Relacionados:**
-  - ADR-0003 (ambientes), ADR-0013 (teste de DagBag)
+  - ADR-0003 (ambientes), ADR-0006 (pacotes de qualidade), ADR-0013 (teste de
+    DagBag)
   - Issues #243 (F1), #246 (poetry → uv), #253 (CI blocante), #254 (pre-commit),
     #255 (imagem única) e #256 (Pages e dependabot)
   - `pyproject.toml`, `requirements.txt`, `infra/docker/airflow/Dockerfile`,
@@ -79,6 +81,12 @@ achou:
 7. **O pre-commit usa o framework `pre-commit`.** Ele roda só nos arquivos do commit,
    com as mesmas ferramentas e versões da CI. O `setup-git-hooks.sh` sai.
 8. **O dependabot roda só nos manifestos reais:** uv, GitHub Actions e Docker.
+9. **Os pacotes dbt são fixados e vão dentro da imagem.**
+   - O projeto usa dois pacotes: `metaplane/dbt_expectations` e
+     `elementary-data/elementary` (ADR-0006). Pacote novo é decisão de ADR.
+   - O `packages.yml` fixa versões exatas, e o `package-lock.yml` é versionado.
+   - O `dbt deps` roda no build da imagem e na CI. Nada é baixado quando a DAG
+     roda.
 
 ## Alternativas consideradas
 
@@ -114,6 +122,8 @@ corrigir tudo antes.
 - O playbook do Airflow e o `values.yaml` do k8s passam a usar a imagem publicada
   pela CI.
 - O `--no-verify` deixa de ser necessário.
+- O projeto dbt ganha `packages.yml` e `package-lock.yml`, e a imagem traz os
+  pacotes instalados.
 
 ## Plano de migração
 
@@ -131,6 +141,7 @@ corrigir tudo antes.
 - O lock da imagem e o `uv.lock` batem (teste no CI).
 - A tag que roda na VM e no k8s é uma tag publicada pela CI.
 - A lista de exceções do lint não cresce entre dois commits da `main`.
+- O `dbt deps` não muda o `package-lock.yml` na CI.
 
 ## Questões em aberto
 
