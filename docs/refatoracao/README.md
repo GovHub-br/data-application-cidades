@@ -54,11 +54,11 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 | B3 | [Novo CAGED com anos fixos](b03-caged-anos-fixos.md) | a abrir | | |
 | B4 | [`local.env` fora do git](b04-local-env-versionado.md) | a abrir | | |
 | B5 | [`no_log` nos playbooks](b05-ansible-no-log.md) | a abrir | | |
-| B6 | CI blocante (ruff, dbt parse, DagBag) | a abrir | | |
-| B7 | pre-commit só nos arquivos tocados | a abrir | | |
-| B8 | Imagem única da CI para VM e k8s | a abrir | | |
-| B9 | GitHub Pages e dependabot | a abrir | | |
-| B10 | `tests/` com `conftest.py` | a abrir | | |
+| B6 | [CI blocante (ruff, dbt parse, DagBag)](b06-ci-blocante.md) | a abrir | | |
+| B7 | [pre-commit só nos arquivos tocados](b07-pre-commit.md) | a abrir | | |
+| B8 | [Imagem única da CI para VM e k8s](b08-imagem-unica.md) | a abrir | | |
+| B9 | [GitHub Pages e dependabot](b09-pages-dependabot.md) | a abrir | | |
+| B10 | [`tests/` com `conftest.py`](b10-conftest.md) | a abrir | | |
 | B11 | Código morto da ingestão | a abrir | | |
 | B12 | Um escritor de staging | a abrir | | |
 | B13 | Orquestração dos DAGs | a abrir | | |
@@ -103,44 +103,13 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 
 ### P1: CI, qualidade e tooling
 
-**B6. A CI não barra nada**
-
-- **Problema:**
-  - `main.yaml:42` roda `make lint-ci || true`;
-  - black, ruff e mypy não rodam;
-  - o ruff acusa 950 erros, 660 deles em `data-science/`;
-  - não há `dbt parse` nem teste de import dos DAGs (DagBag).
-- **Proposta:** ruff blocante só em `dags/`, `plugins/`, `helpers/` e `scripts/`, mais `dbt parse` e um teste de DagBag.
-
-**B7. Pre-commit quebrado**
-
-- **Problema:**
-  - `setup-git-hooks.sh` roda `make format` no repositório inteiro, sem re-stage, e com `set -e` falha sempre.
-  - O pre-push roda `mypy --install-types` (rede, altera o venv) e pula o sqlfluff pela flag `GITLAB_CI`.
-- **Proposta:** `.pre-commit-config.yaml` só com os arquivos tocados. Cabe junto com a F4.
-
-**B8. Imagem da CI que ninguém usa**
-
-- **Problema:**
-  - **Três nomes de imagem:** a CI publica `data-application-cidades-airflow`, o k8s espera `cidades-airflow:main` (push manual) e a VM builda local.
-  - **Build em dobro:** a CI builda a imagem duas vezes.
-  - **Contexto inchado:** não há `.dockerignore`, então o contexto leva `data-science/` (32 MB) e o `.git`.
-  - **Conteúdo da imagem:** carrega a senha padrão `airflow/airflow` e libs de sistema sem uso (gdal, odbc, gtk).
-
-**B9. GitHub Pages e dependabot**
-
-- **Problema:**
-  - `docs-pages.yaml` e o job `dbt_docs` do `main.yaml` publicam no mesmo Pages, e ganha o último.
-  - O dependabot aponta para `/infra/docker/airflow-mcp`, que não existe.
-  - O PR de pip do dependabot quebra o teste do lock por construção.
-
-**B10. `tests/` sem `conftest.py`**
-
-- **Problema:**
-  - cada módulo faz `sys.path.insert` ou `spec_from_file_location`;
-  - `test_foo.py` é placeholder;
-  - `tests/ingestion/` só tem `__pycache__`;
-  - os cerca de 22 testes de `data-science/` não rodam em lugar nenhum.
+| ID | Item |
+|---|---|
+| B6 | [A CI não barra nada](b06-ci-blocante.md) |
+| B7 | [Pre-commit quebrado](b07-pre-commit.md) |
+| B8 | [Imagem da CI que ninguém usa](b08-imagem-unica.md) |
+| B9 | [GitHub Pages e dependabot](b09-pages-dependabot.md) |
+| B10 | [`tests/` sem `conftest.py`](b10-conftest.md) |
 
 ### P2: limpeza e estrutura
 
