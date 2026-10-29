@@ -13,6 +13,8 @@ O repositório acumulou problemas em quatro áreas:
 
 Este guia reúne o que vamos refatorar, em que ordem e com quais regras, para que cada issue e cada PR saia daqui e não de um levantamento novo.
 
+Cada frente (F1–F5) e cada candidato (B1–B15) tem um documento próprio nesta pasta, com o problema, a correção proposta, as dependências e o critério de aceite. O painel de status (seção 4) leva a cada um.
+
 ## 2. Regras de trabalho
 
 1. **Issue antes de código.** Cada item deste guia vira uma issue com critério de aceite. Nada é implementado fora de uma issue.
@@ -42,7 +44,7 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 
 | ID | Item | Status | Issue | PR |
 |---|---|---|---|---|
-| F1 | ADRs | issue aberta | | |
+| F1 | [ADRs](f1-adrs.md) | issue aberta | | |
 | F2 | Ingestão: modelagem nova | a abrir | | |
 | F3 | dbt: padrão único, seletores, homolog | a abrir | | |
 | F4 | poetry → uv | a abrir | | |
@@ -67,11 +69,7 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 
 ### F1. Organização do desenvolvimento via ADRs
 
-Já tem issue. A varredura mostrou três decisões que precisam de ADR antes das frentes 2 e 3:
-
-- **O contrato da `staging/`.** Quem escreve, se o parquet é tipado ou só texto, e se há um escritor só. Liga com B1 e B12.
-- **O destino das tabelas Postgres "raw" das APIs** (`abecip.*`, `bacen.*`, `fgv.*`…). Nenhum modelo dbt lê essas tabelas: as sources de `dbt/mcid/models/sources.yml:4-121` têm 0 usos. Só o infomoney lê o próprio histórico. Conferir o uso no Superset antes de decidir.
-- **A nomenclatura.** `dbt/mcid/models/docs/padrao-nomenclatura-tabelas-dbt.md` manda `silver/gold`, mas o código usa `prata/ouro`. Hoje o padrão escrito contradiz o código.
+Três decisões precisam de ADR antes da F2 e da F3: contrato da staging, destino do Postgres raw e nomenclatura. Detalhe em [f1-adrs.md](f1-adrs.md).
 
 ### F2. Refatoração das ingestões: primeiro providers, depois clientes próprios
 
