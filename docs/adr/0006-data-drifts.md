@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; nomes de rastreio em inglês, ADR-0007)
+- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; drift semântico obrigatoriamente no dbt; nomes de rastreio em inglês, ADR-0007)
 - **Relacionados:**
   - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (tasks `verify_structural_data_drift` e `transform`),
   ADR-0005 (quarentena)
@@ -102,8 +102,10 @@ são lidos na carga completa, para contar as linhas.
 
 ### 3. Drift semântico, nos testes da bronze
 
-O drift semântico roda no `dbt build`, como testes da bronze. Teste `error` que
-falha impede a prata de rodar. No Airflow, cada teste é uma task da DAG geral: o
+O drift semântico é obrigatoriamente dbt: roda no `dbt build`, como testes da
+bronze. O portão fica entre a bronze e a prata, que só existem no warehouse, e é o
+`dbt build` que impede a prata de rodar quando um teste `error` falha. Nenhuma task
+Python do Airflow faz checagem semântica. No Airflow, cada teste é uma task da DAG geral: o
 Cosmos gera uma task de teste depois de cada modelo. Assim, os dois drifts são
 interceptados dentro de uma DAG: o estrutural na DAG de fonte, o semântico na
 DAG geral.
