@@ -2,6 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (onde o `+database` aparece hoje)
 - **Relacionados:**
   - ADR-0001 (arquitetura), ADR-0007 (nomenclatura), ADR-0011 (controle de acesso)
   - Deck *GovHub — Arquitetura Medalhão de Referência* seções 8 a 11
@@ -43,8 +44,10 @@ acomodar outras secretarias. O deck apresenta duas propostas:
   tabelas dos schemas de camada para `snh`.
 
 Para não fechar a porta de uma divisão por banco no futuro, nenhum modelo fixa o
-nome do banco no SQL. Onde hoje existe `+database: cidades` (`mcmv_historico_dbt`
-no `dbt_project.yml`), o nome passa a vir de variável.
+nome do banco no SQL. Hoje o `+database: cidades` aparece em seis lugares do
+`dbt_project.yml`: na raiz dos modelos, em `indicadores_mcmv_dbt`, em
+`mcmv_historico_dbt` e nos seeds `conjuntura`, `entidades_fds` e `data_quality`. O
+nome passa a vir de variável, declarado uma vez.
 
 ## Alternativas consideradas
 
