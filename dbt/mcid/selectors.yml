@@ -1,0 +1,45 @@
+# Seletores do projeto, compartilhados por quem roda o dbt fora da CLI.
+#
+# O eixo histórico é SQL nativo do DuckDB: as macros de `macros/historico/`
+# rodam `describe` sobre o glob do lake JÁ NA COMPILAÇÃO. Compilado com um
+# target Postgres, ele quebra com `syntax error at or near "describe"`. Por isso
+# todo comando que compila no Postgres precisa deixá-lo de fora, e todo comando
+# que roda no DuckDB precisa selecionar só ele.
+#
+# Quem usa:
+#   - dags/dbt/mcid_cosmos_dag.py: um grupo de tasks por seletor;
+#   - helpers/openmetadata/dbt_artifacts.py: o `dbt docs generate` da ingestão
+#     do OpenMetadata, que roda no target `prod`.
+#
+# Nenhum seletor é `default`: a CLI continua selecionando o projeto inteiro.
+selectors:
+  - name: eixo_historico
+    description: Modelos e testes que só compilam no DuckDB (targets *_duckdb).
+    definition:
+      union:
+        - method: path
+          value: models/mcmv_historico_dbt
+        - method: path
+          value: models/reforma_casa_brasil_dbt
+        - method: path
+          value: models/linha_financiada_dbt
+        - method: path
+          value: tests/mcmv_historico
+        - method: path
+          value: tests/reforma_casa_brasil
+        - method: path
+          value: tests/linha_financiada
+
+  - name: dominios_postgres
+    description: Todo o projeto menos o eixo histórico (target prod).
+    definition:
+      union:
+        - method: fqn
+          value: "*"
+        # `fqn:*` não pega as fontes, e sem elas o catalog sai sem os tipos
+        # das colunas de origem.
+        - method: source
+          value: "*"
+        - exclude:
+            - method: selector
+              value: eixo_historico
