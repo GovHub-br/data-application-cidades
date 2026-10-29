@@ -2,7 +2,9 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (usuário do RustFS criado à mão; segredos em Connection, ADR-0013)
 - **Relacionados:**
+  - ADR-0013 (segredos em Connection)
   - ADR-0002 (R0 e a chave do HMAC; R6, consumo só pela ouro), ADR-0005 (raw sem
   remoção), ADR-0007 e ADR-0010 (schema por secretaria, camada no prefixo)
   - Deck *GovHub — Arquitetura Medalhão de Referência* seção 3
@@ -20,7 +22,7 @@ Hoje:
 | Onde | Como está |
 |---|---|
 | Postgres | `cidades` é dono do banco e escreve (dbt e DAGs). `usuario_leitura` lê **tudo** que o `cidades` criar, por `ALTER DEFAULT PRIVILEGES`, e serve ao Superset e aos analistas. `duckdb_users` é o papel de quem executa DuckDB. |
-| RustFS | O usuário `app-cidades` lê e escreve no bucket, para o pg_duckdb e o Airflow. |
+| RustFS | O usuário `app-cidades` lê e escreve no bucket, para o pg_duckdb e o Airflow. Ele é criado à mão (`infra/playbooks/postgres/README.md`): o playbook do RustFS não cria usuários nem políticas. |
 | Airflow | `SimpleAuthManager`, com um usuário administrador. |
 | dbt | Nenhuma configuração de `grants`. |
 
@@ -97,8 +99,8 @@ papel da sua equipe. O ambiente local continua com o `SimpleAuthManager`.
 - A `MASKING_HMAC_SECRET` segue as regras do ADR-0002 R0: só no ambiente do
   Airflow, sem aparecer na interface, e com custódia do ministério no ambiente
   dele.
-- Conexões e variáveis do Airflow com segredo usam o mascaramento do próprio
-  Airflow.
+- Segredo do Airflow fica em Connection, nunca em Variable (ADR-0013), e usa o
+  mascaramento do próprio Airflow.
 
 ## Alternativas consideradas
 
@@ -139,7 +141,8 @@ permissões dadas fora dele.
    com a mudança para o schema `snh` (ADR-0007).
 3. Tornar o `usuario_leitura` membro de `leitura_ouro_snh` e retirar a leitura
    ampla.
-4. Ajustar a política do `app-cidades` no RustFS.
+4. Passar a criar o `app-cidades` e a política dele pelo playbook do RustFS, sem
+   permissão de apagar em `raw/`.
 5. Trocar o auth manager da homologação.
 
 ## Validação operacional
