@@ -45,7 +45,7 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 | ID | Item | Status | Issue | PR |
 |---|---|---|---|---|
 | F1 | [ADRs](f1-adrs.md) | issue aberta | | |
-| F2 | Ingestão: modelagem nova | a abrir | | |
+| F2 | [Ingestão: modelagem nova](f2-ingestao.md) | a abrir | | |
 | F3 | dbt: padrão único, seletores, homolog | a abrir | | |
 | F4 | poetry → uv | a abrir | | |
 | F5 | OpenMetadata | a abrir | | |
@@ -73,43 +73,7 @@ Três decisões precisam de ADR antes da F2 e da F3: contrato da staging, destin
 
 ### F2. Refatoração das ingestões: primeiro providers, depois clientes próprios
 
-**Decisão de 29/10/2026:** o projeto anterior, o PR #206 (branch `refactor/ingestao-raw-staging-bronze`, pacote `plugins/ingestion` com extratores, conversores, estratégias e `DatasetSpec`), foi **descartado**. A ingestão será modelada do zero.
-
-As decisões do #206 não são herdadas. As que podem continuar valendo serão revalidadas na modelagem nova, não assumidas:
-- o bronze só pelo dbt (`fonte_lake`);
-- nada carrega no Postgres;
-- o lake espelha a estrutura da fonte;
-- a saída é igual à da `main`;
-- só o escopo MCid;
-- o código em inglês e as docs em português;
-- hooks dos providers sem operators de transferência;
-- cron literal;
-- como tratar DAGs quase idênticas (fábrica ou não).
-
-**Antes de começar:** fechar o PR #206 e apagar a branch. É irreversível, então só com confirmação explícita na hora.
-
-O que o modelo novo precisa resolver:
-
-- **Clientes duplicados:**
-  - dois de IBGE (`plugins/cliente_ibge.py` v3 e `plugins/cliente_ibge_sidra.py`) e dois de BCB (`cliente_bacen`, `cliente_bacen_imobiliario`);
-  - três pilhas HTTP: httpx, requests e requests com SSL `SECLEVEL=1` em `cliente_fgv.py:23`;
-  - MinIO montado de cinco jeitos;
-  - Postgres por dois caminhos: o hook `postgres_default` e um DSN próprio em cada script;
-  - SFTP com quatro implementações em paramiko.
-- **DAG SIDRA órfão.** `pnad_construcao_sidra_ingest_dag` grava em `staging/ibge/pnad_construcao_*`, que nenhuma source lê. O PNAD já vem pelo `ibge_ingest_dag`.
-- **"Sem dado" termina verde.** icst, incc, mrv, caged, bacen, credito_pib, ibge e sidra só registram warning. Só abecip e fipe falham com `AirflowFailException`.
-- **Histórico truncado na staging** enquanto o Postgres acumula: bacen `ultimos=13`, sidra 12, ibge `-20`. Depende do ADR do Postgres raw.
-- **Tesouro não idempotente.** Faz append sem chave e só procura o e-mail de "hoje". Passa o CSV inteiro pelo XCom e faz monkeypatch em `cliente_email.format_csv` (`dotacao_execucao_outras_fontes_mcid_ingest_dag.py:117,137,162`).
-- **Código no parse do DAG:**
-  - `Variable.get("IBGE_CONFIGURACOES")` no topo do módulo;
-  - `get_dynamic_schedule` lendo Variable em 20 DAGs, com chaves que não batem com o `dag_id`;
-  - `os.environ['AIRFLOW_REPO_BASE']` e `os.makedirs` no topo dos DAGs de dbt.
-- **Imports de Airflow 2** em `dags/data_ingest/minio/minio_transform_dag.py:4-6` e `dags/dbt/mcid_cosmos_dag.py:40-42`. O segundo importa `from airflow import DAG` e depois sobrescreve com o SDK.
-- **Segredos em Variables** que deviam ser Connections: `email_credentials`, `dados_fgv_*` e `api_key_alphavantage`.
-- **Conexões e logs:**
-  - `helpers/postgres_helpers.py:8-18` nunca fecha a conexão;
-  - `plugins/cliente_postgres.py:52-55` loga o DSN com a senha;
-  - a apikey da Alpha Vantage vai na query string, que o httpx loga.
+O #206 foi descartado; a ingestão é modelada do zero, providers primeiro. Lista as regras do #206 a revalidar e o que o modelo novo precisa resolver. Detalhe em [f2-ingestao.md](f2-ingestao.md).
 
 ### F3. Refatoração do dbt: problemas do OpenMetadata, seletores, prod e homolog
 
