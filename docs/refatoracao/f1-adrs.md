@@ -27,7 +27,7 @@ Os ADRs ficam em `docs/adr/`, na branch `feat/adrs-arquiteturais` (PR #264). Ele
 
 ## Questões em aberto nos ADRs
 
-- **0006:** o canal de alerta e os responsáveis por fonte (dependem do ministério).
+- **0006:** os responsáveis por fonte (dependem do ministério).
 - **0008:** o limite de 15 minutos.
 - **0010:** as siglas das secretarias.
 - **0011:** as políticas do ministério.
