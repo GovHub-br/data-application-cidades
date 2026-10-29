@@ -2,6 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (contagens conferidas com o código)
 - **Relacionados:**
   - ADR-0002 (camadas), ADR-0004 (tasks), ADR-0005 (chaves do lake), ADR-0010
   (divisão por secretaria)
@@ -15,8 +16,9 @@ O deck sugere padrões para schemas, tabelas e colunas: o schema leva a sigla da
 secretaria em minúsculas (`snh`, `dph`), e a tabela leva a camada no prefixo. Ele
 deixa buckets e DAGs para definir com o ministério.
 
-O código segue o deck nas tabelas, mas não nos schemas. Os 262 modelos de bronze,
-prata e ouro têm o prefixo da camada (81 `bronze_`, 84 `prata_`, 97 `ouro_`), mas
+O código segue o deck nas tabelas, mas não nos schemas. Os 267 modelos de bronze,
+prata e ouro têm o prefixo da camada (81 `bronze_`, 85 `prata_`, 101 `ouro_`,
+contando um piloto desabilitado e os quatro de `conjuntura_dbt/qualidade/`), mas
 os schemas são um por camada (`bronze`, `prata`, `ouro`). O documento normativo
 (`padrao-nomenclatura-tabelas-dbt.md`) ainda descreve `silver_`/`gold_` e schemas
 `silver`/`gold`. Quem lê o documento aprende um padrão que o código abandonou.
@@ -120,7 +122,7 @@ camadas, mas não separa secretarias, e o ADR-0010 decidiu dividir por schema. A
 camada continua visível no prefixo de cada tabela.
 
 **Camadas em inglês (`silver`, `gold`).** É o padrão mais comum fora do projeto,
-mas o projeto já está em português nos 262 modelos. Voltar para o inglês seria
+mas o projeto já está em português nos 267 modelos. Voltar para o inglês seria
 renomear tudo sem ganho.
 
 **`comum` com ouro.** Criaria produtos sem secretaria dona, que ninguém responde
@@ -140,7 +142,7 @@ pode servir a mais de um domínio (ADR-0005). O domínio aparece da prata em dia
 | Ganha | Paga |
 |---|---|
 | O schema diz de quem é o dado, e o nome diz a camada, a fonte ou o domínio, e o objeto | As três camadas dividem o schema, então o schema sozinho não separa bronze de ouro |
-| Coluna técnica nunca se confunde com coluna de negócio | Os 14 modelos de bronze que geram `dt_ingest` hoje precisam mudar |
+| Coluna técnica nunca se confunde com coluna de negócio | Os 16 modelos de bronze do eixo histórico que geram `dt_ingest` hoje precisam mudar |
 | Documento normativo volta a descrever o código | Reescrever `padrao-nomenclatura-tabelas-dbt.md` |
 | DAGs de fonte encontráveis pelo nome | DAGs atuais fora do padrão (`incc_m_ingest_dag`, `ibge_ingest_dag`) são renomeadas aos poucos |
 
@@ -167,7 +169,7 @@ pode servir a mais de um domínio (ADR-0005). O domínio aparece da prata em dia
 3. Rodar a DAG geral, reapontar os datasets do Superset para `snh` e só então
    remover os schemas `bronze`, `prata` e `ouro`.
 4. Mudar a `add_metadata_timestamps` para `_ingested_at` e `_built_at`, e trocar
-   `dt_ingest` por `_ingested_at` nos 14 modelos de bronze que o geram.
+   `dt_ingest` por `_ingested_at` nos 16 modelos de bronze do eixo histórico que o geram.
 5. Renomear cada DAG de fonte no PR que a migrar para o ADR-0004.
 
 ## Validação operacional
