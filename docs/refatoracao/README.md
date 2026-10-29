@@ -47,7 +47,7 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 | F1 | [ADRs](f1-adrs.md) | issue aberta | | |
 | F2 | [Ingestão: modelagem nova](f2-ingestao.md) | a abrir | | |
 | F3 | [dbt: padrão único, seletores, homolog](f3-dbt.md) | a abrir | | |
-| F4 | poetry → uv | a abrir | | |
+| F4 | [poetry → uv](f4-uv.md) | a abrir | | |
 | F5 | OpenMetadata | a abrir | | |
 | B1 | `raw_para_staging` só em `raw/sftp/` | a abrir | | |
 | B2 | Máscara como trava da staging | a abrir | | |
@@ -81,25 +81,7 @@ Padrão único do `dbt/mcid`, ordem por domínio, o reloginho lendo o bronze da 
 
 ### F4. Troca do poetry pelo uv
 
-Arquivos que mudam:
-- **`pyproject.toml`:** sai `[tool.poetry]` e muda o `[build-system]`. A descrição ainda diz "IPEA".
-- **`.gitignore:10`:** o `**/*.lock` também ignoraria o `uv.lock`, e é por isso que o `poetry.lock` nunca foi versionado.
-- **`Makefile`:** todo `poetry run`, mais o `poetry lock` que roda a cada `make setup`.
-- **CI:** `.github/actions/setup-poetry/`, `.github/workflows/main.yaml:19-60` e `.github/dependabot.yml:7`.
-- **`tests/test_dependencias_sincronizadas.py:31-39`:** lê `tool.poetry.dependencies`.
-- **`README.md:63-72`.**
-- **Já usam uv e ficam como estão:** `infra/docker/airflow/Dockerfile` e `compile-lock.sh`.
-
-O que resolver junto:
-- **Fonte de verdade das dependências.** Hoje são quatro listas: `pyproject.toml`, `requirements.txt`, `infra/docker/airflow/requirements.lock.txt` e o `requirements.generated.txt`, que está morto (Airflow 2.8.1, só local).
-- **Drift do sqlglot:** os testes usam `^30` e a imagem usa `29.0.1`. A exceção `SO_FORA_DA_IMAGEM` esconde a diferença.
-- **Imports diretos não declarados:** `yaml`, `psycopg2`, `paramiko`, `httpx`, `bs4`, `chardet`, `pytz` e `packaging`.
-- **Grupo dev:**
-  - cerca de 17 stubs `types-*` que não têm a ver com o código (uWSGI, gevent, WTForms…);
-  - tudo sem pin;
-  - `jupyter` incluído.
-- **Cache da CI:** a chave `hashFiles('**/poetry.lock')` é sempre vazia, porque o lock é ignorado. O cache nunca renova.
-- **Workspace:** `data-science/dados-historicos-tratamento` já é um projeto uv e pode entrar como membro.
+Arquivos que mudam na troca e o que resolver junto: fonte de verdade única das dependências, drift do sqlglot e imports não declarados. Detalhe em [f4-uv.md](f4-uv.md).
 
 ### F5. Melhorias no OpenMetadata
 
