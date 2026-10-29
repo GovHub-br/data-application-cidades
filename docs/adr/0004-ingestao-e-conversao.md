@@ -2,8 +2,11 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas)
 - **Relacionados:**
-  - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas: R0 a R2)
+  - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas: R0 a R2),
+    ADR-0005 (layout do lake), ADR-0013 (orquestração)
+  - Issues #243 (F1), #244 (refatoração das ingestões) e #248 (staging das APIs sobrescrita)
   - `plugins/ingestor_lake.py`, `plugins/cliente_minio.py`,
   `scripts/raw_para_staging.py`, `scripts/mascarar_minio.py`,
   `dags/data_ingest/minio/minio_transform_dag.py`, `dags/data_ingest/sftp/sftp_ingest_dag.py`
@@ -15,14 +18,28 @@ convertido para Parquet na staging (etapa 2). Hoje isso acontece por dois caminh
 diferentes:
 
 - **DAGs de API** (IBGE, BACEN, CAGED, ABECIP, FGV etc.) convertem na própria task,
-  com `registros_para_staging_parquet` (30 chamadas) ou com o `IngestorLake`. Essa
+  com `registros_para_staging_parquet` (15 DAGs) ou com o `IngestorLake`. Essa
   conversão não normaliza nomes de coluna nem grava colunas de linhagem, e o hook
   `_tipar` converte números antes de gravar.
 - **SFTP:** a `sftp_ingest_dag` só grava a raw. A `minio_transform_dag` roda depois,
   em horário próprio: mascara a PII reescrevendo a raw, varre a `raw/` inteira e
   converte com `scripts/raw_para_staging.py`, que detecta encoding e separador, lê
   MDB e XLSX, processa em blocos de 200 mil linhas, grava a linhagem e é idempotente
-  por hash (`lake._staging_log`). No fim, dispara a DAG do dbt.
+  por hash (`lake._staging_log`). No fim, dispara a DAG do dbt. Como varre a `raw/`
+  inteira, ela também converte a raw das APIs e regrava, só em texto, a staging que
+  as DAGs de API tinham gravado no mesmo caminho (issue #248).
+
+Há ainda dois pontos que nenhum ADR tratava:
+
+- **Postgres.** Antes de gravar o lake, 16 DAGs de API gravam cada execução em
+  tabelas do Postgres (`db.insert_data` em `abecip`, `bacen`, `fgv`, `fipe`, `ibge`,
+  `infomoney`, `mrv`, `novo_caged` e `siafi`). Nenhum modelo dbt lê essas tabelas: as
+  sources desses schemas em `models/sources.yml` não têm nenhum `source()`, e os
+  scripts do Superset no repositório não as citam. Só a DAG do infomoney relê a
+  própria tabela, para remontar a staging com o histórico acumulado.
+- **Clientes.** Cada fonte tem um cliente próprio em `plugins/`, sobre três pilhas
+  HTTP (httpx, requests e requests com SSL rebaixado). O acesso ao lake é montado de
+  cinco jeitos, o Postgres de dois e o SFTP tem quatro implementações.
 
 O ADR-0002 decidiu que o mascaramento acontece antes de gravar a raw (R0) e que a
 conversão é a mesma para todas as fontes (R2). Falta decidir onde a conversão roda.
@@ -72,6 +89,33 @@ Para escrever uma DAG de fonte nova, basta `extract` devolver as chaves e encade
 `transform`. Ninguém escreve conversão de novo. Entre as tasks passam só as chaves,
 nunca o conteúdo.
 
+### Como a `extract` fala com a fonte
+
+1. **Primeiro, os hooks dos providers do Airflow:** `HttpHook` para APIs,
+   `SFTPHook` para o SFTP, `S3Hook` para o lake, `ImapHook` para e-mail e
+   `PostgresHook` para o banco. Endereço, credencial e parâmetros de conexão vêm da
+   Connection do Airflow (ADR-0013).
+2. **Cliente próprio só onde o hook não basta:** autenticação em várias etapas
+   (FGVDados), consulta montada pela API da fonte (Power BI do Novo CAGED) ou página
+   que precisa ser lida para achar o arquivo (ABECIP, FIPE). Mesmo nesses casos, o
+   cliente usa o hook para a conexão e só acrescenta o que é específico da fonte.
+3. **Operators de transferência não são usados** (`SFTPToS3Operator`,
+   `HttpToS3Operator` e semelhantes). Eles gravam no destino sem passar pelo
+   mascaramento (ADR-0002 R0), e alguns levam o conteúdo pela memória do worker ou
+   pelo XCom.
+
+### As DAGs de fonte gravam só no lake
+
+O `insert_data` nas tabelas das APIs sai. Os schemas `abecip`, `bacen`, `fgv`,
+`fipe`, `ibge`, `infomoney`, `mrv`, `novo_caged` e `siafi` deixam de ser escritos e,
+depois do período de conferência, são removidos. O histórico que essas tabelas
+acumulavam passa a existir na raw, com uma carga por execução (ADR-0005). O
+infomoney, que hoje remonta a staging a partir do Postgres, passa a ler as cargas na
+bronze.
+
+As tabelas de controle do schema `lake` (`_ingest_minio_log`, `_staging_log`,
+`_masking_log`) continuam: são controle da ingestão, não dado da fonte.
+
 ### DAG de manutenção do lake
 
 A `raw_para_staging_dag`, disparada à mão ou em horário próprio, percorre a `raw/` e
@@ -117,6 +161,20 @@ DAG de manutenção. Ela também é a única que vê o lake inteiro e trata os "
 mesmo arquivo em formatos ou pastas diferentes). Com uma chave por recebimento e um
 canal por fonte (ADR-0005), gêmeos novos deixam de existir.
 
+**Um cliente próprio por fonte (prática atual).** Cada fonte resolve conexão,
+retry e credencial do seu jeito, e é o que levou a três pilhas HTTP e a quatro
+implementações de SFTP. Os hooks já resolvem essa parte, configurada pela
+Connection.
+
+**Operators de transferência dos providers.** São a forma mais curta de levar um
+arquivo do SFTP ou de uma URL para o lake, mas não há onde mascarar entre a leitura
+e a gravação.
+
+**Manter as tabelas Postgres das APIs como cópia.** Não há quem as leia, e elas
+já divergem do lake: o Postgres acumula o histórico enquanto a staging de várias
+fontes guarda só a última janela consultada. Com a raw imutável, o histórico fica no
+lake.
+
 ## Trade-offs
 
 | Ganha | Paga |
@@ -125,6 +183,8 @@ canal por fonte (ADR-0005), gêmeos novos deixam de existir.
 | Fluxo de cada fonte visível na própria DAG | A conversão fica espalhada pelas DAGs de fonte; a visão do lake inteiro depende da DAG de manutenção |
 | Uma implementação de conversão para todas as fontes | As DAGs de API perdem a conversão própria e precisam ser migradas uma a uma |
 | Retry da conversão sem nova extração | Duas tasks por fonte em vez de uma |
+| Conexão, credencial e retry configurados num lugar só, a Connection | Os clientes atuais são reescritos sobre os hooks |
+| Um caminho só para o dado da fonte, o lake | Quem consulta hoje as tabelas das APIs no Postgres precisa ser reapontado |
 
 ## Consequências
 
@@ -133,6 +193,11 @@ canal por fonte (ADR-0005), gêmeos novos deixam de existir.
   varredura deixa de ser o caminho normal do SFTP.
 - As DAGs de API trocam a conversão própria (`registros_para_staging_parquet`,
   `IngestorLake.gerar_staging_parquet`) pela task comum `transform`.
+- Os clientes de `plugins/` passam a usar os hooks. Os que só fazem uma chamada HTTP
+  simples dão lugar ao `HttpHook`. A imagem já traz os providers `http`, `sftp`,
+  `amazon` e `postgres`; o `imap` precisa entrar para a DAG do Tesouro.
+- O `ClientPostgresDB.insert_data` deixa de ser usado pelas DAGs de fonte, e as
+  sources Postgres sem uso de `models/sources.yml` saem.
 
 ## Plano de migração
 
@@ -147,6 +212,12 @@ canal por fonte (ADR-0005), gêmeos novos deixam de existir.
 3. Quando todas as fontes converterem pela task, renomear a `minio_transform_dag`
    para `raw_para_staging_dag`, tirar dela o mascaramento e o disparo do dbt, e
    desligar o horário automático.
+4. Antes de desligar o Postgres das APIs, listar os datasets do Superset da
+   homologação que leem os schemas das APIs e reapontá-los para a ouro. Depois,
+   tirar o `insert_data` de cada DAG no mesmo PR que a migrar para `extract` →
+   `transform`, junto com a troca do cliente pelo hook.
+5. Remover os schemas das APIs depois de um mês sem leitura nem escrita
+   (`pg_stat_user_tables`).
 
 ## Validação operacional
 
@@ -154,6 +225,9 @@ canal por fonte (ADR-0005), gêmeos novos deixam de existir.
   objeto da raw sem registro em `lake._staging_log`. Se encontrar, alguma DAG de
   fonte não encadeou a `transform`.
 - Nenhuma DAG de fonte grava em `staging/` a não ser pela task `transform`.
+- Nenhuma DAG de fonte importa `ClientPostgresDB`, chama `insert_data` ou usa um
+  operator de transferência.
+- Os schemas das APIs não recebem escrita depois da migração (`pg_stat_user_tables`).
 
 ## Questões em aberto
 
