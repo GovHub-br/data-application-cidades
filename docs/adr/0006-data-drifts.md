@@ -2,6 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005)
 - **Relacionados:**
   - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (task `transform`),
   ADR-0005 (quarentena)
@@ -20,11 +21,14 @@ O que existe hoje:
 
 - Não há checagem antes da staging. Uma mudança de layout entra na bronze pelo
   `select *`.
-- Na bronze, `sem_drift_de_colunas` (declarado em 4 arquivos de schema) e
-  `colunas_esperadas` (1) comparam as colunas da tabela já materializada com uma
+- Na bronze, `sem_drift_de_colunas` (55 declarações em 4 arquivos de schema: `conjuntura`,
+  `far`, `fds` e `rural`) e `colunas_esperadas` (16 declarações, no eixo histórico)
+  comparam as colunas da tabela já materializada com uma
   lista. Ambos são `warn`, de propósito: "layout novo na origem não é motivo para
   derrubar a DAG". O resultado vai para `lake._dbt_log` pelo
-  `registrar_execucao_dbt`.
+  `registrar_execucao_dbt`, que registra todo resultado diferente de sucesso, e só no
+  target do Postgres: o eixo histórico, que roda no `prod_duckdb` (ADR-0003), nunca é
+  registrado.
 - A convenção de testes (`convencao-testes-qualidade.md`) divide o trabalho: a
   bronze **detecta** (`warn`), a prata tem o **contrato** (`error`) e a ouro
   **reconcilia** (`error`). O projeto não usa pacotes dbt; todo teste é macro
@@ -50,7 +54,7 @@ sources:
           caminho: staging/fgv/incc_m/**/*.parquet
           tipo_carga: completa          # completa | incremental
           variacao_maxima_linhas: 0.5   # só para carga completa
-          padrao_arquivo: null          # regex com o período, para SFTP/SharePoint
+          padrao_arquivo: null          # SFTP/SharePoint: regex sobre o caminho espelhado e o nome, com o período
           responsavel: <área do ministério que responde pela base>
         columns:
           - name: mes
