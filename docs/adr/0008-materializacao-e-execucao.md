@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003; incremental da bronze pela `_carga`)
+- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003; incremental da bronze pela `_carga`; limites só no playbook)
 - **Relacionados:**
   - ADR-0002 (prata com todos os períodos), ADR-0003 (targets), ADR-0005 (partição
   por carga), ADR-0006 (tipo de carga e portões)
@@ -72,8 +72,8 @@ de medição.
 
 O `registrar_execucao_dbt` passa a gravar **todos** os modelos em `lake._dbt_log`,
 não só as falhas, com tempo de execução e linhas afetadas, que o dbt já expõe em
-`results`. É a base para o critério acima e para fixar os limites do pg_duckdb antes da
-migração dos domínios DuckDB (ADR-0003).
+`results`. É a base para o critério acima e para ajustar, por PR no playbook, os
+limites do pg_duckdb (ADR-0003).
 
 ### 6. Reconstrução completa periódica
 
@@ -83,10 +83,10 @@ que o incremental tenha acumulado.
 
 ### 7. Memória
 
-- Com um target só (ADR-0003), os guardas de memória deixam o `profiles.yml` e
-  passam a ser parâmetros do pg_duckdb no Postgres: `duckdb.memory_limit` (hoje
-  4 GB), `duckdb.max_temp_directory_size` e `duckdb.threads`, fixados no playbook do
-  Postgres. Os dois últimos estão sem limite hoje.
+- Com um target só (ADR-0003), os guardas de memória deixam o `profiles.yml` e os
+  scripts shell de `dbt/mcid/` e ficam só nos parâmetros do pg_duckdb, no playbook
+  do Postgres: `duckdb.max_memory` (4096 MB) e `duckdb.max_temp_directory_size`
+  (50 GB).
 - O pool `duckdb_historico`, que serializa o eixo histórico, sai junto com o
   `prod_duckdb`.
 - Prata e ouro rodam em SQL de Postgres; o `duckdb.force_execution` não é padrão.
