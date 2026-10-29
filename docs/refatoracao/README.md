@@ -48,7 +48,7 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 | F2 | [Ingestão: modelagem nova](f2-ingestao.md) | a abrir | | |
 | F3 | [dbt: padrão único, seletores, homolog](f3-dbt.md) | a abrir | | |
 | F4 | [poetry → uv](f4-uv.md) | a abrir | | |
-| F5 | OpenMetadata | a abrir | | |
+| F5 | [OpenMetadata](f5-openmetadata.md) | a abrir | | |
 | B1 | `raw_para_staging` só em `raw/sftp/` | a abrir | | |
 | B2 | Máscara como trava da staging | a abrir | | |
 | B3 | Novo CAGED com anos fixos | a abrir | | |
@@ -85,16 +85,7 @@ Arquivos que mudam na troca e o que resolver junto: fonte de verdade única das 
 
 ### F5. Melhorias no OpenMetadata
 
-- **Eixo histórico no catálogo:** vem da F3.
-- **Versão 1.13.3 fixada em quatro lugares:**
-  - `requirements.txt:50`;
-  - `infra/playbooks/openmetadata/group_vars/openmetadata.yaml:9`;
-  - `infra/k8s/openmetadata/values.yaml`;
-  - o Elasticsearch em `infra/k8s/openmetadata/elasticsearch.yaml:37`.
-- **Valores fixos:** o serviço "Cidades" e o e-mail de admin estão em `infra/playbooks/airflow/templates/airflow.env.j2:39` e `infra/k8s/openmetadata/bootstrap.yaml`.
-- **Leitura no parse:** os toggles `OM_INGEST_*` são lidos no parse do DAG.
-- **Comentários desatualizados:** dizem que o `openmetadata-ingestion` roda num venv isolado (`pyproject.toml:147-149`, `infra/env/.env.example:58-62`), mas ele está na imagem.
-- **Exemplo do IPEA:** `helpers/openmetadata/README.md:168-205` ainda usa `compras_gov_api`.
+Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos nos templates. Detalhe em [f5-openmetadata.md](f5-openmetadata.md).
 
 ## 6. Candidatos novos (fora das cinco frentes)
 
