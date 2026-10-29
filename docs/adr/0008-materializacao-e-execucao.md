@@ -2,6 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003)
 - **Relacionados:**
   - ADR-0002 (prata com todos os períodos), ADR-0003 (targets), ADR-0005 (partição
   por carga), ADR-0006 (tipo de carga e portões)
@@ -17,9 +18,11 @@ tabela completa. Também avisa que, no laboratório, uma recarga grande de Parqu
 foi encerrada por falta de memória, e recomenda medir antes de fixar a estratégia.
 
 Hoje todas as camadas são `table`, por decisão do time de 2026-08-29: a
-`materialized_view` derrubava o banco. Só os modelos de `metadata` são
-incrementais. Os guardas de memória do DuckDB em `profiles.yml` (`memory_limit`,
-`temp_directory`, `preserve_insertion_order: false`) existem por causa das recargas
+`materialized_view` derrubava o banco. Só dois modelos são
+incrementais: `metadata/models_metadata` e
+`conjuntura_dbt/qualidade/ouro_conjuntura_qualidade_schema`. Os guardas de memória
+dos targets DuckDB em `profiles.yml` (`memory_limit`, `temp_directory`,
+`max_temp_directory_size`, `preserve_insertion_order: false`) existem por causa das recargas
 grandes.
 
 Duas decisões anteriores pesam aqui. Pelo ADR-0002, a bronze e a prata guardam
@@ -28,7 +31,7 @@ ADR-0006, o tipo de carga de cada fonte (completa ou incremental) fica declarado
 conferido.
 
 Não há medição de tempo por modelo. O `registrar_execucao_dbt` grava em
-`lake._dbt_log` só o que falhou.
+`lake._dbt_log` só o que não terminou em sucesso, e só no target do Postgres.
 
 ## Decisão
 
@@ -69,8 +72,8 @@ de medição.
 
 O `registrar_execucao_dbt` passa a gravar **todos** os modelos em `lake._dbt_log`,
 não só as falhas, com tempo de execução e linhas afetadas, que o dbt já expõe em
-`results`. É a base para o critério acima e para a decisão do ADR-0003 sobre migrar
-os domínios DuckDB.
+`results`. É a base para o critério acima e para fixar os limites do pg_duckdb antes da
+migração dos domínios DuckDB (ADR-0003).
 
 ### 6. Reconstrução completa periódica
 
@@ -80,10 +83,13 @@ que o incremental tenha acumulado.
 
 ### 7. Memória
 
-- Os guardas do DuckDB em `profiles.yml` continuam.
-- O eixo histórico em `homolog_duckdb` continua serializado (pool de 1 slot,
-  ADR-0003).
-- Prata e ouro no Postgres continuam com `duckdb.force_execution = true`.
+- Com um target só (ADR-0003), os guardas de memória deixam o `profiles.yml` e
+  passam a ser parâmetros do pg_duckdb no Postgres: `duckdb.memory_limit` (hoje
+  4 GB), `duckdb.max_temp_directory_size` e `duckdb.threads`, fixados no playbook do
+  Postgres. Os dois últimos estão sem limite hoje.
+- O pool `duckdb_historico`, que serializa o eixo histórico, sai junto com o
+  `prod_duckdb`.
+- Prata e ouro rodam em SQL de Postgres; o `duckdb.force_execution` não é padrão.
 
 ## Alternativas consideradas
 
@@ -120,8 +126,8 @@ recarga completa de Parquet, não de modelos `table` em geral.
 1. Mudar o `registrar_execucao_dbt` e acompanhar um mês em homologação.
 2. Listar os modelos acima do critério.
 3. Antes do primeiro incremental no Postgres, testar a estratégia de apagar e
-   reinserir junto com o `duckdb.force_execution` do pré-hook. O pg_duckdb executa
-   leituras; a escrita incremental precisa ser confirmada.
+   reinserir na bronze, que lê o lake pelo pg_duckdb. O pg_duckdb executa leituras;
+   a escrita incremental sobre `read_parquet` precisa ser confirmada.
 4. Converter os modelos da lista, um por PR, com a comparação de números antes e
    depois (ADR-0002).
 
