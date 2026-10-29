@@ -51,17 +51,12 @@ REPO_BASE = os.environ["AIRFLOW_REPO_BASE"]
 PROJECT_DIR = f"{REPO_BASE}/dbt/mcid"
 PROFILES_YML = f"{PROJECT_DIR}/profiles.yml"
 
-# O eixo histórico: os modelos e os testes singulares que dependem deles.
-# A mesma lista serve para EXCLUIR do grupo Postgres e SELECIONAR no grupo DuckDB,
-# então os dois grupos nunca se sobrepõem nem deixam nó órfão.
-SELETOR_DUCKDB = [
-    "path:models/mcmv_historico_dbt",
-    "path:models/reforma_casa_brasil_dbt",
-    "path:models/linha_financiada_dbt",
-    "path:tests/mcmv_historico",
-    "path:tests/reforma_casa_brasil",
-    "path:tests/linha_financiada",
-]
+# O eixo histórico e o resto do projeto são seletores do próprio dbt
+# (dbt/mcid/selectors.yml): `dominios_postgres` é o projeto menos `eixo_historico`,
+# então os dois grupos nunca se sobrepõem nem deixam nó órfão. O `dbt docs
+# generate` da ingestão do OpenMetadata usa o mesmo seletor do grupo Postgres.
+SELETOR_POSTGRES = "dominios_postgres"
+SELETOR_DUCKDB = "eixo_historico"
 
 # O DuckDB nao aceita duas conexoes de ESCRITA no mesmo arquivo. O Cosmos roda uma
 # invocacao de dbt por task, cada uma abrindo sua propria conexao em
@@ -110,7 +105,7 @@ with DAG(
         project_config=project_config,
         profile_config=profile_postgres,
         execution_config=execution_config,
-        render_config=RenderConfig(exclude=SELETOR_DUCKDB),
+        render_config=RenderConfig(selector=SELETOR_POSTGRES),
     )
 
     eixo_historico = DbtTaskGroup(
@@ -118,7 +113,7 @@ with DAG(
         project_config=project_config,
         profile_config=profile_duckdb,
         execution_config=execution_config,
-        render_config=RenderConfig(select=SELETOR_DUCKDB),
+        render_config=RenderConfig(selector=SELETOR_DUCKDB),
         operator_args={"pool": POOL_DUCKDB},
     )
 
