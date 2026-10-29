@@ -49,11 +49,11 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 | F3 | [dbt: padrão único, seletores, homolog](f3-dbt.md) | a abrir | | |
 | F4 | [poetry → uv](f4-uv.md) | a abrir | | |
 | F5 | [OpenMetadata](f5-openmetadata.md) | a abrir | | |
-| B1 | `raw_para_staging` só em `raw/sftp/` | a abrir | | |
-| B2 | Máscara como trava da staging | a abrir | | |
-| B3 | Novo CAGED com anos fixos | a abrir | | |
-| B4 | `local.env` fora do git | a abrir | | |
-| B5 | `no_log` nos playbooks | a abrir | | |
+| B1 | [`raw_para_staging` só em `raw/sftp/`](b01-raw-para-staging-so-sftp.md) | a abrir | | |
+| B2 | [Máscara como trava da staging](b02-mascara-como-trava.md) | a abrir | | |
+| B3 | [Novo CAGED com anos fixos](b03-caged-anos-fixos.md) | a abrir | | |
+| B4 | [`local.env` fora do git](b04-local-env-versionado.md) | a abrir | | |
+| B5 | [`no_log` nos playbooks](b05-ansible-no-log.md) | a abrir | | |
 | B6 | CI blocante (ruff, dbt parse, DagBag) | a abrir | | |
 | B7 | pre-commit só nos arquivos tocados | a abrir | | |
 | B8 | Imagem única da CI para VM e k8s | a abrir | | |
@@ -93,50 +93,13 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 
 ### P0: risco real
 
-**B1. ✔ O `raw_para_staging` sobrescreve a staging das APIs**
-
-- **Problema:**
-  - `scripts/raw_para_staging.py` varre todo o `raw/` e só ignora `dados_historicos` (`:99`, `:1085`).
-  - Grava `staging/<mesmo caminho>.parquet` só com texto e acrescenta `_source_file`, `_ingested_at` e `_source_hash`.
-  - São exatamente as colunas do "job do outro time" que quebrou o FGV e o infomoney em agosto. Hipótese forte: a colisão nasce do nosso próprio `minio_transform_dag` diário.
-- **Correção:** restringir a varredura a `raw/sftp/`, sem mudar o caminho de ninguém. Criar um namespace próprio já foi rejeitado porque quebra o data mesh.
-- **Antes:** confirmar no `lake._staging_log` se há chaves fora de `sftp/`.
-- **Aceite:** um run do `minio_transform_dag` não reescreve `staging/fgv`, `staging/ibge`, `staging/bacen` nem `staging/infomoney`.
-
-**B2. ✔ A máscara não trava o caminho da PII**
-
-- **Problema:**
-  - `mascarar_minio.run` registra a falha por objeto e retorna normalmente.
-  - `raw_para_staging` não confere a tag `masked`.
-  - `ClienteMinio.get_tagging` engole o erro (`plugins/cliente_minio.py:371-376`).
-  - `sftp_ingest_dag` e `minio_transform_dag` têm schedules independentes.
-- **Correção:** a staging exige a tag (ou o registro no `lake._masking_log`), e a task falha quando a máscara tiver erro.
-- **Aceite:** teste em `tests/` mostrando que um objeto sem `masked` não vira parquet e que um erro de máscara falha a task.
-
-**B3. ✔ O Novo CAGED para de coletar em janeiro de 2027**
-
-- **Problema:**
-  - `anos = [2024, 2025, 2026]` está fixo em `plugins/cliente_novo_caged.py:255`;
-  - o corte de mês está errado por dois (`:282`);
-  - o mês que falha some da staging, que é regravada inteira (`:288`).
-- **Aceite:** teste que deriva anos e meses a partir de uma data fixa.
-
-**B4. ✔ `local.env` versionado**
-
-- **Problema:**
-  - O arquivo está no `.gitignore:36`, mas foi re-adicionado em `e1c1ed3`.
-  - Tem a Fernet key e credenciais de dev.
-  - Três scripts carregam o arquivo: `scripts/sftp_minio_diff.py:38`, `scripts/superset/linha_financiada.py:724` e `dbt/mcid/_run-common.sh:52`. Se alguém preencher com as credenciais reais do DW ou do SFTP, elas vão para o git.
-- **Aceite:** `git rm --cached local.env`, mais um `local.env.example`, e os três scripts conferidos.
-
-**B5. Senhas em texto puro na saída do Ansible**
-
-- **Problema:** os `debug` finais não têm `no_log`:
-  - `install-airflow.yaml:232`;
-  - `install-postgres.yaml:401-403`;
-  - `install-rustfs.yaml:283`;
-  - `install-openmetadata.yaml:349`.
-- **Aceite:** `no_log: true` nos `debug`, conferido com `ansible-playbook --check`.
+| ID | Item |
+|---|---|
+| B1 | [✔ O `raw_para_staging` sobrescreve a staging das APIs](b01-raw-para-staging-so-sftp.md) |
+| B2 | [✔ A máscara não trava o caminho da PII](b02-mascara-como-trava.md) |
+| B3 | [✔ O Novo CAGED para de coletar em janeiro de 2027](b03-caged-anos-fixos.md) |
+| B4 | [✔ `local.env` versionado](b04-local-env-versionado.md) |
+| B5 | [Senhas em texto puro na saída do Ansible](b05-ansible-no-log.md) |
 
 ### P1: CI, qualidade e tooling
 
