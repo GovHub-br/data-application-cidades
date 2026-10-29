@@ -2,6 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (nome das macros; eixo histórico fora do catálogo desde o PR #241)
 - **Relacionados:**
   - ADR-0002 (R0, pseudonimização), ADR-0006 (contrato da fonte), ADR-0007 (sufixo
   `_token`), ADR-0010 (schema por secretaria)
@@ -17,11 +18,16 @@ O catálogo já existe:
 - Depois de cada execução do dbt, a DAG geral dispara a
   `openmetadata_ingestion_dag`, que ingere `manifest.json`, `catalog.json` e
   `run_results.json`. Isso leva ao catálogo as descrições, as tags, o `meta`, a
-  linhagem entre modelos e o resultado dos testes.
+  linhagem entre modelos e o resultado dos testes. Desde o PR #241, o
+  `docs generate` roda com o seletor `dominios_postgres`, porque o eixo histórico não
+  compila no target do Postgres. Por isso `mcmv_historico_dbt`,
+  `reforma_casa_brasil_dbt` e `linha_financiada_dbt` ficam sem catálogo (sem os tipos
+  das colunas) no OpenMetadata até a migração do ADR-0003.
 - O `dbt_project.yml` declara por pasta um `+meta.governance` (`product`,
   `owner_key`, `classification`, `rag_publication`) e um `+meta.openmetadata`
   (`domain`, `tier`, `owner`), herdados pelos modelos.
-- A macro `coluna_sensivel` detecta colunas de dado pessoal pelo nome (`cpf`, `nis`,
+- As macros de `macros/coluna_sensivel.sql` (`padroes_sensiveis`, `parece_cpf`,
+  `parece_dado_pessoal`) detectam colunas de dado pessoal pelo nome (`cpf`, `nis`,
   `endereco`...) e pelo conteúdo (CPF com dígito verificador válido). O teste
   `conjuntura_sem_dado_sensivel` falha o build se uma coluna assim aparecer numa
   camada persistida. Hoje só cobre o domínio `conjuntura`.
@@ -125,6 +131,7 @@ uma coluna renomeada, passaria. Por isso a detecção por conteúdo continua.
 - Teste sobre o grafo, no CI: todo modelo tem `governance.product`, `owner_key`,
   `classification` e `rag_publication`; toda coluna de prata e ouro tem descrição.
 - O teste de dado sensível roda em todos os domínios e passa.
+- Todos os domínios aparecem no catálogo com os tipos das colunas.
 - Toda coluna `_token` tem a tag `PII.Pseudonimizado` no catálogo.
 
 ## Questões em aberto
