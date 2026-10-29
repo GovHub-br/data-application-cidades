@@ -2,10 +2,13 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
+- **Revisão:** 2026-10-29 (decisão trocada: um dialeto e um target por ambiente, no lugar de dois dialetos em homologação)
 - **Relacionados:**
-  - ADR-0001 (arquitetura de referência)
-  - `dbt/mcid/profiles.yml`, `dags/dbt/mcid_cosmos_dag.py`,
-  `dbt/mcid/macros/get_custom_schema.sql`, `infra/playbooks/postgres/`
+  - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas),
+    ADR-0008 (materialização e execução), ADR-0012 (catálogo)
+  - Issues #243 (F1) e #245 (refatoração do dbt), PR #241 (seletores)
+  - `dbt/mcid/profiles.yml`, `dbt/mcid/selectors.yml`, `dags/dbt/mcid_cosmos_dag.py`,
+    `dbt/mcid/macros/get_custom_schema.sql`, `infra/playbooks/postgres/`
 
 ## Contexto
 
@@ -20,99 +23,138 @@ targets:
 
 O terceiro existe porque três domínios (`mcmv_historico`, `reforma_casa_brasil`,
 `linha_financiada`) foram escritos em SQL nativo do DuckDB (`try_cast`,
-`union_by_name`, `describe`), que o parser do Postgres rejeita. Para não
-reescrevê-los, a DAG geral roda esses domínios num segundo task group, com esse
-target (`dags/dbt/mcid_cosmos_dag.py`).
+`union_by_name`, `describe` na compilação), que o Postgres rejeita. Desde o PR #241,
+o `selectors.yml` separa o projeto em dois seletores: `eixo_historico` (esses três
+domínios) e `dominios_postgres` (o resto). A DAG geral roda os dois em sequência,
+`dominios_postgres` e depois `eixo_historico`, este num pool de 1 slot por causa do
+lock do arquivo DuckDB.
 
-Não havia regra escrita sobre o papel de cada target. E o target chamado `prod`
-aponta para o banco que está de pé na infra, que é o de **homologação**. Ainda não
-existe ambiente de produção do ministério.
+A versão de 19/10 deste ADR mantinha os dois dialetos e só impedia que o segundo
+crescesse. A conferência de 29/10 mostrou que isso não se sustenta:
+
+- **Não existe ordem certa para os dois grupos.** As dependências cruzam nos dois
+  sentidos:
+  - do grupo do Postgres para o histórico: `indicadores_mcmv_dbt`
+    (`prata_historico_snh_apf_mes` e `prata_historico_snh_entregas_mes`, e por elas
+    as ouros do reloginho) lê os `bronze_dhist_*`, que só são refeitos depois. O
+    reloginho sempre usa o bronze da execução anterior, e num banco zerado falha;
+  - do histórico para o Postgres: `prata_fds_historico_empreendimento` lê
+    `prata_fds_dim_empreendimento`, e as pratas da `linha_financiada` leem os
+    `bronze_geavo_*` da conjuntura.
+- **SQL do DuckDB já vazou para o Postgres.** `prata_historico_snh_apf_mes`, no grupo
+  do Postgres, usa `try_cast`.
+- **O catálogo fica incompleto.** O `describe` roda na compilação, então o
+  `docs generate` precisa do seletor `dominios_postgres`, e os três domínios ficam
+  sem catálogo no OpenMetadata (ADR-0012).
+- **Dois conjuntos de limites de memória.** Os guardas do DuckDB ficam no
+  `profiles.yml`; os do pg_duckdb, no Postgres. O pg_duckdb 1.2.0 de homologação tem
+  `duckdb.memory_limit` de 4 GB, mas `duckdb.max_temp_directory_size` vazio (sem
+  limite) e `duckdb.threads = -1`. O piloto do pg_duckdb derrubou o banco em
+  2026-09-05.
+
+E o target chamado `prod` aponta para o banco que está de pé na infra, que é o de
+**homologação**. Ainda não existe ambiente de produção do ministério. A macro
+`get_custom_schema.sql` só roteia schema para os nomes `prod`, `prod_duckdb` e
+`staging_duckdb`: qualquer outro target grava tudo no schema de fallback.
 
 ## Decisão
 
-### Ambientes
+### Um dialeto: SQL de Postgres, com o pg_duckdb só na leitura do lake
 
-O warehouse é um só: toda tabela de bronze, prata e ouro que alguém consome é
-materializada no Postgres. O que varia é o motor que executa o SQL até gravar lá.
+| Camada | Como roda |
+|---|---|
+| Bronze | `select * from {{ fonte_lake('<fonte>') }}`, lido pelo pg_duckdb dentro do Postgres. A `fonte_lake` usa `union_by_name` para juntar cargas com colunas diferentes. |
+| Prata e ouro | SQL de Postgres, executado pelo Postgres. |
 
-| Ambiente | Target dbt | Motor | Para que serve |
-|---|---|---|---|
-| Local | `staging_duckdb` | DuckDB num arquivo local, lendo a staging do lake | Testar modelos na máquina de quem desenvolve, sem depender do banco compartilhado |
-| Homologação | `homolog` (hoje `prod`) | Postgres + pg_duckdb | Domínios em SQL de Postgres: `far`, `fds`, `rural`, `conjuntura`, `indicadores_mcmv`, `metadata` |
-| Homologação | `homolog_duckdb` (hoje `prod_duckdb`) | DuckDB no processo do dbt, gravando no Postgres via `ATTACH` | Domínios em SQL nativo do DuckDB: `mcmv_historico`, `reforma_casa_brasil`, `linha_financiada` |
-| Produção | a definir | a definir | Ambiente do ministério, montado com os mesmos playbooks |
+- Nenhum modelo usa função que só existe no DuckDB (`try_cast`, `describe`,
+  `union_by_name` fora da `fonte_lake`). A tipagem usa `case` com expressão regular e
+  `cast`, ou as macros do projeto (`parse_*`).
+- Nada roda contra o banco na compilação (`run_query`, `describe`): o SQL compilado
+  não depende do estado do banco. Coluna que existe só em parte das cargas é tratada
+  na prata com `coalesce` explícito sobre as colunas declaradas no contrato da fonte
+  (ADR-0006).
 
-Os targets passam a ter o nome do ambiente para onde apontam. `prod` fica
-reservado para o ambiente do ministério.
+### Um target por ambiente
 
-### Regras
+| Ambiente | Target | Banco |
+|---|---|---|
+| Homologação | `homolog` | Postgres + pg_duckdb de homologação (o que hoje se chama `prod`) |
+| Produção | `prod` | Ambiente do ministério, montado com os mesmos playbooks |
 
-- **O que é consumido sai do Postgres.** O arquivo DuckDB local é só área de
-  teste. Nenhum modelo pode existir apenas nele.
-- **Cada domínio tem um dialeto, e só um.** A lista oficial de quais domínios rodam
-  em `homolog_duckdb` é o `SELETOR_DUCKDB` em `dags/dbt/mcid_cosmos_dag.py`. Os
-  demais rodam em `homolog`.
-- **Domínio novo nasce em SQL de Postgres.** O `homolog_duckdb` não recebe domínio
-  novo; a lista do `SELETOR_DUCKDB` só pode diminuir. Os três domínios atuais ficam
-  em DuckDB até as medições do ADR-0008 dizerem se a migração compensa.
-- **Os dois targets de homologação gravam no mesmo banco e nos mesmos schemas.** O
-  `macros/get_custom_schema.sql` já roteia igual nos dois, e um domínio pode ler
-  pelo `ref()` a tabela que o outro target materializou. A DAG geral roda primeiro
-  o grupo do Postgres e depois o do DuckDB, porque o eixo histórico lê tabelas que o
-  primeiro grupo materializa.
-- **O time desenvolve usando os dois ambientes.** O target local continua no
-  projeto. Se o teste local e a homologação derem resultados diferentes para o mesmo
-  modelo, vale a homologação, e a diferença é tratada como defeito.
+- Todos os domínios rodam no mesmo target, numa DAG com um grupo só. A ordem é a do
+  grafo do dbt, inclusive entre domínios.
+- Saem, depois da migração: os targets `prod_duckdb` e `staging_duckdb`, os seletores
+  `eixo_historico` e `dominios_postgres`, o pool `duckdb_historico` e os scripts
+  `_run-common.sh`, `run-historico.sh`, `run-reloginho.sh`, `rebuild-local.sh` e
+  `publicar-historico.sh` de `dbt/mcid/`.
+- A `get_custom_schema.sql` roteia o schema igual em `homolog` e `prod`.
+- Domínio novo nasce no padrão. Durante a migração, nenhum domínio entra no
+  `eixo_historico`.
+
+### Limites do pg_duckdb antes da migração
+
+Antes de qualquer domínio do eixo histórico rodar no Postgres, o playbook do
+Postgres passa a fixar `duckdb.max_temp_directory_size` e `duckdb.threads`, além do
+`duckdb.memory_limit` que já existe. Os valores saem de medição na homologação
+(ADR-0008).
 
 ## Alternativas consideradas
 
-**Reescrever os três domínios DuckDB em SQL de Postgres agora.** Deixaria um
-dialeto só, mas é reescrita sem ganho para quem consome, e parte desses modelos
-(`union_by_name` sobre muitos parquets) ainda não tem equivalente medido no
-pg_duckdb. O que se decide agora é só não deixar o problema crescer.
+**Manter dois dialetos, com a lista do DuckDB só diminuindo (versão de 19/10 deste
+ADR).** Evita reescrever agora, mas as dependências cruzadas não têm ordem certa
+entre dois grupos, o catálogo fica sem três domínios, e o time mantém dois conjuntos
+de limites de memória e um pool serial.
 
-**Remover o target local e desenvolver direto contra o Postgres de homologação.**
-Um dialeto e um ambiente a menos, mas todo teste passaria a disputar o banco
-compartilhado, e quem desenvolve dependeria da rede e do banco estarem de pé.
+**Tudo em DuckDB, gravando no Postgres via `ATTACH`.** Também é um dialeto só, mas o
+eixo histórico já mostrou o custo: lock do arquivo, execução serial, guardas de
+memória no processo do dbt e `describe` na compilação.
 
-**Manter os nomes `prod` e `prod_duckdb`.** Evita mexer nas DAGs, mas o nome
-engana quem lê o `profiles.yml` e deixa sem nome o ambiente do ministério quando
-ele existir.
+**Manter os nomes `prod` e `prod_duckdb`.** Evita mexer nas DAGs, mas o nome engana
+quem lê o `profiles.yml` e deixa sem nome o ambiente do ministério quando ele
+existir.
 
 ## Trade-offs
 
 | Ganha | Paga |
 |---|---|
-| Os domínios DuckDB rodam sem reescrita | Dois dialetos de SQL em homologação, com regras diferentes para cada domínio |
-| O problema dos dois dialetos para de crescer | Os três domínios DuckDB continuam diferentes até a migração |
-| Teste local rápido, sem disputar o banco compartilhado | Manter os modelos rodando nos dois ambientes custa esforço |
-| Nome do target diz para onde ele aponta | Um PR que mexe em perfis, DAGs e macro ao mesmo tempo |
-
-O DuckDB anexado também roda serializado (pool `duckdb_historico`, de 1 slot, por
-causa do lock do arquivo) e exige guardas de memória em `profiles.yml`.
+| Uma DAG, um grupo, a ordem dada pelo grafo do dbt | Reescrever três domínios; só o `mcmv_historico` tem 26 modelos |
+| Catálogo completo no OpenMetadata | O que hoje é uma função do DuckDB vira SQL de Postgres mais longo |
+| Um conjunto de limites de memória, no banco | Toda leitura do lake passa pelo pg_duckdb dentro do Postgres: uma recarga grande pesa no banco que também serve o consumo |
+| SQL compilado não depende do estado do banco | Coluna que varia entre cargas precisa estar declarada no contrato da fonte |
 
 ## Consequências
 
-- Como os schemas são os mesmos, a troca de nome não muda nenhum modelo; mudam o
-  `profiles.yml`, as DAGs e a macro de schema.
-- PR com domínio novo em `SELETOR_DUCKDB` não passa na revisão.
+- A DAG geral passa a ter um `DbtTaskGroup` só, sem seletor, e o `docs generate` da
+  DAG do OpenMetadata roda sem seletor (ADR-0012).
+- O `try_cast` de `indicadores_mcmv_dbt` sai junto com a migração.
+- Os guardas de memória deixam o `profiles.yml` e passam a ser parâmetros do
+  pg_duckdb (ADR-0008).
 
 ## Plano de migração
 
-1. Renomear os targets em um PR só:
-   - `dbt/mcid/profiles.yml`: `prod` → `homolog`, `prod_duckdb` → `homolog_duckdb`;
-   - `dags/dbt/mcid_cosmos_dag.py` e `dags/conjuntura/conjuntura_dag.py`:
-     `target_name`;
-   - `dbt/mcid/macros/get_custom_schema.sql`: lista `targets_com_schema_custom` e
-     comentários;
-   - comentários em `dbt/mcid/macros/historico/corpos_bronze.sql` e nos documentos.
+1. Fixar os limites do pg_duckdb no playbook do Postgres de homologação e medir.
+2. Renomear o target `prod` para `homolog` num PR só: `profiles.yml`, as DAGs
+   (`mcid_cosmos_dag.py`, `conjuntura_dag.py`), a `get_custom_schema.sql`, os
+   comentários e os documentos.
+3. Migrar um domínio por PR, nesta ordem: `linha_financiada` → `reforma_casa_brasil`
+   → `mcmv_historico`. Cada PR aplica também o contrato do ADR-0002 naquele domínio e
+   compara os números da ouro antes e depois.
+4. Com os três migrados, remover o `prod_duckdb`, o `staging_duckdb`, os seletores, o
+   pool e os scripts, e deixar a DAG com um grupo só.
 
 ## Validação operacional
 
-- A DAG geral passa nos dois task groups: `dbt build --target homolog` sem o
-  seletor DuckDB e `dbt build --target homolog_duckdb` com ele.
-- O `SELETOR_DUCKDB` não ganha entradas novas (conferido na revisão de PR).
+- `dbt build --target homolog` roda o projeto inteiro numa execução só.
+- Nenhum modelo usa `try_cast`, `describe` ou `run_query` (teste no CI; a
+  `fonte_lake` é a única exceção, pelo `union_by_name`).
+- O `docs generate` sem seletor passa, e todos os domínios aparecem no catálogo com
+  os tipos das colunas.
 
 ## Questões em aberto
 
-Nenhuma.
+1. **Desenvolvimento local.** Sem o `staging_duckdb`, quem desenvolve testa contra um
+   Postgres com pg_duckdb no compose local ou contra a homologação, com um schema
+   por pessoa. Hoje o compose (`infra/docker-compose.yml`) sobe `postgres:17-alpine`,
+   sem pg_duckdb, então a primeira opção exige trocar a imagem. Decidir antes de
+   remover o target.
+2. **Valores dos limites do pg_duckdb.** Saem da medição do passo 1.
