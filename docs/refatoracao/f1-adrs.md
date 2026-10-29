@@ -22,6 +22,8 @@ Os ADRs ficam em `docs/adr/`, na branch `feat/adrs-arquiteturais` (PR #264). Ele
 | Dados manuais do boletim | 0002 (R7), 0004 e 0005 | Passam pela raw como qualquer fonte: CSV ou XLSX em `raw/manual/<base>/load_id=.../`, pelo `scripts/enviar_manual.py`, convertidos pela `manual_ingest_dag`. Carga completa e só dado sem PII. |
 | Ordem das cargas | 0002, 0005 e 0009 | A conversão grava a `_load_id`, copiada da pasta `load_id=`, e é ela que ordena as cargas. O `_ingested_at` só registra a conversão. |
 | Como a `extract` fala com a fonte | 0004 | Hooks dos providers primeiro, cliente próprio só onde o hook não basta. Sem operators de transferência. |
+| Catálogo de colunas | 0006, 0003 e 0012 | `term` (termo do glossário) e `aliases` (outros nomes da coluna) no contrato formam um grafo de nomes. Renomeação conhecida não barra a carga; a desconhecida chega com sugestão. A prata usa `coalesce_aliases` no lugar do `coalesce_present`. No OpenMetadata, o termo mostra todas as colunas ligadas a ele; no banco, `metadata.column_catalog`. |
+| Pacotes de qualidade | 0006, 0008 e 0014 | dbt-expectations (testes do Great Expectations como macros do dbt) e Elementary (anomalias, mudança de schema e registro dos resultados, no lugar do `registrar_execucao_dbt`). Fixados no `packages.yml`, com `dbt deps` no build da imagem. |
 | Orquestração | 0013 | Nada no parse, cron literal, configuração versionada, segredo em Connection e sem dado nunca verde. |
 | Dependências, imagem e CI | 0014 | uv com lock versionado, imagem única publicada pela CI e CI blocante. |
 
