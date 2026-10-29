@@ -16,6 +16,8 @@ Este guia reúne o que vamos refatorar, em que ordem e com quais regras, para qu
 
 Cada frente (F1–F5) e cada candidato (B1–B15) tem um documento próprio nesta pasta, com o problema, a correção proposta, as dependências e o critério de aceite. O painel de status (seção 4) leva a cada um.
 
+Para retomar o trabalho noutra máquina ou sessão, comece por [RETOMADA.md](RETOMADA.md): regras de trabalho, decisões vigentes, armadilhas conhecidas e próximos passos.
+
 ## 2. Regras de trabalho
 
 1. **Issue antes de código.** Cada item deste guia tem uma sub-issue da [#242](https://github.com/GovHub-br/data-application-cidades/issues/242). Nada é implementado fora dela, e o PR a referencia (`Closes #N`).
