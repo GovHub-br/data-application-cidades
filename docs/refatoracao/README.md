@@ -1,6 +1,7 @@
 # Guia das refatorações do data-application-cidades
 
 > Documento vivo. Atualize o status e as decisões aqui quando uma issue for aberta, um PR entrar ou uma decisão mudar.
+> Issue de acompanhamento: [#242](https://github.com/GovHub-br/data-application-cidades/issues/242), com cada item como sub-issue.
 > Levantamento feito em 29/10/2026 sobre a `main` em `13a2253` (depois do #241).
 
 ## 1. Para que serve
@@ -17,7 +18,7 @@ Cada frente (F1–F5) e cada candidato (B1–B15) tem um documento próprio nest
 
 ## 2. Regras de trabalho
 
-1. **Issue antes de código.** Cada item deste guia vira uma issue com critério de aceite. Nada é implementado fora de uma issue.
+1. **Issue antes de código.** Cada item deste guia tem uma sub-issue da [#242](https://github.com/GovHub-br/data-application-cidades/issues/242). Nada é implementado fora dela, e o PR a referencia (`Closes #N`).
 2. **Plano antes de PR.** Cada issue começa em modo planejamento (plano → aprovação → código).
 3. **Um PR por item.** Na frente de dbt, um PR por domínio.
 4. **ADRs na branch deles.** Decisão que muda contrato (staging, Postgres raw, nomenclatura) passa por ADR. Os ADRs são escritos em outra branch: não criar nem editar `docs/adr` aqui.
@@ -44,26 +45,26 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 
 | ID | Item | Status | Issue | PR |
 |---|---|---|---|---|
-| F1 | [ADRs](f1-adrs.md) | issue aberta | | |
-| F2 | [Ingestão: modelagem nova](f2-ingestao.md) | a abrir | | |
-| F3 | [dbt: padrão único, seletores, homolog](f3-dbt.md) | a abrir | | |
-| F4 | [poetry → uv](f4-uv.md) | a abrir | | |
-| F5 | [OpenMetadata](f5-openmetadata.md) | a abrir | | |
-| B1 | [`raw_para_staging` só em `raw/sftp/`](b01-raw-para-staging-so-sftp.md) | a abrir | | |
-| B2 | [Máscara como trava da staging](b02-mascara-como-trava.md) | a abrir | | |
-| B3 | [Novo CAGED com anos fixos](b03-caged-anos-fixos.md) | a abrir | | |
-| B4 | [`local.env` fora do git](b04-local-env-versionado.md) | a abrir | | |
-| B5 | [`no_log` nos playbooks](b05-ansible-no-log.md) | a abrir | | |
-| B6 | [CI blocante (ruff, dbt parse, DagBag)](b06-ci-blocante.md) | a abrir | | |
-| B7 | [pre-commit só nos arquivos tocados](b07-pre-commit.md) | a abrir | | |
-| B8 | [Imagem única da CI para VM e k8s](b08-imagem-unica.md) | a abrir | | |
-| B9 | [GitHub Pages e dependabot](b09-pages-dependabot.md) | a abrir | | |
-| B10 | [`tests/` com `conftest.py`](b10-conftest.md) | a abrir | | |
-| B11 | [Código morto da ingestão](b11-codigo-morto-ingestao.md) | a abrir | | |
-| B12 | [Um escritor de staging](b12-escritor-unico-staging.md) | a abrir | | |
-| B13 | [Orquestração dos DAGs](b13-orquestracao.md) | a abrir | | |
-| B14 | [Infra sem duplicação](b14-infra-duplicada.md) | a abrir | | |
-| B15 | [Higiene do repositório](b15-higiene-repositorio.md) | a abrir | | |
+| F1 | [ADRs](f1-adrs.md) | issue aberta | [#243](https://github.com/GovHub-br/data-application-cidades/issues/243) | |
+| F2 | [Ingestão: modelagem nova](f2-ingestao.md) | issue aberta | [#244](https://github.com/GovHub-br/data-application-cidades/issues/244) | |
+| F3 | [dbt: padrão único, seletores, homolog](f3-dbt.md) | issue aberta | [#245](https://github.com/GovHub-br/data-application-cidades/issues/245) | |
+| F4 | [poetry → uv](f4-uv.md) | issue aberta | [#246](https://github.com/GovHub-br/data-application-cidades/issues/246) | |
+| F5 | [OpenMetadata](f5-openmetadata.md) | issue aberta | [#247](https://github.com/GovHub-br/data-application-cidades/issues/247) | |
+| B1 | [`raw_para_staging` só em `raw/sftp/`](b01-raw-para-staging-so-sftp.md) | issue aberta | [#248](https://github.com/GovHub-br/data-application-cidades/issues/248) | |
+| B2 | [Máscara como trava da staging](b02-mascara-como-trava.md) | issue aberta | [#249](https://github.com/GovHub-br/data-application-cidades/issues/249) | |
+| B3 | [Novo CAGED com anos fixos](b03-caged-anos-fixos.md) | issue aberta | [#250](https://github.com/GovHub-br/data-application-cidades/issues/250) | |
+| B4 | [`local.env` fora do git](b04-local-env-versionado.md) | issue aberta | [#251](https://github.com/GovHub-br/data-application-cidades/issues/251) | |
+| B5 | [`no_log` nos playbooks](b05-ansible-no-log.md) | issue aberta | [#252](https://github.com/GovHub-br/data-application-cidades/issues/252) | |
+| B6 | [CI blocante (ruff, dbt parse, DagBag)](b06-ci-blocante.md) | issue aberta | [#253](https://github.com/GovHub-br/data-application-cidades/issues/253) | |
+| B7 | [pre-commit só nos arquivos tocados](b07-pre-commit.md) | issue aberta | [#254](https://github.com/GovHub-br/data-application-cidades/issues/254) | |
+| B8 | [Imagem única da CI para VM e k8s](b08-imagem-unica.md) | issue aberta | [#255](https://github.com/GovHub-br/data-application-cidades/issues/255) | |
+| B9 | [GitHub Pages e dependabot](b09-pages-dependabot.md) | issue aberta | [#256](https://github.com/GovHub-br/data-application-cidades/issues/256) | |
+| B10 | [`tests/` com `conftest.py`](b10-conftest.md) | issue aberta | [#257](https://github.com/GovHub-br/data-application-cidades/issues/257) | |
+| B11 | [Código morto da ingestão](b11-codigo-morto-ingestao.md) | issue aberta | [#258](https://github.com/GovHub-br/data-application-cidades/issues/258) | |
+| B12 | [Um escritor de staging](b12-escritor-unico-staging.md) | issue aberta | [#259](https://github.com/GovHub-br/data-application-cidades/issues/259) | |
+| B13 | [Orquestração dos DAGs](b13-orquestracao.md) | issue aberta | [#260](https://github.com/GovHub-br/data-application-cidades/issues/260) | |
+| B14 | [Infra sem duplicação](b14-infra-duplicada.md) | issue aberta | [#261](https://github.com/GovHub-br/data-application-cidades/issues/261) | |
+| B15 | [Higiene do repositório](b15-higiene-repositorio.md) | issue aberta | [#262](https://github.com/GovHub-br/data-application-cidades/issues/262) | |
 
 ## 5. As cinco frentes previstas
 
@@ -139,3 +140,4 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 |---|---|
 | 29/10/2026 | O levantamento é aprovado como base do trabalho. |
 | 29/10/2026 | O projeto de ingestão do PR #206 é descartado; a F2 é modelada do zero, providers primeiro e depois clientes próprios. |
+| 29/10/2026 | Cada documento vira uma sub-issue da #242 (#243–#262); a F1 ganha issue nova, porque não havia uma aberta. |

@@ -1,6 +1,6 @@
 # F2 · Refatoração das ingestões: providers primeiro, depois clientes próprios
 
-> Parte do [guia das refatorações](README.md) · Frente prevista · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Frente prevista · Status: issue aberta · Issue: [#244](https://github.com/GovHub-br/data-application-cidades/issues/244) · PR: —
 
 ## Objetivo
 

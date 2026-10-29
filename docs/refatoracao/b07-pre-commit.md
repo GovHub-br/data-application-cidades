@@ -1,6 +1,6 @@
 # B7 · Pre-commit quebrado
 
-> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: issue aberta · Issue: [#254](https://github.com/GovHub-br/data-application-cidades/issues/254) · PR: —
 
 ## Problema
 

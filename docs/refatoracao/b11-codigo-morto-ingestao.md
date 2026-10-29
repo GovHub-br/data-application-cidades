@@ -1,6 +1,6 @@
 # B11 · Código morto da ingestão
 
-> Parte do [guia das refatorações](README.md) · Prioridade P2 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P2 · Status: issue aberta · Issue: [#258](https://github.com/GovHub-br/data-application-cidades/issues/258) · PR: —
 
 ## O que remover
 

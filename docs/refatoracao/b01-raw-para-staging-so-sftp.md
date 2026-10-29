@@ -1,6 +1,6 @@
 # B1 · O `raw_para_staging` sobrescreve a staging das APIs
 
-> Parte do [guia das refatorações](README.md) · Prioridade P0 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P0 · Status: issue aberta · Issue: [#248](https://github.com/GovHub-br/data-application-cidades/issues/248) · PR: —
 
 ## Problema (✔ conferido no código)
 

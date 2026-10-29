@@ -1,6 +1,6 @@
 # B8 · Imagem da CI que ninguém usa
 
-> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: issue aberta · Issue: [#255](https://github.com/GovHub-br/data-application-cidades/issues/255) · PR: —
 
 ## Problema
 

@@ -1,6 +1,6 @@
 # F4 · Troca do poetry pelo uv
 
-> Parte do [guia das refatorações](README.md) · Frente prevista · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Frente prevista · Status: issue aberta · Issue: [#246](https://github.com/GovHub-br/data-application-cidades/issues/246) · PR: —
 
 ## Objetivo
 

@@ -1,6 +1,6 @@
 # B13 · Orquestração dos DAGs
 
-> Parte do [guia das refatorações](README.md) · Prioridade P2 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P2 · Status: issue aberta · Issue: [#260](https://github.com/GovHub-br/data-application-cidades/issues/260) · PR: —
 
 ## Problema
 

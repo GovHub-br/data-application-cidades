@@ -1,6 +1,6 @@
 # B6 · A CI não barra nada
 
-> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: issue aberta · Issue: [#253](https://github.com/GovHub-br/data-application-cidades/issues/253) · PR: —
 
 ## Problema
 

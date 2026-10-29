@@ -1,6 +1,6 @@
 # F5 · Melhorias no OpenMetadata
 
-> Parte do [guia das refatorações](README.md) · Frente prevista · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Frente prevista · Status: issue aberta · Issue: [#247](https://github.com/GovHub-br/data-application-cidades/issues/247) · PR: —
 
 ## Objetivo
 

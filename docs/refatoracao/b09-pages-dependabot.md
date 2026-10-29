@@ -1,6 +1,6 @@
 # B9 · GitHub Pages e dependabot
 
-> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: issue aberta · Issue: [#256](https://github.com/GovHub-br/data-application-cidades/issues/256) · PR: —
 
 ## Problema
 

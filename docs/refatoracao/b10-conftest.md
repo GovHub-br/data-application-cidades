@@ -1,6 +1,6 @@
 # B10 · `tests/` sem `conftest.py`
 
-> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P1 · Status: issue aberta · Issue: [#257](https://github.com/GovHub-br/data-application-cidades/issues/257) · PR: —
 
 ## Problema
 

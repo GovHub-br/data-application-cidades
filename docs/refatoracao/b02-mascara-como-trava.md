@@ -1,6 +1,6 @@
 # B2 · A máscara não trava o caminho da PII
 
-> Parte do [guia das refatorações](README.md) · Prioridade P0 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P0 · Status: issue aberta · Issue: [#249](https://github.com/GovHub-br/data-application-cidades/issues/249) · PR: —
 
 ## Problema (✔ conferido no código)
 

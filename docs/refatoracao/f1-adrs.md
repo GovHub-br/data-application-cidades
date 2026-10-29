@@ -1,6 +1,6 @@
 # F1 · Organização do desenvolvimento via ADRs
 
-> Parte do [guia das refatorações](README.md) · Frente prevista · Status: issue aberta · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Frente prevista · Status: issue aberta · Issue: [#243](https://github.com/GovHub-br/data-application-cidades/issues/243) · PR: —
 
 ## Objetivo
 

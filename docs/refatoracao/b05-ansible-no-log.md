@@ -1,6 +1,6 @@
 # B5 · Senhas em texto puro na saída do Ansible
 
-> Parte do [guia das refatorações](README.md) · Prioridade P0 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P0 · Status: issue aberta · Issue: [#252](https://github.com/GovHub-br/data-application-cidades/issues/252) · PR: —
 
 ## Problema
 

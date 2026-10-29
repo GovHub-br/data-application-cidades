@@ -1,6 +1,6 @@
 # B15 · Higiene do repositório
 
-> Parte do [guia das refatorações](README.md) · Prioridade P2 · Status: a abrir · Issue: — · PR: —
+> Parte do [guia das refatorações](README.md) · Prioridade P2 · Status: issue aberta · Issue: [#262](https://github.com/GovHub-br/data-application-cidades/issues/262) · PR: —
 
 ## O que arrumar
 
