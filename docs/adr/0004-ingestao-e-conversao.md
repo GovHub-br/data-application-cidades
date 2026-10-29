@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verify_structural_data_drift`; nomes de rastreio em inglês, ADR-0007)
+- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verify_structural_data_drift`; nomes de rastreio em inglês, ADR-0007; `raw_to_staging_dag`)
 - **Relacionados:**
   - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas: R0 a R2),
     ADR-0005 (layout do lake), ADR-0013 (orquestração)
@@ -149,7 +149,7 @@ A entrada manual (ADR-0002 R7) não tem fonte externa: o arquivo chega à raw pe
 
 ### DAG de manutenção do lake
 
-A `raw_para_staging_dag`, disparada à mão ou em horário próprio, percorre a `raw/` e
+A `raw_to_staging_dag`, disparada à mão ou em horário próprio, percorre a `raw/` e
 converte o que não tem registro em `lake._staging_log`. Serve para backfill, para
 reprocessar em lote o que foi barrado no drift, e como conferência de que nenhuma
 DAG de fonte deixou de converter. Não é o caminho normal.
@@ -219,7 +219,7 @@ lake.
 
 ## Consequências
 
-- A `minio_transform_dag` dá lugar à `raw_para_staging_dag`, de manutenção. A
+- A `minio_transform_dag` dá lugar à `raw_to_staging_dag`, de manutenção. A
   tarefa de mascaramento sai dela (vai para as DAGs de fonte, ADR-0002 R0), e a
   varredura deixa de ser o caminho normal do SFTP.
 - As DAGs de API trocam a conversão própria (`registros_para_staging_parquet`,
@@ -243,7 +243,7 @@ lake.
    devolver as chaves gravadas). Em cada DAG de API, trocar a conversão própria pela
    task comum.
 3. Quando todas as fontes converterem pela task, renomear a `minio_transform_dag`
-   para `raw_para_staging_dag`, tirar dela o mascaramento e o disparo do dbt, e
+   para `raw_to_staging_dag`, tirar dela o mascaramento e o disparo do dbt, e
    desligar o horário automático.
 4. Antes de desligar o Postgres das APIs, listar os datasets do Superset da
    homologação que leem os schemas das APIs e reapontá-los para a ouro. Depois,
@@ -254,7 +254,7 @@ lake.
 
 ## Validação operacional
 
-- A `raw_para_staging_dag`, rodando em conferência (sem converter), não encontra
+- A `raw_to_staging_dag`, rodando em conferência (sem converter), não encontra
   objeto da raw sem registro em `lake._staging_log`. Se encontrar, alguma DAG de
   fonte não encadeou a `transform`.
 - Nenhuma DAG de fonte grava em `staging/` a não ser pela task `transform`.

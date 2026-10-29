@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-29
-- **Revisão:** 2026-10-29 (pacotes dbt; questões em aberto resolvidas)
+- **Revisão:** 2026-10-29 (pacotes dbt; questões em aberto resolvidas; `mdbtools` fica na imagem)
 - **Relacionados:**
   - ADR-0003 (ambientes), ADR-0006 (pacotes de qualidade), ADR-0013 (teste de
     DagBag)
@@ -76,7 +76,8 @@ achou:
      tag do commit.
    - A VM e o k8s sobem essa tag: o playbook deixa de buildar.
    - A senha padrão sai da imagem e fica só no compose local.
-   - As bibliotecas de sistema sem uso saem.
+   - As bibliotecas de sistema sem uso saem. O `mdbtools` fica: é ele que lê o
+     `.mdb` na `extract` (ADR-0002 R0).
 6. **A CI é blocante.**
    - O ruff (lint e formatação) roda em `dags/`, `plugins/`, `helpers/`, `scripts/`
      e `tests/`.

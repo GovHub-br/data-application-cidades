@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (contagens conferidas com o código; coluna `_load_id`; DAG da entrada manual; sem schema `comum`; nomes de rastreio em inglês; schema `elementary`)
+- **Revisão:** 2026-10-29 (contagens conferidas com o código; coluna `_load_id`; DAG da entrada manual; sem schema `comum`; nomes de rastreio em inglês; schema `elementary`; alcance da regra do inglês; chaves do contrato)
 - **Relacionados:**
   - ADR-0002 (camadas), ADR-0004 (tasks), ADR-0005 (chaves do lake), ADR-0010
   (divisão por secretaria)
@@ -43,6 +43,24 @@ da staging (ADR-0002 R2) já usam prefixo `_` (`_source_file`, `_ingested_at`,
   já existe no código (`_source_file`, `_ingested_at`, `masked`, `converted`,
   `extract`, `transform`).
 - As colunas de negócio seguem os glossários do projeto, em português.
+- **Alcance da regra:** vale para os nomes que descrevem ou rastreiam o dado e
+  aparecem fora do código: colunas técnicas, status das tabelas de controle,
+  pastas do lake, chaves e valores do contrato da fonte e ids de DAG e de task.
+  Identificadores de código (macros, funções, scripts, nomes de arquivo) e de
+  infraestrutura (pools, papéis do Postgres) seguem a língua do código em volta
+  e não são renomeados por esta regra.
+- **Nomes que já existem** mudam quando o domínio ou a DAG for migrado, no mesmo
+  PR. Não há PR só de renomeação. Durante a migração, a `fonte_lake` lê o
+  `meta.path` e, na falta dele, o `meta.caminho`.
+
+| Chave do contrato hoje ou proposta | Nome em inglês | Valores |
+|---|---|---|
+| `meta.caminho` | `meta.path` | — |
+| `tipo_carga` | `load_type` | `full`, `incremental` |
+| `variacao_maxima_linhas` | `max_row_variation` | — |
+| `padrao_arquivo` | `file_pattern` | — |
+| `responsavel` | `owner` | — |
+| `formato` | `format` | `date_br`, `date_iso`, `decimal_br`, `decimal_dot`, `integer`, `text`, `domain` |
 
 ### Camadas
 
@@ -124,7 +142,7 @@ modelo chama a macro hoje, a troca não quebra nada.
 | Chave do lake | ADR-0005 | `raw/fgv/incc_m/load_id=20261019T030000Z/incc_m.xlsx` |
 | DAG de fonte | `<fonte>_<dado>_ingest_dag` | `fgv_incc_m_ingest_dag` |
 | DAG da entrada manual | `manual_ingest_dag` (ADR-0004) | — |
-| DAG de manutenção | `raw_para_staging_dag` | — |
+| DAG de manutenção | `raw_to_staging_dag` | — |
 | DAG do dbt | `mcid_cosmos_dag` | — |
 | Tasks da DAG de fonte | `extract`, `verify_structural_data_drift`, `transform` (ADR-0004) | — |
 

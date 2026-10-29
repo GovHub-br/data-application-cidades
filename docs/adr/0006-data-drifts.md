@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; drift semântico obrigatoriamente no dbt; nomes de rastreio em inglês, ADR-0007; catálogo de colunas; dbt-expectations e Elementary; questões em aberto resolvidas)
+- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; drift semântico obrigatoriamente no dbt; nomes de rastreio em inglês, ADR-0007; catálogo de colunas; dbt-expectations e Elementary; questões em aberto resolvidas; chaves do contrato em inglês)
 - **Relacionados:**
   - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (tasks `verify_structural_data_drift` e `transform`),
   ADR-0005 (quarentena)
@@ -51,22 +51,24 @@ sources:
     tables:
       - name: fgv_incc_m
         meta:
-          caminho: staging/fgv/incc_m/**/*.parquet
-          tipo_carga: completa          # completa | incremental
-          variacao_maxima_linhas: 0.5   # só para carga completa
-          padrao_arquivo: null          # SFTP/SharePoint: regex sobre o caminho espelhado e o nome, com o período
-          responsavel: <área do ministério que responde pela base>
+          path: staging/fgv/incc_m/**/*.parquet
+          load_type: full               # full | incremental
+          max_row_variation: 0.5        # só para carga completa
+          file_pattern: null            # SFTP/SharePoint: regex sobre o caminho espelhado e o nome, com o período
+          owner: <área do ministério que responde pela base>
         columns:
           - name: mes
-            meta: { formato: data_br, term: dt_referencia }
+            meta: { format: date_br, term: dt_referencia }
           - name: indice
             meta:
-              formato: decimal_br
+              format: decimal_br
               term: incc_indice
               aliases: [numero_indice]  # outros nomes com que a coluna já chegou
 ```
 
 Os nomes das colunas são os nomes já normalizados pela conversão (ADR-0002 R2).
+As chaves do contrato ficam em inglês, como os demais nomes de rastreio
+(ADR-0007).
 Mudar o contrato é um PR: aceitar um layout novo é uma decisão explícita e revisada.
 
 **Catálogo de colunas.** Duas chaves de cada coluna do contrato formam um grafo de
@@ -102,7 +104,7 @@ são lidos na carga completa, para contar as linhas.
 | Coluna renomeada sem `aliases` que a explique | Não converte: `quarantined`, alerta com a sugestão de renomeação |
 | Arquivo sem cabeçalho, ou encoding e separador não detectados | Não converte: `quarantined` |
 | Fonte ou arquivo sem contrato | Não converte: `uncataloged`, alerta |
-| Carga completa com linhas fora de `variacao_maxima_linhas` em relação à carga anterior | Não converte: `quarantined` (arquivo truncado, ou a fonte passou a mandar só o incremental) |
+| Carga completa com linhas fora de `max_row_variation` em relação à carga anterior | Não converte: `quarantined` (arquivo truncado, ou a fonte passou a mandar só o incremental) |
 
 - Uma coluna "renomeada" aparece como uma ausente mais uma nova. Se a nova está
   nos `aliases` da ausente, a renomeação já é conhecida. Se não está, a
@@ -117,7 +119,7 @@ são lidos na carga completa, para contar as linhas.
   e-mail (§5) e termina em falha. A `transform` roda mesmo assim e converte só
   as aprovadas. O problema aparece em vermelho no Airflow sem bloquear os outros
   arquivos da mesma carga.
-- O tipo de carga declarado (`tipo_carga`) é conferido pela estrutura do arquivo.
+- O tipo de carga declarado (`load_type`) é conferido pela estrutura do arquivo.
   Na carga completa, o arquivo cobre a base inteira e o número de linhas fica
   perto do da carga anterior. Na incremental, traz só o período novo. Isso
   responde ao requisito 8 da issue #130, e a materialização segue essa
@@ -135,14 +137,14 @@ DAG geral.
 
 | Teste | De onde vem | Pega | Severidade |
 |---|---|---|---|
-| `formato_valido` (novo) | Macro própria sobre o `expect_column_values_to_match_regex` do dbt-expectations (§7) | Valor fora do `meta.formato` da coluna: data que virou `aaaa-mm-dd`, separador decimal trocado, inteiro com texto | `error` |
+| `formato_valido` (novo) | Macro própria sobre o `expect_column_values_to_match_regex` do dbt-expectations (§7) | Valor fora do `meta.format` da coluna: data que virou `aaaa-mm-dd`, separador decimal trocado, inteiro com texto | `error` |
 | `accepted_values` e `dentro_do_dominio` (existentes) | dbt e macro própria | Código de domínio novo numa coluna de domínio fechado | `error` |
 | `volume_anomalies` | Elementary (§7) | Carga com volume fora do que o histórico da tabela mostra como normal; pega carga parcial (ADR-0004) | `error` |
 | `sem_perda_na_tipagem` (novo, na prata) | Macro própria | Valor preenchido na bronze que virou nulo depois do cast na prata | `error` (bloqueia a ouro) |
 | `schema_changes_from_baseline` | Elementary (§7) | Colunas da bronze diferentes das declaradas no contrato; rede de segurança atrás do drift estrutural | `warn` |
 
-Formatos iniciais de `meta.formato`: `data_br`, `data_iso`, `decimal_br`,
-`decimal_ponto`, `inteiro`, `texto`, `dominio`. A macro `formato_valido` traduz
+Formatos iniciais de `meta.format`: `date_br`, `date_iso`, `decimal_br`,
+`decimal_dot`, `integer`, `text`, `domain`. A macro `formato_valido` traduz
 cada formato numa expressão regular e chama o teste do dbt-expectations. A
 tolerância é o `mostly` dele: a fração de valores que precisa passar, por padrão
 1, ou seja, nenhum valor inválido.
@@ -185,9 +187,9 @@ Todo alerta de drift é um e-mail.
 
 Os limites técnicos padrão são os deste ADR. Os limites de negócio de cada fonte
 (variação de volume aceitável, domínios válidos, limiar de anomalia) são definidos
-pelo `responsavel` declarado no contrato, que é quem conhece o dado, e registrados
+pelo `owner` declarado no contrato, que é quem conhece o dado, e registrados
 no próprio contrato. Enquanto o ministério não indica quem responde por cada base, o
-`responsavel` registra a área de origem conhecida, e valem os limites técnicos
+`owner` registra a área de origem conhecida, e valem os limites técnicos
 padrão.
 
 ### 7. Pacotes de qualidade: dbt-expectations e Elementary
@@ -263,8 +265,9 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 
 ## Consequências
 
-- As entradas de `sources.yml` ganham `meta.tipo_carga`, `meta.responsavel`, o
-  `meta.formato` das colunas e, nas fontes de arquivo, `meta.padrao_arquivo`.
+- As entradas de `sources.yml` ganham `meta.load_type`, `meta.owner`, o
+  `meta.format` das colunas e, nas fontes de arquivo, `meta.file_pattern`. O
+  `meta.caminho` vira `meta.path` (ADR-0007).
 - As colunas do contrato ganham `meta.term` e `meta.aliases` (catálogo de colunas).
 - Duas macros novas: `formato_valido`, sobre o dbt-expectations, e
   `sem_perda_na_tipagem`. O volume vem do `volume_anomalies` do Elementary.
@@ -293,13 +296,13 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
    fonte (ADR-0004). Na DAG geral, ligar o `on_failure_callback` e a task
    `notify_dbt_warnings`.
 5. Estender os contratos às fontes do SFTP e do SharePoint, com
-   `padrao_arquivo`, domínio a domínio, na ordem do plano do ADR-0002.
-6. Calibrar `variacao_maxima_linhas` e as tolerâncias com o histórico já presente
+   `file_pattern`, domínio a domínio, na ordem do plano do ADR-0002.
+6. Calibrar `max_row_variation` e as tolerâncias com o histórico já presente
    na raw antes de ligar o `error`.
 
 ## Validação operacional
 
-- Toda fonte em `sources.yml` tem `tipo_carga`, `responsavel` e `meta.formato` em
+- Toda fonte em `sources.yml` tem `load_type`, `owner` e `meta.format` em
   todas as colunas (teste sobre o grafo, no CI).
 - Toda bronze tem `formato_valido` e `volume_anomalies`; toda prata tem
   `sem_perda_na_tipagem`.

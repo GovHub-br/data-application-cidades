@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (nome das macros; eixo histórico fora do catálogo desde o PR #241; catálogo de colunas)
+- **Revisão:** 2026-10-29 (nome das macros; eixo histórico fora do catálogo desde o PR #241; catálogo de colunas; `meta.path`)
 - **Relacionados:**
   - ADR-0002 (R0, pseudonimização), ADR-0006 (contrato da fonte), ADR-0007 (sufixo
   `_token`), ADR-0010 (schema por secretaria)
@@ -66,7 +66,7 @@ coluna de prata e ouro tem descrição.
 ### 3. Linhagem
 
 A linhagem vem do `manifest.json`: fonte, bronze, prata e ouro. Como cada fonte
-declara o `meta.caminho` da staging (ADR-0005), o catálogo mostra de que caminho do
+declara o `meta.path` da staging (ADR-0005), o catálogo mostra de que caminho do
 lake a bronze lê. A ligação entre a raw e a staging fica no `lake._staging_log`, que
 registra cada objeto convertido.
 

@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (layout trocado: o lake espelha a fonte, com a pasta `load_id=` antes do arquivo; entrada manual em `raw/manual/`; carga na coluna `_load_id`; migração da raw antiga sem PII; nomes de rastreio em inglês, ADR-0007)
+- **Revisão:** 2026-10-29 (layout trocado: o lake espelha a fonte, com a pasta `load_id=` antes do arquivo; entrada manual em `raw/manual/`; carga na coluna `_load_id`; migração da raw antiga sem PII; nomes de rastreio em inglês, ADR-0007; `.mdb` como pasta de CSVs; chaves do contrato em inglês)
 - **Relacionados:**
   - ADR-0001 (arquitetura), ADR-0002 (R0 e R1), ADR-0004 (ingestão e conversão),
     ADR-0006 (contrato da fonte), ADR-0009 (histórico)
@@ -95,7 +95,8 @@ raw/fgv/incc_m/load_id=20261029T030000Z/incc_m.xlsx
   quando a staging é regenerada (§6), então não ordena cargas.
 - **O nome original do arquivo é preservado.** Em arquivos de terceiros, o nome
   carrega data e versão, e é o que se usa para derivar o período de referência
-  (ADR-0009).
+  (ADR-0009). O `.mdb` e o `.accdb` chegam à raw como um CSV por tabela
+  (ADR-0002 R0), e o nome original vira a pasta desses CSVs.
 - **A entrada manual** (ADR-0002 R7) só chega pelo `scripts/enviar_manual.py`,
   que monta a pasta `load_id=`, confere o hash (§3) e registra o envio. Ninguém
   grava à mão em `raw/manual/`.
@@ -116,7 +117,7 @@ deixam de existir para dados novos.
 ### 4. Identificação da base
 
 O caminho espelhado não diz qual base lógica o arquivo é. Isso vem do
-`padrao_arquivo` do contrato da fonte (ADR-0006), que casa com o caminho e o nome do
+`file_pattern` do contrato da fonte (ADR-0006), que casa com o caminho e o nome do
 arquivo. Arquivo que não casa com nenhum padrão fica onde chegou, com status
 `uncataloged` no `lake._staging_log`, gera alerta e não é convertido até alguém
 catalogar a base.
@@ -151,7 +152,7 @@ contrato, a DAG de manutenção converte o arquivo.
 
 ### 9. Caminhos em `sources.yml` sem data fixa
 
-O `meta.caminho` de cada fonte aponta para todas as cargas da base, com glob sobre a
+O `meta.path` de cada fonte aponta para todas as cargas da base, com glob sobre a
 pasta `load_id=` e o padrão do nome (`staging/sftp/fabrica/GEFUS/**/PMCMV_FAIXA3_MCID_*.parquet`),
 nunca para um arquivo datado. Escolher a carga vigente é regra da ouro (ADR-0002 R5).
 
@@ -193,7 +194,7 @@ duplicar bases que servem a mais de um domínio.
 
 | Ganha | Paga |
 |---|---|
-| O arquivo do servidor é achado no lake pelo mesmo caminho | O caminho não diz qual base é: isso depende do `padrao_arquivo` do contrato |
+| O arquivo do servidor é achado no lake pelo mesmo caminho | O caminho não diz qual base é: isso depende do `file_pattern` do contrato |
 | Data de chegada de cada arquivo no próprio caminho | O lake cresce a cada carga |
 | Nada é sobrescrito, nem por engano | Remover um objeto vira operação de manutenção |
 | Arquivo movido ou reenviado sem mudança não duplica | A ingestão depende do registro de hashes em `lake._ingest_minio_log` |
@@ -243,7 +244,7 @@ duplicar bases que servem a mais de um domínio.
   nem objeto de `raw/` sem uma pasta `load_id=` logo acima do arquivo.
 - Nenhum hash tem mais de uma carga em `lake._ingest_minio_log`.
 - O usuário `app-cidades` recebe erro ao tentar apagar em `raw/`.
-- Nenhum `meta.caminho` em `sources.yml` aponta para arquivo com data no nome.
+- Nenhum `meta.path` em `sources.yml` aponta para arquivo com data no nome.
 
 ## Questões em aberto
 

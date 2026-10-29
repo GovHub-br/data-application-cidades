@@ -2,10 +2,10 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (a carga mais recente é dada pela `_load_id`, não pelo `_ingested_at`; nomes de rastreio em inglês, ADR-0007)
+- **Revisão:** 2026-10-29 (a carga mais recente é dada pela `_load_id`, não pelo `_ingested_at`; nomes de rastreio em inglês, ADR-0007; `file_pattern`)
 - **Relacionados:**
   - ADR-0002 (prata com todos os períodos, ouro escolhe o vigente), ADR-0005 (uma
-  chave por carga), ADR-0006 (`padrao_arquivo`), ADR-0007 (colunas técnicas),
+  chave por carga), ADR-0006 (`file_pattern`), ADR-0007 (colunas técnicas),
   ADR-0008 (materialização)
   - Issues #118 (estratégia de histórico) e #66
   - `dbt/mcid/models/docs/entregas/issue-118-entrega-final.md`,
@@ -46,7 +46,7 @@ para escolher a versão de um período. Nenhum modelo mistura os dois. O
 a staging é regenerada e não escolhe versão.
 
 Quando o período não vem no dado, ele é extraído do nome do arquivo por um grupo de
-captura no `padrao_arquivo` do contrato da fonte (ADR-0006). Isso substitui o
+captura no `file_pattern` do contrato da fonte (ADR-0006). Isso substitui o
 `dt_movimento` usado em alguns pontos, que o eixo histórico já mostrou ser menos
 confiável que o nome do arquivo.
 
@@ -116,7 +116,7 @@ então o snapshot seria uma segunda cópia menos completa.
 
 ## Plano de migração
 
-1. Acrescentar `padrao_arquivo` com grupo de captura do período aos contratos das
+1. Acrescentar `file_pattern` com grupo de captura do período aos contratos das
    fontes de arquivo (ADR-0006).
 2. Em cada domínio, quando migrar pelo ADR-0002: garantir `dt_referencia` na prata,
    a deduplicação do reenvio e o teste de unicidade.

@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_load_id`; nomes de rastreio em inglês, ADR-0007; questões em aberto resolvidas)
+- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_load_id`; nomes de rastreio em inglês, ADR-0007; questões em aberto resolvidas; `.mdb` exportado para CSV antes da raw)
 - **Relacionados:**
   - ADR-0001, ADR-0003, ADR-0005
   - Deck *GovHub — Arquitetura Medalhão de Referência*, seção 4
@@ -100,6 +100,15 @@ dele e fica no ADR-0011.
 
 A única entrada da raw que não passa por esse mascaramento é a entrada manual
 (R7), que só aceita dado sem PII.
+
+**Formatos que não podem ser reescritos.** O `.mdb` e o `.accdb` só podem ser
+lidos: o mdbtools, que está na imagem, não grava nesses formatos. Para eles, a
+`extract` exporta cada tabela para CSV (`mdb-export`), mascara cada CSV e grava na
+raw só os CSVs, numa pasta com o nome do arquivo original
+(`.../load_id=<...>/<arquivo>.mdb/<tabela>.csv`, ADR-0005). O arquivo original
+nunca pousa no lake. Nesses casos, a raw guarda o conteúdo da fonte, não o
+formato. O controle por hash do ADR-0005 usa o hash do arquivo recebido, então um
+reenvio igual não gera carga nova.
 
 **R1. A raw é imutável.** Cada recebimento, já mascarado, é gravado em caminho
 próprio, na pasta `load_id=` do ADR-0005, e nunca é sobrescrito. É a origem de
@@ -205,6 +214,10 @@ mesmas regras:
 | Prata | Incremental por chave de negócio, com integração entre fontes | Genérica, no grão da fonte, com todos os períodos; a integração por regra de negócio vai para a ouro (R4, R5) | Uma prata serve qualquer indicador futuro |
 
 ## Alternativas consideradas
+
+**Guardar o `.mdb` original na raw e mascarar só na conversão (prática atual
+para esse formato).** É o que o `raw_para_staging.py` faz hoje, porque o mdbtools
+não grava `.mdb`. Deixa dado pessoal no lake até a conversão, contra o R0.
 
 **Mascarar depois de pousar na raw (prática atual).** Deixa o dado pessoal legível
 no lake até a tarefa de mascaramento rodar, e obriga a reescrever a raw, o que

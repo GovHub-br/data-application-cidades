@@ -2,6 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-29
+- **Revisão:** 2026-10-29 (só a DAG geral executa o dbt; a `conjuntura_dag` sai)
 - **Relacionados:**
   - ADR-0004 (DAG de fonte com `extract` e `transform`), ADR-0011 (segredos),
     ADR-0014 (CI com DagBag)
@@ -54,7 +55,7 @@ escritas e encadeadas. A varredura de 29/10 achou:
    o valor nos logs.
 5. **Sem dado nunca é verde.**
    - Fonte sem nada novo desde a última carga: a `extract` termina `skipped`
-     (`AirflowSkipException`), e a `transform` é pulada junto.
+     (`AirflowSkipException`), e as tasks seguintes são puladas junto.
    - Fonte que deveria trazer dado e não trouxe, ou trouxe menos que o esperado: a
      task falha.
 6. **Disparo e espera.**
@@ -67,6 +68,19 @@ escritas e encadeadas. A varredura de 29/10 achou:
    conteúdo.
 8. **Um teste de DagBag no CI** (ADR-0014) importa todas as DAGs, falha em qualquer
    erro de import e mede o tempo de parse. É ele que garante as regras 1 e 7.
+9. **Só a DAG geral executa o dbt** (`build`, `run`, `test`). A DAG do
+   OpenMetadata só gera a documentação (`docs generate`). Nenhuma DAG dispara as
+   DAGs de fonte para depois rodar o dbt: cada fonte roda no próprio cron,
+   agendada para terminar antes da DAG geral (ADR-0004). Por isso a
+   `conjuntura_dag` sai:
+   - os modelos `conjuntura_dbt` passam a rodar só na DAG geral, que já os
+     inclui;
+   - as 13 DAGs de fonte que ela dispara passam a rodar no próprio cron;
+   - a geração de parquet dos dados manuais vai para a `manual_ingest_dag`
+     (ADR-0002 R7).
+
+   Uma fonte que falha não trava o boletim: os testes da bronze barram só a prata
+   daquela fonte, e o resto roda, que era o motivo do `trigger_rule=all_done` dela.
 
 ## Alternativas consideradas
 
@@ -100,25 +114,28 @@ mas cada espera prende um slot de worker pelo tempo inteiro.
 - `IBGE_CONFIGURACOES` e `BACEN_SERIES` passam a ser arquivos versionados,
   validados no CI.
 - As Variables com segredo viram Connections.
-- O `conjuntura_dag` e o `mcid_cosmos_dag` ganham `deferrable=True` e
-  `max_active_runs=1`, e o disparo do dbt pela `minio_transform_dag` sai.
+- A `conjuntura_dag` sai (regra 9). O `mcid_cosmos_dag` ganha `max_active_runs=1`,
+  e o disparo do dbt pela `minio_transform_dag` sai.
 
 ## Plano de migração
 
 1. Criar o teste de DagBag (ADR-0014). Ele começa com uma lista de exceções
    versionada, que só pode diminuir.
-2. Corrigir já o que não depende da migração das DAGs: `deferrable=True` no
-   `conjuntura_dag`, `max_active_runs=1` no `mcid_cosmos_dag`, e os imports do
-   Airflow 2 nas duas DAGs.
+2. Corrigir já o que não depende da migração das DAGs: `max_active_runs=1` e os
+   imports do Airflow 2 no `mcid_cosmos_dag`, e `deferrable=True` na
+   `conjuntura_dag` enquanto ela existir.
 3. Em cada DAG migrada para `extract` → `transform` (ADR-0004): cron literal,
    configuração versionada, Connection no lugar da Variable e a regra de sem dado.
 4. Quando nenhuma DAG usar `get_dynamic_schedule`, remover o `schedule_loader.py` e
    as Variables.
+5. Quando as 13 fontes do boletim tiverem cron próprio e os dados manuais
+   estiverem na `manual_ingest_dag`, remover a `conjuntura_dag`.
 
 ## Validação operacional
 
 - O teste de DagBag passa sem exceções, e nenhuma DAG passa do tempo de parse
   definido.
+- Só a DAG geral tem `DbtTaskGroup` ou executa `dbt build`, `run` ou `test`.
 - Nenhum módulo em `dags/` chama `Variable.get` fora de uma task nem importa
   `get_dynamic_schedule` (teste no CI).
 - Não existe Variable com segredo no Airflow de homologação.
