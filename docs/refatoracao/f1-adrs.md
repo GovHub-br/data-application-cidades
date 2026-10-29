@@ -19,13 +19,14 @@ Os ADRs ficam em `docs/adr/`, na branch `feat/adrs-arquiteturais` (PR #264). Ele
 | Nomenclatura | 0007 | `bronze/prata/ouro` no prefixo das tabelas, e um schema por secretaria (`snh`). |
 | Dialeto e targets do dbt | 0003 | Padrão único: SQL de Postgres, com o pg_duckdb só na leitura do lake, e um target por ambiente (`homolog` e `prod`). |
 | Layout do lake | 0005 | O lake espelha a fonte, com uma pasta `carga=<UTC>` antes do arquivo. Arquivo reenviado sem mudança não gera carga nova. |
+| Dados manuais do boletim | 0002 (R7), 0004 e 0005 | Passam pela raw como qualquer fonte: CSV ou XLSX em `raw/manual/<base>/carga=.../`, pelo `scripts/enviar_manual.py`, convertidos pela `manual_ingest_dag`. Carga completa e só dado sem PII. |
+| Ordem das cargas | 0002, 0005 e 0009 | A conversão grava a `_carga`, copiada da pasta `carga=`, e é ela que ordena as cargas. O `_ingested_at` só registra a conversão. |
 | Como a `extract` fala com a fonte | 0004 | Hooks dos providers primeiro, cliente próprio só onde o hook não basta. Sem operators de transferência. |
 | Orquestração | 0013 | Nada no parse, cron literal, configuração versionada, segredo em Connection e sem dado nunca verde. |
 | Dependências, imagem e CI | 0014 | uv com lock versionado, imagem única publicada pela CI e CI blocante. |
 
 ## Questões em aberto nos ADRs
 
-- **0002:** os dados manuais do boletim ficam como exceção ou passam pela raw?
 - **0003:**
   - o ambiente local sem o `staging_duckdb`;
   - os valores dos limites do pg_duckdb.

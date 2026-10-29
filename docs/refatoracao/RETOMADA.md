@@ -54,7 +54,8 @@ Detalhe em `docs/adr/`.
 | PII | Mascarar **antes** de gravar a raw, com HMAC determinístico. A chave nunca muda e fica só no ambiente do Airflow. | 0002 R0 |
 | dbt | Padrão único: SQL de Postgres, com o pg_duckdb só na leitura do lake, e um target por ambiente (`homolog`, `prod`). O `prod_duckdb` sai. A ordem de migração é `linha_financiada` → `reforma_casa_brasil` → `mcmv_historico`. | 0003 |
 | Ingestão | Duas tasks por DAG de fonte: `extract` (escrita por fonte, mascara e grava a raw) e `transform` (comum: drift estrutural e Parquet). Hooks dos providers primeiro, sem operators de transferência. As DAGs de fonte não gravam no Postgres. | 0004 |
-| Lake | Espelha a fonte, com uma pasta `carga=<UTC>` antes do arquivo. A API usa `<fonte>/<dado>/carga=.../`. Arquivo reenviado sem mudança não gera carga, pelo controle por hash. | 0005 |
+| Lake | Espelha a fonte, com uma pasta `carga=<UTC>` antes do arquivo. A API usa `<fonte>/<dado>/carga=.../`. Arquivo reenviado sem mudança não gera carga, pelo controle por hash. A coluna `_carga` ordena as cargas; o `_ingested_at` não. | 0005 |
+| Entrada manual | CSV ou XLSX em `raw/manual/<base>/carga=.../`, pelo `scripts/enviar_manual.py`, convertido pela `manual_ingest_dag`. Carga completa, só dado sem PII. Substitui os scripts de `scripts/database/`. | 0002 R7 |
 | Drift | O contrato da fonte fica no `sources.yml`. Drift estrutural na `transform`, que põe o arquivo em quarentena; drift semântico nos testes da bronze, com `error`. | 0006 |
 | Nomes | `bronze_`/`prata_`/`ouro_`, um schema por secretaria (`snh`, `comum`) e colunas técnicas com `_`. | 0007, 0010 |
 | Orquestração | Nada no parse, cron literal, configuração versionada, segredo em Connection, sem dado nunca é verde, `deferrable`, `max_active_runs=1` no dbt. | 0013 |
