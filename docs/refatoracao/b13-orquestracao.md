@@ -4,7 +4,7 @@
 
 ## Problema
 
-- **Slots presos em polling.** O `conjuntura_dag` dispara 13 DAGs com `wait_for_completion=True` e `poke_interval=60`, e segura 13 slots de worker enquanto espera (`dags/conjuntura/conjuntura_dag.py:92-99`).
+- **Slots presos em polling.** O `conjuntura_dag` dispara 13 DAGs com `wait_for_completion=True` e `poke_interval=60`, e segura 13 slots de worker enquanto espera (`dags/conjuntura/conjuntura_dag.py:92-99`). Decidido no ADR-0013: a `conjuntura_dag` sai, e cada fonte roda no próprio cron.
 - **Runs sobrepostos do dbt.** O `mcid_cosmos_dag` não tem `max_active_runs`, e é disparado pelo cron e pelo `minio_transform_dag` (`dags/data_ingest/minio/minio_transform_dag.py:103-110`).
 - **Lista incompleta.** abecip_financiamentos e abecip_instituicoes alimentam a staging, mas faltam em `INGEST_DAG_IDS`.
 - **Variables sem versionamento nem validação.** `dynamic_schedules`, `IBGE_CONFIGURACOES` e `BACEN_SERIES` não estão no repositório. Uma vírgula sobrando no JSON do `IBGE_CONFIGURACOES` derruba o DAG no parse. O `infra/playbooks/airflow/README.md:143` manda importar um `variables.json` que não existe.

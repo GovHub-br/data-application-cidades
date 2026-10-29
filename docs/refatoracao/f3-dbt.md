@@ -30,7 +30,7 @@ Levar o `dbt/mcid` a um padrão único. Isso corrige os problemas que o OpenMeta
 - **✔ O reloginho lê o bronze da execução anterior.**
   - `indicadores_mcmv_dbt` está no grupo `dominios_postgres`, mas faz `ref(f.modelo)` nos `bronze_dhist_*` do `eixo_historico`, que roda depois (`dags/dbt/mcid_cosmos_dag.py:127`). Num banco zerado, quebra.
   - Também usa `try_cast` do DuckDB no target `prod` sem `force_execution`. Conferir.
-- **O conjuntura roda duas vezes:** no `conjuntura_dag` (`select=["conjuntura_dbt"]`) e no `mcid_cosmos_dag`, cujo seletor cobre o projeto todo.
+- **O conjuntura roda duas vezes:** no `conjuntura_dag` (`select=["conjuntura_dbt"]`) e no `mcid_cosmos_dag`, cujo seletor cobre o projeto todo. Decidido no ADR-0013: só a DAG geral executa o dbt, e a `conjuntura_dag` sai.
 
 ### OpenMetadata e catálogo
 - **O eixo histórico não tem catálogo.** `helpers/openmetadata/dbt_artifacts.py:18` roda `docs generate --selector dominios_postgres`, e por isso mcmv_historico, reforma e linha_financiada ficam sem catálogo.

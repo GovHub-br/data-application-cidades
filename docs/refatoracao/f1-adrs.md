@@ -24,6 +24,9 @@ Os ADRs ficam em `docs/adr/`, na branch `feat/adrs-arquiteturais` (PR #264). Ele
 | Como a `extract` fala com a fonte | 0004 | Hooks dos providers primeiro, cliente próprio só onde o hook não basta. Sem operators de transferência. |
 | Catálogo de colunas | 0006, 0003 e 0012 | `term` (termo do glossário) e `aliases` (outros nomes da coluna) no contrato formam um grafo de nomes. Renomeação conhecida não barra a carga; a desconhecida chega com sugestão. A prata usa `coalesce_aliases` no lugar do `coalesce_present`. No OpenMetadata, o termo mostra todas as colunas ligadas a ele; no banco, `metadata.column_catalog`. |
 | Pacotes de qualidade | 0006, 0008 e 0014 | dbt-expectations (testes do Great Expectations como macros do dbt) e Elementary (anomalias, mudança de schema e registro dos resultados, no lugar do `registrar_execucao_dbt`). Fixados no `packages.yml`, com `dbt deps` no build da imagem. |
+| Formatos que não podem ser reescritos | 0002 (R0), 0005 e 0014 | `.mdb` e `.accdb` viram um CSV por tabela, mascarado na `extract`; o original nunca pousa no lake, e o `mdbtools` fica na imagem. |
+| Quem executa o dbt | 0013 | Só a DAG geral. A `conjuntura_dag` sai: as fontes rodam no próprio cron e os manuais na `manual_ingest_dag`. |
+| Alcance da regra do inglês | 0007 | Nomes de rastreio fora do código: colunas técnicas, status, pastas do lake, chaves do contrato (`path`, `load_type`, `file_pattern`, `owner`, `format`) e ids de DAG e task. Código e infraestrutura seguem a língua do código; nomes existentes mudam na migração do domínio. |
 | Orquestração | 0013 | Nada no parse, cron literal, configuração versionada, segredo em Connection e sem dado nunca verde. |
 | Dependências, imagem e CI | 0014 | uv com lock versionado, imagem única publicada pela CI e CI blocante. |
 
