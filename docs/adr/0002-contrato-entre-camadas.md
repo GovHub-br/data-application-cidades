@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_load_id`; nomes de rastreio em inglês, ADR-0007)
+- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_load_id`; nomes de rastreio em inglês, ADR-0007; questões em aberto resolvidas)
 - **Relacionados:**
   - ADR-0001, ADR-0003, ADR-0005
   - Deck *GovHub — Arquitetura Medalhão de Referência*, seção 4
@@ -377,6 +377,4 @@ que só pode diminuir.
 
 ## Questões em aberto
 
-Nenhuma. O volume da prata com todos os períodos ficou respondido pelo drift
-estrutural, que identifica o tipo de carga de cada fonte (ver Consequências), e
-os dados manuais, pela R7.
+Nenhuma.

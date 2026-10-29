@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003; incremental da bronze pela `_load_id`; limites só no playbook; nomes de rastreio em inglês, ADR-0007; medição pelo Elementary)
+- **Revisão:** 2026-10-29 (fatos conferidos; memória e execução no padrão único do ADR-0003; incremental da bronze pela `_load_id`; limites só no playbook; nomes de rastreio em inglês, ADR-0007; medição pelo Elementary; questões em aberto resolvidas)
 - **Relacionados:**
   - ADR-0002 (prata com todos os períodos), ADR-0003 (targets), ADR-0005 (partição
   por carga), ADR-0006 (tipo de carga e portões)
@@ -141,5 +141,4 @@ recarga completa de Parquet, não de modelos `table` em geral.
 
 ## Questões em aberto
 
-1. **Limite de 15 minutos.** Confirmar ou recalibrar depois do primeiro mês de
-   medição.
+Nenhuma.

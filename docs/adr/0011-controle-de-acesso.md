@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (usuário do RustFS criado à mão; segredos em Connection, ADR-0013; sem schema `comum`; schema `elementary`)
+- **Revisão:** 2026-10-29 (usuário do RustFS criado à mão; segredos em Connection, ADR-0013; sem schema `comum`; schema `elementary`; questões em aberto resolvidas)
 - **Relacionados:**
   - ADR-0013 (segredos em Connection)
   - ADR-0002 (R0 e a chave do HMAC; R6, consumo só pela ouro), ADR-0005 (raw sem
@@ -102,6 +102,11 @@ papel da sua equipe. O ambiente local continua com o `SimpleAuthManager`.
 - Segredo do Airflow fica em Connection, nunca em Variable (ADR-0013), e usa o
   mascaramento do próprio Airflow.
 
+### 6. Políticas do ministério
+
+Se o ministério já aplica política ou perfis de acesso equivalentes, eles
+prevalecem, e estes papéis se ajustam a eles.
+
 ## Alternativas consideradas
 
 **Manter um usuário de leitura para tudo.** É o mais simples, mas não impõe a R6 e
@@ -155,6 +160,4 @@ permissões dadas fora dele.
 
 ## Questões em aberto
 
-1. **Políticas e perfis que o ministério já tem.** O que pode ser reaproveitado
-   (pendência da seção 3 do deck). Se o ministério já aplica política equivalente,
-   ela prevalece.
+Nenhuma.

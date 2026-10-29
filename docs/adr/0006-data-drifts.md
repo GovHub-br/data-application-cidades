@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; drift semântico obrigatoriamente no dbt; nomes de rastreio em inglês, ADR-0007; catálogo de colunas; dbt-expectations e Elementary)
+- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; drift semântico obrigatoriamente no dbt; nomes de rastreio em inglês, ADR-0007; catálogo de colunas; dbt-expectations e Elementary; questões em aberto resolvidas)
 - **Relacionados:**
   - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (tasks `verify_structural_data_drift` e `transform`),
   ADR-0005 (quarentena)
@@ -186,7 +186,9 @@ Todo alerta de drift é um e-mail.
 Os limites técnicos padrão são os deste ADR. Os limites de negócio de cada fonte
 (variação de volume aceitável, domínios válidos, limiar de anomalia) são definidos
 pelo `responsavel` declarado no contrato, que é quem conhece o dado, e registrados
-no próprio contrato.
+no próprio contrato. Enquanto o ministério não indica quem responde por cada base, o
+`responsavel` registra a área de origem conhecida, e valem os limites técnicos
+padrão.
 
 ### 7. Pacotes de qualidade: dbt-expectations e Elementary
 
@@ -309,6 +311,4 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 
 ## Questões em aberto
 
-1. **Limites de negócio por fonte.** Quem, em cada área do ministério, responde
-   como `responsavel` e valida os limites. Depende do ministério (pendência da
-   seção 5 do deck).
+Nenhuma.

@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (onde o `+database` aparece hoje; sem schema `comum`; medição pelo Elementary)
+- **Revisão:** 2026-10-29 (onde o `+database` aparece hoje; sem schema `comum`; medição pelo Elementary; questões em aberto resolvidas)
 - **Relacionados:**
   - ADR-0001 (arquitetura), ADR-0007 (nomenclatura), ADR-0011 (controle de acesso)
   - Deck *GovHub — Arquitetura Medalhão de Referência* seções 8 a 11
@@ -32,6 +32,8 @@ acomodar outras secretarias. O deck apresenta duas propostas:
 
 - A camada fica no prefixo da tabela e do arquivo de modelo (`bronze_`, `prata_`,
   `ouro_`), como define o ADR-0007.
+- A sigla do piloto é `snh`. As das demais secretarias vêm da lista oficial, que o
+  ministério vai indicar.
 - Não há schema compartilhado. Uma fonte usada por mais de uma secretaria é
   carregada no schema de cada uma, com bronze e prata próprias, e o dado se
   repete. Hoje só a SNH usa o warehouse. Como compartilhar fontes entre
@@ -110,5 +112,4 @@ Está no ADR-0001 como evolução futura.
 
 ## Questões em aberto
 
-1. **Siglas das secretarias.** A lista oficial de siglas que vira nome de schema
-   (`snh` para o piloto já está definida).
+Nenhuma.

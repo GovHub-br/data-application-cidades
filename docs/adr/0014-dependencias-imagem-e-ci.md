@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-29
-- **Revisão:** 2026-10-29 (pacotes dbt)
+- **Revisão:** 2026-10-29 (pacotes dbt; questões em aberto resolvidas)
 - **Relacionados:**
   - ADR-0003 (ambientes), ADR-0006 (pacotes de qualidade), ADR-0013 (teste de
     DagBag)
@@ -60,6 +60,12 @@ achou:
 2. **A imagem é instalada a partir do `uv.lock`.** O lock da imagem
    (`requirements.lock.txt`) passa a ser gerado do `uv.lock`, só com o grupo
    `runtime`, e um teste no CI confere que os dois batem.
+   - O `uv.lock` é resolvido com as constraints oficiais da versão do Airflow da
+     imagem como restrição (`constraints-<versão>/constraints-<python>.txt`).
+   - O Airflow sobe sempre para a release mais nova, e os pacotes que ele fixa
+     seguem as constraints dela, mesmo quando uma versão parece voltar.
+   - Pacotes fora das constraints, como o dbt e o Cosmos, seguem a própria
+     compatibilidade.
 3. **Todo pacote importado direto pelo código é declarado**, e as versões de
    desenvolvimento também ficam fixadas no lock.
 4. **A versão do Airflow e a do Python ficam declaradas num lugar só.** O
@@ -145,8 +151,4 @@ corrigir tudo antes.
 
 ## Questões em aberto
 
-1. **Lock e imagem base.** A imagem `apache/airflow` já traz centenas de pacotes
-   fixados pelas constraints do Airflow. Falta definir como o `uv.lock` respeita
-   essas versões: se o lock é resolvido com as constraints do Airflow como
-   restrição, ou se só o grupo `runtime` é conferido contra a imagem. Decidir na
-   #246.
+Nenhuma.
