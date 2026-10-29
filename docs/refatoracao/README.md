@@ -45,7 +45,7 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 
 | ID | Item | Status | Issue | PR |
 |---|---|---|---|---|
-| F1 | [ADRs](f1-adrs.md) | issue aberta | [#243](https://github.com/GovHub-br/data-application-cidades/issues/243) | |
+| F1 | [ADRs](f1-adrs.md) | PR aberto | [#243](https://github.com/GovHub-br/data-application-cidades/issues/243) | [#264](https://github.com/GovHub-br/data-application-cidades/pull/264) |
 | F2 | [Ingestão: modelagem nova](f2-ingestao.md) | issue aberta | [#244](https://github.com/GovHub-br/data-application-cidades/issues/244) | |
 | F3 | [dbt: padrão único, seletores, homolog](f3-dbt.md) | issue aberta | [#245](https://github.com/GovHub-br/data-application-cidades/issues/245) | |
 | F4 | [poetry → uv](f4-uv.md) | issue aberta | [#246](https://github.com/GovHub-br/data-application-cidades/issues/246) | |
@@ -126,12 +126,11 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 
 | Decisão | Onde se decide | Bloqueia |
 |---|---|---|
-| Contrato da `staging/` (tipado ou texto, um escritor) | ADR | F2, B12 |
-| Destino das tabelas Postgres raw das APIs | ADR, depois de conferir o Superset | F2 (histórico truncado) |
-| Nomenclatura `prata/ouro` × `silver/gold` | ADR | F3 |
 | Quais regras do #206 valem no modelo novo | Modelagem da F2 | F2 |
 | DAGs quase idênticas: fábrica ou não | Modelagem da F2 | F2 |
-| Target de homolog e roteamento de schema | Issue da F3 | F3 |
+| Dados manuais do boletim: exceção ou pela raw | ADR-0002 (PR #264) | F3 (conjuntura) |
+| Ambiente local sem `staging_duckdb` e limites do pg_duckdb | ADR-0003 (PR #264) | F3 |
+| `uv.lock` × constraints da imagem base do Airflow | ADR-0014, na #246 | F4 |
 | `data-science/`: repositório, LFS ou lake | Issue da B15 | — |
 
 ## 8. Registro de decisões
@@ -141,3 +140,4 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 | 29/10/2026 | O levantamento é aprovado como base do trabalho. |
 | 29/10/2026 | O projeto de ingestão do PR #206 é descartado; a F2 é modelada do zero, providers primeiro e depois clientes próprios. |
 | 29/10/2026 | Cada documento vira uma sub-issue da #242 (#243–#262); a F1 ganha issue nova, porque não havia uma aberta. |
+| 29/10/2026 | ADRs revisados e propostos no PR #264. Contrato da staging (0002/0004), Postgres raw das APIs fora (0004), nomenclatura (0007), padrão único do dbt (0003), lake espelhando a fonte com `carga=` (0005), providers na `extract` (0004), orquestração (0013) e dependências, imagem e CI (0014). |
