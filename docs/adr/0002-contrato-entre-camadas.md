@@ -2,15 +2,14 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Relacionados:** 
-  - ADR-0001 
-  - Deck *GovHub — Arquitetura Medalhão de Referência*
-  seção 4,
-  -  `dbt/mcid/models/docs/arquitetura-medalhao-mcid.md` §8 (decisões em
-  aberto) 
-  - `dbt/mcid/macros/fonte_lake.sql`
-  - `dbt/mcid/macros/add_metadata_timestamps.sql`
+- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; dados manuais)
+- **Relacionados:**
+  - ADR-0001, ADR-0003, ADR-0005
+  - Deck *GovHub — Arquitetura Medalhão de Referência*, seção 4
+  - `dbt/mcid/models/docs/arquitetura-medalhao-mcid.md` §8 (decisões em aberto)
+  - `dbt/mcid/macros/fonte_lake.sql`, `dbt/mcid/macros/add_metadata_timestamps.sql`
   - `scripts/mascarar_minio.py`, `scripts/raw_para_staging.py`
+  - Issues #248 (staging das APIs sobrescrita) e #249 (máscara como trava)
 
 ## Contexto
 
@@ -26,21 +25,24 @@ Esses acordos entre camadas são contratos de dados no sentido de Jones (2023).
 Há também uma restrição que vem antes de qualquer camada: a equipe GovHub não pode
 acessar dados pessoais. Hoje o mascaramento acontece *depois* que o dado pousa na
 raw, reescrevendo o objeto no lugar (`minio_transform_dag`). Até a tarefa rodar, o
-dado pessoal fica legível no lake.
+dado pessoal fica legível no lake. E a conversão para a staging não confere se o
+objeto foi mascarado: uma falha no mascaramento não interrompe a DAG, e o objeto é
+convertido do mesmo jeito (issue #249).
 
-Estado do projeto `mcid` em 2026-10-19:
+Estado do projeto `mcid`, conferido em 2026-10-29:
 
 | Verificação | Resultado |
 |---|---|
 | Bronzes que resolvem o caminho pela macro `fonte_lake` | 41 de 81 |
-| Bronzes com caminho `s3://` escrito no próprio SQL | 24 de 81 |
+| Bronzes com caminho `s3://` escrito no próprio SQL | 25 de 81 (24 em `far`, `fds` e `rural`; 1 em `reforma_casa_brasil`, só como padrão do `arquivo_mais_recente`) |
 | Bronzes que filtram para ficar só com o arquivo mais recente (`arquivo_mais_recente`) | 23 de 81 |
-| Caminhos de conversão que gravam `_source_file` e `_ingested_at` no Parquet | 1 de 2: `scripts/raw_para_staging.py` grava; `registros_para_staging_parquet` (30 chamadas nas DAGs de API) não grava |
-| Fontes de API cuja raw é sobrescrita a cada execução (chave fixa `raw/<fonte>/<dado>.<ext>` em `cliente_minio.raw_key`) | Todas as que usam `upload_raw_json` ou `upload_raw_bytes` (32 chamadas) |
+| Caminhos de conversão que gravam `_source_file` e `_ingested_at` no Parquet | 1 de 2: `scripts/raw_para_staging.py` grava; `registros_para_staging_parquet` (15 chamadas, uma por DAG de API) não grava |
+| Fontes de API cuja raw é sobrescrita a cada execução (chave fixa `raw/<fonte>/<dado>.<ext>` em `cliente_minio.raw_key`) | Todas as que usam `upload_raw_json` ou `upload_raw_bytes` (16 chamadas, em 16 DAGs) |
 | Objetos que pousam na raw com dado pessoal e só depois são mascarados | Todo objeto novo em `raw/` |
-| Pratas que leem o lake ou uma `source()` direto, sem passar pela bronze | 8 de 94 |
-| Ouros que leem bronze ou lake direto | 5 de 97 |
-| Pratas e ouros que chamam `add_metadata_timestamps` | 0 de 191 |
+| Pratas que leem o lake ou uma `source()` direto, sem passar pela bronze | 5 de 84, todas com `source('conjuntura_manual')` (dados manuais, ver Questões em aberto) |
+| Ouros que leem bronze ou lake direto | 5 de 97: `ouro_historico_snapshot_empreendimento_atual` (bronzes INT040 a INT065) e quatro do boletim que leem `source('conjuntura_manual')` |
+| Pratas e ouros que chamam `add_metadata_timestamps` | 0 de 181 |
+| Conversões que escrevem por cima da staging das APIs | `scripts/raw_para_staging.py` varre a `raw/` inteira (só ignora `dados_historicos`) e regrava `staging/<fonte>/<dado>.parquet`, o mesmo caminho que as DAGs de API escrevem, só em texto (issue #248) |
 
 ## Decisão
 
@@ -92,7 +94,8 @@ na fonte. Se o ministério quiser guardar o original no ambiente dele, a decisã
 dele e fica no ADR-0011.
 
 **R1. A raw é imutável.** Cada recebimento, já mascarado, é gravado em caminho
-próprio e nunca é sobrescrito. É a origem de qualquer reprocessamento.
+próprio, na pasta `carga=` do ADR-0005, e nunca é sobrescrito. É a origem de
+qualquer reprocessamento.
 
 **R2. A staging muda a forma, não o conteúdo.** A conversão é a mesma para todas
 as fontes e roda na task comum `transform`, encadeada em cada DAG de
@@ -267,6 +270,10 @@ Depois as camadas, por domínio, um PR por domínio, nesta ordem:
 `conjuntura` → `far` → `fds` → `rural` → `mcmv_historico` → `indicadores_mcmv` →
 `linha_financiada` → `reforma_casa_brasil`.
 
+Os três domínios que ainda rodam em DuckDB (`linha_financiada`,
+`reforma_casa_brasil` e `mcmv_historico`) mudam de dialeto e de contrato no mesmo
+PR, e por isso seguem a ordem do ADR-0003, antes dos demais.
+
 Em cada domínio:
 
 1. Staging: garantir que os Parquets do domínio saiam da conversão comum (R2), com
@@ -314,5 +321,11 @@ que só pode diminuir.
 
 ## Questões em aberto
 
-Nenhuma. A questão do volume da prata com todos os períodos ficou respondida pelo
-drift estrutural, que identifica o tipo de carga de cada fonte (ver Consequências).
+A questão do volume da prata com todos os períodos ficou respondida pelo drift
+estrutural, que identifica o tipo de carga de cada fonte (ver Consequências).
+
+1. **Dados manuais.** Os dados do boletim inseridos à mão (`bronze_manual_*`,
+   carregados por `scripts/database/` direto no schema `bronze`) não passam pela raw
+   nem pela staging. Cinco pratas e quatro ouros leem essas tabelas por `source()`.
+   Falta decidir se elas ficam como exceção registrada, com teste próprio, ou se a
+   inserção manual passa a gravar um arquivo na raw, como qualquer fonte.
