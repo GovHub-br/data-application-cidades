@@ -16,12 +16,13 @@ Levar o `dbt/mcid` a um padrão único. Isso corrige os problemas que o OpenMeta
   - bronze só `select * from fonte_lake()`, com `union_by_name`;
   - prata e ouro em SQL de Postgres, com `coalesce` explícito, sem `describe` nem `run_query` na compilação;
   - um target só.
-- **O que sai:** `prod_duckdb`, `staging_duckdb`, o pool `duckdb_historico`, os seletores e os shells `run-*.sh`.
+- **O que sai:** `prod_duckdb`, `staging_duckdb`, o pool `duckdb_historico`, os seletores e os scripts shell de `dbt/mcid/` (`_run-common.sh`, `run-historico.sh`, `run-reloginho.sh`, `rebuild-local.sh`, `publicar-historico.sh`), com os limites por variável de ambiente e `systemd-run` que eles aplicam.
+- **Desenvolvimento:** direto na homologação, com o target `homolog`. Não há ambiente local de dbt.
 - **Ordem dos domínios:**
   1. `linha_financiada_dbt` (quase pronto);
   2. `reforma_casa_brasil_dbt`;
   3. `mcmv_historico_dbt` (26 modelos, o mais pesado).
-- **Antes de migrar o histórico:** definir `max_temp_directory_size` e `threads` do pg_duckdb 1.2.0. Hoje estão vazio e `-1`, e o piloto derrubou o prod em 05/09.
+- **Antes de migrar o histórico:** reaplicar o playbook do Postgres na homologação. Os limites do pg_duckdb ficam só nele (`duckdb.max_memory` 4096 MB, `duckdb.max_temp_directory_size` 50 GB), mas em 29/10 o banco estava com `max_temp_directory_size` vazio. O piloto derrubou o banco em 05/09.
 
 ## Problemas encontrados
 

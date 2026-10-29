@@ -17,7 +17,7 @@ Os ADRs ficam em `docs/adr/`, na branch `feat/adrs-arquiteturais` (PR #264). Ele
 | Contrato da `staging/` | 0002 (R2) e 0004 | Uma conversão comum para todas as fontes, a task `transform`. Toda coluna vai como texto, com nomes normalizados e colunas de linhagem. A tipagem começa na prata. |
 | Destino das tabelas Postgres raw das APIs | 0001 e 0004 | As DAGs de fonte gravam só no lake. O `insert_data` sai, e os schemas são removidos depois de conferir o Superset e de um mês sem uso. |
 | Nomenclatura | 0007 | `bronze/prata/ouro` no prefixo das tabelas, e um schema por secretaria (`snh`). |
-| Dialeto e targets do dbt | 0003 | Padrão único: SQL de Postgres, com o pg_duckdb só na leitura do lake, e um target por ambiente (`homolog` e `prod`). |
+| Dialeto e targets do dbt | 0003 | Padrão único: SQL de Postgres, com o pg_duckdb só na leitura do lake, e um target por ambiente (`homolog` e `prod`). A homologação é também o ambiente de desenvolvimento. Limites do pg_duckdb só no playbook; os scripts shell saem. |
 | Layout do lake | 0005 | O lake espelha a fonte, com uma pasta `carga=<UTC>` antes do arquivo. Arquivo reenviado sem mudança não gera carga nova. |
 | Dados manuais do boletim | 0002 (R7), 0004 e 0005 | Passam pela raw como qualquer fonte: CSV ou XLSX em `raw/manual/<base>/carga=.../`, pelo `scripts/enviar_manual.py`, convertidos pela `manual_ingest_dag`. Carga completa e só dado sem PII. |
 | Ordem das cargas | 0002, 0005 e 0009 | A conversão grava a `_carga`, copiada da pasta `carga=`, e é ela que ordena as cargas. O `_ingested_at` só registra a conversão. |
@@ -27,9 +27,6 @@ Os ADRs ficam em `docs/adr/`, na branch `feat/adrs-arquiteturais` (PR #264). Ele
 
 ## Questões em aberto nos ADRs
 
-- **0003:**
-  - o ambiente local sem o `staging_duckdb`;
-  - os valores dos limites do pg_duckdb.
 - **0006:** o canal de alerta e os responsáveis por fonte (dependem do ministério).
 - **0008:** o limite de 15 minutos.
 - **0010:** as siglas das secretarias.

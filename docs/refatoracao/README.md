@@ -130,7 +130,6 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 |---|---|---|
 | Quais regras do #206 valem no modelo novo | Modelagem da F2 | F2 |
 | DAGs quase idênticas: fábrica ou não | Modelagem da F2 | F2 |
-| Ambiente local sem `staging_duckdb` e limites do pg_duckdb | ADR-0003 (PR #264) | F3 |
 | `uv.lock` × constraints da imagem base do Airflow | ADR-0014, na #246 | F4 |
 | `data-science/`: repositório, LFS ou lake | Issue da B15 | — |
 
@@ -143,3 +142,4 @@ Catálogo completo (vem da F3), versão fixada em quatro lugares e valores fixos
 | 29/10/2026 | Cada documento vira uma sub-issue da #242 (#243–#262); a F1 ganha issue nova, porque não havia uma aberta. |
 | 29/10/2026 | ADRs revisados e propostos no PR #264. Contrato da staging (0002/0004), Postgres raw das APIs fora (0004), nomenclatura (0007), padrão único do dbt (0003), lake espelhando a fonte com `carga=` (0005), providers na `extract` (0004), orquestração (0013) e dependências, imagem e CI (0014). |
 | 29/10/2026 | A entrada manual passa pela raw: CSV ou XLSX em `raw/manual/<base>/carga=.../`, enviado pelo `scripts/enviar_manual.py` e convertido pela `manual_ingest_dag`, com carga completa e só dado sem PII (ADR-0002 R7, 0004, 0005). A coluna `_carga` ordena as cargas, e a migração da raw antiga só copia objetos sem PII (0005). |
+| 29/10/2026 | A homologação é também o ambiente de desenvolvimento: o time testa direto nela, sem dbt local; a produção é o ambiente do ministério. Os limites do pg_duckdb ficam só no playbook do Postgres, e os scripts shell de `dbt/mcid/` saem na migração (ADR-0003). |

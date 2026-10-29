@@ -52,7 +52,7 @@ Detalhe em `docs/adr/`.
 | Arquitetura | Lake (RustFS: `raw/` e `staging/`) e warehouse (Postgres 15 com pg_duckdb). Consumo só pelo warehouse. | 0001 |
 | Camadas | Raw imutável e já mascarada. Staging toda em texto, por uma conversão comum. Bronze = `select * from fonte_lake()`. Prata genérica, no grão da fonte. Toda regra de negócio fica na ouro. | 0002 |
 | PII | Mascarar **antes** de gravar a raw, com HMAC determinístico. A chave nunca muda e fica só no ambiente do Airflow. | 0002 R0 |
-| dbt | Padrão único: SQL de Postgres, com o pg_duckdb só na leitura do lake, e um target por ambiente (`homolog`, `prod`). O `prod_duckdb` sai. A ordem de migração é `linha_financiada` → `reforma_casa_brasil` → `mcmv_historico`. | 0003 |
+| dbt | Padrão único: SQL de Postgres, com o pg_duckdb só na leitura do lake, e um target por ambiente (`homolog`, `prod`). A homologação é também o ambiente de desenvolvimento: sem dbt local. Saem o `prod_duckdb`, o `staging_duckdb` e os scripts shell de `dbt/mcid/`; os limites do pg_duckdb ficam só no playbook. A ordem de migração é `linha_financiada` → `reforma_casa_brasil` → `mcmv_historico`. | 0003 |
 | Ingestão | Duas tasks por DAG de fonte: `extract` (escrita por fonte, mascara e grava a raw) e `transform` (comum: drift estrutural e Parquet). Hooks dos providers primeiro, sem operators de transferência. As DAGs de fonte não gravam no Postgres. | 0004 |
 | Lake | Espelha a fonte, com uma pasta `carga=<UTC>` antes do arquivo. A API usa `<fonte>/<dado>/carga=.../`. Arquivo reenviado sem mudança não gera carga, pelo controle por hash. A coluna `_carga` ordena as cargas; o `_ingested_at` não. | 0005 |
 | Entrada manual | CSV ou XLSX em `raw/manual/<base>/carga=.../`, pelo `scripts/enviar_manual.py`, convertido pela `manual_ingest_dag`. Carga completa, só dado sem PII. Substitui os scripts de `scripts/database/`. | 0002 R7 |
@@ -84,7 +84,7 @@ Detalhe em `docs/adr/`.
   - o `dbt-core` faz `load_dotenv()` no import e vaza o `.env` para os testes; limpe o env com uma fixture autouse;
   - venv local: um upgrade do Airflow no lugar apaga o `airflow/__init__.py`, e é preciso reinstalar com `--force-reinstall`.
 - **Superset:** o bearer JWT da API é "cego" para algumas rotas; use o cookie de sessão.
-- **pg_duckdb:** o piloto derrubou o banco em 05/09. Hoje `memory_limit` está em 4 GB, mas `max_temp_directory_size` está sem limite e `threads=-1`. Defina os dois antes de migrar o eixo histórico (ADR-0003).
+- **pg_duckdb:** o piloto derrubou o banco em 05/09. Os limites ficam só no playbook do Postgres (`duckdb.max_memory` 4096 MB, `duckdb.max_temp_directory_size` 50 GB), mas em 29/10 o banco de homologação estava com `max_temp_directory_size` vazio. Reaplique o playbook antes de migrar o eixo histórico (ADR-0003). Os scripts shell de `dbt/mcid/` limitam só o processo DuckDB e saem na migração; não os use como referência.
 - **Reloginho:** lê o bronze da execução anterior, porque está no grupo do Postgres e os `bronze_dhist_*` são refeitos depois, no grupo do DuckDB. Isso se resolve com o padrão único.
 - **Homologação:** o Airflow roda num container único, com git-sync da `main`. Ele escreve no mesmo banco e lake configurados no `.env`, então tudo que entra na `main` roda lá.
 
