@@ -107,7 +107,7 @@ qualquer reprocessamento.
 
 **R2. A staging muda a forma, não o conteúdo.** A conversão é a mesma para todas
 as fontes e roda na task comum `transform`, encadeada em cada DAG de
-fonte depois da task que grava a raw e da `verificar_drift` (ADR-0004). Ela:
+fonte depois da task que grava a raw e da `verify_structural_data_drift` (ADR-0004). Ela:
 
 - grava o conteúdo da raw em Parquet, na mesma árvore de pastas;
 - grava toda coluna como texto;

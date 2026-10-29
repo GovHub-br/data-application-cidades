@@ -2,9 +2,9 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verificar_drift`; alertas por e-mail)
+- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail)
 - **Relacionados:**
-  - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (tasks `verificar_drift` e `transform`),
+  - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (tasks `verify_structural_data_drift` e `transform`),
   ADR-0005 (quarentena)
   - Deck *GovHub — Arquitetura Medalhão de Referência* seção 5
   - Issue #130, requisitos 5 (drift de schema) e 8 (carga completa ou incremental)
@@ -66,9 +66,9 @@ sources:
 Os nomes das colunas são os nomes já normalizados pela conversão (ADR-0002 R2).
 Mudar o contrato é um PR: aceitar um layout novo é uma decisão explícita e revisada.
 
-### 2. Drift estrutural, na task `verificar_drift`, antes de converter
+### 2. Drift estrutural, na task `verify_structural_data_drift`, antes de converter
 
-O drift estrutural é uma task própria da DAG de fonte, a `verificar_drift`,
+O drift estrutural é uma task própria da DAG de fonte, a `verify_structural_data_drift`,
 entre a `extract` e a `transform` (ADR-0004). Como a `transform`, ela é escrita
 uma vez em `plugins/lake_tasks.py` e usada por todas as DAGs de fonte. Ela lê o
 contrato e compara com o cabeçalho normalizado de cada arquivo novo. Os dados só
@@ -84,10 +84,10 @@ são lidos na carga completa, para contar as linhas.
 | Fonte ou arquivo sem contrato | Não converte: `nao_catalogado`, alerta |
 | Carga completa com linhas fora de `variacao_maxima_linhas` em relação à carga anterior | Não converte: `quarentena` (arquivo truncado, ou a fonte passou a mandar só o incremental) |
 
-- Uma coluna "renomeada" aparece como uma ausente mais uma nova. A `verificar_drift`
+- Uma coluna "renomeada" aparece como uma ausente mais uma nova. A `verify_structural_data_drift`
   compara os nomes por similaridade e sugere a renomeação no alerta. A decisão é
   humana, pelo contrato.
-- A `verificar_drift` confere todas as chaves recebidas, registra o status de
+- A `verify_structural_data_drift` confere todas as chaves recebidas, registra o status de
   cada uma em `lake._staging_log` e passa adiante só as aprovadas: iguais ao
   contrato ou com coluna nova.
 - Se algum arquivo foi barrado (`quarentena` ou `nao_catalogado`), ela manda o
@@ -140,7 +140,7 @@ Todo alerta de drift é um e-mail.
 
 | O que | Onde fica registrado | Quem manda o e-mail |
 |---|---|---|
-| Drift estrutural: arquivo em `quarentena` ou `nao_catalogado`, coluna nova | `lake._staging_log` | A `verificar_drift`, um e-mail por execução, com os arquivos, o motivo e a sugestão de renomeação, se houver |
+| Drift estrutural: arquivo em `quarentena` ou `nao_catalogado`, coluna nova | `lake._staging_log` | A `verify_structural_data_drift`, um e-mail por execução, com os arquivos, o motivo e a sugestão de renomeação, se houver |
 | Drift semântico: teste `error` da bronze que falha | `lake._dbt_log` (`registrar_execucao_dbt`) | O `on_failure_callback` da DAG geral, quando a task do teste falha |
 | Avisos: testes `warn` da bronze e anomalias da ouro (§4) | `lake._dbt_log` | A task `alertar_avisos`, no fim da DAG geral: lê os avisos da execução e manda um e-mail só, se houver algum |
 
@@ -199,7 +199,7 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 - As entradas de `sources.yml` ganham `meta.tipo_carga`, `meta.responsavel`, o
   `meta.formato` das colunas e, nas fontes de arquivo, `meta.padrao_arquivo`.
 - Três macros novas: `formato_valido`, `volume_da_carga` e `sem_perda_na_tipagem`.
-- `plugins/lake_tasks.py` ganha a task `verificar_drift`, e a DAG de fonte passa
+- `plugins/lake_tasks.py` ganha a task `verify_structural_data_drift`, e a DAG de fonte passa
   a ter três tasks (ADR-0004).
 - A DAG geral ganha o `on_failure_callback` com e-mail e a task `alertar_avisos`.
 - O `sem_drift_de_colunas` e o `colunas_esperadas` ficam como rede de segurança na
@@ -211,7 +211,7 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 
 1. Escrever o contrato das fontes do domínio `conjuntura` (as fontes de API são as
    mais estáveis) e criar as três macros.
-2. Implementar a task `verificar_drift`, com o e-mail, e encadeá-la nas DAGs de
+2. Implementar a task `verify_structural_data_drift`, com o e-mail, e encadeá-la nas DAGs de
    fonte (ADR-0004). Na DAG geral, ligar o `on_failure_callback` e a task
    `alertar_avisos`.
 3. Estender os contratos às fontes do SFTP e do SharePoint, com
@@ -225,7 +225,7 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
   todas as colunas (teste sobre o grafo, no CI).
 - Toda bronze tem `formato_valido` e `volume_da_carga`; toda prata tem
   `sem_perda_na_tipagem`.
-- Toda DAG de fonte encadeia `extract` → `verificar_drift` → `transform`.
+- Toda DAG de fonte encadeia `extract` → `verify_structural_data_drift` → `transform`.
 - Nenhum objeto da staging foi gerado a partir de arquivo com status `quarentena`
   ou `nao_catalogado` em `lake._staging_log`.
 

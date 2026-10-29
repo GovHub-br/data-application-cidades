@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verificar_drift`)
+- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verify_structural_data_drift`)
 - **Relacionados:**
   - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas: R0 a R2),
     ADR-0005 (layout do lake), ADR-0013 (orquestração)
@@ -49,11 +49,11 @@ conversão é a mesma para todas as fontes (R2). Falta decidir onde a conversão
 
 ## Decisão
 
-### A DAG da fonte tem três tasks: `extract`, `verificar_drift` e `transform`
+### A DAG da fonte tem três tasks: `extract`, `verify_structural_data_drift` e `transform`
 
 1. **`extract`**, escrita para cada fonte: extrai, mascara a PII (ADR-0002 R0) e
    grava a raw. Devolve as chaves dos objetos que gravou.
-2. **`verificar_drift`**, reutilizável (`plugins/lake_tasks.py`): recebe essas
+2. **`verify_structural_data_drift`**, reutilizável (`plugins/lake_tasks.py`): recebe essas
    chaves, compara cada arquivo com o contrato da fonte (drift estrutural,
    ADR-0006) e devolve só as aprovadas. Se algum arquivo foi barrado, manda o
    e-mail e termina em falha, sem impedir a conversão dos outros.
@@ -61,7 +61,7 @@ conversão é a mesma para todas as fontes (R2). Falta decidir onde a conversão
    Parquet as chaves aprovadas. Implementada uma vez sobre a função
    `processar_objeto()` de `scripts/raw_para_staging.py`.
 
-A `verificar_drift` e a `transform` são as mesmas em todas as DAGs.
+A `verify_structural_data_drift` e a `transform` são as mesmas em todas as DAGs.
 
 A conversão é sempre uma task **separada** da que grava a raw. Assim, um retry da
 conversão lê o que já está na raw, e a extração na fonte não roda de novo. Fonte sem
@@ -77,7 +77,7 @@ Esboço (Airflow 3):
 ```python
 # plugins/lake_tasks.py: escritas uma vez, usadas por todas as DAGs de fonte
 @task
-def verificar_drift(chaves: list[str]) -> list[str]:
+def verify_structural_data_drift(chaves: list[str]) -> list[str]:
     """Drift estrutural (ADR-0006): devolve só as chaves aprovadas.
 
     Registra o status de cada objeto em lake._staging_log e, se algum foi
@@ -101,11 +101,11 @@ def extract() -> list[str]:
     conteudo = mascarar_bytes(conteudo, ext="xlsx")  # ADR-0002 R0
     return [upload_raw_bytes("fgv", "incc_m", conteudo, ext="xlsx")]
 
-transform(verificar_drift(extract()))
+transform(verify_structural_data_drift(extract()))
 ```
 
 Para escrever uma DAG de fonte nova, basta `extract` devolver as chaves e encadear
-`verificar_drift` e `transform`. Ninguém escreve conversão de novo. Entre as tasks passam só as chaves,
+`verify_structural_data_drift` e `transform`. Ninguém escreve conversão de novo. Entre as tasks passam só as chaves,
 nunca o conteúdo.
 
 ### Como a `extract` fala com a fonte
@@ -144,7 +144,7 @@ A entrada manual (ADR-0002 R7) não tem fonte externa: o arquivo chega à raw pe
 - a `extract` não extrai nada. Ela lista em `raw/manual/` os objetos sem registro
   em `lake._staging_log` e devolve as chaves. Sem objeto novo, termina `skipped`.
   A listagem cobre só esse prefixo, que é pequeno, e não a raw inteira;
-- a `verificar_drift` e a `transform` são as comuns, com o drift estrutural
+- a `verify_structural_data_drift` e a `transform` são as comuns, com o drift estrutural
   contra o contrato da base.
 
 ### DAG de manutenção do lake
@@ -237,7 +237,7 @@ lake.
 1. Extrair de `scripts/raw_para_staging.py` a função `converter_chaves(chaves)`, que
    é o `run()` sem a varredura (mesmo controle em `lake._staging_log`), e criar a
    task `transform` em `plugins/lake_tasks.py`, com o pool `lake_conversao`. A task
-   `verificar_drift` entra antes dela quando o ADR-0006 for aceito.
+   `verify_structural_data_drift` entra antes dela quando o ADR-0006 for aceito.
 2. Ligar a task nas DAGs de fonte, uma a uma, começando pela `sftp_ingest_dag`
    (junto com o mascaramento do ADR-0002; o `run()` de `sftp_para_minio.py` passa a
    devolver as chaves gravadas). Em cada DAG de API, trocar a conversão própria pela

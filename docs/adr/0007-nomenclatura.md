@@ -115,7 +115,7 @@ modelo chama a macro hoje, a troca não quebra nada.
 | DAG da entrada manual | `manual_ingest_dag` (ADR-0004) | — |
 | DAG de manutenção | `raw_para_staging_dag` | — |
 | DAG do dbt | `mcid_cosmos_dag` | — |
-| Tasks da DAG de fonte | `extract`, `verificar_drift`, `transform` (ADR-0004) | — |
+| Tasks da DAG de fonte | `extract`, `verify_structural_data_drift`, `transform` (ADR-0004) | — |
 
 ## Alternativas consideradas
 
