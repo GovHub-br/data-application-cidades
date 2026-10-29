@@ -46,7 +46,7 @@ Status: `a abrir` → `issue aberta` → `em andamento` → `PR aberto` → `fei
 |---|---|---|---|---|
 | F1 | [ADRs](f1-adrs.md) | issue aberta | | |
 | F2 | [Ingestão: modelagem nova](f2-ingestao.md) | a abrir | | |
-| F3 | dbt: padrão único, seletores, homolog | a abrir | | |
+| F3 | [dbt: padrão único, seletores, homolog](f3-dbt.md) | a abrir | | |
 | F4 | poetry → uv | a abrir | | |
 | F5 | OpenMetadata | a abrir | | |
 | B1 | `raw_para_staging` só em `raw/sftp/` | a abrir | | |
@@ -77,53 +77,7 @@ O #206 foi descartado; a ingestão é modelada do zero, providers primeiro. List
 
 ### F3. Refatoração do dbt: problemas do OpenMetadata, seletores, prod e homolog
 
-Ordem já decidida:
-1. a DAG do OM roda verde no homolog;
-2. depois, um PR por domínio, por issue, após os ADRs.
-
-O padrão-alvo proposto, ainda a fechar:
-- bronze só `select * from fonte_lake()`;
-- prata e ouro em SQL de Postgres, sem `describe` nem `run_query` na compilação;
-- um target só.
-
-Os domínios entram nesta ordem: `linha_financiada_dbt`, `reforma_casa_brasil_dbt`, `mcmv_historico_dbt`.
-
-**Antes de migrar o histórico:** o pg_duckdb 1.2.0 está com `max_temp_directory_size` vazio e `threads=-1`. O piloto derrubou o prod em 05/09. Definir esses dois parâmetros antes.
-
-O que a varredura acrescenta:
-
-- **O reloginho lê o bronze da execução anterior** (conferido).
-  - `indicadores_mcmv_dbt` está no grupo `dominios_postgres`, mas faz `ref(f.modelo)` nos `bronze_dhist_*` do `eixo_historico`. Esse grupo roda depois (`mcid_cosmos_dag.py:127`). Num banco zerado, quebra.
-  - Também usa `try_cast` do DuckDB no target `prod` sem `force_execution`. Conferir.
-- **O conjuntura roda duas vezes:** no `conjuntura_dag` (`select=["conjuntura_dbt"]`) e no `mcid_cosmos_dag`, cujo seletor cobre o projeto todo.
-- **O eixo histórico fica fora do OpenMetadata.**
-  - `helpers/openmetadata/dbt_artifacts.py:18` roda `docs generate --selector dominios_postgres`, então mcmv_historico, reforma e linha_financiada ficam sem catálogo.
-  - O docs da CI (`scripts/conjuntura/gerar_docs_seguros.py:81-90`) roda sem seletor e quebra no `describe`.
-- **Não existe target de homolog.** Homolog e prod rodam `prod` e só mudam as env vars. `macros/get_custom_schema.sql:19` só roteia `prod`, `prod_duckdb` e `staging_duckdb`: um target `homolog` ingênuo jogaria tudo num schema só.
-- **Linhagem:**
-  - far, fds e rural (24 bronzes) leem `s3://data-lake-mcid/...` literal, sem `source()`, e por isso a linhagem no OM começa no bronze;
-  - o bucket é configurado de três jeitos: `var`, `env_var` e literal.
-- **Cinco padrões de bronze e ingestão duplicada.** INT057, INT059, INT065 e MONIT_MOV_OBRA alimentam duas cadeias: a do histórico e a de far, fds e rural.
-- **Código morto:**
-  - `models/mcmv_silver_dbt/`: 10 modelos desabilitados, com refs inexistentes;
-  - `mcmv_historico_dbt/piloto/`;
-  - 13 sources Postgres sem uso;
-  - `analysis-paths` apontando para uma pasta que não existe;
-  - `dbt deps` na CI sem `packages.yml`.
-- **Padronização:**
-  - `config(materialized=...)` inline nos 278 modelos;
-  - `tests:` e `data_tests:` misturados;
-  - 21 snapshots com `target_schema='ouro'` fixo;
-  - 16 colunas do boletim com espaço e acento no nome.
-- **Qualidade e documentação:**
-  - 104 modelos sem teste em YAML e cerca de 200 sem teste de unicidade;
-  - nenhuma source com `freshness`;
-  - dois modelos sem entrada no YAML (`ouro_conjuntura_boletim_p6_ogu`, `ouro_linha_financiada_mapa_uf`);
-  - os 36 `.md` de `models/docs/` não são blocos `{% docs %}`, então não chegam ao catálogo.
-- **SQL duplicado:**
-  - `prata_rural_prioritarios_bb` e `_caixa` são idênticos;
-  - os 14 `prata_conjuntura_ibge_*` são passthroughs que cabem numa macro;
-  - far e fds (`financeiro_mensal`, `evolucao_financeira`, `obra_mensal`) têm 70–80% de semelhança.
+Padrão único do `dbt/mcid`, ordem por domínio, o reloginho lendo o bronze da execução anterior, o eixo histórico fora do OM e a falta de target de homolog. Detalhe em [f3-dbt.md](f3-dbt.md).
 
 ### F4. Troca do poetry pelo uv
 
