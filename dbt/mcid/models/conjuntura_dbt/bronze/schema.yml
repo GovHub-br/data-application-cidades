@@ -68,6 +68,10 @@ models:
             - saldo
             - dt_ingest
             - fonte
+    columns:
+      - name: captacao_liquida_pct
+        description: >-
+          [TESTE do receptor - nao mergear] Captacao liquida do mes em percentual.
   - name: bronze_bacen_credito_pib
     description: >
       Saldo da carteira de crédito imobiliário expresso como percentual do
