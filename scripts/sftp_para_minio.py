@@ -18,6 +18,8 @@ Colisões de nome (mesma pasta de destino) recebem sufixo contador:
 arquivo_0000.csv, arquivo_0001.csv, ...
 
 Controle de reprocessamento via tabela lake._ingest_minio_log no PostgreSQL.
+Arquivos novos são ingeridos uma vez; republicações no mesmo caminho são
+detectadas por ``mtime`` e tamanho remoto, reingeridas e versionadas por hash.
 Arquivos são processados do menor para o maior: Analise_SNH primeiro, depois GEFUS.
 """
 
@@ -246,25 +248,33 @@ def _criar_schema_e_log(conn_str: str) -> None:
     log.info("Schema '%s' e tabela '%s' garantidos.", SCHEMA, LOG_TABLE)
 
 
-def _obter_ja_inseridos(conn_str: str) -> set:
-    """sftp_paths que já foram ingeridos com sucesso ALGUMA VEZ (skip padrão).
+def _obter_ja_inseridos(conn_str: str) -> dict[str, tuple[Optional[int], Optional[int]]]:
+    """Metadados da última versão ingerida de cada objeto SFTP.
 
-    Filtra por `file_hash IS NOT NULL`, não por `status`: só a ingestão bem-sucedida
-    grava hash, então o arquivo segue pulado mesmo que o objeto seja deletado do MinIO
-    (a deleção "gruda"). Falhas reais, com hash NULL, são re-tentadas.
+    A versão não pode ser identificada só pelo caminho: o SFTP da CAIXA pode
+    republicar uma planilha com o mesmo nome. O par ``mtime`` + ``file_size``
+    é a verificação barata antes do download; se qualquer um mudar, baixamos,
+    recalculamos o hash e guardamos uma nova versão no MinIO.
     """
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 f"""
-                SELECT sftp_path FROM {SCHEMA}.{LOG_TABLE}
-                WHERE file_hash IS NOT NULL
-            """
+                SELECT DISTINCT ON (sftp_path)
+                    sftp_path,
+                    EXTRACT(EPOCH FROM file_mtime)::bigint,
+                    file_size
+                FROM {SCHEMA}.{LOG_TABLE}
+                WHERE file_hash IS NOT NULL AND status = 'success'
+                ORDER BY sftp_path, finished_at DESC NULLS LAST, id DESC
+                """
             )
-            return {row[0] for row in cur.fetchall()}
+            return {path: (mtime, size) for path, mtime, size in cur.fetchall()}
 
 
-def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
+def _obter_ja_inseridos_presentes(
+    conn_str: str, presentes: set
+) -> dict[str, tuple[Optional[int], Optional[int]]]:
     """sftp_paths já ingeridos cujo objeto AINDA está no MinIO.
 
     Skip do modo --reingest-deleted: só pula o que continua no lake, então o que foi
@@ -274,15 +284,35 @@ def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
         with conn.cursor() as cur:
             cur.execute(
                 f"""
-                SELECT sftp_path, minio_key FROM {SCHEMA}.{LOG_TABLE}
-                WHERE file_hash IS NOT NULL
-            """
+                SELECT DISTINCT ON (sftp_path)
+                    sftp_path, minio_key,
+                    EXTRACT(EPOCH FROM file_mtime)::bigint,
+                    file_size
+                FROM {SCHEMA}.{LOG_TABLE}
+                WHERE file_hash IS NOT NULL AND status = 'success'
+                ORDER BY sftp_path, finished_at DESC NULLS LAST, id DESC
+                """
             )
             return {
-                sftp_path
-                for sftp_path, minio_key in cur.fetchall()
+                path: (mtime, size)
+                for path, minio_key, mtime, size in cur.fetchall()
                 if minio_key in presentes
             }
+
+
+def _mesma_versao(
+    inseridos: dict[str, tuple[Optional[int], Optional[int]]],
+    caminho_sftp: str,
+    mtime: Optional[int],
+    tamanho: Optional[int],
+) -> bool:
+    """Verdadeiro somente quando a versão remota já foi ingerida.
+
+    Registros antigos sem mtime/tamanho não recebem confiança: são
+    reingeridos uma vez para passar a ter rastreabilidade de versão.
+    """
+    anterior = inseridos.get(caminho_sftp)
+    return anterior is not None and anterior[0] == mtime and anterior[1] == tamanho
 
 
 def _obter_nomes_usados(conn_str: str) -> set:
@@ -298,27 +328,36 @@ def _obter_nomes_usados(conn_str: str) -> set:
 
 
 def _obter_zips_completos(conn_str: str) -> dict:
-    # ZIPs 100% ingeridos: todos os membros com file_hash e um mtime único. Se esse mtime
-    # bate com o do SFTP, o conteudo e o mesmo -> pula sem baixar. Mapa zip -> mtime.
+    # ZIPs 100% ingeridos na VERSÃO mais recente. Arquivos republicados com o
+    # mesmo nome ficam com outro mtime; versões antigas não podem impedir a
+    # atualização da versão nova.
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 f"""
-                SELECT split_part(sftp_path, '@', 1) AS zip,
+                WITH versoes AS (
+                    SELECT
+                        split_part(sftp_path, '@', 1) AS zip,
+                        file_hash,
+                        file_mtime,
+                        max(file_mtime) OVER (
+                            PARTITION BY split_part(sftp_path, '@', 1)
+                        ) AS mtime_mais_recente
+                    FROM {SCHEMA}.{LOG_TABLE}
+                    WHERE status = 'success'
+                )
+                SELECT zip,
                        bool_and(file_hash IS NOT NULL) AS completo,
-                       min(EXTRACT(EPOCH FROM file_mtime))::bigint AS mtime_min,
-                       max(EXTRACT(EPOCH FROM file_mtime))::bigint AS mtime_max
-                FROM {SCHEMA}.{LOG_TABLE}
-                GROUP BY 1
-            """
+                       EXTRACT(EPOCH FROM max(file_mtime))::bigint AS mtime
+                FROM versoes
+                WHERE file_mtime = mtime_mais_recente
+                GROUP BY zip
+                """
             )
             return {
-                zip_path: mtime_min
-                for zip_path, completo, mtime_min, mtime_max in cur.fetchall()
-                if completo
-                and mtime_min is not None
-                and mtime_min == mtime_max
-                and zip_path.lower().endswith(".zip")
+                zip_path: mtime
+                for zip_path, completo, mtime in cur.fetchall()
+                if completo and mtime is not None and zip_path.lower().endswith(".zip")
             }
 
 
@@ -362,6 +401,7 @@ def _registrar_ingest(
                     minio_key     = EXCLUDED.minio_key,
                     file_name     = EXCLUDED.file_name,
                     file_size     = EXCLUDED.file_size,
+                    file_mtime    = EXCLUDED.file_mtime,
                     error_message = EXCLUDED.error_message,
                     finished_at   = NOW()
                 """,
@@ -596,16 +636,23 @@ def processar_arquivo_simples(
     tamanho: int,
     mtime: int,
     nomes_usados: set,
-    ja_inseridos: set,
+    ja_inseridos: dict[str, tuple[Optional[int], Optional[int]]],
     idx: int = 0,
     total: int = 0,
 ) -> str:
     """Retorna 'skipped', 'success' ou 'error'."""
     nome_arquivo = caminho_sftp.rsplit("/", 1)[-1]
 
-    if caminho_sftp in ja_inseridos:
+    if _mesma_versao(ja_inseridos, caminho_sftp, mtime, tamanho):
         log.info("→ [%d/%d] %s — já inserido, pulando", idx, total, nome_arquivo)
         return "skipped"
+    if caminho_sftp in ja_inseridos:
+        log.info(
+            "↻ [%d/%d] %s — alteração detectada (mtime/tamanho), reingerindo",
+            idx,
+            total,
+            nome_arquivo,
+        )
 
     pasta = _pasta_destino(caminho_sftp)
     nome_destino = gerar_nome_unico(f"{pasta}/{nome_arquivo}", nomes_usados)
@@ -760,16 +807,13 @@ def _zip_pulavel_sem_download(
     sftp: paramiko.SFTPClient,
     caminho_zip: str,
     mtime: int,
-    ja_inseridos: set,
+    ja_inseridos: dict[str, tuple[Optional[int], Optional[int]]],
     zip_completos: dict,
 ) -> Optional[str]:
-    # Motivo p/ pular o ZIP sem baixar, ou None. (1) mtime bate (sem I/O); (2) peek do
-    # indice remoto: pula se todos os membros ja estao em ja_inseridos.
+    # Motivo p/ pular o ZIP sem baixar. O mtime do ZIP é a versão do pacote;
+    # não basta saber que seus membros já apareceram em uma versão anterior.
     if zip_completos.get(caminho_zip) == mtime:
         return "já ingerido (mtime inalterado)"
-    membros = _peek_zip_membros(sftp, caminho_zip)
-    if membros is not None and all(f"{caminho_zip}@{m}" in ja_inseridos for m in membros):
-        return "todos os membros já inseridos (sem download)"
     return None
 
 
@@ -783,7 +827,7 @@ def processar_zip(  # noqa: C901
     tamanho: int,
     mtime: int,
     nomes_usados: set,
-    ja_inseridos: set,
+    ja_inseridos: dict[str, tuple[Optional[int], Optional[int]]],
     zip_completos: dict,
     idx: int = 0,
     total: int = 0,
@@ -840,10 +884,6 @@ def processar_zip(  # noqa: C901
                     continue
 
                 caminho_log = f"{caminho_zip}@{nome_interno}"
-                if caminho_log in ja_inseridos:
-                    log.info("  ↳ %s — já inserido, pulando", nome_interno)
-                    continue
-
                 nome_destino = gerar_nome_unico(
                     f"{pasta}/{_nome_com_origem(nome_zip, nome_interno)}", nomes_usados
                 )
@@ -903,7 +943,7 @@ def processar_zip(  # noqa: C901
     except zipfile.BadZipFile:
         spinner.parar(ok=False)
 
-        if caminho_zip in ja_inseridos:
+        if _mesma_versao(ja_inseridos, caminho_zip, mtime, tamanho):
             log.info("  → já inserido como bruto, pulando")
             return 0, 0
 
@@ -999,9 +1039,6 @@ def processar_zip(  # noqa: C901
                         )
                         continue
                     caminho_log = f"{caminho_zip}@{nome_interno}"
-                    if caminho_log in ja_inseridos:
-                        log.info("  ↳ %s — já inserido, pulando", nome_interno)
-                        continue
                     nome_destino = gerar_nome_unico(
                         f"{pasta}/{_nome_com_origem(nome_zip, nome_interno)}",
                         nomes_usados,
@@ -1102,7 +1139,7 @@ def _processar_entry(
     tamanho: int,
     mtime: int,
     nomes_usados: set,
-    ja_inseridos: set,
+    ja_inseridos: dict[str, tuple[Optional[int], Optional[int]]],
     zip_completos: dict,
     idx: int,
     total: int,
@@ -1173,8 +1210,9 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run()).
     Não há dry-run: a ingestão é idempotente pelo controle lake._ingest_minio_log.
 
-    reingest_deleted=False (padrão): arquivo já ingerido nunca reingere, mesmo que o
-    objeto tenha sumido do MinIO. True: reingere só esses, sem duplicar os presentes.
+    reingest_deleted=False (padrão): arquivos presentes são pulados apenas quando a
+    versão SFTP (mtime e tamanho) é a mesma; republicações são reingeridas. True:
+    além disso, reingere objetos que sumiram do MinIO.
     """
     pastas_filtro = _resolver_pastas(pastas)
 
@@ -1223,8 +1261,8 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
         nomes_usados = _obter_nomes_usados(conn_str)
         zip_completos = _obter_zips_completos(conn_str)
         log.info(
-            "%d sftp_paths já ingeridos (pulados) | %d nomes em uso | %d ZIPs completos "
-            "(skip pré-download por mtime)",
+            "%d sftp_paths com versão registrada | %d nomes em uso | %d ZIPs completos "
+            "(skip pré-download só para versão inalterada)",
             len(ja_inseridos),
             len(nomes_usados),
             len(zip_completos),

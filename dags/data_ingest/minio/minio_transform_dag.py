@@ -1,16 +1,12 @@
 import logging
 from datetime import datetime, timedelta
 
-from airflow.decorators import dag, task
-from airflow.operators.python import get_current_context
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.sdk import dag, task
-from airflow.sdk import get_current_context
-from schedule_loader import get_dynamic_schedule
+from airflow.sdk import dag, get_current_context, task
 
 
 @dag(
-    schedule=get_dynamic_schedule("minio_transform_dag"),
+    # A DAG diária do SFTP a aciona e aguarda antes de materializar as Golds.
+    schedule=None,
     start_date=datetime(2023, 1, 1),
     catchup=False,
     max_active_runs=1,
@@ -24,21 +20,19 @@ from schedule_loader import get_dynamic_schedule
         "limit": 0,
         "pattern": "",
         "only_ext": "",
-        "max_size_mb": 0,
+        "max_size_mb": 512,
     },
     tags=["minio", "mcid", "cidades", "data-lake", "transform"],
 )
 def minio_transform_dag() -> None:
-    """Pipeline de transformação do data lake: raw/ -> mascaramento PII -> staging/.
+    """Pipeline seguro: raw/ -> masked/ -> staging/.
 
-    Roda sobre o que estiver em raw/ no MinIO, INDEPENDENTE de quem carregou (SFTP hoje,
-    outras fontes no futuro). Desacoplada da ingestão: schedule próprio, sem referência
-    às DAGs de fonte.
+    O raw é preservado como evidência. Somente a cópia em ``masked/`` é mascarada e
+    convertida para Parquet. É chamada pela DAG diária de SFTP, sem cron concorrente.
 
     Duas etapas encadeadas, cada uma idempotente/incremental (tabelas de controle no
     schema `lake` do Postgres), então execuções agendadas só processam o que é novo.
-    `max_active_runs=1` porque o mascaramento sobrescreve raw/ in-place — duas execuções
-    concorrentes seriam corrida destrutiva. O I/O usa os clientes de plugins/.
+    `max_active_runs=1` evita corrida entre cópia, máscara e staging.
 
     A carga para o warehouse NÃO faz parte desta DAG: só um subconjunto do lake vira
     tabela no Postgres, e essa seleção é feita pelos modelos dbt, não por varredura da
@@ -57,14 +51,26 @@ def minio_transform_dag() -> None:
                  carregar primeiro a cauda leve; como as duas etapas são idempotentes por
                  hash, a execução seguinte sem o limite só processa o que ficou de fora.
 
-    O default é execução real porque é o que o schedule precisa. Vale lembrar que o
-    mascaramento sobrescreve o objeto no lugar e é irreversível na prática: depois da tag
-    `masked=true`, o valor original só existe na origem.
+    A fila cotidiana limita objetos a 512 MB; os cortes grandes do CadÚnico seguem pela
+    DAG dedicada, no mesmo encadeamento diário.
     """
 
     @task
+    def copiar_para_mascarado() -> None:
+        from copiar_raw_para_mascarado import run as run_copy
+
+        p = get_current_context()["params"]
+        contagem = run_copy(
+            limit=int(p.get("limit") or 0),
+            pattern=str(p.get("pattern") or ""),
+            only_ext=str(p.get("only_ext") or ""),
+            max_size_mb=int(p.get("max_size_mb") or 0),
+        )
+        logging.info("[minio_transform_dag] raw->masked: %s", contagem)
+
+    @task
     def mascarar_pii() -> None:
-        """Mascara PII (CPF/NIS/nome/endereço) nos objetos novos de raw/, in-place."""
+        """Mascara PII somente na área protegida ``masked/``."""
         from mascarar_minio import run as run_mask
 
         p = get_current_context()["params"]
@@ -74,12 +80,13 @@ def minio_transform_dag() -> None:
             pattern=str(p.get("pattern") or ""),
             only_ext=str(p.get("only_ext") or ""),
             max_size_mb=int(p.get("max_size_mb") or 0),
+            prefix="masked/",
         )
         logging.info("[minio_transform_dag] mascaramento concluído: %s", contagem)
 
     @task
     def raw_para_staging() -> None:
-        """Converte os objetos de raw/ para Parquet full-text em staging/.
+        """Converte objetos já mascarados para Parquet em staging/.
 
         Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em raw_para_staging.py):
         já tem tratamento próprio de um membro da equipe para ciência de dados, e gerar
@@ -95,21 +102,16 @@ def minio_transform_dag() -> None:
             pattern=str(p.get("pattern") or ""),
             only_ext=str(p.get("only_ext") or ""),
             max_size_mb=int(p.get("max_size_mb") or 0),
+            prefix="masked/",
         )
         logging.info("[minio_transform_dag] raw->staging concluído: %s", contagem)
 
     # A ordem é obrigatória, não uma preferência: a staging lê raw/ como está, então
     # converter antes de mascarar publicaria PII em parquet.
+    copia = copiar_para_mascarado()
     mascaramento = mascarar_pii()
     staging = raw_para_staging()
-    executar_dbt = TriggerDagRunOperator(
-        task_id="executar_dbt_apos_staging",
-        trigger_dag_id="mcid_cosmos_dag",
-        wait_for_completion=False,
-        reset_dag_run=False,
-    )
-
-    mascaramento >> staging >> executar_dbt
+    copia >> mascaramento >> staging
 
 
 dag_instance = minio_transform_dag()
