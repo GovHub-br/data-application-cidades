@@ -1,7 +1,7 @@
 version: 2
 
 # Dados de referência versionados no repositório: o gabarito de conferência do
-# boletim e a tabela de unidades da federação do IBGE.
+# boletim e as tabelas de unidades da federação e de municípios do IBGE.
 
 seeds:
   - name: api_ibge_uf
@@ -103,5 +103,30 @@ seeds:
           Portaria como escrita na planilha. A "(Art. 14) Portaria MCID nº 488" virou
           "Portaria MCID nº 488, de 2025 (Art. 14, prorrogadas da 727/2023)": são as
           propostas da 727 com prazo prorrogado que passaram à regra da 488 (art. 14).
+        tests:
+          - not_null
+
+  - name: ibge_municipio
+    description: >
+      Municípios do IBGE: código de 7 dígitos, nome oficial e UF. Dá o município e
+      a UF do empreendimento FAR quando a proposta não está no consolidado HIS, a
+      partir do código IBGE do cadastro MONIT, que escreve o nome em maiúsculas.
+    config:
+      column_types:
+        cod_ibge: text
+        municipio: text
+        uf: text
+    columns:
+      - name: cod_ibge
+        description: Código IBGE do município, 7 dígitos.
+        tests:
+          - unique
+          - not_null
+      - name: municipio
+        description: Nome oficial do município.
+        tests:
+          - not_null
+      - name: uf
+        description: Sigla da UF.
         tests:
           - not_null

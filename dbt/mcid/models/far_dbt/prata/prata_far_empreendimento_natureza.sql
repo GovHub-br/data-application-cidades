@@ -45,39 +45,41 @@ with
         from {{ ref("bronze_shpt_monit_cad_pj_far_mensal") }}
     ),
 
-    -- O consolidado repete a proposta a cada movimento; fica o retrato mais recente.
+    -- O consolidado repete a proposta por fase; fica o movimento mais recente. A linha da
+    -- seleção, sem data de movimento, só vale quando a proposta não tem outra.
     proposta as (
         select *
         from (
             select
-                nullif(trim(no_identificacao_proposta), '') as id_proposta,
-                nullif(trim(nu_portaria_contratacao), '') as portaria_contratacao,
-                lpad(nullif(trim(co_originacao_empreendimento), ''), 3, '0') as co_originacao,
-                lpad(nullif(trim(co_tipo_de_demanda), ''), 3, '0') as co_demanda_enquadramento,
-                lpad(nullif(trim(co_tipo_demanda_emp_contratacao), ''), 3, '0') as co_demanda_contratacao,
-                -- A da contratação quase sempre vem vazia; cai para a do enquadramento.
-                lpad(coalesce(nullif(trim(co_qualificacao_terreno_contratacao), ''), nullif(trim(co_qualificacao_terreno), '')), 3, '0') as co_qualificacao_terreno,
-                case trim(ic_previsao_elevador) when 'S' then true when 'N' then false end as ic_previsao_elevador,
-                trim(ic_dados_alterados_pos_contratacao) = 'S' as ic_alterado_pos_contratacao,
-                nullif(trim(no_campo_alterado_contratacao), '') as campos_alterados_contratacao,
-                trim(ic_terreno_area_urbana_consolidada) = 'S' as ic_area_urbana_consolidada,
-                trim(ic_energia_eletrica_iluminacao_publica) = 'S' as ic_entorno_energia,
-                trim(ic_agua_potavel) = 'S' as ic_entorno_agua,
-                trim(ic_rede_esgoto_coleta_lixo) = 'S' as ic_entorno_esgoto_lixo,
-                trim(ic_via_pavimentada) = 'S' as ic_entorno_pavimentacao,
-                trim(ic_drenagem_pluvial) = 'S' as ic_entorno_drenagem,
-                trim(ic_educacao_infantil) = 'S' as ic_entorno_educacao_infantil,
-                trim(ic_ensino_fundamental_ciclo_1) = 'S' as ic_entorno_fundamental_1,
-                trim(ic_ensino_fundamental_ciclo_2) = 'S' as ic_entorno_fundamental_2,
-                trim(ic_unidade_saude_ubs) = 'S' as ic_entorno_ubs,
-                trim(ic_unidade_protecao_social_cras) = 'S' as ic_entorno_cras,
-                trim(ic_comercio_servicos_cotidiano) = 'S' as ic_entorno_comercio,
+                id_proposta,
+                portaria_contratacao,
+                lpad(co_originacao::text, 3, '0') as co_originacao,
+                lpad(co_tipo_demanda::text, 3, '0') as co_demanda_enquadramento,
+                lpad(co_tipo_demanda_contratacao::text, 3, '0') as co_demanda_contratacao,
+                lpad(co_qualificacao_terreno::text, 3, '0') as co_qualificacao_terreno,
+                ic_previsao_elevador,
+                ic_alterado_pos_contratacao,
+                campos_alterados_contratacao,
+                ic_area_urbana_consolidada,
+                ic_energia_eletrica as ic_entorno_energia,
+                ic_agua_potavel as ic_entorno_agua,
+                ic_esgoto as ic_entorno_esgoto_lixo,
+                ic_via_pavimentada as ic_entorno_pavimentacao,
+                ic_drenagem as ic_entorno_drenagem,
+                ic_educacao_infantil as ic_entorno_educacao_infantil,
+                ic_ensino_fundamental_1 as ic_entorno_fundamental_1,
+                ic_ensino_fundamental_2 as ic_entorno_fundamental_2,
+                ic_saude_ubs as ic_entorno_ubs,
+                ic_protecao_social_cras as ic_entorno_cras,
+                ic_comercio_servicos as ic_entorno_comercio,
                 row_number() over (
-                    partition by trim(no_identificacao_proposta)
-                    order by {{ var('schema_udfs') }}.parse_date_br(dt_movimento) desc nulls last, hr_movimento desc
+                    partition by id_proposta
+                    order by
+                        dt_movimento desc nulls last,
+                        hr_movimento desc nulls last,
+                        dt_protocolo desc nulls last
                 ) as rn
-            from {{ ref("bronze_shpt_his_mcidades_consolidado") }}
-            where nullif(trim(nu_apf), '') is not null
+            from {{ ref("prata_far_consolidado") }}
         ) t
         where rn = 1
     )

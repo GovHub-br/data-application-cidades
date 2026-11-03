@@ -3,15 +3,19 @@
 -- Ouro: Panorama Estadual — painel agregado por UF
 -- Cada seção do dashboard vira um bloco do union all, identificado por `secao`:
 -- o BI filtra WHERE secao = 'X' para montar cada card.
--- Cada ficha entra duas vezes: na sua portaria e em 'Todas as portarias', para o
--- filtro de portaria do dashboard não somar recortes nem contar município duas vezes.
+-- Cada ficha entra na sua portaria e em 'Todas as portarias', e no seu município e em
+-- 'Todos os municípios', para os filtros do dashboard não somarem recortes nem
+-- contarem município duas vezes.
 with
     fichas as (
-        select f.*, p.portaria
+        select f.*, p.portaria, m.municipio as recorte_municipio
         from {{ ref("ouro_far_ficha_empreendimento") }} f
         cross join lateral (
             values (f.portaria_selecao), ('Todas as portarias')
         ) p(portaria)
+        cross join lateral (
+            values (coalesce(f.municipio, 'Não informado')), ('Todos os municípios')
+        ) m(municipio)
     ),
 
     ibge_uf as (
@@ -24,6 +28,7 @@ with
         select
             uf,
             portaria,
+            recorte_municipio,
             count(distinct municipio) as total_municipios,
             count(apf) as total_empreendimentos,
             coalesce(sum(quantidade_uh), 0) as total_uhs,
@@ -36,7 +41,7 @@ with
                 else 0.0
             end as valor_medio_por_uh
         from fichas
-        group by uf, portaria
+        group by uf, portaria, recorte_municipio
     ),
 
     -- Seção 2: distribuição de UHs por método, portaria e demanda
@@ -44,33 +49,36 @@ with
         select
             uf,
             portaria,
+            recorte_municipio,
             metodo,
             count(apf) as qtd_empreendimentos,
             coalesce(sum(quantidade_uh), 0) as qtd_uhs
         from fichas
-        group by uf, portaria, metodo
+        group by uf, portaria, recorte_municipio, metodo
     ),
 
     dist_portaria as (
         select
             uf,
             portaria,
+            recorte_municipio,
             portaria_selecao,
             count(apf) as qtd_empreendimentos,
             coalesce(sum(quantidade_uh), 0) as qtd_uhs
         from fichas
-        group by uf, portaria, portaria_selecao
+        group by uf, portaria, recorte_municipio, portaria_selecao
     ),
 
     dist_demanda as (
         select
             uf,
             portaria,
+            recorte_municipio,
             demanda,
             count(apf) as qtd_empreendimentos,
             coalesce(sum(quantidade_uh), 0) as qtd_uhs
         from fichas
-        group by uf, portaria, demanda
+        group by uf, portaria, recorte_municipio, demanda
     ),
 
     -- Seção 3: situação da obra. O esqueleto fixo garante as 6 categorias em toda
@@ -85,10 +93,10 @@ with
             ('DESMOBILIZADO', 6)
     ),
 
-    ufs as (select distinct uf, portaria from fichas),
+    ufs as (select distinct uf, portaria, recorte_municipio from fichas),
 
     grade_situacao as (
-        select u.uf, u.portaria, s.situacao, s.ordem
+        select u.uf, u.portaria, u.recorte_municipio, s.situacao, s.ordem
         from ufs u
         cross join skeleton_situacao s
     ),
@@ -97,17 +105,19 @@ with
         select
             uf,
             portaria,
+            recorte_municipio,
             situacao_empreendimento as situacao,
             count(apf) as qtd_empreendimentos,
             sum(quantidade_uh) as qtd_uhs
         from fichas
-        group by uf, portaria, situacao_empreendimento
+        group by uf, portaria, recorte_municipio, situacao_empreendimento
     ),
 
     dist_situacao as (
         select
             g.uf,
             g.portaria,
+            g.recorte_municipio,
             g.situacao,
             g.ordem,
             coalesce(r.qtd_empreendimentos, 0) as qtd_empreendimentos,
@@ -117,6 +127,7 @@ with
             situacao_real r
             on g.uf = r.uf
             and g.portaria = r.portaria
+            and g.recorte_municipio = r.recorte_municipio
             and g.situacao = r.situacao
     ),
 
@@ -125,6 +136,7 @@ with
         select
             uf,
             portaria,
+            recorte_municipio,
             case
                 when percentual_execucao_fisica <= 40
                 then 'Menor que 40%'
@@ -140,6 +152,7 @@ with
         group by
             uf,
             portaria,
+            recorte_municipio,
             case
                 when percentual_execucao_fisica <= 40
                 then 'Menor que 40%'
@@ -155,6 +168,7 @@ select
     h.uf,
     i.estado,
     h.portaria,
+    h.recorte_municipio as municipio,
     'header' as secao,
     'resumo' as dimensao,
     0 as ordem,
@@ -174,6 +188,7 @@ select
     d.uf,
     i.estado,
     d.portaria,
+    d.recorte_municipio as municipio,
     'metodo' as secao,
     metodo as dimensao,
     0 as ordem,
@@ -193,6 +208,7 @@ select
     d.uf,
     i.estado,
     d.portaria,
+    d.recorte_municipio as municipio,
     'portaria' as secao,
     portaria_selecao as dimensao,
     0 as ordem,
@@ -212,6 +228,7 @@ select
     d.uf,
     i.estado,
     d.portaria,
+    d.recorte_municipio as municipio,
     'demanda' as secao,
     demanda as dimensao,
     0 as ordem,
@@ -231,6 +248,7 @@ select
     d.uf,
     i.estado,
     d.portaria,
+    d.recorte_municipio as municipio,
     'situacao' as secao,
     situacao as dimensao,
     ordem,
@@ -250,6 +268,7 @@ select
     d.uf,
     i.estado,
     d.portaria,
+    d.recorte_municipio as municipio,
     'execucao_fisica' as secao,
     faixa_execucao as dimensao,
     case
