@@ -7,12 +7,20 @@ models:
       Tipo físico de reforma, medição e entrega não estão disponíveis na fonte atual.
     meta:
       tags: [ouro, reforma-casa-brasil, dashboard, ficha, contrato]
+      documentacao:
+        grao: Uma linha por contrato de financiamento do Reforma Casa Brasil.
+        chave: [id_contrato]
+        fonte: Caixa Econômica Federal, carteira contratual do Reforma Casa Brasil.
+        periodicidade: semanal
+        consumo: [Superset, ficha de reforma do Reforma Casa Brasil]
     columns:
       - name: id_contrato
+        description: Identificador técnico do contrato, usado como chave da ficha sem expor dados pessoais.
         data_tests: [not_null, unique]
       - name: identificador_reforma
         description: Número administrativo do contrato para seleção no painel interno.
       - name: ressalva_reforma
+        description: Limitação da fonte sobre serviços executados, medição, vistoria e conclusão física da reforma.
         data_tests: [not_null]
 
   - name: ouro_reforma_casa_brasil_acesso_dash
@@ -75,8 +83,15 @@ models:
       orçamentária, pagamento ou medição física de obra.
     meta:
       tags: [ouro, reforma-casa-brasil, dashboard, monitoramento, recursos, agregado]
+      documentacao:
+        grao: Uma linha por competência, território, faixa de renda e modalidade da carteira.
+        chave: [dt_referencia, uf, municipio, codigo_ibge, faixa_renda, modalidade]
+        fonte: Caixa Econômica Federal, histórico de contratos do Reforma Casa Brasil.
+        periodicidade: semanal
+        consumo: [Superset, monitoramento de recursos do Reforma Casa Brasil]
     columns:
       - name: quantidade_contratos
+        description: Quantidade de contratos da carteira no recorte administrativo do snapshot.
         data_tests: [not_null]
       - name: execucao_orcamentaria_ou_fisica_disponivel
         description: Sempre falso enquanto não houver fonte de execução ou medição.
@@ -84,6 +99,7 @@ models:
           - accepted_values:
               arguments: {values: [false]}
       - name: ressalva_monitoramento
+        description: Limitação que impede interpretar a posição contratual como execução orçamentária, pagamento ou medição física.
         data_tests: [not_null]
 
   - name: ouro_reforma_casa_brasil_mapa_uf
@@ -92,10 +108,17 @@ models:
       alcançados e valores administrativos da carteira de Reforma Casa Brasil.
     meta:
       tags: [ouro, reforma-casa-brasil, dashboard, territorio, mapa]
+      documentacao:
+        grao: Uma linha por unidade da federação no último recorte territorial disponível.
+        chave: [uf]
+        fonte: Caixa Econômica Federal, carteira contratual do Reforma Casa Brasil.
+        periodicidade: semanal
+        consumo: [Superset, mapa nacional do Reforma Casa Brasil]
     columns:
       - name: iso_3166_2
         description: Código UF no padrão utilizado pelo mapa do Brasil no Superset.
       - name: quantidade_contratos
+        description: Quantidade de contratos com unidade da federação informada no agregado territorial.
         data_tests: [not_null]
 
   - name: ouro_reforma_casa_brasil_cobertura_perguntas_dash

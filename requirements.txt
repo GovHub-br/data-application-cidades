@@ -24,6 +24,8 @@ sqlalchemy==2.0.52
 python-dotenv==1.2.3
 requests==2.34.2
 boto3==1.43.75
+# Cliente SFTP usado pelas rotinas de coleta e versionamento de arquivos.
+paramiko==5.0.0
 
 # Instalados por cima da base.
 apache-airflow-providers-microsoft-mssql==4.7.1
