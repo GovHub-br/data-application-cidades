@@ -99,7 +99,11 @@ Efeito no arquivo acima: 16.385 → 38 colunas, 5,1 MB → 99 KB, mesmas 1.288 l
 
 **`.mdb`**: lidos via **`mdbtools`** (binário do sistema, não é lib Python). O `mdb-export`
 já entrega CSV vírgula em **UTF-8**, então esse caminho não usa a detecção de encoding/dialeto
-— vai direto para o mesmo conversor streaming do CSV. Uma falha numa tabela não derruba as
+— vai direto para o mesmo conversor streaming do CSV. Antes da conversão, o CSV de cada
+tabela passa por `mascarar_csv()` do `mascarar_minio.py`: o `.mdb` é o único formato que o
+mascaramento não consegue reescrever no `raw/`, então a PII dele (ex.: `DT_Nascimento` e
+`IM_CEP` do `CCI_CCA`) é mascarada aqui, com o mesmo HMAC. Sem `MASKING_HMAC_SECRET`, uma
+tabela com CPF/NIS falha em vez de gravar. Uma falha numa tabela não derruba as
 outras (aquela part vira `error`, as demais seguem). São 128 arquivos / ~105 GB no lake
 (famílias `MCidades_AO_1/2/3`, `CCI_CCA`, `AF`).
 

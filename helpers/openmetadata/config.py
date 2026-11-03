@@ -22,23 +22,14 @@ OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH = (
 #: O projeto dbt do MCID. A recipe de dbt consome os artefatos que saem dele.
 DBT_MCID_DIR = f"{AIRFLOW_REPO_BASE}/dbt/mcid"
 
-#: O pacote roda num VIRTUALENV ISOLADO. No Airflow 2.8.1 era obrigatório
-#: (`openmetadata-ingestion` exige `sqlalchemy>=2.0` e o Airflow 2 exigia
-#: `<2.0`). No Airflow 3 esse conflito acabou, mas instalar o pacote por cima da
-#: base com `pip install` rebaixa pacotes dela (boto3, botocore,
-#: opentelemetry-sdk) e o `pip check` do Dockerfile reprova. O
-#: `data-application-minc` assa na imagem com um lock resolvido contra a base
-#: (`compile-lock.sh`); até adotarmos o mesmo, o virtualenv segue isolando.
-#:
-#: Isolado, o pacote resolve limpo em 255 pacotes. A versão acompanha a LINHA
-#: do servidor (hoje 1.13.3): cliente e servidor de linhas diferentes divergem
-#: no schema das entidades.
-OPENMETADATA_REQUIREMENTS = [
-    "openmetadata-ingestion[dbt,postgres,superset,airflow,pii-processor]==1.13.3.2",
-    "asyncpg",
-    "PyYAML>=6.0",
-    "psycopg2-binary",
-]
+#: O `openmetadata-ingestion` está na IMAGEM do Airflow, pelo lock
+#: (`infra/docker/airflow/compile-lock.sh`), e não num virtualenv. O venv
+#: existia porque instalar o pacote solto por cima da base rebaixava pacotes
+#: dela; o lock resolve tudo de uma vez, como no `data-application-minc`. No
+#: venv, com o Airflow 3.2.2 que o extra `airflow` instalava, a recipe
+#: `airflow_metadata` falhava no homolog ao inicializar o ORM; na imagem, o
+#: conector roda no mesmo Airflow da task. Ver o README desta pasta.
+#: A versão do pacote acompanha a LINHA do servidor (ver `requirements.txt`).
 
 
 @dataclass(frozen=True)
@@ -81,22 +72,19 @@ INGERIR_SUPERSET = _flag("OM_INGEST_SUPERSET", default=False)
 INGERIR_PROFILER = _flag("OM_INGEST_PROFILER", default=False)
 INGERIR_CLASSIFIER = _flag("OM_INGEST_CLASSIFIER", default=False)
 
-#: As relações semânticas ficam DESLIGADAS por padrão porque o catálogo
-#: `semantic_relationships/mcid.yaml` é um snapshot de 2026-07-23 e não
-#: descreve mais o projeto: declara `table_count: 74` mas lista 63 tabelas — o
-#: que já reprova na validação do próprio `load_semantic_catalog` —, e as 63
-#: usam os nomes e schemas de antes da renomeação (`conjuntura.silver_*`,
-#: `conjuntura_gold.*`, `empreendimento_far.*`), nenhum dos quais existe hoje.
+#: As relações semânticas vêm ligadas desde que o catálogo
+#: `semantic_relationships/mcid.yaml` foi regenerado sobre o medalhão
+#: (2026-11-02): as 201 tabelas de prata e ouro com modelo no repo, medidas por
+#: contagem exata no PostgreSQL. Ficaram desligadas enquanto o arquivo era o
+#: snapshot de 2026-07-23, que nem passava no `load_semantic_catalog`.
 #:
-#: Não é detalhe de configuração: a task fica ANTES da reaplicação de
-#: governança no encadeamento, e falhando ela levava embora a task que devolve
-#: a certificação que o conector dbt apaga.
-#:
-#: Para religar, regenere o YAML para o escopo atual (185 models, schemas
-#: `conjuntura`/`bronze`/`prata`/`ouro`, mais o produto Rural, que nem existia
-#: no snapshot) e ligue `OM_SYNC_RELACOES_SEMANTICAS=true`.
+#: O catálogo é foto do dado do dia da medição. Tabela nova ou renomeada fica
+#: sem relação até a próxima rodada; tabela que saiu do OpenMetadata derruba a
+#: task (`sync_semantic_relationships` exige todas as do escopo), e aí basta
+#: desligar com `OM_SYNC_RELACOES_SEMANTICAS=false` até regenerar — a
+#: reaplicação de governança roda mesmo assim (`all_done`).
 SINCRONIZAR_RELACOES_SEMANTICAS = _flag(
-    "OM_SYNC_RELACOES_SEMANTICAS", default=False
+    "OM_SYNC_RELACOES_SEMANTICAS", default=True
 )
 
 
@@ -118,13 +106,9 @@ COMMON_REPLACEMENTS = {
     "AIRFLOW_DB_DATABASE": os.environ.get("AIRFLOW_DB_DATABASE", "airflow"),
 }
 
-#: Segredos lidos do AMBIENTE dentro da task. Não são Variable do Airflow
-#: porque a task roda num virtualenv sem o pacote `airflow` instalado
-#: (`expect_airflow=False`): lá dentro não há `Variable` para consultar. O
-#: ambiente, esse sim, é herdado.
-#:
-#: Os nomes são os mesmos que `scripts/governance/` já lê do `.env`, que o
-#: compose monta via `env_file`. Uma fonte só evita o token divergir entre dois
+#: Segredos lidos do AMBIENTE dentro da task, não de Variable do Airflow. Os
+#: nomes são os mesmos que `scripts/governance/` já lê do `.env`, que o compose
+#: monta via `env_file`. Uma fonte só evita o token divergir entre dois
 #: lugares — problema que já corrigimos uma vez com o proprietário.
 SEGREDOS_BASE = {"OM_HOST": "OPENMETADATA_URL"}
 SEGREDOS_INGESTAO = {**SEGREDOS_BASE, "INGESTION_TOKEN": "OPENMETADATA_JWT_TOKEN"}
@@ -208,11 +192,16 @@ ALL_RECIPES = tuple(recipe for recipe in _RECIPES_DEFINIDAS if recipe.enabled)
 #: `dbt_metadata` só ANEXA descrição, tier, domínio e linhagem a tabela que já
 #: existe — ele não cria nada. Profiler e classifier só têm o que medir depois
 #: das duas. Inverter faz o dbt anexar a nada e não dá erro nenhum.
+#:
+#: `airflow_metadata` vai por ÚLTIMO porque nenhuma outra depende dele, e a
+#: corrente é sequencial: na frente, uma falha dele marcava `postgres_metadata`
+#: e `dbt_metadata` como `upstream_failed`, e o catálogo do banco parava de
+#: atualizar por causa de um conector secundário.
 RECIPE_PIPELINE = (
-    "airflow_metadata",
     "postgres_metadata",
     "dbt_metadata",
     "postgres_profiler",
     "postgres_classifier",
     "superset_metadata",
+    "airflow_metadata",
 )

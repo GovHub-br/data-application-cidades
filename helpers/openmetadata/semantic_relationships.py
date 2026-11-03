@@ -533,7 +533,7 @@ def sync_semantic_relationships(
     if not jwt_token:
         raise ValueError("INGESTION_TOKEN não pode ser vazio.")
 
-    # Imports tardios: o módulo também é testado fora do virtualenv isolado.
+    # Imports tardios: o módulo também é testado sem o openmetadata-ingestion.
     from metadata.generated.schema.api.data.createCustomProperty import (
         CreateCustomPropertyRequest,
     )

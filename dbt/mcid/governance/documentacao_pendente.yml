@@ -1,0 +1,111 @@
+version: 1
+
+# Models da ouro que ainda não cumprem o contrato de documentação
+# (`scripts/governance/documentacao_dbt.py`): descrição do model e de cada
+# coluna, mais `meta.documentacao` com grão, chave, fonte, periodicidade e
+# consumo.
+#
+# É uma catraca, e só anda para um lado. `tests/test_documentacao_ouro.py`
+# falha se:
+#   - um model da ouro fora desta lista deixar de cumprir o contrato — model
+#     novo na ouro já nasce documentado;
+#   - um model desta lista passar a cumprir — tire-o daqui no mesmo PR.
+#
+# Para ver o que falta em cada um:
+#   poetry run python scripts/governance/auditar_metadados.py --ouro
+pendentes:
+  - ouro_conjuntura_balancos_empresas
+  - ouro_conjuntura_balancos_empresas_totais
+  - ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais
+  - ouro_conjuntura_boletim_p1_lancamentos_por_regiao_cbic
+  - ouro_conjuntura_boletim_p1_pib_construcao_crescimento
+  - ouro_conjuntura_boletim_p1_vendas_por_regiao_cbic
+  - ouro_conjuntura_boletim_p2_financiamentos_habitacionais_uh
+  - ouro_conjuntura_boletim_p2_financiamentos_imobiliarios_bacen
+  - ouro_conjuntura_boletim_p2_lancamentos_por_construtora_variacao
+  - ouro_conjuntura_boletim_p2_totais_empresas_variacao
+  - ouro_conjuntura_boletim_p2_vendas_por_construtora_variacao
+  - ouro_conjuntura_boletim_p3_empregos_construcao_caged
+  - ouro_conjuntura_boletim_p3_financiamentos_por_banco
+  - ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento
+  - ouro_conjuntura_boletim_p3_producao_e_vendas_variacao
+  - ouro_conjuntura_boletim_p4_credito_imobiliario_pib
+  - ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso
+  - ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa
+  - ouro_conjuntura_boletim_p5_poupanca_captacao_liquida
+  - ouro_conjuntura_boletim_p5_sbpe_construcao_no_tri
+  - ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m
+  - ouro_conjuntura_boletim_p6_ticket_medio_vs_incc
+  - ouro_conjuntura_boletim_p7_indices_da_construcao_variacao
+  - ouro_conjuntura_boletim_valores
+  - ouro_conjuntura_canal_fgts
+  - ouro_conjuntura_credito_pib
+  - ouro_conjuntura_empregos_caged
+  - ouro_conjuntura_fgts_valor_medio
+  - ouro_conjuntura_financiamento_pf_faixa
+  - ouro_conjuntura_financiamentos_habitacionais
+  - ouro_conjuntura_financiamentos_imobiliarios_pf_pj
+  - ouro_conjuntura_financiamentos_instituicao
+  - ouro_conjuntura_fipezap
+  - ouro_conjuntura_funding
+  - ouro_conjuntura_fundo_social
+  - ouro_conjuntura_icst
+  - ouro_conjuntura_incc_m
+  - ouro_conjuntura_indice_imob
+  - ouro_conjuntura_novos_financiamentos_banco
+  - ouro_conjuntura_ogu
+  - ouro_conjuntura_pib_construcao_civil
+  - ouro_conjuntura_pib_construcao_civil_pct
+  - ouro_conjuntura_pnad_ocupados
+  - ouro_conjuntura_pnad_rendimento
+  - ouro_conjuntura_producao_fisica
+  - ouro_conjuntura_saldo_poupanca
+  - ouro_conjuntura_sinapi
+  - ouro_conjuntura_ticket_medio
+  - ouro_conjuntura_uh_condicao_uso
+  - ouro_far_curva_s
+  - ouro_far_evolucao_financeira_chart
+  - ouro_far_execucao_fisica_financeira_chart
+  - ouro_far_ficha_empreendimento
+  - ouro_far_mapa_nacional
+  - ouro_far_panorama_estadual
+  - ouro_far_resumo_gerencial
+  - ouro_far_serie_mensal_apf
+  - ouro_fds_evolucao_financeira_chart
+  - ouro_fds_ficha_empreendimento
+  - ouro_fds_panorama_entidade
+  - ouro_historico_marco_empreendimento
+  - ouro_historico_serie_mensal
+  - ouro_historico_serie_situacao_mensal
+  - ouro_historico_snapshot_empreendimento_atual
+  - ouro_linha_financiada_base_agregada
+  - ouro_linha_financiada_base_pf_fundo_social
+  - ouro_linha_financiada_cobertura_perguntas
+  - ouro_linha_financiada_contrapartidas
+  - ouro_linha_financiada_empreendimentos
+  - ouro_linha_financiada_execucao_orcamentaria
+  - ouro_linha_financiada_features_preditivas
+  - ouro_linha_financiada_mapa_execucao
+  - ouro_linha_financiada_projecao_anual
+  - ouro_linha_financiada_ranking_territorial
+  - ouro_linha_financiada_relatorio_semanal
+  - ouro_linha_financiada_resumo_mensal
+  - ouro_reforma_casa_brasil_acesso_dash
+  - ouro_reforma_casa_brasil_cobertura_perguntas_dash
+  - ouro_reforma_casa_brasil_implementacao_dash
+  - ouro_reforma_casa_brasil_resultado_dash
+  - ouro_reloginho_indicadores
+  - ouro_reloginho_indicadores_entregas
+  - ouro_reloginho_indicadores_frente
+  - ouro_reloginho_indicadores_gargalo_desempenho
+  - ouro_reloginho_resumo_dashboard
+  - ouro_reloginho_resumo_gargalo_desempenho_dashboard
+  - ouro_rural_evolucao_financeira
+  - ouro_rural_execucao_fisica_financeira
+  - ouro_rural_ficha_empreendimento
+  - ouro_rural_ficha_trabalho_social
+  - ouro_rural_infraestrutura_agua_saneamento
+  - ouro_rural_mapa_nacional
+  - ouro_rural_panorama_estadual
+  - ouro_rural_perfil_beneficiarios
+  - ouro_rural_resumo_gerencial

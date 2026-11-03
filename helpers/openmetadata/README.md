@@ -5,7 +5,7 @@ Esta pasta concentra a DAG de ingestão do OpenMetadata e o código de suporte p
 ## Estrutura
 
 - `openmetadata_ingestion_dag.py`: define a DAG e o encadeamento entre tasks.
-- `config.py`: catálogo de recipes, replacements e requirements do virtualenv.
+- `config.py`: catálogo de recipes, replacements e liga/desliga por recipe.
 - `execution.py`: renderização e execução dos workflows.
 - `recipes/`: recipes YAML usadas pelo OpenMetadata.
 - `glossary.py`: validação e sincronização idempotente via API.
@@ -16,7 +16,6 @@ Esta pasta concentra a DAG de ingestão do OpenMetadata e o código de suporte p
   RAG/GraphRAG.
 - `DOCUMENTATION_COVERAGE.md`: critério, resultado e allowlist auditada do MCID.
 - `RELATIONSHIP_COVERAGE.md`: linhagem, JOINs, chaves e riscos auditados.
-- `airflow_log_config.py`: logging custom usado apenas para a recipe de Airflow.
 
 ## Glossário MCID
 
@@ -30,8 +29,9 @@ A sincronização é somente de upsert: ela não apaga automaticamente termos qu
 deixarem de existir no CSV.
 
 O `INGESTION_TOKEN` também precisa ter permissão para criar e editar glossários.
-Como o pacote de ingestão está fixado em 1.12.1, mantenha o servidor OpenMetadata
-compatível com a mesma linha de versão.
+O pacote de ingestão (`openmetadata-ingestion==1.13.3.2`, em `requirements.txt`)
+acompanha a linha do servidor, hoje 1.13.3: cliente e servidor de linhas
+diferentes divergem no schema das entidades.
 
 ## Escopo documental do Postgres
 
@@ -75,25 +75,31 @@ Para conferir na interface:
 5. use **Glossary Terms/Tags** para conceitos como MCMV, FAR, FDS, APF, CNPJ,
    Código IBGE e UF.
 
-## Caso especial: `airflow_metadata`
+## Onde o pacote roda
 
-A recipe `airflow_metadata` roda em `@task.virtualenv`, mas o source `airflow` do OpenMetadata importa o pacote `airflow` de verdade durante a execução. No nosso ambiente, isso exigiu alguns cuidados:
+O `openmetadata-ingestion` está na imagem do Airflow, pelo lock
+`infra/docker/airflow/requirements.lock.txt` (gerado por `compile-lock.sh`, o
+mesmo modelo do `data-application-minc`), e as tasks são `@task` comuns.
 
-1. A recipe foi configurada para ler o metadata DB do Airflow via `Postgres`, e não via `Backend`.
-2. A execução dessa recipe acontece em-process com `MetadataWorkflow.create(...)`, em vez de `metadata ingest -c ...`.
-3. O virtualenv precisa incluir `asyncpg`, porque o Airflow inicializa uma sessão assíncrona do SQLAlchemy ao subir o ORM.
-4. O Airflow também precisa de uma config de logging simplificada para conseguir inicializar dentro do virtualenv isolado.
+Até outubro rodava num `@task.virtualenv` isolado, com o Airflow 3.2.2 que o
+extra `airflow` do pacote instala. O source `airflow` do OpenMetadata lê o banco
+de metadados pelo ORM do próprio Airflow, e no homolog (servidor 3.3.2) a recipe
+`airflow_metadata` falhava todo dia no teste de conexão, ao inicializar o
+mapper (`Callback` não acha `Trigger`). Fora daquele venv o erro não se
+reproduziu — o 3.2.2 isolado lê um banco 3.3.2 sem problema —, então o gatilho
+está no ambiente da task virtualenv. Na imagem não há venv: o conector roda no
+mesmo processo e no mesmo Airflow 3.3.2 da task, e foi validado contra um banco
+de metadados 3.3.2 (teste de conexão e listagem das DAGs).
 
-Sem isso, os erros observados foram genéricos, como "missing plugin [airflow]", mas a causa real era falha ao inicializar o próprio pacote `airflow` dentro do venv.
+Por isso o pacote entra **sem** o extra `airflow` (ele fixaria o 3.2.2) e sem o
+`pii-processor`, que exige `numpy<2` e rebaixaria o pandas 3 que a ingestão do
+lake usa. Sem o `pii-processor`, a classificação automática de PII do
+`postgres_classifier` não roda.
 
-## Dependências importantes do virtualenv
-
-Em `config.py`, manter para a task de OpenMetadata:
-
-- `openmetadata-ingestion[dbt,postgres,superset,airflow,pii-processor]==1.12.1`
-- `asyncpg`
-
-Se `asyncpg` sair da lista, a ingestão de Airflow volta a falhar ao importar o source `airflow`.
+A recipe `airflow_metadata` lê o banco de metadados via `Postgres` e roda
+em-process com `MetadataWorkflow.create(...)`, em vez de `metadata ingest -c ...`
+(no subprocesso do CLI o source falha com um "missing plugin [airflow]"
+genérico). Ela é a última da fila: nenhuma outra recipe depende dela.
 
 ## Logs esperados
 
@@ -153,14 +159,6 @@ carga agendada e uma manual publiquem os mesmos testes em paralelo. Cada task
 tem limite de 3 horas e o DagRun completo, 8 horas; assim, uma chamada HTTP
 realmente congelada não ocupa o worker indefinidamente nem bloqueia as próximas
 execuções.
-
-## Plugins locais do Airflow
-
-As tasks usam `expect_airflow=False` no `@task.virtualenv` porque nao consomem
-macros nem contexto Airflow dentro do subprocesso. Isso impede que o wrapper tente
-carregar `/opt/airflow/plugins` no venv isolado e evita erros enganosos por falta de
-dependencias como `imap_tools`, `zeep`, `bs4` ou providers adicionais. O pacote
-Airflow continua instalado no venv e disponivel para a recipe `airflow_metadata`.
 
 ## Shim de lineage para APIs
 

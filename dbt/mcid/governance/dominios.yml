@@ -423,6 +423,44 @@ propriedades_customizadas:
       bloqueio, para que a ausência de um cruzamento seja uma decisão
       documentada e não um esquecimento.
 
+  #: As cinco abaixo vêm de `meta.documentacao` de cada model (contrato em
+  #: `scripts/governance/documentacao_dbt.py`). Ficam fora da `description`
+  #: de propósito: a descrição volta ao git quando alguém sugere outra pelo
+  #: catálogo, e um texto gerado misturado nela viria junto.
+  - name: mcidGrao
+    entidade: table
+    tipo: string
+    description: >
+      O que é uma linha desta tabela. É a primeira coisa a saber antes de
+      somar ou contar qualquer coluna.
+
+  - name: mcidChave
+    entidade: table
+    tipo: string
+    description: >
+      Colunas que identificam uma linha de forma única, e por onde a tabela
+      se cruza com as demais.
+
+  - name: mcidFonte
+    entidade: table
+    tipo: string
+    description: >
+      Instituição e base de origem do dado.
+
+  - name: mcidPeriodicidade
+    entidade: table
+    tipo: string
+    description: >
+      Com que frequência a fonte publica dado novo: diaria, semanal, mensal,
+      trimestral, semestral, anual ou eventual.
+
+  - name: mcidConsumo
+    entidade: table
+    tipo: markdown
+    description: >
+      Painéis e produtos que leem esta tabela. Mudar o significado de uma
+      coluna afeta cada um deles.
+
   #: Estas duas JÁ EXISTEM na instância, criadas pela integração que vivia em
   #: `origin/refactor/openmetadata`. Ficam declaradas aqui para o repo assumir
   #: o que escreve nelas — a sincronização não recria o que já existe, então a

@@ -44,7 +44,6 @@ x-airflow-common: &airflow-common
     - {{ airflow_repo_dir }}/dags:/opt/airflow/dags:ro
     - {{ airflow_repo_dir }}/plugins:/opt/airflow/plugins:ro
     - {{ airflow_repo_dir }}/helpers:/opt/airflow/helpers:ro
-    - {{ airflow_repo_dir }}/templates:/opt/airflow/templates:ro
     - {{ airflow_repo_dir }}/dbt:/opt/airflow/dbt:ro
     - {{ airflow_repo_dir }}/dbt/mcid/profiles.yml:/opt/airflow/.dbt/profiles.yml:ro
     - {{ airflow_repo_dir }}/scripts:/opt/airflow/scripts:ro

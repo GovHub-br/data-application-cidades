@@ -111,10 +111,9 @@ make test
 
 ```
 .
-├── dags/                 # DAGs do Airflow (data_ingest, dashboards, dbt/*_cosmos_dag.py)
+├── dags/                 # DAGs do Airflow (data_ingest, conjuntura, dbt/*_cosmos_dag.py)
 ├── plugins/              # clientes e plugins do Airflow
 ├── helpers/              # funcoes auxiliares
-├── templates/            # templates (ex: consultas SIAPE)
 ├── dbt/                  # projeto dbt (mcid)
 │   └── mcid/
 ├── scripts/              # scripts avulsos (ex: ingestao SFTP)

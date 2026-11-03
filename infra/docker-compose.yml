@@ -16,7 +16,6 @@ x-airflow-common: &airflow-common
     - ../dags:${AIRFLOW_HOME}/dags/
     - ../plugins:${AIRFLOW_HOME}/plugins/
     - ../helpers:${AIRFLOW_HOME}/helpers/
-    - ../templates:${AIRFLOW_HOME}/templates/
     - ../dbt:${AIRFLOW_HOME}/dbt/
     - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
     # Scripts do pipeline do data lake (importados pelas tasks da sftp_ingest_dag).

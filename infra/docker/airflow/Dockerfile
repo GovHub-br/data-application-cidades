@@ -44,12 +44,19 @@ WORKDIR ${AIRFLOW_HOME}
 COPY --chown=airflow:0 infra/airflow/simple_auth_manager_passwords.json ./simple_auth_manager_passwords.json
 
 # Para rodar o airflow só precisamos instalar as dependências visto que o código
-# sempre será sincronizado via git sync ou via volumes localmente
-COPY requirements.txt .
+# sempre será sincronizado via git sync ou via volumes localmente.
+#
+# Instala o LOCK, não o requirements.txt: o lock é resolvido de uma vez contra
+# esta imagem base por infra/docker/airflow/compile-lock.sh. Instalar o
+# requirements.txt solto rebaixava pacotes da base para caber o
+# openmetadata-ingestion. O uv já vem na imagem oficial e instala no mesmo
+# VIRTUAL_ENV (/home/airflow/.local) em que o pip instalava.
+COPY infra/docker/airflow/requirements.lock.txt ./requirements.lock.txt
 # As duas checagens depois do install fazem o build reprovar em vez de gerar uma
 # imagem quebrada: o pip rebaixava o Airflow em silêncio quando a imagem base
 # mudava de versão (AIRFLOW_VERSION vem da imagem oficial), e só avisava, sem
 # falhar, quando deixava pacotes da base incompatíveis.
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN uv pip install --no-cache -r requirements.lock.txt \
   && python -c "import airflow, os, sys; esperado = os.environ['AIRFLOW_VERSION']; print(f'Airflow {airflow.__version__} (base {esperado})'); sys.exit(airflow.__version__ != esperado)" \
-  && pip check
+  && uv pip check \
+  && rm -f requirements.lock.txt

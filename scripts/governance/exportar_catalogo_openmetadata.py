@@ -19,6 +19,7 @@ from pathlib import Path
 
 import yaml
 
+import documentacao_dbt
 from semantic_descriptions import for_column
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -149,6 +150,15 @@ def model_export(
     if not catalog_columns:
         fail(violations, f"{node_id}: sem colunas no catalog.json privado")
 
+    # Ao contrário da descrição, aqui não há texto de reserva: o contrato é
+    # escrito à mão, e um campo impróprio barra a publicação em vez de ser
+    # trocado em silêncio.
+    documentacao = documentacao_dbt.da_configuracao(node) or {}
+    for valor in documentacao_dbt.textos(documentacao):
+        regra = unsafe_description(valor)
+        if regra:
+            fail(violations, f"{node_id}: meta.documentacao com {regra}")
+
     return {
         "id": node_id,
         "product": governance.get("product"),
@@ -168,6 +178,7 @@ def model_export(
             if dependency.startswith("model.")
         ],
         "columns": columns,
+        "documentacao": documentacao,
         # separa as duas decisões que antes eram uma só: aparecer no catálogo
         # e poder alimentar RAG. A Bronze aparece; não alimenta.
         "rag_eligivel": elegivel_rag,

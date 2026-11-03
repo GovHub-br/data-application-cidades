@@ -11,6 +11,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from packaging.requirements import Requirement
+
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "scripts" / "governance"))
 
@@ -630,37 +632,81 @@ def test_recipes_apontam_para_os_servicos_certos() -> None:
     assert _recipe("airflow_metadata")["source"]["serviceName"] == "airflow"
 
 
-def test_ingestao_roda_em_virtualenv_isolado() -> None:
-    """Instalado por cima da base com `pip`, o pacote rebaixa dependências dela.
+LOCK_DA_IMAGEM = RAIZ / "infra" / "docker" / "airflow" / "requirements.lock.txt"
 
-    No Airflow 2.8.1 o isolamento era obrigatório (SQLAlchemy 2 contra 1.4).
-    No Airflow 3 isso acabou, mas assar na imagem, como faz o
-    data-application-minc, exige um lock resolvido contra a base. Sem ele, o
-    `pip check` do Dockerfile reprova o build.
+
+def _pin_do_pacote_de_ingestao() -> Requirement:
+    linhas = (RAIZ / "requirements.txt").read_text(encoding="utf-8").splitlines()
+    linha = next(x for x in linhas if x.startswith("openmetadata-ingestion"))
+    return Requirement(linha)
+
+
+def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
+    """No venv isolado, o conector do Airflow falhava no homolog todo dia.
+
+    O venv trazia o Airflow 3.2.2 do extra `airflow`, e o mapper do ORM não
+    inicializava ali. Na imagem, o conector roda no Airflow da própria task, o
+    mesmo que escreveu o banco de metadados.
     """
     dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
-    assert "task.virtualenv" in dag
-    assert "system_site_packages=False" in dag
-    assert "expect_airflow=False" in dag
+    assert "task.virtualenv" not in dag
+    (versao,) = _pin_do_pacote_de_ingestao().specifier
+    lock = LOCK_DA_IMAGEM.read_text(encoding="utf-8").splitlines()
+    assert f"openmetadata-ingestion=={versao.version}" in lock
 
 
 def test_pacote_de_ingestao_acompanha_a_linha_do_servidor() -> None:
     """Cliente e servidor de linhas diferentes divergem no schema das entidades."""
+    assert str(_pin_do_pacote_de_ingestao().specifier).startswith("==1.13.3")
+
+
+def test_pacote_de_ingestao_nao_traz_outro_airflow() -> None:
+    """O extra `airflow` fixa um Airflow diferente do da imagem.
+
+    O `pii-processor` exige `numpy<2` e rebaixaria o pandas da ingestão do lake.
+    """
+    extras = _pin_do_pacote_de_ingestao().extras
+    assert "airflow" not in extras
+    assert "pii-processor" not in extras
+
+
+def test_lock_da_imagem_acompanha_o_requirements() -> None:
+    """A imagem instala o lock, não o requirements.txt.
+
+    Um pin mudado só no requirements.txt nunca chegaria à imagem.
+    """
+    travados = [
+        Requirement(linha)
+        for linha in LOCK_DA_IMAGEM.read_text(encoding="utf-8").splitlines()
+        if linha and not linha.startswith(("#", " "))
+    ]
+    lock = {r.name.lower(): r for r in travados}
+    for linha in (RAIZ / "requirements.txt").read_text(encoding="utf-8").splitlines():
+        if not linha or linha.startswith("#") or "==" not in linha:
+            continue
+        pedido = Requirement(linha)
+        travado = lock[pedido.name.lower()]
+        assert travado.specifier == pedido.specifier, (
+            f"{pedido.name}: requirements.txt pede {pedido.specifier}, lock tem "
+            f"{travado.specifier}. Rode infra/docker/airflow/compile-lock.sh."
+        )
+
+
+def test_conector_do_airflow_nao_bloqueia_o_catalogo() -> None:
+    """A corrente é sequencial; nada depende de `airflow_metadata`.
+
+    Na frente da fila, uma falha dele deixava `postgres_metadata` e
+    `dbt_metadata` em `upstream_failed` e o catálogo do banco parava.
+    """
     import sys
 
     sys.path.insert(0, str(RAIZ / "helpers"))
-    from openmetadata.config import OPENMETADATA_REQUIREMENTS
+    from openmetadata.config import RECIPE_PIPELINE
 
-    pacote = next(
-        r for r in OPENMETADATA_REQUIREMENTS if r.startswith("openmetadata-ingestion")
+    assert RECIPE_PIPELINE[-1] == "airflow_metadata"
+    assert RECIPE_PIPELINE.index("postgres_metadata") < RECIPE_PIPELINE.index(
+        "dbt_metadata"
     )
-    assert "==1.13.3" in pacote, "o servidor é OpenMetadata 1.13.3"
-
-
-def test_requirements_da_imagem_nao_carrega_o_pacote_de_ingestao() -> None:
-    """Se entrar aqui, o build da imagem do Airflow quebra pelo SQLAlchemy."""
-    requisitos = (RAIZ / "requirements.txt").read_text(encoding="utf-8")
-    assert "openmetadata-ingestion" not in requisitos
 
 
 # ── governança que o conector dbt carrega ───────────────────────────────────
@@ -842,45 +888,16 @@ def test_model_com_varias_origens_lista_todas() -> None:
     assert varias, "esperava ao menos um model com mais de uma DAG de origem"
 
 
-# ── relações semânticas de Silver e Gold ────────────────────────────────────
-def test_relacoes_saem_do_grafo_e_do_contrato_temporal() -> None:
-    """Nada é inferido por semelhança de nome."""
-    modelo = {
-        "name": "gold_x",
-        "columns": [{"name": "data_referencia"}, {"name": "edicao"}, {"name": "valor"}],
-    }
-    texto = gov.markdown_das_relacoes(
-        modelo, {"le_de": ["silver_y"], "lido_por": ["gld_boletim_z"]}
-    )
-    assert "`data_referencia`, `edicao`" in texto
-    assert "`silver_y`" in texto and "`gld_boletim_z`" in texto
-    # deixa explícito que não é chave estrangeira nem linhagem
-    assert "Não constitui chave estrangeira" in texto
+# ── relações semânticas ─────────────────────────────────────────────────────
+def test_governanca_nao_escreve_nas_propriedades_do_catalogo_semantico() -> None:
+    """As duas propriedades são da task `sync_mcid_semantic_relationships`.
 
-
-def test_tabela_sem_grao_nem_vizinho_nao_recebe_texto() -> None:
-    vazio = gov.markdown_das_relacoes(
-        {"name": "x", "columns": [{"name": "coisa"}]}, {"le_de": [], "lido_por": []}
-    )
-    assert vazio == ""
-
-
-def test_bronze_fica_de_fora_das_relacoes() -> None:
-    """Da Bronze se publica topologia, não significado."""
-    assert "bronze" not in gov.CAMADAS_COM_RELACOES
-    assert gov.CAMADAS_COM_RELACOES == {"silver", "gold"}
-
-
-def test_vizinhanca_le_o_grafo_nos_dois_sentidos() -> None:
-    catalogo = {
-        "models": [
-            {"id": "model.a", "name": "a", "depends_on": []},
-            {"id": "model.b", "name": "b", "depends_on": ["model.a"]},
-        ]
-    }
-    v = gov.vizinhanca_do_modelo(catalogo)
-    assert v["b"]["le_de"] == ["a"]
-    assert v["a"]["lido_por"] == ["b"]
+    A governança roda depois dela e, quando gravava ali a vizinhança do grafo
+    do dbt, apagava as relações publicadas na mesma execução.
+    """
+    fonte = Path(gov.__file__).read_text(encoding="utf-8")
+    assert '"mcidSemanticRelationships"' not in fonte
+    assert '"mcidRelatedTables"' not in fonte
 
 
 def test_tabela_relacionada_carrega_o_que_a_interface_precisa() -> None:
@@ -1052,3 +1069,49 @@ def test_produto_por_modelo_sai_do_catalogo_semantico() -> None:
     declarados = {p["name"] for p in DOMINIOS["produtos"]}
     desconhecidos = set(produtos.values()) - declarados - PRODUTOS_SEM_DATA_PRODUCT
     assert not desconhecidos, desconhecidos
+
+
+# ── ativos sem domínio ──────────────────────────────────────────────────────
+class _OMDeTeste:
+    """Só o que `dominio_do_servico_nas_orfas` usa do cliente."""
+
+    offline = False
+
+    def __init__(self, ativos: dict[str, list[dict]]) -> None:
+        self.ativos = ativos
+        self.patches: list[tuple[str, str, list[dict]]] = []
+
+    def existe(self, rota: str, fqn: str, campos: str | None = None) -> dict:
+        return {"id": "d-mcid", "name": fqn, "fullyQualifiedName": fqn}
+
+    def listar(self, rota: str, parametros: dict) -> list[dict]:
+        return self.ativos.get(rota, [])
+
+    def patch(self, rota: str, ident: str, operacoes: list[dict], _rotulo: str) -> None:
+        self.patches.append((rota, ident, operacoes))
+
+
+def test_ativo_sem_dominio_recebe_o_do_servico_e_o_resto_fica() -> None:
+    habitacao = [
+        {"id": "d-hab", "type": "domain", "fullyQualifiedName": "MCid.Habitacao"}
+    ]
+    om = _OMDeTeste(
+        {
+            "databaseSchemas": [
+                {"id": "s1", "fullyQualifiedName": "cidades.metadata", "domains": []},
+                {"id": "s2", "fullyQualifiedName": "cidades.ouro", "domains": habitacao},
+            ],
+            "tables": [
+                {"id": "t1", "fullyQualifiedName": "cidades.metadata.models"},
+                {"id": "t2", "fullyQualifiedName": "ouro.x", "domains": habitacao},
+            ],
+        }
+    )
+    gov.dominio_do_servico_nas_orfas(om, "Cidades", "cidades")
+
+    assert [(rota, ident) for rota, ident, _ in om.patches] == [
+        ("databaseSchemas", "s1"),
+        ("tables", "t1"),
+    ]
+    dominio = om.patches[0][2][0]["value"][0]
+    assert (dominio["id"], dominio["fullyQualifiedName"]) == ("d-mcid", "MCid")
