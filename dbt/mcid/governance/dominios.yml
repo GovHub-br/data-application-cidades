@@ -379,6 +379,12 @@ classificacoes:
       - name: empreendimento_rural
         display_name: Empreendimento Rural
         description: Ativo do produto de dados Empreendimento Rural.
+      - name: linha_financiada
+        display_name: Linha Financiada
+        description: Ativo do produto de dados Linha Financiada.
+      - name: reforma_casa_brasil
+        display_name: Reforma Casa Brasil
+        description: Ativo do produto de dados Reforma Casa Brasil.
       - name: bronze
         display_name: Bronze
         description: Ativo da camada que preserva a representação recebida da origem.

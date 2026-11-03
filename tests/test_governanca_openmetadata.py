@@ -80,12 +80,10 @@ def test_toda_etiqueta_aplicada_esta_declarada() -> None:
         for t in c["etiquetas"]
     }
     nativas = set(DOMINIOS["classificacoes_nativas"])
-    for produto in (
-        "conjuntura",
-        "empreendimento_far",
-        "entidades_fds",
-        "empreendimento_rural",
-    ):
+    # Todos os produtos declarados, não uma lista fixa: com a lista fixa,
+    # `reforma_casa_brasil` entrou aplicando `dbtTags.reforma_casa_brasil` sem
+    # que a etiqueta fosse criada, e a governança falhava com 404.
+    for produto in (p["name"] for p in DOMINIOS["produtos"]):
         for camada in ("bronze", "silver", "gold", "mixed"):
             for fqn in fqns(gov.etiquetas_da_camada(DOMINIOS, produto, camada)):
                 assert fqn in declaradas or fqn.split(".")[0] in nativas, fqn
@@ -1115,3 +1113,42 @@ def test_ativo_sem_dominio_recebe_o_do_servico_e_o_resto_fica() -> None:
     ]
     dominio = om.patches[0][2][0]["value"][0]
     assert (dominio["id"], dominio["fullyQualifiedName"]) == ("d-mcid", "MCid")
+
+
+# ── criação de produto de dados ─────────────────────────────────────────────
+class _OMSemProdutos:
+    """Instância em que os domínios existem e nenhum produto foi criado ainda."""
+
+    offline = False
+
+    def __init__(self) -> None:
+        self.criados: list[tuple[str, dict]] = []
+
+    def existe(self, rota: str, fqn: str, campos: str | None = None) -> dict | None:
+        if rota == "domains":
+            return {"id": "d-hab", "name": fqn.split(".")[-1], "fullyQualifiedName": fqn}
+        return None
+
+    def criar(self, rota: str, corpo: dict, _rotulo: str) -> None:
+        self.criados.append((rota, corpo))
+
+
+class _SemDonos:
+    def resolver(self, _chave: str | None) -> None:
+        return None
+
+
+def test_produto_novo_e_criado_com_dominio_pelo_fqn() -> None:
+    """A criação só aceita `domains` como FQN em texto.
+
+    A referência de entidade é o formato do PATCH. Quando ela chegava à
+    criação, a API recusava o produto com 400 "Invalid request format", e os
+    produtos declarados depois do primeiro sync nunca eram criados.
+    """
+    om = _OMSemProdutos()
+    gov.sincronizar_produtos(om, _SemDonos(), DOMINIOS)
+
+    assert om.criados, "nenhum produto declarado foi criado"
+    for rota, corpo in om.criados:
+        assert rota == "dataProducts"
+        assert all(isinstance(d, str) for d in corpo["domains"]), corpo["domains"]

@@ -338,9 +338,13 @@ def sincronizar_produtos(om: ClienteOM, donos: Proprietarios, dominios: dict) ->
                 f"produto {p['name']}",
             )
         else:
+            # `domains` vem DEPOIS de `desejado`: lá ele é referência de
+            # entidade, o formato do PATCH, e a criação só aceita o FQN em
+            # texto. Na ordem inversa a referência sobrescrevia o FQN e a API
+            # recusava todo produto novo com 400 "Invalid request format".
             om.criar(
                 "dataProducts",
-                {"name": p["name"], "domains": [p["domain"]], **desejado},
+                {"name": p["name"], **desejado, "domains": [p["domain"]]},
                 p["name"],
             )
 
