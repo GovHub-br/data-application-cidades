@@ -2,1254 +2,3452 @@ version: 1
 kind: MCIDSemanticRelationshipCatalog
 metadata:
   catalog_id: mcid-semantic-relationships
-  generated_from: aggregate_read_only_profile_and_dbt_static_analysis
-  profile_generated_at: '2026-07-23T03:51:45.268089+00:00'
+  generated_from: aggregate_read_only_profile (skill mapear-joins-semanticos, PostgreSQL) + dbt relationships tests + dbt
+    static join inventory
+  profile_generated_at: '2026-11-02T22:58:36.104129+00:00'
   status: validated_snapshot
   language: pt-BR
   data_exposure: metadata_and_aggregate_counts_only
 scope:
   service: Cidades
   database: cidades
-  table_count: 74
-  column_count: 1215
+  table_count: 201
+  column_count: 3756
   fqn_format: '{service}.{database}.{schema}.{table}'
+  selection: tabelas de prata e ouro com modelo no main do data-application-cidades; medidas as que existem no PostgreSQL
+    `cidades` (184); as 17 restantes entram sem relação
+  not_in_database:
+  - ouro.ouro_historico_marco_empreendimento
+  - ouro.ouro_historico_serie_mensal
+  - ouro.ouro_historico_serie_situacao_mensal
+  - ouro.ouro_historico_snapshot_empreendimento_atual
+  - ouro.ouro_reloginho_indicadores
+  - ouro.ouro_reloginho_indicadores_entregas
+  - ouro.ouro_reloginho_indicadores_frente
+  - ouro.ouro_reloginho_indicadores_gargalo_desempenho
+  - ouro.ouro_reloginho_resumo_dashboard
+  - ouro.ouro_reloginho_resumo_gargalo_desempenho_dashboard
+  - prata.prata_far_historico_empreendimento
+  - prata.prata_fds_historico_empreendimento
+  - prata.prata_historico_entrega_apf
+  - prata.prata_historico_serie_executiva
+  - prata.prata_historico_snh_apf_mes
+  - prata.prata_historico_snh_entregas_mes
+  - prata.prata_rural_historico_empreendimento
   tables_by_schema:
-    conjuntura:
-    - bronze_abecip_poupanca_sbpe
-    - bronze_bacen_financiamentos_imobiliarios
-    - bronze_fgv_icst
-    - bronze_fgv_incc_m
-    - bronze_fipezap_locacao
-    - bronze_ibge_pib_construcao_civil
-    - bronze_ibge_pnadc_ocupados_construcao
-    - bronze_ibge_pnadc_rendimento_construcao
-    - bronze_ibge_sinapi
-    - bronze_imob_infomoney
-    - bronze_novo_caged
-    conjuntura_gold:
-    - gold_abecip_novos_financiamentos_imobiliarios
-    - gold_balancos_empresas_lancamentos
-    - gold_balancos_empresas_vendas
-    - gold_cbic_lancamentos
-    - gold_cbic_lancamentos_regiao
-    - gold_cbic_vendas
-    - gold_cbic_vendas_regiao
-    - gold_empregos_construcao
-    - gold_fgts_renda_familiar
-    - gold_financiamento_pf_por_faixa
-    - gold_financiamentos_habitacionais
-    - gold_financiamentos_imobiliarios
-    - gold_ibge_pnad_construcao
-    - gold_indicadores_financiamento_pf
-    - gold_indices_mercado_imobiliario
-    - gold_pib_construcao_civil
-    - gold_precos_construcao
-    - gold_saldo_caderneta_poupanca
-    - gold_ticket_medio_vs_incc
-    - gold_uh_condicao_uso
-    conjuntura:
-    - silver_abecip_novos_financiamentos_imobiliarios
-    - silver_abecip_poupanca_sbpe
-    - silver_abecip_sbpe_financiamentos_habitacionais
-    - silver_abramat_indice
-    - silver_bacen_financiamentos_imobiliarios
-    - silver_balancos_empresas
-    - silver_cbic_lancamentos_vendas
-    - silver_fgts_financiamentos_habitacionais
-    - silver_fgv_icst
-    - silver_fgv_incc_m
-    - silver_financiamentos_habitacionais
-    - silver_fipezap_locacao
-    - silver_ibge_pib_construcao_civil
-    - silver_ibge_pnadc_ocupados_construcao
-    - silver_ibge_pnadc_rendimento_construcao
-    - silver_ibge_sinapi
-    - silver_imob_infomoney
-    - silver_novo_caged
-    - silver_ticket_medio_empresas
-    empreendimento_far:
-    - cadastro_pj
-    - consolidado
-    - dados_prioritarios_caixa
-    - empreendimento
-    - evolucao_financeira
-    - evolucao_financeira_chart
-    - execucao_fisica_financeira_chart
-    - ficha_empreendimento
-    - financeiro_mensal
-    - mapa_nacional
-    - obra_mensal
-    - panorama_estadual
-    - resumo_gerencial
-    entidades_fds:
-    - fds_cadastro_pj
-    - fds_dados_prioritarios_entregas
-    - fds_empreendimento
-    - fds_evolucao_financeira
-    - fds_evolucao_financeira_chart
-    - fds_ficha_empreendimento
-    - fds_financeiro_mensal
-    - fds_int_059_caixa_pj
-    - fds_obra_mensal
-    - fds_panorama_entidade
-    - fds_trabalho_social
+    ouro:
+    - ouro_conjuntura_balancos_empresas
+    - ouro_conjuntura_balancos_empresas_totais
+    - ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais
+    - ouro_conjuntura_boletim_p1_lancamentos_por_regiao_cbic
+    - ouro_conjuntura_boletim_p1_pib_construcao_crescimento
+    - ouro_conjuntura_boletim_p1_vendas_por_regiao_cbic
+    - ouro_conjuntura_boletim_p2_financiamentos_habitacionais_uh
+    - ouro_conjuntura_boletim_p2_financiamentos_imobiliarios_bacen
+    - ouro_conjuntura_boletim_p2_lancamentos_por_construtora_variacao
+    - ouro_conjuntura_boletim_p2_totais_empresas_variacao
+    - ouro_conjuntura_boletim_p2_vendas_por_construtora_variacao
+    - ouro_conjuntura_boletim_p3_empregos_construcao_caged
+    - ouro_conjuntura_boletim_p3_financiamentos_por_banco
+    - ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento
+    - ouro_conjuntura_boletim_p3_producao_e_vendas_variacao
+    - ouro_conjuntura_boletim_p4_credito_imobiliario_pib
+    - ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso
+    - ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa
+    - ouro_conjuntura_boletim_p5_poupanca_captacao_liquida
+    - ouro_conjuntura_boletim_p5_sbpe_construcao_no_tri
+    - ouro_conjuntura_boletim_p6_ogu
+    - ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m
+    - ouro_conjuntura_boletim_p6_ticket_medio_vs_incc
+    - ouro_conjuntura_boletim_p7_indices_da_construcao_variacao
+    - ouro_conjuntura_boletim_valores
+    - ouro_conjuntura_canal_fgts
+    - ouro_conjuntura_credito_pib
+    - ouro_conjuntura_empregos_caged
+    - ouro_conjuntura_fgts_valor_medio
+    - ouro_conjuntura_financiamento_pf_faixa
+    - ouro_conjuntura_financiamentos_habitacionais
+    - ouro_conjuntura_financiamentos_imobiliarios_pf_pj
+    - ouro_conjuntura_financiamentos_instituicao
+    - ouro_conjuntura_fipezap
+    - ouro_conjuntura_funding
+    - ouro_conjuntura_fundo_social
+    - ouro_conjuntura_icst
+    - ouro_conjuntura_incc_m
+    - ouro_conjuntura_indice_imob
+    - ouro_conjuntura_novos_financiamentos_banco
+    - ouro_conjuntura_ogu
+    - ouro_conjuntura_pib_construcao_civil
+    - ouro_conjuntura_pib_construcao_civil_pct
+    - ouro_conjuntura_pnad_ocupados
+    - ouro_conjuntura_pnad_rendimento
+    - ouro_conjuntura_producao_fisica
+    - ouro_conjuntura_qualidade_completude
+    - ouro_conjuntura_qualidade_inventario
+    - ouro_conjuntura_qualidade_schema
+    - ouro_conjuntura_qualidade_schema_drift
+    - ouro_conjuntura_saldo_poupanca
+    - ouro_conjuntura_sinapi
+    - ouro_conjuntura_ticket_medio
+    - ouro_conjuntura_uh_condicao_uso
+    - ouro_far_curva_s
+    - ouro_far_evolucao_financeira_chart
+    - ouro_far_execucao_fisica_financeira_chart
+    - ouro_far_ficha_empreendimento
+    - ouro_far_mapa_nacional
+    - ouro_far_panorama_estadual
+    - ouro_far_resumo_gerencial
+    - ouro_far_serie_mensal_apf
+    - ouro_fds_evolucao_financeira_chart
+    - ouro_fds_ficha_empreendimento
+    - ouro_fds_panorama_entidade
+    - ouro_historico_marco_empreendimento
+    - ouro_historico_serie_mensal
+    - ouro_historico_serie_situacao_mensal
+    - ouro_historico_snapshot_empreendimento_atual
+    - ouro_linha_financiada_base_agregada
+    - ouro_linha_financiada_base_pf_fundo_social
+    - ouro_linha_financiada_cobertura_perguntas
+    - ouro_linha_financiada_contrapartidas
+    - ouro_linha_financiada_empreendimentos
+    - ouro_linha_financiada_execucao_orcamentaria
+    - ouro_linha_financiada_features_preditivas
+    - ouro_linha_financiada_mapa_execucao
+    - ouro_linha_financiada_mapa_uf
+    - ouro_linha_financiada_projecao_anual
+    - ouro_linha_financiada_ranking_territorial
+    - ouro_linha_financiada_relatorio_semanal
+    - ouro_linha_financiada_resumo_mensal
+    - ouro_reforma_casa_brasil_cobertura_perguntas_dash
+    - ouro_reforma_casa_brasil_implementacao_dash
+    - ouro_reloginho_indicadores
+    - ouro_reloginho_indicadores_entregas
+    - ouro_reloginho_indicadores_frente
+    - ouro_reloginho_indicadores_gargalo_desempenho
+    - ouro_reloginho_resumo_dashboard
+    - ouro_reloginho_resumo_gargalo_desempenho_dashboard
+    - ouro_rural_evolucao_financeira
+    - ouro_rural_execucao_fisica_financeira
+    - ouro_rural_ficha_empreendimento
+    - ouro_rural_ficha_trabalho_social
+    - ouro_rural_infraestrutura_agua_saneamento
+    - ouro_rural_mapa_nacional
+    - ouro_rural_panorama_estadual
+    - ouro_rural_perfil_beneficiarios
+    - ouro_rural_resumo_gerencial
+    - snap_boletim_p1_cbic_lancamentos_e_vendas_totais
+    - snap_boletim_p1_lancamentos_por_regiao_cbic
+    - snap_boletim_p1_pib_construcao_civil_em_de_crescimento
+    - snap_boletim_p1_vendas_por_regiao_cbic
+    - snap_boletim_p2_financiamentos_habitacionais_uh
+    - snap_boletim_p2_financiamentos_imobiliarios_bacen
+    - snap_boletim_p2_lancamentos_por_construtora_variacao
+    - snap_boletim_p2_totais_das_empresas_levantadas_variacao
+    - snap_boletim_p2_vendas_por_construtora_variacao
+    - snap_boletim_p3_empregos_construcao_caged
+    - snap_boletim_p3_novos_financiamentos_imobiliarios_por_banco_
+    - snap_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re
+    - snap_boletim_p3_producao_industrial_e_volume_de_vendas_varia
+    - snap_boletim_p4_credito_imobiliario_pib
+    - snap_boletim_p4_no_uh_por_condicao_de_uso
+    - snap_boletim_p5_financiamento_pf_mcmv_por_faixa
+    - snap_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida
+    - snap_boletim_p5_sbpe_construcao_unidades_e_valor_acum_no_tri
+    - snap_boletim_p6_sinapi_brasil_e_incc_m
+    - snap_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc
+    - snap_boletim_p7_indices_da_construcao_variacao
+    prata:
+    - prata_conjuntura_abecip_financiamentos
+    - prata_conjuntura_abecip_instituicoes
+    - prata_conjuntura_abecip_poupanca_sbpe
+    - prata_conjuntura_bacen_credito_pib
+    - prata_conjuntura_bacen_financiamentos_imobiliarios
+    - prata_conjuntura_empresas_balanco_lancamentos_vendas
+    - prata_conjuntura_fgts_valor_medio_imoveis
+    - prata_conjuntura_fgv_icst
+    - prata_conjuntura_fgv_incc_m
+    - prata_conjuntura_fipezap_locacao
+    - prata_conjuntura_geavo_cci_cca
+    - prata_conjuntura_geavo_fgts_pf
+    - prata_conjuntura_geavo_fgts_pj
+    - prata_conjuntura_gefus_fundo_social
+    - prata_conjuntura_ibge_paic_obras
+    - prata_conjuntura_ibge_paic_pessoal_salarial
+    - prata_conjuntura_ibge_paic_resultados
+    - prata_conjuntura_ibge_pib_consolidado_trimestral
+    - prata_conjuntura_ibge_pib_construcao_civil
+    - prata_conjuntura_ibge_pib_corrente
+    - prata_conjuntura_ibge_pim_pf_brasil
+    - prata_conjuntura_ibge_pmc_construcao
+    - prata_conjuntura_ibge_pnad_construcao_ocupados
+    - prata_conjuntura_ibge_pnad_construcao_rendimento
+    - prata_conjuntura_ibge_pnadc_populacao_decis_renda
+    - prata_conjuntura_ibge_pnadc_rendimento_domiciliar
+    - prata_conjuntura_ibge_sinapi
+    - prata_conjuntura_infomoney_imob
+    - prata_conjuntura_manual_mensais
+    - prata_conjuntura_manual_trimestrais
+    - prata_conjuntura_novo_caged
+    - prata_conjuntura_novo_caged_servicos_especializados
+    - prata_conjuntura_novo_caged_total
+    - prata_conjuntura_pib_construcao_civil_pct
+    - prata_conjuntura_sbpe_financiamentos_aquisicao
+    - prata_conjuntura_siafi_dotacao_execucao
+    - prata_far_cadastro_pj
+    - prata_far_caixa_serie
+    - prata_far_consolidado
+    - prata_far_dados_prioritarios_caixa
+    - prata_far_empreendimento
+    - prata_far_evolucao_financeira
+    - prata_far_financeiro_mensal
+    - prata_far_historico_empreendimento
+    - prata_far_obra_mensal
+    - prata_far_obra_serie
+    - prata_far_serie_mensal
+    - prata_fds_cadastro_pj
+    - prata_fds_dados_prioritarios_entregas
+    - prata_fds_dim_empreendimento
+    - prata_fds_empreendimento
+    - prata_fds_evolucao_financeira
+    - prata_fds_financeiro_mensal
+    - prata_fds_historico_empreendimento
+    - prata_fds_int_059_caixa_pj
+    - prata_fds_obra_mensal
+    - prata_fds_trabalho_social
+    - prata_historico_entrega_apf
+    - prata_historico_serie_executiva
+    - prata_historico_snh_apf_mes
+    - prata_historico_snh_entregas_mes
+    - prata_linha_financiada_contrapartida
+    - prata_linha_financiada_contrato
+    - prata_linha_financiada_empreendimento
+    - prata_linha_financiada_execucao_orcamentaria
+    - prata_linha_financiada_pf_fgts
+    - prata_reforma_casa_brasil_contrato
+    - prata_rural_cadastro_pf
+    - prata_rural_cadastro_pj
+    - prata_rural_empreendimento
+    - prata_rural_financeiro_mensal
+    - prata_rural_historico_empreendimento
+    - prata_rural_obra_mensal
+    - prata_rural_pnhr_bb
+    - prata_rural_pnhr_caixa
+    - prata_rural_pnhr_liberacoes
+    - prata_rural_prioritarios_bb
+    - prata_rural_prioritarios_caixa
+    - prata_rural_prioritarios_snh
+    - prata_rural_trabalho_social_bb
+    - prata_rural_trabalho_social_caixa
 validation_model:
   database_constraints_found: 0
-  database_indexes_found: 0
   explicit_database_relationships: []
-  aggregate_validated_definition: Observed normalized-key overlap, uniqueness and row coverage; this is evidence, not a PostgreSQL
-    FK.
-  selection_policy: Strong relations are collapsed around canonical hubs; zero-overlap pairs are omitted.
+  aggregate_validated_definition: Sobreposição de chave normalizada confirmada por contagem exata (cobertura de distintos
+    da origem >= 0,95). Evidência do dado do dia, não FK.
+  selection_policy: Cada chave é comparada com até três hubs (global, produto, produto x camada); dimensões conformadas (UF,
+    município, mês, ano, edição) nunca viram relação; chaves com menos de 20 distintos ficam de fora.
 openmetadata:
   custom_properties:
     markdown:
       name: mcidSemanticRelationships
       display_name: Relações semânticas MCID
-      description: >
-        Chaves de ligação, relações validadas, candidatos, campos de pesquisa,
-        cautelas de privacidade e lógica de JOIN relevantes para RAG/GraphRAG.
-        Não representa uma constraint FK física.
+      description: 'Chaves de ligação, relações validadas, candidatos, campos de pesquisa, cautelas de privacidade e lógica
+        de JOIN relevantes para RAG/GraphRAG. Não representa uma constraint FK física.
+
+        '
     related_tables:
       name: mcidRelatedTables
       display_name: Tabelas relacionadas no MCID
-      description: >
-        Atalhos navegáveis para tabelas citadas pelo catálogo semântico. O tipo
-        e a força da relação devem ser conferidos em mcidSemanticRelationships;
-        esta propriedade não cria linhagem nem integridade referencial.
+      description: 'Atalhos navegáveis para tabelas citadas pelo catálogo semântico. O tipo e a força da relação devem ser
+        conferidos em mcidSemanticRelationships; esta propriedade não cria linhagem nem integridade referencial.
+
+        '
 relationships:
-  validated_observed:
-  - id: far_empreendimento_apf_to_cadastro
-    semantic_key: apf
-    source: empreendimento_far.empreendimento.apf
-    target: empreendimento_far.cadastro_pj.apf
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 823
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 1646
-        distinct_keys: 823
-        matched_rows: 1646
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.5
-      target:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 823
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: far_ficha_apf_to_cadastro
-    semantic_key: apf
-    source: empreendimento_far.ficha_empreendimento.apf
-    target: empreendimento_far.cadastro_pj.apf
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 823
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 1646
-        distinct_keys: 823
-        matched_rows: 1646
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.5
-      target:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 823
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: far_execucao_chart_apf_to_cadastro
-    semantic_key: apf
-    source: empreendimento_far.execucao_fisica_financeira_chart.apf
-    target: empreendimento_far.cadastro_pj.apf
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 823
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 17366
-        distinct_keys: 823
-        matched_rows: 17366
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.047391
-      target:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 823
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: far_obra_apf_to_cadastro
-    semantic_key: apf
-    source: empreendimento_far.obra_mensal.apf
-    target: empreendimento_far.cadastro_pj.apf
-    join: normalized_exact
-    cardinality: one_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 823
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 823
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 823
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: far_evolucao_apf_to_cadastro
-    semantic_key: apf
-    source: empreendimento_far.evolucao_financeira.apf
-    target: empreendimento_far.cadastro_pj.apf
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 651
-      jaccard_distinct: 0.791009
-      source:
-        non_null_rows: 8126
-        distinct_keys: 651
-        matched_rows: 8126
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.080113
-      target:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 651
-        row_coverage: 0.791009
-        distinct_coverage: 0.791009
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-    notes: A série financeira contém somente o subconjunto de APFs com evolução.
-  - id: far_evolucao_chart_apf_to_cadastro
-    semantic_key: apf
-    source: empreendimento_far.evolucao_financeira_chart.apf
-    target: empreendimento_far.cadastro_pj.apf
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 651
-      jaccard_distinct: 0.791009
-      source:
-        non_null_rows: 32504
-        distinct_keys: 651
-        matched_rows: 32504
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.020028
-      target:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 651
-        row_coverage: 0.791009
-        distinct_coverage: 0.791009
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: far_cadastro_apf_to_dados_prioritarios
-    semantic_key: apf
-    source: empreendimento_far.cadastro_pj.apf
-    target: empreendimento_far.dados_prioritarios_caixa.apf
-    join: normalized_exact
-    cardinality: one_to_many_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_shared_key_candidate
-      common_distinct_keys: 823
-      jaccard_distinct: 0.185235
-      source:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 823
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 8886
-        distinct_keys: 4443
-        matched_rows: 1646
-        row_coverage: 0.185235
-        distinct_coverage: 0.185235
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.5
-    notes: Todos os APFs cadastrais aparecem na base mais ampla; o destino repete APFs.
-  - id: far_cadastro_id_proposta_to_consolidado
-    semantic_key: id_proposta
-    source: empreendimento_far.cadastro_pj.id_proposta
-    target: empreendimento_far.consolidado.id_proposta
-    join: normalized_exact
-    cardinality: one_to_many_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_shared_key_candidate
-      common_distinct_keys: 823
-      jaccard_distinct: 0.062034
-      source:
-        non_null_rows: 823
-        distinct_keys: 823
-        matched_rows: 823
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 15142
-        distinct_keys: 13267
-        matched_rows: 1045
-        row_coverage: 0.069013
-        distinct_coverage: 0.062034
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.876172
-    notes: Todos os 823 IDs do cadastro aparecem no consolidado; o consolidado possui universo maior e repetição.
-  - id: fds_empreendimento_apf_to_cadastro
-    semantic_key: apf
-    source: entidades_fds.fds_empreendimento.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: normalized_exact
-    cardinality: one_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 343
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: fds_ficha_apf_to_cadastro
-    semantic_key: apf
-    source: entidades_fds.fds_ficha_empreendimento.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: normalized_exact
-    cardinality: one_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 343
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: fds_obra_apf_to_cadastro
-    semantic_key: apf
-    source: entidades_fds.fds_obra_mensal.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: normalized_exact
-    cardinality: one_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 343
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: fds_evolucao_apf_to_cadastro
-    semantic_key: apf
-    source: entidades_fds.fds_evolucao_financeira.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 111
-      jaccard_distinct: 0.323615
-      source:
-        non_null_rows: 306
-        distinct_keys: 111
-        matched_rows: 306
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.362745
-      target:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 111
-        row_coverage: 0.323615
-        distinct_coverage: 0.323615
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: fds_evolucao_chart_apf_to_cadastro
-    semantic_key: apf
-    source: entidades_fds.fds_evolucao_financeira_chart.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 111
-      jaccard_distinct: 0.323615
-      source:
-        non_null_rows: 306
-        distinct_keys: 111
-        matched_rows: 306
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.362745
-      target:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 111
-        row_coverage: 0.323615
-        distinct_coverage: 0.323615
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: fds_trabalho_social_apf_to_cadastro
-    semantic_key: apf
-    source: entidades_fds.fds_trabalho_social.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: normalized_exact
-    cardinality: one_to_one_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 89
-      jaccard_distinct: 0.259475
-      source:
-        non_null_rows: 89
-        distinct_keys: 89
-        matched_rows: 89
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 89
-        row_coverage: 0.259475
-        distinct_coverage: 0.259475
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-  - id: fds_empreendimento_cnpj_to_panorama
-    semantic_key: cnpj_eo
-    source: entidades_fds.fds_empreendimento.eo_cnpj
-    target: entidades_fds.fds_panorama_entidade.cnpj_eo
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 172
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 343
-        distinct_keys: 172
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.501458
-      target:
-        non_null_rows: 172
-        distinct_keys: 172
-        matched_rows: 172
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-    pii: business_identifier_protected
-  - id: fds_ficha_cnpj_to_panorama
-    semantic_key: cnpj_eo
-    source: entidades_fds.fds_ficha_empreendimento.cnpj_eo
-    target: entidades_fds.fds_panorama_entidade.cnpj_eo
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 172
-      jaccard_distinct: 1.0
-      source:
-        non_null_rows: 343
-        distinct_keys: 172
-        matched_rows: 343
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.501458
-      target:
-        non_null_rows: 172
-        distinct_keys: 172
-        matched_rows: 172
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-    pii: business_identifier_protected
-  - id: fds_evolucao_cnpj_to_panorama
-    semantic_key: cnpj_eo
-    source: entidades_fds.fds_evolucao_financeira.eo_cnpj
-    target: entidades_fds.fds_panorama_entidade.cnpj_eo
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 69
-      jaccard_distinct: 0.401163
-      source:
-        non_null_rows: 306
-        distinct_keys: 69
-        matched_rows: 306
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.22549
-      target:
-        non_null_rows: 172
-        distinct_keys: 172
-        matched_rows: 69
-        row_coverage: 0.401163
-        distinct_coverage: 0.401163
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-    pii: business_identifier_protected
-  - id: fds_evolucao_chart_cnpj_to_panorama
-    semantic_key: cnpj_eo
-    source: entidades_fds.fds_evolucao_financeira_chart.cnpj_eo
-    target: entidades_fds.fds_panorama_entidade.cnpj_eo
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_validated_subset
-    confidence: high
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 69
-      jaccard_distinct: 0.401163
-      source:
-        non_null_rows: 306
-        distinct_keys: 69
-        matched_rows: 306
-        row_coverage: 1.0
-        distinct_coverage: 1.0
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.22549
-      target:
-        non_null_rows: 172
-        distinct_keys: 172
-        matched_rows: 69
-        row_coverage: 0.401163
-        distinct_coverage: 0.401163
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-    pii: business_identifier_protected
   tested_relationships:
-  - id: fds_obra_apf_dbt_contract
-    semantic_key: apf
-    source: entidades_fds.fds_obra_mensal.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: exact
-    cardinality: one_to_one
-    validation: dbt_relationships_test
-    confidence: high
-  - id: fds_trabalho_social_apf_dbt_contract
-    semantic_key: apf
-    source: entidades_fds.fds_trabalho_social.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: exact
-    cardinality: one_to_one_on_matching_population
-    validation: dbt_relationships_test
-    confidence: high
-  - id: fds_evolucao_apf_dbt_contract
-    semantic_key: apf
-    source: entidades_fds.fds_evolucao_financeira.apf
-    target: entidades_fds.fds_empreendimento.apf
-    join: exact
-    cardinality: many_to_one
-    validation: dbt_relationships_test
-    confidence: high
-  - id: fds_ficha_apf_dbt_contract
-    semantic_key: apf
-    source: entidades_fds.fds_ficha_empreendimento.apf
-    target: entidades_fds.fds_empreendimento.apf
-    join: exact
-    cardinality: one_to_one
-    validation: dbt_relationships_test
-    confidence: high
-  - id: fds_evolucao_chart_apf_dbt_contract
-    semantic_key: apf
-    source: entidades_fds.fds_evolucao_financeira_chart.apf
-    target: entidades_fds.fds_ficha_empreendimento.apf
-    join: exact
-    cardinality: many_to_one
-    validation: dbt_relationships_test
-    confidence: high
-  - id: conjuntura_pnad_periodo_dbt_contract
-    semantic_key: periodo
-    source: conjuntura.silver_ibge_pnadc_ocupados_construcao.periodo
-    target: conjuntura.silver_ibge_pnadc_rendimento_construcao.periodo
+  - id: dbt_test__ouro_far_ficha_empreendimento__apf__prata_far_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_ficha_empreendimento.apf
+    target: prata.prata_far_empreendimento.apf
     join: exact
     cardinality: one_to_one
     validation: dbt_relationships_test
     confidence: high
     evidence:
-      source_distinct_keys: 21
-      target_distinct_keys: 21
-      source_coverage: 1.0
-      target_coverage: 1.0
-  candidate_observed:
-  - id: fds_int059_apf_to_cadastro
-    semantic_key: apf
-    source: entidades_fds.fds_int_059_caixa_pj.apf
-    target: entidades_fds.fds_cadastro_pj.apf
-    join: normalized_exact
-    cardinality: one_to_one_on_matching_population
-    validation: aggregate_partial_overlap
-    confidence: medium
-    evidence:
-      profile_class: strong_shared_key_candidate
-      common_distinct_keys: 304
-      jaccard_distinct: 0.339665
+      profile_class: exact_count
+      via_hubs:
+      - dbt_relationships_test
+      common_distinct_keys: 878
       source:
-        non_null_rows: 856
-        distinct_keys: 856
-        matched_rows: 304
-        row_coverage: 0.35514
-        distinct_coverage: 0.35514
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-      target:
-        non_null_rows: 343
-        distinct_keys: 343
-        matched_rows: 304
-        row_coverage: 0.886297
-        distinct_coverage: 0.886297
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-    notes: 304 APFs comuns; não usar como FK obrigatória sem filtro de programa/fase.
-  - id: far_to_fds_dados_prioritarios_by_apf
-    semantic_key: apf
-    source: empreendimento_far.dados_prioritarios_caixa.apf
-    target: entidades_fds.fds_dados_prioritarios_entregas.apf
-    join: normalized_exact
-    cardinality: many_to_many_or_repeated_shared_key
-    validation: aggregate_partial_overlap
-    confidence: medium
-    evidence:
-      profile_class: partial_overlap_candidate
-      common_distinct_keys: 3491
-      jaccard_distinct: 0.279481
-      source:
-        non_null_rows: 8886
-        distinct_keys: 4443
-        matched_rows: 6982
-        row_coverage: 0.78573
-        distinct_coverage: 0.78573
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.5
-      target:
-        non_null_rows: 23080
-        distinct_keys: 11539
-        matched_rows: 6984
-        row_coverage: 0.3026
-        distinct_coverage: 0.302539
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 0.499957
-    notes: Ligação transversal relevante; confirmar se representa o mesmo empreendimento antes de fundir nós.
-  - id: fds_cadastro_cnpj_to_panorama_valid_subset
-    semantic_key: cnpj_eo
-    source: entidades_fds.fds_cadastro_pj.eo_cnpj
-    target: entidades_fds.fds_panorama_entidade.cnpj_eo
-    join: normalized_exact
-    cardinality: many_to_one_on_matching_population
-    validation: aggregate_valid_format_subset
-    confidence: medium
-    evidence:
-      profile_class: strong_fk_like_candidate
-      common_distinct_keys: 62
-      jaccard_distinct: 0.360465
-      source:
-        non_null_rows: 129
-        distinct_keys: 62
-        matched_rows: 129
+        non_null_rows: 878
+        distinct_keys: 878
+        matched_rows: 878
         row_coverage: 1.0
         distinct_coverage: 1.0
-        valid_format_ratio: 0.376093
-        key_uniqueness_ratio: 0.48062
       target:
-        non_null_rows: 172
-        distinct_keys: 172
-        matched_rows: 62
-        row_coverage: 0.360465
-        distinct_coverage: 0.360465
-        valid_format_ratio: 1.0
-        key_uniqueness_ratio: 1.0
-    notes: O bronze contém CNPJ de 13 dígitos; aplicar LPAD para 14 e excluir sentinelas antes de validar o universo completo.
-    pii: business_identifier_protected
+        distinct_keys: 878
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/far_dbt/ouro/schema.yml.
+  - id: dbt_test__ouro_fds_ficha_empreendimento__apf__prata_fds_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_fds_ficha_empreendimento.apf
+    target: prata.prata_fds_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: dbt_relationships_test
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - dbt_relationships_test
+      common_distinct_keys: 364
+      source:
+        non_null_rows: 364
+        distinct_keys: 364
+        matched_rows: 364
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 364
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/fds_dbt/ouro/schema.yml.
+  - id: dbt_test__ouro_rural_ficha_empreendimento__apf__prata_rural_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_ficha_empreendimento.apf
+    target: prata.prata_rural_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: dbt_relationships_test
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 10402
+      source:
+        non_null_rows: 10402
+        distinct_keys: 10402
+        matched_rows: 10402
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/rural_dbt/ouro/schema.yml.
+  - id: dbt_test__ouro_rural_evolucao_financeira__apf__prata_rural_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_evolucao_financeira.apf
+    target: prata.prata_rural_empreendimento.apf
+    join: exact
+    cardinality: many_to_one
+    validation: dbt_relationships_test
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - dbt_relationships_test
+      common_distinct_keys: 8172
+      source:
+        non_null_rows: 57492
+        distinct_keys: 8172
+        matched_rows: 57492
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.7856
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/rural_dbt/ouro/schema.yml.
+  - id: dbt_test__ouro_rural_execucao_fisica_financeira__apf__prata_rural_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_execucao_fisica_financeira.apf
+    target: prata.prata_rural_empreendimento.apf
+    join: exact
+    cardinality: many_to_one
+    validation: dbt_relationships_test
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - dbt_relationships_test
+      common_distinct_keys: 10402
+      source:
+        non_null_rows: 59722
+        distinct_keys: 10402
+        matched_rows: 59722
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/rural_dbt/ouro/schema.yml.
+  - id: dbt_test__ouro_rural_ficha_trabalho_social__apf__prata_rural_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_ficha_trabalho_social.apf
+    target: prata.prata_rural_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: dbt_relationships_test
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - dbt_relationships_test
+      common_distinct_keys: 10390
+      source:
+        non_null_rows: 10390
+        distinct_keys: 10390
+        matched_rows: 10390
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.9988
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/rural_dbt/ouro/schema.yml.
+  - id: dbt_test__ouro_rural_perfil_beneficiarios__apf__prata_rural_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_perfil_beneficiarios.apf
+    target: prata.prata_rural_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: dbt_relationships_test
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - dbt_relationships_test
+      common_distinct_keys: 103
+      source:
+        non_null_rows: 103
+        distinct_keys: 103
+        matched_rows: 103
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.0099
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/rural_dbt/ouro/schema.yml.
+  - id: dbt_test__ouro_rural_infraestrutura_agua_saneamento__apf__prata_rural_empreendimento
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_infraestrutura_agua_saneamento.apf
+    target: prata.prata_rural_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: dbt_relationships_test
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - dbt_relationships_test
+      common_distinct_keys: 10402
+      source:
+        non_null_rows: 10402
+        distinct_keys: 10402
+        matched_rows: 10402
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+    notes: Teste `relationships` do dbt em dbt/mcid/models/rural_dbt/ouro/schema.yml.
+  validated_observed:
+  - id: apf__ouro_ouro_far_evolucao_financeira_chart_apf__to__ouro_ouro_far_serie_mensal_apf_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_evolucao_financeira_chart.apf
+    target: ouro.ouro_far_serie_mensal_apf.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 759
+      source:
+        non_null_rows: 7018
+        distinct_keys: 759
+        matched_rows: 7018
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 886
+        distinct_coverage: 0.8567
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_far_execucao_fisica_financeira_chart_apf__to__ouro_ouro_far_serie_mensal_apf_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_execucao_fisica_financeira_chart.apf
+    target: ouro.ouro_far_serie_mensal_apf.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 878
+      source:
+        non_null_rows: 7600
+        distinct_keys: 878
+        matched_rows: 7600
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 886
+        distinct_coverage: 0.991
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_far_ficha_empreendimento_apf__to__ouro_ouro_far_serie_mensal_apf_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_ficha_empreendimento.apf
+    target: ouro.ouro_far_serie_mensal_apf.apf
+    join: exact
+    cardinality: one_to_many
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 878
+      source:
+        non_null_rows: 878
+        distinct_keys: 878
+        matched_rows: 878
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 886
+        distinct_coverage: 0.991
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_fds_evolucao_financeira_chart_apf__to__ouro_ouro_fds_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_fds_evolucao_financeira_chart.apf
+    target: ouro.ouro_fds_ficha_empreendimento.apf
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 197
+      source:
+        non_null_rows: 612
+        distinct_keys: 197
+        matched_rows: 612
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 364
+        distinct_coverage: 0.5412
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_rural_evolucao_financeira_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_evolucao_financeira.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 8172
+      source:
+        non_null_rows: 57492
+        distinct_keys: 8172
+        matched_rows: 57492
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.7856
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_rural_execucao_fisica_financeira_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_execucao_fisica_financeira.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 10402
+      source:
+        non_null_rows: 59722
+        distinct_keys: 10402
+        matched_rows: 59722
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_rural_ficha_trabalho_social_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_ficha_trabalho_social.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 10390
+      source:
+        non_null_rows: 10390
+        distinct_keys: 10390
+        matched_rows: 10390
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.9988
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_rural_perfil_beneficiarios_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_perfil_beneficiarios.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 103
+      source:
+        non_null_rows: 103
+        distinct_keys: 103
+        matched_rows: 103
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.0099
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_cadastro_pf_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_cadastro_pf.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 103
+      source:
+        non_null_rows: 3093
+        distinct_keys: 103
+        matched_rows: 3093
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.0099
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_cadastro_pj_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_cadastro_pj.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 127
+      source:
+        non_null_rows: 127
+        distinct_keys: 127
+        matched_rows: 127
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.0122
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_pnhr_bb_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_bb.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 1087
+      source:
+        non_null_rows: 1087
+        distinct_keys: 1087
+        matched_rows: 1087
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.1045
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_pnhr_caixa_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_caixa.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 8087
+      source:
+        non_null_rows: 8508
+        distinct_keys: 8508
+        matched_rows: 8087
+        row_coverage: 0.9505
+        distinct_coverage: 0.9505
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.7774
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_pnhr_liberacoes_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_liberacoes.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 8172
+      source:
+        non_null_rows: 63869
+        distinct_keys: 8586
+        matched_rows: 61434
+        row_coverage: 0.9619
+        distinct_coverage: 0.9518
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.7856
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_prioritarios_bb_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_prioritarios_bb.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 1088
+      source:
+        non_null_rows: 1088
+        distinct_keys: 1088
+        matched_rows: 1088
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.1046
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_prioritarios_caixa_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_prioritarios_caixa.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 9314
+      source:
+        non_null_rows: 9637
+        distinct_keys: 9637
+        matched_rows: 9314
+        row_coverage: 0.9665
+        distinct_coverage: 0.9665
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.8954
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_trabalho_social_bb_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_trabalho_social_bb.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 1088
+      source:
+        non_null_rows: 1088
+        distinct_keys: 1088
+        matched_rows: 1088
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.1046
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_rural_ficha_empreendimento_apf__to__ouro_ouro_rural_infraestrutura_agua_saneamento_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_ficha_empreendimento.apf
+    target: ouro.ouro_rural_infraestrutura_agua_saneamento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 10402
+      source:
+        non_null_rows: 10402
+        distinct_keys: 10402
+        matched_rows: 10402
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_far_evolucao_financeira_chart_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_evolucao_financeira_chart.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 759
+      source:
+        non_null_rows: 7018
+        distinct_keys: 759
+        matched_rows: 7018
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1685
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_far_execucao_fisica_financeira_chart_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_execucao_fisica_financeira_chart.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 877
+      source:
+        non_null_rows: 7600
+        distinct_keys: 878
+        matched_rows: 7599
+        row_coverage: 0.9999
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1947
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_far_ficha_empreendimento_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_ficha_empreendimento.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: one_to_many
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 877
+      source:
+        non_null_rows: 878
+        distinct_keys: 878
+        matched_rows: 877
+        row_coverage: 0.9989
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1947
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_far_serie_mensal_apf_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_far_serie_mensal_apf.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 885
+      source:
+        non_null_rows: 19070
+        distinct_keys: 886
+        matched_rows: 19069
+        row_coverage: 0.9999
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1964
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_far_cadastro_pj_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_cadastro_pj.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: one_to_many
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 877
+      source:
+        non_null_rows: 878
+        distinct_keys: 878
+        matched_rows: 877
+        row_coverage: 0.9989
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1947
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_far_dados_prioritarios_caixa_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_dados_prioritarios_caixa.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: one_to_many
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 4504
+      source:
+        non_null_rows: 4504
+        distinct_keys: 4504
+        matched_rows: 4504
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.9998
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_far_empreendimento_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_empreendimento.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: one_to_many
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 877
+      source:
+        non_null_rows: 878
+        distinct_keys: 878
+        matched_rows: 877
+        row_coverage: 0.9989
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1947
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_far_evolucao_financeira_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_evolucao_financeira.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 759
+      source:
+        non_null_rows: 7018
+        distinct_keys: 759
+        matched_rows: 7018
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1685
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_far_obra_mensal_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_obra_mensal.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: one_to_many
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 877
+      source:
+        non_null_rows: 878
+        distinct_keys: 878
+        matched_rows: 877
+        row_coverage: 0.9989
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1947
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_far_obra_serie_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_obra_serie.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 877
+      source:
+        non_null_rows: 6726
+        distinct_keys: 878
+        matched_rows: 6725
+        row_coverage: 0.9999
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1947
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_far_serie_mensal_apf__to__prata_prata_far_caixa_serie_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_serie_mensal.apf
+    target: prata.prata_far_caixa_serie.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 885
+      source:
+        non_null_rows: 19070
+        distinct_keys: 886
+        matched_rows: 19069
+        row_coverage: 0.9999
+        distinct_coverage: 0.9989
+      target:
+        distinct_keys: 4505
+        distinct_coverage: 0.1964
+      raw_value_join_matches_normalized: true
+  - id: apf__ouro_ouro_rural_evolucao_financeira_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_evolucao_financeira.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      common_distinct_keys: 7764
+      source:
+        non_null_rows: 57492
+        distinct_keys: 8172
+        matched_rows: 55375
+        row_coverage: 0.9632
+        distinct_coverage: 0.9501
+      target:
+        distinct_keys: 11676
+        distinct_coverage: 0.665
+      raw_value_join_matches_normalized: true
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas'
+  - id: apf__ouro_ouro_rural_ficha_empreendimento_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_ficha_empreendimento.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 10402
+      source:
+        non_null_rows: 10402
+        distinct_keys: 10402
+        matched_rows: 10402
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_cadastro_pf_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_cadastro_pf.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 103
+      source:
+        non_null_rows: 3093
+        distinct_keys: 103
+        matched_rows: 3093
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.0099
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_cadastro_pj_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_cadastro_pj.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 127
+      source:
+        non_null_rows: 127
+        distinct_keys: 127
+        matched_rows: 127
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.0122
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_empreendimento_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_empreendimento.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 10402
+      source:
+        non_null_rows: 10402
+        distinct_keys: 10402
+        matched_rows: 10402
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_pnhr_bb_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_bb.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 1087
+      source:
+        non_null_rows: 1087
+        distinct_keys: 1087
+        matched_rows: 1087
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.1045
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_pnhr_caixa_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_caixa.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 8087
+      source:
+        non_null_rows: 8508
+        distinct_keys: 8508
+        matched_rows: 8087
+        row_coverage: 0.9505
+        distinct_coverage: 0.9505
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.7774
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_pnhr_liberacoes_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_liberacoes.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 8172
+      source:
+        non_null_rows: 63869
+        distinct_keys: 8586
+        matched_rows: 61434
+        row_coverage: 0.9619
+        distinct_coverage: 0.9518
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.7856
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_prioritarios_bb_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_prioritarios_bb.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 1088
+      source:
+        non_null_rows: 1088
+        distinct_keys: 1088
+        matched_rows: 1088
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.1046
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_prioritarios_caixa_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_prioritarios_caixa.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 9314
+      source:
+        non_null_rows: 9637
+        distinct_keys: 9637
+        matched_rows: 9314
+        row_coverage: 0.9665
+        distinct_coverage: 0.9665
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.8954
+      raw_value_join_matches_normalized: true
+  - id: apf__prata_prata_rural_trabalho_social_bb_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_trabalho_social_bb.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 1088
+      source:
+        non_null_rows: 1088
+        distinct_keys: 1088
+        matched_rows: 1088
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.1046
+      raw_value_join_matches_normalized: true
+  - id: cnpj__ouro_ouro_fds_evolucao_financeira_chart_cnpj_eo__to__ouro_ouro_fds_panorama_entidade_cnpj_eo
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_fds_evolucao_financeira_chart.cnpj_eo
+    target: ouro.ouro_fds_panorama_entidade.cnpj_eo
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 114
+      source:
+        non_null_rows: 612
+        distinct_keys: 114
+        matched_rows: 612
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 175
+        distinct_coverage: 0.6514
+      raw_value_join_matches_normalized: true
+  - id: cnpj__ouro_ouro_fds_ficha_empreendimento_cnpj_eo__to__ouro_ouro_fds_panorama_entidade_cnpj_eo
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_fds_ficha_empreendimento.cnpj_eo
+    target: ouro.ouro_fds_panorama_entidade.cnpj_eo
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 175
+      source:
+        non_null_rows: 364
+        distinct_keys: 175
+        matched_rows: 364
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 175
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: cnpj__ouro_ouro_fds_ficha_empreendimento_cnpj_eo_formatado__to__ouro_ouro_fds_panorama_entidade_cnpj_eo
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_fds_ficha_empreendimento.cnpj_eo_formatado
+    target: ouro.ouro_fds_panorama_entidade.cnpj_eo
+    join: normalized_exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 175
+      source:
+        non_null_rows: 364
+        distinct_keys: 175
+        matched_rows: 364
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 175
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: false
+  - id: cnpj__prata_prata_rural_cadastro_pf_eo_cnpj__to__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_cadastro_pf.eo_cnpj
+    target: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 25
+      source:
+        non_null_rows: 2006
+        distinct_keys: 26
+        matched_rows: 1958
+        row_coverage: 0.9761
+        distinct_coverage: 0.9615
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.0124
+      raw_value_join_matches_normalized: true
+  - id: cnpj__prata_prata_rural_cadastro_pj_eo_cnpj__to__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_cadastro_pj.eo_cnpj
+    target: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 64
+      source:
+        non_null_rows: 127
+        distinct_keys: 64
+        matched_rows: 127
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.0318
+      raw_value_join_matches_normalized: true
+  - id: cnpj__prata_prata_rural_empreendimento_construtora_cnpj__to__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_empreendimento.construtora_cnpj
+    target: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 1970
+      source:
+        non_null_rows: 9082
+        distinct_keys: 1985
+        matched_rows: 9065
+        row_coverage: 0.9981
+        distinct_coverage: 0.9924
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.9801
+      raw_value_join_matches_normalized: false
+  - id: cnpj__prata_prata_rural_pnhr_bb_eo_cnpj__to__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_pnhr_bb.eo_cnpj
+    target: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 118
+      source:
+        non_null_rows: 1087
+        distinct_keys: 118
+        matched_rows: 1087
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.0587
+      raw_value_join_matches_normalized: true
+  - id: cnpj__prata_prata_rural_pnhr_caixa_eo_cnpj__to__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_pnhr_caixa.eo_cnpj
+    target: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 1910
+      source:
+        non_null_rows: 8373
+        distinct_keys: 1911
+        matched_rows: 8372
+        row_coverage: 0.9999
+        distinct_coverage: 0.9995
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.9502
+      raw_value_join_matches_normalized: false
+  - id: cnpj__prata_prata_rural_prioritarios_snh_construtora_cnpj__to__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_prioritarios_snh.construtora_cnpj
+    target: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 1970
+      source:
+        non_null_rows: 9082
+        distinct_keys: 1985
+        matched_rows: 9065
+        row_coverage: 0.9981
+        distinct_coverage: 0.9924
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.9801
+      raw_value_join_matches_normalized: false
+  - id: cnpj__ouro_ouro_fds_evolucao_financeira_chart_cnpj_eo__to__prata_prata_fds_int_059_caixa_pj_eo_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_fds_evolucao_financeira_chart.cnpj_eo
+    target: prata.prata_fds_int_059_caixa_pj.eo_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 114
+      source:
+        non_null_rows: 612
+        distinct_keys: 114
+        matched_rows: 612
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 384
+        distinct_coverage: 0.2969
+      raw_value_join_matches_normalized: false
+  - id: cnpj__ouro_ouro_fds_ficha_empreendimento_cnpj_eo__to__prata_prata_fds_int_059_caixa_pj_eo_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_fds_ficha_empreendimento.cnpj_eo
+    target: prata.prata_fds_int_059_caixa_pj.eo_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 175
+      source:
+        non_null_rows: 364
+        distinct_keys: 175
+        matched_rows: 364
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 384
+        distinct_coverage: 0.4557
+      raw_value_join_matches_normalized: false
+  - id: cnpj__ouro_ouro_fds_ficha_empreendimento_cnpj_eo_formatado__to__prata_prata_fds_int_059_caixa_pj_eo_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_fds_ficha_empreendimento.cnpj_eo_formatado
+    target: prata.prata_fds_int_059_caixa_pj.eo_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 175
+      source:
+        non_null_rows: 364
+        distinct_keys: 175
+        matched_rows: 364
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 384
+        distinct_coverage: 0.4557
+      raw_value_join_matches_normalized: false
+  - id: cnpj__ouro_ouro_fds_panorama_entidade_cnpj_eo__to__prata_prata_fds_int_059_caixa_pj_eo_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_fds_panorama_entidade.cnpj_eo
+    target: prata.prata_fds_int_059_caixa_pj.eo_cnpj
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 175
+      source:
+        non_null_rows: 175
+        distinct_keys: 175
+        matched_rows: 175
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 384
+        distinct_coverage: 0.4557
+      raw_value_join_matches_normalized: false
+  - id: cnpj__prata_prata_fds_cadastro_pj_eo_cnpj__to__prata_prata_fds_int_059_caixa_pj_eo_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_fds_cadastro_pj.eo_cnpj
+    target: prata.prata_fds_int_059_caixa_pj.eo_cnpj
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 175
+      source:
+        non_null_rows: 364
+        distinct_keys: 175
+        matched_rows: 364
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 384
+        distinct_coverage: 0.4557
+      raw_value_join_matches_normalized: true
+  - id: cnpj__prata_prata_fds_empreendimento_eo_cnpj__to__prata_prata_fds_int_059_caixa_pj_eo_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_fds_empreendimento.eo_cnpj
+    target: prata.prata_fds_int_059_caixa_pj.eo_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 175
+      source:
+        non_null_rows: 364
+        distinct_keys: 175
+        matched_rows: 364
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 384
+        distinct_coverage: 0.4557
+      raw_value_join_matches_normalized: false
+  - id: cnpj__prata_prata_fds_evolucao_financeira_eo_cnpj__to__prata_prata_fds_int_059_caixa_pj_eo_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_fds_evolucao_financeira.eo_cnpj
+    target: prata.prata_fds_int_059_caixa_pj.eo_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      - produto_camada
+      common_distinct_keys: 114
+      source:
+        non_null_rows: 612
+        distinct_keys: 114
+        matched_rows: 612
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 384
+        distinct_coverage: 0.2969
+      raw_value_join_matches_normalized: false
+  - id: cnpj__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj__to__prata_prata_linha_financiada_empreendimento_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    target: prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 2964
+      source:
+        non_null_rows: 19709
+        distinct_keys: 2964
+        matched_rows: 19709
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 2964
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: false
+  - id: cnpj__ouro_ouro_rural_ficha_empreendimento_entidade_organizadora_cnpj__to__prata_prata_rural_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+    target: prata.prata_rural_empreendimento.entidade_organizadora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 2010
+      source:
+        non_null_rows: 9210
+        distinct_keys: 2010
+        matched_rows: 9210
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: false
+  - id: cnpj__prata_prata_rural_cadastro_pf_eo_cnpj__to__prata_prata_rural_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_cadastro_pf.eo_cnpj
+    target: prata.prata_rural_empreendimento.entidade_organizadora_cnpj
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 25
+      source:
+        non_null_rows: 2006
+        distinct_keys: 26
+        matched_rows: 1958
+        row_coverage: 0.9761
+        distinct_coverage: 0.9615
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.0124
+      raw_value_join_matches_normalized: true
+  - id: cnpj__prata_prata_rural_cadastro_pj_eo_cnpj__to__prata_prata_rural_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_cadastro_pj.eo_cnpj
+    target: prata.prata_rural_empreendimento.entidade_organizadora_cnpj
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 64
+      source:
+        non_null_rows: 127
+        distinct_keys: 64
+        matched_rows: 127
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.0318
+      raw_value_join_matches_normalized: true
+  - id: cnpj__prata_prata_rural_pnhr_bb_eo_cnpj__to__prata_prata_rural_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_pnhr_bb.eo_cnpj
+    target: prata.prata_rural_empreendimento.entidade_organizadora_cnpj
+    join: exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 118
+      source:
+        non_null_rows: 1087
+        distinct_keys: 118
+        matched_rows: 1087
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.0587
+      raw_value_join_matches_normalized: true
+  - id: cnpj__prata_prata_rural_pnhr_caixa_eo_cnpj__to__prata_prata_rural_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_pnhr_caixa.eo_cnpj
+    target: prata.prata_rural_empreendimento.entidade_organizadora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 1910
+      source:
+        non_null_rows: 8373
+        distinct_keys: 1911
+        matched_rows: 8372
+        row_coverage: 0.9999
+        distinct_coverage: 0.9995
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.9502
+      raw_value_join_matches_normalized: false
+  - id: cnpj__prata_prata_rural_prioritarios_snh_construtora_cnpj__to__prata_prata_rural_empreendimento_entidade_organizadora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_rural_prioritarios_snh.construtora_cnpj
+    target: prata.prata_rural_empreendimento.entidade_organizadora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 1970
+      source:
+        non_null_rows: 9082
+        distinct_keys: 1985
+        matched_rows: 9065
+        row_coverage: 0.9981
+        distinct_coverage: 0.9924
+      target:
+        distinct_keys: 2010
+        distinct_coverage: 0.9801
+      raw_value_join_matches_normalized: false
+  - id: codigo_empreendimento__ouro_ouro_linha_financiada_base_agregada_codigo_empreendimento__to__ouro_ouro_linha_financiada_empreendimentos_codigo_empreendimento
+    semantic_key: empreendimento_linha_financiada
+    source: ouro.ouro_linha_financiada_base_agregada.codigo_empreendimento
+    target: ouro.ouro_linha_financiada_empreendimentos.codigo_empreendimento
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      - produto_camada
+      common_distinct_keys: 737
+      source:
+        non_null_rows: 141891
+        distinct_keys: 747
+        matched_rows: 4196
+        row_coverage: 0.0296
+        distinct_coverage: 0.9866
+      target:
+        distinct_keys: 93104
+        distinct_coverage: 0.0079
+      raw_value_join_matches_normalized: true
+  - id: codigo_empreendimento__prata_prata_linha_financiada_contrato_codigo_empreendimento__to__ouro_ouro_linha_financiada_empreendimentos_codigo_empreendimento
+    semantic_key: empreendimento_linha_financiada
+    source: prata.prata_linha_financiada_contrato.codigo_empreendimento
+    target: ouro.ouro_linha_financiada_empreendimentos.codigo_empreendimento
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 737
+      source:
+        non_null_rows: 141891
+        distinct_keys: 747
+        matched_rows: 4196
+        row_coverage: 0.0296
+        distinct_coverage: 0.9866
+      target:
+        distinct_keys: 93104
+        distinct_coverage: 0.0079
+      raw_value_join_matches_normalized: true
+  - id: codigo_empreendimento__ouro_ouro_linha_financiada_empreendimentos_codigo_empreendimento__to__prata_prata_linha_financiada_empreendimento_codigo_empreendimento
+    semantic_key: empreendimento_linha_financiada
+    source: ouro.ouro_linha_financiada_empreendimentos.codigo_empreendimento
+    target: prata.prata_linha_financiada_empreendimento.codigo_empreendimento
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 93104
+      source:
+        non_null_rows: 93104
+        distinct_keys: 93104
+        matched_rows: 93104
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 93104
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: codigo_empreendimento__prata_prata_linha_financiada_contrato_codigo_empreendimento__to__prata_prata_linha_financiada_empreendimento_codigo_empreendimento
+    semantic_key: empreendimento_linha_financiada
+    source: prata.prata_linha_financiada_contrato.codigo_empreendimento
+    target: prata.prata_linha_financiada_empreendimento.codigo_empreendimento
+    join: exact
+    cardinality: many_to_one
+    validation: aggregate_validated
+    confidence: medium
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 737
+      source:
+        non_null_rows: 141891
+        distinct_keys: 747
+        matched_rows: 4196
+        row_coverage: 0.0296
+        distinct_coverage: 0.9866
+      target:
+        distinct_keys: 93104
+        distinct_coverage: 0.0079
+      raw_value_join_matches_normalized: true
+  - id: contrato_operacao__ouro_ouro_linha_financiada_base_agregada_contrato__to__prata_prata_linha_financiada_contrapartida_contrato
+    semantic_key: contrato
+    source: ouro.ouro_linha_financiada_base_agregada.contrato
+    target: prata.prata_linha_financiada_contrapartida.contrato
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 499055
+      source:
+        non_null_rows: 499055
+        distinct_keys: 499055
+        matched_rows: 499055
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 499055
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: contrato_operacao__ouro_ouro_linha_financiada_base_agregada_contrato__to__prata_prata_linha_financiada_contrato_contrato
+    semantic_key: contrato
+    source: ouro.ouro_linha_financiada_base_agregada.contrato
+    target: prata.prata_linha_financiada_contrato.contrato
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 499055
+      source:
+        non_null_rows: 499055
+        distinct_keys: 499055
+        matched_rows: 499055
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 499055
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: contrato_operacao__prata_prata_linha_financiada_contrapartida_contrato__to__prata_prata_linha_financiada_contrato_contrato
+    semantic_key: contrato
+    source: prata.prata_linha_financiada_contrapartida.contrato
+    target: prata.prata_linha_financiada_contrato.contrato
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 499055
+      source:
+        non_null_rows: 499055
+        distinct_keys: 499055
+        matched_rows: 499055
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 499055
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: id_contrato_linha_financiada__ouro_ouro_linha_financiada_base_agregada_id_contrato_linha_financiada__to__prata_prata_linha_financiada_contrapartida_id_contrato_linha_financiada
+    semantic_key: contrato_linha_financiada
+    source: ouro.ouro_linha_financiada_base_agregada.id_contrato_linha_financiada
+    target: prata.prata_linha_financiada_contrapartida.id_contrato_linha_financiada
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 499055
+      source:
+        non_null_rows: 499055
+        distinct_keys: 499055
+        matched_rows: 499055
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 499055
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: id_contrato_linha_financiada__ouro_ouro_linha_financiada_base_agregada_id_contrato_linha_financiada__to__prata_prata_linha_financiada_contrato_id_contrato_linha_financiada
+    semantic_key: contrato_linha_financiada
+    source: ouro.ouro_linha_financiada_base_agregada.id_contrato_linha_financiada
+    target: prata.prata_linha_financiada_contrato.id_contrato_linha_financiada
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 499055
+      source:
+        non_null_rows: 499055
+        distinct_keys: 499055
+        matched_rows: 499055
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 499055
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: id_contrato_linha_financiada__prata_prata_linha_financiada_contrapartida_id_contrato_linha_financiada__to__prata_prata_linha_financiada_contrato_id_contrato_linha_financiada
+    semantic_key: contrato_linha_financiada
+    source: prata.prata_linha_financiada_contrapartida.id_contrato_linha_financiada
+    target: prata.prata_linha_financiada_contrato.id_contrato_linha_financiada
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 499055
+      source:
+        non_null_rows: 499055
+        distinct_keys: 499055
+        matched_rows: 499055
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 499055
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: id_empreendimento_linha_financiada__ouro_ouro_linha_financiada_empreendimentos_id_empreendimento_linha_financiada__to__prata_prata_linha_financiada_empreendimento_id_empreendimento_linha_financiada
+    semantic_key: empreendimento_linha_financiada
+    source: ouro.ouro_linha_financiada_empreendimentos.id_empreendimento_linha_financiada
+    target: prata.prata_linha_financiada_empreendimento.id_empreendimento_linha_financiada
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 93104
+      source:
+        non_null_rows: 93104
+        distinct_keys: 93104
+        matched_rows: 93104
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 93104
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  - id: id_execucao_orcamentaria__ouro_ouro_linha_financiada_execucao_orcamentaria_id_execucao_orcamentaria__to__prata_prata_linha_financiada_execucao_orcamentaria_id_execucao_orcamentaria
+    semantic_key: execucao_orcamentaria
+    source: ouro.ouro_linha_financiada_execucao_orcamentaria.id_execucao_orcamentaria
+    target: prata.prata_linha_financiada_execucao_orcamentaria.id_execucao_orcamentaria
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_validated
+    confidence: high
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - global
+      - produto
+      common_distinct_keys: 375
+      source:
+        non_null_rows: 375
+        distinct_keys: 375
+        matched_rows: 375
+        row_coverage: 1.0
+        distinct_coverage: 1.0
+      target:
+        distinct_keys: 375
+        distinct_coverage: 1.0
+      raw_value_join_matches_normalized: true
+  candidate_observed:
+  - id: apf__prata_prata_rural_obra_mensal_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_obra_mensal.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: normalized_exact
+    cardinality: one_to_one
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto
+      jaccard_estimate: 0.1094
+      source_coverage_estimate: 0.7746
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_trabalho_social_caixa_apf__to__ouro_ouro_rural_ficha_empreendimento_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_trabalho_social_caixa.apf
+    target: ouro.ouro_rural_ficha_empreendimento.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto
+      common_distinct_keys: 9302
+      source:
+        non_null_rows: 10005
+        distinct_keys: 10005
+        matched_rows: 9302
+        row_coverage: 0.9297
+        distinct_coverage: 0.9297
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.8943
+      raw_value_join_matches_normalized: true
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__ouro_ouro_rural_execucao_fisica_financeira_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_execucao_fisica_financeira.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5303
+      source_coverage_estimate: 0.7355
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__ouro_ouro_rural_ficha_empreendimento_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_ficha_empreendimento.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5303
+      source_coverage_estimate: 0.7355
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__ouro_ouro_rural_ficha_trabalho_social_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_ficha_trabalho_social.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5293
+      source_coverage_estimate: 0.735
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__ouro_ouro_rural_infraestrutura_agua_saneamento_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: ouro.ouro_rural_infraestrutura_agua_saneamento.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5303
+      source_coverage_estimate: 0.7355
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_far_caixa_serie_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_caixa_serie.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.2979
+      source_coverage_estimate: 0.8243
+    notes: 'liga produtos diferentes (empreendimento_far → entidades_fds): a numeração de APF é da CAIXA e compartilhada entre
+      programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_far_dados_prioritarios_caixa_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_far_dados_prioritarios_caixa.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.2979
+      source_coverage_estimate: 0.8244
+    notes: 'liga produtos diferentes (empreendimento_far → entidades_fds): a numeração de APF é da CAIXA e compartilhada entre
+      programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_fds_dim_empreendimento_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_fds_dim_empreendimento.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      - produto
+      - produto_camada
+      jaccard_estimate: 0.0273
+      source_coverage_estimate: 0.3104
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_fds_int_059_caixa_pj_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_fds_int_059_caixa_pj.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      - produto
+      - produto_camada
+      jaccard_estimate: 0.0234
+      source_coverage_estimate: 0.3148
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_empreendimento_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_empreendimento.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5303
+      source_coverage_estimate: 0.7355
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_pnhr_caixa_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_caixa.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.6016
+      source_coverage_estimate: 0.8911
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_pnhr_liberacoes_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_pnhr_liberacoes.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5981
+      source_coverage_estimate: 0.8832
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_prioritarios_caixa_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_prioritarios_caixa.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5586
+      source_coverage_estimate: 0.7926
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_prioritarios_snh_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_prioritarios_snh.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.5303
+      source_coverage_estimate: 0.7355
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_trabalho_social_caixa_apf__to__prata_prata_fds_dados_prioritarios_entregas_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_trabalho_social_caixa.apf
+    target: prata.prata_fds_dados_prioritarios_entregas.apf
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.541
+      source_coverage_estimate: 0.7608
+    notes: 'liga produtos diferentes (empreendimento_rural → entidades_fds): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_obra_mensal_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_obra_mensal.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: normalized_exact
+    cardinality: one_to_one
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto_camada
+      jaccard_estimate: 0.1094
+      source_coverage_estimate: 0.7746
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: apf__prata_prata_rural_trabalho_social_caixa_apf__to__prata_prata_rural_prioritarios_snh_apf
+    semantic_key: empreendimento_apf
+    source: prata.prata_rural_trabalho_social_caixa.apf
+    target: prata.prata_rural_prioritarios_snh.apf
+    join: exact
+    cardinality: one_to_one
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: exact_count
+      via_hubs:
+      - produto_camada
+      common_distinct_keys: 9302
+      source:
+        non_null_rows: 10005
+        distinct_keys: 10005
+        matched_rows: 9302
+        row_coverage: 0.9297
+        distinct_coverage: 0.9297
+      target:
+        distinct_keys: 10402
+        distinct_coverage: 0.8943
+      raw_value_join_matches_normalized: true
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__ouro_ouro_far_ficha_empreendimento_proponente_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_far_ficha_empreendimento.proponente_cnpj
+    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.0337
+      source_coverage_estimate: 0.3354
+    notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__ouro_ouro_far_ficha_empreendimento_tomador_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_far_ficha_empreendimento.tomador_cnpj
+    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.0591
+      source_coverage_estimate: 0.7068
+    notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_cadastro_pj_construtora_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_cadastro_pj.construtora_cnpj
+    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.0508
+      source_coverage_estimate: 0.4647
+    notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_consolidado_proponente_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_consolidado.proponente_cnpj
+    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.0366
+      source_coverage_estimate: 0.3397
+    notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_consolidado_tomador_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_consolidado.tomador_cnpj
+    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.061
+      source_coverage_estimate: 0.6844
+    notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_empreendimento_proponente_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_empreendimento.proponente_cnpj
+    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.0337
+      source_coverage_estimate: 0.3354
+    notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_empreendimento_tomador_cnpj__to__ouro_ouro_linha_financiada_empreendimentos_cnpj_entidade_pj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_empreendimento.tomador_cnpj
+    target: ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      jaccard_estimate: 0.0591
+      source_coverage_estimate: 0.7068
+    notes: 'liga produtos diferentes (empreendimento_far → linha_financiada): a numeração de APF é da CAIXA e compartilhada
+      entre programas; sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__ouro_ouro_far_ficha_empreendimento_proponente_cnpj__to__prata_prata_far_cadastro_pj_construtora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_far_ficha_empreendimento.proponente_cnpj
+    target: prata.prata_far_cadastro_pj.construtora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto
+      jaccard_estimate: 0.2143
+      source_coverage_estimate: 0.3668
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__ouro_ouro_far_ficha_empreendimento_tomador_cnpj__to__prata_prata_far_cadastro_pj_construtora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: ouro.ouro_far_ficha_empreendimento.tomador_cnpj
+    target: prata.prata_far_cadastro_pj.construtora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto
+      jaccard_estimate: 0.5573
+      source_coverage_estimate: 0.8425
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_consolidado_tomador_cnpj__to__prata_prata_far_cadastro_pj_construtora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_consolidado.tomador_cnpj
+    target: prata.prata_far_cadastro_pj.construtora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto
+      - produto_camada
+      jaccard_estimate: 0.5362
+      source_coverage_estimate: 0.7904
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_empreendimento_proponente_cnpj__to__prata_prata_far_cadastro_pj_construtora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_empreendimento.proponente_cnpj
+    target: prata.prata_far_cadastro_pj.construtora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto
+      - produto_camada
+      jaccard_estimate: 0.2143
+      source_coverage_estimate: 0.3668
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_empreendimento_tomador_cnpj__to__prata_prata_far_cadastro_pj_construtora_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_empreendimento.tomador_cnpj
+    target: prata.prata_far_cadastro_pj.construtora_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto
+      - produto_camada
+      jaccard_estimate: 0.5573
+      source_coverage_estimate: 0.8425
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: cnpj__prata_prata_far_cadastro_pj_construtora_cnpj__to__prata_prata_far_consolidado_proponente_cnpj
+    semantic_key: pessoa_juridica_cnpj
+    source: prata.prata_far_cadastro_pj.construtora_cnpj
+    target: prata.prata_far_consolidado.proponente_cnpj
+    join: normalized_exact
+    cardinality: many_to_many_on_matching_population
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - produto
+      - produto_camada
+      jaccard_estimate: 0.2134
+      source_coverage_estimate: 0.3517
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
+  - id: id_proposta__prata_prata_far_cadastro_pj_id_proposta__to__prata_prata_far_consolidado_id_proposta
+    semantic_key: proposta
+    source: prata.prata_far_cadastro_pj.id_proposta
+    target: prata.prata_far_consolidado.id_proposta
+    join: normalized_exact
+    cardinality: one_to_many
+    validation: aggregate_candidate
+    confidence: low
+    evidence:
+      profile_class: bottom_k_estimate
+      via_hubs:
+      - global
+      - produto
+      - produto_camada
+      jaccard_estimate: 0.0566
+      source_coverage_estimate: 0.8931
+    notes: 'sobreposição parcial: pista para revisão, não vira aresta no GraphRAG'
 search_groups:
-- id: apf
+- id: empreendimento_apf__apf
   match: normalized_exact
-  normalization: digits_only; preserve 8 digits
+  normalization: digits_only; lpad 8
   use:
   - entity_resolution
   - join
   - exact_search
   pii: not_classified_as_pii_but_treat_as_internal_business_key
-  guardrails:
-  - Do not equate full APF with six-digit roots without an explicit transform.
-  member_count: 22
+  member_count: 48
   members:
-  - empreendimento_far.cadastro_pj.apf
-  - empreendimento_far.consolidado.apf
-  - empreendimento_far.dados_prioritarios_caixa.apf
-  - empreendimento_far.empreendimento.apf
-  - empreendimento_far.evolucao_financeira.apf
-  - empreendimento_far.evolucao_financeira_chart.apf
-  - empreendimento_far.execucao_fisica_financeira_chart.apf
-  - empreendimento_far.ficha_empreendimento.apf
-  - empreendimento_far.financeiro_mensal.apf
-  - empreendimento_far.obra_mensal.apf
-  - entidades_fds.fds_cadastro_pj.apf
-  - entidades_fds.fds_cadastro_pj.apf_aporte
-  - entidades_fds.fds_cadastro_pj.apf_mudanca_fase
-  - entidades_fds.fds_dados_prioritarios_entregas.apf
-  - entidades_fds.fds_empreendimento.apf
-  - entidades_fds.fds_evolucao_financeira.apf
-  - entidades_fds.fds_evolucao_financeira_chart.apf
-  - entidades_fds.fds_ficha_empreendimento.apf
-  - entidades_fds.fds_financeiro_mensal.apf
-  - entidades_fds.fds_int_059_caixa_pj.apf
-  - entidades_fds.fds_obra_mensal.apf
-  - entidades_fds.fds_trabalho_social.apf
-  dbt_glossary_terms:
-  - MCID.Identificadores.APF
-- id: apf_search_labels
-  match: full_text_only
-  normalization: casefold_and_whitespace
-  use:
-  - retrieval
-  pii: may_embed_municipality_and_project_name
-  guardrails:
-  - Never use concatenated labels as join keys.
-  member_count: 5
-  members:
-  - empreendimento_far.evolucao_financeira_chart.apf_municipio_empreendimento
-  - empreendimento_far.execucao_fisica_financeira_chart.apf_municipio_empreendimento
-  - empreendimento_far.ficha_empreendimento.apf_municipio_empreendimento
-  - entidades_fds.fds_evolucao_financeira_chart.apf_municipio_empreendimento
-  - entidades_fds.fds_ficha_empreendimento.apf_municipio_empreendimento
-  dbt_glossary_terms:
-  - MCID.Identificadores.APF
-- id: cnpj
-  match: normalized_exact_with_role
-  normalization: digits_only; LPAD to 14 only where documented; reject all-zero sentinels
-  use:
-  - organization_resolution
-  - exact_search
-  - join_after_role_check
-  pii: protected_business_identifier
-  guardrails:
-  - Do not merge proponente, tomador, construtora and EO roles automatically.
-  - Do not send raw CNPJ to embeddings; retain a protected irreversible exact-match token.
-  member_count: 19
-  members:
-  - empreendimento_far.cadastro_pj.construtora_cnpj
-  - empreendimento_far.consolidado.proponente_cnpj
-  - empreendimento_far.consolidado.tomador_cnpj
-  - empreendimento_far.empreendimento.proponente_cnpj
-  - empreendimento_far.empreendimento.tomador_cnpj
-  - empreendimento_far.ficha_empreendimento.proponente_cnpj
-  - empreendimento_far.ficha_empreendimento.tomador_cnpj
-  - entidades_fds.fds_cadastro_pj.construtora_cnpj
-  - entidades_fds.fds_cadastro_pj.eo_cnpj
-  - entidades_fds.fds_cadastro_pj.eo_substituta_cnpj
-  - entidades_fds.fds_empreendimento.construtora_cnpj
-  - entidades_fds.fds_empreendimento.eo_cnpj
-  - entidades_fds.fds_empreendimento.eo_substituta_cnpj
-  - entidades_fds.fds_evolucao_financeira.eo_cnpj
-  - entidades_fds.fds_evolucao_financeira_chart.cnpj_eo
-  - entidades_fds.fds_ficha_empreendimento.cnpj_eo
-  - entidades_fds.fds_ficha_empreendimento.cnpj_eo_formatado
-  - entidades_fds.fds_int_059_caixa_pj.eo_cnpj
-  - entidades_fds.fds_panorama_entidade.cnpj_eo
-  dbt_glossary_terms:
-  - MCID.Identificadores.CNPJ
-- id: id_proposta
-  match: normalized_exact_with_program_scope
-  normalization: trim; uppercase; collapse whitespace
+  - ouro.ouro_far_evolucao_financeira_chart.apf
+  - ouro.ouro_far_execucao_fisica_financeira_chart.apf
+  - ouro.ouro_far_ficha_empreendimento.apf
+  - ouro.ouro_far_serie_mensal_apf.apf
+  - ouro.ouro_fds_evolucao_financeira_chart.apf
+  - ouro.ouro_fds_ficha_empreendimento.apf
+  - ouro.ouro_rural_evolucao_financeira.apf
+  - ouro.ouro_rural_execucao_fisica_financeira.apf
+  - ouro.ouro_rural_ficha_empreendimento.apf
+  - ouro.ouro_rural_ficha_trabalho_social.apf
+  - ouro.ouro_rural_infraestrutura_agua_saneamento.apf
+  - ouro.ouro_rural_perfil_beneficiarios.apf
+  - prata.prata_far_cadastro_pj.apf
+  - prata.prata_far_caixa_serie.apf
+  - prata.prata_far_consolidado.apf
+  - prata.prata_far_dados_prioritarios_caixa.apf
+  - prata.prata_far_empreendimento.apf
+  - prata.prata_far_evolucao_financeira.apf
+  - prata.prata_far_financeiro_mensal.apf
+  - prata.prata_far_obra_mensal.apf
+  - prata.prata_far_obra_serie.apf
+  - prata.prata_far_serie_mensal.apf
+  - prata.prata_fds_cadastro_pj.apf
+  - prata.prata_fds_cadastro_pj.apf_aporte
+  - prata.prata_fds_cadastro_pj.apf_mudanca_fase
+  - prata.prata_fds_dados_prioritarios_entregas.apf
+  - prata.prata_fds_dim_empreendimento.apf
+  - prata.prata_fds_dim_empreendimento.apf_ancora
+  - prata.prata_fds_empreendimento.apf
+  - prata.prata_fds_evolucao_financeira.apf
+  - prata.prata_fds_financeiro_mensal.apf
+  - prata.prata_fds_int_059_caixa_pj.apf
+  - prata.prata_fds_obra_mensal.apf
+  - prata.prata_fds_trabalho_social.apf
+  - prata.prata_rural_cadastro_pf.apf
+  - prata.prata_rural_cadastro_pj.apf
+  - prata.prata_rural_empreendimento.apf
+  - prata.prata_rural_financeiro_mensal.apf
+  - prata.prata_rural_obra_mensal.apf
+  - prata.prata_rural_pnhr_bb.apf
+  - prata.prata_rural_pnhr_caixa.apf
+  - prata.prata_rural_pnhr_liberacoes.apf
+  - prata.prata_rural_prioritarios_bb.apf
+  - prata.prata_rural_prioritarios_caixa.apf
+  - prata.prata_rural_prioritarios_snh.apf
+  - prata.prata_rural_prioritarios_snh.apf_fase_obra
+  - prata.prata_rural_trabalho_social_bb.apf
+  - prata.prata_rural_trabalho_social_caixa.apf
+  members_by_schema:
+    prata: 36
+    ouro: 12
+- id: pessoa_juridica_cnpj__cnpj
+  match: normalized_exact
+  normalization: digits_only; lpad 14 (zero à esquerda perdido quando gravado como número)
   use:
   - entity_resolution
+  - join
   - exact_search
-  pii: internal_business_identifier
-  guardrails:
-  - FAR and FDS proposal IDs showed no shared universe; scope by program.
-  member_count: 3
+  pii: cnpj_de_pessoa_juridica_publico
+  member_count: 30
   members:
-  - empreendimento_far.cadastro_pj.id_proposta
-  - empreendimento_far.consolidado.id_proposta
-  - entidades_fds.fds_cadastro_pj.id_proposta
-  dbt_glossary_terms:
-  - MCID.Identificadores.IDProposta
-- id: codigo_ibge
+  - ouro.ouro_far_ficha_empreendimento.proponente_cnpj
+  - ouro.ouro_far_ficha_empreendimento.tomador_cnpj
+  - ouro.ouro_fds_evolucao_financeira_chart.cnpj_eo
+  - ouro.ouro_fds_ficha_empreendimento.cnpj_eo
+  - ouro.ouro_fds_ficha_empreendimento.cnpj_eo_formatado
+  - ouro.ouro_fds_panorama_entidade.cnpj_eo
+  - ouro.ouro_linha_financiada_empreendimentos.cnpj_entidade_pj
+  - ouro.ouro_rural_ficha_empreendimento.construtora_cnpj
+  - ouro.ouro_rural_ficha_empreendimento.entidade_organizadora_cnpj
+  - prata.prata_far_cadastro_pj.construtora_cnpj
+  - prata.prata_far_consolidado.proponente_cnpj
+  - prata.prata_far_consolidado.tomador_cnpj
+  - prata.prata_far_empreendimento.proponente_cnpj
+  - prata.prata_far_empreendimento.tomador_cnpj
+  - prata.prata_fds_cadastro_pj.construtora_cnpj
+  - prata.prata_fds_cadastro_pj.eo_cnpj
+  - prata.prata_fds_cadastro_pj.eo_substituta_cnpj
+  - prata.prata_fds_empreendimento.construtora_cnpj
+  - prata.prata_fds_empreendimento.eo_cnpj
+  - prata.prata_fds_empreendimento.eo_substituta_cnpj
+  - prata.prata_fds_evolucao_financeira.eo_cnpj
+  - prata.prata_fds_int_059_caixa_pj.eo_cnpj
+  - prata.prata_linha_financiada_empreendimento.cnpj_entidade_pj
+  - prata.prata_rural_cadastro_pf.eo_cnpj
+  - prata.prata_rural_cadastro_pj.eo_cnpj
+  - prata.prata_rural_empreendimento.construtora_cnpj
+  - prata.prata_rural_empreendimento.entidade_organizadora_cnpj
+  - prata.prata_rural_pnhr_bb.eo_cnpj
+  - prata.prata_rural_pnhr_caixa.eo_cnpj
+  - prata.prata_rural_prioritarios_snh.construtora_cnpj
+  members_by_schema:
+    prata: 21
+    ouro: 9
+- id: empreendimento_linha_financiada__codigo_empreendimento
   match: normalized_exact
-  normalization: digits_only; preserve 7 digits
+  normalization: trim; cast bigint
   use:
-  - geographic_filter
-  - geographic_link
-  pii: not_pii
-  guardrails:
-  - Geographic overlap is not evidence that two project records are the same entity.
-  member_count: 6
+  - entity_resolution
+  - join
+  - exact_search
+  pii: not_classified_as_pii_but_treat_as_internal_business_key
+  member_count: 4
   members:
-  - empreendimento_far.cadastro_pj.cod_ibge
-  - empreendimento_far.consolidado.cod_ibge
-  - empreendimento_far.dados_prioritarios_caixa.cod_ibge
-  - entidades_fds.fds_cadastro_pj.cod_ibge
-  - entidades_fds.fds_empreendimento.cod_ibge
-  - entidades_fds.fds_int_059_caixa_pj.cod_ibge
-  dbt_glossary_terms:
-  - MCID.Identificadores.CodigoIBGE
-- id: uf
+  - ouro.ouro_linha_financiada_base_agregada.codigo_empreendimento
+  - ouro.ouro_linha_financiada_empreendimentos.codigo_empreendimento
+  - prata.prata_linha_financiada_contrato.codigo_empreendimento
+  - prata.prata_linha_financiada_empreendimento.codigo_empreendimento
+  members_by_schema:
+    ouro: 2
+    prata: 2
+- id: contrato__contrato_operacao
   match: normalized_exact
-  normalization: uppercase two-letter code
+  normalization: trim; cast bigint
   use:
-  - filter
-  - facet
-  pii: coarse_location
-  guardrails:
-  - mapa_nacional.uf is polymorphic and may contain a region label.
-  member_count: 18
-  members:
-  - empreendimento_far.cadastro_pj.uf
-  - empreendimento_far.consolidado.uf
-  - empreendimento_far.dados_prioritarios_caixa.uf
-  - empreendimento_far.empreendimento.uf
-  - empreendimento_far.evolucao_financeira.uf
-  - empreendimento_far.evolucao_financeira_chart.uf
-  - empreendimento_far.ficha_empreendimento.municipio_uf
-  - empreendimento_far.ficha_empreendimento.uf
-  - empreendimento_far.mapa_nacional.uf
-  - empreendimento_far.panorama_estadual.total_empreendimentos_uf
-  - empreendimento_far.panorama_estadual.uf
-  - entidades_fds.fds_cadastro_pj.uf
-  - entidades_fds.fds_empreendimento.uf
-  - entidades_fds.fds_evolucao_financeira.uf
-  - entidades_fds.fds_evolucao_financeira_chart.uf
-  - entidades_fds.fds_ficha_empreendimento.municipio_uf
-  - entidades_fds.fds_ficha_empreendimento.uf
-  - entidades_fds.fds_int_059_caixa_pj.uf
-  dbt_glossary_terms:
-  - MCID.Identificadores.UF
-- id: municipio
-  match: normalized_text_and_cod_ibge_preferred
-  normalization: casefold; accentfold; collapse whitespace
-  use:
-  - filter
-  - fuzzy_retrieval
-  pii: coarse_location
-  guardrails:
-  - Prefer codigo_ibge for joins; municipality names alone are ambiguous.
-  member_count: 13
-  members:
-  - empreendimento_far.cadastro_pj.municipio
-  - empreendimento_far.consolidado.municipio
-  - empreendimento_far.dados_prioritarios_caixa.municipio
-  - empreendimento_far.empreendimento.municipio
-  - empreendimento_far.evolucao_financeira.municipio
-  - empreendimento_far.evolucao_financeira_chart.municipio
-  - empreendimento_far.ficha_empreendimento.municipio
-  - entidades_fds.fds_cadastro_pj.municipio
-  - entidades_fds.fds_empreendimento.municipio
-  - entidades_fds.fds_evolucao_financeira.municipio
-  - entidades_fds.fds_evolucao_financeira_chart.municipio
-  - entidades_fds.fds_ficha_empreendimento.municipio
-  - entidades_fds.fds_int_059_caixa_pj.municipio
-  dbt_glossary_terms: []
-- id: empreendimento_nome
-  match: fuzzy_text
-  normalization: casefold; accentfold; strip punctuation; collapse whitespace
-  use:
-  - retrieval
-  - candidate_entity_resolution
-  pii: not_pii
-  guardrails:
-  - Require APF/location corroboration before merging entities.
-  member_count: 10
-  members:
-  - empreendimento_far.cadastro_pj.empreendimento_nome
-  - empreendimento_far.consolidado.empreendimento_nome
-  - empreendimento_far.dados_prioritarios_caixa.empreendimento_nome
-  - empreendimento_far.empreendimento.empreendimento_nome
-  - empreendimento_far.evolucao_financeira_chart.nome_empreendimento
-  - empreendimento_far.ficha_empreendimento.nome_empreendimento
-  - entidades_fds.fds_cadastro_pj.empreendimento_nome
-  - entidades_fds.fds_empreendimento.empreendimento_nome
-  - entidades_fds.fds_ficha_empreendimento.nome_empreendimento
-  - entidades_fds.fds_int_059_caixa_pj.empreendimento_nome
-  dbt_glossary_terms: []
-- id: organizacao_nome
-  match: fuzzy_text_with_role
-  normalization: casefold; accentfold; legal-suffix normalization
-  use:
-  - retrieval
-  - candidate_organization_resolution
-  pii: may_contain_person_name_or_legal_name
-  guardrails:
-  - Corroborate with CNPJ and organization role.
-  member_count: 14
-  members:
-  - conjuntura_gold.gold_balancos_empresas_lancamentos.nome_empresa
-  - conjuntura_gold.gold_balancos_empresas_vendas.nome_empresa
-  - conjuntura.silver_balancos_empresas.nome_empresa
-  - empreendimento_far.cadastro_pj.construtora_nome
-  - empreendimento_far.consolidado.proponente_nome
-  - empreendimento_far.consolidado.tomador_nome
-  - empreendimento_far.empreendimento.proponente_nome
-  - empreendimento_far.empreendimento.tomador_nome
-  - entidades_fds.fds_cadastro_pj.construtora_nome
-  - entidades_fds.fds_cadastro_pj.eo_nome
-  - entidades_fds.fds_empreendimento.construtora_nome
-  - entidades_fds.fds_empreendimento.eo_nome
-  - entidades_fds.fds_evolucao_financeira.eo_nome
-  - entidades_fds.fds_int_059_caixa_pj.eo_nome
-  dbt_glossary_terms: []
-- id: endereco
-  match: fuzzy_text_or_exact_cep
-  normalization: field-specific; never concatenate without access control
-  use:
-  - restricted_retrieval
-  - candidate_geospatial_link
-  pii: location_pii_or_quasi_identifier
-  guardrails:
-  - Do not send raw detailed addresses to embeddings by default.
+  - entity_resolution
+  - join
+  - exact_search
+  pii: not_classified_as_pii_but_treat_as_internal_business_key
   member_count: 9
   members:
-  - empreendimento_far.consolidado.bairro
-  - empreendimento_far.consolidado.cep
-  - empreendimento_far.consolidado.logradouro
-  - empreendimento_far.dados_prioritarios_caixa.bairro
-  - empreendimento_far.dados_prioritarios_caixa.cep
-  - empreendimento_far.dados_prioritarios_caixa.logradouro
-  - entidades_fds.fds_cadastro_pj.bairro
-  - entidades_fds.fds_cadastro_pj.cep
-  - entidades_fds.fds_cadastro_pj.logradouro
-  dbt_glossary_terms: []
-- id: geolocalizacao
-  match: spatial_tolerance
-  normalization: convert documented coordinate representation before distance comparison
+  - ouro.ouro_linha_financiada_base_agregada.contrato
+  - prata.prata_linha_financiada_contrapartida.contrato
+  - prata.prata_linha_financiada_contrato.contrato
+  - prata.prata_rural_cadastro_pf.nu_contrato_empreendimento
+  - prata.prata_rural_cadastro_pj.nu_contrato_empreend
+  - prata.prata_rural_pnhr_bb.nu_contrato_empreendimento
+  - prata.prata_rural_pnhr_caixa.nu_contrato_empreend
+  - prata.prata_rural_trabalho_social_bb.contrato
+  - prata.prata_rural_trabalho_social_caixa.contrato
+  members_by_schema:
+    prata: 8
+    ouro: 1
+- id: contrato_linha_financiada__id_contrato_linha_financiada
+  match: normalized_exact
+  normalization: trim; lower
   use:
-  - restricted_geospatial_candidate_link
-  pii: precise_location_sensitive
-  guardrails:
-  - Round or spatially bucket coordinates according to authorization before retrieval.
-  member_count: 32
+  - entity_resolution
+  - join
+  - exact_search
+  pii: not_classified_as_pii_but_treat_as_internal_business_key
+  member_count: 3
   members:
-  - empreendimento_far.cadastro_pj.gps_lat_grau
-  - empreendimento_far.cadastro_pj.gps_lat_minuto
-  - empreendimento_far.cadastro_pj.gps_lat_segundo
-  - empreendimento_far.cadastro_pj.gps_long_grau
-  - empreendimento_far.cadastro_pj.gps_long_minuto
-  - empreendimento_far.cadastro_pj.gps_long_segundo
-  - empreendimento_far.dados_prioritarios_caixa.latitude
-  - empreendimento_far.dados_prioritarios_caixa.longitude
-  - entidades_fds.fds_cadastro_pj.gps_lat_grau
-  - entidades_fds.fds_cadastro_pj.gps_lat_minuto
-  - entidades_fds.fds_cadastro_pj.gps_lat_segundo
-  - entidades_fds.fds_cadastro_pj.gps_long_grau
-  - entidades_fds.fds_cadastro_pj.gps_long_minuto
-  - entidades_fds.fds_cadastro_pj.gps_long_segundo
-  - entidades_fds.fds_empreendimento.gps_lat_grau
-  - entidades_fds.fds_empreendimento.gps_lat_minuto
-  - entidades_fds.fds_empreendimento.gps_lat_segundo
-  - entidades_fds.fds_empreendimento.gps_long_grau
-  - entidades_fds.fds_empreendimento.gps_long_minuto
-  - entidades_fds.fds_empreendimento.gps_long_segundo
-  - entidades_fds.fds_ficha_empreendimento.gps_lat_grau
-  - entidades_fds.fds_ficha_empreendimento.gps_lat_minuto
-  - entidades_fds.fds_ficha_empreendimento.gps_lat_segundo
-  - entidades_fds.fds_ficha_empreendimento.gps_long_grau
-  - entidades_fds.fds_ficha_empreendimento.gps_long_minuto
-  - entidades_fds.fds_ficha_empreendimento.gps_long_segundo
-  - entidades_fds.fds_int_059_caixa_pj.gps_lat_grau
-  - entidades_fds.fds_int_059_caixa_pj.gps_lat_minuto
-  - entidades_fds.fds_int_059_caixa_pj.gps_lat_segundo
-  - entidades_fds.fds_int_059_caixa_pj.gps_long_grau
-  - entidades_fds.fds_int_059_caixa_pj.gps_long_minuto
-  - entidades_fds.fds_int_059_caixa_pj.gps_long_segundo
-  dbt_glossary_terms: []
-- id: datas
-  member_count: 244
+  - ouro.ouro_linha_financiada_base_agregada.id_contrato_linha_financiada
+  - prata.prata_linha_financiada_contrapartida.id_contrato_linha_financiada
+  - prata.prata_linha_financiada_contrato.id_contrato_linha_financiada
   members_by_schema:
-    conjuntura: 23
-    conjuntura_gold: 59
-    conjuntura: 49
-    empreendimento_far: 46
-    entidades_fds: 67
-  selector: semantic_group=data
-  match: temporal_range_or_exact
+    ouro: 1
+    prata: 2
+- id: empreendimento_linha_financiada__id_empreendimento_linha_financiada
+  match: normalized_exact
+  normalization: trim; lower
   use:
-  - filter
-  - timeline
-  pii: generally_project_dates; review semantics before combining
-  guardrails:
-  - Never infer entity identity from date equality alone.
-- id: codigos_de_dominio
-  member_count: 71
+  - entity_resolution
+  - join
+  - exact_search
+  pii: not_classified_as_pii_but_treat_as_internal_business_key
+  member_count: 2
+  members:
+  - ouro.ouro_linha_financiada_empreendimentos.id_empreendimento_linha_financiada
+  - prata.prata_linha_financiada_empreendimento.id_empreendimento_linha_financiada
   members_by_schema:
-    conjuntura: 16
-    conjuntura: 1
-    empreendimento_far: 25
-    entidades_fds: 29
-  selector: semantic_group=codigo_generico
-  match: exact_with_domain_and_table_context
+    prata: 1
+    ouro: 1
+- id: execucao_orcamentaria__id_execucao_orcamentaria
+  match: normalized_exact
+  normalization: trim; lower
   use:
-  - filter
-  - facet
-  pii: not_inherently_pii
-  guardrails:
-  - Same numeric code across different domains does not imply the same concept.
-- id: nomes_genericos
-  member_count: 21
+  - entity_resolution
+  - join
+  - exact_search
+  pii: not_classified_as_pii_but_treat_as_internal_business_key
+  member_count: 2
+  members:
+  - ouro.ouro_linha_financiada_execucao_orcamentaria.id_execucao_orcamentaria
+  - prata.prata_linha_financiada_execucao_orcamentaria.id_execucao_orcamentaria
   members_by_schema:
-    conjuntura: 11
-    empreendimento_far: 4
-    entidades_fds: 6
-  selector: semantic_group=nome_generico
-  match: fuzzy_text_after_semantic_review
+    ouro: 1
+    prata: 1
+- id: proposta__id_proposta
+  match: normalized_exact
+  normalization: trim; lower
   use:
-  - retrieval
-  pii: unknown_until_column_semantics_are_reviewed
-  guardrails:
-  - Do not use for automatic joins.
+  - entity_resolution
+  - join
+  - exact_search
+  pii: not_classified_as_pii_but_treat_as_internal_business_key
+  member_count: 3
+  members:
+  - prata.prata_far_cadastro_pj.id_proposta
+  - prata.prata_far_consolidado.id_proposta
+  - prata.prata_fds_cadastro_pj.id_proposta
+  members_by_schema:
+    prata: 3
 model_join_logic:
-  description: >
-    Inventário das 53 cláusulas JOIN encontradas em 19 modelos dbt. JOINs
-    entre CTEs do mesmo modelo descrevem cardinalidade e regra temporal, mas
-    não criam uma nova aresta de linhagem entre tabelas.
-  join_count: 53
-  model_count: 19
+  description: Inventário estático das cláusulas JOIN no SQL de 45 modelos dbt do escopo.
+  join_count: 95
+  model_count: 45
   models:
-  - model: conjuntura_gold.gold_abecip_novos_financiamentos_imobiliarios
+  - model: ouro.ouro_conjuntura_boletim_p1_lancamentos_por_regiao_cbic
+    join_count: 1
+    predicates:
+    - d.k = e.k
+  - model: ouro.ouro_conjuntura_boletim_p1_vendas_por_regiao_cbic
+    join_count: 1
+    predicates:
+    - d.k = e.k
+  - model: ouro.ouro_conjuntura_boletim_p2_lancamentos_por_construtora_variacao
+    join_count: 1
+    predicates:
+    - s.k = e.k
+  - model: ouro.ouro_conjuntura_boletim_p2_totais_empresas_variacao
     join_count: 2
     predicates:
-    - b.ano = t.ano AND b.mes = t.mes
-    - c.banco = a.banco AND a.ano = c.ano - 1 AND a.mes = c.mes
-  - model: conjuntura_gold.gold_balancos_empresas_lancamentos
-    join_count: 5
-    predicates:
-    - atual.nome_empresa = t_4t25.nome_empresa
-    - atual.nome_empresa = t_1t25.nome_empresa
-    - atual.nome_empresa = acum_26.nome_empresa
-    - atual.nome_empresa = acum_25.nome_empresa
-    - atual.nome_empresa = acum_24.nome_empresa
-  - model: conjuntura_gold.gold_balancos_empresas_vendas
-    join_count: 5
-    predicates:
-    - atual.nome_empresa = t_4t25.nome_empresa
-    - atual.nome_empresa = t_1t25.nome_empresa
-    - atual.nome_empresa = acum_26.nome_empresa
-    - atual.nome_empresa = acum_25.nome_empresa
-    - atual.nome_empresa = acum_24.nome_empresa
-  - model: conjuntura_gold.gold_cbic_lancamentos_regiao
-    join_count: 2
-    predicates:
-    - atual.regiao = ant.regiao
-    - atual.regiao = aa.regiao
-  - model: conjuntura_gold.gold_cbic_vendas_regiao
-    join_count: 2
-    predicates:
-    - atual.regiao = ant.regiao
-    - atual.regiao = aa.regiao
-  - model: conjuntura_gold.gold_empregos_construcao
+    - t.k = e.k
+    - t.k = e.k
+  - model: ouro.ouro_conjuntura_boletim_p2_vendas_por_construtora_variacao
     join_count: 1
     predicates:
-    - v.ano = a.ano AND v.trimestre = a.trimestre
-  - model: conjuntura_gold.gold_ibge_pnad_construcao
-    join_count: 1
-    predicates:
-    - o.periodo = r.periodo
-    upstream_columns:
-    - conjuntura.silver_ibge_pnadc_ocupados_construcao.periodo
-    - conjuntura.silver_ibge_pnadc_rendimento_construcao.periodo
-  - model: conjuntura_gold.gold_indices_mercado_imobiliario
-    join_count: 10
-    predicates:
-    - ia.data_referencia = p.data_atual
-    - ib.data_referencia = p.data_anterior
-    - fa.data_referencia = p.data_atual
-    - fb.data_referencia = p.data_anterior
-    - ca.data_referencia = p.data_atual
-    - cb.data_referencia = p.data_anterior
-    - cc.data_referencia = p.data_ano_anterior
-    - cd.data_referencia = DATE '2023-12-01'
-    - aa.data_referencia = p.data_atual
-    - ab.data_referencia = p.data_ano_anterior
-  - model: conjuntura_gold.gold_ticket_medio_vs_incc
-    join_count: 1
-    predicates:
-    - e.ano = i.ano AND e.trimestre = i.trimestre
-    upstream_columns:
-    - conjuntura.silver_ticket_medio_empresas.ano
-    - conjuntura.silver_ticket_medio_empresas.trimestre
-    - conjuntura.silver_fgv_incc_m.data_referencia
-  - model: conjuntura.silver_financiamentos_habitacionais
-    join_count: 1
-    predicates:
-    - fgts.ano = abecip.ano AND fgts.trimestre = abecip.trimestre
-  - model: empreendimento_far.empreendimento
+    - s.k = e.k
+  - model: ouro.ouro_conjuntura_boletim_p3_financiamentos_por_banco
     join_count: 3
     predicates:
-    - cadastro.id_proposta = consolidado.id_proposta
-    - cadastro.apf = obra.apf
-    - cadastro.apf = dados_prioritarios_caixa.apf
-  - model: empreendimento_far.evolucao_financeira
-    join_count: 1
-    predicates:
-    - financeiro.apf_raiz = LEFT(empreendimento.apf, 6)
-    guardrail: A relação usa uma raiz APF transformada e o bronze financeiro contém registros fora do recorte.
-  - model: empreendimento_far.evolucao_financeira_chart
+    - g.ano = r.ano_ed and g.mes = r.mes_ed
+    - x.origem = g.instituicao ),
+    - t.edicao = a.edicao
+  - model: ouro.ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento
     join_count: 2
     predicates:
-    - evolucao.uf = api_ibge_uf.sigla
-    - evolucao.apf = ficha_empreendimento.apf
-  - model: empreendimento_far.execucao_fisica_financeira_chart
-    join_count: 2
-    predicates:
-    - financeiro.apf = fisica.apf AND financeiro.mes = fisica.mes_fisica
-    - base.apf = empreendimento.apf
-  - model: empreendimento_far.mapa_nacional
+    - r.periodo = o.periodo ), ref as (select edicao, ano_ed * 12 + tri_ed * 3 as m0 from edicoes)
+    - b.m in (r.m0, r.m0 - 3, r.m0 - 12)
+  - model: ouro.ouro_conjuntura_boletim_p4_credito_imobiliario_pib
     join_count: 1
     predicates:
-    - ficha_empreendimento.uf = api_ibge_uf.sigla
-  - model: empreendimento_far.panorama_estadual
-    join_count: 8
+    - x.m between r.m0 - 15 and r.m0
+  - model: ouro.ouro_conjuntura_boletim_p6_ticket_medio_vs_incc
+    join_count: 1
     predicates:
-    - ufs CROSS JOIN skeleton_situacao
-    - grade_situacao.uf = situacao_real.uf AND grade_situacao.situacao = situacao_real.situacao
-    - total_empreendimentos.uf = api_ibge_uf.sigla
-    - total_uhrs.uf = api_ibge_uf.sigla
-    - total_investimento.uf = api_ibge_uf.sigla
-    - situacao_empreendimentos.uf = api_ibge_uf.sigla
-    - situacao_uhrs.uf = api_ibge_uf.sigla
-    - uhrs_concluidas.uf = api_ibge_uf.sigla
-  - model: entidades_fds.fds_empreendimento
+    - s.k between e.k - 8 and e.k
+  - model: ouro.ouro_conjuntura_empregos_caged
+    join_count: 2
+    predicates:
+    - ed.ano = se.ano and ed.mes = se.mes
+    - coalesce(ed.ano, se.ano) = tc.ano and coalesce(ed.mes, se.mes) = tc.mes
+  - model: ouro.ouro_conjuntura_financiamentos_habitacionais
+    join_count: 2
+    predicates:
+    - fgts_pj_12m.ano = fgts_pj.ano and fgts_pj_12m.trimestre = fgts_pj.trimestre
+    - sbpe.ano = fgts_pj.ano and sbpe.trimestre = fgts_pj.trimestre
+  - model: ouro.ouro_conjuntura_financiamentos_instituicao
+    join_count: 1
+    predicates:
+    - t.ano = u.ano and t.mes = u.mes
+  - model: ouro.ouro_conjuntura_fipezap
+    join_count: 1
+    predicates:
+    - d.ano_seguinte = f.ano )
+  - model: ouro.ouro_conjuntura_incc_m
+    join_count: 1
+    predicates:
+    - d.ano_referencia = extract(year from s.mes)::int )
+  - model: ouro.ouro_conjuntura_indice_imob
+    join_count: 1
+    predicates:
+    - d.ano_seguinte = extract(year from m.mes_ref)::int )
+  - model: ouro.ouro_conjuntura_producao_fisica
+    join_count: 1
+    predicates:
+    - pim.periodo = pmc.periodo
+  - model: ouro.ouro_conjuntura_qualidade_inventario
+    join_count: 1
+    predicates:
+    - t.table_schema = d.schema_dado and t.table_name = d.model
+  - model: ouro.ouro_conjuntura_qualidade_schema_drift
+    join_count: 1
+    predicates:
+    - antes.model = agora.model and antes.coluna = agora.coluna
+  - model: ouro.ouro_conjuntura_ticket_medio
+    join_count: 2
+    predicates:
+    - anterior.ano * 4 + anterior.trimestre = atual.ano * 4 + atual.trimestre - 1
+    - incc.ano = m.ano and incc.trimestre = m.trimestre
+  - model: ouro.ouro_conjuntura_uh_condicao_uso
+    join_count: 2
+    predicates:
+    - s.ano = a.ano and s.mes = a.mes )
+    - sbpe.ano = fgts_pf.ano and sbpe.mes = fgts_pf.mes
+  - model: ouro.ouro_far_curva_s
+    join_count: 1
+    predicates:
+    - a.apf = s.apf
+  - model: ouro.ouro_far_evolucao_financeira_chart
+    join_count: 2
+    predicates:
+    - e.uf = i.sigla
+    - e.apf = f.apf
+  - model: ouro.ouro_far_execucao_fisica_financeira_chart
+    join_count: 2
+    predicates:
+    - f.apf = o.apf and f.mes = o.mes_fisica ),
+    - b.apf = e.apf
+  - model: ouro.ouro_far_mapa_nacional
+    join_count: 1
+    predicates:
+    - f.uf = i.sigla
+  - model: ouro.ouro_far_panorama_estadual
+    join_count: 7
+    predicates:
+    - g.uf = r.uf and g.situacao = r.situacao ),
+    - h.uf = i.sigla
+    - d.uf = i.sigla
+    - d.uf = i.sigla
+    - d.uf = i.sigla
+    - d.uf = i.sigla
+    - d.uf = i.sigla
+  - model: ouro.ouro_far_serie_mensal_apf
+    join_count: 1
+    predicates:
+    - f.apf = s.apf
+  - model: ouro.ouro_fds_evolucao_financeira_chart
+    join_count: 1
+    predicates:
+    - m.apf = f.apf
+  - model: ouro.ouro_linha_financiada_projecao_anual
+    join_count: 1
+    predicates:
+    - m.fonte_recurso = r.fonte_recurso and m.segmento_linha_financiada = r.segmento_linha_financiada and extract(year from
+      m.competencia_contratacao) = extract(year from r.competencia_referencia) and m.competencia_contratacao <= r.competencia_referencia
+  - model: ouro.ouro_rural_evolucao_financeira
+    join_count: 1
+    predicates:
+    - m.apf = e.apf )
+  - model: ouro.ouro_rural_execucao_fisica_financeira
+    join_count: 2
+    predicates:
+    - m.apf = f.apf
+    - fin.apf = m.apf and fin.mes = m.mes
+  - model: ouro.ouro_rural_ficha_empreendimento
+    join_count: 1
+    predicates:
+    - b.apf = se.apf )
+  - model: ouro.ouro_rural_ficha_trabalho_social
+    join_count: 1
+    predicates:
+    - t.apf = f.apf
+  - model: ouro.ouro_rural_infraestrutura_agua_saneamento
     join_count: 4
     predicates:
-    - cadastro.apf = obra.apf
-    - cadastro.apf = int059.apf
-    - cadastro.apf = trabalho_social.apf
-    - LEFT(cadastro.apf, 6) = desembolso_acumulado.apf_raiz
-    guardrail: INT 059 e financeiro possuem universos mais amplos; o vínculo depende do recorte do modelo.
-  - model: entidades_fds.fds_evolucao_financeira
+    - f.apf = c.apf
+    - f.apf = cpf.apf
+    - f.apf = pcx.apf and f.agente_financeiro = 'CAIXA'
+    - f.apf = pbb.apf and f.agente_financeiro = 'BB'
+  - model: ouro.ouro_rural_mapa_nacional
+    join_count: 2
+    predicates:
+    - f.uf = i.sigla
+    - f.uf = i.sigla
+  - model: ouro.ouro_rural_panorama_estadual
+    join_count: 6
+    predicates:
+    - g.uf = r.uf and g.situacao = r.situacao ),
+    - h.uf = i.sigla
+    - d.uf = i.sigla
+    - d.uf = i.sigla
+    - d.uf = i.sigla
+    - d.uf = i.sigla
+  - model: ouro.ouro_rural_perfil_beneficiarios
     join_count: 1
     predicates:
-    - financeiro.apf_raiz = LEFT(empreendimento.apf, 6)
-    guardrail: O bronze financeiro contém legado fora do recorte Novo MCMV.
-  - model: entidades_fds.fds_evolucao_financeira_chart
+    - f.apf = a.apf
+  - model: prata.prata_far_empreendimento
+    join_count: 3
+    predicates:
+    - c.id_proposta = cons.id_proposta
+    - c.apf = o.apf
+    - c.apf = cx.apf
+  - model: prata.prata_far_evolucao_financeira
     join_count: 1
     predicates:
-    - evolucao_mensal.apf = ficha_empreendimento.apf
-pii_and_sensitive_metadata:
-  suspected_column_count: 71
-  categories:
-    email: 1
-    identificador_pessoa_juridica: 19
-    localizacao: 44
-    nome_ou_razao_social: 8
-  policy:
-  - Explore metadata before data values.
-  - Do not emit raw values or reusable transformed identifiers in catalog artifacts.
-  - Use protected exact-match tokens for business identifiers.
-  - Mask or coarsen addresses and coordinates before semantic indexing.
+    - m.apf_raiz = left(e.apf, 6) )
+  - model: prata.prata_far_serie_mensal
+    join_count: 13
+    predicates:
+    - c.apf = x.apf
+    - c.apf = u.apf
+    - f.apf_raiz = left(u.apf, 6)
+    - o.apf = u.apf
+    - x.apf = u.apf ),
+    - f.apf_raiz = left(cal.apf, 6) and f.mes = cal.mes
+    - o.apf = cal.apf and o.competencia = cal.mes
+    - x.apf = cal.apf and x.competencia = cal.mes
+    - xe.apf = cal.apf and xe.competencia = cal.mes and xe.competencia >= (select mes from inicio_exec_caixa) ),
+    - u.apf = p.apf
+    - c.apf = p.apf
+    - a.apf = p.apf
+    - s.co_situacao_obra = p.co_situacao_obra
+  - model: prata.prata_fds_dim_empreendimento
+    join_count: 1
+    predicates:
+    - f.apf = c.apf
+  - model: prata.prata_fds_empreendimento
+    join_count: 4
+    predicates:
+    - c.apf = o.apf
+    - c.apf = i.apf
+    - c.apf = ts.apf
+    - left(c.apf, 6) = d.apf_raiz
+  - model: prata.prata_fds_evolucao_financeira
+    join_count: 1
+    predicates:
+    - m.apf_raiz = left(e.apf, 6) )
+  - model: prata.prata_linha_financiada_contrato
+    join_count: 3
+    predicates:
+    - c.contrato = b.contrato ),
+    - c.contrato = trim(f.nu_contrato::text)
+    - trim(l.codigo::text) = trim(c.cod_linha::text)
+  - model: prata.prata_linha_financiada_empreendimento
+    join_count: 1
+    predicates:
+    - p.codigo_empreendimento = trim(e.cod_empreendimento::text) ), pj as (
+  - model: prata.prata_rural_empreendimento
+    join_count: 6
+    predicates:
+    - s.apf = cx.apf and s.agente_financeiro = 'CAIXA'
+    - s.apf = b.apf and s.agente_financeiro = 'BB'
+    - s.apf = cpj.apf
+    - s.apf = o.apf
+    - s.apf = pcx.apf and s.agente_financeiro = 'CAIXA'
+    - s.apf = pbb.apf and s.agente_financeiro = 'BB'
+table_grain:
+  ouro.ouro_far_evolucao_financeira_chart:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 7018
+  ouro.ouro_far_execucao_fisica_financeira_chart:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 7600
+  ouro.ouro_far_ficha_empreendimento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 878
+  ouro.ouro_far_serie_mensal_apf:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 19070
+  ouro.ouro_fds_evolucao_financeira_chart:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 612
+  ouro.ouro_fds_ficha_empreendimento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 364
+  ouro.ouro_fds_panorama_entidade:
+    statement: uma linha por `cnpj_eo`
+    keys:
+    - cnpj_eo
+    rows: 175
+  ouro.ouro_linha_financiada_base_agregada:
+    statement: uma linha por `id_contrato_linha_financiada` / `contrato`
+    keys:
+    - id_contrato_linha_financiada
+    - contrato
+    rows: 499055
+  ouro.ouro_linha_financiada_empreendimentos:
+    statement: uma linha por `id_empreendimento_linha_financiada` / `codigo_empreendimento`
+    keys:
+    - id_empreendimento_linha_financiada
+    - codigo_empreendimento
+    rows: 93104
+  ouro.ouro_linha_financiada_execucao_orcamentaria:
+    statement: uma linha por `id_execucao_orcamentaria`
+    keys:
+    - id_execucao_orcamentaria
+    rows: 375
+  ouro.ouro_rural_evolucao_financeira:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 57492
+  ouro.ouro_rural_execucao_fisica_financeira:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 59722
+  ouro.ouro_rural_ficha_empreendimento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 10402
+  ouro.ouro_rural_ficha_trabalho_social:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 10390
+  ouro.ouro_rural_infraestrutura_agua_saneamento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 10402
+  ouro.ouro_rural_perfil_beneficiarios:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 103
+  prata.prata_far_cadastro_pj:
+    statement: uma linha por `apf` / `id_proposta`
+    keys:
+    - apf
+    - id_proposta
+    rows: 878
+  prata.prata_far_caixa_serie:
+    statement: uma linha por `apf` × `competencia`
+    keys:
+    - apf
+    - competencia
+    rows: 111112
+  prata.prata_far_consolidado:
+    statement: 'mais fino que `apf`: cada valor aparece em média 1.0 vezes'
+    keys:
+    - apf
+    rows: 15811
+    ratio: 0.997
+  prata.prata_far_dados_prioritarios_caixa:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 4504
+  prata.prata_far_empreendimento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 878
+  prata.prata_far_evolucao_financeira:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 7018
+  prata.prata_far_financeiro_mensal:
+    statement: 'mais fino que `apf`: cada valor aparece em média 16.3 vezes'
+    keys:
+    - apf
+    rows: 12469
+    ratio: 0.0615
+  prata.prata_far_obra_mensal:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 878
+  prata.prata_far_obra_serie:
+    statement: uma linha por `apf` × `competencia`
+    keys:
+    - apf
+    - competencia
+    rows: 6726
+  prata.prata_far_serie_mensal:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 19070
+  prata.prata_fds_cadastro_pj:
+    statement: uma linha por `apf` / `id_proposta`
+    keys:
+    - apf
+    - id_proposta
+    rows: 364
+  prata.prata_fds_dados_prioritarios_entregas:
+    statement: 'mais fino que `apf`: cada valor aparece em média 1.0 vezes'
+    keys:
+    - apf
+    rows: 11677
+    ratio: 0.9999
+  prata.prata_fds_dim_empreendimento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 1095
+  prata.prata_fds_empreendimento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 364
+  prata.prata_fds_evolucao_financeira:
+    statement: uma linha por `apf` × `mes`
+    keys:
+    - apf
+    - mes
+    rows: 612
+  prata.prata_fds_financeiro_mensal:
+    statement: 'mais fino que `apf`: cada valor aparece em média 20.1 vezes'
+    keys:
+    - apf
+    rows: 16887
+    ratio: 0.0497
+  prata.prata_fds_int_059_caixa_pj:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 916
+  prata.prata_fds_obra_mensal:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 364
+  prata.prata_fds_trabalho_social:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 141
+  prata.prata_linha_financiada_contrapartida:
+    statement: uma linha por `id_contrato_linha_financiada` / `contrato`
+    keys:
+    - id_contrato_linha_financiada
+    - contrato
+    rows: 499055
+  prata.prata_linha_financiada_contrato:
+    statement: uma linha por `id_contrato_linha_financiada` / `contrato`
+    keys:
+    - id_contrato_linha_financiada
+    - contrato
+    rows: 499055
+  prata.prata_linha_financiada_empreendimento:
+    statement: uma linha por `id_empreendimento_linha_financiada` / `codigo_empreendimento`
+    keys:
+    - id_empreendimento_linha_financiada
+    - codigo_empreendimento
+    rows: 93104
+  prata.prata_linha_financiada_execucao_orcamentaria:
+    statement: uma linha por `id_execucao_orcamentaria`
+    keys:
+    - id_execucao_orcamentaria
+    rows: 375
+  prata.prata_rural_cadastro_pf:
+    statement: 'mais fino que `apf`: cada valor aparece em média 30.0 vezes'
+    keys:
+    - apf
+    rows: 3093
+    ratio: 0.0333
+  prata.prata_rural_cadastro_pj:
+    statement: uma linha por `apf` / `nu_contrato_empreend`
+    keys:
+    - apf
+    - nu_contrato_empreend
+    rows: 127
+  prata.prata_rural_empreendimento:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 10402
+  prata.prata_rural_financeiro_mensal:
+    statement: 'mais fino que `apf`: cada valor aparece em média 4.9 vezes'
+    keys:
+    - apf
+    rows: 7729
+    ratio: 0.2047
+  prata.prata_rural_obra_mensal:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 1517
+  prata.prata_rural_pnhr_bb:
+    statement: uma linha por `apf` / `nu_contrato_empreendimento`
+    keys:
+    - apf
+    - nu_contrato_empreendimento
+    rows: 1087
+  prata.prata_rural_pnhr_caixa:
+    statement: uma linha por `apf` / `nu_contrato_empreend`
+    keys:
+    - apf
+    - nu_contrato_empreend
+    rows: 8508
+  prata.prata_rural_pnhr_liberacoes:
+    statement: 'mais fino que `apf`: cada valor aparece em média 7.4 vezes'
+    keys:
+    - apf
+    rows: 63869
+    ratio: 0.1344
+  prata.prata_rural_prioritarios_bb:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 1088
+  prata.prata_rural_prioritarios_caixa:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 9637
+  prata.prata_rural_prioritarios_snh:
+    statement: uma linha por `apf`
+    keys:
+    - apf
+    rows: 10402
+  prata.prata_rural_trabalho_social_bb:
+    statement: uma linha por `apf` / `contrato`
+    keys:
+    - apf
+    - contrato
+    rows: 1088
+  prata.prata_rural_trabalho_social_caixa:
+    statement: uma linha por `apf` / `contrato`
+    keys:
+    - apf
+    - contrato
+    rows: 10005
 known_limitations:
-- No physical PK, FK, UNIQUE constraint or index exists in the 74-table scope.
-- The aggregate profile does not encode every dbt ref/source lineage edge.
-- Transformed joins such as six-digit APF roots require a dedicated transformed-key validation before publication.
-- PII was inferred from dbt/PostgreSQL metadata and checked against authenticated OpenMetadata metadata where available; no sample value was read.
-- Database counts and coverage are a point-in-time observation and must be reprofiled after material changes.
+- Sobreposição é do dado do dia da medição; refazer a rodada mantém o catálogo vivo.
+- 17 tabelas do main (histórico e reloginho, eixo DuckDB) não existem no PostgreSQL e não foram medidas.
+- Colunas cujo nome não casa com conceito declarado nem com a cauda automática (forma de identificador em 3+ tabelas) não
+  são medidas.
