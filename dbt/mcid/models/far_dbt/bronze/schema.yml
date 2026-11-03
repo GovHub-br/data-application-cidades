@@ -16,7 +16,7 @@ models:
       cada proposta.
     tests:
       - sem_drift_de_colunas:
-          name: sem_drift_de_colunas_bronze_shpt_his_mcidades_consolidado
+          name: sem_drift_de_colunas_bronze_shpt_his_mcidades_consolidado_serie
           arguments:
             colunas:
               - co_tipo_registro

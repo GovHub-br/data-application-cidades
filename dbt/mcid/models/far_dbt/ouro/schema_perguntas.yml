@@ -10,6 +10,14 @@ models:
       CAIXA, INT021 BB). Base do perfil do beneficiário, da contratação, da situação das
       unidades e da inadimplência. Sem identificador pessoal; descrição das colunas em
       prata_far_contrato_pf.
+    config:
+      meta:
+        documentacao:
+          grao: Um contrato de família beneficiária do FAR, do Novo MCMV ou do legado.
+          chave: [geracao, nu_contrato]
+          fonte: GEFUS, contratos PF do Novo MCMV FAR, da CAIXA (INT039) e do BB (INT021).
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
     columns:
       - name: geracao
         description: Novo MCMV ou Legado (2009–2023).
@@ -33,6 +41,14 @@ models:
       Contratos das famílias do FAR por município e geração: volume, carteira ativa,
       inadimplência, liquidações, distratos, retomadas, titular mulher e renda média.
       Taxas recalculadas no grão; a de inadimplência é sobre os contratos ativos.
+    config:
+      meta:
+        documentacao:
+          grao: Um município por geração (Novo MCMV ou legado).
+          chave: [geracao, cod_ibge]
+          fonte: GEFUS, contratos PF do Novo MCMV FAR, da CAIXA (INT039) e do BB (INT021).
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
     columns:
       - name: geracao
         description: Novo MCMV ou Legado (2009–2023).
@@ -75,6 +91,14 @@ models:
       contratação, execução com sinal de atraso ou paralisação, estoque retomado e
       invadido e contratos das famílias já assinados. O sinal de paralisação marca obra
       iniciada, não concluída e com o percentual físico parado há 3 meses ou mais.
+    config:
+      meta:
+        documentacao:
+          grao: Um empreendimento FAR contratado.
+          chave: [apf]
+          fonte: Consolidado GFAR, MONIT do FAR, CAIXA e contratos PF das famílias.
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos — chave do painel.
@@ -88,7 +112,7 @@ models:
       - name: apf_municipio_empreendimento
         description: APF - Município/UF - Nome, para o filtro do painel.
       - name: portaria
-        description: Portaria normativa pela planilha do FAR (seed far_portaria_apf), ou Não informada.
+        description: Portaria normativa de seleção do empreendimento, ou Não informada.
       - name: alerta_execucao
         description: >
           Concluída, Cancelada ou distratada, Paralisada (informada), Atrasada (informada),
@@ -114,6 +138,14 @@ models:
       Contrapartidas pactuadas pelos entes em cada empreendimento FAR: uma linha por
       APF × ente × tipo (terreno, infraestrutura, complementar, outras), só com valor
       informado. A origem traz o pactuado, não o executado.
+    config:
+      meta:
+        documentacao:
+          grao: Uma contrapartida pactuada por empreendimento, ente e tipo.
+          chave: [apf, ente, tipo]
+          fonte: Consolidado GFAR, natureza e contrapartidas da proposta.
+          periodicidade: semanal
+          consumo: [Superset, painel Perguntas FAR]
     columns:
       - name: apf
         description: APF normalizado para 8 dígitos.
@@ -131,6 +163,14 @@ models:
       Matriz pergunta × dado do painel de perguntas do FAR (seed cobertura_perguntas_far):
       o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta e
       qual a limitação.
+    config:
+      meta:
+        documentacao:
+          grao: Uma pergunta da oficina com o MCID.
+          chave: [pergunta]
+          fonte: Matriz de cobertura mantida pela equipe de dados.
+          periodicidade: eventual
+          consumo: [Superset, painel Perguntas FAR]
     columns:
       - name: pergunta
         description: Pergunta como registrada na oficina.

@@ -3596,6 +3596,516 @@
       "rag_eligivel": false
     },
     {
+      "id": "model.mcid.bronze_sftp_int021_far_bb_pf",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "bronze",
+      "classification": "restricted",
+      "schema": "bronze",
+      "name": "bronze_sftp_int021_far_bb_pf",
+      "description": "Modelo da camada bronze do produto empreendimento_far.",
+      "documentation_status": "derived_convention",
+      "materialized": "table",
+      "depends_on": [],
+      "columns": [
+        {
+          "name": "_ingested_at",
+          "data_type": "text",
+          "ordinal": 38,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "_source_file",
+          "data_type": "text",
+          "ordinal": 37,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "_source_hash",
+          "data_type": "text",
+          "ordinal": 39,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_agente_financeiro",
+          "data_type": "text",
+          "ordinal": 36,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_produto_siico",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_sexo",
+          "data_type": "text",
+          "ordinal": 25,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "cod_municipio_ibge",
+          "data_type": "text",
+          "ordinal": 34,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "de_estado_civil",
+          "data_type": "text",
+          "ordinal": 27,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dsc_situacao_ctr",
+          "data_type": "text",
+          "ordinal": 30,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dsc_tipo_contrato",
+          "data_type": "text",
+          "ordinal": 28,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_assinatura",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_movimento",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_termino_contrato",
+          "data_type": "text",
+          "ordinal": 29,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "filename",
+          "data_type": "text",
+          "ordinal": 40,
+          "description": "Arquivo da staging que venceu esta carga.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "no_bairro_imovel",
+          "data_type": "text",
+          "ordinal": 17,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_complemento_imovel",
+          "data_type": "text",
+          "ordinal": 16,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_municipio_imovel",
+          "data_type": "text",
+          "ordinal": 18,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_apf",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_contrato",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_empreendimento",
+          "data_type": "text",
+          "ordinal": 32,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_imovel",
+          "data_type": "text",
+          "ordinal": 15,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_prestacao",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "origem",
+          "data_type": "text",
+          "ordinal": 35,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_amortizacao",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_remanescente",
+          "data_type": "text",
+          "ordinal": 12,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_coobrigados",
+          "data_type": "text",
+          "ordinal": 26,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_dias_atraso",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "sem_registro",
+          "data_type": "text",
+          "ordinal": 31,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "sg_uf_imovel",
+          "data_type": "text",
+          "ordinal": 19,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_encargo_total_atraso",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_garantia_inicial",
+          "data_type": "text",
+          "ordinal": 22,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_renda_familiar_comprovada",
+          "data_type": "text",
+          "ordinal": 21,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_subsidio_na_concesssao",
+          "data_type": "text",
+          "ordinal": 23,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {},
+      "rag_eligivel": false
+    },
+    {
+      "id": "model.mcid.bronze_sftp_int039_far_caixa_pf",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "bronze",
+      "classification": "restricted",
+      "schema": "bronze",
+      "name": "bronze_sftp_int039_far_caixa_pf",
+      "description": "Modelo da camada bronze do produto empreendimento_far.",
+      "documentation_status": "derived_convention",
+      "materialized": "table",
+      "depends_on": [],
+      "columns": [
+        {
+          "name": "_ingested_at",
+          "data_type": "text",
+          "ordinal": 39,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "_source_file",
+          "data_type": "text",
+          "ordinal": 38,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "_source_hash",
+          "data_type": "text",
+          "ordinal": 40,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_agente_financeiro",
+          "data_type": "text",
+          "ordinal": 37,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_municipio_ibge_completo",
+          "data_type": "text",
+          "ordinal": 35,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_produto_siico",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_sexo",
+          "data_type": "text",
+          "ordinal": 25,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "de_estado_civil",
+          "data_type": "text",
+          "ordinal": 27,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dsc_situacao_ctr",
+          "data_type": "text",
+          "ordinal": 30,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dsc_tipo_contrato",
+          "data_type": "text",
+          "ordinal": 28,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_assinatura",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_movimento",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_termino_contrato",
+          "data_type": "text",
+          "ordinal": 29,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "filename",
+          "data_type": "text",
+          "ordinal": 41,
+          "description": "Arquivo da staging que venceu esta carga.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "no_bairro_imovel",
+          "data_type": "text",
+          "ordinal": 17,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_complemento_imovel",
+          "data_type": "text",
+          "ordinal": 16,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_municipio_imovel",
+          "data_type": "text",
+          "ordinal": 18,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_apf",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_contrato",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Contrato da família com a CAIXA.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "nu_imovel",
+          "data_type": "text",
+          "ordinal": 15,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "origem",
+          "data_type": "text",
+          "ordinal": 36,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_amortizacao",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_decorrido",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_remanescente",
+          "data_type": "text",
+          "ordinal": 12,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_coobrigados",
+          "data_type": "text",
+          "ordinal": 26,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_dias_atraso",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_prestacoes_atraso",
+          "data_type": "text",
+          "ordinal": 32,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "sem_registro",
+          "data_type": "text",
+          "ordinal": 31,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "sg_uf_imovel",
+          "data_type": "text",
+          "ordinal": 19,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_encargo_total_atraso",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_garantia_inicial",
+          "data_type": "text",
+          "ordinal": 22,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao",
+          "data_type": "text",
+          "ordinal": 34,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_renda_familiar_comprovada",
+          "data_type": "text",
+          "ordinal": 21,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_saldo_devedor_atual",
+          "data_type": "text",
+          "ordinal": 33,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_subsidio_na_concesssao",
+          "data_type": "text",
+          "ordinal": 23,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {},
+      "rag_eligivel": false
+    },
+    {
       "id": "model.mcid.bronze_sftp_int055_liberacoes_caixa_bb",
       "product": "empreendimento_rural",
       "owner_key": "mcid_data_engineering",
@@ -5001,6 +5511,695 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "rag_eligivel": false
+    },
+    {
+      "id": "model.mcid.bronze_sftp_mont_cont_pf_far",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "bronze",
+      "classification": "restricted",
+      "schema": "bronze",
+      "name": "bronze_sftp_mont_cont_pf_far",
+      "description": "Modelo da camada bronze do produto empreendimento_far.",
+      "documentation_status": "derived_convention",
+      "materialized": "table",
+      "depends_on": [],
+      "columns": [
+        {
+          "name": "_ingested_at",
+          "data_type": "text",
+          "ordinal": 110,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "_source_file",
+          "data_type": "text",
+          "ordinal": 109,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "_source_hash",
+          "data_type": "text",
+          "ordinal": 111,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_gen_benef_coob",
+          "data_type": "text",
+          "ordinal": 19,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_municipio_ibge",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_situacao_contrato",
+          "data_type": "text",
+          "ordinal": 38,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_tipo_demanda",
+          "data_type": "text",
+          "ordinal": 36,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_tipo_instrum_contratual",
+          "data_type": "text",
+          "ordinal": 37,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_tipo_registro",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dh_movimento",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_assinatura_contrato",
+          "data_type": "text",
+          "ordinal": 40,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_liquidacao",
+          "data_type": "text",
+          "ordinal": 45,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_lista_enquadramento",
+          "data_type": "text",
+          "ordinal": 35,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_nasc_coob",
+          "data_type": "text",
+          "ordinal": 20,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_prescricao_contrato",
+          "data_type": "text",
+          "ordinal": 48,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_primeira_prest_atraso",
+          "data_type": "text",
+          "ordinal": 89,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_primeira_prestacao",
+          "data_type": "text",
+          "ordinal": 88,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_reajuste_prestacao",
+          "data_type": "text",
+          "ordinal": 87,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_registro_contrato",
+          "data_type": "text",
+          "ordinal": 41,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_retomada_imovel",
+          "data_type": "text",
+          "ordinal": 105,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_ultima_prest_paga",
+          "data_type": "text",
+          "ordinal": 91,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_ultima_prestacao",
+          "data_type": "text",
+          "ordinal": 90,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_vigencia_contrato",
+          "data_type": "text",
+          "ordinal": 50,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "filename",
+          "data_type": "text",
+          "ordinal": 112,
+          "description": "Arquivo da staging que venceu esta carga.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_acao_judicial",
+          "data_type": "text",
+          "ordinal": 47,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_benef_coob_idoso",
+          "data_type": "text",
+          "ordinal": 22,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_benef_coob_pcd",
+          "data_type": "text",
+          "ordinal": 26,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_benef_idoso",
+          "data_type": "text",
+          "ordinal": 21,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_benef_pcd",
+          "data_type": "text",
+          "ordinal": 25,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_benef_sit_rua",
+          "data_type": "text",
+          "ordinal": 24,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_contrato_inadimp",
+          "data_type": "text",
+          "ordinal": 44,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_convenio_prest_inadimplencia",
+          "data_type": "text",
+          "ordinal": 94,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_convenio_prest_pag_integral",
+          "data_type": "text",
+          "ordinal": 92,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_convenio_prest_pag_parcial",
+          "data_type": "text",
+          "ordinal": 93,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_divida_prescrita",
+          "data_type": "text",
+          "ordinal": 46,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_imovel_retomado",
+          "data_type": "text",
+          "ordinal": 104,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_liquidacao_dfi",
+          "data_type": "text",
+          "ordinal": 64,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_liquidacao_mip",
+          "data_type": "text",
+          "ordinal": 58,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_memb_fam_idoso",
+          "data_type": "text",
+          "ordinal": 23,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_memb_fam_pcd",
+          "data_type": "text",
+          "ordinal": 27,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_quit_antecipada",
+          "data_type": "text",
+          "ordinal": 66,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_benef_coob",
+          "data_type": "text",
+          "ordinal": 16,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_est_civil_coob",
+          "data_type": "text",
+          "ordinal": 17,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_estado_civil",
+          "data_type": "text",
+          "ordinal": 13,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_genero",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "no_municipio",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_apf",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_contrato",
+          "data_type": "text",
+          "ordinal": 39,
+          "description": "Contrato da família com o agente financeiro.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "nu_registro_contrato",
+          "data_type": "text",
+          "ordinal": 42,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_uh",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pc_correcao_saldo_devedor",
+          "data_type": "text",
+          "ordinal": 98,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pc_renda_benef_coob",
+          "data_type": "text",
+          "ordinal": 29,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pc_renda_benef_principal",
+          "data_type": "text",
+          "ordinal": 28,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pc_taxa",
+          "data_type": "text",
+          "ordinal": 70,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_amortiz_financ",
+          "data_type": "text",
+          "ordinal": 53,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_decorrido",
+          "data_type": "text",
+          "ordinal": 51,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pz_reman_financ",
+          "data_type": "text",
+          "ordinal": 52,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_dias_atraso",
+          "data_type": "text",
+          "ordinal": 77,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_memb_familia",
+          "data_type": "text",
+          "ordinal": 33,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_prestacoes_atrasadas",
+          "data_type": "text",
+          "ordinal": 76,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_total_prestacao_paga",
+          "data_type": "text",
+          "ordinal": 75,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "sg_uf",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_amortiz_recurso_fgts",
+          "data_type": "text",
+          "ordinal": 54,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_atual_saldo_devedor",
+          "data_type": "text",
+          "ordinal": 85,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_convenio_inad",
+          "data_type": "text",
+          "ordinal": 97,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_convenio_integral",
+          "data_type": "text",
+          "ordinal": 95,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_convenio_parcial",
+          "data_type": "text",
+          "ordinal": 96,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_despesas_adjudicacao",
+          "data_type": "text",
+          "ordinal": 107,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_divida_prescrita",
+          "data_type": "text",
+          "ordinal": 49,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_emolum_contrato",
+          "data_type": "text",
+          "ordinal": 43,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_financiamento",
+          "data_type": "text",
+          "ordinal": 69,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_garantia",
+          "data_type": "text",
+          "ordinal": 67,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_imovel",
+          "data_type": "text",
+          "ordinal": 68,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_imovel_retomado",
+          "data_type": "text",
+          "ordinal": 106,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_juros_moratorios",
+          "data_type": "text",
+          "ordinal": 82,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_juros_prest_atrasada",
+          "data_type": "text",
+          "ordinal": 86,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_liquidado_adjudicacao",
+          "data_type": "text",
+          "ordinal": 103,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao",
+          "data_type": "text",
+          "ordinal": 78,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao_atrasada",
+          "data_type": "text",
+          "ordinal": 83,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao_atrasada_juros",
+          "data_type": "text",
+          "ordinal": 84,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao_com_subvencao",
+          "data_type": "text",
+          "ordinal": 72,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao_liquida_subvencao",
+          "data_type": "text",
+          "ordinal": 73,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao_paga",
+          "data_type": "text",
+          "ordinal": 79,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacao_vencida_sem_subvencao",
+          "data_type": "text",
+          "ordinal": 74,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacoes_a_vencer",
+          "data_type": "text",
+          "ordinal": 100,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_prestacoes_vencidas",
+          "data_type": "text",
+          "ordinal": 99,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_quitacao_subsidio",
+          "data_type": "text",
+          "ordinal": 81,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_renda_comprovada",
+          "data_type": "text",
+          "ordinal": 32,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_renda_coob",
+          "data_type": "text",
+          "ordinal": 31,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_renda_tit_cont",
+          "data_type": "text",
+          "ordinal": 30,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_resultado_adjudicacao",
+          "data_type": "text",
+          "ordinal": 108,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_saldo_devedor_com_subvencao",
+          "data_type": "text",
+          "ordinal": 102,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_saldo_devedor_sem_subvencao",
+          "data_type": "text",
+          "ordinal": 101,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_subsidio_far",
+          "data_type": "text",
+          "ordinal": 71,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_subsidio_mensal_far",
+          "data_type": "text",
+          "ordinal": 80,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_total_amortizado",
+          "data_type": "text",
+          "ordinal": 55,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {},
       "rag_eligivel": false
     },
     {
@@ -7395,6 +8594,7 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": false
     },
     {
@@ -14993,6 +16193,633 @@
       "rag_eligivel": true
     },
     {
+      "id": "model.mcid.ouro_far_beneficiario_contrato",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_beneficiario_contrato",
+      "description": "Um contrato de família beneficiária do FAR por linha, Novo MCMV e legado (INT039 CAIXA, INT021 BB). Base do perfil do beneficiário, da contratação, da situação das unidades e da inadimplência. Sem identificador pessoal; descrição das colunas em prata_far_contrato_pf.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_contrato_pf"
+      ],
+      "columns": [
+        {
+          "name": "agente_financeiro",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ano_assinatura",
+          "data_type": "integer",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "apf",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "cod_ibge",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dias_atraso",
+          "data_type": "integer",
+          "ordinal": 27,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_assinatura",
+          "data_type": "date",
+          "ordinal": 5,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_retrato",
+          "data_type": "date",
+          "ordinal": 39,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "estado_civil",
+          "data_type": "text",
+          "ordinal": 12,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "faixa_renda",
+          "data_type": "text",
+          "ordinal": 22,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "geracao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Novo MCMV ou Legado (2009–2023).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_acao_judicial",
+          "data_type": "boolean",
+          "ordinal": 32,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_ativo",
+          "data_type": "boolean",
+          "ordinal": 26,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_coobrigado",
+          "data_type": "boolean",
+          "ordinal": 13,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_familia_com_idoso",
+          "data_type": "boolean",
+          "ordinal": 16,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_familia_com_pcd",
+          "data_type": "boolean",
+          "ordinal": 18,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_inadimplente",
+          "data_type": "boolean",
+          "ordinal": 30,
+          "description": "Contrato ativo com prestação vencida há mais de 90 dias.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_mulher_responsavel",
+          "data_type": "boolean",
+          "ordinal": 14,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_responsavel_idoso",
+          "data_type": "boolean",
+          "ordinal": 15,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_responsavel_pcd",
+          "data_type": "boolean",
+          "ordinal": 17,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_retomado",
+          "data_type": "boolean",
+          "ordinal": 31,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_sem_registro",
+          "data_type": "boolean",
+          "ordinal": 38,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_situacao_rua",
+          "data_type": "boolean",
+          "ordinal": 19,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "modalidade",
+          "data_type": "text",
+          "ordinal": 23,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Município associado ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "municipio_uf",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Município/UF do imóvel, para filtro e ranking.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "nu_contrato",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Contrato da família com o agente financeiro.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "prestacoes_atraso",
+          "data_type": "integer",
+          "ordinal": 28,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_membros_familia",
+          "data_type": "integer",
+          "ordinal": 20,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "renda_familiar",
+          "data_type": "numeric",
+          "ordinal": 21,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "sexo_responsavel",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "situacao_contrato",
+          "data_type": "text",
+          "ordinal": 25,
+          "description": "Situação do contrato.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "tipo_instrumento",
+          "data_type": "text",
+          "ordinal": 24,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Unidade da Federação associada ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_em_atraso",
+          "data_type": "numeric",
+          "ordinal": 29,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_imovel",
+          "data_type": "numeric",
+          "ordinal": 35,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_prestacao",
+          "data_type": "numeric",
+          "ordinal": 37,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_subsidio",
+          "data_type": "numeric",
+          "ordinal": 36,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {
+        "grao": "Um contrato de família beneficiária do FAR, do Novo MCMV ou do legado.",
+        "chave": [
+          "geracao",
+          "nu_contrato"
+        ],
+        "fonte": "GEFUS, contratos PF do Novo MCMV FAR, da CAIXA (INT039) e do BB (INT021).",
+        "periodicidade": "mensal",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.ouro_far_beneficiario_municipio",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_beneficiario_municipio",
+      "description": "Modelo da camada gold do produto empreendimento_far.",
+      "documentation_status": "derived_convention",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_contrato_pf"
+      ],
+      "columns": [
+        {
+          "name": "cod_ibge",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Código IBGE do município.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "geracao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Novo MCMV ou Legado (2009–2023).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Município associado ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "municipio_uf",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Município/UF.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "pct_inadimplencia",
+          "data_type": "numeric",
+          "ordinal": 9,
+          "description": "Inadimplentes ÷ ativos × 100.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "pct_responsavel_mulher",
+          "data_type": "numeric",
+          "ordinal": 14,
+          "description": "Participação ou variação percentual no recorte definido pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pct_sem_renda",
+          "data_type": "numeric",
+          "ordinal": 16,
+          "description": "Contratos com renda comprovada zero ÷ contratos com renda informada × 100.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_ativos",
+          "data_type": "bigint",
+          "ordinal": 7,
+          "description": "Contratos ativos.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_cancelados",
+          "data_type": "bigint",
+          "ordinal": 12,
+          "description": "Contratos cancelados.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_contratos",
+          "data_type": "bigint",
+          "ordinal": 6,
+          "description": "Contratos das famílias.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_distratados",
+          "data_type": "bigint",
+          "ordinal": 11,
+          "description": "Contratos distratados.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_inadimplentes",
+          "data_type": "bigint",
+          "ordinal": 8,
+          "description": "Contratos ativos com mais de 90 dias de atraso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_liquidados",
+          "data_type": "bigint",
+          "ordinal": 10,
+          "description": "Contratos liquidados, por qualquer motivo.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_retomados",
+          "data_type": "bigint",
+          "ordinal": 13,
+          "description": "Imóveis retomados (só Novo MCMV).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "renda_media",
+          "data_type": "numeric",
+          "ordinal": 15,
+          "description": "Renda familiar média dos contratos com renda maior que zero, em R$.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Unidade da Federação associada ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_em_atraso",
+          "data_type": "numeric",
+          "ordinal": 17,
+          "description": "Valor em atraso dos contratos inadimplentes, em R$.",
+          "documentation_status": "curated"
+        }
+      ],
+      "documentacao": {
+        "grao": "Um município por geração (Novo MCMV ou legado).",
+        "chave": [
+          "geracao",
+          "cod_ibge"
+        ],
+        "fonte": "GEFUS, contratos PF do Novo MCMV FAR, da CAIXA (INT039) e do BB (INT021).",
+        "periodicidade": "mensal",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.ouro_far_cobertura_perguntas",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_cobertura_perguntas",
+      "description": "Matriz pergunta × dado do painel de perguntas do FAR (seed cobertura_perguntas_far): o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta e qual a limitação.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [],
+      "columns": [
+        {
+          "name": "bloco",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "fonte_necessaria",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "limitacao",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "modelo_ouro",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ordem",
+          "data_type": "integer",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "origem_pergunta",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pergunta",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Pergunta como registrada na oficina.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "resposta_disponivel",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "situacao_dado",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "situacao_dado_rotulo",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Respondível, Parcial ou Lacuna de fonte.",
+          "documentation_status": "curated"
+        }
+      ],
+      "documentacao": {
+        "grao": "Uma pergunta da oficina com o MCID.",
+        "chave": [
+          "pergunta"
+        ],
+        "fonte": "Matriz de cobertura mantida pela equipe de dados.",
+        "periodicidade": "eventual",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.ouro_far_contrapartida",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_contrapartida",
+      "description": "Contrapartidas pactuadas pelos entes em cada empreendimento FAR: uma linha por APF × ente × tipo (terreno, infraestrutura, complementar, outras), só com valor informado. A origem traz o pactuado, não o executado.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_empreendimento_natureza",
+        "model.mcid.prata_far_empreendimento"
+      ],
+      "columns": [
+        {
+          "name": "apf",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "APF normalizado para 8 dígitos.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ente",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Município, Estado, Ente público (outras) ou Outros.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Município associado ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nome_empreendimento",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh",
+          "data_type": "integer",
+          "ordinal": 5,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "tipo",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Terreno, Infraestrutura, Complementar ou Outras.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Unidade da Federação associada ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor",
+          "data_type": "numeric(15,2)",
+          "ordinal": 8,
+          "description": "Valor pactuado, em R$.",
+          "documentation_status": "curated"
+        }
+      ],
+      "documentacao": {
+        "grao": "Uma contrapartida pactuada por empreendimento, ente e tipo.",
+        "chave": [
+          "apf",
+          "ente",
+          "tipo"
+        ],
+        "fonte": "Consolidado GFAR, natureza e contrapartidas da proposta.",
+        "periodicidade": "semanal",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
+      "rag_eligivel": true
+    },
+    {
       "id": "model.mcid.ouro_far_curva_s",
       "product": "empreendimento_far",
       "owner_key": "mcid_data_engineering",
@@ -15129,6 +16956,524 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.ouro_far_empreendimento_perguntas",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_empreendimento_perguntas",
+      "description": "Um empreendimento FAR contratado por linha: natureza e destino, panorama da contratação, execução com sinal de atraso ou paralisação, estoque retomado e invadido e contratos das famílias já assinados. O sinal de paralisação marca obra iniciada, não concluída e com o percentual físico parado há 3 meses ou mais.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_serie_mensal",
+        "model.mcid.prata_far_contrato_pf",
+        "model.mcid.prata_far_empreendimento",
+        "model.mcid.prata_far_empreendimento_natureza",
+        "model.mcid.prata_far_obra_mensal"
+      ],
+      "columns": [
+        {
+          "name": "agente_financeiro",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "alerta_execucao",
+          "data_type": "text",
+          "ordinal": 69,
+          "description": "Concluída, Cancelada ou distratada, Paralisada (informada), Atrasada (informada), Sinal de paralisação: 3+ meses sem avanço, Ritmo abaixo do previsto (desvio físico de 10 p.p. ou mais), Não iniciada ou Em ritmo — nesta ordem de prioridade.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ano_contratacao",
+          "data_type": "integer",
+          "ordinal": 8,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "apf",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "APF normalizado para 8 dígitos — chave do painel.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "apf_municipio_empreendimento",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "APF - Município/UF - Nome, para o filtro do painel.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "avanco_3_meses",
+          "data_type": "numeric",
+          "ordinal": 64,
+          "description": "Pontos percentuais de avanço físico nos últimos 3 meses.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "demanda_contratacao",
+          "data_type": "text",
+          "ordinal": 14,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "demanda_enquadramento",
+          "data_type": "text",
+          "ordinal": 13,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "desvio_fisico",
+          "data_type": "numeric",
+          "ordinal": 63,
+          "description": "Realizado − previsto na última medição, em p.p.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dt_contratacao",
+          "data_type": "date",
+          "ordinal": 7,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_entrega",
+          "data_type": "date",
+          "ordinal": 57,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_paralisacao",
+          "data_type": "date",
+          "ordinal": 53,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_previsao_entrega",
+          "data_type": "date",
+          "ordinal": 56,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ente_proponente",
+          "data_type": "text",
+          "ordinal": 20,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_area_comercial",
+          "data_type": "boolean",
+          "ordinal": 24,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_area_urbana_consolidada",
+          "data_type": "boolean",
+          "ordinal": 26,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_demanda_mudou",
+          "data_type": "boolean",
+          "ordinal": 15,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_agua",
+          "data_type": "boolean",
+          "ordinal": 28,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_comercio",
+          "data_type": "boolean",
+          "ordinal": 37,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_cras",
+          "data_type": "boolean",
+          "ordinal": 36,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_drenagem",
+          "data_type": "boolean",
+          "ordinal": 31,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_educacao_infantil",
+          "data_type": "boolean",
+          "ordinal": 32,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_energia",
+          "data_type": "boolean",
+          "ordinal": 27,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_esgoto_lixo",
+          "data_type": "boolean",
+          "ordinal": 29,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_fundamental_1",
+          "data_type": "boolean",
+          "ordinal": 33,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_fundamental_2",
+          "data_type": "boolean",
+          "ordinal": 34,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_pavimentacao",
+          "data_type": "boolean",
+          "ordinal": 30,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_entorno_ubs",
+          "data_type": "boolean",
+          "ordinal": 35,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_previsao_elevador",
+          "data_type": "boolean",
+          "ordinal": 23,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_substituicao_construtora",
+          "data_type": "boolean",
+          "ordinal": 25,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_terreno_doado",
+          "data_type": "boolean",
+          "ordinal": 22,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "linha_atendimento",
+          "data_type": "text",
+          "ordinal": 19,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "mes_ultima_medicao",
+          "data_type": "date",
+          "ordinal": 62,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "meses_sem_avanco",
+          "data_type": "integer",
+          "ordinal": 65,
+          "description": "Meses entre a última medição e o último avanço do percentual físico.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "motivo_cancelamento",
+          "data_type": "text",
+          "ordinal": 55,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "motivo_paralisacao",
+          "data_type": "text",
+          "ordinal": 54,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Município associado ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nome_empreendimento",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "operacao_aporte",
+          "data_type": "text",
+          "ordinal": 51,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "originacao",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "percentual_execucao_financeira",
+          "data_type": "numeric",
+          "ordinal": 43,
+          "description": "Participação ou variação percentual no recorte definido pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "percentual_execucao_fisica",
+          "data_type": "numeric",
+          "ordinal": 42,
+          "description": "Participação ou variação percentual no recorte definido pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "portaria",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Portaria normativa de seleção do empreendimento, ou Não informada.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "portaria_contratacao",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_contratos_familias",
+          "data_type": "bigint",
+          "ordinal": 66,
+          "description": "Contratos de famílias do Novo MCMV já assinados no empreendimento.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_contratos_familias_ativos",
+          "data_type": "bigint",
+          "ordinal": 67,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_contratos_familias_inadimplentes",
+          "data_type": "bigint",
+          "ordinal": 68,
+          "description": "Contratos de famílias inadimplentes no empreendimento.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_uh",
+          "data_type": "integer",
+          "ordinal": 38,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_a_alienar",
+          "data_type": "integer",
+          "ordinal": 61,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_alienadas",
+          "data_type": "integer",
+          "ordinal": 60,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_invadidas",
+          "data_type": "integer",
+          "ordinal": 59,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh_ociosas_retomadas",
+          "data_type": "integer",
+          "ordinal": 58,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qualificacao_terreno",
+          "data_type": "text",
+          "ordinal": 21,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "regime_propriedade",
+          "data_type": "text",
+          "ordinal": 18,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "situacao_obra",
+          "data_type": "text",
+          "ordinal": 52,
+          "description": "Situação informada no MONIT de obra.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "tipo_demanda",
+          "data_type": "text",
+          "ordinal": 12,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "tipo_edificacao",
+          "data_type": "text",
+          "ordinal": 16,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "tipo_empreendimento",
+          "data_type": "text",
+          "ordinal": 17,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Unidade da Federação associada ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_contratado",
+          "data_type": "numeric",
+          "ordinal": 39,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_desembolsado",
+          "data_type": "numeric",
+          "ordinal": 41,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_por_uh",
+          "data_type": "numeric",
+          "ordinal": 40,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_aporte_suplementacao",
+          "data_type": "numeric(15,2)",
+          "ordinal": 50,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_equipamento_uso_comum",
+          "data_type": "numeric(15,2)",
+          "ordinal": 49,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_equipamentos_publicos",
+          "data_type": "numeric(15,2)",
+          "ordinal": 48,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_far",
+          "data_type": "numeric(15,2)",
+          "ordinal": 44,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_terreno",
+          "data_type": "numeric(15,2)",
+          "ordinal": 45,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_total_contrapartidas",
+          "data_type": "numeric(15,2)",
+          "ordinal": 46,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vr_total_contrapartidas_retomada",
+          "data_type": "numeric(15,2)",
+          "ordinal": 47,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {
+        "grao": "Um empreendimento FAR contratado.",
+        "chave": [
+          "apf"
+        ],
+        "fonte": "Consolidado GFAR, MONIT do FAR, CAIXA e contratos PF das famílias.",
+        "periodicidade": "mensal",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
       "rag_eligivel": true
     },
     {
@@ -15420,8 +17765,8 @@
           "name": "municipio_uf",
           "data_type": "text",
           "ordinal": 14,
-          "description": "Atributo do indicador no contexto descrito pela tabela.",
-          "documentation_status": "derived_convention"
+          "description": "Município e UF do empreendimento no formato Município/UF, usado nos filtros do painel.",
+          "documentation_status": "curated"
         },
         {
           "name": "nome_empreendimento",
@@ -15550,6 +17895,7 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {
@@ -15560,7 +17906,7 @@
       "classification": "internal",
       "schema": "ouro",
       "name": "ouro_far_mapa_nacional",
-      "description": "Agregação geográfica por UF para o mapa do Superset. Uma linha por UF.",
+      "description": "Agregação geográfica por UF e portaria para o mapa do Superset. Uma linha por UF e portaria, incluindo 'Todas as portarias'.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [
@@ -15584,16 +17930,23 @@
         {
           "name": "media_execucao_fisica",
           "data_type": "numeric",
-          "ordinal": 12,
+          "ordinal": 13,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "nivel",
           "data_type": "text",
-          "ordinal": 6,
+          "ordinal": 7,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
+        },
+        {
+          "name": "portaria",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Portaria normativa ou 'Todas as portarias'. Filtrar uma por vez.",
+          "documentation_status": "curated"
         },
         {
           "name": "regiao_nome",
@@ -15612,35 +17965,35 @@
         {
           "name": "total_empreendimentos",
           "data_type": "numeric",
-          "ordinal": 8,
+          "ordinal": 9,
           "description": "Total agregado do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "total_municipios",
           "data_type": "numeric",
-          "ordinal": 7,
+          "ordinal": 8,
           "description": "Total agregado do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "total_uhs",
           "data_type": "numeric",
-          "ordinal": 9,
+          "ordinal": 10,
           "description": "Total agregado do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "total_valor_contratado",
           "data_type": "numeric",
-          "ordinal": 10,
+          "ordinal": 11,
           "description": "Total agregado do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "total_valor_desembolsado",
           "data_type": "numeric",
-          "ordinal": 11,
+          "ordinal": 12,
           "description": "Total agregado do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
@@ -15652,6 +18005,7 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {
@@ -15768,6 +18122,7 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {
@@ -16141,6 +18496,7 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {
@@ -24122,6 +26478,288 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.prata_far_contrato_pf",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "silver",
+      "classification": "internal",
+      "schema": "prata",
+      "name": "prata_far_contrato_pf",
+      "description": "Modelo da camada silver do produto empreendimento_far.",
+      "documentation_status": "derived_convention",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_cadastro_pj",
+        "model.mcid.bronze_sftp_mont_cont_pf_far",
+        "model.mcid.bronze_sftp_int039_far_caixa_pf",
+        "model.mcid.bronze_sftp_int021_far_bb_pf"
+      ],
+      "columns": [
+        {
+          "name": "agente_financeiro",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "CAIXA ou Banco do Brasil.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ano_assinatura",
+          "data_type": "integer",
+          "ordinal": 38,
+          "description": "Ano de assinatura do contrato.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "apf",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "APF do empreendimento. No Novo MCMV casa com o APF do cadastro FAR.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "arquivo_de_origem",
+          "data_type": "text",
+          "ordinal": 37,
+          "description": "Arquivo da staging de onde veio a linha.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "cod_ibge",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Código IBGE do município do imóvel (7 dígitos).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dias_atraso",
+          "data_type": "integer",
+          "ordinal": 24,
+          "description": "Dias de atraso da prestação mais antiga em aberto.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dt_assinatura",
+          "data_type": "date",
+          "ordinal": 5,
+          "description": "Data de assinatura do contrato.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dt_retrato",
+          "data_type": "date",
+          "ordinal": 36,
+          "description": "Data de referência da remessa.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "estado_civil",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "faixa_renda",
+          "data_type": "text",
+          "ordinal": 39,
+          "description": "Faixa da renda familiar comprovada, em valores nominais.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "geracao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Novo MCMV ou Legado (2009–2023).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_acao_judicial",
+          "data_type": "boolean",
+          "ordinal": 29,
+          "description": "Contrato com ação judicial (só Novo MCMV).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_ativo",
+          "data_type": "boolean",
+          "ordinal": 23,
+          "description": "Contrato ativo, isto é, ainda com prestação a pagar.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_coobrigado",
+          "data_type": "boolean",
+          "ordinal": 11,
+          "description": "Contrato tem coobrigado. Nulo no BB.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_familia_com_idoso",
+          "data_type": "boolean",
+          "ordinal": 14,
+          "description": "Há idoso na família (só Novo MCMV; hoje vazio na origem).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_familia_com_pcd",
+          "data_type": "boolean",
+          "ordinal": 16,
+          "description": "Há PCD na família (só Novo MCMV; hoje vazio na origem).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_inadimplente",
+          "data_type": "boolean",
+          "ordinal": 27,
+          "description": "Contrato ativo com prestação vencida há mais de 90 dias. No Novo MCMV vem do IC_CONTRATO_INADIMP; no legado é calculado com a mesma regra.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_mulher_responsavel",
+          "data_type": "boolean",
+          "ordinal": 12,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_responsavel_idoso",
+          "data_type": "boolean",
+          "ordinal": 13,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_responsavel_pcd",
+          "data_type": "boolean",
+          "ordinal": 15,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_retomado",
+          "data_type": "boolean",
+          "ordinal": 28,
+          "description": "Imóvel retomado por desvio de finalidade (só Novo MCMV).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_sem_registro",
+          "data_type": "boolean",
+          "ordinal": 35,
+          "description": "Contrato ainda sem registro em cartório.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_situacao_rua",
+          "data_type": "boolean",
+          "ordinal": 17,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "modalidade",
+          "data_type": "text",
+          "ordinal": 20,
+          "description": "No Novo MCMV, o tipo de demanda do empreendimento (cadastro PJ). No legado, o tipo de contrato informado pelo agente.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Município do imóvel, em maiúsculas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "nu_contrato",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Contrato da família com o agente financeiro.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "prestacoes_atraso",
+          "data_type": "integer",
+          "ordinal": 25,
+          "description": "Prestações em atraso.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_membros_familia",
+          "data_type": "integer",
+          "ordinal": 18,
+          "description": "Pessoas na família (só Novo MCMV; hoje vazio na origem).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "renda_familiar",
+          "data_type": "numeric",
+          "ordinal": 19,
+          "description": "Renda familiar comprovada, em R$. Nula no BB.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "sexo_responsavel",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Feminino, Masculino ou Não informado. No legado CAIXA vem como código (1 masculino, 2 feminino). O BB não informa.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "situacao_contrato",
+          "data_type": "text",
+          "ordinal": 22,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "tipo_instrumento",
+          "data_type": "text",
+          "ordinal": 21,
+          "description": "Doação ou alienação fiduciária (só Novo MCMV).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "UF do imóvel.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "valor_em_atraso",
+          "data_type": "numeric",
+          "ordinal": 26,
+          "description": "Valor em atraso, em R$.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "valor_imovel",
+          "data_type": "numeric",
+          "ordinal": 32,
+          "description": "Valor do imóvel (Novo MCMV) ou garantia inicial (legado), em R$.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "valor_prestacao",
+          "data_type": "numeric",
+          "ordinal": 34,
+          "description": "Valor da prestação mensal, em R$.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "valor_subsidio",
+          "data_type": "numeric",
+          "ordinal": 33,
+          "description": "Subsídio FAR (Novo MCMV) ou subsídio na concessão (legado), em R$.",
+          "documentation_status": "curated"
+        }
+      ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {
@@ -24532,6 +27170,7 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {
@@ -24922,6 +27561,7 @@
           "documentation_status": "curated"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {
@@ -25754,6 +28394,7 @@
           "documentation_status": "derived_convention"
         }
       ],
+      "documentacao": {},
       "rag_eligivel": true
     },
     {

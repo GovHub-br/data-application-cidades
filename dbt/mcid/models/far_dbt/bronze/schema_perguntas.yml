@@ -13,6 +13,7 @@ models:
       nascimento redigidos.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_mont_cont_pf_far
           arguments:
             colunas:
               - co_tipo_registro
@@ -145,6 +146,7 @@ models:
       e nascimento redigidos.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_int039_far_caixa_pf
           arguments:
             colunas:
               - dt_movimento
@@ -206,6 +208,7 @@ models:
       redigidos.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_int021_far_bb_pf
           arguments:
             colunas:
               - dt_movimento
