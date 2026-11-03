@@ -1,0 +1,40 @@
+version: 2
+
+sources:
+  - name: lake_staging_far
+    description: >
+      Parquets da staging com os contratos das famílias beneficiárias do FAR.
+      Chegam pelo SFTP/GEFUS e passam pelo mascaramento antes da staging:
+      CPF e NIS viram HMAC, nome e data de nascimento são redigidos.
+    schema: staging
+    meta:
+      bucket: data-lake-mcid
+      camada: staging
+      governance:
+        product: empreendimento_far
+        owner_key: mcid_data_engineering
+        classification: restricted
+        rag_publication: prohibited
+    tables:
+      - name: far_contratos_pf_novo
+        description: >
+          MONT_CONT_PF_FAR: monitoramento dos contratos das famílias do Novo
+          MCMV FAR (layout 015). Cada remessa é retrato completo da carteira; a
+          bronze lê só a mais recente. O dicionário vem no MONT_CONT_PF_FAR_LAYOUT.
+        meta:
+          caminho: staging/sftp/fabrica/GEFUS/MONT_CONT_PF_FAR_2*.parquet
+          dag: minio_transform_dag
+      - name: far_contratos_pf_caixa
+        description: >
+          INT039: carteira de contratos PF do FAR operados pela CAIXA, de 2009 em
+          diante. Retrato completo por remessa; a bronze lê só a mais recente.
+        meta:
+          caminho: staging/sftp/fabrica/GEFUS/INT039_MinisterioCidades_FAR_CAIXA_PF_*.parquet
+          dag: minio_transform_dag
+      - name: far_contratos_pf_bb
+        description: >
+          INT021: carteira de contratos PF do FAR operados pelo Banco do Brasil.
+          Retrato completo por remessa; a bronze lê só a mais recente.
+        meta:
+          caminho: staging/sftp/fabrica/GEFUS/INT021_MinisterioCidades_FAR_BB_PF_*.parquet
+          dag: minio_transform_dag

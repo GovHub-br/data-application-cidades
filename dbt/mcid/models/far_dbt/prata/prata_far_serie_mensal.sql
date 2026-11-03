@@ -13,6 +13,8 @@
 --   Previsto: só o MONIT informa. Mês sem MONIT entre dois observados é interpolado
 --           em linha reta; depois do último observado, o último valor é arrastado.
 --           `fonte_prevista` diz qual dos casos.
+--   Marcos: `dt_inicio_obra` do cadastro encerra a cláusula suspensiva;
+--           `mes_inicio_fisico` é o primeiro mês com físico realizado acima de zero.
 --   CAIXA: colunas `_caixa` como vieram no mês, só para conciliação.
 with
     cadastro as (
@@ -22,6 +24,7 @@ with
             municipio,
             uf,
             dt_contratacao,
+            dt_inicio_obra,
             vr_emprestimo_far,
             vr_total_investimento
         from {{ ref("prata_far_cadastro_pj") }}
@@ -243,6 +246,13 @@ select
     coalesce(c.municipio, a.municipio) as municipio,
     coalesce(c.uf, a.uf) as uf,
     u.ic_cadastro_monit,
+
+    -- Marcos
+    c.dt_contratacao,
+    c.dt_inicio_obra,
+    min(p.mes) filter (where p.pct_obra_realizada > 0) over (
+        partition by p.apf
+    ) as mes_inicio_fisico,
 
     -- Execução física
     p.pct_obra_realizada,

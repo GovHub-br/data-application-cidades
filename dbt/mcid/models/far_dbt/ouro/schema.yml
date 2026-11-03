@@ -41,11 +41,31 @@ models:
 
   - name: ouro_far_panorama_estadual
     description: >
-      Painel agregado por UF, com quebra por situação e tipologia.
+      Painel agregado por UF, portaria e município, com quebra por situação e
+      tipologia.
+    columns:
+      - name: portaria
+        description: >
+          Portaria normativa (seed far_portaria_apf) ou 'Todas as portarias', que
+          repete o total da UF. Quem lê a tabela filtra uma portaria por vez.
+        tests:
+          - not_null
+      - name: municipio
+        description: >
+          Município da ficha ou 'Todos os municípios', que repete o total da UF. Quem
+          lê a tabela filtra um município por vez.
+        tests:
+          - not_null
 
   - name: ouro_far_mapa_nacional
     description: >
-      Agregação geográfica por UF para o mapa do Superset. Uma linha por UF.
+      Agregação geográfica por UF e portaria para o mapa do Superset. Uma linha por
+      UF e portaria, incluindo 'Todas as portarias'.
+    columns:
+      - name: portaria
+        description: Portaria normativa ou 'Todas as portarias'. Filtrar uma por vez.
+        tests:
+          - not_null
 
   - name: ouro_far_evolucao_financeira_chart
     description: >
@@ -78,20 +98,46 @@ models:
         description: >
           Falso para os APFs que têm liberação no livro-razão mas não estão no
           cadastro MONIT: entram pela conciliação dos valores, sem % financeiro.
+      - name: etapa
+        description: >
+          `Cláusula suspensiva` antes do mês de `dt_inicio_obra`, `Aguardando início
+          físico` até o primeiro físico acima de zero, `Em execução` depois.
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  ["Cláusula suspensiva", "Aguardando início físico", "Em execução"]
+      - name: pct_marco_fim_suspensiva
+        description: 100 no mês de `dt_inicio_obra`, nulo nos demais.
+      - name: pct_marco_inicio_efetivo
+        description: 100 no mês de `mes_inicio_fisico`, nulo nos demais.
 
   - name: ouro_far_curva_s
     description: >
       Curva S do FAR: percentuais físico (previsto e realizado) e financeiro por mês,
-      ponderados pelo valor FAR, no nível nacional (`uf` = 'BR') e por UF. Exclui os
-      APFs distratados ou cancelados na situação mais recente da CAIXA.
+      ponderados pelo valor FAR, no nível nacional (`uf` = 'BR') e por UF, para cada
+      portaria e para 'Todas as portarias'. Exclui os APFs distratados ou cancelados
+      na situação mais recente da CAIXA. O denominador é o valor FAR de toda a
+      carteira do recorte, igual em todos os meses (obra não iniciada conta 0%), e a
+      curva começa no primeiro mês com físico realizado no recorte.
     tests:
       - unique_combinacao:
           arguments:
-            colunas: ["mes", "nivel", "uf"]
+            colunas: ["mes", "nivel", "uf", "portaria", "municipio"]
     columns:
+      - name: qt_empreendimentos
+        description: APFs da carteira do recorte, a mesma em todos os meses.
+      - name: qt_iniciados
+        description: APFs da carteira que já tiveram físico realizado até o mês.
       - name: nivel
         description: "`nacional` ou `uf`."
         tests:
           - accepted_values:
               arguments:
                 values: ["nacional", "uf"]
+      - name: municipio
+        description: >
+          Município da ficha ou 'Todos os municípios', que repete o total da UF. O
+          nacional só tem 'Todos os municípios'. Filtrar um por vez.
+        tests:
+          - not_null

@@ -3,6 +3,8 @@
 -- Ouro: Série mensal por APF — execução física e financeira prontas para o dashboard
 -- e para o modelo preditivo. Acrescenta à prata a identificação do empreendimento e o
 -- ritmo físico × financeiro do mês.
+-- Os marcos valem 100 só no mês em que acontecem, para o gráfico desenhá-los como
+-- barra cheia sobre a curva do empreendimento.
 with
     serie as (select * from {{ ref("prata_far_serie_mensal") }}),
 
@@ -29,6 +31,21 @@ select
     s.mes,
     to_char(s.mes, 'YYYY-MM') as mes_label,
     to_char(s.mes, 'MM/YYYY') as mes_label_br,
+
+    -- Marcos: fim da cláusula suspensiva e início efetivo da obra
+    s.dt_inicio_obra,
+    s.mes_inicio_fisico,
+    case
+        when s.mes < date_trunc('month', s.dt_inicio_obra)
+        then 'Cláusula suspensiva'
+        when s.mes_inicio_fisico is null or s.mes < s.mes_inicio_fisico
+        then 'Aguardando início físico'
+        else 'Em execução'
+    end as etapa,
+    case
+        when s.mes = date_trunc('month', s.dt_inicio_obra) then 100
+    end as pct_marco_fim_suspensiva,
+    case when s.mes = s.mes_inicio_fisico then 100 end as pct_marco_inicio_efetivo,
 
     -- Execução física
     s.pct_obra_realizada,

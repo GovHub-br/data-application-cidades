@@ -9,7 +9,10 @@ models:
   - name: prata_far_consolidado
     description: >
       Propostas do GFAR tipadas, do protocolo à contratação. Uma linha por MOVIMENTO de
-      proposta, não por empreendimento.
+      proposta, não por empreendimento; cada fase vem da última remessa em que
+      apareceu. A remessa é a foto da semana e proposta contratada pode sair dela, ou
+      voltar só com a linha da seleção, sem ter sido cancelada;
+      `ic_na_remessa_mais_recente` diz quem ainda está na foto.
     columns:
       - name: id_proposta
         description: Identificador da proposta no GFAR.
@@ -19,6 +22,20 @@ models:
         description: >
           APF normalizado para 8 dígitos. Nulo na maior parte das linhas porque
           proposta ainda não contratada não tem APF — por isso não há not_null aqui.
+      - name: dt_remessa
+        description: Data da remessa de onde veio a linha (nome do arquivo).
+        tests:
+          - not_null
+      - name: dt_primeira_remessa
+        description: Primeira remessa em que a proposta apareceu.
+      - name: dt_ultima_remessa
+        description: >
+          Última remessa em que a proposta apareceu, em qualquer fase. Maior que
+          `dt_remessa` quando a fase da linha sumiu nas remessas seguintes.
+      - name: ic_na_remessa_mais_recente
+        description: >
+          Falso para proposta que saiu do consolidado. Sair não é cancelamento: em
+          2026-10 os 74 APFs contratados que saíram seguiam em obra na CAIXA e no MONIT.
 
   - name: prata_far_cadastro_pj
     description: >
@@ -167,6 +184,14 @@ models:
         description: Primeiro dia do mês.
         tests:
           - not_null
+      - name: dt_inicio_obra
+        description: >
+          Início de obra no cadastro MONIT. Marca o fim da cláusula suspensiva:
+          entre a contratação e esta data o contrato aguarda as condições para começar.
+      - name: mes_inicio_fisico
+        description: >
+          Primeiro mês com físico realizado acima de zero; repete-se em todas as linhas
+          do APF. Nulo enquanto a obra não andou.
       - name: pct_obra_realizada
         description: Percentual físico realizado; ver `fonte_fisica`.
       - name: pct_obra_prevista
