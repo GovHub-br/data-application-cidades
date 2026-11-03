@@ -20,6 +20,7 @@ models:
       reais, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_abecip_financiamentos
           colunas:
             - data_referencia
             - unidades_construcao
@@ -37,6 +38,7 @@ models:
       ano.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_abecip_instituicoes
           colunas:
             - competencia_referencia
             - document_id
@@ -58,6 +60,7 @@ models:
       depósitos, retiradas, captação líquida e saldo, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_abecip_poupanca_sbpe
           colunas:
             - data_referencia
             - deposito
@@ -74,6 +77,7 @@ models:
       Produto Interno Bruto, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_bacen_credito_pib
           colunas:
             - info
             - data
@@ -85,6 +89,7 @@ models:
       taxa de juros média e inadimplência da carteira, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_bacen_financiamentos_imobiliarios
           colunas:
             - tipo
             - data
@@ -96,6 +101,7 @@ models:
       ajuste sazonal, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_fgv_icst
           colunas:
             - mes
             - icst_com_ajuste_sazonal
@@ -107,6 +113,7 @@ models:
       variações percentuais, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_fgv_incc_m
           colunas:
             - mes
             - indice
@@ -120,6 +127,7 @@ models:
       variações percentuais, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_fipezap_locacao
           colunas:
             - data_referencia
             - imoveis_residenciais_locacao_numero_indice_total
@@ -133,6 +141,7 @@ models:
       carteira de crédito associativo, em detalhe por contrato.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_geavo_cca_analitico
           colunas:
             - vlrdofinanciamento
             - vlrdodescontofgts
@@ -190,6 +199,7 @@ models:
       cédula de crédito imobiliário, em detalhe por contrato.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_geavo_cci_analitico
           colunas:
             - vlrdofinanciamento
             - vlrdodescontofgts
@@ -244,6 +254,7 @@ models:
       garantia, por faixa de renda e condição de uso do imóvel.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_geavo_fgts_pf
           colunas:
             - dt_assinatura
             - faixa
@@ -256,6 +267,7 @@ models:
       em unidades habitacionais contratadas.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_geavo_fgts_pj
           colunas:
             - origem
             - dt_movimento
@@ -290,6 +302,7 @@ models:
       habitacionais e valor, por condição de uso do imóvel.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_gefus_fundo_social
           colunas:
             - dt_referencia
             - dt_remessa
@@ -346,6 +359,7 @@ models:
       construção, por tipo de obra.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_paic_obras
           colunas:
             - variavel_id
             - variavel_nome
@@ -365,6 +379,7 @@ models:
       Pessoal ocupado e massa salarial anual das empresas de construção.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_paic_pessoal_salarial
           colunas:
             - variavel_id
             - variavel_nome
@@ -385,6 +400,7 @@ models:
       custos e valor adicionado.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_paic_resultados
           colunas:
             - variavel_id
             - variavel_nome
@@ -404,6 +420,7 @@ models:
       Produto Interno Bruto consolidado do país em série trimestral.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pib_consolidado_trimestral
           colunas:
             - variavel_id
             - variavel_nome
@@ -424,6 +441,7 @@ models:
       trimestral, com valor e taxas de variação.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pib_construcao_civil
           colunas:
             - variavel_id
             - variavel_nome
@@ -444,6 +462,7 @@ models:
       trimestre.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pib_corrente
           colunas:
             - variavel_id
             - variavel_nome
@@ -464,6 +483,7 @@ models:
       percentuais mensais.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pim_pf_brasil
           colunas:
             - variavel_id
             - variavel_nome
@@ -484,6 +504,7 @@ models:
       percentuais mensais.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pmc_construcao
           colunas:
             - variavel_id
             - variavel_nome
@@ -504,6 +525,7 @@ models:
       milhares de pessoas, por trimestre móvel.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pnad_construcao_ocupados
           colunas:
             - variavel_id
             - variavel_nome
@@ -524,6 +546,7 @@ models:
       dos ocupados, por trimestre móvel.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pnad_construcao_rendimento
           colunas:
             - variavel_id
             - variavel_nome
@@ -544,6 +567,7 @@ models:
       móvel.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pnadc_populacao_decis_renda
           colunas:
             - variavel_id
             - variavel_nome
@@ -563,6 +587,7 @@ models:
       Rendimento domiciliar real por trimestre móvel.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_pnadc_rendimento_domiciliar
           colunas:
             - variavel_id
             - variavel_nome
@@ -583,6 +608,7 @@ models:
       incluindo material e mão de obra, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_ibge_sinapi
           colunas:
             - variavel_id
             - variavel_nome
@@ -603,6 +629,7 @@ models:
       brasileira, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_infomoney_imob
           colunas:
             - symbol
             - data_pregao
@@ -618,6 +645,7 @@ models:
       admissões, desligamentos, saldo e estoque de postos, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_novo_caged
           colunas:
             - ano
             - mes
@@ -633,6 +661,7 @@ models:
       construção, com saldo e estoque de postos, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_novo_caged_servicos_especializados
           colunas:
             - ano
             - mes
@@ -651,6 +680,7 @@ models:
       saldo e estoque de postos, por mês.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_novo_caged_total
           colunas:
             - ano
             - mes
@@ -669,6 +699,7 @@ models:
       pagamento e restos a pagar por ação de governo.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_siafi_dotacao_execucao
           colunas:
             - unidade_orcamentaria_codigo
             - unidade_orcamentaria_nome

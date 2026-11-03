@@ -13,6 +13,7 @@ models:
       Uma linha por movimento de proposta, não por empreendimento.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_his_mcidades_consolidado
           arguments:
             colunas:
               - co_tipo_registro
@@ -130,6 +131,7 @@ models:
       composição financeira e coordenadas. Competência mensal.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_cad_pj_far_mensal
           arguments:
             colunas:
               - co_tipo_registro
@@ -233,6 +235,7 @@ models:
       Competência mensal.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_obra_far_mensal
           arguments:
             colunas: &colunas_monit_mov_obra_far
               - co_tipo_registro
@@ -296,6 +299,7 @@ models:
       Uma linha por liberação, várias por APF.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_financ_far_mensal
           arguments:
             colunas:
               - id
@@ -344,6 +348,7 @@ models:
       competência atual; elas ficam 100% nulas até a origem voltar a enviá-las.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa
           arguments:
             colunas: &colunas_prioritarios_af_caixa
               - data_de_movimento
@@ -432,6 +437,7 @@ models:
       física só existe empilhando.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_obra_far_serie
           arguments:
             colunas: *colunas_monit_mov_obra_far
     columns:
@@ -450,6 +456,7 @@ models:
       modalidades. Exclui as remessas HISTORICO_RECENTE_*.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_serie
           arguments:
             colunas: *colunas_prioritarios_af_caixa
     columns:

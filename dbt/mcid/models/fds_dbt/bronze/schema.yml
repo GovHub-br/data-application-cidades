@@ -11,6 +11,7 @@ models:
       composição financeira, tipologia, coordenadas e datas. Competência mensal.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_cad_pj_fds_mensal
           colunas:
             - co_tipo_registro
             - dh_movimento
@@ -123,6 +124,7 @@ models:
       do FDS; o padrão não fixa a pasta justamente por isso.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_obra_fds_mensal
           colunas:
             - co_tipo_registro
             - dh_movimento
@@ -192,6 +194,7 @@ models:
       Uma linha por liberação, várias por APF.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_financ_fds_mensal
           colunas:
             - id
             - co_tipo_registro
@@ -236,6 +239,7 @@ models:
       Cobre parte dos empreendimentos — só quem tem trabalho social reportado.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_exec_ts_fds_mensal
           colunas:
             - co_tipo_registro
             - dh_movimento
@@ -274,6 +278,7 @@ models:
       Por isso o model passa excluir=["VALIDACAO"] ao macro arquivo_mais_recente.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_int059_fds_caixa_empreendimentos
           colunas:
             - origem
             - dt_movimento
@@ -379,6 +384,7 @@ models:
       de unicidade aqui.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_entregas
           colunas:
             - data_de_movimento
             - agente_financeiro
