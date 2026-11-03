@@ -72,22 +72,19 @@ INGERIR_SUPERSET = _flag("OM_INGEST_SUPERSET", default=False)
 INGERIR_PROFILER = _flag("OM_INGEST_PROFILER", default=False)
 INGERIR_CLASSIFIER = _flag("OM_INGEST_CLASSIFIER", default=False)
 
-#: As relações semânticas ficam DESLIGADAS por padrão porque o catálogo
-#: `semantic_relationships/mcid.yaml` é um snapshot de 2026-07-23 e não
-#: descreve mais o projeto: declara `table_count: 74` mas lista 63 tabelas — o
-#: que já reprova na validação do próprio `load_semantic_catalog` —, e as 63
-#: usam os nomes e schemas de antes da renomeação (`conjuntura.silver_*`,
-#: `conjuntura_gold.*`, `empreendimento_far.*`), nenhum dos quais existe hoje.
+#: As relações semânticas vêm ligadas desde que o catálogo
+#: `semantic_relationships/mcid.yaml` foi regenerado sobre o medalhão
+#: (2026-11-02): as 201 tabelas de prata e ouro com modelo no repo, medidas por
+#: contagem exata no PostgreSQL. Ficaram desligadas enquanto o arquivo era o
+#: snapshot de 2026-07-23, que nem passava no `load_semantic_catalog`.
 #:
-#: Não é detalhe de configuração: a task fica ANTES da reaplicação de
-#: governança no encadeamento, e falhando ela levava embora a task que devolve
-#: a certificação que o conector dbt apaga.
-#:
-#: Para religar, regenere o YAML para o escopo atual (185 models, schemas
-#: `conjuntura`/`bronze`/`prata`/`ouro`, mais o produto Rural, que nem existia
-#: no snapshot) e ligue `OM_SYNC_RELACOES_SEMANTICAS=true`.
+#: O catálogo é foto do dado do dia da medição. Tabela nova ou renomeada fica
+#: sem relação até a próxima rodada; tabela que saiu do OpenMetadata derruba a
+#: task (`sync_semantic_relationships` exige todas as do escopo), e aí basta
+#: desligar com `OM_SYNC_RELACOES_SEMANTICAS=false` até regenerar — a
+#: reaplicação de governança roda mesmo assim (`all_done`).
 SINCRONIZAR_RELACOES_SEMANTICAS = _flag(
-    "OM_SYNC_RELACOES_SEMANTICAS", default=False
+    "OM_SYNC_RELACOES_SEMANTICAS", default=True
 )
 
 

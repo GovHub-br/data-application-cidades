@@ -888,45 +888,16 @@ def test_model_com_varias_origens_lista_todas() -> None:
     assert varias, "esperava ao menos um model com mais de uma DAG de origem"
 
 
-# ── relações semânticas de Silver e Gold ────────────────────────────────────
-def test_relacoes_saem_do_grafo_e_do_contrato_temporal() -> None:
-    """Nada é inferido por semelhança de nome."""
-    modelo = {
-        "name": "gold_x",
-        "columns": [{"name": "data_referencia"}, {"name": "edicao"}, {"name": "valor"}],
-    }
-    texto = gov.markdown_das_relacoes(
-        modelo, {"le_de": ["silver_y"], "lido_por": ["gld_boletim_z"]}
-    )
-    assert "`data_referencia`, `edicao`" in texto
-    assert "`silver_y`" in texto and "`gld_boletim_z`" in texto
-    # deixa explícito que não é chave estrangeira nem linhagem
-    assert "Não constitui chave estrangeira" in texto
+# ── relações semânticas ─────────────────────────────────────────────────────
+def test_governanca_nao_escreve_nas_propriedades_do_catalogo_semantico() -> None:
+    """As duas propriedades são da task `sync_mcid_semantic_relationships`.
 
-
-def test_tabela_sem_grao_nem_vizinho_nao_recebe_texto() -> None:
-    vazio = gov.markdown_das_relacoes(
-        {"name": "x", "columns": [{"name": "coisa"}]}, {"le_de": [], "lido_por": []}
-    )
-    assert vazio == ""
-
-
-def test_bronze_fica_de_fora_das_relacoes() -> None:
-    """Da Bronze se publica topologia, não significado."""
-    assert "bronze" not in gov.CAMADAS_COM_RELACOES
-    assert gov.CAMADAS_COM_RELACOES == {"silver", "gold"}
-
-
-def test_vizinhanca_le_o_grafo_nos_dois_sentidos() -> None:
-    catalogo = {
-        "models": [
-            {"id": "model.a", "name": "a", "depends_on": []},
-            {"id": "model.b", "name": "b", "depends_on": ["model.a"]},
-        ]
-    }
-    v = gov.vizinhanca_do_modelo(catalogo)
-    assert v["b"]["le_de"] == ["a"]
-    assert v["a"]["lido_por"] == ["b"]
+    A governança roda depois dela e, quando gravava ali a vizinhança do grafo
+    do dbt, apagava as relações publicadas na mesma execução.
+    """
+    fonte = Path(gov.__file__).read_text(encoding="utf-8")
+    assert '"mcidSemanticRelationships"' not in fonte
+    assert '"mcidRelatedTables"' not in fonte
 
 
 def test_tabela_relacionada_carrega_o_que_a_interface_precisa() -> None:
