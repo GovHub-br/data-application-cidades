@@ -93,7 +93,8 @@ profile_duckdb = ProfileConfig(
 
 with DAG(
     dag_id="mcid_cosmos_dag",
-    schedule="0 1 * * *",
+    # É disparada depois que a staging diária estiver pronta; evita corrida às 01:00.
+    schedule=None,
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={"retries": 2},

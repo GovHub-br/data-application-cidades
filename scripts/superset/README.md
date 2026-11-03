@@ -34,3 +34,21 @@ Superset — use `--paginas` quando quiser preservar ajustes manuais.
 
 O `.env` precisa de `SUPERSET_URL`, `SUPERSET_USERNAME` e `SUPERSET_PASSWORD`
 (nunca no Git).
+# Reforma Casa Brasil
+
+O painel **Reforma Casa Brasil — Monitoramento e Evidências** é provisionado
+por `reforma_casa_brasil.py` a partir das tabelas da camada Ouro. Ele separa:
+
+- implementação administrativa;
+- monitoramento temporal da carteira e dos valores contratuais;
+- cobertura e lacunas de evidência para as perguntas da oficina.
+
+Uso:
+
+```bash
+python scripts/superset/reforma_casa_brasil.py --dry-run
+python scripts/superset/reforma_casa_brasil.py
+```
+
+As Golds de acesso e resultado só devem ser incluídas após a materialização do
+CadÚnico protegido. Até lá, a aba de cobertura torna essa limitação explícita.

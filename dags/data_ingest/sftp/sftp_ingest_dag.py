@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 
 from airflow.sdk import dag, task
 from airflow.sdk import get_current_context
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from schedule_loader import get_dynamic_schedule
 
 
 @dag(
-    schedule=get_dynamic_schedule("sftp_ingest_dag"),
+    schedule=get_dynamic_schedule("sftp_ingest_dag", default="0 0 * * *"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     max_active_runs=1,
@@ -20,11 +21,12 @@ from schedule_loader import get_dynamic_schedule
     tags=["sftp", "minio", "mcid", "cidades", "data-lake", "ingest"],
 )
 def sftp_ingest_dag() -> None:
-    """Ingestão do SFTP do MCid para a camada raw/ do data lake (MinIO).
+    """Cadeia diária: SFTP -> raw -> staging -> Bronze/Prata/Gold -> painel.
 
     Idempotente/incremental pela tabela de controle lake._ingest_minio_log: execuções
     agendadas só baixam arquivos novos. O I/O usa os clientes de plugins/
-    (ClienteSftp/ClienteMinio).
+    (ClienteSftp/ClienteMinio). Cada etapa seguinte é aguardada; dbt só inicia
+    após staging leve e CadÚnico estarem consistentes.
     """
 
     @task
@@ -46,7 +48,26 @@ def sftp_ingest_dag() -> None:
             erro,
         )
 
-    ingestao_sftp_para_minio()
+    ingestao = ingestao_sftp_para_minio()
+    transformar_lake = TriggerDagRunOperator(
+        task_id="transformar_raw_em_staging",
+        trigger_dag_id="minio_transform_dag",
+        wait_for_completion=True,
+        reset_dag_run=False,
+    )
+    transformar_cadunico = TriggerDagRunOperator(
+        task_id="transformar_cadunico_em_staging",
+        trigger_dag_id="cadunico_transform_dag",
+        wait_for_completion=True,
+        reset_dag_run=False,
+    )
+    materializar_gold = TriggerDagRunOperator(
+        task_id="materializar_bronze_prata_gold",
+        trigger_dag_id="mcid_cosmos_dag",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    )
+    ingestao >> transformar_lake >> transformar_cadunico >> materializar_gold
 
 
 dag_instance = sftp_ingest_dag()
