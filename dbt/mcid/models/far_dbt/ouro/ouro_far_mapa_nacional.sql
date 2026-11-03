@@ -3,8 +3,15 @@
 -- Ouro: Mapa Nacional — agregação geográfica para o Superset
 -- Duas visões empilhadas, discriminadas por `nivel`: uma por UF (com código ISO
 -- para o Country Map) e uma por macrorregião. A tabela IBGE traz nome e região.
+-- Cada ficha entra na sua portaria e em 'Todas as portarias', para o filtro do dashboard.
 with
-    fichas as (select * from {{ ref("ouro_far_ficha_empreendimento") }}),
+    fichas as (
+        select f.*, p.portaria
+        from {{ ref("ouro_far_ficha_empreendimento") }} f
+        cross join lateral (
+            values (f.portaria_selecao), ('Todas as portarias')
+        ) p(portaria)
+    ),
 
     ibge_uf as (
         select sigla, nome as estado_nome, regiao_sigla, regiao_nome
@@ -14,6 +21,7 @@ with
     agg_uf as (
         select
             f.uf,
+            f.portaria,
             i.estado_nome,
             i.regiao_sigla,
             i.regiao_nome,
@@ -27,7 +35,7 @@ with
             coalesce(avg(f.percentual_execucao_fisica), 0.0) as media_execucao_fisica
         from fichas f
         left join ibge_uf i on f.uf = i.sigla
-        group by f.uf, i.estado_nome, i.regiao_sigla, i.regiao_nome
+        group by f.uf, f.portaria, i.estado_nome, i.regiao_sigla, i.regiao_nome
     )
 
 -- Nível UF: uma linha por estado
@@ -37,6 +45,7 @@ select
     iso_3166_2,
     regiao_sigla,
     regiao_nome,
+    portaria,
     'uf' as nivel,
     total_municipios,
     total_empreendimentos,
@@ -55,6 +64,7 @@ select
     null as iso_3166_2,
     regiao_sigla,
     regiao_nome,
+    portaria,
     'regiao' as nivel,
     sum(total_municipios) as total_municipios,
     sum(total_empreendimentos) as total_empreendimentos,
@@ -63,4 +73,4 @@ select
     sum(total_valor_desembolsado) as total_valor_desembolsado,
     round(avg(media_execucao_fisica), 1) as media_execucao_fisica
 from agg_uf
-group by regiao_sigla, regiao_nome
+group by regiao_sigla, regiao_nome, portaria

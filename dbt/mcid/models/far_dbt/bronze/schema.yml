@@ -5,15 +5,18 @@ version: 2
 
 models:
 
-  - name: bronze_shpt_his_mcidades_consolidado
+  - name: bronze_shpt_his_mcidades_consolidado_serie
     description: >
-      Consolidado GFAR: propostas do Novo MCMV FAR, da protocolização à contratação.
-      Remessa semanal; a tabela guarda o retrato mais recente.
-      
-      Uma linha por movimento de proposta, não por empreendimento.
+      Consolidado GFAR: propostas do Novo MCMV FAR, da protocolização à contratação,
+      com todas as remessas semanais empilhadas (desde 2025-03-12). Cada remessa é a
+      foto completa da base, e propostas saem e voltam entre remessas.
+
+      Uma linha por movimento de proposta por remessa. Quem lê direto filtra a
+      remessa pelo `filename`; a prata_far_consolidado já entrega a última versão de
+      cada proposta.
     tests:
       - sem_drift_de_colunas:
-          name: sem_drift_de_colunas_bronze_shpt_his_mcidades_consolidado
+          name: sem_drift_de_colunas_bronze_shpt_his_mcidades_consolidado_serie
           arguments:
             colunas:
               - co_tipo_registro
@@ -121,7 +124,7 @@ models:
         tests:
           - not_null
       - name: filename
-        description: Arquivo da staging que venceu esta carga.
+        description: Arquivo da staging de origem da linha; dá a data da remessa.
         tests:
           - not_null
 

@@ -1,0 +1,65 @@
+campo,codigo,rotulo
+tipo_instrumento,001,Doação
+tipo_instrumento,002,Alienação fiduciária
+situacao_contrato,001,Ativo
+situacao_contrato,002,Liquidado
+situacao_contrato,003,Liquidado por MIP
+situacao_contrato,004,Liquidado por DFI
+situacao_contrato,005,Distratado
+situacao_contrato,006,Cancelado
+situacao_contrato,007,Liquidado por adjudicação
+estado_civil,S,Solteiro(a)
+estado_civil,C,Casado(a)
+estado_civil,U,União estável
+estado_civil,D,Divorciado(a) ou separado(a)
+estado_civil,V,Viúvo(a)
+estado_civil,O,Outros
+tipo_edificacao,001,Apartamento
+tipo_edificacao,002,Casa sobreposta
+tipo_edificacao,003,Casa
+tipo_edificacao,004,Misto
+tipo_administracao,001,Direta
+tipo_administracao,002,Indireta
+linha_atendimento,001,Aquisição/produção para alienação
+linha_atendimento,002,Aquisição/produção para doação ou locação social
+linha_atendimento,003,Requalificação para alienação
+linha_atendimento,004,Requalificação para doação ou locação social
+tipo_demanda,001,Cadastro habitacional local
+tipo_demanda,002,Obra pública
+tipo_demanda,003,Risco
+tipo_demanda,004,Calamidade
+tipo_demanda,005,Calamidade (seleção extraordinária MCID)
+tipo_demanda,006,Agravamento
+tipo_demanda,007,Cancelamento pregresso
+originacao,001,Empreendimento novo
+originacao,002,Empreendimento requalificado
+qualificacao_terreno,001,Mínima
+qualificacao_terreno,002,Superior
+tipo_empreendimento,001,Condomínio
+tipo_empreendimento,002,Loteamento
+regime_propriedade,001,Condominial
+regime_propriedade,002,Unidades isoladas
+ente_publico,001,Município
+ente_publico,002,Estado
+operacao_aporte,001,Aporte
+operacao_aporte,002,Suplementação
+classificacao_paralisado,001,Técnico
+classificacao_paralisado,002,Abandonada pela empresa
+classificacao_paralisado,003,Orçamentário ou financeiro
+classificacao_paralisado,004,Órgãos de controle
+classificacao_paralisado,005,Judicial
+classificacao_paralisado,006,Titularidade ou desapropriação
+classificacao_paralisado,007,Ambiental
+classificacao_paralisado,008,Ocupação irregular
+classificacao_paralisado,009,Desequilíbrio financeiro do empreendimento
+classificacao_paralisado,010,Entraves do ente público local
+motivo_cancelamento,001,Judicial
+motivo_cancelamento,002,Técnico
+motivo_cancelamento,003,Orçamentário ou financeiro
+motivo_cancelamento,004,Ambiental
+motivo_cancelamento,005,Entraves do ente público local
+sinistro_dfi,001,Desastres naturais
+sinistro_dfi,002,Acidentes
+sinistro_dfi,003,Falhas estruturais
+sinistro_dfi,004,Impactos externos
+sinistro_dfi,005,Ações humanas
