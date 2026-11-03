@@ -14,16 +14,20 @@ source:
   sourceConfig:
     config:
       type: DashboardMetadata
-      # includeDataModels: true
+      # Os datasets físicos das Golds precisam ser ingeridos junto com charts e
+      # dashboards para fechar a linhagem dbt -> Superset no OpenMetadata.
+      includeDataModels: true
       # includeDraftDashboard: true
-      # lineageInformation:
-      #   dbServicePrefixes:
-      #     - Cidades.cidades
-      # Se quiser restringir:
-      # dashboardFilterPattern:
-      #   includes: ["^.*$"]
-      # chartFilterPattern:
-      #   includes: ["^.*$"]
+      lineageInformation:
+        dbServicePrefixes:
+          - Cidades.cidades
+      dashboardFilterPattern:
+        includes:
+          - "^Reforma Casa Brasil.*$"
+          - "^Perguntas: Reforma Casa Brasil$"
+      chartFilterPattern:
+        includes:
+          - "^(Ficha|Contratos|Valor|Municípios|Mapa|Ranking|Carteira|Recursos|Cobertura|Caracterização|Implementação|Monitoramento|Pergunta da oficina).*$"
       # projectFilterPattern:
       #   includes: ["^.*$"]
       # dataModelFilterPattern:

@@ -18,11 +18,6 @@ models:
   - name: ouro_reforma_casa_brasil_acesso_dash
     description: >
       Indicadores agregados de acesso ao Reforma Casa Brasil por território,
-      faixa, raça/cor, sexo e composição domiciliar. Células com menos de dez
-      contratos são suprimidas.
-  - name: ouro_reforma_casa_brasil_acesso_dash
-    description: >
-      Indicadores agregados de acesso ao Reforma Casa Brasil por território,
       faixa, raça/cor e sexo. Células com menos de dez contratos são suprimidas.
     meta:
       tags: [ouro, reforma-casa-brasil, dashboard, acesso, agregado]
@@ -44,8 +39,6 @@ models:
 
   - name: ouro_reforma_casa_brasil_resultado_dash
     description: >
-      Linha de base de inadequação domiciliar e situação financeira declarada
-      no CadÚnico. Não mede efeito pós-obra nem atribui causalidade ao programa.
       Linha de base de inadequação domiciliar observável no CadÚnico. Não mede
       efeito pós-obra nem atribui causalidade ao programa.
     meta:
@@ -61,6 +54,19 @@ models:
         data_tests:
           - accepted_values:
               arguments: {values: [false]}
+
+  - name: ouro_reforma_casa_brasil_trabalho_dash
+    description: >
+      Perfil agregado de trabalho e fontes de renda declaradas pela pessoa
+      vinculada no CadÚnico. Os códigos seguem a fonte e exigem dicionário
+      oficial para interpretação substantiva. Não descreve serviços da reforma.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, cadunico, trabalho, agregado]
+    columns:
+      - name: quantidade_contratos
+        data_tests: [not_null]
+      - name: quantidade_renda_servicos_gerais
+        description: Quantidade com indicador de renda em serviços gerais na fonte CadÚnico.
 
   - name: ouro_reforma_casa_brasil_monitoramento_recursos_dash
     description: >
@@ -108,11 +114,6 @@ models:
         description: Fonte administrativa, pesquisa ou medição necessária para responder integralmente à pergunta.
       - name: limitacao
         description: Restrição que deve acompanhar a leitura do indicador.
-
-  - name: ouro_reforma_casa_brasil_cobertura_perguntas_dash
-    description: Matriz de cobertura que separa resposta administrativa, proxy e lacuna de pesquisa.
-    meta:
-      tags: [ouro, reforma-casa-brasil, dashboard, cobertura]
     data_tests:
       - unique_combinacao:
           arguments: {colunas: [bloco, pergunta]}

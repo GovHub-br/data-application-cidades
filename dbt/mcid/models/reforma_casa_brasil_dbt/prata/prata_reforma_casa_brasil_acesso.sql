@@ -20,6 +20,36 @@ integrada as (
         coalesce(pc.codigo_deficiencia, pn.codigo_deficiencia) as codigo_deficiencia,
         coalesce(pc.codigo_parentesco_responsavel, pn.codigo_parentesco_responsavel)
             as codigo_parentesco_responsavel,
+        coalesce(pc.codigo_trabalhou_semana, pn.codigo_trabalhou_semana)
+            as codigo_trabalhou_semana,
+        coalesce(pc.codigo_afastado_trabalho, pn.codigo_afastado_trabalho)
+            as codigo_afastado_trabalho,
+        coalesce(pc.codigo_trabalho_agricultura, pn.codigo_trabalho_agricultura)
+            as codigo_trabalho_agricultura,
+        coalesce(pc.codigo_ocupacao_principal, pn.codigo_ocupacao_principal)
+            as codigo_ocupacao_principal,
+        coalesce(pc.codigo_trabalho_doze_meses, pn.codigo_trabalho_doze_meses)
+            as codigo_trabalho_doze_meses,
+        coalesce(pc.codigo_carteira_assinada, pn.codigo_carteira_assinada)
+            as codigo_carteira_assinada,
+        coalesce(pc.faixa_renda_trabalho, pn.faixa_renda_trabalho)
+            as faixa_renda_trabalho,
+        coalesce(pc.indicador_renda_construcao, pn.indicador_renda_construcao)
+            as indicador_renda_construcao,
+        coalesce(pc.indicador_renda_flanelinha, pn.indicador_renda_flanelinha)
+            as indicador_renda_flanelinha,
+        coalesce(pc.indicador_renda_carregador, pn.indicador_renda_carregador)
+            as indicador_renda_carregador,
+        coalesce(pc.indicador_renda_catador, pn.indicador_renda_catador)
+            as indicador_renda_catador,
+        coalesce(pc.indicador_renda_servicos_gerais, pn.indicador_renda_servicos_gerais)
+            as indicador_renda_servicos_gerais,
+        coalesce(pc.indicador_renda_pede, pn.indicador_renda_pede)
+            as indicador_renda_pede,
+        coalesce(pc.indicador_renda_vendas, pn.indicador_renda_vendas)
+            as indicador_renda_vendas,
+        coalesce(pc.indicador_renda_outro, pn.indicador_renda_outro)
+            as indicador_renda_outro,
         case
             when pc.id_pessoa is not null then 'cpf_hmac'
             when pn.id_pessoa is not null then 'nis_hmac'

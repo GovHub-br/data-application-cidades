@@ -25,6 +25,9 @@ DATASETS = [
     "ouro_reforma_casa_brasil_implementacao_dash",
     "ouro_reforma_casa_brasil_monitoramento_recursos_dash",
     "ouro_reforma_casa_brasil_mapa_uf",
+    "ouro_reforma_casa_brasil_acesso_dash",
+    "ouro_reforma_casa_brasil_resultado_dash",
+    "ouro_reforma_casa_brasil_trabalho_dash",
     "ouro_reforma_casa_brasil_cobertura_perguntas_dash",
 ]
 
@@ -46,6 +49,8 @@ METRICAS = {
         ("avg__prestacao_inicial_media", "SUM(prestacao_inicial_media * quantidade_contratos) / NULLIF(SUM(quantidade_contratos), 0)"),
         ("avg__taxa_juros_media", "SUM(taxa_juros_media * quantidade_contratos) / NULLIF(SUM(quantidade_contratos), 0)"),
         ("avg__prazo_medio_meses", "SUM(prazo_medio_meses * quantidade_contratos) / NULLIF(SUM(quantidade_contratos), 0)"),
+        ("avg__valor_financiado", "SUM(valor_financiado_total) / NULLIF(SUM(quantidade_contratos), 0)"),
+        ("taxa__atraso", "SUM(quantidade_com_atraso)::numeric / NULLIF(SUM(quantidade_contratos), 0)"),
     ],
     "ouro_reforma_casa_brasil_monitoramento_recursos_dash": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
@@ -56,6 +61,8 @@ METRICAS = {
         ("sum__valor_recurso_proprio_total", "SUM(valor_recurso_proprio_total)"),
         ("sum__valor_fgts_utilizado_total", "SUM(valor_fgts_utilizado_total)"),
         ("sum__quantidade_contratos_com_atraso", "SUM(quantidade_contratos_com_atraso)"),
+        ("taxa__atraso", "SUM(quantidade_contratos_com_atraso)::numeric / NULLIF(SUM(quantidade_contratos), 0)"),
+        ("avg__valor_financiado", "SUM(valor_financiado_total) / NULLIF(SUM(quantidade_contratos), 0)"),
     ],
     "ouro_reforma_casa_brasil_mapa_uf": [
         ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
@@ -63,6 +70,27 @@ METRICAS = {
         ("sum__valor_financiado_total", "SUM(valor_financiado_total)"),
         ("sum__valor_investimento_total", "SUM(valor_investimento_total)"),
         ("sum__quantidade_contratos_com_atraso", "SUM(quantidade_contratos_com_atraso)"),
+    ],
+    "ouro_reforma_casa_brasil_acesso_dash": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__quantidade_encontrada_cadunico", "SUM(quantidade_encontrada_cadunico)"),
+        ("taxa__vinculo_cadunico", "SUM(quantidade_encontrada_cadunico)::numeric / NULLIF(SUM(quantidade_contratos), 0)"),
+        ("sum__quantidade_familias_cadunico", "SUM(quantidade_familias_cadunico)"),
+    ],
+    "ouro_reforma_casa_brasil_resultado_dash": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__quantidade_com_inadequacao", "SUM(quantidade_com_inadequacao_observavel_na_linha_de_base)"),
+        ("taxa__inadequacao_linha_base", "SUM(quantidade_com_inadequacao_observavel_na_linha_de_base)::numeric / NULLIF(SUM(quantidade_contratos), 0)"),
+        ("sum__quantidade_sem_agua", "SUM(quantidade_sem_agua_canalizada)"),
+        ("sum__quantidade_sem_banheiro", "SUM(quantidade_sem_banheiro)"),
+        ("sum__quantidade_escoamento_precario", "SUM(quantidade_escoamento_precario)"),
+    ],
+    "ouro_reforma_casa_brasil_trabalho_dash": [
+        ("sum__quantidade_contratos", "SUM(quantidade_contratos)"),
+        ("sum__quantidade_vinculada_cadunico", "SUM(quantidade_vinculada_cadunico)"),
+        ("sum__quantidade_renda_construcao", "SUM(quantidade_renda_construcao)"),
+        ("sum__quantidade_renda_servicos_gerais", "SUM(quantidade_renda_servicos_gerais)"),
+        ("sum__quantidade_renda_vendas", "SUM(quantidade_renda_vendas)"),
     ],
 }
 
@@ -81,6 +109,10 @@ CHARTS = [
     {"key": "kpi_fgts", "title": "FGTS utilizado", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "big_number_total", "params": {"metric": "sum__valor_fgts_utilizado_total", "subheader": "FGTS declarado"}},
     {"key": "kpi_prazo", "title": "Prazo médio", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "big_number_total", "params": {"metric": "avg__prazo_medio_meses", "subheader": "meses de financiamento"}},
     {"key": "kpi_municipios", "title": "Municípios alcançados", "dataset": "ouro_reforma_casa_brasil_mapa_uf", "viz_type": "big_number_total", "params": {"metric": "sum__quantidade_municipios", "subheader": "municípios na carteira"}},
+    {"key": "kpi_ticket", "title": "Ticket médio", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "big_number_total", "params": {"metric": "avg__valor_financiado", "subheader": "valor financiado por contrato"}},
+    {"key": "kpi_vinculo_cadunico", "title": "Vínculo com CadÚnico", "dataset": "ouro_reforma_casa_brasil_acesso_dash", "viz_type": "big_number_total", "params": {"metric": "taxa__vinculo_cadunico", "subheader": "contratos encontrados por CPF/NIS HMAC"}},
+    {"key": "kpi_familias_cadunico", "title": "Famílias CadÚnico", "dataset": "ouro_reforma_casa_brasil_acesso_dash", "viz_type": "big_number_total", "params": {"metric": "sum__quantidade_familias_cadunico", "subheader": "famílias distintas em células protegidas"}},
+    {"key": "kpi_inadequacao", "title": "Linha de base: inadequação", "dataset": "ouro_reforma_casa_brasil_resultado_dash", "viz_type": "big_number_total", "params": {"metric": "taxa__inadequacao_linha_base", "subheader": "proxy anterior; não mede efeito pós-reforma"}},
     {"key": "mapa_brasil", "title": "Mapa do Brasil — contratos por UF", "dataset": "ouro_reforma_casa_brasil_mapa_uf", "viz_type": "country_map", "params": {"select_country": "brazil", "entity": "iso_3166_2", "metric": "sum__quantidade_contratos", "linear_color_scheme": "dark_blue"}},
     {"key": "ranking_uf", "title": "Ranking de contratação por UF", "dataset": "ouro_reforma_casa_brasil_mapa_uf", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["uf"], "metrics": ["sum__quantidade_contratos", "sum__quantidade_municipios", "sum__valor_financiado_total", "sum__valor_investimento_total"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 27}},
     {"key": "contratos_uf", "title": "Contratos por UF", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["uf"], "metrics": ["sum__quantidade_contratos", "sum__valor_financiado_total", "sum__valor_investimento_total"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 30}},
@@ -90,10 +122,23 @@ CHARTS = [
     {"key": "implementacao", "title": "Carteira de contratos por município", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "raw", "all_columns": ["uf", "municipio", "codigo_ibge", "faixa_renda", "modalidade", "tipo_imovel", "tipo_desembolso", "sistema_amortizacao", "quantidade_contratos", "valor_financiado_total", "valor_investimento_total", "valor_recurso_proprio_total", "valor_fgts_utilizado_total", "quantidade_com_atraso", "proporcao_com_atraso", "dt_referencia"], "row_limit": 5000}},
     {"key": "monitoramento", "title": "Carteira por competência", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_line", "params": {"x_axis": "dt_referencia", "metrics": ["sum__quantidade_contratos", "sum__quantidade_primeira_ocorrencia_serie"], "groupby": ["uf"], "time_grain_sqla": "P1M", "row_limit": 10000}},
     {"key": "recursos", "title": "Recursos contratados por competência", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "dt_referencia", "metrics": ["sum__valor_financiado_total"], "groupby": ["modalidade"], "time_grain_sqla": "P1M", "row_limit": 10000}},
+    {"key": "evolucao_geral", "title": "Evolução dos financiamentos e contratos", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_line", "params": {"x_axis": "dt_referencia", "metrics": ["sum__quantidade_contratos", "sum__valor_financiado_total"], "time_grain_sqla": "P1M", "row_limit": 10000}},
+    {"key": "contratos_mes_faixa", "title": "Contratos por mês e faixa de renda", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "dt_referencia", "metrics": ["sum__quantidade_contratos"], "groupby": ["faixa_renda"], "time_grain_sqla": "P1M", "row_limit": 10000, "stack": "Stack"}},
+    {"key": "valor_mes_faixa", "title": "Valor financiado por mês e faixa de renda", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "dt_referencia", "metrics": ["sum__valor_financiado_total"], "groupby": ["faixa_renda"], "time_grain_sqla": "P1M", "row_limit": 10000, "stack": "Stack"}},
+    {"key": "ticket_faixa", "title": "Ticket médio por faixa de renda", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "faixa_renda", "metrics": ["avg__valor_financiado"], "row_limit": 20, "orientation": "horizontal", "show_legend": False}},
+    {"key": "atraso_uf", "title": "Taxa de atraso por UF", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "uf", "metrics": ["taxa__atraso"], "row_limit": 30, "orientation": "horizontal", "show_legend": False}},
+    {"key": "prazo_uf", "title": "Prazo médio de financiamento por UF", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "uf", "metrics": ["avg__prazo_medio_meses"], "row_limit": 30, "orientation": "horizontal", "show_legend": False}},
+    {"key": "atraso_serie", "title": "Histórico de contratos com atraso", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_line", "params": {"x_axis": "dt_referencia", "metrics": ["sum__quantidade_contratos_com_atraso", "taxa__atraso"], "time_grain_sqla": "P1M", "row_limit": 10000}},
+    {"key": "municipios_top", "title": "Top municípios — contratos e valor financiado", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["municipio", "uf"], "metrics": ["sum__quantidade_contratos", "sum__valor_financiado_total", "avg__valor_financiado", "taxa__atraso"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 100}},
+    {"key": "municipios_faixa", "title": "Municípios por faixa de renda", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["municipio", "uf", "faixa_renda"], "metrics": ["sum__quantidade_contratos", "sum__valor_financiado_total"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 500}},
+    {"key": "qualidade_fontes", "title": "Cobertura, lacunas e fontes necessárias", "dataset": "ouro_reforma_casa_brasil_cobertura_perguntas_dash", "viz_type": "table", "params": {"query_mode": "raw", "all_columns": ["bloco", "pergunta", "situacao_dado", "resposta_disponivel", "fonte_necessaria", "limitacao"], "row_limit": 100}},
     {"key": "cobertura", "title": "Cobertura das perguntas", "dataset": "ouro_reforma_casa_brasil_cobertura_perguntas_dash", "viz_type": "table", "params": {"query_mode": "raw", "all_columns": ["bloco", "pergunta", "situacao_dado", "fonte_necessaria"], "row_limit": 100}},
     {"key": "pergunta_perfil_territorio", "title": "Caracterização — contratos por UF", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["uf"], "metrics": ["sum__quantidade_contratos", "sum__valor_financiado_total"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 30}},
     {"key": "pergunta_perfil_faixa", "title": "Caracterização — financiamento por faixa de renda", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "pie", "params": {"groupby": ["faixa_renda"], "metric": "sum__valor_financiado_total", "donut": True, "row_limit": 30}},
     {"key": "pergunta_perfil_imovel", "title": "Caracterização — contratos por tipo de imóvel", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "pie", "params": {"groupby": ["tipo_imovel"], "metric": "sum__quantidade_contratos", "donut": True, "row_limit": 30}},
+    {"key": "pergunta_cadunico", "title": "Acesso — vínculo pseudonimizado com CadÚnico", "dataset": "ouro_reforma_casa_brasil_acesso_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["uf", "faixa_renda", "raca_cor", "sexo"], "metrics": ["sum__quantidade_contratos", "sum__quantidade_encontrada_cadunico", "taxa__vinculo_cadunico"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 500}},
+    {"key": "pergunta_trabalho", "title": "Caracterização — atividade laboral declarada", "dataset": "ouro_reforma_casa_brasil_trabalho_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["codigo_trabalhou_semana", "codigo_ocupacao_principal", "faixa_renda_trabalho"], "metrics": ["sum__quantidade_contratos", "sum__quantidade_vinculada_cadunico", "sum__quantidade_renda_construcao", "sum__quantidade_renda_servicos_gerais", "sum__quantidade_renda_vendas"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 500}},
+    {"key": "pergunta_linha_base", "title": "Resultados — condições domiciliares na linha de base", "dataset": "ouro_reforma_casa_brasil_resultado_dash", "viz_type": "table", "params": {"query_mode": "aggregate", "groupby": ["uf", "faixa_renda", "raca_cor"], "metrics": ["sum__quantidade_contratos", "sum__quantidade_com_inadequacao", "taxa__inadequacao_linha_base", "sum__quantidade_sem_agua", "sum__quantidade_sem_banheiro", "sum__quantidade_escoamento_precario"], "order_by_cols": ['["sum__quantidade_contratos", false]'], "row_limit": 500}},
     {"key": "pergunta_implementacao", "title": "Implementação — carteira contratual por município", "dataset": "ouro_reforma_casa_brasil_implementacao_dash", "viz_type": "table", "params": {"query_mode": "raw", "all_columns": ["uf", "municipio", "faixa_renda", "modalidade", "tipo_imovel", "tipo_desembolso", "quantidade_contratos", "valor_financiado_total", "valor_investimento_total", "valor_recurso_proprio_total", "valor_fgts_utilizado_total", "quantidade_com_atraso", "proporcao_com_atraso", "dt_referencia"], "row_limit": 5000}},
     {"key": "pergunta_monitoramento", "title": "Monitoramento — carteira por competência", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_line", "params": {"x_axis": "dt_referencia", "metrics": ["sum__quantidade_contratos", "sum__quantidade_primeira_ocorrencia_serie"], "groupby": ["uf"], "time_grain_sqla": "P1M", "row_limit": 10000}},
     {"key": "pergunta_recursos", "title": "Monitoramento — recursos contratados por competência", "dataset": "ouro_reforma_casa_brasil_monitoramento_recursos_dash", "viz_type": "echarts_timeseries_bar", "params": {"x_axis": "dt_referencia", "metrics": ["sum__valor_financiado_total"], "groupby": ["modalidade"], "time_grain_sqla": "P1M", "row_limit": 10000}},
@@ -126,8 +171,8 @@ Use **✓** para evidência disponível, **◐** para proxy/atributo administrat
 
 ### Caracterização
 
-- **Perfil de quem acessa / Faixa 1**: ✓ filtros de **UF**, **município**, **faixa de renda**, **modalidade** e **tipo de imóvel** nas abas *Visão geral*, *Território* e *Contratos e imóveis*.
-- **Raça/cor, família → pessoa e vínculo CadÚnico**: — aguardam a materialização protegida do CadÚnico e o vínculo pseudonimizado.
+- **Perfil de quem acessa / Faixa 1**: ✓ filtros de **UF**, **município** e **faixa de renda** nas abas *Visão geral*, *Análises*, *Cruzamentos* e *Perguntas SNH*.
+- **Raça/cor, família → pessoa e vínculo CadÚnico**: ✓ exibidos somente em agregados com supressão de células pequenas; o vínculo usa CPF/NIS HMAC.
 - **O que está sendo reformado**: — a base contratual não traz serviço, item de obra, ventilação, placa solar ou projeto.
 
 ### Acesso
@@ -136,15 +181,15 @@ Use **✓** para evidência disponível, **◐** para proxy/atributo administrat
 
 ### Implementação
 
-- **Valor disponibilizado, prazo, juros, prestação, recursos próprios, FGTS e atraso**: ✓ aba *Implementação* e *Ficha da reforma*.
+- **Valor disponibilizado, prazo, juros, prestação, recursos próprios, FGTS e atraso**: ✓ abas *Análises*, *Mapa* (ficha individual) e *Perguntas SNH*.
 - **Adequação à necessidade**: ◐ há atributos financeiros; falta projeto/escopo da reforma e necessidade declarada.
 - **Burocracia, documentação, facilidade, relação com banco e compreensão das condições**: — exigem pesquisa ou registros de atendimento.
 - **Obra bem feita / no prazo**: — não há medição, vistoria ou cronograma físico nesta fonte.
 
 ### Resultados
 
-- **Quanto foi contratado/investido**: ✓ cards e tabelas de *Visão geral* e *Implementação*; são valores contratuais, não gasto comprovado.
-- **Conclusão, conforto, segurança, salubridade, redução da inadequação e impacto financeiro pós-obra**: — exigem acompanhamento/vistoria/pesquisa após a reforma. CadÚnico futuro poderá compor apenas linha de base.
+- **Quanto foi contratado/investido**: ✓ cards e tabelas de *Visão geral* e *Análises*; são valores contratuais, não gasto comprovado.
+- **Conclusão, conforto, segurança, salubridade, redução da inadequação e impacto financeiro pós-obra**: — exigem acompanhamento/vistoria/pesquisa após a reforma. O CadÚnico compõe apenas linha de base.
 
 ### Monitoramento
 
@@ -162,7 +207,8 @@ COMO_LER_CARACTERIZACAO = """### 1. Caracterização — quem acessa e o que est
 - Eles respondem ao perfil administrativo disponível: território, faixa, modalidade e imóvel.
 - **Não** identificam o serviço físico da reforma: a base não registra ventilação, placa solar, item de obra, orçamento ou projeto.
 
-⚠️ Raça/cor, composição familiar e vínculo com CadÚnico dependem da camada protegida ainda não materializada.
+⚠️ Raça/cor, composição familiar e vínculo com CadÚnico são exibidos apenas em agregados
+com supressão de células pequenas; CPF, NIS, nome e endereço não entram no painel.
 """
 
 COMO_LER_ACESSO = """### 2. Acesso — quem conhece, consegue entrar ou desiste?
@@ -171,7 +217,7 @@ COMO_LER_ACESSO = """### 2. Acesso — quem conhece, consegue entrar ou desiste?
 
 Esta tabela não usa zero como resposta. Ela mostra por que a carteira contratada **não permite** medir conhecimento do programa, tentativa de acesso, recusa, desistência, motivo ou gargalos.
 
-Para responder, precisamos do funil de propostas e atendimento do agente financeiro, além de pesquisa com usuários. Quando o CadÚnico protegido estiver materializado, será possível medir o vínculo dos contratados — não as barreiras de quem ficou de fora.
+Para responder, precisamos do funil de propostas e atendimento do agente financeiro, além de pesquisa com usuários. O cruzamento protegido mede o vínculo dos contratados — não as barreiras de quem ficou de fora.
 """
 
 COMO_LER_IMPLEMENTACAO = """### 3. Implementação — o financiamento foi adequado e fácil de contratar?
@@ -256,29 +302,59 @@ def charts(api: Superset, ids: dict[str, int]) -> dict[str, int]:
 
 def layout(ids: dict[str, int]) -> str:
     paginas = [
-        ("Visão geral", [["kpi_contratos", "kpi_financiado", "kpi_investimento", "kpi_atraso"], ["contratos_uf", "financiamento_faixa"], ["contratos_modalidade"]]),
-        ("Ficha da reforma", [["ficha_financiado", "ficha_investimento", "ficha_recurso_proprio", "ficha_atraso"], ["ficha_reforma"]]),
-        ("Território", [["mapa_brasil"], ["kpi_municipios", "ranking_uf"], ["implementacao"]]),
-        ("Contratos e imóveis", [["contratos_tipo_imovel", "contratos_modalidade"], ["implementacao"]]),
-        ("Implementação", [["kpi_desconto", "kpi_recurso_proprio", "kpi_fgts", "kpi_prazo"], ["implementacao"]]),
-        ("Monitoramento", [["monitoramento"], ["recursos"]]),
-        ("Perguntas da oficina", [
-            [{"markdown": "## 1. Qual é o perfil de quem acessa e quais características do imóvel constam na contratação?"}],
+        ("Visão geral", [
+            [{"markdown": "## Reforma Casa Brasil — visão geral\n\nCarteira administrativa disponível no recorte selecionado. Valores representam contratação/informação da fonte, e não medição ou gasto comprovado de obra."}],
+            ["kpi_contratos", "kpi_financiado", "kpi_ticket", "kpi_municipios"],
+            ["evolucao_geral"],
+            [{"markdown": "### Como ler\n\nA série acompanha a posição da carteira em cada data de referência. Não some os meses: cada ponto é um *snapshot* administrativo da mesma carteira."}, "municipios_top"],
+            ["ranking_uf"],
+        ]),
+        ("Análises", [
+            [{"markdown": "## Evolução mensal\n\nContratos e valor financiado por data de referência, com composição por faixa de renda."}],
+            ["contratos_mes_faixa"],
+            ["valor_mes_faixa"],
+            [{"markdown": "## Perfil financeiro\n\nAs faixas são as informadas nos registros contratuais. Elas não substituem a renda observada depois da reforma."}],
+            ["ticket_faixa", "financiamento_faixa"],
+            [{"markdown": "## Prazo e atraso administrativo\n\nAtraso é o campo administrativo disponível na fonte. Ele não comprova prazo ou qualidade da obra."}],
+            ["prazo_uf", "atraso_uf"],
+            ["atraso_serie"],
+        ]),
+        ("Cruzamentos", [
+            [{"markdown": "## Cruzamentos disponíveis\n\nO painel cruza os atributos contratuais por município, UF e faixa de renda. Cruzamentos territoriais com FCU, setor censitário, Censo, FJP e coordenadas dependem de fontes geográficas ainda não materializadas na camada Gold."}],
+            ["municipios_faixa"],
+            [{"markdown": "### Como ler\n\nA tabela mostra a distribuição contratual disponível. Não mede demanda territorial, vulnerabilidade do setor censitário ou localização intramunicipal."}, "ticket_faixa"],
+            ["atraso_uf"],
+        ]),
+        ("Perguntas SNH", [
+            [{"markdown": "## 1. Caracterização — qual é o perfil dos beneficiários e quais tipos de reforma foram realizados?"}],
+            ["kpi_vinculo_cadunico", "kpi_familias_cadunico", "kpi_inadequacao"],
             [{"markdown": COMO_LER_CARACTERIZACAO}, "pergunta_perfil_territorio"],
-            [{"markdown": "### Como ler — faixa de renda\n\nA pizza distribui o **valor financiado** entre as faixas informadas no contrato. É perfil da carteira contratada; não mede renda posterior à reforma."}, "pergunta_perfil_faixa"],
-            [{"markdown": "### Como ler — categoria do imóvel na fonte\n\nA carga recebida do Reforma Casa Brasil registra apenas o **código 5** para todos os contratos e não trouxe o dicionário que o traduz. Por isso, ele é exibido como código técnico, **não como casa, apartamento ou tipo de reforma**. Também não informa o serviço executado — ventilação, telhado ou placa solar."}, "pergunta_perfil_imovel"],
-            [{"markdown": "## 2. Quem conhece, entende, consegue acessar ou desiste do programa — e por quê?"}],
-            [{"markdown": COMO_LER_ACESSO}, "cobertura_acesso"],
-            [{"markdown": "## 3. O financiamento é adequado à necessidade e como está a implementação contratual?"}],
+            [{"markdown": "### Como ler — renda e categoria da fonte\n\nA distribuição ao lado é do valor financiado por faixa declarada. O tipo de imóvel é um código técnico recebido na remessa e não informa o serviço executado (telhado, ventilação, elétrica, placa solar etc.)."}, "pergunta_perfil_faixa"],
+            [{"markdown": "### Como ler — trabalho, ocupação e serviços\n\nO CadÚnico permite caracterizar atividade laboral e fontes de renda **da pessoa vinculada**. Os códigos exigem o dicionário oficial do CadÚnico. Isso não informa os serviços executados na obra; estes dependem de orçamento, medição ou vistoria."}, "pergunta_trabalho"],
+            [{"markdown": "## 2. Acesso — as famílias conhecem, entendem e conseguem acessar o programa? Quem desiste e por quê?"}],
+            [{"markdown": COMO_LER_ACESSO}, "pergunta_cadunico"],
+            [{"markdown": "## 3. Implementação — o financiamento é adequado à necessidade e como está a contratação?"}],
             [{"markdown": COMO_LER_IMPLEMENTACAO}, "pergunta_implementacao"],
-            [{"markdown": "## 4. O que foi reformado, quanto foi gasto e quais resultados ocorreram após a obra?"}],
-            [{"markdown": COMO_LER_RESULTADO}, "cobertura_resultado"],
-            [{"markdown": "## 5. Como a carteira e os recursos evoluem ao longo do tempo?"}],
+            [{"markdown": "## 4. Resultados — o que foi reformado e houve melhoria habitacional?"}],
+            [{"markdown": COMO_LER_RESULTADO}, "pergunta_linha_base"],
+            [{"markdown": "## 5. Monitoramento — como a carteira e os recursos evoluem?"}],
             [{"markdown": COMO_LER_MONITORAMENTO}, "pergunta_monitoramento"],
-            [{"markdown": "## Pergunta estrela — quais características aumentam ou reduzem acesso e melhoria habitacional?"}],
+            [{"markdown": "## Pergunta estrela — quais características aumentam ou reduzem o acesso e a melhoria habitacional?"}],
             [{"markdown": COMO_LER_ESTRELA}, "cobertura_avaliacao"],
-            [{"markdown": "## Matriz completa de cobertura\n\nTodas as perguntas, fontes necessárias e limitações usadas na leitura do painel."}],
-            [{"markdown": "### Como ler\n\nA tabela da direita consolida o que é respondido, o que é proxy e o que precisa de nova fonte."}, "cobertura"],
+        ]),
+        ("Mapa", [
+            [{"markdown": "## Distribuição territorial\n\nO mapa representa contratos por UF. A base atual possui município, mas não contém coordenada validada, setor censitário ou ponto de rua; por isso essas camadas não são simuladas."}],
+            ["mapa_brasil"],
+            ["kpi_municipios", "ranking_uf"],
+            ["municipios_top"],
+            [{"markdown": "## Ficha da reforma\n\nSelecione UF, município e contrato nos filtros desta aba para consultar os atributos administrativos do registro, sem dados pessoais."}],
+            ["ficha_financiado", "ficha_investimento", "ficha_recurso_proprio", "ficha_atraso"],
+            ["ficha_reforma"],
+        ]),
+        ("Qualidade dos Dados", [
+            [{"markdown": "## Qualidade, cobertura e limites de interpretação\n\nEsta aba torna visível a fronteira entre dado observado, proxy administrativo e lacuna de fonte. Ausência de dado não é tratada como zero."}],
+            ["qualidade_fontes"],
+            [{"markdown": GUIA_PERGUNTAS}, "cobertura"],
         ]),
     ]
     tabs = "TABS-REFORMA"
@@ -336,25 +412,34 @@ def dashboard(api: Superset, ids: dict[str, int], datasets_ids: dict[str, int]) 
 
     implementacao = ["ouro_reforma_casa_brasil_implementacao_dash"]
     monitoramento = ["ouro_reforma_casa_brasil_monitoramento_recursos_dash"]
+    mapa = ["ouro_reforma_casa_brasil_mapa_uf"]
+    ficha = ["ouro_reforma_casa_brasil_ficha_reforma_dash"]
+    acesso = ["ouro_reforma_casa_brasil_acesso_dash"]
+    resultado = ["ouro_reforma_casa_brasil_resultado_dash"]
+    trabalho = ["ouro_reforma_casa_brasil_trabalho_dash"]
     filtros = [
-        seletor(1, "UF", "uf", implementacao, 0),
-        seletor(2, "Faixa de renda", "faixa_renda", implementacao, 0),
-        seletor(3, "Modalidade", "modalidade", implementacao, 0),
-        seletor(4, "UF", "uf", ["ouro_reforma_casa_brasil_ficha_reforma_dash"], 1),
-        seletor(5, "Município", "municipio", ["ouro_reforma_casa_brasil_ficha_reforma_dash"], 1),
-        seletor(6, "Reforma / contrato", "identificador_reforma", ["ouro_reforma_casa_brasil_ficha_reforma_dash"], 1),
-        seletor(7, "UF", "uf", ["ouro_reforma_casa_brasil_mapa_uf", *implementacao], 2),
-        seletor(8, "Município", "municipio", implementacao, 2),
-        seletor(9, "UF", "uf", implementacao, 3),
-        seletor(10, "Município", "municipio", implementacao, 3),
-        seletor(11, "Tipo de imóvel", "tipo_imovel", implementacao, 3),
-        seletor(12, "Faixa de renda", "faixa_renda", implementacao, 3),
-        seletor(13, "UF", "uf", implementacao, 4),
-        seletor(14, "Município", "municipio", implementacao, 4),
-        seletor(15, "Tipo de desembolso", "tipo_desembolso", implementacao, 4),
-        periodo(16, 5),
-        seletor(17, "UF", "uf", monitoramento, 5),
-        seletor(18, "Faixa de renda", "faixa_renda", monitoramento, 5),
+        # Filtros ficam no topo de cada aba, no mesmo padrão do painel de
+        # referência. Nenhum é obrigatório: abertura sem seleção é Brasil.
+        seletor(1, "UF", "uf", [*implementacao, *monitoramento, *mapa], 0),
+        seletor(2, "Município", "municipio", [*implementacao, *monitoramento], 0),
+        seletor(3, "Extrato de renda", "faixa_renda", [*implementacao, *monitoramento], 0),
+        periodo(4, 0),
+        seletor(5, "UF", "uf", [*implementacao, *monitoramento], 1),
+        seletor(6, "Município", "municipio", [*implementacao, *monitoramento], 1),
+        seletor(7, "Extrato de renda", "faixa_renda", [*implementacao, *monitoramento], 1),
+        periodo(8, 1),
+        seletor(9, "UF", "uf", implementacao, 2),
+        seletor(10, "Município", "municipio", implementacao, 2),
+        seletor(11, "Extrato de renda", "faixa_renda", implementacao, 2),
+        seletor(12, "UF", "uf", implementacao, 3),
+        seletor(13, "Município", "municipio", implementacao, 3),
+        seletor(14, "Extrato de renda", "faixa_renda", implementacao, 3),
+        seletor(15, "UF", "uf", [*mapa, *implementacao, *ficha], 4),
+        seletor(16, "Município", "municipio", [*implementacao, *ficha], 4),
+        seletor(17, "Reforma / contrato", "identificador_reforma", ficha, 4),
+        seletor(18, "UF", "uf", [*implementacao, *acesso, *resultado, *trabalho], 3),
+        seletor(19, "Município", "municipio", [*implementacao, *acesso, *resultado, *trabalho], 3),
+        seletor(20, "Faixa de renda", "faixa_renda", [*implementacao, *acesso, *resultado, *trabalho], 3),
     ]
     payload = {"dashboard_title": DASHBOARD_TITLE, "slug": DASHBOARD_SLUG, "published": True, "position_json": layout(ids), "json_metadata": json.dumps({"refresh_frequency": 0, "native_filter_configuration": filtros, "show_native_filters": True})}
     dashboard_id = api.dashboard_id(DASHBOARD_SLUG)
