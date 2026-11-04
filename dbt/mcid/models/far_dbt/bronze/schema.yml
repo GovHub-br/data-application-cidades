@@ -467,3 +467,25 @@ models:
         description: Arquivo da staging de origem da linha; dá a competência.
         tests:
           - not_null
+
+  - name: bronze_seed_manual_far_portaria_selecao_apf
+    description: Cópia fiel de seeds.far_portaria_selecao_apf (carregada à mão no Postgres). Portaria de seleção de cada APF
+      do MCMV-FAR (727/2023, 704/2024, 47/2025, 488/2025).
+    meta:
+      tags:
+      - bronze
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+        - MCID.Identificadores.IDProposta
+    columns:
+    - name: co_hash
+      description: Identificador da linha.
+    - name: apf
+      description: APF do contrato FAR.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.APF
+    - name: portaria
+      description: Portaria de seleção por extenso.

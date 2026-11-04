@@ -251,6 +251,40 @@ produtos:
       MCMV Cidades, Pró-Moradia, FGTS e Fundo Social. Mantém as lacunas de
       cobertura explícitas e publica saídas próprias para BI e predição.
 
+  # Trabalho Social do MCMV nas três linhas (FAR, Entidades e Rural) e nos dois agentes (CAIXA e
+  # BB): acompanhamento por contrato, marcos da Portaria MCID 75/2025, indicação de demanda e
+  # executor. Os prefixos cobrem as três camadas porque a bronze é própria do produto.
+  - name: trabalho_social
+    termos:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      - MCID.ExecucaoDeEmpreendimentos.PTS
+      - MCID.ProgramasHabitacionais.MCMV
+      - MCID.Atores.AgenteFinanceiro
+      - MCID.Atores.EntePublico
+      - MCID.Atores.EntidadeOrganizadora
+    display_name: Trabalho Social
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - bronze_shpt_mcmv_far_ts_
+      - bronze_shpt_mcmv_fds_ts_
+      - bronze_shpt_mcmv_rural_ts_
+      - bronze_shpt_ts_
+      - bronze_ts_
+      - bronze_seed_ts_
+      - bronze_seed_ibge_municipio_centroide
+      - prata_ts_
+      - ouro_ts_
+    description: >
+      Trabalho Social do Minha Casa, Minha Vida no FAR, no Entidades e no Rural, informado pela
+      CAIXA e pelo Banco do Brasil: situação, valores, relatórios atestados, marcos temporais das
+      Portarias MCID 464/2018 e 75/2025, indicação de demanda, tipo de demanda e ente executor, com a ação
+      sugerida para cada empreendimento fora do marco.
+
 #: Certificação por camada. Gold é o que se publica e se consome; Silver
 #: sustenta a Gold mas não é destino final; Bronze não é apresentada.
 #: A certificação segue a camada, não o modelo, para não virar avaliação
@@ -276,6 +310,7 @@ etiquetas_automaticas:
     empreendimento_rural: dbtTags.empreendimento_rural
     reforma_casa_brasil: dbtTags.reforma_casa_brasil
     linha_financiada: dbtTags.linha_financiada
+    trabalho_social: dbtTags.trabalho_social
   por_camada:
     bronze: dbtTags.bronze
     silver: dbtTags.silver
@@ -385,6 +420,9 @@ classificacoes:
       - name: reforma_casa_brasil
         display_name: Reforma Casa Brasil
         description: Ativo do produto de dados Reforma Casa Brasil.
+      - name: trabalho_social
+        display_name: Trabalho Social
+        description: Ativo do produto de dados Trabalho Social do MCMV.
       - name: bronze
         display_name: Bronze
         description: Ativo da camada que preserva a representação recebida da origem.

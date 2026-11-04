@@ -1,0 +1,133 @@
+version: 2
+seeds:
+- name: ts_portarias
+  description: 'Catálogo das portarias de Trabalho Social: vigência, quem revogou, linhas a que se aplica, regra
+    de transição e se a régua de marcos já foi transcrita. Fonte: 21/2014 (DOU 23/01/2014), 464/2018 compilada e
+    75/2025 (DOU 05/02/2025).'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  columns:
+  - name: portaria_ts
+    description: Portaria no formato número/ano.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: numero
+    description: Número da portaria.
+  - name: ano
+    description: Ano da portaria.
+  - name: dt_assinatura
+    description: Data de assinatura.
+  - name: dt_publicacao_dou
+    description: Data de publicação no DOU, quando confirmada.
+  - name: dt_inicio_vigencia
+    description: Início da vigência.
+  - name: dt_fim_vigencia
+    description: Fim da vigência (véspera da portaria que a revogou).
+  - name: revogada_por
+    description: Portaria que a revogou.
+  - name: linhas
+    description: Linhas a que se aplica, separadas por |.
+  - name: regra_aplicacao
+    description: Regra de aplicação e de transição para contratos anteriores.
+  - name: ic_marcos_transcritos
+    description: true quando a régua de marcos está em seed.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: seed_marcos
+    description: Seed com a régua de marcos.
+  - name: observacao
+    description: O que falta confirmar.
+  - name: referencia
+    description: Fonte da informação.
+- name: ts_marcos_portaria_464_2018
+  description: 'Régua de marcos temporais do TS transcrita da Portaria MCidades 464/2018 compilada: Anexo III (FAR),
+    IV (FDS/Entidades) e V (Rural).'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  columns:
+  - name: id_marco
+    description: Identificador do marco (464-LINHA-ordem).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: linha
+    description: Linha (FAR, FDS, RURAL).
+  - name: ordem
+    description: Ordem do marco na linha.
+  - name: fase
+    description: Fase do TS.
+  - name: gatilho
+    description: O que dispara o marco.
+  - name: pc_obra_gatilho
+    description: Percentual de obra que dispara o marco.
+  - name: prazo_dias
+    description: Intervalo máximo em dias.
+  - name: exigencia
+    description: O que precisa estar pronto.
+  - name: consequencia_descumprimento
+    description: O que acontece se não cumprir.
+  - name: referencia
+    description: Anexo e item da portaria.
+- name: ts_marcos_portaria_75_2025
+  description: Régua de marcos temporais do TS transcrita da Portaria MCID 75/2025, Anexo II (FAR, FDS, Rural, Sub-50
+    e Pró-Moradia).
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+- name: ts_publico_tradicional
+  description: Palavras-chave (expressões regulares, em maiúsculas) usadas para ESTIMAR o público tradicional pelo
+    nome da entidade organizadora e do empreendimento. Não há campo próprio na origem. Revisar quando aparecer falso
+    positivo.
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: ordem
+    description: Prioridade quando mais de uma palavra casa (menor vence).
+  - name: publico_tradicional
+    description: Público atribuído quando a palavra casa.
+  - name: regex_inclui
+    description: Expressão regular procurada no nome (maiúsculas).
+  - name: regex_exclui
+    description: Reservado para exclusões futuras.
+  - name: observacao
+    description: Por que a regra é assim (falsos positivos evitados).
+- name: ibge_municipio_centroide
+  description: Centro (centroide) de cada município brasileiro, da API de malhas do IBGE, com nome e UF da API de
+    localidades. Gerado por scripts/ibge/baixar_centroides_municipios.py. Usado como coordenada de reserva no mapa
+    do Trabalho Social.
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.Identificadores.CodigoIBGE
+      - MCID.FontesInstitucionais.IBGE
+  columns:
+  - name: cod_ibge
+    description: Código IBGE do município (7 dígitos).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.CodigoIBGE
+  - name: municipio
+    description: Nome do município.
+  - name: uf
+    description: Sigla da UF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: latitude
+    description: Latitude do centroide, graus decimais.
+  - name: longitude
+    description: Longitude do centroide, graus decimais.

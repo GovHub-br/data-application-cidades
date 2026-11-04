@@ -1,0 +1,17 @@
+agente_financeiro,situacao_origem,situacao_padronizada,ic_ativo,ic_critico,ic_equivalencia_a_confirmar,observacao
+CAIXA,CONCLUIDO,Concluído,false,false,false,TS encerrado com AVF atestada
+CAIXA,EM ANDAMENTO,Em andamento,true,false,false,Execução adequada aos marcos
+CAIXA,ATRASADO,Atrasado,true,true,false,PTS aprovado sem início ou relatórios atrasados além do prazo da norma
+CAIXA,PARALISADO,Paralisado,true,true,false,Impedimento para continuar o TS (avaliado pela centralizadora)
+CAIXA,NAO INICIADO,Não iniciado,false,false,false,Ainda não há motivo para cobrar entrega pelos marcos temporais
+CAIXA,NÃO INICIADO,Não iniciado,false,false,false,Ainda não há motivo para cobrar entrega pelos marcos temporais
+BB,CONCLUÍDO,Concluído,false,false,false,TS encerrado
+BB,CONCLUÍDO C/ GLOSA PGTO FINAL,Concluído,false,false,true,Concluído com glosa no pagamento final
+BB,EM ANDAMENTO,Em andamento,true,false,false,Execução em curso
+BB,REGULARIZADO,Em andamento,true,false,true,Pendência resolvida e execução retomada
+BB,PENDENTE,Não iniciado,false,false,true,Aguardando acionamento ou PTS em elaboração
+BB,ATRASADO,Atrasado,true,true,false,Relatórios ou entregas atrasados
+BB,PARALISADO,Paralisado,true,true,false,Execução interrompida
+BB,DISTRATO,Distrato,false,false,true,Contrato de TS distratado
+BB,EM DISTRATO,Distrato,false,false,true,Distrato em andamento
+BB,DISTRATO CONCLUÍDO,Distrato,false,false,true,Distrato concluído
