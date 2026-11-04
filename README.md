@@ -153,6 +153,11 @@ git config --global commit.gpgsign true
 
 3. Add your GPG key to your GitLab account
 
+## 🔬 Ciência de dados
+
+- [`data-science/fluxo-politica-mcmv/`](data-science/fluxo-politica-mcmv/README.md): o fluxo da política do MCMV-FAR e do MCMV-Entidades contado pelos dados do banco medalhão, em notebooks executados (inventário, fluxo etapa por etapa, vida de um contrato), com a curva S por mês de contrato, o atraso por fase e as lacunas de dados marcadas. Lê-se direto no GitHub.
+- [`data-science/dados-historicos-tratamento/`](data-science/dados-historicos-tratamento/README.md): classificação e tratamento das bases históricas do MCMV.
+
 ## 📚 Documentation
 
 - [Airflow Documentation](https://airflow.apache.org/docs/)
