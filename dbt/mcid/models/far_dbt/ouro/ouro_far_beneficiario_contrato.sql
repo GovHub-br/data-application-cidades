@@ -26,6 +26,8 @@ select
     ic_situacao_rua,
     qt_membros_familia,
     renda_familiar,
+    pc_renda_responsavel,
+    pc_renda_coobrigado,
     faixa_renda,
     modalidade,
     ic_indicacao_direta,

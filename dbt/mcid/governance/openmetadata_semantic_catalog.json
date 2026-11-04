@@ -16245,7 +16245,7 @@
         {
           "name": "dias_atraso",
           "data_type": "integer",
-          "ordinal": 29,
+          "ordinal": 31,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16259,7 +16259,7 @@
         {
           "name": "dt_retrato",
           "data_type": "date",
-          "ordinal": 41,
+          "ordinal": 43,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16280,7 +16280,7 @@
         {
           "name": "faixa_renda",
           "data_type": "text",
-          "ordinal": 23,
+          "ordinal": 25,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16294,14 +16294,14 @@
         {
           "name": "ic_acao_judicial",
           "data_type": "boolean",
-          "ordinal": 34,
+          "ordinal": 36,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "ic_ativo",
           "data_type": "boolean",
-          "ordinal": 28,
+          "ordinal": 30,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16329,14 +16329,14 @@
         {
           "name": "ic_inadimplente",
           "data_type": "boolean",
-          "ordinal": 32,
+          "ordinal": 34,
           "description": "Contrato ativo com prestação vencida há mais de 90 dias.",
           "documentation_status": "curated"
         },
         {
           "name": "ic_indicacao_direta",
           "data_type": "boolean",
-          "ordinal": 25,
+          "ordinal": 27,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16364,14 +16364,14 @@
         {
           "name": "ic_retomado",
           "data_type": "boolean",
-          "ordinal": 33,
+          "ordinal": 35,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "ic_sem_registro",
           "data_type": "boolean",
-          "ordinal": 40,
+          "ordinal": 42,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16385,7 +16385,7 @@
         {
           "name": "modalidade",
           "data_type": "text",
-          "ordinal": 24,
+          "ordinal": 26,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16411,9 +16411,23 @@
           "documentation_status": "curated"
         },
         {
+          "name": "pc_renda_coobrigado",
+          "data_type": "numeric",
+          "ordinal": 24,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "pc_renda_responsavel",
+          "data_type": "numeric",
+          "ordinal": 23,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
           "name": "prestacoes_atraso",
           "data_type": "integer",
-          "ordinal": 30,
+          "ordinal": 32,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16441,14 +16455,14 @@
         {
           "name": "situacao_contrato",
           "data_type": "text",
-          "ordinal": 27,
+          "ordinal": 29,
           "description": "Situação do contrato.",
           "documentation_status": "curated"
         },
         {
           "name": "tipo_instrumento",
           "data_type": "text",
-          "ordinal": 26,
+          "ordinal": 28,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
@@ -16462,28 +16476,28 @@
         {
           "name": "valor_em_atraso",
           "data_type": "numeric",
-          "ordinal": 31,
+          "ordinal": 33,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "valor_imovel",
           "data_type": "numeric",
-          "ordinal": 37,
+          "ordinal": 39,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "valor_prestacao",
           "data_type": "numeric",
-          "ordinal": 39,
+          "ordinal": 41,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "valor_subsidio",
           "data_type": "numeric",
-          "ordinal": 38,
+          "ordinal": 40,
           "description": "Valor monetário do indicador no período de referência.",
           "documentation_status": "derived_convention"
         }
@@ -17009,7 +17023,7 @@
         {
           "name": "alerta_execucao",
           "data_type": "text",
-          "ordinal": 69,
+          "ordinal": 70,
           "description": "Concluída, Cancelada ou distratada, Paralisada (informada), Atrasada (informada), Sinal de paralisação: 3+ meses sem avanço, Ritmo abaixo do previsto (desvio físico de 10 p.p. ou mais), Não iniciada ou Em ritmo — nesta ordem de prioridade.",
           "documentation_status": "curated"
         },
@@ -17376,6 +17390,13 @@
           "ordinal": 18,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
+        },
+        {
+          "name": "renda_media_familias",
+          "data_type": "numeric",
+          "ordinal": 69,
+          "description": "Renda familiar comprovada média das famílias com contrato, em R$ (renda > 0).",
+          "documentation_status": "curated"
         },
         {
           "name": "situacao_obra",
@@ -26530,7 +26551,7 @@
         {
           "name": "ano_assinatura",
           "data_type": "integer",
-          "ordinal": 40,
+          "ordinal": 42,
           "description": "Ano de assinatura do contrato.",
           "documentation_status": "curated"
         },
@@ -26544,7 +26565,7 @@
         {
           "name": "arquivo_de_origem",
           "data_type": "text",
-          "ordinal": 39,
+          "ordinal": 41,
           "description": "Arquivo da staging de onde veio a linha.",
           "documentation_status": "curated"
         },
@@ -26558,7 +26579,7 @@
         {
           "name": "dias_atraso",
           "data_type": "integer",
-          "ordinal": 26,
+          "ordinal": 28,
           "description": "Dias de atraso da prestação mais antiga em aberto.",
           "documentation_status": "curated"
         },
@@ -26572,7 +26593,7 @@
         {
           "name": "dt_retrato",
           "data_type": "date",
-          "ordinal": 38,
+          "ordinal": 40,
           "description": "Data de referência da remessa.",
           "documentation_status": "curated"
         },
@@ -26586,14 +26607,14 @@
         {
           "name": "faixa_etaria",
           "data_type": "text",
-          "ordinal": 42,
+          "ordinal": 44,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "faixa_renda",
           "data_type": "text",
-          "ordinal": 41,
+          "ordinal": 43,
           "description": "Faixa da renda familiar comprovada, em valores nominais.",
           "documentation_status": "curated"
         },
@@ -26607,14 +26628,14 @@
         {
           "name": "ic_acao_judicial",
           "data_type": "boolean",
-          "ordinal": 31,
+          "ordinal": 33,
           "description": "Contrato com ação judicial (só Novo MCMV).",
           "documentation_status": "curated"
         },
         {
           "name": "ic_ativo",
           "data_type": "boolean",
-          "ordinal": 25,
+          "ordinal": 27,
           "description": "Contrato ativo, isto é, ainda com prestação a pagar.",
           "documentation_status": "curated"
         },
@@ -26642,14 +26663,14 @@
         {
           "name": "ic_inadimplente",
           "data_type": "boolean",
-          "ordinal": 29,
+          "ordinal": 31,
           "description": "Contrato ativo com prestação vencida há mais de 90 dias. No Novo MCMV vem do IC_CONTRATO_INADIMP; no legado é calculado com a mesma regra.",
           "documentation_status": "curated"
         },
         {
           "name": "ic_indicacao_direta",
           "data_type": "boolean",
-          "ordinal": 22,
+          "ordinal": 24,
           "description": "Beneficiário indicado diretamente para o tipo de demanda do empreendimento (só Novo MCMV, a partir de 10/2026).",
           "documentation_status": "curated"
         },
@@ -26677,14 +26698,14 @@
         {
           "name": "ic_retomado",
           "data_type": "boolean",
-          "ordinal": 30,
+          "ordinal": 32,
           "description": "Imóvel retomado por desvio de finalidade (só Novo MCMV).",
           "documentation_status": "curated"
         },
         {
           "name": "ic_sem_registro",
           "data_type": "boolean",
-          "ordinal": 37,
+          "ordinal": 39,
           "description": "Contrato ainda sem registro em cartório.",
           "documentation_status": "curated"
         },
@@ -26705,7 +26726,7 @@
         {
           "name": "modalidade",
           "data_type": "text",
-          "ordinal": 21,
+          "ordinal": 23,
           "description": "No Novo MCMV, o tipo de demanda do empreendimento (cadastro PJ). No legado, o tipo de contrato informado pelo agente.",
           "documentation_status": "curated"
         },
@@ -26724,9 +26745,23 @@
           "documentation_status": "curated"
         },
         {
+          "name": "pc_renda_coobrigado",
+          "data_type": "numeric",
+          "ordinal": 22,
+          "description": "Participação do coobrigado na renda familiar, em % (só Novo MCMV).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "pc_renda_responsavel",
+          "data_type": "numeric",
+          "ordinal": 21,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
           "name": "prestacoes_atraso",
           "data_type": "integer",
-          "ordinal": 27,
+          "ordinal": 29,
           "description": "Prestações em atraso.",
           "documentation_status": "curated"
         },
@@ -26754,14 +26789,14 @@
         {
           "name": "situacao_contrato",
           "data_type": "text",
-          "ordinal": 24,
+          "ordinal": 26,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
         },
         {
           "name": "tipo_instrumento",
           "data_type": "text",
-          "ordinal": 23,
+          "ordinal": 25,
           "description": "Doação ou alienação fiduciária (só Novo MCMV).",
           "documentation_status": "curated"
         },
@@ -26775,28 +26810,28 @@
         {
           "name": "valor_em_atraso",
           "data_type": "numeric",
-          "ordinal": 28,
+          "ordinal": 30,
           "description": "Valor em atraso, em R$.",
           "documentation_status": "curated"
         },
         {
           "name": "valor_imovel",
           "data_type": "numeric",
-          "ordinal": 34,
+          "ordinal": 36,
           "description": "Valor do imóvel (Novo MCMV) ou garantia inicial (legado), em R$.",
           "documentation_status": "curated"
         },
         {
           "name": "valor_prestacao",
           "data_type": "numeric",
-          "ordinal": 36,
+          "ordinal": 38,
           "description": "Valor da prestação mensal, em R$.",
           "documentation_status": "curated"
         },
         {
           "name": "valor_subsidio",
           "data_type": "numeric",
-          "ordinal": 35,
+          "ordinal": 37,
           "description": "Subsídio FAR (Novo MCMV) ou subsídio na concessão (legado), em R$.",
           "documentation_status": "curated"
         }

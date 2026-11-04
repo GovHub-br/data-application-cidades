@@ -43,6 +43,8 @@ with
             case when trim(m.ic_benef_sit_rua) in ('S', '1') then true when trim(m.ic_benef_sit_rua) in ('N', '0') then false end as ic_situacao_rua,
             {{ parse_int("m.qt_memb_familia") }} as qt_membros_familia,
             {{ parse_numeric("m.vr_renda_comprovada") }} as renda_familiar,
+            {{ parse_numeric("m.pc_renda_benef_principal") }} as pc_renda_responsavel,
+            {{ parse_numeric("m.pc_renda_benef_coob") }} as pc_renda_coobrigado,
             coalesce(dem.rotulo, 'Não informada') as modalidade,
             case when trim(m.co_demanda_beneficiario) in ('S', '1') then true when trim(m.co_demanda_beneficiario) in ('N', '0') then false end as ic_indicacao_direta,
             coalesce(ti.rotulo, 'Não informado') as tipo_instrumento,
@@ -118,6 +120,8 @@ with
             null::boolean as ic_situacao_rua,
             null::int as qt_membros_familia,
             {{ parse_numeric("vr_renda_familiar_comprovada") }} as renda_familiar,
+            null::numeric as pc_renda_responsavel,
+            null::numeric as pc_renda_coobrigado,
             case trim(dsc_tipo_contrato)
                 when 'SUBSIDIO_MENSAL_NA_PRESTACAO' then 'Subsídio mensal na prestação'
                 when 'SUBSIDIO_INTEGRAL_NA_CONCESSAO' then 'Subsídio integral na concessão'

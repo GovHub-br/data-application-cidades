@@ -60,6 +60,10 @@ models:
         description: Pessoas na família (só Novo MCMV, a partir de 08/2026).
       - name: renda_familiar
         description: Renda familiar comprovada, em R$. Nula no BB.
+      - name: pc_renda_responsavel
+        description: Participação do titular na renda familiar, em % (só Novo MCMV).
+      - name: pc_renda_coobrigado
+        description: Participação do coobrigado na renda familiar, em % (só Novo MCMV).
       - name: modalidade
         description: >
           No Novo MCMV, o tipo de demanda do empreendimento (cadastro PJ). No legado, o

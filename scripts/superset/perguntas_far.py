@@ -170,6 +170,15 @@ CHARTS = [
            filtros=[NOVO, "qt_membros_familia IS NOT NULL"], eixo_titulo="Pessoas na família", y_titulo="Contratos"),
     barras("b_renda", "Contratos por faixa de renda familiar", CONTRATO, "faixa_renda", [CONTRATOS], grupo=["geracao"], percentual=True,
            filtros=["faixa_renda <> 'Não informada'"], eixo_titulo="Renda familiar comprovada"),
+    barras("b_renda_participacao", "Participação do titular e do coobrigado na renda (Novo MCMV)", CONTRATO, "faixa_renda",
+           [metrica("Titular", "AVG(pc_renda_responsavel) / 100"), metrica("Coobrigado", "AVG(pc_renda_coobrigado) / 100")],
+           filtros=[NOVO, "ic_coobrigado", "pc_renda_responsavel IS NOT NULL", "renda_familiar > 0"], formato=".0%", eixo_titulo="Renda familiar comprovada",
+           y_titulo="% da renda familiar"),
+    tabela_agregada("b_renda_empreendimento", "Renda média das famílias por empreendimento (APF)", CONTRATO, ["geracao", "apf", "municipio_uf"], [
+        CONTRATOS,
+        metrica("Renda média (R$)", "ROUND(AVG(renda_familiar), 2)"),
+        pct("% sem renda comprovada", "renda_familiar = 0", "renda_familiar IS NOT NULL"),
+    ], filtros=["renda_familiar IS NOT NULL", "apf <> '0'"], limite=500),
 
     # 2. Contratação e situação
     pizza("c_instrumento", "Doação ou alienação fiduciária (Novo MCMV)", CONTRATO, "tipo_instrumento", CONTRATOS, filtros=[NOVO]),
@@ -286,7 +295,8 @@ CHARTS = [
             coluna("Situação", "situacao_obra"), coluna("Contrapartidas (R$)", "vr_total_contrapartidas"),
             coluna("Terreno doado", "CASE WHEN ic_terreno_doado THEN 'Sim' ELSE 'Não' END"),
             coluna("Elevador", "CASE ic_previsao_elevador WHEN true THEN 'Sim' WHEN false THEN 'Não' ELSE 'Não informado' END"),
-            coluna("Qualificação do terreno", "qualificacao_terreno"), coluna("Famílias com contrato", "qt_contratos_familias")],
+            coluna("Qualificação do terreno", "qualificacao_terreno"), coluna("Famílias com contrato", "qt_contratos_familias"),
+            coluna("Renda média das famílias (R$)", "renda_media_familias")],
            [["valor_contratado", False]]),
 
     # O que falta
@@ -354,6 +364,12 @@ Composição da família e PCD chegam a partir da remessa de 08/2026. O legado n
 Distribuição dos contratos por faixa de renda familiar comprovada (valores nominais da época da assinatura).
 
 *Sem renda comprovada* é renda zero declarada, comum em famílias atendidas por transferência de renda. O BB não informa renda.""",
+    "b_renda_participacao": """### Como ler
+Nos contratos do Novo MCMV **com coobrigado**, quanto da renda familiar comprovada vem do titular e quanto do coobrigado, por faixa de renda. Sem coobrigado, o titular responde por 100%.
+
+⚠️ Dois terços dos contratos com coobrigado têm renda comprovada zero, mas trazem percentuais de participação. Eles ficam de fora.
+
+A tabela abaixo dá a renda média das famílias por empreendimento. No legado, o empreendimento aparece só pelo código da APF.""",
     "c_instrumento": """### Como ler
 No Novo MCMV, cada contrato é **doação** (sem prestação) ou **alienação fiduciária** (com prestação subsidiada). O gráfico abaixo mostra as assinaturas mês a mês.
 
@@ -437,8 +453,8 @@ ABAS = [
         ("header", "3. Como são as famílias do Novo MCMV? PCD, tamanho e idosos"),
         ("charts", ["b_kpi_pcd", "b_kpi_familia_pcd", "b_kpi_membros", "b_kpi_familia_idoso"]),
         ("pair", "b_familia"),
-        ("header", "4. Qual a renda das famílias?"),
-        ("pair", "b_renda"),
+        ("header", "4. Qual a renda das famílias, a participação do titular e do coobrigado e a renda por empreendimento?"),
+        ("pair", "b_renda"), ("pair", "b_renda_participacao"), ("chart", "b_renda_empreendimento", 70),
     ]),
     ("2. Contratação e situação", [
         ("header", "5. Quantos contratos são doação e quantos alienação fiduciária? Quantos foram assinados por mês?"),
@@ -520,6 +536,8 @@ def query_context(definicao: dict, dataset_id: int, params: dict) -> str:
     else:
         consulta["columns"] = list(fd.get("groupby", []))
         consulta["metrics"] = fd.get("metrics") or [fd["metric"]]
+        if fd.get("timeseries_limit_metric"):
+            consulta["orderby"] = [[fd["timeseries_limit_metric"], not fd.get("order_desc", True)]]
     return json.dumps({"datasource": {"id": dataset_id, "type": "table"}, "force": False,
                        "queries": [consulta], "form_data": params,
                        "result_format": "json", "result_type": "full"})
