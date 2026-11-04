@@ -144,7 +144,7 @@ CHARTS = [
     # 1. Beneficiário
     kpi("b_kpi_mulher", "Titular mulher", CONTRATO, pct("% titular mulher", "sexo_responsavel = 'Feminino'", "sexo_responsavel <> 'Não informado'"), "dos contratos com sexo informado", formato=".1%"),
     kpi("b_kpi_coobrigado", "Com coobrigado", CONTRATO, pct("% com coobrigado", "ic_coobrigado", "ic_coobrigado IS NOT NULL"), "dos contratos com a informação", formato=".1%"),
-    kpi("b_kpi_idoso", "Titular idoso (Novo MCMV)", CONTRATO, pct("% titular idoso", "ic_responsavel_idoso", "ic_responsavel_idoso IS NOT NULL"), "dos contratos do Novo MCMV", formato=".1%", filtros=[NOVO]),
+    kpi("b_kpi_idoso", "Titular idoso", CONTRATO, pct("% titular idoso", "ic_responsavel_idoso", "ic_responsavel_idoso IS NOT NULL"), "Novo MCMV e legado CAIXA", formato=".1%"),
     kpi("b_kpi_renda", "Renda familiar média", CONTRATO, metrica("Renda média", "AVG(NULLIF(renda_familiar, 0))"), "contratos com renda comprovada > 0", formato="$,.0f"),
     barras("b_ano", "Contratos de famílias por ano de assinatura", CONTRATO, "ano_assinatura", [CONTRATOS], grupo=["geracao"], eixo_titulo="Ano de assinatura", y_titulo="Contratos"),
     barras("b_uf", "Contratos de famílias por UF", CONTRATO, "uf", [CONTRATOS], grupo=["geracao"], ordenar_por_valor=True, eixo_titulo="UF", y_titulo="Contratos"),
@@ -159,9 +159,15 @@ CHARTS = [
     barras("b_coobrigado", "Contratos com e sem coobrigado", CONTRATO, "geracao", [CONTRATOS],
            grupo=[coluna("Coobrigado", "CASE WHEN ic_coobrigado THEN 'Com coobrigado' ELSE 'Sem coobrigado' END")],
            percentual=True, filtros=["ic_coobrigado IS NOT NULL"], eixo_titulo="Geração"),
-    barras("b_idoso", "Titular idoso no Novo MCMV", CONTRATO, "uf", [CONTRATOS],
-           grupo=[coluna("Titular", "CASE WHEN ic_responsavel_idoso THEN 'Idoso' ELSE 'Não idoso' END")],
-           filtros=[NOVO], ordenar_por_valor=True, eixo_titulo="UF", y_titulo="Contratos"),
+    barras("b_faixa_etaria", "Faixa etária do titular na assinatura", CONTRATO, "geracao", [CONTRATOS], grupo=["faixa_etaria"],
+           percentual=True, filtros=["faixa_etaria <> 'Não informada'"], eixo_titulo="Geração"),
+    kpi("b_kpi_pcd", "Titular PCD (Novo MCMV)", CONTRATO, pct("% titular PCD", "ic_responsavel_pcd", "ic_responsavel_pcd IS NOT NULL"), "dos contratos com a informação", formato=".1%", filtros=[NOVO]),
+    kpi("b_kpi_familia_pcd", "Família com PCD (Novo MCMV)", CONTRATO, pct("% família com PCD", "ic_familia_com_pcd", "ic_familia_com_pcd IS NOT NULL"), "dos contratos com a informação", formato=".1%", filtros=[NOVO]),
+    kpi("b_kpi_membros", "Pessoas por família (Novo MCMV)", CONTRATO, metrica("Média", "AVG(qt_membros_familia)"), "média dos contratos", formato=",.1f", filtros=[NOVO]),
+    kpi("b_kpi_familia_idoso", "Família com idoso (Novo MCMV)", CONTRATO, pct("% família com idoso", "ic_familia_com_idoso", "ic_familia_com_idoso IS NOT NULL"), "dos contratos com a informação", formato=".1%", filtros=[NOVO]),
+    barras("b_familia", "Contratos do Novo MCMV por tamanho da família", CONTRATO, "qt_membros_familia", [CONTRATOS],
+           grupo=[coluna("PCD na família", "CASE WHEN ic_familia_com_pcd THEN 'Com PCD' ELSE 'Sem PCD' END")],
+           filtros=[NOVO, "qt_membros_familia IS NOT NULL"], eixo_titulo="Pessoas na família", y_titulo="Contratos"),
     barras("b_renda", "Contratos por faixa de renda familiar", CONTRATO, "faixa_renda", [CONTRATOS], grupo=["geracao"], percentual=True,
            filtros=["faixa_renda <> 'Não informada'"], eixo_titulo="Renda familiar comprovada"),
 
@@ -214,6 +220,11 @@ CHARTS = [
             coluna("Demanda no enquadramento", "demanda_enquadramento"), coluna("Demanda na contratação", "demanda_contratacao"),
             coluna("Demanda no monitoramento", "tipo_demanda"), coluna("UH", "qt_uh"), coluna("Situação da obra", "situacao_obra")],
            [["apf", True]], filtros=["ic_demanda_mudou"]),
+    tabela_agregada("n_indicacao", "Famílias indicadas diretamente para a demanda (Novo MCMV)", CONTRATO, ["modalidade"], [
+        CONTRATOS,
+        metrica("Indicadas diretamente", "SUM(CASE WHEN ic_indicacao_direta THEN 1 ELSE 0 END)"),
+        pct("% indicadas diretamente", "ic_indicacao_direta", "ic_indicacao_direta IS NOT NULL"),
+    ], filtros=[NOVO]),
     tabela_agregada("n_entorno", "Entorno declarado na proposta (% dos empreendimentos)", EMPREENDIMENTO, ["tipo_demanda"], [
         metrica("Empreendimentos", "COUNT(*) FILTER (WHERE ic_entorno_agua IS NOT NULL)"),
         pct("Água", "ic_entorno_agua", "ic_entorno_agua IS NOT NULL"),
@@ -308,7 +319,7 @@ A última aba, **O que falta**, lista todas as perguntas da oficina e a situaç�
 - **Parcial**: respondem em parte, com a limitação descrita.
 - **Lacuna de fonte**: a informação não chega ao banco; a coluna *Fonte necessária* diz o que pedir.
 
-Dados pessoais (CPF, NIS, nome, endereço, data de nascimento) são mascarados antes de chegar aqui; o painel só mostra contagens e taxas."""
+Dados pessoais (CPF, NIS, nome e endereço) são mascarados antes de chegar aqui; o painel só mostra contagens e taxas."""
 
 COMO = {
     "b_ano": """### Como ler
@@ -331,10 +342,14 @@ Proporção de titulares por sexo em cada geração. A grande maioria dos contra
 Estado civil do titular na assinatura. Abaixo, a proporção de contratos com **coobrigado** (segundo responsável pelo contrato).
 
 O BB não informa estado civil nem coobrigado.""",
-    "b_idoso": """### Como ler
-Titulares idosos no Novo MCMV, por UF.
+    "b_faixa_etaria": """### Como ler
+Idade do titular **na assinatura** do contrato, em cada geração (100% = contratos com idade informada).
 
-⚠️ **Faixa etária não está disponível**: a data de nascimento é mascarada antes de chegar ao banco. O indicador de idoso vem pronto da remessa do Novo MCMV. **PCD, situação de rua, tamanho da família e família com idoso** existem no layout, mas chegam vazios.""",
+⚠️ O BB não informa data de nascimento. No legado CAIXA, datas impossíveis (idade fora de 18 a 110 anos) ficam de fora.""",
+    "b_familia": """### Como ler
+Contratos do Novo MCMV pelo número de pessoas na família, separando as famílias com pessoa com deficiência (PCD).
+
+Composição da família e PCD chegam a partir da remessa de 08/2026. O legado não informa. **Situação de rua** existe no layout, mas chega vazia.""",
     "b_renda": """### Como ler
 Distribuição dos contratos por faixa de renda familiar comprovada (valores nominais da época da assinatura).
 
@@ -366,11 +381,11 @@ Todos os empreendimentos contratados estão na linha **aquisição/produção pa
     "n_origem": """### Como ler
 A **originação** separa empreendimento **novo** de **requalificado**; as cores mostram o tipo de demanda declarado (cadastro habitacional, obra pública, risco, calamidade, agravamento).
 
-⚠️ A remessa não informa **quem indicou** a demanda (ente, movimento social, defesa civil). 84 empreendimentos não têm proposta no consolidado e aparecem como *Não informada*.""",
+⚠️ A remessa não informa **quem indicou** a demanda (ente, movimento social, defesa civil).""",
     "n_mudou": """### Como ler
 Empreendimentos em que a demanda declarada **mudou** entre o enquadramento da proposta, a contratação e o monitoramento — por exemplo, enquadrado como **calamidade** e contratado como **cadastro habitacional**.
 
-Mostra a mudança de destino declarada; não acompanha quem de fato recebeu a unidade.""",
+Mostra a mudança de destino declarada. A tabela abaixo mostra, no Novo MCMV, quantas famílias foram **indicadas diretamente** para o tipo de demanda do empreendimento (informado a partir de 10/2026).""",
     "n_entorno": """### Como ler
 Percentual dos empreendimentos cujo **entorno** tem cada serviço, segundo o que o proponente **declarou** na proposta. Não é medição independente.
 
@@ -402,7 +417,7 @@ A tabela abaixo é a ficha de cada empreendimento: portaria, demanda, tipologia,
 
 ⚠️ A previsão de elevador só está preenchida em parte dos empreendimentos; não há estimativa de custo de condomínio.""",
     "cobertura_resumo": """### Como ler
-Todas as perguntas da oficina, com a situação do dado hoje. A coluna **Fonte necessária** diz o que pedir para fechar as lacunas: raça/cor, faixa etária, PCD e situação de rua preenchidos, déficit habitacional municipal, Censo 2022, estoque de imóveis retomados e execução das contrapartidas.""",
+Todas as perguntas da oficina, com a situação do dado hoje. A coluna **Fonte necessária** diz o que pedir para fechar as lacunas: raça/cor e situação de rua preenchidos, déficit habitacional municipal, Censo 2022, estoque de imóveis retomados e execução das contrapartidas.""",
 }
 
 
@@ -418,50 +433,53 @@ ABAS = [
         ("header", "1. Quantas famílias foram atendidas, por ano, modalidade, UF e município?"),
         ("pair", "b_ano"), ("pair", "b_uf"), ("pair", "b_modalidade"), ("chart", "b_municipios", 70),
         ("header", "2. Quem são os titulares? Sexo, estado civil, coobrigado e idade"),
-        ("pair", "b_sexo"), ("pair", "b_estado_civil"), ("chart", "b_coobrigado", 45), ("pair", "b_idoso"),
-        ("header", "3. Qual a renda das famílias?"),
+        ("pair", "b_sexo"), ("pair", "b_estado_civil"), ("chart", "b_coobrigado", 45), ("pair", "b_faixa_etaria"),
+        ("header", "3. Como são as famílias do Novo MCMV? PCD, tamanho e idosos"),
+        ("charts", ["b_kpi_pcd", "b_kpi_familia_pcd", "b_kpi_membros", "b_kpi_familia_idoso"]),
+        ("pair", "b_familia"),
+        ("header", "4. Qual a renda das famílias?"),
         ("pair", "b_renda"),
     ]),
     ("2. Contratação e situação", [
-        ("header", "4. Quantos contratos são doação e quantos alienação fiduciária? Quantos foram assinados por mês?"),
+        ("header", "5. Quantos contratos são doação e quantos alienação fiduciária? Quantos foram assinados por mês?"),
         ("pair", "c_instrumento"), ("chart", "c_mes", 50),
-        ("header", "5. Quantas unidades estão ativas, liquidadas, distratadas, canceladas ou liquidadas por MIP/DFI?"),
+        ("header", "6. Quantas unidades estão ativas, liquidadas, distratadas, canceladas ou liquidadas por MIP/DFI?"),
         ("pair", "c_situacao"), ("chart", "c_taxas", 40),
     ]),
     ("3. Inadimplência e território", [
         ("charts", ["i_kpi_ativos", "i_kpi_inadimplentes", "i_kpi_taxa", "i_kpi_valor"]),
-        ("header", "6. Quantos contratos estão inadimplentes e qual a taxa?"),
+        ("header", "7. Quantos contratos estão inadimplentes e qual a taxa?"),
         ("pair", "i_agente"),
-        ("header", "7. Famílias de menor renda são mais inadimplentes?"),
+        ("header", "8. Famílias de menor renda são mais inadimplentes?"),
         ("pair", "i_renda"),
-        ("header", "8. Quais municípios concentram contratos e têm maior inadimplência? Onde há retomadas?"),
+        ("header", "9. Quais municípios concentram contratos e têm maior inadimplência? Onde há retomadas?"),
         ("pair", "i_uf"), ("chart", "i_municipios", 70),
     ]),
     ("4. Natureza e destino", [
         ("charts", ["n_kpi_uh", "n_kpi_terreno", "n_kpi_valor_uh", "n_kpi_mudou"]),
-        ("header", "9. Qual a natureza do empreendimento e qual o destino do atendimento?"),
+        ("header", "10. Qual a natureza do empreendimento e qual o destino do atendimento?"),
         ("pair", "n_tipologia"), ("chart", "n_demanda", 50),
-        ("header", "10. Qual a origem da contratação e de onde vem a indicação da demanda?"),
+        ("header", "11. Qual a origem da contratação e de onde vem a indicação da demanda?"),
         ("pair", "n_origem"),
-        ("header", "11. Obras destinadas a calamidade mudam de público depois?"),
-        ("pair", "n_mudou"),
-        ("header", "12. Como é o entorno dos empreendimentos?"),
+        ("header", "12. Obras destinadas a calamidade mudam de público depois?"),
+        ("pair", "n_mudou"), ("chart", "n_indicacao", 35),
+        ("header", "13. Como é o entorno dos empreendimentos?"),
         ("pair", "n_entorno"),
     ]),
     ("5. Execução da obra", [
         ("charts", ["e_kpi_ritmo", "e_kpi_atrasada", "e_kpi_sinal", "e_kpi_paralisada"]),
-        ("header", "13. Qual o andamento da execução da obra, com indicativo de atraso e paralisação?"),
+        ("header", "14. Qual o andamento da execução da obra, com indicativo de atraso e paralisação?"),
         ("pair", "e_alerta_uf"),
-        ("header", "14. Como saber da paralisação antes de a obra parar?"),
+        ("header", "15. Como saber da paralisação antes de a obra parar?"),
         ("pair", "e_mensal"), ("chart", "e_lista", 70),
     ]),
     ("6. Contrapartidas", [
         ("charts", ["p_kpi_total", "p_kpi_municipio", "p_kpi_estado", "p_kpi_com"]),
-        ("header", "15. Como está a pactuação das contrapartidas e compromissos do ente público?"),
+        ("header", "16. Como está a pactuação das contrapartidas e compromissos do ente público?"),
         ("pair", "p_ente_tipo"), ("pair", "p_uf"),
     ]),
     ("7. Panorama das contratações", [
-        ("header", "16. Panorama geral: UF, município, situação, valores, portaria, demanda, execução e contrapartidas"),
+        ("header", "17. Panorama geral: UF, município, situação, valores, portaria, demanda, execução e contrapartidas"),
         ("pair", "g_uf"), ("chart", "g_ano", 45), ("chart", "g_ficha", 80),
     ]),
     ("O que falta", [
