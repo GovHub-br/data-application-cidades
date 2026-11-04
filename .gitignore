@@ -53,6 +53,11 @@ logs/
 # Jupyter
 **/*.ipynb_checkpoints/
 **/*.ipynb
+# Exceção: notebooks executados da frente de ciência de dados (fluxo da política, curva S)
+!data-science/fluxo-politica-mcmv/**/*.ipynb
+# Caches do banco (parquet) e logs de execução dessa pasta, regeráveis
+data-science/fluxo-politica-mcmv/data/
+data-science/fluxo-politica-mcmv/output/*.log
 
 # System files
 .DS_Store

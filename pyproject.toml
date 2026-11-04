@@ -106,7 +106,10 @@ exclude = [
     "dist",
     "*.pyi",
     ".ipynb_checkpoints",
-    "*.ipynb"
+    "*.ipynb",
+    # geradores de notebook da frente de ciência de dados: células inteiras em strings,
+    # linhas longas por desenho; não é código de pipeline
+    "data-science/fluxo-politica-mcmv",
 ]
 
 [tool.ruff.lint]
