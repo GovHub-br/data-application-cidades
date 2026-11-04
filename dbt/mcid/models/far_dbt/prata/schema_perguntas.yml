@@ -43,23 +43,31 @@ models:
       - name: ic_mulher_responsavel
         description: Mulher titular do contrato (só Novo MCMV).
       - name: ic_responsavel_idoso
-        description: Titular idoso (só Novo MCMV).
+        description: >
+          Titular idoso. No Novo MCMV vem do agente; no legado, idade de 60 anos ou mais
+          na assinatura. Nulo no BB, que não informa nascimento.
+      - name: idade_responsavel
+        description: Idade do titular na assinatura, em anos. Nula no BB.
       - name: ic_familia_com_idoso
-        description: Há idoso na família (só Novo MCMV; hoje vazio na origem).
+        description: Há idoso na família (só Novo MCMV, a partir de 08/2026).
       - name: ic_responsavel_pcd
-        description: Titular PCD (só Novo MCMV; hoje vazio na origem).
+        description: Titular PCD (só Novo MCMV, a partir de 08/2026).
       - name: ic_familia_com_pcd
-        description: Há PCD na família (só Novo MCMV; hoje vazio na origem).
+        description: Há PCD na família (só Novo MCMV, a partir de 08/2026).
       - name: ic_situacao_rua
         description: Titular vindo de situação de rua (só Novo MCMV; hoje vazio na origem).
       - name: qt_membros_familia
-        description: Pessoas na família (só Novo MCMV; hoje vazio na origem).
+        description: Pessoas na família (só Novo MCMV, a partir de 08/2026).
       - name: renda_familiar
         description: Renda familiar comprovada, em R$. Nula no BB.
       - name: modalidade
         description: >
           No Novo MCMV, o tipo de demanda do empreendimento (cadastro PJ). No legado, o
           tipo de contrato informado pelo agente.
+      - name: ic_indicacao_direta
+        description: >
+          Beneficiário indicado diretamente para o tipo de demanda do empreendimento (só
+          Novo MCMV, a partir de 10/2026).
       - name: tipo_instrumento
         description: Doação ou alienação fiduciária (só Novo MCMV).
       - name: situacao_contrato
@@ -100,6 +108,18 @@ models:
         description: Ano de assinatura do contrato.
       - name: faixa_renda
         description: Faixa da renda familiar comprovada, em valores nominais.
+      - name: faixa_etaria
+        description: Faixa de idade do titular na assinatura.
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Até 29 anos
+                  - 30 a 39 anos
+                  - 40 a 49 anos
+                  - 50 a 59 anos
+                  - 60 anos ou mais
+                  - Não informada
 
   - name: prata_far_empreendimento_natureza
     description: >

@@ -5,7 +5,7 @@ sources:
     description: >
       Parquets da staging com os contratos das famílias beneficiárias do FAR.
       Chegam pelo SFTP/GEFUS e passam pelo mascaramento antes da staging:
-      CPF e NIS viram HMAC, nome e data de nascimento são redigidos.
+      CPF e NIS viram HMAC, nome e endereço são redigidos.
     schema: staging
     meta:
       bucket: data-lake-mcid

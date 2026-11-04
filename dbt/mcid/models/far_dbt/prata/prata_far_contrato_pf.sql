@@ -17,7 +17,8 @@ with
         select
             'Novo MCMV' as geracao,
             'CAIXA' as agente_financeiro,
-            trim(m.nu_apf) as apf,
+            -- desde 10/2026 o APF vem com 9 dígitos; o MONIT usa 8
+            {{ var('schema_udfs') }}.normalize_apf(m.nu_apf) as apf,
             trim(m.nu_contrato) as nu_contrato,
             {{ var('schema_udfs') }}.parse_date_br(m.dt_assinatura_contrato) as dt_assinatura,
             nullif(trim(m.sg_uf), '') as uf,
@@ -26,8 +27,16 @@ with
             case trim(m.no_genero) when 'F' then 'Feminino' when 'M' then 'Masculino' else 'Não informado' end as sexo_responsavel,
             coalesce(ec.rotulo, 'Não informado') as estado_civil,
             nullif(trim(m.nu_cpf_benef_coob), '') is not null as ic_coobrigado,
-            case trim(m.mulher_titular) when 'S' then true when 'N' then false end as ic_mulher_responsavel,
+            -- renomeado para IC_MULHER_TITULAR em 10/2026; a bronze guarda os dois nomes
+            case trim(coalesce(m.ic_mulher_titular, m.mulher_titular)) when 'S' then true when 'N' then false end as ic_mulher_responsavel,
             case when trim(m.ic_benef_idoso) in ('S', '1') then true when trim(m.ic_benef_idoso) in ('N', '0') then false end as ic_responsavel_idoso,
+            date_part(
+                'year',
+                age(
+                    {{ var('schema_udfs') }}.parse_date_br(m.dt_assinatura_contrato),
+                    {{ var('schema_udfs') }}.parse_date_br(m.dt_nascimento)
+                )
+            )::int as idade_responsavel,
             case when trim(m.ic_memb_fam_idoso) in ('S', '1') then true when trim(m.ic_memb_fam_idoso) in ('N', '0') then false end as ic_familia_com_idoso,
             case when trim(m.ic_benef_pcd) in ('S', '1') then true when trim(m.ic_benef_pcd) in ('N', '0') then false end as ic_responsavel_pcd,
             case when trim(m.ic_memb_fam_pcd) in ('S', '1') then true when trim(m.ic_memb_fam_pcd) in ('N', '0') then false end as ic_familia_com_pcd,
@@ -35,6 +44,7 @@ with
             {{ parse_int("m.qt_memb_familia") }} as qt_membros_familia,
             {{ parse_numeric("m.vr_renda_comprovada") }} as renda_familiar,
             coalesce(dem.rotulo, 'Não informada') as modalidade,
+            case when trim(m.co_demanda_beneficiario) in ('S', '1') then true when trim(m.co_demanda_beneficiario) in ('N', '0') then false end as ic_indicacao_direta,
             coalesce(ti.rotulo, 'Não informado') as tipo_instrumento,
             coalesce(sc.rotulo, 'Não informada') as situacao_contrato,
             lpad(trim(m.co_situacao_contrato), 3, '0') = '001' as ic_ativo,
@@ -56,7 +66,7 @@ with
         left join dominio ec on ec.campo = 'estado_civil' and ec.codigo = trim(m.no_estado_civil)
         left join dominio ti on ti.campo = 'tipo_instrumento' and ti.codigo = lpad(trim(m.co_tipo_instrum_contratual), 3, '0')
         left join dominio sc on sc.campo = 'situacao_contrato' and sc.codigo = lpad(trim(m.co_situacao_contrato), 3, '0')
-        left join demanda_empreendimento de on de.apf = trim(m.nu_apf)
+        left join demanda_empreendimento de on de.apf = {{ var('schema_udfs') }}.normalize_apf(m.nu_apf)
         left join dominio dem on dem.campo = 'tipo_demanda' and dem.codigo = de.co_tipo_demanda
     ),
 
@@ -64,7 +74,7 @@ with
     legado_bruto as (
         select
             'CAIXA' as agente_financeiro, nu_apf, nu_contrato, dt_assinatura, sg_uf_imovel,
-            co_municipio_ibge_completo as cod_ibge, no_municipio_imovel, co_sexo, de_estado_civil,
+            co_municipio_ibge_completo as cod_ibge, no_municipio_imovel, co_sexo, dt_nascimento, de_estado_civil,
             qt_coobrigados, vr_renda_familiar_comprovada, dsc_tipo_contrato, dsc_situacao_ctr,
             qt_dias_atraso, qt_prestacoes_atraso, vr_encargo_total_atraso, vr_garantia_inicial,
             vr_subsidio_na_concesssao, vr_prestacao, sem_registro, dt_movimento, filename
@@ -72,7 +82,7 @@ with
         union all
         select
             'Banco do Brasil', nu_apf, nu_contrato, dt_assinatura, sg_uf_imovel,
-            cod_municipio_ibge, no_municipio_imovel, co_sexo, de_estado_civil,
+            cod_municipio_ibge, no_municipio_imovel, co_sexo, dt_nascimento, de_estado_civil,
             qt_coobrigados, vr_renda_familiar_comprovada, dsc_tipo_contrato, dsc_situacao_ctr,
             qt_dias_atraso, null, vr_encargo_total_atraso, vr_garantia_inicial,
             vr_subsidio_na_concesssao, vr_parcela_mensal_beneficiario, sem_registro, dt_movimento, filename
@@ -100,7 +110,8 @@ with
             end as estado_civil,
             case when nullif(trim(qt_coobrigados), '') is null then null else {{ parse_int("qt_coobrigados") }} > 0 end as ic_coobrigado,
             null::boolean as ic_mulher_responsavel,
-            null::boolean as ic_responsavel_idoso,
+            case when i.idade between 18 and 110 then i.idade >= 60 end as ic_responsavel_idoso,
+            i.idade as idade_responsavel,
             null::boolean as ic_familia_com_idoso,
             null::boolean as ic_responsavel_pcd,
             null::boolean as ic_familia_com_pcd,
@@ -117,6 +128,7 @@ with
                 when 'CALAMIDADES' then 'Calamidade'
                 else 'Não informada'
             end as modalidade,
+            null::boolean as ic_indicacao_direta,
             'Não informado' as tipo_instrumento,
             case trim(dsc_situacao_ctr)
                 when 'ATIVO' then 'Ativo'
@@ -142,7 +154,17 @@ with
             case trim(sem_registro) when 'SIM' then true when 'NAO' then false end as ic_sem_registro,
             {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_retrato,
             filename as arquivo_de_origem
-        from legado_bruto
+        from legado_bruto,
+            lateral (
+                select
+                    date_part(
+                        'year',
+                        age(
+                            {{ var('schema_udfs') }}.parse_date_br(dt_assinatura),
+                            {{ var('schema_udfs') }}.parse_date_br(dt_nascimento)
+                        )
+                    )::int as idade
+            ) i
     ),
 
     unido as (
@@ -161,5 +183,14 @@ select
         when renda_familiar <= 2000 then 'R$ 1.000 a R$ 2.000'
         when renda_familiar <= 2850 then 'R$ 2.000 a R$ 2.850'
         else 'Acima de R$ 2.850'
-    end as faixa_renda
+    end as faixa_renda,
+    -- idade fora de 18 a 110 é erro de cadastro
+    case
+        when idade_responsavel is null or idade_responsavel not between 18 and 110 then 'Não informada'
+        when idade_responsavel < 30 then 'Até 29 anos'
+        when idade_responsavel < 40 then '30 a 39 anos'
+        when idade_responsavel < 50 then '40 a 49 anos'
+        when idade_responsavel < 60 then '50 a 59 anos'
+        else '60 anos ou mais'
+    end as faixa_etaria
 from unido

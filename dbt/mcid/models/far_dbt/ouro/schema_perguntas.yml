@@ -29,6 +29,8 @@ models:
           - not_null
       - name: municipio_uf
         description: Município/UF do imóvel, para filtro e ranking.
+      - name: faixa_etaria
+        description: Faixa de idade do titular na assinatura. A idade exata fica na prata.
       - name: situacao_contrato
         description: Situação do contrato.
         tests:
