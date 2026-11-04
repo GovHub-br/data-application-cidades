@@ -16,7 +16,7 @@ from schedule_loader import get_dynamic_schedule
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
     },
-    params={"reingest_deleted": False},
+    params={"reingest_deleted": False, "arquivos": []},
     tags=["sftp", "minio", "mcid", "cidades", "data-lake", "ingest"],
 )
 def sftp_ingest_dag() -> None:
@@ -33,15 +33,20 @@ def sftp_ingest_dag() -> None:
 
         Por padrão não reingere arquivos já ingeridos (mesmo deletados). Para reingerir os
         que foram removidos do MinIO, dispare a DAG com config {"reingest_deleted": true}.
+        Para limitar a arquivos específicos, inclua {"arquivos": ["NOME.csv", ...]}, com
+        o nome exato no SFTP: sem isso, a reingestão traz de volta TUDO o que foi apagado.
         """
         from sftp_para_minio import run as run_ingest
 
         params = get_current_context()["params"]
         reingest_deleted = bool(params.get("reingest_deleted", False))
-        sucesso, erro = run_ingest(reingest_deleted=reingest_deleted)
+        arquivos = list(params.get("arquivos") or [])
+        sucesso, erro = run_ingest(reingest_deleted=reingest_deleted, arquivos=arquivos)
         logging.info(
-            "[sftp_ingest_dag] SFTP->raw (reingest_deleted=%s): %d ok, %d erro(s)",
+            "[sftp_ingest_dag] SFTP->raw (reingest_deleted=%s, arquivos=%d): "
+            "%d ok, %d erro(s)",
             reingest_deleted,
+            len(arquivos),
             sucesso,
             erro,
         )

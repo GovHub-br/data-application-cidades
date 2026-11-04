@@ -265,19 +265,25 @@ class ClienteMinio:
         pasta = tmpdir or tempfile.gettempdir()
         os.makedirs(pasta, exist_ok=True)
         identificador = hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
-        path = os.path.join(pasta, f"minio-download-{identificador}{suffix}.part")
+        final = os.path.join(pasta, f"minio-download-{identificador}{suffix}")
+        path = final + ".part"
         tamanho_remoto = int(
             self.s3.head_object(Bucket=self.bucket, Key=key)["ContentLength"]
         )
 
+        if os.path.exists(final):
+            os.unlink(final)
         if os.path.exists(path) and os.path.getsize(path) > tamanho_remoto:
             os.unlink(path)
+        open(path, "ab").close()  # objeto vazio também precisa do arquivo
 
         falhas = 0
         while True:
             inicio = os.path.getsize(path) if os.path.exists(path) else 0
             if inicio == tamanho_remoto:
-                return path
+                # o leitor decide o formato pela extensão: o openpyxl recusa `.part`
+                os.replace(path, final)
+                return final
             try:
                 resposta = self.s3.get_object(
                     Bucket=self.bucket, Key=key, Range=f"bytes={inicio}-"
