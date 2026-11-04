@@ -1,0 +1,1809 @@
+# Bronze do Trabalho Social: espelho em texto da staging do MinIO (bnz_shpt_*) e dos seeds
+# curados (bnz_seed_*). Descrição das colunas pelo dicionário comparativo-dados-base v.01.
+# Gerado a partir do layout declarado em cada .sql (lista `colunas`).
+version: 2
+models:
+
+- name: bronze_shpt_mcmv_rural_ts_caixa_bb_202607
+  description: 'Acompanhamento do Trabalho Social das operações do MCMV-Rural / PNHR geridas pela CAIXA, um contrato por linha. Cópia fiel, tudo texto. Staging: aba TS_AF_CAIXA_PNHR_RURAL_MM_AA da planilha MCMV_RURAL_TS_CAIXA_BB_AAAAMM. Dicionário: comparativo-dados-base v.01 (revisão da Portaria MDR 3.760/2022, reunião de 29/09/2026).'
+  
+  # -------------------------------------------------------------
+  # GOVERNANÇA, ETIQUETAS E CERTIFICAÇÃO (Nível da Tabela)
+  # -------------------------------------------------------------
+  tags:
+    - Status.NaoConsumivel
+    - Orgao.MCID
+    - Dominio.TrabalhoSocial
+    - Programa.MCMVRural
+    - Tier.Tier3
+    - Certification.Bronze
+
+  owners:
+    - name: "Time de Engenharia de Dados do MCID"
+      type: team
+
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      customProperties:
+        dataLayer: "Bronze"
+        tier: "Tier3"
+        certificationStatus: "Bronze"
+        ownerTeam: "Time de Engenharia de Dados do MCID"
+
+  # -------------------------------------------------------------
+  # COLUNAS, TIPOS E DOMÍNIOS / GLOSSÁRIOS
+  # -------------------------------------------------------------
+  columns:
+  - name: recurso
+    dataType: text
+    description: 'Identifica a origem/modalidade do recurso do programa habitacional rural. Valores possíveis: PNHR, RURAL.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+        - MCID.Atores.AgenteFinanceiro
+
+  - name: contrato
+    dataType: text
+    description: 'Código identificador único do empreendimento/operação rural: número do APF cadastrado no SIAPF com o Dígito Verificador (DV).'
+    tags:
+      - PrimaryKey.APF
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+
+  - name: municipio
+    dataType: text
+    description: 'Nome do município de localização da operação habitacional rural.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.EntePublico
+
+  - name: uf
+    dataType: text
+    description: 'Sigla da Unidade da Federação (UF) de localização do empreendimento rural. Ex: RO, PR, RS, SP.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+
+  - name: nome_empreendimento
+    dataType: text
+    description: 'Nome oficial do projeto habitacional rural / grupo de beneficiários cadastrado na operação.'
+
+  - name: uh
+    dataType: text
+    description: 'Quantidade total de Unidades Habitacionais (UH) contratadas/concluídas da operação rural.'
+
+  - name: tipologia
+    dataType: text
+    description: 'Tipologia construtiva das habitações rurais. No PNHR é frequentemente preenchido com hífen (-) ou "Não se aplica ao PNHR".'
+
+  - name: fase_mcmv
+    dataType: text
+    description: 'Fase ou edição do Programa Minha Casa, Minha Vida / PNHR na qual o contrato se enquadra. Valores comuns: Legado I, Legado II, Fase III.'
+
+  - name: data_da_contratacao
+    dataType: text
+    description: 'Data formal de contratação da operação rural junto ao agente financeiro (formato YYYY-MM-DD).'
+
+  - name: vr_global_ts
+    dataType: text
+    description: 'Valor total global destinado à execução do Projeto de Trabalho Social na operação rural.'
+
+  - name: vr_desembolsado
+    dataType: text
+    description: 'Valor acumulado efetivamente pago/desembolsado para a execução do Trabalho Social rural.'
+
+  - name: vr_a_desembolsar_nao_concluidos
+    dataType: text
+    description: 'Valor total pendente de desembolso para a execução de Projeto de Trabalho Social em operações não concluídas.'
+
+  - name: vr_nao_desembolsado_concluidos
+    dataType: text
+    description: 'Saldo orçamentário não utilizado ("perdido") de Projetos de Trabalho Social que já foram concluídos.'
+
+  - name: execucao_ts
+    dataType: text
+    description: 'Percentual acumulado de execução física/operacional do Trabalho Social atingido no mês de movimento.'
+
+  - name: obra
+    dataType: text
+    description: 'Percentual acumulado de avanço físico das obras habitacionais rurais no mês de movimento.'
+
+  - name: portaria_adotada
+    dataType: text
+    description: 'Portaria ou normativa regulamentadora adotada para reger as diretrizes do Trabalho Social rural. Ex: 464-2018, 21-2014, 75-2025.'
+
+  - name: instrumento_de_planejamento
+    dataType: text
+    description: 'Tipo de documento formal de planejamento adotado para a intervenção social rural. Valor comum: PTS (Plano de Trabalho Social).'
+
+  - name: natureza_execucao
+    dataType: text
+    description: 'Modalidade de execução das ações do Projeto de Trabalho Social. Valores possíveis: INDIRETA, DIRETA, MISTA.'
+
+  - name: dt_entrega
+    dataType: text
+    description: 'Data de entrega das unidades habitacionais rurais concluídas aos beneficiários (formato YYYY-MM-DD).'
+
+  - name: situacao_ts
+    dataType: text
+    description: 'Status atual da execução do Trabalho Social na operação rural. Valores possíveis: CONCLUIDO, EM ANDAMENTO, PARALISADO, ATRASADO, NAO INICIADO.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+
+  - name: motivo_situacao_ts_atrasado_paralisado
+    dataType: text
+    description: 'Justificativa técnica quando o Trabalho Social rural está com status Atrasado ou Paralisado. Ex: EM TRATAMENTO - PLANO DE AÇÃO, REALIZADAS TRATATIVAS COM A EO SEM RETOMADA DO TS, PARALISAÇÃO DE OBRAS.'
+
+  - name: dt_ultimo_avt
+    dataType: text
+    description: 'Data do ateste do último relatório ordinário de Acompanhamento de Verificação Técnica (AVT) emitido pela CAIXA.'
+
+  - name: dt_avf
+    dataType: text
+    description: 'Data do ateste do relatório de Avaliação Final (AVF) emitido pela CAIXA, atestando a conclusão do Trabalho Social.'
+
+  - name: _source_file
+    dataType: text
+    description: 'Caminho e nome do arquivo de origem carregado pela pipeline de ingestão (metadado de engenharia).'
+
+  - name: _ingested_at
+    dataType: text
+    description: 'Data e hora em UTC de quando a linha foi inserida na camada Bronze (metadado de engenharia).'
+
+  - name: _source_hash
+    dataType: text
+    description: 'Hash único gerado a partir do conteúdo do registro para deduplicação e rastreabilidade (metadado de engenharia).'
+
+- name: bronze_shpt_mcmv_fds_ts_caixa_202607
+  description: 'Acompanhamento do Trabalho Social das operações do MCMV-FDS (Fundo de Desenvolvimento Social) geridas pela CAIXA, um contrato por linha. Cópia fiel, tudo texto. Staging: aba TS_AF_CAIXA_FDS_MM_AA da planilha MCMV_FDS_TS_CAIXA_AAAAMM. Dicionário: comparativo-dados-base v.01 (revisão da Portaria MDR 3.760/2022, reunião de 29/09/2026).'
+  
+  # -------------------------------------------------------------
+  # GOVERNANÇA, ETIQUETAS E CERTIFICAÇÃO (Nível da Tabela)
+  # -------------------------------------------------------------
+  tags:
+    - Status.NaoConsumivel
+    - Orgao.MCID
+    - Dominio.TrabalhoSocial
+    - Programa.MCMVFDS
+    - Tier.Tier3
+    - Certification.Bronze
+
+  owners:
+    - name: "Time de Engenharia de Dados do MCID"
+      type: team
+
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      customProperties:
+        dataLayer: "Bronze"
+        tier: "Tier3"
+        certificationStatus: "Bronze"
+        ownerTeam: "Time de Engenharia de Dados do MCID"
+
+  # -------------------------------------------------------------
+  # COLUNAS, TIPOS E DOMÍNIOS / GLOSSÁRIOS
+  # -------------------------------------------------------------
+  columns:
+  - name: recursos
+    dataType: text
+    description: 'Identifica a fonte/modalidade de recursos da operação habitacional. Valor padrão: FDS.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+        - MCID.Atores.AgenteFinanceiro
+
+  - name: contrato
+    dataType: text
+    description: 'Código identificador único do empreendimento/operação FDS: número do APF cadastrado no SIAPF com o Dígito Verificador (DV).'
+    tags:
+      - PrimaryKey.APF
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+
+  - name: municipio
+    dataType: text
+    description: 'Nome do município de localização do empreendimento FDS.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.EntePublico
+
+  - name: uf
+    dataType: text
+    description: 'Sigla da Unidade da Federação (UF) de localização do empreendimento. Ex: SP, PA, MS, RJ.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+
+  - name: nome_empreendimento
+    dataType: text
+    description: 'Nome oficial do empreendimento habitacional registrado na operação FDS.'
+
+  - name: uh
+    dataType: text
+    description: 'Quantidade total de Unidades Habitacionais (UH) contratadas/concluídas do empreendimento.'
+
+  - name: tipologia
+    dataType: text
+    description: 'Tipologia construtiva do empreendimento FDS. Valores comuns: CONDOMINIO, LOTEAMENTO, APARTAMENTOS, CASAS.'
+
+  - name: fase_mcmv
+    dataType: text
+    description: 'Fase ou edição do Programa MCMV na qual o contrato se enquadra. Valores comuns: Legado I, Legado II, Fase III.'
+
+  - name: data_da_contratacao
+    dataType: text
+    description: 'Data formal de contratação da operação FDS junto ao agente financeiro (formato YYYY-MM-DD).'
+
+  - name: vr_global_ts
+    dataType: text
+    description: 'Valor total global destinado à execução do Projeto de Trabalho Social no empreendimento FDS.'
+
+  - name: vr_desembolsado
+    dataType: text
+    description: 'Valor acumulado efetivamente pago/desembolsado para a execução das ações do Trabalho Social.'
+
+  - name: vr_a_desembolsar_nao_concluidos
+    dataType: text
+    description: 'Valor total pendente de desembolso para a execução de Projeto de Trabalho Social em obras não concluídas.'
+
+  - name: vr_nao_desembolsado_concluidos
+    dataType: text
+    description: 'Saldo orçamentário não utilizado ("perdido") de Projetos de Trabalho Social que já foram concluídos.'
+
+  - name: execucao_ts
+    dataType: text
+    description: 'Percentual acumulado de execução física/operacional do Trabalho Social atingido no mês de movimento.'
+
+  - name: obra
+    dataType: text
+    description: 'Percentual acumulado de avanço físico da obra de engenharia habitacional no mês de movimento.'
+
+  - name: portaria_adotada
+    dataType: text
+    description: 'Portaria ou normativa regulamentadora adotada para reger o Trabalho Social no FDS. Ex: 21-2014, 464-2018, 75-2025.'
+
+  - name: instrumento_de_planejamento
+    dataType: text
+    description: 'Tipo de documento formal de planejamento adotado para a intervenção social. Valor comum: PTS (Plano de Trabalho Social).'
+
+  - name: dt_entrega
+    dataType: text
+    description: 'Data de assinatura do primeiro contrato de pessoa física / data de entrega das unidades aos beneficiários (formato YYYY-MM-DD).'
+
+  - name: natureza_execucao
+    dataType: text
+    description: 'Modalidade de execução das ações do Trabalho Social no FDS. Valores possíveis: DIRETA, INDIRETA, DIRETA E INDIRETA.'
+
+  - name: situacao_ts
+    dataType: text
+    description: 'Status atual da execução do Trabalho Social no empreendimento FDS. Valores possíveis: CONCLUIDO, EM ANDAMENTO, PARALISADO, ATRASADO, NAO INICIADO.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+
+  - name: motivo_situacao_ts_atrasado_paralisado
+    dataType: text
+    description: 'Justificativa técnica quando o Trabalho Social está com status Atrasado ou Paralisado. Ex: PARALISAÇÃO DE OBRAS, EM TRATAMENTO – PLANO DE AÇÃO, REALIZADAS TRATATIVAS COM A EO, SEM RETOMADA DO TS.'
+
+  - name: dt_ultimo_avt
+    dataType: text
+    description: 'Data do ateste do último relatório ordinário de Acompanhamento de Verificação Técnica (AVT) emitido pela CAIXA.'
+
+  - name: dt_avf
+    dataType: text
+    description: 'Data do ateste do relatório de Avaliação Final (AVF) emitido pela CAIXA, atestando a conclusão do Trabalho Social.'
+
+  - name: _source_file
+    dataType: text
+    description: 'Caminho e nome do arquivo de origem carregado pela pipeline de ingestão (metadado de engenharia).'
+
+  - name: _ingested_at
+    dataType: text
+    description: 'Data e hora em UTC de quando a linha foi inserida na camada Bronze (metadado de engenharia).'
+
+  - name: _source_hash
+    dataType: text
+    description: 'Hash único gerado a partir do conteúdo do registro para deduplicação e rastreabilidade (metadado de engenharia).'
+    
+- name: bronze_shpt_mcmv_far_ts_caixa_202607
+  description: 'Acompanhamento do Trabalho Social do MCMV-FAR pela CAIXA, um contrato por linha. Cópia fiel, tudo texto. Dicionário: comparativo-dados-base v.01 (revisão da Portaria MDR 3.760/2022, reunião de 29/09/2026).'
+  
+  tags:
+    - Status.NaoConsumivel
+    - Orgao.MCID
+    - Dominio.TrabalhoSocial
+    - Tier.Tier3
+    - Certification.Bronze
+
+  owners:
+    - name: "Time de Engenharia de Dados do MCID"
+      type: team
+
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      customProperties:
+        dataLayer: "Bronze"
+        tier: "Tier3"
+        certificationStatus: "Bronze"
+        ownerTeam: "Time de Engenharia de Dados do MCID"
+
+  columns:
+  - name: recurso
+    dataType: text
+    description: 'Ator responsável pela execução do Trabalho Social. Valores possíveis no FAR: FAR-Ente (execução pelo Ente Público) ou FAR-CAIXA (execução assumida pela CAIXA em caso de atraso/notificação).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+        - MCID.Atores.AgenteFinanceiro
+
+  - name: contrato
+    dataType: text
+    description: 'Código identificador único do empreendimento: número da operação/APF cadastrada no SIAPF com o Dígito Verificador (DV).'
+    tags:
+      - PrimaryKey.APF
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+
+  - name: municipio
+    dataType: text
+    description: 'Nome do município de localização do empreendimento habitacional.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.EntePublico
+
+  - name: uf
+    dataType: text
+    description: 'Sigla da Unidade da Federação (UF) de localização do empreendimento. Ex: AP, RJ, RS, SP.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+
+  - name: nome_empreendimento
+    dataType: text
+    description: 'Nome oficial do empreendimento habitacional registrado na operação.'
+
+  - name: uh
+    dataType: text
+    description: 'Quantidade total de Unidades Habitacionais (UH) contratadas/concluídas do empreendimento.'
+
+  - name: tipologia
+    dataType: text
+    description: 'Tipologia construtiva do empreendimento. Valores comuns: CONDOMINIO, LOTEAMENTO, APARTAMENTOS, CASAS.'
+
+  - name: fase_mcmv
+    dataType: text
+    description: 'Fase do Programa Minha Casa, Minha Vida na qual o contrato se enquadra. Valores possíveis: Fase I, Fase II, Fase III.'
+
+  - name: data_da_contratacao
+    dataType: text
+    description: 'Data formal de contratação da operação do empreendimento junto ao agente financeiro (formato YYYY-MM-DD).'
+
+  - name: vr_global_ts
+    dataType: text
+    description: 'Valor total global destinado à execução do Projeto de Trabalho Social (contempla investimento do FAR e contrapartida).'
+
+  - name: vr_desembolsado
+    dataType: text
+    description: 'Valor acumulado efetivamente pago/desembolsado para a execução das ações do Trabalho Social.'
+
+  - name: vr_a_desembolsar_nao_concluidos
+    dataType: text
+    description: 'Valor total pendente de desembolso para a execução de Projeto de Trabalho Social em obras não concluídas.'
+
+  - name: vr_nao_desembolsado_concluidos
+    dataType: text
+    description: 'Saldo orçamentário não utilizado ("perdido") de Projetos de Trabalho Social que já foram concluídos.'
+
+  - name: execucao_ts
+    dataType: text
+    description: 'Percentual acumulado de execução física/operacional do Trabalho Social atingido no mês de movimento.'
+
+  - name: obra
+    dataType: text
+    description: 'Percentual acumulado de avanço físico da obra de engenharia habitacional atingido no mês de movimento.'
+
+  - name: portaria_adotada
+    dataType: text
+    description: 'Portaria ou normativa regulamentadora adotada para definição das diretrizes sociais e famílias beneficiárias. Ex: 464-2018, 168-2013, 75-2025.'
+
+  - name: instrumento_de_planejamento
+    dataType: text
+    description: 'Tipo de documento formal de planejamento adotado. Valores possíveis: PTS (Plano de Trabalho Social), PDST (Plano de Desenvolvimento Socioterritorial).'
+
+  - name: data_entrega
+    dataType: text
+    description: 'Data de entrega e inauguração das chaves do empreendimento habitacional aos beneficiários (formato YYYY-MM-DD).'
+
+  - name: natureza_execucao
+    dataType: text
+    description: 'Modalidade de execução das ações do Projeto de Trabalho Social. Valores possíveis: Direta, Indireta, Mista, DIRETA E INDIRETA, CAIXA.'
+
+  - name: situacao_ts
+    dataType: text
+    description: 'Status atual do ciclo de vida da execução do Trabalho Social. Valores possíveis: EM ANDAMENTO, CONCLUIDO, ATRASADO, PARALISADO, NAO INICIADO, AGUARDANDO LICITACAO.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+
+  - name: motivo_situacao_ts_atrasado_paralisado
+    dataType: text
+    description: 'Justificativa técnica quando o Trabalho Social está com status Atrasado ou Paralisado. Ex: PARALISAÇÃO DE OBRAS, Empreendimento sem definição da demanda, Plano de ação.'
+
+  - name: dt_ultimo_avt
+    dataType: text
+    description: 'Data do ateste do último relatório ordinário de Acompanhamento de Verificação Técnica (AVT) emitido pela CAIXA.'
+
+  - name: dt_avf
+    dataType: text
+    description: 'Data do ateste do relatório de Avaliação Final (AVF) emitido pela CAIXA, atestando a conclusão do Trabalho Social.'
+
+  - name: _source_file
+    dataType: text
+    description: 'Caminho e nome do arquivo de origem carregado pela pipeline de ingestão (metadado de engenharia).'
+
+  - name: _ingested_at
+    dataType: text
+    description: 'Data e hora em UTC de quando a linha foi inserida na camada Bronze (metadado de engenharia).'
+
+  - name: _source_hash
+    dataType: text
+    description: 'Hash único gerado a partir do conteúdo do registro para deduplicação e rastreabilidade (metadado de engenharia).'
+
+- name: bnz_shpt_mcmv_far_ts_caixa_bb_ts_af_caixa_far
+  description: 'Acompanhamento do Trabalho Social do MCMV-FAR pela CAIXA, um contrato por linha. Staging: aba TS_AF_CAIXA_FAR_MM_AA
+    da planilha MCMV_FAR_TS_CAIXA_BB_AAAAMM (último arquivo). Cópia fiel, tudo texto. Dicionário: comparativo-dados-base
+    v.01 (revisão da Portaria MDR 3.760/2022, reunião de 29/09/2026).'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: recurso
+    description: 'Responsável pela execução do TS. Identifica o ator que executa o Trabalho Social: FAR-ENTE (o
+      ente público executa; todo empreendimento começa assim) ou FAR-CAIXA (a CAIXA notificou o ente por atraso
+      e assumiu a execução). No BB e no Rural vem o programa (PNHU, PNHR, RURAL). O dicionário pede ajustar o nome
+      do campo à definição.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+        - MCID.Atores.AgenteFinanceiro
+  - name: contrato
+    description: 'Código identificador do empreendimento: número do APF, a operação cadastrada no SIAPF com o DV.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: municipio
+    description: Nome do município de localização do empreendimento.
+  - name: uf
+    description: Sigla da unidade da Federação de localização do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: nome_empreendimento
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: uh
+    description: Quantidade de unidades habitacionais. Pelo dicionário são as UH com obra física concluída e pendente
+      de entrega; a CAIXA ainda precisa confirmar se o número é de UH contratadas ou concluídas.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UH
+  - name: tipologia
+    description: Tipo de empreendimento (condomínio ou loteamento; no PNHR do BB 'Não se aplica').
+  - name: fase_mcmv
+    description: Fase do Programa MCMV em que o empreendimento está inserido (Fase I, II, III, Legado I/II).
+  - name: data_da_contratacao
+    description: Data de contratação do empreendimento (não do TS).
+  - name: vr_global_ts
+    description: 'Valor de operação do trabalho social: valor total destinado à execução do Projeto de Trabalho
+      Social (investimento do FAR e contrapartida). Como a planilha não traz contrapartida, corresponde ao valor
+      do fundo.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_desembolsado
+    description: Valor desembolsado para trabalho social, acumulado.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: vr_a_desembolsar_nao_concluidos
+    description: Valor a desembolsar para trabalho social nos TS em execução (considera o valor já pago acumulado).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_nao_desembolsado_concluidos
+    description: 'Saldo não utilizado do TS concluído: o valor ''perdido'' do Projeto de Trabalho Social. Só a CAIXA
+      informa.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: execucao_ts
+    description: Percentual de execução do trabalho social, acumulado no mês de movimento (campo previsto na Portaria
+      3.760/2022). CAIXA grava de 0 a 100; BB de 0 a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: obra
+    description: Percentual de execução da obra, acumulado no mês de movimento. CAIXA grava de 0 a 100; BB de 0
+      a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: portaria_adotada
+    description: Portaria de Trabalho Social adotada pelo empreendimento (anterior à 168/2013, 168/2013, 21/2014,
+      464/2018 ou 75/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: instrumento_de_planejamento
+    description: 'Instrumento de planejamento adotado para o Trabalho Social: PTS (Projeto de Trabalho Social) ou
+      PDST.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.InstrumentoPlanejamentoTS
+        - MCID.ExecucaoDeEmpreendimentos.PTS
+  - name: data_entrega
+    description: Data de entrega do empreendimento. Se houver etapas, a data da primeira entrega.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: natureza_execucao
+    description: 'Natureza da execução do Trabalho Social: INDIRETA (EP contrata por empreitada global), DIRETA
+      (EP executa), DIRETA E INDIRETA (EP + contratada), CAIXA (CAIXA contrata credenciada) ou COMPARTILHADA (EP
+      + CAIXA + conveniada, a explicitar na Portaria 75/2025).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.NaturezaExecucaoTS
+  - name: situacao_ts
+    description: 'Situação do Trabalho Social. EM ANDAMENTO: execução adequada aos marcos. ATRASADO: TS aprovado
+      sem início ou com relatórios atrasados além do prazo da norma. PARALISADO: situação mais crítica, impedimento
+      para continuar (avaliado pela gestão da centralizadora). NÃO INICIADO: ainda não há motivo para cobrar entrega
+      pelos marcos temporais. O BB usa outros rótulos (PENDENTE, REGULARIZADO, CONCLUÍDO C/ GLOSA, DISTRATO).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: motivo_situacao_ts_atrasado_paralisado
+    description: Motivo da situação do trabalho social quando atrasado ou paralisado. No BB traz também o andamento
+      (SEM PENDÊNCIAS, AGUARDANDO ACIONAMENTO, REPROGRAMAÇÃO...).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: dt_ultimo_avt
+    description: 'Data do ateste CAIXA do último relatório de acompanhamento apresentado (AVT). Não implica desembolso
+      nem indica o fim da execução: é relatório ordinário. O dicionário sugere renomear para ''ateste último relatório
+      de acompanhamento''.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: dt_avf
+    description: 'Data do ateste CAIXA do relatório de avaliação final (AVF). Marca a conclusão do trabalho social:
+      não há relatório ou ação depois dela.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: _source_file
+    description: 'Linhagem: caminho do arquivo no raw/ do MinIO de onde a linha veio.'
+  - name: _ingested_at
+    description: 'Linhagem: data e hora da conversão raw → staging.'
+  - name: _source_hash
+    description: 'Linhagem: hash do arquivo de origem.'
+  - name: filename
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    tests:
+    - not_null
+- name: bnz_shpt_mcmv_far_ts_caixa_bb_ts_af_bb_far
+  description: 'Acompanhamento do Trabalho Social do MCMV-FAR pelo Banco do Brasil. Staging: aba TS_AF_BB_FAR_MM_AA
+    da planilha MCMV_FAR_TS_CAIXA_BB_AAAAMM (último arquivo). Cópia fiel, tudo texto. Dicionário: comparativo-dados-base
+    v.01 (revisão da Portaria MDR 3.760/2022, reunião de 29/09/2026).'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: cimregistroaf
+    description: Código CIM do registro do agente financeiro no BB. Identificador interno do banco, sem equivalente
+      na CAIXA.
+  - name: recurso
+    description: 'Responsável pela execução do TS. Identifica o ator que executa o Trabalho Social: FAR-ENTE (o
+      ente público executa; todo empreendimento começa assim) ou FAR-CAIXA (a CAIXA notificou o ente por atraso
+      e assumiu a execução). No BB e no Rural vem o programa (PNHU, PNHR, RURAL). O dicionário pede ajustar o nome
+      do campo à definição.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+        - MCID.Atores.AgenteFinanceiro
+  - name: contratoregistroao
+    description: Número do contrato do empreendimento no BB (registro AO). Equivale ao `contrato` (APF) da planilha
+      da CAIXA; no PNHR do BB tem 6 ou 7 dígitos e não é APF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: municipio
+    description: Nome do município de localização do empreendimento.
+  - name: uf
+    description: Sigla da unidade da Federação de localização do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: nome_empreendimento
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: uh
+    description: Quantidade de unidades habitacionais. Pelo dicionário são as UH com obra física concluída e pendente
+      de entrega; a CAIXA ainda precisa confirmar se o número é de UH contratadas ou concluídas.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UH
+  - name: tipologia
+    description: Tipo de empreendimento (condomínio ou loteamento; no PNHR do BB 'Não se aplica').
+  - name: fase_mcmv
+    description: Fase do Programa MCMV em que o empreendimento está inserido (Fase I, II, III, Legado I/II).
+  - name: data_contratacao_empreendimento
+    description: Data de contratação do empreendimento (não do TS). Campo do BB.
+  - name: vr_total_ts
+    description: Valor total do trabalho social no BB. Equivale ao `vr_global_ts` da CAIXA.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_desembolsado_ts
+    description: Valor desembolsado para trabalho social, acumulado. Campo do BB.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: vr_a_desembolsar_ts
+    description: Valor de TS a desembolsar. Campo do BB.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: execucao_ts
+    description: Percentual de execução do trabalho social, acumulado no mês de movimento (campo previsto na Portaria
+      3.760/2022). CAIXA grava de 0 a 100; BB de 0 a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: obra
+    description: Percentual de execução da obra, acumulado no mês de movimento. CAIXA grava de 0 a 100; BB de 0
+      a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: portaria_ts_utilizada
+    description: Portaria de Trabalho Social utilizada, só o número (21, 168, 464). Campo do BB.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: instrumento_de_planejamento
+    description: 'Instrumento de planejamento adotado para o Trabalho Social: PTS (Projeto de Trabalho Social) ou
+      PDST.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.InstrumentoPlanejamentoTS
+        - MCID.ExecucaoDeEmpreendimentos.PTS
+  - name: data_primeiro_relatorio
+    description: Data do primeiro relatório de TS (BB). '00/01/1900' é marcador de vazio na origem.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: data_ultimo_relatorio
+    description: Data do último relatório de TS (BB). Equivale ao `dt_ultimo_avt` da CAIXA. '00/01/1900' é marcador
+      de vazio.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: dt_entrega
+    description: Data de entrega do empreendimento. Se houver etapas, a data da primeira entrega.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: forma_natureza_de_execucao_direta_indireta_mista_pelo_af
+    description: 'Forma/natureza de execução do TS no BB: DIRETA, INDIRETA, MISTA ou PELO AF.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.NaturezaExecucaoTS
+  - name: situacao_ts
+    description: 'Situação do Trabalho Social. EM ANDAMENTO: execução adequada aos marcos. ATRASADO: TS aprovado
+      sem início ou com relatórios atrasados além do prazo da norma. PARALISADO: situação mais crítica, impedimento
+      para continuar (avaliado pela gestão da centralizadora). NÃO INICIADO: ainda não há motivo para cobrar entrega
+      pelos marcos temporais. O BB usa outros rótulos (PENDENTE, REGULARIZADO, CONCLUÍDO C/ GLOSA, DISTRATO).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: motivo_situacao_ts_atrasado_paralisado
+    description: Motivo da situação do trabalho social quando atrasado ou paralisado. No BB traz também o andamento
+      (SEM PENDÊNCIAS, AGUARDANDO ACIONAMENTO, REPROGRAMAÇÃO...).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: data_conclusao_obra
+    description: Data de conclusão da obra (BB).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: data_ultimo_desembolso_ts
+    description: Data do último desembolso de TS (BB).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: _source_file
+    description: 'Linhagem: caminho do arquivo no raw/ do MinIO de onde a linha veio.'
+  - name: _ingested_at
+    description: 'Linhagem: data e hora da conversão raw → staging.'
+  - name: _source_hash
+    description: 'Linhagem: hash do arquivo de origem.'
+  - name: filename
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    tests:
+    - not_null
+- name: bnz_shpt_mcmv_fds_ts_caixa
+  description: 'Acompanhamento do Trabalho Social do MCMV-Entidades (FDS) pela CAIXA. Staging: planilha MCMV_FDS_TS_CAIXA_AAAAMM
+    (último arquivo, aba única). Cópia fiel, tudo texto. Dicionário: comparativo-dados-base v.01 (revisão da Portaria
+    MDR 3.760/2022, reunião de 29/09/2026).'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: recursos
+    description: Responsável pela execução do TS / recurso da operação (no FDS vem 'FDS'). Mesmo campo que `recurso`
+      nas outras planilhas.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+  - name: contrato
+    description: 'Código identificador do empreendimento: número do APF, a operação cadastrada no SIAPF com o DV.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: municipio
+    description: Nome do município de localização do empreendimento.
+  - name: uf
+    description: Sigla da unidade da Federação de localização do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: nome_empreendimento
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: uh
+    description: Quantidade de unidades habitacionais. Pelo dicionário são as UH com obra física concluída e pendente
+      de entrega; a CAIXA ainda precisa confirmar se o número é de UH contratadas ou concluídas.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UH
+  - name: tipologia
+    description: Tipo de empreendimento (condomínio ou loteamento; no PNHR do BB 'Não se aplica').
+  - name: fase_mcmv
+    description: Fase do Programa MCMV em que o empreendimento está inserido (Fase I, II, III, Legado I/II).
+  - name: data_da_contratacao
+    description: Data de contratação do empreendimento (não do TS).
+  - name: vr_global_ts
+    description: 'Valor de operação do trabalho social: valor total destinado à execução do Projeto de Trabalho
+      Social (investimento do FAR e contrapartida). Como a planilha não traz contrapartida, corresponde ao valor
+      do fundo.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_desembolsado
+    description: Valor desembolsado para trabalho social, acumulado.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: vr_a_desembolsar_nao_concluidos
+    description: Valor a desembolsar para trabalho social nos TS em execução (considera o valor já pago acumulado).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_nao_desembolsado_concluidos
+    description: 'Saldo não utilizado do TS concluído: o valor ''perdido'' do Projeto de Trabalho Social. Só a CAIXA
+      informa.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: execucao_ts
+    description: Percentual de execução do trabalho social, acumulado no mês de movimento (campo previsto na Portaria
+      3.760/2022). CAIXA grava de 0 a 100; BB de 0 a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: obra
+    description: Percentual de execução da obra, acumulado no mês de movimento. CAIXA grava de 0 a 100; BB de 0
+      a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: portaria_adotada
+    description: Portaria de Trabalho Social adotada pelo empreendimento (anterior à 168/2013, 168/2013, 21/2014,
+      464/2018 ou 75/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: instrumento_de_planejamento
+    description: 'Instrumento de planejamento adotado para o Trabalho Social: PTS (Projeto de Trabalho Social) ou
+      PDST.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.InstrumentoPlanejamentoTS
+        - MCID.ExecucaoDeEmpreendimentos.PTS
+  - name: dt_entrega_data_da_assinatura_do_primeiro_contrato_de_pessoa_fisica
+    description: 'Data de entrega no FDS: data da assinatura do primeiro contrato de pessoa física.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: natureza_execucao
+    description: 'Natureza da execução do Trabalho Social: INDIRETA (EP contrata por empreitada global), DIRETA
+      (EP executa), DIRETA E INDIRETA (EP + contratada), CAIXA (CAIXA contrata credenciada) ou COMPARTILHADA (EP
+      + CAIXA + conveniada, a explicitar na Portaria 75/2025).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.NaturezaExecucaoTS
+  - name: situacao_ts
+    description: 'Situação do Trabalho Social. EM ANDAMENTO: execução adequada aos marcos. ATRASADO: TS aprovado
+      sem início ou com relatórios atrasados além do prazo da norma. PARALISADO: situação mais crítica, impedimento
+      para continuar (avaliado pela gestão da centralizadora). NÃO INICIADO: ainda não há motivo para cobrar entrega
+      pelos marcos temporais. O BB usa outros rótulos (PENDENTE, REGULARIZADO, CONCLUÍDO C/ GLOSA, DISTRATO).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: motivo_situacao_ts_atrasado_paralisado
+    description: Motivo da situação do trabalho social quando atrasado ou paralisado. No BB traz também o andamento
+      (SEM PENDÊNCIAS, AGUARDANDO ACIONAMENTO, REPROGRAMAÇÃO...).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: dt_ultimo_avt
+    description: 'Data do ateste CAIXA do último relatório de acompanhamento apresentado (AVT). Não implica desembolso
+      nem indica o fim da execução: é relatório ordinário. O dicionário sugere renomear para ''ateste último relatório
+      de acompanhamento''.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: dt_avf
+    description: 'Data do ateste CAIXA do relatório de avaliação final (AVF). Marca a conclusão do trabalho social:
+      não há relatório ou ação depois dela.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: _source_file
+    description: 'Linhagem: caminho do arquivo no raw/ do MinIO de onde a linha veio.'
+  - name: _ingested_at
+    description: 'Linhagem: data e hora da conversão raw → staging.'
+  - name: _source_hash
+    description: 'Linhagem: hash do arquivo de origem.'
+  - name: filename
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    tests:
+    - not_null
+- name: bnz_shpt_mcmv_rural_ts_caixa_bb_ts_af_caixa_pnhr_rural
+  description: 'Acompanhamento do Trabalho Social do PNHR/MCMV Rural pela CAIXA. Staging: aba TS_AF_CAIXA_PNHR_RURAL_MM_AA
+    da planilha MCMV_RURAL_TS_CAIXA_BB_AAAAMM (último arquivo). Cópia fiel, tudo texto. Dicionário: comparativo-dados-base
+    v.01 (revisão da Portaria MDR 3.760/2022, reunião de 29/09/2026).'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: recurso
+    description: 'Responsável pela execução do TS. Identifica o ator que executa o Trabalho Social: FAR-ENTE (o
+      ente público executa; todo empreendimento começa assim) ou FAR-CAIXA (a CAIXA notificou o ente por atraso
+      e assumiu a execução). No BB e no Rural vem o programa (PNHU, PNHR, RURAL). O dicionário pede ajustar o nome
+      do campo à definição.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+        - MCID.Atores.AgenteFinanceiro
+  - name: contrato
+    description: 'Código identificador do empreendimento: número do APF, a operação cadastrada no SIAPF com o DV.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: municipio
+    description: Nome do município de localização do empreendimento.
+  - name: uf
+    description: Sigla da unidade da Federação de localização do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: nome_empreendimento
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: uh
+    description: Quantidade de unidades habitacionais. Pelo dicionário são as UH com obra física concluída e pendente
+      de entrega; a CAIXA ainda precisa confirmar se o número é de UH contratadas ou concluídas.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UH
+  - name: tipologia
+    description: Tipo de empreendimento (condomínio ou loteamento; no PNHR do BB 'Não se aplica').
+  - name: fase_mcmv
+    description: Fase do Programa MCMV em que o empreendimento está inserido (Fase I, II, III, Legado I/II).
+  - name: data_da_contratacao
+    description: Data de contratação do empreendimento (não do TS).
+  - name: vr_global_ts
+    description: 'Valor de operação do trabalho social: valor total destinado à execução do Projeto de Trabalho
+      Social (investimento do FAR e contrapartida). Como a planilha não traz contrapartida, corresponde ao valor
+      do fundo.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_desembolsado
+    description: Valor desembolsado para trabalho social, acumulado.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: vr_a_desembolsar_nao_concluidos
+    description: Valor a desembolsar para trabalho social nos TS em execução (considera o valor já pago acumulado).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_nao_desembolsado_concluidos
+    description: 'Saldo não utilizado do TS concluído: o valor ''perdido'' do Projeto de Trabalho Social. Só a CAIXA
+      informa.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: execucao_ts
+    description: Percentual de execução do trabalho social, acumulado no mês de movimento (campo previsto na Portaria
+      3.760/2022). CAIXA grava de 0 a 100; BB de 0 a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: obra
+    description: Percentual de execução da obra, acumulado no mês de movimento. CAIXA grava de 0 a 100; BB de 0
+      a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: portaria_adotada
+    description: Portaria de Trabalho Social adotada pelo empreendimento (anterior à 168/2013, 168/2013, 21/2014,
+      464/2018 ou 75/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: instrumento_de_planejamento
+    description: 'Instrumento de planejamento adotado para o Trabalho Social: PTS (Projeto de Trabalho Social) ou
+      PDST.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.InstrumentoPlanejamentoTS
+        - MCID.ExecucaoDeEmpreendimentos.PTS
+  - name: natureza_execucao
+    description: 'Natureza da execução do Trabalho Social: INDIRETA (EP contrata por empreitada global), DIRETA
+      (EP executa), DIRETA E INDIRETA (EP + contratada), CAIXA (CAIXA contrata credenciada) ou COMPARTILHADA (EP
+      + CAIXA + conveniada, a explicitar na Portaria 75/2025).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.NaturezaExecucaoTS
+  - name: dt_entrega
+    description: Data de entrega do empreendimento. Se houver etapas, a data da primeira entrega.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: situacao_ts
+    description: 'Situação do Trabalho Social. EM ANDAMENTO: execução adequada aos marcos. ATRASADO: TS aprovado
+      sem início ou com relatórios atrasados além do prazo da norma. PARALISADO: situação mais crítica, impedimento
+      para continuar (avaliado pela gestão da centralizadora). NÃO INICIADO: ainda não há motivo para cobrar entrega
+      pelos marcos temporais. O BB usa outros rótulos (PENDENTE, REGULARIZADO, CONCLUÍDO C/ GLOSA, DISTRATO).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: motivo_situacao_ts_atrasado_paralisado
+    description: Motivo da situação do trabalho social quando atrasado ou paralisado. No BB traz também o andamento
+      (SEM PENDÊNCIAS, AGUARDANDO ACIONAMENTO, REPROGRAMAÇÃO...).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: dt_ultimo_avt
+    description: 'Data do ateste CAIXA do último relatório de acompanhamento apresentado (AVT). Não implica desembolso
+      nem indica o fim da execução: é relatório ordinário. O dicionário sugere renomear para ''ateste último relatório
+      de acompanhamento''.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: dt_avf
+    description: 'Data do ateste CAIXA do relatório de avaliação final (AVF). Marca a conclusão do trabalho social:
+      não há relatório ou ação depois dela.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: _source_file
+    description: 'Linhagem: caminho do arquivo no raw/ do MinIO de onde a linha veio.'
+  - name: _ingested_at
+    description: 'Linhagem: data e hora da conversão raw → staging.'
+  - name: _source_hash
+    description: 'Linhagem: hash do arquivo de origem.'
+  - name: filename
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    tests:
+    - not_null
+- name: bnz_shpt_mcmv_rural_ts_caixa_bb_ts_af_bb_pnhr
+  description: 'Acompanhamento do Trabalho Social do PNHR pelo Banco do Brasil. Staging: aba TS_AF_BB_PNHR_MM_AA
+    da planilha MCMV_RURAL_TS_CAIXA_BB_AAAAMM (último arquivo). Cópia fiel, tudo texto. Dicionário: comparativo-dados-base
+    v.01 (revisão da Portaria MDR 3.760/2022, reunião de 29/09/2026).'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: recurso
+    description: 'Responsável pela execução do TS. Identifica o ator que executa o Trabalho Social: FAR-ENTE (o
+      ente público executa; todo empreendimento começa assim) ou FAR-CAIXA (a CAIXA notificou o ente por atraso
+      e assumiu a execução). No BB e no Rural vem o programa (PNHU, PNHR, RURAL). O dicionário pede ajustar o nome
+      do campo à definição.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+        - MCID.Atores.AgenteFinanceiro
+  - name: contratoregistroao
+    description: Número do contrato do empreendimento no BB (registro AO). Equivale ao `contrato` (APF) da planilha
+      da CAIXA; no PNHR do BB tem 6 ou 7 dígitos e não é APF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: municipio
+    description: Nome do município de localização do empreendimento.
+  - name: uf
+    description: Sigla da unidade da Federação de localização do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: nome_empreendimento
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: uh
+    description: Quantidade de unidades habitacionais. Pelo dicionário são as UH com obra física concluída e pendente
+      de entrega; a CAIXA ainda precisa confirmar se o número é de UH contratadas ou concluídas.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UH
+  - name: tipologia
+    description: Tipo de empreendimento (condomínio ou loteamento; no PNHR do BB 'Não se aplica').
+  - name: fase_mcmv
+    description: Fase do Programa MCMV em que o empreendimento está inserido (Fase I, II, III, Legado I/II).
+  - name: data_contratacao_empreendimento
+    description: Data de contratação do empreendimento (não do TS). Campo do BB.
+  - name: vr_total_ts
+    description: Valor total do trabalho social no BB. Equivale ao `vr_global_ts` da CAIXA.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_desembolsado_ts
+    description: Valor desembolsado para trabalho social, acumulado. Campo do BB.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: vr_a_desembolsar_ts
+    description: Valor de TS a desembolsar. Campo do BB.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: execucao_ts
+    description: Percentual de execução do trabalho social, acumulado no mês de movimento (campo previsto na Portaria
+      3.760/2022). CAIXA grava de 0 a 100; BB de 0 a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: obra
+    description: Percentual de execução da obra, acumulado no mês de movimento. CAIXA grava de 0 a 100; BB de 0
+      a 1.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: portaria_ts_utilizada
+    description: Portaria de Trabalho Social utilizada, só o número (21, 168, 464). Campo do BB.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: instrumento_de_planejamento
+    description: 'Instrumento de planejamento adotado para o Trabalho Social: PTS (Projeto de Trabalho Social) ou
+      PDST.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.InstrumentoPlanejamentoTS
+        - MCID.ExecucaoDeEmpreendimentos.PTS
+  - name: data_primeiro_relatorio
+    description: Data do primeiro relatório de TS (BB). '00/01/1900' é marcador de vazio na origem.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: data_ultimo_relatorio
+    description: Data do último relatório de TS (BB). Equivale ao `dt_ultimo_avt` da CAIXA. '00/01/1900' é marcador
+      de vazio.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: data_da_assinatura_do_primeiro_contrato_de_pessoa_fisica
+    description: Data da assinatura do primeiro contrato de pessoa física (usada como data de entrega no PNHR do
+      BB).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: forma_natureza_de_execucao_direta_indireta_mista_pelo_af
+    description: 'Forma/natureza de execução do TS no BB: DIRETA, INDIRETA, MISTA ou PELO AF.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.NaturezaExecucaoTS
+  - name: situacao_ts
+    description: 'Situação do Trabalho Social. EM ANDAMENTO: execução adequada aos marcos. ATRASADO: TS aprovado
+      sem início ou com relatórios atrasados além do prazo da norma. PARALISADO: situação mais crítica, impedimento
+      para continuar (avaliado pela gestão da centralizadora). NÃO INICIADO: ainda não há motivo para cobrar entrega
+      pelos marcos temporais. O BB usa outros rótulos (PENDENTE, REGULARIZADO, CONCLUÍDO C/ GLOSA, DISTRATO).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: motivo_situacao_ts_atrasado_paralisado
+    description: Motivo da situação do trabalho social quando atrasado ou paralisado. No BB traz também o andamento
+      (SEM PENDÊNCIAS, AGUARDANDO ACIONAMENTO, REPROGRAMAÇÃO...).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: data_conclusao_obra
+    description: Data de conclusão da obra (BB).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: data_ultimo_desembolso_ts
+    description: Data do último desembolso de TS (BB).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: _source_file
+    description: 'Linhagem: caminho do arquivo no raw/ do MinIO de onde a linha veio.'
+  - name: _ingested_at
+    description: 'Linhagem: data e hora da conversão raw → staging.'
+  - name: _source_hash
+    description: 'Linhagem: hash do arquivo de origem.'
+  - name: filename
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    tests:
+    - not_null
+- name: bronze_seed_ts_dominio_situacao
+  description: 'Espelho em texto do seed ts_dominio_situacao: equivalência entre a situação do TS da CAIXA e do
+    BB e a situação padronizada do painel. Fonte: arquivo versionado em seeds/trabalho_social.'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: agente_financeiro
+    description: Agente financeiro que usa o rótulo (CAIXA ou BB).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.AgenteFinanceiro
+  - name: situacao_origem
+    description: Situação do TS como vem na planilha do agente.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: situacao_padronizada
+    description: Situação padronizada do painel (Concluído, Em andamento, Atrasado, Paralisado, Não iniciado, Distrato).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: ic_ativo
+    description: '''true'' quando o TS ainda está em execução (em andamento, atrasado ou paralisado).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: ic_critico
+    description: '''true'' para atrasado ou paralisado.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: ic_equivalencia_a_confirmar
+    description: '''true'' quando a equivalência foi proposta pela equipe e ainda precisa ser validada com o agente
+      financeiro.'
+  - name: observacao
+    description: Significado do rótulo.
+- name: bronze_seed_ts_marcos_portaria_75_2025
+  description: 'Espelho em texto do seed ts_marcos_portaria_75_2025: marcos temporais do TS por linha, transcritos
+    da Portaria MCID 75/2025 (Anexo II). Fonte: arquivo versionado em seeds/trabalho_social.'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: id_marco
+    description: Identificador do marco (linha + ordem).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: linha
+    description: Linha do programa (FAR, FDS, RURAL, SUB50, PRO_MORADIA).
+  - name: ordem
+    description: Ordem do marco na régua da linha.
+  - name: fase
+    description: Fase do TS (pré-obras, obras, pré-ocupação, pós-ocupação, penalidade).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: gatilho
+    description: O que dispara a exigência.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: pc_obra_gatilho
+    description: '% de execução física da obra que dispara o marco, quando há.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: prazo_dias
+    description: Prazo máximo em dias entre relatórios, quando há.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: exigencia
+    description: Documento ou entrega exigida no marco.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: consequencia_descumprimento
+    description: O que a portaria prevê se o marco não for cumprido.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: referencia
+    description: Artigo e item da Portaria 75/2025.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+- name: bronze_seed_ts_dominio_tipo_demanda
+  description: 'Espelho em texto do seed ts_dominio_tipo_demanda: descrição do código co_tipo_demanda do cadastro
+    PJ do FAR. Fonte: arquivo versionado em seeds/trabalho_social.'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: co_tipo_demanda
+    description: Código do tipo de demanda no cadastro PJ do FAR.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.TipoDeDemanda
+  - name: tipo_demanda
+    description: Descrição do tipo de demanda (Cadastro habitacional, Movimentos sociais, Calamidade...).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.TipoDeDemanda
+  - name: observacao
+    description: Explicação do tipo.
+- name: bnz_seed_ts_dominio_uf
+  description: 'Espelho em texto do seed ts_dominio_uf: UF, nome e região. Fonte: arquivo versionado em seeds/trabalho_social.'
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: sg_uf
+    description: Sigla da UF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: no_uf
+    description: Nome da UF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: regiao
+    description: Região geográfica.
+- name: bronze_shpt_mcmv_rural_ts_caixa_202607
+  description: Acompanhamento do Trabalho Social do MCMV Rural / PNHR pela CAIXA, remessa de jul/2026 (aba TS_AF_CAIXA_PNHR_RURAL
+    da planilha MCMV_RURAL_TS_CAIXA_BB_202607). Cópia fiel do parquet, um contrato por linha.
+  meta:
+    tags:
+    - bronze
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: recurso
+    description: Responsável pela execução do TS / programa (no Rural vem o programa).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+  - name: contrato
+    description: Contrato do empreendimento (APF) na CAIXA.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: municipio
+    description: Município do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.CodigoIBGE
+  - name: uf
+    description: Sigla da UF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: nome_empreendimento
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: uh
+    description: Quantidade de unidades habitacionais.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UH
+  - name: tipologia
+    description: Tipologia do empreendimento.
+  - name: fase_mcmv
+    description: Fase do MCMV.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV
+  - name: data_da_contratacao
+    description: Data de contratação do empreendimento.
+  - name: vr_global_ts
+    description: Valor global do TS.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_desembolsado
+    description: Valor do TS desembolsado.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: vr_a_desembolsar_nao_concluidos
+    description: Valor do TS a desembolsar em TS não concluído.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_nao_desembolsado_concluidos
+    description: Saldo não desembolsado de TS concluído.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: execucao_ts
+    description: Percentual de execução do TS (0 a 100).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: obra
+    description: Percentual de execução física da obra (0 a 100).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: portaria_adotada
+    description: 'Portaria de TS adotada (ex.: 21-2014, 464-2018, 75-2025; vazio vem como None).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: instrumento_de_planejamento
+    description: Instrumento de planejamento do TS (PTS ou PDST).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.InstrumentoPlanejamentoTS
+  - name: natureza_execucao
+    description: Natureza da execução do TS.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.NaturezaExecucaoTS
+  - name: dt_entrega
+    description: Data de entrega do empreendimento.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: situacao_ts
+    description: Situação do TS na CAIXA.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: motivo_situacao_ts_atrasado_paralisado
+    description: Motivo do atraso ou da paralisação do TS.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: dt_ultimo_avt
+    description: Data do último AVT (relatório de TS atestado).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: dt_avf
+    description: Data da AVF (conclusão do TS).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: _source_file
+    description: Caminho do parquet na staging.
+  - name: _ingested_at
+    description: Momento da ingestão na staging.
+  - name: _source_hash
+    description: Hash do arquivo de origem.
+- name: bronze_shpt_ts_remessas_historico
+  description: Todas as remessas de acompanhamento do Trabalho Social guardadas na pasta Trabalho Social do MinIO
+    (FAR, FDS e Rural; CAIXA e BB; jan/2025 a jul/2026), empilhadas, tudo texto. Os layouts mudaram ao longo do
+    tempo, então a tabela tem a união das colunas de todos os arquivos (inclusive dicionários de layout que estavam
+    na pasta). Usada para recuperar a portaria de TS de contratos que vieram sem ela em jul/2026. Abaixo, as colunas
+    usadas pela prata; as demais são as das planilhas mensais.
+  meta:
+    tags:
+    - bronze
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  columns:
+  - name: filename
+    description: Caminho do parquet da remessa na staging. Linha, agente e competência saem daqui.
+  - name: contrato
+    description: Contrato (layout CAIXA).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: contratoregistroao
+    description: Contrato (layout BB a partir de 2026).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: contrato_registro_ao
+    description: Contrato (layout BB das bases de jan/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: contratoregistro_ao
+    description: Contrato (variante de layout BB de 2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: portaria_adotada
+    description: Portaria de TS (layout CAIXA).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: portaria_ts_utilizada
+    description: Portaria de TS (layout BB, só o número).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: data_da_contratacao
+    description: Data de contratação (layout CAIXA).
+  - name: data_contratacao_empreendimento
+    description: Data de contratação (layout BB).
+  - name: situacao_ts
+    description: Situação do TS.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: dt_30_obra
+    description: Data em que a obra atingiu 30% (só na base FAR de jan/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: dt_80_obra
+    description: Data em que a obra atingiu 80% (só na base FAR de jan/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: dt_100_obra
+    description: Data em que a obra atingiu 100% (só na base FAR de jan/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+- name: bronze_seed_ts_portarias
+  description: 'Espelho em texto do seed ts_portarias (macro bnz_seed_texto). Catálogo das portarias de Trabalho
+    Social: vigência, quem revogou, linhas a que se aplica, regra de transição e se a régua de marcos já foi transcrita.
+    Fonte: 21/2014 (DOU 23/01/2014), 464/2018 compilada e 75/2025 (DOU 05/02/2025).'
+  meta:
+    tags:
+    - bronze
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  columns:
+  - name: portaria_ts
+    description: Portaria no formato número/ano.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: numero
+    description: Número da portaria.
+  - name: ano
+    description: Ano da portaria.
+  - name: dt_assinatura
+    description: Data de assinatura.
+  - name: dt_publicacao_dou
+    description: Data de publicação no DOU, quando confirmada.
+  - name: dt_inicio_vigencia
+    description: Início da vigência.
+  - name: dt_fim_vigencia
+    description: Fim da vigência (véspera da portaria que a revogou).
+  - name: revogada_por
+    description: Portaria que a revogou.
+  - name: linhas
+    description: Linhas a que se aplica, separadas por |.
+  - name: regra_aplicacao
+    description: Regra de aplicação e de transição para contratos anteriores.
+  - name: ic_marcos_transcritos
+    description: true quando a régua de marcos está em seed.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: seed_marcos
+    description: Seed com a régua de marcos.
+  - name: observacao
+    description: O que falta confirmar.
+  - name: referencia
+    description: Fonte da informação.
+- name: bronze_seed_ts_marcos_portaria_464_2018
+  description: 'Espelho em texto do seed ts_marcos_portaria_464_2018 (macro bnz_seed_texto). Régua de marcos temporais
+    do TS transcrita da Portaria MCidades 464/2018 compilada: Anexo III (FAR), IV (FDS/Entidades) e V (Rural).'
+  meta:
+    tags:
+    - bronze
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  columns:
+  - name: id_marco
+    description: Identificador do marco (464-LINHA-ordem).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: linha
+    description: Linha (FAR, FDS, RURAL).
+  - name: ordem
+    description: Ordem do marco na linha.
+  - name: fase
+    description: Fase do TS.
+  - name: gatilho
+    description: O que dispara o marco.
+  - name: pc_obra_gatilho
+    description: Percentual de obra que dispara o marco.
+  - name: prazo_dias
+    description: Intervalo máximo em dias.
+  - name: exigencia
+    description: O que precisa estar pronto.
+  - name: consequencia_descumprimento
+    description: O que acontece se não cumprir.
+  - name: referencia
+    description: Anexo e item da portaria.
+- name: bronze_seed_ts_publico_tradicional
+  description: Espelho em texto do seed ts_publico_tradicional (macro bnz_seed_texto). Palavras-chave (expressões
+    regulares, em maiúsculas) usadas para ESTIMAR o público tradicional pelo nome da entidade organizadora e do
+    empreendimento. Não há campo próprio na origem. Revisar quando aparecer falso positivo.
+  meta:
+    tags:
+    - bronze
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  columns:
+  - name: ordem
+    description: Prioridade quando mais de uma palavra casa (menor vence).
+  - name: publico_tradicional
+    description: Público atribuído quando a palavra casa.
+  - name: regex_inclui
+    description: Expressão regular procurada no nome (maiúsculas).
+  - name: regex_exclui
+    description: Reservado para exclusões futuras.
+  - name: observacao
+    description: Por que a regra é assim (falsos positivos evitados).
+- name: bronze_seed_ibge_municipio_centroide
+  description: Espelho em texto do seed ibge_municipio_centroide (macro bnz_seed_texto). Centro (centroide) de cada
+    município brasileiro, da API de malhas do IBGE, com nome e UF da API de localidades. Gerado por scripts/ibge/baixar_centroides_municipios.py.
+    Usado como coordenada de reserva no mapa do Trabalho Social.
+  meta:
+    tags:
+    - bronze
+    openmetadata:
+      glossary:
+      - MCID.Identificadores.CodigoIBGE
+      - MCID.FontesInstitucionais.IBGE
+  columns:
+  - name: cod_ibge
+    description: Código IBGE do município (7 dígitos).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.CodigoIBGE
+  - name: municipio
+    description: Nome do município.
+  - name: uf
+    description: Sigla da UF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: latitude
+    description: Latitude do centroide, graus decimais.
+  - name: longitude
+    description: Longitude do centroide, graus decimais.

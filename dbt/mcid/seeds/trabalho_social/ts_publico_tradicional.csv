@@ -1,0 +1,9 @@
+ordem,publico_tradicional,regex_inclui,regex_exclui,observacao
+1,Quilombola,QUILOMB,,Exclui quando a palavra só aparece no nome do município (ex.: Quilombo/SC); a exclusão pelo município é feita no modelo
+2,Indígena,IND[IÍ]GEN|ALDEIA IND|POVOS? IND|ETNIA|TERRA IND,,"""Aldeia"" e ""povo"" sozinhos não entram: aparecem em nomes de bairro (Cidade do Povo, Parque das Aldeias)"
+3,Ribeirinha,RIBEIRINH,,
+4,Pescadores artesanais,PESCADOR|PESCA ARTESANAL|MARISQUEIR,,
+5,Extrativistas,EXTRATIVIS|QUEBRADEIRAS? DE COCO|SERINGUEIROS,,"""Castanheira"" e ""seringueira"" sozinhos não entram: são nomes de árvore comuns em loteamentos"
+6,Cigana,CIGAN,,
+7,Povos de terreiro,TERREIRO|MATRIZ AFRICANA,,
+8,Assentamento da reforma agrária,ASSENTAMENTO|REFORMA AGR[AÁ]RIA,,Não é povo tradicional; aparece para separar do público geral
