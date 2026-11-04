@@ -52,7 +52,7 @@ def _ler(path: Path) -> list[list[str]]:
         return list(csv.reader(f))
 
 
-def test_cci_analitico_sai_sem_nascimento_nem_cep(tmp_path, monkeypatch):
+def test_cci_analitico_preserva_nascimento_e_mascara_cep(tmp_path, monkeypatch):
     modulo = _carregar_modulo(monkeypatch)
     origem, destino = tmp_path / "cci.csv", tmp_path / "cci.mascarado.csv"
     _escrever(
@@ -73,12 +73,18 @@ def test_cci_analitico_sai_sem_nascimento_nem_cep(tmp_path, monkeypatch):
     alvos, total, alterados = modulo.mascarar_csv(str(origem), str(destino), ",", "utf-8")
 
     acoes = {a["column"]: a["action"] for a in alvos}
-    assert acoes == {"DT_Nascimento": "redact", "IM_CEP": "redact"}
+    # a data de nascimento fica, mas prova que o CEP é de pessoa física
+    assert acoes == {"IM_CEP": "redact"}
     assert (total, alterados) == (2, 2)
     linhas = _ler(destino)
     assert linhas[0] == _ler(origem)[0]
-    assert linhas[1] == ["202601", "Minha Casa Minha Vida", "***", "***", "150000,00"]
-    # vazio continua vazio
+    assert linhas[1] == [
+        "202601",
+        "Minha Casa Minha Vida",
+        "03/02/1985",
+        "***",
+        "150000,00",
+    ]
     assert linhas[2] == ["202602", "Minha Casa Minha Vida", "", "***", "98000,00"]
 
 

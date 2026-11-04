@@ -19,7 +19,6 @@ schema `sftp` do Postgres.
 | **CPF** | HMAC-SHA256 determinístico | `NU_CPF_CGC_MUTUARIO`, `NU_CPF_BENEFICIARIO`, `txt_cpf` |
 | **NIS / PIS / PASEP / NIT** | HMAC-SHA256 determinístico | `NU_PIS`, `NU_PIS_PASEP`, `NU_NIS` |
 | **Nome de PF** | Redação (`***`) | `NO_MUTUARIO`, `NO_BENEFICIARIO`, `nomeMutuario` |
-| **Data de nascimento** | Redação (`***`) | `DT_NASCIMENTO`, `DT_NASCIMENTO_MUTUARIO` |
 | **Endereço** | Redação (`***`) — *condicional* | `NO_LOGRADOURO_IMOVEL`, `NO_BAIRRO_IMOVEL`, `NO_COMPLEMENTO_IMOVEL` |
 | **CEP** | Redação (`***`) — *condicional* | `ED_CEP_IMOVEL_GARANTIA`, `NU_CEP`, `CO_CEP_IMOVEL` |
 
@@ -35,11 +34,11 @@ schema `sftp` do Postgres.
 - **Não é mascarado**: CNPJ/CGC (é PJ), `razao_social_*`, `nome_empreendimento`,
   `email_entidade`, município/UF (geografia grossa), e colunas de papel que não são nome
   (`CO_SEXO_BENEFICIARIO`, `VR_PARCELA_MENSAL_BENEFICIARIO`, flags como `TITULAR-COM-PDC`).
-- **Códigos analíticos sensíveis preservados**: `CO_RACA_COR_PESSOA` e
-  `CO_DEFICIENCIA_MEMB` permanecem somente nas camadas restritas, associados a CPF/NIS
-  pseudonimizados. São necessários para análises de equidade e acessibilidade; a camada
-  ouro deve publicar apenas agregados e suprimir grupos pequenos. Nomes/textos livres de
-  raça, etnia ou deficiência continuam redigidos.
+- **Atributos de perfil preservados**: data de nascimento, sexo, raça/cor, etnia,
+  deficiência e PCD (`DT_NASCIMENTO`, `CO_RACA_COR_PESSOA`, `IC_BENEF_PCD`...) não
+  identificam a pessoa sozinhos e respondem perguntas de perfil dos beneficiários. Não são
+  mascarados, mas contam como indicador de PF para a regra de CEP/endereço. A camada ouro
+  publica só agregados.
 - **Valores vazios continuam vazios** (não viram token nem `***`).
 
 ---

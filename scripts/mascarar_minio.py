@@ -9,9 +9,11 @@ sobrescrevendo o objeto no lugar — o raw deixa de conter PII.
 Técnica:
   - Identificadores (CPF, NIS) -> token HMAC-SHA256 determinístico: irreversível, mas
     preserva join e contagem de distintos entre bases.
-  - Quasi-identificadores (nome de PF, endereço, CEP, nascimento) -> redação.
+  - Nome de PF, endereço e CEP -> redação.
   - CEP/endereço só são mascarados quando o arquivo tem indicador de PF; em base
     PJ/empreendimento o CEP é preservado.
+  - Data de nascimento, sexo, raça/cor e deficiência são preservados: não identificam
+    ninguém sozinhos e respondem perguntas de perfil. Servem só de indicador de PF.
 
 O arquivo é lido e reescrito em transporte latin-1, byte a byte, então coluna não
 mascarada sai byte-idêntica seja qual for o encoding real. O encoding só é detectado para
@@ -123,13 +125,9 @@ P_ENDER = re.compile(
 # "ic_benef_sit_rua" (flag indicadora de situação de rua)
 P_ENDER_EXC = re.compile(r"objetivo|sit_rua|(^|_)ic(_|$)")
 P_NASC = re.compile(r"nascimento|dt_?nasc|data_?nasc|dat_nasc")
-# Atributo sensível (LGPD art. 5º II). Instituição não tem raça nem deficiência, então a
-# coluna também serve de prova de que o arquivo trata de pessoa física.
+# Atributo de perfil (raça, deficiência). Não é mascarado, mas instituição não tem raça
+# nem deficiência, então a coluna prova que o arquivo trata de pessoa física.
 P_SENSIVEL = re.compile(r"cor_raca|(^|_)raca(_|$)|etnia|deficiencia|(^|_)pcd(_|$)")
-# Códigos categóricos necessários para análise de equidade e acessibilidade. Eles não
-# identificam alguém sozinhos e permanecem apenas nas camadas restritas, ligados a
-# CPF/NIS já pseudonimizados. Nomes/textos livres continuam redigidos.
-P_SENSIVEL_ANALITICO = re.compile(r"^co_raca_cor_pessoa$|^co_deficiencia_memb$")
 
 # Papéis que sempre denotam pessoa física. Mascarados incondicionalmente.
 P_NOME_PESSOA = re.compile(
@@ -188,9 +186,7 @@ COLUNAS_POR_POSICAO: Dict[str, Dict[int, str]] = {
 _ACAO_POR_CATEGORIA = {
     "cpf": "hmac",
     "nis": "hmac",
-    "nascimento": "redact",
     "nome": "redact",
-    "sensivel": "redact",
     "cep": "redact",
     "endereco": "redact",
 }
@@ -200,7 +196,7 @@ def _avisar_mascaramento_sem_prova(key: str, rec: dict) -> None:
     """Avisa quando um arquivo é mascarado sem prova estrutural de pessoa física.
 
     Como a reescrita é no lugar, o valor não volta sem reingerir da origem — todo
-    mascaramento sem CPF/NIS/nascimento/sensível merece conferência.
+    mascaramento sem CPF/NIS merece conferência.
     """
     if rec.get("status") not in ("masked", "dry_run"):
         return
@@ -431,11 +427,10 @@ def classificar(  # noqa: C901
             continue
         if cat in ("cpf", "nis"):
             action = "hmac"
-        elif cat == "sensivel" and P_SENSIVEL_ANALITICO.search(norm):
-            # Preserva só códigos analíticos categóricos. O arquivo continua sendo
-            # reconhecido como PF e os identificadores diretos seguem protegidos.
+        elif cat in ("nascimento", "sensivel"):
+            # só indicador de PF: o valor é preservado
             continue
-        elif cat in ("nascimento", "nome", "sensivel"):
+        elif cat == "nome":
             action = "redact"
         elif cat == "nome_ambiguo":
             # papel que pode ser instituição: só mascara com prova de PF no arquivo

@@ -31,7 +31,7 @@ def _carregar_modulo():
     return module
 
 
-def test_cadunico_preserva_codigos_analiticos_e_protege_identificadores():
+def test_cadunico_preserva_perfil_e_protege_identificadores():
     modulo = _carregar_modulo()
     header = [
         "NU_CPF_PESSOA",
@@ -52,7 +52,22 @@ def test_cadunico_preserva_codigos_analiticos_e_protege_identificadores():
     assert por_coluna["NU_NIS_PESSOA"] == "hmac"
     assert por_coluna["NO_PESSOA"] == "redact"
     assert por_coluna["NO_APELIDO_PESSOA"] == "redact"
-    assert por_coluna["DT_NASC_PESSOA"] == "redact"
-    assert por_coluna["ETNIA_DESCRICAO"] == "redact"
+    assert "DT_NASC_PESSOA" not in por_coluna
+    assert "ETNIA_DESCRICAO" not in por_coluna
     assert "CO_RACA_COR_PESSOA" not in por_coluna
     assert "CO_DEFICIENCIA_MEMB" not in por_coluna
+
+
+def test_perfil_sem_identificador_ainda_protege_endereco():
+    modulo = _carregar_modulo()
+    header = ["NO_MUTUARIO", "DT_NASCIMENTO", "IC_BENEF_PCD", "NO_LOGRADOURO", "CO_CEP"]
+
+    targets, has_pf = modulo.classificar(header, None)
+    por_coluna = {target["column"]: target["action"] for target in targets}
+
+    assert has_pf is True
+    assert por_coluna == {
+        "NO_MUTUARIO": "redact",
+        "NO_LOGRADOURO": "redact",
+        "CO_CEP": "redact",
+    }
