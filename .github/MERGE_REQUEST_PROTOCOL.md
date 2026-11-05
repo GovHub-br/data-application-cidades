@@ -6,7 +6,7 @@ Este protocolo orienta a revisao de Pull Requests (PRs) no `data-application-cid
 
 1. Crie uma branch a partir da `main` e use um titulo de PR no formato Conventional Commits.
 2. Descreva a mudanca, a issue relacionada e como ela foi validada no template de PR.
-3. Aplique manualmente `team:mcid` para mudancas do dominio de Cidades e/ou `team:infra` para infraestrutura transversal.
+3. Aplique manualmente `team:mcid` para mudancas do dominio de Cidades, `team:infra` para infraestrutura transversal ou `team:oss` para contribuicoes OSS.
 4. A workflow solicita revisao dos times associados quando a label e adicionada a um PR nao draft ou quando um PR com label sai de draft. Ela nao cria labels e nao roda para labels de issues.
 5. Revise os comentarios, obtenha as aprovacoes exigidas pela protecao da `main` e so entao faca o merge.
 
@@ -16,6 +16,7 @@ Este protocolo orienta a revisao de Pull Requests (PRs) no `data-application-cid
 | --- | --- |
 | `team:mcid` | `@GovHub-br/mcid` |
 | `team:infra` | `@GovHub-br/infra` |
+| `team:oss` | `@GovHub-br/oss` |
 
 Solicitar revisao a um time **nao equivale a receber uma aprovacao**. As labels apenas roteiam o pedido de review; elas nao mudam as regras de aprovacao ou de protecao da branch. Se o time solicitado nao corresponder a mudanca, ajuste a label ou explique a escolha no PR.
 

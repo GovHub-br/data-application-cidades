@@ -18,6 +18,7 @@
 <!-- Aplique manualmente a label correspondente ao PR para solicitar revisao. -->
 - [ ] MCid (`team:mcid`)
 - [ ] Infra (`team:infra`)
+- [ ] OSS (`team:oss`)
 
 ## Como testar / validar
 <!-- Informe os comandos realmente executados e os resultados. -->
