@@ -1,6 +1,6 @@
 """Contrato de privacidade analítica do CadÚnico."""
 
-import importlib.util
+import importlib
 import os
 import sys
 from pathlib import Path
@@ -23,12 +23,10 @@ def _carregar_modulo():
 
     scripts = Path(__file__).parents[1] / "scripts"
     sys.path.insert(0, str(scripts))
-    path = scripts / "mascarar_minio.py"
-    spec = importlib.util.spec_from_file_location("mascarar_minio_test", path)
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+    # o pacote lê as variáveis de ambiente no import: cada teste parte de um import novo
+    for nome in [m for m in sys.modules if m.split(".")[0] == "mascaramento"]:
+        del sys.modules[nome]
+    return importlib.import_module("mascaramento.regras")
 
 
 def test_cadunico_preserva_perfil_e_protege_identificadores():
@@ -70,4 +68,61 @@ def test_perfil_sem_identificador_ainda_protege_endereco():
         "NO_MUTUARIO": "redact",
         "NO_LOGRADOURO": "redact",
         "CO_CEP": "redact",
+    }
+
+
+def test_situacao_de_rua_nao_e_endereco():
+    modulo = _carregar_modulo()
+    header = [
+        "NU_CPF_PESSOA",
+        "IN_DORMIR_RUA_MEMB",
+        "QT_DORMIR_FREQ_RUA_MEMB",
+        "CO_TEMPO_RUA_MEMB",
+        "NO_LOGRADOURO_FAM",
+    ]
+
+    targets, _ = modulo.classificar(header, None)
+    por_coluna = {target["column"]: target["action"] for target in targets}
+
+    assert por_coluna == {"NU_CPF_PESSOA": "hmac", "NO_LOGRADOURO_FAM": "redact"}
+
+
+def test_cpf_tem_o_mesmo_token_em_qualquer_formato():
+    modulo = _carregar_modulo()
+    token = modulo._hmac_token("1234567890")
+
+    assert modulo._hmac_token("01234567890") == token
+    assert modulo._hmac_token("012.345.678-90") == token
+    assert modulo._hmac_token(" 1234567890 ") == token
+    assert modulo._hmac_token("NAO INFORMADO") != token
+
+
+def test_documentos_do_cadunico_sao_redigidos():
+    modulo = _carregar_modulo()
+    header = [
+        "NU_IDENTIDADE_PESSOA",
+        "NU_TITULO_ELEITOR_PESSOA",
+        "NU_ZONA_TIT_ELEITOR_PESSOA",
+        "NU_CART_TRAB_PREV_SOC_PESSOA",
+        "NU_SERIE_TRAB_PREV_SOC_PESSOA",
+        "DT_EMISSAO_CART_TRAB_PESSOA",
+        "CO_MATRICULA_CERTIDAO",
+        "CO_LIVRO_CERTIDAO",
+        "CO_FOLHA_CERTIDAO",
+        "CO_CERTIDAO_CIVIL_PESSOA",
+        "IC_CERTIDAO_MATRICULA",
+    ]
+
+    targets, has_pf = modulo.classificar(header, None)
+    redigidas = {t["column"] for t in targets if t["action"] == "redact"}
+
+    assert has_pf is True
+    assert redigidas == {
+        "NU_IDENTIDADE_PESSOA",
+        "NU_TITULO_ELEITOR_PESSOA",
+        "NU_CART_TRAB_PREV_SOC_PESSOA",
+        "NU_SERIE_TRAB_PREV_SOC_PESSOA",
+        "CO_MATRICULA_CERTIDAO",
+        "CO_LIVRO_CERTIDAO",
+        "CO_FOLHA_CERTIDAO",
     }

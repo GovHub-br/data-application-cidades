@@ -1,14 +1,15 @@
 """O .mdb chega à staging mascarado, mesmo ficando com PII no raw/.
 
-O mascarar_minio não reescreve Access (mdbtools é read-only); o raw_para_staging
+O mascaramento não reescreve Access (mdbtools é read-only); o raw_para_staging
 passa o CSV exportado de cada tabela por `mascarar_csv()` antes do parquet. O
 `CCI_CCA` do GEAVO chegou ao banco com data de nascimento e CEP reais por falta
 disso.
 """
 
 import csv
-import importlib.util
+import importlib
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -33,13 +34,10 @@ def _carregar_modulo(monkeypatch, segredo: str = "segredo-de-teste"):
             monkeypatch.setenv(key, value)
     monkeypatch.setenv("MASKING_HMAC_SECRET", segredo)
     monkeypatch.syspath_prepend(str(SCRIPTS))
-    spec = importlib.util.spec_from_file_location(
-        "mascarar_minio_mdb_test", SCRIPTS / "mascarar_minio.py"
-    )
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+    # o pacote lê as variáveis de ambiente no import: cada teste parte de um import novo
+    for nome in [m for m in sys.modules if m.split(".")[0] == "mascaramento"]:
+        del sys.modules[nome]
+    return importlib.import_module("mascaramento.tabular")
 
 
 def _escrever(path: Path, linhas: list[list[str]]) -> None:
@@ -96,7 +94,9 @@ def test_cpf_recebe_o_mesmo_token_do_raw(tmp_path, monkeypatch):
     modulo.mascarar_csv(str(origem), str(destino), ",", "utf-8")
 
     token = _ler(destino)[1][0]
-    assert token == modulo._hmac_token("123.456.789-09")
+    assert token == importlib.import_module("mascaramento.regras")._hmac_token(
+        "123.456.789-09"
+    )
     assert len(token) == 16 and "123" not in token
 
 

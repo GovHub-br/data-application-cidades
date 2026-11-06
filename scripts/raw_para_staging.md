@@ -262,4 +262,8 @@ audit/staging/execution_id=.../       (auditoria)
   (idempotência por `source_hash`).
 - Em máquina com pouca RAM, garanta `LAKE_TMPDIR` num disco com espaço; a conversão é
   streaming (memória constante), mas os arquivos grandes têm I/O intenso.
+- **MinIO fora no upload:** o envio é retentado por ~30 min (espera de 30 s a 5 min). Se
+  ainda falhar, o parquet de CSV/TXT fica em `$LAKE_TMPDIR/staging_pendente/` e rodar o
+  mesmo comando de novo só o reenvia, sem reconverter. Um pendente de conteúdo antigo
+  (raw mudou) é apagado na conversão seguinte.
 - Rode **depois** do mascaramento (ver aviso no topo).

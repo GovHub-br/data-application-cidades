@@ -22,6 +22,7 @@ source_hash). Use --force para reprocessar.
 """
 
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -699,6 +700,41 @@ def _verificar_parquet(dst_path: str, n_esperado: int) -> None:
         raise ValueError(f"parquet: nº de linhas divergem ({n} != {n_esperado})")
 
 
+# Upload que falhou: o parquet fica em disco e a próxima execução só reenvia, sem
+# reconverter (o CadÚnico pessoa leva ~3h para converter).
+def _pendente(destino: str, source_hash: str) -> str:
+    nome = hashlib.sha256(destino.encode("utf-8")).hexdigest()[:16]
+    pasta = os.path.join(TMPDIR or tempfile.gettempdir(), "staging_pendente")
+    return os.path.join(pasta, f"{nome}-{source_hash}.parquet")
+
+
+def _descartar_pendentes_antigos(pendente: str) -> None:
+    """Apaga o que sobrou de um conteúdo anterior do mesmo destino."""
+    pasta = os.path.dirname(pendente)
+    prefixo = os.path.basename(pendente).split("-", 1)[0] + "-"
+    if not os.path.isdir(pasta):
+        return
+    for nome in os.listdir(pasta):
+        antigo = os.path.join(pasta, nome)
+        if nome.startswith(prefixo) and not antigo.startswith(pendente):
+            os.unlink(antigo)
+            log.info("Pendente de outro conteúdo descartado: %s", antigo)
+
+
+def _guardar_pendente(dst: str, pendente: str, rec: dict) -> None:
+    os.makedirs(os.path.dirname(pendente), exist_ok=True)
+    os.replace(dst, pendente)
+    campos = ("n_linhas", "n_colunas", "n_bad_lines", "column_map", "encoding")
+    # o .json é gravado por último: é ele que marca o parquet como completo
+    with open(pendente + ".json", "w", encoding="utf-8") as f:
+        json.dump({c: rec[c] for c in campos}, f, ensure_ascii=False)
+    log.error(
+        "%s: upload falhou; parquet guardado em %s. Rodar de novo só reenvia.",
+        rec["raw_key"],
+        pendente,
+    )
+
+
 # Processamento de um objeto
 def _novo_registro(execution_id: str, raw_key: str) -> dict:
     return {
@@ -762,6 +798,20 @@ def processar_objeto(  # noqa: C901
             rec["staging_key"] = staging_key
             ingested_at = datetime.now(timezone.utc).isoformat()
 
+            destino = staging_key if apply else _dryrun_key(staging_key)
+            pendente = _pendente(destino, source_hash)
+            if os.path.exists(pendente + ".json"):
+                with open(pendente + ".json", encoding="utf-8") as f:
+                    rec.update(json.load(f))
+                _verificar_parquet(pendente, rec["n_linhas"])
+                log.info("%s: só reenvia o parquet guardado em %s", key, pendente)
+                minio.upload_arquivo(pendente, destino)
+                rec["status"] = "converted" if apply else "dry_run"
+                os.unlink(pendente)
+                os.unlink(pendente + ".json")
+                return [rec]
+            _descartar_pendentes_antigos(pendente)
+
             dst = tempfile.NamedTemporaryFile(
                 delete=False, suffix=".parquet", dir=TMPDIR
             ).name
@@ -787,12 +837,12 @@ def processar_objeto(  # noqa: C901
                     encoding=enc_usado,
                 )
                 _verificar_parquet(dst, n_linhas)
-                if apply:
-                    minio.upload_arquivo(dst, staging_key)
-                    rec["status"] = "converted"
-                else:
-                    minio.upload_arquivo(dst, _dryrun_key(staging_key))
-                    rec["status"] = "dry_run"
+                try:
+                    minio.upload_arquivo(dst, destino)
+                except Exception:
+                    _guardar_pendente(dst, pendente, rec)
+                    raise
+                rec["status"] = "converted" if apply else "dry_run"
                 if n_bad > 0:
                     log.warning(
                         "%s — %d linha(s) mal-formada(s) descartada(s)", key, n_bad
@@ -844,7 +894,7 @@ def processar_objeto(  # noqa: C901
                     # mascarar_minio não reescreve Access no raw/ (mdbtools é
                     # read-only), só acusa. Mascara aqui o CSV exportado, com as
                     # mesmas regras e o mesmo HMAC, antes de virar parquet.
-                    from mascarar_minio import mascarar_csv
+                    from mascaramento.tabular import mascarar_csv
 
                     csv_mascarado = csv_tmp + ".mascarado"
                     alvos, _, alterados = mascarar_csv(
