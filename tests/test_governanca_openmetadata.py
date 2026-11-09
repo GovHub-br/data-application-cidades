@@ -1309,3 +1309,94 @@ def test_sem_resposta_em_toda_tentativa_vira_falha_da_entidade_e_segue() -> None
     assert sessao.chamadas == 2 * comum.TENTATIVAS
     assert len(om.falhas) == 2 and om.atualizados == 0
     assert om.resumo() == 1, "o sync ainda tem de terminar com erro"
+
+
+# ── linhagem lake → Bronze ──────────────────────────────────────────────────
+class _OMDaLinhagem:
+    """Responde `existe` só para os FQNs que a instância tem."""
+
+    confirmar = True
+    modo = "confirmar"
+
+    def __init__(self, existentes: set[str]) -> None:
+        self.existentes = existentes
+        self.procurados: list[str] = []
+        self.ligadas: list[str] = []
+        self.atualizados = self.conformes = 0
+        self.falhas: list[str] = []
+        self.avisos: list[str] = []
+
+    def existe(self, rota: str, fqn: str, campos: str = "") -> dict | None:
+        self.procurados.append(fqn)
+        return {"id": fqn} if fqn in self.existentes else None
+
+    def montante(self, tipo: str, ident: str) -> set[str]:
+        return set()
+
+    def ligar(self, origem: str, _tipo: str, destino: str, *_resto: object) -> None:
+        self.ligadas.append(destino)
+
+
+def _ligar(monkeypatch, modelo: str, existentes: set[str], **mapas) -> _OMDaLinhagem:
+    import sincronizar_lake as lake
+
+    monkeypatch.setattr(lake, "schema_por_modelo", lambda: mapas.get("schemas", {}))
+    monkeypatch.setattr(lake, "nomes_no_banco", lambda: mapas.get("nomes", {}))
+    arquivo = lake.Arquivo("f", "staging/x/f.parquet", "lake", "", bronze=[modelo])
+    om = _OMDaLinhagem(existentes)
+    lake.sincronizar_linhagem(
+        om, [arquivo], {("lake", "staging", "x", "f.parquet"): "c1"}, "S", "B"
+    )
+    return om
+
+
+def test_bronze_fora_do_catalogo_e_procurada_no_schema_bronze(monkeypatch) -> None:
+    """Produto novo entra no dbt antes de entrar no catálogo semântico.
+
+    Sem o schema do catálogo, o sync nem perguntava à instância e relatava
+    "não encontrado" para tabela que existia — 14 falhas da Linha Financiada e
+    do Reforma Casa Brasil numa execução só.
+    """
+    om = _ligar(monkeypatch, "bronze_nova", {"S.B.bronze.bronze_nova"})
+    assert om.ligadas == ["S.B.bronze.bronze_nova"]
+    assert not om.falhas
+
+
+def test_bronze_com_alias_e_procurada_pelo_nome_no_banco(monkeypatch) -> None:
+    om = _ligar(
+        monkeypatch,
+        "bronze_model",
+        {"S.B.bronze.bronze_apelido"},
+        nomes={"bronze_model": "bronze_apelido"},
+    )
+    assert om.procurados == ["S.B.bronze.bronze_apelido"]
+    assert not om.falhas
+
+
+def test_bronze_que_ainda_nao_existe_e_aviso_e_nao_falha(monkeypatch) -> None:
+    """Arquivo no lake sem Bronze criada pelo dbt não derruba a DAG.
+
+    Não há para onde apontar a seta, mas o catálogo não está errado: a seta
+    entra na primeira execução depois que a tabela existir. Sumir do log
+    também não pode — o aviso diz qual tabela falta.
+    """
+    om = _ligar(monkeypatch, "bronze_ausente", set())
+    assert not om.falhas and not om.ligadas
+    assert len(om.avisos) == 1 and "bronze.bronze_ausente" in om.avisos[0]
+
+
+def test_aviso_aparece_no_resumo_sem_falhar_a_execucao(capsys) -> None:
+    om = comum.ClienteOM("http://om", "", confirmar=True)
+    om.avisos.append("tabela x não está no OpenMetadata")
+    assert om.resumo() == 0
+    assert "tabela x não está no OpenMetadata" in capsys.readouterr().out
+
+
+def test_alias_so_vale_dentro_do_config() -> None:
+    import sincronizar_lake as lake
+
+    nomes = lake.nomes_no_banco()
+    modelo = "bronze_sharepoint_fgts_canal_tab_ao_1_tab_empreendimentos_posicoes"
+    assert nomes[modelo] == "bronze_sharepoint_fgts_empreendimentos_posicoes"
+    # "alias" aparece num comentário deste SQL, não no config()
+    assert "bronze_geavo_fgts_pf" not in nomes

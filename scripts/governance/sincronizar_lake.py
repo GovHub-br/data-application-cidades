@@ -50,6 +50,14 @@ CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog
 #: A macro registra a dependência do model bronze na fonte do lake. Ler a
 #: chamada é ler a declaração — não há SQL compilado nem caminho de dado aqui.
 CHAMADA_FONTE = re.compile(r"fonte_lake\(\s*['\"]([^'\"]+)['\"]")
+#: Toda pasta `bronze/` do `dbt_project.yml` declara `+schema: bronze`. É onde
+#: procurar o model que o catálogo semântico ainda não lista: produto novo entra
+#: no dbt antes de entrar no catálogo, e sem isto a linhagem dele falhava.
+SCHEMA_BRONZE = "bronze"
+#: `alias` muda o nome da tabela no banco, não o do model. Só vale dentro do
+#: `config()` — "alias" em comentário de SQL não é apelido.
+CONFIG = re.compile(r"config\((.*?)\)\s*}}", re.S)
+APELIDO = re.compile(r"\balias\s*=\s*['\"]([^'\"]+)['\"]")
 
 
 @dataclass
@@ -93,6 +101,17 @@ def carregar_arquivos() -> list[Arquivo]:
             if nome in arquivos:
                 arquivos[nome].bronze.append(sql.stem)
     return list(arquivos.values())
+
+
+def nomes_no_banco() -> dict[str, str]:
+    """Nome da tabela no banco de cada model Bronze que declara `alias`."""
+    nomes: dict[str, str] = {}
+    for sql in sorted(MODELOS.rglob("bronze/*.sql")):
+        config = CONFIG.search(sql.read_text(encoding="utf-8"))
+        apelido = APELIDO.search(config.group(1)) if config else None
+        if apelido:
+            nomes[sql.stem] = apelido.group(1)
+    return nomes
 
 
 def arvore(arquivos: list[Arquivo], declarado: dict) -> list[dict]:
@@ -368,6 +387,7 @@ def sincronizar_linhagem(
     """Liga cada parquet à tabela Bronze que o lê."""
     print("Linhagem arquivo -> Bronze")
     schemas = schema_por_modelo()
+    nomes = nomes_no_banco()
     ligadas = 0
     for arquivo in arquivos:
         origem = identificadores.get((arquivo.bucket, *arquivo.partes))
@@ -376,21 +396,24 @@ def sincronizar_linhagem(
                 print(f"  [{om.modo}] ligaria {arquivo.caminho} -> {modelo}")
                 om.atualizados += 1
                 continue
-            schema = schemas.get(modelo)
-            tabela = (
-                om.existe(
-                    "tables",
-                    f"{servico_banco}.{banco}.{schema}.{modelo}",
-                    campos="extension",
-                )
-                if schema
-                else None
+            endereco = f"{schemas.get(modelo, SCHEMA_BRONZE)}.{nomes.get(modelo, modelo)}"
+            tabela = om.existe(
+                "tables", f"{servico_banco}.{banco}.{endereco}", campos="extension"
             )
-            if not (origem and tabela):
-                faltou = "container" if not origem else "tabela Bronze"
+            if not origem:
                 om.falhas.append(
                     f"não consegui ligar {arquivo.caminho} a {modelo}: "
-                    f"{faltou} não encontrado"
+                    "container não encontrado"
+                )
+                continue
+            if not tabela:
+                # O arquivo chegou ao lake, mas o dbt ainda não criou a Bronze
+                # que o lê (o CadÚnico do Reforma é o caso). Não há para onde
+                # apontar a seta, e isso não é defeito do catálogo: avisa e
+                # liga na primeira execução depois que a tabela existir.
+                om.avisos.append(
+                    f"{arquivo.caminho} não foi ligado a {modelo}: a tabela "
+                    f"{endereco} não está no OpenMetadata (ainda não criada?)"
                 )
                 continue
             if origem in om.montante("table", tabela["id"]):
