@@ -125,6 +125,9 @@ class ClienteOM:
         self.atualizados = 0
         self.conformes = 0
         self.falhas: list[str] = []
+        #: O que o sync não conseguiu fazer por algo que ainda não existe fora
+        #: dele. Aparece no log, mas não falha a execução.
+        self.avisos: list[str] = []
         self.esperar = time.sleep  # trocável no teste
 
     def _enviar(
@@ -315,8 +318,13 @@ class ClienteOM:
     def resumo(self) -> int:
         print(
             f"\ncriados={self.criados}  atualizados={self.atualizados}  "
-            f"já conformes={self.conformes}  falhas={len(self.falhas)}"
+            f"já conformes={self.conformes}  avisos={len(self.avisos)}  "
+            f"falhas={len(self.falhas)}"
         )
+        if self.avisos:
+            print("\nAvisos (não falham a execução):")
+            for mensagem in self.avisos:
+                print(f"  - {mensagem}")
         if self.falhas:
             print("\nFalhas:")
             for mensagem in self.falhas:
