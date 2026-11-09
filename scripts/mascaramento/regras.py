@@ -34,6 +34,9 @@ P_ENDER = re.compile(
 # não-endereços que casariam por acidente: "objetivo_complemento" (rótulo de programa),
 # "ic_benef_sit_rua" e o bloco "*_rua_memb" do CadÚnico (situação de rua)
 P_ENDER_EXC = re.compile(r"objetivo|sit_rua|rua_memb|(^|_)ic(_|$)")
+# Texto livre que costuma carregar dado da pessoa: observação do entrevistador e ponto de
+# referência do domicílio no CadÚnico. Como o endereço, só é redigido com indicador de PF.
+P_TEXTO_LIVRE = re.compile(r"(^|_)obs(_|$)|observac|referencia_local")
 P_NASC = re.compile(r"nascimento|dt_?nasc|data_?nasc|dat_nasc")
 # Atributo de perfil (raça, deficiência). Não é mascarado, mas instituição não tem raça
 # nem deficiência, então a coluna prova que o arquivo trata de pessoa física.
@@ -41,7 +44,7 @@ P_SENSIVEL = re.compile(r"cor_raca|(^|_)raca(_|$)|etnia|deficiencia|(^|_)pcd(_|$
 
 # Papéis que sempre denotam pessoa física. Mascarados incondicionalmente.
 P_NOME_PESSOA = re.compile(
-    r"comprador|conjuge|dependente|completo|(^|_)no_pessoa$|apelido_pessoa"
+    r"comprador|conjuge|dependente|completo|(^|_)no_pessoa$|apelido_pessoa|entrevistador"
 )
 # Papéis que tanto podem ser pessoa quanto instituição: no FAR o "proponente" é a
 # prefeitura. Só viram PII com indicador forte no arquivo.
@@ -101,6 +104,7 @@ _ACAO_POR_CATEGORIA = {
     "nome": "redact",
     "cep": "redact",
     "endereco": "redact",
+    "texto_livre": "redact",
 }
 
 
@@ -180,6 +184,8 @@ def _categoria(norm: str) -> Optional[str]:
     for padrao, categoria in _CATEGORIAS_DIRETAS:
         if padrao.search(norm):
             return categoria
+    if P_TEXTO_LIVRE.search(norm):
+        return "texto_livre"
     if not P_NOME_EXC.search(norm) and not P_CODIGO.search(norm):
         if P_NOME_PESSOA.search(norm):
             return "nome"
@@ -243,7 +249,7 @@ def classificar(  # noqa: C901
             if not has_pf:
                 continue
             cat, action = "nome", "redact"
-        elif cat in ("cep", "endereco"):
+        elif cat in ("cep", "endereco", "texto_livre"):
             # basta o indicador fraco: lista de mutuários sem CPF ainda é endereço
             # residencial. Os papéis que davam falso positivo hoje são "nome_ambiguo".
             if not has_pf:  # PJ/empreendimento/obra pública -> preserva
