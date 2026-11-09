@@ -29,6 +29,8 @@ models:
           - not_null
       - name: municipio_uf
         description: Município/UF do imóvel, para filtro e ranking.
+      - name: faixa_etaria
+        description: Faixa de idade do titular na assinatura. A idade exata fica na prata.
       - name: situacao_contrato
         description: Situação do contrato.
         tests:
@@ -132,6 +134,8 @@ models:
         description: Contratos de famílias do Novo MCMV já assinados no empreendimento.
       - name: qt_contratos_familias_inadimplentes
         description: Contratos de famílias inadimplentes no empreendimento.
+      - name: renda_media_familias
+        description: Renda familiar comprovada média das famílias com contrato, em R$ (renda > 0).
 
   - name: ouro_far_contrapartida
     description: >

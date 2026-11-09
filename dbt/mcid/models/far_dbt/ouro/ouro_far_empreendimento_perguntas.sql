@@ -37,7 +37,8 @@ with
             apf,
             count(*) as qt_contratos_familias,
             count(*) filter (where ic_ativo) as qt_contratos_ativos,
-            count(*) filter (where ic_inadimplente) as qt_contratos_inadimplentes
+            count(*) filter (where ic_inadimplente) as qt_contratos_inadimplentes,
+            round(avg(renda_familiar) filter (where renda_familiar > 0), 2) as renda_media_familias
         from {{ ref("prata_far_contrato_pf") }}
         where geracao = 'Novo MCMV'
         group by apf
@@ -115,7 +116,8 @@ with
             )::int as meses_sem_avanco,
             coalesce(f.qt_contratos_familias, 0) as qt_contratos_familias,
             coalesce(f.qt_contratos_ativos, 0) as qt_contratos_familias_ativos,
-            coalesce(f.qt_contratos_inadimplentes, 0) as qt_contratos_familias_inadimplentes
+            coalesce(f.qt_contratos_inadimplentes, 0) as qt_contratos_familias_inadimplentes,
+            f.renda_media_familias
         from {{ ref("prata_far_empreendimento") }} e
         left join {{ ref("prata_far_empreendimento_natureza") }} n on n.apf = e.apf
         left join {{ ref("prata_far_obra_mensal") }} o on o.apf = e.apf

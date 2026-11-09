@@ -1167,6 +1167,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     pastas: Optional[list] = None,
     preview: bool = False,
     reingest_deleted: bool = False,
+    arquivos: Optional[list] = None,
 ) -> Tuple[int, int]:
     """Ingere os arquivos do SFTP para raw/ no MinIO. Retorna (sucesso, erro).
 
@@ -1175,6 +1176,10 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
 
     reingest_deleted=False (padrão): arquivo já ingerido nunca reingere, mesmo que o
     objeto tenha sumido do MinIO. True: reingere só esses, sem duplicar os presentes.
+
+    arquivos: nomes exatos de arquivo no SFTP (sem pasta) a processar; os demais são
+    ignorados. Junto com reingest_deleted, reingere só os escolhidos, sem trazer de
+    volta o que foi apagado do lake de propósito.
     """
     pastas_filtro = _resolver_pastas(pastas)
 
@@ -1244,6 +1249,16 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
             arquivos_pasta = list(_listar_arquivos(sftp_cli, pasta))
             arquivos_pasta.sort(key=lambda x: x[1])
             todos_arquivos.extend(arquivos_pasta)
+
+        if arquivos:
+            escolhidos = set(arquivos)
+            todos_arquivos = [
+                a for a in todos_arquivos if a[0].rsplit("/", 1)[-1] in escolhidos
+            ]
+            achados = {a[0].rsplit("/", 1)[-1] for a in todos_arquivos}
+            for nome in sorted(escolhidos - achados):
+                log.warning("Arquivo pedido não encontrado no SFTP: %s", nome)
+                total_erro += 1
 
         total = len(todos_arquivos)
         total_size = sum(t for _, t, _ in todos_arquivos)
@@ -1353,8 +1368,21 @@ def main() -> None:
         "(não duplica). Sem esta flag, "
         "o padrão nunca reingere um arquivo já ingerido, mesmo deletado.",
     )
+    parser.add_argument(
+        "--arquivo",
+        metavar="NOME",
+        help="Processa só este arquivo (nome exato no SFTP, sem pasta). Repita para "
+        "vários. Com --reingest-deleted, reingere só os escolhidos.",
+        action="append",
+        dest="arquivos",
+    )
     args = parser.parse_args()
-    run(pastas=args.pastas, preview=args.preview, reingest_deleted=args.reingest_deleted)
+    run(
+        pastas=args.pastas,
+        preview=args.preview,
+        reingest_deleted=args.reingest_deleted,
+        arquivos=args.arquivos,
+    )
 
 
 if __name__ == "__main__":

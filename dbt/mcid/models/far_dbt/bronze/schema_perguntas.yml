@@ -10,7 +10,7 @@ models:
       Contratos das famílias do Novo MCMV FAR (MONT_CONT_PF_FAR, layout 015): perfil do
       beneficiário, instrumento, situação, inadimplência, sinistros e retomada. Retrato
       completo por remessa; a tabela guarda o mais recente. CPF/NIS em HMAC, nome e
-      nascimento redigidos.
+      endereço redigidos.
     tests:
       - sem_drift_de_colunas:
           name: sem_drift_de_colunas_bronze_sftp_mont_cont_pf_far
@@ -127,6 +127,11 @@ models:
               - _source_file
               - _ingested_at
               - _source_hash
+              - ic_mulher_titular
+              - co_demanda_beneficiario
+              - co_descump_contratual
+              - dt_sinistro_mip
+              - dt_sinistro_dfi
               - filename
     columns:
       - name: nu_contrato
@@ -142,8 +147,8 @@ models:
   - name: bronze_sftp_int039_far_caixa_pf
     description: >
       Carteira de contratos PF do FAR na CAIXA (INT039), de 2009 em diante. Retrato
-      completo por remessa; a tabela guarda o mais recente. CPF em HMAC, nome, endereço
-      e nascimento redigidos.
+      completo por remessa; a tabela guarda o mais recente. CPF em HMAC, nome e
+      endereço redigidos.
     tests:
       - sem_drift_de_colunas:
           name: sem_drift_de_colunas_bronze_sftp_int039_far_caixa_pf
@@ -204,8 +209,7 @@ models:
   - name: bronze_sftp_int021_far_bb_pf
     description: >
       Carteira de contratos PF do FAR no Banco do Brasil (INT021). Retrato completo por
-      remessa; a tabela guarda o mais recente. CPF em HMAC, nome, endereço e nascimento
-      redigidos.
+      remessa; a tabela guarda o mais recente. CPF em HMAC, nome e endereço redigidos.
     tests:
       - sem_drift_de_colunas:
           name: sem_drift_de_colunas_bronze_sftp_int021_far_bb_pf

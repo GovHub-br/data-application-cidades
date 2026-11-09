@@ -20,6 +20,7 @@ Duas interfaces convivem aqui, com públicos distintos:
 """
 
 import hashlib
+import io
 import json
 import logging
 import os
@@ -155,6 +156,183 @@ class _HashingReader:
         return self._hasher.hexdigest()
 
 
+def _codigo_erro(exc: Exception) -> str:
+    # erros de rede do botocore têm `response = None`
+    resposta = getattr(exc, "response", None) or {}
+    return str(resposta.get("Error", {}).get("Code", ""))
+
+
+def _erro_definitivo(exc: BaseException) -> bool:
+    """Erro 4xx do S3 (fora SlowDown/RequestTimeout): retentar não adianta."""
+    # o boto3 às vezes embrulha o ClientError em S3UploadFailedError
+    for erro in (exc, exc.__context__):
+        resposta = getattr(erro, "response", None)
+        if resposta:
+            status = resposta.get("ResponseMetadata", {}).get("HTTPStatusCode") or 0
+            codigo = _codigo_erro(erro)
+            return status < 500 and codigo not in ("SlowDown", "RequestTimeout")
+    return False
+
+
+class LeitorObjeto(io.RawIOBase):
+    """Lê um objeto, ou o intervalo [inicio, fim), sem passar pelo disco.
+
+    Retoma por Range se a conexão cair. O ETag fixa a versão lida: se o objeto mudar no
+    meio, a leitura falha.
+    """
+
+    def __init__(
+        self,
+        s3: Any,
+        bucket: str,
+        key: str,
+        tentativas: int = 20,
+        inicio: int = 0,
+        fim: Optional[int] = None,
+        etag: Optional[str] = None,
+    ) -> None:
+        head = s3.head_object(Bucket=bucket, Key=key)
+        self._inicio = inicio
+        self._fim = int(head["ContentLength"]) if fim is None else fim
+        self.tamanho = self._fim - inicio
+        self._s3, self._bucket, self._key = s3, bucket, key
+        self._etag = etag or head["ETag"]
+        self._tentativas = tentativas
+        self._pos = 0
+        self._corpo: Any = None
+        self.md5 = hashlib.md5()
+
+    def readable(self) -> bool:
+        return True
+
+    def readinto(self, destino: Any) -> int:
+        if self._pos >= self.tamanho:
+            return 0
+        falhas = 0
+        while True:
+            try:
+                if self._corpo is None:
+                    self._corpo = self._s3.get_object(
+                        Bucket=self._bucket,
+                        Key=self._key,
+                        Range=f"bytes={self._inicio + self._pos}-{self._fim - 1}",
+                        IfMatch=self._etag,
+                    )["Body"]
+                dados = self._corpo.read(min(len(destino), self.tamanho - self._pos))
+                if not dados:
+                    raise IOError(
+                        f"conexão fechada em {self._pos}/{self.tamanho} bytes"
+                    )
+                break
+            except Exception as exc:
+                self._corpo = None
+                falhas += 1
+                if _codigo_erro(exc) in ("PreconditionFailed", "412") or (
+                    falhas >= self._tentativas
+                ):
+                    raise
+                logging.warning(
+                    "Leitura de %s interrompida em %d/%d bytes (%s); retomando (%d/%d)",
+                    self._key,
+                    self._pos,
+                    self.tamanho,
+                    exc,
+                    falhas,
+                    self._tentativas,
+                )
+                time.sleep(min(5 * falhas, 60))
+        n = len(dados)
+        destino[:n] = dados
+        self._pos += n
+        self.md5.update(dados)
+        return n
+
+
+class EscritorMultipart(io.RawIOBase):
+    """Sobe o que é escrito em partes de um multipart upload.
+
+    O objeto só muda em `concluir()`; `abortar()` descarta tudo e o original fica.
+    """
+
+    def __init__(
+        self, s3: Any, bucket: str, key: str, tamanho_parte: int, tentativas: int = 5
+    ) -> None:
+        self._s3, self._bucket, self._key = s3, bucket, key
+        self._tamanho_parte = tamanho_parte
+        self._tentativas = tentativas
+        self._upload_id = s3.create_multipart_upload(Bucket=bucket, Key=key)["UploadId"]
+        self._buf = bytearray()
+        self._partes: List[dict] = []
+        self._abortado = False
+        self.enviado = 0
+        self.md5 = hashlib.md5()
+
+    def writable(self) -> bool:
+        return True
+
+    def write(self, dados: Any) -> int:
+        # o flush dos wrappers no garbage collector não pode reenviar depois do abort
+        if self._abortado:
+            raise IOError(f"multipart de {self._key} já abortado")
+        self._buf += dados
+        self.md5.update(dados)
+        while len(self._buf) >= self._tamanho_parte:
+            self._enviar(bytes(self._buf[: self._tamanho_parte]))
+            del self._buf[: self._tamanho_parte]
+        return len(dados)
+
+    def _enviar(self, dados: bytes) -> None:
+        numero = len(self._partes) + 1
+        for tentativa in range(1, self._tentativas + 1):
+            try:
+                resp = self._s3.upload_part(
+                    Bucket=self._bucket,
+                    Key=self._key,
+                    UploadId=self._upload_id,
+                    PartNumber=numero,
+                    Body=dados,
+                )
+                break
+            except Exception as exc:
+                # upload sumiu (abortado por fora): nova tentativa não resolve
+                if _codigo_erro(exc) == "NoSuchUpload" or tentativa == self._tentativas:
+                    raise
+                logging.warning(
+                    "Parte %d de %s falhou (%s); tentativa %d/%d",
+                    numero,
+                    self._key,
+                    exc,
+                    tentativa,
+                    self._tentativas,
+                )
+                time.sleep(15 * tentativa)
+        self._partes.append({"ETag": resp["ETag"], "PartNumber": numero})
+        self.enviado += len(dados)
+        logging.info(
+            "Parte %d de %s enviada (%.2f GiB)", numero, self._key, self.enviado / 2**30
+        )
+
+    def concluir(self) -> None:
+        if self._buf or not self._partes:
+            self._enviar(bytes(self._buf))
+            self._buf.clear()
+        self._s3.complete_multipart_upload(
+            Bucket=self._bucket,
+            Key=self._key,
+            UploadId=self._upload_id,
+            MultipartUpload={"Parts": self._partes},
+        )
+
+    def abortar(self) -> None:
+        self._abortado = True
+        try:
+            self._s3.abort_multipart_upload(
+                Bucket=self._bucket, Key=self._key, UploadId=self._upload_id
+            )
+        except Exception as exc:
+            logging.warning("Não abortou o multipart de %s: %s", self._key, exc)
+
+
 class ClienteMinio:
     """Cliente de I/O do MinIO (S3) usado pelos estágios do pipeline do data lake.
 
@@ -247,10 +425,10 @@ class ClienteMinio:
             for obj in page.get("Contents", []):
                 yield obj["Key"], obj["Size"]
 
-    def sample_bytes(self, key: str, n: int = 65536) -> bytes:
-        """Primeiros n bytes do objeto (HTTP Range) — p/ detecção de encoding/dialeto."""
+    def sample_bytes(self, key: str, n: int = 65536, inicio: int = 0) -> bytes:
+        """n bytes do objeto a partir de `inicio` (HTTP Range)."""
         return self.s3.get_object(
-            Bucket=self.bucket, Key=key, Range=f"bytes=0-{n - 1}"
+            Bucket=self.bucket, Key=key, Range=f"bytes={inicio}-{inicio + n - 1}"
         )["Body"].read()
 
     def baixar_para_tempfile(
@@ -265,19 +443,25 @@ class ClienteMinio:
         pasta = tmpdir or tempfile.gettempdir()
         os.makedirs(pasta, exist_ok=True)
         identificador = hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
-        path = os.path.join(pasta, f"minio-download-{identificador}{suffix}.part")
+        final = os.path.join(pasta, f"minio-download-{identificador}{suffix}")
+        path = final + ".part"
         tamanho_remoto = int(
             self.s3.head_object(Bucket=self.bucket, Key=key)["ContentLength"]
         )
 
+        if os.path.exists(final):
+            os.unlink(final)
         if os.path.exists(path) and os.path.getsize(path) > tamanho_remoto:
             os.unlink(path)
+        open(path, "ab").close()  # objeto vazio também precisa do arquivo
 
         falhas = 0
         while True:
             inicio = os.path.getsize(path) if os.path.exists(path) else 0
             if inicio == tamanho_remoto:
-                return path
+                # o leitor decide o formato pela extensão: o openpyxl recusa `.part`
+                os.replace(path, final)
+                return final
             try:
                 resposta = self.s3.get_object(
                     Bucket=self.bucket, Key=key, Range=f"bytes={inicio}-"
@@ -300,17 +484,77 @@ class ClienteMinio:
                     raise
                 time.sleep(min(5 * falhas, 60))
 
+    def abrir_leitura(
+        self,
+        key: str,
+        inicio: int = 0,
+        fim: Optional[int] = None,
+        etag: Optional[str] = None,
+    ) -> LeitorObjeto:
+        """Stream de leitura do objeto, com md5 do que foi lido em `.md5`."""
+        return LeitorObjeto(self.s3, self.bucket, key, inicio=inicio, fim=fim, etag=etag)
+
     # Escrita
+    def abrir_escrita(self, key: str, tamanho_estimado: int = 0) -> EscritorMultipart:
+        """Stream de escrita em multipart; nada muda em `key` até `concluir()`."""
+        # 64 MB por parte, crescendo para não passar das 10.000 partes do S3
+        tamanho_parte = max(64 * 1024 * 1024, -(-tamanho_estimado // 9000))
+        return EscritorMultipart(self.s3, self.bucket, key, tamanho_parte)
+
+    def juntar_objetos(self, chaves: List[str], destino: str) -> None:
+        """Concatena os objetos em `destino` no próprio MinIO, sem baixar nada.
+
+        Cada origem vira uma parte de multipart: até 5 GiB, e todas menos a última com
+        pelo menos 5 MiB.
+        """
+        upload_id = self.s3.create_multipart_upload(Bucket=self.bucket, Key=destino)[
+            "UploadId"
+        ]
+        try:
+            partes = []
+            for numero, chave in enumerate(chaves, 1):
+                resp = self.s3.upload_part_copy(
+                    Bucket=self.bucket,
+                    Key=destino,
+                    UploadId=upload_id,
+                    PartNumber=numero,
+                    CopySource={"Bucket": self.bucket, "Key": chave},
+                )
+                partes.append(
+                    {"ETag": resp["CopyPartResult"]["ETag"], "PartNumber": numero}
+                )
+            self.s3.complete_multipart_upload(
+                Bucket=self.bucket,
+                Key=destino,
+                UploadId=upload_id,
+                MultipartUpload={"Parts": partes},
+            )
+        except BaseException:
+            self.s3.abort_multipart_upload(
+                Bucket=self.bucket, Key=destino, UploadId=upload_id
+            )
+            raise
+
+    def apagar_prefixo(self, prefix: str) -> int:
+        """Apaga todos os objetos sob `prefix`. Retorna quantos apagou."""
+        chaves = [k for k, _ in self.listar_objetos(prefix)]
+        for chave in chaves:
+            self.s3.delete_object(Bucket=self.bucket, Key=chave)
+        return len(chaves)
+
     def upload_arquivo(
         self,
         path: str,
         key: str,
-        tentativas: int = 3,
+        tentativas: int = 10,
         transfer_config: Optional[TransferConfig] = None,
     ) -> str:
-        """Sobe um arquivo local para `key`, com retry e limpeza de multipart no meio."""
+        """Sobe um arquivo local para `key`, com retry e limpeza de multipart no meio.
+
+        A espera dobra a cada falha (30 s até 5 min): o default aguenta ~30 min de
+        MinIO fora. Erro definitivo (permissão, bucket inexistente) não é retentado.
+        """
         config = transfer_config or self._DEFAULT_TRANSFER
-        import time
 
         for tentativa in range(tentativas):
             try:
@@ -318,9 +562,10 @@ class ClienteMinio:
                     self.s3.upload_fileobj(f, self.bucket, key, Config=config)
                 return key
             except Exception as e:
-                if tentativa == tentativas - 1:
+                if tentativa == tentativas - 1 or _erro_definitivo(e):
+                    self.abortar_multiparts_chave(key)
                     raise
-                espera = 15 * (tentativa + 1)
+                espera = min(30 * 2**tentativa, 300)
                 logging.warning(
                     f"[cliente_minio.py] Upload falhou (tentativa {tentativa + 1}/"
                     f"{tentativas}): {e}. Aguardando {espera}s..."

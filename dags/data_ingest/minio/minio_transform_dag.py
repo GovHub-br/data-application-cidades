@@ -79,7 +79,7 @@ def minio_transform_dag() -> None:
     def raw_para_staging() -> None:
         """Converte os objetos de raw/ para Parquet full-text em staging/.
 
-        Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em raw_para_staging.py):
+        Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em conversao/config.py):
         já tem tratamento próprio de um membro da equipe para ciência de dados, e gerar
         parquet full-text por cima seria trabalho duplicado. Continua sendo mascarada
         normalmente pela task anterior.

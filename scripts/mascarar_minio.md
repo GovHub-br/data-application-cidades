@@ -19,7 +19,6 @@ schema `sftp` do Postgres.
 | **CPF** | HMAC-SHA256 determinístico | `NU_CPF_CGC_MUTUARIO`, `NU_CPF_BENEFICIARIO`, `txt_cpf` |
 | **NIS / PIS / PASEP / NIT** | HMAC-SHA256 determinístico | `NU_PIS`, `NU_PIS_PASEP`, `NU_NIS` |
 | **Nome de PF** | Redação (`***`) | `NO_MUTUARIO`, `NO_BENEFICIARIO`, `nomeMutuario` |
-| **Data de nascimento** | Redação (`***`) | `DT_NASCIMENTO`, `DT_NASCIMENTO_MUTUARIO` |
 | **Endereço** | Redação (`***`) — *condicional* | `NO_LOGRADOURO_IMOVEL`, `NO_BAIRRO_IMOVEL`, `NO_COMPLEMENTO_IMOVEL` |
 | **CEP** | Redação (`***`) — *condicional* | `ED_CEP_IMOVEL_GARANTIA`, `NU_CEP`, `CO_CEP_IMOVEL` |
 
@@ -35,11 +34,11 @@ schema `sftp` do Postgres.
 - **Não é mascarado**: CNPJ/CGC (é PJ), `razao_social_*`, `nome_empreendimento`,
   `email_entidade`, município/UF (geografia grossa), e colunas de papel que não são nome
   (`CO_SEXO_BENEFICIARIO`, `VR_PARCELA_MENSAL_BENEFICIARIO`, flags como `TITULAR-COM-PDC`).
-- **Códigos analíticos sensíveis preservados**: `CO_RACA_COR_PESSOA` e
-  `CO_DEFICIENCIA_MEMB` permanecem somente nas camadas restritas, associados a CPF/NIS
-  pseudonimizados. São necessários para análises de equidade e acessibilidade; a camada
-  ouro deve publicar apenas agregados e suprimir grupos pequenos. Nomes/textos livres de
-  raça, etnia ou deficiência continuam redigidos.
+- **Atributos de perfil preservados**: data de nascimento, sexo, raça/cor, etnia,
+  deficiência e PCD (`DT_NASCIMENTO`, `CO_RACA_COR_PESSOA`, `IC_BENEF_PCD`...) não
+  identificam a pessoa sozinhos e respondem perguntas de perfil dos beneficiários. Não são
+  mascarados, mas contam como indicador de PF para a regra de CEP/endereço. A camada ouro
+  publica só agregados.
 - **Valores vazios continuam vazios** (não viram token nem `***`).
 
 ---
@@ -50,16 +49,57 @@ Para cada objeto em `raw/`:
 
 1. **Amostra** dos primeiros 64 KB (via HTTP Range) → detecta **encoding** (utf-8 ou cp1252)
    e **delimitador/dialeto** (`;`, `|`, `\t`, `,`) — via `lake_utils.py`.
-2. **Download** para um tempfile (em `MASKING_TMPDIR`, não em `/tmp`).
+2. **Leitura**:
+   - **CSV/TXT**: direto do MinIO, em streaming, sem tocar o disco. A saída sobe em
+     multipart para a mesma key; o objeto só é trocado depois da verificação, e qualquer
+     falha aborta o upload e mantém o original.
+   - **XLSX/MDB**: download para um tempfile (em `MASKING_TMPDIR`, não em `/tmp`).
 3. **Mascaramento**:
-   - **CSV/TXT**: streaming linha a linha (memória constante mesmo em arquivos de GBs).
+   - **CSV/TXT**: linha a linha (memória constante mesmo em arquivos de dezenas de GB).
    - **XLSX**: pré-scan barato do header em modo `read_only`; só carrega o workbook completo
      na RAM se houver PII a mascarar.
    - **MDB/ACCDB**: **somente verificação** — ver "Bases Access (.mdb)" abaixo.
-4. **Verificação round-trip** (CSV/TXT): confere que nº de linhas e nº de colunas do header
-   foram preservados. Se divergir → status `error`, **não sobrescreve**.
+4. **Verificação round-trip** (CSV/TXT): a saída é reparseada em lotes de 10 mil linhas,
+   que precisam voltar idênticas ao que foi escrito. Se divergir → status `error`, **não
+   sobrescreve**.
 5. **Sobrescreve** o objeto em `raw/` (só com `--apply`) e marca a tag `masked=true`.
 6. **Auditoria**: registra o resultado no parquet e na tabela de controle do Postgres.
+
+### CSV/TXT grande: modo paralelo
+
+O mascaramento de CSV/TXT é limitado por CPU, e um processo Python usa um núcleo só. Arquivo
+de 1 GB ou mais, **sem aspas** e com PII é dividido em pedaços de ~2 GB, cortados logo após
+um `\n`, e cada pedaço é mascarado num processo:
+
+- Sem aspas, todo `\n` fecha um registro, então qualquer fim de linha é um corte seguro.
+  Com aspas um campo pode conter quebra de linha; por isso, se algum pedaço tiver uma aspa,
+  tudo é descartado e o arquivo segue pelo modo sequencial.
+- Cada pedaço vira um objeto em `tmp/masking/`, com um `.json` ao lado marcando que está
+  completo. No fim, o MinIO concatena os pedaços na key original sem baixar nada
+  (`upload_part_copy`) e os temporários são apagados.
+- Se a execução cair, os pedaços prontos ficam: rodar de novo refaz só os que faltam.
+- Durante a junção o bucket guarda original, pedaços e objeto novo ao mesmo tempo: são uns
+  2x o tamanho do arquivo a mais por alguns minutos.
+
+No CadÚnico pessoa (37 GB) o modo sequencial levaria ~9 h numa VM de 6 núcleos; o paralelo
+levou 1h40.
+
+### Organização do código
+
+`mascarar_minio.py` percorre o `raw/`, decide o que fazer com cada objeto e registra o
+resultado. O trabalho mora em `scripts/mascaramento/`:
+
+| Módulo | O que tem |
+|---|---|
+| `config.py` | Variáveis de ambiente, limites e configuração do log |
+| `regras.py` | Padrões das colunas sensíveis, `classificar()`, HMAC e redação |
+| `tabular.py` | CSV/TXT linha a linha: em disco (`mascarar_csv`) e direto do MinIO |
+| `paralelo.py` | O modo paralelo acima |
+| `xlsx.py` | Reescrita das células sensíveis direto no XML do XLSX |
+| `mdb.py` | Verificação do Access |
+| `auditoria.py` | `lake._masking_log` e o parquet de auditoria |
+
+Para mudar **o que** é mascarado, mexa em `regras.py`; o resto não muda.
 
 ### Transporte byte-preserving (por que não corrompe acentos)
 
@@ -111,11 +151,14 @@ evita o **duplo-HMAC** (aplicar HMAC sobre um token já gerado). Use `--force` p
 | `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET` | sim | Conexão MinIO |
 | `DB_DW_HOST_MCID`, `DB_DW_PORT_MCID`, `DB_DW_USER_MCID`, `DB_DW_PASSWORD_MCID`, `DB_DW_DBNAME_MCID` | sim | Postgres (tabela de controle) |
 | `MASKING_HMAC_SECRET` | **sim** | Segredo do HMAC. Sem ela o script recusa rodar. |
-| `MASKING_TMPDIR` | recomendado | Dir de temporários. **Não use `/tmp`** se for tmpfs (RAM). Precisa ~5 GB livres p/ os arquivos de ~2 GB. |
+| `MASKING_TMPDIR` | recomendado | Dir de temporários do XLSX/MDB (CSV/TXT não usa disco). **Não use `/tmp`** se for tmpfs (RAM). |
 | `LAKE_SCHEMA` | não (default `sftp`) | Schema da tabela de controle |
 | `MASKING_PREFIX` | não (default `raw/`) | Prefixo a varrer |
 | `MASKING_TOKEN_LEN` | não (default `16`) | Tamanho do token HMAC (hex chars) |
 | `MASKING_REDACTION` | não (default `***`) | Valor da redação |
+| `MASKING_PROCESSOS` | não (default núcleos − 1) | Processos do modo paralelo; `1` desliga |
+| `MASKING_PARALELO_MIN_MB` | não (default `1024`) | Tamanho mínimo para usar o modo paralelo |
+| `MASKING_PEDACO_MB` | não (default `2048`) | Tamanho de cada pedaço (máx. 5 GB, limite do S3) |
 
 > ⚠️ **`MASKING_HMAC_SECRET` nunca deve ser alterado depois do primeiro mascaramento.**
 > Trocar o segredo muda todos os tokens e quebra os joins entre execuções. Ele também é o
@@ -202,7 +245,7 @@ Sobra um:
 | `CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_M202112.TXT` | col 2 valida como CPF em 298/300; col 3 como NIS em 248/248 |
 
 Com um arquivo e um layout conhecido, a solução não é heurística — é declaração. O mapa
-`COLUNAS_POR_POSICAO` dá as posições à mão, por key exata:
+`COLUNAS_POR_POSICAO` (em `mascaramento/regras.py`) dá as posições à mão, por key exata:
 
 ```python
 COLUNAS_POR_POSICAO = {
@@ -211,14 +254,14 @@ COLUNAS_POR_POSICAO = {
 ```
 
 Funciona porque o passo que reescreve **já é posicional** (`idx_action` em
-`_mascarar_tabular`); a busca por nome existe só para produzir esses índices. O override os
+`_mascarar_fluxo`, de `mascaramento/tabular.py`); a busca por nome existe só para produzir esses índices. O override os
 fornece direto. Mesmo HMAC, mesma auditoria, mesma tag de idempotência — e o token de um CPF
 é idêntico ao que o caminho por nome geraria, então o join com as outras bases continua de pé.
 
 Estar no mapa também significa **"este arquivo não tem linha de cabeçalho"**: nenhuma linha é
 consumida antes do laço, então a linha 0 é mascarada como dado. Sem isso o CPF da primeira
-linha vazaria mesmo com os índices certos. O round-trip recebe `sem_header=True` para contar
-essa linha e não acusar divergência.
+linha vazaria mesmo com os índices certos. O round-trip compara linha a linha, então essa
+linha entra na conferência como qualquer outra.
 
 Nada é inferido em tempo de execução: arquivo fora do mapa segue exatamente o caminho de hoje.
 
@@ -270,9 +313,9 @@ determinístico, mantém o mesmo token para o mesmo CPF entre bases, preservando
 - **Sempre rode dry-run antes do `--apply`** e confira a auditoria + amostras.
 - **Fatiar o `--apply`** por formato/tamanho (menores primeiro); se algo falhar no meio,
   o que já foi feito não se perde (idempotência por tag).
-- Em máquina com **pouca RAM**, garanta `MASKING_TMPDIR` num disco com espaço e rode os
-  lotes grandes (`txt` sem `--max-size-mb`) fora de horário de uso pesado. O footprint de
-  RAM do script é pequeno (streaming), mas os arquivos grandes têm I/O intenso.
+- Garanta `MASKING_TMPDIR` num disco com espaço para os XLSX. CSV/TXT não usa disco e
+  ocupa pouca RAM (partes de 64 MB), mas os arquivos grandes têm rede intensa: rode-os
+  fora de horário de uso pesado.
 - `--apply` é **destrutivo e irreversível** (os bytes originais com PII são perdidos).
   A verificação round-trip roda antes de cada sobrescrita como salvaguarda.
 ```

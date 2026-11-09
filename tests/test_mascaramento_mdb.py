@@ -1,14 +1,15 @@
 """O .mdb chega à staging mascarado, mesmo ficando com PII no raw/.
 
-O mascarar_minio não reescreve Access (mdbtools é read-only); o raw_para_staging
+O mascaramento não reescreve Access (mdbtools é read-only); o raw_para_staging
 passa o CSV exportado de cada tabela por `mascarar_csv()` antes do parquet. O
 `CCI_CCA` do GEAVO chegou ao banco com data de nascimento e CEP reais por falta
 disso.
 """
 
 import csv
-import importlib.util
+import importlib
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -33,13 +34,10 @@ def _carregar_modulo(monkeypatch, segredo: str = "segredo-de-teste"):
             monkeypatch.setenv(key, value)
     monkeypatch.setenv("MASKING_HMAC_SECRET", segredo)
     monkeypatch.syspath_prepend(str(SCRIPTS))
-    spec = importlib.util.spec_from_file_location(
-        "mascarar_minio_mdb_test", SCRIPTS / "mascarar_minio.py"
-    )
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+    # o pacote lê as variáveis de ambiente no import: cada teste parte de um import novo
+    for nome in [m for m in sys.modules if m.split(".")[0] == "mascaramento"]:
+        del sys.modules[nome]
+    return importlib.import_module("mascaramento.tabular")
 
 
 def _escrever(path: Path, linhas: list[list[str]]) -> None:
@@ -52,7 +50,7 @@ def _ler(path: Path) -> list[list[str]]:
         return list(csv.reader(f))
 
 
-def test_cci_analitico_sai_sem_nascimento_nem_cep(tmp_path, monkeypatch):
+def test_cci_analitico_preserva_nascimento_e_mascara_cep(tmp_path, monkeypatch):
     modulo = _carregar_modulo(monkeypatch)
     origem, destino = tmp_path / "cci.csv", tmp_path / "cci.mascarado.csv"
     _escrever(
@@ -73,12 +71,18 @@ def test_cci_analitico_sai_sem_nascimento_nem_cep(tmp_path, monkeypatch):
     alvos, total, alterados = modulo.mascarar_csv(str(origem), str(destino), ",", "utf-8")
 
     acoes = {a["column"]: a["action"] for a in alvos}
-    assert acoes == {"DT_Nascimento": "redact", "IM_CEP": "redact"}
+    # a data de nascimento fica, mas prova que o CEP é de pessoa física
+    assert acoes == {"IM_CEP": "redact"}
     assert (total, alterados) == (2, 2)
     linhas = _ler(destino)
     assert linhas[0] == _ler(origem)[0]
-    assert linhas[1] == ["202601", "Minha Casa Minha Vida", "***", "***", "150000,00"]
-    # vazio continua vazio
+    assert linhas[1] == [
+        "202601",
+        "Minha Casa Minha Vida",
+        "03/02/1985",
+        "***",
+        "150000,00",
+    ]
     assert linhas[2] == ["202602", "Minha Casa Minha Vida", "", "***", "98000,00"]
 
 
@@ -90,7 +94,9 @@ def test_cpf_recebe_o_mesmo_token_do_raw(tmp_path, monkeypatch):
     modulo.mascarar_csv(str(origem), str(destino), ",", "utf-8")
 
     token = _ler(destino)[1][0]
-    assert token == modulo._hmac_token("123.456.789-09")
+    assert token == importlib.import_module("mascaramento.regras")._hmac_token(
+        "123.456.789-09"
+    )
     assert len(token) == 16 and "123" not in token
 
 
@@ -117,6 +123,6 @@ def test_tabela_sem_pii_passa_igual(tmp_path, monkeypatch):
 
 def test_raw_para_staging_mascara_o_mdb_antes_do_parquet():
     """A ordem importa: o parquet é escrito do CSV, então a máscara vem antes."""
-    codigo = (SCRIPTS / "raw_para_staging.py").read_text(encoding="utf-8")
+    codigo = (SCRIPTS / "conversao" / "processamento.py").read_text(encoding="utf-8")
     ramo_mdb = codigo[codigo.index("if ext in SUPPORTED_MDB:") :]
     assert ramo_mdb.index("mascarar_csv(") < ramo_mdb.index("_converter_tabular(")
