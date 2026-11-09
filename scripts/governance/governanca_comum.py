@@ -22,6 +22,7 @@ from __future__ import annotations
 import html
 import os
 import pathlib
+import time
 from typing import Any
 from urllib.parse import quote
 
@@ -36,6 +37,17 @@ GOV = RAIZ / "dbt" / "mcid" / "governance"
 VARS_DE_NOME = ("OPENMETADATA_DATABASE_SERVICE", "OPENMETADATA_DATABASE_NAME")
 #: Variáveis de acesso. Só fazem falta quando se vai falar com a instância.
 VARS_DE_ACESSO = ("OPENMETADATA_URL", "OPENMETADATA_JWT_TOKEN")
+
+#: A instância de produção congela por minutos, de forma intermitente, e volta
+#: sozinha: nesse intervalo nenhuma requisição termina, nem as leves, e a
+#: escrita é aplicada mas a resposta não chega. Antes, um único congelamento
+#: abortava o sync inteiro e deixava sem governança todo produto que vinha
+#: depois no laço. Repetir é seguro porque toda escrita deste cliente é
+#: idempotente: PUT cria ou atualiza, o PATCH leva o valor inteiro do campo e a
+#: aresta de linhagem aceita o PUT repetido.
+TENTATIVAS = 3
+#: Segundos de espera antes da 2ª tentativa; dobra antes da 3ª.
+ESPERA_ENTRE_TENTATIVAS = 30
 
 
 class ConfiguracaoAusente(SystemExit):
@@ -113,6 +125,33 @@ class ClienteOM:
         self.atualizados = 0
         self.conformes = 0
         self.falhas: list[str] = []
+        self.esperar = time.sleep  # trocável no teste
+
+    def _enviar(
+        self, metodo: str, url: str, contexto: str, **kwargs: Any
+    ) -> requests.Response | None:
+        """Faz a requisição repetindo quando a instância não responde.
+
+        Esgotadas as tentativas, a falha fica DESTA entidade, como um 4xx/5xx:
+        anota e devolve None para o chamador seguir com a próxima. O sync
+        termina com código de erro e a lista do que ficou para trás.
+        """
+        erro = ""
+        for tentativa in range(1, TENTATIVAS + 1):
+            try:
+                return self.sessao.request(metodo, url, **kwargs)
+            except (requests.Timeout, requests.ConnectionError) as excecao:
+                erro = type(excecao).__name__
+                if tentativa < TENTATIVAS:
+                    print(
+                        f"  sem resposta ao {contexto} ({erro}); "
+                        f"tentativa {tentativa + 1} de {TENTATIVAS}"
+                    )
+                    self.esperar(ESPERA_ENTRE_TENTATIVAS * 2 ** (tentativa - 1))
+        mensagem = f"{contexto}: sem resposta após {TENTATIVAS} tentativas ({erro})"
+        self.falhas.append(mensagem)
+        print(f"  FALHA {mensagem}")
+        return None
 
     @property
     def modo(self) -> str:
@@ -135,12 +174,14 @@ class ClienteOM:
         if self.offline:
             return None
         parametros = {"fields": campos} if campos else None
-        resposta = self.sessao.get(
+        resposta = self._enviar(
+            "GET",
             f"{self.base}/{rota}/name/{quote(fqn, safe='')}",
+            f"ler {rota} {fqn}",
             params=parametros,
             timeout=60,
         )
-        if not resposta.ok:
+        if resposta is None or not resposta.ok:
             return None
         entidade: dict = resposta.json()
         return entidade
@@ -148,7 +189,11 @@ class ClienteOM:
     def listar(self, rota: str, parametros: dict) -> list[dict]:
         if self.offline:
             return []
-        resposta = self.sessao.get(f"{self.base}/{rota}", params=parametros, timeout=90)
+        resposta = self._enviar(
+            "GET", f"{self.base}/{rota}", f"listar {rota}", params=parametros, timeout=90
+        )
+        if resposta is None:
+            return []
         if not resposta.ok:
             self.falha(f"listar {rota}", resposta)
             return []
@@ -161,7 +206,11 @@ class ClienteOM:
             print(f"  [{self.modo}] criaria {rota}: {rotulo}")
             self.criados += 1
             return None
-        resposta = self.sessao.put(f"{self.base}/{rota}", json=corpo, timeout=90)
+        resposta = self._enviar(
+            "PUT", f"{self.base}/{rota}", f"criar {rota} {rotulo}", json=corpo, timeout=90
+        )
+        if resposta is None:
+            return None
         if not resposta.ok:
             self.falha(f"criar {rota} {rotulo}", resposta)
             return None
@@ -179,12 +228,16 @@ class ClienteOM:
             print(f"  [{self.modo}] ajustaria {rotulo}: {campos}")
             self.atualizados += 1
             return
-        resposta = self.sessao.patch(
+        resposta = self._enviar(
+            "PATCH",
             f"{self.base}/{rota}/{ident}",
+            f"ajustar {rotulo}",
             headers={"Content-Type": "application/json-patch+json"},
             json=operacoes,
             timeout=90,
         )
+        if resposta is None:
+            return
         if not resposta.ok:
             self.falha(f"ajustar {rotulo}", resposta)
             return
@@ -200,12 +253,14 @@ class ClienteOM:
         """
         if self.offline:
             return set()
-        resposta = self.sessao.get(
+        resposta = self._enviar(
+            "GET",
             f"{self.base}/lineage/{tipo}/{ident}",
+            f"ler linhagem de {tipo} {ident}",
             params={"upstreamDepth": 1, "downstreamDepth": 0},
             timeout=90,
         )
-        if not resposta.ok:
+        if resposta is None or not resposta.ok:
             return set()
         corpo = resposta.json()
         return {no["id"] for no in corpo.get("nodes", []) if no.get("id")}
@@ -218,8 +273,10 @@ class ClienteOM:
             print(f"  [{self.modo}] ligaria {tipo_origem} -> {tipo_destino}")
             self.atualizados += 1
             return
-        resposta = self.sessao.put(
+        resposta = self._enviar(
+            "PUT",
             f"{self.base}/lineage",
+            f"ligar {tipo_origem} a {tipo_destino}",
             json={
                 "edge": {
                     "fromEntity": {"id": origem, "type": tipo_origem},
@@ -229,6 +286,8 @@ class ClienteOM:
             },
             timeout=90,
         )
+        if resposta is None:
+            return
         if not resposta.ok:
             self.falha(f"ligar {tipo_origem} a {tipo_destino}", resposta)
             return
