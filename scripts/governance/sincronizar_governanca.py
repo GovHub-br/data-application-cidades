@@ -756,6 +756,38 @@ def catalogar_schemas(
             )
 
 
+def tabelas_alheias(
+    tabelas: list[dict],
+    produto: dict,
+    camadas: dict[str, str],
+    produtos_dos_modelos: dict[str, str],
+) -> tuple[list[str], str]:
+    """Tabelas do schema que este produto NÃO cataloga, e o motivo.
+
+    Com prefixo, a trava é o nome: fica de fora quem não casa o prefixo e não
+    está no catálogo. Produto sem prefixo não tem trava de nome, e antes levava
+    TODA tabela fora do catálogo semântico, inclusive as que um produto
+    anterior do laço acabara de catalogar pelo prefixo: com `mcmv_historico` e
+    `reloginho`, 309 tabelas trocavam de produto a cada execução, e o volume de
+    PATCH deixava a task exposta aos congelamentos da instância. Sem prefixo,
+    vale só o que o catálogo declara deste produto.
+    """
+    prefixos = tuple(produto.get("prefixos_de_tabela") or ())
+    if prefixos:
+        fora_do_prefixo = [
+            t["name"]
+            for t in tabelas
+            if not t["name"].startswith(prefixos) and t["name"] not in camadas
+        ]
+        return fora_do_prefixo, "fora da convenção de prefixo e ausentes do catálogo"
+    nao_declaradas = [
+        t["name"]
+        for t in tabelas
+        if produtos_dos_modelos.get(t["name"]) != produto["name"]
+    ]
+    return nao_declaradas, "não declaradas deste produto no catálogo (sem prefixo)"
+
+
 def catalogar_tabelas(
     om: ClienteOM,
     donos: Proprietarios,
@@ -813,18 +845,12 @@ def catalogar_tabelas(
                 )
                 om.atualizados += 1
                 continue
-            prefixos = tuple(produto.get("prefixos_de_tabela") or ())
-            alheias = [
-                t["name"]
-                for t in tabelas
-                if prefixos
-                and not t["name"].startswith(prefixos)
-                and t["name"] not in camadas
-            ]
+            alheias, motivo = tabelas_alheias(
+                tabelas, produto, camadas, produtos_dos_modelos
+            )
             if alheias:
                 print(
-                    f"  {schema}: {len(alheias)} tabelas fora da convenção de "
-                    f"prefixo e ausentes do catálogo — não catalogadas: "
+                    f"  {schema}: {len(alheias)} tabelas {motivo} — não catalogadas: "
                     + ", ".join(sorted(alheias)[:6])
                     + (" …" if len(alheias) > 6 else "")
                 )

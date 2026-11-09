@@ -1152,3 +1152,160 @@ def test_produto_novo_e_criado_com_dominio_pelo_fqn() -> None:
     for rota, corpo in om.criados:
         assert rota == "dataProducts"
         assert all(isinstance(d, str) for d in corpo["domains"]), corpo["domains"]
+
+
+# ── produto sem prefixo ─────────────────────────────────────────────────────
+class _OMDoLaco:
+    """O que `catalogar_tabelas` usa do cliente, com as tabelas da ouro em memória."""
+
+    offline = False
+
+    def __init__(self, tabelas: list[dict]) -> None:
+        self.tabelas = tabelas
+        self.patches: list[tuple[str, list[dict]]] = []
+        self.conformes = 0
+        self.atualizados = 0
+        self.falhas: list[str] = []
+
+    def existe(self, rota: str, fqn: str, campos: str | None = None) -> dict:
+        return {
+            "id": f"{rota}:{fqn}",
+            "name": fqn.split(".")[-1],
+            "fullyQualifiedName": fqn,
+        }
+
+    def listar(self, rota: str, parametros: dict) -> list[dict]:
+        return self.tabelas if parametros["databaseSchema"].endswith(".ouro") else []
+
+    def patch(self, rota: str, ident: str, operacoes: list[dict], _rotulo: str) -> None:
+        self.patches.append((ident, operacoes))
+
+
+def _tabela_da_ouro(nome: str) -> dict:
+    return {
+        "id": nome,
+        "name": nome,
+        "fullyQualifiedName": f"Cidades.cidades.ouro.{nome}",
+        "tags": [],
+        "columns": [],
+        "domains": [],
+        "dataProducts": [],
+        "extension": {},
+    }
+
+
+def _produtos_gravados(
+    monkeypatch, catalogo: dict[str, str], tabelas: list[str]
+) -> dict[str, list[str]]:
+    """Roda a catalogação com conjuntura, mcmv_historico e reloginho na ouro.
+
+    Devolve, por tabela, os produtos gravados nela, na ordem do laço.
+    """
+    monkeypatch.setattr(gov, "produtos_por_modelo", lambda: catalogo)
+    monkeypatch.setattr(gov, "camadas_por_modelo", lambda: {})
+    escolhidos = ("conjuntura", "mcmv_historico", "reloginho")
+    dominios = dict(
+        DOMINIOS,
+        produtos=[
+            dict(p, schemas=["ouro"])
+            for p in DOMINIOS["produtos"]
+            if p["name"] in escolhidos
+        ],
+    )
+    om = _OMDoLaco([_tabela_da_ouro(nome) for nome in tabelas])
+    gov.catalogar_tabelas(
+        om, _SemDonos(), dominios, comum.carregar("termos_mcid.yml"), "Cidades", "cidades"
+    )
+    gravados: dict[str, list[str]] = {}
+    for ident, operacoes in om.patches:
+        for op in operacoes:
+            if op["path"] == "/dataProducts":
+                gravados.setdefault(ident, []).append(op["value"][0]["name"])
+    return gravados
+
+
+def test_produto_sem_prefixo_nao_leva_tabela_de_outro_produto(monkeypatch) -> None:
+    """Sem prefixo não há trava de nome; o catálogo é a única fonte.
+
+    `mcmv_historico` e `reloginho` não declaram prefixo e não têm modelo no
+    catálogo semântico. Antes, os dois levavam toda tabela fora do catálogo,
+    inclusive a que o `conjuntura` acabara de catalogar pelo prefixo: 309
+    tabelas trocavam de produto a cada execução, e o volume de PATCH deixava
+    a task exposta aos congelamentos da instância.
+    """
+    gravados = _produtos_gravados(
+        monkeypatch,
+        catalogo={},
+        tabelas=["ouro_conjuntura_qualidade_completude", "ouro_hist_serie_mensal"],
+    )
+    assert gravados == {"ouro_conjuntura_qualidade_completude": ["conjuntura"]}
+
+
+def test_produto_sem_prefixo_cataloga_o_que_o_catalogo_declara(monkeypatch) -> None:
+    gravados = _produtos_gravados(
+        monkeypatch,
+        catalogo={"ouro_hist_serie_mensal": "mcmv_historico"},
+        tabelas=["ouro_hist_serie_mensal"],
+    )
+    assert gravados == {"ouro_hist_serie_mensal": ["mcmv_historico"]}
+
+
+# ── instância que não responde ──────────────────────────────────────────────
+class _Resposta:
+    ok = True
+    status_code = 200
+    text = ""
+
+    def json(self) -> dict:
+        return {}
+
+
+class _SessaoQueCongela:
+    """Levanta `Timeout` nas primeiras `sem_resposta` chamadas e depois responde."""
+
+    def __init__(self, sem_resposta: int) -> None:
+        self.sem_resposta = sem_resposta
+        self.chamadas = 0
+
+    def request(self, metodo: str, url: str, **kwargs) -> _Resposta:
+        self.chamadas += 1
+        if self.chamadas <= self.sem_resposta:
+            raise comum.requests.Timeout("a instância congelou")
+        return _Resposta()
+
+
+def _cliente(sessao: _SessaoQueCongela) -> comum.ClienteOM:
+    om = comum.ClienteOM("https://om.exemplo", "token", confirmar=True)
+    om.sessao = sessao
+    om.esperar = lambda _segundos: None
+    return om
+
+
+TAGS_VAZIAS = [{"op": "add", "path": "/tags", "value": []}]
+
+
+def test_requisicao_sem_resposta_e_repetida() -> None:
+    """Um congelamento da instância não pode derrubar o sync.
+
+    Em 09/11 a escrita foi aplicada às 05:18:06 e a resposta nunca chegou; o
+    `ReadTimeout` abortou a task e deixou sem governança os três produtos que
+    vinham depois no laço. Repetir é seguro: o PATCH leva o valor inteiro.
+    """
+    sessao = _SessaoQueCongela(sem_resposta=1)
+    om = _cliente(sessao)
+    om.patch("tables", "t1", TAGS_VAZIAS, "ouro.x")
+
+    assert sessao.chamadas == 2
+    assert (om.atualizados, om.falhas) == (1, [])
+
+
+def test_sem_resposta_em_toda_tentativa_vira_falha_da_entidade_e_segue() -> None:
+    sessao = _SessaoQueCongela(sem_resposta=10_000)
+    om = _cliente(sessao)
+
+    om.patch("tables", "t1", TAGS_VAZIAS, "ouro.x")
+    assert om.listar("tables", {}) == []
+
+    assert sessao.chamadas == 2 * comum.TENTATIVAS
+    assert len(om.falhas) == 2 and om.atualizados == 0
+    assert om.resumo() == 1, "o sync ainda tem de terminar com erro"
