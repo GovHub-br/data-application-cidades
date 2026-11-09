@@ -136,6 +136,24 @@ Para cada objeto em `raw/`:
 
 `.xls` legado e `.zip` → `skipped_unsupported` (tratar à parte). Arquivos de lock `~$*` ignorados.
 
+### Organização do código
+
+`raw_para_staging.py` lista o `raw/`, aplica os filtros, chama a conversão de cada objeto e
+registra o resultado. O trabalho mora em `scripts/conversao/`:
+
+| Módulo | O que tem |
+|---|---|
+| `config.py` | Variáveis de ambiente, prefixos, formatos suportados, pastas ignoradas e log |
+| `gemeos.py` | Precedência de extensão e descarte de gêmeos |
+| `processamento.py` | `processar_objeto`: download, idempotência, conversão, verificação e upload |
+| `tabular.py` | CSV/TXT em chunks, colunas de padding e fallback de encoding |
+| `xlsx.py` / `registros_json.py` | XLSX (uma aba por parquet) e JSON achatado |
+| `pendente.py` | Parquet guardado quando o upload falha |
+| `controle.py` | `lake._staging_log` e o parquet de auditoria |
+
+Para mudar como **um formato** vira parquet, mexa no módulo dele; para mudar **o que** é
+convertido (gêmeos, pastas ignoradas), em `gemeos.py` e `config.py`.
+
 ---
 
 ## 3. Configuração (`.env`)
@@ -219,15 +237,6 @@ O `staging_key` entra na chave porque **XLSX e MDB geram N parts** (uma por aba/
 mesmo par `(raw_key, source_hash)`; com a chave antiga o upsert sobrescrevia e sobrava só 1
 registro por arquivo (ex.: 4 linhas no banco para 32 parts reais). Não afetava os dados nem a
 idempotência — só a observabilidade.
-
-> ⚠️ **Deploy**: `CREATE TABLE IF NOT EXISTS` **não migra** tabela já existente. Num ambiente
-> com o `_staging_log` antigo, o DDL vira no-op e a constraint velha continua valendo — é
-> preciso um `ALTER TABLE` explícito:
-> ```sql
-> ALTER TABLE lake._staging_log DROP CONSTRAINT _staging_log_raw_key_source_hash_key;
-> ALTER TABLE lake._staging_log ADD CONSTRAINT _staging_log_raw_key_staging_key_source_hash_key
->       UNIQUE (raw_key, staging_key, source_hash);
-> ```
 
 **Auditoria parquet** por execução em `audit/staging/execution_id=<uuid>/part-0.parquet`
 (+ cópia local `scripts/auditoria_staging_<uuid>.parquet`).

@@ -123,6 +123,6 @@ def test_tabela_sem_pii_passa_igual(tmp_path, monkeypatch):
 
 def test_raw_para_staging_mascara_o_mdb_antes_do_parquet():
     """A ordem importa: o parquet é escrito do CSV, então a máscara vem antes."""
-    codigo = (SCRIPTS / "raw_para_staging.py").read_text(encoding="utf-8")
+    codigo = (SCRIPTS / "conversao" / "processamento.py").read_text(encoding="utf-8")
     ramo_mdb = codigo[codigo.index("if ext in SUPPORTED_MDB:") :]
     assert ramo_mdb.index("mascarar_csv(") < ramo_mdb.index("_converter_tabular(")

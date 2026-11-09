@@ -36,11 +36,12 @@ def staging(monkeypatch, tmp_path):
     for key, value in defaults.items():
         if key not in os.environ:
             monkeypatch.setenv(key, value)
+    # pelo ambiente, não por monkeypatch: cada módulo do pacote copia o TMPDIR no import
+    monkeypatch.setenv("LAKE_TMPDIR", str(tmp_path))
     monkeypatch.syspath_prepend(str(SCRIPTS))
-    sys.modules.pop("raw_para_staging", None)
-    modulo = importlib.import_module("raw_para_staging")
-    monkeypatch.setattr(modulo, "TMPDIR", str(tmp_path))
-    return modulo
+    for nome in [m for m in sys.modules if m.split(".")[0] == "conversao"]:
+        del sys.modules[nome]
+    return importlib.import_module("conversao.processamento")
 
 
 @pytest.fixture
