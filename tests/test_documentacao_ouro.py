@@ -7,16 +7,14 @@ contrato sai da lista no mesmo PR.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import yaml
 
-RAIZ = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(RAIZ / "scripts" / "governance"))
+import auditar_metadados as auditoria
+import documentacao_dbt
 
-import auditar_metadados as auditoria  # noqa: E402
-import documentacao_dbt  # noqa: E402
+RAIZ = Path(__file__).resolve().parents[1]
 
 PENDENTES = set(
     yaml.safe_load(
