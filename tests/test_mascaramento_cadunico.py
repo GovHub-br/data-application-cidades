@@ -1,32 +1,16 @@
 """Contrato de privacidade analítica do CadÚnico."""
 
-import importlib
-import os
-import sys
-from pathlib import Path
+import pytest
+
+from tests.conftest import fresh_import
 
 
 def _carregar_modulo():
-    defaults = {
-        "MINIO_ENDPOINT": "minio:9000",
-        "MINIO_ACCESS_KEY": "teste",
-        "MINIO_SECRET_KEY": "teste",
-        "MINIO_BUCKET": "teste",
-        "DB_DW_HOST_MCID": "postgres",
-        "DB_DW_USER_MCID": "teste",
-        "DB_DW_PASSWORD_MCID": "teste",
-        "DB_DW_DBNAME_MCID": "teste",
-        "MASKING_HMAC_SECRET": "segredo-de-teste",
-    }
-    for key, value in defaults.items():
-        os.environ.setdefault(key, value)
-
-    scripts = Path(__file__).parents[1] / "scripts"
-    sys.path.insert(0, str(scripts))
-    # o pacote lê as variáveis de ambiente no import: cada teste parte de um import novo
-    for nome in [m for m in sys.modules if m.split(".")[0] == "mascaramento"]:
-        del sys.modules[nome]
-    return importlib.import_module("mascaramento.regras")
+    # the package copies the env at import; nothing else reads it, so it can be undone
+    with pytest.MonkeyPatch.context() as mp:
+        return fresh_import(
+            mp, "mascaramento.regras", MASKING_HMAC_SECRET="segredo-de-teste"
+        )
 
 
 def test_cadunico_preserva_perfil_e_protege_identificadores():

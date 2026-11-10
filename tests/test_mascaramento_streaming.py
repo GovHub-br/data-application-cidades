@@ -4,51 +4,25 @@ import csv
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-import importlib.util
 import io
 import itertools
-import os
-import sys
 from pathlib import Path
 
 import pytest
 
+from tests.conftest import fresh_import
+
 _SEGREDO = "segredo-de-teste"
 
 
-def _carregar_modulo():
-    defaults = {
-        "MINIO_ENDPOINT": "minio:9000",
-        "MINIO_ACCESS_KEY": "teste",
-        "MINIO_SECRET_KEY": "teste",
-        "MINIO_BUCKET": "teste",
-        "DB_DW_HOST_MCID": "postgres",
-        "DB_DW_USER_MCID": "teste",
-        "DB_DW_PASSWORD_MCID": "teste",
-        "DB_DW_DBNAME_MCID": "teste",
-        "MASKING_HMAC_SECRET": _SEGREDO,
-    }
-    for key, value in defaults.items():
-        os.environ.setdefault(key, value)
+# the package copies the env at import; nothing else reads it, so it can be undone
+with pytest.MonkeyPatch.context() as _mp:
+    modulo = fresh_import(
+        _mp, "mascarar_minio", "mascaramento", MASKING_HMAC_SECRET=_SEGREDO
+    )
 
-    scripts = Path(__file__).parents[1] / "scripts"
-    sys.path.insert(0, str(scripts))
-    # o pacote lê as variáveis de ambiente no import: cada teste parte de um import novo
-    for nome in [m for m in sys.modules if m.split(".")[0] == "mascaramento"]:
-        del sys.modules[nome]
-    path = scripts / "mascarar_minio.py"
-    spec = importlib.util.spec_from_file_location("mascarar_minio_stream", path)
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
-
-
-modulo = _carregar_modulo()
-cliente_minio = sys.modules["cliente_minio"]
-regras = sys.modules["mascaramento.regras"]
-tabular = sys.modules["mascaramento.tabular"]
-mod_paralelo = sys.modules["mascaramento.paralelo"]
+import cliente_minio  # noqa: E402
+from mascaramento import paralelo as mod_paralelo, regras, tabular  # noqa: E402
 
 
 class _Erro(Exception):
