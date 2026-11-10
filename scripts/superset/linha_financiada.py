@@ -982,161 +982,160 @@ def dashboard_completo(api: Superset, ids_chart: dict[str, int]) -> None:
     )
 
 
-def dashboard_perguntas(api: Superset, ids: dict[str, int]) -> None:
-    """Painel no padrão pergunta + explicação à esquerda + gráfico à direita."""
-    slug, titulo, tabs = (
-        "perguntas-linha-financiada",
-        "Perguntas: Linha Financiada",
-        "TABS-PERGUNTAS-LF",
-    )
-    estrutura = {
-        "ROOT_ID": {"id": "ROOT_ID", "type": "ROOT", "children": [tabs], "parents": [], "meta": {}},
-        tabs: {"id": tabs, "type": "TABS", "children": [], "parents": ["ROOT_ID"], "meta": {}},
-    }
-    paginas = [
-        (
-            "Comece aqui",
-            [
-                ("charts", ["q_kpi_contratos", "q_kpi_financiamento", "q_kpi_descontos"]),
-                ("heading", "## O que esta base integrada permite acompanhar"),
-                (
-                    "pair",
-                    """### Como ler
+# Abas do painel de perguntas: (nome, blocos). Bloco: ("charts", chaves), ("heading", texto)
+# ou ("pair", explicação, chave do gráfico).
+PAGINAS_PERGUNTAS = [
+    (
+        "Comece aqui",
+        [
+            ("charts", ["q_kpi_contratos", "q_kpi_financiamento", "q_kpi_descontos"]),
+            ("heading", "## O que esta base integrada permite acompanhar"),
+            (
+                "pair",
+                """### Como ler
 
 Integra contratações PF do **FGTS**, operações do **Fundo Social** e recortes de **MCMV Cidades**, **Classe Média** e **Pró-Moradia**.
 
 Valores são contratações e descontos informados. **Apoio à produção PJ não é contratação MCMV**; só compõe a ficha quando houver vínculo verificável com a operação PF.""",
-                    "pizza_linha",
-                ),
-            ],
-        ),
-        (
-            "Previsão e contratação",
-            [
-                (
-                    "heading",
-                    "## 1. É possível fazer análise preditiva da contratação mensal e da execução orçamentária?",
-                ),
-                (
-                    "pair",
-                    """### Como ler
+                "pizza_linha",
+            ),
+        ],
+    ),
+    (
+        "Previsão e contratação",
+        [
+            (
+                "heading",
+                "## 1. É possível fazer análise preditiva da contratação mensal e da execução orçamentária?",
+            ),
+            (
+                "pair",
+                """### Como ler
 
 A série mensal reúne contratos e média móvel de três meses, preparada para modelagem preditiva. Ela permite estimar patamares futuros, mas não substitui modelo treinado.
 
 Filtre fonte, linha e período nesta aba para comparar FGTS e Fundo Social.""",
-                    "previsao",
-                ),
-                (
-                    "pair",
-                    """### Orçamento oneroso e descontos
+                "previsao",
+            ),
+            (
+                "pair",
+                """### Orçamento oneroso e descontos
 
 Orçamento, empenho, pagamentos e restos a pagar são apresentados quando constam na fonte. Descontos FGTS/OGU dos contratos não são automaticamente pagamento orçamentário.""",
-                    "orcamento",
-                ),
-            ],
-        ),
-        (
-            "Contrapartidas",
-            [
-                (
-                    "heading",
-                    "## 2. Quais contrapartidas foram aportadas e quais contratos foram beneficiados?",
-                ),
-                (
-                    "pair",
-                    """### Como ler
+                "orcamento",
+            ),
+        ],
+    ),
+    (
+        "Contrapartidas",
+        [
+            (
+                "heading",
+                "## 2. Quais contrapartidas foram aportadas e quais contratos foram beneficiados?",
+            ),
+            (
+                "pair",
+                """### Como ler
 
 Mostra a cobertura do campo de contrapartida e separa valor informado de ausência de informação.
 
 Ainda não existe base consolidada de contrapartidas além dos campos recebidos. Ente aportante, instrumento e contrato beneficiado dependem de estruturação com o agente financeiro.""",
-                    "contrapartidas_por_linha",
-                ),
-            ],
-        ),
-        (
-            "Base integrada e semanal",
-            [
-                (
-                    "heading",
-                    "## 3. Como garantir dados atualizados, unificados e disponibilizados de forma uniforme?",
-                ),
-                (
-                    "pair",
-                    """### Como ler
+                "contrapartidas_por_linha",
+            ),
+        ],
+    ),
+    (
+        "Base integrada e semanal",
+        [
+            (
+                "heading",
+                "## 3. Como garantir dados atualizados, unificados e disponibilizados de forma uniforme?",
+            ),
+            (
+                "pair",
+                """### Como ler
 
 O relatório semanal consolida fonte, linha, faixa, modalidade, tipo de imóvel, contratos, financiamento, descontos e contrapartida informada em uma estrutura comum.
 
 As rotinas preservam origem e referência temporal para atualização automatizada e consumo em BI.""",
-                    "semanal",
-                ),
-                (
-                    "pair",
-                    """### Contratação por mês
+                "semanal",
+            ),
+            (
+                "pair",
+                """### Contratação por mês
 
 Cada ponto representa contratos por competência. Não some apoio à produção PJ como se fosse contratação de famílias.""",
-                    "contratos_mes",
-                ),
-            ],
-        ),
-        (
-            "Estados e municípios",
-            [
-                (
-                    "heading",
-                    "## 4. Onde estão as contratações? Mapa do Brasil e leitura territorial",
-                ),
-                (
-                    "pair",
-                    """### Como ler
+                "contratos_mes",
+            ),
+        ],
+    ),
+    (
+        "Estados e municípios",
+        [
+            (
+                "heading",
+                "## 4. Onde estão as contratações? Mapa do Brasil e leitura territorial",
+            ),
+            (
+                "pair",
+                """### Como ler
 
 O mapa agrega contratos por UF. Use os filtros desta aba para recortar por UF, linha e fonte. Municípios sem localidade na fonte permanecem fora da territorialização.""",
-                    "mapa_brasil",
-                ),
-                (
-                    "pair",
-                    """### Ranking territorial
+                "mapa_brasil",
+            ),
+            (
+                "pair",
+                """### Ranking territorial
 
 Ordena municípios por contratações e mostra valor financiado, descontos e empreendimentos vinculados quando houver chave disponível.""",
-                    "ranking_territorial",
-                ),
-            ],
-        ),
-        (
-            "Empreendimentos",
-            [
-                (
-                    "heading",
-                    "## 5. Ficha do empreendimento — selecione um empreendimento para consultar suas características",
-                ),
-                (
-                    "charts",
-                    [
-                        "q_empreendimento_uh",
-                        "q_empreendimento_pf",
-                        "q_empreendimento_financiamento",
-                        "q_empreendimento_execucao",
-                    ],
-                ),
-                (
-                    "pair",
-                    """### Como ler a ficha
+                "ranking_territorial",
+            ),
+        ],
+    ),
+    (
+        "Empreendimentos",
+        [
+            (
+                "heading",
+                "## 5. Ficha do empreendimento — selecione um empreendimento para consultar suas características",
+            ),
+            (
+                "charts",
+                [
+                    "q_empreendimento_uh",
+                    "q_empreendimento_pf",
+                    "q_empreendimento_financiamento",
+                    "q_empreendimento_execucao",
+                ],
+            ),
+            (
+                "pair",
+                """### Como ler a ficha
 
 Selecione o **empreendimento** e, se necessário, UF ou município. A ficha segue a lógica do relatório PJ: identificação, unidades, contratos PF vinculados, situação e posição de obra.
 
 O vínculo usa **Operação CCA = código AO1**. Datas de término são previsão/posição de obra, não prova de entrega.""",
-                    "ficha_empreendimento",
-                ),
-                (
-                    "pair",
-                    """### Situação da execução
+                "ficha_empreendimento",
+            ),
+            (
+                "pair",
+                """### Situação da execução
 
 Usa a última posição de obra disponível no canal AO1. Ausência de posição não significa obra parada; apenas ausência de status físico na carga.""",
-                    "empreendimento_situacao",
-                ),
-            ],
-        ),
-    ]
-    for pagina, (nome, blocos) in enumerate(paginas):
+                "empreendimento_situacao",
+            ),
+        ],
+    ),
+]
+
+
+def _estrutura_perguntas(ids: dict[str, int], tabs: str) -> dict:
+    """position_json do painel de perguntas: uma aba por página, uma linha por bloco."""
+    estrutura = {
+        "ROOT_ID": {"id": "ROOT_ID", "type": "ROOT", "children": [tabs], "parents": [], "meta": {}},
+        tabs: {"id": tabs, "type": "TABS", "children": [], "parents": ["ROOT_ID"], "meta": {}},
+    }
+    for pagina, (nome, blocos) in enumerate(PAGINAS_PERGUNTAS):
         tab = f"TAB-PERGUNTAS-LF-{pagina}"
         estrutura[tabs]["children"].append(tab)
         estrutura[tab] = {
@@ -1156,58 +1155,78 @@ Usa a última posição de obra disponível no canal AO1. Ausência de posição
                 "parents": ["ROOT_ID", tabs, tab],
                 "meta": {"background": "BACKGROUND_TRANSPARENT"},
             }
-            tipo, conteudo, *resto = bloco
-            if tipo == "heading":
-                node = f"MARKDOWN-PERGUNTAS-LF-{pagina}-{linha}"
+            for node, tipo, meta in _nos_do_bloco(bloco, pagina, linha, ids):
                 estrutura[row]["children"].append(node)
                 estrutura[node] = {
                     "id": node,
-                    "type": "MARKDOWN",
+                    "type": tipo,
                     "children": [],
                     "parents": ["ROOT_ID", tabs, tab, row],
-                    "meta": {"width": 12, "height": 10, "code": conteudo},
+                    "meta": meta,
                 }
-            elif tipo == "charts":
-                for posicao, chave in enumerate(conteudo):
-                    node = f"CHART-PERGUNTAS-LF-{ids[chave]}-{pagina}-{linha}"
-                    estrutura[row]["children"].append(node)
-                    estrutura[node] = {
-                        "id": node,
-                        "type": "CHART",
-                        "children": [],
-                        "parents": ["ROOT_ID", tabs, tab, row],
-                        "meta": {
-                            "chartId": ids[chave],
-                            "width": 12 // len(conteudo),
-                            "height": 28,
-                            "index": f"{pagina}{linha}{posicao}",
-                        },
-                    }
-            else:
-                markdown, chart = (
-                    f"MARKDOWN-PERGUNTAS-LF-{pagina}-{linha}",
-                    f"CHART-PERGUNTAS-LF-{ids[resto[0]]}-{pagina}-{linha}",
-                )
-                estrutura[row]["children"].extend([markdown, chart])
-                estrutura[markdown] = {
-                    "id": markdown,
-                    "type": "MARKDOWN",
-                    "children": [],
-                    "parents": ["ROOT_ID", tabs, tab, row],
-                    "meta": {"width": 4, "height": 50, "code": conteudo},
-                }
-                estrutura[chart] = {
-                    "id": chart,
-                    "type": "CHART",
-                    "children": [],
-                    "parents": ["ROOT_ID", tabs, tab, row],
-                    "meta": {
-                        "chartId": ids[resto[0]],
-                        "width": 8,
-                        "height": 50,
-                        "index": f"{pagina}{linha}1",
-                    },
-                }
+    return estrutura
+
+
+def _nos_do_bloco(bloco: tuple, pagina: int, linha: int, ids: dict[str, int]) -> list[tuple]:
+    """(id, tipo, meta) dos nós de uma linha, conforme o tipo do bloco."""
+    tipo, conteudo, *resto = bloco
+    if tipo == "heading":
+        meta = {"width": 12, "height": 10, "code": conteudo}
+        return [(f"MARKDOWN-PERGUNTAS-LF-{pagina}-{linha}", "MARKDOWN", meta)]
+    if tipo == "charts":
+        return [
+            (
+                f"CHART-PERGUNTAS-LF-{ids[chave]}-{pagina}-{linha}",
+                "CHART",
+                {
+                    "chartId": ids[chave],
+                    "width": 12 // len(conteudo),
+                    "height": 28,
+                    "index": f"{pagina}{linha}{posicao}",
+                },
+            )
+            for posicao, chave in enumerate(conteudo)
+        ]
+    chave = resto[0]
+    return [
+        (
+            f"MARKDOWN-PERGUNTAS-LF-{pagina}-{linha}",
+            "MARKDOWN",
+            {"width": 4, "height": 50, "code": conteudo},
+        ),
+        (
+            f"CHART-PERGUNTAS-LF-{ids[chave]}-{pagina}-{linha}",
+            "CHART",
+            {"chartId": ids[chave], "width": 8, "height": 50, "index": f"{pagina}{linha}1"},
+        ),
+    ]
+
+
+def _publicar(api: Superset, slug: str, payload: dict, ids: dict[str, int]) -> None:
+    """Cria ou atualiza o painel e liga a ele os gráficos que ainda não estão ligados."""
+    dashboard_id = api.dashboard_id(slug)
+    if dashboard_id:
+        api.update("dashboard", dashboard_id, payload)
+    else:
+        dashboard_id = api.create("dashboard", payload)["id"]
+    if not api.dry_run:
+        for chart_id in ids.values():
+            atual = api.session.get(f"{api.base_url}/api/v1/chart/{chart_id}", timeout=30).json()[
+                "result"
+            ]
+            destinos = {item["id"] for item in atual.get("dashboards", [])}
+            if dashboard_id not in destinos:
+                api.update("chart", chart_id, {"dashboards": sorted(destinos | {dashboard_id})})
+
+
+def dashboard_perguntas(api: Superset, ids: dict[str, int]) -> None:
+    """Painel no padrão pergunta + explicação à esquerda + gráfico à direita."""
+    slug, titulo, tabs = (
+        "perguntas-linha-financiada",
+        "Perguntas: Linha Financiada",
+        "TABS-PERGUNTAS-LF",
+    )
+    estrutura = _estrutura_perguntas(ids, tabs)
     por_tabela = {
         item["table_name"]: item["id"]
         for item in api.list("dataset")
@@ -1320,19 +1339,7 @@ Usa a última posição de obra disponível no canal AO1. Ausência de posição
             }
         ),
     }
-    dashboard_id = api.dashboard_id(slug)
-    if dashboard_id:
-        api.update("dashboard", dashboard_id, payload)
-    else:
-        dashboard_id = api.create("dashboard", payload)["id"]
-    if not api.dry_run:
-        for chart_id in ids.values():
-            atual = api.session.get(f"{api.base_url}/api/v1/chart/{chart_id}", timeout=30).json()[
-                "result"
-            ]
-            destinos = {item["id"] for item in atual.get("dashboards", [])}
-            if dashboard_id not in destinos:
-                api.update("chart", chart_id, {"dashboards": sorted(destinos | {dashboard_id})})
+    _publicar(api, slug, payload, ids)
 
 
 def main() -> None:
