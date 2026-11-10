@@ -466,40 +466,40 @@ def main() -> None:
         p(f"# Diagnóstico de qualidade — domínio {args.dominio}\n")
 
         p("## 1. Mojibake residual (bronze)\n")
-        for l in secao_mojibake(cur, args.schema_bronze or cfg["schema_bronze"], cfg["bronze"]):
-            p(l)
+        for linha in secao_mojibake(cur, args.schema_bronze or cfg["schema_bronze"], cfg["bronze"]):
+            p(linha)
         p(f"\n## 2a. Mojibake residual — silver ({silver})\n")
-        for l in secao_mojibake(cur, silver, sorted(cfg["models_silver"])):
-            p(l)
+        for linha in secao_mojibake(cur, silver, sorted(cfg["models_silver"])):
+            p(linha)
         p(f"\n## 2b. Mojibake residual — gold ({gold})\n")
-        for l in secao_mojibake(cur, gold, sorted(cfg["models_gold"])):
-            p(l)
+        for linha in secao_mojibake(cur, gold, sorted(cfg["models_gold"])):
+            p(linha)
 
         p(f"\n## 3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio\n")
-        for l in secao_nulos(cur, silver, sorted(cfg["models_silver"]), args.limiar_nulo):
-            p(l)
-        for l in secao_nulos(cur, gold, sorted(cfg["models_gold"]), args.limiar_nulo)[2:]:
-            p(l)
+        for linha in secao_nulos(cur, silver, sorted(cfg["models_silver"]), args.limiar_nulo):
+            p(linha)
+        for linha in secao_nulos(cur, gold, sorted(cfg["models_gold"]), args.limiar_nulo)[2:]:
+            p(linha)
 
         p("\n## 4. Duplicidade na chave natural\n")
-        for l in secao_duplicidade(cur, schema_de, chaves):
-            p(l)
+        for linha in secao_duplicidade(cur, schema_de, chaves):
+            p(linha)
 
         p("\n## 5. Cobertura dos joins\n")
-        for l in secao_joins(cur, silver, cfg["joins"]):
-            p(l)
+        for linha in secao_joins(cur, silver, cfg["joins"]):
+            p(linha)
 
         p("\n## 6. Valores reais dos campos de corte\n")
-        for l in secao_cortes(cur, schema_de, cfg["cortes"]):
-            p(l)
+        for linha in secao_cortes(cur, schema_de, cfg["cortes"]):
+            p(linha)
 
         p("\n## 7. Divergência entre fontes da mesma medida\n")
-        for l in secao_divergencia(cur, silver, args.tolerancia_divergencia):
-            p(l)
+        for linha in secao_divergencia(cur, silver, args.tolerancia_divergencia):
+            p(linha)
 
         p("\n## 8. Atualidade e procedência das medições\n")
-        for l in secao_atualidade(cur, silver):
-            p(l)
+        for linha in secao_atualidade(cur, silver):
+            p(linha)
 
 
 if __name__ == "__main__":

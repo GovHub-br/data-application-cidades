@@ -272,7 +272,10 @@ def main() -> int:
             f"({cobertos * 100 // len(inventario)}%)"
         )
     por_regra = collections.Counter(f.rule for f in findings)
-    pct = lambda a, b: f"{a * 100 // b}%" if b else "—"
+
+    def pct(a: int, b: int) -> str:
+        return f"{a * 100 // b}%" if b else "—"
+
     print(
         f"Recursos com descrição efetiva: {res_ok}/{res_tot} ({pct(res_ok, res_tot)})  ·  "
         f"Colunas: {col_ok}/{col_tot} ({pct(col_ok, col_tot)})"

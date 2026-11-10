@@ -15,7 +15,6 @@ import contextlib
 import io
 import json
 import os
-import sys
 from pathlib import Path
 from urllib.parse import quote_plus
 

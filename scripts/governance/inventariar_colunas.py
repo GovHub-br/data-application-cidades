@@ -164,7 +164,7 @@ def bloco_yaml(tabela: str, perfil_tab: dict, com_contrato: bool) -> str:
         texto = COMUNS.get(nome)
         if texto:
             linhas.append("        description: >")
-            linhas += [f"          {l}" for l in textwrap.wrap(texto, 70)]
+            linhas += [f"          {trecho}" for trecho in textwrap.wrap(texto, 70)]
         else:
             linhas.append("        description: >")
             linhas.append("          TODO")

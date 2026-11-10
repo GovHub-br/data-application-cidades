@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -705,13 +704,16 @@ Usa a última posição de obra disponível no canal AO1. Ausência de posição
     filtros = [filtro(1, "Fonte de recurso", "fonte_recurso", [features, "ouro_linha_financiada_execucao_orcamentaria"], 1), filtro(2, "Linha financiada", "segmento_linha_financiada", [features], 1), periodo(3, 1, [(features, "competencia_contratacao")]), filtro(4, "Fonte de recurso", "fonte_recurso", ["ouro_linha_financiada_contrapartidas"], 2), filtro(5, "Linha financiada", "segmento_linha_financiada", ["ouro_linha_financiada_contrapartidas"], 2), filtro(6, "Fonte de recurso", "fonte_recurso", [resumo, semanal], 3), filtro(7, "Linha financiada", "segmento_linha_financiada", [resumo, semanal], 3), periodo(8, 3, [(resumo, "competencia_contratacao"), (semanal, "semana_referencia")]), filtro(9, "UF", "uf", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_ranking_territorial"], 4), filtro(10, "Fonte de recurso", "fonte_recurso", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_ranking_territorial"], 4), filtro(11, "Linha financiada", "segmento_linha_financiada", ["ouro_linha_financiada_mapa_execucao", "ouro_linha_financiada_ranking_territorial"], 4), filtro(12, "Empreendimento", "nome_empreendimento", ["ouro_linha_financiada_empreendimentos"], 5), filtro(13, "UF", "uf_painel", ["ouro_linha_financiada_empreendimentos"], 5), filtro(14, "Município", "municipio_painel", ["ouro_linha_financiada_empreendimentos"], 5)]
     payload = {"dashboard_title": titulo, "slug": slug, "published": True, "position_json": json.dumps(estrutura), "json_metadata": json.dumps({"refresh_frequency": 0, "show_native_filters": True, "native_filter_configuration": filtros})}
     dashboard_id = api.dashboard_id(slug)
-    if dashboard_id: api.update("dashboard", dashboard_id, payload)
-    else: dashboard_id = api.create("dashboard", payload)["id"]
+    if dashboard_id:
+        api.update("dashboard", dashboard_id, payload)
+    else:
+        dashboard_id = api.create("dashboard", payload)["id"]
     if not api.dry_run:
         for chart_id in ids.values():
             atual = api.session.get(f"{api.base_url}/api/v1/chart/{chart_id}", timeout=30).json()["result"]
             destinos = {item["id"] for item in atual.get("dashboards", [])}
-            if dashboard_id not in destinos: api.update("chart", chart_id, {"dashboards": sorted(destinos | {dashboard_id})})
+            if dashboard_id not in destinos:
+                api.update("chart", chart_id, {"dashboards": sorted(destinos | {dashboard_id})})
 
 
 def main() -> None:

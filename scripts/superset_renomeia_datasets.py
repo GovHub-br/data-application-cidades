@@ -28,7 +28,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import requests
 from dotenv import load_dotenv

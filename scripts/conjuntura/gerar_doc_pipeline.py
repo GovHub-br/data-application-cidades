@@ -308,7 +308,8 @@ def carregar_contagens() -> dict[str, int]:
     em vez de falhar.
     """
     try:
-        import subprocess, re as _re
+        import subprocess
+        import re as _re
 
         r = subprocess.run(
             [
