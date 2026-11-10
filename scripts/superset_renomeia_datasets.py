@@ -219,21 +219,10 @@ def main() -> int:
     )
 
     existentes = sup.datasets()
-
     if args.procurar:
-        termo = args.procurar.lower()
-        achados = [
-            d
-            for d in existentes
-            if termo in (d.get("schema") or "").lower() or termo in d["table_name"].lower()
-        ]
-        print(f"{len(achados)} de {len(existentes)} datasets casam com {args.procurar!r}:\n")
-        for d in sorted(achados, key=lambda x: ((x.get("schema") or ""), x["table_name"])):
-            print(f"  [{d['id']:>4}] {d.get('schema')}.{d['table_name']}")
-        return 0
+        return _procurar(existentes, args.procurar)
 
     alvo = {**MAPA, **ALIASES_ANTIGOS}
-
     # LISTA por chave, não um dataset só. A mesma tabela pode ter mais de um dataset
     # registrado — acontece quando alguém cria um novo em vez de editar o existente, e os
     # dois continuam válidos porque os gráficos se ligam por id. Indexar num dict simples
@@ -247,38 +236,70 @@ def main() -> int:
         f"{'APPLY' if args.apply else 'DRY-RUN'} · {sup.url} · "
         f"{len(existentes)} datasets no Superset\n"
     )
+    achados = _planejar(alvo, por_chave)
+    if not achados:
+        print("\nNada a fazer.")
+        return 0
+    if not args.apply:
+        print(
+            f"\n{len(achados)} dataset(s) seriam renomeados "
+            f"({len(set(k for _, k in achados))} tabelas). Rode com --apply."
+        )
+        return 0
+    return _aplicar(sup, achados, args.sync_colunas)
 
+
+def _procurar(existentes: List[dict], procurado: str) -> int:
+    """Lista os datasets cujo schema ou tabela contém o termo, sem renomear nada."""
+    termo = procurado.lower()
+    achados = [
+        d
+        for d in existentes
+        if termo in (d.get("schema") or "").lower() or termo in d["table_name"].lower()
+    ]
+    print(f"{len(achados)} de {len(existentes)} datasets casam com {procurado!r}:\n")
+    for d in sorted(achados, key=lambda x: ((x.get("schema") or ""), x["table_name"])):
+        print(f"  [{d['id']:>4}] {d.get('schema')}.{d['table_name']}")
+    return 0
+
+
+def _planejar(
+    alvo: Dict[Tuple[str, str], Tuple[str, str]], por_chave: Dict[Tuple[str, str], List[dict]]
+) -> List[Tuple[dict, Tuple[str, str]]]:
+    """Os renomes a fazer; imprime o plano, as duplicadas, o que já está no destino e o ausente."""
     achados: List[Tuple[dict, Tuple[str, str]]] = []
     ausentes: List[Tuple[str, str]] = []
     ja_no_destino: List[Tuple[str, str]] = []
+    for velho, novo in alvo.items():
+        if novo in por_chave and velho not in por_chave:
+            ja_no_destino.append(novo)
+        elif por_chave.get(velho):
+            achados += [(d, novo) for d in por_chave[velho]]
+        else:
+            ausentes.append(velho)
 
-    for (schema_v, tab_v), (schema_n, tab_n) in alvo.items():
-        if (schema_n, tab_n) in por_chave and (schema_v, tab_v) not in por_chave:
-            ja_no_destino.append((schema_n, tab_n))
-            continue
-        lote = por_chave.get((schema_v, tab_v))
-        if not lote:
-            ausentes.append((schema_v, tab_v))
-            continue
-        for d in lote:
-            achados.append((d, (schema_n, tab_n)))
-
+    for d, (schema_n, tab_n) in achados:
+        print(f"  [{d['id']:>4}] {d.get('schema')}.{d['table_name']}")
+        print(f"         -> {schema_n}.{tab_n}")
     duplicadas = {
         chave: [d["id"] for d in lote]
         for chave, lote in por_chave.items()
         if len(lote) > 1 and chave in alvo
     }
+    _relatar_pendencias(duplicadas, ja_no_destino, ausentes)
+    return achados
 
-    for d, (schema_n, tab_n) in achados:
-        print(f"  [{d['id']:>4}] {d.get('schema')}.{d['table_name']}")
-        print(f"         -> {schema_n}.{tab_n}")
 
+def _relatar_pendencias(
+    duplicadas: Dict[Tuple[str, str], List[int]],
+    ja_no_destino: List[Tuple[str, str]],
+    ausentes: List[Tuple[str, str]],
+) -> None:
     if duplicadas:
         print("\n  ATENÇÃO — tabela com mais de um dataset. Todos são renomeados, porque")
         print("  não há como saber daqui qual deles os gráficos usam:")
         for (sch, tab), ids in sorted(duplicadas.items()):
             print(f"    {sch}.{tab} -> ids {', '.join(str(i) for i in ids)}")
-
     if ja_no_destino:
         print(
             f"\n  já no destino ({len(set(ja_no_destino))}): "
@@ -292,23 +313,15 @@ def main() -> int:
         for s, t in ausentes:
             print(f"    {s}.{t}")
 
-    if not achados:
-        print("\nNada a fazer.")
-        return 0
 
-    if not args.apply:
-        print(
-            f"\n{len(achados)} dataset(s) seriam renomeados "
-            f"({len(set(k for _, k in achados))} tabelas). Rode com --apply."
-        )
-        return 0
-
+def _aplicar(sup: "Superset", achados: List[Tuple[dict, Tuple[str, str]]], sync: bool) -> int:
+    """Renomeia um por um; um erro não interrompe os outros e é reportado no fim."""
     erros = 0
     print()
     for d, (schema_n, tab_n) in achados:
         try:
             sup.renomeia(d["id"], schema_n, tab_n)
-            if args.sync_colunas:
+            if sync:
                 sup.sincroniza_colunas(d["id"])
             print(f"  ok   [{d['id']:>4}] -> {schema_n}.{tab_n}")
         except Exception as e:  # noqa: BLE001 — queremos seguir e reportar no fim
