@@ -159,29 +159,42 @@ def descricao_semantica(nome: str) -> str:
     """
     if nome in DESCRICOES_SEMANTICAS:
         return DESCRICOES_SEMANTICAS[nome]
-    if nome.startswith("var_") or "_var_" in nome:
-        return "Variação percentual do indicador, conforme o recorte indicado no nome do campo."
-    if nome.startswith("qtd_") or nome.startswith("quantidade_"):
-        return "Quantidade do fenômeno medido no período de referência."
-    if nome.startswith("valor_") or nome.startswith("vlr_"):
-        return "Valor monetário do indicador no período de referência."
-    if nome.startswith("financ_") or nome.startswith("financiamento_"):
-        return "Medida de financiamento habitacional no recorte indicado pelo campo."
-    if nome.startswith("ticket_"):
-        return "Ticket médio de lançamentos no recorte indicado pelo campo."
-    if nome.startswith("perc_") or nome.endswith("_perc") or "_percent" in nome:
-        return "Participação percentual no recorte indicado pelo campo."
-    if nome.startswith("total_") or nome.endswith("_total"):
-        return "Total agregado do indicador no período de referência."
-    if nome.startswith("saldo_"):
-        return "Saldo do indicador no período de referência."
-    if nome.startswith("taxa_"):
-        return "Taxa associada ao indicador no período de referência."
-    if nome.startswith("precos_") or nome.startswith("custo_"):
-        return "Medida de preço ou custo no período de referência."
+    for prefixos, sufixos, trechos, texto in _REGRAS_POR_NOME:
+        if nome.startswith(prefixos) or nome.endswith(sufixos) or any(t in nome for t in trechos):
+            return texto
     return (
         "Atributo técnico do indicador; consultar a descrição da tabela para o contexto e a fonte."
     )
+
+
+# (prefixos, sufixos, trechos, descrição), na ordem de prioridade: a primeira que casa vale.
+_REGRAS_POR_NOME: list[tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...], str]] = [
+    (
+        ("var_",),
+        (),
+        ("_var_",),
+        "Variação percentual do indicador, conforme o recorte indicado no nome do campo.",
+    ),
+    (("qtd_", "quantidade_"), (), (), "Quantidade do fenômeno medido no período de referência."),
+    (("valor_", "vlr_"), (), (), "Valor monetário do indicador no período de referência."),
+    (
+        ("financ_", "financiamento_"),
+        (),
+        (),
+        "Medida de financiamento habitacional no recorte indicado pelo campo.",
+    ),
+    (("ticket_",), (), (), "Ticket médio de lançamentos no recorte indicado pelo campo."),
+    (
+        ("perc_",),
+        ("_perc",),
+        ("_percent",),
+        "Participação percentual no recorte indicado pelo campo.",
+    ),
+    (("total_",), ("_total",), (), "Total agregado do indicador no período de referência."),
+    (("saldo_",), (), (), "Saldo do indicador no período de referência."),
+    (("taxa_",), (), (), "Taxa associada ao indicador no período de referência."),
+    (("precos_", "custo_"), (), (), "Medida de preço ou custo no período de referência."),
+]
 
 
 def sanitizar_artefatos_dbt(alvo: Path) -> int:
@@ -357,6 +370,14 @@ def gerar(saida: Path, alvo: Path = ALVO, incluir_contagens: bool = True) -> Non
         por_dominio[dominio_de(chave, modelos, manifest, memo)][camada_de(no)].append((chave, no))
 
     n_testes = sum(len(v) for v in testes.values())
+    contexto = {
+        "manifest": manifest,
+        "catalog": catalog,
+        "modelos": modelos,
+        "jusante": jusante,
+        "testes": testes,
+        "contagens": contagens,
+    }
     partes = [
         _CABECALHO.format(
             data=date.today().strftime("%d/%m/%Y"),
@@ -374,74 +395,91 @@ def gerar(saida: Path, alvo: Path = ALVO, incluir_contagens: bool = True) -> Non
         # portanto não pertence ao catálogo publicável de metadados.
         for camada in ("silver", "gold"):
             for chave, no in sorted(camadas.get(camada, []), key=lambda x: x[1]["name"]):
-                ncols, nlinhas = stats(catalog, chave, contagens, no["name"])
-                pais = [
-                    modelos[d]["name"]
-                    for d in no.get("depends_on", {}).get("nodes", [])
-                    if d in modelos
-                ]
-                filhos = [modelos[f]["name"] for f in jusante.get(chave, []) if f in modelos]
-                caminho_fonte = ""
-                for d in no.get("depends_on", {}).get("nodes", []):
-                    if d in manifest.get("sources", {}):
-                        caminho_fonte = manifest["sources"][d].get("meta", {}).get("caminho", "")
-
-                linhas_html = [f'<div class="model {camada}">']
-                linhas_html.append(
-                    f'<div class="mh"><span class="badge {camada}">{camada}</span>'
-                    f'<span class="mn">{e(no["name"])}</span>'
-                    f'<span class="meta">{e(no["config"]["materialized"])}'
-                    + (f" · {ncols} col" if ncols else "")
-                    + (f" · {nlinhas:,} linhas".replace(",", ".") if nlinhas is not None else "")
-                    + "</span></div>"
-                )
-                desc = (no.get("description") or "").strip()
-                if desc:
-                    linhas_html.append(f'<p class="desc">{e(desc[:420])}</p>')
-                colunas = colunas_do_model(manifest, catalog, chave)
-                if colunas:
-                    linhas_html.append(
-                        '<details class="cols"><summary>Campos ('
-                        + str(len(colunas))
-                        + ")</summary><table><thead><tr>"
-                        "<th>Campo</th><th>Tipo</th><th>Significado</th>"
-                        "</tr></thead><tbody>"
-                    )
-                    for coluna in colunas:
-                        linhas_html.append(
-                            "<tr><td><code>"
-                            + e(coluna["nome"])
-                            + "</code></td><td>"
-                            + e(coluna["tipo"])
-                            + "</td><td>"
-                            + e(coluna["descricao"])
-                            + "</td></tr>"
-                        )
-                    linhas_html.append("</tbody></table></details>")
-                if caminho_fonte:
-                    linhas_html.append(
-                        f'<div class="rel"><b>lê do lake:</b> <code>{e(caminho_fonte)}</code></div>'
-                    )
-                if pais:
-                    linhas_html.append(
-                        f'<div class="rel"><b>vem de:</b> {", ".join(f"<code>{e(p)}</code>" for p in pais)}</div>'
-                    )
-                if filhos:
-                    linhas_html.append(
-                        f'<div class="rel"><b>alimenta:</b> {", ".join(f"<code>{e(c)}</code>" for c in filhos)}</div>'
-                    )
-                if testes.get(chave):
-                    linhas_html.append(
-                        f'<div class="rel testes"><b>{len(testes[chave])} testes:</b> '
-                        + ", ".join(f"<code>{e(t[:46])}</code>" for t in sorted(testes[chave])[:6])
-                        + ("…" if len(testes[chave]) > 6 else "")
-                        + "</div>"
-                    )
-                linhas_html.append("</div>")
-                partes.append("".join(linhas_html))
+                partes.append(_bloco_do_model(chave, no, camada, contexto))
 
     saida.write_text("\n".join(partes), encoding="utf-8")
     print(f"{saida}  ({len(modelos)} models, {len(fontes)} fontes, {n_testes} testes)")
+
+
+def _bloco_do_model(chave: str, no: dict, camada: str, ctx: dict) -> str:
+    """HTML de um model: cabeçalho, descrição, campos e relações."""
+    linhas_html = [f'<div class="model {camada}">', _cabecalho_do_model(chave, no, camada, ctx)]
+    desc = (no.get("description") or "").strip()
+    if desc:
+        linhas_html.append(f'<p class="desc">{e(desc[:420])}</p>')
+    linhas_html += _campos_do_model(ctx["manifest"], ctx["catalog"], chave)
+    linhas_html += _relacoes_do_model(chave, no, ctx)
+    linhas_html.append("</div>")
+    return "".join(linhas_html)
+
+
+def _cabecalho_do_model(chave: str, no: dict, camada: str, ctx: dict) -> str:
+    ncols, nlinhas = stats(ctx["catalog"], chave, ctx["contagens"], no["name"])
+    return (
+        f'<div class="mh"><span class="badge {camada}">{camada}</span>'
+        f'<span class="mn">{e(no["name"])}</span>'
+        f'<span class="meta">{e(no["config"]["materialized"])}'
+        + (f" · {ncols} col" if ncols else "")
+        + (f" · {nlinhas:,} linhas".replace(",", ".") if nlinhas is not None else "")
+        + "</span></div>"
+    )
+
+
+def _campos_do_model(manifest: dict, catalog: dict, chave: str) -> list[str]:
+    colunas = colunas_do_model(manifest, catalog, chave)
+    if not colunas:
+        return []
+    return [
+        '<details class="cols"><summary>Campos ('
+        + str(len(colunas))
+        + ")</summary><table><thead><tr>"
+        "<th>Campo</th><th>Tipo</th><th>Significado</th>"
+        "</tr></thead><tbody>",
+        *(
+            "<tr><td><code>"
+            + e(coluna["nome"])
+            + "</code></td><td>"
+            + e(coluna["tipo"])
+            + "</td><td>"
+            + e(coluna["descricao"])
+            + "</td></tr>"
+            for coluna in colunas
+        ),
+        "</tbody></table></details>",
+    ]
+
+
+def _relacoes_do_model(chave: str, no: dict, ctx: dict) -> list[str]:
+    """Fonte no lake, models de onde vem, models que alimenta e testes."""
+    modelos, manifest, testes = ctx["modelos"], ctx["manifest"], ctx["testes"]
+    dependencias = no.get("depends_on", {}).get("nodes", [])
+    pais = [modelos[d]["name"] for d in dependencias if d in modelos]
+    filhos = [modelos[f]["name"] for f in ctx["jusante"].get(chave, []) if f in modelos]
+    caminho_fonte = ""
+    for d in dependencias:
+        if d in manifest.get("sources", {}):
+            caminho_fonte = manifest["sources"][d].get("meta", {}).get("caminho", "")
+
+    def codigos(nomes):
+        return ", ".join(f"<code>{e(nome)}</code>" for nome in nomes)
+
+    linhas_html = []
+    if caminho_fonte:
+        linhas_html.append(
+            f'<div class="rel"><b>lê do lake:</b> <code>{e(caminho_fonte)}</code></div>'
+        )
+    if pais:
+        linhas_html.append(f'<div class="rel"><b>vem de:</b> {codigos(pais)}</div>')
+    if filhos:
+        linhas_html.append(f'<div class="rel"><b>alimenta:</b> {codigos(filhos)}</div>')
+    if testes.get(chave):
+        linhas_html.append(
+            f'<div class="rel testes"><b>{len(testes[chave])} testes:</b> '
+            + codigos(t[:46] for t in sorted(testes[chave])[:6])
+            + ("…" if len(testes[chave]) > 6 else "")
+            + "</div>"
+        )
+    return linhas_html
 
 
 _CABECALHO = """<title>Pipeline do Conjuntura</title>
