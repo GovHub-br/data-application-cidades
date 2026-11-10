@@ -19,6 +19,8 @@ def test_todas_as_dags_importam(monkeypatch, tmp_path):
     # O Cosmos roda `dbt ls` no parse (o profiles.yml exige as credenciais, mas não conecta)
     # e guardaria o resultado numa Variable do banco, que o teste não tem.
     monkeypatch.setenv("AIRFLOW__COSMOS__ENABLE_CACHE", "False")
+    # Os dois `dbt ls` passam dos 30 s padrão por arquivo numa máquina lenta da CI.
+    monkeypatch.setenv("AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT", "300")
     for chave, valor in TEST_ENV.items():
         monkeypatch.setenv(chave, valor)
     from airflow.dag_processing.dagbag import DagBag
