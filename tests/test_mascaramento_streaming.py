@@ -8,6 +8,7 @@ import importlib.util
 import io
 import itertools
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -555,3 +556,51 @@ def test_leitor_para_no_fim_do_intervalo_mesmo_se_o_servidor_mandar_mais(minio):
     leitor = minio.abrir_leitura("k", inicio=3, fim=6)
 
     assert io.BufferedReader(leitor).read() == b"345"
+
+
+# Execução pela DAG
+
+
+def test_cli_sai_com_erro_quando_algum_objeto_falha(monkeypatch):
+    monkeypatch.setattr(modulo, "run", lambda **kw: {"masked": 5, "error": 2})
+    monkeypatch.setattr(sys, "argv", ["mascarar_minio.py", "--apply"])
+
+    with pytest.raises(SystemExit, match="2 objeto"):
+        modulo.main()
+
+
+def test_cli_termina_normal_sem_erro(monkeypatch):
+    monkeypatch.setattr(modulo, "run", lambda **kw: {"masked": 5})
+    monkeypatch.setattr(sys, "argv", ["mascarar_minio.py", "--apply"])
+
+    modulo.main()
+
+
+def test_dag_mascara_em_processo_proprio():
+    # importado na task, o spawn do modo paralelo reexecuta o binário do Airflow
+    dag = (
+        Path(__file__).parents[1] / "dags/data_ingest/minio/minio_transform_dag.py"
+    ).read_text("utf-8")
+    assert "from mascarar_minio import" not in dag
+    assert "scripts/mascarar_minio.py" in dag
+    assert "check=True" in dag
+
+
+def test_log_vai_para_stderr_sem_artefatos_locais():
+    # o container do Airflow define LAKE_LOCAL_ARTIFACTS=0; o script à parte tem que logar
+    scripts = Path(__file__).parents[1] / "scripts"
+    codigo = (
+        f"import sys, logging; sys.path.insert(0, {str(scripts)!r}); "
+        "import mascaramento.config; logging.getLogger('x').info('linha de teste')"
+    )
+    env = {**os.environ, "LAKE_LOCAL_ARTIFACTS": "0"}
+    saida = subprocess.run(
+        [sys.executable, "-c", codigo],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    assert saida.returncode == 0, saida.stderr
+    assert saida.stderr.count("linha de teste") == 1

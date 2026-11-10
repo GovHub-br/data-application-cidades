@@ -62,18 +62,29 @@ def minio_transform_dag() -> None:
 
     @task
     def mascarar_pii() -> None:
-        """Mascara PII (CPF/NIS/nome/endereço) nos objetos novos de raw/, in-place."""
-        from mascarar_minio import run as run_mask
+        """Mascara PII (CPF/NIS/nome/endereço) nos objetos novos de raw/, in-place.
+
+        Roda o script em processo próprio: o modo paralelo cria os filhos com spawn, que
+        reexecutam o __main__ do pai. Dentro da task, o __main__ é o binário do Airflow,
+        que quebra sem acesso ao banco. O script sai com erro se algum objeto falhar, e
+        a task falha junto, para a staging não converter raw sem máscara.
+        """
+        import os
+        import subprocess
+        import sys
 
         p = get_current_context()["params"]
-        contagem = run_mask(
-            apply=not bool(p.get("dry_run", False)),
-            limit=int(p.get("limit") or 0),
-            pattern=str(p.get("pattern") or ""),
-            only_ext=str(p.get("only_ext") or ""),
-            max_size_mb=int(p.get("max_size_mb") or 0),
-        )
-        logging.info("[minio_transform_dag] mascaramento concluído: %s", contagem)
+        comando = [
+            sys.executable,
+            f"{os.environ['AIRFLOW_REPO_BASE']}/scripts/mascarar_minio.py",
+            "--limit", str(int(p.get("limit") or 0)),
+            "--pattern", str(p.get("pattern") or ""),
+            "--only-ext", str(p.get("only_ext") or ""),
+            "--max-size-mb", str(int(p.get("max_size_mb") or 0)),
+        ]  # fmt: skip
+        if not p.get("dry_run", False):
+            comando.append("--apply")
+        subprocess.run(comando, check=True)
 
     @task
     def raw_para_staging() -> None:

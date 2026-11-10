@@ -443,7 +443,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    run(
+    contagem = run(
         apply=args.apply,
         force=args.force,
         limit=args.limit,
@@ -452,6 +452,9 @@ def main() -> None:
         max_size_mb=args.max_size_mb,
         prefix=args.prefix,
     )
+    # objeto com erro segue sem máscara no raw: quem roda a staging depois precisa saber
+    if contagem.get("error"):
+        raise SystemExit(f"{contagem['error']} objeto(s) com erro no mascaramento.")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ import json
 import logging
 import multiprocessing
 import os
-import sys
 import threading
 from concurrent.futures import Executor, ProcessPoolExecutor
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -20,8 +19,6 @@ from .config import (
     PEDACO,
     PEDACOS_PREFIX,
     PROCESSOS,
-    _LOCAL_ARTIFACTS,
-    _formatter,
 )
 from .regras import (
     _PF_INDICATOR_CATS,
@@ -58,25 +55,16 @@ def _cliente() -> ClienteMinio:
     return ClienteMinio()
 
 
-def _iniciar_processo(com_log: bool) -> None:
-    if com_log:
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(_formatter)
-        logging.root.addHandler(handler)
-        logging.root.setLevel(logging.INFO)
-
-
 @contextlib.contextmanager
 def _pool(processos: int) -> Iterator[Executor]:
-    # o filho reimporta este módulo: sem isso cada um abriria um arquivo de log próprio
+    # o filho reimporta este módulo e já loga em stderr; sem isso cada um abriria também
+    # um arquivo de log próprio
     anterior = os.environ.get("LAKE_LOCAL_ARTIFACTS")
     os.environ["LAKE_LOCAL_ARTIFACTS"] = "0"
     try:
         with ProcessPoolExecutor(
             processos,
             mp_context=multiprocessing.get_context("spawn"),
-            initializer=_iniciar_processo,
-            initargs=(_LOCAL_ARTIFACTS,),
         ) as pool:
             yield pool
     finally:
