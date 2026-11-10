@@ -23,7 +23,7 @@ Uso:
 import argparse
 import os
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, Iterator, List, Tuple
 
 import psycopg2
 from dotenv import load_dotenv
@@ -474,33 +474,35 @@ def main() -> None:
                 print(linha)
 
 
-def _secoes(cur, cfg: dict, args: argparse.Namespace) -> List[Tuple[str, List[str]]]:
-    """(título, linhas) de cada seção do relatório, na ordem em que saem."""
+def _secoes(cur, cfg: dict, args: argparse.Namespace) -> Iterator[Tuple[str, List[str]]]:
+    """(título, linhas) de cada seção, na ordem em que saem.
+
+    Gerador: cada consulta roda só quando a seção anterior já foi impressa, então uma
+    falha no meio deixa no relatório tudo o que veio antes dela.
+    """
     silver, gold = cfg["schema_silver"], cfg["schema_gold"]
     chaves = {**cfg["chaves_silver"], **cfg["chaves_gold"]}
     schema_de = {m: silver for m in cfg["models_silver"]}
     schema_de.update({m: gold for m in cfg["models_gold"]})
     models_silver, models_gold = sorted(cfg["models_silver"]), sorted(cfg["models_gold"])
     bronze = args.schema_bronze or cfg["schema_bronze"]
-    return [
-        ("1. Mojibake residual (bronze)", secao_mojibake(cur, bronze, cfg["bronze"])),
-        (f"2a. Mojibake residual — silver ({silver})", secao_mojibake(cur, silver, models_silver)),
-        (f"2b. Mojibake residual — gold ({gold})", secao_mojibake(cur, gold, models_gold)),
-        (
-            f"3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio",
-            secao_nulos(cur, silver, models_silver, args.limiar_nulo)
-            # o cabeçalho da tabela só sai uma vez
-            + secao_nulos(cur, gold, models_gold, args.limiar_nulo)[2:],
-        ),
-        ("4. Duplicidade na chave natural", secao_duplicidade(cur, schema_de, chaves)),
-        ("5. Cobertura dos joins", secao_joins(cur, silver, cfg["joins"])),
-        ("6. Valores reais dos campos de corte", secao_cortes(cur, schema_de, cfg["cortes"])),
-        (
-            "7. Divergência entre fontes da mesma medida",
-            secao_divergencia(cur, silver, args.tolerancia_divergencia),
-        ),
-        ("8. Atualidade e procedência das medições", secao_atualidade(cur, silver)),
-    ]
+    yield ("1. Mojibake residual (bronze)", secao_mojibake(cur, bronze, cfg["bronze"]))
+    yield (f"2a. Mojibake residual — silver ({silver})", secao_mojibake(cur, silver, models_silver))
+    yield (f"2b. Mojibake residual — gold ({gold})", secao_mojibake(cur, gold, models_gold))
+    yield (
+        f"3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio",
+        secao_nulos(cur, silver, models_silver, args.limiar_nulo)
+        # o cabeçalho da tabela só sai uma vez
+        + secao_nulos(cur, gold, models_gold, args.limiar_nulo)[2:],
+    )
+    yield ("4. Duplicidade na chave natural", secao_duplicidade(cur, schema_de, chaves))
+    yield ("5. Cobertura dos joins", secao_joins(cur, silver, cfg["joins"]))
+    yield ("6. Valores reais dos campos de corte", secao_cortes(cur, schema_de, cfg["cortes"]))
+    yield (
+        "7. Divergência entre fontes da mesma medida",
+        secao_divergencia(cur, silver, args.tolerancia_divergencia),
+    )
+    yield ("8. Atualidade e procedência das medições", secao_atualidade(cur, silver))
 
 
 if __name__ == "__main__":
