@@ -804,6 +804,17 @@ def catalogar_tabelas(
             print(f"  domínio ou produto ausente para {produto['name']}; pulando")
             continue
 
+        contexto = {
+            "dominios": dominios,
+            "produto": produto["name"],
+            "dominio": dominio,
+            "prod": prod,
+            "dono": dono,
+            "por_modelo": por_modelo,
+            "por_coluna": por_coluna,
+            "nosso_glossario": nosso_glossario,
+            "documentacao": documentacao,
+        }
         for schema in produto["schemas"]:
             camada_do_schema = declarados.get(schema, {}).get("layer", "gold")
             fqn_schema = f"{servico}.{banco}.{schema}"
@@ -823,61 +834,70 @@ def catalogar_tabelas(
                 )
                 om.atualizados += 1
                 continue
-            alheias, motivo = tabelas_alheias(tabelas, produto, camadas, produtos_dos_modelos)
-            if alheias:
-                print(
-                    f"  {schema}: {len(alheias)} tabelas {motivo} — não catalogadas: "
-                    + ", ".join(sorted(alheias)[:6])
-                    + (" …" if len(alheias) > 6 else "")
-                )
-                tabelas = [t for t in tabelas if t["name"] not in set(alheias)]
-
-            # Tabela que o catálogo semântico declara de OUTRO produto sai
-            # daqui: o schema é compartilhado e o `dataProducts` do patch
-            # substitui a lista, então sem esta linha o último produto do laço
-            # levaria as tabelas dos dois anteriores. Tabela sem produto
-            # declarado continua seguindo a trava de prefixo acima, para não
-            # reduzir a cobertura de quem ainda não está no catálogo.
-            de_outro_produto = [
-                t["name"]
-                for t in tabelas
-                if produtos_dos_modelos.get(t["name"], produto["name"]) != produto["name"]
-            ]
-            if de_outro_produto:
-                print(
-                    f"  {schema}: {len(de_outro_produto)} tabelas são de outro "
-                    "produto neste schema compartilhado; catalogadas no laço dele"
-                )
-                tabelas = [t for t in tabelas if t["name"] not in set(de_outro_produto)]
-
+            tabelas = _tabelas_do_produto(tabelas, schema, produto, camadas, produtos_dos_modelos)
             print(f"  {schema}: {len(tabelas)} tabelas")
 
             for tab in tabelas:
-                rotulo = f"{schema}.{tab['name']}"
                 # camada do MODELO; a do schema é só o recurso de última hora
                 camada = camadas.get(tab["name"], camada_do_schema)
+                _catalogar_tabela(om, tab, f"{schema}.{tab['name']}", camada, contexto)
 
-                if dominio:
-                    om.patch(
-                        "tables",
-                        tab["id"],
-                        operacoes_de_diferenca(tab, {"domains": [referencia(dominio, "domain")]}),
-                        rotulo,
-                    )
-                desejado: dict = {}
-                if prod:
-                    desejado["dataProducts"] = [referencia(prod, "dataProduct")]
-                if dono:
-                    desejado["owners"] = dono
-                marcas = etiquetas_da_camada(dominios, produto["name"], camada)
-                marcas += [etiqueta(fqn, "Glossary") for fqn in por_modelo.get(tab["name"], [])]
-                desejado["tags"] = mesclar_etiquetas(tab.get("tags") or [], marcas, nosso_glossario)
-                desejado.update(extensao_da_documentacao(tab, documentacao))
-                om.patch("tables", tab["id"], operacoes_de_diferenca(tab, desejado), rotulo)
-                aplicar_certificacao(
-                    om, "tables", tab, certificacao_da_camada(dominios, camada), rotulo
-                )
-                catalogar_colunas(om, tab, por_coluna, nosso_glossario, rotulo)
+
+def _tabelas_do_produto(
+    tabelas: list, schema: str, produto: dict, camadas: dict, produtos_dos_modelos: dict
+) -> list:
+    """As tabelas do schema que este produto cataloga: sem as alheias e as de outro produto."""
+    alheias, motivo = tabelas_alheias(tabelas, produto, camadas, produtos_dos_modelos)
+    if alheias:
+        print(
+            f"  {schema}: {len(alheias)} tabelas {motivo} — não catalogadas: "
+            + ", ".join(sorted(alheias)[:6])
+            + (" …" if len(alheias) > 6 else "")
+        )
+        tabelas = [t for t in tabelas if t["name"] not in set(alheias)]
+
+    # Tabela que o catálogo semântico declara de OUTRO produto sai
+    # daqui: o schema é compartilhado e o `dataProducts` do patch
+    # substitui a lista, então sem esta linha o último produto do laço
+    # levaria as tabelas dos dois anteriores. Tabela sem produto
+    # declarado continua seguindo a trava de prefixo acima, para não
+    # reduzir a cobertura de quem ainda não está no catálogo.
+    de_outro_produto = [
+        t["name"]
+        for t in tabelas
+        if produtos_dos_modelos.get(t["name"], produto["name"]) != produto["name"]
+    ]
+    if de_outro_produto:
+        print(
+            f"  {schema}: {len(de_outro_produto)} tabelas são de outro "
+            "produto neste schema compartilhado; catalogadas no laço dele"
+        )
+        tabelas = [t for t in tabelas if t["name"] not in set(de_outro_produto)]
+    return tabelas
+
+
+def _catalogar_tabela(om: ClienteOM, tab: dict, rotulo: str, camada: str, ctx: dict) -> None:
+    """Domínio primeiro (a validação do produto exige), depois produto, dono, etiquetas,
+    documentação, certificação e colunas."""
+    if ctx["dominio"]:
+        om.patch(
+            "tables",
+            tab["id"],
+            operacoes_de_diferenca(tab, {"domains": [referencia(ctx["dominio"], "domain")]}),
+            rotulo,
+        )
+    desejado: dict = {}
+    if ctx["prod"]:
+        desejado["dataProducts"] = [referencia(ctx["prod"], "dataProduct")]
+    if ctx["dono"]:
+        desejado["owners"] = ctx["dono"]
+    marcas = etiquetas_da_camada(ctx["dominios"], ctx["produto"], camada)
+    marcas += [etiqueta(fqn, "Glossary") for fqn in ctx["por_modelo"].get(tab["name"], [])]
+    desejado["tags"] = mesclar_etiquetas(tab.get("tags") or [], marcas, ctx["nosso_glossario"])
+    desejado.update(extensao_da_documentacao(tab, ctx["documentacao"]))
+    om.patch("tables", tab["id"], operacoes_de_diferenca(tab, desejado), rotulo)
+    aplicar_certificacao(om, "tables", tab, certificacao_da_camada(ctx["dominios"], camada), rotulo)
+    catalogar_colunas(om, tab, ctx["por_coluna"], ctx["nosso_glossario"], rotulo)
 
 
 def dominio_do_servico_nas_orfas(om: ClienteOM, servico: str, banco: str) -> None:

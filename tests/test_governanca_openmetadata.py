@@ -1210,6 +1210,41 @@ def _cliente(sessao: _SessaoQueCongela) -> comum.ClienteOM:
 TAGS_VAZIAS = [{"op": "add", "path": "/tags", "value": []}]
 
 
+def _catalogar_conjuntura(om, capsys) -> str:
+    conjuntura = next(p for p in DOMINIOS["produtos"] if p["name"] == "conjuntura")
+    dominios = dict(DOMINIOS, produtos=[dict(conjuntura, schemas=["ouro"])])
+    gov.catalogar_tabelas(
+        om, _SemDonos(), dominios, comum.carregar("termos_mcid.yml"), "Cidades", "cidades"
+    )
+    return capsys.readouterr().out
+
+
+def test_offline_so_anuncia_o_que_faria(capsys) -> None:
+    om = _OMDoLaco([_tabela_da_ouro("ouro_conjuntura_qualidade_completude")])
+    om.offline = True
+    saida = _catalogar_conjuntura(om, capsys)
+    assert om.patches == [] and om.atualizados == 1
+    assert "[offline] ouro: catalogaria as tabelas do produto conjuntura" in saida
+
+
+def test_produto_ausente_vira_falha_e_nada_e_gravado(capsys) -> None:
+    om = _OMDoLaco([_tabela_da_ouro("ouro_conjuntura_qualidade_completude")])
+    om.existe = lambda rota, fqn, campos=None: None if rota == "dataProducts" else {"id": fqn}
+    _catalogar_conjuntura(om, capsys)
+    assert om.patches == []
+    assert om.falhas == ["domínio ou produto ausente para conjuntura; tabelas não catalogadas"]
+
+
+def test_tabela_fora_do_prefixo_nao_e_catalogada(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(gov, "produtos_por_modelo", lambda: {})
+    om = _OMDoLaco(
+        [_tabela_da_ouro(n) for n in ("ouro_conjuntura_qualidade_completude", "ouro_hist_x")]
+    )
+    saida = _catalogar_conjuntura(om, capsys)
+    assert "ouro_hist_x" in saida and "não catalogadas" in saida
+    assert {ident for ident, _ in om.patches} == {"ouro_conjuntura_qualidade_completude"}
+
+
 def test_requisicao_sem_resposta_e_repetida() -> None:
     """Um congelamento da instância não pode derrubar o sync.
 
