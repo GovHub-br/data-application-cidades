@@ -3596,6 +3596,145 @@
       "rag_eligivel": false
     },
     {
+      "id": "model.mcid.bronze_sftp_cadunico_beneficiario_far",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "bronze",
+      "classification": "restricted",
+      "schema": "bronze",
+      "name": "bronze_sftp_cadunico_beneficiario_far",
+      "description": "CadÚnico dos responsáveis pelos contratos do FAR (Novo MCMV, INT039 e INT021), casado pelo identificador pessoal mascarado. Pessoa do corte 12/12/2025 e família do corte 09/01/2026. Só entram os encontrados; o identificador não é guardado. Raça/cor, deficiência e situação de rua ficam nesta camada e na prata, ambas restritas.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.bronze_sftp_mont_cont_pf_far",
+        "model.mcid.bronze_sftp_int039_far_caixa_pf",
+        "model.mcid.bronze_sftp_int021_far_bb_pf"
+      ],
+      "columns": [
+        {
+          "name": "agente_financeiro",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "cd_ibge_cadastro",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_deficiencia_memb",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_parentesco_rf_pessoa",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_raca_cor_pessoa",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_tempo_rua_memb",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_atualizacao_fam",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "geracao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "ic_familia_encontrada",
+          "data_type": "boolean",
+          "ordinal": 8,
+          "description": "Se a família da pessoa está no corte de famílias de 09/01/2026.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "marc_pbf",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "nu_contrato",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Contrato da família com o agente financeiro.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_membro_familia",
+          "data_type": "text",
+          "ordinal": 12,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vl_desp_agua_esgoto_fam",
+          "data_type": "text",
+          "ordinal": 15,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vl_desp_energia_fam",
+          "data_type": "text",
+          "ordinal": 14,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "vl_renda_media_fam",
+          "data_type": "text",
+          "ordinal": 13,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {
+        "grao": "Um contrato do FAR cujo responsável está no CadÚnico.",
+        "chave": [
+          "geracao",
+          "agente_financeiro",
+          "nu_contrato"
+        ],
+        "fonte": "CadÚnico (ARQ_PESSOA de 12/12/2025 e ARQ_FAMILIA de 09/01/2026) e contratos PF do FAR.",
+        "periodicidade": "eventual",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
+      "rag_eligivel": false
+    },
+    {
       "id": "model.mcid.bronze_sftp_int021_far_bb_pf",
       "product": "empreendimento_far",
       "owner_key": "mcid_data_engineering",
@@ -16197,6 +16336,181 @@
           "documentation_status": "curated"
         }
       ],
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.ouro_far_beneficiario_cadunico",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_beneficiario_cadunico",
+      "description": "Contratos das famílias do FAR agregados pelo perfil do responsável no CadÚnico: raça/cor, situação de rua, PCD e Bolsa Família, com a carteira ativa, a inadimplência e os gastos da família com energia e água. Agregada e sem contrato nem município, porque raça/cor é dado sensível. Média de gasto = soma dividida pela quantidade com o valor informado.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_contrato_pf",
+        "model.mcid.prata_far_beneficiario_cadunico"
+      ],
+      "columns": [
+        {
+          "name": "agente_financeiro",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "CAIXA ou Banco do Brasil.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "faixa_renda",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Faixa da renda familiar comprovada na assinatura.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "geracao",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Novo MCMV ou Legado (2009–2023).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_bolsa_familia",
+          "data_type": "boolean",
+          "ordinal": 10,
+          "description": "Família no Bolsa Família.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_encontrado_cadunico",
+          "data_type": "boolean",
+          "ordinal": 5,
+          "description": "Se o responsável pelo contrato está no CadÚnico de 12/12/2025.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_mesmo_municipio",
+          "data_type": "boolean",
+          "ordinal": 12,
+          "description": "Se o município do cadastro é o do imóvel do contrato.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_pcd",
+          "data_type": "boolean",
+          "ordinal": 9,
+          "description": "Responsável com deficiência segundo o CadÚnico.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_situacao_rua",
+          "data_type": "boolean",
+          "ordinal": 7,
+          "description": "Responsável em situação de rua na data do corte do CadÚnico.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "momento_cadastro",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Se o cadastro da família foi atualizado antes ou depois da assinatura do contrato. Depois da assinatura, os gastos tendem a ser os da nova moradia.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_ativos",
+          "data_type": "bigint",
+          "ordinal": 14,
+          "description": "Contratos ativos.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_com_despesa_agua",
+          "data_type": "bigint",
+          "ordinal": 18,
+          "description": "Contratos com gasto de água e esgoto informado.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_com_despesa_energia",
+          "data_type": "bigint",
+          "ordinal": 16,
+          "description": "Contratos com gasto de energia informado.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_contratos",
+          "data_type": "bigint",
+          "ordinal": 13,
+          "description": "Contratos na combinação.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_inadimplentes",
+          "data_type": "bigint",
+          "ordinal": 15,
+          "description": "Contratos ativos com prestação vencida há mais de 90 dias.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "raca_cor",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Raça/cor do responsável pelo contrato no CadÚnico. Nula fora do CadÚnico.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "soma_despesa_agua",
+          "data_type": "numeric",
+          "ordinal": 19,
+          "description": "Soma do gasto mensal com água e esgoto, em R$.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "soma_despesa_energia",
+          "data_type": "numeric",
+          "ordinal": 17,
+          "description": "Soma do gasto mensal com energia, em R$.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "tempo_situacao_rua",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Há quanto tempo vive na rua, para quem está em situação de rua.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "UF do imóvel do contrato.",
+          "documentation_status": "curated"
+        }
+      ],
+      "documentacao": {
+        "grao": "Uma combinação de geração, agente, UF, faixa de renda e perfil no CadÚnico.",
+        "chave": [
+          "geracao",
+          "agente_financeiro",
+          "uf",
+          "faixa_renda",
+          "ic_encontrado_cadunico",
+          "raca_cor",
+          "ic_situacao_rua",
+          "tempo_situacao_rua",
+          "ic_pcd",
+          "ic_bolsa_familia",
+          "momento_cadastro",
+          "ic_mesmo_municipio"
+        ],
+        "fonte": "Contratos PF do FAR (Novo MCMV, INT039, INT021) e CadÚnico de 12/2025 e 01/2026.",
+        "periodicidade": "mensal",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
       "rag_eligivel": true
     },
     {

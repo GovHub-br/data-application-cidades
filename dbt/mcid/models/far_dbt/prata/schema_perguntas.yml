@@ -247,3 +247,62 @@ models:
         description: Valor contratado de aporte ou suplementação, em R$.
       - name: dt_aporte_suplementacao
         description: Data de contratação do aporte ou suplementação.
+
+  - name: prata_far_beneficiario_cadunico
+    description: >
+      Atributos do CadÚnico de cada contrato do FAR cujo titular está no cadastro:
+      raça/cor, deficiência, situação de rua, Bolsa Família, renda per capita e gastos
+      da família com energia e água. É a foto do CadÚnico de 12/2025 e 01/2026, não a
+      da assinatura. Restrita por conter raça/cor por contrato; o painel lê a ouro
+      agregada.
+    config:
+      meta:
+        governance:
+          product: empreendimento_far
+          owner_key: mcid_data_engineering
+          layer: silver
+          classification: restricted
+          rag_publication: prohibited
+        documentacao:
+          grao: Um contrato do FAR cujo titular está no CadÚnico.
+          chave: [chave_contrato]
+          fonte: CadÚnico (ARQ_PESSOA de 12/12/2025 e ARQ_FAMILIA de 09/01/2026).
+          periodicidade: eventual
+          consumo: [ouro_far_beneficiario_cadunico]
+    columns:
+      - name: chave_contrato
+        description: Geração, agente financeiro e contrato, a chave de prata_far_contrato_pf.
+        tests:
+          - not_null
+          - unique
+      - name: raca_cor
+        description: Raça/cor declarada no CadÚnico.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Branca", "Preta", "Amarela", "Parda", "Indígena", "Não informada"]
+      - name: ic_responsavel_familiar
+        description: Se o titular é o responsável familiar no CadÚnico.
+      - name: ic_pcd
+        description: Pessoa com deficiência segundo o CadÚnico.
+      - name: ic_situacao_rua
+        description: >
+          Titular com o bloco de situação de rua do CadÚnico preenchido na data do
+          corte. Não diz se estava nessa situação antes do contrato.
+      - name: tempo_situacao_rua
+        description: Há quanto tempo vive na rua, para quem está em situação de rua.
+      - name: ic_familia_encontrada
+        description: Se a família está no corte de famílias de 09/01/2026.
+      - name: cod_ibge_cadastro
+        description: Município do cadastro no CadÚnico (7 dígitos).
+      - name: dt_atualizacao_cadastro
+        description: Última atualização do cadastro da família.
+      - name: ic_bolsa_familia
+        description: Família beneficiária do Bolsa Família no corte.
+      - name: renda_per_capita_cadunico
+        description: Renda familiar per capita declarada no CadÚnico, em R$.
+      - name: despesa_energia
+        description: Gasto mensal da família com energia elétrica, em R$. Acima de R$ 5.000 fica nulo.
+      - name: despesa_agua_esgoto
+        description: Gasto mensal da família com água e esgoto, em R$. Acima de R$ 5.000 fica nulo.

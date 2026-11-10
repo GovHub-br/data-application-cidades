@@ -30,12 +30,13 @@ PREFIXO = "FAR ▸ "
 
 CONTRATO = "ouro_far_beneficiario_contrato"
 MUNICIPIO = "ouro_far_beneficiario_municipio"
+CADUNICO = "ouro_far_beneficiario_cadunico"
 EMPREENDIMENTO = "ouro_far_empreendimento_perguntas"
 CONTRAPARTIDA = "ouro_far_contrapartida"
 COBERTURA = "ouro_far_cobertura_perguntas"
 SERIE = "ouro_far_serie_mensal_apf"
 
-DATASETS = [CONTRATO, MUNICIPIO, EMPREENDIMENTO, CONTRAPARTIDA, COBERTURA, SERIE]
+DATASETS = [CONTRATO, MUNICIPIO, CADUNICO, EMPREENDIMENTO, CONTRAPARTIDA, COBERTURA, SERIE]
 # Datasets que outros painéis já usam: este script só os lê.
 DATASETS_COMPARTILHADOS = {SERIE}
 
@@ -61,6 +62,19 @@ TAXA_INADIMPLENCIA = metrica(
     "SUM(CASE WHEN ic_inadimplente THEN 1 ELSE 0 END)::numeric"
     " / NULLIF(SUM(CASE WHEN ic_ativo THEN 1 ELSE 0 END), 0)",
 )
+
+
+# A ouro do CadÚnico é agregada: cada linha soma qt_contratos.
+CONTRATOS_CAD = metrica("Contratos", "SUM(qt_contratos)")
+
+
+def soma_pct(rotulo: str, condicao: str, base: str = "true") -> dict:
+    return metrica(rotulo, f"SUM(CASE WHEN {condicao} THEN qt_contratos ELSE 0 END)::numeric"
+                           f" / NULLIF(SUM(CASE WHEN {base} THEN qt_contratos ELSE 0 END), 0)")
+
+
+def media_gasto(rotulo: str, coluna_: str) -> dict:
+    return metrica(rotulo, f"SUM(soma_despesa_{coluna_}) / NULLIF(SUM(qt_com_despesa_{coluna_}), 0)")
 
 
 def kpi(chave, titulo, dataset, metrica_, subtitulo, formato=",d", filtros=()):
@@ -174,6 +188,22 @@ CHARTS = [
            [metrica("Titular", "AVG(pc_renda_responsavel) / 100"), metrica("Coobrigado", "AVG(pc_renda_coobrigado) / 100")],
            filtros=[NOVO, "ic_coobrigado", "pc_renda_responsavel IS NOT NULL", "renda_familiar > 0"], formato=".0%", eixo_titulo="Renda familiar comprovada",
            y_titulo="% da renda familiar"),
+    kpi("b_kpi_cadunico", "Titulares encontrados no CadÚnico", CADUNICO, soma_pct("% no CadÚnico", "ic_encontrado_cadunico"),
+        "CPF casado com o corte de 12/2025", formato=".1%"),
+    kpi("b_kpi_pcd_cadunico", "Titular PCD (CadÚnico)", CADUNICO, soma_pct("% titular PCD", "ic_pcd", "ic_pcd IS NOT NULL"),
+        "dos titulares no CadÚnico", formato=".1%"),
+    kpi("b_kpi_bolsa_familia", "Família no Bolsa Família", CADUNICO, soma_pct("% no Bolsa Família", "ic_bolsa_familia", "ic_bolsa_familia IS NOT NULL"),
+        "dos titulares no CadÚnico", formato=".1%"),
+    kpi("b_kpi_rua", "Titulares em situação de rua (CadÚnico)", CADUNICO,
+        metrica("Titulares", "SUM(CASE WHEN ic_situacao_rua THEN qt_contratos ELSE 0 END)"), "na data do corte, não na seleção"),
+    barras("b_raca", "Raça/cor do titular (CadÚnico)", CADUNICO, "agente_financeiro", [CONTRATOS_CAD], grupo=["raca_cor"], percentual=True,
+           filtros=["ic_encontrado_cadunico", "raca_cor <> 'Não informada'"], eixo_titulo="Agente financeiro"),
+    barras("b_rua", "Titulares em situação de rua por tempo na rua (CadÚnico)", CADUNICO, "tempo_situacao_rua", [CONTRATOS_CAD], grupo=["geracao"],
+           filtros=["ic_situacao_rua"], eixo_titulo="Tempo na rua", y_titulo="Titulares"),
+    barras("b_gastos", "Gasto mensal da família com energia e água (CadÚnico)", CADUNICO, "faixa_renda",
+           [media_gasto("Energia", "energia"), media_gasto("Água e esgoto", "agua")], empilhado=False, formato="$,.0f",
+           filtros=["momento_cadastro = 'Depois da assinatura'", "ic_mesmo_municipio", "faixa_renda <> 'Não informada'"],
+           eixo_titulo="Renda familiar comprovada", y_titulo="R$ por mês"),
     tabela_agregada("b_renda_empreendimento", "Renda média das famílias por empreendimento (APF)", CONTRATO, ["geracao", "apf", "municipio_uf"], [
         CONTRATOS,
         metrica("Renda média (R$)", "ROUND(AVG(renda_familiar), 2)"),
@@ -205,6 +235,11 @@ CHARTS = [
            empilhado=False, formato=".0%", eixo_titulo="Agente financeiro", y_titulo="% dos contratos ativos"),
     barras("i_renda", "Inadimplência por faixa de renda", CONTRATO, "faixa_renda", [TAXA_INADIMPLENCIA], grupo=["geracao"],
            empilhado=False, formato=".0%", filtros=["faixa_renda <> 'Não informada'"], eixo_titulo="Renda familiar comprovada", y_titulo="% dos contratos ativos"),
+    barras("i_raca", "Inadimplência por raça/cor do titular (CadÚnico)", CADUNICO, "raca_cor",
+           [metrica("Inadimplência (% dos ativos)", "SUM(qt_inadimplentes)::numeric / NULLIF(SUM(qt_ativos), 0)")],
+           grupo=[coluna("Bolsa Família", "CASE WHEN ic_bolsa_familia THEN 'No Bolsa Família' ELSE 'Fora do Bolsa Família' END")],
+           empilhado=False, formato=".0%", filtros=["ic_encontrado_cadunico", "raca_cor <> 'Não informada'"],
+           eixo_titulo="Raça/cor no CadÚnico", y_titulo="% dos contratos ativos"),
     barras("i_uf", "Inadimplência por UF", CONTRATO, "uf", [TAXA_INADIMPLENCIA], empilhado=False, formato=".0%",
            ordenar_por_valor=True, eixo_titulo="UF", y_titulo="% dos contratos ativos"),
     tabela("i_municipios", "Municípios com maior inadimplência (100 ou mais contratos ativos)", MUNICIPIO,
@@ -329,7 +364,9 @@ A última aba, **O que falta**, lista todas as perguntas da oficina e a situaç�
 - **Parcial**: respondem em parte, com a limitação descrita.
 - **Lacuna de fonte**: a informação não chega ao banco; a coluna *Fonte necessária* diz o que pedir.
 
-Dados pessoais (CPF, NIS, nome e endereço) são mascarados antes de chegar aqui; o painel só mostra contagens e taxas."""
+Dados pessoais (CPF, NIS, nome e endereço) são mascarados antes de chegar aqui; o painel só mostra contagens e taxas.
+
+Raça/cor, situação de rua, Bolsa Família e gastos com energia e água vêm do **CadÚnico** (corte de 12/2025), cruzado com os contratos pelo CPF mascarado."""
 
 COMO = {
     "b_ano": """### Como ler
@@ -359,7 +396,23 @@ Idade do titular **na assinatura** do contrato, em cada geração (100% = contra
     "b_familia": """### Como ler
 Contratos do Novo MCMV pelo número de pessoas na família, separando as famílias com pessoa com deficiência (PCD).
 
-Composição da família e PCD chegam a partir da remessa de 08/2026. O legado não informa. **Situação de rua** existe no layout, mas chega vazia.""",
+Composição da família e PCD chegam a partir da remessa de 08/2026. O legado não informa. **Situação de rua** existe no layout, mas chega vazia.
+
+Logo abaixo, PCD, raça/cor e situação de rua das três carteiras, pelo CadÚnico.""",
+    "b_raca": """### Como ler
+Raça/cor declarada no **CadÚnico** pelos titulares dos contratos, em cada agente financeiro. Nenhuma remessa do FAR traz raça/cor; ela vem do cruzamento pelo CPF mascarado.
+
+⚠️ Só entram os titulares encontrados no CadÚnico de 12/2025: quase todos no Novo MCMV, cerca de 70% no legado. Quem saiu do cadastro fica de fora.""",
+    "b_rua": """### Como ler
+Titulares que estão em **situação de rua** no CadÚnico, pelo tempo que vivem na rua.
+
+⚠️ É a situação na data do corte (12/2025), não a da seleção: quem saiu da rua com a moradia já não aparece. No legado, é quem voltou à rua depois do contrato. O campo de situação de rua das remessas do FAR chega vazio.""",
+    "b_gastos": """### Como ler
+Gasto mensal médio da família com **energia** e com **água e esgoto**, declarado no CadÚnico, por faixa de renda.
+
+Só entram famílias com o cadastro atualizado **depois** da assinatura e no **mesmo município** do imóvel, para que o gasto seja o da nova moradia.
+
+⚠️ É o valor declarado, não a conta. O CadÚnico não coleta gasto com internet. No Novo MCMV, poucas famílias atualizaram o cadastro depois da assinatura (cerca de 100), então a média ainda é frágil.""",
     "b_renda": """### Como ler
 Distribuição dos contratos por faixa de renda familiar comprovada (valores nominais da época da assinatura).
 
@@ -386,6 +439,10 @@ No legado CAIXA, **liquidado** é contrato encerrado (saldo zero) e **sub-rogado
 Taxa de inadimplência por faixa de renda. Responde se famílias de menor renda atrasam mais.
 
 É uma comparação descritiva: não controla município, ano de assinatura nem modalidade. Use os filtros para isolar esses fatores.""",
+    "i_raca": """### Como ler
+Taxa de inadimplência dos contratos ativos pela raça/cor do titular no CadÚnico, separando as famílias no Bolsa Família.
+
+É uma comparação descritiva: a raça/cor e o Bolsa Família são os do CadÚnico de 12/2025, não os da assinatura, e só entram os titulares encontrados no cadastro.""",
     "i_uf": """### Como ler
 Taxa de inadimplência dos contratos ativos por UF. A tabela abaixo lista os municípios com maior taxa, entre os que têm ao menos 100 contratos ativos (para não destacar taxas de poucos contratos).
 
@@ -450,11 +507,13 @@ ABAS = [
         ("pair", "b_ano"), ("pair", "b_uf"), ("pair", "b_modalidade"), ("chart", "b_municipios", 70),
         ("header", "2. Quem são os titulares? Sexo, estado civil, coobrigado e idade"),
         ("pair", "b_sexo"), ("pair", "b_estado_civil"), ("chart", "b_coobrigado", 45), ("pair", "b_faixa_etaria"),
-        ("header", "3. Como são as famílias do Novo MCMV? PCD, tamanho e idosos"),
+        ("header", "3. Como são as famílias? PCD, tamanho, idosos, raça/cor e situação de rua"),
         ("charts", ["b_kpi_pcd", "b_kpi_familia_pcd", "b_kpi_membros", "b_kpi_familia_idoso"]),
         ("pair", "b_familia"),
-        ("header", "4. Qual a renda das famílias, a participação do titular e do coobrigado e a renda por empreendimento?"),
-        ("pair", "b_renda"), ("pair", "b_renda_participacao"), ("chart", "b_renda_empreendimento", 70),
+        ("charts", ["b_kpi_cadunico", "b_kpi_pcd_cadunico", "b_kpi_bolsa_familia", "b_kpi_rua"]),
+        ("pair", "b_raca"), ("pair", "b_rua"),
+        ("header", "4. Qual a renda e os gastos das famílias, a participação do titular e do coobrigado e a renda por empreendimento?"),
+        ("pair", "b_renda"), ("pair", "b_gastos"), ("pair", "b_renda_participacao"), ("chart", "b_renda_empreendimento", 70),
     ]),
     ("2. Contratação e situação", [
         ("header", "5. Quantos contratos são doação e quantos alienação fiduciária? Quantos foram assinados por mês?"),
@@ -466,8 +525,8 @@ ABAS = [
         ("charts", ["i_kpi_ativos", "i_kpi_inadimplentes", "i_kpi_taxa", "i_kpi_valor"]),
         ("header", "7. Quantos contratos estão inadimplentes e qual a taxa?"),
         ("pair", "i_agente"),
-        ("header", "8. Famílias de menor renda são mais inadimplentes?"),
-        ("pair", "i_renda"),
+        ("header", "8. Famílias de menor renda são mais inadimplentes? E por raça/cor e Bolsa Família?"),
+        ("pair", "i_renda"), ("pair", "i_raca"),
         ("header", "9. Quais municípios concentram contratos e têm maior inadimplência? Onde há retomadas?"),
         ("pair", "i_uf"), ("chart", "i_municipios", 70),
     ]),
@@ -506,8 +565,8 @@ ABAS = [
 
 # Filtros nativos: (nome, coluna, datasets, índice da aba).
 FILTROS = [
-    *[(n, c, [CONTRATO, MUNICIPIO], aba) for aba in (1, 2, 3) for n, c in (("Geração", "geracao"), ("UF", "uf"))],
-    *[("Agente financeiro", "agente_financeiro", [CONTRATO], aba) for aba in (1, 2, 3)],
+    *[(n, c, [CONTRATO, MUNICIPIO, CADUNICO], aba) for aba in (1, 2, 3) for n, c in (("Geração", "geracao"), ("UF", "uf"))],
+    *[("Agente financeiro", "agente_financeiro", [CONTRATO, CADUNICO], aba) for aba in (1, 2, 3)],
     *[(n, c, [EMPREENDIMENTO], aba) for aba in (4, 5, 7) for n, c in (("UF", "uf"), ("Tipo de demanda", "tipo_demanda"))],
     ("Empreendimento", "apf_municipio_empreendimento", [EMPREENDIMENTO], 7),
     ("Alerta de execução", "alerta_execucao", [EMPREENDIMENTO], 5),

@@ -36,10 +36,13 @@ python scripts/superset/perguntas_far.py
 | bronze | `bronze_sftp_mont_cont_pf_far` | contrato (remessa mais recente) | MONT_CONT_PF_FAR — Novo MCMV |
 | bronze | `bronze_sftp_int039_far_caixa_pf` | contrato (remessa mais recente) | INT039 — legado CAIXA |
 | bronze | `bronze_sftp_int021_far_bb_pf` | contrato (remessa mais recente) | INT021 — legado BB |
+| bronze | `bronze_sftp_cadunico_beneficiario_far` | contrato com titular no CadÚnico | CadÚnico (pessoa 12/12/2025, família 09/01/2026), casado pelo CPF em HMAC |
 | prata | `prata_far_contrato_pf` | contrato | as três bronzes, sem identificador pessoal |
+| prata | `prata_far_beneficiario_cadunico` | contrato com titular no CadÚnico | raça/cor, PCD, situação de rua, Bolsa Família e gastos; restrita |
 | prata | `prata_far_empreendimento_natureza` | APF | cadastro PJ + consolidado HIS |
 | ouro | `ouro_far_beneficiario_contrato` | contrato | perfil, contratação, situação, inadimplência |
 | ouro | `ouro_far_beneficiario_municipio` | município × geração | território e inadimplência |
+| ouro | `ouro_far_beneficiario_cadunico` | perfil no CadÚnico × geração × UF × renda | agregada, sem contrato nem município |
 | ouro | `ouro_far_empreendimento_perguntas` | APF | natureza, panorama, execução e alerta |
 | ouro | `ouro_far_contrapartida` | APF × ente × tipo | pactuação dos entes |
 | ouro | `ouro_far_cobertura_perguntas` | pergunta | matriz do que falta |
@@ -57,13 +60,20 @@ python scripts/superset/perguntas_far.py
 - **Sinal de paralisação** = obra iniciada, não concluída, com percentual físico parado há
   3 meses ou mais; **ritmo abaixo do previsto** = 10 p.p. ou mais abaixo do cronograma.
 
+- **CadÚnico**: o titular é casado pelo CPF em HMAC (mesmo segredo nas duas fontes). Pessoa
+  do corte 12/12/2025 e família do corte 09/01/2026: o de 12/12/2025 tem só metade das
+  famílias. É a foto do cadastro no corte, não a da assinatura. Gastos com energia e água
+  só valem com cadastro atualizado depois da assinatura e no município do imóvel.
+- A bronze do CadÚnico lê o parquet **filtrado pelos CPFs do FAR**. Varrer o CadÚnico
+  inteiro pelo pg_duckdb estoura a memória do DW.
+
 ## Lacunas de fonte (o que pedir)
 
 | Pergunta | O que falta |
 |---|---|
 | Faixa etária | Idade ou faixa etária calculada antes do mascaramento (a data de nascimento é redigida) |
-| PCD, situação de rua, tamanho da família, família com idoso | Campos do layout 015 preenchidos (chegam vazios) |
-| Raça/cor | Campo em alguma remessa do FAR, ou cruzamento com o CadÚnico |
+| Situação de rua na seleção | IC_BENEF_SIT_RUA preenchido (o CadÚnico só mostra a situação no corte) |
+| Gasto com internet | Não existe no CadÚnico; energia e água vêm de lá |
 | Retomadas e passivo | Estoque de imóveis retomados com data e situação; retomada no legado |
 | Execução das contrapartidas | O que o ente já entregou (hoje só o pactuado) |
 | Equipamentos públicos, aporte/suplementação | Campos do MONIT_CAD_PJ preenchidos (chegam zerados) |

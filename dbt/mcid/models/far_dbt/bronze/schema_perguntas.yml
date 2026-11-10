@@ -260,3 +260,25 @@ models:
         description: Arquivo da staging que venceu esta carga.
         tests:
           - not_null
+
+  - name: bronze_sftp_cadunico_beneficiario_far
+    description: >
+      CadÚnico dos responsáveis pelos contratos do FAR (Novo MCMV, INT039 e INT021),
+      casado pelo identificador pessoal mascarado. Pessoa do corte 12/12/2025 e família
+      do corte 09/01/2026. Só entram os encontrados; o identificador não é guardado. Raça/cor, deficiência e
+      situação de rua ficam nesta camada e na prata, ambas restritas.
+    config:
+      meta:
+        documentacao:
+          grao: Um contrato do FAR cujo responsável está no CadÚnico.
+          chave: [geracao, agente_financeiro, nu_contrato]
+          fonte: CadÚnico (ARQ_PESSOA de 12/12/2025 e ARQ_FAMILIA de 09/01/2026) e contratos PF do FAR.
+          periodicidade: eventual
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: nu_contrato
+        description: Contrato da família com o agente financeiro.
+        tests:
+          - not_null
+      - name: ic_familia_encontrada
+        description: Se a família da pessoa está no corte de famílias de 09/01/2026.

@@ -182,3 +182,66 @@ models:
           - not_null
       - name: situacao_dado_rotulo
         description: Respondível, Parcial ou Lacuna de fonte.
+
+  - name: ouro_far_beneficiario_cadunico
+    description: >
+      Contratos das famílias do FAR agregados pelo perfil do responsável no CadÚnico:
+      raça/cor, situação de rua, PCD e Bolsa Família, com a carteira ativa, a
+      inadimplência e os gastos da família com energia e água. Agregada e sem contrato
+      nem município, porque raça/cor é dado sensível. Média de gasto = soma dividida
+      pela quantidade com o valor informado.
+    config:
+      meta:
+        documentacao:
+          grao: Uma combinação de geração, agente, UF, faixa de renda e perfil no CadÚnico.
+          chave: [geracao, agente_financeiro, uf, faixa_renda, ic_encontrado_cadunico, raca_cor, ic_situacao_rua, tempo_situacao_rua, ic_pcd, ic_bolsa_familia, momento_cadastro, ic_mesmo_municipio]
+          fonte: Contratos PF do FAR (Novo MCMV, INT039, INT021) e CadÚnico de 12/2025 e 01/2026.
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: geracao
+        description: Novo MCMV ou Legado (2009–2023).
+        tests:
+          - not_null
+      - name: agente_financeiro
+        description: CAIXA ou Banco do Brasil.
+      - name: uf
+        description: UF do imóvel do contrato.
+      - name: faixa_renda
+        description: Faixa da renda familiar comprovada na assinatura.
+      - name: ic_encontrado_cadunico
+        description: Se o responsável pelo contrato está no CadÚnico de 12/12/2025.
+        tests:
+          - not_null
+      - name: raca_cor
+        description: Raça/cor do responsável pelo contrato no CadÚnico. Nula fora do CadÚnico.
+      - name: ic_situacao_rua
+        description: Responsável em situação de rua na data do corte do CadÚnico.
+      - name: tempo_situacao_rua
+        description: Há quanto tempo vive na rua, para quem está em situação de rua.
+      - name: ic_pcd
+        description: Responsável com deficiência segundo o CadÚnico.
+      - name: ic_bolsa_familia
+        description: Família no Bolsa Família.
+      - name: momento_cadastro
+        description: >
+          Se o cadastro da família foi atualizado antes ou depois da assinatura do
+          contrato. Depois da assinatura, os gastos tendem a ser os da nova moradia.
+      - name: ic_mesmo_municipio
+        description: Se o município do cadastro é o do imóvel do contrato.
+      - name: qt_contratos
+        description: Contratos na combinação.
+        tests:
+          - not_null
+      - name: qt_ativos
+        description: Contratos ativos.
+      - name: qt_inadimplentes
+        description: Contratos ativos com prestação vencida há mais de 90 dias.
+      - name: qt_com_despesa_energia
+        description: Contratos com gasto de energia informado.
+      - name: soma_despesa_energia
+        description: Soma do gasto mensal com energia, em R$.
+      - name: qt_com_despesa_agua
+        description: Contratos com gasto de água e esgoto informado.
+      - name: soma_despesa_agua
+        description: Soma do gasto mensal com água e esgoto, em R$.

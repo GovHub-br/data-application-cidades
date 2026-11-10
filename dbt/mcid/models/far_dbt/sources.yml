@@ -38,3 +38,12 @@ sources:
         meta:
           caminho: staging/sftp/fabrica/GEFUS/INT021_MinisterioCidades_FAR_BB_PF_*.parquet
           dag: minio_transform_dag
+      - name: cadunico_familia_beneficiario
+        description: >
+          Corte de famílias do CadÚnico de 09/01/2026, usado para os atributos da
+          família dos titulares do FAR. O corte de 12/12/2025 (fonte do Reforma
+          Casa Brasil) tem só metade das famílias das pessoas do mesmo corte.
+          Endereço, entrevistador e texto livre chegam protegidos.
+        meta:
+          caminho: staging/sftp/fabrica/GEFUS/CadUnico/ARQ_FAMILIA_PBF_09012026_SB8.parquet
+          dag: minio_transform_dag
