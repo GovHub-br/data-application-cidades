@@ -141,3 +141,55 @@ def test_sync_le_as_propriedades_do_catalogo(tmp_path, monkeypatch) -> None:
     assert gov.documentacao_por_modelo() == {
         "ouro_far_ficha": documentacao_dbt.propriedades(DOCUMENTACAO)
     }
+
+
+def _auditar(monkeypatch, capsys, tmp_path, *argv) -> tuple[int, str]:
+    import json
+    import sys
+
+    modelos = tmp_path / "models"
+    modelos.mkdir()
+    (modelos / "schema.yml").write_text(
+        "models:\n"
+        "  - name: documentado\n"
+        "    description: Quantidade de contratos assinados no mês.\n"
+        "    columns:\n"
+        "      - name: sem_texto\n"
+    )
+    manifesto = tmp_path / "manifest.json"
+    nos = {"documentado": "a.sql", "esquecido": "models/esquecido.sql"}
+    manifesto.write_text(
+        json.dumps(
+            {"nodes": {n: {"name": n, "path": p, "resource_type": "model"} for n, p in nos.items()}}
+        )
+    )
+    monkeypatch.setattr(auditoria, "DEFAULT_EXTRAS", ())
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "auditar_metadados.py",
+            "--models-root",
+            str(modelos),
+            "--manifest",
+            str(manifesto),
+            *argv,
+        ],
+    )
+    return auditoria.main(), capsys.readouterr().out
+
+
+def test_auditoria_conta_e_lista_os_achados(monkeypatch, capsys, tmp_path) -> None:
+    codigo, saida = _auditar(monkeypatch, capsys, tmp_path)
+    assert codigo == 0
+    assert "Nós do projeto com entrada em YAML: 1/2 (50%)" in saida
+    assert "Recursos com descrição efetiva: 1/1 (100%)  ·  Colunas: 0/1 (0%)" in saida
+    assert "models.documentado.sem_texto — descricao_ausente" in saida
+    assert "models/esquecido.sql: model.esquecido — sem_entrada_yaml" in saida
+
+
+def test_auditoria_resumo_e_estrita(monkeypatch, capsys, tmp_path) -> None:
+    codigo, saida = _auditar(monkeypatch, capsys, tmp_path, "--resumo", "--strict")
+    assert codigo == 1
+    assert "Achados por regra: descricao_ausente=1, sem_entrada_yaml=1" in saida
+    assert "sem_texto" not in saida
