@@ -23,8 +23,8 @@ Por padrão não escreve — sem `--confirmar` apenas relata o que faria. Sem
 URL/token no ambiente, roda offline e imprime só o que está declarado.
 
 Uso:
-    poetry run python scripts/governance/sincronizar_governanca.py
-    poetry run python scripts/governance/sincronizar_governanca.py --confirmar
+    uv run python scripts/governance/sincronizar_governanca.py
+    uv run python scripts/governance/sincronizar_governanca.py --confirmar
 """
 
 from __future__ import annotations

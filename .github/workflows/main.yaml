@@ -16,9 +16,6 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.11"
-  POETRY_VERSION: "1.8.5"
-  POETRY_VIRTUALENVS_IN_PROJECT: "true"
-  POETRY_CACHE_DIR: "/home/runner/.cache/poetry"
   DBT_PROJECT_DIR: "${{ github.workspace }}/dbt/mcid"
 
   IMAGE_REGISTRY: ghcr.io
@@ -32,14 +29,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-poetry
+      - uses: astral-sh/setup-uv@v7
         with:
-          python_version: ${{ env.PYTHON_VERSION }}
-          poetry_version: ${{ env.POETRY_VERSION }}
-          poetry_cache_dir: ${{ env.POETRY_CACHE_DIR }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - run: uv sync --locked
 
       - name: Run lint
-        run: poetry run make lint-ci || true
+        run: uv run pre-commit run --all-files || true
 
   test:
     name: Test
@@ -47,15 +46,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-poetry
+      - uses: astral-sh/setup-uv@v7
         with:
-          python_version: ${{ env.PYTHON_VERSION }}
-          poetry_version: ${{ env.POETRY_VERSION }}
-          poetry_cache_dir: ${{ env.POETRY_CACHE_DIR }}
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - run: uv sync --locked
 
       - name: Run tests
         run: >
-          poetry run pytest tests
+          uv run pytest tests
           --junitxml=report.xml
           --cov=. --cov-report=xml:coverage.xml
 

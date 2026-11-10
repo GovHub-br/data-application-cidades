@@ -21,10 +21,10 @@ gravado. A documentação do produto é semântica — descreve o que a coluna
 significa, e o significado não depende de olhar o que está dentro dela.
 
 Uso:
-    poetry run python scripts/governance/inventariar_colunas.py \\
+    uv run python scripts/governance/inventariar_colunas.py \\
         --schema conjuntura --contrato
 
-    poetry run python scripts/governance/inventariar_colunas.py \\
+    uv run python scripts/governance/inventariar_colunas.py \\
         --schema ouro --tabela ouro_conjuntura_icst
 """
 

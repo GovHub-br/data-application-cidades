@@ -131,7 +131,7 @@ helm upgrade --install airflow apache-airflow/airflow --version 1.22.0 \
 
 O código vem do repositório inteiro pelo git-sync (`/opt/airflow/dags/repo`,
 `AIRFLOW_REPO_BASE`). Para publicar uma versão nova das DAGs, basta o merge na
-branch de `dags.gitSync.branch`. Mudanças no `requirements.txt` ou no
+branch de `dags.gitSync.branch`. Mudanças no `requirements.lock.txt` ou no
 `Dockerfile` pedem imagem nova e outro `defaultAirflowTag`.
 
 Login: `airflow`, com a senha do Secret `airflow-admin`:

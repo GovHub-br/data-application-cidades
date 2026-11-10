@@ -8,7 +8,7 @@ O número é lido; o texto vem de `scripts/conjuntura/dados/boletim-editorial.ym
 de texto é inventado aqui: o gerador só posiciona o que já está escrito.
 
 Uso:
-    poetry run python scripts/conjuntura/gerar_pagina_boletim.py --edicao 1T2026
+    uv run python scripts/conjuntura/gerar_pagina_boletim.py --edicao 1T2026
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 # GERADO POR infra/docker/airflow/compile-lock.sh -- NAO EDITE A MAO.
 #
 # Resolvido contra apache/airflow:3.3.2-python3.11.
-# Para mudar uma dependencia, edite requirements.txt e rode o script.
+# Para mudar uma dependencia, edite o grupo runtime do pyproject.toml e rode o script.
 #
 a2wsgi==1.10.10
     # via

@@ -18,7 +18,7 @@ compilado e o catálogo completo da bronze, que não fazem parte do catálogo de
 metadados de consumo.
 
 Uso:
-    poetry run python scripts/conjuntura/gerar_doc_pipeline.py [saida.html] \\
+    uv run python scripts/conjuntura/gerar_doc_pipeline.py [saida.html] \\
         --target-dir /diretorio/privado/do/dbt
 """
 
@@ -313,7 +313,7 @@ def carregar_contagens() -> dict[str, int]:
 
         r = subprocess.run(
             [
-                "poetry",
+                "uv",
                 "run",
                 "dbt",
                 "show",

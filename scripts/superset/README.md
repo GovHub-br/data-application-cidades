@@ -9,8 +9,8 @@ pré-requisito do outro: `build_boletim.py` pressupõe que a conexão e as Gold
 já estejam registradas.
 
 ```bash
-poetry run python scripts/superset/bootstrap_conjuntura.py --dry-run
-poetry run python scripts/superset/bootstrap_conjuntura.py
+uv run python scripts/superset/bootstrap_conjuntura.py --dry-run
+uv run python scripts/superset/bootstrap_conjuntura.py
 ```
 
 ## `build_boletim.py` — o dashboard do boletim
@@ -20,9 +20,9 @@ uma por página do boletim — e um filtro de trimestre no topo. Cada quadro é 
 dataset virtual com SQL que reproduz a tabela impressa.
 
 ```bash
-poetry run python scripts/superset/build_boletim.py                # tudo
-poetry run python scripts/superset/build_boletim.py --paginas 3,5  # só 3 e 5
-poetry run python scripts/superset/build_boletim.py --dry-run
+uv run python scripts/superset/build_boletim.py                # tudo
+uv run python scripts/superset/build_boletim.py --paginas 3,5  # só 3 e 5
+uv run python scripts/superset/build_boletim.py --dry-run
 ```
 
 Para incluir ou tirar um chart, mexe-se só na função `pagina_0N()` da página

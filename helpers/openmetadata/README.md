@@ -29,7 +29,7 @@ A sincronização é somente de upsert: ela não apaga automaticamente termos qu
 deixarem de existir no CSV.
 
 O `INGESTION_TOKEN` também precisa ter permissão para criar e editar glossários.
-O pacote de ingestão (`openmetadata-ingestion==1.13.3.2`, em `requirements.txt`)
+O pacote de ingestão (`openmetadata-ingestion==1.13.3.2`, no grupo runtime do `pyproject.toml`)
 acompanha a linha do servidor, hoje 1.13.3: cliente e servidor de linhas
 diferentes divergem no schema das entidades.
 

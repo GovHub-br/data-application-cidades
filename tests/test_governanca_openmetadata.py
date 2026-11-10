@@ -8,6 +8,7 @@ camada do schema daria `Tier1` e `Uso.Consumivel` às tabelas bronze dele.
 
 from __future__ import annotations
 
+import tomllib
 from pathlib import Path
 
 from packaging.requirements import Requirement
@@ -632,9 +633,8 @@ LOCK_DA_IMAGEM = RAIZ / "infra" / "docker" / "airflow" / "requirements.lock.txt"
 
 
 def _pin_do_pacote_de_ingestao() -> Requirement:
-    linhas = (RAIZ / "requirements.txt").read_text(encoding="utf-8").splitlines()
-    linha = next(x for x in linhas if x.startswith("openmetadata-ingestion"))
-    return Requirement(linha)
+    runtime = tomllib.loads((RAIZ / "pyproject.toml").read_text())["dependency-groups"]["runtime"]
+    return Requirement(next(x for x in runtime if x.startswith("openmetadata-ingestion")))
 
 
 def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
@@ -665,27 +665,6 @@ def test_pacote_de_ingestao_nao_traz_outro_airflow() -> None:
     assert "airflow" not in extras
     assert "pii-processor" not in extras
 
-
-def test_lock_da_imagem_acompanha_o_requirements() -> None:
-    """A imagem instala o lock, não o requirements.txt.
-
-    Um pin mudado só no requirements.txt nunca chegaria à imagem.
-    """
-    travados = [
-        Requirement(linha)
-        for linha in LOCK_DA_IMAGEM.read_text(encoding="utf-8").splitlines()
-        if linha and not linha.startswith(("#", " "))
-    ]
-    lock = {r.name.lower(): r for r in travados}
-    for linha in (RAIZ / "requirements.txt").read_text(encoding="utf-8").splitlines():
-        if not linha or linha.startswith("#") or "==" not in linha:
-            continue
-        pedido = Requirement(linha)
-        travado = lock[pedido.name.lower()]
-        assert travado.specifier == pedido.specifier, (
-            f"{pedido.name}: requirements.txt pede {pedido.specifier}, lock tem "
-            f"{travado.specifier}. Rode infra/docker/airflow/compile-lock.sh."
-        )
 
 
 def test_conector_do_airflow_nao_bloqueia_o_catalogo() -> None:

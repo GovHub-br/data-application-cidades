@@ -10,9 +10,9 @@ Um arquivo só, em duas metades:
 
 Uso:
 
-    poetry run python scripts/superset/build_boletim.py                # tudo
-    poetry run python scripts/superset/build_boletim.py --paginas 3,5  # só 3 e 5
-    poetry run python scripts/superset/build_boletim.py --dry-run
+    uv run python scripts/superset/build_boletim.py                # tudo
+    uv run python scripts/superset/build_boletim.py --paginas 3,5  # só 3 e 5
+    uv run python scripts/superset/build_boletim.py --dry-run
 
 Reconstruir uma página não apaga as outras: o layout das não selecionadas é
 preservado a partir do que já está publicado.

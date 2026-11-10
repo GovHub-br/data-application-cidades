@@ -20,13 +20,13 @@ OUTPUT = ROOT / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.j
 
 def main() -> int:
     # O executável do dbt não é o mesmo em todo lugar: no ambiente do time é
-    # `poetry run dbt`, no CI é `dbt` puro. O `gerar_docs_seguros.py` já aceitava
-    # a escolha; este fixava poetry e quebrava fora dele.
+    # `uv run dbt`, no CI é `dbt` puro. O `gerar_docs_seguros.py` já aceitava
+    # a escolha; este fixava o gerenciador e quebrava fora dele.
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--dbt-command",
-        default="poetry run dbt",
-        help="executável do dbt (padrão: 'poetry run dbt'; no CI, 'dbt')",
+        default="uv run dbt",
+        help="executável do dbt (padrão: 'uv run dbt'; no CI, 'dbt')",
     )
     args = parser.parse_args()
 

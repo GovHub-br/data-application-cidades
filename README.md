@@ -50,6 +50,7 @@ This project implements a modern data stack using Airflow, dbt, Jupyter, and Sup
 - Docker and Docker Compose
 - Make
 - Python 3.x
+- [uv](https://docs.astral.sh/uv/)
 - Git
 
 ## 🔧 Setup

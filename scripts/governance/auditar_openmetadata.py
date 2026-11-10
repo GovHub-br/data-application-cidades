@@ -16,8 +16,8 @@ O que ele pega e a conferência manual não pegava de graça:
   em lugar nenhum — tabela órfã ou edição feita pela tela.
 
 Uso:
-    poetry run python scripts/governance/auditar_openmetadata.py
-    poetry run python scripts/governance/auditar_openmetadata.py --strict
+    uv run python scripts/governance/auditar_openmetadata.py
+    uv run python scripts/governance/auditar_openmetadata.py --strict
 """
 
 from __future__ import annotations

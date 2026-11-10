@@ -61,7 +61,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--dbt-command",
-        default="poetry run dbt",
+        default="uv run dbt",
         help="comando dbt, por exemplo 'dbt' na CI",
     )
     args = parser.parse_args()

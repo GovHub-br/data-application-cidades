@@ -46,9 +46,9 @@ COPY --chown=airflow:0 infra/airflow/simple_auth_manager_passwords.json ./simple
 # Para rodar o airflow só precisamos instalar as dependências visto que o código
 # sempre será sincronizado via git sync ou via volumes localmente.
 #
-# Instala o LOCK, não o requirements.txt: o lock é resolvido de uma vez contra
+# Instala o LOCK, não o grupo runtime do pyproject.toml: o lock é resolvido de uma vez contra
 # esta imagem base por infra/docker/airflow/compile-lock.sh. Instalar o
-# requirements.txt solto rebaixava pacotes da base para caber o
+# grupo runtime solto rebaixava pacotes da base para caber o
 # openmetadata-ingestion. O uv já vem na imagem oficial e instala no mesmo
 # VIRTUAL_ENV (/home/airflow/.local) em que o pip instalava.
 COPY infra/docker/airflow/requirements.lock.txt ./requirements.lock.txt

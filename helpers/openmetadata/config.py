@@ -29,7 +29,7 @@ DBT_MCID_DIR = f"{AIRFLOW_REPO_BASE}/dbt/mcid"
 #: venv, com o Airflow 3.2.2 que o extra `airflow` instalava, a recipe
 #: `airflow_metadata` falhava no homolog ao inicializar o ORM; na imagem, o
 #: conector roda no mesmo Airflow da task. Ver o README desta pasta.
-#: A versão do pacote acompanha a LINHA do servidor (ver `requirements.txt`).
+#: A versão do pacote acompanha a LINHA do servidor (ver o grupo runtime do `pyproject.toml`).
 
 
 @dataclass(frozen=True)

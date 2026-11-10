@@ -20,8 +20,8 @@ De onde sai cada coisa:
                               compilado, e por isso pode ser lida aqui
 
 Uso:
-    poetry run python scripts/governance/sincronizar_lake.py
-    poetry run python scripts/governance/sincronizar_lake.py --confirmar
+    uv run python scripts/governance/sincronizar_lake.py
+    uv run python scripts/governance/sincronizar_lake.py --confirmar
 """
 
 from __future__ import annotations
