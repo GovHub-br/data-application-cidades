@@ -5,7 +5,8 @@ Uso:
     python scripts/sftp_minio_diff.py --limit 50
     python scripts/sftp_minio_diff.py --json diff_sftp_minio.json
 
-Variaveis esperadas em .env ou local.env:
+Variaveis esperadas em .env ou local.env (fora do git; crie com
+`cp infra/env/.env.example local.env`):
     SFTP_HOST
     SFTP_PORT
     SFTP_USER
