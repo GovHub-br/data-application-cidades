@@ -66,8 +66,7 @@ def minio_transform_dag() -> None:
 
         Roda o script em processo próprio: o modo paralelo cria os filhos com spawn, que
         reexecutam o __main__ do pai. Dentro da task, o __main__ é o binário do Airflow,
-        que quebra sem acesso ao banco. O script sai com erro se algum objeto falhar, e
-        a task falha junto, para a staging não converter raw sem máscara.
+        que quebra sem acesso ao banco. Objeto com erro fica sem tag e a staging o pula.
         """
         import os
         import subprocess

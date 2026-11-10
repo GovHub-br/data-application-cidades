@@ -88,7 +88,7 @@ from mascaramento.xlsx import (
 from mascaramento.mdb import _analisar_mdb
 
 # depois do pacote: mascaramento/__init__.py põe plugins/ no sys.path
-from cliente_minio import ClienteMinio
+from cliente_minio import TRIAGEM_LIBERADA, ClienteMinio
 
 log = logging.getLogger(__name__)
 
@@ -123,6 +123,18 @@ def _novo_registro(execution_id: str, key: str) -> dict:
         "error_message": None,
         "duration_s": 0.0,
     }
+
+
+def _marcar_resultado(
+    minio: ClienteMinio, key: str, execution_id: str, rec: dict
+) -> None:
+    """Grava no objeto a tag que libera a staging: triagem ou mascaramento já feito."""
+    if rec["status"] in TRIAGEM_LIBERADA:
+        minio.marcar_triagem(key, execution_id, rec["status"])
+    elif rec["status"] == "skipped_already" and rec["hash_before"]:
+        # conteúdo igual a um mascaramento anterior, mas sem a tag (ex.: objeto copiado
+        # na reorganização do lake): regrava para a próxima execução pular na hora
+        minio.marcar_mascarado(key, execution_id, rec["hash_before"])
 
 
 def processar_objeto(  # noqa: C901
@@ -233,17 +245,13 @@ def processar_objeto(  # noqa: C901
                 rec["status"] = "skipped_no_pii"
                 return rec
 
-            # Tem PII e não há como reescrever .mdb — falhar alto em vez de fingir que
-            # mascarou.
+            # mdbtools só lê: o .mdb fica como está no raw e a staging mascara cada
+            # tabela exportada, com as mesmas regras, antes de gravar o parquet
             cols = ", ".join(f"{t['table']}.{t['column']}" for t in targets[:5])
-            rec["status"] = "error"
-            rec["error_message"] = (
-                f"PII encontrada em .mdb ({len(targets)} coluna(s): {cols}) — mdbtools é "
-                "read-only e não há como reescrever o arquivo. Tratar à parte "
-                "(converter e "
-                "descartar o .mdb, ou usar Jackcess/UCanAccess via Java)."
-            )[:500]
-            log.error("✗ %s: %s", key, rec["error_message"])
+            rec["status"] = "mdb_mascara_na_staging"
+            log.info(
+                "%s: PII em .mdb (%s), mascarada na conversão para a staging", key, cols
+            )
             return rec
 
         elif ext in SUPPORTED_EXCEL:
@@ -379,6 +387,8 @@ def run(  # noqa: C901
             continue
 
         rec = processar_objeto(minio, conn_str, key, execution_id, apply, masked_hashes)
+        if apply:
+            _marcar_resultado(minio, key, execution_id, rec)
         registros.append(rec)
         contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
         _avisar_mascaramento_sem_prova(key, rec)
@@ -443,7 +453,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    contagem = run(
+    run(
         apply=args.apply,
         force=args.force,
         limit=args.limit,
@@ -452,9 +462,6 @@ def main() -> None:
         max_size_mb=args.max_size_mb,
         prefix=args.prefix,
     )
-    # objeto com erro segue sem máscara no raw: quem roda a staging depois precisa saber
-    if contagem.get("error"):
-        raise SystemExit(f"{contagem['error']} objeto(s) com erro no mascaramento.")
 
 
 if __name__ == "__main__":

@@ -122,13 +122,13 @@ Por isso, para `.mdb` o script **apenas verifica** se há coluna sensível em al
 
 | Resultado | Status |
 |---|---|
-| Nenhuma coluna sensível (caso de todos os 128 hoje) | `skipped_no_pii` |
-| **Alguma coluna sensível** | **`error`** — falha explícita, nada é gravado |
+| Nenhuma coluna sensível | `skipped_no_pii` |
+| **Alguma coluna sensível** | **`mdb_mascara_na_staging`** — nada é gravado no `raw/` |
 
-A falha é deliberada: sem poder reescrever o arquivo, marcar como `masked` seria mentira e
-deixaria PII no lake em silêncio. O `.mdb` continua com PII no `raw/`; quem protege as
-camadas seguintes é o `raw_para_staging.py`, que passa o CSV exportado de cada tabela por
-`mascarar_csv()` (mesmas regras, mesmo HMAC) antes de gravar o parquet. Para tirar a PII do
+Sem poder reescrever o arquivo, marcar como `masked` seria mentira. O `.mdb` continua com PII
+no `raw/`; quem protege as camadas seguintes é o `raw_para_staging.py`, que passa o CSV
+exportado de cada tabela por `mascarar_csv()` (mesmas regras, mesmo HMAC) antes de gravar o
+parquet. Para tirar a PII do
 `raw/` também, é preciso converter e descartar o `.mdb`, ou reescrevê-lo via Java (Jackcess).
 
 **Correção (out/2026):** a amostra abaixo não pegou o `CCI_CCA`. As tabelas `cci_analitico` e
@@ -145,6 +145,14 @@ pela regra condicional (só mascara CEP/endereço com indicador de PF na mesma t
 
 Objetos já mascarados recebem a tag `masked=true` e são pulados em execuções seguintes —
 evita o **duplo-HMAC** (aplicar HMAC sobre um token já gerado). Use `--force` para reprocessar.
+
+Objeto sem a tag cujo conteúdo é igual a um mascaramento anterior (ex.: copiado na
+reorganização do lake, que não leva as tags) sai como `skipped_already` e **ganha a tag de
+volta**, para a execução seguinte pulá-lo sem reler o arquivo.
+
+Com `--apply`, os objetos liberados sem reescrita (`skipped_no_pii`, `skipped_no_header`,
+`skipped_unsupported`) recebem a tag `triagem=<status>`. É ela, junto com `masked=true`, que
+libera o objeto para a staging.
 
 ---
 
@@ -226,7 +234,8 @@ e gera auditoria. Use `--apply` para efetivar.
 | `dry_run` | Tinha PII; prévia gravada em `masked_dryrun/` (sem `--apply`). |
 | `skipped_no_pii` | Sem coluna sensível (bases de empreendimento/PJ). Esperado — mas ver **Arquivos sem cabeçalho** abaixo. |
 | `skipped_no_header` | Não é tabular / sem delimitador detectável. |
-| `skipped_already` | Já mascarado (tag `masked=true`). |
+| `skipped_already` | Já mascarado (tag `masked=true`, ou conteúdo igual a um mascaramento anterior). |
+| `mdb_mascara_na_staging` | `.mdb` com PII: fica como está no `raw/` e é mascarado na conversão. |
 | `skipped_unsupported` | Formato não suportado (`.xls`, `.zip`) — **tratar à parte**. |
 | `error` | Falhou; **o objeto NÃO foi sobrescrito**. Investigar e re-rodar com `--pattern`. |
 

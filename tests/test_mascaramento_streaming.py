@@ -163,7 +163,9 @@ class S3Falso:
         self.tags[Key] = Tagging["TagSet"]
 
     def put_object(self, Bucket, Key, Body):
+        # como no S3: o objeto novo não herda as tags do anterior
         self.objetos[Key] = Body
+        self.tags.pop(Key, None)
 
 
 @pytest.fixture
@@ -561,19 +563,50 @@ def test_leitor_para_no_fim_do_intervalo_mesmo_se_o_servidor_mandar_mais(minio):
 # Execução pela DAG
 
 
-def test_cli_sai_com_erro_quando_algum_objeto_falha(monkeypatch):
-    monkeypatch.setattr(modulo, "run", lambda **kw: {"masked": 5, "error": 2})
-    monkeypatch.setattr(sys, "argv", ["mascarar_minio.py", "--apply"])
-
-    with pytest.raises(SystemExit, match="2 objeto"):
-        modulo.main()
+def _rec(status, hash_before=None):
+    rec = modulo._novo_registro("exec-teste", KEY)
+    rec.update(status=status, hash_before=hash_before)
+    return rec
 
 
-def test_cli_termina_normal_sem_erro(monkeypatch):
-    monkeypatch.setattr(modulo, "run", lambda **kw: {"masked": 5})
-    monkeypatch.setattr(sys, "argv", ["mascarar_minio.py", "--apply"])
+@pytest.mark.parametrize(
+    "status", ["skipped_no_pii", "skipped_no_header", "skipped_unsupported"]
+)
+def test_triagem_libera_a_staging_sem_marcar_como_mascarado(minio, status):
+    minio.s3.objetos[KEY] = CONTEUDO
 
-    modulo.main()
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec(status))
+
+    assert minio.pronto_para_staging(KEY)
+    assert not minio.esta_mascarado(KEY)
+
+
+def test_ja_mascarado_sem_tag_ganha_a_tag_de_volta(minio):
+    # objeto copiado na reorganização do lake perde a tag, mas o conteúdo já é a máscara
+    minio.s3.objetos[KEY] = CONTEUDO
+
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec("skipped_already", "abc"))
+
+    assert minio.esta_mascarado(KEY)
+    assert {"Key": "masked_hash", "Value": "abc"} in minio.get_tagging(KEY)
+
+
+@pytest.mark.parametrize("status", ["error", "dry_run", "mdb_mascara_na_staging"])
+def test_sem_mascara_nao_libera_a_staging(minio, status):
+    minio.s3.objetos[KEY] = CONTEUDO
+
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec(status))
+
+    assert not minio.pronto_para_staging(KEY)
+
+
+def test_regravar_o_objeto_volta_a_bloquear_a_staging(minio):
+    minio.s3.objetos[KEY] = CONTEUDO
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec("skipped_no_pii"))
+
+    minio.s3.put_object(Bucket="teste", Key=KEY, Body=CONTEUDO)
+
+    assert not minio.pronto_para_staging(KEY)
 
 
 def test_dag_mascara_em_processo_proprio():
