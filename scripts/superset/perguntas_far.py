@@ -96,7 +96,7 @@ def pizza(chave, titulo, dataset, grupo, metrica_, filtros=(), formato=",d"):
 
 def barras(chave, titulo, dataset, eixo, metricas, grupo=(), filtros=(), formato=",d",
            empilhado=True, percentual=False, eixo_titulo="", y_titulo="", tempo=None,
-           ordenar_por_valor=False, horizontal=False, limite=1000):
+           ordenar_por_valor=False, horizontal=False, limite=1000, ordenar_eixo_por=None):
     params = {
         "x_axis": eixo, "groupby": list(grupo), "metrics": metricas,
         "adhoc_filters": onde(*filtros), "row_limit": limite, "time_range": "No filter",
@@ -114,6 +114,10 @@ def barras(chave, titulo, dataset, eixo, metricas, grupo=(), filtros=(), formato
     if tempo:
         params["time_grain_sqla"] = tempo
         params["x_axis_time_format"] = "%m/%Y"
+    if ordenar_eixo_por:
+        # na barra horizontal a primeira categoria fica embaixo: crescente põe a maior no topo
+        params["x_axis_sort"] = ordenar_eixo_por
+        params["x_axis_sort_asc"] = horizontal
     if ordenar_por_valor:
         params["x_axis_sort_series"] = "sum"
         params["x_axis_sort_series_ascending"] = False
@@ -237,7 +241,7 @@ CHARTS = [
     barras("i_agente", "Inadimplência por geração e agente financeiro", CONTRATO, "agente_financeiro", [TAXA_INADIMPLENCIA], grupo=["geracao"],
            empilhado=False, formato=".0%", eixo_titulo="Agente financeiro", y_titulo="% dos contratos ativos"),
     barras("i_renda", "Inadimplência por faixa de renda", CONTRATO, "faixa_renda", [TAXA_INADIMPLENCIA], grupo=["geracao"],
-           empilhado=False, formato=".0%", filtros=["faixa_renda <> 'Não informada'"], eixo_titulo="Renda familiar comprovada", y_titulo="% dos contratos ativos"),
+           empilhado=False, formato=".0%", filtros=["faixa_renda NOT IN ('Não informada', 'Acima de R$ 2.850')"], eixo_titulo="Renda familiar comprovada", y_titulo="% dos contratos ativos"),
     barras("i_raca", "Inadimplência por raça/cor do titular (CadÚnico)", CADUNICO, "raca_cor",
            [metrica("Inadimplência (% dos ativos)", "SUM(qt_inadimplentes)::numeric / NULLIF(SUM(qt_ativos), 0)")],
            grupo=[coluna("Bolsa Família", "CASE WHEN ic_bolsa_familia THEN 'No Bolsa Família' ELSE 'Fora do Bolsa Família' END")],
@@ -342,8 +346,11 @@ CHARTS = [
     kpi("h_kpi_sairam", "Propostas que saíram da base", TRAJETORIA, CONTRATOS_PROPOSTAS, "não estão na remessa mais recente", filtros=["NOT ic_na_remessa_mais_recente"]),
     kpi("h_kpi_voltaram", "Propostas que sumiram e voltaram", TRAJETORIA, CONTRATOS_PROPOSTAS, "faltaram em alguma remessa", filtros=["ic_sumiu_e_voltou"]),
     kpi("h_kpi_mudancas", "Mudanças de situação por proposta", TRAJETORIA, metrica("Média", "AVG(qt_mudancas_situacao)"), "média desde a primeira remessa", formato=",.1f"),
-    linhas("h_fase", "Propostas por fase em cada remessa", HISTORICO, "dt_remessa", [metrica("Propostas", "SUM(qt_propostas)")], grupo=["fase"],
+    linhas("h_fase", "Propostas por etapa em cada remessa", HISTORICO, "dt_remessa", [metrica("Propostas", "SUM(qt_propostas)")], grupo=["etapa"],
            tempo="P1W", y_titulo="Propostas"),
+    barras("h_status", "Propostas por situação na remessa mais recente", TRAJETORIA, "status_atual", [CONTRATOS_PROPOSTAS],
+           grupo=["etapa_atual"], filtros=["ic_na_remessa_mais_recente"], horizontal=True, y_titulo="Propostas",
+           ordenar_eixo_por="sum"),
     linhas("h_uh", "Unidades habitacionais por tipo de demanda em cada remessa", HISTORICO, "dt_remessa", [metrica("UHs", "SUM(qt_uh)")],
            grupo=["tipo_demanda"], tempo="P1W", y_titulo="UHs"),
     barras("h_entradas", "Propostas que entraram na base, por mês", TRAJETORIA, "dt_primeira_remessa", [CONTRATOS_PROPOSTAS],
@@ -362,9 +369,13 @@ CHARTS = [
     tabela("cobertura", "O que os dados respondem (e o que falta)", COBERTURA,
            [coluna("Bloco", "bloco"), coluna("Pergunta", "pergunta"), coluna("Situação", "situacao_dado_rotulo"),
             coluna("O que o painel mostra", "resposta_disponivel"), coluna("Fonte necessária", "fonte_necessaria"),
+            coluna("Onde conseguir", "onde_conseguir_rotulo"),
             coluna("Limitação", "limitacao")],
            [["ordem", True]], limite=100),
     pizza("cobertura_resumo", "Perguntas por situação do dado", COBERTURA, "situacao_dado_rotulo", metrica("Perguntas", "COUNT(*)")),
+    barras("cobertura_onde", "Onde conseguir o que falta", COBERTURA, "onde_conseguir_rotulo", [metrica("Perguntas", "COUNT(*)")],
+           grupo=["situacao_dado_rotulo"], filtros=["situacao_dado <> 'respondivel'"], horizontal=True, y_titulo="Perguntas",
+           ordenar_eixo_por="sum"),
 ]
 
 COMECE = """# Perguntas do MCID sobre o FAR
@@ -391,6 +402,9 @@ A última aba, **O que falta**, lista todas as perguntas da oficina e a situaç�
 Dados pessoais (CPF, NIS, nome e endereço) são mascarados antes de chegar aqui; o painel só mostra contagens e taxas.
 
 Raça/cor, situação de rua, Bolsa Família e gastos com energia e água vêm do **CadÚnico** (corte de 12/2025), cruzado com os contratos pelo CPF mascarado."""
+
+# Altura dos pares cujo gráfico precisa de mais espaço que o padrão (55).
+ALTURAS = {"h_status": 75}
 
 COMO = {
     "b_ano": """### Como ler
@@ -462,15 +476,21 @@ No legado CAIXA, **liquidado** é contrato encerrado (saldo zero) e **sub-rogado
     "i_renda": """### Como ler
 Taxa de inadimplência por faixa de renda. Responde se famílias de menor renda atrasam mais.
 
+⚠️ No legado, a renda **não está informada** em cerca de 122 mil dos 132 mil contratos ativos (taxa de 24% nesse grupo), então as faixas descrevem uma parte pequena da carteira ativa. Acima de R$ 2.850 há só 36 contratos ativos e a faixa fica de fora.
+
 É uma comparação descritiva: não controla município, ano de assinatura nem modalidade. Use os filtros para isolar esses fatores.""",
     "i_raca": """### Como ler
 Taxa de inadimplência dos contratos ativos pela raça/cor do titular no CadÚnico, separando as famílias no Bolsa Família.
 
 É uma comparação descritiva: a raça/cor e o Bolsa Família são os do CadÚnico de 12/2025, não os da assinatura, e só entram os titulares encontrados no cadastro.""",
     "h_fase": """### Como ler
-Propostas do consolidado GFAR em cada **remessa semanal**, desde 12/03/2025, pela fase em que estavam naquela semana. É o passado da seleção: o resto do painel mostra só a foto mais recente.
+Propostas do consolidado GFAR em cada **remessa semanal**, desde 12/03/2025, pela etapa em que estavam naquela semana. É o passado da seleção: o resto do painel mostra só a foto mais recente.
 
-A situação da semana é a do movimento mais recente da proposta naquela remessa.""",
+A situação da semana é a do movimento mais recente da proposta naquela remessa. As etapas 1 a 4 são da fase de enquadramento; habilitação aparece nas duas fases; contratação é a última.""",
+    "h_status": """### Como ler
+Onde as propostas da remessa mais recente estão paradas: cada barra é um **status** e a cor é a **etapa**.
+
+As propostas novas entram pelo enquadramento do agente financeiro; boa parte fica como **Não enquadrada AF** e poucas chegam à contratação.""",
     "h_uh": """### Como ler
 Unidades habitacionais das propostas em cada remessa, por tipo de demanda. Use os filtros de UF e de fluxo para ver, por exemplo, só as propostas da calamidade do RS.""",
     "h_entradas": """### Como ler
@@ -526,7 +546,16 @@ A tabela abaixo é a ficha de cada empreendimento: portaria, demanda, tipologia,
 
 ⚠️ A previsão de elevador só está preenchida em parte dos empreendimentos; não há estimativa de custo de condomínio.""",
     "cobertura_resumo": """### Como ler
-Todas as perguntas da oficina, com a situação do dado hoje. A coluna **Fonte necessária** diz o que pedir para fechar as lacunas: raça/cor e situação de rua preenchidos, déficit habitacional municipal, Censo 2022, estoque de imóveis retomados e execução das contrapartidas.""",
+Todas as perguntas da oficina, com a situação do dado hoje. A coluna **Fonte necessária** da tabela abaixo diz o que falta em cada uma.""",
+    "cobertura_onde": """### Como ler
+Perguntas parciais ou sem fonte, por **onde conseguir** o que falta:
+
+- **Pedir ao MCid ou aos agentes**: dado que existe no MCid, na CAIXA ou no BB, mas não chega nas remessas (retomadas, contrapartidas executadas, estoque de imóveis).
+- **Fonte pública**: dá para baixar e cruzar sem pedir a ninguém (INEP, CNES, CadSUAS, déficit da FJP, Censo 2022).
+- **Pedir ao MCid e fonte pública**: precisa das duas coisas, ex. coordenadas do empreendimento (pedir) para cruzar com os setores do Censo (público).
+- **Pedir a outro órgão**: laudo de habitações destruídas, com a Defesa Civil.
+- **Falta análise, não fonte**: os dados já estão no painel; falta o estudo.
+- **Nenhuma fonte conhecida**: nenhuma base cobre (gasto com internet por família).""",
 }
 
 
@@ -596,13 +625,13 @@ ABAS = [
     ("8. Histórico da seleção", [
         ("charts", ["h_kpi_base", "h_kpi_sairam", "h_kpi_voltaram", "h_kpi_mudancas"]),
         ("header", "18. Como a seleção evoluiu semana a semana?"),
-        ("pair", "h_fase"), ("pair", "h_uh"),
+        ("pair", "h_fase"), ("pair", "h_status"), ("pair", "h_uh"),
         ("header", "19. Por onde cada proposta passou? Quais entraram, saíram ou sumiram e voltaram?"),
         ("pair", "h_entradas"), ("pair", "h_saidas"), ("chart", "h_lista", 80),
     ]),
     ("O que falta", [
         ("header", "O que os dados respondem (e o que falta)"),
-        ("pair", "cobertura_resumo"), ("chart", "cobertura", 90),
+        ("pair", "cobertura_resumo"), ("pair", "cobertura_onde"), ("chart", "cobertura", 90),
     ]),
 ]
 
@@ -730,8 +759,9 @@ def layout(ids: dict[str, int]) -> dict:
                     no(f"CHART-PERGUNTAS-FAR-{sufixo}-{posicao}", "CHART", filhos, {"chartId": ids[chave], "width": 6, "height": 55})
             else:
                 chave = bloco[1]
-                no(f"MARKDOWN-PERGUNTAS-FAR-{sufixo}", "MARKDOWN", filhos, {"width": 4, "height": 55, "code": COMO[chave]})
-                no(f"CHART-PERGUNTAS-FAR-{sufixo}", "CHART", filhos, {"chartId": ids[chave], "width": 8, "height": 55})
+                altura = ALTURAS.get(chave, 55)
+                no(f"MARKDOWN-PERGUNTAS-FAR-{sufixo}", "MARKDOWN", filhos, {"width": 4, "height": altura, "code": COMO[chave]})
+                no(f"CHART-PERGUNTAS-FAR-{sufixo}", "CHART", filhos, {"chartId": ids[chave], "width": 8, "height": altura})
     return estrutura
 
 

@@ -16989,7 +16989,7 @@
       "classification": "internal",
       "schema": "ouro",
       "name": "ouro_far_cobertura_perguntas",
-      "description": "Matriz pergunta × dado do painel de perguntas do FAR (seed cobertura_perguntas_far): o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta e qual a limitação.",
+      "description": "Matriz pergunta × dado do painel de perguntas do FAR (seed cobertura_perguntas_far): o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta, onde conseguir (pedir ao MCid ou fonte pública) e qual a limitação.",
       "documentation_status": "curated",
       "materialized": "table",
       "depends_on": [],
@@ -17021,6 +17021,20 @@
           "ordinal": 8,
           "description": "Atributo do indicador no contexto descrito pela tabela.",
           "documentation_status": "derived_convention"
+        },
+        {
+          "name": "onde_conseguir",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "onde_conseguir_rotulo",
+          "data_type": "text",
+          "ordinal": 12,
+          "description": "Onde buscar o que falta: pedir ao MCid ou aos agentes, fonte pública, os dois, outro órgão, falta análise ou nenhuma fonte conhecida. Já respondida quando respondível.",
+          "documentation_status": "curated"
         },
         {
           "name": "ordem",
@@ -18612,35 +18626,42 @@
         {
           "name": "dt_primeira_remessa",
           "data_type": "date",
-          "ordinal": 10,
+          "ordinal": 12,
           "description": "Primeira remessa com a proposta.",
           "documentation_status": "curated"
         },
         {
           "name": "dt_ultima_mudanca",
           "data_type": "date",
-          "ordinal": 12,
+          "ordinal": 14,
           "description": "Remessa em que a situação mudou pela última vez.",
           "documentation_status": "curated"
         },
         {
           "name": "dt_ultima_remessa",
           "data_type": "date",
-          "ordinal": 11,
+          "ordinal": 13,
           "description": "Última remessa com a proposta.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "etapa_atual",
+          "data_type": "text",
+          "ordinal": 10,
+          "description": "Etapa na última remessa em que a proposta apareceu.",
           "documentation_status": "curated"
         },
         {
           "name": "ic_na_remessa_mais_recente",
           "data_type": "boolean",
-          "ordinal": 16,
+          "ordinal": 18,
           "description": "Se a proposta está na remessa mais recente.",
           "documentation_status": "curated"
         },
         {
           "name": "ic_sumiu_e_voltou",
           "data_type": "boolean",
-          "ordinal": 17,
+          "ordinal": 19,
           "description": "Se a proposta faltou em alguma remessa e voltou depois.",
           "documentation_status": "curated"
         },
@@ -18661,28 +18682,28 @@
         {
           "name": "municipio_uf",
           "data_type": "text",
-          "ordinal": 18,
+          "ordinal": 20,
           "description": "Município/UF do empreendimento, para filtro e busca.",
           "documentation_status": "curated"
         },
         {
           "name": "qt_mudancas_situacao",
           "data_type": "bigint",
-          "ordinal": 15,
+          "ordinal": 17,
           "description": "Vezes em que a situação mudou de uma remessa para a seguinte em que apareceu.",
           "documentation_status": "curated"
         },
         {
           "name": "qt_remessas_ausente",
           "data_type": "bigint",
-          "ordinal": 14,
+          "ordinal": 16,
           "description": "Remessas entre a primeira e a última em que a proposta não veio.",
           "documentation_status": "curated"
         },
         {
           "name": "qt_remessas_presente",
           "data_type": "bigint",
-          "ordinal": 13,
+          "ordinal": 15,
           "description": "Remessas em que a proposta apareceu.",
           "documentation_status": "curated"
         },
@@ -18705,6 +18726,13 @@
           "data_type": "text",
           "ordinal": 8,
           "description": "Fase › etapa › status na primeira remessa em que a proposta apareceu.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "status_atual",
+          "data_type": "text",
+          "ordinal": 11,
+          "description": "Status na última remessa em que a proposta apareceu.",
           "documentation_status": "curated"
         },
         {

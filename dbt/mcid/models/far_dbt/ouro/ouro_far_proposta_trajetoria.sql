@@ -18,6 +18,8 @@ with
             coalesce(fa.rotulo, 'Fase ' || s.co_fase, 'Não informada')
                 || ' › ' || coalesce(et.rotulo, 'Etapa ' || s.co_etapa, 'Não informada')
                 || ' › ' || coalesce(st.rotulo, 'Status ' || s.co_status, 'Não informado') as situacao,
+            coalesce(et.rotulo, 'Etapa ' || s.co_etapa, 'Não informada') as etapa,
+            coalesce(st.rotulo, 'Status ' || s.co_status, 'Não informado') as status,
             coalesce(td.rotulo, 'Não informada') as tipo_demanda
         from {{ ref("prata_far_consolidado_serie") }} s
         join numeradas n using (dt_remessa)
@@ -45,6 +47,8 @@ with
             (array_agg(valor_far order by dt_remessa desc))[1] as valor_far,
             (array_agg(situacao order by dt_remessa))[1] as situacao_inicial,
             (array_agg(situacao order by dt_remessa desc))[1] as situacao_atual,
+            (array_agg(etapa order by dt_remessa desc))[1] as etapa_atual,
+            (array_agg(status order by dt_remessa desc))[1] as status_atual,
             min(dt_remessa) as dt_primeira_remessa,
             max(dt_remessa) as dt_ultima_remessa,
             max(dt_remessa) filter (where situacao is distinct from situacao_anterior) as dt_ultima_mudanca,

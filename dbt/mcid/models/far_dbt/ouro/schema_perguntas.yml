@@ -165,8 +165,8 @@ models:
   - name: ouro_far_cobertura_perguntas
     description: >
       Matriz pergunta × dado do painel de perguntas do FAR (seed cobertura_perguntas_far):
-      o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta e
-      qual a limitação.
+      o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta,
+      onde conseguir (pedir ao MCid ou fonte pública) e qual a limitação.
     config:
       meta:
         documentacao:
@@ -182,6 +182,10 @@ models:
           - not_null
       - name: situacao_dado_rotulo
         description: Respondível, Parcial ou Lacuna de fonte.
+      - name: onde_conseguir_rotulo
+        description: >
+          Onde buscar o que falta: pedir ao MCid ou aos agentes, fonte pública, os dois,
+          outro órgão, falta análise ou nenhuma fonte conhecida. Já respondida quando respondível.
 
   - name: ouro_far_beneficiario_cadunico
     description: >
@@ -316,6 +320,10 @@ models:
         description: Fase › etapa › status na primeira remessa em que a proposta apareceu.
       - name: situacao_atual
         description: Fase › etapa › status na última remessa em que a proposta apareceu.
+      - name: etapa_atual
+        description: Etapa na última remessa em que a proposta apareceu.
+      - name: status_atual
+        description: Status na última remessa em que a proposta apareceu.
       - name: dt_primeira_remessa
         description: Primeira remessa com a proposta.
       - name: dt_ultima_remessa

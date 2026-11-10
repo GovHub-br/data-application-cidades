@@ -70,16 +70,35 @@ python scripts/superset/perguntas_far.py
 - A bronze do CadÚnico lê o parquet **filtrado pelos CPFs do FAR**. Varrer o CadÚnico
   inteiro pelo pg_duckdb estoura a memória do DW.
 
-## Lacunas de fonte (o que pedir)
+## Lacunas de fonte: onde conseguir
+
+A coluna `onde_conseguir` da matriz separa o que pedir do que buscar em fonte pública.
+
+**Pedir ao MCid ou aos agentes**
 
 | Pergunta | O que falta |
 |---|---|
-| Faixa etária | Idade ou faixa etária calculada antes do mascaramento (a data de nascimento é redigida) |
 | Situação de rua na seleção | IC_BENEF_SIT_RUA preenchido (o CadÚnico só mostra a situação no corte) |
-| Gasto com internet | Não existe no CadÚnico; energia e água vêm de lá |
 | Retomadas e passivo | Estoque de imóveis retomados com data e situação; retomada no legado |
+| Origem da indicação | Quem indicou a demanda além do ente (movimento, defesa civil) |
 | Execução das contrapartidas | O que o ente já entregou (hoje só o pactuado) |
+| Custo de condomínio | Estimativa de custo de condomínio |
 | Equipamentos públicos, aporte/suplementação | Campos do MONIT_CAD_PJ preenchidos (chegam zerados) |
-| Calamidade sem habitação destruída | Laudo/cadastro de habitações destruídas (Defesa Civil/S2iD) |
-| Déficit, Censo, entorno medido | Déficit habitacional municipal (FJP), Censo 2022 por setor, INEP/CNES/CadSUAS |
 | Compra Assistida | Contratos (há só propostas do RS por município) |
+
+**Fonte pública**
+
+| Pergunta | O que falta |
+|---|---|
+| Entorno medido | INEP, CNES, CadSUAS e GTFS georreferenciados |
+| Déficit habitacional | Déficit municipal (FJP) e Censo 2022 |
+
+**Pedir e fonte pública**: análise por setor censitário (coordenadas do empreendimento +
+malha do Censo 2022) e cadastro habitacional local (cadastro do município + déficit da FJP).
+
+**Outro órgão**: calamidade sem habitação destruída precisa do laudo/cadastro de
+habitações destruídas (Defesa Civil/S2iD).
+
+**Falta análise, não fonte**: fatores da inadimplência, mudança de público em obras de
+calamidade e alerta de paralisação. **Nenhuma fonte conhecida**: gasto com internet por
+família (o CadÚnico não coleta).
