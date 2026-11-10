@@ -178,7 +178,7 @@ KEY = "raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
 
 # cp1252 com acento, campo com delimitador e com quebra de linha, CRLF e CPF formatado
 CONTEUDO = (
-    "NU_CPF_PESSOA;NO_PESSOA;DT_NASC_PESSOA;NU_IDENTIDADE_PESSOA;OBS\r\n"
+    "NU_CPF_PESSOA;NO_PESSOA;DT_NASC_PESSOA;NU_IDENTIDADE_PESSOA;DS_MOTIVO\r\n"
     '123.456.789-09;José da Conceição;01/02/1980;12345;"tem ; dentro"\r\n'
     '00012345678;Maria;;;"duas\r\nlinhas"\r\n'
     ";;03/04/1990;;sem identificador\r\n"
@@ -226,12 +226,12 @@ def test_stream_mascara_e_preserva_o_resto(minio):
         "NO_PESSOA",
         "DT_NASC_PESSOA",
         "NU_IDENTIDADE_PESSOA",
-        "OBS",
+        "DS_MOTIVO",
     ]
-    cpf, nome, nasc, rg, obs = linhas[1]
+    cpf, nome, nasc, rg, motivo = linhas[1]
     assert cpf == regras._hmac_token("12345678909")
     assert (nome, rg) == ("***", "***")
-    assert (nasc, obs) == ("01/02/1980", "tem ; dentro")
+    assert (nasc, motivo) == ("01/02/1980", "tem ; dentro")
     assert linhas[2][4] == "duas\r\nlinhas"
     assert linhas[3] == ["", "", "03/04/1990", "", "sem identificador"]
 

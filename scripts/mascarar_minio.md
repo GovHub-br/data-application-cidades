@@ -18,19 +18,23 @@ schema `sftp` do Postgres.
 |---|---|---|
 | **CPF** | HMAC-SHA256 determinístico | `NU_CPF_CGC_MUTUARIO`, `NU_CPF_BENEFICIARIO`, `txt_cpf` |
 | **NIS / PIS / PASEP / NIT** | HMAC-SHA256 determinístico | `NU_PIS`, `NU_PIS_PASEP`, `NU_NIS` |
-| **Nome de PF** | Redação (`***`) | `NO_MUTUARIO`, `NO_BENEFICIARIO`, `nomeMutuario` |
+| **Nome de PF** | Redação (`***`) | `NO_MUTUARIO`, `NO_BENEFICIARIO`, `nomeMutuario`, `NO_ENTREVISTADOR_FAM` |
+| **Documento** | Redação (`***`) | `NU_IDENTIDADE_PESSOA`, `NU_TITULO_ELEITOR_PESSOA`, `CO_MATRICULA_CERTIDAO` |
 | **Endereço** | Redação (`***`) — *condicional* | `NO_LOGRADOURO_IMOVEL`, `NO_BAIRRO_IMOVEL`, `NO_COMPLEMENTO_IMOVEL` |
 | **CEP** | Redação (`***`) — *condicional* | `ED_CEP_IMOVEL_GARANTIA`, `NU_CEP`, `CO_CEP_IMOVEL` |
+| **Texto livre** | Redação (`***`) — *condicional* | `DS_OBS_ENTREVISTADOR_FAM`, `DS_REFERENCIA_LOCAL_FAM`, `Observações Gerais` |
 
 ### Regras importantes
 
 - **HMAC determinístico**: o mesmo CPF/PIS gera sempre o mesmo token em qualquer arquivo.
   Isso remove o dado real mas preserva a capacidade de **cruzar bases e contar pessoas
   distintas**. É irreversível sem o segredo. (Ver seção "Por que HMAC e não hash simples".)
-- **CEP/endereço são condicionais**: só são mascarados quando o arquivo tem **algum
-  indicador de PF na mesma linha** (CPF, NIS, nascimento ou nome de PF). Em bases de
-  PJ/empreendimento (ex. `Base_PJ_FGTS_*`, arquivos de empreendimentos), o CEP é do imóvel
-  e **é preservado**.
+- **CEP, endereço e texto livre são condicionais**: só são mascarados quando o arquivo tem
+  **algum indicador de PF na mesma linha** (CPF, NIS, nascimento ou nome de PF). Em bases
+  de PJ/empreendimento (ex. `Base_PJ_FGTS_*`, arquivos de empreendimentos), o CEP é do
+  imóvel e a observação é da obra: **são preservados**. Texto livre é observação
+  (`obs`, `observacao`) e ponto de referência do domicílio; `MES_REFERENCIA` e afins não
+  entram.
 - **Não é mascarado**: CNPJ/CGC (é PJ), `razao_social_*`, `nome_empreendimento`,
   `email_entidade`, município/UF (geografia grossa), e colunas de papel que não são nome
   (`CO_SEXO_BENEFICIARIO`, `VR_PARCELA_MENSAL_BENEFICIARIO`, flags como `TITULAR-COM-PDC`).

@@ -126,3 +126,59 @@ def test_documentos_do_cadunico_sao_redigidos():
         "CO_LIVRO_CERTIDAO",
         "CO_FOLHA_CERTIDAO",
     }
+
+
+def test_familia_protege_entrevistador_e_texto_livre():
+    modulo = _carregar_modulo()
+    header = [
+        "CO_FAMILIAR_FAM",
+        "NO_LOCALIDADE_FAM",
+        "NO_LOGRADOURO_FAM",
+        "NU_LOGRADOURO_FAM",
+        "DS_COMPLEMENTO_FAM",
+        "NU_CEP_LOGRADOURO_FAM",
+        "NO_UNIDADE_TERRITORIAL_FAM",
+        "DS_REFERENCIA_LOCAL_FAM",
+        "NO_ENTREVISTADOR_FAM",
+        "NU_CPF_ENTREVISTADOR_FAM",
+        "DS_OBS_ENTREVISTADOR_FAM",
+        "NO_COMUNIDADE_QUILOMBOLA_FAM",
+        "VL_DESP_ENERGIA_FAM",
+        "NO_ESTAB_ASSIST_SAUDE_FAM",
+        "NO_CENTRO_ASSIST_FAM",
+    ]
+
+    targets, has_pf = modulo.classificar(header, None)
+    por_coluna = {target["column"]: target["action"] for target in targets}
+
+    assert has_pf is True
+    # localidade, comunidade, posto de saúde e CRAS não identificam a família
+    assert por_coluna == {
+        "NO_LOGRADOURO_FAM": "redact",
+        "NU_LOGRADOURO_FAM": "redact",
+        "DS_COMPLEMENTO_FAM": "redact",
+        "NU_CEP_LOGRADOURO_FAM": "redact",
+        "DS_REFERENCIA_LOCAL_FAM": "redact",
+        "NO_ENTREVISTADOR_FAM": "redact",
+        "NU_CPF_ENTREVISTADOR_FAM": "hmac",
+        "DS_OBS_ENTREVISTADOR_FAM": "redact",
+    }
+
+
+def test_observacao_sem_pessoa_fisica_fica():
+    modulo = _carregar_modulo()
+    header = ["NO_EMPREENDIMENTO", "DS_OBSERVACAO", "OBS", "VR_CONTRATO"]
+
+    targets, has_pf = modulo.classificar(header, None)
+
+    assert (targets, has_pf) == ([], False)
+
+
+def test_referencia_de_data_nao_e_texto_livre():
+    modulo = _carregar_modulo()
+    header = ["NU_CPF", "MES_REFERENCIA", "DT_REFERENCIA", "ANO_REFERENCIA", "OBS"]
+
+    targets, _ = modulo.classificar(header, None)
+    por_coluna = {target["column"]: target["action"] for target in targets}
+
+    assert por_coluna == {"NU_CPF": "hmac", "OBS": "redact"}
