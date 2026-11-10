@@ -1395,6 +1395,54 @@ def filtro_de_edicao(dataset_id: int) -> dict:
     }
 
 
+def _montar_paginas(
+    api: Superset, cache: dict, alvo: list[int], layout_atual: dict
+) -> dict[int, list[dict]]:
+    """Reconstrói as páginas do alvo e preserva as outras como estão publicadas."""
+    por_pagina: dict[int, list[dict]] = {}
+    for pg in sorted(CONSTRUTORES):
+        if pg in alvo:
+            print(f"  Página {pg}")
+            por_pagina[pg] = CONSTRUTORES[pg](api, cache)
+            continue
+        preservado = nos_da_pagina_publicada(layout_atual, pg)
+        if preservado:
+            por_pagina[pg] = preservado
+            print(f"  Página {pg}: preservada ({len(preservado)} blocos)")
+    return por_pagina
+
+
+def _payload(api: Superset, por_pagina: dict[int, list[dict]]) -> dict:
+    """Layout do painel e o filtro de edição, que usa o dataset do primeiro gráfico."""
+    ds_filtro = next(
+        (n["chart"] for p in por_pagina.values() for n in p if n["tipo"] == "CHART"), None
+    )
+    dataset_filtro = api.get("chart", ds_filtro)["datasource_id"] if ds_filtro else None
+    payload = {
+        "dashboard_title": TITULO,
+        "slug": SLUG,
+        "published": True,
+        "position_json": monta_layout(por_pagina),
+    }
+    if dataset_filtro:
+        payload["json_metadata"] = json.dumps(
+            {
+                "native_filter_configuration": [filtro_de_edicao(dataset_filtro)],
+                "cross_filters_enabled": False,
+            }
+        )
+    return payload
+
+
+def _ligar_graficos(api: Superset, did: int, por_pagina: dict[int, list[dict]]) -> None:
+    """Liga ao painel os gráficos que ainda não estão ligados a ele."""
+    for no in (n for nos in por_pagina.values() for n in nos if n["tipo"] == "CHART"):
+        chart = api.get("chart", no["chart"]) or {}
+        atuais = {d["id"] for d in (chart.get("dashboards") or [])}
+        if did not in atuais:
+            api.atualizar("chart", no["chart"], {"dashboards": sorted(atuais | {did})})
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--paginas", help="ex.: 3,5 — reconstrói só essas páginas")
@@ -1417,39 +1465,13 @@ def main() -> None:
         else {}
     )
 
-    por_pagina: dict[int, list[dict]] = {}
-    for pg in sorted(CONSTRUTORES):
-        if pg in alvo:
-            print(f"  Página {pg}")
-            por_pagina[pg] = CONSTRUTORES[pg](api, cache)
-        else:
-            preservado = nos_da_pagina_publicada(layout_atual, pg)
-            if preservado:
-                por_pagina[pg] = preservado
-                print(f"  Página {pg}: preservada ({len(preservado)} blocos)")
+    por_pagina = _montar_paginas(api, cache, alvo, layout_atual)
 
     if api.dry_run:
         print("\n[dry-run] layout não gravado.")
         return
 
-    ds_filtro = next(
-        (n["chart"] for p in por_pagina.values() for n in p if n["tipo"] == "CHART"), None
-    )
-    dataset_filtro = api.get("chart", ds_filtro)["datasource_id"] if ds_filtro else None
-    payload = {
-        "dashboard_title": TITULO,
-        "slug": SLUG,
-        "published": True,
-        "position_json": monta_layout(por_pagina),
-    }
-    if dataset_filtro:
-        payload["json_metadata"] = json.dumps(
-            {
-                "native_filter_configuration": [filtro_de_edicao(dataset_filtro)],
-                "cross_filters_enabled": False,
-            }
-        )
-
+    payload = _payload(api, por_pagina)
     if publicado:
         api.atualizar("dashboard", publicado["id"], payload)
         did = publicado["id"]
@@ -1458,14 +1480,7 @@ def main() -> None:
         did = api.criar("dashboard", payload)
         print(f"\ndashboard criado: {did}")
 
-    for nos in por_pagina.values():
-        for no in nos:
-            if no["tipo"] != "CHART":
-                continue
-            chart = api.get("chart", no["chart"]) or {}
-            atuais = {d["id"] for d in (chart.get("dashboards") or [])}
-            if did not in atuais:
-                api.atualizar("chart", no["chart"], {"dashboards": sorted(atuais | {did})})
+    _ligar_graficos(api, did, por_pagina)
 
     ligados = api.s.get(f"{api.base}/api/v1/dashboard/{SLUG}/charts", timeout=30).json()["result"]
     print(f"charts ligados: {len(ligados)}")
