@@ -9,31 +9,10 @@ existiam mais, sem nenhum aviso.
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import re
-import sys
-from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[1]
-
-
-def _bootstrap():
-    """Carrega o script como módulo.
-
-    Ele precisa entrar em `sys.modules` ANTES do `exec_module`: o script usa
-    `dataclass`, e a resolução de tipos procura a classe pelo módulo dela — se
-    o módulo ainda não está registrado, a busca devolve None e estoura.
-    """
-    if "bootstrap_conjuntura" in sys.modules:
-        return sys.modules["bootstrap_conjuntura"]
-    caminho = RAIZ / "scripts" / "superset" / "bootstrap_conjuntura.py"
-    spec = importlib.util.spec_from_file_location("bootstrap_conjuntura", caminho)
-    assert spec and spec.loader
-    modulo = importlib.util.module_from_spec(spec)
-    sys.modules["bootstrap_conjuntura"] = modulo
-    spec.loader.exec_module(modulo)
-    return modulo
+import bootstrap_conjuntura
 
 
 class ApiFalsa:
@@ -62,7 +41,7 @@ class ApiFalsa:
 
 def test_chart_orfao_e_reapontado_em_vez_de_ficar_quebrado() -> None:
     """O chart existe com o nome certo, mas o dataset mudou de lugar."""
-    modulo = _bootstrap()
+    modulo = bootstrap_conjuntura
     titulo = modulo.nome_do_chart("ouro_conjuntura_sinapi")
     api = ApiFalsa([{"slice_name": titulo, "id": 42, "datasource_id": 111}])
 
@@ -79,7 +58,7 @@ def test_chart_orfao_e_reapontado_em_vez_de_ficar_quebrado() -> None:
 
 def test_chart_ja_correto_nao_e_tocado() -> None:
     """Sem divergência não há escrita — o script tem de ser idempotente."""
-    modulo = _bootstrap()
+    modulo = bootstrap_conjuntura
     titulo = modulo.nome_do_chart("ouro_conjuntura_sinapi")
     api = ApiFalsa([{"slice_name": titulo, "id": 42, "datasource_id": 222}])
 
@@ -90,7 +69,7 @@ def test_chart_ja_correto_nao_e_tocado() -> None:
 
 
 def test_chart_ausente_e_criado() -> None:
-    modulo = _bootstrap()
+    modulo = bootstrap_conjuntura
     api = ApiFalsa([])
 
     ids = modulo.get_or_create_charts(api, {"ouro_conjuntura_sinapi": 222})
@@ -107,7 +86,7 @@ def test_bootstrap_nao_cria_dashboard_por_trimestre() -> None:
     O `build_boletim.py` já monta um dashboard só, com filtro nativo na coluna
     `edicao`. Rodar o bootstrap ressuscitava os painéis duplicados.
     """
-    modulo = _bootstrap()
+    modulo = bootstrap_conjuntura
     slugs = {d.slug for d in modulo.DASHBOARDS}
     por_trimestre = {s for s in slugs if re.fullmatch(r"conjuntura-\d{4}-\d", s)}
     assert not por_trimestre, f"dashboard por trimestre não deve existir: {por_trimestre}"
