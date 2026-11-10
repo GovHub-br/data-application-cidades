@@ -1708,53 +1708,45 @@ def layout(ids: dict[str, int]) -> dict:
                 continue
             row = f"ROW-PERGUNTAS-FAR-{sufixo}"
             no(row, "ROW", pais, {"background": "BACKGROUND_TRANSPARENT"})
-            filhos = pais + [row]
-            if tipo == "md":
-                no(
-                    f"MARKDOWN-PERGUNTAS-FAR-{sufixo}",
-                    "MARKDOWN",
-                    filhos,
-                    {"width": 12, "height": bloco[2], "code": bloco[1]},
-                )
-            elif tipo == "charts":
-                for posicao, chave in enumerate(bloco[1]):
-                    no(
-                        f"CHART-PERGUNTAS-FAR-{sufixo}-{posicao}",
-                        "CHART",
-                        filhos,
-                        {"chartId": ids[chave], "width": 12 // len(bloco[1]), "height": 22},
-                    )
-            elif tipo == "chart":
-                no(
-                    f"CHART-PERGUNTAS-FAR-{sufixo}",
-                    "CHART",
-                    filhos,
-                    {"chartId": ids[bloco[1]], "width": 12, "height": bloco[2]},
-                )
-            elif tipo == "dupla":
-                for posicao, chave in enumerate(bloco[1:]):
-                    no(
-                        f"CHART-PERGUNTAS-FAR-{sufixo}-{posicao}",
-                        "CHART",
-                        filhos,
-                        {"chartId": ids[chave], "width": 6, "height": 55},
-                    )
-            else:
-                chave = bloco[1]
-                altura = ALTURAS.get(chave, 55)
-                no(
-                    f"MARKDOWN-PERGUNTAS-FAR-{sufixo}",
-                    "MARKDOWN",
-                    filhos,
-                    {"width": 4, "height": altura, "code": COMO[chave]},
-                )
-                no(
-                    f"CHART-PERGUNTAS-FAR-{sufixo}",
-                    "CHART",
-                    filhos,
-                    {"chartId": ids[chave], "width": 8, "height": altura},
-                )
+            for id_, tipo_no, meta in _conteudo_da_linha(bloco, sufixo, ids):
+                no(id_, tipo_no, pais + [row], meta)
     return estrutura
+
+
+def _conteudo_da_linha(bloco: tuple, sufixo: str, ids: dict[str, int]) -> list[tuple]:
+    """(id, tipo, meta) dos nós de uma linha do layout, conforme o tipo do bloco."""
+    tipo = bloco[0]
+    grafico = f"CHART-PERGUNTAS-FAR-{sufixo}"
+    if tipo == "md":
+        meta = {"width": 12, "height": bloco[2], "code": bloco[1]}
+        return [(f"MARKDOWN-PERGUNTAS-FAR-{sufixo}", "MARKDOWN", meta)]
+    if tipo == "charts":
+        largura = 12 // len(bloco[1])
+        return [
+            (
+                f"{grafico}-{posicao}",
+                "CHART",
+                {"chartId": ids[chave], "width": largura, "height": 22},
+            )
+            for posicao, chave in enumerate(bloco[1])
+        ]
+    if tipo == "chart":
+        return [(grafico, "CHART", {"chartId": ids[bloco[1]], "width": 12, "height": bloco[2]})]
+    if tipo == "dupla":
+        return [
+            (f"{grafico}-{posicao}", "CHART", {"chartId": ids[chave], "width": 6, "height": 55})
+            for posicao, chave in enumerate(bloco[1:])
+        ]
+    chave = bloco[1]
+    altura = ALTURAS.get(chave, 55)
+    return [
+        (
+            f"MARKDOWN-PERGUNTAS-FAR-{sufixo}",
+            "MARKDOWN",
+            {"width": 4, "height": altura, "code": COMO[chave]},
+        ),
+        (grafico, "CHART", {"chartId": ids[chave], "width": 8, "height": altura}),
+    ]
 
 
 def filtros_nativos(ids_dataset: dict[str, int]) -> list[dict]:
