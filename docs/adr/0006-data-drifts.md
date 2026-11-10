@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; drift semântico obrigatoriamente no dbt; nomes de rastreio em inglês, ADR-0007; catálogo de colunas; dbt-expectations e Elementary; questões em aberto resolvidas; chaves do contrato em inglês)
+- **Revisão:** 2026-10-29 (fatos conferidos com o código; `padrao_arquivo` sobre o caminho espelhado do ADR-0005; drift estrutural numa task própria, `verify_structural_data_drift`; alertas por e-mail; drift semântico obrigatoriamente no dbt; nomes de rastreio em inglês, ADR-0007; catálogo de colunas; dbt-expectations e Elementary; questões em aberto resolvidas; chaves do contrato em inglês); 2026-11-10 (contrato em ODCS 3.2, um por fonte com um objeto por dado; `sources.yml` gerado a partir dele; `uncataloged` não falha a task)
 - **Relacionados:**
   - ADR-0001 (os dois portões), ADR-0002 (R2 a R4), ADR-0004 (tasks `verify_structural_data_drift` e `transform`),
   ADR-0005 (quarentena)
@@ -40,31 +40,40 @@ tipo de mudança, e a distinção entre "defeito da origem", que a prata trata, 
 
 ## Decisão
 
-### 1. O contrato da fonte fica no `sources.yml`
+### 1. O contrato da fonte é um ODCS, e o `sources.yml` é gerado a partir dele
 
-A entrada da fonte no `sources.yml` do dbt é o contrato. É um lugar só, já lido
-pela macro `fonte_lake` e já publicado no OpenMetadata (ADR-0012).
+Cada fonte tem um contrato no Open Data Contract Standard (ODCS 3.2, Linux
+Foundation), em `contracts/<fonte>.odcs.yaml`, com **um objeto de schema por dado**
+da fonte. O contrato é a fonte da verdade. O `sources.yml` do dbt, lido pela macro
+`fonte_lake`, é gerado a partir dele e não é editado à mão. O OpenMetadata importa o
+ODCS diretamente (ADR-0012).
 
 ```yaml
-sources:
-  - name: lake_staging
-    tables:
-      - name: fgv_incc_m
-        meta:
-          path: staging/fgv/incc_m/**/*.parquet
-          load_type: full               # full | incremental
-          max_row_variation: 0.5        # só para carga completa
-          file_pattern: null            # SFTP/SharePoint: regex sobre o caminho espelhado e o nome, com o período
-          owner: <área do ministério que responde pela base>
-        columns:
-          - name: mes
-            meta: { format: date_br, term: dt_referencia }
-          - name: indice
-            meta:
-              format: decimal_br
-              term: incc_indice
-              aliases: [numero_indice]  # outros nomes com que a coluna já chegou
+apiVersion: v3.2.0
+kind: DataContract
+id: fgv
+schema:
+  - name: fgv_incc_m
+    customProperties:              # o que é só nosso
+      - { property: path, value: staging/fgv/incc_m/**/*.parquet }
+      - { property: load_type, value: full }          # full | incremental
+      - { property: max_row_variation, value: 0.5 }   # só para carga completa
+      - { property: file_pattern, value: null }       # SFTP: regex sobre o caminho espelhado e o nome
+      - { property: reader, value: null }             # leitor da transform (ADR-0004)
+    properties:
+      - name: mes
+        customProperties: [{ property: format, value: date_br }, { property: term, value: dt_referencia }]
+      - name: indice
+        customProperties:
+          - { property: format, value: decimal_br }
+          - { property: term, value: incc_indice }
+          - { property: aliases, value: [numero_indice] }  # outros nomes com que a coluna já chegou
+team:
+  - role: owner                    # área do ministério que responde pela base
 ```
+
+O ODCS também traz o que o `sources.yml` não tinha: `classification` por coluna (a
+PII, ADR-0012), regras de qualidade, SLA e o time da fonte.
 
 Os nomes das colunas são os nomes já normalizados pela conversão (ADR-0002 R2).
 As chaves do contrato ficam em inglês, como os demais nomes de rastreio
@@ -115,10 +124,12 @@ são lidos na carga completa, para contar as linhas.
 - A `verify_structural_data_drift` confere todas as chaves recebidas, registra o status de
   cada uma em `lake._staging_log` e passa adiante só as aprovadas: iguais ao
   contrato, com coluna nova ou com renomeação conhecida.
-- Se algum arquivo foi barrado (`quarantined` ou `uncataloged`), ela manda o
-  e-mail (§5) e termina em falha. A `transform` roda mesmo assim e converte só
-  as aprovadas. O problema aparece em vermelho no Airflow sem bloquear os outros
-  arquivos da mesma carga.
+- Se algum arquivo ficou `quarantined`, ela manda o e-mail (§5) e termina em
+  falha. A `transform` roda mesmo assim e converte só as aprovadas. O problema
+  aparece em vermelho no Airflow sem bloquear os outros arquivos da mesma carga.
+- Arquivo `uncataloged` não falha a task: sem contrato não há consumidor, e ele
+  fica só na raw. O e-mail lista esses arquivos agrupados por pasta; a lista
+  completa fica no `lake._staging_log`.
 - O tipo de carga declarado (`load_type`) é conferido pela estrutura do arquivo.
   Na carga completa, o arquivo cobre a base inteira e o número de linhas fica
   perto do da carga anterior. Na incremental, traz só o período novo. Isso
@@ -224,9 +235,10 @@ task, e a conversão passaria a ter duas responsabilidades.
 **Alerta num canal de chat (Teams, Slack).** Exigiria um webhook e mais uma
 integração para manter. O e-mail sai pelo provider que já está na imagem.
 
-**Contrato num arquivo próprio por fonte (`contratos/<fonte>.yml`).** Separaria o
-contrato do dbt, mas duplicaria o `sources.yml`, que já tem caminho, colunas e
-descrições e já vai para o OpenMetadata.
+**Contrato no `sources.yml` (versão anterior deste ADR).** Um lugar só, já lido
+pela `fonte_lake`, mas cobre só o schema, num formato próprio. O ODCS é o padrão de
+mercado, cobre PII, qualidade, SLA e time, é importado pelo OpenMetadata e tem
+ferramenta para validar e gerar o `sources.yml` (datacontract-cli).
 
 **Usar o schema da última staging como referência automática.** Dispensa escrever
 o contrato, mas aceita qualquer mudança em silêncio depois da primeira execução.
@@ -265,9 +277,10 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 
 ## Consequências
 
-- As entradas de `sources.yml` ganham `meta.load_type`, `meta.owner`, o
-  `meta.format` das colunas e, nas fontes de arquivo, `meta.file_pattern`. O
-  `meta.caminho` vira `meta.path` (ADR-0007).
+- Cada fonte ganha `contracts/<fonte>.odcs.yaml`. O `sources.yml` passa a ser
+  gerado a partir dos contratos, com `meta.path`, `meta.load_type`,
+  `meta.file_pattern` e o `meta.format` das colunas; o `meta.caminho` vira
+  `meta.path` (ADR-0007).
 - As colunas do contrato ganham `meta.term` e `meta.aliases` (catálogo de colunas).
 - Duas macros novas: `formato_valido`, sobre o dbt-expectations, e
   `sem_perda_na_tipagem`. O volume vem do `volume_anomalies` do Elementary.
