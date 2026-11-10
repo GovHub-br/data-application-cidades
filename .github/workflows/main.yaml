@@ -16,7 +16,6 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.11"
-  DBT_PROJECT_DIR: "${{ github.workspace }}/dbt/mcid"
 
   IMAGE_REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/govhub-br/data-application-cidades-airflow
@@ -36,7 +35,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -104,7 +103,7 @@ jobs:
       - uses: docker/setup-buildx-action@v4
 
       - name: Build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           push: false
           context: .
@@ -127,14 +126,14 @@ jobs:
       - uses: docker/setup-buildx-action@v4
 
       - name: Login GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.IMAGE_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           push: true
           context: .
@@ -144,98 +143,3 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG_SHA }}
             ${{ env.IMAGE_NAME }}:latest
-
-  dbt_docs:
-    name: DBT Docs (deploy)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: docker_build
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    steps:
-      - name: Check VPN secrets
-        id: vpn
-        env:
-          CLIENT_OVPN: ${{ secrets.CLIENT_OVPN }}
-        run: |
-          if [ -z "$CLIENT_OVPN" ]; then
-            echo "VPN não configurada — docs não serão publicadas."
-            echo "configurada=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "configurada=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - uses: actions/checkout@v7
-        if: steps.vpn.outputs.configurada == 'true'
-
-      - name: Instalar deps (DBT + VPN)
-        if: steps.vpn.outputs.configurada == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install openvpn iputils-ping
-          pip install 'dbt-postgres==1.11.0' 'dbt-core==1.12.5'
-
-      - name: Conectar VPN
-        if: steps.vpn.outputs.configurada == 'true'
-        env:
-          CLIENT_OVPN: ${{ secrets.CLIENT_OVPN }}
-          VPN_P12: ${{ secrets.VPN_P12 }}
-          VPN_USER: ${{ secrets.VPN_USER }}
-          VPN_PWD: ${{ secrets.VPN_PWD }}
-        run: |
-          sudo mkdir -p /etc/openvpn
-          echo "$CLIENT_OVPN" | sudo tee /etc/openvpn/client.ovpn >/dev/null
-
-          echo "$VPN_USER" | sudo tee /etc/openvpn/cred.txt >/dev/null
-          echo "$VPN_PWD" | sudo tee -a /etc/openvpn/cred.txt >/dev/null
-
-          echo "$VPN_P12" | base64 --decode | sudo tee /etc/openvpn/auth.p12 >/dev/null
-          sudo chmod 600 /etc/openvpn/*
-
-          sudo rm -f /tmp/ovpn.log || true
-          sudo touch /tmp/ovpn.log
-          sudo chmod 644 /tmp/ovpn.log
-
-          sudo openvpn \
-            --config /etc/openvpn/client.ovpn \
-            --auth-user-pass /etc/openvpn/cred.txt \
-            --pkcs12 /etc/openvpn/auth.p12 \
-            --verb 3 --daemon --log /tmp/ovpn.log
-
-          timeout=60
-          until sudo grep -q 'Initialization Sequence Completed' /tmp/ovpn.log; do
-            sleep 1
-            (( timeout-- ))
-            if (( timeout == 0 )); then
-              echo "❌ VPN não inicializou em 60s" >&2
-              sudo tail -n 200 /tmp/ovpn.log || true
-              exit 1
-            fi
-          done
-
-      - name: Gerar DBT docs
-        if: steps.vpn.outputs.configurada == 'true'
-        env:
-          DB_DW_HOST_MCID: ${{ secrets.DB_DW_HOST }}
-          DB_DW_DBNAME_MCID: ${{ secrets.DB_DW_DBNAME }}
-          DB_DW_USER_MCID: ${{ secrets.DB_DW_USER }}
-          DB_DW_PASSWORD_MCID: ${{ secrets.DB_DW_PASSWORD }}
-        run: |
-          dbt deps --project-dir "${{ env.DBT_PROJECT_DIR }}"
-          python scripts/conjuntura/gerar_docs_seguros.py \
-            --dbt-command dbt \
-            --public-dir "${{ env.DBT_PROJECT_DIR }}/public"
-
-      - name: Finalizar VPN
-        if: always() && steps.vpn.outputs.configurada == 'true'
-        run: sudo pkill openvpn || true
-
-      - uses: actions/upload-pages-artifact@v5
-        if: steps.vpn.outputs.configurada == 'true'
-        with:
-          path: ${{ env.DBT_PROJECT_DIR }}/public
-
-      - uses: actions/deploy-pages@v4
-        if: steps.vpn.outputs.configurada == 'true'
