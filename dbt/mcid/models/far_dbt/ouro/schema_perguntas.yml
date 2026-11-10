@@ -245,3 +245,90 @@ models:
         description: Contratos com gasto de água e esgoto informado.
       - name: soma_despesa_agua
         description: Soma do gasto mensal com água e esgoto, em R$.
+
+  - name: ouro_far_consolidado_historico
+    description: >
+      Propostas do consolidado GFAR em cada remessa semanal desde 12/03/2025, por fase,
+      etapa, status, fluxo, UF e tipo de demanda, com UHs e valor FAR. Mostra como a
+      seleção evoluiu, não só a foto atual. Fase, etapa e status sem rótulo aparecem
+      pelo código.
+    config:
+      meta:
+        documentacao:
+          grao: Uma combinação de remessa, fase, etapa, status, fluxo, UF e tipo de demanda.
+          chave: [dt_remessa, fase, etapa, status, fluxo, uf, tipo_demanda]
+          fonte: HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.
+          periodicidade: semanal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: dt_remessa
+        description: Data da remessa semanal.
+        tests:
+          - not_null
+      - name: fase
+        description: Fase da proposta no fluxo GFAR.
+      - name: etapa
+        description: Etapa dentro da fase.
+      - name: status
+        description: Status da proposta na etapa.
+      - name: fluxo
+        description: Fluxo da proposta no GFAR.
+      - name: uf
+        description: UF do empreendimento.
+      - name: tipo_demanda
+        description: Tipo de demanda declarado na proposta.
+      - name: qt_propostas
+        description: Propostas na combinação.
+        tests:
+          - not_null
+      - name: qt_uh
+        description: Unidades habitacionais das propostas.
+      - name: valor_far
+        description: Valor FAR das propostas, em R$.
+
+  - name: ouro_far_proposta_trajetoria
+    description: >
+      Trajetória de cada proposta do consolidado GFAR ao longo das remessas semanais:
+      primeira e última remessa, semanas em que sumiu da base, mudanças de situação e a
+      situação na primeira e na última remessa. Propostas saem e voltam da base sem
+      terem sido canceladas.
+    config:
+      meta:
+        documentacao:
+          grao: Uma proposta do consolidado GFAR.
+          chave: [id_proposta]
+          fonte: HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.
+          periodicidade: semanal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: id_proposta
+        description: Identificação da proposta no GFAR.
+        tests:
+          - not_null
+          - unique
+      - name: apf
+        description: APF do empreendimento, quando já existe.
+      - name: municipio_uf
+        description: Município/UF do empreendimento, para filtro e busca.
+      - name: tipo_demanda
+        description: Tipo de demanda na última remessa.
+      - name: situacao_inicial
+        description: Fase › etapa › status na primeira remessa em que a proposta apareceu.
+      - name: situacao_atual
+        description: Fase › etapa › status na última remessa em que a proposta apareceu.
+      - name: dt_primeira_remessa
+        description: Primeira remessa com a proposta.
+      - name: dt_ultima_remessa
+        description: Última remessa com a proposta.
+      - name: dt_ultima_mudanca
+        description: Remessa em que a situação mudou pela última vez.
+      - name: qt_remessas_presente
+        description: Remessas em que a proposta apareceu.
+      - name: qt_remessas_ausente
+        description: Remessas entre a primeira e a última em que a proposta não veio.
+      - name: qt_mudancas_situacao
+        description: Vezes em que a situação mudou de uma remessa para a seguinte em que apareceu.
+      - name: ic_na_remessa_mais_recente
+        description: Se a proposta está na remessa mais recente.
+      - name: ic_sumiu_e_voltou
+        description: Se a proposta faltou em alguma remessa e voltou depois.

@@ -35,8 +35,10 @@ EMPREENDIMENTO = "ouro_far_empreendimento_perguntas"
 CONTRAPARTIDA = "ouro_far_contrapartida"
 COBERTURA = "ouro_far_cobertura_perguntas"
 SERIE = "ouro_far_serie_mensal_apf"
+HISTORICO = "ouro_far_consolidado_historico"
+TRAJETORIA = "ouro_far_proposta_trajetoria"
 
-DATASETS = [CONTRATO, MUNICIPIO, CADUNICO, EMPREENDIMENTO, CONTRAPARTIDA, COBERTURA, SERIE]
+DATASETS = [CONTRATO, MUNICIPIO, CADUNICO, EMPREENDIMENTO, CONTRAPARTIDA, COBERTURA, SERIE, HISTORICO, TRAJETORIA]
 # Datasets que outros painéis já usam: este script só os lê.
 DATASETS_COMPARTILHADOS = {SERIE}
 
@@ -57,6 +59,7 @@ def onde(*condicoes: str) -> list[dict]:
 
 
 CONTRATOS = metrica("Contratos", "COUNT(*)")
+CONTRATOS_PROPOSTAS = metrica("Propostas", "COUNT(*)")
 TAXA_INADIMPLENCIA = metrica(
     "Inadimplência (% dos ativos)",
     "SUM(CASE WHEN ic_inadimplente THEN 1 ELSE 0 END)::numeric"
@@ -334,6 +337,27 @@ CHARTS = [
             coluna("Renda média das famílias (R$)", "renda_media_familias")],
            [["valor_contratado", False]]),
 
+    # 8. Histórico da seleção
+    kpi("h_kpi_base", "Propostas na remessa mais recente", TRAJETORIA, CONTRATOS_PROPOSTAS, "do consolidado GFAR", filtros=["ic_na_remessa_mais_recente"]),
+    kpi("h_kpi_sairam", "Propostas que saíram da base", TRAJETORIA, CONTRATOS_PROPOSTAS, "não estão na remessa mais recente", filtros=["NOT ic_na_remessa_mais_recente"]),
+    kpi("h_kpi_voltaram", "Propostas que sumiram e voltaram", TRAJETORIA, CONTRATOS_PROPOSTAS, "faltaram em alguma remessa", filtros=["ic_sumiu_e_voltou"]),
+    kpi("h_kpi_mudancas", "Mudanças de situação por proposta", TRAJETORIA, metrica("Média", "AVG(qt_mudancas_situacao)"), "média desde a primeira remessa", formato=",.1f"),
+    linhas("h_fase", "Propostas por fase em cada remessa", HISTORICO, "dt_remessa", [metrica("Propostas", "SUM(qt_propostas)")], grupo=["fase"],
+           tempo="P1W", y_titulo="Propostas"),
+    linhas("h_uh", "Unidades habitacionais por tipo de demanda em cada remessa", HISTORICO, "dt_remessa", [metrica("UHs", "SUM(qt_uh)")],
+           grupo=["tipo_demanda"], tempo="P1W", y_titulo="UHs"),
+    barras("h_entradas", "Propostas que entraram na base, por mês", TRAJETORIA, "dt_primeira_remessa", [CONTRATOS_PROPOSTAS],
+           grupo=["tipo_demanda"], tempo="P1M", eixo_titulo="Mês da primeira remessa", y_titulo="Propostas"),
+    barras("h_saidas", "Propostas que saíram da base, pelo mês da última remessa", TRAJETORIA, "dt_ultima_remessa", [CONTRATOS_PROPOSTAS],
+           grupo=["tipo_demanda"], filtros=["NOT ic_na_remessa_mais_recente"], tempo="P1M", eixo_titulo="Mês da última remessa", y_titulo="Propostas"),
+    tabela("h_lista", "Trajetória das propostas", TRAJETORIA,
+           [coluna("Proposta", "id_proposta"), coluna("APF", "apf"), coluna("Município", "municipio_uf"), coluna("Demanda", "tipo_demanda"),
+            coluna("Situação inicial", "situacao_inicial"), coluna("Situação atual", "situacao_atual"),
+            coluna("Primeira remessa", "dt_primeira_remessa"), coluna("Última remessa", "dt_ultima_remessa"),
+            coluna("Última mudança", "dt_ultima_mudanca"), coluna("Mudanças", "qt_mudancas_situacao"),
+            coluna("Remessas ausente", "qt_remessas_ausente")],
+           [["qt_mudancas_situacao", False]], limite=20000),
+
     # O que falta
     tabela("cobertura", "O que os dados respondem (e o que falta)", COBERTURA,
            [coluna("Bloco", "bloco"), coluna("Pergunta", "pergunta"), coluna("Situação", "situacao_dado_rotulo"),
@@ -443,6 +467,18 @@ Taxa de inadimplência por faixa de renda. Responde se famílias de menor renda 
 Taxa de inadimplência dos contratos ativos pela raça/cor do titular no CadÚnico, separando as famílias no Bolsa Família.
 
 É uma comparação descritiva: a raça/cor e o Bolsa Família são os do CadÚnico de 12/2025, não os da assinatura, e só entram os titulares encontrados no cadastro.""",
+    "h_fase": """### Como ler
+Propostas do consolidado GFAR em cada **remessa semanal**, desde 12/03/2025, pela fase em que estavam naquela semana. É o passado da seleção: o resto do painel mostra só a foto mais recente.
+
+A situação da semana é a do movimento mais recente da proposta naquela remessa.""",
+    "h_uh": """### Como ler
+Unidades habitacionais das propostas em cada remessa, por tipo de demanda. Use os filtros de UF e de fluxo para ver, por exemplo, só as propostas da calamidade do RS.""",
+    "h_entradas": """### Como ler
+Propostas pelo mês da **primeira remessa** em que apareceram. A primeira barra (03/2025) junta tudo o que já estava na base quando a série começou.""",
+    "h_saidas": """### Como ler
+Propostas que **não estão na remessa mais recente**, pelo mês da última remessa em que apareceram.
+
+⚠️ Sair da base não é o mesmo que ser cancelada: propostas somem e voltam entre remessas. A tabela abaixo mostra, por proposta, quantas remessas ela faltou e quantas vezes mudou de situação.""",
     "i_uf": """### Como ler
 Taxa de inadimplência dos contratos ativos por UF. A tabela abaixo lista os municípios com maior taxa, entre os que têm ao menos 100 contratos ativos (para não destacar taxas de poucos contratos).
 
@@ -557,6 +593,13 @@ ABAS = [
         ("header", "17. Panorama geral: UF, município, situação, valores, portaria, demanda, execução e contrapartidas"),
         ("pair", "g_uf"), ("chart", "g_ano", 45), ("chart", "g_ficha", 80),
     ]),
+    ("8. Histórico da seleção", [
+        ("charts", ["h_kpi_base", "h_kpi_sairam", "h_kpi_voltaram", "h_kpi_mudancas"]),
+        ("header", "18. Como a seleção evoluiu semana a semana?"),
+        ("pair", "h_fase"), ("pair", "h_uh"),
+        ("header", "19. Por onde cada proposta passou? Quais entraram, saíram ou sumiram e voltaram?"),
+        ("pair", "h_entradas"), ("pair", "h_saidas"), ("chart", "h_lista", 80),
+    ]),
     ("O que falta", [
         ("header", "O que os dados respondem (e o que falta)"),
         ("pair", "cobertura_resumo"), ("chart", "cobertura", 90),
@@ -571,7 +614,9 @@ FILTROS = [
     ("Empreendimento", "apf_municipio_empreendimento", [EMPREENDIMENTO], 7),
     ("Alerta de execução", "alerta_execucao", [EMPREENDIMENTO], 5),
     ("UF", "uf", [CONTRAPARTIDA, EMPREENDIMENTO], 6),
-    ("Bloco", "bloco", [COBERTURA], 8),
+    *[(n, c, [HISTORICO, TRAJETORIA], 8) for n, c in (("UF", "uf"), ("Tipo de demanda", "tipo_demanda"))],
+    ("Fluxo", "fluxo", [HISTORICO], 8),
+    ("Bloco", "bloco", [COBERTURA], 9),
 ]
 
 

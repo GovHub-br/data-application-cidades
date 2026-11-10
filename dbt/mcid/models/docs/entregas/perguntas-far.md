@@ -40,11 +40,14 @@ python scripts/superset/perguntas_far.py
 | prata | `prata_far_contrato_pf` | contrato | as três bronzes, sem identificador pessoal |
 | prata | `prata_far_beneficiario_cadunico` | contrato com titular no CadÚnico | raça/cor, PCD, situação de rua, Bolsa Família e gastos; restrita |
 | prata | `prata_far_empreendimento_natureza` | APF | cadastro PJ + consolidado HIS |
+| prata | `prata_far_consolidado_serie` | proposta × remessa semanal | consolidado HIS, movimento mais recente da semana |
 | ouro | `ouro_far_beneficiario_contrato` | contrato | perfil, contratação, situação, inadimplência |
 | ouro | `ouro_far_beneficiario_municipio` | município × geração | território e inadimplência |
 | ouro | `ouro_far_beneficiario_cadunico` | perfil no CadÚnico × geração × UF × renda | agregada, sem contrato nem município |
 | ouro | `ouro_far_empreendimento_perguntas` | APF | natureza, panorama, execução e alerta |
 | ouro | `ouro_far_contrapartida` | APF × ente × tipo | pactuação dos entes |
+| ouro | `ouro_far_consolidado_historico` | remessa × fase × etapa × status × fluxo × UF × demanda | evolução semanal da seleção |
+| ouro | `ouro_far_proposta_trajetoria` | proposta | entrada, saída, ausências e mudanças de situação |
 | ouro | `ouro_far_cobertura_perguntas` | pergunta | matriz do que falta |
 
 ## Regras que o painel assume

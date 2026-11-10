@@ -306,3 +306,36 @@ models:
         description: Gasto mensal da família com energia elétrica, em R$. Acima de R$ 5.000 fica nulo.
       - name: despesa_agua_esgoto
         description: Gasto mensal da família com água e esgoto, em R$. Acima de R$ 5.000 fica nulo.
+
+  - name: prata_far_consolidado_serie
+    description: >
+      Situação de cada proposta do consolidado GFAR em cada remessa semanal, desde
+      12/03/2025. A remessa traz uma linha por movimento; fica o mais recente daquela
+      semana. Base do histórico da seleção no painel de perguntas.
+    config:
+      meta:
+        documentacao:
+          grao: Uma proposta em uma remessa semanal do consolidado.
+          chave: [dt_remessa, id_proposta]
+          fonte: HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.
+          periodicidade: semanal
+          consumo: [ouro_far_consolidado_historico, ouro_far_proposta_trajetoria]
+    columns:
+      - name: dt_remessa
+        description: Data da remessa, tirada do nome do arquivo.
+        tests:
+          - not_null
+      - name: id_proposta
+        description: Identificação da proposta no GFAR.
+        tests:
+          - not_null
+      - name: co_fase
+        description: Fase da proposta no fluxo GFAR.
+      - name: co_etapa
+        description: Etapa dentro da fase.
+      - name: co_status
+        description: Status da proposta na etapa.
+      - name: co_fluxo
+        description: Fluxo da proposta (normal, calamidade RS, substituição de terreno, agravamento, cadastro 2025).
+      - name: dt_movimento
+        description: Data do movimento que define a situação na remessa.

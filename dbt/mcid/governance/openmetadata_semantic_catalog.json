@@ -17080,6 +17080,112 @@
       "rag_eligivel": true
     },
     {
+      "id": "model.mcid.ouro_far_consolidado_historico",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_consolidado_historico",
+      "description": "Propostas do consolidado GFAR em cada remessa semanal desde 12/03/2025, por fase, etapa, status, fluxo, UF e tipo de demanda, com UHs e valor FAR. Mostra como a seleção evoluiu, não só a foto atual. Fase, etapa e status sem rótulo aparecem pelo código.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_consolidado_serie"
+      ],
+      "columns": [
+        {
+          "name": "dt_remessa",
+          "data_type": "date",
+          "ordinal": 1,
+          "description": "Data da remessa semanal.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "etapa",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Etapa dentro da fase.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "fase",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Fase da proposta no fluxo GFAR.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "fluxo",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Fluxo da proposta no GFAR.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_propostas",
+          "data_type": "bigint",
+          "ordinal": 8,
+          "description": "Propostas na combinação.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_uh",
+          "data_type": "bigint",
+          "ordinal": 9,
+          "description": "Unidades habitacionais das propostas.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "status",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Status da proposta na etapa.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "tipo_demanda",
+          "data_type": "text",
+          "ordinal": 7,
+          "description": "Tipo de demanda declarado na proposta.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "UF do empreendimento.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "valor_far",
+          "data_type": "numeric",
+          "ordinal": 10,
+          "description": "Valor FAR das propostas, em R$.",
+          "documentation_status": "curated"
+        }
+      ],
+      "documentacao": {
+        "grao": "Uma combinação de remessa, fase, etapa, status, fluxo, UF e tipo de demanda.",
+        "chave": [
+          "dt_remessa",
+          "fase",
+          "etapa",
+          "status",
+          "fluxo",
+          "uf",
+          "tipo_demanda"
+        ],
+        "fonte": "HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.",
+        "periodicidade": "semanal",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
+      "rag_eligivel": true
+    },
+    {
       "id": "model.mcid.ouro_far_contrapartida",
       "product": "empreendimento_far",
       "owner_key": "mcid_data_engineering",
@@ -18479,6 +18585,162 @@
         }
       ],
       "documentacao": {},
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.ouro_far_proposta_trajetoria",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "gold",
+      "classification": "internal",
+      "schema": "ouro",
+      "name": "ouro_far_proposta_trajetoria",
+      "description": "Trajetória de cada proposta do consolidado GFAR ao longo das remessas semanais: primeira e última remessa, semanas em que sumiu da base, mudanças de situação e a situação na primeira e na última remessa. Propostas saem e voltam da base sem terem sido canceladas.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.prata_far_consolidado_serie"
+      ],
+      "columns": [
+        {
+          "name": "apf",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "APF do empreendimento, quando já existe.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dt_primeira_remessa",
+          "data_type": "date",
+          "ordinal": 10,
+          "description": "Primeira remessa com a proposta.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dt_ultima_mudanca",
+          "data_type": "date",
+          "ordinal": 12,
+          "description": "Remessa em que a situação mudou pela última vez.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dt_ultima_remessa",
+          "data_type": "date",
+          "ordinal": 11,
+          "description": "Última remessa com a proposta.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_na_remessa_mais_recente",
+          "data_type": "boolean",
+          "ordinal": 16,
+          "description": "Se a proposta está na remessa mais recente.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "ic_sumiu_e_voltou",
+          "data_type": "boolean",
+          "ordinal": 17,
+          "description": "Se a proposta faltou em alguma remessa e voltou depois.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "id_proposta",
+          "data_type": "text",
+          "ordinal": 1,
+          "description": "Identificação da proposta no GFAR.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Município associado ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "municipio_uf",
+          "data_type": "text",
+          "ordinal": 18,
+          "description": "Município/UF do empreendimento, para filtro e busca.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_mudancas_situacao",
+          "data_type": "bigint",
+          "ordinal": 15,
+          "description": "Vezes em que a situação mudou de uma remessa para a seguinte em que apareceu.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_remessas_ausente",
+          "data_type": "bigint",
+          "ordinal": 14,
+          "description": "Remessas entre a primeira e a última em que a proposta não veio.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_remessas_presente",
+          "data_type": "bigint",
+          "ordinal": 13,
+          "description": "Remessas em que a proposta apareceu.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "qt_uh",
+          "data_type": "integer",
+          "ordinal": 6,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "situacao_atual",
+          "data_type": "text",
+          "ordinal": 9,
+          "description": "Fase › etapa › status na última remessa em que a proposta apareceu.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "situacao_inicial",
+          "data_type": "text",
+          "ordinal": 8,
+          "description": "Fase › etapa › status na primeira remessa em que a proposta apareceu.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "tipo_demanda",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Tipo de demanda na última remessa.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Unidade da Federação associada ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_far",
+          "data_type": "numeric",
+          "ordinal": 7,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {
+        "grao": "Uma proposta do consolidado GFAR.",
+        "chave": [
+          "id_proposta"
+        ],
+        "fonte": "HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.",
+        "periodicidade": "semanal",
+        "consumo": [
+          "Superset",
+          "painel Perguntas FAR"
+        ]
+      },
       "rag_eligivel": true
     },
     {
@@ -26835,6 +27097,135 @@
         }
       ],
       "documentacao": {},
+      "rag_eligivel": true
+    },
+    {
+      "id": "model.mcid.prata_far_consolidado_serie",
+      "product": "empreendimento_far",
+      "owner_key": "mcid_data_engineering",
+      "layer": "silver",
+      "classification": "internal",
+      "schema": "prata",
+      "name": "prata_far_consolidado_serie",
+      "description": "Situação de cada proposta do consolidado GFAR em cada remessa semanal, desde 12/03/2025. A remessa traz uma linha por movimento; fica o mais recente daquela semana. Base do histórico da seleção no painel de perguntas.",
+      "documentation_status": "curated",
+      "materialized": "table",
+      "depends_on": [
+        "model.mcid.bronze_shpt_his_mcidades_consolidado_serie"
+      ],
+      "columns": [
+        {
+          "name": "apf",
+          "data_type": "text",
+          "ordinal": 3,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "co_etapa",
+          "data_type": "integer",
+          "ordinal": 8,
+          "description": "Etapa dentro da fase.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "co_fase",
+          "data_type": "integer",
+          "ordinal": 7,
+          "description": "Fase da proposta no fluxo GFAR.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "co_fluxo",
+          "data_type": "integer",
+          "ordinal": 10,
+          "description": "Fluxo da proposta (normal, calamidade RS, substituição de terreno, agravamento, cadastro 2025).",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "co_status",
+          "data_type": "integer",
+          "ordinal": 9,
+          "description": "Status da proposta na etapa.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "co_tipo_demanda",
+          "data_type": "integer",
+          "ordinal": 11,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "cod_ibge",
+          "data_type": "text",
+          "ordinal": 6,
+          "description": "Atributo do indicador no contexto descrito pela tabela.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "dt_movimento",
+          "data_type": "date",
+          "ordinal": 14,
+          "description": "Data do movimento que define a situação na remessa.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "dt_remessa",
+          "data_type": "date",
+          "ordinal": 1,
+          "description": "Data da remessa, tirada do nome do arquivo.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "id_proposta",
+          "data_type": "text",
+          "ordinal": 2,
+          "description": "Identificação da proposta no GFAR.",
+          "documentation_status": "curated"
+        },
+        {
+          "name": "municipio",
+          "data_type": "text",
+          "ordinal": 5,
+          "description": "Município associado ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "qt_uh",
+          "data_type": "integer",
+          "ordinal": 12,
+          "description": "Quantidade do fenômeno medido no período de referência.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "uf",
+          "data_type": "text",
+          "ordinal": 4,
+          "description": "Unidade da Federação associada ao recorte geográfico do indicador.",
+          "documentation_status": "derived_convention"
+        },
+        {
+          "name": "valor_far",
+          "data_type": "numeric(15,2)",
+          "ordinal": 13,
+          "description": "Valor monetário do indicador no período de referência.",
+          "documentation_status": "derived_convention"
+        }
+      ],
+      "documentacao": {
+        "grao": "Uma proposta em uma remessa semanal do consolidado.",
+        "chave": [
+          "dt_remessa",
+          "id_proposta"
+        ],
+        "fonte": "HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.",
+        "periodicidade": "semanal",
+        "consumo": [
+          "ouro_far_consolidado_historico",
+          "ouro_far_proposta_trajetoria"
+        ]
+      },
       "rag_eligivel": true
     },
     {
