@@ -1,9 +1,0 @@
-[sqlfluff]
-dialect = postgres
-templater = jinja
-
-[sqlfluff:templater:jinja]
-apply_dbt_builtins = True
-
-[sqlfluff:templater:jinja:context]
-target_name = "ci"

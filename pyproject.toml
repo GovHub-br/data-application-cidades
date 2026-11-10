@@ -75,28 +75,8 @@ types-uWSGI = "*"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 90
-target-version = ["py311"]
-skip-string-normalization = false
-include = "\\.pyi?$"
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.conda
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
 [tool.ruff]
-line-length = 90
+line-length = 100
 target-version = "py311"
 exclude = [
     ".git",
@@ -111,7 +91,9 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90"]
-ignore = []
+# O comprimento é do formatador (ruff format, sqlfmt); o E501 só sobrava para strings e
+# comentários longos.
+ignore = ["E501"]
 
 # `helpers/openmetadata/` é código PORTADO — de `origin/refactor/openmetadata`
 # e do data-application-minc, que evoluiu a mesma integração. Quebrar as
@@ -159,7 +141,7 @@ pythonpath = ["plugins", "helpers", "scripts", "scripts/governance", "scripts/su
 python_files = ["test_*.py"]
 
 [tool.sqlfmt]
-line_length = 90
+line_length = 100
 dialect = "polyglot"
 exclude = [
     ".git/",
@@ -169,41 +151,3 @@ exclude = [
     "**/target/**",
     "**/compiled/**"
 ]
-
-[tool.sqlfluff.core]
-dialect = "postgres"
-templater = "dbt"
-max_line_length = 90
-exclude_rules = "L016,LT02,LT09,LT14,RF02,AL04,CV08"
-verbose = 1
-
-[tool.sqlfluff.indentation]
-indented_joins = true
-indented_using_on = true
-template_blocks_indent = true
-indent_unit = "space"
-tab_space_size = 2
-
-[tool.sqlfluff.rules.capitalisation.keywords]
-capitalisation_policy = "lower"
-
-[tool.sqlfluff.rules.capitalisation.identifiers]
-capitalisation_policy = "lower"
-
-[tool.sqlfluff.rules.capitalisation.functions]
-extended_capitalisation_policy = "lower"
-
-[tool.sqlfluff.rules.capitalisation.literals]
-capitalisation_policy = "lower"
-
-[tool.sqlfluff.templater]
-unwrap_wrapped_queries = true
-
-[tool.sqlfluff.templater.dbt]
-project_dir = "./dbt/mcid"
-profiles_dir = "./dbt/mcid"
-profile = "mcid"
-target = "prod"
-defer_mode = true
-static_analysis = true
-disable_database_connection = true

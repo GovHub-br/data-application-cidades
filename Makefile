@@ -14,23 +14,11 @@ setup:
 	poetry lock
 	poetry install --no-root --with dev
 	poetry export --without-hashes --format=requirements.txt > requirements.generated.txt
-	bash setup-git-hooks.sh
+	uvx pre-commit install
 
-format:
-	poetry run black .
-	poetry run ruff check --fix .
-	poetry run sqlfmt ./dbt
-
-lint:
-	poetry run black . --check
-	poetry run ruff check .
-	poetry run mypy . --explicit-package-bases --install-types --non-interactive
-	poetry run sqlfmt ./dbt --check
-	[ "${GITLAB_CI}" ] || poetry run sqlfluff lint ./dbt
-
-lint-ci:
-	poetry run sqlfmt ./dbt --check
-	poetry run sqlfluff lint ./dbt --config .sqlfluff.ci --ignore templating
+# Os mesmos hooks e versões da CI (.pre-commit-config.yaml), no repositório inteiro.
+format lint:
+	uvx pre-commit run --all-files
 
 test:
 	poetry run pytest tests
@@ -172,7 +160,7 @@ conjuntura-validar-boletins:
 conjuntura-congelar:
 	cd dbt/mcid && poetry run dbt snapshot
 
-.PHONY: setup format lint lint-ci test compose-config up down logs-airflow \
+.PHONY: setup format lint test compose-config up down logs-airflow \
 	docs-setup docs-collect docs-build docs-serve docs-clean conjuntura-docs \
 	conjuntura-docs-pdf conjuntura-catalogo conjuntura-validar-boletins \
 	conjuntura-congelar \
