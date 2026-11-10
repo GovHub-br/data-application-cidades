@@ -465,50 +465,42 @@ def main() -> None:
     )
     args = ap.parse_args()
     cfg = DOMINIOS[args.dominio]
+
+    with conectar() as conn, conn.cursor() as cur:
+        print(f"# Diagnóstico de qualidade — domínio {args.dominio}\n")
+        for indice, (titulo, linhas) in enumerate(_secoes(cur, cfg, args)):
+            print(f"{chr(10) if indice else ''}## {titulo}\n")
+            for linha in linhas:
+                print(linha)
+
+
+def _secoes(cur, cfg: dict, args: argparse.Namespace) -> List[Tuple[str, List[str]]]:
+    """(título, linhas) de cada seção do relatório, na ordem em que saem."""
     silver, gold = cfg["schema_silver"], cfg["schema_gold"]
     chaves = {**cfg["chaves_silver"], **cfg["chaves_gold"]}
     schema_de = {m: silver for m in cfg["models_silver"]}
     schema_de.update({m: gold for m in cfg["models_gold"]})
-
-    with conectar() as conn, conn.cursor() as cur:
-        p = print
-        p(f"# Diagnóstico de qualidade — domínio {args.dominio}\n")
-
-        p("## 1. Mojibake residual (bronze)\n")
-        for linha in secao_mojibake(cur, args.schema_bronze or cfg["schema_bronze"], cfg["bronze"]):
-            p(linha)
-        p(f"\n## 2a. Mojibake residual — silver ({silver})\n")
-        for linha in secao_mojibake(cur, silver, sorted(cfg["models_silver"])):
-            p(linha)
-        p(f"\n## 2b. Mojibake residual — gold ({gold})\n")
-        for linha in secao_mojibake(cur, gold, sorted(cfg["models_gold"])):
-            p(linha)
-
-        p(f"\n## 3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio\n")
-        for linha in secao_nulos(cur, silver, sorted(cfg["models_silver"]), args.limiar_nulo):
-            p(linha)
-        for linha in secao_nulos(cur, gold, sorted(cfg["models_gold"]), args.limiar_nulo)[2:]:
-            p(linha)
-
-        p("\n## 4. Duplicidade na chave natural\n")
-        for linha in secao_duplicidade(cur, schema_de, chaves):
-            p(linha)
-
-        p("\n## 5. Cobertura dos joins\n")
-        for linha in secao_joins(cur, silver, cfg["joins"]):
-            p(linha)
-
-        p("\n## 6. Valores reais dos campos de corte\n")
-        for linha in secao_cortes(cur, schema_de, cfg["cortes"]):
-            p(linha)
-
-        p("\n## 7. Divergência entre fontes da mesma medida\n")
-        for linha in secao_divergencia(cur, silver, args.tolerancia_divergencia):
-            p(linha)
-
-        p("\n## 8. Atualidade e procedência das medições\n")
-        for linha in secao_atualidade(cur, silver):
-            p(linha)
+    models_silver, models_gold = sorted(cfg["models_silver"]), sorted(cfg["models_gold"])
+    bronze = args.schema_bronze or cfg["schema_bronze"]
+    return [
+        ("1. Mojibake residual (bronze)", secao_mojibake(cur, bronze, cfg["bronze"])),
+        (f"2a. Mojibake residual — silver ({silver})", secao_mojibake(cur, silver, models_silver)),
+        (f"2b. Mojibake residual — gold ({gold})", secao_mojibake(cur, gold, models_gold)),
+        (
+            f"3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio",
+            secao_nulos(cur, silver, models_silver, args.limiar_nulo)
+            # o cabeçalho da tabela só sai uma vez
+            + secao_nulos(cur, gold, models_gold, args.limiar_nulo)[2:],
+        ),
+        ("4. Duplicidade na chave natural", secao_duplicidade(cur, schema_de, chaves)),
+        ("5. Cobertura dos joins", secao_joins(cur, silver, cfg["joins"])),
+        ("6. Valores reais dos campos de corte", secao_cortes(cur, schema_de, cfg["cortes"])),
+        (
+            "7. Divergência entre fontes da mesma medida",
+            secao_divergencia(cur, silver, args.tolerancia_divergencia),
+        ),
+        ("8. Atualidade e procedência das medições", secao_atualidade(cur, silver)),
+    ]
 
 
 if __name__ == "__main__":
