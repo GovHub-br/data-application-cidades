@@ -127,9 +127,7 @@ def _mascarar_pedaco(
     # marcador em objeto, não em tag: o usuário do lake não grava tag fora de raw/
     marcador = chave_pedaco + ".json"
     if any(k == marcador for k, _ in minio.listar_objetos(marcador)):
-        pronto = json.loads(
-            minio.s3.get_object(Bucket=minio.bucket, Key=marcador)["Body"].read()
-        )
+        pronto = json.loads(minio.s3.get_object(Bucket=minio.bucket, Key=marcador)["Body"].read())
         return "ok", pronto["total"], pronto["alterados"]
 
     leitor = minio.abrir_leitura(key, inicio=inicio, fim=fim, etag=etag)
@@ -158,9 +156,7 @@ def _mascarar_pedaco(
     except BaseException:
         escritor.abortar()
         raise
-    minio.put_object(
-        marcador, json.dumps({"total": total, "alterados": alterados}).encode()
-    )
+    minio.put_object(marcador, json.dumps({"total": total, "alterados": alterados}).encode())
     return "ok", total, alterados
 
 

@@ -6,9 +6,9 @@
 -- LATIN1 e decodificar em UTF8 recupera o original exatamente.
 --
 -- Conservadora, e é isso que a torna segura em qualquer coluna textual:
---   1. sem marcador de mojibake, devolve o texto intacto;
---   2. se o texto não couber em LATIN1, ou os bytes não formarem utf-8 válido, a
---      conversão levanta e o EXCEPTION devolve o original — nunca chuta.
+-- 1. sem marcador de mojibake, devolve o texto intacto;
+-- 2. se o texto não couber em LATIN1, ou os bytes não formarem utf-8 válido, a
+-- conversão levanta e o EXCEPTION devolve o original — nunca chuta.
 -- É no-op sobre texto limpo.
 {% macro create_f_corrigir_mojibake() %}
 

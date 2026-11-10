@@ -57,7 +57,7 @@ def _rotulo(nome: str, camada: str) -> str:
     if len(nome) > 26:
         meio = nome.rfind("_", 0, len(nome) // 2 + 6)
         if meio > 6:
-            return f"{nome[:meio]}_<br/>{nome[meio + 1:]}"
+            return f"{nome[:meio]}_<br/>{nome[meio + 1 :]}"
     return nome
 
 

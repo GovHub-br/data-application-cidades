@@ -15,7 +15,8 @@
 -- necessario para o ritmo_recente e para o caminho alternativo do total de
 -- entregas (decisao #5 da #130).
 --
--- Glob na staging: staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet
+-- Glob na staging:
+-- staging/dados_historicos/*snh_pmcmv_dados_prioritarios_da_entrega_da_unidade_af_bb.parquet
 -- Responsabilidade desta camada: 1 linha por linha de origem, sem regra de
 -- negocio; dt_referencia do nome do arquivo; helpers harmonizados (dt_evento,
 -- qt_uh_entregues_evento) e hash_linha para a silver.

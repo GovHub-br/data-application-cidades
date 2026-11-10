@@ -80,9 +80,7 @@ def estrutura_dos_quadros() -> list[dict]:
 def ler_quadros(edicao: str, de_arquivo: pathlib.Path | None) -> dict[str, list[dict]]:
     """Lê os quadros do banco, ou de um despejo já feito."""
     if de_arquivo:
-        do_arquivo: dict[str, list[dict]] = json.loads(
-            de_arquivo.read_text(encoding="utf-8")
-        )
+        do_arquivo: dict[str, list[dict]] = json.loads(de_arquivo.read_text(encoding="utf-8"))
         return do_arquivo
     import psycopg2
     import psycopg2.extras
@@ -217,9 +215,7 @@ def pilula(valor: float | None, base: str) -> str:
     )
 
 
-def pilulas_da_celula(
-    quadro: str, linha: dict, rotulo: str, coluna: str, por_rotulo: dict
-) -> str:
+def pilulas_da_celula(quadro: str, linha: dict, rotulo: str, coluna: str, por_rotulo: dict) -> str:
     """Todas as pílulas que essa célula recebe, nas duas formas de comparação."""
     regra = PILULAS.get(quadro)
     if not regra:
@@ -411,7 +407,7 @@ def bloco_leitura(texto: str, gerado: bool = False) -> str:
     marca = '<span class="marca-rascunho">rascunho — redigido por máquina</span>'
     return (
         f'<aside class="leitura{" gerada" if gerado else ""}">'
-        f'{marca if gerado else ""}{html.escape(texto)}</aside>'
+        f"{marca if gerado else ''}{html.escape(texto)}</aside>"
     )
 
 
@@ -434,9 +430,7 @@ def cabecalho_fixo(edicao: str) -> str:
     )
 
 
-def montar(
-    edicao: str, quadros: dict, dados: dict, editorial: dict, validacao: list
-) -> str:
+def montar(edicao: str, quadros: dict, dados: dict, editorial: dict, validacao: list) -> str:
     meta = editorial["edicoes"][edicao]
     leitura = meta.get("leitura") or {}
     # Três origens, três tratamentos:
@@ -454,7 +448,7 @@ def montar(
         "<h1>Conjuntura do<b>Setor Habitacional</b></h1>",
         f'<p><span class="selo">{html.escape(edicao)}</span></p>',
         f'<p class="data">{html.escape(meta["titulo"])} — publicado em '
-        f'{data_br(meta["publicado_em"])}</p>',
+        f"{data_br(meta['publicado_em'])}</p>",
         "</div></div>",
         cabecalho_fixo(edicao),
     ]
@@ -516,9 +510,7 @@ def montar(
         "ouro_conjuntura_boletim_p3_financiamentos_por_banco": "credito",
         "ouro_conjuntura_boletim_p4_credito_imobiliario_pib": "credito_pib",
         "ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso": "condicao_de_uso",
-        "ouro_conjuntura_boletim_p5_poupanca_captacao_liquida": (
-            "poupanca_e_financiamento"
-        ),
+        "ouro_conjuntura_boletim_p5_poupanca_captacao_liquida": ("poupanca_e_financiamento"),
         "ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa": "financiamento_pf_mcmv",
         "ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m": "precos",
         "ouro_conjuntura_boletim_p6_ticket_medio_vs_incc": "ticket_medio",
@@ -582,9 +574,7 @@ def montar(
                 f"{html.escape(meta.get('fonte_da_transcricao', 'boletim publicado'))}"
                 "</i>."
             ),
-            "revisado": (
-                "Leitura dos números redigida por máquina e revisada pela equipe."
-            ),
+            "revisado": ("Leitura dos números redigida por máquina e revisada pela equipe."),
         }.get(origem, "Leitura dos números redigida por máquina e ainda não revisada.")
         + "</div>"
     )
@@ -602,13 +592,9 @@ def fechamento(meta: dict) -> str:
             ("neutros", "Neutros", "neu-t"),
             ("negativos", "Negativos", "neg-t"),
         ):
-            itens = "".join(
-                f"<li>{html.escape(i)}</li>" for i in posteriores.get(chave, [])
-            )
+            itens = "".join(f"<li>{html.escape(i)}</li>" for i in posteriores.get(chave, []))
             if itens:
-                colunas += (
-                    f'<div><h4 class="{classe}">{rotulo}</h4><ul>{itens}</ul></div>'
-                )
+                colunas += f'<div><h4 class="{classe}">{rotulo}</h4><ul>{itens}</ul></div>'
         blocos.append(
             f'<h2><span class="n">9.</span>Dados posteriores</h2>'
             f'<div class="listas">{colunas}</div>'
@@ -642,10 +628,10 @@ def fechamento(meta: dict) -> str:
         blocos.append(
             '<h2><span class="n">11.</span>Visão MCid</h2>'
             f'<div class="listas"><div><h4>PIB Construção 2026: '
-            f'{html.escape(visao.get("pib_construcao_2026", "–"))}</h4>'
+            f"{html.escape(visao.get('pib_construcao_2026', '–'))}</h4>"
             f"<ul>{fatores}</ul></div>"
             f"<div><h4>Crédito Imobiliário / PIB</h4><ul><li>"
-            f'{html.escape(visao.get("credito_imobiliario_pib", "–"))}</li></ul>'
+            f"{html.escape(visao.get('credito_imobiliario_pib', '–'))}</li></ul>"
             f"{incompleto}</div></div>"
         )
     if not blocos:
@@ -668,9 +654,7 @@ def main() -> int:
             "é gerado: sem ele a página não sai."
         )
     dados = ler_quadros(args.edicao, args.quadros)
-    validacao = (
-        json.loads(args.validacao.read_text(encoding="utf-8")) if args.validacao else []
-    )
+    validacao = json.loads(args.validacao.read_text(encoding="utf-8")) if args.validacao else []
     corpo = montar(args.edicao, estrutura_dos_quadros(), dados, editorial, validacao)
 
     pagina = (

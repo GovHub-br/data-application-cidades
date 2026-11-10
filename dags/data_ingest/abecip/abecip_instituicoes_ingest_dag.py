@@ -54,9 +54,7 @@ def _competencias(cliente) -> dict[str, str]:
 
 @dag(
     dag_id="abecip_instituicoes_ingest_dag",
-    schedule=get_dynamic_schedule(
-        "abecip_instituicoes_ingest_dag", default="0 7 * * *"
-    ),
+    schedule=get_dynamic_schedule("abecip_instituicoes_ingest_dag", default="0 7 * * *"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={

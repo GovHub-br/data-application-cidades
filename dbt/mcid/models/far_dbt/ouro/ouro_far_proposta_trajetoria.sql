@@ -16,8 +16,10 @@ with
             s.*,
             n.n_remessa,
             coalesce(fa.rotulo, 'Fase ' || s.co_fase, 'Não informada')
-                || ' › ' || coalesce(et.rotulo, 'Etapa ' || s.co_etapa, 'Não informada')
-                || ' › ' || coalesce(st.rotulo, 'Status ' || s.co_status, 'Não informado') as situacao,
+            || ' › '
+            || coalesce(et.rotulo, 'Etapa ' || s.co_etapa, 'Não informada')
+            || ' › '
+            || coalesce(st.rotulo, 'Status ' || s.co_status, 'Não informado') as situacao,
             coalesce(et.rotulo, 'Etapa ' || s.co_etapa, 'Não informada') as etapa,
             coalesce(st.rotulo, 'Status ' || s.co_status, 'Não informado') as status,
             coalesce(td.rotulo, 'Não informada') as tipo_demanda
@@ -26,7 +28,10 @@ with
         left join dominio fa on fa.campo = 'fase' and fa.codigo = lpad(s.co_fase::text, 3, '0')
         left join dominio et on et.campo = 'etapa' and et.codigo = lpad(s.co_etapa::text, 3, '0')
         left join dominio st on st.campo = 'status' and st.codigo = lpad(s.co_status::text, 3, '0')
-        left join dominio td on td.campo = 'tipo_demanda' and td.codigo = lpad(s.co_tipo_demanda::text, 3, '0')
+        left join
+            dominio td
+            on td.campo = 'tipo_demanda'
+            and td.codigo = lpad(s.co_tipo_demanda::text, 3, '0')
     ),
 
     com_anterior as (
@@ -51,10 +56,14 @@ with
             (array_agg(status order by dt_remessa desc))[1] as status_atual,
             min(dt_remessa) as dt_primeira_remessa,
             max(dt_remessa) as dt_ultima_remessa,
-            max(dt_remessa) filter (where situacao is distinct from situacao_anterior) as dt_ultima_mudanca,
+            max(dt_remessa) filter (
+                where situacao is distinct from situacao_anterior
+            ) as dt_ultima_mudanca,
             count(*) as qt_remessas_presente,
             max(n_remessa) - min(n_remessa) + 1 - count(*) as qt_remessas_ausente,
-            count(*) filter (where situacao_anterior is not null and situacao <> situacao_anterior) as qt_mudancas_situacao
+            count(*) filter (
+                where situacao_anterior is not null and situacao <> situacao_anterior
+            ) as qt_mudancas_situacao
         from com_anterior
         group by id_proposta
     )

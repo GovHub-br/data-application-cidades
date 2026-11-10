@@ -33,9 +33,7 @@ _CONN_ERROR_STRINGS = (
     "socket is closed",
 )
 
-_LOG_PATH = (
-    Path(__file__).parent / f"sftp_errors_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-)
+_LOG_PATH = Path(__file__).parent / f"sftp_errors_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -119,9 +117,7 @@ def build_table_name(sftp_path: str, inner_filename: str | None = None) -> str:
         raw_suffix = inner_stem[-available:]
         us = raw_suffix.find("_")
         suffix = (
-            raw_suffix[us + 1 :]
-            if us >= 0 and raw_suffix[us + 1 :]
-            else raw_suffix.lstrip("_")
+            raw_suffix[us + 1 :] if us >= 0 and raw_suffix[us + 1 :] else raw_suffix.lstrip("_")
         )
         return f"{prefix}_{suffix}"
     else:
@@ -261,9 +257,7 @@ def stream_csv_from_file(file_path: str, table_name: str, engine) -> int:
         on_bad_lines="skip",
     ):
         chunk = chunk.loc[:, ~chunk.columns.str.match(r"^Unnamed: \d+$")]
-        chunk.columns = deduplicate_columns(
-            [normalize_name(str(c)) for c in chunk.columns]
-        )
+        chunk.columns = deduplicate_columns([normalize_name(str(c)) for c in chunk.columns])
         if first:
             text_dtype = {c: sa_types.Text() for c in chunk.columns}
             chunk.head(0).to_sql(
@@ -310,9 +304,7 @@ def stream_xlsx_from_file(file_path: str, table_name: str, engine) -> int:
         first = True
         for row in rows_iter:
             row_list = list(row)
-            buffer.append(
-                [row_list[i].value if i < len(row_list) else None for i in valid_indices]
-            )
+            buffer.append([row_list[i].value if i < len(row_list) else None for i in valid_indices])
             if len(buffer) >= CHUNK_SIZE:
                 df = pd.DataFrame(buffer, columns=headers)
                 if multi_sheet:
@@ -370,14 +362,16 @@ def load_file_from_disk(file_path: str, ext: str, table_name: str, engine) -> in
 
 def ensure_ingest_log(engine) -> None:
     with engine.begin() as conn:
-        conn.execute(text(f"""
+        conn.execute(
+            text(f"""
             CREATE TABLE IF NOT EXISTS {DB_SCHEMA}.{INGEST_LOG} (
                 sftp_key       TEXT PRIMARY KEY,
                 table_name     TEXT,
                 rows_inserted  INTEGER,
                 processed_at   TIMESTAMP DEFAULT NOW()
             )
-        """))
+        """)
+        )
 
 
 def is_processed(engine, sftp_key: str) -> bool:
@@ -393,10 +387,7 @@ def is_zip_processed(engine, zip_path: str) -> bool:
     """Checa se o zip já tem ao menos um arquivo interno no log — evita baixar de novo."""
     with engine.connect() as conn:
         result = conn.execute(
-            text(
-                f"SELECT 1 FROM {DB_SCHEMA}.{INGEST_LOG}"
-                f" WHERE sftp_key LIKE :prefix LIMIT 1"
-            ),
+            text(f"SELECT 1 FROM {DB_SCHEMA}.{INGEST_LOG} WHERE sftp_key LIKE :prefix LIMIT 1"),
             {"prefix": zip_path + "::%"},
         )
         return result.fetchone() is not None
@@ -418,9 +409,7 @@ def mark_processed(engine, sftp_key: str, table_name: str, rows: int) -> None:
 
 
 def get_engine():
-    url = (
-        f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}" f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+    url = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     return create_engine(url)
 
 
@@ -439,8 +428,7 @@ def _process_zip(tmp_path: str, sftp_path: str, engine, registry: dict[str, int]
     inner_files = [
         f
         for f in zf.namelist()
-        if Path(f).suffix.lower() in SUPPORTED_EXTENSIONS
-        and not Path(f).name.startswith(".")
+        if Path(f).suffix.lower() in SUPPORTED_EXTENSIONS and not Path(f).name.startswith(".")
     ]
     if not inner_files:
         log.warning("nenhum arquivo suportado dentro de %s", sftp_path)
@@ -469,9 +457,7 @@ def _process_zip(tmp_path: str, sftp_path: str, engine, registry: dict[str, int]
             os.unlink(inner_tmp)
 
 
-def _process_flat(
-    entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]
-) -> None:
+def _process_flat(entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]) -> None:
     path = entry["path"]
     ext = entry["ext"]
 
@@ -499,9 +485,7 @@ def _process_flat(
         os.unlink(tmp_path)
 
 
-def process_entry(
-    entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]
-) -> None:
+def process_entry(entry: dict, sftp: paramiko.SFTPClient, engine, registry: dict[str, int]) -> None:
     log.info("\n→ %s (%s)", entry["path"], format_size(entry["size"]))
 
     if entry["is_zip"]:
@@ -518,9 +502,7 @@ def process_entry(
 
 
 def _is_conn_error(e: Exception) -> bool:
-    return isinstance(e, SOCKET_ERRORS) or any(
-        s in str(e).lower() for s in _CONN_ERROR_STRINGS
-    )
+    return isinstance(e, SOCKET_ERRORS) or any(s in str(e).lower() for s in _CONN_ERROR_STRINGS)
 
 
 def connect_sftp() -> tuple[paramiko.Transport, paramiko.SFTPClient]:
@@ -586,9 +568,7 @@ def main():
     transport.close()
 
     error_count = sum(
-        1
-        for line in _LOG_PATH.read_text(encoding="utf-8").splitlines()
-        if " ERROR " in line
+        1 for line in _LOG_PATH.read_text(encoding="utf-8").splitlines() if " ERROR " in line
     )
     log.info("Concluído. Erros: %d → %s", error_count, _LOG_PATH)
 

@@ -1,6 +1,7 @@
 {{ config(materialized="table") }}
 
--- Bronze: Acompanhamento do Trabalho Social (PTS) do PNHR pelo Banco do Brasil. Layout proprio, diferente do da CAIXA. Mesma ressalva de export avulso.
+-- Bronze: Acompanhamento do Trabalho Social (PTS) do PNHR pelo Banco do Brasil. Layout proprio,
+-- diferente do da CAIXA. Mesma ressalva de export avulso.
 -- Fonte: SHPT — sharepoint/ (export canonico)
 {% set padrao = "s3://data-lake-mcid/staging/**/base_trabalho_social_pnhr_bb.parquet" %}
 

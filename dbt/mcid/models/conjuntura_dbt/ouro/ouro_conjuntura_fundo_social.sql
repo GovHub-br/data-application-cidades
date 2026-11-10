@@ -18,32 +18,33 @@
 -- é zero, mas juntá-las num só model convidaria alguém a deduplicar ou somar
 -- indevidamente. Quem precisar da tabela completa da Página 5 combina as duas
 -- no dashboard, com a decisão explícita.
-
-with mensal as (
-    select
-        ano, mes, data_referencia, condicao_imovel, uh, valor
-    from {{ ref('prata_conjuntura_gefus_fundo_social') }}
-)
+with
+    mensal as (
+        select ano, mes, data_referencia, condicao_imovel, uh, valor
+        from {{ ref('prata_conjuntura_gefus_fundo_social') }}
+    )
 
 select
-    ano || '-' || lpad(mes::text, 2, '0')                as periodo,
+    ano || '-' || lpad(mes::text, 2, '0') as periodo,
     ano,
     mes,
     data_referencia,
-    (floor((mes - 1) / 3))::int + 1                      as trimestre,
+    (floor((mes - 1) / 3))::int + 1 as trimestre,
 
-    sum(uh)                                              as fundo_social_uh_total,
-    sum(valor)                                           as fundo_social_valor_total,
+    sum(uh) as fundo_social_uh_total,
+    sum(valor) as fundo_social_valor_total,
 
-    sum(uh)    filter (where condicao_imovel = 'Novo')   as fundo_social_uh_novos,
-    sum(valor) filter (where condicao_imovel = 'Novo')   as fundo_social_valor_novos,
-    sum(uh)    filter (where condicao_imovel = 'Usado')  as fundo_social_uh_usados,
-    sum(valor) filter (where condicao_imovel = 'Usado')  as fundo_social_valor_usados,
+    sum(uh) filter (where condicao_imovel = 'Novo') as fundo_social_uh_novos,
+    sum(valor) filter (where condicao_imovel = 'Novo') as fundo_social_valor_novos,
+    sum(uh) filter (where condicao_imovel = 'Usado') as fundo_social_uh_usados,
+    sum(valor) filter (where condicao_imovel = 'Usado') as fundo_social_valor_usados,
 
     -- mantido visível de propósito: entra no total publicado, mas não tem
     -- regra que permita chamá-lo de novo ou usado
-    sum(uh)    filter (where condicao_imovel = 'Não classificado') as fundo_social_uh_nao_classificado,
-    sum(valor) filter (where condicao_imovel = 'Não classificado') as fundo_social_valor_nao_classificado
+    sum(uh) filter (where condicao_imovel = 'Não classificado') as fundo_social_uh_nao_classificado,
+    sum(valor) filter (
+        where condicao_imovel = 'Não classificado'
+    ) as fundo_social_valor_nao_classificado
 from mensal
 group by 1, 2, 3, 4, 5
 order by ano desc, mes desc

@@ -107,9 +107,7 @@ def _novo_registro(execution_id: str, key: str) -> dict:
         "bucket": MINIO_BUCKET,
         "file": key,
         "file_name": key.rsplit("/", 1)[-1],
-        "file_format": (
-            key.rsplit(".", 1)[-1].lower() if "." in key.rsplit("/", 1)[-1] else ""
-        ),
+        "file_format": (key.rsplit(".", 1)[-1].lower() if "." in key.rsplit("/", 1)[-1] else ""),
         "encoding": None,
         "delimiter": None,
         "has_pf_indicator": False,
@@ -323,15 +321,12 @@ def run(  # noqa: C901
     """
     if not HMAC_SECRET:
         raise SystemExit(
-            "MASKING_HMAC_SECRET não definida no .env — necessária para "
-            "tokenizar CPF/NIS."
+            "MASKING_HMAC_SECRET não definida no .env — necessária para tokenizar CPF/NIS."
         )
 
     prefix = prefix if prefix is not None else RAW_PREFIX
     execution_id = uuid.uuid4().hex
-    only_ext_set = {
-        ("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()
-    }
+    only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
 
     log.info("=" * 70)
     log.info(
@@ -424,13 +419,9 @@ def main() -> None:
         action="store_true",
         help="Reprocessa objetos já mascarados (tag masked=true).",
     )
-    parser.add_argument(
-        "--limit", type=int, default=0, help="Processa no máximo N objetos."
-    )
+    parser.add_argument("--limit", type=int, default=0, help="Processa no máximo N objetos.")
     parser.add_argument("--pattern", default="", help="Filtra por substring na key.")
-    parser.add_argument(
-        "--only-ext", default="", help="Extensões a processar, ex.: csv,txt"
-    )
+    parser.add_argument("--only-ext", default="", help="Extensões a processar, ex.: csv,txt")
     parser.add_argument(
         "--max-size-mb",
         type=int,
@@ -438,9 +429,7 @@ def main() -> None:
         help="Pula objetos maiores que N MB (0 = sem limite). "
         "Útil p/ fatiar dry-runs: pequenos primeiro, grandes depois.",
     )
-    parser.add_argument(
-        "--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/)."
-    )
+    parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
     args = parser.parse_args()
 
     run(

@@ -14,6 +14,7 @@ revisados linha a linha. O operador em produção usa só `psql` — não precis
 Python. NENHUM destes scripts é chamado por automação; a execução contra `prod`
 é ato MANUAL, fora da aplicação da change. Ver README.md.
 """
+
 from __future__ import annotations
 
 import csv
@@ -123,13 +124,11 @@ def gera_verificar(pares) -> str:
     schemas = sorted({p[0] for p in pares} | {p[2] for p in pares})
     lista_schemas = ", ".join(f"'{s}'" for s in schemas)
     counts = "\nunion all\n".join(
-        f"select '{s}.{t}' as tabela, "
-        f"(select count(*) from \"{s}\".\"{t}\") as n_linhas"
+        f'select \'{s}.{t}\' as tabela, (select count(*) from "{s}"."{t}") as n_linhas'
         for s, t in [(p[0], p[1]) for p in pares]
     )
     counts_novo = "\nunion all\n".join(
-        f"select '{ns}.{nt}' as tabela, "
-        f"(select count(*) from \"{ns}\".\"{nt}\") as n_linhas"
+        f'select \'{ns}.{nt}\' as tabela, (select count(*) from "{ns}"."{nt}") as n_linhas'
         for ns, nt in [(p[2], p[3]) for p in pares]
     )
     return f"""\
@@ -161,20 +160,23 @@ select * from (
 
 def main() -> int:
     linhas = linhas_mapa()
-    pares = [
-        (r["old_schema"], r["old_table"], r["new_schema"], r["new_table"])
-        for r in linhas
-    ]
+    pares = [(r["old_schema"], r["old_table"], r["new_schema"], r["new_table"]) for r in linhas]
 
     (AQUI / "renomear_nomenclatura_prod.sql").write_text(
-        gera(pares, reverso=False,
-             titulo="renomear_nomenclatura_prod.sql — schemas antigos -> bronze/prata/ouro",
-             arquivo="renomear_nomenclatura_prod.sql")
+        gera(
+            pares,
+            reverso=False,
+            titulo="renomear_nomenclatura_prod.sql — schemas antigos -> bronze/prata/ouro",
+            arquivo="renomear_nomenclatura_prod.sql",
+        )
     )
     (AQUI / "reverter_nomenclatura_prod.sql").write_text(
-        gera(pares, reverso=True,
-             titulo="reverter_nomenclatura_prod.sql — ROLLBACK: bronze/prata/ouro -> schemas antigos",
-             arquivo="reverter_nomenclatura_prod.sql")
+        gera(
+            pares,
+            reverso=True,
+            titulo="reverter_nomenclatura_prod.sql — ROLLBACK: bronze/prata/ouro -> schemas antigos",
+            arquivo="reverter_nomenclatura_prod.sql",
+        )
     )
     (AQUI / "verificar_nomenclatura_prod.sql").write_text(gera_verificar(pares))
     print(f"gerados 3 .sql a partir de {len(pares)} linhas do mapa")

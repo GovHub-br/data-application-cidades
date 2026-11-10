@@ -16,9 +16,7 @@ SEM_MENCAO = "@\u200b"
 
 
 def citar(texto: str) -> str:
-    return "\n".join(
-        f"> {linha}" for linha in texto.replace("@", SEM_MENCAO).splitlines()
-    )
+    return "\n".join(f"> {linha}" for linha in texto.replace("@", SEM_MENCAO).splitlines())
 
 
 def links(carga: dict, om_host: str) -> tuple[str, str]:

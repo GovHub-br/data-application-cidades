@@ -3,7 +3,6 @@
 -- Recorte analítico e sem identificadores pessoais da Base PF/FGTS.
 -- Mantido separado de CCI/CCA porque as bases têm critérios de recorte
 -- distintos e sua soma produziria dupla contagem dos indicadores oficiais.
-
 select
     {{ linha_financiada_data_iso('dt_assinatura') }} as data_contratacao,
     trim(faixa::text) as faixa_codigo,

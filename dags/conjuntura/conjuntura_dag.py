@@ -111,10 +111,7 @@ def conjuntura_dag() -> None:
                 ingestor.gerar_staging_parquet()
                 logging.info(f"Parquet manual gerado: {ingestor.fonte}.{ingestor.dado}")
             except Exception as exc:  # noqa: BLE001 - fonte externa instável
-                logging.warning(
-                    f"Ingestor manual falhou ({ingestor.fonte}.{ingestor.dado}): "
-                    f"{exc}"
-                )
+                logging.warning(f"Ingestor manual falhou ({ingestor.fonte}.{ingestor.dado}): {exc}")
 
     manuais_prontos = gera_parquets_manuais()
 

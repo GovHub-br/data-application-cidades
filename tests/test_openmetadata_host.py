@@ -49,9 +49,7 @@ def test_recipe_renderizada_leva_o_api_mesmo_com_url_sem_api(monkeypatch) -> Non
     capturado: dict = {}
 
     def execute_metadata(metadata_command: str, rendered_recipe_path: Path) -> None:
-        capturado["recipe"] = yaml.safe_load(
-            Path(rendered_recipe_path).read_text(encoding="utf-8")
-        )
+        capturado["recipe"] = yaml.safe_load(Path(rendered_recipe_path).read_text(encoding="utf-8"))
 
     monkeypatch.setattr(runner, "execute_metadata", execute_metadata)
 

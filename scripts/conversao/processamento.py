@@ -41,6 +41,7 @@ from .xlsx import _abas_xlsx, _converter_xlsx_aba
 
 log = logging.getLogger(__name__)
 
+
 def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
     """raw/<pastas>/<nome>.<ext> -> staging/<pastas>/<nome>[__parte].parquet
 
@@ -140,9 +141,7 @@ def processar_objeto(  # noqa: C901
                 return [rec]
             _descartar_pendentes_antigos(pendente)
 
-            dst = tempfile.NamedTemporaryFile(
-                delete=False, suffix=".parquet", dir=TMPDIR
-            ).name
+            dst = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet", dir=TMPDIR).name
             try:
                 n_linhas, n_colunas, n_bad, column_map, enc_usado = _converter_tabular(
                     src,
@@ -172,9 +171,7 @@ def processar_objeto(  # noqa: C901
                     raise
                 rec["status"] = "converted" if apply else "dry_run"
                 if n_bad > 0:
-                    log.warning(
-                        "%s — %d linha(s) mal-formada(s) descartada(s)", key, n_bad
-                    )
+                    log.warning("%s — %d linha(s) mal-formada(s) descartada(s)", key, n_bad)
             finally:
                 if os.path.exists(dst):
                     os.unlink(dst)
@@ -206,12 +203,8 @@ def processar_objeto(  # noqa: C901
                 staging_key = _staging_key(key, f"__{norm_header(tabela) or 'tabela'}")
                 rec["staging_key"] = staging_key
 
-                csv_tmp = tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".csv", dir=TMPDIR
-                ).name
-                dst = tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".parquet", dir=TMPDIR
-                ).name
+                csv_tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv", dir=TMPDIR).name
+                dst = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet", dir=TMPDIR).name
                 try:
                     mdb_export_para_csv(src, tabela, csv_tmp)
                     if os.path.getsize(csv_tmp) == 0:
@@ -237,19 +230,17 @@ def processar_objeto(  # noqa: C901
                             alterados,
                             ", ".join(f"{a['column']}:{a['action']}" for a in alvos),
                         )
-                    n_linhas, n_colunas, n_bad, column_map, enc_usado = (
-                        _converter_tabular(
-                            csv_tmp,
-                            dst,
-                            MDB_DELIM,
-                            MDB_ENCODING,
-                            os.path.basename(key),
-                            source_hash,
-                            ingested_at,
-                            chunksize,
-                            bad_mode,
-                            extra_meta={"table": tabela},
-                        )
+                    n_linhas, n_colunas, n_bad, column_map, enc_usado = _converter_tabular(
+                        csv_tmp,
+                        dst,
+                        MDB_DELIM,
+                        MDB_ENCODING,
+                        os.path.basename(key),
+                        source_hash,
+                        ingested_at,
+                        chunksize,
+                        bad_mode,
+                        extra_meta={"table": tabela},
                     )
                     if n_colunas == 0:
                         rec["status"] = "skipped_no_header"
@@ -269,9 +260,7 @@ def processar_objeto(  # noqa: C901
                     else:
                         minio.upload_arquivo(dst, _dryrun_key(staging_key))
                         rec["status"] = "dry_run"
-                except (
-                    Exception
-                ) as e:  # noqa: BLE001 — falha numa tabela não derruba as outras
+                except Exception as e:  # noqa: BLE001 — falha numa tabela não derruba as outras
                     rec["status"] = "error"
                     rec["error_message"] = f"tabela '{tabela}': {e}"[:500]
                     log.error("✗ %s [%s]: %s", key, tabela, e)
@@ -295,9 +284,7 @@ def processar_objeto(  # noqa: C901
             staging_key = _staging_key(key)
             rec["staging_key"] = staging_key
             ingested_at = datetime.now(timezone.utc).isoformat()
-            dst = tempfile.NamedTemporaryFile(
-                delete=False, suffix=".parquet", dir=TMPDIR
-            ).name
+            dst = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet", dir=TMPDIR).name
             try:
                 n_linhas, n_colunas, column_map = _converter_json(
                     src, dst, os.path.basename(key), source_hash, ingested_at
@@ -338,9 +325,7 @@ def processar_objeto(  # noqa: C901
                 sufixo = f"__{norm_header(aba) or 'aba'}" if multi else ""
                 staging_key = _staging_key(key, sufixo)
                 rec["staging_key"] = staging_key
-                dst = tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".parquet", dir=TMPDIR
-                ).name
+                dst = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet", dir=TMPDIR).name
                 try:
                     n_linhas, n_colunas, column_map = _converter_xlsx_aba(
                         src,
@@ -354,9 +339,7 @@ def processar_objeto(  # noqa: C901
                         rec["status"] = "skipped_no_header"
                         recs.append(rec)
                         continue
-                    rec.update(
-                        n_linhas=n_linhas, n_colunas=n_colunas, column_map=column_map
-                    )
+                    rec.update(n_linhas=n_linhas, n_colunas=n_colunas, column_map=column_map)
                     _verificar_parquet(dst, n_linhas)
                     if apply:
                         minio.upload_arquivo(dst, staging_key)

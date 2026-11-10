@@ -131,9 +131,7 @@ with DAG(
                 logging.warning("Nenhum e-mail encontrado com o assunto esperado.")
                 raise AirflowSkipException("Nenhum e-mail encontrado. Task ignorada.")
 
-            logging.info(
-                "CSV processado com sucesso. Registros encontrados: %s", len(csv_data)
-            )
+            logging.info("CSV processado com sucesso. Registros encontrados: %s", len(csv_data))
             return csv_data
         except Exception as e:
             logging.error("Erro no processamento dos emails: %s", str(e))
@@ -146,9 +144,7 @@ with DAG(
 
             if not csv_data:
                 logging.warning("Nenhum dado para inserir no banco.")
-                raise AirflowSkipException(
-                    "Nenhum dado foi encontrado para inserção no BD"
-                )
+                raise AirflowSkipException("Nenhum dado foi encontrado para inserção no BD")
 
             df = pd.read_csv(io.StringIO(csv_data))
             data = df.to_dict(orient="records")

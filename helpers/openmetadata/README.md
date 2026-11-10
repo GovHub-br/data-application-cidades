@@ -188,10 +188,8 @@ airflow_lappis/helpers/metadata/ingestion/source/pipeline/airflow/lineage_parser
 Esse shim não conversa com o OpenMetadata. Ele só cria classes mínimas para que a DAG serialize as anotações no formato esperado pela ingestão de Airflow. Exemplo:
 
 ```python
-inlets=[
-    OMEntity(entity=ApiService, fqn="compras_gov_api", key="apiService")
-]
-outlets=[
+inlets = [OMEntity(entity=ApiService, fqn="compras_gov_api", key="apiService")]
+outlets = [
     {
         "entity": "table",
         "fqn": "IPEA.analytics.compras_gov.contratos",

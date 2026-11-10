@@ -19,6 +19,7 @@ linha a linha. O operador em produção usa só `psql` — não precisa de Pytho
 NENHUM destes scripts é chamado por automação; a execução contra `prod` é ato
 MANUAL, fora da aplicação da change. Ver README.md.
 """
+
 from __future__ import annotations
 
 import csv
@@ -56,10 +57,7 @@ def pares() -> list[tuple[str, str, str, str]]:
         linhas = list(csv.DictReader(fh))
     if not linhas:
         raise SystemExit("mapa_seeds.csv vazio")
-    return [
-        (r["old_schema"], r["old_table"], r["new_schema"], r["old_table"])
-        for r in linhas
-    ]
+    return [(r["old_schema"], r["old_table"], r["new_schema"], r["old_table"]) for r in linhas]
 
 
 def _checa(p, *, schema_i: int, table_i: int, existe: bool, msg: str) -> str:
@@ -75,12 +73,10 @@ def bloco_preflight(pares, *, reverso: bool) -> str:
     o_s, o_t = (2, 3) if reverso else (0, 1)
     d_s, d_t = (0, 1) if reverso else (2, 3)
     checa_origem = "\n".join(
-        _checa(p, schema_i=o_s, table_i=o_t, existe=True, msg="origem ausente")
-        for p in pares
+        _checa(p, schema_i=o_s, table_i=o_t, existe=True, msg="origem ausente") for p in pares
     )
     checa_destino = "\n".join(
-        _checa(p, schema_i=d_s, table_i=d_t, existe=False, msg="destino ja existe")
-        for p in pares
+        _checa(p, schema_i=d_s, table_i=d_t, existe=False, msg="destino ja existe") for p in pares
     )
     return (
         "do $$\nbegin\n"
@@ -104,13 +100,11 @@ def bloco_postflight(pares, *, reverso: bool) -> str:
     d_s, d_t = (0, 1) if reverso else (2, 3)
     o_s, o_t = (2, 3) if reverso else (0, 1)
     checa_destino = "\n".join(
-        _checa(p, schema_i=d_s, table_i=d_t, existe=True,
-               msg="postflight: destino ausente")
+        _checa(p, schema_i=d_s, table_i=d_t, existe=True, msg="postflight: destino ausente")
         for p in pares
     )
     checa_origem = "\n".join(
-        _checa(p, schema_i=o_s, table_i=o_t, existe=False,
-               msg="postflight: origem ainda existe")
+        _checa(p, schema_i=o_s, table_i=o_t, existe=False, msg="postflight: origem ainda existe")
         for p in pares
     )
     return "do $$\nbegin\n" + checa_destino + "\n" + checa_origem + "\nend $$;\n"
@@ -136,13 +130,11 @@ def gera_verificar(pares) -> str:
     schemas = sorted({p[0] for p in pares} | {p[2] for p in pares})
     lista_schemas = ", ".join(f"'{s}'" for s in schemas)
     counts = "\nunion all\n".join(
-        f"select '{s}.{t}' as tabela, "
-        f"(select count(*) from \"{s}\".\"{t}\") as n_linhas"
+        f'select \'{s}.{t}\' as tabela, (select count(*) from "{s}"."{t}") as n_linhas'
         for s, t in [(p[0], p[1]) for p in pares]
     )
     counts_novo = "\nunion all\n".join(
-        f"select '{s}.{t}' as tabela, "
-        f"(select count(*) from \"{s}\".\"{t}\") as n_linhas"
+        f'select \'{s}.{t}\' as tabela, (select count(*) from "{s}"."{t}") as n_linhas'
         for s, t in [(p[2], p[3]) for p in pares]
     )
     return f"""\

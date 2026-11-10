@@ -182,9 +182,7 @@ def _reescrever_shared_strings(fin: IO[bytes], fout: IO[bytes], apagar: set) -> 
     fout.write(b"</sst>")
 
 
-def _transformar_row(
-    bruto: bytes, acoes: Dict[int, str], compart: List[str]
-) -> Tuple[bytes, bool]:
+def _transformar_row(bruto: bytes, acoes: Dict[int, str], compart: List[str]) -> Tuple[bytes, bool]:
     """Recebe UMA <row> como bytes, devolve (bytes reescritos, alterou?).
 
     A row vem sem declaração de namespace (ela mora no default do <worksheet>), então é
@@ -209,9 +207,7 @@ class _RecorteSheet:
     FIM_ROW = b"</row>"
     FIM_DADOS = b"</sheetData>"
 
-    def __init__(
-        self, fout: IO[bytes], acoes: Dict[int, str], compart: List[str]
-    ) -> None:
+    def __init__(self, fout: IO[bytes], acoes: Dict[int, str], compart: List[str]) -> None:
         self.fout = fout
         self.acoes = acoes
         self.compart = compart
@@ -354,9 +350,7 @@ def _mascarar_linha(row: ET.Element, acoes: Dict[int, str], compart: List[str]) 
     return mudou
 
 
-def _mascarar_xlsx(
-    src_path: str, dst_path: str
-) -> Tuple[List[dict], bool, int, int, bool]:
+def _mascarar_xlsx(src_path: str, dst_path: str) -> Tuple[List[dict], bool, int, int, bool]:
     """Retorna (targets, has_pf, registros_total, registros_alterados, has_formulas).
 
     Reescrita em streaming (ver bloco acima): a memória é proporcional à maior linha, não
@@ -391,9 +385,7 @@ def _mascarar_xlsx(
             for info in zin.infolist():
                 if info.filename in por_sheet:
                     with zin.open(info) as fin, zout.open(info.filename, "w") as fout:
-                        n, a = _reescrever_sheet(
-                            fin, fout, por_sheet[info.filename], compart
-                        )
+                        n, a = _reescrever_sheet(fin, fout, por_sheet[info.filename], compart)
                         total += n
                         alterados += a
                 elif info.filename == "xl/sharedStrings.xml" and apagar:

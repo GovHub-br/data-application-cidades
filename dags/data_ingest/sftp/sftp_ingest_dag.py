@@ -43,8 +43,7 @@ def sftp_ingest_dag() -> None:
         arquivos = list(params.get("arquivos") or [])
         sucesso, erro = run_ingest(reingest_deleted=reingest_deleted, arquivos=arquivos)
         logging.info(
-            "[sftp_ingest_dag] SFTP->raw (reingest_deleted=%s, arquivos=%d): "
-            "%d ok, %d erro(s)",
+            "[sftp_ingest_dag] SFTP->raw (reingest_deleted=%s, arquivos=%d): %d ok, %d erro(s)",
             reingest_deleted,
             len(arquivos),
             sucesso,

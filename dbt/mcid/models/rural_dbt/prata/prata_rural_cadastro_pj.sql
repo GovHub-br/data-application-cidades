@@ -1,17 +1,23 @@
 {{ config(materialized="table") }}
 
 -- Silver: Cadastro PJ Rural
--- Fonte: bronze.bronze_shpt_monit_cad_pj_rural_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_shpt_monit_cad_pj_rural_mensal (parquet da staging/ carregado pelo
+-- staging_para_bronze.py)
 -- Saída: dados cadastrais limpos e tipados do empreendimento contratado
-
 with
     cad_pj_raw as (
         select
             -- Identificação
             {{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv) as apf,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_empreend)), '') as nu_contrato_empreend,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_agente_finan)), '') as agente_financeiro_codigo,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_empreend)), ''
+            ) as nu_contrato_empreend,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(no_empreendimento)), ''
+            ) as empreendimento_nome,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(co_agente_finan)), ''
+            ) as agente_financeiro_codigo,
 
             -- Entidade Organizadora (EO)
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_nome_eo)), '') as eo_nome,
@@ -20,7 +26,9 @@ with
             -- Localização
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_municipio)), '') as municipio,
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(sg_uf)), '') as uf,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_ibge_empreend)), '') as cod_ibge,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_ibge_empreend)), ''
+            ) as cod_ibge,
 
             -- Tipologia e Quantidades
             {{ parse_int('nu_modalidade') }} as modalidade_codigo,
@@ -63,7 +71,8 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp
+            as criado_em
 
         from {{ ref("bronze_shpt_monit_cad_pj_rural_mensal") }}
     )

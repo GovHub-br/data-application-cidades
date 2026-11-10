@@ -44,9 +44,7 @@ def main() -> int:
 
         destino = write_json(nome, payload)
         resumo = payload.get("resumo", {})
-        principais = ", ".join(
-            f"{k}={v}" for k, v in resumo.items() if isinstance(v, (int, str))
-        )
+        principais = ", ".join(f"{k}={v}" for k, v in resumo.items() if isinstance(v, (int, str)))
         log.info("%s -> %s (%s)", nome, destino.name, principais)
 
     if falhas:

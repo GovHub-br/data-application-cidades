@@ -55,9 +55,7 @@ def test_ambiente_chega_a_todos_os_modulos(carregar, tmp_path):
     assert _modulo("processamento").TMPDIR == str(tmp_path)
     assert _modulo("pendente").TMPDIR == str(tmp_path)
     assert _modulo("processamento")._staging_key("bruto/a/b.csv") == "stg/a/b.parquet"
-    assert _modulo("processamento")._dryrun_key("stg/a/b.parquet") == (
-        "staging_dryrun/a/b.parquet"
-    )
+    assert _modulo("processamento")._dryrun_key("stg/a/b.parquet") == ("staging_dryrun/a/b.parquet")
     # o prefixo do raw também decide a identidade dos gêmeos
     assert _modulo("gemeos")._stem_sem_extensao("bruto/abecip/2025-10/x.csv") == (
         "abecip/2025-10/x"
@@ -85,9 +83,7 @@ def test_log_dos_modulos_chega_ao_root(carregar, caplog):
     assert "sinal" in caplog.text
 
 
-def test_auditoria_vai_ao_minio_e_a_copia_local_ao_lado_do_script(
-    carregar, tmp_path, monkeypatch
-):
+def test_auditoria_vai_ao_minio_e_a_copia_local_ao_lado_do_script(carregar, tmp_path, monkeypatch):
     carregar()
     controle = _modulo("controle")
     monkeypatch.setattr(controle, "_LOCAL_ARTIFACTS", True)
@@ -98,9 +94,7 @@ def test_auditoria_vai_ao_minio_e_a_copia_local_ao_lado_do_script(
         def put_object(self, key, dados):
             enviados[key] = dados
 
-    controle._gravar_auditoria(
-        Minio(), "abc", [{"raw_key": "raw/a.csv", "column_map": {"A": "a"}}]
-    )
+    controle._gravar_auditoria(Minio(), "abc", [{"raw_key": "raw/a.csv", "column_map": {"A": "a"}}])
 
     chave = "audit/staging/execution_id=abc/part-0.parquet"
     assert list(enviados) == [chave]

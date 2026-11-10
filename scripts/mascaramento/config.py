@@ -69,9 +69,7 @@ _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
     "no",
 )
 _LOG_FILE = SCRIPTS_DIR / f"mascarar_minio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-_formatter = logging.Formatter(
-    "%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
-)
+_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
 if _LOCAL_ARTIFACTS and not logging.root.handlers:
     # Standalone: o script gerencia os próprios handlers (stderr + arquivo de log).

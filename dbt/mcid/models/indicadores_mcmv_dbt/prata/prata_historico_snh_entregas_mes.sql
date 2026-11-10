@@ -29,19 +29,19 @@ with
 
     tipado as (
         {% for f in entregas_familias %}
-        select
-            coalesce(
-                upper(nullif(trim(cast(agente_financeiro as varchar)), '')),
-                agente_arquivo
-            ) as agente_financeiro,
-            nullif(trim(cast(apf as varchar)), '') as apf,
-            dt_evento,
-            date_trunc('month', dt_evento)::date as mes_evento,
-            coalesce(qt_uh_entregues_evento, 0) as qt_uh_entregues_evento,
-            dt_referencia as dt_snapshot
-        from {{ ref(f.modelo) }}
-        where nullif(trim(cast(apf as varchar)), '') is not null
-        {{ "union all" if not loop.last }}
+            select
+                coalesce(
+                    upper(nullif(trim(cast(agente_financeiro as varchar)), '')), agente_arquivo
+                ) as agente_financeiro,
+                nullif(trim(cast(apf as varchar)), '') as apf,
+                dt_evento,
+                date_trunc('month', dt_evento)::date as mes_evento,
+                coalesce(qt_uh_entregues_evento, 0) as qt_uh_entregues_evento,
+                dt_referencia as dt_snapshot
+            from {{ ref(f.modelo) }}
+            where
+                nullif(trim(cast(apf as varchar)), '') is not null
+                {{ "union all" if not loop.last }}
         {% endfor %}
     ),
 

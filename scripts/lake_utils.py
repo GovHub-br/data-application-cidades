@@ -78,8 +78,10 @@ def _contar_sequencias_utf8(sample: bytes) -> Tuple[int, int]:
             i += 1
             continue
         largura = 2 if b >> 5 == 0b110 else 3 if b >> 4 == 0b1110 else 4 if b >> 3 == 0b11110 else 0
-        if largura and i + largura <= n and all(
-            sample[i + k] >> 6 == 0b10 for k in range(1, largura)
+        if (
+            largura
+            and i + largura <= n
+            and all(sample[i + k] >> 6 == 0b10 for k in range(1, largura))
         ):
             validas += 1
             i += largura
@@ -98,9 +100,7 @@ def encoding_fallback(encoding: str) -> Optional[str]:
     return None if encoding == "latin-1" else "latin-1"
 
 
-def detectar_dialeto(
-    sample: bytes, real_encoding: str
-) -> Optional[Tuple[str, str, bool]]:
+def detectar_dialeto(sample: bytes, real_encoding: str) -> Optional[Tuple[str, str, bool]]:
     """Retorna (delimitador, lineterminator, fully_quoted) ou None se não parecer tabular.
 
     Usa csv.reader (e não a primeira linha física) porque há arquivos com quebras de
@@ -116,9 +116,7 @@ def detectar_dialeto(
     melhor_delim, melhor_campos = None, 1
     for d in [";", "|", "\t", ","]:
         try:
-            primeiro = next(
-                csv.reader(io.StringIO(stripped), delimiter=d, quotechar='"'), None
-            )
+            primeiro = next(csv.reader(io.StringIO(stripped), delimiter=d, quotechar='"'), None)
         except csv.Error:
             continue
         # sample pode cortar no meio de um campo aspeado; ainda assim o nº de campos
@@ -214,9 +212,7 @@ def mdb_tabelas(path: str) -> List[str]:
     """Nomes das tabelas de usuário do .mdb (mdbtools já omite as MSys* de sistema)."""
     r = subprocess.run(["mdb-tables", "-1", path], capture_output=True, text=True)
     if r.returncode != 0:
-        raise RuntimeError(
-            f"mdb-tables falhou: {r.stderr.strip() or 'erro desconhecido'}"
-        )
+        raise RuntimeError(f"mdb-tables falhou: {r.stderr.strip() or 'erro desconhecido'}")
     return [t.strip() for t in r.stdout.splitlines() if t.strip()]
 
 
@@ -261,8 +257,7 @@ def mdb_export_para_csv(path: str, tabela: str, dst: str) -> None:
         r = subprocess.run(["mdb-export", path, tabela], stdout=f, stderr=subprocess.PIPE)
     if r.returncode != 0:
         raise RuntimeError(
-            f"mdb-export falhou em '{tabela}': "
-            f"{r.stderr.decode('utf-8', 'replace').strip()}"
+            f"mdb-export falhou em '{tabela}': {r.stderr.decode('utf-8', 'replace').strip()}"
         )
 
 

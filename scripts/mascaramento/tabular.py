@@ -73,9 +73,7 @@ class _LoteVerificado:
 
     def descarregar(self) -> None:
         texto = self._buf.getvalue()
-        leitor = csv.reader(
-            io.StringIO(texto, newline=""), delimiter=self._delim, quotechar='"'
-        )
+        leitor = csv.reader(io.StringIO(texto, newline=""), delimiter=self._delim, quotechar='"')
         relidas = list(leitor)
         if relidas != self._linhas:
             raise ValueError(
@@ -136,9 +134,7 @@ def _mascarar_fluxo(
         row_alterada = False
         for idx, action in idx_action:
             if idx < len(row) and row[idx] is not None and row[idx].strip() != "":
-                row[idx] = (
-                    _hmac_token(row[idx]) if action == "hmac" else _redigir(row[idx])
-                )
+                row[idx] = _hmac_token(row[idx]) if action == "hmac" else _redigir(row[idx])
                 row_alterada = True
         if row_alterada:
             alterados += 1
@@ -217,13 +213,9 @@ def _verificar_roundtrip_tabular(
     ncols_src, _ = _header_e_linhas(src_path)
     ncols_dst, n_dst = _header_e_linhas(dst_path)
     if ncols_src != ncols_dst:
-        raise ValueError(
-            f"round-trip: colunas do header divergem ({ncols_src} != {ncols_dst})"
-        )
+        raise ValueError(f"round-trip: colunas do header divergem ({ncols_src} != {ncols_dst})")
     if n_dst != total_esperado:
-        raise ValueError(
-            f"round-trip: nº de linhas divergem ({n_dst} != {total_esperado})"
-        )
+        raise ValueError(f"round-trip: nº de linhas divergem ({n_dst} != {total_esperado})")
 
 
 def mascarar_csv(

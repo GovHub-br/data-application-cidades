@@ -108,9 +108,7 @@ def main() -> None:
     if args.public_dir:
         args.public_dir.mkdir(parents=True, exist_ok=True)
         destino_publico = args.public_dir / "index.html"
-        destino_publico.write_text(
-            args.saida.read_text(encoding="utf-8"), encoding="utf-8"
-        )
+        destino_publico.write_text(args.saida.read_text(encoding="utf-8"), encoding="utf-8")
         print(f"Catálogo seguro publicado em {destino_publico}")
     else:
         print(f"Catálogo seguro gerado em {args.saida}")

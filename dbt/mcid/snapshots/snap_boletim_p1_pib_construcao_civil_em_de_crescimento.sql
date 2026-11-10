@@ -16,19 +16,23 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p1_pib_construcao_civil_em_de_crescimento %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("indicador"::text, '') as chave,
-    edicao,
-    "indicador", "4 trim. antes", "3 trim. antes", "2 trim. antes", "trim. anterior", "trimestre selecionado"
-from {{ ref('ouro_conjuntura_boletim_p1_pib_construcao_crescimento') }}
+    select
+        edicao || '|' || coalesce("indicador"::text, '') as chave,
+        edicao,
+        "indicador",
+        "4 trim. antes",
+        "3 trim. antes",
+        "2 trim. antes",
+        "trim. anterior",
+        "trimestre selecionado"
+    from {{ ref('ouro_conjuntura_boletim_p1_pib_construcao_crescimento') }}
 
 {% endsnapshot %}

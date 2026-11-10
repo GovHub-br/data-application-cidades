@@ -21,7 +21,6 @@
   que contém o mês; para dado trimestral é o próprio período. Com ela no
   modelo, o dashboard filtra por igualdade em vez de recalcular tempo.
 #}
-
 {% macro periodo_trimestral(ano, trimestre) %}
     ({{ trimestre }}::int::text || 'T' || {{ ano }}::int::text)
 {% endmacro %}
@@ -32,9 +31,7 @@
 {% endmacro %}
 
 
-{% macro indice_mes(ano, mes) %}
-    ({{ ano }}::int * 12 + {{ mes }}::int)
-{% endmacro %}
+{% macro indice_mes(ano, mes) %}({{ ano }}::int * 12 + {{ mes }}::int) {% endmacro %}
 
 
 {#
@@ -43,18 +40,23 @@
   não sofre de ordenação lexicográfica ('4T2025' > '1T2026' como texto).
 #}
 {% macro dimensao_temporal(data, mensal=true) %}
-    {{ data }}::date                                              as data_referencia,
-    extract(year    from {{ data }}::date)::int                   as ano,
-    extract(month   from {{ data }}::date)::int                   as mes,
-    extract(quarter from {{ data }}::date)::int                   as trimestre,
-    {% if mensal -%}
-    to_char({{ data }}::date, 'YYYY-MM')                          as periodo,
+    {{ data }}::date as data_referencia,
+    extract(year from {{ data }}::date)::int as ano,
+    extract(month from {{ data }}::date)::int as mes,
+    extract(quarter from {{ data }}::date)::int as trimestre,
+    {% if mensal -%} to_char({{ data }}::date, 'YYYY-MM') as periodo,
     {%- else -%}
-    (extract(quarter from {{ data }}::date)::int::text || 'T'
-     || extract(year from {{ data }}::date)::int::text)           as periodo,
+        (
+            extract(quarter from {{ data }}::date)::int::text
+            || 'T'
+            || extract(year from {{ data }}::date)::int::text
+        ) as periodo,
     {%- endif %}
-    (extract(quarter from {{ data }}::date)::int::text || 'T'
-     || extract(year from {{ data }}::date)::int::text)           as edicao
+    (
+        extract(quarter from {{ data }}::date)::int::text
+        || 'T'
+        || extract(year from {{ data }}::date)::int::text
+    ) as edicao
 {% endmacro %}
 
 
@@ -66,13 +68,11 @@
 #}
 {% macro dimensao_temporal_do_periodo(periodo) %}
     make_date(
-        right({{ periodo }}, 4)::int,
-        (left({{ periodo }}, 1)::int - 1) * 3 + 1,
-        1
-    )                                                             as data_referencia,
-    right({{ periodo }}, 4)::int                                  as ano,
-    (left({{ periodo }}, 1)::int - 1) * 3 + 1                     as mes,
-    left({{ periodo }}, 1)::int                                   as trimestre,
-    {{ periodo }}                                                 as periodo,
-    {{ periodo }}                                                 as edicao
+        right({{ periodo }}, 4)::int, (left({{ periodo }}, 1)::int - 1) * 3 + 1, 1
+    ) as data_referencia,
+    right({{ periodo }}, 4)::int as ano,
+    (left({{ periodo }}, 1)::int - 1) * 3 + 1 as mes,
+    left({{ periodo }}, 1)::int as trimestre,
+    {{ periodo }} as periodo,
+    {{ periodo }} as edicao
 {% endmacro %}

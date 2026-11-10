@@ -65,17 +65,29 @@ DOMINIOS: Dict[str, dict] = {
         # model tem chave natural declarável (prata_rural_financeiro_mensal são várias
         # liberações por APF), mas todos entram no perfil de nulos e de mojibake.
         "models_silver": [
-            "prata_rural_empreendimento", "prata_rural_prioritarios_snh", "prata_rural_prioritarios_caixa",
-            "prata_rural_prioritarios_bb", "prata_rural_cadastro_pj", "prata_rural_cadastro_pf",
-            "prata_rural_pnhr_caixa", "prata_rural_pnhr_bb", "prata_rural_pnhr_liberacoes",
-            "prata_rural_trabalho_social_caixa", "prata_rural_trabalho_social_bb",
-            "prata_rural_obra_mensal", "prata_rural_financeiro_mensal",
+            "prata_rural_empreendimento",
+            "prata_rural_prioritarios_snh",
+            "prata_rural_prioritarios_caixa",
+            "prata_rural_prioritarios_bb",
+            "prata_rural_cadastro_pj",
+            "prata_rural_cadastro_pf",
+            "prata_rural_pnhr_caixa",
+            "prata_rural_pnhr_bb",
+            "prata_rural_pnhr_liberacoes",
+            "prata_rural_trabalho_social_caixa",
+            "prata_rural_trabalho_social_bb",
+            "prata_rural_obra_mensal",
+            "prata_rural_financeiro_mensal",
         ],
         "models_gold": [
-            "ouro_rural_ficha_empreendimento", "ouro_rural_resumo_gerencial",
-            "ouro_rural_panorama_estadual", "ouro_rural_mapa_nacional",
-            "ouro_rural_evolucao_financeira", "ouro_rural_execucao_fisica_financeira",
-            "ouro_rural_ficha_trabalho_social", "ouro_rural_perfil_beneficiarios",
+            "ouro_rural_ficha_empreendimento",
+            "ouro_rural_resumo_gerencial",
+            "ouro_rural_panorama_estadual",
+            "ouro_rural_mapa_nacional",
+            "ouro_rural_evolucao_financeira",
+            "ouro_rural_execucao_fisica_financeira",
+            "ouro_rural_ficha_trabalho_social",
+            "ouro_rural_perfil_beneficiarios",
             "ouro_rural_infraestrutura_agua_saneamento",
         ],
         # model -> chave natural esperada, por camada (o schema vem de qual bloco)
@@ -168,9 +180,7 @@ def secao_mojibake(cur, schema: str, tabelas: List[str]) -> List[str]:
         cols = [c for c, t in colunas(cur, schema, tab) if t in ("text", "character varying")]
         if not cols:
             continue
-        cond = " or ".join(
-            f"""("{c}" like '%%{m}%%')""" for c in cols for m in MOJIBAKE
-        )
+        cond = " or ".join(f"""("{c}" like '%%{m}%%')""" for c in cols for m in MOJIBAKE)
         try:
             cur.execute(f'select count(*) from "{schema}"."{tab}" where {cond}')
         except psycopg2.Error:
@@ -277,7 +287,6 @@ def secao_joins(cur, schema: str, joins: List[Tuple[str, str, str]]) -> List[str
     return out
 
 
-
 # ---------------------------------------------------------------------------------------
 # Procedência e divergência entre fontes
 # ---------------------------------------------------------------------------------------
@@ -328,7 +337,7 @@ def secao_divergencia(cur, schema: str, tolerancia: float) -> List[str]:
             if n_linhas(cur, schema, tab) < 0:
                 continue
             partes.append(
-                f'select apf, {col}::numeric as v, \'{rot}\' as fonte '
+                f"select apf, {col}::numeric as v, '{rot}' as fonte "
                 f'from "{schema}"."{tab}" where {col} is not null'
             )
         if len(partes) < 2:

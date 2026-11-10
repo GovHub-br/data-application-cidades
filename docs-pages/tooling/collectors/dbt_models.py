@@ -109,9 +109,7 @@ def coletar() -> dict[str, Any]:
                 }
             )
             for origem in refs:
-                arestas.append(
-                    {"de": origem, "para": nome, "projeto": projeto, "dominio": dominio}
-                )
+                arestas.append({"de": origem, "para": nome, "projeto": projeto, "dominio": dominio})
 
     por_camada: dict[str, int] = {}
     por_projeto: dict[str, int] = {}

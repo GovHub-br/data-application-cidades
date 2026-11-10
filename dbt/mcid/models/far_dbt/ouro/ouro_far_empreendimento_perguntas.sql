@@ -15,7 +15,9 @@ with
             mes,
             pct_obra_realizada,
             desvio_fisico,
-            pct_obra_realizada is distinct from lag(pct_obra_realizada) over (partition by apf order by mes) as ic_mudou
+            pct_obra_realizada is distinct from lag(pct_obra_realizada) over (
+                partition by apf order by mes
+            ) as ic_mudou
         from {{ ref("prata_far_serie_mensal") }}
         where pct_obra_realizada is not null
     ),
@@ -27,7 +29,7 @@ with
             max(mes) filter (where ic_mudou) as mes_ultimo_avanco,
             (array_agg(desvio_fisico order by mes desc))[1] as desvio_fisico,
             (array_agg(pct_obra_realizada order by mes desc))[1]
-                - coalesce((array_agg(pct_obra_realizada order by mes desc))[4], 0) as avanco_3_meses
+            - coalesce((array_agg(pct_obra_realizada order by mes desc))[4], 0) as avanco_3_meses
         from serie
         group by apf
     ),
@@ -48,7 +50,13 @@ with
         select
             e.apf,
             e.empreendimento_nome as nome_empreendimento,
-            e.apf || ' - ' || e.municipio || '/' || e.uf || ' - ' || upper(e.empreendimento_nome) as apf_municipio_empreendimento,
+            e.apf
+            || ' - '
+            || e.municipio
+            || '/'
+            || e.uf
+            || ' - '
+            || upper(e.empreendimento_nome) as apf_municipio_empreendimento,
             e.municipio,
             e.uf,
             e.agente_financeiro,
@@ -111,8 +119,23 @@ with
             r.desvio_fisico,
             r.avanco_3_meses,
             (
-                extract(year from age(r.mes_ultima_medicao, coalesce(r.mes_ultimo_avanco, r.mes_ultima_medicao))) * 12
-                + extract(month from age(r.mes_ultima_medicao, coalesce(r.mes_ultimo_avanco, r.mes_ultima_medicao)))
+                extract(
+                    year
+                    from
+                        age(
+                            r.mes_ultima_medicao,
+                            coalesce(r.mes_ultimo_avanco, r.mes_ultima_medicao)
+                        )
+                )
+                * 12
+                + extract(
+                    month
+                    from
+                        age(
+                            r.mes_ultima_medicao,
+                            coalesce(r.mes_ultimo_avanco, r.mes_ultima_medicao)
+                        )
+                )
             )::int as meses_sem_avanco,
             coalesce(f.qt_contratos_familias, 0) as qt_contratos_familias,
             coalesce(f.qt_contratos_ativos, 0) as qt_contratos_familias_ativos,
@@ -122,8 +145,14 @@ with
         left join {{ ref("prata_far_empreendimento_natureza") }} n on n.apf = e.apf
         left join {{ ref("prata_far_obra_mensal") }} o on o.apf = e.apf
         left join {{ ref("far_situacao_obra") }} so on so.co_situacao_obra = o.co_situacao_obra
-        left join dominio cp on cp.campo = 'classificacao_paralisado' and cp.codigo = lpad(o.co_classificacao_paralisado::text, 3, '0')
-        left join dominio mc on mc.campo = 'motivo_cancelamento' and mc.codigo = lpad(o.co_motivo_cancelamento::text, 3, '0')
+        left join
+            dominio cp
+            on cp.campo = 'classificacao_paralisado'
+            and cp.codigo = lpad(o.co_classificacao_paralisado::text, 3, '0')
+        left join
+            dominio mc
+            on mc.campo = 'motivo_cancelamento'
+            and mc.codigo = lpad(o.co_motivo_cancelamento::text, 3, '0')
         left join ritmo r on r.apf = e.apf
         left join familias f on f.apf = e.apf
     )
@@ -131,13 +160,20 @@ with
 select
     *,
     case
-        when situacao_obra like 'CONCLU%' or percentual_execucao_fisica >= 100 then 'Concluída'
-        when situacao_obra like 'CANCELADA%' then 'Cancelada ou distratada'
-        when situacao_obra like '%PARALISAD%' or dt_paralisacao is not null then 'Paralisada (informada)'
-        when situacao_obra like '%ATRASAD%' then 'Atrasada (informada)'
-        when coalesce(percentual_execucao_fisica, 0) > 0 and meses_sem_avanco >= 3 then 'Sinal de paralisação: 3+ meses sem avanço'
-        when desvio_fisico <= -10 then 'Ritmo abaixo do previsto'
-        when situacao_obra like 'NÃO INICIADA%' or coalesce(percentual_execucao_fisica, 0) = 0 then 'Não iniciada'
+        when situacao_obra like 'CONCLU%' or percentual_execucao_fisica >= 100
+        then 'Concluída'
+        when situacao_obra like 'CANCELADA%'
+        then 'Cancelada ou distratada'
+        when situacao_obra like '%PARALISAD%' or dt_paralisacao is not null
+        then 'Paralisada (informada)'
+        when situacao_obra like '%ATRASAD%'
+        then 'Atrasada (informada)'
+        when coalesce(percentual_execucao_fisica, 0) > 0 and meses_sem_avanco >= 3
+        then 'Sinal de paralisação: 3+ meses sem avanço'
+        when desvio_fisico <= -10
+        then 'Ritmo abaixo do previsto'
+        when situacao_obra like 'NÃO INICIADA%' or coalesce(percentual_execucao_fisica, 0) = 0
+        then 'Não iniciada'
         else 'Em ritmo'
     end as alerta_execucao
 from base

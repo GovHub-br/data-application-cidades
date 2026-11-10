@@ -17,8 +17,10 @@ with
             ic_familia_encontrada,
             nullif(trim(cd_ibge_cadastro), '') as cod_ibge_cadastro,
             case
-                when trim(dt_atualizacao_fam) ~ '^\d{4}-\d{2}-\d{2}' then left(trim(dt_atualizacao_fam), 10)::date
-                when trim(dt_atualizacao_fam) ~ '^\d{2}/\d{2}/\d{4}$' then to_date(trim(dt_atualizacao_fam), 'DD/MM/YYYY')
+                when trim(dt_atualizacao_fam) ~ '^\d{4}-\d{2}-\d{2}'
+                then left(trim(dt_atualizacao_fam), 10)::date
+                when trim(dt_atualizacao_fam) ~ '^\d{2}/\d{2}/\d{4}$'
+                then to_date(trim(dt_atualizacao_fam), 'DD/MM/YYYY')
             end as dt_atualizacao_cadastro,
             nullif(trim(marc_pbf), '') as marc_pbf,
             {{ parse_int("qt_membro_familia") }} as qt_membros_cadunico,
@@ -34,24 +36,37 @@ select
     agente_financeiro,
     nu_contrato,
     co_parentesco = '1' as ic_responsavel_familiar,
-    case co_raca_cor
-        when '1' then 'Branca'
-        when '2' then 'Preta'
-        when '3' then 'Amarela'
-        when '4' then 'Parda'
-        when '5' then 'Indígena'
+    case
+        co_raca_cor
+        when '1'
+        then 'Branca'
+        when '2'
+        then 'Preta'
+        when '3'
+        then 'Amarela'
+        when '4'
+        then 'Parda'
+        when '5'
+        then 'Indígena'
         else 'Não informada'
     end as raca_cor,
     case co_deficiencia when '1' then true when '2' then false end as ic_pcd,
     -- o bloco de situação de rua só é preenchido para quem está nessa situação
     co_tempo_rua is not null as ic_situacao_rua,
-    case co_tempo_rua
-        when '1' then 'Até 6 meses'
-        when '2' then '6 meses a 1 ano'
-        when '3' then '1 a 2 anos'
-        when '4' then '2 a 5 anos'
-        when '5' then '5 a 10 anos'
-        when '6' then 'Mais de 10 anos'
+    case
+        co_tempo_rua
+        when '1'
+        then 'Até 6 meses'
+        when '2'
+        then '6 meses a 1 ano'
+        when '3'
+        then '1 a 2 anos'
+        when '4'
+        then '2 a 5 anos'
+        when '5'
+        then '5 a 10 anos'
+        when '6'
+        then 'Mais de 10 anos'
     end as tempo_situacao_rua,
     ic_familia_encontrada,
     cod_ibge_cadastro,

@@ -31,46 +31,40 @@
 -- "fechamento do mês" (ainda não fechou) — os 3 valores desse mês mudam
 -- a cada rodada até o mês virar. Mesmo comportamento que outros
 -- indicadores contínuos já têm (ex.: CBIC), não é bug.
+with
+    fechamentos_mensais as (
+        select
+            date_trunc('month', data_pregao::date)::date as mes_ref,
+            close::numeric as close_fechamento,
+            row_number() over (
+                partition by date_trunc('month', data_pregao::date) order by data_pregao::date desc
+            ) as rn
+        from {{ ref('prata_conjuntura_infomoney_imob') }}
+        where close is not null
+    ),
 
-with fechamentos_mensais as (
-    select
-        date_trunc('month', data_pregao::date)::date as mes_ref,
-        close::numeric as close_fechamento,
-        row_number() over (
-            partition by date_trunc('month', data_pregao::date)
-            order by data_pregao::date desc
-        ) as rn
-    from {{ ref('prata_conjuntura_infomoney_imob') }}
-    where close is not null
-),
+    mensal as (select mes_ref, close_fechamento from fechamentos_mensais where rn = 1),
 
-mensal as (
-    select mes_ref, close_fechamento
-    from fechamentos_mensais
-    where rn = 1
-),
+    dez_ano_anterior as (
+        select
+            extract(year from mes_ref)::int + 1 as ano_seguinte,
+            close_fechamento as close_dez_ano_anterior
+        from mensal
+        where extract(month from mes_ref) = 12
+    ),
 
-dez_ano_anterior as (
-    select
-        extract(year from mes_ref)::int + 1 as ano_seguinte,
-        close_fechamento as close_dez_ano_anterior
-    from mensal
-    where extract(month from mes_ref) = 12
-),
-
-automatico as (
-    select
-        extract(year from m.mes_ref)::int  as ano,
-        extract(month from m.mes_ref)::int as mes,
-        m.close_fechamento / lag(m.close_fechamento) over (order by m.mes_ref) - 1
-            as indice_imob_var_mes,
-        m.close_fechamento / lag(m.close_fechamento, 12) over (order by m.mes_ref) - 1
-            as indice_imob_var_mes_vs_mes_ano_ant,
-        m.close_fechamento / d.close_dez_ano_anterior - 1
-            as indice_imob_var_acum_ano
-    from mensal m
-    left join dez_ano_anterior d on d.ano_seguinte = extract(year from m.mes_ref)::int
-)
+    automatico as (
+        select
+            extract(year from m.mes_ref)::int as ano,
+            extract(month from m.mes_ref)::int as mes,
+            m.close_fechamento / lag(m.close_fechamento) over (order by m.mes_ref)
+            - 1 as indice_imob_var_mes,
+            m.close_fechamento / lag(m.close_fechamento, 12) over (order by m.mes_ref)
+            - 1 as indice_imob_var_mes_vs_mes_ano_ant,
+            m.close_fechamento / d.close_dez_ano_anterior - 1 as indice_imob_var_acum_ano
+        from mensal m
+        left join dez_ano_anterior d on d.ano_seguinte = extract(year from m.mes_ref)::int
+    )
 
 select
     a.ano || '-' || lpad(a.mes::text, 2, '0') as periodo,

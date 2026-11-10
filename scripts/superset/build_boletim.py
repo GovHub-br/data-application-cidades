@@ -113,8 +113,7 @@ def num(coluna: str) -> str:
     """
     limpo = f"btrim({coluna}::text, E' \\t\\r\\n\\u00a0')"
     return (
-        f"(case when {limpo} ~ '^-?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$' "
-        f"then {limpo}::numeric end)"
+        f"(case when {limpo} ~ '^-?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$' then {limpo}::numeric end)"
     )
 
 
@@ -193,11 +192,11 @@ def pagina_01() -> list[Quadro]:
     from edicoes e
     join bronze.bronze_manual_dados_trimestrais d on d.periodo = e.edicao
     cross join lateral (
-        select 'NORTE' as regiao, 1 as ordem, {num('d.cbic_lancamentos_total_n')} total, {num('d.cbic_lancamentos_mcmv_n')} mcmv
-        union all select 'NORDESTE', 2, {num('d.cbic_lancamentos_total_ne')}, {num('d.cbic_lancamentos_mcmv_ne')}
-        union all select 'CENTRO-OESTE', 3, {num('d.cbic_lancamentos_total_co')}, {num('d.cbic_lancamentos_mcmv_co')}
-        union all select 'SUDESTE', 4, {num('d.cbic_lancamentos_total_se')}, {num('d.cbic_lancamentos_mcmv_se')}
-        union all select 'SUL', 5, {num('d.cbic_lancamentos_total_s')}, {num('d.cbic_lancamentos_mcmv_s')}
+        select 'NORTE' as regiao, 1 as ordem, {num("d.cbic_lancamentos_total_n")} total, {num("d.cbic_lancamentos_mcmv_n")} mcmv
+        union all select 'NORDESTE', 2, {num("d.cbic_lancamentos_total_ne")}, {num("d.cbic_lancamentos_mcmv_ne")}
+        union all select 'CENTRO-OESTE', 3, {num("d.cbic_lancamentos_total_co")}, {num("d.cbic_lancamentos_mcmv_co")}
+        union all select 'SUDESTE', 4, {num("d.cbic_lancamentos_total_se")}, {num("d.cbic_lancamentos_mcmv_se")}
+        union all select 'SUL', 5, {num("d.cbic_lancamentos_total_s")}, {num("d.cbic_lancamentos_mcmv_s")}
     ) x
     """,
         ),
@@ -213,11 +212,11 @@ def pagina_01() -> list[Quadro]:
     from edicoes e
     join bronze.bronze_manual_dados_trimestrais d on d.periodo = e.edicao
     cross join lateral (
-        select 'NORTE' as regiao, 1 as ordem, {num('d.cbic_vendas_total_n')} total, {num('d.cbic_vendas_mcmv_n')} mcmv
-        union all select 'NORDESTE', 2, {num('d.cbic_vendas_total_ne')}, {num('d.cbic_vendas_mcmv_ne')}
-        union all select 'CENTRO-OESTE', 3, {num('d.cbic_vendas_total_co')}, {num('d.cbic_vendas_mcmv_co')}
-        union all select 'SUDESTE', 4, {num('d.cbic_vendas_total_se')}, {num('d.cbic_vendas_mcmv_se')}
-        union all select 'SUL', 5, {num('d.cbic_vendas_total_s')}, {num('d.cbic_vendas_mcmv_s')}
+        select 'NORTE' as regiao, 1 as ordem, {num("d.cbic_vendas_total_n")} total, {num("d.cbic_vendas_mcmv_n")} mcmv
+        union all select 'NORDESTE', 2, {num("d.cbic_vendas_total_ne")}, {num("d.cbic_vendas_mcmv_ne")}
+        union all select 'CENTRO-OESTE', 3, {num("d.cbic_vendas_total_co")}, {num("d.cbic_vendas_mcmv_co")}
+        union all select 'SUDESTE', 4, {num("d.cbic_vendas_total_se")}, {num("d.cbic_vendas_mcmv_se")}
+        union all select 'SUL', 5, {num("d.cbic_vendas_total_s")}, {num("d.cbic_vendas_mcmv_s")}
     ) x
     """,
         ),
@@ -238,12 +237,12 @@ def pagina_01() -> list[Quadro]:
     with {EDICOES},
     s as (
         select (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
-               {num('cbic_lancamentos_total')} lt, {num('cbic_lancamentos_mcmv')} lm,
-               {num('cbic_vendas_total')} vt, {num('cbic_vendas_mcmv')} vm,
-               {num('cbic_lancamentos_total_acumulado_12_meses')} lt12,
-               {num('cbic_lancamentos_mcmv_acumulado_12_meses')} lm12,
-               {num('cbic_vendas_total_acumulado_12_meses')} vt12,
-               {num('cbic_vendas_mcmv_acumulado_12_meses')} vm12
+               {num("cbic_lancamentos_total")} lt, {num("cbic_lancamentos_mcmv")} lm,
+               {num("cbic_vendas_total")} vt, {num("cbic_vendas_mcmv")} vm,
+               {num("cbic_lancamentos_total_acumulado_12_meses")} lt12,
+               {num("cbic_lancamentos_mcmv_acumulado_12_meses")} lm12,
+               {num("cbic_vendas_total_acumulado_12_meses")} vt12,
+               {num("cbic_vendas_mcmv_acumulado_12_meses")} vm12
         from bronze.bronze_manual_dados_trimestrais
         where periodo ~ '^[1-4]T[0-9]{{4}}$'
     )
@@ -283,8 +282,8 @@ def pagina_02() -> list[Quadro]:
     serie as (
         select empresa, (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
                lancamentos::numeric as v,
-               {num('var_lancamentos_tri_anterior')}            as var_tri,
-               {num('var_lancamentos_mesmo_tri_ano_anterior')}  as var_ano
+               {num("var_lancamentos_tri_anterior")}            as var_tri,
+               {num("var_lancamentos_mesmo_tri_ano_anterior")}  as var_ano
         from {MART}.ouro_conjuntura_balancos_empresas
     )
     select e.edicao, s.empresa,
@@ -317,8 +316,8 @@ def pagina_02() -> list[Quadro]:
     serie as (
         select empresa, (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
                vendas::numeric as v,
-               {num('var_vendas_tri_anterior')}            as var_tri,
-               {num('var_vendas_mesmo_tri_ano_anterior')}  as var_ano
+               {num("var_vendas_tri_anterior")}            as var_tri,
+               {num("var_vendas_mesmo_tri_ano_anterior")}  as var_ano
         from {MART}.ouro_conjuntura_balancos_empresas
     )
     select e.edicao, s.empresa,
@@ -355,10 +354,10 @@ def pagina_02() -> list[Quadro]:
     ),
     tot as (
         select (right(periodo, 4)::int * 4 + left(periodo, 1)::int) as k,
-               {num('var_lancamentos_totais_tri_anterior')}           as lt,
-               {num('var_lancamentos_totais_mesmo_tri_ano_anterior')} as la,
-               {num('var_vendas_totais_tri_anterior')}                as vt,
-               {num('var_vendas_totais_mesmo_tri_ano_anterior')}      as va
+               {num("var_lancamentos_totais_tri_anterior")}           as lt,
+               {num("var_lancamentos_totais_mesmo_tri_ano_anterior")} as la,
+               {num("var_vendas_totais_tri_anterior")}                as vt,
+               {num("var_vendas_totais_mesmo_tri_ano_anterior")}      as va
         from {MART}.ouro_conjuntura_balancos_empresas_totais
     )
     select e.edicao, 'Total lançamentos' as indicador,
@@ -1111,13 +1110,9 @@ class Superset:
                 f"  [dry-run] criaria {recurso}: {payload.get('table_name') or payload.get('slice_name') or payload.get('dashboard_title')}"
             )
             return -1
-        r = self.s.post(
-            f"{self.base}/api/v1/{recurso}/", headers=self.h, json=payload, timeout=90
-        )
+        r = self.s.post(f"{self.base}/api/v1/{recurso}/", headers=self.h, json=payload, timeout=90)
         if not r.ok:
-            raise RuntimeError(
-                f"{recurso} recusado (HTTP {r.status_code}): {r.text[:300]}"
-            )
+            raise RuntimeError(f"{recurso} recusado (HTTP {r.status_code}): {r.text[:300]}")
         return r.json()["id"]
 
     def atualizar(self, recurso: str, ident, payload: dict) -> None:
@@ -1131,9 +1126,7 @@ class Superset:
             timeout=90,
         )
         if not r.ok:
-            raise RuntimeError(
-                f"{recurso} {ident} recusado (HTTP {r.status_code}): {r.text[:300]}"
-            )
+            raise RuntimeError(f"{recurso} {ident} recusado (HTTP {r.status_code}): {r.text[:300]}")
 
     def dados(self, query_context: dict) -> tuple[bool, str]:
         r = self.s.post(
@@ -1408,17 +1401,11 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    alvo = (
-        [int(x) for x in args.paginas.split(",")]
-        if args.paginas
-        else sorted(CONSTRUTORES)
-    )
+    alvo = [int(x) for x in args.paginas.split(",")] if args.paginas else sorted(CONSTRUTORES)
     api = Superset(dry_run=args.dry_run)
 
     cache = {
-        "db": next(
-            d["id"] for d in api.listar("database") if d["database_name"] == DATABASE_NAME
-        ),
+        "db": next(d["id"] for d in api.listar("database") if d["database_name"] == DATABASE_NAME),
         "datasets": {d["table_name"]: d["id"] for d in api.listar("dataset")},
         "charts": {c["slice_name"]: c["id"] for c in api.listar("chart")},
     }
@@ -1478,13 +1465,9 @@ def main() -> None:
             chart = api.get("chart", no["chart"]) or {}
             atuais = {d["id"] for d in (chart.get("dashboards") or [])}
             if did not in atuais:
-                api.atualizar(
-                    "chart", no["chart"], {"dashboards": sorted(atuais | {did})}
-                )
+                api.atualizar("chart", no["chart"], {"dashboards": sorted(atuais | {did})})
 
-    ligados = api.s.get(f"{api.base}/api/v1/dashboard/{SLUG}/charts", timeout=30).json()[
-        "result"
-    ]
+    ligados = api.s.get(f"{api.base}/api/v1/dashboard/{SLUG}/charts", timeout=30).json()["result"]
     print(f"charts ligados: {len(ligados)}")
     print(f"URL: {api.base}/superset/dashboard/{SLUG}/")
 

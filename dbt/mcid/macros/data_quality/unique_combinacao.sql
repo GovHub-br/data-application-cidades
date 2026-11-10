@@ -21,12 +21,12 @@
 -#}
 {% macro test_unique_combinacao(model, colunas) %}
 
-{%- set lista = colunas | join(", ") -%}
+    {%- set lista = colunas | join(", ") -%}
 
-select {{ lista }}, count(*) as linhas
-from {{ model }}
-group by {{ lista }}
-having count(*) > 1
-order by linhas desc
+    select {{ lista }}, count(*) as linhas
+    from {{ model }}
+    group by {{ lista }}
+    having count(*) > 1
+    order by linhas desc
 
 {% endmacro %}

@@ -46,9 +46,7 @@ with
             f.municipio_uf,
             f.agente_financeiro,
             'Tomador/Proponente'::text as responsavel_tipo,
-            coalesce(
-                nullif(f.tomador_cnpj, ''), nullif(f.proponente_cnpj, '')
-            ) as responsavel_id,
+            coalesce(nullif(f.tomador_cnpj, ''), nullif(f.proponente_cnpj, '')) as responsavel_id,
             coalesce(
                 nullif(f.nome_tomador, ''),
                 nullif(f.nome_proponente, 'Não Informado'),
@@ -116,8 +114,7 @@ with
                 when coalesce(f.status_entrega, '') = 'Totalmente Entregue'
                 then 'Entregue'
                 when
-                    coalesce(e.dt_previsao_entrega, f.dt_previsao_conclusao)
-                    < current_date
+                    coalesce(e.dt_previsao_entrega, f.dt_previsao_conclusao) < current_date
                     and coalesce(f.percentual_execucao_fisica, 0) < 100
                 then 'Em Atraso'
                 else 'Dentro do Prazo'
@@ -140,21 +137,15 @@ with
             f.divergencia_fisico_financeira as gap_fisico_financeiro_pp,
             f.dt_contratacao,
             f.dt_inicio_obra,
-            coalesce(
-                e.dt_previsao_entrega, f.dt_previsao_conclusao
-            ) as dt_previsao_conclusao,
+            coalesce(e.dt_previsao_entrega, f.dt_previsao_conclusao) as dt_previsao_conclusao,
             f.dt_conclusao_obra,
             f.dt_entrega,
             e.dt_paralisacao,
-            coalesce(
-                e.dt_ultima_liberacao, fu.dt_ultima_liberacao
-            ) as dt_ultima_liberacao,
+            coalesce(e.dt_ultima_liberacao, fu.dt_ultima_liberacao) as dt_ultima_liberacao,
             null::date as dt_ultima_medicao_fisica,
             nullif(
                 greatest(
-                    coalesce(
-                        e.dt_ultima_liberacao, fu.dt_ultima_liberacao, '1900-01-01'::date
-                    ),
+                    coalesce(e.dt_ultima_liberacao, fu.dt_ultima_liberacao, '1900-01-01'::date),
                     coalesce(f.dt_entrega, '1900-01-01'::date),
                     coalesce(f.dt_conclusao_obra, '1900-01-01'::date),
                     coalesce(f.dt_inicio_obra, '1900-01-01'::date),
@@ -179,8 +170,7 @@ with
         select
             *,
             case
-                when dt_ultima_atualizacao is not null
-                then current_date - dt_ultima_atualizacao
+                when dt_ultima_atualizacao is not null then current_date - dt_ultima_atualizacao
             end as dias_sem_atualizacao,
             case
                 when
@@ -191,9 +181,7 @@ with
                 else 0
             end as dias_atraso,
             case
-                when
-                    dt_paralisacao is not null
-                    and coalesce(percentual_execucao_fisica, 0) < 100
+                when dt_paralisacao is not null and coalesce(percentual_execucao_fisica, 0) < 100
                 then current_date - dt_paralisacao
                 else 0
             end as dias_paralisacao,
@@ -217,10 +205,7 @@ with
             (
                 coalesce(status_execucao, '') not in ('Concluído', 'Concluída')
                 and coalesce(status_prazo, '') <> 'Entregue'
-                and (
-                    dt_ultima_atualizacao is null
-                    or current_date - dt_ultima_atualizacao > 90
-                )
+                and (dt_ultima_atualizacao is null or current_date - dt_ultima_atualizacao > 90)
             ) as flag_sem_atualizacao_recente,
             (
                 coalesce(percentual_execucao_fisica, 0) < 100

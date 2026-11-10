@@ -16,25 +16,24 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p3_novos_financiamentos_imobiliarios_por_banco_ %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
--- Os apelidos preservam os nomes que as versões já gravadas usam: o histórico do
--- snapshot é a razão de ele existir, e coluna com nome novo partiria a série em
--- duas. `fonte` não é selecionada porque o quadro não a publica.
-select
-    edicao || '|' || coalesce("banco"::text, '') as chave,
-    edicao,
-    "banco",
-    "UH" as "UH acum. ano",
-    "VALOR (R$ bi)" as "R$ bi acum. ano",
-    "% UH"
-from {{ ref('ouro_conjuntura_boletim_p3_financiamentos_por_banco') }}
+    -- Os apelidos preservam os nomes que as versões já gravadas usam: o histórico do
+    -- snapshot é a razão de ele existir, e coluna com nome novo partiria a série em
+    -- duas. `fonte` não é selecionada porque o quadro não a publica.
+    select
+        edicao || '|' || coalesce("banco"::text, '') as chave,
+        edicao,
+        "banco",
+        "UH" as "UH acum. ano",
+        "VALOR (R$ bi)" as "R$ bi acum. ano",
+        "% UH"
+    from {{ ref('ouro_conjuntura_boletim_p3_financiamentos_por_banco') }}
 
 {% endsnapshot %}

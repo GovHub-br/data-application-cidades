@@ -1,26 +1,36 @@
 {{ config(materialized="table") }}
 
 -- Silver: Integração BB PJ (PNHR)
--- Fonte: bronze.bronze_sftp_int057_pnhr_bb_empreendimentos (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_sftp_int057_pnhr_bb_empreendimentos (parquet da staging/ carregado pelo
+-- staging_para_bronze.py)
 -- Saída: dados cadastrais e financeiros históricos do BB PJ limpos e tipados
-
 with
     int_bb_raw as (
         select
             -- Identificadores
             {{ var('schema_udfs') }}.normalize_apf(nu_contrato_empreendimento) as apf,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_empreendimento)), '') as nu_contrato_empreendimento,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_empreendimento)), '') as empreendimento_nome,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_agente_financeiro)), '') as agente_financeiro_codigo,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_contrato_empreendimento)), ''
+            ) as nu_contrato_empreendimento,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(no_empreendimento)), ''
+            ) as empreendimento_nome,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(co_agente_financeiro)), ''
+            ) as agente_financeiro_codigo,
 
             -- Entidade Organizadora (EO)
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_entidade_organizadora)), '') as eo_nome,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(no_entidade_organizadora)), ''
+            ) as eo_nome,
             nullif(regexp_replace(trim(nu_cnpj_entidade), '[^0-9]', '', 'g'), '') as eo_cnpj,
 
             -- Localização
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_municipio)), '') as municipio,
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(sg_uf)), '') as uf,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(co_municipio_ibge)), '') as cod_ibge,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(co_municipio_ibge)), ''
+            ) as cod_ibge,
 
             -- Quantidades
             {{ parse_int('qt_unidades') }} as qt_unidades,
@@ -44,36 +54,49 @@ with
 
             -- Prazos e Execução
             {{ parse_int('pz_obra') }} as prazo_obra,
-            {{ parse_numeric('pc_execucao_fisica_obra', 'numeric(6, 2)') }} as percentual_execucao_fisica,
-            {{ parse_numeric('pc_execucao_financeira_obra', 'numeric(6, 2)') }} as percentual_execucao_financeira,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(no_situacao_obra)), '') as situacao_obra,
+            {{ parse_numeric('pc_execucao_fisica_obra', 'numeric(6, 2)') }}
+            as percentual_execucao_fisica,
+            {{ parse_numeric('pc_execucao_financeira_obra', 'numeric(6, 2)') }}
+            as percentual_execucao_financeira,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(no_situacao_obra)), ''
+            ) as situacao_obra,
 
             -- Datas
             case
-                when dt_contrato is null or trim(dt_contrato) = '' then null
-                when dt_contrato ~ '^\d{4}-\d{2}-\d{2}' then dt_contrato::date
+                when dt_contrato is null or trim(dt_contrato) = ''
+                then null
+                when dt_contrato ~ '^\d{4}-\d{2}-\d{2}'
+                then dt_contrato::date
                 else {{ var('schema_udfs') }}.parse_date_br(dt_contrato)
             end as dt_contrato,
             case
-                when dt_ultima_liberacao is null or trim(dt_ultima_liberacao) = '' then null
-                when dt_ultima_liberacao ~ '^\d{4}-\d{2}-\d{2}' then dt_ultima_liberacao::date
+                when dt_ultima_liberacao is null or trim(dt_ultima_liberacao) = ''
+                then null
+                when dt_ultima_liberacao ~ '^\d{4}-\d{2}-\d{2}'
+                then dt_ultima_liberacao::date
                 else {{ var('schema_udfs') }}.parse_date_br(dt_ultima_liberacao)
             end as dt_ultima_liberacao,
             case
-                when dt_efetiva_conclusao is null or trim(dt_efetiva_conclusao) = '' then null
-                when dt_efetiva_conclusao ~ '^\d{4}-\d{2}-\d{2}' then dt_efetiva_conclusao::date
+                when dt_efetiva_conclusao is null or trim(dt_efetiva_conclusao) = ''
+                then null
+                when dt_efetiva_conclusao ~ '^\d{4}-\d{2}-\d{2}'
+                then dt_efetiva_conclusao::date
                 else {{ var('schema_udfs') }}.parse_date_br(dt_efetiva_conclusao)
             end as dt_conclusao_obra,
             case
-                when dt_movimento is null or trim(dt_movimento) = '' then null
-                when dt_movimento ~ '^\d{4}-\d{2}-\d{2}' then dt_movimento::date
+                when dt_movimento is null or trim(dt_movimento) = ''
+                then null
+                when dt_movimento ~ '^\d{4}-\d{2}-\d{2}'
+                then dt_movimento::date
                 else {{ var('schema_udfs') }}.parse_date_br(dt_movimento)
             end as dt_movimento,
 
             -- Linhagem da bronze do lake
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(origem)), '') as origem,
             _source_file as arquivo_de_origem,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp
+            as criado_em
 
         from {{ ref("bronze_sftp_int057_pnhr_bb_empreendimentos") }}
     )

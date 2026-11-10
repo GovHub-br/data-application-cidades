@@ -165,9 +165,7 @@ DASHBOARDS: list[Dashboard] = []
 
 
 class Superset:
-    def __init__(
-        self, base_url: str, username: str, password: str, dry_run: bool
-    ) -> None:
+    def __init__(self, base_url: str, username: str, password: str, dry_run: bool) -> None:
         self.base_url = base_url.rstrip("/")
         self.dry_run = dry_run
         self.session = requests.Session()
@@ -194,9 +192,7 @@ class Superset:
             },
             timeout=30,
         ).raise_for_status()
-        csrf = self.session.get(
-            f"{self.base_url}/api/v1/security/csrf_token/", timeout=30
-        )
+        csrf = self.session.get(f"{self.base_url}/api/v1/security/csrf_token/", timeout=30)
         csrf.raise_for_status()
         self.session.headers["X-CSRFToken"] = csrf.json()["result"]
         self.session.headers["Referer"] = self.base_url
@@ -234,8 +230,7 @@ class Superset:
         )
         if not response.ok:
             raise RuntimeError(
-                f"Superset recusou criar {resource} (HTTP {response.status_code}): "
-                f"{response.text}"
+                f"Superset recusou criar {resource} (HTTP {response.status_code}): {response.text}"
             )
         response.raise_for_status()
         body = response.json()
@@ -264,9 +259,7 @@ class Superset:
         um booleano de existência) é o que permite atualizar o dashboard em
         vez de apenas constatar que ele existe e deixá-lo como está.
         """
-        response = self.session.get(
-            f"{self.base_url}/api/v1/dashboard/{slug}", timeout=30
-        )
+        response = self.session.get(f"{self.base_url}/api/v1/dashboard/{slug}", timeout=30)
         if response.status_code == 404:
             return None
         response.raise_for_status()
@@ -317,8 +310,7 @@ def get_or_create_database(api: Superset) -> int:
 
 def get_or_create_datasets(api: Superset, database_id: int) -> dict[str, int]:
     existing = {
-        (item.get("schema"), item.get("table_name")): item["id"]
-        for item in api.list("dataset")
+        (item.get("schema"), item.get("table_name")): item["id"] for item in api.list("dataset")
     }
     result: dict[str, int] = {}
     for gold in GOLDS:

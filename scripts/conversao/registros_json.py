@@ -11,6 +11,7 @@ from lake_utils import normalizar_colunas
 
 from .config import LINEAGE_COLS
 
+
 def _converter_json(
     src_path: str,
     dst_path: str,

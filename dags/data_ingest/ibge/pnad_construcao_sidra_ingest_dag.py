@@ -23,9 +23,7 @@ CONFIGS = [
 
 @dag(
     dag_id="ibge_pnad_construcao_sidra_ingest_dag",
-    schedule=get_dynamic_schedule(
-        "ibge_pnad_construcao_sidra_ingest_dag", default="@monthly"
-    ),
+    schedule=get_dynamic_schedule("ibge_pnad_construcao_sidra_ingest_dag", default="@monthly"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={

@@ -5,10 +5,7 @@
 with
     evolucao as (select * from {{ ref("prata_far_evolucao_financeira") }}),
 
-    ibge_uf as (
-        select sigla, upper(nome) as estado
-        from {{ ref('api_ibge_uf') }}
-    ),
+    ibge_uf as (select sigla, upper(nome) as estado from {{ ref('api_ibge_uf') }}),
 
     ficha as (
         select apf, nome_empreendimento, apf_municipio_empreendimento

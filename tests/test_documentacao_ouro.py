@@ -37,9 +37,8 @@ def test_model_da_ouro_fora_da_lista_cumpre_o_contrato() -> None:
 
 def test_model_documentado_sai_da_lista_de_pendentes() -> None:
     resolvidos = sorted(PENDENTES - set(ACHADOS))
-    assert not resolvidos, (
-        "Já cumprem o contrato; tire de documentacao_pendente.yml: "
-        + ", ".join(resolvidos)
+    assert not resolvidos, "Já cumprem o contrato; tire de documentacao_pendente.yml: " + ", ".join(
+        resolvidos
     )
 
 
@@ -70,14 +69,11 @@ def test_documentacao_aponta_campo_faltando_e_chave_inexistente() -> None:
 
 def test_documentacao_vem_de_config_meta_ou_meta() -> None:
     assert (
-        documentacao_dbt.da_configuracao(
-            {"config": {"meta": {"documentacao": DOCUMENTACAO}}}
-        )
+        documentacao_dbt.da_configuracao({"config": {"meta": {"documentacao": DOCUMENTACAO}}})
         == DOCUMENTACAO
     )
     assert (
-        documentacao_dbt.da_configuracao({"meta": {"documentacao": DOCUMENTACAO}})
-        == DOCUMENTACAO
+        documentacao_dbt.da_configuracao({"meta": {"documentacao": DOCUMENTACAO}}) == DOCUMENTACAO
     )
     assert documentacao_dbt.da_configuracao({"meta": {}}) is None
 
@@ -115,9 +111,7 @@ def test_exportador_leva_documentacao_e_barra_texto_improprio() -> None:
 
     catalogo = {"nodes": {"model.x": {"columns": {"apf": {"type": "text", "index": 1}}}}}
     violacoes: list[str] = []
-    exportado = exportador.model_export(
-        "model.x", _node(DOCUMENTACAO), catalogo, violacoes
-    )
+    exportado = exportador.model_export("model.x", _node(DOCUMENTACAO), catalogo, violacoes)
     assert exportado["documentacao"] == DOCUMENTACAO
     assert violacoes == []
 

@@ -15,7 +15,6 @@
 -- compartilhados com far, fds e rural, e o schema sozinho varreria os quatro
 -- domínios mais o que outros times gravam ali — foi assim que esta varredura
 -- chegou a levar 5min46 (2026-09).
-
 {% set alvos = [] %}
 {% set relacoes = relacoes_do_produto(
     'conjuntura_dbt',
@@ -41,13 +40,14 @@
     {% endfor %}
 {% endif %}
 
-with varredura as (
-    {% if alvos %}
-        {{ alvos | join('\n    union all\n    ') }}
-    {% else %}
-        select null::text as model, null::text as coluna, null::bigint as ocorrencias where false
-    {% endif %}
-)
+with
+    varredura as (
+        {% if alvos %}{{ alvos | join('\n    union all\n    ') }}
+        {% else %}
+            select null::text as model, null::text as coluna, null::bigint as ocorrencias
+            where false
+        {% endif %}
+    )
 
 select model, coluna, ocorrencias
 from varredura

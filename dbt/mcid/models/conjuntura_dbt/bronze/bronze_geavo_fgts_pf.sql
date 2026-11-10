@@ -17,20 +17,19 @@
 -- São 10,8 milhões de linhas × 30 colunas.
 --
 -- O que precisa acontecer para regularizar:
---   1. confirmar a capacidade de disco do servidor do banco;
---   2. trocar a projeção abaixo por um espelho integral da fonte do lake;
---   3. reconstruir e conferir o impacto.
+-- 1. confirmar a capacidade de disco do servidor do banco;
+-- 2. trocar a projeção abaixo por um espelho integral da fonte do lake;
+-- 3. reconstruir e conferir o impacto.
 -- Se o custo for inaceitável, a decisão precisa ser registrada como exceção
 -- deliberada de arquitetura — não ficar como está, implícita.
 --
 -- Nota de sintaxe: o alias `r` e `r['coluna']` são exigência do pg_duckdb ao
 -- projetar colunas de `read_parquet` (com `select *` não precisa). Sem isso o
 -- model não constrói — foi assim que ele quebrou em 2026-08-30.
-
 select
-    r['dt_assinatura']  as dt_assinatura,
-    r['faixa']          as faixa,
-    r['tp_orcamento']   as tp_orcamento,
-    r['tpimovel']       as tpimovel,
+    r['dt_assinatura'] as dt_assinatura,
+    r['faixa'] as faixa,
+    r['tp_orcamento'] as tp_orcamento,
+    r['tpimovel'] as tpimovel,
     r['vlr_emprestimo'] as vlr_emprestimo
 from {{ fonte_lake('geavo_fgts_pf', 'lake_staging') }} as r

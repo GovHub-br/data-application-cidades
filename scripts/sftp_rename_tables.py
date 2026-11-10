@@ -52,9 +52,7 @@ def build_table_name_new(sftp_key: str) -> str:
         raw_suffix = inner_stem[-available:]
         us = raw_suffix.find("_")
         suffix = (
-            raw_suffix[us + 1 :]
-            if us >= 0 and raw_suffix[us + 1 :]
-            else raw_suffix.lstrip("_")
+            raw_suffix[us + 1 :] if us >= 0 and raw_suffix[us + 1 :] else raw_suffix.lstrip("_")
         )
         return f"{prefix}_{suffix}"
     else:
@@ -87,10 +85,7 @@ def main() -> None:
     conn.autocommit = False
     cur = conn.cursor()
 
-    cur.execute(
-        f"SELECT sftp_key, table_name FROM {DB_SCHEMA}.{INGEST_LOG}"
-        f" ORDER BY processed_at"
-    )
+    cur.execute(f"SELECT sftp_key, table_name FROM {DB_SCHEMA}.{INGEST_LOG} ORDER BY processed_at")
     entries = cur.fetchall()
     print(f"Entradas no log: {len(entries)}")
 
@@ -124,8 +119,7 @@ def main() -> None:
             skipped += 1
             if not dry_run:
                 cur.execute(
-                    f"UPDATE {DB_SCHEMA}.{INGEST_LOG}"
-                    f" SET table_name = %s WHERE sftp_key = %s",
+                    f"UPDATE {DB_SCHEMA}.{INGEST_LOG} SET table_name = %s WHERE sftp_key = %s",
                     (new_name, sftp_key),
                 )
             continue
@@ -139,8 +133,7 @@ def main() -> None:
         if not dry_run:
             cur.execute(f'ALTER TABLE "{DB_SCHEMA}"."{old_name}" RENAME TO "{new_name}"')
             cur.execute(
-                f"UPDATE {DB_SCHEMA}.{INGEST_LOG}"
-                f" SET table_name = %s WHERE sftp_key = %s",
+                f"UPDATE {DB_SCHEMA}.{INGEST_LOG} SET table_name = %s WHERE sftp_key = %s",
                 (new_name, sftp_key),
             )
         existing.discard(old_name)

@@ -81,9 +81,9 @@ def dominio_de(chave: str, modelos: dict, manifest: dict, _memo=None) -> str:
     # 1) fonte declarada é a resposta mais confiável
     for d in deps:
         if d in manifest.get("sources", {}):
-            r = _rotulo(
-                manifest["sources"][d].get("meta", {}).get("caminho", "")
-            ) or _rotulo(manifest["sources"][d]["name"])
+            r = _rotulo(manifest["sources"][d].get("meta", {}).get("caminho", "")) or _rotulo(
+                manifest["sources"][d]["name"]
+            )
             if r:
                 memo[chave] = r
                 return r
@@ -179,7 +179,9 @@ def descricao_semantica(nome: str) -> str:
         return "Taxa associada ao indicador no período de referência."
     if nome.startswith("precos_") or nome.startswith("custo_"):
         return "Medida de preço ou custo no período de referência."
-    return "Atributo técnico do indicador; consultar a descrição da tabela para o contexto e a fonte."
+    return (
+        "Atributo técnico do indicador; consultar a descrição da tabela para o contexto e a fonte."
+    )
 
 
 def sanitizar_artefatos_dbt(alvo: Path) -> int:
@@ -288,9 +290,7 @@ def colunas_do_model(manifest: dict, catalog: dict, chave: str) -> list[dict]:
         saida.append(
             {
                 "nome": nome,
-                "tipo": metadado.get("type")
-                or documentacao.get("data_type")
-                or "não informado",
+                "tipo": metadado.get("type") or documentacao.get("data_type") or "não informado",
                 "descricao": documentacao.get("description")
                 or metadado.get("comment")
                 or descricao_semantica(nome),
@@ -330,9 +330,7 @@ def carregar_contagens() -> dict[str, int]:
             timeout=300,
         )
         dados = json.loads(_re.search(r"\{[\s\S]*\}", r.stdout).group(0))["show"]
-        return {
-            x["model"]: int(x["linhas"]) for x in dados if x.get("linhas") is not None
-        }
+        return {x["model"]: int(x["linhas"]) for x in dados if x.get("linhas") is not None}
     except Exception as exc:  # noqa: BLE001
         print(f"  (sem contagem de linhas: {exc})")
         return {}
@@ -356,9 +354,7 @@ def gerar(saida: Path, alvo: Path = ALVO, incluir_contagens: bool = True) -> Non
     memo: dict[str, str] = {}
     por_dominio = defaultdict(lambda: defaultdict(list))
     for chave, no in modelos.items():
-        por_dominio[dominio_de(chave, modelos, manifest, memo)][camada_de(no)].append(
-            (chave, no)
-        )
+        por_dominio[dominio_de(chave, modelos, manifest, memo)][camada_de(no)].append((chave, no))
 
     n_testes = sum(len(v) for v in testes.values())
     partes = [
@@ -384,15 +380,11 @@ def gerar(saida: Path, alvo: Path = ALVO, incluir_contagens: bool = True) -> Non
                     for d in no.get("depends_on", {}).get("nodes", [])
                     if d in modelos
                 ]
-                filhos = [
-                    modelos[f]["name"] for f in jusante.get(chave, []) if f in modelos
-                ]
+                filhos = [modelos[f]["name"] for f in jusante.get(chave, []) if f in modelos]
                 caminho_fonte = ""
                 for d in no.get("depends_on", {}).get("nodes", []):
                     if d in manifest.get("sources", {}):
-                        caminho_fonte = (
-                            manifest["sources"][d].get("meta", {}).get("caminho", "")
-                        )
+                        caminho_fonte = manifest["sources"][d].get("meta", {}).get("caminho", "")
 
                 linhas_html = [f'<div class="model {camada}">']
                 linhas_html.append(
@@ -400,11 +392,7 @@ def gerar(saida: Path, alvo: Path = ALVO, incluir_contagens: bool = True) -> Non
                     f'<span class="mn">{e(no["name"])}</span>'
                     f'<span class="meta">{e(no["config"]["materialized"])}'
                     + (f" · {ncols} col" if ncols else "")
-                    + (
-                        f" · {nlinhas:,} linhas".replace(",", ".")
-                        if nlinhas is not None
-                        else ""
-                    )
+                    + (f" · {nlinhas:,} linhas".replace(",", ".") if nlinhas is not None else "")
                     + "</span></div>"
                 )
                 desc = (no.get("description") or "").strip()
@@ -445,9 +433,7 @@ def gerar(saida: Path, alvo: Path = ALVO, incluir_contagens: bool = True) -> Non
                 if testes.get(chave):
                     linhas_html.append(
                         f'<div class="rel testes"><b>{len(testes[chave])} testes:</b> '
-                        + ", ".join(
-                            f"<code>{e(t[:46])}</code>" for t in sorted(testes[chave])[:6]
-                        )
+                        + ", ".join(f"<code>{e(t[:46])}</code>" for t in sorted(testes[chave])[:6])
                         + ("…" if len(testes[chave]) > 6 else "")
                         + "</div>"
                     )
@@ -523,12 +509,8 @@ bronze ou artefatos internos do dbt.</p>
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Gera catálogo público seguro de metadados."
-    )
-    parser.add_argument(
-        "saida", nargs="?", type=Path, default=RAIZ / "build" / "pipeline.html"
-    )
+    parser = argparse.ArgumentParser(description="Gera catálogo público seguro de metadados.")
+    parser.add_argument("saida", nargs="?", type=Path, default=RAIZ / "build" / "pipeline.html")
     parser.add_argument(
         "--target-dir",
         type=Path,

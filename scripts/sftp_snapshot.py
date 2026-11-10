@@ -270,8 +270,7 @@ def interpret(d: dict) -> str:
         )
     if d["removed"]:
         sinais.append(
-            f"{len(d['removed'])} arquivo(s) sumiram sem destino óbvio "
-            "→ podem ter sido DELETADOS."
+            f"{len(d['removed'])} arquivo(s) sumiram sem destino óbvio → podem ter sido DELETADOS."
         )
     return " ".join(sinais)
 
@@ -297,9 +296,7 @@ def print_report(d: dict, limit: int | None) -> None:
     section(
         "NOVOS",
         d["added"],
-        lambda x: (
-            f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})"
-        ),
+        lambda x: f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})",
     )
     section(
         "MODIFICADOS",
@@ -320,9 +317,7 @@ def print_report(d: dict, limit: int | None) -> None:
         d["copied"],
         lambda x: f"= {x['from']}\n      → {x['to']}  ({format_size(x['size'])})",
     )
-    section(
-        "REMOVIDOS", d["removed"], lambda x: f"- {x['path']}  ({format_size(x['size'])})"
-    )
+    section("REMOVIDOS", d["removed"], lambda x: f"- {x['path']}  ({format_size(x['size'])})")
 
     print("\n" + "-" * 70)
     print("INTERPRETAÇÃO:", interpret(d))
@@ -369,9 +364,7 @@ def cmd_diff(args: argparse.Namespace) -> None:
     print_report(d, args.limit)
 
     if args.json:
-        Path(args.json).write_text(
-            json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        Path(args.json).write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
         log.info("Diff em JSON: %s", args.json)
 
 
@@ -395,9 +388,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("snapshot", help="grava fotografia do estado atual do SFTP")
 
-    pd = sub.add_parser(
-        "diff", help="compara SFTP atual (ou dois snapshots) e mostra o diff"
-    )
+    pd = sub.add_parser("diff", help="compara SFTP atual (ou dois snapshots) e mostra o diff")
     pd.add_argument(
         "--save",
         action="store_true",

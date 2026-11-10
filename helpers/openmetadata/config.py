@@ -16,9 +16,7 @@ AIRFLOW_REPO_BASE = os.environ.get("AIRFLOW_REPO_BASE", "/opt/airflow")
 OPENMETADATA_DIR = f"{AIRFLOW_REPO_BASE}/helpers/openmetadata"
 OPENMETADATA_RECIPES_DIR = f"{OPENMETADATA_DIR}/recipes"
 OPENMETADATA_GLOSSARY_PATH = f"{OPENMETADATA_DIR}/glossaries/mcid.yaml"
-OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH = (
-    f"{OPENMETADATA_DIR}/semantic_relationships/mcid.yaml"
-)
+OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH = f"{OPENMETADATA_DIR}/semantic_relationships/mcid.yaml"
 #: O projeto dbt do MCID. A recipe de dbt consome os artefatos que saem dele.
 DBT_MCID_DIR = f"{AIRFLOW_REPO_BASE}/dbt/mcid"
 
@@ -83,9 +81,7 @@ INGERIR_CLASSIFIER = _flag("OM_INGEST_CLASSIFIER", default=False)
 #: task (`sync_semantic_relationships` exige todas as do escopo), e aí basta
 #: desligar com `OM_SYNC_RELACOES_SEMANTICAS=false` até regenerar — a
 #: reaplicação de governança roda mesmo assim (`all_done`).
-SINCRONIZAR_RELACOES_SEMANTICAS = _flag(
-    "OM_SYNC_RELACOES_SEMANTICAS", default=True
-)
+SINCRONIZAR_RELACOES_SEMANTICAS = _flag("OM_SYNC_RELACOES_SEMANTICAS", default=True)
 
 
 #: `.get` com padrão de propósito: `os.environ[...]` levanta no PARSE da DAG, e

@@ -65,18 +65,14 @@ def test_bronze_do_far_nao_herda_a_camada_do_schema() -> None:
     bronzes = [nome for nome, camada in camadas.items() if camada == "bronze"]
     assert bronzes, "o catálogo precisa ter ao menos um modelo bronze"
     for nome in bronzes:
-        aplicadas = fqns(
-            gov.etiquetas_da_camada(DOMINIOS, "empreendimento_far", "bronze")
-        )
+        aplicadas = fqns(gov.etiquetas_da_camada(DOMINIOS, "empreendimento_far", "bronze"))
         assert "Uso.NaoConsumivel" in aplicadas, nome
 
 
 def test_toda_etiqueta_aplicada_esta_declarada() -> None:
     """Nada é pendurado sem existir: era o que fazia a etiquetagem falhar."""
     declaradas = {
-        f"{c['name']}.{t['name']}"
-        for c in DOMINIOS["classificacoes"]
-        for t in c["etiquetas"]
+        f"{c['name']}.{t['name']}" for c in DOMINIOS["classificacoes"] for t in c["etiquetas"]
     }
     nativas = set(DOMINIOS["classificacoes_nativas"])
     # Todos os produtos declarados, não uma lista fixa: com a lista fixa,
@@ -149,9 +145,7 @@ def test_diferenca_ignora_campos_que_a_api_acrescenta() -> None:
 
 
 def test_campo_que_mudou_gera_patch() -> None:
-    operacoes = comum.operacoes_de_diferenca(
-        {"description": "antiga"}, {"description": "nova"}
-    )
+    operacoes = comum.operacoes_de_diferenca({"description": "antiga"}, {"description": "nova"})
     assert operacoes == [{"op": "add", "path": "/description", "value": "nova"}]
 
 
@@ -166,9 +160,7 @@ def test_numerico_preserva_precisao_e_escala() -> None:
 
 
 def test_texto_sem_limite_nao_recebe_comprimento_inventado() -> None:
-    coluna = estrutura.om_column(
-        {"name": "nome", "data_type": "text", "description": "x"}
-    )
+    coluna = estrutura.om_column({"name": "nome", "data_type": "text", "description": "x"})
     assert coluna["dataType"] == "TEXT"
     assert "dataLength" not in coluna
 
@@ -193,9 +185,7 @@ def test_timestamp_com_fuso_e_distinguido_de_sem_fuso() -> None:
 
 
 def test_array_declara_o_tipo_interno() -> None:
-    coluna = estrutura.om_column(
-        {"name": "ids", "data_type": "integer[]", "description": "x"}
-    )
+    coluna = estrutura.om_column({"name": "ids", "data_type": "integer[]", "description": "x"})
     assert coluna["dataType"] == "ARRAY"
     assert coluna["arrayDataType"] == "INT"
 
@@ -273,10 +263,7 @@ def test_relacao_ja_aplicada_nao_gera_patch() -> None:
     entidade = {"id": "1", "name": "Funding", "fullyQualifiedName": "MCID.X.Funding"}
     desejado = [comum.relacao_de_termo(entidade)]
     assert (
-        comum.operacoes_de_diferenca(
-            {"relatedTerms": desejado}, {"relatedTerms": desejado}
-        )
-        == []
+        comum.operacoes_de_diferenca({"relatedTerms": desejado}, {"relatedTerms": desejado}) == []
     )
     outro = {"id": "2", "name": "Outro", "fullyQualifiedName": "MCID.X.Outro"}
     assert comum.operacoes_de_diferenca(
@@ -331,16 +318,11 @@ def test_descricao_escapada_pela_instancia_nao_conta_como_divergencia() -> None:
     gravado = "Filtra ic_credito&#61;&#39;0&#39; e o gráfico &#34;Evolução&#34;"
     curado = "Filtra ic_credito='0' e o gráfico \"Evolução\""
     assert comum.mesmo_texto(gravado, curado)
-    assert (
-        comum.operacoes_de_diferenca({"description": gravado}, {"description": curado})
-        == []
-    )
+    assert comum.operacoes_de_diferenca({"description": gravado}, {"description": curado}) == []
 
 
 def test_coluna_so_com_descricao_escapada_nao_e_reescrita() -> None:
-    atual = [
-        {"name": "obs", "dataType": "TEXT", "description": "vale ic&#61;&#39;1&#39;"}
-    ]
+    atual = [{"name": "obs", "dataType": "TEXT", "description": "vale ic&#61;&#39;1&#39;"}]
     desejada = [{"name": "obs", "dataType": "TEXT", "description": "vale ic='1'"}]
     assert not estrutura.colunas_divergem(atual, desejada)
 
@@ -417,9 +399,7 @@ def test_fqn_de_container_cita_segmento_com_ponto() -> None:
 def test_fqn_de_container_sem_ponto_fica_intacto() -> None:
     import sincronizar_lake as lake
 
-    fqn = lake.fqn_do_container(
-        "Cidades - MinIO", ("data-lake-mcid", "staging", "abecip")
-    )
+    fqn = lake.fqn_do_container("Cidades - MinIO", ("data-lake-mcid", "staging", "abecip"))
     assert fqn == "Cidades - MinIO.data-lake-mcid.staging.abecip"
 
 
@@ -463,9 +443,7 @@ def test_linhagem_de_coluna_segue_a_expressao_e_nao_o_nome() -> None:
         "from base group by periodo"
     )
     schema = {"silver_x": {"periodo": "TEXT", "valor": "TEXT", "variavel_id": "TEXT"}}
-    assert lin._origens("data_referencia", sql, schema, "gold_x") == {
-        ("silver_x", "periodo")
-    }
+    assert lin._origens("data_referencia", sql, schema, "gold_x") == {("silver_x", "periodo")}
     assert lin._origens("custo_medio_m2", sql, schema, "gold_x") == {
         ("silver_x", "valor"),
         ("silver_x", "variavel_id"),
@@ -573,9 +551,7 @@ def test_coluna_publicada_carrega_a_restricao() -> None:
     import restricoes_dbt as r
 
     rest = r.Restricoes(unicas={"apf"}, nao_nulas={"apf"})
-    coluna = estrutura.om_column(
-        {"name": "apf", "data_type": "text", "description": "x"}, rest
-    )
+    coluna = estrutura.om_column({"name": "apf", "data_type": "text", "description": "x"}, rest)
     assert coluna["constraint"] == "NOT_NULL"
 
 
@@ -584,9 +560,7 @@ def test_chave_nao_aparece_nos_dois_lugares() -> None:
     import restricoes_dbt as r
 
     rest = r.Restricoes(unicas={"apf"}, nao_nulas={"apf"})
-    coluna = estrutura.om_column(
-        {"name": "apf", "data_type": "text", "description": "x"}, rest
-    )
+    coluna = estrutura.om_column({"name": "apf", "data_type": "text", "description": "x"}, rest)
     assert coluna["constraint"] != "PRIMARY_KEY"
     assert r.constraints_da_tabela(rest, {"apf"})[0]["constraintType"] == "PRIMARY_KEY"
 
@@ -609,9 +583,7 @@ def test_recipes_cobrem_os_schemas_declarados() -> None:
     declarados = {s["name"] for s in comum.carregar("schemas.yml")["schemas"]}
     for nome in ("postgres_metadata", "postgres_profiler", "postgres_classifier"):
         config = _recipe(nome)["source"]["sourceConfig"]["config"]
-        na_recipe = {
-            padrao.strip("^$") for padrao in config["schemaFilterPattern"]["includes"]
-        }
+        na_recipe = {padrao.strip("^$") for padrao in config["schemaFilterPattern"]["includes"]}
         assert na_recipe == declarados, f"{nome} diverge de schemas.yml"
 
 
@@ -666,7 +638,6 @@ def test_pacote_de_ingestao_nao_traz_outro_airflow() -> None:
     assert "pii-processor" not in extras
 
 
-
 def test_conector_do_airflow_nao_bloqueia_o_catalogo() -> None:
     """A corrente é sequencial; nada depende de `airflow_metadata`.
 
@@ -676,9 +647,7 @@ def test_conector_do_airflow_nao_bloqueia_o_catalogo() -> None:
     from openmetadata.config import RECIPE_PIPELINE
 
     assert RECIPE_PIPELINE[-1] == "airflow_metadata"
-    assert RECIPE_PIPELINE.index("postgres_metadata") < RECIPE_PIPELINE.index(
-        "dbt_metadata"
-    )
+    assert RECIPE_PIPELINE.index("postgres_metadata") < RECIPE_PIPELINE.index("dbt_metadata")
 
 
 # ── governança que o conector dbt carrega ───────────────────────────────────
@@ -753,12 +722,8 @@ def test_posicao_da_coluna_entra_na_comparacao() -> None:
     para sempre sem erro nenhum. Aconteceu com `ordinalPosition`.
     """
     assert "ordinalPosition" in estrutura.CAMPOS_DE_COLUNA
-    atual = [
-        {"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": None}
-    ]
-    desejada = [
-        {"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": 3}
-    ]
+    atual = [{"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": None}]
+    desejada = [{"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": 3}]
     assert estrutura.colunas_divergem(atual, desejada)
 
 
@@ -778,9 +743,7 @@ def test_governanca_roda_depois_do_conector() -> None:
     # a reaplicação é o destino final do encadeamento
     assert "anterior >> governanca" in dag
     corpo = dag[dag.index("def _encadear") :]
-    assert corpo.index("anterior >> governanca") > corpo.index(
-        "for task_id in RECIPE_PIPELINE"
-    )
+    assert corpo.index("anterior >> governanca") > corpo.index("for task_id in RECIPE_PIPELINE")
 
 
 def test_scripts_estao_montados_no_container() -> None:
@@ -833,8 +796,7 @@ def test_dag_de_origem_sobe_pela_linhagem() -> None:
     assert mapa, "nenhum model recebeu DAG de origem"
     camadas = gov.camadas_por_modelo()
     por_camada = {
-        c: sum(1 for m in mapa if camadas.get(m) == c)
-        for c in ("bronze", "silver", "gold")
+        c: sum(1 for m in mapa if camadas.get(m) == c) for c in ("bronze", "silver", "gold")
     }
     # a propagação tem de alcançar as três camadas, não só a Bronze
     assert por_camada["silver"] > 0 and por_camada["gold"] > 0, por_camada
@@ -907,9 +869,7 @@ def test_conjuntura_declara_prefixos_para_nao_catalogar_tabela_alheia() -> None:
     # Toda origem da bronze do conjuntura tem de estar declarada.
     raiz = RAIZ / "dbt" / "mcid" / "models" / "conjuntura_dbt" / "bronze"
     sem_prefixo = [
-        p.stem
-        for p in raiz.rglob("*.sql")
-        if not any(p.stem.startswith(x) for x in prefixos)
+        p.stem for p in raiz.rglob("*.sql") if not any(p.stem.startswith(x) for x in prefixos)
     ]
     assert not sem_prefixo, f"origem da bronze sem prefixo declarado: {sem_prefixo}"
 
@@ -1014,9 +974,7 @@ def test_prefixo_de_tabela_nao_colide_entre_produtos() -> None:
     resolução por tabela veio corrigir.
     """
     por_schema = gov.produtos_por_schema(DOMINIOS)
-    prefixos = {
-        p["name"]: tuple(p.get("prefixos_de_tabela") or []) for p in DOMINIOS["produtos"]
-    }
+    prefixos = {p["name"]: tuple(p.get("prefixos_de_tabela") or []) for p in DOMINIOS["produtos"]}
     for nome, produtos in por_schema.items():
         for produto in produtos:
             for outro in produtos:
@@ -1062,9 +1020,7 @@ class _OMDeTeste:
 
 
 def test_ativo_sem_dominio_recebe_o_do_servico_e_o_resto_fica() -> None:
-    habitacao = [
-        {"id": "d-hab", "type": "domain", "fullyQualifiedName": "MCid.Habitacao"}
-    ]
+    habitacao = [{"id": "d-hab", "type": "domain", "fullyQualifiedName": "MCid.Habitacao"}]
     om = _OMDeTeste(
         {
             "databaseSchemas": [
@@ -1179,9 +1135,7 @@ def _produtos_gravados(
     dominios = dict(
         DOMINIOS,
         produtos=[
-            dict(p, schemas=["ouro"])
-            for p in DOMINIOS["produtos"]
-            if p["name"] in escolhidos
+            dict(p, schemas=["ouro"]) for p in DOMINIOS["produtos"] if p["name"] in escolhidos
         ],
     )
     om = _OMDoLaco([_tabela_da_ouro(nome) for nome in tabelas])

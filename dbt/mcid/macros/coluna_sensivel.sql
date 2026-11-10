@@ -23,7 +23,6 @@
     `acao_governo_nome` e `periodo_nome`, e um teste que grita à toa é um
     teste que o time desliga.
 #}
-
 {% macro padroes_sensiveis() %}
     {{ return([
         'cpf', 'cnpj', 'mutuario', 'nascimento', 'logradouro', 'endereco',
@@ -33,17 +32,14 @@
 
 
 {% macro expressao_sensivel(coluna) %}
-    (
-        lower({{ coluna }}) ~ '({{ padroes_sensiveis() | join("|") }})'
-        or lower({{ coluna }}) = 'cep'
-    )
+    (lower({{ coluna }}) ~ '({{ padroes_sensiveis() | join("|") }})' or lower({{ coluna }}) = 'cep')
 {% endmacro %}
 
 
 {% macro mascarar_coluna_sensivel(coluna) %}
     case
         when {{ expressao_sensivel(coluna) }}
-            then 'sensivel_' || substr(md5({{ coluna }}), 1, 8)
+        then 'sensivel_' || substr(md5({{ coluna }}), 1, 8)
         else {{ coluna }}
     end
 {% endmacro %}
@@ -63,22 +59,29 @@
     teste que o time desliga na primeira semana. Com o DV, o falso positivo
     fica raro.
 #}
-
 {% macro _digito_cpf(v, ate, peso_inicial) %}
     (
         case
-            when (11 - mod(
-                {%- for i in range(1, ate + 1) %}
-                    substr({{ v }}, {{ i }}, 1)::int * {{ peso_inicial - i + 1 }}
-                    {{- " +" if not loop.last }}
-                {%- endfor %}
-            , 11)) >= 10 then 0
-            else 11 - mod(
-                {%- for i in range(1, ate + 1) %}
-                    substr({{ v }}, {{ i }}, 1)::int * {{ peso_inicial - i + 1 }}
-                    {{- " +" if not loop.last }}
-                {%- endfor %}
-            , 11)
+            when
+                (
+                    11 - mod(
+                        {%- for i in range(1, ate + 1) %}
+                            substr({{ v }}, {{ i }}, 1)::int * {{ peso_inicial - i + 1 }}
+                            {{- " +" if not loop.last }}
+                        {%- endfor %},
+                        11
+                    )
+                )
+                >= 10
+            then 0
+            else
+                11 - mod(
+                    {%- for i in range(1, ate + 1) %}
+                        substr({{ v }}, {{ i }}, 1)::int * {{ peso_inicial - i + 1 }}
+                        {{- " +" if not loop.last }}
+                    {%- endfor %},
+                    11
+                )
         end
     )
 {% endmacro %}
@@ -87,7 +90,7 @@
 {% macro parece_cpf(v) %}
     (
         {{ v }} ~ '^[0-9]{11}$'
-        and {{ v }} !~ '^(.)\1{10}$'          {# 00000000000, 11111111111... #}
+        and {{ v }} !~ '^(.)\1{10}$'  {# 00000000000, 11111111111... #}
         and substr({{ v }}, 10, 1)::int = {{ _digito_cpf(v, 9, 10) }}
         and substr({{ v }}, 11, 1)::int = {{ _digito_cpf(v, 10, 11) }}
     )

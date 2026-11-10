@@ -40,9 +40,7 @@ def novo_caged_servicos_especializados_construcao() -> None:
         target_table = "saldo_estoque_servicos_especializados_construcao"
         schema = "novo_caged"
 
-        caged_data = api.obter_historico(
-            cnae_divisao="Serviços Especializados para Construção"
-        )
+        caged_data = api.obter_historico(cnae_divisao="Serviços Especializados para Construção")
 
         if caged_data:
             for record in caged_data:

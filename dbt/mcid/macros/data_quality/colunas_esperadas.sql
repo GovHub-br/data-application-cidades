@@ -28,48 +28,49 @@
 -#}
 {% macro test_colunas_esperadas(model) %}
 
-{%- set audit = [
+    {%- set audit = [
     "fonte_familia", "fonte_interface", "source_file", "report_date_parsed",
     "dt_referencia", "dt_ingest", "hash_linha", "agente_arquivo",
     "prioridade_reentrega", "dt_evento", "qt_uh_entregues_evento",
 ] -%}
 
-{%- set atuais = [] -%}
-{%- if execute -%}
-    {%- for c in adapter.get_columns_in_relation(model) -%}
-        {%- if (c.name | lower) not in audit -%}
-            {%- do atuais.append(c.name | lower) -%}
-        {%- endif -%}
-    {%- endfor -%}
-{%- endif -%}
+    {%- set atuais = [] -%}
+    {%- if execute -%}
+        {%- for c in adapter.get_columns_in_relation(model) -%}
+            {%- if (c.name | lower) not in audit -%}
+                {%- do atuais.append(c.name | lower) -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
 
-with
-    esperado as (
-        select lower(trim(cast(coluna as varchar))) as coluna
-        from {{ ref("colunas_esperadas") }}
-        where modelo = '{{ model.identifier }}'
-    ),
-    atual as (
-        {%- if atuais | length > 0 %}
-        {%- for c in atuais %}
-        select '{{ c }}' as coluna{% if not loop.last %}
-        union all{% endif %}
-        {%- endfor %}
-        {%- else %}
-        select cast(null as varchar) as coluna where 1 = 0
-        {%- endif %}
-    )
+    with
+        esperado as (
+            select lower(trim(cast(coluna as varchar))) as coluna
+            from {{ ref("colunas_esperadas") }}
+            where modelo = '{{ model.identifier }}'
+        ),
+        atual as (
+            {%- if atuais | length > 0 %}
+                {%- for c in atuais %}
+                    select '{{ c }}' as coluna
+                    {% if not loop.last %}
+                        union all
+                    {% endif %}
+                {%- endfor %}
+            {%- else %}select cast(null as varchar) as coluna where 1 = 0
+            {%- endif %}
+        )
 
-select 'nova nao catalogada' as status, atual.coluna
-from atual
-left join esperado using (coluna)
-where esperado.coluna is null
+    select 'nova nao catalogada' as status, atual.coluna
+    from atual
+    left join esperado using (coluna)
+    where esperado.coluna is null
 
-union all
+    union all
 
-select 'removida' as status, esperado.coluna
-from esperado
-left join atual using (coluna)
-where atual.coluna is null
+    select 'removida' as status, esperado.coluna
+    from esperado
+    left join atual using (coluna)
+    where atual.coluna is null
 
 {% endmacro %}

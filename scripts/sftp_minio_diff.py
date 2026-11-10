@@ -272,9 +272,7 @@ def capture_sftp_snapshot(root: str, match_mode: str, expand_zips: bool) -> dict
     return capture_snapshot(files, "sftp", SFTP_HOST)
 
 
-def capture_minio_snapshot(
-    endpoint: str, bucket: str, prefix: str, match_mode: str
-) -> dict:
+def capture_minio_snapshot(endpoint: str, bucket: str, prefix: str, match_mode: str) -> dict:
     log.info("Coletando arvore do MinIO: bucket=%s prefix=%s...", bucket, prefix)
     client = connect_minio(endpoint)
     paginator = client.get_paginator("list_objects_v2")
@@ -293,9 +291,7 @@ def capture_minio_snapshot(
             files[key] = {
                 "size": int(obj.get("Size") or 0),
                 "mtime": (
-                    int(obj["LastModified"].timestamp())
-                    if obj.get("LastModified")
-                    else None
+                    int(obj["LastModified"].timestamp()) if obj.get("LastModified") else None
                 ),
                 "original_path": normalize_path(path_key),
             }
@@ -368,9 +364,7 @@ def print_report(diff: dict, limit: int | None) -> None:
     section(
         "SO NO MINIO",
         diff["added"],
-        lambda x: (
-            f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})"
-        ),
+        lambda x: f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})",
     )
     section(
         "DIFERENTES",
@@ -384,9 +378,7 @@ def print_report(diff: dict, limit: int | None) -> None:
     section(
         "SO NO SFTP",
         diff["removed"],
-        lambda x: (
-            f"- {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})"
-        ),
+        lambda x: f"- {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})",
     )
 
 

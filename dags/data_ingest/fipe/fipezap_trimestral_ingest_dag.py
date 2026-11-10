@@ -49,8 +49,7 @@ def fipezap_trimestral_ingest_dag() -> None:
 
             if df is None:
                 raise AirflowFailException(
-                    "[fipezap_trimestral_dag] ClienteFipeZap falhou ao "
-                    "baixar ou processar o XLSX."
+                    "[fipezap_trimestral_dag] ClienteFipeZap falhou ao baixar ou processar o XLSX."
                 )
 
             if df.empty:
@@ -67,8 +66,7 @@ def fipezap_trimestral_ingest_dag() -> None:
             db = ClientPostgresDB(postgres_conn_str)
 
             logger.info(
-                "[fipezap_trimestral_dag] Inserindo %d registros em "
-                "fipezap.indice_locacao",
+                "[fipezap_trimestral_dag] Inserindo %d registros em fipezap.indice_locacao",
                 len(registros),
             )
 
@@ -88,17 +86,13 @@ def fipezap_trimestral_ingest_dag() -> None:
             upload_fallback_json("fipe", "indice_locacao", registros)
             registros_para_staging_parquet("fipe", "indice_locacao", registros)
 
-            logger.info(
-                "[fipezap_trimestral_dag] Ingestão trimestral concluída com sucesso"
-            )
+            logger.info("[fipezap_trimestral_dag] Ingestão trimestral concluída com sucesso")
 
         except (AirflowFailException, AirflowSkipException):
             raise
         except Exception as e:
             logger.error("[fipezap_trimestral_dag] Erro inesperado na ingestão: %s", e)
-            raise AirflowException(
-                f"[fipezap_trimestral_dag] Erro inesperado: {e}"
-            ) from e
+            raise AirflowException(f"[fipezap_trimestral_dag] Erro inesperado: {e}") from e
 
     fetch_and_store()
 

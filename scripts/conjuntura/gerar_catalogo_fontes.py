@@ -132,13 +132,9 @@ def linha_fonte(bloco: dict) -> str:
     partes = [f"<dd>{html.escape(bloco['fonte'])}"]
     if bloco.get("link"):
         alvo = html.escape(bloco["link"], quote=True)
-        partes.append(
-            f'<br><a href="{alvo}" rel="noopener noreferrer" target="_blank">{alvo}</a>'
-        )
+        partes.append(f'<br><a href="{alvo}" rel="noopener noreferrer" target="_blank">{alvo}</a>')
     elif bloco.get("link_texto"):
-        partes.append(
-            f'<br><span class="origem">{html.escape(bloco["link_texto"])}</span>'
-        )
+        partes.append(f'<br><span class="origem">{html.escape(bloco["link_texto"])}</span>')
     partes.append("</dd>")
     return "".join(partes)
 
@@ -155,15 +151,13 @@ def bloco_html(bloco: dict) -> str:
             if chave == "fonte"
             else (f"<dd>{html.escape(str(bloco[chave]))}</dd>")
         )
-    notas = "".join(
-        f'<p class="nota">{html.escape(n)}</p>' for n in bloco.get("notas", [])
-    )
+    notas = "".join(f'<p class="nota">{html.escape(n)}</p>' for n in bloco.get("notas", []))
     return (
         f'<article class="bloco">'
         f'<div class="cab"><span class="num">Bloco {bloco["numero"]:02d}</span>'
         f"<h3>{html.escape(bloco['titulo'])}</h3>"
         f'<span class="selo {"a" if auto else "m"}">'
-        f'{"Automatizado" if auto else "Não automatizado"}</span></div>'
+        f"{'Automatizado' if auto else 'Não automatizado'}</span></div>"
         f"<dl>{itens}</dl>{notas}</article>"
     )
 

@@ -10,7 +10,6 @@
 -- permanece inalterado. O desenvolvimento será retomado numa change futura —
 -- basta `git revert` deste comentário / reativar o `enabled`.
 -- =====================================================================
-
 /*
 with
     fonte as (

@@ -27,16 +27,16 @@
 -#}
 {% macro test_quantidade_nao_excede_referencia(model, column_name, reference, fator=1.0) %}
 
-select
-    {{ column_name }} as valor,
-    {{ reference }} as referencia,
-    {{ fator }} as fator_limite,
-    {{ column_name }} - {{ reference }} as excedente
-from {{ model }}
-where
-    {{ column_name }} is not null
-    and {{ reference }} is not null
-    and {{ column_name }} > {{ reference }} * {{ fator }}
-order by excedente desc
+    select
+        {{ column_name }} as valor,
+        {{ reference }} as referencia,
+        {{ fator }} as fator_limite,
+        {{ column_name }} - {{ reference }} as excedente
+    from {{ model }}
+    where
+        {{ column_name }} is not null
+        and {{ reference }} is not null
+        and {{ column_name }} > {{ reference }} * {{ fator }}
+    order by excedente desc
 
 {% endmacro %}

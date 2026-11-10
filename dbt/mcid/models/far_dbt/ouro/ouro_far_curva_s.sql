@@ -33,12 +33,13 @@ with
         left join situacao_atual a on a.apf = s.apf
         left join portaria_apf pa on pa.apf = s.apf
         left join ficha f on f.apf = s.apf
-        cross join lateral (
-            values (coalesce(pa.portaria, 'Não informada')), ('Todas as portarias')
-        ) p(portaria)
-        cross join lateral (
-            values (coalesce(f.municipio, 'Não informado')), ('Todos os municípios')
-        ) m(municipio)
+        cross join
+            lateral(
+                values (coalesce(pa.portaria, 'Não informada')), ('Todas as portarias')) p(portaria)
+        cross join
+            lateral(
+                values (coalesce(f.municipio, 'Não informado')), ('Todos os municípios')
+            ) m(municipio)
         where coalesce(a.situacao, '') != 'DISTRATADO/CANCELADO'
     ),
 
@@ -55,18 +56,10 @@ with
         from
             (
                 select distinct
-                    apf,
-                    uf,
-                    portaria,
-                    recorte_municipio,
-                    vr_emprestimo_far,
-                    mes_inicio_fisico
+                    apf, uf, portaria, recorte_municipio, vr_emprestimo_far, mes_inicio_fisico
                 from carteira
             ) apfs
-        group by
-            grouping sets (
-                (portaria, recorte_municipio), (uf, portaria, recorte_municipio)
-            )
+        group by grouping sets ((portaria, recorte_municipio), (uf, portaria, recorte_municipio))
     ),
 
     agregado as (
@@ -93,8 +86,7 @@ with
         from carteira
         group by
             grouping sets (
-                (mes, portaria, recorte_municipio),
-                (mes, uf, portaria, recorte_municipio)
+                (mes, portaria, recorte_municipio), (mes, uf, portaria, recorte_municipio)
             )
     )
 

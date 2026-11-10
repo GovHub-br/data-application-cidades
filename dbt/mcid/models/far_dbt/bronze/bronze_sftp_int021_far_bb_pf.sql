@@ -5,7 +5,8 @@
 {% set padrao = "s3://data-lake-mcid/staging/sftp/fabrica/GEFUS/INT021_MinisterioCidades_FAR_BB_PF_*.parquet" %}
 
 select *
-from {{ fonte_lake(
+from
+    {{ fonte_lake(
     'far_contratos_pf_bb',
     'lake_staging_far',
     filename=true,

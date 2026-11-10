@@ -6,8 +6,11 @@
 -- Lê o CadÚnico filtrado pelas chaves do FAR: varrê-lo inteiro estoura a memória do DW.
 with
     far as (
-        select 'Novo MCMV' as geracao, 'CAIXA' as agente_financeiro,
-            trim(nu_contrato) as nu_contrato, trim(nu_cpf_beneficiario) as cpf
+        select
+            'Novo MCMV' as geracao,
+            'CAIXA' as agente_financeiro,
+            trim(nu_contrato) as nu_contrato,
+            trim(nu_cpf_beneficiario) as cpf
         from {{ ref("bronze_sftp_mont_cont_pf_far") }}
         union all
         select 'Legado (2009–2023)', 'CAIXA', trim(nu_contrato), trim(nu_cpf_cgc_mutuario)
@@ -41,7 +44,9 @@ with
             cast(r['vl_desp_energia_fam'] as varchar) as vl_desp_energia_fam,
             cast(r['vl_desp_agua_esgoto_fam'] as varchar) as vl_desp_agua_esgoto_fam
         from {{ fonte_lake('cadunico_familia_beneficiario', 'lake_staging_far') }} as r
-        where ltrim(cast(r['co_familiar_fam'] as varchar), '0') in (select co_familiar_fam from pessoa)
+        where
+            ltrim(cast(r['co_familiar_fam'] as varchar), '0')
+            in (select co_familiar_fam from pessoa)
     )
 
 select

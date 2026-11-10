@@ -37,8 +37,7 @@
 -- daquele lote.
 {% macro coalesce_present(relation, aliases, cast_type=none) %}
     {%- set present = present_columns(relation, aliases) -%}
-    {%- if present | length > 0 -%}
-        {%- set expr = 'coalesce(' ~ (present | join(', ')) ~ ')' -%}
+    {%- if present | length > 0 -%} {%- set expr = 'coalesce(' ~ (present | join(', ')) ~ ')' -%}
     {%- else -%} {%- set expr = 'null' -%}
     {%- endif -%}
     {%- if cast_type is not none -%} cast({{ expr }} as {{ cast_type }})
@@ -59,12 +58,9 @@
     {%- set present = present_columns(relation, aliases) -%}
     {%- set parts = [] -%}
     {%- for a in present -%}
-        {%- if parser == 'parse_hist_bigint' -%}
-            {%- do parts.append(parse_hist_bigint(a)) -%}
-        {%- elif parser == 'parse_hist_double' -%}
-            {%- do parts.append(parse_hist_double(a)) -%}
-        {%- elif parser == 'parse_hist_date' -%}
-            {%- do parts.append(parse_hist_date(a)) -%}
+        {%- if parser == 'parse_hist_bigint' -%} {%- do parts.append(parse_hist_bigint(a)) -%}
+        {%- elif parser == 'parse_hist_double' -%} {%- do parts.append(parse_hist_double(a)) -%}
+        {%- elif parser == 'parse_hist_date' -%} {%- do parts.append(parse_hist_date(a)) -%}
         {%- else -%}
             {{ exceptions.raise_compiler_error(
                 "coalesce_present_parsed: parser '" ~ parser ~ "' nao suportado"
@@ -72,10 +68,10 @@
         {%- endif -%}
     {%- endfor -%}
     {%- if parts | length == 0 -%}
-        {%- if cast_null_as is not none -%}cast(null as {{ cast_null_as }})
-        {%- else -%}null
+        {%- if cast_null_as is not none -%} cast(null as {{ cast_null_as }})
+        {%- else -%} null
         {%- endif -%}
-    {%- elif parts | length == 1 -%}{{ parts[0] }}
-    {%- else -%}coalesce({{ parts | join(', ') }})
+    {%- elif parts | length == 1 -%} {{ parts[0] }}
+    {%- else -%} coalesce({{ parts | join(', ') }})
     {%- endif -%}
 {% endmacro %}

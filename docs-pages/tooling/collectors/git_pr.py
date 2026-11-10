@@ -78,9 +78,7 @@ def _merges() -> list[dict[str, str]]:
 
 def _pull_requests() -> list[dict[str, Any]]:
     campos = "number,title,author,createdAt,mergedAt,state,labels,url,body"
-    saida = run(
-        ["gh", "pr", "list", "--state", "all", "--limit", "500", "--json", campos]
-    )
+    saida = run(["gh", "pr", "list", "--state", "all", "--limit", "500", "--json", campos])
     prs: list[dict[str, Any]] = []
     for pr in json.loads(saida):
         prs.append(

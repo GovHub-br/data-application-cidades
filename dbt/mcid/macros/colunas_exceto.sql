@@ -24,8 +24,7 @@
             {{ exceptions.raise_compiler_error(
                 "colunas_exceto: nenhuma coluna sobrou em " ~ schema_dado ~ "." ~ tabela) }}
         {%- endif -%}
-        {%- for c in mantidas %}"{{ c }}"{{ ", " if not loop.last }}{% endfor -%}
-    {%- else -%}
-        *
+        {%- for c in mantidas %} "{{ c }}"{{ ", " if not loop.last }}{% endfor -%}
+    {%- else -%} *
     {%- endif -%}
 {% endmacro %}

@@ -5,7 +5,8 @@
 -- documentos e nascimento chegam redigidos. Códigos categóricos de raça e
 -- deficiência permanecem somente nas camadas restritas.
 select *
-from {{ fonte_lake(
+from
+    {{ fonte_lake(
     'cadunico_pessoa',
     'lake_staging_reforma_casa_brasil',
     union_by_name=true

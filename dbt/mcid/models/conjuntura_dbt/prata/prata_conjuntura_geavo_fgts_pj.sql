@@ -25,12 +25,11 @@
 -- Aponta pro mais recente conhecido em 2026-08-25 (07/07/2026) — precisa
 -- atualizar o caminho manualmente até existir uma DAG que copie sempre o
 -- arquivo mais novo pra um caminho fixo.
-
 select
-    extract(year from dt_assinatura::text::date)::int  as ano,
+    extract(year from dt_assinatura::text::date)::int as ano,
     (floor((extract(month from dt_assinatura::text::date)::int - 1) / 3))::int + 1 as trimestre,
     sum(replace(qt_unidades_financiadas::text, ',', '.')::numeric) as fgts_pj_uh,
-    count(*)                as fgts_pj_qtd_contratos,
-    current_timestamp       as dt_silver
+    count(*) as fgts_pj_qtd_contratos,
+    current_timestamp as dt_silver
 from {{ ref('bronze_geavo_fgts_pj') }}
 group by 1, 2

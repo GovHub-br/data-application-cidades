@@ -17,9 +17,7 @@ _SEGREDO = "segredo-de-teste"
 
 # the package copies the env at import; nothing else reads it, so it can be undone
 with pytest.MonkeyPatch.context() as _mp:
-    modulo = fresh_import(
-        _mp, "mascarar_minio", "mascaramento", MASKING_HMAC_SECRET=_SEGREDO
-    )
+    modulo = fresh_import(_mp, "mascarar_minio", "mascaramento", MASKING_HMAC_SECRET=_SEGREDO)
 
 import cliente_minio  # noqa: E402
 from mascaramento import paralelo as mod_paralelo, regras, tabular  # noqa: E402
@@ -82,9 +80,7 @@ class S3Falso:
         if IfMatch != self._etag(Key):
             raise _Erro("PreconditionFailed")
         cair_em = self.quedas.pop(0) - int(inicio) if self.quedas else -1
-        return {
-            "Body": _Corpo(dados[int(inicio) : int(fim or len(dados) - 1) + 1], cair_em)
-        }
+        return {"Body": _Corpo(dados[int(inicio) : int(fim or len(dados) - 1) + 1], cair_em)}
 
     def create_multipart_upload(self, Bucket, Key):
         upload_id = f"u{next(self._ids)}"
@@ -167,9 +163,7 @@ def _via_arquivo(tmp_path: Path, conteudo: bytes) -> bytes:
 
 
 def _processar(minio, apply=True, masked_hashes=None):
-    return modulo.processar_objeto(
-        minio, "", KEY, "exec-teste", apply, masked_hashes or set()
-    )
+    return modulo.processar_objeto(minio, "", KEY, "exec-teste", apply, masked_hashes or set())
 
 
 def test_stream_gera_os_mesmos_bytes_que_o_caminho_em_disco(minio, tmp_path):

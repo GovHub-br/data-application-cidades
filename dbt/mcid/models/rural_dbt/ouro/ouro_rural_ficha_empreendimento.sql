@@ -1,22 +1,17 @@
 {{ config(materialized="table") }}
 
 -- Gold: Ficha do Empreendimento (Rural)
--- Consome silver/empreendimento e injeta regras de negócio finais como status, prazos e ritmo físico-financeiro.
-
+-- Consome silver/empreendimento e injeta regras de negócio finais como status, prazos e ritmo
+-- físico-financeiro.
 with
-    base_silver as (
-        select * from {{ ref("prata_rural_empreendimento") }}
-    ),
+    base_silver as (select * from {{ ref("prata_rural_empreendimento") }}),
 
     -- Acumulado da SÉRIE de liberações, para ser confrontado com o valor_desembolsado,
     -- que é ESTOQUE. A série é um PISO, não a verdade: o INT055 só traz o que CAIXA e BB
     -- reportaram por aquela integração, então contrato antigo tem história anterior ao
     -- arquivo. O estoque é o número da ficha; a série fica ao lado, com a diferença.
     serie as (
-        select
-            apf,
-            max(vr_acumulado) as vr_acumulado_liberacoes,
-            count(*) as qt_meses_com_liberacao
+        select apf, max(vr_acumulado) as vr_acumulado_liberacoes, count(*) as qt_meses_com_liberacao
         from {{ ref("ouro_rural_evolucao_financeira") }}
         group by apf
     ),
@@ -62,11 +57,7 @@ select
     uf,
     concat(municipio, '/', uf) as municipio_uf,
     concat(
-        apf,
-        ' - ',
-        municipio, '/', uf,
-        ' - ',
-        upper(empreendimento_nome)
+        apf, ' - ', municipio, '/', uf, ' - ', upper(empreendimento_nome)
     ) as apf_municipio_empreendimento,
 
     -- Coordenadas
@@ -77,10 +68,13 @@ select
     situacao_empreendimento,
     case
         when situacao_normalizada in ('CONCLUÍDO E ENTREGUE', 'CONCLUIDA', 'CONCLUÍDA', 'ENTREGUE')
-            then 'Concluído'
-        when percentual_execucao_fisica is null then 'Sem Informação'
-        when percentual_execucao_fisica >= 100 then 'Concluído'
-        when percentual_execucao_fisica = 0 then 'Não Iniciado'
+        then 'Concluído'
+        when percentual_execucao_fisica is null
+        then 'Sem Informação'
+        when percentual_execucao_fisica >= 100
+        then 'Concluído'
+        when percentual_execucao_fisica = 0
+        then 'Não Iniciado'
         else 'Em Andamento'
     end as status_execucao_simplificado,
 
@@ -105,9 +99,11 @@ select
     -- afirmava pontualidade sobre empreendimentos cujo prazo ninguém informou.
     case
         when situacao_normalizada in ('CONCLUÍDO E ENTREGUE', 'CONCLUIDA', 'CONCLUÍDA', 'ENTREGUE')
-            then 'Entregue'
-        when dt_previsao_entrega is null then 'Sem Previsão'
-        when dt_previsao_entrega < current_date then 'Em Atraso'
+        then 'Entregue'
+        when dt_previsao_entrega is null
+        then 'Sem Previsão'
+        when dt_previsao_entrega < current_date
+        then 'Em Atraso'
         else 'Dentro do Prazo'
     end as status_prazo,
 
@@ -133,9 +129,9 @@ select
     -- em vez de limitar: um `least(pct, 100)` esconderia o caso que precisa ser olhado.
     case
         when valor_desembolsado is null or coalesce(valor_contratado, 0) <= 0
-            then 'Sem Informação'
+        then 'Sem Informação'
         when valor_desembolsado > (valor_contratado + coalesce(valor_aporte_adicional, 0))
-            then 'Desembolso Acima do Contratado'
+        then 'Desembolso Acima do Contratado'
         else 'Dentro do Contratado'
     end as consistencia_desembolso,
 
@@ -143,9 +139,11 @@ select
     -- Comparar um lado conhecido com um lado desconhecido não produz ritmo nenhum.
     case
         when pct_execucao_financeira is null or percentual_execucao_fisica is null
-            then 'Sem Informação'
-        when pct_execucao_financeira > percentual_execucao_fisica + 5 then 'Desembolso Adiantado'
-        when pct_execucao_financeira < percentual_execucao_fisica - 5 then 'Desembolso Atrasado'
+        then 'Sem Informação'
+        when pct_execucao_financeira > percentual_execucao_fisica + 5
+        then 'Desembolso Adiantado'
+        when pct_execucao_financeira < percentual_execucao_fisica - 5
+        then 'Desembolso Atrasado'
         else 'Ritmo Equilibrado'
     end as ritmo_fisico_financeiro,
 

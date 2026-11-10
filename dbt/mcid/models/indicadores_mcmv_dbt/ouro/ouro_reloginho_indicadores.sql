@@ -48,8 +48,6 @@ select
     uh_entregues,
     uh_vigentes,
     n_apf,
-    count(*) over (
-        partition by agente_financeiro order by dt_referencia
-    ) as n_meses_observados
+    count(*) over (partition by agente_financeiro order by dt_referencia) as n_meses_observados
 from mensal
 order by agente_financeiro, dt_referencia

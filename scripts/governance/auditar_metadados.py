@@ -131,9 +131,7 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
                 if efetiva(text):
                     documented_resources += 1
                 elif text:
-                    findings.append(
-                        Finding(path, resource_id, "", "texto_de_preenchimento")
-                    )
+                    findings.append(Finding(path, resource_id, "", "texto_de_preenchimento"))
                 else:
                     findings.append(Finding(path, resource_id, "", "descricao_ausente"))
                 findings.extend(check_text(path, resource_id, "", text))
@@ -146,17 +144,13 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
                         documented_columns += 1
                     elif column_text:
                         findings.append(
-                            Finding(
-                                path, resource_id, column_name, "texto_de_preenchimento"
-                            )
+                            Finding(path, resource_id, column_name, "texto_de_preenchimento")
                         )
                     else:
                         findings.append(
                             Finding(path, resource_id, column_name, "descricao_ausente")
                         )
-                    findings.extend(
-                        check_text(path, resource_id, column_name, column_text)
-                    )
+                    findings.extend(check_text(path, resource_id, column_name, column_text))
 
     return (
         findings,
@@ -199,9 +193,7 @@ def auditar_ouro(root: Path) -> dict[str, list[str]]:
                 documentacao, {str(c.get("name")) for c in colunas}
             )
             for valor in documentacao_dbt.textos(documentacao or {}):
-                problemas += [
-                    f"documentacao_{f.rule}" for f in check_text(path, nome, "", valor)
-                ]
+                problemas += [f"documentacao_{f.rule}" for f in check_text(path, nome, "", valor)]
             if problemas:
                 achados[nome] = problemas
     return achados
@@ -229,9 +221,7 @@ def main() -> int:
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--resumo", action="store_true", help="só os totais")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    parser.add_argument(
-        "--ouro", action="store_true", help="só a ouro, com o contrato completo"
-    )
+    parser.add_argument("--ouro", action="store_true", help="só a ouro, com o contrato completo")
     args = parser.parse_args()
 
     if args.ouro:
@@ -262,9 +252,7 @@ def main() -> int:
     inventario = nos_do_manifesto(args.manifest)
     sem_yaml = sorted(n for n in inventario if n not in declarados)
     for nome in sem_yaml:
-        findings.append(
-            Finding(Path(inventario[nome]), f"model.{nome}", "", "sem_entrada_yaml")
-        )
+        findings.append(Finding(Path(inventario[nome]), f"model.{nome}", "", "sem_entrada_yaml"))
     if inventario:
         cobertos = len(inventario) - len(sem_yaml)
         print(

@@ -98,7 +98,6 @@ with DAG(
     default_args={"retries": 2},
     doc_md=__doc__,
 ) as my_cosmos_dag:
-
     dominios_postgres = DbtTaskGroup(
         group_id="dominios_postgres",
         project_config=project_config,

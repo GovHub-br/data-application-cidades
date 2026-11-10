@@ -16,19 +16,22 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p2_lancamentos_por_construtora_variacao %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("empresa"::text, '') as chave,
-    edicao,
-    "empresa", "vs. trim. anterior", "vs. mesmo trim. ano ant.", "12m atual / 12m anterior", "12m anterior / 12m retrasado"
-from {{ ref('ouro_conjuntura_boletim_p2_lancamentos_por_construtora_variacao') }}
+    select
+        edicao || '|' || coalesce("empresa"::text, '') as chave,
+        edicao,
+        "empresa",
+        "vs. trim. anterior",
+        "vs. mesmo trim. ano ant.",
+        "12m atual / 12m anterior",
+        "12m anterior / 12m retrasado"
+    from {{ ref('ouro_conjuntura_boletim_p2_lancamentos_por_construtora_variacao') }}
 
 {% endsnapshot %}

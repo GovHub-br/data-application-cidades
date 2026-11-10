@@ -42,48 +42,72 @@ if hasattr(sys.stdout, "reconfigure"):
 # Rural: adoção do padrão do projeto (far_dbt / fds_dbt) — três schemas por camada
 # (bronze/prata/ouro) e a linha no nome a partir da prata.
 MAPA: Dict[Tuple[str, str], Tuple[str, str]] = {
-    ("empreendimento_rural", "gold_ficha_empreendimento"):
-        ("ouro", "ouro_rural_ficha_empreendimento"),
-    ("empreendimento_rural", "gold_resumo_gerencial"):
-        ("ouro", "ouro_rural_resumo_gerencial"),
-    ("empreendimento_rural", "gold_panorama_estadual"):
-        ("ouro", "ouro_rural_panorama_estadual"),
-    ("empreendimento_rural", "gold_mapa_nacional"):
-        ("ouro", "ouro_rural_mapa_nacional"),
-    ("empreendimento_rural", "gold_evolucao_financeira"):
-        ("ouro", "ouro_rural_evolucao_financeira"),
-    ("empreendimento_rural", "gold_execucao_fisica_financeira"):
-        ("ouro", "ouro_rural_execucao_fisica_financeira"),
-    ("empreendimento_rural", "gold_ficha_trabalho_social"):
-        ("ouro", "ouro_rural_ficha_trabalho_social"),
-    ("empreendimento_rural", "gold_perfil_beneficiarios"):
-        ("ouro", "ouro_rural_perfil_beneficiarios"),
-    ("empreendimento_rural", "gold_infraestrutura_agua_saneamento"):
-        ("ouro", "ouro_rural_infraestrutura_agua_saneamento"),
+    ("empreendimento_rural", "gold_ficha_empreendimento"): (
+        "ouro",
+        "ouro_rural_ficha_empreendimento",
+    ),
+    ("empreendimento_rural", "gold_resumo_gerencial"): ("ouro", "ouro_rural_resumo_gerencial"),
+    ("empreendimento_rural", "gold_panorama_estadual"): ("ouro", "ouro_rural_panorama_estadual"),
+    ("empreendimento_rural", "gold_mapa_nacional"): ("ouro", "ouro_rural_mapa_nacional"),
+    ("empreendimento_rural", "gold_evolucao_financeira"): (
+        "ouro",
+        "ouro_rural_evolucao_financeira",
+    ),
+    ("empreendimento_rural", "gold_execucao_fisica_financeira"): (
+        "ouro",
+        "ouro_rural_execucao_fisica_financeira",
+    ),
+    ("empreendimento_rural", "gold_ficha_trabalho_social"): (
+        "ouro",
+        "ouro_rural_ficha_trabalho_social",
+    ),
+    ("empreendimento_rural", "gold_perfil_beneficiarios"): (
+        "ouro",
+        "ouro_rural_perfil_beneficiarios",
+    ),
+    ("empreendimento_rural", "gold_infraestrutura_agua_saneamento"): (
+        "ouro",
+        "ouro_rural_infraestrutura_agua_saneamento",
+    ),
 }
 
 # Nomes que a rodada anterior pode ter deixado para trás. O dataset pode estar em
 # qualquer um dos dois estados dependendo de quando o Superset foi ajustado pela última
 # vez, então os dois são procurados e levam ao mesmo destino.
 ALIASES_ANTIGOS: Dict[Tuple[str, str], Tuple[str, str]] = {
-    ("empreendimento_rural_gold", "ficha_empreendimento_rural"):
-        ("ouro", "ouro_rural_ficha_empreendimento"),
-    ("empreendimento_rural_gold", "resumo_gerencial_rural"):
-        ("ouro", "ouro_rural_resumo_gerencial"),
-    ("empreendimento_rural_gold", "panorama_estadual_rural"):
-        ("ouro", "ouro_rural_panorama_estadual"),
-    ("empreendimento_rural_gold", "mapa_nacional_rural"):
-        ("ouro", "ouro_rural_mapa_nacional"),
-    ("empreendimento_rural_gold", "evolucao_financeira_rural"):
-        ("ouro", "ouro_rural_evolucao_financeira"),
-    ("empreendimento_rural_gold", "execucao_fisica_financeira_chart_rural"):
-        ("ouro", "ouro_rural_execucao_fisica_financeira"),
-    ("empreendimento_rural_gold", "ficha_trabalho_social"):
-        ("ouro", "ouro_rural_ficha_trabalho_social"),
-    ("empreendimento_rural_gold", "perfil_beneficiarios"):
-        ("ouro", "ouro_rural_perfil_beneficiarios"),
-    ("empreendimento_rural_gold", "infraestrutura_agua_saneamento"):
-        ("ouro", "ouro_rural_infraestrutura_agua_saneamento"),
+    ("empreendimento_rural_gold", "ficha_empreendimento_rural"): (
+        "ouro",
+        "ouro_rural_ficha_empreendimento",
+    ),
+    ("empreendimento_rural_gold", "resumo_gerencial_rural"): (
+        "ouro",
+        "ouro_rural_resumo_gerencial",
+    ),
+    ("empreendimento_rural_gold", "panorama_estadual_rural"): (
+        "ouro",
+        "ouro_rural_panorama_estadual",
+    ),
+    ("empreendimento_rural_gold", "mapa_nacional_rural"): ("ouro", "ouro_rural_mapa_nacional"),
+    ("empreendimento_rural_gold", "evolucao_financeira_rural"): (
+        "ouro",
+        "ouro_rural_evolucao_financeira",
+    ),
+    ("empreendimento_rural_gold", "execucao_fisica_financeira_chart_rural"): (
+        "ouro",
+        "ouro_rural_execucao_fisica_financeira",
+    ),
+    ("empreendimento_rural_gold", "ficha_trabalho_social"): (
+        "ouro",
+        "ouro_rural_ficha_trabalho_social",
+    ),
+    ("empreendimento_rural_gold", "perfil_beneficiarios"): (
+        "ouro",
+        "ouro_rural_perfil_beneficiarios",
+    ),
+    ("empreendimento_rural_gold", "infraestrutura_agua_saneamento"): (
+        "ouro",
+        "ouro_rural_infraestrutura_agua_saneamento",
+    ),
 }
 
 
@@ -179,8 +203,9 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    faltando = [v for v in ("SUPERSET_URL", "SUPERSET_USER", "SUPERSET_PASSWORD")
-                if not os.environ.get(v)]
+    faltando = [
+        v for v in ("SUPERSET_URL", "SUPERSET_USER", "SUPERSET_PASSWORD") if not os.environ.get(v)
+    ]
     if faltando:
         print(f"Faltam variáveis de ambiente: {', '.join(faltando)}")
         print("Rode antes:  set -a; source .env; set +a")
@@ -198,9 +223,9 @@ def main() -> int:
     if args.procurar:
         termo = args.procurar.lower()
         achados = [
-            d for d in existentes
-            if termo in (d.get("schema") or "").lower()
-            or termo in d["table_name"].lower()
+            d
+            for d in existentes
+            if termo in (d.get("schema") or "").lower() or termo in d["table_name"].lower()
         ]
         print(f"{len(achados)} de {len(existentes)} datasets casam com {args.procurar!r}:\n")
         for d in sorted(achados, key=lambda x: ((x.get("schema") or ""), x["table_name"])):
@@ -218,8 +243,10 @@ def main() -> int:
     for d in existentes:
         por_chave.setdefault((d.get("schema") or "", d["table_name"]), []).append(d)
 
-    print(f"{'APPLY' if args.apply else 'DRY-RUN'} · {sup.url} · "
-          f"{len(existentes)} datasets no Superset\n")
+    print(
+        f"{'APPLY' if args.apply else 'DRY-RUN'} · {sup.url} · "
+        f"{len(existentes)} datasets no Superset\n"
+    )
 
     achados: List[Tuple[dict, Tuple[str, str]]] = []
     ausentes: List[Tuple[str, str]] = []
@@ -253,11 +280,15 @@ def main() -> int:
             print(f"    {sch}.{tab} -> ids {', '.join(str(i) for i in ids)}")
 
     if ja_no_destino:
-        print(f"\n  já no destino ({len(set(ja_no_destino))}): "
-              + ", ".join(f"{s}.{t}" for s, t in sorted(set(ja_no_destino))))
+        print(
+            f"\n  já no destino ({len(set(ja_no_destino))}): "
+            + ", ".join(f"{s}.{t}" for s, t in sorted(set(ja_no_destino)))
+        )
     if ausentes:
-        print(f"\n  não encontrados ({len(ausentes)}) — provavelmente já renomeados "
-              f"numa rodada anterior, ou nunca existiram:")
+        print(
+            f"\n  não encontrados ({len(ausentes)}) — provavelmente já renomeados "
+            f"numa rodada anterior, ou nunca existiram:"
+        )
         for s, t in ausentes:
             print(f"    {s}.{t}")
 
@@ -266,8 +297,10 @@ def main() -> int:
         return 0
 
     if not args.apply:
-        print(f"\n{len(achados)} dataset(s) seriam renomeados "
-              f"({len(set(k for _, k in achados))} tabelas). Rode com --apply.")
+        print(
+            f"\n{len(achados)} dataset(s) seriam renomeados "
+            f"({len(set(k for _, k in achados))} tabelas). Rode com --apply."
+        )
         return 0
 
     erros = 0
@@ -284,8 +317,10 @@ def main() -> int:
 
     print(f"\n{len(achados) - erros} renomeado(s), {erros} com erro.")
     if erros == 0:
-        print("Os gráficos seguem ligados aos mesmos datasets por id — nada a refazer, "
-              "desde que os nomes de coluna não tenham mudado.")
+        print(
+            "Os gráficos seguem ligados aos mesmos datasets por id — nada a refazer, "
+            "desde que os nomes de coluna não tenham mudado."
+        )
     return 1 if erros else 0
 
 

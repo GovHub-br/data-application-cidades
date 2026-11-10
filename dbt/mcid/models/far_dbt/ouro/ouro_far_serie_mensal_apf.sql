@@ -19,9 +19,7 @@ select
     coalesce(f.nome_empreendimento, upper(s.empreendimento_nome)) as nome_empreendimento,
     coalesce(
         f.apf_municipio_empreendimento,
-        concat(
-            s.apf, ' - ', s.municipio, '/', s.uf, ' - ', upper(s.empreendimento_nome)
-        )
+        concat(s.apf, ' - ', s.municipio, '/', s.uf, ' - ', upper(s.empreendimento_nome))
     ) as apf_municipio_empreendimento,
     s.municipio,
     s.uf,

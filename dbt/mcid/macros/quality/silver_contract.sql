@@ -164,13 +164,10 @@
 
     {% if checks %}
         {% for check in checks %}
-            select * from (
-                {{ check }}
-            ) as verificacao_{{ loop.index }}
-            {{ "union all" if not loop.last }}
+            select *
+            from ({{ check }}) as verificacao_{{ loop.index }} {{ "union all" if not loop.last }}
         {% endfor %}
-    {% else %}
-        select null::text as regra, null::text as detalhe where false
+    {% else %} select null::text as regra, null::text as detalhe where false
     {% endif %}
 
 {% endtest %}
@@ -194,8 +191,7 @@
         select null::text as regra, null::text as detalhe where false
     {% else %}
         {% set key_columns_sql = [] %}
-        {% for column in key_columns %}
-            {% do key_columns_sql.append('"' ~ column ~ '"') %}
+        {% for column in key_columns %} {% do key_columns_sql.append('"' ~ column ~ '"') %}
         {% endfor %}
         {% set first_key = key_columns[0] %}
         {% set local_measures = [] %}
@@ -208,41 +204,40 @@
             {% do difference_checks.append('abs(l."' ~ local_column ~ '" - r."' ~ local_column ~ '") > ' ~ tolerance) %}
         {% endfor %}
 
-        with base_atual as (
-            select
-                {{ key_columns_sql | join(', ') }},
-                {{ local_measures | join(', ') }}
-            from {{ model }}
-            group by {{ key_columns_sql | join(', ') }}
-        ),
-        base_comparada as (
-            select
-                {{ key_columns_sql | join(', ') }},
-                {{ external_measures | join(', ') }}
-            from {{ compare_model }}
-            group by {{ key_columns_sql | join(', ') }}
-        ),
-        chaves_divergentes as (
-            select
-                'chave_ausente_em_uma_fonte'::text as regra,
-                'chave de reconciliação'::text as detalhe
-            from base_atual l
-            full outer join base_comparada r using ({{ key_columns_sql | join(', ') }})
-            where l."{{ first_key }}" is null or r."{{ first_key }}" is null
-            limit 1
-        ),
-        medidas_divergentes as (
-            select
-                'medida_divergente_entre_fontes'::text as regra,
-                'métrica de reconciliação'::text as detalhe
-            from base_atual l
-            inner join base_comparada r using ({{ key_columns_sql | join(', ') }})
-            where {{ difference_checks | join(' or ') }}
-            limit 1
-        )
-        select * from chaves_divergentes
+        with
+            base_atual as (
+                select {{ key_columns_sql | join(', ') }}, {{ local_measures | join(', ') }}
+                from {{ model }}
+                group by {{ key_columns_sql | join(', ') }}
+            ),
+            base_comparada as (
+                select {{ key_columns_sql | join(', ') }}, {{ external_measures | join(', ') }}
+                from {{ compare_model }}
+                group by {{ key_columns_sql | join(', ') }}
+            ),
+            chaves_divergentes as (
+                select
+                    'chave_ausente_em_uma_fonte'::text as regra,
+                    'chave de reconciliação'::text as detalhe
+                from base_atual l
+                full outer join base_comparada r using ({{ key_columns_sql | join(', ') }})
+                where l."{{ first_key }}" is null or r."{{ first_key }}" is null
+                limit 1
+            ),
+            medidas_divergentes as (
+                select
+                    'medida_divergente_entre_fontes'::text as regra,
+                    'métrica de reconciliação'::text as detalhe
+                from base_atual l
+                inner join base_comparada r using ({{ key_columns_sql | join(', ') }})
+                where {{ difference_checks | join(' or ') }}
+                limit 1
+            )
+        select *
+        from chaves_divergentes
         union all
-        select * from medidas_divergentes
+        select *
+        from medidas_divergentes
     {% endif %}
 
 {% endtest %}
@@ -251,12 +246,11 @@
 {# Teste separado para que segurança seja a única regra bloqueante inicial. #}
 {% test sem_coluna_sensivel(model) %}
 
-    select
-        'nome_de_coluna_sensivel'::text as regra,
-        'coluna sensível identificada'::text as detalhe
+    select 'nome_de_coluna_sensivel'::text as regra, 'coluna sensível identificada'::text as detalhe
     from information_schema.columns
-    where table_schema = '{{ model.schema }}'
-      and table_name = '{{ model.identifier }}'
-      and {{ expressao_sensivel('column_name') }}
+    where
+        table_schema = '{{ model.schema }}'
+        and table_name = '{{ model.identifier }}'
+        and {{ expressao_sensivel('column_name') }}
 
 {% endtest %}

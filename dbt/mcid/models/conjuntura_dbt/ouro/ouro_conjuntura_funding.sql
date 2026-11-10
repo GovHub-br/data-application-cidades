@@ -3,7 +3,6 @@
 -- Ouro do conjuntura: Estrutura de Funding — SBPE, FGTS, LCI, LCA,
 -- CRI, CRA, LIG (estoques, R$ bi). Página 4. Dado MANUAL (boletim.xlsx /
 -- bronze.bronze_manual_dados_mensais).
-
 select
     periodo,
     ano,

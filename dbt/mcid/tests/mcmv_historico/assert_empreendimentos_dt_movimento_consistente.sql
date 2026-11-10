@@ -22,12 +22,11 @@ with
         from {{ ref('prata_rural_historico_empreendimento') }}
     )
 
-select
-    fonte_tabela,
-    count(*) as divergencias
+select fonte_tabela, count(*) as divergencias
 from consolidado
-where dt_movimento is not null
-  and fonte_serie <> 'obra_mensal'
-  and date_trunc('month', dt_movimento) <> date_trunc('month', dt_referencia)
+where
+    dt_movimento is not null
+    and fonte_serie <> 'obra_mensal'
+    and date_trunc('month', dt_movimento) <> date_trunc('month', dt_referencia)
 group by fonte_tabela
 having count(*) > 0

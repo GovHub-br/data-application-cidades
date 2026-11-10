@@ -47,18 +47,14 @@ with
 
             -- Composição financeira do investimento
             {{ parse_financial_value("vr_emprestimo_far") }} as vr_emprestimo_far,
-            {{ parse_financial_value("vr_total_contrapartidas") }}
-            as vr_contrapartida_ente_publico,
+            {{ parse_financial_value("vr_total_contrapartidas") }} as vr_contrapartida_ente_publico,
             {{ parse_financial_value("vr_total_investimento") }} as vr_total_investimento,
             {{ parse_financial_value("vr_obra_edificacao") }} as vr_obra_edificacao,
             {{ parse_financial_value("vr_terreno") }} as vr_terreno,
             {{ parse_financial_value("vr_ts") }} as vr_trabalho_social,
-            {{ parse_financial_value("vr_equipamento_uso_comum") }}
-            as vr_equipamento_uso_comum,
-            {{ parse_financial_value("vr_legalizacao_empreendimento") }}
-            as vr_legalizacao,
-            {{ parse_financial_value("vr_seguros_obrigatorios") }}
-            as vr_seguro_obrigatorio,
+            {{ parse_financial_value("vr_equipamento_uso_comum") }} as vr_equipamento_uso_comum,
+            {{ parse_financial_value("vr_legalizacao_empreendimento") }} as vr_legalizacao,
+            {{ parse_financial_value("vr_seguros_obrigatorios") }} as vr_seguro_obrigatorio,
 
             -- Datas-chave
             {{ var('schema_udfs') }}.parse_date_br(dt_contratacao) as dt_contratacao,
@@ -72,9 +68,7 @@ with
             {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
 
             -- Indicadores
-            case
-                when trim(ic_terreno_doado) = 'S' then true else false
-            end as ic_terreno_doado,
+            case when trim(ic_terreno_doado) = 'S' then true else false end as ic_terreno_doado,
             case
                 when trim(ic_sistema_aquec_solar) = 'S' then true else false
             end as ic_aquecimento_solar,

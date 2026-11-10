@@ -30,8 +30,7 @@ with
             {{ parse_financial_value("vr_pago_projeto") }} as vr_pago_projeto,
             {{ parse_financial_value("vr_pago_aporte_suplementacao") }} as vr_pago_aporte,
             {{ parse_financial_value("vr_pago_despesas_incc") }} as vr_pago_incc,
-            {{ parse_financial_value("vr_pago_cartorios_legalizacao") }}
-            as vr_pago_legalizacao,
+            {{ parse_financial_value("vr_pago_cartorios_legalizacao") }} as vr_pago_legalizacao,
             {{ parse_financial_value("vr_pago_seguranca") }} as vr_pago_seguranca,
 
             -- Percentual de evolução

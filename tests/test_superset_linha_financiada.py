@@ -21,9 +21,7 @@ def test_dashboard_tem_mapa_e_cobertura_das_perguntas() -> None:
 def test_campos_dos_charts_conferem_com_as_golds() -> None:
     m = linha_financiada
     por_chave = {c["key"]: c for c in m.CHARTS}
-    assert por_chave["semanal"]["params"]["order_by_cols"] == [
-        '["semana_referencia", false]'
-    ]
+    assert por_chave["semanal"]["params"]["order_by_cols"] == ['["semana_referencia", false]']
     assert "ic_valor_informado" in por_chave["contrapartidas"]["params"]["groupby"]
 
 

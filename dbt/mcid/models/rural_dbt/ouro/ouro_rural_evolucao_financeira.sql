@@ -2,7 +2,6 @@
 
 -- Gold: Evolução Financeira Rural — Série temporal de desembolsos consolidados por APF × mês.
 -- Une o financeiro do Novo MCMV Rural com as liberações históricas do PNHR.
-
 with
     financeiro_novo as (
         select
@@ -14,8 +13,7 @@ with
             -- positivo. O sinal é invertido aqui para liberação somar e devolução
             -- subtrair — somar vr_movimento cru daria o acumulado ao contrário.
             case
-                when ic_credito = '1' then -abs(vr_movimento)
-                else abs(vr_movimento)
+                when ic_credito = '1' then - abs(vr_movimento) else abs(vr_movimento)
             end as vr_liberado,
             vr_desembolso_obra as vr_pago_obra,
             vr_desembolso_trabalho_social as vr_pago_ts,
@@ -44,9 +42,11 @@ with
     ),
 
     union_financeiro as (
-        select * from financeiro_novo
+        select *
+        from financeiro_novo
         union all
-        select * from financeiro_pnhr
+        select *
+        from financeiro_pnhr
     ),
 
     mensal_agrupado as (
@@ -64,9 +64,7 @@ with
         group by apf, mes
     ),
 
-    empreendimento as (
-        select * from {{ ref("prata_rural_empreendimento") }}
-    ),
+    empreendimento as (select * from {{ ref("prata_rural_empreendimento") }}),
 
     evolucao as (
         select
@@ -85,9 +83,7 @@ with
             m.vr_pago_custos_indiretos_mes,
 
             -- Acumulado progressivo por APF
-            sum(m.vr_liberado_mes) over (
-                partition by e.apf order by m.mes
-            ) as vr_acumulado,
+            sum(m.vr_liberado_mes) over (partition by e.apf order by m.mes) as vr_acumulado,
 
             -- Metadados do contrato
             e.valor_contratado,

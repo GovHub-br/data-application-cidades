@@ -8,9 +8,7 @@ from tests.conftest import fresh_import
 def _carregar_modulo():
     # the package copies the env at import; nothing else reads it, so it can be undone
     with pytest.MonkeyPatch.context() as mp:
-        return fresh_import(
-            mp, "mascaramento.regras", MASKING_HMAC_SECRET="segredo-de-teste"
-        )
+        return fresh_import(mp, "mascaramento.regras", MASKING_HMAC_SECRET="segredo-de-teste")
 
 
 def test_cadunico_preserva_perfil_e_protege_identificadores():

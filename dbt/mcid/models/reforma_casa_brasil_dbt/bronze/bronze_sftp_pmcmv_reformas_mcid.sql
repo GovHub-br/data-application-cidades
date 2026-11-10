@@ -6,7 +6,8 @@
 {% set padrao = "s3://data-lake-mcid/staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet" %}
 
 select *
-from {{ fonte_lake(
+from
+    {{ fonte_lake(
     'reforma_contratos',
     'lake_staging_reforma_casa_brasil',
     filename=true,
