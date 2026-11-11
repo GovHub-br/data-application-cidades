@@ -51,6 +51,12 @@ PASTAS_IGNORADAS = {"dados_historicos"}
 LINEAGE_COLS = ["_source_file", "_ingested_at", "_source_hash"]
 
 
+def colunas_de_linhagem(load_id: "str | None") -> list:
+    """`_load_id` só nas cargas com pasta `load_id=` (ADR-0005). No legado a coluna nova
+    quebraria as bronzes que leem vários parquets juntos sem `union_by_name`."""
+    return LINEAGE_COLS + (["_load_id"] if load_id else [])
+
+
 # Artefatos locais (log em arquivo, cópia da auditoria): úteis standalone, mas o diretório
 # do script pode não ser gravável. O container do Airflow define LAKE_LOCAL_ARTIFACTS=0.
 _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (

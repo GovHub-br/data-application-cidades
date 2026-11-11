@@ -9,7 +9,7 @@ import pyarrow.parquet as pq
 
 from lake_utils import normalizar_colunas
 
-from .config import LINEAGE_COLS
+from .config import colunas_de_linhagem
 
 
 def _converter_json(
@@ -18,6 +18,7 @@ def _converter_json(
     source_file: str,
     source_hash: str,
     ingested_at: str,
+    load_id: "str | None" = None,
 ) -> Tuple[int, int, dict]:
     """Converte raw/<fonte>/<dado>.json (list[dict]) para parquet full-text.
 
@@ -48,9 +49,11 @@ def _converter_json(
     df["_source_file"] = source_file
     df["_ingested_at"] = ingested_at
     df["_source_hash"] = source_hash
+    if load_id:
+        df["_load_id"] = load_id
 
     campos = [pa.field(n, pa.string()) for n in nomes_finais]
-    campos += [pa.field(c, pa.string()) for c in LINEAGE_COLS]
+    campos += [pa.field(c, pa.string()) for c in colunas_de_linhagem(load_id)]
     meta = {
         b"source_file": source_file.encode("utf-8"),
         b"source_hash": source_hash.encode("utf-8"),
