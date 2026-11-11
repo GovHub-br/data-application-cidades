@@ -29,9 +29,10 @@ from schedule_loader import get_dynamic_schedule
 def minio_transform_dag() -> None:
     """Pipeline de transformação do data lake: raw/ -> mascaramento PII -> staging/.
 
-    Roda sobre o que estiver em raw/ no MinIO, INDEPENDENTE de quem carregou (SFTP hoje,
-    outras fontes no futuro). Desacoplada da ingestão: schedule próprio, sem referência
-    às DAGs de fonte.
+    Roda só sobre raw/sftp/ e raw/sharepoint/ (`PREFIXOS_LEGADO`, em lake_utils.py), os
+    canais sem conversão própria. As DAGs de API gravam a própria staging, e varrer raw/
+    inteira regravava por cima dela (B1, #248). Desacoplada da ingestão: schedule próprio,
+    sem referência às DAGs de fonte.
 
     Duas etapas encadeadas, cada uma idempotente/incremental (tabelas de controle no
     schema `lake` do Postgres), então execuções agendadas só processam o que é novo.
