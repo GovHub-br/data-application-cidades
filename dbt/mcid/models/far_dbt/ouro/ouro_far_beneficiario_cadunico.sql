@@ -20,15 +20,18 @@ with
             cad.ic_pcd,
             cad.ic_bolsa_familia,
             case
-                when cad.dt_atualizacao_cadastro is null or c.dt_assinatura is null then null
-                when cad.dt_atualizacao_cadastro >= c.dt_assinatura then 'Depois da assinatura'
+                when cad.dt_atualizacao_cadastro is null or c.dt_assinatura is null
+                then null
+                when cad.dt_atualizacao_cadastro >= c.dt_assinatura
+                then 'Depois da assinatura'
                 else 'Antes da assinatura'
             end as momento_cadastro,
             cad.cod_ibge_cadastro = c.cod_ibge as ic_mesmo_municipio,
             cad.despesa_energia,
             cad.despesa_agua_esgoto
         from {{ ref("prata_far_contrato_pf") }} c
-        left join {{ ref("prata_far_beneficiario_cadunico") }} cad
+        left join
+            {{ ref("prata_far_beneficiario_cadunico") }} cad
             on cad.geracao = c.geracao
             and cad.agente_financeiro = c.agente_financeiro
             and cad.nu_contrato = c.nu_contrato

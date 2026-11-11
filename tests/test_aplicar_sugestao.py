@@ -138,17 +138,13 @@ def test_model_sem_entrada_no_yaml_e_criado_ao_lado_do_sql(models: Path) -> None
     (models / "far" / "ouro" / "ouro_c.sql").write_text("select 1", encoding="utf-8")
     arquivo = ap.aplicar("ouro_c", None, "Tabela nova.", models)
     assert arquivo == models / "far" / "ouro" / "schema.yml"
-    assert arquivo.read_text().endswith(
-        "\n  - name: ouro_c\n    description: Tabela nova.\n"
-    )
+    assert arquivo.read_text().endswith("\n  - name: ouro_c\n    description: Tabela nova.\n")
 
 
 def test_descricao_em_bloco_doc_edita_o_markdown(models: Path) -> None:
     schema = models / "far" / "ouro" / "schema.yml"
     schema.write_text(
-        SCHEMA.replace(
-            "description: Texto antigo.", "description: '{{ doc(\"ouro_a\") }}'"
-        ),
+        SCHEMA.replace("description: Texto antigo.", "description: '{{ doc(\"ouro_a\") }}'"),
         encoding="utf-8",
     )
     md = models / "far" / "docs.md"

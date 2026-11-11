@@ -16,8 +16,7 @@ class ClienteMRV:
     # O company_id da MRV na plataforma da MZ
     COMPANY_ID = "4b56353d-d5d9-435f-bf63-dcbf0a6c25d5"
     URL_API = (
-        f"https://apicatalog.mziq.com/filemanager/company/{COMPANY_ID}"
-        f"/filter/categories/year/meta"
+        f"https://apicatalog.mziq.com/filemanager/company/{COMPANY_ID}/filter/categories/year/meta"
     )
 
     # Categoria interna que identifica a Planilha Interativa no JSON
@@ -68,14 +67,10 @@ class ClienteMRV:
             documentos = dados.get("data", {}).get("document_metas", [])
 
             if not documentos:
-                logging.info(
-                    f"[cliente_mrv.py] Nenhum doc para {ano}, tentando ano anterior."
-                )
+                logging.info(f"[cliente_mrv.py] Nenhum doc para {ano}, tentando ano anterior.")
                 continue
 
-            planilhas = [
-                doc for doc in documentos if doc.get("internal_name") == self.CAT_PLANILHA
-            ]
+            planilhas = [doc for doc in documentos if doc.get("internal_name") == self.CAT_PLANILHA]
 
             if not planilhas:
                 continue
@@ -88,8 +83,7 @@ class ClienteMRV:
 
             if link:
                 logging.info(
-                    f"[cliente_mrv.py] Planilha encontrada! "
-                    f"Referência: {trimestre}T{str(ano)[2:]}"
+                    f"[cliente_mrv.py] Planilha encontrada! Referência: {trimestre}T{str(ano)[2:]}"
                 )
                 return link
             else:
@@ -192,9 +186,7 @@ class ClienteMRV:
             # Faz um recorte a partir dessa índice e procura o subgrupo
             df_recorte = df_bruto.iloc[idx_secao:]
             col_0_recorte = df_recorte[0].astype(str)
-            mask_sub = col_0_recorte.str.contains(
-                "MRV Incorporação", case=False, na=False
-            )
+            mask_sub = col_0_recorte.str.contains("MRV Incorporação", case=False, na=False)
             if not mask_sub.any():
                 logging.error("[cliente_mrv.py] Subgrupo 'MRV Incorporação' não achado")
                 return None
@@ -226,8 +218,7 @@ class ClienteMRV:
             df_tabela = df_tabela[~df_tabela[kpi_ancora].isin(["nan", "None", ""])]
 
             logging.info(
-                f"[cliente_mrv.py] Extração de '{nome_secao}' concluída. "
-                f"Shape: {df_tabela.shape}"
+                f"[cliente_mrv.py] Extração de '{nome_secao}' concluída. Shape: {df_tabela.shape}"
             )
             return df_tabela
 

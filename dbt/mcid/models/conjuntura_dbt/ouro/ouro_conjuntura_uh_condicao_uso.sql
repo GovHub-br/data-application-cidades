@@ -19,49 +19,55 @@
 -- automatizada publica só o total de aquisição, e inventar o rateio seria
 -- pior que deixar nulo. Onde o manual não alcança, o total existe e o
 -- split fica em branco.
+with
+    fgts_pf as (
+        select
+            ano,
+            mes,
+            sum(qtd_unidades) filter (where tipo_imovel = 'Novo') as fgts_pf_uh_novos,
+            sum(qtd_unidades) filter (where tipo_imovel = 'Usado') as fgts_pf_uh_usados,
+            sum(valor_emprestimo) filter (where tipo_imovel = 'Novo') as fgts_pf_milhoes_novos,
+            sum(valor_emprestimo) filter (where tipo_imovel = 'Usado') as fgts_pf_milhoes_usados
+        from {{ ref('prata_conjuntura_geavo_fgts_pf') }}
+        group by ano, mes
+    ),
 
-with fgts_pf as (
-    select
-        ano, mes,
-        sum(qtd_unidades) filter (where tipo_imovel = 'Novo')  as fgts_pf_uh_novos,
-        sum(qtd_unidades) filter (where tipo_imovel = 'Usado') as fgts_pf_uh_usados,
-        sum(valor_emprestimo) filter (where tipo_imovel = 'Novo')  as fgts_pf_milhoes_novos,
-        sum(valor_emprestimo) filter (where tipo_imovel = 'Usado') as fgts_pf_milhoes_usados
-    from {{ ref('prata_conjuntura_geavo_fgts_pf') }}
-    group by ano, mes
-),
+    sbpe_split as (
+        select
+            periodo,
+            ano,
+            mes,
+            abecip_sbpe_fin_uh_aq_novos,
+            abecip_sbpe_fin_uh_aq_usados,
+            abecip_sbpe_fin_milhoes_aq_novos,
+            abecip_sbpe_fin_milhoes_aq_usados
+        from {{ ref('prata_conjuntura_manual_mensais') }}
+        where coalesce(abecip_sbpe_fin_uh_aq_novos, abecip_sbpe_fin_uh_aq_usados) is not null
+    ),
 
-sbpe_split as (
-    select
-        periodo, ano, mes,
-        abecip_sbpe_fin_uh_aq_novos,
-        abecip_sbpe_fin_uh_aq_usados,
-        abecip_sbpe_fin_milhoes_aq_novos,
-        abecip_sbpe_fin_milhoes_aq_usados
-    from {{ ref('prata_conjuntura_manual_mensais') }}
-    where coalesce(abecip_sbpe_fin_uh_aq_novos, abecip_sbpe_fin_uh_aq_usados) is not null
-),
-
--- espinha da série: a fonte automatizada, que é a que está em dia
-sbpe as (
-    select
-        a.ano::text || '-' || lpad(a.mes::text, 2, '0') as periodo,
-        a.ano, a.mes,
-        a.unidades_aquisicao       as abecip_sbpe_fin_uh_aq_total,
-        a.valor_aquisicao_milhoes  as abecip_sbpe_fin_milhoes_aq_total,
-        s.abecip_sbpe_fin_uh_aq_novos,
-        s.abecip_sbpe_fin_uh_aq_usados,
-        s.abecip_sbpe_fin_milhoes_aq_novos,
-        s.abecip_sbpe_fin_milhoes_aq_usados
-    from {{ ref('prata_conjuntura_abecip_financiamentos') }} a
-    left join sbpe_split s on s.ano = a.ano and s.mes = a.mes
-)
+    -- espinha da série: a fonte automatizada, que é a que está em dia
+    sbpe as (
+        select
+            a.ano::text || '-' || lpad(a.mes::text, 2, '0') as periodo,
+            a.ano,
+            a.mes,
+            a.unidades_aquisicao as abecip_sbpe_fin_uh_aq_total,
+            a.valor_aquisicao_milhoes as abecip_sbpe_fin_milhoes_aq_total,
+            s.abecip_sbpe_fin_uh_aq_novos,
+            s.abecip_sbpe_fin_uh_aq_usados,
+            s.abecip_sbpe_fin_milhoes_aq_novos,
+            s.abecip_sbpe_fin_milhoes_aq_usados
+        from {{ ref('prata_conjuntura_abecip_financiamentos') }} a
+        left join sbpe_split s on s.ano = a.ano and s.mes = a.mes
+    )
 
 select
     coalesce(sbpe.periodo, fgts_pf.ano || '-' || lpad(fgts_pf.mes::text, 2, '0')) as periodo,
-    coalesce(sbpe.ano, fgts_pf.ano)  as ano,
-    coalesce(sbpe.mes, fgts_pf.mes)  as mes,
-    make_date(coalesce(sbpe.ano, fgts_pf.ano)::int, coalesce(sbpe.mes, fgts_pf.mes)::int, 1) as data_referencia,
+    coalesce(sbpe.ano, fgts_pf.ano) as ano,
+    coalesce(sbpe.mes, fgts_pf.mes) as mes,
+    make_date(
+        coalesce(sbpe.ano, fgts_pf.ano)::int, coalesce(sbpe.mes, fgts_pf.mes)::int, 1
+    ) as data_referencia,
     fgts_pf.fgts_pf_uh_novos,
     fgts_pf.fgts_pf_uh_usados,
     fgts_pf.fgts_pf_milhoes_novos,

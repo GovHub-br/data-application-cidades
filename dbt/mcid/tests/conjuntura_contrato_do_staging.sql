@@ -14,7 +14,6 @@
 --
 -- Complementa `gld_qualidade_schema_drift`: o drift avisa no dia seguinte,
 -- comparando retratos; este falha na hora, dentro do build.
-
 {% set linhas = [] %}
 {% if execute %}
     {% for no in graph.sources.values() if no.source_name == 'lake_staging' %}
@@ -28,13 +27,13 @@
     {% endfor %}
 {% endif %}
 
-with medido as (
-    {% if linhas %}
-        {{ linhas | join('\n    union all\n    ') }}
-    {% else %}
-        select null::text as fonte, null::bigint as linhas, null::bigint as minimo where false
-    {% endif %}
-)
+with
+    medido as (
+        {% if linhas %}{{ linhas | join('\n    union all\n    ') }}
+        {% else %}
+            select null::text as fonte, null::bigint as linhas, null::bigint as minimo where false
+        {% endif %}
+    )
 
 select fonte, linhas, minimo
 from medido

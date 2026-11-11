@@ -13,7 +13,7 @@ make docs-serve     # gera o site e serve em http://localhost:8000
 ```
 
 O primeiro `make docs-*` cria um virtualenv próprio em `docs-pages/.venv` com
-`jinja2` e `pyyaml`. Não é preciso ter Airflow, dbt nem Poetry instalados.
+`jinja2` e `pyyaml`. Não é preciso ter Airflow, dbt nem o ambiente do projeto (uv) instalados.
 
 | Comando | O que faz | Precisa de rede |
 |---|---|---|

@@ -54,12 +54,8 @@ select
     cast(e.n_eventos as bigint) as n_eventos,
     e.n_apf_evento,
     cast(s.uh_entregues_snapshot as bigint) as uh_entregues_snapshot,
-    cast(
-        e.uh_entregues_evento_acum - s.uh_entregues_snapshot as bigint
-    ) as dif_evento_vs_snapshot
+    cast(e.uh_entregues_evento_acum - s.uh_entregues_snapshot as bigint) as dif_evento_vs_snapshot
 from evento_acum e
 full outer join
-    snapshot s
-    on e.agente_financeiro = s.agente_financeiro
-    and e.dt_referencia = s.dt_referencia
+    snapshot s on e.agente_financeiro = s.agente_financeiro and e.dt_referencia = s.dt_referencia
 order by agente_financeiro, dt_referencia

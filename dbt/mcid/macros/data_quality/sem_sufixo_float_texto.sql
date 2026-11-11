@@ -26,12 +26,10 @@
 -#}
 {% macro test_sem_sufixo_float_texto(model, column_name) %}
 
-select
-    {{ column_name }} as valor,
-    count(*) as ocorrencias
-from {{ model }}
-where trim(cast({{ column_name }} as varchar)) similar to '-?[0-9]+[.]0+'
-group by {{ column_name }}
-order by ocorrencias desc
+    select {{ column_name }} as valor, count(*) as ocorrencias
+    from {{ model }}
+    where trim(cast({{ column_name }} as varchar)) similar to '-?[0-9]+[.]0+'
+    group by {{ column_name }}
+    order by ocorrencias desc
 
 {% endmacro %}

@@ -25,28 +25,21 @@
 -#}
 {% macro test_acumulado_nao_regride(model, column_name, partition_by, order_by) %}
 
-with ordenado as (
-    select
-        {{ partition_by }} as particao,
-        {{ order_by }} as ordem,
-        {{ column_name }} as valor,
-        lag({{ column_name }}) over (
-            partition by {{ partition_by }} order by {{ order_by }}
-        ) as valor_anterior
-    from {{ model }}
-)
+    with
+        ordenado as (
+            select
+                {{ partition_by }} as particao,
+                {{ order_by }} as ordem,
+                {{ column_name }} as valor,
+                lag({{ column_name }}) over (
+                    partition by {{ partition_by }} order by {{ order_by }}
+                ) as valor_anterior
+            from {{ model }}
+        )
 
-select
-    particao,
-    ordem,
-    valor,
-    valor_anterior,
-    valor_anterior - valor as queda
-from ordenado
-where
-    valor is not null
-    and valor_anterior is not null
-    and valor < valor_anterior
-order by queda desc
+    select particao, ordem, valor, valor_anterior, valor_anterior - valor as queda
+    from ordenado
+    where valor is not null and valor_anterior is not null and valor < valor_anterior
+    order by queda desc
 
 {% endmacro %}

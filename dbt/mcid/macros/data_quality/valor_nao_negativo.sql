@@ -30,12 +30,10 @@
 -#}
 {% macro test_valor_nao_negativo(model, column_name) %}
 
-select
-    {{ column_name }} as valor,
-    count(*) as ocorrencias
-from {{ model }}
-where try_cast({{ column_name }} as double) < 0
-group by {{ column_name }}
-order by valor
+    select {{ column_name }} as valor, count(*) as ocorrencias
+    from {{ model }}
+    where try_cast({{ column_name }} as double) < 0
+    group by {{ column_name }}
+    order by valor
 
 {% endmacro %}

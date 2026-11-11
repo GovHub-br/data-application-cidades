@@ -2,17 +2,9 @@
 
 -- Gold: Infraestrutura de Água e Saneamento Rural (Cisternas e Efluentes)
 -- Consolida a quantidade e o investimento em cisternas e efluentes nos empreendimentos rurais.
-
 with
     fichas as (
-        select
-            apf,
-            nome_empreendimento,
-            municipio,
-            uf,
-            programa,
-            agente_financeiro,
-            quantidade_uh
+        select apf, nome_empreendimento, municipio, uf, programa, agente_financeiro, quantidade_uh
         from {{ ref("ouro_rural_ficha_empreendimento") }}
     ),
 
@@ -67,18 +59,24 @@ select
     coalesce(c.qt_efluente_pj, cpf.qt_efluente_pf) as qt_efluentes,
 
     -- Valores de Investimento
-    coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb) as valor_investimento_cisternas,
-    coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb) as valor_investimento_efluentes,
+    coalesce(
+        c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb
+    ) as valor_investimento_cisternas,
+    coalesce(
+        c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb
+    ) as valor_investimento_efluentes,
 
     -- Investimento Total em Saneamento Alternativo Rural.
     -- Nulo quando NENHUM dos dois componentes é conhecido; quando um dos dois é conhecido,
     -- soma o que se sabe (o `+` sozinho anularia o total por causa do outro nulo).
     case
-        when coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb) is null
-         and coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb) is null
+        when
+            coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb) is null
+            and coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb) is null
         then null
-        else coalesce(coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb), 0.00)
-           + coalesce(coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb), 0.00)
+        else
+            coalesce(coalesce(c.vr_cisterna_pj, pcx.vr_cisterna_cx, pbb.vr_cisterna_bb), 0.00)
+            + coalesce(coalesce(c.vr_efluente_pj, pcx.vr_efluentes_cx, pbb.vr_efluentes_bb), 0.00)
     end as valor_investimento_saneamento_total,
 
     -- Permite separar "não instalou" de "não sabemos", que a soma de zeros misturava.

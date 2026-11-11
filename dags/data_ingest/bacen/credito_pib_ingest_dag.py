@@ -13,9 +13,7 @@ import pandas as pd
 
 @dag(
     dag_id="bacen_credito_pib_ingest_dag",
-    schedule=get_dynamic_schedule(
-        "bacen_credito_pib_ingest_dag", default="@monthly"
-    ),
+    schedule=get_dynamic_schedule("bacen_credito_pib_ingest_dag", default="@monthly"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={

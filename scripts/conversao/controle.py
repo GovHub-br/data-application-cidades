@@ -26,11 +26,9 @@ from .config import (
 
 log = logging.getLogger(__name__)
 
+
 def _conn_str() -> str:
-    return (
-        f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
-        f"user={PG_USER} password={PG_PASSWORD}"
-    )
+    return f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} user={PG_USER} password={PG_PASSWORD}"
 
 
 def _criar_control_table(conn_str: str) -> None:
@@ -126,14 +124,10 @@ def _registrar_control(conn_str: str, rec: dict) -> None:
 
 
 # Auditoria (parquet)
-def _gravar_auditoria(
-    minio: ClienteMinio, execution_id: str, registros: List[dict]
-) -> None:
+def _gravar_auditoria(minio: ClienteMinio, execution_id: str, registros: List[dict]) -> None:
     df = pd.DataFrame(registros)
     if "column_map" in df.columns:
-        df["column_map"] = df["column_map"].apply(
-            lambda v: json.dumps(v, ensure_ascii=False)
-        )
+        df["column_map"] = df["column_map"].apply(lambda v: json.dumps(v, ensure_ascii=False))
     import io as _io
 
     buf = _io.BytesIO()

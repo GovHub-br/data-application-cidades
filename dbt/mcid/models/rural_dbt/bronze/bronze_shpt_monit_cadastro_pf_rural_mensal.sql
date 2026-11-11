@@ -1,6 +1,7 @@
 {{ config(materialized="table") }}
 
--- Bronze: Cadastro PF do Rural — beneficiarios com perfil socioeconomico (renda, pessoas por familia, Bolsa Familia, BPC).
+-- Bronze: Cadastro PF do Rural — beneficiarios com perfil socioeconomico (renda, pessoas por
+-- familia, Bolsa Familia, BPC).
 -- Fonte: SHPT — sharepoint/Novo MCMV - Rural/
 {% set padrao = "s3://data-lake-mcid/staging/**/*MONIT_CADASTRO_PF_RURAL_MENSAL_*.parquet" %}
 

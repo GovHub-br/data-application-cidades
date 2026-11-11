@@ -38,67 +38,62 @@ with
 
     tipado as (
         {% for f in snh_familias %}
-        select
-            -- Usa a coluna da fonte (não o nome do arquivo) para não recuperar
-            -- linhas que a versão anterior do gold descartava — preserva a
-            -- reconciliação exata contra a referência #66. agente_arquivo fica
-            -- disponível na bronze para auditoria.
-            upper(nullif(trim(agente_financeiro::text), '')) as agente_financeiro,
-            case
-                upper(nullif(trim(modalidade::text), ''))
-                when 'FAR'
-                then 'FAR'
-                when 'ENTIDADES'
-                then 'Entidades'
-                when 'FDS'
-                then 'Entidades'
-                when 'FDS / ENTIDADES'
-                then 'Entidades'
-                when 'RURAL'
-                then 'Rural'
-                when 'PNHR'
-                then 'Rural'
-                else nullif(trim(modalidade::text), '')
-            end as frente_mcmv,
-            nullif(trim(apf::text), '') as apf,
-            dt_referencia,
-            try_cast(
-                nullif(trim(data_de_movimento::text), '') as date
-            ) as data_de_movimento,
-            -- Nome da coluna varia por safra na SNH BB (`uhs_*` até 2025-01,
-            -- `uh_*` a partir de 2025-03); CAIXA só tem `uh_*`. coalesce_present
-            -- resolve por família em tempo de compilação.
-            {{ coalesce_present_parsed(
+            select
+                -- Usa a coluna da fonte (não o nome do arquivo) para não recuperar
+                -- linhas que a versão anterior do gold descartava — preserva a
+                -- reconciliação exata contra a referência #66. agente_arquivo fica
+                -- disponível na bronze para auditoria.
+                upper(nullif(trim(agente_financeiro::text), '')) as agente_financeiro,
+                case
+                    upper(nullif(trim(modalidade::text), ''))
+                    when 'FAR'
+                    then 'FAR'
+                    when 'ENTIDADES'
+                    then 'Entidades'
+                    when 'FDS'
+                    then 'Entidades'
+                    when 'FDS / ENTIDADES'
+                    then 'Entidades'
+                    when 'RURAL'
+                    then 'Rural'
+                    when 'PNHR'
+                    then 'Rural'
+                    else nullif(trim(modalidade::text), '')
+                end as frente_mcmv,
+                nullif(trim(apf::text), '') as apf,
+                dt_referencia,
+                try_cast(nullif(trim(data_de_movimento::text), '') as date) as data_de_movimento,
+                -- Nome da coluna varia por safra na SNH BB (`uhs_*` até 2025-01,
+                -- `uh_*` a partir de 2025-03); CAIXA só tem `uh_*`. coalesce_present
+                -- resolve por família em tempo de compilação.
+                {{ coalesce_present_parsed(
                 ref(f.modelo), ["uh_contratadas", "uhs_contratadas"], "parse_hist_bigint", "bigint"
             ) }} as uh_contratadas,
-            {{ coalesce_present_parsed(
+                {{ coalesce_present_parsed(
                 ref(f.modelo), ["uh_entregues", "uhs_entregues"], "parse_hist_bigint", "bigint"
             ) }} as uh_entregues,
-            {{ coalesce_present_parsed(
+                {{ coalesce_present_parsed(
                 ref(f.modelo), ["uh_vigentes", "uhs_vigentes"], "parse_hist_bigint", "bigint"
             ) }} as uh_vigentes,
-            -- distrato de UH (change enriquecer-quantidades-uh-e-sinais-obra-historico):
-            -- só a SNH reporta; 0 é informação, distinto de NULL. Ambos os
-            -- agentes trazem a coluna `quantidade_de_uhs_distratadas`.
-            try_cast(
-                nullif(trim(quantidade_de_uhs_distratadas::text), '') as bigint
-            ) as quantidade_uh_distratadas,
-            upper(nullif(trim(uf::text), '')) as uf,
-            -- strip_float_text: no agente CAIXA ~20% dos códigos IBGE chegam
-            -- como "355030.0" (int->float->str a montante). Ver
-            -- docs/varredura-sufixo-float-texto.md (change testes-data-quality-dbt).
-            {{ strip_float_text('codigo_ibge_do_municipio') }} as codigo_ibge_municipio,
-            nullif(trim(municipio::text), '') as municipio,
-            nullif(trim(situacao_do_empreendimento::text), '') as status_operacional,
-            try_cast(
-                nullif(trim(data_de_contratacao::text), '') as date
-            ) as dt_contratacao,
-            prioridade_reentrega,
-            source_file,
-            hash_linha
-        from {{ ref(f.modelo) }}
-        where nullif(trim(apf::text), '') is not null
-        {{ "union all" if not loop.last }}
+                -- distrato de UH (change enriquecer-quantidades-uh-e-sinais-obra-historico):
+                -- só a SNH reporta; 0 é informação, distinto de NULL. Ambos os
+                -- agentes trazem a coluna `quantidade_de_uhs_distratadas`.
+                try_cast(
+                    nullif(trim(quantidade_de_uhs_distratadas::text), '') as bigint
+                ) as quantidade_uh_distratadas,
+                upper(nullif(trim(uf::text), '')) as uf,
+                -- strip_float_text: no agente CAIXA ~20% dos códigos IBGE chegam
+                -- como "355030.0" (int->float->str a montante). Ver
+                -- docs/varredura-sufixo-float-texto.md (change testes-data-quality-dbt).
+                {{ strip_float_text('codigo_ibge_do_municipio') }} as codigo_ibge_municipio,
+                nullif(trim(municipio::text), '') as municipio,
+                nullif(trim(situacao_do_empreendimento::text), '') as status_operacional,
+                try_cast(nullif(trim(data_de_contratacao::text), '') as date) as dt_contratacao,
+                prioridade_reentrega,
+                source_file,
+                hash_linha
+            from {{ ref(f.modelo) }}
+            where nullif(trim(apf::text), '') is not null {{ "union all" if not loop.last }}
         {% endfor %}
     ),
 
@@ -107,8 +102,7 @@ with
             *,
             row_number() over (
                 partition by agente_financeiro, apf, dt_referencia
-                order by
-                    prioridade_reentrega desc, data_de_movimento nulls last, source_file
+                order by prioridade_reentrega desc, data_de_movimento nulls last, source_file
             ) as rn
         from tipado
         where dt_referencia is not null and agente_financeiro is not null
@@ -134,10 +128,10 @@ with
             dr.regiao_sigla,
             dr.regiao_nome
         from dedup d
-        left join {{ ref('dominio_status') }} ds
+        left join
+            {{ ref('dominio_status') }} ds
             on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
-        left join {{ ref('dominio_regiao_uf') }} dr
-            on upper(trim(d.uf)) = upper(trim(dr.uf))
+        left join {{ ref('dominio_regiao_uf') }} dr on upper(trim(d.uf)) = upper(trim(dr.uf))
     )
 
 select

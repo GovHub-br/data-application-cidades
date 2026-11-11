@@ -13,16 +13,14 @@ from pathlib import Path
 
 import pytest
 
-from tests.conftest import fresh_import
+from tests.conftest import TEST_ENV, fresh_import
 
 _SEGREDO = "segredo-de-teste"
 
 
 # the package copies the env at import; nothing else reads it, so it can be undone
 with pytest.MonkeyPatch.context() as _mp:
-    modulo = fresh_import(
-        _mp, "mascarar_minio", "mascaramento", MASKING_HMAC_SECRET=_SEGREDO
-    )
+    modulo = fresh_import(_mp, "mascarar_minio", "mascaramento", MASKING_HMAC_SECRET=_SEGREDO)
 
 import cliente_minio  # noqa: E402
 from mascaramento import paralelo as mod_paralelo, regras, tabular  # noqa: E402
@@ -86,9 +84,7 @@ class S3Falso:
         if IfMatch != self._etag(Key):
             raise _Erro("PreconditionFailed")
         cair_em = self.quedas.pop(0) - int(inicio) if self.quedas else -1
-        return {
-            "Body": _Corpo(dados[int(inicio) : int(fim or len(dados) - 1) + 1], cair_em)
-        }
+        return {"Body": _Corpo(dados[int(inicio) : int(fim or len(dados) - 1) + 1], cair_em)}
 
     def create_multipart_upload(self, Bucket, Key):
         upload_id = f"u{next(self._ids)}"
@@ -174,9 +170,7 @@ def _via_arquivo(tmp_path: Path, conteudo: bytes) -> bytes:
 
 
 def _processar(minio, apply=True, masked_hashes=None):
-    return modulo.processar_objeto(
-        minio, "", KEY, "exec-teste", apply, masked_hashes or set()
-    )
+    return modulo.processar_objeto(minio, "", KEY, "exec-teste", apply, masked_hashes or set())
 
 
 def test_stream_gera_os_mesmos_bytes_que_o_caminho_em_disco(minio, tmp_path):
@@ -550,9 +544,7 @@ def _rec(status, hash_before=None):
     return rec
 
 
-@pytest.mark.parametrize(
-    "status", ["skipped_no_pii", "skipped_no_header", "skipped_unsupported"]
-)
+@pytest.mark.parametrize("status", ["skipped_no_pii", "skipped_no_header", "skipped_unsupported"])
 def test_triagem_libera_a_staging_sem_marcar_como_mascarado(minio, status):
     minio.s3.objetos[KEY] = CONTEUDO
 
@@ -592,9 +584,9 @@ def test_regravar_o_objeto_volta_a_bloquear_a_staging(minio):
 
 def test_dag_mascara_em_processo_proprio():
     # importado na task, o spawn do modo paralelo reexecuta o binário do Airflow
-    dag = (
-        Path(__file__).parents[1] / "dags/data_ingest/minio/minio_transform_dag.py"
-    ).read_text("utf-8")
+    dag = (Path(__file__).parents[1] / "dags/data_ingest/minio/minio_transform_dag.py").read_text(
+        "utf-8"
+    )
     assert "from mascarar_minio import" not in dag
     assert "scripts/mascarar_minio.py" in dag
     assert "check=True" in dag
@@ -607,7 +599,7 @@ def test_log_vai_para_stderr_sem_artefatos_locais():
         f"import sys, logging; sys.path.insert(0, {str(scripts)!r}); "
         "import mascaramento.config; logging.getLogger('x').info('linha de teste')"
     )
-    env = {**os.environ, "LAKE_LOCAL_ARTIFACTS": "0"}
+    env = {**os.environ, **TEST_ENV, "LAKE_LOCAL_ARTIFACTS": "0"}
     saida = subprocess.run(
         [sys.executable, "-c", codigo],
         env=env,

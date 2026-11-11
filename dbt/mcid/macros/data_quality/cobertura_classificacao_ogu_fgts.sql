@@ -33,28 +33,28 @@
     nivel_valor='nacional'
 ) %}
 
-with medida as (
-    select
-        sum({{ valor_column }}) as valor_total,
-        sum(
-            case
-                when {{ classificacao_column }} is not null
-                    and {{ classificacao_column }} <> '{{ rotulo_ausencia }}'
-                then {{ valor_column }}
-            end
-        ) as valor_classificado
-    from {{ model }}
-    where {{ nivel_column }} = '{{ nivel_valor }}'
-        and {{ valor_column }} is not null
-)
+    with
+        medida as (
+            select
+                sum({{ valor_column }}) as valor_total,
+                sum(
+                    case
+                        when
+                            {{ classificacao_column }} is not null
+                            and {{ classificacao_column }} <> '{{ rotulo_ausencia }}'
+                        then {{ valor_column }}
+                    end
+                ) as valor_classificado
+            from {{ model }}
+            where {{ nivel_column }} = '{{ nivel_valor }}' and {{ valor_column }} is not null
+        )
 
-select
-    valor_total,
-    valor_classificado,
-    valor_classificado::double / nullif(valor_total, 0) as cobertura,
-    {{ min_pct }} as min_pct_exigido
-from medida
-where valor_total > 0
-    and valor_classificado::double / valor_total < {{ min_pct }}
+    select
+        valor_total,
+        valor_classificado,
+        valor_classificado::double / nullif(valor_total, 0) as cobertura,
+        {{ min_pct }} as min_pct_exigido
+    from medida
+    where valor_total > 0 and valor_classificado::double / valor_total < {{ min_pct }}
 
 {% endmacro %}

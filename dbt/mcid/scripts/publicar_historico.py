@@ -32,6 +32,7 @@ Uso:
     python3 scripts/publicar_historico.py --grupo bronzes --dry-run
     python3 scripts/publicar_historico.py --grupo tudo
 """
+
 from __future__ import annotations
 
 import argparse
@@ -60,42 +61,101 @@ import psycopg2
 
 BRONZES_SERIE = [
     # (schema, tabela, familia, glob de origem)
-    ("bronze", "bronze_dhist_serie_entrada_bb",
-     "entrada_bb", "dados_historicos/*entrada_bb*.parquet"),
-    ("bronze", "bronze_dhist_empreendimento_snh_bb",
-     "snh_bb", "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_bb*.parquet"),
-    ("bronze", "bronze_dhist_snh_entregas_evento_bb",
-     "entregas_bb", "dados_historicos/*_da_entrega_da_unidade_af_bb.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int054",
-     "INT054", "sftp/fabrica/GEFUS/**/INT054_*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int059",
-     "INT059", "sftp/fabrica/GEFUS/**/INT059_*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int057",
-     "INT057", "sftp/fabrica/GEFUS/**/INT057_*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int040",
-     "INT040", "sftp/fabrica/GEFUS/**/INT040_*.parquet"),
-    ("bronze", "bronze_dhist_snh_entregas_evento_caixa",
-     "entregas_caixa", "dados_historicos/*_af_caixa_entregas.parquet"),
-    ("bronze", "bronze_dhist_empreendimento_snh_caixa",
-     "snh_caixa", "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_caixa*.parquet"),
-    ("bronze", "bronze_sftp_empreendimento_int065",
-     "INT065", "sftp/fabrica/GEFUS/**/INT065_*.parquet"),
-    ("bronze", "bronze_dhist_serie_bases_relatorio_executivo",
-     "bases_relatorio_executivo", "dados_historicos/*bases_relat*rio_executivo*.parquet"),
-    ("bronze", "bronze_dhist_serie_min_cidades",
-     "min_cidades", "dados_historicos/*min_cidades*.parquet"),
+    (
+        "bronze",
+        "bronze_dhist_serie_entrada_bb",
+        "entrada_bb",
+        "dados_historicos/*entrada_bb*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_dhist_empreendimento_snh_bb",
+        "snh_bb",
+        "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_bb*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_dhist_snh_entregas_evento_bb",
+        "entregas_bb",
+        "dados_historicos/*_da_entrega_da_unidade_af_bb.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_sftp_empreendimento_int054",
+        "INT054",
+        "sftp/fabrica/GEFUS/**/INT054_*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_sftp_empreendimento_int059",
+        "INT059",
+        "sftp/fabrica/GEFUS/**/INT059_*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_sftp_empreendimento_int057",
+        "INT057",
+        "sftp/fabrica/GEFUS/**/INT057_*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_sftp_empreendimento_int040",
+        "INT040",
+        "sftp/fabrica/GEFUS/**/INT040_*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_dhist_snh_entregas_evento_caixa",
+        "entregas_caixa",
+        "dados_historicos/*_af_caixa_entregas.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_dhist_empreendimento_snh_caixa",
+        "snh_caixa",
+        "dados_historicos/*ecente_*snh_pmcmv_dados_prioritarios_af_caixa*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_sftp_empreendimento_int065",
+        "INT065",
+        "sftp/fabrica/GEFUS/**/INT065_*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_dhist_serie_bases_relatorio_executivo",
+        "bases_relatorio_executivo",
+        "dados_historicos/*bases_relat*rio_executivo*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_dhist_serie_min_cidades",
+        "min_cidades",
+        "dados_historicos/*min_cidades*.parquet",
+    ),
     # bext e a maior transacao isolada (5,66 M linhas) — ultima das bronzes (D8).
-    ("bronze", "bronze_dhist_serie_bext",
-     "bext", "dados_historicos/*bext*.parquet"),
+    ("bronze", "bronze_dhist_serie_bext", "bext", "dados_historicos/*bext*.parquet"),
     # obra mensal (SharePoint) — curva prevista x realizada + situacao de obra
     # (change enriquecer-quantidades-uh-e-sinais-obra-historico). Adicionadas
     # ao inventario 2026-09-11 (nunca publicadas ate entao).
-    ("bronze", "bronze_shpt_obra_mensal_far",
-     "OBRA_FAR", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet"),
-    ("bronze", "bronze_shpt_obra_mensal_fds",
-     "OBRA_FDS", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet"),
-    ("bronze", "bronze_shpt_obra_mensal_rural",
-     "OBRA_RURAL", "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet"),
+    (
+        "bronze",
+        "bronze_shpt_obra_mensal_far",
+        "OBRA_FAR",
+        "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_shpt_obra_mensal_fds",
+        "OBRA_FDS",
+        "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_FDS_MENSAL_*.parquet",
+    ),
+    (
+        "bronze",
+        "bronze_shpt_obra_mensal_rural",
+        "OBRA_RURAL",
+        "sharepoint/Novo MCMV - */**/*MONIT_MOV_OBRA_RURAL_MENSAL_*.parquet",
+    ),
 ]
 
 SILVERS_GOLDS = [
@@ -214,17 +274,17 @@ def perfil_local(con, alvo: Alvo) -> dict:
     """Fingerprint da tabela local: contagem, colunas, arquivos de origem e
     janela de dt_referencia. Le SO o arquivo local — nenhuma requisicao ao
     MinIO (o modo B nao rele a staging)."""
-    cols = [r[0] for r in con.execute(
-        f'describe select * from "{alvo.schema}"."{alvo.tabela}"'
-    ).fetchall()]
-    n_linhas = con.execute(
-        f'select count(*) from "{alvo.schema}"."{alvo.tabela}"'
-    ).fetchone()[0]
+    cols = [
+        r[0]
+        for r in con.execute(f'describe select * from "{alvo.schema}"."{alvo.tabela}"').fetchall()
+    ]
+    n_linhas = con.execute(f'select count(*) from "{alvo.schema}"."{alvo.tabela}"').fetchone()[0]
 
     arquivos: list[str] = []
     if "source_file" in cols:
         arquivos = sorted(
-            r[0] for r in con.execute(
+            r[0]
+            for r in con.execute(
                 f'select distinct source_file from "{alvo.schema}"."{alvo.tabela}" '
                 "where source_file is not null"
             ).fetchall()
@@ -233,8 +293,7 @@ def perfil_local(con, alvo: Alvo) -> dict:
     dt_min = dt_max = None
     if "dt_referencia" in cols:
         dt_min, dt_max = con.execute(
-            f'select min(dt_referencia), max(dt_referencia) '
-            f'from "{alvo.schema}"."{alvo.tabela}"'
+            f'select min(dt_referencia), max(dt_referencia) from "{alvo.schema}"."{alvo.tabela}"'
         ).fetchone()
 
     if arquivos:
@@ -245,9 +304,7 @@ def perfil_local(con, alvo: Alvo) -> dict:
         # para forma + volume. Basta para auditar a carga; NAO e garantia de
         # idempotencia como nas bronzes — por isso --pular-iguais so e confiavel
         # para as bronzes.
-        source_hash = hashlib.md5(
-            f"{n_linhas}|{len(cols)}|{alvo.fqn}".encode()
-        ).hexdigest()
+        source_hash = hashlib.md5(f"{n_linhas}|{len(cols)}|{alvo.fqn}".encode()).hexdigest()
 
     return {
         "n_linhas": n_linhas,
@@ -295,8 +352,7 @@ def ja_publicada(cur, alvo: Alvo, source_hash: str) -> bool:
     return cur.fetchone() is not None
 
 
-def publicar(con, pg, alvo: Alvo, execution_id: str, dry_run: bool,
-             pular_iguais: bool) -> bool:
+def publicar(con, pg, alvo: Alvo, execution_id: str, dry_run: bool, pular_iguais: bool) -> bool:
     """Publica uma tabela. Devolve False quando a verificacao pos-carga falha."""
     cur = pg.cursor()
     perfil = perfil_local(con, alvo)
@@ -305,11 +361,12 @@ def publicar(con, pg, alvo: Alvo, execution_id: str, dry_run: bool,
     sumidas = sorted(set(antes) - set(perfil["colunas"])) if antes else []
 
     print(f"\n=== {alvo.fqn} (familia {alvo.familia})")
-    print(f"    local: {perfil['n_linhas']:,} linhas x {perfil['n_colunas']} colunas"
-          f"  |  {len(perfil['arquivos'])} arquivos de origem")
+    print(
+        f"    local: {perfil['n_linhas']:,} linhas x {perfil['n_colunas']} colunas"
+        f"  |  {len(perfil['arquivos'])} arquivos de origem"
+    )
     if antes:
-        print(f"    destino ja existe com {len(antes)} colunas"
-              f"  (+{len(novas)} / -{len(sumidas)})")
+        print(f"    destino ja existe com {len(antes)} colunas  (+{len(novas)} / -{len(sumidas)})")
 
     if pular_iguais and ja_publicada(cur, alvo, perfil["source_hash"]):
         print("    PULADO: mesma carga ja registrada como loaded no log")
@@ -360,41 +417,52 @@ def publicar(con, pg, alvo: Alvo, execution_id: str, dry_run: bool,
     n_destino = cur.fetchone()[0]
     # %% escapa o % do format() do Postgres para o psycopg2 nao o confundir com
     # placeholder de parametro.
-    cur.execute("select pg_total_relation_size(format('%%I.%%I', %s, %s))",
-                (alvo.schema, alvo.tabela))
+    cur.execute(
+        "select pg_total_relation_size(format('%%I.%%I', %s, %s))", (alvo.schema, alvo.tabela)
+    )
     tamanho = cur.fetchone()[0] or 0
 
     if n_destino != perfil["n_linhas"]:
-        msg = (f"divergencia de contagem: local {perfil['n_linhas']} "
-               f"!= postgres {n_destino}")
+        msg = f"divergencia de contagem: local {perfil['n_linhas']} != postgres {n_destino}"
         gravar_log(cur, status="error", error_message=msg, **base)
         pg.commit()
         print(f"    ERRO: {msg}")
         return False
 
     bytes_linha = tamanho / perfil["n_linhas"] if perfil["n_linhas"] else 0
-    print(f"    OK: {n_destino:,} linhas conferem  |  "
-          f"{tamanho / 1024**2:,.1f} MB no Postgres  ({bytes_linha:.0f} bytes/linha)")
+    print(
+        f"    OK: {n_destino:,} linhas conferem  |  "
+        f"{tamanho / 1024**2:,.1f} MB no Postgres  ({bytes_linha:.0f} bytes/linha)"
+    )
     gravar_log(cur, status="loaded", error_message=None, **base)
     pg.commit()
     return True
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--duckdb", default=os.environ.get(
-        "DUCKDB_MCID_PATH", "/mnt/data/duckdb/cidades.duckdb"))
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--duckdb", default=os.environ.get("DUCKDB_MCID_PATH", "/mnt/data/duckdb/cidades.duckdb")
+    )
     ap.add_argument("--grupo", choices=["bronzes", "silvers", "tudo"], default="bronzes")
-    ap.add_argument("--tabela", action="append", default=[],
-                    help="publica so estas tabelas (schema.tabela); repetivel")
-    ap.add_argument("--listar", action="store_true",
-                    help="mostra a ordem de publicacao e sai")
-    ap.add_argument("--dry-run", action="store_true",
-                    help="mede e mostra, sem escrever no Postgres")
-    ap.add_argument("--pular-iguais", action="store_true",
-                    help="pula tabelas ja registradas como loaded com o mesmo "
-                         "source_hash (confiavel so para as bronzes)")
+    ap.add_argument(
+        "--tabela",
+        action="append",
+        default=[],
+        help="publica so estas tabelas (schema.tabela); repetivel",
+    )
+    ap.add_argument("--listar", action="store_true", help="mostra a ordem de publicacao e sai")
+    ap.add_argument(
+        "--dry-run", action="store_true", help="mede e mostra, sem escrever no Postgres"
+    )
+    ap.add_argument(
+        "--pular-iguais",
+        action="store_true",
+        help="pula tabelas ja registradas como loaded com o mesmo "
+        "source_hash (confiavel so para as bronzes)",
+    )
     args = ap.parse_args()
 
     alvos = inventario(args.grupo)
@@ -434,8 +502,10 @@ def main() -> int:
 
     for alvo in alvos:
         if not publicar(con, pg, alvo, execution_id, args.dry_run, args.pular_iguais):
-            print("\nPUBLICACAO INTERROMPIDA — as famílias seguintes nao foram "
-                  "carregadas (ver lake._bronze_historico_log).")
+            print(
+                "\nPUBLICACAO INTERROMPIDA — as famílias seguintes nao foram "
+                "carregadas (ver lake._bronze_historico_log)."
+            )
             return 1
 
     print("\nOK.")

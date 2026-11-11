@@ -16,19 +16,22 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p7_indices_da_construcao_variacao %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("indicador"::text, '') as chave,
-    edicao,
-    "indicador", "Índice IMOB", "Índice ABRAMAT", "Índice FipeZap", "Índice ICST"
-from {{ ref('ouro_conjuntura_boletim_p7_indices_da_construcao_variacao') }}
+    select
+        edicao || '|' || coalesce("indicador"::text, '') as chave,
+        edicao,
+        "indicador",
+        "Índice IMOB",
+        "Índice ABRAMAT",
+        "Índice FipeZap",
+        "Índice ICST"
+    from {{ ref('ouro_conjuntura_boletim_p7_indices_da_construcao_variacao') }}
 
 {% endsnapshot %}

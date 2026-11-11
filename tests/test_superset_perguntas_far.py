@@ -47,3 +47,16 @@ def test_ultima_aba_e_o_que_falta() -> None:
     nome, blocos = m.ABAS[-1]
     assert nome == "O que falta"
     assert any(b[0] == "chart" and b[1] == "cobertura" for b in blocos)
+
+
+def test_layout_poe_cada_grafico_uma_vez_e_liga_pais_e_filhos() -> None:
+    m = perguntas_far
+    ids = {c["key"]: i for i, c in enumerate(m.CHARTS, start=1)}
+    estrutura = m.layout(ids)
+    nos = {k: v for k, v in estrutura.items() if isinstance(v, dict)}
+    graficos = sorted(v["meta"]["chartId"] for v in nos.values() if v["type"] == "CHART")
+    assert graficos == sorted(ids.values())
+    assert sum(v["type"] == "TAB" for v in nos.values()) == len(m.ABAS)
+    for id_, no in nos.items():
+        if no["parents"]:
+            assert id_ in estrutura[no["parents"][-1]]["children"]

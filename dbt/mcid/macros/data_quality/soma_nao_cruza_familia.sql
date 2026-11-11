@@ -30,26 +30,24 @@
     nivel_valor='uf'
 ) %}
 
-with por_janela as (
-    select
-        {{ data_column }} as dt_referencia,
-        {{ uf_column }} as uf,
-        count(distinct {{ familia_column }}) as n_familias,
-        count(distinct {{ grao_column }}) as n_graos,
-        string_agg(distinct {{ familia_column }} || ' (' || {{ grao_column }} || ')', ', ') as familias
-    from {{ model }}
-    where {{ nivel_column }} = '{{ nivel_valor }}'
-    group by {{ data_column }}, {{ uf_column }}
-)
+    with
+        por_janela as (
+            select
+                {{ data_column }} as dt_referencia,
+                {{ uf_column }} as uf,
+                count(distinct {{ familia_column }}) as n_familias,
+                count(distinct {{ grao_column }}) as n_graos,
+                string_agg(
+                    distinct {{ familia_column }} || ' (' || {{ grao_column }} || ')', ', '
+                ) as familias
+            from {{ model }}
+            where {{ nivel_column }} = '{{ nivel_valor }}'
+            group by {{ data_column }}, {{ uf_column }}
+        )
 
-select
-    dt_referencia,
-    uf,
-    n_familias,
-    n_graos,
-    familias
-from por_janela
-where n_familias > 1 and n_graos > 1
-order by dt_referencia, uf
+    select dt_referencia, uf, n_familias, n_graos, familias
+    from por_janela
+    where n_familias > 1 and n_graos > 1
+    order by dt_referencia, uf
 
 {% endmacro %}

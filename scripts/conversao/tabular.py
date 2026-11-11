@@ -216,15 +216,12 @@ def _converter_tabular_1x(
 
     # descarta colunas de padding do Excel; usecols evita até parsear (um chunk de 200k
     # linhas x 16.382 colunas estouraria a memória à toa)
-    manter = _colunas_a_manter(
-        src_path, delim, real_encoding, chunksize, encoding_errors
-    )
+    manter = _colunas_a_manter(src_path, delim, real_encoding, chunksize, encoding_errors)
     if manter is not None:
         log.info(
             "%s: %d colunas de padding descartadas (mantidas %d).",
             source_file,
-            _n_colunas_arquivo(src_path, delim, real_encoding, encoding_errors)
-            - len(manter),
+            _n_colunas_arquivo(src_path, delim, real_encoding, encoding_errors) - len(manter),
             len(manter),
         )
 
@@ -254,9 +251,7 @@ def _converter_tabular_1x(
         for chunk in reader:
             if writer is None:
                 header_original = list(chunk.columns)
-                nomes_finais, column_map = normalizar_colunas(
-                    [str(c) for c in header_original]
-                )
+                nomes_finais, column_map = normalizar_colunas([str(c) for c in header_original])
                 n_colunas = len(nomes_finais)
                 # todas as colunas string + colunas de linhagem
                 campos = [pa.field(n, pa.string()) for n in nomes_finais]
@@ -270,9 +265,7 @@ def _converter_tabular_1x(
                         else f"{real_encoding}+{encoding_errors}"
                     ).encode("utf-8"),
                     b"delimiter": delim.encode("utf-8"),
-                    b"column_map": json.dumps(column_map, ensure_ascii=False).encode(
-                        "utf-8"
-                    ),
+                    b"column_map": json.dumps(column_map, ensure_ascii=False).encode("utf-8"),
                 }
                 for k, v in (extra_meta or {}).items():
                     meta[k.encode("utf-8")] = str(v).encode("utf-8")

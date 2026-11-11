@@ -15,7 +15,6 @@
         dt_ingest      instante da materializacao
         hash_linha     md5 da identidade da linha na origem
 #}
-
 {#- Serie executiva historica (pre-2024), 4 familias. -#}
 {% macro familias_serie_executiva() %}
     {{ return([
@@ -158,9 +157,7 @@
 
 {#- Busca uma familia pelo nome dentro de um dos mapas acima. -#}
 {% macro familia(mapa, nome) %}
-    {%- for f in mapa -%}
-        {%- if f.nome == nome -%}{{ return(f) }}{%- endif -%}
-    {%- endfor -%}
+    {%- for f in mapa -%} {%- if f.nome == nome -%} {{ return(f) }}{%- endif -%} {%- endfor -%}
     {{ exceptions.raise_compiler_error(
         "familia '" ~ nome ~ "' nao existe no mapa (macros/historico/familias.sql)"
     ) }}

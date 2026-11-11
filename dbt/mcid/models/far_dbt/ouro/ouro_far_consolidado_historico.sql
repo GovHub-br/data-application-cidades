@@ -3,8 +3,7 @@
 -- Ouro: propostas do consolidado GFAR em cada remessa semanal, por fase, etapa,
 -- status, fluxo, UF e tipo de demanda. Dá o passado da seleção, não só a foto atual.
 -- Fase, etapa e status sem rótulo no seed aparecem pelo código.
-with
-    dominio as (select campo, codigo, rotulo from {{ ref("dominio_far_perguntas") }})
+with dominio as (select campo, codigo, rotulo from {{ ref("dominio_far_perguntas") }})
 
 select
     s.dt_remessa,
@@ -22,5 +21,6 @@ left join dominio fa on fa.campo = 'fase' and fa.codigo = lpad(s.co_fase::text, 
 left join dominio et on et.campo = 'etapa' and et.codigo = lpad(s.co_etapa::text, 3, '0')
 left join dominio st on st.campo = 'status' and st.codigo = lpad(s.co_status::text, 3, '0')
 left join dominio fl on fl.campo = 'fluxo' and fl.codigo = lpad(s.co_fluxo::text, 3, '0')
-left join dominio td on td.campo = 'tipo_demanda' and td.codigo = lpad(s.co_tipo_demanda::text, 3, '0')
+left join
+    dominio td on td.campo = 'tipo_demanda' and td.codigo = lpad(s.co_tipo_demanda::text, 3, '0')
 group by 1, 2, 3, 4, 5, 6, 7

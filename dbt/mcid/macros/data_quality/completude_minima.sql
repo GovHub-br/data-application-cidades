@@ -41,49 +41,51 @@
 -#}
 {% macro test_completude_minima(model, column_name, min_pct=none, seed=none, modelo=none) %}
 
-with medida as (
-    select
-        count(*) as n_total,
-        count(
-            case
-                when {{ column_name }} is not null
-                    and trim(cast({{ column_name }} as varchar)) <> ''
-                then 1
-            end
-        ) as n_preenchido
-    from {{ model }}
-)
+    with
+        medida as (
+            select
+                count(*) as n_total,
+                count(
+                    case
+                        when
+                            {{ column_name }} is not null
+                            and trim(cast({{ column_name }} as varchar)) <> ''
+                        then 1
+                    end
+                ) as n_preenchido
+            from {{ model }}
+        )
 
-{%- if seed is not none %}
+    {%- if seed is not none %}
 
-, limiar as (
-    select min_completude
-    from {{ ref(seed) }}
-    where modelo = '{{ modelo }}'
-        and coluna = '{{ column_name }}'
-)
+            ,
+            limiar as (
+                select min_completude
+                from {{ ref(seed) }}
+                where modelo = '{{ modelo }}' and coluna = '{{ column_name }}'
+            )
 
-select
-    medida.n_total,
-    medida.n_preenchido,
-    medida.n_preenchido::double / nullif(medida.n_total, 0) as completude,
-    limiar.min_completude as min_pct_exigido
-from medida
-cross join limiar
-where medida.n_total > 0
-    and medida.n_preenchido::double / medida.n_total < limiar.min_completude
+        select
+            medida.n_total,
+            medida.n_preenchido,
+            medida.n_preenchido::double / nullif(medida.n_total, 0) as completude,
+            limiar.min_completude as min_pct_exigido
+        from medida
+        cross join limiar
+        where
+            medida.n_total > 0
+            and medida.n_preenchido::double / medida.n_total < limiar.min_completude
 
-{%- else %}
+    {%- else %}
 
-select
-    n_total,
-    n_preenchido,
-    n_preenchido::double / nullif(n_total, 0) as completude,
-    {{ min_pct }} as min_pct_exigido
-from medida
-where n_total > 0
-    and n_preenchido::double / n_total < {{ min_pct }}
+        select
+            n_total,
+            n_preenchido,
+            n_preenchido::double / nullif(n_total, 0) as completude,
+            {{ min_pct }} as min_pct_exigido
+        from medida
+        where n_total > 0 and n_preenchido::double / n_total < {{ min_pct }}
 
-{%- endif %}
+    {%- endif %}
 
 {% endmacro %}

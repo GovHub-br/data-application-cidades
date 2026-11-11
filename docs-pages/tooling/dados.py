@@ -74,9 +74,7 @@ def _trimestre(iso: str) -> str:
 def modelos_do_escopo(dbt: dict[str, Any], escopo: dict[str, Any]) -> list[Any]:
     projetos = set(escopo["projetos_dbt"])
     return [
-        m
-        for m in dbt.get("modelos", [])
-        if m["projeto"] in projetos and m["dominio"] != "metadata"
+        m for m in dbt.get("modelos", []) if m["projeto"] in projetos and m["dominio"] != "metadata"
     ]
 
 
@@ -105,9 +103,7 @@ def montar_dominios(
         chaves = [c.lower() for c in ficha["chaves"]]
         meus_modelos = [m for m in modelos if m["dominio"] == slug]
         meus_dags = [
-            d
-            for d in dags
-            if _casa(f"{d['dag_id']} {' '.join(d['tags'])}".lower(), chaves)
+            d for d in dags if _casa(f"{d['dag_id']} {' '.join(d['tags'])}".lower(), chaves)
         ]
         minhas_entregas = [e for e in entregas if _casa(_texto_da_entrega(e), chaves)]
 
@@ -124,12 +120,8 @@ def montar_dominios(
                 ),
                 "gold": [m for m in meus_modelos if m["camada"] == "gold"],
                 "dags": sorted(meus_dags, key=lambda d: d["dag_id"]),
-                "entregas": sorted(
-                    minhas_entregas, key=lambda e: e["data"], reverse=True
-                ),
-                "entregas_documentadas": sum(
-                    1 for e in minhas_entregas if len(e["corpo"]) > 60
-                ),
+                "entregas": sorted(minhas_entregas, key=lambda e: e["data"], reverse=True),
+                "entregas_documentadas": sum(1 for e in minhas_entregas if len(e["corpo"]) > 60),
             }
         )
     return sorted(dominios, key=lambda d: -d["total"])
@@ -159,17 +151,13 @@ def montar_linhas(
     return linhas
 
 
-def entregas_do_escopo(
-    git: dict[str, Any], dominios: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
+def entregas_do_escopo(git: dict[str, Any], dominios: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Entregas que casaram com algum dominio, sem repetir."""
     vistas: dict[str, dict[str, Any]] = {}
     for dominio in dominios:
         for entrega in dominio["entregas"]:
             registro = vistas.setdefault(entrega["id"], {**entrega, "dominios": []})
-            registro["dominios"].append(
-                {"slug": dominio["slug"], "rotulo": dominio["rotulo"]}
-            )
+            registro["dominios"].append({"slug": dominio["slug"], "rotulo": dominio["rotulo"]})
     fora = len(git.get("entregas", [])) - len(vistas)
     if fora > 0:
         log.info("%d entrega(s) fora do escopo MCID, nao publicadas", fora)
@@ -180,10 +168,7 @@ def agrupar_por_trimestre(entregas: list[dict[str, Any]]) -> list[dict[str, Any]
     grupos: dict[str, list[dict[str, Any]]] = {}
     for entrega in entregas:
         grupos.setdefault(_trimestre(entrega["data"]), []).append(entrega)
-    return [
-        {"rotulo": chave, "entregas": grupos[chave]}
-        for chave in sorted(grupos, reverse=True)
-    ]
+    return [{"rotulo": chave, "entregas": grupos[chave]} for chave in sorted(grupos, reverse=True)]
 
 
 def periodo(resumo: dict[str, Any]) -> tuple[str, int]:

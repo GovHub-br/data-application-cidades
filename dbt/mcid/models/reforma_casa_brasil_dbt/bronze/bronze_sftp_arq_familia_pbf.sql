@@ -4,7 +4,8 @@
 -- pelo canal SharePoint, mas pertence à mesma origem lógica CadÚnico/SFTP e mantém
 -- o nome físico acordado para a fonte. Endereço e entrevistador chegam protegidos.
 select *
-from {{ fonte_lake(
+from
+    {{ fonte_lake(
     'cadunico_familia',
     'lake_staging_reforma_casa_brasil',
     union_by_name=true

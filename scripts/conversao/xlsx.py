@@ -11,6 +11,7 @@ from lake_utils import normalizar_colunas
 
 from .config import LINEAGE_COLS
 
+
 def _abas_xlsx(src_path: str) -> List[str]:
     import openpyxl
 

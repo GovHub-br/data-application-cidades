@@ -16,19 +16,20 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p2_financiamentos_habitacionais_uh %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("periodo"::text, '') as chave,
-    edicao,
-    "periodo", "FGTS-PJ", "SBPE Const."
-from {{ ref('ouro_conjuntura_boletim_p2_financiamentos_habitacionais_uh') }}
+    select
+        edicao || '|' || coalesce("periodo"::text, '') as chave,
+        edicao,
+        "periodo",
+        "FGTS-PJ",
+        "SBPE Const."
+    from {{ ref('ouro_conjuntura_boletim_p2_financiamentos_habitacionais_uh') }}
 
 {% endsnapshot %}

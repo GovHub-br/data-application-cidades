@@ -16,19 +16,23 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p4_no_uh_por_condicao_de_uso %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("fonte"::text, '') as chave,
-    edicao,
-    "fonte", "Trim. ano anterior — UH Usadas", "Trim. ano anterior — UH Novas", "Trim. selecionado — UH Usadas", "Trim. selecionado — UH Novas", "Trim. selecionado — UH Total"
-from {{ ref('ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso') }}
+    select
+        edicao || '|' || coalesce("fonte"::text, '') as chave,
+        edicao,
+        "fonte",
+        "Trim. ano anterior — UH Usadas",
+        "Trim. ano anterior — UH Novas",
+        "Trim. selecionado — UH Usadas",
+        "Trim. selecionado — UH Novas",
+        "Trim. selecionado — UH Total"
+    from {{ ref('ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso') }}
 
 {% endsnapshot %}

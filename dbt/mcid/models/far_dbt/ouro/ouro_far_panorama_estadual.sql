@@ -10,18 +10,14 @@ with
     fichas as (
         select f.*, p.portaria, m.municipio as recorte_municipio
         from {{ ref("ouro_far_ficha_empreendimento") }} f
-        cross join lateral (
-            values (f.portaria_selecao), ('Todas as portarias')
-        ) p(portaria)
-        cross join lateral (
-            values (coalesce(f.municipio, 'Não informado')), ('Todos os municípios')
-        ) m(municipio)
+        cross join lateral(values (f.portaria_selecao), ('Todas as portarias')) p(portaria)
+        cross join
+            lateral(
+                values (coalesce(f.municipio, 'Não informado')), ('Todos os municípios')
+            ) m(municipio)
     ),
 
-    ibge_uf as (
-        select sigla, upper(nome) as estado
-        from {{ ref('api_ibge_uf') }}
-    ),
+    ibge_uf as (select sigla, upper(nome) as estado from {{ ref('api_ibge_uf') }}),
 
     -- Seção 1: header — grandes números por UF
     header as (

@@ -29,7 +29,7 @@ A sincronização é somente de upsert: ela não apaga automaticamente termos qu
 deixarem de existir no CSV.
 
 O `INGESTION_TOKEN` também precisa ter permissão para criar e editar glossários.
-O pacote de ingestão (`openmetadata-ingestion==1.13.3.2`, em `requirements.txt`)
+O pacote de ingestão (`openmetadata-ingestion==1.13.3.2`, no grupo runtime do `pyproject.toml`)
 acompanha a linha do servidor, hoje 1.13.3: cliente e servidor de linhas
 diferentes divergem no schema das entidades.
 
@@ -188,10 +188,8 @@ airflow_lappis/helpers/metadata/ingestion/source/pipeline/airflow/lineage_parser
 Esse shim não conversa com o OpenMetadata. Ele só cria classes mínimas para que a DAG serialize as anotações no formato esperado pela ingestão de Airflow. Exemplo:
 
 ```python
-inlets=[
-    OMEntity(entity=ApiService, fqn="compras_gov_api", key="apiService")
-]
-outlets=[
+inlets = [OMEntity(entity=ApiService, fqn="compras_gov_api", key="apiService")]
+outlets = [
     {
         "entity": "table",
         "fqn": "IPEA.analytics.compras_gov.contratos",

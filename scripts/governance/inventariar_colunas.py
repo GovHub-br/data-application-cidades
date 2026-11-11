@@ -21,10 +21,10 @@ gravado. A documentação do produto é semântica — descreve o que a coluna
 significa, e o significado não depende de olhar o que está dentro dela.
 
 Uso:
-    poetry run python scripts/governance/inventariar_colunas.py \\
+    uv run python scripts/governance/inventariar_colunas.py \\
         --schema conjuntura --contrato
 
-    poetry run python scripts/governance/inventariar_colunas.py \\
+    uv run python scripts/governance/inventariar_colunas.py \\
         --schema ouro --tabela ouro_conjuntura_icst
 """
 
@@ -80,9 +80,7 @@ def conectar():
     )
 
 
-def colunas_do_schema(
-    cur, schema: str, tabela: str | None
-) -> dict[str, list[tuple[str, str]]]:
+def colunas_do_schema(cur, schema: str, tabela: str | None) -> dict[str, list[tuple[str, str]]]:
     cur.execute(
         """
         select table_name, column_name, data_type
@@ -106,8 +104,7 @@ def perfil(cur, schema: str, tabela: str, colunas: list[tuple[str, str]]) -> dic
         return {"linhas": 0, "colunas": {}}
 
     medidas = ", ".join(
-        f'count("{c}") as p_{i}, count(distinct "{c}") as d_{i}'
-        for i, (c, _) in enumerate(colunas)
+        f'count("{c}") as p_{i}, count(distinct "{c}") as d_{i}' for i, (c, _) in enumerate(colunas)
     )
     cur.execute(f'select {medidas} from "{schema}"."{tabela}"')
     valores = cur.fetchone()
@@ -131,9 +128,7 @@ def bloco_yaml(tabela: str, perfil_tab: dict, com_contrato: bool) -> str:
     if com_contrato:
         nomes = list(colunas)
         sem_nulo = [n for n, i in colunas.items() if i["completude"] == 1.0]
-        temporal = next(
-            (n for n in ("data_referencia", "data", "mes") if n in colunas), None
-        )
+        temporal = next((n for n in ("data_referencia", "data", "mes") if n in colunas), None)
         linhas += [
             "    data_tests:",
             "      - sem_coluna_sensivel:",
@@ -164,7 +159,7 @@ def bloco_yaml(tabela: str, perfil_tab: dict, com_contrato: bool) -> str:
         texto = COMUNS.get(nome)
         if texto:
             linhas.append("        description: >")
-            linhas += [f"          {l}" for l in textwrap.wrap(texto, 70)]
+            linhas += [f"          {trecho}" for trecho in textwrap.wrap(texto, 70)]
         else:
             linhas.append("        description: >")
             linhas.append("          TODO")

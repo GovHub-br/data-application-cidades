@@ -66,9 +66,7 @@ def _descartar_gemeos(
         if len(grupo) == 1:
             mantidos.append(grupo[0])
             continue
-        ordenado = sorted(
-            grupo, key=lambda kv: (_rank_ext(os.path.splitext(kv[0])[1]), kv[0])
-        )
+        ordenado = sorted(grupo, key=lambda kv: (_rank_ext(os.path.splitext(kv[0])[1]), kv[0]))
         mantidos.append(ordenado[0])
         descartados.extend(k for k, _ in ordenado[1:])
     # Preserva a ordem da listagem do MinIO (previsível no log).

@@ -15,7 +15,6 @@ import contextlib
 import io
 import json
 import os
-import sys
 from pathlib import Path
 from urllib.parse import quote_plus
 
@@ -87,12 +86,8 @@ def expectations(arguments: dict) -> list[object]:
     # Todo modelo Silver deve ser uma relação materializada e não vazia. As
     # regras seguintes vêm do contrato específico quando ele já foi declarado.
     rules: list[object] = [
-        gx.expectations.ExpectTableColumnCountToBeBetween(
-            min_value=1, result_format=RESULT_FORMAT
-        ),
-        gx.expectations.ExpectTableRowCountToBeBetween(
-            min_value=1, result_format=RESULT_FORMAT
-        ),
+        gx.expectations.ExpectTableColumnCountToBeBetween(min_value=1, result_format=RESULT_FORMAT),
+        gx.expectations.ExpectTableRowCountToBeBetween(min_value=1, result_format=RESULT_FORMAT),
     ]
     columns = arguments.get("expected_columns", [])
     if columns:
@@ -212,13 +207,9 @@ def main() -> int:
         "passed": all(check["success"] for check in checks),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     failures = sum(not check["success"] for check in checks)
-    print(
-        f"GX Silver: {len(checks)} verificações, {failures} falhas. Relatório: {args.output}"
-    )
+    print(f"GX Silver: {len(checks)} verificações, {failures} falhas. Relatório: {args.output}")
     return 1 if args.strict and failures else 0
 
 

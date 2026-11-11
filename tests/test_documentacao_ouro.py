@@ -37,9 +37,8 @@ def test_model_da_ouro_fora_da_lista_cumpre_o_contrato() -> None:
 
 def test_model_documentado_sai_da_lista_de_pendentes() -> None:
     resolvidos = sorted(PENDENTES - set(ACHADOS))
-    assert not resolvidos, (
-        "Já cumprem o contrato; tire de documentacao_pendente.yml: "
-        + ", ".join(resolvidos)
+    assert not resolvidos, "Já cumprem o contrato; tire de documentacao_pendente.yml: " + ", ".join(
+        resolvidos
     )
 
 
@@ -70,14 +69,11 @@ def test_documentacao_aponta_campo_faltando_e_chave_inexistente() -> None:
 
 def test_documentacao_vem_de_config_meta_ou_meta() -> None:
     assert (
-        documentacao_dbt.da_configuracao(
-            {"config": {"meta": {"documentacao": DOCUMENTACAO}}}
-        )
+        documentacao_dbt.da_configuracao({"config": {"meta": {"documentacao": DOCUMENTACAO}}})
         == DOCUMENTACAO
     )
     assert (
-        documentacao_dbt.da_configuracao({"meta": {"documentacao": DOCUMENTACAO}})
-        == DOCUMENTACAO
+        documentacao_dbt.da_configuracao({"meta": {"documentacao": DOCUMENTACAO}}) == DOCUMENTACAO
     )
     assert documentacao_dbt.da_configuracao({"meta": {}}) is None
 
@@ -115,9 +111,7 @@ def test_exportador_leva_documentacao_e_barra_texto_improprio() -> None:
 
     catalogo = {"nodes": {"model.x": {"columns": {"apf": {"type": "text", "index": 1}}}}}
     violacoes: list[str] = []
-    exportado = exportador.model_export(
-        "model.x", _node(DOCUMENTACAO), catalogo, violacoes
-    )
+    exportado = exportador.model_export("model.x", _node(DOCUMENTACAO), catalogo, violacoes)
     assert exportado["documentacao"] == DOCUMENTACAO
     assert violacoes == []
 
@@ -147,3 +141,55 @@ def test_sync_le_as_propriedades_do_catalogo(tmp_path, monkeypatch) -> None:
     assert gov.documentacao_por_modelo() == {
         "ouro_far_ficha": documentacao_dbt.propriedades(DOCUMENTACAO)
     }
+
+
+def _auditar(monkeypatch, capsys, tmp_path, *argv) -> tuple[int, str]:
+    import json
+    import sys
+
+    modelos = tmp_path / "models"
+    modelos.mkdir()
+    (modelos / "schema.yml").write_text(
+        "models:\n"
+        "  - name: documentado\n"
+        "    description: Quantidade de contratos assinados no mês.\n"
+        "    columns:\n"
+        "      - name: sem_texto\n"
+    )
+    manifesto = tmp_path / "manifest.json"
+    nos = {"documentado": "a.sql", "esquecido": "models/esquecido.sql"}
+    manifesto.write_text(
+        json.dumps(
+            {"nodes": {n: {"name": n, "path": p, "resource_type": "model"} for n, p in nos.items()}}
+        )
+    )
+    monkeypatch.setattr(auditoria, "DEFAULT_EXTRAS", ())
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "auditar_metadados.py",
+            "--models-root",
+            str(modelos),
+            "--manifest",
+            str(manifesto),
+            *argv,
+        ],
+    )
+    return auditoria.main(), capsys.readouterr().out
+
+
+def test_auditoria_conta_e_lista_os_achados(monkeypatch, capsys, tmp_path) -> None:
+    codigo, saida = _auditar(monkeypatch, capsys, tmp_path)
+    assert codigo == 0
+    assert "Nós do projeto com entrada em YAML: 1/2 (50%)" in saida
+    assert "Recursos com descrição efetiva: 1/1 (100%)  ·  Colunas: 0/1 (0%)" in saida
+    assert "models.documentado.sem_texto — descricao_ausente" in saida
+    assert "models/esquecido.sql: model.esquecido — sem_entrada_yaml" in saida
+
+
+def test_auditoria_resumo_e_estrita(monkeypatch, capsys, tmp_path) -> None:
+    codigo, saida = _auditar(monkeypatch, capsys, tmp_path, "--resumo", "--strict")
+    assert codigo == 1
+    assert "Achados por regra: descricao_ausente=1, sem_entrada_yaml=1" in saida
+    assert "sem_texto" not in saida

@@ -1,9 +1,9 @@
 {{ config(materialized="table") }}
 
 -- Silver: Série histórica de desembolsos financeiros (Rural)
--- Fonte: bronze.bronze_shpt_monit_mov_financ_rural_mensal (parquet da staging/ carregado pelo staging_para_bronze.py)
+-- Fonte: bronze.bronze_shpt_monit_mov_financ_rural_mensal (parquet da staging/ carregado pelo
+-- staging_para_bronze.py)
 -- Saída: liberações financeiras limpas e tipadas por APF
-
 with
     financeiro_mensal_raw as (
         select
@@ -11,7 +11,9 @@ with
             nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(id)), '') as id,
             {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             {{ parse_int('co_tipo_registro') }} as co_tipo_registro,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_identificador)), '') as nu_identificador,
+            nullif(
+                trim({{ var('schema_udfs') }}.corrigir_mojibake(nu_identificador)), ''
+            ) as nu_identificador,
 
             -- Execução e Crédito
             {{ parse_numeric('pc_evolucao', 'numeric(6,2)') }} as percentual_evolucao,
@@ -22,8 +24,10 @@ with
             {{ parse_financial_value('vr_desembolso_obra') }} as vr_desembolso_obra,
             {{ parse_financial_value('vr_desembolso_ts') }} as vr_desembolso_trabalho_social,
             {{ parse_financial_value('vr_desembolso_atec') }} as vr_desembolso_atec,
-            {{ parse_financial_value('vr_desembolso_cisternas_efluentes') }} as vr_desembolso_cisternas_efluentes,
-            {{ parse_financial_value('vr_desembolso_custos_indiretos') }} as vr_desembolso_custos_indiretos,
+            {{ parse_financial_value('vr_desembolso_cisternas_efluentes') }}
+            as vr_desembolso_cisternas_efluentes,
+            {{ parse_financial_value('vr_desembolso_custos_indiretos') }}
+            as vr_desembolso_custos_indiretos,
 
             -- Datas
             {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
@@ -33,7 +37,8 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp
+            as criado_em
 
         from {{ ref("bronze_shpt_monit_mov_financ_rural_mensal") }}
     )

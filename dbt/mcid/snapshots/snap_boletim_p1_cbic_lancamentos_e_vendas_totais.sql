@@ -16,19 +16,24 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p1_cbic_lancamentos_e_vendas_totais %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("periodo"::text, '') as chave,
-    edicao,
-    "periodo", "Lançamentos TOTAL", "Lançamentos MCMV", "Lançamentos DEMAIS", "Vendas TOTAL", "Vendas MCMV", "Vendas DEMAIS"
-from {{ ref('ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais') }}
+    select
+        edicao || '|' || coalesce("periodo"::text, '') as chave,
+        edicao,
+        "periodo",
+        "Lançamentos TOTAL",
+        "Lançamentos MCMV",
+        "Lançamentos DEMAIS",
+        "Vendas TOTAL",
+        "Vendas MCMV",
+        "Vendas DEMAIS"
+    from {{ ref('ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais') }}
 
 {% endsnapshot %}

@@ -11,14 +11,11 @@ with
 
             -- Situação da obra
             {{ parse_int("co_situacao_obra") }} as co_situacao_obra,
-            {{ var('schema_udfs') }}.parse_date_br(
-                dt_alteracao_situacao
-            ) as dt_alteracao_situacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_alteracao_situacao) as dt_alteracao_situacao,
 
             -- Percentuais de execução
             {{ parse_numeric("pc_obra_prevista", "numeric(6, 2)") }} as pct_obra_prevista,
-            {{ parse_numeric("pc_obra_realizada", "numeric(6, 2)") }}
-            as pct_obra_realizada,
+            {{ parse_numeric("pc_obra_realizada", "numeric(6, 2)") }} as pct_obra_realizada,
             -- UHs
             {{ parse_int("qt_uh_concluidas_adaptadas") }} as qt_uh_concluidas_adaptadas,
             {{ parse_int("qt_uh_alienada") }} as qt_uh_alienadas,
@@ -31,23 +28,18 @@ with
             {{ parse_financial_value("vr_total_uh_alienadas") }} as vr_uh_alienadas,
             {{ parse_financial_value("vr_total_uh_a_alienar") }} as vr_uh_a_alienar,
             {{ parse_financial_value("vr_total_uh_sem_habitese") }} as vr_uh_sem_habitese,
-            {{ parse_financial_value("vr_total_uh_em_construcao") }}
-            as vr_uh_em_construcao,
-            {{ parse_financial_value("vr_total_uh_ociosas_retomadas") }}
-            as vr_uh_ociosas_retomadas,
+            {{ parse_financial_value("vr_total_uh_em_construcao") }} as vr_uh_em_construcao,
+            {{ parse_financial_value("vr_total_uh_ociosas_retomadas") }} as vr_uh_ociosas_retomadas,
             nullif(nullif(trim(nu_qt_uh_a_alienar), ''), 'None')::int as qt_uh_a_alienar,
 
             -- Invasão
             case when trim(ic_invadido) = 'S' then true else false end as ic_invadido,
             {{ var('schema_udfs') }}.parse_date_br(dt_invasao) as dt_invasao,
-            nullif(
-                nullif(trim(no_providencias_adotadas), ''), 'None'
-            ) as providencias_invasao,
+            nullif(nullif(trim(no_providencias_adotadas), ''), 'None') as providencias_invasao,
 
             -- Paralisação
             {{ var('schema_udfs') }}.parse_date_br(dt_paralisacao) as dt_paralisacao,
-            {{ parse_int("co_classificacao_paralisados") }}
-            as co_classificacao_paralisado,
+            {{ parse_int("co_classificacao_paralisados") }} as co_classificacao_paralisado,
             {{ parse_int("co_motivo_cancelamento_distrato") }} as co_motivo_cancelamento,
 
             -- Datas de marcos da obra

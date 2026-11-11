@@ -108,9 +108,7 @@ def _novo_registro(execution_id: str, key: str) -> dict:
         "bucket": MINIO_BUCKET,
         "file": key,
         "file_name": key.rsplit("/", 1)[-1],
-        "file_format": (
-            key.rsplit(".", 1)[-1].lower() if "." in key.rsplit("/", 1)[-1] else ""
-        ),
+        "file_format": (key.rsplit(".", 1)[-1].lower() if "." in key.rsplit("/", 1)[-1] else ""),
         "encoding": None,
         "delimiter": None,
         "has_pf_indicator": False,
@@ -126,9 +124,7 @@ def _novo_registro(execution_id: str, key: str) -> dict:
     }
 
 
-def _marcar_resultado(
-    minio: ClienteMinio, key: str, execution_id: str, rec: dict
-) -> None:
+def _marcar_resultado(minio: ClienteMinio, key: str, execution_id: str, rec: dict) -> None:
     """Grava no objeto a tag que libera a staging: triagem ou mascaramento já feito."""
     if rec["status"] in TRIAGEM_LIBERADA:
         minio.marcar_triagem(key, execution_id, rec["status"])
@@ -175,10 +171,7 @@ def processar_objeto(  # noqa: C901
             targets_fixos = targets_por_posicao(key)
             # cópia de arquivo já mascarado (ex.: ANTERIORES/) só se reconhece pelo hash;
             # sem esta leitura simples, seria mascarada e enviada inteira para nada
-            if (
-                masked_hashes
-                and _targets_do_sample(sample, delim, real_encoding, targets_fixos)[0]
-            ):
+            if masked_hashes and _targets_do_sample(sample, delim, real_encoding, targets_fixos)[0]:
                 hash_before = minio.md5_objeto(key)
                 if hash_before in masked_hashes:
                     rec["hash_before"] = hash_before
@@ -262,9 +255,7 @@ def processar_objeto(  # noqa: C901
             # tabela exportada, com as mesmas regras, antes de gravar o parquet
             cols = ", ".join(f"{t['table']}.{t['column']}" for t in targets[:5])
             rec["status"] = "mdb_mascara_na_staging"
-            log.info(
-                "%s: PII em .mdb (%s), mascarada na conversão para a staging", key, cols
-            )
+            log.info("%s: PII em .mdb (%s), mascarada na conversão para a staging", key, cols)
             return rec
 
         elif ext in SUPPORTED_EXCEL:
@@ -344,15 +335,12 @@ def run(  # noqa: C901
     """
     if not HMAC_SECRET:
         raise SystemExit(
-            "MASKING_HMAC_SECRET não definida no .env — necessária para "
-            "tokenizar CPF/NIS."
+            "MASKING_HMAC_SECRET não definida no .env — necessária para tokenizar CPF/NIS."
         )
 
     prefix = prefix if prefix is not None else RAW_PREFIX
     execution_id = uuid.uuid4().hex
-    only_ext_set = {
-        ("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()
-    }
+    only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
 
     log.info("=" * 70)
     log.info(
@@ -447,13 +435,9 @@ def main() -> None:
         action="store_true",
         help="Reprocessa objetos já mascarados (tag masked=true).",
     )
-    parser.add_argument(
-        "--limit", type=int, default=0, help="Processa no máximo N objetos."
-    )
+    parser.add_argument("--limit", type=int, default=0, help="Processa no máximo N objetos.")
     parser.add_argument("--pattern", default="", help="Filtra por substring na key.")
-    parser.add_argument(
-        "--only-ext", default="", help="Extensões a processar, ex.: csv,txt"
-    )
+    parser.add_argument("--only-ext", default="", help="Extensões a processar, ex.: csv,txt")
     parser.add_argument(
         "--max-size-mb",
         type=int,
@@ -461,9 +445,7 @@ def main() -> None:
         help="Pula objetos maiores que N MB (0 = sem limite). "
         "Útil p/ fatiar dry-runs: pequenos primeiro, grandes depois.",
     )
-    parser.add_argument(
-        "--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/)."
-    )
+    parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
     args = parser.parse_args()
 
     run(

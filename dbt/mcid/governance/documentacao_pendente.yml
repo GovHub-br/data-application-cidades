@@ -12,7 +12,7 @@ version: 1
 #   - um model desta lista passar a cumprir — tire-o daqui no mesmo PR.
 #
 # Para ver o que falta em cada um:
-#   poetry run python scripts/governance/auditar_metadados.py --ouro
+#   uv run python scripts/governance/auditar_metadados.py --ouro
 pendentes:
   - ouro_conjuntura_balancos_empresas
   - ouro_conjuntura_balancos_empresas_totais

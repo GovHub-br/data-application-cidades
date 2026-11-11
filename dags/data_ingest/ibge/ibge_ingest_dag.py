@@ -48,9 +48,7 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
                 conn.commit()
             logging.info(f"Schema '{schema}' garantido com sucesso.")
         except psycopg2.errors.UniqueViolation:
-            logging.warning(
-                f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado)."
-            )
+            logging.warning(f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado).")
 
     @task
     def fetch_and_store_mapped(config: dict) -> None:
@@ -174,9 +172,7 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
         buffer = io.BytesIO()
         df.to_parquet(buffer, engine="pyarrow", index=False)
         upload_staging_parquet("ibge", tabela, buffer.getvalue())
-        logging.info(
-            f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)"
-        )
+        logging.info(f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)")
 
     setup = setup_schema()
     fetch = fetch_and_store_mapped.expand(config=CONFIGURACOES)

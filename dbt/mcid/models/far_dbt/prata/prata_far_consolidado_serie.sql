@@ -33,7 +33,10 @@ with
             *,
             row_number() over (
                 partition by dt_remessa, id_proposta
-                order by dt_movimento desc nulls last, hr_movimento desc nulls last, co_fase desc nulls last
+                order by
+                    dt_movimento desc nulls last,
+                    hr_movimento desc nulls last,
+                    co_fase desc nulls last
             ) as rn
         from remessas
     )

@@ -30,9 +30,7 @@ from openmetadata.config import (
 )
 
 
-def _encadear(
-    glossario: Any, tarefas: dict, relacoes: Any | None, governanca: Any
-) -> None:
+def _encadear(glossario: Any, tarefas: dict, relacoes: Any | None, governanca: Any) -> None:
     """Liga as tasks na ordem em que uma depende da outra.
 
     Glossário antes das recipes, porque os FQNs que os `schema.yml` do dbt
@@ -100,8 +98,7 @@ def openmetadata_ingestion_dag() -> None:
             valor = os.environ.get(nome_do_segredo)
             if not valor:
                 raise RuntimeError(
-                    f"'{nome_do_segredo}' não está no ambiente. "
-                    "Ver infra/env/.env.example."
+                    f"'{nome_do_segredo}' não está no ambiente. Ver infra/env/.env.example."
                 )
             resolvidos[marcador] = valor
 
@@ -194,9 +191,7 @@ def openmetadata_ingestion_dag() -> None:
     # encadeá-la deixaria uma task órfã na DAG, que o Airflow executa sem
     # dependência nenhuma — o oposto de desligar.
     relacoes = (
-        sync_mcid_semantic_relationships(
-            catalog_path=OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH
-        )
+        sync_mcid_semantic_relationships(catalog_path=OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH)
         if SINCRONIZAR_RELACOES_SEMANTICAS
         else None
     )

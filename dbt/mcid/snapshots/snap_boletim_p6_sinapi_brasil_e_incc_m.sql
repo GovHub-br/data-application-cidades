@@ -16,19 +16,20 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p6_sinapi_brasil_e_incc_m %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("indicador"::text, '') as chave,
-    edicao,
-    "indicador", "SINAPI", "INCC-M"
-from {{ ref('ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m') }}
+    select
+        edicao || '|' || coalesce("indicador"::text, '') as chave,
+        edicao,
+        "indicador",
+        "SINAPI",
+        "INCC-M"
+    from {{ ref('ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m') }}
 
 {% endsnapshot %}

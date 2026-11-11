@@ -12,7 +12,9 @@ select
     nullif(trim(nu_cpf_pessoa::varchar), '') as cpf_hmac,
     nullif(trim(nu_nis_pessoa::varchar), '') as nis_hmac,
     nullif(trim(co_familiar_fam::varchar), '') as codigo_familiar,
-    regexp_replace(nullif(trim(cd_ibge_cadastro::varchar), ''), '\\.0$', '') as codigo_ibge_cadastro,
+    regexp_replace(
+        nullif(trim(cd_ibge_cadastro::varchar), ''), '\\.0$', ''
+    ) as codigo_ibge_cadastro,
     nullif(trim(co_est_cadastral_memb::varchar), '') as situacao_cadastral_pessoa,
     nullif(trim(co_sexo_pessoa::varchar), '') as codigo_sexo,
     nullif(trim(co_parentesco_rf_pessoa::varchar), '') as codigo_parentesco_responsavel,

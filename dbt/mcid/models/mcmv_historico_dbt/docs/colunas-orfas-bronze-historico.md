@@ -243,19 +243,28 @@ quando um mapeamento bronze→silver mudar:
 # raiz do repo, com o eixo já compilado:
 #   .venv/bin/dbt compile --target staging_duckdb --select mcmv_historico_dbt
 import duckdb, glob, re
-con = duckdb.connect('/mnt/data/duckdb/cidades.duckdb', read_only=True)
-bronzes = ['int040','int054','int057','int059','int065','snh_bb','snh_caixa']
-pat = re.compile(r'^(uh|qt|qtd|qtde|quantidade)_|^(vr|valor)_|^dt_|situacao|pendencia|retomad|paralis|entidade|aporte')
+
+con = duckdb.connect("/mnt/data/duckdb/cidades.duckdb", read_only=True)
+bronzes = ["int040", "int054", "int057", "int059", "int065", "snh_bb", "snh_caixa"]
+pat = re.compile(
+    r"^(uh|qt|qtd|qtde|quantidade)_|^(vr|valor)_|^dt_|situacao|pendencia|retomad|paralis|entidade|aporte"
+)
 files = []
-for d in ['models/mcmv_historico_dbt/prata','models/mcmv_historico_dbt/ouro',
-          'models/mcmv_historico_dbt/bronze','models/indicadores_mcmv_dbt/prata',
-          'models/indicadores_mcmv_dbt/ouro']:
-    files += glob.glob(f'dbt/mcid/target/compiled/mcid/{d}/*.sql')
+for d in [
+    "models/mcmv_historico_dbt/prata",
+    "models/mcmv_historico_dbt/ouro",
+    "models/mcmv_historico_dbt/bronze",
+    "models/indicadores_mcmv_dbt/prata",
+    "models/indicadores_mcmv_dbt/ouro",
+]:
+    files += glob.glob(f"dbt/mcid/target/compiled/mcid/{d}/*.sql")
 corpus = "".join(open(f).read().lower() for f in files)
-toks = set(re.findall(r'[a-z_][a-z0-9_]+', corpus))
+toks = set(re.findall(r"[a-z_][a-z0-9_]+", corpus))
 consumed = set()
 for b in bronzes:
-    for (c,) in con.execute(f"select column_name from information_schema.columns where table_name='bronze_sftp_empreendimento_{b}'").fetchall():
+    for (c,) in con.execute(
+        f"select column_name from information_schema.columns where table_name='bronze_sftp_empreendimento_{b}'"
+    ).fetchall():
         if pat.search(c.lower()) and c.lower() in toks:
             consumed.add(c.lower())
 print(sorted(consumed))

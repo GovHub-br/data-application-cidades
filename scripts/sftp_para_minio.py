@@ -100,9 +100,7 @@ _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
     "false",
     "no",
 )
-_LOG_FILE = (
-    Path(__file__).parent / f"sftp_ingest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-)
+_LOG_FILE = Path(__file__).parent / f"sftp_ingest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 _formatter = logging.Formatter(
     "%(asctime)s %(levelname)s %(message)s",
     datefmt="%H:%M:%S",
@@ -175,10 +173,7 @@ spinner = _Spinner()
 
 
 def _conn_str() -> str:
-    return (
-        f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
-        f"user={PG_USER} password={PG_PASSWORD}"
-    )
+    return f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} user={PG_USER} password={PG_PASSWORD}"
 
 
 def _criar_schema_e_log(conn_str: str) -> None:
@@ -278,11 +273,7 @@ def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
                 WHERE file_hash IS NOT NULL
             """
             )
-            return {
-                sftp_path
-                for sftp_path, minio_key in cur.fetchall()
-                if minio_key in presentes
-            }
+            return {sftp_path for sftp_path, minio_key in cur.fetchall() if minio_key in presentes}
 
 
 def _obter_nomes_usados(conn_str: str) -> set:
@@ -339,8 +330,7 @@ def _registrar_ingest(
                 # Remove registros de erro anteriores para evitar duplicatas de hash NULL
                 # vs hash calculado
                 cur.execute(
-                    f"DELETE FROM {SCHEMA}.{LOG_TABLE} "
-                    "WHERE sftp_path = %s AND status = 'error'",
+                    f"DELETE FROM {SCHEMA}.{LOG_TABLE} WHERE sftp_path = %s AND status = 'error'",
                     (sftp_path,),
                 )
 
@@ -384,9 +374,7 @@ def _extensao(nome: str) -> str:
     return nome[pos:].lower() if pos != -1 else ""
 
 
-def _listar_arquivos(
-    sftp_cli: ClienteSftp, caminho: str
-) -> Iterator[Tuple[str, int, int]]:
+def _listar_arquivos(sftp_cli: ClienteSftp, caminho: str) -> Iterator[Tuple[str, int, int]]:
     """Lista arquivos suportados sob `caminho` (via ClienteSftp)."""
     itens: Iterator[Tuple[str, int, int]] = sftp_cli.listar_arquivos(
         caminho, extensoes=EXTENSOES_SUPORTADAS, pastas_ignorar=PASTAS_IGNORAR
@@ -408,9 +396,7 @@ def baixar_para_tempfile(sftp: paramiko.SFTPClient, caminho: str) -> str:
     # de GB e sem o bug do prefetch limitado do paramiko (ver _DOWNLOAD_WINDOW).
     tmpdir = _dir_download()
     file_size = sftp.stat(caminho).st_size or 0
-    tmp = tempfile.NamedTemporaryFile(
-        delete=False, suffix=Path(caminho).suffix, dir=tmpdir
-    )
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(caminho).suffix, dir=tmpdir)
     baixado = 0
     inicio = time.monotonic()
     ultimo_log = inicio
@@ -520,9 +506,7 @@ _SFTP_TRANSFER = TransferConfig(
 
 
 def subir_para_minio(minio: ClienteMinio, tmp_path: str, nome_destino: str) -> str:
-    key: str = minio.upload_arquivo(
-        tmp_path, f"raw/{nome_destino}", transfer_config=_SFTP_TRANSFER
-    )
+    key: str = minio.upload_arquivo(tmp_path, f"raw/{nome_destino}", transfer_config=_SFTP_TRANSFER)
     return key
 
 
@@ -678,9 +662,7 @@ def _baixar_volumes_complementares(
         vol_dest = os.path.join(tmp_dir, vol_name)
         with open(vol_dest, "wb") as fh:
             sftp.getfo(f"{dir_sftp}/{vol_name}", fh)
-        log.info(
-            "  → baixado: %s (%.1f MiB)", vol_name, os.path.getsize(vol_dest) / 1_048_576
-        )
+        log.info("  → baixado: %s (%.1f MiB)", vol_name, os.path.getsize(vol_dest) / 1_048_576)
     return True
 
 
@@ -793,9 +775,7 @@ def processar_zip(  # noqa: C901
     nome_zip = caminho_zip.rsplit("/", 1)[-1]
     pasta = _pasta_destino(caminho_zip)
 
-    motivo = _zip_pulavel_sem_download(
-        sftp, caminho_zip, mtime, ja_inseridos, zip_completos
-    )
+    motivo = _zip_pulavel_sem_download(sftp, caminho_zip, mtime, ja_inseridos, zip_completos)
     if motivo:
         log.info("→ [%d/%d] %s — %s, pulando", idx, total, nome_zip, motivo)
         return 0, 0
@@ -947,9 +927,7 @@ def processar_zip(  # noqa: C901
             tmp_dir_vols = tempfile.mkdtemp(dir="/var/tmp")
             tmp_dir_extract: Optional[str] = tempfile.mkdtemp(dir="/var/tmp")
             try:
-                if _baixar_volumes_complementares(
-                    sftp, caminho_zip, tmp_zip, tmp_dir_vols
-                ):
+                if _baixar_volumes_complementares(sftp, caminho_zip, tmp_zip, tmp_dir_vols):
                     alvo_7z: Optional[str] = os.path.join(tmp_dir_vols, nome_zip)
                 else:
                     alvo_7z = _preparar_multivolume_implicito(
@@ -965,9 +943,7 @@ def processar_zip(  # noqa: C901
                             res_mv.returncode,
                             res_mv.stderr.decode(errors="replace")[:200],
                         )
-                        if res_mv.returncode in (0, 1) and any(
-                            Path(tmp_dir_extract).iterdir()
-                        ):
+                        if res_mv.returncode in (0, 1) and any(Path(tmp_dir_extract).iterdir()):
                             log.info(
                                 "  → extraído como multi-volume (rc=%d)",
                                 res_mv.returncode,
@@ -1135,9 +1111,7 @@ def _processar_entry(
         idx,
         total,
     )
-    return (
-        (1, 0) if resultado == "success" else (0, 1) if resultado == "error" else (0, 0)
-    )
+    return (1, 0) if resultado == "success" else (0, 1) if resultado == "error" else (0, 0)
 
 
 def _resolver_pastas(filtros: Optional[list]) -> list:
@@ -1252,9 +1226,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
 
         if arquivos:
             escolhidos = set(arquivos)
-            todos_arquivos = [
-                a for a in todos_arquivos if a[0].rsplit("/", 1)[-1] in escolhidos
-            ]
+            todos_arquivos = [a for a in todos_arquivos if a[0].rsplit("/", 1)[-1] in escolhidos]
             achados = {a[0].rsplit("/", 1)[-1] for a in todos_arquivos}
             for nome in sorted(escolhidos - achados):
                 log.warning("Arquivo pedido não encontrado no SFTP: %s", nome)
@@ -1325,11 +1297,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
 
     # sem arquivo de log (Airflow), não há como reler para contar ERRORs — pula a contagem
     error_lines = (
-        sum(
-            1
-            for line in _LOG_FILE.read_text(encoding="utf-8").splitlines()
-            if " ERROR " in line
-        )
+        sum(1 for line in _LOG_FILE.read_text(encoding="utf-8").splitlines() if " ERROR " in line)
         if _LOCAL_ARTIFACTS and _LOG_FILE.exists()
         else 0
     )

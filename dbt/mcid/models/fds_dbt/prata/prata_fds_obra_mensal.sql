@@ -11,9 +11,7 @@ with
 
             -- Situação da operação
             {{ parse_int("co_situacao_operacao") }} as co_situacao_operacao,
-            {{ var('schema_udfs') }}.parse_date_br(
-                dt_alteracao_situacao
-            ) as dt_alteracao_situacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_alteracao_situacao) as dt_alteracao_situacao,
 
             -- Andamento
             {{ parse_int("co_andamento_operacao") }} as co_andamento_operacao,
@@ -23,8 +21,7 @@ with
 
             -- Percentuais de execução
             {{ parse_numeric("pc_obra_prevista", "numeric(6, 2)") }} as pct_obra_prevista,
-            {{ parse_numeric("pc_obra_realizada", "numeric(6, 2)") }}
-            as pct_obra_realizada,
+            {{ parse_numeric("pc_obra_realizada", "numeric(6, 2)") }} as pct_obra_realizada,
 
             -- UHs
             {{ parse_int("qt_uh_concluidas") }} as qt_uh_concluidas,
@@ -41,15 +38,11 @@ with
             {{ parse_financial_value("vr_total_uh_alienadas") }} as vr_uh_alienadas,
             {{ parse_financial_value("vr_total_uh_a_alienar") }} as vr_uh_a_alienar,
             {{ parse_financial_value("vr_total_uh_sem_habitese") }} as vr_uh_sem_habitese,
-            {{ parse_financial_value("vr_total_uh_em_construcao") }}
-            as vr_uh_em_construcao,
-            {{ parse_financial_value("vr_total_uh_ociosas_retomadas") }}
-            as vr_uh_ociosas_retomadas,
+            {{ parse_financial_value("vr_total_uh_em_construcao") }} as vr_uh_em_construcao,
+            {{ parse_financial_value("vr_total_uh_ociosas_retomadas") }} as vr_uh_ociosas_retomadas,
 
             -- Titularidade e parcelamento
-            case
-                when trim(ic_titularidade_eo) = 'S' then true else false
-            end as ic_titularidade_eo,
+            case when trim(ic_titularidade_eo) = 'S' then true else false end as ic_titularidade_eo,
             case
                 when trim(ic_parcelam_gleba) = 'S' then true else false
             end as ic_parcelamento_gleba,
@@ -57,19 +50,13 @@ with
             -- Invasão
             case when trim(ic_invadido) = 'S' then true else false end as ic_invadido,
             {{ var('schema_udfs') }}.parse_date_br(dt_invasao) as dt_invasao,
-            nullif(
-                nullif(trim(no_providencias_adotadas), ''), 'None'
-            ) as providencias_invasao,
+            nullif(nullif(trim(no_providencias_adotadas), ''), 'None') as providencias_invasao,
 
             -- Paralisação
             {{ var('schema_udfs') }}.parse_date_br(dt_paralisacao) as dt_paralisacao,
-            {{ parse_int("co_classificacao_paralisados") }}
-            as co_classificacao_paralisado,
-            {{ parse_int("co_classificacao_nao_retomada") }}
-            as co_classificacao_nao_retomada,
-            nullif(
-                nullif(trim(detalhe_paralisacao_retomada), ''), 'None'
-            ) as detalhe_paralisacao,
+            {{ parse_int("co_classificacao_paralisados") }} as co_classificacao_paralisado,
+            {{ parse_int("co_classificacao_nao_retomada") }} as co_classificacao_nao_retomada,
+            nullif(nullif(trim(detalhe_paralisacao_retomada), ''), 'None') as detalhe_paralisacao,
             {{ var('schema_udfs') }}.parse_date_br(
                 dt_informacao_paralisacao_retomada
             ) as dt_info_paralisacao,
@@ -87,9 +74,7 @@ with
             {{ var('schema_udfs') }}.parse_date_br(dt_legalizacao_reg) as dt_legalizacao,
 
             -- Datas de entrega
-            {{ var('schema_udfs') }}.parse_date_br(
-                dt_prev_entrega_emprend
-            ) as dt_previsao_entrega,
+            {{ var('schema_udfs') }}.parse_date_br(dt_prev_entrega_emprend) as dt_previsao_entrega,
             {{ var('schema_udfs') }}.parse_date_br(dt_entrega_do_empreendimento) as dt_entrega,
 
             -- Datas de assinatura PF (mutuários)

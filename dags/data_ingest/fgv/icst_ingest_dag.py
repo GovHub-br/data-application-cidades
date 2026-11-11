@@ -59,9 +59,7 @@ def icst_ingest_dag() -> None:
             # Raw nativo (CSV) + fallback json + parquet tipado (full-refresh).
             raw_csv = getattr(api, "ultimo_conteudo_csv", None)
             if raw_csv:
-                upload_raw_bytes(
-                    "fgv", tabela, raw_csv, ext="csv", content_type="text/csv"
-                )
+                upload_raw_bytes("fgv", tabela, raw_csv, ext="csv", content_type="text/csv")
             upload_fallback_json("fgv", tabela, registros)
             registros_para_staging_parquet("fgv", tabela, registros)
 

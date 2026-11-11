@@ -75,9 +75,7 @@ def test_cpf_recebe_o_mesmo_token_do_raw(tmp_path, monkeypatch):
     modulo.mascarar_csv(str(origem), str(destino), ",", "utf-8")
 
     token = _ler(destino)[1][0]
-    assert token == importlib.import_module("mascaramento.regras")._hmac_token(
-        "123.456.789-09"
-    )
+    assert token == importlib.import_module("mascaramento.regras")._hmac_token("123.456.789-09")
     assert len(token) == 16 and "123" not in token
 
 

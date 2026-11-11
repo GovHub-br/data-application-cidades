@@ -1,8 +1,8 @@
 {{ config(materialized="table") }}
 
 -- Gold: Acompanhamento de Trabalho Social (Rural)
--- Consolida os dados do Plano de Trabalho Social (PTS) de Caixa e BB, permitindo comparar execução física com social.
-
+-- Consolida os dados do Plano de Trabalho Social (PTS) de Caixa e BB, permitindo comparar
+-- execução física com social.
 with
     ts_caixa as (
         select
@@ -29,19 +29,15 @@ with
     ),
 
     ts_union as (
-        select * from ts_caixa
+        select *
+        from ts_caixa
         union all
-        select * from ts_bb
+        select *
+        from ts_bb
     ),
 
     fichas as (
-        select
-            apf,
-            nome_empreendimento,
-            municipio,
-            uf,
-            programa,
-            quantidade_uh
+        select apf, nome_empreendimento, municipio, uf, programa, quantidade_uh
         from {{ ref("ouro_rural_ficha_empreendimento") }}
     )
 
@@ -69,9 +65,11 @@ select
     -- percentuais não há defasagem a medir, e afirmar alinhamento é inventar.
     case
         when t.percentual_obra is null or t.percentual_execucao_ts is null
-            then 'Sem Informação'
-        when t.percentual_obra > t.percentual_execucao_ts + 10 then 'Trabalho Social Atrasado'
-        when t.percentual_obra < t.percentual_execucao_ts - 10 then 'Trabalho Social Adiantado'
+        then 'Sem Informação'
+        when t.percentual_obra > t.percentual_execucao_ts + 10
+        then 'Trabalho Social Atrasado'
+        when t.percentual_obra < t.percentual_execucao_ts - 10
+        then 'Trabalho Social Adiantado'
         else 'Ritmo Alinhado'
     end as ritmo_social_fisico
 

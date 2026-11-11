@@ -58,12 +58,8 @@ _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
     "false",
     "no",
 )
-_LOG_FILE = (
-    SCRIPTS_DIR / f"raw_para_staging_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-)
-_formatter = logging.Formatter(
-    "%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
-)
+_LOG_FILE = SCRIPTS_DIR / f"raw_para_staging_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
 if _LOCAL_ARTIFACTS:
     # Standalone: o script gerencia os próprios handlers (stderr + arquivo de log).

@@ -79,10 +79,10 @@
 -#}
 {% macro test_bronze_colunas_nao_mapeadas(model) %}
 
-{%- set padrao =
+    {%- set padrao =
     '^(uh|qt|qtd|qtde|quantidade)_|^(vr|valor)_|^dt_|situacao|pendencia|retomad|paralis|entidade|aporte'
 -%}
-{%- set audit = [
+    {%- set audit = [
     '_source_file', '_ingested_at', '_source_hash', 'iorigem', 'filename',
     'source_file', 'dt_referencia', 'dt_ingest', 'hash_linha', 'dt_movimento',
     'dh_movimento', 'idt_movimento', 'origem', 'de_interface', 'de_descricao',
@@ -90,46 +90,45 @@
     'report_date', 'institution', 'profile', 'content_hash', 'agente_arquivo',
     'prioridade_reentrega', 'nu_contrato_emprendimento',
 ] -%}
-{%- set consumidas = historico_bronze_aliases_consumidas() -%}
+    {%- set consumidas = historico_bronze_aliases_consumidas() -%}
 
-{#- sufixo curto do bronze: int040 / snh_bb / ... -#}
-{%- set bronze_curto = model.identifier | lower
+    {#- sufixo curto do bronze: int040 / snh_bb / ... -#}
+    {%- set bronze_curto = model.identifier | lower
         | replace('bronze_sftp_empreendimento_', '') | replace('bronze_dhist_empreendimento_', '') -%}
 
-{%- set orfas = [] -%}
-{%- if execute -%}
-    {%- for c in adapter.get_columns_in_relation(model) -%}
-        {%- set nome = c.name | lower -%}
-        {%- if nome not in audit
+    {%- set orfas = [] -%}
+    {%- if execute -%}
+        {%- for c in adapter.get_columns_in_relation(model) -%}
+            {%- set nome = c.name | lower -%}
+            {%- if nome not in audit
                and nome not in consumidas
                and modules.re.search(padrao, nome) -%}
-            {%- do orfas.append(nome) -%}
-        {%- endif -%}
-    {%- endfor -%}
-{%- endif -%}
+                {%- do orfas.append(nome) -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
 
-with
-    ignoradas as (
-        select lower(trim(cast(coluna as varchar))) as coluna
-        from {{ ref('colunas_bronze_ignoradas') }}
-        where lower(trim(cast(bronze as varchar))) = '{{ bronze_curto }}'
-    ),
-    candidatas_orfas as (
-        {%- if orfas | length > 0 %}
-        {%- for nome in orfas %}
-        select '{{ nome }}' as coluna{% if not loop.last %}
-        union all{% endif %}
-        {%- endfor %}
-        {%- else %}
-        select cast(null as varchar) as coluna where 1 = 0
-        {%- endif %}
-    )
+    with
+        ignoradas as (
+            select lower(trim(cast(coluna as varchar))) as coluna
+            from {{ ref('colunas_bronze_ignoradas') }}
+            where lower(trim(cast(bronze as varchar))) = '{{ bronze_curto }}'
+        ),
+        candidatas_orfas as (
+            {%- if orfas | length > 0 %}
+                {%- for nome in orfas %}
+                    select '{{ nome }}' as coluna
+                    {% if not loop.last %}
+                        union all
+                    {% endif %}
+                {%- endfor %}
+            {%- else %}select cast(null as varchar) as coluna where 1 = 0
+            {%- endif %}
+        )
 
-select
-    '{{ bronze_curto }}' as bronze,
-    c.coluna
-from candidatas_orfas c
-left join ignoradas i using (coluna)
-where i.coluna is null
+    select '{{ bronze_curto }}' as bronze, c.coluna
+    from candidatas_orfas c
+    left join ignoradas i using (coluna)
+    where i.coluna is null
 
 {% endmacro %}

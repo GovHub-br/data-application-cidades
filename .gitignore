@@ -4,13 +4,12 @@
 venv/
 ENV/
 
-# Poetry
+# Build
 dist/
 **/*.pyc
 **/*.lock
+!uv.lock
 __pycache__/
-.poetry/
-requirements.generated.txt
 
 # Cache directories
 .cache/

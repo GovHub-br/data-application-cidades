@@ -23,9 +23,7 @@ with
 
             -- Proponente (Entidade Organizadora)
             nullif(trim(razao_social_proponente), '') as eo_nome,
-            nullif(
-                regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), ''
-            ) as eo_cnpj,
+            nullif(regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), '') as eo_cnpj,
             nullif(trim(email_entidade), '') as eo_email,
 
             -- Localização
@@ -41,12 +39,10 @@ with
             {{ parse_int("quantidade_uh_adaptadas") }} as qt_uh_adaptadas,
 
             -- Execução física
-            {{ parse_numeric("percentual_obra_realizado", "numeric(6, 2)") }}
-            as pct_obra_realizado,
+            {{ parse_numeric("percentual_obra_realizado", "numeric(6, 2)") }} as pct_obra_realizado,
 
             -- Valores financeiros
-            {{ parse_financial_value("vr_emprestimo_original") }}
-            as vr_emprestimo_original,
+            {{ parse_financial_value("vr_emprestimo_original") }} as vr_emprestimo_original,
             {{ parse_financial_value("vlr_operacao") }} as vr_operacao,
             {{ parse_financial_value("vr_investimento") }} as vr_investimento,
             {{ parse_financial_value("vr_liberado") }} as vr_liberado,

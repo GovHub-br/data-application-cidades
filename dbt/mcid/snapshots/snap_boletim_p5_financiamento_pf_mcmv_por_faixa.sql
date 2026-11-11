@@ -16,19 +16,22 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p5_financiamento_pf_mcmv_por_faixa %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("faixa"::text, '') as chave,
-    edicao,
-    "faixa", "Trim. ano anterior — Nº UH", "Trim. ano anterior — FIN (Bi R$)", "Trim. selecionado — Nº UH", "Trim. selecionado — FIN (Bi R$)"
-from {{ ref('ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa') }}
+    select
+        edicao || '|' || coalesce("faixa"::text, '') as chave,
+        edicao,
+        "faixa",
+        "Trim. ano anterior — Nº UH",
+        "Trim. ano anterior — FIN (Bi R$)",
+        "Trim. selecionado — Nº UH",
+        "Trim. selecionado — FIN (Bi R$)"
+    from {{ ref('ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa') }}
 
 {% endsnapshot %}

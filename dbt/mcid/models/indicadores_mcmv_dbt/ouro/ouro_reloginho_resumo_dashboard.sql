@@ -29,12 +29,8 @@ select
     b.uh_vigentes as uh_vigentes_ultimo,
     b.n_apf as n_apf_ultimo,
     b.n_meses_observados,
-    round(
-        b.uh_entregues::double / nullif(b.n_meses_observados, 0), 2
-    ) as ritmo_medio_mensal
+    round(b.uh_entregues::double / nullif(b.n_meses_observados, 0), 2) as ritmo_medio_mensal
 from base b
 inner join
-    ultimo_mes u
-    on b.agente_financeiro = u.agente_financeiro
-    and b.dt_referencia = u.dt_ultimo_mes
+    ultimo_mes u on b.agente_financeiro = u.agente_financeiro and b.dt_referencia = u.dt_ultimo_mes
 order by b.agente_financeiro

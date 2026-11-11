@@ -30,10 +30,7 @@ log = logging.getLogger(__name__)
 
 # Infra: conexões
 def _conn_str() -> str:
-    return (
-        f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
-        f"user={PG_USER} password={PG_PASSWORD}"
-    )
+    return f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} user={PG_USER} password={PG_PASSWORD}"
 
 
 def _criar_control_table(conn_str: str) -> None:
@@ -118,9 +115,7 @@ def _registrar_control(conn_str: str, row: dict) -> None:
 
 
 # Auditoria (parquet)
-def _gravar_auditoria(
-    minio: ClienteMinio, execution_id: str, registros: List[dict]
-) -> str:
+def _gravar_auditoria(minio: ClienteMinio, execution_id: str, registros: List[dict]) -> str:
     df = pd.DataFrame(registros)
     if "masked_columns" in df.columns:
         df["masked_columns"] = df["masked_columns"].apply(

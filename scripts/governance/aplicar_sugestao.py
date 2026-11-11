@@ -107,22 +107,14 @@ def trocar_ou_inserir_descricao(linhas: list[str], mapa: Any, nova: str) -> list
     if "description" in mapa:
         linha_chave, coluna_chave = mapa.lc.key("description")
         em_bloco = bool(ESCALAR_EM_BLOCO.search(linhas[linha_chave]))
-        fim = fim_do_bloco(
-            linhas, linha_chave, coluna_chave, comentario_encerra=not em_bloco
-        )
-        return (
-            linhas[:linha_chave]
-            + linhas_da_descricao(nova, coluna_chave)
-            + linhas[fim + 1 :]
-        )
+        fim = fim_do_bloco(linhas, linha_chave, coluna_chave, comentario_encerra=not em_bloco)
+        return linhas[:linha_chave] + linhas_da_descricao(nova, coluna_chave) + linhas[fim + 1 :]
     linha_nome, coluna_nome = mapa.lc.key("name")
     fim = fim_do_bloco(linhas, linha_nome, coluna_nome)
     return linhas[: fim + 1] + linhas_da_descricao(nova, coluna_nome) + linhas[fim + 1 :]
 
 
-def acrescentar_coluna(
-    linhas: list[str], model: Any, coluna: str, nova: str
-) -> list[str]:
+def acrescentar_coluna(linhas: list[str], model: Any, coluna: str, nova: str) -> list[str]:
     nome = " ".join(coluna.split())
     if "columns" in model and model["columns"]:
         colunas = model["columns"]
@@ -161,17 +153,13 @@ def esperado_depois(original: dict, modelo: str, coluna: str | None, nova: str) 
 
 def editar_bloco_doc(nome: str, nova: str, raiz: Path = MODELS) -> Path:
     padrao = re.compile(
-        r"(\{%-?\s*docs\s+"
-        + re.escape(nome)
-        + r"\s*-?%\})(.*?)(\{%-?\s*enddocs\s*-?%\})",
+        r"(\{%-?\s*docs\s+" + re.escape(nome) + r"\s*-?%\})(.*?)(\{%-?\s*enddocs\s*-?%\})",
         re.DOTALL,
     )
     for caminho in sorted(raiz.parent.rglob("*.md")):
         texto = caminho.read_text(encoding="utf-8")
         if padrao.search(texto):
-            corpo = (
-                "\n" + "\n".join(textwrap.wrap(" ".join(nova.split()), LARGURA)) + "\n"
-            )
+            corpo = "\n" + "\n".join(textwrap.wrap(" ".join(nova.split()), LARGURA)) + "\n"
             caminho.write_text(
                 padrao.sub(lambda m: m.group(1) + corpo + m.group(3), texto, count=1),
                 encoding="utf-8",
@@ -209,11 +197,7 @@ def aplicar(modelo: str, coluna: str | None, nova: str, raiz: Path = MODELS) -> 
         model.get("description")
         if coluna is None
         else next(
-            (
-                c.get("description")
-                for c in model.get("columns") or []
-                if c.get("name") == coluna
-            ),
+            (c.get("description") for c in model.get("columns") or [] if c.get("name") == coluna),
             None,
         )
     )
@@ -225,9 +209,7 @@ def aplicar(modelo: str, coluna: str | None, nova: str, raiz: Path = MODELS) -> 
     if coluna is None:
         linhas = trocar_ou_inserir_descricao(linhas, model, nova)
     else:
-        alvo = next(
-            (c for c in model.get("columns") or [] if c.get("name") == coluna), None
-        )
+        alvo = next((c for c in model.get("columns") or [] if c.get("name") == coluna), None)
         if alvo is None:
             linhas = acrescentar_coluna(linhas, model, coluna, nova)
         else:
@@ -244,18 +226,14 @@ def aplicar(modelo: str, coluna: str | None, nova: str, raiz: Path = MODELS) -> 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--carga", type=Path, required=True, help="client_payload em JSON"
-    )
+    parser.add_argument("--carga", type=Path, required=True, help="client_payload em JSON")
     args = parser.parse_args()
     carga = json.loads(args.carga.read_text(encoding="utf-8"))
     if carga.get("tipo") != "table":
         print(f"tipo de ativo não suportado: {carga.get('tipo')}", file=sys.stderr)
         return 2
     try:
-        caminho = aplicar(
-            nome_da_tabela(carga["fqn"]), carga.get("coluna"), carga["sugestao"]
-        )
+        caminho = aplicar(nome_da_tabela(carga["fqn"]), carga.get("coluna"), carga["sugestao"])
     except SugestaoInvalida as erro:
         print(f"sugestão não aplicada: {erro}", file=sys.stderr)
         return 1

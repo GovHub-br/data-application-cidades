@@ -86,9 +86,7 @@ def abecip_financiamentos_ingest_dag() -> None:
             if bruto:
                 upload_raw_bytes("abecip", "financiamentos_modalidade", bruto, ext="xlsx")
             upload_fallback_json("abecip", "financiamentos_modalidade", registros)
-            registros_para_staging_parquet(
-                "abecip", "financiamentos_modalidade", registros
-            )
+            registros_para_staging_parquet("abecip", "financiamentos_modalidade", registros)
 
             logger.info("[abecip_financiamentos] Ingestão concluída com sucesso")
 

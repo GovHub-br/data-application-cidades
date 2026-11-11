@@ -135,9 +135,7 @@ def targets_por_posicao(key: str) -> Optional[List[dict]]:
     for idx, categoria in sorted(mapa.items()):
         acao = _ACAO_POR_CATEGORIA.get(categoria)
         if acao is None:
-            raise ValueError(
-                f"COLUNAS_POR_POSICAO[{key!r}]: categoria desconhecida {categoria!r}"
-            )
+            raise ValueError(f"COLUNAS_POR_POSICAO[{key!r}]: categoria desconhecida {categoria!r}")
         targets.append(
             {
                 "idx": idx,
@@ -217,9 +215,7 @@ def classificar(  # noqa: C901
         texto = cell
         if real_encoding is not None:
             try:
-                texto = cell.encode("latin-1", "surrogateescape").decode(
-                    real_encoding, "replace"
-                )
+                texto = cell.encode("latin-1", "surrogateescape").decode(real_encoding, "replace")
             except Exception:  # noqa: BLE001
                 texto = cell
         normed.append((idx, cell, norm_header(texto)))
@@ -257,7 +253,5 @@ def classificar(  # noqa: C901
             action = "redact"
         else:
             continue
-        targets.append(
-            {"idx": idx, "column": original, "category": cat, "action": action}
-        )
+        targets.append({"idx": idx, "column": original, "category": cat, "action": action})
     return targets, has_pf

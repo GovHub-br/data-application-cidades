@@ -10,6 +10,7 @@ from .config import TMPDIR
 
 log = logging.getLogger(__name__)
 
+
 # Upload que falhou: o parquet fica em disco e a próxima execução só reenvia, sem
 # reconverter (o CadÚnico pessoa leva ~3h para converter).
 def _pendente(destino: str, source_hash: str) -> str:

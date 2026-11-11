@@ -89,9 +89,7 @@ class ClienteSftp:
         transport.connect(username=self.user, password=self.password)
         transport.set_keepalive(self.KEEPALIVE_S)
         transport.sock.settimeout(self.TIMEOUT_S)
-        sftp: Optional[paramiko.SFTPClient] = paramiko.SFTPClient.from_transport(
-            transport
-        )
+        sftp: Optional[paramiko.SFTPClient] = paramiko.SFTPClient.from_transport(transport)
         if sftp is None:
             transport.close()
             raise RuntimeError("Falha ao abrir sessão SFTP")
@@ -154,9 +152,7 @@ class ClienteSftp:
             caminho_completo = f"{caminho.rstrip('/')}/{item.filename}"
             if S_ISDIR(item.st_mode):
                 if item.filename in pastas_ignorar:
-                    logging.info(
-                        f"[cliente_sftp.py] Ignorando pasta excluída: {caminho_completo}"
-                    )
+                    logging.info(f"[cliente_sftp.py] Ignorando pasta excluída: {caminho_completo}")
                     continue
                 yield from self.listar_arquivos(
                     caminho_completo, extensoes, profundidade + 1, pastas_ignorar
@@ -170,9 +166,7 @@ class ClienteSftp:
             raise RuntimeError("SFTP não conectado — chame conectar() primeiro")
         from pathlib import Path
 
-        tmp = tempfile.NamedTemporaryFile(
-            delete=False, suffix=Path(caminho).suffix, dir=tmpdir
-        )
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(caminho).suffix, dir=tmpdir)
         try:
             self.sftp.getfo(caminho, tmp)
             tmp.flush()

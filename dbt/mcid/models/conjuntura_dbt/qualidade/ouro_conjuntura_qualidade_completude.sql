@@ -13,7 +13,6 @@
 -- A bronze fica fora de propósito: ela espelha a origem e pode conter coluna
 -- com identificador de pessoa, que não deve aparecer em camada de consumo.
 -- Ver `macros/coluna_sensivel.sql`.
-
 {{ perfil_completude(
     relacoes=relacoes_do_produto(
         'conjuntura_dbt',

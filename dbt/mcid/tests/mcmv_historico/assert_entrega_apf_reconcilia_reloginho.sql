@@ -6,16 +6,11 @@
 -- Change: enriquecer-datas-acompanhamento-historico (B), tarefa 5.1.
 with
     espinha as (
-        select sum(uh_entregues_acumulada) as uh
-        from {{ ref('prata_historico_entrega_apf') }}
+        select sum(uh_entregues_acumulada) as uh from {{ ref('prata_historico_entrega_apf') }}
     ),
     reloginho as (
-        select sum(uh_entregues_evento_mes) as uh
-        from {{ ref('prata_historico_snh_entregas_mes') }}
+        select sum(uh_entregues_evento_mes) as uh from {{ ref('prata_historico_snh_entregas_mes') }}
     )
-select
-    espinha.uh as uh_espinha,
-    reloginho.uh as uh_reloginho,
-    espinha.uh - reloginho.uh as diff
+select espinha.uh as uh_espinha, reloginho.uh as uh_reloginho, espinha.uh - reloginho.uh as diff
 from espinha, reloginho
 where espinha.uh is distinct from reloginho.uh

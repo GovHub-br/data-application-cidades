@@ -28,14 +28,9 @@
         from
             (
                 select distinct cast(arq['filename'] as varchar) as arquivo
-                from
-                    read_parquet(
-                        '{{ padrao }}', filename => true, union_by_name => true
-                    ) as arq
+                from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as arq
             ) as candidatos
-        where
-            true
-            {%- for termo in excluir %} and arquivo not like '%{{ termo }}%' {%- endfor %}
+        where true {%- for termo in excluir %} and arquivo not like '%{{ termo }}%' {%- endfor %}
         order by split_part(arquivo, '/', -1) desc
         limit 1
     )

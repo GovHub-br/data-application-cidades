@@ -16,8 +16,8 @@ O que ele pega e a conferência manual não pegava de graça:
   em lugar nenhum — tabela órfã ou edição feita pela tela.
 
 Uso:
-    poetry run python scripts/governance/auditar_openmetadata.py
-    poetry run python scripts/governance/auditar_openmetadata.py --strict
+    uv run python scripts/governance/auditar_openmetadata.py
+    uv run python scripts/governance/auditar_openmetadata.py --strict
 """
 
 from __future__ import annotations
@@ -77,14 +77,10 @@ CRITERIOS_DE_TABELA = (
 
 
 def tem_etiqueta(entidade: dict, prefixo: str) -> bool:
-    return any(
-        str(t.get("tagFQN", "")).startswith(prefixo) for t in (entidade.get("tags") or [])
-    )
+    return any(str(t.get("tagFQN", "")).startswith(prefixo) for t in (entidade.get("tags") or []))
 
 
-def auditar_servico_e_banco(
-    om: ClienteOM, aud: Auditoria, servico: str, banco: str
-) -> None:
+def auditar_servico_e_banco(om: ClienteOM, aud: Auditoria, servico: str, banco: str) -> None:
     declarado = carregar("servicos.yml")
     alvos = [
         ("services/databaseServices", servico, declarado.get("servico") or {}),
@@ -237,9 +233,7 @@ def auditar_tabelas(
                     mesmo_texto(atual_schema.get("description"), decl.get("description")),
                 )
                 aud.conferir("schemas", "dono", bool(atual_schema.get("owners")))
-                aud.conferir(
-                    "schemas", "certificacao", bool(atual_schema.get("certification"))
-                )
+                aud.conferir("schemas", "certificacao", bool(atual_schema.get("certification")))
             else:
                 aud.pendencia(f"schema {fqn_schema} não existe na instância")
                 continue
@@ -252,27 +246,19 @@ def auditar_tabelas(
                     "fields": "tags,domains,owners,dataProducts,certification,columns",
                 },
             )
-            declaradas = {
-                t["name"] for t in porfqn.values() if t["databaseSchema"] == fqn_schema
-            }
+            declaradas = {t["name"] for t in porfqn.values() if t["databaseSchema"] == fqn_schema}
             for extra in sorted({t["name"] for t in tabelas} - declaradas):
                 # existe na instância e não sai do dbt: tabela órfã ou criada
                 # pela tela. O catálogo não deveria ter nada que o repo não diga.
-                aud.pendencia(
-                    f"{schema}.{extra} está na instância e não é declarada no repo"
-                )
+                aud.pendencia(f"{schema}.{extra} está na instância e não é declarada no repo")
 
             for tab in tabelas:
                 alvo = porfqn.get(tab["fullyQualifiedName"])
                 if not alvo:
                     continue
                 contador["tabelas"] += 1
-                camada = camadas.get(
-                    tab["name"], esquemas.get(schema, {}).get("layer", "gold")
-                )
-                conferir_tabela(
-                    aud, contador, dominios, produto["name"], camada, tab, alvo, schema
-                )
+                camada = camadas.get(tab["name"], esquemas.get(schema, {}).get("layer", "gold"))
+                conferir_tabela(aud, contador, dominios, produto["name"], camada, tab, alvo, schema)
                 conferir_glossario_da_tabela(aud, por_modelo, tab, schema)
                 conferir_colunas(aud, contador, por_coluna, tab, schema)
         por_produto[produto["name"]] = contador
@@ -322,9 +308,7 @@ def conferir_glossario_da_tabela(
     ok = esperados <= tem
     aud.conferir("tabelas", "glossario", ok)
     if not ok:
-        aud.pendencia(
-            f"{schema}.{tab['name']}: termos faltando {sorted(esperados - tem)}"
-        )
+        aud.pendencia(f"{schema}.{tab['name']}: termos faltando {sorted(esperados - tem)}")
 
 
 def conferir_colunas(
@@ -341,11 +325,7 @@ def conferir_colunas(
         if not por_coluna.get(coluna["name"]):
             continue
         esperados = set(por_coluna[coluna["name"]])
-        tem = {
-            t["tagFQN"]
-            for t in (coluna.get("tags") or [])
-            if t.get("source") == "Glossary"
-        }
+        tem = {t["tagFQN"] for t in (coluna.get("tags") or []) if t.get("source") == "Glossary"}
         ok = esperados <= tem
         aud.conferir("colunas", "glossario", ok)
         if not ok:
@@ -386,12 +366,8 @@ def relatar(aud: Auditoria, por_produto: dict[str, Counter]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--strict", action="store_true", help="sai com erro se houver pendência"
-    )
-    parser.add_argument(
-        "--listar", type=int, default=25, help="quantas pendências listar"
-    )
+    parser.add_argument("--strict", action="store_true", help="sai com erro se houver pendência")
+    parser.add_argument("--listar", type=int, default=25, help="quantas pendências listar")
     args = parser.parse_args()
 
     config = ambiente(exigir_acesso=True)
@@ -404,9 +380,7 @@ def main() -> int:
     auditar_classificacoes(om, aud, dominios)
     auditar_qualidade(om, aud)
     auditar_glossario(om, aud, termos)
-    por_produto = auditar_tabelas(
-        om, aud, dominios, termos, config["servico"], config["banco"]
-    )
+    por_produto = auditar_tabelas(om, aud, dominios, termos, config["servico"], config["banco"])
 
     relatar(aud, por_produto)
 

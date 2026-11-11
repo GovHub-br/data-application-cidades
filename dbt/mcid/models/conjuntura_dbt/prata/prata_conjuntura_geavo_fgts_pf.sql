@@ -31,33 +31,40 @@
 -- Aponta pro mais recente conhecido em 2026-08-25 (07/07/2026) — precisa
 -- atualizar o caminho manualmente até existir uma DAG que copie sempre o
 -- arquivo mais novo pra um caminho fixo.
-
-with base as (
-    select
-        dt_assinatura::text::date as dt_assinatura,
-        case
-            when faixa::text = 'G1' then 'Faixa 1'
-            when faixa::text = 'G2' then 'Faixa 2'
-            when faixa::text = 'G3' then 'Faixa 3'
-            when tp_orcamento::text ilike '%classe media%' then 'Classe Média'
-        end as faixa,
-        case lower(tpimovel::text)
-            when 'novo' then 'Novo'
-            when 'usado' then 'Usado'
-            else tpimovel::text
-        end as tipo_imovel,
-        replace(vlr_emprestimo::text, ',', '.')::numeric as valor
-    from {{ ref('bronze_geavo_fgts_pf') }}
-)
+with
+    base as (
+        select
+            dt_assinatura::text::date as dt_assinatura,
+            case
+                when faixa::text = 'G1'
+                then 'Faixa 1'
+                when faixa::text = 'G2'
+                then 'Faixa 2'
+                when faixa::text = 'G3'
+                then 'Faixa 3'
+                when tp_orcamento::text ilike '%classe media%'
+                then 'Classe Média'
+            end as faixa,
+            case
+                lower(tpimovel::text)
+                when 'novo'
+                then 'Novo'
+                when 'usado'
+                then 'Usado'
+                else tpimovel::text
+            end as tipo_imovel,
+            replace(vlr_emprestimo::text, ',', '.')::numeric as valor
+        from {{ ref('bronze_geavo_fgts_pf') }}
+    )
 
 select
-    extract(year from dt_assinatura)::int  as ano,
+    extract(year from dt_assinatura)::int as ano,
     extract(month from dt_assinatura)::int as mes,
     faixa,
     tipo_imovel,
-    count(*)                as qtd_unidades,
-    sum(valor)               as valor_emprestimo,
-    current_timestamp        as dt_silver
+    count(*) as qtd_unidades,
+    sum(valor) as valor_emprestimo,
+    current_timestamp as dt_silver
 from base
 where faixa is not null
 group by 1, 2, 3, 4

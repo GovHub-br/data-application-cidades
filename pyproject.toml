@@ -1,102 +1,585 @@
-[tool.poetry]
-package-mode = false
-name = "lappis"
+[project]
+name = "data-application-cidades"
 version = "0.1.0"
-description = "Gestão de Dados do IPEA - Aplicações Python"
-authors = ["Lappis UNB"]
+description = "Pipeline de dados do MCid"
 readme = "README.md"
+requires-python = "~=3.11.0"
 
-[tool.poetry.dependencies]
-python = "~3.11"
-# Versoes iguais as do requirements.txt, que e o que roda na imagem do Airflow.
-# tests/test_dependencias_sincronizadas.py reprova divergencia. So
-# great-expectations e sqlglot ficam fora: rodam em scripts/governance/, nao
-# na imagem.
-apache-airflow = "3.3.2"
-apache-airflow-providers-postgres = "7.0.2"
-apache-airflow-providers-standard = "1.19.0"
-numpy = "2.4.6"
-dbt-core = "1.12.5"
-dbt-postgres = "1.11.0"
-dbt-duckdb = "1.11.0"
-pandas = "3.0.5"
-requests = "2.34.2"
-sqlalchemy = "2.0.52"
-imap-tools = "1.15.0"
-astronomer-cosmos = "1.15.1"
-pyarrow = "25.0.1"
-boto3 = "1.41.5"
-duckdb = "1.5.6"
-# 17 scripts em scripts/ importam dotenv (segredo só via .env/env var, nunca
-# hardcoded); estava em requirements.txt mas nunca declarado aqui, e o CI
-# instala via Poetry — poetry.lock não tinha o pacote.
-python-dotenv = "1.2.3"
-openpyxl = "3.1.5"
-great-expectations = ">=1.21,<2.0"
-# Parser SQL da linhagem de colunas (scripts/governance/linhagem_colunas.py).
-# Preso ao major: a API de `sqlglot.lineage` muda entre versões maiores.
-sqlglot = "^30.0"
+# Única declaração de dependências (ADR-0014). O uv.lock é versionado e a CI instala com
+# `uv sync --locked`. Mexeu aqui: `make lock` (regenera o lock da imagem e o uv.lock).
+[dependency-groups]
+# O que vai para a imagem do Airflow. A imagem instala infra/docker/airflow/requirements.lock.txt,
+# resolvido a partir deste grupo contra a imagem base por infra/docker/airflow/compile-lock.sh.
+# Os pacotes que já vêm na imagem apache/airflow:3.3.2-python3.11 ficam na versão dela, que
+# segue as constraints oficiais do Airflow; os instalados por cima que também aparecem lá usam
+# a versão de lá.
+runtime = [
+    # Vêm da imagem base.
+    "apache-airflow==3.3.2",
+    "apache-airflow-providers-postgres==7.0.2",
+    # PythonOperator, TriggerDagRunOperator, EmptyOperator e @task.virtualenv saíram do core
+    # no Airflow 3 e moram neste provider.
+    "apache-airflow-providers-standard==1.19.0",
+    "numpy==2.4.6",
+    "pandas==3.0.5",
+    "pyarrow==25.0.1",
+    "sqlalchemy==2.0.52",
+    "python-dotenv==1.2.3",
+    "requests==2.34.2",
+    # Abaixo da base (1.43.75): o openmetadata-ingestion 1.13 pede boto3<1.42.
+    "boto3==1.41.5",
+    # Importados direto pelo código; antes só chegavam como dependência de outros.
+    "pyyaml==6.0.3",
+    "psycopg2-binary==2.9.13",
+    "paramiko==5.0.0",
+    "httpx==0.28.1",
+    "beautifulsoup4==4.15.0",
+    "chardet==4.0.0",
+    "pytz==2026.3.post1",
+    # Instalados por cima da base.
+    "openpyxl==3.1.5",
+    # Fora das constraints do Airflow.
+    "astronomer-cosmos==1.15.1",
+    # dbt 1.7 não convive com a base do Airflow 3: fixa sqlparse<0.5 e urllib3 1.x, e a base
+    # traz sqlparse 0.6 (common-sql) e urllib3 2.
+    "dbt-core==1.12.5",
+    "dbt-postgres==1.11.0",
+    "dbt-duckdb==1.11.0",
+    "duckdb==1.5.6",
+    "imap-tools==1.15.0",
+    # Cliente do OpenMetadata (os testes injetam `metadata.*` falso). SEM o extra `airflow`,
+    # que fixa apache-airflow==3.2.2: o conector do Airflow usa o Airflow desta imagem. SEM o
+    # `pii-processor`, que exige numpy<2 e rebaixaria o pandas 3 da ingestão. A versão
+    # acompanha a linha do servidor.
+    "openmetadata-ingestion[dbt,postgres,superset]==1.13.3.2",
+    # Vem com o metricflow do dbt-core 1.12. Fica na 29.0.1, abaixo das constraints (30.x),
+    # porque o collate-sqllineage do openmetadata-ingestion a fixa; o metricflow aceita. É a
+    # versão única do repositório: a linhagem de scripts/governance/ roda com ela.
+    "sqlglot==29.0.1",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+    "packaging",
+]
+dev = [
+    "pre-commit",
+    # scripts/governance/: validação da prata no GX e edição do YAML do dbt a partir de
+    # sugestão do OpenMetadata. Rodam fora da imagem.
+    "great-expectations>=1.21,<2.0",
+    "ruamel-yaml>=0.18,<0.20",
+]
 
-[tool.poetry.group.dev.dependencies]
-# edita o YAML do dbt a partir de sugestão do OpenMetadata
-# (scripts/governance/aplicar_sugestao.py); o workflow instala por conta própria
-ruamel-yaml = ">=0.18,<0.20"
-black = "*"
-ruff = "*"
-pytest = "*"
-pytest-cov = "*"
-mypy = "*"
-types-psycopg2 = "*"
-pandas-stubs = "*"
-sqlalchemy-stubs = "*"
-jupyter = "*"
-shandy-sqlfmt = "*"
-sqlfluff = "*"
-sqlfluff-templater-dbt = "*"
-types-Authlib = "*"
-types-Deprecated = "*"
-types-Pygments = "*"
-types-WTForms = "*"
-types-croniter = "*"
-types-gevent = "*"
-types-jmespath = "*"
-types-jsonschema = "*"
-types-openpyxl = "*"
-types-psutil = "*"
-types-tabulate = "*"
-types-colorama = "*"
-types-decorator = "*"
-types-passlib = "*"
-types-pycurl = "*"
-types-simplejson = "*"
-types-uWSGI = "*"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 90
-target-version = ["py311"]
-skip-string-normalization = false
-include = "\\.pyi?$"
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | \.conda
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
+[tool.uv]
+package = false
+default-groups = ["runtime", "test", "dev"]
+# >>> gerado por infra/docker/airflow/compile-lock.sh (versoes da imagem); nao edite
+constraint-dependencies = [
+    "a2wsgi==1.10.10",
+    "adal==1.2.7",
+    "adbc-driver-manager==1.12.0",
+    "adbc-driver-postgresql==1.12.0",
+    "adbc-driver-sqlite==1.12.0",
+    "adlfs==2026.8.0",
+    "aenum==3.1.17",
+    "agate==1.9.1",
+    "aiobotocore==3.1.3",
+    "aiofiles==24.1.0",
+    "aiohappyeyeballs==2.7.1",
+    "aiohttp==3.14.3",
+    "aiohttp-cors==0.8.1",
+    "aioitertools==0.13.0",
+    "aiomysql==0.3.2",
+    "aiosignal==1.4.0",
+    "aiosmtplib==5.1.3",
+    "aiosqlite==0.22.1",
+    "alembic==1.20.0",
+    "amqp==5.3.1",
+    "annotated-doc==0.0.5",
+    "annotated-types==0.8.0",
+    "antlr4-python3-runtime==4.9.2",
+    "anyio==4.15.1",
+    "apache-airflow==3.3.2",
+    "apache-airflow-core==3.3.2",
+    "apache-airflow-providers-amazon==9.36.0",
+    "apache-airflow-providers-celery==3.24.0",
+    "apache-airflow-providers-cncf-kubernetes==10.22.0",
+    "apache-airflow-providers-common-compat==1.19.0",
+    "apache-airflow-providers-common-io==1.9.0",
+    "apache-airflow-providers-common-messaging==2.1.0",
+    "apache-airflow-providers-common-sql==2.1.1",
+    "apache-airflow-providers-docker==4.5.9",
+    "apache-airflow-providers-elasticsearch==6.9.1",
+    "apache-airflow-providers-fab==3.9.0",
+    "apache-airflow-providers-ftp==3.15.2",
+    "apache-airflow-providers-git==0.5.0",
+    "apache-airflow-providers-google==22.5.0",
+    "apache-airflow-providers-grpc==3.9.5",
+    "apache-airflow-providers-hashicorp==4.8.1",
+    "apache-airflow-providers-http==6.1.0",
+    "apache-airflow-providers-microsoft-azure==15.1.0",
+    "apache-airflow-providers-mysql==6.6.2",
+    "apache-airflow-providers-odbc==4.13.0",
+    "apache-airflow-providers-openlineage==2.20.1",
+    "apache-airflow-providers-opensearch==1.12.1",
+    "apache-airflow-providers-postgres==7.0.2",
+    "apache-airflow-providers-redis==4.6.0",
+    "apache-airflow-providers-sendgrid==4.2.4",
+    "apache-airflow-providers-sftp==6.0.1",
+    "apache-airflow-providers-slack==9.10.2",
+    "apache-airflow-providers-smtp==3.0.4",
+    "apache-airflow-providers-snowflake==6.17.0",
+    "apache-airflow-providers-ssh==6.0.1",
+    "apache-airflow-providers-standard==1.19.0",
+    "apache-airflow-task-sdk==1.3.2",
+    "apispec==6.10.0",
+    "argcomplete==3.7.2",
+    "arrow==1.4.0",
+    "asgiref==3.12.1",
+    "asn1crypto==1.5.1",
+    "astronomer-cosmos==1.15.1",
+    "async-timeout==5.0.1",
+    "asyncpg==0.31.0",
+    "asyncssh==2.24.0",
+    "attrs==26.1.0",
+    "authlib==1.8.0",
+    "azure-ai-projects==2.4.0",
+    "azure-batch==15.1.0",
+    "azure-common==1.1.28",
+    "azure-core==1.41.0",
+    "azure-cosmos==4.17.0",
+    "azure-datalake-store==0.0.53",
+    "azure-identity==1.25.3",
+    "azure-keyvault-secrets==4.11.2",
+    "azure-kusto-data==6.0.4",
+    "azure-mgmt-compute==38.3.0",
+    "azure-mgmt-containerinstance==10.1.0",
+    "azure-mgmt-containerregistry==15.0.0",
+    "azure-mgmt-core==1.6.0",
+    "azure-mgmt-cosmosdb==10.0.0",
+    "azure-mgmt-datafactory==10.0.0",
+    "azure-mgmt-datalake-nspkg==3.0.1",
+    "azure-mgmt-datalake-store==0.5.0",
+    "azure-mgmt-nspkg==3.0.2",
+    "azure-mgmt-resource==26.0.0",
+    "azure-mgmt-storage==25.1.0",
+    "azure-nspkg==3.0.2",
+    "azure-servicebus==7.14.3",
+    "azure-storage-blob==12.30.1",
+    "azure-storage-file-datalake==12.25.0",
+    "azure-storage-file-share==12.26.0",
+    "azure-synapse-artifacts==0.22.0",
+    "azure-synapse-spark==0.7.0",
+    "babel==2.18.0",
+    "backports-tarfile==1.2.0",
+    "bcrypt==5.0.0",
+    "beautifulsoup4==4.15.0",
+    "billiard==4.2.4",
+    "blinker==1.9.0",
+    "boto3==1.41.5",
+    "botocore==1.41.6",
+    "cached-property==1.5.2",
+    "cachelib==0.17.0",
+    "cachetools==7.1.8",
+    "cadwyn==7.0.0",
+    "cattrs==26.2.0",
+    "celery==5.6.3",
+    "certifi==2026.7.22",
+    "cffi==2.1.1",
+    "chardet==4.0.0",
+    "charset-normalizer==3.5.1",
+    "click==8.3.3",
+    "click-didyoumean==0.3.1",
+    "click-plugins==1.1.1.2",
+    "click-repl==0.3.0",
+    "cloudpickle==3.1.1",
+    "collate-data-diff==0.11.18",
+    "collate-dbt-artifacts-parser==0.1.4",
+    "collate-sqlfluff==3.5.3",
+    "collate-sqllineage==2.1.8",
+    "colorama==0.4.6",
+    "colorful==0.5.8",
+    "colorlog==6.12.0",
+    "cron-descriptor==2.1.0",
+    "croniter==6.2.4",
+    "cryptography==50.0.1",
+    "daff==1.4.2",
+    "db-dtypes==1.7.1",
+    "dbt-adapters==1.24.5",
+    "dbt-common==1.39.0",
+    "dbt-core==1.12.5",
+    "dbt-core-experimental-parser==2.0.8",
+    "dbt-duckdb==1.11.0",
+    "dbt-extractor==0.6.0",
+    "dbt-postgres==1.11.0",
+    "dbt-protos==1.0.615",
+    "decorator==5.3.1",
+    "deepdiff==8.6.2",
+    "deprecated==1.3.1",
+    "deprecation==2.1.0",
+    "diff-cover==11.0.0",
+    "dill==0.4.1",
+    "distlib==0.4.3",
+    "distro==1.9.0",
+    "dnspython==2.8.0",
+    "docker==7.2.0",
+    "docstring-parser==0.18.0",
+    "dsnparse==0.1.15",
+    "duckdb==1.5.6",
+    "durationpy==0.11",
+    "elastic-transport==9.4.2",
+    "elasticsearch==9.5.1",
+    "email-validator==2.3.0",
+    "et-xmlfile==2.0.0",
+    "eventlet==0.41.2",
+    "events==0.5",
+    "fastapi==0.136.3",
+    "fastapi-cli==0.0.32",
+    "fastuuid==0.14.0",
+    "filelock==3.32.6",
+    "flask==3.1.3",
+    "flask-appbuilder==5.2.2",
+    "flask-babel==4.0.0",
+    "flask-jwt-extended==4.7.4",
+    "flask-limiter==4.1.1",
+    "flask-login==0.6.3",
+    "flask-session==0.8.0",
+    "flask-sqlalchemy==3.1.1",
+    "flask-wtf==1.3.0",
+    "flower==2.1.0",
+    "frozenlist==1.8.0",
+    "fsspec==2026.7.0",
+    "gcloud-aio-auth==5.5.0",
+    "gcloud-aio-bigquery==7.1.0",
+    "gcloud-aio-storage==9.6.4",
+    "gcsfs==2026.8.1",
+    "geoalchemy2==0.20.0",
+    "gevent==26.8.0",
+    "gitdb==4.0.12",
+    "gitpython==3.1.62",
+    "google-ads==32.0.0",
+    "google-analytics-admin==0.30.1",
+    "google-api-core==2.36.0",
+    "google-api-python-client==2.200.0",
+    "google-auth==2.58.0",
+    "google-auth-httplib2==0.4.2",
+    "google-auth-oauthlib==1.4.1",
+    "google-cloud==0.34.0",
+    "google-cloud-aiplatform==2.1.0",
+    "google-cloud-alloydb==0.11.1",
+    "google-cloud-appengine-logging==1.10.0",
+    "google-cloud-audit-log==0.6.2",
+    "google-cloud-automl==2.20.1",
+    "google-cloud-batch==0.22.3",
+    "google-cloud-bigquery==3.45.0",
+    "google-cloud-bigquery-datatransfer==3.23.0",
+    "google-cloud-bigquery-storage==2.41.0",
+    "google-cloud-bigtable==2.44.0",
+    "google-cloud-build==3.39.0",
+    "google-cloud-compute==1.52.0",
+    "google-cloud-container==2.66.0",
+    "google-cloud-core==2.7.0",
+    "google-cloud-datacatalog==3.31.0",
+    "google-cloud-dataflow-client==0.14.0",
+    "google-cloud-dataform==0.11.3",
+    "google-cloud-dataplex==2.20.0",
+    "google-cloud-dataproc==5.30.0",
+    "google-cloud-dataproc-metastore==1.23.0",
+    "google-cloud-dlp==3.39.0",
+    "google-cloud-kms==3.16.0",
+    "google-cloud-language==2.21.0",
+    "google-cloud-logging==3.16.3",
+    "google-cloud-managedkafka==0.4.1",
+    "google-cloud-memcache==1.16.0",
+    "google-cloud-monitoring==2.31.0",
+    "google-cloud-orchestration-airflow==1.22.0",
+    "google-cloud-os-login==2.22.0",
+    "google-cloud-pubsub==2.40.0",
+    "google-cloud-redis==2.22.0",
+    "google-cloud-resource-manager==1.18.0",
+    "google-cloud-run==0.16.1",
+    "google-cloud-secret-manager==2.24.0",
+    "google-cloud-spanner==3.71.0",
+    "google-cloud-speech==2.40.0",
+    "google-cloud-storage==3.14.1",
+    "google-cloud-storage-control==1.15.0",
+    "google-cloud-storage-transfer==1.21.0",
+    "google-cloud-tasks==2.24.0",
+    "google-cloud-texttospeech==2.37.0",
+    "google-cloud-translate==3.27.0",
+    "google-cloud-videointelligence==2.20.0",
+    "google-cloud-vision==3.15.0",
+    "google-cloud-workflows==1.23.0",
+    "google-crc32c==1.8.0",
+    "google-genai==2.8.0",
+    "google-resumable-media==2.10.2",
+    "googleapis-common-protos==1.75.3",
+    "graphviz==0.21",
+    "greenback==1.3.0",
+    "greenlet==3.5.5",
+    "grpc-google-iam-v1==0.14.5",
+    "grpc-interceptor==0.15.4",
+    "grpcio==1.83.1",
+    "grpcio-gcp==0.2.2",
+    "grpcio-status==1.83.1",
+    "h11==0.16.0",
+    "h2==4.4.1",
+    "hf-xet==1.6.0",
+    "hpack==4.2.0",
+    "httpcore==1.0.9",
+    "httpcore2==2.12.0",
+    "httplib2==0.32.0",
+    "httptools==0.8.0",
+    "httpx==0.28.1",
+    "httpx2==2.12.0",
+    "huggingface-hub==1.16.1",
+    "humanize==4.16.0",
+    "hvac==2.4.0",
+    "hyperframe==6.1.0",
+    "idna==3.19",
+    "ijson==3.4.0.post0",
+    "imap-tools==1.15.0",
+    "immutabledict==4.3.1",
+    "importlib-metadata==8.9.0",
+    "importlib-resources==7.1.0",
+    "inflection==0.5.1",
+    "iniconfig==2.3.1",
+    "invoke==3.0.3",
+    "isodate==0.7.2",
+    "isoduration==20.11.0",
+    "itsdangerous==2.2.0",
+    "jaraco-classes==3.4.0",
+    "jaraco-context==6.1.2",
+    "jaraco-functools==4.1.0",
+    "jeepney==0.9.0",
+    "jinja2==3.1.6",
+    "jiter==0.17.0",
+    "jmespath==1.1.0",
+    "joblib==1.6.0",
+    "joserfc==1.7.5",
+    "jsonpatch==1.38",
+    "jsonpath-ng==1.8.0",
+    "jsonpointer==3.6",
+    "jsonschema==4.26.0",
+    "jsonschema-specifications==2025.9.1",
+    "keyring==25.7.0",
+    "kombu==5.6.2",
+    "kubernetes==35.0.0",
+    "kubernetes-asyncio==36.1.0",
+    "lazy-object-proxy==1.12.0",
+    "leather==0.4.1",
+    "libcst==1.9.0",
+    "limits==5.8.0",
+    "linkify-it-py==2.2.0",
+    "litellm==1.85.7",
+    "lockfile==0.12.2",
+    "looker-sdk==26.12.0",
+    "lxml==6.1.3",
+    "mako==1.4.1",
+    "markdown-it-py==4.2.0",
+    "markupsafe==3.0.3",
+    "marshmallow==4.3.1",
+    "marshmallow-sqlalchemy==1.5.0",
+    "mashumaro==3.10",
+    "mdurl==0.1.2",
+    "memory-profiler==0.61.0",
+    "methodtools==0.4.7",
+    "metricflow==0.213.0",
+    "microsoft-kiota-abstractions==1.12.3",
+    "microsoft-kiota-authentication-azure==1.12.3",
+    "microsoft-kiota-http==1.12.3",
+    "microsoft-kiota-serialization-json==1.12.3",
+    "microsoft-kiota-serialization-text==1.12.3",
+    "mistune==3.4.0",
+    "mmh3==5.3.0",
+    "more-itertools==10.8.0",
+    "msal==1.38.0",
+    "msal-extensions==1.3.1",
+    "msgpack==1.2.2",
+    "msgraph-core==1.5.1",
+    "msgraphfs==0.5",
+    "msgspec==0.21.1",
+    "msrest==0.7.1",
+    "msrestazure==0.6.4.post1",
+    "multidict==6.8.0",
+    "mypy-extensions==1.1.0",
+    "mysql-connector-python==26.7.0",
+    "mysqlclient==2.2.8",
+    "narwhals==2.26.0",
+    "natsort==8.4.0",
+    "networkx==3.6.1",
+    "numpy==2.4.6",
+    "oauthlib==3.3.1",
+    "openai==2.54.0",
+    "opencensus==0.11.4",
+    "opencensus-context==0.1.3",
+    "openlineage-integration-common==1.53.0",
+    "openlineage-python==1.53.0",
+    "openlineage-sql==1.53.0",
+    "openmetadata-ingestion==1.13.3.2",
+    "openpyxl==3.1.5",
+    "opensearch-protobufs==1.2.0",
+    "opensearch-py==3.2.0",
+    "opentelemetry-api==1.44.0",
+    "opentelemetry-exporter-otlp==1.44.0",
+    "opentelemetry-exporter-otlp-proto-common==1.44.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.44.0",
+    "opentelemetry-exporter-otlp-proto-http==1.44.0",
+    "opentelemetry-exporter-prometheus==0.65b0",
+    "opentelemetry-proto==1.44.0",
+    "opentelemetry-resourcedetector-gcp==1.14.0",
+    "opentelemetry-sdk==1.44.0",
+    "opentelemetry-semantic-conventions==0.65b0",
+    "ordered-set==4.1.0",
+    "orderly-set==5.5.0",
+    "outcome==1.3.0.post0",
+    "packaging==26.3",
+    "pandas==3.0.5",
+    "pandas-gbq==0.35.2",
+    "paramiko==5.0.0",
+    "parsedatetime==2.6",
+    "pathlib-abc==0.5.2",
+    "pathspec==1.0.4",
+    "pendulum==3.2.0",
+    "platformdirs==4.11.8",
+    "pluggy==1.6.0",
+    "prison==0.2.1",
+    "prometheus-client==0.26.0",
+    "prompt-toolkit==3.0.53",
+    "propcache==0.5.2",
+    "proto-plus==1.28.4",
+    "protobuf==6.33.6",
+    "psutil==7.2.2",
+    "psycopg==3.3.5",
+    "psycopg-binary==3.3.5",
+    "psycopg2-binary==2.9.13",
+    "py-spy==0.4.2",
+    "pyarrow==25.0.1",
+    "pyasn1==0.6.4",
+    "pyasn1-modules==0.4.2",
+    "pyathena==3.36.0",
+    "pycparser==3.0",
+    "pydantic==2.11.10",
+    "pydantic-core==2.33.2",
+    "pydantic-extra-types==2.11.1",
+    "pydantic-settings==2.15.0",
+    "pydata-google-auth==1.9.1",
+    "pygments==2.21.0",
+    "pygtrie==2.6.1",
+    "pyjwt==2.14.0",
+    "pymysql==1.1.3",
+    "pynacl==1.6.2",
+    "pyodbc==5.3.0",
+    "pyopenssl==26.4.0",
+    "pyparsing==3.3.2",
+    "pytest==9.1.1",
+    "python-daemon==3.1.2",
+    "python-dateutil==2.9.0.post0",
+    "python-discovery==1.6.0",
+    "python-dotenv==1.2.3",
+    "python-http-client==3.3.7",
+    "python-ldap==3.4.7",
+    "python-multipart==0.0.32",
+    "python-slugify==9.0.0",
+    "pytimeparse==1.1.10",
+    "pytz==2026.3.post1",
+    "pyyaml==6.0.3",
+    "rapidfuzz==3.14.6",
+    "ray==2.58.0",
+    "redis==6.4.0",
+    "redshift-connector==2.1.7",
+    "referencing==0.37.0",
+    "regex==2026.9.10",
+    "requests==2.34.2",
+    "requests-aws4auth==1.4.0",
+    "requests-oauthlib==2.0.0",
+    "requests-toolbelt==1.0.0",
+    "rich==15.0.0",
+    "rich-argparse==1.8.0",
+    "rich-toolkit==0.20.5",
+    "rpds-py==2026.6.3",
+    "rsa==4.9.1",
+    "ruamel-yaml==0.19.1",
+    "s3transfer==0.15.0",
+    "sagemaker-studio==1.0.27",
+    "scikit-learn==1.9.1",
+    "scipy==1.17.1",
+    "scramp==1.4.17",
+    "secretstorage==3.5.0",
+    "sendgrid==6.12.5",
+    "setproctitle==1.3.7",
+    "setuptools==84.0.0",
+    "shapely==2.2.0",
+    "shellingham==1.5.4",
+    "six==1.17.0",
+    "slack-sdk==3.44.1",
+    "smart-open==8.0.1",
+    "smmap==5.0.3",
+    "sniffio==1.3.1",
+    "snowflake-connector-python==4.7.3",
+    "snowflake-snowpark-python==1.55.0",
+    "snowflake-sqlalchemy==1.11.1",
+    "snowplow-tracker==1.1.0",
+    "sortedcontainers==2.4.0",
+    "soupsieve==2.9.2",
+    "sqlalchemy==2.0.52",
+    "sqlalchemy-bigquery==1.17.2",
+    "sqlalchemy-spanner==1.20.1",
+    "sqlalchemy-utils==0.42.1",
+    "sqlglot==29.0.1",
+    "sqlparse==0.6.0",
+    "starlette==1.6.0",
+    "statsd==4.0.1",
+    "std-uritemplate==2.0.12",
+    "structlog==26.1.0",
+    "svcs==26.2.0",
+    "tabulate==0.9.0",
+    "tblib==3.2.2",
+    "tenacity==9.1.4",
+    "termcolor==3.3.0",
+    "text-unidecode==1.3",
+    "threadpoolctl==3.6.0",
+    "tiktoken==0.14.0",
+    "tokenizers==0.23.2",
+    "toml==0.10.2",
+    "tomlkit==0.15.1",
+    "tornado==6.5.8",
+    "tqdm==4.70.1",
+    "truststore==0.10.4",
+    "typer==0.27.2",
+    "types-protobuf==7.35.1.20260906",
+    "typing-extensions==4.16.0",
+    "typing-inspect==0.9.0",
+    "typing-inspection==0.4.4",
+    "tzdata==2026.4",
+    "tzlocal==5.4.4",
+    "universal-pathlib==0.3.10",
+    "uritemplate==4.2.0",
+    "urllib3==2.7.0",
+    "uuid6==2025.0.1",
+    "uvicorn==0.52.4",
+    "uvloop==0.22.1",
+    "vine==5.1.0",
+    "virtualenv==21.7.9",
+    "watchfiles==1.2.0",
+    "watchtower==3.4.0",
+    "wcwidth==0.8.3",
+    "websocket-client==1.9.0",
+    "websockets==16.1.1",
+    "werkzeug==3.1.8",
+    "wheel==0.48.0",
+    "wirerope==1.0.0",
+    "wrapt==2.4.1",
+    "wtforms==3.2.2",
+    "yarl==1.24.5",
+    "zipp==4.1.0",
+    "zope-event==6.2",
+    "zope-interface==8.6",
+]
+# <<<
 
 [tool.ruff]
-line-length = 90
+line-length = 100
 target-version = "py311"
 exclude = [
     ".git",
@@ -111,7 +594,9 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "C90"]
-ignore = []
+# O comprimento é do formatador (ruff format, sqlfmt); o E501 só sobrava para strings e
+# comentários longos.
+ignore = ["E501"]
 
 # `helpers/openmetadata/` é código PORTADO — de `origin/refactor/openmetadata`
 # e do data-application-minc, que evoluiu a mesma integração. Quebrar as
@@ -122,36 +607,6 @@ ignore = []
 "helpers/openmetadata/glossary.py" = ["C901"]
 "helpers/openmetadata/semantic_relationships.py" = ["C901"]
 
-[tool.mypy]
-python_version = "3.11"
-files = ["**/*.py"]
-# Espelha o PYTHONPATH de execução do Airflow
-# (`/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers`) mais o
-# diretório dos scripts de governança, que se importam entre si como módulos
-# irmãos. Sem isso o mypy não resolve nenhum deles e todo tipo que atravessa a
-# fronteira vira Any.
-mypy_path = "scripts/governance:helpers:plugins:dags"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = false
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-follow_untyped_imports = true
-disable_error_code = ["arg-type", "attr-defined"]
-
-# O `openmetadata-ingestion` NÃO está instalado no ambiente principal, e isso é
-# deliberado: ele rebaixa dependências da imagem base do Airflow. Ele vive só no
-# virtualenv isolado das tasks. Aqui o mypy só precisa parar de procurá-lo.
-[[tool.mypy.overrides]]
-module = ["metadata.*", "airflow.*"]
-ignore_missing_imports = true
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Raízes de import dos testes; dags/ fica fora (dags/conjuntura colide com scripts/conjuntura).
@@ -159,7 +614,7 @@ pythonpath = ["plugins", "helpers", "scripts", "scripts/governance", "scripts/su
 python_files = ["test_*.py"]
 
 [tool.sqlfmt]
-line_length = 90
+line_length = 100
 dialect = "polyglot"
 exclude = [
     ".git/",
@@ -169,41 +624,3 @@ exclude = [
     "**/target/**",
     "**/compiled/**"
 ]
-
-[tool.sqlfluff.core]
-dialect = "postgres"
-templater = "dbt"
-max_line_length = 90
-exclude_rules = "L016,LT02,LT09,LT14,RF02,AL04,CV08"
-verbose = 1
-
-[tool.sqlfluff.indentation]
-indented_joins = true
-indented_using_on = true
-template_blocks_indent = true
-indent_unit = "space"
-tab_space_size = 2
-
-[tool.sqlfluff.rules.capitalisation.keywords]
-capitalisation_policy = "lower"
-
-[tool.sqlfluff.rules.capitalisation.identifiers]
-capitalisation_policy = "lower"
-
-[tool.sqlfluff.rules.capitalisation.functions]
-extended_capitalisation_policy = "lower"
-
-[tool.sqlfluff.rules.capitalisation.literals]
-capitalisation_policy = "lower"
-
-[tool.sqlfluff.templater]
-unwrap_wrapped_queries = true
-
-[tool.sqlfluff.templater.dbt]
-project_dir = "./dbt/mcid"
-profiles_dir = "./dbt/mcid"
-profile = "mcid"
-target = "prod"
-defer_mode = true
-static_analysis = true
-disable_database_connection = true

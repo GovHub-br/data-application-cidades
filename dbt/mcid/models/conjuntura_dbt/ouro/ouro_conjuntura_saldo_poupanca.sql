@@ -3,7 +3,6 @@
 -- Ouro do conjuntura: Poupança SBPE — captação líquida e saldo.
 -- Página 5. Fonte: ABECIP (automatizado). Bate exato com o boletim
 -- (captação líquida 12m/2025 = -R$ 63,0 bi).
-
 select
     data_referencia::date as data_referencia,
     deposito,
