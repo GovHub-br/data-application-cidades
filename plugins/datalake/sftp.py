@@ -196,23 +196,32 @@ def extract(
     tmpdir: Optional[str] = None,
     limit: int = 0,
     folders: tuple = FOLDERS,
+    files: tuple = (),
 ) -> dict:
     """Lands every new file of the monitored folders in raw/sftp/.../load_id=<load>/.
 
+    `files` (full SFTP paths) forces just those, even if already landed: no skip by
+    path/mtime nor by hash.
     Returns {"keys": landed raw keys, "errors": [...], "unsupported": [...],
     "duplicates": [...]}; only keys travel between tasks, never content.
     """
-    seen, known_hashes = control.ingested(), control.hashes()
+    wanted = set(files)
+    seen, known_hashes = (set(), set()) if wanted else (control.ingested(), control.hashes())
+    if wanted:  # only the folders that hold a forced file
+        folders = tuple(f for f in folders if any(w.startswith(f + "/") for w in wanted))
     result = {"keys": [], "errors": [], "unsupported": [], "duplicates": []}
     done = 0
     for folder in folders:
         try:  # listing first: a vanished folder must not stop the others
-            files = list(walk(sftp, folder))
+            listed = list(walk(sftp, folder))
         except OSError as error:
             result["errors"].append(f"{folder}: pasta inexistente ou sem acesso ({error})")
             continue
-        for path, size, mtime in files:
+        for path, size, mtime in listed:
             ext = Path(path).suffix.lower()
+            if wanted and path not in wanted:
+                continue
+            wanted.discard(path)
             if (path, mtime) in seen or ext not in SUPPORTED | UNSUPPORTED:
                 continue
             if ext in UNSUPPORTED:
@@ -225,4 +234,7 @@ def extract(
             _one(
                 sftp, upload, control, load, md5, tmpdir, (path, size, mtime), known_hashes, result
             )
+    result["errors"] += [
+        f"{path}: não encontrado nas pastas monitoradas" for path in sorted(wanted)
+    ]
     return result

@@ -73,7 +73,7 @@ def sftp_mod(monkeypatch):
     )
 
 
-def run(mod, files, **control):
+def run(mod, files, force=(), **control):
     from lake_utils import md5_arquivo
 
     events, landed = [], {}
@@ -85,7 +85,9 @@ def run(mod, files, **control):
 
     ctl = FakeControl(events, **control)
     sftp = FakeSftp(files)
-    result = mod.extract(sftp, upload, ctl, LOAD, md5_arquivo, folders=("/home/fabrica/GEFUS",))
+    result = mod.extract(
+        sftp, upload, ctl, LOAD, md5_arquivo, folders=("/home/fabrica/GEFUS",), files=force
+    )
     return result, landed, events, ctl, sftp
 
 
@@ -121,6 +123,25 @@ def test_xls_seen_and_duplicates_are_not_landed(sftp_mod):
     assert result["unsupported"] == ["/home/fabrica/GEFUS/velho.xls"]
     assert result["duplicates"] == ["/home/fabrica/GEFUS/copia.csv"]
     assert sftp.downloads == ["/home/fabrica/GEFUS/copia.csv"]  # .xls and seen: no download
+
+
+def test_files_forces_only_those_even_if_already_landed(sftp_mod):
+    import hashlib
+
+    seen = "/home/fabrica/GEFUS/visto.csv"
+    files = {seen: b"A;B\n1;2\n", "/home/fabrica/GEFUS/outro.csv": b"A;B\n3;4\n"}
+    result, landed, _, _, sftp = run(
+        sftp_mod,
+        files,
+        force=(seen, "/home/fabrica/GEFUS/nao_existe.csv"),
+        seen={(seen, 100)},
+        hashes={hashlib.md5(files[seen]).hexdigest()},
+    )
+    assert sftp.downloads == [seen]
+    assert list(landed) == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/visto.csv"]
+    assert result["errors"] == [
+        "/home/fabrica/GEFUS/nao_existe.csv: não encontrado nas pastas monitoradas"
+    ]
 
 
 def test_zip_members_land_masked_below_the_zip(sftp_mod):

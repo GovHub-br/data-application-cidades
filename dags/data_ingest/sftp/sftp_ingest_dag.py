@@ -32,7 +32,7 @@ def _lake(dry_run: bool):
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Gustavo", "retries": 1, "retry_delay": timedelta(minutes=5)},
-    params={"dry_run": False, "limit": 0},
+    params={"dry_run": False, "limit": 0, "files": []},
     tags=["sftp", "mcid", "cidades", "data-lake", "ingest"],
 )
 def sftp_ingest_dag() -> None:
@@ -45,7 +45,8 @@ def sftp_ingest_dag() -> None:
     houve erro ou quarentena.
 
     Params: `dry_run` faz tudo embaixo de `dryrun/`; lê as tabelas de controle mas não grava;
-    `limit` baixa no máximo N arquivos (0 = sem limite).
+    `limit` baixa no máximo N arquivos (0 = sem limite); `files` (caminhos completos no SFTP,
+    ex. "/home/fabrica/GEFUS/x.csv") força só esses, mesmo os já pousados.
     """
 
     @task
@@ -64,6 +65,7 @@ def sftp_ingest_dag() -> None:
                 md5_arquivo,
                 tmpdir=os.environ.get("LAKE_TMPDIR"),
                 limit=int(ctx["params"]["limit"] or 0),
+                files=tuple(ctx["params"]["files"] or ()),
             )
         logging.info("[sftp_ingest_dag] extract: %s", {k: len(v) for k, v in result.items()})
         ctx["ti"].xcom_push(key="result", value=result)
