@@ -5,7 +5,11 @@ detecta separador e encoding, e grava a versão colunar em **Parquet** em `stagi
 etapa seguinte (Staging → DB via dbt/DuckDB) consumir dados uniformes e eficientes.
 
 > **Ordem importa:** rode **depois** do `mascarar_minio.py --apply`. Staging lê `raw/`
-> como está; se rodar antes do mascaramento, o parquet conterá PII.
+> como está. Por isso ela só converte o objeto que tem a tag `masked=true` ou a tag
+> `triagem` (sem PII, sem cabeçalho ou formato não suportado), gravadas pelo mascaramento.
+> O resto sai como `skipped_sem_mascara`: objeto com erro no mascaramento, reingerido
+> depois dele (regravar apaga as tags) ou fora do recorte da execução. O `.mdb` passa
+> direto, porque é mascarado aqui, tabela por tabela.
 
 ---
 

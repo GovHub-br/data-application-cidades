@@ -36,7 +36,7 @@ import os
 import uuid
 from typing import Dict, List, Optional, Tuple
 
-from conversao.config import PASTAS_IGNORADAS, RAW_PREFIX, _LOG_FILE
+from conversao.config import PASTAS_IGNORADAS, RAW_PREFIX, SUPPORTED_MDB, _LOG_FILE
 from conversao.controle import (
     _carregar_convertidos,
     _conn_str,
@@ -72,7 +72,9 @@ def run(  # noqa: C901
     """
     prefix = prefix if prefix is not None else RAW_PREFIX
     execution_id = uuid.uuid4().hex
-    only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
+    only_ext_set = {
+        ("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()
+    }
 
     log.info("=" * 70)
     log.info(
@@ -149,7 +151,24 @@ def run(  # noqa: C901
             break
         processados += 1
 
-        recs = processar_objeto(minio, key, execution_id, apply, convertidos, chunksize, bad_lines)
+        # A staging lê o raw como está: só converte o que o mascaramento liberou. O .mdb
+        # passa, porque é mascarado aqui, na conversão de cada tabela.
+        ext = os.path.splitext(key)[1].lower()
+        if ext not in SUPPORTED_MDB and not minio.pronto_para_staging(key):
+            rec = _novo_registro(execution_id, key)
+            rec["status"] = "skipped_sem_mascara"
+            registros.append(rec)
+            contagem["skipped_sem_mascara"] = contagem.get("skipped_sem_mascara", 0) + 1
+            log.warning(
+                "· [%d] %s — sem tag do mascaramento, fica fora da staging",
+                processados,
+                key,
+            )
+            continue
+
+        recs = processar_objeto(
+            minio, key, execution_id, apply, convertidos, chunksize, bad_lines
+        )
         registros.extend(recs)
         for rec in recs:
             contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
@@ -184,14 +203,20 @@ def run(  # noqa: C901
 
 # Main
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Conversão Raw -> Staging (Parquet) no MinIO.")
+    parser = argparse.ArgumentParser(
+        description="Conversão Raw -> Staging (Parquet) no MinIO."
+    )
     parser.add_argument(
         "--apply",
         action="store_true",
         help="Grava em staging/. Sem esta flag roda em dry-run (staging_dryrun/).",
     )
-    parser.add_argument("--force", action="store_true", help="Reprocessa objetos já convertidos.")
-    parser.add_argument("--limit", type=int, default=0, help="Processa no máximo N objetos.")
+    parser.add_argument(
+        "--force", action="store_true", help="Reprocessa objetos já convertidos."
+    )
+    parser.add_argument(
+        "--limit", type=int, default=0, help="Processa no máximo N objetos."
+    )
     parser.add_argument(
         "--pattern",
         default="",
@@ -224,7 +249,9 @@ def main() -> None:
         help="Linhas mal-formadas: 'skip' descarta (rápido, engine C, sem contagem); "
         "'count' descarta e conta (engine Python, mais lento); 'error' falha o arquivo.",
     )
-    parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
+    parser.add_argument(
+        "--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/)."
+    )
     args = parser.parse_args()
 
     run(

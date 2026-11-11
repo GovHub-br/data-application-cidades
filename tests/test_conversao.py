@@ -171,6 +171,10 @@ OBJETOS = {
 class MinioFalso:
     def __init__(self, tmpdir):
         self.tmpdir, self.enviados, self.auditoria = tmpdir, {}, {}
+        self.sem_mascara: set = set()
+
+    def pronto_para_staging(self, key):
+        return key not in self.sem_mascara
 
     def listar_objetos(self, prefix):
         for key, dados in OBJETOS.items():
@@ -205,7 +209,8 @@ def executar(carregar, tmp_path, monkeypatch):
     monkeypatch.setattr(modulo, "_carregar_convertidos", lambda _c: set())
     monkeypatch.setattr(modulo, "_registrar_control", lambda _c, r: controle.append(r))
 
-    def _executar(**kw):
+    def _executar(sem_mascara=(), **kw):
+        minio.sem_mascara = set(sem_mascara)
         return modulo.run(**kw), minio, controle
 
     return _executar
@@ -241,6 +246,15 @@ def test_run_converte_cada_formato_e_registra(executar, tmp_path):
     assert "raw/dados_historicos/HIST.csv" not in set(auditoria["raw_key"])
     # nenhum download ou parquet temporário fica para trás
     assert list(tmp_path.iterdir()) == []
+
+
+def test_objeto_sem_tag_do_mascaramento_fica_fora_da_staging(executar):
+    contagem, minio, _ = executar(
+        apply=True, only_ext="csv,json", sem_mascara={"raw/sftp/a/DADOS.csv"}
+    )
+
+    assert contagem == {"converted": 1, "skipped_sem_mascara": 1}
+    assert "staging/sftp/a/DADOS.parquet" not in minio.enviados
 
 
 def test_run_em_dry_run_grava_so_em_staging_dryrun(executar):

@@ -71,15 +71,15 @@ _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
 _LOG_FILE = SCRIPTS_DIR / f"mascarar_minio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 _formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
-if _LOCAL_ARTIFACTS and not logging.root.handlers:
-    # Standalone: o script gerencia os próprios handlers (stderr + arquivo de log).
-    # Importado por outro script que já configurou o log (o raw_para_staging usa
-    # `mascarar_csv`), não instala outro par: cada linha sairia duplicada.
+if not logging.root.handlers:
+    # Standalone: o script gerencia os próprios handlers, stderr sempre e arquivo só com
+    # artefatos locais. Importado por quem já configurou o log (o raw_para_staging usa
+    # `mascarar_csv`, o Airflow), não instala outro: cada linha sairia duplicada.
     logging.root.setLevel(logging.INFO)
-    for _h in (
-        logging.StreamHandler(sys.stderr),
-        logging.FileHandler(_LOG_FILE, encoding="utf-8"),
-    ):
+    _handlers: list = [logging.StreamHandler(sys.stderr)]
+    if _LOCAL_ARTIFACTS:
+        _handlers.append(logging.FileHandler(_LOG_FILE, encoding="utf-8"))
+    for _h in _handlers:
         _h.setFormatter(_formatter)
         logging.root.addHandler(_h)
 # Sob o Airflow o logger só propaga: um StreamHandler(sys.stderr) aqui multiplicaria cada

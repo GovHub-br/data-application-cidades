@@ -77,3 +77,9 @@ scripts/auditoria_*.parquet
 
 # Relatorio do scripts/diagnostico_qualidade.py (regeravel)
 diagnostico_*.md
+
+# dbt: id anônimo do usuário (gerado localmente)
+.user.yml
+
+# Fotografias do SFTP do sftp_snapshot.py (host e árvore de arquivos)
+scripts/snapshots/

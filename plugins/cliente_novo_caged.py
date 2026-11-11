@@ -1,8 +1,8 @@
 import logging
 from http import HTTPStatus
-from datetime import datetime
+from datetime import date
 from cliente_base import ClienteBase
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 
 MAP_MESES = {
     "janeiro": "01",
@@ -18,6 +18,26 @@ MAP_MESES = {
     "novembro": "11",
     "dezembro": "12",
 }
+
+FIRST_YEAR = 2024  # start of the series the products use
+
+
+class MissingMonthsError(RuntimeError):
+    """A month the CAGED has already published came back empty."""
+
+
+def expected_periods(today: date) -> List[Tuple[int, str]]:
+    """(year, month name) from January/FIRST_YEAR to the month before `today`.
+
+    The current month is never published; the last one returned may not be yet either
+    (CAGED releases month m around the end of m+1).
+    """
+    return [
+        (year, name)
+        for year in range(FIRST_YEAR, today.year + 1)
+        for number, name in enumerate(MAP_MESES, start=1)
+        if (year, number) < (today.year, today.month)
+    ]
 
 
 class ClienteNovoCaged(ClienteBase):
@@ -140,35 +160,45 @@ class ClienteNovoCaged(ClienteBase):
                                         "Select": [
                                             {
                                                 "Measure": {
-                                                    "Expression": {"SourceRef": {"Source": "m"}},
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
                                                     "Property": "Admitidos",
                                                 },
                                                 "Name": "Admitidos",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {"SourceRef": {"Source": "m"}},
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
                                                     "Property": "Desligados",
                                                 },
                                                 "Name": "Desligados",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {"SourceRef": {"Source": "m"}},
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
                                                     "Property": "Saldo",
                                                 },
                                                 "Name": "Saldo",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {"SourceRef": {"Source": "m"}},
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
                                                     "Property": "Estoque Mensal",
                                                 },
                                                 "Name": "Estoque",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {"SourceRef": {"Source": "m"}},
+                                                    "Expression": {
+                                                        "SourceRef": {"Source": "m"}
+                                                    },
                                                     "Property": "Vr. Relativa",
                                                 },
                                                 "Name": "Variacao",
@@ -178,7 +208,9 @@ class ClienteNovoCaged(ClienteBase):
                                     },
                                     "Binding": {
                                         "Primary": {
-                                            "Groupings": [{"Projections": [0, 1, 2, 3, 4]}]
+                                            "Groupings": [
+                                                {"Projections": [0, 1, 2, 3, 4]}
+                                            ]
                                         },
                                         "DataReduction": {
                                             "DataVolume": 3,
@@ -209,9 +241,9 @@ class ClienteNovoCaged(ClienteBase):
         Trata o JSON complexo do Power BI para um formato amigável para o Postgres.
         """
         try:
-            raw_values = response["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"][
+            raw_values = response["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][
                 0
-            ]["C"]
+            ]["DM0"][0]["C"]
             return {
                 "ano": ano,
                 "mes": MAP_MESES.get(mes.lower(), mes),
@@ -229,50 +261,36 @@ class ClienteNovoCaged(ClienteBase):
 
     def obter_historico(
         self,
-        anos: Optional[List[int]] = None,
-        meses: Optional[List[str]] = None,
         cnae_divisao: Optional[str] = "Construção de Edifícios",
+        today: Optional[date] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Busca os dados de empregos na construção para uma lista de anos e meses.
-        Se não fornecidos, busca do histórico padrão (2024 até o ano/mês atual).
-        `cnae_divisao`: ver `obter_dados_mensais` (None = total da construção).
-        Retorna uma lista de dicionários pronta para inserção no banco de dados.
+        Full history (`expected_periods`) up to the month before `today` (default:
+        the run date).
+        `cnae_divisao`: see `obter_dados_mensais` (None = whole construction sector).
+        Only the latest month may be missing (not published yet); any other missing month
+        raises MissingMonthsError before the caller rewrites raw/staging without it.
         """
-        if not anos:
-            anos = [2024, 2025, 2026]
-        if not meses:
-            meses = [
-                "janeiro",
-                "fevereiro",
-                "março",
-                "abril",
-                "maio",
-                "junho",
-                "julho",
-                "agosto",
-                "setembro",
-                "outubro",
-                "novembro",
-                "dezembro",
-            ]
-
+        periods = expected_periods(today or date.today())
         historico_caged = []
-        ano_atual = datetime.now().year
-        mes_atual = datetime.now().month
+        missing = []
 
-        for ano in anos:
-            if ano > ano_atual:
-                break
+        for ano, mes in periods:
+            logging.info(f"[ClienteNovoCaged] Processando {mes}/{ano}...")
+            dados = self.obter_dados_mensais(ano, mes, cnae_divisao=cnae_divisao)
 
-            for mes in meses:
-                if ano == ano_atual and meses.index(mes) - 1 > mes_atual:
-                    break
+            if dados:
+                historico_caged.append(dados)
+            else:
+                missing.append((ano, mes))
 
-                logging.info(f"[ClienteNovoCaged] Processando {mes}/{ano}...")
-                dados = self.obter_dados_mensais(ano, mes, cnae_divisao=cnae_divisao)
-
-                if dados:
-                    historico_caged.append(dados)
+        if missing and missing[-1] == periods[-1]:
+            ano, mes = missing.pop()
+            logging.warning(f"[ClienteNovoCaged] {mes}/{ano} not published yet; skipped.")
+        if missing:
+            raise MissingMonthsError(
+                "Novo CAGED months missing: "
+                + ", ".join(f"{mes}/{ano}" for ano, mes in missing)
+            )
 
         return historico_caged

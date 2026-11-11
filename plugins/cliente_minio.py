@@ -33,6 +33,8 @@ import boto3
 from boto3.s3.transfer import TransferConfig
 
 BUCKET = os.environ.get("MINIO_BUCKET", "data-lake-mcid")
+# Triagens do mascaramento que liberam o objeto para a staging sem reescrevê-lo.
+TRIAGEM_LIBERADA = ("skipped_no_pii", "skipped_no_header", "skipped_unsupported")
 
 
 def get_s3_client() -> Any:
@@ -82,7 +84,9 @@ def upload_raw_bytes(
 ) -> None:
     """Etapa 01: sobe um arquivo cru (csv/txt/xlsx/...) para a raw (full-refresh)."""
     key = raw_key(fonte, dado, ext)
-    get_s3_client().put_object(Bucket=BUCKET, Key=key, Body=data, ContentType=content_type)
+    get_s3_client().put_object(
+        Bucket=BUCKET, Key=key, Body=data, ContentType=content_type
+    )
     logging.info(f"[cliente_minio] raw enviado: s3://{BUCKET}/{key} ({len(data)} bytes)")
 
 
@@ -116,8 +120,12 @@ def upload_fallback_json(fonte: str, dado: str, payload: Any) -> None:
     """
     body = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
     key = fallback_json_key(fonte, dado)
-    get_s3_client().put_object(Bucket=BUCKET, Key=key, Body=body, ContentType="application/json")
-    logging.info(f"[cliente_minio] fallback_json enviado: s3://{BUCKET}/{key} ({len(body)} bytes)")
+    get_s3_client().put_object(
+        Bucket=BUCKET, Key=key, Body=body, ContentType="application/json"
+    )
+    logging.info(
+        f"[cliente_minio] fallback_json enviado: s3://{BUCKET}/{key} ({len(body)} bytes)"
+    )
 
 
 def upload_staging_parquet(fonte: str, dado: str, data: bytes) -> None:
@@ -126,7 +134,9 @@ def upload_staging_parquet(fonte: str, dado: str, data: bytes) -> None:
     get_s3_client().put_object(
         Bucket=BUCKET, Key=key, Body=data, ContentType="application/octet-stream"
     )
-    logging.info(f"[cliente_minio] staging enviado: s3://{BUCKET}/{key} ({len(data)} bytes)")
+    logging.info(
+        f"[cliente_minio] staging enviado: s3://{BUCKET}/{key} ({len(data)} bytes)"
+    )
 
 
 class _HashingReader:
@@ -297,7 +307,9 @@ class EscritorMultipart(io.RawIOBase):
                 time.sleep(15 * tentativa)
         self._partes.append({"ETag": resp["ETag"], "PartNumber": numero})
         self.enviado += len(dados)
-        logging.info("Parte %d de %s enviada (%.2f GiB)", numero, self._key, self.enviado / 2**30)
+        logging.info(
+            "Parte %d de %s enviada (%.2f GiB)", numero, self._key, self.enviado / 2**30
+        )
 
     def concluir(self) -> None:
         if self._buf or not self._partes:
@@ -329,7 +341,9 @@ class ClienteMinio:
     """
 
     # upload multipart: 8 MB por parte, 2 conexões — estável em LAN e rápido o suficiente.
-    _DEFAULT_TRANSFER = TransferConfig(multipart_chunksize=8 * 1024 * 1024, max_concurrency=2)
+    _DEFAULT_TRANSFER = TransferConfig(
+        multipart_chunksize=8 * 1024 * 1024, max_concurrency=2
+    )
 
     def __init__(
         self,
@@ -349,7 +363,8 @@ class ClienteMinio:
             aws_secret_access_key=secret_key or os.environ["MINIO_SECRET_KEY"],
         )
         logging.info(
-            f"[cliente_minio.py] Initialized ClienteMinio endpoint={endpoint} bucket={self.bucket}"
+            f"[cliente_minio.py] Initialized ClienteMinio endpoint={endpoint} "
+            f"bucket={self.bucket}"
         )
 
     # Bucket / multipart
@@ -374,11 +389,14 @@ class ClienteMinio:
                     )
                     abortados += 1
         except Exception as e:
-            logging.warning(f"[cliente_minio.py] Não foi possível listar multipart uploads: {e}")
+            logging.warning(
+                f"[cliente_minio.py] Não foi possível listar multipart uploads: {e}"
+            )
             return
         if abortados:
             logging.info(
-                f"[cliente_minio.py] {abortados} multipart upload(s) incompleto(s) abortado(s)."
+                f"[cliente_minio.py] {abortados} multipart upload(s) incompleto(s) "
+                f"abortado(s)."
             )
         else:
             logging.info("[cliente_minio.py] Nenhum multipart incompleto encontrado.")
@@ -412,7 +430,9 @@ class ClienteMinio:
             Bucket=self.bucket, Key=key, Range=f"bytes={inicio}-{inicio + n - 1}"
         )["Body"].read()
 
-    def baixar_para_tempfile(self, key: str, suffix: str = "", tmpdir: Optional[str] = None) -> str:
+    def baixar_para_tempfile(
+        self, key: str, suffix: str = "", tmpdir: Optional[str] = None
+    ) -> str:
         """Baixa para disco com retomada por ``Range`` em caso de queda de conexão.
 
         O nome determinístico mantém o parcial entre tentativas e execuções. Isso é
@@ -424,7 +444,9 @@ class ClienteMinio:
         identificador = hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
         final = os.path.join(pasta, f"minio-download-{identificador}{suffix}")
         path = final + ".part"
-        tamanho_remoto = int(self.s3.head_object(Bucket=self.bucket, Key=key)["ContentLength"])
+        tamanho_remoto = int(
+            self.s3.head_object(Bucket=self.bucket, Key=key)["ContentLength"]
+        )
 
         if os.path.exists(final):
             os.unlink(final)
@@ -440,7 +462,9 @@ class ClienteMinio:
                 os.replace(path, final)
                 return final
             try:
-                resposta = self.s3.get_object(Bucket=self.bucket, Key=key, Range=f"bytes={inicio}-")
+                resposta = self.s3.get_object(
+                    Bucket=self.bucket, Key=key, Range=f"bytes={inicio}-"
+                )
                 with open(path, "ab") as destino:
                     shutil.copyfileobj(resposta["Body"], destino, 8 * 1024 * 1024)
                     destino.flush()
@@ -469,6 +493,14 @@ class ClienteMinio:
         """Stream de leitura do objeto, com md5 do que foi lido em `.md5`."""
         return LeitorObjeto(self.s3, self.bucket, key, inicio=inicio, fim=fim, etag=etag)
 
+    def md5_objeto(self, key: str) -> str:
+        """md5 do conteúdo, lido em streaming e sem gravar nada."""
+        leitor = self.abrir_leitura(key)
+        bloco = bytearray(8 * 1024 * 1024)
+        while leitor.readinto(bloco):
+            pass
+        return leitor.md5.hexdigest()
+
     # Escrita
     def abrir_escrita(self, key: str, tamanho_estimado: int = 0) -> EscritorMultipart:
         """Stream de escrita em multipart; nada muda em `key` até `concluir()`."""
@@ -482,7 +514,9 @@ class ClienteMinio:
         Cada origem vira uma parte de multipart: até 5 GiB, e todas menos a última com
         pelo menos 5 MiB.
         """
-        upload_id = self.s3.create_multipart_upload(Bucket=self.bucket, Key=destino)["UploadId"]
+        upload_id = self.s3.create_multipart_upload(Bucket=self.bucket, Key=destino)[
+            "UploadId"
+        ]
         try:
             partes = []
             for numero, chave in enumerate(chaves, 1):
@@ -493,7 +527,9 @@ class ClienteMinio:
                     PartNumber=numero,
                     CopySource={"Bucket": self.bucket, "Key": chave},
                 )
-                partes.append({"ETag": resp["CopyPartResult"]["ETag"], "PartNumber": numero})
+                partes.append(
+                    {"ETag": resp["CopyPartResult"]["ETag"], "PartNumber": numero}
+                )
             self.s3.complete_multipart_upload(
                 Bucket=self.bucket,
                 Key=destino,
@@ -501,7 +537,9 @@ class ClienteMinio:
                 MultipartUpload={"Parts": partes},
             )
         except BaseException:
-            self.s3.abort_multipart_upload(Bucket=self.bucket, Key=destino, UploadId=upload_id)
+            self.s3.abort_multipart_upload(
+                Bucket=self.bucket, Key=destino, UploadId=upload_id
+            )
             raise
 
     def apagar_prefixo(self, prefix: str) -> int:
@@ -590,7 +628,9 @@ class ClienteMinio:
             return []
 
     def esta_mascarado(self, key: str) -> bool:
-        return any(t["Key"] == "masked" and t["Value"] == "true" for t in self.get_tagging(key))
+        return any(
+            t["Key"] == "masked" and t["Value"] == "true" for t in self.get_tagging(key)
+        )
 
     def marcar_mascarado(self, key: str, execution_id: str, masked_hash: str) -> None:
         self.s3.put_object_tagging(
@@ -604,3 +644,21 @@ class ClienteMinio:
                 ]
             },
         )
+
+    def marcar_triagem(self, key: str, execution_id: str, status: str) -> None:
+        """Objeto que o mascaramento liberou sem reescrever (ex.: sem PII)."""
+        self.s3.put_object_tagging(
+            Bucket=self.bucket,
+            Key=key,
+            Tagging={
+                "TagSet": [
+                    {"Key": "triagem", "Value": status},
+                    {"Key": "execution_id", "Value": execution_id},
+                ]
+            },
+        )
+
+    def pronto_para_staging(self, key: str) -> bool:
+        # regravar o objeto apaga as tags: reingerido, ele volta a esperar o mascaramento
+        tags = {t["Key"]: t["Value"] for t in self.get_tagging(key)}
+        return tags.get("masked") == "true" or tags.get("triagem") in TRIAGEM_LIBERADA
