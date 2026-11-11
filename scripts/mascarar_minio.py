@@ -47,6 +47,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from lake_utils import (
+    PREFIXOS_LEGADO,
     detectar_dialeto,
     detectar_encoding,
     md5_arquivo,
@@ -338,7 +339,10 @@ def run(  # noqa: C901
             "MASKING_HMAC_SECRET não definida no .env — necessária para tokenizar CPF/NIS."
         )
 
-    prefix = prefix if prefix is not None else RAW_PREFIX
+    # B1: só os canais do legado. Um `prefix` só pode estreitar dentro deles.
+    if prefix is not None and not prefix.startswith(PREFIXOS_LEGADO):
+        raise ValueError(f"prefixo fora do legado {PREFIXOS_LEGADO}: {prefix!r}")
+    prefixos = (prefix,) if prefix is not None else PREFIXOS_LEGADO
     execution_id = uuid.uuid4().hex
     only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
 
@@ -347,7 +351,7 @@ def run(  # noqa: C901
         "Execução %s | modo=%s | prefixo=%s",
         execution_id,
         "APPLY (sobrescreve raw/)" if apply else "DRY-RUN (masked_dryrun/)",
-        prefix,
+        ", ".join(prefixos),
     )
     log.info("=" * 70)
 
@@ -361,7 +365,7 @@ def run(  # noqa: C901
     contagem: Dict[str, int] = {}
     processados = 0
 
-    for key, size in minio.listar_objetos(prefix):
+    for key, size in (o for p in prefixos for o in minio.listar_objetos(p)):
         # marcador de pasta (0 byte, key terminando em "/"): não é arquivo
         if key.endswith("/"):
             continue
@@ -445,7 +449,11 @@ def main() -> None:
         help="Pula objetos maiores que N MB (0 = sem limite). "
         "Útil p/ fatiar dry-runs: pequenos primeiro, grandes depois.",
     )
-    parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
+    parser.add_argument(
+        "--prefix",
+        default=None,
+        help="Estreita a varredura dentro de raw/sftp/ ou raw/sharepoint/.",
+    )
     args = parser.parse_args()
 
     run(

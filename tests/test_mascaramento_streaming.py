@@ -615,3 +615,22 @@ def test_log_separa_info_e_aviso_sem_artefatos_locais():
     assert saida.stderr.count("linha aviso") == 1
     assert saida.stderr.count("linha erro") == 1
     assert "linha info" not in saida.stderr
+
+
+def test_mascara_so_varre_os_canais_do_legado(monkeypatch):
+    """B1 (#248): a máscara do legado não lista a raw das APIs."""
+    listados = []
+
+    class _Minio:
+        def listar_objetos(self, prefix):
+            listados.append(prefix)
+            return iter(())
+
+    monkeypatch.setattr(modulo, "ClienteMinio", _Minio)
+    for nome in ("_conn_str", "_criar_control_table", "_carregar_masked_hashes"):
+        if hasattr(modulo, nome):
+            monkeypatch.setattr(modulo, nome, lambda *_a: set())
+    modulo.run(apply=False)
+    assert listados == ["raw/sftp/", "raw/sharepoint/"]
+    with pytest.raises(ValueError, match="fora do legado"):
+        modulo.run(apply=False, prefix="raw/ibge/")
