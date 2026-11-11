@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_load_id`; nomes de rastreio em inglês, ADR-0007; questões em aberto resolvidas; `.mdb` exportado para CSV antes da raw)
+- **Revisão:** 2026-10-29 (estado do projeto conferido com o código; staging das APIs sobrescrita; entrada manual pela raw, R7; ordem das cargas pela `_load_id`; nomes de rastreio em inglês, ADR-0007; questões em aberto resolvidas; `.mdb` exportado para CSV antes da raw); 2026-11-10 (raw como cópia exata da fonte)
 - **Relacionados:**
   - ADR-0001, ADR-0003, ADR-0005
   - Deck *GovHub — Arquitetura Medalhão de Referência*, seção 4
@@ -110,9 +110,12 @@ nunca pousa no lake. Nesses casos, a raw guarda o conteúdo da fonte, não o
 formato. O controle por hash do ADR-0005 usa o hash do arquivo recebido, então um
 reenvio igual não gera carga nova.
 
-**R1. A raw é imutável.** Cada recebimento, já mascarado, é gravado em caminho
-próprio, na pasta `load_id=` do ADR-0005, e nunca é sobrescrito. É a origem de
-qualquer reprocessamento.
+**R1. A raw é imutável e é a cópia exata da fonte.** Cada recebimento é gravado
+como a fonte o entregou (o CSV como CSV, a resposta da API como veio), já mascarado,
+em caminho próprio, na pasta `load_id=` do ADR-0005, e nunca é sobrescrito. As
+únicas diferenças em relação ao que a fonte mandou são a máscara (R0) e o `.mdb`
+exportado para CSV. Nenhuma interpretação acontece antes da raw: dar forma de
+tabela é papel da conversão (R2). É a origem de qualquer reprocessamento.
 
 **R2. A staging muda a forma, não o conteúdo.** A conversão é a mesma para todas
 as fontes e roda na task comum `transform`, encadeada em cada DAG de

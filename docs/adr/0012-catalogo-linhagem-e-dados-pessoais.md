@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (nome das macros; eixo histórico fora do catálogo desde o PR #241; catálogo de colunas; `meta.path`)
+- **Revisão:** 2026-10-29 (nome das macros; eixo histórico fora do catálogo desde o PR #241; catálogo de colunas; `meta.path`); 2026-11-10 (contrato da fonte em ODCS importado no OpenMetadata)
 - **Relacionados:**
   - ADR-0002 (R0, pseudonimização), ADR-0006 (contrato da fonte), ADR-0007 (sufixo
   `_token`), ADR-0010 (schema por secretaria)
@@ -45,6 +45,10 @@ OpenMetadata algo que o dbt carrega não adianta: a próxima ingestão sobrescre
 
 No OpenMetadata se edita só o que o dbt não carrega: o glossário e as conversas.
 
+Para as fontes, a fonte da verdade é o contrato ODCS de cada uma (ADR-0006), que
+gera o `sources.yml` e é importado no OpenMetadata pelo import ODCS nativo. A partir
+do OpenMetadata 2.0.3, as regras de qualidade do contrato rodam lá como testes.
+
 ### 2. Metadados obrigatórios
 
 Todo modelo herda da pasta do seu domínio, no `dbt_project.yml`:
@@ -60,8 +64,8 @@ Todo modelo herda da pasta do seu domínio, no `dbt_project.yml`:
 O padrão de `rag_publication` é `prohibited`. Uma tabela só passa a
 `eligible_after_security_validation` depois de revisão de segurança.
 
-Toda fonte em `sources.yml` também tem descrição e contrato (ADR-0006), e toda
-coluna de prata e ouro tem descrição.
+Toda fonte tem contrato ODCS com descrição (ADR-0006), e toda coluna de prata e
+ouro tem descrição.
 
 ### 3. Linhagem
 
@@ -75,6 +79,8 @@ registra cada objeto convertido.
 - Colunas pseudonimizadas (ADR-0002 R0) levam o sufixo `_token` (ADR-0007) e a tag
   `PII.Pseudonimizado` no catálogo. A descrição diz de que identificador o token
   vem e lembra que, para quem tem a chave, ele continua sendo dado pessoal.
+- A `classification` de cada coluna da fonte (o que é dado pessoal e é mascarado)
+  fica declarada no contrato ODCS (ADR-0006) e chega ao catálogo pelo import.
 - O teste de dado sensível passa a cobrir **todos** os domínios, não só a
   conjuntura. É a segunda linha de defesa: se o mascaramento falhar antes, o build
   falha aqui.
