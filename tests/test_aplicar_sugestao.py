@@ -6,16 +6,14 @@ nem comentário, nem indentação, nem a ordem das chaves.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
-RAIZ = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(RAIZ / "scripts" / "governance"))
+import aplicar_sugestao as ap
+import corpo_pr_sugestao
 
-import aplicar_sugestao as ap  # noqa: E402
-import corpo_pr_sugestao  # noqa: E402
+RAIZ = Path(__file__).resolve().parents[1]
 
 SCHEMA = """\
 version: 2

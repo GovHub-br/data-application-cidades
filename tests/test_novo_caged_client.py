@@ -1,14 +1,10 @@
 """Novo CAGED: period derived from the run date and the missing-month rule (#250)."""
 
-import sys
 from datetime import date
-from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[1] / "plugins"))
-
-from cliente_novo_caged import (  # noqa: E402
+from cliente_novo_caged import (
     ClienteNovoCaged,
     MissingMonthsError,
     expected_periods,

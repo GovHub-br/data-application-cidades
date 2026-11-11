@@ -8,17 +8,15 @@ camada do schema daria `Tier1` e `Uso.Consumivel` às tabelas bronze dele.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 from packaging.requirements import Requirement
 
-RAIZ = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(RAIZ / "scripts" / "governance"))
+import governanca_comum as comum
+import sincronizar_governanca as gov
+import sincronizar_openmetadata as estrutura
 
-import governanca_comum as comum  # noqa: E402
-import sincronizar_governanca as gov  # noqa: E402
-import sincronizar_openmetadata as estrutura  # noqa: E402
+RAIZ = Path(__file__).resolve().parents[1]
 
 DOMINIOS = comum.carregar("dominios.yml")
 
@@ -696,9 +694,6 @@ def test_conector_do_airflow_nao_bloqueia_o_catalogo() -> None:
     Na frente da fila, uma falha dele deixava `postgres_metadata` e
     `dbt_metadata` em `upstream_failed` e o catálogo do banco parava.
     """
-    import sys
-
-    sys.path.insert(0, str(RAIZ / "helpers"))
     from openmetadata.config import RECIPE_PIPELINE
 
     assert RECIPE_PIPELINE[-1] == "airflow_metadata"
@@ -756,9 +751,7 @@ def test_toda_recipe_recebe_os_marcadores_que_pede() -> None:
     exercitado.
     """
     import re
-    import sys
 
-    sys.path.insert(0, str(RAIZ / "helpers"))
     from openmetadata.config import _RECIPES_DEFINIDAS
 
     marcador = re.compile(r"\$\{(\w+)\}")

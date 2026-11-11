@@ -6,7 +6,6 @@ que a DAG chama, de ponta a ponta.
 """
 
 import hashlib
-import importlib
 import inspect
 import io
 import json
@@ -21,19 +20,10 @@ import pandas as pd
 import pyarrow.parquet as pq
 import pytest
 
+from tests.conftest import TEST_ENV, fresh_import
+
 RAIZ = Path(__file__).parents[1]
 SCRIPTS = RAIZ / "scripts"
-AMBIENTE = {
-    "MINIO_ENDPOINT": "minio:9000",
-    "MINIO_ACCESS_KEY": "teste",
-    "MINIO_SECRET_KEY": "teste",
-    "MINIO_BUCKET": "teste",
-    "DB_DW_HOST_MCID": "postgres",
-    "DB_DW_USER_MCID": "teste",
-    "DB_DW_PASSWORD_MCID": "teste",
-    "DB_DW_DBNAME_MCID": "teste",
-    "LAKE_LOCAL_ARTIFACTS": "0",
-}
 
 
 @pytest.fixture
@@ -41,14 +31,13 @@ def carregar(monkeypatch, tmp_path):
     """Importa o entrypoint do zero, com o ambiente do teste."""
 
     def _carregar(**extra):
-        for key, value in {**AMBIENTE, "LAKE_TMPDIR": str(tmp_path), **extra}.items():
-            monkeypatch.setenv(key, value)
-        monkeypatch.syspath_prepend(str(SCRIPTS))
-        for nome in [
-            m for m in sys.modules if m.split(".")[0] in ("conversao", "raw_para_staging")
-        ]:
-            del sys.modules[nome]
-        return importlib.import_module("raw_para_staging")
+        return fresh_import(
+            monkeypatch,
+            "raw_para_staging",
+            "conversao",
+            LAKE_TMPDIR=str(tmp_path),
+            **extra,
+        )
 
     return _carregar
 
@@ -142,7 +131,7 @@ def test_run_mantem_a_assinatura_que_a_dag_usa(carregar):
 
 def test_cli_roda_como_script(tmp_path):
     # PYTHONPATH vazio: o script tem que achar o pacote e o plugins/ sozinho
-    env = {**os.environ, **AMBIENTE, "PYTHONPATH": "", "LAKE_TMPDIR": str(tmp_path)}
+    env = {**os.environ, **TEST_ENV, "PYTHONPATH": "", "LAKE_TMPDIR": str(tmp_path)}
     saida = subprocess.run(
         [sys.executable, str(SCRIPTS / "raw_para_staging.py"), "--help"],
         cwd=tmp_path,

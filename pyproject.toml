@@ -154,6 +154,8 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Raízes de import dos testes; dags/ fica fora (dags/conjuntura colide com scripts/conjuntura).
+pythonpath = ["plugins", "helpers", "scripts", "scripts/governance", "scripts/superset"]
 python_files = ["test_*.py"]
 
 [tool.sqlfmt]

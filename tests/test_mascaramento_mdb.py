@@ -8,36 +8,17 @@ disso.
 
 import csv
 import importlib
-import os
-import sys
 from pathlib import Path
 
 import pytest
+
+from tests.conftest import fresh_import
 
 SCRIPTS = Path(__file__).parents[1] / "scripts"
 
 
 def _carregar_modulo(monkeypatch, segredo: str = "segredo-de-teste"):
-    defaults = {
-        "MINIO_ENDPOINT": "minio:9000",
-        "MINIO_ACCESS_KEY": "teste",
-        "MINIO_SECRET_KEY": "teste",
-        "MINIO_BUCKET": "teste",
-        "DB_DW_HOST_MCID": "postgres",
-        "DB_DW_USER_MCID": "teste",
-        "DB_DW_PASSWORD_MCID": "teste",
-        "DB_DW_DBNAME_MCID": "teste",
-        "LAKE_LOCAL_ARTIFACTS": "0",
-    }
-    for key, value in defaults.items():
-        if key not in os.environ:
-            monkeypatch.setenv(key, value)
-    monkeypatch.setenv("MASKING_HMAC_SECRET", segredo)
-    monkeypatch.syspath_prepend(str(SCRIPTS))
-    # o pacote lê as variáveis de ambiente no import: cada teste parte de um import novo
-    for nome in [m for m in sys.modules if m.split(".")[0] == "mascaramento"]:
-        del sys.modules[nome]
-    return importlib.import_module("mascaramento.tabular")
+    return fresh_import(monkeypatch, "mascaramento.tabular", MASKING_HMAC_SECRET=segredo)
 
 
 def _escrever(path: Path, linhas: list[list[str]]) -> None:

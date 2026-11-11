@@ -1,16 +1,14 @@
 """Upload para a staging: aguenta o MinIO fora por um tempo e não perde a conversão."""
 
-import importlib
-import os
 import sys
-from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
 from boto3.exceptions import S3UploadFailedError
 from botocore.exceptions import ClientError, EndpointConnectionError
 
-SCRIPTS = Path(__file__).parents[1] / "scripts"
+from tests.conftest import fresh_import
+
 KEY = "raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
 CONTEUDO = b"CPF;NOME\n" + b"".join(b"%011d;tok%d\n" % (i, i) for i in range(50))
 
@@ -22,26 +20,8 @@ def _erro_s3(codigo: str, status: int) -> ClientError:
 
 @pytest.fixture
 def staging(monkeypatch, tmp_path):
-    defaults = {
-        "MINIO_ENDPOINT": "minio:9000",
-        "MINIO_ACCESS_KEY": "teste",
-        "MINIO_SECRET_KEY": "teste",
-        "MINIO_BUCKET": "teste",
-        "DB_DW_HOST_MCID": "postgres",
-        "DB_DW_USER_MCID": "teste",
-        "DB_DW_PASSWORD_MCID": "teste",
-        "DB_DW_DBNAME_MCID": "teste",
-        "LAKE_LOCAL_ARTIFACTS": "0",
-    }
-    for key, value in defaults.items():
-        if key not in os.environ:
-            monkeypatch.setenv(key, value)
     # pelo ambiente, não por monkeypatch: cada módulo do pacote copia o TMPDIR no import
-    monkeypatch.setenv("LAKE_TMPDIR", str(tmp_path))
-    monkeypatch.syspath_prepend(str(SCRIPTS))
-    for nome in [m for m in sys.modules if m.split(".")[0] == "conversao"]:
-        del sys.modules[nome]
-    return importlib.import_module("conversao.processamento")
+    return fresh_import(monkeypatch, "conversao.processamento", LAKE_TMPDIR=str(tmp_path))
 
 
 @pytest.fixture
