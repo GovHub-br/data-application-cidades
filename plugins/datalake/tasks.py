@@ -12,7 +12,6 @@ import html
 import json
 import os
 import re
-import tempfile
 from collections import Counter
 from typing import Callable, Optional
 
@@ -33,15 +32,15 @@ class Lake:
         self.hook, self.bucket, self.prefix = hook, bucket, prefix
 
     def sample_bytes(self, key: str, n: int = 65536, inicio: int = 0) -> bytes:
-        obj = self.hook.get_conn().get_object(
-            Bucket=self.bucket, Key=self.prefix + key, Range=f"bytes={inicio}-{inicio + n - 1}"
-        )
-        return obj["Body"].read()
+        obj = self.hook.get_key(self.prefix + key, self.bucket)
+        return obj.get(Range=f"bytes={inicio}-{inicio + n - 1}")["Body"].read()
 
     def baixar_para_tempfile(self, key: str, suffix: str = "", tmpdir: Optional[str] = None) -> str:
-        path = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=tmpdir).name
-        self.hook.get_conn().download_file(self.bucket, self.prefix + key, path)
-        return path
+        # keeps the file name: openpyxl refuses a workbook without the .xlsx extension
+        # shortcut: the conversion removes the file but not its airflow_tmp_dir_*; clean LAKE_TMPDIR if it piles up
+        return self.hook.download_file(
+            self.prefix + key, self.bucket, local_path=tmpdir, preserve_file_name=True
+        )
 
     def upload_arquivo(self, path: str, key: str) -> str:
         self.hook.load_file(path, self.prefix + key, bucket_name=self.bucket, replace=True)
@@ -75,15 +74,13 @@ class Gate:
         return key
 
 
-def previous_rows(conn) -> Callable[[contrato.Dataset, list], Optional[int]]:
+def previous_rows(pg) -> Callable[[contrato.Dataset, list], Optional[int]]:
     """Rows of the newest converted load of a dataset, for the row-variation rule."""
-    with conn, conn.cursor() as cur:
-        # shortcut: reads every converted row of _staging_log; filter by folder if it grows large
-        cur.execute(
-            "SELECT raw_key, n_linhas FROM lake._staging_log "
-            "WHERE status = 'converted' AND n_linhas > 0 ORDER BY created_at DESC"
-        )
-        rows = cur.fetchall()
+    # shortcut: reads every converted row of _staging_log; filter by folder if it grows large
+    rows = pg.get_records(
+        "SELECT raw_key, n_linhas FROM lake._staging_log "
+        "WHERE status = 'converted' AND n_linhas > 0 ORDER BY created_at DESC"
+    )
 
     def find(dataset: contrato.Dataset, datasets: list) -> Optional[int]:
         return next((n for key, n in rows if contrato.match(key, datasets) == dataset), None)
@@ -115,6 +112,23 @@ def transform(
         elif status in ("additive_drift", "known_rename"):
             rec["error_message"] = json.dumps(details)[:500]
     return recs
+
+
+STAGING_FIELDS = ["execution_id", "raw_key", "staging_key", "source_hash", "n_linhas",
+                  "n_colunas", "n_bad_lines", "encoding", "delimiter", "column_map", "status",
+                  "error_message"]  # fmt: skip
+
+
+def record(pg, recs: list[dict]) -> None:
+    """The records of `transform` in lake._staging_log (same upsert as the legacy writer)."""
+    rows = [[json.dumps(r[f]) if f == "column_map" else r[f] for f in STAGING_FIELDS] for r in recs]
+    pg.insert_rows(
+        "lake._staging_log",
+        rows,
+        STAGING_FIELDS,
+        replace=True,
+        replace_index=["raw_key", "staging_key", "source_hash"],
+    )
 
 
 def summary(extracted: dict, records: list[dict], lost: int = 0) -> tuple[str, bool, bool]:

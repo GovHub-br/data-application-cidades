@@ -2,36 +2,24 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-import psycopg2
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.sftp.hooks.sftp import SFTPHook
 from airflow.providers.smtp.hooks.smtp import SmtpHook
 from airflow.sdk import dag, get_current_context, task
-from psycopg2.extensions import make_dsn
 
-from conversao.controle import _registrar_control
 from datalake import contrato
 from datalake.chaves import load_id
 from datalake.sftp import Control
 from datalake.sftp import extract as extract_sftp
-from datalake.tasks import Lake, notify, previous_rows, summary
+from datalake.tasks import Lake, notify, previous_rows, record, summary
 from datalake.tasks import transform as transform_key
 from lake_utils import md5_arquivo
 
-SFTP_CONN, LAKE_CONN, PG_CONN, SMTP_CONN = (
-    "sftp_mcid",
-    "lake_mcid",
-    "postgres_default",
-    "smtp_default",
-)
-
-
-def _dsn() -> str:
-    c = PostgresHook.get_connection(PG_CONN)
-    return make_dsn(
-        host=c.host, port=c.port or 5432, dbname=c.schema, user=c.login, password=c.password
-    )
+SFTP_CONN = "sftp_mcid"
+LAKE_CONN = "lake_mcid"
+PG_CONN = "postgres_default"
+SMTP_CONN = "smtp_default"
 
 
 def _lake(dry_run: bool):
@@ -73,20 +61,17 @@ def sftp_ingest_dag() -> None:
         result goes to the `result` XCom, read by `report`."""
         ctx = get_current_context()
         dry = bool(ctx["params"]["dry_run"])
-        lake = _lake(dry)
-        conn = psycopg2.connect(_dsn())
-        try:
+        sftp = SFTPHook(ssh_conn_id=SFTP_CONN)
+        with sftp.get_managed_conn():  # one SSH session for the whole run
             result = extract_sftp(
-                SFTPHook(ssh_conn_id=SFTP_CONN).get_conn(),
-                lake.upload_arquivo,
-                Control(conn, ctx["run_id"], write=not dry),
+                sftp,
+                _lake(dry).upload_arquivo,
+                Control(PostgresHook(postgres_conn_id=PG_CONN), ctx["run_id"], write=not dry),
                 load_id(ctx["dag_run"].run_after),  # the same on a retry: it rewrites the same keys
                 md5_arquivo,
                 tmpdir=os.environ.get("LAKE_TMPDIR"),
                 limit=int(ctx["params"]["limit"] or 0),
             )
-        finally:
-            conn.close()
         logging.info("[sftp_ingest_dag] extract: %s", {k: len(v) for k, v in result.items()})
         ctx["ti"].xcom_push(key="result", value=result)
         return result["keys"]
@@ -95,17 +80,12 @@ def sftp_ingest_dag() -> None:
     def transform(key: str) -> list:
         ctx = get_current_context()
         dry = bool(ctx["params"]["dry_run"])
-        dsn = _dsn()
-        conn = psycopg2.connect(dsn)
-        try:
-            recs = transform_key(
-                _lake(dry), key, ctx["run_id"], not dry, contrato.load(), previous_rows(conn)
-            )
-        finally:
-            conn.close()
+        pg = PostgresHook(postgres_conn_id=PG_CONN)
+        recs = transform_key(
+            _lake(dry), key, ctx["run_id"], not dry, contrato.load(), previous_rows(pg)
+        )
         if not dry:
-            for rec in recs:
-                _registrar_control(dsn, rec)
+            record(pg, recs)
         return [
             {k: r.get(k) for k in ("raw_key", "status", "structural", "error_message")}
             for r in recs

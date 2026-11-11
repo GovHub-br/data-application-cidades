@@ -20,7 +20,7 @@ class FakeSftp:
     def __init__(self, files: dict):
         self.files, self.downloads = files, []
 
-    def listdir_attr(self, folder):
+    def list_directory_with_attr(self, folder):
         names = {
             p[len(folder) + 1 :].split("/")[0] for p in self.files if p.startswith(folder + "/")
         }
@@ -42,7 +42,7 @@ class FakeSftp:
                 )
         return out
 
-    def get(self, path, local):
+    def retrieve_file(self, path, local):
         self.downloads.append(path)
         with open(local, "wb") as f:
             f.write(self.files[path])
@@ -149,14 +149,37 @@ def test_access_lands_one_csv_per_table(sftp_mod, monkeypatch, tmp_path):
     assert result["keys"] == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/MC.mdb/CCI_Analitico.csv"]
 
 
-def test_dry_run_reads_the_control_but_writes_nothing(sftp_mod):
-    class Conn:
-        def __enter__(self):
-            raise AssertionError("the dry run must not write")
+class FakePg:
+    def __init__(self):
+        self.calls = []
 
-    ctl = sftp_mod.Control(Conn(), "run", write=False)
+    def run(self, sql, parameters=None):
+        self.calls.append(("run", sql, parameters))
+
+    def insert_rows(self, table, rows, target_fields, **kwargs):
+        self.calls.append(("insert", table, dict(zip(target_fields, rows[0])), kwargs))
+
+
+def test_control_writes_through_the_postgres_hook(sftp_mod):
+    pg = FakePg()
+    ctl = sftp_mod.Control(pg, "run")
+    rec = {"status": "masked", "masked_columns": [], "registros_total": 1, "registros_alterados": 1}
+    ctl.mask("raw/k.csv", rec, "h1", "h2")
+    ctl.ingest("/home/fabrica/GEFUS/k.csv", "raw/k.csv", 10, 100, "h1", "success")
+    (_, table, row, kw), (_, delete, params), (_, table2, row2, kw2) = pg.calls
+    assert table == "lake._masking_log" and row["masked_hash"] == "h2"
+    assert kw["replace_index"] == ["minio_key", "source_hash"] and kw["replace_target"] == []
+    assert "file_hash IS NULL" in delete and params == ("/home/fabrica/GEFUS/k.csv",)
+    assert table2 == "lake._ingest_minio_log" and row2["file_mtime"].timestamp() == 100
+    assert kw2["replace_index"] == ["sftp_path", "file_hash"]
+
+
+def test_dry_run_reads_the_control_but_writes_nothing(sftp_mod):
+    pg = FakePg()
+    ctl = sftp_mod.Control(pg, "run", write=False)
     ctl.ingest("p", None, 1, 1, None, "error")
     ctl.mask("k", {}, "h", "h")
+    assert not pg.calls
 
 
 # transform and report
@@ -237,6 +260,15 @@ def test_report_is_quiet_on_a_clean_run_and_groups_uncataloged(tasks):
     assert failed
     _, failed, _ = tasks.summary({"keys": [KEY, KEY]}, clean, lost=1)
     assert failed
+
+
+def test_record_upserts_the_staging_log(tasks):
+    pg = FakePg()
+    rec = {f: None for f in tasks.STAGING_FIELDS} | {"raw_key": KEY, "column_map": {"A": "a"}}
+    tasks.record(pg, [rec])
+    [(_, table, row, kw)] = pg.calls
+    assert table == "lake._staging_log" and row["column_map"] == '{"A": "a"}'
+    assert kw["replace_index"] == ["raw_key", "staging_key", "source_hash"]
 
 
 def test_notify_sends_only_when_configured(tasks, monkeypatch):

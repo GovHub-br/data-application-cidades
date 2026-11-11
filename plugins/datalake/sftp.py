@@ -1,8 +1,7 @@
 """`extract` of the SFTP of the MCid (ADR-0004): download, mask, land in raw with load_id.
 
-The DAG wires the providers (SFTPHook, S3Hook, PostgresHook); this module only receives
-what they give (a paramiko SFTP client, an upload function, the control tables), so it is
-tested with in-memory fakes. A file whose masking fails is not uploaded: the other files go
+The DAG builds the hooks (SFTPHook, S3Hook, PostgresHook) and this module calls their
+methods, so it is tested with in-memory fakes of them. A file whose masking fails is not uploaded: the other files go
 on, and the run fails at the end (the `report` task).
 """
 
@@ -13,6 +12,7 @@ import os
 import stat
 import tempfile
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterator, Optional
 
@@ -28,11 +28,19 @@ FOLDERS = (
 SUPPORTED = TABULAR | EXCEL | ACCESS | {".zip"}
 UNSUPPORTED = {".xls"}  # neither the masking nor the conversion reads it (no xlrd)
 MAX_DEPTH = 10
+INGEST_FIELDS = ["sftp_path", "file_name", "file_size", "file_mtime", "file_hash", "minio_key",
+                 "status", "error_message", "started_at", "finished_at"]  # fmt: skip
+MASKING_FIELDS = ["execution_id", "minio_key", "file_name", "source_hash", "masked_hash",
+                  "masked_columns", "registros_total", "registros_alterados", "status"]  # fmt: skip
 
 
 def walk(sftp, folder: str, depth: int = 0) -> Iterator[tuple[str, int, int]]:
-    """(path, size, mtime) of every file below `folder`, in a stable order."""
-    for attr in sorted(sftp.listdir_attr(folder), key=lambda a: a.filename):
+    """(path, size, mtime) of every file below `folder`, in a stable order.
+
+    Not `SFTPHook.walktree`: it gives only the path, and skipping without download needs
+    the size and mtime that the listing already brings.
+    """
+    for attr in sorted(sftp.list_directory_with_attr(folder), key=lambda a: a.filename):
         path = f"{folder}/{attr.filename}"
         if stat.S_ISDIR(attr.st_mode or 0):
             if depth < MAX_DEPTH:
@@ -48,18 +56,13 @@ def mirror(sftp_path: str) -> str:
 
 
 class Control:
-    """lake._ingest_minio_log and lake._masking_log, over one psycopg2 connection.
+    """lake._ingest_minio_log and lake._masking_log, through the PostgresHook.
 
     `write=False` is the dry run: it still skips what was landed, and records nothing.
     """
 
-    def __init__(self, conn, execution_id: str, write: bool = True):
-        self.conn, self.execution_id, self.write = conn, execution_id, write
-
-    def _rows(self, sql: str) -> list:
-        with self.conn, self.conn.cursor() as cur:  # one transaction per block
-            cur.execute(sql)
-            return cur.fetchall()
+    def __init__(self, pg, execution_id: str, write: bool = True):
+        self.pg, self.execution_id, self.write = pg, execution_id, write
 
     def ingested(self) -> set:
         """(path, mtime) already landed or refused: skipped without download.
@@ -67,14 +70,14 @@ class Control:
         The legacy ingestion logged ZIP members as `<zip>@<member>` with the ZIP mtime, so
         the part before `@` keys the ZIP itself; size is left out for the same reason.
         """
-        rows = self._rows(
+        rows = self.pg.get_records(
             "SELECT split_part(sftp_path, '@', 1), EXTRACT(EPOCH FROM file_mtime)::bigint "
             "FROM lake._ingest_minio_log WHERE file_hash IS NOT NULL OR status = 'unsupported'"
         )
         return {(p, m) for p, m in rows}
 
     def hashes(self) -> set:
-        rows = self._rows(
+        rows = self.pg.get_records(
             "SELECT DISTINCT file_hash FROM lake._ingest_minio_log WHERE file_hash IS NOT NULL"
         )
         return {r[0] for r in rows}
@@ -82,30 +85,41 @@ class Control:
     def ingest(self, path, key, size, mtime, file_hash, status, error=None) -> None:
         if not self.write:
             return
-        with self.conn, self.conn.cursor() as cur:  # one transaction per block
-            if file_hash:  # a success replaces the earlier failures of the path
-                cur.execute(
-                    "DELETE FROM lake._ingest_minio_log WHERE sftp_path = %s AND file_hash IS NULL "
-                    "AND status = 'error'",
-                    (path,),
+        # the rows without hash (error, unsupported) sit on a partial unique index that
+        # ON CONFLICT cannot name: the new row of the path replaces them
+        self.pg.run(
+            "DELETE FROM lake._ingest_minio_log WHERE sftp_path = %s AND file_hash IS NULL",
+            parameters=(path,),
+        )
+        now = datetime.now(timezone.utc)
+        self.pg.insert_rows(
+            "lake._ingest_minio_log",
+            [
+                (
+                    path,
+                    Path(path).name,
+                    size,
+                    datetime.fromtimestamp(mtime, timezone.utc),
+                    file_hash,
+                    key,
+                    status,
+                    error,
+                    now,
+                    now,
                 )
-            cur.execute(
-                "INSERT INTO lake._ingest_minio_log (sftp_path, file_name, file_size, file_mtime, "
-                "file_hash, minio_key, status, error_message, started_at, finished_at) "
-                "VALUES (%s, %s, %s, to_timestamp(%s), %s, %s, %s, %s, now(), now()) "
-                "ON CONFLICT DO NOTHING",
-                (path, Path(path).name, size, mtime, file_hash, key, status, error),
-            )
+            ],  # fmt: skip
+            INGEST_FIELDS,
+            replace=True,
+            replace_index=["sftp_path", "file_hash"],
+        )
 
     def mask(self, key: str, rec: dict, source_hash: str, landed_hash: str) -> None:
         """Written BEFORE the upload: no object reaches raw without a masking record."""
         if not self.write:
             return
-        with self.conn, self.conn.cursor() as cur:  # one transaction per block
-            cur.execute(
-                "INSERT INTO lake._masking_log (execution_id, minio_key, file_name, source_hash, "
-                "masked_hash, masked_columns, registros_total, registros_alterados, status) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+        self.pg.insert_rows(
+            "lake._masking_log",
+            [
                 (
                     self.execution_id,
                     key,
@@ -116,8 +130,13 @@ class Control:
                     rec["registros_total"],
                     rec["registros_alterados"],
                     rec["status"],
-                ),
-            )
+                )
+            ],  # fmt: skip
+            MASKING_FIELDS,
+            replace=True,
+            replace_index=["minio_key", "source_hash"],
+            replace_target=[],  # a retry masks to the same bytes: keep the first record
+        )
 
 
 def _land(
@@ -150,7 +169,7 @@ def _one(sftp, upload, control, load, md5, tmpdir, entry, known_hashes, result) 
     with tempfile.TemporaryDirectory(dir=tmpdir) as workdir:
         local = os.path.join(workdir, Path(path).name)
         try:
-            sftp.get(path, local)
+            sftp.retrieve_file(path, local)
             file_hash = md5(local)
             if file_hash in known_hashes:  # moved or re-sent without change
                 result["duplicates"].append(path)
