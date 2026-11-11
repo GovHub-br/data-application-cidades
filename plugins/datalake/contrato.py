@@ -105,7 +105,7 @@ def structural_status(
     """Structural drift of one delivered table (ADR-0006 §2) -> (status, details).
 
     `header` holds the column names as the conversion normalizes them. Only `quarantined`
-    blocks the file; `uncataloged` stays in raw and goes to the e-mail.
+    blocks the file; `uncataloged` stays in raw and goes to the report.
     """
     if dataset is None:
         return "uncataloged", {}

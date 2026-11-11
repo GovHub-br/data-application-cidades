@@ -289,16 +289,3 @@ def test_record_upserts_the_staging_log(tasks):
     [(_, table, row, kw)] = pg.calls
     assert table == "lake._staging_log" and row["column_map"] == '{"A": "a"}'
     assert kw["replace_index"] == ["raw_key", "staging_key", "source_hash"]
-
-
-def test_notify_sends_only_when_configured(tasks, monkeypatch):
-    sent = []
-    monkeypatch.delenv("LAKE_ALERT_EMAIL", raising=False)
-    tasks.notify("s", "<b>", lambda **kw: sent.append(kw))
-    monkeypatch.setenv("LAKE_ALERT_EMAIL", "a@x, b@x")
-    tasks.notify("s", "<b>", lambda **kw: sent.append(kw))
-    assert (
-        len(sent) == 1
-        and sent[0]["to"] == ["a@x", "b@x"]
-        and "&lt;b&gt;" in sent[0]["html_content"]
-    )

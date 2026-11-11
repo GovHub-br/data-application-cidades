@@ -8,7 +8,6 @@ into staging when the contract allows. `report` sums up the run and fails it on 
 
 from __future__ import annotations
 
-import html
 import json
 import os
 import re
@@ -100,7 +99,7 @@ def transform(
     from conversao.processamento import _novo_registro
 
     dataset = contrato.match(key, datasets)
-    if dataset is None:  # stays in raw, goes to the e-mail (ADR-0006)
+    if dataset is None:  # stays in raw, goes to the report (ADR-0006)
         return [{**_novo_registro(execution_id, key), "status": "uncataloged"}]
     gate = Gate(lake, dataset, previous(dataset, datasets))
     recs = leitores.convert(gate, key, execution_id, apply, set(), reader_name=dataset.reader)
@@ -132,7 +131,7 @@ def record(pg, recs: list[dict]) -> None:
 
 
 def summary(extracted: dict, records: list[dict], lost: int = 0) -> tuple[str, bool, bool]:
-    """(plain-text report, whether the run fails, whether it goes by e-mail).
+    """(plain-text report, whether the run fails, whether something needs a look).
 
     Keys and statuses only, never data. `lost` counts transform tasks that left no record.
     """
@@ -163,11 +162,3 @@ def summary(extracted: dict, records: list[dict], lost: int = 0) -> tuple[str, b
     landed = len(extracted.get("keys") or [])
     notable = failed or bool(extracted.get("unsupported")) or set(by_status) - {"approved"}
     return "\n".join([f"Arquivos pousados em raw: {landed}", "", *lines]), failed, bool(notable)
-
-
-def notify(subject: str, body: str, send: Optional[Callable[..., None]]) -> None:
-    """E-mail to LAKE_ALERT_EMAIL through the SMTP provider; only the log when unset."""
-    to = os.environ.get("LAKE_ALERT_EMAIL")
-    if to and send:
-        send(to=[t.strip() for t in to.split(",") if t.strip()], subject=subject,
-             html_content=f"<pre>{html.escape(body)}</pre>")  # fmt: skip

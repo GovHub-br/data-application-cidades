@@ -5,32 +5,25 @@ from datetime import datetime, timedelta
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.sftp.hooks.sftp import SFTPHook
-from airflow.providers.smtp.hooks.smtp import SmtpHook
 from airflow.sdk import dag, get_current_context, task
 
 from datalake import contrato
 from datalake.chaves import load_id
 from datalake.sftp import Control
 from datalake.sftp import extract as extract_sftp
-from datalake.tasks import Lake, notify, previous_rows, record, summary
+from datalake.tasks import Lake, previous_rows, record, summary
 from datalake.tasks import transform as transform_key
 from lake_utils import md5_arquivo
 
 SFTP_CONN = "sftp_mcid"
 LAKE_CONN = "lake_mcid"
 PG_CONN = "postgres_default"
-SMTP_CONN = "smtp_default"
 
 
 def _lake(dry_run: bool):
     return Lake(
         S3Hook(aws_conn_id=LAKE_CONN), os.environ["MINIO_BUCKET"], "dryrun/" if dry_run else ""
     )
-
-
-def _send_email(**kwargs) -> None:
-    with SmtpHook(smtp_conn_id=SMTP_CONN) as smtp:
-        smtp.send_email_smtp(**kwargs)
 
 
 @dag(
@@ -48,7 +41,7 @@ def sftp_ingest_dag() -> None:
     `extract` baixa os arquivos novos das pastas monitoradas, mascara a PII e só então sobe
     para `raw/sftp/<pasta>/load_id=<id>/` (o original nunca pousa). `transform` converte cada
     arquivo para a staging pelo leitor do contrato ODCS e segura em quarentena o que não
-    bate com ele. `report` manda o resumo para `LAKE_ALERT_EMAIL` e falha a execução se
+    bate com ele. `report` escreve o resumo no log da task e falha a execução se
     houve erro ou quarentena.
 
     Params: `dry_run` faz tudo embaixo de `dryrun/`; lê as tabelas de controle mas não grava;
@@ -103,9 +96,9 @@ def sftp_ingest_dag() -> None:
         body, failed, notable = summary(
             extracted, records, len(extracted["keys"]) - len(transformed)
         )
-        logging.info("[sftp_ingest_dag] report\n%s", body)
-        if notable:
-            notify(f"[sftp_ingest_dag] {ctx['run_id']}", body, _send_email)
+        # no e-mail service yet: the task log is the alert (error/warning stand out in the UI)
+        log = logging.error if failed else logging.warning if notable else logging.info
+        log("[sftp_ingest_dag] report\n%s", body)
         if failed:
             raise RuntimeError("ingestão do SFTP com erro ou quarentena; veja o resumo no log")
 
