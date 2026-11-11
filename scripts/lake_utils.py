@@ -198,6 +198,10 @@ def normalizar_colunas(header: List[str]) -> Tuple[List[str], dict]:
 # Bases Access (.mdb) — leitura via mdbtools, que é READ-ONLY: não há mdb-import, e quem
 # precisar modificar um .mdb tem que falhar explicitamente. O mdb-export entrega CSV em
 # UTF-8, então este caminho dispensa detectar_encoding/detectar_dialeto.
+# Canais do legado (minio_transform_dag): os únicos que a máscara e a conversão varrem (B1,
+# #248). As DAGs de API gravam a própria staging, e varrer raw/ inteira regravava por cima.
+PREFIXOS_LEGADO = ("raw/sftp/", "raw/sharepoint/")
+
 MDB_EXT = {".mdb", ".accdb"}
 MDB_DELIM = ","
 MDB_ENCODING = "utf-8"
