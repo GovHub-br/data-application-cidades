@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-19
-- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verify_structural_data_drift`; nomes de rastreio em inglês, ADR-0007; `raw_to_staging_dag`)
+- **Revisão:** 2026-10-29 (providers do Airflow na `extract`; DAGs de fonte deixam de gravar no Postgres; contagens conferidas; entrada manual pela `manual_ingest_dag`; drift estrutural na task `verify_structural_data_drift`; nomes de rastreio em inglês, ADR-0007; `raw_to_staging_dag`); 2026-11-10 (ordem de escolha: providers, clientes existentes, refatoração, cliente novo; escritor único com leitores registrados; `reprocess_raw` manual no lugar da varredura; legado só com `raw/sharepoint/`)
 - **Relacionados:**
   - ADR-0001 (arquitetura de referência), ADR-0002 (contrato entre camadas: R0 a R2),
     ADR-0005 (layout do lake), ADR-0013 (orquestração)
@@ -58,8 +58,14 @@ conversão é a mesma para todas as fontes (R2). Falta decidir onde a conversão
    ADR-0006) e devolve só as aprovadas. Se algum arquivo foi barrado, manda o
    e-mail e termina em falha, sem impedir a conversão dos outros.
 3. **`transform`**, reutilizável (`plugins/lake_tasks.py`): converte para
-   Parquet as chaves aprovadas. Implementada uma vez sobre a função
-   `processar_objeto()` de `scripts/raw_para_staging.py`.
+   Parquet as chaves aprovadas. É o **escritor único** da staging (ADR-0002 R2):
+   a gravação (texto, linhagem, `_load_id`) é uma só, e a leitura é feita por
+   **leitores registrados por nome**. Os leitores genéricos (CSV, TXT, XLSX, o CSV
+   do `.mdb`) chamam o código que já existe em `scripts/conversao/`. Uma fonte que
+   não entrega tabela pronta (o XLSX da FGV, o JSON do IBGE, a resposta do Power BI
+   do Novo CAGED) indica no contrato o leitor dela (`reader`, ADR-0006), que só dá
+   forma de tabela: não tipa, não filtra e não muda valor. Quando o cliente da
+   fonte já tem o parser, o leitor o chama.
 
 A `verify_structural_data_drift` e a `transform` são as mesmas em todas as DAGs.
 
@@ -110,15 +116,23 @@ nunca o conteúdo.
 
 ### Como a `extract` fala com a fonte
 
-1. **Primeiro, os hooks dos providers do Airflow:** `HttpHook` para APIs,
-   `SFTPHook` para o SFTP, `S3Hook` para o lake, `ImapHook` para e-mail e
-   `PostgresHook` para o banco. Endereço, credencial e parâmetros de conexão vêm da
+Para cada necessidade, a escolha segue esta ordem:
+
+1. **Providers e recursos do Airflow:** `HttpHook` para APIs, `SFTPHook` para o
+   SFTP, `S3Hook` para o lake, `ImapHook` para e-mail, `PostgresHook` para o banco,
+   notifier SMTP para o alerta. Endereço, credencial e parâmetros de conexão vêm da
    Connection do Airflow (ADR-0013).
-2. **Cliente próprio só onde o hook não basta:** autenticação em várias etapas
-   (FGVDados), consulta montada pela API da fonte (Power BI do Novo CAGED) ou página
-   que precisa ser lida para achar o arquivo (ABECIP, FIPE). Mesmo nesses casos, o
-   cliente usa o hook para a conexão e só acrescenta o que é específico da fonte.
-3. **Operators de transferência não são usados** (`SFTPToS3Operator`,
+2. **Clientes que já existem em `plugins/`, como função auxiliar e sem alteração:**
+   autenticação em várias etapas (FGVDados), consulta montada pela API da fonte
+   (Power BI do Novo CAGED), página que precisa ser lida para achar o arquivo
+   (ABECIP, FIPE) e os parsers que viram leitores da `transform`.
+3. **Refatorar um cliente** que não sirva como está.
+4. **Por último, criar um cliente novo.**
+
+Os clientes existentes não mudam enquanto alguma DAG os usa; os que ficarem sem uso
+saem no fim da migração.
+
+**Operators de transferência não são usados** (`SFTPToS3Operator`,
    `HttpToS3Operator` e semelhantes). Eles gravam no destino sem passar pelo
    mascaramento (ADR-0002 R0), e alguns levam o conteúdo pela memória do worker ou
    pelo XCom.
@@ -147,12 +161,13 @@ A entrada manual (ADR-0002 R7) não tem fonte externa: o arquivo chega à raw pe
 - a `verify_structural_data_drift` e a `transform` são as comuns, com o drift estrutural
   contra o contrato da base.
 
-### DAG de manutenção do lake
+### Reprocessamento da raw
 
-A `raw_to_staging_dag`, disparada à mão ou em horário próprio, percorre a `raw/` e
-converte o que não tem registro em `lake._staging_log`. Serve para backfill, para
-reprocessar em lote o que foi barrado no drift, e como conferência de que nenhuma
-DAG de fonte deixou de converter. Não é o caminho normal.
+A `reprocess_raw`, só manual, recebe um contrato (ADR-0006) e roda a
+`verify_structural_data_drift` e a `transform` sobre as cargas da raw que casam com
+ele. Serve para converter o histórico de uma base que ganhou contrato depois de
+chegar (`uncataloged`) e para reprocessar o que foi barrado no drift. Ela lista só o
+caminho do contrato; não existe varredura automática da `raw/` inteira.
 
 ### Relação com a DAG geral do dbt
 
@@ -197,6 +212,15 @@ retry e credencial do seu jeito, e é o que levou a três pilhas HTTP e a quatro
 implementações de SFTP. Os hooks já resolvem essa parte, configurada pela
 Connection.
 
+**Conversores numa hierarquia de classes (projeto anterior, PR #206).** O mesmo
+desenho (gravação comum, leitura por formato, escolha por registro) cabe em funções
+e num dicionário de leitores, com menos código. A classe fica para quando um leitor
+precisar de estado.
+
+**Biblioteca de EL (dlt).** Faz o mesmo papel da `extract` e da `transform` (carga
+com `load_id`, contrato de schema), mas troca os providers por ela e tipa as colunas,
+enquanto a staging é toda texto (ADR-0002 R2). Fica para estudo.
+
 **Operators de transferência dos providers.** São a forma mais curta de levar um
 arquivo do SFTP ou de uma URL para o lake, mas não há onde mascarar entre a leitura
 e a gravação.
@@ -214,18 +238,20 @@ lake.
 | Fluxo de cada fonte visível na própria DAG | A conversão fica espalhada pelas DAGs de fonte; a visão do lake inteiro depende da DAG de manutenção |
 | Uma implementação de conversão para todas as fontes | As DAGs de API perdem a conversão própria e precisam ser migradas uma a uma |
 | Retry da conversão sem nova extração | Três tasks por fonte em vez de uma |
-| Conexão, credencial e retry configurados num lugar só, a Connection | Os clientes atuais são reescritos sobre os hooks |
+| Conexão, credencial e retry configurados num lugar só, a Connection | Os clientes atuais convivem com os hooks até a última DAG migrar |
 | Um caminho só para o dado da fonte, o lake | Quem consulta hoje as tabelas das APIs no Postgres precisa ser reapontado |
 
 ## Consequências
 
-- A `minio_transform_dag` dá lugar à `raw_to_staging_dag`, de manutenção. A
-  tarefa de mascaramento sai dela (vai para as DAGs de fonte, ADR-0002 R0), e a
-  varredura deixa de ser o caminho normal do SFTP.
+- Quando o SFTP migrar, a `minio_transform_dag` passa a cuidar só do que já está em
+  `raw/sharepoint/` (o SharePoint chega pelo SFTP), com as travas de máscara, e
+  sai quando esse conteúdo tiver contrato e for reprocessado. A varredura da `raw/`
+  deixa de existir, e a `reprocess_raw` cobre o histórico.
 - As DAGs de API trocam a conversão própria (`registros_para_staging_parquet`,
   `IngestorLake.gerar_staging_parquet`) pela task comum `transform`.
-- Os clientes de `plugins/` passam a usar os hooks. Os que só fazem uma chamada HTTP
-  simples dão lugar ao `HttpHook`. A imagem já traz os providers `http`, `sftp`,
+- As DAGs passam a usar os hooks; os clientes de `plugins/` ficam como auxiliares e,
+  quando nenhuma DAG os usar, saem. Os que só fazem uma chamada HTTP simples dão
+  lugar ao `HttpHook`. A imagem já traz os providers `http`, `sftp`,
   `amazon` e `postgres`; o `imap` precisa entrar para a DAG do Tesouro.
 - O `ClientPostgresDB.insert_data` deixa de ser usado pelas DAGs de fonte, e as
   sources Postgres sem uso de `models/sources.yml` saem.
@@ -234,17 +260,16 @@ lake.
 
 ## Plano de migração
 
-1. Extrair de `scripts/raw_para_staging.py` a função `converter_chaves(chaves)`, que
-   é o `run()` sem a varredura (mesmo controle em `lake._staging_log`), e criar a
-   task `transform` em `plugins/lake_tasks.py`, com o pool `lake_conversao`. A task
+1. Criar a task `transform` em `plugins/lake_tasks.py`, com o pool
+   `lake_conversao`: o escritor único e o registro de leitores, com os genéricos
+   chamando `scripts/conversao/` (mesmo controle em `lake._staging_log`). A task
    `verify_structural_data_drift` entra antes dela quando o ADR-0006 for aceito.
 2. Ligar a task nas DAGs de fonte, uma a uma, começando pela `sftp_ingest_dag`
    (junto com o mascaramento do ADR-0002; o `run()` de `sftp_para_minio.py` passa a
    devolver as chaves gravadas). Em cada DAG de API, trocar a conversão própria pela
    task comum.
-3. Quando todas as fontes converterem pela task, renomear a `minio_transform_dag`
-   para `raw_to_staging_dag`, tirar dela o mascaramento e o disparo do dbt, e
-   desligar o horário automático.
+3. Quando o SFTP converter pela task, restringir a `minio_transform_dag` a
+   `raw/sharepoint/` e tirar dela o disparo do dbt; criar a `reprocess_raw`.
 4. Antes de desligar o Postgres das APIs, listar os datasets do Superset da
    homologação que leem os schemas das APIs e reapontá-los para a ouro. Depois,
    tirar o `insert_data` de cada DAG no mesmo PR que a migrar para `extract` →
@@ -254,9 +279,8 @@ lake.
 
 ## Validação operacional
 
-- A `raw_to_staging_dag`, rodando em conferência (sem converter), não encontra
-  objeto da raw sem registro em `lake._staging_log`. Se encontrar, alguma DAG de
-  fonte não encadeou a `transform`.
+- Todo objeto da raw tem registro em `lake._staging_log` (convertido, barrado ou
+  `uncataloged`). Se não tiver, alguma DAG de fonte não encadeou a `transform`.
 - Nenhuma DAG de fonte grava em `staging/` a não ser pela task `transform`.
 - Nenhuma DAG de fonte importa `ClientPostgresDB`, chama `insert_data` ou usa um
   operator de transferência.

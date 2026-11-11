@@ -142,7 +142,7 @@ modelo chama a macro hoje, a troca não quebra nada.
 | Chave do lake | ADR-0005 | `raw/fgv/incc_m/load_id=20261019T030000Z/incc_m.xlsx` |
 | DAG de fonte | `<fonte>_<dado>_ingest_dag` | `fgv_incc_m_ingest_dag` |
 | DAG da entrada manual | `manual_ingest_dag` (ADR-0004) | — |
-| DAG de manutenção | `raw_to_staging_dag` | — |
+| DAG de reprocessamento | `reprocess_raw` | — |
 | DAG do dbt | `mcid_cosmos_dag` | — |
 | Tasks da DAG de fonte | `extract`, `verify_structural_data_drift`, `transform` (ADR-0004) | — |
 
