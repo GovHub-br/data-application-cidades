@@ -87,6 +87,7 @@ class S3Falso:
         self.tags: dict = {}
         self.uploads: dict = {}
         self.abortados = 0
+        self.multipart_abertos = 0
         self._ids = itertools.count()
         self.quedas: list = []  # offsets em que a leitura em streaming cai
         self.falhar_upload_part = False
@@ -115,6 +116,7 @@ class S3Falso:
 
     def create_multipart_upload(self, Bucket, Key):
         upload_id = f"u{next(self._ids)}"
+        self.multipart_abertos += 1
         self.uploads[upload_id] = {"key": Key, "partes": {}}
         return {"UploadId": upload_id}
 
@@ -281,8 +283,10 @@ def test_hash_ja_mascarado_aborta_sem_reescrever(minio):
     rec = _processar(minio, masked_hashes={hashlib.md5(CONTEUDO).hexdigest()})
 
     assert rec["status"] == "skipped_already"
+    assert rec["hash_before"] == hashlib.md5(CONTEUDO).hexdigest()
     assert minio.s3.objetos[KEY] == CONTEUDO
-    assert not minio.s3.uploads
+    # cópia de arquivo já mascarado não pode pagar o mascaramento e o envio inteiros
+    assert minio.s3.multipart_abertos == 0
 
 
 def test_falha_no_upload_mantem_o_original(minio):
@@ -528,6 +532,7 @@ def test_paralelo_ja_mascarado_nao_reescreve(paralelo):
     assert rec["status"] == "skipped_already"
     assert paralelo.s3.objetos[KEY] == CADUNICO
     assert not _pedacos(paralelo)
+    assert paralelo.s3.multipart_abertos == 0
 
 
 def test_paralelo_dry_run_nao_toca_o_raw(paralelo):

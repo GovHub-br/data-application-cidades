@@ -80,6 +80,7 @@ from mascaramento.tabular import _mascarar_tabular_stream
 from mascaramento.paralelo import (
     _mascarar_tabular_paralelo,
     _pode_paralelizar,
+    _targets_do_sample,
 )
 from mascaramento.xlsx import (
     _mascarar_xlsx,
@@ -172,6 +173,18 @@ def processar_objeto(  # noqa: C901
             # CSV/TXT vai do MinIO ao MinIO sem disco: o CadÚnico pessoa tem 37 GB
             dest_key = key if apply else _preview_key(key)
             targets_fixos = targets_por_posicao(key)
+            # cópia de arquivo já mascarado (ex.: ANTERIORES/) só se reconhece pelo hash;
+            # sem esta leitura simples, seria mascarada e enviada inteira para nada
+            if (
+                masked_hashes
+                and _targets_do_sample(sample, delim, real_encoding, targets_fixos)[0]
+            ):
+                hash_before = minio.md5_objeto(key)
+                if hash_before in masked_hashes:
+                    rec["hash_before"] = hash_before
+                    rec["status"] = "skipped_already"
+                    rec["duration_s"] = round(time.time() - t0, 2)
+                    return rec
             resultado = None
             if _pode_paralelizar(sample, fully_quoted):
                 resultado = _mascarar_tabular_paralelo(

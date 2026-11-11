@@ -493,6 +493,14 @@ class ClienteMinio:
         """Stream de leitura do objeto, com md5 do que foi lido em `.md5`."""
         return LeitorObjeto(self.s3, self.bucket, key, inicio=inicio, fim=fim, etag=etag)
 
+    def md5_objeto(self, key: str) -> str:
+        """md5 do conteúdo, lido em streaming e sem gravar nada."""
+        leitor = self.abrir_leitura(key)
+        bloco = bytearray(8 * 1024 * 1024)
+        while leitor.readinto(bloco):
+            pass
+        return leitor.md5.hexdigest()
+
     # Escrita
     def abrir_escrita(self, key: str, tamanho_estimado: int = 0) -> EscritorMultipart:
         """Stream de escrita em multipart; nada muda em `key` até `concluir()`."""
