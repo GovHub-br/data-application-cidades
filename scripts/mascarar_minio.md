@@ -148,7 +148,10 @@ evita o **duplo-HMAC** (aplicar HMAC sobre um token já gerado). Use `--force` p
 
 Objeto sem a tag cujo conteúdo é igual a um mascaramento anterior (ex.: copiado na
 reorganização do lake, que não leva as tags) sai como `skipped_already` e **ganha a tag de
-volta**, para a execução seguinte pulá-lo sem reler o arquivo.
+volta**, para a execução seguinte pulá-lo sem reler o arquivo. Em CSV/TXT com PII no
+cabeçalho, esse hash vem de uma leitura simples antes do mascaramento: sem ela, a cópia
+seria mascarada e enviada inteira só para ser descartada (~3 min por arquivo, contra
+segundos).
 
 Com `--apply`, os objetos liberados sem reescrita (`skipped_no_pii`, `skipped_no_header`,
 `skipped_unsupported`) recebem a tag `triagem=<status>`. É ela, junto com `masked=true`, que
