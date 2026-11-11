@@ -2,7 +2,7 @@
 
 - **Status:** Proposto
 - **Data:** 2026-10-29
-- **Revisão:** 2026-10-29 (só a DAG geral executa o dbt; a `conjuntura_dag` sai)
+- **Revisão:** 2026-10-29 (só a DAG geral executa o dbt; a `conjuntura_dag` sai); 2026-11-10 (uma DAG por fonte e por cron, com dynamic task mapping por dado; Connections nomeadas)
 - **Relacionados:**
   - ADR-0004 (DAG de fonte com `extract` e `transform`), ADR-0011 (segredos),
     ADR-0014 (CI com DagBag)
@@ -52,7 +52,10 @@ escritas e encadeadas. A varredura de 29/10 achou:
    guarda configuração.
 4. **Segredo fica em Connection, nunca em Variable.** A Connection é definida por
    variável de ambiente (`AIRFLOW_CONN_*`) ou por secrets backend, e o Airflow mascara
-   o valor nos logs.
+   o valor nos logs. Todo acesso externo passa por uma: `sftp_mcid`, `lake_mcid`
+   (tipo `aws`, com o `endpoint_url` do RustFS), `postgres_default`, `smtp_default`
+   e uma `http_<fonte>` por API. Os modelos versionados (playbook, `.env.example`,
+   k8s) têm só as chaves, nunca os valores.
 5. **Sem dado nunca é verde.**
    - Fonte sem nada novo desde a última carga: a `extract` termina `skipped`
      (`AirflowSkipException`), e as tasks seguintes são puladas junto.
@@ -81,6 +84,13 @@ escritas e encadeadas. A varredura de 29/10 achou:
 
    Uma fonte que falha não trava o boletim: os testes da bronze barram só a prata
    daquela fonte, e o resto roda, que era o motivo do `trigger_rule=all_done` dela.
+10. **Uma DAG por fonte e por cron, com dynamic task mapping por dado.** Os dados de
+    uma fonte (as três consultas do Novo CAGED, as séries do BACEN) são instâncias
+    mapeadas da mesma DAG, cada uma com retry e falha próprios, e seguem os objetos
+    do contrato da fonte (ADR-0006). Dados da mesma fonte com ritmos diferentes ficam
+    em DAGs separadas (`abecip_mensal_ingest` e `abecip_trimestral_ingest`). As 19
+    DAGs de API viram 9, e a `pnad_construcao_sidra_ingest_dag`, que grava algo que
+    nenhuma source lê, sai.
 
 ## Alternativas consideradas
 
@@ -95,6 +105,17 @@ vê a configuração.
 **Manter o aviso quando a fonte não traz dado.** Evita alarme em fonte que atrasa,
 mas a execução verde esconde semanas sem dado novo. O `skipped` dá a mesma
 visibilidade sem fingir sucesso.
+
+**Uma DAG por dado (prática atual).** Cada DAG fica curta, mas a mesma fonte se
+repete em várias DAGs que fazem a mesma requisição com outro filtro, e a falha de
+um dado não se distingue da fonte inteira no mesmo lugar.
+
+**Fábrica de DAGs (geração por código ou `dag-factory` em YAML).** Tira a
+repetição quando há dezenas de DAGs iguais e deixa a estrutura legível em YAML.
+Com nove DAGs, a repetição é pequena; a DAG some do próprio arquivo, e a biblioteca
+é uma dependência externa, enquanto o mapping é recurso do Airflow. Fica como
+caminho se quem mantiver as DAGs não programar em Python: as funções das tasks são
+as mesmas.
 
 **Esperar com `wait_for_completion` sem `deferrable`.** É o comportamento padrão,
 mas cada espera prende um slot de worker pelo tempo inteiro.
@@ -114,6 +135,8 @@ mas cada espera prende um slot de worker pelo tempo inteiro.
 - `IBGE_CONFIGURACOES` e `BACEN_SERIES` passam a ser arquivos versionados,
   validados no CI.
 - As Variables com segredo viram Connections.
+- As DAGs de API passam a ser uma por fonte e por cron (regra 10), e as
+  credenciais saem das variáveis de ambiente lidas pelo código para as Connections.
 - A `conjuntura_dag` sai (regra 9). O `mcid_cosmos_dag` ganha `max_active_runs=1`,
   e o disparo do dbt pela `minio_transform_dag` sai.
 
