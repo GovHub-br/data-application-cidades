@@ -10,6 +10,7 @@ from typing import List
 
 import pyarrow.parquet as pq
 
+from datalake.chaves import load_id_of
 from lake_utils import (
     MDB_DELIM,
     MDB_ENCODING,
@@ -94,6 +95,7 @@ def processar_objeto(  # noqa: C901
     """Retorna lista de registros (XLSX pode gerar 1 por aba)."""
     t0 = time.time()
     ext = os.path.splitext(key)[1].lower()
+    load_id = load_id_of(key)  # só as cargas da ingestão nova (ADR-0005)
 
     if ext in UNSUPPORTED:
         rec = _novo_registro(execution_id, key)
@@ -153,6 +155,7 @@ def processar_objeto(  # noqa: C901
                     ingested_at,
                     chunksize,
                     bad_mode,
+                    load_id=load_id,
                 )
                 # o encoding registrado é o que de fato decodificou o arquivo (pode ter
                 # caído para latin-1 no fallback), não o palpite feito sobre o sample
@@ -241,6 +244,7 @@ def processar_objeto(  # noqa: C901
                         chunksize,
                         bad_mode,
                         extra_meta={"table": tabela},
+                        load_id=load_id,
                     )
                     if n_colunas == 0:
                         rec["status"] = "skipped_no_header"
@@ -287,7 +291,7 @@ def processar_objeto(  # noqa: C901
             dst = tempfile.NamedTemporaryFile(delete=False, suffix=".parquet", dir=TMPDIR).name
             try:
                 n_linhas, n_colunas, column_map = _converter_json(
-                    src, dst, os.path.basename(key), source_hash, ingested_at
+                    src, dst, os.path.basename(key), source_hash, ingested_at, load_id=load_id
                 )
                 if n_colunas == 0:
                     rec["status"] = "skipped_no_header"
@@ -334,6 +338,7 @@ def processar_objeto(  # noqa: C901
                         os.path.basename(key),
                         source_hash,
                         ingested_at,
+                        load_id=load_id,
                     )
                     if n_colunas == 0:
                         rec["status"] = "skipped_no_header"

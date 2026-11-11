@@ -10,7 +10,7 @@ import pyarrow.parquet as pq
 
 from lake_utils import encoding_fallback, normalizar_colunas
 
-from .config import LINEAGE_COLS
+from .config import colunas_de_linhagem
 
 log = logging.getLogger(__name__)
 
@@ -119,6 +119,7 @@ def _converter_tabular(
     chunksize: int,
     bad_mode: str,
     extra_meta: Optional[dict] = None,
+    load_id: Optional[str] = None,
 ) -> Tuple[int, int, int, dict, str]:
     """Retorna (n_linhas, n_colunas, n_bad_lines, column_map, encoding_usado).
 
@@ -158,6 +159,7 @@ def _converter_tabular(
                 bad_mode,
                 extra_meta,
                 encoding_errors,
+                load_id=load_id,
             )
             usado = encoding if encoding_errors == "strict" else f"{encoding}+replace"
             return (*resultado, usado)
@@ -201,6 +203,7 @@ def _converter_tabular_1x(
     bad_mode: str,
     extra_meta: Optional[dict] = None,
     encoding_errors: str = "strict",
+    load_id: Optional[str] = None,
 ) -> Tuple[int, int, int, dict]:
     """Uma passada de conversão com um encoding fixo. Retorna (n_linhas, n_colunas, n_bad,
     map)."""
@@ -255,7 +258,7 @@ def _converter_tabular_1x(
                 n_colunas = len(nomes_finais)
                 # todas as colunas string + colunas de linhagem
                 campos = [pa.field(n, pa.string()) for n in nomes_finais]
-                campos += [pa.field(c, pa.string()) for c in LINEAGE_COLS]
+                campos += [pa.field(c, pa.string()) for c in colunas_de_linhagem(load_id)]
                 meta = {
                     b"source_file": source_file.encode("utf-8"),
                     b"source_hash": source_hash.encode("utf-8"),
@@ -276,6 +279,8 @@ def _converter_tabular_1x(
             chunk["_source_file"] = source_file
             chunk["_ingested_at"] = ingested_at
             chunk["_source_hash"] = source_hash
+            if load_id:
+                chunk["_load_id"] = load_id
             table = pa.Table.from_pandas(chunk, schema=schema, preserve_index=False)
             writer.write_table(table)
             n_linhas += len(chunk)
