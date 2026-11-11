@@ -133,6 +133,26 @@ def test_zip_members_land_masked_below_the_zip(sftp_mod):
     assert result["keys"] == [key] and CPF.encode() not in landed[key]
 
 
+def test_a_missing_folder_is_an_error_and_the_others_go_on(sftp_mod):
+    from lake_utils import md5_arquivo
+
+    sftp = FakeSftp({"/home/fabrica/GEFUS/X.csv": b"A;B\n1;2\n"})
+    real = sftp.list_directory_with_attr
+
+    def listing(folder):
+        if folder == "/home/sumiu":
+            raise FileNotFoundError(2, "No such file")
+        return real(folder)
+
+    sftp.list_directory_with_attr = listing
+    ctl = FakeControl([])
+    folders = ("/home/sumiu", "/home/fabrica/GEFUS")
+    result = sftp_mod.extract(sftp, lambda f, k: None, ctl, LOAD, md5_arquivo, folders=folders)
+    [error] = result["errors"]
+    assert error.startswith("/home/sumiu: pasta inexistente")
+    assert result["keys"] == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/X.csv"]
+
+
 def test_access_lands_one_csv_per_table(sftp_mod, monkeypatch, tmp_path):
     table = tmp_path / "t.csv"
     table.write_text("A\n1\n")

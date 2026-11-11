@@ -21,8 +21,7 @@ from datalake.mascara import ACCESS, EXCEL, TABULAR, export_access, mask_file
 
 FOLDERS = (
     "/home/fabrica/Analise_SNH",
-    "/home/fabrica/GEFUS",
-    "/home/fabrica/CadUnico",
+    "/home/fabrica/GEFUS",  # inclui GEFUS/CadUnico; a antiga /home/fabrica/CadUnico não existe mais
     "/home/caixa.geavo/GEAVO",
 )
 SUPPORTED = TABULAR | EXCEL | ACCESS | {".zip"}
@@ -207,7 +206,12 @@ def extract(
     result = {"keys": [], "errors": [], "unsupported": [], "duplicates": []}
     done = 0
     for folder in folders:
-        for path, size, mtime in walk(sftp, folder):
+        try:  # listing first: a vanished folder must not stop the others
+            files = list(walk(sftp, folder))
+        except OSError as error:
+            result["errors"].append(f"{folder}: pasta inexistente ou sem acesso ({error})")
+            continue
+        for path, size, mtime in files:
             ext = Path(path).suffix.lower()
             if (path, mtime) in seen or ext not in SUPPORTED | UNSUPPORTED:
                 continue
