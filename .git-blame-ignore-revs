@@ -3,3 +3,6 @@
 
 # style: formata o repositório com ruff format e sqlfmt (linha 100)
 e1b9c3dc85be91265da1d65b3c4c66e19b1c2da5
+
+# style: formata o que entrou na main (#285, #291, #292)
+06e75f65c94db55848ac95b27c98c2e1e435ed5f
