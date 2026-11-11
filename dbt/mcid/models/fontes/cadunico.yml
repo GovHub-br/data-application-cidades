@@ -1,0 +1,288 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/cadunico.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: cadunico
+  description: Cortes do Cadastro Único entregues ao MCid.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/cadunico.odcs.yaml
+    owner: CadÚnico (MDS)
+  tables:
+  - name: cadunico_familia
+    description: Corte de famílias do CadÚnico de 12/12/2025, com endereço e dados do entrevistador protegidos
+      antes da staging. Reúne as tabelas atuais cadunico_familia, cadunico_familia_beneficiario, que só
+      diferem pela data.
+    meta:
+      caminho: staging/**/ARQ_FAMILIA_PBF_*_SB8.parquet
+      file_pattern: ARQ_FAMILIA_PBF_\d{8}_SB8\.TXT
+      load_type: full
+      dag: minio_transform_dag
+    columns:
+    - name: cd_ibge_cadastro
+    - name: co_familiar_fam
+    - name: marc_pbf
+    - name: dt_cadastro_fam
+    - name: dt_atualizacao_fam
+    - name: co_est_cadastral_fam
+    - name: vl_renda_media_fam
+    - name: co_modalidade_oper_fam
+    - name: co_forma_coleta_fam
+    - name: no_localidade_fam
+    - name: no_tip_logradouro_fam
+      meta:
+        classification: restricted
+    - name: no_tit_logradouro_fam
+      meta:
+        classification: restricted
+    - name: no_logradouro_fam
+      meta:
+        classification: restricted
+    - name: nu_logradouro_fam
+      meta:
+        classification: restricted
+    - name: ds_complemento_fam
+      meta:
+        classification: restricted
+    - name: ds_complemento_adic_fam
+      meta:
+        classification: restricted
+    - name: nu_cep_logradouro_fam
+      meta:
+        classification: restricted
+    - name: co_unidade_territorial_fam
+    - name: no_unidade_territorial_fam
+    - name: ds_referencia_local_fam
+      meta:
+        classification: restricted
+    - name: no_entrevistador_fam
+      meta:
+        classification: restricted
+    - name: nu_cpf_entrevistador_fam
+      meta:
+        classification: restricted
+    - name: ds_obs_entrevistador_fam
+      meta:
+        classification: restricted
+    - name: in_fam_alterada_v7
+    - name: co_local_domic_fam
+    - name: co_especie_domic_fam
+    - name: qt_comodos_domic_fam
+    - name: qt_comodos_dormitorio_fam
+    - name: co_material_piso_fam
+    - name: co_material_domic_fam
+    - name: co_agua_canalizada_fam
+    - name: co_abaste_agua_domic_fam
+    - name: co_banheiro_domic_fam
+    - name: co_escoa_sanitario_domic_fam
+    - name: co_destino_lixo_domic_fam
+    - name: co_iluminacao_domic_fam
+    - name: co_calcamento_domic_fam
+    - name: in_familia_indigena_fam
+    - name: co_povo_indigena_fam
+    - name: no_povo_indigena_fam
+    - name: co_indigena_reside_fam
+    - name: co_reserva_indigena_fam
+    - name: no_reserva_indigena_fam
+    - name: in_familia_quilombola_fam
+    - name: co_comunidade_quilombola_fam
+    - name: no_comunidade_quilombola_fam
+    - name: qt_pessoas_domic_fam
+    - name: qt_familias_domic_fam
+    - name: qt_pessoa_inter_0_17_anos_fam
+    - name: qt_pessoa_inter_18_59_anos_fam
+    - name: qt_pessoa_inter_60_anos_fam
+    - name: vl_desp_energia_fam
+    - name: vl_desp_agua_esgoto_fam
+    - name: vl_desp_gas_fam
+    - name: vl_desp_alimentacao_fam
+    - name: vl_desp_transpor_fam
+    - name: vl_desp_aluguel_fam
+    - name: vl_desp_medicamentos_fam
+    - name: no_estab_assist_saude_fam
+    - name: nu_estbo_saude
+    - name: no_centro_assist_fam
+    - name: co_centro_assist_fam
+    - name: in_parc_mds_fam
+    - name: vl_renda_total_fam
+    - name: qt_membro_familia
+    - name: co_cta_energ_unid_consum_fam
+    - name: ds_marc_bpc
+  - name: cadunico_pessoa
+    description: Corte de pessoas do CadÚnico de 12/12/2025, com CPF/NIS em HMAC e identificadores diretos
+      redigidos antes da staging.
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_*_SB8.parquet
+      file_pattern: ARQ_PESSOA_PBF_\d{8}_SB8\.TXT
+      load_type: full
+      dag: minio_transform_dag
+    columns:
+    - name: cd_ibge_cadastro
+    - name: co_familiar_fam
+    - name: marc_pbf
+    - name: co_chv_natural_pessoa
+    - name: dt_cadastramento_memb
+    - name: co_est_cadastral_memb
+    - name: in_trabalho_infantil_pessoa
+    - name: no_pessoa
+      meta:
+        classification: restricted
+    - name: nu_nis_pessoa
+      meta:
+        classification: restricted
+    - name: no_apelido_pessoa
+      meta:
+        classification: restricted
+    - name: co_sexo_pessoa
+    - name: dt_nasc_pessoa
+      meta:
+        classification: restricted
+    - name: co_parentesco_rf_pessoa
+    - name: co_raca_cor_pessoa
+      meta:
+        classification: restricted
+    - name: no_completo_mae_pessoa
+      meta:
+        classification: restricted
+    - name: no_completo_pai_pessoa
+      meta:
+        classification: restricted
+    - name: co_local_nascimento_pessoa
+      meta:
+        classification: restricted
+    - name: sg_uf_munic_nasc_pessoa
+    - name: no_ibge_munic_nasc_pessoa
+    - name: co_ibge_munic_nasc_pessoa
+    - name: no_pais_origem_pessoa
+    - name: co_pais_origem_pessoa
+    - name: co_certidao_registrada_pessoa
+    - name: co_certidao_civil_pessoa
+    - name: no_cartorio_pessoa
+    - name: co_livro_certidao
+      meta:
+        classification: restricted
+    - name: co_folha_certidao
+      meta:
+        classification: restricted
+    - name: co_matricula_certidao
+      meta:
+        classification: restricted
+    - name: dt_emissao_certidao
+    - name: sg_uf_certidao
+    - name: nu_cpf_pessoa
+      meta:
+        classification: restricted
+    - name: nu_identidade_pessoa
+      meta:
+        classification: restricted
+    - name: co_complemento_pessoa
+      meta:
+        classification: restricted
+    - name: dt_emissao_ident_pessoa
+    - name: sg_uf_ident_pessoa
+    - name: sg_orgao_emissor_pessoa
+    - name: nu_cart_trab_prev_soc_pessoa
+      meta:
+        classification: restricted
+    - name: nu_serie_trab_prev_soc_pessoa
+      meta:
+        classification: restricted
+    - name: dt_emissao_cart_trab_pessoa
+    - name: sg_uf_cart_trab_pessoa
+    - name: nu_titulo_eleitor_pessoa
+      meta:
+        classification: restricted
+    - name: nu_zona_tit_eleitor_pessoa
+    - name: nu_secao_tit_eleitor_pessoa
+    - name: co_deficiencia_memb
+      meta:
+        classification: restricted
+    - name: in_def_cegueira_memb
+    - name: in_def_baixa_visao_memb
+    - name: in_def_surdez_profunda_memb
+    - name: in_def_surdez_leve_memb
+    - name: in_def_fisica_memb
+    - name: in_def_mental_memb
+    - name: in_def_sindrome_down_memb
+    - name: in_def_transtorno_mental_memb
+    - name: in_ajuda_nao_memb
+    - name: in_ajuda_familia_memb
+    - name: in_ajuda_especializada_memb
+    - name: in_ajuda_vizinho_memb
+    - name: in_ajuda_instituicao_memb
+    - name: in_ajuda_outra_memb
+    - name: co_sabe_ler_escrever_memb
+    - name: in_frequenta_escola_memb
+    - name: no_escola_memb
+    - name: co_escola_local_memb
+    - name: sg_uf_escola_memb
+    - name: no_munic_escola_memb
+    - name: co_ibge_munic_escola_memb
+    - name: co_censo_inep_memb
+    - name: co_curso_frequenta_memb
+    - name: co_ano_serie_frequenta_memb
+    - name: co_curso_freq_pessoa_memb
+    - name: co_ano_serie_frequentou_memb
+    - name: co_concluiu_frequentou_memb
+    - name: co_trabalhou_semana_memb
+    - name: co_afastado_trab_memb
+    - name: co_agricultura_trab_memb
+    - name: co_principal_trab_memb
+    - name: fx_renda_individual_805
+    - name: co_trabalho_12_meses_memb
+    - name: qt_meses_12_meses_memb
+    - name: fx_renda_individual_808
+    - name: fx_renda_individual_809_1
+    - name: fx_renda_individual_809_2
+    - name: fx_renda_individual_809_3
+    - name: fx_renda_individual_809_4
+    - name: fx_renda_individual_809_5
+    - name: in_dormir_rua_memb
+    - name: qt_dormir_freq_rua_memb
+    - name: in_dormir_albergue_memb
+    - name: qt_dormir_freq_albergue_memb
+    - name: in_dormir_dom_part_memb
+    - name: qt_dormir_freq_dom_part_memb
+    - name: in_dormir_outro_memb
+    - name: qt_dormir_freq_outro_memb
+    - name: co_tempo_rua_memb
+    - name: in_motivo_perda_memb
+    - name: in_motivo_ameaca_memb
+    - name: in_motivo_probs_fam_memb
+    - name: in_motivo_alcool_memb
+    - name: in_motivo_desemprego_memb
+    - name: in_motivo_trabalho_memb
+    - name: in_motivo_saude_memb
+    - name: in_motivo_pref_memb
+    - name: in_motivo_outro_memb
+    - name: in_motivo_nao_sabe_memb
+    - name: in_motivo_nao_resp_memb
+    - name: co_tempo_cidade_memb
+    - name: co_vive_fam_rua_memb
+    - name: co_contato_parente_memb
+    - name: in_ativ_com_escola_memb
+    - name: in_ativ_com_associacao_memb
+    - name: in_ativ_com_coop_memb
+    - name: in_ativ_mov_soc_memb
+    - name: in_ativ_nao_sabe_memb
+    - name: in_ativ_nao_resp_memb
+    - name: in_atend_cras_memb
+    - name: in_atend_creas_memb
+    - name: in_atend_centro_ref_rua_memb
+    - name: in_atend_inst_gov_memb
+    - name: in_atend_inst_nao_gov_memb
+    - name: in_atend_hospital_geral_memb
+    - name: in_atend_nenhum_memb
+    - name: co_cart_assinada_memb
+    - name: in_dinh_const_memb
+    - name: in_dinh_flanelhinha_memb
+    - name: in_dinh_carregador_memb
+    - name: in_dinh_catador_memb
+    - name: in_dinh_servs_gerais_memb
+    - name: in_dinh_pede_memb
+    - name: in_dinh_vendas_memb
+    - name: in_dinh_outro_memb
+    - name: in_dinh_nao_resp_memb
+    - name: ds_marc_bpc

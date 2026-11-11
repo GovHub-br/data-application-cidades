@@ -1,0 +1,221 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sftp_canal_fgts
+name: Canal FGTS
+version: 0.1.0
+status: draft
+description:
+  purpose: Tabelas do Canal FGTS (AO1) e orçamentos.
+team:
+- username: CAIXA · Canal FGTS
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: contratos_fgts
+  physicalName: contratos_fgts
+  description: Contratos do canal FGTS, incluindo Pró-Moradia pelo código de linha 26.
+  customProperties:
+  - property: path
+    value: staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet
+  - property: file_pattern
+    value: fgts_canal_tab_ao_1_contratos_fgts\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - contratos_fgts
+  properties:
+  - name: cod_empreendimento
+    logicalType: string
+  - name: cod_contrato
+    logicalType: string
+  - name: cod_contrato_dv
+    logicalType: string
+  - name: vlr_contratado
+    logicalType: string
+  - name: vlr_investimento
+    logicalType: string
+  - name: dte_assinatura
+    logicalType: string
+  - name: dte_orcamento_ano
+    logicalType: string
+  - name: cod_area
+    logicalType: string
+  - name: cod_linha
+    logicalType: string
+  - name: cod_modalidade
+    logicalType: string
+  - name: cod_tomador
+    logicalType: string
+  - name: cod_af
+    logicalType: string
+  - name: cod_uor
+    logicalType: string
+  - name: cod_situacao_contrato
+    logicalType: string
+  - name: cod_clasificacao
+    logicalType: string
+  - name: cod_pac
+    logicalType: string
+  - name: cod_operacao_agente_financeiro
+    logicalType: string
+  - name: cod_operacao_agente_financeiro_dv
+    logicalType: string
+  - name: txt_rsgov
+    logicalType: string
+  - name: cod_objetivo
+    logicalType: string
+  - name: cod_ident_externo
+    logicalType: string
+  - name: txt_eixo
+    logicalType: string
+  - name: uf
+    logicalType: string
+  - name: arquivo_de_origem
+    logicalType: string
+  - name: criado_em
+    logicalType: string
+- name: empreendimentos_fgts
+  physicalName: empreendimentos_fgts
+  description: Cadastro dos empreendimentos vinculados aos contratos FGTS.
+  customProperties:
+  - property: path
+    value: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet
+  - property: file_pattern
+    value: fgts_canal_tab_ao_1_tab_empreendimentos\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - empreendimentos_fgts
+  properties:
+  - name: cod_empreendimento
+    logicalType: string
+  - name: txt_nome_empreendimento
+    logicalType: string
+  - name: txt_localidade
+    logicalType: string
+  - name: txt_logradouro
+    logicalType: string
+    classification: restricted
+  - name: cod_municipio
+    logicalType: string
+  - name: txt_projeto
+    logicalType: string
+  - name: qtd_unidades_financiadas
+    logicalType: string
+  - name: txt_objeto
+    logicalType: string
+  - name: qtd_populacao_beneficiada
+    logicalType: string
+  - name: qtd_empregos_gerados
+    logicalType: string
+  - name: qtd_unidades_financiadas_cca
+    logicalType: string
+  - name: arquivo_de_origem
+    logicalType: string
+  - name: criado_em
+    logicalType: string
+- name: posicoes_empreendimentos_fgts
+  physicalName: posicoes_empreendimentos_fgts
+  description: Evolução física e datas dos empreendimentos FGTS.
+  customProperties:
+  - property: path
+    value: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.parquet
+  - property: file_pattern
+    value: fgts_canal_tab_ao_1_tab_empreendimentos_posicoes\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - posicoes_empreendimentos_fgts
+  properties:
+  - name: cod_empreendimento
+    logicalType: string
+  - name: dte_ano_mes
+    logicalType: string
+  - name: prc_obra_executada_ult
+    logicalType: string
+  - name: dt_inicio
+    logicalType: string
+  - name: dt_termino
+    logicalType: string
+  - name: dt_inauguracao
+    logicalType: string
+  - name: arquivo_de_origem
+    logicalType: string
+  - name: criado_em
+    logicalType: string
+- name: dominio_linha_fgts
+  physicalName: dominio_linha_fgts
+  description: Domínio de códigos e nomes das linhas do canal FGTS.
+  customProperties:
+  - property: path
+    value: staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet
+  - property: file_pattern
+    value: fgts_canal_tdom_ao_1_linha\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - dominio_linha_fgts
+  properties:
+  - name: codigo
+    logicalType: string
+  - name: linha
+    logicalType: string
+  - name: arquivo_de_origem
+    logicalType: string
+  - name: criado_em
+    logicalType: string
+- name: orcamento_fgts
+  physicalName: orcamento_fgts
+  description: Orçamento final do FGTS por programa e agrupamento territorial em 2021. Reúne as tabelas
+    atuais orcamento_fgts_2021, orcamento_fgts_2022, orcamento_fgts_2023, orcamento_fgts_2024, que só
+    diferem pela data.
+  customProperties:
+  - property: path
+    value: staging/sharepoint/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet
+  - property: file_pattern
+    value: tpc_\d{4}_fgts_canal_tab_dbo_pc_\d{4}_\d{2}_orcamento_final\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - orcamento_fgts_2021
+    - orcamento_fgts_2022
+    - orcamento_fgts_2023
+    - orcamento_fgts_2024
+  properties:
+  - name: ano_dotacao
+    logicalType: string
+  - name: programa
+    logicalType: string
+  - name: uf_codigo
+    logicalType: string
+  - name: orcamento_original
+    logicalType: string
+  - name: orcamento_final
+    logicalType: string
+  - name: orcamento_alocado
+    logicalType: string
+  - name: arquivo_de_origem
+    logicalType: string
+  - name: criado_em
+    logicalType: string
+  - name: agrupamento
+    logicalType: string

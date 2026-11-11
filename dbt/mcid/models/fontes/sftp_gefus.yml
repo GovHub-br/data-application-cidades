@@ -1,0 +1,418 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp_gefus.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sftp_gefus
+  description: Remessas da CAIXA (GEFUS) no SFTP do MCid.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/sftp_gefus.odcs.yaml
+    owner: CAIXA · GEFUS
+  tables:
+  - name: far_contratos_pf_bb
+    description: 'INT021: carteira de contratos PF do FAR operados pelo Banco do Brasil. Retrato completo
+      por remessa; a bronze lê só a mais recente.'
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/INT021_MinisterioCidades_FAR_BB_PF_*.parquet
+      file_pattern: INT021_MinisterioCidades_FAR_BB_PF_\d{8}_CONTINGENCIA\.TXT
+      load_type: full
+      dag: minio_transform_dag
+    columns:
+    - name: dt_movimento
+    - name: nu_apf
+    - name: nu_contrato
+    - name: no_mutuario
+      meta:
+        classification: restricted
+    - name: nu_cpf_cgc_mutuario
+      meta:
+        classification: restricted
+    - name: dt_assinatura
+    - name: co_produto_siico
+    - name: vr_encargo_total_atraso
+    - name: qt_dias_atraso
+    - name: pz_amortizacao
+    - name: nu_prestacao
+    - name: pz_remanescente
+    - name: sg_tipo_logradouro_imovel
+      meta:
+        classification: restricted
+    - name: no_logradouro_imovel
+      meta:
+        classification: restricted
+    - name: nu_imovel
+    - name: no_complemento_imovel
+      meta:
+        classification: restricted
+    - name: no_bairro_imovel
+      meta:
+        classification: restricted
+    - name: no_municipio_imovel
+    - name: sg_uf_imovel
+    - name: co_cep_imovel
+      meta:
+        classification: restricted
+    - name: vr_renda_familiar_comprovada
+    - name: vr_garantia_inicial
+    - name: vr_subsidio_na_concesssao
+    - name: dt_nascimento
+      meta:
+        classification: restricted
+    - name: co_sexo
+    - name: qt_coobrigados
+    - name: de_estado_civil
+    - name: dsc_tipo_contrato
+    - name: dt_termino_contrato
+    - name: dsc_situacao_ctr
+    - name: sem_registro
+    - name: nu_empreendimento
+    - name: vr_parcela_mensal_beneficiario
+    - name: cod_municipio_ibge
+    - name: origem
+    - name: co_agente_financeiro
+  - name: far_contratos_pf_caixa
+    description: 'INT039: carteira de contratos PF do FAR operados pela CAIXA, de 2009 em diante. Retrato
+      completo por remessa; a bronze lê só a mais recente.'
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/INT039_MinisterioCidades_FAR_CAIXA_PF_*.parquet
+      file_pattern: INT039_MinisterioCidades_FAR_CAIXA_PF_\d{8}_CONTINGENCIA\.TXT
+      load_type: full
+      dag: minio_transform_dag
+    columns:
+    - name: dt_movimento
+    - name: nu_apf
+    - name: nu_contrato
+    - name: no_mutuario
+      meta:
+        classification: restricted
+    - name: nu_cpf_cgc_mutuario
+      meta:
+        classification: restricted
+    - name: dt_assinatura
+    - name: co_produto_siico
+    - name: vr_encargo_total_atraso
+    - name: qt_dias_atraso
+    - name: pz_amortizacao
+    - name: pz_decorrido
+    - name: pz_remanescente
+    - name: sg_tipo_logradouro_imovel
+      meta:
+        classification: restricted
+    - name: no_logradouro_imovel
+      meta:
+        classification: restricted
+    - name: nu_imovel
+    - name: no_complemento_imovel
+      meta:
+        classification: restricted
+    - name: no_bairro_imovel
+      meta:
+        classification: restricted
+    - name: no_municipio_imovel
+    - name: sg_uf_imovel
+    - name: co_cep_imovel
+      meta:
+        classification: restricted
+    - name: vr_renda_familiar_comprovada
+    - name: vr_garantia_inicial
+    - name: vr_subsidio_na_concesssao
+    - name: dt_nascimento
+      meta:
+        classification: restricted
+    - name: co_sexo
+    - name: qt_coobrigados
+    - name: de_estado_civil
+    - name: dsc_tipo_contrato
+    - name: dt_termino_contrato
+    - name: dsc_situacao_ctr
+    - name: sem_registro
+    - name: qt_prestacoes_atraso
+    - name: vr_saldo_devedor_atual
+    - name: vr_prestacao
+    - name: co_municipio_ibge_completo
+    - name: origem
+    - name: co_agente_financeiro
+  - name: far_contratos_pf_novo
+    description: 'MONT_CONT_PF_FAR: monitoramento dos contratos das famílias do Novo MCMV FAR (layout
+      015). Cada remessa é retrato completo da carteira; a bronze lê só a mais recente. O dicionário vem
+      no MONT_CONT_PF_FAR_LAYOUT.'
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/MONT_CONT_PF_FAR_2*.parquet
+      file_pattern: MONT_CONT_PF_FAR_\d{8}\.csv
+      load_type: full
+      dag: minio_transform_dag
+    columns:
+    - name: co_tipo_registro
+    - name: dh_movimento
+    - name: nu_apf
+    - name: nu_uh
+    - name: co_municipio_ibge
+    - name: no_logradouro
+      meta:
+        classification: restricted
+    - name: co_cep
+      meta:
+        classification: restricted
+    - name: sg_uf
+    - name: no_municipio
+    - name: no_beneficiario
+      meta:
+        classification: restricted
+    - name: no_genero
+    - name: dt_nascimento
+      meta:
+        classification: restricted
+    - name: no_estado_civil
+    - name: nu_cpf_beneficiario
+      meta:
+        classification: restricted
+    - name: nu_nis
+      meta:
+        classification: restricted
+    - name: no_benef_coob
+    - name: no_est_civil_coob
+    - name: nu_cpf_benef_coob
+      meta:
+        classification: restricted
+    - name: co_gen_benef_coob
+    - name: dt_nasc_coob
+      meta:
+        classification: restricted
+    - name: ic_benef_idoso
+    - name: ic_benef_coob_idoso
+    - name: ic_memb_fam_idoso
+    - name: ic_benef_sit_rua
+    - name: ic_benef_pcd
+      meta:
+        classification: restricted
+    - name: ic_benef_coob_pcd
+      meta:
+        classification: restricted
+    - name: ic_memb_fam_pcd
+      meta:
+        classification: restricted
+    - name: pc_renda_benef_principal
+    - name: pc_renda_benef_coob
+    - name: vr_renda_tit_cont
+    - name: vr_renda_coob
+    - name: vr_renda_comprovada
+    - name: qt_memb_familia
+    - name: ic_mulher_titular
+    - name: co_demanda_beneficiario
+    - name: co_tipo_instrum_contratual
+    - name: co_situacao_contrato
+    - name: nu_contrato
+    - name: dt_assinatura_contrato
+    - name: dt_registro_contrato
+    - name: nu_registro_contrato
+    - name: vr_emolum_contrato
+    - name: ic_contrato_inadimp
+    - name: dt_liquidacao
+    - name: ic_divida_prescrita
+    - name: ic_acao_judicial
+    - name: dt_prescricao_contrato
+    - name: vr_divida_prescrita
+    - name: dt_vigencia_contrato
+    - name: pz_decorrido
+    - name: pz_reman_financ
+    - name: pz_amortiz_financ
+    - name: vr_amortiz_recurso_fgts
+    - name: vr_total_amortizado
+    - name: ic_sinistro_mip
+    - name: dt_sinistro_mip
+    - name: ic_liquidacao_mip
+    - name: vr_sinistro_mip
+    - name: ic_sinistro_dfi
+    - name: dt_sinistro_dfi
+    - name: co_sinistro_dfi
+    - name: qt_sinistro_dfi
+    - name: ic_liquidacao_dfi
+    - name: vr_sinistro_dfi
+    - name: vr_garantia
+    - name: vr_imovel
+    - name: vr_financiamento
+    - name: pc_taxa
+    - name: vr_subsidio_far
+    - name: vr_prestacao_com_subvencao
+    - name: qt_total_prestacao_paga
+    - name: qt_prestacoes_atrasadas
+    - name: qt_dias_atraso
+    - name: vr_prestacao
+    - name: vr_prestacao_paga
+    - name: vr_subsidio_mensal_far
+    - name: vr_quitacao_subsidio
+    - name: vr_prestacao_atrasada
+    - name: vr_prestacao_atrasada_juros
+    - name: vr_atual_saldo_devedor
+    - name: vr_juros_prest_atrasada
+    - name: dt_reajuste_prestacao
+    - name: dt_primeira_prestacao
+    - name: dt_primeira_prest_atraso
+    - name: dt_ultima_prestacao
+    - name: dt_ultima_prest_paga
+    - name: ic_convenio_prest_pag_integral
+    - name: ic_convenio_prest_pag_parcial
+    - name: ic_convenio_prest_inadimplencia
+    - name: vr_convenio_integral
+    - name: vr_convenio_parcial
+    - name: vr_convenio_inad
+    - name: pc_correcao_saldo_devedor
+    - name: vr_prestacoes_a_vencer
+    - name: vr_saldo_devedor_sem_subvencao
+    - name: vr_saldo_devedor_com_subvencao
+    - name: vr_liquidado_adjudicacao
+    - name: co_descump_contratual
+    - name: ic_imovel_retomado
+    - name: dt_retomada_imovel
+    - name: vr_imovel_retomado
+    - name: vr_despesas_adjudicacao
+    - name: vr_resultado_adjudicacao
+  - name: gefus_fundo_social
+    description: Registros operacionais do Fundo Social destinados à agregação de indicadores habitacionais.
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet
+      file_pattern: PMCMV_FAIXA3_MCID_\d{4}_\d{2}_\d{2}\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: dt_referencia
+    - name: dt_remessa
+    - name: nu_contrato_repasse
+    - name: nu_contrato_passivo
+    - name: nu_contrato
+    - name: no_mutuario
+      meta:
+        classification: restricted
+    - name: dt_nascimento_mutuario
+      meta:
+        classification: restricted
+    - name: sg_sexo
+    - name: nu_cpf_cnpj_mutuario
+      meta:
+        classification: restricted
+    - name: nu_pis
+      meta:
+        classification: restricted
+    - name: vr_renda_familiar_comprovada
+    - name: pc_renda_informal
+    - name: ed_bairro_imovel_garantia
+      meta:
+        classification: restricted
+    - name: sg_uf_imovel
+    - name: no_municipio_imovel
+    - name: ed_cep_imovel_garantia
+      meta:
+        classification: restricted
+    - name: linha_apf
+    - name: modalidade
+    - name: dt_evento
+    - name: ano_orcamento
+    - name: vr_avaliacao_terreno
+    - name: vr_evento
+    - name: vr_desconto_resolucao_460
+    - name: vr_recurso_proprio
+    - name: vr_fgts_utilizado
+    - name: tipo_desemblso
+    - name: pc_taxa_juros_nominal_inicial
+    - name: nu_tipo_garantia
+    - name: vr_garantia
+    - name: situacao_garantia
+    - name: pz_financiamento
+    - name: no_sistema_amortizacao
+    - name: vr_prestacao_inicial
+    - name: vr_pagamento_amortizacao
+    - name: vr_pagamento_juros
+    - name: nu_unidade_operacional
+    - name: nu_codigo_atu
+    - name: nu_produto
+    - name: tipo_imovel
+    - name: faixa_renda
+    - name: ic_cotista
+    - name: nu_legislacao
+    - name: vr_investimento
+    - name: co_municipio_ibge
+    - name: co_classificacao_imovel
+    - name: nu_area_imovel
+  - name: reforma_contratos
+    description: Snapshots completos de contratos do Reforma Casa Brasil recebidos pelo SFTP/GEFUS. A
+      Bronze seleciona somente o arquivo mais recente.
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
+      file_pattern: PMCMV_REFORMAS_MCID_\d{4}_\d{2}_\d{2}\.csv
+      load_type: full
+      dag: minio_transform_dag
+    columns:
+    - name: dt_referencia
+    - name: dt_remessa
+    - name: nu_contrato_repasse
+    - name: nu_contrato_passivo
+    - name: nu_contrato
+    - name: no_mutuario
+      meta:
+        classification: restricted
+    - name: dt_nascimento_mutuario
+      meta:
+        classification: restricted
+    - name: sg_sexo
+    - name: nu_cpf_cnpj_mutuario
+      meta:
+        classification: restricted
+    - name: nu_pis
+      meta:
+        classification: restricted
+    - name: vr_renda_familiar_comprovada
+    - name: pc_renda_informal
+    - name: no_endrco_crspndca
+    - name: no_bairro_crspndca
+      meta:
+        classification: restricted
+    - name: ed_bairro_imovel_garantia
+      meta:
+        classification: restricted
+    - name: sg_uf_imovel
+    - name: no_municipio_imovel
+    - name: ed_cep_imovel_garantia
+      meta:
+        classification: restricted
+    - name: linha_apf
+    - name: modalidade
+    - name: dt_evento
+    - name: ano_orcamento
+    - name: vr_avaliacao_terreno
+    - name: vr_evento
+    - name: vr_desconto_resolucao_460
+    - name: vr_recurso_proprio
+    - name: vr_fgts_utilizado
+    - name: tipo_desembolso
+    - name: pc_taxa_juros_nominal_inicial
+    - name: nu_tipo_garantia
+    - name: vr_garantia
+    - name: situacao_garantia
+    - name: pz_financiamento
+    - name: no_sistema_amortizacao
+    - name: nu_dias_atraso
+    - name: vr_prestacao_inicial
+    - name: vr_pagamento_amortizacao
+    - name: vr_pagamento_juros
+    - name: nu_unidade_operacional
+    - name: nu_codigo_atu
+    - name: nu_produto
+    - name: tipo_imovel
+    - name: faixa_renda
+    - name: ic_cotista
+    - name: nu_legislacao
+    - name: vr_investimento
+    - name: co_municipio_ibge
+    - name: co_classificacao_imovel
+    - name: nu_area_imovel
+    - name: cep_imovel
+      meta:
+        classification: restricted
+    - name: co_municipio_ibge_completo
+    - name: nu_ddd
+    - name: nu_celular
+    - name: de_melhoria_1
+    - name: de_melhoria_2
+    - name: de_melhoria_3

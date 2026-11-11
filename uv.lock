@@ -1421,6 +1421,7 @@ default-groups = ["dev", "runtime", "test"]
 
 [package.dev-dependencies]
 dev = [
+    { name = "datacontract-cli" },
     { name = "great-expectations" },
     { name = "pre-commit" },
     { name = "ruamel-yaml" },
@@ -1463,6 +1464,7 @@ test = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "datacontract-cli", specifier = ">=1.2,<2" },
     { name = "great-expectations", specifier = ">=1.21,<2.0" },
     { name = "pre-commit" },
     { name = "ruamel-yaml", specifier = ">=0.18,<0.20" },
@@ -1499,6 +1501,51 @@ test = [
     { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-cov" },
+]
+
+[[package]]
+name = "datacontract-cli"
+version = "1.2.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "boto3" },
+    { name = "click" },
+    { name = "datacontract-specification" },
+    { name = "deepdiff" },
+    { name = "fastjsonschema" },
+    { name = "jinja-partials" },
+    { name = "jinja2" },
+    { name = "jsonschema" },
+    { name = "open-data-contract-standard" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "python-multipart" },
+    { name = "pytz" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "rich" },
+    { name = "ruamel-yaml" },
+    { name = "sqlglot" },
+    { name = "truststore" },
+    { name = "typer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3e/7a/2e3d457860b96c26820997581fd669edef820e047d68b6fcf0519bab1404/datacontract_cli-1.2.9.tar.gz", hash = "sha256:1f68665d26156b9abc8001468d08416f36314b9ed074c54350b932116a871d81", size = 3601076, upload-time = "2026-10-30T10:50:57.489Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/33/88/1a3f78865a3f75f9f722fe6ae47543139d1558a81a2ee70e2ae7e56ddf2d/datacontract_cli-1.2.9-py3-none-any.whl", hash = "sha256:5a0b35fb0a93068f0a59808762dd5ea7a3d9ca871216b15c3a91c79fc9d02f03", size = 3335430, upload-time = "2026-10-30T10:50:55.141Z" },
+]
+
+[[package]]
+name = "datacontract-specification"
+version = "1.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d3/a5/3ee2bc8671b08e0c350091308386d2171bb03f8255647466ddcfab8717ca/datacontract_specification-1.2.3.tar.gz", hash = "sha256:5fc612255667581321b480e3f646c76ece618632a4aca4cd6ea5f647d98cbb61", size = 16162, upload-time = "2025-09-25T14:25:49.494Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/67/0e/ec63c117fbdb5ecfd6625e7527a267b85eaf26b4227e94a144509859a3dd/datacontract_specification-1.2.3-py3-none-any.whl", hash = "sha256:3d5a998a33be33ca95a20e3681a693b4d720baf0b956ff8970f3e85a77d6f35a", size = 15231, upload-time = "2025-09-25T14:25:48.107Z" },
 ]
 
 [[package]]
@@ -1827,6 +1874,15 @@ wheels = [
 [package.optional-dependencies]
 standard-no-fastapi-cloud-cli = [
     { name = "uvicorn", extra = ["standard"] },
+]
+
+[[package]]
+name = "fastjsonschema"
+version = "2.22.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1c/80/cc3c531dd70c8ffa1045aecf33c97c5581cc8fd0e824b3ecb2c1881550c1/fastjsonschema-2.22.3.tar.gz", hash = "sha256:8330c91b027dcf941efcb7b1f0998515ff95d177ea15bbabdfe8671965620901", size = 388854, upload-time = "2026-11-01T21:11:34.389Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/0d/6caab33488dc9d26440c24221fa610c7c8b83c30715ab45d31f0e004308e/fastjsonschema-2.22.3-py3-none-any.whl", hash = "sha256:f670b443830b75aca3f00b75949efa20f4b2a80302ec7a21505c28dd54cffd43", size = 28442, upload-time = "2026-11-01T21:11:29.306Z" },
 ]
 
 [[package]]
@@ -2319,6 +2375,18 @@ wheels = [
 ]
 
 [[package]]
+name = "jinja-partials"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9c/25/6e1e3c5adba645fb715168918101b2ef067708febaa4eb343eab31ebf82d/jinja_partials-0.4.0.tar.gz", hash = "sha256:5e85542741c445bf1320090d05d9e47dc9061deeb63a3fe2bc06e66690be9cbb", size = 2995817, upload-time = "2026-11-07T04:03:18.302Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/4e/9a1a42378bba65f348d2038db010967880c2f0888aa1d278247e12898440/jinja_partials-0.4.0-py3-none-any.whl", hash = "sha256:035786aed17d7e6bdcd02b5e81917999ea29d4dc0f4d4b65d44368e1ff0cb331", size = 13667, upload-time = "2026-11-07T04:03:16.546Z" },
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2797,6 +2865,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/0b/5f/19930f824ffeb0ad4372da4812c50edbd1434f678c90c2733e1188edfc63/oauthlib-3.3.1.tar.gz", hash = "sha256:0f0f8aa759826a193cf66c12ea1af1637f87b9b4622d46e866952bb022e538c9", size = 185918, upload-time = "2025-06-19T22:48:08.269Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/9c/92789c596b8df838baa98fa71844d84283302f7604ed565dafe5a6b5041a/oauthlib-3.3.1-py3-none-any.whl", hash = "sha256:88119c938d2b8fb88561af5f6ee0eec8cc8d552b7bb1f712743136eb7523b7a1", size = 160065, upload-time = "2025-06-19T22:48:06.508Z" },
+]
+
+[[package]]
+name = "open-data-contract-standard"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/01/5d/11fcaf438c29e66d3f3eb40fa8e10fb53930f6346bce323624e139e0e301/open_data_contract_standard-3.2.0.tar.gz", hash = "sha256:37589b1e98ea519de51366e0efc2e02dbc87e1da68f07fd9385e49ab5df76763", size = 26890, upload-time = "2026-09-02T14:16:17.219Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/3a/8b7eacd298d76cc4777c9195f43d744a55bfda84060fd1c33fe8431fe6ea/open_data_contract_standard-3.2.0-py3-none-any.whl", hash = "sha256:a7e05dfc52b94a77b54f81a9033dd7a718133cf37bf66f3eb7d0eefd2fd33d4f", size = 20894, upload-time = "2026-09-02T14:16:15.799Z" },
 ]
 
 [[package]]

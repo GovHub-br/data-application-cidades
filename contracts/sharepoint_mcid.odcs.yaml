@@ -1,0 +1,196 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sharepoint_mcid
+name: SharePoint · MCid
+version: 0.1.0
+status: draft
+description:
+  purpose: Planilhas do SharePoint do MCid.
+team:
+- username: MCid · SNH
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: mcmv_cidades_emendas
+  physicalName: mcmv_cidades_emendas
+  description: Operações beneficiadas por aportes do MCMV Cidades.
+  customProperties:
+  - property: path
+    value: staging/sharepoint/novo_mcmv_cidades_emendas.parquet
+  - property: file_pattern
+    value: novo_mcmv_cidades_emendas\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - mcmv_cidades_emendas
+  properties:
+  - name: tomador_codigo
+    logicalType: string
+  - name: tomador_nome
+    logicalType: string
+  - name: pmcmv
+    logicalType: string
+  - name: pf
+    logicalType: string
+  - name: cotista
+    logicalType: string
+  - name: modalidade_codigo
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: tipo_imovel
+    logicalType: string
+  - name: linha
+    logicalType: string
+  - name: programa
+    logicalType: string
+  - name: sub_programa
+    logicalType: string
+  - name: ano_do_orcamento
+    logicalType: string
+  - name: operacao
+    logicalType: string
+  - name: numero_do_contrato
+    logicalType: string
+  - name: data_da_contratacao
+    logicalType: string
+  - name: prazo_em_meses
+    logicalType: string
+  - name: tx_jrs_inicial
+    logicalType: string
+  - name: vlr_do_financiamento_bruto
+    logicalType: string
+  - name: vlr_do_financiamento_liquido
+    logicalType: string
+  - name: vlr_do_recurso_do_fgts
+    logicalType: string
+  - name: vlr_de_garantia_do_imovel
+    logicalType: string
+  - name: vlr_de_compra
+    logicalType: string
+  - name: vlr_da_renda
+    logicalType: string
+  - name: vlr_do_desconto
+    logicalType: string
+  - name: tx_administracao
+    logicalType: string
+  - name: dif_de_juros
+    logicalType: string
+  - name: vlr_desconto_complemento
+    logicalType: string
+    classification: restricted
+  - name: vlr_desconto_equilibrio
+    logicalType: string
+  - name: vlr_do_desconto_ogu
+    logicalType: string
+  - name: tx_administracao_ogu
+    logicalType: string
+  - name: dif_de_juros_ogu
+    logicalType: string
+  - name: vlr_desconto_complemento_ogu
+    logicalType: string
+    classification: restricted
+  - name: vlr_desconto_equilibrio_ogu
+    logicalType: string
+  - name: vlr_capital_proprio
+    logicalType: string
+  - name: regiao_nome
+    logicalType: string
+  - name: uf_sigla
+    logicalType: string
+  - name: uf_nome
+    logicalType: string
+  - name: municipio_codigo
+    logicalType: string
+  - name: municipio_nome
+    logicalType: string
+  - name: ano_mes_do_orcamento
+    logicalType: string
+  - name: numero_operacao
+    logicalType: string
+  - name: numero_operacao_dv
+    logicalType: string
+  - name: genero
+    logicalType: string
+  - name: cep
+    logicalType: string
+    classification: restricted
+  - name: faixa_renda
+    logicalType: string
+  - name: sistema_codigo
+    logicalType: string
+  - name: tab
+    logicalType: string
+  - name: area_imovel
+    logicalType: string
+  - name: classificacao_imovel
+    logicalType: string
+  - name: tx_passivo
+    logicalType: string
+  - name: programa_codigo
+    logicalType: string
+  - name: linha_de_credito
+    logicalType: string
+  - name: vlr_contrapartida_parceria
+    logicalType: string
+  - name: caracteristica
+    logicalType: string
+  - name: faixa_programa
+    logicalType: string
+  - name: emenda
+    logicalType: string
+  - name: arquivo_de_origem
+    logicalType: string
+  - name: criado_em
+    logicalType: string
+- name: execucao_fundo_social
+  physicalName: execucao_fundo_social
+  description: Dotação e execução da ação 00XF do Fundo Social por unidade gestora.
+  customProperties:
+  - property: path
+    value: staging/sharepoint/orcamento_resultado_fundo_social.parquet
+  - property: file_pattern
+    value: orcamento_resultado_fundo_social\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - execucao_fundo_social
+  properties:
+  - name: acao_governo
+    logicalType: string
+  - name: ug_executora
+    logicalType: string
+  - name: dotacao_inicial
+    logicalType: string
+  - name: dotacao_atualizada
+    logicalType: string
+  - name: credito_disponivel
+    logicalType: string
+  - name: despesas_empenhadas
+    logicalType: string
+  - name: despesas_pagas
+    logicalType: string
+  - name: restos_a_pagar_inscritos_proc_e_n_proc
+    logicalType: string
+  - name: restos_a_pagar_cancelados_proc_e_n_proc
+    logicalType: string
+  - name: restos_a_pagar_pagos_proc_e_n_proc
+    logicalType: string
+  - name: restos_a_pagar_a_pagar_proc_e_n_proc
+    logicalType: string
+  - name: pagamentos_totais_exercicio_rp
+    logicalType: string
+  - name: arquivo_de_origem
+    logicalType: string
+  - name: criado_em
+    logicalType: string
