@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.conftest import fresh_import
+from tests.conftest import TEST_ENV, fresh_import
 
 _SEGREDO = "segredo-de-teste"
 
@@ -601,7 +601,7 @@ def test_log_vai_para_stderr_sem_artefatos_locais():
         f"import sys, logging; sys.path.insert(0, {str(scripts)!r}); "
         "import mascaramento.config; logging.getLogger('x').info('linha de teste')"
     )
-    env = {**os.environ, "LAKE_LOCAL_ARTIFACTS": "0"}
+    env = {**os.environ, **TEST_ENV, "LAKE_LOCAL_ARTIFACTS": "0"}
     saida = subprocess.run(
         [sys.executable, "-c", codigo],
         env=env,
