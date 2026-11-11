@@ -90,6 +90,7 @@ from mascaramento.mdb import _analisar_mdb
 
 # depois do pacote: mascaramento/__init__.py põe plugins/ no sys.path
 from cliente_minio import TRIAGEM_LIBERADA, ClienteMinio
+from datalake.chaves import load_id_of
 
 log = logging.getLogger(__name__)
 
@@ -372,6 +373,8 @@ def run(  # noqa: C901
             continue
         # arquivos de lock/temporários do Excel (~$...) não são planilhas reais
         if os.path.basename(key).startswith("~$"):
+            continue
+        if load_id_of(key):  # carga da ingestão nova: mascarada antes de pousar
             continue
         if max_size_mb and size > max_size_mb * 1024 * 1024:
             continue
