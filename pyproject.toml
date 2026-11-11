@@ -68,6 +68,7 @@ dev = [
     # sugestão do OpenMetadata. Rodam fora da imagem.
     "great-expectations>=1.21,<2.0",
     "ruamel-yaml>=0.18,<0.20",
+    "datacontract-cli>=1.2,<2",
 ]
 
 [tool.uv]
