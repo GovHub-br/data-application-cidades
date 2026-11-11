@@ -592,12 +592,13 @@ def test_dag_mascara_em_processo_proprio():
     assert "check=True" in dag
 
 
-def test_log_vai_para_stderr_sem_artefatos_locais():
-    # o container do Airflow define LAKE_LOCAL_ARTIFACTS=0; o script à parte tem que logar
+def test_log_separa_info_e_aviso_sem_artefatos_locais():
+    # o Airflow rotula pelo canal: stderr vira ERROR, então só aviso e erro vão para lá
     scripts = Path(__file__).parents[1] / "scripts"
     codigo = (
         f"import sys, logging; sys.path.insert(0, {str(scripts)!r}); "
-        "import mascaramento.config; logging.getLogger('x').info('linha de teste')"
+        "import mascaramento.config; l = logging.getLogger('x'); "
+        "l.info('linha info'); l.warning('linha aviso'); l.error('linha erro')"
     )
     env = {**os.environ, **TEST_ENV, "LAKE_LOCAL_ARTIFACTS": "0"}
     saida = subprocess.run(
@@ -609,7 +610,11 @@ def test_log_vai_para_stderr_sem_artefatos_locais():
     )
 
     assert saida.returncode == 0, saida.stderr
-    assert saida.stderr.count("linha de teste") == 1
+    assert saida.stdout.count("linha info") == 1
+    assert "linha aviso" not in saida.stdout and "linha erro" not in saida.stdout
+    assert saida.stderr.count("linha aviso") == 1
+    assert saida.stderr.count("linha erro") == 1
+    assert "linha info" not in saida.stderr
 
 
 def test_mascara_so_varre_os_canais_do_legado(monkeypatch):

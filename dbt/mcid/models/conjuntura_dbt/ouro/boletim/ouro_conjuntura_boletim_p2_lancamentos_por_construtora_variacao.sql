@@ -41,11 +41,15 @@ from
                     (
                         case
                             when
-                                btrim(var_lancamentos_tri_anterior::text, e ' \t\r\n\u00a0')
+                                btrim(
+                                    var_lancamentos_tri_anterior::text,
+                                    ' ' || chr(9) || chr(13) || chr(10) || chr(160)
+                                )
                                 ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
                             then
                                 btrim(
-                                    var_lancamentos_tri_anterior::text, e ' \t\r\n\u00a0'
+                                    var_lancamentos_tri_anterior::text,
+                                    ' ' || chr(9) || chr(13) || chr(10) || chr(160)
                                 )::numeric
                         end
                     ) as var_tri,
@@ -53,12 +57,14 @@ from
                         case
                             when
                                 btrim(
-                                    var_lancamentos_mesmo_tri_ano_anterior::text, e ' \t\r\n\u00a0'
+                                    var_lancamentos_mesmo_tri_ano_anterior::text,
+                                    ' ' || chr(9) || chr(13) || chr(10) || chr(160)
                                 )
                                 ~ '^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
                             then
                                 btrim(
-                                    var_lancamentos_mesmo_tri_ano_anterior::text, e ' \t\r\n\u00a0'
+                                    var_lancamentos_mesmo_tri_ano_anterior::text,
+                                    ' ' || chr(9) || chr(13) || chr(10) || chr(160)
                                 )::numeric
                         end
                     ) as var_ano

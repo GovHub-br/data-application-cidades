@@ -150,6 +150,7 @@ def _indices_compartilhados(zin: zipfile.ZipFile, sheets: List[Tuple[str, set]])
     de_alvo: set = set()
     de_fora: set = set()
     for caminho, alvos in sheets:
+        cabecalho = True
         with zin.open(caminho) as f:
             for _, el in ET.iterparse(f, events=("end",)):
                 if el.tag != f"{_Q}row":
@@ -160,8 +161,10 @@ def _indices_compartilhados(zin: zipfile.ZipFile, sheets: List[Tuple[str, set]])
                     v = c.find(f"{_Q}v")
                     if v is None or v.text is None:
                         continue
-                    destino = de_alvo if _col_de_ref(c.get("r", "")) in alvos else de_fora
-                    destino.add(int(v.text))
+                    # o cabeçalho nunca é mascarado: apagar o nome deixaria a coluna sem nome
+                    alvo = not cabecalho and _col_de_ref(c.get("r", "")) in alvos
+                    (de_alvo if alvo else de_fora).add(int(v.text))
+                cabecalho = False
                 el.clear()
     return de_alvo - de_fora
 
@@ -182,13 +185,36 @@ def _reescrever_shared_strings(fin: IO[bytes], fout: IO[bytes], apagar: set) -> 
     fout.write(b"</sst>")
 
 
-def _transformar_row(bruto: bytes, acoes: Dict[int, str], compart: List[str]) -> Tuple[bytes, bool]:
+_RE_XMLNS = re.compile(rb'xmlns:([A-Za-z_][\w.-]*)="([^"]*)"')
+
+
+def _prefixos_da_raiz(tag: bytes) -> bytes:
+    """Declarações `xmlns:p` do <worksheet>, para o parse de uma <row> isolada.
+
+    O Excel grava `x14ac:dyDescent` em cada <row> e só declara o prefixo na raiz. O
+    registro mantém o prefixo original na saída, em vez de ns0, ns1...
+    """
+    decl = []
+    for prefixo, uri in _RE_XMLNS.findall(tag):
+        try:
+            ET.register_namespace(prefixo.decode(), uri.decode())
+        except ValueError:  # ns0, ns1...: reservados do ElementTree
+            pass
+        decl.append(b'xmlns:%s="%s"' % (prefixo, uri))
+    return b" ".join(decl)
+
+
+def _transformar_row(
+    bruto: bytes, acoes: Dict[int, str], compart: List[str], prefixos: bytes = b""
+) -> Tuple[bytes, bool]:
     """Recebe UMA <row> como bytes, devolve (bytes reescritos, alterou?).
 
-    A row vem sem declaração de namespace (ela mora no default do <worksheet>), então é
-    embrulhada antes do parse e desembrulhada depois.
+    A row vem sem declaração de namespace (ela mora no <worksheet>), então é embrulhada
+    com as declarações da raiz antes do parse e desembrulhada depois.
     """
-    raiz = ET.fromstring(b'<w xmlns="' + _XL_NS.encode() + b'">' + bruto + b"</w>")
+    raiz = ET.fromstring(
+        b'<w xmlns="' + _XL_NS.encode() + b'" ' + prefixos + b">" + bruto + b"</w>"
+    )
     row = raiz[0]
     mudou = _mascarar_linha(row, acoes, compart)
     return ET.tostring(row, encoding="utf-8"), mudou
@@ -217,6 +243,8 @@ class _RecorteSheet:
         self.primeira = True
         self.em_dados = False
         self.terminou = False
+        self.prefixos = b""
+        self.raiz_lida = False
 
     def alimentar(self, bloco: bytes) -> None:
         self.buf += bloco
@@ -246,6 +274,12 @@ class _RecorteSheet:
         return self._passo_dados()
 
     def _passo_prologo(self) -> bool:
+        if not self.raiz_lida:
+            r = self.buf.find(b"<worksheet")
+            fim = self.buf.find(b">", r) if r >= 0 else -1
+            if fim >= 0:
+                self.prefixos = _prefixos_da_raiz(self.buf[r:fim])
+                self.raiz_lida = True
         i = self.buf.find(b"<sheetData")
         if i < 0:
             return self._reter()
@@ -292,7 +326,7 @@ class _RecorteSheet:
             self.fout.write(bruto)
             return True
         self.total += 1
-        saida, mudou = _transformar_row(bruto, self.acoes, self.compart)
+        saida, mudou = _transformar_row(bruto, self.acoes, self.compart, self.prefixos)
         self.alterados += 1 if mudou else 0
         self.fout.write(saida)
         return True

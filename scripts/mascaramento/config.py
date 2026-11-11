@@ -72,11 +72,16 @@ _LOG_FILE = SCRIPTS_DIR / f"mascarar_minio_{datetime.now().strftime('%Y%m%d_%H%M
 _formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
 if not logging.root.handlers:
-    # Standalone: o script gerencia os próprios handlers, stderr sempre e arquivo só com
+    # Standalone: o script gerencia os próprios handlers, terminal sempre e arquivo só com
     # artefatos locais. Importado por quem já configurou o log (o raw_para_staging usa
     # `mascarar_csv`, o Airflow), não instala outro: cada linha sairia duplicada.
+    # Na task, o Airflow rotula pelo canal (stderr = ERROR): só aviso e erro vão para lá.
     logging.root.setLevel(logging.INFO)
-    _handlers: list = [logging.StreamHandler(sys.stderr)]
+    _saida = logging.StreamHandler(sys.stdout)
+    _saida.addFilter(lambda r: r.levelno < logging.WARNING)
+    _erro = logging.StreamHandler(sys.stderr)
+    _erro.setLevel(logging.WARNING)
+    _handlers: list = [_saida, _erro]
     if _LOCAL_ARTIFACTS:
         _handlers.append(logging.FileHandler(_LOG_FILE, encoding="utf-8"))
     for _h in _handlers:
