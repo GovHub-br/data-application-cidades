@@ -270,7 +270,7 @@ painel mostra número errado. Visibilidade depois do estrago não basta.
 |---|---|
 | Mudança de layout ou de formato barrada antes de chegar ao painel | Mais execuções interrompidas, que alguém precisa destravar |
 | Aceitar layout novo vira decisão revisada em PR | Toda fonte precisa de contrato antes de ser convertida |
-| Um lugar só para o contrato, também publicado no catálogo | O `sources.yml` fica maior |
+| Um contrato por fonte em padrão aberto (ODCS), importado no catálogo | Um gerador do `sources.yml` a manter, e o padrão a acompanhar |
 | Carga parcial ou truncada não passa como dado bom | Limites de volume mal calibrados geram falso alarme no começo |
 | Renomeação conhecida não barra a carga, e a desconhecida chega com sugestão | `term` e `aliases` a manter em cada coluna do contrato |
 | Testes prontos e registro de resultados sem código próprio | Dois pacotes externos a atualizar, e o custo do hook do Elementary por task |

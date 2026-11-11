@@ -202,10 +202,11 @@ DAG, dificulta achar onde um arquivo falhou e traz conceitos novos para o time
 
 **Conversão por varredura periódica da raw (prática atual do SFTP).** A staging só
 fica pronta no horário da varredura, cada execução lista o lake inteiro (custo que
-cresce com o lake), e a falha de um arquivo se perde no meio da varredura. Fica como
-DAG de manutenção. Ela também é a única que vê o lake inteiro e trata os "gêmeos" (o
-mesmo arquivo em formatos ou pastas diferentes). Com uma chave por recebimento e um
-canal por fonte (ADR-0005), gêmeos novos deixam de existir.
+cresce com o lake), e a falha de um arquivo se perde no meio da varredura. Também
+é o que convertia a raw das APIs por cima da staging delas (issue #248). Sai: o
+histórico fica com a `reprocess_raw`, por contrato. Com uma chave por recebimento e um
+canal por fonte (ADR-0005), os "gêmeos" (o mesmo arquivo em formatos ou pastas
+diferentes) deixam de existir.
 
 **Um cliente próprio por fonte (prática atual).** Cada fonte resolve conexão,
 retry e credencial do seu jeito, e é o que levou a três pilhas HTTP e a quatro
