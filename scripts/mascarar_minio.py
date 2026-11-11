@@ -124,9 +124,7 @@ def _novo_registro(execution_id: str, key: str) -> dict:
     }
 
 
-def _marcar_resultado(
-    minio: ClienteMinio, key: str, execution_id: str, rec: dict
-) -> None:
+def _marcar_resultado(minio: ClienteMinio, key: str, execution_id: str, rec: dict) -> None:
     """Grava no objeto a tag que libera a staging: triagem ou mascaramento já feito."""
     if rec["status"] in TRIAGEM_LIBERADA:
         minio.marcar_triagem(key, execution_id, rec["status"])
@@ -173,10 +171,7 @@ def processar_objeto(  # noqa: C901
             targets_fixos = targets_por_posicao(key)
             # cópia de arquivo já mascarado (ex.: ANTERIORES/) só se reconhece pelo hash;
             # sem esta leitura simples, seria mascarada e enviada inteira para nada
-            if (
-                masked_hashes
-                and _targets_do_sample(sample, delim, real_encoding, targets_fixos)[0]
-            ):
+            if masked_hashes and _targets_do_sample(sample, delim, real_encoding, targets_fixos)[0]:
                 hash_before = minio.md5_objeto(key)
                 if hash_before in masked_hashes:
                     rec["hash_before"] = hash_before
@@ -260,9 +255,7 @@ def processar_objeto(  # noqa: C901
             # tabela exportada, com as mesmas regras, antes de gravar o parquet
             cols = ", ".join(f"{t['table']}.{t['column']}" for t in targets[:5])
             rec["status"] = "mdb_mascara_na_staging"
-            log.info(
-                "%s: PII em .mdb (%s), mascarada na conversão para a staging", key, cols
-            )
+            log.info("%s: PII em .mdb (%s), mascarada na conversão para a staging", key, cols)
             return rec
 
         elif ext in SUPPORTED_EXCEL:

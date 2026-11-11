@@ -544,9 +544,7 @@ def _rec(status, hash_before=None):
     return rec
 
 
-@pytest.mark.parametrize(
-    "status", ["skipped_no_pii", "skipped_no_header", "skipped_unsupported"]
-)
+@pytest.mark.parametrize("status", ["skipped_no_pii", "skipped_no_header", "skipped_unsupported"])
 def test_triagem_libera_a_staging_sem_marcar_como_mascarado(minio, status):
     minio.s3.objetos[KEY] = CONTEUDO
 
@@ -586,9 +584,9 @@ def test_regravar_o_objeto_volta_a_bloquear_a_staging(minio):
 
 def test_dag_mascara_em_processo_proprio():
     # importado na task, o spawn do modo paralelo reexecuta o binário do Airflow
-    dag = (
-        Path(__file__).parents[1] / "dags/data_ingest/minio/minio_transform_dag.py"
-    ).read_text("utf-8")
+    dag = (Path(__file__).parents[1] / "dags/data_ingest/minio/minio_transform_dag.py").read_text(
+        "utf-8"
+    )
     assert "from mascarar_minio import" not in dag
     assert "scripts/mascarar_minio.py" in dag
     assert "check=True" in dag

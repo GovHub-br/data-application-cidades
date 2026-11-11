@@ -160,45 +160,35 @@ class ClienteNovoCaged(ClienteBase):
                                         "Select": [
                                             {
                                                 "Measure": {
-                                                    "Expression": {
-                                                        "SourceRef": {"Source": "m"}
-                                                    },
+                                                    "Expression": {"SourceRef": {"Source": "m"}},
                                                     "Property": "Admitidos",
                                                 },
                                                 "Name": "Admitidos",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {
-                                                        "SourceRef": {"Source": "m"}
-                                                    },
+                                                    "Expression": {"SourceRef": {"Source": "m"}},
                                                     "Property": "Desligados",
                                                 },
                                                 "Name": "Desligados",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {
-                                                        "SourceRef": {"Source": "m"}
-                                                    },
+                                                    "Expression": {"SourceRef": {"Source": "m"}},
                                                     "Property": "Saldo",
                                                 },
                                                 "Name": "Saldo",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {
-                                                        "SourceRef": {"Source": "m"}
-                                                    },
+                                                    "Expression": {"SourceRef": {"Source": "m"}},
                                                     "Property": "Estoque Mensal",
                                                 },
                                                 "Name": "Estoque",
                                             },
                                             {
                                                 "Measure": {
-                                                    "Expression": {
-                                                        "SourceRef": {"Source": "m"}
-                                                    },
+                                                    "Expression": {"SourceRef": {"Source": "m"}},
                                                     "Property": "Vr. Relativa",
                                                 },
                                                 "Name": "Variacao",
@@ -208,9 +198,7 @@ class ClienteNovoCaged(ClienteBase):
                                     },
                                     "Binding": {
                                         "Primary": {
-                                            "Groupings": [
-                                                {"Projections": [0, 1, 2, 3, 4]}
-                                            ]
+                                            "Groupings": [{"Projections": [0, 1, 2, 3, 4]}]
                                         },
                                         "DataReduction": {
                                             "DataVolume": 3,
@@ -241,9 +229,9 @@ class ClienteNovoCaged(ClienteBase):
         Trata o JSON complexo do Power BI para um formato amigável para o Postgres.
         """
         try:
-            raw_values = response["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][
+            raw_values = response["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"][
                 0
-            ]["DM0"][0]["C"]
+            ]["C"]
             return {
                 "ano": ano,
                 "mes": MAP_MESES.get(mes.lower(), mes),
@@ -289,8 +277,7 @@ class ClienteNovoCaged(ClienteBase):
             logging.warning(f"[ClienteNovoCaged] {mes}/{ano} not published yet; skipped.")
         if missing:
             raise MissingMonthsError(
-                "Novo CAGED months missing: "
-                + ", ".join(f"{mes}/{ano}" for ano, mes in missing)
+                "Novo CAGED months missing: " + ", ".join(f"{mes}/{ano}" for ano, mes in missing)
             )
 
         return historico_caged
