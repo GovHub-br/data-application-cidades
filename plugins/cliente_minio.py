@@ -33,6 +33,8 @@ import boto3
 from boto3.s3.transfer import TransferConfig
 
 BUCKET = os.environ.get("MINIO_BUCKET", "data-lake-mcid")
+# Triagens do mascaramento que liberam o objeto para a staging sem reescrevê-lo.
+TRIAGEM_LIBERADA = ("skipped_no_pii", "skipped_no_header", "skipped_unsupported")
 
 
 def get_s3_client() -> Any:
@@ -122,8 +124,7 @@ def upload_fallback_json(fonte: str, dado: str, payload: Any) -> None:
         Bucket=BUCKET, Key=key, Body=body, ContentType="application/json"
     )
     logging.info(
-        f"[cliente_minio] fallback_json enviado: s3://{BUCKET}/{key} "
-        f"({len(body)} bytes)"
+        f"[cliente_minio] fallback_json enviado: s3://{BUCKET}/{key} ({len(body)} bytes)"
     )
 
 
@@ -220,9 +221,7 @@ class LeitorObjeto(io.RawIOBase):
                     )["Body"]
                 dados = self._corpo.read(min(len(destino), self.tamanho - self._pos))
                 if not dados:
-                    raise IOError(
-                        f"conexão fechada em {self._pos}/{self.tamanho} bytes"
-                    )
+                    raise IOError(f"conexão fechada em {self._pos}/{self.tamanho} bytes")
                 break
             except Exception as exc:
                 self._corpo = None
@@ -637,3 +636,21 @@ class ClienteMinio:
                 ]
             },
         )
+
+    def marcar_triagem(self, key: str, execution_id: str, status: str) -> None:
+        """Objeto que o mascaramento liberou sem reescrever (ex.: sem PII)."""
+        self.s3.put_object_tagging(
+            Bucket=self.bucket,
+            Key=key,
+            Tagging={
+                "TagSet": [
+                    {"Key": "triagem", "Value": status},
+                    {"Key": "execution_id", "Value": execution_id},
+                ]
+            },
+        )
+
+    def pronto_para_staging(self, key: str) -> bool:
+        # regravar o objeto apaga as tags: reingerido, ele volta a esperar o mascaramento
+        tags = {t["Key"]: t["Value"] for t in self.get_tagging(key)}
+        return tags.get("masked") == "true" or tags.get("triagem") in TRIAGEM_LIBERADA
