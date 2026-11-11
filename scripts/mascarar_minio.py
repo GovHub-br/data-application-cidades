@@ -80,6 +80,7 @@ from mascaramento.tabular import _mascarar_tabular_stream
 from mascaramento.paralelo import (
     _mascarar_tabular_paralelo,
     _pode_paralelizar,
+    _targets_do_sample,
 )
 from mascaramento.xlsx import (
     _mascarar_xlsx,
@@ -88,7 +89,7 @@ from mascaramento.xlsx import (
 from mascaramento.mdb import _analisar_mdb
 
 # depois do pacote: mascaramento/__init__.py põe plugins/ no sys.path
-from cliente_minio import ClienteMinio
+from cliente_minio import TRIAGEM_LIBERADA, ClienteMinio
 
 log = logging.getLogger(__name__)
 
@@ -123,6 +124,18 @@ def _novo_registro(execution_id: str, key: str) -> dict:
         "error_message": None,
         "duration_s": 0.0,
     }
+
+
+def _marcar_resultado(
+    minio: ClienteMinio, key: str, execution_id: str, rec: dict
+) -> None:
+    """Grava no objeto a tag que libera a staging: triagem ou mascaramento já feito."""
+    if rec["status"] in TRIAGEM_LIBERADA:
+        minio.marcar_triagem(key, execution_id, rec["status"])
+    elif rec["status"] == "skipped_already" and rec["hash_before"]:
+        # conteúdo igual a um mascaramento anterior, mas sem a tag (ex.: objeto copiado
+        # na reorganização do lake): regrava para a próxima execução pular na hora
+        minio.marcar_mascarado(key, execution_id, rec["hash_before"])
 
 
 def processar_objeto(  # noqa: C901
@@ -160,6 +173,18 @@ def processar_objeto(  # noqa: C901
             # CSV/TXT vai do MinIO ao MinIO sem disco: o CadÚnico pessoa tem 37 GB
             dest_key = key if apply else _preview_key(key)
             targets_fixos = targets_por_posicao(key)
+            # cópia de arquivo já mascarado (ex.: ANTERIORES/) só se reconhece pelo hash;
+            # sem esta leitura simples, seria mascarada e enviada inteira para nada
+            if (
+                masked_hashes
+                and _targets_do_sample(sample, delim, real_encoding, targets_fixos)[0]
+            ):
+                hash_before = minio.md5_objeto(key)
+                if hash_before in masked_hashes:
+                    rec["hash_before"] = hash_before
+                    rec["status"] = "skipped_already"
+                    rec["duration_s"] = round(time.time() - t0, 2)
+                    return rec
             resultado = None
             if _pode_paralelizar(sample, fully_quoted):
                 resultado = _mascarar_tabular_paralelo(
@@ -233,17 +258,13 @@ def processar_objeto(  # noqa: C901
                 rec["status"] = "skipped_no_pii"
                 return rec
 
-            # Tem PII e não há como reescrever .mdb — falhar alto em vez de fingir que
-            # mascarou.
+            # mdbtools só lê: o .mdb fica como está no raw e a staging mascara cada
+            # tabela exportada, com as mesmas regras, antes de gravar o parquet
             cols = ", ".join(f"{t['table']}.{t['column']}" for t in targets[:5])
-            rec["status"] = "error"
-            rec["error_message"] = (
-                f"PII encontrada em .mdb ({len(targets)} coluna(s): {cols}) — mdbtools é "
-                "read-only e não há como reescrever o arquivo. Tratar à parte "
-                "(converter e "
-                "descartar o .mdb, ou usar Jackcess/UCanAccess via Java)."
-            )[:500]
-            log.error("✗ %s: %s", key, rec["error_message"])
+            rec["status"] = "mdb_mascara_na_staging"
+            log.info(
+                "%s: PII em .mdb (%s), mascarada na conversão para a staging", key, cols
+            )
             return rec
 
         elif ext in SUPPORTED_EXCEL:
@@ -379,6 +400,8 @@ def run(  # noqa: C901
             continue
 
         rec = processar_objeto(minio, conn_str, key, execution_id, apply, masked_hashes)
+        if apply:
+            _marcar_resultado(minio, key, execution_id, rec)
         registros.append(rec)
         contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
         _avisar_mascaramento_sem_prova(key, rec)

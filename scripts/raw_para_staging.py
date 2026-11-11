@@ -36,7 +36,7 @@ import os
 import uuid
 from typing import Dict, List, Optional, Tuple
 
-from conversao.config import PASTAS_IGNORADAS, RAW_PREFIX, _LOG_FILE
+from conversao.config import PASTAS_IGNORADAS, RAW_PREFIX, SUPPORTED_MDB, _LOG_FILE
 from conversao.controle import (
     _carregar_convertidos,
     _conn_str,
@@ -51,6 +51,7 @@ from conversao.processamento import _novo_registro, processar_objeto
 from cliente_minio import ClienteMinio  # noqa: E402
 
 log = logging.getLogger(__name__)
+
 
 # Execução
 def run(  # noqa: C901
@@ -149,6 +150,21 @@ def run(  # noqa: C901
         if limit and processados >= limit:
             break
         processados += 1
+
+        # A staging lê o raw como está: só converte o que o mascaramento liberou. O .mdb
+        # passa, porque é mascarado aqui, na conversão de cada tabela.
+        ext = os.path.splitext(key)[1].lower()
+        if ext not in SUPPORTED_MDB and not minio.pronto_para_staging(key):
+            rec = _novo_registro(execution_id, key)
+            rec["status"] = "skipped_sem_mascara"
+            registros.append(rec)
+            contagem["skipped_sem_mascara"] = contagem.get("skipped_sem_mascara", 0) + 1
+            log.warning(
+                "· [%d] %s — sem tag do mascaramento, fica fora da staging",
+                processados,
+                key,
+            )
+            continue
 
         recs = processar_objeto(
             minio, key, execution_id, apply, convertidos, chunksize, bad_lines

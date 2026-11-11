@@ -6,6 +6,9 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import io
 import itertools
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -60,6 +63,7 @@ class S3Falso:
         self.tags: dict = {}
         self.uploads: dict = {}
         self.abortados = 0
+        self.multipart_abertos = 0
         self._ids = itertools.count()
         self.quedas: list = []  # offsets em que a leitura em streaming cai
         self.falhar_upload_part = False
@@ -88,6 +92,7 @@ class S3Falso:
 
     def create_multipart_upload(self, Bucket, Key):
         upload_id = f"u{next(self._ids)}"
+        self.multipart_abertos += 1
         self.uploads[upload_id] = {"key": Key, "partes": {}}
         return {"UploadId": upload_id}
 
@@ -136,7 +141,9 @@ class S3Falso:
         self.tags[Key] = Tagging["TagSet"]
 
     def put_object(self, Bucket, Key, Body):
+        # como no S3: o objeto novo não herda as tags do anterior
         self.objetos[Key] = Body
+        self.tags.pop(Key, None)
 
 
 @pytest.fixture
@@ -252,8 +259,10 @@ def test_hash_ja_mascarado_aborta_sem_reescrever(minio):
     rec = _processar(minio, masked_hashes={hashlib.md5(CONTEUDO).hexdigest()})
 
     assert rec["status"] == "skipped_already"
+    assert rec["hash_before"] == hashlib.md5(CONTEUDO).hexdigest()
     assert minio.s3.objetos[KEY] == CONTEUDO
-    assert not minio.s3.uploads
+    # cópia de arquivo já mascarado não pode pagar o mascaramento e o envio inteiros
+    assert minio.s3.multipart_abertos == 0
 
 
 def test_falha_no_upload_mantem_o_original(minio):
@@ -499,6 +508,7 @@ def test_paralelo_ja_mascarado_nao_reescreve(paralelo):
     assert rec["status"] == "skipped_already"
     assert paralelo.s3.objetos[KEY] == CADUNICO
     assert not _pedacos(paralelo)
+    assert paralelo.s3.multipart_abertos == 0
 
 
 def test_paralelo_dry_run_nao_toca_o_raw(paralelo):
@@ -529,3 +539,82 @@ def test_leitor_para_no_fim_do_intervalo_mesmo_se_o_servidor_mandar_mais(minio):
     leitor = minio.abrir_leitura("k", inicio=3, fim=6)
 
     assert io.BufferedReader(leitor).read() == b"345"
+
+
+# Execução pela DAG
+
+
+def _rec(status, hash_before=None):
+    rec = modulo._novo_registro("exec-teste", KEY)
+    rec.update(status=status, hash_before=hash_before)
+    return rec
+
+
+@pytest.mark.parametrize(
+    "status", ["skipped_no_pii", "skipped_no_header", "skipped_unsupported"]
+)
+def test_triagem_libera_a_staging_sem_marcar_como_mascarado(minio, status):
+    minio.s3.objetos[KEY] = CONTEUDO
+
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec(status))
+
+    assert minio.pronto_para_staging(KEY)
+    assert not minio.esta_mascarado(KEY)
+
+
+def test_ja_mascarado_sem_tag_ganha_a_tag_de_volta(minio):
+    # objeto copiado na reorganização do lake perde a tag, mas o conteúdo já é a máscara
+    minio.s3.objetos[KEY] = CONTEUDO
+
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec("skipped_already", "abc"))
+
+    assert minio.esta_mascarado(KEY)
+    assert {"Key": "masked_hash", "Value": "abc"} in minio.get_tagging(KEY)
+
+
+@pytest.mark.parametrize("status", ["error", "dry_run", "mdb_mascara_na_staging"])
+def test_sem_mascara_nao_libera_a_staging(minio, status):
+    minio.s3.objetos[KEY] = CONTEUDO
+
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec(status))
+
+    assert not minio.pronto_para_staging(KEY)
+
+
+def test_regravar_o_objeto_volta_a_bloquear_a_staging(minio):
+    minio.s3.objetos[KEY] = CONTEUDO
+    modulo._marcar_resultado(minio, KEY, "exec-teste", _rec("skipped_no_pii"))
+
+    minio.s3.put_object(Bucket="teste", Key=KEY, Body=CONTEUDO)
+
+    assert not minio.pronto_para_staging(KEY)
+
+
+def test_dag_mascara_em_processo_proprio():
+    # importado na task, o spawn do modo paralelo reexecuta o binário do Airflow
+    dag = (
+        Path(__file__).parents[1] / "dags/data_ingest/minio/minio_transform_dag.py"
+    ).read_text("utf-8")
+    assert "from mascarar_minio import" not in dag
+    assert "scripts/mascarar_minio.py" in dag
+    assert "check=True" in dag
+
+
+def test_log_vai_para_stderr_sem_artefatos_locais():
+    # o container do Airflow define LAKE_LOCAL_ARTIFACTS=0; o script à parte tem que logar
+    scripts = Path(__file__).parents[1] / "scripts"
+    codigo = (
+        f"import sys, logging; sys.path.insert(0, {str(scripts)!r}); "
+        "import mascaramento.config; logging.getLogger('x').info('linha de teste')"
+    )
+    env = {**os.environ, "LAKE_LOCAL_ARTIFACTS": "0"}
+    saida = subprocess.run(
+        [sys.executable, "-c", codigo],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    assert saida.returncode == 0, saida.stderr
+    assert saida.stderr.count("linha de teste") == 1

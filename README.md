@@ -25,7 +25,7 @@ E temos também alguns slides falando do projeto e como ele pode ajudar a transf
 
 ## Apoio
 
-Esse trabalho  é mantido pelo [Lab Livre](https://www.instagram.com/lab.livre/) e apoiado pelo [IPEA/Dides](https://www.ipea.gov.br/portal/categorias/72-estrutura-organizacional/210-dides-estrutura-organizacional).
+Esse trabalho  é mantido pelo [Lab Livre](https://www.instagram.com/lab.livre/) e apoiado pelo [MCid](https://www.gov.br/cidades).
 
 ## Contato
 
@@ -56,8 +56,8 @@ This project implements a modern data stack using Airflow, dbt, Jupyter, and Sup
 
 1. Clone the repository:
 ```bash
-git clone git@gitlab.com:lappis-unb/gest-odadosipea/app-lappis-ipea.git
-cd app-lappis-ipea
+git clone git@github.com:GovHub-br/data-application-cidades.git
+cd data-application-cidades
 ```
 
 2. Run the setup using Make:
