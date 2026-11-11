@@ -25,7 +25,7 @@ jobs:
     steps:
       # PR aberto com o token do App, e não com o GITHUB_TOKEN: PR criado pelo
       # GITHUB_TOKEN não dispara o CI, e a sugestão entraria sem os testes.
-      - uses: actions/create-github-app-token@v1
+      - uses: actions/create-github-app-token@v3
         id: app
         with:
           app-id: ${{ vars.OM_SUGESTOES_APP_ID }}
