@@ -47,6 +47,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from lake_utils import (
+    PREFIXOS_LEGADO,
     detectar_dialeto,
     detectar_encoding,
     md5_arquivo,
@@ -231,17 +232,15 @@ def processar_objeto(  # noqa: C901
                 rec["status"] = "skipped_no_pii"
                 return rec
 
-            # Tem PII e não há como reescrever .mdb — falhar alto em vez de fingir que
-            # mascarou.
+            # Tem PII e o mdbtools não reescreve Access: quem mascara é a conversão, no
+            # CSV de cada tabela (ADR-0002 R0). Não é erro, e não pode derrubar a task.
             cols = ", ".join(f"{t['table']}.{t['column']}" for t in targets[:5])
-            rec["status"] = "error"
+            rec["status"] = "deferred_to_conversion"
             rec["error_message"] = (
-                f"PII encontrada em .mdb ({len(targets)} coluna(s): {cols}) — mdbtools é "
-                "read-only e não há como reescrever o arquivo. Tratar à parte "
-                "(converter e "
-                "descartar o .mdb, ou usar Jackcess/UCanAccess via Java)."
+                f"PII em .mdb ({len(targets)} coluna(s): {cols}); mascarada pela conversão, "
+                "no CSV de cada tabela."
             )[:500]
-            log.error("✗ %s: %s", key, rec["error_message"])
+            log.info("→ %s: %s", key, rec["error_message"])
             return rec
 
         elif ext in SUPPORTED_EXCEL:
@@ -324,7 +323,10 @@ def run(  # noqa: C901
             "MASKING_HMAC_SECRET não definida no .env — necessária para tokenizar CPF/NIS."
         )
 
-    prefix = prefix if prefix is not None else RAW_PREFIX
+    # B1: só os canais do legado. Um `prefix` só pode estreitar dentro deles.
+    if prefix is not None and not prefix.startswith(PREFIXOS_LEGADO):
+        raise ValueError(f"prefixo fora do legado {PREFIXOS_LEGADO}: {prefix!r}")
+    prefixos = (prefix,) if prefix is not None else PREFIXOS_LEGADO
     execution_id = uuid.uuid4().hex
     only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
 
@@ -333,7 +335,7 @@ def run(  # noqa: C901
         "Execução %s | modo=%s | prefixo=%s",
         execution_id,
         "APPLY (sobrescreve raw/)" if apply else "DRY-RUN (masked_dryrun/)",
-        prefix,
+        ", ".join(prefixos),
     )
     log.info("=" * 70)
 
@@ -347,7 +349,7 @@ def run(  # noqa: C901
     contagem: Dict[str, int] = {}
     processados = 0
 
-    for key, size in minio.listar_objetos(prefix):
+    for key, size in (o for p in prefixos for o in minio.listar_objetos(p)):
         # marcador de pasta (0 byte, key terminando em "/"): não é arquivo
         if key.endswith("/"):
             continue
@@ -429,7 +431,11 @@ def main() -> None:
         help="Pula objetos maiores que N MB (0 = sem limite). "
         "Útil p/ fatiar dry-runs: pequenos primeiro, grandes depois.",
     )
-    parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
+    parser.add_argument(
+        "--prefix",
+        default=None,
+        help="Estreita a varredura dentro de raw/sftp/ ou raw/sharepoint/.",
+    )
     args = parser.parse_args()
 
     run(

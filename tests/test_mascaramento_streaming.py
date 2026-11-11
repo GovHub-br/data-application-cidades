@@ -523,3 +523,36 @@ def test_leitor_para_no_fim_do_intervalo_mesmo_se_o_servidor_mandar_mais(minio):
     leitor = minio.abrir_leitura("k", inicio=3, fim=6)
 
     assert io.BufferedReader(leitor).read() == b"345"
+
+
+def test_mdb_com_pii_fica_para_a_conversao_e_nao_e_erro(minio, monkeypatch, tmp_path):
+    """O mdbtools não reescreve Access; a conversão mascara o CSV de cada tabela."""
+    chave = "raw/sftp/fabrica/GEAVO/CCI.mdb"
+    arquivo = tmp_path / "x.mdb"
+    arquivo.write_bytes(b"mdb")
+    minio.s3.objetos[chave] = b"mdb"
+    monkeypatch.setattr(modulo, "mdb_disponivel", lambda: True)
+    monkeypatch.setattr(minio, "baixar_para_tempfile", lambda *_a, **_k: str(arquivo))
+    alvo = {"table": "CCI_Analitico", "column": "IM_CEP", "category": "cep", "action": "x"}
+    monkeypatch.setattr(modulo, "_analisar_mdb", lambda _src: ([alvo], False, 10))
+    rec = modulo.processar_objeto(minio, "", chave, "exec-teste", True, set())
+    assert rec["status"] == "deferred_to_conversion"
+
+
+def test_mascara_so_varre_os_canais_do_legado(monkeypatch):
+    listados = []
+
+    class _Minio:
+        def listar_objetos(self, prefix):
+            listados.append(prefix)
+            return iter(())
+
+    monkeypatch.setattr(modulo, "ClienteMinio", _Minio)
+    monkeypatch.setattr(modulo, "_conn_str", lambda: "teste")
+    for nome in ("_criar_control_table", "_carregar_masked_hashes"):
+        if hasattr(modulo, nome):
+            monkeypatch.setattr(modulo, nome, lambda *_a: set())
+    modulo.run(apply=False)
+    assert listados == ["raw/sftp/", "raw/sharepoint/"]
+    with pytest.raises(ValueError, match="fora do legado"):
+        modulo.run(apply=False, prefix="raw/ibge/")

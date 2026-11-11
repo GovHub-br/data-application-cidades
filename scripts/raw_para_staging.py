@@ -36,9 +36,10 @@ import os
 import uuid
 from typing import Dict, List, Optional, Tuple
 
-from conversao.config import PASTAS_IGNORADAS, RAW_PREFIX, _LOG_FILE
+from conversao.config import PASTAS_IGNORADAS, _LOG_FILE
 from conversao.controle import (
     _carregar_convertidos,
+    _carregar_mascarados,
     _conn_str,
     _criar_control_table,
     _gravar_auditoria,
@@ -49,6 +50,7 @@ from conversao.processamento import _novo_registro, processar_objeto
 
 # depois do pacote: conversao/__init__.py põe plugins/ no sys.path
 from cliente_minio import ClienteMinio  # noqa: E402
+from lake_utils import PREFIXOS_LEGADO  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +72,10 @@ def run(  # noqa: C901
 
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run(apply=True)).
     """
-    prefix = prefix if prefix is not None else RAW_PREFIX
+    # B1: só os canais do legado. Um `prefix` só pode estreitar dentro deles.
+    if prefix is not None and not prefix.startswith(PREFIXOS_LEGADO):
+        raise ValueError(f"prefixo fora do legado {PREFIXOS_LEGADO}: {prefix!r}")
+    prefixos = (prefix,) if prefix is not None else PREFIXOS_LEGADO
     execution_id = uuid.uuid4().hex
     only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
 
@@ -79,13 +84,14 @@ def run(  # noqa: C901
         "Execução %s | modo=%s | prefixo=%s",
         execution_id,
         "APPLY (staging/)" if apply else "DRY-RUN (staging_dryrun/)",
-        prefix,
+        ", ".join(prefixos),
     )
     log.info("=" * 70)
 
     conn_str = _conn_str()
     _criar_control_table(conn_str)
     convertidos = set() if force else _carregar_convertidos(conn_str)
+    mascarados = _carregar_mascarados(conn_str)
 
     minio = ClienteMinio()
 
@@ -98,7 +104,7 @@ def run(  # noqa: C901
     # `--only-ext txt` faria os dois formatos escreverem no mesmo parquet. Assim a staging
     # final independe de como a execução foi fatiada.
     todos: List[Tuple[str, int]] = []
-    for key, size in minio.listar_objetos(prefix):
+    for prefix, (key, size) in ((p, o) for p in prefixos for o in minio.listar_objetos(p)):
         # marcador de pasta (0 byte, key terminando em "/"): não é arquivo
         if key.endswith("/"):
             continue
@@ -149,7 +155,9 @@ def run(  # noqa: C901
             break
         processados += 1
 
-        recs = processar_objeto(minio, key, execution_id, apply, convertidos, chunksize, bad_lines)
+        recs = processar_objeto(
+            minio, key, execution_id, apply, convertidos, chunksize, bad_lines, mascarados
+        )
         registros.extend(recs)
         for rec in recs:
             contagem[rec["status"]] = contagem.get(rec["status"], 0) + 1
@@ -224,7 +232,11 @@ def main() -> None:
         help="Linhas mal-formadas: 'skip' descarta (rápido, engine C, sem contagem); "
         "'count' descarta e conta (engine Python, mais lento); 'error' falha o arquivo.",
     )
-    parser.add_argument("--prefix", default=RAW_PREFIX, help="Prefixo a varrer (default raw/).")
+    parser.add_argument(
+        "--prefix",
+        default=None,
+        help="Estreita a varredura dentro de raw/sftp/ ou raw/sharepoint/.",
+    )
     args = parser.parse_args()
 
     run(

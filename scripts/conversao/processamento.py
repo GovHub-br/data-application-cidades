@@ -90,8 +90,14 @@ def processar_objeto(  # noqa: C901
     convertidos: set,
     chunksize: int,
     bad_mode: str,
+    mascarados: set,
 ) -> List[dict]:
-    """Retorna lista de registros (XLSX pode gerar 1 por aba)."""
+    """Retorna lista de registros (XLSX pode gerar 1 por aba).
+
+    `mascarados`: hashes liberados pela máscara (`_carregar_mascarados`). Objeto com outro
+    hash fica `blocked_unmasked` e não vira staging. O `.mdb` não passa por essa trava:
+    a máscara não reescreve Access, e o CSV de cada tabela é mascarado aqui (ADR-0002 R0).
+    """
     t0 = time.time()
     ext = os.path.splitext(key)[1].lower()
 
@@ -121,6 +127,9 @@ def processar_objeto(  # noqa: C901
             rec["source_hash"] = source_hash
             if (key, source_hash) in convertidos:
                 rec["status"] = "skipped_already"
+                return [rec]
+            if source_hash not in mascarados:
+                rec["status"] = "blocked_unmasked"
                 return [rec]
 
             staging_key = _staging_key(key)
@@ -280,6 +289,9 @@ def processar_objeto(  # noqa: C901
             if (key, source_hash) in convertidos:
                 rec["status"] = "skipped_already"
                 return [rec]
+            if source_hash not in mascarados:
+                rec["status"] = "blocked_unmasked"
+                return [rec]
 
             staging_key = _staging_key(key)
             rec["staging_key"] = staging_key
@@ -313,6 +325,11 @@ def processar_objeto(  # noqa: C901
                 rec = _novo_registro(execution_id, key)
                 rec["source_hash"] = source_hash
                 rec["status"] = "skipped_already"
+                return [rec]
+            if source_hash not in mascarados:
+                rec = _novo_registro(execution_id, key)
+                rec["source_hash"] = source_hash
+                rec["status"] = "blocked_unmasked"
                 return [rec]
 
             ingested_at = datetime.now(timezone.utc).isoformat()

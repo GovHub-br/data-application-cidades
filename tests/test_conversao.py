@@ -170,9 +170,10 @@ OBJETOS = {
 
 class MinioFalso:
     def __init__(self, tmpdir):
-        self.tmpdir, self.enviados, self.auditoria = tmpdir, {}, {}
+        self.tmpdir, self.enviados, self.auditoria, self.listados = tmpdir, {}, {}, []
 
     def listar_objetos(self, prefix):
+        self.listados.append(prefix)
         for key, dados in OBJETOS.items():
             if key.startswith(prefix):
                 yield key, len(dados)
@@ -205,7 +206,11 @@ def executar(carregar, tmp_path, monkeypatch):
     monkeypatch.setattr(modulo, "_carregar_convertidos", lambda _c: set())
     monkeypatch.setattr(modulo, "_registrar_control", lambda _c, r: controle.append(r))
 
-    def _executar(**kw):
+    def _executar(sem_mascara=(), **kw):
+        # a máscara liberou todos os objetos, menos os de `sem_mascara`
+        hashes = {k: hashlib.md5(v).hexdigest() for k, v in OBJETOS.items()}
+        liberados = set(hashes.values()) - {hashes[k] for k in sem_mascara}
+        monkeypatch.setattr(modulo, "_carregar_mascarados", lambda _c: liberados)
         return modulo.run(**kw), minio, controle
 
     return _executar
@@ -215,12 +220,11 @@ def test_run_converte_cada_formato_e_registra(executar, tmp_path):
     contagem, minio, controle = executar(apply=True)
 
     assert contagem == {
-        "converted": 4,
+        "converted": 3,
         "skipped_duplicado": 1,
         "skipped_unsupported": 1,
     }
     assert sorted(minio.enviados) == [
-        "staging/api/c.parquet",
         "staging/sftp/a/DADOS.parquet",
         "staging/sftp/a/PLAN__aba_1.parquet",
         "staging/sftp/a/PLAN__resumo.parquet",
@@ -229,14 +233,13 @@ def test_run_converte_cada_formato_e_registra(executar, tmp_path):
     assert [(r["id"], r["nome"]) for r in dados] == [("1", "Ana"), ("2", "Bia")]
     assert {r["_source_file"] for r in dados} == {"DADOS.csv"}
     assert {r["_source_hash"] for r in dados} == {hashlib.md5(DADOS_CSV).hexdigest()}
-    assert minio.enviados["staging/api/c.parquet"].column_names[:2] == ["a", "b_c"]
 
     # o controle só recebe o que tem hash; a auditoria leva tudo, gêmeo incluso
     assert sorted(r["staging_key"] for r in controle) == sorted(minio.enviados)
     (chave,) = minio.auditoria
     auditoria = pd.read_parquet(io.BytesIO(minio.auditoria[chave]))
     assert sorted(auditoria["status"]) == sorted(
-        ["converted"] * 4 + ["skipped_duplicado", "skipped_unsupported"]
+        ["converted"] * 3 + ["skipped_duplicado", "skipped_unsupported"]
     )
     assert "raw/dados_historicos/HIST.csv" not in set(auditoria["raw_key"])
     # nenhum download ou parquet temporário fica para trás
@@ -245,11 +248,8 @@ def test_run_converte_cada_formato_e_registra(executar, tmp_path):
 
 def test_run_em_dry_run_grava_so_em_staging_dryrun(executar):
     contagem, minio, _ = executar(apply=False, only_ext="csv,json")
-    assert contagem == {"dry_run": 2}
-    assert sorted(minio.enviados) == [
-        "staging_dryrun/api/c.parquet",
-        "staging_dryrun/sftp/a/DADOS.parquet",
-    ]
+    assert contagem == {"dry_run": 1}
+    assert sorted(minio.enviados) == ["staging_dryrun/sftp/a/DADOS.parquet"]
 
 
 def test_filtro_nao_muda_quem_vence_entre_gemeos(executar):
@@ -257,3 +257,27 @@ def test_filtro_nao_muda_quem_vence_entre_gemeos(executar):
     contagem, minio, _ = executar(apply=True, only_ext="xlsx")
     assert contagem == {"converted": 2, "skipped_duplicado": 1}
     assert "staging/sharepoint/b/DADOS.parquet" not in minio.enviados
+
+
+def test_run_so_varre_os_canais_do_legado(executar):
+    """B1 (#248): a raw das APIs nunca é convertida por cima da staging delas."""
+    _, minio, controle = executar(apply=True)
+    assert minio.listados == ["raw/sftp/", "raw/sharepoint/"]
+    assert not any(k.startswith("staging/api/") for k in minio.enviados)
+    assert "raw/api/c.json" not in {r["raw_key"] for r in controle}
+
+
+def test_prefixo_fora_do_legado_e_recusado(executar):
+    with pytest.raises(ValueError, match="fora do legado"):
+        executar(apply=True, prefix="raw/fgv/")
+
+
+def test_objeto_sem_mascara_liberada_nao_vira_staging(executar):
+    """B2 (#249): sem registro da máscara para o hash atual, o objeto fica bloqueado."""
+    contagem, minio, controle = executar(
+        apply=True, sem_mascara={"raw/sftp/a/DADOS.csv", "raw/sftp/a/PLAN.xlsx"}
+    )
+    assert contagem["blocked_unmasked"] == 2
+    assert not minio.enviados
+    bloqueados = {r["raw_key"] for r in controle if r["status"] == "blocked_unmasked"}
+    assert bloqueados == {"raw/sftp/a/DADOS.csv", "raw/sftp/a/PLAN.xlsx"}

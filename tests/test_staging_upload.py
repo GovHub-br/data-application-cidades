@@ -1,5 +1,6 @@
 """Upload para a staging: aguenta o MinIO fora por um tempo e não perde a conversão."""
 
+import hashlib
 import sys
 
 import pyarrow.parquet as pq
@@ -111,7 +112,8 @@ class MinioFalso:
 
 
 def _processar(staging, minio):
-    return staging.processar_objeto(minio, KEY, "exec", True, set(), 1000, "skip")[0]
+    liberado = {hashlib.md5(CONTEUDO).hexdigest()}
+    return staging.processar_objeto(minio, KEY, "exec", True, set(), 1000, "skip", liberado)[0]
 
 
 def _pendentes(tmp_path):

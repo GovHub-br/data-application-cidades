@@ -29,9 +29,10 @@ from schedule_loader import get_dynamic_schedule
 def minio_transform_dag() -> None:
     """Pipeline de transformação do data lake: raw/ -> mascaramento PII -> staging/.
 
-    Roda sobre o que estiver em raw/ no MinIO, INDEPENDENTE de quem carregou (SFTP hoje,
-    outras fontes no futuro). Desacoplada da ingestão: schedule próprio, sem referência
-    às DAGs de fonte.
+    Roda só sobre raw/sftp/ e raw/sharepoint/ (`PREFIXOS_LEGADO`, em lake_utils.py), os
+    canais sem conversão própria. As DAGs de API gravam a própria staging, e varrer raw/
+    inteira regravava por cima dela (B1, #248). Desacoplada da ingestão: schedule próprio,
+    sem referência às DAGs de fonte.
 
     Duas etapas encadeadas, cada uma idempotente/incremental (tabelas de controle no
     schema `lake` do Postgres), então execuções agendadas só processam o que é novo.
@@ -74,15 +75,19 @@ def minio_transform_dag() -> None:
             max_size_mb=int(p.get("max_size_mb") or 0),
         )
         logging.info("[minio_transform_dag] mascaramento concluído: %s", contagem)
+        # B2 (#249): objeto que a máscara não conseguiu tratar barra a execução; a conversão,
+        # que vem depois, não roda (e, mesmo que rodasse, recusa o que não foi liberado).
+        if contagem.get("error"):
+            raise RuntimeError(
+                f"máscara falhou em {contagem['error']} objeto(s); ver lake._masking_log"
+            )
 
     @task
     def raw_para_staging() -> None:
-        """Converte os objetos de raw/ para Parquet full-text em staging/.
+        """Converte os objetos de raw/sftp/ e raw/sharepoint/ para Parquet full-text.
 
-        Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em conversao/config.py):
-        já tem tratamento próprio de um membro da equipe para ciência de dados, e gerar
-        parquet full-text por cima seria trabalho duplicado. Continua sendo mascarada
-        normalmente pela task anterior.
+        Só converte objeto cujo hash a máscara liberou (`masked`, `skipped_no_pii` ou
+        `skipped_already` no lake._masking_log); o resto fica `blocked_unmasked` (B2, #249).
         """
         from raw_para_staging import run as run_staging
 

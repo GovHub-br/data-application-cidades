@@ -83,6 +83,23 @@ def _carregar_convertidos(conn_str: str) -> set:
             return {(r[0], r[1]) for r in cur.fetchall()}
 
 
+def _carregar_mascarados(conn_str: str) -> set:
+    """Hashes que a máscara liberou (B2, #249): o resultado de cada `masked` e a origem
+    de cada `skipped_no_pii`/`skipped_already`. Objeto fora daqui não vira staging."""
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT masked_hash FROM {SCHEMA}._masking_log
+                WHERE status = 'masked' AND masked_hash IS NOT NULL
+                UNION
+                SELECT source_hash FROM {SCHEMA}._masking_log
+                WHERE status IN ('skipped_no_pii', 'skipped_already') AND source_hash IS NOT NULL
+            """
+            )
+            return {r[0] for r in cur.fetchall()}
+
+
 def _registrar_control(conn_str: str, rec: dict) -> None:
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
