@@ -10,7 +10,7 @@
 
 with
     op as (select * from {{ ref("prata_rural_operacao_eo") }} where eo_cnpj is not null),
-    rec as (select * from {{ ref("ouro_rural_entidade_recontratacao") }}),
+    rec as (select * from {{ ref("prata_rural_entidade_recontratacao") }}),
     sel as (
         select entidade_organizadora_cnpj as eo_cnpj, count(*) as qt_selecionados_portaria_162,
                sum(quantidade_uh_selecionadas) as uh_selecionadas_portaria_162

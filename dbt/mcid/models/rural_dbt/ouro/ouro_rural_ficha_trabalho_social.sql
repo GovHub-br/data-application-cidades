@@ -9,6 +9,7 @@ with
             apf,
             'CAIXA' as agente_financeiro,
             situacao_ts,
+            portaria_ts,
             vr_global_ts,
             vr_desembolsado_ts,
             percentual_execucao_ts,
@@ -21,6 +22,7 @@ with
             apf,
             'BB' as agente_financeiro,
             situacao_ts,
+            portaria_ts,
             vr_global_ts,
             vr_desembolsado_ts,
             percentual_execucao_ts,
@@ -42,7 +44,7 @@ with
             uf,
             programa,
             quantidade_uh
-        from {{ ref("ouro_rural_ficha_empreendimento") }}
+        from {{ ref("prata_rural_ficha_empreendimento") }}
     )
 
 select
@@ -54,6 +56,9 @@ select
     f.quantidade_uh,
     t.agente_financeiro,
     upper(coalesce(t.situacao_ts, 'NÃO INFORMADO')) as situacao_trabalho_social,
+    -- Portaria de Trabalho Social adotada (21/2014, 464/2018, 75/2025). Nula quando o agente
+    -- financeiro não informou — é o caso da maior parte das operações antigas da CAIXA.
+    t.portaria_ts,
 
     -- Valores — sem coalesce para 0. Empreendimento sem registro de PTS não é um
     -- empreendimento com PTS de R$ 0 e 0% executado: é um sobre o qual não há informação.

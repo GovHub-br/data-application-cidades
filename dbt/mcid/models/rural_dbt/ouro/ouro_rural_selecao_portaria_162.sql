@@ -31,9 +31,10 @@ select
     case when o.apf is not null then 'visão consolidada Rural' when p.apf is not null then 'INT065 PNHR CAIXA' end as fonte_contrato,
     coalesce(o.dt_contratacao, p.dt_contrato) as dt_contratacao,
     coalesce(o.dt_contratacao, p.dt_contrato) - s.dt_portaria as dias_selecao_ate_contrato,
-    coalesce(o.eo_cnpj, regexp_replace(p.eo_cnpj::text, '[^0-9]', '', 'g')) as eo_cnpj_contrato,
+    coalesce(o.eo_cnpj, {{ cnpj_normalizado("p.eo_cnpj") }}) as eo_cnpj_contrato,
     o.eo_nome as eo_nome_contrato,
-    coalesce(o.eo_cnpj, regexp_replace(p.eo_cnpj::text, '[^0-9]', '', 'g')) = s.entidade_organizadora_cnpj as ic_mesma_eo,
+    -- os dois lados já vêm com 14 dígitos (macro cnpj_normalizado)
+    coalesce(o.eo_cnpj, {{ cnpj_normalizado("p.eo_cnpj") }}) = s.entidade_organizadora_cnpj as ic_mesma_eo,
     coalesce(o.quantidade_uh_contratadas, p.qt_unidades) as uh_contratadas,
     coalesce(o.quantidade_uh_entregues, p.qt_unidades_entregues) as uh_entregues,
     coalesce(o.status_operacao,

@@ -6,15 +6,15 @@
 
 with
     fichas as (
-        select * from {{ ref("ouro_rural_ficha_empreendimento") }}
+        select * from {{ ref("prata_rural_ficha_empreendimento") }}
     ),
 
     -- Tabela de referência IBGE para traduzir sigla UF → nome completo do estado.
     -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
     -- dobraria as linhas de cada seção
     ibge_uf as (
-        select distinct sigla, upper(nome) as estado
-        from {{ source("raw", "api_ibge_uf") }}
+        select distinct sigla, upper(estado_nome) as estado
+        from {{ ref("prata_rural_uf_ibge") }}
     ),
 
     -- Seção 1: Header — Grandes números por UF

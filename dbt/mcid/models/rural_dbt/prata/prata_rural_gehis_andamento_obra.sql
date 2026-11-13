@@ -32,7 +32,7 @@ with
     ),
 
     rural as (
-        select distinct apf from {{ ref("prata_rural_empreendimento") }}
+        select distinct apf from ({{ corpo_prata_rural_empreendimento() }}) as prata_rural_empreendimento
     )
 
 select
