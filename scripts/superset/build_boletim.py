@@ -1071,7 +1071,7 @@ class Superset:
         self.s.post(
             f"{self.base}/login/",
             data={
-                "username": os.environ["SUPERSET_USERNAME"],
+                "username": os.environ["SUPERSET_USER"],
                 "password": os.environ["SUPERSET_PASSWORD"],
                 "csrf_token": achado.group(1) if achado else "",
             },

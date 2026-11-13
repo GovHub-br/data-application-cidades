@@ -1,27 +1,30 @@
 #!/usr/bin/env python3
-"""Publica o data lake no OpenMetadata e liga o parquet à camada Bronze.
+r"""Publica fontes declaradas do data lake no OpenMetadata e liga-as à Bronze.
 
 Sem isto o grafo de linhagem começa na Bronze e o parquet aparece do nada: o
 consumidor vê o número, mas não vê de onde ele veio. O caminho já está
 declarado no repo há tempo — `meta.caminho` em `sources.yml`, resolvido pela
 macro `fonte_lake` —, só nunca tinha sido publicado.
 
-O que é publicado: existência e topologia — bucket, camada, prefixo, arquivo,
-formato e a aresta arquivo -> tabela Bronze. Nunca conteúdo de objeto,
-contagem de linha ou amostra. O serviço é registrado SEM credencial: o lake
-entra para catálogo e linhagem, não para ingestão nativa.
+O que é publicado: existência e topologia — bucket, camada, prefixo, padrão de
+arquivo parquet e a aresta padrão -> tabela Bronze. Os curingas de `sources.yml`
+são publicados como fontes lógicas; não há expansão nem leitura de objetos.
+Nunca conteúdo, contagem de linhas ou amostra. O serviço é registrado SEM
+credencial: o lake entra para catálogo e linhagem, não para ingestão nativa.
 
 De onde sai cada coisa:
 
     governance/servicos.yml   semântica do serviço, do bucket e dos prefixos
     models/*/sources.yml      bucket, caminho e descrição de cada arquivo
     models/*/bronze/*.sql     qual Bronze lê qual arquivo, pela chamada a
-                              `fonte_lake('<fonte>')` — é declaração, não SQL
+                              `fonte_lake('<fonte>')` ou
+                              `caminho_fonte_lake('<fonte>')` — é declaração, não SQL
                               compilado, e por isso pode ser lida aqui
 
 Uso:
-    poetry run python scripts/governance/sincronizar_lake.py
-    poetry run python scripts/governance/sincronizar_lake.py --confirmar
+    .venv-om\Scripts\python.exe scripts\governance\sincronizar_lake.py
+    .venv-om\Scripts\python.exe scripts\governance\sincronizar_lake.py --confirmar
+    .venv-om\Scripts\python.exe scripts\governance\sincronizar_lake.py --fontes trabalho_social_lake --confirmar
 """
 
 from __future__ import annotations
@@ -49,12 +52,12 @@ MODELOS = RAIZ / "dbt" / "mcid" / "models"
 CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 #: A macro registra a dependência do model bronze na fonte do lake. Ler a
 #: chamada é ler a declaração — não há SQL compilado nem caminho de dado aqui.
-CHAMADA_FONTE = re.compile(r"fonte_lake\(\s*['\"]([^'\"]+)['\"]")
+CHAMADA_FONTE = re.compile(r"(?:fonte_lake|caminho_fonte_lake)\(\s*['\"]([^'\"]+)['\"]")
 
 
 @dataclass
 class Arquivo:
-    """Um objeto do lake e a tabela Bronze que o lê."""
+    """Uma fonte/padrão declarado no lake e as tabelas Bronze que o leem."""
 
     fonte: str
     caminho: str
@@ -68,12 +71,18 @@ class Arquivo:
         return self.caminho.split("/")
 
 
-def carregar_arquivos() -> list[Arquivo]:
-    """Lê as fontes do lake declaradas nos `sources.yml` do projeto."""
+def carregar_arquivos(fontes: set[str] | None = None) -> list[Arquivo]:
+    """Lê as fontes declaradas nos `sources.yml`, opcionalmente por nome."""
     arquivos: dict[str, Arquivo] = {}
+    encontradas: set[str] = set()
     for caminho_yml in sorted(MODELOS.rglob("sources.yml")):
         documento = yaml.safe_load(caminho_yml.read_text(encoding="utf-8")) or {}
         for fonte in documento.get("sources") or []:
+            nome_fonte = fonte.get("name")
+            if fontes and nome_fonte not in fontes:
+                continue
+            if nome_fonte:
+                encontradas.add(nome_fonte)
             bucket = (fonte.get("meta") or {}).get("bucket")
             if not bucket:
                 continue
@@ -88,6 +97,9 @@ def carregar_arquivos() -> list[Arquivo]:
                     descricao=texto(tabela.get("description")),
                     dag=(tabela.get("meta") or {}).get("dag"),
                 )
+    ausentes = (fontes or set()) - encontradas
+    if ausentes:
+        raise SystemExit(f"Fontes não encontradas nos sources.yml: {sorted(ausentes)}")
     for sql in sorted(MODELOS.rglob("bronze/*.sql")):
         for nome in CHAMADA_FONTE.findall(sql.read_text(encoding="utf-8")):
             if nome in arquivos:
@@ -218,7 +230,7 @@ ID_SIMULADO = "(simulado)"
 def sincronizar_containers(
     om: ClienteOM, declarado: dict, arquivos: list[Arquivo]
 ) -> dict[tuple[str, ...], str]:
-    """Cria bucket, camada, prefixo e arquivo, do raiz para a folha."""
+    """Cria bucket, camada, prefixo e padrões de arquivo, do raiz para a folha."""
     nome_servico = declarado["name"]
     print(f"Containers ({len(arquivos)} arquivos declarados)")
     identificadores: dict[tuple[str, ...], str] = {}
@@ -365,8 +377,8 @@ def sincronizar_linhagem(
     servico_banco: str,
     banco: str,
 ) -> None:
-    """Liga cada parquet à tabela Bronze que o lê."""
-    print("Linhagem arquivo -> Bronze")
+    """Liga cada padrão declarado de arquivo à tabela Bronze que o lê."""
+    print("Linhagem padrão de fonte -> Bronze")
     schemas = schema_por_modelo()
     ligadas = 0
     for arquivo in arquivos:
@@ -531,29 +543,54 @@ def sincronizar_orquestracao(
 
 
 def sincronizar(
-    om: ClienteOM, donos: Proprietarios, servico_banco: str, banco: str
+    om: ClienteOM,
+    donos: Proprietarios,
+    servico_banco: str,
+    banco: str,
+    fontes: set[str] | None = None,
+    pular_orquestracao: bool = False,
 ) -> None:
     declarado = carregar("servicos.yml").get("lake") or {}
     if not declarado:
         raise SystemExit("Seção `lake` ausente em governance/servicos.yml")
     sincronizar_servico(om, donos, declarado)
-    arquivos = carregar_arquivos()
+    arquivos = carregar_arquivos(fontes)
+    if not arquivos:
+        raise SystemExit("Nenhuma fonte lake declarada foi selecionada.")
     identificadores = sincronizar_containers(om, declarado, arquivos)
     sincronizar_linhagem(om, arquivos, identificadores, servico_banco, banco)
     anotar_dags_de_origem(om, arquivos, servico_banco, banco)
-    sincronizar_orquestracao(om, donos, arquivos, identificadores)
+    if not pular_orquestracao:
+        sincronizar_orquestracao(om, donos, arquivos, identificadores)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--confirmar", action="store_true", help="escreve de fato")
+    parser.add_argument(
+        "--fontes",
+        nargs="+",
+        help="nomes de fontes em sources.yml; por padrão, publica todas",
+    )
+    parser.add_argument(
+        "--pular-orquestracao",
+        action="store_true",
+        help="não altera o serviço ou as DAGs do Airflow",
+    )
     args = parser.parse_args()
 
     config = ambiente(exigir_acesso=args.confirmar)
     om = ClienteOM(config["url"], config["token"], args.confirmar)
     om.cabecalho()
     donos = Proprietarios(om, carregar("dominios.yml"))
-    sincronizar(om, donos, config["servico"], config["banco"])
+    sincronizar(
+        om,
+        donos,
+        config["servico"],
+        config["banco"],
+        set(args.fontes) if args.fontes else None,
+        args.pular_orquestracao,
+    )
     return om.resumo()
 
 

@@ -1174,6 +1174,11 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--only-ext",
+        default="",
+        help="Processa só arquivos destas extensões, separadas por vírgula (ex.: xlsx,csv).",
+    )
+    parser.add_argument(
         "--max-size-mb",
         type=int,
         default=0,

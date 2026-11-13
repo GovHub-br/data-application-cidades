@@ -6,6 +6,7 @@ import csv
 import json
 import logging
 from pathlib import Path
+from time import sleep
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -188,18 +189,27 @@ def _put_json(api_url: str, resource: str, payload: dict, jwt_token: str) -> dic
         method="PUT",
     )
 
-    try:
-        with urlopen(request, timeout=30) as response:
-            response_body = response.read().decode("utf-8")
-    except HTTPError as exc:
-        response_body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(
-            f"OpenMetadata recusou PUT {resource} ({exc.code}): {response_body}"
-        ) from exc
-    except URLError as exc:
-        raise RuntimeError(
-            f"Nao foi possivel acessar o OpenMetadata em {api_url}: {exc.reason}"
-        ) from exc
+    for tentativa in range(2):
+        try:
+            with urlopen(request, timeout=30) as response:
+                response_body = response.read().decode("utf-8")
+            break
+        except HTTPError as exc:
+            response_body = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(
+                f"OpenMetadata recusou PUT {resource} ({exc.code}): {response_body}"
+            ) from exc
+        except URLError as exc:
+            if tentativa == 0:
+                logging.warning(
+                    "Falha de transporte no OpenMetadata; repetindo PUT %s uma vez.",
+                    resource,
+                )
+                sleep(1)
+                continue
+            raise RuntimeError(
+                f"Nao foi possivel acessar o OpenMetadata em {api_url}: {exc.reason}"
+            ) from exc
 
     return json.loads(response_body) if response_body else {}
 
