@@ -77,6 +77,8 @@ seeds:
     description: O que acontece se não cumprir.
   - name: referencia
     description: Anexo e item da portaria.
+  - name: rotulo_painel
+    description: Rótulo curto do marco para o painel, na forma linha · quando · o que se exige (portaria).
 - name: ts_marcos_portaria_75_2025
   description: Régua de marcos temporais do TS transcrita da Portaria MCID 75/2025, Anexo II (FAR, FDS, Rural, Sub-50
     e Pró-Moradia).
@@ -84,6 +86,9 @@ seeds:
     openmetadata:
       glossary:
       - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  columns:
+  - name: rotulo_painel
+    description: Rótulo curto do marco para o painel, na forma linha · quando · o que se exige (portaria).
 - name: ts_publico_tradicional
   description: Palavras-chave (expressões regulares, em maiúsculas) usadas para ESTIMAR o público tradicional pelo
     nome da entidade organizadora e do empreendimento. Não há campo próprio na origem. Revisar quando aparecer falso

@@ -62,7 +62,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.Atores.EntePublico
+        - MCID.Localizacao.Municipio
 
   - name: uf
     dataType: text
@@ -70,7 +70,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.Identificadores.UF
+        - MCID.Localizacao.UF
 
   - name: nome_empreendimento
     dataType: text
@@ -138,7 +138,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.StatusTS
 
   - name: motivo_situacao_ts_atrasado_paralisado
     dataType: text
@@ -185,7 +185,7 @@ models:
   meta:
     openmetadata:
       glossary:
-      - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+      - MCID.ProgramasHabitacionais.MCMV.MCMVFDS
       - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
       customProperties:
         dataLayer: "Bronze"
@@ -222,7 +222,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.Atores.EntePublico
+        - MCID.Localizacao.Municipio
 
   - name: uf
     dataType: text
@@ -230,7 +230,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.Identificadores.UF
+        - MCID.Localizacao.UF
 
   - name: nome_empreendimento
     dataType: text
@@ -298,7 +298,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.StatusTS
 
   - name: motivo_situacao_ts_atrasado_paralisado
     dataType: text
@@ -375,7 +375,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.Atores.EntePublico
+        - MCID.Localizacao.Municipio
 
   - name: uf
     dataType: text
@@ -383,7 +383,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.Identificadores.UF
+        - MCID.Localizacao.UF
 
   - name: nome_empreendimento
     dataType: text
@@ -451,7 +451,7 @@ models:
     meta:
       openmetadata:
         glossary:
-        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.StatusTS
 
   - name: motivo_situacao_ts_atrasado_paralisado
     dataType: text
@@ -1807,3 +1807,95 @@ models:
     description: Latitude do centroide, graus decimais.
   - name: longitude
     description: Longitude do centroide, graus decimais.
+
+- name: bronze_ts_trabalho-social-2026-07__ts_af_caixa_far_07_26
+  description: >
+    Acompanhamento do Trabalho Social das operações do MCMV-FAR geridas pela CAIXA, competência jul/2026, um contrato por linha. Cópia fiel do parquet staging/manueal_ts/trabalho-social-2026-07__ts_af_caixa_far_07_26 (aba TS_AF_CAIXA_FAR da planilha MCMV_FAR_TS_CAIXA_BB_202607), sem transformação. Colunas como na planilha do agente; a tipagem é feita na prata_ts_acompanhamento.
+  tags:
+    - Status.NaoConsumivel
+    - Orgao.MCID
+    - Dominio.TrabalhoSocial
+    - Programa.MCMVFAR
+    - Tier.Tier3
+    - Certification.Bronze
+  owners:
+    - name: "Time de Engenharia de Dados do MCID"
+      type: team
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      customProperties:
+        dataLayer: "Bronze"
+        tier: "Tier3"
+        certificationStatus: "Bronze"
+        ownerTeam: "Time de Engenharia de Dados do MCID"
+
+- name: bronze_ts_trabalho-social-2026-07__ts_af_bb_far_07_26
+  description: >
+    Acompanhamento do Trabalho Social das operações do MCMV-FAR geridas pelo Banco do Brasil, competência jul/2026, um contrato por linha. Cópia fiel do parquet staging/manueal_ts/trabalho-social-2026-07__ts_af_bb_far_07_26 (aba TS_AF_BB_FAR da planilha MCMV_FAR_TS_CAIXA_BB_202607), sem transformação. A tipagem é feita na prata_ts_acompanhamento.
+  tags:
+    - Status.NaoConsumivel
+    - Orgao.MCID
+    - Dominio.TrabalhoSocial
+    - Programa.MCMVFAR
+    - Tier.Tier3
+    - Certification.Bronze
+  owners:
+    - name: "Time de Engenharia de Dados do MCID"
+      type: team
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      customProperties:
+        dataLayer: "Bronze"
+        tier: "Tier3"
+        certificationStatus: "Bronze"
+        ownerTeam: "Time de Engenharia de Dados do MCID"
+
+- name: bronze_ts_empreendimentos-sem-indicacao-de-demanda-2026-09-02
+  description: >
+    Lista da SNH de empreendimentos do MCMV-FAR sem indicação de demanda (analítico FAR PF), remessa de 02/09/2026: por APF, grupos familiares pesquisados no SIGDH, dossiês enviados e aprovados pelo aplicativo e contratos PF assinados. Cópia fiel do parquet da staging (manueal_ts), sem transformação; a prata é a prata_ts_demanda_dossie.
+  tags:
+    - Status.NaoConsumivel
+    - Orgao.MCID
+    - Dominio.TrabalhoSocial
+    - Programa.MCMVFAR
+    - Tier.Tier3
+    - Certification.Bronze
+  owners:
+    - name: "Time de Engenharia de Dados do MCID"
+      type: team
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      customProperties:
+        dataLayer: "Bronze"
+        tier: "Tier3"
+        certificationStatus: "Bronze"
+        ownerTeam: "Time de Engenharia de Dados do MCID"
+
+- name: bronze_ts_empreendimentos-sem-indicacao-de-demanda-2026-10-06
+  description: >
+    Lista da SNH de empreendimentos do MCMV-FAR sem indicação de demanda (analítico FAR PF), remessa de 06/10/2026. Mesmo conteúdo da remessa de 02/09, mas sem UF, município, UH, data de contratação, ente, construtora e situação do TS. Cópia fiel do parquet da staging (manueal_ts), sem transformação; a prata é a prata_ts_demanda_dossie.
+  tags:
+    - Status.NaoConsumivel
+    - Orgao.MCID
+    - Dominio.TrabalhoSocial
+    - Programa.MCMVFAR
+    - Tier.Tier3
+    - Certification.Bronze
+  owners:
+    - name: "Time de Engenharia de Dados do MCID"
+      type: team
+  meta:
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      customProperties:
+        dataLayer: "Bronze"
+        tier: "Tier3"
+        certificationStatus: "Bronze"
+        ownerTeam: "Time de Engenharia de Dados do MCID"

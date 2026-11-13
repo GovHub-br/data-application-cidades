@@ -4,15 +4,8 @@ models:
   description: Alertas de marco temporal do Trabalho Social para o painel. Uma linha por contrato × marco da portaria
     de TS do contrato cujo gatilho já foi atingido; ic_descumprido marca os que os dados mostram fora do marco,
     com a evidência em texto e a consequência prevista. Réguas da 464/2018 e da 75/2025, FAR, FDS e Rural. Só entram
-    marcos verificáveis com o acompanhamento informado pelo agente financeiro (obra, entrega, relatórios, execução e
-    desembolso).
+    marcos verificáveis com a planilha (obra, entrega, relatórios, execução e desembolso).
   meta:
-    documentacao:
-      grao: Uma linha por contrato com Trabalho Social e marco da portaria de TS cujo gatilho já foi atingido.
-      chave: [id_alerta]
-      fonte: Acompanhamento do Trabalho Social informado pela CAIXA e pelo Banco do Brasil e réguas de marcos das Portarias MCID 464/2018 e 75/2025.
-      periodicidade: mensal
-      consumo: [Superset, painel Trabalho Social — Alertas de marcos]
     tags:
     - gold
     openmetadata:
@@ -37,7 +30,7 @@ models:
         glossary: &id001
         - MCID.Identificadores.APF
   - name: id_marco
-    description: 'Identificador do marco no formato portaria-linha-ordem, como 75-FAR-01 ou 464-FDS-02.'
+    description: 'Identificador do marco: portaria-linha-ordem (ex.: 75-FAR-01, 464-FDS-02).'
     meta:
       openmetadata:
         glossary:
@@ -45,7 +38,8 @@ models:
     tests:
     - not_null
   - name: marco
-    description: 'Rótulo do marco para o painel: portaria · id · gatilho.'
+    description: 'Rótulo do marco para o painel, na forma linha · quando · o que se exige (portaria). O
+      identificador técnico fica em id_marco.'
     meta:
       openmetadata:
         glossary:
@@ -81,7 +75,7 @@ models:
         glossary: &id004
         - MCID.Identificadores.APF
   - name: contrato
-    description: 'Contrato como informado pelo agente financeiro (na CAIXA, o contrato; no BB, o contrato de registro AO).'
+    description: 'Contrato como veio na planilha (CAIXA: contrato; BB: contrato de registro AO).'
     meta:
       openmetadata:
         glossary:
@@ -187,7 +181,7 @@ models:
         glossary: &id010
         - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
   - name: situacao_ts_origem
-    description: Situação do TS como informada pelo agente financeiro, em maiúsculas.
+    description: Situação do TS como veio da planilha, em maiúsculas.
     meta:
       openmetadata:
         glossary:
@@ -256,7 +250,7 @@ models:
         glossary:
         - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
   - name: dias_sem_relatorio
-    description: Dias entre a competência da remessa e o último relatório de TS.
+    description: Dias entre a competência da planilha e o último relatório de TS.
     meta:
       openmetadata:
         glossary:
@@ -281,7 +275,7 @@ models:
         glossary:
         - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
   - name: dt_referencia
-    description: Competência da remessa do agente financeiro (último dia do mês).
+    description: Competência da planilha (último dia do mês), lida do nome do arquivo.
   - name: ic_alerta_principal
     description: Verdadeiro em uma linha por contrato com alerta (o marco mais avançado descumprido). Use para somar
       UH e valores sem duplicar.
@@ -293,12 +287,6 @@ models:
   description: 'Uma linha por contrato com Trabalho Social para o mapa do painel: coordenadas, tipo de edificação,
     regime, público tradicional estimado, situação e portaria do TS e o resumo dos alertas de marco (status_marco).'
   meta:
-    documentacao:
-      grao: Uma linha por contrato com Trabalho Social.
-      chave: [id_ts]
-      fonte: Acompanhamento do Trabalho Social da CAIXA e do BB, dados prioritários da SNH, cadastro dos empreendimentos FAR e FDS e centroides municipais do IBGE.
-      periodicidade: mensal
-      consumo: [Superset, painel Trabalho Social — Alertas de marcos (mapa e tipo de edificação)]
     tags:
     - gold
     openmetadata:
@@ -513,18 +501,12 @@ models:
         - Sem régua de marcos
         - TS encerrado
   - name: dt_referencia
-    description: Competência da remessa do agente financeiro (último dia do mês).
+    description: Competência da planilha (último dia do mês), lida do nome do arquivo.
 - name: ouro_ts_demanda_dossie
   description: 'Indicação de demanda e dossiês dos empreendimentos FAR sem indicação de demanda, na remessa mais
     recente, com a variação desde a anterior e os alertas da equipe: obra a partir de 50% sem famílias indicadas
     e obra a partir de 60% sem dossiê enviado. Uma linha por APF.'
   meta:
-    documentacao:
-      grao: Uma linha por empreendimento FAR sem indicação de demanda (APF).
-      chave: [apf]
-      fonte: Lista de empreendimentos FAR sem indicação de demanda enviada ao MCID, com a pesquisa no SIGDH e os dossiês enviados.
-      periodicidade: eventual
-      consumo: [Superset, painel Trabalho Social — Alertas de marcos (demanda e dossiês)]
     tags:
     - gold
     openmetadata:
@@ -702,7 +684,7 @@ models:
   - name: dt_referencia_anterior
     description: Data da remessa anterior usada na variação.
   - name: dt_referencia
-    description: Competência da remessa do agente financeiro (último dia do mês).
+    description: Competência da planilha (último dia do mês), lida do nome do arquivo.
   - name: pc_dossies_enviados_por_uh
     description: Dossiês enviados por UH, em %.
     meta:

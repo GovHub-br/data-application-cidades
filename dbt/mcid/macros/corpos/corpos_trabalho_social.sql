@@ -148,10 +148,10 @@ with
     com_chave as (
         select
             t.*,
-            {{ var('schema_udfs') }}.normalize_apf(t.contrato) as apf,
-            count(*) over (partition by t.linha, t.agente_financeiro, {{ var('schema_udfs') }}.normalize_apf(t.contrato)) as qt_linhas_origem,
+            {{ target.schema }}.normalize_apf(t.contrato) as apf,
+            count(*) over (partition by t.linha, t.agente_financeiro, {{ target.schema }}.normalize_apf(t.contrato)) as qt_linhas_origem,
             row_number() over (
-                partition by t.linha, t.agente_financeiro, {{ var('schema_udfs') }}.normalize_apf(t.contrato)
+                partition by t.linha, t.agente_financeiro, {{ target.schema }}.normalize_apf(t.contrato)
                 order by t.vr_global_ts desc nulls last, t.dt_ultimo_relatorio desc nulls last
             ) as ordem
         from tipada t
@@ -299,9 +299,9 @@ with
     com_chave as (
         select
             t.*,
-            {{ var('schema_udfs') }}.normalize_apf(t.contrato) as apf,
+            {{ target.schema }}.normalize_apf(t.contrato) as apf,
             row_number() over (
-                partition by t.linha, t.agente_financeiro, {{ var('schema_udfs') }}.normalize_apf(t.contrato), t.arquivo
+                partition by t.linha, t.agente_financeiro, {{ target.schema }}.normalize_apf(t.contrato), t.arquivo
                 order by t.portaria_ts nulls last
             ) as ordem
         from tipada t
@@ -351,7 +351,8 @@ select
     nullif(trim(prazo_dias), '')::integer as prazo_dias,
     nullif(trim(exigencia), '') as exigencia,
     nullif(trim(consequencia_descumprimento), '') as consequencia_descumprimento,
-    trim(referencia) as referencia
+    trim(referencia) as referencia,
+    nullif(trim(rotulo_painel), '') as rotulo_painel
 from marcos
 {% endmacro %}
 
@@ -364,9 +365,9 @@ from marcos
 --   FAR    bronze_seed_manual_far_portaria_selecao_apf: já vem por APF                       -> 'Exata'
 --   FDS    bronze_seed_manual_fds_portaria_selecao_698_2026 + Cad PJ FDS (bronze, número da proposta) -> 'Exata'
 --          (em out/2026 nenhuma das 393 propostas da 698/2026 está contratada no Cad PJ)
---   RURAL  ainda não entra: o vínculo Rural (162/2018 por APF; 354/2024 e 697/2026 por CNPJ da EO)
---          depende da prata_rural_selecao_contrato, que está na branch feat/dbt_pro_moradia_fnhis.
---          Quando ela chegar na main, voltar com o ramo rural embutindo corpo_prata_rural_selecao_contrato.
+--   RURAL  corpo_prata_rural_selecao_contrato (a regra da prata_rural_selecao_contrato): 162/2018 por APF;
+--          354/2024 e 697/2026 por CNPJ da EO
+--          + município, com a confiança calculada lá (Exata, Alta, Média, Baixa)
 -- Quando o mesmo APF cai em mais de uma seleção, fica a de maior confiança e, no empate, a portaria
 -- mais recente; qt_selecoes_candidatas mostra quantas havia.
 
@@ -374,7 +375,7 @@ with
     far as (
         select
             'FAR'::text as linha,
-            {{ var('schema_udfs') }}.normalize_apf(f.apf) as apf,
+            {{ target.schema }}.normalize_apf(f.apf) as apf,
             replace((regexp_match(f.portaria, 'n[ºo°]\s*([\d.]+)', 'i'))[1], '.', '')
                 || '/' || (regexp_match(f.portaria, '(20\d{2})'))[1] as portaria_selecao,
             nullif(trim(f.portaria), '') as ato_selecao,
@@ -389,7 +390,7 @@ with
     fds as (
         select
             'FDS'::text,
-            {{ var('schema_udfs') }}.normalize_apf(c.apf),
+            {{ target.schema }}.normalize_apf(c.apf),
             '698/2026'::text,
             'Portaria MCID nº 698/2026'::text,
             lower(trim(s."IDENTIFICACAO DA PROPOSTA")),
@@ -398,21 +399,36 @@ with
             null::integer
         from {{ ref("bronze_seed_manual_fds_portaria_selecao_698_2026") }} s
         join (
-            select distinct on ({{ var('schema_udfs') }}.normalize_apf(nu_apf::text))
-                {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
+            select distinct on ({{ target.schema }}.normalize_apf(nu_apf::text))
+                {{ target.schema }}.normalize_apf(nu_apf::text) as apf,
                 nullif(trim(no_identificacao_proposta::text), '') as id_proposta,
                 nullif(trim(no_eo::text), '') as eo_nome
             from {{ ref("bronze_shpt_monit_cad_pj_fds_mensal") }}
             where nullif(trim(nu_apf::text), '') is not null
-            order by {{ var('schema_udfs') }}.normalize_apf(nu_apf::text), filename desc
+            order by {{ target.schema }}.normalize_apf(nu_apf::text), filename desc
         ) c
             on lower(trim(c.id_proposta)) = lower(trim(s."IDENTIFICACAO DA PROPOSTA"))
         where c.apf is not null
     ),
 
+    rural as (
+        select
+            'RURAL'::text,
+            {{ target.schema }}.normalize_apf(r.apf_contrato),
+            replace(r.portaria_codigo, '_', '/'),
+            r.ato_selecao,
+            r.protocolo_proposta,
+            r.metodo_vinculo,
+            r.confianca_vinculo,
+            r.qt_selecoes_mesmo_contrato::integer
+        from ({{ corpo_prata_rural_selecao_contrato() }}) r
+        where r.ic_contratado
+    ),
+
     todas as (
         select * from far
         union all select * from fds
+        union all select * from rural
     ),
 
     ordenada as (
@@ -569,15 +585,15 @@ with
     a as (select * from ({{ corpo_prata_ts_acompanhamento() }}) as acompanhamento),
 
     snh as (
-        select distinct on ({{ var('schema_udfs') }}.normalize_apf(s.codigo_da_operacao_no_agente_financeiro::text))
-            {{ var('schema_udfs') }}.normalize_apf(s.codigo_da_operacao_no_agente_financeiro::text) as apf,
+        select distinct on ({{ target.schema }}.normalize_apf(s.codigo_da_operacao_no_agente_financeiro::text))
+            {{ target.schema }}.normalize_apf(s.codigo_da_operacao_no_agente_financeiro::text) as apf,
             {{ ts_numero("s.latitude", "double precision") }} as latitude,
             {{ ts_numero("s.longitude", "double precision") }} as longitude,
             nullif(regexp_replace(s.codigo_ibge_do_municipio::text, '[^0-9]', '', 'g'), '') as cod_ibge,
             s.nome_da_regiao as regiao
         from {{ ref("bronze_shpt_dados_prioritarios_snh_empreendimentos") }} s
         where nullif(trim(s.codigo_da_operacao_no_agente_financeiro::text), '') is not null
-        order by {{ var('schema_udfs') }}.normalize_apf(s.codigo_da_operacao_no_agente_financeiro::text),
+        order by {{ target.schema }}.normalize_apf(s.codigo_da_operacao_no_agente_financeiro::text),
             (nullif(trim(s.latitude::text), '') is not null) desc,
             s.data_de_referencia desc nulls last
     ),
@@ -585,11 +601,11 @@ with
     tipologia_sftp as (
         select distinct on (linha, apf) linha, apf, dsc_tipologia
         from (
-            select 'FAR'::text as linha, {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
+            select 'FAR'::text as linha, {{ target.schema }}.normalize_apf(nu_apf::text) as apf,
                 upper(trim(dsc_tipologia)) as dsc_tipologia, dt_movimento::text as dt_movimento
             from {{ ref("bronze_sftp_empreendimento_int040") }}
             union all
-            select 'FDS', {{ var('schema_udfs') }}.normalize_apf(nu_apf::text),
+            select 'FDS', {{ target.schema }}.normalize_apf(nu_apf::text),
                 upper(trim(dsc_tipologia)), dt_movimento::text
             from {{ ref("bronze_sftp_empreendimento_int059") }}
         ) t
@@ -599,40 +615,33 @@ with
 
     demanda as (
         select
-            {{ var('schema_udfs') }}.normalize_apf(c.apf) as apf,
+            {{ target.schema }}.normalize_apf(c.apf) as apf,
             c.co_tipo_demanda::text as co_tipo_demanda,
             d.tipo_demanda
         from (
-            select distinct on ({{ var('schema_udfs') }}.normalize_apf(nu_apf::text))
-                {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
+            select distinct on ({{ target.schema }}.normalize_apf(nu_apf::text))
+                {{ target.schema }}.normalize_apf(nu_apf::text) as apf,
                 {{ parse_int("co_tipo_demanda") }} as co_tipo_demanda
             from {{ ref("bronze_shpt_monit_cad_pj_far_mensal") }}
             where nullif(trim(nu_apf::text), '') is not null
-            order by {{ var('schema_udfs') }}.normalize_apf(nu_apf::text), filename desc
+            order by {{ target.schema }}.normalize_apf(nu_apf::text), filename desc
         ) c
         left join {{ ref("bronze_seed_ts_dominio_tipo_demanda") }} d on d.co_tipo_demanda = c.co_tipo_demanda::text
     ),
 
     eo as (
-        select 'RURAL'::text as linha, apf, max(eo_nome) as eo_nome
-        from (
-            select distinct on ({{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv::text))
-                {{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv::text) as apf,
-                nullif(trim(coalesce(nullif(trim(no_nome_novo_eo::text), ''), no_nome_eo::text)), '') as eo_nome
-            from {{ ref("bronze_shpt_monit_cad_pj_rural_mensal") }}
-            where nullif(trim(nu_apf_com_dv::text), '') is not null
-            order by {{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv::text), filename desc
-        ) as cad_rural group by 2
+        select 'RURAL'::text as linha, {{ target.schema }}.normalize_apf(apf) as apf, max(eo_nome) as eo_nome
+        from ({{ corpo_prata_rural_operacao_eo() }}) as operacao_eo group by 2
         union all
-        select 'FDS', {{ var('schema_udfs') }}.normalize_apf(apf), max(eo_nome)
+        select 'FDS', {{ target.schema }}.normalize_apf(apf), max(eo_nome)
         from (
-            select distinct on ({{ var('schema_udfs') }}.normalize_apf(nu_apf::text))
-                {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
+            select distinct on ({{ target.schema }}.normalize_apf(nu_apf::text))
+                {{ target.schema }}.normalize_apf(nu_apf::text) as apf,
                 nullif(trim(no_identificacao_proposta::text), '') as id_proposta,
                 nullif(trim(no_eo::text), '') as eo_nome
             from {{ ref("bronze_shpt_monit_cad_pj_fds_mensal") }}
             where nullif(trim(nu_apf::text), '') is not null
-            order by {{ var('schema_udfs') }}.normalize_apf(nu_apf::text), filename desc
+            order by {{ target.schema }}.normalize_apf(nu_apf::text), filename desc
         ) as cad_fds group by 2
     ),
 
@@ -781,9 +790,9 @@ with
     )
 
 select
-    {{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv::text) || '|'
+    {{ target.schema }}.normalize_apf(nu_apf_com_dv::text) || '|'
         || {{ ts_dt_referencia_arquivo("_source_file") }}::text as id_demanda_remessa,
-    {{ var('schema_udfs') }}.normalize_apf(nu_apf_com_dv::text) as apf,
+    {{ target.schema }}.normalize_apf(nu_apf_com_dv::text) as apf,
     {{ ts_dt_referencia_arquivo("_source_file") }} as dt_referencia,
     {{ ts_texto("no_empreendimento") }} as empreendimento_nome,
     round({{ ts_numero("qt_uh") }})::integer as qt_uh,
@@ -867,7 +876,7 @@ with
         select
             s.*,
             m.id_marco, m.ordem as ordem_marco, m.fase, m.gatilho, m.pc_obra_gatilho, m.prazo_dias,
-            m.exigencia, m.consequencia_descumprimento, m.referencia,
+            m.exigencia, m.consequencia_descumprimento, m.referencia, m.rotulo_painel,
             -- o gatilho do marco já foi atingido?
             case m.id_marco
                 when '75-FAR-01' then coalesce(s.pc_obra, 0) >= 60
@@ -902,7 +911,8 @@ select
     id_ts || '|' || id_marco as id_alerta,
     id_ts,
     id_marco,
-    portaria_ts || ' · ' || id_marco || ' · ' || gatilho as marco,
+    -- rótulo legível (pedido da UnB): linha · quando · o que se exige (portaria)
+    coalesce(rotulo_painel, portaria_ts || ' · ' || id_marco || ' · ' || gatilho) as marco,
     portaria_ts,
     origem_portaria_ts,
     linha,
