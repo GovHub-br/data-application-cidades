@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shlex
 import subprocess
 import sys
@@ -28,35 +29,69 @@ def main() -> int:
         default="poetry run dbt",
         help="executável do dbt (padrão: 'poetry run dbt'; no CI, 'dbt')",
     )
+    parser.add_argument(
+        "--select",
+        nargs="+",
+        help="limita docs generate a estes seletores dbt e mescla o resultado ao catálogo existente",
+    )
     args = parser.parse_args()
 
     load_dotenv(ROOT / ".env", override=False)
     with tempfile.TemporaryDirectory(prefix="openmetadata-dbt-") as private_target:
-        subprocess.run(
-            [
-                *shlex.split(args.dbt_command),
-                "docs",
-                "generate",
-                "--profiles-dir",
-                str(DBT_PROJECT),
-                "--target-path",
-                private_target,
-            ],
-            cwd=DBT_PROJECT,
-            check=True,
-        )
-        subprocess.run(
-            [
-                sys.executable,
-                str(EXPORTER),
-                "--target-dir",
-                private_target,
-                "--output",
-                str(OUTPUT),
-            ],
-            cwd=ROOT,
-            check=True,
-        )
+        command = [
+            *shlex.split(args.dbt_command),
+            "docs",
+            "generate",
+            "--profiles-dir",
+            str(DBT_PROJECT),
+            "--target-path",
+            private_target,
+        ]
+        if args.select:
+            command.extend(["--select", *args.select])
+        subprocess.run(command, cwd=DBT_PROJECT, check=True)
+
+        output = OUTPUT
+        export_command = [
+            sys.executable,
+            str(EXPORTER),
+            "--target-dir",
+            private_target,
+        ]
+        if args.select:
+            output = Path(private_target) / "openmetadata_semantic_catalog.json"
+            seletores_de_caminho = []
+            for seletor in args.select:
+                if not seletor.startswith("path:"):
+                    raise ValueError(
+                        "A geração seletiva do catálogo aceita apenas seletores path:."
+                    )
+                seletores_de_caminho.append(seletor.removeprefix("path:"))
+            export_command.extend(["--model-path", *seletores_de_caminho])
+        export_command.extend(["--output", str(output)])
+        subprocess.run(export_command, cwd=ROOT, check=True)
+        if args.select:
+            catalogo_novo = json.loads(output.read_text(encoding="utf-8"))
+            catalogo_existente = (
+                json.loads(OUTPUT.read_text(encoding="utf-8"))
+                if OUTPUT.exists()
+                else {}
+            )
+            models = {
+                model["id"]: model
+                for model in catalogo_existente.get("models", [])
+            }
+            models.update({model["id"]: model for model in catalogo_novo["models"]})
+            catalogo_novo["models"] = [models[key] for key in sorted(models)]
+            OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+            OUTPUT.write_text(
+                json.dumps(catalogo_novo, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            print(
+                f"Catálogo semântico mesclado: {OUTPUT} "
+                f"({len(catalogo_novo['models'])} models)"
+            )
     return 0
 
 

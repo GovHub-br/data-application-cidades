@@ -337,11 +337,20 @@ def sincronizar_produtos(om: ClienteOM, donos: Proprietarios, dominios: dict) ->
                 f"produto {p['name']}",
             )
         else:
-            om.criar(
-                "dataProducts",
-                {"name": p["name"], "domains": [p["domain"]], **desejado},
-                p["name"],
-            )
+            # Em CreateDataProduct, `domains` e `experts` são listas de STRING
+            # (FQN do domínio, login do especialista), não as referências de
+            # entidade que o patch aceita. Espalhar `desejado` por último
+            # sobrescrevia `domains` com a referência -> HTTP 400.
+            corpo = {
+                chave: valor
+                for chave, valor in desejado.items()
+                if chave not in {"domains", "experts"}
+            }
+            corpo["name"] = p["name"]
+            corpo["domains"] = [p["domain"]]
+            if peritos:
+                corpo["experts"] = [perito["name"] for perito in peritos]
+            om.criar("dataProducts", corpo, p["name"])
 
 
 # ── glossário ───────────────────────────────────────────────────────────────

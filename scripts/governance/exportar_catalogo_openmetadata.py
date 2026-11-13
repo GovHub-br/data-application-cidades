@@ -178,6 +178,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target-dir", type=Path, default=DBT_TARGET)
     parser.add_argument(
+        "--model-path",
+        nargs="+",
+        help="exporta modelos somente destes caminhos relativos a models/",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=ROOT
@@ -200,6 +205,13 @@ def main() -> None:
             continue
         if node.get("resource_type") != "model":
             continue
+        if args.model_path:
+            model_path = (node.get("original_file_path") or "").replace("\\", "/")
+            if not any(
+                model_path.startswith(f"{path.rstrip('/')}/")
+                for path in args.model_path
+            ):
+                continue
         exported = model_export(node_id, node, catalog, violations)
         if exported:
             models.append(exported)

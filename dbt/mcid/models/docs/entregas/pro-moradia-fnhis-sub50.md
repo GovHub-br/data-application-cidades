@@ -97,3 +97,30 @@ produto do FGTS deve referenciá-las, não duplicá-las.
   série histórica das remessas; a bronze lê só a remessa corrente.
 - O site `docs-pages` não ganhou página de domínio: ela exige o texto do relatório técnico
   (`no_relatorio`), que não cobre estes dois programas.
+
+## Curva S do Pró-Moradia e empenho por parcelas do Sub-50 (11/11/2026)
+
+A primeira versão copiou o desenho do Rural (curva por mês do calendário + faixas por quartil) e não fazia sentido
+nas duas linhas. Revisão:
+
+**Pró-Moradia** — a Curva S é a **por tempo de contrato** (`ouro_pro_moradia_curva_s_referencia`): mediana do % físico
+de 0% (0 meses) → 4% (12) → 25% (24) → 49% (48) → 72% (60) → 92% (180). A curva por mês do calendário
+(`ouro_pro_moradia_curva_s`) somava 30 anos de contratos, com os concluídos a 100% para sempre; agora tem
+`situacao_carteira` (Em execução / Concluída / Sem medição há 12+ meses) e o painel mostra só a carteira em execução,
+como acompanhamento (não é S: a carteira entra e sai). O % previsto foi tirado dos gráficos: vem 0 em 474 de 653
+avaliações desde 2024. Em `ouro_pro_moradia_curva_s_desvio`, `situacao_acompanhamento` separa as obras em aberto em
+**Atrasada** (medição nos últimos 12 meses e abaixo do p25 da idade), **Sem medição há 12+ meses** (provável
+paralisação; não dá para dizer se está atrasada), Em dia e Sem referência. Em 11/11/2026 (corte: medição de
+out/2026): 11 atrasadas, 101 sem medição há 12+ meses, 36 em dia, 5 sem referência.
+
+**FNHIS Sub-50** — não há Curva S possível hoje: o % físico vem 0 na SNH (ficha e prioritários), o desembolso tem um
+único retrato (25/08/2026) e todos os termos têm 12 a 24 meses (seleção 1.310/2024). O empenho sai em parcelas
+fixas (≈10%, 20%, 30%, 50%), por isso a "curva" anda em degraus e os quartis por idade colapsavam (p25 = mediana =
+p75 ≈ 9,7%). `ouro_fnhis_curva_s_referencia` e `ouro_fnhis_curva_s_desvio` foram **removidos** e substituídos por
+`ouro_fnhis_empenho_parcelas` (termo): parcelas empenhadas, último empenho, meses sem nova parcela e
+`situacao_parcelas`. Em 11/11/2026 (retrato de ago/2026): 625 termos parados na 1ª parcela (~10%) há 12+ meses,
+566 com nova parcela nos últimos 6 meses, 9 sem empenho. `ouro_fnhis_curva_s` continua como evolução do empenho
+(mês × UF), com `ic_retrato_completo`. Para ter Curva S do Sub-50 é preciso o % físico preenchido na fonte ou
+retratos mensais do desembolso — levar à validação com o MCid.
+
+No painel: `scripts/superset/build_secao_curva_s_linhas.py`.
