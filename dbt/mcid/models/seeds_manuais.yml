@@ -1,0 +1,399 @@
+version: 2
+sources:
+- name: seeds_manuais
+  schema: seeds
+  description: Anexos de portarias de seleção carregados direto no Postgres (schema seeds).
+  tables:
+  # --- MCMV Rural: anexos das portarias do ciclo de seleção, extraídos dos PDFs compilados
+  # (pasta rural/portarias_selecao) e carregados por carga_seeds_portarias_rural.sql em 03/11/2026.
+  - name: rural_portaria_selecao_354_2024
+    description: >
+      Anexo da Portaria MCID nº 354/2024 (resultado da Seleção 2023 do MCMV Rural, aberta pela 743/2023),
+      versão compilada de 18/11/2025, que já incorpora as Portarias 701/2024, 990/2024, 503/2025, 707/2025 e
+      1.281/2025. Uma linha por proposta, com a situação depois das alterações (original, alterada, incluída,
+      excluída). Fonte: PDF publicado em gov.br/cidades; extração automática do PDF. Data de referência: 18/11/2025.
+      Cobertura: 2.110 linhas, 75.230 UH.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: &anexo_selecao
+    - name: portaria_arquivo
+      description: PDF de onde o anexo foi extraído.
+    - name: pagina
+      description: Página do PDF.
+    - name: uf
+      description: Sigla da UF.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UF
+    - name: municipio
+      description: Município da proposta.
+    - name: municipio_anterior
+      description: Município antes da alteração, quando a compilada alterou.
+    - name: id_proposta
+      description: Número de identificação da proposta (UUID). Chave para cruzar com as portarias de autorização.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.IDProposta
+    - name: entidade_organizadora
+      description: Nome da entidade organizadora.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Atores.EntidadeOrganizadora
+    - name: cnpj_eo
+      description: CNPJ da entidade organizadora, como está no PDF (com pontuação).
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.CNPJ
+          - MCID.Atores.EntidadeOrganizadora
+    - name: qtd_uh
+      description: UH selecionadas.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UH
+    - name: situacao
+      description: 'Situação na compilada: original, alterada, incluída ou excluída.'
+    - name: nota_alteracao
+      description: Portaria que alterou, incluiu ou excluiu a proposta.
+    - name: texto_riscado
+      description: Texto riscado na compilada.
+    - name: alertas
+      description: Alertas da extração do PDF.
+  - name: rural_portaria_selecao_697_2026
+    description: >
+      Anexo II da Portaria MCID nº 697/2026 (resultado da Seleção 2025 do MCMV Rural, aberta pela 1.161/2025),
+      versão compilada, que já inclui a 948/2026 (art. 6º-A). Mesmo layout da 354/2024. Fonte: PDF publicado em
+      gov.br/cidades; extração automática. Cobertura: 1.217 linhas, 50.000 UH (bate com a meta do Anexo I).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: *anexo_selecao
+  - name: rural_portaria_autorizacao_1133_2024
+    description: >
+      Anexo da Portaria MCID nº 1.133/2024, de 09/10/2024 (versão compilada): propostas da Seleção 2023 autorizadas
+      a contratar. Uma linha por proposta. Fonte: PDF SEI_MIDR5372571 (gov.br/cidades); extração automática por
+      tabela. Cobertura: 263 propostas, 11.203 UH.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: &anexo_autorizacao
+    - name: portaria_codigo
+      description: Código da portaria (número sem ponto + ano, ex. 1133_2024).
+    - name: numero
+      description: Número da portaria por extenso (ex. 1.133).
+    - name: ano
+      description: Ano da portaria.
+    - name: dt_portaria
+      description: Data da portaria (página de autorizações do MCID).
+    - name: papel
+      description: Papel da portaria no ciclo (autorizacao_contratacao).
+    - name: selecao
+      description: Seleção a que a autorização pertence (MCMV Rural - Selecao 2023).
+    - name: arquivo
+      description: PDF de onde o anexo foi extraído.
+    - name: pagina
+      description: Página do PDF.
+    - name: uf
+      description: Sigla da UF.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UF
+    - name: municipio
+      description: Município da proposta, em maiúsculas.
+    - name: id_proposta
+      description: Número de identificação da proposta (UUID); o mesmo do anexo da 354/2024.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.IDProposta
+    - name: eo_nome
+      description: Nome da entidade organizadora.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Atores.EntidadeOrganizadora
+    - name: eo_cnpj
+      description: CNPJ da entidade organizadora, só dígitos.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.CNPJ
+    - name: empreendimento
+      description: Nome do empreendimento, quando o anexo traz (hoje sempre vazio).
+    - name: qt_uh
+      description: UH autorizadas.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UH
+    - name: metodo
+      description: Método de extração do PDF (tabela).
+  - name: rural_portaria_autorizacao_1346_2024
+    description: >
+      Anexo da Portaria MCID nº 1.346/2024, de 26/11/2024 (versão compilada, SEI_MIDR5467838): propostas da
+      Seleção 2023 autorizadas a contratar. Cobertura: 61 propostas, 2.448 UH.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: *anexo_autorizacao
+  - name: rural_portaria_autorizacao_1386_2024
+    description: >
+      Anexo da Portaria MCID nº 1.386/2024, de 11/12/2024 (versão compilada, SEI_MIDR5500334): propostas da
+      Seleção 2023 autorizadas a contratar. Cobertura: 103 propostas, 4.252 UH.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: *anexo_autorizacao
+  - name: rural_portaria_autorizacao_278_2025
+    description: >
+      Anexo da Portaria MCID nº 278/2025, de 21/03/2025 (versão compilada, SEI_MIDR5705925): propostas da
+      Seleção 2023 autorizadas a contratar. Cobertura: 9 propostas, 289 UH.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: *anexo_autorizacao
+  - name: rural_portaria_autorizacao_562_2025
+    description: >
+      Anexo da Portaria MCID nº 562/2025, de 11/06/2025 (versão compilada, SEI_MIDR5886285): propostas da
+      Seleção 2023 autorizadas a contratar. Cobertura: 203 propostas, 7.639 UH, todas no anexo da 354/2024.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: *anexo_autorizacao
+  - name: rural_portaria_autorizacao_1362_2026
+    description: >
+      Anexo da Portaria MCID nº 1.362/2026, de 08/10/2026: propostas da Seleção 2025 (697/2026) autorizadas a
+      contratar. Cobertura: 13 propostas, 650 UH, todas no Anexo II da 697/2026 com as mesmas UH.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: *anexo_autorizacao
+  - name: rural_portaria_autorizacao_1449_2026
+    description: >
+      Anexo da Portaria MCID nº 1.449/2026, de 23/10/2026: propostas da Seleção 2025 (697/2026) autorizadas a
+      contratar. Cobertura: 15 propostas, 716 UH, todas no Anexo II da 697/2026 com as mesmas UH.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns: *anexo_autorizacao
+  - name: rural_portaria_enquadramento_1207_2025
+    description: >
+      Anexos vigentes de propostas do MCMV Rural enquadradas no rito de calamidade da Portaria 1.417/2023 (RS),
+      na redação dada pela Portaria MCID nº 1.207/2025 (DOU 20/10/2025): o anexo da 173/2024 (44 propostas, 411
+      UH), o da 840/2025 (15 propostas, 133 UH) e o anexo próprio da 1.207/2025 (7 propostas, 56 UH). Ao contrário
+      do anexo original da 173/2024, traz a APF de cada proposta. Extraído do texto do PDF; os três totais conferem.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.APF
+    columns:
+    - name: portaria_codigo
+      description: Portaria cujo anexo a linha compõe (173_2024, 840_2025 ou 1207_2025).
+    - name: redacao_dada_por
+      description: Portaria que deu a redação vigente do anexo (1207_2025).
+    - name: dt_portaria
+      description: Data da portaria do anexo.
+    - name: papel
+      description: Papel no rito (enquadramento_calamidade).
+    - name: selecao
+      description: Rito a que pertence (Calamidade RS 2023).
+    - name: arquivo
+      description: PDF de origem.
+    - name: uf
+      description: Sigla da UF (RS).
+    - name: municipio
+      description: Município da proposta.
+    - name: apf
+      description: APF do contrato da proposta enquadrada (8 dígitos).
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.APF
+    - name: tipo_proponente
+      description: Tipo de proponente (Entidade Privada).
+    - name: cnpj_eo
+      description: CNPJ da entidade organizadora (14 dígitos).
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.CNPJ
+    - name: qt_uh
+      description: Unidades habitacionais enquadradas.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UH
+    - name: metodo
+      description: Como a linha foi obtida do PDF.
+  - name: rural_portaria_enquadramento_173_2024
+    description: >
+      Anexo da Portaria MCID nº 173/2024, de 27/02/2024 (compilada, alterada pela 958/2024): propostas do MCMV
+      Rural enquadradas pelo agente financeiro no rito de calamidade da Portaria 1.417/2023 (Rio Grande do Sul),
+      na redação ORIGINAL. A 1.207/2025 substituiu esse anexo (ver rural_portaria_enquadramento_1207_2025); esta
+      tabela fica como registro histórico e não alimenta a prata.
+      O texto do PDF usa fonte codificada; a tabela foi transcrita da imagem e conferida pelo total do anexo
+      (55 propostas, 600 UH). O identificador da proposta é numérico (7 dígitos), não UUID.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.IDProposta
+    columns:
+    - name: portaria_codigo
+      description: Código da portaria (173_2024).
+    - name: numero
+      description: Número da portaria.
+    - name: ano
+      description: Ano da portaria.
+    - name: dt_portaria
+      description: Data da portaria.
+    - name: papel
+      description: Papel no rito (enquadramento_calamidade).
+    - name: selecao
+      description: Rito a que a portaria pertence (Calamidade RS 2023, Portaria 1.417/2023).
+    - name: arquivo
+      description: PDF de onde o anexo foi transcrito.
+    - name: pagina
+      description: Página do PDF.
+    - name: uf
+      description: Sigla da UF (RS).
+    - name: municipio
+      description: Município da proposta.
+    - name: id_proposta
+      description: Identificador da proposta no anexo (7 dígitos).
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.IDProposta
+    - name: tipo_proponente
+      description: Tipo de proponente (Entidade Privada).
+    - name: cnpj_proponente
+      description: CNPJ do proponente com 14 dígitos (o PDF omite o zero à esquerda).
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.CNPJ
+    - name: qt_uh
+      description: Unidades habitacionais enquadradas.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UH
+    - name: metodo
+      description: Como a linha foi obtida do PDF.
+  - name: rural_portaria_autorizacao_conferencia
+    description: >
+      Conferência da extração dos PDFs das portarias de autorização do Rural: uma linha por portaria, com
+      propostas e UH lidas e o total declarado no PDF (quando houver). Serve para checar se a extração leu tudo.
+    columns:
+    - name: portaria_codigo
+      description: Código da portaria (número sem ponto + ano).
+    - name: numero
+      description: Número da portaria por extenso.
+    - name: ano
+      description: Ano da portaria.
+    - name: dt_portaria
+      description: Data da portaria.
+    - name: papel
+      description: Papel da portaria no ciclo.
+    - name: selecao
+      description: Seleção a que pertence.
+    - name: arquivo
+      description: PDF lido.
+    - name: situacao
+      description: Situação da leitura (lido).
+    - name: propostas
+      description: Propostas lidas no anexo.
+    - name: uh
+      description: UH lidas no anexo.
+    - name: total_uh_declarado
+      description: Total de UH declarado no PDF, quando o PDF traz (vazio nas 4 portarias).
+    - name: alertas
+      description: Alertas da extração.
+  - name: fds_portaria_selecao_698_2026
+    description: 'Anexo da Portaria MCID 698/2026 (propostas selecionadas do MCMV-Entidades/FDS, seleção da 927/2025).
+      Colunas com o nome do PDF, em maiúsculas e com espaço.
+
+      '
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+        - MCID.Identificadores.IDProposta
+    columns:
+    - name: IDENTIFICACAO DA PROPOSTA
+      description: Número de identificação da proposta.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.IDProposta
+    - name: UF
+      description: Sigla da UF.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UF
+    - name: MUNICÍPIO
+      description: Município da proposta.
+    - name: CNPJ ENTIDADE
+      description: CNPJ da entidade organizadora.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.CNPJ
+          - MCID.Atores.EntidadeOrganizadora
+    - name: NOME DO EMPREENDIMENTO
+      description: Nome do empreendimento.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+    - name: UH
+      description: UH selecionadas.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UH
+  - name: far_portaria_selecao_apf
+    description: Portaria de seleção de cada APF do MCMV-FAR (727/2023, 704/2024, 47/2025, 488/2025).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+        - MCID.Identificadores.IDProposta
+    columns:
+    - name: co_hash
+      description: Identificador da linha.
+    - name: apf
+      description: APF do contrato FAR.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.APF
+    - name: portaria
+      description: Portaria de seleção por extenso.
