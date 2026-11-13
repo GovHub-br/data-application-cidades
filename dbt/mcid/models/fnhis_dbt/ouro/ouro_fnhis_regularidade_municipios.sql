@@ -26,7 +26,7 @@ with
             cod_ibge,
             count(*) filter (where ic_instrumento_ativo) as qt_termos_ativos,
             coalesce(sum(valor_repasse) filter (where ic_instrumento_ativo), 0) as valor_repasse
-        from {{ ref("ouro_fnhis_ficha_termo_compromisso") }}
+        from {{ ref("prata_fnhis_ficha_termo_compromisso") }}
         group by cod_ibge
     )
 

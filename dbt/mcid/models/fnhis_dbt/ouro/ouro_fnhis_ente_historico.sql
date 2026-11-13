@@ -43,23 +43,12 @@ with
             count(*) filter (where etapa_ordem = 4) as qt_termos_anulados_rescindidos,
             count(*) filter (where etapa_ordem in (5, 6, 7)) as qt_termos_ativos,
             coalesce(sum(valor_empenhado_acumulado), 0) as valor_empenhado
-        from {{ ref("ouro_fnhis_proposta_tramite") }}
+        from {{ ref("prata_fnhis_proposta_tramite") }}
         where cod_ibge is not null
         group by cod_ibge
     ),
 
-    snh as (
-        select
-            left(regexp_replace(codigo_ibge_do_municipio::text, '[^0-9]', '', 'g'), 6) as cod_ibge_6,
-            trim({{ target.schema }}.corrigir_mojibake(modalidade::text)) as modalidade,
-            trim({{ target.schema }}.corrigir_mojibake(situacao_da_empreendimento_agrupada::text)) as situacao,
-            {{ target.schema }}.parse_date_br(nullif(trim(data_da_contratacao::text), '')) as dt_contratacao,
-            {{ parse_int("regexp_replace(unidades_contratadas::text, '[^0-9]', '', 'g')") }} as uh_contratadas,
-            {{ parse_int("regexp_replace(unidades_entregues::text, '[^0-9]', '', 'g')") }} as uh_entregues,
-            {{ parse_int("regexp_replace(unidades_distratadas::text, '[^0-9]', '', 'g')") }} as uh_distratadas
-        from {{ ref("bronze_shpt_dados_prioritarios_snh_empreendimentos") }}
-        where upper(trim(modalidade::text)) <> 'FNHIS'
-    ),
+    snh as (select * from {{ ref("prata_fnhis_snh_mcmv_outras_modalidades") }}),
 
     hist as (
         select

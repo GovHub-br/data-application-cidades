@@ -301,3 +301,245 @@ models:
         description: Orçamento efetivamente alocado, em R$.
       - name: arquivo_de_origem
         description: Arquivo da prestação de contas de onde veio a linha.
+
+# --- regra das camadas (prata só lê bronze; ouro só lê prata), 2026-10-08 ---
+  - name: prata_pro_moradia_ficha_contrato
+    description: 'Lógica que antes ficava na ouro ouro_pro_moradia_ficha_contrato, trazida para a prata para a ouro
+      ler só prata. Ficha do contrato do Pró-Moradia: uma linha por contrato, com tipo de intervenção, tomador, localização,
+      valores, execução física (última medição mensal, ou a posição do cadastro), execução financeira (soma das liberações),
+      status de execução, ritmo físico × financeiro e paralisação. É a tabela de consumo do produto.'
+    meta:
+      tags:
+      - silver
+    columns:
+    - name: contrato
+      description: Contrato no formato `cod_contrato-dv`.
+    - name: cod_contrato
+      description: Código do contrato no FGTS (7 dígitos, sem o dígito verificador).
+    - name: cod_contrato_dv
+      description: Dígito verificador do contrato.
+    - name: cod_empreendimento
+      description: Código do empreendimento no FGTS. No Pró-Moradia cada empreendimento tem um contrato.
+    - name: programa
+      description: Sempre "Pró-Moradia".
+    - name: tipo_intervencao
+      description: Frente da carta-consulta — Urbanização, Provisão habitacional, Desenvolvimento institucional ou
+        Situação de emergência.
+    - name: modalidade_codigo
+      description: Código da modalidade de operação do FGTS (tipo de intervenção financiada).
+    - name: modalidade
+      description: Nome da modalidade, traduzido pela tabela de domínio do canal.
+    - name: empreendimento_nome
+      description: Nome do empreendimento no cadastro do FGTS, em caixa alta.
+    - name: objeto
+      description: Objeto do financiamento informado no cadastro do empreendimento.
+    - name: tomador_codigo
+      description: Código do tomador (ente público que contrai o financiamento) no FGTS, 5 dígitos.
+    - name: tomador_nome
+      description: Ente público tomador do financiamento.
+    - name: tomador_esfera
+      description: Estado/DF, Município ou Companhia ou autarquia.
+    - name: agente_financeiro
+      description: Nome do agente financeiro do contrato — na prática a CAIXA na quase totalidade.
+    - name: uor
+      description: Unidade operacional da CAIXA (superintendência regional) que acompanha o contrato.
+    - name: uf
+      description: UF do contrato.
+    - name: regiao
+      description: Região geográfica da UF do contrato.
+    - name: municipio
+      description: Município do empreendimento, traduzido do código CAIXA pela tabela de domínio.
+    - name: cod_ibge
+      description: Código IBGE do município (7 dígitos). Nulo quando o município não está na tabela de domínio do
+        canal.
+    - name: municipio_uf
+      description: Localização no formato "Município/UF".
+    - name: contrato_municipio_empreendimento
+      description: Rótulo "contrato - Município/UF - empreendimento", usado como dimensão de filtro no Superset.
+    - name: situacao_contrato_codigo
+      description: Código da situação do contrato no FGTS.
+    - name: situacao_contrato
+      description: Situação do contrato (em situação normal, distratado, cancelado, cláusula suspensiva...).
+    - name: ic_contrato_vigente
+      description: Falso para contrato distratado, cancelado ou extinto.
+    - name: ano_orcamento
+      description: Ano do orçamento do FGTS ao qual o contrato foi imputado.
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: ic_pac
+      description: Indicador de contrato do PAC.
+    - name: identificador_selecao
+      description: Identificador externo — em geral a seleção de origem (ex. "PAC - 3A SELECAO") ou o processo.
+    - name: quantidade_uh
+      description: Unidades habitacionais financiadas (zero em urbanização).
+    - name: populacao_beneficiada
+      description: População beneficiada declarada no cadastro do empreendimento.
+    - name: empregos_gerados
+      description: Empregos gerados estimados no cadastro do empreendimento.
+    - name: valor_contratado
+      description: Valor financiado pelo FGTS, em R$.
+    - name: valor_investimento
+      description: Investimento total (financiamento + contrapartida), em R$.
+    - name: valor_contrapartida
+      description: Contrapartida do tomador = investimento − contratado, em R$.
+    - name: valor_investimento_por_uh
+      description: Investimento sobre UH financiadas, quando há UH.
+    - name: percentual_execucao_fisica
+      description: Percentual físico realizado — última medição mensal não futura; sem ela, a posição do cadastro
+        do empreendimento.
+    - name: fonte_percentual_fisico
+      description: De onde veio o percentual físico (execucao_obra_mensal ou posicao_empreendimento).
+    - name: percentual_obra_previsto
+      description: 'Percentual acumulado previsto no cronograma para o mês da última medição. Ao lado do realizado,
+        é o que mostra atraso físico.
+
+        '
+    - name: situacao_obra_codigo
+      description: 'Código da situação da obra na última avaliação mensal medida. Mistura dígito e letra na origem
+        (ex. `4`/`H` paralisada, `6`/`8`/`E` concluída) — é ele que alimenta a regra de `status_execucao_simplificado`.
+
+        '
+    - name: situacao_obra
+      description: Situação da obra na última avaliação medida (adiantada, normal, atrasada, paralisada, concluída...).
+    - name: dt_ultima_avaliacao
+      description: Mês da última avaliação de obra já medida — exclui os meses futuros do cronograma.
+    - name: dt_ultima_vistoria
+      description: Data da última vistoria de obra registrada nessa avaliação.
+    - name: dt_inicio_obra
+      description: Data de início da obra, da posição do cadastro do empreendimento.
+    - name: dt_termino_obra
+      description: Data de término da obra, da posição do cadastro do empreendimento.
+    - name: status_execucao_simplificado
+      description: 'Regra de negócio: Cancelado ou distratado, Concluído, Paralisado, Não Iniciado, Em Andamento ou
+        Sem Informação — nessa ordem de precedência, a partir da situação do contrato, da situação da obra, da lista
+        de paralisadas e do percentual físico.
+
+        '
+    - name: vr_desembolsado
+      description: 'Soma das liberações do FGTS ao contrato, em R$. A série do canal começa em 2000, então para contrato
+        anterior é um piso (ver ic_serie_financeira_incompleta).
+
+        '
+    - name: percentual_execucao_financeira
+      description: Desembolsado sobre contratado, em %.
+    - name: dt_primeiro_desembolso
+      description: Competência da primeira liberação do contrato na série do canal (não necessariamente a primeira
+        da vida do contrato).
+    - name: dt_ultimo_desembolso
+      description: Competência da liberação mais recente do contrato.
+    - name: qt_meses_com_desembolso
+      description: Quantidade de competências com liberação na série. Zero quando o contrato não tem liberação no
+        arquivo.
+    - name: ic_serie_financeira_incompleta
+      description: Verdadeiro para contrato assinado antes de 2000, cujas liberações anteriores não estão no arquivo.
+    - name: ritmo_fisico_financeiro
+      description: 'Regra de negócio: compara o % físico com o % financeiro, com tolerância de 5 pontos — Ritmo Equilibrado,
+        Desembolso Adiantado ou Desembolso Atrasado.
+
+        '
+    - name: ic_paralisada
+      description: Verdadeiro quando o contrato está na lista de obras paralisadas do setor público.
+    - name: dias_sem_evolucao
+      description: Dias desde a última evolução física, para o contrato que está na lista de paralisadas.
+    - name: faixa_paralisacao
+      description: Faixa de tempo de paralisação (ex. "091 - 180 dias", "Entre 1 e 2 anos").
+    - name: motivo_paralisacao
+      description: Último motivo de paralisação informado pelo acompanhamento da CAIXA.
+    - name: dt_previsao_conclusao
+      description: Previsão de conclusão do objeto registrada no acompanhamento da paralisação.
+    - name: remessa_canal_fgts
+      description: Remessa do Canal FGTS de onde veio o contrato (MCaaaammdd.zip).
+    - name: dt_remessa
+      description: Data da remessa do Canal FGTS.
+  - name: prata_pro_moradia_tomador_recontratacao
+    description: Lógica que antes ficava na ouro ouro_pro_moradia_tomador_recontratacao, trazida para a prata para
+      a ouro ler só prata. Para cada contrato do Pró-Moradia, quantos contratos anteriores do mesmo tomador ainda
+      tinham obra não terminada na data da assinatura, o valor envolvido e se algum hoje está paralisado. A data de
+      assinatura substitui a data da carta-consulta, que não existe no Canal FGTS.
+    meta:
+      tags:
+      - silver
+    columns:
+    - name: cod_contrato
+      description: Código do contrato no Canal FGTS (sem dígito).
+    - name: contrato
+      description: Contrato com dígito, para exibição.
+    - name: tomador_codigo
+      description: Código do tomador no Canal FGTS.
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: tomador_cnpj
+      description: CNPJ do tomador, só dígitos.
+    - name: uf
+      description: Sigla da UF.
+    - name: municipio
+      description: Município do empreendimento.
+    - name: tipo_intervencao
+      description: Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+    - name: identificador_selecao
+      description: Identificador de seleção do Canal FGTS (cod_ident_externo).
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: ano_assinatura
+      description: Ano da assinatura.
+    - name: valor_contratado
+      description: Valor contratado (R$).
+    - name: status_execucao_simplificado
+      description: Status de execução do contrato (ficha).
+    - name: qt_anteriores
+      description: Contratos do mesmo tomador assinados antes.
+    - name: qt_anteriores_pendentes
+      description: Anteriores não cancelados com obra não terminada na data da assinatura.
+    - name: valor_anteriores_pendentes
+      description: Valor contratado dos anteriores pendentes (R$).
+    - name: qt_anteriores_hoje_paralisados
+      description: Anteriores hoje paralisados.
+    - name: qt_anteriores_sem_data_termino
+      description: Anteriores concluídos ou sem informação e sem data de término — incerteza.
+    - name: ic_contratou_com_pendencia
+      description: Verdadeiro quando havia anterior pendente.
+    - name: situacao_recontratacao
+      description: Primeiro contrato do tomador, Anteriores concluídos ou Contratou com anterior pendente.
+
+  - name: prata_pro_moradia_portarias
+    description: >
+      Catálogo tipado das portarias e atos do Pró-Moradia (Resolução CCFGTS 702/2012, IN 11/2024, IN 26/2024 e a seleção por carta-consulta), no mesmo formato do catálogo do Rural, com o tipo usado no
+      filtro de portaria. Uma linha por ato.
+    meta:
+      tags:
+        - silver
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+    columns:
+      - name: portaria_codigo
+        description: "Código do ato (número_ano; atos que não são portaria levam prefixo, ex. in_11_2024)."
+        tests:
+          - unique
+          - not_null
+      - name: ato
+        description: "Nome do ato por extenso."
+      - name: especie_ato
+        description: "Portaria, Instrução Normativa, Resolução ou Processo de seleção."
+      - name: numero_ato
+        description: "Número do ato."
+      - name: ano_ato
+        description: "Ano do ato."
+      - name: dt_ato
+        description: "Data do ato, quando conhecida."
+      - name: numero_ano
+        description: "Número/ano com ponto de milhar (ex. 1.310/2024), usado como rótulo."
+      - name: papel_ato
+        description: "Papel no ciclo: Regulamento da linha, Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade), Alteração, Autorização de contratação ou A confirmar."
+      - name: tipo_portaria
+        description: "Tipo para o filtro de portaria: Regulamento da linha, Abertura do ciclo, Seleção, Alteração, Autorização de contratação ou A confirmar."
+      - name: ciclo_selecao
+        description: "Ciclo a que o ato pertence (ex. Seleção 2024, Seleção 2025, Calamidade RS 2024, Todos)."
+      - name: tem_lista_nominal
+        description: "Se o ato publica lista de propostas (sim, não)."
+      - name: fonte_lista
+        description: "Onde está (ou deve estar) a lista de propostas."
+      - name: observacao
+        description: "O que o ato faz."

@@ -2,8 +2,8 @@
 
 -- Gold: Matriz pergunta × dado das três linhas acompanhadas com o MCID (Rural, FNHIS Sub-50,
 -- Pró-Moradia): o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta
--- e qual a limitação. Fonte: seed perguntas_mcid/cobertura_perguntas_mcid (curada a partir das
--- explorações de 2026-09/10). Mesmo formato das tabelas de cobertura de outros produtos.
+-- e qual a limitação. Fonte: prata_mcid_cobertura_perguntas (seed perguntas_mcid/cobertura_perguntas_mcid,
+-- curado a partir das explorações de 2026-09/10). Mesmo formato das tabelas de cobertura de outros produtos.
 
 select
     programa,
@@ -21,4 +21,4 @@ select
     nullif(modelo_ouro, '') as modelo_ouro,
     nullif(fonte_necessaria, '') as fonte_necessaria,
     nullif(limitacao, '') as limitacao
-from {{ ref("cobertura_perguntas_mcid") }}
+from {{ ref("prata_mcid_cobertura_perguntas") }}

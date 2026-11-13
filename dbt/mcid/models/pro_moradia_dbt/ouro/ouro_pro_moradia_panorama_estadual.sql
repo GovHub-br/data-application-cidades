@@ -7,7 +7,7 @@
 
 with
     ficha as (
-        select * from {{ ref("ouro_pro_moradia_ficha_contrato") }}
+        select * from {{ ref("prata_pro_moradia_ficha_contrato") }}
     )
 
 select

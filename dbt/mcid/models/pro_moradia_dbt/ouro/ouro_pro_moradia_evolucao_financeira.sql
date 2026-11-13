@@ -13,7 +13,7 @@ with
 
     contrato as (
         select contrato, uf, regiao, tipo_intervencao, valor_contratado, ic_serie_financeira_incompleta
-        from {{ ref("ouro_pro_moradia_ficha_contrato") }}
+        from {{ ref("prata_pro_moradia_ficha_contrato") }}
     )
 
 select

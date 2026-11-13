@@ -9,7 +9,7 @@
 -- quanto avançou nos últimos 12 meses e desde quando o percentual não sobe.
 
 with
-    f as (select * from {{ ref("ouro_pro_moradia_ficha_contrato") }}),
+    f as (select * from {{ ref("prata_pro_moradia_ficha_contrato") }}),
 
     med as (
         select *,
