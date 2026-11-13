@@ -14,7 +14,7 @@
     Uso no model bronze:
         select * from {{ fonte_lake('ibge_sinapi') }}
 #}
-{% macro fonte_lake(nome_tabela, nome_fonte='lake_staging') %}
+{% macro caminho_fonte_lake(nome_tabela, nome_fonte='lake_staging') -%}
     {#- registra a dependência no grafo do dbt (o Relation em si não é usado:
         o dado é parquet no object storage, não uma tabela do Postgres) -#}
     {%- set _ = source(nome_fonte, nome_tabela) -%}
@@ -34,12 +34,16 @@
 
         {%- if not caminho.valor -%}
             {{ exceptions.raise_compiler_error(
-                "fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
+                "caminho_fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
         {%- endif -%}
 
-        read_parquet('s3://{{ bucket }}/{{ caminho.valor }}')
+        {%- do return('s3://' ~ bucket ~ '/' ~ caminho.valor) -%}
     {%- else -%}
         {#- placeholder só para o parse; nunca chega a ser executado -#}
-        read_parquet('s3://{{ bucket }}/__parse__')
+        {%- do return('s3://' ~ bucket ~ '/__parse__') -%}
     {%- endif -%}
+{%- endmacro %}
+
+{% macro fonte_lake(nome_tabela, nome_fonte='lake_staging') %}
+    read_parquet('{{ caminho_fonte_lake(nome_tabela, nome_fonte) }}')
 {% endmacro %}

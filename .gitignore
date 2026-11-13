@@ -69,3 +69,11 @@ scripts/auditoria_*.parquet
 
 # Relatorio do scripts/diagnostico_qualidade.py (regeravel)
 diagnostico_*.md
+.venv-om
+.venv-om/
+.venv-lake
+
+# venvs e artefatos locais do dbt/lake
+.venv-om
+.venv-lake
+dbt/mcid/target_lake/

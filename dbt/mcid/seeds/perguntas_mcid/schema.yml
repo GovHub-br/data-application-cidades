@@ -20,3 +20,129 @@ seeds:
       Matriz curada pergunta × dado das perguntas levantadas com o MCID para Rural, FNHIS Sub-50 e
       Pró-Moradia: situação (respondível, parcial, lacuna de fonte), ouro que responde, fonte que
       falta e limitação.
+  - name: portarias_selecao_rural
+    description: >
+      Catálogo curado das portarias do ciclo de seleção do MCMV Rural (inclusive o rito de calamidade do RS):
+      abertura do ciclo, resultado da seleção, enquadramento, alteração, reaproveitamento e autorização de contratação (as 46 da Seleção 2023, mais a 1.362/2026 da
+      Seleção 2025). Uma linha por portaria. Datas e papéis conferidos na página de normativos e na página
+      de autorizações do MCID em 16/10/2026 (entendimento/rural_portarias_selecao.md). `fonte_lista` diz em
+      que tabela do schema seeds o anexo foi carregado ou que ele ainda não foi extraído.
+    columns:
+      - name: portaria_codigo
+        description: Código da portaria, no formato número_ano sem ponto (ex. 1133_2024). Liga o catálogo aos anexos.
+        tests:
+          - unique
+          - not_null
+      - name: ato_selecao
+        description: Nome do ato por extenso.
+      - name: numero
+        description: Número da portaria, sem ponto.
+      - name: ano
+        description: Ano da portaria.
+      - name: dt_portaria
+        description: Data da portaria (AAAA-MM-DD), quando confirmada.
+      - name: papel
+        description: >
+          Papel da portaria no ciclo: Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade),
+          Reaproveitamento, Alteração, Autorização de contratação ou A confirmar.
+        tests:
+          - accepted_values:
+              values: ['Abertura do ciclo', 'Resultado da seleção', 'Enquadramento (Calamidade)', 'Reaproveitamento', 'Alteração', 'Autorização de contratação', 'A confirmar']
+      - name: tem_lista_nominal
+        description: Se a portaria publica lista de propostas (sim, não, a confirmar).
+      - name: fonte_lista
+        description: Onde está (ou deve estar) a lista de propostas.
+      - name: observacao
+        description: Observação sobre a portaria.
+      - name: ciclo_selecao
+        description: Ciclo de seleção a que a portaria pertence (Seleção PNHR 2017-2018, Seleção 2023, Seleção 2025).
+  - name: portarias_fnhis_sub50
+    description: >
+      Catálogo curado das portarias e demais atos do MCMV FNHIS Sub-50: número, ano, data, papel no ciclo, ciclo e se o ato
+      publica lista de propostas. Montado a partir da página de regulamentação do MCID (consultada em
+      11/11/2026) e do fluxo da oficina. Uma linha por ato.
+    columns:
+      - name: portaria_codigo
+        description: Código do ato (número_ano; atos que não são portaria levam prefixo).
+        tests:
+          - unique
+          - not_null
+      - name: ato
+        description: Nome do ato.
+      - name: especie_ato
+        description: Espécie do ato.
+      - name: numero
+        description: Número.
+      - name: ano
+        description: Ano.
+      - name: dt_portaria
+        description: Data (AAAA-MM-DD).
+      - name: papel
+        description: Papel no ciclo.
+      - name: ciclo_selecao
+        description: Ciclo.
+      - name: tem_lista_nominal
+        description: Se publica lista de propostas.
+      - name: fonte_lista
+        description: Onde está a lista.
+      - name: observacao
+        description: O que o ato faz.
+  - name: portarias_pro_moradia
+    description: >
+      Catálogo curado das portarias e demais atos do Pró-Moradia: número, ano, data, papel no ciclo, ciclo e se o ato
+      publica lista de propostas. Montado a partir da página de regulamentação do MCID (consultada em
+      11/11/2026) e do fluxo da oficina. Uma linha por ato.
+    columns:
+      - name: portaria_codigo
+        description: Código do ato (número_ano; atos que não são portaria levam prefixo).
+        tests:
+          - unique
+          - not_null
+      - name: ato
+        description: Nome do ato.
+      - name: especie_ato
+        description: Espécie do ato.
+      - name: numero
+        description: Número.
+      - name: ano
+        description: Ano.
+      - name: dt_portaria
+        description: Data (AAAA-MM-DD).
+      - name: papel
+        description: Papel no ciclo.
+      - name: ciclo_selecao
+        description: Ciclo.
+      - name: tem_lista_nominal
+        description: Se publica lista de propostas.
+      - name: fonte_lista
+        description: Onde está a lista.
+      - name: observacao
+        description: O que o ato faz.
+  - name: selecao_portarias_rural
+    description: >
+      Linhas dos anexos das portarias de seleção do Rural, exceto a 162/2018 (que vem do SFTP). Uma
+      linha por proposta selecionada. Começa vazio: preencher com os anexos da SNH (697/2026, 948/2026
+      e outras). Só `portaria_codigo` é obrigatório; quanto mais campos vierem, melhor o vínculo.
+    columns:
+      - name: portaria_codigo
+        description: Código da portaria, igual ao do catálogo portarias_selecao_rural (ex. 697_2026).
+      - name: uf
+        description: Sigla da UF.
+      - name: municipio
+        description: Nome do município.
+      - name: cod_ibge
+        description: Código IBGE do município (6 ou 7 dígitos).
+      - name: eo_cnpj
+        description: CNPJ da entidade organizadora selecionada (com ou sem máscara).
+      - name: eo_nome
+        description: Nome da entidade organizadora.
+      - name: protocolo_proposta
+        description: Número da proposta (NU_PROTOCOLO_SISAD), quando o anexo trouxer.
+      - name: codigo_empreendimento
+        description: Código do empreendimento ou APF, quando o anexo trouxer.
+      - name: quantidade_uh_selecionadas
+        description: UH selecionadas na proposta.
+      - name: situacao_selecao
+        description: Situação no anexo (Selecionada, Reaproveitada…). Em branco vira Selecionada.
+      - name: observacao
+        description: Observação livre.

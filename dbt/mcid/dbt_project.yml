@@ -41,6 +41,38 @@ seeds:
           codigo: integer
           descricao: varchar
           estagio: varchar
+      # Catálogo e anexos das portarias de seleção do Rural: tudo texto (CNPJ, IBGE e código do
+      # empreendimento perdem o zero à esquerda se virarem número; o anexo começa vazio).
+      portarias_selecao_rural:
+        +column_types:
+          portaria_codigo: varchar
+          ato_selecao: varchar
+          numero: varchar
+          ano: varchar
+          dt_portaria: varchar
+          papel: varchar
+          tem_lista_nominal: varchar
+          fonte_lista: varchar
+          observacao: varchar
+          ciclo_selecao: varchar
+      # Catálogos de portarias/atos do Sub-50 e do Pró-Moradia: tudo texto (a prata tipa).
+      portarias_fnhis_sub50:
+        +column_types: {portaria_codigo: varchar, ato: varchar, especie_ato: varchar, numero: varchar, ano: varchar, dt_portaria: varchar, papel: varchar, ciclo_selecao: varchar, tem_lista_nominal: varchar, fonte_lista: varchar, observacao: varchar}
+      portarias_pro_moradia:
+        +column_types: {portaria_codigo: varchar, ato: varchar, especie_ato: varchar, numero: varchar, ano: varchar, dt_portaria: varchar, papel: varchar, ciclo_selecao: varchar, tem_lista_nominal: varchar, fonte_lista: varchar, observacao: varchar}
+      selecao_portarias_rural:
+        +column_types:
+          portaria_codigo: varchar
+          uf: varchar
+          municipio: varchar
+          cod_ibge: varchar
+          eo_cnpj: varchar
+          eo_nome: varchar
+          protocolo_proposta: varchar
+          codigo_empreendimento: varchar
+          quantidade_uh_selecionadas: varchar
+          situacao_selecao: varchar
+          observacao: varchar
 
     # Seeds curadas de identidade FDS, consumidas pela dim de empreendimento
     # (prata_fds_dim_empreendimento).
@@ -77,6 +109,32 @@ seeds:
           obrigatoria: boolean
           min_completude: double
           origem: varchar
+
+    # Seeds do Trabalho Social (trabalho_social_dbt): domínio de situação CAIXA × BB, réguas de
+    # marcos das Portarias 464/2018 e 75/2025, catálogo de vigência das portarias, tipo de demanda e UF. Tudo texto: a bronze é cópia fiel
+    # e a tipagem é da prata.
+    trabalho_social:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+      +column_types:
+        co_tipo_demanda: varchar
+        ordem: varchar
+        pc_obra_gatilho: varchar
+        prazo_dias: varchar
+        ic_ativo: varchar
+        ic_critico: varchar
+        ic_equivalencia_a_confirmar: varchar
+        numero: varchar
+        ano: varchar
+        dt_assinatura: varchar
+        dt_publicacao_dou: varchar
+        dt_inicio_vigencia: varchar
+        dt_fim_vigencia: varchar
+        ic_marcos_transcritos: varchar
+        cod_ibge: varchar
+        latitude: varchar
+        longitude: varchar
 
 models:
   mcid:
@@ -434,6 +492,56 @@ models:
       # Piloto (OGU/FGTS): DESABILITADO. O modelo
       # `prata_dhist_serie_anual_ogu_fgts` carrega `config(enabled=false)` no
       # próprio arquivo — por isso não há bloco `piloto:` aqui.
+
+    # Trabalho Social do MCMV (FAR, Entidades e Rural, CAIXA e BB): acompanhamento por contrato,
+    # marcos da Portaria MCID 75/2025, demanda e executor. Nomes: bnz_<fonte>_<nome do MinIO>,
+    # prata_ts_<tabela>, ouro_ts_<tabela>. As bronzes do lake (tag ts_lake) rodam no target
+    # prod_duckdb; o resto no prod. Tudo roda pelo rodar_trabalho_social.py.
+    trabalho_social_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: trabalho_social
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: trabalho_social
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: trabalho_social
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: trabalho_social
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
 # Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
 # CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`

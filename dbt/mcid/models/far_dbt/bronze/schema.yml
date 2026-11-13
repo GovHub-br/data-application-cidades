@@ -126,9 +126,17 @@ models:
   - name: bronze_shpt_monit_cad_pj_far_mensal
     description: >
       Cadastro PJ do FAR: empreendimento contratado, com construtora, tipologia,
-      composição financeira e coordenadas. Competência mensal.
+      composição financeira e coordenadas. Competência mensal. As descrições das
+      80 colunas de negócio seguem o arquivo MONIT_CAD_PJ_FAR_LAYOUT mais recente.
+    meta:
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+          - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+          - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_cad_pj_far_schema
           colunas:
             - co_tipo_registro
             - dt_movimento
@@ -215,16 +223,538 @@ models:
             - _source_hash
             - filename
     columns:
+      - name: co_tipo_registro
+        description: >-
+          Campo utilizado para identificar o tipo de registro (Padrão: 010)
+
+      - name: dt_movimento
+        description: >-
+          Data de movimento da informação gerada.
+
       - name: nu_apf
-        description: APF como veio da origem, ainda sem normalizar.
+        description: >-
+          Número de operação cadastrada no SIAPF com o DV Completar com zeros a esquerda.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.APF
         tests:
           - not_null
           - unique
+
+      - name: no_identificacao_proposta
+        description: >-
+          Hash de identificação da proposta cadastrada no AF.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.IDProposta
+
+      - name: no_agente_financeiro
+        description: >-
+          Campo de identificação do Agente Financeiro.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Atores.AgenteFinanceiro
+
+      - name: no_empreendimento
+        description: >-
+          Nome do Empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+
+      - name: dt_apresentacao_orcamento
+        description: >-
+          Data de apresentação do orçamento final pela construtora.
+
+      - name: ic_terreno_doado
+        description: >-
+          S(Sim)/N(Não). O empreendimento possui terreno doado pelo ente público.
+
+      - name: no_logradouro_emprrendimento
+        description: >-
+          Identifica o endereço do empreendimento (rua, localização por número e quadra ou demais
+          complementos).
+
+      - name: no_bairro
+        description: >-
+          Nome do bairro da localização do empreendimento.
+
+      - name: co_cep
+        description: >-
+          Número do CEP da localização do empreendimento.
+
+      - name: no_municipio
+        description: >-
+          Nome do município da localização do empreendimento.
+
+      - name: sg_uf
+        description: >-
+          Sigla da unidade federativa da localização do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.UF
+
+      - name: co_municipio_ibge
+        description: >-
+          Campo numérico que identifica o código do município onde se localiza o empreendimento conforme
+          registrado no Instituto Brasileiro de Geografia e Estatística (IBGE). Completar com zeros a
+          esquerda, quando for o caso.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.CodigoIBGE
+
+      - name: no_construtora
+        description: >-
+          Nome da contrutora do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Atores.Construtora
+
+      - name: nu_cnpj_construtora
+        description: >-
+          CNPJ da construtora do empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Atores.Construtora
+
+      - name: co_ente_publico_proponente
+        description: >-
+          Identifica o ente público local responsável pela proposta do empreendimento: 001 - Município
+          002 - Estado.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Atores.EntePublico
+
+      - name: dt_contratacao
+        description: >-
+          Data da contratação da obra. Assinatura do contrato entre AF e construtora.
+
+      - name: dt_inicio_obra
+        description: >-
+          Data que informa quando as obras foram iniciadas.
+
+      - name: dt_previsao_conclusao_obra
+        description: >-
+          Data que informa a previsão para as obras serem concluídas, conforme cronograma de obras e
+          atualizações.
+
+      - name: co_tipo_edificacao
+        description: >-
+          001 - Apartamento; 002 - Casa sobreposta; 003 - Casa; 004 - Misto.
+
+      - name: co_tipo_administracao
+        description: >-
+          Identifica o tipo de administração: 001 - Direta; 002 -Indireta.
+
+      - name: co_linha_atendimento
+        description: >-
+          Identifica a linha de atendimento: 001 - Aquisição/Produção/Alienação; 002 -
+          Aquisição/Produção para doação/Locação Social; 003 - Requalificação para venda/Alienação; 004
+          - Requalificação pra doação/Locação Social.
+
+      - name: co_tipo_demanda
+        description: >-
+          Tipo de demanda do empreendimento: 001 - Cadastro Habitacional Local; 002 - Obra Pública, 003
+          - Calamidades, 004 - Risco (Agravamento), 005 - Calamidade - Selecionada MCID extraordinária.
+          004 - Risco (Agravamento); 005 - Calamidade - Selecionada MCID extraordinária.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.TipoDeDemanda
+
+      - name: co_tipo_empreendimento
+        description: >-
+          Tipo de empreendimento: 001-Condomínio; 002-Loteamento.
+
+      - name: ic_sistema_aquec_solar
+        description: >-
+          S(Sim)/N(Não). Identifica se há aquecimento solar no empreendimento.
+
+      - name: ic_energia_alternativa
+        description: >-
+          S(Sim)/N(Não). Identifica se há um dos tipos de sistema alternativo de geração de energia
+          (Sistema de Aquecimento Solar/Sistema Fotovoltaico/Outros).
+
+      - name: co_regime_propriedade
+        description: >-
+          Identifica o regime de propriedade do emprendimento: 001 - Condominial; 002 - Unidades
+          isoladas.
+
+      - name: nu_qt_uh
+        description: >-
+          Quantidade de Unidades Habitacionais contratadas para o empreendimento.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.UH
+
+      - name: ic_previsao_area_comercial
+        description: >-
+          S(Sim)/N(Não). Informa se há a previsão de implementação de área comercial no empreendimento.
+
+      - name: no_gps_datum
+        description: >-
+          Identifica as Coordenadas geográficas georreferenciadas do centro da poligonal (UTM).
+
+      - name: nu_gps_latitude_grau
+        description: >-
+          Identifica as Coordenadas geográficas georreferenciadas do centro da poligonal (UTM) expressas
+          em graus.
+
+      - name: nu_gps_latitude_minuto
+        description: >-
+          Identifica as Coordenadas geográficas georreferenciadas do centro da poligonal (UTM) expressas
+          em minutos.
+
+      - name: nu_gps_latitude_segundo
+        description: >-
+          Identifica as Coordenadas geográficas georreferenciadas do centro da poligonal (UTM) expressas
+          em segundos.
+
+      - name: nu_gps_longitude_grau
+        description: >-
+          Identifica as Coordenadas geográficas georreferenciadas do centro da poligonal (UTM) expressas
+          em graus.
+
+      - name: nu_gps_longitude_minuto
+        description: >-
+          Identifica as Coordenadas geográficas georreferenciadas do centro da poligonal (UTM) expressas
+          em minutos.
+
+      - name: nu_gps_longitude_segundo
+        description: >-
+          Identifica as Coordenadas geográficas georreferenciadas do centro da poligonal (UTM) expressas
+          em segundos.
+
+      - name: nu_area_terreno
+        description: >-
+          Identifica, em metros quadrados, a área total do terreno do empreendimento. Completar com
+          zeros a esquerda.
+
+      - name: vr_obra_edificacao
+        description: >-
+          Valor destinado à construção.
+
+      - name: vr_terreno
+        description: >-
+          Valor do terreno adquirido pelo FAR ou doado pelo EP.
+
+      - name: vr_ts
+        description: >-
+          Valor destinado à trabalho social.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+
+      - name: vr_contrapartida_outras
+        description: >-
+          Demais contrapartidas financeiras como exemplo: companhia de habitação ou administração.
+          Preencher com zeros caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_outras_contrapartida_ente_publico
+        description: >-
+          Informa o valor correspondente a outras contrapartidas aportadas por EP. Preencher com zeros,
+          caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_estado_infra
+        description: >-
+          Informa o correspondente ao somatório dos valores destinados à execução de infraestrutura não
+          incidente e de equipamentos públicos sob responsabilidade do estado. Preencher com zeros, caso
+          a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_estado_terreno
+        description: >-
+          Informa o valor de terreno doado pelo estado, se houver. Preencher com zeros, caso a situação
+          não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_complementar_estado
+        description: >-
+          Informa o valor de contrapartida financeira complementar do estado, se houver. Preencher com
+          zeros, caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_municipio_infra
+        description: >-
+          Informa o correspondente ao somatório dos valores destinados à execução de infraestrutura não
+          incidente e de equipamentos públicos sob responsabilidade do municipio. Preencher com zeros,
+          caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_municipio_terreno
+        description: >-
+          nforma o valor de terreno doado pelo municipio, se houver. Preencher com zeros, caso a
+          situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_complementar_municipio
+        description: >-
+          Informa o valor de contrapartida financeira complementar do municipio, se houver. Preencher
+          com zeros, caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_total_contrapartidas
+        description: >-
+          Informa o correspondente ao somatório de recursos aportados como contrapartida financeira por
+          governo estadual, municipal ou outros. Preencher com zeros, caso a situação não se aplica ao
+          disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_equipamentos_publicos
+        description: >-
+          Valor destinado à construção de equipamento público.
+
+      - name: vr_emprestimo_far
+        description: >-
+          Valor total da operação custeada pelo FAR.
+
+      - name: vr_infraestrutura_incidente
+        description: >-
+          Informa o valor destinado à execução da infraestrutura incidente (dentro da poligonal do
+          terreno) do empreendimento. Preencher com zeros, caso a situação não se aplica ao disposto.
+
+      - name: vr_equipamento_uso_comum
+        description: >-
+          Informa o valor destinado aos equipamentos de uso comum (ex.: sala de síndico, sala de
+          correspondência).
+
+      - name: vr_legalizacao_empreendimento
+        description: >-
+          Informa o valor destinado à legalização do empreendimento.
+
+      - name: vr_seguros_obrigatorios
+        description: >-
+          Informa o valor destinado à contratação dos seguros obrigatórios.
+
+      - name: vr_total_operacao
+        description: >-
+          Informa o correspondente ao somatório dos valores destinados à edificação do empreendimento, à
+          execução da infraestrutura incidente, aos equipamentos de uso comum, à execução do trabalho
+          social, à legalização do empreendimento, à contratação dos seguros obrigatórios e à
+          suplementação de recursos. (Não computar o valor destinado à compra do terreno).
+
+      - name: vr_total_investimento
+        description: >-
+          Informa o correspondente ao somatório do valor total da operação e o valor total de
+          contrapartidas (inclusive o valor destinado à compra do terreno).
+
+      - name: nu_apf_aporte_suplementacao
+        description: >-
+          Número de operação APF informada pelo Gestor do FAR. Caso haja mais de uma contratação,
+          atualizar para a nova operação. Preencher com zeros, caso a situação não se aplica ao
+          disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.APF
+
+      - name: co_operacao_aporte_retomada
+        description: >-
+          001 - APORTE; 002 - SUPLEMENTAÇÃO; Preencher com zeros, caso a situação não se aplica ao
+          disposto.
+
+      - name: vr_contratado_aporte_suplementacao
+        description: >-
+          Valor destinado à suplementação de recursos necessária para a conclusão/entrega do
+          empreendimento, quando houver. O campo deve ser preenchido apenas quando a substituição da
+          construtora/assinatura de Termo Aditivo for realizada fora do âmbito do Seguro Garantia
+          Executante Construtor (SGC).
+
+      - name: dt_contratacao_aporte_suplementacao
+        description: >-
+          Data da contratação da operação de retomada vigente. Preencher com zeros, caso a situação não
+          se aplica ao disposto.
+
+      - name: no_construtora_retomada
+        description: >-
+          Nome construtora contrato retomada. Campo em branco caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Atores.Construtora
+
+      - name: nu_cnpj_construtora_retomada
+        description: >-
+          CNPJ da construtora do contrato de retomada vigente. Preencher com zeros, caso a situação não
+          se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Atores.Construtora
+
+      - name: vr_contrapartida_retomada
+        description: >-
+          Contrapartida financeira de ente público para contratação de retomada. Preencher com zeros,
+          caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_total_em_construcao
+        description: >-
+          Valor Total de UH em construção.
+
+      - name: ic_substiuicao_construtora
+        description: >-
+          S(Sim)/N(Não). Identifica se a construtora foi substituída. Campo em branco caso a situação
+          não se aplica ao disposto.
+
+      - name: dt_substituicao_construtora
+        description: >-
+          Data de quando ocorreu a substituição da construtora. Campo em branco caso a situação não se
+          aplica ao disposto.
+
+      - name: vr_sistema_alternativo_de_energia
+        description: >-
+          Valor do custo total para implantação do sistema alternativo de energia ou de sistema
+          alternativo de aquecimento de água ou geração de energia utilizado na obra. Preencher com
+          zeros, caso a situação não se aplica ao disposto.
+
+      - name: vr_sistema_aquecimento_solar
+        description: >-
+          Valor do custo total para implantação do sistema de aquecimento solar utilizado na obra.
+          Preencher com zeros, caso a situação não se aplica ao disposto.
+
+      - name: co_tipo_ente_publico_contrapartida
+        description: >-
+          Identifica o ente público local responsável por ofertar as contrapartidas para o
+          empreendimento: 001 - Município; 002 - Estado; Preencher com zeros, caso a situação não se
+          aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_retomada_outras
+        description: >-
+          Demais contrapartidas financeiras de retomada de obra como exemplo: companhia de habitação ou
+          administração. Preencher com zeros, caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_outras_contrapartida_retomada_ente_publico
+        description: >-
+          Informa o valor correspondente a outras contrapartidas de retomada de obra aportadas por ente
+          público. Preencher com zeros, caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_retomada_estado_infra
+        description: >-
+          Campo numérico correspondente ao somatório dos valores destinados à execução de infraestrutura
+          não incidente e de equipamentos públicos sob responsabilidade do estado para a retomada de
+          obra. Preencher com zeros, caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_retomada_complemetar_estado
+        description: >-
+          Informa o valor de contrapartida financeira complementar do estado, se houver para a retomada
+          de obra. Preencher com zeros, caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_retomada_municipio_infra
+        description: >-
+          Campo numérico correspondente ao somatório dos valores destinados à execução de infraestrutura
+          não incidente e de equipamentos públicos sob responsabilidade do municipio para a retomada de
+          obra. Campo em branco caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_contrapartida_retomada_complementar_municipio
+        description: >-
+          Informa o valor de contrapartida financeira complementar do municipio, se houver para a
+          retomada de obra. Campo em branco caso a situação não se aplica ao disposto.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: vr_total_contrapartidas_retomadas
+        description: >-
+          Campo numérico correspondente ao somatório de recursos aportados como contrapartida financeira
+          para a retomada de obra por governo estadual, municipal ou outros. Campo em branco nos casos
+          em que não houver contrapartida financeira.
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.Contrapartida
+
+      - name: dt_inicio_obra_retomada
+        description: >-
+          Data que informa quando as obras de retomada foram iniciadas. Campo em branco caso a situação
+          não se aplica ao disposto.
+
+      - name: dt_previsao_conclusao_obra_retomada
+        description: >-
+          Data que informa a previsão para a obra de retomada ser concluída, conforme cronograma de
+          obras. Campo em branco caso a situação não se aplica ao disposto.
+
+      - name: _source_file
+        description: Caminho do arquivo parquet de origem no MinIO.
+
+      - name: _ingested_at
+        description: Data e hora de ingest?o do registro na camada bronze.
+
+      - name: _source_hash
+        description: Hash do registro de origem para rastreabilidade da ingest?o.
+
       - name: filename
-        description: Arquivo da staging que venceu esta carga.
+        description: Nome do arquivo da staging que venceu esta carga.
         tests:
           - not_null
-
   - name: bronze_shpt_monit_mov_obra_far_mensal
     description: >
       Movimento de obra do FAR: medição física e entregas por empreendimento.
@@ -416,3 +946,24 @@ models:
         description: Arquivo da staging que venceu esta carga.
         tests:
           - not_null
+  - name: bronze_seed_manual_far_portaria_selecao_apf
+    description: Cópia fiel de seeds.far_portaria_selecao_apf (carregada à mão no Postgres). Portaria de seleção de cada APF
+      do MCMV-FAR (727/2023, 704/2024, 47/2025, 488/2025).
+    meta:
+      tags:
+      - bronze
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+        - MCID.Identificadores.IDProposta
+    columns:
+    - name: co_hash
+      description: Identificador da linha.
+    - name: apf
+      description: APF do contrato FAR.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.APF
+    - name: portaria
+      description: Portaria de seleção por extenso.
