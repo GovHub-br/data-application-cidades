@@ -11,7 +11,7 @@
 with
     c as (
         select f.*, p.tomador_cnpj
-        from {{ ref("ouro_pro_moradia_ficha_contrato") }} f
+        from {{ ref("prata_pro_moradia_ficha_contrato") }} f
         left join {{ ref("prata_pro_moradia_contrato") }} p on p.cod_contrato = f.cod_contrato
         where f.tomador_codigo is not null
     ),
@@ -20,7 +20,7 @@ with
         select tomador_codigo,
                count(*) filter (where ic_contratou_com_pendencia) as qt_contratos_com_pendencia_anterior,
                max(qt_anteriores_pendentes) as max_anteriores_pendentes
-        from {{ ref("ouro_pro_moradia_tomador_recontratacao") }}
+        from {{ ref("prata_pro_moradia_tomador_recontratacao") }}
         group by 1
     ),
 

@@ -511,3 +511,163 @@ models:
       description: Fonte que falta para responder por completo.
     - name: limitacao
       description: Limitação da resposta atual.
+
+  - name: ouro_fnhis_portarias
+    description: >
+      Portarias e atos do MCMV FNHIS Sub-50 com o que cada um representa no dado. Uma linha por ato. A 673/2024
+      (abertura da Seleção 2024) conta as propostas apresentadas e a 1.310/2024 (resultado) as selecionadas, ambas
+      da base do TransfereGov (prata_fnhis_propostas). A Seleção 2025 (483/2025 → 892/2025) e a Calamidade RS 2024
+      (865/2024 → 1.341 e 1.354/2024) ainda não têm lista de propostas carregada.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV
+    columns:
+      - name: portaria_codigo
+        description: "Código do ato (número_ano; atos que não são portaria levam prefixo, ex. in_11_2024)."
+        tests:
+          - unique
+          - not_null
+      - name: ato
+        description: "Nome do ato por extenso."
+      - name: especie_ato
+        description: "Portaria, Instrução Normativa, Resolução ou Processo de seleção."
+      - name: numero_ato
+        description: "Número do ato."
+      - name: ano_ato
+        description: "Ano do ato."
+      - name: dt_ato
+        description: "Data do ato, quando conhecida."
+      - name: numero_ano
+        description: "Número/ano com ponto de milhar (ex. 1.310/2024), usado como rótulo."
+      - name: papel_ato
+        description: "Papel no ciclo: Regulamento da linha, Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade), Alteração, Autorização de contratação ou A confirmar."
+      - name: tipo_portaria
+        description: "Tipo para o filtro de portaria: Regulamento da linha, Abertura do ciclo, Seleção, Alteração, Autorização de contratação ou A confirmar."
+      - name: ciclo_selecao
+        description: "Ciclo a que o ato pertence (ex. Seleção 2024, Seleção 2025, Calamidade RS 2024, Todos)."
+      - name: tem_lista_nominal
+        description: "Se o ato publica lista de propostas (sim, não)."
+      - name: fonte_lista
+        description: "Onde está (ou deve estar) a lista de propostas."
+      - name: observacao
+        description: "O que o ato faz."
+      - name: situacao_lista
+        description: "Lista carregada, Lista não carregada ou Não lista propostas."
+      - name: qt_propostas
+        description: "Propostas ligadas ao ato (apresentadas na abertura; selecionadas no resultado)."
+      - name: uh_propostas
+        description: "UH dessas propostas."
+
+  - name: ouro_fnhis_empenho_parcelas
+    description: >
+      Situação das parcelas de empenho de cada termo de compromisso do FNHIS Sub-50 (termos ativos, sem anulados ou
+      rescindidos). O empenho sai em parcelas fixas (≈10%, 20%, 30%, 50%…), então em vez de comparar com uma curva o
+      modelo diz quantas parcelas o termo já teve e há quantos meses não recebe uma nova. Os retratos mensais do
+      TransfereGov começam em mar/2025: o que foi empenhado antes conta como uma parcela. Grão: termo.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV
+    columns:
+      - name: numero_proposta_transferegov
+        description: "Número da proposta no TransfereGov (chave do termo)."
+        tests:
+          - unique
+          - not_null
+      - name: numero_proposta
+        description: "Número da proposta na seleção."
+      - name: proponente_nome
+        description: "Município ou estado proponente."
+      - name: uf
+        description: "Sigla da UF."
+      - name: municipio
+        description: "Município."
+      - name: regiao
+        description: "Região."
+      - name: dt_assinatura
+        description: "Data de assinatura do termo."
+      - name: ano_assinatura
+        description: "Ano de assinatura."
+      - name: objeto
+        description: "Objeto do termo."
+      - name: situacao_instrumento
+        description: "Situação do instrumento no último retrato."
+      - name: idade_meses
+        description: "Meses desde a assinatura no último retrato."
+      - name: valor_repasse
+        description: "Repasse previsto (R$) no último retrato."
+      - name: valor_empenhado_acumulado
+        description: "Empenhado acumulado (R$) no último retrato."
+      - name: pct_empenhado
+        description: "% empenhado acumulado ÷ repasse no último retrato."
+      - name: faixa_empenho
+        description: "Faixa do % empenhado, ordenável pelo prefixo: 0. Sem empenho, 1. Até 10%, 2. 10% a 20%, 3. 20% a 30%, 4. 30% a 50%, 5. 50% a 99%, 6. 100%."
+        tests:
+          - accepted_values:
+              values: ['0. Sem empenho', '1. Até 10%', '2. 10% a 20%', '3. 20% a 30%', '4. 30% a 50%', '5. 50% a 99%', '6. 100%']
+      - name: qt_parcelas_empenhadas
+        description: "Vezes que o empenho acumulado subiu nos retratos (+1 se o primeiro retrato já veio com empenho)."
+      - name: qt_retratos
+        description: "Retratos mensais do termo na base."
+      - name: dt_primeiro_retrato
+        description: "Mês do primeiro retrato do termo."
+      - name: dt_ultimo_retrato
+        description: "Mês do último retrato do termo."
+      - name: dt_ultimo_empenho
+        description: "Mês do retrato em que o empenho subiu pela última vez (ou do primeiro retrato, se nunca subiu depois dele)."
+      - name: ic_ultimo_empenho_antes_dos_retratos
+        description: "Verdadeiro quando o último empenho já estava no primeiro retrato: a data real é essa ou anterior."
+      - name: dt_referencia_base
+        description: "Mês do retrato mais recente da base (data de corte)."
+      - name: meses_sem_novo_empenho
+        description: "Meses entre dt_ultimo_empenho e dt_referencia_base (mínimo, se ic_ultimo_empenho_antes_dos_retratos)."
+      - name: situacao_parcelas
+        description: "Sem empenho, Sem novo empenho há 12+ meses, Sem novo empenho há 6 a 11 meses ou Empenho nos últimos 6 meses."
+        tests:
+          - accepted_values:
+              values: ['Sem empenho', 'Sem novo empenho há 12+ meses', 'Sem novo empenho há 6 a 11 meses', 'Empenho nos últimos 6 meses']
+      - name: portaria_selecao
+        description: "Portaria de resultado da seleção dos termos (1.310/2024)."
+
+  - name: ouro_fnhis_curva_s
+    description: >
+      Evolução do empenho do FNHIS Sub-50 por mês do retrato do TransfereGov. Grão: mês × UF. Termos ativos com assinatura.
+      % empenhado = Σ empenhado ÷ Σ repasse (recalcule a partir das somas). Não é Curva S de obra: o Sub-50 não tem
+      % físico nas bases e o empenho sai em parcelas fixas, por isso a linha anda em degraus.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV
+    columns:
+      - name: id_curva_s
+        description: "Identificador da linha."
+        tests:
+          - unique
+          - not_null
+      - name: mes
+        description: "Mês do retrato."
+      - name: ic_ultimo_mes
+        description: "Verdadeiro no último retrato."
+      - name: ic_retrato_completo
+        description: "Verdadeiro quando o retrato do mês tem pelo menos 80% do maior número de termos da série."
+      - name: uf
+        description: "Sigla da UF."
+      - name: portaria_selecao
+        description: "Portaria de resultado da seleção (1.310/2024)."
+      - name: qt_termos
+        description: "Termos ativos no retrato."
+      - name: qt_termos_com_empenho
+        description: "Termos com algum empenho."
+      - name: valor_repasse
+        description: "Repasse previsto (R$)."
+      - name: valor_empenhado_acumulado
+        description: "Empenhado acumulado (R$)."
+      - name: pct_empenhado
+        description: "% empenhado da linha. Não somar."

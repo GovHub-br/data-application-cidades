@@ -22,7 +22,7 @@ with
             sum(valor_contratado) as valor_contratado,
             sum(valor_contratado) filter (where ic_contrato_vigente) as valor_contratado_vigente,
             sum(quantidade_uh) filter (where ic_contrato_vigente) as quantidade_uh
-        from {{ ref("ouro_pro_moradia_ficha_contrato") }}
+        from {{ ref("prata_pro_moradia_ficha_contrato") }}
         where ano_orcamento is not null and regiao is not null
         group by ano_orcamento, regiao
     )

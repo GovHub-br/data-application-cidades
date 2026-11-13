@@ -299,3 +299,17 @@ models:
     description: >
       Tabela de domínio dos municípios do FGTS: traduz o código de município da CAIXA (4
       dígitos) para o código IBGE (7 dígitos). Colunas: codigo, municipio, uf, ibge_codigo.
+
+  - name: bronze_seed_portarias_pro_moradia
+    description: >
+      Catálogo curado das portarias e demais atos (instruções normativas, resoluções) do Pró-Moradia, como está no
+      seed perguntas_mcid/portarias_pro_moradia. Uma linha por ato. Sem transformação.
+    tests:
+      - sem_drift_de_colunas:
+          colunas: [portaria_codigo, ato, especie_ato, numero, ano, dt_portaria, papel, ciclo_selecao, tem_lista_nominal, fonte_lista, observacao]
+    meta:
+      tags:
+        - bronze
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais

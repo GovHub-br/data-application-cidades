@@ -124,3 +124,39 @@ models:
           - data_consulta
           - uf
           - municipio
+
+# --- regra das camadas (prata só lê bronze; ouro só lê prata), 2026-10-08 ---
+  - name: bronze_seed_cobertura_perguntas_mcid
+    description: >
+      Matriz pergunta × dado das perguntas da oficina com o MCID (Rural, FNHIS Sub-50, Pró-Moradia),
+      como está no seed perguntas_mcid/cobertura_perguntas_mcid. Sem transformação; existe para a prata ler bronze, não o seed.
+    meta:
+      tags:
+      - bronze
+    data_tests:
+    - sem_drift_de_colunas:
+        arguments:
+          colunas:
+          - programa
+          - ordem
+          - origem_pergunta
+          - pergunta
+          - situacao_dado
+          - resposta_disponivel
+          - modelo_ouro
+          - fonte_necessaria
+          - limitacao
+
+  - name: bronze_seed_portarias_fnhis_sub50
+    description: >
+      Catálogo curado das portarias e demais atos (instruções normativas, resoluções) do MCMV FNHIS Sub-50, como está no
+      seed perguntas_mcid/portarias_fnhis_sub50. Uma linha por ato. Sem transformação.
+    tests:
+      - sem_drift_de_colunas:
+          colunas: [portaria_codigo, ato, especie_ato, numero, ano, dt_portaria, papel, ciclo_selecao, tem_lista_nominal, fonte_lista, observacao]
+    meta:
+      tags:
+        - bronze
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV

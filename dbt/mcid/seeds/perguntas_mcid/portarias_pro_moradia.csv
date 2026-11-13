@@ -1,0 +1,5 @@
+portaria_codigo,ato,especie_ato,numero,ano,dt_portaria,papel,ciclo_selecao,tem_lista_nominal,fonte_lista,observacao
+res_ccfgts_702_2012,Resolução CCFGTS nº 702/2012,Resolução,702,2012,,Regulamento da linha,Todos,não,,"Diretrizes de aplicação do FGTS no Pró-Moradia, inclusive a seleção das famílias (renda e prazo até 50% da obra)."
+in_11_2024,Instrução Normativa MCID nº 11/2024,Instrução Normativa,11,2024,2024-05-08,Regulamento da linha,Todos,não,,"Regulamenta o Pró-Moradia: modalidades, contrapartida mínima de 5%, limite de 300 UH/lotes por contrato, carta-consulta."
+in_26_2024,Instrução Normativa MCID nº 26/2024,Instrução Normativa,26,2024,2024-11-11,Alteração,Todos,não,,Altera a regulamentação do Pró-Moradia.
+selehab_carta_consulta,Seleção por carta-consulta (SeleHab),Processo de seleção,,,,Abertura do ciclo,Fluxo contínuo,não,Não publicada: a carta-consulta vai por e-mail à CAIXA com cópia ao MCID,Não há portaria de resultado. O vínculo contrato → ato no Canal FGTS é o texto cod_ident_externo (ouro_pro_moradia_contrato_selecao).

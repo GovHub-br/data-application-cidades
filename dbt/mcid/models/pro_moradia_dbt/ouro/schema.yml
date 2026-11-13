@@ -595,3 +595,246 @@ models:
       description: Média do percentual realizado.
     - name: qt_entraram_no_mes
       description: Contratos que mudaram para a situação no mês.
+
+  - name: ouro_pro_moradia_portarias
+    description: >
+      Atos que regem o Pró-Moradia: Resolução CCFGTS 702/2012, Instruções Normativas MCID 11/2024 e 26/2024 e a
+      seleção por carta-consulta (sem portaria de resultado). Uma linha por ato. O elo contrato → ato está na
+      ouro_pro_moradia_contrato_selecao.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+    columns:
+      - name: portaria_codigo
+        description: "Código do ato (número_ano; atos que não são portaria levam prefixo, ex. in_11_2024)."
+        tests:
+          - unique
+          - not_null
+      - name: ato
+        description: "Nome do ato por extenso."
+      - name: especie_ato
+        description: "Portaria, Instrução Normativa, Resolução ou Processo de seleção."
+      - name: numero_ato
+        description: "Número do ato."
+      - name: ano_ato
+        description: "Ano do ato."
+      - name: dt_ato
+        description: "Data do ato, quando conhecida."
+      - name: numero_ano
+        description: "Número/ano com ponto de milhar (ex. 1.310/2024), usado como rótulo."
+      - name: papel_ato
+        description: "Papel no ciclo: Regulamento da linha, Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade), Alteração, Autorização de contratação ou A confirmar."
+      - name: tipo_portaria
+        description: "Tipo para o filtro de portaria: Regulamento da linha, Abertura do ciclo, Seleção, Alteração, Autorização de contratação ou A confirmar."
+      - name: ciclo_selecao
+        description: "Ciclo a que o ato pertence (ex. Seleção 2024, Seleção 2025, Calamidade RS 2024, Todos)."
+      - name: tem_lista_nominal
+        description: "Se o ato publica lista de propostas (sim, não)."
+      - name: fonte_lista
+        description: "Onde está (ou deve estar) a lista de propostas."
+      - name: observacao
+        description: "O que o ato faz."
+
+  - name: ouro_pro_moradia_curva_s_referencia
+    description: >
+      Curva S de referência do Pró-Moradia por tempo de contrato (meses desde a assinatura): distribuição do % físico
+      realizado (medições mensais do Canal FGTS) e do % financeiro desembolsado de todos os contratos com medição naquela
+      idade. A mediana é a curva padrão. Grão: idade_meses.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+          - MCID.ExecucaoDeEmpreendimentos
+    columns:
+      - name: idade_meses
+        description: "Tempo de contrato, em meses (mês do retrato − mês da assinatura)."
+        tests:
+          - unique
+          - not_null
+      - name: qt_retratos
+        description: "Retratos (contrato × mês) daquela idade."
+      - name: qt_contratos
+        description: "Contratos distintos com retrato naquela idade."
+      - name: fis_p10
+        description: "% físico realizado: percentil 10 na idade."
+      - name: fis_p25
+        description: "% físico realizado: percentil 25 na idade."
+      - name: fis_mediana
+        description: "% físico realizado: mediana na idade (curva padrão)."
+      - name: fis_p75
+        description: "% físico realizado: percentil 75 na idade."
+      - name: fis_p90
+        description: "% físico realizado: percentil 90 na idade."
+      - name: fis_previsto_mediana
+        description: "% físico previsto pelo cronograma: mediana na idade."
+      - name: fin_p10
+        description: "% financeiro: percentil 10 na idade."
+      - name: fin_p25
+        description: "% financeiro: percentil 25 na idade."
+      - name: fin_mediana
+        description: "% financeiro: mediana na idade."
+      - name: fin_p75
+        description: "% financeiro: percentil 75 na idade."
+      - name: fin_p90
+        description: "% financeiro: percentil 90 na idade."
+      - name: ic_referencia_valida
+        description: "Verdadeiro quando a idade tem pelo menos 10 retratos."
+
+  - name: ouro_pro_moradia_curva_s_desvio
+    description: >
+      Quais contratos do Pró-Moradia fogem da curva S de referência: medição mais recente do Canal FGTS comparada com
+      os contratos na mesma idade (desvio da mediana, desvio do próprio cronograma e faixa). Grão: contrato.
+      ic_obra_em_aberto separa as obras vigentes ainda abaixo de 100%.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+          - MCID.ExecucaoDeEmpreendimentos
+    columns:
+      - name: cod_contrato
+        description: "Código do contrato no Canal FGTS."
+        tests:
+          - unique
+          - not_null
+      - name: contrato
+        description: "Número do contrato com DV."
+      - name: empreendimento_nome
+        description: "Nome do empreendimento."
+      - name: tomador_nome
+        description: "Ente tomador do financiamento."
+      - name: tomador_esfera
+        description: "Esfera do tomador (estadual, municipal…)."
+      - name: uf
+        description: "Sigla da UF."
+      - name: municipio
+        description: "Município."
+      - name: modalidade
+        description: "Modalidade do Pró-Moradia."
+      - name: tipo_intervencao
+        description: "Tipo de intervenção."
+      - name: situacao_contrato
+        description: "Situação do contrato no Canal FGTS."
+      - name: ic_contrato_vigente
+        description: "Verdadeiro se o contrato está vigente."
+      - name: dt_assinatura
+        description: "Data de assinatura."
+      - name: ano_assinatura
+        description: "Ano de assinatura."
+      - name: valor_contratado
+        description: "Valor contratado (R$)."
+      - name: quantidade_uh_financiadas
+        description: "UH financiadas (zero em urbanização, lotes e encostas)."
+      - name: identificador_selecao
+        description: "Texto do ato de seleção no Canal FGTS (cod_ident_externo)."
+      - name: dt_ultima_medicao
+        description: "Mês da medição mais recente usada."
+      - name: idade_meses
+        description: "Meses desde a assinatura na última medição."
+      - name: pct_fisico_realizado
+        description: "% físico realizado na última medição."
+      - name: pct_fisico_previsto
+        description: "% físico previsto no cronograma na última medição."
+      - name: pct_financeiro
+        description: "% desembolsado acumulado ÷ contratado (nulo se o contrato não tem desembolso no canal)."
+      - name: situacao_obra
+        description: "Situação da obra na última medição."
+      - name: qt_contratos_na_idade
+        description: "Contratos que formam a referência da idade."
+      - name: fis_p10
+        description: "Referência: p10 do % físico na idade."
+      - name: fis_p25
+        description: "Referência: p25 do % físico na idade."
+      - name: fis_mediana
+        description: "Referência: mediana do % físico na idade."
+      - name: fis_p75
+        description: "Referência: p75 do % físico na idade."
+      - name: fis_p90
+        description: "Referência: p90 do % físico na idade."
+      - name: fin_mediana
+        description: "Referência: mediana do % financeiro na idade."
+      - name: desvio_mediana_pp
+        description: "% físico − mediana da idade, em p.p. (negativo = atrás dos demais)."
+      - name: desvio_cronograma_pp
+        description: "% físico realizado − previsto do próprio cronograma, em p.p."
+      - name: diferenca_financeiro_fisico_pp
+        description: "% financeiro − % físico, em p.p."
+      - name: faixa_curva_fisica
+        description: "Muito abaixo da curva (≤ p10 ou 20 p.p. abaixo da mediana), Abaixo da curva (< p25), Na curva (p25 a p75), Acima da curva (> p75) ou Sem referência."
+        tests:
+          - accepted_values:
+              values: ['Muito abaixo da curva', 'Abaixo da curva', 'Na curva', 'Acima da curva', 'Sem referência']
+      - name: ic_obra_em_aberto
+        description: "Verdadeiro se o contrato está vigente e o físico está abaixo de 100%."
+      - name: dt_referencia_base
+        description: "Mês da medição mais recente da base (data de corte)."
+      - name: meses_sem_medicao
+        description: "Meses entre a última medição do contrato e dt_referencia_base."
+      - name: situacao_acompanhamento
+        description: "Atrasada (obra em aberto, medição nos últimos 12 meses, abaixo do p25 da idade), Sem medição há 12+ meses (obra em aberto sem medição recente: provável paralisação), Em dia, Sem referência ou Concluída ou encerrada."
+        tests:
+          - accepted_values:
+              values: ['Atrasada', 'Sem medição há 12+ meses', 'Em dia', 'Sem referência', 'Concluída ou encerrada']
+
+  - name: ouro_pro_moradia_curva_s
+    description: >
+      Execução físico-financeira da carteira do Pró-Moradia por mês do calendário. Grão: mês × UF × tipo de intervenção ×
+      situação na carteira. Carteira: contratos assinados até o mês com alguma medição; o mês sem medição repete a
+      última. Pesos por valor contratado. Financeiro só dos contratos com desembolso no Canal FGTS. Para a carteira
+      ativa filtre situacao_carteira = 'Em execução' (sem o filtro, os concluídos entram a 100% para sempre). A Curva S
+      propriamente dita está em ouro_pro_moradia_curva_s_referencia (por tempo de contrato). O % previsto vem quase
+      sempre 0 no Canal FGTS: não use como cronograma. Some as colunas de soma e recalcule os percentuais.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+          - MCID.ExecucaoDeEmpreendimentos
+    columns:
+      - name: id_curva_s
+        description: "Identificador da linha (md5 do grão)."
+        tests:
+          - unique
+          - not_null
+      - name: mes
+        description: "Mês de referência."
+      - name: ic_ultimo_mes
+        description: "Verdadeiro no último mês da série."
+      - name: uf
+        description: "Sigla da UF."
+      - name: tipo_intervencao
+        description: "Tipo de intervenção."
+      - name: situacao_carteira
+        description: "Situação do contrato no mês: Em execução, Concluída (físico = 100%) ou Sem medição há 12+ meses."
+        tests:
+          - accepted_values:
+              values: ['Em execução', 'Concluída', 'Sem medição há 12+ meses']
+      - name: qt_contratos
+        description: "Contratos na carteira no mês."
+      - name: valor_contratado
+        description: "Valor contratado da carteira (R$)."
+      - name: valor_com_medicao
+        description: "Valor contratado dos contratos com medição (denominador do % físico)."
+      - name: fis_realizado_x_valor
+        description: "Σ(% realizado × valor contratado)."
+      - name: valor_com_previsao
+        description: "Valor contratado dos contratos com % previsto."
+      - name: fis_previsto_x_valor
+        description: "Σ(% previsto × valor contratado)."
+      - name: valor_com_desembolso
+        description: "Valor contratado dos contratos com desembolso no canal (denominador do % financeiro)."
+      - name: vr_desembolsado_acumulado
+        description: "Desembolsado acumulado até o mês (R$), desses contratos."
+      - name: pct_fisico_realizado
+        description: "% físico realizado da linha (ponderado por valor). Não somar."
+      - name: pct_fisico_previsto
+        description: "% físico previsto da linha (ponderado por valor). Não somar."
+      - name: pct_financeiro
+        description: "% desembolsado da linha. Não somar."

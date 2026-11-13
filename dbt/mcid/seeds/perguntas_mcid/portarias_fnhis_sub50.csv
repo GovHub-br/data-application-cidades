@@ -1,0 +1,20 @@
+portaria_codigo,ato,especie_ato,numero,ano,dt_portaria,papel,ciclo_selecao,tem_lista_nominal,fonte_lista,observacao
+1416_2023,Portaria MCID nº 1.416/2023,Portaria,1416,2023,2023-11-06,Regulamento da linha,Todos,não,,Regulamenta a linha MCMV FNHIS Sub 50 (provisão subsidiada em municípios até 50 mil hab.).
+1424_2025,Portaria MCID nº 1.424/2025,Portaria,1424,2025,2025-12-09,Alteração,Todos,não,,Altera a 1.416/2023.
+res_cgfnhis_51_2012,Resolução CGFNHIS nº 51/2012,Resolução,51,2012,2012-12-28,Regulamento da linha,Todos,não,,Exige regularidade no SNHIS para o ente concorrer (parágrafo único do art. 2º).
+res_cgfnhis_60_2024,Resolução CGFNHIS nº 60/2024,Resolução,60,2024,2024-09-05,Regulamento da linha,Todos,não,,Prazos e condições para atender os requisitos do SNHIS.
+res_cgfnhis_61_2024,Resolução CGFNHIS nº 61/2024,Resolução,61,2024,2024-11-07,Regulamento da linha,Todos,não,,"Termo de adesão ao SNHIS (art. 12, IV, da Lei 11.124/2005)."
+in_29_2024,Instrução Normativa MCID nº 29/2024,Instrução Normativa,29,2024,2024-12-06,Regulamento da linha,Todos,não,,Institui o Termo de Adesão ao SNHIS.
+673_2024,Portaria MCID nº 673/2024,Portaria,673,2024,2024-07-11,Abertura do ciclo,Seleção 2024,não,,"Regras, requisitos e meta física da seleção de 2024. É o ciclo das propostas da base todas_propostas_FNHIS."
+1310_2024,Portaria MCID nº 1.310/2024,Portaria,1310,2024,2024-11-19,Resultado da seleção,Seleção 2024,sim,"lake: todas_propostas_FNHIS (bronze_shpt_fnhis_sub50_propostas, resultado_selecao = selecionada)","Divulga as propostas selecionadas do processo seletivo da 673/2024. A lista vem do TransfereGov, não do PDF."
+1385_2025,Portaria MCID nº 1.385/2025,Portaria,1385,2025,2025-12-02,Alteração,Seleção 2024,não,,Autoriza acréscimo de até 10% no valor por UH das propostas da 1.310/2024 na Região Norte.
+483_2025,Portaria MCID nº 483/2025,Portaria,483,2025,2025-05-19,Abertura do ciclo,Seleção 2025,não,,"Regras, requisitos e meta física (Anexo III, por UF) da seleção de 2025."
+538_2025,Portaria MCID nº 538/2025,Portaria,538,2025,2025-05-30,Alteração,Seleção 2025,não,,"Altera a 483/2025 (teto de R$ 154 mil por UH, segundo o fluxo da oficina)."
+892_2025,Portaria MCID nº 892/2025,Portaria,892,2025,2025-08-08,Resultado da seleção,Seleção 2025,sim,PDF na página de regulamentação do Sub-50 (compilada consolidadaV2); anexo ainda não extraído,"Amplia a meta da 483/2025, divulga as propostas selecionadas e fixa prazos de cadastramento e contratação."
+1130_2025,Portaria MCID nº 1.130/2025,Portaria,1130,2025,2025-09-26,Alteração,Seleção 2025,não,,Altera o prazo de cadastramento das propostas da 892/2025.
+311_2026,Portaria MCID nº 311/2026,Portaria,311,2026,2026-03-24,Alteração,Seleção 2025,não,,Altera a 892/2025.
+865_2024,Portaria MCID nº 865/2024,Portaria,865,2024,2024-08-13,Abertura do ciclo,Calamidade RS 2024,não,,Rito e condições para contratar propostas em municípios do RS em emergência ou calamidade (Decreto Legislativo 36/2024).
+1245_2024,Portaria MCID nº 1.245/2024,Portaria,1245,2024,2024-11-01,Alteração,Calamidade RS 2024,não,,Altera a 865/2024.
+1341_2024,Portaria MCID nº 1.341/2024,Portaria,1341,2024,2024-11-26,Enquadramento (Calamidade),Calamidade RS 2024,sim,PDF na página de regulamentação do Sub-50; anexo ainda não extraído,Divulga as propostas enquadradas no rito da 865/2024.
+1354_2024,Portaria MCID nº 1.354/2024,Portaria,1354,2024,2024-11-28,Enquadramento (Calamidade),Calamidade RS 2024,sim,PDF na página de regulamentação do Sub-50; anexo ainda não extraído,Divulga mais propostas enquadradas e altera a 1.341/2024.
+96_2026,Portaria MCID nº 96/2026,Portaria,96,2026,2026-01-27,Alteração,Calamidade RS 2024,não,,Altera a 865/2024.
