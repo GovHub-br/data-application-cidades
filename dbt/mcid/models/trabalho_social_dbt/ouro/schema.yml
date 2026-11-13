@@ -1,0 +1,714 @@
+version: 2
+models:
+- name: ouro_ts_alerta_marco
+  description: Alertas de marco temporal do Trabalho Social para o painel. Uma linha por contrato × marco da portaria
+    de TS do contrato cujo gatilho já foi atingido; ic_descumprido marca os que os dados mostram fora do marco,
+    com a evidência em texto e a consequência prevista. Réguas da 464/2018 e da 75/2025, FAR, FDS e Rural. Só entram
+    marcos verificáveis com a planilha (obra, entrega, relatórios, execução e desembolso).
+  meta:
+    tags:
+    - gold
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  columns:
+  - name: id_alerta
+    description: 'Chave: id_ts | id_marco.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+    tests:
+    - unique
+    - not_null
+  - name: id_ts
+    description: 'Chave do contrato no Trabalho Social: linha | agente financeiro | APF normalizado.'
+    meta:
+      openmetadata:
+        glossary: &id001
+        - MCID.Identificadores.APF
+  - name: id_marco
+    description: 'Identificador do marco: portaria-linha-ordem (ex.: 75-FAR-01, 464-FDS-02).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+    tests:
+    - not_null
+  - name: marco
+    description: 'Rótulo do marco para o painel, na forma linha · quando · o que se exige (portaria). O
+      identificador técnico fica em id_marco.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: portaria_ts
+    description: Portaria de TS no formato número/ano.
+    meta:
+      openmetadata:
+        glossary: &id015
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: origem_portaria_ts
+    description: 'De onde veio portaria_ts: informada (jul/2026), remessa anterior ou sem portaria.'
+    meta:
+      openmetadata:
+        glossary: &id016
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: linha
+    description: 'Linha do MCMV: FAR, FDS (Entidades) ou RURAL (PNHR).'
+    meta:
+      openmetadata:
+        glossary: &id002
+        - MCID.ProgramasHabitacionais.MCMV
+  - name: agente_financeiro
+    description: 'Agente financeiro que informou o acompanhamento: CAIXA ou BB.'
+    meta:
+      openmetadata:
+        glossary: &id003
+        - MCID.Atores.AgenteFinanceiro
+  - name: apf
+    description: APF (número do contrato do empreendimento) normalizado, sem pontuação.
+    meta:
+      openmetadata:
+        glossary: &id004
+        - MCID.Identificadores.APF
+  - name: contrato
+    description: 'Contrato como veio na planilha (CAIXA: contrato; BB: contrato de registro AO).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.APF
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary: &id005
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: municipio
+    description: Município do empreendimento, em maiúsculas.
+    meta:
+      openmetadata:
+        glossary: &id006
+        - MCID.Identificadores.CodigoIBGE
+  - name: uf
+    description: Sigla da UF do empreendimento.
+    meta:
+      openmetadata:
+        glossary: &id007
+        - MCID.Identificadores.UF
+  - name: qt_uh
+    description: Quantidade de unidades habitacionais do empreendimento.
+    meta:
+      openmetadata:
+        glossary: &id008
+        - MCID.Identificadores.UH
+  - name: dt_contratacao
+    description: Data de contratação do empreendimento.
+    meta:
+      openmetadata:
+        glossary: &id009
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: portaria_selecao
+    description: Portaria de SELEÇÃO de onde o contrato saiu, no formato número/ano (não é a portaria de TS).
+    meta:
+      openmetadata:
+        glossary: &id017
+        - MCID.ProgramasHabitacionais.MCMV
+  - name: ordem_marco
+    description: Ordem do marco dentro da linha.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: fase
+    description: Fase do TS em que o marco vale (pré-obras, pré-contratual, obras, pós-ocupação, penalidade).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PosOcupacao
+  - name: gatilho
+    description: O que dispara o marco (percentual de obra, contratação, entrega...).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: exigencia
+    description: O que precisa estar pronto no marco, segundo a portaria.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: consequencia_descumprimento
+    description: O que a portaria prevê quando o marco não é cumprido.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: referencia
+    description: Artigo, anexo e item da portaria de onde o marco foi transcrito.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: ic_descumprido
+    description: Verdadeiro quando os dados mostram que o marco não foi cumprido.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+    tests:
+    - not_null
+  - name: evidencia
+    description: Por que o contrato está fora do marco, em texto (obra, relatórios, execução e desembolso do TS).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: dias_alem_do_prazo
+    description: Dias além do intervalo máximo entre relatórios, quando o marco tem prazo e há relatório.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: situacao_ts
+    description: Situação do TS padronizada entre CAIXA e BB (Concluído, Em andamento, Atrasado, Paralisado, Não
+      iniciado, Distrato).
+    meta:
+      openmetadata:
+        glossary: &id010
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: situacao_ts_origem
+    description: Situação do TS como veio da planilha, em maiúsculas.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: motivo_situacao_ts
+    description: Motivo informado para TS atrasado ou paralisado.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+  - name: recurso
+    description: Responsável pela execução do TS na CAIXA FAR (FAR-ENTE ou FAR-CAIXA); no BB e no Rural, o programa.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.AgenteExecutorTS
+  - name: natureza_execucao
+    description: 'Natureza da execução do TS: direta, indireta, mista, CAIXA ou compartilhada.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.NaturezaExecucaoTS
+  - name: instrumento_planejamento
+    description: 'Instrumento de planejamento do TS: PTS ou PDST.'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.InstrumentoPlanejamentoTS
+        - MCID.ExecucaoDeEmpreendimentos.PTS
+  - name: pc_obra
+    description: Percentual de execução física da obra, de 0 a 100 (o BB vem de 0 a 1 e é convertido).
+    meta:
+      openmetadata:
+        glossary: &id011
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: pc_execucao_ts
+    description: Percentual de execução do Trabalho Social, de 0 a 100 (o BB vem de 0 a 1 e é convertido).
+    meta:
+      openmetadata:
+        glossary: &id012
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: vr_global_ts
+    description: Valor global do Trabalho Social, em reais.
+    meta:
+      openmetadata:
+        glossary: &id013
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+  - name: vr_desembolsado_ts
+    description: Valor do Trabalho Social já desembolsado, em reais.
+    meta:
+      openmetadata:
+        glossary: &id014
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ValorTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.Desembolso
+  - name: dt_entrega
+    description: Data de entrega do empreendimento (no FDS e no Rural BB, a assinatura do primeiro contrato de pessoa
+      física).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: dt_ultimo_relatorio
+    description: 'Data do último relatório de TS atestado (CAIXA: último AVT; BB: último relatório).'
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: dias_sem_relatorio
+    description: Dias entre a competência da planilha e o último relatório de TS.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: ic_ts_com_sinal
+    description: Verdadeiro quando há execução do TS, desembolso ou relatório. Falso é indício de convênio/PTS ausente.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ConvenioTrabalhoSocial
+        - MCID.ExecucaoDeEmpreendimentos.PTS
+  - name: ic_tem_relatorio
+    description: Verdadeiro quando há pelo menos um relatório de TS informado.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+  - name: ic_obra_entregue
+    description: Verdadeiro quando a obra está em 100% ou a data de entrega já passou.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: dt_referencia
+    description: Competência da planilha (último dia do mês), lida do nome do arquivo.
+  - name: ic_alerta_principal
+    description: Verdadeiro em uma linha por contrato com alerta (o marco mais avançado descumprido). Use para somar
+      UH e valores sem duplicar.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+- name: ouro_ts_empreendimento_mapa
+  description: 'Uma linha por contrato com Trabalho Social para o mapa do painel: coordenadas, tipo de edificação,
+    regime, público tradicional estimado, situação e portaria do TS e o resumo dos alertas de marco (status_marco).'
+  meta:
+    tags:
+    - gold
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+      - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  columns:
+  - name: id_ts
+    description: 'Chave do contrato no Trabalho Social: linha | agente financeiro | APF normalizado.'
+    meta:
+      openmetadata:
+        glossary: *id001
+    tests:
+    - unique
+    - not_null
+  - name: linha
+    description: 'Linha do MCMV: FAR, FDS (Entidades) ou RURAL (PNHR).'
+    meta:
+      openmetadata:
+        glossary: *id002
+  - name: agente_financeiro
+    description: 'Agente financeiro que informou o acompanhamento: CAIXA ou BB.'
+    meta:
+      openmetadata:
+        glossary: *id003
+  - name: apf
+    description: APF (número do contrato do empreendimento) normalizado, sem pontuação.
+    meta:
+      openmetadata:
+        glossary: *id004
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id005
+  - name: eo_nome
+    description: Nome da entidade organizadora (FDS e Rural).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.EntidadeOrganizadora
+  - name: municipio
+    description: Município do empreendimento, em maiúsculas.
+    meta:
+      openmetadata:
+        glossary: *id006
+  - name: uf
+    description: Sigla da UF do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id007
+  - name: uf_iso
+    description: UF no padrão ISO 3166-2 (BR-SP), para o mapa por UF do Superset.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: cod_ibge
+    description: Código IBGE do município (SNH).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.CodigoIBGE
+  - name: regiao
+    description: Região do Brasil (SNH).
+  - name: latitude
+    description: 'Latitude em graus decimais: endereço do empreendimento (SNH) ou, sem ele, centro do município
+      (IBGE). Ver origem_coordenada.'
+    meta:
+      openmetadata:
+        glossary: &id018
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: longitude
+    description: 'Longitude em graus decimais: endereço do empreendimento (SNH) ou, sem ele, centro do município
+      (IBGE). Ver origem_coordenada.'
+    meta:
+      openmetadata:
+        glossary: &id019
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: ic_tem_coordenada
+    description: Verdadeiro quando o empreendimento tem latitude e longitude válidas.
+  - name: origem_coordenada
+    description: 'De onde veio a coordenada: Endereço do empreendimento (SNH), Centro do município (IBGE) ou Sem
+      coordenada.'
+  - name: qt_uh
+    description: Quantidade de unidades habitacionais do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id008
+  - name: tipo_edificacao
+    description: 'Tipo de edificação: Casa, Apartamento, Casa sobreposta, Misto ou Não informado. No Rural é sempre
+      Casa (regra do PNHR).'
+    meta:
+      openmetadata:
+        glossary: &id020
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: origem_tipo_edificacao
+    description: 'De onde veio o tipo de edificação: INT040 (FAR), INT059 (FDS) ou regra do PNHR (Rural).'
+  - name: regime
+    description: 'Regime do empreendimento: Condomínio, Loteamento, Unidade isolada (rural) ou Não informado.'
+    meta:
+      openmetadata:
+        glossary: &id021
+        - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+  - name: tipo_demanda
+    description: Tipo de demanda (cadastro habitacional, movimentos sociais, calamidade...), só FAR.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.TipoDeDemanda
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: publico_tradicional_estimado
+    description: 'Público tradicional ESTIMADO por palavra-chave no nome da EO e do empreendimento (seed ts_publico_tradicional):
+      Quilombola, Indígena, Ribeirinha, Pescadores artesanais, Extrativistas, Cigana, Povos de terreiro, Assentamento
+      da reforma agrária ou Não identificado.'
+    meta:
+      openmetadata:
+        glossary: &id022
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+  - name: origem_publico_tradicional
+    description: 'Onde a palavra-chave apareceu: nome da entidade organizadora (indício mais forte) ou nome do empreendimento.'
+  - name: ic_publico_tradicional
+    description: Verdadeiro quando foi estimado público tradicional (assentamento da reforma agrária não conta).
+  - name: dt_contratacao
+    description: Data de contratação do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id009
+  - name: situacao_ts
+    description: Situação do TS padronizada entre CAIXA e BB (Concluído, Em andamento, Atrasado, Paralisado, Não
+      iniciado, Distrato).
+    meta:
+      openmetadata:
+        glossary: *id010
+  - name: pc_obra
+    description: Percentual de execução física da obra, de 0 a 100 (o BB vem de 0 a 1 e é convertido).
+    meta:
+      openmetadata:
+        glossary: *id011
+  - name: pc_execucao_ts
+    description: Percentual de execução do Trabalho Social, de 0 a 100 (o BB vem de 0 a 1 e é convertido).
+    meta:
+      openmetadata:
+        glossary: *id012
+  - name: vr_global_ts
+    description: Valor global do Trabalho Social, em reais.
+    meta:
+      openmetadata:
+        glossary: *id013
+  - name: vr_desembolsado_ts
+    description: Valor do Trabalho Social já desembolsado, em reais.
+    meta:
+      openmetadata:
+        glossary: *id014
+  - name: portaria_ts
+    description: Portaria de TS no formato número/ano.
+    meta:
+      openmetadata:
+        glossary: *id015
+  - name: origem_portaria_ts
+    description: 'De onde veio portaria_ts: informada (jul/2026), remessa anterior ou sem portaria.'
+    meta:
+      openmetadata:
+        glossary: *id016
+  - name: portaria_selecao
+    description: Portaria de SELEÇÃO de onde o contrato saiu, no formato número/ano (não é a portaria de TS).
+    meta:
+      openmetadata:
+        glossary: *id017
+  - name: qt_marcos_vencidos
+    description: Quantos marcos de TS já valem para o contrato (gatilho atingido).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: qt_marcos_descumpridos
+    description: Quantos marcos de TS os dados mostram descumpridos.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: ic_fora_do_marco
+    description: Verdadeiro quando o contrato tem pelo menos um marco descumprido.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: marco_principal_descumprido
+    description: O marco mais avançado descumprido.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: evidencia_principal
+    description: Evidência do marco mais avançado descumprido.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+  - name: status_marco
+    description: Fora do marco, Dentro do marco, Sem régua de marcos (portaria sem régua transcrita) ou TS encerrado.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
+    tests:
+    - accepted_values:
+        values:
+        - Fora do marco
+        - Dentro do marco
+        - Sem régua de marcos
+        - TS encerrado
+  - name: dt_referencia
+    description: Competência da planilha (último dia do mês), lida do nome do arquivo.
+- name: ouro_ts_demanda_dossie
+  description: 'Indicação de demanda e dossiês dos empreendimentos FAR sem indicação de demanda, na remessa mais
+    recente, com a variação desde a anterior e os alertas da equipe: obra a partir de 50% sem famílias indicadas
+    e obra a partir de 60% sem dossiê enviado. Uma linha por APF.'
+  meta:
+    tags:
+    - gold
+    openmetadata:
+      glossary:
+      - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+      - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+  columns:
+  - name: apf
+    description: APF (número do contrato do empreendimento) normalizado, sem pontuação.
+    meta:
+      openmetadata:
+        glossary: *id004
+    tests:
+    - unique
+    - not_null
+  - name: id_ts
+    description: 'Chave do contrato no Trabalho Social: linha | agente financeiro | APF normalizado.'
+    meta:
+      openmetadata:
+        glossary: *id001
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id005
+  - name: municipio
+    description: Município do empreendimento, em maiúsculas.
+    meta:
+      openmetadata:
+        glossary: *id006
+  - name: uf
+    description: Sigla da UF do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id007
+  - name: qt_uh
+    description: Quantidade de unidades habitacionais do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id008
+  - name: dt_contratacao
+    description: Data de contratação do empreendimento.
+    meta:
+      openmetadata:
+        glossary: *id009
+  - name: ente_cnpj
+    description: CNPJ do ente público local.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.EntePublico
+        - MCID.Identificadores.CNPJ
+  - name: ente_nome
+    description: Nome do ente público local.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.EntePublico
+  - name: construtora_nome
+    description: Nome da construtora.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Atores.Construtora
+  - name: latitude
+    description: 'Latitude em graus decimais: endereço do empreendimento (SNH) ou, sem ele, centro do município
+      (IBGE). Ver origem_coordenada.'
+    meta:
+      openmetadata:
+        glossary: *id018
+  - name: longitude
+    description: 'Longitude em graus decimais: endereço do empreendimento (SNH) ou, sem ele, centro do município
+      (IBGE). Ver origem_coordenada.'
+    meta:
+      openmetadata:
+        glossary: *id019
+  - name: tipo_edificacao
+    description: 'Tipo de edificação: Casa, Apartamento, Casa sobreposta, Misto ou Não informado. No Rural é sempre
+      Casa (regra do PNHR).'
+    meta:
+      openmetadata:
+        glossary: *id020
+  - name: regime
+    description: 'Regime do empreendimento: Condomínio, Loteamento, Unidade isolada (rural) ou Não informado.'
+    meta:
+      openmetadata:
+        glossary: *id021
+  - name: publico_tradicional_estimado
+    description: 'Público tradicional ESTIMADO por palavra-chave no nome da EO e do empreendimento (seed ts_publico_tradicional):
+      Quilombola, Indígena, Ribeirinha, Pescadores artesanais, Extrativistas, Cigana, Povos de terreiro, Assentamento
+      da reforma agrária ou Não identificado.'
+    meta:
+      openmetadata:
+        glossary: *id022
+  - name: situacao_ts
+    description: Situação do TS padronizada entre CAIXA e BB (Concluído, Em andamento, Atrasado, Paralisado, Não
+      iniciado, Distrato).
+    meta:
+      openmetadata:
+        glossary: *id010
+  - name: pc_obra
+    description: Percentual de execução física da obra, de 0 a 100 (o BB vem de 0 a 1 e é convertido).
+    meta:
+      openmetadata:
+        glossary: *id011
+  - name: qt_pesquisas_sigdh
+    description: Grupos familiares indicados pelo ente e pesquisados no SIGDH (a indicação de demanda). Zero = nenhuma
+      família indicada.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: pc_pesquisas_sigdh
+    description: Pesquisas no SIGDH em relação às UH, em % (pode passar de 100).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: qt_dossies_enviados
+    description: Dossiês das famílias enviados pelo aplicativo.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: qt_dossies_aprovados
+    description: Dossiês das famílias aprovados.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: pc_dossies_aprovados
+    description: Dossiês aprovados em relação às UH, em %.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: qt_contratos_assinados
+    description: Contratos de pessoa física já assinados.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.EntregaDeUnidade
+  - name: status_equip_comunitario_50
+    description: Situação do equipamento comunitário no marco de 50% da obra.
+  - name: status_infra_rede_eletrica
+    description: Situação da infraestrutura externa de rede elétrica.
+  - name: status_infra_pavimentacao
+    description: Situação da infraestrutura externa de pavimentação.
+  - name: status_infra_agua_esgoto
+    description: Situação da infraestrutura externa de água e esgoto.
+  - name: var_pc_obra
+    description: Variação da obra (pontos percentuais) desde a remessa anterior.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+  - name: var_qt_pesquisas_sigdh
+    description: Variação das pesquisas no SIGDH desde a remessa anterior.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: var_qt_dossies_enviados
+    description: Variação dos dossiês enviados desde a remessa anterior.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: var_qt_dossies_aprovados
+    description: Variação dos dossiês aprovados desde a remessa anterior.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: dt_referencia_anterior
+    description: Data da remessa anterior usada na variação.
+  - name: dt_referencia
+    description: Competência da planilha (último dia do mês), lida do nome do arquivo.
+  - name: pc_dossies_enviados_por_uh
+    description: Dossiês enviados por UH, em %.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: alerta_50_sem_demanda
+    description: Obra a partir de 50% e nenhuma família indicada (zero pesquisas no SIGDH). Regra de acompanhamento
+      da equipe do MCID.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: alerta_60_sem_dossie
+    description: Obra a partir de 60% e nenhum dossiê enviado. Regra de acompanhamento da equipe do MCID.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: situacao_demanda
+    description: Resumo da situação da demanda e dos dossiês, do mais grave ao menos grave.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.IndicacaoDeDemanda
+  - name: prioridade
+    description: 'Prioridade de ação: 1 (60%+ sem famílias), 2 (60%+ sem dossiê), 3 (50-60% sem famílias), 9 (demais).'
