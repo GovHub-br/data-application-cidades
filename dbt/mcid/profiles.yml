@@ -80,7 +80,10 @@ mcid:
       # Aqui e o arquivo local de scratch/spill: mcid_local.duckdb -> mcid_local.
       # O catalogo `cidades` vem do `attach` abaixo, apontando pro Postgres --
       # e um nome nao pode servir aos dois na mesma sessao.
-      database: mcid_local
+      # O nome do catálogo precisa acompanhar o basename do arquivo. A variável
+      # permite execuções isoladas (manual, recuperação ou CI) sem disputar o
+      # arquivo usado pelo Airflow.
+      database: "{{ env_var('DUCKDB_MCID_LOCAL_DATABASE', 'mcid_local') }}"
       schema: "{{ env_var('DB_DW_SCHEMA_MCID', 'dbt_default') }}"
       threads: "{{ env_var('DUCKDB_MCID_THREADS', '4') | int }}"
       extensions:

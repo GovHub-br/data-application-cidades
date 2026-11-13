@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from airflow.sdk import dag, task
 from airflow.sdk import get_current_context
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from schedule_loader import get_dynamic_schedule
 
 
@@ -46,7 +47,21 @@ def sftp_ingest_dag() -> None:
             erro,
         )
 
-    ingestao_sftp_para_minio()
+    ingestao = ingestao_sftp_para_minio()
+
+    # O raw é apenas a aterrissagem. Sem este encadeamento, uma execução bem-sucedida
+    # da ingestão podia deixar arquivos novos no MinIO por dias até a próxima execução
+    # independente da transformação, e a Bronze continuava no snapshot anterior.
+    # A transformação é incremental/idempotente: se o SFTP não trouxer mudanças, ela
+    # só verifica os controles e o dbt mantém as tabelas materializadas consistentes.
+    transformar_e_materializar = TriggerDagRunOperator(
+        task_id="transformar_raw_e_materializar_bronze",
+        trigger_dag_id="minio_transform_dag",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    )
+
+    ingestao >> transformar_e_materializar
 
 
 dag_instance = sftp_ingest_dag()

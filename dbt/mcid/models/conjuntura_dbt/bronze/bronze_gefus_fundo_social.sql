@@ -13,8 +13,9 @@
 -- Projeta os três campos que o indicador usa, e só eles. Se precisar de mais
 -- algum, avaliar campo a campo — não voltar para `select *`.
 --
--- ATENÇÃO: a remessa é semanal e o nome do arquivo carrega a data. O caminho
--- está em `sources.yml` (`meta.caminho`); atualizar lá, não aqui.
+-- A remessa é semanal e o nome do arquivo carrega a data. A Bronze escolhe a
+-- competência mais recente diretamente da staging; nunca deve ficar presa ao
+-- caminho pontual de uma remessa antiga em `sources.yml`.
 
 -- Bronze é ESPELHO da origem: `select *`, sem projeção e sem transformação.
 -- Toda transformação — inclusive descartar coluna — acontece de bronze para
@@ -29,4 +30,10 @@
 --   - `tests/conjuntura_sem_dado_sensivel.sql` impede que cheguem a
 --     prata/ouro, que são as camadas de consumo.
 
-select * from {{ fonte_lake('gefus_fundo_social', 'lake_staging') }}
+{% set padrao = "s3://data-lake-mcid/staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet" %}
+
+select *
+from read_parquet(
+    '{{ padrao }}', filename => true, union_by_name => true
+) as r
+where cast(r['filename'] as varchar) = {{ arquivo_mais_recente(padrao) }}
