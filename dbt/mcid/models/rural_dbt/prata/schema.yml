@@ -75,22 +75,33 @@ models:
 
       '
 - name: prata_rural_financeiro_mensal
-  description: 'Série de liberações financeiras do Novo MCMV Rural, decomposta por componente (obra, trabalho
-    social, ATEC, cisternas/efluentes e custos indiretos). Várias linhas por APF.
-
-    '
+  description: >
+    Série de liberações financeiras do Novo MCMV Rural (arquivo MONIT_MOV_FINANC da CAIXA), decomposta
+    por componente (obra, trabalho social, ATEC, cisternas/efluentes e custos indiretos). Várias linhas por APF.
+    Schema drift corrigido em 03/11/2026: a origem traz a APF sem o dígito verificador (6 dígitos); a APF de 8
+    dígitos é resolvida pelos 6 primeiros dígitos contra as APFs do MONIT_MOV_OBRA e do Cad PJ (só quando há
+    um candidato). `metodo_chave_apf` diz como cada linha foi resolvida.
   meta:
     tags:
     - silver
   columns:
   - name: apf
-    description: APF normalizado para 8 dígitos.
+    description: "APF com 8 dígitos (com DV), resolvida a partir do nu_apf de 6 dígitos da origem. Quando não há candidato único, fica o nu_apf completado com zeros (não casa com outras bases)."
     tests:
     - not_null
   - name: dt_liberacao_recurso
     description: Data da liberação do recurso; eixo temporal da série financeira.
   - name: vr_movimento
     description: Valor total do movimento financeiro em R$ (numeric 15,2).
+  - name: nu_apf_origem
+    description: APF como veio no arquivo (só dígitos; 6 dígitos, sem o DV).
+  - name: metodo_chave_apf
+    description: >
+      Como a APF foi resolvida: APF com DV na origem; APF sem DV resolvida pelos 6 primeiros dígitos; APF sem DV
+      ambígua (mais de um candidato); APF sem DV não encontrada em obra/Cad PJ; Sem APF na origem.
+    tests:
+    - accepted_values:
+        values: ['APF com DV na origem', 'APF sem DV resolvida pelos 6 primeiros dígitos', 'APF sem DV ambígua (mais de um candidato)', 'APF sem DV não encontrada em obra/Cad PJ', 'Sem APF na origem']
 - name: prata_rural_prioritarios_snh
   description: 'Dados prioritários disponibilizados pela SNH, filtrados para `modalidade = ''RURAL''`.
     É a espinha dorsal da prata_rural_empreendimento: todos os outros insumos entram por left join sobre
@@ -305,6 +316,8 @@ models:
       da CAIXA — o BB não informa esta coluna.
 
       '
+  - name: portaria_ts
+    description: 'Portaria de Trabalho Social no formato número/ano (21/2014, 464/2018, 75/2025). Nula quando o agente financeiro não informou.'
 - name: prata_rural_trabalho_social_bb
   description: 'Base de acompanhamento do Plano de Trabalho Social (PTS) do PNHR pelo Banco do Brasil.
     Mesmo papel do trabalho_social_caixa, mas o layout de origem é diferente: os nomes das colunas de
@@ -347,6 +360,8 @@ models:
     - sem_mojibake:
         config:
           severity: warn
+  - name: portaria_ts
+    description: 'Portaria de Trabalho Social no formato número/ano (21/2014, 464/2018, 75/2025). Nula quando o agente financeiro não informou.'
 - name: prata_rural_empreendimento
   description: 'Visão unificada do empreendimento Rural. Parte do prioritarios_snh e resolve cada atributo
     por coalesce na ordem SNH → agente (CAIXA/BB) → cadastro PJ → histórico PNHR, para que um empreendimento
@@ -447,6 +462,40 @@ models:
       um número é velho, em vez de apresentá-lo com a mesma autoridade de um de ontem.
 
   # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: agente_financeiro
+    description: "Agente financeiro da operação (CAIXA ou BB)."
+  - name: modalidade
+    description: "Modalidade da operação informada pela SNH (RURAL)."
+  - name: entidade_organizadora_cnpj
+    description: "CNPJ da entidade organizadora, como informado pela fonte consolidada."
+  - name: construtora_cnpj
+    description: "CNPJ da construtora, quando informado."
+  - name: uf
+    description: "Sigla da UF do empreendimento."
+  - name: cod_ibge
+    description: "Código IBGE do município do empreendimento."
+  - name: quantidade_uh_entregues
+    description: "UH entregues (fonte mais recente disponível)."
+  - name: quantidade_uh_vigentes
+    description: "UH vigentes (contratadas menos distratadas), fonte mais recente disponível."
+  - name: quantidade_uh_distratadas
+    description: "UH distratadas."
+  - name: valor_aporte_adicional
+    description: "Aporte adicional ao valor contratado (R$)."
+  - name: valor_desembolsado
+    description: "Valor desembolsado acumulado (R$), posição de estoque da fonte mais recente."
+  - name: detalhamento_situacao
+    description: "Texto de detalhamento da situação do empreendimento, da fonte mais recente que informa."
+  - name: latitude
+    description: "Latitude do empreendimento (centroide do município quando não há coordenada própria)."
+  - name: longitude
+    description: "Longitude do empreendimento (centroide do município quando não há coordenada própria)."
+  - name: dt_contratacao
+    description: "Data de contratação da operação."
+  - name: dt_previsao_entrega
+    description: "Data prevista de entrega do empreendimento."
+  - name: dt_conclusao_obra
+    description: "Data de conclusão da obra, quando concluída."
 - name: prata_rural_obra_mensal_serie
   description: 'Situação da obra do Novo Rural mês a mês (série desde dez/2025): uma linha por APF e mês
     de referência, com situação e andamento decodificados pelo layout da CAIXA, percentual previsto e
@@ -595,12 +644,14 @@ models:
   - name: cod_ibge
     description: Código IBGE do município (como na visão consolidada do Rural).
   - name: eo_cnpj
-    description: CNPJ da entidade organizadora, só dígitos.
+    description: CNPJ da entidade organizadora com 14 dígitos (zeros à esquerda completados). Nulo quando a origem não traz CNPJ ou traz só zeros.
   - name: eo_nome
     description: Nome da entidade organizadora.
   - name: fonte_eo
     description: 'De onde veio a EO: cadastro de EO (Cad PJ/INT065/INT057), AF CAIXA construtora/entidade
-      (a confirmar) ou sem EO.'
+      (a confirmar), CNPJ inválido na origem (só zeros) ou sem EO.'
+  - name: eo_cnpj_origem
+    description: 'CNPJ da EO como chegou da origem (só dígitos, sem completar zeros). Serve para ver o valor recebido quando o `eo_cnpj` ficou nulo por ser inválido ("0").'
   - name: situacao_empreendimento
     description: Situação do empreendimento como na visão consolidada do Rural.
   - name: status_operacao
@@ -621,3 +672,722 @@ models:
     description: Valor contratado (R$).
   - name: valor_desembolsado
     description: Valor desembolsado acumulado (R$).
+
+# --- regra das camadas (prata só lê bronze; ouro só lê prata), 2026-10-08 ---
+- name: prata_rural_uf_ibge
+  description: >
+    Referência do IBGE por UF: sigla, nome do estado e região, sem a duplicação da origem.
+    Usada pelas ouros do Rural que precisam do nome do estado e da região (mapa nacional e panorama estadual).
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: sigla
+    description: 'Sigla da UF.'
+  - name: estado_nome
+    description: 'Nome do estado.'
+  - name: regiao_sigla
+    description: 'Sigla da região (N, NE, CO, SE, S).'
+  - name: regiao_nome
+    description: 'Nome da região.'
+- name: prata_rural_evolucao_financeira
+  description: Lógica que antes ficava na ouro ouro_rural_evolucao_financeira, trazida para a prata para a ouro
+    ler só prata. Série temporal Gold de liberações por APF × mês, com acumulado progressivo e percentual executado
+    sobre o valor contratado. Une o financeiro mensal do Novo MCMV Rural (decomposto por componente) com as liberações
+    históricas do PNHR vindas da silver liberacoes_pnhr — o INT055 não decompõe por componente, então essas linhas
+    entram só no total liberado.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF do empreendimento (8 dígitos, normalizado).
+  - name: mes
+    description: Primeiro dia do mês da(s) liberação(ões), truncado.
+  - name: vr_acumulado
+    description: Soma progressiva do valor liberado por APF ao longo dos meses.
+  - name: pct_executado_financeiro
+    description: vr_acumulado sobre valor_contratado, em %.
+  - name: vr_liberado_mes
+    description: "Valor liberado no mês (R$), líquido de devoluções."
+- name: prata_rural_ficha_empreendimento
+  description: 'Lógica que antes ficava na ouro ouro_rural_ficha_empreendimento, trazida para a prata para a ouro
+    ler só prata. Tabela Gold que alimenta a "Ficha do Empreendimento" no dashboard do MCMV Rural. Consome a prata_rural_empreendimento
+    e injeta as regras de negócio finais: programa (Novo MCMV Rural vs. PNHR histórico), status de execução, status
+    de prazo, valor por UH e ritmo físico-financeiro. Uma linha por empreendimento (APF).'
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF (Autorização de Projeto de Financiamento) do empreendimento.
+  - name: programa
+    description: 'Regra de negócio: NOVO MCMV RURAL quando ic_novo_mcmv, senão PNHR (HISTÓRICO).
+
+      '
+  - name: pessoas_atendidas
+    description: 'Estimativa de pessoas atendidas: UHs contratadas × 3,3 (média de moradores por domicílio), truncada
+      para inteiro.
+
+      '
+  - name: municipio_uf
+    description: Localização no formato "Município/UF".
+  - name: apf_municipio_empreendimento
+    description: 'Rótulo concatenado "APF - Município/UF - EMPREENDIMENTO", usado como dimensão de filtro no Superset.
+
+      '
+  - name: status_execucao_simplificado
+    description: 'Regra de negócio: traduz o percentual físico em categorias (Não Iniciado, Em Andamento, Concluído,
+      Status Desconhecido).
+
+      '
+  - name: status_prazo
+    description: 'Regra de negócio: compara a previsão de entrega com a data atual. Alerta "Em Atraso" quando não
+      foi entregue e a data venceu.
+
+      '
+  - name: percentual_execucao_financeira
+    description: Valor desembolsado sobre valor contratado, em %.
+  - name: ritmo_fisico_financeiro
+    description: 'Regra de negócio: compara o % de execução física com o % de desembolso, com tolerância de 5% (Ritmo
+      Equilibrado, Desembolso Adiantado ou Atrasado).
+
+      '
+  - name: tipologia
+    description: "Novo MCMV Rural ou PNHR (Rural)."
+  - name: nome_empreendimento
+    description: "Nome do empreendimento."
+  - name: municipio
+    description: "Município do empreendimento."
+  - name: uf
+    description: "Sigla da UF."
+  - name: quantidade_uh
+    description: "UH contratadas."
+  - name: valor_contratado
+    description: "Valor contratado (R$)."
+  - name: valor_desembolsado
+    description: "Valor desembolsado acumulado (R$), posição de estoque da fonte mais recente."
+  - name: percentual_execucao_fisica
+    description: "Execução física da obra (%), medição mais recente do agente financeiro."
+  - name: nome_entidade_organizadora
+    description: "Nome da entidade organizadora."
+  - name: nome_construtora
+    description: "Nome da construtora."
+  - name: fonte_execucao_fisica
+    description: 'Fonte que produziu o percentual de execução física, propagada da silver. Publicar o número sem
+      a procedência foi o que deixou a ficha (33,90%) e o gráfico (100,00%) discordarem na mesma tela sem ninguém
+      saber por quê.
+
+      '
+  - name: dt_referencia_execucao_fisica
+    description: Data de medição da fonte que venceu para a execução física.
+  - name: fonte_valor_desembolsado
+    description: Fonte que produziu o valor desembolsado.
+  - name: dt_referencia_valor_desembolsado
+    description: Data de medição da fonte que venceu para o valor desembolsado.
+  - name: fonte_situacao
+    description: Fonte que produziu a situação do empreendimento.
+  - name: dt_referencia_consolidada
+    description: Data da medição mais recente que entrou na linha, qualquer que seja o campo.
+  - name: dias_desde_ultima_medicao
+    description: '`current_date - dt_referencia_consolidada`. Serve para o dashboard marcar número velho: uma fonte
+      de boa cobertura pode estar meses atrás dos feeds mensais.
+
+      '
+  - name: vr_acumulado_liberacoes
+    description: 'Soma da série de liberações (FLUXO), para ser confrontada com `valor_desembolsado`, que é ESTOQUE.
+      Quando as duas não fecham é a série que está incompleta: o INT055 só traz o que CAIXA e BB reportaram por
+      aquela integração e o feed para em 2025-03, então contrato antigo tem história anterior ao arquivo. No APF
+      29712236 o estoque diz 100% do contratado e a série soma 75,7%.
+
+      '
+  - name: percentual_acumulado_liberacoes
+    description: '`vr_acumulado_liberacoes` sobre o valor contratado. É o número que o gráfico plota.
+
+      '
+  - name: qt_meses_com_liberacao
+    description: Meses com liberação registrada na série. Zero/nulo = sem série financeira.
+  - name: diferenca_estoque_menos_serie
+    description: '`valor_desembolsado - vr_acumulado_liberacoes`. Positivo = a série não cobre todo o desembolso
+      informado. Negativo merece investigação: a série passou do estoque.
+
+      '
+  - name: consistencia_desembolso
+    description: 'Marca desembolso acima de contratado + aportes. Acontece de verdade (suplementação), mas é também
+      a assinatura de erro de sinal ou liberação duplicada na origem. Marcado em vez de limitado: um `least(pct,
+      100)` esconderia justamente o caso a olhar.
+
+      '
+  - name: agente_financeiro
+    description: "Agente financeiro da operação (CAIXA ou BB)."
+  - name: entidade_organizadora_cnpj
+    description: "CNPJ da entidade organizadora, como informado pela fonte consolidada."
+  - name: construtora_cnpj
+    description: "CNPJ da construtora, quando informado."
+  - name: quantidade_uh_entregues
+    description: "UH entregues (fonte mais recente disponível)."
+  - name: quantidade_uh_vigentes
+    description: "UH vigentes (contratadas menos distratadas), fonte mais recente disponível."
+  - name: latitude
+    description: "Latitude do empreendimento (centroide do município quando não há coordenada própria)."
+  - name: longitude
+    description: "Longitude do empreendimento (centroide do município quando não há coordenada própria)."
+  - name: situacao_empreendimento
+    description: "Situação do empreendimento na fonte consolidada."
+  - name: valor_aporte_adicional
+    description: "Aporte adicional ao valor contratado (R$)."
+  - name: valor_por_uh
+    description: "Valor contratado ÷ UH contratadas (R$ por UH); nulo se faltar um dos dois."
+  - name: dt_contratacao
+    description: "Data de contratação da operação."
+  - name: dt_previsao_entrega
+    description: "Data prevista de entrega do empreendimento."
+  - name: dt_conclusao_obra
+    description: "Data de conclusão da obra, quando concluída."
+- name: prata_rural_entidade_recontratacao
+  description: Lógica que antes ficava na ouro ouro_rural_entidade_recontratacao, trazida para a prata para a ouro
+    ler só prata. Para cada operação do Rural com entidade organizadora, quantas operações anteriores da mesma EO
+    ainda não tinham obra concluída na data da contratação, quantas UH estavam pendentes e se alguma delas hoje
+    está paralisada. A data de contratação substitui a data de inscrição no ciclo, que não existe no dado.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: APF da operação (8 dígitos, normalizada por normalize_apf) — chave do empreendimento no Rural.
+  - name: eo_cnpj
+    description: CNPJ da entidade organizadora, só dígitos.
+  - name: eo_nome
+    description: Nome da entidade organizadora.
+  - name: fonte_eo
+    description: 'De onde veio a EO: cadastro de EO (Cad PJ/INT065/INT057), AF CAIXA construtora/entidade (a confirmar)
+      ou sem EO.'
+  - name: ic_novo_mcmv
+    description: Verdadeiro para operação do Novo MCMV (2023 em diante); falso para o PNHR antigo.
+  - name: empreendimento_nome
+    description: Nome do empreendimento.
+  - name: municipio
+    description: Nome do município.
+  - name: uf
+    description: Sigla da UF.
+  - name: dt_contratacao
+    description: Data de contratação da operação.
+  - name: ano_contratacao
+    description: Ano da contratação.
+  - name: quantidade_uh_contratadas
+    description: UH contratadas na operação.
+  - name: status_operacao
+    description: 'Status simplificado: Concluída, Em obra, Paralisada, Não iniciada ou Distratada.'
+  - name: qt_anteriores
+    description: Operações da mesma EO contratadas antes desta.
+  - name: qt_anteriores_pendentes
+    description: Anteriores não distratadas e sem obra concluída na data desta contratação.
+  - name: uh_anteriores_pendentes
+    description: UH ainda não entregues nas anteriores pendentes.
+  - name: qt_anteriores_hoje_paralisadas
+    description: Anteriores que hoje estão paralisadas.
+  - name: qt_anteriores_sem_data_conclusao
+    description: Anteriores hoje concluídas sem data de conclusão — incerteza da medida.
+  - name: dt_anterior_pendente_mais_antiga
+    description: Contratação mais antiga entre as anteriores pendentes.
+  - name: ic_contratou_com_pendencia
+    description: Verdadeiro quando havia pelo menos uma anterior pendente.
+  - name: situacao_recontratacao
+    description: Primeira operação da EO, Anteriores concluídas, Contratou com anterior pendente (hoje paralisada
+      ou não).
+
+# --- aba Rural do painel do MCID: vínculos e qualidade (2026-10-09) ---
+- name: prata_rural_vinculo_operacao
+  description: >
+    Vínculos de cada operação do Rural — portaria de seleção, portaria de autorização de contratação, portaria
+    de Trabalho Social, contrato/empreendimento e entidade organizadora —, com execução física e financeira e
+    marcas de qualidade. Uma linha por APF. No Rural a APF identifica contrato e empreendimento ao mesmo tempo.
+    A portaria de seleção e a de autorização vêm do funil (prata_rural_proposta_funil): se duas propostas caírem
+    na mesma APF, fica a de vínculo mais firme. Seleção e Trabalho Social são deduplicados por APF antes do join,
+    para o valor financeiro não se multiplicar.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: apf
+    description: 'Código da operação (APF). No Rural identifica ao mesmo tempo o contrato e o empreendimento.'
+  - name: agente_financeiro
+    description: 'Agente financeiro da operação (CAIXA ou BB).'
+  - name: programa
+    description: 'PNHR (HISTÓRICO) ou NOVO MCMV RURAL.'
+  - name: nome_empreendimento
+    description: 'Nome do empreendimento.'
+  - name: municipio
+    description: 'Município do empreendimento.'
+  - name: uf
+    description: 'Sigla da UF.'
+  - name: regiao
+    description: 'Região geográfica da UF.'
+  - name: dt_contratacao
+    description: 'Data de contratação da operação.'
+  - name: ano_contratacao
+    description: 'Ano da data de contratação.'
+  - name: situacao_empreendimento
+    description: 'Situação do empreendimento como informada na origem.'
+  - name: status_execucao
+    description: 'Status pela execução física: Concluído (100%), Não Iniciado (0%) ou Em Andamento.'
+  - name: status_operacao
+    description: 'Status simplificado da operação: Concluída, Em obra, Paralisada, Não iniciada ou Distratada.'
+  - name: quantidade_uh
+    description: 'Unidades habitacionais contratadas.'
+  - name: quantidade_uh_entregues
+    description: 'Unidades habitacionais entregues.'
+  - name: valor_contratado
+    description: 'Valor contratado da operação (R$).'
+  - name: valor_aporte_adicional
+    description: 'Aporte adicional à operação (R$).'
+  - name: valor_desembolsado
+    description: 'Valor desembolsado acumulado (R$), conforme o arquivo de dados prioritários do agente.'
+  - name: percentual_execucao_fisica
+    description: 'Execução física mais recente informada pelo agente (0 a 100).'
+  - name: percentual_execucao_financeira
+    description: 'valor_desembolsado ÷ valor_contratado × 100. Nulo quando o valor contratado é nulo ou zero.'
+  - name: diferenca_financeiro_fisico_pp
+    description: 'Execução financeira menos execução física, em pontos percentuais. Positivo: pagou mais do que a obra avançou. Nulo se faltar um dos dois.'
+  - name: ritmo_fisico_financeiro
+    description: 'Desembolso Adiantado / Atrasado / Ritmo Equilibrado (margem de 5 p.p.) ou Sem Informação.'
+  - name: consistencia_desembolso
+    description: 'Dentro do Contratado ou Desembolso Acima do Contratado (desembolsado > contratado + aporte).'
+  - name: dt_referencia_execucao_fisica
+    description: 'Data de referência da medição física.'
+  - name: dt_referencia_valor_desembolsado
+    description: 'Data de referência do valor desembolsado.'
+  - name: eo_cnpj
+    description: 'CNPJ da entidade organizadora com 14 dígitos. Nulo se ausente ou inválido.'
+  - name: eo_cnpj_origem
+    description: 'CNPJ da EO como chegou da origem (só dígitos).'
+  - name: eo_nome
+    description: 'Nome da entidade organizadora.'
+  - name: fonte_eo
+    description: 'De onde veio a EO: cadastro de EO, AF CAIXA (a confirmar), CNPJ inválido na origem ou sem EO.'
+  - name: situacao_vinculo_eo
+    description: 'EO do cadastro de EO / EO a confirmar (arquivo AF CAIXA) / CNPJ da EO inválido na origem / Sem EO informada.'
+  - name: portaria_selecao
+    description: "Portaria que selecionou a proposta do contrato, no formato número/ano (162/2018, 354/2024, 697/2026). Nula se nenhuma proposta selecionada foi ligada à APF."
+  - name: ic_selecionado_portaria_162
+    description: "Verdadeiro se a portaria de seleção da APF é a 162/2018."
+  - name: eo_cnpj_selecionada
+    description: "CNPJ (14 dígitos) da EO indicada na portaria de seleção."
+  - name: ic_mesma_eo_selecao
+    description: 'Verdadeiro se a EO do contrato é a mesma da seleção; nulo quando não foi selecionada ou não há EO no contrato.'
+  - name: agente_ts
+    description: 'Agente cuja planilha de Trabalho Social traz a APF (CAIXA ou BB).'
+  - name: portaria_ts
+    description: 'Portaria de Trabalho Social adotada (21/2014, 464/2018, 75/2025). Nula quando não informada.'
+  - name: situacao_ts
+    description: 'Situação do Trabalho Social informada pelo agente.'
+  - name: situacao_portaria_ts
+    description: 'Portaria informada / Portaria não informada pelo agente / Sem registro de Trabalho Social.'
+  - name: ic_sem_eo
+    description: 'Regra R01: sem EO em nenhuma fonte.'
+  - name: ic_cnpj_eo_invalido
+    description: 'Regra R02: CNPJ da EO só com zeros na origem.'
+  - name: ic_eo_a_confirmar
+    description: 'Regra R03: EO vinda do arquivo AF CAIXA (campo construtora/entidade).'
+  - name: ic_desembolso_acima_contratado
+    description: 'Regra R05: desembolsado maior que contratado + aporte.'
+  - name: ic_eo_diferente_da_selecao
+    description: 'Regra R07: EO do contrato diferente da selecionada na Portaria 162/2018.'
+  - name: ic_sem_trabalho_social
+    description: 'Regra R09: APF fora das planilhas de Trabalho Social.'
+  - name: ic_portaria_ts_nao_informada
+    description: 'Regra R10: portaria de Trabalho Social vazia na planilha do agente.'
+  - name: qt_alertas
+    description: 'Quantidade de alertas que pedem ação na operação: sem EO válida (R01/R02), desembolso acima do contratado (R05) e EO diferente da selecionada (R07).'
+  - name: ato_selecao
+    description: Nome por extenso da portaria de seleção.
+  - name: ciclo_selecao
+    description: Ciclo de seleção (Seleção PNHR 2017-2018, Seleção 2023, Seleção 2025).
+  - name: dt_portaria_selecao
+    description: Data da portaria de seleção.
+  - name: confianca_vinculo_selecao
+    description: >
+      Firmeza do vínculo proposta → contrato: Exata (pela APF), Alta (CNPJ da EO + município, um candidato e
+      mesmas UH), Média (um candidato) ou Baixa (vários candidatos).
+  - name: metodo_vinculo_selecao
+    description: Regra que ligou a proposta selecionada ao contrato (APF; CNPJ da EO + município).
+  - name: situacao_portaria_selecao
+    description: Selecionada (vínculo exato/alto/médio/baixo) ou Sem portaria de seleção identificada.
+  - name: portaria_autorizacao
+    description: >
+      Portaria que autorizou contratar a proposta selecionada, no formato número/ano (ex. 1133/2024). Nula
+      quando a autorização da proposta ainda não foi carregada (hoje 4 das 46 da Seleção 2023).
+  - name: ato_autorizacao
+    description: Nome por extenso da portaria de autorização.
+  - name: dt_autorizacao
+    description: Data da portaria de autorização.
+  - name: situacao_portaria_autorizacao
+    description: >
+      Autorização carregada; Seleção 2023 sem autorização carregada; Seleção 2025 sem autorização carregada;
+      Calamidade (sem portaria de autorização); Ciclo sem autorização carregada (162/2018); Sem portaria de seleção
+      identificada.
+- name: prata_rural_portarias_selecao
+  description: >
+    Catálogo das portarias do ciclo de seleção do Rural, tipado: abertura do ciclo, resultado da seleção,
+    reaproveitamento e autorização de contratação. Uma linha por portaria, com o tipo usado no filtro único de
+    portaria do painel e o ciclo de seleção.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: portaria_codigo
+    description: "Código da portaria (número sem ponto + ano, ex. 1133_2024)."
+    tests:
+    - unique
+    - not_null
+  - name: ato_selecao
+    description: Nome do ato de seleção por extenso.
+  - name: numero_portaria
+    description: Número da portaria.
+  - name: ano_portaria
+    description: Ano da portaria.
+  - name: dt_portaria
+    description: Data da portaria, quando confirmada.
+  - name: dt_referencia_vinculo
+    description: Data a partir da qual um contrato pode ter vindo da portaria (data da portaria ou 1º de janeiro do ano).
+  - name: papel_portaria
+    description: "Papel no ciclo: Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade), Reaproveitamento, Alteração, Autorização de contratação ou A confirmar."
+  - name: tem_lista_nominal
+    description: Se a portaria publica lista de selecionados (sim, não, a confirmar).
+  - name: fonte_lista
+    description: De onde vem (ou deve vir) a lista de selecionados.
+  - name: observacao
+    description: Observação sobre a portaria.
+  - name: tipo_portaria
+    description: >
+      Tipo da portaria no filtro único do painel: Seleção (resultado da seleção, enquadramento da calamidade,
+      alteração e reaproveitamento), Autorização de
+      contratação, Abertura do ciclo ou A confirmar. A portaria de Trabalho Social é o quarto tipo e vem da
+      planilha de TS, não deste catálogo.
+    tests:
+    - accepted_values:
+        values: ['Seleção', 'Autorização de contratação', 'Abertura do ciclo', 'A confirmar']
+  - name: ciclo_selecao
+    description: Ciclo de seleção a que a portaria pertence (Seleção PNHR 2017-2018, Seleção 2023, Seleção 2025).
+- name: prata_rural_selecao_portarias
+  description: Propostas selecionadas por todas as portarias de seleção do Rural num formato só. A 162/2018 vem
+    do anexo do SFTP; as demais, do seed selecao_portarias_rural. Uma linha por linha do anexo.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: id_selecao
+    description: Identificador da linha do anexo (md5 de portaria, protocolo, empreendimento, EO, município, UH e ordem de repetição).
+  - name: portaria_codigo
+    description: Código da portaria (número_ano).
+  - name: ato_selecao
+    description: Nome do ato de seleção por extenso.
+  - name: papel_portaria
+    description: Papel da portaria no ciclo.
+  - name: dt_portaria
+    description: Data da portaria, quando confirmada.
+  - name: dt_referencia_vinculo
+    description: Data a partir da qual um contrato pode ter vindo da portaria.
+  - name: uf
+    description: Sigla da UF.
+  - name: municipio
+    description: Nome do município, em maiúsculas.
+  - name: cod_ibge
+    description: Código IBGE do município, só dígitos, quando o anexo traz.
+  - name: municipio_chave
+    description: Nome do município sem acento e sem espaço, para casar quando falta o código IBGE.
+  - name: eo_cnpj_selecionada
+    description: CNPJ da entidade organizadora selecionada (14 dígitos).
+  - name: eo_nome_selecionada
+    description: Nome da entidade organizadora selecionada, quando o anexo traz.
+  - name: protocolo_proposta
+    description: Número da proposta (NU_PROTOCOLO_SISAD), quando o anexo traz.
+  - name: apf
+    description: Código do empreendimento normalizado como APF, quando o anexo traz.
+  - name: codigo_empreendimento
+    description: Código do empreendimento como veio no anexo.
+  - name: quantidade_uh_selecionadas
+    description: UH selecionadas.
+  - name: situacao_selecao
+    description: Situação no anexo (Selecionada, Reaproveitada…).
+  - name: observacao_selecao
+    description: Observação da linha do anexo.
+  - name: ic_portaria_fora_do_catalogo
+    description: Verdadeiro se o código da portaria não está no catálogo portarias_selecao_rural.
+  - name: fonte_linha
+    description: De onde veio a linha (SFTP da 162/2018 ou seed).
+  - name: arquivo_de_origem
+    description: Arquivo de origem da linha (linhagem).
+  - name: ciclo_selecao
+    description: Ciclo de seleção da portaria (do catálogo).
+- name: prata_rural_selecao_contrato
+  description: Vínculo de cada proposta selecionada (todas as portarias) com o contrato que saiu dela. Tenta
+    APF; depois CNPJ da EO + município (código IBGE); depois CNPJ da EO + município (nome e UF), só com contratos
+    assinados a partir da portaria. Uma linha por linha do anexo.
+  meta:
+    tags:
+    - silver
+  columns:
+  - name: id_selecao
+    description: Identificador da linha do anexo.
+  - name: portaria_codigo
+    description: Código da portaria (número_ano).
+  - name: ato_selecao
+    description: Nome do ato de seleção por extenso.
+  - name: papel_portaria
+    description: Papel da portaria no ciclo.
+  - name: dt_portaria
+    description: Data da portaria, quando confirmada.
+  - name: uf
+    description: Sigla da UF da proposta selecionada.
+  - name: municipio
+    description: Município da proposta selecionada.
+  - name: cod_ibge
+    description: Código IBGE do município, quando o anexo traz.
+  - name: eo_cnpj_selecionada
+    description: CNPJ da entidade organizadora selecionada (14 dígitos).
+  - name: eo_nome_selecionada
+    description: Nome da entidade organizadora selecionada, quando o anexo traz.
+  - name: protocolo_proposta
+    description: Número da proposta, quando o anexo traz.
+  - name: codigo_empreendimento
+    description: Código do empreendimento como veio no anexo.
+  - name: apf_selecao
+    description: APF vinda do anexo, quando ele traz o código do empreendimento.
+  - name: quantidade_uh_selecionadas
+    description: UH selecionadas.
+  - name: situacao_selecao
+    description: Situação no anexo (Selecionada, Reaproveitada…).
+  - name: ic_contratado
+    description: Verdadeiro se a proposta foi ligada a um contrato.
+  - name: metodo_vinculo
+    description: Como o contrato foi achado (APF; CNPJ da EO + município pelo IBGE; CNPJ da EO + município pelo nome e UF; Sem vínculo).
+  - name: confianca_vinculo
+    description: Exata (APF); Alta (um só candidato e mesmas UH); Média (um só candidato); Baixa (vários candidatos). Nulo sem vínculo.
+  - name: qt_contratos_candidatos
+    description: Quantos contratos atendiam ao critério que achou o vínculo.
+  - name: apf_contrato
+    description: APF do contrato vinculado.
+  - name: agente_financeiro
+    description: Agente financeiro do contrato.
+  - name: fonte_contrato
+    description: De onde veio o contrato (visão consolidada Rural ou INT065 PNHR CAIXA).
+  - name: dt_contratacao
+    description: Data de contratação.
+  - name: dias_selecao_ate_contrato
+    description: Dias entre a portaria e o contrato (só quando a data da portaria é conhecida).
+  - name: eo_cnpj_contrato
+    description: CNPJ da EO no contrato (14 dígitos).
+  - name: eo_nome_contrato
+    description: Nome da EO no contrato.
+  - name: ic_mesma_eo
+    description: Verdadeiro se a EO do contrato é a selecionada. Nos vínculos por CNPJ é verdadeiro por construção.
+  - name: uh_contratadas
+    description: UH contratadas no contrato vinculado.
+  - name: uh_entregues
+    description: UH entregues no contrato vinculado.
+  - name: status_operacao
+    description: Situação simplificada do contrato, ou "Não contratado (sem vínculo)".
+  - name: situacao_origem
+    description: Situação do contrato como veio da origem.
+  - name: qt_selecoes_mesmo_contrato
+    description: Quantas linhas de anexo caíram no mesmo contrato. Acima de 1 pede conferência.
+  - name: ic_portaria_fora_do_catalogo
+    description: Verdadeiro se o código da portaria não está no catálogo.
+  - name: fonte_linha
+    description: De onde veio a linha do anexo.
+  - name: arquivo_de_origem
+    description: Arquivo de origem da linha do anexo.
+  - name: ciclo_selecao
+    description: Ciclo de seleção da portaria (do catálogo).
+- name: prata_rural_autorizacao_proposta
+  description: >
+    Propostas autorizadas a contratar pelas portarias de autorização da Seleção 2023 do MCMV Rural, tipadas e
+    com o catálogo. Fonte: bronze_seed_manual_rural_portaria_autorizacao (anexos extraídos dos PDFs de 1.133/2024,
+    1.346/2024, 1.386/2024 e 278/2025). Uma linha por portaria × proposta. O número da proposta (UUID) é o
+    mesmo do anexo da 354/2024.
+  meta:
+    tags:
+    - silver
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+      - MCID.Identificadores.IDProposta
+  columns:
+  - name: id_autorizacao
+    description: Identificador da linha (md5 de portaria e número da proposta).
+    tests:
+    - unique
+    - not_null
+  - name: portaria_codigo
+    description: Código da portaria de autorização (número sem ponto + ano).
+    tests:
+    - not_null
+    - relationships:
+        to: ref('prata_rural_portarias_selecao')
+        field: portaria_codigo
+  - name: ato_autorizacao
+    description: Nome por extenso da portaria (do catálogo).
+  - name: dt_autorizacao
+    description: Data da portaria (do catálogo; na falta, a do anexo).
+  - name: ciclo_selecao
+    description: Ciclo de seleção da autorização.
+  - name: uf
+    description: Sigla da UF.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.UF
+  - name: municipio
+    description: Município da proposta, em maiúsculas.
+  - name: municipio_chave
+    description: Chave de comparação do nome do município (sem acento, só letras e dígitos).
+  - name: eo_cnpj
+    description: CNPJ da entidade organizadora com 14 dígitos.
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.CNPJ
+  - name: eo_nome
+    description: Nome da entidade organizadora.
+  - name: protocolo_proposta
+    description: Número de identificação da proposta (UUID, minúsculo). Liga a autorização à seleção.
+    tests:
+    - not_null
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.Identificadores.IDProposta
+  - name: empreendimento_nome
+    description: Nome do empreendimento, quando o anexo traz.
+  - name: quantidade_uh_autorizadas
+    description: UH autorizadas.
+  - name: ic_portaria_fora_do_catalogo
+    description: Verdadeiro se a portaria não está no catálogo portarias_selecao_rural.
+  - name: pagina
+    description: Página do PDF.
+  - name: metodo_extracao
+    description: Método de extração do PDF.
+  - name: tabela_origem
+    description: Tabela do schema seeds de onde veio a linha.
+  - name: arquivo_de_origem
+    description: PDF de onde o anexo foi extraído.
+- name: prata_rural_proposta_funil
+  description: >
+    Funil de cada proposta selecionada do Rural: seleção → autorização de contratação → contrato. Uma linha por
+    linha do anexo da portaria de seleção (id_selecao): todas as colunas da prata_rural_selecao_contrato mais a
+    autorização, ligada pelo número da proposta. `etapa_funil` é a etapa mais avançada com evidência
+    (1. Selecionada, 2. Autorizada, 3. Contratada). Só 4 das 46 autorizações da Seleção 2023 estão carregadas,
+    então "Contratada sem autorização carregada" é falta de dado, não irregularidade.
+  meta:
+    tags:
+    - silver
+    openmetadata:
+      glossary:
+      - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+      - MCID.Identificadores.IDProposta
+  columns:
+  - name: id_selecao
+    description: Identificador da linha do anexo de seleção.
+    tests:
+    - unique
+    - not_null
+  - name: portaria_codigo
+    description: Código da portaria (número_ano).
+  - name: ato_selecao
+    description: Nome do ato de seleção por extenso.
+  - name: papel_portaria
+    description: Papel da portaria no ciclo.
+  - name: dt_portaria
+    description: Data da portaria, quando confirmada.
+  - name: uf
+    description: Sigla da UF da proposta selecionada.
+  - name: municipio
+    description: Município da proposta selecionada.
+  - name: cod_ibge
+    description: Código IBGE do município, quando o anexo traz.
+  - name: eo_cnpj_selecionada
+    description: CNPJ da entidade organizadora selecionada (14 dígitos).
+  - name: eo_nome_selecionada
+    description: Nome da entidade organizadora selecionada, quando o anexo traz.
+  - name: protocolo_proposta
+    description: Número da proposta, quando o anexo traz.
+  - name: codigo_empreendimento
+    description: Código do empreendimento como veio no anexo.
+  - name: apf_selecao
+    description: APF vinda do anexo, quando ele traz o código do empreendimento.
+  - name: quantidade_uh_selecionadas
+    description: UH selecionadas.
+  - name: situacao_selecao
+    description: Situação no anexo (Selecionada, Reaproveitada…).
+  - name: ic_contratado
+    description: Verdadeiro se a proposta foi ligada a um contrato.
+  - name: metodo_vinculo
+    description: Como o contrato foi achado (APF; CNPJ da EO + município pelo IBGE; CNPJ da EO + município pelo nome e UF; Sem vínculo).
+  - name: confianca_vinculo
+    description: Exata (APF); Alta (um só candidato e mesmas UH); Média (um só candidato); Baixa (vários candidatos). Nulo sem vínculo.
+  - name: qt_contratos_candidatos
+    description: Quantos contratos atendiam ao critério que achou o vínculo.
+  - name: apf_contrato
+    description: APF do contrato vinculado.
+  - name: agente_financeiro
+    description: Agente financeiro do contrato.
+  - name: fonte_contrato
+    description: De onde veio o contrato (visão consolidada Rural ou INT065 PNHR CAIXA).
+  - name: dt_contratacao
+    description: Data de contratação.
+  - name: dias_selecao_ate_contrato
+    description: Dias entre a portaria e o contrato (só quando a data da portaria é conhecida).
+  - name: eo_cnpj_contrato
+    description: CNPJ da EO no contrato (14 dígitos).
+  - name: eo_nome_contrato
+    description: Nome da EO no contrato.
+  - name: ic_mesma_eo
+    description: Verdadeiro se a EO do contrato é a selecionada. Nos vínculos por CNPJ é verdadeiro por construção.
+  - name: uh_contratadas
+    description: UH contratadas no contrato vinculado.
+  - name: uh_entregues
+    description: UH entregues no contrato vinculado.
+  - name: status_operacao
+    description: Situação simplificada do contrato, ou "Não contratado (sem vínculo)".
+  - name: situacao_origem
+    description: Situação do contrato como veio da origem.
+  - name: qt_selecoes_mesmo_contrato
+    description: Quantas linhas de anexo caíram no mesmo contrato. Acima de 1 pede conferência.
+  - name: ic_portaria_fora_do_catalogo
+    description: Verdadeiro se o código da portaria não está no catálogo.
+  - name: fonte_linha
+    description: De onde veio a linha do anexo.
+  - name: arquivo_de_origem
+    description: Arquivo de origem da linha do anexo.
+  - name: ciclo_selecao
+    description: Ciclo de seleção da portaria (do catálogo).
+  - name: portaria_autorizacao_codigo
+    description: Código da portaria de autorização (número sem ponto + ano).
+  - name: portaria_autorizacao
+    description: Portaria de autorização no formato número/ano.
+  - name: ato_autorizacao
+    description: Nome por extenso da portaria de autorização.
+  - name: dt_autorizacao
+    description: Data da portaria de autorização.
+  - name: quantidade_uh_autorizadas
+    description: UH autorizadas na proposta.
+  - name: ic_autorizada
+    description: Verdadeiro se a proposta está numa portaria de autorização carregada.
+  - name: qt_autorizacoes
+    description: Em quantas portarias de autorização carregadas a proposta aparece (esperado 0 ou 1).
+  - name: ic_uh_autorizada_igual_selecionada
+    description: Verdadeiro se as UH autorizadas são as mesmas UH selecionadas.
+  - name: dias_autorizacao_ate_contrato
+    description: Dias entre a autorização e a contratação.
+  - name: ic_contrato_antes_da_autorizacao
+    description: Verdadeiro se o contrato ligado foi assinado antes da autorização (sinal de vínculo errado; regra R12).
+  - name: etapa_funil
+    description: Etapa mais avançada com evidência (1. Selecionada, 2. Autorizada, 3. Contratada).
+    tests:
+    - accepted_values:
+        values: ['1. Selecionada', '2. Autorizada', '3. Contratada']
+  - name: situacao_funil
+    description: >
+      Contratada com autorização carregada; Contratada sem autorização carregada; Autorizada, sem contrato
+      identificado; Selecionada, sem autorização carregada e sem contrato.

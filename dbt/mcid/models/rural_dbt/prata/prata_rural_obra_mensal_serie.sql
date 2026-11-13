@@ -38,7 +38,7 @@ with
     ),
 
     dominio as (
-        select campo, codigo, descricao, estagio from {{ ref("dominio_rural_obra") }}
+        select campo, codigo, descricao, estagio from {{ ref("bronze_seed_dominio_rural_obra") }}
     )
 
 select

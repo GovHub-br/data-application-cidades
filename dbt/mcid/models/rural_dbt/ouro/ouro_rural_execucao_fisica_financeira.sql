@@ -16,7 +16,7 @@ with
             mes,
             pct_executado_financeiro,
             vr_acumulado
-        from {{ ref("ouro_rural_evolucao_financeira") }}
+        from {{ ref("prata_rural_evolucao_financeira") }}
     ),
 
     -- Medição física consolidada: uma linha por APF, com a procedência.
