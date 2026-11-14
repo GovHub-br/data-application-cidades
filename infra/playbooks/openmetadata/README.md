@@ -8,7 +8,7 @@ O que fica nesta VM e o que fica fora:
 
 | Peça | Onde |
 | --- | --- |
-| servidor OpenMetadata 1.13.3 (UI + API, porta 8585) | esta VM |
+| servidor OpenMetadata 2.0.7 (UI + API, porta 8585) | esta VM |
 | Elasticsearch 9.3.0 (busca do catálogo) | esta VM, só no loopback |
 | banco de metadados | database `openmetadata` na VM do Postgres |
 | ingestão (quem lê o DW, o dbt e o Airflow e publica no catálogo) | o Airflow do projeto, pela `openmetadata_ingestion_dag` |
@@ -16,7 +16,7 @@ O que fica nesta VM e o que fica fora:
 Não há container de ingestão do próprio OpenMetadata: o cliente de pipeline fica
 desligado (`PIPELINE_SERVICE_CLIENT_ENABLED=false`) e a ingestão roda no nosso
 Airflow, como já roda hoje. A versão do servidor acompanha a linha do cliente
-fixado em `helpers/openmetadata/config.py` (`openmetadata-ingestion==1.13.3.x`):
+fixado em `helpers/openmetadata/config.py` (`openmetadata-ingestion==2.0.7.x`):
 cliente e servidor de linhas diferentes divergem no schema das entidades.
 
 Este playbook é autocontido: tem o próprio `inventory.yaml` e o próprio

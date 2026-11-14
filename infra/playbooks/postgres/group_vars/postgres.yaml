@@ -3,8 +3,8 @@
 postgres_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/{{ inventory_hostname }}"
 
 # --- Versões ----------------------------------------------------------------
-# 15 é a versão do homolog (10.0.0.50). O pg_duckdb suporta de 14 a 18.
-postgres_version: 15
+# 18 é a versão do homolog (10.0.0.50). O pg_duckdb suporta de 14 a 18.
+postgres_version: 18
 
 # O pg_duckdb não tem pacote apt: é compilado do fonte neste commit. É a main
 # de 2026-07-17, que instala a extensão 1.2.0 — a mesma versão do homolog.

@@ -1,17 +1,17 @@
 # Imagem do Postgres do Cidades para o CloudNativePG: a imagem padrão do CNPG
-# (PostgreSQL 15, Debian 12) + pg_duckdb compilado do fonte. O commit é o mesmo
+# (PostgreSQL 18, Debian 12) + pg_duckdb compilado do fonte. O commit é o mesmo
 # do playbook de VM (infra/playbooks/postgres/group_vars/postgres.yaml), que
 # instala a extensão 1.2.0, a mesma do homolog.
 #
 # O build compila o DuckDB inteiro: de 20 a 60 minutos, ~2 GB de RAM por job.
 #
-#   docker build -t ghcr.io/govhub-br/cidades-postgres:15-pgduckdb-ee38d3b infra/k8s/postgres
+#   docker build -t ghcr.io/govhub-br/cidades-postgres:18-pgduckdb-ee38d3b infra/k8s/postgres
 
-ARG CNPG_IMAGE=ghcr.io/cloudnative-pg/postgresql:15.19-202609281634-standard-bookworm
+ARG CNPG_IMAGE=ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-standard-bookworm
 
 FROM ${CNPG_IMAGE} AS builder
 
-ARG PG_MAJOR=15
+ARG PG_MAJOR=18
 ARG PG_DUCKDB_VERSION=ee38d3b540ecea1d93683ba99bdcec5632a21eaf
 ARG MAKE_JOBS=4
 

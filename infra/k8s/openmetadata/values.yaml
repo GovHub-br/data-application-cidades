@@ -1,8 +1,8 @@
 # OpenMetadata no Kubernetes: chart oficial (https://helm.open-metadata.org),
-# versão 1.13.3, a mesma linha do cliente que as DAGs usam
-# (helpers/openmetadata/config.py: openmetadata-ingestion==1.13.3.x).
+# versão 2.0.7, a mesma linha do cliente que as DAGs usam
+# (helpers/openmetadata/config.py: openmetadata-ingestion==2.0.7.x).
 #
-#   helm upgrade --install openmetadata open-metadata/openmetadata --version 1.13.3 \
+#   helm upgrade --install openmetadata open-metadata/openmetadata --version 2.0.7 \
 #     -n cidades -f infra/k8s/openmetadata/values.yaml
 #
 # Como no playbook de VM: o banco é o database "openmetadata" do cluster CNPG,
@@ -35,7 +35,7 @@ openmetadata:
     # A ingestão é a openmetadata_ingestion_dag do Airflow do projeto.
     pipelineServiceClientConfig:
       enabled: false
-      # O chart 1.13.3 ignora o enabled: false acima ao decidir se injeta a
+      # O chart 2.0.7 ignora o enabled: false acima ao decidir se injeta a
       # senha do Airflow dele (usa `enabled | default true`, e o default do
       # Helm trata false como vazio) e o pod fica preso esperando o Secret
       # airflow-secrets. Desligar a autenticação evita a referência.
