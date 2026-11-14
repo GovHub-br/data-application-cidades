@@ -74,6 +74,32 @@ seeds:
           min_completude: double
           origem: varchar
 
+    # Seeds do Trabalho Social (trabalho_social_dbt): domínio de situação CAIXA × BB, réguas de
+    # marcos das Portarias 464/2018 e 75/2025, catálogo de vigência das portarias, tipo de demanda e UF. Tudo texto: a bronze é cópia fiel
+    # e a tipagem é da prata.
+    trabalho_social:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+      +column_types:
+        co_tipo_demanda: varchar
+        ordem: varchar
+        pc_obra_gatilho: varchar
+        prazo_dias: varchar
+        ic_ativo: varchar
+        ic_critico: varchar
+        ic_equivalencia_a_confirmar: varchar
+        numero: varchar
+        ano: varchar
+        dt_assinatura: varchar
+        dt_publicacao_dou: varchar
+        dt_inicio_vigencia: varchar
+        dt_fim_vigencia: varchar
+        ic_marcos_transcritos: varchar
+        cod_ibge: varchar
+        latitude: varchar
+        longitude: varchar
+
 models:
   mcid:
     +database: cidades
@@ -528,6 +554,56 @@ models:
             layer: gold
             classification: internal
             aggregation_only: false
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+    # Trabalho Social do MCMV (FAR, Entidades e Rural, CAIXA e BB): acompanhamento por contrato,
+    # marcos das Portarias MCID 464/2018 e 75/2025, demanda e executor. Nomes: bronze_<fonte>_<nome
+    # do MinIO>, prata_ts_<tabela>, ouro_ts_<tabela>. As bronzes do lake (tag ts_lake) rodam no
+    # target prod_duckdb; o resto no prod.
+    trabalho_social_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: trabalho_social
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: trabalho_social
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: trabalho_social
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: trabalho_social
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
             rag_publication: eligible_after_security_validation
           openmetadata:
             domain: MCid.Habitacao
