@@ -15,17 +15,12 @@ IDs de rastreabilidade
 
 import http
 import logging
-import sys
 from datetime import datetime
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-RAIZ = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(RAIZ / "plugins"))
-
-from cliente_ibge import ClienteIBGE  # noqa: E402
+from cliente_ibge import ClienteIBGE
 
 OK = http.HTTPStatus.OK
 
@@ -44,9 +39,7 @@ def chamar(cliente, retorno=(OK, []), **kwargs):
 
 
 def variavel(valores, classificacoes=None, id_=1, nome="PIB", unidade="%"):
-    resultado = {
-        "series": [{"localidade": {"id": "1", "nome": "Brasil"}, "serie": valores}]
-    }
+    resultado = {"series": [{"localidade": {"id": "1", "nome": "Brasil"}, "serie": valores}]}
     if classificacoes is not None:
         resultado["classificacoes"] = classificacoes
     return {
@@ -97,9 +90,7 @@ class TestGetDadosAgregadosCaixaBranca:
         assert resultado is None
 
     def test_cb_d2_ambos_falsos_retorna_none(self, cliente):
-        resultado, _ = chamar(
-            cliente, retorno=(http.HTTPStatus.INTERNAL_SERVER_ERROR, None)
-        )
+        resultado, _ = chamar(cliente, retorno=(http.HTTPStatus.INTERNAL_SERVER_ERROR, None))
         assert resultado is None
 
     def test_cb_log_info_no_sucesso(self, cliente, caplog):
@@ -132,9 +123,7 @@ class TestGetDadosAgregadosCaixaPreta:
             nivel="N3",
             localidade="53",
         )
-        assert (
-            req.call_args.args[1] == "/agregados/2296/periodos/202401|202402/variaveis/1"
-        )
+        assert req.call_args.args[1] == "/agregados/2296/periodos/202401|202402/variaveis/1"
         assert req.call_args.kwargs["params"]["localidades"] == "N3[53]"
 
     @pytest.mark.parametrize(
@@ -148,9 +137,7 @@ class TestGetDadosAgregadosCaixaPreta:
         ],
         ids=["pipe", "virgula", "unica_str", "unica_int", "tres_pipes"],
     )
-    def test_cp_particionamento_categoria_normaliza_separador(
-        self, cliente, categoria, esperado
-    ):
+    def test_cp_particionamento_categoria_normaliza_separador(self, cliente, categoria, esperado):
         _, req = chamar(cliente, classificacao_id=11255, categoria=categoria)
         assert req.call_args.kwargs["params"]["classificacao"] == esperado
 
@@ -180,9 +167,7 @@ class TestTransformarRespostaCaixaBranca:
         assert ClienteIBGE.transformar_resposta(dados) == []
 
     def test_cb_l5_resultado_sem_series_retorna_vazio(self):
-        dados = [
-            {"id": 1, "variavel": "PIB", "unidade": "%", "resultados": [{"series": []}]}
-        ]
+        dados = [{"id": 1, "variavel": "PIB", "unidade": "%", "resultados": [{"series": []}]}]
         assert ClienteIBGE.transformar_resposta(dados) == []
 
     def test_cb_l6_serie_vazia_retorna_vazio(self):
@@ -196,9 +181,7 @@ class TestTransformarRespostaCaixaBranca:
         assert reg["categoria_nome"] == ""
 
     def test_cb_l3_classificacoes_lista_vazia_usa_padrao(self):
-        reg = ClienteIBGE.transformar_resposta(
-            [variavel({"202401": "1"}, classificacoes=[])]
-        )[0]
+        reg = ClienteIBGE.transformar_resposta([variavel({"202401": "1"}, classificacoes=[])])[0]
         assert reg["classificacao_id"] == "0"
         assert reg["categoria_id"] == "0"
 
