@@ -1,0 +1,7 @@
+valor_bruto,situacao_canonica,classe
+obra iniciada sem medicao,em_obras,valido
+obra nao executada - contrato cancelado - divida liquidada,cancelada,valido
+critica - somente habitacao,em_obras,pendente
+novo,nao_iniciada,pendente
+retomado,em_obras,valido
+obra frustrada,cancelada,pendente

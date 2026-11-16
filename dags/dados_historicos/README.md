@@ -27,6 +27,11 @@ coluna e regra) e `_versoes_substituidas/` (versões trocadas, fora da pasta que
 - Conexão `minio_lake` (tipo `aws`, com o `endpoint_url` do MinIO no extra).
 - Os mapas de tratamento **não ficam no repositório**: estão no MinIO, em
   `tests/config/dados_historicos/` (`cabecalhos.csv`, `familias.csv`, `de_para_colunas.csv`).
+  No `cabecalhos.csv`, por arquivo:
+  - a ação do cabeçalho;
+  - os blocos;
+  - `linhas_zeradas` (descarta as linhas-modelo zeradas);
+  - `linhas_total` (`_linha_origem` de um total sem rótulo; sai como `total`).
 
 ## Rodar localmente
 
@@ -39,11 +44,41 @@ uv run airflow dags test dados_historicos_dag            # ou: airflow tasks tes
 
 Testes: `uv run pytest tests/test_dados_historicos_dag.py` (lake em memória, sem MinIO).
 
+## Medalhão no dbt (`dbt/mcid/models/dados_historicos_dbt/`)
+
+A DAG cuida do formato; o significado fica no dbt.
+
+- **Bronze**: `bronze_dhist_<familia>`, uma por família (54). É cópia fiel do cleansed, com
+  `familia`, `saida` e `source_file`. Mais `bronze_dhist_cleansed_log`.
+- **Silver**: `prata_dhist_<familia>`, com o de-para de `macros/dados_historicos/de_para.sql`
+  (nome canônico ← colunas de origem, e o tipo). Traz a competência e o corte do log, o IBGE
+  de 7 dígitos e a situação canônica. A primeira fatia é a cadeia do APF da Caixa.
+- **Isolamento**: só existe no target `staging_duckdb` (arquivo DuckDB local que lê o MinIO).
+  Fica fora do Cosmos, do OpenMetadata e do banco compartilhado. O prefixo lido é a var
+  `dhist_cleansed_prefixo`.
+- **Testes** (`dbt/mcid/tests/dados_historicos/`):
+  - linhas por saída e colunas da bronze contra o log;
+  - linhas da silver contra a bronze;
+  - tipagem sem perda;
+  - cobertura do de-para;
+  - situação no domínio;
+  - formato do APF.
+
+```bash
+cd dbt/mcid   # com MINIO_* e DUCKDB_MCID_PATH no ambiente
+dbt build --target staging_duckdb --indirect-selection=cautious \
+  --select path:models/dados_historicos_dbt path:tests/dados_historicos path:seeds/dados_historicos ibge_municipio dominio_status
+```
+
 ## Notebooks (`notebooks/dados_historicos/`)
 
-`00` visão geral · `01`/`02` EDA da entrada BB · `03` grafo de nomes de coluna · `04` estudo
-das colunas por entidade e dicionário proposto · `05` conferência de que a padronização não
-perdeu informação (compara com `tests/cleansed_antes_padronizacao/`).
+- `00`: visão geral.
+- `01`/`02`: EDA da entrada BB.
+- `03`: grafo de nomes de coluna.
+- `04`: estudo das colunas por entidade e dicionário proposto.
+- `05`: conferência de que a padronização não perdeu informação (compara com
+  `tests/cleansed_antes_padronizacao/`).
+- `06`: validação da silver da cadeia do APF da Caixa. Lê o DuckDB local.
 
 ## Estado e próximos passos (16/11/2026)
 
@@ -52,6 +87,10 @@ perdeu informação (compara com `tests/cleansed_antes_padronizacao/`).
 - A validar: as questões da seção 8 do notebook 04 e o de-para (`status = proposto`); conteúdo
   idêntico em meses diferentes hoje vira versão substituída; as bases 5c e 5c1 de 2012-04 ficaram
   as duas.
-- Próximo: medalhão no dbt — bronze por família lendo o cleansed; silver por família com o de-para
-  (lido do MinIO), tipagem e escalas; gold com as fatos e dimensões (primeira fatia: a cadeia do
-  APF da Caixa). Formato fica na DAG; significado, no dbt.
+- Bronze das 54 famílias pronta e conferida contra o log. A silver da cadeia do APF da Caixa
+  está em validação (notebook 06).
+- Próximo:
+  - silver do BB;
+  - silver da contratação PF;
+  - silver das demais famílias;
+  - gold com as fatos e dimensões.

@@ -1,0 +1,67 @@
+version: 2
+
+sources:
+  - name: dhist_cleansed
+    description: >
+      Cleansed dos dados históricos do MCMV, publicado pela dados_historicos_dag no MinIO, uma
+      pasta por família (`<var dhist_cleansed_prefixo><familia>/*.parquet`). Lido por
+      read_parquet na macro fonte_dhist; a source existe para a linhagem.
+    config:
+      enabled: "{{ target.name == 'staging_duckdb' }}"
+    tables:
+      - name: cleansed_log
+        description: _cleansed_log.parquet, uma linha por saída, com competência, corte e status.
+      - name: balanco_min_planejamento_bb
+      - name: base_pf_pj_caixa
+      - name: bext
+      - name: bext_agregado_caixa
+      - name: contratacao_caixa_2010
+      - name: contratacao_pf_caixa
+      - name: contratacao_pf_total_caixa
+      - name: contratacao_uf_caixa
+      - name: dados_bb_2011
+      - name: datas_entregas_pj_caixa
+      - name: demanda_far_caixa
+      - name: desligados_caixa
+      - name: empreendimentos_contratados_caixa
+      - name: entrada_bb
+      - name: entrada_bb_aux_far
+      - name: entrega_bb_pf_pf
+      - name: entrega_bb_pj
+      - name: entrega_bb_pj_pf
+      - name: int040_far_caixa
+      - name: int054_far_bb
+      - name: loginfesta_bb
+      - name: municipios_contratados_regiao_caixa
+      - name: municipios_contratados_uf_caixa
+      - name: pmcmv_parte2_caixa
+      - name: pnhr_bb
+      - name: presidencia_caixa
+      - name: previsao_entrega_far_caixa
+      - name: propostas_bb
+      - name: propostas_contratadas_caixa_2009
+      - name: propostas_far_caixa
+      - name: propostas_recebidas_caixa
+      - name: propostas_recebidas_caixa_2009
+      - name: relatorio_cidades_caixa
+      - name: relatorio_cidades_entregas_caixa
+      - name: relatorio_executivo_caixa
+      - name: relatorio_executivo_municipio_caixa
+      - name: relatorio_semanal_bb_publico
+      - name: relatorio_semanal_bb_uf
+      - name: rural_caixa
+      - name: snh_af_bb
+      - name: snh_af_caixa
+      - name: snh_entregas_af_bb
+      - name: snh_entregas_af_caixa
+      - name: tab_andamento_obras_bb
+      - name: tab_arquivos_dados_bb
+      - name: tab_beneficiarios_fgts_bb
+      - name: tab_caracterizacoes_entornos_bb
+      - name: tab_contratos_pf_fgts_bb
+      - name: tab_contratos_pj_bb
+      - name: tab_empreendimentos_bb
+      - name: tab_operacoes_bb
+      - name: tab_proponentes_bb
+      - name: tab_unidades_concluidas_bb
+      - name: validacao_caixa

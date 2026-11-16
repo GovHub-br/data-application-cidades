@@ -1,0 +1,28 @@
+version: 2
+
+# Silver dos dados históricos, cadeia do APF da Caixa. Corpo comum em
+# macros/dados_historicos/prata.sql; colunas e tipos em macros/dados_historicos/de_para.sql.
+# Grão = o da fonte (uma linha por linha do cleansed: saida × _linha_origem). Validação nos
+# testes singulares tests/dados_historicos/dhist_prata_* e dhist_de_para_cobertura.
+
+models:
+  - name: prata_dhist_relatorio_executivo_caixa
+    description: >
+      Relatório executivo da Caixa (FAR), 2011-12 a 2018-08, uma linha por lançamento do
+      APF. `quantidade_uh` é MOVIMENTO com sinal (+N contratação, −N distrato): o arquivo
+      repete o razão do APF e o estoque é a soma por APF (gold). `valor_subsidio_ogu`: de 2015-04
+      para 2015-05 só 38% dos valores do mesmo APF se repetem (a confirmar). `dt_contratacao` vem de `dataprevistasr` até 2014-11 (o nome
+      engana: o conteúdo é a data de contratação, provado no estudo de colunas).
+  - name: prata_dhist_datas_entregas_pj_caixa
+    description: Datas de entrega por APF (arquivo único de 2015-06).
+  - name: prata_dhist_int040_far_caixa
+    description: >
+      INT040 do FAR (Caixa), foto de 2018-10: situação do contrato PJ, pendências, datas de
+      obra e entrega, liberações e quantidades por APF.
+  - name: prata_dhist_snh_af_caixa
+    description: >
+      Painel SNH dos empreendimentos da Caixa, 2024-06 a 2026-03 (foto mensal por APF). As
+      colunas `*_ano_ref` e `*_janeiro_ano_ref` mudam de conteúdo de 2024-10 para 2024-11
+      (o painel trocou de layout).
+  - name: prata_dhist_snh_entregas_af_caixa
+    description: Entregas por evento do painel SNH (Caixa), 2024-06 a 2026-03.

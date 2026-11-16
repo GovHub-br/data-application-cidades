@@ -22,6 +22,9 @@ clean-targets:
 # diferir entre máquinas, o que espalharia as funções por schemas diferentes.
 vars:
   schema_udfs: metadata
+  # Onde a dados_historicos_dag publica o cleansed (uma pasta por família). Fica em
+  # tests/ enquanto a validação não termina; sair de lá é mudar só esta var.
+  dhist_cleansed_prefixo: tests/cleansed/dados_historicos/
 
 seeds:
   mcid:
@@ -41,6 +44,14 @@ seeds:
     # Seeds curadas de identidade FDS, consumidas pela dim de empreendimento
     # (prata_fds_dim_empreendimento).
     entidades_fds:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+
+    # Situações de obra dos dados históricos que faltam no data_quality/dominio_status
+    # (compartilhado com o mcmv_historico_dbt em produção, por isso não é alterado).
+    dados_historicos:
+      +enabled: "{{ target.name == 'staging_duckdb' }}"
       +database: cidades
       +schema: seeds
       +quote_columns: false
@@ -232,6 +243,35 @@ models:
       # para o nome-alvo `prata_dhist_serie_anual_ogu_fgts` e carrega
       # `config(enabled=false)` no próprio arquivo — não há bloco `piloto:`
       # aqui. Retomada do desenvolvimento numa change futura.
+
+    # Dados históricos reconstruídos pela dados_historicos_dag (cleansed por família).
+    # Em validação: só existe no target local `staging_duckdb` (arquivo DuckDB), fora
+    # do Cosmos, do docs generate do OpenMetadata e do banco compartilhado. Não mexe
+    # no `mcmv_historico_dbt`, que segue em produção.
+    dados_historicos_dbt:
+      +enabled: "{{ target.name == 'staging_duckdb' }}"
+      +database: cidades
+      +materialized: table
+      +meta:
+        governance:
+          product: dados_historicos
+          owner_key: mcid_data_engineering
+
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
 
     far_dbt:
       +materialized: table
@@ -544,3 +584,9 @@ on-run-start:
 
 on-run-end:
   - "{% if target.type == 'postgres' %}{{ registrar_execucao_dbt() }}{% endif %}"
+
+data_tests:
+  mcid:
+    # Testes da reconstrução dos dados históricos: mesmo isolamento dos modelos.
+    dados_historicos:
+      +enabled: "{{ target.name == 'staging_duckdb' }}"
