@@ -29,7 +29,6 @@
         {%- endif %}
     {%- endfor %}
 {%- endfor %}
-select * from (
-    {{ partes | join('\nunion all\n') }}
-)
+select *
+from ({{ partes | join('\nunion all\n') }})
 where n > 0

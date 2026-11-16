@@ -9,8 +9,9 @@
         (apf is not null and not regexp_matches(apf, '^\d{7,8}$'))
         or (
             apf is null
-            {%- if f == 'relatorio_executivo_caixa' %} and competencia >= date '2012-07-01'{% endif %}
+            {%- if f == 'relatorio_executivo_caixa' %}
+                and competencia >= date '2012-07-01'
+            {% endif %}
         )
-    group by all
-    {{ 'union all' if not loop.last }}
+    group by all {{ 'union all' if not loop.last }}
 {% endfor %}

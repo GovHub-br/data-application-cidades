@@ -14,8 +14,9 @@ with
             {%- set rel = ref('bronze_dhist_' ~ f) %}
             select '{{ f }}' as familia, column_name as coluna
             from information_schema.columns
-            where table_schema = '{{ rel.schema }}' and table_name = '{{ rel.identifier }}'
-            {{ 'union all' if not loop.last }}
+            where
+                table_schema = '{{ rel.schema }}' and table_name = '{{ rel.identifier }}'
+                {{ 'union all' if not loop.last }}
         {% endfor %}
     )
 
@@ -26,7 +27,7 @@ select
     b.coluna is null as so_no_log
 from esperadas as e
 full outer join na_bronze as b on e.familia = b.familia and e.coluna = b.coluna
-where (e.coluna is null or b.coluna is null)
-    and coalesce(e.coluna, b.coluna) not in (
-        'familia', 'saida', 'source_file', '_linha_origem', '_source_file', '_source_hash'
-    )
+where
+    (e.coluna is null or b.coluna is null)
+    and coalesce(e.coluna, b.coluna)
+    not in ('familia', 'saida', 'source_file', '_linha_origem', '_source_file', '_source_hash')

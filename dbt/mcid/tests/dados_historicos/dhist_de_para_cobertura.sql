@@ -3,22 +3,27 @@
 -- mapeou aparece aqui, em vez de sumir calada na silver.
 with
 
-    mapeadas (familia, coluna) as (
+    mapeadas(familia, coluna) as (
         values
-        {%- set linhas = [] %}
-        {%- for f in familias_prata_dhist() %}
-            {%- set dp = de_para_dhist()[f] %}
-            {%- for c in dp['colunas'] %}{% for o in c.origens %}{% do linhas.append("('" ~ f ~ "', '" ~ o ~ "')") %}{% endfor %}{% endfor %}
-            {%- for o in dp['descartar'] %}{% do linhas.append("('" ~ f ~ "', '" ~ o ~ "')") %}{% endfor %}
-        {%- endfor %}
-        {{ linhas | join(',\n        ') }}
+            {%- set linhas = [] %}
+            {%- for f in familias_prata_dhist() %}
+                {%- set dp = de_para_dhist()[f] %}
+                {%- for c in dp['colunas'] %}
+                    {% for o in c.origens %}
+                        {% do linhas.append("('" ~ f ~ "', '" ~ o ~ "')") %}
+                    {% endfor %}
+                {% endfor %}
+                {%- for o in dp['descartar'] %}
+                    {% do linhas.append("('" ~ f ~ "', '" ~ o ~ "')") %}
+                {% endfor %}
+            {%- endfor %}
+            {{ linhas | join(',\n        ') }}
     ),
 
     no_log as (
         select distinct familia, unnest(colunas) as coluna
         from {{ ref('bronze_dhist_cleansed_log') }}
-        where status = 'tratado'
-            and familia in ('{{ familias_prata_dhist() | join("', '") }}')
+        where status = 'tratado' and familia in ('{{ familias_prata_dhist() | join("', '") }}')
     )
 
 select l.familia, l.coluna

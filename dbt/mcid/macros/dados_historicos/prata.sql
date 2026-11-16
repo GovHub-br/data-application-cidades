@@ -56,16 +56,17 @@
         {%- for c in colunas %}
             {%- set origem = dhist_origem(c.origens) %}
             {%- if c.tipo == 'ibge' %}
-        case
-            when length({{ origem }}) = 7 then {{ origem }}
-            when length({{ origem }}) = 6 then cast(ibge_{{ loop.index }}.cod_ibge as varchar)
-        end as "{{ c.nome }}",
-        {{ origem }} as "{{ c.nome }}_fonte"
+                case
+                    when length({{ origem }}) = 7
+                    then {{ origem }}
+                    when length({{ origem }}) = 6
+                    then cast(ibge_{{ loop.index }}.cod_ibge as varchar)
+                end as "{{ c.nome }}",
+                {{ origem }} as "{{ c.nome }}_fonte"
             {%- elif c.tipo == 'situacao' %}
-        {{ origem }} as "{{ c.nome }}",
-        status_{{ loop.index }}.situacao_canonica as "{{ c.nome }}_canonica"
-            {%- else %}
-        {{ dhist_tipo(origem, c.tipo) }} as "{{ c.nome }}"
+                {{ origem }} as "{{ c.nome }}",
+                status_{{ loop.index }}.situacao_canonica as "{{ c.nome }}_canonica"
+            {%- else %} {{ dhist_tipo(origem, c.tipo) }} as "{{ c.nome }}"
             {%- endif %}
             {{- ',' if not loop.last }}
         {%- endfor %}
@@ -73,23 +74,29 @@
     left join log on b.saida = log.saida
     {%- for c in colunas %}
         {%- if c.tipo == 'ibge' %}
-    left join {{ ref('ibge_municipio') }} as ibge_{{ loop.index }}
-        on substr(cast(ibge_{{ loop.index }}.cod_ibge as varchar), 1, 6) = {{ dhist_origem(c.origens) }}
+            left join
+                {{ ref('ibge_municipio') }} as ibge_{{ loop.index }}
+                on substr(cast(ibge_{{ loop.index }}.cod_ibge as varchar), 1, 6)
+                = {{ dhist_origem(c.origens) }}
         {%- elif c.tipo == 'situacao' %}
-    left join (
-        select distinct strip_accents(lower(trim(valor_bruto))) as chave, situacao_canonica
-        from (
-            select valor_bruto, situacao_canonica from {{ ref('dominio_status') }}
-            union all
-            select valor_bruto, situacao_canonica from {{ ref('dominio_status_extra') }}
-        )
-    ) as status_{{ loop.index }}
-        on status_{{ loop.index }}.chave = strip_accents(lower({{ dhist_origem(c.origens) }}))
+            left join
+                (
+                    select distinct
+                        strip_accents(lower(trim(valor_bruto))) as chave, situacao_canonica
+                    from
+                        (
+                            select valor_bruto, situacao_canonica
+                            from {{ ref('dominio_status') }}
+                            union all
+                            select valor_bruto, situacao_canonica
+                            from {{ ref('dominio_status_extra') }}
+                        )
+                ) as status_{{ loop.index }}
+                on status_{{ loop.index }}.chave
+                = strip_accents(lower({{ dhist_origem(c.origens) }}))
         {%- endif %}
     {%- endfor %}
 {% endmacro %}
 
 {#- As famílias que já têm silver (as que estão no de-para). -#}
-{% macro familias_prata_dhist() %}
-    {{ return(de_para_dhist().keys() | list | sort) }}
-{% endmacro %}
+{% macro familias_prata_dhist() %} {{ return(de_para_dhist().keys() | list | sort) }} {% endmacro %}

@@ -7,8 +7,7 @@ with
         {% for f in familias_dhist() %}
             select '{{ f }}' as familia, saida, count(*) as linhas
             from {{ ref('bronze_dhist_' ~ f) }}
-            group by saida
-            {{ 'union all' if not loop.last }}
+            group by saida {{ 'union all' if not loop.last }}
         {% endfor %}
     ),
 
