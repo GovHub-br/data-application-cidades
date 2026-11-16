@@ -742,6 +742,7 @@ class Regra:
     fim: Optional[int] = None
     colunas: List[str] = field(default_factory=list)  # nomes para nomear/dividir
     zeradas: bool = False  # descarta as linhas-modelo zeradas (regra explícita no mapa)
+    totais: List[int] = field(default_factory=list)  # _linha_origem de total sem rótulo (mapa)
 
 
 @dataclass
@@ -910,10 +911,10 @@ def _zeradas(limpo: pd.DataFrame) -> pd.Series:
 
 
 def separar_descartes(
-    df: pd.DataFrame, refs: List[List[str]], zeradas: bool = False
+    df: pd.DataFrame, refs: List[List[str]], zeradas: bool = False, totais: Iterable[int] = ()
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Separa linhas vazias, cópias de cabeçalho, totais, subtítulos, rodapé e, quando o
-    mapa pede, as linhas-modelo zeradas."""
+    mapa pede, as linhas-modelo zeradas e os totais sem rótulo (pela `_linha_origem`)."""
     cols = [c for c in df.columns if c != LINHA_ORIGEM]
     if df.empty or not cols:
         return df, _vazio_descartes()
@@ -928,6 +929,9 @@ def separar_descartes(
     motivo[(motivo == "") & _copias_de_cabecalho(df, cols, refs)] = COPIA_CABECALHO
     total = primeira.str.replace("\xa0", " ").str.lower().str.contains(_TOTAL)
     motivo[(motivo == "") & total] = TOTAL
+    totais = list(totais)
+    if totais:
+        motivo[(motivo == "") & df[LINHA_ORIGEM].isin(totais)] = TOTAL
     if len(cols) >= 4:
         # uma célula só, de texto ou data solta (carimbo de posição); número sozinho fica
         texto = ~primeira.str.match(_NUMERO) | primeira.str.match(_DATA_SOLTA)
@@ -994,7 +998,7 @@ def dividir_coluna(df: pd.DataFrame, nomes: List[str]) -> pd.DataFrame:
 
 def _tratar_bloco(unico: pd.DataFrame, regra: Regra, n_entrada: int) -> Resultado:
     dados, consumidas, refs = aplicar_cabecalho(unico, regra)
-    dados, outros = separar_descartes(dados, refs, regra.zeradas)
+    dados, outros = separar_descartes(dados, refs, regra.zeradas, regra.totais)
     dados, removidas, vazias = remover_colunas_vazias(dados)
     descartes = pd.concat([consumidas, outros]).sort_values(LINHA_ORIGEM).reset_index(drop=True)
     return Resultado(dados, descartes, removidas, n_entrada, vazias)
@@ -1011,7 +1015,16 @@ def tratar_blocos(df: pd.DataFrame, regras: List[Regra]) -> List[Tuple[str, Resu
         if len(regras) != 1:
             raise ErroHistorico("dividir não combina com blocos")
         entrada = dividir_coluna(entrada, regras[0].colunas)  # conferência já dividida
-        regras = [Regra(MANTER, 0, regras[0].motivo, regras[0].bloco, zeradas=regras[0].zeradas)]
+        regras = [
+            Regra(
+                MANTER,
+                0,
+                regras[0].motivo,
+                regras[0].bloco,
+                zeradas=regras[0].zeradas,
+                totais=regras[0].totais,
+            )
+        ]
     unico = desfazer_duplicacao(entrada)
     saida, ini = [], 0
     for regra in regras:
@@ -1025,13 +1038,30 @@ def tratar_blocos(df: pd.DataFrame, regras: List[Regra]) -> List[Tuple[str, Resu
             regra.bloco,
             colunas=regra.colunas,
             zeradas=regra.zeradas,
+            totais=regra.totais,
         )
         saida.append((regra.bloco, _tratar_bloco(unico.iloc[ini:fim], relativa, len(entrada))))
         ini = fim
     if ini != len(unico):
         raise ErroHistorico(f"linhas {ini}..{len(unico)} não pertencem a nenhum bloco")
+    _conferir_totais(regras, saida)
     conferir(entrada, [r for _, r in saida])
     return saida
+
+
+def _conferir_totais(regras: List[Regra], saida: List[Tuple[str, Resultado]]) -> None:
+    """Toda linha de total apontada no mapa tem de ter saído como total (número errado no
+    mapa não pode passar calado)."""
+    pedidas = {n for r in regras for n in r.totais}
+    if not pedidas:
+        return
+    achadas = {
+        int(n)
+        for _, res in saida
+        for n in res.descartes.loc[res.descartes.motivo == TOTAL, LINHA_ORIGEM]
+    }
+    if pedidas - achadas:
+        raise ErroHistorico(f"total do mapa não encontrado nas linhas {sorted(pedidas - achadas)}")
 
 
 def tratar_arquivo(df: pd.DataFrame, regra: Optional[Regra] = None) -> Resultado:
@@ -1069,6 +1099,9 @@ _N_PONTO = re.compile(r"^-?\d+\.\d+$")
 _N_MILHAR_BR = re.compile(r"^-?\d{1,3}(\.\d{3})+$")  # "1.000": milhar no BR, decimal no resto
 _N_BR = re.compile(r"^-?\d{1,3}(\.\d{3})*,\d+$|^-?\d+,\d+$")
 _N_CIENT = re.compile(r"^-?\d+(\.\d+)?[eE][+-]?\d+$")
+# ",05": vírgula decimal sem a parte inteira. Não pode ser milhar, então é decimal em
+# qualquer convenção (aparece até em coluna de ponto decimal, como no INT040)
+_N_FRACAO = re.compile(r"^-?,\d+$")
 _CNPJ_COLUNA = re.compile(r"cnpj")
 LIMIAR_TIPO = 0.95  # fração dos valores para a coluna ser de data ou de número
 CASAS_RUIDO = 7  # decimal com tantas casas ou mais é ruído de float
@@ -1091,7 +1124,7 @@ def _e_data(t: str) -> bool:
 
 
 def _e_numero(t: str) -> bool:
-    return any(rx.match(t) for rx in (_N_INT, _N_PONTO, _N_MILHAR_BR, _N_BR, _N_CIENT))
+    return any(rx.match(t) for rx in (_N_INT, _N_PONTO, _N_MILHAR_BR, _N_BR, _N_CIENT, _N_FRACAO))
 
 
 def _data_iso(t: str) -> Tuple[str, str]:
@@ -1139,7 +1172,9 @@ def _numero_canonico(t: str, convencao: str) -> Tuple[str, Optional[str]]:
     """(valor, regra) de um número: ponto decimal, sem milhar, sem zero à direita."""
     regra = None
     s = t
-    if convencao == "br" and (_N_BR.match(t) or _N_MILHAR_BR.match(t)):
+    if _N_FRACAO.match(t):
+        s, regra = t.replace(",", "."), DECIMAL_BR
+    elif convencao == "br" and (_N_BR.match(t) or _N_MILHAR_BR.match(t)):
         s, regra = t.replace(".", "").replace(",", "."), DECIMAL_BR
     d = Decimal(s)
     if d == d.to_integral_value():
@@ -1159,6 +1194,8 @@ def _conferir_numero(antes: str, depois: str, convencao: str, coluna: str) -> No
     s = antes.replace(".", "").replace(",", ".") if convencao == "br" and "," in antes else antes
     if convencao == "br" and _N_MILHAR_BR.match(antes):
         s = antes.replace(".", "")
+    if _N_FRACAO.match(antes):
+        s = antes.replace(",", ".")
     a, b = float(s), float(depois)
     if abs(a - b) > 1e-6 * max(1.0, abs(a)):
         raise ErroHistorico(f"padronização mudou o número em {coluna}: {antes!r} -> {depois!r}")
@@ -1593,6 +1630,7 @@ SCHEMA_CLEANSED = pa.schema(
         ("cabecalho_colunas", pa.list_(pa.string())),
         ("cabecalho_motivo", pa.string()),
         ("descartar_zeradas", pa.bool_()),
+        ("linhas_total", pa.list_(pa.int64())),
         ("linhas_entrada", pa.int64()),
         ("linhas_reais", pa.int64()),
         ("linhas_descartadas", pa.int64()),
@@ -1631,9 +1669,10 @@ SCHEMA_DESCARTES = pa.schema(
 
 
 def ler_mapa(mapa: pd.DataFrame) -> Dict[str, List[Regra]]:
-    """`cabecalhos.csv`: arquivo, bloco, acao, linha, fim, colunas ("|"), motivo e
-    linhas_zeradas ("descartar" descarta as linhas-modelo zeradas do arquivo). A ação vazia
-    mantém o cabeçalho (serve para pedir só o descarte das zeradas)."""
+    """`cabecalhos.csv`: arquivo, bloco, acao, linha, fim, colunas ("|"), motivo,
+    linhas_zeradas ("descartar" descarta as linhas-modelo zeradas do arquivo) e linhas_total
+    (`_linha_origem` de totais sem rótulo, "|"; a linha sai como total). A ação vazia mantém
+    o cabeçalho (serve para pedir só esses descartes)."""
     regras: Dict[str, List[Regra]] = {}
     for r in mapa.itertuples():
         if r.acao not in (PROMOVER, COMPOR, NOMEAR, DIVIDIR, EXCLUIR, MANTER):
@@ -1649,6 +1688,7 @@ def ler_mapa(mapa: pd.DataFrame) -> Dict[str, List[Regra]]:
             int(r.fim) if r.fim else None,
             colunas,
             getattr(r, "linhas_zeradas", "") == "descartar",
+            [int(n) for n in str(getattr(r, "linhas_total", "") or "").split("|") if n],
         )
         regras.setdefault(r.arquivo, []).append(regra)
     for arquivo, rs in regras.items():
@@ -1697,6 +1737,7 @@ def _registro(s: dict, regra: Regra, familias) -> dict:
         "familia": familia,
         "chave_familia": chaves_da_familia(familia, familias) or None,
         "descartar_zeradas": regra.zeradas,
+        "linhas_total": regra.totais or None,
         "analytics_key": s["analytics_key"],
         "periodo": s.get("periodo"),
         "colunas_entrada": list(s["colunas"]),
@@ -1819,6 +1860,7 @@ def _regras_do_registro(regs: List[dict]) -> List[Regra]:
             fim=r["bloco_fim"],
             colunas=list(r["cabecalho_colunas"] or []),
             zeradas=bool(r.get("descartar_zeradas")),
+            totais=list(r.get("linhas_total") or []),
         )
         for r in regs
     ]

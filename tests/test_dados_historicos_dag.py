@@ -714,6 +714,22 @@ def test_padroniza_numeros_sem_mudar_o_valor(dh):
     ]
 
 
+def test_virgula_decimal_sem_parte_inteira(dh):
+    # INT040: ",00" e ",01" ao lado de "100,00"; sem a regra a coluna não chegava a 95%
+    assert _padronizada(dh, "pct", ["100,00", ",00", ",01", "4,07"])[0] == [
+        "100",
+        "0",
+        "0.01",
+        "4.07",
+    ]
+    # ",01" numa coluna de ponto decimal: não pode ser milhar, então é decimal
+    assert _padronizada(dh, "vlr", ["22500000", "5360361.17", ",01"])[0] == [
+        "22500000",
+        "5360361.17",
+        "0.01",
+    ]
+
+
 def test_numero_ambiguo_ou_codigo_fica_como_esta(dh):
     # mistura vírgula e ponto decimal no mesmo arquivo: não dá para saber
     assert _padronizada(dh, "x", ["1,5", "2.5", "3"])[0] == ["1,5", "2.5", "3"]
@@ -780,6 +796,31 @@ def test_linhas_zeradas_so_com_regra_no_mapa(dh):
     dados, desc = dh.separar_descartes(df, [cols], zeradas=True)
     assert (dados.nome.tolist(), desc.motivo.tolist()) == (["RES X", ""], ["zerada"])
     assert len(dh.separar_descartes(df, [cols])[0]) == 3  # sem a regra, fica
+
+
+def test_total_sem_rotulo_so_pela_linha_do_mapa(dh):
+    cols = ["apf", "municipio", "uh", "valor"]
+    linhas = [["1", "A", "10", "5"], ["2", "B", "20", "7"], ["", "", "29", "12.5"]]
+    df = _df(linhas, cols).assign(_linha_origem=[7, 8, 9])
+    assert len(dh.separar_descartes(df, [cols])[0]) == 3  # sem rótulo e sem o mapa, fica
+    dados, desc = dh.separar_descartes(df, [cols], totais=[9])
+    assert (dados.apf.tolist(), desc.motivo.tolist()) == (["1", "2"], ["total"])
+
+
+def test_total_do_mapa_que_nao_existe_para(dh):
+    linhas = [["apf", "uh"], ["1", "10"], ["2", "20"]]
+    regra = dh.Regra(dh.PROMOVER, 0, totais=[99])
+    with pytest.raises(dh.ErroHistorico, match="total do mapa"):
+        dh.tratar_blocos(_df(_2x(linhas)), [regra])
+    mapa = pd.read_csv(
+        io.StringIO(
+            "arquivo,bloco,acao,linha,fim,colunas,motivo,linhas_zeradas,linhas_total\n"
+            "a,,manter,,,,total sem rótulo,,9075|9076\n"
+        ),
+        dtype=str,
+        keep_default_na=False,
+    )
+    assert dh.ler_mapa(mapa)["a"][0].totais == [9075, 9076]
 
 
 def test_duplicada_identica_sai(dh):
