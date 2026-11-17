@@ -5,3 +5,5 @@ critica - somente habitacao,em_obras,pendente
 novo,nao_iniciada,pendente
 retomado,em_obras,valido
 obra frustrada,cancelada,pendente
+sem medicao,em_obras,pendente
+a distratar,cancelada,pendente

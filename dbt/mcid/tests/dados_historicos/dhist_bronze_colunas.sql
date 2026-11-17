@@ -1,10 +1,12 @@
 -- Validação 1 (bronze): as colunas de cada bronze são exatamente a união das colunas que
 -- o log do cleansed registra para as saídas tratadas da família (fora as técnicas).
 -- Devolve a coluna que sobra ou falta de um dos lados.
+-- SQL do Postgres, fora do envelope: o catálogo do Postgres não aparece dentro do DuckDB.
 with
 
     esperadas as (
-        select distinct familia, unnest(colunas) as coluna
+        -- o Postgres corta o nome da coluna da bronze em 63 caracteres (NAMEDATALEN)
+        select distinct familia, left(unnest(colunas), 63) as coluna
         from {{ ref('bronze_dhist_cleansed_log') }}
         where status = 'tratado'
     ),

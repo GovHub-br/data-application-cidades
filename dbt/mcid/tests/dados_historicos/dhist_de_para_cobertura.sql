@@ -1,6 +1,7 @@
 -- Validação 2 (silver): toda coluna do cleansed de uma família com silver está no de-para,
 -- como origem de alguma coluna ou em `descartar`. Coluna nova num layout que ninguém
 -- mapeou aparece aqui, em vez de sumir calada na silver.
+{% call duckdb_query() %}
 with
 
     mapeadas(familia, coluna) as (
@@ -22,7 +23,7 @@ with
 
     no_log as (
         select distinct familia, unnest(colunas) as coluna
-        from {{ ref('bronze_dhist_cleansed_log') }}
+        from {{ rel_pgduckdb(ref('bronze_dhist_cleansed_log')) }}
         where status = 'tratado' and familia in ('{{ familias_prata_dhist() | join("', '") }}')
     )
 
@@ -30,3 +31,4 @@ select l.familia, l.coluna
 from no_log as l
 left join mapeadas as m on l.familia = m.familia and l.coluna = m.coluna
 where m.coluna is null
+{% endcall %}

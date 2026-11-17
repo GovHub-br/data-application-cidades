@@ -98,9 +98,9 @@ def test_dag_espera_a_raw_e_publica_cada_camada(dh):
     assert outlets["analytics_para_cleansed"] == ["dados_historicos_cleansed"]
     for anterior, seguinte in zip(d.task_ids, d.task_ids[1:]):
         assert d.get_task(anterior).downstream_task_ids == {seguinte}
-    # tudo grava em tests/ até a validação terminar
+    # tudo grava sob staging/historico_mcmv/, nunca na conversão antiga nem em tests/
     for prefixo in (dh.STAGING, dh.ANALYTICS, dh.CLEANSED, dh.CONFIG):
-        assert prefixo.startswith("tests/")
+        assert prefixo.startswith("staging/historico_mcmv/")
 
 
 def test_normalizacao_de_nomes_e_a_do_lake(dh):
@@ -116,7 +116,7 @@ def test_normalizacao_de_nomes_e_a_do_lake(dh):
 
 def test_chave_espelha_a_raw(dh):
     assert dh.chave_staging("raw/dados_historicos/bb_2012_entrada.csv") == (
-        "tests/staging/dados_historicos/bb_2012_entrada.parquet"
+        "staging/historico_mcmv/convertido/bb_2012_entrada.parquet"
     )
     with pytest.raises(dh.ErroHistorico):
         dh.chave_staging("raw/sftp/x.csv")
@@ -243,9 +243,9 @@ def _lake_raw():
                     ["2013-06-17|FULANO|2013-06-17"],
                 ]
             ),
-            "tests/config/dados_historicos/cabecalhos.csv": MAPA_VAZIO
+            "staging/historico_mcmv/config/cabecalhos.csv": MAPA_VAZIO
             + b"bb_2013_06_junho_x_controle,,dividir,,,data|resp_arq|data_pos_arq,colado\n",
-            "tests/config/dados_historicos/familias.csv": FAMILIAS,
+            "staging/historico_mcmv/config/familias.csv": FAMILIAS,
         }
     )
 
@@ -270,6 +270,19 @@ def test_staging_mascara_retoma_e_confere_a_raw(dh, tmp_path):
     del lake.objetos["raw/dados_historicos/bb_2013_06_junho_x_controle.csv"]
     with pytest.raises(dh.ErroHistorico, match="sumiram"):
         dh.conferir_raw_contra_manifesto(lake)
+
+
+def test_staging_ignora_arquivo_fora_e_tira_do_manifesto(dh, tmp_path):
+    lake = _lake_raw()
+    fora = "raw/dados_historicos/bb_2015_08_agosto_loginfesta.csv"
+    lake.objetos[fora] = _csv([["login", "senha"], ["x", "1234"]])
+    # manifesto de antes da exclusão: o arquivo já tinha sido convertido
+    dh.escrever_manifesto([{"raw_key": fora, "status": "ok"}], tmp_path / "m.csv")
+    lake.subir(tmp_path / "m.csv", dh.MANIFESTO)
+    assert dh.etapa_staging(lake, tmp_path) == {"ok": 2, "pulado": 0, "erro": 0}
+    assert fora not in dh.ler_manifesto(lake.ler_texto(dh.MANIFESTO))
+    assert not any("loginfesta" in k for k in lake.objetos if k.startswith(dh.STAGING))
+    assert dh.conferir_raw_contra_manifesto(lake) == {"arquivos": 2, "novos": 0, "alterados": 0}
 
 
 # ---------------------------------------------------------------------------------------
@@ -348,6 +361,26 @@ def test_analytics_copia_a_selecao_e_tira_a_sobra(dh, tmp_path):
         dh.ANALYTICS + "bb_2013_06_junho_x_entrada_20130618.parquet",
     ]
     assert lake.tabela(dh.LOG_ANALYTICS).schema == dh.SCHEMA_ANALYTICS
+
+
+def test_analytics_reaproveita_metricas_de_arquivo_que_nao_mudou(dh, tmp_path, monkeypatch):
+    lake = _lake_raw()
+    dh.etapa_staging(lake, tmp_path / "s")
+    dh.etapa_analytics(lake, tmp_path / "a")
+    medidos = []
+    original = dh.metricas_parquet
+    monkeypatch.setattr(
+        dh, "metricas_parquet", lambda p, con=None: medidos.append(p.name) or original(p, con)
+    )
+    # nada mudou na staging: nada é medido de novo e o resultado é o mesmo
+    assert dh.etapa_analytics(lake, tmp_path / "b") == {"selecionado": 2}
+    assert medidos == []
+    # um arquivo alterado: só ele é medido
+    chave = dh.STAGING + "bb_2013_06_junho_x_entrada_20130618.parquet"
+    lake.objetos[chave] = lake.objetos[chave] + b""  # mesmo conteúdo não muda o etag
+    lake.objetos[dh.STAGING + "bb_2013_06_junho_x_controle.parquet"] = lake.objetos[chave]
+    dh.etapa_analytics(lake, tmp_path / "c")
+    assert medidos == ["bb_2013_06_junho_x_controle.parquet"]
 
 
 # ---------------------------------------------------------------------------------------
@@ -739,6 +772,16 @@ def test_numero_ambiguo_ou_codigo_fica_como_esta(dh):
     assert _padronizada(dh, "cep", ["0012", "0034.0", "1200"])[0] == ["0012", "0034", "1200"]
 
 
+def test_moeda_e_milhar_br_inequivoco_em_coluna_mista(dh):
+    # SNH BB 2024-06: "R$" na frente e milhar BR numa coluna que também tem ponto decimal
+    valores, contagem = _padronizada(
+        dh, "vlr", ["R$ 1.008.000,00", "R$ -", "38670473.58", "1.737.972,88", "1,5"]
+    )
+    # "1,5" segue ambíguo (vírgula decimal sem milhar ao lado de ponto decimal)
+    assert valores == ["1008000", "", "38670473.58", "1737972.88", "1,5"]
+    assert contagem == {"numero_decimal_br": 2, "nulo": 1}
+
+
 def test_padroniza_datas_e_esvazia_a_que_nao_existe(dh):
     valores, contagem = _padronizada(
         dh,
@@ -870,7 +913,7 @@ def test_escolhe_a_versao_corrigida_e_tira_o_conteudo_repetido(dh):
     assert por["k_a"][0] == por["k_b"][0] == "tratado"
     assert (
         regs[0]["cleansed_key"]
-        == "tests/cleansed/dados_historicos/_versoes_substituidas/f/x_20121031.parquet"
+        == "staging/historico_mcmv/cleansed/_versoes_substituidas/f/x_20121031.parquet"
     )
 
 

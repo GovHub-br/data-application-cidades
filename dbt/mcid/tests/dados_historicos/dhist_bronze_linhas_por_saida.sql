@@ -1,19 +1,20 @@
 -- Validação 1 (bronze): cada saída tratada do cleansed está inteira na bronze da sua
 -- família, e nada além disso (versões substituídas e painéis excluídos não entram).
 -- Devolve as saídas em que a contagem não bate.
+{% call duckdb_query() %}
 with
 
     bronze as (
         {% for f in familias_dhist() %}
             select '{{ f }}' as familia, saida, count(*) as linhas
-            from {{ ref('bronze_dhist_' ~ f) }}
+            from {{ rel_pgduckdb(ref('bronze_dhist_' ~ f)) }}
             group by saida {{ 'union all' if not loop.last }}
         {% endfor %}
     ),
 
     log as (
         select familia, saida, linhas_reais
-        from {{ ref('bronze_dhist_cleansed_log') }}
+        from {{ rel_pgduckdb(ref('bronze_dhist_cleansed_log')) }}
         where status = 'tratado'
     )
 
@@ -25,3 +26,4 @@ select
 from bronze as b
 full outer join log as l on b.familia = l.familia and b.saida = l.saida
 where b.linhas is distinct from l.linhas_reais
+{% endcall %}

@@ -5,7 +5,7 @@ Ela é o Asset `dados_historicos_raw`: quem sobe cria um evento do Asset na UI (
 a DAG direto). Cada camada desta DAG é um Asset também, para quem vier depois (a bronze)
 agendar por ele.
 
-Camadas, todas em `tests/` enquanto a validação não termina:
+Camadas, todas sob `staging/historico_mcmv/` (`convertido/`, `analytics/`, `cleansed/`):
 - **staging**: cada CSV vira Parquet, um a um, tudo em texto, sem tocar no conteúdo, menos
   o dado pessoal, que é mascarado aqui (a raw fica como foi subida);
 - **analytics**: só os arquivos de conteúdo próprio (fora: vazios, o modelo de 2009 que o
@@ -21,7 +21,7 @@ Camadas, todas em `tests/` enquanto a validação não termina:
   longo do tempo) e a proposta de nome canônico.
 
 Os mapas que dizem como tratar cada arquivo NÃO ficam no repositório: ficam no MinIO, em
-`tests/config/dados_historicos/` (`cabecalhos.csv`: cabeçalho, blocos e colunas coladas
+`staging/historico_mcmv/config/` (`cabecalhos.csv`: cabeçalho, blocos e colunas coladas
 por "|"; `familias.csv`: a família de cada saída).
 
 Conexão: `minio_lake`, do tipo `aws`, com o `endpoint_url` do MinIO no extra, por exemplo
@@ -61,10 +61,12 @@ log = logging.getLogger(__name__)
 BUCKET = "data-lake-mcid"
 CONN_ID = "minio_lake"
 RAW = "raw/dados_historicos/"
-STAGING = "tests/staging/dados_historicos/"
-ANALYTICS = "tests/analytics/dados_historicos/"
-CLEANSED = "tests/cleansed/dados_historicos/"
-CONFIG = "tests/config/dados_historicos/"
+# Tudo sob staging/historico_mcmv/: staging/dados_historicos/ é da conversão antiga do dump.
+BASE = "staging/historico_mcmv/"
+STAGING = BASE + "convertido/"
+ANALYTICS = BASE + "analytics/"
+CLEANSED = BASE + "cleansed/"
+CONFIG = BASE + "config/"
 MAPA_CABECALHOS = CONFIG + "cabecalhos.csv"
 MAPA_FAMILIAS = CONFIG + "familias.csv"
 
@@ -192,6 +194,10 @@ CHUNKSIZE = 200_000
 LINHAGEM = ["_source_file", "_ingested_at", "_source_hash"]
 LIMITE_COLS_SEM_NOME = 10  # acima disso, coluna sem nome e vazia é padding do Excel
 MANIFESTO = STAGING + "_manifesto.csv"
+# Arquivos da raw que nunca entram no pipeline (ficam só na raw): sem dado do programa.
+RAW_FORA = {
+    "bb_2015_08_agosto_loginfesta.csv",  # credenciais (login e PIN), nenhum dado do MCMV
+}
 CAMPOS_MANIFESTO = [
     "raw_key",
     "raw_etag",
@@ -491,14 +497,20 @@ def campos_colados(mapa: pd.DataFrame) -> Dict[str, List[str]]:
 def etapa_staging(lake: Lake, tmp: Path, forcar: bool = False, filtro: str = "") -> Dict[str, int]:
     """Converte a raw para a staging. `filtro` (regex sobre o nome) limita aos arquivos que
     casam; com `forcar`, reconverte esses mesmo sem mudança na raw."""
-    anteriores = ler_manifesto(lake.ler_texto(MANIFESTO))
+    anteriores = {
+        k: v
+        for k, v in ler_manifesto(lake.ler_texto(MANIFESTO)).items()
+        if Path(k).name not in RAW_FORA
+    }
     existentes = {k for k, _, _ in lake.listar(STAGING)}
     colados = campos_colados(ler_csv(lake, MAPA_CABECALHOS))
     padrao = re.compile(filtro) if filtro else None
     objetos = [
         o
         for o in lake.listar(RAW)
-        if o[0].lower().endswith(".csv") and (not padrao or padrao.search(Path(o[0]).name))
+        if o[0].lower().endswith(".csv")
+        and Path(o[0]).name not in RAW_FORA
+        and (not padrao or padrao.search(Path(o[0]).name))
     ]
     resumo = {"ok": 0, "pulado": 0, "erro": 0}
     for i, (key, size, etag) in enumerate(objetos, 1):
@@ -525,7 +537,11 @@ def etapa_staging(lake: Lake, tmp: Path, forcar: bool = False, filtro: str = "")
 def conferir_raw_contra_manifesto(lake: Lake) -> Dict[str, int]:
     """A raw é subida à mão: falha se sumiu algum arquivo que já foi convertido (upload
     pela metade). Arquivo novo ou alterado só aparece no resumo."""
-    raw = {k: e for k, _, e in lake.listar(RAW) if k.lower().endswith(".csv")}
+    raw = {
+        k: e
+        for k, _, e in lake.listar(RAW)
+        if k.lower().endswith(".csv") and Path(k).name not in RAW_FORA
+    }
     if not raw:
         raise ErroHistorico(f"{RAW} está vazia")
     anteriores = ler_manifesto(lake.ler_texto(MANIFESTO))
@@ -567,6 +583,7 @@ SCHEMA_ANALYTICS = pa.schema(
     [
         ("arquivo", pa.string()),
         ("staging_key", pa.string()),
+        ("staging_etag", pa.string()),
         ("analytics_key", pa.string()),
         ("status", pa.string()),
         ("copia_de", pa.string()),
@@ -605,6 +622,16 @@ def periodo(nome: str) -> str:
 
 def _q(coluna: str) -> str:
     return '"' + coluna.replace('"', '""') + '"'
+
+
+METRICAS_ANALYTICS = (
+    "n_linhas",
+    "n_colunas",
+    "celulas_preenchidas",
+    "layout",
+    "colunas",
+    "hash_conteudo",
+)
 
 
 def metricas_parquet(path: Path, con=None) -> dict:
@@ -660,20 +687,33 @@ def etapa_analytics(lake: Lake, tmp: Path) -> Dict[str, int]:
     con = duckdb.connect()
     gerado_em = datetime.now(timezone.utc).isoformat()
     registros = []
+    # a raw é congelada: arquivo da staging com o mesmo etag reaproveita as métricas do log
+    anteriores = {}
+    if any(k == LOG_ANALYTICS for k, _, _ in lake.listar(ANALYTICS)):
+        log_ant = pq.read_table(lake.baixar(LOG_ANALYTICS, tmp / "analytics_log_anterior.parquet"))
+        anteriores = {r["staging_key"]: r for r in log_ant.to_pylist() if r.get("staging_etag")}
     objetos = [o for o in lake.listar(STAGING) if o[0].endswith(".parquet")]
-    for i, (key, _, _) in enumerate(objetos, 1):
+    reaproveitados = 0
+    for i, (key, _, etag) in enumerate(objetos, 1):
         nome = Path(key).stem
-        local = lake.baixar(key, tmp / f"{nome}.parquet")
+        anterior = anteriores.get(key)
+        if anterior and anterior["staging_etag"] == etag:
+            metricas = {c: anterior[c] for c in METRICAS_ANALYTICS}
+            reaproveitados += 1
+        else:
+            local = lake.baixar(key, tmp / f"{nome}.parquet")
+            metricas = metricas_parquet(local, con)
+            local.unlink()
         registros.append(
             {
                 "arquivo": nome,
                 "staging_key": key,
+                "staging_etag": etag,
                 "periodo": periodo(nome),
                 "gerado_em": gerado_em,
-                **metricas_parquet(local, con),
+                **metricas,
             }
         )
-        local.unlink()
         if i % 100 == 0:
             log.info("[%d/%d] métricas", i, len(objetos))
     registros = classificar(registros)
@@ -696,7 +736,12 @@ def etapa_analytics(lake: Lake, tmp: Path) -> Dict[str, int]:
     resumo: Dict[str, int] = {}
     for r in registros:
         resumo[r["status"]] = resumo.get(r["status"], 0) + 1
-    log.info("analytics: %s (%d removido(s) da seleção anterior)", resumo, len(sobra))
+    log.info(
+        "analytics: %s (%d removido(s) da seleção anterior; %d métricas reaproveitadas)",
+        resumo,
+        len(sobra),
+        reaproveitados,
+    )
     return resumo
 
 
@@ -1078,7 +1123,7 @@ def tratar_arquivo(df: pd.DataFrame, regra: Optional[Regra] = None) -> Resultado
 # Toda célula alterada é conferida (o número e a data continuam os mesmos) e contada; o
 # texto original continua no analytics.
 
-ESPACO, MOJIBAKE, NULO = "espaco", "mojibake", "nulo"
+ESPACO, MOJIBAKE, NULO, MOEDA = "espaco", "mojibake", "nulo", "moeda"
 DATA, DATA_INVALIDA = "data", "data_invalida"
 PONTO_ZERO, DECIMAL_BR, RUIDO_FLOAT, FORMA_NUMERO = (
     "numero_ponto_zero",
@@ -1098,6 +1143,10 @@ _N_INT = re.compile(r"^-?\d+$")
 _N_PONTO = re.compile(r"^-?\d+\.\d+$")
 _N_MILHAR_BR = re.compile(r"^-?\d{1,3}(\.\d{3})+$")  # "1.000": milhar no BR, decimal no resto
 _N_BR = re.compile(r"^-?\d{1,3}(\.\d{3})*,\d+$|^-?\d+,\d+$")
+# "1.737.972,88": ponto de milhar e vírgula decimal juntos só existem no BR, então vale até
+# em coluna que mistura as convenções (SNH BB de 2024-06)
+_N_BR_MILHAR = re.compile(r"^-?\d{1,3}(\.\d{3})+,\d+$")
+_MOEDA = re.compile(r"^R\$\s*(-|-?[\d.,]+)$")  # "R$ 1.008.000,00", "R$ -"
 _N_CIENT = re.compile(r"^-?\d+(\.\d+)?[eE][+-]?\d+$")
 # ",05": vírgula decimal sem a parte inteira. Não pode ser milhar, então é decimal em
 # qualquer convenção (aparece até em coluna de ponto decimal, como no INT040)
@@ -1110,6 +1159,9 @@ CASAS_RUIDO = 7  # decimal com tantas casas ou mais é ruído de float
 def _limpar_texto(v: str) -> Tuple[str, Optional[str]]:
     t = v.replace("\xa0", " ").strip()
     regra = ESPACO if t != v else None
+    moeda = _MOEDA.match(t)
+    if moeda:
+        t, regra = moeda.group(1), MOEDA
     if _MOJIBAKE_RX.search(t):
         corrigido = _corrigir_mojibake(t)
         if corrigido != t:
@@ -1224,8 +1276,14 @@ def _mapa_numerico(coluna: str, limpos: Dict[str, str]) -> Dict[str, Tuple[str, 
         }
     convencao = _convencao(numeros)
     if convencao is None:
-        log.warning("%s mistura vírgula e ponto decimal: números ficam como estão", coluna)
-        return {}
+        log.warning("%s mistura vírgula e ponto decimal: só o milhar BR inequívoco muda", coluna)
+        mapa = {}
+        for t in numeros:
+            if _N_BR_MILHAR.match(t):
+                novo, regra = _numero_canonico(t, "br")
+                _conferir_numero(t, novo, "br", coluna)
+                mapa[t] = (novo, regra)
+        return mapa
     mapa = {}
     for t in numeros:
         if convencao == "inteiro" and _N_MILHAR_BR.match(t):

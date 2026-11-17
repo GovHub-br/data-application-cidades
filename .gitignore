@@ -74,8 +74,6 @@ scripts/sftp_listing.txt
 scripts/*.log
 scripts/preview_arquivos.txt
 scripts/auditoria_*.parquet
-# EDA dos dados históricos: os notebooks podem ser versionados (exceção ao **/*.ipynb)
-!notebooks/dados_historicos/*.ipynb
 
 # Relatorio do scripts/diagnostico_qualidade.py (regeravel)
 diagnostico_*.md

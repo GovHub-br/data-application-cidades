@@ -26,3 +26,178 @@ models:
       (o painel trocou de layout).
   - name: prata_dhist_snh_entregas_af_caixa
     description: Entregas por evento do painel SNH (Caixa), 2024-06 a 2026-03.
+
+  # Etapa 3 (spec 005): BB, ligado ao APF pelo INT054.
+  - name: prata_dhist_ponte_bb_apf
+    description: >
+      Ponte código do empreendimento no BB → APF, tirada do INT054 (2018-08): 202 códigos,
+      chave única. Fora dela o histórico do BB fica sem APF (15% dos 1.358 códigos têm ponte).
+  - name: prata_dhist_int054_far_bb
+    description: >
+      INT054 do FAR (BB), foto de 2018-08. O percentual de obra veio truncado em 0/1 da fonte
+      (sai 0 ou 100); para percentual de obra do BB, preferir a entrega_bb_pj.
+  - name: prata_dhist_entrada_bb
+    description: >
+      Entrada BB, 2012-10 a 2014-09, com o APF pela ponte. Percentual de obra em 0–1 na fonte,
+      sai em 0–100. De 2013-05 para 2013-06 oito colunas de contrato e unidades mudam de
+      conteúdo com o layout.
+  - name: prata_dhist_entrada_bb_aux_far
+    description: Entrada BB auxiliar do FAR (arquivo único de 2013-12), com o APF pela ponte.
+  - name: prata_dhist_entrega_bb_pj
+    description: >
+      Entrega BB PJ, 2014-10 a 2019-04, com o APF pela ponte. Endereço, CEP, nome e natureza do
+      proponente e beneficiários indicados chegam mascarados (***). vlr_total_liberado muda de
+      conteúdo em 2015-10, 2015-12 e 2016-07.
+  - name: prata_dhist_snh_af_bb
+    description: >
+      Painel SNH dos empreendimentos do BB, 2024-06 a 2026-03 (foto mensal por APF), com os
+      mesmos nomes do snh_af_caixa.
+  - name: prata_dhist_snh_entregas_af_bb
+    description: Entregas por evento do painel SNH (BB), 2024-06 a 2026-03.
+  - name: prata_dhist_pnhr_bb
+    description: >
+      PNHR (rural, BB), 2014-10 a 2018-07. Percentual de obra em 0–100: a escala da fonte
+      varia por arquivo, e o arquivo de 2015-09, que mistura as duas, é resolvido pela mesma
+      proposta em 2015-10.
+
+  # Etapa 4 (spec 005): contratação PF. Campos pessoais só mascarados (hash ou ***),
+  # conferidos pelo teste dhist_prata_pii; nenhum notebook mostra valores dessas famílias.
+  - name: prata_dhist_bext
+    description: >
+      Contratos de pessoa física da Caixa (BEXT), 2012-05 a 2018-08, um por linha
+      (codigo_contrato_pf). Os dois layouts (2012 e 2015+) se juntam pelas equivalências do
+      notebook 04.
+  - name: prata_dhist_relatorio_cidades_caixa
+    description: Relatório Cidades (2016-02), contratos PF da Caixa com os mesmos nomes da bext.
+  - name: prata_dhist_relatorio_cidades_entregas_caixa
+    description: Entregas do Relatório Cidades (2016-02) por contrato PF.
+  - name: prata_dhist_entrega_bb_pf_pf
+    description: Contratos PF do BB, 2014-10 a 2019-04.
+  - name: prata_dhist_entrega_bb_pj_pf
+    description: >
+      Contratos PF dentro de empreendimento PJ do BB, 2014-10 a 2019-04. nr_prpt é o código do
+      empreendimento BB, e o APF vem pela ponte do INT054.
+  - name: prata_dhist_tab_contratos_pf_fgts_bb
+    description: >
+      Contratos PF FGTS do BB, retrato de 2013-06; cod_operacao é o código do empreendimento BB,
+      com o APF pela ponte.
+  - name: prata_dhist_tab_beneficiarios_fgts_bb
+    description: >
+      Beneficiários dos contratos PF FGTS do BB (2013-06). CPF em hash; nome, nascimento,
+      endereço, titularidade e cor/raça mascarados (***).
+
+  # Etapa 5 (spec 005): demais famílias com silver (as sem silver estão em descartes_dhist).
+  - name: prata_dhist_base_pf_pj_caixa
+    description: >
+      Bases PF/PJ da Caixa (2012-04 a 2012-08), mesmo layout e nomes do
+      relatorio_executivo_caixa. data_prevista_termino_obra = cronograma_datatermino (notebook
+      04 §3). de_obra_executada muda de conteúdo de 2012-04 para 2012-08 (§4).
+  - name: prata_dhist_empreendimentos_contratados_caixa
+    description: >
+      Empreendimentos contratados da Caixa (2012-04 e 2012-05), nomes do
+      relatorio_executivo_caixa. comercializados vira quantidade_uh_comercializadas (variante sem prova).
+  - name: prata_dhist_de_para
+    description: >
+      O de-para da silver histórica como tabela (spec 007): família, coluna da silver, tipo,
+      ordem de preferência e coluna do cleansed de origem; `tipo = descartada` para as colunas
+      do cleansed que não entram. É a decisão sobre os nomes; a proposta e a evidência estão nas
+      bronzes do grafo (bronze_dhist_colunas_evolucao, _candidatos e _conceitos), e o teste
+      dhist_de_para_grafo confere que as trocas de nome provadas pelo grafo caem na mesma coluna.
+  - name: prata_dhist_demanda_far_caixa
+    description: >
+      Demanda do FAR na Caixa por APF (2011-08). ibge_codigo tem 12 dígitos, não é código de município, e vira codigo_ibge_fonte (texto).
+  - name: prata_dhist_rural_caixa
+    description: >
+      Contratação rural da Caixa por APF (2012-04).
+  - name: prata_dhist_tab_operacoes_bb
+    description: >
+      Operações do BB, retrato de 2013-06. cod_operacao é o código do empreendimento BB (dos
+      407 que existem na entrega_bb_pj, 406 têm o mesmo município); cod_empreendimento é outro
+      código (agrupa etapas) e vira codigo_empreendimento_agrupador_bb. dte_apres_projeto vem como serial do Excel.
+      dte_prev_contratacao é sempre vazia.
+  - name: prata_dhist_tab_empreendimentos_bb
+    description: >
+      Empreendimentos do BB, retrato de 2013-06 (cod_empreendimento, que vira
+      codigo_empreendimento_agrupador_bb, agrupa as etapas de tab_operacoes_bb).
+  - name: prata_dhist_tab_contratos_pj_bb
+    description: >
+      Contratos PJ do BB, retrato de 2013-06; cod_operacao como em tab_operacoes_bb.
+      dte_assin_contrat é o nome truncado (63 caracteres) de dte_assin_contrato e vira dt_contratacao.
+  - name: prata_dhist_tab_proponentes_bb
+    description: >
+      Proponentes do BB, retrato de 2013-06. txt_ra é o nome truncado (63 caracteres),
+      provavelmente txt_razao_social, e vira nome_proponente.
+  - name: prata_dhist_tab_andamento_obras_bb
+    description: >
+      Andamento das obras do BB, retrato de 2013-06. sem_nome_10 a _17: o nome se perdeu no
+      dump (cabeçalho cortado em 63 caracteres pelo PostgreSQL antigo, research R4); conteúdo
+      aparente: datas (10, 11, 12, 16, 17), 0/100 (13, 14) e valor em R$ (15). sem_nome_05 a
+      _09 são sempre vazias.
+  - name: prata_dhist_tab_unidades_concluidas_bb
+    description: >
+      Unidades concluídas do BB, retrato de 2013-06. dte_primeira_en é o nome truncado de
+      dte_primeira_entrega e vira dt_primeira_entrega. sem_nome_05 a _07: nome perdido no dump; conteúdo aparente: data
+      (05) e quantidades (06, 07). dte_legalizacao é sempre vazia.
+  - name: prata_dhist_tab_caracterizacoes_entornos_bb
+    description: >
+      Caracterização do entorno dos empreendimentos do BB, retrato de 2013-06. sem_nome_05 a
+      _16: nome perdido no dump; conteúdo aparente: indicadores T/F de infraestrutura.
+  - name: prata_dhist_contratacao_caixa_2010
+    description: >
+      Contratação da Caixa por empreendimento (2010-06), sem APF.
+  - name: prata_dhist_pmcmv_parte2_caixa
+    description: >
+      Empreendimentos enquadráveis da Caixa (2009-12), sem APF.
+  - name: prata_dhist_propostas_recebidas_caixa
+    description: >
+      Propostas recebidas pela Caixa por empreendimento (2012-04), sem APF.
+  - name: prata_dhist_dados_bb_2011
+    description: >
+      5 empreendimentos do Plano Piloto do BB (2011-02). faixa_de_renda_3_a_6_sm_ou_6_a_10_sm
+      é sempre vazia.
+  - name: prata_dhist_relatorio_executivo_municipio_caixa
+    description: >
+      Relatório executivo da Caixa agregado por município, faixa e produto (2011-11);
+      conferência da gold.
+  - name: prata_dhist_contratacao_uf_caixa
+    description: >
+      Contratação por UF, faixa e instituição (2017-11); conferência da gold.
+  - name: prata_dhist_bext_agregado_caixa
+    description: >
+      BEXT agregada por UF, faixa e produto (2012-04); conferência da contratação PF. Nomes do
+      layout de 2012 da bext.
+  - name: prata_dhist_contratacao_pf_caixa
+    description: >
+      Contratação PF da Caixa por município, produto e renda (2012-04); conferência da
+      contratação PF.
+  - name: prata_dhist_contratacao_pf_total_caixa
+    description: >
+      Contratação PF total da Caixa por município, produto e faixa (2010-09).
+  - name: prata_dhist_presidencia_caixa
+    description: >
+      Relatório da presidência da Caixa por município: UH, valores, metas e subsídio por faixa
+      de renda (2011-06 a 2011-08). nome é o nome do município.
+  - name: prata_dhist_desligados_caixa
+    description: >
+      Desligamentos da Caixa por empreendimento (2010-09), sem APF.
+  - name: prata_dhist_previsao_entrega_far_caixa
+    description: >
+      Previsão de conclusão e entrega do FAR por UF (2011-08); as colunas *_uh da previsão têm
+      texto e ficam como texto.
+  - name: prata_dhist_relatorio_semanal_bb_uf
+    description: >
+      Relatório semanal do BB ao MCid por UF (2011-01 a 2011-07): desligamentos do Plano
+      Piloto, aprovações na Caixa e contratações; conferência.
+  - name: prata_dhist_relatorio_semanal_bb_publico
+    description: >
+      Relatório semanal do BB ao MCid por UF e público-alvo (2011-01 a 2012-10); conferência.
+      contratacao_total_quantidade_unidades é sempre vazia.
+  - name: prata_dhist_propostas_far_caixa
+    description: >
+      Seleção do FAR por município (2013-02): déficit urbano 2010, diretriz do MCid,
+      contratação na Caixa (MCMV2) e no BB e UH de propostas em análise; conferência e
+      variável de demanda.
+  - name: prata_dhist_propostas_bb
+    description: >
+      Financiamento PF do BB por UF e faixa (2013-02), layout do relatório semanal;
+      conferência. Cinco colunas são sempre vazias.
