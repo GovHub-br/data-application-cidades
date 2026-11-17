@@ -1,0 +1,13 @@
+version: 2
+
+seeds:
+  - name: dominio_status_extra
+    description: >
+      Situações de obra que aparecem nos dados históricos e faltam em
+      data_quality/dominio_status (seed compartilhado com o mcmv_historico_dbt, em produção).
+      Mesmo formato; `pendente` marca a classificação que ainda precisa de confirmação.
+    config:
+      column_types:
+        valor_bruto: text
+        situacao_canonica: text
+        classe: text

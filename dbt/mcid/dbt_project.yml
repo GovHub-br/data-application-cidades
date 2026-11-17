@@ -45,6 +45,13 @@ seeds:
       +schema: seeds
       +quote_columns: false
 
+    # Situações de obra dos dados históricos que faltam no data_quality/dominio_status
+    # (compartilhado com o mcmv_historico_dbt em produção, por isso não é alterado).
+    dados_historicos:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+
     # Seeds de referência dos testes de qualidade: domínios canônicos e
     # retrato de colunas por família.
     data_quality:
@@ -232,6 +239,33 @@ models:
       # para o nome-alvo `prata_dhist_serie_anual_ogu_fgts` e carrega
       # `config(enabled=false)` no próprio arquivo — não há bloco `piloto:`
       # aqui. Retomada do desenvolvimento numa change futura.
+
+    # Dados históricos reconstruídos pela dados_historicos_dag (cleansed por família em
+    # staging/historico_mcmv/cleansed/). O SQL é do DuckDB e roda no pg_duckdb, dentro do
+    # envelope duckdb_query(). Não mexe no `mcmv_historico_dbt`.
+    dados_historicos_dbt:
+      +database: cidades
+      +materialized: table
+      +meta:
+        governance:
+          product: dados_historicos
+          owner_key: mcid_data_engineering
+
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
 
     far_dbt:
       +materialized: table
