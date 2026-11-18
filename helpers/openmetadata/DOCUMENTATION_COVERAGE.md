@@ -130,3 +130,30 @@ documentação para suas sete colunas: `schema_name`, `table_name`,
 - As allowlists de modelos aprovados vivem em `postgres_metadata.yaml`,
   `postgres_profiler.yaml` e `postgres_classifier.yaml` e devem permanecer
   idênticas entre si.
+
+## Modelos novos de 2026-11-17
+
+Entraram seis modelos, todos nos schemas `bronze` e `prata`, que as recipes já
+incluem por schema (a lista deixou de ser por modelo; vale `schemas.yml`).
+
+| Modelo | Camada | Situação do critério |
+|---|---|---|
+| `prata_fnhis_regularidade_serie` | prata | atende: 23 colunas documentadas, grão `cod_ibge` × `dt_referencia` testado, glossário FNHIS e ente público |
+| `prata_far_gehis_andamento_obra` | prata | atende: 6 colunas documentadas, grão `apf` × `dt_referencia` testado, glossário MCMV-FAR |
+| `bronze_shpt_snhis_regularidade_entes_serie` | bronze | atende: copia a lista de colunas da bronze do retrato mais recente |
+| `bronze_sftp_int058_pnhr_bb_familias` | bronze | **pendente**: falta o teste `sem_drift_de_colunas` |
+| `bronze_sftp_int064_pnhr_caixa_familias` | bronze | **pendente**: falta o teste `sem_drift_de_colunas` |
+| `bronze_sftp_int042_fds_caixa_familias` | bronze | **pendente**: falta o teste `sem_drift_de_colunas` |
+
+As três bronzes de famílias estão pendentes porque a lista de colunas só se conhece
+lendo o parquet da staging, e esse acesso exige a VPN. Para fechar:
+`poetry run python scripts/governance/inspecionar_layout_bronze.py <trecho do nome>`
+imprime as colunas (sem valores) e o bloco YAML pronto para colar no `schema.yml`.
+Elas são dado pessoal: já herdam `classification: restricted` e
+`rag_publication: prohibited` da bronze de cada frente; as pratas que vierem
+precisam decidir o mascaramento antes de publicar.
+
+O catálogo semântico (`openmetadata_semantic_catalog.json`) precisa ser regerado
+com `gerar_catalogo_openmetadata_seguro.py --select` nos seis modelos, porque o
+`dbt docs generate` precisa do banco.
+

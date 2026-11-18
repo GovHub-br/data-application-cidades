@@ -1012,3 +1012,25 @@ models:
       description: UH enquadradas.
     - name: metodo
       description: Como a linha foi obtida do PDF.
+
+  - name: bronze_sftp_int058_pnhr_bb_familias
+    description: >
+      Famílias (pessoa física) beneficiárias do PNHR, rural legado, nos contratos do Banco do Brasil (integração INT058). Libera a contagem e o perfil dos beneficiários do Rural antigo. Chega como remessa trimestral de contingência; a bronze lê a mais recente e não estima colunas além do que a origem manda.
+    meta:
+      tags:
+        - bronze
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+          - MCID.Atores.AgenteFinanceiro
+
+  - name: bronze_sftp_int064_pnhr_caixa_familias
+    description: >
+      Famílias (pessoa física) beneficiárias do PNHR, rural legado, nos contratos da CAIXA (integração INT064). Par do INT058, que cobre o Banco do Brasil. Chega como remessa trimestral de contingência; a bronze lê a mais recente e não estima colunas além do que a origem manda.
+    meta:
+      tags:
+        - bronze
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+          - MCID.Atores.CAIXA

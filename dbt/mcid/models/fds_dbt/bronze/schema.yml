@@ -547,3 +547,15 @@ models:
         openmetadata:
           glossary:
           - MCID.Identificadores.UH
+
+  - name: bronze_sftp_int042_fds_caixa_familias
+    description: >
+      Famílias (pessoa física) do MCMV Entidades (FDS) no legado, nos contratos da CAIXA (integração INT042). Libera os beneficiários do Entidades antigo. Chega como remessa trimestral de contingência; a bronze lê a mais recente e não estima colunas além do que a origem manda.
+    meta:
+      tags:
+        - bronze
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+          - MCID.FundosEFontes.FDS
+          - MCID.Atores.CAIXA

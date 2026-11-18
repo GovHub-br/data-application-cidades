@@ -100,3 +100,41 @@ models:
         description: Primeiro dia do mês da liberação.
         tests:
           - not_null
+
+  - name: prata_far_gehis_andamento_obra
+    description: >
+      Andamento de obra do FAR informado pela CAIXA (GEHIS), por APF e mês, de jul/2021 em diante,
+      com a situação da obra (Normal, Em atenção, Risco de paralisação, Paralisado, Obra retomada...)
+      e as datas previstas de conclusão e inauguração. Recorta da GEHIS só as APFs que estão na
+      visão de empreendimentos do FAR. Quando chega mais de um arquivo no mês, vale o último.
+    meta:
+      tags:
+        - silver
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVFAR
+          - MCID.ExecucaoDeEmpreendimentos.ExecucaoFisica
+          - MCID.ExecucaoDeEmpreendimentos.ParalisacaoDeObra
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas:
+              - apf
+              - dt_referencia
+    columns:
+      - name: apf
+        description: APF do empreendimento (8 dígitos, normalizada).
+        data_tests:
+          - not_null
+      - name: dt_referencia
+        description: Mês de referência do retrato (primeiro dia do mês).
+        data_tests:
+          - not_null
+      - name: situacao_obra
+        description: Situação da obra segundo a GEHIS/CAIXA, em maiúsculas.
+      - name: dt_prevista_conclusao
+        description: Data prevista de conclusão da obra informada pela CAIXA.
+      - name: dt_prevista_inauguracao
+        description: Data prevista de inauguração informada pela CAIXA.
+      - name: arquivo_de_origem
+        description: Nome do arquivo da staging de onde veio a linha (linhagem).

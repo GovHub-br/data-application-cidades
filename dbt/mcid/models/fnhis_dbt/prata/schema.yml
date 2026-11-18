@@ -600,3 +600,83 @@ models:
         description: "Onde está (ou deve estar) a lista de propostas."
       - name: observacao
         description: "O que o ato faz."
+
+  - name: prata_fnhis_regularidade_serie
+    description: >
+      Regularidade de estados, DF e municípios no Sistema Nacional de Habitação de Interesse
+      Social (SNHIS) — condição para receber recurso do FNHIS. Cinco exigências (lei do fundo
+      local, lei do conselho gestor, termo de adesão, plano habitacional e relatório de gestão)
+      e a situação-síntese do ente, remessa a remessa. Uma linha por ente e data de referência; serve
+      para saber se o ente estava regular na data da seleção, e não só hoje.
+    meta:
+      tags:
+        - silver
+      openmetadata:
+        glossary:
+          - MCID.FundosEFontes.FNHIS
+          - MCID.Atores.EntePublico
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas:
+              - cod_ibge
+              - dt_referencia
+    columns:
+      - name: cod_ibge
+        description: Código IBGE do ente (7 dígitos; estados usam o código da UF seguido de zeros).
+        data_tests:
+          - not_null
+      - name: cod_ibge_6
+        description: IBGE do ente sem o dígito verificador (6 dígitos), para cruzar com as bases da SNH.
+      - name: ente_esfera
+        description: Estado/DF ou Município.
+      - name: ente_nome
+        description: Nome do ente.
+      - name: uf
+        description: UF do ente.
+      - name: ente_cnpj
+        description: CNPJ do ente (apenas dígitos). É ente público, não pessoa.
+      - name: populacao
+        description: População do ente.
+      - name: ic_regiao_metropolitana
+        description: Verdadeiro quando o ente integra região metropolitana, conforme a extração da CAIXA.
+      - name: situacao_lei_fundo
+        description: Lei de criação do Fundo Local de Habitação de Interesse Social (FLHIS) — Regular ou Pendente.
+      - name: dt_lei_fundo
+        description: Data da análise da lei do FLHIS pela CEFUS.
+      - name: situacao_lei_conselho
+        description: Lei do conselho gestor do FLHIS — Regular ou Pendente.
+      - name: dt_lei_conselho
+        description: Data da análise da lei do conselho gestor pela CEFUS.
+      - name: situacao_termo_adesao
+        description: Termo de adesão ao SNHIS — Regular ou Pendente.
+      - name: dt_termo_adesao
+        description: Data da análise do termo de adesão pela CEFUS.
+      - name: situacao_plano_habitacional
+        description: Plano Local de Habitação de Interesse Social — Regular ou Pendente.
+      - name: dt_plano_habitacional
+        description: Data da análise do plano habitacional pela CEFUS.
+      - name: ano_relatorio_gestao
+        description: Ano do relatório de gestão do fundo a que a situação se refere.
+      - name: situacao_relatorio_gestao
+        description: Situação do relatório de gestão do fundo.
+      - name: situacao_ente
+        description: Situação-síntese do ente no SNHIS.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Regular", "Pendente"]
+              config:
+                severity: warn
+      - name: ic_ente_regular
+        description: Verdadeiro quando a situação do ente é Regular.
+      - name: dt_referencia
+        description: Data de referência da extração semanal — a que semana a foto se refere.
+      - name: arquivo_de_origem
+        description: Arquivo da staging de onde veio a linha (`_source_file` da bronze).
+      - name: criado_em
+        description: >
+          Momento em que a linha foi ingerida no lake (`_ingested_at` da bronze). É carimbo de
+          ingestão, não data de negócio.
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
