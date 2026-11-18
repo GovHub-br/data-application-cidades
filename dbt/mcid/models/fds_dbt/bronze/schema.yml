@@ -559,3 +559,53 @@ models:
           - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
           - MCID.FundosEFontes.FDS
           - MCID.Atores.CAIXA
+    data_tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - dt_movimento
+              - nu_apf
+              - nuapf_vinculacao
+              - nu_contrato
+              - no_mutuario
+              - nu_cpf_cgc_mutuario
+              - dt_assinatura
+              - co_produto_siico
+              - vr_encargo_total_atraso
+              - qt_dias_atraso
+              - pz_amortizacao
+              - pz_decorrido
+              - pz_remanescente
+              - sg_tipo_logradouro_imovel
+              - no_logradouro_imovel
+              - nu_imovel
+              - no_complemento_imovel
+              - no_bairro_imovel
+              - no_municipio_imovel
+              - sg_uf_imovel
+              - co_cep_imovel
+              - vr_renda_familiar_comprovada
+              - vr_garantia_inicial
+              - vr_subsidio_na_concesssao
+              - dt_nascimento
+              - co_sexo
+              - qt_coobrigados
+              - de_estado_civil
+              - dsc_tipo_contrato
+              - dt_termino_contrato
+              - dsc_situacao_ctr
+              - sem_registro
+              - fase
+              - nu_pis_pasep
+              - mulher_chefe_familia
+              - qt_prestacoes_atraso
+              - vr_saldo_devedor_atual
+              - vr_prestacao
+              - vr_subsidio_concedido
+              - co_municipio_ibge_completo
+              - origem
+              - co_agente_financeiro
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename

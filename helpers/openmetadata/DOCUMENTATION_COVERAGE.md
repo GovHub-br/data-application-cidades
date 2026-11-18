@@ -133,7 +133,7 @@ documentação para suas sete colunas: `schema_name`, `table_name`,
 
 ## Modelos novos de 2026-11-17
 
-Entraram seis modelos, todos nos schemas `bronze` e `prata`, que as recipes já
+Entraram oito modelos, todos nos schemas `bronze` e `prata`, que as recipes já
 incluem por schema (a lista deixou de ser por modelo; vale `schemas.yml`).
 
 | Modelo | Camada | Situação do critério |
@@ -141,19 +141,19 @@ incluem por schema (a lista deixou de ser por modelo; vale `schemas.yml`).
 | `prata_fnhis_regularidade_serie` | prata | atende: 23 colunas documentadas, grão `cod_ibge` × `dt_referencia` testado, glossário FNHIS e ente público |
 | `prata_far_gehis_andamento_obra` | prata | atende: 6 colunas documentadas, grão `apf` × `dt_referencia` testado, glossário MCMV-FAR |
 | `bronze_shpt_snhis_regularidade_entes_serie` | bronze | atende: copia a lista de colunas da bronze do retrato mais recente |
-| `bronze_sftp_int058_pnhr_bb_familias` | bronze | **pendente**: falta o teste `sem_drift_de_colunas` |
-| `bronze_sftp_int064_pnhr_caixa_familias` | bronze | **pendente**: falta o teste `sem_drift_de_colunas` |
-| `bronze_sftp_int042_fds_caixa_familias` | bronze | **pendente**: falta o teste `sem_drift_de_colunas` |
+| `bronze_sftp_int058_pnhr_bb_familias` | bronze | atende: teste `sem_drift_de_colunas` com o layout lido da staging em 2026-11-17 |
+| `bronze_sftp_int064_pnhr_caixa_familias` | bronze | atende: teste `sem_drift_de_colunas` com o layout lido da staging em 2026-11-17 |
+| `bronze_sftp_int042_fds_caixa_familias` | bronze | atende: teste `sem_drift_de_colunas` com o layout lido da staging em 2026-11-17 |
 
-As três bronzes de famílias estão pendentes porque a lista de colunas só se conhece
-lendo o parquet da staging, e esse acesso exige a VPN. Para fechar:
-`poetry run python scripts/governance/inspecionar_layout_bronze.py <trecho do nome>`
-imprime as colunas (sem valores) e o bloco YAML pronto para colar no `schema.yml`.
-Elas são dado pessoal: já herdam `classification: restricted` e
-`rag_publication: prohibited` da bronze de cada frente; as pratas que vierem
-precisam decidir o mascaramento antes de publicar.
+Entraram também duas pratas de famílias, ambas sem nome, CPF, PIS, data de nascimento,
+endereço nem CEP (a faixa etária sai do nascimento na própria prata):
+
+| Modelo | Camada | Situação do critério |
+|---|---|---|
+| `prata_rural_pnhr_familia` | prata | atende: 42 colunas documentadas e conferidas contra o SQL, grão agente financeiro × contrato individual testado; `classification: restricted` e `rag_publication: prohibited` no próprio modelo |
+| `prata_fds_familia_legado` | prata | atende: 32 colunas documentadas e conferidas contra o SQL, grão `nu_contrato` testado; mesma classificação restrita |
 
 O catálogo semântico (`openmetadata_semantic_catalog.json`) precisa ser regerado
-com `gerar_catalogo_openmetadata_seguro.py --select` nos seis modelos, porque o
+com `gerar_catalogo_openmetadata_seguro.py --select` nos oito modelos, porque o
 `dbt docs generate` precisa do banco.
 

@@ -1391,3 +1391,115 @@ models:
     description: >
       Contratada com autorização carregada; Contratada sem autorização carregada; Autorizada, sem contrato
       identificado; Selecionada, sem autorização carregada e sem contrato.
+
+- name: prata_rural_pnhr_familia
+  description: >
+    Famílias beneficiárias do PNHR (rural legado) nos contratos do Banco do Brasil (INT058) e da
+    CAIXA (INT064), uma linha por agente financeiro e contrato individual, com o último movimento.
+    Traz localização em nível de município, valores, situação de atraso e perfil agregado (sexo,
+    estado civil e faixa etária). Não guarda nome, CPF, data de nascimento nem endereço.
+  meta:
+    tags:
+      - silver
+    governance:
+      classification: restricted
+      rag_publication: prohibited
+    openmetadata:
+      glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVRural
+        - MCID.Identificadores.APF
+  data_tests:
+    - unique_combinacao:
+        arguments:
+          colunas:
+            - agente_financeiro
+            - nu_contrato_individual
+  columns:
+    - name: agente_financeiro
+      description: "Agente financeiro do contrato: BB (INT058) ou CAIXA (INT064)."
+      data_tests:
+        - not_null
+    - name: agente_financeiro_codigo
+      description: Código do agente financeiro como veio na origem.
+    - name: apf
+      description: APF do empreendimento (8 dígitos, normalizada). No BB sai do número do contrato do empreendimento; na CAIXA, do nu_apf.
+    - name: nu_contrato_empreendimento
+      description: Número do contrato do empreendimento como veio na origem.
+    - name: nu_contrato_individual
+      description: Número do contrato individual da família. É a chave do grão, junto com o agente financeiro.
+      data_tests:
+        - not_null
+    - name: dt_movimento
+      description: Data do movimento da remessa; fica a mais recente por contrato.
+    - name: dt_contrato
+      description: Data de assinatura do contrato individual.
+    - name: dt_efetiva_conclusao
+      description: Data efetiva de conclusão da unidade.
+    - name: co_tipo_contratacao
+      description: Código do tipo de contratação. Só a CAIXA informa; fica nulo no BB.
+    - name: co_natureza
+      description: Código da natureza da operação.
+    - name: co_grupo_renda
+      description: Código do grupo de renda da família.
+    - name: tipo_beneficiario
+      description: Tipo de beneficiário informado pelo agente.
+    - name: sexo
+      description: Sexo do beneficiário como veio na origem.
+    - name: estado_civil
+      description: Estado civil do beneficiário.
+    - name: faixa_etaria
+      description: Faixa etária do beneficiário na data do movimento, calculada na prata. A data de nascimento não é guardada.
+    - name: cod_ibge
+      description: Código IBGE do município do contrato como veio na origem.
+    - name: municipio
+      description: Nome do município do contrato.
+    - name: uf
+      description: Sigla da UF do contrato.
+    - name: vr_investimento
+      description: Valor do investimento da unidade, em reais.
+    - name: vr_operacao
+      description: Valor da operação, em reais.
+    - name: vr_edificacao
+      description: Valor da edificação, em reais.
+    - name: vr_atec
+      description: Valor da assistência técnica (ATEC), em reais.
+    - name: vr_trabalho_social
+      description: Valor do trabalho social, em reais.
+    - name: vr_custo_originacao
+      description: Valor do custo de originação, em reais.
+    - name: vr_taxa_administracao
+      description: Valor da taxa de administração, em reais.
+    - name: vr_diferencial_juros
+      description: Valor do diferencial de juros, em reais.
+    - name: vr_taxa_risco_credito
+      description: Valor da taxa de risco de crédito, em reais.
+    - name: vr_cisterna
+      description: Valor da cisterna, em reais.
+    - name: vr_efluentes
+      description: Valor do tratamento de efluentes, em reais.
+    - name: vr_atec_ts_cisterna
+      description: Valor de ATEC e trabalho social da cisterna, em reais.
+    - name: vr_taxa_administracao_cisterna
+      description: Valor da taxa de administração da cisterna, em reais.
+    - name: vr_contrapartida
+      description: Valor da contrapartida, em reais.
+    - name: vr_emprestimo
+      description: Valor do empréstimo, em reais.
+    - name: vr_subsidio
+      description: Valor do subsídio, em reais. Na CAIXA é o subsídio do FGTS.
+    - name: vr_liberado
+      description: Valor liberado até a remessa, em reais.
+    - name: vr_imovel
+      description: Valor do imóvel, em reais. Só a CAIXA informa; fica nulo no BB.
+    - name: vr_renda_familiar
+      description: Renda familiar, em reais. Só a CAIXA informa; fica nula no BB.
+    - name: vr_inadimplente
+      description: Valor em inadimplência, em reais.
+    - name: vr_parcela_mensal
+      description: Valor da parcela mensal do beneficiário, em reais.
+    - name: ic_cisterna
+      description: Verdadeiro quando o contrato inclui cisterna.
+    - name: qt_dias_atraso
+      description: Quantidade de dias em atraso.
+    - name: arquivo_de_origem
+      description: Nome do arquivo da staging de onde veio a linha (linhagem).

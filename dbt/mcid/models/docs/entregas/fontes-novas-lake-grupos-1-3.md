@@ -6,14 +6,14 @@ Levantamento de 2026-11-17 sobre as bases que estavam no lake sem tabela no Post
 
 | Fonte | Modelo | Situação |
 |---|---|---|
-| INT058 (PNHR, Banco do Brasil) | `bronze_sftp_int058_pnhr_bb_familias` | bronze criada; falta a prata |
-| INT064 (PNHR, CAIXA) | `bronze_sftp_int064_pnhr_caixa_familias` | bronze criada; falta a prata |
-| INT042 (Entidades legado, CAIXA) | `bronze_sftp_int042_fds_caixa_familias` | bronze criada; falta a prata |
+| INT058 (PNHR, Banco do Brasil) | `bronze_sftp_int058_pnhr_bb_familias` | bronze e prata criadas (`prata_rural_pnhr_familia`, em conjunto com a INT064) |
+| INT064 (PNHR, CAIXA) | `bronze_sftp_int064_pnhr_caixa_familias` | bronze criada; a prata é a mesma `prata_rural_pnhr_familia` |
+| INT042 (Entidades legado, CAIXA) | `bronze_sftp_int042_fds_caixa_familias` | bronze e prata (`prata_fds_familia_legado`) criadas |
 | Regularidade SNHIS semanal | `bronze_shpt_snhis_regularidade_entes_serie` e `prata_fnhis_regularidade_serie` | pronto: ente × data de referência |
 | GEHIS no FAR | `prata_far_gehis_andamento_obra` | pronto: APF × mês, só APFs do FAR |
 | Bronzes DuckDB paradas em 29 e 30/09 (Faixa 3, Reforma Casa Brasil, MCMV Cidades, eixo histórico) e a bronze GEHIS parada em M20260821 | sem modelo novo | operacional: rodar de novo depois de `raw_para_staging.py` |
 
-As três pratas de famílias dependem das colunas dos arquivos, que só se conhecem lendo o parquet na VPN. `scripts/governance/inspecionar_layout_bronze.py` lista as colunas sem imprimir valores e já devolve o bloco do teste de layout. São dado pessoal: precisam decidir o mascaramento antes de publicar.
+As pratas de famílias foram escritas depois de ler o layout dos parquets (`scripts/governance/inspecionar_layout_bronze.py`, que imprime só nomes de colunas). Como são dado pessoal, a prata não carrega nome, CPF, PIS, nascimento, endereço nem CEP; guarda o contrato, o município, os valores, a situação e três atributos agregados (sexo, estado civil e faixa etária). Os dois modelos estão marcados como `restricted` e `rag_publication: prohibited`.
 
 ## Grupo 2: fontes do SharePoint com cópia manual parada em 08/2026
 

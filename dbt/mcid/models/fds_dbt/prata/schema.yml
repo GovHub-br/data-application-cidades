@@ -127,3 +127,93 @@ models:
         description: >
           De onde veio a fase: seed curado (JAN26/ABR26), evento de mudança de
           fase, ou fallback do cadastro.
+
+  - name: prata_fds_familia_legado
+    description: >
+      Famílias do MCMV Entidades (FDS) no legado, contratos da CAIXA (INT042), uma linha por contrato,
+      com o último movimento. Traz localização do imóvel em nível de município, valores, prazos,
+      situação do contrato e perfil agregado (sexo, estado civil e faixa etária). Não guarda nome,
+      CPF, PIS, data de nascimento, endereço nem CEP.
+    meta:
+      tags:
+        - silver
+      governance:
+        classification: restricted
+        rag_publication: prohibited
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+          - MCID.FundosEFontes.FDS
+          - MCID.Identificadores.APF
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas:
+              - nu_contrato
+    columns:
+      - name: agente_financeiro_codigo
+        description: Código do agente financeiro como veio na origem.
+      - name: apf
+        description: APF do empreendimento (8 dígitos, normalizada).
+      - name: apf_vinculacao
+        description: APF de vinculação do contrato (8 dígitos, normalizada), quando a origem informa.
+      - name: nu_contrato
+        description: Número do contrato. É a chave do grão.
+        data_tests:
+          - not_null
+      - name: dt_movimento
+        description: Data do movimento da remessa; fica a mais recente por contrato.
+      - name: dt_assinatura
+        description: Data de assinatura do contrato.
+      - name: dt_termino_contrato
+        description: Data de término do contrato.
+      - name: co_produto_siico
+        description: Código do produto no SIICO.
+      - name: tipo_contrato
+        description: Descrição do tipo de contrato.
+      - name: situacao_contrato
+        description: Descrição da situação do contrato.
+      - name: fase
+        description: Fase do contrato informada pela CAIXA.
+      - name: sexo
+        description: Sexo do mutuário como veio na origem.
+      - name: estado_civil
+        description: Estado civil do mutuário.
+      - name: ic_mulher_chefe_familia
+        description: Verdadeiro quando a família é chefiada por mulher.
+      - name: qt_coobrigados
+        description: Quantidade de coobrigados no contrato.
+      - name: faixa_etaria
+        description: Faixa etária do mutuário na data do movimento, calculada na prata. A data de nascimento não é guardada.
+      - name: cod_ibge
+        description: Código IBGE completo do município do imóvel.
+      - name: municipio
+        description: Nome do município do imóvel.
+      - name: uf
+        description: Sigla da UF do imóvel.
+      - name: vr_renda_familiar
+        description: Renda familiar comprovada, em reais.
+      - name: vr_garantia_inicial
+        description: Valor da garantia inicial, em reais.
+      - name: vr_subsidio_concessao
+        description: Valor do subsídio na concessão, em reais.
+      - name: vr_subsidio_concedido
+        description: Valor do subsídio concedido, em reais.
+      - name: vr_saldo_devedor
+        description: Saldo devedor atual, em reais.
+      - name: vr_prestacao
+        description: Valor da prestação, em reais.
+      - name: vr_encargo_atraso
+        description: Encargo total em atraso, em reais.
+      - name: qt_dias_atraso
+        description: Quantidade de dias em atraso.
+      - name: qt_prestacoes_atraso
+        description: Quantidade de prestações em atraso.
+      - name: pz_amortizacao
+        description: Prazo de amortização, em meses.
+      - name: pz_decorrido
+        description: Prazo decorrido, em meses.
+      - name: pz_remanescente
+        description: Prazo remanescente, em meses.
+      - name: arquivo_de_origem
+        description: Nome do arquivo da staging de onde veio a linha (linhagem).

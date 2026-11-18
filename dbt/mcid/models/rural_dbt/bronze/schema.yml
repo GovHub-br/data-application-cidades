@@ -1023,6 +1023,54 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais.MCMV.MCMVRural
           - MCID.Atores.AgenteFinanceiro
+    data_tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - dt_movimento
+              - co_agente_financeiro
+              - nu_contrato_empreendimento
+              - nu_contrato_individual
+              - co_natureza
+              - co_grupo_renda
+              - dt_contrato
+              - co_municipio_ibge
+              - no_municipio
+              - sg_uf
+              - no_beneficiario
+              - nu_cpf_beneficiario
+              - co_sexo_beneficiario
+              - dt_nascimento
+              - co_estado_civil
+              - no_estado_civil
+              - no_tipo_beneficiario
+              - vr_investimento
+              - vr_operacao
+              - vr_edificacao
+              - vr_atec
+              - vr_ts
+              - vr_custo_originacao
+              - vr_taxa_administracao
+              - vr_diferencial_juros
+              - vr_taxa_risco_credito
+              - vr_cisterna
+              - vr_efluentes
+              - vr_atec_ts_cisterna
+              - vr_tx_adm_cisterna
+              - vr_contrapartida
+              - vr_emprestimo
+              - vr_subsidio
+              - vr_liberado
+              - ic_cisterna
+              - qt_dias_atraso
+              - vr_inadimplente
+              - vr_parcela_mensal_beneficiario
+              - dt_efetiva_conclusao
+              - origem
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
 
   - name: bronze_sftp_int064_pnhr_caixa_familias
     description: >
@@ -1034,3 +1082,55 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais.MCMV.MCMVRural
           - MCID.Atores.CAIXA
+    data_tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - dt_movimento
+              - co_agente_financeiro
+              - nu_contrato_emprendimento
+              - nu_apf
+              - nu_contrato_individual
+              - co_tipo_contratacao
+              - co_natureza
+              - co_grupo_renda
+              - dt_contrato
+              - co_municipio_ibge
+              - no_municipio
+              - sg_uf
+              - no_beneficiario
+              - nu_cpf_beneficiario
+              - co_sexo_beneficiario
+              - dt_nascimento
+              - no_estado_civil
+              - co_tipo_beneficiario
+              - no_tipo_beneficiario
+              - vr_investimento_pnhr
+              - vr_operacao
+              - vr_edificcacao
+              - vr_atec
+              - vr_ts
+              - vr_custo_originacao
+              - vr_taxa_administracao
+              - vr_diferencial_juros
+              - vr_taxa_risco_credito
+              - vr_cisterna
+              - vr_efluentes
+              - vr_atec_ts_cisterna
+              - vr_tx_adm_cisterna
+              - vr_contrapartida
+              - vr_emprestimo
+              - vr_subsidio_fgts
+              - vr_liberado
+              - ic_cisterna
+              - vr_imovel
+              - vr_renda_familiar
+              - qt_dias_atraso
+              - vr_inadimplente
+              - vr_parcela_mensal_beneficiario
+              - dt_efetiva_conclusao
+              - origem
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename
