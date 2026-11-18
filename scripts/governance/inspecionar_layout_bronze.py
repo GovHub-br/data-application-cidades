@@ -26,7 +26,10 @@ import re
 import sys
 from pathlib import Path
 
-import pyarrow.parquet as pq
+try:
+    import pyarrow.parquet as pq
+except ImportError:  # ambiente sem pyarrow (ou com NumPy incompatível): cai para o DuckDB
+    pq = None
 from dotenv import load_dotenv
 
 _plugins = Path(__file__).resolve().parents[2] / "plugins"
@@ -53,8 +56,23 @@ def listar(s3, trecho):
 
 def schema(s3, chave):
     corpo = s3.get_object(Bucket=BUCKET, Key=chave)["Body"].read()
-    arq = pq.ParquetFile(io.BytesIO(corpo))
-    return [(f.name, str(f.type)) for f in arq.schema_arrow], arq.metadata.num_rows
+    if pq is not None:
+        arq = pq.ParquetFile(io.BytesIO(corpo))
+        return [(f.name, str(f.type)) for f in arq.schema_arrow], arq.metadata.num_rows
+    import os
+    import tempfile
+
+    import duckdb
+
+    with tempfile.TemporaryDirectory() as pasta:
+        caminho = os.path.join(pasta, "remessa.parquet")
+        with open(caminho, "wb") as f:
+            f.write(corpo)
+        con = duckdb.connect()
+        cols = [(r[0], r[1]) for r in con.execute(f"describe select * from read_parquet('{caminho.replace(chr(92), '/')}')").fetchall()]
+        linhas = con.execute(f"select count(*) from read_parquet('{caminho.replace(chr(92), '/')}')").fetchone()[0]
+        con.close()
+    return cols, linhas
 
 
 def main():
