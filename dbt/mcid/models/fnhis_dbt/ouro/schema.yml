@@ -1,0 +1,739 @@
+version: 2
+
+models:
+  - name: ouro_fnhis_ficha_termo_compromisso
+    description: >
+      Ficha do termo de compromisso do FNHIS Sub-50: uma linha por termo, juntando a seleção
+      (UH, IBGE), o instrumento no TransfereGov (repasse, empenho, situação), a regularidade do
+      município no SNHIS e a execução acompanhada pela SNH, vinculada por município + valor
+      (+ data) somente quando o vínculo é 1:1.
+    meta:
+      tags:
+        - gold
+      documentacao:
+        grao: "Uma linha por termo de compromisso do FNHIS Sub-50."
+        chave: [numero_proposta_transferegov]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNHIS, regularidade dos entes; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
+    columns:
+      - name: numero_proposta_transferegov
+        description: Número da proposta no TransfereGov.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_fnhis_termo_compromisso')
+                field: numero_proposta_transferegov
+      - name: numero_proposta
+        description: Número da proposta na seleção do MCID — a chave que liga o termo à proposta.
+      - name: codigo_programa
+        description: Código do programa no TransfereGov.
+      - name: programa
+        description: Sempre "Novo MCMV FNHIS Sub-50".
+      - name: uf
+        description: UF do proponente.
+      - name: regiao
+        description: Região geográfica da UF.
+      - name: municipio
+        description: Município do proponente.
+      - name: cod_ibge
+        description: >
+          Código IBGE do município beneficiado (7 dígitos), vindo da proposta. Nulo quando o termo
+          não casou com nenhuma proposta da seleção.
+      - name: municipio_uf
+        description: Localização no formato "Município/UF".
+      - name: termo_municipio
+        description: Rótulo "proposta TransfereGov - Município/UF", usado como dimensão de filtro no Superset.
+      - name: proponente_nome
+        description: Ente proponente.
+      - name: proponente_esfera
+        description: Município ou Estado/DF, conforme a administração pública proponente.
+      - name: objeto
+        description: Objeto do termo de compromisso, como descrito no painel do TransfereGov.
+      - name: situacao_selecao
+        description: >
+          Situação da proposta na SELEÇÃO do MCID (portaria nº 673/2024) — não confundir com
+          `situacao_proposta`, que é o estágio dela dentro do TransfereGov.
+      - name: ic_proposta_de_risco
+        description: Verdadeiro para as propostas do grupo de áreas de risco.
+      - name: quantidade_uh
+        description: UH da proposta selecionada.
+      - name: pessoas_atendidas
+        description: Estimativa = UH × 3,3 moradores por domicílio, truncada.
+      - name: situacao_contratacao
+        description: Situação da contratação (Normal, Cláusula Suspensiva, Liminar Judicial).
+      - name: situacao_proposta
+        description: Situação da proposta no TransfereGov — o estágio dela dentro do sistema de transferência.
+      - name: situacao_instrumento
+        description: Situação do instrumento (Em execução, Convênio Anulado, Convênio Rescindido, Prestação de Contas...).
+      - name: ic_instrumento_ativo
+        description: Falso quando o termo foi anulado, rescindido ou não chegou a ter instrumento.
+      - name: dt_assinatura
+        description: Data de assinatura do termo.
+      - name: valor_repasse
+        description: Valor de repasse do FNHIS, em R$.
+      - name: valor_contrapartida
+        description: Contrapartida do ente, em R$.
+      - name: valor_investimento
+        description: Repasse + contrapartida, em R$.
+      - name: valor_repasse_por_uh
+        description: Repasse sobre UH.
+      - name: valor_empenhado_acumulado
+        description: Valor empenhado acumulado, em R$.
+      - name: percentual_empenhado
+        description: Empenhado acumulado sobre o repasse, em %.
+      - name: ic_ente_regular
+        description: Situação do município no SNHIS no retrato mais recente (nulo se o município não está no SNHIS).
+      - name: situacao_ente
+        description: Situação-síntese do município no SNHIS (Regular ou Pendente).
+      - name: situacao_plano_habitacional
+        description: Situação do Plano Local de Habitação de Interesse Social do município.
+      - name: situacao_lei_fundo
+        description: Situação da lei de criação do Fundo Local de Habitação de Interesse Social (FLHIS).
+      - name: situacao_lei_conselho
+        description: Situação da lei do conselho gestor do FLHIS.
+      - name: ic_contrato_snh_identificado
+        description: Verdadeiro quando o termo foi vinculado 1:1 a um contrato acompanhado pela SNH.
+      - name: criterio_vinculo_snh
+        description: Como o vínculo foi feito — município + valor + data, ou município + valor.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["município + valor + data", "município + valor"]
+      - name: id_operacao_snh
+        description: Operação da SNH vinculada.
+        data_tests:
+          - unique
+      - name: cod_operacao_agente
+        description: Código da operação na CAIXA (7 dígitos), do contrato vinculado na SNH. Não é APF.
+      - name: agente_financeiro
+        description: Agente financeiro do contrato vinculado — no Sub-50 é a CAIXA na totalidade das operações.
+      - name: situacao_obra_snh
+        description: Situação do empreendimento informada pela SNH, do contrato vinculado.
+      - name: percentual_execucao_fisica
+        description: Percentual de execução da obra, do contrato vinculado na SNH.
+      - name: uh_entregues
+        description: Unidades habitacionais já entregues, do contrato vinculado na SNH.
+      - name: valor_desembolsado
+        description: Valor desembolsado no contrato vinculado, em R$. É desembolso da SNH, não o empenho do TransfereGov.
+      - name: dt_previsao_termino
+        description: Data prevista para o término da obra, do contrato vinculado na SNH.
+      - name: dt_termino
+        description: Data efetiva do término da obra, quando já concluída.
+      - name: status_execucao_simplificado
+        description: >
+          Regra de negócio: Sem instrumento ativo, Sem acompanhamento SNH, Concluído, Não Iniciado,
+          Paralisado ou Em Andamento.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Sem instrumento ativo", "Sem acompanhamento SNH", "Concluído", "Não Iniciado", "Paralisado", "Em Andamento"]
+      - name: dt_consulta
+        description: Data de extração do painel no TransfereGov — a idade do lado instrumento desta ficha.
+      - name: dt_referencia_snh
+        description: Data de referência do extrato da SNH — a idade do lado execução desta ficha.
+
+  - name: ouro_fnhis_funil_propostas
+    description: >
+      Funil do FNHIS Sub-50 por UF: propostas apresentadas, não enquadradas, recusadas por cota,
+      selecionadas, termos assinados e ativos, contratos acompanhados pela SNH, obras iniciadas
+      e UH entregues. Cada etapa vem da sua própria fonte. Uma linha por UF.
+    meta:
+      tags:
+        - gold
+      documentacao:
+        grao: "Uma linha por UF, com as etapas do funil do FNHIS Sub-50."
+        chave: [uf]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
+    columns:
+      - name: uf
+        description: Sigla da UF.
+        data_tests:
+          - not_null
+          - unique
+      - name: regiao
+        description: Região geográfica da UF.
+      - name: qt_propostas_apresentadas
+        description: Propostas apresentadas na seleção.
+      - name: uh_apresentadas
+        description: Unidades habitacionais somadas em todas as propostas apresentadas.
+      - name: qt_nao_enquadradas
+        description: Propostas recusadas por não enquadramento nas regras da seleção.
+      - name: qt_cota_insuficiente
+        description: Propostas não selecionadas porque a cota da UF se esgotou.
+      - name: qt_municipio_ja_contemplado
+        description: Propostas não selecionadas porque o município já havia sido contemplado.
+      - name: qt_selecionadas
+        description: Propostas selecionadas.
+      - name: uh_selecionadas
+        description: Unidades habitacionais das propostas selecionadas.
+      - name: percentual_selecao
+        description: Selecionadas sobre apresentadas, em %.
+      - name: qt_termos
+        description: Termos de compromisso registrados no TransfereGov, ativos ou não.
+      - name: qt_termos_ativos
+        description: Termos de compromisso com instrumento ativo no TransfereGov.
+      - name: qt_termos_anulados_rescindidos
+        description: Termos cujo convênio foi anulado ou rescindido.
+      - name: valor_repasse_termos_ativos
+        description: Repasse somado dos termos ativos, em R$.
+      - name: valor_empenhado
+        description: Empenho acumulado somado dos termos ativos, em R$.
+      - name: qt_contratos_snh
+        description: Contratos acompanhados pela SNH.
+      - name: uh_contratadas_snh
+        description: Unidades habitacionais contratadas segundo a SNH.
+      - name: qt_obras_iniciadas
+        description: Contratos da SNH com percentual de execução física maior que zero.
+      - name: uh_entregues_snh
+        description: UH entregues segundo a SNH.
+      - name: valor_desembolsado_snh
+        description: Valor desembolsado somado dos contratos da SNH, em R$.
+
+  - name: ouro_fnhis_regularidade_municipios
+    description: >
+      Regularidade dos entes no SNHIS cruzada com a participação no FNHIS Sub-50: se o ente
+      apresentou proposta, se foi selecionado, se tem termo ativo, e o critério populacional do
+      Sub-50 (menos de 50 mil habitantes). Uma linha por ente.
+    meta:
+      tags:
+        - gold
+      documentacao:
+        grao: "Uma linha por ente (município) no SNHIS, cruzada com a participação no FNHIS Sub-50."
+        chave: [cod_ibge]
+        fonte: "SNHIS, regularidade dos entes; TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: semanal
+        consumo: ["Consulta direta na camada ouro"]
+    columns:
+      - name: cod_ibge
+        description: Código IBGE do ente (7 dígitos).
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_fnhis_regularidade_entes')
+                field: cod_ibge
+      - name: ente_nome
+        description: Nome do ente.
+      - name: ente_esfera
+        description: Estado/DF ou Município.
+      - name: uf
+        description: UF do ente.
+      - name: regiao
+        description: Região geográfica da UF do ente.
+      - name: populacao
+        description: População do ente.
+      - name: ic_elegivel_sub50_por_populacao
+        description: Verdadeiro quando a população é menor que 50 mil habitantes — o recorte do Sub-50.
+      - name: ic_regiao_metropolitana
+        description: Verdadeiro quando o ente integra região metropolitana, conforme a extração da CAIXA.
+      - name: situacao_ente
+        description: Situação-síntese do ente no SNHIS (Regular ou Pendente).
+      - name: ic_ente_regular
+        description: Situação Regular no SNHIS.
+      - name: situacao_lei_fundo
+        description: Lei de criação do Fundo Local de Habitação de Interesse Social (FLHIS) — Regular ou Pendente.
+      - name: situacao_lei_conselho
+        description: Lei do conselho gestor do FLHIS — Regular ou Pendente.
+      - name: situacao_termo_adesao
+        description: Termo de adesão ao SNHIS — Regular ou Pendente.
+      - name: situacao_plano_habitacional
+        description: Plano Local de Habitação de Interesse Social — Regular ou Pendente.
+      - name: situacao_relatorio_gestao
+        description: Situação do relatório de gestão do fundo.
+      - name: ic_apresentou_proposta
+        description: Verdadeiro quando o ente apresentou ao menos uma proposta.
+      - name: qt_propostas
+        description: Propostas apresentadas pelo ente na seleção.
+      - name: qt_selecionadas
+        description: Propostas do ente que foram selecionadas.
+      - name: uh_selecionadas
+        description: Unidades habitacionais das propostas selecionadas do ente.
+      - name: qt_termos_ativos
+        description: Termos de compromisso ativos do ente.
+      - name: valor_repasse
+        description: Repasse somado dos termos ativos do ente, em R$.
+      - name: dt_referencia
+        description: Data de referência da extração semanal do SNHIS — a que semana a foto se refere.
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: ouro_fnhis_motivos_nao_enquadramento
+    description: 'Por que cada proposta do FNHIS Sub-50 ficou de fora: para as não enquadradas, o motivo
+      da justificativa categorizado por regra (titularidade, retificadora, limite de UH, risco, nº de propostas,
+      população, documentação, outros), uma linha por motivo; para as enquadradas não selecionadas, o motivo
+      da seleção.'
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por proposta e motivo de não enquadramento ou de não seleção."
+        chave: [numero_proposta, motivo]
+        fonte: "TransfereGov, propostas apresentadas e resultado da seleção do FNHIS Sub-50"
+        periodicidade: eventual
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - numero_proposta
+          - motivo
+    columns:
+    - name: numero_proposta
+      description: Número da proposta na seleção.
+    - name: uf
+      description: UF do município beneficiado.
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: municipio
+      description: Município beneficiado.
+    - name: cod_ibge
+      description: Código IBGE do município (7 dígitos).
+    - name: proponente_esfera
+      description: Município ou Estado/DF.
+    - name: quantidade_uh
+      description: UH propostas.
+    - name: resultado_selecao
+      description: Resultado da seleção agrupado.
+    - name: etapa_em_que_saiu
+      description: Enquadramento ou Seleção.
+    - name: motivo
+      description: Motivo categorizado.
+    - name: ordem_motivo
+      description: Ordem de exibição do motivo.
+    - name: qt_motivos_da_proposta
+      description: Quantos motivos a proposta tem.
+    - name: justificativa_nao_enquadramento
+      description: Justificativa original em texto livre.
+  - name: ouro_fnhis_proposta_tramite
+    description: Etapa atual de cada proposta apresentada ao FNHIS Sub-50 — fora no enquadramento, fora
+      na seleção, selecionada sem termo, termo anulado, termo em execução, obra na SNH, prestação de contas
+      — com o termo do TransfereGov, a execução na SNH e a trajetória do instrumento entre os retratos mensais.
+      O trâmite interno do MCID (SEI e controles internos) não chega ao banco.
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por proposta apresentada ao FNHIS Sub-50, com a etapa atual."
+        chave: [numero_proposta]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
+    columns:
+    - name: numero_proposta
+      description: Número da proposta na seleção.
+      data_tests:
+      - not_null
+      - unique
+    - name: uf
+      description: UF do município beneficiado.
+    - name: municipio
+      description: Município beneficiado.
+    - name: cod_ibge
+      description: Código IBGE do município (7 dígitos).
+    - name: proponente_esfera
+      description: Município ou Estado/DF.
+    - name: quantidade_uh
+      description: UH propostas.
+    - name: resultado_selecao
+      description: Resultado da seleção agrupado.
+    - name: ic_proposta_de_risco
+      description: Verdadeiro para proposta do grupo de áreas de risco.
+    - name: numero_proposta_transferegov
+      description: Número do termo no TransfereGov (nulo se não virou termo).
+    - name: situacao_contratacao
+      description: Situação da contratação no TransfereGov.
+    - name: situacao_instrumento
+      description: Situação atual do instrumento.
+    - name: ic_instrumento_ativo
+      description: Termo não anulado nem rescindido.
+    - name: dt_assinatura
+      description: Data de assinatura do termo.
+    - name: valor_repasse
+      description: Valor de repasse (R$).
+    - name: valor_empenhado_acumulado
+      description: Empenho acumulado no retrato mais recente (R$).
+    - name: ic_contrato_snh_identificado
+      description: Verdadeiro quando o termo foi vinculado a uma operação da SNH.
+    - name: id_operacao_snh
+      description: Identificador da operação na SNH.
+    - name: situacao_obra_snh
+      description: Situação da obra na SNH.
+    - name: percentual_execucao_fisica
+      description: Percentual de execução física na SNH.
+    - name: uh_entregues
+      description: UH entregues na SNH.
+    - name: valor_desembolsado
+      description: Valor desembolsado na SNH (R$).
+    - name: ic_ente_regular
+      description: Ente regular no SNHIS.
+    - name: qt_retratos
+      description: Retratos mensais em que o termo aparece.
+    - name: dt_primeiro_retrato
+      description: Primeiro retrato com o termo.
+    - name: situacao_instrumento_inicial
+      description: Primeira situação de instrumento registrada.
+    - name: situacao_instrumento_anterior
+      description: Situação anterior à mudança mais recente.
+    - name: dt_ultima_mudanca_situacao
+      description: Retrato em que a situação mudou pela última vez.
+    - name: qt_situacoes_instrumento
+      description: Quantas situações distintas o instrumento teve.
+    - name: variacao_empenho_na_serie
+      description: Empenho atual menos o empenho no primeiro retrato (R$).
+    - name: etapa_ordem
+      description: Ordem da etapa no fluxo (1 a 7).
+    - name: etapa_atual
+      description: Etapa atual da proposta.
+  - name: ouro_fnhis_ente_historico
+    description: 'Histórico de cada município que propôs ao FNHIS Sub-50: regularidade atual no SNHIS (a
+      habilitação do ente), resultado das propostas e termos no Sub-50, e experiência anterior com obra
+      habitacional do MCMV no município (concluídas, em andamento, paralisadas, UH entregues), incluindo
+      se tinha obra aberta quando concorreu.'
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por município que apresentou proposta ao FNHIS Sub-50."
+        chave: [cod_ibge]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNHIS, regularidade dos entes; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
+    columns:
+    - name: cod_ibge
+      description: Código IBGE do município beneficiado (7 dígitos).
+      data_tests:
+      - not_null
+      - unique
+    - name: municipio
+      description: Município beneficiado.
+    - name: uf
+      description: Sigla da UF.
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: proponente_esfera
+      description: Esferas que propuseram para o município (Município e/ou Estado/DF).
+    - name: populacao
+      description: População do município no SNHIS.
+    - name: situacao_ente
+      description: Situação geral do ente no SNHIS.
+    - name: ic_ente_regular
+      description: Verdadeiro quando o ente está regular no SNHIS.
+    - name: situacao_lei_fundo
+      description: Situação da lei do fundo local de HIS.
+    - name: situacao_lei_conselho
+      description: Situação da lei do conselho gestor.
+    - name: situacao_termo_adesao
+      description: Situação do termo de adesão ao SNHIS.
+    - name: situacao_plano_habitacional
+      description: Situação do plano habitacional.
+    - name: situacao_relatorio_gestao
+      description: Situação do relatório de gestão.
+    - name: dt_referencia_snhis
+      description: Data do retrato SNHIS.
+    - name: qt_propostas
+      description: Propostas apresentadas para o município.
+    - name: qt_nao_enquadradas
+      description: Propostas não enquadradas.
+    - name: qt_cota_insuficiente
+      description: Propostas fora por cota insuficiente da UF.
+    - name: qt_ja_contemplado
+      description: Propostas fora por município já contemplado.
+    - name: qt_selecionadas
+      description: Propostas selecionadas.
+    - name: uh_propostas
+      description: UH propostas.
+    - name: uh_selecionadas
+      description: UH selecionadas.
+    - name: qt_termos_ativos
+      description: Termos em execução, em obra ou em prestação de contas.
+    - name: qt_termos_anulados_rescindidos
+      description: Termos anulados ou rescindidos.
+    - name: valor_empenhado
+      description: Empenho acumulado dos termos (R$).
+    - name: qt_operacoes_his_antes
+      description: Operações MCMV (outras modalidades) no município contratadas antes da seleção.
+    - name: modalidades_his
+      description: Modalidades dessas operações.
+    - name: qt_his_concluidas
+      description: Dessas, concluídas hoje.
+    - name: qt_his_em_andamento_hoje
+      description: Dessas, em andamento ou não iniciadas hoje.
+    - name: qt_his_paralisadas_hoje
+      description: Dessas, paralisadas hoje.
+    - name: qt_his_distratadas
+      description: Dessas, distratadas.
+    - name: uh_his_contratadas
+      description: UH contratadas nessas operações.
+    - name: uh_his_entregues
+      description: UH entregues nessas operações.
+    - name: percentual_his_entregue
+      description: UH entregues sobre (contratadas − distratadas), em %.
+    - name: dt_ultima_contratacao_his
+      description: Contratação mais recente antes da seleção.
+    - name: ic_tinha_obra_aberta_ao_concorrer
+      description: Verdadeiro quando há operação contratada antes da seleção e hoje em andamento ou paralisada.
+    - name: ic_tem_obra_paralisada
+      description: Verdadeiro quando há operação anterior hoje paralisada.
+    - name: dt_corte_selecao
+      description: Data de corte da seleção usada (var fnhis_data_selecao, padrão 2024-02-20).
+  - name: ouro_fnhis_termo_situacao_mensal
+    description: Quantos termos de compromisso do FNHIS Sub-50 estavam em cada situação do instrumento em
+      cada retrato mensal do TransfereGov, por UF, com repasse, empenho acumulado e quantos entraram na
+      situação naquele retrato.
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por retrato mensal, UF e situação do instrumento."
+        chave: [dt_retrato, uf, situacao_instrumento]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - dt_retrato
+          - uf
+          - situacao_instrumento
+    columns:
+    - name: dt_retrato
+      description: Data do retrato do painel.
+    - name: uf
+      description: UF do proponente (ND quando ausente).
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: situacao_instrumento
+      description: Situação do instrumento no retrato.
+    - name: qt_termos
+      description: Termos na situação.
+    - name: valor_repasse
+      description: Repasse somado (R$).
+    - name: valor_empenhado_acumulado
+      description: Empenho acumulado somado (R$).
+    - name: qt_entraram_no_retrato
+      description: Termos que estavam em outra situação no retrato anterior.
+  - name: ouro_mcid_cobertura_perguntas
+    description: 'Matriz pergunta × dado das perguntas levantadas com o MCID para Rural, FNHIS Sub-50 e
+      Pró-Moradia (da oficina e réplicas das perguntas do Rural): o que cada uma consegue responder hoje,
+      em qual ouro, a fonte que falta e a limitação.'
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por pergunta levantada com o MCID, por programa."
+        chave: [programa, ordem]
+        fonte: "Oficina de perguntas com o MCID (Rural, FNHIS Sub-50 e Pró-Moradia)"
+        periodicidade: eventual
+        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - programa
+          - ordem
+    columns:
+    - name: programa
+      description: Rural, FNHIS/Sub-50 ou Pró-Moradia.
+    - name: ordem
+      description: Ordem da pergunta no programa.
+    - name: origem_pergunta
+      description: Oficina MCID ou Réplica do Rural.
+    - name: pergunta
+      description: Texto da pergunta.
+    - name: situacao_dado
+      description: respondivel, parcial ou lacuna_de_fonte.
+    - name: situacao_dado_rotulo
+      description: Rótulo para painel.
+    - name: resposta_disponivel
+      description: O que os dados atuais respondem.
+    - name: modelo_ouro
+      description: Ouro que responde (nulo se lacuna).
+    - name: fonte_necessaria
+      description: Fonte que falta para responder por completo.
+    - name: limitacao
+      description: Limitação da resposta atual.
+
+  - name: ouro_fnhis_portarias
+    description: >
+      Portarias e atos do MCMV FNHIS Sub-50 com o que cada um representa no dado. Uma linha por ato. A 673/2024
+      (abertura da Seleção 2024) conta as propostas apresentadas e a 1.310/2024 (resultado) as selecionadas, ambas
+      da base do TransfereGov (prata_fnhis_propostas). A Seleção 2025 (483/2025 → 892/2025) e a Calamidade RS 2024
+      (865/2024 → 1.341 e 1.354/2024) ainda não têm lista de propostas carregada.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV
+      documentacao:
+        grao: "Uma linha por ato (portaria) do FNHIS Sub-50."
+        chave: [portaria_codigo]
+        fonte: "Portarias do MCID publicadas no Diário Oficial da União; TransfereGov, propostas apresentadas"
+        periodicidade: eventual
+        consumo: ["Consulta direta na camada ouro"]
+    columns:
+      - name: portaria_codigo
+        description: "Código do ato (número_ano; atos que não são portaria levam o prefixo da espécie, como in_11_2024)."
+        tests:
+          - unique
+          - not_null
+      - name: ato
+        description: "Nome do ato por extenso."
+      - name: especie_ato
+        description: "Portaria, Instrução Normativa, Resolução ou Processo de seleção."
+      - name: numero_ato
+        description: "Número do ato."
+      - name: ano_ato
+        description: "Ano do ato."
+      - name: dt_ato
+        description: "Data do ato, quando conhecida."
+      - name: numero_ano
+        description: "Número/ano com ponto de milhar, como 1.310/2024, usado como rótulo."
+      - name: papel_ato
+        description: "Papel no ciclo: Regulamento da linha, Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade), Alteração, Autorização de contratação ou A confirmar."
+      - name: tipo_portaria
+        description: "Tipo para o filtro de portaria: Regulamento da linha, Abertura do ciclo, Seleção, Alteração, Autorização de contratação ou A confirmar."
+      - name: ciclo_selecao
+        description: "Ciclo a que o ato pertence (Seleção 2024, Seleção 2025, Calamidade RS 2024 ou Todos)."
+      - name: tem_lista_nominal
+        description: "Se o ato publica lista de propostas (sim, não)."
+      - name: fonte_lista
+        description: "Onde está (ou deve estar) a lista de propostas."
+      - name: observacao
+        description: "O que o ato faz."
+      - name: situacao_lista
+        description: "Lista carregada, Lista não carregada ou Não lista propostas."
+      - name: qt_propostas
+        description: "Propostas ligadas ao ato (apresentadas na abertura; selecionadas no resultado)."
+      - name: uh_propostas
+        description: "UH dessas propostas."
+
+  - name: ouro_fnhis_empenho_parcelas
+    description: >
+      Situação das parcelas de empenho de cada termo de compromisso do FNHIS Sub-50 (termos ativos, sem anulados ou
+      rescindidos). O empenho sai em parcelas fixas (≈10%, 20%, 30%, 50%…), então em vez de comparar com uma curva o
+      modelo diz quantas parcelas o termo já teve e há quantos meses não recebe uma nova. Os retratos mensais do
+      TransfereGov começam em mar/2025: o que foi empenhado antes conta como uma parcela. Grão: termo.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV
+      documentacao:
+        grao: "Uma linha por termo de compromisso ativo."
+        chave: [numero_proposta_transferegov]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+    columns:
+      - name: numero_proposta_transferegov
+        description: "Número da proposta no TransfereGov (chave do termo)."
+        tests:
+          - unique
+          - not_null
+      - name: numero_proposta
+        description: "Número da proposta na seleção."
+      - name: proponente_nome
+        description: "Município ou estado proponente."
+      - name: uf
+        description: "Sigla da UF."
+      - name: municipio
+        description: "Município."
+      - name: regiao
+        description: "Região."
+      - name: dt_assinatura
+        description: "Data de assinatura do termo."
+      - name: ano_assinatura
+        description: "Ano de assinatura."
+      - name: objeto
+        description: "Objeto do termo."
+      - name: situacao_instrumento
+        description: "Situação do instrumento no último retrato."
+      - name: idade_meses
+        description: "Meses desde a assinatura no último retrato."
+      - name: valor_repasse
+        description: "Repasse previsto (R$) no último retrato."
+      - name: valor_empenhado_acumulado
+        description: "Empenhado acumulado (R$) no último retrato."
+      - name: pct_empenhado
+        description: "% empenhado acumulado ÷ repasse no último retrato."
+      - name: faixa_empenho
+        description: "Faixa do % empenhado, ordenável pelo prefixo: 0. Sem empenho, 1. Até 10%, 2. 10% a 20%, 3. 20% a 30%, 4. 30% a 50%, 5. 50% a 99%, 6. 100%."
+        tests:
+          - accepted_values:
+              values: ['0. Sem empenho', '1. Até 10%', '2. 10% a 20%', '3. 20% a 30%', '4. 30% a 50%', '5. 50% a 99%', '6. 100%']
+      - name: qt_parcelas_empenhadas
+        description: "Vezes que o empenho acumulado subiu nos retratos (+1 se o primeiro retrato já veio com empenho)."
+      - name: qt_retratos
+        description: "Retratos mensais do termo na base."
+      - name: dt_primeiro_retrato
+        description: "Mês do primeiro retrato do termo."
+      - name: dt_ultimo_retrato
+        description: "Mês do último retrato do termo."
+      - name: dt_ultimo_empenho
+        description: "Mês do retrato em que o empenho subiu pela última vez (ou do primeiro retrato, se nunca subiu depois dele)."
+      - name: ic_ultimo_empenho_antes_dos_retratos
+        description: "Verdadeiro quando o último empenho já estava no primeiro retrato: a data real é essa ou anterior."
+      - name: dt_referencia_base
+        description: "Mês do retrato mais recente da base (data de corte)."
+      - name: meses_sem_novo_empenho
+        description: "Meses entre dt_ultimo_empenho e dt_referencia_base (mínimo, se ic_ultimo_empenho_antes_dos_retratos)."
+      - name: situacao_parcelas
+        description: "Sem empenho, Sem novo empenho há 12+ meses, Sem novo empenho há 6 a 11 meses ou Empenho nos últimos 6 meses."
+        tests:
+          - accepted_values:
+              values: ['Sem empenho', 'Sem novo empenho há 12+ meses', 'Sem novo empenho há 6 a 11 meses', 'Empenho nos últimos 6 meses']
+      - name: portaria_selecao
+        description: "Portaria de resultado da seleção dos termos (1.310/2024)."
+
+  - name: ouro_fnhis_curva_s
+    description: >
+      Evolução do empenho do FNHIS Sub-50 por mês do retrato do TransfereGov. Grão: mês × UF. Termos ativos com assinatura.
+      % empenhado = Σ empenhado ÷ Σ repasse (recalcule a partir das somas). Não é Curva S de obra: o Sub-50 não tem
+      % físico nas bases e o empenho sai em parcelas fixas, por isso a linha anda em degraus.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV
+      documentacao:
+        grao: "Uma linha por mês do retrato, UF e portaria de seleção."
+        chave: [id_curva_s]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+    columns:
+      - name: id_curva_s
+        description: "Identificador da linha."
+        tests:
+          - unique
+          - not_null
+      - name: mes
+        description: "Mês do retrato."
+      - name: ic_ultimo_mes
+        description: "Verdadeiro no último retrato."
+      - name: ic_retrato_completo
+        description: "Verdadeiro quando o retrato do mês tem pelo menos 80% do maior número de termos da série."
+      - name: uf
+        description: "Sigla da UF."
+      - name: portaria_selecao
+        description: "Portaria de resultado da seleção (1.310/2024)."
+      - name: qt_termos
+        description: "Termos ativos no retrato."
+      - name: qt_termos_com_empenho
+        description: "Termos com algum empenho."
+      - name: valor_repasse
+        description: "Repasse previsto (R$)."
+      - name: valor_empenhado_acumulado
+        description: "Empenhado acumulado (R$)."
+      - name: pct_empenhado
+        description: "% empenhado da linha. Não somar."

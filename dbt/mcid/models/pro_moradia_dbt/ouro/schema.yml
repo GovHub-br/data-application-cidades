@@ -1,0 +1,918 @@
+version: 2
+
+models:
+  - name: ouro_pro_moradia_ficha_contrato
+    description: >
+      Ficha do contrato do Pró-Moradia: uma linha por contrato, com tipo de intervenção,
+      tomador, localização, valores, execução física (última medição mensal, ou a posição do
+      cadastro), execução financeira (soma das liberações), status de execução, ritmo físico ×
+      financeiro e paralisação. É a tabela de consumo do produto.
+    meta:
+      tags:
+        - gold
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia."
+        chave: [contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+    columns:
+      - name: contrato
+        description: Contrato no formato `cod_contrato-dv`.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_pro_moradia_contrato')
+                field: contrato
+      - name: cod_contrato
+        description: Código do contrato no FGTS (7 dígitos, sem o dígito verificador).
+      - name: cod_contrato_dv
+        description: Dígito verificador do contrato.
+      - name: cod_empreendimento
+        description: Código do empreendimento no FGTS. No Pró-Moradia cada empreendimento tem um contrato.
+      - name: programa
+        description: Sempre "Pró-Moradia".
+      - name: tipo_intervencao
+        description: Frente da carta-consulta — Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+      - name: modalidade_codigo
+        description: Código da modalidade de operação do FGTS (tipo de intervenção financiada).
+      - name: modalidade
+        description: Nome da modalidade, traduzido pela tabela de domínio do canal.
+      - name: empreendimento_nome
+        description: Nome do empreendimento no cadastro do FGTS, em caixa alta.
+      - name: objeto
+        description: Objeto do financiamento informado no cadastro do empreendimento.
+      - name: tomador_codigo
+        description: Código do tomador (ente público que contrai o financiamento) no FGTS, 5 dígitos.
+      - name: tomador_nome
+        description: Ente público tomador do financiamento.
+      - name: tomador_esfera
+        description: Estado/DF, Município ou Companhia ou autarquia.
+      - name: agente_financeiro
+        description: Nome do agente financeiro do contrato — na prática a CAIXA na quase totalidade.
+      - name: uor
+        description: Unidade operacional da CAIXA (superintendência regional) que acompanha o contrato.
+      - name: uf
+        description: UF do contrato.
+      - name: regiao
+        description: Região geográfica da UF do contrato.
+      - name: municipio
+        description: Município do empreendimento, traduzido do código CAIXA pela tabela de domínio.
+      - name: cod_ibge
+        description: Código IBGE do município (7 dígitos). Nulo quando o município não está na tabela de domínio do canal.
+      - name: municipio_uf
+        description: Localização no formato "Município/UF".
+      - name: contrato_municipio_empreendimento
+        description: Rótulo "contrato - Município/UF - empreendimento", usado como dimensão de filtro no Superset.
+      - name: situacao_contrato_codigo
+        description: Código da situação do contrato no FGTS.
+      - name: situacao_contrato
+        description: Situação do contrato (em situação normal, distratado, cancelado, cláusula suspensiva...).
+      - name: ic_contrato_vigente
+        description: Falso para contrato distratado, cancelado ou extinto.
+      - name: ano_orcamento
+        description: Ano do orçamento do FGTS ao qual o contrato foi imputado.
+      - name: dt_assinatura
+        description: Data de assinatura do contrato.
+      - name: ic_pac
+        description: Indicador de contrato do PAC.
+      - name: identificador_selecao
+        description: Identificador externo — em geral a seleção de origem, como "PAC - 3A SELECAO", ou o processo.
+      - name: quantidade_uh
+        description: Unidades habitacionais financiadas (zero em urbanização).
+      - name: populacao_beneficiada
+        description: População beneficiada declarada no cadastro do empreendimento.
+      - name: empregos_gerados
+        description: Empregos gerados estimados no cadastro do empreendimento.
+      - name: valor_contratado
+        description: Valor financiado pelo FGTS, em R$.
+      - name: valor_investimento
+        description: Investimento total (financiamento + contrapartida), em R$.
+      - name: valor_contrapartida
+        description: Contrapartida do tomador = investimento − contratado, em R$.
+      - name: valor_investimento_por_uh
+        description: Investimento sobre UH financiadas, quando há UH.
+      - name: percentual_execucao_fisica
+        description: Percentual físico realizado — última medição mensal não futura; sem ela, a posição do cadastro do empreendimento.
+      - name: fonte_percentual_fisico
+        description: De onde veio o percentual físico (execucao_obra_mensal ou posicao_empreendimento).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["execucao_obra_mensal", "posicao_empreendimento"]
+      - name: percentual_obra_previsto
+        description: >
+          Percentual acumulado previsto no cronograma para o mês da última medição. Ao lado do
+          realizado, é o que mostra atraso físico.
+      - name: situacao_obra_codigo
+        description: >
+          Código da situação da obra na última avaliação mensal medida. Mistura dígito e letra na
+          origem (`4` e `H` indicam paralisada; `6`, `8` e `E` indicam concluída) — é ele que alimenta a regra de
+          `status_execucao_simplificado`.
+      - name: situacao_obra
+        description: Situação da obra na última avaliação medida (adiantada, normal, atrasada, paralisada, concluída...).
+      - name: dt_ultima_avaliacao
+        description: Mês da última avaliação de obra já medida — exclui os meses futuros do cronograma.
+      - name: dt_ultima_vistoria
+        description: Data da última vistoria de obra registrada nessa avaliação.
+      - name: dt_inicio_obra
+        description: Data de início da obra, da posição do cadastro do empreendimento.
+      - name: dt_termino_obra
+        description: Data de término da obra, da posição do cadastro do empreendimento.
+      - name: status_execucao_simplificado
+        description: >
+          Regra de negócio: Cancelado ou distratado, Concluído, Paralisado, Não Iniciado, Em
+          Andamento ou Sem Informação — nessa ordem de precedência, a partir da situação do
+          contrato, da situação da obra, da lista de paralisadas e do percentual físico.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Cancelado ou distratado", "Concluído", "Paralisado", "Não Iniciado", "Em Andamento", "Sem Informação"]
+      - name: vr_desembolsado
+        description: >
+          Soma das liberações do FGTS ao contrato, em R$. A série do canal começa em 2000, então
+          para contrato anterior é um piso (ver ic_serie_financeira_incompleta).
+      - name: percentual_execucao_financeira
+        description: Desembolsado sobre contratado, em %.
+      - name: dt_primeiro_desembolso
+        description: Competência da primeira liberação do contrato na série do canal (não necessariamente a primeira da vida do contrato).
+      - name: dt_ultimo_desembolso
+        description: Competência da liberação mais recente do contrato.
+      - name: qt_meses_com_desembolso
+        description: Quantidade de competências com liberação na série. Zero quando o contrato não tem liberação no arquivo.
+      - name: ic_serie_financeira_incompleta
+        description: Verdadeiro para contrato assinado antes de 2000, cujas liberações anteriores não estão no arquivo.
+      - name: ritmo_fisico_financeiro
+        description: >
+          Regra de negócio: compara o % físico com o % financeiro, com tolerância de 5 pontos —
+          Ritmo Equilibrado, Desembolso Adiantado ou Desembolso Atrasado.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Ritmo Equilibrado", "Desembolso Adiantado", "Desembolso Atrasado", "Sem Informação"]
+      - name: ic_paralisada
+        description: Verdadeiro quando o contrato está na lista de obras paralisadas do setor público.
+      - name: dias_sem_evolucao
+        description: Dias desde a última evolução física, para o contrato que está na lista de paralisadas.
+      - name: faixa_paralisacao
+        description: Faixa de tempo de paralisação (como "091 - 180 dias" ou "Entre 1 e 2 anos").
+      - name: motivo_paralisacao
+        description: Último motivo de paralisação informado pelo acompanhamento da CAIXA.
+      - name: dt_previsao_conclusao
+        description: Previsão de conclusão do objeto registrada no acompanhamento da paralisação.
+      - name: remessa_canal_fgts
+        description: Remessa do Canal FGTS de onde veio o contrato (MCaaaammdd.zip).
+      - name: dt_remessa
+        description: Data da remessa do Canal FGTS.
+
+  - name: ouro_pro_moradia_evolucao_financeira
+    description: >
+      Série mensal de liberações do FGTS por contrato do Pró-Moradia, com o valor do mês, os
+      estornos, o acumulado e o percentual acumulado sobre o contratado. Uma linha por contrato
+      e mês.
+    meta:
+      tags:
+        - gold
+      documentacao:
+        grao: "Uma linha por contrato e mês de liberação do FGTS."
+        chave: [contrato, mes]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["contrato", "mes"]
+    columns:
+      - name: contrato
+        description: Contrato no formato `cod_contrato-dv`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('ouro_pro_moradia_ficha_contrato')
+                field: contrato
+      - name: mes
+        description: Mês da liberação.
+      - name: uf
+        description: UF do contrato, trazida da ficha para permitir o corte territorial da série.
+      - name: regiao
+        description: Região geográfica da UF do contrato.
+      - name: tipo_intervencao
+        description: Frente da carta-consulta do contrato — Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+      - name: qt_lancamentos
+        description: Quantidade de lançamentos da origem somados no mês.
+      - name: vr_liberado_mes
+        description: Valor líquido liberado no mês, em R$.
+      - name: vr_estornado_mes
+        description: Estornos do mês, em R$ (negativo).
+      - name: vr_acumulado
+        description: Acumulado das liberações do contrato até o mês, em R$.
+      - name: percentual_acumulado_contratado
+        description: Acumulado sobre o valor contratado, em %.
+      - name: ic_serie_financeira_incompleta
+        description: >
+          Verdadeiro para contrato assinado antes de 2000: o acumulado da série é um piso, porque
+          as liberações anteriores não estão no arquivo do canal.
+
+  - name: ouro_pro_moradia_panorama_estadual
+    description: >
+      Grandes números do Pró-Moradia por UF: contratos por status, tomadores, municípios, UH,
+      população, valores contratado, de investimento e desembolsado. Valores e metas somam só
+      contratos vigentes. Uma linha por UF.
+    meta:
+      tags:
+        - gold
+      documentacao:
+        grao: "Uma linha por UF."
+        chave: [uf]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
+    columns:
+      - name: uf
+        description: Sigla da UF.
+        data_tests:
+          - not_null
+          - unique
+      - name: regiao
+        description: Região geográfica da UF.
+      - name: qt_contratos
+        description: Todos os contratos da UF, inclusive cancelados e distratados.
+      - name: qt_contratos_vigentes
+        description: Contratos que não foram distratados, cancelados ou extintos.
+      - name: qt_cancelados_distratados
+        description: Contratos com status de execução "Cancelado ou distratado".
+      - name: qt_concluidos
+        description: Contratos com status de execução "Concluído".
+      - name: qt_em_andamento
+        description: Contratos com status de execução "Em Andamento".
+      - name: qt_paralisados
+        description: Contratos com status de execução "Paralisado".
+      - name: qt_nao_iniciados
+        description: Contratos com status de execução "Não Iniciado".
+      - name: qt_sem_informacao
+        description: >
+          Contratos sem percentual físico nem situação de obra que permitam classificar o status.
+          É a medida de lacuna do acompanhamento na UF.
+      - name: qt_urbanizacao
+        description: Contratos vigentes cuja frente é Urbanização.
+      - name: qt_provisao_habitacional
+        description: Contratos vigentes cuja frente é Provisão habitacional.
+      - name: qt_tomadores
+        description: Tomadores distintos com contrato vigente na UF (por código do tomador).
+      - name: qt_municipios
+        description: >
+          Municípios distintos com contrato vigente na UF, contados por código IBGE — contrato
+          cujo município não foi traduzido não entra.
+      - name: total_uh
+        description: Unidades habitacionais financiadas pelos contratos vigentes. Urbanização contribui com zero.
+      - name: total_populacao_beneficiada
+        description: População beneficiada declarada, somada sobre os contratos vigentes.
+      - name: total_valor_contratado
+        description: Valor contratado dos contratos vigentes, em R$.
+      - name: total_valor_investimento
+        description: Investimento total (financiamento + contrapartida) dos contratos vigentes, em R$.
+      - name: total_vr_desembolsado
+        description: Desembolsado (soma das liberações) dos contratos vigentes, em R$.
+      - name: percentual_execucao_financeira
+        description: Desembolsado sobre contratado dos vigentes, em %.
+
+  - name: ouro_pro_moradia_orcamento_execucao
+    description: >
+      Orçamento do FGTS para o Pró-Moradia × contratação, por ano de orçamento e região: o que
+      foi reservado (original, final, alocado) e o que foi contratado com orçamento daquele ano.
+      Anos sem prestação de contas no lake aparecem só com o lado contratado. Uma linha por ano
+      e região.
+    meta:
+      tags:
+        - gold
+      documentacao:
+        grao: "Uma linha por ano de orçamento e região."
+        chave: [ano_orcamento, regiao]
+        fonte: "FGTS, orçamento e prestação de contas do Pró-Moradia; CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: anual
+        consumo: ["Consulta direta na camada ouro"]
+    data_tests:
+      - unique_combinacao:
+          arguments:
+            colunas: ["ano_orcamento", "regiao"]
+    columns:
+      - name: ano_orcamento
+        description: Ano do orçamento.
+        data_tests:
+          - not_null
+      - name: regiao
+        description: Região geográfica.
+        data_tests:
+          - not_null
+      - name: orcamento_original
+        description: Orçamento original aprovado para o programa na região, em R$. Nulo em ano sem prestação de contas no lake.
+      - name: orcamento_final
+        description: Orçamento final do FGTS para o programa na região, em R$.
+      - name: orcamento_alocado
+        description: Orçamento efetivamente alocado, em R$. Nulo em ano sem prestação de contas no lake.
+      - name: qt_contratos
+        description: Contratos assinados com orçamento do ano na região, inclusive cancelados e distratados. Zero quando o ano só tem o lado do orçamento.
+      - name: qt_contratos_vigentes
+        description: Desses, os que não foram distratados, cancelados ou extintos.
+      - name: valor_contratado
+        description: Valor contratado com orçamento do ano, na região, em R$ (todos os contratos).
+      - name: valor_contratado_vigente
+        description: Valor contratado apenas dos contratos vigentes, em R$ — a carteira que restou daquele ano.
+      - name: quantidade_uh
+        description: Unidades habitacionais dos contratos vigentes do ano na região. Urbanização contribui com zero.
+      - name: percentual_orcamento_contratado
+        description: Contratado sobre orçamento final, em %.
+      - name: ic_tem_orcamento
+        description: Verdadeiro quando há prestação de contas do ano no lake.
+
+  # --- perguntas do MCID (models/docs/entregas/perguntas-mcid-rural-fnhis-pro-moradia.md) ---
+  - name: ouro_pro_moradia_contrato_selecao
+    description: 'Cada contrato do Pró-Moradia ligado ao ato que o originou, a partir do identificador de
+      seleção do Canal FGTS: tipo do ato (seleção PAC, processo administrativo, ofício, portaria, voto),
+      ato normalizado, número da seleção PAC e ano. Não há carta-consulta nem proposta no Canal FGTS.'
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, ligado ao ato que o originou."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+    columns:
+    - name: cod_contrato
+      description: Código do contrato no Canal FGTS (sem dígito).
+      data_tests:
+      - not_null
+      - unique
+    - name: contrato
+      description: Contrato com dígito, para exibição.
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: tomador_cnpj
+      description: CNPJ do tomador, só dígitos.
+    - name: uf
+      description: Sigla da UF.
+    - name: municipio
+      description: Município do empreendimento.
+    - name: tipo_intervencao
+      description: Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+    - name: ano_orcamento
+      description: Ano do orçamento do FGTS.
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: situacao_contrato
+      description: Situação do contrato no Canal FGTS.
+    - name: ic_contrato_vigente
+      description: Contrato não liquidado, cancelado ou distratado.
+    - name: valor_contratado
+      description: Valor contratado (R$).
+    - name: quantidade_uh_financiadas
+      description: UH financiadas.
+    - name: populacao_beneficiada
+      description: População beneficiada declarada.
+    - name: ic_pac
+      description: Contrato do PAC.
+    - name: identificador_selecao
+      description: Identificador de seleção do Canal FGTS (cod_ident_externo).
+    - name: tipo_ato
+      description: Tipo do ato inferido do identificador.
+    - name: ato_normalizado
+      description: Identificador normalizado para agrupar variantes do mesmo ato.
+    - name: numero_selecao_pac
+      description: Número da seleção PAC (1ª a 5ª), quando houver.
+    - name: ano_ato
+      description: Ano do ato extraído do identificador.
+  - name: ouro_pro_moradia_tomador
+    description: 'Histórico e capacidade de execução de cada tomador do Pró-Moradia desde 1995: contratos
+      por status de execução e tipo de intervenção, UH financiadas, população, valores, período de atuação,
+      seleções e quantas vezes contratou com contrato anterior pendente. Não há dado de habilitação do tomador.'
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por tomador do Pró-Moradia."
+        chave: [tomador_codigo]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+    columns:
+    - name: tomador_codigo
+      description: Código do tomador no Canal FGTS.
+      data_tests:
+      - not_null
+      - unique
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: tomador_cnpj
+      description: CNPJ do tomador, só dígitos.
+    - name: uf
+      description: UF do tomador (a de maior ordem alfabética quando há mais de uma).
+    - name: qt_contratos
+      description: Contratos do tomador.
+    - name: qt_vigentes
+      description: Contratos vigentes.
+    - name: qt_concluidos
+      description: Contratos com obra concluída.
+    - name: qt_em_andamento
+      description: Contratos em andamento.
+    - name: qt_paralisados
+      description: Contratos paralisados.
+    - name: qt_nao_iniciados
+      description: Contratos com obra não iniciada.
+    - name: qt_cancelados_distratados
+      description: Contratos cancelados ou distratados.
+    - name: qt_sem_informacao
+      description: Contratos sem informação de execução.
+    - name: qt_urbanizacao
+      description: Contratos de urbanização.
+    - name: qt_provisao
+      description: Contratos de provisão habitacional.
+    - name: uh_financiadas
+      description: UH financiadas somadas.
+    - name: uh_contratos_concluidos
+      description: UH dos contratos concluídos.
+    - name: populacao_beneficiada
+      description: População beneficiada somada.
+    - name: valor_contratado
+      description: Valor contratado somado (R$).
+    - name: valor_desembolsado
+      description: Valor desembolsado somado (R$; piso para contratos anteriores a 2000).
+    - name: percentual_medio_obra_abertos
+      description: Média do percentual físico dos contratos em andamento ou paralisados.
+    - name: dt_primeiro_contrato
+      description: Primeira assinatura.
+    - name: dt_ultimo_contrato
+      description: Assinatura mais recente.
+    - name: qt_anos_orcamento
+      description: Anos de orçamento distintos.
+    - name: selecoes
+      description: Identificadores de seleção dos contratos.
+    - name: qt_abertos
+      description: Contratos em andamento, paralisados ou não iniciados.
+    - name: percentual_contratos_concluidos
+      description: Concluídos sobre (contratos − cancelados), em %.
+    - name: qt_contratos_com_pendencia_anterior
+      description: Contratos assinados com outro contrato anterior pendente.
+    - name: max_anteriores_pendentes
+      description: Maior número de anteriores pendentes na assinatura de um contrato.
+    - name: situacao_execucao_tomador
+      description: Com obra paralisada, Em execução, Concluiu tudo o que contratou ou Sem informação suficiente.
+  - name: ouro_pro_moradia_tomador_recontratacao
+    description: Para cada contrato do Pró-Moradia, quantos contratos anteriores do mesmo tomador ainda
+      tinham obra não terminada na data da assinatura, o valor envolvido e se algum hoje está paralisado.
+      A data de assinatura substitui a data da carta-consulta, que não existe no Canal FGTS.
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, com os contratos anteriores do mesmo tomador."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+    columns:
+    - name: cod_contrato
+      description: Código do contrato no Canal FGTS (sem dígito).
+      data_tests:
+      - not_null
+      - unique
+    - name: contrato
+      description: Contrato com dígito, para exibição.
+    - name: tomador_codigo
+      description: Código do tomador no Canal FGTS.
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: tomador_cnpj
+      description: CNPJ do tomador, só dígitos.
+    - name: uf
+      description: Sigla da UF.
+    - name: municipio
+      description: Município do empreendimento.
+    - name: tipo_intervencao
+      description: Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+    - name: identificador_selecao
+      description: Identificador de seleção do Canal FGTS (cod_ident_externo).
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: ano_assinatura
+      description: Ano da assinatura.
+    - name: valor_contratado
+      description: Valor contratado (R$).
+    - name: status_execucao_simplificado
+      description: Status de execução do contrato (ficha).
+    - name: qt_anteriores
+      description: Contratos do mesmo tomador assinados antes.
+    - name: qt_anteriores_pendentes
+      description: Anteriores não cancelados com obra não terminada na data da assinatura.
+    - name: valor_anteriores_pendentes
+      description: Valor contratado dos anteriores pendentes (R$).
+    - name: qt_anteriores_hoje_paralisados
+      description: Anteriores hoje paralisados.
+    - name: qt_anteriores_sem_data_termino
+      description: Anteriores concluídos ou sem informação e sem data de término — incerteza.
+    - name: ic_contratou_com_pendencia
+      description: Verdadeiro quando havia anterior pendente.
+    - name: situacao_recontratacao
+      description: Primeiro contrato do tomador, Anteriores concluídos ou Contratou com anterior pendente.
+  - name: ouro_pro_moradia_obra_andamento
+    description: 'Estágio atual da obra de cada contrato do Pró-Moradia, com percentual previsto e realizado,
+      ritmo físico-financeiro, paralisação e a trajetória das medições mensais do Canal FGTS: quantas medições,
+      avanço nos últimos 12 meses, desde quando o percentual não sobe e quantas mudanças de situação.'
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, com o estágio atual da obra."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+    columns:
+    - name: cod_contrato
+      description: Código do contrato no Canal FGTS (sem dígito).
+      data_tests:
+      - not_null
+      - unique
+    - name: contrato
+      description: Contrato com dígito, para exibição.
+    - name: contrato_municipio_empreendimento
+      description: Rótulo contrato - município/UF - empreendimento, para filtro.
+    - name: tomador_codigo
+      description: Código do tomador no Canal FGTS.
+    - name: tomador_nome
+      description: Nome do tomador.
+    - name: tomador_esfera
+      description: Município, Estado/DF ou Companhia ou autarquia.
+    - name: uf
+      description: Sigla da UF.
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: municipio
+      description: Município do empreendimento.
+    - name: tipo_intervencao
+      description: Urbanização, Provisão habitacional, Desenvolvimento institucional ou Situação de emergência.
+    - name: dt_assinatura
+      description: Data de assinatura do contrato.
+    - name: valor_contratado
+      description: Valor contratado (R$).
+    - name: vr_desembolsado
+      description: Desembolsado acumulado (R$; piso antes de 2000).
+    - name: quantidade_uh
+      description: UH financiadas.
+    - name: estagio_obra
+      description: 'Status de execução: Concluído, Em Andamento, Paralisado, Não Iniciado, Cancelado ou
+        distratado, Sem Informação.'
+    - name: situacao_obra
+      description: Situação da obra na última medição.
+    - name: percentual_execucao_fisica
+      description: Percentual físico atual.
+    - name: percentual_obra_previsto
+      description: Percentual previsto no cronograma.
+    - name: desvio_cronograma_pp
+      description: Físico menos previsto, em pontos.
+    - name: percentual_execucao_financeira
+      description: Percentual financeiro (desembolsado / contratado).
+    - name: ritmo_fisico_financeiro
+      description: Desembolso adiantado, atrasado ou equilibrado.
+    - name: dt_inicio_obra
+      description: Início da obra.
+    - name: dt_termino_obra
+      description: Término da obra (previsto ou realizado, conforme a posição).
+    - name: ic_paralisada
+      description: Contrato na lista de paralisadas da CAIXA.
+    - name: dias_sem_evolucao
+      description: Dias sem evolução (lista de paralisadas).
+    - name: motivo_paralisacao
+      description: Motivo de paralisação informado.
+    - name: qt_medicoes
+      description: Medições mensais já realizadas.
+    - name: dt_primeira_medicao
+      description: Primeira medição.
+    - name: dt_ultima_medicao
+      description: Última medição.
+    - name: dt_ultimo_avanco
+      description: Última medição em que o percentual subiu.
+    - name: meses_sem_avanco
+      description: Meses entre o último avanço e a última medição.
+    - name: avanco_pp_12_meses
+      description: Avanço do percentual realizado nos últimos 12 meses da série, em pontos.
+    - name: qt_mudancas_situacao
+      description: Mudanças de situação da obra entre medições.
+    - name: ic_obra_em_aberto
+      description: Verdadeiro para obra em andamento, paralisada ou não iniciada.
+  - name: ouro_pro_moradia_obra_situacao_mensal
+    description: Quantos contratos do Pró-Moradia estavam em cada situação de obra, mês a mês, por UF, com
+      valor contratado, percentual médio realizado e quantos entraram na situação no mês, a partir das medições
+      mensais do Canal FGTS (sem o cronograma futuro).
+    meta:
+      tags:
+      - gold
+      documentacao:
+        grao: "Uma linha por mês, UF e situação da obra."
+        chave: [mes, uf, situacao_obra]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+    data_tests:
+    - chave_composta_unica:
+        arguments:
+          colunas:
+          - mes
+          - uf
+          - situacao_obra
+    columns:
+    - name: mes
+      description: Mês da medição.
+    - name: uf
+      description: UF do contrato (ND quando ausente).
+    - name: regiao
+      description: Região geográfica da UF.
+    - name: situacao_obra
+      description: Situação da obra no mês.
+    - name: qt_contratos
+      description: Contratos na situação.
+    - name: valor_contratado
+      description: Valor contratado somado (R$).
+    - name: percentual_medio_realizado
+      description: Média do percentual realizado.
+    - name: qt_entraram_no_mes
+      description: Contratos que mudaram para a situação no mês.
+
+  - name: ouro_pro_moradia_portarias
+    description: >
+      Atos que regem o Pró-Moradia: Resolução CCFGTS 702/2012, Instruções Normativas MCID 11/2024 e 26/2024 e a
+      seleção por carta-consulta (sem portaria de resultado). Uma linha por ato. O elo contrato → ato está na
+      ouro_pro_moradia_contrato_selecao.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+      documentacao:
+        grao: "Uma linha por ato que rege o Pró-Moradia."
+        chave: [portaria_codigo]
+        fonte: "Resolução do Conselho Curador do FGTS e instruções normativas do MCID"
+        periodicidade: eventual
+        consumo: ["Consulta direta na camada ouro"]
+    columns:
+      - name: portaria_codigo
+        description: "Código do ato (número_ano; atos que não são portaria levam o prefixo da espécie, como in_11_2024)."
+        tests:
+          - unique
+          - not_null
+      - name: ato
+        description: "Nome do ato por extenso."
+      - name: especie_ato
+        description: "Portaria, Instrução Normativa, Resolução ou Processo de seleção."
+      - name: numero_ato
+        description: "Número do ato."
+      - name: ano_ato
+        description: "Ano do ato."
+      - name: dt_ato
+        description: "Data do ato, quando conhecida."
+      - name: numero_ano
+        description: "Número/ano com ponto de milhar, como 1.310/2024, usado como rótulo."
+      - name: papel_ato
+        description: "Papel no ciclo: Regulamento da linha, Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade), Alteração, Autorização de contratação ou A confirmar."
+      - name: tipo_portaria
+        description: "Tipo para o filtro de portaria: Regulamento da linha, Abertura do ciclo, Seleção, Alteração, Autorização de contratação ou A confirmar."
+      - name: ciclo_selecao
+        description: "Ciclo a que o ato pertence (Seleção 2024, Seleção 2025, Calamidade RS 2024 ou Todos)."
+      - name: tem_lista_nominal
+        description: "Se o ato publica lista de propostas (sim, não)."
+      - name: fonte_lista
+        description: "Onde está (ou deve estar) a lista de propostas."
+      - name: observacao
+        description: "O que o ato faz."
+
+  - name: ouro_pro_moradia_curva_s_referencia
+    description: >
+      Curva S de referência do Pró-Moradia por tempo de contrato (meses desde a assinatura): distribuição do % físico
+      realizado (medições mensais do Canal FGTS) e do % financeiro desembolsado de todos os contratos com medição naquela
+      idade. A mediana é a curva padrão. Grão: idade_meses.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+          - MCID.ExecucaoDeEmpreendimentos
+      documentacao:
+        grao: "Uma linha por idade de contrato, em meses desde a assinatura."
+        chave: [idade_meses]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+    columns:
+      - name: idade_meses
+        description: "Tempo de contrato, em meses (mês do retrato − mês da assinatura)."
+        tests:
+          - unique
+          - not_null
+      - name: qt_retratos
+        description: "Retratos (contrato × mês) daquela idade."
+      - name: qt_contratos
+        description: "Contratos distintos com retrato naquela idade."
+      - name: fis_p10
+        description: "% físico realizado: percentil 10 na idade."
+      - name: fis_p25
+        description: "% físico realizado: percentil 25 na idade."
+      - name: fis_mediana
+        description: "% físico realizado: mediana na idade (curva padrão)."
+      - name: fis_p75
+        description: "% físico realizado: percentil 75 na idade."
+      - name: fis_p90
+        description: "% físico realizado: percentil 90 na idade."
+      - name: fis_previsto_mediana
+        description: "% físico previsto pelo cronograma: mediana na idade."
+      - name: fin_p10
+        description: "% financeiro: percentil 10 na idade."
+      - name: fin_p25
+        description: "% financeiro: percentil 25 na idade."
+      - name: fin_mediana
+        description: "% financeiro: mediana na idade."
+      - name: fin_p75
+        description: "% financeiro: percentil 75 na idade."
+      - name: fin_p90
+        description: "% financeiro: percentil 90 na idade."
+      - name: ic_referencia_valida
+        description: "Verdadeiro quando a idade tem pelo menos 10 retratos."
+
+  - name: ouro_pro_moradia_curva_s_desvio
+    description: >
+      Quais contratos do Pró-Moradia fogem da curva S de referência: medição mais recente do Canal FGTS comparada com
+      os contratos na mesma idade (desvio da mediana, desvio do próprio cronograma e faixa). Grão: contrato.
+      ic_obra_em_aberto separa as obras vigentes ainda abaixo de 100%.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+          - MCID.ExecucaoDeEmpreendimentos
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, com o desvio da curva S de referência."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+    columns:
+      - name: cod_contrato
+        description: "Código do contrato no Canal FGTS."
+        tests:
+          - unique
+          - not_null
+      - name: contrato
+        description: "Número do contrato com DV."
+      - name: empreendimento_nome
+        description: "Nome do empreendimento."
+      - name: tomador_nome
+        description: "Ente tomador do financiamento."
+      - name: tomador_esfera
+        description: "Esfera do tomador (estadual, municipal…)."
+      - name: uf
+        description: "Sigla da UF."
+      - name: municipio
+        description: "Município."
+      - name: modalidade
+        description: "Modalidade do Pró-Moradia."
+      - name: tipo_intervencao
+        description: "Tipo de intervenção."
+      - name: situacao_contrato
+        description: "Situação do contrato no Canal FGTS."
+      - name: ic_contrato_vigente
+        description: "Verdadeiro se o contrato está vigente."
+      - name: dt_assinatura
+        description: "Data de assinatura."
+      - name: ano_assinatura
+        description: "Ano de assinatura."
+      - name: valor_contratado
+        description: "Valor contratado (R$)."
+      - name: quantidade_uh_financiadas
+        description: "UH financiadas (zero em urbanização, lotes e encostas)."
+      - name: identificador_selecao
+        description: "Texto do ato de seleção no Canal FGTS (cod_ident_externo)."
+      - name: dt_ultima_medicao
+        description: "Mês da medição mais recente usada."
+      - name: idade_meses
+        description: "Meses desde a assinatura na última medição."
+      - name: pct_fisico_realizado
+        description: "% físico realizado na última medição."
+      - name: pct_fisico_previsto
+        description: "% físico previsto no cronograma na última medição."
+      - name: pct_financeiro
+        description: "% desembolsado acumulado ÷ contratado (nulo se o contrato não tem desembolso no canal)."
+      - name: situacao_obra
+        description: "Situação da obra na última medição."
+      - name: qt_contratos_na_idade
+        description: "Contratos que formam a referência da idade."
+      - name: fis_p10
+        description: "Referência: p10 do % físico na idade."
+      - name: fis_p25
+        description: "Referência: p25 do % físico na idade."
+      - name: fis_mediana
+        description: "Referência: mediana do % físico na idade."
+      - name: fis_p75
+        description: "Referência: p75 do % físico na idade."
+      - name: fis_p90
+        description: "Referência: p90 do % físico na idade."
+      - name: fin_mediana
+        description: "Referência: mediana do % financeiro na idade."
+      - name: desvio_mediana_pp
+        description: "% físico − mediana da idade, em p.p. (negativo = atrás dos demais)."
+      - name: desvio_cronograma_pp
+        description: "% físico realizado − previsto do próprio cronograma, em p.p."
+      - name: diferenca_financeiro_fisico_pp
+        description: "% financeiro − % físico, em p.p."
+      - name: faixa_curva_fisica
+        description: "Muito abaixo da curva (≤ p10 ou 20 p.p. abaixo da mediana), Abaixo da curva (< p25), Na curva (p25 a p75), Acima da curva (> p75) ou Sem referência."
+        tests:
+          - accepted_values:
+              values: ['Muito abaixo da curva', 'Abaixo da curva', 'Na curva', 'Acima da curva', 'Sem referência']
+      - name: ic_obra_em_aberto
+        description: "Verdadeiro se o contrato está vigente e o físico está abaixo de 100%."
+      - name: dt_referencia_base
+        description: "Mês da medição mais recente da base (data de corte)."
+      - name: meses_sem_medicao
+        description: "Meses entre a última medição do contrato e dt_referencia_base."
+      - name: situacao_acompanhamento
+        description: "Atrasada (obra em aberto, medição nos últimos 12 meses, abaixo do p25 da idade), Sem medição há 12+ meses (obra em aberto sem medição recente: provável paralisação), Em dia, Sem referência ou Concluída ou encerrada."
+        tests:
+          - accepted_values:
+              values: ['Atrasada', 'Sem medição há 12+ meses', 'Em dia', 'Sem referência', 'Concluída ou encerrada']
+
+  - name: ouro_pro_moradia_curva_s
+    description: >
+      Execução físico-financeira da carteira do Pró-Moradia por mês do calendário. Grão: mês × UF × tipo de intervenção ×
+      situação na carteira. Carteira: contratos assinados até o mês com alguma medição; o mês sem medição repete a
+      última. Pesos por valor contratado. Financeiro só dos contratos com desembolso no Canal FGTS. Para a carteira
+      ativa filtre situacao_carteira = 'Em execução' (sem o filtro, os concluídos entram a 100% para sempre). A Curva S
+      propriamente dita está em ouro_pro_moradia_curva_s_referencia (por tempo de contrato). O % previsto vem quase
+      sempre 0 no Canal FGTS: não use como cronograma. Some as colunas de soma e recalcule os percentuais.
+    meta:
+      tags:
+        - gold
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais
+          - MCID.ExecucaoDeEmpreendimentos
+      documentacao:
+        grao: "Uma linha por mês, UF, tipo de intervenção e situação na carteira."
+        chave: [id_curva_s]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+    columns:
+      - name: id_curva_s
+        description: "Identificador da linha (md5 do grão)."
+        tests:
+          - unique
+          - not_null
+      - name: mes
+        description: "Mês de referência."
+      - name: ic_ultimo_mes
+        description: "Verdadeiro no último mês da série."
+      - name: uf
+        description: "Sigla da UF."
+      - name: tipo_intervencao
+        description: "Tipo de intervenção."
+      - name: situacao_carteira
+        description: "Situação do contrato no mês: Em execução, Concluída (físico = 100%) ou Sem medição há 12+ meses."
+        tests:
+          - accepted_values:
+              values: ['Em execução', 'Concluída', 'Sem medição há 12+ meses']
+      - name: qt_contratos
+        description: "Contratos na carteira no mês."
+      - name: valor_contratado
+        description: "Valor contratado da carteira (R$)."
+      - name: valor_com_medicao
+        description: "Valor contratado dos contratos com medição (denominador do % físico)."
+      - name: fis_realizado_x_valor
+        description: "Σ(% realizado × valor contratado)."
+      - name: valor_com_previsao
+        description: "Valor contratado dos contratos com % previsto."
+      - name: fis_previsto_x_valor
+        description: "Σ(% previsto × valor contratado)."
+      - name: valor_com_desembolso
+        description: "Valor contratado dos contratos com desembolso no canal (denominador do % financeiro)."
+      - name: vr_desembolsado_acumulado
+        description: "Desembolsado acumulado até o mês (R$), desses contratos."
+      - name: pct_fisico_realizado
+        description: "% físico realizado da linha (ponderado por valor). Não somar."
+      - name: pct_fisico_previsto
+        description: "% físico previsto da linha (ponderado por valor). Não somar."
+      - name: pct_financeiro
+        description: "% desembolsado da linha. Não somar."

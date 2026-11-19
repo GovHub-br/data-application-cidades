@@ -332,15 +332,20 @@ def sincronizar_produtos(om: ClienteOM, donos: Proprietarios, dominios: dict) ->
                 f"produto {p['name']}",
             )
         else:
-            # `domains` vem DEPOIS de `desejado`: lá ele é referência de
-            # entidade, o formato do PATCH, e a criação só aceita o FQN em
-            # texto. Na ordem inversa a referência sobrescrevia o FQN e a API
-            # recusava todo produto novo com 400 "Invalid request format".
-            om.criar(
-                "dataProducts",
-                {"name": p["name"], **desejado, "domains": [p["domain"]]},
-                p["name"],
-            )
+            # Em CreateDataProduct, `domains` e `experts` são listas de STRING
+            # (FQN do domínio, login do especialista), não as referências de
+            # entidade que o patch aceita. Espalhar `desejado` por último
+            # sobrescrevia `domains` com a referência -> HTTP 400.
+            corpo = {
+                chave: valor
+                for chave, valor in desejado.items()
+                if chave not in {"domains", "experts"}
+            }
+            corpo["name"] = p["name"]
+            corpo["domains"] = [p["domain"]]
+            if peritos:
+                corpo["experts"] = [perito["name"] for perito in peritos]
+            om.criar("dataProducts", corpo, p["name"])
 
 
 # ── glossário ───────────────────────────────────────────────────────────────

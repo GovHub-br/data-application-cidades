@@ -34,3 +34,40 @@ Superset — use `--paginas` quando quiser preservar ajustes manuais.
 
 O `.env` precisa de `SUPERSET_URL`, `SUPERSET_USERNAME` e `SUPERSET_PASSWORD`
 (nunca no Git).
+
+## `build_aba_rural_mcid.py` — aba Rural do painel do MCID
+
+Reconstrói só a aba **Rural** do dashboard `mcid-perguntas` (sete seções: visão executiva,
+portarias, contratos/empreendimentos/EOs, execução física e financeira, Curva S, empreendimentos fora da
+curva, qualidade) e os
+filtros nativos `NATIVE_FILTER-RURAL-*`, com escopo só nessa aba. Reaproveita a sessão do
+`build_boletim.py`. Não apaga chart, dataset nem outras abas.
+
+Portaria tem **filtro único por tipo**: *Tipo de portaria* (obrigatório, uma opção: Seleção,
+Autorização de contratação ou Trabalho Social; padrão Seleção) e *Portaria* (depende do tipo). O
+dataset principal é `ouro_rural_painel_portaria` (APF × tipo de portaria), então com um tipo
+escolhido cada contrato conta uma vez.
+
+```bash
+poetry run python scripts/superset/build_aba_rural_mcid.py --dry-run
+poetry run python scripts/superset/build_aba_rural_mcid.py
+```
+
+Pré-requisito: materializadas pelo dbt `ouro_rural_painel_portaria`, `ouro_rural_painel_pendencia`,
+`ouro_rural_curva_s`, `ouro_rural_curva_s_referencia`, `ouro_rural_curva_s_desvio`,
+`ouro_rural_selecao_portarias` e `ouro_rural_portarias_selecao_resumo`.
+
+## `build_secao_curva_s_linhas.py` — Curva S do Pró-Moradia e empenho do Sub-50
+
+Acrescenta no fim das abas do `mcid-perguntas`: no **Pró-Moradia**, a Curva S por tempo de contrato, a execução da
+carteira em obra, as obras atrasadas e as sem medição há 12+ meses; no **FNHIS Sub-50**, a evolução do empenho, as
+faixas e a situação das parcelas e os termos parados na mesma parcela (o Sub-50 não tem Curva S: sem % físico). Só
+troca as linhas que ele mesmo criou (ids `CS-PM-*` e `CS-FN-*`); o resto das abas e os filtros ficam como estão.
+
+```bash
+poetry run python scripts/superset/build_secao_curva_s_linhas.py --dry-run
+poetry run python scripts/superset/build_secao_curva_s_linhas.py
+```
+
+Pré-requisito: `ouro_pro_moradia_curva_s*`, `ouro_fnhis_curva_s` e `ouro_fnhis_empenho_parcelas` materializadas
+pelo dbt.

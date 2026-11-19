@@ -5,7 +5,7 @@
 with
     fichas as (
         select apf, nome_empreendimento, municipio, uf, programa, agente_financeiro, quantidade_uh
-        from {{ ref("ouro_rural_ficha_empreendimento") }}
+        from {{ ref("prata_rural_ficha_empreendimento") }}
     ),
 
     cpj as (
