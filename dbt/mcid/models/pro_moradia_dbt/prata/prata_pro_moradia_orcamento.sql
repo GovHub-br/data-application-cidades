@@ -30,7 +30,7 @@ with
     orcamento as (
         select
             {{ parse_int("ano_dotacao::text") }} as ano_orcamento,
-            initcap(lower(nullif(trim({{ target.schema }}.corrigir_mojibake(coalesce(
+            initcap(lower(nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(coalesce(
                 {%- for c in colunas_regiao %}nullif(trim("{{ c }}"::text), ''){{ ', ' if not loop.last }}{% endfor -%}
             ))), ''))) as regiao,
             {{ parse_numeric("orcamento_original::text", "numeric(17, 2)") }} as orcamento_original,
@@ -39,7 +39,7 @@ with
             nullif(trim(arquivo_de_origem::text), '') as arquivo_de_origem,
             cast(filename as varchar) as arquivo_lake
         from {{ ref("bronze_shpt_fgts_orcamento_final") }}
-        where upper({{ target.schema }}.corrigir_mojibake(programa::text)) like 'PR%MORADIA'
+        where upper({{ var('schema_udfs') }}.corrigir_mojibake(programa::text)) like 'PR%MORADIA'
     )
 
 select distinct on (ano_orcamento, regiao)

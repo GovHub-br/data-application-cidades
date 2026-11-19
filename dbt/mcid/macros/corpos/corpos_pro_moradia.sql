@@ -279,7 +279,7 @@ select
         when trim(x.dte_ultima_vistoria::text) ~ '^\d{2}/\d{2}/\d{2}'
         then to_date(left(trim(x.dte_ultima_vistoria::text), 8), 'MM/DD/YY')
     end as dt_ultima_vistoria,
-    nullif(trim({{ target.schema }}.corrigir_mojibake(x.txt_providencias::text)), '') as providencias,
+    nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(x.txt_providencias::text)), '') as providencias,
     to_date(trim(x.dte_ano_mes_avaliacao::text) || '01', 'YYYYMMDD')
     > date_trunc('month', current_date)::date as ic_avaliacao_futura
 from {{ ref("bronze_shpt_fgts_canal_execucoes_obras") }} x
@@ -483,15 +483,15 @@ select
     trim(p.cod_contrato::text) as cod_contrato,
     trim(p.cod_contrato_dv::text) as cod_contrato_dv,
     {{ parse_int("p.dias_sem_evolucao::text") }} as dias_sem_evolucao,
-    nullif(trim({{ target.schema }}.corrigir_mojibake(p.faixa_paralisacao::text)), '') as faixa_paralisacao,
-    nullif(trim({{ target.schema }}.corrigir_mojibake(p.ultimo_motivo_paralisacao::text)), '') as motivo_paralisacao,
-    nullif(trim({{ target.schema }}.corrigir_mojibake(p.ultimo_entrave_preenchido::text)), '') as entrave,
-    nullif(trim({{ target.schema }}.corrigir_mojibake(p.situacao_atual::text)), '') as situacao_atual,
-    upper(trim({{ target.schema }}.corrigir_mojibake(p.plano_acao_aprovado_af::text))) in ('SIM', 'S') as ic_plano_acao_aprovado,
+    nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(p.faixa_paralisacao::text)), '') as faixa_paralisacao,
+    nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(p.ultimo_motivo_paralisacao::text)), '') as motivo_paralisacao,
+    nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(p.ultimo_entrave_preenchido::text)), '') as entrave,
+    nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(p.situacao_atual::text)), '') as situacao_atual,
+    upper(trim({{ var('schema_udfs') }}.corrigir_mojibake(p.plano_acao_aprovado_af::text))) in ('SIM', 'S') as ic_plano_acao_aprovado,
     case
         when trim(p.dt_ultimo_bm::text) ~ '^\d{4}-\d{2}-\d{2}' then left(trim(p.dt_ultimo_bm::text), 10)::date
     end as dt_ultimo_boletim_medicao,
-    {{ target.schema }}.parse_date_br(nullif(trim(p.dt_previsao_conclusao_objeto::text), '')) as dt_previsao_conclusao
+    {{ var('schema_udfs') }}.parse_date_br(nullif(trim(p.dt_previsao_conclusao_objeto::text), '')) as dt_previsao_conclusao
 from {{ ref("bronze_shpt_fgts_canal_paralisadas_setor_publico") }} p
 join contrato c on c.cod_contrato = trim(p.cod_contrato::text)
 {% endmacro %}

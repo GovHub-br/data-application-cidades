@@ -12,12 +12,12 @@
     case
         when {{ coluna }} is null or trim({{ coluna }}) = '' then null
         when {{ coluna }} ~ '^\d{4}-\d{2}-\d{2}' then left({{ coluna }}, 10)::date
-        else {{ target.schema }}.parse_date_br({{ coluna }})
+        else {{ var('schema_udfs') }}.parse_date_br({{ coluna }})
     end
 {% endmacro %}
 
 {% macro familia_texto(coluna) %}
-    nullif(trim({{ target.schema }}.corrigir_mojibake({{ coluna }}::text)), '')
+    nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake({{ coluna }}::text)), '')
 {% endmacro %}
 
 {% macro familia_faixa_etaria(dt_nascimento, dt_referencia) %}
@@ -47,7 +47,7 @@ with
         select
             'BB' as agente_financeiro,
             {{ familia_texto('co_agente_financeiro') }} as agente_financeiro_codigo,
-            {{ target.schema }}.normalize_apf(nu_contrato_empreendimento::text) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_contrato_empreendimento::text) as apf,
             {{ familia_texto('nu_contrato_empreendimento') }} as nu_contrato_empreendimento,
             {{ familia_texto('nu_contrato_individual') }} as nu_contrato_individual,
             {{ familia_data('dt_movimento') }} as dt_movimento,
@@ -95,7 +95,7 @@ with
         select
             'CAIXA' as agente_financeiro,
             {{ familia_texto('co_agente_financeiro') }} as agente_financeiro_codigo,
-            {{ target.schema }}.normalize_apf(nu_apf::text) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
             {{ familia_texto('nu_contrato_emprendimento') }} as nu_contrato_empreendimento,
             {{ familia_texto('nu_contrato_individual') }} as nu_contrato_individual,
             {{ familia_data('dt_movimento') }} as dt_movimento,
@@ -163,8 +163,8 @@ with
     bruto as (
         select
             {{ familia_texto('co_agente_financeiro') }} as agente_financeiro_codigo,
-            {{ target.schema }}.normalize_apf(nu_apf::text) as apf,
-            {{ target.schema }}.normalize_apf(nuapf_vinculacao::text) as apf_vinculacao,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nuapf_vinculacao::text) as apf_vinculacao,
             {{ familia_texto('nu_contrato') }} as nu_contrato,
             {{ familia_data('dt_movimento') }} as dt_movimento,
             {{ familia_data('dt_assinatura') }} as dt_assinatura,

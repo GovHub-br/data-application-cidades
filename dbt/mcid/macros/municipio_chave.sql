@@ -2,7 +2,7 @@
 -- ou dígito, em maiúsculas. Serve para casar município quando falta o código IBGE.
 {% macro municipio_chave(coluna) -%}
     nullif(regexp_replace(upper(translate(
-        {{ target.schema }}.corrigir_mojibake({{ coluna }}::text),
+        {{ var('schema_udfs') }}.corrigir_mojibake({{ coluna }}::text),
         'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇáàâãäéèêëíìîïóòôõöúùûüç',
         'AAAAAEEEEIIIIOOOOOUUUUCaaaaaeeeeiiiiooooouuuuc'
     )), '[^A-Z0-9]', '', 'g'), '')

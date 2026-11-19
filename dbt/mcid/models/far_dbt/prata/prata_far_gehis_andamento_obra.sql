@@ -11,14 +11,14 @@
 with
     bruto as (
         select
-            {{ target.schema }}.normalize_apf(nu_apf::text) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
             coalesce(
                 to_date(nullif(regexp_replace(anomes::text, '[^0-9]', '', 'g'), ''), 'YYYYMM'),
                 to_date(substring(filename::text from 'OBRA_M(\d{6})'), 'YYYYMM')
             ) as dt_referencia,
-            upper(nullif(trim({{ target.schema }}.corrigir_mojibake(situacao_obra::text)), '')) as situacao_obra,
-            {{ target.schema }}.parse_date_br(nullif(trim(dt_prevista_conclusao::text), '')) as dt_prevista_conclusao,
-            {{ target.schema }}.parse_date_br(nullif(trim(dt_prevista_inauguracao::text), '')) as dt_prevista_inauguracao,
+            upper(nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(situacao_obra::text)), '')) as situacao_obra,
+            {{ var('schema_udfs') }}.parse_date_br(nullif(trim(dt_prevista_conclusao::text), '')) as dt_prevista_conclusao,
+            {{ var('schema_udfs') }}.parse_date_br(nullif(trim(dt_prevista_inauguracao::text), '')) as dt_prevista_inauguracao,
             regexp_replace(filename::text, '^.*/', '') as arquivo_de_origem
         from {{ ref("bronze_sftp_gehis_andamento_obra") }}
         where nullif(trim(nu_apf::text), '') is not null
