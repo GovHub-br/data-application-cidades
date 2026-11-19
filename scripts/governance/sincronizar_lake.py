@@ -53,6 +53,14 @@ CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog
 #: A macro registra a dependência do model bronze na fonte do lake. Ler a
 #: chamada é ler a declaração — não há SQL compilado nem caminho de dado aqui.
 CHAMADA_FONTE = re.compile(r"(?:fonte_lake|caminho_fonte_lake)\(\s*['\"]([^'\"]+)['\"]")
+#: Toda pasta `bronze/` do `dbt_project.yml` declara `+schema: bronze`. É onde
+#: procurar o model que o catálogo semântico ainda não lista: produto novo entra
+#: no dbt antes de entrar no catálogo, e sem isto a linhagem dele falhava.
+SCHEMA_BRONZE = "bronze"
+#: `alias` muda o nome da tabela no banco, não o do model. Só vale dentro do
+#: `config()` — "alias" em comentário de SQL não é apelido.
+CONFIG = re.compile(r"config\((.*?)\)\s*}}", re.S)
+APELIDO = re.compile(r"\balias\s*=\s*['\"]([^'\"]+)['\"]")
 
 
 @dataclass

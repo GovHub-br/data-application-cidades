@@ -176,6 +176,81 @@ produtos:
       beneficiário, execução física, liberação financeira por componente,
       trabalho social e infraestrutura de água e saneamento.
 
+  # `product: mcmv_historico` já era usado em `dbt_project.yml` sem entrada
+  # aqui — `test_todo_produto_do_dbt_esta_declarado_em_dominios` acusa.
+  # Sem `prefixos_de_tabela` de propósito: a bronze mistura `bronze_dhist_`,
+  # `bronze_sftp_` e `bronze_shpt_`, e a prata reaproveita os prefixos dos
+  # outros produtos (`prata_far_historico_`, `prata_fds_historico_`,
+  # `prata_rural_historico_`) — declarar qualquer um deles aqui colidiria com
+  # `empreendimento_far`/`entidades_fds`/`empreendimento_rural` em
+  # `test_prefixo_de_tabela_nao_colide_entre_produtos`. A atribuição por
+  # tabela fica pendente de decisão de quem introduziu o produto.
+  - name: mcmv_historico
+    display_name: Histórico MCMV
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    description: >
+      Série histórica por empreendimento do MCMV (FAR, FDS e Rural), a partir
+      de arquivos SNH e SFTP anteriores à ingestão corrente, para reconstituir
+      o acompanhamento físico-financeiro fora da janela coberta pelos outros
+      produtos.
+
+  - name: reloginho
+    display_name: Reloginho MCMV
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    description: >
+      Indicadores temporais de contratação, entrega e acompanhamento físico
+      do MCMV. O produto é declarado separadamente para que os modelos dbt
+      com governance.product=reloginho sejam catalogados no OpenMetadata.
+
+  - name: reforma_casa_brasil
+    display_name: Reforma Casa Brasil
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - prata_reforma_casa_brasil_
+      - ouro_reforma_casa_brasil_
+    description: >
+      Produto de dados para caracterização do acesso, acompanhamento da
+      implementação e linha de base de resultados do Reforma Casa Brasil. Une
+      contratos pseudonimizados do SFTP/GEFUS a pessoas e famílias do CadÚnico
+      por tokens HMAC de CPF/NIS; a camada Ouro publica somente agregados com
+      supressão de células pequenas.
+
+  - name: linha_financiada
+    display_name: Linha Financiada
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+      - ouro
+    prefixos_de_tabela:
+      - bronze_sharepoint_fgts_
+      - bronze_sharepoint_novo_mcmv_cidades_
+      - bronze_sharepoint_orcamento_resultado_fundo_social
+      - bronze_sharepoint_tpc_orcamento_final
+      - prata_linha_financiada_
+      - ouro_linha_financiada_
+    description: >
+      Produto unificado de contratação, empreendimentos, orçamento e
+      contrapartidas da Linha Financiada, incluindo os recortes Classe Média,
+      MCMV Cidades, Pró-Moradia, FGTS e Fundo Social. Mantém as lacunas de
+      cobertura explícitas e publica saídas próprias para BI e predição.
+
   # Pró-Moradia não é linha do MCMV: é programa do FGTS para o setor público, com tomador
   # estado, DF, município ou companhia de habitação — por isso fica sob `ProgramasHabitacionais`
   # e não sob `MCMV` no glossário. A bronze do Canal FGTS traz todos os programas do fundo;
@@ -290,6 +365,8 @@ etiquetas_automaticas:
     pro_moradia: dbtTags.pro_moradia
     fnhis_sub50: dbtTags.fnhis_sub50
     trabalho_social: dbtTags.trabalho_social
+    reforma_casa_brasil: dbtTags.reforma_casa_brasil
+    linha_financiada: dbtTags.linha_financiada
   por_camada:
     bronze: dbtTags.bronze
     silver: dbtTags.silver
@@ -402,6 +479,12 @@ classificacoes:
       - name: trabalho_social
         display_name: Trabalho Social
         description: Ativo do produto de dados Trabalho Social.
+      - name: linha_financiada
+        display_name: Linha Financiada
+        description: Ativo do produto de dados Linha Financiada.
+      - name: reforma_casa_brasil
+        display_name: Reforma Casa Brasil
+        description: Ativo do produto de dados Reforma Casa Brasil.
       - name: bronze
         display_name: Bronze
         description: Ativo da camada que preserva a representação recebida da origem.
