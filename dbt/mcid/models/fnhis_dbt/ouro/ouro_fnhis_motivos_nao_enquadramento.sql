@@ -7,23 +7,34 @@
 -- por regra; uma proposta pode ter mais de um motivo (uma linha por motivo). As que passaram no
 -- enquadramento mas não foram selecionadas entram com o motivo da seleção (cota insuficiente da
 -- UF ou município já contemplado), para que a tabela responda "por que ficou de fora" inteira.
-
 with
-    prop as (
-        select * from {{ ref("prata_fnhis_propostas") }}
-        where not ic_selecionada
-    ),
+    prop as (select * from {{ ref("prata_fnhis_propostas") }} where not ic_selecionada),
 
     regras as (
-        select * from (values
-            (1, 'Titularidade da área em desacordo', 'titularidade'),
-            (2, 'Proposta retificadora apresentada', 'retificadora'),
-            (3, 'UH acima do limite para o porte do município', 'maior que o limite|limite disposto'),
-            (4, 'Área suscetível a risco / declaração de risco', 'risco|deslizamento|inunda'),
-            (5, 'Excede nº de propostas por município/proponente', 'supera n|n.mero de propostas'),
-            (6, 'Município acima de 50 mil habitantes', 'popula..o|mil hab'),
-            (7, 'Documentação ausente ou irregular', 'document|of.cio|assinatura|certid')
-        ) as r (ordem, motivo, padrao)
+        select *
+        from
+            (
+                values
+                    (1, 'Titularidade da área em desacordo', 'titularidade'),
+                    (2, 'Proposta retificadora apresentada', 'retificadora'),
+                    (
+                        3,
+                        'UH acima do limite para o porte do município',
+                        'maior que o limite|limite disposto'
+                    ),
+                    (
+                        4,
+                        'Área suscetível a risco / declaração de risco',
+                        'risco|deslizamento|inunda'
+                    ),
+                    (
+                        5,
+                        'Excede nº de propostas por município/proponente',
+                        'supera n|n.mero de propostas'
+                    ),
+                    (6, 'Município acima de 50 mil habitantes', 'popula..o|mil hab'),
+                    (7, 'Documentação ausente ou irregular', 'document|of.cio|assinatura|certid')
+            ) as r(ordem, motivo, padrao)
     ),
 
     nao_enq as (
@@ -36,8 +47,9 @@ with
     nao_enq_outros as (
         select p.numero_proposta, 99 as ordem, 'Outros (ver justificativa)' as motivo
         from prop p
-        where p.resultado_selecao = 'Não enquadrada'
-          and not exists (select 1 from nao_enq n where n.numero_proposta = p.numero_proposta)
+        where
+            p.resultado_selecao = 'Não enquadrada'
+            and not exists (select 1 from nao_enq n where n.numero_proposta = p.numero_proposta)
     ),
 
     fora_selecao as (
@@ -47,9 +59,14 @@ with
     ),
 
     motivos as (
-        select * from nao_enq
-        union all select * from nao_enq_outros
-        union all select * from fora_selecao
+        select *
+        from nao_enq
+        union all
+        select *
+        from nao_enq_outros
+        union all
+        select *
+        from fora_selecao
     )
 
 select
@@ -61,7 +78,9 @@ select
     p.proponente_esfera,
     p.quantidade_uh,
     p.resultado_selecao,
-    case when p.resultado_selecao = 'Não enquadrada' then 'Enquadramento' else 'Seleção' end as etapa_em_que_saiu,
+    case
+        when p.resultado_selecao = 'Não enquadrada' then 'Enquadramento' else 'Seleção'
+    end as etapa_em_que_saiu,
     m.motivo,
     m.ordem as ordem_motivo,
     count(*) over (partition by p.numero_proposta) as qt_motivos_da_proposta,

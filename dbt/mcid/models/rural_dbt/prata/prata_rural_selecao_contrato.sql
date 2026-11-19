@@ -5,5 +5,4 @@
 --
 -- O SQL está em macros/corpos/corpos_rural.sql (corpo_prata_rural_selecao_contrato), porque a
 -- prata do Trabalho Social (prata_ts_selecao_contrato) usa a mesma regra e prata não lê prata.
-
 {{ corpo_prata_rural_selecao_contrato() }}

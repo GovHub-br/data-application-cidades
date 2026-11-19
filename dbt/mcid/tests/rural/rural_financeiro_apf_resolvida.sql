@@ -5,14 +5,17 @@
 -#}
 {{ config(severity="warn") }}
 
-with t as (
-    select
-        count(distinct nu_apf_origem) as apfs,
-        count(distinct nu_apf_origem) filter (
-            where metodo_chave_apf in ('APF com DV na origem', 'APF sem DV resolvida pelos 6 primeiros dígitos')
-        ) as resolvidas
-    from {{ ref("prata_rural_financeiro_mensal") }}
-)
+with
+    t as (
+        select
+            count(distinct nu_apf_origem) as apfs,
+            count(distinct nu_apf_origem) filter (
+                where
+                    metodo_chave_apf
+                    in ('APF com DV na origem', 'APF sem DV resolvida pelos 6 primeiros dígitos')
+            ) as resolvidas
+        from {{ ref("prata_rural_financeiro_mensal") }}
+    )
 
 select apfs, resolvidas, round(100.0 * resolvidas / nullif(apfs, 0), 1) as pct_resolvidas
 from t

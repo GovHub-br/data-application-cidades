@@ -1,7 +1,9 @@
 {{ config(materialized="table") }}
 
--- Bronze: Operações do FGTS com o setor público cuja obra está paralisada (canal AO_2): dias sem evolução, faixa e motivo da paralisação, plano de ação.
--- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por tabela)
+-- Bronze: Operações do FGTS com o setor público cuja obra está paralisada (canal AO_2): dias sem
+-- evolução, faixa e motivo da paralisação, plano de ação.
+-- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por
+-- tabela)
 {% set padrao = "s3://data-lake-mcid/staging/**/fgts_canal_tab_ao_2_operacoes_paralisadas_fgts_setorpublico.parquet" %}
 
 select *

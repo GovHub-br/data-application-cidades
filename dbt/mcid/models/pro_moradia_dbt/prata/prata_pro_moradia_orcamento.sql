@@ -15,7 +15,6 @@
 -- primeira coluna não nula entre as que falam de região/agrupamento na bronze materializada.
 -- Linha que ainda assim fica sem região — total geral do programa, por exemplo — é descartada:
 -- somada às regiões, ela contaria o orçamento duas vezes.
-
 {%- set colunas_regiao = [] -%}
 {%- if execute -%}
     {%- for c in adapter.get_columns_in_relation(ref("bronze_shpt_fgts_orcamento_final")) -%}
@@ -24,15 +23,28 @@
         {%- endif -%}
     {%- endfor -%}
 {%- endif -%}
-{%- if not colunas_regiao -%}{%- do colunas_regiao.append("agrupamento") -%}{%- endif %}
+{%- if not colunas_regiao -%} {%- do colunas_regiao.append("agrupamento") -%} {%- endif %}
 
 with
     orcamento as (
         select
             {{ parse_int("ano_dotacao::text") }} as ano_orcamento,
-            initcap(lower(nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(coalesce(
-                {%- for c in colunas_regiao %}nullif(trim("{{ c }}"::text), ''){{ ', ' if not loop.last }}{% endfor -%}
-            ))), ''))) as regiao,
+            initcap(
+                lower(
+                    nullif(
+                        trim(
+                            {{ var('schema_udfs') }}.corrigir_mojibake(
+                                coalesce(
+                                    {%- for c in colunas_regiao %}
+                                        nullif(trim("{{ c }}"::text), ''){{ ', ' if not loop.last }}
+                                    {% endfor -%}
+                                )
+                            )
+                        ),
+                        ''
+                    )
+                )
+            ) as regiao,
             {{ parse_numeric("orcamento_original::text", "numeric(17, 2)") }} as orcamento_original,
             {{ parse_numeric("orcamento_final::text", "numeric(17, 2)") }} as orcamento_final,
             {{ parse_numeric("orcamento_alocado::text", "numeric(17, 2)") }} as orcamento_alocado,
@@ -42,7 +54,8 @@ with
         where upper({{ var('schema_udfs') }}.corrigir_mojibake(programa::text)) like 'PR%MORADIA'
     )
 
-select distinct on (ano_orcamento, regiao)
+select distinct
+    on (ano_orcamento, regiao)
     ano_orcamento,
     regiao,
     orcamento_original,

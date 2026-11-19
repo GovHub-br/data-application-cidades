@@ -35,7 +35,7 @@ import argparse
 import csv
 import html
 import re
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 import pdfplumber
@@ -47,7 +47,9 @@ SAIDA = PASTA / "saida"
 
 RE_ID = re.compile(r"[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}", re.I)
 RE_CNPJ = re.compile(r"\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}")
-UFS = set("AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split())
+UFS = set(
+    "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split()
+)
 
 # palavra do cabeçalho -> campo
 CABECALHO = [
@@ -145,7 +147,9 @@ def linhas_de_tabelas(tabelas: list, pagina: int, estado: dict) -> list:
             if len(buffer) > 4:
                 del buffer[0]
             junta = juntar_linhas(buffer, col_id)
-            get = lambda campo: junta[mapa[campo]] if campo in mapa and mapa[campo] < len(junta) else ""
+            get = lambda campo: (
+                junta[mapa[campo]] if campo in mapa and mapa[campo] < len(junta) else ""
+            )
             pid = norm_id(get("id_proposta"))
             if not pid and len(buffer) == 1:
                 # layout de uma linha só, sem coluna de código mapeada: procura o código célula a célula
@@ -155,7 +159,9 @@ def linhas_de_tabelas(tabelas: list, pagina: int, estado: dict) -> list:
             if not pid:
                 compacto = re.sub(r"\s", "", "".join(limpa(c) for c in linha)).upper()
                 if compacto.startswith("TOTAL"):
-                    estado["total_declarado"] = norm_int(get("qt_uh")) or estado.get("total_declarado")
+                    estado["total_declarado"] = norm_int(get("qt_uh")) or estado.get(
+                        "total_declarado"
+                    )
                     estado["buffer"] = []
                 continue
             estado["buffer"] = []
@@ -164,18 +170,20 @@ def linhas_de_tabelas(tabelas: list, pagina: int, estado: dict) -> list:
                 estado["uf"] = uf
             else:
                 uf = estado.get("uf", "")  # célula de UF mesclada: herda a anterior
-            saida.append({
-                "uf": uf,
-                "municipio": get("municipio").upper(),
-                "municipio_original": get("municipio"),
-                "id_proposta": pid,
-                "eo_nome": get("eo_nome"),
-                "eo_cnpj": norm_cnpj(get("eo_cnpj")) or norm_cnpj(texto_linha),
-                "empreendimento": get("empreendimento"),
-                "qt_uh": norm_int(get("qt_uh")),
-                "pagina": pagina,
-                "metodo": "tabela",
-            })
+            saida.append(
+                {
+                    "uf": uf,
+                    "municipio": get("municipio").upper(),
+                    "municipio_original": get("municipio"),
+                    "id_proposta": pid,
+                    "eo_nome": get("eo_nome"),
+                    "eo_cnpj": norm_cnpj(get("eo_cnpj")) or norm_cnpj(texto_linha),
+                    "empreendimento": get("empreendimento"),
+                    "qt_uh": norm_int(get("qt_uh")),
+                    "pagina": pagina,
+                    "metodo": "tabela",
+                }
+            )
     return saida
 
 
@@ -193,15 +201,26 @@ def linhas_de_texto(texto: str, pagina: int) -> list:
         # município: entre a UF e o código; EO: entre o código e o CNPJ; UH: último número
         idx_id = ln.find(m_id.group(0)) if m_id and m_id.group(0) in ln else -1
         antes = ln[:idx_id] if idx_id >= 0 else ""
-        depois = ln[idx_id + len(m_id.group(0)):] if idx_id >= 0 else ln
-        municipio = limpa(antes[len(uf):] if uf and antes.lstrip().upper().startswith(uf) else antes).upper()
-        eo = limpa(depois[: depois.find(cnpj_m.group(0))] if cnpj_m and cnpj_m.group(0) in depois else "")
-        nums = re.findall(r"\b\d{1,4}\b", ln[cnpj_m.end():] if cnpj_m else ln)
-        saida.append({
-            "uf": uf, "municipio": municipio, "id_proposta": pid, "eo_nome": eo,
-            "eo_cnpj": norm_cnpj(cnpj_m.group(0)) if cnpj_m else "",
-            "qt_uh": int(nums[-1]) if nums else None, "pagina": pagina, "metodo": "texto",
-        })
+        depois = ln[idx_id + len(m_id.group(0)) :] if idx_id >= 0 else ln
+        municipio = limpa(
+            antes[len(uf) :] if uf and antes.lstrip().upper().startswith(uf) else antes
+        ).upper()
+        eo = limpa(
+            depois[: depois.find(cnpj_m.group(0))] if cnpj_m and cnpj_m.group(0) in depois else ""
+        )
+        nums = re.findall(r"\b\d{1,4}\b", ln[cnpj_m.end() :] if cnpj_m else ln)
+        saida.append(
+            {
+                "uf": uf,
+                "municipio": municipio,
+                "id_proposta": pid,
+                "eo_nome": eo,
+                "eo_cnpj": norm_cnpj(cnpj_m.group(0)) if cnpj_m else "",
+                "qt_uh": int(nums[-1]) if nums else None,
+                "pagina": pagina,
+                "metodo": "texto",
+            }
+        )
     return saida
 
 
@@ -247,9 +266,11 @@ def escolher_arquivo(cod: str):
 def codigo_do_nome(caminho: Path) -> tuple:
     """Número e ano da portaria a partir do nome do arquivo (PORTARIAMCIDN698_2026, 698_2026, N698DE...2026)."""
     nome = caminho.stem.upper()
-    m = (re.search(r"N[ºO°]?\s*(\d{1,4})[_\s-]+(20\d{2})", nome)
-         or re.search(r"(?<!\d)(\d{1,4})[_-](20\d{2})(?!\d)", nome)
-         or re.search(r"N[ºO°]?(\d{1,4})DE.*?(20\d{2})", nome))
+    m = (
+        re.search(r"N[ºO°]?\s*(\d{1,4})[_\s-]+(20\d{2})", nome)
+        or re.search(r"(?<!\d)(\d{1,4})[_-](20\d{2})(?!\d)", nome)
+        or re.search(r"N[ºO°]?(\d{1,4})DE.*?(20\d{2})", nome)
+    )
     return (m.group(1).lstrip("0") or "0", m.group(2)) if m else ("", "")
 
 
@@ -257,20 +278,38 @@ def manifesto_avulso(arquivos: list) -> list:
     itens = []
     for a in arquivos:
         numero, ano = codigo_do_nome(a)
-        itens.append({"portaria_codigo": f"{numero}_{ano}" if numero else a.stem, "numero": numero, "ano": ano,
-                      "dt_portaria": "", "papel": "", "selecao": "", "_arquivo": a})
+        itens.append(
+            {
+                "portaria_codigo": f"{numero}_{ano}" if numero else a.stem,
+                "numero": numero,
+                "ano": ano,
+                "dt_portaria": "",
+                "papel": "",
+                "selecao": "",
+                "_arquivo": a,
+            }
+        )
     return itens
 
 
 def main() -> None:
     global SAIDA
     ap = argparse.ArgumentParser()
-    ap.add_argument("arquivos", nargs="*", type=Path,
-                    help="PDFs ou HTML avulsos para ler direto, sem o manifesto do Rural")
+    ap.add_argument(
+        "arquivos",
+        nargs="*",
+        type=Path,
+        help="PDFs ou HTML avulsos para ler direto, sem o manifesto do Rural",
+    )
     ap.add_argument("--so", nargs="*", help="códigos de portaria do manifesto (ex.: 1024_2024)")
-    ap.add_argument("--tabela", action="store_true",
-                    help="grava também a tabela do anexo como está no PDF: <nome do pdf>.csv, separado por ';' (abre direto no Excel)")
-    ap.add_argument("--saida", type=Path, help="pasta das saídas (padrão: saida/ ou a pasta do primeiro PDF)")
+    ap.add_argument(
+        "--tabela",
+        action="store_true",
+        help="grava também a tabela do anexo como está no PDF: <nome do pdf>.csv, separado por ';' (abre direto no Excel)",
+    )
+    ap.add_argument(
+        "--saida", type=Path, help="pasta das saídas (padrão: saida/ ou a pasta do primeiro PDF)"
+    )
     args = ap.parse_args()
 
     if args.arquivos:
@@ -291,16 +330,36 @@ def main() -> None:
     for m in manifesto:
         cod = m["portaria_codigo"]
         arq = m.get("_arquivo") or escolher_arquivo(cod)
-        base = {k: m[k] for k in ("portaria_codigo", "numero", "ano", "dt_portaria", "papel", "selecao")}
+        base = {
+            k: m[k] for k in ("portaria_codigo", "numero", "ano", "dt_portaria", "papel", "selecao")
+        }
         if not arq:
-            conf.append({**base, "arquivo": "", "situacao": "sem arquivo", "propostas": 0, "uh": 0,
-                         "total_uh_declarado": "", "alertas": "baixar o PDF"})
+            conf.append(
+                {
+                    **base,
+                    "arquivo": "",
+                    "situacao": "sem arquivo",
+                    "propostas": 0,
+                    "uh": 0,
+                    "total_uh_declarado": "",
+                    "alertas": "baixar o PDF",
+                }
+            )
             continue
         try:
             linhas, total_decl, _ = ler_html(arq) if arq.suffix == ".html" else ler_pdf(arq)
         except Exception as e:
-            conf.append({**base, "arquivo": arq.name, "situacao": "erro", "propostas": 0, "uh": 0,
-                         "total_uh_declarado": "", "alertas": f"{type(e).__name__}: {e}"})
+            conf.append(
+                {
+                    **base,
+                    "arquivo": arq.name,
+                    "situacao": "erro",
+                    "propostas": 0,
+                    "uh": 0,
+                    "total_uh_declarado": "",
+                    "alertas": f"{type(e).__name__}: {e}",
+                }
+            )
             continue
         for l in linhas:
             todas.append({**base, "arquivo": arq.name, **l})
@@ -308,17 +367,35 @@ def main() -> None:
             destino = SAIDA / f"{arq.stem}.csv"
             with open(destino, "w", newline="", encoding="utf-8-sig") as f:
                 w = csv.writer(f, delimiter=";")
-                w.writerow(["IDENTIFICACAO DA PROPOSTA", "UF", "MUNICÍPIO", "CNPJ ENTIDADE",
-                            "NOME DO EMPREENDIMENTO", "UH"])
+                w.writerow(
+                    [
+                        "IDENTIFICACAO DA PROPOSTA",
+                        "UF",
+                        "MUNICÍPIO",
+                        "CNPJ ENTIDADE",
+                        "NOME DO EMPREENDIMENTO",
+                        "UH",
+                    ]
+                )
                 for l in linhas:
-                    w.writerow([l["id_proposta"], l["uf"], l.get("municipio_original") or l["municipio"],
-                                l["eo_cnpj"], l.get("empreendimento", ""), l["qt_uh"] if l["qt_uh"] is not None else ""])
+                    w.writerow(
+                        [
+                            l["id_proposta"],
+                            l["uf"],
+                            l.get("municipio_original") or l["municipio"],
+                            l["eo_cnpj"],
+                            l.get("empreendimento", ""),
+                            l["qt_uh"] if l["qt_uh"] is not None else "",
+                        ]
+                    )
             print(f"  tabela do anexo: {destino}")
         ids = Counter(l["id_proposta"] for l in linhas)
         uh = sum(l["qt_uh"] or 0 for l in linhas)
         alertas = []
         if not linhas:
-            alertas.append("nenhuma proposta encontrada: abrir o PDF (pode ser imagem ou layout novo)")
+            alertas.append(
+                "nenhuma proposta encontrada: abrir o PDF (pode ser imagem ou layout novo)"
+            )
         if dup := [k for k, v in ids.items() if v > 1]:
             alertas.append(f"{len(dup)} id(s) repetido(s)")
         if n := sum(1 for l in linhas if not l["eo_cnpj"]):
@@ -331,18 +408,47 @@ def main() -> None:
             alertas.append(f"soma das UH ({uh}) diferente do total do anexo ({total_decl})")
         if any(l["metodo"] == "texto" for l in linhas):
             alertas.append("parte lida pelo texto (conferir)")
-        conf.append({**base, "arquivo": arq.name, "situacao": "lido", "propostas": len(linhas), "uh": uh,
-                     "total_uh_declarado": total_decl or "", "alertas": "; ".join(alertas)})
+        conf.append(
+            {
+                **base,
+                "arquivo": arq.name,
+                "situacao": "lido",
+                "propostas": len(linhas),
+                "uh": uh,
+                "total_uh_declarado": total_decl or "",
+                "alertas": "; ".join(alertas),
+            }
+        )
         print(f"{cod:10} {arq.name:34} {len(linhas):5} propostas {uh:7} UH  {'; '.join(alertas)}")
 
-    campos = ["portaria_codigo", "numero", "ano", "dt_portaria", "papel", "selecao", "arquivo", "pagina",
-              "uf", "municipio", "id_proposta", "eo_nome", "eo_cnpj", "empreendimento", "qt_uh", "metodo"]
-    sufixo = "rural" if not args.arquivos else "_".join(m["portaria_codigo"] for m in manifesto)[:80]
+    campos = [
+        "portaria_codigo",
+        "numero",
+        "ano",
+        "dt_portaria",
+        "papel",
+        "selecao",
+        "arquivo",
+        "pagina",
+        "uf",
+        "municipio",
+        "id_proposta",
+        "eo_nome",
+        "eo_cnpj",
+        "empreendimento",
+        "qt_uh",
+        "metodo",
+    ]
+    sufixo = (
+        "rural" if not args.arquivos else "_".join(m["portaria_codigo"] for m in manifesto)[:80]
+    )
     with open(SAIDA / f"propostas_portarias_{sufixo}.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=campos, extrasaction="ignore", restval="")
         w.writeheader()
         w.writerows(todas)
-    with open(SAIDA / f"conferencia_portarias_{sufixo}.csv", "w", newline="", encoding="utf-8") as f:
+    with open(
+        SAIDA / f"conferencia_portarias_{sufixo}.csv", "w", newline="", encoding="utf-8"
+    ) as f:
         w = csv.DictWriter(f, fieldnames=list(conf[0].keys()))
         w.writeheader()
         w.writerows(conf)
@@ -355,21 +461,29 @@ def main() -> None:
         cruz = []
         for l in aut:
             s = sel.get(l["id_proposta"])
-            cruz.append({
-                "id_proposta": l["id_proposta"], "portaria_autorizacao": l["portaria_codigo"],
-                "uf": l["uf"], "municipio": l["municipio"], "eo_cnpj": l["eo_cnpj"], "qt_uh_autorizadas": l["qt_uh"],
-                "esta_na_354": "sim" if s else ("354 não lida" if not sel else "não"),
-                "qt_uh_selecionadas": s["qt_uh"] if s else "",
-                "mesma_eo": ("sim" if s["eo_cnpj"] == l["eo_cnpj"] else "não") if s else "",
-                "autorizada_em_quantas_portarias": vezes[l["id_proposta"]],
-            })
+            cruz.append(
+                {
+                    "id_proposta": l["id_proposta"],
+                    "portaria_autorizacao": l["portaria_codigo"],
+                    "uf": l["uf"],
+                    "municipio": l["municipio"],
+                    "eo_cnpj": l["eo_cnpj"],
+                    "qt_uh_autorizadas": l["qt_uh"],
+                    "esta_na_354": "sim" if s else ("354 não lida" if not sel else "não"),
+                    "qt_uh_selecionadas": s["qt_uh"] if s else "",
+                    "mesma_eo": ("sim" if s["eo_cnpj"] == l["eo_cnpj"] else "não") if s else "",
+                    "autorizada_em_quantas_portarias": vezes[l["id_proposta"]],
+                }
+            )
         with open(SAIDA / "autorizadas_x_selecionadas.csv", "w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=list(cruz[0].keys()))
             w.writeheader()
             w.writerows(cruz)
         ids_aut = set(vezes)
-        print(f"\nSeleção 2023: {len(sel)} selecionadas na 354; {len(ids_aut)} propostas distintas autorizadas"
-              + (f"; {len(ids_aut - set(sel))} autorizadas que não estão na 354" if sel else ""))
+        print(
+            f"\nSeleção 2023: {len(sel)} selecionadas na 354; {len(ids_aut)} propostas distintas autorizadas"
+            + (f"; {len(ids_aut - set(sel))} autorizadas que não estão na 354" if sel else "")
+        )
 
     print(f"\nSaídas em {SAIDA}:")
     for nome in (f"propostas_portarias_{sufixo}.csv", f"conferencia_portarias_{sufixo}.csv"):

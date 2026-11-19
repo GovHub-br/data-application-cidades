@@ -13,12 +13,22 @@ with
         group by mes
     )
 
-select 'percentual fora da faixa' as problema, mes, tipo_portaria, portaria, uf,
-       pct_fisico_realizado, pct_fisico_previsto, pct_financeiro
+select
+    'percentual fora da faixa' as problema,
+    mes,
+    tipo_portaria,
+    portaria,
+    uf,
+    pct_fisico_realizado,
+    pct_fisico_previsto,
+    pct_financeiro
 from {{ ref("ouro_rural_curva_s") }}
-where pct_fisico_realizado not between 0 and 100
-   or pct_fisico_previsto not between 0 and 100
-   or pct_financeiro > 110
+where
+    pct_fisico_realizado not between 0
+    and 100
+    or pct_fisico_previsto not between 0
+    and 100
+    or pct_financeiro > 110
 
 union all
 

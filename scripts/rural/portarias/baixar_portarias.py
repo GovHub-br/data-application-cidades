@@ -77,8 +77,16 @@ def main() -> None:
             destino = DESTINO / f"{l['portaria_codigo']}{sufixo}{ext}"
             status, detalhe = baixar(url, destino, args.refazer)
             print(f"{status:11} {destino.name:40} {detalhe}")
-            log.append({"portaria_codigo": l["portaria_codigo"], "tipo": tipo, "arquivo": destino.name,
-                        "status": status, "detalhe": detalhe, "url": url})
+            log.append(
+                {
+                    "portaria_codigo": l["portaria_codigo"],
+                    "tipo": tipo,
+                    "arquivo": destino.name,
+                    "status": status,
+                    "detalhe": detalhe,
+                    "url": url,
+                }
+            )
             if status == "ok":
                 time.sleep(1)  # não martelar o gov.br
 
@@ -88,7 +96,9 @@ def main() -> None:
         w.writerows(log)
 
     falhas = [x for x in log if x["status"] == "falha"]
-    print(f"\n{len(log)} arquivos: {len(log) - len(falhas)} ok ou já existiam, {len(falhas)} falharam.")
+    print(
+        f"\n{len(log)} arquivos: {len(log) - len(falhas)} ok ou já existiam, {len(falhas)} falharam."
+    )
     for x in falhas:
         print(f"  baixar à mão: {x['arquivo']} <- {x['url']}  ({x['detalhe']})")
 

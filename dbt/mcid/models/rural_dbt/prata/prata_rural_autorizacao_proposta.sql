@@ -5,5 +5,4 @@
 --
 -- O SQL está em macros/corpos/corpos_rural.sql (corpo_prata_rural_autorizacao_proposta), porque a
 -- prata_rural_proposta_funil usa a mesma lógica e prata não lê prata.
-
 {{ corpo_prata_rural_autorizacao_proposta() }}

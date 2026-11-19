@@ -10,11 +10,7 @@
 with
     -- Série financeira: esta sim é temporal, uma linha por APF × mês de liberação.
     financeira as (
-        select
-            apf,
-            mes,
-            pct_executado_financeiro,
-            vr_acumulado
+        select apf, mes, pct_executado_financeiro, vr_acumulado
         from {{ ref("prata_rural_evolucao_financeira") }}
     ),
 

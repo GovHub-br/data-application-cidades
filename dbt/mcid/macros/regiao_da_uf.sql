@@ -9,10 +9,15 @@
 -#}
 {% macro regiao_da_uf(coluna) -%}
     case
-        when {{ coluna }} in ('AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO') then 'Norte'
-        when {{ coluna }} in ('AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE') then 'Nordeste'
-        when {{ coluna }} in ('DF', 'GO', 'MT', 'MS') then 'Centro-Oeste'
-        when {{ coluna }} in ('ES', 'MG', 'RJ', 'SP') then 'Sudeste'
-        when {{ coluna }} in ('PR', 'RS', 'SC') then 'Sul'
+        when {{ coluna }} in ('AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO')
+        then 'Norte'
+        when {{ coluna }} in ('AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE')
+        then 'Nordeste'
+        when {{ coluna }} in ('DF', 'GO', 'MT', 'MS')
+        then 'Centro-Oeste'
+        when {{ coluna }} in ('ES', 'MG', 'RJ', 'SP')
+        then 'Sudeste'
+        when {{ coluna }} in ('PR', 'RS', 'SC')
+        then 'Sul'
     end
 {%- endmacro %}

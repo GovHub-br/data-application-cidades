@@ -8,13 +8,10 @@
 -- começa em dez/2025, então "primeiro estágio" é o primeiro retrato disponível, não o início da
 -- obra. A situação GEHIS (Normal / Em atenção / Risco de paralisação...) é a avaliação da
 -- CAIXA no mesmo período e vem do arquivo GEHIS mais recente para a APF.
-
 with
     serie as (select * from {{ ref("prata_rural_obra_mensal_serie") }}),
 
-    atual as (
-        select distinct on (apf) * from serie order by apf, dt_referencia desc
-    ),
+    atual as (select distinct on (apf) * from serie order by apf, dt_referencia desc),
 
     trajetoria as (
         select
@@ -22,17 +19,26 @@ with
             count(*) as qt_meses_na_serie,
             min(dt_referencia) as dt_primeiro_retrato,
             (array_agg(estagio_obra order by dt_referencia))[1] as estagio_primeiro_retrato,
-            (array_agg(percentual_obra_realizada order by dt_referencia))[1] as percentual_primeiro_retrato,
-            count(*) filter (where estagio_mes_anterior is not null and estagio_obra <> estagio_mes_anterior) as qt_mudancas_estagio,
-            max(dt_referencia) filter (where estagio_mes_anterior is not null and estagio_obra <> estagio_mes_anterior) as dt_ultima_mudanca_estagio,
+            (array_agg(percentual_obra_realizada order by dt_referencia))[
+                1
+            ] as percentual_primeiro_retrato,
+            count(*) filter (
+                where estagio_mes_anterior is not null and estagio_obra <> estagio_mes_anterior
+            ) as qt_mudancas_estagio,
+            max(dt_referencia) filter (
+                where estagio_mes_anterior is not null and estagio_obra <> estagio_mes_anterior
+            ) as dt_ultima_mudanca_estagio,
             count(*) filter (where estagio_obra = 'Paralisada') as qt_meses_paralisada
         from serie
         group by apf
     ),
 
     gehis as (
-        select distinct on (apf) apf, situacao_obra as situacao_gehis, dt_referencia as dt_referencia_gehis,
-               dt_prevista_conclusao as dt_prevista_conclusao_gehis
+        select distinct
+            on (apf) apf,
+            situacao_obra as situacao_gehis,
+            dt_referencia as dt_referencia_gehis,
+            dt_prevista_conclusao as dt_prevista_conclusao_gehis
         from {{ ref("prata_rural_gehis_andamento_obra") }}
         order by apf, dt_referencia desc
     ),
@@ -75,7 +81,9 @@ select
     g.situacao_gehis,
     g.dt_referencia_gehis,
     g.dt_prevista_conclusao_gehis,
-    a.estagio_obra in ('Em obra', 'Em obra - no prazo', 'Em obra - atrasada', 'Paralisada', 'Não iniciada') as ic_obra_em_aberto
+    a.estagio_obra in (
+        'Em obra', 'Em obra - no prazo', 'Em obra - atrasada', 'Paralisada', 'Não iniciada'
+    ) as ic_obra_em_aberto
 from atual a
 join trajetoria t on t.apf = a.apf
 left join op o on o.apf = a.apf

@@ -6,5 +6,5 @@
 -- prata_rural_proposta_funil; esta ouro só a expõe para o painel.
 --
 -- A ouro_rural_selecao_portaria_162 continua igual: para a 162/2018 ela usa só a APF.
-
-select * from {{ ref("prata_rural_proposta_funil") }}
+select *
+from {{ ref("prata_rural_proposta_funil") }}

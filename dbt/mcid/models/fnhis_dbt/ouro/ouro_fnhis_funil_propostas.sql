@@ -5,7 +5,6 @@
 -- contratos da SNH), então as colunas não precisam fechar entre si: a diferença entre
 -- selecionadas e termos ativos é o que não virou instrumento, e entre termos e contratos SNH é o
 -- que a SNH ainda não acompanha.
-
 with
     proposta as (
         select
@@ -13,8 +12,12 @@ with
             count(*) as qt_propostas_apresentadas,
             coalesce(sum(quantidade_uh), 0) as uh_apresentadas,
             count(*) filter (where resultado_selecao = 'Não enquadrada') as qt_nao_enquadradas,
-            count(*) filter (where resultado_selecao = 'Cota insuficiente da UF') as qt_cota_insuficiente,
-            count(*) filter (where resultado_selecao = 'Município já contemplado') as qt_municipio_ja_contemplado,
+            count(*) filter (
+                where resultado_selecao = 'Cota insuficiente da UF'
+            ) as qt_cota_insuficiente,
+            count(*) filter (
+                where resultado_selecao = 'Município já contemplado'
+            ) as qt_municipio_ja_contemplado,
             count(*) filter (where ic_selecionada) as qt_selecionadas,
             coalesce(sum(quantidade_uh) filter (where ic_selecionada), 0) as uh_selecionadas
         from {{ ref("prata_fnhis_propostas") }}
@@ -27,9 +30,15 @@ with
             uf,
             count(*) as qt_termos,
             count(*) filter (where ic_instrumento_ativo) as qt_termos_ativos,
-            count(*) filter (where situacao_instrumento in ('Convênio Anulado', 'Convênio Rescindido')) as qt_termos_anulados_rescindidos,
-            coalesce(sum(valor_repasse) filter (where ic_instrumento_ativo), 0) as valor_repasse_termos_ativos,
-            coalesce(sum(valor_empenhado_acumulado) filter (where ic_instrumento_ativo), 0) as valor_empenhado
+            count(*) filter (
+                where situacao_instrumento in ('Convênio Anulado', 'Convênio Rescindido')
+            ) as qt_termos_anulados_rescindidos,
+            coalesce(
+                sum(valor_repasse) filter (where ic_instrumento_ativo), 0
+            ) as valor_repasse_termos_ativos,
+            coalesce(
+                sum(valor_empenhado_acumulado) filter (where ic_instrumento_ativo), 0
+            ) as valor_empenhado
         from {{ ref("prata_fnhis_termo_compromisso") }}
         where uf is not null
         group by uf
@@ -49,11 +58,14 @@ with
     ),
 
     ufs as (
-        select uf from proposta
+        select uf
+        from proposta
         union
-        select uf from termo
+        select uf
+        from termo
         union
-        select uf from contrato
+        select uf
+        from contrato
     )
 
 select

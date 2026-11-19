@@ -1,16 +1,18 @@
 {{ config(materialized="table") }}
 
 -- Gold: resumo por portaria do ciclo de seleção do Rural — abertura, seleção e autorização de
--- contratação. Mostra todas as portarias do catálogo, inclusive as que ainda não têm anexo carregado,
+-- contratação. Mostra todas as portarias do catálogo, inclusive as que ainda não têm anexo
+-- carregado,
 -- com quantas propostas cada uma lista e quantas viraram contrato. Grão: portaria.
 --
--- Portaria de seleção: propostas = linhas do anexo de seleção; `qt_autorizadas` = quantas delas estão
+-- Portaria de seleção: propostas = linhas do anexo de seleção; `qt_autorizadas` = quantas delas
+-- estão
 -- numa autorização carregada.
--- Portaria de autorização: propostas = linhas do anexo de autorização; o contrato vem do funil, pela
+-- Portaria de autorização: propostas = linhas do anexo de autorização; o contrato vem do funil,
+-- pela
 -- proposta (a autorização não traz APF).
 -- `uh_contratadas` soma as UH dos contratos vinculados; se duas propostas caírem no mesmo contrato
 -- (qt_selecoes_mesmo_contrato > 1), as UH desse contrato entram duas vezes.
-
 with
     cat as (select * from {{ ref("prata_rural_portarias_selecao") }}),
     f as (select * from {{ ref("prata_rural_proposta_funil") }}),
@@ -30,7 +32,9 @@ with
             count(*) filter (where f.confianca_vinculo = 'Média') as qt_vinculo_media,
             count(*) filter (where f.confianca_vinculo = 'Baixa') as qt_vinculo_baixa,
             count(*) filter (where f.ic_mesma_eo is false) as qt_eo_diferente,
-            round(avg(f.dias_selecao_ate_contrato) filter (where f.ic_contratado)) as dias_medios_ate_contrato
+            round(
+                avg(f.dias_selecao_ate_contrato) filter (where f.ic_contratado)
+            ) as dias_medios_ate_contrato
         from f
         group by f.portaria_codigo
     ),
@@ -49,18 +53,23 @@ with
             count(*) filter (where f.confianca_vinculo = 'Média') as qt_vinculo_media,
             count(*) filter (where f.confianca_vinculo = 'Baixa') as qt_vinculo_baixa,
             count(*) filter (where f.ic_mesma_eo is false) as qt_eo_diferente,
-            round(avg(f.dias_autorizacao_ate_contrato) filter (where f.ic_contratado)) as dias_medios_ate_contrato
+            round(
+                avg(f.dias_autorizacao_ate_contrato) filter (where f.ic_contratado)
+            ) as dias_medios_ate_contrato
         from au a
-        left join f
+        left join
+            f
             on f.protocolo_proposta = a.protocolo_proposta
             and f.portaria_autorizacao_codigo = a.portaria_codigo
         group by a.portaria_codigo
     ),
 
     medidas as (
-        select * from por_selecao
+        select *
+        from por_selecao
         union all
-        select * from por_autorizacao
+        select *
+        from por_autorizacao
     )
 
 select
@@ -76,8 +85,10 @@ select
     c.tem_lista_nominal,
     c.fonte_lista,
     case
-        when c.tem_lista_nominal = 'não' then 'Não lista propostas'
-        when m.portaria_codigo is null then 'Anexo não carregado'
+        when c.tem_lista_nominal = 'não'
+        then 'Não lista propostas'
+        when m.portaria_codigo is null
+        then 'Anexo não carregado'
         else 'Anexo carregado'
     end as situacao_anexo,
     coalesce(m.qt_propostas, 0) as qt_propostas,

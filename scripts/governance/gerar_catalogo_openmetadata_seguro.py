@@ -73,14 +73,9 @@ def main() -> int:
         if args.select:
             catalogo_novo = json.loads(output.read_text(encoding="utf-8"))
             catalogo_existente = (
-                json.loads(OUTPUT.read_text(encoding="utf-8"))
-                if OUTPUT.exists()
-                else {}
+                json.loads(OUTPUT.read_text(encoding="utf-8")) if OUTPUT.exists() else {}
             )
-            models = {
-                model["id"]: model
-                for model in catalogo_existente.get("models", [])
-            }
+            models = {model["id"]: model for model in catalogo_existente.get("models", [])}
             models.update({model["id"]: model for model in catalogo_novo["models"]})
             catalogo_novo["models"] = [models[key] for key in sorted(models)]
             OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -88,10 +83,7 @@ def main() -> int:
                 json.dumps(catalogo_novo, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
-            print(
-                f"Catálogo semântico mesclado: {OUTPUT} "
-                f"({len(catalogo_novo['models'])} models)"
-            )
+            print(f"Catálogo semântico mesclado: {OUTPUT} ({len(catalogo_novo['models'])} models)")
     return 0
 
 

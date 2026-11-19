@@ -9,9 +9,14 @@ with
     aut as (select * from {{ ref("prata_rural_autorizacao_proposta") }}),
     sel as (select * from {{ ref("prata_rural_selecao_portarias") }})
 
-select a.portaria_codigo, a.protocolo_proposta, a.quantidade_uh_autorizadas,
-       s.portaria_codigo as portaria_selecao, s.quantidade_uh_selecionadas
+select
+    a.portaria_codigo,
+    a.protocolo_proposta,
+    a.quantidade_uh_autorizadas,
+    s.portaria_codigo as portaria_selecao,
+    s.quantidade_uh_selecionadas
 from aut a
 left join sel s on s.protocolo_proposta = a.protocolo_proposta
-where s.protocolo_proposta is null
-   or s.quantidade_uh_selecionadas is distinct from a.quantidade_uh_autorizadas
+where
+    s.protocolo_proposta is null
+    or s.quantidade_uh_selecionadas is distinct from a.quantidade_uh_autorizadas

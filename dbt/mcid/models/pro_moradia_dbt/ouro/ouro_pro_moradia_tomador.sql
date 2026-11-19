@@ -7,7 +7,6 @@
 --
 -- Não há dado de "habilitação" do tomador (análise de capacidade de pagamento, CAUC, PVL): o que
 -- existe é o histórico de execução dos contratos.
-
 with
     c as (
         select f.*, p.tomador_cnpj
@@ -17,9 +16,12 @@ with
     ),
 
     rec as (
-        select tomador_codigo,
-               count(*) filter (where ic_contratou_com_pendencia) as qt_contratos_com_pendencia_anterior,
-               max(qt_anteriores_pendentes) as max_anteriores_pendentes
+        select
+            tomador_codigo,
+            count(*) filter (
+                where ic_contratou_com_pendencia
+            ) as qt_contratos_com_pendencia_anterior,
+            max(qt_anteriores_pendentes) as max_anteriores_pendentes
         from {{ ref("prata_pro_moradia_tomador_recontratacao") }}
         group by 1
     ),
@@ -34,19 +36,34 @@ with
             count(*) as qt_contratos,
             count(*) filter (where ic_contrato_vigente) as qt_vigentes,
             count(*) filter (where status_execucao_simplificado = 'Concluído') as qt_concluidos,
-            count(*) filter (where status_execucao_simplificado = 'Em Andamento') as qt_em_andamento,
+            count(*) filter (
+                where status_execucao_simplificado = 'Em Andamento'
+            ) as qt_em_andamento,
             count(*) filter (where status_execucao_simplificado = 'Paralisado') as qt_paralisados,
-            count(*) filter (where status_execucao_simplificado = 'Não Iniciado') as qt_nao_iniciados,
-            count(*) filter (where status_execucao_simplificado = 'Cancelado ou distratado') as qt_cancelados_distratados,
-            count(*) filter (where status_execucao_simplificado = 'Sem Informação') as qt_sem_informacao,
+            count(*) filter (
+                where status_execucao_simplificado = 'Não Iniciado'
+            ) as qt_nao_iniciados,
+            count(*) filter (
+                where status_execucao_simplificado = 'Cancelado ou distratado'
+            ) as qt_cancelados_distratados,
+            count(*) filter (
+                where status_execucao_simplificado = 'Sem Informação'
+            ) as qt_sem_informacao,
             count(*) filter (where tipo_intervencao = 'Urbanização') as qt_urbanizacao,
             count(*) filter (where tipo_intervencao = 'Provisão habitacional') as qt_provisao,
             coalesce(sum(quantidade_uh), 0) as uh_financiadas,
-            coalesce(sum(quantidade_uh) filter (where status_execucao_simplificado = 'Concluído'), 0) as uh_contratos_concluidos,
+            coalesce(
+                sum(quantidade_uh) filter (where status_execucao_simplificado = 'Concluído'), 0
+            ) as uh_contratos_concluidos,
             coalesce(sum(populacao_beneficiada), 0) as populacao_beneficiada,
             coalesce(sum(valor_contratado), 0) as valor_contratado,
             coalesce(sum(vr_desembolsado), 0) as valor_desembolsado,
-            round(avg(percentual_execucao_fisica) filter (where status_execucao_simplificado in ('Em Andamento', 'Paralisado')), 1) as percentual_medio_obra_abertos,
+            round(
+                avg(percentual_execucao_fisica) filter (
+                    where status_execucao_simplificado in ('Em Andamento', 'Paralisado')
+                ),
+                1
+            ) as percentual_medio_obra_abertos,
             min(dt_assinatura) as dt_primeiro_contrato,
             max(dt_assinatura) as dt_ultimo_contrato,
             count(distinct ano_orcamento) as qt_anos_orcamento,
@@ -89,9 +106,12 @@ select
     coalesce(r.qt_contratos_com_pendencia_anterior, 0) as qt_contratos_com_pendencia_anterior,
     coalesce(r.max_anteriores_pendentes, 0) as max_anteriores_pendentes,
     case
-        when t.qt_paralisados > 0 then 'Com obra paralisada'
-        when t.qt_em_andamento + t.qt_nao_iniciados > 0 then 'Em execução'
-        when t.qt_concluidos > 0 then 'Concluiu tudo o que contratou'
+        when t.qt_paralisados > 0
+        then 'Com obra paralisada'
+        when t.qt_em_andamento + t.qt_nao_iniciados > 0
+        then 'Em execução'
+        when t.qt_concluidos > 0
+        then 'Concluiu tudo o que contratou'
         else 'Sem informação suficiente'
     end as situacao_execucao_tomador
 from t

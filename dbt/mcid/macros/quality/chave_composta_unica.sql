@@ -8,8 +8,8 @@
                 colunas: [apf, dt_referencia]
 #}
 {% test chave_composta_unica(model, colunas) %}
-select {{ colunas | join(', ') }}, count(*) as qt
-from {{ model }}
-group by {{ colunas | join(', ') }}
-having count(*) > 1
+    select {{ colunas | join(', ') }}, count(*) as qt
+    from {{ model }}
+    group by {{ colunas | join(', ') }}
+    having count(*) > 1
 {% endtest %}

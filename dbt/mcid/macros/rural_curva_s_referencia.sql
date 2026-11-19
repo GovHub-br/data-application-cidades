@@ -13,8 +13,10 @@
         o.apf,
         date_trunc('month', o.dt_referencia)::date as mes,
         (
-            (extract(year from o.dt_referencia)::int - extract(year from v.dt_contratacao)::int) * 12
-            + extract(month from o.dt_referencia)::int - extract(month from v.dt_contratacao)::int
+            (extract(year from o.dt_referencia)::int - extract(year from v.dt_contratacao)::int)
+            * 12
+            + extract(month from o.dt_referencia)::int
+            - extract(month from v.dt_contratacao)::int
         ) as idade_meses,
         max(o.percentual_obra_realizada) as pct_fisico_realizado,
         max(o.percentual_obra_prevista) as pct_fisico_previsto,
@@ -23,16 +25,30 @@
         -- liberado acumulado até o mês do retrato (0 se ainda não houve liberação) ÷ contratado
         case
             when max(v.valor_contratado) > 0
-                then round(100.0 * coalesce((array_agg(f.vr_acumulado order by f.mes desc) filter (where f.apf is not null))[1], 0) / max(v.valor_contratado), 2)
+            then
+                round(
+                    100.0 * coalesce(
+                        (
+                            array_agg(f.vr_acumulado order by f.mes desc) filter (
+                                where f.apf is not null
+                            )
+                        )[1],
+                        0
+                    )
+                    / max(v.valor_contratado),
+                    2
+                )
         end as pct_financeiro
     from {{ ref("prata_rural_obra_mensal_serie") }} o
     join {{ ref("prata_rural_vinculo_operacao") }} v on v.apf = o.apf
-    left join {{ ref("prata_rural_evolucao_financeira") }} f
+    left join
+        {{ ref("prata_rural_evolucao_financeira") }} f
         on f.apf = o.apf
         and date_trunc('month', f.mes)::date <= date_trunc('month', o.dt_referencia)::date
-    where v.programa = 'NOVO MCMV RURAL'
-      and v.dt_contratacao is not null
-      and o.percentual_obra_realizada is not null
+    where
+        v.programa = 'NOVO MCMV RURAL'
+        and v.dt_contratacao is not null
+        and o.percentual_obra_realizada is not null
     group by o.apf, date_trunc('month', o.dt_referencia)::date, v.dt_contratacao, o.dt_referencia
 {% endmacro %}
 
@@ -41,14 +57,28 @@
         idade_meses,
         count(*) as qt_retratos,
         count(distinct apf) as qt_empreendimentos,
-        round(percentile_cont(0.10) within group (order by pct_fisico_realizado)::numeric, 1) as fis_p10,
-        round(percentile_cont(0.25) within group (order by pct_fisico_realizado)::numeric, 1) as fis_p25,
-        round(percentile_cont(0.50) within group (order by pct_fisico_realizado)::numeric, 1) as fis_mediana,
-        round(percentile_cont(0.75) within group (order by pct_fisico_realizado)::numeric, 1) as fis_p75,
-        round(percentile_cont(0.90) within group (order by pct_fisico_realizado)::numeric, 1) as fis_p90,
-        round(percentile_cont(0.50) within group (order by pct_fisico_previsto)::numeric, 1) as fis_previsto_mediana,
+        round(
+            percentile_cont(0.10) within group (order by pct_fisico_realizado)::numeric, 1
+        ) as fis_p10,
+        round(
+            percentile_cont(0.25) within group (order by pct_fisico_realizado)::numeric, 1
+        ) as fis_p25,
+        round(
+            percentile_cont(0.50) within group (order by pct_fisico_realizado)::numeric, 1
+        ) as fis_mediana,
+        round(
+            percentile_cont(0.75) within group (order by pct_fisico_realizado)::numeric, 1
+        ) as fis_p75,
+        round(
+            percentile_cont(0.90) within group (order by pct_fisico_realizado)::numeric, 1
+        ) as fis_p90,
+        round(
+            percentile_cont(0.50) within group (order by pct_fisico_previsto)::numeric, 1
+        ) as fis_previsto_mediana,
         round(percentile_cont(0.25) within group (order by pct_financeiro)::numeric, 1) as fin_p25,
-        round(percentile_cont(0.50) within group (order by pct_financeiro)::numeric, 1) as fin_mediana,
+        round(
+            percentile_cont(0.50) within group (order by pct_financeiro)::numeric, 1
+        ) as fin_mediana,
         round(percentile_cont(0.75) within group (order by pct_financeiro)::numeric, 1) as fin_p75,
         (count(*) >= {{ min_obs }}) as ic_referencia_valida
     from ({{ rural_curva_s_apf_mes() }}) b

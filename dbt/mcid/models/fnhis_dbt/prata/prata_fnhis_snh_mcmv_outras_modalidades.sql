@@ -8,14 +8,19 @@
 --
 -- Antes esta conformação ficava dentro da ouro, lendo a bronze direto; veio para a prata para
 -- a ouro ler só prata. O SQL é o mesmo.
-
 select
     left(regexp_replace(codigo_ibge_do_municipio::text, '[^0-9]', '', 'g'), 6) as cod_ibge_6,
     trim({{ var('schema_udfs') }}.corrigir_mojibake(modalidade::text)) as modalidade,
-    trim({{ var('schema_udfs') }}.corrigir_mojibake(situacao_da_empreendimento_agrupada::text)) as situacao,
-    {{ var('schema_udfs') }}.parse_date_br(nullif(trim(data_da_contratacao::text), '')) as dt_contratacao,
-    {{ parse_int("regexp_replace(unidades_contratadas::text, '[^0-9]', '', 'g')") }} as uh_contratadas,
+    trim(
+        {{ var('schema_udfs') }}.corrigir_mojibake(situacao_da_empreendimento_agrupada::text)
+    ) as situacao,
+    {{ var('schema_udfs') }}.parse_date_br(
+        nullif(trim(data_da_contratacao::text), '')
+    ) as dt_contratacao,
+    {{ parse_int("regexp_replace(unidades_contratadas::text, '[^0-9]', '', 'g')") }}
+    as uh_contratadas,
     {{ parse_int("regexp_replace(unidades_entregues::text, '[^0-9]', '', 'g')") }} as uh_entregues,
-    {{ parse_int("regexp_replace(unidades_distratadas::text, '[^0-9]', '', 'g')") }} as uh_distratadas
+    {{ parse_int("regexp_replace(unidades_distratadas::text, '[^0-9]', '', 'g')") }}
+    as uh_distratadas
 from {{ ref("bronze_shpt_dados_prioritarios_snh_empreendimentos") }}
 where upper(trim(modalidade::text)) <> 'FNHIS'

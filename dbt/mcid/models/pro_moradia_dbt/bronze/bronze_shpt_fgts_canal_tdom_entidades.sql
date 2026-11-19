@@ -1,7 +1,9 @@
 {{ config(materialized="table") }}
 
--- Bronze: Tabela de domínio das entidades do FGTS: tomadores (estados, municípios, companhias de habitação) e agentes financeiros, com CNPJ.
--- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por tabela)
+-- Bronze: Tabela de domínio das entidades do FGTS: tomadores (estados, municípios, companhias de
+-- habitação) e agentes financeiros, com CNPJ.
+-- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por
+-- tabela)
 {% set padrao = "s3://data-lake-mcid/staging/**/fgts_canal_tdom_ao_1_entidades.parquet" %}
 
 select *

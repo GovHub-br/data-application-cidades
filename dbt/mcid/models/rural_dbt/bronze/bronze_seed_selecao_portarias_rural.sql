@@ -4,5 +4,5 @@
 -- SFTP), como estão no seed perguntas_mcid/selecao_portarias_rural. Uma linha por proposta
 -- selecionada. O seed começa vazio: as listas da 697/2026 e da 948/2026 ainda não chegaram.
 -- Sem transformação; existe para a prata ler bronze, não o seed.
-
-select * from {{ ref("selecao_portarias_rural") }}
+select *
+from {{ ref("selecao_portarias_rural") }}

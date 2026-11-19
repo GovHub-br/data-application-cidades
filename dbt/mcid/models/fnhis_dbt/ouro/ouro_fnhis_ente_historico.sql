@@ -14,7 +14,6 @@
 -- 2024-02-20 = arquivo de resultado) e a situação ATUAL das operações contratadas antes dela:
 -- operação que hoje está em andamento ou paralisada e foi contratada antes também estava aberta
 -- naquela data; a que hoje está concluída pode ter sido concluída depois — fica como incerteza.
-
 {% set data_selecao = var("fnhis_data_selecao", "2024-02-20") %}
 
 with
@@ -27,8 +26,12 @@ with
             string_agg(distinct proponente_esfera, '; ') as proponente_esfera,
             count(*) as qt_propostas,
             count(*) filter (where resultado_selecao = 'Não enquadrada') as qt_nao_enquadradas,
-            count(*) filter (where resultado_selecao = 'Cota insuficiente da UF') as qt_cota_insuficiente,
-            count(*) filter (where resultado_selecao = 'Município já contemplado') as qt_ja_contemplado,
+            count(*) filter (
+                where resultado_selecao = 'Cota insuficiente da UF'
+            ) as qt_cota_insuficiente,
+            count(*) filter (
+                where resultado_selecao = 'Município já contemplado'
+            ) as qt_ja_contemplado,
             count(*) filter (where ic_selecionada) as qt_selecionadas,
             coalesce(sum(quantidade_uh), 0) as uh_propostas,
             coalesce(sum(quantidade_uh) filter (where ic_selecionada), 0) as uh_selecionadas
@@ -56,7 +59,9 @@ with
             count(*) as qt_operacoes_his_antes,
             string_agg(distinct modalidade, ', ') as modalidades_his,
             count(*) filter (where situacao ~* 'conclu') as qt_concluidas,
-            count(*) filter (where situacao ~* 'andamento|n.o inic|projeto') as qt_em_andamento_hoje,
+            count(*) filter (
+                where situacao ~* 'andamento|n.o inic|projeto'
+            ) as qt_em_andamento_hoje,
             count(*) filter (where situacao ~* 'paralis') as qt_paralisadas_hoje,
             count(*) filter (where situacao ~* 'distrat') as qt_distratadas,
             coalesce(sum(uh_contratadas), 0) as uh_contratadas_antes,
@@ -68,7 +73,11 @@ with
         group by cod_ibge_6
     ),
 
-    reg as (select * from {{ ref("prata_fnhis_regularidade_entes") }} where ente_esfera is distinct from 'Estado/DF')
+    reg as (
+        select *
+        from {{ ref("prata_fnhis_regularidade_entes") }}
+        where ente_esfera is distinct from 'Estado/DF'
+    )
 
 select
     p.cod_ibge,
@@ -108,10 +117,14 @@ select
     coalesce(h.uh_entregues_antes, 0) as uh_his_entregues,
     case
         when coalesce(h.uh_contratadas_antes, 0) - coalesce(h.uh_distratadas_antes, 0) > 0
-        then round(100.0 * h.uh_entregues_antes / (h.uh_contratadas_antes - h.uh_distratadas_antes), 1)
+        then
+            round(
+                100.0 * h.uh_entregues_antes / (h.uh_contratadas_antes - h.uh_distratadas_antes), 1
+            )
     end as percentual_his_entregue,
     h.dt_ultima_contratacao_his,
-    coalesce(h.qt_em_andamento_hoje, 0) + coalesce(h.qt_paralisadas_hoje, 0) > 0 as ic_tinha_obra_aberta_ao_concorrer,
+    coalesce(h.qt_em_andamento_hoje, 0) + coalesce(h.qt_paralisadas_hoje, 0)
+    > 0 as ic_tinha_obra_aberta_ao_concorrer,
     coalesce(h.qt_paralisadas_hoje, 0) > 0 as ic_tem_obra_paralisada,
     date '{{ data_selecao }}' as dt_corte_selecao
 from prop p

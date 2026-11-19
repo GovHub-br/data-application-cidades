@@ -4,14 +4,7 @@
 -- Consolida a quantidade e o investimento em cisternas e efluentes nos empreendimentos rurais.
 with
     fichas as (
-        select
-            apf,
-            nome_empreendimento,
-            municipio,
-            uf,
-            programa,
-            agente_financeiro,
-            quantidade_uh
+        select apf, nome_empreendimento, municipio, uf, programa, agente_financeiro, quantidade_uh
         from {{ ref("prata_rural_ficha_empreendimento") }}
     ),
 

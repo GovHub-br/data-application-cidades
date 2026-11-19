@@ -5,11 +5,8 @@
 -- recurso do FNHIS — com o que ele fez no programa: se apresentou proposta, se foi selecionado,
 -- se tem termo ativo. Responde, por exemplo, quantos municípios irregulares tiveram proposta
 -- selecionada, ou quantos regulares nem chegaram a propor.
-
 with
-    ente as (
-        select * from {{ ref("prata_fnhis_regularidade_entes") }}
-    ),
+    ente as (select * from {{ ref("prata_fnhis_regularidade_entes") }}),
 
     proposta as (
         select

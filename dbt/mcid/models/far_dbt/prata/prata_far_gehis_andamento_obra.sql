@@ -7,7 +7,6 @@
 -- Fica só a APF que está na prata_far_empreendimento. A situação de obra da GEHIS é a série
 -- semanal que faltava no FAR, que até aqui só tinha a bronze. Quando chega mais de um arquivo
 -- no mesmo mês, fica o último pelo nome.
-
 with
     bruto as (
         select
@@ -16,9 +15,15 @@ with
                 to_date(nullif(regexp_replace(anomes::text, '[^0-9]', '', 'g'), ''), 'YYYYMM'),
                 to_date(substring(filename::text from 'OBRA_M(\d{6})'), 'YYYYMM')
             ) as dt_referencia,
-            upper(nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(situacao_obra::text)), '')) as situacao_obra,
-            {{ var('schema_udfs') }}.parse_date_br(nullif(trim(dt_prevista_conclusao::text), '')) as dt_prevista_conclusao,
-            {{ var('schema_udfs') }}.parse_date_br(nullif(trim(dt_prevista_inauguracao::text), '')) as dt_prevista_inauguracao,
+            upper(
+                nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(situacao_obra::text)), '')
+            ) as situacao_obra,
+            {{ var('schema_udfs') }}.parse_date_br(
+                nullif(trim(dt_prevista_conclusao::text), '')
+            ) as dt_prevista_conclusao,
+            {{ var('schema_udfs') }}.parse_date_br(
+                nullif(trim(dt_prevista_inauguracao::text), '')
+            ) as dt_prevista_inauguracao,
             regexp_replace(filename::text, '^.*/', '') as arquivo_de_origem
         from {{ ref("bronze_sftp_gehis_andamento_obra") }}
         where nullif(trim(nu_apf::text), '') is not null
@@ -37,7 +42,9 @@ select
     u.apf,
     u.dt_referencia,
     -- "CRONOGRAMA INÃOMPLETO" e variações de encoding da origem
-    case when u.situacao_obra ~ '^CRONOGRAMA' then 'CRONOGRAMA INCOMPLETO' else u.situacao_obra end as situacao_obra,
+    case
+        when u.situacao_obra ~ '^CRONOGRAMA' then 'CRONOGRAMA INCOMPLETO' else u.situacao_obra
+    end as situacao_obra,
     u.dt_prevista_conclusao,
     u.dt_prevista_inauguracao,
     u.arquivo_de_origem

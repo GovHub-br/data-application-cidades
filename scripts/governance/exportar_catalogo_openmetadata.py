@@ -208,10 +208,7 @@ def main() -> None:
             continue
         if args.model_path:
             model_path = (node.get("original_file_path") or "").replace("\\", "/")
-            if not any(
-                model_path.startswith(f"{path.rstrip('/')}/")
-                for path in args.model_path
-            ):
+            if not any(model_path.startswith(f"{path.rstrip('/')}/") for path in args.model_path):
                 continue
         exported = model_export(node_id, node, catalog, violations)
         if exported:

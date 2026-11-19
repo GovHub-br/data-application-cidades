@@ -3,14 +3,10 @@
 -- Gold: Mapa Nacional (Rural)
 -- Produz duas visões complementares: por UF (para mapas) e por Região (para gráficos)
 with
-    fichas as (
-        select * from {{ ref("prata_rural_ficha_empreendimento") }}
-    ),
+    fichas as (select * from {{ ref("prata_rural_ficha_empreendimento") }}),
 
     -- Referência IBGE: sigla, nome do estado, região.
-    ibge_uf as (
-        select * from {{ ref("prata_rural_uf_ibge") }}
-    ),
+    ibge_uf as (select * from {{ ref("prata_rural_uf_ibge") }}),
 
     -- Agregação por UF
     agg_uf as (

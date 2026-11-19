@@ -19,24 +19,35 @@
 #}
 {% macro portaria_ts_normalizada(coluna) -%}
     case
-        when {{ coluna }} is null
+        when
+            {{ coluna }} is null
             or upper(trim({{ coluna }}::text)) in ('', 'NONE', 'NAN', 'NULL', '-')
-            then null
+        then null
         when trim({{ coluna }}::text) ~* '^anterior.*168'
-            then 'anterior à 168/2013'
+        then 'anterior à 168/2013'
         when trim({{ coluna }}::text) ~ '^\d+\s*[-/]\s*\d{4}$'
-            then (regexp_match(trim({{ coluna }}::text), '^(\d+)'))[1]
-                || '/' || (regexp_match(trim({{ coluna }}::text), '(\d{4})$'))[1]
+        then
+            (regexp_match(trim({{ coluna }}::text), '^(\d+)'))[1]
+            || '/'
+            || (regexp_match(trim({{ coluna }}::text), '(\d{4})$'))[1]
         -- ano digitado com 3 dígitos ("21/014", jan/2025): completa com o 2 do milênio
         when trim({{ coluna }}::text) ~ '^\d+\s*[-/]\s*0\d{2}$'
-            then (regexp_match(trim({{ coluna }}::text), '^(\d+)'))[1]
-                || '/2' || (regexp_match(trim({{ coluna }}::text), '(\d{3})$'))[1]
+        then
+            (regexp_match(trim({{ coluna }}::text), '^(\d+)'))[1]
+            || '/2'
+            || (regexp_match(trim({{ coluna }}::text), '(\d{3})$'))[1]
         when trim({{ coluna }}::text) ~ '^\d+(\.0)?$'
-            then case (regexp_match(trim({{ coluna }}::text), '^(\d+)'))[1]
-                when '21' then '21/2014'
-                when '168' then '168/2013'
-                when '464' then '464/2018'
-                when '75' then '75/2025'
+        then
+            case
+                (regexp_match(trim({{ coluna }}::text), '^(\d+)'))[1]
+                when '21'
+                then '21/2014'
+                when '168'
+                then '168/2013'
+                when '464'
+                then '464/2018'
+                when '75'
+                then '75/2025'
                 else trim({{ coluna }}::text)
             end
         else trim({{ coluna }}::text)

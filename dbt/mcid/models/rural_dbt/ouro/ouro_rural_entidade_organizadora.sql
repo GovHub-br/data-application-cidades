@@ -7,13 +7,14 @@
 --
 -- Não há histórico de HABILITAÇÃO: nenhuma base traz pedido, decisão ou motivo. O que existe é o
 -- histórico de EXECUÇÃO, que é o que esta tabela mostra.
-
 with
     op as (select * from {{ ref("prata_rural_operacao_eo") }} where eo_cnpj is not null),
     rec as (select * from {{ ref("prata_rural_entidade_recontratacao") }}),
     sel as (
-        select entidade_organizadora_cnpj as eo_cnpj, count(*) as qt_selecionados_portaria_162,
-               sum(quantidade_uh_selecionadas) as uh_selecionadas_portaria_162
+        select
+            entidade_organizadora_cnpj as eo_cnpj,
+            count(*) as qt_selecionados_portaria_162,
+            sum(quantidade_uh_selecionadas) as uh_selecionadas_portaria_162
         from {{ ref("prata_rural_selecao_portaria_162") }}
         where entidade_organizadora_cnpj is not null
         group by 1
@@ -34,7 +35,12 @@ with
             coalesce(sum(quantidade_uh_contratadas), 0) as uh_contratadas,
             coalesce(sum(quantidade_uh_entregues), 0) as uh_entregues,
             coalesce(sum(quantidade_uh_distratadas), 0) as uh_distratadas,
-            round(avg(percentual_execucao_fisica) filter (where status_operacao in ('Em obra', 'Paralisada')), 1) as percentual_medio_obra_abertas,
+            round(
+                avg(percentual_execucao_fisica) filter (
+                    where status_operacao in ('Em obra', 'Paralisada')
+                ),
+                1
+            ) as percentual_medio_obra_abertas,
             coalesce(sum(valor_contratado), 0) as valor_contratado,
             coalesce(sum(valor_desembolsado), 0) as valor_desembolsado,
             min(dt_contratacao) as dt_primeira_contratacao,
@@ -47,10 +53,14 @@ with
     ),
 
     r as (
-        select eo_cnpj,
-               count(*) filter (where ic_contratou_com_pendencia) as qt_contratos_com_pendencia_anterior,
-               max(qt_anteriores_pendentes) as max_anteriores_pendentes
-        from rec group by 1
+        select
+            eo_cnpj,
+            count(*) filter (
+                where ic_contratou_com_pendencia
+            ) as qt_contratos_com_pendencia_anterior,
+            max(qt_anteriores_pendentes) as max_anteriores_pendentes
+        from rec
+        group by 1
     )
 
 select
@@ -85,9 +95,12 @@ select
     coalesce(s.qt_selecionados_portaria_162, 0) as qt_selecionados_portaria_162,
     coalesce(s.uh_selecionadas_portaria_162, 0) as uh_selecionadas_portaria_162,
     case
-        when eo.qt_paralisadas > 0 then 'Com obra paralisada'
-        when eo.qt_em_obra + eo.qt_nao_iniciadas > 0 then 'Em execução'
-        when eo.uh_entregues >= eo.uh_contratadas - eo.uh_distratadas then 'Entregou tudo o que contratou'
+        when eo.qt_paralisadas > 0
+        then 'Com obra paralisada'
+        when eo.qt_em_obra + eo.qt_nao_iniciadas > 0
+        then 'Em execução'
+        when eo.uh_entregues >= eo.uh_contratadas - eo.uh_distratadas
+        then 'Entregou tudo o que contratou'
         else 'Concluída com entrega parcial'
     end as situacao_execucao_eo
 from eo

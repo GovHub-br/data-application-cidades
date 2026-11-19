@@ -39,13 +39,7 @@ with
     ),
 
     fichas as (
-        select
-            apf,
-            nome_empreendimento,
-            municipio,
-            uf,
-            programa,
-            quantidade_uh
+        select apf, nome_empreendimento, municipio, uf, programa, quantidade_uh
         from {{ ref("prata_rural_ficha_empreendimento") }}
     )
 

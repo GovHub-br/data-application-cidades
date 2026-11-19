@@ -7,11 +7,8 @@
 -- O orçamento só existe para os anos com prestação de contas no lake (2021–2024 em 2026-09);
 -- a contratação vai de 1995 em diante. O full join mantém os dois lados: ano sem orçamento
 -- mostra só o contratado, e orçamento sem contrato mostra a reserva não usada.
-
 with
-    orcamento as (
-        select * from {{ ref("prata_pro_moradia_orcamento") }}
-    ),
+    orcamento as (select * from {{ ref("prata_pro_moradia_orcamento") }}),
 
     contratado as (
         select
@@ -44,6 +41,4 @@ select
     end as percentual_orcamento_contratado,
     o.ano_orcamento is not null as ic_tem_orcamento
 from orcamento o
-full outer join contratado c
-    on c.ano_orcamento = o.ano_orcamento
-    and c.regiao = o.regiao
+full outer join contratado c on c.ano_orcamento = o.ano_orcamento and c.regiao = o.regiao

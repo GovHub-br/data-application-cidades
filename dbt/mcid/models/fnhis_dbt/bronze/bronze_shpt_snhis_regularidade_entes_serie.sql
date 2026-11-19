@@ -1,6 +1,7 @@
 {{ config(materialized="table") }}
 
--- Bronze: Regularidade de estados e municípios no SNHIS, SÉRIE inteira (todas as remessas semanais).
+-- Bronze: Regularidade de estados e municípios no SNHIS, SÉRIE inteira (todas as remessas
+-- semanais).
 -- Fonte: SHPT — sharepoint/SNHIS/ (extração semanal da CAIXA para o MCID)
 --
 -- Diferente da bronze_shpt_snhis_regularidade_entes, que guarda só o retrato mais recente, esta

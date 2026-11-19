@@ -1,7 +1,9 @@
 {{ config(materialized="table") }}
 
--- Bronze: Tabela de domínio dos municípios do FGTS: traduz o código de município da CAIXA (4 dígitos) para o código IBGE (7 dígitos).
--- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por tabela)
+-- Bronze: Tabela de domínio dos municípios do FGTS: traduz o código de município da CAIXA (4
+-- dígitos) para o código IBGE (7 dígitos).
+-- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por
+-- tabela)
 {% set padrao = "s3://data-lake-mcid/staging/**/fgts_canal_tdom_ao_1_municipios.parquet" %}
 
 select *

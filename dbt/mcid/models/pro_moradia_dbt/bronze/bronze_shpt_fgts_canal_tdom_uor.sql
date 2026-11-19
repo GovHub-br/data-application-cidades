@@ -1,7 +1,9 @@
 {{ config(materialized="table") }}
 
--- Bronze: Tabela de domínio das unidades operacionais (superintendências regionais da CAIXA) que acompanham os contratos.
--- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por tabela)
+-- Bronze: Tabela de domínio das unidades operacionais (superintendências regionais da CAIXA) que
+-- acompanham os contratos.
+-- Fonte: SHPT — sharepoint/ (remessa mensal do Canal FGTS, MCaaaammdd.zip, expandida um CSV por
+-- tabela)
 {% set padrao = "s3://data-lake-mcid/staging/**/fgts_canal_tdom_ao_1_uor.parquet" %}
 
 select *

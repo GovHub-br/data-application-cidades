@@ -69,15 +69,26 @@ def schema(s3, chave):
         with open(caminho, "wb") as f:
             f.write(corpo)
         con = duckdb.connect()
-        cols = [(r[0], r[1]) for r in con.execute(f"describe select * from read_parquet('{caminho.replace(chr(92), '/')}')").fetchall()]
-        linhas = con.execute(f"select count(*) from read_parquet('{caminho.replace(chr(92), '/')}')").fetchone()[0]
+        cols = [
+            (r[0], r[1])
+            for r in con.execute(
+                f"describe select * from read_parquet('{caminho.replace(chr(92), '/')}')"
+            ).fetchall()
+        ]
+        linhas = con.execute(
+            f"select count(*) from read_parquet('{caminho.replace(chr(92), '/')}')"
+        ).fetchone()[0]
         con.close()
     return cols, linhas
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("trecho", help="trecho do nome do arquivo, ex.: INT058_MinisterioCidades_PNHR_BB_PF")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "trecho", help="trecho do nome do arquivo, ex.: INT058_MinisterioCidades_PNHR_BB_PF"
+    )
     ap.add_argument("--todas", action="store_true", help="compara o layout de todas as remessas")
     args = ap.parse_args()
 
@@ -96,12 +107,16 @@ def main():
 
     if args.todas:
         base = {n for n, _ in cols}
-        print("\nDiferenças de layout por remessa (colunas que entram/saem em relação à mais recente):")
+        print(
+            "\nDiferenças de layout por remessa (colunas que entram/saem em relação à mais recente):"
+        )
         for chave, _ in arquivos[:-1]:
             outras, _n = schema(s3, chave)
             nomes = {n for n, _ in outras}
             if nomes != base:
-                print(f"  {chave.rsplit('/', 1)[-1]}: +{sorted(nomes - base)} -{sorted(base - nomes)}")
+                print(
+                    f"  {chave.rsplit('/', 1)[-1]}: +{sorted(nomes - base)} -{sorted(base - nomes)}"
+                )
 
     print("\n# Cole no schema.yml, dentro da entrada da bronze:")
     print("    data_tests:")

@@ -1,12 +1,16 @@
 {{ config(materialized="table") }}
 
--- Gold: evolução do EMPENHO do FNHIS Sub-50 por mês do retrato do TransfereGov, já agregada. Grão: mês × UF.
--- Termos ativos (sem anulados/rescindidos) com assinatura. % empenhado = Σ empenhado acumulado ÷ Σ repasse
--- previsto (recalcule a partir das somas; não some pct_empenhado). Não é uma Curva S de obra: o Sub-50 não tem
--- % físico nas bases e o empenho é liberado em parcelas fixas (≈10%, 20%, 30%, 50%…), por isso a linha anda em
--- degraus. ic_retrato_completo marca os meses em que o retrato tem pelo menos 80% do maior número de termos já
+-- Gold: evolução do EMPENHO do FNHIS Sub-50 por mês do retrato do TransfereGov, já agregada.
+-- Grão: mês × UF.
+-- Termos ativos (sem anulados/rescindidos) com assinatura. % empenhado = Σ empenhado acumulado ÷
+-- Σ repasse
+-- previsto (recalcule a partir das somas; não some pct_empenhado). Não é uma Curva S de obra: o
+-- Sub-50 não tem
+-- % físico nas bases e o empenho é liberado em parcelas fixas (≈10%, 20%, 30%, 50%…), por isso a
+-- linha anda em
+-- degraus. ic_retrato_completo marca os meses em que o retrato tem pelo menos 80% do maior número
+-- de termos já
 -- visto (proteção contra um retrato que venha cortado; hoje todos estão completos). Lê só prata.
-
 with
     base as (select * from ({{ fnhis_curva_s_termo_mes() }}) b),
     t as (select numero_proposta_transferegov, uf from {{ ref("prata_fnhis_termo_compromisso") }}),

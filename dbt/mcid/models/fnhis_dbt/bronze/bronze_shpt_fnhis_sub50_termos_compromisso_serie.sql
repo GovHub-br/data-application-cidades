@@ -34,20 +34,19 @@
     {%- endif -%}
 {%- endif %}
 
-{% if not execute %}
-select null::varchar as filename
+{% if not execute %} select null::varchar as filename
 {% else %}
-{% for arq in arquivos %}
-select
-    '{{ arq }}'::varchar as filename,
-    {%- for c in colunas %}
-    {% if c in cols_por_arquivo[arq] -%}
-    cast(r['{{ c }}'] as varchar)
-    {%- else -%}
-    null::varchar
-    {%- endif %} as {{ c }}{{ "," if not loop.last }}
-    {%- endfor %}
-from read_parquet('{{ arq }}') as r
-{% if not loop.last %}union all{% endif %}
-{% endfor %}
+    {% for arq in arquivos %}
+        select
+            '{{ arq }}'::varchar as filename,
+            {%- for c in colunas %}
+                {% if c in cols_por_arquivo[arq] -%} cast(r['{{ c }}'] as varchar)
+                {%- else -%} null::varchar
+                {%- endif %} as {{ c }}{{ "," if not loop.last }}
+            {%- endfor %}
+        from read_parquet('{{ arq }}') as r
+        {% if not loop.last %}
+            union all
+        {% endif %}
+    {% endfor %}
 {% endif %}
