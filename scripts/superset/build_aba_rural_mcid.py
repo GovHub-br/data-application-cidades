@@ -1,3 +1,5 @@
+# Script de apoio, fora do pipeline: definição declarativa da aba.
+# ruff: noqa: C901, E731
 """Aba **Rural** do painel "Perguntas do MCID" no Superset: definição + construção.
 
 Mesmo desenho do `build_boletim.py`, do qual reaproveita a sessão autenticada:

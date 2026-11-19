@@ -79,6 +79,21 @@ class Arquivo:
         return self.caminho.split("/")
 
 
+def _registrar_tabelas(fonte: dict, bucket: str, arquivos: dict[str, Arquivo]) -> None:
+    """Acrescenta a `arquivos` as tabelas da fonte que declaram `meta.caminho`."""
+    for tabela in fonte.get("tables") or []:
+        caminho = (tabela.get("meta") or {}).get("caminho")
+        if not caminho:
+            continue
+        arquivos[tabela["name"]] = Arquivo(
+            fonte=tabela["name"],
+            caminho=caminho,
+            bucket=bucket,
+            descricao=texto(tabela.get("description")),
+            dag=(tabela.get("meta") or {}).get("dag"),
+        )
+
+
 def carregar_arquivos(fontes: set[str] | None = None) -> list[Arquivo]:
     """Lê as fontes declaradas nos `sources.yml`, opcionalmente por nome."""
     arquivos: dict[str, Arquivo] = {}
@@ -94,17 +109,7 @@ def carregar_arquivos(fontes: set[str] | None = None) -> list[Arquivo]:
             bucket = (fonte.get("meta") or {}).get("bucket")
             if not bucket:
                 continue
-            for tabela in fonte.get("tables") or []:
-                caminho = (tabela.get("meta") or {}).get("caminho")
-                if not caminho:
-                    continue
-                arquivos[tabela["name"]] = Arquivo(
-                    fonte=tabela["name"],
-                    caminho=caminho,
-                    bucket=bucket,
-                    descricao=texto(tabela.get("description")),
-                    dag=(tabela.get("meta") or {}).get("dag"),
-                )
+            _registrar_tabelas(fonte, bucket, arquivos)
     ausentes = (fontes or set()) - encontradas
     if ausentes:
         raise SystemExit(f"Fontes não encontradas nos sources.yml: {sorted(ausentes)}")

@@ -1,3 +1,5 @@
+# Script de apoio, fora do pipeline: `l` é a linha do texto; parser longo por natureza.
+# ruff: noqa: C901, E731, E741
 """
 extrair_portarias.py: extrai as tabelas de propostas dos anexos das portarias do MCMV Rural
 (seleção e autorização de contratação) e grava um CSV por linha de proposta.

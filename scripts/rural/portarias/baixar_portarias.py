@@ -1,3 +1,5 @@
+# Script de apoio, fora do pipeline: `l` é a linha do texto.
+# ruff: noqa: E741
 """
 baixar_portarias.py: baixa os PDFs das portarias do MCMV Rural listadas no manifesto.
 
