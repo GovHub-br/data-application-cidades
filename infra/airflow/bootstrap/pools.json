@@ -1,0 +1,7 @@
+{
+    "duckdb_historico": {
+        "slots": 1,
+        "description": "Serializa o eixo histórico do dbt: o DuckDB aceita um só escritor por arquivo",
+        "include_deferred": false
+    }
+}
