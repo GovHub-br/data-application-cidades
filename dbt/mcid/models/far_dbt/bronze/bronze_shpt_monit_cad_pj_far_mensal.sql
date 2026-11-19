@@ -2,7 +2,7 @@
 
 -- Bronze: Cadastro PJ mensal do FAR — dados cadastrais do empreendimento contratado.
 -- Fonte: SHPT — sharepoint/Novo MCMV - FAR/
-{% set padrao = caminho_fonte_lake('monit_cad_pj_far_mensal', 'trabalho_social_lake') %}
+{% set padrao = "s3://data-lake-mcid/staging/**/*MONIT_CAD_PJ_FAR_MENSAL_*.parquet" %}
 
 select columns(*)::varchar
 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as r

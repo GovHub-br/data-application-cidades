@@ -2,7 +2,7 @@
 
 -- Bronze: Execução do trabalho social do FDS por empreendimento.
 -- Fonte: SHPT — sharepoint/Novo MCMV - FDS/
-{% set padrao = caminho_fonte_lake('monit_exec_ts_fds_mensal', 'trabalho_social_lake') %}
+{% set padrao = "s3://data-lake-mcid/staging/**/*MONIT_EXEC_TS_FDS_MENSAL_*.parquet" %}
 
 select columns(*)::varchar
 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as r
