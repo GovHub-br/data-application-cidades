@@ -10,14 +10,12 @@ models:
     meta:
       tags:
         - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por termo de compromisso do FNHIS Sub-50."
-          chave: [numero_proposta_transferegov]
-          fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNHIS, regularidade dos entes; SNH, acompanhamento de contratos do Novo MCMV"
-          periodicidade: mensal
-          consumo: ["Consulta direta na camada ouro"]
+      documentacao:
+        grao: "Uma linha por termo de compromisso do FNHIS Sub-50."
+        chave: [numero_proposta_transferegov]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNHIS, regularidade dos entes; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: numero_proposta_transferegov
         description: Número da proposta no TransfereGov.
@@ -146,14 +144,12 @@ models:
     meta:
       tags:
         - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por UF, com as etapas do funil do FNHIS Sub-50."
-          chave: [uf]
-          fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNH, acompanhamento de contratos do Novo MCMV"
-          periodicidade: mensal
-          consumo: ["Consulta direta na camada ouro"]
+      documentacao:
+        grao: "Uma linha por UF, com as etapas do funil do FNHIS Sub-50."
+        chave: [uf]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: uf
         description: Sigla da UF.
@@ -207,14 +203,12 @@ models:
     meta:
       tags:
         - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por ente (município) no SNHIS, cruzada com a participação no FNHIS Sub-50."
-          chave: [cod_ibge]
-          fonte: "SNHIS, regularidade dos entes; TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
-          periodicidade: semanal
-          consumo: ["Consulta direta na camada ouro"]
+      documentacao:
+        grao: "Uma linha por ente (município) no SNHIS, cruzada com a participação no FNHIS Sub-50."
+        chave: [cod_ibge]
+        fonte: "SNHIS, regularidade dos entes; TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: semanal
+        consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: cod_ibge
         description: Código IBGE do ente (7 dígitos).
@@ -277,20 +271,18 @@ models:
     meta:
       tags:
       - gold
+      documentacao:
+        grao: "Uma linha por proposta e motivo de não enquadramento ou de não seleção."
+        chave: [numero_proposta, motivo]
+        fonte: "TransfereGov, propostas apresentadas e resultado da seleção do FNHIS Sub-50"
+        periodicidade: eventual
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
     data_tests:
     - chave_composta_unica:
         arguments:
           colunas:
           - numero_proposta
           - motivo
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por proposta e motivo de não enquadramento ou de não seleção."
-          chave: [numero_proposta, motivo]
-          fonte: "TransfereGov, propostas apresentadas e resultado da seleção do FNHIS Sub-50"
-          periodicidade: eventual
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
     columns:
     - name: numero_proposta
       description: Número da proposta na seleção.
@@ -326,14 +318,12 @@ models:
     meta:
       tags:
       - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por proposta apresentada ao FNHIS Sub-50, com a etapa atual."
-          chave: [numero_proposta]
-          fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNH, acompanhamento de contratos do Novo MCMV"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
+      documentacao:
+        grao: "Uma linha por proposta apresentada ao FNHIS Sub-50, com a etapa atual."
+        chave: [numero_proposta]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
     columns:
     - name: numero_proposta
       description: Número da proposta na seleção.
@@ -408,14 +398,12 @@ models:
     meta:
       tags:
       - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por município que apresentou proposta ao FNHIS Sub-50."
-          chave: [cod_ibge]
-          fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNHIS, regularidade dos entes; SNH, acompanhamento de contratos do Novo MCMV"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
+      documentacao:
+        grao: "Uma linha por município que apresentou proposta ao FNHIS Sub-50."
+        chave: [cod_ibge]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50; SNHIS, regularidade dos entes; SNH, acompanhamento de contratos do Novo MCMV"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
     columns:
     - name: cod_ibge
       description: Código IBGE do município beneficiado (7 dígitos).
@@ -501,6 +489,12 @@ models:
     meta:
       tags:
       - gold
+      documentacao:
+        grao: "Uma linha por retrato mensal, UF e situação do instrumento."
+        chave: [dt_retrato, uf, situacao_instrumento]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
     data_tests:
     - chave_composta_unica:
         arguments:
@@ -508,14 +502,6 @@ models:
           - dt_retrato
           - uf
           - situacao_instrumento
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por retrato mensal, UF e situação do instrumento."
-          chave: [dt_retrato, uf, situacao_instrumento]
-          fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), FNHIS Sub-50"]
     columns:
     - name: dt_retrato
       description: Data do retrato do painel.
@@ -540,20 +526,18 @@ models:
     meta:
       tags:
       - gold
+      documentacao:
+        grao: "Uma linha por pergunta levantada com o MCID, por programa."
+        chave: [programa, ordem]
+        fonte: "Oficina de perguntas com o MCID (Rural, FNHIS Sub-50 e Pró-Moradia)"
+        periodicidade: eventual
+        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
     data_tests:
     - chave_composta_unica:
         arguments:
           colunas:
           - programa
           - ordem
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por pergunta levantada com o MCID, por programa."
-          chave: [programa, ordem]
-          fonte: "Oficina de perguntas com o MCID (Rural, FNHIS Sub-50 e Pró-Moradia)"
-          periodicidade: eventual
-          consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
     columns:
     - name: programa
       description: Rural, FNHIS/Sub-50 ou Pró-Moradia.
@@ -588,14 +572,12 @@ models:
       openmetadata:
         glossary:
           - MCID.ProgramasHabitacionais.MCMV
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por ato (portaria) do FNHIS Sub-50."
-          chave: [portaria_codigo]
-          fonte: "Portarias do MCID publicadas no Diário Oficial da União; TransfereGov, propostas apresentadas"
-          periodicidade: eventual
-          consumo: ["Consulta direta na camada ouro"]
+      documentacao:
+        grao: "Uma linha por ato (portaria) do FNHIS Sub-50."
+        chave: [portaria_codigo]
+        fonte: "Portarias do MCID publicadas no Diário Oficial da União; TransfereGov, propostas apresentadas"
+        periodicidade: eventual
+        consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: portaria_codigo
         description: "Código do ato (número_ano; atos que não são portaria levam o prefixo da espécie, como in_11_2024)."
@@ -645,14 +627,12 @@ models:
       openmetadata:
         glossary:
           - MCID.ProgramasHabitacionais.MCMV
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por termo de compromisso ativo."
-          chave: [numero_proposta_transferegov]
-          fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
-          periodicidade: mensal
-          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+      documentacao:
+        grao: "Uma linha por termo de compromisso ativo."
+        chave: [numero_proposta_transferegov]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: numero_proposta_transferegov
         description: "Número da proposta no TransfereGov (chave do termo)."
@@ -725,14 +705,12 @@ models:
       openmetadata:
         glossary:
           - MCID.ProgramasHabitacionais.MCMV
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por mês do retrato, UF e portaria de seleção."
-          chave: [id_curva_s]
-          fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
-          periodicidade: mensal
-          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+      documentacao:
+        grao: "Uma linha por mês do retrato, UF e portaria de seleção."
+        chave: [id_curva_s]
+        fonte: "TransfereGov, propostas e termos de compromisso do FNHIS Sub-50"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: id_curva_s
         description: "Identificador da linha."

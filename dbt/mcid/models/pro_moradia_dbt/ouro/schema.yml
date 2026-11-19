@@ -10,14 +10,12 @@ models:
     meta:
       tags:
         - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por contrato do Pró-Moradia."
-          chave: [contrato]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia."
+        chave: [contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
       - name: contrato
         description: Contrato no formato `cod_contrato-dv`.
@@ -178,18 +176,16 @@ models:
     meta:
       tags:
         - gold
+      documentacao:
+        grao: "Uma linha por contrato e mês de liberação do FGTS."
+        chave: [contrato, mes]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
     data_tests:
       - unique_combinacao:
           arguments:
             colunas: ["contrato", "mes"]
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por contrato e mês de liberação do FGTS."
-          chave: [contrato, mes]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: contrato
         description: Contrato no formato `cod_contrato-dv`.
@@ -230,14 +226,12 @@ models:
     meta:
       tags:
         - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por UF."
-          chave: [uf]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Consulta direta na camada ouro"]
+      documentacao:
+        grao: "Uma linha por UF."
+        chave: [uf]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: uf
         description: Sigla da UF.
@@ -296,18 +290,16 @@ models:
     meta:
       tags:
         - gold
+      documentacao:
+        grao: "Uma linha por ano de orçamento e região."
+        chave: [ano_orcamento, regiao]
+        fonte: "FGTS, orçamento e prestação de contas do Pró-Moradia; CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: anual
+        consumo: ["Consulta direta na camada ouro"]
     data_tests:
       - unique_combinacao:
           arguments:
             colunas: ["ano_orcamento", "regiao"]
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por ano de orçamento e região."
-          chave: [ano_orcamento, regiao]
-          fonte: "FGTS, orçamento e prestação de contas do Pró-Moradia; CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: anual
-          consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: ano_orcamento
         description: Ano do orçamento.
@@ -346,14 +338,12 @@ models:
     meta:
       tags:
       - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por contrato do Pró-Moradia, ligado ao ato que o originou."
-          chave: [cod_contrato]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, ligado ao ato que o originou."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: cod_contrato
       description: Código do contrato no Canal FGTS (sem dígito).
@@ -407,14 +397,12 @@ models:
     meta:
       tags:
       - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por tomador do Pró-Moradia."
-          chave: [tomador_codigo]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+      documentacao:
+        grao: "Uma linha por tomador do Pró-Moradia."
+        chave: [tomador_codigo]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: tomador_codigo
       description: Código do tomador no Canal FGTS.
@@ -486,14 +474,12 @@ models:
     meta:
       tags:
       - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por contrato do Pró-Moradia, com os contratos anteriores do mesmo tomador."
-          chave: [cod_contrato]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, com os contratos anteriores do mesmo tomador."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: cod_contrato
       description: Código do contrato no Canal FGTS (sem dígito).
@@ -547,14 +533,12 @@ models:
     meta:
       tags:
       - gold
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por contrato do Pró-Moradia, com o estágio atual da obra."
-          chave: [cod_contrato]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, com o estágio atual da obra."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: cod_contrato
       description: Código do contrato no Canal FGTS (sem dígito).
@@ -635,6 +619,12 @@ models:
     meta:
       tags:
       - gold
+      documentacao:
+        grao: "Uma linha por mês, UF e situação da obra."
+        chave: [mes, uf, situacao_obra]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     data_tests:
     - chave_composta_unica:
         arguments:
@@ -642,14 +632,6 @@ models:
           - mes
           - uf
           - situacao_obra
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por mês, UF e situação da obra."
-          chave: [mes, uf, situacao_obra]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: mes
       description: Mês da medição.
@@ -679,14 +661,12 @@ models:
       openmetadata:
         glossary:
           - MCID.ProgramasHabitacionais
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por ato que rege o Pró-Moradia."
-          chave: [portaria_codigo]
-          fonte: "Resolução do Conselho Curador do FGTS e instruções normativas do MCID"
-          periodicidade: eventual
-          consumo: ["Consulta direta na camada ouro"]
+      documentacao:
+        grao: "Uma linha por ato que rege o Pró-Moradia."
+        chave: [portaria_codigo]
+        fonte: "Resolução do Conselho Curador do FGTS e instruções normativas do MCID"
+        periodicidade: eventual
+        consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: portaria_codigo
         description: "Código do ato (número_ano; atos que não são portaria levam o prefixo da espécie, como in_11_2024)."
@@ -730,14 +710,12 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais
           - MCID.ExecucaoDeEmpreendimentos
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por idade de contrato, em meses desde a assinatura."
-          chave: [idade_meses]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+      documentacao:
+        grao: "Uma linha por idade de contrato, em meses desde a assinatura."
+        chave: [idade_meses]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: idade_meses
         description: "Tempo de contrato, em meses (mês do retrato − mês da assinatura)."
@@ -785,14 +763,12 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais
           - MCID.ExecucaoDeEmpreendimentos
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por contrato do Pró-Moradia, com o desvio da curva S de referência."
-          chave: [cod_contrato]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+      documentacao:
+        grao: "Uma linha por contrato do Pró-Moradia, com o desvio da curva S de referência."
+        chave: [cod_contrato]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: cod_contrato
         description: "Código do contrato no Canal FGTS."
@@ -893,14 +869,12 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais
           - MCID.ExecucaoDeEmpreendimentos
-    config:
-      meta:
-        documentacao:
-          grao: "Uma linha por mês, UF, tipo de intervenção e situação na carteira."
-          chave: [id_curva_s]
-          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
-          periodicidade: mensal
-          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
+      documentacao:
+        grao: "Uma linha por mês, UF, tipo de intervenção e situação na carteira."
+        chave: [id_curva_s]
+        fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+        periodicidade: mensal
+        consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: id_curva_s
         description: "Identificador da linha (md5 do grão)."

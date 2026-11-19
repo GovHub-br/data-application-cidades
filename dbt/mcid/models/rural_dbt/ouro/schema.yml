@@ -594,14 +594,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por entidade organizadora (CNPJ) do Rural."
-        chave: [eo_cnpj]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; Portarias do MCID publicadas no Diário Oficial da União"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
+    documentacao:
+      grao: "Uma linha por entidade organizadora (CNPJ) do Rural."
+      chave: [eo_cnpj]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; Portarias do MCID publicadas no Diário Oficial da União"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
   columns:
   - name: eo_cnpj
     description: CNPJ da entidade organizadora, só dígitos.
@@ -671,14 +669,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por operação do Rural com entidade organizadora, com as operações anteriores da mesma entidade."
-        chave: [apf]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
+    documentacao:
+      grao: "Uma linha por operação do Rural com entidade organizadora, com as operações anteriores da mesma entidade."
+      chave: [apf]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
   columns:
   - name: apf
     description: APF da operação (8 dígitos, normalizada por normalize_apf) — chave do empreendimento
@@ -734,14 +730,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por empreendimento selecionado pela Portaria MCidades nº 162/2018."
-        chave: [apf]
-        fonte: "Portarias do MCID publicadas no Diário Oficial da União; CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: eventual
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
+    documentacao:
+      grao: "Uma linha por empreendimento selecionado pela Portaria MCidades nº 162/2018."
+      chave: [apf]
+      fonte: "Portarias do MCID publicadas no Diário Oficial da União; CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: eventual
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
   columns:
   - name: apf
     description: Código do empreendimento selecionado normalizado como APF.
@@ -790,14 +784,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por obra (APF) do Novo MCMV Rural, com o estágio atual."
-        chave: [apf]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; CAIXA, andamento de obra GEHIS"
-        periodicidade: mensal
-        consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
+    documentacao:
+      grao: "Uma linha por obra (APF) do Novo MCMV Rural, com o estágio atual."
+      chave: [apf]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; CAIXA, andamento de obra GEHIS"
+      periodicidade: mensal
+      consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
   columns:
   - name: apf
     description: APF da operação (8 dígitos, normalizada por normalize_apf) — chave do empreendimento
@@ -883,6 +875,12 @@ models:
   meta:
     tags:
     - gold
+    documentacao:
+      grao: "Uma linha por fonte, mês de referência, UF e situação da obra."
+      chave: [fonte, dt_referencia, uf, situacao]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; CAIXA, andamento de obra GEHIS"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
   data_tests:
   - chave_composta_unica:
       arguments:
@@ -891,14 +889,6 @@ models:
         - dt_referencia
         - uf
         - situacao
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por fonte, mês de referência, UF e situação da obra."
-        chave: [fonte, dt_referencia, uf, situacao]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; CAIXA, andamento de obra GEHIS"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID", "Matriz de perguntas do MCID (cobertura pergunta × dado), Rural"]
   columns:
   - name: fonte
     description: Obra mensal Novo Rural (estágio) ou GEHIS CAIXA (andamento).
@@ -926,14 +916,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por APF (contrato) do Rural."
-        chave: [apf]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por APF (contrato) do Rural."
+      chave: [apf]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: apf
     description: 'Código da operação (APF). No Rural identifica ao mesmo tempo o contrato e o empreendimento.'
@@ -1063,14 +1051,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por registro e regra de pendência (R01 a R12)."
-        chave: [regra_codigo, chave]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; Portarias do MCID publicadas no Diário Oficial da União"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por registro e regra de pendência (R01 a R12)."
+      chave: [regra_codigo, chave]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; Portarias do MCID publicadas no Diário Oficial da União"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: regra_codigo
     description: "Código da regra (R01 a R12)."
@@ -1120,14 +1106,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por proposta selecionada nas portarias de seleção do Rural."
-        chave: [id_selecao]
-        fonte: "Portarias do MCID publicadas no Diário Oficial da União; CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: eventual
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por proposta selecionada nas portarias de seleção do Rural."
+      chave: [id_selecao]
+      fonte: "Portarias do MCID publicadas no Diário Oficial da União; CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: eventual
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: id_selecao
     description: Identificador da linha do anexo de seleção.
@@ -1242,14 +1226,12 @@ models:
   meta:
     tags:
     - gold
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por portaria do ciclo de seleção do Rural."
-        chave: [portaria_codigo]
-        fonte: "Portarias do MCID publicadas no Diário Oficial da União; CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: eventual
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por portaria do ciclo de seleção do Rural."
+      chave: [portaria_codigo]
+      fonte: "Portarias do MCID publicadas no Diário Oficial da União; CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: eventual
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: portaria_codigo
     description: Código da portaria (número sem ponto + ano).
@@ -1318,14 +1300,12 @@ models:
     openmetadata:
       glossary:
       - MCID.ProgramasHabitacionais.MCMV.MCMVRural
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por APF e tipo de portaria (seleção, autorização de contratação e trabalho social)."
-        chave: [id_apf_tipo_portaria]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; Portarias do MCID publicadas no Diário Oficial da União"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por APF e tipo de portaria (seleção, autorização de contratação e trabalho social)."
+      chave: [id_apf_tipo_portaria]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR; Portarias do MCID publicadas no Diário Oficial da União"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: id_apf_tipo_portaria
     description: Identificador da linha (md5 de APF e tipo de portaria).
@@ -1480,14 +1460,12 @@ models:
       glossary:
       - MCID.ProgramasHabitacionais.MCMV.MCMVRural
       - MCID.ExecucaoDeEmpreendimentos
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por mês, tipo de portaria, portaria, UF, agente financeiro e programa."
-        chave: [id_curva_s]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por mês, tipo de portaria, portaria, UF, agente financeiro e programa."
+      chave: [id_curva_s]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: id_curva_s
     description: Identificador da linha (md5 do grão).
@@ -1553,14 +1531,12 @@ models:
       glossary:
       - MCID.ProgramasHabitacionais.MCMV.MCMVRural
       - MCID.ExecucaoDeEmpreendimentos
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por idade de contrato, em meses desde a contratação."
-        chave: [idade_meses]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por idade de contrato, em meses desde a contratação."
+      chave: [idade_meses]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: idade_meses
     description: "Tempo de contrato, em meses (mês do retrato − mês da contratação)."
@@ -1605,14 +1581,12 @@ models:
       glossary:
       - MCID.ProgramasHabitacionais.MCMV.MCMVRural
       - MCID.ExecucaoDeEmpreendimentos
-  config:
-    meta:
-      documentacao:
-        grao: "Uma linha por APF e tipo de portaria, com o desvio da curva S de referência."
-        chave: [id_apf_tipo_portaria]
-        fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
-        periodicidade: mensal
-        consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
+    documentacao:
+      grao: "Uma linha por APF e tipo de portaria, com o desvio da curva S de referência."
+      chave: [id_apf_tipo_portaria]
+      fonte: "CAIXA e Banco do Brasil, contratos e acompanhamento de obra do Novo MCMV Rural e do PNHR"
+      periodicidade: mensal
+      consumo: ["Superset, aba Rural do painel Perguntas do MCID"]
   columns:
   - name: id_apf_tipo_portaria
     description: "Identificador da linha (md5 de APF e tipo de portaria)."
