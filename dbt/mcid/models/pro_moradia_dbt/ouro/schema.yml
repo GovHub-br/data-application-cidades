@@ -10,6 +10,14 @@ models:
     meta:
       tags:
         - gold
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por contrato do Pró-Moradia."
+          chave: [contrato]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
       - name: contrato
         description: Contrato no formato `cod_contrato-dv`.
@@ -73,7 +81,7 @@ models:
       - name: ic_pac
         description: Indicador de contrato do PAC.
       - name: identificador_selecao
-        description: Identificador externo — em geral a seleção de origem (ex. "PAC - 3A SELECAO") ou o processo.
+        description: Identificador externo — em geral a seleção de origem, como "PAC - 3A SELECAO", ou o processo.
       - name: quantidade_uh
         description: Unidades habitacionais financiadas (zero em urbanização).
       - name: populacao_beneficiada
@@ -103,7 +111,7 @@ models:
       - name: situacao_obra_codigo
         description: >
           Código da situação da obra na última avaliação mensal medida. Mistura dígito e letra na
-          origem (ex. `4`/`H` paralisada, `6`/`8`/`E` concluída) — é ele que alimenta a regra de
+          origem (`4` e `H` indicam paralisada; `6`, `8` e `E` indicam concluída) — é ele que alimenta a regra de
           `status_execucao_simplificado`.
       - name: situacao_obra
         description: Situação da obra na última avaliação medida (adiantada, normal, atrasada, paralisada, concluída...).
@@ -152,7 +160,7 @@ models:
       - name: dias_sem_evolucao
         description: Dias desde a última evolução física, para o contrato que está na lista de paralisadas.
       - name: faixa_paralisacao
-        description: Faixa de tempo de paralisação (ex. "091 - 180 dias", "Entre 1 e 2 anos").
+        description: Faixa de tempo de paralisação (como "091 - 180 dias" ou "Entre 1 e 2 anos").
       - name: motivo_paralisacao
         description: Último motivo de paralisação informado pelo acompanhamento da CAIXA.
       - name: dt_previsao_conclusao
@@ -174,6 +182,14 @@ models:
       - unique_combinacao:
           arguments:
             colunas: ["contrato", "mes"]
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por contrato e mês de liberação do FGTS."
+          chave: [contrato, mes]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: contrato
         description: Contrato no formato `cod_contrato-dv`.
@@ -214,6 +230,14 @@ models:
     meta:
       tags:
         - gold
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por UF."
+          chave: [uf]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: uf
         description: Sigla da UF.
@@ -276,6 +300,14 @@ models:
       - unique_combinacao:
           arguments:
             colunas: ["ano_orcamento", "regiao"]
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por ano de orçamento e região."
+          chave: [ano_orcamento, regiao]
+          fonte: "FGTS, orçamento e prestação de contas do Pró-Moradia; CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: anual
+          consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: ano_orcamento
         description: Ano do orçamento.
@@ -314,6 +346,14 @@ models:
     meta:
       tags:
       - gold
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por contrato do Pró-Moradia, ligado ao ato que o originou."
+          chave: [cod_contrato]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: cod_contrato
       description: Código do contrato no Canal FGTS (sem dígito).
@@ -367,6 +407,14 @@ models:
     meta:
       tags:
       - gold
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por tomador do Pró-Moradia."
+          chave: [tomador_codigo]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: tomador_codigo
       description: Código do tomador no Canal FGTS.
@@ -438,6 +486,14 @@ models:
     meta:
       tags:
       - gold
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por contrato do Pró-Moradia, com os contratos anteriores do mesmo tomador."
+          chave: [cod_contrato]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: cod_contrato
       description: Código do contrato no Canal FGTS (sem dígito).
@@ -491,6 +547,14 @@ models:
     meta:
       tags:
       - gold
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por contrato do Pró-Moradia, com o estágio atual da obra."
+          chave: [cod_contrato]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: cod_contrato
       description: Código do contrato no Canal FGTS (sem dígito).
@@ -578,6 +642,14 @@ models:
           - mes
           - uf
           - situacao_obra
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por mês, UF e situação da obra."
+          chave: [mes, uf, situacao_obra]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Matriz de perguntas do MCID (cobertura pergunta × dado), Pró-Moradia"]
     columns:
     - name: mes
       description: Mês da medição.
@@ -607,9 +679,17 @@ models:
       openmetadata:
         glossary:
           - MCID.ProgramasHabitacionais
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por ato que rege o Pró-Moradia."
+          chave: [portaria_codigo]
+          fonte: "Resolução do Conselho Curador do FGTS e instruções normativas do MCID"
+          periodicidade: eventual
+          consumo: ["Consulta direta na camada ouro"]
     columns:
       - name: portaria_codigo
-        description: "Código do ato (número_ano; atos que não são portaria levam prefixo, ex. in_11_2024)."
+        description: "Código do ato (número_ano; atos que não são portaria levam o prefixo da espécie, como in_11_2024)."
         tests:
           - unique
           - not_null
@@ -624,13 +704,13 @@ models:
       - name: dt_ato
         description: "Data do ato, quando conhecida."
       - name: numero_ano
-        description: "Número/ano com ponto de milhar (ex. 1.310/2024), usado como rótulo."
+        description: "Número/ano com ponto de milhar, como 1.310/2024, usado como rótulo."
       - name: papel_ato
         description: "Papel no ciclo: Regulamento da linha, Abertura do ciclo, Resultado da seleção, Enquadramento (Calamidade), Alteração, Autorização de contratação ou A confirmar."
       - name: tipo_portaria
         description: "Tipo para o filtro de portaria: Regulamento da linha, Abertura do ciclo, Seleção, Alteração, Autorização de contratação ou A confirmar."
       - name: ciclo_selecao
-        description: "Ciclo a que o ato pertence (ex. Seleção 2024, Seleção 2025, Calamidade RS 2024, Todos)."
+        description: "Ciclo a que o ato pertence (Seleção 2024, Seleção 2025, Calamidade RS 2024 ou Todos)."
       - name: tem_lista_nominal
         description: "Se o ato publica lista de propostas (sim, não)."
       - name: fonte_lista
@@ -650,6 +730,14 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais
           - MCID.ExecucaoDeEmpreendimentos
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por idade de contrato, em meses desde a assinatura."
+          chave: [idade_meses]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: idade_meses
         description: "Tempo de contrato, em meses (mês do retrato − mês da assinatura)."
@@ -697,6 +785,14 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais
           - MCID.ExecucaoDeEmpreendimentos
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por contrato do Pró-Moradia, com o desvio da curva S de referência."
+          chave: [cod_contrato]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: cod_contrato
         description: "Código do contrato no Canal FGTS."
@@ -797,6 +893,14 @@ models:
         glossary:
           - MCID.ProgramasHabitacionais
           - MCID.ExecucaoDeEmpreendimentos
+    config:
+      meta:
+        documentacao:
+          grao: "Uma linha por mês, UF, tipo de intervenção e situação na carteira."
+          chave: [id_curva_s]
+          fonte: "CAIXA, Canal FGTS (contratos, medições e desembolsos do Pró-Moradia)"
+          periodicidade: mensal
+          consumo: ["Superset, seção Curva S por linha do painel Perguntas do MCID"]
     columns:
       - name: id_curva_s
         description: "Identificador da linha (md5 do grão)."

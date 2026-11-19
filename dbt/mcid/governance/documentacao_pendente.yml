@@ -13,14 +13,6 @@ version: 1
 #
 # Para ver o que falta em cada um:
 #   uv run python scripts/governance/auditar_metadados.py --ouro
-# Dívida deste PR (Rural, Pró-Moradia e FNHIS Sub-50): os models abaixo entraram sem
-# `meta.documentacao`. Entram na lista para o teste não barrar a entrega; cada um sai
-# daqui quando for documentado (grão, chave, fonte, periodicidade, consumo).
-# Os que também têm achado de texto (exemplo de código, linguagem de processo,
-# mapeamento literal) precisam desse ajuste antes de sair:
-#   ouro_fnhis_portarias, ouro_fnhis_proposta_tramite, ouro_pro_moradia_ficha_contrato,
-#   ouro_pro_moradia_portarias, ouro_rural_curva_s_desvio, ouro_rural_obra_andamento,
-#   ouro_rural_painel_operacao, ouro_rural_painel_portaria.
 pendentes:
   - ouro_conjuntura_balancos_empresas
   - ouro_conjuntura_balancos_empresas_totais
@@ -82,16 +74,6 @@ pendentes:
   - ouro_fds_evolucao_financeira_chart
   - ouro_fds_ficha_empreendimento
   - ouro_fds_panorama_entidade
-  - ouro_fnhis_curva_s
-  - ouro_fnhis_empenho_parcelas
-  - ouro_fnhis_ente_historico
-  - ouro_fnhis_ficha_termo_compromisso
-  - ouro_fnhis_funil_propostas
-  - ouro_fnhis_motivos_nao_enquadramento
-  - ouro_fnhis_portarias
-  - ouro_fnhis_proposta_tramite
-  - ouro_fnhis_regularidade_municipios
-  - ouro_fnhis_termo_situacao_mensal
   - ouro_historico_marco_empreendimento
   - ouro_historico_serie_mensal
   - ouro_historico_serie_situacao_mensal
@@ -108,20 +90,6 @@ pendentes:
   - ouro_linha_financiada_ranking_territorial
   - ouro_linha_financiada_relatorio_semanal
   - ouro_linha_financiada_resumo_mensal
-  - ouro_mcid_cobertura_perguntas
-  - ouro_pro_moradia_contrato_selecao
-  - ouro_pro_moradia_curva_s
-  - ouro_pro_moradia_curva_s_desvio
-  - ouro_pro_moradia_curva_s_referencia
-  - ouro_pro_moradia_evolucao_financeira
-  - ouro_pro_moradia_ficha_contrato
-  - ouro_pro_moradia_obra_andamento
-  - ouro_pro_moradia_obra_situacao_mensal
-  - ouro_pro_moradia_orcamento_execucao
-  - ouro_pro_moradia_panorama_estadual
-  - ouro_pro_moradia_portarias
-  - ouro_pro_moradia_tomador
-  - ouro_pro_moradia_tomador_recontratacao
   - ouro_reforma_casa_brasil_acesso_dash
   - ouro_reforma_casa_brasil_cobertura_perguntas_dash
   - ouro_reforma_casa_brasil_implementacao_dash
@@ -132,25 +100,12 @@ pendentes:
   - ouro_reloginho_indicadores_gargalo_desempenho
   - ouro_reloginho_resumo_dashboard
   - ouro_reloginho_resumo_gargalo_desempenho_dashboard
-  - ouro_rural_curva_s
-  - ouro_rural_curva_s_desvio
-  - ouro_rural_curva_s_referencia
-  - ouro_rural_entidade_organizadora
-  - ouro_rural_entidade_recontratacao
   - ouro_rural_evolucao_financeira
   - ouro_rural_execucao_fisica_financeira
   - ouro_rural_ficha_empreendimento
   - ouro_rural_ficha_trabalho_social
   - ouro_rural_infraestrutura_agua_saneamento
   - ouro_rural_mapa_nacional
-  - ouro_rural_obra_andamento
-  - ouro_rural_obra_situacao_mensal
-  - ouro_rural_painel_operacao
-  - ouro_rural_painel_pendencia
-  - ouro_rural_painel_portaria
   - ouro_rural_panorama_estadual
   - ouro_rural_perfil_beneficiarios
-  - ouro_rural_portarias_selecao_resumo
   - ouro_rural_resumo_gerencial
-  - ouro_rural_selecao_portaria_162
-  - ouro_rural_selecao_portarias
