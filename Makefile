@@ -38,8 +38,19 @@ up:
 down:
 	$(COMPOSE) down
 
+# Derruba E APAGA os volumes: postgres-db (bancos airflow, superset e data_warehouse),
+# airflow_logs e lake_tmp. Pools, Variables e Connections voltam no proximo `make up`
+# (airflow-init); historico de execucoes, dashboards do Superset e o DW local, nao.
+down-volumes:
+	$(COMPOSE) down -v
+
 logs-airflow:
 	$(COMPOSE) logs airflow --tail=200
+
+# Reaplica os Pools, Variables e Connections de infra/airflow/bootstrap/ sem
+# reiniciar o airflow. O `make up` ja faz isso a cada subida (servico airflow-init).
+airflow-bootstrap:
+	$(COMPOSE) run --rm airflow-init
 
 # ---------------------------------------------------------------------------
 # Site de documentacao (docs-pages/)
@@ -158,7 +169,8 @@ conjuntura-validar-boletins:
 conjuntura-congelar:
 	cd dbt/mcid && uv run dbt snapshot
 
-.PHONY: setup format lint test lock compose-config up down logs-airflow \
+.PHONY: setup format lint test lock compose-config up down down-volumes logs-airflow \
+	airflow-bootstrap \
 	docs-setup docs-collect docs-build docs-serve docs-clean conjuntura-docs \
 	conjuntura-docs-pdf conjuntura-catalogo conjuntura-validar-boletins \
 	conjuntura-congelar \

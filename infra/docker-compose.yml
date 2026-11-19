@@ -5,6 +5,10 @@ name: data-application-cidades
 
 # Base configuration for Airflow services
 x-airflow-common: &airflow-common
+  # Nome fixo: `airflow` e `airflow-init` usam sempre a MESMA imagem. Sem ele cada
+  # servico ganha a sua (data-application-cidades-<servico>), e uma imagem velha do
+  # init rodaria `db migrate` com outra versao do Airflow contra o banco.
+  image: data-application-cidades-airflow
   build:
     context: ..
     dockerfile: infra/docker/airflow/Dockerfile
@@ -57,14 +61,16 @@ x-airflow-environment: &airflow-common-env
   # scheduler assina para uma task nao bate com a chave que o api-server usa,
   # e toda task falha com "Invalid auth token: Signature verification failed".
   AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-local-dev-airflow-jwt-secret}
-  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts:$PYTHONPATH"
+  # Sem `:$PYTHONPATH` no fim: o Compose interpolaria a variavel do HOST (nao a da
+  # imagem, que nem define PYTHONPATH), com aviso a cada comando quando ela nao existe.
+  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts"
   # Temporários dos scripts do data lake — sobrescreve os caminhos de host do .env
   LAKE_TMPDIR: /opt/airflow/lake_tmp
   MASKING_TMPDIR: /opt/airflow/lake_tmp
   # Desliga os artefatos locais dos scripts (log em arquivo, preview): o bind-mount de
   # scripts/ não é gravável pelo usuário do container. Logs vão p/ stderr (UI).
   LAKE_LOCAL_ARTIFACTS: "0"
-  _AIRFLOW_DB_MIGRATE: 'true'
+  # O _AIRFLOW_DB_MIGRATE fica so no airflow-init, que roda antes do airflow.
   AIRFLOW__CORE__PLUGINS_FOLDER: ${AIRFLOW_HOME}/plugins
   AIRFLOW__CORE__DAGS_FOLDER: ${AIRFLOW_HOME}/dags
   AIRFLOW_REPO_BASE: ${AIRFLOW_HOME}
@@ -89,6 +95,63 @@ services:
       - lake_tmp:/opt/airflow/lake_tmp
     restart: "no"
 
+  # Roda a cada `make up` e termina: migra o banco de metadados e importa os Pools,
+  # Variables e Connections de infra/airflow/bootstrap/ (ver o README de la). Os JSONs
+  # sao a fonte da verdade: sobrescrevem o que foi editado na UI. O `airflow` so sobe
+  # depois que ele termina com sucesso. `make airflow-bootstrap` reaplica sem reiniciar.
+  airflow-init:
+    <<: *airflow-common
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+    volumes:
+      - ./airflow/airflow.cfg:${AIRFLOW_HOME}/airflow.cfg
+      - ./airflow/bootstrap:${AIRFLOW_HOME}/bootstrap:ro
+    restart: "no"
+    command:
+      - bash
+      - -c
+      - |
+        set -euo pipefail
+        dir="$${AIRFLOW_HOME%/}/bootstrap"
+
+        # 0 = importar; 1 = pular (o arquivo nao existe). Aborta se existe e nao da
+        # para ler: importar pela metade esconderia o problema.
+        existe() {
+          if [ ! -f "$$dir/$$1" ]; then
+            echo "AVISO: infra/airflow/bootstrap/$$1 nao existe (copie de $${1%.json}.example.json e preencha). Nada importado dele."
+            return 1
+          fi
+          if [ ! -r "$$dir/$$1" ]; then
+            echo "ERRO: o uid $$(id -u) nao consegue ler infra/airflow/bootstrap/$$1. Defina AIRFLOW_UID no .env com o seu uid do host (id -u) e confira se ele nao esta exportado no shell, que tem prioridade sobre o .env." >&2
+            exit 1
+          fi
+        }
+
+        # `variables import` e `connections import` saem com 0 mesmo quando um item
+        # falha; so a saida diz. Sem esta checagem o airflow subiria faltando item.
+        importar() {
+          local falha=$$1
+          shift
+          local saida
+          saida=$$("$$@" 2>&1) || { echo "$$saida" >&2; exit 1; }
+          echo "$$saida"
+          if grep -qF -- "$$falha" <<<"$$saida"; then
+            echo "ERRO: nem todos os itens foram importados (ver acima)." >&2
+            exit 1
+          fi
+        }
+
+        airflow pools import "$$dir/pools.json"
+        if existe variables.json; then
+          importar "failed to be updated" \
+            airflow variables import --action-on-existing-key overwrite "$$dir/variables.json"
+        fi
+        if existe connections.json; then
+          importar "Could not import" \
+            airflow connections import --overwrite "$$dir/connections.json"
+        fi
+
   # Airflow Services
   airflow:
     <<: *airflow-common
@@ -96,6 +159,10 @@ services:
     # do airflow localmente e assim melhorar a velocidade inicialização
     # doc do standalone: https://airflow.apache.org/docs/apache-airflow/3.3.2/start.html
     command: standalone
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
     ports:
       - "8080:8080"
     healthcheck:

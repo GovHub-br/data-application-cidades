@@ -1,0 +1,57 @@
+{
+    "BACEN_SERIES": {
+        "description": "Séries do SGS do Banco Central lidas pela bacen_sgs_ingest_dag: nome da série -> código no SGS",
+        "value": {
+            "pf_concessoes_rs_mi": "<código SGS>",
+            "pf_taxa_juros_aa": "<código SGS>",
+            "pf_inadimplencia_pct": "<código SGS>",
+            "pj_concessoes_rs_mi": "<código SGS>",
+            "pj_taxa_juros_aa": "<código SGS>",
+            "pj_inadimplencia_pct": "<código SGS>"
+        }
+    },
+    "IBGE_CONFIGURACOES": {
+        "description": "Agregados da API SIDRA lidos pela ibge_ingest_dag, uma task por item",
+        "value": [
+            {
+                "tabela": "<tabela de destino>",
+                "agregado": "<id do agregado no SIDRA>",
+                "variaveis": "<ids das variáveis>",
+                "periodos": "-20"
+            }
+        ]
+    },
+    "dynamic_schedules": {
+        "description": "Schedule por dag_id ({type: preset | cron | timedelta, value}); DAG ausente usa o padrão do código",
+        "value": {
+            "ibge_ingest_dag": {
+                "type": "preset",
+                "value": "@daily"
+            }
+        }
+    },
+    "dados_fgv_email": {
+        "description": "Login da FGV usado pela icst_ingest_dag",
+        "value": "<email>"
+    },
+    "dados_fgv_password": {
+        "description": "Senha da FGV usada pela icst_ingest_dag",
+        "value": "<senha>"
+    },
+    "api_key_alphavantage": {
+        "description": "Chave da Alpha Vantage e ativo consultado pela imob_ingest_dag",
+        "value": {
+            "api_key": "<api key>",
+            "acao": "<símbolo do ativo>"
+        }
+    },
+    "email_credentials": {
+        "description": "Caixa de e-mail (IMAP) lida pela dotacao_execucao_outras_fontes_mcid_ingest_dag",
+        "value": {
+            "email": "<email>",
+            "password": "<senha>",
+            "imap_server": "<servidor IMAP>",
+            "sender_email": "<remetente esperado>"
+        }
+    }
+}
