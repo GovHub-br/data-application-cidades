@@ -634,7 +634,7 @@ models:
   - name: bronze_seed_api_ibge_uf
     description: >
       Referência do IBGE com as UFs (id, sigla, nome, região), como está em seeds.api_ibge_uf
-      (source raw.api_ibge_uf). Sem transformação: a origem traz cada UF duplicada (54 linhas para 27 siglas).
+      (seed `api_ibge_uf`). Sem transformação: a origem traz cada UF duplicada (54 linhas para 27 siglas).
     meta:
       tags:
       - bronze
