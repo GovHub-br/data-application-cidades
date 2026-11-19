@@ -44,6 +44,15 @@
     {%- endif -%}
 {%- endmacro %}
 
-{% macro fonte_lake(nome_tabela, nome_fonte='lake_staging') %}
-    read_parquet('{{ caminho_fonte_lake(nome_tabela, nome_fonte) }}')
+{% macro fonte_lake(
+    nome_tabela,
+    nome_fonte='lake_staging',
+    filename=false,
+    union_by_name=false
+) %}
+    read_parquet(
+        '{{ caminho_fonte_lake(nome_tabela, nome_fonte) }}'
+        {%- if filename %}, filename => true{% endif -%}
+        {%- if union_by_name %}, union_by_name => true{% endif -%}
+    )
 {% endmacro %}
