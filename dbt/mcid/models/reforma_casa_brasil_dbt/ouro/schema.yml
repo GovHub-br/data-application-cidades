@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: ouro_reforma_casa_brasil_acesso_dash
+    description: >
+      Indicadores agregados de acesso ao Reforma Casa Brasil por território,
+      faixa, raça/cor e sexo. Células com menos de dez contratos são suprimidas.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, acesso, agregado]
+    columns:
+      - name: quantidade_contratos
+        data_tests: [not_null]
+      - name: proporcao_encontrada_cadunico
+        description: Cobertura do vínculo pseudonimizado com o CadÚnico.
+
+  - name: ouro_reforma_casa_brasil_implementacao_dash
+    description: >
+      Indicadores administrativos de financiamento e adimplência. Percepções de
+      burocracia, documentação e qualidade dependem da pesquisa.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, implementacao, agregado]
+    columns:
+      - name: quantidade_contratos
+        data_tests: [not_null]
+
+  - name: ouro_reforma_casa_brasil_resultado_dash
+    description: >
+      Linha de base de inadequação domiciliar observável no CadÚnico. Não mede
+      efeito pós-obra nem atribui causalidade ao programa.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, resultado, agregado]
+    columns:
+      - name: resultado_pos_obra_disponivel
+        description: Sempre falso até a entrada de pesquisa ou medição pós-obra.
+        data_tests:
+          - accepted_values:
+              arguments: {values: [false]}
+
+  - name: ouro_reforma_casa_brasil_cobertura_perguntas_dash
+    description: Matriz de cobertura que separa resposta administrativa, proxy e lacuna de pesquisa.
+    meta:
+      tags: [ouro, reforma-casa-brasil, dashboard, cobertura]
+    data_tests:
+      - unique_combinacao:
+          arguments: {colunas: [bloco, pergunta]}

@@ -23,8 +23,8 @@ Por padrão não escreve — sem `--confirmar` apenas relata o que faria. Sem
 URL/token no ambiente, roda offline e imprime só o que está declarado.
 
 Uso:
-    poetry run python scripts/governance/sincronizar_governanca.py
-    poetry run python scripts/governance/sincronizar_governanca.py --confirmar
+    uv run python scripts/governance/sincronizar_governanca.py
+    uv run python scripts/governance/sincronizar_governanca.py --confirmar
 """
 
 from __future__ import annotations
@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import json
 
+import documentacao_dbt
 from governanca_comum import (
     RAIZ,
     ClienteOM,
@@ -142,15 +143,12 @@ def sincronizar_propriedades_customizadas(om: ClienteOM, dominios: dict) -> None
         return
     print("Propriedades customizadas")
     tipos_de_campo = {
-        t["name"]: t["id"]
-        for t in om.listar("metadata/types", {"category": "field", "limit": 100})
+        t["name"]: t["id"] for t in om.listar("metadata/types", {"category": "field", "limit": 100})
     }
     for propriedade in declaradas:
         # `customProperties` só vem se for pedido — sem isso a lista chega
         # vazia, a propriedade parece faltar e é recriada a cada execução.
-        entidade = om.existe(
-            "metadata/types", propriedade["entidade"], campos="customProperties"
-        )
+        entidade = om.existe("metadata/types", propriedade["entidade"], campos="customProperties")
         if not entidade:
             om.falhas.append(f"tipo de entidade {propriedade['entidade']} não existe")
             continue
@@ -245,8 +243,7 @@ def _documentar_entidade_de_servico(
             rota,
             atual["id"],
             operacoes_de_diferenca(atual, {"displayName": decl["display_name"]}),
-            f"nome de exibição de {fqn} "
-            f"({atual.get('displayName')!r} -> {decl['display_name']!r})",
+            f"nome de exibição de {fqn} ({atual.get('displayName')!r} -> {decl['display_name']!r})",
         )
 
 
@@ -326,9 +323,7 @@ def sincronizar_produtos(om: ClienteOM, donos: Proprietarios, dominios: dict) ->
         reconciliacoes = resumo_de_reconciliacoes(p["name"])
         if reconciliacoes:
             desejado["extension"] = {"mcidReconciliacoes": reconciliacoes}
-        atual = om.existe(
-            "dataProducts", p["name"], campos="owners,domains,tags,experts,extension"
-        )
+        atual = om.existe("dataProducts", p["name"], campos="owners,domains,tags,experts,extension")
         if atual:
             om.patch(
                 "dataProducts",
@@ -440,136 +435,13 @@ def _relacionar_termo(om: ClienteOM, t: dict, relacionados: list[str]) -> None:
         )
 
 
-#: Colunas do contrato de dimensão temporal (macro `dimensao_temporal.sql`).
-#: São o que torna duas séries do conjuntura comparáveis entre si — e o que
-#: responde "com o que eu posso cruzar esta tabela".
-GRANULARIDADE_TEMPORAL = (
-    "data_referencia",
-    "periodo",
-    "ano",
-    "mes",
-    "trimestre",
-    "edicao",
-)
-
-#: Camadas que recebem relações semânticas. A Bronze fica de fora: ela é cópia
-#: fiel da origem, e o que se publica dela é a topologia, não o significado.
-CAMADAS_COM_RELACOES = {"silver", "gold"}
-
-
-def vizinhanca_do_modelo(catalogo: dict) -> dict[str, dict[str, list[str]]]:
-    """De quem cada model lê e quem lê dele, direto do grafo do dbt."""
-    por_id = {m["id"]: m["name"] for m in catalogo.get("models", [])}
-    acima: dict[str, list[str]] = {}
-    abaixo: dict[str, list[str]] = {}
-    for modelo in catalogo.get("models", []):
-        nome = modelo["name"]
-        for pai in modelo.get("depends_on") or []:
-            if pai in por_id:
-                acima.setdefault(nome, []).append(por_id[pai])
-                abaixo.setdefault(por_id[pai], []).append(nome)
-    return {
-        m["name"]: {
-            "le_de": sorted(acima.get(m["name"], [])),
-            "lido_por": sorted(abaixo.get(m["name"], [])),
-        }
-        for m in catalogo.get("models", [])
-    }
-
-
-def markdown_das_relacoes(modelo: dict, vizinhos: dict[str, list[str]]) -> str:
-    """Texto que descreve com o que a tabela se relaciona e por qual chave.
-
-    Sai do grafo do dbt e do contrato de dimensão temporal — nada é inferido
-    por semelhança de nome. Não cria FK física nem aresta de linhagem: é
-    auxílio de descoberta, para quem procura "com o que posso cruzar isto".
-    """
-    colunas = {c["name"] for c in modelo.get("columns") or []}
-    grao = [c for c in GRANULARIDADE_TEMPORAL if c in colunas]
-    linhas = []
-    if grao:
-        linhas.append(
-            "**Granularidade temporal:** `" + "`, `".join(grao) + "`. "
-            "Séries que compartilham estas colunas são comparáveis entre si "
-            "no mesmo período."
-        )
-    if vizinhos["le_de"]:
-        linhas.append("**Lê de:** " + ", ".join(f"`{n}`" for n in vizinhos["le_de"]))
-    if vizinhos["lido_por"]:
-        linhas.append(
-            "**É lido por:** " + ", ".join(f"`{n}`" for n in vizinhos["lido_por"])
-        )
-    if not linhas:
-        return ""
-    linhas.append(
-        "_Derivado do grafo do dbt e do contrato de dimensão temporal. "
-        "Não constitui chave estrangeira nem aresta de linhagem._"
-    )
-    return "\n\n".join(linhas)
-
-
-def _referencias_dos_vizinhos(
-    om: ClienteOM, catalogo: dict, vizinhos: dict, servico: str, banco: str
-) -> list[dict]:
-    """Atalhos navegáveis para as tabelas vizinhas no grafo."""
-    por_nome = {m["name"]: m for m in catalogo.get("models", [])}
-    referencias = []
-    for vizinho in vizinhos["le_de"] + vizinhos["lido_por"]:
-        outro = por_nome.get(vizinho)
-        if not outro:
-            continue
-        entidade = om.existe(
-            "tables", f"{servico}.{banco}.{outro['schema']}.{outro['name']}"
-        )
-        if entidade:
-            # `id` e `type` sozinhos não bastam: a interface usa `name` e
-            # `fullyQualifiedName` como rótulo do link, e sem eles a lista
-            # aparece com entradas em branco.
-            referencias.append(referencia(entidade, "table"))
-    return referencias
-
-
-def sincronizar_relacoes_semanticas(om: ClienteOM, servico: str, banco: str) -> None:
-    """Publica vizinhança e granularidade nas tabelas Silver e Gold."""
-    if not CATALOGO.exists():
-        return
-    print("Relações semânticas")
-    catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
-    vizinhanca = vizinhanca_do_modelo(catalogo)
-    escritas = 0
-    for modelo in catalogo.get("models", []):
-        if modelo.get("layer") not in CAMADAS_COM_RELACOES:
-            continue
-        texto_md = markdown_das_relacoes(modelo, vizinhanca[modelo["name"]])
-        if not texto_md:
-            continue
-        fqn = f"{servico}.{banco}.{modelo['schema']}.{modelo['name']}"
-        if not om.confirmar:
-            om.atualizados += 1
-            continue
-        tabela = om.existe("tables", fqn, campos="extension")
-        if not tabela:
-            continue
-        relacionadas = _referencias_dos_vizinhos(
-            om, catalogo, vizinhanca[modelo["name"]], servico, banco
-        )
-        desejado = {
-            **(tabela.get("extension") or {}),
-            "mcidSemanticRelationships": texto_md,
-        }
-        if relacionadas:
-            desejado["mcidRelatedTables"] = relacionadas
-        if not operacoes_de_diferenca(tabela, {"extension": desejado}):
-            om.conformes += 1
-            continue
-        om.patch(
-            "tables",
-            tabela["id"],
-            [{"op": "add", "path": "/extension", "value": desejado}],
-            f"relações de {modelo['name']}",
-        )
-        escritas += 1
-    print(f"  {escritas} tabelas Silver/Gold com relações publicadas")
+#: `mcidSemanticRelationships` e `mcidRelatedTables` não são escritas aqui. Elas
+#: são do catálogo semântico (`helpers/openmetadata/semantic_relationships/`),
+#: publicado pela task `sync_mcid_semantic_relationships`. Este script já gravou
+#: nelas a vizinhança do grafo do dbt ("Lê de" / "É lido por"), e como roda
+#: depois daquela task, apagava as relações publicadas na mesma execução. A
+#: vizinhança é a linhagem, e a linhagem o OpenMetadata já guarda nativamente
+#: (ingestão do dbt, aba Lineage).
 
 
 # ── catalogação de schemas, tabelas e colunas ───────────────────────────────
@@ -611,6 +483,30 @@ def mesclar_etiquetas(
     return resultado
 
 
+def documentacao_por_modelo() -> dict[str, dict[str, str]]:
+    """Propriedades customizadas de cada modelo, do `meta.documentacao`."""
+    if not CATALOGO.exists():
+        return {}
+    catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
+    return {
+        m["name"]: documentacao_dbt.propriedades(m["documentacao"])
+        for m in catalogo.get("models", [])
+        if m.get("documentacao")
+    }
+
+
+def extensao_da_documentacao(tabela: dict, documentacao: dict[str, dict]) -> dict:
+    """`extension` desejada, ou nada se o modelo não declara documentação.
+
+    Mescla com o que já existe: as relações semânticas também moram em
+    `extension` e são escritas por outra etapa.
+    """
+    propriedades = documentacao.get(tabela["name"])
+    if not propriedades:
+        return {}
+    return {"extension": {**(tabela.get("extension") or {}), **propriedades}}
+
+
 def camadas_por_modelo() -> dict[str, str]:
     """Camada real de cada modelo, lida do catálogo semântico.
 
@@ -643,9 +539,7 @@ def produtos_por_modelo() -> dict[str, str]:
     if not CATALOGO.exists():
         return {}
     catalogo = json.loads(CATALOGO.read_text(encoding="utf-8"))
-    return {
-        m["name"]: m["product"] for m in catalogo.get("models", []) if m.get("product")
-    }
+    return {m["name"]: m["product"] for m in catalogo.get("models", []) if m.get("product")}
 
 
 def produtos_por_schema(dominios: dict) -> dict[str, list[str]]:
@@ -812,9 +706,7 @@ def catalogar_schemas(
                 om.falhas.append(f"schema '{nome}' do produto sem entrada em schemas.yml")
                 continue
             fqn = f"{servico}.{banco}.{nome}"
-            atual = om.existe(
-                "databaseSchemas", fqn, campos="owners,domains,tags,certification"
-            )
+            atual = om.existe("databaseSchemas", fqn, campos="owners,domains,tags,certification")
             if not atual:
                 if om.offline:
                     print(f"  [offline] catalogaria schema {nome}")
@@ -832,18 +724,12 @@ def catalogar_schemas(
             # anterior pendurou — o schema terminaria marcado com um produto
             # só, o último do laço. A lista desejada é a mesma nas três
             # iterações: a união dos produtos que dividem o schema.
-            marcas = etiquetas_da_camada(
-                dominios, produto["name"], decl.get("layer", "gold")
-            )
+            marcas = etiquetas_da_camada(dominios, produto["name"], decl.get("layer", "gold"))
             marcas += [
                 etiqueta(fqn_produto)
-                for fqn_produto in etiquetas_dos_produtos(
-                    dominios, compartilhado.get(nome, [])
-                )
+                for fqn_produto in etiquetas_dos_produtos(dominios, compartilhado.get(nome, []))
             ]
-            desejado["tags"] = mesclar_etiquetas(
-                atual.get("tags") or [], marcas, nosso_glossario
-            )
+            desejado["tags"] = mesclar_etiquetas(atual.get("tags") or [], marcas, nosso_glossario)
             om.patch(
                 "databaseSchemas",
                 atual["id"],
@@ -857,6 +743,36 @@ def catalogar_schemas(
                 certificacao_da_camada(dominios, decl.get("layer", "gold")),
                 fqn,
             )
+
+
+def tabelas_alheias(
+    tabelas: list[dict],
+    produto: dict,
+    camadas: dict[str, str],
+    produtos_dos_modelos: dict[str, str],
+) -> tuple[list[str], str]:
+    """Tabelas do schema que este produto NÃO cataloga, e o motivo.
+
+    Com prefixo, a trava é o nome: fica de fora quem não casa o prefixo e não
+    está no catálogo. Produto sem prefixo não tem trava de nome, e antes levava
+    TODA tabela fora do catálogo semântico, inclusive as que um produto
+    anterior do laço acabara de catalogar pelo prefixo: com `mcmv_historico` e
+    `reloginho`, 309 tabelas trocavam de produto a cada execução, e o volume de
+    PATCH deixava a task exposta aos congelamentos da instância. Sem prefixo,
+    vale só o que o catálogo declara deste produto.
+    """
+    prefixos = tuple(produto.get("prefixos_de_tabela") or ())
+    if prefixos:
+        fora_do_prefixo = [
+            t["name"]
+            for t in tabelas
+            if not t["name"].startswith(prefixos) and t["name"] not in camadas
+        ]
+        return fora_do_prefixo, "fora da convenção de prefixo e ausentes do catálogo"
+    nao_declaradas = [
+        t["name"] for t in tabelas if produtos_dos_modelos.get(t["name"]) != produto["name"]
+    ]
+    return nao_declaradas, "não declaradas deste produto no catálogo (sem prefixo)"
 
 
 def catalogar_tabelas(
@@ -877,6 +793,7 @@ def catalogar_tabelas(
     declarados = {s["name"]: s for s in carregar("schemas.yml")["schemas"]}
     camadas = camadas_por_modelo()
     produtos_dos_modelos = produtos_por_modelo()
+    documentacao = documentacao_por_modelo()
     por_modelo = termos_por_modelo(termos)
     por_coluna = termos_por_coluna(termos)
     nosso_glossario = vocabulario_declarado(termos)
@@ -887,12 +804,22 @@ def catalogar_tabelas(
         dono = donos.resolver(produto.get("owner_key"))
         if not om.offline and not (dominio and prod):
             om.falhas.append(
-                f"domínio ou produto ausente para {produto['name']}; "
-                "tabelas não catalogadas"
+                f"domínio ou produto ausente para {produto['name']}; tabelas não catalogadas"
             )
             print(f"  domínio ou produto ausente para {produto['name']}; pulando")
             continue
 
+        contexto = {
+            "dominios": dominios,
+            "produto": produto["name"],
+            "dominio": dominio,
+            "prod": prod,
+            "dono": dono,
+            "por_modelo": por_modelo,
+            "por_coluna": por_coluna,
+            "nosso_glossario": nosso_glossario,
+            "documentacao": documentacao,
+        }
         for schema in produto["schemas"]:
             camada_do_schema = declarados.get(schema, {}).get("layer", "gold")
             fqn_schema = f"{servico}.{banco}.{schema}"
@@ -901,7 +828,7 @@ def catalogar_tabelas(
                 {
                     "databaseSchema": fqn_schema,
                     "limit": 1000,
-                    "fields": "tags,domains,owners,columns,certification,dataProducts",
+                    "fields": ("tags,domains,owners,columns,certification,dataProducts,extension"),
                 },
             )
             if om.offline:
@@ -912,79 +839,102 @@ def catalogar_tabelas(
                 )
                 om.atualizados += 1
                 continue
-            prefixos = tuple(produto.get("prefixos_de_tabela") or ())
-            alheias = [
-                t["name"]
-                for t in tabelas
-                if prefixos
-                and not t["name"].startswith(prefixos)
-                and t["name"] not in camadas
-            ]
-            if alheias:
-                print(
-                    f"  {schema}: {len(alheias)} tabelas fora da convenção de "
-                    f"prefixo e ausentes do catálogo — não catalogadas: "
-                    + ", ".join(sorted(alheias)[:6])
-                    + (" …" if len(alheias) > 6 else "")
-                )
-                tabelas = [t for t in tabelas if t["name"] not in set(alheias)]
-
-            # Tabela que o catálogo semântico declara de OUTRO produto sai
-            # daqui: o schema é compartilhado e o `dataProducts` do patch
-            # substitui a lista, então sem esta linha o último produto do laço
-            # levaria as tabelas dos dois anteriores. Tabela sem produto
-            # declarado continua seguindo a trava de prefixo acima, para não
-            # reduzir a cobertura de quem ainda não está no catálogo.
-            de_outro_produto = [
-                t["name"]
-                for t in tabelas
-                if produtos_dos_modelos.get(t["name"], produto["name"])
-                != produto["name"]
-            ]
-            if de_outro_produto:
-                print(
-                    f"  {schema}: {len(de_outro_produto)} tabelas são de outro "
-                    "produto neste schema compartilhado; catalogadas no laço dele"
-                )
-                tabelas = [
-                    t for t in tabelas if t["name"] not in set(de_outro_produto)
-                ]
-
+            tabelas = _tabelas_do_produto(tabelas, schema, produto, camadas, produtos_dos_modelos)
             print(f"  {schema}: {len(tabelas)} tabelas")
 
             for tab in tabelas:
-                rotulo = f"{schema}.{tab['name']}"
                 # camada do MODELO; a do schema é só o recurso de última hora
                 camada = camadas.get(tab["name"], camada_do_schema)
+                _catalogar_tabela(om, tab, f"{schema}.{tab['name']}", camada, contexto)
 
-                if dominio:
-                    om.patch(
-                        "tables",
-                        tab["id"],
-                        operacoes_de_diferenca(
-                            tab, {"domains": [referencia(dominio, "domain")]}
-                        ),
-                        rotulo,
-                    )
-                desejado: dict = {}
-                if prod:
-                    desejado["dataProducts"] = [referencia(prod, "dataProduct")]
-                if dono:
-                    desejado["owners"] = dono
-                marcas = etiquetas_da_camada(dominios, produto["name"], camada)
-                marcas += [
-                    etiqueta(fqn, "Glossary") for fqn in por_modelo.get(tab["name"], [])
-                ]
-                desejado["tags"] = mesclar_etiquetas(
-                    tab.get("tags") or [], marcas, nosso_glossario
-                )
-                om.patch(
-                    "tables", tab["id"], operacoes_de_diferenca(tab, desejado), rotulo
-                )
-                aplicar_certificacao(
-                    om, "tables", tab, certificacao_da_camada(dominios, camada), rotulo
-                )
-                catalogar_colunas(om, tab, por_coluna, nosso_glossario, rotulo)
+
+def _tabelas_do_produto(
+    tabelas: list, schema: str, produto: dict, camadas: dict, produtos_dos_modelos: dict
+) -> list:
+    """As tabelas do schema que este produto cataloga: sem as alheias e as de outro produto."""
+    alheias, motivo = tabelas_alheias(tabelas, produto, camadas, produtos_dos_modelos)
+    if alheias:
+        print(
+            f"  {schema}: {len(alheias)} tabelas {motivo} — não catalogadas: "
+            + ", ".join(sorted(alheias)[:6])
+            + (" …" if len(alheias) > 6 else "")
+        )
+        tabelas = [t for t in tabelas if t["name"] not in set(alheias)]
+
+    # Tabela que o catálogo semântico declara de OUTRO produto sai
+    # daqui: o schema é compartilhado e o `dataProducts` do patch
+    # substitui a lista, então sem esta linha o último produto do laço
+    # levaria as tabelas dos dois anteriores. Tabela sem produto
+    # declarado continua seguindo a trava de prefixo acima, para não
+    # reduzir a cobertura de quem ainda não está no catálogo.
+    de_outro_produto = [
+        t["name"]
+        for t in tabelas
+        if produtos_dos_modelos.get(t["name"], produto["name"]) != produto["name"]
+    ]
+    if de_outro_produto:
+        print(
+            f"  {schema}: {len(de_outro_produto)} tabelas são de outro "
+            "produto neste schema compartilhado; catalogadas no laço dele"
+        )
+        tabelas = [t for t in tabelas if t["name"] not in set(de_outro_produto)]
+    return tabelas
+
+
+def _catalogar_tabela(om: ClienteOM, tab: dict, rotulo: str, camada: str, ctx: dict) -> None:
+    """Domínio primeiro (a validação do produto exige), depois produto, dono, etiquetas,
+    documentação, certificação e colunas."""
+    if ctx["dominio"]:
+        om.patch(
+            "tables",
+            tab["id"],
+            operacoes_de_diferenca(tab, {"domains": [referencia(ctx["dominio"], "domain")]}),
+            rotulo,
+        )
+    desejado: dict = {}
+    if ctx["prod"]:
+        desejado["dataProducts"] = [referencia(ctx["prod"], "dataProduct")]
+    if ctx["dono"]:
+        desejado["owners"] = ctx["dono"]
+    marcas = etiquetas_da_camada(ctx["dominios"], ctx["produto"], camada)
+    marcas += [etiqueta(fqn, "Glossary") for fqn in ctx["por_modelo"].get(tab["name"], [])]
+    desejado["tags"] = mesclar_etiquetas(tab.get("tags") or [], marcas, ctx["nosso_glossario"])
+    desejado.update(extensao_da_documentacao(tab, ctx["documentacao"]))
+    om.patch("tables", tab["id"], operacoes_de_diferenca(tab, desejado), rotulo)
+    aplicar_certificacao(om, "tables", tab, certificacao_da_camada(ctx["dominios"], camada), rotulo)
+    catalogar_colunas(om, tab, ctx["por_coluna"], ctx["nosso_glossario"], rotulo)
+
+
+def dominio_do_servico_nas_orfas(om: ClienteOM, servico: str, banco: str) -> None:
+    """Schema e tabela que nenhum produto catalogou recebem o domínio do serviço.
+
+    A restrição de acesso por domínio usa `hasDomain()`, que deixa passar
+    ativo SEM domínio: uma tabela órfã do nosso banco ficaria visível para o
+    perfil restrito de qualquer outro domínio da instância. É o caso do schema
+    `metadata`, que não pertence a produto nenhum. Esta etapa roda depois da
+    catalogação, então só alcança o que ela não cobriu, e não troca domínio de
+    quem já tem um.
+    """
+    dominio_fqn = (carregar("servicos.yml").get("servico") or {}).get("domain")
+    dominio = om.existe("domains", dominio_fqn) if dominio_fqn else None
+    if not dominio:
+        return
+    print(f"Ativos sem domínio recebem {dominio_fqn}")
+    desejado = {"domains": [referencia(dominio, "domain")]}
+    for rota in ("databaseSchemas", "tables"):
+        # o banco tem poucas centenas de tabelas; `limit` cobre sem paginar
+        ativos = om.listar(
+            rota, {"database": f"{servico}.{banco}", "fields": "domains", "limit": 1000}
+        )
+        orfaos = [a for a in ativos if not a.get("domains")]
+        for ativo in orfaos:
+            om.patch(
+                rota,
+                ativo["id"],
+                operacoes_de_diferenca(ativo, desejado),
+                ativo["fullyQualifiedName"],
+            )
+        print(f"  {rota}: {len(orfaos)} sem domínio")
 
 
 def catalogar_colunas(
@@ -1041,11 +991,9 @@ def main() -> int:
     sincronizar_termos(om, termos)
     sincronizar_glossario(om, donos, termos)
     nosso_glossario = vocabulario_declarado(termos)
-    catalogar_schemas(
-        om, donos, dominios, nosso_glossario, config["servico"], config["banco"]
-    )
+    catalogar_schemas(om, donos, dominios, nosso_glossario, config["servico"], config["banco"])
     catalogar_tabelas(om, donos, dominios, termos, config["servico"], config["banco"])
-    sincronizar_relacoes_semanticas(om, config["servico"], config["banco"])
+    dominio_do_servico_nas_orfas(om, config["servico"], config["banco"])
 
     return om.resumo()
 

@@ -59,16 +59,12 @@ def _dag_de_arquivo(caminho: Path) -> dict[str, Any] | None:
             encontrou = True
             argumentos = no.keywords
         elif isinstance(no, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            decorador = next(
-                (d for d in no.decorator_list if _nome_chamado(d) in NOMES_DAG), None
-            )
+            decorador = next((d for d in no.decorator_list if _nome_chamado(d) in NOMES_DAG), None)
             if decorador is None:
                 continue
             encontrou = True
             info["dag_id"] = no.name
-            info["descricao"] = (ast.get_docstring(no) or info["descricao"]).split("\n")[
-                0
-            ]
+            info["descricao"] = (ast.get_docstring(no) or info["descricao"]).split("\n")[0]
             if isinstance(decorador, ast.Call):
                 argumentos = decorador.keywords
         else:
@@ -111,8 +107,7 @@ def _clientes() -> list[dict[str, Any]]:
             n.name
             for classe in classes
             for n in classe.body
-            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-            and not n.name.startswith("_")
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and not n.name.startswith("_")
         ]
         clientes.append(
             {

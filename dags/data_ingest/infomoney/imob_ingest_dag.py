@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 
 from postgres_helpers import get_postgres_conn
 from cliente_postgres import ClientPostgresDB
@@ -19,7 +19,7 @@ DEFAULT_ARGS = {
 
 @dag(
     dag_id="infomoney_imob",
-    schedule_interval="@daily",
+    schedule="@daily",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=DEFAULT_ARGS,

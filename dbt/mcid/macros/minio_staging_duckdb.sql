@@ -33,9 +33,7 @@
     staging_duckdb, este ramo pode voltar a ser incondicional.
 #}
 {% macro duckdb_query() -%}
-{%- if target.type == 'duckdb' -%}
-{{ caller() }}
-{%- else -%}
-select * from duckdb.query($duckdb_query${{ caller() }}$duckdb_query$) r
-{%- endif -%}
+    {%- if target.type == 'duckdb' -%} {{ caller() }}
+    {%- else -%} select * from duckdb.query($duckdb_query${{ caller() }}$duckdb_query$) r
+    {%- endif -%}
 {%- endmacro %}

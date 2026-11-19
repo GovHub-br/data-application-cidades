@@ -1,0 +1,107 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sharepoint_mcid.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sharepoint_mcid
+  description: Planilhas do SharePoint do MCid.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/sharepoint_mcid.odcs.yaml
+    owner: MCid · SNH
+  tables:
+  - name: mcmv_cidades_emendas
+    description: Operações beneficiadas por aportes do MCMV Cidades.
+    meta:
+      caminho: staging/sharepoint/novo_mcmv_cidades_emendas.parquet
+      file_pattern: novo_mcmv_cidades_emendas\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: tomador_codigo
+    - name: tomador_nome
+    - name: pmcmv
+    - name: pf
+    - name: cotista
+    - name: modalidade_codigo
+    - name: modalidade
+    - name: tipo_imovel
+    - name: linha
+    - name: programa
+    - name: sub_programa
+    - name: ano_do_orcamento
+    - name: operacao
+    - name: numero_do_contrato
+    - name: data_da_contratacao
+    - name: prazo_em_meses
+    - name: tx_jrs_inicial
+    - name: vlr_do_financiamento_bruto
+    - name: vlr_do_financiamento_liquido
+    - name: vlr_do_recurso_do_fgts
+    - name: vlr_de_garantia_do_imovel
+    - name: vlr_de_compra
+    - name: vlr_da_renda
+    - name: vlr_do_desconto
+    - name: tx_administracao
+    - name: dif_de_juros
+    - name: vlr_desconto_complemento
+      meta:
+        classification: restricted
+    - name: vlr_desconto_equilibrio
+    - name: vlr_do_desconto_ogu
+    - name: tx_administracao_ogu
+    - name: dif_de_juros_ogu
+    - name: vlr_desconto_complemento_ogu
+      meta:
+        classification: restricted
+    - name: vlr_desconto_equilibrio_ogu
+    - name: vlr_capital_proprio
+    - name: regiao_nome
+    - name: uf_sigla
+    - name: uf_nome
+    - name: municipio_codigo
+    - name: municipio_nome
+    - name: ano_mes_do_orcamento
+    - name: numero_operacao
+    - name: numero_operacao_dv
+    - name: genero
+    - name: cep
+      meta:
+        classification: restricted
+    - name: faixa_renda
+    - name: sistema_codigo
+    - name: tab
+    - name: area_imovel
+    - name: classificacao_imovel
+    - name: tx_passivo
+    - name: programa_codigo
+    - name: linha_de_credito
+    - name: vlr_contrapartida_parceria
+    - name: caracteristica
+    - name: faixa_programa
+    - name: emenda
+    - name: arquivo_de_origem
+    - name: criado_em
+  - name: execucao_fundo_social
+    description: Dotação e execução da ação 00XF do Fundo Social por unidade gestora.
+    meta:
+      caminho: staging/sharepoint/orcamento_resultado_fundo_social.parquet
+      file_pattern: orcamento_resultado_fundo_social\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: acao_governo
+    - name: ug_executora
+    - name: dotacao_inicial
+    - name: dotacao_atualizada
+    - name: credito_disponivel
+    - name: despesas_empenhadas
+    - name: despesas_pagas
+    - name: restos_a_pagar_inscritos_proc_e_n_proc
+    - name: restos_a_pagar_cancelados_proc_e_n_proc
+    - name: restos_a_pagar_pagos_proc_e_n_proc
+    - name: restos_a_pagar_a_pagar_proc_e_n_proc
+    - name: pagamentos_totais_exercicio_rp
+    - name: arquivo_de_origem
+    - name: criado_em

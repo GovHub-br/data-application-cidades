@@ -8,9 +8,14 @@ from contextlib import ExitStack
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+# O `docs generate` compila no target `prod` (Postgres), então deixa de fora o
+# eixo histórico: as macros dele rodam `describe` do DuckDB já na compilação e o
+# Postgres responde `syntax error at or near "describe"`. O seletor é o mesmo do
+# grupo Postgres do mcid_cosmos_dag (dbt/mcid/selectors.yml). Os modelos do eixo
+# continuam no manifest; ficam sem SQL compilado e fora do catalog.
 DBT_COMMANDS = (
     ("deps",),
-    ("docs", "generate"),
+    ("docs", "generate", "--selector", "dominios_postgres"),
 )
 
 # Sem manifest nao ha o que ingerir. Os outros dois enriquecem e podem faltar:
@@ -69,9 +74,7 @@ def prepare_dbt_artifacts(project_dir: str, tmp_dirs: ExitStack) -> str:
         if not artifact.exists():
             raise FileNotFoundError(f"{file_name} não encontrado em {artifact}")
 
-    ausentes = [
-        nome for nome in OPTIONAL_DBT_ARTIFACTS if not (target_dir / nome).exists()
-    ]
+    ausentes = [nome for nome in OPTIONAL_DBT_ARTIFACTS if not (target_dir / nome).exists()]
     if ausentes:
         logging.warning(
             "[openmetadata] Artefatos opcionais ausentes (%s). A ingestao segue "

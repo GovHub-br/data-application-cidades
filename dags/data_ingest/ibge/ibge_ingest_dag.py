@@ -1,8 +1,8 @@
 import io
 import logging
 from typing import Any
-from airflow.decorators import dag, task
-from airflow.models import Variable
+from airflow.sdk import dag, task
+from airflow.sdk import Variable
 from datetime import datetime, timedelta
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
@@ -12,11 +12,11 @@ from cliente_minio import upload_raw_json, download_raw_json, upload_staging_par
 import pandas as pd
 import psycopg2
 
-CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default_var=[])
+CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default=[])
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("ibge_ingest_dag"),
+    schedule=get_dynamic_schedule("ibge_ingest_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     default_args={
@@ -48,9 +48,7 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
                 conn.commit()
             logging.info(f"Schema '{schema}' garantido com sucesso.")
         except psycopg2.errors.UniqueViolation:
-            logging.warning(
-                f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado)."
-            )
+            logging.warning(f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado).")
 
     @task
     def fetch_and_store_mapped(config: dict) -> None:
@@ -174,9 +172,7 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simpl
         buffer = io.BytesIO()
         df.to_parquet(buffer, engine="pyarrow", index=False)
         upload_staging_parquet("ibge", tabela, buffer.getvalue())
-        logging.info(
-            f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)"
-        )
+        logging.info(f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)")
 
     setup = setup_schema()
     fetch = fetch_and_store_mapped.expand(config=CONFIGURACOES)

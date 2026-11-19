@@ -24,7 +24,7 @@
 -#}
 {% test sem_drift_de_colunas(model, colunas) %}
 
-{{ config(severity="warn") }}
+    {{ config(severity="warn") }}
 
     with
         esperadas as (
@@ -39,9 +39,7 @@
         atuais as (
             select column_name as coluna
             from information_schema.columns
-            where
-                table_schema = '{{ model.schema }}'
-                and table_name = '{{ model.identifier }}'
+            where table_schema = '{{ model.schema }}' and table_name = '{{ model.identifier }}'
         )
 
     select coluna, 'coluna_nova_nao_declarada' as divergencia

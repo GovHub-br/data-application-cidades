@@ -38,20 +38,15 @@ class ClientPostgresDB:
         """
         return list(
             map(
-                lambda d: {
-                    str(k): v if type(v) is not list else str(v) for k, v in d.items()
-                },
-                json_normalize(data, sep=ClientPostgresDB.SEPARATOR).to_dict(
-                    orient="records"
-                ),
+                lambda d: {str(k): v if type(v) is not list else str(v) for k, v in d.items()},
+                json_normalize(data, sep=ClientPostgresDB.SEPARATOR).to_dict(orient="records"),
             )
         )
 
     def __init__(self, conn_str: str) -> None:
         self.conn_str = conn_str
         logging.info(
-            f"[cliente_postgres.py] Initialized ClientPostgresDB with conn_str: "
-            f"{conn_str}"
+            f"[cliente_postgres.py] Initialized ClientPostgresDB with conn_str: {conn_str}"
         )
 
     def create_table_if_not_exists(
@@ -100,9 +95,7 @@ class ClientPostgresDB:
                         f"[cliente_postgres.py] Failed to create table {schema}."
                         f"{table_name}. Error: {str(err)}"
                     )
-                    raise RuntimeError(
-                        f"Failed to create table {schema}.{table_name}"
-                    ) from err
+                    raise RuntimeError(f"Failed to create table {schema}.{table_name}") from err
 
     def insert_data(
         self,
@@ -122,14 +115,10 @@ class ClientPostgresDB:
             schema: Database schema name
         """
         if not data:
-            logging.warning(
-                f"[cliente_postgres.py] No data to insert into {schema}.{table_name}"
-            )
+            logging.warning(f"[cliente_postgres.py] No data to insert into {schema}.{table_name}")
             return
 
-        self.create_table_if_not_exists(
-            data[0], table_name, primary_key=primary_key, schema=schema
-        )
+        self.create_table_if_not_exists(data[0], table_name, primary_key=primary_key, schema=schema)
 
         flattened_data = self._flatten_data(data)
         columns = list(flattened_data[0].keys())
@@ -147,18 +136,13 @@ class ClientPostgresDB:
                 try:
                     psycopg2.extras.execute_values(cursor, sql, values)
                     conn.commit()
-                    logging.info(
-                        f"[cliente_postgres.py] Inserted data into {schema}."
-                        f"{table_name}"
-                    )
+                    logging.info(f"[cliente_postgres.py] Inserted data into {schema}.{table_name}")
                 except psycopg2.Error as err:
                     logging.error(
                         f"[cliente_postgres.py] Failed to insert data into {schema}."
                         f"{table_name}. Error: {str(err)}"
                     )
-                    raise RuntimeError(
-                        f"Failed to insert data into {schema}.{table_name}"
-                    ) from err
+                    raise RuntimeError(f"Failed to insert data into {schema}.{table_name}") from err
 
     def execute_query(self, query: str) -> List[Tuple[Any, ...]]:
         """Execute a query and return the results.
@@ -225,9 +209,7 @@ class ClientPostgresDB:
             cursor.close()
             conn.close()
 
-    def insert_csv_data(
-        self, csv_data: str, table_name: str, schema: str = "raw"
-    ) -> None:
+    def insert_csv_data(self, csv_data: str, table_name: str, schema: str = "raw") -> None:
         """
         Insere dados de um CSV no banco de dados, garantindo que a tabela seja criada.
         Se a tabela existir, ela será removida antes da inserção dos novos dados.
@@ -265,9 +247,7 @@ class ClientPostgresDB:
                 programacao_financeira = cursor.fetchall()
                 return programacao_financeira
 
-    def alter_table(
-        self, data: Dict[str, Any], table_name: str, schema: str = "raw"
-    ) -> None:
+    def alter_table(self, data: Dict[str, Any], table_name: str, schema: str = "raw") -> None:
         """
         Alter table to add columns that exist in the data but not in the table.
         All new columns will be created as TEXT type.
@@ -312,8 +292,7 @@ class ClientPostgresDB:
 
                 conn.commit()
                 logging.info(
-                    f"[cliente_postgres.py] Table {schema}.{table_name} "
-                    f"altered successfully"
+                    f"[cliente_postgres.py] Table {schema}.{table_name} altered successfully"
                 )
 
     def get_nota_credito(self) -> List[Tuple[Any, ...]]:
@@ -356,34 +335,26 @@ class ClientPostgresDB:
             """
             vacuum_query = f"VACUUM {schema}.{table_name};"
 
-            logging.info(
-                f"Executando query para remover duplicados em {schema}.{table_name}"
-            )
+            logging.info(f"Executando query para remover duplicados em {schema}.{table_name}")
 
             with psycopg2.connect(self.conn_str) as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(delete_query)
                     conn.commit()
-                    logging.info(
-                        f"Duplicados removidos com sucesso de {schema}.{table_name}"
-                    )
+                    logging.info(f"Duplicados removidos com sucesso de {schema}.{table_name}")
 
             conn = psycopg2.connect(self.conn_str)
             conn.autocommit = True
             cursor = conn.cursor()
             try:
                 cursor.execute(vacuum_query)
-                logging.info(
-                    f"VACUUM FULL executado com sucesso em {schema}.{table_name}"
-                )
+                logging.info(f"VACUUM FULL executado com sucesso em {schema}.{table_name}")
             finally:
                 cursor.close()
                 conn.close()
 
         except Exception as e:
-            logging.error(
-                f"Erro ao remover duplicados ou otimizar {schema}.{table_name}: {str(e)}"
-            )
+            logging.error(f"Erro ao remover duplicados ou otimizar {schema}.{table_name}: {str(e)}")
             raise
 
     def get_codigo_unidade(self) -> list[dict]:
@@ -398,8 +369,7 @@ class ClientPostgresDB:
                 cursor.execute(query)
                 rows = cursor.fetchall()
                 return [
-                    {"codigounidade": int(row[0]), "ordem_grandeza": int(row[1])}
-                    for row in rows
+                    {"codigounidade": int(row[0]), "ordem_grandeza": int(row[1])} for row in rows
                 ]
 
     def execute_non_query(self, query: str) -> None:
@@ -417,9 +387,7 @@ class ClientPostgresDB:
                     conn.commit()
                     logging.info("[cliente_postgres.py] Non-query executado com sucesso")
                 except psycopg2.Error as e:
-                    logging.error(
-                        f"[cliente_postgres.py] Erro ao executar non-query. Erro: {e}"
-                    )
+                    logging.error(f"[cliente_postgres.py] Erro ao executar non-query. Erro: {e}")
                     raise RuntimeError("Erro ao executar comando SQL sem retorno") from e
 
     def get_dashboard_kpis(self) -> Dict[str, int]:

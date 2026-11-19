@@ -37,10 +37,7 @@ class ClienteIbgeSidra:
         """Retorna os registros planos de uma consulta SIDRA."""
         cats = ",".join(str(c) for c in categorias)
         per = periodos.replace(" ", "%20")
-        url = (
-            f"{self.BASE}/t/{tabela}/{nivel}/v/{variavel}"
-            f"/p/{per}/c{classificacao}/{cats}"
-        )
+        url = f"{self.BASE}/t/{tabela}/{nivel}/v/{variavel}/p/{per}/c{classificacao}/{cats}"
         logging.info(f"[cliente_ibge_sidra] GET {url}")
         resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=60)
         resp.raise_for_status()

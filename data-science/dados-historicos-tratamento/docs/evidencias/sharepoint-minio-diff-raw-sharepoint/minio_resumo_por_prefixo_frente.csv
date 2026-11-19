@@ -1,0 +1,13 @@
+top_prefix,frente_primaria,fonte_inferida,extension,quantidade
+raw,fgts_financiado,fgts,.csv,51
+raw,nao_classificado,nao_identificada,.csv,24
+raw,far,nao_identificada,.csv,18
+raw,entidades,nao_identificada,.csv,14
+raw,rural,nao_identificada,.csv,14
+raw,conjuntura,nao_identificada,.csv,4
+raw,mcmv_geral,nao_identificada,.csv,4
+raw,entidades,fgts,.csv,2
+raw,nao_classificado,entregas,.csv,2
+raw,ogu_subsidiado,ogu,.csv,2
+raw,sub50_fnhis,nao_identificada,.csv,2
+raw,nao_classificado,nao_identificada,,1

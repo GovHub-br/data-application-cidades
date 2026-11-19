@@ -1,0 +1,99 @@
+dataset_id,schema,table_name,dataset_front,sample_term,sharepoint_content_match,sharepoint_match_count,sharepoint_examples
+32,empreendimento_far,ficha_empreendimento,far,63269705,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250602_040119.csv
+32,empreendimento_far,ficha_empreendimento,far,RESIDENCIAL PARQUE IGARASSU I,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250602_040119.csv
+32,empreendimento_far,ficha_empreendimento,far,Igarassu,True,5,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250512_040113.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250515_040114.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250602_040119.csv
+32,empreendimento_far,ficha_empreendimento,far,63234766,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv
+32,empreendimento_far,ficha_empreendimento,far,RESIDENCIAL DOS IPES II,True,2,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv
+32,empreendimento_far,ficha_empreendimento,far,Corumbá,True,2,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv
+32,empreendimento_far,ficha_empreendimento,far,63006745,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv
+32,empreendimento_far,ficha_empreendimento,far,RESIDENCIAL SIQUEIRA I,True,2,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv
+32,empreendimento_far,ficha_empreendimento,far,Maracanaú,True,2,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv
+32,empreendimento_far,ficha_empreendimento,far,Não informada,False,0,
+34,empreendimento_far,panorama_estadual,far,ACRE,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+34,empreendimento_far,panorama_estadual,far,ALAGOAS,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+34,empreendimento_far,panorama_estadual,far,AMAZONAS,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+34,empreendimento_far,panorama_estadual,far,AMAPÁ,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+35,empreendimento_far,mapa_nacional,far,Nordeste,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+35,empreendimento_far,mapa_nacional,far,Amazonas,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+35,empreendimento_far,mapa_nacional,far,Distrito Federal,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+35,empreendimento_far,mapa_nacional,far,Centro-Oeste,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+35,empreendimento_far,mapa_nacional,far,Espírito Santo,True,1,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/HIS_MCIDADES_CONSOLIDADO_20260209.csv
+80,empreendimento_far,execucao_fisica_financeira_chart,far,61457336,True,2,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_20250520_120000.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FAR_DIARIO_20251230_084744.CSV
+80,empreendimento_far,execucao_fisica_financeira_chart,far,61457336 - Jaguariúna/SP - RESIDENCIAL POR DO SOL,False,0,
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2024-09-01,False,0,
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2025-02-01,False,0,
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2025-04-01,True,2,OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Financeiro/MONIT_MOV_FINANC_FAR_20250505.csv | OneDrive_2026-08-19 (3).zip::Novo MCMV - FAR/Arquivados/Arquivo 2025 - Financeiro/MONIT_MOV_FINANC_FAR_20250520.csv
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2025-06-01,False,0,
+82,entidades_fds,fds_ficha_empreendimento,entidades,63511208,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251110_040412_revSNH.xlsx
+82,entidades_fds,fds_ficha_empreendimento,entidades,RIO BRANCO I,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251110_040412_revSNH.xlsx
+82,entidades_fds,fds_ficha_empreendimento,entidades,RIO BRANCO,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251110_040412_revSNH.xlsx
+82,entidades_fds,fds_ficha_empreendimento,entidades,ASS DE MORADORES DO ACAMPAMENTO ESPERANCA DE UM NOVO MILENIO,True,22,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251010_040156.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251013_040232.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251014_040211.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251015_040228.csv
+82,entidades_fds,fds_ficha_empreendimento,entidades,07367387000168,False,0,
+82,entidades_fds,fds_ficha_empreendimento,entidades,63511426,True,22,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251010_040156.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251013_040232.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251014_040211.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251015_040228.csv
+82,entidades_fds,fds_ficha_empreendimento,entidades,NOSSA SENHORA DAS BROTAS I,True,22,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251010_040156.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251013_040232.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251014_040211.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251015_040228.csv
+82,entidades_fds,fds_ficha_empreendimento,entidades,ATALAIA,True,22,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251010_040156.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251013_040232.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251014_040211.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251015_040228.csv
+82,entidades_fds,fds_ficha_empreendimento,entidades,COOPERATIVA HABITACIONAL DA CONSTRUCAO CIVIL,True,22,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251010_040156.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251013_040232.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251014_040211.csv | OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251015_040228.csv
+82,entidades_fds,fds_ficha_empreendimento,entidades,02491661000192,False,0,
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,63512993,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,BOM JESUS DA LAPA,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,ASSOCIACAO SOLIDARIA UNIDAS,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,04113405000197,False,0,
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,63513353,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,CANDIBA,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,ASSOCIACAO DOS AMIGOS DO MUNICIPIO DE CANDIBA,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,07616466000165,False,0,
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,63514378,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,IGAPORÃ,True,1,OneDrive_2026-08-19 (4).zip::Novo MCMV - FDS/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_FDS_20251009_040153.csv
+86,empreendimento_rural,ficha_empreendimento_rural,rural,02443448,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,1681 - CAPRICHANDO A MORADA II,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,Presidente Tancredo Neves,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,13070949000100,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,01420205,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,964 - CIST - AVELINO LOPES,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,Avelino Lopes,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,6553572000184,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,02176499,False,0,
+86,empreendimento_rural,ficha_empreendimento_rural,rural,1702 - PA SEBASTIAO DA MAIA -,False,0,
+87,empreendimento_rural,panorama_estadual_rural,rural,RONDÔNIA,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+87,empreendimento_rural,panorama_estadual_rural,rural,ACRE,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+87,empreendimento_rural,panorama_estadual_rural,rural,AMAZONAS,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+87,empreendimento_rural,panorama_estadual_rural,rural,RORAIMA,False,0,
+87,empreendimento_rural,panorama_estadual_rural,rural,PARÁ,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+87,empreendimento_rural,panorama_estadual_rural,rural,AMAPÁ,False,0,
+87,empreendimento_rural,panorama_estadual_rural,rural,TOCANTINS,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+87,empreendimento_rural,panorama_estadual_rural,rural,MARANHÃO,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29101380,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29101380 - São Francisco do Guaporé/RO - MORAR E VIVER BEM SAO FRANCISCO DO G,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2011-12-01,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2012-03-01,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2012-08-01,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2012-11-01,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29371954,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29371954 - São Jorge do Ivaí/PR - HABITACAO RURAL - SAO JORGE DO IVAI,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2010-11-01,False,0,
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2011-02-01,False,0,
+89,empreendimento_rural,mapa_nacional_rural,rural,Nordeste,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+89,empreendimento_rural,mapa_nacional_rural,rural,Amazonas,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+89,empreendimento_rural,mapa_nacional_rural,rural,Distrito Federal,False,0,
+89,empreendimento_rural,mapa_nacional_rural,rural,Centro-Oeste,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+89,empreendimento_rural,mapa_nacional_rural,rural,Espírito Santo,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+90,empreendimento_rural,perfil_beneficiarios,rural,63733539,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,SAO BRAS,True,2,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx | OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,São Brás,True,2,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx | OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,NOVO MCMV RURAL,False,0,
+90,empreendimento_rural,perfil_beneficiarios,rural,63731717,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,IGREJA NOVA,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,Igreja Nova,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,63733206,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,PORTO COLEGIO,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Arquivados/Arquivo 2025 - Cad PJ/MONIT_CAD_PJ_RURAL_20251224_101226.CSV
+90,empreendimento_rural,perfil_beneficiarios,rural,Porto Real do Colégio,True,1,OneDrive_2026-08-19 (2).zip::Novo MCMV - Rural/Lista Selecionadas_Autorizadas MCMV-Rural_20240220.xlsx
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,02443448,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,1681 - CAPRICHANDO A MORADA II,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,Presidente Tancredo Neves,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,PNHR (HISTÓRICO),False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,01420205,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,964 - CIST - AVELINO LOPES,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,Avelino Lopes,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,02176499,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,1702 - PA SEBASTIAO DA MAIA -,False,0,
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,Querência do Norte,False,0,

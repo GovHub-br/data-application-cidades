@@ -44,14 +44,11 @@ class ClienteFipeZap(ClienteBase):
         super().__init__(
             base_url=self.BASE_URL,
             headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"
-                )
+                "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
             },
         )
         logging.info(
-            "[cliente_fipezap.py] Initialized ClienteFipeZap "
-            f"com base_url: {self.BASE_URL}"
+            f"[cliente_fipezap.py] Initialized ClienteFipeZap com base_url: {self.BASE_URL}"
         )
 
     @staticmethod
@@ -118,9 +115,7 @@ class ClienteFipeZap(ClienteBase):
                 - dt_ingest (str ISO 8601)
             Ou None em caso de falha.
         """
-        logging.info(
-            f"[cliente_fipezap.py] Baixando XLSX de: " f"{self.BASE_URL}{self.XLSX_PATH}"
-        )
+        logging.info(f"[cliente_fipezap.py] Baixando XLSX de: {self.BASE_URL}{self.XLSX_PATH}")
 
         try:
             _, content = self.request(
@@ -167,9 +162,7 @@ class ClienteFipeZap(ClienteBase):
             df = df[pd.notna(df["data_referencia"])].copy()
 
             # Normaliza data para string 'yyyy-MM-dd'
-            df["data_referencia"] = pd.to_datetime(df["data_referencia"]).dt.strftime(
-                "%Y-%m-%d"
-            )
+            df["data_referencia"] = pd.to_datetime(df["data_referencia"]).dt.strftime("%Y-%m-%d")
 
             # Converte valores para numérico
             for coluna in (

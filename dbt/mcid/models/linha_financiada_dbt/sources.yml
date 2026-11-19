@@ -1,0 +1,55 @@
+version: 2
+
+sources:
+  - name: linha_financiada_lake
+    description: Fontes do MinIO usadas pelo produto Linha Financiada.
+    schema: staging
+    meta:
+      bucket: data-lake-mcid
+      camada: staging
+      governance:
+        product: linha_financiada
+        owner_key: mcid_data_engineering
+        classification: restricted
+        rag_publication: prohibited
+    tables:
+      - name: mcmv_cidades_emendas
+        description: Operações beneficiadas por aportes do MCMV Cidades.
+        meta:
+          caminho: staging/sharepoint/novo_mcmv_cidades_emendas.parquet
+      - name: contratos_fgts
+        description: Contratos do canal FGTS, incluindo Pró-Moradia pelo código de linha 26.
+        meta:
+          caminho: staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet
+      - name: dominio_linha_fgts
+        description: Domínio de códigos e nomes das linhas do canal FGTS.
+        meta:
+          caminho: staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet
+      - name: empreendimentos_fgts
+        description: Cadastro dos empreendimentos vinculados aos contratos FGTS.
+        meta:
+          caminho: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet
+      - name: posicoes_empreendimentos_fgts
+        description: Evolução física e datas dos empreendimentos FGTS.
+        meta:
+          caminho: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.parquet
+      - name: orcamento_fgts_2021
+        description: Orçamento final do FGTS por programa e agrupamento territorial em 2021.
+        meta:
+          caminho: staging/sharepoint/tpc_2021_fgts_canal_tab_dbo_pc_2021_03_orcamento_final.parquet
+      - name: orcamento_fgts_2022
+        description: Orçamento final do FGTS por programa e agrupamento territorial em 2022.
+        meta:
+          caminho: staging/sharepoint/tpc_2022_fgts_canal_tab_dbo_pc_2022_02_orcamento_final.parquet
+      - name: orcamento_fgts_2023
+        description: Orçamento final do FGTS por programa e agrupamento territorial em 2023.
+        meta:
+          caminho: staging/sharepoint/tpc_2023_fgts_canal_tab_dbo_pc_2023_02_orcamento_final.parquet
+      - name: orcamento_fgts_2024
+        description: Orçamento final do FGTS por programa e agrupamento territorial em 2024.
+        meta:
+          caminho: staging/sharepoint/tpc_2024_fgts_canal_tab_dbo_pc_2024_02_orcamento_final.parquet
+      - name: execucao_fundo_social
+        description: Dotação e execução da ação 00XF do Fundo Social por unidade gestora.
+        meta:
+          caminho: staging/sharepoint/orcamento_resultado_fundo_social.parquet

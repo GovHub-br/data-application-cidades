@@ -1,0 +1,35 @@
+# RustFS no Kubernetes: chart oficial (https://charts.rustfs.com), versão 1.0.1,
+# a mesma do playbook de VM.
+#
+#   helm upgrade --install rustfs rustfs/rustfs --version 1.0.1 \
+#     -n cidades -f infra/k8s/rustfs/values.yaml
+#
+# S3 dentro do cluster: http://rustfs-svc.cidades.svc:9000
+# Console:              http://rustfs-svc.cidades.svc:9001
+
+image:
+  rustfs:
+    tag: "1.0.1"
+
+# Um nó só, como a VM. Para vários nós, distributed + replicaCount >= 4.
+mode:
+  standalone:
+    enabled: true
+  distributed:
+    enabled: false
+replicaCount: 1
+
+# Credenciais do admin: Secret criado à mão (ver README), nunca no values.
+secret:
+  existingSecret: rustfs-admin
+
+storageclass:
+  # No cluster do LAPPIS: longhorn.
+  name: standard
+  dataStorageSize: 200Gi
+  logStorageSize: 2Gi
+
+# O padrão do chart cria um Ingress nginx com hosts de exemplo
+# (console.rustfs.com). Ligue com os hosts do cluster, se for expor.
+ingress:
+  enabled: false

@@ -13,14 +13,13 @@
 -- colunas `_source_file/_ingested_at/_source_hash` só aparecem quando outro
 -- processo reescreve o parquet. `dt_ingest` existe nas duas formas, então é
 -- a única que sobrevive a qualquer dos dois escritores.
-
 select
-    ano::int                       as ano,
-    mes::int                       as mes,
-    admitidos::numeric             as admitidos,
-    desligados::numeric            as desligados,
-    saldo::numeric                 as saldo,
-    estoque::numeric               as estoque,
-    variacao::numeric              as variacao,
-    dt_ingest                      as dt_ingest
+    ano::int as ano,
+    mes::int as mes,
+    admitidos::numeric as admitidos,
+    desligados::numeric as desligados,
+    saldo::numeric as saldo,
+    estoque::numeric as estoque,
+    variacao::numeric as variacao,
+    dt_ingest as dt_ingest
 from {{ ref('bronze_novo_caged_total') }}

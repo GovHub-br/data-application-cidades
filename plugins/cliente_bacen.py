@@ -15,8 +15,7 @@ class ClienteBacen(ClienteBase):
     def __init__(self) -> None:
         super().__init__(base_url=ClienteBacen.BASE_URL)
         logging.info(
-            "[cliente_bacen.py] Initialized ClienteBacen with base_url: "
-            f"{ClienteBacen.BASE_URL}"
+            f"[cliente_bacen.py] Initialized ClienteBacen with base_url: {ClienteBacen.BASE_URL}"
         )
 
     def get_serie(self, codigo: int, ultimos: int = 13) -> list | None:
@@ -38,13 +37,11 @@ class ClienteBacen(ClienteBase):
 
         if status == http.HTTPStatus.OK and isinstance(data, list):
             logging.info(
-                f"[cliente_bacen.py] Successfully fetched {len(data)} records "
-                f"for serie={codigo}"
+                f"[cliente_bacen.py] Successfully fetched {len(data)} records for serie={codigo}"
             )
             return data
         else:
             logging.warning(
-                f"[cliente_bacen.py] Failed to fetch serie={codigo} "
-                f"with status: {status}"
+                f"[cliente_bacen.py] Failed to fetch serie={codigo} with status: {status}"
             )
             return None

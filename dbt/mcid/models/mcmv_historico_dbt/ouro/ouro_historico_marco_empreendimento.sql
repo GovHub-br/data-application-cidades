@@ -8,30 +8,30 @@
 -- FAR/Rural chave = apf).
 --
 -- 7 marcos, todos `date`, cada um com proveniência:
---   <marco>_fonte        interface/stream de origem do valor escolhido
---                        ('sftp:INTxxx', 'snh:dados_prioritarios',
---                         'snh:entrega_evento', 'sem_fonte')
---   <marco>_dt_snapshot  dt_referencia (ou dt_ultimo_snapshot da espinha) da
---                        observação de onde o valor veio
+-- <marco>_fonte        interface/stream de origem do valor escolhido
+-- ('sftp:INTxxx', 'snh:dados_prioritarios',
+-- 'snh:entrega_evento', 'sem_fonte')
+-- <marco>_dt_snapshot  dt_referencia (ou dt_ultimo_snapshot da espinha) da
+-- observação de onde o valor veio
 --
 -- O modelo SÓ SELECIONA entre valores observados — nunca interpola nem calcula
 -- um marco. Marco sem fonte = NULL + _fonte = 'sem_fonte' + _dt_snapshot = NULL.
 --
 -- ORDEM DE COALESCE (igual no schema.yml):
---   dt_contratacao / dt_inicio_obra
---        -> linha "estado" vencedora do empreendimento (fase mais avançada,
---           depois dt_referencia mais recente), fonte = feed dessa linha.
---   dt_conclusao_obra / dt_ultima_entrega
---        -> MAIOR valor observado em qualquer snapshot do empreendimento (a data
---           pode ter sido reportada e depois sumir do feed; queremos a última
---           conhecida). dt_ultima_entrega considera ainda o max da espinha sobre
---           TODOS os APFs de fase. Fonte = a do snapshot que trouxe o max.
---   dt_primeira_entrega  -> espinha prata_historico_entrega_apf (evento SNH).
---   dt_legalizacao       -> sem fonte nesta fase (NULL / 'sem_fonte').
---   dt_previsao_entrega  -> MAIOR data prevista observada em qualquer snapshot do
---        empreendimento (change destravar-datas-obra-entrega-silver-historico:
---        braco SNH projeta data_da_previsao_da_entrega). Fonte sempre
---        'snh:dados_prioritarios'. Fill baixo (~2% dos APFs).
+-- dt_contratacao / dt_inicio_obra
+-- -> linha "estado" vencedora do empreendimento (fase mais avançada,
+-- depois dt_referencia mais recente), fonte = feed dessa linha.
+-- dt_conclusao_obra / dt_ultima_entrega
+-- -> MAIOR valor observado em qualquer snapshot do empreendimento (a data
+-- pode ter sido reportada e depois sumir do feed; queremos a última
+-- conhecida). dt_ultima_entrega considera ainda o max da espinha sobre
+-- TODOS os APFs de fase. Fonte = a do snapshot que trouxe o max.
+-- dt_primeira_entrega  -> espinha prata_historico_entrega_apf (evento SNH).
+-- dt_legalizacao       -> sem fonte nesta fase (NULL / 'sem_fonte').
+-- dt_previsao_entrega  -> MAIOR data prevista observada em qualquer snapshot do
+-- empreendimento (change destravar-datas-obra-entrega-silver-historico:
+-- braco SNH projeta data_da_previsao_da_entrega). Fonte sempre
+-- 'snh:dados_prioritarios'. Fill baixo (~2% dos APFs).
 --
 -- `marcos_coerentes` = a cadeia de datas se sustenta (ignorando nulos). É
 -- DIAGNÓSTICO — o modelo não corrige nada.
@@ -52,33 +52,32 @@ with
 
     silver_rows as (
         {% for frente in ['far', 'fds', 'rural'] %}
-        -- fonte_serie = 'obra_mensal' EXCLUÍDA (change
-        -- consolidar-schemas-historico-reloginho, D2): linhas só-de-obra não
-        -- trazem marco novo e não devem virar a linha "estado" corrente do
-        -- empreendimento (perderia dt_contratacao/dt_inicio_obra). Mantém a
-        -- contagem de id_empreendimento.
-        select
-            frente_mcmv,
-            coalesce(id_empreendimento, apf) as chave_empreendimento,
-            apf,
-            fase_empreendimento,
-            dt_referencia,
-            dt_contratacao,
-            dt_inicio_obra,
-            dt_conclusao_obra,
-            dt_entrega_uh,
-            dt_entrega_uh_fonte,
-            dt_previsao_entrega,
-            -- Bloco C (change colunas-orfas-bronze-historico): marcos direto da
-            -- fonte, hoje no contrato da silver.
-            dt_primeira_entrega,
-            dt_primeira_entrega_fonte,
-            dt_ultima_liberacao,
-            fonte_serie,
-            fonte_tabela
-        from {{ ref('prata_' ~ frente ~ '_historico_empreendimento') }}
-        where fonte_serie <> 'obra_mensal'
-        {{ "union all" if not loop.last }}
+            -- fonte_serie = 'obra_mensal' EXCLUÍDA (change
+            -- consolidar-schemas-historico-reloginho, D2): linhas só-de-obra não
+            -- trazem marco novo e não devem virar a linha "estado" corrente do
+            -- empreendimento (perderia dt_contratacao/dt_inicio_obra). Mantém a
+            -- contagem de id_empreendimento.
+            select
+                frente_mcmv,
+                coalesce(id_empreendimento, apf) as chave_empreendimento,
+                apf,
+                fase_empreendimento,
+                dt_referencia,
+                dt_contratacao,
+                dt_inicio_obra,
+                dt_conclusao_obra,
+                dt_entrega_uh,
+                dt_entrega_uh_fonte,
+                dt_previsao_entrega,
+                -- Bloco C (change colunas-orfas-bronze-historico): marcos direto da
+                -- fonte, hoje no contrato da silver.
+                dt_primeira_entrega,
+                dt_primeira_entrega_fonte,
+                dt_ultima_liberacao,
+                fonte_serie,
+                fonte_tabela
+            from {{ ref('prata_' ~ frente ~ '_historico_empreendimento') }}
+            where fonte_serie <> 'obra_mensal' {{ "union all" if not loop.last }}
         {% endfor %}
     ),
 
@@ -91,10 +90,14 @@ with
             row_number() over (
                 partition by frente_mcmv, chave_empreendimento
                 order by
-                    case fase_empreendimento
-                        when 'Desligamento' then 0
-                        when 'Obra' then 1
-                        when 'Projeto' then 2
+                    case
+                        fase_empreendimento
+                        when 'Desligamento'
+                        then 0
+                        when 'Obra'
+                        then 1
+                        when 'Projeto'
+                        then 2
                         else 3
                     end,
                     dt_referencia desc
@@ -120,7 +123,9 @@ with
             -- Bloco C: menor dt_primeira_entrega direta da silver (FAR/INT040) +
             -- maior dt_ultima_liberacao observada.
             min(dt_primeira_entrega) as dt_primeira_entrega_silver,
-            arg_min(dt_primeira_entrega_fonte, dt_primeira_entrega) as dt_primeira_entrega_silver_fonte,
+            arg_min(
+                dt_primeira_entrega_fonte, dt_primeira_entrega
+            ) as dt_primeira_entrega_silver_fonte,
             arg_min(dt_referencia, dt_primeira_entrega) as dt_primeira_entrega_silver_snapshot,
             max(dt_ultima_liberacao) as dt_ultima_liberacao_max,
             arg_max(fonte_serie, dt_ultima_liberacao) as _lib_fonte_serie,
@@ -158,26 +163,34 @@ with
             sr.fase_empreendimento,
 
             sr.dt_contratacao,
-            case when sr.dt_contratacao is not null then {{ fonte_estado }} end
-                as dt_contratacao_fonte,
-            case when sr.dt_contratacao is not null then sr.dt_referencia end
-                as dt_contratacao_dt_snapshot,
+            case
+                when sr.dt_contratacao is not null then {{ fonte_estado }}
+            end as dt_contratacao_fonte,
+            case
+                when sr.dt_contratacao is not null then sr.dt_referencia
+            end as dt_contratacao_dt_snapshot,
 
             sr.dt_inicio_obra,
-            case when sr.dt_inicio_obra is not null then {{ fonte_estado }} end
-                as dt_inicio_obra_fonte,
-            case when sr.dt_inicio_obra is not null then sr.dt_referencia end
-                as dt_inicio_obra_dt_snapshot,
+            case
+                when sr.dt_inicio_obra is not null then {{ fonte_estado }}
+            end as dt_inicio_obra_fonte,
+            case
+                when sr.dt_inicio_obra is not null then sr.dt_referencia
+            end as dt_inicio_obra_dt_snapshot,
 
             ms.dt_conclusao_obra_max as dt_conclusao_obra,
             case
                 when ms.dt_conclusao_obra_max is null
                 then null
                 when ms._conc_fonte_serie = 'sftp'
-                then coalesce(
-                    nullif('sftp:' || regexp_extract(ms._conc_fonte_tabela, '(INT[0-9]+)', 1), 'sftp:'),
-                    'sftp'
-                )
+                then
+                    coalesce(
+                        nullif(
+                            'sftp:' || regexp_extract(ms._conc_fonte_tabela, '(INT[0-9]+)', 1),
+                            'sftp:'
+                        ),
+                        'sftp'
+                    )
                 else 'snh:dados_prioritarios'
             end as dt_conclusao_obra_fonte,
             ms.dt_conclusao_obra_max_snapshot as dt_conclusao_obra_dt_snapshot,
@@ -188,7 +201,8 @@ with
             case
                 when least(ms.dt_primeira_entrega_silver, en.dt_primeira_entrega) is null
                 then null
-                when ms.dt_primeira_entrega_silver is not null
+                when
+                    ms.dt_primeira_entrega_silver is not null
                     and (
                         en.dt_primeira_entrega is null
                         or ms.dt_primeira_entrega_silver <= en.dt_primeira_entrega
@@ -199,7 +213,8 @@ with
             case
                 when least(ms.dt_primeira_entrega_silver, en.dt_primeira_entrega) is null
                 then null
-                when ms.dt_primeira_entrega_silver is not null
+                when
+                    ms.dt_primeira_entrega_silver is not null
                     and (
                         en.dt_primeira_entrega is null
                         or ms.dt_primeira_entrega_silver <= en.dt_primeira_entrega
@@ -211,12 +226,17 @@ with
             -- dt_ultima_liberacao: marco financeiro (change colunas-orfas-bronze-historico).
             ms.dt_ultima_liberacao_max as dt_ultima_liberacao,
             case
-                when ms.dt_ultima_liberacao_max is null then null
+                when ms.dt_ultima_liberacao_max is null
+                then null
                 when ms._lib_fonte_serie = 'sftp'
-                then coalesce(
-                    nullif('sftp:' || regexp_extract(ms._lib_fonte_tabela, '(INT[0-9]+)', 1), 'sftp:'),
-                    'sftp'
-                )
+                then
+                    coalesce(
+                        nullif(
+                            'sftp:' || regexp_extract(ms._lib_fonte_tabela, '(INT[0-9]+)', 1),
+                            'sftp:'
+                        ),
+                        'sftp'
+                    )
                 else 'snh:dados_prioritarios'
             end as dt_ultima_liberacao_fonte,
             ms.dt_ultima_liberacao_max_snapshot as dt_ultima_liberacao_dt_snapshot,
@@ -228,7 +248,8 @@ with
             case
                 when greatest(ms.dt_entrega_uh_max, en.dt_ultima_entrega_espinha) is null
                 then null
-                when ms.dt_entrega_uh_max is not null
+                when
+                    ms.dt_entrega_uh_max is not null
                     and (
                         en.dt_ultima_entrega_espinha is null
                         or ms.dt_entrega_uh_max >= en.dt_ultima_entrega_espinha
@@ -239,7 +260,8 @@ with
             case
                 when greatest(ms.dt_entrega_uh_max, en.dt_ultima_entrega_espinha) is null
                 then null
-                when ms.dt_entrega_uh_max is not null
+                when
+                    ms.dt_entrega_uh_max is not null
                     and ms.dt_entrega_uh_max_fonte <> 'snh:entrega_evento'
                     and (
                         en.dt_ultima_entrega_espinha is null
@@ -254,20 +276,20 @@ with
 
             ms.dt_previsao_entrega_max as dt_previsao_entrega,
             case
-                when ms.dt_previsao_entrega_max is not null
-                then 'snh:dados_prioritarios'
+                when ms.dt_previsao_entrega_max is not null then 'snh:dados_prioritarios'
             end as dt_previsao_entrega_fonte,
             case
-                when ms.dt_previsao_entrega_max is not null
-                then ms.dt_previsao_entrega_max_snapshot
+                when ms.dt_previsao_entrega_max is not null then ms.dt_previsao_entrega_max_snapshot
             end as dt_previsao_entrega_dt_snapshot,
 
             en.uh_entregues_acumulada
         from estado sr
-        left join marco_silver ms
+        left join
+            marco_silver ms
             on sr.frente_mcmv = ms.frente_mcmv
             and sr.chave_empreendimento = ms.chave_empreendimento
-        left join entrega en
+        left join
+            entrega en
             on sr.frente_mcmv = en.frente_mcmv
             and sr.chave_empreendimento = en.chave_empreendimento
     )

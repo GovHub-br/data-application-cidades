@@ -3,7 +3,6 @@
 -- Ouro do conjuntura: FGTS — Valor médio dos imóveis financiados
 -- (total e Faixa 1), variações. Página 6/7 (Preços). Dado MANUAL (validado
 -- vs boletim 4T25: DEZ/25 = R$ 245.959, +2,89% mês, +12,14% em 12m).
-
 select
     ano,
     mes,

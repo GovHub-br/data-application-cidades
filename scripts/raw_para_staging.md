@@ -5,7 +5,11 @@ detecta separador e encoding, e grava a versão colunar em **Parquet** em `stagi
 etapa seguinte (Staging → DB via dbt/DuckDB) consumir dados uniformes e eficientes.
 
 > **Ordem importa:** rode **depois** do `mascarar_minio.py --apply`. Staging lê `raw/`
-> como está; se rodar antes do mascaramento, o parquet conterá PII.
+> como está. Por isso ela só converte o objeto que tem a tag `masked=true` ou a tag
+> `triagem` (sem PII, sem cabeçalho ou formato não suportado), gravadas pelo mascaramento.
+> O resto sai como `skipped_sem_mascara`: objeto com erro no mascaramento, reingerido
+> depois dele (regravar apaga as tags) ou fora do recorte da execução. O `.mdb` passa
+> direto, porque é mascarado aqui, tabela por tabela.
 
 ---
 
@@ -99,7 +103,11 @@ Efeito no arquivo acima: 16.385 → 38 colunas, 5,1 MB → 99 KB, mesmas 1.288 l
 
 **`.mdb`**: lidos via **`mdbtools`** (binário do sistema, não é lib Python). O `mdb-export`
 já entrega CSV vírgula em **UTF-8**, então esse caminho não usa a detecção de encoding/dialeto
-— vai direto para o mesmo conversor streaming do CSV. Uma falha numa tabela não derruba as
+— vai direto para o mesmo conversor streaming do CSV. Antes da conversão, o CSV de cada
+tabela passa por `mascarar_csv()` do `mascarar_minio.py`: o `.mdb` é o único formato que o
+mascaramento não consegue reescrever no `raw/`, então a PII dele (ex.: o
+`IM_CEP` do `CCI_CCA`) é mascarada aqui, com o mesmo HMAC. Sem `MASKING_HMAC_SECRET`, uma
+tabela com CPF/NIS falha em vez de gravar. Uma falha numa tabela não derruba as
 outras (aquela part vira `error`, as demais seguem). São 128 arquivos / ~105 GB no lake
 (famílias `MCidades_AO_1/2/3`, `CCI_CCA`, `AF`).
 
@@ -131,6 +139,24 @@ Para cada objeto em `raw/`:
 6. **Upload** para `staging/<...>.parquet` + registro no controle e na auditoria.
 
 `.xls` legado e `.zip` → `skipped_unsupported` (tratar à parte). Arquivos de lock `~$*` ignorados.
+
+### Organização do código
+
+`raw_para_staging.py` lista o `raw/`, aplica os filtros, chama a conversão de cada objeto e
+registra o resultado. O trabalho mora em `scripts/conversao/`:
+
+| Módulo | O que tem |
+|---|---|
+| `config.py` | Variáveis de ambiente, prefixos, formatos suportados, pastas ignoradas e log |
+| `gemeos.py` | Precedência de extensão e descarte de gêmeos |
+| `processamento.py` | `processar_objeto`: download, idempotência, conversão, verificação e upload |
+| `tabular.py` | CSV/TXT em chunks, colunas de padding e fallback de encoding |
+| `xlsx.py` / `registros_json.py` | XLSX (uma aba por parquet) e JSON achatado |
+| `pendente.py` | Parquet guardado quando o upload falha |
+| `controle.py` | `lake._staging_log` e o parquet de auditoria |
+
+Para mudar como **um formato** vira parquet, mexa no módulo dele; para mudar **o que** é
+convertido (gêmeos, pastas ignoradas), em `gemeos.py` e `config.py`.
 
 ---
 
@@ -216,15 +242,6 @@ mesmo par `(raw_key, source_hash)`; com a chave antiga o upsert sobrescrevia e s
 registro por arquivo (ex.: 4 linhas no banco para 32 parts reais). Não afetava os dados nem a
 idempotência — só a observabilidade.
 
-> ⚠️ **Deploy**: `CREATE TABLE IF NOT EXISTS` **não migra** tabela já existente. Num ambiente
-> com o `_staging_log` antigo, o DDL vira no-op e a constraint velha continua valendo — é
-> preciso um `ALTER TABLE` explícito:
-> ```sql
-> ALTER TABLE lake._staging_log DROP CONSTRAINT _staging_log_raw_key_source_hash_key;
-> ALTER TABLE lake._staging_log ADD CONSTRAINT _staging_log_raw_key_staging_key_source_hash_key
->       UNIQUE (raw_key, staging_key, source_hash);
-> ```
-
 **Auditoria parquet** por execução em `audit/staging/execution_id=<uuid>/part-0.parquet`
 (+ cópia local `scripts/auditoria_staging_<uuid>.parquet`).
 
@@ -258,4 +275,8 @@ audit/staging/execution_id=.../       (auditoria)
   (idempotência por `source_hash`).
 - Em máquina com pouca RAM, garanta `LAKE_TMPDIR` num disco com espaço; a conversão é
   streaming (memória constante), mas os arquivos grandes têm I/O intenso.
+- **MinIO fora no upload:** o envio é retentado por ~30 min (espera de 30 s a 5 min). Se
+  ainda falhar, o parquet de CSV/TXT fica em `$LAKE_TMPDIR/staging_pendente/` e rodar o
+  mesmo comando de novo só o reenvia, sem reconverter. Um pendente de conteúdo antigo
+  (raw mudou) é apagado na conversão seguinte.
 - Rode **depois** do mascaramento (ver aviso no topo).

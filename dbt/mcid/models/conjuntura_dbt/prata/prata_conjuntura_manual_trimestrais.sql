@@ -5,7 +5,6 @@
 -- bronze.bronze_manual_dados_trimestrais. Cobre PIB %, CBIC, balanço das empresas,
 -- ocupados PNAD, INCC trimestral, ticket médio e financiamentos habitacionais.
 -- A camada ouro seleciona as séries por seção do boletim.
-
 -- `unnamed_115` e `unnamed_116` são colunas residuais da importação da
 -- planilha: 100% vazias e fora da convenção de nomes. Duas checagens
 -- independentes as apontaram (perfil de completude e teste de padronização),

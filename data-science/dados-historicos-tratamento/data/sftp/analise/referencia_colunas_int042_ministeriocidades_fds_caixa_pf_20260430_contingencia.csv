@@ -1,0 +1,57 @@
+coluna,tipo_inferido,amostra_1,amostra_2,amostra_3
+col_0,date,2026-04-30,2026-04-30,2026-04-30
+col_1,date,29680136,29680136,29680136
+col_2,date,29680136,29680136,29680136
+col_3,number,603450000124,603450000126,603450000146
+col_4,text,J,PATRICIA VIVIANE PRAD,NATALY KARLA DE FRANCA G
+col_5,text,SELINA SANT,,DINH
+col_6,number,S SANTANA,22677266881,
+col_7,number,29552209811,2010-01-14,35263718810
+col_8,date,2010-01-14,4752,2010-01-14
+col_9,number,4752,0.00,4752
+col_10,number,0.00,0,0.00
+col_11,number,0,120,0
+col_12,number,120,0,120
+col_13,number,0,120,0
+col_14,number,120,R  ,120
+col_15,text,R  ,GENERAL CAMARA                                    ,R  
+col_16,text,GENERAL CAMARA                                    ,410,GENERAL CAMARA                                    
+col_17,number,410,AP 305                                  ,410
+col_18,text,AP 203                                  ,CENTR,AP 103                                  
+col_19,text,CENTR,        ,CENTR
+col_20,text,        ,SANT,        
+col_21,text,SANT,S                   ,SANT
+col_22,text,S                   ,SP,S                   
+col_23,text,SP,11010122,SP
+col_24,date,11010122,600.00,11010122
+col_25,number,726.08,65350.00,750.00
+col_26,number,59000.00,44800.00,59000.00
+col_27,number,43287.04,1982-07-07,43000.00
+col_28,date,1980-07-06,2,1985-12-11
+col_29,number,2,0,2
+col_30,number,0,Solteiro,0
+col_31,text,Solteiro,FDS MCMV,Solteiro
+col_32,text,FDS MCMV,,FDS MCMV
+col_33,text,,ATIV,
+col_34,text,ATIV,,ATIV
+col_35,text,,NA,
+col_36,text,NA,,NA
+col_37,text,,,
+col_38,text,,BRA,
+col_39,text,BRA,16679564132,BRA
+col_40,number,13060477859,SIM,16668480293
+col_41,text,SIM,0,SIM
+col_42,number,0,5754.96,0
+col_43,number,6964.33,0.00,7193.70
+col_44,number,0.00,0.00,0.00
+col_45,number,0.00,3548500,0.00
+col_46,number,3548500,FDS - PF,3548500
+col_47,text,FDS - PF,104,FDS - PF
+col_48,number,104,2026-06-30T12:01:28.145233,104
+col_49,text,2026-06-30T12:01:28.145233,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,2026-06-30T12:01:28.145233
+col_50,text,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,104
+col_51,text,2026-06-30T12:01:28.145233,104,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT
+col_52,text,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,2026-06-30T12:01:28.145233,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT
+col_53,text,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT
+col_54,text,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,2026-06-30T12:01:28.145233,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT
+col_55,text,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,/home/fabrica/GEFUS/INT042_MinisterioCidades_FDS_CAIXA_PF_20260430_CONTINGENCIA.TXT,FDS - PF

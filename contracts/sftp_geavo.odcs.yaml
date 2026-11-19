@@ -1,0 +1,377 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sftp_geavo
+name: SFTP · GEAVO
+version: 0.1.0
+status: draft
+description:
+  purpose: Remessas da CAIXA (GEAVO) no SFTP do MCid.
+team:
+- username: CAIXA · GEAVO
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: geavo_fgts_pf
+  physicalName: geavo_fgts_pf
+  description: Base analítica de contratos FGTS pessoa física (GEAVO/Caixa). ~10,8 M linhas.
+  customProperties:
+  - property: path
+    value: staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_*.parquet
+  - property: file_pattern
+    value: Base_PF_FGTS_\d{8}\.txt
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - geavo_fgts_pf
+  properties:
+  - name: co_agente_financeiro
+    logicalType: string
+  - name: cod_mun_ibge
+    logicalType: string
+  - name: co_sexo
+    logicalType: string
+  - name: de_estado_civil
+    logicalType: string
+  - name: dt_assinatura
+    logicalType: string
+  - name: ano_orc
+    logicalType: string
+  - name: faixa
+    logicalType: string
+  - name: dt_nascimento
+    logicalType: string
+    classification: restricted
+  - name: no_mutuario
+    logicalType: string
+    classification: restricted
+  - name: nu_apf
+    logicalType: string
+  - name: nu_contrato
+    logicalType: string
+  - name: nu_cpf_cgc_mutuario
+    logicalType: string
+    classification: restricted
+  - name: vlr_compra
+    logicalType: string
+  - name: vlr_renda_familiar_comprovada
+    logicalType: string
+  - name: vlr_emprestimo
+    logicalType: string
+  - name: vlr_desconto_fgts
+    logicalType: string
+  - name: vlr_desconto_ogu
+    logicalType: string
+  - name: vlr_equilibrio_fgts
+    logicalType: string
+  - name: vlr_equilibrio_ogu
+    logicalType: string
+  - name: origem
+    logicalType: string
+  - name: tp_orcamento
+    logicalType: string
+  - name: dt_movimento
+    logicalType: string
+  - name: cep
+    logicalType: string
+    classification: restricted
+  - name: txjrsmut
+    logicalType: string
+  - name: tpimovel
+    logicalType: string
+  - name: cotista
+    logicalType: string
+  - name: sistamort
+    logicalType: string
+- name: geavo_fgts_pj
+  physicalName: geavo_fgts_pj
+  description: Base de contratos FGTS pessoa jurídica — Apoio à Produção (GEAVO/Caixa).
+  customProperties:
+  - property: path
+    value: staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_*.parquet
+  - property: file_pattern
+    value: Base_PJ_FGTS_\d{8}\.txt
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - geavo_fgts_pj
+  properties:
+  - name: origem
+    logicalType: string
+  - name: dt_movimento
+    logicalType: string
+  - name: nu_apf
+    logicalType: string
+  - name: no_empreendimento
+    logicalType: string
+  - name: cod_agente_financeiro
+    logicalType: string
+  - name: cod_municipio_ibge
+    logicalType: string
+  - name: dt_assinatura
+    logicalType: string
+  - name: ano_orc
+    logicalType: string
+  - name: vi
+    logicalType: string
+  - name: ve
+    logicalType: string
+  - name: percentual_obra_realizado
+    logicalType: string
+  - name: qt_unidades_financiadas
+    logicalType: string
+  - name: qt_unidades_concluidas
+    logicalType: string
+  - name: qt_unidades_entregues
+    logicalType: string
+  - name: dt_inicio_obra
+    logicalType: string
+  - name: dt_termino_obra
+    logicalType: string
+  - name: situacao_obra
+    logicalType: string
+  - name: situacao_contrato
+    logicalType: string
+  - name: cgc
+    logicalType: string
+  - name: rz_social
+    logicalType: string
+  - name: no_logradouro
+    logicalType: string
+    classification: restricted
+  - name: cep_logradouro
+    logicalType: string
+    classification: restricted
+  - name: latitude
+    logicalType: string
+  - name: longitude
+    logicalType: string
+- name: geavo_cca_analitico
+  physicalName: geavo_cca_analitico
+  description: Carta de Crédito Associativo (CCA) — contratos PF do Canal FGTS/GEAVO. Complementa o CCI
+    no 'Financiamento PF MCMV' por faixa.
+  customProperties:
+  - property: path
+    value: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
+  - property: file_pattern
+    value: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - geavo_cca_analitico
+  properties:
+  - name: vlrdofinanciamento
+    logicalType: string
+  - name: vlrdodescontofgts
+    logicalType: string
+  - name: vlrdodescontoogu
+    logicalType: string
+  - name: vlrdoequilibriofgts
+    logicalType: string
+  - name: vlrdoequilibrioogu
+    logicalType: string
+  - name: vlrdegarantiadoimovel
+    logicalType: string
+  - name: txjrsinicial
+    logicalType: string
+  - name: area_codigo
+    logicalType: string
+  - name: linha_codigo
+    logicalType: string
+  - name: agentefinanceiro_codigo
+    logicalType: string
+  - name: municipio_codigo
+    logicalType: string
+  - name: uor_codigo
+    logicalType: string
+  - name: faixaderenda_codigo
+    logicalType: string
+  - name: datadacontratacao
+    logicalType: string
+  - name: vlrdarenda
+    logicalType: string
+  - name: vlrdecompra
+    logicalType: string
+  - name: areaimovel
+    logicalType: string
+  - name: vlrcontrapartidaparceria
+    logicalType: string
+  - name: dtterminoobra
+    logicalType: string
+  - name: data_entrega_para_pf
+    logicalType: string
+  - name: vlrredutor
+    logicalType: string
+  - name: tx_passivo
+    logicalType: string
+  - name: datadaremessa
+    logicalType: string
+  - name: operacao
+    logicalType: string
+  - name: numerodocontrato
+    logicalType: string
+  - name: sistemacodigo
+    logicalType: string
+  - name: dt_nascimento
+    logicalType: string
+    classification: restricted
+  - name: im_cep
+    logicalType: string
+    classification: restricted
+  - name: anomescontratacao
+    logicalType: string
+  - name: genero
+    logicalType: string
+  - name: linhadecredito
+    logicalType: string
+  - name: tipo
+    logicalType: string
+  - name: cod_programa
+    logicalType: string
+  - name: nome_programa
+    logicalType: string
+  - name: sub_programa
+    logicalType: string
+  - name: modalidade_codigo
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: regiao_desconto
+    logicalType: string
+  - name: prazo
+    logicalType: string
+  - name: cotista
+    logicalType: string
+  - name: fatorsocial
+    logicalType: string
+  - name: classificacaoimovel
+    logicalType: string
+  - name: regiaoimovel
+    logicalType: string
+  - name: caracteristica
+    logicalType: string
+  - name: pmcmv
+    logicalType: string
+  - name: compatibilidade_faixa_novo_mcmv
+    logicalType: string
+  - name: pf_pj
+    logicalType: string
+- name: geavo_cci_analitico
+  physicalName: geavo_cci_analitico
+  description: Carta de Crédito Individual (CCI) — contratos PF do Canal FGTS/GEAVO. Fonte do 'Financiamento
+    PF MCMV' por faixa do boletim, junto com o CCA.
+  customProperties:
+  - property: path
+    value: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
+  - property: file_pattern
+    value: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - geavo_cci_analitico
+  properties:
+  - name: vlrdofinanciamento
+    logicalType: string
+  - name: vlrdodescontofgts
+    logicalType: string
+  - name: vlrdodescontoogu
+    logicalType: string
+  - name: vlrdoequilibriofgts
+    logicalType: string
+  - name: vlrdoequilibrioogu
+    logicalType: string
+  - name: vlrdegarantiadoimovel
+    logicalType: string
+  - name: txjrsinicial
+    logicalType: string
+  - name: area_codigo
+    logicalType: string
+  - name: linha_codigo
+    logicalType: string
+  - name: agentefinanceiro_codigo
+    logicalType: string
+  - name: municipio_codigo
+    logicalType: string
+  - name: uor_codigo
+    logicalType: string
+  - name: faixaderenda_codigo
+    logicalType: string
+  - name: datadacontratacao
+    logicalType: string
+  - name: vlrdarenda
+    logicalType: string
+  - name: vlrdecompra
+    logicalType: string
+  - name: areaimovel
+    logicalType: string
+  - name: vlrcontrapartidaparceria
+    logicalType: string
+  - name: dtterminoobra
+    logicalType: string
+  - name: data_entrega_para_pf
+    logicalType: string
+  - name: tx_passivo
+    logicalType: string
+  - name: numerodocontrato
+    logicalType: string
+  - name: sistemacodigo
+    logicalType: string
+  - name: datadaremessa
+    logicalType: string
+  - name: dt_nascimento
+    logicalType: string
+    classification: restricted
+  - name: im_cep
+    logicalType: string
+    classification: restricted
+  - name: anomescontratacao
+    logicalType: string
+  - name: genero
+    logicalType: string
+  - name: linhadecredito
+    logicalType: string
+  - name: tipo
+    logicalType: string
+  - name: cod_programa
+    logicalType: string
+  - name: nome_programa
+    logicalType: string
+  - name: sub_programa
+    logicalType: string
+  - name: modalidade_codigo
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: regiao_desconto
+    logicalType: string
+  - name: prazo
+    logicalType: string
+  - name: cotista
+    logicalType: string
+  - name: fatorsocial
+    logicalType: string
+  - name: classificacaoimovel
+    logicalType: string
+  - name: regiaoimovel
+    logicalType: string
+  - name: caracteristica
+    logicalType: string
+  - name: pmcmv
+    logicalType: string
+  - name: compatibilidade_faixa_novo_mcmv
+    logicalType: string

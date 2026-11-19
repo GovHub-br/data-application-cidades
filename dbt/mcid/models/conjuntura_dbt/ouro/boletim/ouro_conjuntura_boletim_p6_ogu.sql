@@ -17,39 +17,39 @@
 -- é o retrato. No impresso ela aparece no cabeçalho ("Dados de 02/01/26").
 --
 -- Valores em milhões de reais, como no boletim.
+with
+    edicoes as (
+        select distinct edicao
+        from {{ ref('ouro_conjuntura_boletim_p1_pib_construcao_crescimento') }}
+    ),
 
-with edicoes as (
-    select distinct edicao
-    from {{ ref('ouro_conjuntura_boletim_p1_pib_construcao_crescimento') }}
-),
-
-execucao as (
-    select
-        acao_governo_codigo,
-        acao_nome,
-        round(dotacao_atualizada / 1000000.0, 1)  as dotacao_atual,
-        round(empenho / 1000000.0, 1)             as empenho,
-        round(pagamento / 1000000.0, 1)           as pagamento,
-        round(rap_inscrito / 1000000.0, 1)        as rap_inscrito,
-        round(pag_rap / 1000000.0, 1)             as pag_rap,
-        round(pag_total / 1000000.0, 1)           as pag_total,
-        dt_referencia_extracao,
-        -- SOMA por último; o resto na ordem em que o boletim imprime
-        case when acao_governo_codigo = 'SOMA' then 1 else 0 end as e_total
-    from {{ ref('ouro_conjuntura_ogu') }}
-)
+    execucao as (
+        select
+            acao_governo_codigo,
+            acao_nome,
+            round(dotacao_atualizada / 1000000.0, 1) as dotacao_atual,
+            round(empenho / 1000000.0, 1) as empenho,
+            round(pagamento / 1000000.0, 1) as pagamento,
+            round(rap_inscrito / 1000000.0, 1) as rap_inscrito,
+            round(pag_rap / 1000000.0, 1) as pag_rap,
+            round(pag_total / 1000000.0, 1) as pag_total,
+            dt_referencia_extracao,
+            -- SOMA por último; o resto na ordem em que o boletim imprime
+            case when acao_governo_codigo = 'SOMA' then 1 else 0 end as e_total
+        from {{ ref('ouro_conjuntura_ogu') }}
+    )
 
 select
-    e.edicao                                              as "edicao",
-    x.acao_governo_codigo                                 as "Ação",
-    x.acao_nome                                           as "Projeto / Atividade",
-    x.dotacao_atual                                       as "Dotação atual",
-    x.empenho                                             as "Empenho",
-    x.pagamento                                           as "Pagamento",
-    x.rap_inscrito                                        as "RAP inscrito",
-    x.pag_rap                                             as "Pag. RAP",
-    x.pag_total                                           as "Pag. total",
-    x.dt_referencia_extracao                              as "Extração"
+    e.edicao as "edicao",
+    x.acao_governo_codigo as "Ação",
+    x.acao_nome as "Projeto / Atividade",
+    x.dotacao_atual as "Dotação atual",
+    x.empenho as "Empenho",
+    x.pagamento as "Pagamento",
+    x.rap_inscrito as "RAP inscrito",
+    x.pag_rap as "Pag. RAP",
+    x.pag_total as "Pag. total",
+    x.dt_referencia_extracao as "Extração"
 from execucao x
 cross join edicoes e
 order by e.edicao, x.e_total, x.acao_governo_codigo

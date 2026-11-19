@@ -5,7 +5,8 @@
 with
     cadastro as (select * from {{ ref("prata_far_cadastro_pj") }}),
 
-    -- O consolidado pode ter mais de uma proposta por ID; fica a mais recente
+    -- O consolidado repete a proposta por fase; fica o movimento mais recente. A linha
+    -- da seleção vem sem data de movimento e não pode passar na frente da contratação
     consolidado as (
         select *
         from
@@ -14,7 +15,10 @@ with
                     *,
                     row_number() over (
                         partition by id_proposta
-                        order by dt_movimento desc, dt_protocolo desc
+                        order by
+                            dt_movimento desc nulls last,
+                            hr_movimento desc nulls last,
+                            dt_protocolo desc nulls last
                     ) as rn
                 from {{ ref("prata_far_consolidado") }}
                 where id_proposta is not null
@@ -24,21 +28,29 @@ with
 
     obra as (select * from {{ ref("prata_far_obra_mensal") }}),
 
-    caixa as (select * from {{ ref("prata_far_dados_prioritarios_caixa") }})
+    caixa as (select * from {{ ref("prata_far_dados_prioritarios_caixa") }}),
+
+    -- Portaria normativa pela planilha do FAR; o número de portaria do consolidado
+    -- é o ato de contratação, não a regra de seleção
+    portaria as (select distinct apf, portaria from {{ ref("far_portaria_apf") }}),
+
+    -- Localização de quem não está no consolidado: código IBGE do cadastro MONIT,
+    -- com o nome oficial em vez das maiúsculas do MONIT
+    ibge as (select cod_ibge, municipio, uf from {{ ref("ibge_municipio") }})
 
 select
     c.apf,
 
     -- 1. Dados do Empreendimento
-    coalesce(cons.portaria_contratacao, 'Não informada') as portaria_selecao,
+    coalesce(pt.portaria, 'Não informada') as portaria_selecao,
     cons.proponente_cnpj,
     cons.proponente_nome,
     cons.tomador_cnpj,
     cons.tomador_nome,
     c.empreendimento_nome,
     c.qt_uh as quantidade_uh,
-    cons.municipio,
-    cons.uf,
+    coalesce(cons.municipio, ib.municipio) as municipio,
+    coalesce(cons.uf, ib.uf) as uf,
     cons.co_originacao,
     cons.co_tipo_demanda,
     coalesce(cx.situacao, 'Situação não mapeada') as situacao_empreendimento,
@@ -86,3 +98,5 @@ from cadastro c
 left join consolidado cons on c.id_proposta = cons.id_proposta
 left join obra o on c.apf = o.apf
 left join caixa cx on c.apf = cx.apf
+left join portaria pt on c.apf = pt.apf
+left join ibge ib on c.cod_ibge = ib.cod_ibge

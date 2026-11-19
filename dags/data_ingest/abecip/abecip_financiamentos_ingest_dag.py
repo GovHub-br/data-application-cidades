@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from airflow.exceptions import (
     AirflowException,
     AirflowFailException,
@@ -26,7 +26,7 @@ default_args = {
 
 @dag(
     dag_id="abecip_financiamentos_ingest_dag",
-    schedule_interval=get_dynamic_schedule("abecip_financiamentos"),
+    schedule=get_dynamic_schedule("abecip_financiamentos"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=default_args,
@@ -86,9 +86,7 @@ def abecip_financiamentos_ingest_dag() -> None:
             if bruto:
                 upload_raw_bytes("abecip", "financiamentos_modalidade", bruto, ext="xlsx")
             upload_fallback_json("abecip", "financiamentos_modalidade", registros)
-            registros_para_staging_parquet(
-                "abecip", "financiamentos_modalidade", registros
-            )
+            registros_para_staging_parquet("abecip", "financiamentos_modalidade", registros)
 
             logger.info("[abecip_financiamentos] Ingestão concluída com sucesso")
 

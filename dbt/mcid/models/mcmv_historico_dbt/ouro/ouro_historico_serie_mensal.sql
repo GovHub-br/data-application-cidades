@@ -143,8 +143,7 @@ with
                 else 'BR'
             end as regiao_sigla,
             case
-                when grouping(regiao_sigla) = 0 or grouping(uf) = 0
-                then max(regiao_nome)
+                when grouping(regiao_sigla) = 0 or grouping(uf) = 0 then max(regiao_nome)
             end as regiao_nome,
             -- uh_comercializadas ao FIM do contrato (change
             -- auditar-grao-serie-executiva-historica, D5): so exposto apos a
@@ -155,14 +154,7 @@ with
         from base
         group by
             grouping sets (
-                (
-                    dt_referencia,
-                    ano,
-                    mes,
-                    fonte_familia,
-                    prioridade_familia,
-                    linha_ogu_fgts
-                ),
+                (dt_referencia, ano, mes, fonte_familia, prioridade_familia, linha_ogu_fgts),
                 (
                     dt_referencia,
                     ano,
@@ -172,15 +164,7 @@ with
                     linha_ogu_fgts,
                     regiao_sigla
                 ),
-                (
-                    dt_referencia,
-                    ano,
-                    mes,
-                    fonte_familia,
-                    prioridade_familia,
-                    linha_ogu_fgts,
-                    uf
-                )
+                (dt_referencia, ano, mes, fonte_familia, prioridade_familia, linha_ogu_fgts, uf)
             )
     )
 

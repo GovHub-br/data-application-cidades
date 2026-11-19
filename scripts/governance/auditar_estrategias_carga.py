@@ -56,9 +56,7 @@ def main() -> int:
     args.output.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2, default=dict), encoding="utf-8"
     )
-    unknown = sum(
-        row["load_strategy"] == "materializacao_nao_classificada" for row in rows
-    )
+    unknown = sum(row["load_strategy"] == "materializacao_nao_classificada" for row in rows)
     print(f"Estratégias de carga: {len(rows)} modelos, {unknown} não classificadas.")
     return 1 if args.strict and unknown else 0
 

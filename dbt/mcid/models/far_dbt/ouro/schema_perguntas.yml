@@ -1,0 +1,342 @@
+version: 2
+
+# Ouros do painel "Perguntas: FAR". Os testes protegem o grão que cada gráfico assume.
+
+models:
+
+  - name: ouro_far_beneficiario_contrato
+    description: >
+      Um contrato de família beneficiária do FAR por linha, Novo MCMV e legado (INT039
+      CAIXA, INT021 BB). Base do perfil do beneficiário, da contratação, da situação das
+      unidades e da inadimplência. Sem identificador pessoal; descrição das colunas em
+      prata_far_contrato_pf.
+    config:
+      meta:
+        documentacao:
+          grao: Um contrato de família beneficiária do FAR, do Novo MCMV ou do legado.
+          chave: [geracao, nu_contrato]
+          fonte: GEFUS, contratos PF do Novo MCMV FAR, da CAIXA (INT039) e do BB (INT021).
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: geracao
+        description: Novo MCMV ou Legado (2009–2023).
+        tests:
+          - not_null
+      - name: nu_contrato
+        description: Contrato da família com o agente financeiro.
+        tests:
+          - not_null
+      - name: municipio_uf
+        description: Município/UF do imóvel, para filtro e ranking.
+      - name: faixa_etaria
+        description: Faixa de idade do titular na assinatura. A idade exata fica na prata.
+      - name: situacao_contrato
+        description: Situação do contrato.
+        tests:
+          - not_null
+      - name: ic_inadimplente
+        description: Contrato ativo com prestação vencida há mais de 90 dias.
+
+  - name: ouro_far_beneficiario_municipio
+    description: >
+      Contratos das famílias do FAR por município e geração: volume, carteira ativa,
+      inadimplência, liquidações, distratos, retomadas, titular mulher e renda média.
+      Taxas recalculadas no grão; a de inadimplência é sobre os contratos ativos.
+    config:
+      meta:
+        documentacao:
+          grao: Um município por geração (Novo MCMV ou legado).
+          chave: [geracao, cod_ibge]
+          fonte: GEFUS, contratos PF do Novo MCMV FAR, da CAIXA (INT039) e do BB (INT021).
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: geracao
+        description: Novo MCMV ou Legado (2009–2023).
+        tests:
+          - not_null
+      - name: cod_ibge
+        description: Código IBGE do município.
+        tests:
+          - not_null
+      - name: municipio_uf
+        description: Município/UF.
+      - name: qt_contratos
+        description: Contratos das famílias.
+      - name: qt_ativos
+        description: Contratos ativos.
+      - name: qt_inadimplentes
+        description: Contratos ativos com mais de 90 dias de atraso.
+      - name: pct_inadimplencia
+        description: Inadimplentes ÷ ativos × 100.
+      - name: qt_liquidados
+        description: Contratos liquidados, por qualquer motivo.
+      - name: qt_distratados
+        description: Contratos distratados.
+      - name: qt_cancelados
+        description: Contratos cancelados.
+      - name: qt_retomados
+        description: Imóveis retomados (só Novo MCMV).
+      - name: pct_responsavel_mulher
+        description: Contratos com titular do sexo feminino ÷ contratos × 100.
+      - name: renda_media
+        description: Renda familiar média dos contratos com renda maior que zero, em R$.
+      - name: pct_sem_renda
+        description: Contratos com renda comprovada zero ÷ contratos com renda informada × 100.
+      - name: valor_em_atraso
+        description: Valor em atraso dos contratos inadimplentes, em R$.
+
+  - name: ouro_far_empreendimento_perguntas
+    description: >
+      Um empreendimento FAR contratado por linha: natureza e destino, panorama da
+      contratação, execução com sinal de atraso ou paralisação, estoque retomado e
+      invadido e contratos das famílias já assinados. O sinal de paralisação marca obra
+      iniciada, não concluída e com o percentual físico parado há 3 meses ou mais.
+    config:
+      meta:
+        documentacao:
+          grao: Um empreendimento FAR contratado.
+          chave: [apf]
+          fonte: Consolidado GFAR, MONIT do FAR, CAIXA e contratos PF das famílias.
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos — chave do painel.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('prata_far_empreendimento')
+                field: apf
+      - name: apf_municipio_empreendimento
+        description: APF - Município/UF - Nome, para o filtro do painel.
+      - name: portaria
+        description: Portaria normativa de seleção do empreendimento, ou Não informada.
+      - name: alerta_execucao
+        description: >
+          Concluída, Cancelada ou distratada, Paralisada (informada), Atrasada (informada),
+          Sinal de paralisação: 3+ meses sem avanço, Ritmo abaixo do previsto (desvio
+          físico de 10 p.p. ou mais), Não iniciada ou Em ritmo — nesta ordem de prioridade.
+        tests:
+          - not_null
+      - name: meses_sem_avanco
+        description: Meses entre a última medição e o último avanço do percentual físico.
+      - name: avanco_3_meses
+        description: Pontos percentuais de avanço físico nos últimos 3 meses.
+      - name: desvio_fisico
+        description: Realizado − previsto na última medição, em p.p.
+      - name: situacao_obra
+        description: Situação informada no MONIT de obra.
+      - name: qt_contratos_familias
+        description: Contratos de famílias do Novo MCMV já assinados no empreendimento.
+      - name: qt_contratos_familias_inadimplentes
+        description: Contratos de famílias inadimplentes no empreendimento.
+      - name: renda_media_familias
+        description: Renda familiar comprovada média das famílias com contrato, em R$ (renda > 0).
+
+  - name: ouro_far_contrapartida
+    description: >
+      Contrapartidas pactuadas pelos entes em cada empreendimento FAR: uma linha por
+      APF × ente × tipo (terreno, infraestrutura, complementar, outras), só com valor
+      informado. A origem traz o pactuado, não o executado.
+    config:
+      meta:
+        documentacao:
+          grao: Uma contrapartida pactuada por empreendimento, ente e tipo.
+          chave: [apf, ente, tipo]
+          fonte: Consolidado GFAR, natureza e contrapartidas da proposta.
+          periodicidade: semanal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: apf
+        description: APF normalizado para 8 dígitos.
+        tests:
+          - not_null
+      - name: ente
+        description: Município, Estado, Ente público (outras) ou Outros.
+      - name: tipo
+        description: Terreno, Infraestrutura, Complementar ou Outras.
+      - name: valor
+        description: Valor pactuado, em R$.
+
+  - name: ouro_far_cobertura_perguntas
+    description: >
+      Matriz pergunta × dado do painel de perguntas do FAR (seed cobertura_perguntas_far):
+      o que cada pergunta da oficina consegue responder hoje, em qual ouro, o que falta,
+      onde conseguir (pedir ao MCid ou fonte pública) e qual a limitação.
+    config:
+      meta:
+        documentacao:
+          grao: Uma pergunta da oficina com o MCID.
+          chave: [pergunta]
+          fonte: Matriz de cobertura mantida pela equipe de dados.
+          periodicidade: eventual
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: pergunta
+        description: Pergunta como registrada na oficina.
+        tests:
+          - not_null
+      - name: situacao_dado_rotulo
+        description: Respondível, Parcial ou Lacuna de fonte.
+      - name: onde_conseguir_rotulo
+        description: >
+          Onde buscar o que falta: pedir ao MCid ou aos agentes, fonte pública, os dois,
+          outro órgão, falta análise ou nenhuma fonte conhecida. Já respondida quando respondível.
+
+  - name: ouro_far_beneficiario_cadunico
+    description: >
+      Contratos das famílias do FAR agregados pelo perfil do responsável no CadÚnico:
+      raça/cor, situação de rua, PCD e Bolsa Família, com a carteira ativa, a
+      inadimplência e os gastos da família com energia e água. Agregada e sem contrato
+      nem município, porque raça/cor é dado sensível. Média de gasto = soma dividida
+      pela quantidade com o valor informado.
+    config:
+      meta:
+        documentacao:
+          grao: Uma combinação de geração, agente, UF, faixa de renda e perfil no CadÚnico.
+          chave: [geracao, agente_financeiro, uf, faixa_renda, ic_encontrado_cadunico, raca_cor, ic_situacao_rua, tempo_situacao_rua, ic_pcd, ic_bolsa_familia, momento_cadastro, ic_mesmo_municipio]
+          fonte: Contratos PF do FAR (Novo MCMV, INT039, INT021) e CadÚnico de 12/2025 e 01/2026.
+          periodicidade: mensal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: geracao
+        description: Novo MCMV ou Legado (2009–2023).
+        tests:
+          - not_null
+      - name: agente_financeiro
+        description: CAIXA ou Banco do Brasil.
+      - name: uf
+        description: UF do imóvel do contrato.
+      - name: faixa_renda
+        description: Faixa da renda familiar comprovada na assinatura.
+      - name: ic_encontrado_cadunico
+        description: Se o responsável pelo contrato está no CadÚnico de 12/12/2025.
+        tests:
+          - not_null
+      - name: raca_cor
+        description: Raça/cor do responsável pelo contrato no CadÚnico. Nula fora do CadÚnico.
+      - name: ic_situacao_rua
+        description: Responsável em situação de rua na data do corte do CadÚnico.
+      - name: tempo_situacao_rua
+        description: Há quanto tempo vive na rua, para quem está em situação de rua.
+      - name: ic_pcd
+        description: Responsável com deficiência segundo o CadÚnico.
+      - name: ic_bolsa_familia
+        description: Família no Bolsa Família.
+      - name: momento_cadastro
+        description: >
+          Se o cadastro da família foi atualizado antes ou depois da assinatura do
+          contrato. Depois da assinatura, os gastos tendem a ser os da nova moradia.
+      - name: ic_mesmo_municipio
+        description: Se o município do cadastro é o do imóvel do contrato.
+      - name: qt_contratos
+        description: Contratos na combinação.
+        tests:
+          - not_null
+      - name: qt_ativos
+        description: Contratos ativos.
+      - name: qt_inadimplentes
+        description: Contratos ativos com prestação vencida há mais de 90 dias.
+      - name: qt_com_despesa_energia
+        description: Contratos com gasto de energia informado.
+      - name: soma_despesa_energia
+        description: Soma do gasto mensal com energia, em R$.
+      - name: qt_com_despesa_agua
+        description: Contratos com gasto de água e esgoto informado.
+      - name: soma_despesa_agua
+        description: Soma do gasto mensal com água e esgoto, em R$.
+
+  - name: ouro_far_consolidado_historico
+    description: >
+      Propostas do consolidado GFAR em cada remessa semanal desde 12/03/2025, por fase,
+      etapa, status, fluxo, UF e tipo de demanda, com UHs e valor FAR. Mostra como a
+      seleção evoluiu, não só a foto atual. Fase, etapa e status sem rótulo aparecem
+      pelo código.
+    config:
+      meta:
+        documentacao:
+          grao: Uma combinação de remessa, fase, etapa, status, fluxo, UF e tipo de demanda.
+          chave: [dt_remessa, fase, etapa, status, fluxo, uf, tipo_demanda]
+          fonte: HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.
+          periodicidade: semanal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: dt_remessa
+        description: Data da remessa semanal.
+        tests:
+          - not_null
+      - name: fase
+        description: Fase da proposta no fluxo GFAR.
+      - name: etapa
+        description: Etapa dentro da fase.
+      - name: status
+        description: Status da proposta na etapa.
+      - name: fluxo
+        description: Fluxo da proposta no GFAR.
+      - name: uf
+        description: UF do empreendimento.
+      - name: tipo_demanda
+        description: Tipo de demanda declarado na proposta.
+      - name: qt_propostas
+        description: Propostas na combinação.
+        tests:
+          - not_null
+      - name: qt_uh
+        description: Unidades habitacionais das propostas.
+      - name: valor_far
+        description: Valor FAR das propostas, em R$.
+
+  - name: ouro_far_proposta_trajetoria
+    description: >
+      Trajetória de cada proposta do consolidado GFAR ao longo das remessas semanais:
+      primeira e última remessa, semanas em que sumiu da base, mudanças de situação e a
+      situação na primeira e na última remessa. Propostas saem e voltam da base sem
+      terem sido canceladas.
+    config:
+      meta:
+        documentacao:
+          grao: Uma proposta do consolidado GFAR.
+          chave: [id_proposta]
+          fonte: HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.
+          periodicidade: semanal
+          consumo: [Superset, painel Perguntas FAR]
+    columns:
+      - name: id_proposta
+        description: Identificação da proposta no GFAR.
+        tests:
+          - not_null
+          - unique
+      - name: apf
+        description: APF do empreendimento, quando já existe.
+      - name: municipio_uf
+        description: Município/UF do empreendimento, para filtro e busca.
+      - name: tipo_demanda
+        description: Tipo de demanda na última remessa.
+      - name: situacao_inicial
+        description: Fase › etapa › status na primeira remessa em que a proposta apareceu.
+      - name: situacao_atual
+        description: Fase › etapa › status na última remessa em que a proposta apareceu.
+      - name: etapa_atual
+        description: Etapa na última remessa em que a proposta apareceu.
+      - name: status_atual
+        description: Status na última remessa em que a proposta apareceu.
+      - name: dt_primeira_remessa
+        description: Primeira remessa com a proposta.
+      - name: dt_ultima_remessa
+        description: Última remessa com a proposta.
+      - name: dt_ultima_mudanca
+        description: Remessa em que a situação mudou pela última vez.
+      - name: qt_remessas_presente
+        description: Remessas em que a proposta apareceu.
+      - name: qt_remessas_ausente
+        description: Remessas entre a primeira e a última em que a proposta não veio.
+      - name: qt_mudancas_situacao
+        description: Vezes em que a situação mudou de uma remessa para a seguinte em que apareceu.
+      - name: ic_na_remessa_mais_recente
+        description: Se a proposta está na remessa mais recente.
+      - name: ic_sumiu_e_voltou
+        description: Se a proposta faltou em alguma remessa e voltou depois.

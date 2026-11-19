@@ -41,9 +41,7 @@ def migracoes(diretorio: Path) -> list[Path]:
     )
     sem_prefixo = [p.name for p in encontrados if not re.match(r"\d+__", p.name)]
     if sem_prefixo:
-        raise SystemExit(
-            "Script sem prefixo numérico, ordem indefinida: " + ", ".join(sem_prefixo)
-        )
+        raise SystemExit("Script sem prefixo numérico, ordem indefinida: " + ", ".join(sem_prefixo))
     return encontrados
 
 
@@ -64,9 +62,7 @@ def main() -> None:
         pedidos = {nome.strip() for nome in args.somente.split(",")}
         disponiveis = {p.name for p in paths}
         if faltando := pedidos - disponiveis:
-            raise SystemExit(
-                "Não encontrado em scripts/database: " + ", ".join(sorted(faltando))
-            )
+            raise SystemExit("Não encontrado em scripts/database: " + ", ".join(sorted(faltando)))
         paths = [p for p in paths if p.name in pedidos]
 
     if args.dry_run:

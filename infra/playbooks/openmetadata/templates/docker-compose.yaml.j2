@@ -1,0 +1,70 @@
+# Gerenciado pelo Ansible (infra/playbooks/openmetadata/install-openmetadata.yaml).
+#
+# Baseado no docker-compose-postgres.yml oficial do OpenMetadata
+# {{ openmetadata_version }}, sem o Postgres (fica na VM do playbook postgres) e
+# sem o container "ingestion" (a ingestão roda no Airflow do projeto).
+# network_mode: host, como no Airflow: porta publicada pelo Docker escapa do
+# ufw. O Elasticsearch escuta só no loopback.
+name: cidades-openmetadata
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:{{ elasticsearch_version }}
+    network_mode: host
+    environment:
+      - discovery.type=single-node
+      - http.host=127.0.0.1
+      - transport.host=127.0.0.1
+      - ES_JAVA_OPTS=-Xms{{ elasticsearch_heap }} -Xmx{{ elasticsearch_heap }}
+      - xpack.security.enabled=false
+{% for item in elasticsearch_extra_env %}
+      - {{ item }}
+{% endfor %}
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: "curl -s http://127.0.0.1:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"' || exit 1"
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    restart: always
+
+  # Cria/atualiza as tabelas do OpenMetadata no Postgres e sai. Fica num
+  # profile para o `up` não rodá-la de novo: o playbook a chama com
+  # `docker compose run`, uma vez por versão.
+  execute-migrate-all:
+    image: docker.getcollate.io/openmetadata/server:{{ openmetadata_version }}
+    profiles: ["migrate"]
+    network_mode: host
+    command: "./bootstrap/openmetadata-ops.sh migrate"
+    env_file:
+      - {{ openmetadata_dir }}/openmetadata.env
+    environment:
+      MIGRATION_LIMIT_PARAM: "1200"
+    volumes:
+      - {{ openmetadata_dir }}/keys:/opt/openmetadata/conf/cidades:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: "no"
+
+  openmetadata-server:
+    image: docker.getcollate.io/openmetadata/server:{{ openmetadata_version }}
+    network_mode: host
+    env_file:
+      - {{ openmetadata_dir }}/openmetadata.env
+    volumes:
+      - {{ openmetadata_dir }}/keys:/opt/openmetadata/conf/cidades:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8586/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 10
+    restart: always
+
+volumes:
+  es-data:

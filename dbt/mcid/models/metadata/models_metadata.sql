@@ -54,12 +54,5 @@ with
         {% endfor %}
     )
 
-select
-    schema_name,
-    table_name,
-    database_name,
-    materialization,
-    description,
-    dt_transform,
-    run_id
+select schema_name, table_name, database_name, materialization, description, dt_transform, run_id
 from dbt_models

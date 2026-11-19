@@ -52,15 +52,10 @@ class ClienteAbecip(ClienteBase):
         super().__init__(
             base_url=self.BASE_URL,
             headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"
-                )
+                "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
             },
         )
-        logging.info(
-            "[cliente_abecip.py] Initialized ClienteAbecip "
-            f"com base_url: {self.BASE_URL}"
-        )
+        logging.info(f"[cliente_abecip.py] Initialized ClienteAbecip com base_url: {self.BASE_URL}")
 
     def _get_xlsx_url(self, pagina_path: str, pattern: str) -> Optional[str]:
         """
@@ -97,8 +92,7 @@ class ClienteAbecip(ClienteBase):
                 return url
 
         logging.error(
-            f"[cliente_abecip.py] Nenhum link com pattern "
-            f"'{pattern}' encontrado na página."
+            f"[cliente_abecip.py] Nenhum link com pattern '{pattern}' encontrado na página."
         )
         return None
 
@@ -149,10 +143,7 @@ class ClienteAbecip(ClienteBase):
             )
 
         saldo = (
-            d["saldo"].shift(1)
-            + d["captacao_liquida_valor"]
-            + d["rendimento"]
-            - d["saldo"]
+            d["saldo"].shift(1) + d["captacao_liquida_valor"] + d["rendimento"] - d["saldo"]
         ).abs()
         comparavel2 = saldo.notna()
         if comparavel2.sum() and (saldo[comparavel2] > 1.0).mean() > 0.10:
@@ -202,9 +193,7 @@ class ClienteAbecip(ClienteBase):
                 nome_aba = self.ABA_POUPANCA
             else:
                 candidatas = [
-                    a
-                    for a in abas
-                    if a.strip().lower().startswith(self.ABA_POUPANCA.lower())
+                    a for a in abas if a.strip().lower().startswith(self.ABA_POUPANCA.lower())
                 ]
                 if len(candidatas) != 1:
                     raise LayoutFonteMudou(
@@ -231,9 +220,7 @@ class ClienteAbecip(ClienteBase):
             df = df[~((df["captacao_liquida_valor"] == 0) & df["saldo"].isna())].copy()
 
             # Normaliza data para string 'yyyy-MM-dd'
-            df["data_referencia"] = pd.to_datetime(df["data_referencia"]).dt.strftime(
-                "%Y-%m-%d"
-            )
+            df["data_referencia"] = pd.to_datetime(df["data_referencia"]).dt.strftime("%Y-%m-%d")
 
             # Converte colunas numéricas
             cols_numericas = [c for c in self.COLUNAS_NOMES if c != "data_referencia"]
@@ -332,15 +319,9 @@ class ClienteAbecip(ClienteBase):
 
         try:
             planilha = pd.ExcelFile(io.BytesIO(conteudo))
-            abas = [
-                a
-                for a in planilha.sheet_names
-                if a.strip().lower().startswith("bd_unidades")
-            ]
+            abas = [a for a in planilha.sheet_names if a.strip().lower().startswith("bd_unidades")]
             if not abas:
-                raise ValueError(
-                    f"aba de unidades não encontrada; abas: {planilha.sheet_names}"
-                )
+                raise ValueError(f"aba de unidades não encontrada; abas: {planilha.sheet_names}")
 
             bruto = pd.read_excel(planilha, sheet_name=abas[0], header=None)
 
@@ -373,7 +354,5 @@ class ClienteAbecip(ClienteBase):
             # propaga: é diagnóstico acionável, não erro de parse
             raise
         except Exception as e:
-            logging.error(
-                f"[cliente_abecip.py] Erro ao processar XLSX de financiamentos: {e}"
-            )
+            logging.error(f"[cliente_abecip.py] Erro ao processar XLSX de financiamentos: {e}")
             return None

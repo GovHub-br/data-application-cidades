@@ -12,18 +12,17 @@
 -- antigo `pnad_construcao_*`. Os arquivos antigos ficaram órfãos: a config
 -- foi renomeada, mas as chamadas passaram a falhar (separador de categoria
 -- errado no client) e os novos nunca foram gerados. Corrigido em 2026-08-30.
-
 select
     periodo,
     -- date, não timestamp: representa um mês/trimestre de referência,
     -- não um instante. Sem o cast, `current_date - data_referencia`
     -- devolve interval e quebra o teste de frescor.
-    data_referencia::date         as data_referencia,
+    data_referencia::date as data_referencia,
     variavel_id,
-    variavel_nome     as variavel,
+    variavel_nome as variavel,
     unidade,
     localidade_id,
-    localidade_nome   as localidade,
+    localidade_nome as localidade,
     classificacao_id,
     classificacao,
     categoria_id,

@@ -10,9 +10,7 @@ from datetime import datetime, date
 import pytz
 
 # Configuração do log
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def format_csv(
@@ -91,9 +89,7 @@ def fetch_email_with_csv(
     csv_payloads: List[bytes] = []
     with MailBox(imap_server).login(email, password) as mailbox:
         # bulk=True: single IMAP FETCH command for all messages (avoids overquota)
-        for msg in mailbox.fetch(
-            AND(date=today, from_=sender_email, subject=subject), bulk=True
-        ):
+        for msg in mailbox.fetch(AND(date=today, from_=sender_email, subject=subject), bulk=True):
             for attachment in msg.attachments:
                 file_name = (attachment.filename or "").lower()
                 if file_name.endswith(".csv"):
@@ -181,9 +177,7 @@ def fetch_and_process_email_csv_attachment(
 ) -> Optional[str]:
     """Busca e processa e-mails do dia, extraindo CSVs anexados diretamente."""
     try:
-        csv_payloads = fetch_email_with_csv(
-            imap_server, email, password, sender_email, subject
-        )
+        csv_payloads = fetch_email_with_csv(imap_server, email, password, sender_email, subject)
         if not csv_payloads:
             logging.warning("Nenhum anexo CSV encontrado.")
             return None

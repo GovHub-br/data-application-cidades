@@ -7,34 +7,31 @@
 -- nomes explícitos para auditoria, mas as métricas de uso analítico são
 -- recalculadas a partir do número-índice: isso elimina ambiguidade de rótulo
 -- entre "no ano" e "12 meses" e torna a regra verificável.
+with
+    serie as (
+        select
+            mes,
+            indice,
+            var_mes,
+            var_ano as var_fonte_no_ano,
+            var_12_meses as var_fonte_12_meses,
+            lag(indice, 12) over (order by mes) as indice_mes_ano_anterior
+        from {{ ref('prata_conjuntura_fgv_incc_m') }}
+    ),
 
-with serie as (
-    select
-        mes,
-        indice,
-        var_mes,
-        var_ano as var_fonte_no_ano,
-        var_12_meses as var_fonte_12_meses,
-        lag(indice, 12) over (order by mes) as indice_mes_ano_anterior
-    from {{ ref('prata_conjuntura_fgv_incc_m') }}
-),
+    dezembro_ano_anterior as (
+        select
+            extract(year from mes)::int + 1 as ano_referencia,
+            indice as indice_dezembro_ano_anterior
+        from serie
+        where extract(month from mes) = 12
+    ),
 
-dezembro_ano_anterior as (
-    select
-        extract(year from mes)::int + 1 as ano_referencia,
-        indice as indice_dezembro_ano_anterior
-    from serie
-    where extract(month from mes) = 12
-),
-
-com_referencia_dezembro as (
-    select
-        s.*,
-        d.indice_dezembro_ano_anterior
-    from serie s
-    left join dezembro_ano_anterior d
-        on d.ano_referencia = extract(year from s.mes)::int
-)
+    com_referencia_dezembro as (
+        select s.*, d.indice_dezembro_ano_anterior
+        from serie s
+        left join dezembro_ano_anterior d on d.ano_referencia = extract(year from s.mes)::int
+    )
 
 select
     mes,

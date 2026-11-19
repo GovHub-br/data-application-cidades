@@ -1,0 +1,11 @@
+old_schema,old_table,new_schema
+data_quality,campos_obrigatorios,seeds
+data_quality,colunas_bronze_ignoradas,seeds
+data_quality,colunas_esperadas,seeds
+data_quality,dominio_motivo_paralisacao,seeds
+data_quality,dominio_regiao_uf,seeds
+data_quality,dominio_retomada,seeds
+data_quality,dominio_status,seeds
+data_quality,faixa_valor_uh,seeds
+data_quality,quarentena_valores_financeiros,seeds
+conjuntura,issue_118_mcmv_serie_temporal_piloto,seeds

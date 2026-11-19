@@ -52,11 +52,7 @@ class ClienteSinduscon:
 
         # User-Agent previne que alguns servidores bloqueiem
         # requisições de bibliotecas python
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36"
-            )
-        }
+        headers = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")}
 
         try:
             response = requests.get(self.URL_INCC, headers=headers)
@@ -91,8 +87,7 @@ class ClienteSinduscon:
             registros = df.to_dict(orient="records")
 
             logging.info(
-                f"[cliente_fgv.py] Transformação concluída. "
-                f"{len(registros)} registros preparados."
+                f"[cliente_fgv.py] Transformação concluída. {len(registros)} registros preparados."
             )
 
             return registros
@@ -132,8 +127,8 @@ class ClienteFGVDados:
            chamadas no formato:
            callDataAction("...", "screenservices/...", "HASH", ...)
         """
-        logging.info("[cliente_fgv.py] Buscando hashes" " dinâmicas do OutSystems...")
-        url_base = "https://autenticacao-ibre.fgv.br" "/ProdutosDigitais/"
+        logging.info("[cliente_fgv.py] Buscando hashes dinâmicas do OutSystems...")
+        url_base = "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
 
         # Fallbacks caso algo falhe
         resultado = {
@@ -141,14 +136,10 @@ class ClienteFGVDados:
             "api_cloudflare": "OTGxLOOIYRPT4Yzxi6zCuA",
             "api_login": "kEIaQNU5n93i9Q026f_dlQ",
             "url_cloudflare": (
-                "screenservices/ProdutosDigitais/"
-                "Blocks/BL01_Login/"
-                "DataActionCheckUsarCloudFlare"
+                "screenservices/ProdutosDigitais/Blocks/BL01_Login/DataActionCheckUsarCloudFlare"
             ),
             "url_login": (
-                "screenservices/ProdutosDigitais/"
-                "Blocks/BL01_Login/"
-                "DataActionGetDadosLogin"
+                "screenservices/ProdutosDigitais/Blocks/BL01_Login/DataActionGetDadosLogin"
             ),
         }
 
@@ -168,11 +159,11 @@ class ClienteFGVDados:
                 if token:
                     resultado["moduleVersion"] = token
         except Exception as e:
-            logging.warning("[cliente_fgv.py] Falha ao buscar" f" moduleversioninfo: {e}")
+            logging.warning(f"[cliente_fgv.py] Falha ao buscar moduleversioninfo: {e}")
 
         # apiVersions e URLs do BL01_Login.mvc.js
         try:
-            url_js = url_base + "scripts/ProdutosDigitais" ".Blocks.BL01_Login.mvc.js"
+            url_js = url_base + "scripts/ProdutosDigitais.Blocks.BL01_Login.mvc.js"
             res_js = self.session.get(url_js, timeout=10, headers=headers_get)
             if res_js.status_code == 200:
                 js = res_js.text
@@ -212,7 +203,7 @@ class ClienteFGVDados:
                         resultado[k_hash] = api_hash
                         resultado[k_url] = url_path
         except Exception as e:
-            logging.warning("[cliente_fgv.py] Falha ao buscar" f" BL01_Login.mvc.js: {e}")
+            logging.warning(f"[cliente_fgv.py] Falha ao buscar BL01_Login.mvc.js: {e}")
 
         logging.info(
             "[cliente_fgv.py] Hashes:"
@@ -268,8 +259,7 @@ class ClienteFGVDados:
         self.session.headers.update(
             {
                 "User-Agent": (
-                    "Mozilla/5.0 (X11; Linux x86_64; rv:149.0) "
-                    "Gecko/20100101 Firefox/149.0"
+                    "Mozilla/5.0 (X11; Linux x86_64; rv:149.0) Gecko/20100101 Firefox/149.0"
                 ),
                 "Content-Type": "application/json; charset=UTF-8",
                 "Accept": "application/json",
@@ -338,8 +328,7 @@ class ClienteFGVDados:
         self.session.headers.update({"X-CSRFToken": token_csrf})
 
         url_login = (
-            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
-            + hashes_dinamicas["url_login"]
+            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/" + hashes_dinamicas["url_login"]
         )
 
         payload_login = {
@@ -500,9 +489,7 @@ class ClienteFGVDados:
         res_radio = self.session.post(
             url_consulta,
             data={
-                "ctl00$smg": (
-                    "ctl00$cphConsulta$updpOpcoes|" "ctl00$cphConsulta$rbtSerieHistorica"
-                ),
+                "ctl00$smg": ("ctl00$cphConsulta$updpOpcoes|ctl00$cphConsulta$rbtSerieHistorica"),
                 "ctl00$drpFiltro": "E",
                 "ctl00$txtBuscarSeries": "",
                 "ctl00$cphConsulta$rblConsultaHierarquia": "COMPARATIVA",
@@ -538,9 +525,7 @@ class ClienteFGVDados:
             estados.update(delta_estados)
 
         payload_viz = {
-            "ctl00$smg": (
-                "ctl00$updpAreaConsulta|" "ctl00$cphConsulta$butVisualizarResultado"
-            ),
+            "ctl00$smg": ("ctl00$updpAreaConsulta|ctl00$cphConsulta$butVisualizarResultado"),
             "__EVENTTARGET": "",
             "__EVENTARGUMENT": "",
             "__LASTFOCUS": "",
@@ -582,16 +567,12 @@ class ClienteFGVDados:
         DevExpress e emite a requisição final para download e parse do CSV.
         """
         url_consulta = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/consulta.aspx"
-        url_visualiza = (
-            "https://extra-ibre.fgv.br/IBRE/sitefgvdados/visualizaconsulta.aspx"
-        )
+        url_visualiza = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/visualizaconsulta.aspx"
 
         # Preparação do grid de download
         self.session.get(url_visualiza, headers={"Referer": url_consulta})
 
-        url_frame = (
-            "https://extra-ibre.fgv.br/IBRE/sitefgvdados/" "VisualizaConsultaFrame.aspx"
-        )
+        url_frame = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/VisualizaConsultaFrame.aspx"
         res_frame = self.session.get(url_frame, headers={"Referer": url_visualiza})
 
         if "ICST" not in res_frame.text:
@@ -628,18 +609,14 @@ class ClienteFGVDados:
             data=payload_download,
             headers={
                 "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": (
-                    "text/html,application/xhtml+xml,application/xml;" "q=0.9,*/*;q=0.8"
-                ),
+                "Accept": ("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
                 "Origin": "https://extra-ibre.fgv.br",
                 "Referer": url_frame,
             },
         )
 
         content_type = res_csv.headers.get("Content-Type", "").lower()
-        is_valid_type = (
-            "text/csv" in content_type or "application/octet-stream" in content_type
-        )
+        is_valid_type = "text/csv" in content_type or "application/octet-stream" in content_type
 
         if res_csv.status_code == 200 and is_valid_type:
             # Guarda os bytes brutos do CSV p/ a camada raw do data lake (nativo).

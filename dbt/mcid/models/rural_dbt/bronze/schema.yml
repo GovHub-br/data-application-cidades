@@ -17,6 +17,7 @@ models:
       guarda o retrato mais recente. Uma linha por empreendimento.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_cad_pj_rural_mensal
           colunas:
             - co_tipo_registro
             - no_nome_eo
@@ -78,6 +79,7 @@ models:
       empreendimento. Cobre cerca de 1% da carteira.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_cadastro_pf_rural_mensal
           colunas:
             - nu_registro
             - nu_contrato_empreendimento
@@ -126,6 +128,7 @@ models:
       UHs concluídas e alienadas, paralisação, datas de situação e de entrega.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_obra_rural_mensal
           colunas:
             - co_tipo_registro
             - dh_movimento
@@ -184,6 +187,7 @@ models:
       '0' é débito — a liberação real, com valor negativo — e '1' é crédito, a devolução.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_monit_mov_financ_rural_mensal
           colunas:
             - id
             - co_tipo_registro
@@ -213,6 +217,7 @@ models:
       então a competência vigente aqui costuma ser anterior à da CAIXA.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_snh_pmcmv_dados_prioritarios_af_bb
           colunas:
             - data_de_movimento
             - agente_financeiro
@@ -275,6 +280,7 @@ models:
       encerrado e a série não avança mais.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_int065_pnhr_caixa_empreendimentos
           colunas:
             - dt_movimento
             - nu_contrato_emprendimento
@@ -334,6 +340,7 @@ models:
       em 2024-11-29.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_int057_pnhr_bb_empreendimentos
           colunas:
             - dt_movimento
             - co_agente_financeiro
@@ -401,6 +408,7 @@ models:
       entrada; a extensão de origem não entra na key da staging. Vigente 2025-03-18.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_sftp_int055_liberacoes_caixa_bb
           colunas:
             - no_programa
             - nu_apf
@@ -422,6 +430,7 @@ models:
       mensal. Não há histórico recuperável — cada regeração apaga a anterior.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_dados_prioritarios_snh_empreendimentos
           colunas:
             - data_de_referencia
             - codigo_ibge_do_municipio
@@ -492,6 +501,7 @@ models:
       nome todo mês — não há padrão estável para pescar a aba certa.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_base_trabalho_social_pnhr_rural_caixa
           colunas:
             - recurso
             - contrato
@@ -529,6 +539,7 @@ models:
       próprio, diferente do da CAIXA. Mesma ressalva de export avulso.
     tests:
       - sem_drift_de_colunas:
+          name: sem_drift_de_colunas_bronze_shpt_base_trabalho_social_pnhr_bb
           colunas:
             - recurso
             - contrato_registro_ao

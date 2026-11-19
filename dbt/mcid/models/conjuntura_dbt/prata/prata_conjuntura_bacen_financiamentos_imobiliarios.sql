@@ -18,23 +18,22 @@
 -- `data` chega como texto DD/MM/YYYY e vira date aqui — sem isso o
 -- `order by data desc` do ouro ordenaria alfabeticamente, e 01/12/2025
 -- passaria a valer mais que 01/07/2026.
+with
+    sgs as (
+        select
+            to_date(data, 'DD/MM/YYYY') as data,
+            tipo as tipo,
+            nullif(btrim(valor), '')::numeric as valor
+        from {{ ref('bronze_bacen_financiamentos_imobiliarios') }}
+    ),
 
-with sgs as (
-    select
-        to_date(data, 'DD/MM/YYYY')             as data,
-        tipo                                    as tipo,
-        nullif(btrim(valor), '')::numeric       as valor
-    from {{ ref('bronze_bacen_financiamentos_imobiliarios') }}
-),
+    credito_pib as (
+        select data as data, 'indice_imobiliario_por_pib' as tipo, valor as valor
+        from {{ ref('prata_conjuntura_bacen_credito_pib') }}
+    )
 
-credito_pib as (
-    select
-        data                                    as data,
-        'indice_imobiliario_por_pib'            as tipo,
-        valor                                   as valor
-    from {{ ref('prata_conjuntura_bacen_credito_pib') }}
-)
-
-select data, tipo, valor from sgs
+select data, tipo, valor
+from sgs
 union all
-select data, tipo, valor from credito_pib
+select data, tipo, valor
+from credito_pib

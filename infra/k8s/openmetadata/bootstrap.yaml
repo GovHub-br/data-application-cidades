@@ -1,0 +1,178 @@
+# Pós-instalação do OpenMetadata, o equivalente às últimas tarefas do playbook:
+#  1. troca a senha padrão do admin (admin/admin) pela do Secret openmetadata-admin;
+#  2. lê o token do ingestion-bot;
+#  3. grava o Secret openmetadata-airflow-env (OPENMETADATA_URL, token, nomes do
+#     service e do banco), que o Airflow do cluster lê como opcional.
+#
+# Idempotente: rodar de novo só confere o login e regrava o Secret.
+#   kubectl -n cidades delete job openmetadata-bootstrap --ignore-not-found
+#   kubectl apply -f infra/k8s/openmetadata/bootstrap.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openmetadata-bootstrap
+  namespace: cidades
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: openmetadata-bootstrap
+  namespace: cidades
+rules:
+  # "create" não aceita resourceNames; get/patch ficam presos ao Secret dele.
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [secrets]
+    resourceNames: [openmetadata-airflow-env]
+    verbs: [get, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openmetadata-bootstrap
+  namespace: cidades
+subjects:
+  - kind: ServiceAccount
+    name: openmetadata-bootstrap
+    namespace: cidades
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openmetadata-bootstrap
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openmetadata-bootstrap
+  namespace: cidades
+data:
+  bootstrap.py: |
+    import base64, json, os, ssl, time, urllib.error, urllib.request
+
+    OM = os.environ["OM_API"]              # http://openmetadata:8585/api/v1
+    URL_AIRFLOW = os.environ["OM_URL"]     # sem /api: a convenção do projeto
+    EMAIL = "admin@open-metadata.org"
+    SENHA = os.environ["ADMIN_PASSWORD"]
+    NS = open("/var/run/secrets/kubernetes.io/serviceaccount/namespace").read().strip()
+    K8S_TOKEN = open("/var/run/secrets/kubernetes.io/serviceaccount/token").read().strip()
+    K8S = "https://kubernetes.default.svc"
+    K8S_SSL = ssl.create_default_context(cafile="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
+
+
+    def chamar(metodo, url, corpo=None, headers=None, contexto=None):
+        dados = json.dumps(corpo).encode() if corpo is not None else None
+        req = urllib.request.Request(url, data=dados, method=metodo,
+                                     headers={"Content-Type": "application/json", **(headers or {})})
+        try:
+            with urllib.request.urlopen(req, context=contexto, timeout=30) as r:
+                corpo = r.read()
+                status = r.status
+        except urllib.error.HTTPError as e:
+            return e.code, {}
+        # O changePassword responde 200 com corpo que não é JSON.
+        try:
+            return status, json.loads(corpo or b"{}")
+        except ValueError:
+            return status, {}
+
+
+    def login(senha):
+        return chamar("POST", f"{OM}/users/login",
+                      {"email": EMAIL, "password": base64.b64encode(senha.encode()).decode()})
+
+
+    for _ in range(60):
+        try:
+            if chamar("GET", f"{OM}/system/version")[0] == 200:
+                break
+        except OSError:
+            pass
+        time.sleep(10)
+    else:
+        raise SystemExit("OpenMetadata não respondeu em 10 minutos")
+    print("OpenMetadata respondendo")
+
+    status, corpo = login(SENHA)
+    print(f"login com a senha gerada: {status}")
+    if status == 401:
+        print("admin ainda com a senha padrão: trocando")
+        status, padrao = login("admin")
+        if status != 200:
+            raise SystemExit(f"login do admin falhou com a senha gerada e com a padrão ({status})")
+        status, _ = chamar("PUT", f"{OM}/users/changePassword",
+                           {"username": "admin", "oldPassword": "admin", "newPassword": SENHA,
+                            "confirmPassword": SENHA, "requestType": "SELF"},
+                           {"Authorization": f"Bearer {padrao['accessToken']}"})
+        if status != 200:
+            raise SystemExit(f"troca de senha falhou ({status})")
+        print("senha do admin trocada")
+        # A senha nova pode levar alguns segundos para valer no login.
+        for _ in range(12):
+            status, corpo = login(SENHA)
+            if status == 200:
+                break
+            time.sleep(5)
+    if status != 200:
+        raise SystemExit(f"login do admin falhou ({status})")
+    auth = {"Authorization": f"Bearer {corpo['accessToken']}"}
+
+    status, bot = chamar("GET", f"{OM}/bots/name/ingestion-bot?fields=botUser", headers=auth)
+    print(f"ingestion-bot: {status}")
+    status, mecanismo = chamar("GET", f"{OM}/users/auth-mechanism/{bot['botUser']['id']}", headers=auth)
+    print(f"token do ingestion-bot: {status}")
+    token = mecanismo["config"]["JWTToken"]
+
+    dados = {
+        "OPENMETADATA_URL": URL_AIRFLOW,
+        "OPENMETADATA_JWT_TOKEN": token,
+        "OPENMETADATA_DATABASE_SERVICE": "Cidades",
+        "OPENMETADATA_DATABASE_NAME": "cidades",
+    }
+    segredo = {"apiVersion": "v1", "kind": "Secret",
+               "metadata": {"name": "openmetadata-airflow-env", "namespace": NS},
+               "stringData": dados}
+    k8s_auth = {"Authorization": f"Bearer {K8S_TOKEN}"}
+    status, _ = chamar("POST", f"{K8S}/api/v1/namespaces/{NS}/secrets", segredo, k8s_auth, K8S_SSL)
+    if status == 409:
+        req = urllib.request.Request(
+            f"{K8S}/api/v1/namespaces/{NS}/secrets/openmetadata-airflow-env", method="PATCH",
+            data=json.dumps({"stringData": dados}).encode(),
+            headers={"Content-Type": "application/merge-patch+json", **k8s_auth})
+        urllib.request.urlopen(req, context=K8S_SSL, timeout=30)
+        status = 200
+    if status not in (200, 201):
+        raise SystemExit(f"gravar o Secret falhou ({status})")
+    print("Secret openmetadata-airflow-env gravado; token do ingestion-bot ok")
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openmetadata-bootstrap
+  namespace: cidades
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      serviceAccountName: openmetadata-bootstrap
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          image: python:3.12.11-slim-bookworm
+          command: ["python", "-u", "/script/bootstrap.py"]
+          env:
+            - name: OM_API
+              value: http://openmetadata:8585/api/v1
+            - name: OM_URL
+              value: http://openmetadata.cidades.svc:8585
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: openmetadata-admin, key: password}
+          volumeMounts:
+            - name: script
+              mountPath: /script
+      volumes:
+        - name: script
+          configMap:
+            name: openmetadata-bootstrap

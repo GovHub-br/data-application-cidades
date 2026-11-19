@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from airflow.exceptions import (
     AirflowException,
     AirflowFailException,
@@ -26,7 +26,7 @@ default_args = {
 
 @dag(
     dag_id="abecip_poupanca_trimestral_ingest_dag",
-    schedule_interval=get_dynamic_schedule("abecip_poupanca_trimestral"),
+    schedule=get_dynamic_schedule("abecip_poupanca_trimestral"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args=default_args,
@@ -94,9 +94,7 @@ def abecip_poupanca_trimestral_ingest_dag() -> None:
             raise
         except Exception as e:
             logger.error("[abecip_poupanca_trimestral_dag] Erro inesperado: %s", e)
-            raise AirflowException(
-                f"[abecip_poupanca_trimestral_dag] Erro inesperado: {e}"
-            ) from e
+            raise AirflowException(f"[abecip_poupanca_trimestral_dag] Erro inesperado: {e}") from e
 
     fetch_and_store()
 

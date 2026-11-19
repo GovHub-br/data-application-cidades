@@ -7,7 +7,7 @@ with
     cad_pj_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             nullif(trim(no_identificacao_proposta), '') as id_proposta,
             nullif(trim(no_agente_financeiro), '') as agente_financeiro,
             nullif(trim(no_empreendimento), '') as empreendimento_nome,
@@ -18,10 +18,8 @@ with
             {{ parse_int("co_nivel_hab_eo") }} as co_nivel_hab_eo,
 
             -- Substituição de EO
-            case
-                when trim(ic_substituicao_eo) = 'S' then true else false
-            end as ic_substituicao_eo,
-            {{ target.schema }}.parse_date_br(dt_substituicao_eo) as dt_substituicao_eo,
+            case when trim(ic_substituicao_eo) = 'S' then true else false end as ic_substituicao_eo,
+            {{ var('schema_udfs') }}.parse_date_br(dt_substituicao_eo) as dt_substituicao_eo,
             nullif(trim(no_substituicao_eo), '') as eo_substituta_nome,
             nullif(
                 regexp_replace(trim(nu_cnpj_substituicao_eo), '[^0-9]', '', 'g'), ''
@@ -65,18 +63,14 @@ with
 
             -- Composição financeira do investimento
             {{ parse_financial_value("vr_financiamento_fds") }} as vr_financiamento_fds,
-            {{ parse_financial_value("vr_total_contrapartidas") }}
-            as vr_total_contrapartidas,
+            {{ parse_financial_value("vr_total_contrapartidas") }} as vr_total_contrapartidas,
             {{ parse_financial_value("vr_total_investimento") }} as vr_total_investimento,
             {{ parse_financial_value("vr_total_operacao") }} as vr_total_operacao,
             {{ parse_financial_value("vr_terreno") }} as vr_terreno,
             {{ parse_financial_value("vr_ts") }} as vr_trabalho_social,
-            {{ parse_financial_value("vr_equipamentos_publicos") }}
-            as vr_equipamentos_publicos,
-            {{ parse_financial_value("vr_equipamento_uso_comum") }}
-            as vr_equipamento_uso_comum,
-            {{ parse_financial_value("vr_infraestrutura_incidente") }}
-            as vr_infraestrutura,
+            {{ parse_financial_value("vr_equipamentos_publicos") }} as vr_equipamentos_publicos,
+            {{ parse_financial_value("vr_equipamento_uso_comum") }} as vr_equipamento_uso_comum,
+            {{ parse_financial_value("vr_infraestrutura_incidente") }} as vr_infraestrutura,
             {{ parse_financial_value("vr_legalizacao") }} as vr_legalizacao,
             {{ parse_financial_value("vr_regularizacao") }} as vr_regularizacao,
             {{ parse_financial_value("vr_seguros_obrigatorios") }} as vr_seguros,
@@ -95,45 +89,39 @@ with
             as vr_contrapartida_municipio_terreno,
             {{ parse_financial_value("vr_contrapartida_municipio_complementar") }}
             as vr_contrapartida_municipio_complementar,
-            {{ parse_financial_value("vr_contrapartida_outras") }}
-            as vr_contrapartida_outras,
+            {{ parse_financial_value("vr_contrapartida_outras") }} as vr_contrapartida_outras,
 
             -- Aporte / Retomada
             nullif(trim(nu_apf_aporte_suplementacao), '') as apf_aporte,
             {{ parse_int("co_operacao_retomada") }} as co_operacao_retomada,
             {{ parse_financial_value("vr_contratado_aporte_suplementacao") }}
             as vr_aporte_suplementacao,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_contratacao_aporte_suplementacao
             ) as dt_aporte_suplementacao,
-            {{ parse_financial_value("vr_total_em_construcao") }}
-            as vr_total_em_construcao,
+            {{ parse_financial_value("vr_total_em_construcao") }} as vr_total_em_construcao,
             {{ parse_financial_value("vr_total_em_projeto") }} as vr_total_em_projeto,
 
             -- Datas-chave
-            {{ target.schema }}.parse_date_br(dt_assinatura) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(dt_assinatura) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_previsao_conclusao_obra
             ) as dt_previsao_conclusao,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_apresentacao_orcamento
             ) as dt_apresentacao_orcamento,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_inicio_obra_retomada
             ) as dt_inicio_obra_retomada,
-            {{ target.schema }}.parse_date_br(
+            {{ var('schema_udfs') }}.parse_date_br(
                 dt_previsao_conclusao_obra_retomada
             ) as dt_previsao_conclusao_retomada,
-            {{ target.schema }}.parse_date_br(dh_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dh_movimento) as dt_movimento,
 
             -- Indicadores
-            case
-                when trim(ic_terreno_doado) = 'S' then true else false
-            end as ic_terreno_doado,
-            case
-                when trim(ic_uniao_imovel) = 'S' then true else false
-            end as ic_uniao_imovel,
+            case when trim(ic_terreno_doado) = 'S' then true else false end as ic_terreno_doado,
+            case when trim(ic_uniao_imovel) = 'S' then true else false end as ic_uniao_imovel,
             case
                 when trim(ic_sistema_aquec_solar) = 'S' then true else false
             end as ic_aquecimento_solar,
@@ -143,16 +131,13 @@ with
             case
                 when trim(ic_previsao_area_comercial) = 'S' then true else false
             end as ic_area_comercial,
-            case
-                when trim(ic_mudanca_fase) = 'S' then true else false
-            end as ic_mudanca_fase,
+            case when trim(ic_mudanca_fase) = 'S' then true else false end as ic_mudanca_fase,
             nullif(trim(nu_apf_mudanca_fase), '') as apf_mudanca_fase,
 
             -- Energia alternativa e solar (valores)
             {{ parse_financial_value("vr_sistema_alternativo_de_energia") }}
             as vr_energia_alternativa,
-            {{ parse_financial_value("vr_sistema_aquecimento_solar") }}
-            as vr_aquecimento_solar,
+            {{ parse_financial_value("vr_sistema_aquecimento_solar") }} as vr_aquecimento_solar,
 
             -- Metadados
             _source_file as arquivo_de_origem,

@@ -1,0 +1,478 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: cadunico
+name: CadÚnico
+version: 0.1.0
+status: draft
+description:
+  purpose: Cortes do Cadastro Único entregues ao MCid.
+team:
+- username: CadÚnico (MDS)
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: cadunico_familia
+  physicalName: cadunico_familia
+  description: Corte de famílias do CadÚnico de 12/12/2025, com endereço e dados do entrevistador protegidos
+    antes da staging. Reúne as tabelas atuais cadunico_familia, cadunico_familia_beneficiario, que só
+    diferem pela data.
+  customProperties:
+  - property: path
+    value: staging/**/ARQ_FAMILIA_PBF_*_SB8.parquet
+  - property: file_pattern
+    value: ARQ_FAMILIA_PBF_\d{8}_SB8\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: minio_transform_dag
+  - property: dbt_tables
+    value:
+    - cadunico_familia
+    - cadunico_familia_beneficiario
+  properties:
+  - name: cd_ibge_cadastro
+    logicalType: string
+  - name: co_familiar_fam
+    logicalType: string
+  - name: marc_pbf
+    logicalType: string
+  - name: dt_cadastro_fam
+    logicalType: string
+  - name: dt_atualizacao_fam
+    logicalType: string
+  - name: co_est_cadastral_fam
+    logicalType: string
+  - name: vl_renda_media_fam
+    logicalType: string
+  - name: co_modalidade_oper_fam
+    logicalType: string
+  - name: co_forma_coleta_fam
+    logicalType: string
+  - name: no_localidade_fam
+    logicalType: string
+  - name: no_tip_logradouro_fam
+    logicalType: string
+    classification: restricted
+  - name: no_tit_logradouro_fam
+    logicalType: string
+    classification: restricted
+  - name: no_logradouro_fam
+    logicalType: string
+    classification: restricted
+  - name: nu_logradouro_fam
+    logicalType: string
+    classification: restricted
+  - name: ds_complemento_fam
+    logicalType: string
+    classification: restricted
+  - name: ds_complemento_adic_fam
+    logicalType: string
+    classification: restricted
+  - name: nu_cep_logradouro_fam
+    logicalType: string
+    classification: restricted
+  - name: co_unidade_territorial_fam
+    logicalType: string
+  - name: no_unidade_territorial_fam
+    logicalType: string
+  - name: ds_referencia_local_fam
+    logicalType: string
+    classification: restricted
+  - name: no_entrevistador_fam
+    logicalType: string
+    classification: restricted
+  - name: nu_cpf_entrevistador_fam
+    logicalType: string
+    classification: restricted
+  - name: ds_obs_entrevistador_fam
+    logicalType: string
+    classification: restricted
+  - name: in_fam_alterada_v7
+    logicalType: string
+  - name: co_local_domic_fam
+    logicalType: string
+  - name: co_especie_domic_fam
+    logicalType: string
+  - name: qt_comodos_domic_fam
+    logicalType: string
+  - name: qt_comodos_dormitorio_fam
+    logicalType: string
+  - name: co_material_piso_fam
+    logicalType: string
+  - name: co_material_domic_fam
+    logicalType: string
+  - name: co_agua_canalizada_fam
+    logicalType: string
+  - name: co_abaste_agua_domic_fam
+    logicalType: string
+  - name: co_banheiro_domic_fam
+    logicalType: string
+  - name: co_escoa_sanitario_domic_fam
+    logicalType: string
+  - name: co_destino_lixo_domic_fam
+    logicalType: string
+  - name: co_iluminacao_domic_fam
+    logicalType: string
+  - name: co_calcamento_domic_fam
+    logicalType: string
+  - name: in_familia_indigena_fam
+    logicalType: string
+  - name: co_povo_indigena_fam
+    logicalType: string
+  - name: no_povo_indigena_fam
+    logicalType: string
+  - name: co_indigena_reside_fam
+    logicalType: string
+  - name: co_reserva_indigena_fam
+    logicalType: string
+  - name: no_reserva_indigena_fam
+    logicalType: string
+  - name: in_familia_quilombola_fam
+    logicalType: string
+  - name: co_comunidade_quilombola_fam
+    logicalType: string
+  - name: no_comunidade_quilombola_fam
+    logicalType: string
+  - name: qt_pessoas_domic_fam
+    logicalType: string
+  - name: qt_familias_domic_fam
+    logicalType: string
+  - name: qt_pessoa_inter_0_17_anos_fam
+    logicalType: string
+  - name: qt_pessoa_inter_18_59_anos_fam
+    logicalType: string
+  - name: qt_pessoa_inter_60_anos_fam
+    logicalType: string
+  - name: vl_desp_energia_fam
+    logicalType: string
+  - name: vl_desp_agua_esgoto_fam
+    logicalType: string
+  - name: vl_desp_gas_fam
+    logicalType: string
+  - name: vl_desp_alimentacao_fam
+    logicalType: string
+  - name: vl_desp_transpor_fam
+    logicalType: string
+  - name: vl_desp_aluguel_fam
+    logicalType: string
+  - name: vl_desp_medicamentos_fam
+    logicalType: string
+  - name: no_estab_assist_saude_fam
+    logicalType: string
+  - name: nu_estbo_saude
+    logicalType: string
+  - name: no_centro_assist_fam
+    logicalType: string
+  - name: co_centro_assist_fam
+    logicalType: string
+  - name: in_parc_mds_fam
+    logicalType: string
+  - name: vl_renda_total_fam
+    logicalType: string
+  - name: qt_membro_familia
+    logicalType: string
+  - name: co_cta_energ_unid_consum_fam
+    logicalType: string
+  - name: ds_marc_bpc
+    logicalType: string
+- name: cadunico_pessoa
+  physicalName: cadunico_pessoa
+  description: Corte de pessoas do CadÚnico de 12/12/2025, com CPF/NIS em HMAC e identificadores diretos
+    redigidos antes da staging.
+  customProperties:
+  - property: path
+    value: staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_*_SB8.parquet
+  - property: file_pattern
+    value: ARQ_PESSOA_PBF_\d{8}_SB8\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: minio_transform_dag
+  - property: dbt_tables
+    value:
+    - cadunico_pessoa
+  properties:
+  - name: cd_ibge_cadastro
+    logicalType: string
+  - name: co_familiar_fam
+    logicalType: string
+  - name: marc_pbf
+    logicalType: string
+  - name: co_chv_natural_pessoa
+    logicalType: string
+  - name: dt_cadastramento_memb
+    logicalType: string
+  - name: co_est_cadastral_memb
+    logicalType: string
+  - name: in_trabalho_infantil_pessoa
+    logicalType: string
+  - name: no_pessoa
+    logicalType: string
+    classification: restricted
+  - name: nu_nis_pessoa
+    logicalType: string
+    classification: restricted
+  - name: no_apelido_pessoa
+    logicalType: string
+    classification: restricted
+  - name: co_sexo_pessoa
+    logicalType: string
+  - name: dt_nasc_pessoa
+    logicalType: string
+    classification: restricted
+  - name: co_parentesco_rf_pessoa
+    logicalType: string
+  - name: co_raca_cor_pessoa
+    logicalType: string
+    classification: restricted
+  - name: no_completo_mae_pessoa
+    logicalType: string
+    classification: restricted
+  - name: no_completo_pai_pessoa
+    logicalType: string
+    classification: restricted
+  - name: co_local_nascimento_pessoa
+    logicalType: string
+    classification: restricted
+  - name: sg_uf_munic_nasc_pessoa
+    logicalType: string
+  - name: no_ibge_munic_nasc_pessoa
+    logicalType: string
+  - name: co_ibge_munic_nasc_pessoa
+    logicalType: string
+  - name: no_pais_origem_pessoa
+    logicalType: string
+  - name: co_pais_origem_pessoa
+    logicalType: string
+  - name: co_certidao_registrada_pessoa
+    logicalType: string
+  - name: co_certidao_civil_pessoa
+    logicalType: string
+  - name: no_cartorio_pessoa
+    logicalType: string
+  - name: co_livro_certidao
+    logicalType: string
+    classification: restricted
+  - name: co_folha_certidao
+    logicalType: string
+    classification: restricted
+  - name: co_matricula_certidao
+    logicalType: string
+    classification: restricted
+  - name: dt_emissao_certidao
+    logicalType: string
+  - name: sg_uf_certidao
+    logicalType: string
+  - name: nu_cpf_pessoa
+    logicalType: string
+    classification: restricted
+  - name: nu_identidade_pessoa
+    logicalType: string
+    classification: restricted
+  - name: co_complemento_pessoa
+    logicalType: string
+    classification: restricted
+  - name: dt_emissao_ident_pessoa
+    logicalType: string
+  - name: sg_uf_ident_pessoa
+    logicalType: string
+  - name: sg_orgao_emissor_pessoa
+    logicalType: string
+  - name: nu_cart_trab_prev_soc_pessoa
+    logicalType: string
+    classification: restricted
+  - name: nu_serie_trab_prev_soc_pessoa
+    logicalType: string
+    classification: restricted
+  - name: dt_emissao_cart_trab_pessoa
+    logicalType: string
+  - name: sg_uf_cart_trab_pessoa
+    logicalType: string
+  - name: nu_titulo_eleitor_pessoa
+    logicalType: string
+    classification: restricted
+  - name: nu_zona_tit_eleitor_pessoa
+    logicalType: string
+  - name: nu_secao_tit_eleitor_pessoa
+    logicalType: string
+  - name: co_deficiencia_memb
+    logicalType: string
+    classification: restricted
+  - name: in_def_cegueira_memb
+    logicalType: string
+  - name: in_def_baixa_visao_memb
+    logicalType: string
+  - name: in_def_surdez_profunda_memb
+    logicalType: string
+  - name: in_def_surdez_leve_memb
+    logicalType: string
+  - name: in_def_fisica_memb
+    logicalType: string
+  - name: in_def_mental_memb
+    logicalType: string
+  - name: in_def_sindrome_down_memb
+    logicalType: string
+  - name: in_def_transtorno_mental_memb
+    logicalType: string
+  - name: in_ajuda_nao_memb
+    logicalType: string
+  - name: in_ajuda_familia_memb
+    logicalType: string
+  - name: in_ajuda_especializada_memb
+    logicalType: string
+  - name: in_ajuda_vizinho_memb
+    logicalType: string
+  - name: in_ajuda_instituicao_memb
+    logicalType: string
+  - name: in_ajuda_outra_memb
+    logicalType: string
+  - name: co_sabe_ler_escrever_memb
+    logicalType: string
+  - name: in_frequenta_escola_memb
+    logicalType: string
+  - name: no_escola_memb
+    logicalType: string
+  - name: co_escola_local_memb
+    logicalType: string
+  - name: sg_uf_escola_memb
+    logicalType: string
+  - name: no_munic_escola_memb
+    logicalType: string
+  - name: co_ibge_munic_escola_memb
+    logicalType: string
+  - name: co_censo_inep_memb
+    logicalType: string
+  - name: co_curso_frequenta_memb
+    logicalType: string
+  - name: co_ano_serie_frequenta_memb
+    logicalType: string
+  - name: co_curso_freq_pessoa_memb
+    logicalType: string
+  - name: co_ano_serie_frequentou_memb
+    logicalType: string
+  - name: co_concluiu_frequentou_memb
+    logicalType: string
+  - name: co_trabalhou_semana_memb
+    logicalType: string
+  - name: co_afastado_trab_memb
+    logicalType: string
+  - name: co_agricultura_trab_memb
+    logicalType: string
+  - name: co_principal_trab_memb
+    logicalType: string
+  - name: fx_renda_individual_805
+    logicalType: string
+  - name: co_trabalho_12_meses_memb
+    logicalType: string
+  - name: qt_meses_12_meses_memb
+    logicalType: string
+  - name: fx_renda_individual_808
+    logicalType: string
+  - name: fx_renda_individual_809_1
+    logicalType: string
+  - name: fx_renda_individual_809_2
+    logicalType: string
+  - name: fx_renda_individual_809_3
+    logicalType: string
+  - name: fx_renda_individual_809_4
+    logicalType: string
+  - name: fx_renda_individual_809_5
+    logicalType: string
+  - name: in_dormir_rua_memb
+    logicalType: string
+  - name: qt_dormir_freq_rua_memb
+    logicalType: string
+  - name: in_dormir_albergue_memb
+    logicalType: string
+  - name: qt_dormir_freq_albergue_memb
+    logicalType: string
+  - name: in_dormir_dom_part_memb
+    logicalType: string
+  - name: qt_dormir_freq_dom_part_memb
+    logicalType: string
+  - name: in_dormir_outro_memb
+    logicalType: string
+  - name: qt_dormir_freq_outro_memb
+    logicalType: string
+  - name: co_tempo_rua_memb
+    logicalType: string
+  - name: in_motivo_perda_memb
+    logicalType: string
+  - name: in_motivo_ameaca_memb
+    logicalType: string
+  - name: in_motivo_probs_fam_memb
+    logicalType: string
+  - name: in_motivo_alcool_memb
+    logicalType: string
+  - name: in_motivo_desemprego_memb
+    logicalType: string
+  - name: in_motivo_trabalho_memb
+    logicalType: string
+  - name: in_motivo_saude_memb
+    logicalType: string
+  - name: in_motivo_pref_memb
+    logicalType: string
+  - name: in_motivo_outro_memb
+    logicalType: string
+  - name: in_motivo_nao_sabe_memb
+    logicalType: string
+  - name: in_motivo_nao_resp_memb
+    logicalType: string
+  - name: co_tempo_cidade_memb
+    logicalType: string
+  - name: co_vive_fam_rua_memb
+    logicalType: string
+  - name: co_contato_parente_memb
+    logicalType: string
+  - name: in_ativ_com_escola_memb
+    logicalType: string
+  - name: in_ativ_com_associacao_memb
+    logicalType: string
+  - name: in_ativ_com_coop_memb
+    logicalType: string
+  - name: in_ativ_mov_soc_memb
+    logicalType: string
+  - name: in_ativ_nao_sabe_memb
+    logicalType: string
+  - name: in_ativ_nao_resp_memb
+    logicalType: string
+  - name: in_atend_cras_memb
+    logicalType: string
+  - name: in_atend_creas_memb
+    logicalType: string
+  - name: in_atend_centro_ref_rua_memb
+    logicalType: string
+  - name: in_atend_inst_gov_memb
+    logicalType: string
+  - name: in_atend_inst_nao_gov_memb
+    logicalType: string
+  - name: in_atend_hospital_geral_memb
+    logicalType: string
+  - name: in_atend_nenhum_memb
+    logicalType: string
+  - name: co_cart_assinada_memb
+    logicalType: string
+  - name: in_dinh_const_memb
+    logicalType: string
+  - name: in_dinh_flanelhinha_memb
+    logicalType: string
+  - name: in_dinh_carregador_memb
+    logicalType: string
+  - name: in_dinh_catador_memb
+    logicalType: string
+  - name: in_dinh_servs_gerais_memb
+    logicalType: string
+  - name: in_dinh_pede_memb
+    logicalType: string
+  - name: in_dinh_vendas_memb
+    logicalType: string
+  - name: in_dinh_outro_memb
+    logicalType: string
+  - name: in_dinh_nao_resp_memb
+    logicalType: string
+  - name: ds_marc_bpc
+    logicalType: string

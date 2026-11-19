@@ -228,7 +228,9 @@ def despejar(cur, apf: str) -> Dict[Tuple[str, str], List[object]]:
 
 
 def conciliar(coletado: Dict[Tuple[str, str], List[object]]) -> None:
-    print(f"\n{'=' * 78}\nCONCILIAÇÃO — o mesmo indicador, em cada lugar onde ele aparece\n{'=' * 78}")
+    print(
+        f"\n{'=' * 78}\nCONCILIAÇÃO — o mesmo indicador, em cada lugar onde ele aparece\n{'=' * 78}"
+    )
     for rotulo, origens in CONCILIAR:
         print(f"\n{rotulo}")
         vistos = []
@@ -240,7 +242,11 @@ def conciliar(coletado: Dict[Tuple[str, str], List[object]]) -> None:
             if not distintos:
                 print(f"  {tabela}.{col:<34} —  (nulo)")
                 continue
-            mostra = distintos[0] if len(distintos) == 1 else f"{len(distintos)} valores: {', '.join(distintos[:6])}"
+            mostra = (
+                distintos[0]
+                if len(distintos) == 1
+                else f"{len(distintos)} valores: {', '.join(distintos[:6])}"
+            )
             print(f"  {tabela}.{col:<34} {mostra}")
             vistos.extend(distintos)
         if len({v for v in vistos}) > 1:
@@ -266,6 +272,7 @@ def main() -> None:
         with conn.cursor() as cur:
             if args.so_divergencias:
                 import io
+
                 real = sys.stdout
                 sys.stdout = io.StringIO()
                 coletado = despejar(cur, args.apf)

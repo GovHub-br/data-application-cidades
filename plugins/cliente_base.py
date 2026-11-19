@@ -27,9 +27,7 @@ class ClienteBase:
     def __init__(self, base_url: str, headers: Optional[dict] = None) -> None:
         self.base_url = base_url
         self.client = httpx.Client(base_url=base_url, headers=headers)
-        logging.info(
-            f"[cliente_base.py] Initialized ClienteBase with base_url: {base_url}"
-        )
+        logging.info(f"[cliente_base.py] Initialized ClienteBase with base_url: {base_url}")
 
     def request(
         self, method: str, path: str, response_type: str = "json", **kwargs: Any
@@ -49,13 +47,9 @@ class ClienteBase:
 
         for attempt in range(self.DEFAULT_MAX_RETRIES):
             try:
-                logging.info(
-                    f"[cliente_base.py] Attempt {attempt + 1} for {method} " f"{path}"
-                )
+                logging.info(f"[cliente_base.py] Attempt {attempt + 1} for {method} {path}")
 
-                response = self.client.request(
-                    method, path, follow_redirects=True, **kwargs
-                )
+                response = self.client.request(method, path, follow_redirects=True, **kwargs)
                 response.raise_for_status()
 
                 if response_type == "json":
@@ -68,8 +62,7 @@ class ClienteBase:
                     raise ValueError(f"Unsupported response_type: {response_type}")
 
                 logging.info(
-                    f"[cliente_base.py] Request successful with status "
-                    f"{response.status_code}"
+                    f"[cliente_base.py] Request successful with status {response.status_code}"
                 )
                 return HTTPStatus(response.status_code), payload
             except httpx.HTTPError as e:
@@ -85,8 +78,6 @@ class ClienteBase:
                         f"[cliente_base.py] API failed after "
                         f"{self.DEFAULT_MAX_RETRIES} attempts. Error: {str(e)}"
                     )
-                    raise Exception(
-                        "API failed after the maximum number of attempts!"
-                    ) from e
+                    raise Exception("API failed after the maximum number of attempts!") from e
 
         return HTTPStatus.INTERNAL_SERVER_ERROR, None

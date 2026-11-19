@@ -22,8 +22,7 @@ TABLE_WORKFLOW_SUCCESS_THRESHOLD = 100
 def validate_command(metadata_command: str) -> None:
     if metadata_command not in VALID_METADATA_COMMANDS:
         raise ValueError(
-            f"Comando inválido: {metadata_command}. "
-            f"Esperado um de {VALID_METADATA_COMMANDS}"
+            f"Comando inválido: {metadata_command}. Esperado um de {VALID_METADATA_COMMANDS}"
         )
 
 
@@ -64,9 +63,7 @@ def _in_process_runner(metadata_command: str, source_type: str) -> Callable | No
 
 
 def execute_metadata(metadata_command: str, rendered_recipe_path: Path) -> None:
-    rendered_recipe_data = yaml.safe_load(
-        rendered_recipe_path.read_text(encoding="utf-8")
-    )
+    rendered_recipe_data = yaml.safe_load(rendered_recipe_path.read_text(encoding="utf-8"))
     source_type = rendered_recipe_data.get("source", {}).get("type", "")
 
     logging.info(
@@ -96,8 +93,7 @@ def execute_metadata_workflow_in_process(workflow_config: dict) -> None:
     from metadata.workflow.metadata import MetadataWorkflow
 
     logging.info(
-        "[openmetadata.execution] Executando workflow em-process "
-        "via MetadataWorkflow.create(...)"
+        "[openmetadata.execution] Executando workflow em-process via MetadataWorkflow.create(...)"
     )
 
     workflow = MetadataWorkflow.create(workflow_config)
@@ -127,11 +123,7 @@ def set_entity_list_page_size(
             requested_entity = args[0]
 
         has_positional_limit = len(args) >= 3
-        if (
-            requested_entity is entity_type
-            and "limit" not in kwargs
-            and not has_positional_limit
-        ):
+        if requested_entity is entity_type and "limit" not in kwargs and not has_positional_limit:
             kwargs["limit"] = page_size
 
         return original_list_all_entities(*args, **kwargs)
@@ -150,7 +142,7 @@ def execute_table_workflow_in_process(
     from metadata.generated.schema.entity.data.table import Table
 
     logging.info(
-        "[openmetadata.execution] Executando %s em-process " "com paginas de %s tabelas",
+        "[openmetadata.execution] Executando %s em-process com paginas de %s tabelas",
         workflow_name,
         table_page_size,
     )

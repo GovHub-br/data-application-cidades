@@ -26,7 +26,6 @@
     `retornar='fonte'` e `retornar='data'` devolvem a procedência do MESMO valor — é o que
     permite o dashboard dizer "100% (CAIXA, ref. 31/07/2026)" em vez de só "100%".
 #}
-
 {% macro valor_mais_recente(candidatos, tipo="numeric", retornar="valor") %}
     {%- set valores = [] -%}
     {%- set datas = [] -%}
@@ -38,12 +37,9 @@
         {%- do fontes.append("'" ~ c[2] ~ "'") -%}
         {%- do ordens.append(loop.index) -%}
     {%- endfor -%}
-    {%- if retornar == "valor" -%}
-        {%- set devolve = "c.valor" -%}
-    {%- elif retornar == "fonte" -%}
-        {%- set devolve = "c.fonte" -%}
-    {%- elif retornar == "data" -%}
-        {%- set devolve = "c.dt" -%}
+    {%- if retornar == "valor" -%} {%- set devolve = "c.valor" -%}
+    {%- elif retornar == "fonte" -%} {%- set devolve = "c.fonte" -%}
+    {%- elif retornar == "data" -%} {%- set devolve = "c.dt" -%}
     {%- else -%}
         {{ exceptions.raise_compiler_error(
             "valor_mais_recente: retornar deve ser 'valor', 'fonte' ou 'data', não '"
@@ -52,12 +48,13 @@
     {%- endif -%}
     (
         select {{ devolve }}
-        from unnest(
-            array[{{ valores | join(", ") }}]::{{ tipo }}[],
-            array[{{ datas | join(", ") }}]::date[],
-            array[{{ fontes | join(", ") }}]::text[],
-            array[{{ ordens | join(", ") }}]::int[]
-        ) as c(valor, dt, fonte, ord)
+        from
+            unnest(
+                array[{{ valores | join(", ") }}]::{{ tipo }} [],
+                array[{{ datas | join(", ") }}]::date[],
+                array[{{ fontes | join(", ") }}]::text[],
+                array[{{ ordens | join(", ") }}]::int[]
+            ) as c(valor, dt, fonte, ord)
         where c.valor is not null
         order by c.dt desc nulls last, c.ord
         limit 1

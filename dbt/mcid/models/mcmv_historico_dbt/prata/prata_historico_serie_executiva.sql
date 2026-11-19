@@ -38,163 +38,154 @@
 
 with
 
-{% for f in familias %}
-    {%- set b = ref(f.modelo) -%}
-    familia_{{ f.nome }} as (
-        select
-            'Minha Casa Minha Vida' as programa,
-            '{{ f.nome }}' as fonte_familia,
-            source_file,
-            dt_referencia,
-            report_date_parsed,
-            hash_linha,
+    {% for f in familias %}
+        {%- set b = ref(f.modelo) -%}
+        familia_{{ f.nome }} as (
+            select
+                'Minha Casa Minha Vida' as programa,
+                '{{ f.nome }}' as fonte_familia,
+                source_file,
+                dt_referencia,
+                report_date_parsed,
+                hash_linha,
 
-            case
-                when
-                    lower(source_file) like 'caixa%' or lower(source_file) like '%_caixa%'
-                then 'CAIXA'
-                when lower(source_file) like 'bb%' or lower(source_file) like '%_bb%'
-                then 'Banco do Brasil'
-            end as agente_financeiro,
+                case
+                    when lower(source_file) like 'caixa%' or lower(source_file) like '%_caixa%'
+                    then 'CAIXA'
+                    when lower(source_file) like 'bb%' or lower(source_file) like '%_bb%'
+                    then 'Banco do Brasil'
+                end as agente_financeiro,
 
-            case when lower(source_file) like '%pnhr%' then 'Rural' end as frente_hint,
+                case when lower(source_file) like '%pnhr%' then 'Rural' end as frente_hint,
 
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, [
             'cod_apf','codapf','cod_empreendimento','icodigo_empreendimento',
             'codigo_empreendimento_bb','cod_contrato','nr_prpt','contrato_bb','contrato_caixa'
-        ], 'varchar') }}
-            as chave_natural,
+        ], 'varchar') }} as chave_natural,
 
-            {{ coalesce_present(b, ['uf','csigla_uf'], 'varchar') }} as uf_raw,
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, ['uf','csigla_uf'], 'varchar') }} as uf_raw,
+                {{ coalesce_present(b, [
             'cod_munic_ibge','codmunicibge','cod_municipio','codigo_do_ibge',
             'icodigo_municipio_ibge_sem_dv'
         ], 'varchar') }} as codigo_ibge_raw,
-            {{ coalesce_present(b, ['municipio','vnome_municipio'], 'varchar') }}
-            as municipio_raw,
-            {{ coalesce_present(b, ['faixa','cfaixa','num_faixa','faixa_divisao'], 'varchar') }}
-            as faixa_raw,
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, ['municipio','vnome_municipio'], 'varchar') }}
+                as municipio_raw,
+                {{ coalesce_present(b, ['faixa','cfaixa','num_faixa','faixa_divisao'], 'varchar') }}
+                as faixa_raw,
+                {{ coalesce_present(b, [
             'produto','vnome_produto','iprograma_mcmv','num_programa','fase_mcmv','fase_do_pmcmv'
-        ], 'varchar') }}
-            as produto_raw,
-            {{ coalesce_present(b, [
+        ], 'varchar') }} as produto_raw,
+                {{ coalesce_present(b, [
             'vnome_empreendimento','nomeempreendimento','dsc_empreendimento','empreendimento'
-        ], 'varchar') }}
-            as nome_empreendimento,
-            {{ coalesce_present(b, ['vnome_construtora','construtora','nom_proponente','empresa'], 'varchar') }}
-            as responsavel_nome,
-            {{ coalesce_present(b, ['inumero_cnpj','cnpj','cod_cnpj_proponente'], 'varchar') }}
-            as responsavel_id,
+        ], 'varchar') }} as nome_empreendimento,
+                {{ coalesce_present(b, ['vnome_construtora','construtora','nom_proponente','empresa'], 'varchar') }}
+                as responsavel_nome,
+                {{ coalesce_present(b, ['inumero_cnpj','cnpj','cod_cnpj_proponente'], 'varchar') }}
+                as responsavel_id,
 
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, [
             'uh','unidades','iqde_uh','qtd_unidade_habitacional','qtd_uh','qde_unidades'
         ], 'varchar') }} as uh_contratadas_raw,
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, [
             'iqde_unidades_entregues','unidades_entregues','iqde_uh_entregues',
             'qtd_unidade_entregue','qtd_entregue','entregues'
         ], 'varchar') }} as uh_entregues_raw,
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, [
             'uh_concluidas','unidades_concluidas','iqde_uh_concluidas',
             'qtd_unidade_concluida','qtd_concluida','uh_concluidos'
         ], 'varchar') }} as uh_concluidas_raw,
-            {{ coalesce_present(b, ['uh_em_obras','unidades_em_obras','iqde_uh_em_obras'], 'varchar') }}
-            as uh_em_obras_raw,
-            {{ coalesce_present(b, ['uh_comercializadas','comercializadas','qtd_comercializadas'], 'varchar') }}
-            as uh_comercializadas_raw,
+                {{ coalesce_present(b, ['uh_em_obras','unidades_em_obras','iqde_uh_em_obras'], 'varchar') }}
+                as uh_em_obras_raw,
+                {{ coalesce_present(b, ['uh_comercializadas','comercializadas','qtd_comercializadas'], 'varchar') }}
+                as uh_comercializadas_raw,
 
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, [
             'valor_total_do_investimento','mvalor_investimento','vlr_total_operacao','vlr_total_investimento'
         ], 'varchar') }}
-            as valor_investimento_raw,
-            -- valor_financiamento = operacao de credito de fato (nome alinhado
-            -- ao vocabulario das fichas atuais: valor_financiamento_fds / valor_far).
-            -- VGV saiu daqui (change vocabulario-e-qualidade-financeira-historica,
-            -- D2): a familia entrada_bb so tem valor_global_de_venda_vgv e caia
-            -- 100% como emprestimo. Agora vai para valor_vgv_raw abaixo.
-            {{ coalesce_present(b, [
+                as valor_investimento_raw,
+                -- valor_financiamento = operacao de credito de fato (nome alinhado
+                -- ao vocabulario das fichas atuais: valor_financiamento_fds / valor_far).
+                -- VGV saiu daqui (change vocabulario-e-qualidade-financeira-historica,
+                -- D2): a familia entrada_bb so tem valor_global_de_venda_vgv e caia
+                -- 100% como emprestimo. Agora vai para valor_vgv_raw abaixo.
+                {{ coalesce_present(b, [
             'valor_do_emprestimo','mvalor_emprestimo','vlr_emprestimo','vlr_financiamento',
             'mvalor_financiamento','total_financiamentos_pf'
-        ], 'varchar') }}
-            as valor_financiamento_raw,
-            {{ coalesce_present(b, ['valor_global_de_venda_vgv'], 'varchar') }}
-            as valor_vgv_raw,
-            -- contrapartidas (poder publico / estado / municipio / entidade) —
-            -- antes descartada. bext.mvalor_contrapartida_poder_publico e 100%
-            -- preenchida (D2). Nome no plural = vocabulario das fichas atuais.
-            {{ coalesce_present(b, [
+        ], 'varchar') }} as valor_financiamento_raw,
+                {{ coalesce_present(b, ['valor_global_de_venda_vgv'], 'varchar') }}
+                as valor_vgv_raw,
+                -- contrapartidas (poder publico / estado / municipio / entidade) —
+                -- antes descartada. bext.mvalor_contrapartida_poder_publico e 100%
+                -- preenchida (D2). Nome no plural = vocabulario das fichas atuais.
+                {{ coalesce_present(b, [
             'mvalor_contrapartida_poder_publico','valor_contrapartida_poder_publico',
             'valor_da_contrapartida_do_poder_publico','vlr_contrapartida'
-        ], 'varchar') }}
-            as valor_contrapartidas_raw,
-            {{ coalesce_present(b, ['valor_total_liberado','mvalor_desembolso'], 'varchar') }}
-            as valor_liberado_raw,
-            {{ coalesce_present(b, [
+        ], 'varchar') }} as valor_contrapartidas_raw,
+                {{ coalesce_present(b, ['valor_total_liberado','mvalor_desembolso'], 'varchar') }}
+                as valor_liberado_raw,
+                {{ coalesce_present(b, [
             'subsidio_fgts','siaci_valorsubsidio_fgts','vlr_subsidio_fgts','complemento_fgts'
-        ], 'varchar') }}
-            as subsidio_fgts_raw,
-            {{ coalesce_present(b, [
+        ], 'varchar') }} as subsidio_fgts_raw,
+                {{ coalesce_present(b, [
             'subsidio_ogu','siaci_valorsubsidio_ogu','vlr_subsidio_ogu','complemento_ogu'
         ], 'varchar') }} as subsidio_ogu_raw,
-            {{ coalesce_present(b, ['mvalor_subsidio'], 'varchar') }} as subsidio_total_raw,
+                {{ coalesce_present(b, ['mvalor_subsidio'], 'varchar') }} as subsidio_total_raw,
 
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, [
             'obra_executada','de_obra_executada','prc_execucao_obra','percentual_de_obra',
             'vfaixa_perc_obra','obra'
         ], 'varchar') }} as pct_execucao_fisica_raw,
 
-            {{ coalesce_present(b, ['data_contratacao','dat_contratacao','data_da_contratacao_bb'], 'varchar') }}
-            as dt_contratacao_raw,
-            {{ coalesce_present(b, ['data_conclusao','dat_entregue','entrega_do_empreendimento'], 'varchar') }}
-            as dt_entrega_raw,
-            {{ coalesce_present(b, [
+                {{ coalesce_present(b, ['data_contratacao','dat_contratacao','data_da_contratacao_bb'], 'varchar') }}
+                as dt_contratacao_raw,
+                {{ coalesce_present(b, ['data_conclusao','dat_entregue','entrega_do_empreendimento'], 'varchar') }}
+                as dt_entrega_raw,
+                {{ coalesce_present(b, [
             'data_prevista_termino_obra','data_prevista_termino_obras','dat_prevista_termino',
             'cronograma_datatermino','dataprevistasr'
-        ], 'varchar') }}
-            as dt_previsao_termino_raw
-        from {{ b }}
-    ),
-{% endfor %}
+        ], 'varchar') }} as dt_previsao_termino_raw
+            from {{ b }}
+        ),
+    {% endfor %}
 
     mapeado as (
         {% for f in familias %}
-        select
-            programa,
-            fonte_familia,
-            source_file,
-            dt_referencia,
-            report_date_parsed,
-            hash_linha,
-            agente_financeiro,
-            frente_hint,
-            chave_natural,
-            uf_raw,
-            codigo_ibge_raw,
-            municipio_raw,
-            faixa_raw,
-            produto_raw,
-            nome_empreendimento,
-            responsavel_nome,
-            responsavel_id,
-            uh_contratadas_raw,
-            uh_entregues_raw,
-            uh_concluidas_raw,
-            uh_em_obras_raw,
-            uh_comercializadas_raw,
-            valor_investimento_raw,
-            valor_financiamento_raw,
-            valor_vgv_raw,
-            valor_contrapartidas_raw,
-            valor_liberado_raw,
-            subsidio_fgts_raw,
-            subsidio_ogu_raw,
-            subsidio_total_raw,
-            pct_execucao_fisica_raw,
-            dt_contratacao_raw,
-            dt_entrega_raw,
-            dt_previsao_termino_raw
-        from familia_{{ f.nome }}
-        {{ "union all" if not loop.last }}
+            select
+                programa,
+                fonte_familia,
+                source_file,
+                dt_referencia,
+                report_date_parsed,
+                hash_linha,
+                agente_financeiro,
+                frente_hint,
+                chave_natural,
+                uf_raw,
+                codigo_ibge_raw,
+                municipio_raw,
+                faixa_raw,
+                produto_raw,
+                nome_empreendimento,
+                responsavel_nome,
+                responsavel_id,
+                uh_contratadas_raw,
+                uh_entregues_raw,
+                uh_concluidas_raw,
+                uh_em_obras_raw,
+                uh_comercializadas_raw,
+                valor_investimento_raw,
+                valor_financiamento_raw,
+                valor_vgv_raw,
+                valor_contrapartidas_raw,
+                valor_liberado_raw,
+                subsidio_fgts_raw,
+                subsidio_ogu_raw,
+                subsidio_total_raw,
+                pct_execucao_fisica_raw,
+                dt_contratacao_raw,
+                dt_entrega_raw,
+                dt_previsao_termino_raw
+            from familia_{{ f.nome }} {{ "union all" if not loop.last }}
         {% endfor %}
     ),
 
@@ -239,8 +230,7 @@ with
             {{ parse_hist_numeric('subsidio_fgts_raw') }} as subsidio_fgts,
             {{ parse_hist_numeric('subsidio_ogu_raw') }} as subsidio_ogu,
             {{ parse_hist_numeric('subsidio_total_raw') }} as subsidio_total,
-            {{ parse_hist_double('pct_execucao_fisica_raw') }}
-            as percentual_execucao_fisica,
+            {{ parse_hist_double('pct_execucao_fisica_raw') }} as percentual_execucao_fisica,
 
             {{ parse_hist_date('dt_contratacao_raw') }} as dt_contratacao,
             {{ parse_hist_date('dt_entrega_raw') }} as dt_entrega,
@@ -265,8 +255,7 @@ with
             -- entrada_bb sao por empreendimento. Impede o consumidor de somar
             -- UH/valor entre graos diferentes no ouro_historico_serie_mensal.
             case
-                when fonte_familia in ('bext', 'min_cidades') then 'contrato'
-                else 'empreendimento'
+                when fonte_familia in ('bext', 'min_cidades') then 'contrato' else 'empreendimento'
             end as grao_familia,
 
             -- natureza_serie por familia (D4, auditoria task 1.2/1.7): antes
@@ -275,8 +264,7 @@ with
             -- valor por contrato constante entre meses); entrada_bb e FLUXO
             -- (entrada de novos empreendimentos na carteira BB).
             case
-                when fonte_familia = 'entrada_bb' then 'fluxo'
-                else 'estoque'
+                when fonte_familia = 'entrada_bb' then 'fluxo' else 'estoque'
             end as natureza_serie,
 
             -- Fallback de dedup por conteudo de negocio quando chave_natural e
@@ -325,8 +313,8 @@ with
     -- seed. Ver seeds/data_quality/README.md.
     --
     -- Para RE-VARRER o seed contra uma silver limpa (sem circularidade):
-    --   dbt build --select prata_historico_serie_executiva \
-    --     --vars 'quarentena_bypass: true' --target staging_duckdb
+    -- dbt build --select prata_historico_serie_executiva \
+    -- --vars 'quarentena_bypass: true' --target staging_duckdb
     -- depois regenerar o CSV e reconstruir sem a var.
     quarentena as (
         select distinct
@@ -350,13 +338,11 @@ with
                 or c.valor_financiamento is not null
             )
             {% if not var('quarentena_bypass', false) %}
-            and not exists (
-                select 1
-                from quarentena q
-                where
-                    q.fonte_familia = c.fonte_familia
-                    and q.chave_natural = c.chave_natural
-            )
+                and not exists (
+                    select 1
+                    from quarentena q
+                    where q.fonte_familia = c.fonte_familia and q.chave_natural = c.chave_natural
+                )
             {% endif %}
     ),
 
@@ -371,16 +357,16 @@ with
     -- (chave, mes): faixa, subsidio e linha_ogu_fgts da linha sobrevivente eram
     -- sorteados (24% das linhas com uh_comercializadas > uh_entregues).
     --
-    --  1. reenvio_rank  — entre source_file do mesmo mes/chave/faixa/municipio,
-    --     mantem so o mais recente (report_date_parsed, depois source_file:
-    --     `_v2` > base). ANTES de qualquer soma.
-    --  2. conteudo_rank — colapsa reingestao byte-a-byte da mesma linha de
-    --     negocio (o extrator a montante emite "295.0" e "295"): 87% dos grupos
-    --     multi-linha por APF sao isso, nao movimento. SUM cego dobraria (~9%).
-    --  3. agregado      — SUM ao grao de consumo (chave_natural, dt_referencia):
-    --     os pares +N/-N genuinos netam (distrato -> 0); a linha passa a
-    --     representar o empreendimento/contrato inteiro. linha_ogu_fgts e
-    --     situacao_derivada sao RECALCULADOS sobre os valores agregados.
+    -- 1. reenvio_rank  — entre source_file do mesmo mes/chave/faixa/municipio,
+    -- mantem so o mais recente (report_date_parsed, depois source_file:
+    -- `_v2` > base). ANTES de qualquer soma.
+    -- 2. conteudo_rank — colapsa reingestao byte-a-byte da mesma linha de
+    -- negocio (o extrator a montante emite "295.0" e "295"): 87% dos grupos
+    -- multi-linha por APF sao isso, nao movimento. SUM cego dobraria (~9%).
+    -- 3. agregado      — SUM ao grao de consumo (chave_natural, dt_referencia):
+    -- os pares +N/-N genuinos netam (distrato -> 0); a linha passa a
+    -- representar o empreendimento/contrato inteiro. linha_ogu_fgts e
+    -- situacao_derivada sao RECALCULADOS sobre os valores agregados.
     -- `qualify` e sintaxe exclusiva do DuckDB — o rank vai em CTE + `where`.
     reenvio_rank as (
         select
@@ -402,10 +388,7 @@ with
             *,
             row_number() over (
                 partition by
-                    fonte_familia,
-                    coalesce(chave_natural, ''),
-                    conteudo_hash,
-                    dt_referencia
+                    fonte_familia, coalesce(chave_natural, ''), conteudo_hash, dt_referencia
                 order by hash_linha
             ) as rk_conteudo
         from reenvio_rank
@@ -494,9 +477,7 @@ with
         select
             d.*,
             case
-                when
-                    d.dt_contratacao is not null
-                    and coalesce(d.uh_entregues, 0) = 0
+                when d.dt_contratacao is not null and coalesce(d.uh_entregues, 0) = 0
                 then 'contratada'
                 when
                     d.uh_entregues > 0
@@ -510,8 +491,7 @@ with
             dr.regiao_sigla,
             dr.regiao_nome
         from classificado_agregado d
-        left join {{ ref('dominio_regiao_uf') }} dr
-            on upper(trim(d.uf)) = upper(trim(dr.uf))
+        left join {{ ref('dominio_regiao_uf') }} dr on upper(trim(d.uf)) = upper(trim(dr.uf))
     )
 
 -- Lista explicita no lugar do `select * exclude` (sintaxe exclusiva do DuckDB).

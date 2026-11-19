@@ -1,0 +1,30 @@
+# Hooks do repositório. Instalação: `make setup` (roda `pre-commit install`).
+# Localmente rodam só nos arquivos do commit; a CI roda os mesmos hooks, nas mesmas
+# versões, no repositório inteiro, e reprova o PR. O `--no-verify` pula o hook local,
+# mas não passa pela CI.
+# A configuração das ferramentas fica no pyproject.toml ([tool.ruff], [tool.sqlfmt]).
+exclude: ^data-science/
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.4
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/tconbeer/sqlfmt
+    rev: v0.32.0
+    hooks:
+      - id: sqlfmt
+        language_version: python3.11
+        files: ^dbt/.*\.sql$
+        # scripts psql (\set, \echo) de migração manual, não SQL do dbt
+        exclude: ^dbt/mcid/scripts/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: detect-private-key

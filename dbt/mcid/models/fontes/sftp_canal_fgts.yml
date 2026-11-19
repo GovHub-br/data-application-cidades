@@ -1,0 +1,116 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp_canal_fgts.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sftp_canal_fgts
+  description: Tabelas do Canal FGTS (AO1) e orçamentos.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/sftp_canal_fgts.odcs.yaml
+    owner: CAIXA · Canal FGTS
+  tables:
+  - name: contratos_fgts
+    description: Contratos do canal FGTS, incluindo Pró-Moradia pelo código de linha 26.
+    meta:
+      caminho: staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet
+      file_pattern: fgts_canal_tab_ao_1_contratos_fgts\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: cod_empreendimento
+    - name: cod_contrato
+    - name: cod_contrato_dv
+    - name: vlr_contratado
+    - name: vlr_investimento
+    - name: dte_assinatura
+    - name: dte_orcamento_ano
+    - name: cod_area
+    - name: cod_linha
+    - name: cod_modalidade
+    - name: cod_tomador
+    - name: cod_af
+    - name: cod_uor
+    - name: cod_situacao_contrato
+    - name: cod_clasificacao
+    - name: cod_pac
+    - name: cod_operacao_agente_financeiro
+    - name: cod_operacao_agente_financeiro_dv
+    - name: txt_rsgov
+    - name: cod_objetivo
+    - name: cod_ident_externo
+    - name: txt_eixo
+    - name: uf
+    - name: arquivo_de_origem
+    - name: criado_em
+  - name: empreendimentos_fgts
+    description: Cadastro dos empreendimentos vinculados aos contratos FGTS.
+    meta:
+      caminho: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet
+      file_pattern: fgts_canal_tab_ao_1_tab_empreendimentos\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: cod_empreendimento
+    - name: txt_nome_empreendimento
+    - name: txt_localidade
+    - name: txt_logradouro
+      meta:
+        classification: restricted
+    - name: cod_municipio
+    - name: txt_projeto
+    - name: qtd_unidades_financiadas
+    - name: txt_objeto
+    - name: qtd_populacao_beneficiada
+    - name: qtd_empregos_gerados
+    - name: qtd_unidades_financiadas_cca
+    - name: arquivo_de_origem
+    - name: criado_em
+  - name: posicoes_empreendimentos_fgts
+    description: Evolução física e datas dos empreendimentos FGTS.
+    meta:
+      caminho: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.parquet
+      file_pattern: fgts_canal_tab_ao_1_tab_empreendimentos_posicoes\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: cod_empreendimento
+    - name: dte_ano_mes
+    - name: prc_obra_executada_ult
+    - name: dt_inicio
+    - name: dt_termino
+    - name: dt_inauguracao
+    - name: arquivo_de_origem
+    - name: criado_em
+  - name: dominio_linha_fgts
+    description: Domínio de códigos e nomes das linhas do canal FGTS.
+    meta:
+      caminho: staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet
+      file_pattern: fgts_canal_tdom_ao_1_linha\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: codigo
+    - name: linha
+    - name: arquivo_de_origem
+    - name: criado_em
+  - name: orcamento_fgts
+    description: Orçamento final do FGTS por programa e agrupamento territorial em 2021. Reúne as tabelas
+      atuais orcamento_fgts_2021, orcamento_fgts_2022, orcamento_fgts_2023, orcamento_fgts_2024, que só
+      diferem pela data.
+    meta:
+      caminho: staging/sharepoint/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet
+      file_pattern: tpc_\d{4}_fgts_canal_tab_dbo_pc_\d{4}_\d{2}_orcamento_final\.csv
+      load_type: full
+      dag: null
+    columns:
+    - name: ano_dotacao
+    - name: programa
+    - name: uf_codigo
+    - name: orcamento_original
+    - name: orcamento_final
+    - name: orcamento_alocado
+    - name: arquivo_de_origem
+    - name: criado_em
+    - name: agrupamento

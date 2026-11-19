@@ -15,8 +15,7 @@ class ClienteIBGE(ClienteBase):
     def __init__(self) -> None:
         super().__init__(base_url=ClienteIBGE.BASE_URL)
         logging.info(
-            "[cliente_ibge.py] Initialized ClienteIBGE with base_url: "
-            f"{ClienteIBGE.BASE_URL}"
+            f"[cliente_ibge.py] Initialized ClienteIBGE with base_url: {ClienteIBGE.BASE_URL}"
         )
 
     def get_dados_agregados(
@@ -45,7 +44,7 @@ class ClienteIBGE(ClienteBase):
         Returns:
             Lista de dicionários com os dados ou None em caso de falha.
         """
-        path = f"/agregados/{agregado}" f"/periodos/{periodos}" f"/variaveis/{variaveis}"
+        path = f"/agregados/{agregado}/periodos/{periodos}/variaveis/{variaveis}"
 
         params = {
             "localidades": f"{nivel}[{localidade}]",
@@ -68,9 +67,7 @@ class ClienteIBGE(ClienteBase):
         status, data = self.request(http.HTTPMethod.GET, path, params=params)
 
         if status == http.HTTPStatus.OK and isinstance(data, list):
-            logging.info(
-                f"[cliente_ibge.py] Successfully fetched data for " f"agregado={agregado}"
-            )
+            logging.info(f"[cliente_ibge.py] Successfully fetched data for agregado={agregado}")
             return data
         else:
             logging.warning(

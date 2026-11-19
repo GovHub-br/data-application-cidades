@@ -19,6 +19,7 @@ from pathlib import Path
 
 import yaml
 
+import documentacao_dbt
 from semantic_descriptions import for_column
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -63,9 +64,7 @@ def load_yaml(path: Path) -> dict:
 
 def is_sensitive_identifier(value: str) -> bool:
     lowered = value.lower()
-    return lowered == "cep" or any(
-        pattern in lowered for pattern in SENSITIVE_IDENTIFIERS
-    )
+    return lowered == "cep" or any(pattern in lowered for pattern in SENSITIVE_IDENTIFIERS)
 
 
 def unsafe_description(value: str) -> str | None:
@@ -90,13 +89,9 @@ def fail(violations: list[str], message: str) -> None:
 CAMADAS_SO_PARA_LINHAGEM = {"bronze"}
 
 
-def model_export(
-    node_id: str, node: dict, catalog: dict, violations: list[str]
-) -> dict | None:
+def model_export(node_id: str, node: dict, catalog: dict, violations: list[str]) -> dict | None:
     governance = node.get("meta", {}).get("governance", {})
-    elegivel_rag = (
-        governance.get("rag_publication") == "eligible_after_security_validation"
-    )
+    elegivel_rag = governance.get("rag_publication") == "eligible_after_security_validation"
     so_linhagem = governance.get("layer") in CAMADAS_SO_PARA_LINHAGEM
     if not elegivel_rag and not so_linhagem:
         return None
@@ -149,6 +144,15 @@ def model_export(
     if not catalog_columns:
         fail(violations, f"{node_id}: sem colunas no catalog.json privado")
 
+    # Ao contrário da descrição, aqui não há texto de reserva: o contrato é
+    # escrito à mão, e um campo impróprio barra a publicação em vez de ser
+    # trocado em silêncio.
+    documentacao = documentacao_dbt.da_configuracao(node) or {}
+    for valor in documentacao_dbt.textos(documentacao):
+        regra = unsafe_description(valor)
+        if regra:
+            fail(violations, f"{node_id}: meta.documentacao com {regra}")
+
     return {
         "id": node_id,
         "product": governance.get("product"),
@@ -168,6 +172,7 @@ def model_export(
             if dependency.startswith("model.")
         ],
         "columns": columns,
+        "documentacao": documentacao,
         # separa as duas decisões que antes eram uma só: aparecer no catálogo
         # e poder alimentar RAG. A Bronze aparece; não alimenta.
         "rag_eligivel": elegivel_rag,
@@ -185,11 +190,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=ROOT
-        / "dbt"
-        / "mcid"
-        / "governance"
-        / "openmetadata_semantic_catalog.json",
+        default=ROOT / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json",
     )
     args = parser.parse_args()
 
@@ -231,9 +232,7 @@ def main() -> None:
         "models": models,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Catálogo semântico seguro: {args.output} ({len(models)} models)")
 
 

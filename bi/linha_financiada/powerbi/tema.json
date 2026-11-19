@@ -1,0 +1,13 @@
+{
+  "name": "GovHub Linha Financiada",
+  "dataColors": ["#4C2A85", "#6D44B8", "#8B6BCB", "#B09ADE", "#D5CAEF"],
+  "background": "#FFFFFF",
+  "foreground": "#24212A",
+  "tableAccent": "#4C2A85",
+  "good": "#287A52",
+  "neutral": "#A36A00",
+  "bad": "#A63C3C",
+  "maximum": "#4C2A85",
+  "center": "#B09ADE",
+  "minimum": "#EEEAF5"
+}

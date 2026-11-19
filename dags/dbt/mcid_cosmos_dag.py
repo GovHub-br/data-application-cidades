@@ -6,7 +6,7 @@ Um DAG, DOIS task groups — porque o projeto tem dois dialetos de SQL:
   metadata e as seeds são SQL de
   Postgres. Usam as UDFs `normalize_apf` / `parse_date_br` / `f_corrigir_mojibake`,
   criadas pelo `create_udfs()` com CREATE FUNCTION no on-run-start.
-- mcmv_historico_dbt é SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
+- mcmv_historico_dbt, reforma_casa_brasil_dbt e linha_financiada_dbt são SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
   `union_by_name = true`, `describe select * from read_parquet(...)`. O parser do
   Postgres rejeita tudo isso — não é um bug do modelo, é outro motor.
 
@@ -24,7 +24,7 @@ não existem no DuckDB. As seeds também são carregadas no primeiro grupo e lid
 pelo segundo através do catálogo atachado.
 
 Pré-requisitos no ambiente do Airflow (além do dbt-postgres):
-- `dbt-duckdb` instalado, na linha 1.7 (o dbt-postgres 1.7.13 fixa dbt-core 1.7.13);
+- `dbt-duckdb` instalado, compatível com o dbt-core (hoje 1.11, com dbt-core 1.12);
 - variáveis do MinIO — MINIO_ENDPOINT (host:porta, SEM http://), MINIO_ACCESS_KEY,
   MINIO_SECRET_KEY — visíveis para o worker;
 - um pool chamado `duckdb_historico` com UM slot:
@@ -38,7 +38,8 @@ Pré-requisitos no ambiente do Airflow (além do dbt-postgres):
 import os
 from datetime import datetime
 
-from airflow import DAG
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.sdk import DAG
 from cosmos import DbtTaskGroup, ExecutionConfig, ProfileConfig, ProjectConfig, RenderConfig
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
 
@@ -50,10 +51,12 @@ REPO_BASE = os.environ["AIRFLOW_REPO_BASE"]
 PROJECT_DIR = f"{REPO_BASE}/dbt/mcid"
 PROFILES_YML = f"{PROJECT_DIR}/profiles.yml"
 
-# O eixo histórico: os modelos e os testes singulares que dependem deles.
-# A mesma lista serve para EXCLUIR do grupo Postgres e SELECIONAR no grupo DuckDB,
-# então os dois grupos nunca se sobrepõem nem deixam nó órfão.
-SELETOR_HISTORICO = ["path:models/mcmv_historico_dbt", "path:tests/mcmv_historico"]
+# O eixo histórico e o resto do projeto são seletores do próprio dbt
+# (dbt/mcid/selectors.yml): `dominios_postgres` é o projeto menos `eixo_historico`,
+# então os dois grupos nunca se sobrepõem nem deixam nó órfão. O `dbt docs
+# generate` da ingestão do OpenMetadata usa o mesmo seletor do grupo Postgres.
+SELETOR_POSTGRES = "dominios_postgres"
+SELETOR_DUCKDB = "eixo_historico"
 
 # O DuckDB nao aceita duas conexoes de ESCRITA no mesmo arquivo. O Cosmos roda uma
 # invocacao de dbt por task, cada uma abrindo sua propria conexao em
@@ -90,19 +93,18 @@ profile_duckdb = ProfileConfig(
 
 with DAG(
     dag_id="mcid_cosmos_dag",
-    schedule_interval="0 1 * * *",
+    schedule="0 1 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={"retries": 2},
     doc_md=__doc__,
 ) as my_cosmos_dag:
-
     dominios_postgres = DbtTaskGroup(
         group_id="dominios_postgres",
         project_config=project_config,
         profile_config=profile_postgres,
         execution_config=execution_config,
-        render_config=RenderConfig(exclude=SELETOR_HISTORICO),
+        render_config=RenderConfig(selector=SELETOR_POSTGRES),
     )
 
     eixo_historico = DbtTaskGroup(
@@ -110,8 +112,15 @@ with DAG(
         project_config=project_config,
         profile_config=profile_duckdb,
         execution_config=execution_config,
-        render_config=RenderConfig(select=SELETOR_HISTORICO),
+        render_config=RenderConfig(selector=SELETOR_DUCKDB),
         operator_args={"pool": POOL_DUCKDB},
     )
 
-    dominios_postgres >> eixo_historico
+    publicar_linhagem_openmetadata = TriggerDagRunOperator(
+        task_id="publicar_linhagem_openmetadata",
+        trigger_dag_id="openmetadata_ingestion_dag",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    )
+
+    dominios_postgres >> eixo_historico >> publicar_linhagem_openmetadata

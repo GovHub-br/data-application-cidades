@@ -17,7 +17,6 @@ source:
       profileSample: 25
       schemaFilterPattern:
         includes:
-          - "^conjuntura$"
           - "^metadata$"
           - "^bronze$"
           - "^prata$"

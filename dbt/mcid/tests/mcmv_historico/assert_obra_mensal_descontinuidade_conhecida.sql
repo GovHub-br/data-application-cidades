@@ -13,7 +13,6 @@
 --
 -- Retorna 1 linha por mês em que a contagem de APF caiu mais de 50% frente ao
 -- mês anterior.
-
 with
     consolidado as (
         select frente_mcmv, apf, dt_referencia
@@ -27,20 +26,12 @@ with
     ),
 
     por_mes as (
-        select
-            date_trunc('month', dt_referencia)::date as mes,
-            count(distinct apf) as n_apf
+        select date_trunc('month', dt_referencia)::date as mes, count(distinct apf) as n_apf
         from consolidado
         group by 1
     ),
 
-    variacao as (
-        select
-            mes,
-            n_apf,
-            lag(n_apf) over (order by mes) as n_apf_anterior
-        from por_mes
-    )
+    variacao as (select mes, n_apf, lag(n_apf) over (order by mes) as n_apf_anterior from por_mes)
 
 select
     mes,
@@ -48,6 +39,4 @@ select
     n_apf_anterior,
     round(100.0 * n_apf / nullif(n_apf_anterior, 0), 1) as pct_do_mes_anterior
 from variacao
-where
-    n_apf_anterior is not null
-    and n_apf < 0.5 * n_apf_anterior
+where n_apf_anterior is not null and n_apf < 0.5 * n_apf_anterior

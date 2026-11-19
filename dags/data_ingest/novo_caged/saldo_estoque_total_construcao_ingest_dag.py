@@ -1,5 +1,5 @@
 import logging
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from datetime import datetime, timedelta
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
@@ -10,9 +10,7 @@ from ingestor_lake import registros_para_staging_parquet
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule(
-        "novo_caged_total_construcao", default="@monthly"
-    ),
+    schedule=get_dynamic_schedule("novo_caged_total_construcao", default="@monthly"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
@@ -30,9 +28,7 @@ def novo_caged_total_construcao() -> None:
 
     @task
     def fetch_and_store_caged() -> None:
-        logging.info(
-            "[saldo_estoque_total_construcao.py] Iniciando extração (Novo Caged)"
-        )
+        logging.info("[saldo_estoque_total_construcao.py] Iniciando extração (Novo Caged)")
 
         api = ClienteNovoCaged()
         db = ClientPostgresDB(get_postgres_conn())

@@ -1,0 +1,4 @@
+dashboard_id,dashboard_title,dashboard_front,url,changed_on,published
+6,RURAL,rural,/superset/dashboard/6/,2026-07-09T01:17:33.225369+0000,True
+5,Entidades,entidades,/superset/dashboard/5/,2026-07-08T23:30:12.483085+0000,True
+3,FAR,far,/superset/dashboard/3/,2026-07-08T23:28:06.328187+0000,True

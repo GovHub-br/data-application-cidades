@@ -1,5 +1,5 @@
 import logging
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from datetime import datetime, timedelta
 from schedule_loader import get_dynamic_schedule
 from postgres_helpers import get_postgres_conn
@@ -10,7 +10,7 @@ from ingestor_lake import registros_para_staging_parquet
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule(
+    schedule=get_dynamic_schedule(
         "novo_caged_servicos_especializados_construcao", default="@monthly"
     ),
     start_date=datetime(2025, 1, 1),
@@ -40,9 +40,7 @@ def novo_caged_servicos_especializados_construcao() -> None:
         target_table = "saldo_estoque_servicos_especializados_construcao"
         schema = "novo_caged"
 
-        caged_data = api.obter_historico(
-            cnae_divisao="Serviços Especializados para Construção"
-        )
+        caged_data = api.obter_historico(cnae_divisao="Serviços Especializados para Construção")
 
         if caged_data:
             for record in caged_data:

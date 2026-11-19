@@ -1,0 +1,61 @@
+version: 2
+
+# ============================================================================
+# DESATIVADO — domínio mcmv_silver_dbt (legado).
+# Source `sftp_mcmv` + descrições dos 10 modelos `silver_mcmv_*_base`.
+# Código original preservado abaixo (comentado linha a linha).
+# Reativar: remova o `#` do início das linhas abaixo.
+# ============================================================================
+# sources:
+#   - name: sftp_mcmv
+#     schema: sftp
+#     description: >
+#       Fontes carregadas a partir do SFTP/MinIO para montagem da camada silver
+#       padronizada do Minha Casa Minha Vida.
+#     tables:
+#       - name: pmcmv_faixa3_mcid_2026_06_26
+#         description: Base GEAVO/FGTS de contratos PMCMV Faixa 3 / Classe Media.
+#       - name: pmcmv_reformas_mcid_2026_06_26
+#         description: Base GEAVO/FGTS de contratos Reforma Casa Brasil.
+#       - name: pmcmv_cidades_mcid_2026_03_01
+#         description: Base PMCMV Cidades / emendas e entes publicos.
+#       - name: int057_ministeriocidades_pnhr_bb_empreendimentos_20241031
+#         description: Base PNHR/Rural Banco do Brasil, recebida com linhas em separador pipe.
+#       - name: int065_ministeriocidades_pnhr_caixa_empreendimentos_20240830
+#         description: Base PNHR/Rural CAIXA, recebida com linhas em separador pipe.
+
+# models:
+#   - name: silver_mcmv_minha_casa_minha_vida_base
+#     description: >
+#       Recorte geral operacional do programa, consolidando as frentes
+#       disponiveis (uniao direta das bases por frente, exceto Conjuntura —
+#       o helper cross-frente silver_mcmv_frentes_base foi aposentado na
+#       convencao 2026-09-04: cada frente materializa em schema proprio, e quem
+#       precisa do consolidado une na hora).
+#   - name: silver_mcmv_far_base
+#     description: Base padronizada da frente FAR.
+#   - name: silver_mcmv_entidades_base
+#     description: Base padronizada da frente Entidades/FDS.
+#   - name: silver_mcmv_rural_base
+#     description: >
+#       Base padronizada da frente Rural/PNHR. Repontada (change
+#       consolidar-schemas-historico-reloginho, D7) para
+#       `ouro.ouro_historico_snapshot_empreendimento_atual` filtrado a
+#       `frente_mcmv = 'Rural'` — a pilha "atual" `empreendimento_rural_dbt` foi
+#       removida. `dt_previsao_entrega` sai 0% (idêntico ao braço anterior em
+#       prod — perda zero); `fase_empreendimento` NULL.
+#   - name: silver_mcmv_classe_media_base
+#     description: Base padronizada da frente Classe Media / Faixa 3 com dados GEAVO/FGTS.
+#   - name: silver_mcmv_cidades_base
+#     description: Base padronizada da frente MCMV Cidades.
+#   - name: silver_mcmv_reforma_base
+#     description: Base padronizada da frente Reforma Casa Brasil com dados GEAVO/FGTS.
+#   - name: silver_mcmv_conjuntura_base
+#     description: Base padronizada de indicadores de conjuntura, incluindo FGTS habitacional.
+#   - name: silver_mcmv_pro_moradia_base
+#     description: Contrato padronizado da frente Pro-Moradia; fonte ainda nao localizada no schema sftp.
+#   - name: silver_mcmv_sub50_base
+#     description: >
+#       Base padronizada da frente SUB50/FNHIS a partir das propostas apresentadas
+#       e selecionadas quando as tabelas novo_mcmv_fnhis_sub_50_* estiverem
+#       materializadas no schema __dados_brutos.

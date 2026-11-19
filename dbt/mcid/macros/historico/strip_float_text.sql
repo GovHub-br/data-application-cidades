@@ -14,8 +14,10 @@
 -- Portável DuckDB/Postgres: `similar to` + `regexp_replace` com âncora `$`.
 {% macro strip_float_text(col) -%}
     case
-        when {{ col }} is null then null
-        when trim(cast({{ col }} as varchar)) = '' then null
+        when {{ col }} is null
+        then null
+        when trim(cast({{ col }} as varchar)) = ''
+        then null
         when trim(cast({{ col }} as varchar)) similar to '-?[0-9]+[.]0+'
         then regexp_replace(trim(cast({{ col }} as varchar)), '[.]0+$', '')
         else trim(cast({{ col }} as varchar))

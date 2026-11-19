@@ -881,6 +881,7 @@ models:
           config:
             severity: error
       - silver_contract:
+          name: silver_contract_prata_conjuntura_ibge_sinapi
           config:
             severity: warn
           expected_columns:

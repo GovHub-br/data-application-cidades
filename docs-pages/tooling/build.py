@@ -34,8 +34,7 @@ ABAS = [
         "publico": "para quem decide",
         "pergunta": "O que foi entregue e que problema resolveu?",
         "resumo": (
-            "O histórico de entregas na linguagem de quem decide, com a evidência "
-            "de cada uma."
+            "O histórico de entregas na linguagem de quem decide, com a evidência de cada uma."
         ),
     },
     {
@@ -229,9 +228,7 @@ def _contexto(acervo: dict[str, Any]) -> dict[str, Any]:
             [(c, camadas[c]) for c in camadas], CORES_CAMADA
         ),
         "grafico_dominios": graficos.barras_horizontais(por_dominio),
-        "descricao": (
-            "Roadmap e documentação da aplicação de dados do Ministério das Cidades."
-        ),
+        "descricao": ("Roadmap e documentação da aplicação de dados do Ministério das Cidades."),
     }
 
 

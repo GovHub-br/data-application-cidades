@@ -31,7 +31,6 @@ source:
           - "^bronze$"
           - "^prata$"
           - "^ouro$"
-          - "^conjuntura$"
           - "^metadata$"
 
 sink:

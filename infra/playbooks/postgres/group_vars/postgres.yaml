@@ -1,0 +1,58 @@
+# Onde as senhas são geradas e guardadas: na SUA máquina e FORA do repo,
+# para nunca serem commitadas por acidente.
+postgres_credentials_dir: "{{ lookup('env', 'HOME') }}/.clusterlab/credentials/{{ inventory_hostname }}"
+
+# --- Versões ----------------------------------------------------------------
+# 15 é a versão do homolog (10.0.0.50). O pg_duckdb suporta de 14 a 18.
+postgres_version: 15
+
+# O pg_duckdb não tem pacote apt: é compilado do fonte neste commit. É a main
+# de 2026-07-17, que instala a extensão 1.2.0 — a mesma versão do homolog.
+pg_duckdb_version: ee38d3b540ecea1d93683ba99bdcec5632a21eaf
+
+# --- Bancos e usuários ------------------------------------------------------
+# Data warehouse: o dbt escreve aqui (bronze, prata, ouro, conjuntura...).
+postgres_dw_database: cidades
+postgres_dw_user: cidades
+postgres_dw_password: "{{ lookup('password', postgres_credentials_dir ~ '/' ~ postgres_dw_user ~ '_password chars=ascii_letters,digits length=32') }}"
+
+# Banco de metadados do Airflow (a VM do Airflow não tem Postgres próprio).
+postgres_airflow_database: airflow
+postgres_airflow_user: airflow
+postgres_airflow_password: "{{ lookup('password', postgres_credentials_dir ~ '/' ~ postgres_airflow_user ~ '_password chars=ascii_letters,digits length=32') }}"
+
+# Banco do OpenMetadata (a VM do OpenMetadata não tem Postgres próprio).
+postgres_openmetadata_database: openmetadata
+postgres_openmetadata_user: openmetadata
+postgres_openmetadata_password: "{{ lookup('password', postgres_credentials_dir ~ '/' ~ postgres_openmetadata_user ~ '_password chars=ascii_letters,digits length=32') }}"
+
+# Somente leitura no data warehouse (Superset, analistas).
+postgres_readonly_user: usuario_leitura
+postgres_readonly_password: "{{ lookup('password', postgres_credentials_dir ~ '/' ~ postgres_readonly_user ~ '_password chars=ascii_letters,digits length=32') }}"
+
+# --- pg_duckdb --------------------------------------------------------------
+# Só quem é membro deste role executa DuckDB (read_parquet etc.). O padrão do
+# pg_duckdb é "só superusuário".
+pg_duckdb_role: duckdb_users
+# Quem entra no role acima E recebe o secret S3 do lake.
+pg_duckdb_users:
+  - "{{ postgres_dw_user }}"
+# Memória do DuckDB por conexão, em MB (o equivalente ao work_mem).
+pg_duckdb_max_memory_mb: 4096
+# Teto do spill em disco do DuckDB (fica em <data_dir>/pg_duckdb/temp).
+pg_duckdb_max_temp_directory_size: 50GB
+
+# --- Lake (RustFS) que o pg_duckdb lê --------------------------------------
+# host:porta, SEM http:// — o DuckDB monta a URL sozinho.
+lake_s3_endpoint: "<IP_DO_RUSTFS>:9000"
+lake_bucket: data-lake-mcid
+# Usuário de aplicação criado no RustFS (ver README.md, "Como rodar").
+lake_s3_access_key: app-cidades
+lake_s3_secret_key: "{{ lookup('file', lookup('env', 'HOME') ~ '/.clusterlab/credentials/rustfs0/' ~ lake_s3_access_key ~ '_secret_key', errors='ignore') | default('', true) | trim }}"
+
+# --- Redes autorizadas (o "allow hosts": pg_hba.conf + ufw) -----------------
+postgres_port: 5432
+postgres_allowed_networks:
+  - 10.0.0.0/24
+  - 172.16.1.0/24
+  - 192.168.2.0/24

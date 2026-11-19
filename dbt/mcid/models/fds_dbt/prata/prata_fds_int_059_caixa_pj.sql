@@ -10,7 +10,7 @@ with
     int059_raw as (
         select
             -- Identificação
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
             nullif(trim(no_empreeendmento), '') as empreendimento_nome,
 
             -- Seleção MCMV (campo-chave para filtrar Novo vs Legado)
@@ -23,9 +23,7 @@ with
 
             -- Proponente (Entidade Organizadora)
             nullif(trim(razao_social_proponente), '') as eo_nome,
-            nullif(
-                regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), ''
-            ) as eo_cnpj,
+            nullif(regexp_replace(trim(cnpj_proponente), '[^0-9]', '', 'g'), '') as eo_cnpj,
             nullif(trim(email_entidade), '') as eo_email,
 
             -- Localização
@@ -41,12 +39,10 @@ with
             {{ parse_int("quantidade_uh_adaptadas") }} as qt_uh_adaptadas,
 
             -- Execução física
-            {{ parse_numeric("percentual_obra_realizado", "numeric(6, 2)") }}
-            as pct_obra_realizado,
+            {{ parse_numeric("percentual_obra_realizado", "numeric(6, 2)") }} as pct_obra_realizado,
 
             -- Valores financeiros
-            {{ parse_financial_value("vr_emprestimo_original") }}
-            as vr_emprestimo_original,
+            {{ parse_financial_value("vr_emprestimo_original") }} as vr_emprestimo_original,
             {{ parse_financial_value("vlr_operacao") }} as vr_operacao,
             {{ parse_financial_value("vr_investimento") }} as vr_investimento,
             {{ parse_financial_value("vr_liberado") }} as vr_liberado,
@@ -71,13 +67,13 @@ with
             nullif(trim(infraestrutura_externa), '') as infraestrutura_externa,
 
             -- Datas-chave
-            {{ target.schema }}.parse_date_br(dt_assinatura) as dt_contratacao,
-            {{ target.schema }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
-            {{ target.schema }}.parse_date_br(dt_termino_obra) as dt_termino_obra,
-            {{ target.schema }}.parse_date_br(dt_legalizacao) as dt_legalizacao,
-            {{ target.schema }}.parse_date_br(dt_maxima_liberacao) as dt_maxima_liberacao,
-            {{ target.schema }}.parse_date_br(dt_ultima_entrega) as dt_ultima_entrega,
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_assinatura) as dt_contratacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_inicio_obra) as dt_inicio_obra,
+            {{ var('schema_udfs') }}.parse_date_br(dt_termino_obra) as dt_termino_obra,
+            {{ var('schema_udfs') }}.parse_date_br(dt_legalizacao) as dt_legalizacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_maxima_liberacao) as dt_maxima_liberacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_ultima_entrega) as dt_ultima_entrega,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
 
             -- Coordenadas GPS
             {{ parse_numeric("gps_latitude_grau") }} as gps_lat_grau,

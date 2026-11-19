@@ -7,7 +7,5 @@
 -- Trata espaços em branco e o string literal 'None',
 -- além de já realizar o replace de , por . antes de fazer o cast.
 {% macro parse_numeric(column_name, cast_type="numeric") %}
-    nullif(
-        replace(nullif(trim({{ column_name }}), 'None'), ',', '.'), ''
-    )::{{ cast_type }}
+    nullif(replace(nullif(trim({{ column_name }}), 'None'), ',', '.'), '')::{{ cast_type }}
 {% endmacro %}

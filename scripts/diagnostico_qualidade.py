@@ -23,7 +23,7 @@ Uso:
 import argparse
 import os
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, Iterator, List, Tuple
 
 import psycopg2
 from dotenv import load_dotenv
@@ -65,17 +65,29 @@ DOMINIOS: Dict[str, dict] = {
         # model tem chave natural declarável (prata_rural_financeiro_mensal são várias
         # liberações por APF), mas todos entram no perfil de nulos e de mojibake.
         "models_silver": [
-            "prata_rural_empreendimento", "prata_rural_prioritarios_snh", "prata_rural_prioritarios_caixa",
-            "prata_rural_prioritarios_bb", "prata_rural_cadastro_pj", "prata_rural_cadastro_pf",
-            "prata_rural_pnhr_caixa", "prata_rural_pnhr_bb", "prata_rural_pnhr_liberacoes",
-            "prata_rural_trabalho_social_caixa", "prata_rural_trabalho_social_bb",
-            "prata_rural_obra_mensal", "prata_rural_financeiro_mensal",
+            "prata_rural_empreendimento",
+            "prata_rural_prioritarios_snh",
+            "prata_rural_prioritarios_caixa",
+            "prata_rural_prioritarios_bb",
+            "prata_rural_cadastro_pj",
+            "prata_rural_cadastro_pf",
+            "prata_rural_pnhr_caixa",
+            "prata_rural_pnhr_bb",
+            "prata_rural_pnhr_liberacoes",
+            "prata_rural_trabalho_social_caixa",
+            "prata_rural_trabalho_social_bb",
+            "prata_rural_obra_mensal",
+            "prata_rural_financeiro_mensal",
         ],
         "models_gold": [
-            "ouro_rural_ficha_empreendimento", "ouro_rural_resumo_gerencial",
-            "ouro_rural_panorama_estadual", "ouro_rural_mapa_nacional",
-            "ouro_rural_evolucao_financeira", "ouro_rural_execucao_fisica_financeira",
-            "ouro_rural_ficha_trabalho_social", "ouro_rural_perfil_beneficiarios",
+            "ouro_rural_ficha_empreendimento",
+            "ouro_rural_resumo_gerencial",
+            "ouro_rural_panorama_estadual",
+            "ouro_rural_mapa_nacional",
+            "ouro_rural_evolucao_financeira",
+            "ouro_rural_execucao_fisica_financeira",
+            "ouro_rural_ficha_trabalho_social",
+            "ouro_rural_perfil_beneficiarios",
             "ouro_rural_infraestrutura_agua_saneamento",
         ],
         # model -> chave natural esperada, por camada (o schema vem de qual bloco)
@@ -168,9 +180,7 @@ def secao_mojibake(cur, schema: str, tabelas: List[str]) -> List[str]:
         cols = [c for c, t in colunas(cur, schema, tab) if t in ("text", "character varying")]
         if not cols:
             continue
-        cond = " or ".join(
-            f"""("{c}" like '%%{m}%%')""" for c in cols for m in MOJIBAKE
-        )
+        cond = " or ".join(f"""("{c}" like '%%{m}%%')""" for c in cols for m in MOJIBAKE)
         try:
             cur.execute(f'select count(*) from "{schema}"."{tab}" where {cond}')
         except psycopg2.Error:
@@ -277,7 +287,6 @@ def secao_joins(cur, schema: str, joins: List[Tuple[str, str, str]]) -> List[str
     return out
 
 
-
 # ---------------------------------------------------------------------------------------
 # Procedência e divergência entre fontes
 # ---------------------------------------------------------------------------------------
@@ -328,7 +337,7 @@ def secao_divergencia(cur, schema: str, tolerancia: float) -> List[str]:
             if n_linhas(cur, schema, tab) < 0:
                 continue
             partes.append(
-                f'select apf, {col}::numeric as v, \'{rot}\' as fonte '
+                f"select apf, {col}::numeric as v, '{rot}' as fonte "
                 f'from "{schema}"."{tab}" where {col} is not null'
             )
         if len(partes) < 2:
@@ -456,50 +465,44 @@ def main() -> None:
     )
     args = ap.parse_args()
     cfg = DOMINIOS[args.dominio]
+
+    with conectar() as conn, conn.cursor() as cur:
+        print(f"# Diagnóstico de qualidade — domínio {args.dominio}\n")
+        for indice, (titulo, linhas) in enumerate(_secoes(cur, cfg, args)):
+            print(f"{chr(10) if indice else ''}## {titulo}\n")
+            for linha in linhas:
+                print(linha)
+
+
+def _secoes(cur, cfg: dict, args: argparse.Namespace) -> Iterator[Tuple[str, List[str]]]:
+    """(título, linhas) de cada seção, na ordem em que saem.
+
+    Gerador: cada consulta roda só quando a seção anterior já foi impressa, então uma
+    falha no meio deixa no relatório tudo o que veio antes dela.
+    """
     silver, gold = cfg["schema_silver"], cfg["schema_gold"]
     chaves = {**cfg["chaves_silver"], **cfg["chaves_gold"]}
     schema_de = {m: silver for m in cfg["models_silver"]}
     schema_de.update({m: gold for m in cfg["models_gold"]})
-
-    with conectar() as conn, conn.cursor() as cur:
-        p = print
-        p(f"# Diagnóstico de qualidade — domínio {args.dominio}\n")
-
-        p("## 1. Mojibake residual (bronze)\n")
-        for l in secao_mojibake(cur, args.schema_bronze or cfg["schema_bronze"], cfg["bronze"]):
-            p(l)
-        p(f"\n## 2a. Mojibake residual — silver ({silver})\n")
-        for l in secao_mojibake(cur, silver, sorted(cfg["models_silver"])):
-            p(l)
-        p(f"\n## 2b. Mojibake residual — gold ({gold})\n")
-        for l in secao_mojibake(cur, gold, sorted(cfg["models_gold"])):
-            p(l)
-
-        p(f"\n## 3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio\n")
-        for l in secao_nulos(cur, silver, sorted(cfg["models_silver"]), args.limiar_nulo):
-            p(l)
-        for l in secao_nulos(cur, gold, sorted(cfg["models_gold"]), args.limiar_nulo)[2:]:
-            p(l)
-
-        p("\n## 4. Duplicidade na chave natural\n")
-        for l in secao_duplicidade(cur, schema_de, chaves):
-            p(l)
-
-        p("\n## 5. Cobertura dos joins\n")
-        for l in secao_joins(cur, silver, cfg["joins"]):
-            p(l)
-
-        p("\n## 6. Valores reais dos campos de corte\n")
-        for l in secao_cortes(cur, schema_de, cfg["cortes"]):
-            p(l)
-
-        p("\n## 7. Divergência entre fontes da mesma medida\n")
-        for l in secao_divergencia(cur, silver, args.tolerancia_divergencia):
-            p(l)
-
-        p("\n## 8. Atualidade e procedência das medições\n")
-        for l in secao_atualidade(cur, silver):
-            p(l)
+    models_silver, models_gold = sorted(cfg["models_silver"]), sorted(cfg["models_gold"])
+    bronze = args.schema_bronze or cfg["schema_bronze"]
+    yield ("1. Mojibake residual (bronze)", secao_mojibake(cur, bronze, cfg["bronze"]))
+    yield (f"2a. Mojibake residual — silver ({silver})", secao_mojibake(cur, silver, models_silver))
+    yield (f"2b. Mojibake residual — gold ({gold})", secao_mojibake(cur, gold, models_gold))
+    yield (
+        f"3. Colunas com >= {args.limiar_nulo:.0f}% de nulo/vazio",
+        secao_nulos(cur, silver, models_silver, args.limiar_nulo)
+        # o cabeçalho da tabela só sai uma vez
+        + secao_nulos(cur, gold, models_gold, args.limiar_nulo)[2:],
+    )
+    yield ("4. Duplicidade na chave natural", secao_duplicidade(cur, schema_de, chaves))
+    yield ("5. Cobertura dos joins", secao_joins(cur, silver, cfg["joins"]))
+    yield ("6. Valores reais dos campos de corte", secao_cortes(cur, schema_de, cfg["cortes"]))
+    yield (
+        "7. Divergência entre fontes da mesma medida",
+        secao_divergencia(cur, silver, args.tolerancia_divergencia),
+    )
+    yield ("8. Atualidade e procedência das medições", secao_atualidade(cur, silver))
 
 
 if __name__ == "__main__":

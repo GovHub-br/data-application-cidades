@@ -1,7 +1,7 @@
 -- UDF para parsear datas no formato brasileiro DD/MM/YYYY
 {% macro create_f_parse_date_br() %}
 
-    create or replace function {{ target.schema }}.parse_date_br(in_text text)
+    create or replace function {{ var('schema_udfs') }}.parse_date_br(in_text text)
     returns date
     as $$
         select

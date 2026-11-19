@@ -98,9 +98,7 @@ class IngestorLake(ABC):
                 pd.read_csv(io.BytesIO(raw), sep=self._sep, **self._read_kwargs()),
             )
         if self.formato == "xlsx":
-            return cast(
-                pd.DataFrame, pd.read_excel(io.BytesIO(raw), **self._read_kwargs())
-            )
+            return cast(pd.DataFrame, pd.read_excel(io.BytesIO(raw), **self._read_kwargs()))
         if self.formato == "json":
             return self._json_para_dataframe(json.loads(raw.decode("utf-8")))
         raise ValueError(f"[ingestor_lake] Formato não suportado: {self.formato}")
@@ -125,13 +123,9 @@ class IngestorLake(ABC):
         """Aplica os tipos finais do dataset — o parquet precisa sair tipado."""
 
     # ------------------------- infra (invariante) ----------------------------
-    def subir_raw(
-        self, data: bytes, content_type: str = "application/octet-stream"
-    ) -> None:
+    def subir_raw(self, data: bytes, content_type: str = "application/octet-stream") -> None:
         """Conveniência da Etapa 01: sobe o arquivo cru recebido para a raw."""
-        upload_raw_bytes(
-            self.fonte, self.dado, data, ext=self.formato, content_type=content_type
-        )
+        upload_raw_bytes(self.fonte, self.dado, data, ext=self.formato, content_type=content_type)
 
     def _salvar_parquet(self, df: pd.DataFrame) -> None:
         df = _todas_colunas_texto(df)

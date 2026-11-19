@@ -1,0 +1,8 @@
+extensao,categoria,quantidade
+.csv,dado_tabular_ou_serializado,1464
+.xlsx,dado_tabular_ou_serializado,342
+.txt,dado_tabular_ou_serializado,209
+.zip,arquivo_compactado,192
+.xls,dado_tabular_ou_serializado,142
+.pptx,documento,52
+.pdf,documento,14

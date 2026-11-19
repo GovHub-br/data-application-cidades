@@ -13,7 +13,6 @@
     Durante `dbt parse` (sem `execute`) devolve lista vazia / `null`, como
     `coalesce_present` — compila; o valor real so importa no run.
 #}
-
 {% macro staging_glob_columns(glob_pattern) %}
     {%- set cols = [] -%}
     {%- if execute -%}
@@ -21,7 +20,7 @@
             'describe select * from ' ~ read_minio_staging_parquet_series(glob_pattern)
         ) -%}
         {%- if res is not none -%}
-            {%- for r in res.rows -%}{%- do cols.append(r[0] | lower) -%}{%- endfor -%}
+            {%- for r in res.rows -%} {%- do cols.append(r[0] | lower) -%} {%- endfor -%}
         {%- endif -%}
     {%- endif -%}
     {{ return(cols) }}
@@ -40,17 +39,14 @@
         {%- if (a | lower) in cols -%}
             {%- if try_cast_as is not none -%}
                 {%- do present.append('try_cast(' ~ a ~ ' as ' ~ try_cast_as ~ ')') -%}
-            {%- else -%}
-                {%- do present.append(a) -%}
+            {%- else -%} {%- do present.append(a) -%}
             {%- endif -%}
         {%- endif -%}
     {%- endfor -%}
-    {%- if present | length > 0 -%}
-        {%- set expr = 'coalesce(' ~ (present | join(', ')) ~ ')' -%}
-    {%- else -%}
-        {%- set expr = 'null' -%}
+    {%- if present | length > 0 -%} {%- set expr = 'coalesce(' ~ (present | join(', ')) ~ ')' -%}
+    {%- else -%} {%- set expr = 'null' -%}
     {%- endif -%}
-    {%- if cast_type is not none -%}cast({{ expr }} as {{ cast_type }})
-    {%- else -%}{{ expr }}
+    {%- if cast_type is not none -%} cast({{ expr }} as {{ cast_type }})
+    {%- else -%} {{ expr }}
     {%- endif -%}
 {% endmacro %}

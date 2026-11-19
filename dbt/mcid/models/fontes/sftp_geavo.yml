@@ -1,0 +1,209 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp_geavo.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sftp_geavo
+  description: Remessas da CAIXA (GEAVO) no SFTP do MCid.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/sftp_geavo.odcs.yaml
+    owner: CAIXA · GEAVO
+  tables:
+  - name: geavo_fgts_pf
+    description: Base analítica de contratos FGTS pessoa física (GEAVO/Caixa). ~10,8 M linhas.
+    meta:
+      caminho: staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_*.parquet
+      file_pattern: Base_PF_FGTS_\d{8}\.txt
+      load_type: full
+      dag: null
+    columns:
+    - name: co_agente_financeiro
+    - name: cod_mun_ibge
+    - name: co_sexo
+    - name: de_estado_civil
+    - name: dt_assinatura
+    - name: ano_orc
+    - name: faixa
+    - name: dt_nascimento
+      meta:
+        classification: restricted
+    - name: no_mutuario
+      meta:
+        classification: restricted
+    - name: nu_apf
+    - name: nu_contrato
+    - name: nu_cpf_cgc_mutuario
+      meta:
+        classification: restricted
+    - name: vlr_compra
+    - name: vlr_renda_familiar_comprovada
+    - name: vlr_emprestimo
+    - name: vlr_desconto_fgts
+    - name: vlr_desconto_ogu
+    - name: vlr_equilibrio_fgts
+    - name: vlr_equilibrio_ogu
+    - name: origem
+    - name: tp_orcamento
+    - name: dt_movimento
+    - name: cep
+      meta:
+        classification: restricted
+    - name: txjrsmut
+    - name: tpimovel
+    - name: cotista
+    - name: sistamort
+  - name: geavo_fgts_pj
+    description: Base de contratos FGTS pessoa jurídica — Apoio à Produção (GEAVO/Caixa).
+    meta:
+      caminho: staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_*.parquet
+      file_pattern: Base_PJ_FGTS_\d{8}\.txt
+      load_type: full
+      dag: null
+    columns:
+    - name: origem
+    - name: dt_movimento
+    - name: nu_apf
+    - name: no_empreendimento
+    - name: cod_agente_financeiro
+    - name: cod_municipio_ibge
+    - name: dt_assinatura
+    - name: ano_orc
+    - name: vi
+    - name: ve
+    - name: percentual_obra_realizado
+    - name: qt_unidades_financiadas
+    - name: qt_unidades_concluidas
+    - name: qt_unidades_entregues
+    - name: dt_inicio_obra
+    - name: dt_termino_obra
+    - name: situacao_obra
+    - name: situacao_contrato
+    - name: cgc
+    - name: rz_social
+    - name: no_logradouro
+      meta:
+        classification: restricted
+    - name: cep_logradouro
+      meta:
+        classification: restricted
+    - name: latitude
+    - name: longitude
+  - name: geavo_cca_analitico
+    description: Carta de Crédito Associativo (CCA) — contratos PF do Canal FGTS/GEAVO. Complementa o
+      CCI no 'Financiamento PF MCMV' por faixa.
+    meta:
+      caminho: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
+      file_pattern: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+      load_type: full
+      dag: null
+    columns:
+    - name: vlrdofinanciamento
+    - name: vlrdodescontofgts
+    - name: vlrdodescontoogu
+    - name: vlrdoequilibriofgts
+    - name: vlrdoequilibrioogu
+    - name: vlrdegarantiadoimovel
+    - name: txjrsinicial
+    - name: area_codigo
+    - name: linha_codigo
+    - name: agentefinanceiro_codigo
+    - name: municipio_codigo
+    - name: uor_codigo
+    - name: faixaderenda_codigo
+    - name: datadacontratacao
+    - name: vlrdarenda
+    - name: vlrdecompra
+    - name: areaimovel
+    - name: vlrcontrapartidaparceria
+    - name: dtterminoobra
+    - name: data_entrega_para_pf
+    - name: vlrredutor
+    - name: tx_passivo
+    - name: datadaremessa
+    - name: operacao
+    - name: numerodocontrato
+    - name: sistemacodigo
+    - name: dt_nascimento
+      meta:
+        classification: restricted
+    - name: im_cep
+      meta:
+        classification: restricted
+    - name: anomescontratacao
+    - name: genero
+    - name: linhadecredito
+    - name: tipo
+    - name: cod_programa
+    - name: nome_programa
+    - name: sub_programa
+    - name: modalidade_codigo
+    - name: modalidade
+    - name: regiao_desconto
+    - name: prazo
+    - name: cotista
+    - name: fatorsocial
+    - name: classificacaoimovel
+    - name: regiaoimovel
+    - name: caracteristica
+    - name: pmcmv
+    - name: compatibilidade_faixa_novo_mcmv
+    - name: pf_pj
+  - name: geavo_cci_analitico
+    description: Carta de Crédito Individual (CCI) — contratos PF do Canal FGTS/GEAVO. Fonte do 'Financiamento
+      PF MCMV' por faixa do boletim, junto com o CCA.
+    meta:
+      caminho: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
+      file_pattern: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+      load_type: full
+      dag: null
+    columns:
+    - name: vlrdofinanciamento
+    - name: vlrdodescontofgts
+    - name: vlrdodescontoogu
+    - name: vlrdoequilibriofgts
+    - name: vlrdoequilibrioogu
+    - name: vlrdegarantiadoimovel
+    - name: txjrsinicial
+    - name: area_codigo
+    - name: linha_codigo
+    - name: agentefinanceiro_codigo
+    - name: municipio_codigo
+    - name: uor_codigo
+    - name: faixaderenda_codigo
+    - name: datadacontratacao
+    - name: vlrdarenda
+    - name: vlrdecompra
+    - name: areaimovel
+    - name: vlrcontrapartidaparceria
+    - name: dtterminoobra
+    - name: data_entrega_para_pf
+    - name: tx_passivo
+    - name: numerodocontrato
+    - name: sistemacodigo
+    - name: datadaremessa
+    - name: dt_nascimento
+      meta:
+        classification: restricted
+    - name: im_cep
+      meta:
+        classification: restricted
+    - name: anomescontratacao
+    - name: genero
+    - name: linhadecredito
+    - name: tipo
+    - name: cod_programa
+    - name: nome_programa
+    - name: sub_programa
+    - name: modalidade_codigo
+    - name: modalidade
+    - name: regiao_desconto
+    - name: prazo
+    - name: cotista
+    - name: fatorsocial
+    - name: classificacaoimovel
+    - name: regiaoimovel
+    - name: caracteristica
+    - name: pmcmv
+    - name: compatibilidade_faixa_novo_mcmv

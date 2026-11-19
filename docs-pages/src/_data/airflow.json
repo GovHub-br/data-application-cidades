@@ -1,29 +1,55 @@
 {
-  "gerado_em": "2026-08-13T13:47:06.732222+00:00",
+  "gerado_em": "2026-11-10T20:03:36.037049+00:00",
   "resumo": {
-    "total_dags": 74,
-    "total_clientes": 21,
+    "total_dags": 22,
+    "total_clientes": 15,
     "por_grupo": {
-      "data_ingest": 70,
-      "dbt": 3,
-      "dashboards": 1
+      "data_ingest": 19,
+      "conjuntura": 1,
+      "dbt": 1,
+      ".": 1
     }
   },
   "dags": [
     {
-      "arquivo": "airflow_lappis/dags/dashboards/dashboard_servidores_dag.py",
-      "grupo": "dashboards",
-      "dag_id": "dashboard_servidores_json",
-      "schedule": "0 6 * * *",
+      "arquivo": "dags/conjuntura/conjuntura_dag.py",
+      "grupo": "conjuntura",
+      "dag_id": "conjuntura_dag",
+      "schedule": "dinamico",
       "tags": [
-        "dashboard",
-        "pessoas",
-        "json"
+        "conjuntura",
+        "dbt",
+        "orquestracao"
       ],
-      "descricao": "DAG que gera arquivo JSON consolidado com dados do dashboard de servidores."
+      "descricao": "DAG guarda-chuva do boletim de conjuntura."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/abecip/abecip_poupanca_trimestral_ingest_dag.py",
+      "arquivo": "dags/data_ingest/abecip/abecip_financiamentos_ingest_dag.py",
+      "grupo": "data_ingest/abecip",
+      "dag_id": "abecip_financiamentos_ingest_dag",
+      "schedule": "dinamico",
+      "tags": [
+        "abecip",
+        "financiamentos",
+        "sbpe",
+        "conjuntura"
+      ],
+      "descricao": "Ingestão da série mensal de financiamentos SBPE por modalidade (ABECIP)."
+    },
+    {
+      "arquivo": "dags/data_ingest/abecip/abecip_instituicoes_ingest_dag.py",
+      "grupo": "data_ingest/abecip",
+      "dag_id": "abecip_instituicoes_ingest_dag",
+      "schedule": "dinamico",
+      "tags": [
+        "conjuntura",
+        "abecip",
+        "ingestao"
+      ],
+      "descricao": "Consolida as competências da ABECIP por instituição financeira em staging."
+    },
+    {
+      "arquivo": "dags/data_ingest/abecip/abecip_poupanca_trimestral_ingest_dag.py",
       "grupo": "data_ingest/abecip",
       "dag_id": "abecip_poupanca_trimestral_ingest_dag",
       "schedule": "dinamico",
@@ -34,7 +60,7 @@
       "descricao": "DAG de ingestão incremental trimestral da Caderneta de Poupança ABECIP."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/bacen/bacen_sgs_ingest_dag.py",
+      "arquivo": "dags/data_ingest/bacen/bacen_sgs_ingest_dag.py",
       "grupo": "data_ingest/bacen",
       "dag_id": "bacen_sgs_ingest_dag",
       "schedule": "dinamico",
@@ -46,99 +72,20 @@
       "descricao": "DAG para ingestão de séries temporais do SGS/BACEN no PostgreSQL."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/compras_gov/contratos_inativos_ingest_dag.py",
-      "grupo": "data_ingest/compras_gov",
-      "dag_id": "api_contratos_inativos_dag",
+      "arquivo": "dags/data_ingest/bacen/credito_pib_ingest_dag.py",
+      "grupo": "data_ingest/bacen",
+      "dag_id": "bacen_credito_pib_ingest_dag",
       "schedule": "dinamico",
       "tags": [
-        "contratos_inativos_api",
-        "compras_gov"
+        "bacen",
+        "imobiliario",
+        "credito_pib",
+        "conjuntura"
       ],
-      "descricao": "DAG para buscar e armazenar contratos inativos de uma API no PostgreSQL."
+      "descricao": "Ingestão do Crédito Imobiliário / PIB (BCB Olinda MercadoImobiliario)."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/compras_gov/contratos_ingest_dag.py",
-      "grupo": "data_ingest/compras_gov",
-      "dag_id": "api_contratos_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "contratos_api",
-        "compras_gov"
-      ],
-      "descricao": "DAG para buscar e armazenar contratos por órgão definido."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/compras_gov/cronograma_ingest_dag.py",
-      "grupo": "data_ingest/compras_gov",
-      "dag_id": "api_cronogramas_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "cronogramas_api",
-        "compras_gov"
-      ],
-      "descricao": "DAG para buscar e armazenar cronogramas de uma API no PostgreSQL."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/compras_gov/empenhos_ingest_dag.py",
-      "grupo": "data_ingest/compras_gov",
-      "dag_id": "api_empenhos_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "empenhos_api",
-        "compras_gov"
-      ],
-      "descricao": "DAG para buscar e armazenar dados de empenhos de uma API."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/compras_gov/faturas_ingest_dag.py",
-      "grupo": "data_ingest/compras_gov",
-      "dag_id": "api_faturas_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "faturas_api",
-        "compras_gov"
-      ],
-      "descricao": "DAG para buscar e armazenar faturas de uma API no PostgreSQL."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/compras_gov/terceirizados_ingest_dag.py",
-      "grupo": "data_ingest/compras_gov",
-      "dag_id": "api_terceirizados_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "terceirizados_api",
-        "compras_gov"
-      ],
-      "descricao": "DAG para buscar e armazenar dados de terceirizados de uma API."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/dados_abertos/deputados_ingest_dag.py",
-      "grupo": "data_ingest/dados_abertos",
-      "dag_id": "deputados_ingest_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "camara_deputados",
-        "deputados",
-        "dados_abertos",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar dados de deputados da Câmara dos Deputados."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/dados_abertos/senadores_ingest_dag.py",
-      "grupo": "data_ingest/dados_abertos",
-      "dag_id": "senadores_ingest_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "senado_federal",
-        "senadores",
-        "dados_abertos",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar dados de senadores do Senado Federal."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/fgv/icst_ingest_dag.py",
+      "arquivo": "dags/data_ingest/fgv/icst_ingest_dag.py",
       "grupo": "data_ingest/fgv",
       "dag_id": "icst_ingest_dag",
       "schedule": "dinamico",
@@ -151,7 +98,7 @@
       "descricao": "DAG para ingestão de dados históricos do ICST da FGV no PostgreSQL."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/fgv/incc_m_ingest_dag.py",
+      "arquivo": "dags/data_ingest/fgv/incc_m_ingest_dag.py",
       "grupo": "data_ingest/fgv",
       "dag_id": "incc_m_ingest_dag",
       "schedule": "dinamico",
@@ -164,7 +111,7 @@
       "descricao": "DAG para ingestão de dados do INCC-M da FGV no PostgreSQL."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/fipe/fipezap_trimestral_ingest_dag.py",
+      "arquivo": "dags/data_ingest/fipe/fipezap_trimestral_ingest_dag.py",
       "grupo": "data_ingest/fipe",
       "dag_id": "fipezap_trimestral_ingest_dag",
       "schedule": "dinamico",
@@ -175,7 +122,7 @@
       "descricao": "DAG de ingestão incremental trimestral do Índice FipeZAP."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/ibge/ibge_ingest_dag.py",
+      "arquivo": "dags/data_ingest/ibge/ibge_ingest_dag.py",
       "grupo": "data_ingest/ibge",
       "dag_id": "ibge_ingest_dag",
       "schedule": "dinamico",
@@ -187,7 +134,21 @@
       "descricao": "DAG para ingestão de dados do IBGE no PostgreSQL."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/infomoney/imob_ingest_dag.py",
+      "arquivo": "dags/data_ingest/ibge/pnad_construcao_sidra_ingest_dag.py",
+      "grupo": "data_ingest/ibge",
+      "dag_id": "ibge_pnad_construcao_sidra_ingest_dag",
+      "schedule": "dinamico",
+      "tags": [
+        "ibge",
+        "pnad",
+        "construcao",
+        "sidra",
+        "conjuntura"
+      ],
+      "descricao": "PNAD-C construção (ocupados + rendimento médio real) via SIDRA — pág. 3."
+    },
+    {
+      "arquivo": "dags/data_ingest/infomoney/imob_ingest_dag.py",
       "grupo": "data_ingest/infomoney",
       "dag_id": "infomoney_imob",
       "schedule": "@daily",
@@ -201,7 +162,21 @@
       "descricao": "DAG para extração de séries temporais do índice IMOB.SA"
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/mrv/lancamentos_ingest_dag.py",
+      "arquivo": "dags/data_ingest/minio/minio_transform_dag.py",
+      "grupo": "data_ingest/minio",
+      "dag_id": "minio_transform_dag",
+      "schedule": "dinamico",
+      "tags": [
+        "minio",
+        "mcid",
+        "cidades",
+        "data-lake",
+        "transform"
+      ],
+      "descricao": "Pipeline de transformação do data lake: raw/ -> mascaramento PII -> staging/."
+    },
+    {
+      "arquivo": "dags/data_ingest/mrv/lancamentos_ingest_dag.py",
       "grupo": "data_ingest/mrv",
       "dag_id": "lancamentos_ingest_dag",
       "schedule": "dinamico",
@@ -214,7 +189,7 @@
       "descricao": "DAG para ingestão de dados dos Lançamentos da Empresa MRV no PostgreSQL."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/mrv/vendas_ingest_dag.py",
+      "arquivo": "dags/data_ingest/mrv/vendas_ingest_dag.py",
       "grupo": "data_ingest/mrv",
       "dag_id": "vendas_ingest_dag",
       "schedule": "dinamico",
@@ -227,264 +202,65 @@
       "descricao": "DAG para ingestão de dados das Vendas Líquidas da Empresa MRV"
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/sgac/projetos_sgac_ingest_dag.py",
-      "grupo": "data_ingest/sgac",
-      "dag_id": "email_projetos_sgac_ingest",
+      "arquivo": "dags/data_ingest/novo_caged/saldo_estoque_construcao_edificios_ingest_dag.py",
+      "grupo": "data_ingest/novo_caged",
+      "dag_id": "novo_caged_construcao_edificios",
       "schedule": "dinamico",
       "tags": [
-        "email",
-        "projetos",
-        "sgac"
+        "cidades",
+        "novo_caged",
+        "construcao",
+        "saldo",
+        "estoque"
       ],
-      "descricao": "Processa anexos do email de dados do SGAC e insere no db"
+      "descricao": "DAG para buscar e armazenar dados de saldo e estoque na construção"
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/siafi/nota_credito_siafi_ingest_dag.py",
-      "grupo": "data_ingest/siafi",
-      "dag_id": "nota_credito_siafi_dag",
+      "arquivo": "dags/data_ingest/novo_caged/saldo_estoque_servicos_especializados_construcao_ingest_dag.py",
+      "grupo": "data_ingest/novo_caged",
+      "dag_id": "novo_caged_servicos_especializados_construcao",
       "schedule": "dinamico",
       "tags": [
-        "nota_credito",
-        "siafi_api"
+        "cidades",
+        "novo_caged",
+        "construcao",
+        "saldo",
+        "estoque"
       ],
-      "descricao": ""
+      "descricao": "DAG para buscar e armazenar dados de saldo e estoque em serviços"
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/siafi/nota_empenho_siafi_ingest_dag.py",
-      "grupo": "data_ingest/siafi",
-      "dag_id": "nota_empenho_siafi_ingest_dag",
+      "arquivo": "dags/data_ingest/novo_caged/saldo_estoque_total_construcao_ingest_dag.py",
+      "grupo": "data_ingest/novo_caged",
+      "dag_id": "novo_caged_total_construcao",
       "schedule": "dinamico",
       "tags": [
-        "nota_empenho",
-        "siafi_api"
+        "cidades",
+        "novo_caged",
+        "construcao",
+        "saldo",
+        "estoque"
       ],
-      "descricao": ""
+      "descricao": "DAG para buscar e armazenar dados de saldo e estoque no total da"
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/siafi/programacao_financeira_siafi_ingest_dag.py",
-      "grupo": "data_ingest/siafi",
-      "dag_id": "programacao_financeira_siafi_dag",
+      "arquivo": "dags/data_ingest/sftp/sftp_ingest_dag.py",
+      "grupo": "data_ingest/sftp",
+      "dag_id": "sftp_ingest_dag",
       "schedule": "dinamico",
       "tags": [
-        "programacao_financeira",
-        "siafi_api"
+        "sftp",
+        "minio",
+        "mcid",
+        "cidades",
+        "data-lake",
+        "ingest"
       ],
-      "descricao": ""
+      "descricao": "Ingestão do SFTP do MCid para a camada raw/ do data lake (MinIO)."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_afastamento_historico_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_afastamento_historico_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "afastamento_historico"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosAfastamentoHistorico da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_afastamento_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_afastamento_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_afastamento"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosAfastamento da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_curriculo_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_curriculo_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_curriculo"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosCurriculo da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_dependentes_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_dependentes_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_dependentes"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosDependentes da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_escolares_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_escolares_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_escolares"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosEscolares da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_financeiros_siape_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_financeiros_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_financeiros"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosFinanceiros da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_funcionais_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_funcionais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_funcionais"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_pa_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_pa_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_pa"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosPA da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_pessoais_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_pessoais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_pessoais"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosPessoais da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/dados_uorg_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_dados_uorg_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "dados_uorg"
-      ],
-      "descricao": "DAG que consome o endpoint consultaDadosUorg da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/lista_aposentadoria_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_lista_info_aposentadoria_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "aposentadoria"
-      ],
-      "descricao": "DAG que consome o endpoint listaInformacoesAposentadoria da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/lista_servidores_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_lista_servidores_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "lista_servidores"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/lista_uorgs_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_lista_uorgs_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "lista_uorgs"
-      ],
-      "descricao": "DAG que extrai a lista de UORGs do SIAPE via API SOAP"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siape/pensoes_instituidas_siape_ingest_dag.py",
-      "grupo": "data_ingest/siape",
-      "dag_id": "siape_pensoes_instituidas_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "siape",
-        "pensoes_instituidas"
-      ],
-      "descricao": "DAG que consome o endpoint consultaPensoesInstituidas da API SIAPE"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siorg/cargos_funcao_ingest_dag.py",
-      "grupo": "data_ingest/siorg",
-      "dag_id": "api_cargos_funcao_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "estrutura_organizacional",
-        "siorg"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siorg/estrutura_organizacional_cargos_ingest_dag.py",
-      "grupo": "data_ingest/siorg",
-      "dag_id": "api_estrutura_organizacional_cargos_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "estrutura_organizacional",
-        "siorg"
-      ],
-      "descricao": "Busca dados da estrutura organizacional via API e armazena no PostgreSQL."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/siorg/unidade_organizacional_ingest_dag.py",
-      "grupo": "data_ingest/siorg",
-      "dag_id": "api_unidade_organizacional_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "estrutura_organizacional",
-        "siorg"
-      ],
-      "descricao": "DAG para buscar e armazenar dados da Estrutura Organizacional"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/sisbolsas/sisbolsas_to_postgres_ingest_dag.py",
-      "grupo": "data_ingest/sisbolsas",
-      "dag_id": "sql_server_to_postgres_ingest_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "sql_server",
-        "postgres",
-        "sisbolsas"
-      ],
-      "descricao": "Replica tabelas do SisBolsas para o Postgres Analytics."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/empenhos_tesouro_ingest_dag.py",
+      "arquivo": "dags/data_ingest/tesouro_gerencial/dotacao_execucao_outras_fontes_mcid_ingest_dag.py",
       "grupo": "data_ingest/tesouro_gerencial",
-      "dag_id": "email_empenhos_tesouro_ingest",
-      "schedule": "dinamico",
-      "tags": [
-        "email",
-        "empenhos",
-        "tesouro"
-      ],
-      "descricao": "Processa anexos dos empenhos vindo do email, formata e insere no db"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mcid/dotacao_execucao_outras_fontes_mcid_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mcid",
       "dag_id": "dotacao_execucao_outras_fontes_mcid_ingest_dag",
       "schedule": "dinamico",
       "tags": [
@@ -497,396 +273,45 @@
       "descricao": "Processa e ingere dados de execução de outras fontes de MCID"
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mcid/empenho_emendas_parlamentares_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mcid",
-      "dag_id": "empenho_emendas_parlamentares_ingest_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "email",
-        "empenhos",
-        "tesouro",
-        "emendas"
-      ],
-      "descricao": "Processa e ingere dados de empenho de emendas parlamentares do MCID"
+      "arquivo": "dags/dbt/mcid_cosmos_dag.py",
+      "grupo": "dbt",
+      "dag_id": "mcid_cosmos_dag",
+      "schedule": "0 1 * * *",
+      "tags": [],
+      "descricao": "DAG do dbt do MCid."
     },
     {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mcid/orcamento_mcid_por_acao_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mcid",
-      "dag_id": "orcamento_mcid_por_acao_ingest_dag",
+      "arquivo": "dags/openmetadata_ingestion_dag.py",
+      "grupo": ".",
+      "dag_id": "openmetadata_ingestion_dag",
       "schedule": "dinamico",
       "tags": [
-        "email",
-        "orcamento",
-        "tesouro",
+        "openmetadata",
+        "dbt",
+        "postgres",
+        "metadata",
         "mcid"
       ],
-      "descricao": "Processa e ingere dados de orcamento por acao do MCID do Tesouro"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mir/nc_tesouro_ingest_2025_mir_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mir",
-      "dag_id": "email_notas_credito_ingest_mir_ate_2025",
-      "schedule": "dinamico",
-      "tags": [
-        "MIR",
-        "SIAFI",
-        "notas_credito"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mir/nc_tesouro_ingest_2026_mir_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mir",
-      "dag_id": "email_notas_credito_ingest_mir_pos_2026",
-      "schedule": "dinamico",
-      "tags": [
-        "MIR",
-        "email",
-        "notas_credito"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mir/ne_tesouro_emendas_mir_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mir",
-      "dag_id": "email_tesouro_emendas_ingest",
-      "schedule": "dinamico",
-      "tags": [
-        "MIR",
-        "email",
-        "empenhos",
-        "tesouro",
-        "emendas"
-      ],
-      "descricao": "Processa anexos dos empenhos vindo do email, formata e insere no db"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mir/ne_tesouro_mir_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mir",
-      "dag_id": "email_tesouro_teds_notas_empenhadas_ingest_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "MIR",
-        "email",
-        "empenhos",
-        "tesouro"
-      ],
-      "descricao": "Processa anexos dos empenhos vindo do email, formata e insere no db"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mir/pf_tesouro_mir_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mir",
-      "dag_id": "email_programacoes_financeiras_mir_ingest",
-      "schedule": "dinamico",
-      "tags": [
-        "email",
-        "pfs",
-        "tesouro",
-        "MIR"
-      ],
-      "descricao": "Processa anexo consolidado de PFs por email e insere no db"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/mir/programacao_acao_ptres_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial/mir",
-      "dag_id": "email_programacao_acao_por_PTRES_ingest",
-      "schedule": "dinamico",
-      "tags": [
-        "email",
-        "ptres",
-        "tesouro",
-        "MIR"
-      ],
-      "descricao": "Processa anexo consolidado de programações de ação por PTRES por email e insere no db"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/tesouro_gerencial/pf_tesouro_ingest_dag.py",
-      "grupo": "data_ingest/tesouro_gerencial",
-      "dag_id": "email_programacoes_financeiras_ingest",
-      "schedule": "dinamico",
-      "tags": [
-        "email",
-        "pfs",
-        "tesouro"
-      ],
-      "descricao": "Processa anexos das PFs vindo de dois emails, formata e insere no db"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/mir/notas_de_credito_ingest_mir_dag.py",
-      "grupo": "data_ingest/transfere_gov/mir",
-      "dag_id": "notas_de_credito_mir_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "notas de credito",
-        "ted_api",
-        "MIR"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/mir/plano_acao_ingest_mir_dag.py",
-      "grupo": "data_ingest/transfere_gov/mir",
-      "dag_id": "api_planos_acao_mir_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "ted_api",
-        "planos_acao",
-        "MIR"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/mir/programa_financeira_ingest_mir_dag.py",
-      "grupo": "data_ingest/transfere_gov/mir",
-      "dag_id": "programacao_financeira_mir_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "programacao_financeira",
-        "ted_api",
-        "MIR"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/mir/programas_ingest_mir_dag.py",
-      "grupo": "data_ingest/transfere_gov/mir",
-      "dag_id": "api_programas_ted_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "ted_api",
-        "programas",
-        "MIR"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/notas_de_credito_ingest_dag.py",
-      "grupo": "data_ingest/transfere_gov",
-      "dag_id": "notas_de_credito_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "notas de credito",
-        "ted_api"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/plano_acao_ingest_dag.py",
-      "grupo": "data_ingest/transfere_gov",
-      "dag_id": "api_planos_acao_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "ted_api",
-        "planos_acao"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/programa_beneficiario_ingest_dag.py",
-      "grupo": "data_ingest/transfere_gov",
-      "dag_id": "api_programa_beneficiario_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "ted_api",
-        "programa_beneficiario"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/programacao_financeira_ingest_dag.py",
-      "grupo": "data_ingest/transfere_gov",
-      "dag_id": "programacao_financeira_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "programacao_financeira",
-        "ted_api"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transfere_gov/programas_ingest_dag.py",
-      "grupo": "data_ingest/transfere_gov",
-      "dag_id": "api_programas_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "ted_api",
-        "programas"
-      ],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/documentos_habeis_especias_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_documentos_habeis_especiais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "documentos_especiais",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar documentos hábeis especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/empenhos_especiais_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_empenhos_especiais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "empenhos_especiais",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar empenhos especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/executor_especial_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_executor_especial_dag",
-      "schedule": "@daily",
-      "tags": [
-        "transfere_gov_api",
-        "planos_acao_especiais",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar executores especiais do Transfere Gov de forma massiva."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/finalidade_especial_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_finalidade_especial_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "finalidade_especial",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar finalidades especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/historico_pagamentos_especiais_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_historico_pagamentos_especiais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "historico_pagamentos_especiais",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar histórico de pagamentos especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/metas_especiais_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_metas_especiais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "metas_especiais",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar metas especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/ordem_bancaria_especial_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_ordem_bancaria_especial_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "ordem_bancaria_especial",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar ordens bancárias especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/plano_trabalho_especial_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_plano_trabalho_especial_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "plano_trabalho",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar planos de trabalho especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/planos_acao_especiais_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_planos_acao_especiais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "planos_acao_especiais",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar planos de ação especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/programas_especiais_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_programas_especiais_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "programas_especiais",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar programas especiais do Transfere Gov."
-    },
-    {
-      "arquivo": "airflow_lappis/dags/data_ingest/transferegov_emendas/relatorio_gestao_novo_especial_ingest_dag.py",
-      "grupo": "data_ingest/transferegov_emendas",
-      "dag_id": "api_relatorio_gestao_novo_especial_dag",
-      "schedule": "dinamico",
-      "tags": [
-        "transfere_gov_api",
-        "relatorio_gestao_novo_especial",
-        "MIR"
-      ],
-      "descricao": "DAG para buscar e armazenar relatórios de gestão novo especial do Transfere Gov"
-    },
-    {
-      "arquivo": "airflow_lappis/dags/dbt/ipea/cosmos_dag.py",
-      "grupo": "dbt/ipea",
-      "dag_id": "ipea_cosmos_dag",
-      "schedule": " 0 1 * * *",
-      "tags": [],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/dbt/mcid/cosmos_dag.py",
-      "grupo": "dbt/mcid",
-      "dag_id": "mcid_cosmos_dag",
-      "schedule": " 0 1 * * *",
-      "tags": [],
-      "descricao": ""
-    },
-    {
-      "arquivo": "airflow_lappis/dags/dbt/mir/cosmos_dag.py",
-      "grupo": "dbt/mir",
-      "dag_id": "mir_cosmos_dag",
-      "schedule": " 0 1 * * *",
-      "tags": [],
-      "descricao": ""
+      "descricao": "Executa as recipes do OpenMetadata para o escopo do MCID."
     }
   ],
   "clientes": [
     {
       "sistema": "abecip",
-      "arquivo": "airflow_lappis/plugins/cliente_abecip.py",
+      "arquivo": "plugins/cliente_abecip.py",
       "classes": [
         "ClienteAbecip"
       ],
       "metodos": [
-        "fetch_and_transform_poupanca"
+        "fetch_and_transform_poupanca",
+        "fetch_and_transform_financiamentos"
       ],
-      "total_metodos": 1,
+      "total_metodos": 2,
       "descricao": ""
     },
     {
       "sistema": "bacen",
-      "arquivo": "airflow_lappis/plugins/cliente_bacen.py",
+      "arquivo": "plugins/cliente_bacen.py",
       "classes": [
         "ClienteBacen"
       ],
@@ -897,9 +322,23 @@
       "descricao": ""
     },
     {
-      "sistema": "base",
-      "arquivo": "airflow_lappis/plugins/cliente_base.py",
+      "sistema": "bacen_imobiliario",
+      "arquivo": "plugins/cliente_bacen_imobiliario.py",
       "classes": [
+        "ClienteBacenImobiliario"
+      ],
+      "metodos": [
+        "obter_serie",
+        "obter_credito_pib"
+      ],
+      "total_metodos": 2,
+      "descricao": "Cliente da API Olinda 'MercadoImobiliario' do BCB (OData)."
+    },
+    {
+      "sistema": "base",
+      "arquivo": "plugins/cliente_base.py",
+      "classes": [
+        "LayoutFonteMudou",
         "ClienteBase"
       ],
       "metodos": [
@@ -909,38 +348,8 @@
       "descricao": ""
     },
     {
-      "sistema": "contratos",
-      "arquivo": "airflow_lappis/plugins/cliente_contratos.py",
-      "classes": [
-        "ClienteContratos"
-      ],
-      "metodos": [
-        "get_contratos_by_ug",
-        "get_contratos_inativos_by_ug",
-        "get_faturas_by_contrato_id",
-        "get_empenhos_by_contrato_id",
-        "get_cronograma_by_contrato_id",
-        "get_terceirizados_by_contrato_id"
-      ],
-      "total_metodos": 6,
-      "descricao": ""
-    },
-    {
-      "sistema": "deputados",
-      "arquivo": "airflow_lappis/plugins/cliente_deputados.py",
-      "classes": [
-        "ClienteDeputados"
-      ],
-      "metodos": [
-        "get_deputados",
-        "get_all_deputados"
-      ],
-      "total_metodos": 2,
-      "descricao": ""
-    },
-    {
       "sistema": "email",
-      "arquivo": "airflow_lappis/plugins/cliente_email.py",
+      "arquivo": "plugins/cliente_email.py",
       "classes": [],
       "metodos": [],
       "total_metodos": 0,
@@ -948,7 +357,7 @@
     },
     {
       "sistema": "fgv",
-      "arquivo": "airflow_lappis/plugins/cliente_fgv.py",
+      "arquivo": "plugins/cliente_fgv.py",
       "classes": [
         "LegacySSLAdapter",
         "ClienteSinduscon",
@@ -964,7 +373,7 @@
     },
     {
       "sistema": "fipe",
-      "arquivo": "airflow_lappis/plugins/cliente_fipe.py",
+      "arquivo": "plugins/cliente_fipe.py",
       "classes": [
         "ClienteFipeZap"
       ],
@@ -975,21 +384,8 @@
       "descricao": ""
     },
     {
-      "sistema": "github",
-      "arquivo": "airflow_lappis/plugins/cliente_github.py",
-      "classes": [
-        "ClienteGitHub"
-      ],
-      "metodos": [
-        "get_file_sha",
-        "update_file"
-      ],
-      "total_metodos": 2,
-      "descricao": "Cliente para interagir com a API do GitHub."
-    },
-    {
       "sistema": "ibge",
-      "arquivo": "airflow_lappis/plugins/cliente_ibge.py",
+      "arquivo": "plugins/cliente_ibge.py",
       "classes": [
         "ClienteIBGE"
       ],
@@ -1001,8 +397,20 @@
       "descricao": ""
     },
     {
+      "sistema": "ibge_sidra",
+      "arquivo": "plugins/cliente_ibge_sidra.py",
+      "classes": [
+        "ClienteIbgeSidra"
+      ],
+      "metodos": [
+        "obter"
+      ],
+      "total_metodos": 1,
+      "descricao": "Cliente da API SIDRA do IBGE (apisidra.ibge.gov.br)."
+    },
+    {
       "sistema": "infomoney",
-      "arquivo": "airflow_lappis/plugins/cliente_infomoney.py",
+      "arquivo": "plugins/cliente_infomoney.py",
       "classes": [
         "ClienteInfomoney"
       ],
@@ -1013,8 +421,46 @@
       "descricao": ""
     },
     {
+      "sistema": "minio",
+      "arquivo": "plugins/cliente_minio.py",
+      "classes": [
+        "_HashingReader",
+        "LeitorObjeto",
+        "EscritorMultipart",
+        "ClienteMinio"
+      ],
+      "metodos": [
+        "read",
+        "hexdigest",
+        "readable",
+        "readinto",
+        "writable",
+        "write",
+        "concluir",
+        "abortar",
+        "garantir_bucket",
+        "abortar_multiparts_incompletos",
+        "abortar_multiparts_chave",
+        "listar_objetos",
+        "sample_bytes",
+        "baixar_para_tempfile",
+        "abrir_leitura",
+        "abrir_escrita",
+        "juntar_objetos",
+        "apagar_prefixo",
+        "upload_arquivo",
+        "subir_stream_com_hash",
+        "put_object",
+        "get_tagging",
+        "esta_mascarado",
+        "marcar_mascarado"
+      ],
+      "total_metodos": 24,
+      "descricao": "Cliente MinIO (S3-compatível) para o data lake do conjuntura contínuo."
+    },
+    {
       "sistema": "mrv",
-      "arquivo": "airflow_lappis/plugins/cliente_mrv.py",
+      "arquivo": "plugins/cliente_mrv.py",
       "classes": [
         "ClienteMRV"
       ],
@@ -1026,23 +472,21 @@
       "descricao": ""
     },
     {
-      "sistema": "pncp",
-      "arquivo": "airflow_lappis/plugins/cliente_pncp.py",
+      "sistema": "novo_caged",
+      "arquivo": "plugins/cliente_novo_caged.py",
       "classes": [
-        "ClientePNCP"
+        "ClienteNovoCaged"
       ],
       "metodos": [
-        "get_contratacoes_publicacao",
-        "get_contratacoes_publicacao_paginado",
-        "get_contratacoes_publicacao_semestral",
-        "get_itens_e_resultados"
+        "obter_dados_mensais",
+        "obter_historico"
       ],
-      "total_metodos": 4,
+      "total_metodos": 2,
       "descricao": ""
     },
     {
       "sistema": "postgres",
-      "arquivo": "airflow_lappis/plugins/cliente_postgres.py",
+      "arquivo": "plugins/cliente_postgres.py",
       "classes": [
         "ClientPostgresDB"
       ],
@@ -1072,134 +516,20 @@
       "descricao": ""
     },
     {
-      "sistema": "senadores",
-      "arquivo": "airflow_lappis/plugins/cliente_senadores.py",
+      "sistema": "sftp",
+      "arquivo": "plugins/cliente_sftp.py",
       "classes": [
-        "ClienteSenadores"
+        "ClienteSftp"
       ],
       "metodos": [
-        "get_senadores_atuais"
+        "conectar",
+        "fechar",
+        "reconectar",
+        "is_conn_error",
+        "listar_arquivos",
+        "baixar_para_tempfile"
       ],
-      "total_metodos": 1,
-      "descricao": ""
-    },
-    {
-      "sistema": "siafi",
-      "arquivo": "airflow_lappis/plugins/cliente_siafi.py",
-      "classes": [
-        "ClienteSiafi"
-      ],
-      "metodos": [
-        "consultar_programacao_financeira",
-        "consultar_nota_empenho",
-        "get_access_token",
-        "consultar_nota_credito"
-      ],
-      "total_metodos": 4,
-      "descricao": ""
-    },
-    {
-      "sistema": "siape",
-      "arquivo": "airflow_lappis/plugins/cliente_siape.py",
-      "classes": [
-        "ClienteSiape"
-      ],
-      "metodos": [
-        "render_xml",
-        "enviar_soap",
-        "call",
-        "parse_xml_to_dict",
-        "parse_xml_to_list",
-        "parse_afastamento_historico",
-        "parse_dependentes",
-        "parse_pensoes_instituidas",
-        "parse_dado_funcional"
-      ],
-      "total_metodos": 9,
-      "descricao": ""
-    },
-    {
-      "sistema": "siorg",
-      "arquivo": "airflow_lappis/plugins/cliente_siorg.py",
-      "classes": [
-        "ClienteSiorg"
-      ],
-      "metodos": [
-        "get_estrutura_organizacional_resumida",
-        "get_estrutura_organizacional_cargos",
-        "get_cargos_funcao"
-      ],
-      "total_metodos": 3,
-      "descricao": ""
-    },
-    {
-      "sistema": "sqlserver",
-      "arquivo": "airflow_lappis/plugins/cliente_sqlserver.py",
-      "classes": [
-        "ClientSQLServerDB"
-      ],
-      "metodos": [
-        "fetch_table_all"
-      ],
-      "total_metodos": 1,
-      "descricao": ""
-    },
-    {
-      "sistema": "ted",
-      "arquivo": "airflow_lappis/plugins/cliente_ted.py",
-      "classes": [
-        "ClienteTed"
-      ],
-      "metodos": [
-        "get_ted_by_programa_beneficiario",
-        "get_programa_by_id_programa",
-        "get_planos_acao_by_id_programa",
-        "get_programas_by_sigla_unidade_descentralizadora",
-        "get_notas_de_credito_by_id_plano_acao",
-        "get_programacao_financeira_by_id_plano_acao",
-        "get_todos_programas",
-        "get_all_programas"
-      ],
-      "total_metodos": 8,
-      "descricao": ""
-    },
-    {
-      "sistema": "transferegov_emendas",
-      "arquivo": "airflow_lappis/plugins/cliente_transferegov_emendas.py",
-      "classes": [
-        "ClienteTransfereGov"
-      ],
-      "metodos": [
-        "get_programas_especiais",
-        "get_all_programas_especiais",
-        "get_planos_acao_especiais_by_programa",
-        "get_all_planos_acao_especiais_by_programa",
-        "get_executores_especiais",
-        "get_all_executores_especiais",
-        "get_empenhos_especiais_by_plano_acao",
-        "get_empenhos_especiais",
-        "get_all_empenhos_especiais",
-        "get_all_empenhos_especiais_by_plano_acao",
-        "get_relatorio_gestao_especial",
-        "get_all_relatorio_gestao_especial",
-        "get_documentos_habeis_especiais",
-        "get_all_documentos_habeis_especiais",
-        "get_documentos_habeis_especiais_by_empenho",
-        "get_all_documentos_habeis_especiais_by_empenho",
-        "get_metas_especiais",
-        "get_all_metas_especiais",
-        "get_finalidades_especiais",
-        "get_all_finalidades_especiais",
-        "get_ordens_bancarias_especiais",
-        "get_all_ordens_bancarias_especiais",
-        "get_relatorio_gestao_novo_especial",
-        "get_all_relatorios_gestao_novo_especial",
-        "get_plano_trabalho_especial",
-        "get_all_plano_trabalho_especial",
-        "get_historico_pagamentos_especiais",
-        "get_all_historico_pagamentos_especiais"
-      ],
-      "total_metodos": 28,
+      "total_metodos": 6,
       "descricao": ""
     }
   ]

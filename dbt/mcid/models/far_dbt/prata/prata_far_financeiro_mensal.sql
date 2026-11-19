@@ -7,7 +7,7 @@ with
     financeiro_raw as (
         select
             -- Identificação (APF no financeiro é 6 dígitos, normalizar para 8)
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
 
             -- Tipo de movimento (1=liberação obra, 5=INCC/ajuste, etc.)
             {{ parse_int("co_tipo_movimento") }} as co_tipo_movimento,
@@ -25,19 +25,16 @@ with
             {{ parse_financial_value("vr_pago_obra_empreendimento") }} as vr_pago_obra,
             {{ parse_financial_value("vr_pago_terreno") }} as vr_pago_terreno,
             {{ parse_financial_value("vr_pago_pts") }} as vr_pago_trabalho_social,
-            {{ parse_financial_value("vr_pago_equipamentos_publicos") }}
-            as vr_pago_equipamentos,
+            {{ parse_financial_value("vr_pago_equipamentos_publicos") }} as vr_pago_equipamentos,
             {{ parse_financial_value("vr_pago_aporte_suplementacao") }} as vr_pago_aporte,
-            {{ parse_financial_value("vr_pago_despesas_manutencao") }}
-            as vr_pago_manutencao,
+            {{ parse_financial_value("vr_pago_despesas_manutencao") }} as vr_pago_manutencao,
             {{ parse_financial_value("vr_pago_despesas_incc") }} as vr_pago_incc,
-            {{ parse_financial_value("vr_pago_cartorios_legalizacao") }}
-            as vr_pago_legalizacao,
+            {{ parse_financial_value("vr_pago_cartorios_legalizacao") }} as vr_pago_legalizacao,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
-            {{ target.schema }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao,
-            {{ target.schema }}.parse_date_br(dt_remessa) as dt_remessa,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_remessa) as dt_remessa,
 
             -- Identificador do registro
             nullif(trim(no_identificador), '') as identificador,

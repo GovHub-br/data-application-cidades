@@ -7,13 +7,9 @@
         case
             when {{ col }} is null
             then null
-            when
-                trim(cast({{ col }} as varchar))
-                in ('', 'None', 'nan', 'NaN', 'null', 'NULL')
+            when trim(cast({{ col }} as varchar)) in ('', 'None', 'nan', 'NaN', 'null', 'NULL')
             then null
-            when
-                cast({{ col }} as varchar) like '%,%'
-                and cast({{ col }} as varchar) like '%.%'
+            when cast({{ col }} as varchar) like '%,%' and cast({{ col }} as varchar) like '%.%'
             then replace(replace(cast({{ col }} as varchar), '.', ''), ',', '.')
             when cast({{ col }} as varchar) like '%,%'
             then replace(cast({{ col }} as varchar), ',', '.')
@@ -49,9 +45,7 @@
 -- (contratacao/entrega), que tem outra faixa valida.
 {% macro hist_snapshot_date_plausivel(date_expr) -%}
     case
-        when
-            ({{ date_expr }})
-            between date '2007-01-01' and (current_date + interval '1' year)
+        when ({{ date_expr }}) between date '2007-01-01' and (current_date + interval '1' year)
         then ({{ date_expr }})
     end
 {%- endmacro %}
@@ -72,19 +66,15 @@
                     ~ " as varchar)), ''), 'None') as date)"
                 ) }},
                 try_strptime(
-                    regexp_extract({{ fn }}, '(20[0-2]\d)(0[1-9]|1[0-2])[0-3]\d', 0),
-                    '%Y%m%d'
+                    regexp_extract({{ fn }}, '(20[0-2]\d)(0[1-9]|1[0-2])[0-3]\d', 0), '%Y%m%d'
                 ),
                 try_strptime(
-                    regexp_extract({{ fn }}, '[0-3]\d(0[1-9]|1[0-2])(20[0-2]\d)', 0),
-                    '%d%m%Y'
+                    regexp_extract({{ fn }}, '[0-3]\d(0[1-9]|1[0-2])(20[0-2]\d)', 0), '%d%m%Y'
                 ),
                 try_strptime(
                     nullif(
                         regexp_extract(
-                            regexp_replace(
-                                {{ fn }}, '(20[0-2]\d)[_-](0[1-9]|1[0-2])', '\1\2'
-                            ),
+                            regexp_replace({{ fn }}, '(20[0-2]\d)[_-](0[1-9]|1[0-2])', '\1\2'),
                             '20[0-2]\d(?:0[1-9]|1[0-2])',
                             0
                         ),

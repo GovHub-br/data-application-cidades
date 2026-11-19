@@ -1,0 +1,99 @@
+dataset_id,schema,table_name,dataset_front,sample_term,minio_object_name_match
+32,empreendimento_far,ficha_empreendimento,far,63269705,False
+32,empreendimento_far,ficha_empreendimento,far,RESIDENCIAL PARQUE IGARASSU I,False
+32,empreendimento_far,ficha_empreendimento,far,Igarassu,False
+32,empreendimento_far,ficha_empreendimento,far,63234766,False
+32,empreendimento_far,ficha_empreendimento,far,RESIDENCIAL DOS IPES II,False
+32,empreendimento_far,ficha_empreendimento,far,Corumbá,False
+32,empreendimento_far,ficha_empreendimento,far,63006745,False
+32,empreendimento_far,ficha_empreendimento,far,RESIDENCIAL SIQUEIRA I,False
+32,empreendimento_far,ficha_empreendimento,far,Maracanaú,False
+32,empreendimento_far,ficha_empreendimento,far,Não informada,False
+34,empreendimento_far,panorama_estadual,far,ACRE,False
+34,empreendimento_far,panorama_estadual,far,ALAGOAS,False
+34,empreendimento_far,panorama_estadual,far,AMAZONAS,False
+34,empreendimento_far,panorama_estadual,far,AMAPÁ,False
+35,empreendimento_far,mapa_nacional,far,Nordeste,False
+35,empreendimento_far,mapa_nacional,far,Amazonas,False
+35,empreendimento_far,mapa_nacional,far,Distrito Federal,False
+35,empreendimento_far,mapa_nacional,far,Centro-Oeste,False
+35,empreendimento_far,mapa_nacional,far,Espírito Santo,False
+80,empreendimento_far,execucao_fisica_financeira_chart,far,61457336,False
+80,empreendimento_far,execucao_fisica_financeira_chart,far,61457336 - Jaguariúna/SP - RESIDENCIAL POR DO SOL,False
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2024-09-01,False
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2025-02-01,False
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2025-04-01,False
+80,empreendimento_far,execucao_fisica_financeira_chart,far,2025-06-01,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,63511208,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,RIO BRANCO I,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,RIO BRANCO,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,ASS DE MORADORES DO ACAMPAMENTO ESPERANCA DE UM NOVO MILENIO,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,07367387000168,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,63511426,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,NOSSA SENHORA DAS BROTAS I,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,ATALAIA,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,COOPERATIVA HABITACIONAL DA CONSTRUCAO CIVIL,False
+82,entidades_fds,fds_ficha_empreendimento,entidades,02491661000192,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,63512993,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,BOM JESUS DA LAPA,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,ASSOCIACAO SOLIDARIA UNIDAS,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,04113405000197,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,63513353,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,CANDIBA,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,ASSOCIACAO DOS AMIGOS DO MUNICIPIO DE CANDIBA,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,07616466000165,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,63514378,False
+84,entidades_fds,fds_evolucao_financeira_chart,entidades,IGAPORÃ,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,02443448,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,1681 - CAPRICHANDO A MORADA II,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,Presidente Tancredo Neves,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,13070949000100,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,01420205,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,964 - CIST - AVELINO LOPES,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,Avelino Lopes,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,6553572000184,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,02176499,False
+86,empreendimento_rural,ficha_empreendimento_rural,rural,1702 - PA SEBASTIAO DA MAIA -,False
+87,empreendimento_rural,panorama_estadual_rural,rural,RONDÔNIA,False
+87,empreendimento_rural,panorama_estadual_rural,rural,ACRE,False
+87,empreendimento_rural,panorama_estadual_rural,rural,AMAZONAS,False
+87,empreendimento_rural,panorama_estadual_rural,rural,RORAIMA,False
+87,empreendimento_rural,panorama_estadual_rural,rural,PARÁ,False
+87,empreendimento_rural,panorama_estadual_rural,rural,AMAPÁ,False
+87,empreendimento_rural,panorama_estadual_rural,rural,TOCANTINS,False
+87,empreendimento_rural,panorama_estadual_rural,rural,MARANHÃO,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29101380,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29101380 - São Francisco do Guaporé/RO - MORAR E VIVER BEM SAO FRANCISCO DO G,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2011-12-01,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2012-03-01,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2012-08-01,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2012-11-01,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29371954,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,29371954 - São Jorge do Ivaí/PR - HABITACAO RURAL - SAO JORGE DO IVAI,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2010-11-01,False
+88,empreendimento_rural,execucao_fisica_financeira_chart_rural,rural,2011-02-01,False
+89,empreendimento_rural,mapa_nacional_rural,rural,Nordeste,False
+89,empreendimento_rural,mapa_nacional_rural,rural,Amazonas,False
+89,empreendimento_rural,mapa_nacional_rural,rural,Distrito Federal,False
+89,empreendimento_rural,mapa_nacional_rural,rural,Centro-Oeste,False
+89,empreendimento_rural,mapa_nacional_rural,rural,Espírito Santo,False
+90,empreendimento_rural,perfil_beneficiarios,rural,63733539,False
+90,empreendimento_rural,perfil_beneficiarios,rural,SAO BRAS,False
+90,empreendimento_rural,perfil_beneficiarios,rural,São Brás,False
+90,empreendimento_rural,perfil_beneficiarios,rural,NOVO MCMV RURAL,False
+90,empreendimento_rural,perfil_beneficiarios,rural,63731717,False
+90,empreendimento_rural,perfil_beneficiarios,rural,IGREJA NOVA,False
+90,empreendimento_rural,perfil_beneficiarios,rural,Igreja Nova,False
+90,empreendimento_rural,perfil_beneficiarios,rural,63733206,False
+90,empreendimento_rural,perfil_beneficiarios,rural,PORTO COLEGIO,False
+90,empreendimento_rural,perfil_beneficiarios,rural,Porto Real do Colégio,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,02443448,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,1681 - CAPRICHANDO A MORADA II,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,Presidente Tancredo Neves,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,PNHR (HISTÓRICO),False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,01420205,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,964 - CIST - AVELINO LOPES,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,Avelino Lopes,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,02176499,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,1702 - PA SEBASTIAO DA MAIA -,False
+91,empreendimento_rural,infraestrutura_agua_saneamento,rural,Querência do Norte,False

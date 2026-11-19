@@ -9,7 +9,8 @@
 -- dt_referencia mais recente. FAR/Rural: fase nula -> so dt_referencia (inalterado).
 -- Consolidado apenas (filtravel por frente_mcmv) — nao ha versao por frente.
 --
--- Uniao direta das 3 silvers por frente (FAR/FDS/Rural) — antes lia de um helper consolidado, aposentado na convencao 2026-09-04.
+-- Uniao direta das 3 silvers por frente (FAR/FDS/Rural) — antes lia de um helper consolidado,
+-- aposentado na convencao 2026-09-04.
 -- Hoje cada frente materializa como prata_<frente>_historico_empreendimento no
 -- schema `prata`.
 --
@@ -21,9 +22,9 @@
 -- dim_empreendimento_arm sobre as bronzes INT0XX + SNH, dedup para 1 linha/apf
 -- e depois 1 linha/(frente, codigo_empreendimento). `dt_dim` NAO migra (a linha
 -- ja expoe dt_silver / o gold ja e um retrato corrente).
---   GOTCHA: no_entidade_organizadora / nu_cnpj_entidade so existem em Rural
---   (INT057/INT065 ~86%); INT059/FDS nao traz a coluna. Os gps_* do INT059 sao
---   0% reais — a coordenada decimal vem do latitude_do_imovel/longitude do SNH.
+-- GOTCHA: no_entidade_organizadora / nu_cnpj_entidade so existem em Rural
+-- (INT057/INT065 ~86%); INT059/FDS nao traz a coluna. Os gps_* do INT059 sao
+-- 0% reais — a coordenada decimal vem do latitude_do_imovel/longitude do SNH.
 {% set int040 = ref('bronze_sftp_empreendimento_int040') %}
 {% set int054 = ref('bronze_sftp_empreendimento_int054') %}
 {% set int057 = ref('bronze_sftp_empreendimento_int057') %}
@@ -57,10 +58,14 @@ with
             row_number() over (
                 partition by frente_mcmv, codigo_empreendimento
                 order by
-                    case fase_empreendimento
-                        when 'Desligamento' then 0
-                        when 'Obra' then 1
-                        when 'Projeto' then 2
+                    case
+                        fase_empreendimento
+                        when 'Desligamento'
+                        then 0
+                        when 'Obra'
+                        then 1
+                        when 'Projeto'
+                        then 2
                         else 3
                     end,
                     dt_referencia desc
@@ -92,8 +97,8 @@ with
         union all by name
         {{ dim_empreendimento_arm(int065) }}
         {% for f in snh_familias %}
-        union all by name
-        {{ dim_empreendimento_arm(ref(f.modelo)) }}
+            union all by name
+            {{ dim_empreendimento_arm(ref(f.modelo)) }}
         {% endfor %}
     ),
 
@@ -101,19 +106,31 @@ with
         select
             apf,
             max(snap_date) as attr_snap_date,
-            max(no_entidade_organizadora) filter (where no_entidade_organizadora is not null) as no_entidade_organizadora,
+            max(no_entidade_organizadora) filter (
+                where no_entidade_organizadora is not null
+            ) as no_entidade_organizadora,
             max(nu_cnpj_entidade) filter (where nu_cnpj_entidade is not null) as nu_cnpj_entidade,
             max(dsc_tipologia) filter (where dsc_tipologia is not null) as dsc_tipologia,
-            max(tipo_de_unidade_do_empreendimento) filter (where tipo_de_unidade_do_empreendimento is not null) as tipo_de_unidade_do_empreendimento,
-            max(regime_construcao) filter (where regime_construcao is not null) as regime_construcao,
-            max(cod_regime_execucao) filter (where cod_regime_execucao is not null) as cod_regime_execucao,
-            max(modalidade_requalificacao) filter (where modalidade_requalificacao is not null) as modalidade_requalificacao,
+            max(tipo_de_unidade_do_empreendimento) filter (
+                where tipo_de_unidade_do_empreendimento is not null
+            ) as tipo_de_unidade_do_empreendimento,
+            max(regime_construcao) filter (
+                where regime_construcao is not null
+            ) as regime_construcao,
+            max(cod_regime_execucao) filter (
+                where cod_regime_execucao is not null
+            ) as cod_regime_execucao,
+            max(modalidade_requalificacao) filter (
+                where modalidade_requalificacao is not null
+            ) as modalidade_requalificacao,
             arg_max(latitude, snap_date) filter (where latitude is not null) as latitude,
             arg_max(longitude, snap_date) filter (where longitude is not null) as longitude,
             max(bairro) filter (where bairro is not null) as bairro,
             max(cep) filter (where cep is not null) as cep,
             max(logradouro) filter (where logradouro is not null) as logradouro,
-            max(nu_apf_vinculacao) filter (where nu_apf_vinculacao is not null) as nu_apf_vinculacao,
+            max(nu_apf_vinculacao) filter (
+                where nu_apf_vinculacao is not null
+            ) as nu_apf_vinculacao,
             max(portaria_selecao) filter (where portaria_selecao is not null) as portaria_selecao
         from dim_attrs_raw
         group by 1
@@ -237,7 +254,8 @@ select
     dj.nu_apf_vinculacao,
     dj.portaria_selecao
 from ultimo u
-left join dim_juntado dj
+left join
+    dim_juntado dj
     on u.frente_mcmv = dj.frente_mcmv
     and u.codigo_empreendimento = dj.codigo_empreendimento
     and dj.rn = 1

@@ -1,0 +1,698 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sftp_gefus
+name: SFTP · GEFUS
+version: 0.1.0
+status: draft
+description:
+  purpose: Remessas da CAIXA (GEFUS) no SFTP do MCid.
+team:
+- username: CAIXA · GEFUS
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: far_contratos_pf_bb
+  physicalName: far_contratos_pf_bb
+  description: 'INT021: carteira de contratos PF do FAR operados pelo Banco do Brasil. Retrato completo
+    por remessa; a bronze lê só a mais recente.'
+  customProperties:
+  - property: path
+    value: staging/sftp/fabrica/GEFUS/INT021_MinisterioCidades_FAR_BB_PF_*.parquet
+  - property: file_pattern
+    value: INT021_MinisterioCidades_FAR_BB_PF_\d{8}_CONTINGENCIA\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: minio_transform_dag
+  - property: dbt_tables
+    value:
+    - far_contratos_pf_bb
+  properties:
+  - name: dt_movimento
+    logicalType: string
+  - name: nu_apf
+    logicalType: string
+  - name: nu_contrato
+    logicalType: string
+  - name: no_mutuario
+    logicalType: string
+    classification: restricted
+  - name: nu_cpf_cgc_mutuario
+    logicalType: string
+    classification: restricted
+  - name: dt_assinatura
+    logicalType: string
+  - name: co_produto_siico
+    logicalType: string
+  - name: vr_encargo_total_atraso
+    logicalType: string
+  - name: qt_dias_atraso
+    logicalType: string
+  - name: pz_amortizacao
+    logicalType: string
+  - name: nu_prestacao
+    logicalType: string
+  - name: pz_remanescente
+    logicalType: string
+  - name: sg_tipo_logradouro_imovel
+    logicalType: string
+    classification: restricted
+  - name: no_logradouro_imovel
+    logicalType: string
+    classification: restricted
+  - name: nu_imovel
+    logicalType: string
+  - name: no_complemento_imovel
+    logicalType: string
+    classification: restricted
+  - name: no_bairro_imovel
+    logicalType: string
+    classification: restricted
+  - name: no_municipio_imovel
+    logicalType: string
+  - name: sg_uf_imovel
+    logicalType: string
+  - name: co_cep_imovel
+    logicalType: string
+    classification: restricted
+  - name: vr_renda_familiar_comprovada
+    logicalType: string
+  - name: vr_garantia_inicial
+    logicalType: string
+  - name: vr_subsidio_na_concesssao
+    logicalType: string
+  - name: dt_nascimento
+    logicalType: string
+    classification: restricted
+  - name: co_sexo
+    logicalType: string
+  - name: qt_coobrigados
+    logicalType: string
+  - name: de_estado_civil
+    logicalType: string
+  - name: dsc_tipo_contrato
+    logicalType: string
+  - name: dt_termino_contrato
+    logicalType: string
+  - name: dsc_situacao_ctr
+    logicalType: string
+  - name: sem_registro
+    logicalType: string
+  - name: nu_empreendimento
+    logicalType: string
+  - name: vr_parcela_mensal_beneficiario
+    logicalType: string
+  - name: cod_municipio_ibge
+    logicalType: string
+  - name: origem
+    logicalType: string
+  - name: co_agente_financeiro
+    logicalType: string
+- name: far_contratos_pf_caixa
+  physicalName: far_contratos_pf_caixa
+  description: 'INT039: carteira de contratos PF do FAR operados pela CAIXA, de 2009 em diante. Retrato
+    completo por remessa; a bronze lê só a mais recente.'
+  customProperties:
+  - property: path
+    value: staging/sftp/fabrica/GEFUS/INT039_MinisterioCidades_FAR_CAIXA_PF_*.parquet
+  - property: file_pattern
+    value: INT039_MinisterioCidades_FAR_CAIXA_PF_\d{8}_CONTINGENCIA\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: minio_transform_dag
+  - property: dbt_tables
+    value:
+    - far_contratos_pf_caixa
+  properties:
+  - name: dt_movimento
+    logicalType: string
+  - name: nu_apf
+    logicalType: string
+  - name: nu_contrato
+    logicalType: string
+  - name: no_mutuario
+    logicalType: string
+    classification: restricted
+  - name: nu_cpf_cgc_mutuario
+    logicalType: string
+    classification: restricted
+  - name: dt_assinatura
+    logicalType: string
+  - name: co_produto_siico
+    logicalType: string
+  - name: vr_encargo_total_atraso
+    logicalType: string
+  - name: qt_dias_atraso
+    logicalType: string
+  - name: pz_amortizacao
+    logicalType: string
+  - name: pz_decorrido
+    logicalType: string
+  - name: pz_remanescente
+    logicalType: string
+  - name: sg_tipo_logradouro_imovel
+    logicalType: string
+    classification: restricted
+  - name: no_logradouro_imovel
+    logicalType: string
+    classification: restricted
+  - name: nu_imovel
+    logicalType: string
+  - name: no_complemento_imovel
+    logicalType: string
+    classification: restricted
+  - name: no_bairro_imovel
+    logicalType: string
+    classification: restricted
+  - name: no_municipio_imovel
+    logicalType: string
+  - name: sg_uf_imovel
+    logicalType: string
+  - name: co_cep_imovel
+    logicalType: string
+    classification: restricted
+  - name: vr_renda_familiar_comprovada
+    logicalType: string
+  - name: vr_garantia_inicial
+    logicalType: string
+  - name: vr_subsidio_na_concesssao
+    logicalType: string
+  - name: dt_nascimento
+    logicalType: string
+    classification: restricted
+  - name: co_sexo
+    logicalType: string
+  - name: qt_coobrigados
+    logicalType: string
+  - name: de_estado_civil
+    logicalType: string
+  - name: dsc_tipo_contrato
+    logicalType: string
+  - name: dt_termino_contrato
+    logicalType: string
+  - name: dsc_situacao_ctr
+    logicalType: string
+  - name: sem_registro
+    logicalType: string
+  - name: qt_prestacoes_atraso
+    logicalType: string
+  - name: vr_saldo_devedor_atual
+    logicalType: string
+  - name: vr_prestacao
+    logicalType: string
+  - name: co_municipio_ibge_completo
+    logicalType: string
+  - name: origem
+    logicalType: string
+  - name: co_agente_financeiro
+    logicalType: string
+- name: far_contratos_pf_novo
+  physicalName: far_contratos_pf_novo
+  description: 'MONT_CONT_PF_FAR: monitoramento dos contratos das famílias do Novo MCMV FAR (layout 015).
+    Cada remessa é retrato completo da carteira; a bronze lê só a mais recente. O dicionário vem no MONT_CONT_PF_FAR_LAYOUT.'
+  customProperties:
+  - property: path
+    value: staging/sftp/fabrica/GEFUS/MONT_CONT_PF_FAR_2*.parquet
+  - property: file_pattern
+    value: MONT_CONT_PF_FAR_\d{8}\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: minio_transform_dag
+  - property: dbt_tables
+    value:
+    - far_contratos_pf_novo
+  properties:
+  - name: co_tipo_registro
+    logicalType: string
+  - name: dh_movimento
+    logicalType: string
+  - name: nu_apf
+    logicalType: string
+  - name: nu_uh
+    logicalType: string
+  - name: co_municipio_ibge
+    logicalType: string
+  - name: no_logradouro
+    logicalType: string
+    classification: restricted
+  - name: co_cep
+    logicalType: string
+    classification: restricted
+  - name: sg_uf
+    logicalType: string
+  - name: no_municipio
+    logicalType: string
+  - name: no_beneficiario
+    logicalType: string
+    classification: restricted
+  - name: no_genero
+    logicalType: string
+  - name: dt_nascimento
+    logicalType: string
+    classification: restricted
+  - name: no_estado_civil
+    logicalType: string
+  - name: nu_cpf_beneficiario
+    logicalType: string
+    classification: restricted
+  - name: nu_nis
+    logicalType: string
+    classification: restricted
+  - name: no_benef_coob
+    logicalType: string
+  - name: no_est_civil_coob
+    logicalType: string
+  - name: nu_cpf_benef_coob
+    logicalType: string
+    classification: restricted
+  - name: co_gen_benef_coob
+    logicalType: string
+  - name: dt_nasc_coob
+    logicalType: string
+    classification: restricted
+  - name: ic_benef_idoso
+    logicalType: string
+  - name: ic_benef_coob_idoso
+    logicalType: string
+  - name: ic_memb_fam_idoso
+    logicalType: string
+  - name: ic_benef_sit_rua
+    logicalType: string
+  - name: ic_benef_pcd
+    logicalType: string
+    classification: restricted
+  - name: ic_benef_coob_pcd
+    logicalType: string
+    classification: restricted
+  - name: ic_memb_fam_pcd
+    logicalType: string
+    classification: restricted
+  - name: pc_renda_benef_principal
+    logicalType: string
+  - name: pc_renda_benef_coob
+    logicalType: string
+  - name: vr_renda_tit_cont
+    logicalType: string
+  - name: vr_renda_coob
+    logicalType: string
+  - name: vr_renda_comprovada
+    logicalType: string
+  - name: qt_memb_familia
+    logicalType: string
+  - name: ic_mulher_titular
+    logicalType: string
+  - name: co_demanda_beneficiario
+    logicalType: string
+  - name: co_tipo_instrum_contratual
+    logicalType: string
+  - name: co_situacao_contrato
+    logicalType: string
+  - name: nu_contrato
+    logicalType: string
+  - name: dt_assinatura_contrato
+    logicalType: string
+  - name: dt_registro_contrato
+    logicalType: string
+  - name: nu_registro_contrato
+    logicalType: string
+  - name: vr_emolum_contrato
+    logicalType: string
+  - name: ic_contrato_inadimp
+    logicalType: string
+  - name: dt_liquidacao
+    logicalType: string
+  - name: ic_divida_prescrita
+    logicalType: string
+  - name: ic_acao_judicial
+    logicalType: string
+  - name: dt_prescricao_contrato
+    logicalType: string
+  - name: vr_divida_prescrita
+    logicalType: string
+  - name: dt_vigencia_contrato
+    logicalType: string
+  - name: pz_decorrido
+    logicalType: string
+  - name: pz_reman_financ
+    logicalType: string
+  - name: pz_amortiz_financ
+    logicalType: string
+  - name: vr_amortiz_recurso_fgts
+    logicalType: string
+  - name: vr_total_amortizado
+    logicalType: string
+  - name: ic_sinistro_mip
+    logicalType: string
+  - name: dt_sinistro_mip
+    logicalType: string
+  - name: ic_liquidacao_mip
+    logicalType: string
+  - name: vr_sinistro_mip
+    logicalType: string
+  - name: ic_sinistro_dfi
+    logicalType: string
+  - name: dt_sinistro_dfi
+    logicalType: string
+  - name: co_sinistro_dfi
+    logicalType: string
+  - name: qt_sinistro_dfi
+    logicalType: string
+  - name: ic_liquidacao_dfi
+    logicalType: string
+  - name: vr_sinistro_dfi
+    logicalType: string
+  - name: vr_garantia
+    logicalType: string
+  - name: vr_imovel
+    logicalType: string
+  - name: vr_financiamento
+    logicalType: string
+  - name: pc_taxa
+    logicalType: string
+  - name: vr_subsidio_far
+    logicalType: string
+  - name: vr_prestacao_com_subvencao
+    logicalType: string
+  - name: qt_total_prestacao_paga
+    logicalType: string
+  - name: qt_prestacoes_atrasadas
+    logicalType: string
+  - name: qt_dias_atraso
+    logicalType: string
+  - name: vr_prestacao
+    logicalType: string
+  - name: vr_prestacao_paga
+    logicalType: string
+  - name: vr_subsidio_mensal_far
+    logicalType: string
+  - name: vr_quitacao_subsidio
+    logicalType: string
+  - name: vr_prestacao_atrasada
+    logicalType: string
+  - name: vr_prestacao_atrasada_juros
+    logicalType: string
+  - name: vr_atual_saldo_devedor
+    logicalType: string
+  - name: vr_juros_prest_atrasada
+    logicalType: string
+  - name: dt_reajuste_prestacao
+    logicalType: string
+  - name: dt_primeira_prestacao
+    logicalType: string
+  - name: dt_primeira_prest_atraso
+    logicalType: string
+  - name: dt_ultima_prestacao
+    logicalType: string
+  - name: dt_ultima_prest_paga
+    logicalType: string
+  - name: ic_convenio_prest_pag_integral
+    logicalType: string
+  - name: ic_convenio_prest_pag_parcial
+    logicalType: string
+  - name: ic_convenio_prest_inadimplencia
+    logicalType: string
+  - name: vr_convenio_integral
+    logicalType: string
+  - name: vr_convenio_parcial
+    logicalType: string
+  - name: vr_convenio_inad
+    logicalType: string
+  - name: pc_correcao_saldo_devedor
+    logicalType: string
+  - name: vr_prestacoes_a_vencer
+    logicalType: string
+  - name: vr_saldo_devedor_sem_subvencao
+    logicalType: string
+  - name: vr_saldo_devedor_com_subvencao
+    logicalType: string
+  - name: vr_liquidado_adjudicacao
+    logicalType: string
+  - name: co_descump_contratual
+    logicalType: string
+  - name: ic_imovel_retomado
+    logicalType: string
+  - name: dt_retomada_imovel
+    logicalType: string
+  - name: vr_imovel_retomado
+    logicalType: string
+  - name: vr_despesas_adjudicacao
+    logicalType: string
+  - name: vr_resultado_adjudicacao
+    logicalType: string
+- name: gefus_fundo_social
+  physicalName: gefus_fundo_social
+  description: Registros operacionais do Fundo Social destinados à agregação de indicadores habitacionais.
+  customProperties:
+  - property: path
+    value: staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet
+  - property: file_pattern
+    value: PMCMV_FAIXA3_MCID_\d{4}_\d{2}_\d{2}\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - gefus_fundo_social
+  properties:
+  - name: dt_referencia
+    logicalType: string
+  - name: dt_remessa
+    logicalType: string
+  - name: nu_contrato_repasse
+    logicalType: string
+  - name: nu_contrato_passivo
+    logicalType: string
+  - name: nu_contrato
+    logicalType: string
+  - name: no_mutuario
+    logicalType: string
+    classification: restricted
+  - name: dt_nascimento_mutuario
+    logicalType: string
+    classification: restricted
+  - name: sg_sexo
+    logicalType: string
+  - name: nu_cpf_cnpj_mutuario
+    logicalType: string
+    classification: restricted
+  - name: nu_pis
+    logicalType: string
+    classification: restricted
+  - name: vr_renda_familiar_comprovada
+    logicalType: string
+  - name: pc_renda_informal
+    logicalType: string
+  - name: ed_bairro_imovel_garantia
+    logicalType: string
+    classification: restricted
+  - name: sg_uf_imovel
+    logicalType: string
+  - name: no_municipio_imovel
+    logicalType: string
+  - name: ed_cep_imovel_garantia
+    logicalType: string
+    classification: restricted
+  - name: linha_apf
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: dt_evento
+    logicalType: string
+  - name: ano_orcamento
+    logicalType: string
+  - name: vr_avaliacao_terreno
+    logicalType: string
+  - name: vr_evento
+    logicalType: string
+  - name: vr_desconto_resolucao_460
+    logicalType: string
+  - name: vr_recurso_proprio
+    logicalType: string
+  - name: vr_fgts_utilizado
+    logicalType: string
+  - name: tipo_desemblso
+    logicalType: string
+  - name: pc_taxa_juros_nominal_inicial
+    logicalType: string
+  - name: nu_tipo_garantia
+    logicalType: string
+  - name: vr_garantia
+    logicalType: string
+  - name: situacao_garantia
+    logicalType: string
+  - name: pz_financiamento
+    logicalType: string
+  - name: no_sistema_amortizacao
+    logicalType: string
+  - name: vr_prestacao_inicial
+    logicalType: string
+  - name: vr_pagamento_amortizacao
+    logicalType: string
+  - name: vr_pagamento_juros
+    logicalType: string
+  - name: nu_unidade_operacional
+    logicalType: string
+  - name: nu_codigo_atu
+    logicalType: string
+  - name: nu_produto
+    logicalType: string
+  - name: tipo_imovel
+    logicalType: string
+  - name: faixa_renda
+    logicalType: string
+  - name: ic_cotista
+    logicalType: string
+  - name: nu_legislacao
+    logicalType: string
+  - name: vr_investimento
+    logicalType: string
+  - name: co_municipio_ibge
+    logicalType: string
+  - name: co_classificacao_imovel
+    logicalType: string
+  - name: nu_area_imovel
+    logicalType: string
+- name: reforma_contratos
+  physicalName: reforma_contratos
+  description: Snapshots completos de contratos do Reforma Casa Brasil recebidos pelo SFTP/GEFUS. A Bronze
+    seleciona somente o arquivo mais recente.
+  customProperties:
+  - property: path
+    value: staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
+  - property: file_pattern
+    value: PMCMV_REFORMAS_MCID_\d{4}_\d{2}_\d{2}\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: minio_transform_dag
+  - property: dbt_tables
+    value:
+    - reforma_contratos
+  properties:
+  - name: dt_referencia
+    logicalType: string
+  - name: dt_remessa
+    logicalType: string
+  - name: nu_contrato_repasse
+    logicalType: string
+  - name: nu_contrato_passivo
+    logicalType: string
+  - name: nu_contrato
+    logicalType: string
+  - name: no_mutuario
+    logicalType: string
+    classification: restricted
+  - name: dt_nascimento_mutuario
+    logicalType: string
+    classification: restricted
+  - name: sg_sexo
+    logicalType: string
+  - name: nu_cpf_cnpj_mutuario
+    logicalType: string
+    classification: restricted
+  - name: nu_pis
+    logicalType: string
+    classification: restricted
+  - name: vr_renda_familiar_comprovada
+    logicalType: string
+  - name: pc_renda_informal
+    logicalType: string
+  - name: no_endrco_crspndca
+    logicalType: string
+  - name: no_bairro_crspndca
+    logicalType: string
+    classification: restricted
+  - name: ed_bairro_imovel_garantia
+    logicalType: string
+    classification: restricted
+  - name: sg_uf_imovel
+    logicalType: string
+  - name: no_municipio_imovel
+    logicalType: string
+  - name: ed_cep_imovel_garantia
+    logicalType: string
+    classification: restricted
+  - name: linha_apf
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: dt_evento
+    logicalType: string
+  - name: ano_orcamento
+    logicalType: string
+  - name: vr_avaliacao_terreno
+    logicalType: string
+  - name: vr_evento
+    logicalType: string
+  - name: vr_desconto_resolucao_460
+    logicalType: string
+  - name: vr_recurso_proprio
+    logicalType: string
+  - name: vr_fgts_utilizado
+    logicalType: string
+  - name: tipo_desembolso
+    logicalType: string
+  - name: pc_taxa_juros_nominal_inicial
+    logicalType: string
+  - name: nu_tipo_garantia
+    logicalType: string
+  - name: vr_garantia
+    logicalType: string
+  - name: situacao_garantia
+    logicalType: string
+  - name: pz_financiamento
+    logicalType: string
+  - name: no_sistema_amortizacao
+    logicalType: string
+  - name: nu_dias_atraso
+    logicalType: string
+  - name: vr_prestacao_inicial
+    logicalType: string
+  - name: vr_pagamento_amortizacao
+    logicalType: string
+  - name: vr_pagamento_juros
+    logicalType: string
+  - name: nu_unidade_operacional
+    logicalType: string
+  - name: nu_codigo_atu
+    logicalType: string
+  - name: nu_produto
+    logicalType: string
+  - name: tipo_imovel
+    logicalType: string
+  - name: faixa_renda
+    logicalType: string
+  - name: ic_cotista
+    logicalType: string
+  - name: nu_legislacao
+    logicalType: string
+  - name: vr_investimento
+    logicalType: string
+  - name: co_municipio_ibge
+    logicalType: string
+  - name: co_classificacao_imovel
+    logicalType: string
+  - name: nu_area_imovel
+    logicalType: string
+  - name: cep_imovel
+    logicalType: string
+    classification: restricted
+  - name: co_municipio_ibge_completo
+    logicalType: string
+  - name: nu_ddd
+    logicalType: string
+  - name: nu_celular
+    logicalType: string
+  - name: de_melhoria_1
+    logicalType: string
+  - name: de_melhoria_2
+    logicalType: string
+  - name: de_melhoria_3
+    logicalType: string

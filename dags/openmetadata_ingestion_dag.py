@@ -17,27 +17,20 @@ coluna.
 from datetime import datetime, timedelta
 from typing import Any
 
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from schedule_loader import get_dynamic_schedule
 
 from openmetadata.config import (
     ALL_RECIPES,
     OPENMETADATA_GLOSSARY_PATH,
-    OPENMETADATA_REQUIREMENTS,
     OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH,
     RECIPE_PIPELINE,
     SEGREDOS_INGESTAO,
     SINCRONIZAR_RELACOES_SEMANTICAS,
 )
 
-#: Cache do virtualenv, compartilhado pelas tasks para não reinstalar 255
-#: pacotes a cada uma.
-VENV_CACHE = "/tmp/airflow_venvs"
 
-
-def _encadear(
-    glossario: Any, tarefas: dict, relacoes: Any | None, governanca: Any
-) -> None:
+def _encadear(glossario: Any, tarefas: dict, relacoes: Any | None, governanca: Any) -> None:
     """Liga as tasks na ordem em que uma depende da outra.
 
     Glossário antes das recipes, porque os FQNs que os `schema.yml` do dbt
@@ -66,7 +59,7 @@ def _encadear(
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("openmetadata_ingestion_dag"),
+    schedule=get_dynamic_schedule("openmetadata_ingestion_dag"),
     start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
@@ -82,15 +75,11 @@ def _encadear(
 def openmetadata_ingestion_dag() -> None:
     """Executa as recipes do OpenMetadata para o escopo do MCID."""
 
-    @task.virtualenv(
-        task_id="run_openmetadata_recipe_base",
-        requirements=OPENMETADATA_REQUIREMENTS,
-        # isolamento é o PONTO, não detalhe: o pacote exige SQLAlchemy 2
-        # e o Airflow 2.8.1 exige 1.4. Não há versão que conviva.
-        system_site_packages=False,
-        expect_airflow=False,
-        venv_cache_path=VENV_CACHE,
-    )
+    # O openmetadata-ingestion está na imagem (requirements.lock.txt), não num
+    # virtualenv: o conector do Airflow lê o banco de metadados pelo ORM do
+    # próprio Airflow, e aqui ele usa o da task, o mesmo que escreveu o banco.
+    # No venv, com o 3.2.2 do extra `airflow`, ele falhava no homolog.
+    @task(task_id="run_openmetadata_recipe_base")
     def run_openmetadata_recipe(
         recipe_path: str,
         command: str,
@@ -99,9 +88,6 @@ def openmetadata_ingestion_dag() -> None:
         dbt_project_dir: str = "",
     ) -> None:
         import os
-        import sys
-
-        sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
 
         from openmetadata.runner import (
             run_openmetadata_recipe as executar_recipe,
@@ -112,8 +98,7 @@ def openmetadata_ingestion_dag() -> None:
             valor = os.environ.get(nome_do_segredo)
             if not valor:
                 raise RuntimeError(
-                    f"'{nome_do_segredo}' não está no ambiente. "
-                    "Ver infra/env/.env.example."
+                    f"'{nome_do_segredo}' não está no ambiente. Ver infra/env/.env.example."
                 )
             resolvidos[marcador] = valor
 
@@ -124,21 +109,10 @@ def openmetadata_ingestion_dag() -> None:
             dbt_project_dir=dbt_project_dir,
         )
 
-    @task.virtualenv(
-        task_id="sync_mcid_glossary",
-        requirements=OPENMETADATA_REQUIREMENTS,
-        # isolamento é o PONTO, não detalhe: o pacote exige SQLAlchemy 2
-        # e o Airflow 2.8.1 exige 1.4. Não há versão que conviva.
-        system_site_packages=False,
-        expect_airflow=False,
-        venv_cache_path=VENV_CACHE,
-    )
+    @task(task_id="sync_mcid_glossary")
     def sync_mcid_glossary(glossary_definition_path: str) -> None:
         import logging
         import os
-        import sys
-
-        sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
 
         from openmetadata.glossary import sync_glossary
 
@@ -149,21 +123,10 @@ def openmetadata_ingestion_dag() -> None:
         )
         logging.info("Glossário MCID sincronizado: %s", resumo)
 
-    @task.virtualenv(
-        task_id="sync_mcid_semantic_relationships",
-        requirements=OPENMETADATA_REQUIREMENTS,
-        # isolamento é o PONTO, não detalhe: o pacote exige SQLAlchemy 2
-        # e o Airflow 2.8.1 exige 1.4. Não há versão que conviva.
-        system_site_packages=False,
-        expect_airflow=False,
-        venv_cache_path=VENV_CACHE,
-    )
+    @task(task_id="sync_mcid_semantic_relationships")
     def sync_mcid_semantic_relationships(catalog_path: str) -> None:
         import logging
         import os
-        import sys
-
-        sys.path.append(f"{os.environ['AIRFLOW_REPO_BASE']}/helpers")
 
         from openmetadata.semantic_relationships import sync_semantic_relationships
 
@@ -191,27 +154,34 @@ def openmetadata_ingestion_dag() -> None:
         de uma vez, em silêncio. Domínio, produto e etiqueta sobreviveram;
         certificação não.
 
-        Roda no ambiente do Airflow, não no virtualenv: o script usa só
-        `requests` e `yaml`, e precisa do `scripts/` montado no container.
+        O script usa só `requests` e `yaml`, e precisa do `scripts/` montado
+        no container.
         """
         import logging
         import os
         import subprocess
 
         caminho = f"{os.environ['AIRFLOW_REPO_BASE']}/scripts/governance"
-        resultado = subprocess.run(
-            ["python", f"{caminho}/sincronizar_governanca.py", "--confirmar"],
-            capture_output=True,
-            text=True,
-            check=False,
-            cwd=caminho,
-        )
-        logging.info("Governança reaplicada:\n%s", resultado.stdout[-4000:])
-        if resultado.returncode != 0:
-            raise RuntimeError(
-                "Falha ao reaplicar a governança. O catálogo pode ter ficado "
-                f"sem certificação:\n{resultado.stderr[-2000:]}"
+        for script, descricao in (
+            ("sincronizar_governanca.py", "governança das tabelas"),
+            ("sincronizar_lake.py", "lake e linhagem staging → Bronze"),
+        ):
+            resultado = subprocess.run(
+                ["python", f"{caminho}/{script}", "--confirmar"],
+                capture_output=True,
+                text=True,
+                check=False,
+                cwd=caminho,
             )
+            logging.info("%s:\n%s", descricao, resultado.stdout[-4000:])
+            if resultado.returncode != 0:
+                # O script relata as falhas no fim do STDOUT; o stderr só tem
+                # algo quando ele quebra. Sem o stdout, a exceção não dizia o
+                # que falhou.
+                raise RuntimeError(
+                    f"Falha ao sincronizar {descricao}:\n"
+                    f"{resultado.stdout[-1500:]}\n{resultado.stderr[-2000:]}"
+                )
 
     # O glossário vem ANTES das recipes: os FQNs que os `schema.yml` do dbt
     # referenciam em `meta.openmetadata.glossary` precisam existir para que a
@@ -221,9 +191,7 @@ def openmetadata_ingestion_dag() -> None:
     # encadeá-la deixaria uma task órfã na DAG, que o Airflow executa sem
     # dependência nenhuma — o oposto de desligar.
     relacoes = (
-        sync_mcid_semantic_relationships(
-            catalog_path=OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH
-        )
+        sync_mcid_semantic_relationships(catalog_path=OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH)
         if SINCRONIZAR_RELACOES_SEMANTICAS
         else None
     )

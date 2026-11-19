@@ -5,12 +5,7 @@
 with
     evolucao as (select * from {{ ref("prata_far_evolucao_financeira") }}),
 
-    -- distinct: a api_ibge_uf tem cada UF duplicada (54 linhas p/ 27 siglas) e o join
-    -- dobraria as linhas da série
-    ibge_uf as (
-        select distinct sigla, upper(nome) as estado
-        from {{ source("raw", "api_ibge_uf") }}
-    ),
+    ibge_uf as (select sigla, upper(nome) as estado from {{ ref('api_ibge_uf') }}),
 
     ficha as (
         select apf, nome_empreendimento, apf_municipio_empreendimento

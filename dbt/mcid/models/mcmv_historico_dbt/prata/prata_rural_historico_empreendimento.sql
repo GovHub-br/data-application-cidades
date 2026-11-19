@@ -56,8 +56,7 @@ with
             {{ parse_hist_bigint('qt_unidades_entregues') }} as quantidade_uh_entregues,
             {{ parse_hist_numeric('vr_investimento') }} as valor_contratado,
             {{ parse_hist_numeric('vr_liberado') }} as valor_desembolsado,
-            {{ parse_hist_double('pc_execucao_fisica_obra') }}
-            as percentual_execucao_fisica,
+            {{ parse_hist_double('pc_execucao_fisica_obra') }} as percentual_execucao_fisica,
             nullif(trim(no_situacao_obra), '')::text as status_operacional,
             {{ parse_hist_date('dt_contrato') }} as dt_contratacao,
             null::date as dt_inicio_obra,
@@ -74,8 +73,7 @@ with
             -- GEFUS grava dt_referencia no fim do mês; normaliza ao 1º do mês
             -- ANTES do enriquecido/dedup. Dia exato migra p/ dt_movimento.
             date_trunc('month', dt_referencia)::date as dt_referencia,
-            {{ parse_hist_date('coalesce(idt_movimento, dt_movimento)') }}
-            as dt_movimento,
+            {{ parse_hist_date('coalesce(idt_movimento, dt_movimento)') }} as dt_movimento,
             'sftp'::text as fonte_serie,
             fonte_interface::text as fonte_tabela,
             source_file,
@@ -131,14 +129,14 @@ with
     ),
 
     -- fase 2: bb_*_pnhr_* mensal (2014-10 → 2018-07) — único sinal de Rural pré-2019.
-{% for f in snh_familias %}
-    snh_rural_{{ f.nome | lower }} as (
-{{ prata_dhist_snh_arm(ref(f.modelo), 'Rural', 'PNHR Rural', 'RURAL') }}
-    ),
-{% endfor %}
+    {% for f in snh_familias %}
+        snh_rural_{{ f.nome | lower }} as (
+            {{ prata_dhist_snh_arm(ref(f.modelo), 'Rural', 'PNHR Rural', 'RURAL') }}
+        ),
+    {% endfor %}
     -- braço obra_mensal (change consolidar-schemas-historico-reloginho, D2/C2).
     obra_rural as (
-{{ historico_obra_mensal_rows(ref('bronze_shpt_obra_mensal_rural'), 'Rural', 'PNHR Rural') }}
+        {{ historico_obra_mensal_rows(ref('bronze_shpt_obra_mensal_rural'), 'Rural', 'PNHR Rural') }}
     ),
     unioned as (
         select *
@@ -147,9 +145,9 @@ with
         select *
         from rural_caixa
         {% for f in snh_familias %}
-        union all by name
-        select *
-        from snh_rural_{{ f.nome | lower }}
+            union all by name
+            select *
+            from snh_rural_{{ f.nome | lower }}
         {% endfor %}
         union all by name
         select *
@@ -169,9 +167,8 @@ with
             max(dt_entrega_uh) over grao as dt_entrega_uh_grao,
             max(dt_conclusao_obra) over grao as dt_conclusao_obra_grao,
             max(quantidade_uh_concluidas) over grao as quantidade_uh_concluidas_grao,
-            max(
-                case when dt_entrega_uh is not null then fonte_tabela end
-            ) over grao as fonte_entrega_uh_grao,
+            max(case when dt_entrega_uh is not null then fonte_tabela end) over grao
+            as fonte_entrega_uh_grao,
             -- Blocos A/C (change colunas-orfas-bronze-historico).
             max(sinal_retomada_bruto) over grao as sinal_retomada_bruto_grao,
             max(motivo_paralisacao_bruto) over grao as motivo_paralisacao_bruto_grao,
@@ -179,9 +176,8 @@ with
             max(dt_ultima_liberacao) over grao as dt_ultima_liberacao_grao,
             max(dt_primeira_entrega) over grao as dt_primeira_entrega_grao,
             max(dt_assinatura_projeto) over grao as dt_assinatura_projeto_grao,
-            max(
-                case when dt_primeira_entrega is not null then fonte_tabela end
-            ) over grao as fonte_primeira_entrega_grao
+            max(case when dt_primeira_entrega is not null then fonte_tabela end) over grao
+            as fonte_primeira_entrega_grao
         from unioned
         window grao as (partition by frente_mcmv, apf, dt_referencia)
     ),
@@ -221,167 +217,175 @@ with
             dr.regiao_nome,
             -- Bloco A (change colunas-orfas-bronze-historico).
             case
-                when coalesce(d.sinal_retomada_bruto, d.sinal_retomada_bruto_grao) is null then null
-                when dret.sinal_retomada is not null then dret.sinal_retomada
+                when coalesce(d.sinal_retomada_bruto, d.sinal_retomada_bruto_grao) is null
+                then null
+                when dret.sinal_retomada is not null
+                then dret.sinal_retomada
                 else 'nao_mapeada'
             end as sinal_retomada,
             case
-                when coalesce(d.motivo_paralisacao_bruto, d.motivo_paralisacao_bruto_grao) is null then null
-                when dmot.motivo_paralisacao is not null then dmot.motivo_paralisacao
+                when coalesce(d.motivo_paralisacao_bruto, d.motivo_paralisacao_bruto_grao) is null
+                then null
+                when dmot.motivo_paralisacao is not null
+                then dmot.motivo_paralisacao
                 else 'nao_mapeada'
             end as motivo_paralisacao
         from dedup d
-        left join {{ ref('dominio_status') }} ds
+        left join
+            {{ ref('dominio_status') }} ds
             on lower(trim(d.status_operacional)) = lower(trim(ds.valor_bruto))
-        left join {{ ref('dominio_regiao_uf') }} dr
-            on upper(trim(d.uf)) = upper(trim(dr.uf))
-        left join {{ ref('prata_historico_entrega_apf') }} esp
-            on d.apf = esp.apf
-        left join {{ ref('dominio_retomada') }} dret
+        left join {{ ref('dominio_regiao_uf') }} dr on upper(trim(d.uf)) = upper(trim(dr.uf))
+        left join {{ ref('prata_historico_entrega_apf') }} esp on d.apf = esp.apf
+        left join
+            {{ ref('dominio_retomada') }} dret
             on lower(trim(coalesce(d.sinal_retomada_bruto, d.sinal_retomada_bruto_grao)))
-               = lower(trim(dret.valor_bruto))
-        left join {{ ref('dominio_motivo_paralisacao') }} dmot
+            = lower(trim(dret.valor_bruto))
+        left join
+            {{ ref('dominio_motivo_paralisacao') }} dmot
             on lower(trim(coalesce(d.motivo_paralisacao_bruto, d.motivo_paralisacao_bruto_grao)))
-               = lower(trim(dmot.valor_bruto))
+            = lower(trim(dmot.valor_bruto))
     ),
 
     -- 22 colunas de obra_mensal por left join no grão (change
     -- consolidar-schemas-historico-reloginho, D2).
-{{ historico_obra_enriquecido(ref('bronze_shpt_obra_mensal_rural'), 'Rural', 'enriquecido_dominio') }}
+    {{ historico_obra_enriquecido(ref('bronze_shpt_obra_mensal_rural'), 'Rural', 'enriquecido_dominio') }}
 
     resolvido as (
         select
-    md5(
-        concat_ws(
-            '|', 'empreendimento', frente_mcmv, coalesce(apf, ''), dt_referencia::text
-        )
-    ) as id_historico_snapshot,
-    md5(concat_ws('|', programa, frente_mcmv, coalesce(apf, ''))) as id_negocio_historico,
-    programa,
-    frente_mcmv,
-    grupo_linha,
-    linha_mcmv,
-    grao_registro,
-    agente_financeiro,
-    apf,
-    codigo_empreendimento,
-    nome_empreendimento,
-    codigo_ibge_municipio,
-    municipio,
-    uf,
-    coalesce(responsavel_id, responsavel_id_grao) as responsavel_id,
-    coalesce(responsavel_nome, responsavel_nome_grao) as responsavel_nome,
-    quantidade_uh,
-    -- coalesce so age sobre NULL (0 explicito e informacao, nao ausencia)
-    coalesce(quantidade_uh_entregues, esp_uh_entregues) as quantidade_uh_entregues,
-    valor_contratado,
-    valor_desembolsado,
-    percentual_execucao_fisica,
-    status_operacional,
-    dt_contratacao,
-    dt_inicio_obra,
-    -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING). Rural: entrega_uh
-    -- do INT065 (dt_ultima_entrega) > grao > espinha; dt_conclusao_obra do
-    -- dt_efetiva_conclusao (SFTP INT057/065).
-    coalesce(dt_entrega_uh, dt_entrega_uh_grao, esp_dt_ultima_entrega) as dt_entrega_uh,
-    coalesce(dt_conclusao_obra, dt_conclusao_obra_grao) as dt_conclusao_obra,
-    coalesce(
-        quantidade_uh_concluidas, quantidade_uh_concluidas_grao
-    ) as quantidade_uh_concluidas,
-    dt_previsao_entrega,
-    qt_uh_previsao_entrega,
-    case
-        when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null
-        then coalesce(
-            nullif(
-                'sftp:' || regexp_extract(
+            md5(
+                concat_ws(
+                    '|', 'empreendimento', frente_mcmv, coalesce(apf, ''), dt_referencia::text
+                )
+            ) as id_historico_snapshot,
+            md5(concat_ws('|', programa, frente_mcmv, coalesce(apf, ''))) as id_negocio_historico,
+            programa,
+            frente_mcmv,
+            grupo_linha,
+            linha_mcmv,
+            grao_registro,
+            agente_financeiro,
+            apf,
+            codigo_empreendimento,
+            nome_empreendimento,
+            codigo_ibge_municipio,
+            municipio,
+            uf,
+            coalesce(responsavel_id, responsavel_id_grao) as responsavel_id,
+            coalesce(responsavel_nome, responsavel_nome_grao) as responsavel_nome,
+            quantidade_uh,
+            -- coalesce so age sobre NULL (0 explicito e informacao, nao ausencia)
+            coalesce(quantidade_uh_entregues, esp_uh_entregues) as quantidade_uh_entregues,
+            valor_contratado,
+            valor_desembolsado,
+            percentual_execucao_fisica,
+            status_operacional,
+            dt_contratacao,
+            dt_inicio_obra,
+            -- dt_entrega -> dt_entrega_uh + dt_conclusao_obra (BREAKING). Rural: entrega_uh
+            -- do INT065 (dt_ultima_entrega) > grao > espinha; dt_conclusao_obra do
+            -- dt_efetiva_conclusao (SFTP INT057/065).
+            coalesce(dt_entrega_uh, dt_entrega_uh_grao, esp_dt_ultima_entrega) as dt_entrega_uh,
+            coalesce(dt_conclusao_obra, dt_conclusao_obra_grao) as dt_conclusao_obra,
+            coalesce(
+                quantidade_uh_concluidas, quantidade_uh_concluidas_grao
+            ) as quantidade_uh_concluidas,
+            dt_previsao_entrega,
+            qt_uh_previsao_entrega,
+            case
+                when coalesce(dt_entrega_uh, dt_entrega_uh_grao) is not null
+                then
                     coalesce(
-                        case when dt_entrega_uh is not null then fonte_tabela end,
-                        fonte_entrega_uh_grao
-                    ),
-                    '(INT[0-9]+)',
-                    1
-                ),
-                'sftp:'
-            ),
-            'sftp'
-        )
-        when esp_dt_ultima_entrega is not null
-        then 'snh:entrega_evento'
-    end as dt_entrega_uh_fonte,
-    dt_referencia,
-    coalesce(dt_movimento, dt_movimento_grao) as dt_movimento,
-    fonte_serie,
-    fonte_tabela,
-    source_file,
-    hash_linha,
-    dt_ingest,
-    situacao_canonica,
-    regiao_sigla,
-    regiao_nome,
-    -- id_empreendimento / fase_empreendimento: contrato comum com o FDS
-    -- (change id-empreendimento-eixo-historico). No Rural o APF ja e o
-    -- empreendimento -- id_empreendimento = apf, sem fase administrativa.
-    apf as id_empreendimento,
-    null::text as fase_empreendimento,
-    -- quantidades de UH e sinais de obra (change enriquecer-quantidades-uh-e-sinais-obra-historico).
-    -- Rural: INT065 traz qtde_uh_inicial; INT057 traz pc_execucao_financeira_obra
-    -- (reportada); braço SNH traz distrato/vigência. NULL onde a fonte não reporta.
-    quantidade_uh_distratadas,
-    quantidade_uh_vigentes,
-    quantidade_uh_ociosas,
-    quantidade_uh_inicial,
-    cod_pendencia_obra,
-    coalesce(
-        percentual_execucao_financeira_reportada,
-        case
-            when valor_contratado > 0 and valor_desembolsado is not null
-            then valor_desembolsado / nullif(valor_contratado, 0) * 100
-        end
-    ) as percentual_execucao_financeira,
-    case
-        when percentual_execucao_financeira_reportada is not null
-        then 'reportada'
-        when valor_contratado > 0 and valor_desembolsado is not null
-        then 'derivada'
-    end as percentual_execucao_financeira_fonte,
-    -- Blocos A/C (change colunas-orfas-bronze-historico) — ao fim do contrato.
-    sinal_retomada,
-    motivo_paralisacao,
-    coalesce(desc_situacao_contrato, desc_situacao_contrato_grao) as desc_situacao_contrato,
-    coalesce(dt_ultima_liberacao, dt_ultima_liberacao_grao) as dt_ultima_liberacao,
-    coalesce(dt_primeira_entrega, dt_primeira_entrega_grao) as dt_primeira_entrega,
-    case
-        when coalesce(dt_primeira_entrega, dt_primeira_entrega_grao) is not null
-        then coalesce(
-            nullif(
-                'sftp:' || regexp_extract(
+                        nullif(
+                            'sftp:' || regexp_extract(
+                                coalesce(
+                                    case when dt_entrega_uh is not null then fonte_tabela end,
+                                    fonte_entrega_uh_grao
+                                ),
+                                '(INT[0-9]+)',
+                                1
+                            ),
+                            'sftp:'
+                        ),
+                        'sftp'
+                    )
+                when esp_dt_ultima_entrega is not null
+                then 'snh:entrega_evento'
+            end as dt_entrega_uh_fonte,
+            dt_referencia,
+            coalesce(dt_movimento, dt_movimento_grao) as dt_movimento,
+            fonte_serie,
+            fonte_tabela,
+            source_file,
+            hash_linha,
+            dt_ingest,
+            situacao_canonica,
+            regiao_sigla,
+            regiao_nome,
+            -- id_empreendimento / fase_empreendimento: contrato comum com o FDS
+            -- (change id-empreendimento-eixo-historico). No Rural o APF ja e o
+            -- empreendimento -- id_empreendimento = apf, sem fase administrativa.
+            apf as id_empreendimento,
+            null::text as fase_empreendimento,
+            -- quantidades de UH e sinais de obra (change
+            -- enriquecer-quantidades-uh-e-sinais-obra-historico).
+            -- Rural: INT065 traz qtde_uh_inicial; INT057 traz pc_execucao_financeira_obra
+            -- (reportada); braço SNH traz distrato/vigência. NULL onde a fonte não reporta.
+            quantidade_uh_distratadas,
+            quantidade_uh_vigentes,
+            quantidade_uh_ociosas,
+            quantidade_uh_inicial,
+            cod_pendencia_obra,
+            coalesce(
+                percentual_execucao_financeira_reportada,
+                case
+                    when valor_contratado > 0 and valor_desembolsado is not null
+                    then valor_desembolsado / nullif(valor_contratado, 0) * 100
+                end
+            ) as percentual_execucao_financeira,
+            case
+                when percentual_execucao_financeira_reportada is not null
+                then 'reportada'
+                when valor_contratado > 0 and valor_desembolsado is not null
+                then 'derivada'
+            end as percentual_execucao_financeira_fonte,
+            -- Blocos A/C (change colunas-orfas-bronze-historico) — ao fim do contrato.
+            sinal_retomada,
+            motivo_paralisacao,
+            coalesce(desc_situacao_contrato, desc_situacao_contrato_grao) as desc_situacao_contrato,
+            coalesce(dt_ultima_liberacao, dt_ultima_liberacao_grao) as dt_ultima_liberacao,
+            coalesce(dt_primeira_entrega, dt_primeira_entrega_grao) as dt_primeira_entrega,
+            case
+                when coalesce(dt_primeira_entrega, dt_primeira_entrega_grao) is not null
+                then
                     coalesce(
-                        case when dt_primeira_entrega is not null then fonte_tabela end,
-                        fonte_primeira_entrega_grao
-                    ),
-                    '(INT[0-9]+)',
-                    1
-                ),
-                'sftp:'
-            ),
-            'sftp'
-        )
-    end as dt_primeira_entrega_fonte,
-    coalesce(dt_assinatura_projeto, dt_assinatura_projeto_grao) as dt_assinatura_projeto
-    -- 22 colunas de obra_mensal (change consolidar-schemas-historico-reloginho, D2).
-    {{ historico_obra_cols_resolvido() }}
-from enriquecido_obra
-where
-    rn = 1
-    -- quarentena (change vocabulario-e-qualidade-financeira-historica, D6):
-    -- anti-join por (fonte_familia = 'rural_historico', chave_natural = apf).
-    -- Entram aqui os APF com desembolso > 2x o contratado (teste
-    -- desembolso_nao_excede_contratado em error).
-    and not exists (
-        select 1
-        from {{ ref('quarentena_valores_financeiros') }} q
-        where q.fonte_familia = 'rural_historico' and q.chave_natural = apf
+                        nullif(
+                            'sftp:' || regexp_extract(
+                                coalesce(
+                                    case when dt_primeira_entrega is not null then fonte_tabela end,
+                                    fonte_primeira_entrega_grao
+                                ),
+                                '(INT[0-9]+)',
+                                1
+                            ),
+                            'sftp:'
+                        ),
+                        'sftp'
+                    )
+            end as dt_primeira_entrega_fonte,
+            coalesce(dt_assinatura_projeto, dt_assinatura_projeto_grao) as dt_assinatura_projeto
+            -- 22 colunas de obra_mensal (change consolidar-schemas-historico-reloginho, D2).
+            {{ historico_obra_cols_resolvido() }}
+        from enriquecido_obra
+        where
+            rn = 1
+            -- quarentena (change vocabulario-e-qualidade-financeira-historica, D6):
+            -- anti-join por (fonte_familia = 'rural_historico', chave_natural = apf).
+            -- Entram aqui os APF com desembolso > 2x o contratado (teste
+            -- desembolso_nao_excede_contratado em error).
+            and not exists (
+                select 1
+                from {{ ref('quarentena_valores_financeiros') }} q
+                where q.fonte_familia = 'rural_historico' and q.chave_natural = apf
+            )
     )
-    )
-{{ historico_silver_tail() }}
+    {{ historico_silver_tail() }}

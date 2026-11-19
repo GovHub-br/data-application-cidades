@@ -105,14 +105,14 @@ with
     -- O que RESTA e o desempate ENTRE APF-fases distintos do mesmo empreendimento
     -- FDS multi-fase (2-3 APFs de fase no mesmo mes). NAO e re-dedup de fonte --
     -- e a escolha de qual APF-fase representa o empreendimento no mes:
-    --   1. o APF cuja observacao do mes vem do SNH (dados prioritarios por
-    --      agente) prevalece sobre o APF que so o SFTP GEFUS reportou -- o
-    --      `case fonte_serie` continua necessario AQUI (a silver so resolve
-    --      fonte DENTRO de um APF, nao entre APFs). Sem ele o estoque de
-    --      `nao_iniciada` do FDS cai e `em_obras` sobe (a fase Obra de um APF
-    --      SFTP passa a ganhar da fase Projeto do APF SNH) -- muda a serie.
-    --   2. depois, fase mais avancada (Desligamento > Obra > Projeto);
-    --   3. depois, dt_referencia desc.
+    -- 1. o APF cuja observacao do mes vem do SNH (dados prioritarios por
+    -- agente) prevalece sobre o APF que so o SFTP GEFUS reportou -- o
+    -- `case fonte_serie` continua necessario AQUI (a silver so resolve
+    -- fonte DENTRO de um APF, nao entre APFs). Sem ele o estoque de
+    -- `nao_iniciada` do FDS cai e `em_obras` sobe (a fase Obra de um APF
+    -- SFTP passa a ganhar da fase Projeto do APF SNH) -- muda a serie.
+    -- 2. depois, fase mais avancada (Desligamento > Obra > Projeto);
+    -- 3. depois, dt_referencia desc.
     -- Sem esse colapso a lag() cria transicao falsa (troca de APF Projeto->Obra)
     -- e o estoque/uh dobra.
     silvers as (
@@ -132,10 +132,14 @@ with
                 partition by frente_mcmv, chave_empreendimento, mes
                 order by
                     case fonte_serie when 'snh' then 0 else 1 end,
-                    case fase_empreendimento
-                        when 'Desligamento' then 0
-                        when 'Obra' then 1
-                        when 'Projeto' then 2
+                    case
+                        fase_empreendimento
+                        when 'Desligamento'
+                        then 0
+                        when 'Obra'
+                        then 1
+                        when 'Projeto'
+                        then 2
                         else 3
                     end,
                     dt_referencia desc
@@ -188,9 +192,7 @@ with
             0 as entrada,
             1 as saida
         from transicoes
-        where
-            situacao_anterior is not null
-            and situacao_canonica is distinct from situacao_anterior
+        where situacao_anterior is not null and situacao_canonica is distinct from situacao_anterior
     ),
 
     -- fonte_serie predominante do mes, por frente (para anotar a virada de feed).
@@ -202,9 +204,7 @@ with
         select
             mes,
             frente_mcmv,
-            (array_agg(fonte_serie order by n desc, fonte_serie))[
-                1
-            ] as fonte_serie_predominante
+            (array_agg(fonte_serie order by n desc, fonte_serie))[1] as fonte_serie_predominante
         from fonte_contagem
         group by 1, 2
     ),
@@ -266,9 +266,4 @@ select
 from agg
 left join fonte_mes on agg.mes = fonte_mes.mes and agg.frente_mcmv = fonte_mes.frente_mcmv
 order by
-    agg.mes,
-    agg.frente_mcmv,
-    agg.situacao_canonica,
-    agg.nivel_geografico,
-    agg.regiao_sigla,
-    agg.uf
+    agg.mes, agg.frente_mcmv, agg.situacao_canonica, agg.nivel_geografico, agg.regiao_sigla, agg.uf

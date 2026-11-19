@@ -1,0 +1,87 @@
+# OpenMetadata no Kubernetes: chart oficial (https://helm.open-metadata.org),
+# versão 1.13.3, a mesma linha do cliente que as DAGs usam
+# (helpers/openmetadata/config.py: openmetadata-ingestion==1.13.3.x).
+#
+#   helm upgrade --install openmetadata open-metadata/openmetadata --version 1.13.3 \
+#     -n cidades -f infra/k8s/openmetadata/values.yaml
+#
+# Como no playbook de VM: o banco é o database "openmetadata" do cluster CNPG,
+# a busca é o Elasticsearch de elasticsearch.yaml, e a ingestão roda no Airflow
+# do projeto (sem o Airflow do próprio OpenMetadata). Os Secrets referenciados
+# aqui são criados por criar-secrets.sh; nenhuma senha fica neste arquivo.
+
+openmetadata:
+  config:
+    clusterName: cidades
+
+    elasticsearch:
+      host: elasticsearch
+      searchType: elasticsearch
+      port: 9200
+      scheme: http
+
+    database:
+      host: cidades-pg-rw
+      port: 5432
+      driverClass: org.postgresql.Driver
+      dbScheme: postgresql
+      databaseName: openmetadata
+      auth:
+        username: openmetadata
+        password:
+          secretRef: cidades-pg-openmetadata
+          secretKey: password
+
+    # A ingestão é a openmetadata_ingestion_dag do Airflow do projeto.
+    pipelineServiceClientConfig:
+      enabled: false
+      # O chart 1.13.3 ignora o enabled: false acima ao decidir se injeta a
+      # senha do Airflow dele (usa `enabled | default true`, e o default do
+      # Helm trata false como vazio) e o pod fica preso esperando o Secret
+      # airflow-secrets. Desligar a autenticação evita a referência.
+      airflow:
+        auth:
+          enabled: false
+    # Os dois CronJobs abaixo existem para o Airflow do próprio OpenMetadata.
+    deployPipelinesConfig:
+      enabled: false
+    reindexConfig:
+      enabled: false
+
+    # Chaves que assinam os tokens, geradas por criar-secrets.sh. As que vêm na
+    # imagem são as mesmas em toda instalação do OpenMetadata.
+    jwtTokenConfiguration:
+      rsapublicKeyFilePath: /opt/openmetadata/conf/cidades/public_key.der
+      rsaprivateKeyFilePath: /opt/openmetadata/conf/cidades/private_key.der
+      jwtissuer: open-metadata.org
+      keyId: cidades-openmetadata
+
+    # Cifra os segredos que o OpenMetadata guarda no banco. NÃO troque depois.
+    fernetkey:
+      value: ""
+      secretRef: openmetadata-fernet
+      secretKey: fernet-key
+
+extraVolumes:
+  - name: jwt-keys
+    secret:
+      secretName: openmetadata-jwt-keys
+      defaultMode: 0444
+extraVolumeMounts:
+  - name: jwt-keys
+    mountPath: /opt/openmetadata/conf/cidades
+    readOnly: true
+
+extraEnvs:
+  - name: OPENMETADATA_HEAP_OPTS
+    value: "-Xmx2G -Xms2G"
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 3Gi
+  limits:
+    memory: 3Gi
+
+image:
+  pullPolicy: IfNotPresent

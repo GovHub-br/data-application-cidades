@@ -1,0 +1,62 @@
+coluna,tipo_inferido,amostra_1,amostra_2,amostra_3
+data_0,date,2020-11-30,2020-11-30,2020-11-30
+data_1,date,29455274,29455274,29455274
+data_2,date,29455274,29455274,29455274
+numero_3,number,655550105792,655550105794,655550105833
+texto_4,text,NATANIEL NUNES D,ZELIA DA C,KATIUSCIA APARECIDA LEAL BUEN
+texto_5,text,S SANT,STA,
+numero_6,number,S,65787528034,229640028
+data_7,date,98799630087,2010-04-09,2010-04-09
+numero_8,number,2010-04-09,4752,4752
+texto_9,text,4752,",00",",00"
+numero_10,number,",00",0,0
+numero_11,number,0,120,120
+numero_12,number,120,106,106
+numero_13,number,106,14,14
+texto_14,text,14,RUA,R  
+texto_15,text,R  ,C,V ANT
+texto_16,text,BELEM                                             ,QUEIR,NI
+numero_17,number,402,                                          , R DA R
+numero_18,number,00000000000,508,SA                               
+texto_19,text,VILA M,CASA 151   ,0
+texto_20,text,NaN,PQ H,           
+texto_21,text,G00000,RTENCIAS ,M
+texto_22,text,P,P,RRETINH
+texto_23,text,RTA,RTA,S   
+texto_24,text,         ,         ,P
+texto_25,text,RS,RS,RTA
+data_26,date,93800000,93180000,         
+numero_27,number,"985,24","669,60",RS
+numero_28,number,"38000,00","38000,00",93800000
+numero_29,number,"23995,12","27782,80","600,00"
+data_30,date,1980-11-28,1975-10-25,"38000,00"
+numero_31,number,1,2,"28618,00"
+numero_32,number,0,0,1984-01-31
+texto_33,text,Solteiro,Solteiro,2
+texto_34,text,FDS MCMV,FDS MCMV,0
+texto_35,text,,,Solteiro
+texto_36,text,ATIV,ATIV,FDS MCMV
+texto_37,text,,,
+texto_38,text,NA,NA,ATIV
+texto_39,text,,,
+texto_40,text,AM,AM,NA
+texto_41,text,RTIZACA,RTIZACA,
+texto_42,text,,,AM
+numero_43,number,0,0,RTIZACA
+texto_44,text,NA,SIM,
+numero_45,number,,0,0
+numero_46,number,0,"950,75",SIM
+numero_47,number,"1396,70","71,54",0
+numero_48,number,"105,29",",00","851,50"
+numero_49,number,",00",4314803,"64,11"
+texto_50,text,4314803,FDS - PF,",00"
+numero_51,number,FDS - PF,104,4314803
+texto_52,text,104,2026-06-30T13:03:40.342277,FDS - PF
+texto_53,text,2026-06-30T13:03:40.342277,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,104
+texto_54,text,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,2026-06-30T13:03:40.342277,4314803
+texto_55,text,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,FDS - PF,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip
+numero_56,number,104,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,104
+texto_57,text,2026-06-30T13:03:40.342277,2026-06-30T13:03:40.342277,2026-06-30T13:03:40.342277
+texto_58,text,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip
+texto_59,text,2026-06-30T13:03:40.342277,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip
+texto_60,text,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip,/home/fabrica/GEFUS/ANTERIORES/INT042_MinisterioCidades_FDS_CAIXA_PF_20201130.zip

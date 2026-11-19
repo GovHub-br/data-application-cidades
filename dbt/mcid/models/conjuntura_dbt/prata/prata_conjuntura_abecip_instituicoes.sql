@@ -15,17 +15,16 @@
 -- R$ 93.738,1 mi) bate EXATO com a soma jan–jun/2026 do XLSX de unidades
 -- (`prata_conjuntura_abecip_financiamentos`), que é uma extração
 -- independente da mesma ABECIP.
-
 select
-    competencia_referencia                        as competencia,
-    to_date(periodo_rotulo, 'YYYY-MM')            as data_referencia,
-    left(periodo_rotulo, 4)::int                  as ano,
-    right(periodo_rotulo, 2)::int                 as mes,
-    modalidade                                    as modalidade,
-    instituicao_financeira                        as instituicao,
-    nullif(volume_mensal_milhoes, '')::numeric        as volume_mensal_milhoes,
-    nullif(unidades_mensais, '')::numeric             as unidades_mensais,
+    competencia_referencia as competencia,
+    to_date(periodo_rotulo, 'YYYY-MM') as data_referencia,
+    left(periodo_rotulo, 4)::int as ano,
+    right(periodo_rotulo, 2)::int as mes,
+    modalidade as modalidade,
+    instituicao_financeira as instituicao,
+    nullif(volume_mensal_milhoes, '')::numeric as volume_mensal_milhoes,
+    nullif(unidades_mensais, '')::numeric as unidades_mensais,
     nullif(volume_acumulado_ano_milhoes, '')::numeric as volume_acumulado_ano_milhoes,
-    nullif(unidades_acumuladas_ano, '')::numeric      as unidades_acumuladas_ano,
-    exportado_em::timestamp                       as dt_ingest
+    nullif(unidades_acumuladas_ano, '')::numeric as unidades_acumuladas_ano,
+    exportado_em::timestamp as dt_ingest
 from {{ ref('bronze_abecip_instituicoes') }}

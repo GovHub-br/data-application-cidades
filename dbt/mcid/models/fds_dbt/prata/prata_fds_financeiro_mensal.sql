@@ -10,7 +10,7 @@ with
     financeiro_raw as (
         select
             -- Identificação (APF no financeiro é 6 dígitos, normalizar para 8)
-            {{ target.schema }}.normalize_apf(nu_apf) as apf,
+            {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
 
             -- Tipo de movimento
             {{ parse_int("co_tipo_movimento") }} as co_tipo_movimento,
@@ -30,18 +30,17 @@ with
             {{ parse_financial_value("vr_pago_projeto") }} as vr_pago_projeto,
             {{ parse_financial_value("vr_pago_aporte_suplementacao") }} as vr_pago_aporte,
             {{ parse_financial_value("vr_pago_despesas_incc") }} as vr_pago_incc,
-            {{ parse_financial_value("vr_pago_cartorios_legalizacao") }}
-            as vr_pago_legalizacao,
+            {{ parse_financial_value("vr_pago_cartorios_legalizacao") }} as vr_pago_legalizacao,
             {{ parse_financial_value("vr_pago_seguranca") }} as vr_pago_seguranca,
 
             -- Percentual de evolução
             {{ parse_numeric("pc_evolucao", "numeric(6, 2)") }} as pct_evolucao,
 
             -- Datas
-            {{ target.schema }}.parse_date_br(dt_movimento) as dt_movimento,
-            {{ target.schema }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao,
-            {{ target.schema }}.parse_date_br(dt_remessa) as dt_remessa,
-            {{ target.schema }}.parse_date_br(dt_evento) as dt_evento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_movimento) as dt_movimento,
+            {{ var('schema_udfs') }}.parse_date_br(dt_liberacao_recurso) as dt_liberacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_remessa) as dt_remessa,
+            {{ var('schema_udfs') }}.parse_date_br(dt_evento) as dt_evento,
 
             -- Identificador do registro
             nullif(trim(nu_identificador), '') as identificador,

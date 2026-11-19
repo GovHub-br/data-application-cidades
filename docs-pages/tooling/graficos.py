@@ -17,9 +17,7 @@ MARGEM_ROTULO = 132
 COR_PADRAO = "#7A34F3"
 
 
-def barras_horizontais(
-    dados: list[tuple[str, int]], cores: dict[str, str] | None = None
-) -> Markup:
+def barras_horizontais(dados: list[tuple[str, int]], cores: dict[str, str] | None = None) -> Markup:
     """Barras horizontais com rotulo a esquerda e valor na ponta."""
     if not dados:
         return Markup('<p class="secao__intro">Sem dados para exibir.</p>')

@@ -1,15 +1,15 @@
 # Python virtual environments
 .venv/
+.review-venv/
 venv/
 ENV/
 
-# Poetry
+# Build
 dist/
 **/*.pyc
 **/*.lock
+!uv.lock
 __pycache__/
-.poetry/
-requirements.generated.txt
 
 # Cache directories
 .cache/
@@ -25,12 +25,17 @@ htmlcov/
 # IDE specific files
 .idea/
 .vscode/
+.opencode/
 *.swp
 *.swo
 
 # Environment variables
 .env
 .env.local
+local.env
+
+# Local development environments
+.dbt-venv/
 
 # Build directories
 build/
@@ -51,6 +56,9 @@ logs/
 # System files
 .DS_Store
 Thumbs.db
+
+# OpenSpec
+openspec/
 
 # VPN 
 /connect.sh

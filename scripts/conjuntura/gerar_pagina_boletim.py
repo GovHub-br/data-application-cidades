@@ -8,7 +8,7 @@ O número é lido; o texto vem de `scripts/conjuntura/dados/boletim-editorial.ym
 de texto é inventado aqui: o gerador só posiciona o que já está escrito.
 
 Uso:
-    poetry run python scripts/conjuntura/gerar_pagina_boletim.py --edicao 1T2026
+    uv run python scripts/conjuntura/gerar_pagina_boletim.py --edicao 1T2026
 """
 
 from __future__ import annotations
@@ -80,9 +80,7 @@ def estrutura_dos_quadros() -> list[dict]:
 def ler_quadros(edicao: str, de_arquivo: pathlib.Path | None) -> dict[str, list[dict]]:
     """Lê os quadros do banco, ou de um despejo já feito."""
     if de_arquivo:
-        do_arquivo: dict[str, list[dict]] = json.loads(
-            de_arquivo.read_text(encoding="utf-8")
-        )
+        do_arquivo: dict[str, list[dict]] = json.loads(de_arquivo.read_text(encoding="utf-8"))
         return do_arquivo
     import psycopg2
     import psycopg2.extras
@@ -217,9 +215,7 @@ def pilula(valor: float | None, base: str) -> str:
     )
 
 
-def pilulas_da_celula(
-    quadro: str, linha: dict, rotulo: str, coluna: str, por_rotulo: dict
-) -> str:
+def pilulas_da_celula(quadro: str, linha: dict, rotulo: str, coluna: str, por_rotulo: dict) -> str:
     """Todas as pílulas que essa célula recebe, nas duas formas de comparação."""
     regra = PILULAS.get(quadro)
     if not regra:
@@ -411,7 +407,7 @@ def bloco_leitura(texto: str, gerado: bool = False) -> str:
     marca = '<span class="marca-rascunho">rascunho — redigido por máquina</span>'
     return (
         f'<aside class="leitura{" gerada" if gerado else ""}">'
-        f'{marca if gerado else ""}{html.escape(texto)}</aside>'
+        f"{marca if gerado else ''}{html.escape(texto)}</aside>"
     )
 
 
@@ -434,9 +430,22 @@ def cabecalho_fixo(edicao: str) -> str:
     )
 
 
-def montar(
-    edicao: str, quadros: dict, dados: dict, editorial: dict, validacao: list
-) -> str:
+# A leitura é ancorada no QUADRO que ela comenta, não na seção: uma seção
+# pode ter vários quadros, e o texto se refere a um deles.
+LEITURA_DO_QUADRO = {
+    "ouro_conjuntura_boletim_p1_pib_construcao_crescimento": "pib",
+    "ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais": "lancamentos_e_vendas",
+    "ouro_conjuntura_boletim_p3_financiamentos_por_banco": "credito",
+    "ouro_conjuntura_boletim_p4_credito_imobiliario_pib": "credito_pib",
+    "ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso": "condicao_de_uso",
+    "ouro_conjuntura_boletim_p5_poupanca_captacao_liquida": ("poupanca_e_financiamento"),
+    "ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa": "financiamento_pf_mcmv",
+    "ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m": "precos",
+    "ouro_conjuntura_boletim_p6_ticket_medio_vs_incc": "ticket_medio",
+}
+
+
+def montar(edicao: str, quadros: dict, dados: dict, editorial: dict, validacao: list) -> str:
     meta = editorial["edicoes"][edicao]
     leitura = meta.get("leitura") or {}
     # Três origens, três tratamentos:
@@ -446,19 +455,27 @@ def montar(
     #               mas o rodapé preserva a procedência
     origem = meta.get("origem", "gerado")
     texto_gerado = origem == "gerado"
-    divergentes = [v for v in validacao if v["status"] == "DIVERGE"]
-
     partes = [
         '<div class="capa"><div class="folha">',
         '<p class="orgao">Secretaria Nacional de Habitação</p>',
         "<h1>Conjuntura do<b>Setor Habitacional</b></h1>",
         f'<p><span class="selo">{html.escape(edicao)}</span></p>',
         f'<p class="data">{html.escape(meta["titulo"])} — publicado em '
-        f'{data_br(meta["publicado_em"])}</p>',
+        f"{data_br(meta['publicado_em'])}</p>",
         "</div></div>",
         cabecalho_fixo(edicao),
     ]
+    partes += _avisos(meta, validacao, texto_gerado)
+    partes += _paginas(quadros, dados, leitura, texto_gerado)
+    partes.append(fechamento(meta))
+    partes.append(_rodape(meta, origem))
+    return "\n".join(p for p in partes if p)
 
+
+def _avisos(meta: dict, validacao: list, texto_gerado: bool) -> list[str]:
+    """Aviso de texto gerado por máquina e de células que divergem do publicado."""
+    partes: list[str] = []
+    divergentes = [v for v in validacao if v["status"] == "DIVERGE"]
     if texto_gerado:
         ausentes = [
             rotulo
@@ -503,26 +520,15 @@ def montar(
             "depois da publicação.</p>"
             f"<ul>{itens}</ul></div></div>"
         )
+    return partes
 
+
+def _paginas(quadros: list, dados: dict, leitura: dict, texto_gerado: bool) -> list[str]:
+    """Uma folha por página, com o rótulo do bloco e o título da seção quando mudam."""
+    partes: list[str] = []
     por_pagina: dict[int, list[dict]] = {}
     for q in quadros:
         por_pagina.setdefault(q["pagina"], []).append(q)
-
-    # A leitura é ancorada no QUADRO que ela comenta, não na seção: uma seção
-    # pode ter vários quadros, e o texto se refere a um deles.
-    leitura_do_quadro = {
-        "ouro_conjuntura_boletim_p1_pib_construcao_crescimento": "pib",
-        "ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais": "lancamentos_e_vendas",
-        "ouro_conjuntura_boletim_p3_financiamentos_por_banco": "credito",
-        "ouro_conjuntura_boletim_p4_credito_imobiliario_pib": "credito_pib",
-        "ouro_conjuntura_boletim_p4_no_uh_por_condicao_de_uso": "condicao_de_uso",
-        "ouro_conjuntura_boletim_p5_poupanca_captacao_liquida": (
-            "poupanca_e_financiamento"
-        ),
-        "ouro_conjuntura_boletim_p5_financiamento_pf_mcmv_por_faixa": "financiamento_pf_mcmv",
-        "ouro_conjuntura_boletim_p6_sinapi_brasil_e_incc_m": "precos",
-        "ouro_conjuntura_boletim_p6_ticket_medio_vs_incc": "ticket_medio",
-    }
 
     # `secao_atual` vive FORA do laço de página: no PPTX a seção "6. Crédito"
     # começa numa página e continua na seguinte, sem repetir o título. Reiniciar
@@ -552,28 +558,38 @@ def montar(
                         f'<h2><span class="n">{html.escape(numero_secao)}.</span>'
                         f"{html.escape(titulo_secao)}</h2>"
                     )
-            partes.append('<div class="grade">')
-            linhas = dados.get(q["tabela"], [])
-            if q["tabela"] == "ouro_conjuntura_boletim_p4_credito_imobiliario_pib":
-                partes.append(grafico_credito(linhas))
-            else:
-                partes.append(tabela_html(q, linhas))
-            if q["tabela"] == "ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais":
-                partes.append(cartoes_dos_totais(linhas))
-            elif q["tabela"] == "ouro_conjuntura_boletim_p2_totais_empresas_variacao":
-                partes.append(cartoes_das_empresas(linhas))
-            # A leitura entra DENTRO da grade, como no impresso: ao lado do
-            # quadro quando ele é estreito, abaixo quando é largo. Fora da
-            # grade ela ficava sempre embaixo, o que o boletim só faz nas
-            # páginas de tabela larga.
-            chave = leitura_do_quadro.get(q["tabela"])
-            if chave and leitura.get(chave):
-                partes.append(bloco_leitura(leitura[chave], gerado=texto_gerado))
-            partes.append("</div>")
+            partes += _quadro(q, dados, leitura, texto_gerado)
         partes.append("</div>")
 
-    partes.append(fechamento(meta))
-    partes.append(
+    return partes
+
+
+def _quadro(q: dict, dados: dict, leitura: dict, texto_gerado: bool) -> list[str]:
+    """Grade de um quadro: tabela (ou gráfico), cartões e a leitura que o comenta."""
+    partes: list[str] = []
+    partes.append('<div class="grade">')
+    linhas = dados.get(q["tabela"], [])
+    if q["tabela"] == "ouro_conjuntura_boletim_p4_credito_imobiliario_pib":
+        partes.append(grafico_credito(linhas))
+    else:
+        partes.append(tabela_html(q, linhas))
+    if q["tabela"] == "ouro_conjuntura_boletim_p1_cbic_lancamentos_e_vendas_totais":
+        partes.append(cartoes_dos_totais(linhas))
+    elif q["tabela"] == "ouro_conjuntura_boletim_p2_totais_empresas_variacao":
+        partes.append(cartoes_das_empresas(linhas))
+    # A leitura entra DENTRO da grade, como no impresso: ao lado do
+    # quadro quando ele é estreito, abaixo quando é largo. Fora da
+    # grade ela ficava sempre embaixo, o que o boletim só faz nas
+    # páginas de tabela larga.
+    chave = LEITURA_DO_QUADRO.get(q["tabela"])
+    if chave and leitura.get(chave):
+        partes.append(bloco_leitura(leitura[chave], gerado=texto_gerado))
+    partes.append("</div>")
+    return partes
+
+
+def _rodape(meta: dict, origem: str) -> str:
+    return (
         '<div class="rodape">Quadros lidos das tabelas <code>gld_boletim_*</code>, '
         "as mesmas que alimentam o dashboard do Superset. "
         + {
@@ -582,13 +598,10 @@ def montar(
                 f"{html.escape(meta.get('fonte_da_transcricao', 'boletim publicado'))}"
                 "</i>."
             ),
-            "revisado": (
-                "Leitura dos números redigida por máquina e revisada pela equipe."
-            ),
+            "revisado": ("Leitura dos números redigida por máquina e revisada pela equipe."),
         }.get(origem, "Leitura dos números redigida por máquina e ainda não revisada.")
         + "</div>"
     )
-    return "\n".join(p for p in partes if p)
 
 
 def fechamento(meta: dict) -> str:
@@ -602,13 +615,9 @@ def fechamento(meta: dict) -> str:
             ("neutros", "Neutros", "neu-t"),
             ("negativos", "Negativos", "neg-t"),
         ):
-            itens = "".join(
-                f"<li>{html.escape(i)}</li>" for i in posteriores.get(chave, [])
-            )
+            itens = "".join(f"<li>{html.escape(i)}</li>" for i in posteriores.get(chave, []))
             if itens:
-                colunas += (
-                    f'<div><h4 class="{classe}">{rotulo}</h4><ul>{itens}</ul></div>'
-                )
+                colunas += f'<div><h4 class="{classe}">{rotulo}</h4><ul>{itens}</ul></div>'
         blocos.append(
             f'<h2><span class="n">9.</span>Dados posteriores</h2>'
             f'<div class="listas">{colunas}</div>'
@@ -642,10 +651,10 @@ def fechamento(meta: dict) -> str:
         blocos.append(
             '<h2><span class="n">11.</span>Visão MCid</h2>'
             f'<div class="listas"><div><h4>PIB Construção 2026: '
-            f'{html.escape(visao.get("pib_construcao_2026", "–"))}</h4>'
+            f"{html.escape(visao.get('pib_construcao_2026', '–'))}</h4>"
             f"<ul>{fatores}</ul></div>"
             f"<div><h4>Crédito Imobiliário / PIB</h4><ul><li>"
-            f'{html.escape(visao.get("credito_imobiliario_pib", "–"))}</li></ul>'
+            f"{html.escape(visao.get('credito_imobiliario_pib', '–'))}</li></ul>"
             f"{incompleto}</div></div>"
         )
     if not blocos:
@@ -668,9 +677,7 @@ def main() -> int:
             "é gerado: sem ele a página não sai."
         )
     dados = ler_quadros(args.edicao, args.quadros)
-    validacao = (
-        json.loads(args.validacao.read_text(encoding="utf-8")) if args.validacao else []
-    )
+    validacao = json.loads(args.validacao.read_text(encoding="utf-8")) if args.validacao else []
     corpo = montar(args.edicao, estrutura_dos_quadros(), dados, editorial, validacao)
 
     pagina = (

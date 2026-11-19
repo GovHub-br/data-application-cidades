@@ -1,0 +1,45 @@
+name: Fechar Task do OpenMetadata
+
+# Quando o PR de uma sugestão (`om-sugestao/<task_id>`) fecha, fecha a Task no
+# catálogo com o link do PR. Fecha, e não resolve: resolver gravaria o texto
+# direto no OpenMetadata, e quem publica descrição é o sync, a partir do git.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  fechar-task:
+    if: startsWith(github.event.pull_request.head.ref, 'om-sugestao/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fechar a Task
+        env:
+          OM_HOST: ${{ vars.OM_HOST }}
+          OM_TOKEN: ${{ secrets.OM_SUGESTOES_TOKEN }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          MERGEADO: ${{ github.event.pull_request.merged }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          task_id="${BRANCH#om-sugestao/}"
+          if ! [[ "$task_id" =~ ^[0-9]+$ ]]; then
+            echo "branch sem task_id numérico: $BRANCH" >&2
+            exit 1
+          fi
+          if [ "$MERGEADO" = "true" ]; then
+            comentario="Sugestão aprovada e incorporada ao git: $PR_URL. A descrição chega ao catálogo na próxima sincronização."
+          else
+            comentario="Sugestão não incorporada; a discussão está em $PR_URL."
+          fi
+          jq -n --arg c "$comentario" '{comment: $c}' > corpo.json
+          status=$(curl -sS -o resposta.txt -w '%{http_code}' -X PUT \
+            -H "Authorization: Bearer $OM_TOKEN" -H "Content-Type: application/json" \
+            --data @corpo.json "${OM_HOST%/}/api/v1/feed/tasks/$task_id/close")
+          if [ "$status" != "200" ]; then
+            echo "OpenMetadata respondeu $status" >&2
+            head -c 500 resposta.txt >&2
+            exit 1
+          fi

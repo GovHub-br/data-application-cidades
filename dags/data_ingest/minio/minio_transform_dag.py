@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 
 from airflow.decorators import dag, task
 from airflow.operators.python import get_current_context
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from schedule_loader import get_dynamic_schedule
 
 
 @dag(
-    schedule_interval=get_dynamic_schedule("minio_transform_dag"),
+    schedule=get_dynamic_schedule("minio_transform_dag"),
     start_date=datetime(2023, 1, 1),
     catchup=False,
     max_active_runs=1,
@@ -28,9 +29,10 @@ from schedule_loader import get_dynamic_schedule
 def minio_transform_dag() -> None:
     """Pipeline de transformação do data lake: raw/ -> mascaramento PII -> staging/.
 
-    Roda sobre o que estiver em raw/ no MinIO, INDEPENDENTE de quem carregou (SFTP hoje,
-    outras fontes no futuro). Desacoplada da ingestão: schedule próprio, sem referência
-    às DAGs de fonte.
+    Roda só sobre raw/sftp/ e raw/sharepoint/ (`PREFIXOS_LEGADO`, em lake_utils.py), os
+    canais sem conversão própria. As DAGs de API gravam a própria staging, e varrer raw/
+    inteira regravava por cima dela (B1, #248). Desacoplada da ingestão: schedule próprio,
+    sem referência às DAGs de fonte.
 
     Duas etapas encadeadas, cada uma idempotente/incremental (tabelas de controle no
     schema `lake` do Postgres), então execuções agendadas só processam o que é novo.
@@ -61,24 +63,34 @@ def minio_transform_dag() -> None:
 
     @task
     def mascarar_pii() -> None:
-        """Mascara PII (CPF/NIS/nome/endereço) nos objetos novos de raw/, in-place."""
-        from mascarar_minio import run as run_mask
+        """Mascara PII (CPF/NIS/nome/endereço) nos objetos novos de raw/, in-place.
+
+        Roda o script em processo próprio: o modo paralelo cria os filhos com spawn, que
+        reexecutam o __main__ do pai. Dentro da task, o __main__ é o binário do Airflow,
+        que quebra sem acesso ao banco. Objeto com erro fica sem tag e a staging o pula.
+        """
+        import os
+        import subprocess
+        import sys
 
         p = get_current_context()["params"]
-        contagem = run_mask(
-            apply=not bool(p.get("dry_run", False)),
-            limit=int(p.get("limit") or 0),
-            pattern=str(p.get("pattern") or ""),
-            only_ext=str(p.get("only_ext") or ""),
-            max_size_mb=int(p.get("max_size_mb") or 0),
-        )
-        logging.info("[minio_transform_dag] mascaramento concluído: %s", contagem)
+        comando = [
+            sys.executable,
+            f"{os.environ['AIRFLOW_REPO_BASE']}/scripts/mascarar_minio.py",
+            "--limit", str(int(p.get("limit") or 0)),
+            "--pattern", str(p.get("pattern") or ""),
+            "--only-ext", str(p.get("only_ext") or ""),
+            "--max-size-mb", str(int(p.get("max_size_mb") or 0)),
+        ]  # fmt: skip
+        if not p.get("dry_run", False):
+            comando.append("--apply")
+        subprocess.run(comando, check=True)
 
     @task
     def raw_para_staging() -> None:
         """Converte os objetos de raw/ para Parquet full-text em staging/.
 
-        Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em raw_para_staging.py):
+        Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em conversao/config.py):
         já tem tratamento próprio de um membro da equipe para ciência de dados, e gerar
         parquet full-text por cima seria trabalho duplicado. Continua sendo mascarada
         normalmente pela task anterior.
@@ -97,7 +109,16 @@ def minio_transform_dag() -> None:
 
     # A ordem é obrigatória, não uma preferência: a staging lê raw/ como está, então
     # converter antes de mascarar publicaria PII em parquet.
-    mascarar_pii() >> raw_para_staging()
+    mascaramento = mascarar_pii()
+    staging = raw_para_staging()
+    executar_dbt = TriggerDagRunOperator(
+        task_id="executar_dbt_apos_staging",
+        trigger_dag_id="mcid_cosmos_dag",
+        wait_for_completion=False,
+        reset_dag_run=False,
+    )
+
+    mascaramento >> staging >> executar_dbt
 
 
 dag_instance = minio_transform_dag()

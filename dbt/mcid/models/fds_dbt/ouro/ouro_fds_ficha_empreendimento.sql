@@ -89,9 +89,7 @@ select
         else 'Em Andamento'
     end as semaforo_alerta,
 
-    case
-        when dt_paralisacao is not null then 'Sim' else 'Não'
-    end as indicativo_paralisacao,
+    case when dt_paralisacao is not null then 'Sim' else 'Não' end as indicativo_paralisacao,
 
     -- Valores Contratuais e Financeiros
     valor_contratado,
