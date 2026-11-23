@@ -1,5 +1,5 @@
 # Busca do OpenMetadata: Elasticsearch 9.3.0 de um nó só, a mesma versão do
-# docker-compose oficial do OpenMetadata 1.13.3 e do playbook de VM.
+# docker-compose oficial do OpenMetadata 2.0.7 e do playbook de VM.
 #
 # node.store.allow_mmap=false dispensa vm.max_map_count >= 262144 nos nós
 # (e, com isso, init container privilegiado para ajustar o kernel).

@@ -1,4 +1,4 @@
-# PostgreSQL 15 + pg_duckdb no CloudNativePG.
+# PostgreSQL 18 + pg_duckdb no CloudNativePG.
 #
 # Antes de aplicar: o operator CNPG instalado e os Secrets do README
 # (cidades-pg-dw, cidades-pg-airflow, cidades-pg-leitura, cidades-pg-openmetadata).
@@ -10,7 +10,7 @@ metadata:
 spec:
   instances: 1
   # Imagem construída a partir de infra/k8s/postgres/Dockerfile.
-  imageName: ghcr.io/govhub-br/cidades-postgres:15-pgduckdb-ee38d3b
+  imageName: ghcr.io/govhub-br/cidades-postgres:18-pgduckdb-ee38d3b
 
   # O secret do lake (SERVER do FDW duckdb) só pode ser criado por
   # superusuário; o Job lake-secret.yaml usa o cidades-pg-superuser.
