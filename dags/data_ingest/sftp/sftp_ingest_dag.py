@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.sftp.hooks.sftp import SFTPHook
-from airflow.sdk import dag, get_current_context, task
+from airflow.sdk import Variable, dag, get_current_context, task
 
 from plugins.datalake import contract
 from plugins.datalake.keys import load_id
@@ -22,7 +22,7 @@ PG_CONN = "postgres_default"
 
 def _lake(dry_run: bool):
     return Lake(
-        S3Hook(aws_conn_id=LAKE_CONN), os.environ["MINIO_BUCKET"], "dryrun/" if dry_run else ""
+        S3Hook(aws_conn_id=LAKE_CONN), Variable.get("lake_bucket"), "dryrun/" if dry_run else ""
     )
 
 
