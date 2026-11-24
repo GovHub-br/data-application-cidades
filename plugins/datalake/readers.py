@@ -295,6 +295,11 @@ NOVO_CAGED_MEASURES = ["admitidos", "desligados", "saldo", "estoque", "variacao"
 
 def novo_caged_values(answer: dict) -> list:
     """The five measures of one month in a Power BI answer (the order of the query)."""
+    error = ((answer.get("results") or [{}])[0].get("result") or {}).get("error") or {}
+    if error:  # the report answers 200 with the failure inside (e.g. the model is offline)
+        raise SourceLayoutChanged(
+            f"Power BI: {error.get('errorCode')}: {error.get('message', '')[:300]}"
+        )
     try:
         values = answer["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"][0]["C"]
     except (KeyError, IndexError, TypeError) as exc:

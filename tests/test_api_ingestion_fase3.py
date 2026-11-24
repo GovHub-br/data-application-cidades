@@ -172,3 +172,12 @@ def test_mrv_block_is_one_row_per_quarter(tmp_path):
 def test_mrv_missing_section_is_refused(tmp_path):
     with pytest.raises(SourceLayoutChanged, match="Vendas"):
         parse("mrv_vendas_xlsx", _mrv_sheet(tmp_path / "planilha_interativa.xlsx"))
+
+
+def test_caged_power_bi_error_is_named(tmp_path):
+    answer = {"results": [{"result": {"error": {"errorCode": "OpenConnectionError",
+                                                "message": "The semantic model was not found"}}}]}  # fmt: skip
+    path = tmp_path / "2025-03.json"
+    path.write_text(json.dumps(answer))
+    with pytest.raises(SourceLayoutChanged, match="OpenConnectionError"):
+        parse("novo_caged_powerbi_json", str(path))

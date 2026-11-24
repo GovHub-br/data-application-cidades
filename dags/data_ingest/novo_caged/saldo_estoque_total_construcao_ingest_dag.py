@@ -74,7 +74,7 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
         """
         hook = HttpHook(method="POST", http_conn_id="powerbi_caged")
         periods = expected_periods(get_current_context()["dag_run"].run_after.date())
-        paths, missing = [], []
+        paths, missing, last_error = [], [], ""
         for year, month in periods:
             response = hook.run(
                 ENDPOINT,
@@ -83,8 +83,9 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
             )
             try:
                 novo_caged_values(response.json())
-            except (ValueError, SourceLayoutChanged):
+            except (ValueError, SourceLayoutChanged) as exc:
                 missing.append((year, month))
+                last_error = str(exc)
                 continue
             path = _run_dir() / f"{year}-{month:02d}.json"
             path.write_bytes(response.content)
@@ -94,7 +95,9 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
                 "[novo_caged_total_construcao] %d-%02d ainda não publicado", *missing.pop()
             )
         if missing:
-            raise AirflowFailException(f"meses do Novo CAGED sem dado: {missing}")
+            raise AirflowFailException(
+                f"meses do Novo CAGED sem dado: {missing}. Último erro: {last_error}"
+            )
         return paths
 
     @task(retries=2, retry_exponential_backoff=True)
