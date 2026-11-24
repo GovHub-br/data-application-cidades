@@ -1,0 +1,97 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp/subsidiada/fds.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sftp_subsidiada_fds
+  description: Remessas do FDS/Entidades da CAIXA (GEFUS) no SFTP do MCid.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/sftp/subsidiada/fds.odcs.yaml
+    owner: CAIXA · GEFUS
+  tables:
+  - name: fds_empreendimentos_caixa
+    description: 'INT059: empreendimentos do FDS (Entidades) reportados pela CAIXA. Retrato completo por
+      remessa; a bronze lê só a mais recente (sem as remessas de VALIDACAO). Colunas da remessa INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_20261030.TXT.'
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet
+      file_pattern: INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: origem
+    - name: dt_movimento
+    - name: cod_agente_financeiro
+    - name: cod_municipio_ibge
+    - name: no_municipio
+    - name: nu_apf
+    - name: no_empreeendmento
+    - name: dt_assinatura
+    - name: dt_inicio_obra
+    - name: dt_termino_obra
+    - name: dt_legalizacao
+    - name: percentual_obra_realizado
+    - name: vr_emprestimo_original
+    - name: vlr_operacao
+    - name: vr_investimento
+    - name: vr_liberado
+    - name: vr_liberado_sisfin
+    - name: dt_maxima_liberacao
+    - name: qt_unidade_financiadas
+    - name: nu_apf_vinculacao
+    - name: razao_social_proponente
+    - name: cnpj_proponente
+    - name: fase_contrato
+    - name: situacao_gefus
+    - name: dt_assinatura_projeto
+    - name: vr_projeto
+    - name: vr_obra
+    - name: dsc_tipologia
+    - name: cod_regime_execucao
+    - name: terreno_doado
+    - name: aquecimento_solar
+    - name: contrapartida_financeira
+    - name: contrapartida_servicos
+    - name: nu_apf_nao_obra
+    - name: quantidade_uh_adaptadas
+    - name: email_entidade
+    - name: tipo_terreno
+    - name: contrapartida_poder_pub_local_terreno_far_fds_1217
+    - name: contrapartida_poder_pub_local_financ_far_fds_1222
+    - name: contrapartida_poder_pub_local_financ_far_fds_1219
+    - name: contrapartida_poder_pub_local_infra_far_fds_1218
+    - name: contrapartida_poder_pub_local_terreno_far_fds_1220
+    - name: contrapartida_poder_pub_local_infra_far_fds_1221
+    - name: valor_aditamento_selecao_complementar
+    - name: valor_aporte_adicional
+    - name: situacao_empreendimento
+    - name: infraestrutura_externa
+    - name: itens_investimento_terreno
+    - name: sistema_aquecimento_solar
+    - name: gps_latitude_grau
+    - name: gps_latitude_minuto
+    - name: gps_latitude_segundo
+    - name: gps_longitude_grau
+    - name: gps_longitude_minuto
+    - name: gps_longitude_segundo
+    - name: gps_hemisferio
+    - name: gps_local_pto_medio_conf_laudo
+    - name: gps_datum_preferencia_sad_69
+    - name: tipo_de_unidade_do_empreendimento
+    - name: no_localidade
+    - name: no_logradouro
+      meta:
+        classification: restricted
+    - name: nu_cep
+      meta:
+        classification: restricted
+    - name: regime_construcao
+    - name: sg_uf
+    - name: valor_aporte_adicional_contratado
+    - name: dt_ultima_entrega
+    - name: qt_unidades_concluidas
+    - name: qt_unidades_entregues
+    - name: modalidade_requalificacao
+    - name: no_regiao
+    - name: no_selecao_pmcmv_e

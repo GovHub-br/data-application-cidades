@@ -9,13 +9,14 @@ Uma pasta por fonte, a mesma que abre o caminho no lake (`raw/<fonte>/...`). Den
 ```
 contracts/
 ├── sftp/          remessas da CAIXA no SFTP do MCid (GEFUS, GEAVO, CadÚnico)
+│   └── subsidiada/  linha subsidiada: FDS (INT059), Rural (INT055/057/065) e dados prioritários da SNH
 ├── sharepoint/    planilhas do SharePoint do MCid (inclui o Canal FGTS)
 ├── ibge/          agregados da API v3
 ├── bacen/         SGS e Olinda
 ├── fgv/  abecip/  fipe/  novo_caged/  mrv/  infomoney/  tesouro/
 ```
 
-- O arquivo é `contracts/<fonte>/<grupo>.odcs.yaml`, e o `id` do contrato é `<fonte>_<grupo>`.
+- O arquivo é `contracts/<fonte>/<grupo>.odcs.yaml`, e o `id` do contrato é `<fonte>_<grupo>`. Numa subpasta por linha, o `id` leva a linha: `contracts/sftp/subsidiada/fds.odcs.yaml` é `sftp_subsidiada_fds`.
 - No SFTP ficam os dados essenciais do MCMV, e ele vai concentrar a maior parte dos contratos (FGTS, linha subsidiada etc.). Quando a pasta crescer, ela pode ganhar subpastas por linha, como `sftp/fgts/` e `sftp/subsidiada/`: a ingestão e os geradores leem as subpastas.
 
 ## Campos de cada dado (`customProperties`)

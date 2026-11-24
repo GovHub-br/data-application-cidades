@@ -1,0 +1,126 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp/subsidiada/rural.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sftp_subsidiada_rural
+  description: Remessas do PNHR (Rural) da CAIXA e do BB no GEFUS.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/sftp/subsidiada/rural.odcs.yaml
+    owner: CAIXA · GEFUS
+  tables:
+  - name: rural_liberacoes_caixa_bb
+    description: 'INT055: liberações do PNHR (Rural) da CAIXA e do BB. Sem remessa nova desde 18/03/2025;
+      o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_20250318.TXT.'
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet
+      file_pattern: INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_\d{8}\.TXT
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: no_programa
+    - name: nu_apf
+    - name: data_liberacao
+    - name: no_tipo_liberacao
+    - name: vr_valor
+  - name: rural_empreendimentos_bb
+    description: 'INT057: empreendimentos do PNHR (Rural) operados pelo BB. Sem remessa nova desde 29/11/2024;
+      o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_20241129.TXT.'
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet
+      file_pattern: INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_\d{8}\.TXT
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: dt_movimento
+    - name: co_agente_financeiro
+    - name: nu_contrato_empreendimento
+    - name: no_empreendimento
+    - name: co_natureza
+    - name: natureza_contrato
+    - name: co_grupo_renda
+    - name: dt_contrato
+    - name: co_municipio_ibge
+    - name: no_municipio
+    - name: sg_uf
+    - name: no_entidade_organizadora
+    - name: nu_cnpj_entidade
+    - name: qt_unidades
+    - name: qt_unidades_concluidas
+    - name: qt_unidades_entregues
+    - name: vr_investimento
+    - name: vr_operacao
+    - name: vr_edificacao
+    - name: vr_atec
+    - name: vr_ts
+    - name: vr_custo_originacao
+    - name: vr_taxa_administracao
+    - name: vr_diferencial_juros
+    - name: vr_taxa_risco_credito
+    - name: vr_cisterna
+    - name: vr_efluentes
+    - name: vr_atec_ts_cisterna
+    - name: vr_tx_adm_cisterna
+    - name: vr_contrapartida
+    - name: vr_liberado
+    - name: pz_obra
+    - name: pc_execucao_fisica_obra
+    - name: pc_execucao_financeira_obra
+    - name: pc_execucao_financeira_atec
+    - name: pc_execucao_financeira_ts
+    - name: co_situacao_obra
+    - name: no_situacao_obra
+    - name: dt_ultima_liberacao
+    - name: dt_efetiva_conclusao
+    - name: origem
+  - name: rural_empreendimentos_caixa
+    description: 'INT065: empreendimentos do PNHR (Rural) operados pela CAIXA. Sem remessa nova desde
+      29/11/2024; o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_20241129.TXT.'
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet
+      file_pattern: INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: dt_movimento
+    - name: co_agente_financeiro
+    - name: nu_contrato_emprendimento
+    - name: nu_apf
+    - name: no_empreendimento
+    - name: co_natureza
+    - name: co_grupo_renda
+    - name: dt_contrato
+    - name: co_municipio_ibge
+    - name: no_municipio
+    - name: sg_uf
+    - name: no_entidade_organizadora
+    - name: nu_cnpj_entidade
+    - name: qtde_uh_inicial
+    - name: qtde_unidades
+    - name: qt_unidades_concluidas
+    - name: qt_unidades_entregues
+    - name: vr_investimento_pnhr
+    - name: vr_operacao
+    - name: vr_edificacao
+    - name: vr_atec
+    - name: vr_ts
+    - name: vr_custo_originacao
+    - name: vr_taxa_administracao
+    - name: vr_diferencial_juros
+    - name: vr_taxa_risco_credito
+    - name: vr_cisterna
+    - name: vr_efluentes
+    - name: vr_atec_ts_cisterna
+    - name: vr_tx_adm_cisterna
+    - name: vr_contrapartida
+    - name: vr_emprestimo
+    - name: vr_subsidio_fgts
+    - name: vr_liberado
+    - name: pz_construcao
+    - name: pc_obra_realizado
+    - name: no_situacao_obra
+    - name: dt_ultima_liberacao
+    - name: dt_efetiva_conclusao
+    - name: origem
