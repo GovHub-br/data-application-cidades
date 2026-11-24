@@ -371,6 +371,84 @@ def mrv_vendas_xlsx(path: str) -> "pd.DataFrame":
     return _mrv_block(path, "Vendas Líquidas %MRV", [1, 4, 5], names)
 
 
+INFOMONEY_COLUMNS = ["symbol", "data_pregao", "open", "high", "low", "close", "volume"]
+
+
+@parser("alphavantage_daily_json")
+def alphavantage_daily_json(path: str) -> "pd.DataFrame":
+    """TIME_SERIES_DAILY of the Alpha Vantage: one row per trading day, values as delivered.
+
+    The answer brings only the last ~100 days (`compact`): the history lives in the
+    earlier loads, which the prata joins.
+    """
+    import json
+
+    import pandas as pd
+
+    with open(path, encoding="utf-8") as f:
+        answer = json.load(f)
+    if "Time Series (Daily)" not in answer:  # rate limit or wrong key: a note, not data
+        raise SourceLayoutChanged(f"answer without 'Time Series (Daily)': {list(answer)}")
+    symbol = answer["Meta Data"]["2. Symbol"]
+    rows = [
+        [symbol, day, v["1. open"], v["2. high"], v["3. low"], v["4. close"], v["5. volume"]]
+        for day, v in answer["Time Series (Daily)"].items()
+    ]
+    return pd.DataFrame(rows, columns=INFOMONEY_COLUMNS)
+
+
+@parser("infomoney_postgres_csv")
+def infomoney_postgres_csv(path: str) -> "pd.DataFrame":
+    """The one-time export of infomoney.acoes_imob (the history the Postgres accumulated
+    before the lake kept every load), with the same columns as the API reader."""
+    import pandas as pd
+
+    return pd.read_csv(path, dtype=str, keep_default_na=False)[INFOMONEY_COLUMNS]
+
+
+TESOURO_COLUMNS = [
+    "unidade_orcamentaria_codigo", "unidade_orcamentaria_nome", "acao_governo_codigo",
+    "acao_governo_nome", "programa_governo_codigo", "programa_governo_nome",
+    "plano_orcamentario_codigo", "plano_orcamentario_funcao", "plano_orcamentario_subfuncao",
+    "plano_orcamentario_programa", "plano_orcamentario_acao", "plano_orcamentario_medida",
+    "plano_orcamentario_descricao", "elemento_despesa_codigo", "elemento_despesa_nome",
+    "orgao_uge_codigo", "orgao_uge_nome", "uge_matriz_filial", "ug_executora_codigo",
+    "ug_executora_nome", "fixacao_despesa_loa", "dotacao_inicial", "dotacao_atualizada",
+    "credito_disponivel", "despesas_empenhadas", "despesas_empenhadas_a_liquidar",
+    "despesas_liquidadas_a_pagar", "despesas_pagas", "restos_a_pagar_inscritos",
+    "restos_a_pagar_pagos",
+]  # fmt: skip
+
+
+@parser("tesouro_dotacao_zip")
+def tesouro_dotacao_zip(path: str) -> "pd.DataFrame":
+    """The Tesouro Gerencial report e-mailed as a ZIP: one UTF-16 TSV with 12 title rows.
+
+    Columns by position (the report has no usable header); everything as text, so codes
+    like `0E64` keep their letters and leading zeros.
+    """
+    import io
+    import zipfile
+
+    import pandas as pd
+
+    with zipfile.ZipFile(path) as archive:
+        members = [m for m in archive.namelist() if m.lower().endswith(".csv")]
+        if not members:
+            raise SourceLayoutChanged(f"ZIP without a CSV: {archive.namelist()}")
+        text = archive.read(members[0]).decode("utf-16")
+    df = pd.read_csv(
+        io.StringIO(text), sep="\t", skiprows=12, header=None, dtype=str,
+        engine="python", on_bad_lines="skip",
+    )  # fmt: skip
+    extra = df.iloc[:, len(TESOURO_COLUMNS) :]
+    if df.shape[1] < len(TESOURO_COLUMNS) or extra.notna().any().any():
+        raise SourceLayoutChanged(f"expected {len(TESOURO_COLUMNS)} columns, got {df.shape[1]}")
+    df = df.iloc[:, : len(TESOURO_COLUMNS)]  # a trailing tab gives an empty extra column
+    df.columns = TESOURO_COLUMNS
+    return df
+
+
 def convert(
     minio,
     key: str,

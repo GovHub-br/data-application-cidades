@@ -80,5 +80,20 @@
         "description": "Catálogo de arquivos da MZ, RI da MRV (lancamentos_ingest_dag e vendas_ingest_dag)",
         "host": "https://apicatalog.mziq.com",
         "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\", \"Accept\": \"application/json\", \"Content-Type\": \"application/json\", \"Origin\": \"https://ri.mrv.com.br\", \"Referer\": \"https://ri.mrv.com.br/\"}"
+    },
+    "alphavantage": {
+        "conn_type": "http",
+        "description": "API da Alpha Vantage (infomoney_imob): a chave no password, o ativo em symbol no extra",
+        "host": "https://www.alphavantage.co",
+        "password": "<api key>",
+        "extra": "{\"symbol\": \"<s\\u00edmbolo do ativo>\"}"
+    },
+    "tesouro_imap": {
+        "conn_type": "imap",
+        "description": "Caixa de e-mail que recebe o relatório do Tesouro Gerencial (dotacao_execucao_outras_fontes_mcid_ingest_dag)",
+        "host": "<servidor IMAP>",
+        "login": "<email>",
+        "password": "<senha>",
+        "extra": "{\"sender_email\": \"<remetente esperado>\"}"
     }
 }

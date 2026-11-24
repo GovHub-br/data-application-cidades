@@ -183,8 +183,8 @@ sources:
       - name: infomoney_imob
         description: "Cotações diárias do índice IMOB da B3 (via Alpha Vantage)."
         meta:
-          caminho: staging/infomoney/acoes_imob.parquet
-          dag: imob_ingest_dag
+          caminho: staging/infomoney/acoes_imob/load_id=*/*.parquet
+          dag: infomoney_imob
           linhas_minimas: 336   # metade do observado em 2026-08-29 (673)
       - name: novo_caged
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
@@ -207,6 +207,6 @@ sources:
       - name: siafi_dotacao_execucao
         description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."
         meta:
-          caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid.parquet
+          caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/load_id=*/*.parquet
           dag: dotacao_execucao_outras_fontes_mcid_ingest_dag
           linhas_minimas: 281   # metade do observado em 2026-08-29 (562)

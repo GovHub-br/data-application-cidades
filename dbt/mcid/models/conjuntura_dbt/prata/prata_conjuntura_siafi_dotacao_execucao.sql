@@ -13,6 +13,7 @@
 -- que já existe no projeto e trata os dois casos (vazio vira 0,00).
 -- O wrapper `parse_valor_siafi` acrescenta o tratamento de negativo em
 -- notação contábil — "(6570011.00)" = -6.570.011,00.
+-- A bronze guarda todas as cargas; cada carga é o relatório inteiro, então fica a última.
 select
     unidade_orcamentaria_codigo,
     unidade_orcamentaria_nome,
@@ -46,3 +47,4 @@ select
     {{ parse_valor_siafi('restos_a_pagar_pagos') }} as restos_a_pagar_pagos,
     _ingested_at as dt_ingest
 from {{ ref('bronze_siafi_dotacao_execucao') }}
+where {{ ultima_carga(ref('bronze_siafi_dotacao_execucao')) }}

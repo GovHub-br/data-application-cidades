@@ -1,0 +1,52 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/email_tesouro.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: email_tesouro
+  description: Dotação e execução orçamentária do MCID por outras fontes, enviada pelo Tesouro Gerencial
+    por e-mail. Cada carga são os ZIPs do e-mail do dia, com o relatório inteiro (carga completa).
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/email_tesouro.odcs.yaml
+    owner: Tesouro Nacional (Tesouro Gerencial)
+  tables:
+  - name: dotacao_execucao_outras_fontes_mcid
+    description: Relatório de dotação e execução (UTF-16, TSV, 12 linhas de título), um ZIP por anexo.
+    meta:
+      caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/*.parquet
+      file_pattern: \d{2}_.+\.zip
+      load_type: full
+      dag: dotacao_execucao_outras_fontes_mcid_ingest_dag
+    columns:
+    - name: unidade_orcamentaria_codigo
+    - name: unidade_orcamentaria_nome
+    - name: acao_governo_codigo
+    - name: acao_governo_nome
+    - name: programa_governo_codigo
+    - name: programa_governo_nome
+    - name: plano_orcamentario_codigo
+    - name: plano_orcamentario_funcao
+    - name: plano_orcamentario_subfuncao
+    - name: plano_orcamentario_programa
+    - name: plano_orcamentario_acao
+    - name: plano_orcamentario_medida
+    - name: plano_orcamentario_descricao
+    - name: elemento_despesa_codigo
+    - name: elemento_despesa_nome
+    - name: orgao_uge_codigo
+    - name: orgao_uge_nome
+    - name: uge_matriz_filial
+    - name: ug_executora_codigo
+    - name: ug_executora_nome
+    - name: fixacao_despesa_loa
+    - name: dotacao_inicial
+    - name: dotacao_atualizada
+    - name: credito_disponivel
+    - name: despesas_empenhadas
+    - name: despesas_empenhadas_a_liquidar
+    - name: despesas_liquidadas_a_pagar
+    - name: despesas_pagas
+    - name: restos_a_pagar_inscritos
+    - name: restos_a_pagar_pagos

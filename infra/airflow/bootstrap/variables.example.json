@@ -30,22 +30,6 @@
             }
         }
     },
-    "api_key_alphavantage": {
-        "description": "Chave da Alpha Vantage e ativo consultado pela imob_ingest_dag",
-        "value": {
-            "api_key": "<api key>",
-            "acao": "<símbolo do ativo>"
-        }
-    },
-    "email_credentials": {
-        "description": "Caixa de e-mail (IMAP) lida pela dotacao_execucao_outras_fontes_mcid_ingest_dag",
-        "value": {
-            "email": "<email>",
-            "password": "<senha>",
-            "imap_server": "<servidor IMAP>",
-            "sender_email": "<remetente esperado>"
-        }
-    },
     "lake_bucket": {
         "description": "Bucket do lake (raw/ e staging/) usado pelas DAGs de ingestão; o mesmo da var lake_bucket do dbt",
         "value": "data-lake-mcid"
