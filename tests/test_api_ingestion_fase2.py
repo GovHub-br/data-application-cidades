@@ -142,7 +142,7 @@ def ibge(monkeypatch, tmp_path):
         def __init__(self, method, http_conn_id):
             pass
 
-        def run(self, endpoint, data=None):
+        def run(self, endpoint, data=None, **kw):
             calls.append((endpoint, data))
             if "2296" in endpoint:
                 raise RuntimeError("HTTP 500")

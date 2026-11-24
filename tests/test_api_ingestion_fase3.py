@@ -93,7 +93,7 @@ def _caged_http(empty):
         def __init__(self, method, http_conn_id):
             pass
 
-        def run(self, endpoint, json=None):
+        def run(self, endpoint, json=None, **kw):
             where = json["queries"][0]["Query"]["Commands"][0]["SemanticQueryDataShapeCommand"][
                 "Query"
             ]["Where"]
@@ -124,7 +124,7 @@ def test_sgs_one_bad_series_lands_nothing(monkeypatch, tmp_path):
         def __init__(self, method, http_conn_id):
             pass
 
-        def run(self, endpoint, data=None):
+        def run(self, endpoint, data=None, **kw):
             html = "bcdata.sgs.2" in endpoint
             return SimpleNamespace(
                 json=(lambda: (_ for _ in ()).throw(ValueError("html")))

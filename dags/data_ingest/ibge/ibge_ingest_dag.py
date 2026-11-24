@@ -55,7 +55,7 @@ def _endpoint_and_params(config: dict) -> tuple[str, dict]:
 
 @dag(
     schedule="@daily",
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Mateus", "retries": 1, "retry_delay": timedelta(minutes=5)},
@@ -84,7 +84,9 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
             table = config["tabela"]
             endpoint, params = _endpoint_and_params(config)
             try:
-                response = hook.run(endpoint, data=params)  # != 2xx levanta
+                response = hook.run(
+                    endpoint, data=params, extra_options={"timeout": 120}
+                )  # != 2xx levanta
                 if not isinstance(response.json(), list) or not response.json():
                     raise ValueError("resposta sem dados")
             except Exception as exc:  # noqa: BLE001 - uma tabela não derruba as outras

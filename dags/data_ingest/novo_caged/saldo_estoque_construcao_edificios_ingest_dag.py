@@ -47,7 +47,7 @@ def _lake() -> tuple[S3Hook, str, str]:
 
 @dag(
     schedule="@monthly",
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Milena Rocha", "retries": 1, "retry_delay": timedelta(minutes=5)},
@@ -76,7 +76,11 @@ def novo_caged_construcao_edificios() -> None:  # noqa: C901 - as tasks da DAG f
         periods = expected_periods(get_current_context()["dag_run"].run_after.date())
         paths, missing = [], []
         for year, month in periods:
-            response = hook.run(ENDPOINT, json=query_payload(year, month, CNAE_DIVISION))
+            response = hook.run(
+                ENDPOINT,
+                json=query_payload(year, month, CNAE_DIVISION),
+                extra_options={"timeout": 120},
+            )
             try:
                 novo_caged_values(response.json())
             except (ValueError, SourceLayoutChanged):

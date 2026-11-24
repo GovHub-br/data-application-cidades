@@ -44,7 +44,7 @@ def _lake() -> tuple[S3Hook, str, str]:
 
 @dag(
     schedule="@daily",
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Mateus", "retries": 1, "retry_delay": timedelta(minutes=5)},
@@ -76,7 +76,9 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
         hook, paths = HttpHook(method="GET", http_conn_id="bacen_sgs"), []
         for name, code in series.items():
             response = hook.run(
-                f"dados/serie/bcdata.sgs.{code}/dados", data={"formato": "json", "ultimos": 13}
+                f"dados/serie/bcdata.sgs.{code}/dados",
+                data={"formato": "json", "ultimos": 13},
+                extra_options={"timeout": 120},
             )  # != 2xx levanta
             try:
                 rows = response.json()

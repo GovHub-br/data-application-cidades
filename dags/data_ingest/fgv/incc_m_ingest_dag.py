@@ -46,7 +46,7 @@ def _lake() -> tuple[S3Hook, str, str]:
 
 @dag(
     schedule="@daily",
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Gustavo", "retries": 1, "retry_delay": timedelta(minutes=5)},
@@ -66,7 +66,9 @@ def incc_m_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
     def extract() -> str:
         """O XLSX da série histórica pelo HttpHook (Connection `sinduscon`, com o
         User-Agent de navegador no extra, sem o qual o site recusa)."""
-        response = HttpHook(method="GET", http_conn_id="sinduscon").run(ENDPOINT)  # != 2xx falha
+        response = HttpHook(method="GET", http_conn_id="sinduscon").run(
+            ENDPOINT, extra_options={"timeout": 120}
+        )  # != 2xx falha
         if not response.content:
             raise AirflowFailException("o Sinduscon-PR devolveu o XLSX do INCC-M vazio")
         path = _run_dir() / FILE_NAME

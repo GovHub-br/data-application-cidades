@@ -50,7 +50,7 @@ def _lake() -> tuple[S3Hook, str, str]:
 @dag(
     dag_id="abecip_financiamentos_ingest_dag",
     schedule="@daily",
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Lucas Bottino", "retries": 1, "retry_delay": timedelta(minutes=5)},

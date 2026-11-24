@@ -51,7 +51,7 @@ def _lake() -> tuple[S3Hook, str, str]:
 @dag(
     dag_id="bacen_credito_pib_ingest_dag",
     schedule="@monthly",
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Lucas Bottino", "retries": 1, "retry_delay": timedelta(minutes=5)},
@@ -72,7 +72,9 @@ def bacen_credito_pib_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fica
     @task(retries=2, retry_exponential_backoff=True)
     def extract() -> str:
         """A resposta OData como o Olinda entrega (Connection `bacen_olinda`)."""
-        response = HttpHook(method="GET", http_conn_id="bacen_olinda").run(ENDPOINT)  # != 2xx falha
+        response = HttpHook(method="GET", http_conn_id="bacen_olinda").run(
+            ENDPOINT, extra_options={"timeout": 120}
+        )  # != 2xx falha
         if not response.content:
             raise AirflowFailException("o Olinda devolveu a série de crédito/PIB vazia")
         path = _run_dir() / FILE_NAME

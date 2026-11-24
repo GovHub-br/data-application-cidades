@@ -47,7 +47,7 @@ def _lake() -> tuple[S3Hook, str, str]:
 @dag(
     dag_id="dotacao_execucao_outras_fontes_mcid_ingest_dag",
     schedule="0 12 * * *",  # 09h em Brasília: o e-mail chega entre 04h e 08h
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,
     default_args={"owner": "Lucas", "retries": 1, "retry_delay": timedelta(minutes=5)},
