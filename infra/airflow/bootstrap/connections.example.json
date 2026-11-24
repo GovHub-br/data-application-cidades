@@ -38,5 +38,29 @@
         "description": "Série histórica do INCC-M no Sinduscon-PR (incc_m_ingest_dag); o site recusa sem User-Agent de navegador",
         "host": "https://sindusconpr.com.br",
         "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"}"
+    },
+    "abecip": {
+        "conn_type": "http",
+        "description": "Site da ABECIP (abecip_financiamentos e abecip_poupanca): a página traz o link do XLSX da divulgação",
+        "host": "https://www.abecip.org.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"}"
+    },
+    "fipe": {
+        "conn_type": "http",
+        "description": "Downloads da FIPE: séries históricas do FipeZAP (fipezap_trimestral_ingest_dag)",
+        "host": "https://downloads.fipe.org.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"}"
+    },
+    "bacen_olinda": {
+        "conn_type": "http",
+        "description": "API Olinda do Banco Central (OData), usada pela bacen_credito_pib_ingest_dag",
+        "host": "https://olinda.bcb.gov.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0\", \"Accept\": \"application/json\"}"
+    },
+    "ibge": {
+        "conn_type": "http",
+        "description": "API de agregados v3 do IBGE (ibge_ingest_dag)",
+        "host": "https://servicodados.ibge.gov.br",
+        "extra": ""
     }
 }

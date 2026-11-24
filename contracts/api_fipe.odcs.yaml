@@ -1,0 +1,46 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: api_fipe
+name: FIPE (índice FipeZAP de locação)
+version: 0.1.0
+status: draft
+description:
+  purpose: Índice FipeZAP de locação residencial. Cada carga é o XLSX das séries históricas inteiro (carga
+    completa).
+team:
+- username: FIPE
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: indice_locacao
+  physicalName: indice_locacao
+  description: Número índice e variações mensal e em 12 meses da locação residencial (total).
+  customProperties:
+  - property: path
+    value: staging/fipe/indice_locacao/*.parquet
+  - property: file_pattern
+    value: indice_locacao\.xlsx
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: fipezap_xlsx
+  - property: dag
+    value: fipezap_trimestral_ingest_dag
+  - property: dbt_tables
+    value:
+    - fipezap_locacao
+  properties:
+  - name: data_referencia
+    logicalType: string
+  - name: imoveis_residenciais_locacao_numero_indice_total
+    logicalType: string
+  - name: imoveis_residenciais_locacao_var_mensal_total
+    logicalType: string
+  - name: imoveis_residenciais_locacao_var_ano_total
+    logicalType: string

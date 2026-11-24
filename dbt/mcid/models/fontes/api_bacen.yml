@@ -1,0 +1,25 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_bacen.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: api_bacen
+  description: Séries do Banco Central usadas na conjuntura. Cada carga é a resposta da API como veio,
+    com a série inteira (carga completa).
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/api_bacen.odcs.yaml
+    owner: Banco Central do Brasil
+  tables:
+  - name: credito_imobiliario_pib
+    description: Crédito imobiliário / PIB (%), indicador indices_imobiliario_pib_br do Olinda MercadoImobiliario.
+    meta:
+      caminho: staging/bacen/credito_imobiliario_pib/*.parquet
+      file_pattern: credito_imobiliario_pib\.json
+      load_type: full
+      dag: bacen_credito_pib_ingest_dag
+    columns:
+    - name: info
+    - name: data
+    - name: valor

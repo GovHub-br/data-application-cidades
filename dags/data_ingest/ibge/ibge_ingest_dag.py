@@ -1,183 +1,213 @@
-import io
+import json
 import logging
-from typing import Any
-from airflow.sdk import dag, task
-from airflow.sdk import Variable
+import os
+import re
+import shutil
 from datetime import datetime, timedelta
-from schedule_loader import get_dynamic_schedule
-from postgres_helpers import get_postgres_conn
-from cliente_ibge import ClienteIBGE
-from cliente_postgres import ClientPostgresDB
-from cliente_minio import upload_raw_json, download_raw_json, upload_staging_parquet
-import pandas as pd
-import psycopg2
+from pathlib import Path
 
-CONFIGURACOES = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True, default=[])
+import pyarrow.parquet as pq
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from airflow.providers.http.hooks.http import HttpHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.sdk import Variable, dag, get_current_context, task
+from airflow.sdk.exceptions import AirflowFailException
+
+from plugins.datalake import contract, readers
+from plugins.datalake.api import staging_key, staging_record, write_text_parquet
+from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.tasks import previous_rows, record, summary
+from scripts.lake_utils import md5_file
+
+
+def _run_dir() -> Path:
+    """LAKE_TMPDIR/<dag_id>/<run_id>/: os arquivos da execução, entre uma task e outra.
+
+    shortcut: só funciona porque todo ambiente usa LocalExecutor com o LAKE_TMPDIR
+    compartilhado; com outro executor, o extract passa a gravar no bucket.
+    """
+    ctx = get_current_context()
+    run = re.sub(r"[^A-Za-z0-9_.-]", "_", ctx["run_id"])
+    path = Path(os.environ.get("LAKE_TMPDIR") or "/tmp") / ctx["dag"].dag_id / run
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _lake() -> tuple[S3Hook, str, str]:
+    """(hook, bucket, prefixo): o `dry_run` grava tudo embaixo de dryrun/."""
+    dry = bool(get_current_context()["params"]["dry_run"])
+    return S3Hook(aws_conn_id="lake_mcid"), Variable.get("lake_bucket"), "dryrun/" if dry else ""
+
+
+def _endpoint_and_params(config: dict) -> tuple[str, dict]:
+    """Uma entrada do IBGE_CONFIGURACOES -> caminho e parâmetros da API de agregados v3."""
+    endpoint = (
+        f"api/v3/agregados/{config['agregado']}/periodos/{config.get('periodos', '-20')}"
+        f"/variaveis/{config['variaveis']}"
+    )
+    params = {"localidades": "N1[1]"}  # Brasil
+    if config.get("classificacao_id") is not None and config.get("categoria") is not None:
+        # a API separa variáveis por `|` e categorias por `,`; aceita os dois na Variable
+        categories = str(config["categoria"]).replace("|", ",")
+        params["classificacao"] = f"{config['classificacao_id']}[{categories}]"
+    return endpoint, params
 
 
 @dag(
-    schedule=get_dynamic_schedule("ibge_ingest_dag"),
-    start_date=datetime(2023, 1, 1),
+    schedule="@daily",
+    start_date=datetime(2026, 12, 1),
     catchup=False,
-    default_args={
-        "owner": "Mateus",
-        "retries": 1,
-        "retry_delay": timedelta(minutes=5),
-    },
-    tags=["ibge", "pib_construcao", "sinapi"],
+    max_active_runs=1,
+    default_args={"owner": "Mateus", "retries": 1, "retry_delay": timedelta(minutes=5)},
+    params={"dry_run": False},
+    tags=["ibge", "pib_construcao", "sinapi", "conjuntura", "data-lake", "ingest"],
 )
-def ibge_ingest_dag() -> None:  # noqa: C901 - 3 tasks aninhadas, cada uma simples
-    """DAG para ingestão de dados do IBGE no PostgreSQL.
+def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
+    """Agregados do IBGE (API v3) listados no IBGE_CONFIGURACOES para o lake (ADR-0004).
 
-    Usa dynamic task mapping para criar uma task paralela
-    para cada configuração de agregado definida em CONFIGURACOES.
+    Uma tabela por entrada da Variable, cada uma em raw/ibge/<tabela>/load_id=<id>/ com a
+    resposta JSON como a API entrega. Cada task percorre as tabelas: uma tabela que falha
+    na API não impede as outras, e o report falha a execução no fim.
+
+    Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task
-    def setup_schema() -> None:
+    @task(retries=2, retry_exponential_backoff=True)
+    def extract() -> dict:
+        """A resposta de cada agregado em disco; os erros seguem para o report."""
+        configs = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True)
+        if not configs:
+            raise AirflowFailException("IBGE_CONFIGURACOES vazia: nenhuma tabela para ingerir")
+        hook = HttpHook(method="GET", http_conn_id="ibge")
+        files, errors = {}, []
+        for config in configs:
+            table = config["tabela"]
+            endpoint, params = _endpoint_and_params(config)
+            try:
+                response = hook.run(endpoint, data=params)  # != 2xx levanta
+                if not isinstance(response.json(), list) or not response.json():
+                    raise ValueError("resposta sem dados")
+            except Exception as exc:  # noqa: BLE001 - uma tabela não derruba as outras
+                errors.append(f"{table}: {exc}"[:300])
+                continue
+            path = _run_dir() / f"{table}.json"
+            path.write_bytes(response.content)
+            files[table] = str(path)
+        if not files:
+            raise AirflowFailException(f"nenhuma tabela do IBGE respondeu: {errors}")
+        return {"files": files, "errors": errors}
+
+    @task(retries=2, retry_exponential_backoff=True)
+    def upload_to_s3(extracted: dict) -> list[str]:
+        """Cada JSON em raw/ibge/<tabela>/load_id=<id>/; a tabela igual à última carga não pousa.
+
+        O md5 vai no metadado do objeto, e a próxima execução compara com ele (ADR-0005).
         """
-        Cria o schema do IBGE antes do processamento paralelo.
-        Tratando o UniqueViolation em alta concorrência do Airflow.
-        """
-        postgres_conn_str = get_postgres_conn()
-        schema = "ibge"
-        try:
-            with psycopg2.connect(postgres_conn_str) as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {schema};")
-                conn.commit()
-            logging.info(f"Schema '{schema}' garantido com sucesso.")
-        except psycopg2.errors.UniqueViolation:
-            logging.warning(f"Schema '{schema}' já estava sendo criado (UniqueViolation mitigado).")
-
-    @task
-    def fetch_and_store_mapped(config: dict) -> None:
-        logging.info(f"Iniciando ingestão: {config['tabela']}")
-
-        agregado = config["agregado"]
-        variaveis = config["variaveis"]
-        tabela = config["tabela"]
-        periodos = config.get("periodos", "-20")
-        classificacao_id = config.get("classificacao_id")
-        categoria = config.get("categoria")
-
-        api = ClienteIBGE()
-        postgres_conn_str = get_postgres_conn()
-        db = ClientPostgresDB(postgres_conn_str)
-
-        dados_api = api.get_dados_agregados(
-            agregado=agregado,
-            variaveis=variaveis,
-            periodos=periodos,
-            classificacao_id=classificacao_id,
-            categoria=categoria,
-        )
-
-        if not dados_api:
-            logging.warning(f"Nenhum dado retornado da API IBGE para tabela {tabela}")
-            return
-
-        # 1.1 Extração p/ MinIO (raw, full-refresh): payload cru da API.
-        upload_raw_json("ibge", tabela, dados_api)
-
-        registros = ClienteIBGE.transformar_resposta(dados_api)
-
-        if registros:
-            logging.info(f"Inserindo {len(registros)} registros em ibge.{tabela}")
-            db.insert_data(
-                registros,
-                tabela,
-                conflict_fields=[
-                    "variavel_id",
-                    "localidade_id",
-                    "periodo",
-                    "classificacao_id",
-                    "categoria_id",
-                ],
-                primary_key=[
-                    "variavel_id",
-                    "localidade_id",
-                    "periodo",
-                    "classificacao_id",
-                    "categoria_id",
-                ],
-                schema="ibge",
+        hook, bucket, prefix = _lake()
+        load = load_id(get_current_context()["dag_run"].run_after)  # o mesmo num retry
+        client, keys = hook.get_conn(), []
+        for table, path in extracted["files"].items():
+            folder, file_name, md5 = f"ibge/{table}", f"{table}.json", md5_file(path)
+            previous_loads = sorted(
+                {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{folder}/") or []}
+                - {load, None}
             )
-            logging.info(f"Ingestão de {tabela} concluída")
-        else:
-            logging.warning(f"Nenhum registro extraído dos dados da API para {tabela}")
+            if previous_loads:
+                previous_key = f"{prefix}{raw_key(folder, file_name, previous_loads[-1])}"
+                head = client.head_object(Bucket=bucket, Key=previous_key)
+                if head["Metadata"].get("md5") == md5:
+                    logging.info("[ibge_ingest_dag] %s não mudou desde a última carga", table)
+                    continue
+            key = raw_key(folder, file_name, load)
+            client.upload_file(path, bucket, prefix + key, ExtraArgs={"Metadata": {"md5": md5}})
+            keys.append(key)
+        return keys
+
+    @task
+    def transform(keys: list[str]) -> list[dict]:
+        """Cada raw em Parquet local (texto + linhagem), pelo leitor do contrato `api_ibge`."""
+        hook, bucket, prefix = _lake()
+        run_id, datasets, out = get_current_context()["run_id"], contract.load(), []
+        for i, key in enumerate(keys):
+            dataset = contract.match(key, datasets)
+            if dataset is None:  # tabela nova na Variable sem contrato: fica na raw
+                out.append(staging_record(run_id, key, status="uncataloged"))
+                continue
+            work = _run_dir() / f"transform_{i}"
+            work.mkdir(exist_ok=True)
+            try:
+                src = hook.download_file(
+                    prefix + key, bucket, str(work), preserve_file_name=True,
+                    use_autogenerated_subdir=False,
+                )  # fmt: skip
+                source_hash = md5_file(src)
+                dst = str(work / "staging.parquet")
+                df = readers.parse(dataset.reader, src)
+                stats = write_text_parquet(df, dst, Path(key).name, source_hash, load_id_of(key))
+            except Exception as exc:  # noqa: BLE001 - uma tabela não derruba as outras
+                out.append(staging_record(run_id, key, status="error", error_message=str(exc)))
+                continue
+            out.append(staging_record(run_id, key, staging_key=staging_key(key),
+                                      status="converted", source_hash=source_hash,
+                                      local_path=dst, **stats))  # fmt: skip
+        return out
+
+    @task
+    def verify_structural_data_drift(recs: list[dict]) -> list[dict]:
+        """Colunas e volume de cada tabela contra o contrato; `quarantined` fica fora."""
+        datasets = contract.load()
+        previous = previous_rows(PostgresHook(postgres_conn_id="postgres_default"))
+        for rec in recs:
+            if rec["status"] != "converted":
+                continue
+            dataset = contract.match(rec["raw_key"], datasets)
+            meta = pq.read_metadata(rec["local_path"])
+            header = [c for c in meta.schema.names if not c.startswith("_")]  # linhagem fora
+            status, details = contract.structural_status(
+                header, dataset, meta.num_rows, previous(dataset, datasets)
+            )
+            rec["structural"] = status
+            if status == "quarantined":
+                rec.update(status="quarantined", error_message=json.dumps(details)[:500])
+            elif status in ("additive_drift", "known_rename"):
+                rec["error_message"] = json.dumps(details)[:500]
+        return recs
+
+    @task(retries=2, retry_exponential_backoff=True)
+    def upload_staging(recs: list[dict]) -> list[dict]:
+        """Os Parquet aprovados em staging/ibge/<tabela>/load_id=<id>/ e o lake._staging_log."""
+        hook, bucket, prefix = _lake()
+        for rec in recs:
+            if rec["status"] == "converted":
+                hook.load_file(rec["local_path"], prefix + rec["staging_key"], bucket, replace=True)
+        if recs and not prefix:  # o dry run lê as tabelas de controle, mas não grava
+            record(PostgresHook(postgres_conn_id="postgres_default"), recs)
+        return [
+            {k: r.get(k) for k in ("raw_key", "status", "structural", "error_message")}
+            for r in recs
+        ]
+
+    @task(trigger_rule="none_failed")
+    def report() -> None:
+        """Resumo das tabelas; falha com erro de API, conversão ou quarentena."""
+        ti = get_current_context()["ti"]
+        errors = (ti.xcom_pull(task_ids="extract") or {}).get("errors") or []
+        recs = ti.xcom_pull(task_ids="upload_staging") or []
+        body, failed, notable = summary(
+            {"keys": [r["raw_key"] for r in recs], "errors": errors}, recs
+        )
+        (logging.error if failed else logging.warning if notable else logging.info)(
+            "[ibge_ingest_dag] report\n%s", body
+        )
+        if failed:
+            raise RuntimeError("ingestão do IBGE com erro ou quarentena; veja o resumo no log")
 
     @task(trigger_rule="all_done")
-    def gera_parquet_tipado(config: dict) -> None:
-        """1.2 Transformação → parquet TIPADO na staging do MinIO.
+    def cleanup() -> None:
+        shutil.rmtree(_run_dir(), ignore_errors=True)
 
-        Lê o raw json do MinIO, aplica os casts (a mesma tipagem que a camada
-        bronze fazia em SQL) e sobe o parquet já tipado. A silver depois só faz
-        `select * from read_parquet('s3://...')` via pg_duckdb — por isso o
-        parquet precisa sair daqui com os tipos finais.
-
-        O schema de saída do IBGE é uniforme para qualquer agregado (sempre as
-        mesmas colunas de transformar_resposta), então esta tipagem serve para
-        todas as tabelas do IBGE.
-
-        trigger_rule=all_done + o guard abaixo garantem que uma tabela cujo
-        fetch falhou (ex.: HTTP 500 do IBGE) NÃO bloqueie o parquet das demais:
-        cada config é independente — a que não tem raw é apenas pulada.
-        """
-        tabela = config["tabela"]
-
-        try:
-            dados_api = download_raw_json("ibge", tabela)
-        except Exception as exc:  # noqa: BLE001 - raw ausente = fetch falhou
-            logging.warning(
-                f"Sem raw para ibge.{tabela} (fetch pode ter falhado): {exc}. "
-                f"Pulando geração de parquet."
-            )
-            return
-
-        registros = ClienteIBGE.transformar_resposta(dados_api)
-        if not registros:
-            logging.warning(f"Sem registros para gerar parquet: ibge.{tabela}")
-            return
-
-        df = pd.DataFrame(registros)
-
-        # ids -> inteiros nuláveis
-        for col in ["variavel_id", "localidade_id", "classificacao_id", "categoria_id"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
-
-        # nomes -> texto normalizado (upper/trim), como na bronze
-        for col in ["localidade_nome", "classificacao_nome", "categoria_nome"]:
-            df[col] = df[col].astype("string").str.strip().str.upper()
-        df = df.rename(
-            columns={"classificacao_nome": "classificacao", "categoria_nome": "categoria"}
-        )
-
-        df["variavel_nome"] = df["variavel_nome"].astype("string")
-        df["unidade"] = df["unidade"].astype("string")
-        df["periodo"] = df["periodo"].astype("string")
-        periodos = df["periodo"].astype(str).tolist()
-        df["data_referencia"] = pd.to_datetime(
-            [f"{p}01" for p in periodos], format="%Y%m%d", errors="coerce"
-        )
-
-        # valor: a API v3 do IBGE usa PONTO como decimal ("1891.63"), sem
-        # separador de milhar. Portanto só coage — NÃO remover o ponto (isso
-        # corrompia o decimal, ex.: 1891.63 -> 189163). "..."/"-"/"" viram nulo.
-        nulos: dict[str, Any] = {"": None, "-": None, "...": None}
-        valor = df["valor"].astype("string").str.strip().replace(nulos)
-        df["valor"] = pd.to_numeric(valor, errors="coerce")
-        df["dt_ingest"] = pd.to_datetime(df["dt_ingest"], errors="coerce")
-
-        buffer = io.BytesIO()
-        df.to_parquet(buffer, engine="pyarrow", index=False)
-        upload_staging_parquet("ibge", tabela, buffer.getvalue())
-        logging.info(f"Parquet tipado gerado: staging/ibge/{tabela}.parquet ({len(df)} linhas)")
-
-    setup = setup_schema()
-    fetch = fetch_and_store_mapped.expand(config=CONFIGURACOES)
-    parquet = gera_parquet_tipado.expand(config=CONFIGURACOES)
-    setup >> fetch >> parquet
+    staged = upload_staging(verify_structural_data_drift(transform(upload_to_s3(extract()))))
+    staged >> report() >> cleanup()
 
 
 dag_instance = ibge_ingest_dag()

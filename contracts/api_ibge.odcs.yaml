@@ -1,0 +1,573 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: api_ibge
+name: IBGE (API de agregados v3)
+version: 0.1.0
+status: draft
+description:
+  purpose: Agregados do IBGE listados na Variable IBGE_CONFIGURACOES, um por tabela. Cada carga é a resposta
+    JSON da API como veio (carga completa da janela de períodos pedida).
+team:
+- username: IBGE
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: pib_construcao
+  physicalName: pib_construcao
+  description: Agregado do IBGE da tabela pib_construcao (variável x localidade x classificação x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/pib_construcao/*.parquet
+  - property: file_pattern
+    value: pib_construcao\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pib_construcao_civil
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: sinapi
+  physicalName: sinapi
+  description: Agregado do IBGE da tabela sinapi (variável x localidade x classificação x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/sinapi/*.parquet
+  - property: file_pattern
+    value: sinapi\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_sinapi
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: pib_consolidado_trimestral_bruto
+  physicalName: pib_consolidado_trimestral_bruto
+  description: Agregado do IBGE da tabela pib_consolidado_trimestral_bruto (variável x localidade x classificação
+    x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/pib_consolidado_trimestral_bruto/*.parquet
+  - property: file_pattern
+    value: pib_consolidado_trimestral_bruto\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pib_consolidado_trimestral
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: pib_corrente_milhoes_brl
+  physicalName: pib_corrente_milhoes_brl
+  description: Agregado do IBGE da tabela pib_corrente_milhoes_brl (variável x localidade x classificação
+    x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/pib_corrente_milhoes_brl/*.parquet
+  - property: file_pattern
+    value: pib_corrente_milhoes_brl\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pib_corrente
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: paic_obras
+  physicalName: paic_obras
+  description: Agregado do IBGE da tabela paic_obras (variável x localidade x classificação x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/paic_obras/*.parquet
+  - property: file_pattern
+    value: paic_obras\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_paic_obras
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: paic_pessoal_salarial
+  physicalName: paic_pessoal_salarial
+  description: Agregado do IBGE da tabela paic_pessoal_salarial (variável x localidade x classificação
+    x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/paic_pessoal_salarial/*.parquet
+  - property: file_pattern
+    value: paic_pessoal_salarial\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_paic_pessoal_salarial
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: paic_resultados
+  physicalName: paic_resultados
+  description: Agregado do IBGE da tabela paic_resultados (variável x localidade x classificação x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/paic_resultados/*.parquet
+  - property: file_pattern
+    value: paic_resultados\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_paic_resultados
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: pnad_trabalho_construcao
+  physicalName: pnad_trabalho_construcao
+  description: Agregado do IBGE da tabela pnad_trabalho_construcao (variável x localidade x classificação
+    x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/pnad_trabalho_construcao/*.parquet
+  - property: file_pattern
+    value: pnad_trabalho_construcao\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pnad_construcao_ocupados
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: pnad_rendimento_construcao
+  physicalName: pnad_rendimento_construcao
+  description: Agregado do IBGE da tabela pnad_rendimento_construcao (variável x localidade x classificação
+    x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/pnad_rendimento_construcao/*.parquet
+  - property: file_pattern
+    value: pnad_rendimento_construcao\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pnad_construcao_rendimento
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: pnadc_populacao_decis_renda
+  physicalName: pnadc_populacao_decis_renda
+  description: Agregado do IBGE da tabela pnadc_populacao_decis_renda (variável x localidade x classificação
+    x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/pnadc_populacao_decis_renda/*.parquet
+  - property: file_pattern
+    value: pnadc_populacao_decis_renda\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pnadc_populacao_decis_renda
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: pnadc_rendimento_domiciliar_real
+  physicalName: pnadc_rendimento_domiciliar_real
+  description: Agregado do IBGE da tabela pnadc_rendimento_domiciliar_real (variável x localidade x classificação
+    x período).
+  customProperties:
+  - property: path
+    value: staging/ibge/pnadc_rendimento_domiciliar_real/*.parquet
+  - property: file_pattern
+    value: pnadc_rendimento_domiciliar_real\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pnadc_rendimento_domiciliar
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: ibge_pim_pf_brasil
+  physicalName: ibge_pim_pf_brasil
+  description: Agregado do IBGE da tabela ibge_pim_pf_brasil (variável x localidade x classificação x
+    período).
+  customProperties:
+  - property: path
+    value: staging/ibge/ibge_pim_pf_brasil/*.parquet
+  - property: file_pattern
+    value: ibge_pim_pf_brasil\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pim_pf_brasil
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: ibge_pmc_construcao
+  physicalName: ibge_pmc_construcao
+  description: Agregado do IBGE da tabela ibge_pmc_construcao (variável x localidade x classificação x
+    período).
+  customProperties:
+  - property: path
+    value: staging/ibge/ibge_pmc_construcao/*.parquet
+  - property: file_pattern
+    value: ibge_pmc_construcao\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: ibge_agregados_json
+  - property: dag
+    value: ibge_ingest_dag
+  - property: dbt_tables
+    value:
+    - ibge_pmc_construcao
+  properties:
+  - name: variavel_id
+    logicalType: string
+  - name: variavel_nome
+    logicalType: string
+  - name: localidade_id
+    logicalType: string
+  - name: localidade_nome
+    logicalType: string
+  - name: classificacao_id
+    logicalType: string
+  - name: classificacao_nome
+    logicalType: string
+  - name: categoria_id
+    logicalType: string
+  - name: categoria_nome
+    logicalType: string
+  - name: unidade
+    logicalType: string
+  - name: periodo
+    logicalType: string
+  - name: valor
+    logicalType: string

@@ -1,0 +1,270 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_ibge.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: api_ibge
+  description: Agregados do IBGE listados na Variable IBGE_CONFIGURACOES, um por tabela. Cada carga é
+    a resposta JSON da API como veio (carga completa da janela de períodos pedida).
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/api_ibge.odcs.yaml
+    owner: IBGE
+  tables:
+  - name: pib_construcao
+    description: Agregado do IBGE da tabela pib_construcao (variável x localidade x classificação x período).
+    meta:
+      caminho: staging/ibge/pib_construcao/*.parquet
+      file_pattern: pib_construcao\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: sinapi
+    description: Agregado do IBGE da tabela sinapi (variável x localidade x classificação x período).
+    meta:
+      caminho: staging/ibge/sinapi/*.parquet
+      file_pattern: sinapi\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: pib_consolidado_trimestral_bruto
+    description: Agregado do IBGE da tabela pib_consolidado_trimestral_bruto (variável x localidade x
+      classificação x período).
+    meta:
+      caminho: staging/ibge/pib_consolidado_trimestral_bruto/*.parquet
+      file_pattern: pib_consolidado_trimestral_bruto\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: pib_corrente_milhoes_brl
+    description: Agregado do IBGE da tabela pib_corrente_milhoes_brl (variável x localidade x classificação
+      x período).
+    meta:
+      caminho: staging/ibge/pib_corrente_milhoes_brl/*.parquet
+      file_pattern: pib_corrente_milhoes_brl\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: paic_obras
+    description: Agregado do IBGE da tabela paic_obras (variável x localidade x classificação x período).
+    meta:
+      caminho: staging/ibge/paic_obras/*.parquet
+      file_pattern: paic_obras\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: paic_pessoal_salarial
+    description: Agregado do IBGE da tabela paic_pessoal_salarial (variável x localidade x classificação
+      x período).
+    meta:
+      caminho: staging/ibge/paic_pessoal_salarial/*.parquet
+      file_pattern: paic_pessoal_salarial\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: paic_resultados
+    description: Agregado do IBGE da tabela paic_resultados (variável x localidade x classificação x período).
+    meta:
+      caminho: staging/ibge/paic_resultados/*.parquet
+      file_pattern: paic_resultados\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: pnad_trabalho_construcao
+    description: Agregado do IBGE da tabela pnad_trabalho_construcao (variável x localidade x classificação
+      x período).
+    meta:
+      caminho: staging/ibge/pnad_trabalho_construcao/*.parquet
+      file_pattern: pnad_trabalho_construcao\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: pnad_rendimento_construcao
+    description: Agregado do IBGE da tabela pnad_rendimento_construcao (variável x localidade x classificação
+      x período).
+    meta:
+      caminho: staging/ibge/pnad_rendimento_construcao/*.parquet
+      file_pattern: pnad_rendimento_construcao\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: pnadc_populacao_decis_renda
+    description: Agregado do IBGE da tabela pnadc_populacao_decis_renda (variável x localidade x classificação
+      x período).
+    meta:
+      caminho: staging/ibge/pnadc_populacao_decis_renda/*.parquet
+      file_pattern: pnadc_populacao_decis_renda\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: pnadc_rendimento_domiciliar_real
+    description: Agregado do IBGE da tabela pnadc_rendimento_domiciliar_real (variável x localidade x
+      classificação x período).
+    meta:
+      caminho: staging/ibge/pnadc_rendimento_domiciliar_real/*.parquet
+      file_pattern: pnadc_rendimento_domiciliar_real\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: ibge_pim_pf_brasil
+    description: Agregado do IBGE da tabela ibge_pim_pf_brasil (variável x localidade x classificação
+      x período).
+    meta:
+      caminho: staging/ibge/ibge_pim_pf_brasil/*.parquet
+      file_pattern: ibge_pim_pf_brasil\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
+  - name: ibge_pmc_construcao
+    description: Agregado do IBGE da tabela ibge_pmc_construcao (variável x localidade x classificação
+      x período).
+    meta:
+      caminho: staging/ibge/ibge_pmc_construcao/*.parquet
+      file_pattern: ibge_pmc_construcao\.json
+      load_type: full
+      dag: ibge_ingest_dag
+    columns:
+    - name: variavel_id
+    - name: variavel_nome
+    - name: localidade_id
+    - name: localidade_nome
+    - name: classificacao_id
+    - name: classificacao_nome
+    - name: categoria_id
+    - name: categoria_nome
+    - name: unidade
+    - name: periodo
+    - name: valor
