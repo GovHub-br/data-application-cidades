@@ -95,5 +95,22 @@
         "login": "<email>",
         "password": "<senha>",
         "extra": "{\"sender_email\": \"<remetente esperado>\"}"
+    },
+    "openmetadata_default": {
+        "conn_type": "openmetadata",
+        "description": "OpenMetadata do lab (OpenMetadataHook): openmetadata_ingestion_dag e scripts/governance. Password = token JWT do bot de ingestão; extra = serviço e banco do catálogo",
+        "host": "<openmetadata.host, sem https:// e sem /api>",
+        "schema": "https",
+        "port": 443,
+        "password": "<token JWT do bot de ingestão>",
+        "extra": "{\"database_service\": \"Cidades\", \"database_name\": \"cidades\"}"
+    },
+    "superset": {
+        "conn_type": "http",
+        "description": "Superset, só para a recipe superset_metadata do OpenMetadata (OM_INGEST_SUPERSET=true)",
+        "host": "<https://superset.host>",
+        "login": "<usuario>",
+        "password": "<senha>",
+        "extra": ""
     }
 }

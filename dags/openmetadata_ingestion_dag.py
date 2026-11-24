@@ -21,12 +21,62 @@ from airflow.sdk import dag, task
 
 from openmetadata.config import (
     ALL_RECIPES,
+    INGERIR_SUPERSET,
     OPENMETADATA_GLOSSARY_PATH,
     OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH,
     RECIPE_PIPELINE,
-    SEGREDOS_INGESTAO,
     SINCRONIZAR_RELACOES_SEMANTICAS,
 )
+
+
+def _exportar_credenciais() -> None:
+    """Exporta no processo da task as variáveis que recipes, dbt e governança leem.
+
+    Tudo sai de Connections do Airflow e da configuração dele, nunca do `.env`:
+    - `openmetadata_default` (tipo `openmetadata`, pelo OpenMetadataHook do provider que
+      vem no openmetadata-ingestion): host, porta, esquema e o token JWT no password; o
+      serviço e o banco do catálogo no extra (`database_service`, `database_name`);
+    - `postgres_default`: o DW que as recipes de Postgres e o `dbt docs` leem;
+    - o banco de metadados e a URL do próprio Airflow, da configuração dele;
+    - `superset`, só quando a recipe do Superset está ligada.
+    """
+    import os
+
+    from airflow.configuration import conf
+    from airflow.sdk import BaseHook
+    from airflow_provider_openmetadata.hooks.openmetadata import OpenMetadataHook
+    from sqlalchemy.engine import make_url
+
+    om_hook = OpenMetadataHook(openmetadata_conn_id="openmetadata_default")
+    om = om_hook.get_connection(om_hook.openmetadata_conn_id)
+    dw = BaseHook.get_connection(conn_id="postgres_default")
+    meta = make_url(conf.get("database", "sql_alchemy_conn"))
+    valores = {
+        # sem o /api: as recipes e os scripts acrescentam (ver openmetadata/rendering.py)
+        "OPENMETADATA_URL": om_hook.get_conn().hostPort.removesuffix("/api"),
+        "OPENMETADATA_JWT_TOKEN": om.password,
+        "OPENMETADATA_DATABASE_SERVICE": om.extra_dejson.get("database_service"),
+        "OPENMETADATA_DATABASE_NAME": om.extra_dejson.get("database_name"),
+        "DB_DW_HOST_MCID": dw.host,
+        "DB_DW_PORT_MCID": str(dw.port or 5432),
+        "DB_DW_USER_MCID": dw.login,
+        "DB_DW_PASSWORD_MCID": dw.password,
+        "DB_DW_DBNAME_MCID": dw.schema,
+        # endereço de rede, não segredo: o playbook da VM define (localhost:<porta>)
+        "AIRFLOW_HOST_PORT": os.environ.get("AIRFLOW_HOST_PORT", "http://airflow:8080"),
+        "AIRFLOW_DB_HOST_PORT": f"{meta.host}:{meta.port or 5432}",
+        "AIRFLOW_DB_USERNAME": meta.username,
+        "AIRFLOW_DB_PASSWORD": meta.password,
+        "AIRFLOW_DB_DATABASE": meta.database,
+    }
+    if INGERIR_SUPERSET:
+        superset = BaseHook.get_connection(conn_id="superset")
+        valores |= {
+            "SUPERSET_HOST_PORT": superset.host + (f":{superset.port}" if superset.port else ""),
+            "SUPERSET_USERNAME": superset.login,
+            "SUPERSET_PASSWORD": superset.password,
+        }
+    os.environ.update({chave: str(valor) for chave, valor in valores.items() if valor})
 
 
 def _encadear(glossario: Any, tarefas: dict, relacoes: Any | None, governanca: Any) -> None:
@@ -92,14 +142,15 @@ def openmetadata_ingestion_dag() -> None:
             run_openmetadata_recipe as executar_recipe,
         )
 
-        resolvidos = dict(replacements)
-        for marcador, nome_do_segredo in segredos.items():
-            valor = os.environ.get(nome_do_segredo)
-            if not valor:
+        _exportar_credenciais()
+        resolvidos = {}
+        for marcador, variavel in {**replacements, **segredos}.items():
+            if not os.environ.get(variavel):
                 raise RuntimeError(
-                    f"'{nome_do_segredo}' não está no ambiente. Ver infra/env/.env.example."
+                    f"'{variavel}' ficou vazio: confira as Connections openmetadata_default,"
+                    " postgres_default e superset (infra/airflow/bootstrap/)."
                 )
-            resolvidos[marcador] = valor
+            resolvidos[marcador] = os.environ[variavel]
 
         executar_recipe(
             recipe_path=recipe_path,
@@ -115,10 +166,11 @@ def openmetadata_ingestion_dag() -> None:
 
         from openmetadata.glossary import sync_glossary
 
+        _exportar_credenciais()
         resumo = sync_glossary(
             glossary_definition_path=glossary_definition_path,
-            host_port=os.environ[SEGREDOS_INGESTAO["OM_HOST"]],
-            jwt_token=os.environ[SEGREDOS_INGESTAO["INGESTION_TOKEN"]],
+            host_port=os.environ["OPENMETADATA_URL"],
+            jwt_token=os.environ["OPENMETADATA_JWT_TOKEN"],
         )
         logging.info("Glossário MCID sincronizado: %s", resumo)
 
@@ -129,10 +181,11 @@ def openmetadata_ingestion_dag() -> None:
 
         from openmetadata.semantic_relationships import sync_semantic_relationships
 
+        _exportar_credenciais()
         resumo = sync_semantic_relationships(
             catalog_path=catalog_path,
-            host_port=os.environ[SEGREDOS_INGESTAO["OM_HOST"]],
-            jwt_token=os.environ[SEGREDOS_INGESTAO["INGESTION_TOKEN"]],
+            host_port=os.environ["OPENMETADATA_URL"],
+            jwt_token=os.environ["OPENMETADATA_JWT_TOKEN"],
         )
         logging.info("Relações semânticas do MCID sincronizadas: %s", resumo)
 
@@ -160,6 +213,7 @@ def openmetadata_ingestion_dag() -> None:
         import os
         import subprocess
 
+        _exportar_credenciais()  # os scripts herdam as variáveis do processo da task
         caminho = f"{os.environ['AIRFLOW_REPO_BASE']}/scripts/governance"
         for script, descricao in (
             ("sincronizar_governanca.py", "governança das tabelas"),
