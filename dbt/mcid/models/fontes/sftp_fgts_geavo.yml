@@ -1,14 +1,14 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp/geavo.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp/fgts/geavo.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
-- name: sftp_geavo
+- name: sftp_fgts_geavo
   description: Remessas da CAIXA (GEAVO) no SFTP do MCid.
   schema: staging
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/sftp/geavo.odcs.yaml
+    contract: contracts/sftp/fgts/geavo.odcs.yaml
     owner: CAIXA · GEAVO
   tables:
   - name: geavo_fgts_pf

@@ -1,0 +1,131 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sftp_fundo_social_faixa3
+name: Fundo Social · Faixa 3
+version: 0.1.0
+status: draft
+description:
+  purpose: Operações do MCMV com recursos do Fundo Social (PMCMV_FAIXA3) entregues no GEFUS.
+team:
+- username: CAIXA · GEFUS
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: gefus_fundo_social
+  physicalName: gefus_fundo_social
+  description: Registros operacionais do Fundo Social destinados à agregação de indicadores habitacionais.
+  customProperties:
+  - property: path
+    value: staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet
+  - property: file_pattern
+    value: PMCMV_FAIXA3_MCID_\d{4}_\d{2}_\d{2}\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: null
+  - property: dbt_tables
+    value:
+    - gefus_fundo_social
+  properties:
+  - name: dt_referencia
+    logicalType: string
+  - name: dt_remessa
+    logicalType: string
+  - name: nu_contrato_repasse
+    logicalType: string
+  - name: nu_contrato_passivo
+    logicalType: string
+  - name: nu_contrato
+    logicalType: string
+  - name: no_mutuario
+    logicalType: string
+    classification: restricted
+  - name: dt_nascimento_mutuario
+    logicalType: string
+    classification: restricted
+  - name: sg_sexo
+    logicalType: string
+  - name: nu_cpf_cnpj_mutuario
+    logicalType: string
+    classification: restricted
+  - name: nu_pis
+    logicalType: string
+    classification: restricted
+  - name: vr_renda_familiar_comprovada
+    logicalType: string
+  - name: pc_renda_informal
+    logicalType: string
+  - name: ed_bairro_imovel_garantia
+    logicalType: string
+    classification: restricted
+  - name: sg_uf_imovel
+    logicalType: string
+  - name: no_municipio_imovel
+    logicalType: string
+  - name: ed_cep_imovel_garantia
+    logicalType: string
+    classification: restricted
+  - name: linha_apf
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: dt_evento
+    logicalType: string
+  - name: ano_orcamento
+    logicalType: string
+  - name: vr_avaliacao_terreno
+    logicalType: string
+  - name: vr_evento
+    logicalType: string
+  - name: vr_desconto_resolucao_460
+    logicalType: string
+  - name: vr_recurso_proprio
+    logicalType: string
+  - name: vr_fgts_utilizado
+    logicalType: string
+  - name: tipo_desemblso
+    logicalType: string
+  - name: pc_taxa_juros_nominal_inicial
+    logicalType: string
+  - name: nu_tipo_garantia
+    logicalType: string
+  - name: vr_garantia
+    logicalType: string
+  - name: situacao_garantia
+    logicalType: string
+  - name: pz_financiamento
+    logicalType: string
+  - name: no_sistema_amortizacao
+    logicalType: string
+  - name: vr_prestacao_inicial
+    logicalType: string
+  - name: vr_pagamento_amortizacao
+    logicalType: string
+  - name: vr_pagamento_juros
+    logicalType: string
+  - name: nu_unidade_operacional
+    logicalType: string
+  - name: nu_codigo_atu
+    logicalType: string
+  - name: nu_produto
+    logicalType: string
+  - name: tipo_imovel
+    logicalType: string
+  - name: faixa_renda
+    logicalType: string
+  - name: ic_cotista
+    logicalType: string
+  - name: nu_legislacao
+    logicalType: string
+  - name: vr_investimento
+    logicalType: string
+  - name: co_municipio_ibge
+    logicalType: string
+  - name: co_classificacao_imovel
+    logicalType: string
+  - name: nu_area_imovel
+    logicalType: string

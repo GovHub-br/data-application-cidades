@@ -31,7 +31,7 @@ def test_raw_key_puts_the_load_folder_before_the_file():
     [
         (
             "raw/sftp/fabrica/GEFUS/load_id=20261111T030000Z/PMCMV_FAIXA3_MCID_2026_11_01.csv",
-            ("sftp_gefus", "gefus_fundo_social"),
+            ("sftp_fundo_social_faixa3", "gefus_fundo_social"),
         ),
         (
             "raw/sftp/fabrica/GEFUS/CadUnico/load_id=20261111T030000Z/ARQ_PESSOA_PBF_01112026_SB8.TXT",
@@ -46,7 +46,7 @@ def test_raw_key_puts_the_load_folder_before_the_file():
         (
             "raw/sftp/caixa.geavo/GEAVO/load_id=20261111T030000Z/"
             "MC20261101__MCidades_CCI_CCA_2026.mdb/CCI_Analitico.csv",
-            ("sftp_geavo", "geavo_cci_analitico"),
+            ("sftp_fgts_geavo", "geavo_cci_analitico"),
         ),
         ("raw/sftp/fabrica/GEFUS/load_id=20261111T030000Z/QUALQUER_COISA.csv", None),
     ],

@@ -39,15 +39,44 @@ SOURCES = [
         re.compile(r"^staging/sftp/fabrica/GEFUS/CadUnico/|^staging/sharepoint/Cadastro Único/"),
         "cadunico",
     ),
+    # GEFUS: one contract per MCMV line (contracts/sftp/<linha>/); new families go in gefus
+    (
+        re.compile(r"^staging/sftp/fabrica/GEFUS/(INT021|INT039|MONT_CONT_PF_FAR)"),
+        "sftp_subsidiada_far",
+    ),
+    (re.compile(r"^staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3"), "sftp_fundo_social_faixa3"),
+    (
+        re.compile(r"^staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS"),
+        "sftp_reforma_casa_brasil_reformas",
+    ),
     (re.compile(r"^staging/sftp/fabrica/GEFUS/"), "sftp_gefus"),
-    (re.compile(r"^staging/sftp/caixa\.geavo/GEAVO/"), "sftp_geavo"),
+    (re.compile(r"^staging/sftp/caixa\.geavo/GEAVO/"), "sftp_fgts_geavo"),
     (re.compile(r"^staging/sharepoint/.*fgts_canal"), "sharepoint_canal_fgts"),
     (re.compile(r"^staging/sharepoint/"), "sharepoint_mcid"),
 ]
 SOURCE_INFO = {
     "cadunico": ("CadÚnico", "Cortes do Cadastro Único entregues ao MCid.", "CadÚnico (MDS)"),
     "sftp_gefus": ("SFTP · GEFUS", "Remessas da CAIXA (GEFUS) no SFTP do MCid.", "CAIXA · GEFUS"),
-    "sftp_geavo": ("SFTP · GEAVO", "Remessas da CAIXA (GEAVO) no SFTP do MCid.", "CAIXA · GEAVO"),
+    "sftp_subsidiada_far": (
+        "Linha subsidiada · FAR",
+        "Carteiras de contratos PF do FAR (BB e CAIXA) entregues no GEFUS.",
+        "CAIXA · GEFUS",
+    ),
+    "sftp_fundo_social_faixa3": (
+        "Fundo Social · Faixa 3",
+        "Operações do MCMV com recursos do Fundo Social (PMCMV_FAIXA3) entregues no GEFUS.",
+        "CAIXA · GEFUS",
+    ),
+    "sftp_reforma_casa_brasil_reformas": (
+        "Reforma Casa Brasil",
+        "Contratos do Reforma Casa Brasil (PMCMV_REFORMAS) entregues no GEFUS.",
+        "CAIXA · GEFUS",
+    ),
+    "sftp_fgts_geavo": (
+        "FGTS · GEAVO",
+        "Remessas da CAIXA (GEAVO) no SFTP do MCid.",
+        "CAIXA · GEAVO",
+    ),
     "sharepoint_canal_fgts": (
         "Canal FGTS",
         "Tabelas do Canal FGTS (AO1) e orçamentos.",
@@ -59,7 +88,10 @@ SOURCE_INFO = {
 SOURCE_FILES = {
     "cadunico": "sftp/cadunico",
     "sftp_gefus": "sftp/gefus",
-    "sftp_geavo": "sftp/geavo",
+    "sftp_subsidiada_far": "sftp/subsidiada/far",
+    "sftp_fundo_social_faixa3": "sftp/fundo_social/faixa3",
+    "sftp_reforma_casa_brasil_reformas": "sftp/reforma_casa_brasil/reformas",
+    "sftp_fgts_geavo": "sftp/fgts/geavo",
     "sharepoint_canal_fgts": "sharepoint/canal_fgts",
     "sharepoint_mcid": "sharepoint/mcid",
 }

@@ -1,0 +1,94 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp/reforma_casa_brasil/reformas.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sftp_reforma_casa_brasil_reformas
+  description: Contratos do Reforma Casa Brasil (PMCMV_REFORMAS) entregues no GEFUS.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/sftp/reforma_casa_brasil/reformas.odcs.yaml
+    owner: CAIXA · GEFUS
+  tables:
+  - name: reforma_contratos
+    description: Snapshots completos de contratos do Reforma Casa Brasil recebidos pelo SFTP/GEFUS. A
+      Bronze seleciona somente o arquivo mais recente.
+    meta:
+      caminho: staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
+      file_pattern: PMCMV_REFORMAS_MCID_\d{4}_\d{2}_\d{2}\.csv
+      load_type: full
+      dag: minio_transform_dag
+    columns:
+    - name: dt_referencia
+    - name: dt_remessa
+    - name: nu_contrato_repasse
+    - name: nu_contrato_passivo
+    - name: nu_contrato
+    - name: no_mutuario
+      meta:
+        classification: restricted
+    - name: dt_nascimento_mutuario
+      meta:
+        classification: restricted
+    - name: sg_sexo
+    - name: nu_cpf_cnpj_mutuario
+      meta:
+        classification: restricted
+    - name: nu_pis
+      meta:
+        classification: restricted
+    - name: vr_renda_familiar_comprovada
+    - name: pc_renda_informal
+    - name: no_endrco_crspndca
+    - name: no_bairro_crspndca
+      meta:
+        classification: restricted
+    - name: ed_bairro_imovel_garantia
+      meta:
+        classification: restricted
+    - name: sg_uf_imovel
+    - name: no_municipio_imovel
+    - name: ed_cep_imovel_garantia
+      meta:
+        classification: restricted
+    - name: linha_apf
+    - name: modalidade
+    - name: dt_evento
+    - name: ano_orcamento
+    - name: vr_avaliacao_terreno
+    - name: vr_evento
+    - name: vr_desconto_resolucao_460
+    - name: vr_recurso_proprio
+    - name: vr_fgts_utilizado
+    - name: tipo_desembolso
+    - name: pc_taxa_juros_nominal_inicial
+    - name: nu_tipo_garantia
+    - name: vr_garantia
+    - name: situacao_garantia
+    - name: pz_financiamento
+    - name: no_sistema_amortizacao
+    - name: nu_dias_atraso
+    - name: vr_prestacao_inicial
+    - name: vr_pagamento_amortizacao
+    - name: vr_pagamento_juros
+    - name: nu_unidade_operacional
+    - name: nu_codigo_atu
+    - name: nu_produto
+    - name: tipo_imovel
+    - name: faixa_renda
+    - name: ic_cotista
+    - name: nu_legislacao
+    - name: vr_investimento
+    - name: co_municipio_ibge
+    - name: co_classificacao_imovel
+    - name: nu_area_imovel
+    - name: cep_imovel
+      meta:
+        classification: restricted
+    - name: co_municipio_ibge_completo
+    - name: nu_ddd
+    - name: nu_celular
+    - name: de_melhoria_1
+    - name: de_melhoria_2
+    - name: de_melhoria_3

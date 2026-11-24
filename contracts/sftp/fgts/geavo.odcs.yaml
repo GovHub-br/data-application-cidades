@@ -1,7 +1,7 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: sftp_geavo
-name: SFTP · GEAVO
+id: sftp_fgts_geavo
+name: FGTS · GEAVO
 version: 0.1.0
 status: draft
 description:
