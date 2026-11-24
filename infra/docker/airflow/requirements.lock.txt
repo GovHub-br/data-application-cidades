@@ -1943,6 +1943,7 @@ packaging==26.3
     #   openlineage-python
     #   openmetadata-ingestion
     #   pandas-gbq
+    #   pandera
     #   pytest
     #   ray
     #   redshift-connector
@@ -1962,6 +1963,8 @@ pandas-gbq==0.35.2
     # via
     #   -r /w/lock.in
     #   apache-airflow-providers-google
+pandera==0.35.0
+    # via -r /w/lock.in
 paramiko==5.0.0
     # via
     #   -r /w/lock.in
@@ -2196,6 +2199,7 @@ pydantic==2.11.10
     #   metricflow
     #   openai
     #   openmetadata-ingestion
+    #   pandera
     #   pydantic-extra-types
     #   pydantic-settings
     #   ray
@@ -2679,6 +2683,8 @@ truststore==0.10.4
     #   -r /w/lock.in
     #   httpcore2
     #   httpx2
+typeguard==4.6.0
+    # via pandera
 typer==0.27.2
     # via
     #   -r /w/lock.in
@@ -2742,6 +2748,7 @@ typing-extensions==4.16.0
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
+    #   pandera
     #   psycopg
     #   pydantic
     #   pydantic-core
@@ -2755,10 +2762,13 @@ typing-extensions==4.16.0
     #   sqlalchemy
     #   starlette
     #   svcs
+    #   typeguard
     #   typing-inspect
     #   typing-inspection
 typing-inspect==0.9.0
-    # via openmetadata-ingestion
+    # via
+    #   openmetadata-ingestion
+    #   pandera
 typing-inspection==0.4.4
     # via
     #   -r /w/lock.in

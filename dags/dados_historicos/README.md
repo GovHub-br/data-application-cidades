@@ -1,8 +1,31 @@
 # Dados históricos do MCMV
 
 `dados_historicos_dag.py` reconstrói a série histórica do MCMV a partir do dump congelado
-do banco antigo (754 CSVs em `raw/dados_historicos/`, subidos à mão). Todo o código está no
-módulo da DAG; não há scripts nem plugin próprio.
+do banco antigo (754 CSVs em `raw/dados_historicos/`, subidos à mão).
+
+## Onde está o código
+
+- **DAG** (`dados_historicos_dag.py`): só orquestração e I/O. Lê e grava no lake pelo `S3Hook`
+  (provider amazon) e encadeia as tasks.
+- **Tratamento** (`helpers/historico_mcmv/`): funções puras, que recebem DataFrame ou caminho
+  local e não sabem de S3. Há um módulo por etapa:
+  - `staging`: CSV → Parquet e máscara de dado pessoal;
+  - `analytics`: métricas e seleção;
+  - `estrutura`: duplicação 2×, cabeçalho, descartes e conservação;
+  - `padronizacao`;
+  - `datas`: competência e corte;
+  - `cleansed`: plano, famílias, log e versões;
+  - `colunas`: grafo de nomes;
+  - `nomes`: nome de coluna normalizado;
+  - `layout`: os prefixos do lake.
+- **Validação** (`helpers/historico_mcmv/validacao.py`, pandera): o contrato de cada fronteira.
+  - Na entrada: os mapas de configuração, validados assim que são lidos.
+  - No controle: o manifesto, os logs e os descartes, validados antes de subir.
+  - Na saída: cada arquivo do cleansed (`_linha_origem` inteiro e único, o resto texto e com
+    nome normalizado).
+  - Uma falha para a task com os casos que quebraram o contrato.
+- A normalização de nomes de coluna e a correção de mojibake (`nomes.py`) seguem a mesma regra de
+  `scripts/lake_utils.py`. Um teste confere a equivalência, e o código não importa de `scripts/`.
 
 ## Camadas (todas sob `staging/historico_mcmv/`)
 
@@ -44,7 +67,7 @@ uv run airflow db migrate
 uv run airflow dags test dados_historicos_dag            # ou: airflow tasks test dados_historicos_dag <task>
 ```
 
-Testes: `uv run pytest tests/test_dados_historicos_dag.py` (lake em memória, sem MinIO).
+Testes: `uv run pytest tests/test_historico_mcmv.py tests/test_dados_historicos_dag.py` (helpers puros; a DAG com um S3Hook em memória, sem MinIO).
 
 ## Medalhão no dbt (`dbt/mcid/models/dados_historicos_dbt/`)
 
