@@ -31,7 +31,6 @@ profile_config = ProfileConfig(
 # via pg_duckdb.
 INGEST_DAG_IDS = [
     "ibge_ingest_dag",  # PIB, SINAPI, PIM-PF, PMC
-    "ibge_pnad_construcao_sidra_ingest_dag",  # PNAD-C ocupados+rendimento (pág. 3)
     "novo_caged_construcao_edificios",  # empregos: saldo + estoque (pág. 3)
     "novo_caged_total_construcao",  # empregos: total da construção (pág. 3)
     "novo_caged_servicos_especializados_construcao",  # empregos (pág. 3)
