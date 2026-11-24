@@ -15,7 +15,7 @@ from airflow.sdk.exceptions import AirflowFailException
 
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from scripts.lake_utils import md5_file
 
@@ -111,7 +111,10 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
         for table, path in extracted["files"].items():
             folder, file_name, md5 = f"ibge/{table}", f"{table}.json", md5_file(path)
             previous_loads = sorted(
-                {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{folder}/") or []}
+                {
+                    load_id_of(k)
+                    for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{folder}/") or []
+                }
                 - {load, None}
             )
             if previous_loads:

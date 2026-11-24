@@ -16,11 +16,11 @@ from imap_tools import AND, MailBox
 
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from scripts.lake_utils import md5_file
 
-# raw/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/load_id=<id>/<nn>_<anexo>.zip
+# snh/raw/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/load_id=<id>/<nn>_<anexo>.zip
 FOLDER = "siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid"
 SUBJECT = "dotacao_execucao_outras_fontes_mcid"
 
@@ -103,7 +103,7 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
         client = hook.get_conn()
         hashes = {Path(p).name: md5_file(p) for p in paths}
         previous_loads = sorted(
-            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{FOLDER}/") or []}
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
             - {load, None}
         )
         if previous_loads:

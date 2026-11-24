@@ -13,14 +13,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: geavo_fgts_pf
   physicalName: geavo_fgts_pf
   description: Base analítica de contratos FGTS pessoa física (GEAVO/Caixa). ~10,8 M linhas.
   customProperties:
   - property: path
-    value: staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_*.parquet
+    value: snh/staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_*.parquet
   - property: file_pattern
     value: Base_PF_FGTS_\d{8}\.txt
   - property: load_type
@@ -94,7 +94,7 @@ schema:
   description: Base de contratos FGTS pessoa jurídica — Apoio à Produção (GEAVO/Caixa).
   customProperties:
   - property: path
-    value: staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_*.parquet
+    value: snh/staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_*.parquet
   - property: file_pattern
     value: Base_PJ_FGTS_\d{8}\.txt
   - property: load_type
@@ -161,7 +161,7 @@ schema:
     no 'Financiamento PF MCMV' por faixa.
   customProperties:
   - property: path
-    value: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
+    value: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
   - property: file_pattern
     value: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
   - property: load_type
@@ -274,7 +274,7 @@ schema:
     PF MCMV' por faixa do boletim, junto com o CCA.
   customProperties:
   - property: path
-    value: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
+    value: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
   - property: file_pattern
     value: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
   - property: load_type

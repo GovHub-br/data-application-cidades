@@ -15,7 +15,7 @@ sources:
   - name: indice_locacao
     description: Número índice e variações mensal e em 12 meses da locação residencial (total).
     meta:
-      caminho: staging/fipe/indice_locacao/*.parquet
+      caminho: snh/staging/fipe/indice_locacao/*.parquet
       file_pattern: indice_locacao\.xlsx
       load_type: full
       dag: fipezap_trimestral_ingest_dag

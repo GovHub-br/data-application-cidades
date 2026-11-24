@@ -17,11 +17,11 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
 from plugins.datalake.readers import INFOMONEY_COLUMNS
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from scripts.lake_utils import md5_file
 
-FOLDER = "infomoney/acoes_imob"  # raw/infomoney/acoes_imob/load_id=<id>/acoes_imob.json
+FOLDER = "infomoney/acoes_imob"  # snh/raw/infomoney/acoes_imob/load_id=<id>/acoes_imob.json
 FILE_NAME = "acoes_imob.json"
 
 
@@ -113,7 +113,7 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
         name, md5 = Path(path).name, md5_file(path)
         client = hook.get_conn()
         previous_loads = sorted(
-            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{FOLDER}/") or []}
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
             - {load, None}
         )
         if previous_loads:

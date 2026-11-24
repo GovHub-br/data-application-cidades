@@ -35,9 +35,9 @@ def consolidar(monkeypatch, tmp_path):
         "volume_mensal_milhoes": 10.5,
     }
     s3 = FakeS3({
-        "raw/abecip/2026-09/financiamentos_por_instituicao.json": json.dumps([row]).encode(),
-        "raw/abecip/2026-10/financiamentos_por_instituicao.json": json.dumps({"dados": [row]}).encode(),
-        "raw/abecip/financiamentos_modalidade/load_id=X/financiamentos_modalidade.xlsx": b"x",
+        "snh/raw/abecip/2026-09/financiamentos_por_instituicao.json": json.dumps([row]).encode(),
+        "snh/raw/abecip/2026-10/financiamentos_por_instituicao.json": json.dumps({"dados": [row]}).encode(),
+        "snh/raw/abecip/financiamentos_modalidade/load_id=X/financiamentos_modalidade.xlsx": b"x",
     })  # fmt: skip
     ctx = {"dag_run": SimpleNamespace(run_after=datetime(2026, 11, 24, 7, tzinfo=timezone.utc))}
     monkeypatch.setenv("LAKE_TMPDIR", str(tmp_path))
@@ -52,7 +52,9 @@ def test_every_competence_in_one_text_staging(consolidar):
     resumo = consolidar.run()
     assert resumo == {"competencias": 2, "de": "2026-09", "ate": "2026-10", "linhas": 2}
     table = pq.read_table(
-        io.BytesIO(consolidar.s3.objects["staging/abecip/financiamentos_por_instituicao.parquet"])
+        io.BytesIO(
+            consolidar.s3.objects["snh/staging/abecip/financiamentos_por_instituicao.parquet"]
+        )
     )
     assert all(str(f.type) == "string" for f in table.schema)
     df = table.to_pandas()

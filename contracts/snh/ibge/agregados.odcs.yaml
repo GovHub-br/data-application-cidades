@@ -14,14 +14,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: pib_construcao
   physicalName: pib_construcao
   description: Agregado do IBGE da tabela pib_construcao (variável x localidade x classificação x período).
   customProperties:
   - property: path
-    value: staging/ibge/pib_construcao/*.parquet
+    value: snh/staging/ibge/pib_construcao/*.parquet
   - property: file_pattern
     value: pib_construcao\.json
   - property: load_type
@@ -63,7 +63,7 @@ schema:
   description: Agregado do IBGE da tabela sinapi (variável x localidade x classificação x período).
   customProperties:
   - property: path
-    value: staging/ibge/sinapi/*.parquet
+    value: snh/staging/ibge/sinapi/*.parquet
   - property: file_pattern
     value: sinapi\.json
   - property: load_type
@@ -106,7 +106,7 @@ schema:
     x período).
   customProperties:
   - property: path
-    value: staging/ibge/pib_consolidado_trimestral_bruto/*.parquet
+    value: snh/staging/ibge/pib_consolidado_trimestral_bruto/*.parquet
   - property: file_pattern
     value: pib_consolidado_trimestral_bruto\.json
   - property: load_type
@@ -149,7 +149,7 @@ schema:
     x período).
   customProperties:
   - property: path
-    value: staging/ibge/pib_corrente_milhoes_brl/*.parquet
+    value: snh/staging/ibge/pib_corrente_milhoes_brl/*.parquet
   - property: file_pattern
     value: pib_corrente_milhoes_brl\.json
   - property: load_type
@@ -191,7 +191,7 @@ schema:
   description: Agregado do IBGE da tabela paic_obras (variável x localidade x classificação x período).
   customProperties:
   - property: path
-    value: staging/ibge/paic_obras/*.parquet
+    value: snh/staging/ibge/paic_obras/*.parquet
   - property: file_pattern
     value: paic_obras\.json
   - property: load_type
@@ -234,7 +234,7 @@ schema:
     x período).
   customProperties:
   - property: path
-    value: staging/ibge/paic_pessoal_salarial/*.parquet
+    value: snh/staging/ibge/paic_pessoal_salarial/*.parquet
   - property: file_pattern
     value: paic_pessoal_salarial\.json
   - property: load_type
@@ -276,7 +276,7 @@ schema:
   description: Agregado do IBGE da tabela paic_resultados (variável x localidade x classificação x período).
   customProperties:
   - property: path
-    value: staging/ibge/paic_resultados/*.parquet
+    value: snh/staging/ibge/paic_resultados/*.parquet
   - property: file_pattern
     value: paic_resultados\.json
   - property: load_type
@@ -319,7 +319,7 @@ schema:
     x período).
   customProperties:
   - property: path
-    value: staging/ibge/pnad_trabalho_construcao/*.parquet
+    value: snh/staging/ibge/pnad_trabalho_construcao/*.parquet
   - property: file_pattern
     value: pnad_trabalho_construcao\.json
   - property: load_type
@@ -362,7 +362,7 @@ schema:
     x período).
   customProperties:
   - property: path
-    value: staging/ibge/pnad_rendimento_construcao/*.parquet
+    value: snh/staging/ibge/pnad_rendimento_construcao/*.parquet
   - property: file_pattern
     value: pnad_rendimento_construcao\.json
   - property: load_type
@@ -405,7 +405,7 @@ schema:
     x período).
   customProperties:
   - property: path
-    value: staging/ibge/pnadc_populacao_decis_renda/*.parquet
+    value: snh/staging/ibge/pnadc_populacao_decis_renda/*.parquet
   - property: file_pattern
     value: pnadc_populacao_decis_renda\.json
   - property: load_type
@@ -448,7 +448,7 @@ schema:
     x período).
   customProperties:
   - property: path
-    value: staging/ibge/pnadc_rendimento_domiciliar_real/*.parquet
+    value: snh/staging/ibge/pnadc_rendimento_domiciliar_real/*.parquet
   - property: file_pattern
     value: pnadc_rendimento_domiciliar_real\.json
   - property: load_type
@@ -491,7 +491,7 @@ schema:
     período).
   customProperties:
   - property: path
-    value: staging/ibge/ibge_pim_pf_brasil/*.parquet
+    value: snh/staging/ibge/ibge_pim_pf_brasil/*.parquet
   - property: file_pattern
     value: ibge_pim_pf_brasil\.json
   - property: load_type
@@ -534,7 +534,7 @@ schema:
     período).
   customProperties:
   - property: path
-    value: staging/ibge/ibge_pmc_construcao/*.parquet
+    value: snh/staging/ibge/ibge_pmc_construcao/*.parquet
   - property: file_pattern
     value: ibge_pmc_construcao\.json
   - property: load_type

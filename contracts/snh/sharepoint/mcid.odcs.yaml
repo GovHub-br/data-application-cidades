@@ -13,14 +13,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: mcmv_cidades_emendas
   physicalName: mcmv_cidades_emendas
   description: Operações beneficiadas por aportes do MCMV Cidades.
   customProperties:
   - property: path
-    value: staging/sharepoint/novo_mcmv_cidades_emendas.parquet
+    value: snh/staging/sharepoint/novo_mcmv_cidades_emendas.parquet
   - property: file_pattern
     value: novo_mcmv_cidades_emendas\.csv
   - property: load_type
@@ -155,7 +155,7 @@ schema:
   description: Dotação e execução da ação 00XF do Fundo Social por unidade gestora.
   customProperties:
   - property: path
-    value: staging/sharepoint/orcamento_resultado_fundo_social.parquet
+    value: snh/staging/sharepoint/orcamento_resultado_fundo_social.parquet
   - property: file_pattern
     value: orcamento_resultado_fundo_social\.csv
   - property: load_type

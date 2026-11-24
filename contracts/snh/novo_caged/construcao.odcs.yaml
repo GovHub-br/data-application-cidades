@@ -14,14 +14,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: saldo_estoque_construcao_edificios
   physicalName: saldo_estoque_construcao_edificios
   description: Divisão CNAE Construção de Edifícios.
   customProperties:
   - property: path
-    value: staging/novo_caged/saldo_estoque_construcao_edificios/*.parquet
+    value: snh/staging/novo_caged/saldo_estoque_construcao_edificios/*.parquet
   - property: file_pattern
     value: \d{4}-\d{2}\.json
   - property: load_type
@@ -53,7 +53,7 @@ schema:
   description: Divisão CNAE Serviços Especializados para Construção.
   customProperties:
   - property: path
-    value: staging/novo_caged/saldo_estoque_servicos_especializados_construcao/*.parquet
+    value: snh/staging/novo_caged/saldo_estoque_servicos_especializados_construcao/*.parquet
   - property: file_pattern
     value: \d{4}-\d{2}\.json
   - property: load_type
@@ -85,7 +85,7 @@ schema:
   description: Toda a construção (todas as divisões CNAE).
   customProperties:
   - property: path
-    value: staging/novo_caged/saldo_estoque_total_construcao/*.parquet
+    value: snh/staging/novo_caged/saldo_estoque_total_construcao/*.parquet
   - property: file_pattern
     value: \d{4}-\d{2}\.json
   - property: load_type

@@ -14,7 +14,7 @@ sources:
   - name: gefus_fundo_social
     description: Registros operacionais do Fundo Social destinados à agregação de indicadores habitacionais.
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet
       file_pattern: PMCMV_FAIXA3_MCID_\d{4}_\d{2}_\d{2}\.csv
       load_type: full
       dag: null

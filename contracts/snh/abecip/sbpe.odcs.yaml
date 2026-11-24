@@ -14,7 +14,7 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: financiamentos_modalidade
   physicalName: financiamentos_modalidade
@@ -22,7 +22,7 @@ schema:
     mensal desde 2002.
   customProperties:
   - property: path
-    value: staging/abecip/financiamentos_modalidade/*.parquet
+    value: snh/staging/abecip/financiamentos_modalidade/*.parquet
   - property: file_pattern
     value: financiamentos_modalidade\.xlsx
   - property: load_type
@@ -57,7 +57,7 @@ schema:
     mensal.'
   customProperties:
   - property: path
-    value: staging/abecip/poupanca_sbpe_mensal/*.parquet
+    value: snh/staging/abecip/poupanca_sbpe_mensal/*.parquet
   - property: file_pattern
     value: poupanca_sbpe_mensal\.xlsx
   - property: load_type

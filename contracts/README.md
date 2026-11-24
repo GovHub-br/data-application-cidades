@@ -4,7 +4,7 @@ Um contrato diz o que se espera de cada dado que a ingestão recebe: onde ele po
 
 ## Organização
 
-Uma pasta por secretaria (hoje só a SNH, como em `dags/snh/`) e, dentro dela, uma pasta por fonte, a mesma que abre o caminho no lake (`raw/<fonte>/...`). Dentro da fonte, um arquivo por grupo de dados:
+Uma pasta por secretaria (hoje só a SNH, como em `dags/snh/`) e, dentro dela, uma pasta por fonte, a mesma que abre o caminho no lake (`snh/raw/<fonte>/...`). Dentro da fonte, um arquivo por grupo de dados:
 
 ```
 contracts/
@@ -28,7 +28,7 @@ contracts/
 
 | Campo | O que é |
 |---|---|
-| `path` | Pasta do dado na staging, **sem** `load_id=` (ex.: `staging/fgv/icst/*.parquet`) |
+| `path` | Pasta do dado na staging, **sem** `load_id=` (ex.: `snh/staging/fgv/icst/*.parquet`) |
 | `file_pattern` | Regex do nome do arquivo entregue (ex.: `icst\.csv`) |
 | `load_type` | `full` (cada carga traz o dado inteiro) ou `incremental` |
 | `max_row_variation` | Variação de linhas aceita entre cargas `full`; acima disso, quarentena |

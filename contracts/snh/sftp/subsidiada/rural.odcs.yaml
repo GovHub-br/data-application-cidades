@@ -13,7 +13,7 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: rural_liberacoes_caixa_bb
   physicalName: rural_liberacoes_caixa_bb
@@ -21,7 +21,7 @@ schema:
     o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_20250318.TXT.'
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet
   - property: file_pattern
     value: INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_\d{8}\.TXT
   - property: load_type
@@ -48,7 +48,7 @@ schema:
     o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_20241129.TXT.'
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet
   - property: file_pattern
     value: INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_\d{8}\.TXT
   - property: load_type
@@ -147,7 +147,7 @@ schema:
     o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_20241129.TXT.'
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet
   - property: file_pattern
     value: INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
   - property: load_type

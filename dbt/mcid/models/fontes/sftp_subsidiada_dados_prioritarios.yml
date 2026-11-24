@@ -16,7 +16,7 @@ sources:
     description: Dados prioritários da SNH reportados pela CAIXA (AF_CAIXA), todas as modalidades. Uma
       remessa por mês (AAAAMM no nome). Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv.
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet
       file_pattern: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA\.csv
       load_type: full
       dag: sftp_ingest_dag
@@ -87,7 +87,7 @@ sources:
     description: Entregas de unidades por APF reportadas pela CAIXA, junto dos dados prioritários. Uma
       remessa por mês. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv.
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet
       file_pattern: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS\.csv
       load_type: full
       dag: sftp_ingest_dag
@@ -103,7 +103,7 @@ sources:
       (.txt ou .csv), que vira o mesmo Parquet. Colunas vazias no fim da linha (coluna_N) entram como
       drift aditivo. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt.
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet
       file_pattern: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB\.(txt|csv)
       load_type: full
       dag: sftp_ingest_dag

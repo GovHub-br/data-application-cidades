@@ -15,14 +15,14 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from scripts.lake_utils import md5_file
 
 # Catálogo de arquivos da MZ (RI da MRV): company_id da MRV e a categoria da planilha.
 CATALOG = "/filemanager/company/4b56353d-d5d9-435f-bf63-dcbf0a6c25d5/filter/categories/year/meta"
 CATEGORY = "central_de_resultados_planilha_interativa"
-FOLDER = "mrv/vendas_liquidas"  # raw/mrv/vendas_liquidas/load_id=<id>/planilha_interativa.xlsx
+FOLDER = "mrv/vendas_liquidas"  # snh/raw/mrv/vendas_liquidas/load_id=<id>/planilha_interativa.xlsx
 FILE_NAME = "planilha_interativa.xlsx"
 
 
@@ -110,7 +110,7 @@ def vendas_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
         md5 = md5_file(path)
         client = hook.get_conn()
         previous_loads = sorted(
-            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{FOLDER}/") or []}
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
             - {load, None}
         )
         if previous_loads:

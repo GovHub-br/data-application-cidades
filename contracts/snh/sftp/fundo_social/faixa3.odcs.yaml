@@ -13,14 +13,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: gefus_fundo_social
   physicalName: gefus_fundo_social
   description: Registros operacionais do Fundo Social destinados à agregação de indicadores habitacionais.
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_*.parquet
   - property: file_pattern
     value: PMCMV_FAIXA3_MCID_\d{4}_\d{2}_\d{2}\.csv
   - property: load_type

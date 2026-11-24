@@ -15,7 +15,7 @@ sources:
     description: Snapshots completos de contratos do Reforma Casa Brasil recebidos pelo SFTP/GEFUS. A
       Bronze seleciona somente o arquivo mais recente.
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
       file_pattern: PMCMV_REFORMAS_MCID_\d{4}_\d{2}_\d{2}\.csv
       load_type: full
       dag: minio_transform_dag

@@ -15,7 +15,7 @@ sources:
     description: 'INT059: empreendimentos do FDS (Entidades) reportados pela CAIXA. Retrato completo por
       remessa; a bronze lê só a mais recente (sem as remessas de VALIDACAO). Colunas da remessa INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_20261030.TXT.'
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet
       file_pattern: INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
       load_type: full
       dag: sftp_ingest_dag

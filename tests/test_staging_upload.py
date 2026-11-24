@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError, EndpointConnectionError
 
 from tests.conftest import fresh_import
 
-KEY = "raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
+KEY = "snh/raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
 CONTEUDO = b"CPF;NOME\n" + b"".join(b"%011d;tok%d\n" % (i, i) for i in range(50))
 
 
@@ -56,22 +56,22 @@ def arquivo(tmp_path):
 
 def test_espera_o_minio_voltar(cliente, arquivo):
     cliente.s3.falhas = [EndpointConnectionError(endpoint_url="http://minio")] * 3
-    assert cliente.upload_arquivo(arquivo, "staging/x.parquet") == "staging/x.parquet"
+    assert cliente.upload_arquivo(arquivo, "snh/staging/x.parquet") == "snh/staging/x.parquet"
     assert cliente.esperas == [30, 60, 120]
-    assert cliente.s3.enviados == {"staging/x.parquet": b"dados"}
+    assert cliente.s3.enviados == {"snh/staging/x.parquet": b"dados"}
 
 
 def test_desiste_depois_de_uns_30_minutos(cliente, arquivo):
     cliente.s3.falhas = [EndpointConnectionError(endpoint_url="http://minio")] * 10
     with pytest.raises(EndpointConnectionError):
-        cliente.upload_arquivo(arquivo, "staging/x.parquet")
+        cliente.upload_arquivo(arquivo, "snh/staging/x.parquet")
     assert cliente.esperas == [30, 60, 120, 240, 300, 300, 300, 300, 300]
     assert 30 * 60 <= sum(cliente.esperas) <= 35 * 60
 
 
 def test_erro_5xx_e_slowdown_sao_retentados(cliente, arquivo):
     cliente.s3.falhas = [_erro_s3("InternalError", 500), _erro_s3("SlowDown", 400)]
-    cliente.upload_arquivo(arquivo, "staging/x.parquet")
+    cliente.upload_arquivo(arquivo, "snh/staging/x.parquet")
     assert len(cliente.esperas) == 2
 
 
@@ -88,7 +88,7 @@ def test_erro_definitivo_nao_espera(cliente, arquivo, embrulhado):
             erro = e
     cliente.s3.falhas = [erro]
     with pytest.raises(type(erro)):
-        cliente.upload_arquivo(arquivo, "staging/x.parquet")
+        cliente.upload_arquivo(arquivo, "snh/staging/x.parquet")
     assert cliente.esperas == []
 
 
@@ -142,7 +142,7 @@ def test_proxima_execucao_so_reenvia(staging, tmp_path, monkeypatch):
     assert rec["status"] == "converted"
     assert (rec["n_linhas"], rec["n_colunas"]) == (50, 2)
     assert rec["column_map"] == {"CPF": "cpf", "NOME": "nome"}
-    tabela = minio.enviados["staging/sftp/fabrica/GEFUS/CadUnico/PESSOA.parquet"]
+    tabela = minio.enviados["snh/staging/sftp/fabrica/GEFUS/CadUnico/PESSOA.parquet"]
     assert tabela.num_rows == 50
     assert _pendentes(tmp_path) == []
 

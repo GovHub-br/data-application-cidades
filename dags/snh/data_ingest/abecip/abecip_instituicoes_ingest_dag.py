@@ -3,7 +3,7 @@
 O relatório mensal da ABECIP traz a abertura do financiamento imobiliário por
 instituição — a tabela que o boletim publica na seção de crédito. Ela é
 extraída por outro time, que grava uma competência por diretório em
-`raw/abecip/<AAAA-MM>/financiamentos_por_instituicao.json`.
+`snh/raw/abecip/<AAAA-MM>/financiamentos_por_instituicao.json`.
 
 A DAG lê TODAS as competências presentes no raw e reescreve o parquet inteiro.
 Reescrever é de propósito: a ABECIP revisa competências já publicadas, e uma
@@ -27,11 +27,11 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.sdk import Variable, dag, get_current_context, task
 
 from plugins.datalake.api import write_text_parquet
-from plugins.datalake.keys import load_id
+from plugins.datalake.keys import RAW_PREFIX, STAGING_PREFIX, load_id
 
-PREFIX = "raw/abecip/"
+PREFIX = f"{RAW_PREFIX}abecip/"
 DATASET = "financiamentos_por_instituicao"
-STAGING_KEY = f"staging/abecip/{DATASET}.parquet"
+STAGING_KEY = f"{STAGING_PREFIX}abecip/{DATASET}.parquet"
 RAW_KEY = re.compile(rf"^{PREFIX}(\d{{4}}-\d{{2}})/{DATASET}\.json$")
 
 
@@ -44,8 +44,8 @@ RAW_KEY = re.compile(rf"^{PREFIX}(\d{{4}}-\d{{2}})/{DATASET}\.json$")
     default_args={"owner": "Lucas Bottino", "retries": 1, "retry_delay": timedelta(minutes=5)},
     tags=["conjuntura", "abecip", "ingestao"],
     description=(
-        "Consolida raw/abecip/<competência>/financiamentos_por_instituicao.json "
-        "em staging/abecip/financiamentos_por_instituicao.parquet"
+        "Consolida snh/raw/abecip/<competência>/financiamentos_por_instituicao.json "
+        "em snh/staging/abecip/financiamentos_por_instituicao.parquet"
     ),
 )
 def abecip_instituicoes_ingest_dag() -> None:
@@ -59,7 +59,7 @@ def abecip_instituicoes_ingest_dag() -> None:
         }
         if not competencias:
             raise RuntimeError(
-                "Nenhuma competência encontrada em raw/abecip/. A extração do "
+                "Nenhuma competência encontrada em snh/raw/abecip/. A extração do "
                 "relatório mensal não depositou nada — não há o que consolidar."
             )
 

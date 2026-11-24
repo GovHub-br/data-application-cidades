@@ -13,7 +13,7 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: reforma_contratos
   physicalName: reforma_contratos
@@ -21,7 +21,7 @@ schema:
     seleciona somente o arquivo mais recente.
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
   - property: file_pattern
     value: PMCMV_REFORMAS_MCID_\d{4}_\d{2}_\d{2}\.csv
   - property: load_type

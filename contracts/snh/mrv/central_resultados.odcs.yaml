@@ -14,14 +14,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: lancamentos
   physicalName: lancamentos
   description: 'Lançamentos da MRV Incorporação: VGV, unidades e preço médio por trimestre.'
   customProperties:
   - property: path
-    value: staging/mrv/lancamentos/*.parquet
+    value: snh/staging/mrv/lancamentos/*.parquet
   - property: file_pattern
     value: planilha_interativa\.xlsx
   - property: load_type
@@ -48,7 +48,7 @@ schema:
   description: 'Vendas líquidas da MRV Incorporação: valor, unidades e preço médio por trimestre.'
   customProperties:
   - property: path
-    value: staging/mrv/vendas_liquidas/*.parquet
+    value: snh/staging/mrv/vendas_liquidas/*.parquet
   - property: file_pattern
     value: planilha_interativa\.xlsx
   - property: load_type

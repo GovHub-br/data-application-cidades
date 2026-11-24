@@ -3,9 +3,9 @@
 """
 Conversão Raw -> Staging (Parquet) do data lake (MinIO).
 
-Percorre raw/ (CSV/TXT/XLSX/MDB/JSON), detecta separador e encoding de cada arquivo e
-grava a versão colunar em staging/, espelhando a estrutura de pastas sem a extensão de
-origem: raw/sftp/fabrica/GEFUS/foo.csv -> staging/sftp/fabrica/GEFUS/foo.parquet
+Percorre snh/raw/ (CSV/TXT/XLSX/MDB/JSON), detecta separador e encoding de cada arquivo e
+grava a versão colunar em snh/staging/, espelhando a estrutura de pastas sem a extensão de
+origem: snh/raw/sftp/fabrica/GEFUS/foo.csv -> snh/staging/sftp/fabrica/GEFUS/foo.parquet
 
 Decisões do projeto:
   - Todas as colunas como STRING — a tipagem fica para o dbt/DuckDB.
@@ -13,14 +13,14 @@ Decisões do projeto:
   - Colunas em snake_case ASCII (dedup); header original nos metadados do parquet.
   - Linhagem `_source_file`, `_ingested_at`, `_source_hash` em cada parquet.
 
-Rode DEPOIS do `mascarar_minio.py --apply`: a staging lê o raw/ como está, e fora de ordem
+Rode DEPOIS do `mascarar_minio.py --apply`: a staging lê o snh/raw/ como está, e fora de ordem
 o parquet sai com PII.
 
 Idempotência: lake._staging_log com UNIQUE(raw_key, staging_key, source_hash). O
 staging_key entra na chave porque XLSX/MDB geram N parts com o mesmo (raw_key,
 source_hash). Use --force para reprocessar.
 
-Organização: este arquivo lista o raw/, escolhe o que converter e registra o resultado;
+Organização: este arquivo lista o snh/raw/, escolhe o que converter e registra o resultado;
 o trabalho fica em conversao/:
   - config: variáveis de ambiente, prefixos, formatos e log;
   - gemeos: um parquet por dado quando ele chega em vários formatos ou pastas;
@@ -49,8 +49,7 @@ from conversao.processamento import _novo_registro, processar_objeto
 
 # depois do pacote: conversao/__init__.py põe plugins/ no sys.path
 from cliente_minio import ClienteMinio  # noqa: E402
-from datalake.keys import load_id_of  # noqa: E402
-from lake_utils import PREFIXOS_LEGADO  # noqa: E402
+from datalake.keys import LEGACY_PREFIXES, load_id_of  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -67,15 +66,15 @@ def run(  # noqa: C901
     bad_lines: str = "skip",
     prefix: Optional[str] = None,
 ) -> Dict[str, int]:
-    """Converte os objetos de raw/ para Parquet em staging/. Retorna a contagem por
+    """Converte os objetos de snh/raw/ para Parquet em snh/staging/. Retorna a contagem por
     status.
 
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run(apply=True)).
     """
     # B1: só os canais do legado. Um `prefix` só pode estreitar dentro deles.
-    if prefix is not None and not prefix.startswith(PREFIXOS_LEGADO):
-        raise ValueError(f"prefixo fora do legado {PREFIXOS_LEGADO}: {prefix!r}")
-    prefixos = (prefix,) if prefix is not None else PREFIXOS_LEGADO
+    if prefix is not None and not prefix.startswith(LEGACY_PREFIXES):
+        raise ValueError(f"prefixo fora do legado {LEGACY_PREFIXES}: {prefix!r}")
+    prefixos = (prefix,) if prefix is not None else LEGACY_PREFIXES
     execution_id = uuid.uuid4().hex
     only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
 
@@ -83,7 +82,7 @@ def run(  # noqa: C901
     log.info(
         "Execução %s | modo=%s | prefixo=%s",
         execution_id,
-        "APPLY (staging/)" if apply else "DRY-RUN (staging_dryrun/)",
+        "APPLY (snh/staging/)" if apply else "DRY-RUN (snh/staging_dryrun/)",
         ", ".join(prefixos),
     )
     log.info("=" * 70)
@@ -122,7 +121,7 @@ def run(  # noqa: C901
 
     # `pattern` aceita vários substrings separados por vírgula (OR entre eles). Um
     # arquivo específico por vírgula evita reprocessar o lake inteiro para consertar
-    # meia dúzia de origens — e a listagem do raw/ roda uma vez só, não uma por padrão.
+    # meia dúzia de origens — e a listagem do snh/raw/ roda uma vez só, não uma por padrão.
     padroes = [x.strip() for x in pattern.split(",") if x.strip()]
 
     def _selecionado(key: str, size: int) -> bool:
@@ -204,7 +203,7 @@ def run(  # noqa: C901
     for status, n in sorted(contagem.items()):
         log.info("  %-20s %d", status, n)
     if not apply:
-        log.info("DRY-RUN — nada em staging/. Prévia em staging_dryrun/")
+        log.info("DRY-RUN — nada em snh/staging/. Prévia em snh/staging_dryrun/")
     log.info("Log: %s", _LOG_FILE)
     return contagem
 
@@ -215,7 +214,7 @@ def main() -> None:
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="Grava em staging/. Sem esta flag roda em dry-run (staging_dryrun/).",
+        help="Grava em snh/staging/. Sem esta flag roda em dry-run (snh/staging_dryrun/).",
     )
     parser.add_argument("--force", action="store_true", help="Reprocessa objetos já convertidos.")
     parser.add_argument("--limit", type=int, default=0, help="Processa no máximo N objetos.")
@@ -254,7 +253,7 @@ def main() -> None:
     parser.add_argument(
         "--prefix",
         default=None,
-        help="Estreita a varredura dentro de raw/sftp/ ou raw/sharepoint/.",
+        help="Estreita a varredura dentro de snh/raw/sftp/ ou snh/raw/sharepoint/.",
     )
     args = parser.parse_args()
 

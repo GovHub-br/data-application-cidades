@@ -1,4 +1,4 @@
-"""Conversão de um objeto do raw/: escolhe o formato, converte, verifica e envia."""
+"""Conversão de um objeto do snh/raw/: escolhe o formato, converte, verifica e envia."""
 
 import json
 import logging
@@ -27,6 +27,7 @@ from cliente_minio import ClienteMinio
 
 from .config import (
     RAW_PREFIX,
+    DRYRUN_PREFIX,
     STAGING_PREFIX,
     SUPPORTED_EXCEL,
     SUPPORTED_JSON,
@@ -44,7 +45,7 @@ log = logging.getLogger(__name__)
 
 
 def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
-    """raw/<pastas>/<nome>.<ext> -> staging/<pastas>/<nome>[__parte].parquet
+    """snh/raw/<pastas>/<nome>.<ext> -> snh/staging/<pastas>/<nome>[__parte].parquet
 
     A extensão de origem não entra no nome: `foo.csv` e `foo.txt` são o mesmo dado e viram
     um único `foo.parquet`. Quem garante que só um deles chega aqui é o
@@ -215,7 +216,7 @@ def processar_objeto(  # noqa: C901
                         recs.append(rec)
                         continue
                     # O .mdb é o único formato que chega à staging com PII: o
-                    # mascarar_minio não reescreve Access no raw/ (mdbtools é
+                    # mascarar_minio não reescreve Access no snh/raw/ (mdbtools é
                     # read-only), só acusa. Mascara aqui o CSV exportado, com as
                     # mesmas regras e o mesmo HMAC, antes de virar parquet.
                     from mascaramento.tabular import mascarar_csv
@@ -375,4 +376,4 @@ def processar_objeto(  # noqa: C901
 
 
 def _dryrun_key(staging_key: str) -> str:
-    return "staging_dryrun/" + staging_key[len(STAGING_PREFIX) :]
+    return DRYRUN_PREFIX + staging_key[len(STAGING_PREFIX) :]

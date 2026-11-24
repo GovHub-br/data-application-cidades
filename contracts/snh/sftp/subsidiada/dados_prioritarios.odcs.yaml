@@ -14,7 +14,7 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: dados_prioritarios_af_caixa
   physicalName: dados_prioritarios_af_caixa
@@ -22,7 +22,7 @@ schema:
     por mês (AAAAMM no nome). Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv.
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet
   - property: file_pattern
     value: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA\.csv
   - property: load_type
@@ -149,7 +149,7 @@ schema:
     por mês. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv.
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet
   - property: file_pattern
     value: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS\.csv
   - property: load_type
@@ -178,7 +178,7 @@ schema:
     aditivo. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt.
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet
   - property: file_pattern
     value: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB\.(txt|csv)
   - property: load_type

@@ -13,7 +13,7 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: cadunico_familia
   physicalName: cadunico_familia
@@ -22,7 +22,7 @@ schema:
     diferem pela data.
   customProperties:
   - property: path
-    value: staging/**/ARQ_FAMILIA_PBF_*_SB8.parquet
+    value: snh/staging/**/ARQ_FAMILIA_PBF_*_SB8.parquet
   - property: file_pattern
     value: ARQ_FAMILIA_PBF_\d{8}_SB8\.TXT
   - property: load_type
@@ -185,7 +185,7 @@ schema:
     redigidos antes da staging.
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_*_SB8.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_*_SB8.parquet
   - property: file_pattern
     value: ARQ_PESSOA_PBF_\d{8}_SB8\.TXT
   - property: load_type

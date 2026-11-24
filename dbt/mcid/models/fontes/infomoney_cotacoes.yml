@@ -15,7 +15,7 @@ sources:
   - name: acoes_imob
     description: Resposta TIME_SERIES_DAILY da Alpha Vantage como veio.
     meta:
-      caminho: staging/infomoney/acoes_imob/*.parquet
+      caminho: snh/staging/infomoney/acoes_imob/*.parquet
       file_pattern: acoes_imob\.json
       load_type: incremental
       dag: infomoney_imob
@@ -31,7 +31,7 @@ sources:
     description: Exportação única do histórico da prata prata_conjuntura_infomoney_imob (a última montagem
       com a série inteira, de antes de o lake guardar as cargas).
     meta:
-      caminho: staging/infomoney/acoes_imob/*.parquet
+      caminho: snh/staging/infomoney/acoes_imob/*.parquet
       file_pattern: acoes_imob_postgres\.csv
       load_type: incremental
       dag: infomoney_imob

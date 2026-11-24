@@ -14,7 +14,7 @@ sources:
   - name: contratos_fgts
     description: Contratos do canal FGTS, incluindo Pró-Moradia pelo código de linha 26.
     meta:
-      caminho: staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet
+      caminho: snh/staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet
       file_pattern: fgts_canal_tab_ao_1_contratos_fgts\.csv
       load_type: full
       dag: null
@@ -47,7 +47,7 @@ sources:
   - name: empreendimentos_fgts
     description: Cadastro dos empreendimentos vinculados aos contratos FGTS.
     meta:
-      caminho: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet
+      caminho: snh/staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet
       file_pattern: fgts_canal_tab_ao_1_tab_empreendimentos\.csv
       load_type: full
       dag: null
@@ -70,7 +70,7 @@ sources:
   - name: posicoes_empreendimentos_fgts
     description: Evolução física e datas dos empreendimentos FGTS.
     meta:
-      caminho: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.parquet
+      caminho: snh/staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.parquet
       file_pattern: fgts_canal_tab_ao_1_tab_empreendimentos_posicoes\.csv
       load_type: full
       dag: null
@@ -86,7 +86,7 @@ sources:
   - name: dominio_linha_fgts
     description: Domínio de códigos e nomes das linhas do canal FGTS.
     meta:
-      caminho: staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet
+      caminho: snh/staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet
       file_pattern: fgts_canal_tdom_ao_1_linha\.csv
       load_type: full
       dag: null
@@ -100,7 +100,7 @@ sources:
       atuais orcamento_fgts_2021, orcamento_fgts_2022, orcamento_fgts_2023, orcamento_fgts_2024, que só
       diferem pela data.
     meta:
-      caminho: staging/sharepoint/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet
+      caminho: snh/staging/sharepoint/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet
       file_pattern: tpc_\d{4}_fgts_canal_tab_dbo_pc_\d{4}_\d{2}_orcamento_final\.csv
       load_type: full
       dag: null

@@ -15,7 +15,7 @@ sources:
   - name: dotacao_execucao_outras_fontes_mcid
     description: Relatório de dotação e execução (UTF-16, TSV, 12 linhas de título), um ZIP por anexo.
     meta:
-      caminho: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/*.parquet
+      caminho: snh/staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/*.parquet
       file_pattern: \d{2}_.+\.zip
       load_type: full
       dag: dotacao_execucao_outras_fontes_mcid_ingest_dag

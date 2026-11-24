@@ -1,6 +1,6 @@
 """Pure helpers of the API ingestion DAGs (no Airflow here: the tasks live in each DAG).
 
-The DAG lands the original file in `raw/<source>/<dataset>/load_id=<id>/`, converts it
+The DAG lands the original file in `snh/raw/<source>/<dataset>/load_id=<id>/`, converts it
 with a parser of `plugins.datalake.readers` and writes the staging through
 `write_text_parquet`, so every staging Parquet has the same shape (ADR-0002 R2).
 """
@@ -12,6 +12,8 @@ import os
 from datetime import datetime, timezone
 
 import pandas as pd
+
+from plugins.datalake.keys import RAW_PREFIX, STAGING_PREFIX
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -50,8 +52,8 @@ def write_text_parquet(
 
 
 def staging_key(raw_key: str) -> str:
-    """raw/<folder>/load_id=<id>/<name>.<ext> -> staging/<folder>/load_id=<id>/<name>.parquet"""
-    return "staging/" + os.path.splitext(raw_key.removeprefix("raw/"))[0] + ".parquet"
+    """snh/raw/<folder>/load_id=<id>/<name>.<ext> -> snh/staging/<folder>/load_id=<id>/<name>.parquet"""
+    return STAGING_PREFIX + os.path.splitext(raw_key.removeprefix(RAW_PREFIX))[0] + ".parquet"
 
 
 def staging_record(execution_id: str, raw_key: str, **fields) -> dict:

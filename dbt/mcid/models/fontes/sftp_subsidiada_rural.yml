@@ -15,7 +15,7 @@ sources:
     description: 'INT055: liberações do PNHR (Rural) da CAIXA e do BB. Sem remessa nova desde 18/03/2025;
       o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_20250318.TXT.'
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet
       file_pattern: INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_\d{8}\.TXT
       load_type: full
       dag: sftp_ingest_dag
@@ -29,7 +29,7 @@ sources:
     description: 'INT057: empreendimentos do PNHR (Rural) operados pelo BB. Sem remessa nova desde 29/11/2024;
       o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_20241129.TXT.'
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet
       file_pattern: INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_\d{8}\.TXT
       load_type: full
       dag: sftp_ingest_dag
@@ -79,7 +79,7 @@ sources:
     description: 'INT065: empreendimentos do PNHR (Rural) operados pela CAIXA. Sem remessa nova desde
       29/11/2024; o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_20241129.TXT.'
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet
       file_pattern: INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
       load_type: full
       dag: sftp_ingest_dag

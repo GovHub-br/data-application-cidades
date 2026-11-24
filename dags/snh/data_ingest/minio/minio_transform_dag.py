@@ -26,16 +26,16 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
     tags=["minio", "mcid", "cidades", "data-lake", "transform"],
 )
 def minio_transform_dag() -> None:
-    """Pipeline de transformação do data lake: raw/ -> mascaramento PII -> staging/.
+    """Pipeline de transformação do data lake: snh/raw/ -> mascaramento PII -> snh/staging/.
 
-    Roda só sobre raw/sftp/ e raw/sharepoint/ (`PREFIXOS_LEGADO`, em lake_utils.py), os
-    canais sem conversão própria. As DAGs de API gravam a própria staging, e varrer raw/
+    Roda só sobre snh/raw/sftp/ e snh/raw/sharepoint/ (`LEGACY_PREFIXES`, em plugins/datalake/keys.py), os
+    canais sem conversão própria. As DAGs de API gravam a própria staging, e varrer snh/raw/
     inteira regravava por cima dela (B1, #248). Desacoplada da ingestão: schedule próprio,
     sem referência às DAGs de fonte.
 
     Duas etapas encadeadas, cada uma idempotente/incremental (tabelas de controle no
     schema `lake` do Postgres), então execuções agendadas só processam o que é novo.
-    `max_active_runs=1` porque o mascaramento sobrescreve raw/ in-place — duas execuções
+    `max_active_runs=1` porque o mascaramento sobrescreve snh/raw/ in-place — duas execuções
     concorrentes seriam corrida destrutiva. O I/O usa os clientes de plugins/.
 
     A carga para o warehouse NÃO faz parte desta DAG: só um subconjunto do lake vira
@@ -45,7 +45,7 @@ def minio_transform_dag() -> None:
     Params (para disparo manual; o schedule usa os defaults e processa tudo):
 
     - `dry_run`  marque para NÃO sobrescrever nada: a prévia do mascaramento vai para
-                 `masked_dryrun/` e a dos parquets para `staging_dryrun/`, e as tabelas de
+                 `snh/masked_dryrun/` e a dos parquets para `snh/staging_dryrun/`, e as tabelas de
                  controle não registram conversão. É o modo de conferir o pipeline.
     - `limit`    processa no máximo N objetos por task (0 = sem limite).
     - `pattern`  só objetos cuja key contenha esta substring.
@@ -62,7 +62,7 @@ def minio_transform_dag() -> None:
 
     @task
     def mascarar_pii() -> None:
-        """Mascara PII (CPF/NIS/nome/endereço) nos objetos novos de raw/, in-place.
+        """Mascara PII (CPF/NIS/nome/endereço) nos objetos novos de snh/raw/, in-place.
 
         Roda o script em processo próprio: o modo paralelo cria os filhos com spawn, que
         reexecutam o __main__ do pai. Dentro da task, o __main__ é o binário do Airflow,
@@ -87,9 +87,9 @@ def minio_transform_dag() -> None:
 
     @task
     def raw_para_staging() -> None:
-        """Converte os objetos de raw/ para Parquet full-text em staging/.
+        """Converte os objetos de snh/raw/ para Parquet full-text em snh/staging/.
 
-        Pula raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em conversao/config.py):
+        Pula snh/raw/dados_historicos/ inteira (ver PASTAS_IGNORADAS em conversao/config.py):
         já tem tratamento próprio de um membro da equipe para ciência de dados, e gerar
         parquet full-text por cima seria trabalho duplicado. Continua sendo mascarada
         normalmente pela task anterior.
@@ -106,7 +106,7 @@ def minio_transform_dag() -> None:
         )
         logging.info("[minio_transform_dag] raw->staging concluído: %s", contagem)
 
-    # A ordem é obrigatória, não uma preferência: a staging lê raw/ como está, então
+    # A ordem é obrigatória, não uma preferência: a staging lê snh/raw/ como está, então
     # converter antes de mascarar publicaria PII em parquet.
     mascaramento = mascarar_pii()
     staging = raw_para_staging()

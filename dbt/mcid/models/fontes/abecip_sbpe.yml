@@ -16,7 +16,7 @@ sources:
     description: Financiamentos SBPE por modalidade (construção e aquisição), em unidades e R$ milhões,
       mensal desde 2002.
     meta:
-      caminho: staging/abecip/financiamentos_modalidade/*.parquet
+      caminho: snh/staging/abecip/financiamentos_modalidade/*.parquet
       file_pattern: financiamentos_modalidade\.xlsx
       load_type: full
       dag: abecip_financiamentos_ingest_dag
@@ -32,7 +32,7 @@ sources:
     description: 'Caderneta de poupança SBPE: depósitos, retiradas, captação líquida, rendimento e saldo,
       mensal.'
     meta:
-      caminho: staging/abecip/poupanca_sbpe_mensal/*.parquet
+      caminho: snh/staging/abecip/poupanca_sbpe_mensal/*.parquet
       file_pattern: poupanca_sbpe_mensal\.xlsx
       load_type: full
       dag: abecip_poupanca_trimestral_ingest_dag

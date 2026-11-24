@@ -15,7 +15,7 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from scripts.lake_utils import md5_file
 
@@ -25,7 +25,7 @@ ENDPOINT = (
     "olinda/servico/MercadoImobiliario/versao/v1/odata/mercadoimobiliario"
     "?$filter=Info eq 'indices_imobiliario_pib_br'&$orderby=Data&$format=json"
 )
-FOLDER = "bacen/credito_imobiliario_pib"  # raw/bacen/credito_imobiliario_pib/load_id=<id>/credito_imobiliario_pib.json
+FOLDER = "bacen/credito_imobiliario_pib"  # snh/raw/bacen/credito_imobiliario_pib/load_id=<id>/credito_imobiliario_pib.json
 FILE_NAME = "credito_imobiliario_pib.json"
 
 
@@ -92,7 +92,7 @@ def bacen_credito_pib_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fica
         md5 = md5_file(path)
         client = hook.get_conn()
         previous_loads = sorted(
-            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{FOLDER}/") or []}
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
             - {load, None}
         )
         if previous_loads:

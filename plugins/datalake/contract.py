@@ -14,6 +14,8 @@ from typing import Optional
 
 import yaml
 
+from plugins.datalake.keys import RAW_PREFIX, STAGING_PREFIX
+
 CONTRACTS = Path(__file__).resolve().parents[2] / "contracts"
 ACCESS = (".mdb", ".accdb")
 
@@ -32,8 +34,10 @@ class Dataset:
 
     @property
     def folder(self) -> str:
-        """Folder of the dataset below raw/ and staging/ (a glob)."""
-        return str(Path(self.path).parent).removeprefix("staging").strip("/") or "*"
+        """Folder of the dataset below snh/raw/ and snh/staging/ (a glob)."""
+        return (
+            str(Path(self.path).parent).removeprefix(STAGING_PREFIX.rstrip("/")).strip("/") or "*"
+        )
 
     @property
     def access_table(self) -> Optional[str]:
@@ -77,7 +81,7 @@ def load(folder: Path = CONTRACTS) -> list[Dataset]:
 
 def _split(raw_key: str) -> tuple[str, str, Optional[str]]:
     """raw key -> (folder, delivered file name, Access table), without the load folder."""
-    parts = [p for p in raw_key.removeprefix("raw/").split("/") if not p.startswith("load_id=")]
+    parts = [p for p in raw_key.removeprefix(RAW_PREFIX).split("/") if not p.startswith("load_id=")]
     if len(parts) >= 2 and parts[-2].lower().endswith(ACCESS):  # <file>.mdb/<table>.csv
         return "/".join(parts[:-2]), parts[-2], Path(parts[-1]).stem.lower()
     return "/".join(parts[:-1]), parts[-1], None

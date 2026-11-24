@@ -20,10 +20,10 @@ def _converter_json(
     ingested_at: str,
     load_id: "str | None" = None,
 ) -> Tuple[int, int, dict]:
-    """Converte raw/<fonte>/<dado>.json (list[dict]) para parquet full-text.
+    """Converte snh/raw/<fonte>/<dado>.json (list[dict]) para parquet full-text.
 
     Retorna (n_linhas, n_colunas, column_map). Formas fora de list[dict] não são tratadas
-    aqui — só chega em raw/ o formato achatado pelo cliente da fonte; se vier diferente, a
+    aqui — só chega em snh/raw/ o formato achatado pelo cliente da fonte; se vier diferente, a
     exceção do pandas sobe e processar_objeto marca status="error" no objeto, sem derrubar
     a execução.
     """

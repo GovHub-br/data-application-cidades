@@ -108,7 +108,7 @@ def icst(monkeypatch, tmp_path):
 
 def test_upload_lands_under_load_id_and_skips_same_content(icst):
     key = icst.land()
-    assert key == f"raw/fgv/icst/load_id={LOAD}/icst.csv"
+    assert key == f"snh/raw/fgv/icst/load_id={LOAD}/icst.csv"
     assert icst.s3.objects[key][0] == ICST_CSV
 
     with pytest.raises(AirflowSkipException):  # no dia seguinte, mesmo arquivo: sem carga
@@ -117,7 +117,7 @@ def test_upload_lands_under_load_id_and_skips_same_content(icst):
     novo = icst.land(
         ICST_CSV + b"03/2025;95,0;94,2\n", datetime(2026, 12, 3, 6, tzinfo=timezone.utc)
     )
-    assert novo == "raw/fgv/icst/load_id=20261203T060000Z/icst.csv"
+    assert novo == "snh/raw/fgv/icst/load_id=20261203T060000Z/icst.csv"
 
 
 def test_retry_rewrites_the_same_key(icst):
@@ -149,7 +149,7 @@ def test_missing_column_is_quarantined_and_report_fails(icst, monkeypatch):
     monkeypatch.setattr(c, "load", lambda: stricter)
     out = icst.chain(icst.land())
     assert out["status"] == "quarantined"
-    assert not [k for k in icst.s3.objects if k.startswith("staging/")]
+    assert not [k for k in icst.s3.objects if k.startswith("snh/staging/")]
     icst.ctx["xcom"] = out
     with pytest.raises(RuntimeError):
         icst.run("report")

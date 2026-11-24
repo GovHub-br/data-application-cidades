@@ -14,14 +14,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: credito_imobiliario_pib
   physicalName: credito_imobiliario_pib
   description: Crédito imobiliário / PIB (%), indicador indices_imobiliario_pib_br do Olinda MercadoImobiliario.
   customProperties:
   - property: path
-    value: staging/bacen/credito_imobiliario_pib/*.parquet
+    value: snh/staging/bacen/credito_imobiliario_pib/*.parquet
   - property: file_pattern
     value: credito_imobiliario_pib\.json
   - property: load_type
@@ -48,7 +48,7 @@ schema:
     um arquivo por série; o nome do arquivo é o tipo da série.
   customProperties:
   - property: path
-    value: staging/bacen/financiamentos_imobiliarios/*.parquet
+    value: snh/staging/bacen/financiamentos_imobiliarios/*.parquet
   - property: file_pattern
     value: '[a-z0-9_]+\.json'
   - property: load_type

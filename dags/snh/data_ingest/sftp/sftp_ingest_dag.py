@@ -39,7 +39,7 @@ def sftp_ingest_dag() -> None:
     """Ingestão do SFTP do MCid (ADR-0004): extract -> transform (um por arquivo) -> report.
 
     `extract` baixa os arquivos novos das pastas monitoradas, mascara a PII e só então sobe
-    para `raw/sftp/<pasta>/load_id=<id>/` (o original nunca pousa). `transform` converte cada
+    para `snh/raw/sftp/<pasta>/load_id=<id>/` (o original nunca pousa). `transform` converte cada
     arquivo para a staging pelo leitor do contrato ODCS e segura em quarentena o que não
     bate com ele. `report` escreve o resumo no log da task e falha a execução se
     houve erro ou quarentena.

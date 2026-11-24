@@ -17,6 +17,7 @@ from typing import Callable, Optional
 import pyarrow.parquet as pq
 
 from plugins.datalake import contract, readers
+from plugins.datalake.keys import LAKE_ROOT
 
 BLOCKING = ("error", "quarantined")
 
@@ -47,8 +48,9 @@ class Lake:
 
 
 def _rel(staging_key: str) -> str:
-    """The key without its first folder: staging/ and staging_dryrun/ name the same table."""
-    return staging_key.split("/", 1)[-1]
+    """The key without the root and its first folder: snh/staging/ and snh/staging_dryrun/
+    name the same table."""
+    return staging_key.removeprefix(LAKE_ROOT).split("/", 1)[-1]
 
 
 class Gate:

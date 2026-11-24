@@ -15,14 +15,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: icst
   physicalName: icst
   description: Índice de Confiança da Construção, com e sem ajuste sazonal, CSV do FGVDados.
   customProperties:
   - property: path
-    value: staging/fgv/icst/*.parquet
+    value: snh/staging/fgv/icst/*.parquet
   - property: file_pattern
     value: icst\.csv
   - property: load_type
@@ -48,7 +48,7 @@ schema:
   description: INCC-M (número índice e variações), XLSX da série histórica do Sinduscon-PR.
   customProperties:
   - property: path
-    value: staging/fgv/incc_m/*.parquet
+    value: snh/staging/fgv/incc_m/*.parquet
   - property: file_pattern
     value: incc_m\.xlsx
   - property: load_type

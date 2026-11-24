@@ -14,14 +14,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: indice_locacao
   physicalName: indice_locacao
   description: Número índice e variações mensal e em 12 meses da locação residencial (total).
   customProperties:
   - property: path
-    value: staging/fipe/indice_locacao/*.parquet
+    value: snh/staging/fipe/indice_locacao/*.parquet
   - property: file_pattern
     value: indice_locacao\.xlsx
   - property: load_type

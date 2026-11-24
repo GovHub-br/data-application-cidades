@@ -36,23 +36,25 @@ CONTRACTS = ROOT / "contracts"
 # Which source a staging path belongs to: the area or system that delivers it.
 SOURCES = [
     (
-        re.compile(r"^staging/sftp/fabrica/GEFUS/CadUnico/|^staging/sharepoint/Cadastro Único/"),
+        re.compile(
+            r"^snh/staging/sftp/fabrica/GEFUS/CadUnico/|^snh/staging/sharepoint/Cadastro Único/"
+        ),
         "cadunico",
     ),
     # GEFUS: one contract per MCMV line (contracts/snh/sftp/<linha>/); new families go in gefus
     (
-        re.compile(r"^staging/sftp/fabrica/GEFUS/(INT021|INT039|MONT_CONT_PF_FAR)"),
+        re.compile(r"^snh/staging/sftp/fabrica/GEFUS/(INT021|INT039|MONT_CONT_PF_FAR)"),
         "sftp_subsidiada_far",
     ),
-    (re.compile(r"^staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3"), "sftp_fundo_social_faixa3"),
+    (re.compile(r"^snh/staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3"), "sftp_fundo_social_faixa3"),
     (
-        re.compile(r"^staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS"),
+        re.compile(r"^snh/staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS"),
         "sftp_reforma_casa_brasil_reformas",
     ),
-    (re.compile(r"^staging/sftp/fabrica/GEFUS/"), "sftp_gefus"),
-    (re.compile(r"^staging/sftp/caixa\.geavo/GEAVO/"), "sftp_fgts_geavo"),
-    (re.compile(r"^staging/sharepoint/.*fgts_canal"), "sharepoint_canal_fgts"),
-    (re.compile(r"^staging/sharepoint/"), "sharepoint_mcid"),
+    (re.compile(r"^snh/staging/sftp/fabrica/GEFUS/"), "sftp_gefus"),
+    (re.compile(r"^snh/staging/sftp/caixa\.geavo/GEAVO/"), "sftp_fgts_geavo"),
+    (re.compile(r"^snh/staging/sharepoint/.*fgts_canal"), "sharepoint_canal_fgts"),
+    (re.compile(r"^snh/staging/sharepoint/"), "sharepoint_mcid"),
 ]
 SOURCE_INFO = {
     "cadunico": ("CadÚnico", "Cortes do Cadastro Único entregues ao MCid.", "CadÚnico (MDS)"),
@@ -140,7 +142,7 @@ def path_glob(paths: list[str]) -> str:
         return globs.pop()
     names = {Path(g).name for g in globs}
     if len(names) == 1:  # same file name in different folders
-        return f"staging/**/{names.pop()}"
+        return f"snh/staging/**/{names.pop()}"
     raise ValueError(f"cannot merge paths {sorted(paths)}")
 
 
@@ -154,7 +156,7 @@ def dbt_tables() -> list[dict]:
             for table in src.get("tables") or []:
                 meta = table.get("meta") or {}
                 path = meta.get("caminho") or meta.get("path") or ""
-                if path.startswith(("staging/sftp/", "staging/sharepoint/")):
+                if path.startswith(("snh/staging/sftp/", "snh/staging/sharepoint/")):
                     tables.append({**table, "path": path, "bucket": bucket, "dag": meta.get("dag")})
     return tables
 
@@ -253,7 +255,7 @@ def build(tables: list[dict], env: dict) -> dict[str, dict]:
                         "server": "staging",
                         "type": "s3",
                         "format": "parquet",
-                        "location": f"s3://{items[0]['bucket']}/staging/",
+                        "location": f"s3://{items[0]['bucket']}/snh/staging/",
                     }
                 ],
                 "schema": [],

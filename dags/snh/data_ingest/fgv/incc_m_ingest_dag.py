@@ -15,13 +15,13 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from scripts.lake_utils import md5_file
 
 # Link estável da série histórica no Sinduscon-PR; redireciona para o XLSX vigente.
 ENDPOINT = "economia/indices-economicos/incc-m-fgv/9547-serie-historica-incc-m-fgv/"
-FOLDER = "fgv/incc_m"  # raw/fgv/incc_m/load_id=<id>/incc_m.xlsx
+FOLDER = "fgv/incc_m"  # snh/raw/fgv/incc_m/load_id=<id>/incc_m.xlsx
 FILE_NAME = "incc_m.xlsx"
 
 
@@ -86,7 +86,7 @@ def incc_m_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
         md5 = md5_file(path)
         client = hook.get_conn()
         previous_loads = sorted(
-            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{FOLDER}/") or []}
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
             - {load, None}
         )
         if previous_loads:

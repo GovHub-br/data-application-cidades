@@ -181,13 +181,13 @@ def test_ibge_one_failing_table_does_not_stop_the_others(ibge):
     assert list(extracted["files"]) == ["pib_construcao"]
     assert extracted["errors"] == ["sinapi: HTTP 500"]
     keys = ibge.run("upload_to_s3", extracted)
-    assert keys == ["raw/ibge/pib_construcao/load_id=20261201T060000Z/pib_construcao.json"]
+    assert keys == ["snh/raw/ibge/pib_construcao/load_id=20261201T060000Z/pib_construcao.json"]
     recs = ibge.run(
         "upload_staging", ibge.run("verify_structural_data_drift", ibge.run("transform", keys))
     )
     assert recs[0]["status"] == "converted" and recs[0]["structural"] == "approved"
     assert (
-        "staging/ibge/pib_construcao/load_id=20261201T060000Z/pib_construcao.parquet"
+        "snh/staging/ibge/pib_construcao/load_id=20261201T060000Z/pib_construcao.parquet"
         in ibge.s3.objects
     )
     with pytest.raises(RuntimeError):  # a tabela que falhou na API falha a execução no fim

@@ -16,12 +16,12 @@ from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 from plugins.datalake import contract, readers
 from plugins.datalake.readers import SourceLayoutChanged, novo_caged_values
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from plugins.novo_caged_query import ENDPOINT, expected_periods, query_payload
 from scripts.lake_utils import md5_file
 
-# raw/novo_caged/saldo_estoque_total_construcao/load_id=<id>/<ano>-<mês>.json, um por mês
+# snh/raw/novo_caged/saldo_estoque_total_construcao/load_id=<id>/<ano>-<mês>.json, um por mês
 FOLDER = "novo_caged/saldo_estoque_total_construcao"
 CNAE_DIVISION = None  # None = toda a construção
 
@@ -111,7 +111,7 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
         client = hook.get_conn()
         hashes = {Path(p).name: md5_file(p) for p in paths}
         previous_loads = sorted(
-            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{FOLDER}/") or []}
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
             - {load, None}
         )
         if previous_loads:

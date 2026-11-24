@@ -49,7 +49,7 @@ def walk(sftp, folder: str, depth: int = 0) -> Iterator[tuple[str, int, int]]:
 
 
 def mirror(sftp_path: str) -> str:
-    """Folder below raw/ that mirrors the server (ADR-0005): /home/fabrica/GEFUS/x -> sftp/fabrica/GEFUS."""
+    """Folder below snh/raw/ that mirrors the server (ADR-0005): /home/fabrica/GEFUS/x -> sftp/fabrica/GEFUS."""
     folder = str(Path(sftp_path).parent).removeprefix("/home/").strip("/")
     return f"sftp/{folder}" if folder else "sftp"
 
@@ -198,7 +198,7 @@ def extract(
     folders: tuple = FOLDERS,
     files: tuple = (),
 ) -> dict:
-    """Lands every new file of the monitored folders in raw/sftp/.../load_id=<load>/.
+    """Lands every new file of the monitored folders in snh/raw/sftp/.../load_id=<load>/.
 
     `files` (full SFTP paths) forces just those, even if already landed: no skip by
     path/mtime nor by hash.

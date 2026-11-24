@@ -13,14 +13,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: contratos_fgts
   physicalName: contratos_fgts
   description: Contratos do canal FGTS, incluindo Pró-Moradia pelo código de linha 26.
   customProperties:
   - property: path
-    value: staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet
+    value: snh/staging/sharepoint/fgts_canal_tab_ao_1_contratos_fgts.parquet
   - property: file_pattern
     value: fgts_canal_tab_ao_1_contratos_fgts\.csv
   - property: load_type
@@ -86,7 +86,7 @@ schema:
   description: Cadastro dos empreendimentos vinculados aos contratos FGTS.
   customProperties:
   - property: path
-    value: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet
+    value: snh/staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos.parquet
   - property: file_pattern
     value: fgts_canal_tab_ao_1_tab_empreendimentos\.csv
   - property: load_type
@@ -129,7 +129,7 @@ schema:
   description: Evolução física e datas dos empreendimentos FGTS.
   customProperties:
   - property: path
-    value: staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.parquet
+    value: snh/staging/sharepoint/fgts_canal_tab_ao_1_tab_empreendimentos_posicoes.parquet
   - property: file_pattern
     value: fgts_canal_tab_ao_1_tab_empreendimentos_posicoes\.csv
   - property: load_type
@@ -161,7 +161,7 @@ schema:
   description: Domínio de códigos e nomes das linhas do canal FGTS.
   customProperties:
   - property: path
-    value: staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet
+    value: snh/staging/sharepoint/fgts_canal_tdom_ao_1_linha.parquet
   - property: file_pattern
     value: fgts_canal_tdom_ao_1_linha\.csv
   - property: load_type
@@ -187,7 +187,7 @@ schema:
     diferem pela data.
   customProperties:
   - property: path
-    value: staging/sharepoint/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet
+    value: snh/staging/sharepoint/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet
   - property: file_pattern
     value: tpc_\d{4}_fgts_canal_tab_dbo_pc_\d{4}_\d{2}_orcamento_final\.csv
   - property: load_type

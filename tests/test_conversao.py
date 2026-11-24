@@ -55,7 +55,9 @@ def test_ambiente_chega_a_todos_os_modulos(carregar, tmp_path):
     assert _modulo("processamento").TMPDIR == str(tmp_path)
     assert _modulo("pendente").TMPDIR == str(tmp_path)
     assert _modulo("processamento")._staging_key("bruto/a/b.csv") == "stg/a/b.parquet"
-    assert _modulo("processamento")._dryrun_key("stg/a/b.parquet") == ("staging_dryrun/a/b.parquet")
+    assert _modulo("processamento")._dryrun_key("stg/a/b.parquet") == (
+        "snh/staging_dryrun/a/b.parquet"
+    )
     # o prefixo do raw também decide a identidade dos gêmeos
     assert _modulo("gemeos")._stem_sem_extensao("bruto/abecip/2025-10/x.csv") == (
         "abecip/2025-10/x"
@@ -94,9 +96,11 @@ def test_auditoria_vai_ao_minio_e_a_copia_local_ao_lado_do_script(carregar, tmp_
         def put_object(self, key, dados):
             enviados[key] = dados
 
-    controle._gravar_auditoria(Minio(), "abc", [{"raw_key": "raw/a.csv", "column_map": {"A": "a"}}])
+    controle._gravar_auditoria(
+        Minio(), "abc", [{"raw_key": "snh/raw/a.csv", "column_map": {"A": "a"}}]
+    )
 
-    chave = "audit/staging/execution_id=abc/part-0.parquet"
+    chave = "snh/audit/staging/execution_id=abc/part-0.parquet"
     assert list(enviados) == [chave]
     df = pd.read_parquet(io.BytesIO(enviados[chave]))
     assert json.loads(df.loc[0, "column_map"]) == {"A": "a"}
@@ -155,16 +159,16 @@ def _xlsx(abas):
 
 DADOS_CSV = "ID;NOME\n1;Ana\n2;Bia\n".encode("utf-8")
 OBJETOS = {
-    "raw/sftp/a/DADOS.csv": DADOS_CSV,
+    "snh/raw/sftp/a/DADOS.csv": DADOS_CSV,
     # gêmeo do DADOS.csv em outra pasta: o texto vence a planilha
-    "raw/sharepoint/b/DADOS.xlsx": _xlsx({"Planilha": [["ID"], ["9"]]}),
-    "raw/sftp/a/PLAN.xlsx": _xlsx(
+    "snh/raw/sharepoint/b/DADOS.xlsx": _xlsx({"Planilha": [["ID"], ["9"]]}),
+    "snh/raw/sftp/a/PLAN.xlsx": _xlsx(
         {"Aba 1": [["COD", "VALOR"], ["1", "10"]], "Resumo": [["TOTAL"], ["10"]]}
     ),
-    "raw/api/c.json": json.dumps([{"a": 1, "b": {"c": 2}}]).encode("utf-8"),
-    "raw/sftp/a/x.zip": b"PK",
-    "raw/sftp/a/~$DADOS.csv": b"lixo do Excel",
-    "raw/dados_historicos/HIST.csv": DADOS_CSV,
+    "snh/raw/api/c.json": json.dumps([{"a": 1, "b": {"c": 2}}]).encode("utf-8"),
+    "snh/raw/sftp/a/x.zip": b"PK",
+    "snh/raw/sftp/a/~$DADOS.csv": b"lixo do Excel",
+    "snh/raw/dados_historicos/HIST.csv": DADOS_CSV,
 }
 
 
@@ -227,11 +231,11 @@ def test_run_converte_cada_formato_e_registra(executar, tmp_path):
         "skipped_unsupported": 1,
     }
     assert sorted(minio.enviados) == [
-        "staging/sftp/a/DADOS.parquet",
-        "staging/sftp/a/PLAN__aba_1.parquet",
-        "staging/sftp/a/PLAN__resumo.parquet",
+        "snh/staging/sftp/a/DADOS.parquet",
+        "snh/staging/sftp/a/PLAN__aba_1.parquet",
+        "snh/staging/sftp/a/PLAN__resumo.parquet",
     ]
-    dados = minio.enviados["staging/sftp/a/DADOS.parquet"].to_pylist()
+    dados = minio.enviados["snh/staging/sftp/a/DADOS.parquet"].to_pylist()
     assert [(r["id"], r["nome"]) for r in dados] == [("1", "Ana"), ("2", "Bia")]
     assert {r["_source_file"] for r in dados} == {"DADOS.csv"}
     assert {r["_source_hash"] for r in dados} == {hashlib.md5(DADOS_CSV).hexdigest()}
@@ -243,41 +247,41 @@ def test_run_converte_cada_formato_e_registra(executar, tmp_path):
     assert sorted(auditoria["status"]) == sorted(
         ["converted"] * 3 + ["skipped_duplicado", "skipped_unsupported"]
     )
-    assert "raw/dados_historicos/HIST.csv" not in set(auditoria["raw_key"])
+    assert "snh/raw/dados_historicos/HIST.csv" not in set(auditoria["raw_key"])
     # nenhum download ou parquet temporário fica para trás
     assert list(tmp_path.iterdir()) == []
 
 
 def test_objeto_sem_tag_do_mascaramento_fica_fora_da_staging(executar):
     contagem, minio, _ = executar(
-        apply=True, only_ext="csv,json", sem_mascara={"raw/sftp/a/DADOS.csv"}
+        apply=True, only_ext="csv,json", sem_mascara={"snh/raw/sftp/a/DADOS.csv"}
     )
 
     assert contagem == {"skipped_sem_mascara": 1}
-    assert "staging/sftp/a/DADOS.parquet" not in minio.enviados
+    assert "snh/staging/sftp/a/DADOS.parquet" not in minio.enviados
 
 
 def test_run_em_dry_run_grava_so_em_staging_dryrun(executar):
     contagem, minio, _ = executar(apply=False, only_ext="csv,json")
     assert contagem == {"dry_run": 1}
-    assert sorted(minio.enviados) == ["staging_dryrun/sftp/a/DADOS.parquet"]
+    assert sorted(minio.enviados) == ["snh/staging_dryrun/sftp/a/DADOS.parquet"]
 
 
 def test_filtro_nao_muda_quem_vence_entre_gemeos(executar):
     # só o xlsx no recorte: ele continua perdendo para o csv que ficou de fora
     contagem, minio, _ = executar(apply=True, only_ext="xlsx")
     assert contagem == {"converted": 2, "skipped_duplicado": 1}
-    assert "staging/sharepoint/b/DADOS.parquet" not in minio.enviados
+    assert "snh/staging/sharepoint/b/DADOS.parquet" not in minio.enviados
 
 
 def test_run_so_varre_os_canais_do_legado(executar):
     """B1 (#248): a raw das APIs nunca é convertida por cima da staging delas."""
     _, minio, controle = executar(apply=True)
-    assert minio.listados == ["raw/sftp/", "raw/sharepoint/"]
-    assert not any(k.startswith("staging/api/") for k in minio.enviados)
-    assert "raw/api/c.json" not in {r["raw_key"] for r in controle}
+    assert minio.listados == ["snh/raw/sftp/", "snh/raw/sharepoint/"]
+    assert not any(k.startswith("snh/staging/api/") for k in minio.enviados)
+    assert "snh/raw/api/c.json" not in {r["raw_key"] for r in controle}
 
 
 def test_prefixo_fora_do_legado_e_recusado(executar):
     with pytest.raises(ValueError, match="fora do legado"):
-        executar(apply=True, prefix="raw/fgv/")
+        executar(apply=True, prefix="snh/raw/fgv/")

@@ -15,7 +15,7 @@ sources:
   - name: lancamentos
     description: 'Lançamentos da MRV Incorporação: VGV, unidades e preço médio por trimestre.'
     meta:
-      caminho: staging/mrv/lancamentos/*.parquet
+      caminho: snh/staging/mrv/lancamentos/*.parquet
       file_pattern: planilha_interativa\.xlsx
       load_type: full
       dag: lancamentos_ingest_dag
@@ -27,7 +27,7 @@ sources:
   - name: vendas_liquidas
     description: 'Vendas líquidas da MRV Incorporação: valor, unidades e preço médio por trimestre.'
     meta:
-      caminho: staging/mrv/vendas_liquidas/*.parquet
+      caminho: snh/staging/mrv/vendas_liquidas/*.parquet
       file_pattern: planilha_interativa\.xlsx
       load_type: full
       dag: vendas_ingest_dag

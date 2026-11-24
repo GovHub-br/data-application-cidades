@@ -17,14 +17,14 @@ from bs4 import BeautifulSoup
 
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
-from plugins.datalake.keys import load_id, load_id_of, raw_key
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
 from plugins.datalake.tasks import previous_rows, record, summary
 from scripts.lake_utils import md5_file
 
 # O nome do XLSX muda a cada divulgação: o link sai da página.
 PAGE = "/credito-imobiliario/indicadores/financiamento"
 LINK_PATTERN = "unidades"
-FOLDER = "abecip/financiamentos_modalidade"  # raw/abecip/financiamentos_modalidade/load_id=<id>/financiamentos_modalidade.xlsx
+FOLDER = "abecip/financiamentos_modalidade"  # snh/raw/abecip/financiamentos_modalidade/load_id=<id>/financiamentos_modalidade.xlsx
 FILE_NAME = "financiamentos_modalidade.xlsx"
 
 
@@ -102,7 +102,7 @@ def abecip_financiamentos_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG 
         md5 = md5_file(path)
         client = hook.get_conn()
         previous_loads = sorted(
-            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}raw/{FOLDER}/") or []}
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
             - {load, None}
         )
         if previous_loads:

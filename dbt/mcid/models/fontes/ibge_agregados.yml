@@ -15,7 +15,7 @@ sources:
   - name: pib_construcao
     description: Agregado do IBGE da tabela pib_construcao (variável x localidade x classificação x período).
     meta:
-      caminho: staging/ibge/pib_construcao/*.parquet
+      caminho: snh/staging/ibge/pib_construcao/*.parquet
       file_pattern: pib_construcao\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -34,7 +34,7 @@ sources:
   - name: sinapi
     description: Agregado do IBGE da tabela sinapi (variável x localidade x classificação x período).
     meta:
-      caminho: staging/ibge/sinapi/*.parquet
+      caminho: snh/staging/ibge/sinapi/*.parquet
       file_pattern: sinapi\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -54,7 +54,7 @@ sources:
     description: Agregado do IBGE da tabela pib_consolidado_trimestral_bruto (variável x localidade x
       classificação x período).
     meta:
-      caminho: staging/ibge/pib_consolidado_trimestral_bruto/*.parquet
+      caminho: snh/staging/ibge/pib_consolidado_trimestral_bruto/*.parquet
       file_pattern: pib_consolidado_trimestral_bruto\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -74,7 +74,7 @@ sources:
     description: Agregado do IBGE da tabela pib_corrente_milhoes_brl (variável x localidade x classificação
       x período).
     meta:
-      caminho: staging/ibge/pib_corrente_milhoes_brl/*.parquet
+      caminho: snh/staging/ibge/pib_corrente_milhoes_brl/*.parquet
       file_pattern: pib_corrente_milhoes_brl\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -93,7 +93,7 @@ sources:
   - name: paic_obras
     description: Agregado do IBGE da tabela paic_obras (variável x localidade x classificação x período).
     meta:
-      caminho: staging/ibge/paic_obras/*.parquet
+      caminho: snh/staging/ibge/paic_obras/*.parquet
       file_pattern: paic_obras\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -113,7 +113,7 @@ sources:
     description: Agregado do IBGE da tabela paic_pessoal_salarial (variável x localidade x classificação
       x período).
     meta:
-      caminho: staging/ibge/paic_pessoal_salarial/*.parquet
+      caminho: snh/staging/ibge/paic_pessoal_salarial/*.parquet
       file_pattern: paic_pessoal_salarial\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -132,7 +132,7 @@ sources:
   - name: paic_resultados
     description: Agregado do IBGE da tabela paic_resultados (variável x localidade x classificação x período).
     meta:
-      caminho: staging/ibge/paic_resultados/*.parquet
+      caminho: snh/staging/ibge/paic_resultados/*.parquet
       file_pattern: paic_resultados\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -152,7 +152,7 @@ sources:
     description: Agregado do IBGE da tabela pnad_trabalho_construcao (variável x localidade x classificação
       x período).
     meta:
-      caminho: staging/ibge/pnad_trabalho_construcao/*.parquet
+      caminho: snh/staging/ibge/pnad_trabalho_construcao/*.parquet
       file_pattern: pnad_trabalho_construcao\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -172,7 +172,7 @@ sources:
     description: Agregado do IBGE da tabela pnad_rendimento_construcao (variável x localidade x classificação
       x período).
     meta:
-      caminho: staging/ibge/pnad_rendimento_construcao/*.parquet
+      caminho: snh/staging/ibge/pnad_rendimento_construcao/*.parquet
       file_pattern: pnad_rendimento_construcao\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -192,7 +192,7 @@ sources:
     description: Agregado do IBGE da tabela pnadc_populacao_decis_renda (variável x localidade x classificação
       x período).
     meta:
-      caminho: staging/ibge/pnadc_populacao_decis_renda/*.parquet
+      caminho: snh/staging/ibge/pnadc_populacao_decis_renda/*.parquet
       file_pattern: pnadc_populacao_decis_renda\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -212,7 +212,7 @@ sources:
     description: Agregado do IBGE da tabela pnadc_rendimento_domiciliar_real (variável x localidade x
       classificação x período).
     meta:
-      caminho: staging/ibge/pnadc_rendimento_domiciliar_real/*.parquet
+      caminho: snh/staging/ibge/pnadc_rendimento_domiciliar_real/*.parquet
       file_pattern: pnadc_rendimento_domiciliar_real\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -232,7 +232,7 @@ sources:
     description: Agregado do IBGE da tabela ibge_pim_pf_brasil (variável x localidade x classificação
       x período).
     meta:
-      caminho: staging/ibge/ibge_pim_pf_brasil/*.parquet
+      caminho: snh/staging/ibge/ibge_pim_pf_brasil/*.parquet
       file_pattern: ibge_pim_pf_brasil\.json
       load_type: full
       dag: ibge_ingest_dag
@@ -252,7 +252,7 @@ sources:
     description: Agregado do IBGE da tabela ibge_pmc_construcao (variável x localidade x classificação
       x período).
     meta:
-      caminho: staging/ibge/ibge_pmc_construcao/*.parquet
+      caminho: snh/staging/ibge/ibge_pmc_construcao/*.parquet
       file_pattern: ibge_pmc_construcao\.json
       load_type: full
       dag: ibge_ingest_dag

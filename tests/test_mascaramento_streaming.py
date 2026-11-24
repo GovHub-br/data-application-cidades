@@ -132,7 +132,7 @@ class S3Falso:
 
     def put_object_tagging(self, Bucket, Key, Tagging):
         # como no MinIO do lake: tag só em raw/
-        if not Key.startswith("raw/"):
+        if not Key.startswith("snh/raw/"):
             raise _Erro("AccessDenied")
         self.tags[Key] = Tagging["TagSet"]
 
@@ -151,7 +151,7 @@ def minio(monkeypatch):
     return cliente
 
 
-KEY = "raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
+KEY = "snh/raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
 
 # cp1252 com acento, campo com delimitador e com quebra de linha, CRLF e CPF formatado
 CONTEUDO = (
@@ -229,7 +229,7 @@ def test_dry_run_grava_previa_e_nao_toca_o_raw(minio):
 
     assert rec["status"] == "dry_run"
     assert minio.s3.objetos[KEY] == CONTEUDO
-    previa = "masked_dryrun/" + KEY[len("raw/") :]
+    previa = "snh/masked_dryrun/" + KEY[len("snh/raw/") :]
     assert hashlib.md5(minio.s3.objetos[previa]).hexdigest() == rec["hash_after"]
     assert not minio.esta_mascarado(KEY)
 
@@ -512,7 +512,7 @@ def test_paralelo_dry_run_nao_toca_o_raw(paralelo):
 
     assert rec["status"] == "dry_run"
     assert paralelo.s3.objetos[KEY] == CADUNICO
-    assert "masked_dryrun/" + KEY[len("raw/") :] in paralelo.s3.objetos
+    assert "snh/masked_dryrun/" + KEY[len("snh/raw/") :] in paralelo.s3.objetos
 
 
 def test_arquivo_pequeno_fica_no_sequencial(paralelo, monkeypatch):
@@ -631,9 +631,9 @@ def test_mascara_so_varre_os_canais_do_legado(monkeypatch):
         if hasattr(modulo, nome):
             monkeypatch.setattr(modulo, nome, lambda *_a: set())
     modulo.run(apply=False)
-    assert listados == ["raw/sftp/", "raw/sharepoint/"]
+    assert listados == ["snh/raw/sftp/", "snh/raw/sharepoint/"]
     with pytest.raises(ValueError, match="fora do legado"):
-        modulo.run(apply=False, prefix="raw/ibge/")
+        modulo.run(apply=False, prefix="snh/raw/ibge/")
 
 
 @pytest.fixture

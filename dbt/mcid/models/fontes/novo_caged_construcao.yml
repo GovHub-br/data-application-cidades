@@ -15,7 +15,7 @@ sources:
   - name: saldo_estoque_construcao_edificios
     description: Divisão CNAE Construção de Edifícios.
     meta:
-      caminho: staging/novo_caged/saldo_estoque_construcao_edificios/*.parquet
+      caminho: snh/staging/novo_caged/saldo_estoque_construcao_edificios/*.parquet
       file_pattern: \d{4}-\d{2}\.json
       load_type: full
       dag: novo_caged_construcao_edificios
@@ -30,7 +30,7 @@ sources:
   - name: saldo_estoque_servicos_especializados_construcao
     description: Divisão CNAE Serviços Especializados para Construção.
     meta:
-      caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao/*.parquet
+      caminho: snh/staging/novo_caged/saldo_estoque_servicos_especializados_construcao/*.parquet
       file_pattern: \d{4}-\d{2}\.json
       load_type: full
       dag: novo_caged_servicos_especializados_construcao
@@ -45,7 +45,7 @@ sources:
   - name: saldo_estoque_total_construcao
     description: Toda a construção (todas as divisões CNAE).
     meta:
-      caminho: staging/novo_caged/saldo_estoque_total_construcao/*.parquet
+      caminho: snh/staging/novo_caged/saldo_estoque_total_construcao/*.parquet
       file_pattern: \d{4}-\d{2}\.json
       load_type: full
       dag: novo_caged_total_construcao

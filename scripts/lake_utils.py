@@ -4,7 +4,7 @@
 Utilitários compartilhados dos scripts do data lake (MinIO).
 
 Reúne o que mais de uma etapa do pipeline usa: detecção de encoding/dialeto dos arquivos
-heterogêneos do raw/, normalização de nome de coluna, hash de arquivo e leitura de bases
+heterogêneos do snh/raw/, normalização de nome de coluna, hash de arquivo e leitura de bases
 Access (.mdb). O I/O de S3/MinIO fica em plugins/cliente_minio.py (ClienteMinio).
 
 Usado por `mascarar_minio.py` e `raw_para_staging.py`. Cada script mantém o que é próprio
@@ -198,9 +198,6 @@ def normalize_columns(header: List[str]) -> Tuple[List[str], dict]:
 # Bases Access (.mdb) — leitura via mdbtools, que é READ-ONLY: não há mdb-import, e quem
 # precisar modificar um .mdb tem que falhar explicitamente. O mdb-export entrega CSV em
 # UTF-8, então este caminho dispensa detectar_encoding/detectar_dialeto.
-# Canais do legado (minio_transform_dag): os únicos que a máscara e a conversão varrem (B1,
-# #248). As DAGs de API gravam a própria staging, e varrer raw/ inteira regravava por cima.
-PREFIXOS_LEGADO = ("raw/sftp/", "raw/sharepoint/")
 
 MDB_EXT = {".mdb", ".accdb"}
 MDB_DELIM = ","

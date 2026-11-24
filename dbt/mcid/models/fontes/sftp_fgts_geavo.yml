@@ -14,7 +14,7 @@ sources:
   - name: geavo_fgts_pf
     description: Base analítica de contratos FGTS pessoa física (GEAVO/Caixa). ~10,8 M linhas.
     meta:
-      caminho: staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_*.parquet
+      caminho: snh/staging/sftp/caixa.geavo/GEAVO/Base_PF_FGTS_*.parquet
       file_pattern: Base_PF_FGTS_\d{8}\.txt
       load_type: full
       dag: null
@@ -57,7 +57,7 @@ sources:
   - name: geavo_fgts_pj
     description: Base de contratos FGTS pessoa jurídica — Apoio à Produção (GEAVO/Caixa).
     meta:
-      caminho: staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_*.parquet
+      caminho: snh/staging/sftp/caixa.geavo/GEAVO/Base_PJ_FGTS_*.parquet
       file_pattern: Base_PJ_FGTS_\d{8}\.txt
       load_type: full
       dag: null
@@ -94,7 +94,7 @@ sources:
     description: Carta de Crédito Associativo (CCA) — contratos PF do Canal FGTS/GEAVO. Complementa o
       CCI no 'Financiamento PF MCMV' por faixa.
     meta:
-      caminho: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
+      caminho: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
       file_pattern: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
       load_type: full
       dag: null
@@ -154,7 +154,7 @@ sources:
     description: Carta de Crédito Individual (CCI) — contratos PF do Canal FGTS/GEAVO. Fonte do 'Financiamento
       PF MCMV' por faixa do boletim, junto com o CCA.
     meta:
-      caminho: staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
+      caminho: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
       file_pattern: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
       load_type: full
       dag: null

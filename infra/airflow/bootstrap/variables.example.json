@@ -22,7 +22,7 @@
         ]
     },
     "lake_bucket": {
-        "description": "Bucket do lake (raw/ e staging/) usado pelas DAGs de ingestão; o mesmo da var lake_bucket do dbt",
+        "description": "Bucket do lake (snh/raw/ e snh/staging/) usado pelas DAGs de ingestão; o mesmo da var lake_bucket do dbt",
         "value": "data-lake-mcid"
     }
 }

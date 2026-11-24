@@ -14,14 +14,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: dotacao_execucao_outras_fontes_mcid
   physicalName: dotacao_execucao_outras_fontes_mcid
   description: Relatório de dotação e execução (UTF-16, TSV, 12 linhas de título), um ZIP por anexo.
   customProperties:
   - property: path
-    value: staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/*.parquet
+    value: snh/staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/*.parquet
   - property: file_pattern
     value: \d{2}_.+\.zip
   - property: load_type

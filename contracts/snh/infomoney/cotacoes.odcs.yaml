@@ -14,14 +14,14 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: acoes_imob
   physicalName: acoes_imob
   description: Resposta TIME_SERIES_DAILY da Alpha Vantage como veio.
   customProperties:
   - property: path
-    value: staging/infomoney/acoes_imob/*.parquet
+    value: snh/staging/infomoney/acoes_imob/*.parquet
   - property: file_pattern
     value: acoes_imob\.json
   - property: load_type
@@ -54,7 +54,7 @@ schema:
     com a série inteira, de antes de o lake guardar as cargas).
   customProperties:
   - property: path
-    value: staging/infomoney/acoes_imob/*.parquet
+    value: snh/staging/infomoney/acoes_imob/*.parquet
   - property: file_pattern
     value: acoes_imob_postgres\.csv
   - property: load_type

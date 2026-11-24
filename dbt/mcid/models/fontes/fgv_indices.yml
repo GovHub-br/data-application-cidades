@@ -15,7 +15,7 @@ sources:
   - name: icst
     description: Índice de Confiança da Construção, com e sem ajuste sazonal, CSV do FGVDados.
     meta:
-      caminho: staging/fgv/icst/*.parquet
+      caminho: snh/staging/fgv/icst/*.parquet
       file_pattern: icst\.csv
       load_type: full
       dag: icst_ingest_dag
@@ -26,7 +26,7 @@ sources:
   - name: incc_m
     description: INCC-M (número índice e variações), XLSX da série histórica do Sinduscon-PR.
     meta:
-      caminho: staging/fgv/incc_m/*.parquet
+      caminho: snh/staging/fgv/incc_m/*.parquet
       file_pattern: incc_m\.xlsx
       load_type: full
       dag: incc_m_ingest_dag

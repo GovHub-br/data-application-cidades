@@ -94,7 +94,7 @@ def run(mod, files, force=(), **control):
 def test_masks_before_upload_and_the_original_never_lands(sftp_mod):
     csv = f"CPF;NOME\n{CPF};Ana\n".encode()
     result, landed, events, ctl, _ = run(sftp_mod, {"/home/fabrica/GEFUS/X.csv": csv})
-    key = f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/X.csv"
+    key = f"snh/raw/sftp/fabrica/GEFUS/load_id={LOAD}/X.csv"
     assert result["keys"] == [key] and not result["errors"]
     assert events == [("mask", key, "masked"), ("upload", key)]
     assert CPF.encode() not in landed[key]
@@ -138,7 +138,7 @@ def test_files_forces_only_those_even_if_already_landed(sftp_mod):
         hashes={hashlib.md5(files[seen]).hexdigest()},
     )
     assert sftp.downloads == [seen]
-    assert list(landed) == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/visto.csv"]
+    assert list(landed) == [f"snh/raw/sftp/fabrica/GEFUS/load_id={LOAD}/visto.csv"]
     assert result["errors"] == [
         "/home/fabrica/GEFUS/nao_existe.csv: não encontrado nas pastas monitoradas"
     ]
@@ -149,7 +149,7 @@ def test_files_does_not_open_the_gate_once_every_forced_file_is_found(sftp_mod):
     files = {"/home/fabrica/GEFUS/a.csv": b"A;B\n1;2\n", "/home/fabrica/GEFUS/b.csv": b"A;B\n3;4\n"}
     result, landed, _, _, sftp = run(sftp_mod, files, force=("/home/fabrica/GEFUS/a.csv",))
     assert sftp.downloads == ["/home/fabrica/GEFUS/a.csv"]
-    assert list(landed) == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/a.csv"]
+    assert list(landed) == [f"snh/raw/sftp/fabrica/GEFUS/load_id={LOAD}/a.csv"]
     assert not result["errors"]
 
 
@@ -159,7 +159,7 @@ def test_zip_members_land_masked_below_the_zip(sftp_mod):
         z.writestr("dentro/A.csv", f"CPF;NOME\n{CPF};Ana\n")
         z.writestr("leia.pdf", b"%PDF")
     result, landed, _, _, _ = run(sftp_mod, {"/home/fabrica/GEFUS/P.zip": buf.getvalue()})
-    key = f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/P.zip/dentro/A.csv"
+    key = f"snh/raw/sftp/fabrica/GEFUS/load_id={LOAD}/P.zip/dentro/A.csv"
     assert result["keys"] == [key] and CPF.encode() not in landed[key]
 
 
@@ -180,7 +180,7 @@ def test_a_missing_folder_is_an_error_and_the_others_go_on(sftp_mod):
     result = sftp_mod.extract(sftp, lambda f, k: None, ctl, LOAD, md5_file, folders=folders)
     [error] = result["errors"]
     assert error.startswith("/home/sumiu: pasta inexistente")
-    assert result["keys"] == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/X.csv"]
+    assert result["keys"] == [f"snh/raw/sftp/fabrica/GEFUS/load_id={LOAD}/X.csv"]
 
 
 def test_access_lands_one_csv_per_table(sftp_mod, monkeypatch, tmp_path):
@@ -196,7 +196,7 @@ def test_access_lands_one_csv_per_table(sftp_mod, monkeypatch, tmp_path):
         sftp_mod, "export_access", lambda src, workdir: [("CCI_Analitico", str(table), rec)]
     )
     result, landed, _, _, _ = run(sftp_mod, {"/home/fabrica/GEFUS/MC.mdb": b"mdb"})
-    assert result["keys"] == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/MC.mdb/CCI_Analitico.csv"]
+    assert result["keys"] == [f"snh/raw/sftp/fabrica/GEFUS/load_id={LOAD}/MC.mdb/CCI_Analitico.csv"]
 
 
 class FakePg:
@@ -214,8 +214,8 @@ def test_control_writes_through_the_postgres_hook(sftp_mod):
     pg = FakePg()
     ctl = sftp_mod.Control(pg, "run")
     rec = {"status": "masked", "masked_columns": [], "registros_total": 1, "registros_alterados": 1}
-    ctl.mask("raw/k.csv", rec, "h1", "h2")
-    ctl.ingest("/home/fabrica/GEFUS/k.csv", "raw/k.csv", 10, 100, "h1", "success")
+    ctl.mask("snh/raw/k.csv", rec, "h1", "h2")
+    ctl.ingest("/home/fabrica/GEFUS/k.csv", "snh/raw/k.csv", 10, 100, "h1", "success")
     (_, table, row, kw), (_, delete, params), (_, table2, row2, kw2) = pg.calls
     assert table == "lake._masking_log" and row["masked_hash"] == "h2"
     assert kw["replace_index"] == ["minio_key", "source_hash"] and kw["replace_target"] == []
@@ -238,7 +238,7 @@ def test_dry_run_reads_the_control_but_writes_nothing(sftp_mod):
 DS = contract.Dataset(
     source="s",
     name="d",
-    path="staging/sftp/fabrica/GEFUS/D_*.parquet",
+    path="snh/staging/sftp/fabrica/GEFUS/D_*.parquet",
     file_pattern=re.compile(r"D_\d+\.csv"),
     columns=("id", "nome"),
 )
@@ -266,7 +266,7 @@ def tasks(monkeypatch, tmp_path):
     return fresh_import(monkeypatch, "plugins.datalake.tasks", "plugins")
 
 
-KEY = f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/D_1.csv"
+KEY = f"snh/raw/sftp/fabrica/GEFUS/load_id={LOAD}/D_1.csv"
 
 
 @pytest.mark.parametrize(
@@ -297,14 +297,14 @@ def test_report_is_quiet_on_a_clean_run_and_groups_uncataloged(tasks):
 
     other = [
         {
-            "raw_key": f"raw/sftp/a/load_id={LOAD}/X{i}.csv",
+            "raw_key": f"snh/raw/sftp/a/load_id={LOAD}/X{i}.csv",
             "status": "uncataloged",
             "structural": None,
         }
         for i in range(3)
     ]
     body, failed, notable = tasks.summary({"keys": [KEY]}, other)
-    assert notable and not failed and "raw/sftp/a: 3 arquivo(s)" in body
+    assert notable and not failed and "snh/raw/sftp/a: 3 arquivo(s)" in body
 
     _, failed, _ = tasks.summary({"keys": [KEY], "errors": ["x"]}, [])
     assert failed

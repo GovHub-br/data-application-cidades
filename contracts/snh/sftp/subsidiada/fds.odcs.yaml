@@ -13,7 +13,7 @@ servers:
 - server: staging
   type: s3
   format: parquet
-  location: s3://data-lake-mcid/staging/
+  location: s3://data-lake-mcid/snh/staging/
 schema:
 - name: fds_empreendimentos_caixa
   physicalName: fds_empreendimentos_caixa
@@ -21,7 +21,7 @@ schema:
     remessa; a bronze lê só a mais recente (sem as remessas de VALIDACAO). Colunas da remessa INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_20261030.TXT.'
   customProperties:
   - property: path
-    value: staging/sftp/fabrica/GEFUS/INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet
+    value: snh/staging/sftp/fabrica/GEFUS/INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet
   - property: file_pattern
     value: INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
   - property: load_type
