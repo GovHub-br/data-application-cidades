@@ -8,8 +8,8 @@ A carga do parquet para o Postgres (silver) NÃO passa por aqui: é o pg_duckdb,
 via `select * from read_parquet('s3://...')` nos modelos dbt.
 
 Usa `boto3` (já presente no ambiente) apontando para o endpoint do MinIO. As
-credenciais vêm das envs MINIO_ENDPOINT / MINIO_ACCESS_KEY / MINIO_SECRET_KEY /
-MINIO_BUCKET.
+credenciais vêm das envs DL_ENDPOINT / DL_ACCESS_KEY / DL_SECRET_KEY /
+DL_BUCKET.
 
 Duas interfaces convivem aqui, com públicos distintos:
 
@@ -32,21 +32,21 @@ from typing import Any, Callable, Iterator, List, Optional, Tuple
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-BUCKET = os.environ.get("MINIO_BUCKET", "data-lake-mcid")
+BUCKET = os.environ.get("DL_BUCKET", "data-lake-mcid")
 # Triagens do mascaramento que liberam o objeto para a staging sem reescrevê-lo.
 TRIAGEM_LIBERADA = ("skipped_no_pii", "skipped_no_header", "skipped_unsupported")
 
 
 def get_s3_client() -> Any:
     """Cria um client S3 (boto3) apontando para o MinIO."""
-    endpoint = os.environ["MINIO_ENDPOINT"]
+    endpoint = os.environ["DL_ENDPOINT"]
     if not endpoint.startswith(("http://", "https://")):
         endpoint = f"http://{endpoint}"
     return boto3.client(
         "s3",
         endpoint_url=endpoint,
-        aws_access_key_id=os.environ["MINIO_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["MINIO_SECRET_KEY"],
+        aws_access_key_id=os.environ["DL_ACCESS_KEY"],
+        aws_secret_access_key=os.environ["DL_SECRET_KEY"],
         region_name="us-east-1",
     )
 
@@ -340,15 +340,15 @@ class ClienteMinio:
         secret_key: Optional[str] = None,
         bucket: Optional[str] = None,
     ) -> None:
-        endpoint = endpoint or os.environ["MINIO_ENDPOINT"]
+        endpoint = endpoint or os.environ["DL_ENDPOINT"]
         if not endpoint.startswith("http"):
             endpoint = f"http://{endpoint}"
-        self.bucket = bucket or os.environ["MINIO_BUCKET"]
+        self.bucket = bucket or os.environ["DL_BUCKET"]
         self.s3 = boto3.client(
             "s3",
             endpoint_url=endpoint,
-            aws_access_key_id=access_key or os.environ["MINIO_ACCESS_KEY"],
-            aws_secret_access_key=secret_key or os.environ["MINIO_SECRET_KEY"],
+            aws_access_key_id=access_key or os.environ["DL_ACCESS_KEY"],
+            aws_secret_access_key=secret_key or os.environ["DL_SECRET_KEY"],
         )
         logging.info(
             f"[cliente_minio.py] Initialized ClienteMinio endpoint={endpoint} bucket={self.bucket}"

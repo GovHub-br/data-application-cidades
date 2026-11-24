@@ -51,12 +51,12 @@ mcid:
         max_temp_directory_size: "{{ env_var('DUCKDB_MCID_MAX_TEMP', '60GB') }}"
       settings:
         # O DuckDB espera host:porta SEM esquema -- ele mesmo prefixa http://
-        # (s3_use_ssl=false). Se MINIO_ENDPOINT vier como "http://host:9000",
+        # (s3_use_ssl=false). Se DL_ENDPOINT vier como "http://host:9000",
         # o resultado vira "http://http://host:9000" e a resolucao de nome falha.
         # O replace abaixo aceita a variavel com ou sem esquema.
-        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
-        s3_access_key_id: "{{ env_var('MINIO_ACCESS_KEY') }}"
-        s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
+        s3_endpoint: "{{ env_var('DL_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
+        s3_access_key_id: "{{ env_var('DL_ACCESS_KEY') }}"
+        s3_secret_access_key: "{{ env_var('DL_SECRET_KEY') }}"
         s3_url_style: path
         s3_use_ssl: false
 
@@ -97,11 +97,11 @@ mcid:
         max_temp_directory_size: "{{ env_var('DUCKDB_MCID_MAX_TEMP', '60GB') }}"
       settings:
         # O DuckDB espera host:porta SEM esquema -- ele mesmo prefixa http://
-        # (s3_use_ssl=false). Se MINIO_ENDPOINT vier como "http://host:9000",
+        # (s3_use_ssl=false). Se DL_ENDPOINT vier como "http://host:9000",
         # o resultado vira "http://http://host:9000" e a resolucao de nome falha.
         # O replace abaixo aceita a variavel com ou sem esquema.
-        s3_endpoint: "{{ env_var('MINIO_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
-        s3_access_key_id: "{{ env_var('MINIO_ACCESS_KEY') }}"
-        s3_secret_access_key: "{{ env_var('MINIO_SECRET_KEY') }}"
+        s3_endpoint: "{{ env_var('DL_ENDPOINT') | replace('https://', '') | replace('http://', '') | trim('/') }}"
+        s3_access_key_id: "{{ env_var('DL_ACCESS_KEY') }}"
+        s3_secret_access_key: "{{ env_var('DL_SECRET_KEY') }}"
         s3_url_style: path
         s3_use_ssl: false
