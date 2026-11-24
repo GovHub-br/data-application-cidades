@@ -37,10 +37,9 @@ Sem um deles, o `airflow-init` avisa e segue: o Airflow sobe, só sem aqueles it
 
 ## Por que o example precisa estar completo
 
-As DAGs leem `BACEN_SERIES`, `IBGE_CONFIGURACOES` e `dynamic_schedules` com
-`default=`. Quando a Variable falta, nada quebra: a `bacen_sgs_ingest_dag`
-termina verde sem ingerir nenhuma série, e a `ibge_ingest_dag` gera zero tasks.
-Por isso o `variables.example.json` lista tudo o que o código lê, e o
+As DAGs leem `BACEN_SERIES`, `IBGE_CONFIGURACOES` e `lake_bucket` dentro das
+tasks, e falham quando a Variable falta ou vem vazia. Por isso o
+`variables.example.json` lista tudo o que o código lê, e o
 `tests/test_airflow_bootstrap.py` falha quando uma DAG passa a ler uma Variable,
 Connection ou pool que não está declarado aqui.
 

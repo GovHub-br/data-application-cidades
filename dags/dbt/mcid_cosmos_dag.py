@@ -95,6 +95,9 @@ with DAG(
     schedule="0 1 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
+    # cron e minio_transform_dag disparam esta DAG: duas execuções do dbt ao mesmo tempo
+    # disputam as mesmas tabelas
+    max_active_runs=1,
     default_args={"retries": 2},
     doc_md=__doc__,
 ) as my_cosmos_dag:

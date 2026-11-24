@@ -1,8 +1,7 @@
-import logging
 import os
 from datetime import datetime, timedelta
 
-from airflow.sdk import dag, task
+from airflow.sdk import dag
 from airflow.providers.standard.operators.empty import EmptyOperator
 from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 from cosmos import (
@@ -13,8 +12,6 @@ from cosmos import (
     RenderConfig,
 )
 from cosmos.constants import DBT_LOG_PATH_ENVVAR
-from schedule_loader import get_dynamic_schedule
-from ingestor_lake import IngestorBalancoEmpresas
 
 dbt_log_path = "/tmp/dbt_logs"  # NOSONAR
 os.makedirs(dbt_log_path, exist_ok=True)
@@ -26,10 +23,12 @@ profile_config = ProfileConfig(
     target_name="prod",
 )
 
-# Ingestões automatizadas que alimentam o conjuntura. Além de carregar o
-# Postgres, geram o parquet tipado na staging (Etapa 02) consumido pela silver
-# via pg_duckdb.
+# Ingestões que alimentam o conjuntura: gravam raw e staging no lake, e a bronze lê a
+# staging pelo pg_duckdb. Toda DAG que escreve uma staging lida pelo conjuntura_dbt
+# precisa estar aqui.
 INGEST_DAG_IDS = [
+    "abecip_financiamentos_ingest_dag",  # financiamentos SBPE por modalidade (pág. 2)
+    "abecip_instituicoes_ingest_dag",  # abertura por instituição (pág. 3)
     "ibge_ingest_dag",  # PIB, SINAPI, PIM-PF, PMC
     "novo_caged_construcao_edificios",  # empregos: saldo + estoque (pág. 3)
     "novo_caged_total_construcao",  # empregos: total da construção (pág. 3)
@@ -46,17 +45,11 @@ INGEST_DAG_IDS = [
     "icst_ingest_dag",
 ]
 
-# Ingestores manuais (Template Method): convertem arquivos já colocados no RAW
-# (CSV/XLSX/TXT) em parquet tipado na staging. Adicionar novas classes aqui
-# conforme os dados manuais forem chegando (ver README do conjuntura_dbt).
-INGESTORES_MANUAIS = [
-    IngestorBalancoEmpresas,
-]
-
 
 @dag(
     dag_id="conjuntura_dag",
-    schedule=get_dynamic_schedule("conjuntura_dag", default="0 8 * * 1"),
+    schedule="0 8 * * 1",
+    max_active_runs=1,
     start_date=datetime(2025, 1, 1),
     catchup=False,
     default_args={
@@ -67,8 +60,7 @@ INGESTORES_MANUAIS = [
     tags=["conjuntura", "dbt", "orquestracao"],
     description=(
         "Orquestra o boletim de conjuntura (semanal): dispara as "
-        "ingestões automatizadas (que geram os parquets de staging), converte os "
-        "dados manuais para parquet tipado (Template Method) e roda o dbt "
+        "ingestões automatizadas (que geram os parquets de staging) e roda o dbt "
         "conjuntura_dbt (silver via pg_duckdb read_parquet + gold). "
         "DAGs de ingestão: " + ", ".join(INGEST_DAG_IDS)
     ),
@@ -77,10 +69,12 @@ def conjuntura_dag() -> None:
     """DAG guarda-chuva do boletim de conjuntura.
 
     Fluxo:
-      1. Dispara as DAGs de ingestão automatizadas (Etapas 01/02 das fontes com
-         API) em paralelo e aguarda a conclusão de todas.
-      2. Gera os parquets tipados dos dados manuais já presentes no RAW.
-      3. Roda o dbt `conjuntura_dbt` (silver + gold do exercício atual).
+      1. Dispara as DAGs de ingestão em paralelo e espera todas, sem prender slot de
+         worker: a espera é adiada para o triggerer (deferrable).
+      2. Roda o dbt `conjuntura_dbt` (silver + gold do exercício atual).
+
+    Os dados manuais (balanços das empresas e afins) chegam ao banco pelos scripts de
+    scripts/database/ e a bronze lê a source `conjuntura_manual`: não há passo aqui.
 
     O dbt roda mesmo que alguma fonte falhe (trigger_rule=all_done): uma fonte
     instável não deve travar o boletim — os modelos daquela fonte ficam com o
@@ -94,25 +88,9 @@ def conjuntura_dag() -> None:
             trigger_dag_id=ingest_dag_id,
             wait_for_completion=True,
             poke_interval=60,
+            deferrable=True,  # não segura um slot de worker por DAG enquanto espera
         )
         trigger >> fontes_prontas
-
-    @task(trigger_rule="all_done")
-    def gera_parquets_manuais() -> None:
-        """Etapa 02 dos dados manuais: roda cada Template Method configurado.
-
-        Uma falha isolada (ex.: arquivo ainda não colocado no RAW) apenas loga
-        e segue — o dado fica com o último parquet válido.
-        """
-        for ingestor_cls in INGESTORES_MANUAIS:
-            ingestor = ingestor_cls()
-            try:
-                ingestor.gerar_staging_parquet()
-                logging.info(f"Parquet manual gerado: {ingestor.fonte}.{ingestor.dado}")
-            except Exception as exc:  # noqa: BLE001 - fonte externa instável
-                logging.warning(f"Ingestor manual falhou ({ingestor.fonte}.{ingestor.dado}): {exc}")
-
-    manuais_prontos = gera_parquets_manuais()
 
     dbt_conjuntura = DbtTaskGroup(
         group_id="dbt_conjuntura",
@@ -124,7 +102,7 @@ def conjuntura_dag() -> None:
         render_config=RenderConfig(select=["conjuntura_dbt"]),
     )
 
-    [fontes_prontas, manuais_prontos] >> dbt_conjuntura
+    fontes_prontas >> dbt_conjuntura
 
 
 dag_instance = conjuntura_dag()

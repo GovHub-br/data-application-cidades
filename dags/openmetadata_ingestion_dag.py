@@ -18,7 +18,6 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
-from schedule_loader import get_dynamic_schedule
 
 from openmetadata.config import (
     ALL_RECIPES,
@@ -59,7 +58,7 @@ def _encadear(glossario: Any, tarefas: dict, relacoes: Any | None, governanca: A
 
 
 @dag(
-    schedule=get_dynamic_schedule("openmetadata_ingestion_dag"),
+    schedule="@daily",
     start_date=datetime(2025, 1, 1),
     catchup=False,
     max_active_runs=1,

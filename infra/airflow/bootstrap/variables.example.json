@@ -21,15 +21,6 @@
             }
         ]
     },
-    "dynamic_schedules": {
-        "description": "Schedule por dag_id ({type: preset | cron | timedelta, value}); DAG ausente usa o padrão do código",
-        "value": {
-            "ibge_ingest_dag": {
-                "type": "preset",
-                "value": "@daily"
-            }
-        }
-    },
     "lake_bucket": {
         "description": "Bucket do lake (raw/ e staging/) usado pelas DAGs de ingestão; o mesmo da var lake_bucket do dbt",
         "value": "data-lake-mcid"
