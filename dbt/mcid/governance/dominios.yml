@@ -199,6 +199,22 @@ produtos:
       o acompanhamento físico-financeiro fora da janela coberta pelos outros
       produtos.
 
+  - name: dados_historicos
+    display_name: Dados históricos do MCMV
+    domain: MCid.Habitacao
+    owner_key: mcid_data_engineering
+    schemas:
+      - bronze
+      - prata
+    prefixos_de_tabela:
+      - bronze_dhist_
+      - prata_dhist_
+    description: >
+      Série histórica do MCMV de 2009 a 2019 (dump do banco antigo) e o painel SNH
+      de 2024 a 2026, reconstruídos pela dados_historicos_dag a partir da raw e
+      levados à silver no dbt, uma silver por família de arquivo, com nomes de
+      coluna canônicos e a frente do MCMV.
+
   - name: reloginho
     display_name: Reloginho MCMV
     domain: MCid.Habitacao
