@@ -4,6 +4,7 @@
 -- (o máximo do arquivo é 100), então cada valor em (0, 1] é resolvido pela mesma proposta em
 -- 2015-10, ficando a escala mais perto do vizinho; sem vizinho, nulo (o teste
 -- dhist_prata_percentual_escala conta esses casos).
+-- depends_on: {{ ref('dominio_frente') }}
 {% call duckdb_query() %}
 with
 

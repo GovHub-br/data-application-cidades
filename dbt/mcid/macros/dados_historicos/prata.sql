@@ -32,6 +32,9 @@
       fora dos códigos da ponte. A ponte tem chave única, então o join não multiplica linhas.
     - `situacao`: o texto da fonte e a situação canônica (`<nome>_canonica`), pelos seeds
       data_quality/dominio_status (compartilhado) e dados_historicos/dominio_status_extra.
+    - `frente_mcmv` (FAR, Entidades, Rural, SUB50, Financiada) e `frente_mcmv_origem`, em
+      toda família: do texto de produto/modalidade, dos códigos do BB, da frente única da
+      família ou herdada pela chave (macros/dados_historicos/frente.sql).
     - Contexto pelo log, ligado pela `saida`: `competencia` (1º dia do mês) e `data_corte`.
     - O grão é o da fonte: uma linha da silver por linha do cleansed (`saida`,
       `_linha_origem`). Agregar é da gold.
@@ -179,7 +182,8 @@
             {%- endif %}
             {{- ',' if not loop.last }}
         {%- endfor %}
-        {%- if ponte %}, ponte.apf as apf {%- endif %}
+        {%- if ponte %}, ponte.apf as apf {%- endif %},
+        {{ frente_dhist_expr(familia) }}
     from b
     left join log on b.saida = log.saida
     {%- if ponte %}
@@ -211,12 +215,14 @@
                 on status_{{ loop.index }}.chave
                 = strip_accents(lower({{ dhist_origem(c.origens) }}))
         {%- endif %}
-    {%- endfor %}
+        {%- endfor %} {{ frente_dhist_join(familia, colunas) }}
 {% endmacro %}
 
 {#- A silver no target do banco: o SQL do DuckDB roda no pg_duckdb, dentro do envelope. -#}
 {% macro prata_dhist(familia) %}
-    {% call duckdb_query() %} {{ prata_dhist_sql(familia) }} {% endcall %}
+    {% call duckdb_query() %}
+        {{ frente_dhist_heranca(familia, prata_dhist_sql(familia)) }}
+    {% endcall %}
 {% endmacro %}
 
 {#- As famílias que já têm silver (as que estão no de-para). -#}
