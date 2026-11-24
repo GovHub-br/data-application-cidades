@@ -112,7 +112,10 @@ def tesouro(monkeypatch, tmp_path):
         "run_id": "scheduled__2026-11-24T12:00:00+00:00",
         "dag": SimpleNamespace(dag_id="dotacao_execucao_outras_fontes_mcid_ingest_dag"),
         # 01h UTC de 25/11 ainda é 24/11 em Brasília
-        "dag_run": SimpleNamespace(run_after=datetime(2026, 11, 25, 1, tzinfo=timezone.utc)),
+        "dag_run": SimpleNamespace(
+            logical_date=datetime(2026, 11, 25, 1, tzinfo=timezone.utc),
+            run_after=datetime(2026, 11, 26, 9, tzinfo=timezone.utc),
+        ),
         "params": {"dry_run": False},
     }
     conn = SimpleNamespace(

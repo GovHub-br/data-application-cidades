@@ -21,5 +21,4 @@ select
     {{ parse_financial_value('volume::text') }} as volume,
     left(_ingested_at, 19)::timestamp as dt_ingest
 from cargas
--- o corte que a DAG antiga fazia antes de gravar
-where ordem = 1 and data_pregao >= '2024-01-01'
+where ordem = 1

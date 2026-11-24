@@ -59,7 +59,7 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
 
     A API devolve só os ~100 últimos pregões; o histórico fica nas cargas anteriores, que
     a prata junta (a mais recente vence em cada pregão). Antes de a primeira carga rodar,
-    disparar uma vez com `backfill_postgres`, que traz o que o Postgres acumulou.
+    disparar uma vez com `backfill_postgres`, que traz o histórico que só a prata ainda tem.
 
     extract → upload_to_s3 → transform → verify_structural_data_drift → upload_staging
     → report, e cleanup no fim.
@@ -72,16 +72,20 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
         """Os ~100 últimos pregões da Alpha Vantage (Connection `alphavantage`: a chave no
         password, o ativo em `symbol` no extra), como a API responde.
 
-        Com o param `backfill_postgres`, exporta uma vez o histórico de infomoney.acoes_imob,
-        que só o Postgres acumulava, como a primeira carga do lake.
+        Com o param `backfill_postgres`, exporta uma vez o histórico da prata
+        prata_conjuntura_infomoney_imob como a primeira carga do lake: o schema infomoney, onde
+        a DAG antiga acumulava os pregões, já não existe no banco, e a prata é a última montagem
+        com a série inteira. Rodar antes da primeira mcid_cosmos_dag, que reconstrói a prata.
         """
         if get_current_context()["params"]["backfill_postgres"]:
             rows = PostgresHook(postgres_conn_id="postgres_default").get_records(
                 "SELECT symbol, data_pregao::text, open::text, high::text, low::text, "
-                "close::text, volume::text FROM infomoney.acoes_imob ORDER BY data_pregao"
+                "close::text, volume::text FROM prata.prata_conjuntura_infomoney_imob ORDER BY data_pregao"
             )
             if not rows:
-                raise AirflowFailException("infomoney.acoes_imob vazia: nada para exportar")
+                raise AirflowFailException(
+                    "prata_conjuntura_infomoney_imob vazia: nada para exportar"
+                )
             path = _run_dir() / "acoes_imob_postgres.csv"
             with open(path, "w", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerows([INFOMONEY_COLUMNS, *rows])

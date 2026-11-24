@@ -74,8 +74,10 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
         o e-mail daquele dia.
         """
         conn = BaseHook.get_connection(conn_id="tesouro_imap")
-        run_after = get_current_context()["dag_run"].run_after
-        day = run_after.astimezone(ZoneInfo("America/Sao_Paulo")).date()
+        dag_run = get_current_context()["dag_run"]
+        # o dia da execução: a data lógica, que se escolhe ao disparar para um dia passado
+        moment = dag_run.logical_date or dag_run.run_after
+        day = moment.astimezone(ZoneInfo("America/Sao_Paulo")).date()
         criteria = AND(date=day, from_=conn.extra_dejson["sender_email"], subject=SUBJECT)
         paths = []
         with MailBox(conn.host).login(conn.login, conn.password) as mailbox:

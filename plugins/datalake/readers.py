@@ -399,8 +399,9 @@ def alphavantage_daily_json(path: str) -> "pd.DataFrame":
 
 @parser("infomoney_postgres_csv")
 def infomoney_postgres_csv(path: str) -> "pd.DataFrame":
-    """The one-time export of infomoney.acoes_imob (the history the Postgres accumulated
-    before the lake kept every load), with the same columns as the API reader."""
+    """The one-time export of the Infomoney history (prata_conjuntura_infomoney_imob, the
+    last build with the whole series, from before the lake kept every load), with the same
+    columns as the API reader."""
     import pandas as pd
 
     return pd.read_csv(path, dtype=str, keep_default_na=False)[INFOMONEY_COLUMNS]

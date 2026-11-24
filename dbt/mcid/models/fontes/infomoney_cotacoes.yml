@@ -28,8 +28,8 @@ sources:
     - name: close
     - name: volume
   - name: acoes_imob_postgres
-    description: Exportação única de infomoney.acoes_imob (o histórico que o Postgres acumulou antes de
-      o lake guardar as cargas).
+    description: Exportação única do histórico da prata prata_conjuntura_infomoney_imob (a última montagem
+      com a série inteira, de antes de o lake guardar as cargas).
     meta:
       caminho: staging/infomoney/acoes_imob/*.parquet
       file_pattern: acoes_imob_postgres\.csv
