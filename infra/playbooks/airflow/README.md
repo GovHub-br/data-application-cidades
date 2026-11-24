@@ -37,6 +37,7 @@ Antes da primeira vez:
 
 - troque `<IP_DA_VM>` no `inventory.yaml`;
 - troque `<IP_DO_POSTGRES>` e `<IP_DO_RUSTFS>` em `group_vars/airflow.yaml`;
+- crie o OAuth App do GitHub ([Login com o GitHub](#login-com-o-github));
 - crie o `extra.env` (abaixo).
 
 ```bash
@@ -44,7 +45,7 @@ cd infra/playbooks/airflow
 ansible-playbook -i inventory.yaml install-airflow.yaml
 ```
 
-A URL e a senha do usuário `airflow` são impressas no final.
+A URL é impressa no final.
 
 ---
 
@@ -55,7 +56,8 @@ fontes, todas **fora do repositório**:
 
 | De onde | O quê |
 | --- | --- |
-| `~/.clusterlab/credentials/airflow0/` | geradas na 1ª execução: senha do login, fernet key, secret da API e do JWT |
+| `~/.clusterlab/credentials/airflow0/` | geradas na 1ª execução: fernet key, secret da API e do JWT |
+| `~/.clusterlab/credentials/airflow0/github_oauth_client_{id,secret}` | o OAuth App do login, gravados por você |
 | `~/.clusterlab/credentials/postgres0/` | senhas do banco `airflow` e do data warehouse `cidades` |
 | `~/.clusterlab/credentials/rustfs0/app-cidades_secret_key` | secret do usuário do lake |
 | `~/.clusterlab/credentials/openmetadata0/ingestion_bot_token` | token do OpenMetadata (só com `openmetadata_url` preenchido) |
@@ -90,6 +92,60 @@ OpenMetadata antes deste.
 
 **Não perca a fernet key** (`fernet_seed`). Ela cifra as Connections gravadas no
 banco. Se ela mudar, as Connections viram lixo e precisam ser recadastradas.
+
+---
+
+## Login com o GitHub
+
+O login é o FAB auth manager com OAuth do GitHub, configurado em
+`infra/airflow/webserver_config.py`. Não há senha: cada pessoa entra com a própria
+conta, e o time dela na organização `GovHub-br` define o papel.
+
+| Time | Papel | Pode |
+| --- | --- | --- |
+| `mcid-admin` | `Admin` | tudo |
+| `mcid` | `Op` | ver, pausar e disparar DAGs, limpar tasks, editar Variables, Connections e Pools |
+| nenhum dos dois, mesmo sendo da organização | `Public` | nada |
+
+### Criar o OAuth App (uma vez)
+
+1. Na organização: Settings → Developer settings → OAuth Apps → New OAuth App.
+   - **Homepage URL:** `http://<IP_DA_VM>:8080`
+   - **Authorization callback URL:** `http://<IP_DA_VM>:8080/auth/oauth-authorized/github`
+2. A callback precisa bater com a URL que o navegador usa, em host, porta e
+   http/https. Se a equipe entra por um nome em vez do IP, use o nome nos dois
+   campos e em `airflow_url` (`group_vars/airflow.yaml`).
+3. Gere o client secret e grave os dois valores na sua máquina:
+
+```bash
+mkdir -p ~/.clusterlab/credentials/airflow0
+(umask 077
+ cd ~/.clusterlab/credentials/airflow0
+ printf 'client id: ';     read -r  v; printf %s "$v" > github_oauth_client_id
+ printf 'client secret: '; read -rs v; printf %s "$v" > github_oauth_client_secret)
+```
+
+4. Se a organização restringe OAuth Apps (Settings → Third-party access), um
+   owner aprova o app. Sem isso, o GitHub não devolve os times e todos caem em
+   `Public`.
+
+A VM precisa alcançar `github.com` e `api.github.com` por HTTPS.
+
+### Dar e tirar acesso
+
+Dar acesso é colocar a pessoa no time; o papel vale a partir do próximo login.
+Os times são lidos **só no login**: quem sai do time mantém o papel até o token da
+UI vencer (24 h). Para cortar na hora:
+
+```bash
+docker compose exec airflow-apiserver airflow users list
+docker compose exec airflow-apiserver airflow users delete -u github_<login>
+```
+
+As permissões ficam até 30 s em cache no api-server.
+
+Se o GitHub estiver fora, ninguém faz login novo. As DAGs continuam rodando, e a
+operação é pelo CLI (`airflow dags ...`, `airflow tasks ...`) no container.
 
 ---
 

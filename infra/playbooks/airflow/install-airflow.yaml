@@ -22,12 +22,16 @@
           - airflow_db_password | length >= 8
           - dw_db_password | length >= 8
           - lake_s3_secret_key | length >= 8
+          - github_oauth_client_id | length > 0
+          - github_oauth_client_secret | length > 0
           - (openmetadata_url | length == 0) or (openmetadata_url is not search('<') and openmetadata_url is not search('/api') and openmetadata_jwt_token | length > 20)
         fail_msg: >-
           Configuração incompleta. Confira postgres_host e lake_s3_endpoint em
           group_vars/airflow.yaml, e se o playbook do Postgres já rodou daqui
           (ele grava as senhas em {{ postgres_credentials_dir }}/) e se existe
           {{ rustfs_credentials_dir }}/{{ lake_s3_access_key }}_secret_key.
+          O login precisa de github_oauth_client_id e github_oauth_client_secret
+          em {{ airflow_credentials_dir }}/ (README, "Login com o GitHub").
           Com openmetadata_url preenchido (sem /api), o playbook do
           OpenMetadata precisa ter rodado daqui antes (ele grava
           {{ openmetadata_credentials_dir }}/ingestion_bot_token).
@@ -141,15 +145,14 @@
         mode: '0600'
       no_log: true
 
-    # Substitui o arquivo da imagem, que tem airflow/airflow.
-    - name: Write SimpleAuthManager passwords
+    - name: Copy webserver_config.py (login com o GitHub)
       ansible.builtin.copy:
-        dest: "{{ airflow_dir }}/simple_auth_manager_passwords.json"
-        content: "{{ {airflow_admin_user: airflow_admin_password} | to_json }}"
-        owner: '50000'
-        group: '0'
-        mode: '0600'
-      no_log: true
+        src: "{{ airflow_repo_dir }}/infra/airflow/webserver_config.py"
+        dest: "{{ airflow_dir }}/webserver_config.py"
+        remote_src: true
+        owner: root
+        group: root
+        mode: '0644'
       notify: Recreate Airflow API server
 
     - name: Write docker-compose.yaml
@@ -224,22 +227,21 @@
       delay: 10
       when: not ansible_check_mode
 
-    - name: Mostrar as credenciais
+    - name: Mostrar o endereço
       ansible.builtin.debug:
         msg:
           - "================ AIRFLOW PRONTO ==============="
-          - "UI/API: http://{{ ansible_host }}:{{ airflow_port }}"
-          - "Login:  {{ airflow_admin_user }} / {{ airflow_admin_password }}"
+          - "UI/API: {{ airflow_url }}"
+          - "Login:  conta do GitHub (README, \"Login com o GitHub\")"
           - ""
-          - "Guardada em: {{ airflow_credentials_dir }}/airflow_admin_password"
           - "Código: {{ airflow_repo_url }} @ {{ airflow_repo_version }}"
           - ""
           - "Falta: importar as Variables (README.md, \"Comandos úteis\")."
           - "==============================================="
 
   handlers:
-    # O arquivo de senhas é bind-mount de arquivo: o container só vê a
-    # versão nova se for recriado.
+    # O api-server só lê o webserver_config.py ao subir, e o bind-mount de
+    # arquivo só enxerga a versão nova se o container for recriado.
     - name: Recreate Airflow API server
       ansible.builtin.command:
         cmd: docker compose up -d --force-recreate airflow-apiserver

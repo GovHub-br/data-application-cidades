@@ -13,8 +13,13 @@ airflow_repo_version: main
 # --- Airflow ----------------------------------------------------------------
 airflow_port: 8080
 airflow_instance_name: "MCid - Cidades"
-airflow_admin_user: airflow
-airflow_admin_password: "{{ lookup('password', airflow_credentials_dir ~ '/airflow_admin_password chars=ascii_letters,digits length=24') }}"
+# A URL que os devs abrem no navegador. A callback do OAuth App é esta URL mais
+# /auth/oauth-authorized/github, e precisa bater em host, porta e http/https.
+airflow_url: "http://{{ ansible_host }}:{{ airflow_port }}"
+
+# --- Login com o GitHub (OAuth App, ver README) -------------------------------
+github_oauth_client_id: "{{ lookup('file', airflow_credentials_dir ~ '/github_oauth_client_id', errors='ignore') | default('', true) | trim }}"
+github_oauth_client_secret: "{{ lookup('file', airflow_credentials_dir ~ '/github_oauth_client_secret', errors='ignore') | default('', true) | trim }}"
 
 # Chaves internas. Ficam fixas depois da primeira execução: trocar a fernet
 # key torna ilegíveis as Connections já gravadas no banco.

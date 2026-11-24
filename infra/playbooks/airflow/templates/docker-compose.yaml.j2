@@ -23,11 +23,15 @@ x-airflow-common: &airflow-common
     # Com os componentes separados, quem executa a task (o scheduler, no
     # LocalExecutor) fala com o api-server por esta URL.
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://localhost:{{ airflow_port }}/execution/'
-    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: '{{ airflow_admin_user }}:admin'
-    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/simple_auth_manager_passwords.json
+    # Login com a conta do GitHub; a configuração é o webserver_config.py abaixo.
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    # Menor que a vida do token da UI (24 h): sem isso a sessão renova o token
+    # sozinha, e quem saiu do time continua entrando sem passar pelo GitHub.
+    AIRFLOW__FAB__SESSION_LIFETIME_MINUTES: '60'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     AIRFLOW__API__INSTANCE_NAME: '{{ airflow_instance_name }}'
     AIRFLOW__API__PORT: '{{ airflow_port }}'
+    AIRFLOW__API__BASE_URL: '{{ airflow_url }}'
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
     AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
     AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
@@ -39,8 +43,7 @@ x-airflow-common: &airflow-common
     LAKE_LOCAL_ARTIFACTS: "0"
   volumes:
     - {{ airflow_repo_dir }}/infra/airflow/airflow.cfg:/opt/airflow/airflow.cfg:ro
-    # Sem :ro: o SimpleAuthManager abre o arquivo em modo de escrita (a+).
-    - {{ airflow_dir }}/simple_auth_manager_passwords.json:/opt/airflow/simple_auth_manager_passwords.json
+    - {{ airflow_dir }}/webserver_config.py:/opt/airflow/webserver_config.py:ro
     - {{ airflow_repo_dir }}/dags:/opt/airflow/dags:ro
     - {{ airflow_repo_dir }}/plugins:/opt/airflow/plugins:ro
     - {{ airflow_repo_dir }}/helpers:/opt/airflow/helpers:ro
