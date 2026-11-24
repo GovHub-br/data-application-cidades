@@ -3,8 +3,6 @@
 # versões, no repositório inteiro, e reprova o PR. O `--no-verify` pula o hook local,
 # mas não passa pela CI.
 # A configuração das ferramentas fica no pyproject.toml ([tool.ruff], [tool.sqlfmt]).
-exclude: ^data-science/
-
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.17.4
