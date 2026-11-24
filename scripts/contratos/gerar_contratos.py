@@ -146,7 +146,7 @@ def raw_name(cur, staging_key: str) -> str:
 
 
 def build(tables: list[dict], env: dict) -> dict[str, dict]:
-    endpoint = env["MINIO_ENDPOINT"]
+    endpoint = env["DL_ENDPOINT"]
     if "://" not in endpoint:  # the .env keeps host:port, like the Airflow clients
         endpoint = f"http://{endpoint}"
     host = re.sub(r"^https?://", "", endpoint)
@@ -154,14 +154,14 @@ def build(tables: list[dict], env: dict) -> dict[str, dict]:
     s3 = boto3.client(
         "s3",
         endpoint_url=endpoint,
-        aws_access_key_id=env["MINIO_ACCESS_KEY"],
-        aws_secret_access_key=env["MINIO_SECRET_KEY"],
+        aws_access_key_id=env["DL_ACCESS_KEY"],
+        aws_secret_access_key=env["DL_SECRET_KEY"],
     )
     db = duckdb.connect()
     db.execute("INSTALL httpfs; LOAD httpfs;")
     db.execute(
-        f"CREATE SECRET lake (TYPE s3, KEY_ID '{env['MINIO_ACCESS_KEY']}', "
-        f"SECRET '{env['MINIO_SECRET_KEY']}', ENDPOINT '{host}', URL_STYLE 'path', "
+        f"CREATE SECRET lake (TYPE s3, KEY_ID '{env['DL_ACCESS_KEY']}', "
+        f"SECRET '{env['DL_SECRET_KEY']}', ENDPOINT '{host}', URL_STYLE 'path', "
         f"USE_SSL {str(secure).lower()})"
     )
     conn = psycopg2.connect(

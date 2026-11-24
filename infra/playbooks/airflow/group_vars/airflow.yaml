@@ -33,7 +33,7 @@ dw_db_user: cidades
 dw_db_password: "{{ lookup('file', postgres_credentials_dir ~ '/' ~ dw_db_user ~ '_password', errors='ignore') | default('', true) | trim }}"
 
 # --- Lake (VM do playbook rustfs) -------------------------------------------
-# Os nomes MINIO_* são os que o código já lê; só o endereço muda.
+# Viram as variáveis DL_* do airflow.env.
 lake_s3_endpoint: "<IP_DO_RUSTFS>:9000"
 lake_bucket: data-lake-mcid
 lake_s3_access_key: app-cidades
