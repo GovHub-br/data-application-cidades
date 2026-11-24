@@ -13,7 +13,7 @@ from historico_mcmv import analytics, cleansed, erros, layout, staging
 REPO = Path(__file__).resolve().parents[1]
 
 
-MODULO = REPO / "dags" / "dados_historicos" / "dados_historicos_dag.py"
+MODULO = REPO / "dags" / "snh" / "dados_historicos" / "dados_historicos_dag.py"
 
 
 @pytest.fixture(scope="module")

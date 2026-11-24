@@ -61,7 +61,7 @@ coluna e regra) e `_versoes_substituidas/` (versões trocadas, fora da pasta que
 ## Rodar localmente
 
 ```bash
-export AIRFLOW_HOME=$(mktemp -d) AIRFLOW__CORE__DAGS_FOLDER=$PWD/dags/dados_historicos AIRFLOW__CORE__LOAD_EXAMPLES=False
+export AIRFLOW_HOME=$(mktemp -d) AIRFLOW__CORE__DAGS_FOLDER=$PWD/dags/snh/dados_historicos AIRFLOW__CORE__LOAD_EXAMPLES=False
 export AIRFLOW_CONN_MINIO_LAKE='{"conn_type": "aws", "login": "<access>", "password": "<secret>", "extra": {"endpoint_url": "http://<minio>:9000"}}'
 uv run airflow db migrate
 uv run airflow dags test dados_historicos_dag            # ou: airflow tasks test dados_historicos_dag <task>
