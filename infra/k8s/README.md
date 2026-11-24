@@ -124,7 +124,10 @@ folga no `storage` de `elasticsearch.yaml`.
 ### 4. Airflow
 
 ```bash
+export GITHUB_OAUTH_CLIENT_ID=... GITHUB_OAUTH_CLIENT_SECRET=...
 infra/k8s/criar-secrets.sh airflow [extra.env]
+kubectl -n cidades create configmap airflow-webserver-config \
+  --from-file=infra/airflow/webserver_config.py --dry-run=client -o yaml | kubectl apply -f -
 helm upgrade --install airflow apache-airflow/airflow --version 1.22.0 \
   -n cidades -f infra/k8s/airflow/values.yaml --timeout 15m
 ```
@@ -134,10 +137,13 @@ O código vem do repositório inteiro pelo git-sync (`/opt/airflow/dags/repo`,
 branch de `dags.gitSync.branch`. Mudanças no `requirements.lock.txt` ou no
 `Dockerfile` pedem imagem nova e outro `defaultAirflowTag`.
 
-Login: `airflow`, com a senha do Secret `airflow-admin`:
+Login: conta do GitHub, com os mesmos times e papéis das VMs
+(`infra/playbooks/airflow/README.md`, "Login com o GitHub"). O OAuth App é outro, porque
+cada um aceita uma URL só: aqui a callback é
+`http://localhost:8080/auth/oauth-authorized/github`, a do port-forward. Ao publicar
+o Airflow num domínio, troque a callback e o `base_url` do `values.yaml`.
 
 ```bash
-kubectl -n cidades get secret airflow-admin -o jsonpath='{.data.password}' | base64 -d
 kubectl -n cidades port-forward svc/airflow-api-server 8080:8080
 ```
 

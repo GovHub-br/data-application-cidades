@@ -9,7 +9,8 @@
 #   infra/k8s/criar-secrets.sh rustfs                 # antes do helm do RustFS
 #   infra/k8s/criar-secrets.sh postgres <secret-app>  # antes do cluster.yaml
 #   infra/k8s/criar-secrets.sh openmetadata           # antes do helm do OpenMetadata
-#   infra/k8s/criar-secrets.sh airflow [extra.env]    # antes do helm do Airflow
+#   infra/k8s/criar-secrets.sh airflow [extra.env]    # antes do helm do Airflow; pede
+#                                                     # GITHUB_OAUTH_CLIENT_{ID,SECRET} no ambiente
 #
 # <secret-app> é o arquivo com a secret do usuário app-cidades do RustFS.
 # [extra.env] é opcional: variáveis das DAGs (SFTP, OpenMetadata...) no
@@ -90,7 +91,11 @@ case "${1:-}" in
     generico airflow-fernet-key fernet-key="$(openssl rand -base64 32 | tr '+/' '-_')"
     generico airflow-api-secret-key api-secret-key="$(senha)"
     generico airflow-jwt-secret jwt-secret="$(senha)"
-    generico airflow-admin password="$(senha)"
+    # OAuth App do login (infra/playbooks/airflow/README.md, "Login com o GitHub").
+    existe airflow-github-oauth || : "${GITHUB_OAUTH_CLIENT_ID:?}" "${GITHUB_OAUTH_CLIENT_SECRET:?}"
+    generico airflow-github-oauth \
+      GITHUB_OAUTH_CLIENT_ID="${GITHUB_OAUTH_CLIENT_ID:-}" \
+      GITHUB_OAUTH_CLIENT_SECRET="${GITHUB_OAUTH_CLIENT_SECRET:-}"
 
     if existe cidades-airflow-env; then
       echo "ok: cidades-airflow-env já existe"
@@ -116,7 +121,7 @@ EOF
     ;;
 
   *)
-    sed -n '2,16p' "$0"
+    sed -n '2,17p' "$0"
     exit 1
     ;;
 esac

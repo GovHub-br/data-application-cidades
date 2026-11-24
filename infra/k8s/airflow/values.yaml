@@ -58,21 +58,22 @@ env:
     value: "0"
 
 # DW, lake, postgres_default e o que for de cada DAG (SFTP, mascaramento...).
-# O segundo é o do catálogo, gravado pelo Job openmetadata/bootstrap.yaml; é
+# O segundo é o OAuth App do login.
+# O terceiro é o do catálogo, gravado pelo Job openmetadata/bootstrap.yaml; é
 # opcional para o Airflow subir mesmo sem o OpenMetadata instalado.
 extraEnvFrom: |
   - secretRef:
       name: cidades-airflow-env
+  - secretRef:
+      name: airflow-github-oauth
   - secretRef:
       name: openmetadata-airflow-env
       optional: true
 
 config:
   core:
-    # O mesmo login das VMs e do ambiente local. O padrão do chart é o FAB.
-    auth_manager: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
-    simple_auth_manager_users: "airflow:admin"
-    simple_auth_manager_passwords_file: /opt/airflow/auth/passwords.json
+    # O mesmo login das VMs: conta do GitHub (infra/airflow/webserver_config.py).
+    auth_manager: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     default_timezone: America/Sao_Paulo
     load_examples: "False"
     test_connection: Enabled
@@ -82,41 +83,22 @@ config:
     dag_file_processor_timeout: 360
   api:
     instance_name: "MCid - Cidades"
+    # A URL que o navegador usa, a mesma da callback do OAuth App.
+    base_url: http://localhost:8080
+  fab:
+    # Menor que a vida do token da UI (24 h): sem isso a sessão renova o token
+    # sozinha, e quem saiu do time continua entrando sem passar pelo GitHub.
+    session_lifetime_minutes: 60
   email:
     default_email_on_retry: "False"
     default_email_on_failure: "False"
 
-# O createUserJob é do FAB; com o SimpleAuthManager não se aplica.
+# O createUserJob cria um usuário com senha, que o login por OAuth não usa.
 createUserJob:
   enabled: false
 
 apiServer:
-  # O SimpleAuthManager abre o arquivo de senhas para escrita, então ele não
-  # pode ser o Secret montado direto (somente leitura): um init container
-  # copia a senha para um emptyDir.
-  extraInitContainers:
-    - name: auth-passwords
-      image: busybox:1.37
-      command:
-        - sh
-        - -c
-        - |
-          printf '{"airflow": "%s"}' "$SENHA" > /opt/airflow/auth/passwords.json
-      env:
-        - name: SENHA
-          valueFrom:
-            secretKeyRef:
-              name: airflow-admin
-              key: password
-      volumeMounts:
-        - name: auth
-          mountPath: /opt/airflow/auth
-  extraVolumes:
-    - name: auth
-      emptyDir: {}
-  extraVolumeMounts:
-    - name: auth
-      mountPath: /opt/airflow/auth
+  apiServerConfigConfigMapName: airflow-webserver-config
 
 scheduler:
   resources:
