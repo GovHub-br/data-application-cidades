@@ -205,7 +205,7 @@ def extract(
     Returns {"keys": landed raw keys, "errors": [...], "unsupported": [...],
     "duplicates": [...]}; only keys travel between tasks, never content.
     """
-    wanted = set(files)
+    wanted, missing = frozenset(files), set(files)
     seen, known_hashes = (set(), set()) if wanted else (control.ingested(), control.hashes())
     if wanted:  # only the folders that hold a forced file
         folders = tuple(f for f in folders if any(w.startswith(f + "/") for w in wanted))
@@ -221,7 +221,7 @@ def extract(
             ext = Path(path).suffix.lower()
             if wanted and path not in wanted:
                 continue
-            wanted.discard(path)
+            missing.discard(path)
             if (path, mtime) in seen or ext not in SUPPORTED | UNSUPPORTED:
                 continue
             if ext in UNSUPPORTED:
@@ -235,6 +235,6 @@ def extract(
                 sftp, upload, control, load, md5, tmpdir, (path, size, mtime), known_hashes, result
             )
     result["errors"] += [
-        f"{path}: não encontrado nas pastas monitoradas" for path in sorted(wanted)
+        f"{path}: não encontrado nas pastas monitoradas" for path in sorted(missing)
     ]
     return result
