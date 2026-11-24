@@ -172,7 +172,7 @@ def norm_header(texto: str) -> str:
     return s
 
 
-def normalizar_colunas(header: List[str]) -> Tuple[List[str], dict]:
+def normalize_columns(header: List[str]) -> Tuple[List[str], dict]:
     """Normaliza + deduplica nomes de coluna.
 
     - Header vazio vira `coluna_<i>` (1-based).
@@ -266,7 +266,7 @@ def mdb_export_para_csv(path: str, tabela: str, dst: str) -> None:
 
 
 # Hash de arquivo
-def md5_arquivo(path: str) -> str:
+def md5_file(path: str) -> str:
     h = hashlib.md5()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 16), b""):

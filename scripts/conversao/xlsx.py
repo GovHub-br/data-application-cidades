@@ -7,7 +7,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from lake_utils import normalizar_colunas
+from lake_utils import normalize_columns
 
 from .config import colunas_de_linhagem
 
@@ -35,7 +35,7 @@ def _converter_xlsx_aba(
     df = pd.read_excel(src_path, sheet_name=aba, dtype=str, header=0, engine="openpyxl")
     df = df.fillna("")
     header_original = [str(c) for c in df.columns]
-    nomes_finais, column_map = normalizar_colunas(header_original)
+    nomes_finais, column_map = normalize_columns(header_original)
     df.columns = nomes_finais
     df["_source_file"] = source_file
     df["_ingested_at"] = ingested_at

@@ -8,5 +8,35 @@
         "login": "<usuario>",
         "password": "<senha>",
         "extra": ""
+    },
+    "lake_mcid": {
+        "conn_type": "aws",
+        "description": "Lake do MCid (MinIO/RustFS): S3Hook das DAGs de ingestão (plugins/datalake)",
+        "login": "<access key>",
+        "password": "<secret key>",
+        "extra": "{\"endpoint_url\": \"<http://host:9000>\"}"
+    },
+    "sftp_mcid": {
+        "conn_type": "sftp",
+        "description": "SFTP da CAIXA lido pela sftp_ingest_dag",
+        "host": "<host>",
+        "port": 22,
+        "login": "<usuario>",
+        "password": "<senha>",
+        "extra": ""
+    },
+    "fgv_dados": {
+        "conn_type": "http",
+        "description": "Portal FGVDados (login OutSystems) da icst_ingest_dag; a sessão sai do HttpHook.get_conn()",
+        "host": "https://autenticacao-ibre.fgv.br",
+        "login": "<email>",
+        "password": "<senha>",
+        "extra": ""
+    },
+    "sinduscon": {
+        "conn_type": "http",
+        "description": "Série histórica do INCC-M no Sinduscon-PR (incc_m_ingest_dag); o site recusa sem User-Agent de navegador",
+        "host": "https://sindusconpr.com.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"}"
     }
 }

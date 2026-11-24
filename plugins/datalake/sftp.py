@@ -16,8 +16,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterator, Optional
 
-from datalake.chaves import raw_key
-from datalake.mascara import ACCESS, EXCEL, TABULAR, export_access, mask_file
+from plugins.datalake.keys import raw_key
+from plugins.datalake.masking import ACCESS, EXCEL, TABULAR, export_access, mask_file
 
 FOLDERS = (
     "/home/fabrica/Analise_SNH",

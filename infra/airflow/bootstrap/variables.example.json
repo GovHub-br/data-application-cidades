@@ -30,14 +30,6 @@
             }
         }
     },
-    "dados_fgv_email": {
-        "description": "Login da FGV usado pela icst_ingest_dag",
-        "value": "<email>"
-    },
-    "dados_fgv_password": {
-        "description": "Senha da FGV usada pela icst_ingest_dag",
-        "value": "<senha>"
-    },
     "api_key_alphavantage": {
         "description": "Chave da Alpha Vantage e ativo consultado pela imob_ingest_dag",
         "value": {
@@ -53,5 +45,9 @@
             "imap_server": "<servidor IMAP>",
             "sender_email": "<remetente esperado>"
         }
+    },
+    "lake_bucket": {
+        "description": "Bucket do lake (raw/ e staging/) usado pelas DAGs de ingestão; o mesmo da var lake_bucket do dbt",
+        "value": "data-lake-mcid"
     }
 }

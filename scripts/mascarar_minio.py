@@ -50,7 +50,7 @@ from lake_utils import (
     PREFIXOS_LEGADO,
     detectar_dialeto,
     detectar_encoding,
-    md5_arquivo,
+    md5_file,
     mdb_disponivel,
 )
 
@@ -91,7 +91,7 @@ from mascaramento.mdb import _analisar_mdb
 
 # depois do pacote: mascaramento/__init__.py põe plugins/ no sys.path
 from cliente_minio import TRIAGEM_LIBERADA, ClienteMinio
-from datalake.chaves import load_id_of
+from datalake.keys import load_id_of
 
 log = logging.getLogger(__name__)
 
@@ -236,7 +236,7 @@ def processar_objeto(  # noqa: C901
                     "(instale o pacote 'mdbtools')."
                 )
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            rec["hash_before"] = md5_arquivo(src)
+            rec["hash_before"] = md5_file(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
                 return rec
@@ -262,7 +262,7 @@ def processar_objeto(  # noqa: C901
 
         elif ext in SUPPORTED_EXCEL:
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            rec["hash_before"] = md5_arquivo(src)
+            rec["hash_before"] = md5_file(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
                 return rec
@@ -297,7 +297,7 @@ def processar_objeto(  # noqa: C901
             rec["status"] = "skipped_unsupported"
             return rec
 
-        rec["hash_after"] = md5_arquivo(dst)
+        rec["hash_after"] = md5_file(dst)
 
         if apply:
             minio.upload_arquivo(dst, key)

@@ -16,7 +16,7 @@ from typing import Callable, Optional
 
 import pyarrow.parquet as pq
 
-from datalake import contrato, leitores
+from plugins.datalake import contract, readers
 
 BLOCKING = ("error", "quarantined")
 
@@ -54,7 +54,7 @@ def _rel(staging_key: str) -> str:
 class Gate:
     """Stands in for the lake while the conversion runs; holds back quarantined Parquet."""
 
-    def __init__(self, lake, dataset: contrato.Dataset, previous_rows: Optional[int]):
+    def __init__(self, lake, dataset: contract.Dataset, previous_rows: Optional[int]):
         self.lake, self.dataset, self.previous_rows = lake, dataset, previous_rows
         self.verdicts: dict[str, tuple[str, dict]] = {}
 
@@ -64,7 +64,7 @@ class Gate:
     def upload_arquivo(self, path: str, key: str) -> str:
         meta = pq.read_metadata(path)
         header = [c for c in meta.schema.names if not c.startswith("_")]  # lineage out
-        verdict = contrato.structural_status(
+        verdict = contract.structural_status(
             header, self.dataset, meta.num_rows, self.previous_rows
         )
         self.verdicts[_rel(key)] = verdict
@@ -73,7 +73,7 @@ class Gate:
         return key
 
 
-def previous_rows(pg) -> Callable[[contrato.Dataset, list], Optional[int]]:
+def previous_rows(pg) -> Callable[[contract.Dataset, list], Optional[int]]:
     """Rows of the newest converted load of a dataset, for the row-variation rule."""
     # shortcut: reads every converted row of _staging_log; filter by folder if it grows large
     rows = pg.get_records(
@@ -81,8 +81,8 @@ def previous_rows(pg) -> Callable[[contrato.Dataset, list], Optional[int]]:
         "WHERE status = 'converted' AND n_linhas > 0 ORDER BY created_at DESC"
     )
 
-    def find(dataset: contrato.Dataset, datasets: list) -> Optional[int]:
-        return next((n for key, n in rows if contrato.match(key, datasets) == dataset), None)
+    def find(dataset: contract.Dataset, datasets: list) -> Optional[int]:
+        return next((n for key, n in rows if contract.match(key, datasets) == dataset), None)
 
     return find
 
@@ -93,16 +93,18 @@ def transform(
     execution_id: str,
     apply: bool,
     datasets: list,
-    previous: Callable[[contrato.Dataset, list], Optional[int]],
+    previous: Callable[[contract.Dataset, list], Optional[int]],
 ) -> list[dict]:
     """_staging_log records of one landed raw key; `structural` carries the drift status."""
+    # shortcut: scripts/conversao e scripts/mascaramento ainda se importam pelo nome curto
+    # (também rodam por CLI); passam ao caminho completo quando saírem de scripts/ (B11/B12)
     from conversao.processamento import _novo_registro
 
-    dataset = contrato.match(key, datasets)
+    dataset = contract.match(key, datasets)
     if dataset is None:  # stays in raw, goes to the report (ADR-0006)
         return [{**_novo_registro(execution_id, key), "status": "uncataloged"}]
     gate = Gate(lake, dataset, previous(dataset, datasets))
-    recs = leitores.convert(gate, key, execution_id, apply, set(), reader_name=dataset.reader)
+    recs = readers.convert(gate, key, execution_id, apply, set(), reader_name=dataset.reader)
     for rec in recs:
         status, details = gate.verdicts.get(_rel(rec["staging_key"] or ""), (None, {}))
         rec["structural"] = status

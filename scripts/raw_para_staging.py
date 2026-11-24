@@ -49,7 +49,7 @@ from conversao.processamento import _novo_registro, processar_objeto
 
 # depois do pacote: conversao/__init__.py põe plugins/ no sys.path
 from cliente_minio import ClienteMinio  # noqa: E402
-from datalake.chaves import load_id_of  # noqa: E402
+from datalake.keys import load_id_of  # noqa: E402
 from lake_utils import PREFIXOS_LEGADO  # noqa: E402
 
 log = logging.getLogger(__name__)

@@ -28,7 +28,7 @@ def mask_file(src: str, key: str) -> tuple[str, dict]:
     log: `masked` or `skipped_no_pii` (nothing to mask). Any error raises, and so does a
     text file whose columns cannot be told apart: the file must not be uploaded.
     """
-    from lake_utils import detectar_dialeto, detectar_encoding
+    from scripts.lake_utils import detectar_dialeto, detectar_encoding
     from mascaramento.regras import targets_por_posicao
 
     ext = Path(key).suffix.lower()
@@ -68,7 +68,7 @@ def mask_file(src: str, key: str) -> tuple[str, dict]:
 def export_access(src: str, workdir: str) -> list[tuple[str, str, dict]]:
     """An Access file becomes one masked CSV per table; the .mdb itself never lands
     (ADR-0002 R0, mdbtools cannot rewrite it). Returns [(table, csv path, record)]."""
-    from lake_utils import MDB_DELIM, MDB_ENCODING, mdb_export_para_csv, mdb_tabelas
+    from scripts.lake_utils import MDB_DELIM, MDB_ENCODING, mdb_export_para_csv, mdb_tabelas
     from mascaramento.tabular import mascarar_csv
 
     out = []

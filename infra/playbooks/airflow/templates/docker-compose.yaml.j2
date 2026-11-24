@@ -33,7 +33,8 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
     AIRFLOW__CORE__PLUGINS_FOLDER: /opt/airflow/plugins
     AIRFLOW_REPO_BASE: /opt/airflow
-    PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts"
+    # A raiz vem primeiro: código novo importa pelo caminho completo (plugins.datalake...).
+    PYTHONPATH: "/opt/airflow:/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts"
     LAKE_TMPDIR: /opt/airflow/lake_tmp
     MASKING_TMPDIR: /opt/airflow/lake_tmp
     LAKE_LOCAL_ARTIFACTS: "0"
@@ -47,6 +48,8 @@ x-airflow-common: &airflow-common
     - {{ airflow_repo_dir }}/dbt:/opt/airflow/dbt:ro
     - {{ airflow_repo_dir }}/dbt/mcid/profiles.yml:/opt/airflow/.dbt/profiles.yml:ro
     - {{ airflow_repo_dir }}/scripts:/opt/airflow/scripts:ro
+    # Contratos ODCS das fontes, lidos na execução pela ingestão (plugins/datalake/contrato.py).
+    - {{ airflow_repo_dir }}/contracts:/opt/airflow/contracts:ro
     # O api-server lê os logs das tasks que o scheduler escreveu.
     - airflow_logs:/opt/airflow/logs
     # Temporários dos scripts do lake (arquivos de GBs): NÃO usar /tmp.

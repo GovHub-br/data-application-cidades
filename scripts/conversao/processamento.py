@@ -10,13 +10,13 @@ from typing import List
 
 import pyarrow.parquet as pq
 
-from datalake.chaves import load_id_of
+from datalake.keys import load_id_of
 from lake_utils import (
     MDB_DELIM,
     MDB_ENCODING,
     detectar_dialeto,
     detectar_encoding,
-    md5_arquivo,
+    md5_file,
     mdb_disponivel,
     mdb_export_para_csv,
     mdb_tabelas,
@@ -119,7 +119,7 @@ def processar_objeto(  # noqa: C901
             rec["delimiter"] = delim
 
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             rec["source_hash"] = source_hash
             if (key, source_hash) in convertidos:
                 rec["status"] = "skipped_already"
@@ -188,7 +188,7 @@ def processar_objeto(  # noqa: C901
                     "(instale o pacote 'mdbtools')."
                 )
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             if (key, source_hash) in convertidos:
                 rec = _novo_registro(execution_id, key)
                 rec["source_hash"] = source_hash
@@ -279,7 +279,7 @@ def processar_objeto(  # noqa: C901
         if ext in SUPPORTED_JSON:
             rec = _novo_registro(execution_id, key)
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             rec["source_hash"] = source_hash
             if (key, source_hash) in convertidos:
                 rec["status"] = "skipped_already"
@@ -312,7 +312,7 @@ def processar_objeto(  # noqa: C901
         # XLSX (uma aba por parquet)
         if ext in SUPPORTED_EXCEL:
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             if (key, source_hash) in convertidos:
                 rec = _novo_registro(execution_id, key)
                 rec["source_hash"] = source_hash

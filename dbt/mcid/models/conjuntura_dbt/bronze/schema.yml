@@ -106,7 +106,10 @@ models:
             - mes
             - icst_com_ajuste_sazonal
             - icst_sem_ajuste_sazonal
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_fgv_incc_m
     description: >
       Índice de custo da construção habitacional, com número índice e
@@ -120,7 +123,10 @@ models:
             - var_mes
             - var_ano
             - var_12_meses
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_fipezap_locacao
     description: >
       Índice de preços de locação residencial anunciados, com número índice e

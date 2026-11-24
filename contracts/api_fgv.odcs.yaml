@@ -1,0 +1,75 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: api_fgv
+name: FGV (ICST e INCC-M)
+version: 0.1.0
+status: draft
+description:
+  purpose: >-
+    Séries da FGV usadas na conjuntura. Cada carga traz a série histórica inteira
+    (carga completa); a raw guarda o arquivo como a fonte entrega.
+team:
+- username: FGV-IBRE
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: icst
+  physicalName: icst
+  description: Índice de Confiança da Construção, com e sem ajuste sazonal, CSV do FGVDados.
+  customProperties:
+  - property: path
+    value: staging/fgv/icst/*.parquet
+  - property: file_pattern
+    value: icst\.csv
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: fgv_icst_csv
+  - property: dag
+    value: icst_ingest_dag
+  - property: dbt_tables
+    value:
+    - fgv_icst
+  properties:
+  - name: mes
+    logicalType: string
+  - name: icst_com_ajuste_sazonal
+    logicalType: string
+  - name: icst_sem_ajuste_sazonal
+    logicalType: string
+- name: incc_m
+  physicalName: incc_m
+  description: INCC-M (número índice e variações), XLSX da série histórica do Sinduscon-PR.
+  customProperties:
+  - property: path
+    value: staging/fgv/incc_m/*.parquet
+  - property: file_pattern
+    value: incc_m\.xlsx
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: sinduscon_incc_xlsx
+  - property: dag
+    value: incc_m_ingest_dag
+  - property: dbt_tables
+    value:
+    - fgv_incc_m
+  properties:
+  - name: mes
+    logicalType: string
+  - name: indice
+    logicalType: string
+  - name: var_mes
+    logicalType: string
+  - name: var_ano
+    logicalType: string
+  - name: var_12_meses
+    logicalType: string

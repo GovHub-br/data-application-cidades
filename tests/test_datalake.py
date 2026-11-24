@@ -6,11 +6,11 @@ from datetime import datetime, timedelta, timezone
 import pyarrow.parquet as pq
 import pytest
 
-from datalake import contrato, leitores
-from datalake.chaves import load_id, load_id_of, raw_key
+from plugins.datalake import contract, readers
+from plugins.datalake.keys import load_id, load_id_of, raw_key
 from tests.conftest import fresh_import
 
-DATASETS = contrato.load()
+DATASETS = contract.load()
 
 
 def test_load_id_is_utc_and_sortable():
@@ -52,7 +52,7 @@ def test_raw_key_puts_the_load_folder_before_the_file():
     ],
 )
 def test_match_finds_the_dataset_of_a_delivery(key, expected):
-    found = contrato.match(key, DATASETS)
+    found = contract.match(key, DATASETS)
     assert (found and (found.source, found.name)) == expected
 
 
@@ -61,7 +61,7 @@ def test_no_delivery_matches_two_datasets():
     assert DATASETS and len(keys) == len(set(keys))
 
 
-DS = contrato.Dataset(
+DS = contract.Dataset(
     source="s",
     name="d",
     path="staging/s/D_*.parquet",
@@ -85,16 +85,16 @@ DS = contrato.Dataset(
     ],
 )
 def test_structural_status(header, rows, previous, status):
-    assert contrato.structural_status(header, DS, rows, previous)[0] == status
+    assert contract.structural_status(header, DS, rows, previous)[0] == status
 
 
 def test_without_contract_is_uncataloged():
-    assert contrato.structural_status(["a"], None)[0] == "uncataloged"
+    assert contract.structural_status(["a"], None)[0] == "uncataloged"
 
 
 def test_unknown_reader_is_refused():
     with pytest.raises(KeyError, match="no reader"):
-        leitores.convert(None, "raw/x.csv", "e", True, set(), reader_name="nao_existe")
+        readers.convert(None, "raw/x.csv", "e", True, set(), reader_name="nao_existe")
 
 
 def test_new_loads_get_load_id_and_legacy_keys_do_not(monkeypatch, tmp_path):

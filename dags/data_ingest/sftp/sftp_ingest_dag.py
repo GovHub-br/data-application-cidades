@@ -7,13 +7,13 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.sftp.hooks.sftp import SFTPHook
 from airflow.sdk import dag, get_current_context, task
 
-from datalake import contrato
-from datalake.chaves import load_id
-from datalake.sftp import Control
-from datalake.sftp import extract as extract_sftp
-from datalake.tasks import Lake, previous_rows, record, summary
-from datalake.tasks import transform as transform_key
-from lake_utils import md5_arquivo
+from plugins.datalake import contract
+from plugins.datalake.keys import load_id
+from plugins.datalake.sftp import Control
+from plugins.datalake.sftp import extract as extract_sftp
+from plugins.datalake.tasks import Lake, previous_rows, record, summary
+from plugins.datalake.tasks import transform as transform_key
+from scripts.lake_utils import md5_file
 
 SFTP_CONN = "sftp_mcid"
 LAKE_CONN = "lake_mcid"
@@ -62,7 +62,7 @@ def sftp_ingest_dag() -> None:
                 _lake(dry).upload_arquivo,
                 Control(PostgresHook(postgres_conn_id=PG_CONN), ctx["run_id"], write=not dry),
                 load_id(ctx["dag_run"].run_after),  # the same on a retry: it rewrites the same keys
-                md5_arquivo,
+                md5_file,
                 tmpdir=os.environ.get("LAKE_TMPDIR"),
                 limit=int(ctx["params"]["limit"] or 0),
                 files=tuple(ctx["params"]["files"] or ()),
@@ -77,7 +77,7 @@ def sftp_ingest_dag() -> None:
         dry = bool(ctx["params"]["dry_run"])
         pg = PostgresHook(postgres_conn_id=PG_CONN)
         recs = transform_key(
-            _lake(dry), key, ctx["run_id"], not dry, contrato.load(), previous_rows(pg)
+            _lake(dry), key, ctx["run_id"], not dry, contract.load(), previous_rows(pg)
         )
         if not dry:
             record(pg, recs)

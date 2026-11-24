@@ -1,12 +1,9 @@
 import logging
-import io
 import urllib.parse
 import re
 import html
-from datetime import datetime
 from typing import Any, Optional
 
-import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.ssl_ import create_urllib3_context
@@ -25,79 +22,7 @@ class LegacySSLAdapter(HTTPAdapter):
         return super(LegacySSLAdapter, self).init_poolmanager(*args, **kwargs)
 
 
-class ClienteSinduscon:
-    """
-    Cliente para extração de dados INCC-M da FGV no site da Sinduscon.
-
-    Fonte (série histórica XLSX, link estável que redireciona p/ o arquivo atual):
-    https://sindusconpr.com.br/economia/indices-economicos/incc-m-fgv/9547-serie-historica-incc-m-fgv/
-    """
-
-    URL_INCC = (
-        "https://sindusconpr.com.br/economia/indices-economicos/"
-        "incc-m-fgv/9547-serie-historica-incc-m-fgv/"
-    )
-
-    def __init__(self) -> None:
-        logging.info("[cliente_fgv.py] Initialized ClienteFGV")
-
-    def fetch_and_transform_incc(self) -> Optional[list[dict]]:
-        """
-        Baixa o arquivo XLSX do INCC-M, limpa os cabeçalhos e formata os dados.
-
-        Returns:
-            Lista de dicionários contendo os registros do índice ou None em caso de falha.
-        """
-        logging.info(f"[cliente_fgv.py] Baixando dados de: {self.URL_INCC}")
-
-        # User-Agent previne que alguns servidores bloqueiem
-        # requisições de bibliotecas python
-        headers = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")}
-
-        try:
-            response = requests.get(self.URL_INCC, headers=headers)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            logging.error(f"[cliente_fgv.py] Erro ao baixar o arquivo da FGV: {e}")
-            return None
-
-        # Guarda os bytes brutos do XLSX p/ a camada raw do data lake (formato nativo).
-        self.ultimo_conteudo_xlsx = response.content
-
-        try:
-            # Lendo o Excel em memória
-            # Pula as 3 primeiras linhas de cabeçalho
-            df = pd.read_excel(
-                io.BytesIO(response.content),
-                skiprows=3,
-                usecols="A:E",
-                names=["mes", "indice", "var_mes", "var_ano", "var_12_meses"],
-            )
-
-            # Remove as linhas vazias ou o rodapé de "Fonte FGV"
-            df = df.dropna(subset=["mes"])
-            df = df[~df["mes"].astype(str).str.contains("Fonte", case=False, na=False)]
-
-            # # Adiciona data de ingestão
-            df["dt_ingest"] = datetime.now().isoformat()
-
-            # Converte valores pd.NA/NaN para None (NULL do Postgres)
-            df = df.where(pd.notnull(df), None)
-
-            registros = df.to_dict(orient="records")
-
-            logging.info(
-                f"[cliente_fgv.py] Transformação concluída. {len(registros)} registros preparados."
-            )
-
-            return registros
-
-        except Exception as e:
-            logging.error(f"[cliente_fgv.py] Erro ao processar arquivo com Pandas: {e}")
-            return None
-
-
-class ClienteFGVDados:
+class FGVDadosClient:
     """
     Cliente para extração autenticada de dados históricos (ICST) do portal FGVDados.
     Lida com a autenticação OutSystems e a navegação no sistema legado ASP.NET.
@@ -107,14 +32,17 @@ class ClienteFGVDados:
         self,
         email: str,
         password: str,
+        session: Optional[requests.Session] = None,
     ) -> None:
         self.email = email
         self.password = password
-        self.session = requests.Session()
+        # A DAG passa a sessão do HttpHook (Connection fgv_dados); o SSL legado vale só
+        # para o ASP.NET, não para o login do OutSystems.
+        self.session = session or requests.Session()
         self.session.mount("https://extra-ibre.fgv.br", LegacySSLAdapter())
-        logging.info("[cliente_fgv.py] Initialized ClienteFGVDados")
+        logging.info("[fgv_client] Initialized FGVDadosClient")
 
-    def _obter_versoes_outsystems(self) -> dict:
+    def _outsystems_versions(self) -> dict:
         """
         Extrai dinamicamente moduleVersion, apiVersions e
         URLs dos endpoints de login do OutSystems.
@@ -127,11 +55,11 @@ class ClienteFGVDados:
            chamadas no formato:
            callDataAction("...", "screenservices/...", "HASH", ...)
         """
-        logging.info("[cliente_fgv.py] Buscando hashes dinâmicas do OutSystems...")
+        logging.info("[fgv_client] Buscando hashes dinâmicas do OutSystems...")
         url_base = "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
 
         # Fallbacks caso algo falhe
-        resultado = {
+        result = {
             "moduleVersion": "vuthrRMgPWqGaqAin6KHTA",
             "api_cloudflare": "OTGxLOOIYRPT4Yzxi6zCuA",
             "api_login": "kEIaQNU5n93i9Q026f_dlQ",
@@ -157,9 +85,9 @@ class ClienteFGVDados:
             if res_ver.status_code == 200:
                 token = res_ver.json().get("versionToken", "")
                 if token:
-                    resultado["moduleVersion"] = token
+                    result["moduleVersion"] = token
         except Exception as e:
-            logging.warning(f"[cliente_fgv.py] Falha ao buscar moduleversioninfo: {e}")
+            logging.warning(f"[fgv_client] Falha ao buscar moduleversioninfo: {e}")
 
         # apiVersions e URLs do BL01_Login.mvc.js
         try:
@@ -168,8 +96,8 @@ class ClienteFGVDados:
             if res_js.status_code == 200:
                 js = res_js.text
 
-                # Sufixo do DataAction -> chaves no resultado
-                acoes = {
+                # Sufixo do DataAction -> chaves no result
+                actions = {
                     "DataActionCheckUsarCloudFlare": (
                         "api_cloudflare",
                         "url_cloudflare",
@@ -198,23 +126,23 @@ class ClienteFGVDados:
                     url_path = m.group(1)
                     action_name = m.group(2)
                     api_hash = m.group(3)
-                    if action_name in acoes:
-                        k_hash, k_url = acoes[action_name]
-                        resultado[k_hash] = api_hash
-                        resultado[k_url] = url_path
+                    if action_name in actions:
+                        k_hash, k_url = actions[action_name]
+                        result[k_hash] = api_hash
+                        result[k_url] = url_path
         except Exception as e:
-            logging.warning(f"[cliente_fgv.py] Falha ao buscar BL01_Login.mvc.js: {e}")
+            logging.warning(f"[fgv_client] Falha ao buscar BL01_Login.mvc.js: {e}")
 
         logging.info(
-            "[cliente_fgv.py] Hashes:"
-            f" Module={resultado['moduleVersion'][:8]}..."
-            f" | CF={resultado['api_cloudflare'][:8]}..."
-            f" | Login={resultado['api_login'][:8]}..."
+            "[fgv_client] Hashes:"
+            f" Module={result['moduleVersion'][:8]}..."
+            f" | CF={result['api_cloudflare'][:8]}..."
+            f" | Login={result['api_login'][:8]}..."
         )
-        return resultado
+        return result
 
     @staticmethod
-    def _extrair_estados(html_text: str) -> dict:
+    def _extract_states(html_text: str) -> dict:
         """Extrai campos ocultos exigidos pela arquitetura ASP.NET WebForms."""
         vs = re.search(r'id="__VIEWSTATE"\s+value="(.*?)"', html_text)
         vsg = re.search(r'id="__VIEWSTATEGENERATOR"\s+value="(.*?)"', html_text)
@@ -226,36 +154,36 @@ class ClienteFGVDados:
         }
 
     @staticmethod
-    def _extrair_estados_delta(delta_text: str) -> dict:
+    def _extract_delta_states(delta_text: str) -> dict:
         """Extrai campos ocultos de respostas parciais (AJAX) do UpdatePanel."""
-        estados = {}
-        partes = delta_text.split("|")
+        states = {}
+        parts = delta_text.split("|")
         i = 0
-        while i + 3 < len(partes):
+        while i + 3 < len(parts):
             try:
-                int(partes[i])
+                int(parts[i])
             except ValueError:
                 i += 1
                 continue
 
-            eh_hidden = partes[i + 1] == "hiddenField"
-            campos_validos = (
+            is_hidden = parts[i + 1] == "hiddenField"
+            valid_fields = (
                 "__VIEWSTATE",
                 "__VIEWSTATEGENERATOR",
                 "__EVENTVALIDATION",
             )
 
-            if eh_hidden and partes[i + 2] in campos_validos:
-                estados[partes[i + 2]] = partes[i + 3]
+            if is_hidden and parts[i + 2] in valid_fields:
+                states[parts[i + 2]] = parts[i + 3]
             i += 4
-        return estados
+        return states
 
-    def _autenticar(self, hashes_dinamicas: dict) -> Optional[str]:
+    def _authenticate(self, dynamic_hashes: dict) -> Optional[str]:
         """
         Executa o fluxo de login no portal OutSystems e prepara a sessão
         para transição aos sistemas ASP.NET legados.
         """
-        logging.info("[cliente_fgv.py]  Inicializando autenticação FGV...")
+        logging.info("[fgv_client] Inicializando autenticação FGV...")
         self.session.headers.update(
             {
                 "User-Agent": (
@@ -274,14 +202,13 @@ class ClienteFGVDados:
         self.session.headers.update({"X-CSRFToken": ""})
 
         url_cf = (
-            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/"
-            + hashes_dinamicas["url_cloudflare"]
+            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/" + dynamic_hashes["url_cloudflare"]
         )
 
         payload_cf = {
             "versionInfo": {
-                "moduleVersion": hashes_dinamicas["moduleVersion"],
-                "apiVersion": hashes_dinamicas["api_cloudflare"],
+                "moduleVersion": dynamic_hashes["moduleVersion"],
+                "apiVersion": dynamic_hashes["api_cloudflare"],
             },
             "viewName": "MainFlow.Login",
             "screenData": {
@@ -320,7 +247,7 @@ class ClienteFGVDados:
 
         cookie_nr2users = self.session.cookies.get("nr2Users")
         if not cookie_nr2users:
-            logging.error("[cliente_fgv.py] Falha ao capturar token (nr2Users).")
+            logging.error("[fgv_client] Falha ao capturar token (nr2Users).")
             return None
 
         token_unquoted = urllib.parse.unquote(cookie_nr2users)
@@ -328,13 +255,13 @@ class ClienteFGVDados:
         self.session.headers.update({"X-CSRFToken": token_csrf})
 
         url_login = (
-            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/" + hashes_dinamicas["url_login"]
+            "https://autenticacao-ibre.fgv.br/ProdutosDigitais/" + dynamic_hashes["url_login"]
         )
 
         payload_login = {
             "versionInfo": {
-                "moduleVersion": hashes_dinamicas["moduleVersion"],
-                "apiVersion": hashes_dinamicas["api_login"],
+                "moduleVersion": dynamic_hashes["moduleVersion"],
+                "apiVersion": dynamic_hashes["api_login"],
             },
             "viewName": "MainFlow.Login",
             "screenData": {
@@ -370,14 +297,14 @@ class ClienteFGVDados:
         }
 
         res_login = self.session.post(url_login, json=payload_login)
-        dados_resposta = res_login.json()
+        response_data = res_login.json()
 
-        if not dados_resposta.get("data", {}).get("FLG_Sucesso"):
-            logging.error("[cliente_fgv.py] Credenciais rejeitadas/login falhou.")
+        if not response_data.get("data", {}).get("FLG_Sucesso"):
+            logging.error("[fgv_client] Credenciais rejeitadas/login falhou.")
             return None
 
-        url_redir: str = dados_resposta["data"]["URL_Gratuito"]
-        logging.info("[cliente_fgv.py] Acesso autorizado. Migrando para ASP.NET.")
+        url_redir: str = response_data["data"]["URL_Gratuito"]
+        logging.info("[fgv_client] Acesso autorizado. Migrando para ASP.NET.")
 
         headers_to_remove = [
             "Content-Type",
@@ -394,14 +321,14 @@ class ClienteFGVDados:
 
         return url_redir
 
-    def _buscar_serie_icst(self, url_redir: str) -> bool:
+    def _search_icst_series(self, url_redir: str) -> bool:
         """
         Acessa a página inicial do sistema legado, busca a série 'ICST'
         e a seleciona contornando a validação de eventos do ASP.NET.
         """
 
         res_default = self.session.get(url_redir)
-        estados = self._extrair_estados(res_default.text)
+        states = self._extract_states(res_default.text)
         url_base_default = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/Default.aspx"
 
         headers_ajax = {
@@ -414,7 +341,7 @@ class ClienteFGVDados:
         }
 
         # Fluxo de Busca e Seleção (Bypass Event Validation)
-        logging.info("[cliente_fgv.py] Executando busca paramétrica...")
+        logging.info("[fgv_client] Executando busca paramétrica...")
         res_search = self.session.post(
             url_base_default,
             data={
@@ -423,8 +350,8 @@ class ClienteFGVDados:
                 "ctl00$txtBuscarSeries": "ICST",
                 "__EVENTTARGET": "",
                 "__EVENTARGUMENT": "",
-                "__VIEWSTATE": estados["__VIEWSTATE"],
-                "__VIEWSTATEGENERATOR": estados["__VIEWSTATEGENERATOR"],
+                "__VIEWSTATE": states["__VIEWSTATE"],
+                "__VIEWSTATEGENERATOR": states["__VIEWSTATEGENERATOR"],
                 "__VIEWSTATEENCRYPTED": "",
                 "__ASYNCPOST": "true",
                 "ctl00$butBuscarSeries": "OK",
@@ -432,12 +359,12 @@ class ClienteFGVDados:
             headers=headers_ajax,
         )
 
-        delta_estados = self._extrair_estados_delta(res_search.text)
-        if delta_estados.get("__VIEWSTATE"):
-            estados.update(delta_estados)
+        delta_states = self._extract_delta_states(res_search.text)
+        if delta_states.get("__VIEWSTATE"):
+            states.update(delta_states)
 
         if "ICST" not in res_search.text:
-            logging.error("[cliente_fgv.py] Série ICST não encontrada na busca.")
+            logging.error("[fgv_client] Série ICST não encontrada na busca.")
             return False
 
         self.session.post(
@@ -450,8 +377,8 @@ class ClienteFGVDados:
                 "ctl00$dlsSerie$ctl01$chkSerieEscolhida": "on",
                 "__EVENTTARGET": "",
                 "__EVENTARGUMENT": "",
-                "__VIEWSTATE": estados["__VIEWSTATE"],
-                "__VIEWSTATEGENERATOR": estados["__VIEWSTATEGENERATOR"],
+                "__VIEWSTATE": states["__VIEWSTATE"],
+                "__VIEWSTATEGENERATOR": states["__VIEWSTATEGENERATOR"],
                 "__VIEWSTATEENCRYPTED": "",
                 "__ASYNCPOST": "true",
                 "ctl00$butBuscarSeriesOK": "OK",
@@ -461,33 +388,33 @@ class ClienteFGVDados:
 
         return True
 
-    def _configurar_consulta(self) -> bool:
+    def _configure_query(self) -> bool:
         """
         Navega para a página de consulta, seleciona a opção de série histórica
         e submete o formulário para preparar o grid de visualização.
         """
 
         # Configuração da Visualização
-        logging.info("[cliente_fgv.py] Configurando parâmetros históricos...")
-        url_consulta = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/consulta.aspx"
-        res_consulta = self.session.get(url_consulta)
-        estados = self._extrair_estados(res_consulta.text)
+        logging.info("[fgv_client] Configurando parâmetros históricos...")
+        url_query = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/consulta.aspx"
+        res_consulta = self.session.get(url_query)
+        states = self._extract_states(res_consulta.text)
 
         if "ICST" not in res_consulta.text:
-            logging.error("[cliente_fgv.py] Séries não persistidas na sessão.")
+            logging.error("[fgv_client] Séries não persistidas na sessão.")
             return False
 
-        headers_ajax_consulta = {
+        headers_ajax_query = {
             "X-Requested-With": "XMLHttpRequest",
             "X-MicrosoftAjax": "Delta=true",
             "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
             "Cache-Control": "no-cache",
             "Origin": "https://extra-ibre.fgv.br",
-            "Referer": url_consulta,
+            "Referer": url_query,
         }
 
         res_radio = self.session.post(
-            url_consulta,
+            url_query,
             data={
                 "ctl00$smg": ("ctl00$cphConsulta$updpOpcoes|ctl00$cphConsulta$rbtSerieHistorica"),
                 "ctl00$drpFiltro": "E",
@@ -512,25 +439,25 @@ class ClienteFGVDados:
                 "__EVENTTARGET": "ctl00$cphConsulta$rbtSerieHistorica",
                 "__EVENTARGUMENT": "",
                 "__LASTFOCUS": "",
-                "__VIEWSTATE": estados["__VIEWSTATE"],
-                "__VIEWSTATEGENERATOR": estados["__VIEWSTATEGENERATOR"],
+                "__VIEWSTATE": states["__VIEWSTATE"],
+                "__VIEWSTATEGENERATOR": states["__VIEWSTATEGENERATOR"],
                 "__VIEWSTATEENCRYPTED": "",
                 "__ASYNCPOST": "true",
             },
-            headers=headers_ajax_consulta,
+            headers=headers_ajax_query,
         )
 
-        delta_estados = self._extrair_estados_delta(res_radio.text)
-        if delta_estados.get("__VIEWSTATE"):
-            estados.update(delta_estados)
+        delta_states = self._extract_delta_states(res_radio.text)
+        if delta_states.get("__VIEWSTATE"):
+            states.update(delta_states)
 
         payload_viz = {
             "ctl00$smg": ("ctl00$updpAreaConsulta|ctl00$cphConsulta$butVisualizarResultado"),
             "__EVENTTARGET": "",
             "__EVENTARGUMENT": "",
             "__LASTFOCUS": "",
-            "__VIEWSTATE": estados["__VIEWSTATE"],
-            "__VIEWSTATEGENERATOR": estados["__VIEWSTATEGENERATOR"],
+            "__VIEWSTATE": states["__VIEWSTATE"],
+            "__VIEWSTATEGENERATOR": states["__VIEWSTATEGENERATOR"],
             "__VIEWSTATEENCRYPTED": "",
             "ctl00$drpFiltro": "E",
             "ctl00$txtBuscarSeries": "",
@@ -554,41 +481,41 @@ class ClienteFGVDados:
             "__ASYNCPOST": "true",
             "ctl00$cphConsulta$butVisualizarResultado": "Visualizar e salvar",
         }
-        if estados.get("__EVENTVALIDATION"):
-            payload_viz["__EVENTVALIDATION"] = estados["__EVENTVALIDATION"]
+        if states.get("__EVENTVALIDATION"):
+            payload_viz["__EVENTVALIDATION"] = states["__EVENTVALIDATION"]
 
-        self.session.post(url_consulta, data=payload_viz, headers=headers_ajax_consulta)
+        self.session.post(url_query, data=payload_viz, headers=headers_ajax_query)
 
         return True
 
-    def _baixar_e_parsear_csv(self) -> Optional[list[dict]]:
+    def _download_csv(self) -> Optional[bytes]:
         """
         Acessa o frame de visualização, extrai as variáveis de estado do
-        DevExpress e emite a requisição final para download e parse do CSV.
+        DevExpress e emite a requisição final de download do CSV (bytes originais).
         """
-        url_consulta = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/consulta.aspx"
-        url_visualiza = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/visualizaconsulta.aspx"
+        url_query = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/consulta.aspx"
+        url_view = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/visualizaconsulta.aspx"
 
         # Preparação do grid de download
-        self.session.get(url_visualiza, headers={"Referer": url_consulta})
+        self.session.get(url_view, headers={"Referer": url_query})
 
         url_frame = "https://extra-ibre.fgv.br/IBRE/sitefgvdados/VisualizaConsultaFrame.aspx"
-        res_frame = self.session.get(url_frame, headers={"Referer": url_visualiza})
+        res_frame = self.session.get(url_frame, headers={"Referer": url_view})
 
         if "ICST" not in res_frame.text:
-            logging.error("[cliente_fgv.py] Componentes DevExpress falharam.")
+            logging.error("[fgv_client] Componentes DevExpress falharam.")
             return None
 
-        estados_frame = self._extrair_estados(res_frame.text)
+        frame_states = self._extract_states(res_frame.text)
 
         payload_download = {
             "__EVENTTARGET": "lbtSalvarCSV",
             "__EVENTARGUMENT": "",
-            "__VIEWSTATE": estados_frame["__VIEWSTATE"],
-            "__VIEWSTATEGENERATOR": estados_frame["__VIEWSTATEGENERATOR"],
+            "__VIEWSTATE": frame_states["__VIEWSTATE"],
+            "__VIEWSTATEGENERATOR": frame_states["__VIEWSTATEGENERATOR"],
         }
-        if estados_frame.get("__EVENTVALIDATION"):
-            payload_download["__EVENTVALIDATION"] = estados_frame["__EVENTVALIDATION"]
+        if frame_states.get("__EVENTVALIDATION"):
+            payload_download["__EVENTVALIDATION"] = frame_states["__EVENTVALIDATION"]
 
         # Campos opcionais do DevExpress grid
         regexes_dx = [
@@ -597,13 +524,13 @@ class ClienteFGVDados:
             ("DXCss", r'name="DXCss"[^>]*value="(.*?)"'),
         ]
 
-        for campo, regex in regexes_dx:
+        for field, regex in regexes_dx:
             match = re.search(regex, res_frame.text)
             if match:
-                payload_download[campo] = html.unescape(match.group(1))
+                payload_download[field] = html.unescape(match.group(1))
 
         # Download do CSV
-        logging.info("[cliente_fgv.py] Emitindo solicitação final de extração...")
+        logging.info("[fgv_client] Emitindo solicitação final de extração...")
         res_csv = self.session.post(
             url_frame,
             data=payload_download,
@@ -619,59 +546,30 @@ class ClienteFGVDados:
         is_valid_type = "text/csv" in content_type or "application/octet-stream" in content_type
 
         if res_csv.status_code == 200 and is_valid_type:
-            # Guarda os bytes brutos do CSV p/ a camada raw do data lake (nativo).
-            self.ultimo_conteudo_csv = res_csv.content
-            try:
-                df = pd.read_csv(
-                    io.BytesIO(res_csv.content),
-                    sep=";",
-                    encoding="latin1",
-                    header=0,
-                    names=["mes", "icst_com_ajuste_sazonal", "icst_sem_ajuste_sazonal"],
-                )
+            return res_csv.content
+        logging.error(
+            f"[fgv_client] Falha na extração. HTTP {res_csv.status_code} | Type: {content_type}"
+        )
+        return None
 
-                # Adiciona data de ingestão
-                df["dt_ingest"] = datetime.now().isoformat()
-
-                # Converte valores pd.NA/NaN para None (NULL do Postgres)
-                df = df.where(pd.notnull(df), None)
-
-                registros = df.to_dict(orient="records")
-
-                logging.info(
-                    f"[cliente_fgv.py] Extração concluída. "
-                    f"DataFrame construído com {len(df)} registros."
-                )
-                return registros
-            except Exception as e:
-                logging.error(f"[cliente_fgv.py] Falha no parser do Pandas: {e}")
-                return None
-        else:
-            logging.error(
-                f"[cliente_fgv.py] Falha na extração. "
-                f"HTTP {res_csv.status_code} | Type: {content_type}"
-            )
-            return None
-
-    def fetch_icst_historico(self) -> Optional[list[dict]]:
+    def download_icst_csv(self) -> Optional[bytes]:
         """
         Orquestrador do fluxo completo de autenticação e raspagem do CSV
         da série histórica (ICST).
 
         Returns:
-            Lista de dicionários contendo dados brutos em sucesso,
-            ou None em falha.
+            Os bytes do CSV como a FGV entrega, ou None em falha.
         """
-        hashes_dinamicas = self._obter_versoes_outsystems()
+        dynamic_hashes = self._outsystems_versions()
 
-        url_redir = self._autenticar(hashes_dinamicas)
+        url_redir = self._authenticate(dynamic_hashes)
         if not url_redir:
             return None
 
-        if not self._buscar_serie_icst(url_redir):
+        if not self._search_icst_series(url_redir):
             return None
 
-        if not self._configurar_consulta():
+        if not self._configure_query():
             return None
 
-        return self._baixar_e_parsear_csv()
+        return self._download_csv()

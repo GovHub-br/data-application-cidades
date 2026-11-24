@@ -13,11 +13,9 @@ sources:
     #
     #   - as 5 de `sftp/` chegam por transferência do agente operador; não há
     #     DAG que as escreva, e o campo fica ausente de propósito;
-    #   - as do IBGE saem de `ibge_ingest_dag`, atribuída POR ELIMINAÇÃO: só
-    #     duas DAGs escrevem em `staging/ibge/`, e a outra
-    #     (`pnad_construcao_sidra_ingest_dag`) produz `pnad_construcao_ocupados`
-    #     e `pnad_construcao_rendimento`, que não correspondem a nenhuma source
-    #     declarada. Para confirmar item a item, olhar a Airflow Variable
+    #   - as do IBGE saem de `ibge_ingest_dag`, a única DAG que escreve em
+    #     `staging/ibge/` (a `pnad_construcao_sidra_ingest_dag`, que duplicava a
+    #     PNAD, saiu). Para confirmar item a item, olhar a Airflow Variable
     #     `IBGE_CONFIGURACOES`, que é de onde a DAG lê a lista de datasets.
     #
     # Quem souber a resposta acrescenta a linha; o catálogo passa a mostrar a
@@ -64,13 +62,13 @@ sources:
       - name: fgv_icst
         description: "Índice de Confiança da Construção (FGV), com e sem ajuste sazonal."
         meta:
-          caminho: staging/fgv/icst.parquet
+          caminho: staging/fgv/icst/load_id=*/*.parquet
           dag: icst_ingest_dag
           linhas_minimas: 96   # metade do observado em 2026-08-29 (193)
       - name: fgv_incc_m
         description: "INCC-M: número índice e variações. Usa `...` como marcador de ausente."
         meta:
-          caminho: staging/fgv/incc_m.parquet
+          caminho: staging/fgv/incc_m/load_id=*/*.parquet
           dag: incc_m_ingest_dag
           linhas_minimas: 191   # metade do observado em 2026-08-29 (383)
       - name: fipezap_locacao

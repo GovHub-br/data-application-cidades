@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import pyarrow.parquet as pq
 import pytest
 
-from datalake import contrato
+from plugins.datalake import contract
 from tests.conftest import fresh_import
 
 LOAD = "20261111T050000Z"
@@ -69,12 +69,12 @@ class FakeControl:
 @pytest.fixture
 def sftp_mod(monkeypatch):
     return fresh_import(
-        monkeypatch, "datalake.sftp", "datalake", "mascaramento", MASKING_HMAC_SECRET="s"
+        monkeypatch, "plugins.datalake.sftp", "plugins", "mascaramento", MASKING_HMAC_SECRET="s"
     )
 
 
 def run(mod, files, force=(), **control):
-    from lake_utils import md5_arquivo
+    from scripts.lake_utils import md5_file
 
     events, landed = [], {}
 
@@ -86,7 +86,7 @@ def run(mod, files, force=(), **control):
     ctl = FakeControl(events, **control)
     sftp = FakeSftp(files)
     result = mod.extract(
-        sftp, upload, ctl, LOAD, md5_arquivo, folders=("/home/fabrica/GEFUS",), files=force
+        sftp, upload, ctl, LOAD, md5_file, folders=("/home/fabrica/GEFUS",), files=force
     )
     return result, landed, events, ctl, sftp
 
@@ -155,7 +155,7 @@ def test_zip_members_land_masked_below_the_zip(sftp_mod):
 
 
 def test_a_missing_folder_is_an_error_and_the_others_go_on(sftp_mod):
-    from lake_utils import md5_arquivo
+    from scripts.lake_utils import md5_file
 
     sftp = FakeSftp({"/home/fabrica/GEFUS/X.csv": b"A;B\n1;2\n"})
     real = sftp.list_directory_with_attr
@@ -168,7 +168,7 @@ def test_a_missing_folder_is_an_error_and_the_others_go_on(sftp_mod):
     sftp.list_directory_with_attr = listing
     ctl = FakeControl([])
     folders = ("/home/sumiu", "/home/fabrica/GEFUS")
-    result = sftp_mod.extract(sftp, lambda f, k: None, ctl, LOAD, md5_arquivo, folders=folders)
+    result = sftp_mod.extract(sftp, lambda f, k: None, ctl, LOAD, md5_file, folders=folders)
     [error] = result["errors"]
     assert error.startswith("/home/sumiu: pasta inexistente")
     assert result["keys"] == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/X.csv"]
@@ -226,7 +226,7 @@ def test_dry_run_reads_the_control_but_writes_nothing(sftp_mod):
 # transform and report
 
 
-DS = contrato.Dataset(
+DS = contract.Dataset(
     source="s",
     name="d",
     path="staging/sftp/fabrica/GEFUS/D_*.parquet",
@@ -254,7 +254,7 @@ class FakeLake:
 @pytest.fixture
 def tasks(monkeypatch, tmp_path):
     fresh_import(monkeypatch, "conversao.processamento", "conversao", LAKE_TMPDIR=str(tmp_path))
-    return fresh_import(monkeypatch, "datalake.tasks", "datalake")
+    return fresh_import(monkeypatch, "plugins.datalake.tasks", "plugins")
 
 
 KEY = f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/D_1.csv"
