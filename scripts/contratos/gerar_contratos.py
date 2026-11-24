@@ -2,7 +2,7 @@
 
 Reads what the project already declares (the `lake_staging*` tables of the dbt
 `sources.yml` files) and, from the lake, only the SCHEMA of the newest staging Parquet of
-each table (column names, never values). Writes one contract per source in `contracts/<channel>/`,
+each table (column names, never values). Writes one contract per source in `contracts/snh/<channel>/`,
 with one schema object per dataset.
 
 Run once to create the contracts; after that the contract is the source of truth and is
@@ -39,7 +39,7 @@ SOURCES = [
         re.compile(r"^staging/sftp/fabrica/GEFUS/CadUnico/|^staging/sharepoint/Cadastro Único/"),
         "cadunico",
     ),
-    # GEFUS: one contract per MCMV line (contracts/sftp/<linha>/); new families go in gefus
+    # GEFUS: one contract per MCMV line (contracts/snh/sftp/<linha>/); new families go in gefus
     (
         re.compile(r"^staging/sftp/fabrica/GEFUS/(INT021|INT039|MONT_CONT_PF_FAR)"),
         "sftp_subsidiada_far",
@@ -84,16 +84,16 @@ SOURCE_INFO = {
     ),
     "sharepoint_mcid": ("SharePoint · MCid", "Planilhas do SharePoint do MCid.", "MCid · SNH"),
 }
-# Where each contract lives: contracts/<channel>/<name>.odcs.yaml (one folder per source).
+# Where each contract lives: contracts/snh/<channel>/<name>.odcs.yaml (one folder per source).
 SOURCE_FILES = {
-    "cadunico": "sftp/cadunico",
-    "sftp_gefus": "sftp/gefus",
-    "sftp_subsidiada_far": "sftp/subsidiada/far",
-    "sftp_fundo_social_faixa3": "sftp/fundo_social/faixa3",
-    "sftp_reforma_casa_brasil_reformas": "sftp/reforma_casa_brasil/reformas",
-    "sftp_fgts_geavo": "sftp/fgts/geavo",
-    "sharepoint_canal_fgts": "sharepoint/canal_fgts",
-    "sharepoint_mcid": "sharepoint/mcid",
+    "cadunico": "snh/sftp/cadunico",
+    "sftp_gefus": "snh/sftp/gefus",
+    "sftp_subsidiada_far": "snh/sftp/subsidiada/far",
+    "sftp_fundo_social_faixa3": "snh/sftp/fundo_social/faixa3",
+    "sftp_reforma_casa_brasil_reformas": "snh/sftp/reforma_casa_brasil/reformas",
+    "sftp_fgts_geavo": "snh/sftp/fgts/geavo",
+    "sharepoint_canal_fgts": "snh/sharepoint/canal_fgts",
+    "sharepoint_mcid": "snh/sharepoint/mcid",
 }
 # Categories of the masking rules that are personal data (masked, redacted or kept).
 PERSONAL = {

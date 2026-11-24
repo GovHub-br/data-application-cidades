@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/fgv/indices.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/fgv/indices.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -9,7 +9,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/fgv/indices.odcs.yaml
+    contract: contracts/snh/fgv/indices.odcs.yaml
     owner: FGV-IBRE
   tables:
   - name: icst

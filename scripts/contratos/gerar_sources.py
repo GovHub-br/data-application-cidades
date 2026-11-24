@@ -1,6 +1,6 @@
 """Generate the dbt sources of each contract (ADR-0006: the contract is the source of truth).
 
-`contracts/<source>/<name>.odcs.yaml` (one folder per source) -> `dbt/mcid/models/fontes/<id>.yml`. The generated
+`contracts/snh/<source>/<name>.odcs.yaml` (one folder per source) -> `dbt/mcid/models/fontes/<id>.yml`. The generated
 file is never edited by hand; `tests/test_contratos.py` fails when it is out of date.
 
     uv run python scripts/contratos/gerar_sources.py

@@ -107,7 +107,7 @@ def bacen_credito_pib_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fica
 
     @task
     def transform(key: str) -> dict:
-        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `bacen_credito_imobiliario` (contracts/bacen/)."""
+        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `bacen_credito_imobiliario` (contracts/snh/bacen/)."""
         hook, bucket, prefix = _lake()
         run_id = get_current_context()["run_id"]
         dataset = contract.match(key, contract.load())

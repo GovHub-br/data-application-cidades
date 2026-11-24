@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sharepoint/canal_fgts.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/sharepoint/canal_fgts.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -8,7 +8,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/sharepoint/canal_fgts.odcs.yaml
+    contract: contracts/snh/sharepoint/canal_fgts.odcs.yaml
     owner: CAIXA · Canal FGTS
   tables:
   - name: contratos_fgts

@@ -1,6 +1,6 @@
 """The ODCS contracts of the sources (ADR-0006) as seen by the ingestion.
 
-`load()` reads `contracts/<source>/*.odcs.yaml` at run time (never at DAG parse), `match()` finds
+`load()` reads `contracts/snh/<source>/*.odcs.yaml` at run time (never at DAG parse), `match()` finds
 the dataset of a raw key, and `structural_status()` is the structural drift rule.
 """
 

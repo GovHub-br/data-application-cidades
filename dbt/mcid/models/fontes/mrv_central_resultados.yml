@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/mrv/central_resultados.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/mrv/central_resultados.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -9,7 +9,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/mrv/central_resultados.odcs.yaml
+    contract: contracts/snh/mrv/central_resultados.odcs.yaml
     owner: MRV Engenharia (RI)
   tables:
   - name: lancamentos

@@ -134,7 +134,7 @@ def novo_caged_servicos_especializados_construcao() -> None:  # noqa: C901 - as 
 
     @task
     def transform(keys: list[str]) -> list[dict]:
-        """Cada mês em Parquet local (texto + linhagem), pelo leitor do contrato `novo_caged_construcao` (contracts/novo_caged/)."""
+        """Cada mês em Parquet local (texto + linhagem), pelo leitor do contrato `novo_caged_construcao` (contracts/snh/novo_caged/)."""
         hook, bucket, prefix = _lake()
         run_id, datasets, out = get_current_context()["run_id"], contract.load(), []
         for i, key in enumerate(keys):

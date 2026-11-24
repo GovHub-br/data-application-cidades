@@ -123,7 +123,7 @@ def lancamentos_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dent
 
     @task
     def transform(key: str) -> dict:
-        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `mrv_central_resultados` (contracts/mrv/)."""
+        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `mrv_central_resultados` (contracts/snh/mrv/)."""
         hook, bucket, prefix = _lake()
         run_id = get_current_context()["run_id"]
         dataset = contract.match(key, contract.load())

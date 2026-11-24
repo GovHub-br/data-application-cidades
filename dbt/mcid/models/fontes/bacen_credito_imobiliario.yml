@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/bacen/credito_imobiliario.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/bacen/credito_imobiliario.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -9,7 +9,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/bacen/credito_imobiliario.odcs.yaml
+    contract: contracts/snh/bacen/credito_imobiliario.odcs.yaml
     owner: Banco Central do Brasil
   tables:
   - name: credito_imobiliario_pib

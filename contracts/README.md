@@ -4,23 +4,24 @@ Um contrato diz o que se espera de cada dado que a ingestão recebe: onde ele po
 
 ## Organização
 
-Uma pasta por fonte, a mesma que abre o caminho no lake (`raw/<fonte>/...`). Dentro dela, um arquivo por grupo de dados:
+Uma pasta por secretaria (hoje só a SNH, como em `dags/snh/`) e, dentro dela, uma pasta por fonte, a mesma que abre o caminho no lake (`raw/<fonte>/...`). Dentro da fonte, um arquivo por grupo de dados:
 
 ```
 contracts/
-├── sftp/          remessas da CAIXA no SFTP do MCid, uma subpasta por linha do MCMV
-│   ├── subsidiada/           FAR, FDS (INT059), Rural (INT055/057/065) e dados prioritários da SNH
-│   ├── fgts/                 GEAVO: FGTS PF/PJ e carteiras CCA/CCI
-│   ├── fundo_social/         PMCMV_FAIXA3
-│   ├── reforma_casa_brasil/  PMCMV_REFORMAS
-│   └── cadunico.odcs.yaml    cortes do CadÚnico (servem a várias linhas)
-├── sharepoint/    planilhas do SharePoint do MCid (inclui o Canal FGTS)
-├── ibge/          agregados da API v3
-├── bacen/         SGS e Olinda
-├── fgv/  abecip/  fipe/  novo_caged/  mrv/  infomoney/  tesouro/
+└── snh/
+    ├── sftp/          remessas da CAIXA no SFTP do MCid, uma subpasta por linha do MCMV
+    │   ├── subsidiada/           FAR, FDS (INT059), Rural (INT055/057/065) e dados prioritários da SNH
+    │   ├── fgts/                 GEAVO: FGTS PF/PJ e carteiras CCA/CCI
+    │   ├── fundo_social/         PMCMV_FAIXA3
+    │   ├── reforma_casa_brasil/  PMCMV_REFORMAS
+    │   └── cadunico.odcs.yaml    cortes do CadÚnico (servem a várias linhas)
+    ├── sharepoint/    planilhas do SharePoint do MCid (inclui o Canal FGTS)
+    ├── ibge/          agregados da API v3
+    ├── bacen/         SGS e Olinda
+    ├── fgv/  abecip/  fipe/  novo_caged/  mrv/  infomoney/  tesouro/
 ```
 
-- O arquivo é `contracts/<fonte>/<grupo>.odcs.yaml`, e o `id` do contrato é `<fonte>_<grupo>`. Numa subpasta por linha, o `id` leva a linha: `contracts/sftp/subsidiada/fds.odcs.yaml` é `sftp_subsidiada_fds`.
+- O arquivo é `contracts/snh/<fonte>/<grupo>.odcs.yaml`, e o `id` do contrato é `<fonte>_<grupo>` (a secretaria não entra no id). Numa subpasta por linha, o `id` leva a linha: `contracts/snh/sftp/subsidiada/fds.odcs.yaml` é `sftp_subsidiada_fds`.
 - No SFTP ficam os dados essenciais do MCMV, e os contratos dele se dividem por linha (`sftp/subsidiada/`, `sftp/fgts/`…). A ingestão e os geradores leem as subpastas. Família nova que ainda não tem linha vai para `sftp/gefus.odcs.yaml`.
 
 ## Campos de cada dado (`customProperties`)

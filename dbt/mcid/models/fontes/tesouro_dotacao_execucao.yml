@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/tesouro/dotacao_execucao.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/tesouro/dotacao_execucao.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -9,7 +9,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/tesouro/dotacao_execucao.odcs.yaml
+    contract: contracts/snh/tesouro/dotacao_execucao.odcs.yaml
     owner: Tesouro Nacional (Tesouro Gerencial)
   tables:
   - name: dotacao_execucao_outras_fontes_mcid

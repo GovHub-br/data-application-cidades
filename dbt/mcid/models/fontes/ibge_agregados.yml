@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/ibge/agregados.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/ibge/agregados.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -9,7 +9,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/ibge/agregados.odcs.yaml
+    contract: contracts/snh/ibge/agregados.odcs.yaml
     owner: IBGE
   tables:
   - name: pib_construcao

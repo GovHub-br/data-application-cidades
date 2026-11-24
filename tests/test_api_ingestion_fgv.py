@@ -1,5 +1,5 @@
 """Ingestão das APIs da FGV no modelo novo (ADR-0004): as tasks da icst_ingest_dag, os
-leitores do contrato `fgv_indices` (contracts/fgv/indices.odcs.yaml) e as funções puras de plugins/datalake/api.py.
+leitores do contrato `fgv_indices` (contracts/snh/fgv/indices.odcs.yaml) e as funções puras de plugins/datalake/api.py.
 
 Sem lake, banco nem rede: S3Hook, PostgresHook, Variable e o contexto da task são
 trocados no módulo da DAG, e cada task é chamada pelo seu `python_callable`.

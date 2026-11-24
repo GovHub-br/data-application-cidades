@@ -131,7 +131,7 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
 
     @task
     def transform(key: str) -> dict:
-        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `infomoney_cotacoes` (contracts/infomoney/)."""
+        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `infomoney_cotacoes` (contracts/snh/infomoney/)."""
         hook, bucket, prefix = _lake()
         run_id = get_current_context()["run_id"]
         dataset = contract.match(key, contract.load())

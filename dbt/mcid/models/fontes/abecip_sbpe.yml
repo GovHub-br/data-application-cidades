@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/abecip/sbpe.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/abecip/sbpe.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -9,7 +9,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/abecip/sbpe.odcs.yaml
+    contract: contracts/snh/abecip/sbpe.odcs.yaml
     owner: ABECIP
   tables:
   - name: financiamentos_modalidade

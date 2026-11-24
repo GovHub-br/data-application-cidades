@@ -124,7 +124,7 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
 
     @task
     def transform(keys: list[str]) -> list[dict]:
-        """Cada série em Parquet local (texto + linhagem), pelo leitor do contrato `bacen_credito_imobiliario` (contracts/bacen/)."""
+        """Cada série em Parquet local (texto + linhagem), pelo leitor do contrato `bacen_credito_imobiliario` (contracts/snh/bacen/)."""
         hook, bucket, prefix = _lake()
         run_id, datasets, out = get_current_context()["run_id"], contract.load(), []
         for i, key in enumerate(keys):
