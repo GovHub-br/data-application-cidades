@@ -1,7 +1,7 @@
 # Dados históricos do MCMV
 
 `dados_historicos_dag.py` reconstrói a série histórica do MCMV a partir do dump congelado
-do banco antigo (754 CSVs em `raw/dados_historicos/`, subidos à mão).
+do banco antigo (754 CSVs em `snh/raw/dados_historicos/`, subidos à mão).
 
 ## Onde está o código
 
@@ -27,15 +27,15 @@ do banco antigo (754 CSVs em `raw/dados_historicos/`, subidos à mão).
 - A normalização de nomes de coluna e a correção de mojibake (`nomes.py`) seguem a mesma regra de
   `scripts/lake_utils.py`. Um teste confere a equivalência, e o código não importa de `scripts/`.
 
-## Camadas (todas sob `staging/historico_mcmv/`)
+## Camadas (todas sob `snh/staging/historico_mcmv/`)
 
 | Task | Grava em | O que faz |
 |---|---|---|
 | `conferir_raw` | — | falha se sumiu da raw algum arquivo já convertido (upload pela metade) |
-| `raw_para_staging` | `staging/historico_mcmv/convertido/` | CSV → Parquet um a um, tudo texto; mascara dado pessoal |
-| `staging_para_analytics` | `staging/historico_mcmv/analytics/` | tira vazios, o modelo de 2009 e cópias exatas |
-| `analytics_para_cleansed` | `staging/historico_mcmv/cleansed/<familia>/` | estrutura (2×, cabeçalho, descartes), competência e corte, padronização de formato, duplicatas e versões |
-| `mapear_colunas` | `staging/historico_mcmv/cleansed/_colunas_*` | evidência do grafo de nomes de coluna |
+| `raw_para_staging` | `snh/staging/historico_mcmv/convertido/` | CSV → Parquet um a um, tudo texto; mascara dado pessoal |
+| `staging_para_analytics` | `snh/staging/historico_mcmv/analytics/` | tira vazios, o modelo de 2009 e cópias exatas |
+| `analytics_para_cleansed` | `snh/staging/historico_mcmv/cleansed/<familia>/` | estrutura (2×, cabeçalho, descartes), competência e corte, padronização de formato, duplicatas e versões |
+| `mapear_colunas` | `snh/staging/historico_mcmv/cleansed/_colunas_*` | evidência do grafo de nomes de coluna |
 
 Cada camada é um Asset (`dados_historicos_raw` → `_staging` → `_analytics` → `_cleansed`).
 A DAG dispara por um evento do Asset da raw (criado na UI por quem sobe os arquivos) ou à mão.
@@ -51,7 +51,7 @@ coluna e regra) e `_versoes_substituidas/` (versões trocadas, fora da pasta que
 
 - Conexão `minio_lake` (tipo `aws`, com o `endpoint_url` do MinIO no extra).
 - Os mapas de tratamento **não ficam no repositório**: estão no MinIO, em
-  `staging/historico_mcmv/config/` (`cabecalhos.csv`, `familias.csv`, `de_para_colunas.csv`).
+  `snh/staging/historico_mcmv/config/` (`cabecalhos.csv`, `familias.csv`, `de_para_colunas.csv`).
   No `cabecalhos.csv`, por arquivo:
   - a ação do cabeçalho;
   - os blocos;

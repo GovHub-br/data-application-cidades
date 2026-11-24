@@ -94,7 +94,7 @@ models:
           rag_publication: prohibited
 
     # Dados históricos reconstruídos pela dados_historicos_dag (cleansed por família em
-    # staging/historico_mcmv/cleansed/). O SQL é do DuckDB e roda no pg_duckdb, dentro do
+    # snh/staging/historico_mcmv/cleansed/). O SQL é do DuckDB e roda no pg_duckdb, dentro do
     # envelope duckdb_query().
     dados_historicos_dbt:
       +database: cidades

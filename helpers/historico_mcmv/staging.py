@@ -53,7 +53,7 @@ CAMPOS_MANIFESTO = [
 
 
 def chave_staging(raw_key: str) -> str:
-    """raw/dados_historicos/<nome>.csv -> <staging><nome>.parquet (espelho um a um)."""
+    """snh/raw/dados_historicos/<nome>.csv -> <staging><nome>.parquet (espelho um a um)."""
     if not raw_key.startswith(RAW):
         raise ErroHistorico(f"{raw_key} fora de {RAW}")
     return f"{STAGING}{os.path.splitext(raw_key[len(RAW) :])[0]}.parquet"

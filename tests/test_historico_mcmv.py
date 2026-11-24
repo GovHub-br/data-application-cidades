@@ -150,8 +150,8 @@ def test_normalizacao_de_nomes_e_a_do_lake():
 
 
 def test_chave_espelha_a_raw():
-    assert staging.chave_staging("raw/dados_historicos/bb_2012_entrada.csv") == (
-        "staging/historico_mcmv/convertido/bb_2012_entrada.parquet"
+    assert staging.chave_staging("snh/raw/dados_historicos/bb_2012_entrada.csv") == (
+        "snh/staging/historico_mcmv/convertido/bb_2012_entrada.parquet"
     )
     with pytest.raises(erros.ErroHistorico):
         staging.chave_staging("raw/sftp/x.csv")
@@ -170,14 +170,14 @@ def test_conversao_nao_tira_nenhuma_linha(tmp_path):
         '"Fase I";"CAMARAGIBE; PE";0012\n',
         encoding="utf-8",
     )
-    info = staging.converter_csv(src, tmp_path / "t.parquet", "raw/dados_historicos/t.csv")
+    info = staging.converter_csv(src, tmp_path / "t.parquet", "snh/raw/dados_historicos/t.csv")
     tabela = pq.read_table(tmp_path / "t.parquet").to_pandas()
     assert info["n_linhas"] == len(tabela) == 6
     assert info["encoding"] == "utf-8"
     assert list(tabela.columns) == ["fase_do_pmcmv", "municipio", "valor", *staging.LINHAGEM]
     assert tabela["valor"].tolist() == ["", "1.000,50", "1.000,50", "", "", "0012"]
     assert tabela["municipio"].iloc[-1] == "CAMARAGIBE; PE"
-    assert (tabela["_source_file"] == "raw/dados_historicos/t.csv").all()
+    assert (tabela["_source_file"] == "snh/raw/dados_historicos/t.csv").all()
 
 
 def test_so_cabecalho_e_sem_coluna_viram_parquet_vazio(tmp_path):
@@ -750,7 +750,7 @@ def test_escolhe_a_versao_corrigida_e_tira_o_conteudo_repetido():
     assert por["k_a"][0] == por["k_b"][0] == "tratado"
     assert (
         regs[0]["cleansed_key"]
-        == "staging/historico_mcmv/cleansed/_versoes_substituidas/f/x_20121031.parquet"
+        == "snh/staging/historico_mcmv/cleansed/_versoes_substituidas/f/x_20121031.parquet"
     )
 
 
@@ -855,12 +855,12 @@ def test_log_do_cleansed_pasta_da_familia():
 def test_prefixo_das_camadas_pode_ser_desviado(monkeypatch):
     import importlib
 
-    assert layout.BASE == "staging/historico_mcmv/"  # o padrão é o oficial
+    assert layout.BASE == "snh/staging/historico_mcmv/"  # o padrão é o oficial
     try:
         monkeypatch.setenv("HISTORICO_MCMV_PREFIXO", "tests/historico_mcmv/")
         importlib.reload(layout)
         assert layout.CLEANSED == "tests/historico_mcmv/cleansed/"
-        assert layout.RAW == "raw/dados_historicos/"  # a raw não muda
+        assert layout.RAW == "snh/raw/dados_historicos/"  # a raw não muda
         monkeypatch.setenv("HISTORICO_MCMV_PREFIXO", "tests/sem_barra")
         with pytest.raises(ValueError, match="terminar em"):
             importlib.reload(layout)

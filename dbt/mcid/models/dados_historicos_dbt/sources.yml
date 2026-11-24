@@ -5,7 +5,7 @@ sources:
     description: >
       Cleansed dos dados históricos do MCMV (dump do banco antigo, 2009 a 2019, e o painel
       SNH de 2024 a 2026), publicado pela dados_historicos_dag em
-      staging/historico_mcmv/cleansed/, uma pasta por família. O dado pessoal já chega
+      snh/staging/historico_mcmv/cleansed/, uma pasta por família. O dado pessoal já chega
       mascarado da staging.
     schema: staging
     meta:
@@ -20,232 +20,232 @@ sources:
       - name: cleansed_log
         description: Uma linha por saída do cleansed, com competência, corte e status.
         meta:
-          caminho: staging/historico_mcmv/cleansed/_cleansed_log.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/_cleansed_log.parquet
           dag: dados_historicos_dag
       - name: colunas_evolucao
         description: Grafo de nomes (task mapear_colunas), cada coluna de cada família com o período e os layouts em que aparece.
         meta:
-          caminho: staging/historico_mcmv/cleansed/_colunas_evolucao.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/_colunas_evolucao.parquet
           dag: dados_historicos_dag
       - name: colunas_candidatos
         description: Grafo de nomes (task mapear_colunas), pares de colunas que trocam de nome numa família, com as notas de valor, nome e formato.
         meta:
-          caminho: staging/historico_mcmv/cleansed/_colunas_candidatos.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/_colunas_candidatos.parquet
           dag: dados_historicos_dag
       - name: colunas_conceitos
         description: Grafo de nomes (task mapear_colunas), o nome canônico que a task propõe para cada coluna de cada família.
         meta:
-          caminho: staging/historico_mcmv/cleansed/_colunas_conceitos.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/_colunas_conceitos.parquet
           dag: dados_historicos_dag
       - name: balanco_min_planejamento_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/balanco_min_planejamento_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/balanco_min_planejamento_bb/*.parquet
           dag: dados_historicos_dag
       - name: base_pf_pj_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/base_pf_pj_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/base_pf_pj_caixa/*.parquet
           dag: dados_historicos_dag
       - name: bext
         meta:
-          caminho: staging/historico_mcmv/cleansed/bext/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/bext/*.parquet
           dag: dados_historicos_dag
       - name: bext_agregado_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/bext_agregado_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/bext_agregado_caixa/*.parquet
           dag: dados_historicos_dag
       - name: contratacao_caixa_2010
         meta:
-          caminho: staging/historico_mcmv/cleansed/contratacao_caixa_2010/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/contratacao_caixa_2010/*.parquet
           dag: dados_historicos_dag
       - name: contratacao_pf_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/contratacao_pf_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/contratacao_pf_caixa/*.parquet
           dag: dados_historicos_dag
       - name: contratacao_pf_total_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/contratacao_pf_total_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/contratacao_pf_total_caixa/*.parquet
           dag: dados_historicos_dag
       - name: contratacao_uf_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/contratacao_uf_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/contratacao_uf_caixa/*.parquet
           dag: dados_historicos_dag
       - name: dados_bb_2011
         meta:
-          caminho: staging/historico_mcmv/cleansed/dados_bb_2011/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/dados_bb_2011/*.parquet
           dag: dados_historicos_dag
       - name: datas_entregas_pj_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/datas_entregas_pj_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/datas_entregas_pj_caixa/*.parquet
           dag: dados_historicos_dag
       - name: demanda_far_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/demanda_far_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/demanda_far_caixa/*.parquet
           dag: dados_historicos_dag
       - name: desligados_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/desligados_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/desligados_caixa/*.parquet
           dag: dados_historicos_dag
       - name: empreendimentos_contratados_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/empreendimentos_contratados_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/empreendimentos_contratados_caixa/*.parquet
           dag: dados_historicos_dag
       - name: entrada_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/entrada_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/entrada_bb/*.parquet
           dag: dados_historicos_dag
       - name: entrada_bb_aux_far
         meta:
-          caminho: staging/historico_mcmv/cleansed/entrada_bb_aux_far/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/entrada_bb_aux_far/*.parquet
           dag: dados_historicos_dag
       - name: entrega_bb_pf_pf
         meta:
-          caminho: staging/historico_mcmv/cleansed/entrega_bb_pf_pf/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/entrega_bb_pf_pf/*.parquet
           dag: dados_historicos_dag
       - name: entrega_bb_pj
         meta:
-          caminho: staging/historico_mcmv/cleansed/entrega_bb_pj/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/entrega_bb_pj/*.parquet
           dag: dados_historicos_dag
       - name: entrega_bb_pj_pf
         meta:
-          caminho: staging/historico_mcmv/cleansed/entrega_bb_pj_pf/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/entrega_bb_pj_pf/*.parquet
           dag: dados_historicos_dag
       - name: int040_far_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/int040_far_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/int040_far_caixa/*.parquet
           dag: dados_historicos_dag
       - name: int054_far_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/int054_far_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/int054_far_bb/*.parquet
           dag: dados_historicos_dag
       - name: municipios_contratados_regiao_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/municipios_contratados_regiao_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/municipios_contratados_regiao_caixa/*.parquet
           dag: dados_historicos_dag
       - name: municipios_contratados_uf_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/municipios_contratados_uf_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/municipios_contratados_uf_caixa/*.parquet
           dag: dados_historicos_dag
       - name: pmcmv_parte2_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/pmcmv_parte2_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/pmcmv_parte2_caixa/*.parquet
           dag: dados_historicos_dag
       - name: pnhr_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/pnhr_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/pnhr_bb/*.parquet
           dag: dados_historicos_dag
       - name: presidencia_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/presidencia_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/presidencia_caixa/*.parquet
           dag: dados_historicos_dag
       - name: previsao_entrega_far_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/previsao_entrega_far_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/previsao_entrega_far_caixa/*.parquet
           dag: dados_historicos_dag
       - name: propostas_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/propostas_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/propostas_bb/*.parquet
           dag: dados_historicos_dag
       - name: propostas_contratadas_caixa_2009
         meta:
-          caminho: staging/historico_mcmv/cleansed/propostas_contratadas_caixa_2009/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/propostas_contratadas_caixa_2009/*.parquet
           dag: dados_historicos_dag
       - name: propostas_far_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/propostas_far_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/propostas_far_caixa/*.parquet
           dag: dados_historicos_dag
       - name: propostas_recebidas_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/propostas_recebidas_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/propostas_recebidas_caixa/*.parquet
           dag: dados_historicos_dag
       - name: propostas_recebidas_caixa_2009
         meta:
-          caminho: staging/historico_mcmv/cleansed/propostas_recebidas_caixa_2009/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/propostas_recebidas_caixa_2009/*.parquet
           dag: dados_historicos_dag
       - name: relatorio_cidades_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/relatorio_cidades_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/relatorio_cidades_caixa/*.parquet
           dag: dados_historicos_dag
       - name: relatorio_cidades_entregas_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/relatorio_cidades_entregas_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/relatorio_cidades_entregas_caixa/*.parquet
           dag: dados_historicos_dag
       - name: relatorio_executivo_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/relatorio_executivo_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/relatorio_executivo_caixa/*.parquet
           dag: dados_historicos_dag
       - name: relatorio_executivo_municipio_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/relatorio_executivo_municipio_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/relatorio_executivo_municipio_caixa/*.parquet
           dag: dados_historicos_dag
       - name: relatorio_semanal_bb_publico
         meta:
-          caminho: staging/historico_mcmv/cleansed/relatorio_semanal_bb_publico/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/relatorio_semanal_bb_publico/*.parquet
           dag: dados_historicos_dag
       - name: relatorio_semanal_bb_uf
         meta:
-          caminho: staging/historico_mcmv/cleansed/relatorio_semanal_bb_uf/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/relatorio_semanal_bb_uf/*.parquet
           dag: dados_historicos_dag
       - name: rural_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/rural_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/rural_caixa/*.parquet
           dag: dados_historicos_dag
       - name: snh_af_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/snh_af_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/snh_af_bb/*.parquet
           dag: dados_historicos_dag
       - name: snh_af_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/snh_af_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/snh_af_caixa/*.parquet
           dag: dados_historicos_dag
       - name: snh_entregas_af_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/snh_entregas_af_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/snh_entregas_af_bb/*.parquet
           dag: dados_historicos_dag
       - name: snh_entregas_af_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/snh_entregas_af_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/snh_entregas_af_caixa/*.parquet
           dag: dados_historicos_dag
       - name: tab_andamento_obras_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_andamento_obras_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_andamento_obras_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_arquivos_dados_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_arquivos_dados_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_arquivos_dados_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_beneficiarios_fgts_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_beneficiarios_fgts_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_beneficiarios_fgts_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_caracterizacoes_entornos_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_caracterizacoes_entornos_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_caracterizacoes_entornos_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_contratos_pf_fgts_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_contratos_pf_fgts_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_contratos_pf_fgts_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_contratos_pj_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_contratos_pj_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_contratos_pj_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_empreendimentos_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_empreendimentos_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_empreendimentos_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_operacoes_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_operacoes_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_operacoes_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_proponentes_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_proponentes_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_proponentes_bb/*.parquet
           dag: dados_historicos_dag
       - name: tab_unidades_concluidas_bb
         meta:
-          caminho: staging/historico_mcmv/cleansed/tab_unidades_concluidas_bb/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/tab_unidades_concluidas_bb/*.parquet
           dag: dados_historicos_dag
       - name: validacao_caixa
         meta:
-          caminho: staging/historico_mcmv/cleansed/validacao_caixa/*.parquet
+          caminho: snh/staging/historico_mcmv/cleansed/validacao_caixa/*.parquet
           dag: dados_historicos_dag

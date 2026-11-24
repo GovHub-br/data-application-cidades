@@ -3,12 +3,14 @@
 import os
 
 BUCKET = "data-lake-mcid"
-RAW = "raw/dados_historicos/"  # o dump congelado, subido à mão (o Asset de entrada)
+# Raiz da SNH no bucket (snh/, LAKE_ROOT em plugins/datalake/keys.py no #312), o mesmo
+# recorte de dags/snh/.
+RAW = "snh/raw/dados_historicos/"  # o dump congelado, subido à mão (o Asset de entrada)
 
-# Tudo sob staging/historico_mcmv/: staging/dados_historicos/ é da conversão antiga do dump.
+# Tudo sob snh/staging/historico_mcmv/: snh/staging/dados_historicos/ é da conversão antiga do dump.
 # HISTORICO_MCMV_PREFIXO desvia as camadas (não a raw) para outro prefixo, para rodar a DAG
 # sem tocar nas oficiais (ex.: tests/historico_mcmv/, com os mapas copiados em config/).
-BASE = os.environ.get("HISTORICO_MCMV_PREFIXO", "staging/historico_mcmv/")
+BASE = os.environ.get("HISTORICO_MCMV_PREFIXO", "snh/staging/historico_mcmv/")
 if not BASE.endswith("/"):
     raise ValueError(f"HISTORICO_MCMV_PREFIXO precisa terminar em '/': {BASE!r}")
 STAGING = BASE + "convertido/"

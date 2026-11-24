@@ -1,11 +1,11 @@
-"""Dados históricos do MCMV: raw/dados_historicos/ -> staging -> analytics -> cleansed.
+"""Dados históricos do MCMV: snh/raw/dados_historicos/ -> staging -> analytics -> cleansed.
 
 A raw é o dump congelado do banco antigo (754 CSVs `;`), subido à mão e completo no MinIO.
 Ela é o Asset `dados_historicos_raw`: quem sobe cria um evento do Asset na UI (ou dispara
 a DAG direto). Cada camada desta DAG é um Asset também, para quem vier depois (a bronze)
 agendar por ele.
 
-Camadas, todas sob `staging/historico_mcmv/` (`convertido/`, `analytics/`, `cleansed/`):
+Camadas, todas sob `snh/staging/historico_mcmv/` (`convertido/`, `analytics/`, `cleansed/`):
 - **staging**: cada CSV vira Parquet, um a um, tudo em texto, sem tocar no conteúdo, menos
   o dado pessoal, que é mascarado aqui (a raw fica como foi subida);
 - **analytics**: só os arquivos de conteúdo próprio (fora: vazios, o modelo de 2009 que o
@@ -24,7 +24,7 @@ O tratamento está em `helpers/historico_mcmv/` (funções puras, sem S3). Esta 
 grava no lake, pelo S3Hook, e encadeia as etapas.
 
 Os mapas que dizem como tratar cada arquivo NÃO ficam no repositório: ficam no MinIO, em
-`staging/historico_mcmv/config/` (`cabecalhos.csv`: cabeçalho, blocos e colunas coladas
+`snh/staging/historico_mcmv/config/` (`cabecalhos.csv`: cabeçalho, blocos e colunas coladas
 por "|"; `familias.csv`: a família de cada saída).
 
 Conexão: `minio_lake`, do tipo `aws`, com o `endpoint_url` do MinIO no extra, por exemplo

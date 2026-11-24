@@ -93,20 +93,20 @@ FAMILIAS = (
 def _lake_raw():
     return S3Memoria(
         {
-            "raw/dados_historicos/bb_2013_06_junho_x_entrada_20130618.csv": _csv(
+            "snh/raw/dados_historicos/bb_2013_06_junho_x_entrada_20130618.csv": _csv(
                 # cabeçalho do CSV, depois tudo 2x, inclusive uma cópia da linha de cabeçalho
                 [["UF", "UH"], ["SP", "10"], ["UF", "UH"], ["UF", "UH"], ["SP", "10"]]
             ),
-            "raw/dados_historicos/bb_2013_06_junho_x_controle.csv": _csv(
+            "snh/raw/dados_historicos/bb_2013_06_junho_x_controle.csv": _csv(
                 [
                     ["datarespdata"],
                     ["2013-06-17|FULANO|2013-06-17"],
                     ["2013-06-17|FULANO|2013-06-17"],
                 ]
             ),
-            "staging/historico_mcmv/config/cabecalhos.csv": MAPA_VAZIO
+            "snh/staging/historico_mcmv/config/cabecalhos.csv": MAPA_VAZIO
             + b"bb_2013_06_junho_x_controle,,dividir,,,data|resp_arq|data_pos_arq,colado\n",
-            "staging/historico_mcmv/config/familias.csv": FAMILIAS,
+            "snh/staging/historico_mcmv/config/familias.csv": FAMILIAS,
         }
     )
 
@@ -130,9 +130,9 @@ def test_dag_espera_a_raw_e_publica_cada_camada(dh):
     assert outlets["analytics_para_cleansed"] == ["dados_historicos_cleansed"]
     for anterior, seguinte in zip(d.task_ids, d.task_ids[1:]):
         assert d.get_task(anterior).downstream_task_ids == {seguinte}
-    # tudo grava sob staging/historico_mcmv/, nunca na conversão antiga nem em tests/
+    # tudo grava sob snh/staging/historico_mcmv/, nunca na conversão antiga nem em tests/
     for prefixo in (layout.STAGING, layout.ANALYTICS, layout.CLEANSED, layout.CONFIG):
-        assert prefixo.startswith("staging/historico_mcmv/")
+        assert prefixo.startswith("snh/staging/historico_mcmv/")
 
 
 def test_staging_mascara_retoma_e_confere_a_raw(dh, tmp_path):
@@ -141,7 +141,7 @@ def test_staging_mascara_retoma_e_confere_a_raw(dh, tmp_path):
     controle = lake.tabela(layout.STAGING + "bb_2013_06_junho_x_controle.parquet").column(0)
     assert set(controle.to_pylist()) == {"2013-06-17|***|2013-06-17"}
     manifesto = staging.ler_manifesto(lake.texto(layout.MANIFESTO))
-    assert manifesto["raw/dados_historicos/bb_2013_06_junho_x_controle.csv"][
+    assert manifesto["snh/raw/dados_historicos/bb_2013_06_junho_x_controle.csv"][
         "colunas_mascaradas"
     ] == ("datarespdata:resp_arq")
     # segunda execução: nada mudou na raw, nada é reconvertido; com filtro e forcar, só um
@@ -152,14 +152,14 @@ def test_staging_mascara_retoma_e_confere_a_raw(dh, tmp_path):
         "erro": 0,
     }
     assert dh.conferir_raw_contra_manifesto(lake) == {"arquivos": 2, "novos": 0, "alterados": 0}
-    del lake.objetos["raw/dados_historicos/bb_2013_06_junho_x_controle.csv"]
+    del lake.objetos["snh/raw/dados_historicos/bb_2013_06_junho_x_controle.csv"]
     with pytest.raises(erros.ErroHistorico, match="sumiram"):
         dh.conferir_raw_contra_manifesto(lake)
 
 
 def test_staging_ignora_arquivo_fora_e_tira_do_manifesto(dh, tmp_path):
     lake = _lake_raw()
-    fora = "raw/dados_historicos/bb_2015_08_agosto_loginfesta.csv"
+    fora = "snh/raw/dados_historicos/bb_2015_08_agosto_loginfesta.csv"
     lake.objetos[fora] = _csv([["login", "senha"], ["x", "1234"]])
     # manifesto de antes da exclusão: o arquivo já tinha sido convertido
     staging.escrever_manifesto([{"raw_key": fora, "status": "ok"}], tmp_path / "m.csv")
@@ -234,7 +234,7 @@ def test_cleansed_por_familia_com_log_e_descartes(dh, tmp_path):
 def test_cleansed_padroniza_e_guarda_a_versao_substituida(dh, tmp_path):
     lake = _lake_raw()
     # a mesma entrada, numa versão "_v2" que só difere no ".0"
-    lake.objetos["raw/dados_historicos/bb_2013_06_junho_x_entrada_20130618_v2.csv"] = _csv(
+    lake.objetos["snh/raw/dados_historicos/bb_2013_06_junho_x_entrada_20130618_v2.csv"] = _csv(
         [["UF", "UH"], ["SP", "10.0"], ["UF", "UH"], ["UF", "UH"], ["SP", "10.0"]]
     )
     lake.objetos[layout.MAPA_FAMILIAS] = FAMILIAS.replace(b"_entrada_,", b"_entrada_\\d+(_v2)?$,")
