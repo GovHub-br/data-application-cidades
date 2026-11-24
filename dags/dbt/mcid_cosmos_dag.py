@@ -5,7 +5,7 @@ Um DAG, DOIS task groups — porque o projeto tem dois dialetos de SQL:
 - far_dbt / fds_dbt / rural_dbt / conjuntura_dbt / metadata e as seeds são SQL de
   Postgres. Usam as UDFs `normalize_apf` / `parse_date_br` / `f_corrigir_mojibake`,
   criadas pelo `create_udfs()` com CREATE FUNCTION no on-run-start.
-- mcmv_historico_dbt, reforma_casa_brasil_dbt e linha_financiada_dbt são SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
+- reforma_casa_brasil_dbt e linha_financiada_dbt são SQL NATIVO do DuckDB: `try_cast(x as tipo)`,
   `union_by_name = true`, `describe select * from read_parquet(...)`. O parser do
   Postgres rejeita tudo isso — não é um bug do modelo, é outro motor.
 
@@ -16,11 +16,10 @@ disso, cada task group carrega seu próprio ProfileConfig:
     prod_duckdb   -> motor DuckDB no processo do dbt, lendo o MinIO e escrevendo
                      no Postgres atachado como catálogo `cidades`
 
-A ordem importa: o histórico faz `ref('prata_fds_dim_empreendimento')`, que é
-materializada pelo grupo do Postgres. Como ela fica FORA da seleção do segundo
-grupo, o dbt só resolve a referência — não tenta reconstruí-la com as UDFs que
-não existem no DuckDB. As seeds também são carregadas no primeiro grupo e lidas
-pelo segundo através do catálogo atachado.
+A ordem importa: as seeds são carregadas no primeiro grupo e lidas pelo segundo
+através do catálogo atachado. (A série histórica do MCMV não está mais aqui: é a
+silver `dados_historicos_dbt`, SQL de DuckDB dentro do envelope duckdb_query(),
+que roda no grupo do Postgres.)
 
 Pré-requisitos no ambiente do Airflow (além do dbt-postgres):
 - `dbt-duckdb` instalado, compatível com o dbt-core (hoje 1.11, com dbt-core 1.12);

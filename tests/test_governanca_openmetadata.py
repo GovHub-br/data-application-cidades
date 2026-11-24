@@ -1125,17 +1125,22 @@ def _tabela_da_ouro(nome: str) -> dict:
 def _produtos_gravados(
     monkeypatch, catalogo: dict[str, str], tabelas: list[str]
 ) -> dict[str, list[str]]:
-    """Roda a catalogação com conjuntura, mcmv_historico e reloginho na ouro.
+    """Roda a catalogação com conjuntura e dois produtos sem prefixo na ouro.
 
+    `mcmv_historico` e `reloginho` são produtos de mentira, sem prefixo de tabela (os
+    reais saíram do repositório): o que importa é o caso do produto sem trava de nome.
     Devolve, por tabela, os produtos gravados nela, na ordem do laço.
     """
     monkeypatch.setattr(gov, "produtos_por_modelo", lambda: catalogo)
     monkeypatch.setattr(gov, "camadas_por_modelo", lambda: {})
-    escolhidos = ("conjuntura", "mcmv_historico", "reloginho")
+    conjuntura = next(p for p in DOMINIOS["produtos"] if p["name"] == "conjuntura")
+    sem_prefixo = {k: v for k, v in conjuntura.items() if k not in ("prefixos_de_tabela", "termos")}
     dominios = dict(
         DOMINIOS,
-        produtos=[
-            dict(p, schemas=["ouro"]) for p in DOMINIOS["produtos"] if p["name"] in escolhidos
+        produtos=[dict(conjuntura, schemas=["ouro"])]
+        + [
+            dict(sem_prefixo, name=n, display_name=n, schemas=["ouro"])
+            for n in ("mcmv_historico", "reloginho")
         ],
     )
     om = _OMDoLaco([_tabela_da_ouro(nome) for nome in tabelas])
