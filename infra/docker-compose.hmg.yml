@@ -1,0 +1,240 @@
+# Compose do ambiente de HOMOLOGACAO (VM mcid-airflow).
+# Para desenvolvimento local, use o docker-compose.yml.
+#
+# Subida:
+#   cd infra
+#   docker compose -f docker-compose.hmg.yml --env-file ../.env up -d
+#
+# Diferencas em relacao ao compose de dev:
+#   - O codigo (dags, plugins, helpers, dbt, scripts) vem do GitHub via git-sync,
+#     e nao do clone local. Publicar = merge na branch GITSYNC_REF.
+#   - Um container por componente do Airflow, em vez do `standalone`, que forca o
+#     SimpleAuthManager e impede o login com o GitHub.
+#   - Sem Superset e Jupyter.
+#   - Postgres de metadados sem porta exposta no host.
+#
+# O nome do projeto e mantido igual ao do dev para reaproveitar os volumes
+# ja existentes na VM (postgres-db, lake_tmp).
+name: data-application-cidades
+
+x-airflow-common: &airflow-common
+  image: data-application-cidades-airflow
+  build:
+    context: ..
+    dockerfile: infra/docker/airflow/Dockerfile
+  user: "${AIRFLOW_UID:-50000}:0"
+  env_file:
+    - ../.env
+  volumes:
+    - ./airflow/airflow.cfg:${AIRFLOW_HOME}/airflow.cfg
+    # Codigo do projeto vem do git-sync, montado no mesmo caminho (/git) usado
+    # pelo container do git-sync para que o link simbolico "repo" resolva.
+    - dags-repo:/git
+    # Arquivos de infraestrutura continuam vindo do clone local da VM.
+    # Mudancas no profiles.yml exigem `git pull` na VM.
+    - ../dbt/mcid/profiles.yml:${AIRFLOW_HOME}/.dbt/profiles.yml
+    # O api-server le os logs das tasks que o scheduler escreveu.
+    - airflow_logs:/opt/airflow/logs
+    # Temporários dos scripts (arquivos de GBs): NÃO usar /tmp (tmpfs em RAM)
+    - lake_tmp:/opt/airflow/lake_tmp
+  depends_on:
+    airflow-init:
+      condition: service_completed_successfully
+  restart: always
+  environment: &airflow-common-env
+    AIRFLOW__CORE__DEFAULT_TIMEZONE: 'America/Sao_Paulo'
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:?defina no .env}
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__TEST_CONNECTION: Enabled
+    AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT: '300'
+    # No Airflow 3 a opcao saiu de [core] para [dag_processor]. E o teto do
+    # dagbag_import_timeout, por isso fica acima dele.
+    AIRFLOW__DAG_PROCESSOR__DAG_FILE_PROCESSOR_TIMEOUT: '360'
+    # Intervalo para o dag-processor detectar arquivos novos, alinhado ao
+    # GITSYNC_PERIOD (padrao do Airflow 3 e 300s).
+    AIRFLOW__DAG_PROCESSOR__REFRESH_INTERVAL: '60'
+    # Quem executa a task (o scheduler, no LocalExecutor) fala com o api-server
+    # por esta URL.
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow:8080/execution/
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    # Login com a conta do GitHub (OAuth App). Mudanca no webserver_config.py so
+    # vale depois de reiniciar o servico airflow.
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__FAB__CONFIG_FILE: /git/repo/infra/airflow/webserver_config.py
+    # Menor que a vida do token da UI (24 h): sem isso a sessao renova o token
+    # sozinha, e quem saiu do time continua entrando sem passar pelo GitHub.
+    AIRFLOW__FAB__SESSION_LIFETIME_MINUTES: '60'
+    GITHUB_OAUTH_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID:?defina no .env}
+    GITHUB_OAUTH_CLIENT_SECRET: ${GITHUB_OAUTH_CLIENT_SECRET:?defina no .env}
+    # A URL que os devs abrem no navegador, a mesma da callback do OAuth App.
+    AIRFLOW__API__BASE_URL: ${AIRFLOW__API__BASE_URL:?defina no .env}
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres/airflow
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_RETRY: 'false'
+    AIRFLOW__EMAIL__DEFAULT_EMAIL_ON_FAILURE: 'false'
+    AIRFLOW__API__INSTANCE_NAME: "Cidades - Homologação"
+    # Sem valor padrao de proposito: quem conhece a chave forja um token de Admin
+    # e entra sem passar pelo GitHub. Iguais em todos os containers.
+    AIRFLOW__API__SECRET_KEY: ${AIRFLOW__API__SECRET_KEY:?defina no .env}
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:?defina no .env}
+    PYTHONPATH: "/git/repo/dags:/git/repo/plugins:/git/repo/helpers:/git/repo/scripts"
+    # Temporários dos scripts do data lake — sobrescreve os caminhos de host do .env
+    LAKE_TMPDIR: /opt/airflow/lake_tmp
+    MASKING_TMPDIR: /opt/airflow/lake_tmp
+    # Desliga os artefatos locais dos scripts (log em arquivo, preview).
+    # Logs vão p/ stderr (UI).
+    LAKE_LOCAL_ARTIFACTS: "0"
+    # Plugins sao carregados so na inicializacao: mudancas neles exigem restart
+    # dos containers, mesmo com o git-sync atualizando o codigo.
+    AIRFLOW__CORE__PLUGINS_FOLDER: /git/repo/plugins
+    AIRFLOW__CORE__DAGS_FOLDER: /git/repo/dags
+    AIRFLOW_REPO_BASE: /git/repo
+    # A ENV AIRFLOW_REPO_BASE É IMPORTANTE PARA SINCRONIZAR COM O SISTEMA DE PASTAS
+    # DO AIRFLOW EM HOMOLOG E PROD, ELES POSSUEM UMA ESTRUTURA DE PASTAS DIFERENTE
+    # USAR ESSA ENV NOS CÓDIGOS PARA NÃO HAVER CONFLITOS
+
+services:
+  # Ajusta o dono dos volumes (criados root:root, sem escrita p/ o usuário do
+  # container) para o UID do airflow. Roda uma vez e sai antes do airflow subir.
+  volumes-init:
+    image: data-application-cidades-airflow
+    build:
+      context: ..
+      dockerfile: infra/docker/airflow/Dockerfile
+    user: "0:0"
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - "mkdir -p /opt/airflow/lake_tmp && chown -R ${AIRFLOW_UID:-50000}:0 /opt/airflow/lake_tmp /opt/airflow/logs && chmod -R 775 /opt/airflow/lake_tmp /opt/airflow/logs"
+    volumes:
+      - lake_tmp:/opt/airflow/lake_tmp
+      - airflow_logs:/opt/airflow/logs
+    restart: "no"
+
+  # Sincroniza o repositorio no volume dags-repo. O Airflow le o codigo de
+  # /git/repo, um link simbolico trocado de forma atomica a cada atualizacao.
+  git-sync:
+    image: registry.k8s.io/git-sync/git-sync:v4.4.0
+    user: "0:0"
+    restart: always
+    environment:
+      GITSYNC_REPO: https://github.com/GovHub-br/data-application-cidades.git
+      # Trocar para a branch de homologacao quando ela existir
+      GITSYNC_REF: main
+      GITSYNC_ROOT: /git
+      GITSYNC_LINK: repo
+      GITSYNC_PERIOD: 60s
+      GITSYNC_DEPTH: "1"
+      # O Airflow roda com gid 0: arquivos graváveis pelo grupo permitem que o
+      # dbt escreva target/ dentro do projeto, se precisar.
+      GITSYNC_GROUP_WRITE: "true"
+    volumes:
+      - dags-repo:/git
+
+  # Espera o webserver_config.py do git-sync (sem ele o FAB sobe com login por
+  # senha, calado), migra o banco de metadados e sai.
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - 'timeout 120 bash -c "until [ -f $$AIRFLOW__FAB__CONFIG_FILE ]; do sleep 2; done" && exec /entrypoint version'
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      volumes-init:
+        condition: service_completed_successfully
+      git-sync:
+        condition: service_started
+
+  # UI e API. O nome e o endereco que o OpenMetadata usa (http://airflow:8080).
+  airflow:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 10s
+      timeout: 60s
+      start_period: 60s
+      retries: 5
+
+  # Agenda e executa as tasks (LocalExecutor).
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 30s
+      start_period: 60s
+      retries: 5
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 30s
+      start_period: 60s
+      retries: 5
+
+  # Apaga os logs com mais de 15 dias, com o script da imagem oficial: o volume
+  # airflow_logs sobrevive ao container e cresceria ate encher o disco.
+  airflow-log-groomer:
+    image: data-application-cidades-airflow
+    build:
+      context: ..
+      dockerfile: infra/docker/airflow/Dockerfile
+    user: "${AIRFLOW_UID:-50000}:0"
+    entrypoint: ["/usr/bin/dumb-init", "--", "bash", "/clean-logs"]
+    environment:
+      AIRFLOW__LOG_RETENTION_DAYS: '15'
+    volumes:
+      - airflow_logs:/opt/airflow/logs
+    depends_on:
+      volumes-init:
+        condition: service_completed_successfully
+    restart: always
+
+  # Postgres de metadados do Airflow. Sem porta exposta no host: acessivel so
+  # pela rede interna do compose. Sera substituido pelo banco externo.
+  postgres:
+    image: postgres:17-alpine
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+      - ./docker/postgres/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  postgres-db:
+  airflow_logs:
+  lake_tmp:
+  dags-repo:
