@@ -42,3 +42,28 @@ schema:
     logicalType: string
   - name: valor
     logicalType: string
+- name: financiamentos_imobiliarios
+  physicalName: financiamentos_imobiliarios
+  description: Séries do SGS listadas na Variable BACEN_SERIES (concessões, juros e inadimplência PF/PJ),
+    um arquivo por série; o nome do arquivo é o tipo da série.
+  customProperties:
+  - property: path
+    value: staging/bacen/financiamentos_imobiliarios/*.parquet
+  - property: file_pattern
+    value: '[a-z0-9_]+\.json'
+  - property: load_type
+    value: full
+  - property: reader
+    value: bacen_sgs_json
+  - property: dag
+    value: bacen_sgs_ingest_dag
+  - property: dbt_tables
+    value:
+    - bacen_financiamentos_imobiliarios
+  properties:
+  - name: tipo
+    logicalType: string
+  - name: data
+    logicalType: string
+  - name: valor
+    logicalType: string

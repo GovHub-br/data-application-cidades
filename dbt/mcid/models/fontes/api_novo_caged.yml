@@ -1,0 +1,59 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_novo_caged.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: api_novo_caged
+  description: Admitidos, desligados, saldo, estoque e variação do emprego formal na construção, desde
+    jan/2024. Cada carga é a série inteira, um arquivo por mês com a resposta do Power BI como veio.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/api_novo_caged.odcs.yaml
+    owner: Ministério do Trabalho e Emprego
+  tables:
+  - name: saldo_estoque_construcao_edificios
+    description: Divisão CNAE Construção de Edifícios.
+    meta:
+      caminho: staging/novo_caged/saldo_estoque_construcao_edificios/*.parquet
+      file_pattern: \d{4}-\d{2}\.json
+      load_type: full
+      dag: novo_caged_construcao_edificios
+    columns:
+    - name: ano
+    - name: mes
+    - name: admitidos
+    - name: desligados
+    - name: saldo
+    - name: estoque
+    - name: variacao
+  - name: saldo_estoque_servicos_especializados_construcao
+    description: Divisão CNAE Serviços Especializados para Construção.
+    meta:
+      caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao/*.parquet
+      file_pattern: \d{4}-\d{2}\.json
+      load_type: full
+      dag: novo_caged_servicos_especializados_construcao
+    columns:
+    - name: ano
+    - name: mes
+    - name: admitidos
+    - name: desligados
+    - name: saldo
+    - name: estoque
+    - name: variacao
+  - name: saldo_estoque_total_construcao
+    description: Toda a construção (todas as divisões CNAE).
+    meta:
+      caminho: staging/novo_caged/saldo_estoque_total_construcao/*.parquet
+      file_pattern: \d{4}-\d{2}\.json
+      load_type: full
+      dag: novo_caged_total_construcao
+    columns:
+    - name: ano
+    - name: mes
+    - name: admitidos
+    - name: desligados
+    - name: saldo
+    - name: estoque
+    - name: variacao

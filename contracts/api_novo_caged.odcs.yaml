@@ -1,0 +1,114 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: api_novo_caged
+name: Novo CAGED (painel público do Ministério do Trabalho)
+version: 0.1.0
+status: draft
+description:
+  purpose: Admitidos, desligados, saldo, estoque e variação do emprego formal na construção, desde jan/2024.
+    Cada carga é a série inteira, um arquivo por mês com a resposta do Power BI como veio.
+team:
+- username: Ministério do Trabalho e Emprego
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: saldo_estoque_construcao_edificios
+  physicalName: saldo_estoque_construcao_edificios
+  description: Divisão CNAE Construção de Edifícios.
+  customProperties:
+  - property: path
+    value: staging/novo_caged/saldo_estoque_construcao_edificios/*.parquet
+  - property: file_pattern
+    value: \d{4}-\d{2}\.json
+  - property: load_type
+    value: full
+  - property: reader
+    value: novo_caged_powerbi_json
+  - property: dag
+    value: novo_caged_construcao_edificios
+  - property: dbt_tables
+    value:
+    - novo_caged
+  properties:
+  - name: ano
+    logicalType: string
+  - name: mes
+    logicalType: string
+  - name: admitidos
+    logicalType: string
+  - name: desligados
+    logicalType: string
+  - name: saldo
+    logicalType: string
+  - name: estoque
+    logicalType: string
+  - name: variacao
+    logicalType: string
+- name: saldo_estoque_servicos_especializados_construcao
+  physicalName: saldo_estoque_servicos_especializados_construcao
+  description: Divisão CNAE Serviços Especializados para Construção.
+  customProperties:
+  - property: path
+    value: staging/novo_caged/saldo_estoque_servicos_especializados_construcao/*.parquet
+  - property: file_pattern
+    value: \d{4}-\d{2}\.json
+  - property: load_type
+    value: full
+  - property: reader
+    value: novo_caged_powerbi_json
+  - property: dag
+    value: novo_caged_servicos_especializados_construcao
+  - property: dbt_tables
+    value:
+    - novo_caged_servicos_especializados
+  properties:
+  - name: ano
+    logicalType: string
+  - name: mes
+    logicalType: string
+  - name: admitidos
+    logicalType: string
+  - name: desligados
+    logicalType: string
+  - name: saldo
+    logicalType: string
+  - name: estoque
+    logicalType: string
+  - name: variacao
+    logicalType: string
+- name: saldo_estoque_total_construcao
+  physicalName: saldo_estoque_total_construcao
+  description: Toda a construção (todas as divisões CNAE).
+  customProperties:
+  - property: path
+    value: staging/novo_caged/saldo_estoque_total_construcao/*.parquet
+  - property: file_pattern
+    value: \d{4}-\d{2}\.json
+  - property: load_type
+    value: full
+  - property: reader
+    value: novo_caged_powerbi_json
+  - property: dag
+    value: novo_caged_total_construcao
+  - property: dbt_tables
+    value:
+    - novo_caged_total
+  properties:
+  - name: ano
+    logicalType: string
+  - name: mes
+    logicalType: string
+  - name: admitidos
+    logicalType: string
+  - name: desligados
+    logicalType: string
+  - name: saldo
+    logicalType: string
+  - name: estoque
+    logicalType: string
+  - name: variacao
+    logicalType: string

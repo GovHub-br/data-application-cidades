@@ -23,3 +23,15 @@ sources:
     - name: info
     - name: data
     - name: valor
+  - name: financiamentos_imobiliarios
+    description: Séries do SGS listadas na Variable BACEN_SERIES (concessões, juros e inadimplência PF/PJ),
+      um arquivo por série; o nome do arquivo é o tipo da série.
+    meta:
+      caminho: staging/bacen/financiamentos_imobiliarios/*.parquet
+      file_pattern: '[a-z0-9_]+\.json'
+      load_type: full
+      dag: bacen_sgs_ingest_dag
+    columns:
+    - name: tipo
+    - name: data
+    - name: valor

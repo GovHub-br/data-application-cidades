@@ -1,0 +1,72 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: api_mrv
+name: MRV (Planilha Interativa da Central de Resultados)
+version: 0.1.0
+status: draft
+description:
+  purpose: Dados operacionais da MRV por trimestre. Cada carga é a planilha mais recente da Central de
+    Resultados, inteira. Ainda sem source no dbt.
+team:
+- username: MRV Engenharia (RI)
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/staging/
+schema:
+- name: lancamentos
+  physicalName: lancamentos
+  description: 'Lançamentos da MRV Incorporação: VGV, unidades e preço médio por trimestre.'
+  customProperties:
+  - property: path
+    value: staging/mrv/lancamentos/*.parquet
+  - property: file_pattern
+    value: planilha_interativa\.xlsx
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: mrv_lancamentos_xlsx
+  - property: dag
+    value: lancamentos_ingest_dag
+  - property: dbt_tables
+    value: []
+  properties:
+  - name: periodo
+    logicalType: string
+  - name: vgv_lancamentos_milhoes
+    logicalType: string
+  - name: unidades
+    logicalType: string
+  - name: preco_medio_unidade_mil
+    logicalType: string
+- name: vendas_liquidas
+  physicalName: vendas_liquidas
+  description: 'Vendas líquidas da MRV Incorporação: valor, unidades e preço médio por trimestre.'
+  customProperties:
+  - property: path
+    value: staging/mrv/vendas_liquidas/*.parquet
+  - property: file_pattern
+    value: planilha_interativa\.xlsx
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: mrv_vendas_xlsx
+  - property: dag
+    value: vendas_ingest_dag
+  - property: dbt_tables
+    value: []
+  properties:
+  - name: periodo
+    logicalType: string
+  - name: vendas_liquidas_milhoes
+    logicalType: string
+  - name: unidades
+    logicalType: string
+  - name: preco_medio_unidade_mil
+    logicalType: string

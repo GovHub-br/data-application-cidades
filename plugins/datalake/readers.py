@@ -272,6 +272,105 @@ def ibge_agregados_json(path: str) -> "pd.DataFrame":
     return pd.DataFrame(rows, columns=IBGE_COLUMNS)
 
 
+@parser("bacen_sgs_json")
+def bacen_sgs_json(path: str) -> "pd.DataFrame":
+    """One SGS series as the API delivers it (`[{data, valor}]`); the series name is the
+    file name, because the answer does not carry it."""
+    import json
+    from pathlib import Path
+
+    import pandas as pd
+
+    with open(path, encoding="utf-8") as f:
+        rows = json.load(f)
+    if not isinstance(rows, list):  # the SGS sometimes answers 200 with an HTML page
+        raise SourceLayoutChanged(f"SGS answer is not a list: {type(rows).__name__}")
+    df = pd.DataFrame(rows, columns=["data", "valor"])
+    df.insert(0, "tipo", Path(path).stem)
+    return df
+
+
+NOVO_CAGED_MEASURES = ["admitidos", "desligados", "saldo", "estoque", "variacao"]
+
+
+def novo_caged_values(answer: dict) -> list:
+    """The five measures of one month in a Power BI answer (the order of the query)."""
+    try:
+        values = answer["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"][0]["C"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise SourceLayoutChanged(f"Power BI answer without the month data: {exc!r}") from exc
+    if len(values) != len(NOVO_CAGED_MEASURES):
+        raise SourceLayoutChanged(f"expected {len(NOVO_CAGED_MEASURES)} measures, got {values}")
+    return values
+
+
+@parser("novo_caged_powerbi_json")
+def novo_caged_powerbi_json(path: str) -> "pd.DataFrame":
+    """One month of the Novo CAGED report: year and month come from the file name
+    (`<year>-<month>.json`), the measures from the answer."""
+    import json
+    from pathlib import Path
+
+    import pandas as pd
+
+    year, month = Path(path).stem.split("-")
+    with open(path, encoding="utf-8") as f:
+        values = novo_caged_values(json.load(f))
+    return pd.DataFrame([[year, month, *values]], columns=["ano", "mes", *NOVO_CAGED_MEASURES])
+
+
+MRV_SHEETS = ["Dados Oper. MRV&Co | Oper.Data", "Dados Oper. MRV&Co | Oper.D"]
+
+
+def _mrv_block(path: str, section: str, offsets: list[int], names: list[str]) -> "pd.DataFrame":
+    """One block of the MRV operational sheet, transposed to one row per quarter.
+
+    The sheet has a section title in column 0 ("Lançamentos %MRV"), then the subgroup
+    "MRV Incorporação"; the KPIs are rows at fixed offsets below it, the quarters are the
+    columns (header in row 1). The sheet name changes between releases: a known name
+    first, the "dados oper" prefix only when it is the only match.
+    """
+    import pandas as pd
+
+    sheets = pd.ExcelFile(path).sheet_names
+    sheet = next((s for s in MRV_SHEETS if s in sheets), None)
+    if sheet is None:
+        candidates = [s for s in sheets if s.lower().startswith("dados oper")]
+        if len(candidates) != 1:
+            raise SourceLayoutChanged(f"operational sheet not found; prefix matched {candidates}")
+        sheet = candidates[0]
+    raw = pd.read_excel(path, sheet_name=sheet, header=None, dtype=str)
+    first = raw[0].astype(str)
+    found = raw[first.str.contains(section, case=False, na=False, regex=False)].index
+    if not len(found):
+        raise SourceLayoutChanged(f"section {section!r} not found")
+    below = raw.loc[found[0] :]
+    sub = below[below[0].astype(str).str.contains("MRV Incorporação", case=False, na=False)].index
+    if not len(sub):
+        raise SourceLayoutChanged(f"subgroup 'MRV Incorporação' not found below {section!r}")
+    block = raw.iloc[[raw.index.get_loc(sub[0]) + o for o in offsets], 2:].copy()
+    block.index = names
+    block.columns = raw.iloc[1, 2:].astype(str).tolist()
+    table = block.T.reset_index()
+    table.columns = ["periodo", *names]
+    # "1T26 / 1Q26" -> "1T26"; a float header like "1.0" loses the ".0"
+    table["periodo"] = table["periodo"].map(lambda p: str(p).split(" / ")[0].strip())
+    table["periodo"] = table["periodo"].str.replace(".0", "", regex=False)
+    return table[~table[names[0]].isin(["nan", "None", ""]) & table[names[0]].notna()]
+
+
+@parser("mrv_lancamentos_xlsx")
+def mrv_lancamentos_xlsx(path: str) -> "pd.DataFrame":
+    names = ["vgv_lancamentos_milhoes", "unidades", "preco_medio_unidade_mil"]
+    return _mrv_block(path, "Lançamentos %MRV", [1, 2, 3], names)
+
+
+@parser("mrv_vendas_xlsx")
+def mrv_vendas_xlsx(path: str) -> "pd.DataFrame":
+    names = ["vendas_liquidas_milhoes", "unidades", "preco_medio_unidade_mil"]
+    return _mrv_block(path, "Vendas Líquidas %MRV", [1, 4, 5], names)
+
+
 def convert(
     minio,
     key: str,

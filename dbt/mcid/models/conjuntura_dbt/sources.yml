@@ -54,9 +54,9 @@ sources:
           dag: bacen_credito_pib_ingest_dag
           linhas_minimas: 73   # metade do observado em 2026-08-29 (146)
       - name: bacen_financiamentos_imobiliarios
-        description: "Concessões, taxas de juros e inadimplência PF/PJ (BACEN SGS). Uma linha, séries aninhadas em JSON por coluna."
+        description: "Concessões, taxas de juros e inadimplência PF/PJ (BACEN SGS), formato longo (tipo, data, valor): um arquivo por série em cada carga."
         meta:
-          caminho: staging/bacen/financiamentos_imobiliarios.parquet
+          caminho: staging/bacen/financiamentos_imobiliarios/load_id=*/*.parquet
           dag: bacen_sgs_ingest_dag
           linhas_minimas: 1   # metade do observado em 2026-08-29 (1)
       - name: fgv_icst
@@ -189,20 +189,20 @@ sources:
       - name: novo_caged
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_construcao_edificios.parquet
-          dag: saldo_estoque_construcao_edificios_ingest_dag
+          caminho: staging/novo_caged/saldo_estoque_construcao_edificios/load_id=*/*.parquet
+          dag: novo_caged_construcao_edificios
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: novo_caged_servicos_especializados
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao.parquet
-          dag: saldo_estoque_servicos_especializados_construcao_ingest_dag
+          caminho: staging/novo_caged/saldo_estoque_servicos_especializados_construcao/load_id=*/*.parquet
+          dag: novo_caged_servicos_especializados_construcao
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: novo_caged_total
         description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
         meta:
-          caminho: staging/novo_caged/saldo_estoque_total_construcao.parquet
-          dag: saldo_estoque_total_construcao_ingest_dag
+          caminho: staging/novo_caged/saldo_estoque_total_construcao/load_id=*/*.parquet
+          dag: novo_caged_total_construcao
           linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
       - name: siafi_dotacao_execucao
         description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."

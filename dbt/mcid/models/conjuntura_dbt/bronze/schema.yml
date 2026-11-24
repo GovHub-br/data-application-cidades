@@ -101,7 +101,10 @@ models:
             - tipo
             - data
             - valor
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_fgv_icst
     description: >
       Índice de confiança do empresariado da construção, nas séries com e sem
@@ -695,7 +698,10 @@ models:
             - saldo
             - estoque
             - variacao
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_novo_caged_servicos_especializados
     description: >
       Movimentação de emprego formal em serviços especializados para
@@ -711,10 +717,13 @@ models:
             - saldo
             - estoque
             - variacao
-            - dt_ingest
             - _source_file
             - _ingested_at
             - _source_hash
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_novo_caged_total
     description: >
       Movimentação de emprego formal no conjunto da construção civil, com
@@ -730,10 +739,13 @@ models:
             - saldo
             - estoque
             - variacao
-            - dt_ingest
             - _source_file
             - _ingested_at
             - _source_hash
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_siafi_dotacao_execucao
     description: >
       Execução orçamentária federal em habitação, com dotação, empenho,

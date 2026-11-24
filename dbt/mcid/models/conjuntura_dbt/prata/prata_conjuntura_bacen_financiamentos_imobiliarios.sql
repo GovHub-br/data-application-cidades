@@ -7,7 +7,7 @@
 -- consome. São sete tipos — seis do SGS mais o índice crédito/PIB, que vem
 -- de outro endpoint e por isso mora em parquet separado.
 --
--- Lê o parquet como a nossa DAG o grava: já achatado em (tipo, data, valor).
+-- Lê o parquet como a nossa DAG o grava: um arquivo por série, já em (tipo, data, valor).
 -- A versão anterior desta prata despivotava sete colunas de JSON aninhado,
 -- partindo de um staging que espelhava o raw da API. Esse pressuposto veio do
 -- refactor de 28/08 e foi abandonado em 30/08 para o IBGE, quando as silvers
@@ -25,6 +25,8 @@ with
             tipo as tipo,
             nullif(btrim(valor), '')::numeric as valor
         from {{ ref('bronze_bacen_financiamentos_imobiliarios') }}
+        -- todas as cargas na bronze; cada carga traz todas as séries inteiras
+        where {{ ultima_carga(ref('bronze_bacen_financiamentos_imobiliarios')) }}
     ),
 
     credito_pib as (
