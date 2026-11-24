@@ -1,6 +1,6 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: api_abecip
+id: abecip_sbpe
 name: ABECIP (financiamentos e poupança SBPE)
 version: 0.1.0
 status: draft

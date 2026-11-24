@@ -123,7 +123,7 @@ def vendas_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
 
     @task
     def transform(key: str) -> dict:
-        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `api_mrv`."""
+        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `mrv_central_resultados` (contracts/mrv/)."""
         hook, bucket, prefix = _lake()
         run_id = get_current_context()["run_id"]
         dataset = contract.match(key, contract.load())

@@ -2,7 +2,7 @@
 
 Reads what the project already declares (the `lake_staging*` tables of the dbt
 `sources.yml` files) and, from the lake, only the SCHEMA of the newest staging Parquet of
-each table (column names, never values). Writes one contract per source in `contracts/`,
+each table (column names, never values). Writes one contract per source in `contracts/<channel>/`,
 with one schema object per dataset.
 
 Run once to create the contracts; after that the contract is the source of truth and is
@@ -41,19 +41,27 @@ SOURCES = [
     ),
     (re.compile(r"^staging/sftp/fabrica/GEFUS/"), "sftp_gefus"),
     (re.compile(r"^staging/sftp/caixa\.geavo/GEAVO/"), "sftp_geavo"),
-    (re.compile(r"^staging/sharepoint/.*fgts_canal"), "sftp_canal_fgts"),
+    (re.compile(r"^staging/sharepoint/.*fgts_canal"), "sharepoint_canal_fgts"),
     (re.compile(r"^staging/sharepoint/"), "sharepoint_mcid"),
 ]
 SOURCE_INFO = {
     "cadunico": ("CadÚnico", "Cortes do Cadastro Único entregues ao MCid.", "CadÚnico (MDS)"),
     "sftp_gefus": ("SFTP · GEFUS", "Remessas da CAIXA (GEFUS) no SFTP do MCid.", "CAIXA · GEFUS"),
     "sftp_geavo": ("SFTP · GEAVO", "Remessas da CAIXA (GEAVO) no SFTP do MCid.", "CAIXA · GEAVO"),
-    "sftp_canal_fgts": (
+    "sharepoint_canal_fgts": (
         "Canal FGTS",
         "Tabelas do Canal FGTS (AO1) e orçamentos.",
         "CAIXA · Canal FGTS",
     ),
     "sharepoint_mcid": ("SharePoint · MCid", "Planilhas do SharePoint do MCid.", "MCid · SNH"),
+}
+# Where each contract lives: contracts/<channel>/<name>.odcs.yaml (one folder per source).
+SOURCE_FILES = {
+    "cadunico": "sftp/cadunico",
+    "sftp_gefus": "sftp/gefus",
+    "sftp_geavo": "sftp/geavo",
+    "sharepoint_canal_fgts": "sharepoint/canal_fgts",
+    "sharepoint_mcid": "sharepoint/mcid",
 }
 # Categories of the masking rules that are personal data (masked, redacted or kept).
 PERSONAL = {
@@ -255,9 +263,9 @@ def main() -> None:
     parser.add_argument("--force", action="store_true", help="overwrite existing contracts")
     args = parser.parse_args()
     env = {**dotenv_values(ROOT / ".env")}
-    CONTRACTS.mkdir(exist_ok=True)
     for source, contract in build(dbt_tables(), env).items():
-        target = CONTRACTS / f"{source}.odcs.yaml"
+        target = CONTRACTS / f"{SOURCE_FILES[source]}.odcs.yaml"
+        target.parent.mkdir(parents=True, exist_ok=True)
         if target.exists() and not args.force:
             print(f"kept {target.relative_to(ROOT)} (use --force to overwrite)")
             continue

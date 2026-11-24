@@ -1,15 +1,15 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_fipe.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/fipe/fipezap.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
-- name: api_fipe
+- name: fipe_fipezap
   description: Índice FipeZAP de locação residencial. Cada carga é o XLSX das séries históricas inteiro
     (carga completa).
   schema: staging
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/api_fipe.odcs.yaml
+    contract: contracts/fipe/fipezap.odcs.yaml
     owner: FIPE
   tables:
   - name: indice_locacao

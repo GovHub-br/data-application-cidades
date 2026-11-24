@@ -1,15 +1,15 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_mrv.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/mrv/central_resultados.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
-- name: api_mrv
+- name: mrv_central_resultados
   description: Dados operacionais da MRV por trimestre. Cada carga é a planilha mais recente da Central
     de Resultados, inteira. Ainda sem source no dbt.
   schema: staging
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/api_mrv.odcs.yaml
+    contract: contracts/mrv/central_resultados.odcs.yaml
     owner: MRV Engenharia (RI)
   tables:
   - name: lancamentos

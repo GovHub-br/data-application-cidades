@@ -1,6 +1,6 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: sftp_canal_fgts
+id: sharepoint_canal_fgts
 name: Canal FGTS
 version: 0.1.0
 status: draft

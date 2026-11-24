@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/cadunico.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/sftp/cadunico.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -8,7 +8,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/cadunico.odcs.yaml
+    contract: contracts/sftp/cadunico.odcs.yaml
     owner: CadÚnico (MDS)
   tables:
   - name: cadunico_familia

@@ -125,7 +125,7 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
 
     @task
     def transform(keys: list[str]) -> list[dict]:
-        """Cada raw em Parquet local (texto + linhagem), pelo leitor do contrato `api_ibge`."""
+        """Cada raw em Parquet local (texto + linhagem), pelo leitor do contrato `ibge_agregados` (contracts/ibge/agregados.odcs.yaml)."""
         hook, bucket, prefix = _lake()
         run_id, datasets, out = get_current_context()["run_id"], contract.load(), []
         for i, key in enumerate(keys):

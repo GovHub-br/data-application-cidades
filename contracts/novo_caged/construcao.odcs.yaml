@@ -1,6 +1,6 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: api_novo_caged
+id: novo_caged_construcao
 name: Novo CAGED (painel público do Ministério do Trabalho)
 version: 0.1.0
 status: draft

@@ -1,6 +1,6 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: email_tesouro
+id: tesouro_dotacao_execucao
 name: Tesouro Gerencial (relatório por e-mail)
 version: 0.1.0
 status: draft

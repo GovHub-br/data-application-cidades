@@ -1,6 +1,6 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: api_mrv
+id: mrv_central_resultados
 name: MRV (Planilha Interativa da Central de Resultados)
 version: 0.1.0
 status: draft

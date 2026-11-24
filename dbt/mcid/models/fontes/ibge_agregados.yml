@@ -1,15 +1,15 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_ibge.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/ibge/agregados.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
-- name: api_ibge
+- name: ibge_agregados
   description: Agregados do IBGE listados na Variable IBGE_CONFIGURACOES, um por tabela. Cada carga é
     a resposta JSON da API como veio (carga completa da janela de períodos pedida).
   schema: staging
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/api_ibge.odcs.yaml
+    contract: contracts/ibge/agregados.odcs.yaml
     owner: IBGE
   tables:
   - name: pib_construcao

@@ -123,7 +123,7 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
 
     @task
     def transform(keys: list[str]) -> list[dict]:
-        """Cada anexo em Parquet local (texto + linhagem), pelo leitor do contrato `email_tesouro`."""
+        """Cada anexo em Parquet local (texto + linhagem), pelo leitor do contrato `tesouro_dotacao_execucao` (contracts/tesouro/)."""
         hook, bucket, prefix = _lake()
         run_id, datasets, out = get_current_context()["run_id"], contract.load(), []
         for i, key in enumerate(keys):

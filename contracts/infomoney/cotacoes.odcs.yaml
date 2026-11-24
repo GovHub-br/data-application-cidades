@@ -1,6 +1,6 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: api_infomoney
+id: infomoney_cotacoes
 name: Alpha Vantage (cotações do IMOB)
 version: 0.1.0
 status: draft

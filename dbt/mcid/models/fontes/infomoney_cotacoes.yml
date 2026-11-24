@@ -1,15 +1,15 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_infomoney.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/infomoney/cotacoes.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
-- name: api_infomoney
+- name: infomoney_cotacoes
   description: 'Cotações diárias do índice IMOB da B3. Cada carga traz só os ~100 últimos pregões (carga
     incremental): o histórico está nas cargas anteriores.'
   schema: staging
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/api_infomoney.odcs.yaml
+    contract: contracts/infomoney/cotacoes.odcs.yaml
     owner: Alpha Vantage
   tables:
   - name: acoes_imob

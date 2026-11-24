@@ -1,15 +1,15 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/email_tesouro.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/tesouro/dotacao_execucao.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
-- name: email_tesouro
+- name: tesouro_dotacao_execucao
   description: Dotação e execução orçamentária do MCID por outras fontes, enviada pelo Tesouro Gerencial
     por e-mail. Cada carga são os ZIPs do e-mail do dia, com o relatório inteiro (carga completa).
   schema: staging
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/email_tesouro.odcs.yaml
+    contract: contracts/tesouro/dotacao_execucao.odcs.yaml
     owner: Tesouro Nacional (Tesouro Gerencial)
   tables:
   - name: dotacao_execucao_outras_fontes_mcid

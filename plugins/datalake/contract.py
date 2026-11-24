@@ -1,6 +1,6 @@
 """The ODCS contracts of the sources (ADR-0006) as seen by the ingestion.
 
-`load()` reads `contracts/*.odcs.yaml` at run time (never at DAG parse), `match()` finds
+`load()` reads `contracts/<source>/*.odcs.yaml` at run time (never at DAG parse), `match()` finds
 the dataset of a raw key, and `structural_status()` is the structural drift rule.
 """
 
@@ -48,7 +48,7 @@ def _custom(item: dict) -> dict:
 
 def load(folder: Path = CONTRACTS) -> list[Dataset]:
     datasets = []
-    for path in sorted(folder.glob("*.odcs.yaml")):
+    for path in sorted(folder.rglob("*.odcs.yaml")):  # one folder per source
         contract = yaml.safe_load(path.read_text(encoding="utf-8"))
         for obj in contract.get("schema") or []:
             props = _custom(obj)

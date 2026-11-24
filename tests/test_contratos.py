@@ -7,7 +7,7 @@ import yaml
 
 from contratos import gerar_sources
 
-CONTRACTS = sorted(gerar_sources.CONTRACTS.glob("*.odcs.yaml"))
+CONTRACTS = sorted(gerar_sources.CONTRACTS.rglob("*.odcs.yaml"))
 
 
 def test_generated_sources_are_up_to_date():

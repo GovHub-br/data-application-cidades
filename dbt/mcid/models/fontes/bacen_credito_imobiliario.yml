@@ -1,15 +1,15 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/api_bacen.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/bacen/credito_imobiliario.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
-- name: api_bacen
+- name: bacen_credito_imobiliario
   description: Séries do Banco Central usadas na conjuntura. Cada carga é a resposta da API como veio,
     com a série inteira (carga completa).
   schema: staging
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/api_bacen.odcs.yaml
+    contract: contracts/bacen/credito_imobiliario.odcs.yaml
     owner: Banco Central do Brasil
   tables:
   - name: credito_imobiliario_pib

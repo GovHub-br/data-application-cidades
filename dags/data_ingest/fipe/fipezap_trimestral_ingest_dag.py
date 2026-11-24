@@ -98,7 +98,7 @@ def fipezap_trimestral_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fic
 
     @task
     def transform(key: str) -> dict:
-        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `api_fipe`."""
+        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `fipe_fipezap` (contracts/fipe/fipezap.odcs.yaml)."""
         hook, bucket, prefix = _lake()
         run_id = get_current_context()["run_id"]
         dataset = contract.match(key, contract.load())
