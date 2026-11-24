@@ -5,63 +5,43 @@ instituição — a tabela que o boletim publica na seção de crédito. Ela é
 extraída por outro time, que grava uma competência por diretório em
 `raw/abecip/<AAAA-MM>/financiamentos_por_instituicao.json`.
 
-Do nosso lado faltava juntar essas competências numa série. Sem isso o gold
-enxergava apenas a última extração, e a abertura por banco ficava restrita a
-um mês solto — foi por isso que o quadro da página 3 do boletim conviveu tanto
-tempo com a planilha manual, que morria em setembro de 2025.
-
 A DAG lê TODAS as competências presentes no raw e reescreve o parquet inteiro.
 Reescrever é de propósito: a ABECIP revisa competências já publicadas, e uma
 carga incremental preservaria o número velho ao lado do corrigido.
 
-Não busca nada na internet: consome o que o pipeline de extração já depositou.
+Não busca nada na internet: consome o que o pipeline de extração já depositou. A
+staging sai pelo mesmo escritor das outras ingestões (texto + linhagem, ADR-0002).
 """
 
 from __future__ import annotations
 
-import io
+import hashlib
 import json
+import os
 import re
+import tempfile
 from datetime import datetime, timedelta
 
 import pandas as pd
-from airflow.sdk import dag, task
-from cliente_minio import get_s3_client, upload_staging_parquet
-from schedule_loader import get_dynamic_schedule
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from airflow.sdk import Variable, dag, get_current_context, task
 
-BUCKET = "data-lake-mcid"
-PREFIXO = "raw/abecip/"
-DADO = "financiamentos_por_instituicao"
+from plugins.datalake.api import write_text_parquet
+from plugins.datalake.keys import load_id
 
-
-def _competencias(cliente) -> dict[str, str]:
-    """Competência -> chave do objeto, para tudo que existe no raw."""
-    encontradas: dict[str, str] = {}
-    token = None
-    while True:
-        argumentos = {"Bucket": BUCKET, "Prefix": PREFIXO, "MaxKeys": 1000}
-        if token:
-            argumentos["ContinuationToken"] = token
-        resposta = cliente.list_objects_v2(**argumentos)
-        for objeto in resposta.get("Contents", []):
-            achado = re.match(rf"{PREFIXO}(\d{{4}}-\d{{2}})/{DADO}\.json$", objeto["Key"])
-            if achado:
-                encontradas[achado.group(1)] = objeto["Key"]
-        if not resposta.get("IsTruncated"):
-            return dict(sorted(encontradas.items()))
-        token = resposta.get("NextContinuationToken")
+PREFIX = "raw/abecip/"
+DATASET = "financiamentos_por_instituicao"
+STAGING_KEY = f"staging/abecip/{DATASET}.parquet"
+RAW_KEY = re.compile(rf"^{PREFIX}(\d{{4}}-\d{{2}})/{DATASET}\.json$")
 
 
 @dag(
     dag_id="abecip_instituicoes_ingest_dag",
-    schedule=get_dynamic_schedule("abecip_instituicoes_ingest_dag", default="0 7 * * *"),
+    schedule="0 7 * * *",
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    default_args={
-        "owner": "Lucas Bottino",
-        "retries": 1,
-        "retry_delay": timedelta(minutes=5),
-    },
+    max_active_runs=1,
+    default_args={"owner": "Lucas Bottino", "retries": 1, "retry_delay": timedelta(minutes=5)},
     tags=["conjuntura", "abecip", "ingestao"],
     description=(
         "Consolida raw/abecip/<competência>/financiamentos_por_instituicao.json "
@@ -71,17 +51,22 @@ def _competencias(cliente) -> dict[str, str]:
 def abecip_instituicoes_ingest_dag() -> None:
     @task
     def consolidar() -> dict:
-        cliente = get_s3_client()
-        competencias = _competencias(cliente)
+        hook, bucket = S3Hook(aws_conn_id="lake_mcid"), Variable.get("lake_bucket")
+        competencias = {
+            m.group(1): key
+            for key in hook.list_keys(bucket, PREFIX) or []
+            if (m := RAW_KEY.match(key))
+        }
         if not competencias:
             raise RuntimeError(
                 "Nenhuma competência encontrada em raw/abecip/. A extração do "
                 "relatório mensal não depositou nada — não há o que consolidar."
             )
 
-        registros: list[dict] = []
-        for competencia, chave in competencias.items():
-            corpo = cliente.get_object(Bucket=BUCKET, Key=chave)["Body"].read()
+        registros, digest = [], hashlib.md5()
+        for competencia, key in sorted(competencias.items()):
+            corpo = hook.read_key(key, bucket).encode("utf-8")
+            digest.update(corpo)
             conteudo = json.loads(corpo)
             linhas = (
                 conteudo
@@ -93,24 +78,21 @@ def abecip_instituicoes_ingest_dag() -> None:
             for linha in linhas:
                 # a competência do diretório manda: o campo interno já veio
                 # divergente do caminho em extrações anteriores
-                linha["competencia_referencia"] = competencia
-                registros.append(linha)
+                registros.append({**linha, "competencia_referencia": competencia})
 
-        # Sem tipagem aqui de propósito: a staging espelha a forma da origem e
-        # quem tipa é a Silver. Converter na ingestão quebrou o cast que a
-        # Silver já fazia (`nullif(coluna, '')::numeric` sobre coluna que
-        # deixara de ser texto) e duplicaria a regra em duas camadas.
-        quadro = pd.DataFrame(registros)
-
-        buffer = io.BytesIO()
-        quadro.to_parquet(buffer, engine="pyarrow", index=False)
-        upload_staging_parquet("abecip", DADO, buffer.getvalue())
+        with tempfile.TemporaryDirectory(dir=os.environ.get("LAKE_TMPDIR")) as work:
+            dst = os.path.join(work, f"{DATASET}.parquet")
+            write_text_parquet(
+                pd.DataFrame(registros), dst, f"{PREFIX}*/{DATASET}.json", digest.hexdigest(),
+                load_id(get_current_context()["dag_run"].run_after),
+            )  # fmt: skip
+            hook.load_file(dst, STAGING_KEY, bucket, replace=True)
 
         return {
             "competencias": len(competencias),
             "de": min(competencias),
             "ate": max(competencias),
-            "linhas": len(quadro),
+            "linhas": len(registros),
         }
 
     @task
@@ -139,4 +121,4 @@ def abecip_instituicoes_ingest_dag() -> None:
     conferir(consolidar())
 
 
-abecip_instituicoes_ingest_dag()
+dag_instance = abecip_instituicoes_ingest_dag()
