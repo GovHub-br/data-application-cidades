@@ -1,0 +1,12 @@
+{
+    "postgres_default": {
+        "conn_type": "postgres",
+        "description": "Data warehouse do MCid, onde as DAGs gravam (helpers/postgres_helpers.py)",
+        "host": "<host>",
+        "port": 5432,
+        "schema": "<banco>",
+        "login": "<usuario>",
+        "password": "<senha>",
+        "extra": ""
+    }
+}
