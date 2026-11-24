@@ -11,6 +11,7 @@ make compose-config
 make up
 make logs-airflow
 make down
+make down-volumes   # também apaga os volumes (bancos locais, logs, lake_tmp)
 ```
 
 Ou chame o Compose diretamente, a partir da raiz do repositorio:
@@ -37,6 +38,14 @@ O login da UI e da API e `airflow` / `airflow` (SimpleAuthManager, senha em
 Quem ja tinha o ambiente em Airflow 2.8.1: o primeiro `make up` migra o banco
 de metadados do volume `postgres-db` para o schema do 3.x, e essa migracao nao
 volta. Para ter um ambiente limpo, `make down` e apague o volume antes.
+
+### Variables, Connections e Pools
+
+A cada `make up`, o servico `airflow-init` importa os JSONs de
+`infra/airflow/bootstrap/` antes de o `airflow` subir. Os arquivos com
+credencial (`variables.json`, `connections.json`) ficam fora do git: copie dos
+`*.example.json` e preencha. `make airflow-bootstrap` reaplica sem reiniciar.
+Detalhes em [airflow/bootstrap/README.md](airflow/bootstrap/README.md).
 
 ## Layout
 

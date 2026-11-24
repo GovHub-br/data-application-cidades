@@ -1,0 +1,26 @@
+
+name: Mirror GitHub to GitLab
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          git remote add gitlab \
+            https://oauth2:${GITLAB_TOKEN}@gitlab.cidades.gov.br/dados-mcid/airflow-dags.git
+
+          git push gitlab main:hmg --force
