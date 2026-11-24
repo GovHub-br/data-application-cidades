@@ -634,3 +634,39 @@ def test_mascara_so_varre_os_canais_do_legado(monkeypatch):
     assert listados == ["raw/sftp/", "raw/sharepoint/"]
     with pytest.raises(ValueError, match="fora do legado"):
         modulo.run(apply=False, prefix="raw/ibge/")
+
+
+@pytest.fixture
+def run_isolado(minio, monkeypatch):
+    """`run` com o lake falso e sem banco: só o laço e a contagem (B2)."""
+    minio.s3.objetos[KEY] = CONTEUDO
+    for nome in ("_criar_control_table", "_registrar_control", "_gravar_auditoria",
+                 "_marcar_resultado", "_avisar_mascaramento_sem_prova"):  # fmt: skip
+        monkeypatch.setattr(modulo, nome, lambda *a, **k: None)
+    monkeypatch.setattr(modulo, "_conn_str", lambda: "")
+    monkeypatch.setattr(modulo, "_carregar_masked_hashes", lambda conn: set())
+    monkeypatch.setattr(modulo, "ClienteMinio", lambda: minio)
+    return minio
+
+
+def test_erro_de_mascara_falha_a_execucao(run_isolado, monkeypatch):
+    def falha(minio, conn, key, execution_id, apply, hashes):
+        rec = modulo._novo_registro(execution_id, key)
+        rec.update(status="error", error_message="quebrou", hash_before=None)
+        return rec
+
+    monkeypatch.setattr(modulo, "processar_objeto", falha)
+    with pytest.raises(RuntimeError, match="1 objeto"):
+        modulo.run(apply=True)
+
+
+def test_tag_ilegivel_nao_remascara_e_falha(run_isolado, monkeypatch):
+    def ilegivel(key):
+        raise _Erro("InternalError")
+
+    chamado = []
+    monkeypatch.setattr(run_isolado, "esta_mascarado", ilegivel)
+    monkeypatch.setattr(modulo, "processar_objeto", lambda *a: chamado.append(a))
+    with pytest.raises(RuntimeError):
+        modulo.run(apply=True)
+    assert not chamado  # sem saber se já foi mascarado, não mascara de novo
