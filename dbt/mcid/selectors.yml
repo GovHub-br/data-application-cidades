@@ -7,7 +7,7 @@
 # que roda no DuckDB precisa selecionar só ele.
 #
 # Quem usa:
-#   - dags/dbt/mcid_cosmos_dag.py: um grupo de tasks por seletor;
+#   - dags/snh/dbt/mcid_cosmos_dag.py: um grupo de tasks por seletor;
 #   - helpers/openmetadata/dbt_artifacts.py: o `dbt docs generate` da ingestão
 #     do OpenMetadata, que roda no target `prod`.
 #

@@ -28,7 +28,7 @@ class FakeS3:
 
 @pytest.fixture
 def consolidar(monkeypatch, tmp_path):
-    mod = importlib.import_module("dags.data_ingest.abecip.abecip_instituicoes_ingest_dag")
+    mod = importlib.import_module("dags.snh.data_ingest.abecip.abecip_instituicoes_ingest_dag")
     row = {
         "periodo_rotulo": "2026-09",
         "instituicao_financeira": "CAIXA",

@@ -108,7 +108,7 @@ def test_auditoria_vai_ao_minio_e_a_copia_local_ao_lado_do_script(carregar, tmp_
 
 def test_run_mantem_a_assinatura_que_a_dag_usa(carregar):
     modulo = carregar()
-    dag = (RAIZ / "dags/data_ingest/minio/minio_transform_dag.py").read_text("utf-8")
+    dag = (RAIZ / "dags/snh/data_ingest/minio/minio_transform_dag.py").read_text("utf-8")
     assert "from raw_para_staging import run" in dag
     assert list(inspect.signature(modulo.run).parameters) == [
         "apply",

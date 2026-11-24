@@ -74,7 +74,7 @@ class FakePg:
 @pytest.fixture
 def icst(monkeypatch, tmp_path):
     """O módulo da DAG com lake, banco e contexto falsos; `run(task_id, *args)` chama a task."""
-    mod = importlib.import_module("dags.data_ingest.fgv.icst_ingest_dag")
+    mod = importlib.import_module("dags.snh.data_ingest.fgv.icst_ingest_dag")
     s3, pg = FakeS3(), FakePg()
     ctx = {
         "run_id": "scheduled__2026-12-01T06:00:00+00:00",

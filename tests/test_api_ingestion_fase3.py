@@ -104,7 +104,7 @@ def _caged_http(empty):
     return Http
 
 
-CAGED = "dags.data_ingest.novo_caged.saldo_estoque_total_construcao_ingest_dag"
+CAGED = "dags.snh.data_ingest.novo_caged.saldo_estoque_total_construcao_ingest_dag"
 
 
 def test_caged_latest_month_may_be_missing(monkeypatch, tmp_path):
@@ -133,7 +133,7 @@ def test_sgs_one_bad_series_lands_nothing(monkeypatch, tmp_path):
                 content=b"[]",
             )
 
-    extract = _module(monkeypatch, tmp_path, "dags.data_ingest.bacen.bacen_sgs_ingest_dag", Http,
+    extract = _module(monkeypatch, tmp_path, "dags.snh.data_ingest.bacen.bacen_sgs_ingest_dag", Http,
                       variable=[{"pf": "1", "pj": "2"}])  # fmt: skip
     with pytest.raises(AirflowFailException, match="pj"):
         extract()

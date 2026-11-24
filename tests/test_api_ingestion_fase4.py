@@ -86,7 +86,7 @@ def test_tesouro_zip_with_missing_columns_is_refused(tmp_path):
 @pytest.fixture
 def tesouro(monkeypatch, tmp_path):
     mod = importlib.import_module(
-        "dags.data_ingest.tesouro_gerencial.dotacao_execucao_outras_fontes_mcid_ingest_dag"
+        "dags.snh.data_ingest.tesouro_gerencial.dotacao_execucao_outras_fontes_mcid_ingest_dag"
     )
     inbox: list = []
     asked: list = []

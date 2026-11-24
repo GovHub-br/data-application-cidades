@@ -132,7 +132,7 @@ def test_ibge_flattens_and_keeps_value_as_delivered(tmp_path):
 
 @pytest.fixture
 def ibge(monkeypatch, tmp_path):
-    mod = importlib.import_module("dags.data_ingest.ibge.ibge_ingest_dag")
+    mod = importlib.import_module("dags.snh.data_ingest.ibge.ibge_ingest_dag")
     s3, pg = FakeS3(), FakePg()
     configs = [{"tabela": "pib_construcao", "agregado": "5932", "variaveis": "6564"},
                {"tabela": "sinapi", "agregado": "2296", "variaveis": "48"}]  # fmt: skip
@@ -195,7 +195,7 @@ def test_ibge_one_failing_table_does_not_stop_the_others(ibge):
 
 
 def test_ibge_endpoint_uses_comma_between_categories(ibge):
-    from dags.data_ingest.ibge.ibge_ingest_dag import _endpoint_and_params
+    from dags.snh.data_ingest.ibge.ibge_ingest_dag import _endpoint_and_params
 
     endpoint, params = _endpoint_and_params(
         {
