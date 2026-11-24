@@ -144,6 +144,15 @@ def test_files_forces_only_those_even_if_already_landed(sftp_mod):
     ]
 
 
+def test_files_does_not_open_the_gate_once_every_forced_file_is_found(sftp_mod):
+    # o forçado vem antes na listagem: achado ele, os outros arquivos continuam de fora
+    files = {"/home/fabrica/GEFUS/a.csv": b"A;B\n1;2\n", "/home/fabrica/GEFUS/b.csv": b"A;B\n3;4\n"}
+    result, landed, _, _, sftp = run(sftp_mod, files, force=("/home/fabrica/GEFUS/a.csv",))
+    assert sftp.downloads == ["/home/fabrica/GEFUS/a.csv"]
+    assert list(landed) == [f"raw/sftp/fabrica/GEFUS/load_id={LOAD}/a.csv"]
+    assert not result["errors"]
+
+
 def test_zip_members_land_masked_below_the_zip(sftp_mod):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
