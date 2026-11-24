@@ -487,11 +487,8 @@ class ClienteMinio:
 
     # Tags de mascaramento
     def get_tagging(self, key: str) -> List[dict]:
-        try:
-            resp = self.s3.get_object_tagging(Bucket=self.bucket, Key=key)
-            return resp.get("TagSet", [])
-        except Exception:
-            return []
+        # o erro sobe: tratado como "sem tag", um objeto já mascarado seria mascarado de novo
+        return self.s3.get_object_tagging(Bucket=self.bucket, Key=key).get("TagSet", [])
 
     def esta_mascarado(self, key: str) -> bool:
         return any(t["Key"] == "masked" and t["Value"] == "true" for t in self.get_tagging(key))

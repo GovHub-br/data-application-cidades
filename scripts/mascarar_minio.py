@@ -386,7 +386,16 @@ def run(  # noqa: C901
             break
         processados += 1
 
-        if not force and minio.esta_mascarado(key):
+        try:
+            ja_mascarado = not force and minio.esta_mascarado(key)
+        except Exception as exc:  # tag ilegível: sem saber o estado, não mascara de novo
+            rec = _novo_registro(execution_id, key)
+            rec.update(status="error", error_message=f"tag ilegível: {exc}"[:500])
+            registros.append(rec)
+            contagem["error"] = contagem.get("error", 0) + 1
+            log.error("✗ %s: tag ilegível: %s", key, exc)
+            continue
+        if ja_mascarado:
             rec = _novo_registro(execution_id, key)
             rec["status"] = "skipped_already"
             registros.append(rec)
@@ -426,6 +435,8 @@ def run(  # noqa: C901
     if not apply:
         log.info("DRY-RUN — nada foi sobrescrito em raw/. Prévia em %s", DRYRUN_PREFIX)
     log.info("Log: %s", _LOG_FILE)
+    if contagem.get("error"):  # a máscara é trava: com erro, a execução falha (B2)
+        raise RuntimeError(f"{contagem['error']} objeto(s) com erro no mascaramento; veja o log")
     return contagem
 
 

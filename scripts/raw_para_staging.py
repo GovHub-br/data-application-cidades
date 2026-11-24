@@ -159,7 +159,12 @@ def run(  # noqa: C901
         # A staging lê o raw como está: só converte o que o mascaramento liberou. O .mdb
         # passa, porque é mascarado aqui, na conversão de cada tabela.
         ext = os.path.splitext(key)[1].lower()
-        if ext not in SUPPORTED_MDB and not minio.pronto_para_staging(key):
+        try:
+            liberado = ext in SUPPORTED_MDB or minio.pronto_para_staging(key)
+        except Exception as exc:  # tag ilegível conta como não liberado
+            log.error("· [%d] %s — tag ilegível: %s", processados, key, exc)
+            liberado = False
+        if not liberado:
             rec = _novo_registro(execution_id, key)
             rec["status"] = "skipped_sem_mascara"
             registros.append(rec)
