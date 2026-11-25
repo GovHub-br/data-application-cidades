@@ -1807,3 +1807,33 @@ models:
     description: Latitude do centroide, graus decimais.
   - name: longitude
     description: Longitude do centroide, graus decimais.
+- name: bronze_sftp_empreendimento_int040
+  description: INT040 do SFTP/GEFUS (empreendimentos do FAR na CAIXA), todas as remessas mensais empilhadas,
+    cópia fiel. Usada para a tipologia de cada APF do FAR no perfil de empreendimento do TS.
+  meta:
+    tags:
+    - bronze
+  columns:
+  - name: nu_apf
+    description: Número da APF (operação no agente financeiro).
+  - name: dsc_tipologia
+    description: Tipologia do empreendimento (casa, apartamento...), como veio da CAIXA.
+  - name: dt_movimento
+    description: Data de movimento da remessa.
+  - name: filename
+    description: Caminho do parquet da remessa na staging.
+- name: bronze_sftp_empreendimento_int059
+  description: INT059 do SFTP/GEFUS (empreendimentos do FDS na CAIXA), todas as remessas mensais empilhadas,
+    cópia fiel. Usada para a tipologia de cada APF do FDS no perfil de empreendimento do TS.
+  meta:
+    tags:
+    - bronze
+  columns:
+  - name: nu_apf
+    description: Número da APF (operação no agente financeiro).
+  - name: dsc_tipologia
+    description: Tipologia do empreendimento (casa, apartamento...), como veio da CAIXA.
+  - name: dt_movimento
+    description: Data de movimento da remessa.
+  - name: filename
+    description: Caminho do parquet da remessa na staging.
