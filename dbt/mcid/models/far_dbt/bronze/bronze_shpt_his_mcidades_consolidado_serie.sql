@@ -6,7 +6,7 @@
 -- versão de quem saiu. A data da remessa sai do nome (`_CONSOLIDADO_<aaaammdd>`) na
 -- prata; inclui as remessas de 2025 em `Arquivados/`.
 -- Fonte: SHPT — sharepoint/Novo MCMV - FAR/
-{% set padrao = "s3://data-lake-mcid/staging/**/*HIS_MCIDADES_CONSOLIDADO_*.parquet" %}
+{% set padrao = "s3://data-lake-mcid/snh/staging/**/*HIS_MCIDADES_CONSOLIDADO_*.parquet" %}
 
 select *
 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as r

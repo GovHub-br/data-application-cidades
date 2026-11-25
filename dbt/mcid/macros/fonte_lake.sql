@@ -42,10 +42,16 @@
                 "fonte_lake: '" ~ nome_tabela ~ "' não tem meta.caminho em sources.yml") }}
         {%- endif -%}
 
+        {#- Ingestão nova (ADR-0005): o caminho cobre todas as cargas `load_id=*/`.
+            A bronze guarda todas (a prata escolhe com `ultima_carga()`); cargas de
+            épocas diferentes podem ter colunas diferentes, e a pasta `load_id=` não
+            deve virar coluna (a carga já vem em `_load_id`). -#}
+        {%- set cargas = 'load_id=' in caminho.valor -%}
         read_parquet(
             's3://{{ bucket }}/{{ caminho.valor }}'
             {%- if filename %}, filename => true{% endif -%}
-            {%- if union_by_name %}, union_by_name => true{% endif -%}
+            {%- if union_by_name or cargas %}, union_by_name => true{% endif -%}
+            {%- if cargas %}, hive_partitioning => false{% endif -%}
         )
     {%- else -%}
         {#- placeholder só para o parse; nunca chega a ser executado -#}

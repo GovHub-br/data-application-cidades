@@ -24,5 +24,93 @@
         "login": "<usuario>",
         "password": "<senha>",
         "extra": ""
+    },
+    "fgv_dados": {
+        "conn_type": "http",
+        "description": "Portal FGVDados (login OutSystems) da icst_ingest_dag; a sessão sai do HttpHook.get_conn()",
+        "host": "https://autenticacao-ibre.fgv.br",
+        "login": "<email>",
+        "password": "<senha>",
+        "extra": ""
+    },
+    "sinduscon": {
+        "conn_type": "http",
+        "description": "Série histórica do INCC-M no Sinduscon-PR (incc_m_ingest_dag); o site recusa sem User-Agent de navegador",
+        "host": "https://sindusconpr.com.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"}"
+    },
+    "abecip": {
+        "conn_type": "http",
+        "description": "Site da ABECIP (abecip_financiamentos e abecip_poupanca): a página traz o link do XLSX da divulgação",
+        "host": "https://www.abecip.org.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"}"
+    },
+    "fipe": {
+        "conn_type": "http",
+        "description": "Downloads da FIPE: séries históricas do FipeZAP (fipezap_trimestral_ingest_dag)",
+        "host": "https://downloads.fipe.org.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"}"
+    },
+    "bacen_olinda": {
+        "conn_type": "http",
+        "description": "API Olinda do Banco Central (OData), usada pela bacen_credito_pib_ingest_dag",
+        "host": "https://olinda.bcb.gov.br",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0\", \"Accept\": \"application/json\"}"
+    },
+    "ibge": {
+        "conn_type": "http",
+        "description": "API de agregados v3 do IBGE (ibge_ingest_dag)",
+        "host": "https://servicodados.ibge.gov.br",
+        "extra": ""
+    },
+    "bacen_sgs": {
+        "conn_type": "http",
+        "description": "API SGS do Banco Central (bacen_sgs_ingest_dag)",
+        "host": "https://api.bcb.gov.br",
+        "extra": ""
+    },
+    "powerbi_caged": {
+        "conn_type": "http",
+        "description": "Painel público do Novo CAGED no Power BI (novo_caged_*): a chave do relatório público vai no extra",
+        "host": "https://wabi-brazil-south-api.analysis.windows.net",
+        "extra": "{\"Content-Type\": \"application/json;charset=UTF-8\", \"X-PowerBI-ResourceKey\": \"<chave do relat\\u00f3rio p\\u00fablico>\", \"Referer\": \"https://app.powerbi.com/\", \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36\"}"
+    },
+    "mz_mrv": {
+        "conn_type": "http",
+        "description": "Catálogo de arquivos da MZ, RI da MRV (lancamentos_ingest_dag e vendas_ingest_dag)",
+        "host": "https://apicatalog.mziq.com",
+        "extra": "{\"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36\", \"Accept\": \"application/json\", \"Content-Type\": \"application/json\", \"Origin\": \"https://ri.mrv.com.br\", \"Referer\": \"https://ri.mrv.com.br/\"}"
+    },
+    "alphavantage": {
+        "conn_type": "http",
+        "description": "API da Alpha Vantage (infomoney_imob): a chave no password, o ativo em symbol no extra",
+        "host": "https://www.alphavantage.co",
+        "password": "<api key>",
+        "extra": "{\"symbol\": \"<s\\u00edmbolo do ativo>\"}"
+    },
+    "tesouro_imap": {
+        "conn_type": "imap",
+        "description": "Caixa de e-mail que recebe o relatório do Tesouro Gerencial (dotacao_execucao_outras_fontes_mcid_ingest_dag)",
+        "host": "<servidor IMAP>",
+        "login": "<email>",
+        "password": "<senha>",
+        "extra": "{\"sender_email\": \"<remetente esperado>\"}"
+    },
+    "openmetadata_default": {
+        "conn_type": "openmetadata",
+        "description": "OpenMetadata do lab (OpenMetadataHook): openmetadata_ingestion_dag e scripts/governance. Password = token JWT do bot de ingestão; extra = serviço e banco do catálogo",
+        "host": "<openmetadata.host, sem https:// e sem /api>",
+        "schema": "https",
+        "port": 443,
+        "password": "<token JWT do bot de ingestão>",
+        "extra": "{\"database_service\": \"Cidades\", \"database_name\": \"cidades\"}"
+    },
+    "superset": {
+        "conn_type": "http",
+        "description": "Superset, só para a recipe superset_metadata do OpenMetadata (OM_INGEST_SUPERSET=true)",
+        "host": "<https://superset.host>",
+        "login": "<usuario>",
+        "password": "<senha>",
+        "extra": ""
     }
 }

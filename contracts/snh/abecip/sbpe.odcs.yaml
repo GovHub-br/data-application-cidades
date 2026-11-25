@@ -1,0 +1,88 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: abecip_sbpe
+name: ABECIP (financiamentos e poupança SBPE)
+version: 0.1.0
+status: draft
+description:
+  purpose: Séries mensais da ABECIP usadas na conjuntura. Cada carga é o XLSX da divulgação, com a série
+    inteira (carga completa).
+team:
+- username: ABECIP
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: financiamentos_modalidade
+  physicalName: financiamentos_modalidade
+  description: Financiamentos SBPE por modalidade (construção e aquisição), em unidades e R$ milhões,
+    mensal desde 2002.
+  customProperties:
+  - property: path
+    value: snh/staging/abecip/financiamentos_modalidade/*.parquet
+  - property: file_pattern
+    value: financiamentos_modalidade\.xlsx
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: abecip_financiamentos_xlsx
+  - property: dag
+    value: abecip_financiamentos_ingest_dag
+  - property: dbt_tables
+    value:
+    - abecip_financiamentos
+  properties:
+  - name: data_referencia
+    logicalType: string
+  - name: unidades_construcao
+    logicalType: string
+  - name: unidades_aquisicao
+    logicalType: string
+  - name: unidades_total
+    logicalType: string
+  - name: valor_construcao_milhoes
+    logicalType: string
+  - name: valor_aquisicao_milhoes
+    logicalType: string
+  - name: valor_total_milhoes
+    logicalType: string
+- name: poupanca_sbpe_mensal
+  physicalName: poupanca_sbpe_mensal
+  description: 'Caderneta de poupança SBPE: depósitos, retiradas, captação líquida, rendimento e saldo,
+    mensal.'
+  customProperties:
+  - property: path
+    value: snh/staging/abecip/poupanca_sbpe_mensal/*.parquet
+  - property: file_pattern
+    value: poupanca_sbpe_mensal\.xlsx
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: abecip_poupanca_xlsx
+  - property: dag
+    value: abecip_poupanca_trimestral_ingest_dag
+  - property: dbt_tables
+    value:
+    - abecip_poupanca_sbpe
+  properties:
+  - name: data_referencia
+    logicalType: string
+  - name: deposito
+    logicalType: string
+  - name: retirada
+    logicalType: string
+  - name: captacao_liquida_valor
+    logicalType: string
+  - name: captacao_liquida_pct
+    logicalType: string
+  - name: rendimento
+    logicalType: string
+  - name: saldo
+    logicalType: string

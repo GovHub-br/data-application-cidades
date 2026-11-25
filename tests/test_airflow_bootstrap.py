@@ -23,8 +23,8 @@ BOOTSTRAP = RAIZ / "infra" / "airflow" / "bootstrap"
 CODIGO = [RAIZ / "dags", RAIZ / "plugins", RAIZ / "helpers"]
 
 VARIABLE_GET = re.compile(r"Variable\.get\(\s*[\"']([^\"']+)[\"']")
-# `conn_id="x"` literal, ou o padrão `"x_default"` de um parâmetro de função, como em
-# `get_postgres_conn(data_base_name: str = "postgres_default")`.
+# `conn_id="x"` literal (ex.: `postgres_conn_id="postgres_default"`), ou o padrão
+# `"x_default"` de um parâmetro de função.
 CONNECTION = re.compile(r"conn_id\s*=\s*[\"']([^\"']+)[\"']|[\"'](\w+_default)[\"']")
 # `pool="x"`, `{"pool": "x"}` ou uma constante `POOL_X = "x"` passada adiante.
 POOL = re.compile(r"(?:\bpool\s*=|[\"']pool[\"']\s*:|\bPOOL_\w+\s*=)\s*[\"']([^\"']+)[\"']")

@@ -1,0 +1,26 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/fipe/fipezap.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: fipe_fipezap
+  description: Índice FipeZAP de locação residencial. Cada carga é o XLSX das séries históricas inteiro
+    (carga completa).
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/snh/fipe/fipezap.odcs.yaml
+    owner: FIPE
+  tables:
+  - name: indice_locacao
+    description: Número índice e variações mensal e em 12 meses da locação residencial (total).
+    meta:
+      caminho: snh/staging/fipe/indice_locacao/*.parquet
+      file_pattern: indice_locacao\.xlsx
+      load_type: full
+      dag: fipezap_trimestral_ingest_dag
+    columns:
+    - name: data_referencia
+    - name: imoveis_residenciais_locacao_numero_indice_total
+    - name: imoveis_residenciais_locacao_var_mensal_total
+    - name: imoveis_residenciais_locacao_var_ano_total

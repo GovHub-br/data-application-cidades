@@ -1,4 +1,4 @@
-"""Conversão raw/ -> staging/ (Parquet). Ponto de entrada: scripts/raw_para_staging.py."""
+"""Conversão snh/raw/ -> snh/staging/ (Parquet). Ponto de entrada: scripts/raw_para_staging.py."""
 
 import sys
 from pathlib import Path

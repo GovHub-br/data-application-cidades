@@ -132,7 +132,7 @@ class S3Falso:
 
     def put_object_tagging(self, Bucket, Key, Tagging):
         # como no MinIO do lake: tag só em raw/
-        if not Key.startswith("raw/"):
+        if not Key.startswith("snh/raw/"):
             raise _Erro("AccessDenied")
         self.tags[Key] = Tagging["TagSet"]
 
@@ -151,7 +151,7 @@ def minio(monkeypatch):
     return cliente
 
 
-KEY = "raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
+KEY = "snh/raw/sftp/fabrica/GEFUS/CadUnico/PESSOA.TXT"
 
 # cp1252 com acento, campo com delimitador e com quebra de linha, CRLF e CPF formatado
 CONTEUDO = (
@@ -229,7 +229,7 @@ def test_dry_run_grava_previa_e_nao_toca_o_raw(minio):
 
     assert rec["status"] == "dry_run"
     assert minio.s3.objetos[KEY] == CONTEUDO
-    previa = "masked_dryrun/" + KEY[len("raw/") :]
+    previa = "snh/masked_dryrun/" + KEY[len("snh/raw/") :]
     assert hashlib.md5(minio.s3.objetos[previa]).hexdigest() == rec["hash_after"]
     assert not minio.esta_mascarado(KEY)
 
@@ -512,7 +512,7 @@ def test_paralelo_dry_run_nao_toca_o_raw(paralelo):
 
     assert rec["status"] == "dry_run"
     assert paralelo.s3.objetos[KEY] == CADUNICO
-    assert "masked_dryrun/" + KEY[len("raw/") :] in paralelo.s3.objetos
+    assert "snh/masked_dryrun/" + KEY[len("snh/raw/") :] in paralelo.s3.objetos
 
 
 def test_arquivo_pequeno_fica_no_sequencial(paralelo, monkeypatch):
@@ -584,9 +584,9 @@ def test_regravar_o_objeto_volta_a_bloquear_a_staging(minio):
 
 def test_dag_mascara_em_processo_proprio():
     # importado na task, o spawn do modo paralelo reexecuta o binário do Airflow
-    dag = (Path(__file__).parents[1] / "dags/data_ingest/minio/minio_transform_dag.py").read_text(
-        "utf-8"
-    )
+    dag = (
+        Path(__file__).parents[1] / "dags/snh/data_ingest/minio/minio_transform_dag.py"
+    ).read_text("utf-8")
     assert "from mascarar_minio import" not in dag
     assert "scripts/mascarar_minio.py" in dag
     assert "check=True" in dag
@@ -631,6 +631,42 @@ def test_mascara_so_varre_os_canais_do_legado(monkeypatch):
         if hasattr(modulo, nome):
             monkeypatch.setattr(modulo, nome, lambda *_a: set())
     modulo.run(apply=False)
-    assert listados == ["raw/sftp/", "raw/sharepoint/"]
+    assert listados == ["snh/raw/sftp/", "snh/raw/sharepoint/"]
     with pytest.raises(ValueError, match="fora do legado"):
-        modulo.run(apply=False, prefix="raw/ibge/")
+        modulo.run(apply=False, prefix="snh/raw/ibge/")
+
+
+@pytest.fixture
+def run_isolado(minio, monkeypatch):
+    """`run` com o lake falso e sem banco: só o laço e a contagem (B2)."""
+    minio.s3.objetos[KEY] = CONTEUDO
+    for nome in ("_criar_control_table", "_registrar_control", "_gravar_auditoria",
+                 "_marcar_resultado", "_avisar_mascaramento_sem_prova"):  # fmt: skip
+        monkeypatch.setattr(modulo, nome, lambda *a, **k: None)
+    monkeypatch.setattr(modulo, "_conn_str", lambda: "")
+    monkeypatch.setattr(modulo, "_carregar_masked_hashes", lambda conn: set())
+    monkeypatch.setattr(modulo, "ClienteMinio", lambda: minio)
+    return minio
+
+
+def test_erro_de_mascara_falha_a_execucao(run_isolado, monkeypatch):
+    def falha(minio, conn, key, execution_id, apply, hashes):
+        rec = modulo._novo_registro(execution_id, key)
+        rec.update(status="error", error_message="quebrou", hash_before=None)
+        return rec
+
+    monkeypatch.setattr(modulo, "processar_objeto", falha)
+    with pytest.raises(RuntimeError, match="1 objeto"):
+        modulo.run(apply=True)
+
+
+def test_tag_ilegivel_nao_remascara_e_falha(run_isolado, monkeypatch):
+    def ilegivel(key):
+        raise _Erro("InternalError")
+
+    chamado = []
+    monkeypatch.setattr(run_isolado, "esta_mascarado", ilegivel)
+    monkeypatch.setattr(modulo, "processar_objeto", lambda *a: chamado.append(a))
+    with pytest.raises(RuntimeError):
+        modulo.run(apply=True)
+    assert not chamado  # sem saber se já foi mascarado, não mascara de novo

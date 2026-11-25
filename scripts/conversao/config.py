@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from datalake import keys as lake_keys
 from lake_utils import MDB_EXT
 
 load_dotenv()
@@ -29,9 +30,10 @@ PG_DBNAME = os.environ["DB_DW_DBNAME_MCID"]
 SCHEMA = os.environ.get("LAKE_SCHEMA", "lake")
 CONTROL_TABLE = "_staging_log"
 
-RAW_PREFIX = os.environ.get("MASKING_PREFIX", "raw/")
-STAGING_PREFIX = os.environ.get("STAGING_PREFIX", "staging/")
-AUDIT_PREFIX = "audit/staging/"
+RAW_PREFIX = os.environ.get("MASKING_PREFIX", lake_keys.RAW_PREFIX)
+STAGING_PREFIX = os.environ.get("STAGING_PREFIX", lake_keys.STAGING_PREFIX)
+DRYRUN_PREFIX = f"{lake_keys.LAKE_ROOT}staging_dryrun/"
+AUDIT_PREFIX = f"{lake_keys.LAKE_ROOT}audit/staging/"
 
 TMPDIR = os.environ.get("LAKE_TMPDIR") or os.environ.get("MASKING_TMPDIR") or None
 if TMPDIR:

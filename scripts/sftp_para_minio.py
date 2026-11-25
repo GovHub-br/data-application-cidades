@@ -5,9 +5,9 @@ Ingestão de arquivos do SFTP para o MinIO (camada raw).
 
 Percorre Analise_SNH, GEFUS e CadUnico em /home/fabrica, além de
 /home/caixa.geavo/GEAVO, baixa todos os arquivos suportados (CSV, TXT, XLSX,
-XLS, MDB, ZIP — expandindo ZIPs internamente) e os sobe para raw/sftp/ no MinIO,
+XLS, MDB, ZIP — expandindo ZIPs internamente) e os sobe para snh/raw/sftp/ no MinIO,
 espelhando a estrutura de pastas do servidor SFTP (sem o prefixo /home/) — ex.:
-/home/fabrica/GEFUS/ANTERIORES/x.TXT -> raw/sftp/fabrica/GEFUS/ANTERIORES/x.TXT.
+/home/fabrica/GEFUS/ANTERIORES/x.TXT -> snh/raw/sftp/fabrica/GEFUS/ANTERIORES/x.TXT.
 Arquivos extraídos de um ZIP vão para a mesma pasta de destino do ZIP.
 
 Arquivos .mdb extraídos de um ZIP recebem o stem do ZIP como prefixo
@@ -51,6 +51,7 @@ if _plugins.is_dir() and str(_plugins) not in sys.path:
 
 from cliente_minio import ClienteMinio  # noqa: E402
 from cliente_sftp import ClienteSftp  # noqa: E402
+from datalake.keys import RAW_PREFIX  # noqa: E402
 
 load_dotenv()
 
@@ -263,7 +264,7 @@ def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
     """sftp_paths já ingeridos cujo objeto AINDA está no MinIO.
 
     Skip do modo --reingest-deleted: só pula o que continua no lake, então o que foi
-    removido pode ser reingerido. `presentes` é o conjunto de minio_keys de raw/.
+    removido pode ser reingerido. `presentes` é o conjunto de minio_keys de snh/raw/.
     """
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
@@ -465,7 +466,7 @@ _PREFIXO_SFTP_HOME = "/home/"
 
 
 def _pasta_destino(caminho_sftp: str) -> str:
-    """Deriva a subpasta em raw/sftp/ a partir do caminho no servidor SFTP,
+    """Deriva a subpasta em snh/raw/sftp/ a partir do caminho no servidor SFTP,
     espelhando a estrutura de diretórios de origem (sem o prefixo /home/).
 
     Ex.: /home/fabrica/GEFUS/ANTERIORES/x.TXT -> sftp/fabrica/GEFUS/ANTERIORES
@@ -506,7 +507,9 @@ _SFTP_TRANSFER = TransferConfig(
 
 
 def subir_para_minio(minio: ClienteMinio, tmp_path: str, nome_destino: str) -> str:
-    key: str = minio.upload_arquivo(tmp_path, f"raw/{nome_destino}", transfer_config=_SFTP_TRANSFER)
+    key: str = minio.upload_arquivo(
+        tmp_path, f"{RAW_PREFIX}{nome_destino}", transfer_config=_SFTP_TRANSFER
+    )
     return key
 
 
@@ -540,7 +543,7 @@ def _subir_stream_com_hash(
     """Upload a partir de um stream (sem temp file), retornando (minio_key, file_hash).
     stream_factory é um callable que retorna um context manager com .read()."""
     resultado: Tuple[str, str] = minio.subir_stream_com_hash(
-        f"raw/{nome_destino}",
+        f"{RAW_PREFIX}{nome_destino}",
         stream_factory,
         transfer_config=_SFTP_TRANSFER,
         progress_cb=progress_cb,
@@ -602,7 +605,7 @@ def processar_arquivo_simples(
         file_hash = _compute_hash(tmp_path)
         minio_key = subir_para_minio(minio, tmp_path, nome_destino)
         spinner.parar(ok=True)
-        log.info("✓ [%d/%d] %s → raw/%s", idx, total, nome_arquivo, nome_destino)
+        log.info("✓ [%d/%d] %s → snh/raw/%s", idx, total, nome_arquivo, nome_destino)
         _registrar_ingest(
             conn_str,
             caminho_sftp,
@@ -831,7 +834,7 @@ def processar_zip(  # noqa: C901
 
                 spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
                 log.info(
-                    "  ↳ subindo %s (%s descomprimido) → raw/%s ...",
+                    "  ↳ subindo %s (%s descomprimido) → snh/raw/%s ...",
                     nome_interno,
                     format_size(info.file_size),
                     nome_destino,
@@ -843,7 +846,7 @@ def processar_zip(  # noqa: C901
                         lambda fn=info.filename: zf.open(fn),
                         progress_cb=_progresso_upload(nome_interno, info.file_size),
                     )
-                    log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
+                    log.info("  ✓ ↳ %s → snh/raw/%s", nome_interno, nome_destino)
                     _registrar_ingest(
                         conn_str,
                         caminho_log,
@@ -987,7 +990,7 @@ def processar_zip(  # noqa: C901
                     try:
                         file_hash = _compute_hash(str(arq_path))
                         minio_key = subir_para_minio(minio, str(arq_path), nome_destino)
-                        log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
+                        log.info("  ✓ ↳ %s → snh/raw/%s", nome_interno, nome_destino)
                         _registrar_ingest(
                             conn_str,
                             caminho_log,
@@ -1038,7 +1041,7 @@ def processar_zip(  # noqa: C901
         try:
             file_hash = _compute_hash(tmp_zip)
             minio_key = subir_para_minio(minio, tmp_zip, nome_destino)
-            log.info("✓ [%d/%d] %s → raw/%s (bruto)", idx, total, nome_zip, nome_destino)
+            log.info("✓ [%d/%d] %s → snh/raw/%s (bruto)", idx, total, nome_zip, nome_destino)
             _registrar_ingest(
                 conn_str,
                 caminho_zip,
@@ -1143,7 +1146,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     reingest_deleted: bool = False,
     arquivos: Optional[list] = None,
 ) -> Tuple[int, int]:
-    """Ingere os arquivos do SFTP para raw/ no MinIO. Retorna (sucesso, erro).
+    """Ingere os arquivos do SFTP para snh/raw/ no MinIO. Retorna (sucesso, erro).
 
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run()).
     Não há dry-run: a ingestão é idempotente pelo controle lake._ingest_minio_log.
@@ -1183,15 +1186,15 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     if reingest_deleted:
         # Só pula o que ainda está presente no MinIO; reingere os já-ingeridos que
         # sumiram.
-        presentes = {key for key, _ in minio.listar_objetos("raw/")}
+        presentes = {key for key, _ in minio.listar_objetos(RAW_PREFIX)}
         ja_inseridos = _obter_ja_inseridos_presentes(conn_str, presentes)
         # nome livre p/ os deletados: reingerem com o nome original, sem sufixo. Compara
         # o caminho completo, como o gerar_nome_unico() faz no resto do fluxo.
-        nomes_usados = {key[len("raw/") :] for key in presentes}
+        nomes_usados = {key[len(RAW_PREFIX) :] for key in presentes}
         # fast-path por mtime desligado: queremos reingerir os ZIPs deletados
         zip_completos: dict = {}
         log.info(
-            "MODO --reingest-deleted | %d objetos presentes em raw/ | %d "
+            "MODO --reingest-deleted | %d objetos presentes em snh/raw/ | %d "
             "já-ingeridos ainda "
             "presentes (pulados); ausentes serão reingeridos",
             len(presentes),

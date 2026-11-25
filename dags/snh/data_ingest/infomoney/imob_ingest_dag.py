@@ -1,0 +1,205 @@
+import csv
+import json
+import logging
+import os
+import re
+import shutil
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pyarrow.parquet as pq
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from airflow.providers.http.hooks.http import HttpHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.sdk import Variable, dag, get_current_context, task
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
+
+from plugins.datalake import contract, readers
+from plugins.datalake.api import staging_key, staging_record, write_text_parquet
+from plugins.datalake.readers import INFOMONEY_COLUMNS
+from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
+from plugins.datalake.tasks import previous_rows, record, summary
+from scripts.lake_utils import md5_file
+
+FOLDER = "infomoney/acoes_imob"  # snh/raw/infomoney/acoes_imob/load_id=<id>/acoes_imob.json
+FILE_NAME = "acoes_imob.json"
+
+
+def _run_dir() -> Path:
+    """LAKE_TMPDIR/<dag_id>/<run_id>/: os arquivos da execução, entre uma task e outra.
+
+    shortcut: só funciona porque todo ambiente usa LocalExecutor com o LAKE_TMPDIR
+    compartilhado; com outro executor, o extract passa a gravar no bucket.
+    """
+    ctx = get_current_context()
+    run = re.sub(r"[^A-Za-z0-9_.-]", "_", ctx["run_id"])
+    path = Path(os.environ.get("LAKE_TMPDIR") or "/tmp") / ctx["dag"].dag_id / run
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _lake() -> tuple[S3Hook, str, str]:
+    """(hook, bucket, prefixo): o `dry_run` grava tudo embaixo de dryrun/."""
+    dry = bool(get_current_context()["params"]["dry_run"])
+    return S3Hook(aws_conn_id="lake_mcid"), Variable.get("lake_bucket"), "dryrun/" if dry else ""
+
+
+@dag(
+    dag_id="infomoney_imob",
+    schedule="@daily",
+    start_date=datetime(2025, 1, 1),
+    catchup=False,
+    max_active_runs=1,
+    default_args={"owner": "Milena Rocha", "retries": 1, "retry_delay": timedelta(minutes=5)},
+    params={"dry_run": False, "backfill_postgres": False},
+    tags=["cidades", "infomoney", "imob", "cotações", "conjuntura", "data-lake", "ingest"],
+)
+def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
+    """Cotações diárias do IMOB (B3) pela Alpha Vantage para o lake (ADR-0004).
+
+    A API devolve só os ~100 últimos pregões; o histórico fica nas cargas anteriores, que
+    a prata junta (a mais recente vence em cada pregão). Antes de a primeira carga rodar,
+    disparar uma vez com `backfill_postgres`, que traz o histórico que só a prata ainda tem.
+
+    extract → upload_to_s3 → transform → verify_structural_data_drift → upload_staging
+    → report, e cleanup no fim.
+
+    Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
+    """
+
+    @task(retries=2, retry_exponential_backoff=True)
+    def extract() -> str:
+        """Os ~100 últimos pregões da Alpha Vantage (Connection `alphavantage`: a chave no
+        password, o ativo em `symbol` no extra), como a API responde.
+
+        Com o param `backfill_postgres`, exporta uma vez o histórico da prata
+        prata_conjuntura_infomoney_imob como a primeira carga do lake: o schema infomoney, onde
+        a DAG antiga acumulava os pregões, já não existe no banco, e a prata é a última montagem
+        com a série inteira. Rodar antes da primeira mcid_cosmos_dag, que reconstrói a prata.
+        """
+        if get_current_context()["params"]["backfill_postgres"]:
+            rows = PostgresHook(postgres_conn_id="postgres_default").get_records(
+                "SELECT symbol, data_pregao::text, open::text, high::text, low::text, "
+                "close::text, volume::text FROM prata.prata_conjuntura_infomoney_imob ORDER BY data_pregao"
+            )
+            if not rows:
+                raise AirflowFailException(
+                    "prata_conjuntura_infomoney_imob vazia: nada para exportar"
+                )
+            path = _run_dir() / "acoes_imob_postgres.csv"
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                csv.writer(f).writerows([INFOMONEY_COLUMNS, *rows])
+            return str(path)
+        hook = HttpHook(method="GET", http_conn_id="alphavantage")
+        conn = hook.get_connection(hook.http_conn_id)
+        params = {"function": "TIME_SERIES_DAILY", "symbol": conn.extra_dejson["symbol"],
+                  "apikey": conn.password, "outputsize": "compact"}  # fmt: skip
+        response = hook.run("query", data=params, extra_options={"timeout": 120})  # != 2xx levanta
+        answer = response.json()
+        if "Time Series (Daily)" not in answer:  # limite da API: vem uma nota, não dado
+            raise AirflowFailException(f"a Alpha Vantage não devolveu a série: {list(answer)}")
+        path = _run_dir() / FILE_NAME
+        path.write_bytes(response.content)
+        return str(path)
+
+    @task(retries=2, retry_exponential_backoff=True)
+    def upload_to_s3(path: str) -> str:
+        """O arquivo em raw/infomoney/acoes_imob/load_id=<id>/; se igual à última carga, nada pousa.
+
+        O md5 vai no metadado do objeto, e a próxima execução compara com ele (ADR-0005).
+        """
+        hook, bucket, prefix = _lake()
+        load = load_id(get_current_context()["dag_run"].run_after)  # o mesmo num retry
+        name, md5 = Path(path).name, md5_file(path)
+        client = hook.get_conn()
+        previous_loads = sorted(
+            {load_id_of(k) for k in hook.list_keys(bucket, f"{prefix}{RAW_PREFIX}{FOLDER}/") or []}
+            - {load, None}
+        )
+        if previous_loads:
+            previous_key = f"{prefix}{raw_key(FOLDER, name, previous_loads[-1])}"
+            known = {k.rsplit("/", 1)[-1] for k in hook.list_keys(bucket, previous_key) or []}
+            if (
+                name in known
+                and client.head_object(Bucket=bucket, Key=previous_key)["Metadata"].get("md5")
+                == md5
+            ):
+                raise AirflowSkipException("a série do IMOB não mudou desde a última carga")
+        key = raw_key(FOLDER, name, load)
+        client.upload_file(path, bucket, prefix + key, ExtraArgs={"Metadata": {"md5": md5}})
+        return key
+
+    @task
+    def transform(key: str) -> dict:
+        """A raw em Parquet local (texto + linhagem), pelo leitor do contrato `infomoney_cotacoes` (contracts/snh/infomoney/)."""
+        hook, bucket, prefix = _lake()
+        run_id = get_current_context()["run_id"]
+        dataset = contract.match(key, contract.load())
+        if dataset is None:  # fica na raw e vai para o resumo (ADR-0006)
+            return staging_record(run_id, key, status="uncataloged")
+        work = _run_dir() / "transform"
+        work.mkdir(exist_ok=True)
+        src = hook.download_file(
+            prefix + key, bucket, str(work), preserve_file_name=True,
+            use_autogenerated_subdir=False,
+        )  # fmt: skip
+        source_hash = md5_file(src)
+        dst = str(work / "staging.parquet")
+        df = readers.parse(dataset.reader, src)
+        stats = write_text_parquet(df, dst, Path(key).name, source_hash, load_id_of(key))
+        return staging_record(run_id, key, staging_key=staging_key(key), status="converted",
+                              source_hash=source_hash, local_path=dst, **stats)  # fmt: skip
+
+    @task
+    def verify_structural_data_drift(rec: dict) -> dict:
+        """Colunas e volume contra o contrato; `quarantined` não entra na staging."""
+        if rec["status"] != "converted":
+            return rec
+        datasets = contract.load()
+        dataset = contract.match(rec["raw_key"], datasets)
+        previous = previous_rows(PostgresHook(postgres_conn_id="postgres_default"))
+        meta = pq.read_metadata(rec["local_path"])
+        header = [c for c in meta.schema.names if not c.startswith("_")]  # linhagem fora
+        status, details = contract.structural_status(
+            header, dataset, meta.num_rows, previous(dataset, datasets)
+        )
+        rec["structural"] = status
+        if status == "quarantined":
+            rec.update(status="quarantined", error_message=json.dumps(details)[:500])
+        elif status in ("additive_drift", "known_rename"):
+            rec["error_message"] = json.dumps(details)[:500]
+        return rec
+
+    @task(retries=2, retry_exponential_backoff=True)
+    def upload_staging(rec: dict) -> dict:
+        """O Parquet aprovado em staging/infomoney/acoes_imob/load_id=<id>/ e o lake._staging_log."""
+        hook, bucket, prefix = _lake()
+        if rec["status"] == "converted":
+            hook.load_file(rec["local_path"], prefix + rec["staging_key"], bucket, replace=True)
+        if not prefix:  # o dry run lê as tabelas de controle, mas não grava
+            record(PostgresHook(postgres_conn_id="postgres_default"), [rec])
+        return {k: rec.get(k) for k in ("raw_key", "status", "structural", "error_message")}
+
+    @task(trigger_rule="none_failed")
+    def report() -> None:
+        """Resumo da execução; falha com erro ou quarentena, fica verde sem carga nova."""
+        rec = get_current_context()["ti"].xcom_pull(task_ids="upload_staging")
+        if not rec:  # upload_to_s3 pulou: a fonte não mudou
+            logging.info("[infomoney_imob] sem carga nova: o IMOB não mudou")
+            return
+        body, failed, notable = summary({"keys": [rec["raw_key"]]}, [rec])
+        (logging.error if failed else logging.warning if notable else logging.info)(
+            "[infomoney_imob] report\n%s", body
+        )
+        if failed:
+            raise RuntimeError("ingestão do IMOB com erro ou quarentena; veja o resumo no log")
+
+    @task(trigger_rule="all_done")
+    def cleanup() -> None:
+        shutil.rmtree(_run_dir(), ignore_errors=True)
+
+    staged = upload_staging(verify_structural_data_drift(transform(upload_to_s3(extract()))))
+    staged >> report() >> cleanup()
+
+
+dag_instance = infomoney_imob_dag()

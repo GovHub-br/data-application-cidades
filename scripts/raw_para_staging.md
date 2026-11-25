@@ -166,8 +166,8 @@ convertido (gêmeos, pastas ignoradas), em `gemeos.py` e `config.py`.
 |---|---|---|
 | `DL_ENDPOINT`, `DL_ACCESS_KEY`, `DL_SECRET_KEY`, `DL_BUCKET` | sim | Conexão com o lake |
 | `DB_DW_HOST_MCID`, `DB_DW_PORT_MCID`, `DB_DW_USER_MCID`, `DB_DW_PASSWORD_MCID`, `DB_DW_DBNAME_MCID` | sim | Postgres (tabela de controle) |
-| `STAGING_PREFIX` | não (default `staging/`) | Prefixo de saída |
-| `MASKING_PREFIX` | não (default `raw/`) | Prefixo de entrada |
+| `STAGING_PREFIX` | não (default `snh/staging/`) | Prefixo de saída |
+| `MASKING_PREFIX` | não (default `snh/raw/`) | Prefixo de entrada |
 | `LAKE_TMPDIR` / `MASKING_TMPDIR` | recomendado | Dir de temporários. **Não use `/tmp`** se for tmpfs (RAM). ~5 GB livres p/ os arquivos grandes. |
 
 ### Dependências
@@ -211,7 +211,7 @@ Por padrão roda em **DRY-RUN**: grava em `staging_dryrun/` (não em `staging/`)
 | `--max-size-mb N` | Pula objetos maiores que N MB. |
 | `--chunksize N` | Linhas por chunk na leitura CSV/TXT (default 200k). |
 | `--bad-lines {skip,count,error}` | Linhas mal-formadas: `skip` (rápido, engine C, sem contagem), `count` (engine Python, conta), `error` (falha o arquivo). Default `skip`. |
-| `--prefix P` | Prefixo a varrer (default `raw/`). |
+| `--prefix P` | Prefixo a varrer (default `snh/raw/`). |
 
 ---
 

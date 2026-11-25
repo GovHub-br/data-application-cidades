@@ -12,7 +12,7 @@
   },
   "dags": [
     {
-      "arquivo": "dags/conjuntura/conjuntura_dag.py",
+      "arquivo": "dags/snh/conjuntura/conjuntura_dag.py",
       "grupo": "conjuntura",
       "dag_id": "conjuntura_dag",
       "schedule": "dinamico",
@@ -24,7 +24,7 @@
       "descricao": "DAG guarda-chuva do boletim de conjuntura."
     },
     {
-      "arquivo": "dags/data_ingest/abecip/abecip_financiamentos_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/abecip/abecip_financiamentos_ingest_dag.py",
       "grupo": "data_ingest/abecip",
       "dag_id": "abecip_financiamentos_ingest_dag",
       "schedule": "dinamico",
@@ -37,7 +37,7 @@
       "descricao": "Ingestão da série mensal de financiamentos SBPE por modalidade (ABECIP)."
     },
     {
-      "arquivo": "dags/data_ingest/abecip/abecip_instituicoes_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/abecip/abecip_instituicoes_ingest_dag.py",
       "grupo": "data_ingest/abecip",
       "dag_id": "abecip_instituicoes_ingest_dag",
       "schedule": "dinamico",
@@ -49,7 +49,7 @@
       "descricao": "Consolida as competências da ABECIP por instituição financeira em staging."
     },
     {
-      "arquivo": "dags/data_ingest/abecip/abecip_poupanca_trimestral_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/abecip/abecip_poupanca_trimestral_ingest_dag.py",
       "grupo": "data_ingest/abecip",
       "dag_id": "abecip_poupanca_trimestral_ingest_dag",
       "schedule": "dinamico",
@@ -60,7 +60,7 @@
       "descricao": "DAG de ingestão incremental trimestral da Caderneta de Poupança ABECIP."
     },
     {
-      "arquivo": "dags/data_ingest/bacen/bacen_sgs_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/bacen/bacen_sgs_ingest_dag.py",
       "grupo": "data_ingest/bacen",
       "dag_id": "bacen_sgs_ingest_dag",
       "schedule": "dinamico",
@@ -72,7 +72,7 @@
       "descricao": "DAG para ingestão de séries temporais do SGS/BACEN no PostgreSQL."
     },
     {
-      "arquivo": "dags/data_ingest/bacen/credito_pib_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/bacen/credito_pib_ingest_dag.py",
       "grupo": "data_ingest/bacen",
       "dag_id": "bacen_credito_pib_ingest_dag",
       "schedule": "dinamico",
@@ -85,7 +85,7 @@
       "descricao": "Ingestão do Crédito Imobiliário / PIB (BCB Olinda MercadoImobiliario)."
     },
     {
-      "arquivo": "dags/data_ingest/fgv/icst_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/fgv/icst_ingest_dag.py",
       "grupo": "data_ingest/fgv",
       "dag_id": "icst_ingest_dag",
       "schedule": "dinamico",
@@ -98,7 +98,7 @@
       "descricao": "DAG para ingestão de dados históricos do ICST da FGV no PostgreSQL."
     },
     {
-      "arquivo": "dags/data_ingest/fgv/incc_m_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/fgv/incc_m_ingest_dag.py",
       "grupo": "data_ingest/fgv",
       "dag_id": "incc_m_ingest_dag",
       "schedule": "dinamico",
@@ -111,7 +111,7 @@
       "descricao": "DAG para ingestão de dados do INCC-M da FGV no PostgreSQL."
     },
     {
-      "arquivo": "dags/data_ingest/fipe/fipezap_trimestral_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/fipe/fipezap_trimestral_ingest_dag.py",
       "grupo": "data_ingest/fipe",
       "dag_id": "fipezap_trimestral_ingest_dag",
       "schedule": "dinamico",
@@ -122,7 +122,7 @@
       "descricao": "DAG de ingestão incremental trimestral do Índice FipeZAP."
     },
     {
-      "arquivo": "dags/data_ingest/ibge/ibge_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/ibge/ibge_ingest_dag.py",
       "grupo": "data_ingest/ibge",
       "dag_id": "ibge_ingest_dag",
       "schedule": "dinamico",
@@ -134,7 +134,7 @@
       "descricao": "DAG para ingestão de dados do IBGE no PostgreSQL."
     },
     {
-      "arquivo": "dags/data_ingest/ibge/pnad_construcao_sidra_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/ibge/pnad_construcao_sidra_ingest_dag.py",
       "grupo": "data_ingest/ibge",
       "dag_id": "ibge_pnad_construcao_sidra_ingest_dag",
       "schedule": "dinamico",
@@ -148,7 +148,7 @@
       "descricao": "PNAD-C construção (ocupados + rendimento médio real) via SIDRA — pág. 3."
     },
     {
-      "arquivo": "dags/data_ingest/infomoney/imob_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/infomoney/imob_ingest_dag.py",
       "grupo": "data_ingest/infomoney",
       "dag_id": "infomoney_imob",
       "schedule": "@daily",
@@ -162,7 +162,7 @@
       "descricao": "DAG para extração de séries temporais do índice IMOB.SA"
     },
     {
-      "arquivo": "dags/data_ingest/minio/minio_transform_dag.py",
+      "arquivo": "dags/snh/data_ingest/minio/minio_transform_dag.py",
       "grupo": "data_ingest/minio",
       "dag_id": "minio_transform_dag",
       "schedule": "dinamico",
@@ -176,7 +176,7 @@
       "descricao": "Pipeline de transformação do data lake: raw/ -> mascaramento PII -> staging/."
     },
     {
-      "arquivo": "dags/data_ingest/mrv/lancamentos_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/mrv/lancamentos_ingest_dag.py",
       "grupo": "data_ingest/mrv",
       "dag_id": "lancamentos_ingest_dag",
       "schedule": "dinamico",
@@ -189,7 +189,7 @@
       "descricao": "DAG para ingestão de dados dos Lançamentos da Empresa MRV no PostgreSQL."
     },
     {
-      "arquivo": "dags/data_ingest/mrv/vendas_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/mrv/vendas_ingest_dag.py",
       "grupo": "data_ingest/mrv",
       "dag_id": "vendas_ingest_dag",
       "schedule": "dinamico",
@@ -202,7 +202,7 @@
       "descricao": "DAG para ingestão de dados das Vendas Líquidas da Empresa MRV"
     },
     {
-      "arquivo": "dags/data_ingest/novo_caged/saldo_estoque_construcao_edificios_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/novo_caged/saldo_estoque_construcao_edificios_ingest_dag.py",
       "grupo": "data_ingest/novo_caged",
       "dag_id": "novo_caged_construcao_edificios",
       "schedule": "dinamico",
@@ -216,7 +216,7 @@
       "descricao": "DAG para buscar e armazenar dados de saldo e estoque na construção"
     },
     {
-      "arquivo": "dags/data_ingest/novo_caged/saldo_estoque_servicos_especializados_construcao_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/novo_caged/saldo_estoque_servicos_especializados_construcao_ingest_dag.py",
       "grupo": "data_ingest/novo_caged",
       "dag_id": "novo_caged_servicos_especializados_construcao",
       "schedule": "dinamico",
@@ -230,7 +230,7 @@
       "descricao": "DAG para buscar e armazenar dados de saldo e estoque em serviços"
     },
     {
-      "arquivo": "dags/data_ingest/novo_caged/saldo_estoque_total_construcao_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/novo_caged/saldo_estoque_total_construcao_ingest_dag.py",
       "grupo": "data_ingest/novo_caged",
       "dag_id": "novo_caged_total_construcao",
       "schedule": "dinamico",
@@ -244,7 +244,7 @@
       "descricao": "DAG para buscar e armazenar dados de saldo e estoque no total da"
     },
     {
-      "arquivo": "dags/data_ingest/sftp/sftp_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/sftp/sftp_ingest_dag.py",
       "grupo": "data_ingest/sftp",
       "dag_id": "sftp_ingest_dag",
       "schedule": "dinamico",
@@ -259,7 +259,7 @@
       "descricao": "Ingestão do SFTP do MCid para a camada raw/ do data lake (MinIO)."
     },
     {
-      "arquivo": "dags/data_ingest/tesouro_gerencial/dotacao_execucao_outras_fontes_mcid_ingest_dag.py",
+      "arquivo": "dags/snh/data_ingest/tesouro_gerencial/dotacao_execucao_outras_fontes_mcid_ingest_dag.py",
       "grupo": "data_ingest/tesouro_gerencial",
       "dag_id": "dotacao_execucao_outras_fontes_mcid_ingest_dag",
       "schedule": "dinamico",
@@ -273,7 +273,7 @@
       "descricao": "Processa e ingere dados de execução de outras fontes de MCID"
     },
     {
-      "arquivo": "dags/dbt/mcid_cosmos_dag.py",
+      "arquivo": "dags/snh/dbt/mcid_cosmos_dag.py",
       "grupo": "dbt",
       "dag_id": "mcid_cosmos_dag",
       "schedule": "0 1 * * *",
@@ -281,7 +281,7 @@
       "descricao": "DAG do dbt do MCid."
     },
     {
-      "arquivo": "dags/openmetadata_ingestion_dag.py",
+      "arquivo": "dags/snh/openmetadata_ingestion_dag.py",
       "grupo": ".",
       "dag_id": "openmetadata_ingestion_dag",
       "schedule": "dinamico",

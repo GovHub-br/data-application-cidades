@@ -1,0 +1,300 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sftp_subsidiada_dados_prioritarios
+name: Linha subsidiada · dados prioritários da SNH
+version: 0.1.0
+status: draft
+description:
+  purpose: Dados prioritários das operações subsidiadas (FAR, FDS e Rural) que CAIXA e BB entregam por
+    mês no GEFUS.
+team:
+- username: CAIXA · GEFUS
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: dados_prioritarios_af_caixa
+  physicalName: dados_prioritarios_af_caixa
+  description: Dados prioritários da SNH reportados pela CAIXA (AF_CAIXA), todas as modalidades. Uma remessa
+    por mês (AAAAMM no nome). Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv.
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet
+  - property: file_pattern
+    value: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value:
+    - bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa
+    - bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_serie
+  properties:
+  - name: data_de_movimento
+    logicalType: string
+  - name: agente_financeiro
+    logicalType: string
+  - name: apf
+    logicalType: string
+  - name: uf
+    logicalType: string
+  - name: municipio
+    logicalType: string
+  - name: codigo_ibge_do_municipio
+    logicalType: string
+  - name: nome_empreendimento
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: situacao_do_empreendimento
+    logicalType: string
+  - name: detalhamento_da_situacao_do_empreendimento
+    logicalType: string
+  - name: data_de_contratacao
+    logicalType: string
+  - name: exec
+    logicalType: string
+  - name: valor_contratado
+    logicalType: string
+  - name: valor_aporte_adicional
+    logicalType: string
+  - name: valor_desembolsado
+    logicalType: string
+  - name: uh_contratadas
+    logicalType: string
+  - name: uh_entregues
+    logicalType: string
+  - name: uh_vigentes
+    logicalType: string
+  - name: observacoes
+    logicalType: string
+    classification: restricted
+  - name: quantidade_de_uhs_vigentes_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_entregues_do_ano_de_referencia
+    logicalType: string
+  - name: situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: valor_desembolsado_do_ano_de_referencia
+    logicalType: string
+  - name: detalhamento_da_situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_contratadas_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_contratadas_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_entregues_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_vigentes_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_distratadas
+    logicalType: string
+  - name: quantidade_de_uhs_distratadas_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_distratadas_do_ano_de_referencia
+    logicalType: string
+  - name: data_da_previsao_da_entrega
+    logicalType: string
+  - name: unidades_habitacionais_a_serem_entregues
+    logicalType: string
+  - name: logradouro_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: numero_do_imovel
+    logicalType: string
+  - name: complemento_do_endereco_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: bairro_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: cep_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: latitude_do_imovel
+    logicalType: string
+  - name: longitude_do_imovel
+    logicalType: string
+  - name: apf_fds_fase_projeto
+    logicalType: string
+  - name: data_de_contratacao_fds_fase_projeto
+    logicalType: string
+  - name: valor_contratado_fds_fase_projeto
+    logicalType: string
+  - name: apf_fds_fase_obra
+    logicalType: string
+  - name: data_de_contratacao_fds_fase_obra
+    logicalType: string
+  - name: valor_contratado_fds_fase_obra
+    logicalType: string
+  - name: apf_fds_fase_desligamento
+    logicalType: string
+  - name: data_de_contratacao_fds_fase_desligamento
+    logicalType: string
+  - name: valor_contratado_fds_fase_desligamento
+    logicalType: string
+  - name: data_de_termino
+    logicalType: string
+  - name: cnpj_da_construtora_entidade
+    logicalType: string
+  - name: razao_social_da_construtora_entidade
+    logicalType: string
+- name: dados_prioritarios_af_caixa_entregas
+  physicalName: dados_prioritarios_af_caixa_entregas
+  description: Entregas de unidades por APF reportadas pela CAIXA, junto dos dados prioritários. Uma remessa
+    por mês. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv.
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet
+  - property: file_pattern
+    value: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value:
+    - bronze_sftp_snh_pmcmv_dados_prioritarios_af_caixa_entregas
+  properties:
+  - name: data_de_movimento
+    logicalType: string
+  - name: agente_financeiro
+    logicalType: string
+  - name: apf
+    logicalType: string
+  - name: dt_entrega
+    logicalType: string
+  - name: qt_uh_entregues
+    logicalType: string
+- name: dados_prioritarios_af_bb
+  physicalName: dados_prioritarios_af_bb
+  description: Dados prioritários da SNH reportados pelo Banco do Brasil (AF_BB), mesmo layout da CAIXA,
+    com um mês de atraso. O BB manda o mesmo arquivo em .txt, .csv e .xlsx; o contrato aceita o texto
+    (.txt ou .csv), que vira o mesmo Parquet. Colunas vazias no fim da linha (coluna_N) entram como drift
+    aditivo. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt.
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet
+  - property: file_pattern
+    value: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB\.(txt|csv)
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value:
+    - bronze_sftp_snh_pmcmv_dados_prioritarios_af_bb
+  properties:
+  - name: data_de_movimento
+    logicalType: string
+  - name: agente_financeiro
+    logicalType: string
+  - name: apf
+    logicalType: string
+  - name: uf
+    logicalType: string
+  - name: municipio
+    logicalType: string
+  - name: codigo_ibge_do_municipio
+    logicalType: string
+  - name: nome_empreendimento
+    logicalType: string
+  - name: modalidade
+    logicalType: string
+  - name: situacao_do_empreendimento
+    logicalType: string
+  - name: detalhamento_da_situacao_do_empreendimento
+    logicalType: string
+  - name: data_de_contratacao
+    logicalType: string
+  - name: exec
+    logicalType: string
+  - name: valor_contratado
+    logicalType: string
+  - name: valor_aporte_adicional
+    logicalType: string
+  - name: valor_desembolsado
+    logicalType: string
+  - name: uh_contratadas
+    logicalType: string
+  - name: uh_entregues
+    logicalType: string
+  - name: uh_vigentes
+    logicalType: string
+  - name: observacoes
+    logicalType: string
+    classification: restricted
+  - name: quantidade_de_uhs_vigentes_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_entregues_do_ano_de_referencia
+    logicalType: string
+  - name: situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: valor_desembolsado_do_ano_de_referencia
+    logicalType: string
+  - name: detalhamento_da_situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_contratadas_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_contratadas_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_entregues_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_vigentes_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_distratadas
+    logicalType: string
+  - name: quantidade_de_uhs_distratadas_em_janeiro_do_ano_de_referencia
+    logicalType: string
+  - name: quantidade_de_uhs_distratadas_do_ano_de_referencia
+    logicalType: string
+  - name: data_da_previsao_da_entrega
+    logicalType: string
+  - name: unidades_habitacionais_a_serem_entregues
+    logicalType: string
+  - name: logradouro_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: numero_do_imovel
+    logicalType: string
+  - name: complemento_do_endereco_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: bairro_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: cep_do_imovel
+    logicalType: string
+    classification: restricted
+  - name: latitude_do_imovel
+    logicalType: string
+  - name: longitude_do_imovel
+    logicalType: string
+  - name: apf_fds_fase_projeto
+    logicalType: string
+  - name: data_de_contratacao_fds_fase_projeto
+    logicalType: string
+  - name: valor_contratado_fds_fase_projeto
+    logicalType: string
+  - name: apf_fds_fase_obra
+    logicalType: string
+  - name: data_de_contratacao_fds_fase_obra
+    logicalType: string
+  - name: valor_contratado_fds_fase_obra
+    logicalType: string
+  - name: apf_fds_fase_desligamento
+    logicalType: string
+  - name: data_de_contratacao_fds_fase_desligamento
+    logicalType: string
+  - name: valor_contratado_fds_fase_desligamento
+    logicalType: string
+  - name: data_de_termino
+    logicalType: string
+  - name: cnpj_da_construtora_entidade
+    logicalType: string
+  - name: razao_social_da_construtora_entidade
+    logicalType: string

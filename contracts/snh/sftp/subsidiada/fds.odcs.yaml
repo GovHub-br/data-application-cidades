@@ -1,0 +1,178 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sftp_subsidiada_fds
+name: Linha subsidiada · FDS (Entidades)
+version: 0.1.0
+status: draft
+description:
+  purpose: Remessas do FDS/Entidades da CAIXA (GEFUS) no SFTP do MCid.
+team:
+- username: CAIXA · GEFUS
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: fds_empreendimentos_caixa
+  physicalName: fds_empreendimentos_caixa
+  description: 'INT059: empreendimentos do FDS (Entidades) reportados pela CAIXA. Retrato completo por
+    remessa; a bronze lê só a mais recente (sem as remessas de VALIDACAO). Colunas da remessa INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_20261030.TXT.'
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet
+  - property: file_pattern
+    value: INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value:
+    - bronze_sftp_int059_fds_caixa_empreendimentos
+  properties:
+  - name: origem
+    logicalType: string
+  - name: dt_movimento
+    logicalType: string
+  - name: cod_agente_financeiro
+    logicalType: string
+  - name: cod_municipio_ibge
+    logicalType: string
+  - name: no_municipio
+    logicalType: string
+  - name: nu_apf
+    logicalType: string
+  - name: no_empreeendmento
+    logicalType: string
+  - name: dt_assinatura
+    logicalType: string
+  - name: dt_inicio_obra
+    logicalType: string
+  - name: dt_termino_obra
+    logicalType: string
+  - name: dt_legalizacao
+    logicalType: string
+  - name: percentual_obra_realizado
+    logicalType: string
+  - name: vr_emprestimo_original
+    logicalType: string
+  - name: vlr_operacao
+    logicalType: string
+  - name: vr_investimento
+    logicalType: string
+  - name: vr_liberado
+    logicalType: string
+  - name: vr_liberado_sisfin
+    logicalType: string
+  - name: dt_maxima_liberacao
+    logicalType: string
+  - name: qt_unidade_financiadas
+    logicalType: string
+  - name: nu_apf_vinculacao
+    logicalType: string
+  - name: razao_social_proponente
+    logicalType: string
+  - name: cnpj_proponente
+    logicalType: string
+  - name: fase_contrato
+    logicalType: string
+  - name: situacao_gefus
+    logicalType: string
+  - name: dt_assinatura_projeto
+    logicalType: string
+  - name: vr_projeto
+    logicalType: string
+  - name: vr_obra
+    logicalType: string
+  - name: dsc_tipologia
+    logicalType: string
+  - name: cod_regime_execucao
+    logicalType: string
+  - name: terreno_doado
+    logicalType: string
+  - name: aquecimento_solar
+    logicalType: string
+  - name: contrapartida_financeira
+    logicalType: string
+  - name: contrapartida_servicos
+    logicalType: string
+  - name: nu_apf_nao_obra
+    logicalType: string
+  - name: quantidade_uh_adaptadas
+    logicalType: string
+  - name: email_entidade
+    logicalType: string
+  - name: tipo_terreno
+    logicalType: string
+  - name: contrapartida_poder_pub_local_terreno_far_fds_1217
+    logicalType: string
+  - name: contrapartida_poder_pub_local_financ_far_fds_1222
+    logicalType: string
+  - name: contrapartida_poder_pub_local_financ_far_fds_1219
+    logicalType: string
+  - name: contrapartida_poder_pub_local_infra_far_fds_1218
+    logicalType: string
+  - name: contrapartida_poder_pub_local_terreno_far_fds_1220
+    logicalType: string
+  - name: contrapartida_poder_pub_local_infra_far_fds_1221
+    logicalType: string
+  - name: valor_aditamento_selecao_complementar
+    logicalType: string
+  - name: valor_aporte_adicional
+    logicalType: string
+  - name: situacao_empreendimento
+    logicalType: string
+  - name: infraestrutura_externa
+    logicalType: string
+  - name: itens_investimento_terreno
+    logicalType: string
+  - name: sistema_aquecimento_solar
+    logicalType: string
+  - name: gps_latitude_grau
+    logicalType: string
+  - name: gps_latitude_minuto
+    logicalType: string
+  - name: gps_latitude_segundo
+    logicalType: string
+  - name: gps_longitude_grau
+    logicalType: string
+  - name: gps_longitude_minuto
+    logicalType: string
+  - name: gps_longitude_segundo
+    logicalType: string
+  - name: gps_hemisferio
+    logicalType: string
+  - name: gps_local_pto_medio_conf_laudo
+    logicalType: string
+  - name: gps_datum_preferencia_sad_69
+    logicalType: string
+  - name: tipo_de_unidade_do_empreendimento
+    logicalType: string
+  - name: no_localidade
+    logicalType: string
+  - name: no_logradouro
+    logicalType: string
+    classification: restricted
+  - name: nu_cep
+    logicalType: string
+    classification: restricted
+  - name: regime_construcao
+    logicalType: string
+  - name: sg_uf
+    logicalType: string
+  - name: valor_aporte_adicional_contratado
+    logicalType: string
+  - name: dt_ultima_entrega
+    logicalType: string
+  - name: qt_unidades_concluidas
+    logicalType: string
+  - name: qt_unidades_entregues
+    logicalType: string
+  - name: modalidade_requalificacao
+    logicalType: string
+  - name: no_regiao
+    logicalType: string
+  - name: no_selecao_pmcmv_e
+    logicalType: string

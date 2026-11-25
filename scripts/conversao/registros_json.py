@@ -7,7 +7,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from lake_utils import normalizar_colunas
+from lake_utils import normalize_columns
 
 from .config import colunas_de_linhagem
 
@@ -20,10 +20,10 @@ def _converter_json(
     ingested_at: str,
     load_id: "str | None" = None,
 ) -> Tuple[int, int, dict]:
-    """Converte raw/<fonte>/<dado>.json (list[dict]) para parquet full-text.
+    """Converte snh/raw/<fonte>/<dado>.json (list[dict]) para parquet full-text.
 
     Retorna (n_linhas, n_colunas, column_map). Formas fora de list[dict] não são tratadas
-    aqui — só chega em raw/ o formato achatado pelo cliente da fonte; se vier diferente, a
+    aqui — só chega em snh/raw/ o formato achatado pelo cliente da fonte; se vier diferente, a
     exceção do pandas sobe e processar_objeto marca status="error" no objeto, sem derrubar
     a execução.
     """
@@ -44,7 +44,7 @@ def _converter_json(
     df = df.astype(str)
 
     header_original = [str(c) for c in df.columns]
-    nomes_finais, column_map = normalizar_colunas(header_original)
+    nomes_finais, column_map = normalize_columns(header_original)
     df.columns = nomes_finais
     df["_source_file"] = source_file
     df["_ingested_at"] = ingested_at

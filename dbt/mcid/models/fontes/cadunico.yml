@@ -1,4 +1,4 @@
-# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/cadunico.odcs.yaml.
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/sftp/cadunico.odcs.yaml.
 # Não edite: mude o contrato e rode o gerador.
 version: 2
 sources:
@@ -8,7 +8,7 @@ sources:
   meta:
     bucket: data-lake-mcid
     camada: staging
-    contract: contracts/cadunico.odcs.yaml
+    contract: contracts/snh/sftp/cadunico.odcs.yaml
     owner: CadÚnico (MDS)
   tables:
   - name: cadunico_familia
@@ -16,7 +16,7 @@ sources:
       antes da staging. Reúne as tabelas atuais cadunico_familia, cadunico_familia_beneficiario, que só
       diferem pela data.
     meta:
-      caminho: staging/**/ARQ_FAMILIA_PBF_*_SB8.parquet
+      caminho: snh/staging/**/ARQ_FAMILIA_PBF_*_SB8.parquet
       file_pattern: ARQ_FAMILIA_PBF_\d{8}_SB8\.TXT
       load_type: full
       dag: minio_transform_dag
@@ -114,7 +114,7 @@ sources:
     description: Corte de pessoas do CadÚnico de 12/12/2025, com CPF/NIS em HMAC e identificadores diretos
       redigidos antes da staging.
     meta:
-      caminho: staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_*_SB8.parquet
+      caminho: snh/staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_*_SB8.parquet
       file_pattern: ARQ_PESSOA_PBF_\d{8}_SB8\.TXT
       load_type: full
       dag: minio_transform_dag

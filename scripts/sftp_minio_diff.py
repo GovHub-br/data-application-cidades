@@ -55,7 +55,7 @@ DL_ENDPOINT = os.getenv("DL_ENDPOINT")
 DL_ACCESS_KEY = os.getenv("DL_ACCESS_KEY")
 DL_SECRET_KEY = os.getenv("DL_SECRET_KEY")
 DL_BUCKET = os.getenv("DL_BUCKET") or "data-lake-mcid"
-DL_PREFIX = os.getenv("DL_PREFIX") or "raw/"
+DL_PREFIX = os.getenv("DL_PREFIX") or "snh/raw/"
 SUPPORTED_IN_ZIP_EXTENSIONS = {".csv", ".txt", ".xlsx"}
 
 IGNORED_EXTENSIONS = {

@@ -1,9 +1,9 @@
 # scripts/mascarar_minio.py
 
 """
-Mascaramento de PII (dados de pessoa física) na camada raw/ do data lake (MinIO).
+Mascaramento de PII (dados de pessoa física) na camada snh/raw/ do data lake (MinIO).
 
-Percorre os objetos de raw/, detecta colunas sensíveis pelo header e mascara os valores,
+Percorre os objetos de snh/raw/, detecta colunas sensíveis pelo header e mascara os valores,
 sobrescrevendo o objeto no lugar — o raw deixa de conter PII.
 
 Técnica:
@@ -25,9 +25,9 @@ seguintes, evitando duplo-HMAC. --force reprocessa.
 Auditoria: um parquet por execução em audit/masking/execution_id=<uuid>/ no MinIO, e uma
 linha por arquivo em lake._masking_log no Postgres.
 
-Roda em DRY-RUN por padrão, gravando a prévia em masked_dryrun/; --apply sobrescreve.
+Roda em DRY-RUN por padrão, gravando a prévia em snh/masked_dryrun/; --apply sobrescreve.
 
-Organização: este arquivo percorre o raw/ e decide o que fazer com cada objeto; o
+Organização: este arquivo percorre o snh/raw/ e decide o que fazer com cada objeto; o
 trabalho fica em mascaramento/:
   - config: variáveis de ambiente, limites e log;
   - regras: quais colunas são sensíveis e como cada valor é transformado;
@@ -47,10 +47,9 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from lake_utils import (
-    PREFIXOS_LEGADO,
     detectar_dialeto,
     detectar_encoding,
-    md5_arquivo,
+    md5_file,
     mdb_disponivel,
 )
 
@@ -91,7 +90,7 @@ from mascaramento.mdb import _analisar_mdb
 
 # depois do pacote: mascaramento/__init__.py põe plugins/ no sys.path
 from cliente_minio import TRIAGEM_LIBERADA, ClienteMinio
-from datalake.chaves import load_id_of
+from datalake.keys import LEGACY_PREFIXES, load_id_of
 
 log = logging.getLogger(__name__)
 
@@ -236,7 +235,7 @@ def processar_objeto(  # noqa: C901
                     "(instale o pacote 'mdbtools')."
                 )
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            rec["hash_before"] = md5_arquivo(src)
+            rec["hash_before"] = md5_file(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
                 return rec
@@ -262,7 +261,7 @@ def processar_objeto(  # noqa: C901
 
         elif ext in SUPPORTED_EXCEL:
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            rec["hash_before"] = md5_arquivo(src)
+            rec["hash_before"] = md5_file(src)
             if rec["hash_before"] in masked_hashes:
                 rec["status"] = "skipped_already"
                 return rec
@@ -297,7 +296,7 @@ def processar_objeto(  # noqa: C901
             rec["status"] = "skipped_unsupported"
             return rec
 
-        rec["hash_after"] = md5_arquivo(dst)
+        rec["hash_after"] = md5_file(dst)
 
         if apply:
             minio.upload_arquivo(dst, key)
@@ -331,7 +330,7 @@ def run(  # noqa: C901
     max_size_mb: int = 0,
     prefix: Optional[str] = None,
 ) -> Dict[str, int]:
-    """Mascara PII nos objetos de raw/. Retorna a contagem por status.
+    """Mascara PII nos objetos de snh/raw/. Retorna a contagem por status.
 
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run(apply=True)).
     """
@@ -341,9 +340,9 @@ def run(  # noqa: C901
         )
 
     # B1: só os canais do legado. Um `prefix` só pode estreitar dentro deles.
-    if prefix is not None and not prefix.startswith(PREFIXOS_LEGADO):
-        raise ValueError(f"prefixo fora do legado {PREFIXOS_LEGADO}: {prefix!r}")
-    prefixos = (prefix,) if prefix is not None else PREFIXOS_LEGADO
+    if prefix is not None and not prefix.startswith(LEGACY_PREFIXES):
+        raise ValueError(f"prefixo fora do legado {LEGACY_PREFIXES}: {prefix!r}")
+    prefixos = (prefix,) if prefix is not None else LEGACY_PREFIXES
     execution_id = uuid.uuid4().hex
     only_ext_set = {("." + e.strip().lstrip(".")).lower() for e in only_ext.split(",") if e.strip()}
 
@@ -351,7 +350,7 @@ def run(  # noqa: C901
     log.info(
         "Execução %s | modo=%s | prefixo=%s",
         execution_id,
-        "APPLY (sobrescreve raw/)" if apply else "DRY-RUN (masked_dryrun/)",
+        "APPLY (sobrescreve snh/raw/)" if apply else "DRY-RUN (snh/masked_dryrun/)",
         ", ".join(prefixos),
     )
     log.info("=" * 70)
@@ -386,7 +385,16 @@ def run(  # noqa: C901
             break
         processados += 1
 
-        if not force and minio.esta_mascarado(key):
+        try:
+            ja_mascarado = not force and minio.esta_mascarado(key)
+        except Exception as exc:  # tag ilegível: sem saber o estado, não mascara de novo
+            rec = _novo_registro(execution_id, key)
+            rec.update(status="error", error_message=f"tag ilegível: {exc}"[:500])
+            registros.append(rec)
+            contagem["error"] = contagem.get("error", 0) + 1
+            log.error("✗ %s: tag ilegível: %s", key, exc)
+            continue
+        if ja_mascarado:
             rec = _novo_registro(execution_id, key)
             rec["status"] = "skipped_already"
             registros.append(rec)
@@ -424,18 +432,20 @@ def run(  # noqa: C901
     for status, n in sorted(contagem.items()):
         log.info("  %-20s %d", status, n)
     if not apply:
-        log.info("DRY-RUN — nada foi sobrescrito em raw/. Prévia em %s", DRYRUN_PREFIX)
+        log.info("DRY-RUN — nada foi sobrescrito em snh/raw/. Prévia em %s", DRYRUN_PREFIX)
     log.info("Log: %s", _LOG_FILE)
+    if contagem.get("error"):  # a máscara é trava: com erro, a execução falha (B2)
+        raise RuntimeError(f"{contagem['error']} objeto(s) com erro no mascaramento; veja o log")
     return contagem
 
 
 # Main
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Mascaramento de PII no raw/ do MinIO.")
+    parser = argparse.ArgumentParser(description="Mascaramento de PII no snh/raw/ do MinIO.")
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="Efetiva a sobrescrita em raw/. Sem esta flag roda em dry-run.",
+        help="Efetiva a sobrescrita em snh/raw/. Sem esta flag roda em dry-run.",
     )
     parser.add_argument(
         "--force",
@@ -455,7 +465,7 @@ def main() -> None:
     parser.add_argument(
         "--prefix",
         default=None,
-        help="Estreita a varredura dentro de raw/sftp/ ou raw/sharepoint/.",
+        help="Estreita a varredura dentro de snh/raw/sftp/ ou snh/raw/sharepoint/.",
     )
     args = parser.parse_args()
 

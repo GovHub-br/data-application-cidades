@@ -1,0 +1,38 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/fgv/indices.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: fgv_indices
+  description: Séries da FGV usadas na conjuntura. Cada carga traz a série histórica inteira (carga completa);
+    a raw guarda o arquivo como a fonte entrega.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/snh/fgv/indices.odcs.yaml
+    owner: FGV-IBRE
+  tables:
+  - name: icst
+    description: Índice de Confiança da Construção, com e sem ajuste sazonal, CSV do FGVDados.
+    meta:
+      caminho: snh/staging/fgv/icst/*.parquet
+      file_pattern: icst\.csv
+      load_type: full
+      dag: icst_ingest_dag
+    columns:
+    - name: mes
+    - name: icst_com_ajuste_sazonal
+    - name: icst_sem_ajuste_sazonal
+  - name: incc_m
+    description: INCC-M (número índice e variações), XLSX da série histórica do Sinduscon-PR.
+    meta:
+      caminho: snh/staging/fgv/incc_m/*.parquet
+      file_pattern: incc_m\.xlsx
+      load_type: full
+      dag: incc_m_ingest_dag
+    columns:
+    - name: mes
+    - name: indice
+    - name: var_mes
+    - name: var_ano
+    - name: var_12_meses

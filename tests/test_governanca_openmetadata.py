@@ -616,7 +616,7 @@ def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
     inicializava ali. Na imagem, o conector roda no Airflow da própria task, o
     mesmo que escreveu o banco de metadados.
     """
-    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    dag = (RAIZ / "dags" / "snh" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
     assert "task.virtualenv" not in dag
     (versao,) = _pin_do_pacote_de_ingestao().specifier
     lock = LOCK_DA_IMAGEM.read_text(encoding="utf-8").splitlines()
@@ -739,7 +739,7 @@ def test_governanca_roda_depois_do_conector() -> None:
     domínio, produto e etiqueta sobreviveram; certificação não. A task de
     reaplicação é o que devolve, e tem de ser a ÚLTIMA.
     """
-    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    dag = (RAIZ / "dags" / "snh" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
     assert "reaplicar_governanca" in dag
     assert "sincronizar_governanca.py" in dag
     # a reaplicação é o destino final do encadeamento

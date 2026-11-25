@@ -8,7 +8,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from lake_utils import encoding_fallback, normalizar_colunas
+from lake_utils import encoding_fallback, normalize_columns
 
 from .config import colunas_de_linhagem
 
@@ -254,7 +254,7 @@ def _converter_tabular_1x(
         for chunk in reader:
             if writer is None:
                 header_original = list(chunk.columns)
-                nomes_finais, column_map = normalizar_colunas([str(c) for c in header_original])
+                nomes_finais, column_map = normalize_columns([str(c) for c in header_original])
                 n_colunas = len(nomes_finais)
                 # todas as colunas string + colunas de linhagem
                 campos = [pa.field(n, pa.string()) for n in nomes_finais]

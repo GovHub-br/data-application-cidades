@@ -26,6 +26,8 @@ x-airflow-common: &airflow-common
     # Também usado pela DAG do OpenMetadata, que roda `scripts/governance/` no
     # fim para reaplicar o que o conector apaga — ver a nota lá.
     - ../scripts:${AIRFLOW_HOME}/scripts/
+    # Contratos ODCS das fontes, lidos na execução pela ingestão (plugins/datalake/contrato.py).
+    - ../contracts:${AIRFLOW_HOME}/contracts/
     # Temporários dos scripts (arquivos de GBs): NÃO usar /tmp (tmpfs em RAM)
     - lake_tmp:/opt/airflow/lake_tmp
   depends_on: &airflow-common-depends-on
@@ -63,7 +65,9 @@ x-airflow-environment: &airflow-common-env
   AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-local-dev-airflow-jwt-secret}
   # Sem `:$PYTHONPATH` no fim: o Compose interpolaria a variavel do HOST (nao a da
   # imagem, que nem define PYTHONPATH), com aviso a cada comando quando ela nao existe.
-  PYTHONPATH: "/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts"
+  # A raiz (/opt/airflow) vem primeiro: código novo importa pelo caminho completo
+  # (`from plugins.datalake.api_tasks import ...`); as outras entradas servem ao legado.
+  PYTHONPATH: "/opt/airflow:/opt/airflow/dags:/opt/airflow/plugins:/opt/airflow/helpers:/opt/airflow/scripts"
   # Temporários dos scripts do data lake — sobrescreve os caminhos de host do .env
   LAKE_TMPDIR: /opt/airflow/lake_tmp
   MASKING_TMPDIR: /opt/airflow/lake_tmp

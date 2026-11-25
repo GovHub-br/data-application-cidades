@@ -9,6 +9,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from datalake import keys as lake_keys
 from lake_utils import MDB_EXT
 
 load_dotenv()
@@ -30,9 +31,9 @@ PG_DBNAME = os.environ["DB_DW_DBNAME_MCID"]
 SCHEMA = os.environ.get("LAKE_SCHEMA", "lake")
 CONTROL_TABLE = "_masking_log"
 
-RAW_PREFIX = os.environ.get("MASKING_PREFIX", "raw/")
-DRYRUN_PREFIX = "masked_dryrun/"
-AUDIT_PREFIX = "audit/masking/"
+RAW_PREFIX = os.environ.get("MASKING_PREFIX", lake_keys.RAW_PREFIX)
+DRYRUN_PREFIX = f"{lake_keys.LAKE_ROOT}masked_dryrun/"
+AUDIT_PREFIX = f"{lake_keys.LAKE_ROOT}audit/masking/"
 
 HMAC_SECRET = os.environ.get("MASKING_HMAC_SECRET", "").encode("utf-8")
 TOKEN_LEN = int(os.environ.get("MASKING_TOKEN_LEN", 16))

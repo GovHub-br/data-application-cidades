@@ -90,7 +90,7 @@ _CATEGORIAS_DIRETAS = [
 # colunas é declarada à mão, por key exata, depois de conferir o conteúdo. Estar aqui
 # também significa que a linha 0 é dado, não cabeçalho (ver `_mascarar_tabular`).
 COLUNAS_POR_POSICAO: Dict[str, Dict[int, str]] = {
-    "raw/sftp/fabrica/GEFUS/ANTERIORES/CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_M202112.TXT": {
+    "snh/raw/sftp/fabrica/GEFUS/ANTERIORES/CAIXA_AF_GEHIS_ALIENACAO_IMOVEL_M202112.TXT": {
         2: "cpf",
         3: "nis",
     },

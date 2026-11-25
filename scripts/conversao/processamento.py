@@ -1,4 +1,4 @@
-"""Conversão de um objeto do raw/: escolhe o formato, converte, verifica e envia."""
+"""Conversão de um objeto do snh/raw/: escolhe o formato, converte, verifica e envia."""
 
 import json
 import logging
@@ -10,13 +10,13 @@ from typing import List
 
 import pyarrow.parquet as pq
 
-from datalake.chaves import load_id_of
+from datalake.keys import load_id_of
 from lake_utils import (
     MDB_DELIM,
     MDB_ENCODING,
     detectar_dialeto,
     detectar_encoding,
-    md5_arquivo,
+    md5_file,
     mdb_disponivel,
     mdb_export_para_csv,
     mdb_tabelas,
@@ -27,6 +27,7 @@ from cliente_minio import ClienteMinio
 
 from .config import (
     RAW_PREFIX,
+    DRYRUN_PREFIX,
     STAGING_PREFIX,
     SUPPORTED_EXCEL,
     SUPPORTED_JSON,
@@ -44,7 +45,7 @@ log = logging.getLogger(__name__)
 
 
 def _staging_key(raw_key: str, sufixo_parte: str = "") -> str:
-    """raw/<pastas>/<nome>.<ext> -> staging/<pastas>/<nome>[__parte].parquet
+    """snh/raw/<pastas>/<nome>.<ext> -> snh/staging/<pastas>/<nome>[__parte].parquet
 
     A extensão de origem não entra no nome: `foo.csv` e `foo.txt` são o mesmo dado e viram
     um único `foo.parquet`. Quem garante que só um deles chega aqui é o
@@ -119,7 +120,7 @@ def processar_objeto(  # noqa: C901
             rec["delimiter"] = delim
 
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             rec["source_hash"] = source_hash
             if (key, source_hash) in convertidos:
                 rec["status"] = "skipped_already"
@@ -188,7 +189,7 @@ def processar_objeto(  # noqa: C901
                     "(instale o pacote 'mdbtools')."
                 )
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             if (key, source_hash) in convertidos:
                 rec = _novo_registro(execution_id, key)
                 rec["source_hash"] = source_hash
@@ -215,7 +216,7 @@ def processar_objeto(  # noqa: C901
                         recs.append(rec)
                         continue
                     # O .mdb é o único formato que chega à staging com PII: o
-                    # mascarar_minio não reescreve Access no raw/ (mdbtools é
+                    # mascarar_minio não reescreve Access no snh/raw/ (mdbtools é
                     # read-only), só acusa. Mascara aqui o CSV exportado, com as
                     # mesmas regras e o mesmo HMAC, antes de virar parquet.
                     from mascaramento.tabular import mascarar_csv
@@ -279,7 +280,7 @@ def processar_objeto(  # noqa: C901
         if ext in SUPPORTED_JSON:
             rec = _novo_registro(execution_id, key)
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             rec["source_hash"] = source_hash
             if (key, source_hash) in convertidos:
                 rec["status"] = "skipped_already"
@@ -312,7 +313,7 @@ def processar_objeto(  # noqa: C901
         # XLSX (uma aba por parquet)
         if ext in SUPPORTED_EXCEL:
             src = minio.baixar_para_tempfile(key, ext, TMPDIR)
-            source_hash = md5_arquivo(src)
+            source_hash = md5_file(src)
             if (key, source_hash) in convertidos:
                 rec = _novo_registro(execution_id, key)
                 rec["source_hash"] = source_hash
@@ -375,4 +376,4 @@ def processar_objeto(  # noqa: C901
 
 
 def _dryrun_key(staging_key: str) -> str:
-    return "staging_dryrun/" + staging_key[len(STAGING_PREFIX) :]
+    return DRYRUN_PREFIX + staging_key[len(STAGING_PREFIX) :]

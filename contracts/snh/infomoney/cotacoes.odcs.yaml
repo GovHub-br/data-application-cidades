@@ -1,0 +1,83 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: infomoney_cotacoes
+name: Alpha Vantage (cotações do IMOB)
+version: 0.1.0
+status: draft
+description:
+  purpose: 'Cotações diárias do índice IMOB da B3. Cada carga traz só os ~100 últimos pregões (carga incremental):
+    o histórico está nas cargas anteriores.'
+team:
+- username: Alpha Vantage
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: acoes_imob
+  physicalName: acoes_imob
+  description: Resposta TIME_SERIES_DAILY da Alpha Vantage como veio.
+  customProperties:
+  - property: path
+    value: snh/staging/infomoney/acoes_imob/*.parquet
+  - property: file_pattern
+    value: acoes_imob\.json
+  - property: load_type
+    value: incremental
+  - property: reader
+    value: alphavantage_daily_json
+  - property: dag
+    value: infomoney_imob
+  - property: dbt_tables
+    value:
+    - infomoney_imob
+  properties:
+  - name: symbol
+    logicalType: string
+  - name: data_pregao
+    logicalType: string
+  - name: open
+    logicalType: string
+  - name: high
+    logicalType: string
+  - name: low
+    logicalType: string
+  - name: close
+    logicalType: string
+  - name: volume
+    logicalType: string
+- name: acoes_imob_postgres
+  physicalName: acoes_imob_postgres
+  description: Exportação única do histórico da prata prata_conjuntura_infomoney_imob (a última montagem
+    com a série inteira, de antes de o lake guardar as cargas).
+  customProperties:
+  - property: path
+    value: snh/staging/infomoney/acoes_imob/*.parquet
+  - property: file_pattern
+    value: acoes_imob_postgres\.csv
+  - property: load_type
+    value: incremental
+  - property: reader
+    value: infomoney_postgres_csv
+  - property: dag
+    value: infomoney_imob
+  - property: dbt_tables
+    value:
+    - infomoney_imob
+  properties:
+  - name: symbol
+    logicalType: string
+  - name: data_pregao
+    logicalType: string
+  - name: open
+    logicalType: string
+  - name: high
+    logicalType: string
+  - name: low
+    logicalType: string
+  - name: close
+    logicalType: string
+  - name: volume
+    logicalType: string
