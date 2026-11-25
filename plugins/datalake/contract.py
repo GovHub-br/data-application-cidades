@@ -16,7 +16,9 @@ import yaml
 
 from plugins.datalake.keys import RAW_PREFIX, STAGING_PREFIX
 
-CONTRACTS = Path(__file__).resolve().parents[2] / "contracts"
+# sem resolve(): no git-sync, /git/repo é um link para a worktree do commit atual, e a
+# worktree antiga some a cada sync; resolvido, um processo antigo leria uma pasta apagada
+CONTRACTS = Path(__file__).parents[2] / "contracts"
 ACCESS = (".mdb", ".accdb")
 
 
@@ -76,6 +78,8 @@ def load(folder: Path = CONTRACTS) -> list[Dataset]:
                     aliases=aliases,
                 )
             )
+    if not datasets:  # sem isso, toda entrega vira "uncataloged" e a DAG fica verde
+        raise FileNotFoundError(f"nenhum contrato ODCS em {folder}")
     return datasets
 
 

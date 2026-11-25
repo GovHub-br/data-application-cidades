@@ -123,3 +123,8 @@ def test_new_loads_get_load_id_and_legacy_keys_do_not(monkeypatch, tmp_path):
     novo = Lake.enviados["snh/staging/sftp/a/load_id=20261111T030000Z/D.parquet"]
     assert novo.column("_load_id").to_pylist() == ["20261111T030000Z"]
     assert "_load_id" not in Lake.enviados["snh/staging/sftp/a/D.parquet"].column_names
+
+
+def test_load_refuses_a_folder_without_contracts(tmp_path):
+    with pytest.raises(FileNotFoundError, match="nenhum contrato"):
+        contract.load(tmp_path)
