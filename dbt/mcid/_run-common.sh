@@ -4,7 +4,7 @@
 # (modo A, dev — target staging_duckdb). É SOURCED, não executado.
 #
 # O que faz:
-#   1. carrega credenciais MINIO_* / DB_* do .env do repo (python-dotenv);
+#   1. carrega credenciais DL_* / DB_* do .env do repo (python-dotenv);
 #   2. fixa storage, dir de spill e limite SOFT de RAM do DuckDB;
 #   3. embrulha cada invocação do dbt (run_dbt) num teto RÍGIDO de memória
 #      (cgroup via `systemd-run --user --scope`). Se o `union_by_name` das
@@ -59,7 +59,7 @@ for k, v in d.items():
         print(f"export {k}={shlex.quote(v)}")
 PY
 )"; then
-  echo "aviso: não consegui carregar os .env automaticamente; garanta MINIO_* no ambiente" >&2
+  echo "aviso: não consegui carregar os .env automaticamente; garanta DL_* no ambiente" >&2
 fi
 
 # --- storage/temp do DuckDB no disco com espaço + limites de RAM ---
@@ -76,7 +76,7 @@ DUCKDB_MCID_CGROUP_SWAP_MAX="${DUCKDB_MCID_CGROUP_SWAP_MAX:-0}"
 # --- teto rígido: cada dbt roda dentro de um scope de usuário com MemoryMax ---
 # Probe único. Se `systemd-run --user --scope` não funcionar aqui, cai pro modo
 # sem teto (com aviso alto). `--scope` (e não `--service`) preserva ambiente e
-# cwd do chamador — MINIO_*/DUCKDB_MCID_* e o `cd dbt/mcid` continuam valendo.
+# cwd do chamador — DL_*/DUCKDB_MCID_* e o `cd dbt/mcid` continuam valendo.
 # MemorySwapMax=0 tira o build do swap (já saturado nesta máquina) e força o
 # spill pro temp_directory em disco.
 _RUN_CGROUP=0

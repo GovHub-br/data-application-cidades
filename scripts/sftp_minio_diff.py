@@ -11,11 +11,11 @@ Variaveis esperadas em .env ou local.env (fora do git; crie com
     SFTP_PORT
     SFTP_USER
     SFTP_PASSWORD
-    MINIO_ENDPOINT
-    MINIO_ACCESS_KEY
-    MINIO_SECRET_KEY
-    MINIO_BUCKET
-    MINIO_PREFIX
+    DL_ENDPOINT
+    DL_ACCESS_KEY
+    DL_SECRET_KEY
+    DL_BUCKET
+    DL_PREFIX
 """
 
 import argparse
@@ -51,11 +51,11 @@ SFTP_PORT = int(os.getenv("SFTP_PORT") or 22)
 SFTP_USER = os.getenv("SFTP_USER")
 SFTP_PASSWORD = os.getenv("SFTP_PASSWORD")
 
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
-MINIO_BUCKET = os.getenv("MINIO_BUCKET") or "data-lake-mcid"
-MINIO_PREFIX = os.getenv("MINIO_PREFIX") or "snh/raw/"
+DL_ENDPOINT = os.getenv("DL_ENDPOINT")
+DL_ACCESS_KEY = os.getenv("DL_ACCESS_KEY")
+DL_SECRET_KEY = os.getenv("DL_SECRET_KEY")
+DL_BUCKET = os.getenv("DL_BUCKET") or "data-lake-mcid"
+DL_PREFIX = os.getenv("DL_PREFIX") or "snh/raw/"
 SUPPORTED_IN_ZIP_EXTENSIONS = {".csv", ".txt", ".xlsx"}
 
 IGNORED_EXTENSIONS = {
@@ -98,7 +98,7 @@ def comparison_key(path: str, match_mode: str) -> str:
 
 def ensure_endpoint_url(endpoint: str | None) -> str:
     if not endpoint:
-        raise ValueError("MINIO_ENDPOINT nao encontrado em .env/local.env")
+        raise ValueError("DL_ENDPOINT nao encontrado em .env/local.env")
     if endpoint.startswith(("http://", "https://")):
         return endpoint.rstrip("/")
     return f"http://{endpoint.rstrip('/')}"
@@ -117,13 +117,13 @@ def connect_sftp() -> tuple[paramiko.Transport, paramiko.SFTPClient]:
 
 
 def connect_minio(endpoint: str) -> Any:
-    if not MINIO_ACCESS_KEY or not MINIO_SECRET_KEY:
+    if not DL_ACCESS_KEY or not DL_SECRET_KEY:
         raise ValueError("Credenciais MinIO incompletas em .env/local.env")
     return boto3.client(
         "s3",
         endpoint_url=endpoint,
-        aws_access_key_id=MINIO_ACCESS_KEY,
-        aws_secret_access_key=MINIO_SECRET_KEY,
+        aws_access_key_id=DL_ACCESS_KEY,
+        aws_secret_access_key=DL_SECRET_KEY,
     )
 
 
@@ -362,7 +362,7 @@ def print_report(diff: dict, limit: int | None) -> None:
     )
 
     section(
-        "SO NO MINIO",
+        "SO NO LAKE",
         diff["added"],
         lambda x: f"+ {x['path']}  ({format_size(x['size'])}, {format_mtime(x['mtime'])})",
     )
@@ -385,9 +385,9 @@ def print_report(diff: dict, limit: int | None) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Compara arquivos do SFTP com MinIO.")
     parser.add_argument("--sftp-root", default=".", help="pasta raiz no SFTP")
-    parser.add_argument("--minio-endpoint", default=MINIO_ENDPOINT)
-    parser.add_argument("--minio-bucket", default=MINIO_BUCKET)
-    parser.add_argument("--minio-prefix", default=MINIO_PREFIX)
+    parser.add_argument("--minio-endpoint", default=DL_ENDPOINT)
+    parser.add_argument("--minio-bucket", default=DL_BUCKET)
+    parser.add_argument("--minio-prefix", default=DL_PREFIX)
     parser.add_argument(
         "--match-mode",
         choices=["path", "filename"],

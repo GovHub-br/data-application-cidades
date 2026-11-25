@@ -24,8 +24,8 @@ pelo segundo através do catálogo atachado.
 
 Pré-requisitos no ambiente do Airflow (além do dbt-postgres):
 - `dbt-duckdb` instalado, compatível com o dbt-core (hoje 1.11, com dbt-core 1.12);
-- variáveis do MinIO — MINIO_ENDPOINT (host:porta, SEM http://), MINIO_ACCESS_KEY,
-  MINIO_SECRET_KEY — visíveis para o worker;
+- variáveis do lake — DL_ENDPOINT (host:porta, SEM http://), DL_ACCESS_KEY,
+  DL_SECRET_KEY — visíveis para o worker;
 - um pool chamado `duckdb_historico` com UM slot:
 
       airflow pools set duckdb_historico 1 "Serializa o eixo historico (lock DuckDB)"

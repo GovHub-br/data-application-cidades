@@ -14,7 +14,7 @@ Não apaga os originais: confira as bronzes e apague a raiz antiga à mão depoi
 Sem `--apply`, só conta o que faria. Rodar de novo é seguro (pula a cópia que já existe
 com o mesmo tamanho e só atualiza chave que ainda não começa com `snh/`).
 
-    uv run python scripts/migrar_prefixo_snh.py            # .env com MINIO_* e DB_DW_*_MCID
+    uv run python scripts/migrar_prefixo_snh.py            # .env com DL_* e DB_DW_*_MCID
     uv run python scripts/migrar_prefixo_snh.py --apply
 """
 
@@ -44,12 +44,12 @@ CONTROL_KEYS = {
 
 
 def _s3():
-    endpoint = os.environ["MINIO_ENDPOINT"]
+    endpoint = os.environ["DL_ENDPOINT"]
     return boto3.client(
         "s3",
         endpoint_url=endpoint if "://" in endpoint else f"http://{endpoint}",
-        aws_access_key_id=os.environ["MINIO_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["MINIO_SECRET_KEY"],
+        aws_access_key_id=os.environ["DL_ACCESS_KEY"],
+        aws_secret_access_key=os.environ["DL_SECRET_KEY"],
         region_name="us-east-1",
         config=Config(s3={"addressing_style": "path"}),
     )
@@ -120,7 +120,7 @@ def main() -> None:
     parser.add_argument("--apply", action="store_true", help="copia e atualiza (sem: só conta)")
     args = parser.parse_args()
     load_dotenv(Path(__file__).resolve().parents[1] / ".env")
-    bucket = os.environ.get("MINIO_BUCKET", "data-lake-mcid")
+    bucket = os.environ.get("DL_BUCKET", "data-lake-mcid")
 
     print(f"objetos fora de {LAKE_ROOT} em {bucket}:")
     for name, n in sorted(copy_objects(_s3(), bucket, args.apply).items()):

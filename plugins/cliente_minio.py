@@ -3,7 +3,7 @@
 A classe `ClienteMinio` atende o pipeline legado do data lake do SFTP (scripts de máscara
 e conversão rodados pela minio_transform_dag), onde os arquivos chegam com nome próprio e
 o I/O precisa de streaming, multipart, hash e tags. As credenciais vêm das envs
-MINIO_ENDPOINT / MINIO_ACCESS_KEY / MINIO_SECRET_KEY / MINIO_BUCKET.
+DL_ENDPOINT / DL_ACCESS_KEY / DL_SECRET_KEY / DL_BUCKET.
 
 As DAGs de ingestão novas não passam por aqui: usam o S3Hook (Connection lake_mcid).
 """
@@ -20,7 +20,7 @@ from typing import Any, Callable, Iterator, List, Optional, Tuple
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-BUCKET = os.environ.get("MINIO_BUCKET", "data-lake-mcid")
+BUCKET = os.environ.get("DL_BUCKET", "data-lake-mcid")
 # Triagens do mascaramento que liberam o objeto para a staging sem reescrevê-lo.
 TRIAGEM_LIBERADA = ("skipped_no_pii", "skipped_no_header", "skipped_unsupported")
 
@@ -234,15 +234,15 @@ class ClienteMinio:
         secret_key: Optional[str] = None,
         bucket: Optional[str] = None,
     ) -> None:
-        endpoint = endpoint or os.environ["MINIO_ENDPOINT"]
+        endpoint = endpoint or os.environ["DL_ENDPOINT"]
         if not endpoint.startswith("http"):
             endpoint = f"http://{endpoint}"
-        self.bucket = bucket or os.environ["MINIO_BUCKET"]
+        self.bucket = bucket or os.environ["DL_BUCKET"]
         self.s3 = boto3.client(
             "s3",
             endpoint_url=endpoint,
-            aws_access_key_id=access_key or os.environ["MINIO_ACCESS_KEY"],
-            aws_secret_access_key=secret_key or os.environ["MINIO_SECRET_KEY"],
+            aws_access_key_id=access_key or os.environ["DL_ACCESS_KEY"],
+            aws_secret_access_key=secret_key or os.environ["DL_SECRET_KEY"],
         )
         logging.info(
             f"[cliente_minio.py] Initialized ClienteMinio endpoint={endpoint} bucket={self.bucket}"

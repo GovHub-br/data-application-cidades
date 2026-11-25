@@ -163,7 +163,7 @@ libera o objeto para a staging.
 
 | Variável | Obrigatória | Descrição |
 |---|---|---|
-| `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET` | sim | Conexão MinIO |
+| `DL_ENDPOINT`, `DL_ACCESS_KEY`, `DL_SECRET_KEY`, `DL_BUCKET` | sim | Conexão com o lake |
 | `DB_DW_HOST_MCID`, `DB_DW_PORT_MCID`, `DB_DW_USER_MCID`, `DB_DW_PASSWORD_MCID`, `DB_DW_DBNAME_MCID` | sim | Postgres (tabela de controle) |
 | `MASKING_HMAC_SECRET` | **sim** | Segredo do HMAC. Sem ela o script recusa rodar. |
 | `MASKING_TMPDIR` | recomendado | Dir de temporários do XLSX/MDB (CSV/TXT não usa disco). **Não use `/tmp`** se for tmpfs (RAM). |

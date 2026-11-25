@@ -56,7 +56,7 @@ from lake_utils import (
 from mascaramento.config import (
     DRYRUN_PREFIX,
     HMAC_SECRET,
-    MINIO_BUCKET,
+    DL_BUCKET,
     RAW_PREFIX,
     SUPPORTED_EXCEL,
     SUPPORTED_MDB,
@@ -106,7 +106,7 @@ def _novo_registro(execution_id: str, key: str) -> dict:
     return {
         "execution_id": execution_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "bucket": MINIO_BUCKET,
+        "bucket": DL_BUCKET,
         "file": key,
         "file_name": key.rsplit("/", 1)[-1],
         "file_format": (key.rsplit(".", 1)[-1].lower() if "." in key.rsplit("/", 1)[-1] else ""),
