@@ -104,10 +104,10 @@ DB_DW_DBNAME_MCID=cidades
 DB_DW_USER_MCID=cidades
 DB_DW_PASSWORD_MCID=${dw_pw}
 AIRFLOW_CONN_POSTGRES_DEFAULT=postgresql://cidades:${dw_pw}@${PG_HOST}:5432/cidades
-MINIO_ENDPOINT=$(ler cidades-lake endpoint)
-MINIO_ACCESS_KEY=$(ler cidades-lake access_key)
-MINIO_SECRET_KEY=$(ler cidades-lake secret_key)
-MINIO_BUCKET=$(ler cidades-lake bucket)
+DL_ENDPOINT=$(ler cidades-lake endpoint)
+DL_ACCESS_KEY=$(ler cidades-lake access_key)
+DL_SECRET_KEY=$(ler cidades-lake secret_key)
+DL_BUCKET=$(ler cidades-lake bucket)
 EOF
       [ -n "$extra_env" ] && grep -vE '^\s*(#|$)' "$extra_env" >> "$env_file"
       kubectl -n "$NS" create secret generic cidades-airflow-env --from-env-file="$env_file" >/dev/null

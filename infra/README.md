@@ -85,7 +85,7 @@ sempre da mesma maquina: cada playbook le as senhas que o anterior gravou em
 | --- | --- |
 | `rustfs/` | RustFS, storage de objetos compativel com S3 (o data lake) |
 | `postgres/` | PostgreSQL 15 + pg_duckdb, ja com o secret S3 do lake (`read_parquet('s3://...')`) |
-| `openmetadata/` | OpenMetadata 1.13.3 + Elasticsearch, com Docker Compose; a ingestao roda no Airflow |
+| `openmetadata/` | OpenMetadata 2.0.7 + Elasticsearch, com Docker Compose; a ingestao roda no Airflow |
 | `airflow/` | Airflow 3 com Docker Compose, imagem de `infra/docker/airflow/Dockerfile` |
 
 Cada pasta e autocontida (inventario, `group_vars/` e README proprios).

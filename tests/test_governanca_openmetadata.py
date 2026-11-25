@@ -624,8 +624,10 @@ def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
 
 
 def test_pacote_de_ingestao_acompanha_a_linha_do_servidor() -> None:
-    """Cliente e servidor de linhas diferentes divergem no schema das entidades."""
-    assert str(_pin_do_pacote_de_ingestao().specifier).startswith("==1.13.3")
+    """Cliente e servidor de linhas diferentes divergem no schema das entidades, e o SDK
+    recusa rodar ("Server version is 2.0.7 vs. Client version 1.13"). O servidor está na
+    2.0.7: subiu, suba aqui e rode `make lock`."""
+    assert str(_pin_do_pacote_de_ingestao().specifier).startswith("==2.0.7")
 
 
 def test_pacote_de_ingestao_nao_traz_outro_airflow() -> None:
