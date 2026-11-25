@@ -13,8 +13,15 @@ source:
   sourceConfig:
     config:
       type: Profiler
-      computeMetrics: true
-      profileSample: 25
+      # Formato do OpenMetadata 2.0: `computeMetrics` e `profileSample` saíram do
+      # schema e a recipe antiga é recusada ("Extra parameter 'computeMetrics'").
+      computeTableMetrics: true
+      computeColumnMetrics: true
+      profileSampleConfig:
+        sampleConfigType: STATIC
+        config:
+          profileSample: 25
+          profileSampleType: PERCENTAGE
       schemaFilterPattern:
         includes:
           - "^metadata$"
