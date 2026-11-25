@@ -18,13 +18,9 @@ selectors:
     definition:
       union:
         - method: path
-          value: models/mcmv_historico_dbt
-        - method: path
           value: models/reforma_casa_brasil_dbt
         - method: path
           value: models/linha_financiada_dbt
-        - method: path
-          value: tests/mcmv_historico
         - method: path
           value: tests/reforma_casa_brasil
         - method: path

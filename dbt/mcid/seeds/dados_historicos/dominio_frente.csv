@@ -1,0 +1,33 @@
+valor_bruto,frente_mcmv,classe
+FAR,FAR,valido
+FAR Alienação,FAR,valido
+FAR ALIENACAO,FAR,valido
+FAR - Alienação Direta,FAR,valido
+01 - PNHU - FAR Alienação,FAR,valido
+FDS,Entidades,valido
+Entidades,Entidades,valido
+Programa Habitacional Popular - FDS,Entidades,valido
+Rural,Rural,valido
+Imóvel Rural,Rural,valido
+PNHR,Rural,valido
+Programa Nacional de Habitação Rural,Rural,valido
+01 - PNHR -,Rural,valido
+Oferta Pública,SUB50,valido
+Oferta Publica,SUB50,valido
+Oferta Pública de Recursos - Mun. com até 50 mil hab,SUB50,valido
+Municípios,SUB50,pendente
+FGTS,Financiada,valido
+CCFGTS,Financiada,valido
+CCFGTS Apoio à produção,Financiada,valido
+CCFGTS Imóvel na planta,Financiada,valido
+CCFGTS Plano Empresa da Construção Civil,Financiada,valido
+CCFGTS Construção Individual,Financiada,valido
+CCFGTS Aquisição Imóvel Novo,Financiada,valido
+CCFGTS Alocação de Recursos,Financiada,valido
+CCFGTS Agentes Externos,Financiada,valido
+CCFGTS - Faixa 1,Financiada,valido
+CCFGTS - Faixa 2,Financiada,valido
+CCFGTS - Faixa 3,Financiada,valido
+Urbanização,,fora_da_habitacao
+Infraestrutura,,fora_da_habitacao
+CCSBPE Imóvel na Planta,,fora_da_habitacao

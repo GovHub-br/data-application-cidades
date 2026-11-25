@@ -1,0 +1,62 @@
+version: 2
+
+seeds:
+  - name: dominio_status_extra
+    description: >
+      Situações de obra que aparecem nos dados históricos e faltam em
+      data_quality/dominio_status (seed compartilhado com outros domínios).
+      Mesmo formato; `pendente` marca a classificação que ainda precisa de confirmação.
+    config:
+      column_types:
+        valor_bruto: text
+        situacao_canonica: text
+        classe: text
+
+  - name: dominio_frente
+    description: >
+      Frente do MCMV (`frente_mcmv`: FAR, Entidades, Rural, SUB50, Financiada) de cada valor
+      de produto, modalidade ou subprograma que aparece nos dados históricos. É o mesmo
+      vocabulário do Reloginho. A comparação ignora caixa e acento. `fora_da_habitacao`
+      (urbanização, infraestrutura, SBPE) fica sem frente; `pendente` é classificação a
+      confirmar com a área. Os valores vêm do levantamento das 46 silvers (17/11/2026) e do
+      notebook 23 do analytics_mcid.
+    config:
+      column_types:
+        valor_bruto: text
+        frente_mcmv: text
+        classe: text
+    columns:
+      - name: valor_bruto
+        data_tests: [not_null, unique]
+      - name: classe
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["valido", "pendente", "fora_da_habitacao"]
+      - name: frente_mcmv
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural", "SUB50", "Financiada"]
+
+  - name: dominio_frente_codigo
+    description: >
+      Frente do MCMV dos códigos numéricos do BB, restrita à coluna (o "1" da faixa não é o
+      "1" do produto). Cada tradução foi medida cruzando o código com a frente já conhecida do
+      empreendimento (pela modalidade da entrega_bb_pj ou da família de frente única), sem
+      nenhuma exceção (17/11/2026); a contagem está em `evidencia`. Códigos que não cruzam
+      com empreendimento de frente conhecida (subprograma 3 e 5, linha de crédito 3) ficam
+      fora até a área responder.
+    config:
+      column_types:
+        coluna: text
+        codigo: text
+        frente_mcmv: text
+        evidencia: text
+    columns:
+      - name: frente_mcmv
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["FAR", "Entidades", "Rural", "SUB50", "Financiada"]
