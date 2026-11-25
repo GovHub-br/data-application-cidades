@@ -201,7 +201,9 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
             "[dotacao_execucao_outras_fontes_mcid_ingest_dag] report\n%s", body
         )
         if failed:
-            raise AirflowFailException("ingestão do Tesouro com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do Tesouro com erro ou quarentena; veja o resumo no log"
+            )
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:

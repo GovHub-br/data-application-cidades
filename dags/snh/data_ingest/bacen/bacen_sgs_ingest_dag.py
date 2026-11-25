@@ -198,7 +198,9 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
             "[bacen_sgs_ingest_dag] report\n%s", body
         )
         if failed:
-            raise AirflowFailException("ingestão do SGS com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do SGS com erro ou quarentena; veja o resumo no log"
+            )
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:

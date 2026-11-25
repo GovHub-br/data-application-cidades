@@ -196,7 +196,9 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
             "[infomoney_imob] report\n%s", body
         )
         if failed:
-            raise AirflowFailException("ingestão do IMOB com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do IMOB com erro ou quarentena; veja o resumo no log"
+            )
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:

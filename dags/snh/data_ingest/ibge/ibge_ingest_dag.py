@@ -209,7 +209,9 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
             "[ibge_ingest_dag] report\n%s", body
         )
         if failed:
-            raise AirflowFailException("ingestão do IBGE com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do IBGE com erro ou quarentena; veja o resumo no log"
+            )
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:
