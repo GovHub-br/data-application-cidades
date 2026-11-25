@@ -1,12 +1,13 @@
 {{ config(materialized="table") }}
 
--- Ouro: uma linha por contrato com Trabalho Social, pronta para o mapa do painel: coordenadas, tipo de
--- edificação, regime, público tradicional estimado, situação e portaria do TS, e o resumo dos alertas
+-- Ouro: uma linha por contrato com Trabalho Social, pronta para o mapa do painel: coordenadas,
+-- tipo de
+-- edificação, regime, público tradicional estimado, situação e portaria do TS, e o resumo dos
+-- alertas
 -- de marco. Grão: id_ts. Chave: id_ts.
 -- Fontes: prata_ts_acompanhamento, prata_ts_empreendimento_perfil, prata_ts_portaria_contrato e
 -- a regra de alertas (corpo_ouro_ts_alerta_marco, a mesma da ouro_ts_alerta_marco).
 -- publico_tradicional_estimado é ESTIMATIVA por palavra-chave no nome da EO e do empreendimento.
-
 with
     alertas as (
         select
@@ -58,9 +59,12 @@ select
     al.marco_principal_descumprido,
     al.evidencia_principal,
     case
-        when coalesce(al.qt_marcos_descumpridos, 0) > 0 then 'Fora do marco'
-        when not coalesce(c.ic_marcos_transcritos, false) then 'Sem régua de marcos'
-        when a.situacao_ts in ('Concluído', 'Distrato') then 'TS encerrado'
+        when coalesce(al.qt_marcos_descumpridos, 0) > 0
+        then 'Fora do marco'
+        when not coalesce(c.ic_marcos_transcritos, false)
+        then 'Sem régua de marcos'
+        when a.situacao_ts in ('Concluído', 'Distrato')
+        then 'TS encerrado'
         else 'Dentro do marco'
     end as status_marco,
     a.dt_referencia

@@ -8,5 +8,4 @@
 -- Instruções do TS (21/2014) e no Anexo V da 168/2013, que não foram transcritos.
 --
 -- O SQL está em macros/corpos/corpos_trabalho_social.sql (corpo_prata_ts_marco_portaria).
-
 {{ corpo_prata_ts_marco_portaria() }}

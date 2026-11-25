@@ -3,14 +3,15 @@
 -- Ouro: indicação de demanda e dossiês dos empreendimentos FAR da lista "sem indicação de demanda",
 -- na remessa mais recente, com a variação desde a remessa anterior e os dois alertas pedidos pela
 -- equipe do MCID:
---   alerta_50_sem_demanda  obra a partir de 50% e nenhuma família indicada (zero pesquisas no SIGDH);
---   alerta_60_sem_dossie   obra a partir de 60% e nenhum dossiê enviado.
--- Os limites de 50% e 60% são regra de acompanhamento informada pela equipe; a norma de origem ainda
+-- alerta_50_sem_demanda  obra a partir de 50% e nenhuma família indicada (zero pesquisas no SIGDH);
+-- alerta_60_sem_dossie   obra a partir de 60% e nenhum dossiê enviado.
+-- Os limites de 50% e 60% são regra de acompanhamento informada pela equipe; a norma de origem
+-- ainda
 -- não foi registrada no repositório.
 -- Grão: APF. Chave: apf.
 -- Fontes: prata_ts_demanda_dossie (remessas de 02/09 e 06/10/2026), prata_ts_acompanhamento (UF,
--- município, UH e situação do TS quando a remessa não traz) e prata_ts_empreendimento_perfil (mapa).
-
+-- município, UH e situação do TS quando a remessa não traz) e prata_ts_empreendimento_perfil
+-- (mapa).
 with
     ordenada as (
         select d.*, row_number() over (partition by apf order by dt_referencia desc) as ordem
@@ -21,7 +22,15 @@ with
     anterior as (select * from ordenada where ordem = 2),
 
     cadastro as (
-        select distinct on (apf) apf, qt_uh, dt_contratacao, municipio, uf, ente_cnpj, ente_nome, construtora_nome
+        select distinct
+            on (apf) apf,
+            qt_uh,
+            dt_contratacao,
+            municipio,
+            uf,
+            ente_cnpj,
+            ente_nome,
+            construtora_nome
         from {{ ref("prata_ts_demanda_dossie") }}
         where uf is not null
         order by apf, dt_referencia desc
@@ -35,7 +44,8 @@ with
     ),
 
     perfil as (
-        select distinct on (apf) apf, latitude, longitude, tipo_edificacao, regime, publico_tradicional_estimado
+        select distinct
+            on (apf) apf, latitude, longitude, tipo_edificacao, regime, publico_tradicional_estimado
         from {{ ref("prata_ts_empreendimento_perfil") }}
         where linha = 'FAR'
         order by apf, agente_financeiro
@@ -85,25 +95,31 @@ with
 
 select
     j.*,
-    case when j.qt_uh > 0 then round(j.qt_dossies_enviados::numeric / j.qt_uh * 100, 1) end::numeric(7, 1)
-        as pc_dossies_enviados_por_uh,
+    case
+        when j.qt_uh > 0 then round(j.qt_dossies_enviados::numeric / j.qt_uh * 100, 1)
+    end::numeric(7, 1) as pc_dossies_enviados_por_uh,
     coalesce(j.pc_obra, 0) >= 50 and coalesce(j.qt_pesquisas_sigdh, 0) = 0 as alerta_50_sem_demanda,
     coalesce(j.pc_obra, 0) >= 60 and coalesce(j.qt_dossies_enviados, 0) = 0 as alerta_60_sem_dossie,
     case
         when coalesce(j.pc_obra, 0) >= 60 and coalesce(j.qt_pesquisas_sigdh, 0) = 0
-            then 'Obra a partir de 60% sem famílias indicadas nem dossiês'
+        then 'Obra a partir de 60% sem famílias indicadas nem dossiês'
         when coalesce(j.pc_obra, 0) >= 60 and coalesce(j.qt_dossies_enviados, 0) = 0
-            then 'Obra a partir de 60% com famílias indicadas, mas sem dossiê enviado'
+        then 'Obra a partir de 60% com famílias indicadas, mas sem dossiê enviado'
         when coalesce(j.pc_obra, 0) >= 50 and coalesce(j.qt_pesquisas_sigdh, 0) = 0
-            then 'Obra entre 50% e 60% sem famílias indicadas'
-        when coalesce(j.qt_dossies_enviados, 0) > 0 then 'Com dossiês enviados'
-        when coalesce(j.qt_pesquisas_sigdh, 0) > 0 then 'Com famílias indicadas, sem dossiê (obra abaixo de 60%)'
+        then 'Obra entre 50% e 60% sem famílias indicadas'
+        when coalesce(j.qt_dossies_enviados, 0) > 0
+        then 'Com dossiês enviados'
+        when coalesce(j.qt_pesquisas_sigdh, 0) > 0
+        then 'Com famílias indicadas, sem dossiê (obra abaixo de 60%)'
         else 'Sem famílias indicadas (obra abaixo de 50%)'
     end as situacao_demanda,
     case
-        when coalesce(j.pc_obra, 0) >= 60 and coalesce(j.qt_pesquisas_sigdh, 0) = 0 then 1
-        when coalesce(j.pc_obra, 0) >= 60 and coalesce(j.qt_dossies_enviados, 0) = 0 then 2
-        when coalesce(j.pc_obra, 0) >= 50 and coalesce(j.qt_pesquisas_sigdh, 0) = 0 then 3
+        when coalesce(j.pc_obra, 0) >= 60 and coalesce(j.qt_pesquisas_sigdh, 0) = 0
+        then 1
+        when coalesce(j.pc_obra, 0) >= 60 and coalesce(j.qt_dossies_enviados, 0) = 0
+        then 2
+        when coalesce(j.pc_obra, 0) >= 50 and coalesce(j.qt_pesquisas_sigdh, 0) = 0
+        then 3
         else 9
     end as prioridade
 from junto j

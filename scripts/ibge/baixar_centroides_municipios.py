@@ -14,6 +14,7 @@ Fontes (API de serviços de dados do IBGE):
 Depois: dbt seed --target prod --select ibge_municipio_centroide
 O painel do Trabalho Social usa o centro do município quando a SNH não traz coordenada válida.
 """
+
 import csv
 import gzip
 import json
@@ -24,11 +25,15 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[2]
 DESTINO = RAIZ / "dbt" / "mcid" / "seeds" / "trabalho_social" / "ibge_municipio_centroide.csv"
 URL_MUN = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
-URL_MALHA = "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR/metadados?intrarregiao=municipio"
+URL_MALHA = (
+    "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR/metadados?intrarregiao=municipio"
+)
 
 
 def baixar(url: str):
-    req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "mcid-govhub"})
+    req = urllib.request.Request(
+        url, headers={"Accept": "application/json", "User-Agent": "mcid-govhub"}
+    )
     with urllib.request.urlopen(req, timeout=180) as r:
         corpo = r.read()
     # A API do IBGE responde comprimida em gzip mesmo sem o cliente pedir.
@@ -63,14 +68,16 @@ def main() -> None:
     linhas = []
     for cod, m in sorted(municipios.items()):
         lat, lon = centro.get(cod, (None, None))
-        linhas.append({
-            "cod_ibge": cod,
-            "municipio": m["nome"],
-            "uf": uf_do_municipio(m),
-            "latitude": "" if lat is None else f"{float(lat):.6f}",
-            "longitude": "" if lon is None else f"{float(lon):.6f}",
-        })
-    sem = sum(1 for l in linhas if not l["latitude"])
+        linhas.append(
+            {
+                "cod_ibge": cod,
+                "municipio": m["nome"],
+                "uf": uf_do_municipio(m),
+                "latitude": "" if lat is None else f"{float(lat):.6f}",
+                "longitude": "" if lon is None else f"{float(lon):.6f}",
+            }
+        )
+    sem = sum(1 for linha in linhas if not linha["latitude"])
     with open(DESTINO, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["cod_ibge", "municipio", "uf", "latitude", "longitude"])
         w.writeheader()
