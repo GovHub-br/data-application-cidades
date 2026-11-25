@@ -12,7 +12,8 @@
     {#-
         Bronze do Trabalho Social: espelho da staging do MinIO, com TODAS as colunas em texto.
 
-        - `padrao`: glob do parquet na staging.
+        - `padrao`: glob do parquet na staging (o mesmo que o inventário do
+          rodar_trabalho_social.py confere antes do dbt rodar).
         - `colunas`: layout conhecido da planilha. Entra como molde vazio unido POR NOME ao
           parquet, para que uma remessa sem alguma coluna (a planilha de 06/10/2026 dos
           empreendimentos sem indicação de demanda, por exemplo, não traz UF nem a situação do
@@ -58,7 +59,7 @@
     case
         when {{ coluna }} is null then null
         when upper(trim({{ coluna }}::text)) in ('', '-', 'NONE', 'NAN', 'NULL', 'NAT') then null
-        else trim({{ var('schema_udfs') }}.corrigir_mojibake(trim({{ coluna }}::text)))
+        else trim({{ target.schema }}.corrigir_mojibake(trim({{ coluna }}::text)))
     end
 {%- endmacro %}
 

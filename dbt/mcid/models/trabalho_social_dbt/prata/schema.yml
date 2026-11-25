@@ -335,9 +335,9 @@ models:
       openmetadata:
         glossary: *id008
 - name: prata_ts_selecao_contrato
-  description: Portaria de SELEÇÃO de onde saiu cada contrato (FAR e FDS), com o método e a confiança do
+  description: Portaria de SELEÇÃO de onde saiu cada contrato (FAR, FDS e Rural), com o método e a confiança do
     vínculo. Não é a portaria de TS. FAR pelo APF (seeds.far_portaria_selecao_apf), FDS pelo número da proposta (698/2026
-    x Cad PJ FDS). O Rural (162/2018, 354/2024, 697/2026) entra quando a prata_rural_selecao_contrato chegar na main.
+    x Cad PJ FDS), Rural pela prata_rural_selecao_contrato (162/2018, 354/2024, 697/2026).
   meta:
     tags:
     - silver
@@ -399,7 +399,7 @@ models:
         - Média
         - Baixa
   - name: qt_selecoes_mesmo_contrato
-    description: Quantas linhas do anexo de seleção caíram no mesmo contrato (só Rural; nulo enquanto o Rural não entra).
+    description: Quantas linhas do anexo de seleção caíram no mesmo contrato (só Rural).
   - name: qt_selecoes_candidatas
     description: Quantas seleções candidatas havia para o APF antes de escolher a de maior confiança.
 - name: prata_ts_portaria_contrato
@@ -675,6 +675,12 @@ models:
       openmetadata:
         glossary:
         - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+  - name: rotulo_painel
+    description: Rótulo curto do marco para o painel, na forma linha · quando · o que se exige (portaria).
+    meta:
+      openmetadata:
+        glossary:
+        - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.MarcoTemporalTS
 - name: prata_ts_empreendimento_perfil
   description: 'Perfil de cada contrato com Trabalho Social para o mapa: coordenadas (SNH), tipo de edificação (INT040/INT059;
     Rural sempre casa), regime, tipo de demanda (FAR) e público tradicional ESTIMADO por palavra-chave no nome da

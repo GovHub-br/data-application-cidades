@@ -3,9 +3,9 @@ version: 2
 sources:
   - name: trabalho_social_lake
     description: >
-      Arquivos de acompanhamento do Trabalho Social na staging do MinIO. Só entra aqui o que
-      uma bronze lê por caminho_fonte_lake / fonte_lake; as bronzes de remessa única (jul/2026)
-      ainda leem o parquet direto.
+      Arquivos de acompanhamento do Trabalho Social e de execução do FAR/FDS
+      na staging do MinIO. Os parquets de layout são dicionários de campos,
+      não registros de empreendimentos.
     schema: staging
     meta:
       bucket: data-lake-mcid
@@ -16,6 +16,38 @@ sources:
         classification: restricted
         rag_publication: prohibited
     tables:
+      - name: mcmv_far_ts_caixa
+        description: Planilha mensal de acompanhamento do Trabalho Social do FAR informada pela CAIXA.
+        meta:
+          caminho: staging/**/*MCMV_FAR_TS_CAIXA_BB*__ts_af_caixa_far_*.parquet
+      - name: mcmv_far_ts_bb
+        description: Planilha mensal de acompanhamento do Trabalho Social do FAR informada pelo Banco do Brasil.
+        meta:
+          caminho: staging/**/*MCMV_FAR_TS_CAIXA_BB*__ts_af_bb_far_*.parquet
+      - name: mcmv_fds_ts_caixa
+        description: Planilha de acompanhamento do Trabalho Social do FDS informada pela CAIXA.
+        meta:
+          caminho: staging/**/*MCMV_FDS_TS_CAIXA*.parquet
+      - name: mcmv_rural_ts_caixa
+        description: Planilha de acompanhamento do Trabalho Social Rural informada pela CAIXA.
+        meta:
+          caminho: staging/**/*MCMV_RURAL_TS_CAIXA_BB*__ts_af_caixa_pnhr_rural_*.parquet
+      - name: mcmv_rural_ts_bb
+        description: Planilha de acompanhamento do Trabalho Social Rural informada pelo Banco do Brasil.
+        meta:
+          caminho: staging/**/*MCMV_RURAL_TS_CAIXA_BB*__ts_af_bb_pnhr_*.parquet
+      - name: monit_cad_pj_far_mensal
+        description: Cadastro mensal de empreendimentos contratados no FAR.
+        meta:
+          caminho: staging/**/*MONIT_CAD_PJ_FAR_MENSAL_*.parquet
+      - name: monit_exec_ts_fds_mensal
+        description: Datas de execução do PTS e dos relatórios do Trabalho Social do FDS.
+        meta:
+          caminho: staging/**/*MONIT_EXEC_TS_FDS_MENSAL_*.parquet
+      - name: monit_mov_obra_far_mensal
+        description: Movimento mensal de obra do FAR, com situação, percentual executado e entregas de unidades habitacionais.
+        meta:
+          caminho: staging/**/*MONIT_MOV_OBRA_FAR_MENSAL_*.parquet
       - name: mcmv_ts_remessas_historico
         description: >
           Todas as remessas de acompanhamento do Trabalho Social guardadas na pasta Trabalho Social
