@@ -6,8 +6,10 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.sftp.hooks.sftp import SFTPHook
 from airflow.sdk import Variable, dag, get_current_context, task
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from plugins.datalake import contract
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake.keys import load_id
 from plugins.datalake.sftp import Control
 from plugins.datalake.sftp import extract as extract_sftp
@@ -41,7 +43,7 @@ def _lake(dry_run: bool):
     params={"dry_run": False, "limit": 0, "files": []},
     tags=["sftp", "mcid", "cidades", "data-lake", "ingest"],
 )
-def sftp_ingest_dag() -> None:
+def sftp_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
     """Ingestão do SFTP do MCid (ADR-0004): extract -> transform (um por arquivo) -> report.
 
     `extract` abre uma sessão por login (`LOGINS`: sftp_mcid, depois sftp_geavo) e, em
@@ -49,14 +51,16 @@ def sftp_ingest_dag() -> None:
     para `snh/raw/sftp/<pasta>/load_id=<id>/` (o original nunca pousa). `transform` converte cada
     arquivo para a staging pelo leitor do contrato ODCS e segura em quarentena o que não
     bate com ele. `report` escreve o resumo no log da task e falha a execução se
-    houve erro ou quarentena.
+    houve erro ou quarentena; sem nada novo (nenhum arquivo, erro ou aviso), ele pula, e o
+    dia sem entrega aparece como `skipped` na grade.
 
     Params: `dry_run` faz tudo embaixo de `dryrun/`; lê as tabelas de controle mas não grava;
     `limit` baixa no máximo N arquivos por login (0 = sem limite); `files` (caminhos completos no SFTP,
     ex. "/home/fabrica/GEFUS/x.csv") força só esses, mesmo os já pousados.
     """
 
-    @task
+    # hours: the CadÚnico arrives with tens of GB; a hung SSH session must not hold the run
+    @task(execution_timeout=timedelta(hours=6))
     def extract() -> list:
         """Keys to convert as the return value (what `transform` maps over); the whole
         result goes to the `result` XCom, read by `report`."""
@@ -99,6 +103,7 @@ def sftp_ingest_dag() -> None:
         return result["keys"]
 
     @task(pool="lake_conversao")
+    @fail_fast_on_missing_config
     def transform(key: str) -> list:
         ctx = get_current_context()
         dry = bool(ctx["params"]["dry_run"])
@@ -122,6 +127,8 @@ def sftp_ingest_dag() -> None:
         }
         transformed = list(transformed or [])
         records = [rec for recs in transformed for rec in recs]
+        if not records and not any(extracted.values()):  # skipped on the grid: no delivery today
+            raise AirflowSkipException("nada novo no SFTP: nenhum arquivo, erro ou aviso")
         body, failed, notable = summary(
             extracted, records, len(extracted["keys"]) - len(transformed)
         )
@@ -129,7 +136,9 @@ def sftp_ingest_dag() -> None:
         log = logging.error if failed else logging.warning if notable else logging.info
         log("[sftp_ingest_dag] report\n%s", body)
         if failed:
-            raise RuntimeError("ingestão do SFTP com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do SFTP com erro ou quarentena; veja o resumo no log"
+            )
 
     report(transform.expand(key=extract()))
 

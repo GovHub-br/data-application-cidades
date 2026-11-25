@@ -11,9 +11,10 @@ import pyarrow.parquet as pq
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import BaseHook, Variable, dag, get_current_context, task
-from airflow.sdk.exceptions import AirflowSkipException
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 from imap_tools import AND, MailBox
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
 from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
@@ -64,7 +65,8 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    @fail_fast_on_missing_config
     def extract() -> list[str]:
         """Os anexos ZIP do e-mail do Tesouro Gerencial do dia da execução, como chegaram.
 
@@ -93,6 +95,7 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
         return paths
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_to_s3(paths: list[str]) -> list[str]:
         """Os anexos na mesma pasta load_id=; se são iguais aos da última carga, nada pousa.
 
@@ -170,6 +173,7 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
         return recs
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_staging(recs: list[dict]) -> list[dict]:
         """Os anexos aprovados em staging/siafi-tesouro-gerencial/dotacao_execucao_outras_fontes_mcid/load_id=<id>/."""
         hook, bucket, prefix = _lake()
@@ -197,7 +201,7 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
             "[dotacao_execucao_outras_fontes_mcid_ingest_dag] report\n%s", body
         )
         if failed:
-            raise RuntimeError("ingestão do Tesouro com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException("ingestão do Tesouro com erro ou quarentena; veja o resumo no log")
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:

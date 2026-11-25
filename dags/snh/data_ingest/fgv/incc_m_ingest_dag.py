@@ -13,6 +13,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
 from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
@@ -62,7 +63,8 @@ def incc_m_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    @fail_fast_on_missing_config
     def extract() -> str:
         """O XLSX da série histórica pelo HttpHook (Connection `sinduscon`, com o
         User-Agent de navegador no extra, sem o qual o site recusa)."""
@@ -76,6 +78,7 @@ def incc_m_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
         return str(path)
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_to_s3(path: str) -> str:
         """O XLSX em raw/fgv/incc_m/load_id=<id>/; se igual à última carga, nada pousa.
 
@@ -149,6 +152,7 @@ def incc_m_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
         return rec
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_staging(rec: dict) -> dict:
         """O Parquet aprovado em staging/fgv/incc_m/load_id=<id>/ e o lake._staging_log."""
         hook, bucket, prefix = _lake()
@@ -170,7 +174,7 @@ def incc_m_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro de
             "[incc_m_ingest_dag] report\n%s", body
         )
         if failed:
-            raise RuntimeError("ingestão do INCC-M com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException("ingestão do INCC-M com erro ou quarentena; veja o resumo no log")
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:

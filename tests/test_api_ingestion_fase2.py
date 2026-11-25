@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+from airflow.sdk.exceptions import AirflowFailException
 
 from plugins.datalake.api import as_text
 from plugins.datalake.readers import SourceLayoutChanged, parse
@@ -190,7 +191,7 @@ def test_ibge_one_failing_table_does_not_stop_the_others(ibge):
         "snh/staging/ibge/pib_construcao/load_id=20261201T060000Z/pib_construcao.parquet"
         in ibge.s3.objects
     )
-    with pytest.raises(RuntimeError):  # a tabela que falhou na API falha a execução no fim
+    with pytest.raises(AirflowFailException):  # a tabela que falhou na API falha a execução no fim
         ibge.run("report")
 
 

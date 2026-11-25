@@ -13,6 +13,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake import contract, readers
 from plugins.datalake.readers import SourceLayoutChanged, novo_caged_values
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
@@ -64,7 +65,8 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    @fail_fast_on_missing_config
     def extract() -> list[str]:
         """Cada mês desde jan/2024, como o Power BI responde (Connection `powerbi_caged`).
 
@@ -101,6 +103,7 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
         return paths
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_to_s3(paths: list[str]) -> list[str]:
         """Os meses na mesma pasta load_id=; se nenhum mudou desde a última carga, nada pousa.
 
@@ -178,6 +181,7 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
         return recs
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_staging(recs: list[dict]) -> list[dict]:
         """Os meses aprovados em staging/novo_caged/saldo_estoque_total_construcao/load_id=<id>/."""
         hook, bucket, prefix = _lake()
@@ -203,7 +207,7 @@ def novo_caged_total_construcao() -> None:  # noqa: C901 - as tasks da DAG ficam
             "[novo_caged_total_construcao] report\n%s", body
         )
         if failed:
-            raise RuntimeError(
+            raise AirflowFailException(
                 "ingestão do Novo CAGED com erro ou quarentena; veja o resumo no log"
             )
 

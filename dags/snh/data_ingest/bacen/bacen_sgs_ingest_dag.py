@@ -13,6 +13,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
 from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
@@ -61,7 +62,8 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    @fail_fast_on_missing_config
     def extract() -> list[str]:
         """Cada série do BACEN_SERIES (nome -> código), lida na task, em disco.
 
@@ -92,6 +94,7 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
         return paths
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_to_s3(paths: list[str]) -> list[str]:
         """As séries na mesma pasta load_id=; se nenhuma mudou desde a última carga, nada pousa.
 
@@ -169,6 +172,7 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
         return recs
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_staging(recs: list[dict]) -> list[dict]:
         """As séries aprovadas em staging/bacen/financiamentos_imobiliarios/load_id=<id>/."""
         hook, bucket, prefix = _lake()
@@ -194,7 +198,7 @@ def bacen_sgs_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro
             "[bacen_sgs_ingest_dag] report\n%s", body
         )
         if failed:
-            raise RuntimeError("ingestão do SGS com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException("ingestão do SGS com erro ou quarentena; veja o resumo no log")
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:
