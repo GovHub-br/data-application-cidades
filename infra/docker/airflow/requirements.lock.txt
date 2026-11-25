@@ -543,7 +543,7 @@ celery==5.6.3
     #   -r /w/lock.in
     #   apache-airflow-providers-celery
     #   flower
-certifi==2026.7.22
+certifi==2026.11.20
     # via
     #   -r /w/lock.in
     #   elastic-transport
@@ -553,6 +553,7 @@ certifi==2026.7.22
     #   kubernetes
     #   kubernetes-asyncio
     #   msrest
+    #   openmetadata-ingestion
     #   opensearch-py
     #   requests
     #   snowflake-connector-python
@@ -613,7 +614,7 @@ collate-dbt-artifacts-parser==0.1.4
     # via openmetadata-ingestion
 collate-sqlfluff==3.5.3
     # via collate-sqllineage
-collate-sqllineage==2.1.8
+collate-sqllineage==2.1.7
     # via openmetadata-ingestion
 colorama==0.4.6
     # via
@@ -1829,7 +1830,7 @@ openlineage-sql==1.53.0
     # via
     #   -r /w/lock.in
     #   openlineage-integration-common
-openmetadata-ingestion==1.13.3.2
+openmetadata-ingestion==2.0.7.2
     # via -r /w/lock.in
 openpyxl==3.1.5
     # via -r /w/lock.in
@@ -2182,7 +2183,7 @@ pycparser==3.0
     # via
     #   -r /w/lock.in
     #   cffi
-pydantic==2.11.10
+pydantic==2.14.4
     # via
     #   -r /w/lock.in
     #   apache-airflow-core
@@ -2203,7 +2204,7 @@ pydantic==2.11.10
     #   pydantic-extra-types
     #   pydantic-settings
     #   ray
-pydantic-core==2.33.2
+pydantic-core==2.50.5
     # via
     #   -r /w/lock.in
     #   pydantic
@@ -2232,7 +2233,7 @@ pygtrie==2.6.1
     #   -r /w/lock.in
     #   apache-airflow-core
     #   apache-airflow-task-sdk
-pyjwt==2.14.0
+pyjwt==2.15.1
     # via
     #   -r /w/lock.in
     #   adal
@@ -2795,7 +2796,7 @@ uritemplate==4.2.0
     # via
     #   -r /w/lock.in
     #   google-api-python-client
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   -r /w/lock.in
     #   apache-airflow-providers-cncf-kubernetes
@@ -2805,6 +2806,7 @@ urllib3==2.7.0
     #   elastic-transport
     #   kubernetes
     #   kubernetes-asyncio
+    #   openmetadata-ingestion
     #   opensearch-py
     #   requests
     #   sagemaker-studio

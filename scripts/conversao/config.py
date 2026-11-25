@@ -15,10 +15,10 @@ load_dotenv()
 # logs e cópias locais ficam ao lado de raw_para_staging.py, como antes do pacote
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 
-MINIO_ENDPOINT = os.environ["MINIO_ENDPOINT"]
-MINIO_ACCESS_KEY = os.environ["MINIO_ACCESS_KEY"]
-MINIO_SECRET_KEY = os.environ["MINIO_SECRET_KEY"]
-MINIO_BUCKET = os.environ["MINIO_BUCKET"]
+DL_ENDPOINT = os.environ["DL_ENDPOINT"]
+DL_ACCESS_KEY = os.environ["DL_ACCESS_KEY"]
+DL_SECRET_KEY = os.environ["DL_SECRET_KEY"]
+DL_BUCKET = os.environ["DL_BUCKET"]
 
 PG_HOST = os.environ["DB_DW_HOST_MCID"]
 PG_PORT = int(os.environ.get("DB_DW_PORT_MCID", 5432))
