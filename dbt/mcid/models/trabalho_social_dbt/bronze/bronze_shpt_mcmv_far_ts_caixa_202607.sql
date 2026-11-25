@@ -1,5 +1,5 @@
 select *
 from
     read_parquet(
-        's3://data-lake-mcid/staging/sharepoint/Trabalho Social/MCMV_FAR_TS_CAIXA_BB_ 202607__ts_af_caixa_far_07_26.parquet'
+        's3://data-lake-mcid/snh/staging/sharepoint/Trabalho Social/MCMV_FAR_TS_CAIXA_BB_ 202607__ts_af_caixa_far_07_26.parquet'
     )

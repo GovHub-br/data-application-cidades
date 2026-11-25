@@ -449,8 +449,9 @@ models:
 
     # Trabalho Social do MCMV (FAR, Entidades e Rural, CAIXA e BB): acompanhamento por contrato,
     # marcos das Portarias MCID 464/2018 e 75/2025, demanda e executor. Nomes: bronze_<fonte>_<nome
-    # do MinIO>, prata_ts_<tabela>, ouro_ts_<tabela>. As bronzes do lake (tag ts_lake) rodam no
-    # target prod_duckdb; o resto no prod.
+    # do MinIO>, prata_ts_<tabela>, ouro_ts_<tabela>. As bronzes do lake (tag ts_lake) entram no
+    # seletor dominios_postgres e rodam no target prod (Postgres + pg_duckdb), como o resto; por
+    # isso a macro bnz_ts_staging manda o corpo para o DuckDB com duckdb.query nesse target.
     trabalho_social_dbt:
       +materialized: table
       +meta:

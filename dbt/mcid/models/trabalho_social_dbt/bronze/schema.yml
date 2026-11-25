@@ -639,7 +639,7 @@ models:
   - name: _source_hash
     description: 'Linhagem: hash do arquivo de origem.'
   - name: filename
-    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/snh/staging/...).'
     tests:
     - not_null
 - name: bnz_shpt_mcmv_far_ts_caixa_bb_ts_af_bb_far
@@ -806,7 +806,7 @@ models:
   - name: _source_hash
     description: 'Linhagem: hash do arquivo de origem.'
   - name: filename
-    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/snh/staging/...).'
     tests:
     - not_null
 - name: bnz_shpt_mcmv_fds_ts_caixa
@@ -968,7 +968,7 @@ models:
   - name: _source_hash
     description: 'Linhagem: hash do arquivo de origem.'
   - name: filename
-    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/snh/staging/...).'
     tests:
     - not_null
 - name: bnz_shpt_mcmv_rural_ts_caixa_bb_ts_af_caixa_pnhr_rural
@@ -1133,7 +1133,7 @@ models:
   - name: _source_hash
     description: 'Linhagem: hash do arquivo de origem.'
   - name: filename
-    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/snh/staging/...).'
     tests:
     - not_null
 - name: bnz_shpt_mcmv_rural_ts_caixa_bb_ts_af_bb_pnhr
@@ -1298,7 +1298,7 @@ models:
   - name: _source_hash
     description: 'Linhagem: hash do arquivo de origem.'
   - name: filename
-    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/staging/...).'
+    description: 'Linhagem: parquet da staging que venceu esta carga (s3://data-lake-mcid/snh/staging/...).'
     tests:
     - not_null
 - name: bronze_seed_ts_dominio_situacao

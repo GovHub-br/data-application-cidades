@@ -21,7 +21,13 @@
         - `todos_os_arquivos`: false = só o arquivo mais recente (cada remessa é um retrato
           completo); true = empilha todas as remessas, para a prata escolher por APF.
         - `excluir`: termos que tiram um arquivo da disputa do mais recente.
+
+        No target Postgres (prod, com pg_duckdb) o parser do Postgres não aceita
+        `union all by name` nem `columns(*)`: o corpo vai inteiro para o DuckDB por
+        `duckdb.query`. No target DuckDB roda direto.
     -#}
+    {%- if target.type == 'postgres' %} select * from duckdb.query($bnz_ts$
+    {%- endif %}
     with
         molde as (
             select
@@ -51,6 +57,8 @@
 
     select columns(*)::varchar
     from unido
+    {%- if target.type == 'postgres' %}
+    $bnz_ts$) as r {%- endif %}
 {%- endmacro %}
 
 
