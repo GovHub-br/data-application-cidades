@@ -69,7 +69,8 @@ def copy_objects(s3, bucket: str, apply: bool) -> Counter:
     for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket):
         for obj in page.get("Contents", []):
             key = obj["Key"]
-            if key.startswith(LAKE_ROOT):
+            # dryrun/ fica no topo por desenho: o dry_run grava em dryrun/snh/...
+            if key.startswith((LAKE_ROOT, "dryrun/")):
                 continue
             dest = LAKE_ROOT + key
             counts[key.split("/", 1)[0] + "/"] += 1
