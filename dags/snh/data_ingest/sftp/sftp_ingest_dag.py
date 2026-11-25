@@ -19,10 +19,12 @@ from scripts.lake_utils import md5_file
 
 # Um usuário do SFTP da CAIXA por Connection (a autenticação é do provider SFTP), cada um
 # com as pastas que enxerga; a DAG extrai um login por vez, nesta ordem.
+# O terceiro campo é o `root` de um login preso (chroot) numa pasta: o GEAVO vê
+# /home/caixa.geavo como `/`; o lake e o controle seguem com o caminho completo.
 LOGINS = {
     # GEFUS inclui GEFUS/CadUnico; a antiga /home/fabrica/CadUnico não existe mais
-    "fabrica": ("sftp_mcid", ("/home/fabrica/Analise_SNH", "/home/fabrica/GEFUS")),
-    "geavo": ("sftp_geavo", ("/home/caixa.geavo/GEAVO",)),
+    "fabrica": ("sftp_mcid", ("/home/fabrica/Analise_SNH", "/home/fabrica/GEFUS"), ""),
+    "geavo": ("sftp_geavo", ("/home/caixa.geavo/GEAVO",), "/home/caixa.geavo"),
 }
 LAKE_CONN = "lake_mcid"
 PG_CONN = "postgres_default"
@@ -69,7 +71,7 @@ def sftp_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
         forced = tuple(ctx["params"]["files"] or ())
         result = {"keys": [], "errors": [], "unsupported": [], "duplicates": []}
 
-        for conn_id, folders in LOGINS.values():  # one login after the other
+        for conn_id, folders, root in LOGINS.values():  # one login after the other
             files = tuple(f for f in forced if f.startswith(tuple(d + "/" for d in folders)))
             if forced and not files:  # the forced files are all of another login
                 continue
@@ -88,13 +90,14 @@ def sftp_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
                         limit=int(ctx["params"]["limit"] or 0),
                         folders=folders,
                         files=files,
+                        root=root,
                     )
             except Exception as error:  # noqa: BLE001 — `report` fails the run
                 result["errors"].append(f"{conn_id}: {type(error).__name__}: {error}"[:500])
                 continue
             for name, items in part.items():
                 result[name] += items
-        seen = tuple(d + "/" for _, folders in LOGINS.values() for d in folders)
+        seen = tuple(d + "/" for _, folders, _ in LOGINS.values() for d in folders)
         result["errors"] += [
             f"{f}: fora das pastas monitoradas" for f in forced if not f.startswith(seen)
         ]
