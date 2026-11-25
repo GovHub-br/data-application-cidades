@@ -405,3 +405,49 @@ models:
         description: Arquivo da staging que venceu esta carga.
         tests:
           - not_null
+
+  - name: bronze_seed_manual_fds_portaria_selecao_698_2026
+    description: Cópia fiel de seeds.fds_portaria_selecao_698_2026 (carregada à mão no Postgres). Anexo da Portaria MCID 698/2026
+      (propostas selecionadas do MCMV-Entidades/FDS, seleção da 927/2025). Colunas com o nome do PDF, em maiúsculas
+      e com espaço.
+    meta:
+      tags:
+      - bronze
+      openmetadata:
+        glossary:
+        - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+        - MCID.Identificadores.IDProposta
+    columns:
+    - name: IDENTIFICACAO DA PROPOSTA
+      description: Número de identificação da proposta.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.IDProposta
+    - name: UF
+      description: Sigla da UF.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UF
+    - name: MUNICÍPIO
+      description: Município da proposta.
+    - name: CNPJ ENTIDADE
+      description: CNPJ da entidade organizadora.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.CNPJ
+          - MCID.Atores.EntidadeOrganizadora
+    - name: NOME DO EMPREENDIMENTO
+      description: Nome do empreendimento.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.ExecucaoDeEmpreendimentos.EmpreendimentoHabitacional
+    - name: UH
+      description: UH selecionadas.
+      meta:
+        openmetadata:
+          glossary:
+          - MCID.Identificadores.UH

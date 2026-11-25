@@ -1,0 +1,25 @@
+version: 2
+
+sources:
+  - name: trabalho_social_lake
+    description: >
+      Arquivos de acompanhamento do Trabalho Social na staging do MinIO. Só entra aqui o que
+      uma bronze lê por caminho_fonte_lake / fonte_lake; as bronzes de remessa única (jul/2026)
+      ainda leem o parquet direto.
+    schema: staging
+    meta:
+      bucket: data-lake-mcid
+      camada: staging
+      governance:
+        product: trabalho_social
+        owner_key: mcid_data_engineering
+        classification: restricted
+        rag_publication: prohibited
+    tables:
+      - name: mcmv_ts_remessas_historico
+        description: >
+          Todas as remessas de acompanhamento do Trabalho Social guardadas na pasta Trabalho Social
+          (FAR, FDS e Rural; CAIXA e BB; de jan/2025 a jul/2026, inclusive as arquivadas). Serve para
+          recuperar a portaria de TS de contratos que vieram sem ela na remessa mais recente.
+        meta:
+          caminho: staging/sharepoint/Trabalho Social/**/*.parquet

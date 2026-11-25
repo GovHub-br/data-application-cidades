@@ -1,0 +1,1 @@
+SELECT * FROM read_parquet('s3://data-lake-mcid/staging/manueal_ts/trabalho-social-2026-07__ts_af_bb_far_07_26.parquet')

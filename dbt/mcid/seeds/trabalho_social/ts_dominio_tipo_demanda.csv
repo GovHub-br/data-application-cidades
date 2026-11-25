@@ -1,0 +1,8 @@
+co_tipo_demanda,tipo_demanda,observacao
+1,CADASTRO HABITACIONAL,Famílias indicadas pelo cadastro habitacional do ente
+2,MOVIMENTOS SOCIAIS,Demanda organizada por movimentos sociais
+3,CALAMIDADE,Atendimento a famílias atingidas por calamidade pública
+4,OBRA PÚBLICA,Reassentamento por obra pública
+5,REASSENTAMENTO,Reassentamento de famílias
+6,DOAÇÃO/CESSÃO DE TERRENO,Terreno doado ou cedido pelo ente
+7,OUTROS,Outras origens de demanda
