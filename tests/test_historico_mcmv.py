@@ -141,10 +141,10 @@ def _reg_versao(saida, competencia, hash_, corte=None, colunas=("a",)):
 
 def test_normalizacao_de_nomes_e_a_do_lake():
     # mesma regra do resto do lake, sem o código depender de scripts/
-    from lake_utils import corrigir_mojibake_texto, normalizar_colunas
+    from lake_utils import corrigir_mojibake_texto, normalize_columns
 
     amostra = ["Município", "municÃ\xadpio", "% Meta R$", "", "UF", "UF", "\ufeffCódigo"]
-    assert nomes.normalizar_colunas(amostra) == normalizar_colunas(amostra)
+    assert nomes.normalizar_colunas(amostra) == normalize_columns(amostra)
     for t in amostra + ["SÃO PAULO", "José", "Ã"]:
         assert nomes.corrigir_mojibake(t) == corrigir_mojibake_texto(t)
 
