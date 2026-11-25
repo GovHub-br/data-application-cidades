@@ -53,5 +53,9 @@
             "imap_server": "<servidor IMAP>",
             "sender_email": "<remetente esperado>"
         }
+    },
+    "lake_bucket": {
+        "description": "Bucket do lake (raw/ e staging/) usado pelas DAGs de ingestão; o mesmo da var lake_bucket do dbt",
+        "value": "data-lake-mcid"
     }
 }
