@@ -14,6 +14,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
 from plugins.datalake.readers import INFOMONEY_COLUMNS
@@ -67,7 +68,8 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    @fail_fast_on_missing_config
     def extract() -> str:
         """Os ~100 últimos pregões da Alpha Vantage (Connection `alphavantage`: a chave no
         password, o ativo em `symbol` no extra), como a API responde.
@@ -103,6 +105,7 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
         return str(path)
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_to_s3(path: str) -> str:
         """O arquivo em raw/infomoney/acoes_imob/load_id=<id>/; se igual à última carga, nada pousa.
 
@@ -171,6 +174,7 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
         return rec
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_staging(rec: dict) -> dict:
         """O Parquet aprovado em staging/infomoney/acoes_imob/load_id=<id>/ e o lake._staging_log."""
         hook, bucket, prefix = _lake()
@@ -192,7 +196,9 @@ def infomoney_imob_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro d
             "[infomoney_imob] report\n%s", body
         )
         if failed:
-            raise RuntimeError("ingestão do IMOB com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do IMOB com erro ou quarentena; veja o resumo no log"
+            )
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:

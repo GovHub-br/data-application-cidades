@@ -6,8 +6,10 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.sftp.hooks.sftp import SFTPHook
 from airflow.sdk import Variable, dag, get_current_context, task
+from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
 from plugins.datalake import contract
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake.keys import load_id
 from plugins.datalake.sftp import Control
 from plugins.datalake.sftp import extract as extract_sftp
@@ -15,7 +17,13 @@ from plugins.datalake.tasks import Lake, previous_rows, record, summary
 from plugins.datalake.tasks import transform as transform_key
 from scripts.lake_utils import md5_file
 
-SFTP_CONN = "sftp_mcid"
+# Um usuário do SFTP da CAIXA por Connection (a autenticação é do provider SFTP), cada um
+# com as pastas que enxerga; a DAG extrai um login por vez, nesta ordem.
+LOGINS = {
+    # GEFUS inclui GEFUS/CadUnico; a antiga /home/fabrica/CadUnico não existe mais
+    "fabrica": ("sftp_mcid", ("/home/fabrica/Analise_SNH", "/home/fabrica/GEFUS")),
+    "geavo": ("sftp_geavo", ("/home/caixa.geavo/GEAVO",)),
+}
 LAKE_CONN = "lake_mcid"
 PG_CONN = "postgres_default"
 
@@ -35,43 +43,67 @@ def _lake(dry_run: bool):
     params={"dry_run": False, "limit": 0, "files": []},
     tags=["sftp", "mcid", "cidades", "data-lake", "ingest"],
 )
-def sftp_ingest_dag() -> None:
+def sftp_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
     """Ingestão do SFTP do MCid (ADR-0004): extract -> transform (um por arquivo) -> report.
 
-    `extract` baixa os arquivos novos das pastas monitoradas, mascara a PII e só então sobe
+    `extract` abre uma sessão por login (`LOGINS`: sftp_mcid, depois sftp_geavo) e, em
+    cada uma, baixa os arquivos novos das pastas daquele login, mascara a PII e só então sobe
     para `snh/raw/sftp/<pasta>/load_id=<id>/` (o original nunca pousa). `transform` converte cada
     arquivo para a staging pelo leitor do contrato ODCS e segura em quarentena o que não
     bate com ele. `report` escreve o resumo no log da task e falha a execução se
-    houve erro ou quarentena.
+    houve erro ou quarentena; sem nada novo (nenhum arquivo, erro ou aviso), ele pula, e o
+    dia sem entrega aparece como `skipped` na grade.
 
     Params: `dry_run` faz tudo embaixo de `dryrun/`; lê as tabelas de controle mas não grava;
-    `limit` baixa no máximo N arquivos (0 = sem limite); `files` (caminhos completos no SFTP,
+    `limit` baixa no máximo N arquivos por login (0 = sem limite); `files` (caminhos completos no SFTP,
     ex. "/home/fabrica/GEFUS/x.csv") força só esses, mesmo os já pousados.
     """
 
-    @task
+    # hours: the CadÚnico arrives with tens of GB; a hung SSH session must not hold the run
+    @task(execution_timeout=timedelta(hours=6))
     def extract() -> list:
         """Keys to convert as the return value (what `transform` maps over); the whole
         result goes to the `result` XCom, read by `report`."""
         ctx = get_current_context()
         dry = bool(ctx["params"]["dry_run"])
-        sftp = SFTPHook(ssh_conn_id=SFTP_CONN)
-        with sftp.get_managed_conn():  # one SSH session for the whole run
-            result = extract_sftp(
-                sftp,
-                _lake(dry).upload_arquivo,
-                Control(PostgresHook(postgres_conn_id=PG_CONN), ctx["run_id"], write=not dry),
-                load_id(ctx["dag_run"].run_after),  # the same on a retry: it rewrites the same keys
-                md5_file,
-                tmpdir=os.environ.get("LAKE_TMPDIR"),
-                limit=int(ctx["params"]["limit"] or 0),
-                files=tuple(ctx["params"]["files"] or ()),
-            )
+        forced = tuple(ctx["params"]["files"] or ())
+        result = {"keys": [], "errors": [], "unsupported": [], "duplicates": []}
+
+        for conn_id, folders in LOGINS.values():  # one login after the other
+            files = tuple(f for f in forced if f.startswith(tuple(d + "/" for d in folders)))
+            if forced and not files:  # the forced files are all of another login
+                continue
+            sftp = SFTPHook(ssh_conn_id=conn_id)
+            try:  # a login that fails must not lose what the others landed
+                with sftp.get_managed_conn():  # one SSH session per login
+                    part = extract_sftp(
+                        sftp,
+                        _lake(dry).upload_arquivo,
+                        Control(
+                            PostgresHook(postgres_conn_id=PG_CONN), ctx["run_id"], write=not dry
+                        ),
+                        load_id(ctx["dag_run"].run_after),  # the same on a retry: same keys
+                        md5_file,
+                        tmpdir=os.environ.get("LAKE_TMPDIR"),
+                        limit=int(ctx["params"]["limit"] or 0),
+                        folders=folders,
+                        files=files,
+                    )
+            except Exception as error:  # noqa: BLE001 — `report` fails the run
+                result["errors"].append(f"{conn_id}: {type(error).__name__}: {error}"[:500])
+                continue
+            for name, items in part.items():
+                result[name] += items
+        seen = tuple(d + "/" for _, folders in LOGINS.values() for d in folders)
+        result["errors"] += [
+            f"{f}: fora das pastas monitoradas" for f in forced if not f.startswith(seen)
+        ]
         logging.info("[sftp_ingest_dag] extract: %s", {k: len(v) for k, v in result.items()})
         ctx["ti"].xcom_push(key="result", value=result)
         return result["keys"]
 
     @task(pool="lake_conversao")
+    @fail_fast_on_missing_config
     def transform(key: str) -> list:
         ctx = get_current_context()
         dry = bool(ctx["params"]["dry_run"])
@@ -95,6 +127,8 @@ def sftp_ingest_dag() -> None:
         }
         transformed = list(transformed or [])
         records = [rec for recs in transformed for rec in recs]
+        if not records and not any(extracted.values()):  # skipped on the grid: no delivery today
+            raise AirflowSkipException("nada novo no SFTP: nenhum arquivo, erro ou aviso")
         body, failed, notable = summary(
             extracted, records, len(extracted["keys"]) - len(transformed)
         )
@@ -102,7 +136,9 @@ def sftp_ingest_dag() -> None:
         log = logging.error if failed else logging.warning if notable else logging.info
         log("[sftp_ingest_dag] report\n%s", body)
         if failed:
-            raise RuntimeError("ingestão do SFTP com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do SFTP com erro ou quarentena; veja o resumo no log"
+            )
 
     report(transform.expand(key=extract()))
 

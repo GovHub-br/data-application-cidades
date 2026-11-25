@@ -14,6 +14,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pyarrow.parquet as pq
 import pytest
+from airflow.sdk.exceptions import AirflowFailException
 from airflow.sdk.exceptions import AirflowSkipException
 
 from plugins.datalake import readers
@@ -151,7 +152,7 @@ def test_missing_column_is_quarantined_and_report_fails(icst, monkeypatch):
     assert out["status"] == "quarantined"
     assert not [k for k in icst.s3.objects if k.startswith("snh/staging/")]
     icst.ctx["xcom"] = out
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AirflowFailException):
         icst.run("report")
 
 

@@ -269,3 +269,16 @@ sources:
     - name: vr_imovel_retomado
     - name: vr_despesas_adjudicacao
     - name: vr_resultado_adjudicacao
+    - name: dt_referencia
+  - name: far_contratos_pf_novo_layout
+    description: 'MONT_CONT_PF_FAR_LAYOUT: dicionário dos campos do MONT_CONT_PF_FAR (ordem, campo e descrição),
+      entregue junto de cada remessa.'
+    meta:
+      caminho: snh/staging/sftp/fabrica/GEFUS/MONT_CONT_PF_FAR_LAYOUT_2*.parquet
+      file_pattern: MONT_CONT_PF_FAR_LAYOUT_\d{8}\.csv
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: ordem
+    - name: campo
+    - name: descricao

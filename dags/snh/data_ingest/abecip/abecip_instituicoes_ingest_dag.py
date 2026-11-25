@@ -25,7 +25,9 @@ from datetime import datetime, timedelta
 import pandas as pd
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.sdk import Variable, dag, get_current_context, task
+from airflow.sdk.exceptions import AirflowFailException
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake.api import write_text_parquet
 from plugins.datalake.keys import RAW_PREFIX, STAGING_PREFIX, load_id
 
@@ -50,6 +52,7 @@ RAW_KEY = re.compile(rf"^{PREFIX}(\d{{4}}-\d{{2}})/{DATASET}\.json$")
 )
 def abecip_instituicoes_ingest_dag() -> None:
     @task
+    @fail_fast_on_missing_config
     def consolidar() -> dict:
         hook, bucket = S3Hook(aws_conn_id="lake_mcid"), Variable.get("lake_bucket")
         competencias = {
@@ -58,7 +61,7 @@ def abecip_instituicoes_ingest_dag() -> None:
             if (m := RAW_KEY.match(key))
         }
         if not competencias:
-            raise RuntimeError(
+            raise AirflowFailException(
                 "Nenhuma competência encontrada em snh/raw/abecip/. A extração do "
                 "relatório mensal não depositou nada — não há o que consolidar."
             )
@@ -74,7 +77,7 @@ def abecip_instituicoes_ingest_dag() -> None:
                 else next((v for v in conteudo.values() if isinstance(v, list)), [])
             )
             if not linhas:
-                raise RuntimeError(f"Competência {competencia} veio sem registros")
+                raise AirflowFailException(f"Competência {competencia} veio sem registros")
             for linha in linhas:
                 # a competência do diretório manda: o campo interno já veio
                 # divergente do caminho em extrações anteriores
@@ -104,12 +107,12 @@ def abecip_instituicoes_ingest_dag() -> None:
         série mais curta como se fosse o mundo.
         """
         if resumo["competencias"] < 2:
-            raise RuntimeError(
+            raise AirflowFailException(
                 f"Só {resumo['competencias']} competência(s) no raw: a série da "
                 "abertura por instituição exige histórico, não um mês solto."
             )
         if resumo["linhas"] < resumo["competencias"] * 10:
-            raise RuntimeError(
+            raise AirflowFailException(
                 f"{resumo['linhas']} linhas para {resumo['competencias']} "
                 "competências é pouco: o relatório traz dezenas de linhas por mês."
             )

@@ -19,11 +19,6 @@ from typing import Callable, Iterator, Optional
 from plugins.datalake.keys import raw_key
 from plugins.datalake.masking import ACCESS, EXCEL, TABULAR, export_access, mask_file
 
-FOLDERS = (
-    "/home/fabrica/Analise_SNH",
-    "/home/fabrica/GEFUS",  # inclui GEFUS/CadUnico; a antiga /home/fabrica/CadUnico não existe mais
-    "/home/caixa.geavo/GEAVO",
-)
 SUPPORTED = TABULAR | EXCEL | ACCESS | {".zip"}
 UNSUPPORTED = {".xls"}  # neither the masking nor the conversion reads it (no xlrd)
 MAX_DEPTH = 10
@@ -195,7 +190,7 @@ def extract(
     md5: Callable[[str], str],
     tmpdir: Optional[str] = None,
     limit: int = 0,
-    folders: tuple = FOLDERS,
+    folders: tuple = (),
     files: tuple = (),
 ) -> dict:
     """Lands every new file of the monitored folders in snh/raw/sftp/.../load_id=<load>/.

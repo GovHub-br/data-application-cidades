@@ -13,6 +13,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
 from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
@@ -72,7 +73,8 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    @fail_fast_on_missing_config
     def extract() -> dict:
         """A resposta de cada agregado em disco; os erros seguem para o report."""
         configs = Variable.get("IBGE_CONFIGURACOES", deserialize_json=True)
@@ -100,6 +102,7 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
         return {"files": files, "errors": errors}
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_to_s3(extracted: dict) -> list[str]:
         """Cada JSON em raw/ibge/<tabela>/load_id=<id>/; a tabela igual à última carga não pousa.
 
@@ -179,6 +182,7 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
         return recs
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_staging(recs: list[dict]) -> list[dict]:
         """Os Parquet aprovados em staging/ibge/<tabela>/load_id=<id>/ e o lake._staging_log."""
         hook, bucket, prefix = _lake()
@@ -205,7 +209,9 @@ def ibge_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG ficam dentro dela
             "[ibge_ingest_dag] report\n%s", body
         )
         if failed:
-            raise RuntimeError("ingestão do IBGE com erro ou quarentena; veja o resumo no log")
+            raise AirflowFailException(
+                "ingestão do IBGE com erro ou quarentena; veja o resumo no log"
+            )
 
     @task(trigger_rule="all_done")
     def cleanup() -> None:

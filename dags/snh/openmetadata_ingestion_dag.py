@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow.sdk import dag, task
+from airflow.sdk.exceptions import AirflowFailException
 
 from openmetadata.config import (
     ALL_RECIPES,
@@ -146,7 +147,7 @@ def openmetadata_ingestion_dag() -> None:
         resolvidos = {}
         for marcador, variavel in {**replacements, **segredos}.items():
             if not os.environ.get(variavel):
-                raise RuntimeError(
+                raise AirflowFailException(
                     f"'{variavel}' ficou vazio: confira as Connections openmetadata_default,"
                     " postgres_default e superset (infra/airflow/bootstrap/)."
                 )

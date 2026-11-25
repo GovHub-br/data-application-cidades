@@ -13,6 +13,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import Variable, dag, get_current_context, task
 from airflow.sdk.exceptions import AirflowFailException, AirflowSkipException
 
+from plugins.datalake.config import fail_fast_on_missing_config
 from plugins.datalake import contract, readers
 from plugins.datalake.api import staging_key, staging_record, write_text_parquet
 from plugins.datalake.keys import RAW_PREFIX, load_id, load_id_of, raw_key
@@ -64,7 +65,8 @@ def fipezap_trimestral_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fic
     Param `dry_run`: grava tudo embaixo de `dryrun/` e não escreve nas tabelas de controle.
     """
 
-    @task(retries=2, retry_exponential_backoff=True)
+    @task(retries=2, retry_exponential_backoff=True, execution_timeout=timedelta(minutes=30))
+    @fail_fast_on_missing_config
     def extract() -> str:
         """As séries históricas do FipeZAP (Connection `fipe`: host de downloads e User-Agent)."""
         response = HttpHook(method="GET", http_conn_id="fipe").run(
@@ -77,6 +79,7 @@ def fipezap_trimestral_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fic
         return str(path)
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_to_s3(path: str) -> str:
         """O arquivo em raw/fipe/indice_locacao/load_id=<id>/; se igual à última carga, nada pousa.
 
@@ -140,6 +143,7 @@ def fipezap_trimestral_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fic
         return rec
 
     @task(retries=2, retry_exponential_backoff=True)
+    @fail_fast_on_missing_config
     def upload_staging(rec: dict) -> dict:
         """O Parquet aprovado em staging/fipe/indice_locacao/load_id=<id>/ e o lake._staging_log."""
         hook, bucket, prefix = _lake()
@@ -163,7 +167,7 @@ def fipezap_trimestral_ingest_dag() -> None:  # noqa: C901 - as tasks da DAG fic
             "[fipezap_trimestral_ingest_dag] report\n%s", body
         )
         if failed:
-            raise RuntimeError(
+            raise AirflowFailException(
                 "ingestão do XLSX do FipeZAP com erro ou quarentena; veja o resumo no log"
             )
 

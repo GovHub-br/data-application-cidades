@@ -25,6 +25,15 @@
         "password": "<senha>",
         "extra": ""
     },
+    "sftp_geavo": {
+        "conn_type": "sftp",
+        "description": "Login próprio do GEAVO no SFTP da CAIXA (/home/caixa.geavo/GEAVO), lido pela sftp_ingest_dag depois do sftp_mcid",
+        "host": "<host>",
+        "port": 22,
+        "login": "<usuario>",
+        "password": "<senha>",
+        "extra": ""
+    },
     "fgv_dados": {
         "conn_type": "http",
         "description": "Portal FGVDados (login OutSystems) da icst_ingest_dag; a sessão sai do HttpHook.get_conn()",
