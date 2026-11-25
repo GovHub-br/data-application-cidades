@@ -445,3 +445,31 @@ schema:
     logicalType: string
   - name: vr_resultado_adjudicacao
     logicalType: string
+  - name: dt_referencia
+    logicalType: string
+- name: far_contratos_pf_novo_layout
+  physicalName: far_contratos_pf_novo_layout
+  description: 'MONT_CONT_PF_FAR_LAYOUT: dicionário dos campos do MONT_CONT_PF_FAR (ordem, campo e descrição),
+    entregue junto de cada remessa.'
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/MONT_CONT_PF_FAR_LAYOUT_2*.parquet
+  - property: file_pattern
+    value: MONT_CONT_PF_FAR_LAYOUT_\d{8}\.csv
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value: []
+  properties:
+  - name: ordem
+    logicalType: string
+  - name: campo
+    logicalType: string
+    customProperties:
+    - property: aliases
+      value:
+      - nome_campo
+  - name: descricao
+    logicalType: string

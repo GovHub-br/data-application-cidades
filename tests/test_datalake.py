@@ -48,6 +48,21 @@ def test_raw_key_puts_the_load_folder_before_the_file():
             "MC20261101__MCidades_CCI_CCA_2026.mdb/CCI_Analitico.csv",
             ("sftp_fgts_geavo", "geavo_cci_analitico"),
         ),
+        # a ZIP member is the delivered file: zipped or loose, the same dataset
+        (
+            "snh/raw/sftp/fabrica/GEFUS/load_id=20261125T050000Z/"
+            "MONT_CONT_PF_FAR_20261110.zip/MONT_CONT_PF_FAR_20261110.csv",
+            ("sftp_subsidiada_far", "far_contratos_pf_novo"),
+        ),
+        (
+            "snh/raw/sftp/fabrica/GEFUS/load_id=20261125T050000Z/"
+            "MONT_CONT_PF_FAR_LAYOUT_20261110.zip/MONT_CONT_PF_FAR_LAYOUT_20261110.csv",
+            ("sftp_subsidiada_far", "far_contratos_pf_novo_layout"),
+        ),
+        (
+            "snh/raw/sftp/fabrica/GEFUS/load_id=20261125T050000Z/MONT_CONT_PF_FAR_20261110.csv",
+            ("sftp_subsidiada_far", "far_contratos_pf_novo"),
+        ),
         ("snh/raw/sftp/fabrica/GEFUS/load_id=20261111T030000Z/QUALQUER_COISA.csv", None),
     ],
 )

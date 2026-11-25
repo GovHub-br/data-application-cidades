@@ -88,6 +88,12 @@ def _split(raw_key: str) -> tuple[str, str, Optional[str]]:
     parts = [p for p in raw_key.removeprefix(RAW_PREFIX).split("/") if not p.startswith("load_id=")]
     if len(parts) >= 2 and parts[-2].lower().endswith(ACCESS):  # <file>.mdb/<table>.csv
         return "/".join(parts[:-2]), parts[-2], Path(parts[-1]).stem.lower()
+    if len(parts) >= 2 and parts[-2].lower().endswith(".zip"):  # <file>.zip/<member>
+        return (
+            "/".join(parts[:-2]),
+            parts[-1],
+            None,
+        )  # vale o membro: zipado ou solto, mesmo contrato
     return "/".join(parts[:-1]), parts[-1], None
 
 

@@ -19,11 +19,6 @@ from typing import Callable, Iterator, Optional
 from plugins.datalake.keys import raw_key
 from plugins.datalake.masking import ACCESS, EXCEL, TABULAR, export_access, mask_file
 
-FOLDERS = (
-    "/home/fabrica/Analise_SNH",
-    "/home/fabrica/GEFUS",  # inclui GEFUS/CadUnico; a antiga /home/fabrica/CadUnico não existe mais
-    "/home/caixa.geavo/GEAVO",
-)
 SUPPORTED = TABULAR | EXCEL | ACCESS | {".zip"}
 UNSUPPORTED = {".xls"}  # neither the masking nor the conversion reads it (no xlrd)
 MAX_DEPTH = 10
@@ -46,6 +41,16 @@ def walk(sftp, folder: str, depth: int = 0) -> Iterator[tuple[str, int, int]]:
                 yield from walk(sftp, path, depth + 1)
         else:
             yield path, attr.st_size or 0, int(attr.st_mtime or 0)
+
+
+def by_login(files: tuple, logins: dict) -> tuple[dict, list]:
+    """Forced files -> ({login: its files}, files outside every login's folders)."""
+    owned = {
+        login: tuple(f for f in files if f.startswith(tuple(d + "/" for d in folders)))
+        for login, folders in logins.items()
+    }
+    taken = {f for fs in owned.values() for f in fs}
+    return owned, [f for f in files if f not in taken]
 
 
 def mirror(sftp_path: str) -> str:
@@ -195,7 +200,7 @@ def extract(
     md5: Callable[[str], str],
     tmpdir: Optional[str] = None,
     limit: int = 0,
-    folders: tuple = FOLDERS,
+    folders: tuple = (),
     files: tuple = (),
 ) -> dict:
     """Lands every new file of the monitored folders in snh/raw/sftp/.../load_id=<load>/.
