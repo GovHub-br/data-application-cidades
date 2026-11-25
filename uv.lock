@@ -550,6 +550,15 @@ wheels = [
 ]
 
 [[package]]
+name = "aiofiles"
+version = "24.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/03/a88171e277e8caa88a4c77808c20ebb04ba74cc4681bf1e9416c862de237/aiofiles-24.1.0.tar.gz", hash = "sha256:22a075c9e5a3810f0c2e48f3008c94d68c65d763b9b03857924c99e57355166c", size = 30247, upload-time = "2024-06-24T11:02:03.584Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/45/30bb92d442636f570cb5651bc661f52b610e2eec3f891a5dc3a4c3667db0/aiofiles-24.1.0-py3-none-any.whl", hash = "sha256:b4ec55f4195e3eb5d7abd1bf7e061763e864dd4954231fb8539a0ef8bb8260e5", size = 15896, upload-time = "2024-06-24T11:02:01.529Z" },
+]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -885,6 +894,23 @@ wheels = [
 ]
 
 [[package]]
+name = "apache-airflow-providers-sftp"
+version = "6.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiofiles" },
+    { name = "apache-airflow" },
+    { name = "apache-airflow-providers-common-compat" },
+    { name = "apache-airflow-providers-ssh" },
+    { name = "asyncssh" },
+    { name = "paramiko" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3c/41/6e0bdc29e907703e686e194b4c1ff1309557c5bbbd623640bf4ce85210ef/apache_airflow_providers_sftp-6.0.1.tar.gz", hash = "sha256:29730124e60ff5d0ce82a5a69d6fb1d3ee7c78a27ce1e3182965f048546c5dd1", size = 98943, upload-time = "2026-08-08T03:17:31.827Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/45/66/b61589999edc5892ba590e95844893629254b0b1b4435330f5d3f43b31cd/apache_airflow_providers_sftp-6.0.1-py3-none-any.whl", hash = "sha256:034a97c43b7ebe1201e6465e2f53a6cff569d620a8c28cc825242d80d49cc889", size = 43651, upload-time = "2026-08-08T03:16:29.494Z" },
+]
+
+[[package]]
 name = "apache-airflow-providers-smtp"
 version = "3.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -896,6 +922,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d5/bb/c8f75db7124eccc09cfbe53034708600c8f8565646b6589224c24a481058/apache_airflow_providers_smtp-3.0.4.tar.gz", hash = "sha256:529956aeef294682e9dd4ec0d3657c64f2612c78fa2f4cad92fd2cdc2ba6354c", size = 48351, upload-time = "2026-09-14T14:48:23.143Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/36/fee1a2cd9d38ad93ab0594d7a78a3757a4eba01a9b78d25bf8d158270a96/apache_airflow_providers_smtp-3.0.4-py3-none-any.whl", hash = "sha256:af18419fea297b50bead38581fbd2d44927624cb963ee05b03dd25c5f733639f", size = 25837, upload-time = "2026-09-14T14:47:47.325Z" },
+]
+
+[[package]]
+name = "apache-airflow-providers-ssh"
+version = "6.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "apache-airflow" },
+    { name = "apache-airflow-providers-common-compat" },
+    { name = "asyncssh" },
+    { name = "paramiko" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7a/3a/f4f594e9c86e2786382db43b0558cbe8e8213936c7b79cd15407b676f7bd/apache_airflow_providers_ssh-6.0.1.tar.gz", hash = "sha256:51a42acc8c49a9e19e72715f7ce3226d52e882568d52edfb27e737c61057f7a8", size = 78154, upload-time = "2026-08-08T03:17:35.081Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/63/f9503ffece9d21fecd01e83068caca89bd88a761d17a088d49ff1813e2fc/apache_airflow_providers_ssh-6.0.1-py3-none-any.whl", hash = "sha256:96eabf81e311ecaccca46df0765afa95979c4e500b430c0b686788973ea0c762", size = 44905, upload-time = "2026-08-08T03:16:32.992Z" },
 ]
 
 [[package]]
@@ -1022,6 +1063,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3e/f4/03ff1426acc87be0f4e8d40fa2bff5c3952bef0080062af9efc2212e3be8/asyncpg-0.31.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:37fc6c00a814e18eef51833545d1891cac9aa69140598bb076b4cd29b3e010b9", size = 2962574, upload-time = "2025-11-24T23:25:44.942Z" },
     { url = "https://files.pythonhosted.org/packages/c7/39/cc788dfca3d4060f9d93e67be396ceec458dfc429e26139059e58c2c244d/asyncpg-0.31.0-cp311-cp311-win32.whl", hash = "sha256:5a4af56edf82a701aece93190cc4e094d2df7d33f6e915c222fb09efbb5afc24", size = 521076, upload-time = "2025-11-24T23:25:46.486Z" },
     { url = "https://files.pythonhosted.org/packages/28/fc/735af5384c029eb7f1ca60ccb8fa95521dbdaeef788edf4cecfc604c3cab/asyncpg-0.31.0-cp311-cp311-win_amd64.whl", hash = "sha256:480c4befbdf079c14c9ca43c8c5e1fe8b6296c96f1f927158d4f1e750aacc047", size = 584980, upload-time = "2025-11-24T23:25:47.938Z" },
+]
+
+[[package]]
+name = "asyncssh"
+version = "2.24.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/dd/7f/2d79247bacc562104f312d27efe541673aa177feac89de291bd61bca52be/asyncssh-2.24.0.tar.gz", hash = "sha256:4064c590e59ce2e8d82a2f66d35f3120d765828b4df5e3dbfb07b4a8c24686c9", size = 550148, upload-time = "2026-06-27T20:34:44.755Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/29/908ce0ca5e8cae76662e354a0f08df552d6d221844748b9e5ca06051cc44/asyncssh-2.24.0-py3-none-any.whl", hash = "sha256:9abd46300adcb6d4b73269b34c53cd0d17a138b9a22b5b38008ce7d5808734b7", size = 381237, upload-time = "2026-06-27T20:34:43.198Z" },
 ]
 
 [[package]]
@@ -1542,6 +1596,7 @@ runtime = [
     { name = "apache-airflow" },
     { name = "apache-airflow-providers-amazon" },
     { name = "apache-airflow-providers-postgres" },
+    { name = "apache-airflow-providers-sftp" },
     { name = "apache-airflow-providers-standard" },
     { name = "astronomer-cosmos" },
     { name = "beautifulsoup4" },
@@ -1587,6 +1642,7 @@ runtime = [
     { name = "apache-airflow", specifier = "==3.3.2" },
     { name = "apache-airflow-providers-amazon", specifier = "==9.36.0" },
     { name = "apache-airflow-providers-postgres", specifier = "==7.0.2" },
+    { name = "apache-airflow-providers-sftp", specifier = "==6.0.1" },
     { name = "apache-airflow-providers-standard", specifier = "==1.19.0" },
     { name = "astronomer-cosmos", specifier = "==1.15.1" },
     { name = "beautifulsoup4", specifier = "==4.15.0" },

@@ -49,7 +49,7 @@ coluna e regra) e `_versoes_substituidas/` (versões trocadas, fora da pasta que
 
 ## Configuração
 
-- Conexão `minio_lake` (tipo `aws`, com o `endpoint_url` do MinIO no extra).
+- Conexão `lake_mcid`, a mesma das DAGs de ingestão (tipo `aws`, com o `endpoint_url` do lake no extra).
 - Os mapas de tratamento **não ficam no repositório**: estão no MinIO, em
   `snh/staging/historico_mcmv/config/` (`cabecalhos.csv`, `familias.csv`, `de_para_colunas.csv`).
   No `cabecalhos.csv`, por arquivo:
@@ -62,7 +62,7 @@ coluna e regra) e `_versoes_substituidas/` (versões trocadas, fora da pasta que
 
 ```bash
 export AIRFLOW_HOME=$(mktemp -d) AIRFLOW__CORE__DAGS_FOLDER=$PWD/dags/snh/dados_historicos AIRFLOW__CORE__LOAD_EXAMPLES=False
-export AIRFLOW_CONN_MINIO_LAKE='{"conn_type": "aws", "login": "<access>", "password": "<secret>", "extra": {"endpoint_url": "http://<minio>:9000"}}'
+export AIRFLOW_CONN_LAKE_MCID='{"conn_type": "aws", "login": "<access>", "password": "<secret>", "extra": {"endpoint_url": "http://<lake>:9000"}}'
 uv run airflow db migrate
 uv run airflow dags test dados_historicos_dag            # ou: airflow tasks test dados_historicos_dag <task>
 ```

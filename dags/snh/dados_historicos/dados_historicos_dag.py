@@ -27,9 +27,8 @@ Os mapas que dizem como tratar cada arquivo NÃO ficam no repositório: ficam no
 `snh/staging/historico_mcmv/config/` (`cabecalhos.csv`: cabeçalho, blocos e colunas coladas
 por "|"; `familias.csv`: a família de cada saída).
 
-Conexão: `minio_lake`, do tipo `aws`, com o `endpoint_url` do MinIO no extra, por exemplo
-`AIRFLOW_CONN_MINIO_LAKE='{"conn_type": "aws", "login": "<access key>", "password":
-"<secret>", "extra": {"endpoint_url": "http://10.0.0.56:9000"}}'`.
+Conexão: `lake_mcid`, a mesma das DAGs de ingestão (tipo `aws`, com o `endpoint_url` do
+lake no extra; o playbook e o k8s a montam a partir das `DL_*`).
 
 Params da staging (disparo manual):
 - `forcar`: reconverte mesmo o que já está convertido (por padrão só o que mudou na raw,
@@ -76,7 +75,7 @@ from historico_mcmv.layout import (
 
 log = logging.getLogger(__name__)
 
-CONN_ID = "minio_lake"
+CONN_ID = "lake_mcid"
 MB = 1024 * 1024
 
 ASSET_RAW = Asset(name="dados_historicos_raw", uri=f"s3://{BUCKET}/{RAW}")
