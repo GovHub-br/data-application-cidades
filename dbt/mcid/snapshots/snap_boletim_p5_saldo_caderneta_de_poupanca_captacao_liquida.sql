@@ -16,19 +16,16 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p5_saldo_caderneta_de_poupanca_captacao_liquida %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("periodo"::text, '') as chave,
-    edicao,
-    "periodo", "Cap. Líq. (Bi)"
-from {{ ref('ouro_conjuntura_boletim_p5_poupanca_captacao_liquida') }}
+    select
+        edicao || '|' || coalesce("periodo"::text, '') as chave, edicao, "periodo", "Cap. Líq. (Bi)"
+    from {{ ref('ouro_conjuntura_boletim_p5_poupanca_captacao_liquida') }}
 
 {% endsnapshot %}

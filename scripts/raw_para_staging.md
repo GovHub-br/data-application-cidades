@@ -5,7 +5,11 @@ detecta separador e encoding, e grava a versão colunar em **Parquet** em `stagi
 etapa seguinte (Staging → DB via dbt/DuckDB) consumir dados uniformes e eficientes.
 
 > **Ordem importa:** rode **depois** do `mascarar_minio.py --apply`. Staging lê `raw/`
-> como está; se rodar antes do mascaramento, o parquet conterá PII.
+> como está. Por isso ela só converte o objeto que tem a tag `masked=true` ou a tag
+> `triagem` (sem PII, sem cabeçalho ou formato não suportado), gravadas pelo mascaramento.
+> O resto sai como `skipped_sem_mascara`: objeto com erro no mascaramento, reingerido
+> depois dele (regravar apaga as tags) ou fora do recorte da execução. O `.mdb` passa
+> direto, porque é mascarado aqui, tabela por tabela.
 
 ---
 
@@ -101,7 +105,7 @@ Efeito no arquivo acima: 16.385 → 38 colunas, 5,1 MB → 99 KB, mesmas 1.288 l
 já entrega CSV vírgula em **UTF-8**, então esse caminho não usa a detecção de encoding/dialeto
 — vai direto para o mesmo conversor streaming do CSV. Antes da conversão, o CSV de cada
 tabela passa por `mascarar_csv()` do `mascarar_minio.py`: o `.mdb` é o único formato que o
-mascaramento não consegue reescrever no `raw/`, então a PII dele (ex.: `DT_Nascimento` e
+mascaramento não consegue reescrever no `raw/`, então a PII dele (ex.: o
 `IM_CEP` do `CCI_CCA`) é mascarada aqui, com o mesmo HMAC. Sem `MASKING_HMAC_SECRET`, uma
 tabela com CPF/NIS falha em vez de gravar. Uma falha numa tabela não derruba as
 outras (aquela part vira `error`, as demais seguem). São 128 arquivos / ~105 GB no lake
@@ -136,16 +140,34 @@ Para cada objeto em `raw/`:
 
 `.xls` legado e `.zip` → `skipped_unsupported` (tratar à parte). Arquivos de lock `~$*` ignorados.
 
+### Organização do código
+
+`raw_para_staging.py` lista o `raw/`, aplica os filtros, chama a conversão de cada objeto e
+registra o resultado. O trabalho mora em `scripts/conversao/`:
+
+| Módulo | O que tem |
+|---|---|
+| `config.py` | Variáveis de ambiente, prefixos, formatos suportados, pastas ignoradas e log |
+| `gemeos.py` | Precedência de extensão e descarte de gêmeos |
+| `processamento.py` | `processar_objeto`: download, idempotência, conversão, verificação e upload |
+| `tabular.py` | CSV/TXT em chunks, colunas de padding e fallback de encoding |
+| `xlsx.py` / `registros_json.py` | XLSX (uma aba por parquet) e JSON achatado |
+| `pendente.py` | Parquet guardado quando o upload falha |
+| `controle.py` | `lake._staging_log` e o parquet de auditoria |
+
+Para mudar como **um formato** vira parquet, mexa no módulo dele; para mudar **o que** é
+convertido (gêmeos, pastas ignoradas), em `gemeos.py` e `config.py`.
+
 ---
 
 ## 3. Configuração (`.env`)
 
 | Variável | Obrigatória | Descrição |
 |---|---|---|
-| `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET` | sim | Conexão MinIO |
+| `DL_ENDPOINT`, `DL_ACCESS_KEY`, `DL_SECRET_KEY`, `DL_BUCKET` | sim | Conexão com o lake |
 | `DB_DW_HOST_MCID`, `DB_DW_PORT_MCID`, `DB_DW_USER_MCID`, `DB_DW_PASSWORD_MCID`, `DB_DW_DBNAME_MCID` | sim | Postgres (tabela de controle) |
-| `STAGING_PREFIX` | não (default `staging/`) | Prefixo de saída |
-| `MASKING_PREFIX` | não (default `raw/`) | Prefixo de entrada |
+| `STAGING_PREFIX` | não (default `snh/staging/`) | Prefixo de saída |
+| `MASKING_PREFIX` | não (default `snh/raw/`) | Prefixo de entrada |
 | `LAKE_TMPDIR` / `MASKING_TMPDIR` | recomendado | Dir de temporários. **Não use `/tmp`** se for tmpfs (RAM). ~5 GB livres p/ os arquivos grandes. |
 
 ### Dependências
@@ -189,7 +211,7 @@ Por padrão roda em **DRY-RUN**: grava em `staging_dryrun/` (não em `staging/`)
 | `--max-size-mb N` | Pula objetos maiores que N MB. |
 | `--chunksize N` | Linhas por chunk na leitura CSV/TXT (default 200k). |
 | `--bad-lines {skip,count,error}` | Linhas mal-formadas: `skip` (rápido, engine C, sem contagem), `count` (engine Python, conta), `error` (falha o arquivo). Default `skip`. |
-| `--prefix P` | Prefixo a varrer (default `raw/`). |
+| `--prefix P` | Prefixo a varrer (default `snh/raw/`). |
 
 ---
 
@@ -219,15 +241,6 @@ O `staging_key` entra na chave porque **XLSX e MDB geram N parts** (uma por aba/
 mesmo par `(raw_key, source_hash)`; com a chave antiga o upsert sobrescrevia e sobrava só 1
 registro por arquivo (ex.: 4 linhas no banco para 32 parts reais). Não afetava os dados nem a
 idempotência — só a observabilidade.
-
-> ⚠️ **Deploy**: `CREATE TABLE IF NOT EXISTS` **não migra** tabela já existente. Num ambiente
-> com o `_staging_log` antigo, o DDL vira no-op e a constraint velha continua valendo — é
-> preciso um `ALTER TABLE` explícito:
-> ```sql
-> ALTER TABLE lake._staging_log DROP CONSTRAINT _staging_log_raw_key_source_hash_key;
-> ALTER TABLE lake._staging_log ADD CONSTRAINT _staging_log_raw_key_staging_key_source_hash_key
->       UNIQUE (raw_key, staging_key, source_hash);
-> ```
 
 **Auditoria parquet** por execução em `audit/staging/execution_id=<uuid>/part-0.parquet`
 (+ cópia local `scripts/auditoria_staging_<uuid>.parquet`).
@@ -262,4 +275,8 @@ audit/staging/execution_id=.../       (auditoria)
   (idempotência por `source_hash`).
 - Em máquina com pouca RAM, garanta `LAKE_TMPDIR` num disco com espaço; a conversão é
   streaming (memória constante), mas os arquivos grandes têm I/O intenso.
+- **MinIO fora no upload:** o envio é retentado por ~30 min (espera de 30 s a 5 min). Se
+  ainda falhar, o parquet de CSV/TXT fica em `$LAKE_TMPDIR/staging_pendente/` e rodar o
+  mesmo comando de novo só o reenvia, sem reconverter. Um pendente de conteúdo antigo
+  (raw mudou) é apagado na conversão seguinte.
 - Rode **depois** do mascaramento (ver aviso no topo).

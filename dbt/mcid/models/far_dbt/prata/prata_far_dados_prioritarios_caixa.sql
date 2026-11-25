@@ -20,17 +20,14 @@ with
             -- Situação
             nullif(trim(modalidade), '') as modalidade,
             nullif(trim(situacao_do_empreendimento), '') as situacao,
-            nullif(
-                trim(detalhamento_da_situacao_do_empreendimento), ''
-            ) as situacao_detalhamento,
+            nullif(trim(detalhamento_da_situacao_do_empreendimento), '') as situacao_detalhamento,
 
             -- Execução física
             {{ parse_numeric('"exec"', "numeric(6, 2)") }} as pct_execucao,
 
             -- Valores financeiros (formato "34679700" ou "33275351,54")
             {{ parse_financial_value("valor_contratado") }} as valor_contratado,
-            {{ parse_financial_value("valor_aporte_adicional") }}
-            as valor_aporte_adicional,
+            {{ parse_financial_value("valor_aporte_adicional") }} as valor_aporte_adicional,
             {{ parse_financial_value("valor_desembolsado") }} as valor_desembolsado,
 
             -- UHs
@@ -47,9 +44,7 @@ with
                 else {{ var('schema_udfs') }}.parse_date_br(data_de_contratacao)
             end as dt_contratacao,
             case
-                when
-                    data_da_previsao_da_entrega is null
-                    or trim(data_da_previsao_da_entrega) = ''
+                when data_da_previsao_da_entrega is null or trim(data_da_previsao_da_entrega) = ''
                 then null
                 when data_da_previsao_da_entrega ~ '^\d{4}-\d{2}-\d{2}'
                 then data_da_previsao_da_entrega::date

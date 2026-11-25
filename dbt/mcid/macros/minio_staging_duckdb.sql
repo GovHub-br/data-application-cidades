@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro minio_staging_uri(object_name) -%}
-    's3://{{ env_var("MINIO_BUCKET", "data-lake-mcid") }}/staging/{{ object_name }}'
+    's3://{{ env_var("DL_BUCKET", "data-lake-mcid") }}/staging/{{ object_name }}'
 {%- endmacro %}
 
 {% macro read_minio_staging_parquet(object_name) -%}
@@ -33,9 +33,7 @@
     staging_duckdb, este ramo pode voltar a ser incondicional.
 #}
 {% macro duckdb_query() -%}
-{%- if target.type == 'duckdb' -%}
-{{ caller() }}
-{%- else -%}
-select * from duckdb.query($duckdb_query${{ caller() }}$duckdb_query$) r
-{%- endif -%}
+    {%- if target.type == 'duckdb' -%} {{ caller() }}
+    {%- else -%} select * from duckdb.query($duckdb_query${{ caller() }}$duckdb_query$) r
+    {%- endif -%}
 {%- endmacro %}

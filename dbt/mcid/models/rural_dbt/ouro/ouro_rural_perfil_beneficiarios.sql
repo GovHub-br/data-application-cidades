@@ -1,12 +1,10 @@
 {{ config(materialized="table") }}
 
 -- Gold: Perfil dos Beneficiários (Rural)
--- Consolida os dados socioeconômicos dos beneficiários de cada empreendimento a partir da base de pessoas físicas.
-
+-- Consolida os dados socioeconômicos dos beneficiários de cada empreendimento a partir da base de
+-- pessoas físicas.
 with
-    cadastro_pf as (
-        select * from {{ ref("prata_rural_cadastro_pf") }}
-    ),
+    cadastro_pf as (select * from {{ ref("prata_rural_cadastro_pf") }}),
 
     agregado as (
         select
@@ -21,7 +19,9 @@ with
             sum(case when upper(trim(beneficiario_sexo)) = 'M' then 1 else 0 end) as total_homens,
 
             -- Benefícios Sociais
-            sum(case when ic_benef_bolsa_familia then 1 else 0 end) as total_beneficiarios_bolsa_familia,
+            sum(
+                case when ic_benef_bolsa_familia then 1 else 0 end
+            ) as total_beneficiarios_bolsa_familia,
             sum(case when ic_benef_bpc then 1 else 0 end) as total_beneficiarios_bpc,
 
             -- Renda Familiar
@@ -34,13 +34,7 @@ with
     ),
 
     fichas as (
-        select
-            apf,
-            nome_empreendimento,
-            municipio,
-            uf,
-            programa,
-            quantidade_uh
+        select apf, nome_empreendimento, municipio, uf, programa, quantidade_uh
         from {{ ref("ouro_rural_ficha_empreendimento") }}
     )
 
@@ -68,13 +62,19 @@ select
     a.total_beneficiarios_bolsa_familia,
     case
         when coalesce(a.total_beneficiarios_cadastrados, 0) > 0
-        then round((a.total_beneficiarios_bolsa_familia::numeric / a.total_beneficiarios_cadastrados) * 100, 2)
+        then
+            round(
+                (a.total_beneficiarios_bolsa_familia::numeric / a.total_beneficiarios_cadastrados)
+                * 100,
+                2
+            )
     end as percentual_bolsa_familia,
 
     a.total_beneficiarios_bpc,
     case
         when coalesce(a.total_beneficiarios_cadastrados, 0) > 0
-        then round((a.total_beneficiarios_bpc::numeric / a.total_beneficiarios_cadastrados) * 100, 2)
+        then
+            round((a.total_beneficiarios_bpc::numeric / a.total_beneficiarios_cadastrados) * 100, 2)
     end as percentual_bpc,
 
     -- Renda

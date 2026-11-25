@@ -2,10 +2,11 @@
 
 -- Bronze: carteira de contratos PF do FAR no Banco do Brasil (INT021).
 -- Retrato completo por remessa; fica só a mais recente.
-{% set padrao = "s3://data-lake-mcid/staging/sftp/fabrica/GEFUS/INT021_MinisterioCidades_FAR_BB_PF_*.parquet" %}
+{% set padrao = "s3://data-lake-mcid/snh/staging/sftp/fabrica/GEFUS/**/INT021_MinisterioCidades_FAR_BB_PF_*.parquet" %}
 
 select *
-from {{ fonte_lake(
+from
+    {{ fonte_lake(
     'far_contratos_pf_bb',
     'lake_staging_far',
     filename=true,

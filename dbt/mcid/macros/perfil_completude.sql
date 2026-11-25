@@ -70,9 +70,14 @@
         {%- endfor -%}
 
         {%- if not tabelas -%}
-            select null::text as schema_dado, null::text as model, null::text as coluna,
-                   null::bigint as linhas, null::bigint as preenchidas,
-                   null::numeric as completude, current_timestamp as medido_em
+            select
+                null::text as schema_dado,
+                null::text as model,
+                null::text as coluna,
+                null::bigint as linhas,
+                null::bigint as preenchidas,
+                null::numeric as completude,
+                current_timestamp as medido_em
             where false
         {%- else -%}
             {%- set ctes = [] -%}
@@ -102,14 +107,17 @@
                 {%- endfor -%}
             {%- endfor -%}
 
-            with
-            {{ ctes | join(",\n") }}
-            {{ blocos | join("\nunion all\n") }}
+            with {{ ctes | join(",\n") }} {{ blocos | join("\nunion all\n") }}
         {%- endif -%}
     {%- else -%}
-        select null::text as schema_dado, null::text as model, null::text as coluna,
-               null::bigint as linhas, null::bigint as preenchidas,
-               null::numeric as completude, current_timestamp as medido_em
+        select
+            null::text as schema_dado,
+            null::text as model,
+            null::text as coluna,
+            null::bigint as linhas,
+            null::bigint as preenchidas,
+            null::numeric as completude,
+            current_timestamp as medido_em
         where false
     {%- endif -%}
 

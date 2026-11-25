@@ -16,19 +16,26 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p6_ticket_medio_das_unidades_lancadas_vs_incc %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("periodo"::text, '') as chave,
-    edicao,
-    "periodo", "INCC trimestral", "MRV trimestral", "Direcional trimestral", "Tenda trimestral", "INCC acum. 4T20", "MRV acum. 4T20", "Direcional acum. 4T20", "Tenda acum. 4T20"
-from {{ ref('ouro_conjuntura_boletim_p6_ticket_medio_vs_incc') }}
+    select
+        edicao || '|' || coalesce("periodo"::text, '') as chave,
+        edicao,
+        "periodo",
+        "INCC trimestral",
+        "MRV trimestral",
+        "Direcional trimestral",
+        "Tenda trimestral",
+        "INCC acum. 4T20",
+        "MRV acum. 4T20",
+        "Direcional acum. 4T20",
+        "Tenda acum. 4T20"
+    from {{ ref('ouro_conjuntura_boletim_p6_ticket_medio_vs_incc') }}
 
 {% endsnapshot %}

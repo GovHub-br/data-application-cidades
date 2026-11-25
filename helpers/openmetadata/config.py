@@ -16,9 +16,7 @@ AIRFLOW_REPO_BASE = os.environ.get("AIRFLOW_REPO_BASE", "/opt/airflow")
 OPENMETADATA_DIR = f"{AIRFLOW_REPO_BASE}/helpers/openmetadata"
 OPENMETADATA_RECIPES_DIR = f"{OPENMETADATA_DIR}/recipes"
 OPENMETADATA_GLOSSARY_PATH = f"{OPENMETADATA_DIR}/glossaries/mcid.yaml"
-OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH = (
-    f"{OPENMETADATA_DIR}/semantic_relationships/mcid.yaml"
-)
+OPENMETADATA_SEMANTIC_RELATIONSHIPS_PATH = f"{OPENMETADATA_DIR}/semantic_relationships/mcid.yaml"
 #: O projeto dbt do MCID. A recipe de dbt consome os artefatos que saem dele.
 DBT_MCID_DIR = f"{AIRFLOW_REPO_BASE}/dbt/mcid"
 
@@ -29,7 +27,7 @@ DBT_MCID_DIR = f"{AIRFLOW_REPO_BASE}/dbt/mcid"
 #: venv, com o Airflow 3.2.2 que o extra `airflow` instalava, a recipe
 #: `airflow_metadata` falhava no homolog ao inicializar o ORM; na imagem, o
 #: conector roda no mesmo Airflow da task. Ver o README desta pasta.
-#: A versão do pacote acompanha a LINHA do servidor (ver `requirements.txt`).
+#: A versão do pacote acompanha a LINHA do servidor (ver o grupo runtime do `pyproject.toml`).
 
 
 @dataclass(frozen=True)
@@ -83,33 +81,28 @@ INGERIR_CLASSIFIER = _flag("OM_INGEST_CLASSIFIER", default=False)
 #: task (`sync_semantic_relationships` exige todas as do escopo), e aí basta
 #: desligar com `OM_SYNC_RELACOES_SEMANTICAS=false` até regenerar — a
 #: reaplicação de governança roda mesmo assim (`all_done`).
-SINCRONIZAR_RELACOES_SEMANTICAS = _flag(
-    "OM_SYNC_RELACOES_SEMANTICAS", default=True
-)
+SINCRONIZAR_RELACOES_SEMANTICAS = _flag("OM_SYNC_RELACOES_SEMANTICAS", default=True)
 
 
-#: `.get` com padrão de propósito: `os.environ[...]` levanta no PARSE da DAG, e
-#: uma variável ausente derrubaria o arquivo inteiro em vez de a task falhar.
+#: Marcador da recipe -> variável de ambiente que o preenche. Os valores não vêm do
+#: `.env`: a DAG lê as Connections (`postgres_default`, `openmetadata_default`,
+#: `superset`) e a configuração do próprio Airflow dentro da task e exporta essas
+#: variáveis no processo dela, que as recipes, o `dbt docs generate` e os scripts de
+#: `scripts/governance/` herdam. Nada é lido no parse da DAG.
 COMMON_REPLACEMENTS = {
-    "DB_DW_HOST": os.environ.get("DB_DW_HOST_MCID", "postgres"),
-    "DB_DW_PORT": os.environ.get("DB_DW_PORT_MCID", "5432"),
-    "DB_DW_USER": os.environ.get("DB_DW_USER_MCID", "postgres_dw"),
-    "DB_DW_PASSWORD": os.environ.get("DB_DW_PASSWORD_MCID", "postgres_dw"),
-    "DB_DW_DBNAME": os.environ.get("DB_DW_DBNAME_MCID", "data_warehouse"),
-    # nome do serviço no compose, não `localhost`: dentro do container
-    # `localhost` é o próprio container, e só funciona por acidente quando
-    # webserver e scheduler estão juntos.
-    "AIRFLOW_HOST_PORT": os.environ.get("AIRFLOW_HOST_PORT", "http://airflow:8080"),
-    "AIRFLOW_DB_HOST_PORT": os.environ.get("AIRFLOW_DB_HOST_PORT", "postgres:5432"),
-    "AIRFLOW_DB_USERNAME": os.environ.get("POSTGRES_USER", "airflow"),
-    "AIRFLOW_DB_PASSWORD": os.environ.get("POSTGRES_PASSWORD", "airflow"),
-    "AIRFLOW_DB_DATABASE": os.environ.get("AIRFLOW_DB_DATABASE", "airflow"),
+    "DB_DW_HOST": "DB_DW_HOST_MCID",
+    "DB_DW_PORT": "DB_DW_PORT_MCID",
+    "DB_DW_USER": "DB_DW_USER_MCID",
+    "DB_DW_PASSWORD": "DB_DW_PASSWORD_MCID",
+    "DB_DW_DBNAME": "DB_DW_DBNAME_MCID",
+    "AIRFLOW_HOST_PORT": "AIRFLOW_HOST_PORT",
+    "AIRFLOW_DB_HOST_PORT": "AIRFLOW_DB_HOST_PORT",
+    "AIRFLOW_DB_USERNAME": "AIRFLOW_DB_USERNAME",
+    "AIRFLOW_DB_PASSWORD": "AIRFLOW_DB_PASSWORD",
+    "AIRFLOW_DB_DATABASE": "AIRFLOW_DB_DATABASE",
 }
 
-#: Segredos lidos do AMBIENTE dentro da task, não de Variable do Airflow. Os
-#: nomes são os mesmos que `scripts/governance/` já lê do `.env`, que o compose
-#: monta via `env_file`. Uma fonte só evita o token divergir entre dois
-#: lugares — problema que já corrigimos uma vez com o proprietário.
+#: Os segredos seguem a mesma regra: marcador -> variável exportada pela task.
 SEGREDOS_BASE = {"OM_HOST": "OPENMETADATA_URL"}
 SEGREDOS_INGESTAO = {**SEGREDOS_BASE, "INGESTION_TOKEN": "OPENMETADATA_JWT_TOKEN"}
 SEGREDOS_PROFILER = {**SEGREDOS_BASE, "PROFILER_TOKEN": "OPENMETADATA_JWT_TOKEN"}

@@ -1,10 +1,8 @@
 {{ config(materialized='table') }}
 
 -- Prata do conjuntura: Saldo/poupança SBPE (ABECIP).
--- pg_duckdb lê o parquet tipado da staging (MinIO) direto do Postgres.
--- Parquet já sai tipado da ingestão (Etapa 02), então a prata é passthrough.
--- Full-refresh: cada run reconstrói a tabela a partir do parquet atual.
-
+-- A staging é texto (ADR-0002): a tipagem é aqui.
+-- A bronze guarda todas as cargas; cada carga traz a série inteira, então fica a última.
 select
     data_referencia::date as data_referencia,
     deposito::numeric as deposito,
@@ -13,3 +11,4 @@ select
     captacao_liquida_pct::numeric as captacao_liquida_pct,
     saldo::numeric as saldo
 from {{ ref('bronze_abecip_poupanca_sbpe') }}
+where {{ ultima_carga(ref('bronze_abecip_poupanca_sbpe')) }}

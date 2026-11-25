@@ -7,7 +7,7 @@ seeds:
       arquivos de layout que acompanham as remessas: MONT_CONT_PF_FAR_LAYOUT
       (contrato da família), MONIT_CAD_PJ_FAR_LAYOUT (empreendimento) e
       MONIT_MOV_OBRA_FAR_LAYOUT (obra). Atualizar se um layout mudar o domínio.
-      tipo_demanda, originacao e qualificacao_terreno vêm do catálogo de metadados do
+      tipo_demanda, originacao, qualificacao_terreno, fluxo, fase, etapa e status vêm do catálogo de metadados do
       HIS_MCIDADES_CONSOLIDADO (SharePoint do MCID): o layout do MONIT_CAD_PJ troca
       003/004 e não traz 006, mas os dados seguem o catálogo — o 004 cai nas cheias do
       RS, AC e PE e o 006 anda junto com o fluxo Agravamento do consolidado.
@@ -33,8 +33,8 @@ seeds:
   - name: cobertura_perguntas_far
     description: >
       Matriz pergunta × dado do painel de perguntas do FAR: o que cada pergunta da
-      oficina com o MCID consegue responder hoje, em qual ouro, o que falta e qual a
-      limitação.
+      oficina com o MCID consegue responder hoje, em qual ouro, o que falta, onde
+      conseguir e qual a limitação.
     config:
       column_types:
         bloco: text
@@ -46,6 +46,7 @@ seeds:
         modelo_ouro: text
         fonte_necessaria: text
         limitacao: text
+        onde_conseguir: text
     columns:
       - name: pergunta
         description: Pergunta como registrada na oficina.
@@ -57,3 +58,12 @@ seeds:
           - accepted_values:
               arguments:
                 values: ["respondivel", "parcial", "lacuna_de_fonte"]
+      - name: onde_conseguir
+        description: >
+          Para as perguntas não respondidas, onde buscar o que falta: pedir_mcid (MCid ou
+          agentes financeiros), fonte_publica, pedir_e_publica, outro_orgao (ex. Defesa
+          Civil), analise (o dado existe, falta o estudo) ou sem_fonte. Vazio quando respondível.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["pedir_mcid", "fonte_publica", "pedir_e_publica", "outro_orgao", "analise", "sem_fonte"]

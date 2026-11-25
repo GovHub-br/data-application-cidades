@@ -32,9 +32,7 @@ from restricoes_dbt import (
     constraints_da_tabela,
 )
 
-DEFAULT_CATALOG = (
-    RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
-)
+DEFAULT_CATALOG = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 DEFAULT_PAYLOAD = RAIZ / "build" / "openmetadata_sync_payload.json"
 
 #: Tipos do PostgreSQL para o vocabulário do OpenMetadata. O mapa é explícito
@@ -129,9 +127,7 @@ TIPOS_DE_TABELA = {
 
 def build_payload(catalog: dict, service: str, database: str) -> dict:
     """Monta o payload estrutural a partir do catálogo semântico filtrado."""
-    declarados = {
-        item["name"]: item for item in carregar("schemas.yml").get("schemas", [])
-    }
+    declarados = {item["name"]: item for item in carregar("schemas.yml").get("schemas", [])}
     models = catalog.get("models", [])
     todas_restricoes = carregar_restricoes()
     by_id = {model["id"]: model for model in models}
@@ -229,8 +225,7 @@ def request(session: requests.Session, method: str, url: str, **kwargs: Any) -> 
         )
     if body.get("status") == "failure":
         messages = [
-            str(item.get("message", "erro de validação"))
-            for item in body.get("failedRequest", [])
+            str(item.get("message", "erro de validação")) for item in body.get("failedRequest", [])
         ]
         raise RuntimeError("OpenMetadata recusou a operação: " + "; ".join(messages[:3]))
     return body
@@ -322,9 +317,7 @@ def publicar_linhagem(
             corpo["lineageDetails"] = {"columnsLineage": mapeamento}
         request(session, "PUT", f"{base}/lineage", json={"edge": corpo})
     com_coluna = sum(
-        1
-        for edge in payload["lineage"]
-        if (edge["from_fqn"], edge["to_fqn"]) in colunas_por_aresta
+        1 for edge in payload["lineage"] if (edge["from_fqn"], edge["to_fqn"]) in colunas_por_aresta
     )
     total = len(payload["lineage"])
     print(f"Linhagem: {total} arestas, {com_coluna} com mapeamento de coluna.")
@@ -333,12 +326,8 @@ def publicar_linhagem(
 def sync(payload: dict, url: str, token: str) -> None:
     base = api_base(url)
     session = requests.Session()
-    session.headers.update(
-        {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    )
-    request(
-        session, "PUT", f"{base}/databaseSchemas/bulk", json=payload["database_schemas"]
-    )
+    session.headers.update({"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    request(session, "PUT", f"{base}/databaseSchemas/bulk", json=payload["database_schemas"])
     # O `PUT` cria o que falta e atualiza o nome de exibição, mas NÃO sobrescreve
     # descrição já preenchida: a instância preserva o texto existente quando a
     # atualização vem de ingestão. Foi assim que as descrições de rodapé da
@@ -347,9 +336,7 @@ def sync(payload: dict, url: str, token: str) -> None:
     # em 85 tabelas. Descrição, portanto, só entra por PATCH.
     for schema in payload["database_schemas"]:
         fqn = f"{schema['database']}.{schema['name']}"
-        atual = request(
-            session, "GET", f"{base}/databaseSchemas/name/{quote(fqn, safe='')}"
-        )
+        atual = request(session, "GET", f"{base}/databaseSchemas/name/{quote(fqn, safe='')}")
         if not mesmo_texto(atual.get("description"), schema["description"]):
             patch_json(
                 session,
@@ -372,15 +359,11 @@ def sync(payload: dict, url: str, token: str) -> None:
     ajustadas = 0
     for table in payload["tables"]:
         fqn = f"{table['databaseSchema']}.{table['name']}"
-        entity = request(
-            session, "GET", f"{base}/tables/name/{quote(fqn, safe='')}?fields=columns"
-        )
+        entity = request(session, "GET", f"{base}/tables/name/{quote(fqn, safe='')}?fields=columns")
         entities[fqn] = entity["id"]
         operacoes = []
         if not mesmo_texto(entity.get("description"), table["description"]):
-            operacoes.append(
-                {"op": "add", "path": "/description", "value": table["description"]}
-            )
+            operacoes.append({"op": "add", "path": "/description", "value": table["description"]})
         # Reescrever `/columns` substitui o array inteiro e leva junto a etiqueta
         # de glossário que a governança pendura na coluna. É por isso que a ordem
         # do `make openmetadata` é estrutura primeiro, governança depois.
@@ -408,9 +391,7 @@ def main() -> int:
     catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
     payload = build_payload(catalog, service, database)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(
         "Payload seguro: "
         f"{len(payload['database_schemas'])} schemas, "

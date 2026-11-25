@@ -13,6 +13,7 @@ da descrição do model e de cada coluna declarada, o `meta.documentacao`
 from __future__ import annotations
 
 import argparse
+import collections
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -131,9 +132,7 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
                 if efetiva(text):
                     documented_resources += 1
                 elif text:
-                    findings.append(
-                        Finding(path, resource_id, "", "texto_de_preenchimento")
-                    )
+                    findings.append(Finding(path, resource_id, "", "texto_de_preenchimento"))
                 else:
                     findings.append(Finding(path, resource_id, "", "descricao_ausente"))
                 findings.extend(check_text(path, resource_id, "", text))
@@ -146,17 +145,13 @@ def audit(root: Path) -> tuple[list[Finding], int, int]:
                         documented_columns += 1
                     elif column_text:
                         findings.append(
-                            Finding(
-                                path, resource_id, column_name, "texto_de_preenchimento"
-                            )
+                            Finding(path, resource_id, column_name, "texto_de_preenchimento")
                         )
                     else:
                         findings.append(
                             Finding(path, resource_id, column_name, "descricao_ausente")
                         )
-                    findings.extend(
-                        check_text(path, resource_id, column_name, column_text)
-                    )
+                    findings.extend(check_text(path, resource_id, column_name, column_text))
 
     return (
         findings,
@@ -199,9 +194,7 @@ def auditar_ouro(root: Path) -> dict[str, list[str]]:
                 documentacao, {str(c.get("name")) for c in colunas}
             )
             for valor in documentacao_dbt.textos(documentacao or {}):
-                problemas += [
-                    f"documentacao_{f.rule}" for f in check_text(path, nome, "", valor)
-                ]
+                problemas += [f"documentacao_{f.rule}" for f in check_text(path, nome, "", valor)]
             if problemas:
                 achados[nome] = problemas
     return achados
@@ -229,60 +222,71 @@ def main() -> int:
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--resumo", action="store_true", help="só os totais")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    parser.add_argument(
-        "--ouro", action="store_true", help="só a ouro, com o contrato completo"
-    )
+    parser.add_argument("--ouro", action="store_true", help="só a ouro, com o contrato completo")
     args = parser.parse_args()
 
     if args.ouro:
         return relatar_ouro(args.models_root, args.strict)
 
-    findings, (res_ok, res_tot), (col_ok, col_tot) = audit(args.models_root)
-    for extra in DEFAULT_EXTRAS:
-        if extra.exists():
-            f2, (r2, rt2), (c2, ct2) = audit(extra)
-            findings += f2
-            res_ok += r2
-            res_tot += rt2
-            col_ok += c2
-            col_tot += ct2
-    import collections
+    raizes = [args.models_root, *(extra for extra in DEFAULT_EXTRAS if extra.exists())]
+    findings, recursos, colunas = _auditar_raizes(raizes)
+    findings += _sem_entrada_yaml(raizes, args.manifest)
+    _imprimir_totais(findings, recursos, colunas)
+    if not args.resumo:
+        _imprimir_achados(findings)
+    return 1 if args.strict and findings else 0
 
-    # nós que existem no projeto mas não têm sequer entrada em YAML
+
+def _auditar_raizes(raizes: list[Path]) -> tuple[list[Finding], tuple[int, int], tuple[int, int]]:
+    """audit() de cada raiz, com os achados e as contagens somados."""
+    findings: list[Finding] = []
+    res_ok = res_tot = col_ok = col_tot = 0
+    for raiz in raizes:
+        f, (r, rt), (c, ct) = audit(raiz)
+        findings += f
+        res_ok, res_tot, col_ok, col_tot = res_ok + r, res_tot + rt, col_ok + c, col_tot + ct
+    return findings, (res_ok, res_tot), (col_ok, col_tot)
+
+
+def _sem_entrada_yaml(raizes: list[Path], manifest: Path) -> list[Finding]:
+    """Nós que existem no projeto mas não têm sequer entrada em YAML."""
     declarados = set()
-    caminhos = list(args.models_root.rglob("*.yml"))
-    for extra in DEFAULT_EXTRAS:
-        if extra.exists():
-            caminhos += list(extra.rglob("*.yml"))
+    caminhos = [caminho for raiz in raizes for caminho in raiz.rglob("*.yml")]
     for caminho in sorted(caminhos):
         doc = load_yaml(caminho)
         for tipo in ("models", "sources", "seeds", "snapshots"):
             for recurso in doc.get(tipo, []) or []:
                 declarados.add(str(recurso.get("name", "")))
-    inventario = nos_do_manifesto(args.manifest)
+    inventario = nos_do_manifesto(manifest)
     sem_yaml = sorted(n for n in inventario if n not in declarados)
-    for nome in sem_yaml:
-        findings.append(
-            Finding(Path(inventario[nome]), f"model.{nome}", "", "sem_entrada_yaml")
-        )
     if inventario:
         cobertos = len(inventario) - len(sem_yaml)
         print(
             f"Nós do projeto com entrada em YAML: {cobertos}/{len(inventario)} "
             f"({cobertos * 100 // len(inventario)}%)"
         )
+    return [Finding(Path(inventario[n]), f"model.{n}", "", "sem_entrada_yaml") for n in sem_yaml]
+
+
+def _pct(a: int, b: int) -> str:
+    return f"{a * 100 // b}%" if b else "—"
+
+
+def _imprimir_totais(
+    findings: list[Finding], recursos: tuple[int, int], colunas: tuple[int, int]
+) -> None:
     por_regra = collections.Counter(f.rule for f in findings)
-    pct = lambda a, b: f"{a * 100 // b}%" if b else "—"
     print(
-        f"Recursos com descrição efetiva: {res_ok}/{res_tot} ({pct(res_ok, res_tot)})  ·  "
-        f"Colunas: {col_ok}/{col_tot} ({pct(col_ok, col_tot)})"
+        f"Recursos com descrição efetiva: {recursos[0]}/{recursos[1]} ({_pct(*recursos)})  ·  "
+        f"Colunas: {colunas[0]}/{colunas[1]} ({_pct(*colunas)})"
     )
     print(
         "Achados por regra: "
         + (", ".join(f"{k}={v}" for k, v in por_regra.most_common()) or "nenhum")
     )
-    if args.resumo:
-        return 1 if args.strict and findings else 0
+
+
+def _imprimir_achados(findings: list[Finding]) -> None:
     for finding in findings:
         location = finding.resource
         if finding.field:
@@ -294,8 +298,6 @@ def main() -> int:
         except ValueError:
             caminho = finding.path
         print(f"{caminho}: {location} — {finding.rule}")
-
-    return 1 if args.strict and findings else 0
 
 
 if __name__ == "__main__":

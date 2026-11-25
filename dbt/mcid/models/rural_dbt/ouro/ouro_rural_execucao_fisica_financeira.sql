@@ -7,15 +7,10 @@
 -- sai repetida em todos os meses, para ser desenhada como linha de referência sobre a
 -- série financeira — que é a única das duas que tem história de verdade.
 --
-
 with
     -- Série financeira: esta sim é temporal, uma linha por APF × mês de liberação.
     financeira as (
-        select
-            apf,
-            mes,
-            pct_executado_financeiro,
-            vr_acumulado
+        select apf, mes, pct_executado_financeiro, vr_acumulado
         from {{ ref("ouro_rural_evolucao_financeira") }}
     ),
 
@@ -44,26 +39,22 @@ with
     -- entra com um mês só, o da própria medição física, para não desaparecer do gráfico
     -- nem aparecer com zero.
     meses as (
-        select apf, mes from financeira
+        select apf, mes
+        from financeira
 
         union
 
-        select
-            f.apf,
-            date_trunc('month', f.dt_referencia_execucao_fisica) as mes
+        select f.apf, date_trunc('month', f.dt_referencia_execucao_fisica) as mes
         from fisica f
-        where f.dt_referencia_execucao_fisica is not null
-          and not exists (select 1 from financeira x where x.apf = f.apf)
+        where
+            f.dt_referencia_execucao_fisica is not null
+            and not exists (select 1 from financeira x where x.apf = f.apf)
     )
 
 select
     m.apf,
     concat(
-        m.apf,
-        ' - ',
-        f.municipio, '/', f.uf,
-        ' - ',
-        upper(f.empreendimento_nome)
+        m.apf, ' - ', f.municipio, '/', f.uf, ' - ', upper(f.empreendimento_nome)
     ) as apf_municipio_empreendimento,
     to_char(m.mes, 'YYYY-MM-DD') as mes,
 

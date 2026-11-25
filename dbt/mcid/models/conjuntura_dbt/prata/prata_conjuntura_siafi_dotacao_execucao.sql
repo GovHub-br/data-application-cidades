@@ -13,7 +13,7 @@
 -- que já existe no projeto e trata os dois casos (vazio vira 0,00).
 -- O wrapper `parse_valor_siafi` acrescenta o tratamento de negativo em
 -- notação contábil — "(6570011.00)" = -6.570.011,00.
-
+-- A bronze guarda todas as cargas; cada carga é o relatório inteiro, então fica a última.
 select
     unidade_orcamentaria_codigo,
     unidade_orcamentaria_nome,
@@ -35,15 +35,16 @@ select
     uge_matriz_filial,
     ug_executora_codigo,
     ug_executora_nome,
-    {{ parse_valor_siafi('fixacao_despesa_loa') }}            as fixacao_despesa_loa,
-    {{ parse_valor_siafi('dotacao_inicial') }}                as dotacao_inicial,
-    {{ parse_valor_siafi('dotacao_atualizada') }}             as dotacao_atualizada,
-    {{ parse_valor_siafi('credito_disponivel') }}             as credito_disponivel,
-    {{ parse_valor_siafi('despesas_empenhadas') }}            as despesas_empenhadas,
+    {{ parse_valor_siafi('fixacao_despesa_loa') }} as fixacao_despesa_loa,
+    {{ parse_valor_siafi('dotacao_inicial') }} as dotacao_inicial,
+    {{ parse_valor_siafi('dotacao_atualizada') }} as dotacao_atualizada,
+    {{ parse_valor_siafi('credito_disponivel') }} as credito_disponivel,
+    {{ parse_valor_siafi('despesas_empenhadas') }} as despesas_empenhadas,
     {{ parse_valor_siafi('despesas_empenhadas_a_liquidar') }} as despesas_empenhadas_a_liquidar,
-    {{ parse_valor_siafi('despesas_liquidadas_a_pagar') }}    as despesas_liquidadas_a_pagar,
-    {{ parse_valor_siafi('despesas_pagas') }}                 as despesas_pagas,
-    {{ parse_valor_siafi('restos_a_pagar_inscritos') }}       as restos_a_pagar_inscritos,
-    {{ parse_valor_siafi('restos_a_pagar_pagos') }}           as restos_a_pagar_pagos,
-    _ingested_at                            as dt_ingest
+    {{ parse_valor_siafi('despesas_liquidadas_a_pagar') }} as despesas_liquidadas_a_pagar,
+    {{ parse_valor_siafi('despesas_pagas') }} as despesas_pagas,
+    {{ parse_valor_siafi('restos_a_pagar_inscritos') }} as restos_a_pagar_inscritos,
+    {{ parse_valor_siafi('restos_a_pagar_pagos') }} as restos_a_pagar_pagos,
+    _ingested_at as dt_ingest
 from {{ ref('bronze_siafi_dotacao_execucao') }}
+where {{ ultima_carga(ref('bronze_siafi_dotacao_execucao')) }}

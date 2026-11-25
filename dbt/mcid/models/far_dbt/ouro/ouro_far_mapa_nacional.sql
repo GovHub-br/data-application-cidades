@@ -8,14 +8,11 @@ with
     fichas as (
         select f.*, p.portaria
         from {{ ref("ouro_far_ficha_empreendimento") }} f
-        cross join lateral (
-            values (f.portaria_selecao), ('Todas as portarias')
-        ) p(portaria)
+        cross join lateral(values (f.portaria_selecao), ('Todas as portarias')) p(portaria)
     ),
 
     ibge_uf as (
-        select sigla, nome as estado_nome, regiao_sigla, regiao_nome
-        from {{ ref('api_ibge_uf') }}
+        select sigla, nome as estado_nome, regiao_sigla, regiao_nome from {{ ref('api_ibge_uf') }}
     ),
 
     agg_uf as (

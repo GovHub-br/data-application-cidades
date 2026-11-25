@@ -3,7 +3,6 @@
 -- Ouro do conjuntura: Lançamentos e Vendas TOTAIS (todas as empresas
 -- monitoradas), com variações. Página 2, seção 2 (cards de totais).
 -- Dado MANUAL (boletim.xlsx / bronze.bronze_manual_dados_trimestrais).
-
 select
     data_referencia,
     periodo,

@@ -1,0 +1,38 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/mrv/central_resultados.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: mrv_central_resultados
+  description: Dados operacionais da MRV por trimestre. Cada carga é a planilha mais recente da Central
+    de Resultados, inteira. Ainda sem source no dbt.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/snh/mrv/central_resultados.odcs.yaml
+    owner: MRV Engenharia (RI)
+  tables:
+  - name: lancamentos
+    description: 'Lançamentos da MRV Incorporação: VGV, unidades e preço médio por trimestre.'
+    meta:
+      caminho: snh/staging/mrv/lancamentos/*.parquet
+      file_pattern: planilha_interativa\.xlsx
+      load_type: full
+      dag: lancamentos_ingest_dag
+    columns:
+    - name: periodo
+    - name: vgv_lancamentos_milhoes
+    - name: unidades
+    - name: preco_medio_unidade_mil
+  - name: vendas_liquidas
+    description: 'Vendas líquidas da MRV Incorporação: valor, unidades e preço médio por trimestre.'
+    meta:
+      caminho: snh/staging/mrv/vendas_liquidas/*.parquet
+      file_pattern: planilha_interativa\.xlsx
+      load_type: full
+      dag: vendas_ingest_dag
+    columns:
+    - name: periodo
+    - name: vendas_liquidas_milhoes
+    - name: unidades
+    - name: preco_medio_unidade_mil

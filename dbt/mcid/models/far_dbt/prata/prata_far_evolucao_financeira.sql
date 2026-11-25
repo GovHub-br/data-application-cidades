@@ -51,9 +51,7 @@ with
             coalesce(m.vr_pago_legalizacao_mes, 0.0) as vr_pago_legalizacao_mes,
 
             -- Acumulado progressivo por APF
-            sum(m.vr_liberado_mes) over (
-                partition by e.apf order by m.mes
-            ) as vr_acumulado,
+            sum(m.vr_liberado_mes) over (partition by e.apf order by m.mes) as vr_acumulado,
 
             -- Contexto do empreendimento (para o cálculo do %)
             e.valor_contratado,

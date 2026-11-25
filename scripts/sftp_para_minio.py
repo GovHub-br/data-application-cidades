@@ -5,9 +5,9 @@ Ingestão de arquivos do SFTP para o MinIO (camada raw).
 
 Percorre Analise_SNH, GEFUS e CadUnico em /home/fabrica, além de
 /home/caixa.geavo/GEAVO, baixa todos os arquivos suportados (CSV, TXT, XLSX,
-XLS, MDB, ZIP — expandindo ZIPs internamente) e os sobe para raw/sftp/ no MinIO,
+XLS, MDB, ZIP — expandindo ZIPs internamente) e os sobe para snh/raw/sftp/ no MinIO,
 espelhando a estrutura de pastas do servidor SFTP (sem o prefixo /home/) — ex.:
-/home/fabrica/GEFUS/ANTERIORES/x.TXT -> raw/sftp/fabrica/GEFUS/ANTERIORES/x.TXT.
+/home/fabrica/GEFUS/ANTERIORES/x.TXT -> snh/raw/sftp/fabrica/GEFUS/ANTERIORES/x.TXT.
 Arquivos extraídos de um ZIP vão para a mesma pasta de destino do ZIP.
 
 Arquivos .mdb extraídos de um ZIP recebem o stem do ZIP como prefixo
@@ -51,6 +51,7 @@ if _plugins.is_dir() and str(_plugins) not in sys.path:
 
 from cliente_minio import ClienteMinio  # noqa: E402
 from cliente_sftp import ClienteSftp  # noqa: E402
+from datalake.keys import RAW_PREFIX  # noqa: E402
 
 load_dotenv()
 
@@ -59,10 +60,10 @@ SFTP_PORT = int(os.environ.get("SFTP_PORT", 22))
 SFTP_USER = os.environ["SFTP_USER"]
 SFTP_PASSWORD = os.environ["SFTP_PASSWORD"]
 
-MINIO_ENDPOINT = os.environ["MINIO_ENDPOINT"]
-MINIO_ACCESS_KEY = os.environ["MINIO_ACCESS_KEY"]
-MINIO_SECRET_KEY = os.environ["MINIO_SECRET_KEY"]
-MINIO_BUCKET = os.environ["MINIO_BUCKET"]
+DL_ENDPOINT = os.environ["DL_ENDPOINT"]
+DL_ACCESS_KEY = os.environ["DL_ACCESS_KEY"]
+DL_SECRET_KEY = os.environ["DL_SECRET_KEY"]
+DL_BUCKET = os.environ["DL_BUCKET"]
 
 PG_HOST = os.environ["DB_DW_HOST_MCID"]
 PG_PORT = int(os.environ.get("DB_DW_PORT_MCID", 5432))
@@ -100,9 +101,7 @@ _LOCAL_ARTIFACTS = os.environ.get("LAKE_LOCAL_ARTIFACTS", "1").lower() not in (
     "false",
     "no",
 )
-_LOG_FILE = (
-    Path(__file__).parent / f"sftp_ingest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-)
+_LOG_FILE = Path(__file__).parent / f"sftp_ingest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 _formatter = logging.Formatter(
     "%(asctime)s %(levelname)s %(message)s",
     datefmt="%H:%M:%S",
@@ -175,10 +174,7 @@ spinner = _Spinner()
 
 
 def _conn_str() -> str:
-    return (
-        f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} "
-        f"user={PG_USER} password={PG_PASSWORD}"
-    )
+    return f"host={PG_HOST} port={PG_PORT} dbname={PG_DBNAME} user={PG_USER} password={PG_PASSWORD}"
 
 
 def _criar_schema_e_log(conn_str: str) -> None:
@@ -268,7 +264,7 @@ def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
     """sftp_paths já ingeridos cujo objeto AINDA está no MinIO.
 
     Skip do modo --reingest-deleted: só pula o que continua no lake, então o que foi
-    removido pode ser reingerido. `presentes` é o conjunto de minio_keys de raw/.
+    removido pode ser reingerido. `presentes` é o conjunto de minio_keys de snh/raw/.
     """
     with psycopg2.connect(conn_str) as conn:
         with conn.cursor() as cur:
@@ -278,11 +274,7 @@ def _obter_ja_inseridos_presentes(conn_str: str, presentes: set) -> set:
                 WHERE file_hash IS NOT NULL
             """
             )
-            return {
-                sftp_path
-                for sftp_path, minio_key in cur.fetchall()
-                if minio_key in presentes
-            }
+            return {sftp_path for sftp_path, minio_key in cur.fetchall() if minio_key in presentes}
 
 
 def _obter_nomes_usados(conn_str: str) -> set:
@@ -339,8 +331,7 @@ def _registrar_ingest(
                 # Remove registros de erro anteriores para evitar duplicatas de hash NULL
                 # vs hash calculado
                 cur.execute(
-                    f"DELETE FROM {SCHEMA}.{LOG_TABLE} "
-                    "WHERE sftp_path = %s AND status = 'error'",
+                    f"DELETE FROM {SCHEMA}.{LOG_TABLE} WHERE sftp_path = %s AND status = 'error'",
                     (sftp_path,),
                 )
 
@@ -384,9 +375,7 @@ def _extensao(nome: str) -> str:
     return nome[pos:].lower() if pos != -1 else ""
 
 
-def _listar_arquivos(
-    sftp_cli: ClienteSftp, caminho: str
-) -> Iterator[Tuple[str, int, int]]:
+def _listar_arquivos(sftp_cli: ClienteSftp, caminho: str) -> Iterator[Tuple[str, int, int]]:
     """Lista arquivos suportados sob `caminho` (via ClienteSftp)."""
     itens: Iterator[Tuple[str, int, int]] = sftp_cli.listar_arquivos(
         caminho, extensoes=EXTENSOES_SUPORTADAS, pastas_ignorar=PASTAS_IGNORAR
@@ -408,9 +397,7 @@ def baixar_para_tempfile(sftp: paramiko.SFTPClient, caminho: str) -> str:
     # de GB e sem o bug do prefetch limitado do paramiko (ver _DOWNLOAD_WINDOW).
     tmpdir = _dir_download()
     file_size = sftp.stat(caminho).st_size or 0
-    tmp = tempfile.NamedTemporaryFile(
-        delete=False, suffix=Path(caminho).suffix, dir=tmpdir
-    )
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(caminho).suffix, dir=tmpdir)
     baixado = 0
     inicio = time.monotonic()
     ultimo_log = inicio
@@ -479,7 +466,7 @@ _PREFIXO_SFTP_HOME = "/home/"
 
 
 def _pasta_destino(caminho_sftp: str) -> str:
-    """Deriva a subpasta em raw/sftp/ a partir do caminho no servidor SFTP,
+    """Deriva a subpasta em snh/raw/sftp/ a partir do caminho no servidor SFTP,
     espelhando a estrutura de diretórios de origem (sem o prefixo /home/).
 
     Ex.: /home/fabrica/GEFUS/ANTERIORES/x.TXT -> sftp/fabrica/GEFUS/ANTERIORES
@@ -521,7 +508,7 @@ _SFTP_TRANSFER = TransferConfig(
 
 def subir_para_minio(minio: ClienteMinio, tmp_path: str, nome_destino: str) -> str:
     key: str = minio.upload_arquivo(
-        tmp_path, f"raw/{nome_destino}", transfer_config=_SFTP_TRANSFER
+        tmp_path, f"{RAW_PREFIX}{nome_destino}", transfer_config=_SFTP_TRANSFER
     )
     return key
 
@@ -556,7 +543,7 @@ def _subir_stream_com_hash(
     """Upload a partir de um stream (sem temp file), retornando (minio_key, file_hash).
     stream_factory é um callable que retorna um context manager com .read()."""
     resultado: Tuple[str, str] = minio.subir_stream_com_hash(
-        f"raw/{nome_destino}",
+        f"{RAW_PREFIX}{nome_destino}",
         stream_factory,
         transfer_config=_SFTP_TRANSFER,
         progress_cb=progress_cb,
@@ -618,7 +605,7 @@ def processar_arquivo_simples(
         file_hash = _compute_hash(tmp_path)
         minio_key = subir_para_minio(minio, tmp_path, nome_destino)
         spinner.parar(ok=True)
-        log.info("✓ [%d/%d] %s → raw/%s", idx, total, nome_arquivo, nome_destino)
+        log.info("✓ [%d/%d] %s → snh/raw/%s", idx, total, nome_arquivo, nome_destino)
         _registrar_ingest(
             conn_str,
             caminho_sftp,
@@ -678,9 +665,7 @@ def _baixar_volumes_complementares(
         vol_dest = os.path.join(tmp_dir, vol_name)
         with open(vol_dest, "wb") as fh:
             sftp.getfo(f"{dir_sftp}/{vol_name}", fh)
-        log.info(
-            "  → baixado: %s (%.1f MiB)", vol_name, os.path.getsize(vol_dest) / 1_048_576
-        )
+        log.info("  → baixado: %s (%.1f MiB)", vol_name, os.path.getsize(vol_dest) / 1_048_576)
     return True
 
 
@@ -793,9 +778,7 @@ def processar_zip(  # noqa: C901
     nome_zip = caminho_zip.rsplit("/", 1)[-1]
     pasta = _pasta_destino(caminho_zip)
 
-    motivo = _zip_pulavel_sem_download(
-        sftp, caminho_zip, mtime, ja_inseridos, zip_completos
-    )
+    motivo = _zip_pulavel_sem_download(sftp, caminho_zip, mtime, ja_inseridos, zip_completos)
     if motivo:
         log.info("→ [%d/%d] %s — %s, pulando", idx, total, nome_zip, motivo)
         return 0, 0
@@ -851,7 +834,7 @@ def processar_zip(  # noqa: C901
 
                 spinner.atualizar(f"[{idx}/{total}] {nome_zip} └─ {nome_interno}")
                 log.info(
-                    "  ↳ subindo %s (%s descomprimido) → raw/%s ...",
+                    "  ↳ subindo %s (%s descomprimido) → snh/raw/%s ...",
                     nome_interno,
                     format_size(info.file_size),
                     nome_destino,
@@ -863,7 +846,7 @@ def processar_zip(  # noqa: C901
                         lambda fn=info.filename: zf.open(fn),
                         progress_cb=_progresso_upload(nome_interno, info.file_size),
                     )
-                    log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
+                    log.info("  ✓ ↳ %s → snh/raw/%s", nome_interno, nome_destino)
                     _registrar_ingest(
                         conn_str,
                         caminho_log,
@@ -947,9 +930,7 @@ def processar_zip(  # noqa: C901
             tmp_dir_vols = tempfile.mkdtemp(dir="/var/tmp")
             tmp_dir_extract: Optional[str] = tempfile.mkdtemp(dir="/var/tmp")
             try:
-                if _baixar_volumes_complementares(
-                    sftp, caminho_zip, tmp_zip, tmp_dir_vols
-                ):
+                if _baixar_volumes_complementares(sftp, caminho_zip, tmp_zip, tmp_dir_vols):
                     alvo_7z: Optional[str] = os.path.join(tmp_dir_vols, nome_zip)
                 else:
                     alvo_7z = _preparar_multivolume_implicito(
@@ -965,9 +946,7 @@ def processar_zip(  # noqa: C901
                             res_mv.returncode,
                             res_mv.stderr.decode(errors="replace")[:200],
                         )
-                        if res_mv.returncode in (0, 1) and any(
-                            Path(tmp_dir_extract).iterdir()
-                        ):
+                        if res_mv.returncode in (0, 1) and any(Path(tmp_dir_extract).iterdir()):
                             log.info(
                                 "  → extraído como multi-volume (rc=%d)",
                                 res_mv.returncode,
@@ -1011,7 +990,7 @@ def processar_zip(  # noqa: C901
                     try:
                         file_hash = _compute_hash(str(arq_path))
                         minio_key = subir_para_minio(minio, str(arq_path), nome_destino)
-                        log.info("  ✓ ↳ %s → raw/%s", nome_interno, nome_destino)
+                        log.info("  ✓ ↳ %s → snh/raw/%s", nome_interno, nome_destino)
                         _registrar_ingest(
                             conn_str,
                             caminho_log,
@@ -1062,7 +1041,7 @@ def processar_zip(  # noqa: C901
         try:
             file_hash = _compute_hash(tmp_zip)
             minio_key = subir_para_minio(minio, tmp_zip, nome_destino)
-            log.info("✓ [%d/%d] %s → raw/%s (bruto)", idx, total, nome_zip, nome_destino)
+            log.info("✓ [%d/%d] %s → snh/raw/%s (bruto)", idx, total, nome_zip, nome_destino)
             _registrar_ingest(
                 conn_str,
                 caminho_zip,
@@ -1135,9 +1114,7 @@ def _processar_entry(
         idx,
         total,
     )
-    return (
-        (1, 0) if resultado == "success" else (0, 1) if resultado == "error" else (0, 0)
-    )
+    return (1, 0) if resultado == "success" else (0, 1) if resultado == "error" else (0, 0)
 
 
 def _resolver_pastas(filtros: Optional[list]) -> list:
@@ -1167,14 +1144,19 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     pastas: Optional[list] = None,
     preview: bool = False,
     reingest_deleted: bool = False,
+    arquivos: Optional[list] = None,
 ) -> Tuple[int, int]:
-    """Ingere os arquivos do SFTP para raw/ no MinIO. Retorna (sucesso, erro).
+    """Ingere os arquivos do SFTP para snh/raw/ no MinIO. Retorna (sucesso, erro).
 
     Ponto de entrada reutilizável (CLI via main(); DAG do Airflow chama run()).
     Não há dry-run: a ingestão é idempotente pelo controle lake._ingest_minio_log.
 
     reingest_deleted=False (padrão): arquivo já ingerido nunca reingere, mesmo que o
     objeto tenha sumido do MinIO. True: reingere só esses, sem duplicar os presentes.
+
+    arquivos: nomes exatos de arquivo no SFTP (sem pasta) a processar; os demais são
+    ignorados. Junto com reingest_deleted, reingere só os escolhidos, sem trazer de
+    volta o que foi apagado do lake de propósito.
     """
     pastas_filtro = _resolver_pastas(pastas)
 
@@ -1204,15 +1186,15 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
     if reingest_deleted:
         # Só pula o que ainda está presente no MinIO; reingere os já-ingeridos que
         # sumiram.
-        presentes = {key for key, _ in minio.listar_objetos("raw/")}
+        presentes = {key for key, _ in minio.listar_objetos(RAW_PREFIX)}
         ja_inseridos = _obter_ja_inseridos_presentes(conn_str, presentes)
         # nome livre p/ os deletados: reingerem com o nome original, sem sufixo. Compara
         # o caminho completo, como o gerar_nome_unico() faz no resto do fluxo.
-        nomes_usados = {key[len("raw/") :] for key in presentes}
+        nomes_usados = {key[len(RAW_PREFIX) :] for key in presentes}
         # fast-path por mtime desligado: queremos reingerir os ZIPs deletados
         zip_completos: dict = {}
         log.info(
-            "MODO --reingest-deleted | %d objetos presentes em raw/ | %d "
+            "MODO --reingest-deleted | %d objetos presentes em snh/raw/ | %d "
             "já-ingeridos ainda "
             "presentes (pulados); ausentes serão reingeridos",
             len(presentes),
@@ -1244,6 +1226,14 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
             arquivos_pasta = list(_listar_arquivos(sftp_cli, pasta))
             arquivos_pasta.sort(key=lambda x: x[1])
             todos_arquivos.extend(arquivos_pasta)
+
+        if arquivos:
+            escolhidos = set(arquivos)
+            todos_arquivos = [a for a in todos_arquivos if a[0].rsplit("/", 1)[-1] in escolhidos]
+            achados = {a[0].rsplit("/", 1)[-1] for a in todos_arquivos}
+            for nome in sorted(escolhidos - achados):
+                log.warning("Arquivo pedido não encontrado no SFTP: %s", nome)
+                total_erro += 1
 
         total = len(todos_arquivos)
         total_size = sum(t for _, t, _ in todos_arquivos)
@@ -1310,11 +1300,7 @@ def run(  # noqa: C901 — orquestração linear dos modos de execução
 
     # sem arquivo de log (Airflow), não há como reler para contar ERRORs — pula a contagem
     error_lines = (
-        sum(
-            1
-            for line in _LOG_FILE.read_text(encoding="utf-8").splitlines()
-            if " ERROR " in line
-        )
+        sum(1 for line in _LOG_FILE.read_text(encoding="utf-8").splitlines() if " ERROR " in line)
         if _LOCAL_ARTIFACTS and _LOG_FILE.exists()
         else 0
     )
@@ -1353,8 +1339,21 @@ def main() -> None:
         "(não duplica). Sem esta flag, "
         "o padrão nunca reingere um arquivo já ingerido, mesmo deletado.",
     )
+    parser.add_argument(
+        "--arquivo",
+        metavar="NOME",
+        help="Processa só este arquivo (nome exato no SFTP, sem pasta). Repita para "
+        "vários. Com --reingest-deleted, reingere só os escolhidos.",
+        action="append",
+        dest="arquivos",
+    )
     args = parser.parse_args()
-    run(pastas=args.pastas, preview=args.preview, reingest_deleted=args.reingest_deleted)
+    run(
+        pastas=args.pastas,
+        preview=args.preview,
+        reingest_deleted=args.reingest_deleted,
+        arquivos=args.arquivos,
+    )
 
 
 if __name__ == "__main__":

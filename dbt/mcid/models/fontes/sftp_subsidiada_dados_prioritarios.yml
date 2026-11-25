@@ -1,0 +1,172 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/sftp/subsidiada/dados_prioritarios.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: sftp_subsidiada_dados_prioritarios
+  description: Dados prioritários das operações subsidiadas (FAR, FDS e Rural) que CAIXA e BB entregam
+    por mês no GEFUS.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/snh/sftp/subsidiada/dados_prioritarios.odcs.yaml
+    owner: CAIXA · GEFUS
+  tables:
+  - name: dados_prioritarios_af_caixa
+    description: Dados prioritários da SNH reportados pela CAIXA (AF_CAIXA), todas as modalidades. Uma
+      remessa por mês (AAAAMM no nome). Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.csv.
+    meta:
+      caminho: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA.parquet
+      file_pattern: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA\.csv
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: data_de_movimento
+    - name: agente_financeiro
+    - name: apf
+    - name: uf
+    - name: municipio
+    - name: codigo_ibge_do_municipio
+    - name: nome_empreendimento
+    - name: modalidade
+    - name: situacao_do_empreendimento
+    - name: detalhamento_da_situacao_do_empreendimento
+    - name: data_de_contratacao
+    - name: exec
+    - name: valor_contratado
+    - name: valor_aporte_adicional
+    - name: valor_desembolsado
+    - name: uh_contratadas
+    - name: uh_entregues
+    - name: uh_vigentes
+    - name: observacoes
+      meta:
+        classification: restricted
+    - name: quantidade_de_uhs_vigentes_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_entregues_do_ano_de_referencia
+    - name: situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    - name: valor_desembolsado_do_ano_de_referencia
+    - name: detalhamento_da_situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_contratadas_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_contratadas_do_ano_de_referencia
+    - name: quantidade_de_uhs_entregues_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_vigentes_do_ano_de_referencia
+    - name: quantidade_de_uhs_distratadas
+    - name: quantidade_de_uhs_distratadas_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_distratadas_do_ano_de_referencia
+    - name: data_da_previsao_da_entrega
+    - name: unidades_habitacionais_a_serem_entregues
+    - name: logradouro_do_imovel
+      meta:
+        classification: restricted
+    - name: numero_do_imovel
+    - name: complemento_do_endereco_do_imovel
+      meta:
+        classification: restricted
+    - name: bairro_do_imovel
+      meta:
+        classification: restricted
+    - name: cep_do_imovel
+      meta:
+        classification: restricted
+    - name: latitude_do_imovel
+    - name: longitude_do_imovel
+    - name: apf_fds_fase_projeto
+    - name: data_de_contratacao_fds_fase_projeto
+    - name: valor_contratado_fds_fase_projeto
+    - name: apf_fds_fase_obra
+    - name: data_de_contratacao_fds_fase_obra
+    - name: valor_contratado_fds_fase_obra
+    - name: apf_fds_fase_desligamento
+    - name: data_de_contratacao_fds_fase_desligamento
+    - name: valor_contratado_fds_fase_desligamento
+    - name: data_de_termino
+    - name: cnpj_da_construtora_entidade
+    - name: razao_social_da_construtora_entidade
+  - name: dados_prioritarios_af_caixa_entregas
+    description: Entregas de unidades por APF reportadas pela CAIXA, junto dos dados prioritários. Uma
+      remessa por mês. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.csv.
+    meta:
+      caminho: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS.parquet
+      file_pattern: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_CAIXA_ENTREGAS\.csv
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: data_de_movimento
+    - name: agente_financeiro
+    - name: apf
+    - name: dt_entrega
+    - name: qt_uh_entregues
+  - name: dados_prioritarios_af_bb
+    description: Dados prioritários da SNH reportados pelo Banco do Brasil (AF_BB), mesmo layout da CAIXA,
+      com um mês de atraso. O BB manda o mesmo arquivo em .txt, .csv e .xlsx; o contrato aceita o texto
+      (.txt ou .csv), que vira o mesmo Parquet. Colunas vazias no fim da linha (coluna_N) entram como
+      drift aditivo. Colunas da remessa 202610_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.txt.
+    meta:
+      caminho: snh/staging/sftp/fabrica/GEFUS/*_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB.parquet
+      file_pattern: \d{6}_SNH_PMCMV_DADOS_PRIORITARIOS_AF_BB\.(txt|csv)
+      load_type: full
+      dag: sftp_ingest_dag
+    columns:
+    - name: data_de_movimento
+    - name: agente_financeiro
+    - name: apf
+    - name: uf
+    - name: municipio
+    - name: codigo_ibge_do_municipio
+    - name: nome_empreendimento
+    - name: modalidade
+    - name: situacao_do_empreendimento
+    - name: detalhamento_da_situacao_do_empreendimento
+    - name: data_de_contratacao
+    - name: exec
+    - name: valor_contratado
+    - name: valor_aporte_adicional
+    - name: valor_desembolsado
+    - name: uh_contratadas
+    - name: uh_entregues
+    - name: uh_vigentes
+    - name: observacoes
+      meta:
+        classification: restricted
+    - name: quantidade_de_uhs_vigentes_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_entregues_do_ano_de_referencia
+    - name: situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    - name: valor_desembolsado_do_ano_de_referencia
+    - name: detalhamento_da_situacao_do_empreendimento_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_contratadas_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_contratadas_do_ano_de_referencia
+    - name: quantidade_de_uhs_entregues_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_vigentes_do_ano_de_referencia
+    - name: quantidade_de_uhs_distratadas
+    - name: quantidade_de_uhs_distratadas_em_janeiro_do_ano_de_referencia
+    - name: quantidade_de_uhs_distratadas_do_ano_de_referencia
+    - name: data_da_previsao_da_entrega
+    - name: unidades_habitacionais_a_serem_entregues
+    - name: logradouro_do_imovel
+      meta:
+        classification: restricted
+    - name: numero_do_imovel
+    - name: complemento_do_endereco_do_imovel
+      meta:
+        classification: restricted
+    - name: bairro_do_imovel
+      meta:
+        classification: restricted
+    - name: cep_do_imovel
+      meta:
+        classification: restricted
+    - name: latitude_do_imovel
+    - name: longitude_do_imovel
+    - name: apf_fds_fase_projeto
+    - name: data_de_contratacao_fds_fase_projeto
+    - name: valor_contratado_fds_fase_projeto
+    - name: apf_fds_fase_obra
+    - name: data_de_contratacao_fds_fase_obra
+    - name: valor_contratado_fds_fase_obra
+    - name: apf_fds_fase_desligamento
+    - name: data_de_contratacao_fds_fase_desligamento
+    - name: valor_contratado_fds_fase_desligamento
+    - name: data_de_termino
+    - name: cnpj_da_construtora_entidade
+    - name: razao_social_da_construtora_entidade

@@ -49,7 +49,7 @@ metadata:
   namespace: cidades
 data:
   bootstrap.py: |
-    import base64, json, os, ssl, time, urllib.error, urllib.request
+    import base64, json, os, ssl, time, urllib.error, urllib.parse, urllib.request
 
     OM = os.environ["OM_API"]              # http://openmetadata:8585/api/v1
     URL_AIRFLOW = os.environ["OM_URL"]     # sem /api: a convenção do projeto
@@ -130,6 +130,13 @@ data:
         "OPENMETADATA_DATABASE_SERVICE": "Cidades",
         "OPENMETADATA_DATABASE_NAME": "cidades",
     }
+    # a Connection que a openmetadata_ingestion_dag lê (OpenMetadataHook); as variáveis
+    # acima ficam para scripts/governance/ rodado à mão
+    url = urllib.parse.urlsplit(URL_AIRFLOW)
+    dados["AIRFLOW_CONN_OPENMETADATA_DEFAULT"] = json.dumps({
+        "conn_type": "openmetadata", "host": url.hostname, "schema": url.scheme,
+        "port": url.port or (443 if url.scheme == "https" else 80), "password": token,
+        "extra": {"database_service": "Cidades", "database_name": "cidades"}})
     segredo = {"apiVersion": "v1", "kind": "Secret",
                "metadata": {"name": "openmetadata-airflow-env", "namespace": NS},
                "stringData": dados}

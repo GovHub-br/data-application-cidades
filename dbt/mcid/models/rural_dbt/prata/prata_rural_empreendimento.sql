@@ -2,31 +2,18 @@
 
 -- Silver: Empreendimento Rural — Visão unificada
 -- Consolida os dados cadastrais, contratuais, andamento físico-financeiro de Caixa e BB.
-
 with
-    snh as (
-        select * from {{ ref("prata_rural_prioritarios_snh") }}
-    ),
+    snh as (select * from {{ ref("prata_rural_prioritarios_snh") }}),
 
-    caixa as (
-        select * from {{ ref("prata_rural_prioritarios_caixa") }}
-    ),
+    caixa as (select * from {{ ref("prata_rural_prioritarios_caixa") }}),
 
-    bb as (
-        select * from {{ ref("prata_rural_prioritarios_bb") }}
-    ),
+    bb as (select * from {{ ref("prata_rural_prioritarios_bb") }}),
 
-    cad_pj as (
-        select * from {{ ref("prata_rural_cadastro_pj") }}
-    ),
+    cad_pj as (select * from {{ ref("prata_rural_cadastro_pj") }}),
 
-    pnhr_caixa as (
-        select * from {{ ref("prata_rural_pnhr_caixa") }}
-    ),
+    pnhr_caixa as (select * from {{ ref("prata_rural_pnhr_caixa") }}),
 
-    pnhr_bb as (
-        select * from {{ ref("prata_rural_pnhr_bb") }}
-    ),
+    pnhr_bb as (select * from {{ ref("prata_rural_pnhr_bb") }}),
 
     -- A obra mensal é a medição física mais granular que existe, e estava de fora daqui:
     -- a gold do gráfico lia direto dela, o que deixou a ficha e o gráfico com números
@@ -48,26 +35,20 @@ select
     coalesce(s.ic_novo_mcmv, (cpj.apf is not null), false) as ic_novo_mcmv,
 
     -- Nomes e Entidades
-    upper(coalesce(
-        cpj.empreendimento_nome,
-        s.empreendimento_nome,
-        cx.empreendimento_nome,
-        b.empreendimento_nome,
-        pcx.empreendimento_nome,
-        pbb.empreendimento_nome
-    )) as empreendimento_nome,
+    upper(
+        coalesce(
+            cpj.empreendimento_nome,
+            s.empreendimento_nome,
+            cx.empreendimento_nome,
+            b.empreendimento_nome,
+            pcx.empreendimento_nome,
+            pbb.empreendimento_nome
+        )
+    ) as empreendimento_nome,
 
-    upper(coalesce(
-        cpj.eo_nome,
-        pcx.eo_nome,
-        pbb.eo_nome
-    )) as entidade_organizadora_nome,
+    upper(coalesce(cpj.eo_nome, pcx.eo_nome, pbb.eo_nome)) as entidade_organizadora_nome,
 
-    coalesce(
-        cpj.eo_cnpj,
-        pcx.eo_cnpj,
-        pbb.eo_cnpj
-    ) as entidade_organizadora_cnpj,
+    coalesce(cpj.eo_cnpj, pcx.eo_cnpj, pbb.eo_cnpj) as entidade_organizadora_cnpj,
 
     -- Só o SNH traz construtora; o coalesce herdado repetia o mesmo campo duas vezes.
     upper(s.construtora_nome) as construtora_nome,
@@ -88,7 +69,6 @@ select
     -- Cada medição vem com a fonte e a data que a produziram, para o número ser auditável
     -- no dashboard. Ausência é NULL, nunca 0: "não sei" e "zero" são afirmações
     -- diferentes, e a segunda é falsa.
-
     -- UHs
     {% set uh_contratadas = [
         ('s.uh_contratadas', 's.dt_referencia', 'prioritarios_snh'),
@@ -225,8 +205,12 @@ select
     -- É a "idade" do empreendimento na visão consolidada, e serve para o dashboard avisar
     -- quando um número é velho em vez de apresentá-lo como se fosse de hoje.
     greatest(
-        s.dt_referencia, cx.dt_movimento, b.dt_movimento,
-        o.dt_movimento, pcx.dt_movimento, pbb.dt_movimento
+        s.dt_referencia,
+        cx.dt_movimento,
+        b.dt_movimento,
+        o.dt_movimento,
+        pcx.dt_movimento,
+        pbb.dt_movimento
     ) as dt_referencia_consolidada
 
 from snh s

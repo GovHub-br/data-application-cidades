@@ -18,7 +18,9 @@ with
             lpad(nullif(trim(co_tipo_empreendimento), ''), 3, '0') as co_tipo_empreendimento,
             lpad(nullif(trim(co_regime_propriedade), ''), 3, '0') as co_regime_propriedade,
             lpad(nullif(trim(co_ente_publico_proponente), ''), 3, '0') as co_ente_proponente,
-            lpad(nullif(trim(co_tipo_ente_publico_contrapartida), ''), 3, '0') as co_ente_contrapartida,
+            lpad(
+                nullif(trim(co_tipo_ente_publico_contrapartida), ''), 3, '0'
+            ) as co_ente_contrapartida,
             lpad(nullif(trim(co_operacao_aporte_retomada), ''), 3, '0') as co_operacao_aporte,
             trim(ic_terreno_doado) = 'S' as ic_terreno_doado,
             trim(ic_previsao_area_comercial) = 'S' as ic_area_comercial,
@@ -27,21 +29,31 @@ with
             {{ parse_financial_value("vr_terreno") }} as vr_terreno,
             {{ parse_financial_value("vr_emprestimo_far") }} as vr_far,
             {{ parse_financial_value("vr_total_investimento") }} as vr_total_investimento,
-            {{ parse_financial_value("vr_contrapartida_municipio_terreno") }} as vr_cp_municipio_terreno,
-            {{ parse_financial_value("vr_contrapartida_municipio_infra") }} as vr_cp_municipio_infra,
-            {{ parse_financial_value("vr_contrapartida_complementar_municipio") }} as vr_cp_municipio_complementar,
+            {{ parse_financial_value("vr_contrapartida_municipio_terreno") }}
+            as vr_cp_municipio_terreno,
+            {{ parse_financial_value("vr_contrapartida_municipio_infra") }}
+            as vr_cp_municipio_infra,
+            {{ parse_financial_value("vr_contrapartida_complementar_municipio") }}
+            as vr_cp_municipio_complementar,
             {{ parse_financial_value("vr_contrapartida_estado_terreno") }} as vr_cp_estado_terreno,
             {{ parse_financial_value("vr_contrapartida_estado_infra") }} as vr_cp_estado_infra,
-            {{ parse_financial_value("vr_contrapartida_complementar_estado") }} as vr_cp_estado_complementar,
+            {{ parse_financial_value("vr_contrapartida_complementar_estado") }}
+            as vr_cp_estado_complementar,
             {{ parse_financial_value("vr_contrapartida_outras") }} as vr_cp_outras,
-            {{ parse_financial_value("vr_outras_contrapartida_ente_publico") }} as vr_cp_outras_ente_publico,
+            {{ parse_financial_value("vr_outras_contrapartida_ente_publico") }}
+            as vr_cp_outras_ente_publico,
             {{ parse_financial_value("vr_total_contrapartidas") }} as vr_total_contrapartidas,
-            {{ parse_financial_value("vr_total_contrapartidas_retomadas") }} as vr_total_contrapartidas_retomada,
+            {{ parse_financial_value("vr_total_contrapartidas_retomadas") }}
+            as vr_total_contrapartidas_retomada,
             {{ parse_financial_value("vr_equipamentos_publicos") }} as vr_equipamentos_publicos,
             {{ parse_financial_value("vr_equipamento_uso_comum") }} as vr_equipamento_uso_comum,
-            {{ parse_financial_value("vr_infraestrutura_incidente") }} as vr_infraestrutura_incidente,
-            {{ parse_financial_value("vr_contratado_aporte_suplementacao") }} as vr_aporte_suplementacao,
-            {{ var('schema_udfs') }}.parse_date_br(dt_contratacao_aporte_suplementacao) as dt_aporte_suplementacao
+            {{ parse_financial_value("vr_infraestrutura_incidente") }}
+            as vr_infraestrutura_incidente,
+            {{ parse_financial_value("vr_contratado_aporte_suplementacao") }}
+            as vr_aporte_suplementacao,
+            {{ var('schema_udfs') }}.parse_date_br(
+                dt_contratacao_aporte_suplementacao
+            ) as dt_aporte_suplementacao
         from {{ ref("bronze_shpt_monit_cad_pj_far_mensal") }}
     ),
 
@@ -49,38 +61,39 @@ with
     -- seleção, sem data de movimento, só vale quando a proposta não tem outra.
     proposta as (
         select *
-        from (
-            select
-                id_proposta,
-                portaria_contratacao,
-                lpad(co_originacao::text, 3, '0') as co_originacao,
-                lpad(co_tipo_demanda::text, 3, '0') as co_demanda_enquadramento,
-                lpad(co_tipo_demanda_contratacao::text, 3, '0') as co_demanda_contratacao,
-                lpad(co_qualificacao_terreno::text, 3, '0') as co_qualificacao_terreno,
-                ic_previsao_elevador,
-                ic_alterado_pos_contratacao,
-                campos_alterados_contratacao,
-                ic_area_urbana_consolidada,
-                ic_energia_eletrica as ic_entorno_energia,
-                ic_agua_potavel as ic_entorno_agua,
-                ic_esgoto as ic_entorno_esgoto_lixo,
-                ic_via_pavimentada as ic_entorno_pavimentacao,
-                ic_drenagem as ic_entorno_drenagem,
-                ic_educacao_infantil as ic_entorno_educacao_infantil,
-                ic_ensino_fundamental_1 as ic_entorno_fundamental_1,
-                ic_ensino_fundamental_2 as ic_entorno_fundamental_2,
-                ic_saude_ubs as ic_entorno_ubs,
-                ic_protecao_social_cras as ic_entorno_cras,
-                ic_comercio_servicos as ic_entorno_comercio,
-                row_number() over (
-                    partition by id_proposta
-                    order by
-                        dt_movimento desc nulls last,
-                        hr_movimento desc nulls last,
-                        dt_protocolo desc nulls last
-                ) as rn
-            from {{ ref("prata_far_consolidado") }}
-        ) t
+        from
+            (
+                select
+                    id_proposta,
+                    portaria_contratacao,
+                    lpad(co_originacao::text, 3, '0') as co_originacao,
+                    lpad(co_tipo_demanda::text, 3, '0') as co_demanda_enquadramento,
+                    lpad(co_tipo_demanda_contratacao::text, 3, '0') as co_demanda_contratacao,
+                    lpad(co_qualificacao_terreno::text, 3, '0') as co_qualificacao_terreno,
+                    ic_previsao_elevador,
+                    ic_alterado_pos_contratacao,
+                    campos_alterados_contratacao,
+                    ic_area_urbana_consolidada,
+                    ic_energia_eletrica as ic_entorno_energia,
+                    ic_agua_potavel as ic_entorno_agua,
+                    ic_esgoto as ic_entorno_esgoto_lixo,
+                    ic_via_pavimentada as ic_entorno_pavimentacao,
+                    ic_drenagem as ic_entorno_drenagem,
+                    ic_educacao_infantil as ic_entorno_educacao_infantil,
+                    ic_ensino_fundamental_1 as ic_entorno_fundamental_1,
+                    ic_ensino_fundamental_2 as ic_entorno_fundamental_2,
+                    ic_saude_ubs as ic_entorno_ubs,
+                    ic_protecao_social_cras as ic_entorno_cras,
+                    ic_comercio_servicos as ic_entorno_comercio,
+                    row_number() over (
+                        partition by id_proposta
+                        order by
+                            dt_movimento desc nulls last,
+                            hr_movimento desc nulls last,
+                            dt_protocolo desc nulls last
+                    ) as rn
+                from {{ ref("prata_far_consolidado") }}
+            ) t
         where rn = 1
     )
 
@@ -90,12 +103,18 @@ select
     coalesce(p.portaria_contratacao, 'Não informada') as portaria_contratacao,
     coalesce(og.rotulo, 'Não informada') as originacao,
     coalesce(td.rotulo, 'Não informada') as tipo_demanda,
-    coalesce(de.rotulo, 'Código ' || p.co_demanda_enquadramento, 'Não informada') as demanda_enquadramento,
-    coalesce(dc.rotulo, 'Código ' || p.co_demanda_contratacao, 'Não informada') as demanda_contratacao,
+    coalesce(
+        de.rotulo, 'Código ' || p.co_demanda_enquadramento, 'Não informada'
+    ) as demanda_enquadramento,
+    coalesce(
+        dc.rotulo, 'Código ' || p.co_demanda_contratacao, 'Não informada'
+    ) as demanda_contratacao,
     -- Mudou se enquadramento, contratação e monitoramento não declaram a mesma demanda.
     case
-        when p.id_proposta is null then null
-        else p.co_demanda_enquadramento is distinct from p.co_demanda_contratacao
+        when p.id_proposta is null
+        then null
+        else
+            p.co_demanda_enquadramento is distinct from p.co_demanda_contratacao
             or p.co_demanda_contratacao is distinct from cad.co_tipo_demanda
     end as ic_demanda_mudou,
     coalesce(te.rotulo, 'Não informada') as tipo_edificacao,
@@ -106,7 +125,9 @@ select
     coalesce(ep.rotulo, 'Não informado') as ente_proponente,
     coalesce(ec.rotulo, 'Não informado') as ente_contrapartida,
     coalesce(op.rotulo, 'Sem aporte/suplementação') as operacao_aporte,
-    coalesce(qt.rotulo, 'Código ' || p.co_qualificacao_terreno, 'Não informada') as qualificacao_terreno,
+    coalesce(
+        qt.rotulo, 'Código ' || p.co_qualificacao_terreno, 'Não informada'
+    ) as qualificacao_terreno,
     p.ic_previsao_elevador,
     p.ic_alterado_pos_contratacao,
     p.campos_alterados_contratacao,
@@ -150,7 +171,8 @@ left join dominio td on td.campo = 'tipo_demanda' and td.codigo = cad.co_tipo_de
 left join dominio de on de.campo = 'tipo_demanda' and de.codigo = p.co_demanda_enquadramento
 left join dominio dc on dc.campo = 'tipo_demanda' and dc.codigo = p.co_demanda_contratacao
 left join dominio te on te.campo = 'tipo_edificacao' and te.codigo = cad.co_tipo_edificacao
-left join dominio tem on tem.campo = 'tipo_empreendimento' and tem.codigo = cad.co_tipo_empreendimento
+left join
+    dominio tem on tem.campo = 'tipo_empreendimento' and tem.codigo = cad.co_tipo_empreendimento
 left join dominio rp on rp.campo = 'regime_propriedade' and rp.codigo = cad.co_regime_propriedade
 left join dominio la on la.campo = 'linha_atendimento' and la.codigo = cad.co_linha_atendimento
 left join dominio ta on ta.campo = 'tipo_administracao' and ta.codigo = cad.co_tipo_administracao

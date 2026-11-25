@@ -38,9 +38,7 @@ def _parse_references(value: str, row_number: int) -> list[dict[str, str]]:
         name, endpoint = items[index : index + 2]
         parsed_url = urlparse(endpoint)
         if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
-            raise ValueError(
-                f"Linha {row_number}: URL de referencia invalida: {endpoint}"
-            )
+            raise ValueError(f"Linha {row_number}: URL de referencia invalida: {endpoint}")
         references.append({"name": name, "endpoint": endpoint})
     return references
 
@@ -60,9 +58,7 @@ def load_glossary(glossary_definition_path: str) -> tuple[dict, list[dict]]:
     """Carrega e valida a definicao do glossario e o CSV oficial de termos."""
     definition_path = Path(glossary_definition_path)
     if not definition_path.is_file():
-        raise FileNotFoundError(
-            f"Definicao de glossario nao encontrada: {definition_path}"
-        )
+        raise FileNotFoundError(f"Definicao de glossario nao encontrada: {definition_path}")
 
     definition = yaml.safe_load(definition_path.read_text(encoding="utf-8"))
     if not isinstance(definition, dict):
@@ -90,9 +86,7 @@ def load_glossary(glossary_definition_path: str) -> tuple[dict, list[dict]]:
     with terms_path.open(encoding="utf-8", newline="") as terms_file:
         reader = csv.DictReader(terms_file)
         if tuple(reader.fieldnames or ()) != CSV_COLUMNS:
-            raise ValueError(
-                "Cabecalho invalido no CSV. Esperado: " + ",".join(CSV_COLUMNS)
-            )
+            raise ValueError("Cabecalho invalido no CSV. Esperado: " + ",".join(CSV_COLUMNS))
 
         terms = []
         for row_number, row in enumerate(reader, start=2):
@@ -100,21 +94,13 @@ def load_glossary(glossary_definition_path: str) -> tuple[dict, list[dict]]:
             description = row["description"].strip()
             parent = row["parent"].strip()
             if not name or not description:
-                raise ValueError(
-                    f"Linha {row_number}: name e description sao obrigatorios."
-                )
+                raise ValueError(f"Linha {row_number}: name e description sao obrigatorios.")
             if "." in name:
-                raise ValueError(
-                    f"Linha {row_number}: name nao pode conter ponto: {name}"
-                )
+                raise ValueError(f"Linha {row_number}: name nao pode conter ponto: {name}")
             if parent and not parent.startswith(f"{glossary_name}."):
-                raise ValueError(
-                    f"Linha {row_number}: parent deve pertencer a {glossary_name}."
-                )
+                raise ValueError(f"Linha {row_number}: parent deve pertencer a {glossary_name}.")
 
-            fully_qualified_name = (
-                f"{parent}.{name}" if parent else f"{glossary_name}.{name}"
-            )
+            fully_qualified_name = f"{parent}.{name}" if parent else f"{glossary_name}.{name}"
             terms.append(
                 {
                     "row_number": row_number,
@@ -136,9 +122,7 @@ def load_glossary(glossary_definition_path: str) -> tuple[dict, list[dict]]:
 
     for term in terms:
         if term["parent"] and term["parent"] not in fqn_set:
-            raise ValueError(
-                f"Linha {term['row_number']}: parent inexistente: {term['parent']}"
-            )
+            raise ValueError(f"Linha {term['row_number']}: parent inexistente: {term['parent']}")
         unknown_related_terms = set(term["relatedTerms"]) - fqn_set
         if unknown_related_terms:
             raise ValueError(

@@ -32,32 +32,33 @@
     desembolsado_column='valor_desembolsado'
 ) %}
 
-{%- set fator = ratio_minimo if ratio_minimo is not none else (1.0 + tolerancia) -%}
+    {%- set fator = ratio_minimo if ratio_minimo is not none else (1.0 + tolerancia) -%}
 
-with ultimo as (
+    with
+        ultimo as (
+            select
+                {{ apf_column }} as apf,
+                {{ contratado_column }} as valor_contratado,
+                {{ desembolsado_column }} as valor_desembolsado,
+                row_number() over (
+                    partition by {{ apf_column }} order by {{ data_column }} desc nulls last
+                ) as rn
+            from {{ model }}
+            where {{ apf_column }} is not null
+        )
+
     select
-        {{ apf_column }} as apf,
-        {{ contratado_column }} as valor_contratado,
-        {{ desembolsado_column }} as valor_desembolsado,
-        row_number() over (
-            partition by {{ apf_column }}
-            order by {{ data_column }} desc nulls last
-        ) as rn
-    from {{ model }}
-    where {{ apf_column }} is not null
-)
-
-select
-    apf,
-    valor_contratado,
-    valor_desembolsado,
-    round(valor_desembolsado / nullif(valor_contratado, 0), 3) as ratio,
-    {{ fator }} as fator_limite
-from ultimo
-where rn = 1
-    and valor_contratado > 0
-    and valor_desembolsado is not null
-    and valor_desembolsado > valor_contratado * {{ fator }}
-order by ratio desc
+        apf,
+        valor_contratado,
+        valor_desembolsado,
+        round(valor_desembolsado / nullif(valor_contratado, 0), 3) as ratio,
+        {{ fator }} as fator_limite
+    from ultimo
+    where
+        rn = 1
+        and valor_contratado > 0
+        and valor_desembolsado is not null
+        and valor_desembolsado > valor_contratado * {{ fator }}
+    order by ratio desc
 
 {% endmacro %}

@@ -58,9 +58,7 @@ def problemas(documentacao: Mapping[str, Any] | None, colunas: set[str]) -> list
     """Regras estruturais; o texto é conferido por quem chama, com as regras dele."""
     if documentacao is None:
         return ["documentacao_ausente"]
-    achados = [
-        f"documentacao_sem_{campo}" for campo in CAMPOS if not documentacao.get(campo)
-    ]
+    achados = [f"documentacao_sem_{campo}" for campo in CAMPOS if not documentacao.get(campo)]
     chave = documentacao.get("chave")
     if chave and not isinstance(chave, list):
         achados.append("documentacao_chave_nao_e_lista")
@@ -95,8 +93,4 @@ def propriedades(documentacao: Mapping[str, Any]) -> dict[str, str]:
         "periodicidade": documentacao.get("periodicidade"),
         "consumo": "\n".join(f"- {item}" for item in documentacao.get("consumo") or []),
     }
-    return {
-        PROPRIEDADES[campo]: str(valor).strip()
-        for campo, valor in valores.items()
-        if valor
-    }
+    return {PROPRIEDADES[campo]: str(valor).strip() for campo, valor in valores.items() if valor}

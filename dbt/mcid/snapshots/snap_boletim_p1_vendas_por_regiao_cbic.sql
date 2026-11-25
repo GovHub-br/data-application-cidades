@@ -16,19 +16,21 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p1_vendas_por_regiao_cbic %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("regiao"::text, '') as chave,
-    edicao,
-    "regiao", "TOTAL", "MCMV", "% MCMV"
-from {{ ref('ouro_conjuntura_boletim_p1_vendas_por_regiao_cbic') }}
+    select
+        edicao || '|' || coalesce("regiao"::text, '') as chave,
+        edicao,
+        "regiao",
+        "TOTAL",
+        "MCMV",
+        "% MCMV"
+    from {{ ref('ouro_conjuntura_boletim_p1_vendas_por_regiao_cbic') }}
 
 {% endsnapshot %}

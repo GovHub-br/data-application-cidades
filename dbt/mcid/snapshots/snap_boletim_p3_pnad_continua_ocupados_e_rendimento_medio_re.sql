@@ -16,19 +16,22 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p3_pnad_continua_ocupados_e_rendimento_medio_re %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("periodo"::text, '') as chave,
-    edicao,
-    "periodo", "Ocupados Construção (mil)", "Ocupados Total (mil)", "Rendimento Construção (R$)", "Rendimento Total (R$)"
-from {{ ref('ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento') }}
+    select
+        edicao || '|' || coalesce("periodo"::text, '') as chave,
+        edicao,
+        "periodo",
+        "Ocupados Construção (mil)",
+        "Ocupados Total (mil)",
+        "Rendimento Construção (R$)",
+        "Rendimento Total (R$)"
+    from {{ ref('ouro_conjuntura_boletim_p3_pnad_ocupados_rendimento') }}
 
 {% endsnapshot %}

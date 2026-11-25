@@ -1,0 +1,10 @@
+coluna,codigo,frente_mcmv,evidencia
+codigo_faixa,1,FAR,"entrega_bb_pj_pf: 948.977 contratos em empreendimento FAR, 0 em Financiada"
+codigo_faixa,2,Financiada,"entrega_bb_pj_pf: 2.239.311 contratos em empreendimento Financiada, 0 em FAR"
+codigo_faixa,3,Financiada,"entrega_bb_pj_pf: 334.319 contratos em empreendimento Financiada, 0 em FAR"
+codigo_produto,1,Financiada,"entrega_bb_pj: 818 linhas em empreendimento Financiada, 0 em FAR"
+codigo_produto,7,FAR,"entrega_bb_pj: 212 linhas em empreendimento FAR, 0 em Financiada"
+codigo_subprograma,1,FAR,"tab_operacoes_bb: 115 operações em empreendimento FAR, 0 em Financiada"
+codigo_subprograma,4,Financiada,"tab_operacoes_bb: 323 operações em empreendimento Financiada, 0 em FAR"
+codigo_linha_credito,0,FAR,"tab_operacoes_bb: 115 operações em empreendimento FAR, 0 em Financiada"
+codigo_linha_credito,2,Financiada,"tab_operacoes_bb: 323 operações em empreendimento Financiada, 0 em FAR"

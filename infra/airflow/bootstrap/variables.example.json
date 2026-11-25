@@ -1,0 +1,28 @@
+{
+    "BACEN_SERIES": {
+        "description": "Séries do SGS do Banco Central lidas pela bacen_sgs_ingest_dag: nome da série -> código no SGS",
+        "value": {
+            "pf_concessoes_rs_mi": "<código SGS>",
+            "pf_taxa_juros_aa": "<código SGS>",
+            "pf_inadimplencia_pct": "<código SGS>",
+            "pj_concessoes_rs_mi": "<código SGS>",
+            "pj_taxa_juros_aa": "<código SGS>",
+            "pj_inadimplencia_pct": "<código SGS>"
+        }
+    },
+    "IBGE_CONFIGURACOES": {
+        "description": "Agregados da API SIDRA lidos pela ibge_ingest_dag, uma task por item",
+        "value": [
+            {
+                "tabela": "<tabela de destino>",
+                "agregado": "<id do agregado no SIDRA>",
+                "variaveis": "<ids das variáveis>",
+                "periodos": "-20"
+            }
+        ]
+    },
+    "lake_bucket": {
+        "description": "Bucket do lake (snh/raw/ e snh/staging/) usado pelas DAGs de ingestão; o mesmo da var lake_bucket do dbt",
+        "value": "data-lake-mcid"
+    }
+}

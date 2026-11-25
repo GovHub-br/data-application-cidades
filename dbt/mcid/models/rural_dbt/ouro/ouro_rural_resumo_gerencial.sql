@@ -2,11 +2,7 @@
 
 -- Gold: Resumo Gerencial (Rural)
 -- Visão agregada contendo os KPIs consolidados para os gráficos gerenciais de pizza e barra.
-
-with
-    base_fichas as (
-        select * from {{ ref("ouro_rural_ficha_empreendimento") }}
-    )
+with base_fichas as (select * from {{ ref("ouro_rural_ficha_empreendimento") }})
 
 select
     agente_financeiro,

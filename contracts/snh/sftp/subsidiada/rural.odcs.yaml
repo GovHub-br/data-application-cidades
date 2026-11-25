@@ -1,0 +1,240 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sftp_subsidiada_rural
+name: Linha subsidiada · Rural (PNHR)
+version: 0.1.0
+status: draft
+description:
+  purpose: Remessas do PNHR (Rural) da CAIXA e do BB no GEFUS.
+team:
+- username: CAIXA · GEFUS
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: rural_liberacoes_caixa_bb
+  physicalName: rural_liberacoes_caixa_bb
+  description: 'INT055: liberações do PNHR (Rural) da CAIXA e do BB. Sem remessa nova desde 18/03/2025;
+    o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_20250318.TXT.'
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_*.parquet
+  - property: file_pattern
+    value: INT055_MinisterioCidades_LIBERACOES_CAIXA_BB_\d{8}\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value:
+    - bronze_sftp_int055_liberacoes_caixa_bb
+  properties:
+  - name: no_programa
+    logicalType: string
+  - name: nu_apf
+    logicalType: string
+  - name: data_liberacao
+    logicalType: string
+  - name: no_tipo_liberacao
+    logicalType: string
+  - name: vr_valor
+    logicalType: string
+- name: rural_empreendimentos_bb
+  physicalName: rural_empreendimentos_bb
+  description: 'INT057: empreendimentos do PNHR (Rural) operados pelo BB. Sem remessa nova desde 29/11/2024;
+    o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_20241129.TXT.'
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_*.parquet
+  - property: file_pattern
+    value: INT057_MinisterioCidades_PNHR_BB_EMPREENDIMENTOS_\d{8}\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value:
+    - bronze_sftp_int057_pnhr_bb_empreendimentos
+  properties:
+  - name: dt_movimento
+    logicalType: string
+  - name: co_agente_financeiro
+    logicalType: string
+  - name: nu_contrato_empreendimento
+    logicalType: string
+  - name: no_empreendimento
+    logicalType: string
+  - name: co_natureza
+    logicalType: string
+  - name: natureza_contrato
+    logicalType: string
+  - name: co_grupo_renda
+    logicalType: string
+  - name: dt_contrato
+    logicalType: string
+  - name: co_municipio_ibge
+    logicalType: string
+  - name: no_municipio
+    logicalType: string
+  - name: sg_uf
+    logicalType: string
+  - name: no_entidade_organizadora
+    logicalType: string
+  - name: nu_cnpj_entidade
+    logicalType: string
+  - name: qt_unidades
+    logicalType: string
+  - name: qt_unidades_concluidas
+    logicalType: string
+  - name: qt_unidades_entregues
+    logicalType: string
+  - name: vr_investimento
+    logicalType: string
+  - name: vr_operacao
+    logicalType: string
+  - name: vr_edificacao
+    logicalType: string
+  - name: vr_atec
+    logicalType: string
+  - name: vr_ts
+    logicalType: string
+  - name: vr_custo_originacao
+    logicalType: string
+  - name: vr_taxa_administracao
+    logicalType: string
+  - name: vr_diferencial_juros
+    logicalType: string
+  - name: vr_taxa_risco_credito
+    logicalType: string
+  - name: vr_cisterna
+    logicalType: string
+  - name: vr_efluentes
+    logicalType: string
+  - name: vr_atec_ts_cisterna
+    logicalType: string
+  - name: vr_tx_adm_cisterna
+    logicalType: string
+  - name: vr_contrapartida
+    logicalType: string
+  - name: vr_liberado
+    logicalType: string
+  - name: pz_obra
+    logicalType: string
+  - name: pc_execucao_fisica_obra
+    logicalType: string
+  - name: pc_execucao_financeira_obra
+    logicalType: string
+  - name: pc_execucao_financeira_atec
+    logicalType: string
+  - name: pc_execucao_financeira_ts
+    logicalType: string
+  - name: co_situacao_obra
+    logicalType: string
+  - name: no_situacao_obra
+    logicalType: string
+  - name: dt_ultima_liberacao
+    logicalType: string
+  - name: dt_efetiva_conclusao
+    logicalType: string
+  - name: origem
+    logicalType: string
+- name: rural_empreendimentos_caixa
+  physicalName: rural_empreendimentos_caixa
+  description: 'INT065: empreendimentos do PNHR (Rural) operados pela CAIXA. Sem remessa nova desde 29/11/2024;
+    o histórico está em GEFUS/ANTERIORES/ e na staging antiga. Colunas da remessa INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_20241129.TXT.'
+  customProperties:
+  - property: path
+    value: snh/staging/sftp/fabrica/GEFUS/INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_*.parquet
+  - property: file_pattern
+    value: INT065_MinisterioCidades_PNHR_CAIXA_EMPREENDIMENTOS_\d{8}\.TXT
+  - property: load_type
+    value: full
+  - property: dag
+    value: sftp_ingest_dag
+  - property: dbt_tables
+    value:
+    - bronze_sftp_int065_pnhr_caixa_empreendimentos
+  properties:
+  - name: dt_movimento
+    logicalType: string
+  - name: co_agente_financeiro
+    logicalType: string
+  - name: nu_contrato_emprendimento
+    logicalType: string
+  - name: nu_apf
+    logicalType: string
+  - name: no_empreendimento
+    logicalType: string
+  - name: co_natureza
+    logicalType: string
+  - name: co_grupo_renda
+    logicalType: string
+  - name: dt_contrato
+    logicalType: string
+  - name: co_municipio_ibge
+    logicalType: string
+  - name: no_municipio
+    logicalType: string
+  - name: sg_uf
+    logicalType: string
+  - name: no_entidade_organizadora
+    logicalType: string
+  - name: nu_cnpj_entidade
+    logicalType: string
+  - name: qtde_uh_inicial
+    logicalType: string
+  - name: qtde_unidades
+    logicalType: string
+  - name: qt_unidades_concluidas
+    logicalType: string
+  - name: qt_unidades_entregues
+    logicalType: string
+  - name: vr_investimento_pnhr
+    logicalType: string
+  - name: vr_operacao
+    logicalType: string
+  - name: vr_edificacao
+    logicalType: string
+  - name: vr_atec
+    logicalType: string
+  - name: vr_ts
+    logicalType: string
+  - name: vr_custo_originacao
+    logicalType: string
+  - name: vr_taxa_administracao
+    logicalType: string
+  - name: vr_diferencial_juros
+    logicalType: string
+  - name: vr_taxa_risco_credito
+    logicalType: string
+  - name: vr_cisterna
+    logicalType: string
+  - name: vr_efluentes
+    logicalType: string
+  - name: vr_atec_ts_cisterna
+    logicalType: string
+  - name: vr_tx_adm_cisterna
+    logicalType: string
+  - name: vr_contrapartida
+    logicalType: string
+  - name: vr_emprestimo
+    logicalType: string
+  - name: vr_subsidio_fgts
+    logicalType: string
+  - name: vr_liberado
+    logicalType: string
+  - name: pz_construcao
+    logicalType: string
+  - name: pc_obra_realizado
+    logicalType: string
+  - name: no_situacao_obra
+    logicalType: string
+  - name: dt_ultima_liberacao
+    logicalType: string
+  - name: dt_efetiva_conclusao
+    logicalType: string
+  - name: origem
+    logicalType: string

@@ -31,7 +31,7 @@ jobs:
           app-id: ${{ vars.OM_SUGESTOES_APP_ID }}
           private-key: ${{ secrets.OM_SUGESTOES_APP_KEY }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           token: ${{ steps.app.outputs.token }}
 
@@ -60,7 +60,7 @@ jobs:
             echo "sim=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: steps.existe.outputs.sim != 'true'
         with:
           python-version: "3.12"

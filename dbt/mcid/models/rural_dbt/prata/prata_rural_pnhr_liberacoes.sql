@@ -25,12 +25,14 @@ with
 
             -- Linhagem da bronze do lake
             _source_file as arquivo_de_origem,
-            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp as criado_em
+            nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(_ingested_at)), '')::timestamp
+            as criado_em
 
         from {{ ref("bronze_sftp_int055_liberacoes_caixa_bb") }}
         where
             nu_apf is not null
-            and nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(data_liberacao)), '') is not null
+            and nullif(trim({{ var('schema_udfs') }}.corrigir_mojibake(data_liberacao)), '')
+            is not null
             and trim(upper(no_programa)) like '%PNHR%'
     )
 

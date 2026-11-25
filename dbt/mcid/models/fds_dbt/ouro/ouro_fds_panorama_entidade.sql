@@ -49,16 +49,10 @@ with
             -- Score de Risco (Soma de alertas)
             -- 1 ponto para cada obra atrasada (físico < previsto)
             sum(
-                case
-                    when percentual_execucao_fisica < percentual_obra_prevista
-                    then 1
-                    else 0
-                end
+                case when percentual_execucao_fisica < percentual_obra_prevista then 1 else 0 end
             ) as qtd_obras_atrasadas,
             -- 2 pontos para cada obra paralisada
-            sum(
-                case when dt_paralisacao is not null then 1 else 0 end
-            ) as qtd_obras_paralisadas,
+            sum(case when dt_paralisacao is not null then 1 else 0 end) as qtd_obras_paralisadas,
             -- 1 ponto para divergência grave (< -5 p.p.)
             sum(
                 case when divergencia_fisico_financeira < -5 then 1 else 0 end

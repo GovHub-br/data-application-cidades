@@ -5,8 +5,7 @@
 -- último valor válido para os meses vazios (senão a linha despencaria para 0%).
 with
     financeira as (
-        select apf, mes, pct_executado_financeiro
-        from {{ ref("prata_far_evolucao_financeira") }}
+        select apf, mes, pct_executado_financeiro from {{ ref("prata_far_evolucao_financeira") }}
     ),
 
     fisica as (
@@ -20,8 +19,7 @@ with
     ),
 
     empreendimento as (
-        select apf, municipio, uf, empreendimento_nome
-        from {{ ref("prata_far_empreendimento") }}
+        select apf, municipio, uf, empreendimento_nome from {{ ref("prata_far_empreendimento") }}
     ),
 
     base as (
@@ -42,9 +40,7 @@ with
             pct_obra_realizada,
             pct_executado_financeiro,
             count(pct_obra_realizada) over (partition by apf order by mes) as grp_fisica,
-            count(pct_executado_financeiro) over (
-                partition by apf order by mes
-            ) as grp_financeira
+            count(pct_executado_financeiro) over (partition by apf order by mes) as grp_financeira
         from base
     ),
 

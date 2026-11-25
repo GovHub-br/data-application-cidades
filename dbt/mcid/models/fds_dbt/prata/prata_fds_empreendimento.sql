@@ -16,9 +16,7 @@ with
             (
                 select
                     *,
-                    row_number() over (
-                        partition by apf order by dt_movimento desc nulls last
-                    ) as rn
+                    row_number() over (partition by apf order by dt_movimento desc nulls last) as rn
                 from {{ ref("prata_fds_int_059_caixa_pj") }}
                 where selecao_pmcmv_e = 'NOVO PMCMV-E'
             ) t
@@ -62,15 +60,12 @@ select
     c.agente_financeiro,
     -- UHs: campos construcao/projeto são mutuamente exclusivos na fonte.
     -- Quando um tem valor o outro é 0. Usar GREATEST para obter o real.
-    greatest(
-        coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)
-    ) as quantidade_uh,
+    greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) as quantidade_uh,
     c.qt_uh_construcao,
     c.qt_uh_projeto,
     -- Heurística: 3,3 pessoas por família
-    floor(
-        greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) * 3.3
-    )::int as pessoas_atendidas,
+    floor(greatest(coalesce(c.qt_uh_construcao, 0), coalesce(c.qt_uh_projeto, 0)) * 3.3)::int
+    as pessoas_atendidas,
 
     -- Localização
     c.municipio,
@@ -159,11 +154,7 @@ select
     d.dt_ultima_liberacao,
     case
         when coalesce(c.vr_total_investimento, 0.0) > 0
-        then
-            round(
-                (coalesce(d.vr_total_desembolsado, 0.0) / c.vr_total_investimento) * 100,
-                2
-            )
+        then round((coalesce(d.vr_total_desembolsado, 0.0) / c.vr_total_investimento) * 100, 2)
         else 0.0
     end as percentual_execucao_financeira,
 

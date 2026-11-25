@@ -1,7 +1,7 @@
 # GERADO POR infra/docker/airflow/compile-lock.sh -- NAO EDITE A MAO.
 #
 # Resolvido contra apache/airflow:3.3.2-python3.11.
-# Para mudar uma dependencia, edite requirements.txt e rode o script.
+# Para mudar uma dependencia, edite o grupo runtime do pyproject.toml e rode o script.
 #
 a2wsgi==1.10.10
     # via
@@ -543,7 +543,7 @@ celery==5.6.3
     #   -r /w/lock.in
     #   apache-airflow-providers-celery
     #   flower
-certifi==2026.7.22
+certifi==2026.11.20
     # via
     #   -r /w/lock.in
     #   elastic-transport
@@ -553,6 +553,7 @@ certifi==2026.7.22
     #   kubernetes
     #   kubernetes-asyncio
     #   msrest
+    #   openmetadata-ingestion
     #   opensearch-py
     #   requests
     #   snowflake-connector-python
@@ -613,7 +614,7 @@ collate-dbt-artifacts-parser==0.1.4
     # via openmetadata-ingestion
 collate-sqlfluff==3.5.3
     # via collate-sqllineage
-collate-sqllineage==2.1.8
+collate-sqllineage==2.1.7
     # via openmetadata-ingestion
 colorama==0.4.6
     # via
@@ -1829,7 +1830,7 @@ openlineage-sql==1.53.0
     # via
     #   -r /w/lock.in
     #   openlineage-integration-common
-openmetadata-ingestion==1.13.3.2
+openmetadata-ingestion==2.0.7.2
     # via -r /w/lock.in
 openpyxl==3.1.5
     # via -r /w/lock.in
@@ -1943,6 +1944,7 @@ packaging==26.3
     #   openlineage-python
     #   openmetadata-ingestion
     #   pandas-gbq
+    #   pandera
     #   pytest
     #   ray
     #   redshift-connector
@@ -1962,6 +1964,8 @@ pandas-gbq==0.35.2
     # via
     #   -r /w/lock.in
     #   apache-airflow-providers-google
+pandera==0.35.0
+    # via -r /w/lock.in
 paramiko==5.0.0
     # via
     #   -r /w/lock.in
@@ -2179,7 +2183,7 @@ pycparser==3.0
     # via
     #   -r /w/lock.in
     #   cffi
-pydantic==2.11.10
+pydantic==2.14.4
     # via
     #   -r /w/lock.in
     #   apache-airflow-core
@@ -2196,10 +2200,11 @@ pydantic==2.11.10
     #   metricflow
     #   openai
     #   openmetadata-ingestion
+    #   pandera
     #   pydantic-extra-types
     #   pydantic-settings
     #   ray
-pydantic-core==2.33.2
+pydantic-core==2.50.5
     # via
     #   -r /w/lock.in
     #   pydantic
@@ -2228,7 +2233,7 @@ pygtrie==2.6.1
     #   -r /w/lock.in
     #   apache-airflow-core
     #   apache-airflow-task-sdk
-pyjwt==2.14.0
+pyjwt==2.15.1
     # via
     #   -r /w/lock.in
     #   adal
@@ -2679,6 +2684,8 @@ truststore==0.10.4
     #   -r /w/lock.in
     #   httpcore2
     #   httpx2
+typeguard==4.6.0
+    # via pandera
 typer==0.27.2
     # via
     #   -r /w/lock.in
@@ -2742,6 +2749,7 @@ typing-extensions==4.16.0
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
+    #   pandera
     #   psycopg
     #   pydantic
     #   pydantic-core
@@ -2755,10 +2763,13 @@ typing-extensions==4.16.0
     #   sqlalchemy
     #   starlette
     #   svcs
+    #   typeguard
     #   typing-inspect
     #   typing-inspection
 typing-inspect==0.9.0
-    # via openmetadata-ingestion
+    # via
+    #   openmetadata-ingestion
+    #   pandera
 typing-inspection==0.4.4
     # via
     #   -r /w/lock.in
@@ -2785,7 +2796,7 @@ uritemplate==4.2.0
     # via
     #   -r /w/lock.in
     #   google-api-python-client
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   -r /w/lock.in
     #   apache-airflow-providers-cncf-kubernetes
@@ -2795,6 +2806,7 @@ urllib3==2.7.0
     #   elastic-transport
     #   kubernetes
     #   kubernetes-asyncio
+    #   openmetadata-ingestion
     #   opensearch-py
     #   requests
     #   sagemaker-studio

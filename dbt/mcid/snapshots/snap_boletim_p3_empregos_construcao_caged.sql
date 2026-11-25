@@ -16,19 +16,20 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p3_empregos_construcao_caged %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("periodo"::text, '') as chave,
-    edicao,
-    "periodo", "Criação Líquida (Saldo)", "Total de Postos (Estoque)"
-from {{ ref('ouro_conjuntura_boletim_p3_empregos_construcao_caged') }}
+    select
+        edicao || '|' || coalesce("periodo"::text, '') as chave,
+        edicao,
+        "periodo",
+        "Criação Líquida (Saldo)",
+        "Total de Postos (Estoque)"
+    from {{ ref('ouro_conjuntura_boletim_p3_empregos_construcao_caged') }}
 
 {% endsnapshot %}

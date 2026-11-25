@@ -43,23 +43,35 @@ models:
       - name: ic_mulher_responsavel
         description: Mulher titular do contrato (só Novo MCMV).
       - name: ic_responsavel_idoso
-        description: Titular idoso (só Novo MCMV).
+        description: >
+          Titular idoso. No Novo MCMV vem do agente; no legado, idade de 60 anos ou mais
+          na assinatura. Nulo no BB, que não informa nascimento.
+      - name: idade_responsavel
+        description: Idade do titular na assinatura, em anos. Nula no BB.
       - name: ic_familia_com_idoso
-        description: Há idoso na família (só Novo MCMV; hoje vazio na origem).
+        description: Há idoso na família (só Novo MCMV, a partir de 08/2026).
       - name: ic_responsavel_pcd
-        description: Titular PCD (só Novo MCMV; hoje vazio na origem).
+        description: Titular PCD (só Novo MCMV, a partir de 08/2026).
       - name: ic_familia_com_pcd
-        description: Há PCD na família (só Novo MCMV; hoje vazio na origem).
+        description: Há PCD na família (só Novo MCMV, a partir de 08/2026).
       - name: ic_situacao_rua
         description: Titular vindo de situação de rua (só Novo MCMV; hoje vazio na origem).
       - name: qt_membros_familia
-        description: Pessoas na família (só Novo MCMV; hoje vazio na origem).
+        description: Pessoas na família (só Novo MCMV, a partir de 08/2026).
       - name: renda_familiar
         description: Renda familiar comprovada, em R$. Nula no BB.
+      - name: pc_renda_responsavel
+        description: Participação do titular na renda familiar, em % (só Novo MCMV).
+      - name: pc_renda_coobrigado
+        description: Participação do coobrigado na renda familiar, em % (só Novo MCMV).
       - name: modalidade
         description: >
           No Novo MCMV, o tipo de demanda do empreendimento (cadastro PJ). No legado, o
           tipo de contrato informado pelo agente.
+      - name: ic_indicacao_direta
+        description: >
+          Beneficiário indicado diretamente para o tipo de demanda do empreendimento (só
+          Novo MCMV, a partir de 10/2026).
       - name: tipo_instrumento
         description: Doação ou alienação fiduciária (só Novo MCMV).
       - name: situacao_contrato
@@ -100,6 +112,18 @@ models:
         description: Ano de assinatura do contrato.
       - name: faixa_renda
         description: Faixa da renda familiar comprovada, em valores nominais.
+      - name: faixa_etaria
+        description: Faixa de idade do titular na assinatura.
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Até 29 anos
+                  - 30 a 39 anos
+                  - 40 a 49 anos
+                  - 50 a 59 anos
+                  - 60 anos ou mais
+                  - Não informada
 
   - name: prata_far_empreendimento_natureza
     description: >
@@ -223,3 +247,95 @@ models:
         description: Valor contratado de aporte ou suplementação, em R$.
       - name: dt_aporte_suplementacao
         description: Data de contratação do aporte ou suplementação.
+
+  - name: prata_far_beneficiario_cadunico
+    description: >
+      Atributos do CadÚnico de cada contrato do FAR cujo titular está no cadastro:
+      raça/cor, deficiência, situação de rua, Bolsa Família, renda per capita e gastos
+      da família com energia e água. É a foto do CadÚnico de 12/2025 e 01/2026, não a
+      da assinatura. Restrita por conter raça/cor por contrato; o painel lê a ouro
+      agregada.
+    config:
+      meta:
+        governance:
+          product: empreendimento_far
+          owner_key: mcid_data_engineering
+          layer: silver
+          classification: restricted
+          rag_publication: prohibited
+        documentacao:
+          grao: Um contrato do FAR cujo titular está no CadÚnico.
+          chave: [chave_contrato]
+          fonte: CadÚnico (ARQ_PESSOA de 12/12/2025 e ARQ_FAMILIA de 09/01/2026).
+          periodicidade: eventual
+          consumo: [ouro_far_beneficiario_cadunico]
+    columns:
+      - name: chave_contrato
+        description: Geração, agente financeiro e contrato, a chave de prata_far_contrato_pf.
+        tests:
+          - not_null
+          - unique
+      - name: raca_cor
+        description: Raça/cor declarada no CadÚnico.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Branca", "Preta", "Amarela", "Parda", "Indígena", "Não informada"]
+      - name: ic_responsavel_familiar
+        description: Se o titular é o responsável familiar no CadÚnico.
+      - name: ic_pcd
+        description: Pessoa com deficiência segundo o CadÚnico.
+      - name: ic_situacao_rua
+        description: >
+          Titular com o bloco de situação de rua do CadÚnico preenchido na data do
+          corte. Não diz se estava nessa situação antes do contrato.
+      - name: tempo_situacao_rua
+        description: Há quanto tempo vive na rua, para quem está em situação de rua.
+      - name: ic_familia_encontrada
+        description: Se a família está no corte de famílias de 09/01/2026.
+      - name: cod_ibge_cadastro
+        description: Município do cadastro no CadÚnico (7 dígitos).
+      - name: dt_atualizacao_cadastro
+        description: Última atualização do cadastro da família.
+      - name: ic_bolsa_familia
+        description: Família beneficiária do Bolsa Família no corte.
+      - name: renda_per_capita_cadunico
+        description: Renda familiar per capita declarada no CadÚnico, em R$.
+      - name: despesa_energia
+        description: Gasto mensal da família com energia elétrica, em R$. Acima de R$ 5.000 fica nulo.
+      - name: despesa_agua_esgoto
+        description: Gasto mensal da família com água e esgoto, em R$. Acima de R$ 5.000 fica nulo.
+
+  - name: prata_far_consolidado_serie
+    description: >
+      Situação de cada proposta do consolidado GFAR em cada remessa semanal, desde
+      12/03/2025. A remessa traz uma linha por movimento; fica o mais recente daquela
+      semana. Base do histórico da seleção no painel de perguntas.
+    config:
+      meta:
+        documentacao:
+          grao: Uma proposta em uma remessa semanal do consolidado.
+          chave: [dt_remessa, id_proposta]
+          fonte: HIS_MCIDADES_CONSOLIDADO, remessas semanais do SharePoint do FAR.
+          periodicidade: semanal
+          consumo: [ouro_far_consolidado_historico, ouro_far_proposta_trajetoria]
+    columns:
+      - name: dt_remessa
+        description: Data da remessa, tirada do nome do arquivo.
+        tests:
+          - not_null
+      - name: id_proposta
+        description: Identificação da proposta no GFAR.
+        tests:
+          - not_null
+      - name: co_fase
+        description: Fase da proposta no fluxo GFAR.
+      - name: co_etapa
+        description: Etapa dentro da fase.
+      - name: co_status
+        description: Status da proposta na etapa.
+      - name: co_fluxo
+        description: Fluxo da proposta (normal, calamidade RS, substituição de terreno, agravamento, cadastro 2025).
+      - name: dt_movimento
+        description: Data do movimento que define a situação na remessa.

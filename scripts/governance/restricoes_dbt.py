@@ -83,9 +83,7 @@ def carregar() -> dict[str, Restricoes]:
     return {nome: r for nome, r in resultado.items() if r.unicas or r.nao_nulas}
 
 
-def constraints_da_tabela(
-    restricoes: Restricoes, colunas_publicadas: set[str]
-) -> list[dict]:
+def constraints_da_tabela(restricoes: Restricoes, colunas_publicadas: set[str]) -> list[dict]:
     """`tableConstraints` no formato do OpenMetadata.
 
     Só declara chave sobre coluna que EXISTE no catálogo. Uma coluna omitida

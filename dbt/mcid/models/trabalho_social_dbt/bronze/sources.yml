@@ -55,3 +55,17 @@ sources:
           recuperar a portaria de TS de contratos que vieram sem ela na remessa mais recente.
         meta:
           caminho: staging/sharepoint/Trabalho Social/**/*.parquet
+      - name: far_empreendimentos_caixa_int040
+        description: >
+          INT040 do SFTP/GEFUS: empreendimentos do FAR operados pela CAIXA, uma remessa por mês
+          (a última na staging é de 29/11/2024, em GEFUS/ANTERIORES). O TS usa a tipologia.
+        meta:
+          caminho: snh/staging/sftp/fabrica/GEFUS/**/INT040_MinisterioCidades_FAR_CAIXA_EMPREENDIMENTOS_*.parquet
+          dag: minio_transform_dag
+      - name: fds_empreendimentos_caixa_int059
+        description: >
+          INT059 do SFTP/GEFUS: empreendimentos do FDS (Entidades) operados pela CAIXA, uma
+          remessa por mês. O TS usa a tipologia.
+        meta:
+          caminho: snh/staging/sftp/fabrica/GEFUS/**/INT059_MinisterioCidades_FDS_CAIXA_EMPREENDIMENTOS_*.parquet
+          dag: minio_transform_dag

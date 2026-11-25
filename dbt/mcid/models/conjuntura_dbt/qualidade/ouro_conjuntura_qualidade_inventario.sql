@@ -20,48 +20,51 @@
 -- MATERIALIZADO. O inventário é a interseção: model declarado mas ainda não
 -- construído fica de fora em vez de derrubar a execução — inclusive este, na
 -- primeira vez que roda.
-
 {% set relacoes = relacoes_do_produto('conjuntura_dbt') %}
 
 {% if relacoes %}
-with declarados (camada, schema_dado, model, materializacao) as (
-    values
-    {% for r in relacoes -%}
-    (
-        '{{ r["camada"] }}'::text,
-        '{{ r["schema"] }}'::text,
-        '{{ r["tabela"] }}'::text,
-        {% if r["materializacao"] == 'table' -%}
-            'table (full-refresh)'::text
-        {%- else -%}
-            '{{ r["materializacao"] }}'::text
-        {%- endif %}
-    ){{ "," if not loop.last }}
-    {% endfor %}
-)
-
-select
-    d.camada,
-    d.schema_dado,
-    d.model,
-    d.materializacao,
-    (xpath(
-        '/row/cnt/text()',
-        query_to_xml(
-            format('select count(*) as cnt from %I.%I', d.schema_dado, d.model),
-            false, true, ''
+    with
+        declarados(camada, schema_dado, model, materializacao) as (
+            values
+                {% for r in relacoes -%}
+                    (
+                        '{{ r["camada"] }}'::text,
+                        '{{ r["schema"] }}'::text,
+                        '{{ r["tabela"] }}'::text,
+                        {% if r["materializacao"] == 'table' -%} 'table (full-refresh)'::text
+                        {%- else -%} '{{ r["materializacao"] }}'::text
+                        {%- endif %}
+                    ){{ "," if not loop.last }}
+                {% endfor %}
         )
-    ))[1]::text::bigint as linhas,
-    current_timestamp   as medido_em
-from declarados as d
-join information_schema.tables as t
-    on t.table_schema = d.schema_dado
-   and t.table_name = d.model
-order by d.camada, d.model
+
+    select
+        d.camada,
+        d.schema_dado,
+        d.model,
+        d.materializacao,
+        (
+            xpath(
+                '/row/cnt/text()',
+                query_to_xml(
+                    format('select count(*) as cnt from %I.%I', d.schema_dado, d.model),
+                    false,
+                    true,
+                    ''
+                )
+            )
+        )[1]::text::bigint as linhas,
+        current_timestamp as medido_em
+    from declarados as d
+    join information_schema.tables as t on t.table_schema = d.schema_dado and t.table_name = d.model
+    order by d.camada, d.model
 {% else %}
-select
-    null::text as camada, null::text as schema_dado, null::text as model,
-    null::text as materializacao, null::bigint as linhas,
-    current_timestamp as medido_em
-where false
+    select
+        null::text as camada,
+        null::text as schema_dado,
+        null::text as model,
+        null::text as materializacao,
+        null::bigint as linhas,
+        current_timestamp as medido_em
+    where false
 {% endif %}

@@ -18,9 +18,7 @@ with
                 dt_assinatura_convenio
             ) as dt_assinatura_convenio,
             {{ var('schema_udfs') }}.parse_date_br(dt_termino_convenio) as dt_termino_convenio,
-            {{ var('schema_udfs') }}.parse_date_br(
-                dt_primeiro_relatorio
-            ) as dt_primeiro_relatorio,
+            {{ var('schema_udfs') }}.parse_date_br(dt_primeiro_relatorio) as dt_primeiro_relatorio,
             {{ var('schema_udfs') }}.parse_date_br(dt_ultimo_relatorio) as dt_ultimo_relatorio,
 
             -- Percentual de execução do TS
@@ -28,9 +26,7 @@ with
 
             -- Portaria
             nullif(trim(nu_portaria_ts), '') as nu_portaria_ts,
-            {{ var('schema_udfs') }}.parse_date_br(
-                dt_publ_portaria_ts
-            ) as dt_publicacao_portaria,
+            {{ var('schema_udfs') }}.parse_date_br(dt_publ_portaria_ts) as dt_publicacao_portaria,
 
             -- Referência temporal
             {{ var('schema_udfs') }}.parse_date_br(dh_movimento) as dt_movimento,

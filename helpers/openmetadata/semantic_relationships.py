@@ -36,18 +36,14 @@ def _plain_value(value: Any) -> Any:
 def _split_column_reference(reference: str) -> tuple[str, str, str]:
     parts = str(reference).split(".")
     if len(parts) != 3 or any(not part.strip() for part in parts):
-        raise ValueError(
-            "Referência de coluna inválida. Use schema.tabela.coluna: " f"{reference!r}"
-        )
+        raise ValueError(f"Referência de coluna inválida. Use schema.tabela.coluna: {reference!r}")
     return tuple(part.strip() for part in parts)  # type: ignore[return-value]
 
 
 def _split_model_reference(reference: str) -> tuple[str, str]:
     parts = str(reference).split(".")
     if len(parts) != 2 or any(not part.strip() for part in parts):
-        raise ValueError(
-            f"Referência de modelo inválida. Use schema.tabela: {reference!r}"
-        )
+        raise ValueError(f"Referência de modelo inválida. Use schema.tabela: {reference!r}")
     return parts[0].strip(), parts[1].strip()
 
 
@@ -101,26 +97,18 @@ def load_semantic_catalog(catalog_path: str) -> dict[str, Any]:
     for _, _, relationship in _iter_relationships(catalog):
         relationship_id = str(relationship.get("id", "")).strip()
         if not relationship_id or relationship_id in relationship_ids:
-            raise ValueError(
-                f"ID de relacionamento ausente ou duplicado: {relationship_id!r}"
-            )
+            raise ValueError(f"ID de relacionamento ausente ou duplicado: {relationship_id!r}")
         relationship_ids.add(relationship_id)
         for endpoint_name in ("source", "target"):
-            schema_name, table_name, _ = _split_column_reference(
-                relationship[endpoint_name]
-            )
+            schema_name, table_name, _ = _split_column_reference(relationship[endpoint_name])
             if f"{schema_name}.{table_name}" not in table_key_set:
-                raise ValueError(
-                    f"{relationship_id}: {endpoint_name} está fora do escopo."
-                )
+                raise ValueError(f"{relationship_id}: {endpoint_name} está fora do escopo.")
 
     search_group_ids: set[str] = set()
     for group in catalog.get("search_groups", []):
         group_id = str(group.get("id", "")).strip()
         if not group_id or group_id in search_group_ids:
-            raise ValueError(
-                f"ID de grupo de pesquisa ausente ou duplicado: {group_id!r}"
-            )
+            raise ValueError(f"ID de grupo de pesquisa ausente ou duplicado: {group_id!r}")
         search_group_ids.add(group_id)
         members = group.get("members", [])
         if members and int(group["member_count"]) != len(members):
@@ -130,18 +118,14 @@ def load_semantic_catalog(catalog_path: str) -> dict[str, Any]:
             if f"{schema_name}.{table_name}" not in table_key_set:
                 raise ValueError(f"{group_id}: membro fora do escopo: {member}")
         counts = group.get("members_by_schema")
-        if counts and sum(int(value) for value in counts.values()) != int(
-            group["member_count"]
-        ):
+        if counts and sum(int(value) for value in counts.values()) != int(group["member_count"]):
             raise ValueError(f"{group_id}: member_count diverge de members_by_schema.")
 
     join_logic = catalog.get("model_join_logic", {})
     models = join_logic.get("models", [])
     if int(join_logic.get("model_count", -1)) != len(models):
         raise ValueError("model_join_logic.model_count está inconsistente.")
-    if int(join_logic.get("join_count", -1)) != sum(
-        int(model["join_count"]) for model in models
-    ):
+    if int(join_logic.get("join_count", -1)) != sum(int(model["join_count"]) for model in models):
         raise ValueError("model_join_logic.join_count está inconsistente.")
     for model in models:
         schema_name, table_name = _split_model_reference(model["model"])
@@ -153,9 +137,7 @@ def load_semantic_catalog(catalog_path: str) -> dict[str, Any]:
     properties = catalog.get("openmetadata", {}).get("custom_properties", {})
     for property_name in ("markdown", "related_tables"):
         if not properties.get(property_name, {}).get("name"):
-            raise ValueError(
-                f"openmetadata.custom_properties.{property_name}.name é obrigatório."
-            )
+            raise ValueError(f"openmetadata.custom_properties.{property_name}.name é obrigatório.")
 
     return catalog
 
@@ -175,9 +157,7 @@ def validate_catalog_against_dbt(
             name = str(model["name"])
             if name in model_columns:
                 raise ValueError(f"Modelo dbt duplicado no inventário: {name}")
-            model_columns[name] = {
-                str(column["name"]) for column in model.get("columns", [])
-            }
+            model_columns[name] = {str(column["name"]) for column in model.get("columns", [])}
 
     table_keys = _scope_table_keys(catalog)
     for table_key in table_keys:
@@ -200,12 +180,8 @@ def validate_catalog_against_dbt(
         for reference in model.get("upstream_columns", []):
             validate_column(reference)
 
-    scoped_model_names = {
-        _split_model_reference(table_key)[1] for table_key in table_keys
-    }
-    column_count = sum(
-        len(model_columns[model_name]) for model_name in scoped_model_names
-    )
+    scoped_model_names = {_split_model_reference(table_key)[1] for table_key in table_keys}
+    column_count = sum(len(model_columns[model_name]) for model_name in scoped_model_names)
     if column_count != int(catalog["scope"]["column_count"]):
         raise ValueError("scope.column_count diverge das colunas documentadas no dbt.")
 
@@ -252,9 +228,7 @@ def _relationships_for_table(
         if table_key == source:
             result.append((section_label, relationship, "origem", relationship["target"]))
         elif table_key == target:
-            result.append(
-                (section_label, relationship, "destino", relationship["source"])
-            )
+            result.append((section_label, relationship, "destino", relationship["source"]))
     return result
 
 
@@ -283,21 +257,13 @@ def _coverage_text(relationship: dict[str, Any]) -> str:
     if common is not None:
         details.append(f"{common} chaves distintas em comum")
     if source.get("distinct_coverage") is not None:
-        details.append(
-            f"cobertura origem {100 * float(source['distinct_coverage']):.1f}%"
-        )
+        details.append(f"cobertura origem {100 * float(source['distinct_coverage']):.1f}%")
     if target.get("distinct_coverage") is not None:
-        details.append(
-            f"cobertura destino {100 * float(target['distinct_coverage']):.1f}%"
-        )
+        details.append(f"cobertura destino {100 * float(target['distinct_coverage']):.1f}%")
     if evidence.get("source_coverage") is not None:
-        details.append(
-            f"cobertura origem {100 * float(evidence['source_coverage']):.1f}%"
-        )
+        details.append(f"cobertura origem {100 * float(evidence['source_coverage']):.1f}%")
     if evidence.get("target_coverage") is not None:
-        details.append(
-            f"cobertura destino {100 * float(evidence['target_coverage']):.1f}%"
-        )
+        details.append(f"cobertura destino {100 * float(evidence['target_coverage']):.1f}%")
     return "; ".join(details)
 
 
@@ -499,7 +465,7 @@ def _patch_custom_properties_preserving_extension(
         ]
 
     response = metadata.client.patch(
-        path=(f"{metadata.get_suffix(entity)}/" f"{str(_plain_value(table.id))}"),
+        path=(f"{metadata.get_suffix(entity)}/{str(_plain_value(table.id))}"),
         data=json.dumps(operations, ensure_ascii=False),
     )
     if not response:
@@ -571,9 +537,7 @@ def sync_semantic_relationships(
                 name=markdown_definition["name"],
                 displayName=markdown_definition["display_name"],
                 description=markdown_definition["description"],
-                propertyType=metadata.get_property_type_ref(
-                    CustomPropertyDataTypes.MARKDOWN
-                ),
+                propertyType=metadata.get_property_type_ref(CustomPropertyDataTypes.MARKDOWN),
             ),
         )
     )
@@ -589,9 +553,7 @@ def sync_semantic_relationships(
                 propertyType=metadata.get_property_type_ref(
                     CustomPropertyDataTypes.ENTITY_REFERENCE_LIST
                 ),
-                customPropertyConfig=CustomPropertyConfig(
-                    config=EntityTypes(root=["table"])
-                ),
+                customPropertyConfig=CustomPropertyConfig(config=EntityTypes(root=["table"])),
             ),
         )
     )
@@ -618,8 +580,7 @@ def sync_semantic_relationships(
     # Evita publicar referências que ficaram obsoletas após alteração de schema.
     live_columns = {
         table_key: {
-            str(_plain_value(column.name))
-            for column in (getattr(table, "columns", None) or [])
+            str(_plain_value(column.name)) for column in (getattr(table, "columns", None) or [])
         }
         for table_key, table in tables.items()
     }
@@ -631,8 +592,7 @@ def sync_semantic_relationships(
             table_key = f"{schema_name}.{table_name}"
             if column_name not in live_columns[table_key]:
                 raise RuntimeError(
-                    "Coluna do catálogo ausente no OpenMetadata: "
-                    f"{relationship[endpoint_name]}"
+                    f"Coluna do catálogo ausente no OpenMetadata: {relationship[endpoint_name]}"
                 )
 
     markdown_name = markdown_definition["name"]
@@ -644,13 +604,9 @@ def sync_semantic_relationships(
             for related_key in _related_table_keys(catalog, table_key)
         ]
         existing = _extension_dict(table)
-        unchanged = str(
-            existing.get(markdown_name, "")
-        ) == markdown and _reference_identity_set(
+        unchanged = str(existing.get(markdown_name, "")) == markdown and _reference_identity_set(
             existing.get(related_name)
-        ) == _reference_identity_set(
-            related_payload
-        )
+        ) == _reference_identity_set(related_payload)
         if unchanged:
             summary["unchanged"] = int(summary["unchanged"]) + 1
             continue

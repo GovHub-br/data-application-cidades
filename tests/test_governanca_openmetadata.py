@@ -8,17 +8,16 @@ camada do schema daria `Tier1` e `Uso.Consumivel` às tabelas bronze dele.
 
 from __future__ import annotations
 
-import sys
+import tomllib
 from pathlib import Path
 
 from packaging.requirements import Requirement
 
-RAIZ = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(RAIZ / "scripts" / "governance"))
+import governanca_comum as comum
+import sincronizar_governanca as gov
+import sincronizar_openmetadata as estrutura
 
-import governanca_comum as comum  # noqa: E402
-import sincronizar_governanca as gov  # noqa: E402
-import sincronizar_openmetadata as estrutura  # noqa: E402
+RAIZ = Path(__file__).resolve().parents[1]
 
 DOMINIOS = comum.carregar("dominios.yml")
 
@@ -66,18 +65,14 @@ def test_bronze_do_far_nao_herda_a_camada_do_schema() -> None:
     bronzes = [nome for nome, camada in camadas.items() if camada == "bronze"]
     assert bronzes, "o catálogo precisa ter ao menos um modelo bronze"
     for nome in bronzes:
-        aplicadas = fqns(
-            gov.etiquetas_da_camada(DOMINIOS, "empreendimento_far", "bronze")
-        )
+        aplicadas = fqns(gov.etiquetas_da_camada(DOMINIOS, "empreendimento_far", "bronze"))
         assert "Uso.NaoConsumivel" in aplicadas, nome
 
 
 def test_toda_etiqueta_aplicada_esta_declarada() -> None:
     """Nada é pendurado sem existir: era o que fazia a etiquetagem falhar."""
     declaradas = {
-        f"{c['name']}.{t['name']}"
-        for c in DOMINIOS["classificacoes"]
-        for t in c["etiquetas"]
+        f"{c['name']}.{t['name']}" for c in DOMINIOS["classificacoes"] for t in c["etiquetas"]
     }
     nativas = set(DOMINIOS["classificacoes_nativas"])
     # Todos os produtos declarados, não uma lista fixa: com a lista fixa,
@@ -150,9 +145,7 @@ def test_diferenca_ignora_campos_que_a_api_acrescenta() -> None:
 
 
 def test_campo_que_mudou_gera_patch() -> None:
-    operacoes = comum.operacoes_de_diferenca(
-        {"description": "antiga"}, {"description": "nova"}
-    )
+    operacoes = comum.operacoes_de_diferenca({"description": "antiga"}, {"description": "nova"})
     assert operacoes == [{"op": "add", "path": "/description", "value": "nova"}]
 
 
@@ -167,9 +160,7 @@ def test_numerico_preserva_precisao_e_escala() -> None:
 
 
 def test_texto_sem_limite_nao_recebe_comprimento_inventado() -> None:
-    coluna = estrutura.om_column(
-        {"name": "nome", "data_type": "text", "description": "x"}
-    )
+    coluna = estrutura.om_column({"name": "nome", "data_type": "text", "description": "x"})
     assert coluna["dataType"] == "TEXT"
     assert "dataLength" not in coluna
 
@@ -194,9 +185,7 @@ def test_timestamp_com_fuso_e_distinguido_de_sem_fuso() -> None:
 
 
 def test_array_declara_o_tipo_interno() -> None:
-    coluna = estrutura.om_column(
-        {"name": "ids", "data_type": "integer[]", "description": "x"}
-    )
+    coluna = estrutura.om_column({"name": "ids", "data_type": "integer[]", "description": "x"})
     assert coluna["dataType"] == "ARRAY"
     assert coluna["arrayDataType"] == "INT"
 
@@ -274,10 +263,7 @@ def test_relacao_ja_aplicada_nao_gera_patch() -> None:
     entidade = {"id": "1", "name": "Funding", "fullyQualifiedName": "MCID.X.Funding"}
     desejado = [comum.relacao_de_termo(entidade)]
     assert (
-        comum.operacoes_de_diferenca(
-            {"relatedTerms": desejado}, {"relatedTerms": desejado}
-        )
-        == []
+        comum.operacoes_de_diferenca({"relatedTerms": desejado}, {"relatedTerms": desejado}) == []
     )
     outro = {"id": "2", "name": "Outro", "fullyQualifiedName": "MCID.X.Outro"}
     assert comum.operacoes_de_diferenca(
@@ -332,16 +318,11 @@ def test_descricao_escapada_pela_instancia_nao_conta_como_divergencia() -> None:
     gravado = "Filtra ic_credito&#61;&#39;0&#39; e o gráfico &#34;Evolução&#34;"
     curado = "Filtra ic_credito='0' e o gráfico \"Evolução\""
     assert comum.mesmo_texto(gravado, curado)
-    assert (
-        comum.operacoes_de_diferenca({"description": gravado}, {"description": curado})
-        == []
-    )
+    assert comum.operacoes_de_diferenca({"description": gravado}, {"description": curado}) == []
 
 
 def test_coluna_so_com_descricao_escapada_nao_e_reescrita() -> None:
-    atual = [
-        {"name": "obs", "dataType": "TEXT", "description": "vale ic&#61;&#39;1&#39;"}
-    ]
+    atual = [{"name": "obs", "dataType": "TEXT", "description": "vale ic&#61;&#39;1&#39;"}]
     desejada = [{"name": "obs", "dataType": "TEXT", "description": "vale ic='1'"}]
     assert not estrutura.colunas_divergem(atual, desejada)
 
@@ -418,9 +399,7 @@ def test_fqn_de_container_cita_segmento_com_ponto() -> None:
 def test_fqn_de_container_sem_ponto_fica_intacto() -> None:
     import sincronizar_lake as lake
 
-    fqn = lake.fqn_do_container(
-        "Cidades - MinIO", ("data-lake-mcid", "staging", "abecip")
-    )
+    fqn = lake.fqn_do_container("Cidades - MinIO", ("data-lake-mcid", "staging", "abecip"))
     assert fqn == "Cidades - MinIO.data-lake-mcid.staging.abecip"
 
 
@@ -464,9 +443,7 @@ def test_linhagem_de_coluna_segue_a_expressao_e_nao_o_nome() -> None:
         "from base group by periodo"
     )
     schema = {"silver_x": {"periodo": "TEXT", "valor": "TEXT", "variavel_id": "TEXT"}}
-    assert lin._origens("data_referencia", sql, schema, "gold_x") == {
-        ("silver_x", "periodo")
-    }
+    assert lin._origens("data_referencia", sql, schema, "gold_x") == {("silver_x", "periodo")}
     assert lin._origens("custo_medio_m2", sql, schema, "gold_x") == {
         ("silver_x", "valor"),
         ("silver_x", "variavel_id"),
@@ -574,9 +551,7 @@ def test_coluna_publicada_carrega_a_restricao() -> None:
     import restricoes_dbt as r
 
     rest = r.Restricoes(unicas={"apf"}, nao_nulas={"apf"})
-    coluna = estrutura.om_column(
-        {"name": "apf", "data_type": "text", "description": "x"}, rest
-    )
+    coluna = estrutura.om_column({"name": "apf", "data_type": "text", "description": "x"}, rest)
     assert coluna["constraint"] == "NOT_NULL"
 
 
@@ -585,9 +560,7 @@ def test_chave_nao_aparece_nos_dois_lugares() -> None:
     import restricoes_dbt as r
 
     rest = r.Restricoes(unicas={"apf"}, nao_nulas={"apf"})
-    coluna = estrutura.om_column(
-        {"name": "apf", "data_type": "text", "description": "x"}, rest
-    )
+    coluna = estrutura.om_column({"name": "apf", "data_type": "text", "description": "x"}, rest)
     assert coluna["constraint"] != "PRIMARY_KEY"
     assert r.constraints_da_tabela(rest, {"apf"})[0]["constraintType"] == "PRIMARY_KEY"
 
@@ -610,9 +583,7 @@ def test_recipes_cobrem_os_schemas_declarados() -> None:
     declarados = {s["name"] for s in comum.carregar("schemas.yml")["schemas"]}
     for nome in ("postgres_metadata", "postgres_profiler", "postgres_classifier"):
         config = _recipe(nome)["source"]["sourceConfig"]["config"]
-        na_recipe = {
-            padrao.strip("^$") for padrao in config["schemaFilterPattern"]["includes"]
-        }
+        na_recipe = {padrao.strip("^$") for padrao in config["schemaFilterPattern"]["includes"]}
         assert na_recipe == declarados, f"{nome} diverge de schemas.yml"
 
 
@@ -634,9 +605,8 @@ LOCK_DA_IMAGEM = RAIZ / "infra" / "docker" / "airflow" / "requirements.lock.txt"
 
 
 def _pin_do_pacote_de_ingestao() -> Requirement:
-    linhas = (RAIZ / "requirements.txt").read_text(encoding="utf-8").splitlines()
-    linha = next(x for x in linhas if x.startswith("openmetadata-ingestion"))
-    return Requirement(linha)
+    runtime = tomllib.loads((RAIZ / "pyproject.toml").read_text())["dependency-groups"]["runtime"]
+    return Requirement(next(x for x in runtime if x.startswith("openmetadata-ingestion")))
 
 
 def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
@@ -646,7 +616,7 @@ def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
     inicializava ali. Na imagem, o conector roda no Airflow da própria task, o
     mesmo que escreveu o banco de metadados.
     """
-    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    dag = (RAIZ / "dags" / "snh" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
     assert "task.virtualenv" not in dag
     (versao,) = _pin_do_pacote_de_ingestao().specifier
     lock = LOCK_DA_IMAGEM.read_text(encoding="utf-8").splitlines()
@@ -654,8 +624,10 @@ def test_ingestao_roda_na_imagem_e_nao_em_virtualenv() -> None:
 
 
 def test_pacote_de_ingestao_acompanha_a_linha_do_servidor() -> None:
-    """Cliente e servidor de linhas diferentes divergem no schema das entidades."""
-    assert str(_pin_do_pacote_de_ingestao().specifier).startswith("==1.13.3")
+    """Cliente e servidor de linhas diferentes divergem no schema das entidades, e o SDK
+    recusa rodar ("Server version is 2.0.7 vs. Client version 1.13"). O servidor está na
+    2.0.7: subiu, suba aqui e rode `make lock`."""
+    assert str(_pin_do_pacote_de_ingestao().specifier).startswith("==2.0.7")
 
 
 def test_pacote_de_ingestao_nao_traz_outro_airflow() -> None:
@@ -668,43 +640,16 @@ def test_pacote_de_ingestao_nao_traz_outro_airflow() -> None:
     assert "pii-processor" not in extras
 
 
-def test_lock_da_imagem_acompanha_o_requirements() -> None:
-    """A imagem instala o lock, não o requirements.txt.
-
-    Um pin mudado só no requirements.txt nunca chegaria à imagem.
-    """
-    travados = [
-        Requirement(linha)
-        for linha in LOCK_DA_IMAGEM.read_text(encoding="utf-8").splitlines()
-        if linha and not linha.startswith(("#", " "))
-    ]
-    lock = {r.name.lower(): r for r in travados}
-    for linha in (RAIZ / "requirements.txt").read_text(encoding="utf-8").splitlines():
-        if not linha or linha.startswith("#") or "==" not in linha:
-            continue
-        pedido = Requirement(linha)
-        travado = lock[pedido.name.lower()]
-        assert travado.specifier == pedido.specifier, (
-            f"{pedido.name}: requirements.txt pede {pedido.specifier}, lock tem "
-            f"{travado.specifier}. Rode infra/docker/airflow/compile-lock.sh."
-        )
-
-
 def test_conector_do_airflow_nao_bloqueia_o_catalogo() -> None:
     """A corrente é sequencial; nada depende de `airflow_metadata`.
 
     Na frente da fila, uma falha dele deixava `postgres_metadata` e
     `dbt_metadata` em `upstream_failed` e o catálogo do banco parava.
     """
-    import sys
-
-    sys.path.insert(0, str(RAIZ / "helpers"))
     from openmetadata.config import RECIPE_PIPELINE
 
     assert RECIPE_PIPELINE[-1] == "airflow_metadata"
-    assert RECIPE_PIPELINE.index("postgres_metadata") < RECIPE_PIPELINE.index(
-        "dbt_metadata"
-    )
+    assert RECIPE_PIPELINE.index("postgres_metadata") < RECIPE_PIPELINE.index("dbt_metadata")
 
 
 # ── governança que o conector dbt carrega ───────────────────────────────────
@@ -756,9 +701,7 @@ def test_toda_recipe_recebe_os_marcadores_que_pede() -> None:
     exercitado.
     """
     import re
-    import sys
 
-    sys.path.insert(0, str(RAIZ / "helpers"))
     from openmetadata.config import _RECIPES_DEFINIDAS
 
     marcador = re.compile(r"\$\{(\w+)\}")
@@ -781,12 +724,8 @@ def test_posicao_da_coluna_entra_na_comparacao() -> None:
     para sempre sem erro nenhum. Aconteceu com `ordinalPosition`.
     """
     assert "ordinalPosition" in estrutura.CAMPOS_DE_COLUNA
-    atual = [
-        {"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": None}
-    ]
-    desejada = [
-        {"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": 3}
-    ]
+    atual = [{"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": None}]
+    desejada = [{"name": "a", "dataType": "TEXT", "description": "x", "ordinalPosition": 3}]
     assert estrutura.colunas_divergem(atual, desejada)
 
 
@@ -800,15 +739,13 @@ def test_governanca_roda_depois_do_conector() -> None:
     domínio, produto e etiqueta sobreviveram; certificação não. A task de
     reaplicação é o que devolve, e tem de ser a ÚLTIMA.
     """
-    dag = (RAIZ / "dags" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
+    dag = (RAIZ / "dags" / "snh" / "openmetadata_ingestion_dag.py").read_text(encoding="utf-8")
     assert "reaplicar_governanca" in dag
     assert "sincronizar_governanca.py" in dag
     # a reaplicação é o destino final do encadeamento
     assert "anterior >> governanca" in dag
     corpo = dag[dag.index("def _encadear") :]
-    assert corpo.index("anterior >> governanca") > corpo.index(
-        "for task_id in RECIPE_PIPELINE"
-    )
+    assert corpo.index("anterior >> governanca") > corpo.index("for task_id in RECIPE_PIPELINE")
 
 
 def test_scripts_estao_montados_no_container() -> None:
@@ -861,8 +798,7 @@ def test_dag_de_origem_sobe_pela_linhagem() -> None:
     assert mapa, "nenhum model recebeu DAG de origem"
     camadas = gov.camadas_por_modelo()
     por_camada = {
-        c: sum(1 for m in mapa if camadas.get(m) == c)
-        for c in ("bronze", "silver", "gold")
+        c: sum(1 for m in mapa if camadas.get(m) == c) for c in ("bronze", "silver", "gold")
     }
     # a propagação tem de alcançar as três camadas, não só a Bronze
     assert por_camada["silver"] > 0 and por_camada["gold"] > 0, por_camada
@@ -935,9 +871,7 @@ def test_conjuntura_declara_prefixos_para_nao_catalogar_tabela_alheia() -> None:
     # Toda origem da bronze do conjuntura tem de estar declarada.
     raiz = RAIZ / "dbt" / "mcid" / "models" / "conjuntura_dbt" / "bronze"
     sem_prefixo = [
-        p.stem
-        for p in raiz.rglob("*.sql")
-        if not any(p.stem.startswith(x) for x in prefixos)
+        p.stem for p in raiz.rglob("*.sql") if not any(p.stem.startswith(x) for x in prefixos)
     ]
     assert not sem_prefixo, f"origem da bronze sem prefixo declarado: {sem_prefixo}"
 
@@ -1042,9 +976,7 @@ def test_prefixo_de_tabela_nao_colide_entre_produtos() -> None:
     resolução por tabela veio corrigir.
     """
     por_schema = gov.produtos_por_schema(DOMINIOS)
-    prefixos = {
-        p["name"]: tuple(p.get("prefixos_de_tabela") or []) for p in DOMINIOS["produtos"]
-    }
+    prefixos = {p["name"]: tuple(p.get("prefixos_de_tabela") or []) for p in DOMINIOS["produtos"]}
     for nome, produtos in por_schema.items():
         for produto in produtos:
             for outro in produtos:
@@ -1090,9 +1022,7 @@ class _OMDeTeste:
 
 
 def test_ativo_sem_dominio_recebe_o_do_servico_e_o_resto_fica() -> None:
-    habitacao = [
-        {"id": "d-hab", "type": "domain", "fullyQualifiedName": "MCid.Habitacao"}
-    ]
+    habitacao = [{"id": "d-hab", "type": "domain", "fullyQualifiedName": "MCid.Habitacao"}]
     om = _OMDeTeste(
         {
             "databaseSchemas": [
@@ -1152,3 +1082,289 @@ def test_produto_novo_e_criado_com_dominio_pelo_fqn() -> None:
     for rota, corpo in om.criados:
         assert rota == "dataProducts"
         assert all(isinstance(d, str) for d in corpo["domains"]), corpo["domains"]
+
+
+# ── produto sem prefixo ─────────────────────────────────────────────────────
+class _OMDoLaco:
+    """O que `catalogar_tabelas` usa do cliente, com as tabelas da ouro em memória."""
+
+    offline = False
+
+    def __init__(self, tabelas: list[dict]) -> None:
+        self.tabelas = tabelas
+        self.patches: list[tuple[str, list[dict]]] = []
+        self.conformes = 0
+        self.atualizados = 0
+        self.falhas: list[str] = []
+
+    def existe(self, rota: str, fqn: str, campos: str | None = None) -> dict:
+        return {
+            "id": f"{rota}:{fqn}",
+            "name": fqn.split(".")[-1],
+            "fullyQualifiedName": fqn,
+        }
+
+    def listar(self, rota: str, parametros: dict) -> list[dict]:
+        return self.tabelas if parametros["databaseSchema"].endswith(".ouro") else []
+
+    def patch(self, rota: str, ident: str, operacoes: list[dict], _rotulo: str) -> None:
+        self.patches.append((ident, operacoes))
+
+
+def _tabela_da_ouro(nome: str) -> dict:
+    return {
+        "id": nome,
+        "name": nome,
+        "fullyQualifiedName": f"Cidades.cidades.ouro.{nome}",
+        "tags": [],
+        "columns": [],
+        "domains": [],
+        "dataProducts": [],
+        "extension": {},
+    }
+
+
+def _produtos_gravados(
+    monkeypatch, catalogo: dict[str, str], tabelas: list[str]
+) -> dict[str, list[str]]:
+    """Roda a catalogação com conjuntura e dois produtos sem prefixo na ouro.
+
+    `mcmv_historico` e `reloginho` são produtos de mentira, sem prefixo de tabela (os
+    reais saíram do repositório): o que importa é o caso do produto sem trava de nome.
+    Devolve, por tabela, os produtos gravados nela, na ordem do laço.
+    """
+    monkeypatch.setattr(gov, "produtos_por_modelo", lambda: catalogo)
+    monkeypatch.setattr(gov, "camadas_por_modelo", lambda: {})
+    conjuntura = next(p for p in DOMINIOS["produtos"] if p["name"] == "conjuntura")
+    sem_prefixo = {k: v for k, v in conjuntura.items() if k not in ("prefixos_de_tabela", "termos")}
+    dominios = dict(
+        DOMINIOS,
+        produtos=[dict(conjuntura, schemas=["ouro"])]
+        + [
+            dict(sem_prefixo, name=n, display_name=n, schemas=["ouro"])
+            for n in ("mcmv_historico", "reloginho")
+        ],
+    )
+    om = _OMDoLaco([_tabela_da_ouro(nome) for nome in tabelas])
+    gov.catalogar_tabelas(
+        om, _SemDonos(), dominios, comum.carregar("termos_mcid.yml"), "Cidades", "cidades"
+    )
+    gravados: dict[str, list[str]] = {}
+    for ident, operacoes in om.patches:
+        for op in operacoes:
+            if op["path"] == "/dataProducts":
+                gravados.setdefault(ident, []).append(op["value"][0]["name"])
+    return gravados
+
+
+def test_produto_sem_prefixo_nao_leva_tabela_de_outro_produto(monkeypatch) -> None:
+    """Sem prefixo não há trava de nome; o catálogo é a única fonte.
+
+    `mcmv_historico` e `reloginho` não declaram prefixo e não têm modelo no
+    catálogo semântico. Antes, os dois levavam toda tabela fora do catálogo,
+    inclusive a que o `conjuntura` acabara de catalogar pelo prefixo: 309
+    tabelas trocavam de produto a cada execução, e o volume de PATCH deixava
+    a task exposta aos congelamentos da instância.
+    """
+    gravados = _produtos_gravados(
+        monkeypatch,
+        catalogo={},
+        tabelas=["ouro_conjuntura_qualidade_completude", "ouro_hist_serie_mensal"],
+    )
+    assert gravados == {"ouro_conjuntura_qualidade_completude": ["conjuntura"]}
+
+
+def test_produto_sem_prefixo_cataloga_o_que_o_catalogo_declara(monkeypatch) -> None:
+    gravados = _produtos_gravados(
+        monkeypatch,
+        catalogo={"ouro_hist_serie_mensal": "mcmv_historico"},
+        tabelas=["ouro_hist_serie_mensal"],
+    )
+    assert gravados == {"ouro_hist_serie_mensal": ["mcmv_historico"]}
+
+
+# ── instância que não responde ──────────────────────────────────────────────
+class _Resposta:
+    ok = True
+    status_code = 200
+    text = ""
+
+    def json(self) -> dict:
+        return {}
+
+
+class _SessaoQueCongela:
+    """Levanta `Timeout` nas primeiras `sem_resposta` chamadas e depois responde."""
+
+    def __init__(self, sem_resposta: int) -> None:
+        self.sem_resposta = sem_resposta
+        self.chamadas = 0
+
+    def request(self, metodo: str, url: str, **kwargs) -> _Resposta:
+        self.chamadas += 1
+        if self.chamadas <= self.sem_resposta:
+            raise comum.requests.Timeout("a instância congelou")
+        return _Resposta()
+
+
+def _cliente(sessao: _SessaoQueCongela) -> comum.ClienteOM:
+    om = comum.ClienteOM("https://om.exemplo", "token", confirmar=True)
+    om.sessao = sessao
+    om.esperar = lambda _segundos: None
+    return om
+
+
+TAGS_VAZIAS = [{"op": "add", "path": "/tags", "value": []}]
+
+
+def _catalogar_conjuntura(om, capsys) -> str:
+    conjuntura = next(p for p in DOMINIOS["produtos"] if p["name"] == "conjuntura")
+    dominios = dict(DOMINIOS, produtos=[dict(conjuntura, schemas=["ouro"])])
+    gov.catalogar_tabelas(
+        om, _SemDonos(), dominios, comum.carregar("termos_mcid.yml"), "Cidades", "cidades"
+    )
+    return capsys.readouterr().out
+
+
+def test_offline_so_anuncia_o_que_faria(capsys) -> None:
+    om = _OMDoLaco([_tabela_da_ouro("ouro_conjuntura_qualidade_completude")])
+    om.offline = True
+    saida = _catalogar_conjuntura(om, capsys)
+    assert om.patches == [] and om.atualizados == 1
+    assert "[offline] ouro: catalogaria as tabelas do produto conjuntura" in saida
+
+
+def test_produto_ausente_vira_falha_e_nada_e_gravado(capsys) -> None:
+    om = _OMDoLaco([_tabela_da_ouro("ouro_conjuntura_qualidade_completude")])
+    om.existe = lambda rota, fqn, campos=None: None if rota == "dataProducts" else {"id": fqn}
+    _catalogar_conjuntura(om, capsys)
+    assert om.patches == []
+    assert om.falhas == ["domínio ou produto ausente para conjuntura; tabelas não catalogadas"]
+
+
+def test_tabela_fora_do_prefixo_nao_e_catalogada(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(gov, "produtos_por_modelo", lambda: {})
+    om = _OMDoLaco(
+        [_tabela_da_ouro(n) for n in ("ouro_conjuntura_qualidade_completude", "ouro_hist_x")]
+    )
+    saida = _catalogar_conjuntura(om, capsys)
+    assert "ouro_hist_x" in saida and "não catalogadas" in saida
+    assert {ident for ident, _ in om.patches} == {"ouro_conjuntura_qualidade_completude"}
+
+
+def test_requisicao_sem_resposta_e_repetida() -> None:
+    """Um congelamento da instância não pode derrubar o sync.
+
+    Em 09/11 a escrita foi aplicada às 05:18:06 e a resposta nunca chegou; o
+    `ReadTimeout` abortou a task e deixou sem governança os três produtos que
+    vinham depois no laço. Repetir é seguro: o PATCH leva o valor inteiro.
+    """
+    sessao = _SessaoQueCongela(sem_resposta=1)
+    om = _cliente(sessao)
+    om.patch("tables", "t1", TAGS_VAZIAS, "ouro.x")
+
+    assert sessao.chamadas == 2
+    assert (om.atualizados, om.falhas) == (1, [])
+
+
+def test_sem_resposta_em_toda_tentativa_vira_falha_da_entidade_e_segue() -> None:
+    sessao = _SessaoQueCongela(sem_resposta=10_000)
+    om = _cliente(sessao)
+
+    om.patch("tables", "t1", TAGS_VAZIAS, "ouro.x")
+    assert om.listar("tables", {}) == []
+
+    assert sessao.chamadas == 2 * comum.TENTATIVAS
+    assert len(om.falhas) == 2 and om.atualizados == 0
+    assert om.resumo() == 1, "o sync ainda tem de terminar com erro"
+
+
+# ── linhagem lake → Bronze ──────────────────────────────────────────────────
+class _OMDaLinhagem:
+    """Responde `existe` só para os FQNs que a instância tem."""
+
+    confirmar = True
+    modo = "confirmar"
+
+    def __init__(self, existentes: set[str]) -> None:
+        self.existentes = existentes
+        self.procurados: list[str] = []
+        self.ligadas: list[str] = []
+        self.atualizados = self.conformes = 0
+        self.falhas: list[str] = []
+        self.avisos: list[str] = []
+
+    def existe(self, rota: str, fqn: str, campos: str = "") -> dict | None:
+        self.procurados.append(fqn)
+        return {"id": fqn} if fqn in self.existentes else None
+
+    def montante(self, tipo: str, ident: str) -> set[str]:
+        return set()
+
+    def ligar(self, origem: str, _tipo: str, destino: str, *_resto: object) -> None:
+        self.ligadas.append(destino)
+
+
+def _ligar(monkeypatch, modelo: str, existentes: set[str], **mapas) -> _OMDaLinhagem:
+    import sincronizar_lake as lake
+
+    monkeypatch.setattr(lake, "schema_por_modelo", lambda: mapas.get("schemas", {}))
+    monkeypatch.setattr(lake, "nomes_no_banco", lambda: mapas.get("nomes", {}))
+    arquivo = lake.Arquivo("f", "staging/x/f.parquet", "lake", "", bronze=[modelo])
+    om = _OMDaLinhagem(existentes)
+    lake.sincronizar_linhagem(
+        om, [arquivo], {("lake", "staging", "x", "f.parquet"): "c1"}, "S", "B"
+    )
+    return om
+
+
+def test_bronze_fora_do_catalogo_e_procurada_no_schema_bronze(monkeypatch) -> None:
+    """Produto novo entra no dbt antes de entrar no catálogo semântico.
+
+    Sem o schema do catálogo, o sync nem perguntava à instância e relatava
+    "não encontrado" para tabela que existia — 14 falhas da Linha Financiada e
+    do Reforma Casa Brasil numa execução só.
+    """
+    om = _ligar(monkeypatch, "bronze_nova", {"S.B.bronze.bronze_nova"})
+    assert om.ligadas == ["S.B.bronze.bronze_nova"]
+    assert not om.falhas
+
+
+def test_bronze_com_alias_e_procurada_pelo_nome_no_banco(monkeypatch) -> None:
+    om = _ligar(
+        monkeypatch,
+        "bronze_model",
+        {"S.B.bronze.bronze_apelido"},
+        nomes={"bronze_model": "bronze_apelido"},
+    )
+    assert om.procurados == ["S.B.bronze.bronze_apelido"]
+    assert not om.falhas
+
+
+def test_bronze_que_ainda_nao_existe_e_aviso_e_nao_falha(monkeypatch) -> None:
+    """Arquivo no lake sem Bronze criada pelo dbt não derruba a DAG.
+
+    Não há para onde apontar a seta, mas o catálogo não está errado: a seta
+    entra na primeira execução depois que a tabela existir. Sumir do log
+    também não pode — o aviso diz qual tabela falta.
+    """
+    om = _ligar(monkeypatch, "bronze_ausente", set())
+    assert not om.falhas and not om.ligadas
+    assert len(om.avisos) == 1 and "bronze.bronze_ausente" in om.avisos[0]
+
+
+def test_aviso_aparece_no_resumo_sem_falhar_a_execucao(capsys) -> None:
+    om = comum.ClienteOM("http://om", "", confirmar=True)
+    om.avisos.append("tabela x não está no OpenMetadata")
+    assert om.resumo() == 0
+    assert "tabela x não está no OpenMetadata" in capsys.readouterr().out
+
+
+def test_alias_so_vale_dentro_do_config() -> None:
+    import sincronizar_lake as lake
+
+    nomes = lake.nomes_no_banco()
+    modelo = "bronze_sharepoint_fgts_canal_tab_ao_1_tab_empreendimentos_posicoes"
+    assert nomes[modelo] == "bronze_sharepoint_fgts_empreendimentos_posicoes"
+    # "alias" aparece num comentário deste SQL, não no config()
+    assert "bronze_geavo_fgts_pf" not in nomes

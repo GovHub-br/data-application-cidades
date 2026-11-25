@@ -5,17 +5,17 @@
 -- cadastro (identificados pela CAIXA; sem valor FAR, então sem % financeiro).
 -- Calendário contínuo do primeiro sinal do APF (contratação, liberação ou medição) até
 -- a última competência disponível em qualquer fonte.
---   Financeiro: livro-razão MONIT (valor do mês e acumulado); % sobre o valor FAR.
---   Físico: MONIT; sem MONIT no mês, CAIXA; sem nenhum, o último valor arrastado.
---           `fonte_fisica` diz de onde veio cada ponto. A CAIXA manda `exec` = 0 para
---           o Novo MCMV antes de começar a medi-lo, então só vale a partir da primeira
---           competência com algum APF do cadastro acima de zero.
---   Previsto: só o MONIT informa. Mês sem MONIT entre dois observados é interpolado
---           em linha reta; depois do último observado, o último valor é arrastado.
---           `fonte_prevista` diz qual dos casos.
---   Marcos: `dt_inicio_obra` do cadastro encerra a cláusula suspensiva;
---           `mes_inicio_fisico` é o primeiro mês com físico realizado acima de zero.
---   CAIXA: colunas `_caixa` como vieram no mês, só para conciliação.
+-- Financeiro: livro-razão MONIT (valor do mês e acumulado); % sobre o valor FAR.
+-- Físico: MONIT; sem MONIT no mês, CAIXA; sem nenhum, o último valor arrastado.
+-- `fonte_fisica` diz de onde veio cada ponto. A CAIXA manda `exec` = 0 para
+-- o Novo MCMV antes de começar a medi-lo, então só vale a partir da primeira
+-- competência com algum APF do cadastro acima de zero.
+-- Previsto: só o MONIT informa. Mês sem MONIT entre dois observados é interpolado
+-- em linha reta; depois do último observado, o último valor é arrastado.
+-- `fonte_prevista` diz qual dos casos.
+-- Marcos: `dt_inicio_obra` do cadastro encerra a cláusula suspensiva;
+-- `mes_inicio_fisico` é o primeiro mês com físico realizado acima de zero.
+-- CAIXA: colunas `_caixa` como vieram no mês, só para conciliação.
 with
     cadastro as (
         select
@@ -79,31 +79,26 @@ with
         select max(mes) as mes
         from
             (
-                select max(competencia) as mes from obra
+                select max(competencia) as mes
+                from obra
                 union all
-                select max(competencia) from caixa
+                select max(competencia)
+                from caixa
                 union all
-                select max(mes) from financeiro
+                select max(mes)
+                from financeiro
             ) t
     ),
 
     inicio as (
-        select
-            u.apf,
-            least(
-                date_trunc('month', c.dt_contratacao)::date, f.mes, o.mes, x.mes
-            ) as mes
+        select u.apf, least(date_trunc('month', c.dt_contratacao)::date, f.mes, o.mes, x.mes) as mes
         from universo u
         left join cadastro c on c.apf = u.apf
         left join
             (select apf_raiz, min(mes) as mes from financeiro group by 1) f
             on f.apf_raiz = left(u.apf, 6)
-        left join
-            (select apf, min(competencia) as mes from obra group by 1) o
-            on o.apf = u.apf
-        left join
-            (select apf, min(competencia) as mes from caixa group by 1) x
-            on x.apf = u.apf
+        left join (select apf, min(competencia) as mes from obra group by 1) o on o.apf = u.apf
+        left join (select apf, min(competencia) as mes from caixa group by 1) x on x.apf = u.apf
     ),
 
     calendario as (
@@ -164,14 +159,10 @@ with
     agrupado as (
         select
             *,
-            count(pct_realizada_obs) over (
-                partition by apf order by mes
-            ) as grp_realizada,
+            count(pct_realizada_obs) over (partition by apf order by mes) as grp_realizada,
             count(pct_prevista_obs) over (partition by apf order by mes) as grp_prevista,
             -- Contado de trás para frente, agrupa cada mês com o PRÓXIMO observado
-            count(pct_prevista_obs) over (
-                partition by apf order by mes desc
-            ) as grp_prevista_prox,
+            count(pct_prevista_obs) over (partition by apf order by mes desc) as grp_prevista_prox,
             count(co_situacao_obs) over (partition by apf order by mes) as grp_situacao
         from observado
     ),
@@ -186,9 +177,7 @@ with
             first_value(pct_prevista_obs) over (
                 partition by apf, grp_prevista order by mes
             ) as prevista_ant,
-            first_value(mes) over (
-                partition by apf, grp_prevista order by mes
-            ) as mes_prevista_ant,
+            first_value(mes) over (partition by apf, grp_prevista order by mes) as mes_prevista_ant,
             first_value(pct_prevista_obs) over (
                 partition by apf, grp_prevista_prox order by mes desc
             ) as prevista_prox,
@@ -218,8 +207,7 @@ with
                             + extract(month from age(mes, mes_prevista_ant))
                         )
                         / (
-                            extract(year from age(mes_prevista_prox, mes_prevista_ant))
-                            * 12
+                            extract(year from age(mes_prevista_prox, mes_prevista_ant)) * 12
                             + extract(month from age(mes_prevista_prox, mes_prevista_ant))
                         ),
                         2
@@ -280,8 +268,7 @@ select
     c.vr_emprestimo_far,
     c.vr_total_investimento,
     case
-        when c.vr_emprestimo_far > 0
-        then round(p.vr_liberado_acum / c.vr_emprestimo_far * 100, 2)
+        when c.vr_emprestimo_far > 0 then round(p.vr_liberado_acum / c.vr_emprestimo_far * 100, 2)
     end as pct_financeiro,
 
     -- Conciliação com a CAIXA

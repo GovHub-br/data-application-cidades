@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# Gera infra/docker/airflow/requirements.lock.txt.
+# Gera infra/docker/airflow/requirements.lock.txt e, a partir dele, o uv.lock.
 #
 # Por que existe: o `pip install` resolve um pacote de cada vez e nao revisa
 # decisoes anteriores. A imagem oficial do Airflow ja chega com ~440 pacotes
 # instalados, e o openmetadata-ingestion tem opiniao sobre a versao de varios
-# deles. Instalar `requirements.txt` solto por cima rebaixa alguns e deixa o
+# deles. Instalar o grupo `runtime` solto por cima rebaixa alguns e deixa o
 # ambiente internamente inconsistente -- o `uv pip check` do Dockerfile pega
 # isso e derruba o build.
 #
@@ -13,11 +13,15 @@
 # inteiro da imagem base, num unico passe. O resultado vira este lock, que o
 # Dockerfile instala literalmente. Mesmo modelo do data-application-minc.
 #
-# Rode sempre que mexer em requirements.txt ou subir AIRFLOW_VERSION, e
-# commite o lock junto com a mudanca.
+# Depois, as versoes deste lock viram o `constraint-dependencies` do
+# pyproject.toml e o uv.lock e refeito: o ambiente dos testes e da CI fica com
+# as mesmas versoes da imagem (ADR-0014).
+#
+# Rode (`make lock`) sempre que mexer no grupo `runtime` do pyproject.toml ou
+# subir AIRFLOW_VERSION, e commite o pyproject, o lock e o uv.lock juntos.
 #
 # O lock atual entra como preferencia: o resolvedor so troca a versao de um
-# pacote quando o requirements.txt obriga. UPGRADE=1 descarta a preferencia e
+# pacote quando o grupo `runtime` obriga. UPGRADE=1 descarta a preferencia e
 # atualiza tudo -- faca isso num PR proprio.
 #
 # Uso:
@@ -31,7 +35,7 @@ PYTHON_VERSION="${PYTHON_VERSION:-3.11}"
 BASE_IMAGE="apache/airflow:${AIRFLOW_VERSION}-python${PYTHON_VERSION}"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-requirements="${repo_root}/requirements.txt"
+pyproject="${repo_root}/pyproject.toml"
 lockfile="${repo_root}/infra/docker/airflow/requirements.lock.txt"
 workdir="$(mktemp -d)"
 # O container roda como o usuario `airflow` (UID 50000), que precisa gravar aqui.
@@ -51,7 +55,7 @@ echo "==> Pacotes ja presentes na imagem base: $(wc -l < "${workdir}/base_pkgs.t
 
 {
   echo "apache-airflow==${AIRFLOW_VERSION}"
-  cat "${requirements}"
+  python3 -c 'import sys, tomllib; print("\n".join(tomllib.load(open(sys.argv[1], "rb"))["dependency-groups"]["runtime"]))' "${pyproject}"
   echo
   # Os nomes da base entram SEM pin: o resolvedor escolhe versoes que fechem
   # com o que estamos pedindo. Sao excluidos os que ja pinamos acima e os do
@@ -89,9 +93,37 @@ docker run --rm \
   echo "# GERADO POR infra/docker/airflow/compile-lock.sh -- NAO EDITE A MAO."
   echo "#"
   echo "# Resolvido contra ${BASE_IMAGE}."
-  echo "# Para mudar uma dependencia, edite requirements.txt e rode o script."
+  echo "# Para mudar uma dependencia, edite o grupo runtime do pyproject.toml e rode o script."
   echo "#"
   grep -v '^#' "${workdir}/lock.out"
 } > "${lockfile}"
 
 echo "==> Escrito ${lockfile#"${repo_root}/"} com $(grep -cE '^[a-zA-Z]' "${lockfile}") pacotes"
+
+# As versoes da imagem viram restricao do uv.lock. O bloco entre os marcadores do
+# pyproject.toml e reescrito inteiro; o resto do arquivo nao muda.
+python3 - "${lockfile}" "${pyproject}" <<'PY'
+import re, sys
+from pathlib import Path
+
+lock, pyproject = Path(sys.argv[1]), Path(sys.argv[2])
+pins = [l for l in lock.read_text().splitlines() if re.match(r"^[A-Za-z0-9][^ ]*==", l)]
+bloco = (
+    "# >>> gerado por infra/docker/airflow/compile-lock.sh (versoes da imagem); nao edite\n"
+    "constraint-dependencies = [\n"
+    + "".join(f'    "{p}",\n' for p in pins)
+    + "]\n# <<<\n"
+)
+texto = pyproject.read_text()
+inicio, fim = "# >>> gerado por infra/docker/airflow/compile-lock.sh", "# <<<\n"
+if inicio in texto:
+    a = texto.index(inicio)
+    texto = texto[:a] + bloco + texto[texto.index(fim, a) + len(fim):]
+else:
+    ancora = 'default-groups = ["runtime", "test", "dev"]\n'
+    texto = texto.replace(ancora, ancora + bloco, 1)
+pyproject.write_text(texto)
+PY
+
+echo "==> Restricoes da imagem gravadas no pyproject.toml; refazendo o uv.lock"
+(cd "${repo_root}" && uv lock)

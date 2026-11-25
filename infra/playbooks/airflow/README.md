@@ -121,7 +121,7 @@ nova, troque `airflow_repo_version` (branch, tag ou commit) e rode de novo. O
 playbook:
 
 1. faz checkout da ref, descartando qualquer mudança feita à mão na VM;
-2. reconstrói a imagem, o que só demora se o `Dockerfile` ou o `requirements.txt`
+2. reconstrói a imagem, o que só demora se o `Dockerfile` ou o `requirements.lock.txt`
    mudaram;
 3. recria os containers cuja imagem ou cujo ambiente mudaram.
 

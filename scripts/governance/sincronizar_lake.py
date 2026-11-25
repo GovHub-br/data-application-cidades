@@ -20,8 +20,8 @@ De onde sai cada coisa:
                               compilado, e por isso pode ser lida aqui
 
 Uso:
-    poetry run python scripts/governance/sincronizar_lake.py
-    poetry run python scripts/governance/sincronizar_lake.py --confirmar
+    uv run python scripts/governance/sincronizar_lake.py
+    uv run python scripts/governance/sincronizar_lake.py --confirmar
 """
 
 from __future__ import annotations
@@ -49,7 +49,17 @@ MODELOS = RAIZ / "dbt" / "mcid" / "models"
 CATALOGO = RAIZ / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json"
 #: A macro registra a dependência do model bronze na fonte do lake. Ler a
 #: chamada é ler a declaração — não há SQL compilado nem caminho de dado aqui.
-CHAMADA_FONTE = re.compile(r"fonte_lake\(\s*['\"]([^'\"]+)['\"]")
+#: As bronzes do histórico chamam `bronze_dhist('<família>')`, que envolve o
+#: `fonte_lake` da mesma família.
+CHAMADA_FONTE = re.compile(r"(?:fonte_lake|bronze_dhist)\(\s*['\"]([^'\"]+)['\"]")
+#: Toda pasta `bronze/` do `dbt_project.yml` declara `+schema: bronze`. É onde
+#: procurar o model que o catálogo semântico ainda não lista: produto novo entra
+#: no dbt antes de entrar no catálogo, e sem isto a linhagem dele falhava.
+SCHEMA_BRONZE = "bronze"
+#: `alias` muda o nome da tabela no banco, não o do model. Só vale dentro do
+#: `config()` — "alias" em comentário de SQL não é apelido.
+CONFIG = re.compile(r"config\((.*?)\)\s*}}", re.S)
+APELIDO = re.compile(r"\balias\s*=\s*['\"]([^'\"]+)['\"]")
 
 
 @dataclass
@@ -95,6 +105,17 @@ def carregar_arquivos() -> list[Arquivo]:
     return list(arquivos.values())
 
 
+def nomes_no_banco() -> dict[str, str]:
+    """Nome da tabela no banco de cada model Bronze que declara `alias`."""
+    nomes: dict[str, str] = {}
+    for sql in sorted(MODELOS.rglob("bronze/*.sql")):
+        config = CONFIG.search(sql.read_text(encoding="utf-8"))
+        apelido = APELIDO.search(config.group(1)) if config else None
+        if apelido:
+            nomes[sql.stem] = apelido.group(1)
+    return nomes
+
+
 def arvore(arquivos: list[Arquivo], declarado: dict) -> list[dict]:
     """Monta os containers do raiz para a folha.
 
@@ -112,9 +133,7 @@ def arvore(arquivos: list[Arquivo], declarado: dict) -> list[dict]:
             {
                 "chave": trilha,
                 "name": arquivo.bucket,
-                "description": texto(
-                    (buckets.get(arquivo.bucket) or {}).get("description")
-                ),
+                "description": texto((buckets.get(arquivo.bucket) or {}).get("description")),
                 "folha": False,
             },
         )
@@ -308,9 +327,7 @@ def dags_por_modelo(arquivos: list[Arquivo]) -> dict[str, set[str]]:
     return {nome: dags for nome, dags in resolvido.items() if dags}
 
 
-def anotar_dags_de_origem(
-    om: ClienteOM, arquivos: list[Arquivo], servico: str, banco: str
-) -> None:
+def anotar_dags_de_origem(om: ClienteOM, arquivos: list[Arquivo], servico: str, banco: str) -> None:
     """Grava em cada tabela a DAG que originou o dado dela.
 
     A linhagem já responde isso, mas exige percorrer o grafo inteiro até o
@@ -368,6 +385,7 @@ def sincronizar_linhagem(
     """Liga cada parquet à tabela Bronze que o lê."""
     print("Linhagem arquivo -> Bronze")
     schemas = schema_por_modelo()
+    nomes = nomes_no_banco()
     ligadas = 0
     for arquivo in arquivos:
         origem = identificadores.get((arquivo.bucket, *arquivo.partes))
@@ -376,29 +394,27 @@ def sincronizar_linhagem(
                 print(f"  [{om.modo}] ligaria {arquivo.caminho} -> {modelo}")
                 om.atualizados += 1
                 continue
-            schema = schemas.get(modelo)
-            tabela = (
-                om.existe(
-                    "tables",
-                    f"{servico_banco}.{banco}.{schema}.{modelo}",
-                    campos="extension",
-                )
-                if schema
-                else None
-            )
-            if not (origem and tabela):
-                faltou = "container" if not origem else "tabela Bronze"
+            endereco = f"{schemas.get(modelo, SCHEMA_BRONZE)}.{nomes.get(modelo, modelo)}"
+            tabela = om.existe("tables", f"{servico_banco}.{banco}.{endereco}", campos="extension")
+            if not origem:
                 om.falhas.append(
-                    f"não consegui ligar {arquivo.caminho} a {modelo}: "
-                    f"{faltou} não encontrado"
+                    f"não consegui ligar {arquivo.caminho} a {modelo}: container não encontrado"
+                )
+                continue
+            if not tabela:
+                # O arquivo chegou ao lake, mas o dbt ainda não criou a Bronze
+                # que o lê (o CadÚnico do Reforma é o caso). Não há para onde
+                # apontar a seta, e isso não é defeito do catálogo: avisa e
+                # liga na primeira execução depois que a tabela existir.
+                om.avisos.append(
+                    f"{arquivo.caminho} não foi ligado a {modelo}: a tabela "
+                    f"{endereco} não está no OpenMetadata (ainda não criada?)"
                 )
                 continue
             if origem in om.montante("table", tabela["id"]):
                 om.conformes += 1
                 continue
-            om.ligar(
-                origem, "container", tabela["id"], "table", "Ingestão declarada no dbt."
-            )
+            om.ligar(origem, "container", tabela["id"], "table", "Ingestão declarada no dbt.")
             ligadas += 1
     if ligadas:
         print(f"  {ligadas} arestas do lake para a Bronze")
@@ -434,16 +450,12 @@ def _limpar_marcacao_do_mcid(om: ClienteOM, donos: Proprietarios, atual: dict) -
         resultado["owners"] = restantes
     atuais_dominios = atual.get("domains") or []
     dominios = [
-        d
-        for d in atuais_dominios
-        if not str(d.get("fullyQualifiedName", "")).startswith("MCid")
+        d for d in atuais_dominios if not str(d.get("fullyQualifiedName", "")).startswith("MCid")
     ]
     if len(dominios) != len(atuais_dominios):
         resultado["domains"] = dominios
     atuais_tags = atual.get("tags") or []
-    etiquetas = [
-        t for t in atuais_tags if not str(t.get("tagFQN", "")).startswith("dbtTags.")
-    ]
+    etiquetas = [t for t in atuais_tags if not str(t.get("tagFQN", "")).startswith("dbtTags.")]
     if len(etiquetas) != len(atuais_tags):
         resultado["tags"] = etiquetas
     return resultado
@@ -462,17 +474,13 @@ def _documentar_dag(
         pipeline = om.criar("pipelines", {"name": arquivo.dag, "service": servico}, fqn)
         if not pipeline:
             return
-    om.patch(
-        "pipelines", pipeline["id"], operacoes_de_diferenca(pipeline, governanca), fqn
-    )
+    om.patch("pipelines", pipeline["id"], operacoes_de_diferenca(pipeline, governanca), fqn)
     if not destino:
         return
     if om.confirmar and pipeline["id"] in om.montante("container", destino):
         om.conformes += 1
         return
-    om.ligar(
-        pipeline["id"], "pipeline", destino, "container", "Ingestão declarada no dbt."
-    )
+    om.ligar(pipeline["id"], "pipeline", destino, "container", "Ingestão declarada no dbt.")
 
 
 def sincronizar_orquestracao(
@@ -513,9 +521,7 @@ def sincronizar_orquestracao(
     )
 
     com_dag = [a for a in arquivos if a.dag]
-    print(
-        f"  {len(com_dag)} arquivos com DAG declarada, {len(arquivos) - len(com_dag)} sem"
-    )
+    print(f"  {len(com_dag)} arquivos com DAG declarada, {len(arquivos) - len(com_dag)} sem")
     # A governança das DAGs é OUTRA que a do serviço: o serviço é compartilhado,
     # as DAGs deste repositório são nossas. Reaproveitar a do serviço aqui
     # apagaria a marcação das nossas junto com a dele.
@@ -530,9 +536,7 @@ def sincronizar_orquestracao(
         )
 
 
-def sincronizar(
-    om: ClienteOM, donos: Proprietarios, servico_banco: str, banco: str
-) -> None:
+def sincronizar(om: ClienteOM, donos: Proprietarios, servico_banco: str, banco: str) -> None:
     declarado = carregar("servicos.yml").get("lake") or {}
     if not declarado:
         raise SystemExit("Seção `lake` ausente em governance/servicos.yml")

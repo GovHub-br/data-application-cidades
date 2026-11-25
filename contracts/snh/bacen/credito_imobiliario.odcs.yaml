@@ -1,0 +1,69 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: bacen_credito_imobiliario
+name: Banco Central (Olinda)
+version: 0.1.0
+status: draft
+description:
+  purpose: Séries do Banco Central usadas na conjuntura. Cada carga é a resposta da API como veio, com
+    a série inteira (carga completa).
+team:
+- username: Banco Central do Brasil
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: credito_imobiliario_pib
+  physicalName: credito_imobiliario_pib
+  description: Crédito imobiliário / PIB (%), indicador indices_imobiliario_pib_br do Olinda MercadoImobiliario.
+  customProperties:
+  - property: path
+    value: snh/staging/bacen/credito_imobiliario_pib/*.parquet
+  - property: file_pattern
+    value: credito_imobiliario_pib\.json
+  - property: load_type
+    value: full
+  - property: max_row_variation
+    value: 0.5
+  - property: reader
+    value: bacen_olinda_json
+  - property: dag
+    value: bacen_credito_pib_ingest_dag
+  - property: dbt_tables
+    value:
+    - bacen_credito_pib
+  properties:
+  - name: info
+    logicalType: string
+  - name: data
+    logicalType: string
+  - name: valor
+    logicalType: string
+- name: financiamentos_imobiliarios
+  physicalName: financiamentos_imobiliarios
+  description: Séries do SGS listadas na Variable BACEN_SERIES (concessões, juros e inadimplência PF/PJ),
+    um arquivo por série; o nome do arquivo é o tipo da série.
+  customProperties:
+  - property: path
+    value: snh/staging/bacen/financiamentos_imobiliarios/*.parquet
+  - property: file_pattern
+    value: '[a-z0-9_]+\.json'
+  - property: load_type
+    value: full
+  - property: reader
+    value: bacen_sgs_json
+  - property: dag
+    value: bacen_sgs_ingest_dag
+  - property: dbt_tables
+    value:
+    - bacen_financiamentos_imobiliarios
+  properties:
+  - name: tipo
+    logicalType: string
+  - name: data
+    logicalType: string
+  - name: valor
+    logicalType: string

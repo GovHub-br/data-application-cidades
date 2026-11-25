@@ -1,29 +1,41 @@
 {{ config(materialized="table") }}
 
-with rotulada as (
-    select
-        coalesce(uf, 'Não informado') as uf,
-        coalesce(municipio, 'Não informado') as municipio,
-        coalesce(codigo_ibge, codigo_ibge_cadastro, 'Não informado') as codigo_ibge,
-        coalesce(faixa_renda, 'Não informada') as faixa_renda,
-        case codigo_raca_cor
-            when '1' then 'Branca'
-            when '2' then 'Preta'
-            when '3' then 'Amarela'
-            when '4' then 'Parda'
-            when '5' then 'Indígena'
-            else 'Não informada'
-        end as raca_cor,
-        case coalesce(codigo_sexo_cadunico, sexo_fonte)
-            when '1' then 'Masculino'
-            when '2' then 'Feminino'
-            when 'M' then 'Masculino'
-            when 'F' then 'Feminino'
-            else 'Não informado'
-        end as sexo,
-        * exclude (uf, municipio, codigo_ibge, faixa_renda)
-    from {{ ref('prata_reforma_casa_brasil_acesso') }}
-)
+with
+    rotulada as (
+        select
+            coalesce(uf, 'Não informado') as uf,
+            coalesce(municipio, 'Não informado') as municipio,
+            coalesce(codigo_ibge, codigo_ibge_cadastro, 'Não informado') as codigo_ibge,
+            coalesce(faixa_renda, 'Não informada') as faixa_renda,
+            case
+                codigo_raca_cor
+                when '1'
+                then 'Branca'
+                when '2'
+                then 'Preta'
+                when '3'
+                then 'Amarela'
+                when '4'
+                then 'Parda'
+                when '5'
+                then 'Indígena'
+                else 'Não informada'
+            end as raca_cor,
+            case
+                coalesce(codigo_sexo_cadunico, sexo_fonte)
+                when '1'
+                then 'Masculino'
+                when '2'
+                then 'Feminino'
+                when 'M'
+                then 'Masculino'
+                when 'F'
+                then 'Feminino'
+                else 'Não informado'
+            end as sexo,
+            * exclude (uf, municipio, codigo_ibge, faixa_renda)
+        from {{ ref('prata_reforma_casa_brasil_acesso') }}
+    )
 
 select
     uf,

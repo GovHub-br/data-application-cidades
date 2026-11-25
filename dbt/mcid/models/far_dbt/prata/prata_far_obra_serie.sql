@@ -8,20 +8,15 @@ with
     obra as (
         select
             {{ var('schema_udfs') }}.normalize_apf(nu_apf) as apf,
-            to_date(
-                substring(filename from 'MENSAL_([0-9]{6})'), 'YYYYMM'
-            ) as competencia,
+            to_date(substring(filename from 'MENSAL_([0-9]{6})'), 'YYYYMM') as competencia,
 
             -- Situação (código; o rótulo está no seed far_situacao_obra)
             {{ parse_int("co_situacao_obra") }} as co_situacao_obra,
-            {{ var('schema_udfs') }}.parse_date_br(
-                dt_alteracao_situacao
-            ) as dt_alteracao_situacao,
+            {{ var('schema_udfs') }}.parse_date_br(dt_alteracao_situacao) as dt_alteracao_situacao,
 
             -- Percentuais de execução
             {{ parse_numeric("pc_obra_prevista", "numeric(6, 2)") }} as pct_obra_prevista,
-            {{ parse_numeric("pc_obra_realizada", "numeric(6, 2)") }}
-            as pct_obra_realizada,
+            {{ parse_numeric("pc_obra_realizada", "numeric(6, 2)") }} as pct_obra_realizada,
 
             -- Marcos
             {{ var('schema_udfs') }}.parse_date_br(dt_conclusao_obra) as dt_conclusao_obra,
@@ -42,9 +37,7 @@ with
     deduplicado as (
         select
             *,
-            row_number() over (
-                partition by apf, competencia order by arquivo_de_origem desc
-            ) as rn
+            row_number() over (partition by apf, competencia order by arquivo_de_origem desc) as rn
         from obra
     )
 

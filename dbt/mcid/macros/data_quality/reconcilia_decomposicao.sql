@@ -29,33 +29,31 @@
 -#}
 {% macro test_reconcilia_decomposicao(model, total_column, parcela_columns, tolerancia) %}
 
-{%- set soma_expr = [] -%}
-{%- for p in parcela_columns -%}
-    {%- do soma_expr.append('coalesce(' ~ p ~ ', 0)') -%}
-{%- endfor -%}
-{%- set alguma_parcela = [] -%}
-{%- for p in parcela_columns -%}
-    {%- do alguma_parcela.append(p ~ ' is not null') -%}
-{%- endfor -%}
+    {%- set soma_expr = [] -%}
+    {%- for p in parcela_columns -%}
+        {%- do soma_expr.append('coalesce(' ~ p ~ ', 0)') -%}
+    {%- endfor -%}
+    {%- set alguma_parcela = [] -%}
+    {%- for p in parcela_columns -%}
+        {%- do alguma_parcela.append(p ~ ' is not null') -%}
+    {%- endfor -%}
 
-with base as (
+    with
+        base as (
+            select {{ total_column }} as total, {{ soma_expr | join(' + ') }} as soma_parcelas
+            from {{ model }}
+            where {{ total_column }} is not null and ({{ alguma_parcela | join(' or ') }})
+        )
+
     select
-        {{ total_column }} as total,
-        {{ soma_expr | join(' + ') }} as soma_parcelas
-    from {{ model }}
-    where {{ total_column }} is not null
-        and ({{ alguma_parcela | join(' or ') }})
-)
-
-select
-    total,
-    soma_parcelas,
-    round(total - soma_parcelas, 2) as diferenca,
-    {{ tolerancia }} as tolerancia,
-    count(*) as ocorrencias
-from base
-where abs(total - soma_parcelas) > {{ tolerancia }}
-group by total, soma_parcelas
-order by abs(total - soma_parcelas) desc
+        total,
+        soma_parcelas,
+        round(total - soma_parcelas, 2) as diferenca,
+        {{ tolerancia }} as tolerancia,
+        count(*) as ocorrencias
+    from base
+    where abs(total - soma_parcelas) > {{ tolerancia }}
+    group by total, soma_parcelas
+    order by abs(total - soma_parcelas) desc
 
 {% endmacro %}

@@ -3,10 +3,11 @@
 -- Snapshot mais recente de contratação do Reforma Casa Brasil recebido pelo
 -- SFTP/GEFUS. Cada arquivo é fotografia completa; empilhar competências duplicaria
 -- contratos. A Bronze preserva texto, layout e colunas de linhagem da staging.
-{% set padrao = "s3://data-lake-mcid/staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet" %}
+{% set padrao = "s3://data-lake-mcid/snh/staging/sftp/fabrica/GEFUS/**/PMCMV_REFORMAS_MCID_*.parquet" %}
 
 select *
-from {{ fonte_lake(
+from
+    {{ fonte_lake(
     'reforma_contratos',
     'lake_staging_reforma_casa_brasil',
     filename=true,

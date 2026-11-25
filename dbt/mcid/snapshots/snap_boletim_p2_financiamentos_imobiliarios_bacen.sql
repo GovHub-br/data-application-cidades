@@ -16,19 +16,24 @@
 
   Roda com `dbt snapshot`. Cada execução acrescenta versão só do que mudou.
 #}
-
 {% snapshot snap_boletim_p2_financiamentos_imobiliarios_bacen %}
-{{ config(
+    {{ config(
     target_schema='ouro',
     unique_key='chave',
     strategy='check',
     check_cols='all',
 ) }}
 
-select
-    edicao || '|' || coalesce("periodo"::text, '') as chave,
-    edicao,
-    "periodo", "PF Concessões (R$ mi)", "PF Taxa de Juros (%a.a)", "PF Inadimplência (%)", "PJ Concessões (R$ mi)", "PJ Taxa de Juros (%a.a)", "PJ Inadimplência (%)"
-from {{ ref('ouro_conjuntura_boletim_p2_financiamentos_imobiliarios_bacen') }}
+    select
+        edicao || '|' || coalesce("periodo"::text, '') as chave,
+        edicao,
+        "periodo",
+        "PF Concessões (R$ mi)",
+        "PF Taxa de Juros (%a.a)",
+        "PF Inadimplência (%)",
+        "PJ Concessões (R$ mi)",
+        "PJ Taxa de Juros (%a.a)",
+        "PJ Inadimplência (%)"
+    from {{ ref('ouro_conjuntura_boletim_p2_financiamentos_imobiliarios_bacen') }}
 
 {% endsnapshot %}

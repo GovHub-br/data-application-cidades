@@ -8,17 +8,15 @@ iniciar o cliente com "'Response' object is not subscriptable".
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 import yaml
 
-RAIZ = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(RAIZ / "helpers"))
+from openmetadata import runner
+from openmetadata.rendering import sdk_host_port
 
-from openmetadata import runner  # noqa: E402
-from openmetadata.rendering import sdk_host_port  # noqa: E402
+RAIZ = Path(__file__).resolve().parents[1]
 
 RECIPE_POSTGRES = RAIZ / "helpers/openmetadata/recipes/postgres_metadata.yaml"
 
@@ -51,9 +49,7 @@ def test_recipe_renderizada_leva_o_api_mesmo_com_url_sem_api(monkeypatch) -> Non
     capturado: dict = {}
 
     def execute_metadata(metadata_command: str, rendered_recipe_path: Path) -> None:
-        capturado["recipe"] = yaml.safe_load(
-            Path(rendered_recipe_path).read_text(encoding="utf-8")
-        )
+        capturado["recipe"] = yaml.safe_load(Path(rendered_recipe_path).read_text(encoding="utf-8"))
 
     monkeypatch.setattr(runner, "execute_metadata", execute_metadata)
 

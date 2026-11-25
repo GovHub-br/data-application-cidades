@@ -28,16 +28,16 @@
 -#}
 {% macro test_verificacao_tipagem(model, column_name, tipo_esperado) %}
 
-select
-    '{{ model.schema }}.{{ model.identifier }}' as nome_tabela,
-    '{{ column_name }}' as nome_coluna,
-    '{{ tipo_esperado }}' as tipo_esperado,
-    data_type as tipo_real
-from information_schema.columns
-where
-    table_schema = '{{ model.schema }}'
-    and table_name = '{{ model.identifier }}'
-    and column_name = '{{ column_name }}'
-    and data_type <> '{{ tipo_esperado }}'
+    select
+        '{{ model.schema }}.{{ model.identifier }}' as nome_tabela,
+        '{{ column_name }}' as nome_coluna,
+        '{{ tipo_esperado }}' as tipo_esperado,
+        data_type as tipo_real
+    from information_schema.columns
+    where
+        table_schema = '{{ model.schema }}'
+        and table_name = '{{ model.identifier }}'
+        and column_name = '{{ column_name }}'
+        and data_type <> '{{ tipo_esperado }}'
 
 {% endmacro %}

@@ -74,9 +74,7 @@ def prepare_dbt_artifacts(project_dir: str, tmp_dirs: ExitStack) -> str:
         if not artifact.exists():
             raise FileNotFoundError(f"{file_name} não encontrado em {artifact}")
 
-    ausentes = [
-        nome for nome in OPTIONAL_DBT_ARTIFACTS if not (target_dir / nome).exists()
-    ]
+    ausentes = [nome for nome in OPTIONAL_DBT_ARTIFACTS if not (target_dir / nome).exists()]
     if ausentes:
         logging.warning(
             "[openmetadata] Artefatos opcionais ausentes (%s). A ingestao segue "

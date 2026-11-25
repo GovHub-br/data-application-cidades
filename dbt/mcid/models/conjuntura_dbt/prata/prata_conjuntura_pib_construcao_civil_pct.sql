@@ -20,21 +20,21 @@
 --
 -- Mantém os nomes de coluna da tabela manual: o ouro já os consome, e
 -- renomear aqui espalharia a mudança sem ganho nenhum.
-
 select
-    (trimestre::text || 'T' || ano::text)                       as periodo,
+    (trimestre::text || 'T' || ano::text) as periodo,
     trimestre,
     ano,
-    tri                                                         as pib_const_trimestre_anterior,
-    acum_ano                                                    as pib_const_taxa_acumulada_ano,
-    acum_4t                                                     as pib_const_taxa_acumulada_4_trimestres
-from (
-    select
-        left(periodo, 4)::int                                   as ano,
-        right(periodo, 2)::int                                  as trimestre,
-        max(valor) filter (where variavel like 'Taxa trimestre contra%')          as tri,
-        max(valor) filter (where variavel like 'Taxa acumulada ao longo do ano%') as acum_ano,
-        max(valor) filter (where variavel like 'Taxa acumulada em quatro%')       as acum_4t
-    from {{ ref('prata_conjuntura_ibge_pib_construcao_civil') }}
-    group by 1, 2
-) s
+    tri as pib_const_trimestre_anterior,
+    acum_ano as pib_const_taxa_acumulada_ano,
+    acum_4t as pib_const_taxa_acumulada_4_trimestres
+from
+    (
+        select
+            left(periodo, 4)::int as ano,
+            right(periodo, 2)::int as trimestre,
+            max(valor) filter (where variavel like 'Taxa trimestre contra%') as tri,
+            max(valor) filter (where variavel like 'Taxa acumulada ao longo do ano%') as acum_ano,
+            max(valor) filter (where variavel like 'Taxa acumulada em quatro%') as acum_4t
+        from {{ ref('prata_conjuntura_ibge_pib_construcao_civil') }}
+        group by 1, 2
+    ) s

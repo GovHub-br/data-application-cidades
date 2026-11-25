@@ -64,9 +64,7 @@ def load_yaml(path: Path) -> dict:
 
 def is_sensitive_identifier(value: str) -> bool:
     lowered = value.lower()
-    return lowered == "cep" or any(
-        pattern in lowered for pattern in SENSITIVE_IDENTIFIERS
-    )
+    return lowered == "cep" or any(pattern in lowered for pattern in SENSITIVE_IDENTIFIERS)
 
 
 def unsafe_description(value: str) -> str | None:
@@ -91,13 +89,9 @@ def fail(violations: list[str], message: str) -> None:
 CAMADAS_SO_PARA_LINHAGEM = {"bronze"}
 
 
-def model_export(
-    node_id: str, node: dict, catalog: dict, violations: list[str]
-) -> dict | None:
+def model_export(node_id: str, node: dict, catalog: dict, violations: list[str]) -> dict | None:
     governance = node.get("meta", {}).get("governance", {})
-    elegivel_rag = (
-        governance.get("rag_publication") == "eligible_after_security_validation"
-    )
+    elegivel_rag = governance.get("rag_publication") == "eligible_after_security_validation"
     so_linhagem = governance.get("layer") in CAMADAS_SO_PARA_LINHAGEM
     if not elegivel_rag and not so_linhagem:
         return None
@@ -191,11 +185,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=ROOT
-        / "dbt"
-        / "mcid"
-        / "governance"
-        / "openmetadata_semantic_catalog.json",
+        default=ROOT / "dbt" / "mcid" / "governance" / "openmetadata_semantic_catalog.json",
     )
     args = parser.parse_args()
 
@@ -230,9 +220,7 @@ def main() -> None:
         "models": models,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Catálogo semântico seguro: {args.output} ({len(models)} models)")
 
 

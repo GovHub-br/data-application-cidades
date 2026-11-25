@@ -2,8 +2,8 @@
 
 -- Prata do conjuntura: PNAD Contínua — pessoas ocupadas (IBGE/SIDRA).
 --
--- Passthrough tipado — o achatamento acontece na ingestão
--- (`ClienteIBGE.transformar_resposta`).
+-- O achatamento acontece no leitor `ibge_agregados_json` da ingestão; a
+-- tipagem, no macro `prata_ibge_agregado`.
 --
 -- Categorias: 47946 = Total, 47949 = Construção (classificação 888).
 --
@@ -12,22 +12,4 @@
 -- antigo `pnad_construcao_*`. Os arquivos antigos ficaram órfãos: a config
 -- foi renomeada, mas as chamadas passaram a falhar (separador de categoria
 -- errado no client) e os novos nunca foram gerados. Corrigido em 2026-08-30.
-
-select
-    periodo,
-    -- date, não timestamp: representa um mês/trimestre de referência,
-    -- não um instante. Sem o cast, `current_date - data_referencia`
-    -- devolve interval e quebra o teste de frescor.
-    data_referencia::date         as data_referencia,
-    variavel_id,
-    variavel_nome     as variavel,
-    unidade,
-    localidade_id,
-    localidade_nome   as localidade,
-    classificacao_id,
-    classificacao,
-    categoria_id,
-    categoria,
-    valor,
-    dt_ingest
-from {{ ref('bronze_ibge_pnad_construcao_ocupados') }}
+{{ prata_ibge_agregado('bronze_ibge_pnad_construcao_ocupados') }}

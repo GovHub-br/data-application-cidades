@@ -29,8 +29,10 @@ models:
             - valor_construcao_milhoes
             - valor_aquisicao_milhoes
             - valor_total_milhoes
-            - dt_ingest
-            - fonte
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_abecip_instituicoes
     description: >
       Financiamento imobiliário com recursos da poupança aberto por
@@ -54,6 +56,10 @@ models:
             - unidades_mensais
             - volume_acumulado_ano_milhoes
             - unidades_acumuladas_ano
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_abecip_poupanca_sbpe
     description: >
       Movimento das cadernetas de poupança do sistema habitacional, com
@@ -69,8 +75,10 @@ models:
             - captacao_liquida_pct
             - rendimento
             - saldo
-            - dt_ingest
-            - fonte
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_bacen_credito_pib
     description: >
       Saldo da carteira de crédito imobiliário expresso como percentual do
@@ -82,7 +90,10 @@ models:
             - info
             - data
             - valor
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_bacen_financiamentos_imobiliarios
     description: >
       Crédito imobiliário concedido a pessoa física e jurídica, com volume,
@@ -94,7 +105,10 @@ models:
             - tipo
             - data
             - valor
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_fgv_icst
     description: >
       Índice de confiança do empresariado da construção, nas séries com e sem
@@ -106,7 +120,10 @@ models:
             - mes
             - icst_com_ajuste_sazonal
             - icst_sem_ajuste_sazonal
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_fgv_incc_m
     description: >
       Índice de custo da construção habitacional, com número índice e
@@ -120,7 +137,10 @@ models:
             - var_mes
             - var_ano
             - var_12_meses
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_fipezap_locacao
     description: >
       Índice de preços de locação residencial anunciados, com número índice e
@@ -133,8 +153,10 @@ models:
             - imoveis_residenciais_locacao_numero_indice_total
             - imoveis_residenciais_locacao_var_mensal_total
             - imoveis_residenciais_locacao_var_ano_total
-            - dt_ingest
-            - fonte
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_geavo_cca_analitico
     description: >
       Contratos de financiamento habitacional a pessoa física originados de
@@ -366,14 +388,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_paic_pessoal_salarial
     description: >
       Pessoal ocupado e massa salarial anual das empresas de construção.
@@ -386,14 +410,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_paic_resultados
     description: >
       Resultados econômicos anuais das empresas de construção, com receita,
@@ -407,14 +433,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pib_consolidado_trimestral
     description: >
       Produto Interno Bruto consolidado do país em série trimestral.
@@ -427,14 +455,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pib_construcao_civil
     description: >
       Produto Interno Bruto da construção civil brasileira em série
@@ -448,14 +478,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pib_corrente
     description: >
       Produto Interno Bruto a preços correntes, em milhões de reais, por
@@ -469,14 +501,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pim_pf_brasil
     description: >
       Produção física dos insumos típicos da construção civil, em variações
@@ -490,14 +524,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pmc_construcao
     description: >
       Volume de vendas no varejo de material de construção, em variações
@@ -511,14 +547,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pnad_construcao_ocupados
     description: >
       População ocupada na construção civil e no conjunto da economia, em
@@ -532,14 +570,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pnad_construcao_rendimento
     description: >
       Rendimento médio real de quem trabalha na construção civil e do conjunto
@@ -553,14 +593,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pnadc_populacao_decis_renda
     description: >
       Distribuição da população brasileira por décimo de renda, por trimestre
@@ -574,14 +616,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_pnadc_rendimento_domiciliar
     description: >
       Rendimento domiciliar real por trimestre móvel.
@@ -594,14 +638,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_ibge_sinapi
     description: >
       Custo de referência da construção habitacional por metro quadrado,
@@ -615,14 +661,16 @@ models:
             - localidade_id
             - localidade_nome
             - classificacao_id
-            - classificacao
+            - classificacao_nome
             - categoria_id
-            - categoria
+            - categoria_nome
             - unidade
             - periodo
             - valor
-            - dt_ingest
-            - data_referencia
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_infomoney_imob
     description: >
       Índice de ações das empresas do setor imobiliário listadas na bolsa
@@ -638,7 +686,10 @@ models:
             - low
             - close
             - volume
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_novo_caged
     description: >
       Movimentação de emprego formal na construção de edifícios, com
@@ -654,7 +705,10 @@ models:
             - saldo
             - estoque
             - variacao
-            - dt_ingest
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_novo_caged_servicos_especializados
     description: >
       Movimentação de emprego formal em serviços especializados para
@@ -670,10 +724,13 @@ models:
             - saldo
             - estoque
             - variacao
-            - dt_ingest
             - _source_file
             - _ingested_at
             - _source_hash
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_novo_caged_total
     description: >
       Movimentação de emprego formal no conjunto da construção civil, com
@@ -689,10 +746,13 @@ models:
             - saldo
             - estoque
             - variacao
-            - dt_ingest
             - _source_file
             - _ingested_at
             - _source_hash
+            - _source_file
+            - _ingested_at
+            - _source_hash
+            - _load_id
   - name: bronze_siafi_dotacao_execucao
     description: >
       Execução orçamentária federal em habitação, com dotação, empenho,
@@ -734,3 +794,4 @@ models:
             - _source_file
             - _ingested_at
             - _source_hash
+            - _load_id

@@ -15,9 +15,6 @@
 -- O teste lê `target.schema`, e não um nome fixo: se o fallback mudar, ele
 -- acompanha. Consequência desejada: apontar o fallback de volta para um schema
 -- real faz este teste falhar em massa, que é o aviso certo.
-
-select
-    table_schema as schema_de_fallback,
-    table_name   as recurso_extraviado
+select table_schema as schema_de_fallback, table_name as recurso_extraviado
 from information_schema.tables
 where table_schema = '{{ target.schema }}'

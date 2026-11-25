@@ -21,19 +21,19 @@ sources:
           Snapshots completos de contratos do Reforma Casa Brasil recebidos
           pelo SFTP/GEFUS. A Bronze seleciona somente o arquivo mais recente.
         meta:
-          caminho: staging/sftp/fabrica/GEFUS/PMCMV_REFORMAS_MCID_*.parquet
+          caminho: snh/staging/sftp/fabrica/GEFUS/**/PMCMV_REFORMAS_MCID_*.parquet
           dag: minio_transform_dag
       - name: cadunico_pessoa
         description: >
           Corte de pessoas do CadÚnico de 12/12/2025, com CPF/NIS em HMAC e
           identificadores diretos redigidos antes da staging.
         meta:
-          caminho: staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_12122025_SB8.parquet
+          caminho: snh/staging/sftp/fabrica/GEFUS/CadUnico/ARQ_PESSOA_PBF_12122025_SB8.parquet
           dag: minio_transform_dag
       - name: cadunico_familia
         description: >
           Corte de famílias do CadÚnico de 12/12/2025, com endereço e dados do
           entrevistador protegidos antes da staging.
         meta:
-          caminho: staging/sharepoint/Cadastro Único/ARQ_FAMILIA_PBF_12122025_SB8.parquet
+          caminho: snh/staging/sharepoint/Cadastro Único/ARQ_FAMILIA_PBF_12122025_SB8.parquet
           dag: minio_transform_dag

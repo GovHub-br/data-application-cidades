@@ -9,9 +9,7 @@ with
     caixa as (
         select
             nullif(trim(apf), '') as apf,
-            to_date(
-                substring(filename from '([0-9]{6})_SNH_[^/]*$'), 'YYYYMM'
-            ) as competencia,
+            to_date(substring(filename from '([0-9]{6})_SNH_[^/]*$'), 'YYYYMM') as competencia,
 
             -- Identificação
             nullif(trim(nome_empreendimento), '') as empreendimento_nome,
@@ -20,9 +18,7 @@ with
 
             -- Situação
             nullif(trim(situacao_do_empreendimento), '') as situacao,
-            nullif(
-                trim(detalhamento_da_situacao_do_empreendimento), ''
-            ) as situacao_detalhamento,
+            nullif(trim(detalhamento_da_situacao_do_empreendimento), '') as situacao_detalhamento,
 
             -- Execução física
             {{ parse_numeric("nullif(upper(trim(\"exec\")), 'NULL')", "numeric(6, 2)") }}
