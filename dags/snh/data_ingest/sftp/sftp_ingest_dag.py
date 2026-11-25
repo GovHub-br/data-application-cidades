@@ -9,18 +9,18 @@ from airflow.sdk import Variable, dag, get_current_context, task
 
 from plugins.datalake import contract
 from plugins.datalake.keys import load_id
-from plugins.datalake.sftp import Control, by_login
+from plugins.datalake.sftp import Control
 from plugins.datalake.sftp import extract as extract_sftp
 from plugins.datalake.tasks import Lake, previous_rows, record, summary
 from plugins.datalake.tasks import transform as transform_key
 from scripts.lake_utils import md5_file
 
-# Um login (Connection) por usuário do SFTP da CAIXA, extraídos em sequência: primeiro tudo
-# do primeiro, depois tudo do segundo. Cada login só enxerga as pastas dele.
+# Um usuário do SFTP da CAIXA por Connection (a autenticação é do provider SFTP), cada um
+# com as pastas que enxerga; a DAG extrai um login por vez, nesta ordem.
 LOGINS = {
     # GEFUS inclui GEFUS/CadUnico; a antiga /home/fabrica/CadUnico não existe mais
-    "sftp_mcid": ("/home/fabrica/Analise_SNH", "/home/fabrica/GEFUS"),
-    "sftp_geavo": ("/home/caixa.geavo/GEAVO",),
+    "fabrica": ("sftp_mcid", ("/home/fabrica/Analise_SNH", "/home/fabrica/GEFUS")),
+    "geavo": ("sftp_geavo", ("/home/caixa.geavo/GEAVO",)),
 }
 LAKE_CONN = "lake_mcid"
 PG_CONN = "postgres_default"
@@ -44,7 +44,8 @@ def _lake(dry_run: bool):
 def sftp_ingest_dag() -> None:
     """Ingestão do SFTP do MCid (ADR-0004): extract -> transform (um por arquivo) -> report.
 
-    `extract` baixa os arquivos novos das pastas monitoradas, mascara a PII e só então sobe
+    `extract` abre uma sessão por login (`LOGINS`: sftp_mcid, depois sftp_geavo) e, em
+    cada uma, baixa os arquivos novos das pastas daquele login, mascara a PII e só então sobe
     para `snh/raw/sftp/<pasta>/load_id=<id>/` (o original nunca pousa). `transform` converte cada
     arquivo para a staging pelo leitor do contrato ODCS e segura em quarentena o que não
     bate com ele. `report` escreve o resumo no log da task e falha a execução se
@@ -61,34 +62,38 @@ def sftp_ingest_dag() -> None:
         result goes to the `result` XCom, read by `report`."""
         ctx = get_current_context()
         dry = bool(ctx["params"]["dry_run"])
-        control = Control(PostgresHook(postgres_conn_id=PG_CONN), ctx["run_id"], write=not dry)
-        load = load_id(ctx["dag_run"].run_after)  # the same on a retry: it rewrites the same keys
-        files = tuple(ctx["params"]["files"] or ())
-        owned, outside = by_login(files, LOGINS)
+        forced = tuple(ctx["params"]["files"] or ())
         result = {"keys": [], "errors": [], "unsupported": [], "duplicates": []}
-        result["errors"] += [f"{path}: fora das pastas monitoradas" for path in outside]
-        for conn_id, folders in LOGINS.items():
-            if files and not owned[conn_id]:
+
+        for conn_id, folders in LOGINS.values():  # one login after the other
+            files = tuple(f for f in forced if f.startswith(tuple(d + "/" for d in folders)))
+            if forced and not files:  # the forced files are all of another login
                 continue
-            try:  # a broken login must not stop the other one; `report` fails the run
-                sftp = SFTPHook(ssh_conn_id=conn_id)
+            sftp = SFTPHook(ssh_conn_id=conn_id)
+            try:  # a login that fails must not lose what the others landed
                 with sftp.get_managed_conn():  # one SSH session per login
                     part = extract_sftp(
                         sftp,
                         _lake(dry).upload_arquivo,
-                        control,
-                        load,
+                        Control(
+                            PostgresHook(postgres_conn_id=PG_CONN), ctx["run_id"], write=not dry
+                        ),
+                        load_id(ctx["dag_run"].run_after),  # the same on a retry: same keys
                         md5_file,
                         tmpdir=os.environ.get("LAKE_TMPDIR"),
                         limit=int(ctx["params"]["limit"] or 0),
                         folders=folders,
-                        files=owned[conn_id],
+                        files=files,
                     )
-            except Exception as error:  # noqa: BLE001
+            except Exception as error:  # noqa: BLE001 — `report` fails the run
                 result["errors"].append(f"{conn_id}: {type(error).__name__}: {error}"[:500])
                 continue
             for name, items in part.items():
                 result[name] += items
+        seen = tuple(d + "/" for _, folders in LOGINS.values() for d in folders)
+        result["errors"] += [
+            f"{f}: fora das pastas monitoradas" for f in forced if not f.startswith(seen)
+        ]
         logging.info("[sftp_ingest_dag] extract: %s", {k: len(v) for k, v in result.items()})
         ctx["ti"].xcom_push(key="result", value=result)
         return result["keys"]

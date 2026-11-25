@@ -319,11 +319,3 @@ def test_record_upserts_the_staging_log(tasks):
     [(_, table, row, kw)] = pg.calls
     assert table == "lake._staging_log" and row["column_map"] == '{"A": "a"}'
     assert kw["replace_index"] == ["raw_key", "staging_key", "source_hash"]
-
-
-def test_forced_files_go_to_the_login_that_sees_them(sftp_mod):
-    logins = {"a": ("/home/fabrica/GEFUS",), "b": ("/home/caixa.geavo/GEAVO",)}
-    files = ("/home/caixa.geavo/GEAVO/x.mdb", "/home/fabrica/GEFUS/y.csv", "/home/outra/z.csv")
-    owned, outside = sftp_mod.by_login(files, logins)
-    assert owned == {"a": ("/home/fabrica/GEFUS/y.csv",), "b": ("/home/caixa.geavo/GEAVO/x.mdb",)}
-    assert outside == ["/home/outra/z.csv"]

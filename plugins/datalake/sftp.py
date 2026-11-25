@@ -43,16 +43,6 @@ def walk(sftp, folder: str, depth: int = 0) -> Iterator[tuple[str, int, int]]:
             yield path, attr.st_size or 0, int(attr.st_mtime or 0)
 
 
-def by_login(files: tuple, logins: dict) -> tuple[dict, list]:
-    """Forced files -> ({login: its files}, files outside every login's folders)."""
-    owned = {
-        login: tuple(f for f in files if f.startswith(tuple(d + "/" for d in folders)))
-        for login, folders in logins.items()
-    }
-    taken = {f for fs in owned.values() for f in fs}
-    return owned, [f for f in files if f not in taken]
-
-
 def mirror(sftp_path: str) -> str:
     """Folder below snh/raw/ that mirrors the server (ADR-0005): /home/fabrica/GEFUS/x -> sftp/fabrica/GEFUS."""
     folder = str(Path(sftp_path).parent).removeprefix("/home/").strip("/")
