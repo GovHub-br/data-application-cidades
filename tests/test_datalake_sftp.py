@@ -319,3 +319,23 @@ def test_record_upserts_the_staging_log(tasks):
     [(_, table, row, kw)] = pg.calls
     assert table == "lake._staging_log" and row["column_map"] == '{"A": "a"}'
     assert kw["replace_index"] == ["raw_key", "staging_key", "source_hash"]
+
+
+def test_jailed_login_talks_to_the_server_without_root(sftp_mod):
+    """The GEAVO login sees /home/caixa.geavo as `/`; keys and control keep the full path."""
+    from scripts.lake_utils import md5_file
+
+    sftp = FakeSftp({"/GEAVO/x.csv": b"A;B\n1;2\n"})
+    ctl = FakeControl([])
+    result = sftp_mod.extract(
+        sftp,
+        lambda f, k: None,
+        ctl,
+        LOAD,
+        md5_file,
+        folders=("/home/caixa.geavo/GEAVO",),
+        root="/home/caixa.geavo",
+    )
+    assert sftp.downloads == ["/GEAVO/x.csv"]
+    assert result["keys"] == [f"snh/raw/sftp/caixa.geavo/GEAVO/load_id={LOAD}/x.csv"]
+    assert ctl.rows[0][0] == "/home/caixa.geavo/GEAVO/x.csv"

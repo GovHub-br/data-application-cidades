@@ -157,13 +157,13 @@ def _land(
     return [(key, path, rec)]
 
 
-def _one(sftp, upload, control, load, md5, tmpdir, entry, known_hashes, result) -> None:
+def _one(sftp, upload, control, load, md5, tmpdir, entry, known_hashes, result, root="") -> None:
     """Download, mask and land one delivered file; a failure is collected, never raised."""
     path, size, mtime = entry
     with tempfile.TemporaryDirectory(dir=tmpdir) as workdir:
         local = os.path.join(workdir, Path(path).name)
         try:
-            sftp.retrieve_file(path, local)
+            sftp.retrieve_file(path.removeprefix(root), local)  # the server path
             file_hash = md5(local)
             if file_hash in known_hashes:  # moved or re-sent without change
                 result["duplicates"].append(path)
@@ -192,11 +192,15 @@ def extract(
     limit: int = 0,
     folders: tuple = (),
     files: tuple = (),
+    root: str = "",
 ) -> dict:
     """Lands every new file of the monitored folders in snh/raw/sftp/.../load_id=<load>/.
 
     `files` (full SFTP paths) forces just those, even if already landed: no skip by
     path/mtime nor by hash.
+    `root`: for a login jailed (chroot) in a folder, where its `/` sits. `folders`, `files`,
+    the lake keys and the control tables use the canonical path (root + server path); only
+    the listing and the download go to the server without `root`.
     Returns {"keys": landed raw keys, "errors": [...], "unsupported": [...],
     "duplicates": [...]}; only keys travel between tasks, never content.
     """
@@ -208,7 +212,7 @@ def extract(
     done = 0
     for folder in folders:
         try:  # listing first: a vanished folder must not stop the others
-            listed = list(walk(sftp, folder))
+            listed = [(root + p, s, m) for p, s, m in walk(sftp, folder.removeprefix(root) or "/")]
         except OSError as error:
             result["errors"].append(f"{folder}: pasta inexistente ou sem acesso ({error})")
             continue
@@ -227,7 +231,16 @@ def extract(
                 return result
             done += 1
             _one(
-                sftp, upload, control, load, md5, tmpdir, (path, size, mtime), known_hashes, result
+                sftp,
+                upload,
+                control,
+                load,
+                md5,
+                tmpdir,
+                (path, size, mtime),
+                known_hashes,
+                result,
+                root,
             )
     result["errors"] += [
         f"{path}: não encontrado nas pastas monitoradas" for path in sorted(missing)
