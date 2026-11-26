@@ -1,0 +1,14 @@
+jupyterlab
+ipykernel
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+scikit-learn
+lifelines
+psycopg2-binary
+sqlalchemy
+python-dotenv
+pyarrow
+duckdb
