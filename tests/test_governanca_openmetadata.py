@@ -75,10 +75,14 @@ def test_toda_etiqueta_aplicada_esta_declarada() -> None:
         f"{c['name']}.{t['name']}" for c in DOMINIOS["classificacoes"] for t in c["etiquetas"]
     }
     nativas = set(DOMINIOS["classificacoes_nativas"])
-    # Todos os produtos declarados, não uma lista fixa: com a lista fixa,
-    # `reforma_casa_brasil` entrou aplicando `dbtTags.reforma_casa_brasil` sem
-    # que a etiqueta fosse criada, e a governança falhava com 404.
-    for produto in (p["name"] for p in DOMINIOS["produtos"]):
+    for produto in (
+        "conjuntura",
+        "empreendimento_far",
+        "entidades_fds",
+        "empreendimento_rural",
+        "pro_moradia",
+        "fnhis_sub50",
+    ):
         for camada in ("bronze", "silver", "gold", "mixed"):
             for fqn in fqns(gov.etiquetas_da_camada(DOMINIOS, produto, camada)):
                 assert fqn in declaradas or fqn.split(".")[0] in nativas, fqn

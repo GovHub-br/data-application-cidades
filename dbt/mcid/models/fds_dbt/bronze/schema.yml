@@ -235,8 +235,15 @@ models:
   - name: bronze_shpt_monit_exec_ts_fds_mensal
     description: >
       Execução do trabalho social por empreendimento. Competência mensal.
-      
       Cobre parte dos empreendimentos — só quem tem trabalho social reportado.
+      As descrições das colunas de negócio seguem o arquivo
+      MONIT_EXEC_TS_FDS_LAYOUT mais recente.
+    meta:
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+          - MCID.ExecucaoDeEmpreendimentos.PTS
+          - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ConvenioTrabalhoSocial
     tests:
       - sem_drift_de_colunas:
           name: sem_drift_de_colunas_bronze_shpt_monit_exec_ts_fds_mensal
@@ -258,16 +265,112 @@ models:
             - _source_hash
             - filename
     columns:
+      - name: co_tipo_registro
+        description: >-
+          Tipo de registro (Padrão: 013)
+
+      - name: dh_movimento
+        description: >-
+          Data e hora de movimento da informação gerada
+
       - name: nu_apf
-        description: APF como veio da origem, ainda sem normalizar.
+        description: >-
+          Número de operação APF informada pelo Gestor do FAR/Agente Operador FDS
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.Identificadores.APF
         tests:
           - not_null
           - unique
+
+      - name: co_situacao_trabalho_social
+        description: >-
+          Situação do Trabalho Social: 001- Em execução; 002 Concluído; 003- Não iniciado; 004-
+          Paralisado; 005- Aguardando licitação/contratação; 006- Atrasado
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.SituacaoTrabalhoSocial
+
+      - name: dt_aprovacao_pts
+        description: >-
+          Data na qual houve a aprovação do PTS (Projeto de Trabalho Social)
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.PTS
+
+      - name: dt_assinatura_convenio
+        description: >-
+          Data na qual o convênio foi iniciado Campo "zerado" caso a situação não se aplica ao disposto
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ConvenioTrabalhoSocial
+
+      - name: dt_termino_convenio
+        description: >-
+          Data na qual ocorreu o término do convênio Campo em branco caso a situação não se aplica ao
+          disposto
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.ConvenioTrabalhoSocial
+
+      - name: dt_primeiro_relatorio
+        description: >-
+          Data na qual houve a entrega do primeiro relatório do Trabalho Social
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+
+      - name: dt_ultimo_relatorio
+        description: >-
+          Data na qual houve a entrega do último relatório do Trabalho Social
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.RATS
+
+      - name: pc_execucao_ts
+        description: >-
+          Percentual de execução do Trabalho Social
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial
+
+      - name: nu_portaria_ts
+        description: >-
+          Número da Portaria que regulamenta a execução do Trabalho Social do contrato
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+
+      - name: dt_publ_portaria_ts
+        description: >-
+          Data da publicação da Portaria que regulamenta a execução do Trabalho Social
+        meta:
+          openmetadata:
+            glossary:
+              - MCID.ExecucaoDeEmpreendimentos.TrabalhoSocial.PortariaTrabalhoSocial
+
+      - name: _source_file
+        description: Caminho do arquivo parquet de origem no MinIO.
+
+      - name: _ingested_at
+        description: Data e hora de ingest?o do registro na camada bronze.
+
+      - name: _source_hash
+        description: Hash do registro de origem para rastreabilidade da ingest?o.
+
       - name: filename
-        description: Arquivo da staging que venceu esta carga.
+        description: Nome do arquivo da staging que venceu esta carga.
         tests:
           - not_null
-
   - name: bronze_sftp_int059_fds_caixa_empreendimentos
     description: >
       INT059: empreendimentos FDS reportados pela CAIXA, com situação GEFUS e
@@ -405,7 +508,6 @@ models:
         description: Arquivo da staging que venceu esta carga.
         tests:
           - not_null
-
   - name: bronze_seed_manual_fds_portaria_selecao_698_2026
     description: Cópia fiel de seeds.fds_portaria_selecao_698_2026 (carregada à mão no Postgres). Anexo da Portaria MCID 698/2026
       (propostas selecionadas do MCMV-Entidades/FDS, seleção da 927/2025). Colunas com o nome do PDF, em maiúsculas
@@ -451,3 +553,65 @@ models:
         openmetadata:
           glossary:
           - MCID.Identificadores.UH
+
+  - name: bronze_sftp_int042_fds_caixa_familias
+    description: >
+      Famílias (pessoa física) do MCMV Entidades (FDS) no legado, nos contratos da CAIXA (integração INT042). Libera os beneficiários do Entidades antigo. Chega como remessa trimestral de contingência; a bronze lê a mais recente e não estima colunas além do que a origem manda.
+    meta:
+      tags:
+        - bronze
+      openmetadata:
+        glossary:
+          - MCID.ProgramasHabitacionais.MCMV.MCMVEntidades
+          - MCID.FundosEFontes.FDS
+          - MCID.Atores.CAIXA
+    data_tests:
+      - sem_drift_de_colunas:
+          arguments:
+            colunas:
+              - dt_movimento
+              - nu_apf
+              - nuapf_vinculacao
+              - nu_contrato
+              - no_mutuario
+              - nu_cpf_cgc_mutuario
+              - dt_assinatura
+              - co_produto_siico
+              - vr_encargo_total_atraso
+              - qt_dias_atraso
+              - pz_amortizacao
+              - pz_decorrido
+              - pz_remanescente
+              - sg_tipo_logradouro_imovel
+              - no_logradouro_imovel
+              - nu_imovel
+              - no_complemento_imovel
+              - no_bairro_imovel
+              - no_municipio_imovel
+              - sg_uf_imovel
+              - co_cep_imovel
+              - vr_renda_familiar_comprovada
+              - vr_garantia_inicial
+              - vr_subsidio_na_concesssao
+              - dt_nascimento
+              - co_sexo
+              - qt_coobrigados
+              - de_estado_civil
+              - dsc_tipo_contrato
+              - dt_termino_contrato
+              - dsc_situacao_ctr
+              - sem_registro
+              - fase
+              - nu_pis_pasep
+              - mulher_chefe_familia
+              - qt_prestacoes_atraso
+              - vr_saldo_devedor_atual
+              - vr_prestacao
+              - vr_subsidio_concedido
+              - co_municipio_ibge_completo
+              - origem
+              - co_agente_financeiro
+              - _source_file
+              - _ingested_at
+              - _source_hash
+              - filename

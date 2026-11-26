@@ -37,6 +37,51 @@ seeds:
       +schema: seeds
       +quote_columns: false
 
+    # Seeds das perguntas do MCID (Rural, FNHIS Sub-50, Pró-Moradia): domínio dos códigos
+    # do layout de obra do Rural e a matriz de cobertura pergunta × dado.
+    perguntas_mcid:
+      +database: cidades
+      +schema: seeds
+      +quote_columns: false
+      dominio_rural_obra:
+        +column_types:
+          campo: varchar
+          codigo: integer
+          descricao: varchar
+          estagio: varchar
+      # Catálogo e anexos das portarias de seleção do Rural: tudo texto (CNPJ, IBGE e código do
+      # empreendimento perdem o zero à esquerda se virarem número; o anexo começa vazio).
+      portarias_selecao_rural:
+        +column_types:
+          portaria_codigo: varchar
+          ato_selecao: varchar
+          numero: varchar
+          ano: varchar
+          dt_portaria: varchar
+          papel: varchar
+          tem_lista_nominal: varchar
+          fonte_lista: varchar
+          observacao: varchar
+          ciclo_selecao: varchar
+      # Catálogos de portarias/atos do Sub-50 e do Pró-Moradia: tudo texto (a prata tipa).
+      portarias_fnhis_sub50:
+        +column_types: {portaria_codigo: varchar, ato: varchar, especie_ato: varchar, numero: varchar, ano: varchar, dt_portaria: varchar, papel: varchar, ciclo_selecao: varchar, tem_lista_nominal: varchar, fonte_lista: varchar, observacao: varchar}
+      portarias_pro_moradia:
+        +column_types: {portaria_codigo: varchar, ato: varchar, especie_ato: varchar, numero: varchar, ano: varchar, dt_portaria: varchar, papel: varchar, ciclo_selecao: varchar, tem_lista_nominal: varchar, fonte_lista: varchar, observacao: varchar}
+      selecao_portarias_rural:
+        +column_types:
+          portaria_codigo: varchar
+          uf: varchar
+          municipio: varchar
+          cod_ibge: varchar
+          eo_cnpj: varchar
+          eo_nome: varchar
+          protocolo_proposta: varchar
+          codigo_empreendimento: varchar
+          quantidade_uh_selecionadas: varchar
+          situacao_selecao: varchar
+          observacao: varchar
+
     # Seeds curadas de identidade FDS, consumidas pela dim de empreendimento
     # (prata_fds_dim_empreendimento).
     entidades_fds:
@@ -254,7 +299,6 @@ models:
             layer: bronze
             classification: restricted
             rag_publication: prohibited
-
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier3
@@ -268,7 +312,6 @@ models:
             layer: silver
             classification: internal
             rag_publication: eligible_after_security_validation
-
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier2
@@ -282,7 +325,104 @@ models:
             layer: gold
             classification: internal
             rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
 
+    # Pró-Moradia: programa do FGTS para o SETOR PÚBLICO (estados, DF, municípios e suas
+    # companhias de habitação). Não é linha do MCMV. A fonte é o Canal FGTS, que traz todos
+    # os programas do fundo: a prata recorta o Pró-Moradia pela linha `26`.
+    pro_moradia_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: pro_moradia
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: pro_moradia
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: pro_moradia
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: pro_moradia
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier1
+            owner: mcid-data-engineering
+
+    # FNHIS Sub-50: linha do Novo MCMV para municípios com menos de 50 mil habitantes, com
+    # recurso do FNHIS/OGU repassado por termo de compromisso. Três fontes: a seleção de
+    # propostas, o painel do TransfereGov e o acompanhamento da SNH (a mesma bronze do Rural).
+    fnhis_dbt:
+      +materialized: table
+      +meta:
+        governance:
+          product: fnhis_sub50
+          owner_key: mcid_data_engineering
+      bronze:
+        +schema: bronze
+        +meta:
+          governance:
+            product: fnhis_sub50
+            owner_key: mcid_data_engineering
+            layer: bronze
+            classification: restricted
+            rag_publication: prohibited
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier3
+            owner: mcid-data-engineering
+      prata:
+        +schema: prata
+        +meta:
+          governance:
+            product: fnhis_sub50
+            owner_key: mcid_data_engineering
+            layer: silver
+            classification: internal
+            rag_publication: eligible_after_security_validation
+          openmetadata:
+            domain: MCid.Habitacao
+            tier: Tier.Tier2
+            owner: mcid-data-engineering
+      ouro:
+        +schema: ouro
+        +meta:
+          governance:
+            product: fnhis_sub50
+            owner_key: mcid_data_engineering
+            layer: gold
+            classification: internal
+            rag_publication: eligible_after_security_validation
           openmetadata:
             domain: MCid.Habitacao
             tier: Tier.Tier1
