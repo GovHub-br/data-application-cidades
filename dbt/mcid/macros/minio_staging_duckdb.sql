@@ -37,3 +37,18 @@
     {%- else -%} select * from duckdb.query($duckdb_query${{ caller() }}$duckdb_query$) r
     {%- endif -%}
 {%- endmacro %}
+
+{#
+    Par do envelope: dentro do duckdb_query() o SQL roda no DuckDB do pg_duckdb, que enxerga
+    o Postgres como o catálogo `pgduckdb` (o nome do banco do ref() não existe lá). Use em
+    volta do ref(), que continua registrando a dependência:
+
+        from {{ rel_pgduckdb(ref('prata_x')) }}
+
+    No `staging_duckdb` o envelope é passthrough e a relação fica como o ref() a devolve.
+#}
+{% macro rel_pgduckdb(rel) -%}
+    {%- if target.type == 'duckdb' -%} {{ rel }}
+    {%- else -%} pgduckdb.{{ rel.schema }}.{{ rel.identifier }}
+    {%- endif -%}
+{%- endmacro %}

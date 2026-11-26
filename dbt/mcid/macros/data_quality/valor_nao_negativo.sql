@@ -19,6 +19,8 @@
   Texto em formato brasileiro no bronze pode escapar do try_cast; onde isso
   importar, aplicar o teste sobre a coluna já parseada.
 
+  O `try_cast` é do DuckDB: no Postgres a consulta roda no pg_duckdb, dentro do envelope.
+
   Uso no schema.yml:
 
       columns:
@@ -30,10 +32,12 @@
 -#}
 {% macro test_valor_nao_negativo(model, column_name) %}
 
-    select {{ column_name }} as valor, count(*) as ocorrencias
-    from {{ model }}
-    where try_cast({{ column_name }} as double) < 0
-    group by {{ column_name }}
-    order by valor
+    {% call duckdb_query() %}
+        select {{ column_name }} as valor, count(*) as ocorrencias
+        from {{ rel_pgduckdb(model) }}
+        where try_cast({{ column_name }} as double) < 0
+        group by {{ column_name }}
+        order by valor
+    {% endcall %}
 
 {% endmacro %}

@@ -12,11 +12,12 @@
 -- (a `prata_fds_dim_empreendimento`, no Postgres atachado como `cidades`),
 -- procurava no schema errado.
 --
--- A lista abaixo faz os três targets de produção roteaarem schema do mesmo jeito,
--- então uma tabela mora no mesmo endereço independente de por qual motor foi
--- construída. O comportamento do target `prod` é idêntico ao de antes.
+-- A lista abaixo faz os targets rotearem schema do mesmo jeito, então uma tabela
+-- mora no mesmo endereço independente de por qual motor foi construída. O
+-- comportamento do target `prod` é idêntico ao de antes. (O `prod_duckdb` saiu em
+-- 11/2026, quando Reforma Casa Brasil e Linha Financiada passaram para o pg_duckdb.)
 {% macro generate_schema_name(custom_schema_name, node) -%}
-    {%- set targets_com_schema_custom = ['prod', 'prod_duckdb', 'staging_duckdb'] -%}
+    {%- set targets_com_schema_custom = ['prod', 'staging_duckdb'] -%}
     {%- if target.name in targets_com_schema_custom and custom_schema_name is not none -%}
         {{ custom_schema_name | trim }}
     {%- else -%} {{ target.schema }}

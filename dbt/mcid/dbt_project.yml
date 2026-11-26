@@ -490,6 +490,13 @@ models:
         governance:
           product: reforma_casa_brasil
           owner_key: mcid_data_engineering
+        # Uma task da Reforma por vez no Airflow (pool de 1 slot, infra/airflow/bootstrap/
+        # pools.json). O DuckDB do pg_duckdb tem um limite de memória POR CONEXÃO
+        # (duckdb.max_memory), e as bronzes e pratas do CadÚnico (a de famílias tem 9,3 M
+        # linhas) são o maior volume do projeto. O resto do grupo segue em paralelo.
+        cosmos:
+          operator_kwargs:
+            pool: pg_duckdb
       bronze:
         +schema: bronze
         +meta:
@@ -641,8 +648,8 @@ models:
 # Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
 # CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`
 # / `timestamptz`. Nenhum dos dois existe no DuckDB, entao ficam atras do guard
-# de target.type -- o eixo DuckDB (reforma e linha financiada) roda nos targets duckdb
-# (staging_duckdb / prod_duckdb) e quebrava no hook, nao no modelo.
+# de target.type -- no target local staging_duckdb o projeto quebrava no hook, nao no
+# modelo.
 on-run-start:
   - "{% if target.type == 'postgres' %}{{ create_udfs() }}{% endif %}"
 

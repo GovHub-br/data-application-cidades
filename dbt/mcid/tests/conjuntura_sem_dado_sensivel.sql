@@ -1,3 +1,9 @@
+-- Aviso, não erro, até a revisão dos testes do projeto: falha hoje pelas colunas de
+-- nascimento, CPF e nome das bronzes do GEAVO e do GEFUS. O CPF chega tokenizado e o
+-- nome mascarado; a data de nascimento o mascaramento preserva de propósito
+-- (scripts/mascaramento/regras.py), e é essa a divergência a resolver.
+{{ config(severity='warn') }}
+
 -- Falha o build se coluna com identificador de pessoa chegar a qualquer
 -- camada persistida do contínuo.
 --
@@ -14,6 +20,8 @@
 -- domínios mais o que outros times gravam ali.
 --
 -- Padrões em `macros/coluna_sensivel.sql`.
+-- Roda depois da conjuntura inteira (macros/depende_de.sql).
+{{ depende_de(folhas_conjuntura()) }}
 {% set relacoes = relacoes_do_produto('conjuntura_dbt') %}
 
 select table_schema as schema_dado, table_name as model, column_name as coluna

@@ -6,7 +6,7 @@ importa o que está nesta pasta:
 
 | Arquivo | Versionado | Conteúdo |
 | --- | --- | --- |
-| `pools.json` | sim | pools que as DAGs exigem (`duckdb_historico`) |
+| `pools.json` | sim | pools que as DAGs exigem (`lake_conversao`, `pg_duckdb`) |
 | `variables.json` | **não** | Variables com os valores reais |
 | `connections.json` | **não** | Connections com as credenciais reais |
 | `variables.example.json` | sim | modelo do `variables.json`: tudo o que o código lê |

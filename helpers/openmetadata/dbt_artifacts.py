@@ -8,11 +8,10 @@ from contextlib import ExitStack
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-# O `docs generate` compila no target `prod` (Postgres), então deixa de fora o
-# eixo histórico: as macros dele rodam `describe` do DuckDB já na compilação e o
-# Postgres responde `syntax error at or near "describe"`. O seletor é o mesmo do
-# grupo Postgres do mcid_cosmos_dag (dbt/mcid/selectors.yml). Os modelos do eixo
-# continuam no manifest; ficam sem SQL compilado e fora do catalog.
+# O `docs generate` compila no target `prod` (Postgres) com o mesmo seletor do
+# mcid_cosmos_dag (dbt/mcid/selectors.yml): o projeto inteiro, com as fontes, que
+# sem elas o catalog sai sem os tipos das colunas de origem. Até 11/2026 o seletor
+# deixava de fora o eixo DuckDB, cujas macros rodavam `describe` já na compilação.
 DBT_COMMANDS = (
     ("deps",),
     ("docs", "generate", "--selector", "dominios_postgres"),

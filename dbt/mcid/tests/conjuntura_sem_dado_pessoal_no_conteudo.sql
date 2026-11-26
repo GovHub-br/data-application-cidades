@@ -15,6 +15,8 @@
 -- compartilhados com far, fds e rural, e o schema sozinho varreria os quatro
 -- domínios mais o que outros times gravam ali — foi assim que esta varredura
 -- chegou a levar 5min46 (2026-09).
+-- Roda depois da conjuntura inteira (macros/depende_de.sql).
+{{ depende_de(folhas_conjuntura()) }}
 {% set alvos = [] %}
 {% set relacoes = relacoes_do_produto(
     'conjuntura_dbt',
