@@ -4,7 +4,7 @@
 raw object into staging Parquet records. `auto` is the generic conversion that already
 exists in scripts/conversao/ (CSV, TXT, XLSX and the CSV of each Access table): it writes
 every column as text, with the lineage columns and `_load_id`. Sources that do not deliver
-a ready table (the FGV XLSX, the IBGE JSON, the Power BI answer of the Novo CAGED) register
+a ready table (the FGV XLSX, the IBGE JSON, the 7z of the Novo CAGED microdata) register
 their reader here; a reader only gives the data a table shape.
 """
 
@@ -290,38 +290,83 @@ def bacen_sgs_json(path: str) -> "pd.DataFrame":
     return df
 
 
-NOVO_CAGED_MEASURES = ["admitidos", "desligados", "saldo", "estoque", "variacao"]
+# Seção CNAE da construção nos microdados do Novo CAGED (divisões 41, 42 e 43)
+NOVO_CAGED_SECTION = "F"
 
 
-def novo_caged_values(answer: dict) -> list:
-    """The five measures of one month in a Power BI answer (the order of the query)."""
-    error = ((answer.get("results") or [{}])[0].get("result") or {}).get("error") or {}
-    if error:  # the report answers 200 with the failure inside (e.g. the model is offline)
-        raise SourceLayoutChanged(
-            f"Power BI: {error.get('errorCode')}: {error.get('message', '')[:300]}"
-        )
+def _extract_7z(path: str, folder: str) -> list[str]:
+    """Every file of a .7z into `folder`, through the libarchive the image already has.
+
+    No package for this: libarchive.so.13 comes with the GDAL dependencies of the image and
+    reads 7z/LZMA2; ctypes is the standard library.
+    """
+    import ctypes
+    import ctypes.util
+    import os
+
+    lib = ctypes.CDLL(ctypes.util.find_library("archive") or "libarchive.so.13")
+    lib.archive_read_new.restype = ctypes.c_void_p
+    lib.archive_entry_pathname.restype = ctypes.c_char_p
+    lib.archive_entry_pathname.argtypes = [ctypes.c_void_p]
+    lib.archive_error_string.restype = ctypes.c_char_p
+    lib.archive_error_string.argtypes = [ctypes.c_void_p]
+    for name in ("archive_read_support_format_7zip", "archive_read_support_filter_all",
+                 "archive_read_free", "archive_read_next_header", "archive_read_data",
+                 "archive_read_open_filename"):  # fmt: skip
+        getattr(lib, name).argtypes = [ctypes.c_void_p] + {
+            "archive_read_next_header": [ctypes.POINTER(ctypes.c_void_p)],
+            "archive_read_data": [ctypes.c_void_p, ctypes.c_size_t],
+            "archive_read_open_filename": [ctypes.c_char_p, ctypes.c_size_t],
+        }.get(name, [])
+    lib.archive_read_data.restype = ctypes.c_ssize_t
+
+    archive = lib.archive_read_new()
+    lib.archive_read_support_format_7zip(archive)
+    lib.archive_read_support_filter_all(archive)
+    out = []
     try:
-        values = answer["results"][0]["result"]["data"]["dsr"]["DS"][0]["PH"][0]["DM0"][0]["C"]
-    except (KeyError, IndexError, TypeError) as exc:
-        raise SourceLayoutChanged(f"Power BI answer without the month data: {exc!r}") from exc
-    if len(values) != len(NOVO_CAGED_MEASURES):
-        raise SourceLayoutChanged(f"expected {len(NOVO_CAGED_MEASURES)} measures, got {values}")
-    return values
+        if lib.archive_read_open_filename(archive, path.encode(), 1 << 20) != 0:
+            raise SourceLayoutChanged(f"7z ilegível: {lib.archive_error_string(archive)}")
+        entry = ctypes.c_void_p()
+        buf = ctypes.create_string_buffer(1 << 20)
+        while lib.archive_read_next_header(archive, ctypes.byref(entry)) == 0:
+            name = os.path.basename(lib.archive_entry_pathname(entry).decode())
+            target = os.path.join(folder, name)
+            with open(target, "wb") as f:
+                while (n := lib.archive_read_data(archive, buf, len(buf))) > 0:
+                    f.write(buf.raw[:n])
+            if n < 0:
+                raise SourceLayoutChanged(f"7z corrompido: {lib.archive_error_string(archive)}")
+            out.append(target)
+    finally:
+        lib.archive_read_free(archive)
+    return out
 
 
-@parser("novo_caged_powerbi_json")
-def novo_caged_powerbi_json(path: str) -> "pd.DataFrame":
-    """One month of the Novo CAGED report: year and month come from the file name
-    (`<year>-<month>.json`), the measures from the answer."""
-    import json
+@parser("novo_caged_pdet_7z")
+def novo_caged_pdet_7z(path: str) -> "pd.DataFrame":
+    """One monthly file of the Novo CAGED microdata (PDET): the movements of the
+    construction section, every column as delivered.
+
+    The 7z holds one `;`-separated UTF-8 TXT with every movement of the country (~4 M
+    rows); only the construction section (`seção` F, ~10%) reaches the staging.
+    """
+    import tempfile
     from pathlib import Path
 
     import pandas as pd
 
-    year, month = Path(path).stem.split("-")
-    with open(path, encoding="utf-8") as f:
-        values = novo_caged_values(json.load(f))
-    return pd.DataFrame([[year, month, *values]], columns=["ano", "mes", *NOVO_CAGED_MEASURES])
+    with tempfile.TemporaryDirectory() as tmp:
+        txts = [f for f in _extract_7z(path, tmp) if f.lower().endswith(".txt")]
+        if len(txts) != 1:
+            raise SourceLayoutChanged(f"expected one TXT in {Path(path).name}, got {txts}")
+        chunks = pd.read_csv(txts[0], sep=";", dtype=str, chunksize=500_000, encoding="utf-8")
+        parts = []
+        for chunk in chunks:
+            if "seção" not in chunk.columns:
+                raise SourceLayoutChanged(f"no `seção` column in {Path(path).name}")
+            parts.append(chunk[chunk["seção"] == NOVO_CAGED_SECTION])
+    return pd.concat(parts, ignore_index=True)
 
 
 MRV_SHEETS = ["Dados Oper. MRV&Co | Oper.Data", "Dados Oper. MRV&Co | Oper.D"]

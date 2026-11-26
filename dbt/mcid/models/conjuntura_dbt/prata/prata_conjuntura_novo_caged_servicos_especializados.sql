@@ -1,25 +1,40 @@
 {{ config(materialized='table') }}
 
--- Prata do conjuntura: empregos em serviços especializados (CNAE 43), do Novo CAGED.
--- Página 3, seção 4 (Empregos).
+-- Novo CAGED, serviços especializados para construção (divisão CNAE 43): série mensal desde
+-- jan/2024 a partir dos microdados do PDET
+-- (prata_conjuntura_novo_caged_pdet), no lugar do painel Power BI que saiu do ar em 06/2026.
 --
--- Reescrita em 2026-08-28 pra nova arquitetura: a bronze materializa o
--- parquet de staging e a prata TIPA. O parquet novo é espelho do raw e
--- traz tudo como texto — sem o cast aqui, o ouro quebra na hora de fazer
--- conta (`estoque - lag(estoque, 12)` dava "operator does not exist:
--- text - text").
---
--- `dt_ingest` sai de `_ingested_at`, a coluna de linhagem que a ingestão
--- nova grava em toda staging (a DAG não escreve mais `dt_ingest`).
--- A bronze guarda todas as cargas; cada carga traz a série inteira, então fica a última.
+-- Os microdados não trazem o estoque. Como no painel (estoque = estoque anterior + saldo,
+-- conferido: 1.204.418 + 810 = 1.205.228 em jun/26 nos edifícios), o estoque sai do estoque
+-- de dez/2023 do painel somado aos saldos. `variacao` é o saldo sobre o estoque anterior,
+-- a mesma medida que o painel publicava.
+with
+    ancora as (
+        -- estoque de dez/2023 = estoque de jan/2024 menos o saldo de jan/2024, no painel
+        select estoque::numeric - saldo::numeric as estoque_inicial
+        from {{ ref('bronze_novo_caged_servicos_especializados') }}
+        where ano::int = 2024 and mes::int = 1
+    ),
+
+    serie as (
+        select
+            p.data_referencia,
+            p.admitidos,
+            p.desligados,
+            p.saldo,
+            a.estoque_inicial + sum(p.saldo) over (order by p.data_referencia) as estoque
+        from {{ ref('prata_conjuntura_novo_caged_pdet') }} p
+        cross join ancora a
+        where p.recorte = 'servicos_especializados'
+    )
+
 select
-    ano::int as ano,
-    mes::int as mes,
+    extract(year from data_referencia)::int as ano,
+    extract(month from data_referencia)::int as mes,
     admitidos::numeric as admitidos,
     desligados::numeric as desligados,
     saldo::numeric as saldo,
     estoque::numeric as estoque,
-    variacao::numeric as variacao,
-    _ingested_at as dt_ingest
-from {{ ref('bronze_novo_caged_servicos_especializados') }}
-where {{ ultima_carga(ref('bronze_novo_caged_servicos_especializados')) }}
+    saldo::numeric / nullif(estoque - saldo, 0) as variacao,
+    current_timestamp as dt_ingest
+from serie

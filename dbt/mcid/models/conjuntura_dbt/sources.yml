@@ -80,7 +80,7 @@ sources:
       - name: gefus_fundo_social
         description: "Registros operacionais do Fundo Social destinados à agregação de indicadores habitacionais."
         meta:
-          caminho: snh/staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_2026_08_21.parquet
+          caminho: snh/staging/sftp/fabrica/GEFUS/PMCMV_FAIXA3_MCID_2026_11_20.parquet
           linhas_minimas: 68745   # metade do observado em 2026-08-29 (137.491)
       - name: geavo_cci_analitico
         description: "Carta de Crédito Individual (CCI) — contratos PF do Canal FGTS/GEAVO. Fonte do 'Financiamento PF MCMV' por faixa do boletim, junto com o CCA."
@@ -186,24 +186,25 @@ sources:
           caminho: snh/staging/infomoney/acoes_imob/load_id=*/*.parquet
           dag: infomoney_imob
           linhas_minimas: 336   # metade do observado em 2026-08-29 (673)
+      - name: novo_caged_pdet
+        description: "Microdados do Novo CAGED (PDET/MTE), seção F (construção): movimentações (MOV), declarações fora do prazo (FOR) e exclusões (EXC), um parquet por arquivo do FTP. Valores como texto."
+        meta:
+          caminho: snh/staging/novo_caged/pdet/*/*/load_id=*/*.parquet
+          dag: novo_caged_pdet_ingest_dag
+      # Painel Power BI do MTE (fora do ar desde 06/2026): fica só como âncora do estoque,
+      # que os microdados não trazem. Arquivos migrados do MinIO, sem `load_id`.
       - name: novo_caged
-        description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
+        description: "Saldo e estoque de empregos formais na construção de edifícios, painel Power BI do Novo CAGED até 06/2026 (âncora do estoque). Valores como texto."
         meta:
-          caminho: snh/staging/novo_caged/saldo_estoque_construcao_edificios/load_id=*/*.parquet
-          dag: novo_caged_construcao_edificios
-          linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+          caminho: snh/staging/novo_caged/saldo_estoque_construcao_edificios.parquet
       - name: novo_caged_servicos_especializados
-        description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
+        description: "Idem, serviços especializados para construção (âncora do estoque)."
         meta:
-          caminho: snh/staging/novo_caged/saldo_estoque_servicos_especializados_construcao/load_id=*/*.parquet
-          dag: novo_caged_servicos_especializados_construcao
-          linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+          caminho: snh/staging/novo_caged/saldo_estoque_servicos_especializados_construcao.parquet
       - name: novo_caged_total
-        description: "Saldo e estoque de empregos formais na construção (Novo CAGED). Valores como texto."
+        description: "Idem, total da construção (âncora do estoque)."
         meta:
-          caminho: snh/staging/novo_caged/saldo_estoque_total_construcao/load_id=*/*.parquet
-          dag: novo_caged_total_construcao
-          linhas_minimas: 15   # metade do observado em 2026-08-29 (30)
+          caminho: snh/staging/novo_caged/saldo_estoque_total_construcao.parquet
       - name: siafi_dotacao_execucao
         description: "Dotação e execução orçamentária do MCID (SIAFI/Tesouro Gerencial). Valores em pt-BR, negativo entre parênteses."
         meta:

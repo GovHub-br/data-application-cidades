@@ -78,12 +78,6 @@
         "host": "https://api.bcb.gov.br",
         "extra": ""
     },
-    "powerbi_caged": {
-        "conn_type": "http",
-        "description": "Painel público do Novo CAGED no Power BI (novo_caged_*): a chave do relatório público vai no extra",
-        "host": "https://wabi-brazil-south-api.analysis.windows.net",
-        "extra": "{\"Content-Type\": \"application/json;charset=UTF-8\", \"X-PowerBI-ResourceKey\": \"<chave do relat\\u00f3rio p\\u00fablico>\", \"Referer\": \"https://app.powerbi.com/\", \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36\"}"
-    },
     "mz_mrv": {
         "conn_type": "http",
         "description": "Catálogo de arquivos da MZ, RI da MRV (lancamentos_ingest_dag e vendas_ingest_dag)",

@@ -87,7 +87,10 @@ def _split(raw_key: str) -> tuple[str, str, Optional[str]]:
     """raw key -> (folder, delivered file name, Access table), without the load folder."""
     parts = [p for p in raw_key.removeprefix(RAW_PREFIX).split("/") if not p.startswith("load_id=")]
     if len(parts) >= 2 and parts[-2].lower().endswith(ACCESS):  # <file>.mdb/<table>.csv
-        return "/".join(parts[:-2]), parts[-2], Path(parts[-1]).stem.lower()
+        folder = parts[:-2]
+        if folder and folder[-1].lower().endswith(".zip"):  # <zip>/<member>.mdb/<table>.csv
+            folder = folder[:-1]
+        return "/".join(folder), parts[-2], Path(parts[-1]).stem.lower()
     if len(parts) >= 2 and parts[-2].lower().endswith(".zip"):  # <file>.zip/<member>
         return (
             "/".join(parts[:-2]),

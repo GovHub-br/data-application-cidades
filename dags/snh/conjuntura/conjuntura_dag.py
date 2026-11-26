@@ -30,9 +30,7 @@ INGEST_DAG_IDS = [
     "abecip_financiamentos_ingest_dag",  # financiamentos SBPE por modalidade (pág. 2)
     "abecip_instituicoes_ingest_dag",  # abertura por instituição (pág. 3)
     "ibge_ingest_dag",  # PIB, SINAPI, PIM-PF, PMC
-    "novo_caged_construcao_edificios",  # empregos: saldo + estoque (pág. 3)
-    "novo_caged_total_construcao",  # empregos: total da construção (pág. 3)
-    "novo_caged_servicos_especializados_construcao",  # empregos (pág. 3)
+    "novo_caged_pdet_ingest_dag",  # empregos: microdados do Novo CAGED (pág. 3)
     # MRV lançamentos/vendas: fora da lista — as construtoras entram via
     # o dado manual `empresas` (balanços), que já engloba a MRV.
     "bacen_sgs_ingest_dag",
