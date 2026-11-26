@@ -16,6 +16,8 @@ RUN apt-get update \
          # para ler os .mdb/.accdb do lake — sem ele a conversão dessa família falha em
          # bloco no mdb_disponivel().
          mdbtools \
+         # p7zip-full: os microdados do Novo CAGED (PDET) vêm em .7z
+         p7zip-full \
   && sed -i 's,^\(MinProtocol[ ]*=\).*,\1'TLSv1.0',g' /etc/ssl/openssl.cnf \
   && sed -i 's,^\(CipherString[ ]*=\).*,\1'DEFAULT@SECLEVEL=1',g' /etc/ssl/openssl.cnf \
   && curl -O http://acraiz.icpbrasil.gov.br/credenciadas/CertificadosAC-ICP-Brasil/ACcompactado.zip \

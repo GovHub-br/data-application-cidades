@@ -48,6 +48,17 @@ def test_raw_key_puts_the_load_folder_before_the_file():
             "MC20261101__MCidades_CCI_CCA_2026.mdb/CCI_Analitico.csv",
             ("sftp_fgts_geavo", "geavo_cci_analitico"),
         ),
+        # the GEAVO delivers the Access files inside a weekly ZIP, without the date
+        (
+            "snh/raw/sftp/caixa.geavo/GEAVO/load_id=20261126T020000Z/"
+            "MC20261119.zip/MCidades_CCI_CCA_2026.mdb/CCA_Analitico.csv",
+            ("sftp_fgts_geavo", "geavo_cca_analitico"),
+        ),
+        (
+            "snh/raw/sftp/caixa.geavo/GEAVO/load_id=20261126T020000Z/"
+            "Base_PJ_FGTS_20261007.zip/Base_PJ_FGTS_20261007.txt",
+            ("sftp_fgts_geavo", "geavo_fgts_pj"),
+        ),
         # a ZIP member is the delivered file: zipped or loose, the same dataset
         (
             "snh/raw/sftp/fabrica/GEFUS/load_id=20261125T050000Z/"

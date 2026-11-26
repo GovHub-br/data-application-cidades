@@ -163,7 +163,7 @@ schema:
   - property: path
     value: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
   - property: file_pattern
-    value: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+    value: (MC\d{8}__)?MCidades_CCI_CCA_\d{4}\.mdb
   - property: load_type
     value: full
   - property: dag
@@ -276,7 +276,7 @@ schema:
   - property: path
     value: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
   - property: file_pattern
-    value: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+    value: (MC\d{8}__)?MCidades_CCI_CCA_\d{4}\.mdb
   - property: load_type
     value: full
   - property: dag

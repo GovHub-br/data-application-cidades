@@ -1,13 +1,14 @@
 {
     "BACEN_SERIES": {
-        "description": "Séries do SGS do Banco Central lidas pela bacen_sgs_ingest_dag: nome da série -> código no SGS",
+        "description": "Séries do SGS do Banco Central lidas pela bacen_sgs_ingest_dag: nome da série -> código no SGS (7456 = INCC-M, variação % mensal, desde que o Sinduscon-PR parou em 07/2026)",
         "value": {
             "pf_concessoes_rs_mi": "<código SGS>",
             "pf_taxa_juros_aa": "<código SGS>",
             "pf_inadimplencia_pct": "<código SGS>",
             "pj_concessoes_rs_mi": "<código SGS>",
             "pj_taxa_juros_aa": "<código SGS>",
-            "pj_inadimplencia_pct": "<código SGS>"
+            "pj_inadimplencia_pct": "<código SGS>",
+            "incc_m_var_mes_pct": "<código SGS>"
         }
     },
     "IBGE_CONFIGURACOES": {

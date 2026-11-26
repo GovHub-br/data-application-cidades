@@ -1,5 +1,7 @@
 """Fase 3 da ingestão das APIs (BACEN SGS, Novo CAGED e MRV) no modelo novo.
 
+O Novo CAGED vem dos microdados do PDET (FTP), no lugar do painel Power BI.
+
 Aqui uma carga tem vários arquivos (uma série, um mês), e o contexto que a resposta não
 traz vai no nome do arquivo. Os leitores rodam sobre arquivos sintéticos; o extract do
 Novo CAGED e do SGS, com HTTP falso.
@@ -7,16 +9,14 @@ Novo CAGED e do SGS, com HTTP falso.
 
 import importlib
 import json
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 from airflow.sdk.exceptions import AirflowFailException
 
-from plugins.datalake.api import as_text
 from plugins.datalake.readers import SourceLayoutChanged, parse
-from plugins.novo_caged_query import expected_periods, query_payload
 
 
 def test_sgs_series_name_comes_from_the_file(tmp_path):
@@ -32,42 +32,6 @@ def test_sgs_html_answer_is_refused(tmp_path):
     path.write_text(json.dumps({"erro": "página"}))
     with pytest.raises(SourceLayoutChanged):
         parse("bacen_sgs_json", str(path))
-
-
-def test_caged_periods_end_before_the_current_month():
-    periods = expected_periods(date(2027, 1, 10))
-    assert (periods[0], periods[-1], len(periods)) == ((2024, 1), (2026, 12), 36)
-
-
-def _where(payload: dict) -> list:
-    return payload["queries"][0]["Query"]["Commands"][0]["SemanticQueryDataShapeCommand"]["Query"][
-        "Where"
-    ]
-
-
-def test_caged_query_filters_division_only_when_given():
-    where = _where
-    assert len(where(query_payload(2025, 3, None))) == 2
-    edificios = where(query_payload(2025, 3, "Construção de Edifícios"))
-    assert len(edificios) == 3
-    assert edificios[-1]["Condition"]["In"]["Values"] == [
-        [{"Literal": {"Value": "2025L"}}, {"Literal": {"Value": "'março'"}}]
-    ]
-
-
-def _caged_answer(values):
-    return {
-        "results": [{"result": {"data": {"dsr": {"DS": [{"PH": [{"DM0": [{"C": values}]}]}]}}}}]
-    }
-
-
-def test_caged_month_comes_from_the_file(tmp_path):
-    path = tmp_path / "2025-03.json"
-    path.write_text(json.dumps(_caged_answer([10, 4, 6, 1000, 0.6])))
-    assert as_text(parse("novo_caged_powerbi_json", str(path))).to_dict("records") == [
-        {"ano": "2025", "mes": "03", "admitidos": "10", "desligados": "4", "saldo": "6",
-         "estoque": "1000", "variacao": "0.6"}
-    ]  # fmt: skip
 
 
 def _module(monkeypatch, tmp_path, name, http, variable=None, today=datetime(2024, 4, 10)):
@@ -86,37 +50,6 @@ def _module(monkeypatch, tmp_path, name, http, variable=None, today=datetime(202
             mod, "Variable", SimpleNamespace(get=lambda key, deserialize_json=False: variable)
         )
     return mod.dag_instance.get_task("extract").python_callable
-
-
-def _caged_http(empty):
-    class Http:
-        def __init__(self, method, http_conn_id):
-            pass
-
-        def run(self, endpoint, json=None, **kw):
-            where = json["queries"][0]["Query"]["Commands"][0]["SemanticQueryDataShapeCommand"][
-                "Query"
-            ]["Where"]
-            year, month = (v["Literal"]["Value"] for v in where[-1]["Condition"]["In"]["Values"][0])
-            answer = {} if (year, month) in empty else _caged_answer([1, 1, 0, 10, 0.0])
-            return SimpleNamespace(json=lambda: answer, content=b"{}")
-
-    return Http
-
-
-CAGED = "dags.snh.data_ingest.novo_caged.saldo_estoque_total_construcao_ingest_dag"
-
-
-def test_caged_latest_month_may_be_missing(monkeypatch, tmp_path):
-    extract = _module(monkeypatch, tmp_path, CAGED, _caged_http({("2024L", "'março'")}))
-    names = [p.rsplit("/", 1)[-1] for p in extract()]
-    assert names == ["2024-01.json", "2024-02.json"]  # março ainda não publicado
-
-
-def test_caged_older_missing_month_fails(monkeypatch, tmp_path):
-    extract = _module(monkeypatch, tmp_path, CAGED, _caged_http({("2024L", "'fevereiro'")}))
-    with pytest.raises(AirflowFailException, match="2024, 2"):
-        extract()
 
 
 def test_sgs_one_bad_series_lands_nothing(monkeypatch, tmp_path):
@@ -174,10 +107,73 @@ def test_mrv_missing_section_is_refused(tmp_path):
         parse("mrv_vendas_xlsx", _mrv_sheet(tmp_path / "planilha_interativa.xlsx"))
 
 
-def test_caged_power_bi_error_is_named(tmp_path):
-    answer = {"results": [{"result": {"error": {"errorCode": "OpenConnectionError",
-                                                "message": "The semantic model was not found"}}}]}  # fmt: skip
-    path = tmp_path / "2025-03.json"
-    path.write_text(json.dumps(answer))
-    with pytest.raises(SourceLayoutChanged, match="OpenConnectionError"):
-        parse("novo_caged_powerbi_json", str(path))
+def _caged_7z(tmp_path, name, rows):
+    """A PDET-like 7z: one `;` TXT with the header of the microdata."""
+    import subprocess
+
+    txt = tmp_path / f"{name}.txt"
+    header = "competênciamov;região;uf;município;seção;subclasse;saldomovimentação"
+    txt.write_text("\n".join([header, *rows]) + "\n", encoding="utf-8")
+    out = tmp_path / f"{name}.7z"
+    subprocess.run(["7z", "a", str(out), str(txt)], check=True, capture_output=True)
+    txt.unlink()
+    return str(out)
+
+
+def test_caged_pdet_keeps_only_the_construction_section(tmp_path):
+    path = _caged_7z(tmp_path, "CAGEDMOV202606", [
+        "202606;3;35;354890;F;4120400;1",
+        "202606;3;35;354890;G;4687702;1",
+        "202606;3;35;354890;F;4399103;-1",
+    ])  # fmt: skip
+    df = parse("novo_caged_pdet_7z", path)
+    assert df[["seção", "subclasse", "saldomovimentação"]].values.tolist() == [
+        ["F", "4120400", "1"],
+        ["F", "4399103", "-1"],
+    ]
+
+
+class _FakeFTP:
+    TREE = {
+        "/pdet/microdados/NOVO CAGED": ["2023", "2026"],
+        "/pdet/microdados/NOVO CAGED/2026": ["202609"],
+        "/pdet/microdados/NOVO CAGED/2026/202609": [
+            "/pdet/microdados/NOVO CAGED/2026/202609/CAGEDMOV202609.7z",
+            "/pdet/microdados/NOVO CAGED/2026/202609/CAGEDFOR202609.7z",
+            "LEIAME.txt",
+        ],
+    }  # fmt: skip
+
+    def __init__(self, *a, **kw):
+        self.encoding = "utf-8"
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def login(self):
+        pass
+
+    def nlst(self, path):
+        return self.TREE.get(path, [])
+
+    def retrbinary(self, cmd, write):
+        write(b"7z")
+
+
+def test_caged_pdet_extract_downloads_only_what_is_not_in_raw(monkeypatch, tmp_path):
+    mod = importlib.import_module("dags.snh.data_ingest.novo_caged.pdet_ingest_dag")
+    ctx = {"run_id": "manual__1", "dag": SimpleNamespace(dag_id="pdet"),
+           "params": {"dry_run": False, "limit": 0}}  # fmt: skip
+    landed = ["snh/raw/novo_caged/pdet/2026/202609/load_id=20261101T000000Z/CAGEDMOV202609.7z"]
+    hook = SimpleNamespace(list_keys=lambda bucket, prefix: landed)
+    monkeypatch.setenv("LAKE_TMPDIR", str(tmp_path))
+    monkeypatch.setattr(mod, "get_current_context", lambda: ctx)
+    monkeypatch.setattr(mod, "S3Hook", lambda aws_conn_id: hook)
+    monkeypatch.setattr(mod, "Variable", SimpleNamespace(get=lambda key: "bucket"))
+    monkeypatch.setattr(mod.ftplib, "FTP", _FakeFTP)
+    paths = mod.dag_instance.get_task("extract").python_callable()
+    assert [p.rsplit("/", 1)[-1] for p in paths] == ["CAGEDFOR202609.7z"]  # 2023 fica fora
+    assert mod._folder("CAGEDFOR202609.7z") == "novo_caged/pdet/2026/202609"

@@ -1,0 +1,53 @@
+# GERADO por scripts/contratos/gerar_sources.py a partir de contracts/snh/novo_caged/pdet.odcs.yaml.
+# Não edite: mude o contrato e rode o gerador.
+version: 2
+sources:
+- name: novo_caged_pdet
+  description: Movimentações do emprego formal na construção (seção CNAE F), mês a mês, como o PDET publica
+    no FTP (ftp.mtps.gov.br/pdet/microdados/NOVO CAGED/<ano>/<ano><mês>/). Cada mês traz três arquivos
+    — movimentações do mês (MOV), declarações fora do prazo de meses anteriores (FOR) e exclusões (EXC)
+    — e o saldo do painel do MTE de uma competência é MOV + FOR − EXC. Substitui o painel Power BI, cujo
+    modelo saiu do ar em 06/2026.
+  schema: staging
+  meta:
+    bucket: data-lake-mcid
+    camada: staging
+    contract: contracts/snh/novo_caged/pdet.odcs.yaml
+    owner: Ministério do Trabalho e Emprego
+  tables:
+  - name: novo_caged_pdet_mov
+    description: Movimentações declaradas no prazo, seção F (construção).
+    meta:
+      caminho: snh/staging/novo_caged/pdet/*/*/CAGEDMOV*.parquet
+      file_pattern: CAGEDMOV\d{6}\.7z
+      load_type: incremental
+      dag: novo_caged_pdet_ingest_dag
+    columns:
+    - name: competenciamov
+    - name: secao
+    - name: subclasse
+    - name: saldomovimentacao
+  - name: novo_caged_pdet_for
+    description: Declarações fora do prazo (competências anteriores), seção F (construção).
+    meta:
+      caminho: snh/staging/novo_caged/pdet/*/*/CAGEDFOR*.parquet
+      file_pattern: CAGEDFOR\d{6}\.7z
+      load_type: incremental
+      dag: novo_caged_pdet_ingest_dag
+    columns:
+    - name: competenciamov
+    - name: secao
+    - name: subclasse
+    - name: saldomovimentacao
+  - name: novo_caged_pdet_exc
+    description: Exclusões de movimentações já divulgadas, seção F (construção).
+    meta:
+      caminho: snh/staging/novo_caged/pdet/*/*/CAGEDEXC*.parquet
+      file_pattern: CAGEDEXC\d{6}\.7z
+      load_type: incremental
+      dag: novo_caged_pdet_ingest_dag
+    columns:
+    - name: competenciamov
+    - name: secao
+    - name: subclasse
+    - name: saldomovimentacao

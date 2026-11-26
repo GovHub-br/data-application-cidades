@@ -1,0 +1,99 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: novo_caged_pdet
+name: Novo CAGED (microdados do PDET, Ministério do Trabalho)
+version: 0.1.0
+status: draft
+description:
+  purpose: Movimentações do emprego formal na construção (seção CNAE F), mês a mês, como o PDET publica
+    no FTP (ftp.mtps.gov.br/pdet/microdados/NOVO CAGED/<ano>/<ano><mês>/). Cada mês traz três arquivos —
+    movimentações do mês (MOV), declarações fora do prazo de meses anteriores (FOR) e exclusões (EXC) —
+    e o saldo do painel do MTE de uma competência é MOV + FOR − EXC. Substitui o painel Power BI, cujo
+    modelo saiu do ar em 06/2026.
+team:
+- username: Ministério do Trabalho e Emprego
+  role: owner
+servers:
+- server: staging
+  type: s3
+  format: parquet
+  location: s3://data-lake-mcid/snh/staging/
+schema:
+- name: novo_caged_pdet_mov
+  physicalName: novo_caged_pdet_mov
+  description: Movimentações declaradas no prazo, seção F (construção).
+  customProperties:
+  - property: path
+    value: snh/staging/novo_caged/pdet/*/*/CAGEDMOV*.parquet
+  - property: file_pattern
+    value: CAGEDMOV\d{6}\.7z
+  - property: load_type
+    value: incremental
+  - property: reader
+    value: novo_caged_pdet_7z
+  - property: dag
+    value: novo_caged_pdet_ingest_dag
+  - property: dbt_tables
+    value:
+    - novo_caged_pdet
+  properties:
+  - name: competenciamov
+    logicalType: string
+  - name: secao
+    logicalType: string
+  - name: subclasse
+    logicalType: string
+  - name: saldomovimentacao
+    logicalType: string
+- name: novo_caged_pdet_for
+  physicalName: novo_caged_pdet_for
+  description: Declarações fora do prazo (competências anteriores), seção F (construção).
+  customProperties:
+  - property: path
+    value: snh/staging/novo_caged/pdet/*/*/CAGEDFOR*.parquet
+  - property: file_pattern
+    value: CAGEDFOR\d{6}\.7z
+  - property: load_type
+    value: incremental
+  - property: reader
+    value: novo_caged_pdet_7z
+  - property: dag
+    value: novo_caged_pdet_ingest_dag
+  - property: dbt_tables
+    value:
+    - novo_caged_pdet
+  properties:
+  - name: competenciamov
+    logicalType: string
+  - name: secao
+    logicalType: string
+  - name: subclasse
+    logicalType: string
+  - name: saldomovimentacao
+    logicalType: string
+- name: novo_caged_pdet_exc
+  physicalName: novo_caged_pdet_exc
+  description: Exclusões de movimentações já divulgadas, seção F (construção).
+  customProperties:
+  - property: path
+    value: snh/staging/novo_caged/pdet/*/*/CAGEDEXC*.parquet
+  - property: file_pattern
+    value: CAGEDEXC\d{6}\.7z
+  - property: load_type
+    value: incremental
+  - property: reader
+    value: novo_caged_pdet_7z
+  - property: dag
+    value: novo_caged_pdet_ingest_dag
+  - property: dbt_tables
+    value:
+    - novo_caged_pdet
+  properties:
+  - name: competenciamov
+    logicalType: string
+  - name: secao
+    logicalType: string
+  - name: subclasse
+    logicalType: string
+  - name: saldomovimentacao
+    logicalType: string

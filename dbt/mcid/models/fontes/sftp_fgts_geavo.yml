@@ -95,7 +95,7 @@ sources:
       CCI no 'Financiamento PF MCMV' por faixa.
     meta:
       caminho: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cca_analitico.parquet
-      file_pattern: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+      file_pattern: (MC\d{8}__)?MCidades_CCI_CCA_\d{4}\.mdb
       load_type: full
       dag: null
     columns:
@@ -155,7 +155,7 @@ sources:
       PF MCMV' por faixa do boletim, junto com o CCA.
     meta:
       caminho: snh/staging/sftp/caixa.geavo/GEAVO/MC*__MCidades_CCI_CCA_*__cci_analitico.parquet
-      file_pattern: MC\d{8}__MCidades_CCI_CCA_\d{4}\.mdb
+      file_pattern: (MC\d{8}__)?MCidades_CCI_CCA_\d{4}\.mdb
       load_type: full
       dag: null
     columns:
