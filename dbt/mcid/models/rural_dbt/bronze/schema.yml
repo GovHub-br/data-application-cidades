@@ -180,6 +180,21 @@ models:
             - _source_hash
             - filename
 
+  - name: bronze_shpt_monit_mov_obra_rural_serie
+    description: >
+      Evolução física da obra do Rural com todas as competências empilhadas, cópia fiel. Cada
+      arquivo é o retrato do mês, uma linha por APF; a série de execução física só existe
+      empilhando. É a base da prata_rural_obra_mensal_serie e da curva S do Rural.
+    columns:
+      - name: nu_apf
+        description: APF como veio da origem, ainda sem normalizar.
+        tests:
+          - not_null
+      - name: filename
+        description: Arquivo da staging de origem da linha; dá a competência.
+        tests:
+          - not_null
+
   - name: bronze_shpt_monit_mov_financ_rural_mensal
     description: >
       Liberações financeiras do Rural, decompostas por componente (obra, trabalho social,

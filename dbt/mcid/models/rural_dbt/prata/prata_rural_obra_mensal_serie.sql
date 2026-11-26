@@ -1,8 +1,8 @@
 {{ config(materialized="table") }}
 
 -- Prata: Situação da obra do Novo Rural MÊS A MÊS (série), com os códigos do layout decodificados.
--- Fonte: bronze_shpt_obra_mensal_rural (todas as remessas MONIT_MOV_OBRA_RURAL_MENSAL, dez/2025
--- em diante) + seed dominio_rural_obra (descrições do layout MONIT_MOV_OBRA_RURAL_LAYOUT).
+-- Fonte: bronze_shpt_monit_mov_obra_rural_serie (todas as remessas MONIT_MOV_OBRA_RURAL_MENSAL,
+-- dez/2025 em diante) + seed dominio_rural_obra (descrições do layout MONIT_MOV_OBRA_RURAL_LAYOUT).
 -- Grão: APF × mês de referência.
 --
 -- A prata_rural_obra_mensal guarda só o último retrato; esta guarda todos, para medir a
@@ -13,7 +13,8 @@ with
     bruto as (
         select
             {{ var('schema_udfs') }}.normalize_apf(nu_apf::text) as apf,
-            dt_referencia::date as dt_referencia,
+            -- competência = 1º dia do mês do sufixo `_MENSAL_<aaaamm>_` do nome do arquivo
+            to_date(substring(filename from 'MENSAL_([0-9]{6})'), 'YYYYMM') as dt_referencia,
             {{ parse_int('co_situacao_operacao::text') }} as co_situacao_operacao,
             {{ parse_int('co_andamento_operacao::text') }} as co_andamento_operacao,
             {{ parse_numeric('pc_obra_prevista::text', 'numeric(6,2)') }}
@@ -46,8 +47,8 @@ with
             {{ var('schema_udfs') }}.parse_date_br(
                 nullif(trim(dt_previsao_entrega_do_empreendimento::text), '')
             ) as dt_previsao_entrega,
-            source_file::text as arquivo_de_origem
-        from {{ ref("bronze_shpt_obra_mensal_rural") }}
+            filename::text as arquivo_de_origem
+        from {{ ref("bronze_shpt_monit_mov_obra_rural_serie") }}
         where nullif(trim(nu_apf::text), '') is not null
     ),
 

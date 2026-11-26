@@ -30,7 +30,7 @@ O mesmo roteiro vale para o Sub-50 e o Pró-Moradia (próximas rodadas).
 | `seeds.rural_portaria_enquadramento_173_2024` (anexo original, transcrito) | `bronze_seed_manual_rural_portaria_enquadramento_173_2024` | — (histórico) | — | — |
 | `seeds.rural_portaria_autorizacao_conferencia` | `bronze_seed_manual_rural_portaria_autorizacao_conferencia` | — (teste de completude) | — | — |
 | seed `perguntas_mcid/portarias_selecao_rural` (catálogo, 54 portarias) | `bronze_seed_portarias_selecao_rural` | `prata_rural_portarias_selecao` | `ouro_rural_portarias_selecao_resumo` | Tabela de portarias |
-| SharePoint `MONIT_MOV_OBRA_RURAL_MENSAL` | `bronze_shpt_monit_mov_obra_rural_mensal` | `prata_rural_obra_mensal_serie` | `ouro_rural_curva_s` | Curva S |
+| SharePoint `MONIT_MOV_OBRA_RURAL_MENSAL` | `bronze_shpt_monit_mov_obra_rural_serie` | `prata_rural_obra_mensal_serie` | `ouro_rural_curva_s` | Curva S |
 | SharePoint `MONIT_MOV_FINANC_RURAL_MENSAL` | `bronze_shpt_monit_mov_financ_rural_mensal` | `prata_rural_financeiro_mensal` → `prata_rural_evolucao_financeira` | `ouro_rural_curva_s`, `ouro_rural_evolucao_financeira` | Curva S |
 | Visão consolidada + Cad PJ + TS CAIXA/BB | (bronzes existentes) | `prata_rural_vinculo_operacao` (agora com seleção, autorização e TS) | `ouro_rural_painel_operacao`, `ouro_rural_painel_portaria`, `ouro_rural_painel_pendencia` | Cartões, tabelas, pendências |
 
