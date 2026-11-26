@@ -1,0 +1,133 @@
+/* Tema Gov Hub do dashboard Boletim de Conjuntura (Superset).
+ *
+ * Gravado no campo `css` do dashboard pelo build_boletim.py a cada construção:
+ * mudar a identidade é mudar este arquivo e reconstruir. Tokens do Manual de
+ * Identidade Visual (skill govhub-visual-identity): roxo #613EFF é a assinatura
+ * (cabeçalho de tabela, aba ativa), navy #0A005A dá o contraste (títulos), rosa
+ * #F9006F só em acento pontual, fundos claros. Reddit Sans no corpo, Oswald só em
+ * título (uppercase).
+ *
+ * Os quadros do boletim são todos tabelas (viz `table`), por isso o tema é CSS e
+ * não um esquema de cores: não há série para colorir.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Reddit+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --gh-roxo: #613EFF;
+  --gh-roxo-700: #3F28A6;
+  --gh-navy: #0A005A;
+  --gh-rosa: #F9006F;
+  --gh-pessego: #FFE7E1;
+  --gh-fundo: #F7F7F7;
+  --gh-zebra: #F8F9FA;
+  --gh-texto: #2D3748;
+  --gh-borda: #E4E0FF;
+}
+
+/* base */
+.dashboard,
+.dashboard-content,
+.grid-container {
+  font-family: 'Reddit Sans', 'Open Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--gh-texto);
+}
+.dashboard-content {
+  background: var(--gh-fundo);
+}
+
+/* título do dashboard */
+/* só o primeiro filho do painel é o nome; os selos (publicado, autor) vêm depois */
+.dashboard-header-container .title-panel > :first-child,
+.dashboard-header-container .title-panel > :first-child input,
+.dashboard-header-container .title-panel > :first-child span {
+  font-family: 'Oswald', 'Reddit Sans', sans-serif !important;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gh-navy) !important;
+}
+
+/* abas (uma por página do boletim) */
+/* o texto da aba fica num .editable-title com fonte própria: a regra tem de chegar nele */
+.ant-tabs-nav .ant-tabs-tab .editable-title,
+.ant-tabs-nav .ant-tabs-tab .editable-title span {
+  font-family: 'Oswald', 'Reddit Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--gh-navy);
+}
+.ant-tabs-nav .ant-tabs-tab-active .editable-title,
+.ant-tabs-nav .ant-tabs-tab-active .editable-title span {
+  color: var(--gh-roxo) !important;
+  font-weight: 700;
+}
+.ant-tabs-nav .ant-tabs-ink-bar {
+  background: var(--gh-roxo) !important;
+  height: 3px !important;
+}
+
+/* cartão de cada quadro */
+.dashboard-component-chart-holder {
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(10, 0, 90, 0.08);
+  border-top: 4px solid var(--gh-roxo);
+}
+.dashboard-component-chart-holder .header-title,
+.dashboard-component-chart-holder .editable-title,
+.chart-header .header-title {
+  font-family: 'Reddit Sans', sans-serif !important;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gh-navy) !important;
+}
+
+/* tabelas: cabeçalho roxo, zebra suave */
+.dashboard-component-chart-holder table thead th,
+.dashboard-component-chart-holder table thead th * {
+  background: var(--gh-roxo) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  border-color: var(--gh-roxo) !important;
+}
+.dashboard-component-chart-holder table thead th svg {
+  fill: #FFFFFF;
+}
+.dashboard-component-chart-holder table tbody tr:nth-child(even) td {
+  background: var(--gh-zebra);
+}
+.dashboard-component-chart-holder table tbody td {
+  color: var(--gh-texto);
+  border-color: var(--gh-borda);
+}
+.dashboard-component-chart-holder table tbody tr:hover td {
+  background: var(--gh-pessego) !important;
+}
+
+/* bloco de aviso (markdown): contorno navy, sem cor de alerta */
+.dashboard-markdown {
+  border-left: 4px solid var(--gh-navy);
+  background: #FFFFFF;
+  border-radius: 10px;
+}
+.dashboard-markdown h1,
+.dashboard-markdown h2,
+.dashboard-markdown h3 {
+  color: var(--gh-navy);
+  font-family: 'Oswald', 'Reddit Sans', sans-serif;
+  text-transform: uppercase;
+}
+
+/* filtro de edição: o único acento rosa do painel */
+.filter-bar .ant-select-selector,
+[data-test="filter-bar"] .ant-select-selector {
+  border-color: var(--gh-roxo) !important;
+}
+[data-test="filter-bar__apply-button"],
+.filter-bar button[type="button"].superset-button-primary {
+  background: var(--gh-rosa) !important;
+  border-color: var(--gh-rosa) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
