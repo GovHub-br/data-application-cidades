@@ -8,7 +8,7 @@
 -- empilha todos os arquivos FNHIS_SEMANAL_MCID_* da staging. O valor dela está em responder se o
 -- ente estava regular NA DATA da seleção, e não só hoje. Cada remessa é um retrato completo; quem
 -- escolhe uma data é a prata_fnhis_regularidade_serie.
-{% set padrao = "s3://data-lake-mcid/staging/**/FNHIS_SEMANAL_MCID_*.parquet" %}
+{% set padrao = "s3://data-lake-mcid/snh/staging/**/FNHIS_SEMANAL_MCID_*.parquet" %}
 
 select *
 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as r

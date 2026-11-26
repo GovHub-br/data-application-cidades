@@ -9,7 +9,7 @@
 -- de arquivos e as colunas de cada um são resolvidas na COMPILAÇÃO (parquet_schema via
 -- duckdb.query); cada arquivo é lido sozinho, projetando só as colunas de negócio, e coluna que
 -- não existe num retrato antigo vira nulo. Tudo texto — tipagem é da prata.
-{%- set padrao = "s3://data-lake-mcid/staging/**/FNHIS SUB 50 Painel_TG_*.parquet" -%}
+{%- set padrao = "s3://data-lake-mcid/snh/staging/**/FNHIS SUB 50 Painel_TG_*.parquet" -%}
 {%- set colunas = [
     "no_proposta", "no_reservado_pac", "situacao_proposta", "sit_contratacao",
     "situacao_instrumento", "valor_de_repasse", "valor_de_contrapartida",

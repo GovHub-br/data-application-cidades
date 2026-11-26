@@ -37,6 +37,7 @@ if _plugins.is_dir() and str(_plugins) not in sys.path:
     sys.path.insert(0, str(_plugins))
 
 from cliente_minio import BUCKET, get_s3_client  # noqa: E402
+from datalake.keys import LAKE_ROOT  # noqa: E402
 
 load_dotenv()
 
@@ -45,7 +46,10 @@ EXCLUIR = ("VALIDACAO", "SUBSTITUIDO", "ALTERACAO_LAYOUT")
 
 def listar(s3, trecho):
     achados = []
-    for pagina in s3.get_paginator("list_objects_v2").paginate(Bucket=BUCKET, Prefix="staging/"):
+    paginas = s3.get_paginator("list_objects_v2").paginate(
+        Bucket=BUCKET, Prefix=f"{LAKE_ROOT}staging/"
+    )
+    for pagina in paginas:
         for obj in pagina.get("Contents", []):
             chave = obj["Key"]
             nome = chave.rsplit("/", 1)[-1]

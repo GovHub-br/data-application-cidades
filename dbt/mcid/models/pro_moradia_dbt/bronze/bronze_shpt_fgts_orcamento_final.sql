@@ -8,7 +8,7 @@
 -- Diferente das outras bronzes, NÃO pega só o arquivo mais recente: cada arquivo é
 -- a dotação de UM ano, e a série precisa de todos. `filename` fica para a prata
 -- desempatar se o mesmo ano chegar em mais de um arquivo.
-{% set padrao = "s3://data-lake-mcid/staging/**/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet" %}
+{% set padrao = "s3://data-lake-mcid/snh/staging/**/tpc_*_fgts_canal_tab_dbo_pc_*_orcamento_final.parquet" %}
 
 select *
 from read_parquet('{{ padrao }}', filename => true, union_by_name => true) as r

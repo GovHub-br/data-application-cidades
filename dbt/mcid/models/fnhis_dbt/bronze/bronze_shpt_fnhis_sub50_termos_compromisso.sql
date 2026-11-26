@@ -15,7 +15,7 @@
 -- `arquivo_mais_recente`, que só lista nomes de arquivo e roda limpa), e a tabela lê só ele, sem
 -- glob e sem união. O layout é o do arquivo corrente; o teste `sem_drift_de_colunas` avisa se
 -- ele mudar.
-{% set padrao = "s3://data-lake-mcid/staging/**/FNHIS SUB 50 Painel_TG_*.parquet" %}
+{% set padrao = "s3://data-lake-mcid/snh/staging/**/FNHIS SUB 50 Painel_TG_*.parquet" %}
 {%- set arquivo = "s3://data-lake-mcid/__parse__" -%}
 {%- if execute -%}
     {%- set resultado = run_query("select " ~ arquivo_mais_recente(padrao) ~ " as arquivo") -%}
