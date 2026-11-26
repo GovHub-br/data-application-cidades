@@ -490,6 +490,13 @@ models:
         governance:
           product: reforma_casa_brasil
           owner_key: mcid_data_engineering
+        # Uma task da Reforma por vez no Airflow (pool de 1 slot, infra/airflow/bootstrap/
+        # pools.json). O DuckDB do pg_duckdb tem um limite de memória POR CONEXÃO
+        # (duckdb.max_memory), e as bronzes e pratas do CadÚnico (a de famílias tem 9,3 M
+        # linhas) são o maior volume do projeto. O resto do grupo segue em paralelo.
+        cosmos:
+          operator_kwargs:
+            pool: pg_duckdb_pesado
       bronze:
         +schema: bronze
         +meta:

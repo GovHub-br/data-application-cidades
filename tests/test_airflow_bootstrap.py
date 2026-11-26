@@ -17,10 +17,12 @@ from pathlib import Path
 from typing import Any, Iterator
 
 import pytest
+import yaml
 
 RAIZ = Path(__file__).resolve().parents[1]
 BOOTSTRAP = RAIZ / "infra" / "airflow" / "bootstrap"
 CODIGO = [RAIZ / "dags", RAIZ / "plugins", RAIZ / "helpers"]
+DBT_PROJECT = RAIZ / "dbt" / "mcid" / "dbt_project.yml"
 
 VARIABLE_GET = re.compile(r"Variable\.get\(\s*[\"']([^\"']+)[\"']")
 # `conn_id="x"` literal (ex.: `postgres_conn_id="postgres_default"`), ou o padrão
@@ -88,6 +90,14 @@ def test_toda_connection_usada_pelo_codigo_esta_no_example() -> None:
 def test_todo_pool_usado_pelo_codigo_esta_no_pools_json() -> None:
     faltando = _faltando(_carregar("pools.json"), POOL)
     assert not faltando, f"declare em pools.json: {faltando}"
+
+
+def test_todo_pool_do_dbt_esta_no_pools_json() -> None:
+    """O Cosmos passa o `meta.cosmos.operator_kwargs` do model para a task dele."""
+    projeto = yaml.safe_load(DBT_PROJECT.read_text(encoding="utf-8"))
+    pools = {v for k, v in _folhas(projeto) if k.endswith("cosmos.operator_kwargs.pool")}
+    faltando = sorted(pools - set(_carregar("pools.json")))
+    assert not faltando, f"declare em pools.json (usados no dbt_project.yml): {faltando}"
 
 
 def test_variables_no_formato_com_descricao() -> None:

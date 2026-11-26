@@ -12,6 +12,10 @@ Qualquer falha da conjuntura deixava os dois domínios e a linhagem do OpenMetad
 upstream_failed, e os testes que ligavam um seed a um model do outro grupo rodavam antes de a
 tabela existir. Num grupo só, o Cosmos liga as tasks pelo grafo do dbt: uma falha para só o
 que depende dela.
+
+Os models da Reforma Casa Brasil rodam um por vez, no pool `pg_duckdb_pesado`, que o
+`dbt_project.yml` passa às tasks pelo `meta.cosmos.operator_kwargs`. O resto segue em
+paralelo.
 """
 
 import os

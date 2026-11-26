@@ -3,5 +3,10 @@
         "slots": 4,
         "description": "Conversões raw -> staging simultâneas da sftp_ingest_dag (arquivos grandes, memória)",
         "include_deferred": false
+    },
+    "pg_duckdb_pesado": {
+        "slots": 1,
+        "description": "Models pesados do pg_duckdb no mcid_cosmos_dag (Reforma Casa Brasil): um por vez",
+        "include_deferred": false
     }
 }
