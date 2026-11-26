@@ -294,6 +294,55 @@ def bacen_sgs_json(path: str) -> "pd.DataFrame":
 NOVO_CAGED_SECTION = "F"
 
 
+def _extract_7z(path: str, folder: str) -> list[str]:
+    """Every file of a .7z into `folder`, through the libarchive the image already has.
+
+    No package for this: libarchive.so.13 comes with the GDAL dependencies of the image and
+    reads 7z/LZMA2; ctypes is the standard library.
+    """
+    import ctypes
+    import ctypes.util
+    import os
+
+    lib = ctypes.CDLL(ctypes.util.find_library("archive") or "libarchive.so.13")
+    lib.archive_read_new.restype = ctypes.c_void_p
+    lib.archive_entry_pathname.restype = ctypes.c_char_p
+    lib.archive_entry_pathname.argtypes = [ctypes.c_void_p]
+    lib.archive_error_string.restype = ctypes.c_char_p
+    lib.archive_error_string.argtypes = [ctypes.c_void_p]
+    for name in ("archive_read_support_format_7zip", "archive_read_support_filter_all",
+                 "archive_read_free", "archive_read_next_header", "archive_read_data",
+                 "archive_read_open_filename"):  # fmt: skip
+        getattr(lib, name).argtypes = [ctypes.c_void_p] + {
+            "archive_read_next_header": [ctypes.POINTER(ctypes.c_void_p)],
+            "archive_read_data": [ctypes.c_void_p, ctypes.c_size_t],
+            "archive_read_open_filename": [ctypes.c_char_p, ctypes.c_size_t],
+        }.get(name, [])
+    lib.archive_read_data.restype = ctypes.c_ssize_t
+
+    archive = lib.archive_read_new()
+    lib.archive_read_support_format_7zip(archive)
+    lib.archive_read_support_filter_all(archive)
+    out = []
+    try:
+        if lib.archive_read_open_filename(archive, path.encode(), 1 << 20) != 0:
+            raise SourceLayoutChanged(f"7z ilegível: {lib.archive_error_string(archive)}")
+        entry = ctypes.c_void_p()
+        buf = ctypes.create_string_buffer(1 << 20)
+        while lib.archive_read_next_header(archive, ctypes.byref(entry)) == 0:
+            name = os.path.basename(lib.archive_entry_pathname(entry).decode())
+            target = os.path.join(folder, name)
+            with open(target, "wb") as f:
+                while (n := lib.archive_read_data(archive, buf, len(buf))) > 0:
+                    f.write(buf.raw[:n])
+            if n < 0:
+                raise SourceLayoutChanged(f"7z corrompido: {lib.archive_error_string(archive)}")
+            out.append(target)
+    finally:
+        lib.archive_read_free(archive)
+    return out
+
+
 @parser("novo_caged_pdet_7z")
 def novo_caged_pdet_7z(path: str) -> "pd.DataFrame":
     """One monthly file of the Novo CAGED microdata (PDET): the movements of the
@@ -302,16 +351,13 @@ def novo_caged_pdet_7z(path: str) -> "pd.DataFrame":
     The 7z holds one `;`-separated UTF-8 TXT with every movement of the country (~4 M
     rows); only the construction section (`seção` F, ~10%) reaches the staging.
     """
-    import subprocess
     import tempfile
     from pathlib import Path
 
     import pandas as pd
 
     with tempfile.TemporaryDirectory() as tmp:
-        # shortcut: needs the 7z binary (p7zip-full in the image); py7zr if it ever goes
-        subprocess.run(["7z", "e", "-y", f"-o{tmp}", path], check=True, capture_output=True)
-        txts = list(Path(tmp).glob("*.txt"))
+        txts = [f for f in _extract_7z(path, tmp) if f.lower().endswith(".txt")]
         if len(txts) != 1:
             raise SourceLayoutChanged(f"expected one TXT in {Path(path).name}, got {txts}")
         chunks = pd.read_csv(txts[0], sep=";", dtype=str, chunksize=500_000, encoding="utf-8")

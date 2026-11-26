@@ -14,6 +14,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+from pathlib import Path
 from airflow.sdk.exceptions import AirflowFailException
 
 from plugins.datalake.readers import SourceLayoutChanged, parse
@@ -107,25 +108,9 @@ def test_mrv_missing_section_is_refused(tmp_path):
         parse("mrv_vendas_xlsx", _mrv_sheet(tmp_path / "planilha_interativa.xlsx"))
 
 
-def _caged_7z(tmp_path, name, rows):
-    """A PDET-like 7z: one `;` TXT with the header of the microdata."""
-    import subprocess
-
-    txt = tmp_path / f"{name}.txt"
-    header = "competênciamov;região;uf;município;seção;subclasse;saldomovimentação"
-    txt.write_text("\n".join([header, *rows]) + "\n", encoding="utf-8")
-    out = tmp_path / f"{name}.7z"
-    subprocess.run(["7z", "a", str(out), str(txt)], check=True, capture_output=True)
-    txt.unlink()
-    return str(out)
-
-
-def test_caged_pdet_keeps_only_the_construction_section(tmp_path):
-    path = _caged_7z(tmp_path, "CAGEDMOV202606", [
-        "202606;3;35;354890;F;4120400;1",
-        "202606;3;35;354890;G;4687702;1",
-        "202606;3;35;354890;F;4399103;-1",
-    ])  # fmt: skip
+def test_caged_pdet_keeps_only_the_construction_section():
+    # fixture: um 7z (LZMA2, como o PDET) com uma linha G entre duas F
+    path = str(Path(__file__).parent / "fixtures/novo_caged/CAGEDMOV202606.7z")
     df = parse("novo_caged_pdet_7z", path)
     assert df[["seção", "subclasse", "saldomovimentação"]].values.tolist() == [
         ["F", "4120400", "1"],
