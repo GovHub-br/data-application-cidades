@@ -16,18 +16,12 @@ with
         select
             competenciamov::int as competencia,
             left(subclasse::text, 2) as divisao,
-            sum(
-                case when saldomovimentacao::int = 1 then sinal else 0 end
-            ) as admitidos,
-            sum(
-                case when saldomovimentacao::int = -1 then sinal else 0 end
-            ) as desligados,
+            sum(case when saldomovimentacao::int = 1 then sinal else 0 end) as admitidos,
+            sum(case when saldomovimentacao::int = -1 then sinal else 0 end) as desligados,
             sum(saldomovimentacao::int * sinal) as saldo
         from
             (
-                select
-                    *,
-                    case when _source_file like 'CAGEDEXC%' then -1 else 1 end as sinal
+                select *, case when _source_file like 'CAGEDEXC%' then -1 else 1 end as sinal
                 from {{ ref('bronze_novo_caged_pdet') }}
             ) b
         where secao = 'F' and competenciamov::int >= 202401
