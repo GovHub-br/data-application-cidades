@@ -759,7 +759,9 @@ def test_dag_de_origem_declarada_onde_existe_dag() -> None:
 
     As 5 do SFTP chegam por transferência do agente operador e
     `financiamentos_por_instituicao` é extração manual — nenhuma tem DAG que a
-    escreva. Preencher seria publicar linhagem falsa.
+    escreva. As 3 do painel Power BI do Novo CAGED são arquivo histórico (âncora
+    do estoque): a DAG que as escrevia saiu quando o painel saiu do ar.
+    Preencher seria publicar linhagem falsa.
     """
     import yaml
 
@@ -776,11 +778,15 @@ def test_dag_de_origem_declarada_onde_existe_dag() -> None:
         for t in com_caminho
         if not (t.get("meta") or {}).get("dag")
     ]
-    assert len(com_caminho) == 31
-    # só as 5 do SFTP e a extração manual da ABECIP podem ficar sem
+    assert len(com_caminho) == 32
+    # só as 5 do SFTP, a extração manual da ABECIP e o painel histórico do CAGED
     for caminho_sem in sem_dag:
-        assert "sftp/" in caminho_sem or "por_instituicao" in caminho_sem, caminho_sem
-    assert len(sem_dag) == 6
+        assert (
+            "sftp/" in caminho_sem
+            or "por_instituicao" in caminho_sem
+            or caminho_sem.startswith("snh/staging/novo_caged/saldo_estoque_")
+        ), caminho_sem
+    assert len(sem_dag) == 9
 
 
 # ── DAG de origem propagada (mcidDagDeOrigem) ───────────────────────────────
