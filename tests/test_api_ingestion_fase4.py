@@ -16,7 +16,14 @@ from types import SimpleNamespace
 import pytest
 from airflow.sdk.exceptions import AirflowSkipException
 
-from plugins.datalake.readers import TESOURO_COLUMNS, SourceLayoutChanged, parse
+from plugins.datalake.readers import (
+    TESOURO_ACAO_COLUMNS,
+    TESOURO_ACAO_DIMENSIONS,
+    TESOURO_ACAO_METRICS,
+    TESOURO_COLUMNS,
+    SourceLayoutChanged,
+    parse,
+)
 
 
 def test_alphavantage_rows_keep_values_as_delivered(tmp_path):
@@ -81,6 +88,42 @@ def test_tesouro_zip_with_missing_columns_is_refused(tmp_path):
     path.write_bytes(_tesouro_zip([["a", "b", "c"]]))
     with pytest.raises(SourceLayoutChanged):
         parse("tesouro_dotacao_zip", str(path))
+
+
+def _acao_zip(rows, codes=None):
+    """ "Orçamento MCid por ação (com data)" as the Tesouro Gerencial e-mails it."""
+    n = len(TESOURO_ACAO_DIMENSIONS)
+    header = [
+        list(TESOURO_ACAO_DIMENSIONS.values()) + ["Movim. Líquido"] * len(TESOURO_ACAO_METRICS),
+        [" "] * (n - 1) + ["Item Informação Código"] + list(codes or TESOURO_ACAO_METRICS),
+        [" "] * (n - 1) + ["Natureza Despesa Nome"] + ["NOME"] * len(TESOURO_ACAO_METRICS),
+    ]
+    lines = ["Orçamento MCid por ação (com data)", "", "Filtro do relatório:", "(...)", ""]
+    lines += ["\t".join(f'"{c}"' for c in r) for r in [*header, *rows]]
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as z:
+        z.writestr("orcamento_mcid_com_data.csv", "\r\n".join(lines).encode("utf-16"))
+    return buffer.getvalue()
+
+
+def test_orcamento_por_acao_reads_by_the_checked_header(tmp_path):
+    row = ["000/2026", "00CW", *["x"] * (len(TESOURO_ACAO_COLUMNS) - 4), "(200,00)", ""]
+    path = tmp_path / "01_orcamento_mcid_com_data.zip"
+    path.write_bytes(_acao_zip([row, row]))
+    df = parse("tesouro_orcamento_acao_zip", str(path))
+    assert df.columns.tolist() == TESOURO_ACAO_COLUMNS and len(df) == 2
+    assert df.loc[0, "dia_lancamento"] == "000/2026"  # abertura do ano, sem dia
+    assert df.loc[0, "acao_governo_codigo"] == "00CW"
+    assert df.loc[0, "liquidacoes_totais"] == "(200,00)"  # texto, como o relatório dá
+
+
+def test_orcamento_por_acao_with_other_metrics_is_refused(tmp_path):
+    """Uma métrica trocada no relatório deslocaria os valores: falha antes."""
+    codes = [*list(TESOURO_ACAO_METRICS)[:-1], "99"]
+    path = tmp_path / "01_orcamento_mcid_com_data.zip"
+    path.write_bytes(_acao_zip([["x"] * len(TESOURO_ACAO_COLUMNS)], codes=codes))
+    with pytest.raises(SourceLayoutChanged, match="header changed"):
+        parse("tesouro_orcamento_acao_zip", str(path))
 
 
 @pytest.fixture

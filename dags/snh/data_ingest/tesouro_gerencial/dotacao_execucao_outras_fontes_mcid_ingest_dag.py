@@ -110,7 +110,7 @@ def dotacao_execucao_outras_fontes_mcid_ingest_dag() -> None:  # noqa: C901 - as
             - {load, None}
         )
         if previous_loads:
-            base = f"{prefix}raw/{FOLDER}/load_id={previous_loads[-1]}/"
+            base = f"{prefix}{RAW_PREFIX}{FOLDER}/load_id={previous_loads[-1]}/"
             previous = {
                 k.rsplit("/", 1)[-1]: client.head_object(Bucket=bucket, Key=k)["Metadata"].get("md5")
                 for k in hook.list_keys(bucket, base) or []
