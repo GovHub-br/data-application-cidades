@@ -16,6 +16,8 @@
 -- O recorte vem do grafo do dbt, não do schema: `prata` e `ouro` são
 -- compartilhados com far, fds e rural, então "todo o schema" varreria os
 -- quatro domínios.
+-- Roda depois da conjuntura inteira (macros/depende_de.sql).
+{{ depende_de(folhas_conjuntura()) }}
 {% set relacoes = relacoes_do_produto(
     'conjuntura_dbt',
     camadas=['prata', 'ouro'],

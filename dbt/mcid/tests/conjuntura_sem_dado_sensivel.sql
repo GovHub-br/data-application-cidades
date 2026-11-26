@@ -14,6 +14,8 @@
 -- domínios mais o que outros times gravam ali.
 --
 -- Padrões em `macros/coluna_sensivel.sql`.
+-- Roda depois da conjuntura inteira (macros/depende_de.sql).
+{{ depende_de(folhas_conjuntura()) }}
 {% set relacoes = relacoes_do_produto('conjuntura_dbt') %}
 
 select table_schema as schema_dado, table_name as model, column_name as coluna

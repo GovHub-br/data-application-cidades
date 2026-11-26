@@ -14,6 +14,38 @@
 --
 -- Complementa `gld_qualidade_schema_drift`: o drift avisa no dia seguinte,
 -- comparando retratos; este falha na hora, dentro do build.
+-- Roda depois das bronzes que conta (macros/depende_de.sql): as das fontes de `lake_staging`
+-- com `meta.linhas_minimas`. Fonte nova com piso entra aqui.
+{{ depende_de([
+        'bronze_abecip_financiamentos',
+        'bronze_abecip_instituicoes',
+        'bronze_abecip_poupanca_sbpe',
+        'bronze_bacen_credito_pib',
+        'bronze_bacen_financiamentos_imobiliarios',
+        'bronze_fgv_icst',
+        'bronze_fgv_incc_m',
+        'bronze_fipezap_locacao',
+        'bronze_geavo_cca_analitico',
+        'bronze_geavo_cci_analitico',
+        'bronze_geavo_fgts_pf',
+        'bronze_geavo_fgts_pj',
+        'bronze_gefus_fundo_social',
+        'bronze_ibge_paic_obras',
+        'bronze_ibge_paic_pessoal_salarial',
+        'bronze_ibge_paic_resultados',
+        'bronze_ibge_pib_consolidado_trimestral',
+        'bronze_ibge_pib_construcao_civil',
+        'bronze_ibge_pib_corrente',
+        'bronze_ibge_pim_pf_brasil',
+        'bronze_ibge_pmc_construcao',
+        'bronze_ibge_pnad_construcao_ocupados',
+        'bronze_ibge_pnad_construcao_rendimento',
+        'bronze_ibge_pnadc_populacao_decis_renda',
+        'bronze_ibge_pnadc_rendimento_domiciliar',
+        'bronze_ibge_sinapi',
+        'bronze_infomoney_imob',
+        'bronze_siafi_dotacao_execucao',
+    ]) }}
 {% set linhas = [] %}
 {% if execute %}
     {% for no in graph.sources.values() if no.source_name == 'lake_staging' %}

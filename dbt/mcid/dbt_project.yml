@@ -641,8 +641,8 @@ models:
 # Os dois hooks sao SQL de Postgres: create_udfs() usa pg_advisory_xact_lock e
 # CREATE FUNCTION, e registrar_execucao_dbt() cria lake._dbt_log com `id serial`
 # / `timestamptz`. Nenhum dos dois existe no DuckDB, entao ficam atras do guard
-# de target.type -- o eixo DuckDB (reforma e linha financiada) roda nos targets duckdb
-# (staging_duckdb / prod_duckdb) e quebrava no hook, nao no modelo.
+# de target.type -- no target local staging_duckdb o projeto quebrava no hook, nao no
+# modelo.
 on-run-start:
   - "{% if target.type == 'postgres' %}{{ create_udfs() }}{% endif %}"
 
